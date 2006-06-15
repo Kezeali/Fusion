@@ -241,6 +241,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicsResponse.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsTerrain.cpp"
 				>
 			</File>
@@ -400,7 +404,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsProperties.h"
+				RelativePath=".\FusionPhysicsResponse.h"
 				>
 			</File>
 			<File

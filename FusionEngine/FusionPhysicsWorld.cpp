@@ -17,7 +17,3 @@ FusionPhysicsWorld::FusionPhysicsWorld()
 FusionPhysicsWorld::~FusionPhysicsWorld()
 {
 }
-
-void SetPosition(const CL_Vector2 &position)
-{
-}

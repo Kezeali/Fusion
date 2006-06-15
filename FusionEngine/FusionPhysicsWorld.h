@@ -14,7 +14,7 @@ namespace FusionEngine
 	 * from Bodies and moves them (the bodies do no movement themselves.)
 	 * 
 	 * \see
-	 * FusionPhysicsWorld | FusionElipse.
+	 * FusionPhysicsWorld | FusionPhysicsElipse.
 	 */
 	class FusionPhysicsWorld
 	{
