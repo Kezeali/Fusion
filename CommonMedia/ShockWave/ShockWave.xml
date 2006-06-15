@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<FusionShip tag="Aggressive Fighter"
+            desc="ShockWave - built to test the ship loading system.">
+	<resources>
+		<image name="bod" file="Body.png" />
+		<image name="eng" file="Engine.png" />
+		<image name="pri" file="Primary.png" />
+		<image name="sec" file="Secondary.png" />
+	</resources>
+  
+	<body image="bod" />
+	<leftEngine x="3" y="24" image="eng" />
+	<rightEngine x="28" y="24" image="eng" />
+	<primaryWeapon x="7" y="7" image="pri" />
+	<secondaryWeapon x="24" y="7" image="sec" />
+	<physics mass="10" engineforce="100" rotationvelocity="10" />
+        <gameplay health="10" />
+</FusionShip>
