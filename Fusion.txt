@@ -1,0 +1,248 @@
+systems:
+Gameplay:
+ - Max 4 players per client.
+
+Resources
+ - Server shoud tell the client which ships, weapons and level it needs.
+ - Along with each name, a checksum will be sent to confirm sync.
+ - 
+
+Levels
+ - Lua
+  - Functions:
+   - trigger_aiShip_once_rect
+   - trigger_aiShip_repeating_rect
+   - trigger_aiShip_ondamage_rect
+
+   - trigger_plShip_once_rect
+   - trigger_plShip_repeating_rect
+   - trigger_plShip_onDamage_rect
+
+   - trigger_anyship_once_rect
+
+   - trigger_terrain_onDamage_rect
+
+   - physics_applyForce_linea(physicalObjectID, direction, force)
+   - physics_applyForce_vector(physicalObjectID, x, y, force)
+
+   - Script Example (to simulate gravity):
+   {
+     uint g_MapWidth = 1024;
+     uint g_MapHeight = 1024;
+
+     main()
+     {
+       trigger_anyShip_repeating_rect("applygravity", 0, 0, g_MapWidth, g_MapHeight);
+     }
+
+     applygravity(int objectID)
+     {
+       physics_applyforce_linea(objectID, 270, 9.8);
+     }
+   }
+
+Weapons
+ - Lua
+
+Ships
+ - XML
+ - Sprites:
+   Ship image width/height:
+     Minimum: 24
+     Maximum image width/height: 48
+
+   Engines/Weapons images width/height:
+     Minimum: 4
+     Maximum: 16
+
+   - Mass is the total number of unmasked pixels
+   Ship image Mass:
+     Minimum: 256
+     Maximum: 2304
+
+   Engines/Weapons images Mass:
+     Minimum: 8
+     Maximum: 256
+
+ - Engines, Primary & secondary weapons:
+    must be placed within 2px of the alpha map's border, and within 4px of the nearest
+    pixel to the corrisponding corner of the image
+ - When an engine is lost the max velocity is reduced to 1/2 and a spin is applied
+    whenever the ship is thrusting.
+
+ - If a ships Mass drops below 128, or all weapons + engines are knocked off (optional),
+    the ship is destroied.
+
+
+
+Engine loop
+{
+  ClientEnvironment/ServerEnvironment *enviroment = new ClientEnvironment/ServerEnvironment();
+  while (!quit)
+  {
+    float split = getFrameTime();
+
+    if (CL_Input::check_key(CL_KEY::ESCAPE)) quit = true;
+
+    environment->Update(split);
+    environment->Draw();
+
+    CL_Core::KeepAlive()
+  }
+}
+
+ClientEnvironment::Update
+{
+  // Setup local frames
+  readLocalInputs();
+
+  // Update the states of all local objects based on the gathered input
+  predictLocal();
+
+  // Build all local frames
+  buildFrames();
+
+  // Send everything in the message queue
+  send();
+
+  // Read any frames / messages received between this update and the last
+  if (receive())
+  {
+    // Update the states of all sync'ed objects if any remote frames were received
+    //  (this function will also check the time on each frame individually to make sure it has changed)
+    updateObjects();
+  }
+
+  // Move/rotate ships based on the received/predicted frames
+  finaliseObjectMovement();
+
+  // Update all the client only stuff (particle systems, 
+  updateNonSynced()
+}
+
+How to use a std::list:
+class class_a { std::string to_string() { return "class_a" } };
+int main()
+{
+  // This code leaves lst containing:
+  // [0] instance_of_class_a_to_be_inserted
+  // [1] instance2_of_class_a
+  // [2] instance3_of_class_a
+
+  std::list<class_a> lst;
+
+  class_a instance1_of_class_a();
+  class_a instance2_of_class_a();
+  class_a instance3_of_class_a();
+
+  class_a instance_of_class_a_to_be_inserted();
+
+  lst.push_back(instance1_of_class_a);
+  lst.push_back(instance2_of_class_a);
+  lst.push_back(instance3_of_class_a);
+
+  std::list<class_a>::iterator it;
+  for (it = lst.begin(); it != lst.end(); ++it)
+  {
+    if (it == instance2_of_class_a)
+    {
+      lst.insert(it, instance_of_class_a_to_be_inserted);
+    }
+  }
+
+  lst.remove(instance1_of_class_a);
+
+  return 0;
+}
+
+How to use a std::map:
+class class_a { std::string to_string() { return "class_a" } };
+class class_b { std::string to_string() { return "class_b" } };
+int main()
+{
+  // This code leaves lst containing:
+  // ["one"] instance1_of_class_a
+  // ["two"] instance2_of_class_a
+  // ["three"] instance_of_class_b
+
+  std::map<std::string, class_a> lst;
+
+  class_a instance1_of_class_a();
+  class_a instance2_of_class_a();
+  class_a instance3_of_class_a();
+
+  class_b instance_of_class_b();
+
+  lst["one"] = instance1_of_class_a;
+  lst["two"] = instance2_of_class_a;
+  lst["three"] = instance3_of_class_a;
+
+  lst["three"] = instance_of_class_b;
+
+  std::map<std::string, class_a>::iterator it;
+  for (it = lst.begin(); it != lst.end(); ++it)
+  {
+    if (it->first == "three")
+    {
+      std::cout << it->second.to_string();
+    }
+  }
+
+  return 0;
+}
+
+
+
+FusionNetMessage
+ - int type
+ - void message
+
+
+
+Server
+ Runs a level script, master physics, and multiple -ShipEntity-'s
+
+Client
+ Runs a level script, predictive physics, and a single -Node-:
+  - Node:
+   ShipIcon
+   ShipEntity
+
+
+
+From PDA:
+
+- Health --
+sprite should be slowly destroyed (possably changing the color of pixels fist) by making each "destroyed" pixel trasparent. So larger sprites effectively have more health, but are obviously a bigger target.
+There should be a maximum sprite weight (say 48px) and min (say 16px) to prevent possable bugs / cheats.
+
+Weight would be the number of non-transparent pixels.
+
+The sprite definition file (XML?) should be able to define the positions of engine / weapon mounts - and each of these can fall off if the pixel defined (as the mount) is destroyed.
+
+- GFX --
+Engine should do FullSceneA-A.
+
+Level scripts should be able to activate: paralax bg, gravity.
+
+A level image collection should be comprised of: bg1/2 (each can be set to semi-transparent in the level script), fg1/2 (same as bg1/2 but these go above the player), b&w collision map.
+
+- Level scripting using events --
+triger_ai_onenter_region(callback_function, minx, miny, maxx, maxy)
+
+the format for event definition functions (such as the one above) would be as follows:
+trigger_<triggeredBy>_<type>_[specificationOfType]().
+
+Calling an event definition function from within a level script will tell the engine to point the callback pointer for that event to the LUA functon specified by the "callback_funcion" parameter.
+
+can the LUA libraries compile scripts? I don't want to slow the game down if someone writes a really complicated level or weapon. 
+Or do functions have to be written in C?
+
+Actually, scripts should be compiled into dynamic libraries then compressed - so all the game has to do is decompress the weapons before gameplay, and decompress levels before they are used.
+
+A maximum should be defined for the amount of weapons that can be selected to appear in a game.
+
+- Engine --
+GameObject - has an entity and an icon.
+Entity - the behavior part of a game object
+Icon - the visable part of a game object - this is just a collection of properties which tell the engine what to draw (sprite, etc.) unless the custom draw propety is "true".

@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!DOCTYPE CodeBlocks_layout_file>
+<CodeBlocks_layout_file>
+	<File name="FusionEngine\FusionClientEnvironment.h" open="0" top="0">
+		<Cursor position="0" topLine="18"/>
+	</File>
+	<File name="FusionEngine\FusionInputHandler.cpp" open="0" top="0">
+		<Cursor position="810" topLine="45"/>
+	</File>
+	<File name="FusionEngine\FusionScene.h" open="0" top="0">
+		<Cursor position="472" topLine="0"/>
+	</File>
+	<File name="FusionEngine\FusionServerEnvironment.cpp" open="0" top="0">
+		<Cursor position="3117" topLine="26"/>
+	</File>
+	<File name="FusionEngine\FusionServerEnvironment.h" open="0" top="0">
+		<Cursor position="1006" topLine="14"/>
+	</File>
+	<File name="FusionEngine\FusionShipResource.h" open="0" top="0">
+		<Cursor position="1281" topLine="0"/>
+	</File>
+	<File name="FusionEngine\FusionShipWeapon.h" open="0" top="0">
+		<Cursor position="748" topLine="0"/>
+	</File>
+	<File name="FusionEngine\FusionStateData.h" open="0" top="0">
+		<Cursor position="731" topLine="6"/>
+	</File>
+	<Expand folder="/Sources/FusionEngine"/>
+	<Expand folder="/Sources"/>
+	<Expand folder="/Headers/FusionEngine"/>
+	<Expand folder="/Headers"/>
+</CodeBlocks_layout_file>
