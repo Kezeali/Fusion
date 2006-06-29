@@ -9,27 +9,31 @@
 namespace FusionEngine
 {
 	/*!
-	 * \brief
+	 * \\brief
 	 * The controller for moving objects - this takes data (eg. velocity, force)
 	 * from Bodies and moves them (the bodies do no movement themselves.)
 	 * 
-	 * \see
+	 * \\see
 	 * FusionPhysicsWorld | FusionPhysicsElipse.
 	 */
 	class FusionPhysicsWorld
 	{
 	public:
 		/*!
-		 * \brief
+		 * \\brief
 		 * Constructor. Should only be called by FusionScene.
 		 *
-		 * \param world
+		 * \\param world
 		 * The world in which this body resides.
 		 */
 		FusionPhysicsWorld();
 		//! Virtual destructor.
 		virtual ~FusionPhysicsWorld();
-
+		
+public:
+		bool CheckCollision(const PhysicsBody &one, const PhysicsBody &two);
+		void AddBody(PhysicsBody *body);
+		
 	};
 
 }

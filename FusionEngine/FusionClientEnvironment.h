@@ -13,7 +13,6 @@
 #include "FusionClientOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
-#include "FusionShip.h"
 #include "FusionProjectile.h"
 #include "FusionResourceLoader.h"
 #include "FusionShipResource.h"

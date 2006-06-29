@@ -13,6 +13,8 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Provides a surface and methods to modify it.
+	 * 
+	 * May be [depreciated] with FusionPhysicsTerrain implementation.
 	 *
 	 * \remarks
 	 * The ApplyDamageMap method is for efficianly syncronising the damage over

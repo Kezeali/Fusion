@@ -17,3 +17,11 @@ FusionPhysicsWorld::FusionPhysicsWorld()
 FusionPhysicsWorld::~FusionPhysicsWorld()
 {
 }
+
+FusionPhysicsBody::CheckCollision()
+{
+}
+
+FusionPhysicsWorld::AddBody()
+{
+}

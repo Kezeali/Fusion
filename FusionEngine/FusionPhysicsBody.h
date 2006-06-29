@@ -44,6 +44,24 @@ namespace FusionEngine
 		virtual void ApplyForce(const CL_Vector2 &force);
 		//! We don't care about yo torque.
 		virtual SetRotationVelocity(const float velocity);
+		
+		//@{
+		/*! Collision type properties.
+		 * I think these are self explanatory.
+		 */
+		void SetUsePixelCollisions(bool usePixel);
+		void SetUseBBCollisions(bool useBB);
+		void SetUseDistCollisions(bool useDist);
+		//@}
+		
+		//@{
+		/*! Collision type property retrieval.
+		 * I think these are self explanatory.
+		 */
+		void GetUsePixelCollisions(bool usePixel);
+		void GetUseBBCollisions(bool useBB);
+		void GetUseDistCollisions(bool useDist);
+		//@}
 
 		//@{
 		//! State retreival.
@@ -69,6 +87,13 @@ namespace FusionEngine
 		FusionPhysicsProperties *m_Properties;
 
 		bool m_IsColliding;
+		
+		//! Bitmask collisions
+		bool m_UsesPixel;
+		//! Bounding Box collisions
+		bool m_UsesBB;
+		//! Distance (circle) based collisions
+		bool m_UsesDist;
 
 		//@{
 		//! "State" stuff.
