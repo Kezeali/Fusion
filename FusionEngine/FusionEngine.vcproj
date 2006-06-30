@@ -237,6 +237,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicsBody.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsElipse.cpp"
 				>
 			</File>

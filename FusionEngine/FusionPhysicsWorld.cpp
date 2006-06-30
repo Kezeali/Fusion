@@ -18,10 +18,10 @@ FusionPhysicsWorld::~FusionPhysicsWorld()
 {
 }
 
-FusionPhysicsBody::CheckCollision()
+FusionPhysicsWorld::AddBody()
 {
 }
 
-FusionPhysicsWorld::AddBody()
+FusionPhysicsWorld::CheckCollision()
 {
 }
