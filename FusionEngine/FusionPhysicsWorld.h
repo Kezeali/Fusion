@@ -6,6 +6,8 @@
 
 #include "FusionEngineCommon.h"
 
+#include "FusionPhysicsBody.h"
+
 namespace FusionEngine
 {
 	/*!
@@ -30,9 +32,41 @@ namespace FusionEngine
 		//! Virtual destructor.
 		virtual ~FusionPhysicsWorld();
 		
-public:
-		bool CheckCollision(const PhysicsBody &one, const PhysicsBody &two);
-		void AddBody(PhysicsBody *body);
+	public:
+		/*!
+		 * Adds a body to the world so it will have physics applied to it.
+		 *
+		 * /param body Pointer to the body to add.
+		 */
+		void AddBody(FusionPhysicsBody *body);
+
+		/*!
+		 * Does movement and collision detection.
+		 *
+		 * /param split Step magnitude (millis since last step.)
+		 */
+		void RunSimulation(unsigned int split);
+
+	public:
+		/*!
+		 * Used internally by RunSimulation for its namesake.
+		 *
+		 * /param one The object to check for collisions against.
+		 * /param two The object which may be colliding against param one.
+		 */
+		bool _CheckCollision(const FusionPhysicsBody &one, const FusionPhysicsBody &two);
+		/*!
+		 * Used internally by RunSimulation to check for collisions on moving objects.
+		 *
+		 * /param vector The vector along which to check.
+		 * /param one The object to check for collisions against.
+		 * /param two The object which may be colliding against param one.
+		 */
+		bool _CheckVectorForCollisions(const CL_Vector2 &vector,
+			const FusionPhsicsBody &one, const FusionPhysicsBody &two);
+
+	private:
+		std::list<FusionPhysicsBody *> m_Bodies;
 		
 	};
 

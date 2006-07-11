@@ -11,7 +11,7 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Holds all client side ship state information for each ship.
+	 * Holds all ship state information for each ship.
 	 *
 	 * State information such as current buttons pressed and health is stored in
 	 * this class. Other classes that need such information can gain access to it

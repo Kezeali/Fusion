@@ -6,6 +6,8 @@
 
 #include "FusionEngineCommon.h"
 
+#include "FusionBitmask.h"
+
 namespace FusionEngine
 {
 	/*!
@@ -45,6 +47,23 @@ namespace FusionEngine
 		//! We don't care about yo torque.
 		virtual SetRotationVelocity(const float velocity);
 		
+		//@{
+		//! Properties.
+		//! Returns true if the given point is solid
+		virtual bool GetColPoint(CL_Pointf point) const;
+		virtual CL_Rectf GetColBB() const;
+		virtual float GetColDist() const;
+		//@}
+
+		//@{
+		//! Property retreival.
+		virtual FusionBitmask GetColBitmask() const;
+		//! Returns true if the given point is solid
+		virtual bool GetColPoint(CL_Pointf point) const;
+		virtual CL_Rectf GetColBB() const;
+		virtual float GetColDist() const;
+		//@}
+
 		//@{
 		/*! Collision type properties.
 		 * I think these are self explanatory.
