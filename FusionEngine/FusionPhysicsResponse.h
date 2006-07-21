@@ -1,5 +1,5 @@
-#ifndef Header_FusionEngine_FusionPhysicsBody
-#define Header_FusionEngine_FusionPhysicsBody
+#ifndef Header_FusionEngine_FusionPhysicsResponse
+#define Header_FusionEngine_FusionPhysicsResponse
 #if _MSC_VER > 1000
 #pragma once
 #endif
@@ -10,8 +10,11 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Holds data about a physical object.
+	 * Each body can have a derived class for different collison responses :D.
 	 * 
+	 * \remarks
+	 * MCS - This is probably one of my best ideas on the physics front.
+	 *
 	 * \see
 	 * FusionPhysicsBody
 	 */
@@ -22,7 +25,6 @@ namespace FusionEngine
 		virtual ~FusionPhysicsResponse();
 
 	public:
-		//! Each type of body can have a derived class for different collison responses :D.
 		virtual void CollisionResponse() {};
 
 	};

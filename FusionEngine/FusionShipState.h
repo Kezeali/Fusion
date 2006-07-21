@@ -26,7 +26,7 @@ namespace FusionEngine
 		CL_Vector Velocity;
 		CL_Vector Position;
 		float Rotation;
-		float RotationVelocity;
+		float RotationalVelocity;
 		//@}
 
 		//@{

@@ -18,7 +18,6 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
-
 */
 
 #ifndef Header_FusionEngine_FusionBitmask
@@ -73,20 +72,50 @@ namespace FusionEngine
 		/*!
 		 * Creates a bitmask from an internal image.
 		 *
+		 * \remarks
+		 * MCS - I don't know if I should define the solid parts by alpha or colour...
+		 * I think just checking alpha is faster so I'm using that; but if you want to
+		 * change it, feel free :P
+		 *
 		 * \param filename The image to base the mask on.
 		 * \param gridsize The amount of pixels per bit in the bitmask.
 		 * \param threshold The alpha value above which pixels are considered opaque.
 		 */
 		void SetFromSurface(const CL_Surface &surface, int gridsize, unsigned int threshold = 128);
 
+		//! Returns the solidality of the bit at the given point.
 		bool GetBit(CL_Point point) const;
 
-		bool Overlap(FusionBitmask other);
+		//! Tells ya if there's a collision between this object and the one given
+		bool Overlap(const FusionBitmask &other, const CL_Point &offset);
+		//! Same as FusionBitmask#Overlap, but this tells you the first of intersection.
+		/*!
+		 * \return The first point at which an overlap was found.
+		 * \retval (-1, -1) If no overlap was found.
+		 */
+		const CL_Point &OverlapPoint(const FusionBitmask &other, const CL_Point &offset);
+		//! Calculates an <i>approximate</i> normal to the edge of this bitmask.
+		/*!
+		 * This calculates an approximate normal to the edge of this bitmask at a
+		 * given point of collision; by checking the relative ammount of bits which
+		 * collide with the bitmask 'other' on each side of said point. Obviously
+		 * this method is very hap-hazard - e.g. in the case of there being no
+		 * colliding bits on one side, you'll probably get a vector pointing straight
+		 * through the mask :P
+		 */
+		const CL_Vector2 &CalcCollisionNormal(const FusionBitmask &other, const CL_Point &offset);
 
 	protected:
+		//! Bitmask n' stuff
 		bitmask_t *m_Bitmask;
 
+		//! We don't want to be using an uninitialised object now do we?
 		bool m_BitmaskCreated;
+
+		//! Width of the bitmask, to prevent checks going out of bounds.
+		int m_MaskWidth;
+		//! Height of the bitmask, to prevent checks going out of bounds.
+		int m_MaskHeight;
 
 	};
 

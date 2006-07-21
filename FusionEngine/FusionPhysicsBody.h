@@ -1,3 +1,25 @@
+/*
+  Copyright (c) 2006 Elliot Hayward
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef Header_FusionEngine_FusionPhysicsBody
 #define Header_FusionEngine_FusionPhysicsBody
 #if _MSC_VER > 1000
@@ -14,27 +36,44 @@ namespace FusionEngine
 	 * \brief
 	 * Abstract class, the basis for movable/colliding objects.
 	 *
+	 * ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really
+	 * think BB's are necessary... Bah
+	 *
 	 * \remarks
 	 * With regurad to the state stored in this class:
 	 * For FusionShips this should be initialisd by the ShipFactory when it creates
 	 * a new ship. It should remain indipendant of the ClientEnvironment after that
 	 * point - all modification to it can be done manually, rather than requiring it
 	 * to know of ShipResource.
-	 * 
+	 * <br>
+	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
+	 * This class just stores data, and keeps that data valid (i.e. modify the AABB
+	 * to fit the bitmask if it rotates.)
+	 * <br>
+	 * MCS - AABBs are not yet implimented
+	 *
+	 * \todo AABB for FusionPhysicsBody
+	 *
 	 * \see
 	 * FusionPhysicsWorld | FusionFhysicsElipse.
 	 */
 	class FusionPhysicsBody
 	{
 	public:
+		//! Constructor.
 		/*!
-		 * \brief
-		 * Constructor.
-		 *
 		 * \param world
 		 * The world in which this body resides.
 		 */
 		FusionPhysicsBody(FusionPhysicsWorld *world);
+		//! Constructor with response param.
+		/*!
+		 * \param world
+		 * The world in which this body resides.
+		 * \param props
+		 * The basics physical properties to initialise this body with.
+		 */
+		FusionPhysicsBody(FusionPhysicsWorld *world, const FusionPhysicsResponse &response);
 		//! Virtual destructor.
 		virtual ~FusionPhysicsBody();
 
@@ -44,15 +83,15 @@ namespace FusionEngine
 
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
-		//! We don't care about yo torque.
-		virtual SetRotationVelocity(const float velocity);
+		//! We don't care about yo' torque.
+		virtual SetRotationalVelocity(const float velocity);
 		
 		//@{
 		//! Properties.
-		//! Returns true if the given point is solid
-		virtual bool GetColPoint(CL_Pointf point) const;
-		virtual CL_Rectf GetColBB() const;
-		virtual float GetColDist() const;
+		virtual SetColBitmask(const FusionBitmask &bitmask);
+		virtual SetColAABB(float width, float height);
+		//virtual SetColAABB(const CL_Rectf &bbox);
+		virtual SetColDist(float dist);
 		//@}
 
 		//@{
@@ -60,26 +99,28 @@ namespace FusionEngine
 		virtual FusionBitmask GetColBitmask() const;
 		//! Returns true if the given point is solid
 		virtual bool GetColPoint(CL_Pointf point) const;
-		virtual CL_Rectf GetColBB() const;
+		virtual CL_Rectf GetColAABB() const;
 		virtual float GetColDist() const;
 		//@}
 
 		//@{
-		/*! Collision type properties.
+		//! Collision type properties.
+		/*!
 		 * I think these are self explanatory.
 		 */
 		void SetUsePixelCollisions(bool usePixel);
-		void SetUseBBCollisions(bool useBB);
+		void SetUseAABBCollisions(bool useAABB);
 		void SetUseDistCollisions(bool useDist);
 		//@}
 		
 		//@{
-		/*! Collision type property retrieval.
+		/**
+		 * Collision type property retrieval.
 		 * I think these are self explanatory.
 		 */
-		void GetUsePixelCollisions(bool usePixel);
-		void GetUseBBCollisions(bool useBB);
-		void GetUseDistCollisions(bool useDist);
+		bool GetUsePixelCollisions();
+		bool GetUseAABBCollisions();
+		bool GetUseDistCollisions();
 		//@}
 
 		//@{
@@ -88,7 +129,7 @@ namespace FusionEngine
 		virtual CL_Vector2 &GetAcceleration() const;
 		virtual CL_Vector2 &GetVelocity() const;
 
-		virtual float GetRotationVelocity() const;
+		virtual float GetRotationalVelocity() const;
 		virtual float GetRotation() const;
 		//@}
 
@@ -102,15 +143,21 @@ namespace FusionEngine
 		//@}
 
 	protected:
+		//! Containing world
 		FusionPhysicsWorld *m_World;
-		FusionPhysicsProperties *m_Properties;
+		//! Just look up FusionPhysicsResponse
+		FusionPhysicsResponse m_CollisionResponse;
+
+		FusionBitmask m_Bitmask;
+		CL_Rectf m_AABB;
+		float m_ColDist;
 
 		bool m_IsColliding;
 		
 		//! Bitmask collisions
 		bool m_UsesPixel;
 		//! Bounding Box collisions
-		bool m_UsesBB;
+		bool m_UsesAABB;
 		//! Distance (circle) based collisions
 		bool m_UsesDist;
 
@@ -124,7 +171,13 @@ namespace FusionEngine
 		Cl_Vector2 m_Position;
 
 		float m_Rotation;
-		float m_RotationVelocity;
+		//! Current velocity of rotation.
+		/*!
+		 * \remarks
+		 * (ShipResource has RotationVelocity [no 'al'], that being the <i>maximum</i>
+		 * velocity of rotation.)
+		 */
+		float m_RotationalVelocity;
 		//@}
 
 	};

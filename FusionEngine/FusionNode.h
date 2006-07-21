@@ -34,7 +34,7 @@ namespace FusionEngine
 	class FusionNode
 	{
 	public:
-				/*!
+		/*!
 		 * \brief
 		 * Constructor. Should only be called by FusionScene.
 		 *

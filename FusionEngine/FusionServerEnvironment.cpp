@@ -1,5 +1,28 @@
+/*
+  Copyright (c) 2006 Elliot Hayward
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+*/
+
 #include "FusionServerEnvironment.h"
-#include <math.h>
+
+#include "FusionPhysicsWorld.h"
 
 using namespace FusionEngine;
 
@@ -15,14 +38,19 @@ bool ServerEnvironment::Initialise(ResourceLoader *resources)
 	return true;
 }
 
-void ServerEnvironment::Update(unsigned int split) /*!The main game loop calls this
-                                                     before it draws each frame. Every
-                                                     thing gets updated here, and data
-                                                     gets read from the things that
-                                                     update themselves (InputManager
-                                                     and NetworkManager.)*/
+void ServerEnvironment::Update(unsigned int split)
 {
-    //Begin main server loop
+}
+
+void ServerEnvironment::updateShipStates()
+{
+}
+
+void ServerEnvironment::updateAllPositions(unsigned int split)
+{
+	m_PhysicsWorld->RunSimulation(split);
+		/* [depreciated] See FusionPhysicsWorld
+	    //Begin main server loop
     for(int i=0; i<numPlayers; i++) //move and uncheck collision
     {
         m_Ships[i].CurrentState.Velocity.x += m_Ships[i].CurrentState.ShipMass / m_Ships[i].CurrentState.EngineForce * sin(m_Ships[i].CurrentState.Rotation);
@@ -67,22 +95,5 @@ void ServerEnvironment::Update(unsigned int split) /*!The main game loop calls t
 
         //If hit terrain move back + damage -- MrCai: damage? 
 		        //   Well, that should be an option... eventually :P
-
-
-}
-
-void ServerEnvironment::updateShipStates()  /*!this is a method called by Update,
-                                            it takes the data received from the
-                                            clients (or for the ClientEnv version,
-                                            it takes the data from the keyboard)
-                                            and puts it into FusionShip.shipstate*/
-{
-}
-
-void ServerEnvironment::updateAllPositions() /*!This tells each ship to update it's
-                                              nodes position (the node is the thing
-                                              that handles drawing, it's seperate
-                                              form the rest of the ship cause that
-                                              makes it more generic.)*/
-{
+	*/
 }

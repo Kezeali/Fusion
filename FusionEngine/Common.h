@@ -5,6 +5,10 @@
 #pragma once
 #endif
 
+// C
+// I'm pretty sure this isn't needed, but Bruski included it, so here you go :P
+#include <math.h>
+
 // STL
 #include <string>
 #include <vector>

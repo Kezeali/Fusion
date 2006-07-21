@@ -197,11 +197,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionDemo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDestructableImage.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionDrawable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGame.cpp"
 				>
 			</File>
 			<File
@@ -336,6 +344,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionDemo.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDestructableImage.h"
 				>
 			</File>
@@ -345,6 +357,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionEngineCommon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGame.h"
 				>
 			</File>
 			<File
@@ -397,6 +413,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsElipse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsProperties.h"
 				>
 			</File>
 			<File

@@ -13,7 +13,7 @@ namespace FusionEngine
 {
 	/*!
 	 * \example fusionscene_example.cpp
-	 * Nodes should be added to the scene using code simmular to the following
+	 * Nodes should be added to the scene using code simmular to this
 	 */
 
 	/*!
@@ -26,11 +26,11 @@ namespace FusionEngine
 	class FusionScene
 	{
 	public:
-		typedef std::vector<FusionNode*> SceneNodeList;
-
 		FusionScene();
 		~FusionScene();
 
+	public:
+		typedef std::vector<FusionNode*> SceneNodeList;
 		virtual FusionNode *GetRootNode() const;
 
 		virtual FusionNode *CreateNode();

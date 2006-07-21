@@ -17,7 +17,7 @@ namespace FusionEngine
 	struct ShipState;
 	struct InputState;
 	class ShipResource;
-	struct FusionPhysicsProperties;
+	class FusionPhysicsResponse;
 }
 
 #endif

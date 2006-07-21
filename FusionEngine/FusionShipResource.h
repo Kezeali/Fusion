@@ -60,6 +60,13 @@ namespace FusionEngine
 		{
 			float Mass;
 			float EngineForce;
+			/*! 
+		   * Maximum velocity of rotation.
+		   *
+		   * \remarks
+		   * (FusionPhysicsBody has RotationalVelocity [note 'al'], that being the
+		   * <i>current</i> velocity of rotation.)
+		   */
 			float RotationVelocity;
 		}
 		Physics;

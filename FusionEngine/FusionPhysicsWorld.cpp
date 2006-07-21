@@ -26,6 +26,19 @@ void FusionPhysicsWorld::AddBody(FusionPhysicsBody *body)
 void FusionPhysicsWorld::RunSimulation(unsigned int split)
 {
 	// Move bodies
+	PhysicsBodyList::iterator it = m_Bodies.begin();
+	for (;it != m_Bodies.end(); ++it)
+	{
+		FusionPhysicsBody *cBod = (*it);
+
+		CL_Vector2 cVel = cBod->GetVelocity();
+		if (cVel > 0)
+		{
+			if (cBod->GetUseDistCollisions())
+			{
+			}
+		}
+		if (cVel > cBod->getW
 }
 
 bool FusionPhysicsWorld::_CheckCollision(const FusionPhysicsBody &one, const FusionPhysicsBody &two)
