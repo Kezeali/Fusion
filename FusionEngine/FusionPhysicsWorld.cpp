@@ -38,7 +38,10 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 			{
 			}
 		}
-		if (cVel > cBod->getW
+		if (cVel.squared_length > (cBod->GetColDist()*cBod->GetColDist()))
+		{
+			_CheckVectorForCollisions(cVel, cBod, cOther);
+		}
 }
 
 bool FusionPhysicsWorld::_CheckCollision(const FusionPhysicsBody &one, const FusionPhysicsBody &two)

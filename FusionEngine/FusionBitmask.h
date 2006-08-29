@@ -85,7 +85,6 @@ namespace FusionEngine
 
 		//! Returns the solidality of the bit at the given point.
 		bool GetBit(CL_Point point) const;
-
 		//! Tells ya if there's a collision between this object and the one given
 		bool Overlap(const FusionBitmask &other, const CL_Point &offset);
 		//! Same as FusionBitmask#Overlap, but this tells you the first of intersection.

@@ -245,6 +245,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicsCollisionGrid.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsElipse.cpp"
 				>
 			</File>
@@ -409,6 +413,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsBody.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsCollisionGrid.h"
 				>
 			</File>
 			<File

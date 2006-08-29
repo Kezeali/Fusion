@@ -112,3 +112,13 @@ float FusionPhysicsBody::GetColDist() const
 {
 	return m_ColDist;
 }
+
+void FusionPhysicsBody::_setCGIndex(int ind)
+{
+	m_CGIndex = ind;
+}
+
+int FusionPhysicsBody::_getCGIndex() const
+{
+	return m_CGIndex;
+}

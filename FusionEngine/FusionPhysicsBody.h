@@ -142,7 +142,15 @@ namespace FusionEngine
 		virtual void _setRotation(const float rotation);
 		//@}
 
+		//! Stores the Collision Grid Index - required for sorting etc.
+		void _setCGIndex(int ind);
+		//! Retreives the Collision Grid Index - required for sorting etc.
+		int _getCGIndex() const;
+
 	protected:
+		//! Collision Grid Index
+		int m_CGIndex;
+
 		//! Containing world
 		FusionPhysicsWorld *m_World;
 		//! Just look up FusionPhysicsResponse
