@@ -14,8 +14,10 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * An implimentation of PhysicsBody. Handles distance based collisions.
-	 * 
+	 * An implimentation of PhysicsBody. Handles bitmask based collisions.
+	 *
+	 * Has functions for removing sections of the bitmask.
+	 *
 	 * \sa
 	 * FusionBody | FusionPhysicsWorld.
 	 */
@@ -32,6 +34,9 @@ namespace FusionEngine
 		FusionPhysicsTerrain(FusionPhysicsWorld *world);
 		//! Virtual destructor.
 		virtual ~FusionPhysicsTerrain();
+
+	public:
+		void MakeHole(int x, int y, int radius);
 
 	};
 

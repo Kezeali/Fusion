@@ -28,6 +28,7 @@
 #endif
 
 #include "FusionEngineCommon.h"
+#include <deque>
 
 namespace FusionEngine
 {
@@ -50,12 +51,35 @@ namespace FusionEngine
 		void AddBody(FusionPhysicsBody *body);
 		//! Removes the given body from the grid.
 		void RemoveBody(FusionPhysicsBody *body);
-		//! Places all bodies at their correct positions within the grid.
+		/*!
+		 * Places all bodies at their correct positions within the grid.
+		 *
+		 * This action is not immediate, the actual sort takes place next
+		 * FusionPhysicsCollisionGrid#Resort() is called.
+		 * Call FusionPhysicsCollisionGrid#ForceResortAll() for an 
+		 * immeadiate resort.
+		 */
 		void ResortAll();
+		//! Warning! This function is very slow; only call if you are sure you need to.
+		void ForceResortAll();
 		//! Removes all values from the grid.
 		void Clear();
 		//! Moves bodies which have marked themselves as needing an update.
 		void Resort();
+		/*! 
+		 * Sets the grid scale.
+		 *
+		 * The level dimensions must be provided to work out the new grid
+		 * dimensions.
+		 *
+		 * \param scale The scale of the grid compared to the level.
+		 *  From 0.01f to 1.f
+		 *
+		 * \param level_x Self explanatory.
+		 */
+		void SetScale(float scale, int level_x, int level_y);
+		//! Retreives the scale property.
+		float GetScale() const;
 		/*!
 		 * Insures a specific body will be updated when #Resort is called.
 		 *
@@ -76,13 +100,16 @@ namespace FusionEngine
 
 	protected:
 		//! The ratio of the grid coords to the physics world coords.
-		int m_GridScale;
+		float m_GridScale;
 		//! The dimensions of the grid.
 		int m_GridWidth, m_GridHeight;
-		//! All bodies which have been added are listed here, for resort purposes.
+		//! [depreciated] All bodies which have been added are listed here, for resort purposes.
 		BodyList m_Bodies;
 		//! Guess :P
 		BodyListCollection m_Grid;
+
+		//! Self explainatory (nb. this replaces m_Bodies.)
+		BodyList m_BodiesToUpdate;
 
 	};
 

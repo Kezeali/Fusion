@@ -18,9 +18,12 @@ namespace FusionEngine
 		friend class boost::serialization::access;
 
 	public:
+		//! Constructor.
 		FusionMessage(const std::string &type);
+		//! virtual Destructor
 		virtual ~FusionMessage();
 
+	public:
 		//! Returns the serialised form of this message.
 		virtual std::string &Serialize() const;
 		//! Creates a message instance from its serialised form.

@@ -14,7 +14,8 @@ namespace FusionEngine
 	 * \brief
 	 * Provides a surface and methods to modify it.
 	 * 
-	 * May be [depreciated] with FusionPhysicsTerrain implementation.
+	 * This class will be [depreciated] by the FusionPhysicsTerrain and
+	 * FusionLevel implementation. DamageMap will be replaced by FusionHoleMap.
 	 *
 	 * \remarks
 	 * The ApplyDamageMap method is for efficianly syncronising the damage over
