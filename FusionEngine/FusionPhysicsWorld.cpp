@@ -1,17 +1,13 @@
 
-#include "FusionEngineCommon.h"
-
-/// STL
-
-/// Fusion
-
-/// Class
 #include "FusionPhysicsWorld.h"
+
+#include "FusionPhysicsCollisionGrid.h"
 
 using namespace FusionEngine;
 
 FusionPhysicsWorld::FusionPhysicsWorld()
 {
+	m_CollisionGrid = new FusionPhysicsCollisionGrid();
 }
 
 FusionPhysicsWorld::~FusionPhysicsWorld()
@@ -34,26 +30,39 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 		CL_Vector2 cVel = cBod->GetVelocity();
 		if (cVel > 0)
 		{
-			if (cBod->GetUseDistCollisions())
+			PhysicsBodyList bodies = m_CollisionGrid->FindAdjacentBodies(cBod);
+			PhysicsBodyList::iterator it = bodies.begin();
+
+			for (; it != bodies.end(); ++it)
 			{
+				_CheckCollision(cBod, (*it));
 			}
 		}
-		if (cVel.squared_length > (cBod->GetColDist()*cBod->GetColDist()))
+		// If there could be anything, outside the collision distance, along the movement
+		// path, check.
+		if (cVel.squared_length > (cBod->GetColDist() ^2))
 		{
 			_CheckVectorForCollisions(cVel, cBod, cOther);
 		}
-}
-
-bool FusionPhysicsWorld::_CheckCollision(const FusionPhysicsBody &one, const FusionPhysicsBody &two)
-{
-	// Check for distance collision
-	if (one.GetUseDistCollisions())
-	{
 	}
 }
 
-bool FusionPhysicsWorld::_CheckVectorForCollisions(const CL_Vector2 &vector, const FusionPhysicsBody &one, const FusionPhysicsBody &two)
+bool FusionPhysicsWorld::_CheckCollision(const FusionPhysicsBody *one, const FusionPhysicsBody *two)
 {
-	// Work out the interval at which to check collisions.
-	float interval = ;
+	// Check for distance collision
+	if (one->GetUseDistCollisions())
+	{
+		int dy = one->GetPosition().y - two->GetPosition().y;
+		int dx = one->GetPosition().x - two->GetPosition().x;
+
+		return ((dx ^2 + dy ^2) < (one->GetColDist() - two->GetColDist()) ^2);
+	}
+}
+
+bool FusionPhysicsWorld::_CheckVectorForCollisions(const CL_Vector2 &vector, const FusionPhysicsBody *one, const FusionPhysicsBody *two)
+{
+	// destination
+	CL_Vector2 dest = one->GetPosition() + vector;
+
+	PhysicsBodyList bodies = m_CollisionGrid->FindAdjacentBodies(
 }

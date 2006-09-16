@@ -28,7 +28,8 @@
 #endif
 
 #include "FusionEngineCommon.h"
-#include <deque>
+
+#include "FusionPhysicsBody.h"
 
 namespace FusionEngine
 {
@@ -39,6 +40,8 @@ namespace FusionEngine
 
 		//! Constructor
 		FusionPhysicsCollisionGrid();
+		//! Constructor + initialiser
+		FusionPhysicsCollisionGrid(float scale, int level_x, int level_y);
 		//! Destructor
 		~FusionPhysicsCollisionGrid();
 
@@ -52,10 +55,10 @@ namespace FusionEngine
 		//! Removes the given body from the grid.
 		void RemoveBody(FusionPhysicsBody *body);
 		/*!
-		 * Places all bodies at their correct positions within the grid.
+		 * \brief Places all bodies at their correct positions within the grid.
 		 *
-		 * This action is not immediate, the actual sort takes place next
-		 * FusionPhysicsCollisionGrid#Resort() is called.
+		 * This action is not immediate, the actual sort takes place the next
+		 * time FusionPhysicsCollisionGrid#Resort() is called.
 		 * Call FusionPhysicsCollisionGrid#ForceResortAll() for an 
 		 * immeadiate resort.
 		 */
@@ -66,8 +69,8 @@ namespace FusionEngine
 		void Clear();
 		//! Moves bodies which have marked themselves as needing an update.
 		void Resort();
-		/*! 
-		 * Sets the grid scale.
+		/*!
+		 * \brief Sets the grid scale.
 		 *
 		 * The level dimensions must be provided to work out the new grid
 		 * dimensions.
@@ -81,20 +84,30 @@ namespace FusionEngine
 		//! Retreives the scale property.
 		float GetScale() const;
 		/*!
-		 * Insures a specific body will be updated when #Resort is called.
+		 * \brief Checks for bodies which may collide with the given body.
+		 *
+		 * This is probably the most important function of the CollisionBody class.
+		 *
+		 * \returns a STL vector of FusionPhysicsBodys
+		 */
+		BodyList FindAdjacentBodies(FusionPhysicsBody *body);
+
+		/*!
+		 * \brief Ensures a specific body will be updated when #Resort is called.
 		 *
 		 * Used internally by FusionPhysicsWorld when it moves a body.
 		 */
 		void _updateThis(FusionPhysicsBody *body);
 		/*!
-		 * Insures a specific body will be updated when #Resort is called.
+		 * [depreciated] Ensures a specific body will be updated when #Resort is called.
 		 *
 		 * Used internally by FusionPhysicsWorld when it moves a body.
 		 */
-		void _updateThis(int cgind);
+		//void _updateThis(int cgind);
+
 		/*!
-		 * Finds the correct position withing the collision grid for a
-		 * specific body.
+		 * Finds the correct position (i.e. vector index) within the collision grid
+		 * for a specific body.
 		 */
 		int _getGridPosition(FusionPhysicsBody *body);
 

@@ -26,12 +26,17 @@
 <p>
 <code>#include &lt;FusionPhysicsWorld.h&gt;</code>
 <p>
-<a href="class_fusion_engine_1_1_fusion_physics_world-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
+Collaboration diagram for FusionEngine::FusionPhysicsWorld:<p><center><img src="class_fusion_engine_1_1_fusion_physics_world__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_physics_world__coll__map" alt="Collaboration graph"></center>
+<map name="_fusion_engine_1_1_fusion_physics_world__coll__map">
+<area href="class_fusion_engine_1_1_fusion_physics_collision_grid.html" shape="rect" coords="7,7,279,34" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_physics_world-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#39b2d511503d1d0e5f26c2c9a981432b">FusionPhysicsWorld</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="39b2d511503d1d0e5f26c2c9a981432b"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::FusionPhysicsWorld" ref="39b2d511503d1d0e5f26c2c9a981432b" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#39b2d511503d1d0e5f26c2c9a981432b">FusionPhysicsWorld</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. Should only be called by <a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a>.  <a href="#39b2d511503d1d0e5f26c2c9a981432b"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e07a84f619916542f16c26b07cc60fcd"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::~FusionPhysicsWorld" ref="e07a84f619916542f16c26b07cc60fcd" args="()" -->
 virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#e07a84f619916542f16c26b07cc60fcd">~FusionPhysicsWorld</a> ()</td></tr>
 
@@ -42,12 +47,15 @@ virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#90d24389fa01bdffcdb1db8d3c981108">RunSimulation</a> (unsigned int split)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does movement and collision detection.  <a href="#90d24389fa01bdffcdb1db8d3c981108"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#4c2a65a3bf8e19b3d01ffc775d747082">_CheckCollision</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;two)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#ebaf6bb84ce5991d0929bdd9e6d0b316">LevelChange</a> (int level_x, int level_y)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation for its namesake.  <a href="#4c2a65a3bf8e19b3d01ffc775d747082"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#8b7ef440a50780229115fe7e8740546b">_CheckVectorForCollisions</a> (const CL_Vector2 &amp;vector, const FusionPhsicsBody &amp;one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;two)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Resets the CollisonGrid and sets the borders up, etc.  <a href="#ebaf6bb84ce5991d0929bdd9e6d0b316"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#5ef9edf7dacb6e586d1c049cbbf6ef8f">_CheckCollision</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *two)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation to check for collisions on moving objects.  <a href="#8b7ef440a50780229115fe7e8740546b"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation for its namesake.  <a href="#5ef9edf7dacb6e586d1c049cbbf6ef8f"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#27146109ec023a96c3c2a340a6741fc0">_CheckVectorForCollisions</a> (const CL_Vector2 &amp;vector, const FusionPhsicsBody *one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *two)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation to check for collisions on moving objects.  <a href="#27146109ec023a96c3c2a340a6741fc0"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The controller for moving objects - this takes data (eg. velocity, force) from Bodies and moves them (the bodies do no movement themselves.). 
@@ -55,57 +63,22 @@ The controller for moving objects - this takes data (eg. velocity, force) from B
 <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a> | <a class="el" href="class_fusion_engine_1_1_fusion_physics_elipse.html">FusionPhysicsElipse</a>. </dd></dl>
 
 <p>
-<hr><h2>Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" name="39b2d511503d1d0e5f26c2c9a981432b"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::FusionPhysicsWorld" ref="39b2d511503d1d0e5f26c2c9a981432b" args="()" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">FusionPhysicsWorld::FusionPhysicsWorld           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Constructor. Should only be called by <a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a>. 
-<p>
-<dl compact><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>world</em>&nbsp;</td><td>The world in which this body resides. </td></tr>
-  </table>
-</dl>
-    </td>
-  </tr>
-</table>
 <hr><h2>Member Function Documentation</h2>
-<a class="anchor" name="4c2a65a3bf8e19b3d01ffc775d747082"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_CheckCollision" ref="4c2a65a3bf8e19b3d01ffc775d747082" args="(const FusionPhysicsBody &amp;one, const FusionPhysicsBody &amp;two)" --><p>
+<a class="anchor" name="5ef9edf7dacb6e586d1c049cbbf6ef8f"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_CheckCollision" ref="5ef9edf7dacb6e586d1c049cbbf6ef8f" args="(const FusionPhysicsBody *one, const FusionPhysicsBody *two)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::FusionPhysicsWorld::_CheckCollision           </td>
+          <td class="md" nowrap valign="top">bool FusionPhysicsWorld::_CheckCollision           </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top">const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *&nbsp;</td>
           <td class="mdname" nowrap> <em>one</em>, </td>
         </tr>
         <tr>
           <td class="md" nowrap align="right"></td>
           <td class="md"></td>
-          <td class="md" nowrap>const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;&nbsp;</td>
+          <td class="md" nowrap>const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *&nbsp;</td>
           <td class="mdname" nowrap> <em>two</em></td>
         </tr>
         <tr>
@@ -136,7 +109,7 @@ Used internally by RunSimulation for its namesake.
     </td>
   </tr>
 </table>
-<a class="anchor" name="8b7ef440a50780229115fe7e8740546b"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_CheckVectorForCollisions" ref="8b7ef440a50780229115fe7e8740546b" args="(const CL_Vector2 &amp;vector, const FusionPhsicsBody &amp;one, const FusionPhysicsBody &amp;two)" --><p>
+<a class="anchor" name="27146109ec023a96c3c2a340a6741fc0"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_CheckVectorForCollisions" ref="27146109ec023a96c3c2a340a6741fc0" args="(const CL_Vector2 &amp;vector, const FusionPhsicsBody *one, const FusionPhysicsBody *two)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -150,13 +123,13 @@ Used internally by RunSimulation for its namesake.
         <tr>
           <td class="md" nowrap align="right"></td>
           <td class="md"></td>
-          <td class="md" nowrap>const FusionPhsicsBody &amp;&nbsp;</td>
+          <td class="md" nowrap>const FusionPhsicsBody *&nbsp;</td>
           <td class="mdname" nowrap> <em>one</em>, </td>
         </tr>
         <tr>
           <td class="md" nowrap align="right"></td>
           <td class="md"></td>
-          <td class="md" nowrap>const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> &amp;&nbsp;</td>
+          <td class="md" nowrap>const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *&nbsp;</td>
           <td class="mdname" nowrap> <em>two</em></td>
         </tr>
         <tr>
@@ -223,6 +196,47 @@ Adds a body to the world so it will have physics applied to it.
     </td>
   </tr>
 </table>
+<a class="anchor" name="ebaf6bb84ce5991d0929bdd9e6d0b316"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::LevelChange" ref="ebaf6bb84ce5991d0929bdd9e6d0b316" args="(int level_x, int level_y)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionEngine::FusionPhysicsWorld::LevelChange           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">int&nbsp;</td>
+          <td class="mdname" nowrap> <em>level_x</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>level_y</em></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Resets the CollisonGrid and sets the borders up, etc. 
+<p>
+Call this every time a new level is loaded.<p>
+<dl compact><dt><b>Remarks:</b></dt><dd>Remember to add a terrain body for the new level! (use <a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#fd79478cb77e6c01e18ed47c89ac66cb">AddBody()</a>) </dd></dl>
+    </td>
+  </tr>
+</table>
 <a class="anchor" name="90d24389fa01bdffcdb1db8d3c981108"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::RunSimulation" ref="90d24389fa01bdffcdb1db8d3c981108" args="(unsigned int split)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
@@ -260,7 +274,7 @@ Does movement and collision detection.
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsWorld.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsWorld.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Tue Aug 29 20:17:49 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sat Sep 16 21:51:46 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

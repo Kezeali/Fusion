@@ -1,4 +1,2 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_physics_body.html 8,32 235,59
-rect $class_fusion_engine_1_1_fusion_physics_elipse.html 288,7 520,34
-rect $class_fusion_engine_1_1_fusion_physics_terrain.html 286,58 523,84
+rect $class_fusion_engine_1_1_fusion_node.html 8,7 189,33

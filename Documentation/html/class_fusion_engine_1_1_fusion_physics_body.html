@@ -35,9 +35,10 @@ Inheritance diagram for FusionEngine::FusionPhysicsBody:<p><center><img src="cla
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::FusionPhysicsBody:<p><center><img src="class_fusion_engine_1_1_fusion_physics_body__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_physics_body__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_fusion_physics_body__coll__map">
-<area href="class_fusion_engine_1_1_fusion_physics_response.html" shape="rect" coords="7,7,263,34" alt="">
-<area href="class_fusion_engine_1_1_fusion_bitmask.html" shape="rect" coords="287,7,487,34" alt="">
-<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="511,7,743,34" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_response.html" shape="rect" coords="7,97,263,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_bitmask.html" shape="rect" coords="287,97,487,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="511,97,743,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_collision_grid.html" shape="rect" coords="491,7,763,33" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_physics_body-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -61,28 +62,36 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Preferably this is used to move the body. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="8b2d663ce604163c5377a7e735d617b4"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::SetRotationalVelocity" ref="8b2d663ce604163c5377a7e735d617b4" args="(const float velocity)" -->
-virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#8b2d663ce604163c5377a7e735d617b4">SetRotationalVelocity</a> (const float velocity)</td></tr>
+virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#8b2d663ce604163c5377a7e735d617b4">SetRotationalVelocity</a> (const float velocity)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">We don't care about yo' torque. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="4ee16cd4984d3fe62aab040fef4f5521"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_setCGIndex" ref="4ee16cd4984d3fe62aab040fef4f5521" args="(int ind)" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#4ee16cd4984d3fe62aab040fef4f5521">_setCGIndex</a> (int ind)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f64fe8b9516bff0492efddf0d880a3cd"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_setCGPos" ref="f64fe8b9516bff0492efddf0d880a3cd" args="(int ind)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#f64fe8b9516bff0492efddf0d880a3cd">_setCGPos</a> (int ind)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stores the Collision Grid Index - required for sorting etc. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="d201a146bdc98ab0bbb684b4fbdc3939"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_getCGIndex" ref="d201a146bdc98ab0bbb684b4fbdc3939" args="() const " -->
-int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#d201a146bdc98ab0bbb684b4fbdc3939">_getCGIndex</a> () const </td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stores the Collision Grid Pos; the position on the grid. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7c29a833dd6f7b4e977d4433edb29123"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_getCGPos" ref="7c29a833dd6f7b4e977d4433edb29123" args="() const " -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#7c29a833dd6f7b4e977d4433edb29123">_getCGPos</a> () const </td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Retreives the Collision Grid Index - required for sorting etc. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Retreives the Collision Grid Pos - required for sorting etc. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a578340f7adabfa1b26e210d67525ff9"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_setCCIndex" ref="a578340f7adabfa1b26e210d67525ff9" args="(int ind)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#a578340f7adabfa1b26e210d67525ff9">_setCCIndex</a> (int ind)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Stores the Collision Cell Index; the position within the cell. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c6479dfd6f9ab148f56934c0f3071b21"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::_getCCIndex" ref="c6479dfd6f9ab148f56934c0f3071b21" args="() const " -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#c6479dfd6f9ab148f56934c0f3071b21">_getCCIndex</a> () const </td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Retreives the Collision Cell Index. <br></td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="196e4ab65fe9b73a77d546fe1c28c1fc"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::SetColBitmask" ref="196e4ab65fe9b73a77d546fe1c28c1fc" args="(const FusionBitmask &amp;bitmask)" -->
-virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#196e4ab65fe9b73a77d546fe1c28c1fc">SetColBitmask</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html">FusionBitmask</a> &amp;bitmask)</td></tr>
+virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#196e4ab65fe9b73a77d546fe1c28c1fc">SetColBitmask</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html">FusionBitmask</a> &amp;bitmask)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Properties. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2dfafcd31b96b46b0a4a3e1dd38922e1"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::SetColAABB" ref="2dfafcd31b96b46b0a4a3e1dd38922e1" args="(float width, float height)" -->
-virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#2dfafcd31b96b46b0a4a3e1dd38922e1">SetColAABB</a> (float width, float height)</td></tr>
+virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#2dfafcd31b96b46b0a4a3e1dd38922e1">SetColAABB</a> (float width, float height)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Properties. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="33bde773cd05bb9fc2b7045180f36518"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::SetColDist" ref="33bde773cd05bb9fc2b7045180f36518" args="(float dist)" -->
-virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#33bde773cd05bb9fc2b7045180f36518">SetColDist</a> (float dist)</td></tr>
+virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#33bde773cd05bb9fc2b7045180f36518">SetColDist</a> (float dist)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Properties. <br></td></tr>
 <tr><td colspan="2"><div class="groupHeader"></div></td></tr>
@@ -161,8 +170,12 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">For syncronising client-side only, shouldn't be called otherwise. <br></td></tr>
 <tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="01bd522f261fb5b028ccfea5ec319194"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_CGIndex" ref="01bd522f261fb5b028ccfea5ec319194" args="" -->
-int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#01bd522f261fb5b028ccfea5ec319194">m_CGIndex</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f8a0b1e171359607152da22d8bb35d01"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_CGPos" ref="f8a0b1e171359607152da22d8bb35d01" args="" -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#f8a0b1e171359607152da22d8bb35d01">m_CGPos</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Collision Grid Index. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="fb7e271df1a395454a8d5a5186e72a9a"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_CCIndex" ref="fb7e271df1a395454a8d5a5186e72a9a" args="" -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#fb7e271df1a395454a8d5a5186e72a9a">m_CCIndex</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Collision Grid Index. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="338b2435a7312b83b7de2e0609c0f36d"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_World" ref="338b2435a7312b83b7de2e0609c0f36d" args="" -->
@@ -194,16 +207,16 @@ float&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 CL_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#21a9eaf5f1e296fdcf4cc007ede54270">m_AppliedForce</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">"State" stuff. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="efb47b9e455f786bd3100d6e5fe8d6dd"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Acceleration" ref="efb47b9e455f786bd3100d6e5fe8d6dd" args="" -->
-Cl_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#efb47b9e455f786bd3100d6e5fe8d6dd">m_Acceleration</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="02d8a7968d7ef45fccc410202b0e8135"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Acceleration" ref="02d8a7968d7ef45fccc410202b0e8135" args="" -->
+CL_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#02d8a7968d7ef45fccc410202b0e8135">m_Acceleration</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">"State" stuff. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c1bcb373527969807bad4a4e0f8f4a18"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Velocity" ref="c1bcb373527969807bad4a4e0f8f4a18" args="" -->
-Cl_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#c1bcb373527969807bad4a4e0f8f4a18">m_Velocity</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="cd2d047630523ed1ef4ace9db8cb1dfc"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Velocity" ref="cd2d047630523ed1ef4ace9db8cb1dfc" args="" -->
+CL_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#cd2d047630523ed1ef4ace9db8cb1dfc">m_Velocity</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">"State" stuff. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="d394aeb625147b01865ec0df0f192507"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Position" ref="d394aeb625147b01865ec0df0f192507" args="" -->
-Cl_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#d394aeb625147b01865ec0df0f192507">m_Position</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e4cd5080a29291d5eac0dbc7847c2e91"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Position" ref="e4cd5080a29291d5eac0dbc7847c2e91" args="" -->
+CL_Vector2&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html#e4cd5080a29291d5eac0dbc7847c2e91">m_Position</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">"State" stuff. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="3711396b29fc716828c0898f748888f7"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Rotation" ref="3711396b29fc716828c0898f748888f7" args="" -->
@@ -513,7 +526,7 @@ Current velocity of rotation.
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsBody.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsBody.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Tue Aug 29 20:17:49 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sat Sep 16 21:51:46 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

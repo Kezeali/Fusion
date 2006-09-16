@@ -29,6 +29,7 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionBitmask.h"
+#include "FusionPhysicsResponse.h"
 
 namespace FusionEngine
 {
@@ -84,14 +85,14 @@ namespace FusionEngine
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
 		//! We don't care about yo' torque.
-		virtual SetRotationalVelocity(const float velocity);
+		virtual void SetRotationalVelocity(const float velocity);
 		
 		//@{
 		//! Properties.
-		virtual SetColBitmask(const FusionBitmask &bitmask);
-		virtual SetColAABB(float width, float height);
+		virtual void SetColBitmask(const FusionBitmask &bitmask);
+		virtual void SetColAABB(float width, float height);
 		//virtual SetColAABB(const CL_Rectf &bbox);
-		virtual SetColDist(float dist);
+		virtual void SetColDist(float dist);
 		//@}
 
 		//@{
@@ -180,9 +181,9 @@ namespace FusionEngine
 		float m_Mass;
 
 		CL_Vector2 m_AppliedForce;
-		Cl_Vector2 m_Acceleration;
-		Cl_Vector2 m_Velocity;
-		Cl_Vector2 m_Position;
+		CL_Vector2 m_Acceleration;
+		CL_Vector2 m_Velocity;
+		CL_Vector2 m_Position;
 
 		float m_Rotation;
 		//! Current velocity of rotation.

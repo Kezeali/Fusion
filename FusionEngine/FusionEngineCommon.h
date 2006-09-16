@@ -18,7 +18,9 @@ namespace FusionEngine
 	struct InputState;
 	class ShipResource;
 	class FusionPhysicsResponse;
+	class FusionPhysicsWorld;
 	class FusionPhysicsBody;
+	class FusionPhysicsCollisionGrid;
 }
 
 #endif

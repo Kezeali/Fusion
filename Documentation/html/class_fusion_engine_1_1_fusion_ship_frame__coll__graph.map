@@ -1,3 +1,4 @@
 base referer
-rect $struct_fusion_engine_1_1_ship_input.html 7,7 175,34
-rect $struct_fusion_engine_1_1_ship_state.html 199,7 367,34
+rect $class_fusion_engine_1_1_fusion_message.html 7,7 212,34
+rect $struct_fusion_engine_1_1_ship_input.html 236,7 404,34
+rect $struct_fusion_engine_1_1_ship_state.html 428,7 596,34
