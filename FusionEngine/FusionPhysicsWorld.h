@@ -55,15 +55,16 @@ namespace FusionEngine
 		 * \param one The object to check for collisions against.
 		 * \param two The object which may be colliding against param one.
 		 */
-		bool _CheckCollision(const FusionPhysicsBody *one, const FusionPhysicsBody *two);
+		bool _checkCollision(const FusionPhysicsBody *one, const FusionPhysicsBody *two);
 		//! Used internally by RunSimulation to check for collisions on moving objects.
 		/*!
-		 * \param vector The vector along which to check.
+		 * \param vector_one The movement vector for object one.
+		 * \param vector_two The movement vector for object two.
 		 * \param one The object to check for collisions against.
 		 * \param two The object which may be colliding against param one.
 		 */
-		bool _CheckVectorForCollisions(const CL_Vector2 &vector,
-			const FusionPhsicsBody *one, const FusionPhysicsBody *two);
+		CL_Vector2 &_checkVectorForCollisions(const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
+			 const FusionPhsicsBody *one, const FusionPhysicsBody *two) const;
 
 	private:
 		//! All physical objects controled by this world.

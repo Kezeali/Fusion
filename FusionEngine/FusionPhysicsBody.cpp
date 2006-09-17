@@ -103,6 +103,11 @@ FusionBitmask FusionPhysicsBody::GetColBitmask() const
 	return m_Bitmask;
 }
 
+bool FusionPhysicsBody::GetColPoint(CL_Point point) const
+{
+	return m_Bitmask.GetBit(point);
+}
+
 CL_Rectf FusionPhysicsBody::GetColAABB() const
 {
 	return m_AABB;
@@ -111,6 +116,86 @@ CL_Rectf FusionPhysicsBody::GetColAABB() const
 float FusionPhysicsBody::GetColDist() const
 {
 	return m_ColDist;
+}
+
+void FusionPhysicsBody::SetUsePixelCollisions(bool usePixel)
+{
+	m_UsesPixel = usePixel;
+}
+
+void FusionPhysicsBody::SetUseAABBCollisions(bool useAABB)
+{
+	m_UsesAABB = useAABB;
+}
+
+void FusionPhysicsBody::SetUseDistCollisions(bool useDist)
+{
+	m_UsesDist = useDist;
+}
+
+bool FusionPhysicsBody::GetUsePixelCollisions()
+{
+	return m_UsesPixel;
+}
+
+bool FusionPhysicsBody::GetUseAABBCollisions()
+{
+	return m_UsesAABB;
+}
+
+bool FusionPhysicsBody::GetUseDistCollisions()
+{
+	return m_UsesDist;
+}
+
+CL_Vector2 &FusionPhysicsBody::GetPosition() const
+{
+	return m_Position;
+}
+
+CL_Point &FusionPhysicsBody::GetPositionPoint() const
+{
+	return CL_Point(m_Position.x, m_Position.y);
+}
+
+CL_Vector2 &FusionPhysicsBody::GetAcceleration() const
+{
+	return m_Acceleration;
+}
+
+CL_Vector2 &FusionPhysicsBody::GetVelocity() const
+{
+	return m_Velocity;
+}
+
+float FusionPhysicsBody::GetRotationalVelocity() const
+{
+	return m_RotationalVelocity;
+}
+
+float FusionPhysicsBody::GetRotation() const
+{
+	return m_Rotation;
+}
+
+void FusionPhysicsBody::_setPosition(const CL_Vector2 &position)
+{
+	m_Position = position;
+}
+
+void FusionPhysicsBody::_setAcceleration(const CL_Vector2 &acceleration)
+{
+	m_Acceleration = acceleration;
+}
+
+void FusionPhysicsBody::_setVelocity(const CL_Vector2 &velocity)
+{
+	m_Velocity = velocity;
+}
+
+void FusionPhysicsBody::_setRotation(const float rotation)
+{
+	m_Rotation = rotation;
 }
 
 void FusionPhysicsBody::_setCGPos(int ind)

@@ -84,6 +84,9 @@ namespace FusionEngine
 		void SetFromSurface(const CL_Surface &surface, int gridsize, unsigned int threshold = 128);
 
 		//! Returns the solidality of the bit at the given point.
+		/*!
+		 * \returns true if solid
+		 */
 		bool GetBit(CL_Point point) const;
 		//! Tells ya if there's a collision between this object and the one given
 		bool Overlap(const FusionBitmask &other, const CL_Point &offset);

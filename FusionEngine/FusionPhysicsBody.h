@@ -60,6 +60,7 @@ namespace FusionEngine
 	 */
 	class FusionPhysicsBody
 	{
+		friend class FusionPhysicsWorld;
 	public:
 		//! Constructor.
 		/*!
@@ -99,7 +100,10 @@ namespace FusionEngine
 		//! Property retreival.
 		virtual FusionBitmask GetColBitmask() const;
 		//! Returns true if the given point is solid
-		virtual bool GetColPoint(CL_Pointf point) const;
+		/*!
+		 * Quick access to the bitmask function FusionBitmask#GetBit()
+		 */
+		virtual bool GetColPoint(CL_Point point) const;
 		virtual CL_Rectf GetColAABB() const;
 		virtual float GetColDist() const;
 		//@}
@@ -127,6 +131,7 @@ namespace FusionEngine
 		//@{
 		//! State retreival.
 		virtual CL_Vector2 &GetPosition() const;
+		virtual CL_Point &GetPositionPoint() const;
 		virtual CL_Vector2 &GetAcceleration() const;
 		virtual CL_Vector2 &GetVelocity() const;
 
@@ -136,9 +141,9 @@ namespace FusionEngine
 
 		//@{
 		//! For syncronising client-side only, shouldn't be called otherwise.
+		virtual void _setPosition(const CL_Vector2 &position);
 		virtual void _setAcceleration(const CL_Vector2 &acceleration);
 		virtual void _setVelocity(const CL_Vector2 &velocity);
-		virtual void _setPosition(const CL_Vector2 &position);
 
 		virtual void _setRotation(const float rotation);
 		//@}

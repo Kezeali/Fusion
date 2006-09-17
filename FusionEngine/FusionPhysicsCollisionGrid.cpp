@@ -94,8 +94,8 @@ void FusionPhysicsCollisionGrid::Resort()
 void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 {
 	m_GridScale = scale;
-	m_GridWidth = int(ceil(level_x * scale));
-	m_GridHeight = int(ceil(level_y * scale));
+	m_GridWidth = int((level_x * scale) + 0.5);
+	m_GridHeight = int((level_y * scale) + 0.5);
 
 	// Speed up later insertions by preallocating the grid.
 	m_Grid.resize(m_GridWidth * m_GridHeight);

@@ -82,8 +82,8 @@ bool FusionBitmask::GetBit(const CL_Point &point) const
 {
 	assert(m_BitmaskCreated);
 
-	if (point.x > m_MaskWidth || point.y > m_MaskHeight)
-		assert(0); // Out of range!
+	if (point.x > m_MaskWidth) | (point.y > m_MaskHeight) // Out of range!
+		return false;
 
 	return bool(bitmask_getbit(m_Bitmask, point.x, point.y));
 }
