@@ -1,0 +1,169 @@
+// !$*UTF8*$!
+{
+	08FB7793FE84155DC02AAC07 /* Project object */ = {
+		activeBuildConfigurationName = Debug;
+		activeExecutable = 81CCE57F0A5217EB00BE09C4 /* Fusion */;
+		activeTarget = 8DD76F620486A84900D96B5E /* Fusion */;
+		addToTargets = (
+			8DD76F620486A84900D96B5E /* Fusion */,
+		);
+		codeSenseManager = 81CCE5830A5217FA00BE09C4 /* Code sense */;
+		executables = (
+			81CCE57F0A5217EB00BE09C4 /* Fusion */,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					310,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 180399810;
+			PBXWorkspaceStateSaveDate = 180399810;
+		};
+		sourceControlManager = 81CCE5820A5217FA00BE09C4 /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 429}}";
+			sepNavSelRange = "{80, 0}";
+			sepNavVisRect = "{{0, 0}, {711, 429}}";
+			sepNavWindowFrame = "{{179, 133}, {750, 558}}";
+		};
+	};
+	81CCE57F0A5217EB00BE09C4 /* Fusion */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = Fusion;
+		sourceDirectories = (
+		);
+	};
+	81CCE5820A5217FA00BE09C4 /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+		};
+		scmType = "";
+	};
+	81CCE5830A5217FA00BE09C4 /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	81CCE58A0A52184C00BE09C4 /* Common.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {459, 350}}";
+			sepNavSelRange = "{216, 27}";
+			sepNavVisRect = "{{0, 124}, {459, 186}}";
+			sepNavWindowFrame = "{{61, 141}, {750, 558}}";
+		};
+	};
+	81CCE58C0A52184C00BE09C4 /* FusionClientEnvironment.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {614, 1512}}";
+			sepNavSelRange = "{679, 18}";
+			sepNavVisRect = "{{0, 320}, {459, 186}}";
+		};
+	};
+	81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {584, 1750}}";
+			sepNavSelRange = "{282, 0}";
+			sepNavVisRect = "{{0, 124}, {459, 186}}";
+			sepNavWindowFrame = "{{107, 99}, {750, 558}}";
+		};
+	};
+	81CCE5AF0A52184C00BE09C4 /* FusionPhysicsBody.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 1610}}";
+			sepNavSelRange = "{1700, 0}";
+			sepNavVisRect = "{{0, 481}, {711, 429}}";
+			sepNavWindowFrame = "{{38, 162}, {750, 558}}";
+		};
+	};
+	81CCE5B70A52184C00BE09C4 /* FusionPhysicsWorld.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 429}}";
+			sepNavSelRange = "{222, 0}";
+			sepNavVisRect = "{{0, 0}, {711, 429}}";
+			sepNavWindowFrame = "{{156, 83}, {750, 558}}";
+		};
+	};
+	81CCE5B80A52184C00BE09C4 /* FusionPhysicsWorld.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 574}}";
+			sepNavSelRange = "{201, 0}";
+			sepNavVisRect = "{{0, 145}, {711, 429}}";
+			sepNavWindowFrame = "{{15, 183}, {750, 558}}";
+		};
+	};
+	81CCE5BA0A52184C00BE09C4 /* FusionProjectile.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {548, 630}}";
+			sepNavSelRange = "{946, 27}";
+			sepNavVisRect = "{{0, 444}, {459, 186}}";
+		};
+	};
+	81CCE5BC0A52184C00BE09C4 /* FusionResourceLoader.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {668, 3192}}";
+			sepNavSelRange = "{158, 26}";
+			sepNavVisRect = "{{0, 0}, {459, 186}}";
+		};
+	};
+	81CCE5CC0A52184C00BE09C4 /* FusionShipResource.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {542, 1008}}";
+			sepNavSelRange = "{1225, 0}";
+			sepNavVisRect = "{{0, 219}, {459, 186}}";
+		};
+	};
+	81CCE5D30A52184C00BE09C4 /* FusionStringVector.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 429}}";
+			sepNavSelRange = "{269, 0}";
+			sepNavVisRect = "{{0, 0}, {711, 429}}";
+			sepNavWindowFrame = "{{130, 78}, {750, 558}}";
+		};
+	};
+	8DD76F620486A84900D96B5E /* Fusion */ = {
+		activeExec = 0;
+		executables = (
+			81CCE57F0A5217EB00BE09C4 /* Fusion */,
+		);
+	};
+}
