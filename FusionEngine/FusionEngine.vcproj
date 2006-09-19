@@ -301,6 +301,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionShipResponse.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionStateData.cpp"
 				>
 			</File>
@@ -481,6 +485,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipResource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionShipResponse.h"
 				>
 			</File>
 			<File

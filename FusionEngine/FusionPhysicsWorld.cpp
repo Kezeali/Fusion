@@ -37,7 +37,8 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 
 			for (; it != bodies.end(); ++it)
 			{
-				_checkCollision(cBod, (*it));
+				if (_checkCollision(cBod, (*it)))
+					cBod->m_CollisionResponse
 			}
 		}
 		// Check for collisions of moving objects.
@@ -53,9 +54,7 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 
 				if (point_collision != CL_Vector2::ZERO)
 				{
-					cBod->m_Position = point_collision;
-					// Stop movement and reverse motion. Hopefully it isn't already stuck in a wall
-					cBod->ApplyForce(-(cVel));
+					cBod->m_CollisionResponse.CollisionResponse(point_collision);
 				}
 			}
 		}
@@ -63,6 +62,8 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 		// Movement
 		CL_Vector2 accel = cBod->m_AppliedForce / cBod->m_Mass;
 		cBod->m_Velocity += cBod->m_Acceleration;
+
+		cBod->m_Rotation += cBod->m_RotationalVelocity;
 	}
 }
 

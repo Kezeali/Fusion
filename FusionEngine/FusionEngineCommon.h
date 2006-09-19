@@ -12,6 +12,7 @@
 // Forward declarations
 namespace FusionEngine
 {
+	class FusionClientEnvironment;
 	class FusionScene;
 	class FusionNode;
 	struct ShipState;

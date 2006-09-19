@@ -128,6 +128,11 @@ namespace FusionEngine
 		bool GetUseDistCollisions();
 		//@}
 
+		//! Calls the collision response
+		void CollisionResponse(void);
+		//! Calls the collision response with a reference point
+		void CollisionResponse(const CL_Vector2 &collision_point);
+
 		//@{
 		//! State retreival.
 		virtual CL_Vector2 &GetPosition() const;
@@ -165,7 +170,7 @@ namespace FusionEngine
 
 		//! Containing world
 		FusionPhysicsWorld *m_World;
-		//! Just look up FusionPhysicsResponse
+		//! \see FusionPhysicsResponse
 		FusionPhysicsResponse m_CollisionResponse;
 
 		FusionBitmask m_Bitmask;

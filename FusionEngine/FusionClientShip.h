@@ -43,26 +43,38 @@ namespace FusionEngine
 	 * \remarks
 	 * An instance of this object holds the state data for each ship in the game.
 	 * This object should remain general enough to be used by client and server.
+	 * <br>
+	 * FusionClientEnvironment and FusionServerEnvironment have friend access to
+	 * this class, for efficiant updating.
 	 */
 	class FusionClientShip
 	{
+		friend class FusionServerEnvironment;
+		friend class FusionClientEnvironment;
 	public:
-
-		void SetVelocity(const CL_Vector2 &position);
-		void SetPosition(const CL_Vector2 &position);
-
-		const ShipState &GetShipState() const;
-		const InputState &GetInputState() const;
-
-		const ShipResource &GetShipResource() const;
-
-		void RevertToInitialState() const;
-
 		FusionClientShip();
 		FusionClientShip(ShipState initState);
 		~FusionClientShip();
 
+	public:
+		//! Set Vel
+		void SetVelocity(const CL_Vector2 &position);
+		//! Set Pos
+		void SetPosition(const CL_Vector2 &position);
+
+		//! Guess
+		const ShipState &GetShipState() const;
+		//! Self explainatory
+		const InputState &GetInputState() const;
+
+		//! You know it
+		const ShipResource &GetShipResource() const;
+
+		//! Reverts all state data
+		void RevertToInitialState() const;
+
 	protected:
+		// Is this needed?
 		ClientEnvironment *m_Environment;
 
 		FusionNode *m_Node;
