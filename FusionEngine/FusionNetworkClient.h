@@ -7,7 +7,8 @@
 
 #include "FusionEngineCommon.h"
 
-#include "R
+#include "../RakNet/RakClientInterface.h"
+#include "../RakNet/RakNetworkFactory.h"
 
 /// Fusion
 #include "FusionClientOptions.h"
@@ -43,7 +44,7 @@ namespace FusionEngine
 		 * \param address
 		 * A CL_IPAddress pointing to the server.
 		 */
-		FusionNetworkClient(const CL_IPAddress &address);
+		//FusionNetworkClient(const CL_IPAddress &address);
 
 		/*!
 		 * \brief
@@ -70,21 +71,25 @@ namespace FusionEngine
 		 * \param options
 		 * Object to load options from (max. rate, packet interval, etc.)
 		 */
-		FusionNetworkClient(const CL_IPAddress &address,
-			ClientOptions *options);
+		//FusionNetworkClient(const CL_IPAddress &address, ClientOptions *options);
 
+		//! Destructor
+		~FusionNetworkClient();
+
+	public:
 		InitialiseChannel();
 
 		typedef std::queue<FusionMessage*> MessageQueue;
 
 		//! Adds a message to the outgoing queue.
-		void QueueMessage(const std::string &channel);
+		void QueueMessage(FusionMessage int channel);
 		//! Gets all messages from the incomming queue.
-		MessageQueue GetAllMessages(const std::string &channel);
+		MessageQueue GetAllMessages(int channel);
 		//! Gets a message from the incomming queue.
-		FusionMessage GetNextMessages(const std::string &channel);
+		FusionMessage GetNextMessages(int channel);
 
 	private:
+		RakClientInterface *m_RakClient;
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
