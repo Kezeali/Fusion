@@ -60,6 +60,7 @@ namespace FusionEngine
 	public:
 		ClientEnvironment(ClientOptions *options);
 
+	public:
 		bool Initialise(ResourceLoader *resources);
 
 		/*!

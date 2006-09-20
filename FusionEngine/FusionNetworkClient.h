@@ -7,6 +7,8 @@
 
 #include "FusionEngineCommon.h"
 
+#include "R
+
 /// Fusion
 #include "FusionClientOptions.h"
 
@@ -95,7 +97,7 @@ namespace FusionEngine
 		 *
 		 * Ensures thread-safety by preventing concurrent data access via GetMessages().
 		 */
-		CL_Mutex *m_Mutex;
+		//CL_Mutex *m_Mutex;
 	};
 
 }

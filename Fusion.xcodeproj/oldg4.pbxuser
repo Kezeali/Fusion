@@ -34,8 +34,55 @@
 					PBXFileDataSource_Target_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 180399810;
-			PBXWorkspaceStateSaveDate = 180399810;
+			PBXConfiguration.PBXFileTableDataSource3.PBXSymbolsDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXSymbolsDataSource_SymbolNameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					16,
+					200,
+					50,
+					200,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXSymbolsDataSource_SymbolTypeIconID,
+					PBXSymbolsDataSource_SymbolNameID,
+					PBXSymbolsDataSource_SymbolTypeID,
+					PBXSymbolsDataSource_ReferenceNameID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.XCSCMDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					20,
+					286,
+					20,
+					48.1626,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_SCM_ColumnID,
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 180413291;
+			PBXWorkspaceStateSaveDate = 180413291;
+		};
+		perUserProjectItems = {
+			81697C6C0AC0E36F00D37199 /* PBXTextBookmark */ = 81697C6C0AC0E36F00D37199 /* PBXTextBookmark */;
+			816D68360AC0D254001DA58B = 816D68360AC0D254001DA58B /* PBXTextBookmark */;
+			816D68410AC0D368001DA58B = 816D68410AC0D368001DA58B /* PBXTextBookmark */;
+			81CC4D260AC0B12B00ED7C55 = 81CC4D260AC0B12B00ED7C55 /* PBXBookmark */;
+			81CC4D290AC0B45300ED7C55 = 81CC4D290AC0B45300ED7C55 /* PBXTextBookmark */;
 		};
 		sourceControlManager = 81CCE5820A5217FA00BE09C4 /* Source Control */;
 		userBuildSettings = {
@@ -48,6 +95,50 @@
 			sepNavVisRect = "{{0, 0}, {711, 429}}";
 			sepNavWindowFrame = "{{179, 133}, {750, 558}}";
 		};
+	};
+	81697C6C0AC0E36F00D37199 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */;
+		name = "FusionClientEnvironment.h: 63";
+		rLen = 0;
+		rLoc = 1905;
+		rType = 0;
+		vrLen = 1362;
+		vrLoc = 1647;
+	};
+	816D68360AC0D254001DA58B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */;
+		name = "FusionClientEnvironment.h: 52";
+		rLen = 0;
+		rLoc = 1584;
+		rType = 0;
+		vrLen = 1836;
+		vrLoc = 1839;
+	};
+	816D68410AC0D368001DA58B /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */;
+		name = "FusionClientEnvironment.h: 63";
+		rLen = 0;
+		rLoc = 1905;
+		rType = 0;
+		vrLen = 1451;
+		vrLoc = 1647;
+	};
+	81CC4D260AC0B12B00ED7C55 /* PBXBookmark */ = {
+		isa = PBXBookmark;
+		fRef = 81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */;
+	};
+	81CC4D290AC0B45300ED7C55 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */;
+		name = "FusionClientEnvironment.h: 52";
+		rLen = 0;
+		rLoc = 1584;
+		rType = 0;
+		vrLen = 1842;
+		vrLoc = 1839;
 	};
 	81CCE57F0A5217EB00BE09C4 /* Fusion */ = {
 		isa = PBXExecutable;
@@ -75,10 +166,11 @@
 	81CCE5820A5217FA00BE09C4 /* Source Control */ = {
 		isa = PBXSourceControlManager;
 		fallbackIsa = XCSourceControlManager;
-		isSCMEnabled = 0;
+		isSCMEnabled = 1;
 		scmConfiguration = {
+			SubversionToolPath = /usr/local/bin/svn;
 		};
-		scmType = "";
+		scmType = scm.subversion;
 	};
 	81CCE5830A5217FA00BE09C4 /* Code sense */ = {
 		isa = PBXCodeSenseManager;
@@ -101,10 +193,26 @@
 	};
 	81CCE58D0A52184C00BE09C4 /* FusionClientEnvironment.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {584, 1750}}";
-			sepNavSelRange = "{282, 0}";
-			sepNavVisRect = "{{0, 124}, {459, 186}}";
+			sepNavIntBoundsRect = "{{0, 0}, {711, 2086}}";
+			sepNavSelRange = "{1905, 0}";
+			sepNavVisRect = "{{0, 787}, {711, 429}}";
 			sepNavWindowFrame = "{{107, 99}, {750, 558}}";
+		};
+	};
+	81CCE5A90A52184C00BE09C4 /* FusionNetworkClient.cpp */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 429}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRect = "{{0, 0}, {711, 429}}";
+			sepNavWindowFrame = "{{130, 78}, {750, 558}}";
+		};
+	};
+	81CCE5AA0A52184C00BE09C4 /* FusionNetworkClient.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {711, 1442}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRect = "{{0, 1013}, {711, 429}}";
+			sepNavWindowFrame = "{{15, 183}, {750, 558}}";
 		};
 	};
 	81CCE5AF0A52184C00BE09C4 /* FusionPhysicsBody.h */ = {
