@@ -22,6 +22,7 @@
 
 #ifndef Header_FusionEngine_FusionPhysicsBody
 #define Header_FusionEngine_FusionPhysicsBody
+
 #if _MSC_VER > 1000
 #pragma once
 #endif
@@ -34,13 +35,13 @@
 namespace FusionEngine
 {
 	/*!
-	 * \brief
-	 * Abstract class, the basis for movable/colliding objects.
+	 * \\brief
+	 * Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.
 	 *
 	 * ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really
 	 * think BB's are necessary... Bah
 	 *
-	 * \remarks
+	 * \\remarks
 	 * With regurad to the state stored in this class:
 	 * For FusionShips this should be initialisd by the ShipFactory when it creates
 	 * a new ship. It should remain indipendant of the ClientEnvironment after that
@@ -53,9 +54,9 @@ namespace FusionEngine
 	 * <br>
 	 * MCS - AABBs are not yet implimented
 	 *
-	 * \todo AABB for FusionPhysicsBody
+	 * \\todo AABB for FusionPhysicsBody
 	 *
-	 * \see
+	 * \\see
 	 * FusionPhysicsWorld | FusionFhysicsElipse.
 	 */
 	class FusionPhysicsBody
@@ -64,15 +65,15 @@ namespace FusionEngine
 	public:
 		//! Constructor.
 		/*!
-		 * \param world
+		 * \\param world
 		 * The world in which this body resides.
 		 */
 		FusionPhysicsBody(FusionPhysicsWorld *world);
 		//! Constructor with response param.
 		/*!
-		 * \param world
+		 * \\param world
 		 * The world in which this body resides.
-		 * \param props
+		 * \\param props
 		 * The basics physical properties to initialise this body with.
 		 */
 		FusionPhysicsBody(FusionPhysicsWorld *world, const FusionPhysicsResponse &response);
@@ -170,8 +171,14 @@ namespace FusionEngine
 
 		//! Containing world
 		FusionPhysicsWorld *m_World;
-		//! \see FusionPhysicsResponse
+		//! \\see FusionPhysicsResponse
 		FusionPhysicsResponse m_CollisionResponse;
+		
+		//! The unique ID for the current object
+		/*!
+		 * Blah, I was going to write something here, but I forget.
+		 */
+		int m_Type;
 
 		FusionBitmask m_Bitmask;
 		CL_Rectf m_AABB;
@@ -198,7 +205,7 @@ namespace FusionEngine
 		float m_Rotation;
 		//! Current velocity of rotation.
 		/*!
-		 * \remarks
+		 * \\remarks
 		 * (ShipResource has RotationVelocity [no 'al'], that being the <i>maximum</i>
 		 * velocity of rotation.)
 		 */

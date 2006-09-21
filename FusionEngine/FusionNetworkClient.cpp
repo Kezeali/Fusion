@@ -31,4 +31,7 @@ FusionNetworkClient::InitialiseChannel()
 {
 }
 
-FusionNetworkClient::QueueMessage(const std::string &channel)
+FusionNetworkClient::QueueMessage(FusionMessage *message, int channel)
+{
+	m_MessageQueue.push(message);
+}

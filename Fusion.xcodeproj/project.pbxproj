@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		81180DA00A54985100E0FD72 /* FusionPhysicsBody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */; };
+		81581E3F0AC21985003AB035 /* FusionGame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE59B0A52184C00BE09C4 /* FusionGame.cpp */; };
+		81581E480AC21EAD003AB035 /* FusionPhysicsStatic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81581E470AC21EAD003AB035 /* FusionPhysicsStatic.h */; };
 		81697DA40AC0EA6900D37199 /* ClanApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81697DA00AC0EA6900D37199 /* ClanApp.framework */; };
 		81697DA50AC0EA6900D37199 /* ClanCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81697DA10AC0EA6900D37199 /* ClanCore.framework */; };
 		81697DA60AC0EA6900D37199 /* ClanDisplay.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81697DA20AC0EA6900D37199 /* ClanDisplay.framework */; };
@@ -47,7 +49,6 @@
 		81CCE5E40A52184C00BE09C4 /* FusionEngine.vcproj in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5980A52184C00BE09C4 /* FusionEngine.vcproj */; };
 		81CCE5E50A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5990A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user */; };
 		81CCE5E60A52184C00BE09C4 /* FusionEngineCommon.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE59A0A52184C00BE09C4 /* FusionEngineCommon.h */; };
-		81CCE5E70A52184C00BE09C4 /* FusionGame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE59B0A52184C00BE09C4 /* FusionGame.cpp */; };
 		81CCE5E80A52184C00BE09C4 /* FusionGame.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE59C0A52184C00BE09C4 /* FusionGame.h */; };
 		81CCE5E90A52184C00BE09C4 /* FusionGUI_MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE59D0A52184C00BE09C4 /* FusionGUI_MainMenu.cpp */; };
 		81CCE5EA0A52184C00BE09C4 /* FusionGUI_MainMenu.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE59E0A52184C00BE09C4 /* FusionGUI_MainMenu.h */; };
@@ -169,6 +170,7 @@
 				81697F450AC0FB2900D37199 /* RakNetworkFactory.h in CopyFiles */,
 				81697F460AC0FB2900D37199 /* RakPeerInterface.h in CopyFiles */,
 				81697F470AC0FB2900D37199 /* RakServerInterface.h in CopyFiles */,
+				81581E480AC21EAD003AB035 /* FusionPhysicsStatic.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -176,6 +178,7 @@
 
 /* Begin PBXFileReference section */
 		81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPhysicsBody.cpp; sourceTree = "<group>"; };
+		81581E470AC21EAD003AB035 /* FusionPhysicsStatic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsStatic.h; sourceTree = "<group>"; };
 		81697DA00AC0EA6900D37199 /* ClanApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClanApp.framework; path = "../ClanLib-0.8.0/MacOSX/ClanApp.framework"; sourceTree = SOURCE_ROOT; };
 		81697DA10AC0EA6900D37199 /* ClanCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClanCore.framework; path = "../ClanLib-0.8.0/MacOSX/ClanCore.framework"; sourceTree = SOURCE_ROOT; };
 		81697DA20AC0EA6900D37199 /* ClanDisplay.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClanDisplay.framework; path = "../ClanLib-0.8.0/MacOSX/ClanDisplay.framework"; sourceTree = SOURCE_ROOT; };
@@ -437,6 +440,7 @@
 				81CCE5D20A52184C00BE09C4 /* FusionStateManager.h */,
 				81CCE5D30A52184C00BE09C4 /* FusionStringVector.h */,
 				81CCE5D40A52184C00BE09C4 /* Prereq.h */,
+				81581E470AC21EAD003AB035 /* FusionPhysicsStatic.h */,
 			);
 			path = FusionEngine;
 			sourceTree = "<group>";
@@ -497,7 +501,6 @@
 				81CCE5DE0A52184C00BE09C4 /* FusionDemo.cpp in Sources */,
 				81CCE5E00A52184C00BE09C4 /* FusionDestructableImage.cpp in Sources */,
 				81CCE5E20A52184C00BE09C4 /* FusionDrawable.cpp in Sources */,
-				81CCE5E70A52184C00BE09C4 /* FusionGame.cpp in Sources */,
 				81CCE5E90A52184C00BE09C4 /* FusionGUI_MainMenu.cpp in Sources */,
 				81CCE5EB0A52184C00BE09C4 /* FusionGUI_Options.cpp in Sources */,
 				81CCE5EE0A52184C00BE09C4 /* FusionInputHandler.cpp in Sources */,
@@ -521,6 +524,7 @@
 				81CCE61C0A52184C00BE09C4 /* FusionStateData.cpp in Sources */,
 				81CCE61D0A52184C00BE09C4 /* FusionStateManager.cpp in Sources */,
 				81180DA00A54985100E0FD72 /* FusionPhysicsBody.cpp in Sources */,
+				81581E3F0AC21985003AB035 /* FusionGame.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

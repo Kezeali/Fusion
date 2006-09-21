@@ -21,7 +21,7 @@ namespace FusionEngine
 	 * \sa
 	 * FusionBody | FusionPhysicsWorld.
 	 */
-	class FusionPhysicsTerrain : public FusionPhysicsBody
+	class FusionPhysicsTerrain : public FusionPhysicsStatic
 	{
 	public:
 		/*!

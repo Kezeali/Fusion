@@ -16,7 +16,7 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Data container for transferring player state information between client and server.
+	 * [depreciated] Data container for transferring player state information between client and server.
 	 */
 	class FusionShipFrame : public FusionMessage
 	{
