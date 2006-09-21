@@ -30,7 +30,6 @@ namespace FusionEngine
 		 * can just access these directly. :P If you wan't it to be more ObjectO, (i.e.
 		 * uses member funcions to access these) tell me and I _might_ get around to it.
 		 */
-		std::string ResourceID;
 		ShipState CurrentState;
 		ShipState InitialState;
 		//@}

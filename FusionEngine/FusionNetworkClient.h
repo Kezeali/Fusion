@@ -34,6 +34,8 @@
 
 /// Fusion
 #include "FusionClientOptions.h"
+#include "FusionMessage.h"
+#include "FusionNetworkWorker.h"
 
 namespace FusionEngine
 {
@@ -99,10 +101,6 @@ namespace FusionEngine
 		~FusionNetworkClient();
 
 	public:
-		typedef std::list<FusionMessage*> MessageQueue;
-		
-		InitialiseChannel();
-
 		//! Adds a message to the outgoing queue.
 		void QueueMessage(FusionMessage *message, int channel);
 		//! Gets all messages from the incomming queue.
@@ -115,20 +113,11 @@ namespace FusionEngine
 		RakClientInterface *m_RakClient;
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
-		
-		//! Teh queuez
-		MessageQueue m_MessageQueue;
+
+		FusionNetworkWorker *m_Worker;
 
 		//! Converts packets into messages and sorts them.
-		onPacketReceive();
-
-		/*!
-		 * \\brief
-		 * Used for thread-safety.
-		 *
-		 * Ensures thread-safety by preventing concurrent data access via GetMessages().
-		 */
-		//CL_Mutex *m_Mutex;
+		//onPacketReceive();
 	};
 
 }

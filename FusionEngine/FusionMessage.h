@@ -29,8 +29,7 @@
 
 #include "FusionEngineCommon.h"
 
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include "../RakNet/Bitstream.h"
 
 namespace FusionEngine
 {
@@ -40,21 +39,18 @@ namespace FusionEngine
 	 */
 	class FusionMessage
 	{
-		friend class boost::serialization::access;
-
 	public:
 		//! Constructor.
-		FusionMessage(const std::string &type);
+		FusionMessage(int type);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
 	public:
-		//! Returns the serialised form of this message.
-		virtual std::string &Serialize() const;
-		//! Creates a message instance from its serialised form.
-		virtual static FusionMessage *Deserialize(const std::string &serialized);
 
 	private:
+		//! Does all the work so I don't have to
+		BitStream m_DataStream;
+
 		/*!
 		 * \brief
 		 * The specific type of message.
@@ -63,15 +59,16 @@ namespace FusionEngine
 		 * state' type, etc.
 		 *
 		 * \remarks
+		 * The following remark is [depreciated]; it only applied when messages were
+		 * serialised objects.
+		 * <br>
 		 * This should only be considered slightly more specific than the channel, and more
 		 * specifics of the message should be controlled by the implementation. For example,
 		 * the 'change state' type could have another member, m_State holding the acutal
 		 * state-name to change to.
 		 */
-		std::string m_Type;
+		int m_Type;
 
-		template <class Archive>
-		void serialize(Archive &ar, const unsigned int ver);
 	};
 
 }

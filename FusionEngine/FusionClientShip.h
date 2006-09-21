@@ -80,7 +80,7 @@ namespace FusionEngine
 		FusionNode *m_Node;
 		FusionShipDrawable *m_Drawable;
 		
-		FusionPhysicsElipse *m_PhysicalBody;
+		FusionPhysicsBody *m_PhysicalBody;
 
 		std::string m_ResourceID;
 		ShipInput m_Input;

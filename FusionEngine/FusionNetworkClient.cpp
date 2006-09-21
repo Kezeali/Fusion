@@ -27,11 +27,7 @@ FusionNetworkClient::~FusionNetworkClient()
 	RakNetworkFactory::DestroyRakClientInterface(m_RakClient);
 }
 
-FusionNetworkClient::InitialiseChannel()
-{
-}
-
 FusionNetworkClient::QueueMessage(FusionMessage *message, int channel)
 {
-	m_MessageQueue.push(message);
+	m_Worker->_addMessage(message, channel);
 }

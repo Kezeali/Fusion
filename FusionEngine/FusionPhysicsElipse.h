@@ -33,16 +33,6 @@ namespace FusionEngine
 		//! Virtual destructor.
 		virtual ~FusionPhysicsElipse();
 
-	public:
-		//! Sets the distance from which a collision will be recorded.
-		void SetRadius(float radius);
-
-		//! Returns the distance from which a collision will be recorded.
-		float GetRadius() const;
-
-	private:
-		float m_Radius;
-
 	};
 
 }

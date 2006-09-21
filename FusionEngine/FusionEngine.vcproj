@@ -239,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetworkMessageQueue.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNode.cpp"
 				>
 			</File>
@@ -406,6 +410,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetworkMessageQueue.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionNetworkReceiver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionNetworkSender.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionNetworkTypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNode.h"
 				>
 			</File>
@@ -439,6 +459,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsTerrain.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsTypes.h"
 				>
 			</File>
 			<File
