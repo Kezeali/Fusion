@@ -406,19 +406,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionMessageBuilder.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNetworkClient.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionNetworkMessageQueue.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionNetworkReceiver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionNetworkSender.h"
 				>
 			</File>
 			<File
@@ -471,6 +467,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionProjectile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionProjectileState.h"
 				>
 			</File>
 			<File

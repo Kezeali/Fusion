@@ -40,17 +40,20 @@ namespace FusionEngine
 	class FusionMessage
 	{
 	public:
-		//! Constructor.
+		//! Constructor. Don't use
+		FusionMessage();
+		//! Constructor. +type
 		FusionMessage(int type);
+		//! Constructor. +type +message
+		FusionMessage(int type, const std::string &message);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
 	public:
+		void Write(const std::string &message);
+		const std::string &Read();
 
 	private:
-		//! Does all the work so I don't have to
-		BitStream m_DataStream;
-
 		/*!
 		 * \brief
 		 * The specific type of message.
@@ -68,6 +71,9 @@ namespace FusionEngine
 		 * state-name to change to.
 		 */
 		int m_Type;
+
+		//! The message serialised
+		std::string m_Message;
 
 	};
 

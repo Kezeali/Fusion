@@ -65,7 +65,7 @@ namespace FusionEngine
 		//! Guess
 		const ShipState &GetShipState() const;
 		//! Self explainatory
-		const InputState &GetInputState() const;
+		const ShipInput &GetInputState() const;
 
 		//! You know it
 		const ShipResource &GetShipResource() const;

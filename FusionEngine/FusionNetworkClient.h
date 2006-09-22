@@ -108,13 +108,16 @@ namespace FusionEngine
 		//! Gets a message from the incomming queue.
 		FusionMessage GetNextMessages(int channel);
 
+		//! Updates the network
+		void Run();
+
 	private:
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
-		FusionNetworkWorker *m_Worker;
+		FusionNetworkMessageQueue *m_Worker;
 
 		//! Converts packets into messages and sorts them.
 		//onPacketReceive();

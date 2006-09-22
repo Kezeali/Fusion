@@ -3,22 +3,27 @@
 
 using namespace FusionEngine;
 
-std::string &FusionMessage::Serialize() const
+FusionMessage::FusionMessage()
 {
-	std::stringstream output;
-
-	{
-		boost::archive::text_oarchive archive(output);
-
-		// Here boost::archive will call serialize(archive, 0) from this object.
-		archive << *this;
-	}
-
-	return output;
 }
 
-template <class Archive>
-void FusionMessage::serialize(Archive &ar, const unsigned int ver)
+FusionMessage::FusionMessage(int type)
+: m_Type(type)
 {
-	ar & m_Type;
+}
+
+FusionMessage::FusionMessage(int type, const std::string &message)
+: m_Type(type),
+m_Message(message)
+{
+}
+
+void FusionMessage::Write(const std::string &message)
+{
+	m_Message = message;
+}
+
+const std::string &FusionMessage::Read()
+{
+	return m_Message;
 }
