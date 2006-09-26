@@ -20,7 +20,7 @@ const MessageQueue &FusionNetworkMessageQueue::_getInMessages(int channel) const
 void FusionNetworkMessageQueue::_addInMessage(FusionMessage *message, int channel)
 {
 	m_Mutex->enter();
-	m_InChannels[channel].push(message);
+	m_InChannels[channel].push_back(message);
 
 	m_Mutex->notify();
 	m_Mutex->leave();
@@ -39,8 +39,10 @@ void FusionNetworkMessageQueue::_addOutMessage(FusionEngine::FusionMessage *mess
 																							 int channel)
 {
 	m_Mutex->enter();
-	m_OutChannels[channel].push(message);
+	m_OutChannels[channel].push_back(message);
 
 	m_Mutex->notify();
 	m_Mutex->leave();
 }
+
+const FusionMessage &FusionNetworkMessageQueue::_getInMessage()

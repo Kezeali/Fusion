@@ -40,6 +40,8 @@ namespace FusionEngine
 
 	enum
 	{
+		//!sys
+		MTID_NEWPLAYER,
 		//@{
 		//! Gameplay channel message types
 		MTID_SHIPFRAME,

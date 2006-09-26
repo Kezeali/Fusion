@@ -15,7 +15,7 @@
 #include <map>
 #include <list>
 #include <set>
-#include <queue>
+#include <deque>
 
 // ClanLib
 #include <ClanLib/core.h>

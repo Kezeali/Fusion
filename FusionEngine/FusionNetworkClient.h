@@ -31,11 +31,13 @@
 
 #include "../RakNet/RakClientInterface.h"
 #include "../RakNet/RakNetworkFactory.h"
+#include "../RakNet/PacketEnumerations.h"
 
 /// Fusion
 #include "FusionClientOptions.h"
 #include "FusionMessage.h"
-#include "FusionNetworkWorker.h"
+#include "FusionNetworkMessageQueue.h"
+#include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
@@ -101,23 +103,39 @@ namespace FusionEngine
 		~FusionNetworkClient();
 
 	public:
+		//! A group of messages
+		typedef std::deque<FusionMessage*> MessageQueue;
+		//! A group of net events
+		typedef std::deque<FusionMessage*> EventQueue;
+
 		//! Adds a message to the outgoing queue.
 		void QueueMessage(FusionMessage *message, int channel);
 		//! Gets all messages from the incomming queue.
-		MessageQueue GetAllMessages(int channel);
-		//! Gets a message from the incomming queue.
-		FusionMessage GetNextMessages(int channel);
+		const MessageQueue &GetAllMessages(int channel);
+		//! Gets the message from the front of the incomming queue.
+		const FusionMessage &GetNextMessage(int channel);
 
 		//! Updates the network
 		void Run();
 
-	private:
+		//! Used internally. Allows the CE to act on network events
+		/*!
+		 * \param messageId The packet ID which CE should act on.
+		 */
+		void _notifyNetEvent(unsigned char messageId);
+		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
+		const EventQueue &GetEvents();
+
+	protected:
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
-		FusionNetworkMessageQueue *m_Worker;
+		FusionNetworkMessageQueue *m_Queue;
+
+		unsigned char getPacketIdentifier(Packet *p);
+		bool handleRakPackets(Packet *p);
 
 		//! Converts packets into messages and sorts them.
 		//onPacketReceive();

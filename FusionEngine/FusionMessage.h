@@ -40,18 +40,24 @@ namespace FusionEngine
 	class FusionMessage
 	{
 	public:
-		//! Constructor. Don't use
+		//! Basic Constructor. Don't use
 		FusionMessage();
-		//! Constructor. +type
-		FusionMessage(int type);
-		//! Constructor. +type +message
-		FusionMessage(int type, const std::string &message);
+		//! Constructor. +type +playerIndex
+		FusionMessage(unsigned char type, unsigned int playerInd);
+		//! Constructor. +type +playerIndex +message
+		FusionMessage(unsigned char type, unsigned int playerInd, unsigned char *message);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
 	public:
-		void Write(const std::string &message);
-		const std::string &Read();
+		//! Write data
+		void Write(unsigned char *message);
+		//! Read data
+		const unsigned char Read();
+		//! Read PlayerInd
+		const unsigned int GetPlayerInd();
+		//! Read type
+		const unsigned char GetType();
 
 	private:
 		/*!
@@ -72,8 +78,11 @@ namespace FusionEngine
 		 */
 		int m_Type;
 
+		//! The player from whence it came
+		unsigned int m_PlayerInd;
+
 		//! The message serialised
-		std::string m_Message;
+		unsigned char *m_Message;
 
 	};
 

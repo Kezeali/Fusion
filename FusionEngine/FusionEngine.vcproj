@@ -552,6 +552,14 @@
 			Name="RakNet"
 			>
 			<File
+				RelativePath="..\RakNet\BitStream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\RakNet\Export.h"
+				>
+			</File>
+			<File
 				RelativePath="..\RakNet\NetworkTypes.h"
 				>
 			</File>
@@ -565,6 +573,14 @@
 			</File>
 			<File
 				RelativePath="..\RakNet\RakClientInterface.h"
+				>
+			</File>
+			<File
+				RelativePath="..\RakNet\RakNetDefines.h"
+				>
+			</File>
+			<File
+				RelativePath="..\RakNet\RakNetStatistics.h"
 				>
 			</File>
 			<File

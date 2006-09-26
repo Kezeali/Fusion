@@ -94,6 +94,7 @@ namespace FusionEngine
 		 */
 		bool Update(unsigned int split);
 
+		//! Draws stuff
 		void Draw();
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
@@ -104,8 +105,8 @@ namespace FusionEngine
 		FusionInput *m_InputManager;
 		FusionNetwork *m_NetworkManager;
 
-		std::set<FusionShip> m_Ships;
-		std::set<FusionProjectile> m_Projectiles;
+		std::vector<FusionShip> m_Ships;
+		std::vector<FusionProjectile> m_Projectiles;
 
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
 		ShipResourceMap m_ShipResources;

@@ -48,7 +48,7 @@ namespace FusionEngine
 
 	public:
 		//! A group of messages
-		typedef std::queue<FusionMessage*> MessageQueue;
+		typedef std::deque<FusionMessage*> MessageQueue;
 		//! A group of channels (containing messages)
 		typedef std::vector<MessageQueue> ChannelList;
 
@@ -61,6 +61,9 @@ namespace FusionEngine
 		const MessageQueue &_getOutMessages(int channel);
 		//! Used internally by FusionNetworkSender. Threadsafe.
 		void _addOutMessage(FusionMessage *message, int channel);
+
+		//! Used internally. Gets one message only. Null if none
+		const FusionMessage &_getInMessage(int channel);
 
 	protected:
 		//! Teh in queuez
