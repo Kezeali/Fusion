@@ -35,30 +35,45 @@ Inheritance diagram for FusionEngine::FusionMessage:<p><center><img src="class_f
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_message-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a024e1a5b6bab4b34e9afdd4e93323b3"></a><!-- doxytag: member="FusionEngine::FusionMessage::FusionMessage" ref="a024e1a5b6bab4b34e9afdd4e93323b3" args="(const std::string &amp;type)" -->
-&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#a024e1a5b6bab4b34e9afdd4e93323b3">FusionMessage</a> (const std::string &amp;type)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="665cee46bdd9f86945a62cdd64c4be09"></a><!-- doxytag: member="FusionEngine::FusionMessage::FusionMessage" ref="665cee46bdd9f86945a62cdd64c4be09" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#665cee46bdd9f86945a62cdd64c4be09">FusionMessage</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Basic Constructor. Don't use. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="af1ef3c53573a6f7781930d85042569d"></a><!-- doxytag: member="FusionEngine::FusionMessage::FusionMessage" ref="af1ef3c53573a6f7781930d85042569d" args="(unsigned char type, unsigned int playerInd)" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#af1ef3c53573a6f7781930d85042569d">FusionMessage</a> (unsigned char type, unsigned int playerInd)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. +type +playerIndex. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="824570bb8b4db1e37fc4dfa0334a1089"></a><!-- doxytag: member="FusionEngine::FusionMessage::FusionMessage" ref="824570bb8b4db1e37fc4dfa0334a1089" args="(unsigned char type, unsigned int playerInd, unsigned char *message)" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#824570bb8b4db1e37fc4dfa0334a1089">FusionMessage</a> (unsigned char type, unsigned int playerInd, unsigned char *message)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. +type +playerIndex +message. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="d99a8e3ed7805cc04afb58620820b3ca"></a><!-- doxytag: member="FusionEngine::FusionMessage::~FusionMessage" ref="d99a8e3ed7805cc04afb58620820b3ca" args="()" -->
 virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#d99a8e3ed7805cc04afb58620820b3ca">~FusionMessage</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">virtual Destructor <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="4c327224b2b5b6f671726026ce409ec6"></a><!-- doxytag: member="FusionEngine::FusionMessage::Serialize" ref="4c327224b2b5b6f671726026ce409ec6" args="() const " -->
-virtual std::string &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#4c327224b2b5b6f671726026ce409ec6">Serialize</a> () const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="163644e0546e24448eb5dc4db49786f3"></a><!-- doxytag: member="FusionEngine::FusionMessage::Write" ref="163644e0546e24448eb5dc4db49786f3" args="(unsigned char *message)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#163644e0546e24448eb5dc4db49786f3">Write</a> (unsigned char *message)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the serialised form of this message. <br></td></tr>
-<tr><td colspan="2"><br><h2>Static Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="fb642a3075f82555a25ab53480f87085"></a><!-- doxytag: member="FusionEngine::FusionMessage::Deserialize" ref="fb642a3075f82555a25ab53480f87085" args="(const std::string &amp;serialized)" -->
-virtual static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#fb642a3075f82555a25ab53480f87085">Deserialize</a> (const std::string &amp;serialized)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Write data. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="dafdc5534523889d600ffdce893c7108"></a><!-- doxytag: member="FusionEngine::FusionMessage::Read" ref="dafdc5534523889d600ffdce893c7108" args="()" -->
+const unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#dafdc5534523889d600ffdce893c7108">Read</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Creates a message instance from its serialised form. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read data. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a8d3c10d6a72a096966e98808d03faa6"></a><!-- doxytag: member="FusionEngine::FusionMessage::GetPlayerInd" ref="a8d3c10d6a72a096966e98808d03faa6" args="()" -->
+const unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#a8d3c10d6a72a096966e98808d03faa6">GetPlayerInd</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read PlayerInd. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="4e0601cccaa6c7ca577c356f48757464"></a><!-- doxytag: member="FusionEngine::FusionMessage::GetType" ref="4e0601cccaa6c7ca577c356f48757464" args="()" -->
+const unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html#4e0601cccaa6c7ca577c356f48757464">GetType</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Read type. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 High level network messaging. 
 <p>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionMessage.h<li>F:/Projects/Fusion/FusionEngine/FusionMessage.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 21 18:44:53 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:49 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

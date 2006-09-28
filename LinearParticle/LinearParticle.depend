@@ -1,0 +1,81 @@
+# depslib dependency file v1.0
+1149326154 source:f:\dev\linearparticle\linearparticle\sources\l_droppingeffect.cpp
+	"L_DroppingEffect.h"
+
+1159208938 f:\dev\linearparticle\linearparticle\include\l_droppingeffect.h
+	"L_ParticleEffect.h"
+
+1159303749 f:\dev\linearparticle\linearparticle\include\l_particleeffect.h
+	"L_Particle.h"
+	<list>
+
+1159300420 f:\dev\linearparticle\linearparticle\include\l_particle.h
+	"L_Vector.h"
+	"L_MotionController.h"
+
+1159303821 f:\dev\linearparticle\linearparticle\include\l_vector.h
+	"L_Defination.h"
+
+1159290913 f:\dev\linearparticle\linearparticle\include\l_defination.h
+	<ClanLib/core.h>
+	<ClanLib/application.h>
+	<ClanLib/display.h>
+	<float.h>
+	<iostream>
+
+1159301744 f:\dev\linearparticle\linearparticle\include\l_motioncontroller.h
+	"L_Vector.h"
+
+1159289601 source:f:\dev\linearparticle\linearparticle\sources\l_effectemitter.cpp
+	"L_EffectEmitter.h"
+
+1159300279 f:\dev\linearparticle\linearparticle\include\l_effectemitter.h
+	"L_EffectManager.h"
+
+1159300364 f:\dev\linearparticle\linearparticle\include\l_effectmanager.h
+	"L_DroppingEffect.h"
+	"L_ExplosionEffect.h"
+	"L_ShootingEffect.h"
+
+1159290188 f:\dev\linearparticle\linearparticle\include\l_explosioneffect.h
+	"L_ParticleEffect.h"
+
+1159300513 f:\dev\linearparticle\linearparticle\include\l_shootingeffect.h
+	"L_ParticleEffect.h"
+
+1159301898 source:f:\dev\linearparticle\linearparticle\sources\l_effectmanager.cpp
+	"L_EffectManager.h"
+
+1159308252 source:f:\dev\linearparticle\linearparticle\sources\l_explosioneffect.cpp
+	"L_ExplosionEffect.h"
+
+1159301646 source:f:\dev\linearparticle\linearparticle\sources\l_motioncontroller.cpp
+	"L_MotionController.h"
+
+1159308010 source:f:\dev\linearparticle\linearparticle\sources\l_particle.cpp
+	"L_Particle.h"
+
+1159302066 source:f:\dev\linearparticle\linearparticle\sources\l_particleeffect.cpp
+	"L_ParticleEffect.h"
+	"L_ParticleMem.h"
+
+1159308480 f:\dev\linearparticle\linearparticle\include\l_particlemem.h
+	"L_Particle.h"
+
+1159301568 source:f:\dev\linearparticle\linearparticle\sources\l_particlemem.cpp
+	"L_ParticleMem.h"
+
+1159308252 source:f:\dev\linearparticle\linearparticle\sources\l_particlesystem.cpp
+	"L_ParticleSystem.h"
+	"L_ParticleMem.h"
+
+1159312169 f:\dev\linearparticle\linearparticle\include\l_particlesystem.h
+	"L_EffectEmitter.h"
+
+1159301989 source:f:\dev\linearparticle\linearparticle\sources\l_shootingeffect.cpp
+	"L_ShootingEffect.h"
+
+1159303830 source:f:\dev\linearparticle\linearparticle\sources\l_vector.cpp
+	"L_Vector.h"
+	<math.h>
+

@@ -68,8 +68,14 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">High level network messaging.  <a href="class_fusion_engine_1_1_fusion_message.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html">FusionMessageBuilder</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Not quite a factory.  <a href="class_fusion_engine_1_1_fusion_message_builder.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionNetworkClient</a></td></tr>
 
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionNetworkMessageQueue</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Worker thread for receiving messages.  <a href="class_fusion_engine_1_1_fusion_network_message_queue.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> represents a moveable object with sub-objects.  <a href="class_fusion_engine_1_1_fusion_node.html#_details">More...</a><br></td></tr>
@@ -96,6 +102,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html">FusionProjectile</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds all state information for each projectile.  <a href="class_fusion_engine_1_1_fusion_projectile.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds all state information for each projectile.  <a href="struct_fusion_engine_1_1_projectile_state.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returned by <a class="el" href="namespace_fusion_engine.html#2674c45bf8badb53dee4f0c32fdb3e38">GetPackageType()</a>.  <a href="class_fusion_engine_1_1_package_type.html#_details">More...</a><br></td></tr>
@@ -137,6 +146,19 @@
 typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">It's a vector. It's a string. It's a StringVector! <br></td></tr>
+<tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Channels. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom">{ <a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75">MTID_NEWPLAYER</a>, 
+<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0">MTID_SHIPFRAME</a>, 
+<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c">MTID_PROJECTILEFRAME</a>, 
+<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2">MTID_NAME</a>
+ }</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Types of bodies. <br></td></tr>
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9ebaaf2b15bf6cd315ada888140508a0"></a><!-- doxytag: member="FusionEngine::ClearAll" ref="9ebaaf2b15bf6cd315ada888140508a0" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#9ebaaf2b15bf6cd315ada888140508a0">ClearAll</a> ()</td></tr>
@@ -191,7 +213,43 @@ FusionEngine::PackageResources&nbsp;</td><td class="memItemRight" valign="bottom
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Encapsulates resource maps of various types. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-<a class="el" href="namespace_fusion.html">Fusion</a>. <hr><h2>Function Documentation</h2>
+<a class="el" href="namespace_fusion.html">Fusion</a>. <hr><h2>Enumeration Type Documentation</h2>
+<a class="anchor" name="d401819bdfee58a48d21caffcb3ad788"></a><!-- doxytag: member="FusionEngine::@1" ref="d401819bdfee58a48d21caffcb3ad788" args="" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">anonymous enum          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>Enumerator: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75"></a><!-- doxytag: member="MTID_NEWPLAYER" ref="d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75" args="" -->MTID_NEWPLAYER</em>&nbsp;</td><td>
+sys </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0"></a><!-- doxytag: member="MTID_SHIPFRAME" ref="d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0" args="" -->MTID_SHIPFRAME</em>&nbsp;</td><td>
+Gameplay channel message types. </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c"></a><!-- doxytag: member="MTID_PROJECTILEFRAME" ref="d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c" args="" -->MTID_PROJECTILEFRAME</em>&nbsp;</td><td>
+Gameplay channel message types. </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2"></a><!-- doxytag: member="MTID_NAME" ref="d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2" args="" -->MTID_NAME</em>&nbsp;</td><td>
+Chat channel message types. </td></tr>
+</table>
+</dl>
+    </td>
+  </tr>
+</table>
+<hr><h2>Function Documentation</h2>
 <a class="anchor" name="2674c45bf8badb53dee4f0c32fdb3e38"></a><!-- doxytag: member="FusionEngine::GetPackageType" ref="2674c45bf8badb53dee4f0c32fdb3e38" args="(const std::string &amp;name)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
@@ -460,7 +518,7 @@ Verifies the existance and crc of a weapon package.
 Shorthand for <code>VerifyPackage(name, crc, "Weapons/");</code> where Weapons/ is the local weapons package directory.     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 21 18:44:52 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:48 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>
