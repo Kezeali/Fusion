@@ -35,10 +35,13 @@
 #include "FusionClientOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
+#include "FusionClientShip.h"
 #include "FusionProjectile.h"
 #include "FusionResourceLoader.h"
 #include "FusionShipResource.h"
 #include "FusionInputHandler.h"
+#include "FusionNetworkClient.h"
+#include "FusionPhysicsWorld.h"
 
 namespace FusionEngine
 {
@@ -58,9 +61,23 @@ namespace FusionEngine
 	class ClientEnvironment
 	{
 	public:
-		ClientEnvironment(ClientOptions *options);
+		//! Constructor
+		ClientEnvironment();
+		//! Constructor
+		ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options);
 
 	public:
+		//! A list of ships
+		typedef std::vector<FusionClientShip> ShipList;
+		//! A list of projectiles
+		typedef std::vector<FusionProjectile> ProjectileList;
+		//! A list of resources
+		typedef std::map<std::string, ShipResource*> ShipResourceMap;
+
+		//! A list of inputs
+		typedef std::vector<ShipInput> ShipInputList;
+
+		//! Pulls the resources from the ResourceLoader
 		bool Initialise(ResourceLoader *resources);
 
 		/*!
@@ -101,22 +118,57 @@ namespace FusionEngine
 		const ShipResource &GetShipResourceByID(std::string id) const;
 
 	private:
+		//! Number of players in the env
+		unsigned int m_NumPlayers;
+
+		//! SceneGraph
 		FusionScene *m_Scene;
+		//! Options (controlls, etc.)
+		ClientOptions *m_Options;
+		//! High level input manager
 		FusionInput *m_InputManager;
-		FusionNetwork *m_NetworkManager;
+		//! High level network manager
+		FusionNetworkClient *m_NetworkManager;
+		//! High level physics manager
+		FusionPhysicsWorld *m_PhysicsWorld;
 
-		std::vector<FusionShip> m_Ships;
-		std::vector<FusionProjectile> m_Projectiles;
+		//! Thread from which the network manager works
+		/*!
+		 * \remarks
+		 * Having the FusionNetworkClient object running in another
+		 * thread removes the nessescity to limit it's working time
+		 * per step (that is to say, it can take as long as it needs
+		 * process every packet, as it won't hold up the redraw.)
+		 * This may turn out to be more of a performance hit than just
+		 * limiting it's working time, but it's easyer to remove code
+		 * than write it in later :P
+		 */
+		CL_Thread *m_NetManThread;
 
-		typedef std::map<std::string, ShipResource*> ShipResourceMap;
+		//! List of ships currently in the environment
+		ShipList m_Ships;
+		//! List of Projectiles currently in the environment
+		ProjectilesList m_Projectiles;
+
+		//! List of ship resources in loaded.
+		/*!
+		 * Maps ships to shipnames
+		 */
 		ShipResourceMap m_ShipResources;
+
+		//! Send all packets
+		/*!
+		 * "Sending" can be done here (ofcourse, FusionNetwork will have done the real 
+		 * receiving, this just handles the data from it.)
+		 */
+		void send();
+		//! Receive all packets
+		void receive();
 
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();
 		/*!
 		 * Updates the state structures of local and remote ships.
-		 * "Sending" and "receiving" can be done here (ofcourse, FusionNetwork
-		 * will have done the real receiving, this just handles the data from it.)
 		 */
 		void updateShipStates();
 		/*!

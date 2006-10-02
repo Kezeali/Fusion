@@ -5,16 +5,24 @@
 using namespace FusionEngine;
 
 FusionInput::FusionInput()
+: m_Suspend(false)
 {
+}
+
+FusionInput::FusionInput(const ClientOptions &from)
+: m_Suspend(false)
+{
+	m_GlobalInputMap = from.GlobalInputs;
+	m_PlayerInputMaps = from.PlayerInputs;
 }
 
 bool FusionInput::Test()
 {
 	// Keyboard is always required (for global input)
-	if (!CL_Keyboard::get_device_count())
+	if (CL_Keyboard::get_device_count() == 0)
 		return false;
 
-	PlayerInputMapContainer::iterator it;
+	PlayerInputMapList::iterator it;
 	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 	{
 		switch (it->type)
@@ -35,7 +43,7 @@ bool FusionInput::Test()
 	return true;
 }
 
-void FusionInput::Activate()
+void FusionInput::Initialise()
 {
 	// Activate Key Down signal handler
 	m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionInput::onKeyDown);
@@ -48,9 +56,14 @@ void FusionInput::Activate()
 	m_Slots.connect(CL_Mouse::sig_key_up(), this, &FusionInput::onKeyUp);
 }
 
+void FusionInput::Activate()
+{
+	m_Suspend = false;
+}
+
 void FusionInput::Suspend()
 {
-	m_Slots.slots
+	m_Suspend = true;
 }
 
 void FusionInput::SetInputMaps(const FusionEngine::ClientOptions &from)
@@ -76,7 +89,7 @@ GlobalInput FusionInput::GetGlobalInputs() const
 
 void FusionInput::onKeyDown(const CL_InputEvent &key)
 {
-	PlayerInputMapContainer::iterator it;
+	PlayerInputMapList::iterator it;
 	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 	{
 		if (key.device.get_name() != it->device->get_name())
@@ -115,10 +128,10 @@ void FusionInput::onKeyDown(const CL_InputEvent &key)
 
 void FusionInput::onKeyUp(const CL_InputEvent &key)
 {
-	PlayerInputMapContainer::iterator it;
+	PlayerInputMapList::iterator it;
 	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 	{
-		if (key.device.get_name() != it->device->get_name())
+		if (key.device.get_name() != it->device.get_name())
 			continue;
 
 		if(key.id == it->thrust)

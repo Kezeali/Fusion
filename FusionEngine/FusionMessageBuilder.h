@@ -30,22 +30,24 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionMessage.h"
+#include "FusionShipState.h"
+#include "FusionProjectileState.h"
+
+#include "../RakNet/"
 
 namespace FusionEngine
 {
 
 	//! Not quite a factory.
+	/*!
+	 * Creates FusionMessage objects from either game structs or RakNet Packets.
+	 */
 	class FusionMessageBuilder
 	{
 	public:
-		//! Constructor
-		FusionMessageBuilder();
-		//! Destructor
-		FusionMessageBuilder();
-
-	public:
-		FusionMessage *BuildMessage(const ShipState &input);
-		FusionMessage *BuildMessage(const ProjectileState &input);
+		static FusionMessage *BuildMessage(const ShipState &input);
+		static FusionMessage *BuildMessage(const ProjectileState &input);
+		static FusionMessage *BuildMessage(const Packet &packet);
 
 	};
 

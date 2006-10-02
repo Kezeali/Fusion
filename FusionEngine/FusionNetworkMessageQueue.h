@@ -34,9 +34,10 @@
 namespace FusionEngine
 {
 
-	//! Worker thread for receiving messages
+	//! Thread safe message storage
 	/*!
-	 * Possably [depreciated] by RakNet... ATM seems useable.
+	 * Possably [depreciated]... ATM seems useable, but all this stuff could be done in
+	 * NetworkClient (at the expense of its simplicity.)
 	 */
 	class FusionNetworkMessageQueue
 	{
@@ -49,8 +50,11 @@ namespace FusionEngine
 	public:
 		//! A group of messages
 		typedef std::deque<FusionMessage*> MessageQueue;
-		//! A group of channels (containing messages)
+		//! A group of channels (each containing messages)
 		typedef std::vector<MessageQueue> ChannelList;
+
+		//! A group of net events
+		typedef std::vector<FusionMessage*> EventList;
 
 		//! Used internally by FusionNetwork[Client|Server]. Threadsafe.
 		const MessageQueue &_getInMessages(int channel);
@@ -65,12 +69,30 @@ namespace FusionEngine
 		//! Used internally. Gets one message only. Null if none
 		const FusionMessage &_getInMessage(int channel);
 
+		//! Used internally. Allows the CE to act on network events
+		/*!
+		 * \param messageId The packet ID which CE should act on.
+		 */
+		void _addEvent(FusionMessage *message);
+		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
+		const EventList &GetEvents();
+
+		//! Removes events
+		void ClearEvents();
+		//! Removes messages from the in queue
+		void ClearInMessages();
+		//! Removes messages from the out queue
+		void ClearOutMessages();
+
 	protected:
 		//! Teh in queuez
 		ChannelList m_InChannels;
 
 		//! Teh out queuez
 		ChannelList m_OutChannels;
+
+		//! List of network events
+		EventList m_EventList;
 
 		/*!
 		 * \brief

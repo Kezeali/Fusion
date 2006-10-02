@@ -67,7 +67,22 @@ void FusionClientShip::SetPosition(const CL_Vector2 &position)
 	m_PhysicalBody->SetPosition(position);
 }
 
+const ShipState &FusionClientShip::GetShipState() const
+{
+	return m_CurrentState;
+}
+
+const ShipInput &FusionClientShip::GetInputState() const
+{
+	return m_InitialState;
+}
+
+std::string FusionClientShip::GetShipResource() const
+{
+	return m_ResourceID;
+}
+
 void FusionClientShip::RevertToInitialState()
 {
-	CurrentState = InitialState;
+	m_CurrentState = m_InitialState;
 }

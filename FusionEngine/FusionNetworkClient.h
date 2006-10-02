@@ -43,13 +43,16 @@ namespace FusionEngine
 {
 
 	/*!
-	 * \\brief
+	 * \brief
 	 * Handles network communicaion for the client in-game.
 	 *
 	 * This class gathers messages received from the host, sorts them, and allows the
 	 * ClientEnvironment to access them.
+	 * <br>
+	 * This impliments CL_Runnable; but the funny thing is, it isn't on-its-own thread safe -
+	 * the storage class FusionNetworkMessageQueue is... I guess that just makes it tidier?
 	 */
-	class FusionNetworkClient
+	class FusionNetworkClient : public CL_Runnable
 	{
 	public:
 		/*!
@@ -105,8 +108,6 @@ namespace FusionEngine
 	public:
 		//! A group of messages
 		typedef std::deque<FusionMessage*> MessageQueue;
-		//! A group of net events
-		typedef std::deque<FusionMessage*> EventQueue;
 
 		//! Adds a message to the outgoing queue.
 		void QueueMessage(FusionMessage *message, int channel);
@@ -116,15 +117,10 @@ namespace FusionEngine
 		const FusionMessage &GetNextMessage(int channel);
 
 		//! Updates the network
-		void Run();
+		void run();
 
-		//! Used internally. Allows the CE to act on network events
-		/*!
-		 * \param messageId The packet ID which CE should act on.
-		 */
-		void _notifyNetEvent(unsigned char messageId);
 		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
-		const EventQueue &GetEvents();
+		EventList GetEvents() const;
 
 	protected:
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
@@ -132,9 +128,12 @@ namespace FusionEngine
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
+		//! Threadsafe, organised package storage
 		FusionNetworkMessageQueue *m_Queue;
 
+		//! Extract the id from the packet
 		unsigned char getPacketIdentifier(Packet *p);
+		//! Check if a packet can be handled by the network client
 		bool handleRakPackets(Packet *p);
 
 		//! Converts packets into messages and sorts them.

@@ -48,7 +48,7 @@ namespace FusionEngine
 
 		struct ImageInfo
 		{
-			DestructableImage Body;
+			CL_Surface *Body;
 			CL_Surface *LeftEngine;
 			CL_Surface *RightEngine;
 			CL_Surface *PrimaryWeapon;
@@ -64,8 +64,9 @@ namespace FusionEngine
 		   * Maximum velocity of rotation.
 		   *
 		   * \remarks
-		   * (FusionPhysicsBody has RotationalVelocity [note 'al'], that being the
-		   * <i>current</i> velocity of rotation.)
+		   * FusionPhysicsBody has RotationalVelocity [note 'al'], that being the
+		   * <i>current</i> velocity of rotation. Yeah, just don't question my naming.
+			 * It seemed logical at the time damnit!
 		   */
 			float RotationVelocity;
 		}

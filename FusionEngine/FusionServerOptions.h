@@ -8,9 +8,14 @@
 namespace FusionEngine
 {
 
-    class ServerOptions
-    {
-    };
+	//! Server ops. Nothing atm.
+	class ServerOptions
+	{
+	public:
+		//! Constructor
+		ServerOptions();
+
+	};
 
 }
 

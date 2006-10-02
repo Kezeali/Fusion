@@ -10,8 +10,14 @@
 
 using namespace FusionEngine;
 
-void FusionGame::RunClient(const std::string hostname, const std::string port, const ClientOptions &options)
+FusionGame::FusionGame()
+: m_KeepGoing(true)
 {
+}
+
+void FusionGame::RunClient(const std::string &hostname, const std::string &port, const ClientOptions &options)
+{
+	/*
 	CL_SetupNetwork setup_network;
 	CL_NetSession *netgame = NULL;
 
@@ -31,12 +37,15 @@ void FusionGame::RunClient(const std::string hostname, const std::string port, c
 	CL_IPAddress server_ip;
 	server_ip.set_address(hostname, port);
 	netgame->connect(server_ip);
+	*/
+
+	bool keepGoing = false;
 
 	ResourceLoader *resLoader = new ResourceLoader();
 	resLoader->LoadShips(resLoader->GetInstalledShips());
 
-	ClientEnvironment *env = new ClientEnvironment(options);
-	bool keepGoing = env->Initialise(resLoader);
+	ClientEnvironment *env = new ClientEnvironment(hostname, port, options);
+	keepGoing = env->Initialise(resLoader);
 
 	unsigned int lastTime = CL_System::get_time();
 	unsigned int split = 0;
@@ -46,7 +55,7 @@ void FusionGame::RunClient(const std::string hostname, const std::string port, c
 		split = CL_System::get_time() - lastTime;
 		lastTime = CL_System::get_time();
 
-		env->Update(split);
+		keepGoing = env->Update(split);
 		env->Draw();
 	}
 
@@ -54,6 +63,7 @@ void FusionGame::RunClient(const std::string hostname, const std::string port, c
 
 void FusionGame::RunServer(const std::string port, const ServerOptions &options)
 {
+	/*
 	CL_SetupNetwork setup_network;
 	CL_NetSession *netgame = NULL;
 
@@ -66,4 +76,5 @@ void FusionGame::RunServer(const std::string port, const ServerOptions &options)
 	//   &NetChannelDemo::on_server_disconnect);
 	//start the server listening for client activity
 	netgame->start_listen(port);
+	*/
 }

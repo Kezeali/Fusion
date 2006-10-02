@@ -10,7 +10,7 @@
 namespace FusionEngine
 {
 
-	//! It's a vector. It's a string. It's a StringVector!
+	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
 	typedef std::vector<std::string> StringVector;
 
 }

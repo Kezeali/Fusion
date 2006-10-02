@@ -203,10 +203,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionDestructableImage.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionDrawable.cpp"
 				>
 			</File>
@@ -232,6 +228,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionMessage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionMessageBuilder.cpp"
 				>
 			</File>
 			<File
@@ -359,10 +359,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionDemo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionDestructableImage.h"
 				>
 			</File>
 			<File

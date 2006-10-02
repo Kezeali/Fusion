@@ -22,7 +22,7 @@ namespace FusionEngine
 	{
 	public:
 		enum Type { Ship, Level, Weapon, FileNotFound, UnknownType };
-	}
+	};
 
 	/*!
 	 * \brief
@@ -31,22 +31,33 @@ namespace FusionEngine
 	class ResourceLoader
 	{
 	public:
+		//! Constructor
 		ResourceLoader() {}
+		//! Destructor
 		~ResourceLoader() { ClearAll(); }
 
-		typedef std::map<std::string, ShipResource*> ShipResourcePtrMap;
+	public:
+		//! Map of surfaces
+		typedef std::map<std::string, CL_Surface*> SurfaceMap;
+		//! Map of sound buffers
+		typedef std::map<std::string, CL_SoundBuffer*> SoundBufferMap;
+
+		//! Map of ships
+		typedef std::map<std::string, ShipResource*> ShipResourceMap;
 		//typedef std::map<std::string, WeaponResource*> WeaponResourcePtrMap;
 
-
 		//! The relative path to Ship packages, including trailing slash.
-		const std::string ShipsPath = "Ships/";
+		static const std::string ShipsPath;
 		//! The relative path to Level packages, including trailing slash.
-		const std::string LevelsPath = "Levels/";
+		static const std::string LevelsPath;
 		//! The relative path th Weapon packages, including trailing slash.
-		const std::string WeaponsPath = "Weapons/";
+		static const std::string WeaponsPath;
 
+		//! Self exp.
 		static StringVector GetInstalledShips();
+		//! Self exp.
 		static StringVector GetInstalledLevels();
+		//! Self exp.
 		static StringVector GetInstalledWeapons();
 
 		/*!
@@ -145,22 +156,20 @@ namespace FusionEngine
 		 * \brief
 		 * Checks a loaded document for validity as a ship definiiton.
 		 */
-		ShipResourcePtrMap GetLoadedShips();
+		ShipResourceMap GetLoadedShips();
 		// LevelResource* GetLoadedLevel();
 		// WeaponResourcePtrMap GetLoadedWeapons();
 
 	private:
-		typedef std::map<std::string, CL_Surface*> SurfaceMap;
-		typedef std::map<std::string, CL_SoundBuffer*> SoundBufferMap;
 
 		//! Encapsulates resource maps of various types.
 		struct PackageResources
 		{
 			SurfaceMap Images;
 			SoundBufferMap Sounds;
-		}
+		};
 
-		ShipResourcePtrMap m_ShipResources;
+		ShipResourceMap m_ShipResources;
 		// LevelResource* m_LevelResource;
 		// WeaponResourcePtrMap m_WeaponResources;
 
@@ -197,7 +206,7 @@ namespace FusionEngine
 		 * \returns
 		 * A PackageResources object containing all resources.
 		 */
-		SurfaceMap parseResources(const CL_DomDocument *document);
+		PackageResources parseResources(const CL_DomDocument *document, const CL_Zip_Archive *arc);
 
 		/*!
 		 * \brief

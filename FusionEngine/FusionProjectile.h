@@ -28,6 +28,7 @@
 #endif
 
 #include "FusionEngineCommon.h"
+#include "FusionProjectileState.h"
 
 namespace FusionEngine
 {

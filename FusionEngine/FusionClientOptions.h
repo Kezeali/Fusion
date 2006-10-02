@@ -1,3 +1,25 @@
+/*
+  Copyright (c) 2006 Elliot Hayward
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef Header_FusionEngine_ClientOptions
 #define Header_FusionEngine_ClientOptions
 
@@ -9,14 +31,18 @@
 
 namespace FusionEngine
 {
+	//! Max players per client
 	const unsigned int g_MaxPlayers = 4;
 
 	//! Settings for network related stuff.
 	class NetworkSettings
 	{
 	public:
+		//! Constructor
 		NetworkSettings();
 
+	public:
+		//! Maximum packets per second
 		unsigned int MaximumRate;
 	};
 
@@ -26,18 +52,26 @@ namespace FusionEngine
 	class ClientOptions
 	{
 	public:
+		//! Constructor
 		ClientOptions();
 
+	public:
+		//! Number of local players
 		unsigned int NumPlayers;
 
-		typedef std::map<int, PlayerInputMap> PlayerInputMapContainer;
+		typedef std::vector<PlayerInputMap> PlayerInputMapList;
 
-		PlayerInputMapContainer PlayerInputs;
+		//! Player input mappings
+		PlayerInputMapList PlayerInputs;
+		//! Global input mappings
 		GlobalInputMap GlobalInputs;
 
+		//! Nework options
 		NetworkSettings NetworkOptions;
 
+		//! Set the controls for defaults
 		void DefaultPlayerControls(unsigned int player);
+		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
 	};
 

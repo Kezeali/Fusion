@@ -1,6 +1,9 @@
 
 #include "FusionEngineCommon.h"
 
+/// Class
+#include "FusionResourceLoader.h"
+
 /// Boost
 #include <boost/crc.hpp>
 
@@ -8,19 +11,23 @@
 #include "FusionShipResource.h"
 #include "FusionDestructableImage.h"
 
-/// Class
-#include "FusionResourceLoader.h"
-
 using namespace FusionEngine;
 
-/// Public:
+// Look, nice formatting :D
+////////////
+/// Statics:
+ResourceLoader::ShipsPath = "Ships/";
+ResourceLoader::LevelsPath = "Levels/";
+ResourceLoader::WeaponsPath = "Weapons/";
 
-std::vector<std::string> ResourceLoader::GetInstalledShips()
+///////////
+/// Public:
+StringVector ResourceLoader::GetInstalledShips()
 {
-	std::vector<std::string> list;
+	StringVector list;
 
 	CL_DirectoryScanner scanner;
-	if (scanner.scan("Ships/", "*.zip"))
+	if (scanner.scan(ShipsPath, "*.zip"))
 	{
 		while (scanner.next())
 		{
@@ -31,12 +38,12 @@ std::vector<std::string> ResourceLoader::GetInstalledShips()
 	return list;
 }
 
-std::vector<std::string> ResourceLoader::GetInstalledLevels()
+StringVector ResourceLoader::GetInstalledLevels()
 {
-	std::vector<std::string> list;
+	StringVector list;
 
 	CL_DirectoryScanner scanner;
-	if (scanner.scan("Levels/", "*.zip"))
+	if (scanner.scan(LevelsPath, "*.zip"))
 	{
 		while (scanner.next())
 		{
@@ -52,7 +59,7 @@ StringVector ResourceLoader::GetInstalledWeapons()
 	StringVector list;
 
 	CL_DirectoryScanner scanner;
-	if (scanner.scan("Weapons/", "*.zip"))
+	if (scanner.scan(WeaponsPath, "*.zip"))
 	{
 		while (scanner.next())
 		{
@@ -63,22 +70,20 @@ StringVector ResourceLoader::GetInstalledWeapons()
 	return list;
 }
 
-c
-
 // Returns false if any ships aren't found.
-bool ResourceLoader::LoadShips(std::vector<std::string> names)
+bool ResourceLoader::LoadShips(StringVector names)
 {
-    std::map<std::string, ShipResource*> ships;
+    ShipResourceMap ships;
 
-    std::vector<std::string>::iterator it;
+    StringVector::iterator it;
     for (it = names.begin(); it != names.end(); ++it)
     {
-    	ShipResource *ship = parseShipDefinition(*it);
+			ShipResource *ship = parseShipDefinition(*it);
 
-    	if (ship != NULL)
-			ships[*it] = ship;
-		else
-			return false;
+			if (ship != NULL)
+				ships[*it] = ship;
+			else
+				return false;
     }
 
     m_ShipResources = ships;
@@ -86,13 +91,13 @@ bool ResourceLoader::LoadShips(std::vector<std::string> names)
 	return true;
 }
 
-std::map<std::string, ShipResource*> ResourceLoader::GetLoadedShips()
+ResourceLoader::ShipResourceMap ResourceLoader::GetLoadedShips()
 {
 	return m_ShipResources;
 }
 
+////////////
 /// Private:
-
 ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 {
 	// The return object.
@@ -110,7 +115,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 		return NULL;
 
 	// Build a resource list
-	std::map<std::string, CL_Surface> resourceList parseResources(cElement);
+	PackageManager resourceList = parseResources(cElement);
 
 	// Get the root element (document level element)
 	CL_DomElement root = doc.get_document_element();
@@ -209,15 +214,17 @@ bool ResourceLoader::verifyShipDocument(const CL_DomDocument *document)
 	} do (current = cNode.get_next_sibling());
 }
 
-std::map<std::string, CL_Surface> parseResources(const CL_DomDocument *document)
+ResourceLoader::PackageResources ResourceLoader::parseResources(const CL_DomDocument *document, const CL_Zip_Archive *arc)
 {
-	std::map<std::string, CL_Surface> list;
+	SurfaceMap sf_list;
+	SoundBufferMap snd_list;
 
 	CL_DomNodeList resourceNodes =
 		document->get_document_element().get_elements_by_tag_name("resources");
 
 	for (int i=0; i<resourceNodes.get_length(); i++)
 	{
+		// Images
 		CL_DomNodeList images = element.get_elements_by_tag_name("image");
 
 		for (int i=0; i<images.get_length(); i++)
@@ -227,15 +234,37 @@ std::map<std::string, CL_Surface> parseResources(const CL_DomDocument *document)
 			std::string name(image.get_attribute("name"));
 			std::string file(image.get_attribute("file"));
 
-			if (list.find("name") != list.end())
+			if (sf_list.find("name") != sf_list.end())
 				return NULL;
 
 			if (checkInList(file, availableFiles))
-				list[name] = CL_Surface(arc.open_source(file));
+				sf_list[name] = CL_Surface(arc->open_source(file));
+		}
+
+		// Sounds
+		CL_DomNodeList sounds = element.get_elements_by_tag_name("sound");
+
+		for (int i=0; i<sounds.get_length(); i++)
+		{
+			CL_DomElement sound = sounds.item(i).to_element();
+
+			std::string name(sound.get_attribute("name"));
+			std::string file(sound.get_attribute("file"));
+
+			if (snd_list.find("name") != snd_list.end())
+				return NULL;
+
+			if (checkInList(file, availableFiles))
+				snd_list[name] = CL_SoundBuffer(arc->open_source(file));
 		}
 	}
 
-	return list;
+	// Compile the collected resources into an easy to digest package
+	PackageResources res;
+	res.Images = sf_list;
+	res.Sounds = snd_list;
+
+	return res;
 }
 
 CL_Point ResourceLoader::getPoint(const CL_DomElement *element);
@@ -249,7 +278,7 @@ CL_Point ResourceLoader::getPoint(const CL_DomElement *element);
 	return CL_Point(x, y);
 }
 
-bool checkInList(const std::string &filename, std::vector<std::string> filelist)
+bool ResourceLoader::checkInList(const std::string &filename, std::vector<std::string> filelist)
 {
 	std::vector<std::string>::iterator it;
 	for (it = filelist.begin(); it != filelist.end(); ++it)

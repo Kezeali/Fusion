@@ -63,19 +63,19 @@ namespace FusionEngine
 		void SetPosition(const CL_Vector2 &position);
 
 		//! Guess
-		const ShipState &GetShipState() const;
+		ShipState *GetShipState() const;
 		//! Self explainatory
-		const ShipInput &GetInputState() const;
+		ShipInput *GetInputState() const;
 
 		//! You know it
-		const ShipResource &GetShipResource() const;
+		std::string GetShipResource() const;
 
 		//! Reverts all state data
 		void RevertToInitialState() const;
 
 	protected:
 		// Is this needed?
-		ClientEnvironment *m_Environment;
+		//ClientEnvironment *m_Environment;
 
 		FusionNode *m_Node;
 		FusionShipDrawable *m_Drawable;

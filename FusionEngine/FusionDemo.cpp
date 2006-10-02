@@ -5,7 +5,7 @@
 
 /// Fusion
 #include "FusionClientOptions.h"
-#include "FusionHostOptions.h"
+#include "FusionServerOptions.h"
 #include "FusionGUI_MainMenu.h"
 #include "FusionGUI_Options.h"
 
@@ -35,8 +35,8 @@ int Fusion::FusionDemo::main(int argc, char **argv)
 
 
 		// Initialise options
-		ClientOpts = new ClientOptions();
-		ServerOpts = new ServerOptions();
+		m_ClientOpts = new ClientOptions();
+		m_ServerOpts = new ServerOptions();
 
 		while (!m_Quit)
 		{
@@ -44,13 +44,12 @@ int Fusion::FusionDemo::main(int argc, char **argv)
 			CL_System::keep_alive();
 		}
 
-		delete cliopts;
-		delete srvopts;
-		delete game;
+		delete m_ClientOpts;
+		delete m_ServerOpts;
 	}
 	catch (CL_Error err)
 	{
-		CL_MessageBox::info(
+		CL_MessageBox::info("Exception caught", err.message.c_str(), m_GuiManager, 0);
 		std::cout << "Exception caught: " << err.message.c_str() << std::endl;
 	}
 
@@ -59,19 +58,21 @@ int Fusion::FusionDemo::main(int argc, char **argv)
 
 void Fusion::FusionDemo::setupGui()
 {
-	CL_ResourceManager style_res("../../GUI/FusionStyle/gui.xml");
-	CL_ResourceManager layout_res("../../GUI/FusionGUI.xml");
-	resources.add_resources(extra_resources);
+	CL_ResourceManager style_res("../FusionGUI/style.xml");
+	CL_ResourceManager layout_res("../FusionGUI/FusionGUI.xml");
 
-	CL_StyleManager_Silver style(&gui_resources);
+	// Don't know what this was ment to do
+	//resources.add_resources(extra_resources);
+
+	CL_StyleManager_Silver style(&style_res);
 	CL_GUIManager gui_manager(&style);
 	// Store a pointer to the manager for use in signal methods
-	m_GuiManager = &gui_manager;
+	m_GuiManager = &gui_manager; //! \remarks MCS- why isn't this done via the line above?
 
 	m_GuiDeck = new CL_Deck();
 
-	m_GuiMenu = new FusionGUI_MainMenu(&resources, gui_manager, m_GuiDeck);
-	m_GuiOptions = new FusionGUI_Options(&resources, gui_manager, m_GuiDeck);
+	m_GuiMenu = new FusionGUI_MainMenu(&layout_res, gui_manager, m_GuiDeck);
+	m_GuiOptions = new FusionGUI_Options(&layout_res, gui_manager, m_GuiDeck);
 
 	m_GuiDeck->add(FusionGUI_MainMenu::Name, m_GuiMenu->get_component());
 	m_GuiDeck->add(FusionGUI_Options::Name, m_GuiOptions->get_component());
@@ -87,13 +88,13 @@ void Fusion::FusionDemo::on_guiPaint()
 void Fusion::FusionDemo::RunClient()
 {
 		FusionGame *game = new FusionGame();
-		game->RunClient("localhost", "4444", ClientOpts);
+		game->RunClient("localhost", "4444", m_ClientOpts);
 		delete game;
 }
 
 void Fusion::FusionDemo::RunServer()
 {
 		FusionGame *game = new FusionGame();
-		game->RunServer("4444", ServerOpts);
+		game->RunServer("4444", m_ServerOpts);
 		delete game;
 }

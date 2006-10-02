@@ -5,3 +5,6 @@
 
 using namespace FusionEngine;
 
+ServerOptions::ServerOptions()
+{
+}

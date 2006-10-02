@@ -11,6 +11,7 @@ FusionNetworkMessageQueue::FusionNetworkMessageQueue()
 const MessageQueue &FusionNetworkMessageQueue::_getInMessages(int channel) const
 {
 	m_Mutex->enter();
+
 	return m_InChannels[channel];
 
 	m_Mutex->notify();
@@ -20,6 +21,7 @@ const MessageQueue &FusionNetworkMessageQueue::_getInMessages(int channel) const
 void FusionNetworkMessageQueue::_addInMessage(FusionMessage *message, int channel)
 {
 	m_Mutex->enter();
+
 	m_InChannels[channel].push_back(message);
 
 	m_Mutex->notify();
@@ -29,20 +31,49 @@ void FusionNetworkMessageQueue::_addInMessage(FusionMessage *message, int channe
 const MessageQueue &FusionNetworkMessageQueue::_getOutMessages(int channel)
 {
 	m_Mutex->enter();
+
 	return m_OutChannels[channel];
 
 	m_Mutex->notify();
 	m_Mutex->leave();
 }
 
-void FusionNetworkMessageQueue::_addOutMessage(FusionEngine::FusionMessage *message,
-																							 int channel)
+void FusionNetworkMessageQueue::_addOutMessage(FusionEngine::FusionMessage *message, int channel)
 {
 	m_Mutex->enter();
+
 	m_OutChannels[channel].push_back(message);
 
 	m_Mutex->notify();
 	m_Mutex->leave();
 }
 
-const FusionMessage &FusionNetworkMessageQueue::_getInMessage()
+const FusionMessage &FusionNetworkMessageQueue::_getInMessage(int channel)
+{
+	m_Mutex->enter();
+
+	return m_InChannels[channel].front();
+
+	m_Mutex->notify();
+	m_Mutex->leave();
+}
+
+void FusionNetworkMessageQueue::_addEvent(FusionMessage *message)
+{
+	m_Mutex->enter();
+
+	m_EventList.push_back(message);
+
+	m_Mutex->notify();
+	m_Mutex->leave();
+}
+
+const EventList &FusionNetworkMessageQueue::GetEvents()
+{
+	m_Mutex->enter();
+
+	return m_EventList;
+
+	m_Mutex->notify();
+	m_Mutex->leave();
+}
