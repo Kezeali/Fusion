@@ -45,26 +45,22 @@ FusionMessage *FusionNetworkClient::GetNextMessage(int channel)
 
 void FusionNetworkClient::run()
 {
-	Packet *p = m_RakClient->Receive();
-
-	while (p)
+	do
 	{
+		// Check for more packets
+		Packet *p = m_RakClient->Receive();
+
 		bool rakPacket = handleRakPackets(p);
 
 		// If it wasn't a rakNet packet, we can deal with it
 		if (!rakPacket)
 		{
-			unsigned char packetId = getPacketIdentifier(p);
-			switch (packetId)
-			{
-			case MTID_SHIPFRAME:
-				break;
-			}
+			FusionMessage *m = FusionMessageBuilder::BuildMessage(p);
+			m_Queue->_addInMessage(m, m->m_Channel);
 		}
 
-		// Check for more packets
-		p = m_RakClient->Receive();
-	}
+		m_RakClient->DeallocatePacket(p);
+	} while (p)
 }
 
 /*
@@ -95,7 +91,7 @@ EventList FusionNetworkClient::GetEvents() const
 
 bool FusionNetworkClient::handleRakPackets(Packet *p)
 {
-	unsigned char packetId = getPacketIdentifier(p);
+	unsigned char packetId = FusionMessageBuilder::_getPacketIdentifier(p);
 	switch (packetId)
 	{
 		// Give the client env any messages it should handle.
@@ -103,9 +99,12 @@ bool FusionNetworkClient::handleRakPackets(Packet *p)
 	case ID_NO_FREE_INCOMING_CONNECTIONS:
 	case ID_DISCONNECTION_NOTIFICATION:
 	case ID_CONNECTION_LOST:
-		m_Queue->_addEvent();
+		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p));
+		return true;
 		break;
 	}
+
+	return false;
 }
 
 unsigned char FusionNetworkClient::getPacketIdentifier(Packet *p)

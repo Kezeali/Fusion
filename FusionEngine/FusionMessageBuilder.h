@@ -33,7 +33,7 @@
 #include "FusionShipState.h"
 #include "FusionProjectileState.h"
 
-#include "../RakNet/"
+#include "../RakNet/NetworkTypes.h"
 
 namespace FusionEngine
 {
@@ -45,9 +45,17 @@ namespace FusionEngine
 	class FusionMessageBuilder
 	{
 	public:
+		//! Builds a message from a ShipState
 		static FusionMessage *BuildMessage(const ShipState &input);
+		//! Builds a message from a ProjectileState
 		static FusionMessage *BuildMessage(const ProjectileState &input);
-		static FusionMessage *BuildMessage(const Packet &packet);
+		//! Builds a message from a network passage
+		static FusionMessage *BuildMessage(const Packet *packet);
+
+		//! Extract the id from the packet. Internal use only
+		static unsigned char _getPacketIdentifier(Packet *p);
+		//! Extract the id from the packet. Internal use only
+		//static unsigned char _getPacketChannel(Packet *p);
 
 	};
 

@@ -77,6 +77,14 @@ namespace FusionEngine
 		 * state-name to change to.
 		 */
 		int m_Type;
+		/*!
+		 * \brief
+		 * The channel for the message.
+		 *
+		 * This helps the FusionNetworkClient decide where to put a new message.
+		 * FusionMessageBuilder calculates this from the message ID.
+		 */
+		int m_Channel;
 
 		//! The player from whence it came
 		unsigned int m_PlayerInd;

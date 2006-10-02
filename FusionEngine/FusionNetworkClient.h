@@ -36,6 +36,7 @@
 /// Fusion
 #include "FusionClientOptions.h"
 #include "FusionMessage.h"
+#include "FusionMessageBuilder.h"
 #include "FusionNetworkMessageQueue.h"
 #include "FusionNetworkTypes.h"
 
@@ -131,7 +132,10 @@ namespace FusionEngine
 		//! Threadsafe, organised package storage
 		FusionNetworkMessageQueue *m_Queue;
 
-		//! Extract the id from the packet
+		//! [depreciated] by Don'tRepeatYourself rules; see FusionMessageBuilder.
+		/*!
+		 * Extract the id from the packet.
+		 */
 		unsigned char getPacketIdentifier(Packet *p);
 		//! Check if a packet can be handled by the network client
 		bool handleRakPackets(Packet *p);
