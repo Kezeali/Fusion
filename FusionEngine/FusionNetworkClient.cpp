@@ -11,10 +11,9 @@ m_Port(port)
 	m_RakClient->Connect(host.c_str(), atoi(port.c_str()), atoi(port.c_str()), 0, 0);
 }
 
-FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port,
-													ClientOptions *options)
-													: m_Host(host),
-													m_Port(port)
+FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port, ClientOptions *options)
+: m_Host(host),
+m_Port(port)
 {
 	m_RakClient = RakNetworkFactory::GetRakClientInterface();
 	m_RakClient->Connect(host.c_str(), atoi(port.c_str()), atoi(port.c_str()), 0, 0);
@@ -55,19 +54,19 @@ void FusionNetworkClient::run()
 		// If it wasn't a rakNet packet, we can deal with it
 		if (!rakPacket)
 		{
-			FusionMessage *m = FusionMessageBuilder::BuildMessage(p);
+			// playerid is set to 0, as only the server needs to know that
+			FusionMessage *m = FusionMessageBuilder::BuildMessage(p, 0);
 			m_Queue->_addInMessage(m, m->m_Channel);
 		}
 
 		m_RakClient->DeallocatePacket(p);
-	} while (p)
+	} while (p);
 }
 
 /*
 void FusionNetworkClient::_notifyNetEvent(unsigned char messageId)
 {
 	m_Mutex->enter();
-
 
 	m_Mutex->notify();
 	m_Mutex->leave();
@@ -99,7 +98,7 @@ bool FusionNetworkClient::handleRakPackets(Packet *p)
 	case ID_NO_FREE_INCOMING_CONNECTIONS:
 	case ID_DISCONNECTION_NOTIFICATION:
 	case ID_CONNECTION_LOST:
-		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p));
+		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, 0));
 		return true;
 		break;
 	}

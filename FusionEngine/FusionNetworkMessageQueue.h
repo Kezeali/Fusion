@@ -57,17 +57,17 @@ namespace FusionEngine
 		typedef std::vector<FusionMessage*> EventList;
 
 		//! Used internally by FusionNetwork[Client|Server]. Threadsafe.
-		const MessageQueue &_getInMessages(int channel);
+		MessageQueue *_getInMessages(int channel);
 		//! Used internally by FusionNetworkReceiver. Threadsafe.
 		void _addInMessage(FusionMessage *message, int channel);
 
 		//! Used internally... by nothing really :P Threadsafe.
-		const MessageQueue &_getOutMessages(int channel);
+		MessageQueue *_getOutMessages(int channel);
 		//! Used internally by FusionNetworkSender. Threadsafe.
 		void _addOutMessage(FusionMessage *message, int channel);
 
 		//! Used internally. Gets one message only. Null if none
-		const FusionMessage &_getInMessage(int channel);
+		FusionMessage *_getInMessage(int channel);
 
 		//! Used internally. Allows the CE to act on network events
 		/*!

@@ -33,10 +33,23 @@ Collaboration diagram for FusionEngine::FusionInput:<p><center><img src="class_f
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_input-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
+<tr><td colspan="2"><br><h2>Public Types</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="18deee8909c76a8d2a79018f165e3a05"></a><!-- doxytag: member="FusionEngine::FusionInput::PlayerInputMapList" ref="18deee8909c76a8d2a79018f165e3a05" args="" -->
+typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_player_input_map.html">PlayerInputMap</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#18deee8909c76a8d2a79018f165e3a05">PlayerInputMapList</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Typedef for ship inputs. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c8895d969d873685b5d66b187921e1a5"></a><!-- doxytag: member="FusionEngine::FusionInput::ShipInputList" ref="c8895d969d873685b5d66b187921e1a5" args="" -->
+typedef std::vector&lt; <a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#c8895d969d873685b5d66b187921e1a5">ShipInputList</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Typedef for ship inputs. <br></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#5556441201be40cb3cd0c2300dae068e">Test</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Finds required devices.  <a href="#5556441201be40cb3cd0c2300dae068e"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="97414ca0b1a9fd01cebbd89321dbabf8"></a><!-- doxytag: member="FusionEngine::FusionInput::Initialise" ref="97414ca0b1a9fd01cebbd89321dbabf8" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#97414ca0b1a9fd01cebbd89321dbabf8">Initialise</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sets up the input slots. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9f04150902a68b461046c3a5f210c59a"></a><!-- doxytag: member="FusionEngine::FusionInput::Activate" ref="9f04150902a68b461046c3a5f210c59a" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#9f04150902a68b461046c3a5f210c59a">Activate</a> ()</td></tr>
 
@@ -45,12 +58,16 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#bbf0b4b0921f68937e922c1a153e86bb">Suspend</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Unbinds inputs. Call when going to the menu. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="405d8e40f2d9c7777f8b19a521513cc1"></a><!-- doxytag: member="FusionEngine::FusionInput::SetInputMaps" ref="405d8e40f2d9c7777f8b19a521513cc1" args="(const ClientOptions &amp;from)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#405d8e40f2d9c7777f8b19a521513cc1">SetInputMaps</a> (const <a class="el" href="class_fusion_engine_1_1_client_options.html">ClientOptions</a> &amp;from)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sets up inputs. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="02f1286a6db3bfbf2edae41a35d796df"></a><!-- doxytag: member="FusionEngine::FusionInput::GetShipInputs" ref="02f1286a6db3bfbf2edae41a35d796df" args="(unsigned int player) const " -->
 <a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#02f1286a6db3bfbf2edae41a35d796df">GetShipInputs</a> (unsigned int player) const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the currently pressed inputs for the given ship. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="ed9c5a6e91bf1de52c12469ea7919d62"></a><!-- doxytag: member="FusionEngine::FusionInput::GetAllShipInputs" ref="ed9c5a6e91bf1de52c12469ea7919d62" args="() const " -->
-std::vector&lt; <a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#ed9c5a6e91bf1de52c12469ea7919d62">GetAllShipInputs</a> () const </td></tr>
+<a class="el" href="class_fusion_engine_1_1_fusion_input.html#c8895d969d873685b5d66b187921e1a5">ShipInputList</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_input.html#ed9c5a6e91bf1de52c12469ea7919d62">GetAllShipInputs</a> () const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the currently pressed inputs for all ships. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="14740706c50fa149a048bea9a792b114"></a><!-- doxytag: member="FusionEngine::FusionInput::GetGlobalInputs" ref="14740706c50fa149a048bea9a792b114" args="() const " -->
@@ -90,7 +107,7 @@ Provides an interface to an input buffer optimised for <a class="el" href="names
 <p>
 Finds required devices. 
 <p>
-This checks all input maps currently bound (by FusionInput::SetInputMaps()) to see if the device they are set to is present. If it isn't the test fails.<p>
+This checks all input maps currently bound (by <a class="el" href="class_fusion_engine_1_1_fusion_input.html#405d8e40f2d9c7777f8b19a521513cc1">FusionInput::SetInputMaps()</a>) to see if the device they are set to is present. If it isn't the test fails.<p>
 <dl compact><dt><b>Returns:</b></dt><dd>True if all devices are found.</dd></dl>
 <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_player_input_map.html">PlayerInputMap</a> | <a class="el" href="class_fusion_engine_1_1_global_input_map.html">GlobalInputMap</a> </dd></dl>
     </td>
@@ -98,7 +115,7 @@ This checks all input maps currently bound (by FusionInput::SetInputMaps()) to s
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionInputHandler.h<li>F:/Projects/Fusion/FusionEngine/FusionInputHandler.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:49 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 3 12:07:07 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

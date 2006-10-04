@@ -72,7 +72,7 @@ void FusionInput::SetInputMaps(const FusionEngine::ClientOptions &from)
 	m_PlayerInputMaps = from.PlayerInputs;
 }
 
-ShipInput FusionInput::GetShipInputs(unsigned int player) const
+ShipInput FusionInput::GetShipInputs(PlayerInd player) const
 {
 	return m_ShipInputData[player];
 }

@@ -8,7 +8,7 @@ FusionNetworkMessageQueue::FusionNetworkMessageQueue()
 	m_Mutex = CL_Mutex::create();
 }
 
-const MessageQueue &FusionNetworkMessageQueue::_getInMessages(int channel) const
+MessageQueue *FusionNetworkMessageQueue::_getInMessages(int channel) const
 {
 	m_Mutex->enter();
 
@@ -28,7 +28,7 @@ void FusionNetworkMessageQueue::_addInMessage(FusionMessage *message, int channe
 	m_Mutex->leave();
 }
 
-const MessageQueue &FusionNetworkMessageQueue::_getOutMessages(int channel)
+MessageQueue *FusionNetworkMessageQueue::_getOutMessages(int channel)
 {
 	m_Mutex->enter();
 
@@ -48,7 +48,7 @@ void FusionNetworkMessageQueue::_addOutMessage(FusionEngine::FusionMessage *mess
 	m_Mutex->leave();
 }
 
-const FusionMessage &FusionNetworkMessageQueue::_getInMessage(int channel)
+FusionMessage *FusionNetworkMessageQueue::_getInMessage(int channel)
 {
 	m_Mutex->enter();
 
@@ -68,7 +68,7 @@ void FusionNetworkMessageQueue::_addEvent(FusionMessage *message)
 	m_Mutex->leave();
 }
 
-const EventList &FusionNetworkMessageQueue::GetEvents()
+FusionNetworkMessageQueue::EventList *FusionNetworkMessageQueue::GetEvents()
 {
 	m_Mutex->enter();
 

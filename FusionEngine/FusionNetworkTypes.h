@@ -32,26 +32,51 @@ namespace FusionEngine
 	//! Channels
 	enum
 	{
-		CID_SYSTEM,
-		CID_FILETRANSFER,
-		CID_GAME,
-		CID_CHAT
-	};
+		//@{
+		//! Channels
 
-	enum
-	{
-		//!sys
-		MTID_NEWPLAYER,
+		//! (0000 0001)
+		CID_SYSTEM = 1,
+		//! (0000 0010)
+		CID_FILETRANSFER = 2,
+		//! (0000 0100)
+		CID_GAME = 4,
+		//! (0000 1000)
+		CID_CHAT = 8,
+		//@}
+
+		//@{
+		//! System channel message types
+
+		//! (0001 0000)
+		MTID_NEWPLAYER = 16,
+		//@}
+
+		//@{
+		//! File transfer channel message types
+
+		//! (0001 0000)
+		MTID_STARTTRANSFER = 16,
+		//@}
+
 		//@{
 		//! Gameplay channel message types
-		MTID_SHIPFRAME,
-		MTID_PROJECTILEFRAME,
+
+		//! (0001 0000)
+		MTID_SHIPFRAME = 16,
+		//! (0010 0000)
+		MTID_PROJECTILEFRAME = 32,
 		//@}
 
 		//@{
 		//! Chat channel message types
-		MTID_NAME,
-		MTID_CHAT
+
+		//! (0001 0000)
+		MTID_CHALL = 16,
+		//! (0010 0000)
+		MTID_CHTEAM = 32,
+		//! (0100 0000)
+		MTID_CHONE = 64
 		//@}
 	};
 

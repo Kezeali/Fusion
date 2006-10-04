@@ -57,48 +57,48 @@ namespace FusionEngine
 	{
 	public:
 		/*!
-		 * \\brief
+		 * \brief
 		 * Sets up a network client.
 		 *
-		 * \\param host
+		 * \param host
 		 * The hostname or ipaddress of the server.
 		 *
-		 * \\param port
+		 * \param port
 		 * The port of the server.
 		 */
 		FusionNetworkClient(const std::string &host, const std::string &port);
 		/*!
-		 * \\brief
+		 * \brief
 		 * Sets up a network client.
 		 *
-		 * \\param address
+		 * \param address
 		 * A CL_IPAddress pointing to the server.
 		 */
 		//FusionNetworkClient(const CL_IPAddress &address);
 
 		/*!
-		 * \\brief
+		 * \brief
 		 * Sets up a network client. Gets settings from a ClientOptions object.
 		 *
-		 * \\param host
+		 * \param host
 		 * The hostname or ipaddress of the server.
 		 *
-		 * \\param port
+		 * \param port
 		 * The port of the server.
 		 *
-		 * \\param options
+		 * \param options
 		 * Object to load options from (max. rate, packet interval, etc.)
 		 */
 		FusionNetworkClient(const std::string &host, const std::string &port,
 			ClientOptions *options);
 		/*!
-		 * \\brief
+		 * \brief
 		 * Sets up a network client. Gets settings from a ClientOptions object.
 		 *
-		 * \\param address
+		 * \param address
 		 * A CL_IPAddress pointing to the server.
 		 *
-		 * \\param options
+		 * \param options
 		 * Object to load options from (max. rate, packet interval, etc.)
 		 */
 		//FusionNetworkClient(const CL_IPAddress &address, ClientOptions *options);
@@ -109,13 +109,15 @@ namespace FusionEngine
 	public:
 		//! A group of messages
 		typedef std::deque<FusionMessage*> MessageQueue;
+		//! Maps Fusion player ids to RakNet player indexes
+		typedef std::map<int, int> PlayerIDMap;
 
 		//! Adds a message to the outgoing queue.
 		void QueueMessage(FusionMessage *message, int channel);
 		//! Gets all messages from the incomming queue.
-		const MessageQueue &GetAllMessages(int channel);
+		MessageQueue *GetAllMessages(int channel);
 		//! Gets the message from the front of the incomming queue.
-		const FusionMessage &GetNextMessage(int channel);
+		FusionMessage *GetNextMessage(int channel);
 
 		//! Updates the network
 		void run();

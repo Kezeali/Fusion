@@ -42,10 +42,10 @@ namespace FusionEngine
 	public:
 		//! Basic Constructor. Don't use
 		FusionMessage();
-		//! Constructor. +type +playerIndex
-		FusionMessage(unsigned char type, unsigned int playerInd);
-		//! Constructor. +type +playerIndex +message
-		FusionMessage(unsigned char type, unsigned int playerInd, unsigned char *message);
+		//! Constructor. +channel +type +playerIndex
+		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd);
+		//! Constructor. +channel +type +playerIndex +message
+		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
@@ -55,9 +55,11 @@ namespace FusionEngine
 		//! Read data
 		const unsigned char Read();
 		//! Read PlayerInd
-		const unsigned int GetPlayerInd();
+		const PlayerInd GetPlayerInd() const;
 		//! Read type
-		const unsigned char GetType();
+		const unsigned char GetType() const;
+		//! Read channel
+		const unsigned char GetChannel() const;
 
 	private:
 		/*!
@@ -87,7 +89,7 @@ namespace FusionEngine
 		int m_Channel;
 
 		//! The player from whence it came
-		unsigned int m_PlayerInd;
+		PlayerInd m_PlayerInd;
 
 		//! The message serialised
 		unsigned char *m_Message;

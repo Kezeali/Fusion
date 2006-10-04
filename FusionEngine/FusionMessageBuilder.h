@@ -45,17 +45,19 @@ namespace FusionEngine
 	class FusionMessageBuilder
 	{
 	public:
-		//! Builds a message from a ShipState
-		static FusionMessage *BuildMessage(const ShipState &input);
-		//! Builds a message from a ProjectileState
-		static FusionMessage *BuildMessage(const ProjectileState &input);
-		//! Builds a message from a network passage
-		static FusionMessage *BuildMessage(const Packet *packet);
+		//! Builds a message from a ShipState (usually outgoing)
+		static FusionMessage *BuildMessage(const ShipState &input, PlayerInd playerid);
+		//! Builds a message from a ProjectileState (usually outgoing)
+		static FusionMessage *BuildMessage(const ProjectileState &input, PlayerInd playerid);
+
+		//! Builds a message from a network packet (usually incoming)
+		static FusionMessage *BuildMessage(const Packet *packet, PlayerInd playerid);
+
+		//! Builds a message from a RakNet engine message (I call these 'events')
+		static FusionMessage *BuildEventMessage(const Packet *packet, PlayerInd playerind);
 
 		//! Extract the id from the packet. Internal use only
 		static unsigned char _getPacketIdentifier(Packet *p);
-		//! Extract the id from the packet. Internal use only
-		//static unsigned char _getPacketChannel(Packet *p);
 
 	};
 

@@ -1,4 +1,5 @@
 base referer
-rect $class_fusion_engine_1_1_client_options.html 128,97 320,124
-rect $class_fusion_engine_1_1_global_input_map.html 7,7 212,33
-rect $class_fusion_engine_1_1_network_settings.html 236,7 444,33
+rect $class_fusion_engine_1_1_server_options.html 7,97 204,124
+rect $class_fusion_engine_1_1_client_options.html 228,97 420,124
+rect $class_fusion_engine_1_1_global_input_map.html 105,7 311,33
+rect $class_fusion_engine_1_1_network_settings.html 335,7 543,33

@@ -42,8 +42,10 @@ namespace FusionEngine
 		NetworkSettings();
 
 	public:
-		//! Maximum packets per second
-		unsigned int MaximumRate;
+		//! Maximum messages per second (how oftern to send / receive states)
+		unsigned int MaxMessageRate;
+		//! Sleep timer for network thread (for raknet)
+		unsigned int NetDelay;
 	};
 
 	/*!
@@ -70,7 +72,7 @@ namespace FusionEngine
 		NetworkSettings NetworkOptions;
 
 		//! Set the controls for defaults
-		void DefaultPlayerControls(unsigned int player);
+		void DefaultPlayerControls(PlayerInd player);
 		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
 	};

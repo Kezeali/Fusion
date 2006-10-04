@@ -21,7 +21,7 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionNetworkMessageQueue</a></div>
-<h1>FusionEngine::FusionNetworkMessageQueue Class Reference</h1><!-- doxytag: class="FusionEngine::FusionNetworkMessageQueue" -->Worker thread for receiving messages.  
+<h1>FusionEngine::FusionNetworkMessageQueue Class Reference</h1><!-- doxytag: class="FusionEngine::FusionNetworkMessageQueue" -->Thread safe message storage.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionNetworkMessageQueue.h&gt;</code>
@@ -36,7 +36,11 @@ typedef std::deque&lt; <a class="el" href="class_fusion_engine_1_1_fusion_messag
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="04b6462b91f877ae4406423313b71a02"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::ChannelList" ref="04b6462b91f877ae4406423313b71a02" args="" -->
 typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#5d3a450f307637820d7f00f464c88458">MessageQueue</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#04b6462b91f877ae4406423313b71a02">ChannelList</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A group of channels (containing messages). <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A group of channels (each containing messages). <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="cb81677cb74779b9dd6e4a4f699f5da4"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::EventList" ref="cb81677cb74779b9dd6e4a4f699f5da4" args="" -->
+typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#cb81677cb74779b9dd6e4a4f699f5da4">EventList</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A group of net events. <br></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="6635a29dd0aea590bbe2444c35fb41b8"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::FusionNetworkMessageQueue" ref="6635a29dd0aea590bbe2444c35fb41b8" args="()" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#6635a29dd0aea590bbe2444c35fb41b8">FusionNetworkMessageQueue</a> ()</td></tr>
@@ -62,10 +66,29 @@ const <a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.h
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#ca366c3e7dd1ef06d1091e4191964b4e">_addOutMessage</a> (<a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *message, int channel)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by FusionNetworkSender. Threadsafe. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="723f67e899ff723bab002d3c21412239"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::_getInMessage" ref="723f67e899ff723bab002d3c21412239" args="(int channel)" -->
-const <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#723f67e899ff723bab002d3c21412239">_getInMessage</a> (int channel)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e1601a983c0100b0972273aaa9f68fe9"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::_getInMessage" ref="e1601a983c0100b0972273aaa9f68fe9" args="(int channel)" -->
+const <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#e1601a983c0100b0972273aaa9f68fe9">_getInMessage</a> (int channel)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally. Gets one message only. Null if none. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#1fa89cb3ca1b7679195ba3b56f4f48ef">_addEvent</a> (<a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *message)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally. Allows the CE to act on network events.  <a href="#1fa89cb3ca1b7679195ba3b56f4f48ef"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2f52685d7acb529f0f5e09b27366c3cb"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::GetEvents" ref="2f52685d7acb529f0f5e09b27366c3cb" args="()" -->
+const <a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#cb81677cb74779b9dd6e4a4f699f5da4">EventList</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#2f52685d7acb529f0f5e09b27366c3cb">GetEvents</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows the <a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a>, etc. to access the NetEvent queue. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7ed8a4c4bf552eb39e74ee3b6d8f3c49"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::ClearEvents" ref="7ed8a4c4bf552eb39e74ee3b6d8f3c49" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#7ed8a4c4bf552eb39e74ee3b6d8f3c49">ClearEvents</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes events. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f87ec418d083355e2d6acabedb457215"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::ClearInMessages" ref="f87ec418d083355e2d6acabedb457215" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#f87ec418d083355e2d6acabedb457215">ClearInMessages</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes messages from the in queue. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="80d107daf1daf6a1c26172e193d69baf"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::ClearOutMessages" ref="80d107daf1daf6a1c26172e193d69baf" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#80d107daf1daf6a1c26172e193d69baf">ClearOutMessages</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes messages from the out queue. <br></td></tr>
 <tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="8740b2c41f1602496ea1d85459d4376c"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::m_InChannels" ref="8740b2c41f1602496ea1d85459d4376c" args="" -->
 <a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#04b6462b91f877ae4406423313b71a02">ChannelList</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#8740b2c41f1602496ea1d85459d4376c">m_InChannels</a></td></tr>
@@ -75,15 +98,55 @@ const <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMes
 <a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#04b6462b91f877ae4406423313b71a02">ChannelList</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#ed4a00042403cdcfce09b49e74fa4e87">m_OutChannels</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Teh out queuez. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="475a08ed0bd4d0880958e8653d250f2c"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::m_EventList" ref="475a08ed0bd4d0880958e8653d250f2c" args="" -->
+<a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#cb81677cb74779b9dd6e4a4f699f5da4">EventList</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#475a08ed0bd4d0880958e8653d250f2c">m_EventList</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">List of network events. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">CL_Mutex *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html#f0612313f0fcebe38315ae4f190b6f68">m_Mutex</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used for thread-safety.  <a href="#f0612313f0fcebe38315ae4f190b6f68"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-Worker thread for receiving messages. 
+Thread safe message storage. 
 <p>
-Possably [depreciated] by RakNet... ATM seems useable. 
+Possably [depreciated]... ATM seems useable, but all this stuff could be done in NetworkClient (at the expense of its simplicity.) 
 <p>
+<hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="1fa89cb3ca1b7679195ba3b56f4f48ef"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::_addEvent" ref="1fa89cb3ca1b7679195ba3b56f4f48ef" args="(FusionMessage *message)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionNetworkMessageQueue::_addEvent           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>message</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Used internally. Allows the CE to act on network events. 
+<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>messageId</em>&nbsp;</td><td>The packet ID which CE should act on. </td></tr>
+  </table>
+</dl>
+    </td>
+  </tr>
+</table>
 <hr><h2>Member Data Documentation</h2>
 <a class="anchor" name="f0612313f0fcebe38315ae4f190b6f68"></a><!-- doxytag: member="FusionEngine::FusionNetworkMessageQueue::m_Mutex" ref="f0612313f0fcebe38315ae4f190b6f68" args="" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
@@ -112,7 +175,7 @@ Ensures thread-safety by preventing concurrent data access via _getMessages().  
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionNetworkMessageQueue.h<li>F:/Projects/Fusion/FusionEngine/FusionNetworkMessageQueue.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:49 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 3 12:07:07 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

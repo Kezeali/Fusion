@@ -47,6 +47,9 @@ namespace FusionEngine
 	class FusionPhysicsWorld;
 	class FusionPhysicsBody;
 	class FusionPhysicsCollisionGrid;
+
+	// Global typedefs
+	typedef unsigned short PlayerInd;
 }
 
 #endif

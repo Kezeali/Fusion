@@ -84,7 +84,7 @@ namespace FusionEngine
 		void SetInputMaps(const ClientOptions &from);
 
 		//! Returns the currently pressed inputs for the given ship.
-		ShipInput GetShipInputs(unsigned int player) const;
+		ShipInput GetShipInputs(PlayerInd player) const;
 		//! Returns the currently pressed inputs for all ships.
 		ShipInputList GetAllShipInputs() const;
 		//! Returns the currently pressed global inputs.

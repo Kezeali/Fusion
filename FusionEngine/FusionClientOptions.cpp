@@ -14,13 +14,13 @@ ClientOptions::ClientOptions()
 : NumPlayers(0)
 {
 	DefaultGlobalControls();
-	for (unsigned int i=0; i<g_MaxPlayers; i++)
+	for (PlayerInd i=0; i<g_MaxPlayers; i++)
 	{
 		DefaultPlayerControls(i);
 	}
 }
 
-void ClientOptions::DefaultPlayerControls(unsigned int player)
+void ClientOptions::DefaultPlayerControls(PlayerInd player)
 {
 	switch (player)
 	{

@@ -1,7 +1,6 @@
 base referer
-rect $class_fusion_engine_1_1_client_environment.html 14,10 235,36
-rect $class_fusion_engine_1_1_fusion_node.html 34,100 215,127
-rect $struct_fusion_engine_1_1_ship_input.html 40,151 208,178
-rect $struct_fusion_engine_1_1_ship_state.html 40,210 208,236
-rect $class_fusion_engine_1_1_fusion_ship_drawable.html 7,260 242,287
-rect $class_fusion_engine_1_1_fusion_physics_body.html 11,311 238,338
+rect $class_fusion_engine_1_1_fusion_node.html 34,47 215,74
+rect $struct_fusion_engine_1_1_ship_input.html 40,98 208,124
+rect $struct_fusion_engine_1_1_ship_state.html 40,158 208,184
+rect $class_fusion_engine_1_1_fusion_ship_drawable.html 7,208 242,235
+rect $class_fusion_engine_1_1_fusion_physics_body.html 11,259 238,286

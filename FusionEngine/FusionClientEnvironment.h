@@ -163,7 +163,7 @@ namespace FusionEngine
 		 */
 		void send();
 		//! Receive all packets
-		void receive();
+		bool receive();
 
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();

@@ -38,15 +38,12 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds all ship state information for each ship.  <a href="class_fusion_engine_1_1_fusion_client_ship.html#_details">More...</a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_destructable_image.html">DestructableImage</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Provides a surface and methods to modify it.  <a href="class_fusion_engine_1_1_destructable_image.html#_details">More...</a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_damage_map.html">DamageMap</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows data about image deformation to be transferred efficiantly over a network.  <a href="class_fusion_engine_1_1_damage_map.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html">FusionDrawable</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Base class for objects controlled by a node.  <a href="class_fusion_engine_1_1_fusion_drawable.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html">FusionGame</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Gameplay overlord.  <a href="class_fusion_engine_1_1_fusion_game.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Input state structure for each ship.  <a href="struct_fusion_engine_1_1_ship_input.html#_details">More...</a><br></td></tr>
@@ -73,9 +70,10 @@
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Not quite a factory.  <a href="class_fusion_engine_1_1_fusion_message_builder.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionNetworkClient</a></td></tr>
 
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Handles network communicaion for the client in-game.  <a href="class_fusion_engine_1_1_fusion_network_client.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionNetworkMessageQueue</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Worker thread for receiving messages.  <a href="class_fusion_engine_1_1_fusion_network_message_queue.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Thread safe message storage.  <a href="class_fusion_engine_1_1_fusion_network_message_queue.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> represents a moveable object with sub-objects.  <a href="class_fusion_engine_1_1_fusion_node.html#_details">More...</a><br></td></tr>
@@ -107,13 +105,19 @@
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds all state information for each projectile.  <a href="struct_fusion_engine_1_1_projectile_state.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returned by <a class="el" href="namespace_fusion_engine.html#2674c45bf8badb53dee4f0c32fdb3e38">GetPackageType()</a>.  <a href="class_fusion_engine_1_1_package_type.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returned by GetPackageType().  <a href="class_fusion_engine_1_1_package_type.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Loads and stores resources for gameplay.  <a href="class_fusion_engine_1_1_resource_loader.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> provides easy memory management for FusionNodes.  <a href="class_fusion_engine_1_1_fusion_scene.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The client gameplay environment.  <a href="class_fusion_engine_1_1_server_environment.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_server_options.html">ServerOptions</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Server ops. Nothing atm.  <a href="class_fusion_engine_1_1_server_options.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html">FusionShipDrawable</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents a ship visually.  <a href="class_fusion_engine_1_1_fusion_ship_drawable.html#_details">More...</a><br></td></tr>
@@ -145,76 +149,37 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="77f24d39cb48a9f0579b53997867516a"></a><!-- doxytag: member="FusionEngine::StringVector" ref="77f24d39cb48a9f0579b53997867516a" args="" -->
 typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">It's a vector. It's a string. It's a StringVector! <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...). <br></td></tr>
 <tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Channels. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom">{ <a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75">MTID_NEWPLAYER</a>, 
-<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0">MTID_SHIPFRAME</a>, 
-<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c">MTID_PROJECTILEFRAME</a>, 
-<a class="el" href="namespace_fusion_engine.html#d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2">MTID_NAME</a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom">{ <br>
+&nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85">CID_SYSTEM</a> =  1, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96">CID_FILETRANSFER</a> =  2, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018">CID_GAME</a> =  4, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def497c1b12d2fdefd6f684b10fded4c387">CID_CHAT</a> =  8, 
+<br>
+&nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def4417fdb7af2dd4752aa5324915a46e75">MTID_NEWPLAYER</a> =  16, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def1ba28f121e1dacf634eb68be3df460c6">MTID_STARTTRANSFER</a> =  16, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defdb0ee13a082fd60bb7e9452cbc4be4f0">MTID_SHIPFRAME</a> =  16, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c">MTID_PROJECTILEFRAME</a> =  32, 
+<br>
+&nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defe3102d7d2d7d799d3958e4881d62a6c2">MTID_NAME</a> =  16, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def5a9e60ea9e8548804eb5fc0b33b274b1">MTID_CHAT</a> =  32
+<br>
  }</td></tr>
 
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Channels.  <a href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Types of bodies. <br></td></tr>
-<tr><td colspan="2"><br><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9ebaaf2b15bf6cd315ada888140508a0"></a><!-- doxytag: member="FusionEngine::ClearAll" ref="9ebaaf2b15bf6cd315ada888140508a0" args="()" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#9ebaaf2b15bf6cd315ada888140508a0">ClearAll</a> ()</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clears and deletes all loaded resources. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#2674c45bf8badb53dee4f0c32fdb3e38">GetPackageType</a> (const std::string &amp;name)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deduces the type of resource stored in the given package.  <a href="#2674c45bf8badb53dee4f0c32fdb3e38"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#9b15cc8260480bd1d73fce8381dfacf1">VerifyPackage</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc, const std::string &amp;path)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a package.  <a href="#9b15cc8260480bd1d73fce8381dfacf1"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#7e896837c46e436a3fc41e49d9720505">VerifyShip</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a ship package.  <a href="#7e896837c46e436a3fc41e49d9720505"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#e3e296ef7726a0275cbc6728031a21e2">VerifyLevel</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a level package.  <a href="#e3e296ef7726a0275cbc6728031a21e2"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#cfaafafd6014e8f9c346445d18027ade">VerifyWeapon</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a weapon package.  <a href="#cfaafafd6014e8f9c346445d18027ade"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#bb4c85e01fb8b4fb723d4cd04e5d0ace">LoadShips</a> (<a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a> names)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Forces the resource loader to load the defined ships.  <a href="#bb4c85e01fb8b4fb723d4cd04e5d0ace"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#ae37c08008110377ff701d8f18fc3de1">LoadVerified</a> ()</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Loads all packages previously verified.  <a href="#ae37c08008110377ff701d8f18fc3de1"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="eb134e00a3d7dd073a15b0b737e27464"></a><!-- doxytag: member="FusionEngine::GetLoadedShips" ref="eb134e00a3d7dd073a15b0b737e27464" args="()" -->
-ShipResourcePtrMap&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#eb134e00a3d7dd073a15b0b737e27464">GetLoadedShips</a> ()</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Checks a loaded document for validity as a ship definiiton. <br></td></tr>
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="1a8d90363aa0c6069d539868e21e79ee"></a><!-- doxytag: member="FusionEngine::ClearAll" ref="1a8d90363aa0c6069d539868e21e79ee" args="" -->
-<a class="el" href="class_fusion_engine_1_1_package_type.html">FusionEngine::PackageType</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#1a8d90363aa0c6069d539868e21e79ee">ClearAll</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a9b2229b4283fbda5a07f96ea21c3f07"></a><!-- doxytag: member="FusionEngine::g_MaxPlayers" ref="a9b2229b4283fbda5a07f96ea21c3f07" args="" -->
+const unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#a9b2229b4283fbda5a07f96ea21c3f07">g_MaxPlayers</a> = 4</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returned by <a class="el" href="namespace_fusion_engine.html#2674c45bf8badb53dee4f0c32fdb3e38">GetPackageType()</a>.<p>
-Loads and stores resources for gameplay. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="3714c1c2cfc5bcfe3114739f89bf6863"></a><!-- doxytag: member="FusionEngine::ShipsPath" ref="3714c1c2cfc5bcfe3114739f89bf6863" args="" -->
-const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#3714c1c2cfc5bcfe3114739f89bf6863">ShipsPath</a> = &quot;Ships/&quot;</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Ship packages, including trailing slash. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="59d6220dbbfc731ce3d0f3bed7b022e0"></a><!-- doxytag: member="FusionEngine::LevelsPath" ref="59d6220dbbfc731ce3d0f3bed7b022e0" args="" -->
-const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#59d6220dbbfc731ce3d0f3bed7b022e0">LevelsPath</a> = &quot;Levels/&quot;</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Level packages, including trailing slash. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="bf5449758db0e5cf9e355eceb3541776"></a><!-- doxytag: member="FusionEngine::WeaponsPath" ref="bf5449758db0e5cf9e355eceb3541776" args="" -->
-const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#bf5449758db0e5cf9e355eceb3541776">WeaponsPath</a> = &quot;Weapons/&quot;</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path th Weapon packages, including trailing slash. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7e67526866933229e51fdc6ca036a55f"></a><!-- doxytag: member="FusionEngine::m_ShipResources" ref="7e67526866933229e51fdc6ca036a55f" args="" -->
-FusionEngine::PackageResources&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#7e67526866933229e51fdc6ca036a55f">m_ShipResources</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Encapsulates resource maps of various types. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Max players per client. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 <a class="el" href="namespace_fusion.html">Fusion</a>. <hr><h2>Enumeration Type Documentation</h2>
-<a class="anchor" name="d401819bdfee58a48d21caffcb3ad788"></a><!-- doxytag: member="FusionEngine::@1" ref="d401819bdfee58a48d21caffcb3ad788" args="" --><p>
+<a class="anchor" name="6904447ab87ac636b731c19773191def"></a><!-- doxytag: member="FusionEngine::@0" ref="6904447ab87ac636b731c19773191def" args="" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -234,291 +199,36 @@ FusionEngine::PackageResources&nbsp;</td><td class="memItemRight" valign="bottom
     <td>
 
 <p>
+Channels. 
+<p>
 <dl compact><dt><b>Enumerator: </b></dt><dd>
 <table border="0" cellspacing="2" cellpadding="0">
-<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75"></a><!-- doxytag: member="MTID_NEWPLAYER" ref="d401819bdfee58a48d21caffcb3ad7884417fdb7af2dd4752aa5324915a46e75" args="" -->MTID_NEWPLAYER</em>&nbsp;</td><td>
-sys </td></tr>
-<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0"></a><!-- doxytag: member="MTID_SHIPFRAME" ref="d401819bdfee58a48d21caffcb3ad788db0ee13a082fd60bb7e9452cbc4be4f0" args="" -->MTID_SHIPFRAME</em>&nbsp;</td><td>
-Gameplay channel message types. </td></tr>
-<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c"></a><!-- doxytag: member="MTID_PROJECTILEFRAME" ref="d401819bdfee58a48d21caffcb3ad7889145a0196f7253948fbe60012eb90f1c" args="" -->MTID_PROJECTILEFRAME</em>&nbsp;</td><td>
-Gameplay channel message types. </td></tr>
-<tr><td valign="top"><em><a class="anchor" name="d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2"></a><!-- doxytag: member="MTID_NAME" ref="d401819bdfee58a48d21caffcb3ad788e3102d7d2d7d799d3958e4881d62a6c2" args="" -->MTID_NAME</em>&nbsp;</td><td>
-Chat channel message types. </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85"></a><!-- doxytag: member="CID_SYSTEM" ref="6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85" args="" -->CID_SYSTEM</em>&nbsp;</td><td>
+(0000 0001) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96"></a><!-- doxytag: member="CID_FILETRANSFER" ref="6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96" args="" -->CID_FILETRANSFER</em>&nbsp;</td><td>
+(0000 0010) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018"></a><!-- doxytag: member="CID_GAME" ref="6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018" args="" -->CID_GAME</em>&nbsp;</td><td>
+(0000 0100) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def497c1b12d2fdefd6f684b10fded4c387"></a><!-- doxytag: member="CID_CHAT" ref="6904447ab87ac636b731c19773191def497c1b12d2fdefd6f684b10fded4c387" args="" -->CID_CHAT</em>&nbsp;</td><td>
+(0000 1000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def4417fdb7af2dd4752aa5324915a46e75"></a><!-- doxytag: member="MTID_NEWPLAYER" ref="6904447ab87ac636b731c19773191def4417fdb7af2dd4752aa5324915a46e75" args="" -->MTID_NEWPLAYER</em>&nbsp;</td><td>
+(0001 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def1ba28f121e1dacf634eb68be3df460c6"></a><!-- doxytag: member="MTID_STARTTRANSFER" ref="6904447ab87ac636b731c19773191def1ba28f121e1dacf634eb68be3df460c6" args="" -->MTID_STARTTRANSFER</em>&nbsp;</td><td>
+(0001 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defdb0ee13a082fd60bb7e9452cbc4be4f0"></a><!-- doxytag: member="MTID_SHIPFRAME" ref="6904447ab87ac636b731c19773191defdb0ee13a082fd60bb7e9452cbc4be4f0" args="" -->MTID_SHIPFRAME</em>&nbsp;</td><td>
+(0001 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c"></a><!-- doxytag: member="MTID_PROJECTILEFRAME" ref="6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c" args="" -->MTID_PROJECTILEFRAME</em>&nbsp;</td><td>
+(0010 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defe3102d7d2d7d799d3958e4881d62a6c2"></a><!-- doxytag: member="MTID_NAME" ref="6904447ab87ac636b731c19773191defe3102d7d2d7d799d3958e4881d62a6c2" args="" -->MTID_NAME</em>&nbsp;</td><td>
+(0001 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def5a9e60ea9e8548804eb5fc0b33b274b1"></a><!-- doxytag: member="MTID_CHAT" ref="6904447ab87ac636b731c19773191def5a9e60ea9e8548804eb5fc0b33b274b1" args="" -->MTID_CHAT</em>&nbsp;</td><td>
+(0010 0000) </td></tr>
 </table>
 </dl>
     </td>
   </tr>
 </table>
-<hr><h2>Function Documentation</h2>
-<a class="anchor" name="2674c45bf8badb53dee4f0c32fdb3e38"></a><!-- doxytag: member="FusionEngine::GetPackageType" ref="2674c45bf8badb53dee4f0c32fdb3e38" args="(const std::string &amp;name)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a> FusionEngine::GetPackageType           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap> <em>name</em>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Deduces the type of resource stored in the given package. 
-<p>
-<dl compact><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>The filename of the package.</td></tr>
-  </table>
-</dl>
-<dl compact><dt><b>Returns:</b></dt><dd>The <a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a> of the package. If the file isn't found it returns FileNotFound. If the package is of unknown (invalid) type, it returns UnkownType. </dd></dl>
-    </td>
-  </tr>
-</table>
-<a class="anchor" name="bb4c85e01fb8b4fb723d4cd04e5d0ace"></a><!-- doxytag: member="FusionEngine::LoadShips" ref="bb4c85e01fb8b4fb723d4cd04e5d0ace" args="(StringVector names)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">c bool ResourceLoader::LoadShips           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">StringVector&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap> <em>names</em>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Forces the resource loader to load the defined ships. 
-<p>
-Calls parseShipDefinition on each of the packages named in the vector.<p>
-<dl compact><dt><b>Remarks:</b></dt><dd>It is recomended that LoadVerified be used instead, as it will load only previously verified packages (that is, packages with the correct filename and crc.) </dd></dl>
-    </td>
-  </tr>
-</table>
-<a class="anchor" name="ae37c08008110377ff701d8f18fc3de1"></a><!-- doxytag: member="FusionEngine::LoadVerified" ref="ae37c08008110377ff701d8f18fc3de1" args="()" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::LoadVerified           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Loads all packages previously verified. 
-<p>
-The ResourceLoader class stores a list of packages verified with VerifyPackage, VerifyShip, VerifyLevel and VerifyWeapon. This function iterates through that list, loading all resources. Using this method is recomended over directly calling LoadShips, LoadLevel, and LoadWeapons.<p>
-<dl compact><dt><b>Remarks:</b></dt><dd>This method still has a return value (is failable) because even though the packages will have been verified as consistant with the server, the server may have bad packages installed! </dd></dl>
-    </td>
-  </tr>
-</table>
-<a class="anchor" name="e3e296ef7726a0275cbc6728031a21e2"></a><!-- doxytag: member="FusionEngine::VerifyLevel" ref="e3e296ef7726a0275cbc6728031a21e2" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::VerifyLevel           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a level package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Levels/");</code> where Levels/ is the local level package directory.     </td>
-  </tr>
-</table>
-<a class="anchor" name="9b15cc8260480bd1d73fce8381dfacf1"></a><!-- doxytag: member="FusionEngine::VerifyPackage" ref="9b15cc8260480bd1d73fce8381dfacf1" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc, const std::string &amp;path)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::VerifyPackage           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>path</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a package. 
-<p>
-<dl compact><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>The filename of the package.</td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>crc</em>&nbsp;</td><td>The crc that should be valid with the package.</td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>path</em>&nbsp;</td><td>The path the package should reside in. </td></tr>
-  </table>
-</dl>
-    </td>
-  </tr>
-</table>
-<a class="anchor" name="7e896837c46e436a3fc41e49d9720505"></a><!-- doxytag: member="FusionEngine::VerifyShip" ref="7e896837c46e436a3fc41e49d9720505" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::VerifyShip           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a ship package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Ships/");</code> where Ships/ is the local ship package directory.     </td>
-  </tr>
-</table>
-<a class="anchor" name="cfaafafd6014e8f9c346445d18027ade"></a><!-- doxytag: member="FusionEngine::VerifyWeapon" ref="cfaafafd6014e8f9c346445d18027ade" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::VerifyWeapon           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a weapon package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Weapons/");</code> where Weapons/ is the local weapons package directory.     </td>
-  </tr>
-</table>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:48 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 3 12:07:06 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

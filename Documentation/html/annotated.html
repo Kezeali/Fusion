@@ -22,17 +22,16 @@
 <h1>Fusion Class List</h1>Here are the classes, structs, unions and interfaces with brief descriptions:<table>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_client_environment.html">FusionEngine::ClientEnvironment</a></td><td class="indexvalue">The client gameplay environment </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_client_options.html">FusionEngine::ClientOptions</a></td><td class="indexvalue"></td></tr>
-  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_damage_map.html">FusionEngine::DamageMap</a></td><td class="indexvalue">Allows data about image deformation to be transferred efficiantly over a network </td></tr>
-  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_destructable_image.html">FusionEngine::DestructableImage</a></td><td class="indexvalue">Provides a surface and methods to modify it </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html">FusionEngine::FusionBitmask</a></td><td class="indexvalue">OO wrapper for Ulf Ekstrom's bitmask library </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionEngine::FusionClientShip</a></td><td class="indexvalue">Holds all ship state information for each ship </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_1_1_fusion_demo.html">Fusion::FusionDemo</a></td><td class="indexvalue">A simplified form of the <a class="el" href="namespace_fusion.html">Fusion</a> front-end </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html">FusionEngine::FusionDrawable</a></td><td class="indexvalue">Base class for objects controlled by a node </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_game.html">FusionEngine::FusionGame</a></td><td class="indexvalue">Gameplay overlord </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionEngine::FusionInput</a></td><td class="indexvalue">Provides an interface to an input buffer optimised for <a class="el" href="namespace_fusion_engine.html">FusionEngine</a> </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionEngine::FusionMessage</a></td><td class="indexvalue">High level network messaging </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html">FusionEngine::FusionMessageBuilder</a></td><td class="indexvalue">Not quite a factory </td></tr>
-  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionEngine::FusionNetworkClient</a></td><td class="indexvalue"></td></tr>
-  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionEngine::FusionNetworkMessageQueue</a></td><td class="indexvalue">Worker thread for receiving messages </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionEngine::FusionNetworkClient</a></td><td class="indexvalue">Handles network communicaion for the client in-game </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionEngine::FusionNetworkMessageQueue</a></td><td class="indexvalue">Thread safe message storage </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionEngine::FusionNode</a></td><td class="indexvalue"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> represents a moveable object with sub-objects </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionEngine::FusionPhysicsBody</a></td><td class="indexvalue"></td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_fusion_physics_collision_grid.html">FusionEngine::FusionPhysicsCollisionGrid</a></td><td class="indexvalue">Compartmentises collision checking to keep redundant checks to a minimum </td></tr>
@@ -53,16 +52,18 @@
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_global_input_map.html">FusionEngine::GlobalInputMap</a></td><td class="indexvalue">Keybindings for global functions </td></tr>
   <tr><td class="indexkey"><a class="el" href="struct_fusion_engine_1_1_input_dev_type.html">FusionEngine::InputDevType</a></td><td class="indexvalue">Possable input devices </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_network_settings.html">FusionEngine::NetworkSettings</a></td><td class="indexvalue">Settings for network related stuff </td></tr>
-  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_package_type.html">FusionEngine::PackageType</a></td><td class="indexvalue">Returned by <a class="el" href="namespace_fusion_engine.html#2674c45bf8badb53dee4f0c32fdb3e38">GetPackageType()</a> </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_package_type.html">FusionEngine::PackageType</a></td><td class="indexvalue">Returned by GetPackageType() </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_player_input_map.html">FusionEngine::PlayerInputMap</a></td><td class="indexvalue">Keybindings for player specific functions </td></tr>
   <tr><td class="indexkey"><a class="el" href="struct_fusion_engine_1_1_projectile_state.html">FusionEngine::ProjectileState</a></td><td class="indexvalue">Holds all state information for each projectile </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_resource_loader.html">FusionEngine::ResourceLoader</a></td><td class="indexvalue">Loads and stores resources for gameplay </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_server_environment.html">FusionEngine::ServerEnvironment</a></td><td class="indexvalue">The client gameplay environment </td></tr>
+  <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_server_options.html">FusionEngine::ServerOptions</a></td><td class="indexvalue">Server ops. Nothing atm </td></tr>
   <tr><td class="indexkey"><a class="el" href="struct_fusion_engine_1_1_ship_input.html">FusionEngine::ShipInput</a></td><td class="indexvalue">Input state structure for each ship </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_ship_resource.html">FusionEngine::ShipResource</a></td><td class="indexvalue">Stores information loaded from a ship package </td></tr>
   <tr><td class="indexkey"><a class="el" href="struct_fusion_engine_1_1_ship_state.html">FusionEngine::ShipState</a></td><td class="indexvalue">Ship state syncronisation structure. Supports serialization </td></tr>
   <tr><td class="indexkey"><a class="el" href="class_fusion_engine_1_1_state_manager.html">FusionEngine::StateManager</a></td><td class="indexvalue">This class manages what can happen and when, while the game is running </td></tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Sep 28 20:58:48 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 3 12:07:06 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

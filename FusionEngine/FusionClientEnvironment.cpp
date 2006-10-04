@@ -15,8 +15,9 @@ bool ClientEnvironment::Initialise(ResourceLoader *resources)
 {
 	m_InputManager->Initialise();
 
-	m_NetManThread = new CL_Thread(m_NetworkManager, false);
-	m_NetManThread->start();
+	// Not doing threading any more, cause that's the way we roll
+	//m_NetManThread = new CL_Thread(m_NetworkManager, false);
+	//m_NetManThread->start();
 
 	m_ShipResources = resources->GetLoadedShips();
 	return true;
@@ -29,6 +30,9 @@ void ClientEnvironment::Update(unsigned int split)
 
 	// Update the states of all local objects based on the gathered input
 	updateAllPositions(split);
+
+	// Check the network for packets
+	m_NetworkManager->run();
 
 	// Send everything in the message queue
 	send();
@@ -63,11 +67,17 @@ ShipResource *ClientEnvironment::GetShipResourceByID(std::string id)
 
 void ClientEnvironment::send()
 {
-	m_NetworkManager->GetEvents();
 }
 
-void ClientEnvironment::receive()
+bool ClientEnvironment::receive()
 {
+	// Check events (important messages)
+	std::vector<FusionMessage*> list = m_NetworkManager->GetEvents();
+	std::vector<FusionMessage*>::iterator it = list.begin();
+
+	for (; it != list.end(); ++it)
+	{
+		(*it)->GetType
 }
 
 void ClientEnvironment::gatherLocalInput()
