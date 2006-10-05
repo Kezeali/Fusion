@@ -29,18 +29,22 @@
 <a href="class_fusion_engine_1_1_fusion_message_builder-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Static Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="875f9eb3cf8cf90bb56b30826e00038d"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="875f9eb3cf8cf90bb56b30826e00038d" args="(const ShipState &amp;input)" -->
-static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#875f9eb3cf8cf90bb56b30826e00038d">BuildMessage</a> (const <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> &amp;input)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2fff2fbc68c7d8c01bd730e7cef97d52"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="2fff2fbc68c7d8c01bd730e7cef97d52" args="(const ShipState &amp;input, PlayerInd playerid)" -->
+static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#2fff2fbc68c7d8c01bd730e7cef97d52">BuildMessage</a> (const <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> &amp;input, PlayerInd playerid)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a>. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f65475c9d968db5e3ff381237cfb2a5c"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="f65475c9d968db5e3ff381237cfb2a5c" args="(const ProjectileState &amp;input)" -->
-static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#f65475c9d968db5e3ff381237cfb2a5c">BuildMessage</a> (const <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> &amp;input)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> (usually outgoing). <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7da55a3462d5f058b812b9612d6c5196"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="7da55a3462d5f058b812b9612d6c5196" args="(const ProjectileState &amp;input, PlayerInd playerid)" -->
+static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#7da55a3462d5f058b812b9612d6c5196">BuildMessage</a> (const <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> &amp;input, PlayerInd playerid)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a>. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="98a6e540754ea4385aff8e629bc4eea1"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="98a6e540754ea4385aff8e629bc4eea1" args="(const Packet *packet)" -->
-static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#98a6e540754ea4385aff8e629bc4eea1">BuildMessage</a> (const Packet *packet)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> (usually outgoing). <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="d01f311f32cbba65fd0658e1fe593b58"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="d01f311f32cbba65fd0658e1fe593b58" args="(const Packet *packet, PlayerInd playerid)" -->
+static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#d01f311f32cbba65fd0658e1fe593b58">BuildMessage</a> (const Packet *packet, PlayerInd playerid)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a network passage. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a network packet (usually incoming). <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="175036e887fdabdd20586694282655ee"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildEventMessage" ref="175036e887fdabdd20586694282655ee" args="(const Packet *packet, PlayerInd playerind)" -->
+static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#175036e887fdabdd20586694282655ee">BuildEventMessage</a> (const Packet *packet, PlayerInd playerind)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a RakNet engine message (I call these 'events'). <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="b5a3b488f43b53c53f42b1ad659fb11c"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::_getPacketIdentifier" ref="b5a3b488f43b53c53f42b1ad659fb11c" args="(Packet *p)" -->
 static unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#b5a3b488f43b53c53f42b1ad659fb11c">_getPacketIdentifier</a> (Packet *p)</td></tr>
 
@@ -53,7 +57,7 @@ Creates <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionM
 <p>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionMessageBuilder.h<li>F:/Projects/Fusion/FusionEngine/FusionMessageBuilder.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 3 12:07:07 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>
