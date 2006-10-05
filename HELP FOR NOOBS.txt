@@ -1,0 +1,31 @@
+------Getting pre-compiled libs-----------
+Decompress the following files into the following places, then add 
+<whereever>/include/ and <whereever>/lib/ to your global search directories:
+
+ClanLib and Boost includes - <whereever>/include/:
+http://homepages.ihug.co.nz/~mariahayward/include.7z
+
+ClanLib and Boost libraries - <whereever>/lib/:
+http://homepages.ihug.co.nz/~mariahayward/lib.7z
+
+-------Setting up MSVC++-------------------
+In MSVC++ 7, go to 
+1. Open the Options dialog
+ "Tools>Options>Projects and Solutions>VC++ Directories"
+
+2. Includes
+ Then look for the "Show directories for:" popup on the top right of this page
+  "Show directories for:>Include files"
+
+ Click the "New line" button (ctrl-Insert)
+  type "<whereever>/include/"
+  
+3. Libs
+ Then look for the "Show directories for:" popup on the top right of this page
+  "Show directories for:>Library files"
+
+ Click the "New line" button (ctrl-Insert)
+  type "<whereever>/lib/"
+
+4. Done
+Click "Ok" at the bottom of the dialog to save the changes.

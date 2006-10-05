@@ -48,17 +48,17 @@ FusionBitmask::~FusionBitmask()
 }
 
 
-FusionBitmask::SetFromImage(const std::string &filename, int gridsize, unsigned int threshold)
+void FusionBitmask::SetFromImage(const std::string &filename, int gridsize, unsigned int threshold)
 {
-	CL_Surface source(filename);
+	CL_Surface *source = &CL_Surface(filename);
 	
 	SetFromSurface(source, gridsize);
 }
 
-FusionBitmask::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold)
+void FusionBitmask::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold)
 {
-	int mask_w = int(surface.get_width() / gridsize);
-	int mask_h = int(surface.get_height() / gridsize);
+	int mask_w = int(surface->get_width() / gridsize);
+	int mask_h = int(surface->get_height() / gridsize);
 
 	// Make sure the bitmask is only created once; if it's already created,
 	// just clear the data.
@@ -75,7 +75,7 @@ FusionBitmask::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned 
 	for (int x = 0; x < mask_w; x++)
 		for (int y = 0; y < mask_h; y++)
 		{
-			if (surface.get_pixeldata().get_pixel(x, y).get_alpha() <= threshold)
+			if (surface->get_pixeldata().get_pixel(x, y).get_alpha() <= threshold)
 				bitmask_setbit(m_Bitmask, x, y);
 		}
 }

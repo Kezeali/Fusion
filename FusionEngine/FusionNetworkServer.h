@@ -107,8 +107,8 @@ namespace FusionEngine
 		 */
 		FusionMessage *GetNextMessage(int channel);
 
-		//! Gets all messages from the incomming queue. Don't use.
-		MessageQueue*GetAllMessages(int channel);
+		//! [depreciated] Use GetNextMessage instead.
+		//MessageQueue GetAllMessages(int channel);
 
 		//! Updates the network
 		void run();

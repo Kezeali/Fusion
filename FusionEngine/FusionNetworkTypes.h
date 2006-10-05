@@ -68,7 +68,7 @@ namespace FusionEngine
 		//! (0010 0000)
 		MTID_PROJECTILEFRAME = 32,
 		//! (0100 0000) Low priority
-		MTID_TERRAINBITMASK = 64
+		MTID_TERRAINBITMASK = 64,
 		//@}
 
 		//@{

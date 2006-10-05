@@ -39,11 +39,6 @@ void FusionNetworkServer::QueueMessage(FusionMessage *message, int channel)
 	m_Queue->_addOutMessage(message, channel);
 }
 
-FusionNetworkServer::MessageQueue FusionNetworkServer::GetAllMessages(int channel)
-{
-	return m_Queue->_getInMessages(channel);
-}
-
 FusionMessage *FusionNetworkServer::GetNextMessage(int channel)
 {
 	return m_Queue->_getInMessage(channel);
