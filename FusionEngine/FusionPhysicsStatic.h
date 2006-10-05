@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsBody
-#define Header_FusionEngine_FusionPhysicsBody
+#ifndef Header_FusionEngine_FusionPhysicsStatic
+#define Header_FusionEngine_FusionPhysicsStatic
 
 #if _MSC_VER > 1000
 #pragma once
@@ -30,7 +30,6 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionBitmask.h"
-#include "FusionPhysicsResponse.h"
 
 namespace FusionEngine
 {
@@ -48,18 +47,18 @@ namespace FusionEngine
 	 * point - all modification to it can be done manually, rather than requiring it
 	 * to know of ShipResource.
 	 * <br>
-	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
+	 * MCS - Just one other key thing to remember, FusionPhysicsStatic is brainless!
 	 * This class just stores data, and keeps that data valid (i.e. modify the AABB
 	 * to fit the bitmask if it rotates.)
 	 * <br>
 	 * MCS - AABBs are not yet implimented
 	 *
-	 * \todo AABB for FusionPhysicsBody
+	 * \todo AABB for FusionPhysicsStatic
 	 *
 	 * \see
 	 * FusionPhysicsWorld | FusionFhysicsElipse.
 	 */
-	class FusionPhysicsBody
+	class FusionPhysicsStatic
 	{
 		friend class FusionPhysicsWorld;
 	public:
@@ -68,27 +67,12 @@ namespace FusionEngine
 		 * \param world
 		 * The world in which this body resides.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world);
-		//! Constructor with response param.
-		/*!
-		 * \param world
-		 * The world in which this body resides.
-		 * \param props
-		 * The basics physical properties to initialise this body with.
-		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, const FusionPhysicsResponse &response);
+		FusionPhysicsStatic(FusionPhysicsWorld *world);
+
 		//! Virtual destructor.
-		virtual ~FusionPhysicsBody();
+		virtual ~FusionPhysicsStatic();
 
 	public:
-		//! Does what you think it does.
-		void SetMass(float mass);
-
-		//! Preferably this is used to move the body.
-		virtual void ApplyForce(const CL_Vector2 &force);
-		//! We don't care about yo' torque.
-		virtual void SetRotationalVelocity(const float velocity);
-		
 		//@{
 		//! Properties.
 		virtual void SetColBitmask(const FusionBitmask &bitmask);
@@ -129,50 +113,20 @@ namespace FusionEngine
 		bool GetUseDistCollisions();
 		//@}
 
-		//! Calls the collision response
-		void CollisionResponse(void);
-		//! Calls the collision response with a reference point
-		void CollisionResponse(const CL_Vector2 &collision_point);
-
 		//@{
 		//! State retreival.
 		virtual CL_Vector2 &GetPosition() const;
 		virtual CL_Point &GetPositionPoint() const;
-		virtual CL_Vector2 &GetAcceleration() const;
-		virtual CL_Vector2 &GetVelocity() const;
-
-		virtual float GetRotationalVelocity() const;
-		virtual float GetRotation() const;
 		//@}
 
 		//@{
 		//! For syncronising client-side only, shouldn't be called otherwise.
 		virtual void _setPosition(const CL_Vector2 &position);
-		virtual void _setAcceleration(const CL_Vector2 &acceleration);
-		virtual void _setVelocity(const CL_Vector2 &velocity);
-
-		virtual void _setRotation(const float rotation);
 		//@}
 
-		//! Stores the Collision Grid Pos; the position on the grid.
-		void _setCGPos(int ind);
-		//! Retreives the Collision Grid Pos - required for sorting etc.
-		int _getCGPos() const;
-		//! Stores the Collision Cell Index; the position within the cell.
-		void _setCCIndex(int ind);
-		//! Retreives the Collision Cell Index
-		int _getCCIndex() const;
-
 	protected:
-		//! Collision Grid Index
-		int m_CGPos;
-		//! Collision Grid Index
-		int m_CCIndex;
-
 		//! Containing world
 		FusionPhysicsWorld *m_World;
-		//! \\see FusionPhysicsResponse
-		FusionPhysicsResponse m_CollisionResponse;
 		
 		//! The unique ID for the current object
 		/*!
@@ -180,10 +134,14 @@ namespace FusionEngine
 		 */
 		int m_Type;
 
+		//! Bitmask
 		FusionBitmask m_Bitmask;
+		//! AABB
 		CL_Rectf m_AABB;
+		//! Dist
 		float m_ColDist;
 
+		//! I'm not sure if this is used...
 		bool m_IsColliding;
 		
 		//! Bitmask collisions
@@ -195,21 +153,8 @@ namespace FusionEngine
 
 		//@{
 		//! "State" stuff.
-		float m_Mass;
 
-		CL_Vector2 m_AppliedForce;
-		CL_Vector2 m_Acceleration;
-		CL_Vector2 m_Velocity;
 		CL_Vector2 m_Position;
-
-		float m_Rotation;
-		//! Current velocity of rotation.
-		/*!
-		 * \remarks
-		 * (ShipResource has RotationVelocity [no 'al'], that being the <i>maximum</i>
-		 * velocity of rotation.)
-		 */
-		float m_RotationalVelocity;
 		//@}
 
 	};

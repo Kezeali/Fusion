@@ -19,6 +19,24 @@ FusionPhysicsTerrain::~FusionPhysicsTerrain()
 {
 }
 
-void SetPosition(const CL_Vector2 &position)
+void FusionPhysicsTerrain::MakeHole(int x, int y, int radius)
 {
+	Hole h;
+	h.x = x; h.y = y;
+	h.radius = radius;
+
+	m_Holes.push_back(h);
+}
+
+Hole FusionPhysicsTerrain::GetNextHole()
+{
+	Hole h = m_Holes.front();
+	m_Holes.pop_front();
+
+	return h;
+}
+
+void FusionPhysicsTerrain::_madeHole(surface)
+{
+	m_Bitmask.SetFromSurface(surface, m_World->GetBitmaskRes(), 128);
 }

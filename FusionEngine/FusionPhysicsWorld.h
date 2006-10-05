@@ -49,6 +49,11 @@ namespace FusionEngine
 		 */
 		void LevelChange(int level_x, int level_y);
 
+		//! Allows the bitmask resolution to be set (pixels per bit)
+		void SetBitmaskRes(int ppb);
+		//! Returns the res bodies should use for their bitmasks
+		int GetBitmaskRes();
+
 	public:
 		//! Used internally by RunSimulation for its namesake.
 		/*!
@@ -72,6 +77,9 @@ namespace FusionEngine
 
 		//! Collision list.
 		FusionPhysicsCollisionGrid *m_CollisionGrid;
+
+		//! The resolution to use for bitmasks
+		int m_BitmaskRes;
 	};
 
 }

@@ -37,7 +37,8 @@ namespace FusionEngine
 	//! Thread safe message storage
 	/*!
 	 * Possably [depreciated]... ATM seems useable, but all this stuff could be done in
-	 * NetworkClient (at the expense of its simplicity.)
+	 * NetworkClient (at the expense of its simplicity.) Also, the thread safety is now
+	 * redundant - FusionNetworkClient / FusionNetworkServer run in the main thread.
 	 */
 	class FusionNetworkMessageQueue
 	{
@@ -53,35 +54,46 @@ namespace FusionEngine
 		//! A group of channels (each containing messages)
 		typedef std::vector<MessageQueue> ChannelList;
 
-		//! A group of net events
+		//! A group of net events.
 		typedef std::vector<FusionMessage*> EventList;
+
+		//! Use this to pre-allocate the required channels
+		/*!
+		 * This should be called before any retreival functions, to avoid
+		 * accessing null space.
+		 */
+		void Resize(unsigned short channels);
 
 		//! Used internally by FusionNetwork[Client|Server]. Threadsafe.
 		MessageQueue *_getInMessages(int channel);
-		//! Used internally by FusionNetworkReceiver. Threadsafe.
-		void _addInMessage(FusionMessage *message, int channel);
-
 		//! Used internally... by nothing really :P Threadsafe.
 		MessageQueue *_getOutMessages(int channel);
+
+		//! Used internally by FusionNetworkReceiver. Threadsafe.
+		void _addInMessage(FusionMessage *message, int channel);
 		//! Used internally by FusionNetworkSender. Threadsafe.
 		void _addOutMessage(FusionMessage *message, int channel);
 
-		//! Used internally. Gets one message only. Null if none
+		//! Used internally. Gets the next message. Null if none
 		FusionMessage *_getInMessage(int channel);
+		//! Used internally. Gets the next message. Null if none
+		FusionMessage *_getOutMessage(int channel);
 
 		//! Used internally. Allows the CE to act on network events
 		/*!
 		 * \param messageId The packet ID which CE should act on.
 		 */
 		void _addEvent(FusionMessage *message);
+		//! Gets the next event. See #GetEvents()
+		FusionMessage *GetEvent();
 		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
-		const EventList &GetEvents();
+		const EventList GetEvents();
 
-		//! Removes events
+		//! Deletes all messages in the event list, and clears the list.
 		void ClearEvents();
-		//! Removes messages from the in queue
+		//! Deletes messages in the in queue
 		void ClearInMessages();
-		//! Removes messages from the out queue
+		//! Deletes messages in the out queue
 		void ClearOutMessages();
 
 	protected:
@@ -96,7 +108,7 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Used for thread-safety.
+		 * [depreciated] Used for thread-safety.
 		 *
 		 * Ensures thread-safety by preventing concurrent data access via _getMessages().
 		 */

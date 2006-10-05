@@ -43,6 +43,8 @@ namespace FusionEngine
 		std::vector<PlayerInd> MaxMessageRate;
 		//! Underlying send rate limiter
 		unsigned int NetDelay;
+		//! The 'pixels per bit' (resolution) setting to use for bitmasks
+		int BitmaskResolution;
 
 	};
 

@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionNetworkClient
-#define Header_FusionEngine_FusionNetworkClient
+#ifndef Header_FusionEngine_FusionNetworkServer
+#define Header_FusionEngine_FusionNetworkServer
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,12 +29,12 @@
 
 #include "FusionEngineCommon.h"
 
-#include "../RakNet/RakClientInterface.h"
+#include "../RakNet/RakServerInterface.h"
 #include "../RakNet/RakNetworkFactory.h"
 #include "../RakNet/PacketEnumerations.h"
 
 /// Fusion
-#include "FusionClientOptions.h"
+#include "FusionServerOptions.h"
 #include "FusionMessage.h"
 #include "FusionMessageBuilder.h"
 #include "FusionNetworkMessageQueue.h"
@@ -45,46 +45,34 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Handles network communicaion for the client in-game.
+	 * Handles network communicaion for the server in-game.
 	 *
-	 * \todo FusionNetworkClient and FusionNetworkServer should probably inherit from
-	 * a common parent, as they recreate alot of each of their methods :(
-	 *
-	 * This class gathers messages received from the host, sorts them, and allows the
-	 * ClientEnvironment to access them.
+	 * This class gathers messages received from the clients, sorts them, and allows the
+	 * ServerEnvironment to access them.
 	 * <br>
 	 * This impliments CL_Runnable; but the funny thing is, it isn't on-its-own thread safe -
 	 * the storage class FusionNetworkMessageQueue is... I guess that just makes it tidier?
 	 */
-	class FusionNetworkClient : public CL_Runnable
+	class FusionNetworkServer : public CL_Runnable
 	{
 	public:
 		/*!
 		 * \brief
-		 * Sets up a network client.
-		 *
-		 * \param host
-		 * The hostname or ipaddress of the server.
+		 * Sets up a network server.
 		 *
 		 * \param port
 		 * The port of the server.
 		 */
-		FusionNetworkClient(const std::string &host, const std::string &port);
+		FusionNetworkServer(const std::string &port);
 		/*!
 		 * \brief
-		 * Sets up a network client.
-		 *
-		 * \param address
-		 * A CL_IPAddress pointing to the server.
+		 * Sets up a network server.
 		 */
-		//FusionNetworkClient(const CL_IPAddress &address);
+		//FusionNetworkClient();
 
 		/*!
 		 * \brief
-		 * Sets up a network client. Gets settings from a ClientOptions object.
-		 *
-		 * \param host
-		 * The hostname or ipaddress of the server.
+		 * Sets up a network server. Gets settings from a ServerOptions object.
 		 *
 		 * \param port
 		 * The port of the server.
@@ -92,28 +80,24 @@ namespace FusionEngine
 		 * \param options
 		 * Object to load options from (max. rate, packet interval, etc.)
 		 */
-		FusionNetworkClient(const std::string &host, const std::string &port,
-			ClientOptions *options);
+		FusionNetworkServer(const std::string &port, ServerOptions *options);
 		/*!
 		 * \brief
 		 * Sets up a network client. Gets settings from a ClientOptions object.
 		 *
-		 * \param address
-		 * A CL_IPAddress pointing to the server.
-		 *
 		 * \param options
 		 * Object to load options from (max. rate, packet interval, etc.)
 		 */
-		//FusionNetworkClient(const CL_IPAddress &address, ClientOptions *options);
+		//FusionNetworkServer(ServerOptions *options);
 
 		//! Destructor
-		~FusionNetworkClient();
+		~FusionNetworkServer();
 
 	public:
 		//! A group of messages
 		typedef std::deque<FusionMessage*> MessageQueue;
 		//! Maps Fusion player ids to RakNet player indexes
-		typedef std::map<int, int> PlayerIDMap;
+		typedef std::map<PlayerIndex, FusionEngine::PlayerInd> PlayerIDMap;
 
 		//! Adds a message to the outgoing queue.
 		void QueueMessage(FusionMessage *message, int channel);
@@ -124,22 +108,25 @@ namespace FusionEngine
 		FusionMessage *GetNextMessage(int channel);
 
 		//! Gets all messages from the incomming queue. Don't use.
-		MessageQueue *GetAllMessages(int channel);
+		MessageQueue*GetAllMessages(int channel);
 
 		//! Updates the network
 		void run();
 
-		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
-		EventList GetEvents() const;
+		//! Allows the ServerEnvironment, etc. to access the NetEvent queue
+		FusionMessage *GetNextEvent() const;
 
 	protected:
-		//! The underlying network interface (clientside, but it's really just a RakPeer...)
-		RakClientInterface *m_RakClient;
+		//! The underlying network interface (serverside, but it's really just a RakPeer...)
+		RakServerInterface *m_RakServer;
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
 		//! Threadsafe, organised package storage
 		FusionNetworkMessageQueue *m_Queue;
+
+		//! Map of local player indexes, indexed by RakNet PlayerIDs
+		PlayerIDMap m_PlayerIDMap;
 
 		//! [depreciated] by Don'tRepeatYourself rules; see FusionMessageBuilder.
 		/*!

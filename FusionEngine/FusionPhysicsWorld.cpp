@@ -6,6 +6,7 @@
 using namespace FusionEngine;
 
 FusionPhysicsWorld::FusionPhysicsWorld()
+: m_BitmaskRes(1)
 {
 	m_CollisionGrid = new FusionPhysicsCollisionGrid();
 }

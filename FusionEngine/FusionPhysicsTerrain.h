@@ -8,10 +8,17 @@
 #include "FusionEngineCommon.h"
 
 /// Fusion
-#include "FusionBody.h"
+#include "FusionPhysicsStatic.h"
 
 namespace FusionEngine
 {
+	//! Ease of storage for holes. Not used ATM.
+	struct Hole
+	{
+		//! Data
+		int x, y, radius;
+	};
+
 	/*!
 	 * \brief
 	 * An implimentation of PhysicsBody. Handles bitmask based collisions.
@@ -36,7 +43,22 @@ namespace FusionEngine
 		virtual ~FusionPhysicsTerrain();
 
 	public:
+		//! Marks a point with a hole, so the Environment will create one there
 		void MakeHole(int x, int y, int radius);
+
+		//! Returns the next unmade hole
+		Hole GetNextHole();
+
+		//! This is called by the Environment on hole creation.
+		/*!
+		 * When the Environment has finished making a hole in the terrain image,
+		 * it calls this so the FusionPhysicsTerrain will update its bitmask.
+		 */
+		void _madeHole(const CL_Surface *surface);
+
+	protected:
+		//! List of unmade holes.
+		std::deque<Hole> m_Holes;
 
 	};
 

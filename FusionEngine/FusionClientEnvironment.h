@@ -50,6 +50,9 @@ namespace FusionEngine
 	 * \brief
 	 * The client gameplay environment.
 	 * 
+	 * \todo ClientEnvironment and ServerEnvironment should probably inherit from
+	 * a common parent.
+	 *
 	 * This is where all the gameplay stuff goes on at the client-side.
 	 * Moving / drawing ships, syncing with server, prediction, etc. is all controlled
 	 * from here. That isn't to say just this one class does all thoes things, this

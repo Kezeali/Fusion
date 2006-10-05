@@ -55,7 +55,7 @@ namespace FusionEngine
 		 * \param gridsize The amount of pixels per bit in the bitmask.
 		 * \param threshold The alpha value above which pixels are considered opaque.
 		 */
-		FusionBitmask(const CL_Surface &surface, int gridsize, unsigned int threshold);
+		FusionBitmask(const CL_Surface *surface, int gridsize, unsigned int threshold);
 
 		~FusionBitmask();
 
@@ -81,7 +81,7 @@ namespace FusionEngine
 		 * \param gridsize The amount of pixels per bit in the bitmask.
 		 * \param threshold The alpha value above which pixels are considered opaque.
 		 */
-		void SetFromSurface(const CL_Surface &surface, int gridsize, unsigned int threshold = 128);
+		void SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold = 128);
 
 		//! Returns the solidality of the bit at the given point.
 		/*!

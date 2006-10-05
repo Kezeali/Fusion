@@ -29,6 +29,7 @@
 
 namespace FusionEngine
 {
+	const unsigned short g_ChannelNum = 4;
 	//! Channels
 	enum
 	{
@@ -66,6 +67,8 @@ namespace FusionEngine
 		MTID_SHIPFRAME = 16,
 		//! (0010 0000)
 		MTID_PROJECTILEFRAME = 32,
+		//! (0100 0000) Low priority
+		MTID_TERRAINBITMASK = 64
 		//@}
 
 		//@{
