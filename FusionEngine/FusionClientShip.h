@@ -28,6 +28,7 @@
 #endif
 
 #include "FusionEngineCommon.h"
+#include "FusionShipState.h"
 
 namespace FusionEngine
 {

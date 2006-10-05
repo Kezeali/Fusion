@@ -4,7 +4,6 @@
 /// STL
 
 /// Fusion
-#include "FusionStateData.h"
 #include "FusionNode.h"
 
 /// Class
