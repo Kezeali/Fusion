@@ -28,7 +28,9 @@
 #endif
 
 #include "FusionEngineCommon.h"
+
 #include "FusionShipState.h"
+#include "FusionShipDrawable.h"
 
 namespace FusionEngine
 {
@@ -38,14 +40,15 @@ namespace FusionEngine
 	 *
 	 * State information such as current buttons pressed and health is stored in
 	 * this class. Other classes that need such information can gain access to it
-	 * via the public members. Unlike the server version, this also holds information
-	 * about ascociated drawables and nodes.
+	 * via the public members.
 	 *
 	 * \remarks
+	 * DON'T LET THE NAME FOOL YOU: due to poor foresight, this class was left with
+	 * a misnomer and is infact used by both ClientEnvironment and ServerEnvironment
+	 * :P <br>
 	 * An instance of this object holds the state data for each ship in the game.
-	 * This object should remain general enough to be used by client and server.
 	 * <br>
-	 * FusionClientEnvironment and FusionServerEnvironment have friend access to
+	 * ClientEnvironment and ServerEnvironment have friend access to
 	 * this class, for efficiant updating.
 	 */
 	class FusionClientShip
@@ -59,17 +62,26 @@ namespace FusionEngine
 
 	public:
 		//! Set Vel
-		void SetVelocity(const CL_Vector2 &position);
+		/*!
+		 * \param physics If this is true, the velocity of the PhysicsBody
+		 * associated with this Ship will be set too. This defaults to false,
+		 * as a PhysicsBody is usually the /source/ of this information. 
+		 */
+		void SetVelocity(const CL_Vector2 &velocity, bool physics = false);
 		//! Set Pos
-		void SetPosition(const CL_Vector2 &position);
+		/*!
+		 * \param physics If this is true, the position of the PhysicsBody
+		 * associated with this Ship will be set too.
+		 */
+		void SetPosition(const CL_Vector2 &position, bool physics = false);
 
 		//! Guess
 		ShipState *GetShipState() const;
 		//! Self explainatory
 		ShipInput *GetInputState() const;
 
-		//! You know it
-		std::string GetShipResource() const;
+		//! [depreciated] You know it
+		//std::string GetShipResource() const;
 
 		//! Reverts all state data
 		void RevertToInitialState() const;
@@ -78,14 +90,22 @@ namespace FusionEngine
 		// Is this needed?
 		//ClientEnvironment *m_Environment;
 
+		//! Associated node
 		FusionNode *m_Node;
-		FusionShipDrawable *m_Drawable;
+		//! [depreciated] FusionNode lists all attached drawables. Associated drawable
+		//FusionShipDrawable *m_Drawable;
 		
+		//! \see FusionPhysicsBody
 		FusionPhysicsBody *m_PhysicalBody;
 
-		std::string m_ResourceID;
+		//! [depreciated] Allows this object to find its resource in the client env
+		//std::string m_ResourceID;
+
+		//! Input state
 		ShipInput m_Input;
+		//! Current spacial attributes
 		ShipState m_CurrentState;
+		//! Default (initial) spacial attributes
 		ShipState m_InitialState;
 	};
 

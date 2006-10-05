@@ -1,6 +1,5 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_node.html 34,47 215,74
-rect $struct_fusion_engine_1_1_ship_input.html 40,98 208,124
-rect $struct_fusion_engine_1_1_ship_state.html 40,158 208,184
-rect $class_fusion_engine_1_1_fusion_ship_drawable.html 7,208 242,235
-rect $class_fusion_engine_1_1_fusion_physics_body.html 11,259 238,286
+rect $class_fusion_engine_1_1_fusion_node.html 7,17 188,44
+rect $struct_fusion_engine_1_1_ship_input.html 295,17 463,44
+rect $struct_fusion_engine_1_1_ship_state.html 487,17 655,44
+rect $class_fusion_engine_1_1_fusion_physics_body.html 679,17 905,44

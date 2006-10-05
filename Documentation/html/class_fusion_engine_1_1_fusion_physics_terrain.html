@@ -21,12 +21,25 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html">FusionPhysicsTerrain</a></div>
-<h1>FusionEngine::FusionPhysicsTerrain Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsTerrain" -->An implimentation of PhysicsBody. Handles bitmask based collisions.  
+<h1>FusionEngine::FusionPhysicsTerrain Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsTerrain" --><!-- doxytag: inherits="FusionEngine::FusionPhysicsStatic" -->An implimentation of PhysicsBody. Handles bitmask based collisions.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionPhysicsTerrain.h&gt;</code>
 <p>
-<a href="class_fusion_engine_1_1_fusion_physics_terrain-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
+Inherits <a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionEngine::FusionPhysicsStatic</a>.
+<p>
+Inheritance diagram for FusionEngine::FusionPhysicsTerrain:<p><center><img src="class_fusion_engine_1_1_fusion_physics_terrain__inherit__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_physics_terrain__inherit__map" alt="Inheritance graph"></center>
+<map name="_fusion_engine_1_1_fusion_physics_terrain__inherit__map">
+<area href="class_fusion_engine_1_1_fusion_physics_static.html" shape="rect" coords="11,7,240,34" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::FusionPhysicsTerrain:<p><center><img src="class_fusion_engine_1_1_fusion_physics_terrain__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_physics_terrain__coll__map" alt="Collaboration graph"></center>
+<map name="_fusion_engine_1_1_fusion_physics_terrain__coll__map">
+<area href="class_fusion_engine_1_1_fusion_physics_static.html" shape="rect" coords="76,188,305,215" alt="">
+<area href="class_fusion_engine_1_1_fusion_bitmask.html" shape="rect" coords="7,98,207,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="231,98,463,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_collision_grid.html" shape="rect" coords="211,7,483,34" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_physics_terrain-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#7fd71aeadf81938b840ccdcd2b27adb6">FusionPhysicsTerrain</a> (<a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a> *world)</td></tr>
@@ -36,6 +49,22 @@
 virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#ee05925b2cb514d1600ac6c48bb2d44b">~FusionPhysicsTerrain</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Virtual destructor. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="98d334313db3a14e34089e13cfd4b791"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::MakeHole" ref="98d334313db3a14e34089e13cfd4b791" args="(int x, int y, int radius)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#98d334313db3a14e34089e13cfd4b791">MakeHole</a> (int x, int y, int radius)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Marks a point with a hole, so the Environment will create one there. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="95bc9cab1a12f4e99c202740e8eb9664"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::GetNextHole" ref="95bc9cab1a12f4e99c202740e8eb9664" args="()" -->
+<a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#95bc9cab1a12f4e99c202740e8eb9664">GetNextHole</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the next unmade hole. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#0aa9b3a0c0f9d147f077756c2abf33eb">_madeHole</a> (const CL_Surface *surface)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">This is called by the Environment on hole creation.  <a href="#0aa9b3a0c0f9d147f077756c2abf33eb"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="8f095287d90c472d606dce945e54938c"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::m_Holes" ref="8f095287d90c472d606dce945e54938c" args="" -->
+std::deque&lt; <a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#8f095287d90c472d606dce945e54938c">m_Holes</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">List of unmade holes. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 An implimentation of PhysicsBody. Handles bitmask based collisions. 
@@ -80,9 +109,40 @@ Constructor.
     </td>
   </tr>
 </table>
+<hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="0aa9b3a0c0f9d147f077756c2abf33eb"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::_madeHole" ref="0aa9b3a0c0f9d147f077756c2abf33eb" args="(const CL_Surface *surface)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionEngine::FusionPhysicsTerrain::_madeHole           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Surface *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>surface</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+This is called by the Environment on hole creation. 
+<p>
+When the Environment has finished making a hole in the terrain image, it calls this so the <a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html">FusionPhysicsTerrain</a> will update its bitmask.     </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsTerrain.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsTerrain.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

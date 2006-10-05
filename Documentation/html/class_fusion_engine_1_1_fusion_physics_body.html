@@ -21,7 +21,10 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a></div>
-<h1>FusionEngine::FusionPhysicsBody Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsBody" --><code>#include &lt;FusionPhysicsBody.h&gt;</code>
+<h1>FusionEngine::FusionPhysicsBody Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsBody" -->Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.  
+<a href="#_details">More...</a>
+<p>
+<code>#include &lt;FusionPhysicsBody.h&gt;</code>
 <p>
 Inherited by <a class="el" href="class_fusion_engine_1_1_fusion_physics_elipse.html">FusionEngine::FusionPhysicsElipse</a>.
 <p>
@@ -238,13 +241,15 @@ float&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Current velocity of rotation.  <a href="#0e7d6f7eba6cb590d81174c308851ac9"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-\brief Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.<p>
+Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects. 
+<p>
 ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really think BB's are necessary... Bah<p>
-\remarks With regurad to the state stored in this class: For FusionShips this should be initialisd by the ShipFactory when it creates a new ship. It should remain indipendant of the <a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> after that point - all modification to it can be done manually, rather than requiring it to know of <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a>. <br>
+<dl compact><dt><b>Remarks:</b></dt><dd>With regurad to the state stored in this class: For FusionShips this should be initialisd by the ShipFactory when it creates a new ship. It should remain indipendant of the <a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> after that point - all modification to it can be done manually, rather than requiring it to know of <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a>. <br>
  MCS - Just one other key thing to remember, <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> is brainless! This class just stores data, and keeps that data valid (i.e. modify the AABB to fit the bitmask if it rotates.) <br>
- MCS - AABBs are not yet implimented<p>
-\todo AABB for <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a><p>
-\see <a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a> | FusionFhysicsElipse. 
+ MCS - AABBs are not yet implimented</dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000005">Todo:</a></b></dt><dd>AABB for <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a></dd></dl>
+<dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a> | FusionFhysicsElipse. </dd></dl>
+
 <p>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" name="d3bee6717bf53094d25a1869a4013e60"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::FusionPhysicsBody" ref="d3bee6717bf53094d25a1869a4013e60" args="(FusionPhysicsWorld *world)" --><p>
@@ -274,7 +279,12 @@ ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really 
 <p>
 Constructor. 
 <p>
-\param world The world in which this body resides.     </td>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>world</em>&nbsp;</td><td>The world in which this body resides. </td></tr>
+  </table>
+</dl>
+    </td>
   </tr>
 </table>
 <a class="anchor" name="22704340f28766b7c962571f33dc5f46"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::FusionPhysicsBody" ref="22704340f28766b7c962571f33dc5f46" args="(FusionPhysicsWorld *world, const FusionPhysicsResponse &amp;response)" --><p>
@@ -313,7 +323,13 @@ Constructor.
 <p>
 Constructor with response param. 
 <p>
-\param world The world in which this body resides. \param props The basics physical properties to initialise this body with.     </td>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>world</em>&nbsp;</td><td>The world in which this body resides. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>props</em>&nbsp;</td><td>The basics physical properties to initialise this body with. </td></tr>
+  </table>
+</dl>
+    </td>
   </tr>
 </table>
 <hr><h2>Member Function Documentation</h2>
@@ -344,7 +360,7 @@ Constructor with response param.
 <p>
 Returns true if the given point is solid. 
 <p>
-Quick access to the bitmask function <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#1c0898be8caabeda229d901a1d6da710">FusionBitmask::GetBit()</a>     </td>
+Quick access to the bitmask function <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#30d4be86db8d23aa219d2f3a009d37e2">FusionBitmask::GetBit()</a>     </td>
   </tr>
 </table>
 <a class="anchor" name="8cdfa68f2b1111ae6ade3ae81b98d5a4"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::GetUseAABBCollisions" ref="8cdfa68f2b1111ae6ade3ae81b98d5a4" args="()" --><p>
@@ -547,7 +563,8 @@ I think these are self explanatory.     </td>
 <p>
 Current velocity of rotation. 
 <p>
-\remarks (<a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> has RotationVelocity [no 'al'], that being the <em>maximum</em> velocity of rotation.)     </td>
+<dl compact><dt><b>Remarks:</b></dt><dd>(<a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> has RotationVelocity [no 'al'], that being the <em>maximum</em> velocity of rotation.) </dd></dl>
+    </td>
   </tr>
 </table>
 <a class="anchor" name="bb60a25373d54bbe424a6bf8cfcfdb27"></a><!-- doxytag: member="FusionEngine::FusionPhysicsBody::m_Type" ref="bb60a25373d54bbe424a6bf8cfcfdb27" args="" --><p>
@@ -577,7 +594,7 @@ Blah, I was going to write something here, but I forget.     </td>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsBody.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsBody.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

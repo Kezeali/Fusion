@@ -34,11 +34,8 @@
 #include "../RakNet/PacketEnumerations.h"
 
 /// Fusion
+#include "FusionNetworkGeneric.h"
 #include "FusionClientOptions.h"
-#include "FusionMessage.h"
-#include "FusionMessageBuilder.h"
-#include "FusionNetworkMessageQueue.h"
-#include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
@@ -56,7 +53,7 @@ namespace FusionEngine
 	 * This impliments CL_Runnable; but the funny thing is, it isn't on-its-own thread safe -
 	 * the storage class FusionNetworkMessageQueue is... I guess that just makes it tidier?
 	 */
-	class FusionNetworkClient : public CL_Runnable
+	class FusionNetworkClient : public FusionNetworkGeneric
 	{
 	public:
 		/*!
@@ -110,47 +107,19 @@ namespace FusionEngine
 		~FusionNetworkClient();
 
 	public:
-		//! A group of messages
-		typedef std::deque<FusionMessage*> MessageQueue;
-		//! Maps Fusion player ids to RakNet player indexes
-		typedef std::map<int, int> PlayerIDMap;
-
-		//! Adds a message to the outgoing queue.
-		void QueueMessage(FusionMessage *message, int channel);
-		//! Gets the message from the front of the incomming queue.
-		/*!
-		 * Remember to delete the message when you're done!
-		 */
-		FusionMessage *GetNextMessage(int channel);
-
-		//! Gets all messages from the incomming queue. Don't use.
-		MessageQueue *GetAllMessages(int channel);
-
 		//! Updates the network
 		void run();
-
-		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
-		EventList GetEvents() const;
 
 	protected:
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
-		//! The hostname (or ip) and port to use.
-		std::string m_Host, m_Port;
 
 		//! Threadsafe, organised package storage
 		FusionNetworkMessageQueue *m_Queue;
 
-		//! [depreciated] by Don'tRepeatYourself rules; see FusionMessageBuilder.
-		/*!
-		 * Extract the id from the packet.
-		 */
-		unsigned char getPacketIdentifier(Packet *p);
-		//! Check if a packet can be handled by the network client
+		//! Check if a packet can be handled by without Environment (game) intervention.
 		bool handleRakPackets(Packet *p);
 
-		//! Converts packets into messages and sorts them.
-		//onPacketReceive();
 	};
 
 }

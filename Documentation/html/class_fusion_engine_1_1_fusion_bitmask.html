@@ -29,17 +29,21 @@
 <a href="class_fusion_engine_1_1_fusion_bitmask-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="3b1522a151e2ad82c2643234b2b56809"></a><!-- doxytag: member="FusionEngine::FusionBitmask::FusionBitmask" ref="3b1522a151e2ad82c2643234b2b56809" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#3b1522a151e2ad82c2643234b2b56809">FusionBitmask</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Basic constructor. Don't use. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#cad1eaff4bd27a3cf0af54fae69eee17">FusionBitmask</a> (const std::string &amp;filename, int gridsize, unsigned int threshold)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#4dbc15d71019d792317028445bb99d5c">FusionBitmask</a> (const CL_Surface &amp;surface, int gridsize, unsigned int threshold)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#02db2c3d6983dee6befc8e5ea8959f55">FusionBitmask</a> (const CL_Surface *surface, int gridsize, unsigned int threshold)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#aa1a5db3690276385da7b832ab1727c0">SetFromImage</a> (const std::string &amp;filename, int gridsize, unsigned int threshold=128)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#bb18d75f9b68909bd883281cdd578eee">SetFromImage</a> (const std::string &amp;filename, int gridsize, unsigned int threshold=128)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#ec5f841444ee7aea7fee294df3a44b49">SetFromSurface</a> (const CL_Surface &amp;surface, int gridsize, unsigned int threshold=128)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#ee9f6b3531b366d89a424f119ecec36a">SetFromSurface</a> (const CL_Surface *surface, int gridsize, unsigned int threshold=128)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#1c0898be8caabeda229d901a1d6da710">GetBit</a> (CL_Point point) const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#30d4be86db8d23aa219d2f3a009d37e2">GetBit</a> (const CL_Point &amp;point) const </td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the solidality of the bit at the given point.  <a href="#1c0898be8caabeda229d901a1d6da710"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the solidality of the bit at the given point.  <a href="#30d4be86db8d23aa219d2f3a009d37e2"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c48196e469022bc1347adf3f70c7041a"></a><!-- doxytag: member="FusionEngine::FusionBitmask::Overlap" ref="c48196e469022bc1347adf3f70c7041a" args="(const FusionBitmask &amp;other, const CL_Point &amp;offset)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#c48196e469022bc1347adf3f70c7041a">Overlap</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html">FusionBitmask</a> &amp;other, const CL_Point &amp;offset)</td></tr>
 
@@ -123,7 +127,7 @@ Creates a bitmask from an external image file.<p>
     </td>
   </tr>
 </table>
-<a class="anchor" name="4dbc15d71019d792317028445bb99d5c"></a><!-- doxytag: member="FusionEngine::FusionBitmask::FusionBitmask" ref="4dbc15d71019d792317028445bb99d5c" args="(const CL_Surface &amp;surface, int gridsize, unsigned int threshold)" --><p>
+<a class="anchor" name="02db2c3d6983dee6befc8e5ea8959f55"></a><!-- doxytag: member="FusionEngine::FusionBitmask::FusionBitmask" ref="02db2c3d6983dee6befc8e5ea8959f55" args="(const CL_Surface *surface, int gridsize, unsigned int threshold)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -131,7 +135,7 @@ Creates a bitmask from an external image file.<p>
         <tr>
           <td class="md" nowrap valign="top">FusionBitmask::FusionBitmask           </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const CL_Surface &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Surface *&nbsp;</td>
           <td class="mdname" nowrap> <em>surface</em>, </td>
         </tr>
         <tr>
@@ -214,15 +218,15 @@ Calculates an <em>approximate</em> normal to the edge of this bitmask.
 This calculates an approximate normal to the edge of this bitmask at a given point of collision; by checking the relative ammount of bits which collide with the bitmask 'other' on each side of said point. Obviously this method is very hap-hazard - e.g. in the case of there being no colliding bits on one side, you'll probably get a vector pointing straight through the mask :P     </td>
   </tr>
 </table>
-<a class="anchor" name="1c0898be8caabeda229d901a1d6da710"></a><!-- doxytag: member="FusionEngine::FusionBitmask::GetBit" ref="1c0898be8caabeda229d901a1d6da710" args="(CL_Point point) const " --><p>
+<a class="anchor" name="30d4be86db8d23aa219d2f3a009d37e2"></a><!-- doxytag: member="FusionEngine::FusionBitmask::GetBit" ref="30d4be86db8d23aa219d2f3a009d37e2" args="(const CL_Point &amp;point) const " --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::FusionBitmask::GetBit           </td>
+          <td class="md" nowrap valign="top">bool FusionBitmask::GetBit           </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">CL_Point&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Point &amp;&nbsp;</td>
           <td class="mdname1" valign="top" nowrap> <em>point</em>          </td>
           <td class="md" valign="top">&nbsp;)&nbsp;</td>
           <td class="md" nowrap> const</td>
@@ -290,13 +294,13 @@ Same as <a class="el" href="class_fusion_engine_1_1_fusion_bitmask.html#c48196e4
     </td>
   </tr>
 </table>
-<a class="anchor" name="aa1a5db3690276385da7b832ab1727c0"></a><!-- doxytag: member="FusionEngine::FusionBitmask::SetFromImage" ref="aa1a5db3690276385da7b832ab1727c0" args="(const std::string &amp;filename, int gridsize, unsigned int threshold=128)" --><p>
+<a class="anchor" name="bb18d75f9b68909bd883281cdd578eee"></a><!-- doxytag: member="FusionEngine::FusionBitmask::SetFromImage" ref="bb18d75f9b68909bd883281cdd578eee" args="(const std::string &amp;filename, int gridsize, unsigned int threshold=128)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">FusionBitmask::SetFromImage           </td>
+          <td class="md" nowrap valign="top">void FusionBitmask::SetFromImage           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
           <td class="mdname" nowrap> <em>filename</em>, </td>
@@ -341,15 +345,15 @@ Creates a bitmask from an external image file.<p>
     </td>
   </tr>
 </table>
-<a class="anchor" name="ec5f841444ee7aea7fee294df3a44b49"></a><!-- doxytag: member="FusionEngine::FusionBitmask::SetFromSurface" ref="ec5f841444ee7aea7fee294df3a44b49" args="(const CL_Surface &amp;surface, int gridsize, unsigned int threshold=128)" --><p>
+<a class="anchor" name="ee9f6b3531b366d89a424f119ecec36a"></a><!-- doxytag: member="FusionEngine::FusionBitmask::SetFromSurface" ref="ee9f6b3531b366d89a424f119ecec36a" args="(const CL_Surface *surface, int gridsize, unsigned int threshold=128)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">FusionBitmask::SetFromSurface           </td>
+          <td class="md" nowrap valign="top">void FusionBitmask::SetFromSurface           </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const CL_Surface &amp;&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Surface *&nbsp;</td>
           <td class="mdname" nowrap> <em>surface</em>, </td>
         </tr>
         <tr>
@@ -395,7 +399,7 @@ Creates a bitmask from an internal image.<p>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionBitmask.h<li>F:/Projects/Fusion/FusionEngine/FusionBitmask.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:19 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

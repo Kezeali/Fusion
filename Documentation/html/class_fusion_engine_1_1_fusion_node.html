@@ -410,7 +410,11 @@ Change the node's parent. Used internally.
 <p>
 Sorts child nodes by their depth attribute. 
 <p>
-This sorts nodes so their position in the scene graph reflects their m_Depth attribute, in other words nodes with a higher m_Depth within a branch are drawn first.     </td>
+This sorts nodes so their position in the scene graph reflects their m_Depth attribute, in other words nodes with a lower m_Depth within a branch are drawn first.<p>
+<dl compact><dt><b>Remarks:</b></dt><dd><b>On Efficiancy:</b><br>
+ It is more efficiant to use <a class="el" href="class_fusion_engine_1_1_fusion_scene.html#5542973ae1b7e0441e4e07dfc166655f">FusionScene::Sort()</a> in <a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> <b>if</b> drawing isn't done in cascade mode (e.g. by calling mynode-&gt;_draw(true);). </dd></dl>
+<b>Only</b> use this method if you plan on doing something like: <br>
+ myobject-&gt;GetNode()-&gt;_draw(true);      </td>
   </tr>
 </table>
 <a class="anchor" name="59471c70c6cc89db1b863f8c4b0bc827"></a><!-- doxytag: member="FusionEngine::FusionNode::_update" ref="59471c70c6cc89db1b863f8c4b0bc827" args="(bool cascade, bool parentHasChanged)" --><p>
@@ -900,7 +904,7 @@ Set position will move a node to the specified position relative to its parent, 
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionNode.h<li>F:/Projects/Fusion/FusionEngine/FusionNode.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

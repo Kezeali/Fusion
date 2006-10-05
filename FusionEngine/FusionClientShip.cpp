@@ -56,14 +56,24 @@ FusionClientShip::FusionClientShip(ShipState initState)
 
 FusionClientShip::~FusionClientShip()
 {
+	// Nothing to do here
 }
 
-void FusionClientShip::SetPosition(const CL_Vector2 &position)
+void FusionClientShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
+{
+	m_CurrentState.Velocity = velocity;
+
+	if (physics)
+		m_PhysicalBody->_setVelocity(velocity);
+}
+
+void FusionClientShip::SetPosition(const CL_Vector2 &position, bool physics)
 {
 	m_CurrentState.Position = position;
 
 	m_Node->SetPosition(position);
-	m_PhysicalBody->SetPosition(position);
+	if (physics)
+		m_PhysicalBody->_setPosition(position);
 }
 
 const ShipState &FusionClientShip::GetShipState() const
@@ -76,10 +86,10 @@ const ShipInput &FusionClientShip::GetInputState() const
 	return m_InitialState;
 }
 
-std::string FusionClientShip::GetShipResource() const
-{
-	return m_ResourceID;
-}
+//std::string FusionClientShip::GetShipResource() const
+//{
+//	return m_ResourceID;
+//}
 
 void FusionClientShip::RevertToInitialState()
 {

@@ -3,29 +3,29 @@
 
 /// STL
 
-/// Fusion
-#include "FusionNode.h"
-
 /// Class
-#include "FusionShip.h"
+#include "FusionShipDrawable.h"
 
 using namespace FusionEngine;
 
-FusionShip::FusionShip()
+FusionShipDrawable::FusionShipDrawable()
 {
 }
 
-FusionShip::~FusionShip()
+FusionShipDrawable::~FusionShipDrawable()
 {
 }
 
-void FusionShip::UpdateNode()
+void FusionShipDrawable::SetResource(const std::string &resid)
 {
-	GetParentSceneNode()->SetPosition(CurrentState.position);
-	GetParentSceneNode()->SetFacing(CurrentState.facing);
+	m_ResourceID = resid;
 }
 
-void FusionShip::Draw()
+void FusionShipDrawable::Draw()
 {
-	//GetParentSceneNode()->GetGlobalPosition()
+	std::string res_id = m_ParentNode->
+	CL_Vector pos = m_ParentNode->GetGlobalPosition();
+	float rot = m_ParentNode->GetGlobalFacing();
+
+	m_Env->GetShipResourceByID(m_ResourceID);
 }

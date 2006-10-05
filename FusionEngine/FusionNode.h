@@ -34,6 +34,9 @@ Copyright (c) 2006 Elliot Hayward
 
 namespace FusionEngine
 {
+	//! Returns whether one is greater than two. \see std::sort()
+	bool DepthIsLess(FusionNode *one, FusionNode *two);
+
 	/*!
 	 * \brief
 	 * FusionNode represents a moveable object with sub-objects.
@@ -308,8 +311,18 @@ namespace FusionEngine
 			* Sorts child nodes by their depth attribute.
 			*
 			* This sorts nodes so their position in the scene graph reflects their m_Depth
-			* attribute, in other words nodes with a higher m_Depth within a branch are drawn
+			* attribute, in other words nodes with a lower m_Depth within a branch are drawn
 			* first.
+			*
+			* \remarks
+			* <b>On Efficiancy:</b><br>
+			* It is more efficiant to use FusionScene#Sort() in FusionScene <b>if</b>
+			* drawing isn't done in cascade mode (e.g. by calling mynode->_draw(true);). 
+			* <p>
+			* <b>Only</b> use this method if you plan on doing something like:
+			* <br>
+			* myobject->GetNode()->_draw(true);
+			* </p>
 			*/
 		 virtual void _sortChildren(bool cascade);
 
@@ -339,16 +352,6 @@ namespace FusionEngine
 		 virtual void SetAllowSort(bool allow, bool cascade);
 		 //! Returns the value of m_AllowChildSort.
 		 virtual bool GetAllowSort() const;
-
-	private:
-		struct DepthIsGreater
-			: std::binary_function<const FusionNode *, const FusionNode *, bool>
-		{
-			bool operator()(const FusionNode *x, const FusionNode *y) const
-			{
-				return (x->GetDepth() > y->GetDepth());
-			}
-		};
 
 	private:
 		//! See definition of FusionNode::IsInSceneGraph().

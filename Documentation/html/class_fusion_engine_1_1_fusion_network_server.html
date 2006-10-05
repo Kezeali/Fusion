@@ -21,27 +21,24 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_network_server.html">FusionNetworkServer</a></div>
-<h1>FusionEngine::FusionNetworkServer Class Reference</h1><!-- doxytag: class="FusionEngine::FusionNetworkServer" -->Handles network communicaion for the server in-game.  
+<h1>FusionEngine::FusionNetworkServer Class Reference</h1><!-- doxytag: class="FusionEngine::FusionNetworkServer" --><!-- doxytag: inherits="FusionEngine::FusionNetworkGeneric" -->Handles network communicaion for the server in-game.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionNetworkServer.h&gt;</code>
 <p>
-Collaboration diagram for FusionEngine::FusionNetworkServer:<p><center><img src="class_fusion_engine_1_1_fusion_network_server__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_network_server__coll__map" alt="Collaboration graph"></center>
+Inherits <a class="el" href="class_fusion_engine_1_1_fusion_network_generic.html">FusionEngine::FusionNetworkGeneric</a>.
+<p>
+Inheritance diagram for FusionEngine::FusionNetworkServer:<p><center><img src="class_fusion_engine_1_1_fusion_network_server__inherit__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_network_server__inherit__map" alt="Inheritance graph"></center>
+<map name="_fusion_engine_1_1_fusion_network_server__inherit__map">
+<area href="class_fusion_engine_1_1_fusion_network_generic.html" shape="rect" coords="7,7,252,34" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::FusionNetworkServer:<p><center><img src="class_fusion_engine_1_1_fusion_network_server__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_network_server__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_fusion_network_server__coll__map">
-<area href="class_fusion_engine_1_1_fusion_network_message_queue.html" shape="rect" coords="7,7,300,34" alt="">
+<area href="class_fusion_engine_1_1_fusion_network_generic.html" shape="rect" coords="31,97,276,124" alt="">
+<area href="class_fusion_engine_1_1_fusion_network_message_queue.html" shape="rect" coords="7,7,300,33" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_network_server-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
-<tr><td colspan="2"><br><h2>Public Types</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="95a30577aa0e1b4333e1fe02ae05eb4b"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::MessageQueue" ref="95a30577aa0e1b4333e1fe02ae05eb4b" args="" -->
-typedef std::deque&lt; <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#95a30577aa0e1b4333e1fe02ae05eb4b">MessageQueue</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A group of messages. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e7407a7d49f927cb83709ceead60a249"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::PlayerIDMap" ref="e7407a7d49f927cb83709ceead60a249" args="" -->
-typedef std::map&lt; PlayerIndex,<br>
- FusionEngine::PlayerInd &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#e7407a7d49f927cb83709ceead60a249">PlayerIDMap</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Maps <a class="el" href="namespace_fusion.html">Fusion</a> player ids to RakNet player indexes. <br></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#ca3797e09658e066561787c205987ffa">FusionNetworkServer</a> (const std::string &amp;port)</td></tr>
 
@@ -53,48 +50,22 @@ Sets up a network server. Gets settings from a <a class="el" href="class_fusion_
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#b2692ad09e9060ce316d2a37d98cfac3">~FusionNetworkServer</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor.  <a href="#b2692ad09e9060ce316d2a37d98cfac3"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="79b8ec5e894b2e10d8689eba8f7b807f"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::QueueMessage" ref="79b8ec5e894b2e10d8689eba8f7b807f" args="(FusionMessage *message, int channel)" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#79b8ec5e894b2e10d8689eba8f7b807f">QueueMessage</a> (<a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *message, int channel)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Adds a message to the outgoing queue. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#5f2349a350f127e4fd234ade8ab349c1">GetNextMessage</a> (int channel)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Gets the message from the front of the incomming queue.  <a href="#5f2349a350f127e4fd234ade8ab349c1"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="0ffce75ab792da0263b719596b1a04c1"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::GetAllMessages" ref="0ffce75ab792da0263b719596b1a04c1" args="(int channel)" -->
-<a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#95a30577aa0e1b4333e1fe02ae05eb4b">MessageQueue</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#0ffce75ab792da0263b719596b1a04c1">GetAllMessages</a> (int channel)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Gets all messages from the incomming queue. Don't use. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="cc7ca2a3b2c40c0b45ef750076488837"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::run" ref="cc7ca2a3b2c40c0b45ef750076488837" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#cc7ca2a3b2c40c0b45ef750076488837">run</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Updates the network. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="dceb1ac6739757ad28b431461d1e65f7"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::GetEvents" ref="dceb1ac6739757ad28b431461d1e65f7" args="() const " -->
-std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#dceb1ac6739757ad28b431461d1e65f7">GetEvents</a> () const </td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows the <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a>, etc. to access the NetEvent queue. <br></td></tr>
 <tr><td colspan="2"><br><h2>Protected Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#1c862c88d91c9f7da77bcc5542165150">getPacketIdentifier</a> (Packet *p)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">[depreciated] by Don'tRepeatYourself rules; see <a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html">FusionMessageBuilder</a>.  <a href="#1c862c88d91c9f7da77bcc5542165150"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="8499b584a7d2656adbd41343132fa590"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::handleRakPackets" ref="8499b584a7d2656adbd41343132fa590" args="(Packet *p)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#8499b584a7d2656adbd41343132fa590">handleRakPackets</a> (Packet *p)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Check if a packet can be handled by the network client. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Check if a packet can be handled by without Environment (game) intervention. <br></td></tr>
 <tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="bd89582740106821e143e714ba8a1ac7"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::m_RakServer" ref="bd89582740106821e143e714ba8a1ac7" args="" -->
 RakServerInterface *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#bd89582740106821e143e714ba8a1ac7">m_RakServer</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The underlying network interface (serverside, but it's really just a RakPeer...). <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a34f38c9e1746bbbe36806f2069e1834"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::m_Host" ref="a34f38c9e1746bbbe36806f2069e1834" args="" -->
-std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#a34f38c9e1746bbbe36806f2069e1834">m_Host</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The hostname (or ip) and port to use. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="0fa830586c20f3eab4a5ba77e5351aea"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::m_Queue" ref="0fa830586c20f3eab4a5ba77e5351aea" args="" -->
-<a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionNetworkMessageQueue</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#0fa830586c20f3eab4a5ba77e5351aea">m_Queue</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Threadsafe, organised package storage. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="66806ea28241451da04f13a6766591e5"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::m_PlayerIDMap" ref="66806ea28241451da04f13a6766591e5" args="" -->
-<a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#e7407a7d49f927cb83709ceead60a249">PlayerIDMap</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#66806ea28241451da04f13a6766591e5">m_PlayerIDMap</a></td></tr>
+<a class="el" href="class_fusion_engine_1_1_fusion_network_generic.html#9a7174894da2315a0423b49f5513b110">PlayerIDMap</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_server.html#66806ea28241451da04f13a6766591e5">m_PlayerIDMap</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Map of local player indexes, indexed by RakNet PlayerIDs. <br></td></tr>
 </table>
@@ -220,70 +191,9 @@ Destructor.
     </td>
   </tr>
 </table>
-<hr><h2>Member Function Documentation</h2>
-<a class="anchor" name="5f2349a350f127e4fd234ade8ab349c1"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::GetNextMessage" ref="5f2349a350f127e4fd234ade8ab349c1" args="(int channel)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> * FusionNetworkServer::GetNextMessage           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">int&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap> <em>channel</em>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Gets the message from the front of the incomming queue. 
-<p>
-Remember to delete the message when you're done!     </td>
-  </tr>
-</table>
-<a class="anchor" name="1c862c88d91c9f7da77bcc5542165150"></a><!-- doxytag: member="FusionEngine::FusionNetworkServer::getPacketIdentifier" ref="1c862c88d91c9f7da77bcc5542165150" args="(Packet *p)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">unsigned char FusionNetworkServer::getPacketIdentifier           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">Packet *&nbsp;</td>
-          <td class="mdname1" valign="top" nowrap> <em>p</em>          </td>
-          <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap><code> [protected]</code></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-[depreciated] by Don'tRepeatYourself rules; see <a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html">FusionMessageBuilder</a>. 
-<p>
-Extract the id from the packet.     </td>
-  </tr>
-</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionNetworkServer.h<li>F:/Projects/Fusion/FusionEngine/FusionNetworkServer.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

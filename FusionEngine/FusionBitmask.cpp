@@ -84,16 +84,16 @@ bool FusionBitmask::GetBit(const CL_Point &point) const
 {
 	assert(m_BitmaskCreated);
 
-	if (point.x > m_MaskWidth) | (point.y > m_MaskHeight) // Out of range!
+	if ((point.x > m_MaskWidth) | (point.y > m_MaskHeight)) // Out of range!
 		return false;
 
-	return bool(bitmask_getbit(m_Bitmask, point.x, point.y));
+	return (bitmask_getbit(m_Bitmask, point.x, point.y) == 1) ? true : false;
 }
 
 bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask &other, const CL_Point &offset)
 {
 	assert(m_BitmaskCreated);
-	return bool(bitmask_overlap(m_Bitmask, other.m_Bitmask, offset.x, offset.y));
+	return (bitmask_overlap(m_Bitmask, other.m_Bitmask, offset.x, offset.y) == 1) ? true : false;
 }
 
 const CL_Point &FusionBitmask::OverlapPoint(const FusionEngine::FusionBitmask &other, const CL_Point &offset)
@@ -102,7 +102,7 @@ const CL_Point &FusionBitmask::OverlapPoint(const FusionEngine::FusionBitmask &o
 	int x, y;
 	x = y = -1;
 
-	bitmask_overlap_pos(m_Bitmask, other.m_Bitmask, offset.x, offset.y, x, y);
+	bitmask_overlap_pos(m_Bitmask, other.m_Bitmask, offset.x, offset.y, &x, &y);
 	return CL_Point(x, y);
 }
 

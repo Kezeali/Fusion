@@ -28,11 +28,10 @@
 <p>
 Collaboration diagram for FusionEngine::FusionClientShip:<p><center><img src="class_fusion_engine_1_1_fusion_client_ship__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_client_ship__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_fusion_client_ship__coll__map">
-<area href="class_fusion_engine_1_1_fusion_node.html" shape="rect" coords="34,47,215,74" alt="">
-<area href="struct_fusion_engine_1_1_ship_input.html" shape="rect" coords="40,98,208,124" alt="">
-<area href="struct_fusion_engine_1_1_ship_state.html" shape="rect" coords="40,158,208,184" alt="">
-<area href="class_fusion_engine_1_1_fusion_ship_drawable.html" shape="rect" coords="7,208,242,235" alt="">
-<area href="class_fusion_engine_1_1_fusion_physics_body.html" shape="rect" coords="11,259,238,286" alt="">
+<area href="class_fusion_engine_1_1_fusion_node.html" shape="rect" coords="7,17,188,44" alt="">
+<area href="struct_fusion_engine_1_1_ship_input.html" shape="rect" coords="295,17,463,44" alt="">
+<area href="struct_fusion_engine_1_1_ship_state.html" shape="rect" coords="487,17,655,44" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_body.html" shape="rect" coords="679,17,905,44" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_client_ship-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -41,14 +40,12 @@ Collaboration diagram for FusionEngine::FusionClientShip:<p><center><img src="cl
 
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#77e78a61c2542d464f4e12ebd55ea13c">FusionClientShip</a> (<a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> initState)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7279a4a2f97aa9770af4d096149b1292"></a><!-- doxytag: member="FusionEngine::FusionClientShip::SetVelocity" ref="7279a4a2f97aa9770af4d096149b1292" args="(const CL_Vector2 &amp;position)" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#7279a4a2f97aa9770af4d096149b1292">SetVelocity</a> (const CL_Vector2 &amp;position)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#8ff3d52d6921022bfb555cbc4de1e2df">SetVelocity</a> (const CL_Vector2 &amp;velocity, bool physics=false)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set Vel. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="04f45076b16f5b28981085aa85b8dd90"></a><!-- doxytag: member="FusionEngine::FusionClientShip::SetPosition" ref="04f45076b16f5b28981085aa85b8dd90" args="(const CL_Vector2 &amp;position)" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#04f45076b16f5b28981085aa85b8dd90">SetPosition</a> (const CL_Vector2 &amp;position)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set Vel.  <a href="#8ff3d52d6921022bfb555cbc4de1e2df"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#f30e1ac8574c6024f3cbb0f1ed418cdb">SetPosition</a> (const CL_Vector2 &amp;position, bool physics=false)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set Pos. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Set Pos.  <a href="#f30e1ac8574c6024f3cbb0f1ed418cdb"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="ee15dbd2c46b5a373665ca4faaa31d73"></a><!-- doxytag: member="FusionEngine::FusionClientShip::GetShipState" ref="ee15dbd2c46b5a373665ca4faaa31d73" args="() const " -->
 <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#ee15dbd2c46b5a373665ca4faaa31d73">GetShipState</a> () const </td></tr>
 
@@ -57,21 +54,37 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#ac59310812b7c5fc471e34e30bb35cef">GetInputState</a> () const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Self explainatory. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="93b8bed8e49b1328e951354548772e15"></a><!-- doxytag: member="FusionEngine::FusionClientShip::GetShipResource" ref="93b8bed8e49b1328e951354548772e15" args="() const " -->
-std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#93b8bed8e49b1328e951354548772e15">GetShipResource</a> () const </td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">You know it. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a5dbaa85ca7eaed71982577d5699c786"></a><!-- doxytag: member="FusionEngine::FusionClientShip::RevertToInitialState" ref="a5dbaa85ca7eaed71982577d5699c786" args="() const " -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#a5dbaa85ca7eaed71982577d5699c786">RevertToInitialState</a> () const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Reverts all state data. <br></td></tr>
+<tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="972fe4a3cb46fed8ea07be472c48a747"></a><!-- doxytag: member="FusionEngine::FusionClientShip::m_Node" ref="972fe4a3cb46fed8ea07be472c48a747" args="" -->
+<a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#972fe4a3cb46fed8ea07be472c48a747">m_Node</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Associated node. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#f6cf721e155ea3cfcfc9d543c0f3fb27">m_PhysicalBody</a></td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="ff3ff29227c91240ade8adde6bcffdb9"></a><!-- doxytag: member="FusionEngine::FusionClientShip::m_Input" ref="ff3ff29227c91240ade8adde6bcffdb9" args="" -->
+<a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#ff3ff29227c91240ade8adde6bcffdb9">m_Input</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Input state. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="947687660c860ba14d84b99a92c1a5f0"></a><!-- doxytag: member="FusionEngine::FusionClientShip::m_CurrentState" ref="947687660c860ba14d84b99a92c1a5f0" args="" -->
+<a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#947687660c860ba14d84b99a92c1a5f0">m_CurrentState</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Current spacial attributes. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a61341efb2ce3dd13af3796c03d24ccb"></a><!-- doxytag: member="FusionEngine::FusionClientShip::m_InitialState" ref="a61341efb2ce3dd13af3796c03d24ccb" args="" -->
+<a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#a61341efb2ce3dd13af3796c03d24ccb">m_InitialState</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Default (initial) spacial attributes. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Holds all ship state information for each ship. 
 <p>
-State information such as current buttons pressed and health is stored in this class. Other classes that need such information can gain access to it via the public members. Unlike the server version, this also holds information about ascociated drawables and nodes.<p>
-<dl compact><dt><b>Remarks:</b></dt><dd>An instance of this object holds the state data for each ship in the game. This object should remain general enough to be used by client and server. <br>
- FusionClientEnvironment and FusionServerEnvironment have friend access to this class, for efficiant updating. </dd></dl>
+State information such as current buttons pressed and health is stored in this class. Other classes that need such information can gain access to it via the public members.<p>
+<dl compact><dt><b>Remarks:</b></dt><dd>DON'T LET THE NAME FOOL YOU: due to poor foresight, this class was left with a misnomer and is infact used by both <a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> :P <br>
+ An instance of this object holds the state data for each ship in the game. <br>
+ <a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> have friend access to this class, for efficiant updating. </dd></dl>
 
 <p>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
@@ -132,9 +145,123 @@ Input<p>
 State     </td>
   </tr>
 </table>
+<hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="f30e1ac8574c6024f3cbb0f1ed418cdb"></a><!-- doxytag: member="FusionEngine::FusionClientShip::SetPosition" ref="f30e1ac8574c6024f3cbb0f1ed418cdb" args="(const CL_Vector2 &amp;position, bool physics=false)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionClientShip::SetPosition           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Vector2 &amp;&nbsp;</td>
+          <td class="mdname" nowrap> <em>position</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>bool&nbsp;</td>
+          <td class="mdname" nowrap> <em>physics</em> = <code>false</code></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Set Pos. 
+<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>physics</em>&nbsp;</td><td>If this is true, the position of the PhysicsBody associated with this Ship will be set too. </td></tr>
+  </table>
+</dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="8ff3d52d6921022bfb555cbc4de1e2df"></a><!-- doxytag: member="FusionEngine::FusionClientShip::SetVelocity" ref="8ff3d52d6921022bfb555cbc4de1e2df" args="(const CL_Vector2 &amp;velocity, bool physics=false)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionClientShip::SetVelocity           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const CL_Vector2 &amp;&nbsp;</td>
+          <td class="mdname" nowrap> <em>velocity</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>bool&nbsp;</td>
+          <td class="mdname" nowrap> <em>physics</em> = <code>false</code></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Set Vel. 
+<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>physics</em>&nbsp;</td><td>If this is true, the velocity of the PhysicsBody associated with this Ship will be set too. This defaults to false, as a PhysicsBody is usually the /source/ of this information. </td></tr>
+  </table>
+</dl>
+    </td>
+  </tr>
+</table>
+<hr><h2>Member Data Documentation</h2>
+<a class="anchor" name="f6cf721e155ea3cfcfc9d543c0f3fb27"></a><!-- doxytag: member="FusionEngine::FusionClientShip::m_PhysicalBody" ref="f6cf721e155ea3cfcfc9d543c0f3fb27" args="" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a>* <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#f6cf721e155ea3cfcfc9d543c0f3fb27">FusionEngine::FusionClientShip::m_PhysicalBody</a><code> [protected]</code>          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+<dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> </dd></dl>
+    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionClientShip.h<li>F:/Projects/Fusion/FusionEngine/FusionClientShip.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:20 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

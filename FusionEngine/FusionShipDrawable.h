@@ -7,6 +7,8 @@
 
 #include "FusionEngineCommon.h"
 
+#include "FusionDrawable.h"
+
 namespace FusionEngine
 {
 	/*!
@@ -19,14 +21,13 @@ namespace FusionEngine
 	class FusionShipDrawable : public FusionDrawable
 	{
 	public:
-		//! The state container for the ship that this draws.
-		FusionShip Ship;
-
 		FusionShipDrawable();
 		~FusionShipDrawable();
 
 		/*!
 		 * \brief
+		 * [depreciated] This is now done by FusionClientShip#SetPosition
+		 *
 		 * Moves the ship and all its attached accessories.
 		 *
 		 * This function is only used on client-side, as it is used to ensure
@@ -38,9 +39,18 @@ namespace FusionEngine
 		 * \sa
 		 * FusionScene | FusionNode | FusionShip | ShipState | ShipResource
 		 */
-		void UpdateNode();
+		//void UpdateNode();
+
+		void SetResource(const std::string &resid);
 
 		virtual void Draw();
+
+	protected:
+		//! Allows the ship drawable to access the relavant ShipResource
+		ClientEnvironment *m_Env;
+
+		//! Resource (sent by FusionClientShip)
+		std::string m_ResourceID;
 	};
 
 }

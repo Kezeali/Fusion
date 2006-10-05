@@ -239,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetworkGeneric.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNetworkMessageQueue.cpp"
 				>
 			</File>
@@ -415,6 +419,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionNetworkClient.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionNetworkGeneric.h"
 				>
 			</File>
 			<File

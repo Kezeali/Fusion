@@ -71,6 +71,9 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionNetworkClient</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Handles network communicaion for the client in-game.  <a href="class_fusion_engine_1_1_fusion_network_client.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_generic.html">FusionNetworkGeneric</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Generic methods for <a class="el" href="class_fusion_engine_1_1_fusion_network_server.html">FusionNetworkServer</a> and <a class="el" href="class_fusion_engine_1_1_fusion_network_client.html">FusionNetworkClient</a>.  <a href="class_fusion_engine_1_1_fusion_network_generic.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_network_message_queue.html">FusionNetworkMessageQueue</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Thread safe message storage.  <a href="class_fusion_engine_1_1_fusion_network_message_queue.html#_details">More...</a><br></td></tr>
@@ -82,6 +85,7 @@
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> represents a moveable object with sub-objects.  <a href="class_fusion_engine_1_1_fusion_node.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a></td></tr>
 
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.  <a href="class_fusion_engine_1_1_fusion_physics_body.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_collision_grid.html">FusionPhysicsCollisionGrid</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compartmentises collision checking to keep redundant checks to a minimum.  <a href="class_fusion_engine_1_1_fusion_physics_collision_grid.html#_details">More...</a><br></td></tr>
@@ -94,6 +98,12 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_response.html">FusionPhysicsResponse</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Each body can have a derived class for different collison responses :D.  <a href="class_fusion_engine_1_1_fusion_physics_response.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.  <a href="class_fusion_engine_1_1_fusion_physics_static.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Ease of storage for holes. Not used ATM.  <a href="struct_fusion_engine_1_1_hole.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html">FusionPhysicsTerrain</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">An implimentation of PhysicsBody. Handles bitmask based collisions.  <a href="class_fusion_engine_1_1_fusion_physics_terrain.html#_details">More...</a><br></td></tr>
@@ -165,7 +175,8 @@ typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" vali
 <a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defdb0ee13a082fd60bb7e9452cbc4be4f0">MTID_SHIPFRAME</a> =  16, 
 <a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c">MTID_PROJECTILEFRAME</a> =  32, 
 <br>
-&nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def1a10161f5ee8eae934923758f9a52d86">MTID_CHALL</a> =  16, 
+&nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def1fc46b8cf9acf32402c659bffc06471d">MTID_TERRAINBITMASK</a> =  64, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def1a10161f5ee8eae934923758f9a52d86">MTID_CHALL</a> =  16, 
 <a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defdf92b230a629363f3eed0f9e3043c05e">MTID_CHTEAM</a> =  32, 
 <a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def82797e4b333e1efd8b1d7d0c587b55ae">MTID_CHONE</a> =  64
 <br>
@@ -175,6 +186,10 @@ typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" vali
 <tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Types of bodies. <br></td></tr>
+<tr><td colspan="2"><br><h2>Functions</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#9fe55a5a0abc871d10ca152b8f3a4cc0">DepthIsLess</a> (<a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *one, <a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *two)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns whether one is greater than two.  <a href="#9fe55a5a0abc871d10ca152b8f3a4cc0"></a><br></td></tr>
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a9b2229b4283fbda5a07f96ea21c3f07"></a><!-- doxytag: member="FusionEngine::g_MaxPlayers" ref="a9b2229b4283fbda5a07f96ea21c3f07" args="" -->
 const unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#a9b2229b4283fbda5a07f96ea21c3f07">g_MaxPlayers</a> = 4</td></tr>
@@ -223,6 +238,8 @@ Channels.
 (0001 0000) </td></tr>
 <tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c"></a><!-- doxytag: member="MTID_PROJECTILEFRAME" ref="6904447ab87ac636b731c19773191def9145a0196f7253948fbe60012eb90f1c" args="" -->MTID_PROJECTILEFRAME</em>&nbsp;</td><td>
 (0010 0000) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def1fc46b8cf9acf32402c659bffc06471d"></a><!-- doxytag: member="MTID_TERRAINBITMASK" ref="6904447ab87ac636b731c19773191def1fc46b8cf9acf32402c659bffc06471d" args="" -->MTID_TERRAINBITMASK</em>&nbsp;</td><td>
+(0100 0000) Low priority </td></tr>
 <tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def1a10161f5ee8eae934923758f9a52d86"></a><!-- doxytag: member="MTID_CHALL" ref="6904447ab87ac636b731c19773191def1a10161f5ee8eae934923758f9a52d86" args="" -->MTID_CHALL</em>&nbsp;</td><td>
 (0001 0000) </td></tr>
 <tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defdf92b230a629363f3eed0f9e3043c05e"></a><!-- doxytag: member="MTID_CHTEAM" ref="6904447ab87ac636b731c19773191defdf92b230a629363f3eed0f9e3043c05e" args="" -->MTID_CHTEAM</em>&nbsp;</td><td>
@@ -234,7 +251,48 @@ Channels.
     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 12:07:18 2006 for Fusion by&nbsp;
+<hr><h2>Function Documentation</h2>
+<a class="anchor" name="9fe55a5a0abc871d10ca152b8f3a4cc0"></a><!-- doxytag: member="FusionEngine::DepthIsLess" ref="9fe55a5a0abc871d10ca152b8f3a4cc0" args="(FusionNode *one, FusionNode *two)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">bool FusionEngine::DepthIsLess           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>one</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>two</em></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Returns whether one is greater than two. 
+<p>
+<dl compact><dt><b>See also:</b></dt><dd>std::sort() </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:19 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

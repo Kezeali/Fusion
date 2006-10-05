@@ -26,13 +26,21 @@ m_DerivedFacing(0)
 
 FusionNode::~FusionNode()
 {
+	// This tells all of this nodes children that they have been orphaned
+	_setInSceneGraph(false);
+
 	// Tell all Drawables that they've been detached.
-	DrawableList::iterator it;
-	for ( it = m_AttachedObjects.begin(); it != m_AttachedObjects.end(); ++it )
+	DrawableList::iterator it = m_AttachedObjects.begin();
+	for (; it != m_AttachedObjects.end(); ++it )
 	{
 		(*it)->_notifyAttached(NULL);
 	}
 	m_AttachedObjects.clear();
+}
+
+bool DepthIsLess(FusionNode *one, FusionNode *two)
+{
+	return (one->GetDepth() < two->GetDepth());
 }
 
 void FusionNode::AttachDrawable(FusionDrawable *draw)
@@ -43,7 +51,16 @@ void FusionNode::AttachDrawable(FusionDrawable *draw)
 
 void FusionNode::DetachDrawable(FusionDrawable *draw)
 {
-	m_AttachedObjects.remove(draw);
+	DrawableList::iterator it = m_AttachedObjects.begin();
+	for (; it != m_AttachedObjects.end(); ++it )
+	{
+		if ((*it) == draw)
+		{
+			m_AttachedObjects.erase(it);
+			break;
+		}
+	}
+
 	draw->_notifyAttached(NULL);
 }
 
@@ -257,7 +274,7 @@ void FusionNode::_setInSceneGraph(bool inSceneGraph)
 		ChildNodeList::iterator it;
 		for (it = m_Children.begin(); it != m_Children.end(); ++it)
 		{
-			(*it)->_setInSceneGraph(inSceneGrpah);
+			(*it)->_setInSceneGraph(inSceneGraph);
 		}
 	}
 }
@@ -281,52 +298,65 @@ FusionNode *FusionNode::CreateChildNode(const CL_Vector2 &position, float facing
 
 void FusionNode::AddChild(FusionNode* child)
 {
-	assert(!child->GetParent());
+	// Don't give nodes multiple parents!
+	if (child->GetParent())
+		child->GetParent()->RemoveChild(child);
 
 	m_Children.push_back(child);
 	child->_setParent(this);
 
-	// The lazy way to insert children.
-	//! \todo Insert children by depth
 	if (m_AllowChildSort)
 		m_NeedChildSort = true;
 }
 
 void FusionNode::RemoveChild(FusionNode* child)
 {
-	m_Children.erase(child);
+	ChildNodeList::iterator it = m_Children.begin();
+	for (; it != m_Children.end(); ++it)
+	{
+		m_Children.erase(it);
+	}
+
+	child->_setParent(NULL);
 }
 
 void FusionNode::RemoveAndDestroyChild(FusionNode *child)
 {
 	delete child;
 
-	m_Children.erase(child);
+	RemoveChild(child);
 }
 
 void FusionNode::RemoveAndDestroyAllChildren()
 {
 	ChildNodeList::iterator it;
-	for (it = m_Children.begin(); it != m_Children.end() ++it)
+	for (it = m_Children.begin(); it != m_Children.end(); ++it)
 	{
+		// Cascade
+		(*it)->RemoveAndDestroyAllChildren();
+		// Then delete
 		delete (*it);
 	}
+
 	m_Children.clear();
 }
 
 void FusionNode::_draw(bool cascade) const
 {
+	// Nodes shouldn't be drawn if they haven't been added to the graph
+	// (although the scene might try to because of the way it finds nodes to draw.)
+	if (m_InSceneGraph == false)
+		return;
+
+	DrawableList::const_iterator it = m_AttachedObjects.begin();
+	for (; it != m_AttachedObjects.end(); ++it )
 	{
-		DrawableList::iterator it;
-		for (it = m_AttachedObjects.begin(); it != m_AttachedObjects.end(); ++it)
-		{
-			(*it)->Draw();
-		}
+		(*it)->Draw();
 	}
 
 	if (cascade)
 	{
-		ChildNodeList::iterator it;
+		ChildNodeList::const_iterator it;
 		for (it = m_Children.begin(); it != m_Children.end(); ++it)
 		{
 			(*it)->_draw(true);
@@ -340,7 +370,7 @@ void FusionNode::_sortChildren(bool cascade)
 
 	if (cascade)
 	{
-		ChildList::iterator it;
+		ChildNodeList::iterator it;
 		for (it = m_Children.begin(); it != m_Children.end(); ++it)
 		{
 			(*it)->_sortChildren(true);
@@ -365,6 +395,8 @@ void FusionNode::SetDepth(int depth)
 void FusionNode::NeedSort()
 {
 	m_Parent->_requestSort(this);
+	// This requests a global sort (used for flat-scene drawing)
+	m_Creator->_requestSort();
 }
 
 void FusionNode::_requestSort(FusionNode *child)
@@ -386,7 +418,7 @@ void FusionNode::SetAllowSort(bool allow, bool cascade)
 
 	if (cascade)
 	{
-		ChildList::iterator it;
+		ChildNodeList::iterator it;
 		for (it = m_Children.begin(); it != m_Children.end(); ++it)
 		{
 			(*it)->SetAllowSort(allow, true);

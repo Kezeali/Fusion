@@ -1,2 +1,3 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_network_message_queue.html 7,7 300,34
+rect $class_fusion_engine_1_1_fusion_network_generic.html 175,97 420,124
+rect $class_fusion_engine_1_1_fusion_network_message_queue.html 7,7 300,33

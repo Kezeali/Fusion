@@ -26,15 +26,22 @@ namespace FusionEngine
 	class FusionScene
 	{
 	public:
+		//! Constructor
 		FusionScene();
+		//! Destructor
 		~FusionScene();
 
 	public:
+		//! A list of scene nodes
 		typedef std::vector<FusionNode*> SceneNodeList;
+
+		//! Gives you access to the root node
 		virtual FusionNode *GetRootNode() const;
 
+		//! Runs the node factory to give you a node
 		virtual FusionNode *CreateNode();
-		virtual void DestroySceneNode(FusionNode *node);
+		//! Destroys a node cleanly
+		virtual void DestroySceneNode(FusionNode *node, bool destroy_children = true);
 
 		/*!
 		 * \brief
@@ -45,12 +52,47 @@ namespace FusionEngine
 		//! Updates nodes and draws them.
 		virtual void Draw();
 
+		//! Sets the drawing mode
+		/*!
+		 * True for flat (ignores child/parent ordering)
+		 * False for graph (cascade draws from the scene node)
+		 */
+		virtual void SetDrawingMode(bool flat);
+
+		//! Use this to enable or disable global (flat) sorting
+		/*!
+		 * Flat sorting should only be used if you aren't drawin using the
+		 * scene graph (flat drawing)
+		 */
+		virtual void SetEnableSorting(bool enable);
+
+		//! Allows nodes to request a global (flat) sort when their depth changes
+		virtual void _requestSort();
+
+		/*!
+		 * \brief
+		 * Sorts child nodes in the global (flat) list by their depth attribute.
+		 *
+		 * This sorts nodes so their position in the scene graph reflects their m_Depth
+		 * attribute, in other words nodes with a lower m_Depth are drawn first.
+		 * <br>
+		 * This is only used when nodes aren't drawn via the graph (flat drawing).
+		 */
+		 virtual void Sort();
+
 	protected:
 		//! All nodes created by this scene are listed here.
 		SceneNodeList m_SceneNodes;
+		//! The node to which all other nodes are children
 		FusionNode *m_RootNode;
 
-		bool m_UseDrawOrder;
+		//! If this is true, the scene ignores parent/child relationships
+		bool m_FlatScene;
+
+		//! The scene will only call Sort() if this is
+		bool m_EnableSorting;
+		//! Makes the graph resort if a nodes depth changes
+		bool m_NeedSort;
 	};
 
 }

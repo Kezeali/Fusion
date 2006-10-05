@@ -9,6 +9,8 @@
 // I'm pretty sure this isn't needed, but Bruski included it, so here you go :P
 #include <math.h>
 
+#include <cassert>
+
 // STL
 #include <string>
 #include <vector>
@@ -16,6 +18,7 @@
 #include <list>
 #include <set>
 #include <deque>
+#include <algorithm>
 
 // ClanLib
 #include <ClanLib/core.h>

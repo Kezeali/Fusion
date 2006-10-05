@@ -10,6 +10,7 @@
 // STL
 
 // Fusion
+#include "FusionNode.h"
 
 
 namespace FusionEngine
