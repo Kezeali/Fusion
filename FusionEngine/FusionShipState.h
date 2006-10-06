@@ -29,8 +29,8 @@
 
 #include "FusionEngineCommon.h"
 
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+//#include <boost/archive/text_oarchive.hpp>
+//#include <boost/archive/text_iarchive.hpp>
 
 namespace FusionEngine
 {
@@ -41,12 +41,15 @@ namespace FusionEngine
 	 */
 	struct ShipState
 	{
-		friend class boost::serialization::access;
+		//[depreciated] friend class boost::serialization::access;
+
+		//! The unique identifier of the ship this state reffers to
+		PlayerInd UID;
 
 		//@{
 		//! Position and velocity vars.
-		CL_Vector Velocity;
-		CL_Vector Position;
+		CL_Vector2 Velocity;
+		CL_Vector2 Position;
 		float Rotation;
 		float RotationalVelocity;
 		//@}
@@ -83,8 +86,8 @@ namespace FusionEngine
 		cl_uint8 weapons;
 
 	private:
-		template <class Archive>
-		void serialize(Archive &ar, unsigned int ver);
+		//template <class Archive>
+		//void serialize(Archive &ar, unsigned int ver);
 	};
 
 }

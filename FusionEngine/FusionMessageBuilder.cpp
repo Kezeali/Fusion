@@ -1,20 +1,30 @@
 
 #include "FusionMessageBuilder.h"
 
-#include <boost/archive/text_iarchive.hpp>
+#include "FusionNetworkTypes.h"
+
+/// RakNet
+#include "../RakNet/PacketEnumerations.h"
+
+//! \todo for some reason boost's serialization doesn't work with RakNet, so we might
+//! as well remove the dependancy on boost altogether.
+
+//#include <boost/archive/text_iarchive.hpp>
 
 using namespace FusionEngine;
 
 FusionMessage *FusionMessageBuilder::BuildMessage(const ShipState &input, PlayerInd playerid)
-{
-	RakNet::BitStream out_stream;
-
+{	
+	/*
 	// serialise the input and push it into the stream via boost::archive
 	{
 		boost::archive::text_oarchive arc(out_stream);
 
 		arc << input;
 	}
+	*/
+
+	RakNet::BitStream out_stream;
 
 	return (new FusionMessage(CID_GAME, MTID_SHIPFRAME, playerid, out_stream.GetData()));
 }
@@ -23,46 +33,47 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const FusionEngine::Projectile
 {
 	RakNet::BitStream out_stream;
 
-	// serialise the input and push it into the stream via boost::archive
-	{
-		boost::archive::text_oarchive arc(out_stream);
-
-		arc << input;
-	}
+	// Unique Identifier
+	out_stream.Write(input.UID);
+	// Pos
+	out_stream.Write(input.Position.x);
+	out_stream.Write(input.Position.y);
+	// Vel
+	out_stream.Write(input.Velocity.x);
+	out_stream.Write(input.Velocity.y);
+	// Rotation / RotVel
+	out_stream.Write(input.Rotation);
+	out_stream.Write(input.RotationalVelocity);
 
 	return (new FusionMessage(CID_GAME, MTID_PROJECTILEFRAME, playerid, out_stream.GetData()));
 }
 
-FusionMessage *FusionMessageBuilder::BuildMessage(const Packet *packet, PlayerInd playerid)
+FusionMessage *FusionMessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
 {
 	FusionMessage *m;
 	unsigned char packetid = _getPacketIdentifier(packet);
 
-	unsigned char *data = packet->data;
+	int head_length = _getHeaderLength(packet);
+	int data_length = packet->length - head_length;
 
-	// System messages
-	if ((packetid & CID_SYSTEM) > 0)
+	unsigned char *data = new unsigned char[data_length];
+	memcpy(data+head_length, packet->data, data_length);
+
+	/// System messages
+	// New player
+	if (packetid == MTID_NEWPLAYER)
 	{
-		// New player
-		if ((packetid & MTID_NEWPLAYER) > 0)
-		{
-			m = new FusionMessage(CID_SYSTEM, MTID_NEWPLAYER, playerid, data);
-		}
+		m = new FusionMessage(CID_SYSTEM, MTID_NEWPLAYER, playerid, data);
 	}
-	// File transfer messages
-	else if ((packetid & CID_FILETRANSFER) > 0)
+	/// File transfer messages
+	// Ship data
+	if (packetid == MTID_STARTTRANSFER)
 	{
-		// Ship data
-		if ((packetid & MTID_STARTTRANSFER) > 0)
-		{
-			m = new FusionMessage(CID_FILETRANSFER, MTID_STARTTRANSFER, playerid, data);
-		}
+		m = new FusionMessage(CID_FILESYS, MTID_STARTTRANSFER, playerid, data);
 	}
-	// Gameplay messages
-	else if ((packetid & CID_GAME) > 0)
-	{
-		// Ship data
-		if ((packetid & MTID_SHIPFRAME) > 0)
+	/// Gameplay messages
+	// Ship data
+	if (packetid == MTID_SHIPFRAME)
 		{
 			m = new FusionMessage(CID_GAME, MTID_SHIPFRAME, playerid, data);
 		}
@@ -95,7 +106,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const Packet *packet, PlayerIn
 	return m;
 }
 
-FusionMessage *FusionMessageBuilder::BuildEventMessage(const Packet *packet, PlayerInd playerind)
+FusionMessage *FusionMessageBuilder::BuildEventMessage(Packet *packet, PlayerInd playerind)
 {
 	unsigned char type = _getPacketIdentifier(packet);
 	FusionMessage* m = new FusionMessage(0, type, playerind, packet->data);
@@ -108,9 +119,41 @@ unsigned char FusionMessageBuilder::_getPacketIdentifier(Packet *p)
 
 	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
 	{
-		assert(p->length > sizeof(unsigned char) + sizeof(unsigned long));
-		return (unsigned char) p->data[sizeof(unsigned char) + sizeof(unsigned long)];
+		assert(p->length > sizeof(unsigned char) + sizeof(RakNetTime));
+		return (unsigned char) p->data[sizeof(unsigned char) + sizeof(RakNetTime)];
 	}
 	else
 		return (unsigned char) p->data[0];
+}
+
+RakNetTime FusionMessageBuilder::_getPacketTime(Packet *p)
+{
+	assert(p);
+
+	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
+	{
+		// Make sure there actually is a timestamp here
+		assert(p->length >= sizeof(unsigned char) + sizeof(RakNetTime));
+
+		RakNetTime time = 0;
+
+		RakNet::BitStream timeBS(p->data+1, sizeof(unsigned int), false);
+		timeBS.Read(time);
+
+		return time;
+	}
+	else
+		return (RakNetTime)0;
+}
+
+int FusionMessageBuilder::_getHeaderLength(Packet *p)
+{
+	assert(p);
+
+	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
+	{
+		return (int) sizeof(unsigned char) + sizeof(RakNetTime);
+	}
+	else
+		return (int) sizeof(unsigned char);
 }

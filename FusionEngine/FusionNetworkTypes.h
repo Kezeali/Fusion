@@ -20,6 +20,12 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
+/*! 
+ * \file FusionNetworkTypes.h
+ * Previously I had used a binary flag setup for message ID's, but
+ * that is stupidly complicated and limiting.
+ */
+
 #ifndef Header_FusionEngine_FusionNetworkTypes
 #define Header_FusionEngine_FusionNetworkTypes
 
@@ -29,6 +35,7 @@
 
 namespace FusionEngine
 {
+	//! The amount of ordering channels defined
 	const unsigned short g_ChannelNum = 4;
 	//! Channels
 	enum
@@ -36,14 +43,14 @@ namespace FusionEngine
 		//@{
 		//! Channels
 
-		//! (0000 0001)
+		//! ignore these -> (0000 0001) it only applied when I was using binary flags
 		CID_SYSTEM = 1,
 		//! (0000 0010)
-		CID_FILETRANSFER = 2,
+		CID_FILESYS = 2,
 		//! (0000 0100)
-		CID_GAME = 4,
+		CID_GAME = 3,
 		//! (0000 1000)
-		CID_CHAT = 8,
+		CID_CHAT = 4,
 		//@}
 
 		//@{

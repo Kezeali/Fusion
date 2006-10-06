@@ -30,6 +30,7 @@
 #include "FusionEngineCommon.h"
 
 #include "../RakNet/Bitstream.h"
+#include "../RakNet/GetTime.h"
 
 namespace FusionEngine
 {
@@ -53,7 +54,13 @@ namespace FusionEngine
 		//! Write data
 		void Write(unsigned char *message);
 		//! Read data
-		const unsigned char Read();
+		const unsigned char *Read() const;
+
+		//! Returns a bitstream containing all the data for RakNet to send
+		RakNet::BitStream *GetBitStream();
+		//! Returns a timestamped bitstream
+		RakNet::BitStream *GetTimedBitStream();
+
 		//! Read PlayerInd
 		const PlayerInd GetPlayerInd() const;
 		//! Read type
@@ -89,7 +96,16 @@ namespace FusionEngine
 		int m_Channel;
 
 		//! The player from whence it came
+		/*!
+		 * \remarks
+		 * Remember: this property is server-side only; if a client wants to
+		 * know what ship/object to apply a message to it looks at the ID stored
+		 * in the received data.
+		 */
 		PlayerInd m_PlayerInd;
+
+		//! The system time when this message was created
+		unsigned int m_Timestamp;
 
 		//! The message serialised
 		unsigned char *m_Message;

@@ -4,8 +4,8 @@
 /// Class
 #include "FusionResourceLoader.h"
 
-/// Boost
-#include <boost/crc.hpp>
+/// Boost [depreciated]
+//#include <boost/crc.hpp>
 
 /// Fusion
 #include "FusionShipResource.h"

@@ -36,7 +36,7 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.
+	 * Should be abstract (Not ATM...) class; the basis for movable/colliding objects.
 	 *
 	 * ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really
 	 * think BB's are necessary... Bah

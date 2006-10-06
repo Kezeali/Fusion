@@ -8,6 +8,7 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionDrawable.h"
+#include "FusionClientEnvironment.h"
 
 namespace FusionEngine
 {

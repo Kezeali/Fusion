@@ -133,6 +133,9 @@ namespace FusionEngine
 		//! Check if a packet can be handled by the network client
 		virtual bool handleRakPackets(Packet *p);
 
+		//! Returns the age (timestamp of the packet
+		unsigned char age(Packet *p);
+
 		//! Converts packets into messages and sorts them.
 		//onPacketReceive();
 	};

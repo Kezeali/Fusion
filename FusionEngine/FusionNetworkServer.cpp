@@ -8,6 +8,9 @@ FusionNetworkServer::FusionNetworkServer(const std::string &port)
 {
 	m_RakServer = RakNetworkFactory::GetRakServerInterface();
 	m_RakServer->Start(0, 0, 30, atoi(port.c_str()));
+
+	// Required for timestamps (it should be on by default anyway)
+	m_RakServer->StartOccasionalPing();
 }
 
 FusionNetworkServer::FusionNetworkServer(const std::string &port, ServerOptions *options)
@@ -15,6 +18,9 @@ FusionNetworkServer::FusionNetworkServer(const std::string &port, ServerOptions 
 {
 	m_RakServer = RakNetworkFactory::GetRakServerInterface();
 	m_RakServer->Start(options->MaxClients, 0, options->NetDelay, atoi(port.c_str()));
+
+	// Required for timestamps (it should be on by default anyway)
+	m_RakServer->StartOccasionalPing();
 }
 
 FusionNetworkServer::~FusionNetworkServer()

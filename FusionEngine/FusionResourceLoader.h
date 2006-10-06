@@ -7,9 +7,12 @@
 
 #include "Common.h"
 
-#include <boost/crc.hpp>
+//! \todo Replace Boost crc use with RakNet CRC
+//#include <boost/crc.hpp>
 
 #include "FusionShipResource.h"
+
+#include "FileVerifier.h"
 
 namespace FusionEngine
 {
@@ -82,18 +85,15 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
+		 * Executed client-side when a VerifyPackage packet is received.
+		 *
 		 * Verifies the existance and crc of a package.
 		 *
-		 * \param name
-		 * The filename of the package.
-		 *
-		 * \param crc
-		 * The crc that should be valid with the package.
-		 *
-		 * \param path
-		 * The path the package should reside in.
+		 * \param stream
+		 * The VerifyPackage bitstream sent from the server.
 		 */
-		bool VerifyPackage(const std::string &name, const boost::crc_32_type &crc, const std::string &path);
+		bool VerifyPackage(RakNet::BitStream *stream);
+		//bool VerifyPackage(const std::string &name, const boost::crc_32_type &crc, const std::string &path);
 		/*!
 		 * \brief
 		 * Verifies the existance and crc of a ship package.
@@ -102,7 +102,7 @@ namespace FusionEngine
 		 *  <code>VerifyPackage(name, crc, "Ships/");</code>
 		 * where Ships/ is the local ship package directory.
 		 */
-		bool VerifyShip(const std::string &name, const boost::crc_32_type &crc);
+		//bool VerifyShip(const std::string &name, const boost::crc_32_type &crc);
 		/*!
 		 * \brief
 		 * Verifies the existance and crc of a level package.
@@ -111,7 +111,7 @@ namespace FusionEngine
 		 *  <code>VerifyPackage(name, crc, "Levels/");</code>
 		 * where Levels/ is the local level package directory.
 		 */
-		bool VerifyLevel(const std::string &name, const boost::crc_32_type &crc);
+		//bool VerifyLevel(const std::string &name, const boost::crc_32_type &crc);
 		/*!
 		 * \brief
 		 * Verifies the existance and crc of a weapon package.
@@ -120,7 +120,7 @@ namespace FusionEngine
 		 *  <code>VerifyPackage(name, crc, "Weapons/");</code>
 		 * where Weapons/ is the local weapons package directory.
 		 */
-		bool VerifyWeapon(const std::string &name, const boost::crc_32_type &crc);
+		//bool VerifyWeapon(const std::string &name, const boost::crc_32_type &crc);
 
 		/*!
 		 * \brief

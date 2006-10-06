@@ -255,6 +255,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPackSyncClient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPackSyncHost.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsBody.cpp"
 				>
 			</File>
@@ -320,10 +328,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipResponse.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionStateData.cpp"
 				>
 			</File>
 			<File
@@ -442,11 +446,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPackSync_Client.h"
+				RelativePath=".\FusionPackSyncClient.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPackSync_Host.h"
+				RelativePath=".\FusionPackSyncHost.h"
 				>
 			</File>
 			<File
@@ -573,6 +577,10 @@
 			>
 			<File
 				RelativePath="..\RakNet\BitStream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\RakNet\DirectoryDeltaTransfer.h"
 				>
 			</File>
 			<File

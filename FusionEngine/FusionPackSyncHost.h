@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionProjectileState
-#define Header_FusionEngine_FusionProjectileState
+#ifndef Header_FusionEngine_FusionPackSyncHost
+#define Header_FusionEngine_FusionPackSyncHost
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,36 +29,28 @@
 
 #include "FusionEngineCommon.h"
 
+#include "../RakNet/RakPeerInterface.h"
+#include "../RakNet/DirectoryDeltaTransfer.h"
+#include "../RakNet/FileListTransfer.h"
+
 //#include <boost/archive/text_oarchive.hpp>
 //#include <boost/archive/text_iarchive.hpp>
 
 namespace FusionEngine
 {
+
 	/*!
 	 * \brief
-	 * Holds all state information for each projectile.
-	 *
-	 * An instance of this object holds the state data for each projectile in the game.
-	 * This object should remain general enough to be used by client and server.
-	 *
-	 * \remarks
-	 * When a weapon fires, and instance of this class is produced.
+	 * Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer
 	 */
-	struct ProjectileState
+	class PackSyncHost
 	{
-		//[depreciated] friend class boost::serialization::access;
+		//! Constructor
+		PackSyncHost(RakPeerInterface *peer);
 
-		//@{
-		//! Position and velocity vars.
-		CL_Vector2 Velocity;
-		CL_Vector2 Position;
-		float Rotation;
-		float RotationalVelocity;
-		//@}
-
-	private:
-		//template <class Archive>
-		//void serialize(Archive &ar, unsigned int ver);
+	protected:
+		DirectoryDeltaTransfer *m_SyncPlugin;
+		FileListTransfer *m_TransferPlugin;
 	};
 
 }

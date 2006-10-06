@@ -51,13 +51,20 @@ namespace FusionEngine
 		static FusionMessage *BuildMessage(const ProjectileState &input, PlayerInd playerid);
 
 		//! Builds a message from a network packet (usually incoming)
-		static FusionMessage *BuildMessage(const Packet *packet, PlayerInd playerid);
+		static FusionMessage *BuildMessage(Packet *packet, PlayerInd playerid);
 
 		//! Builds a message from a RakNet engine message (I call these 'events')
-		static FusionMessage *BuildEventMessage(const Packet *packet, PlayerInd playerind);
+		static FusionMessage *BuildEventMessage(Packet *packet, PlayerInd playerind);
 
 		//! Extract the id from the packet. Internal use only
 		static unsigned char _getPacketIdentifier(Packet *p);
+
+		//! Extract the timestamp from the packet. Internal use only
+		//! \returns 0 if no timestamp is  present
+		static RakNetTime _getPacketTime(Packet *p);
+
+		//! Get the length of the packet header (ID and Timestamp). Internal use only
+		static int _getHeaderLength(Packet *p);
 
 	};
 

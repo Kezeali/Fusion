@@ -12,6 +12,8 @@ FusionMessage::FusionMessage(unsigned char channel, unsigned char type, PlayerIn
 m_Type(type),
 m_PlayerInd(playerInd)
 {
+	// Get a timestamp
+	m_Timestamp = RakNet::GetTime();
 }
 
 FusionMessage::FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message)
@@ -20,6 +22,8 @@ m_Type(type),
 m_PlayerInd(playerInd),
 m_Message(message)
 {
+	// Get a timestamp
+	m_Timestamp = RakNet::GetTime();
 }
 
 FusionMessage::~FusionMessage()
@@ -32,10 +36,14 @@ void FusionMessage::Write(unsigned char *message)
 	m_Message = message;
 }
 
-const std::string &FusionMessage::Read()
+const unsigned char *FusionMessage::Read() const
 {
 	return m_Message;
 }
+
+Packet *GetPacket()
+{
+	Packet *p = 
 
 const PlayerInd FusionMessage::GetPlayerInd() const
 {

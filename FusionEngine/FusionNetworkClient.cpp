@@ -8,13 +8,23 @@ FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::str
 {
 	m_RakClient = RakNetworkFactory::GetRakClientInterface();
 	m_RakClient->Connect(host.c_str(), atoi(port.c_str()), atoi(port.c_str()), 0, 0);
+
+	// Required for timestamps (it should be on by default anyway)
+	rakClient->StartOccasionalPing();
 }
 
 FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port, ClientOptions *options)
 : FusionNetworkGeneric(host, port)
 {
 	m_RakClient = RakNetworkFactory::GetRakClientInterface();
-	m_RakClient->Connect(host.c_str(), atoi(port.c_str()), atoi(port.c_str()), 0, 0);
+	m_RakClient->Connect(
+		host.c_str(),
+		atoi(port.c_str()),
+		atoi(port.c_str()), 0,
+		options->NetworkOptions.NetDelay);
+
+	// Required for timestamps (it should be on by default anyway)
+	m_RakClient->StartOccasionalPing();
 }
 
 FusionNetworkClient::~FusionNetworkClient()
@@ -28,8 +38,14 @@ FusionNetworkClient::~FusionNetworkClient()
 
 void FusionNetworkClient::run()
 {
+	//////////
+	// Receive
 	Packet *p = m_RakClient->Receive();
-	while (p);
+
+	// We don't want the client to get stuck updating if there's tonnes of packets:
+	unsigned int i_time = CL_System::get_time();
+	unsigned int d_time = 0;
+	while (p && d_time < 100);
 	{
 		bool sysPacket = handleRakPackets(p);
 
@@ -45,6 +61,38 @@ void FusionNetworkClient::run()
 
 		// Check for more packets
 		p = m_RakClient->Receive();
+
+		d_time = CL_System::get_time() - i_time;
+	}
+
+	///////
+	// Send
+	for (int chan = 0; chan < g_ChannelNum; chan++)
+	{
+		FusionMessage *m = m_Queue->_getOutMessage(chan);
+
+		i_time = CL_System::get_time();
+		d_time = 0;
+		while (m > 0 && d_time < 100);
+		{
+			// System messages - RELIABLE, HIGH_PRIORITY, no timestamps
+			if (m->GetChannel() == CID_SYSTEM)
+				m_RakClient->Send(m->GetBitStream(), HIGH_PRIORITY, RELIABLE, CID_SYSTEM);
+			// File messages - RELIABLE, HIGH_PRIORITY, no timestamps
+			if (m->GetChannel() == CID_FILESYS)
+				m_RakClient->Send(m->GetBitStream(), MEDIUM_PRIORITY, RELIABLE, CID_FILESYS);
+			// Gameplay messages - UNRELIABLE_SEQUENCED, MEDIUM_PRIORITY, timestamps
+			if (m->GetChannel() == CID_GAME)
+				m_RakClient->Send(m->GetTimedBitStream(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
+			// Chat messages - RELIABLE, LOW_PRIORITY, timestamps
+			if (m->GetChannel() == CID_CHAT)
+				m_RakClient->Send(m->GetTimedBitStream(), LOW_PRIORITY, RELIABLE, CID_CHAT);
+
+			// Check for more packets
+			p = m_RakClient->Receive();
+
+			d_time = CL_System::get_time() - i_time;
+		}
 	}
 }
 
