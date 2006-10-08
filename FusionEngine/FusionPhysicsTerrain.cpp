@@ -28,7 +28,7 @@ void FusionPhysicsTerrain::MakeHole(int x, int y, int radius)
 	m_Holes.push_back(h);
 }
 
-Hole FusionPhysicsTerrain::GetNextHole()
+Hole FusionPhysicsTerrain::PopNextHole()
 {
 	Hole h = m_Holes.front();
 	m_Holes.pop_front();

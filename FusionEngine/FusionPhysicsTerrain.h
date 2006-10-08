@@ -21,12 +21,13 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * An implimentation of PhysicsBody. Handles bitmask based collisions.
+	 * An implimentation of FusionPhysicsStatic. Handles bitmask based collisions.
 	 *
-	 * Has functions for removing sections of the bitmask.
+	 * Has functions for removing sections of the bitmask (to be used in
+	 * collision callbacks of the bodies that can destroy it.)
 	 *
 	 * \sa
-	 * FusionBody | FusionPhysicsWorld.
+	 * FusionPhysicsStatic | FusionPhysicsWorld.
 	 */
 	class FusionPhysicsTerrain : public FusionPhysicsStatic
 	{
@@ -47,7 +48,7 @@ namespace FusionEngine
 		void MakeHole(int x, int y, int radius);
 
 		//! Returns the next unmade hole
-		Hole GetNextHole();
+		Hole PopNextHole();
 
 		//! This is called by the Environment on hole creation.
 		/*!

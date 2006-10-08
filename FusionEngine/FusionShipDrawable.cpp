@@ -23,7 +23,6 @@ void FusionShipDrawable::SetResource(const std::string &resid)
 
 void FusionShipDrawable::Draw()
 {
-	std::string res_id = m_ParentNode->
 	CL_Vector pos = m_ParentNode->GetGlobalPosition();
 	float rot = m_ParentNode->GetGlobalFacing();
 

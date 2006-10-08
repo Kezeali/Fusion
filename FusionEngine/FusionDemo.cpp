@@ -26,7 +26,7 @@ int Fusion::FusionDemo::main(int argc, char **argv)
 		CL_SetupDisplay setup_display;
 		CL_SetupGL setup_gl;
 		CL_SetupGUI setup_gui;
- 
+
 		// Create displaywindow
 		CL_DisplayWindow display("Fusion Gameplay Demo", 640, 480);
 
@@ -67,7 +67,10 @@ void Fusion::FusionDemo::setupGui()
 	CL_StyleManager_Silver style(&style_res);
 	CL_GUIManager gui_manager(&style);
 	// Store a pointer to the manager for use in signal methods
-	m_GuiManager = &gui_manager; //! \remarks MCS- why isn't this done via the line above?
+	//! \remarks MCS: Since this is a pointer to a stack variable, wont
+	//! it be automatically deleted when the function ends..? This could
+	//! cause problems.
+	m_GuiManager = &gui_manager;
 
 	m_GuiDeck = new CL_Deck();
 

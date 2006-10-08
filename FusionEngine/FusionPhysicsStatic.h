@@ -35,10 +35,8 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.
+	 * Abstract (Not ATM... maybe never) class, the basis for colliding but non-moving objects.
 	 *
-	 * ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really
-	 * think BB's are necessary... Bah
 	 *
 	 * \remarks
 	 * With regurad to the state stored in this class:
@@ -50,8 +48,6 @@ namespace FusionEngine
 	 * MCS - Just one other key thing to remember, FusionPhysicsStatic is brainless!
 	 * This class just stores data, and keeps that data valid (i.e. modify the AABB
 	 * to fit the bitmask if it rotates.)
-	 * <br>
-	 * MCS - AABBs are not yet implimented
 	 *
 	 * \todo AABB for FusionPhysicsStatic
 	 *
@@ -102,7 +98,7 @@ namespace FusionEngine
 		void SetUseAABBCollisions(bool useAABB);
 		void SetUseDistCollisions(bool useDist);
 		//@}
-		
+
 		//@{
 		/**
 		 * Collision type property retrieval.
@@ -127,7 +123,7 @@ namespace FusionEngine
 	protected:
 		//! Containing world
 		FusionPhysicsWorld *m_World;
-		
+
 		//! The unique ID for the current object
 		/*!
 		 * Blah, I was going to write something here, but I forget.
@@ -143,7 +139,7 @@ namespace FusionEngine
 
 		//! I'm not sure if this is used...
 		bool m_IsColliding;
-		
+
 		//! Bitmask collisions
 		bool m_UsesPixel;
 		//! Bounding Box collisions

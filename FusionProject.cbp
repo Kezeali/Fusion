@@ -36,7 +36,27 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="FusionEngine\FileVerifier.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FileVerifier.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="FusionEngine\Fusion.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionBitmask.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionBitmask.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -62,21 +82,21 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionDemo.cpp">
+		<Unit filename="FusionEngine\FusionClientShip.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionDemo.h">
+		<Unit filename="FusionEngine\FusionClientShip.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionDestructableImage.cpp">
+		<Unit filename="FusionEngine\FusionDemo.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionDestructableImage.h">
+		<Unit filename="FusionEngine\FusionDemo.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -170,11 +190,57 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="FusionEngine\FusionMessageBuilder.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionMessageBuilder.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="FusionEngine\FusionNetworkClient.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\FusionNetworkClient.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkGeneric.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkGeneric.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkMessageQueue.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkMessageQueue.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkServer.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkServer.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionNetworkTypes.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -190,16 +256,20 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionPackSync_Client.h">
+		<Unit filename="FusionEngine\FusionPackSyncClient.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
-		<Unit filename="FusionEngine\FusionPackSync_Host.h">
+		<Unit filename="FusionEngine\FusionPackSyncHost.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsBody.cpp">
+			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\FusionPhysicsBody.h">
@@ -208,10 +278,54 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsCollisionGrid.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsCollisionGrid.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsElipse.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="FusionEngine\FusionPhysicsElipse.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsProperties.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsResponse.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsResponse.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsStatic.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsStatic.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsTerrain.cpp">
+			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\FusionPhysicsTerrain.h">
@@ -220,7 +334,33 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsTypes.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionPhysicsWorld.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="FusionEngine\FusionPhysicsWorld.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionProjectile.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionProjectile.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionProjectileState.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -276,11 +416,33 @@
 			<Option link="0"/>
 			<Option target="default"/>
 		</Unit>
+		<Unit filename="FusionEngine\FusionShipDrawable.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipDrawable.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
 		<Unit filename="FusionEngine\FusionShipEngine.cpp">
 			<Option compilerVar="CPP"/>
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\FusionShipEngine.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipEngineDrawable.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipFactory.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -301,6 +463,22 @@
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\FusionShipResource.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipResponse.cpp">
+			<Option compilerVar="CPP"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipResponse.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\FusionShipState.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
@@ -345,6 +523,16 @@
 			<Option target="default"/>
 		</Unit>
 		<Unit filename="FusionEngine\Prereq.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\bitmask.c">
+			<Option compilerVar="CC"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="FusionEngine\bitmask.h">
 			<Option compilerVar=""/>
 			<Option compile="0"/>
 			<Option link="0"/>
