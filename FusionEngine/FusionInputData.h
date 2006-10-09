@@ -36,9 +36,9 @@ namespace FusionEngine
 	 * \brief
 	 * Input state structure for each ship.
 	 *
-	 * This structure has two purposes: 1. as part of FusionShipFrame to syncronise input 
+	 * This structure has two purposes: 1. as part of FusionShipFrame to syncronise input
 	 * between client and server, and 2. returned by FusionInput to tell the
-	 * ClientEnvironment what inputs are currently active (on local hardware) for a specific 
+	 * ClientEnvironment what inputs are currently active (on local hardware) for a specific
 	 * ship.
 	 */
 	struct ShipInput

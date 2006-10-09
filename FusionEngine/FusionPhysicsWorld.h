@@ -14,7 +14,7 @@ namespace FusionEngine
 	 * \brief
 	 * The controller for moving objects - this takes data (eg. velocity, force)
 	 * from Bodies and moves them (the bodies do no movement themselves.)
-	 * 
+	 *
 	 * \see
 	 * FusionPhysicsWorld | FusionPhysicsElipse.
 	 */
@@ -25,7 +25,7 @@ namespace FusionEngine
 		FusionPhysicsWorld();
 		//! Virtual destructor.
 		virtual ~FusionPhysicsWorld();
-		
+
 	public:
 		typedef std::vector<FusionPhysicsBody *> PhysicsBodyList;
 

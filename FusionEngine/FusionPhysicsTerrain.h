@@ -15,8 +15,12 @@ namespace FusionEngine
 	//! Ease of storage for holes. Not used ATM.
 	struct Hole
 	{
-		//! Data
-		int x, y, radius;
+		//! x loc
+		int x;
+		//! y loc
+		int y;
+		//! rad
+		int radius;
 	};
 
 	/*!

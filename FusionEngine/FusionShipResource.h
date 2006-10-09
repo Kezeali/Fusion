@@ -49,8 +49,7 @@ namespace FusionEngine
 		struct ImageInfo
 		{
 			CL_Surface *Body;
-			CL_Surface *LeftEngine;
-			CL_Surface *RightEngine;
+			CL_Surface *Engine;
 			CL_Surface *PrimaryWeapon;
 			CL_Surface *SecondaryWeapon;
 		}
@@ -60,7 +59,7 @@ namespace FusionEngine
 		{
 			float Mass;
 			float EngineForce;
-			/*! 
+			/*!
 		   * Maximum velocity of rotation.
 		   *
 		   * \remarks

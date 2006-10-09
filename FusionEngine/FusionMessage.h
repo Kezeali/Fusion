@@ -73,7 +73,7 @@ namespace FusionEngine
 		 * \brief
 		 * The specific type of message.
 		 *
-		 * eg. if it were in the gameplay channel, it could be a 'player frame' type, 'change 
+		 * eg. if it were in the gameplay channel, it could be a 'player frame' type, 'change
 		 * state' type, etc.
 		 *
 		 * \remarks

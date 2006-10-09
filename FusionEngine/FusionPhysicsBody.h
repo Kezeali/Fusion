@@ -88,7 +88,7 @@ namespace FusionEngine
 		virtual void ApplyForce(const CL_Vector2 &force);
 		//! We don't care about yo' torque.
 		virtual void SetRotationalVelocity(const float velocity);
-		
+
 		//@{
 		//! Properties.
 		virtual void SetColBitmask(const FusionBitmask &bitmask);
@@ -118,7 +118,7 @@ namespace FusionEngine
 		void SetUseAABBCollisions(bool useAABB);
 		void SetUseDistCollisions(bool useDist);
 		//@}
-		
+
 		//@{
 		/**
 		 * Collision type property retrieval.
@@ -173,7 +173,7 @@ namespace FusionEngine
 		FusionPhysicsWorld *m_World;
 		//! \\see FusionPhysicsResponse
 		FusionPhysicsResponse m_CollisionResponse;
-		
+
 		//! The unique ID for the current object
 		/*!
 		 * Blah, I was going to write something here, but I forget.
@@ -185,7 +185,7 @@ namespace FusionEngine
 		float m_ColDist;
 
 		bool m_IsColliding;
-		
+
 		//! Bitmask collisions
 		bool m_UsesPixel;
 		//! Bounding Box collisions

@@ -54,7 +54,7 @@ namespace FusionEngine
 		virtual bool IsAttached() const;
 
 		/*!
-		 * Returns true if this object is attached to a SceneNode or TagPoint, 
+		 * Returns true if this object is attached to a SceneNode or TagPoint,
 		 * and this SceneNode / TagPoint is currently in an active part of the
 		 * scene graph.
 		 */

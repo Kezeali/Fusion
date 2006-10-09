@@ -34,7 +34,7 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Each body can have a derived class for different collison responses :D.
-	 * 
+	 *
 	 * \remarks
 	 * MCS - This is probably one of my best ideas on the physics front.
 	 *
