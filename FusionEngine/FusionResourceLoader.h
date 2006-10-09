@@ -5,7 +5,7 @@
 #pragma once
 #endif
 
-#include "Common.h"
+#include "FusionEngineCommon.h"
 
 //! \todo Replace Boost crc use with RakNet CRC
 //#include <boost/crc.hpp>
@@ -48,13 +48,6 @@ namespace FusionEngine
 		//! Map of ships
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
 		//typedef std::map<std::string, WeaponResource*> WeaponResourcePtrMap;
-
-		//! The relative path to Ship packages, including trailing slash.
-		static const std::string ShipsPath;
-		//! The relative path to Level packages, including trailing slash.
-		static const std::string LevelsPath;
-		//! The relative path th Weapon packages, including trailing slash.
-		static const std::string WeaponsPath;
 
 		//! Self exp.
 		static StringVector GetInstalledShips();

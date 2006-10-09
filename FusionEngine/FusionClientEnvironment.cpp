@@ -11,6 +11,13 @@ ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::str
 	m_Scene = new FusionScene();
 }
 
+ClientEnvironment::~ClientEnvironment()
+{
+	delete m_InputManager;
+	delete m_NetworkManager;
+	delete m_Scene;
+}
+
 bool ClientEnvironment::Initialise(ResourceLoader *resources)
 {
 	m_InputManager->Initialise();
@@ -23,8 +30,12 @@ bool ClientEnvironment::Initialise(ResourceLoader *resources)
 	return true;
 }
 
-void ClientEnvironment::Update(unsigned int split)
+bool ClientEnvironment::Update(unsigned int split)
 {
+	// Tells the game to exit the client environment (by returning false)
+	if (m_Quit)
+		return false;
+
 	// Setup local frames
 	gatherLocalInput();
 
@@ -52,6 +63,10 @@ void ClientEnvironment::Update(unsigned int split)
 
 	// Update all the client only stuff (particle systems, falling engines, etc.)
 	//updateNonSynced();
+
+	//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false, 
+	//! or perhaps an error, when update fails... Or perhaps I should use exceptions here?
+	return true;
 }
 
 void ClientEnvironment::Draw()
@@ -65,6 +80,11 @@ ShipResource *ClientEnvironment::GetShipResourceByID(std::string id)
 	return m_ShipResources[id];
 }
 
+void ClientEnvironment::_quit()
+{
+	m_Quit = true;
+}
+
 void ClientEnvironment::send()
 {
 }
@@ -72,12 +92,39 @@ void ClientEnvironment::send()
 bool ClientEnvironment::receive()
 {
 	// Check events (important messages)
-	std::vector<FusionMessage*> list = m_NetworkManager->GetEvents();
-	std::vector<FusionMessage*>::iterator it = list.begin();
+	FusionMessage *e = m_NetworkManager->GetNextEvent();
 
-	for (; it != list.end(); ++it)
+	while (e)
 	{
-		(*it)->GetType
+		const unsigned char type = e->GetType();
+		switch (type)
+		{
+		case ID_REMOTE_CONNECTION_LOST:
+			// Perhaps we should show a connection lost message here?
+			_quit();
+			break;
+		}
+
+		e = m_NetworkManager->GetNextEvent();
+	}
+
+	// Gameplay Messages
+	FusionMessage *m = m_NetworkManager->GetNextMessage(CID_GAME);
+	while (m)
+	{
+		const unsigned char type = m->GetType();
+		switch (type)
+		{
+		case MTID_SHIPFRAME:
+			// I call another method here, because, well... because that's how I roll ;)
+			installShipFrameFromMessage(m);
+			break;
+		}
+
+		m = m_NetworkManager->GetNextMessage(CID_GAME);
+	}
+
+	//! \todo System, etc. messages in the ClientEnvironment
 }
 
 void ClientEnvironment::gatherLocalInput()

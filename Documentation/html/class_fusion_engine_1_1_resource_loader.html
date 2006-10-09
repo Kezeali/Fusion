@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -60,21 +61,12 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="class_fusion_engine_1_1_package_type.html">PackageType</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#dd6402368975508dcb37c6205f617988">GetPackageType</a> (const std::string &amp;name)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Deduces the type of resource stored in the given package.  <a href="#dd6402368975508dcb37c6205f617988"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#cde9dd477c57a4eb0f2120e08a12b1f6">VerifyPackage</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc, const std::string &amp;path)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#88a5996ef5b73a8ca770b33bb515bc0e">VerifyPackage</a> (RakNet::BitStream *stream)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a package.  <a href="#cde9dd477c57a4eb0f2120e08a12b1f6"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#e3c75a66206b7726cf5135100cb1b5b0">VerifyShip</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a ship package.  <a href="#e3c75a66206b7726cf5135100cb1b5b0"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#c0f8e9c09bcc1065f305c56665036af5">VerifyLevel</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a level package.  <a href="#c0f8e9c09bcc1065f305c56665036af5"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#80738afc7fdf15b7736ebb6a4eec780d">VerifyWeapon</a> (const std::string &amp;name, const boost::crc_32_type &amp;crc)</td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a weapon package.  <a href="#80738afc7fdf15b7736ebb6a4eec780d"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Executed client-side when a VerifyPackage packet is received.  <a href="#88a5996ef5b73a8ca770b33bb515bc0e"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#5a28ba1491d3255f902f2ab89e5316c2">LoadShips</a> (<a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a> names)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Forces the resource loader to load the defined ships.  <a href="#5a28ba1491d3255f902f2ab89e5316c2"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Verifies the existance and crc of a ship package. Verifies the existance and crc of a level package. Verifies the existance and crc of a weapon package. Forces the resource loader to load the defined ships.  <a href="#5a28ba1491d3255f902f2ab89e5316c2"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#c970672bbb71633d34b23478b08f9dd4">LoadVerified</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Loads all packages previously verified.  <a href="#c970672bbb71633d34b23478b08f9dd4"></a><br></td></tr>
@@ -95,19 +87,6 @@ static <a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b5399
 static <a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#14d19022eebf77d81a1834dc2a7f8b5d">GetInstalledWeapons</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Self exp. <br></td></tr>
-<tr><td colspan="2"><br><h2>Static Public Attributes</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="f06ef90f5d7154ad046dc4504424e3c8"></a><!-- doxytag: member="FusionEngine::ResourceLoader::ShipsPath" ref="f06ef90f5d7154ad046dc4504424e3c8" args="" -->
-static const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#f06ef90f5d7154ad046dc4504424e3c8">ShipsPath</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Ship packages, including trailing slash. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="bc7e688f8a48ca4c51e7b4029bce63c0"></a><!-- doxytag: member="FusionEngine::ResourceLoader::LevelsPath" ref="bc7e688f8a48ca4c51e7b4029bce63c0" args="" -->
-static const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#bc7e688f8a48ca4c51e7b4029bce63c0">LevelsPath</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Level packages, including trailing slash. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="52ea727657cc1d7cb998e637542cbf29"></a><!-- doxytag: member="FusionEngine::ResourceLoader::WeaponsPath" ref="52ea727657cc1d7cb998e637542cbf29" args="" -->
-static const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_resource_loader.html#52ea727657cc1d7cb998e637542cbf29">WeaponsPath</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path th Weapon packages, including trailing slash. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Loads and stores resources for gameplay. 
@@ -174,7 +153,7 @@ Deduces the type of resource stored in the given package.
     <td>
 
 <p>
-Forces the resource loader to load the defined ships. 
+Verifies the existance and crc of a ship package. Verifies the existance and crc of a level package. Verifies the existance and crc of a weapon package. Forces the resource loader to load the defined ships. 
 <p>
 Calls parseShipDefinition on each of the packages named in the vector.<p>
 <dl compact><dt><b>Remarks:</b></dt><dd>It is recomended that LoadVerified be used instead, as it will load only previously verified packages (that is, packages with the correct filename and crc.) </dd></dl>
@@ -212,46 +191,7 @@ The <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLo
     </td>
   </tr>
 </table>
-<a class="anchor" name="c0f8e9c09bcc1065f305c56665036af5"></a><!-- doxytag: member="FusionEngine::ResourceLoader::VerifyLevel" ref="c0f8e9c09bcc1065f305c56665036af5" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::ResourceLoader::VerifyLevel           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a level package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Levels/");</code> where Levels/ is the local level package directory.     </td>
-  </tr>
-</table>
-<a class="anchor" name="cde9dd477c57a4eb0f2120e08a12b1f6"></a><!-- doxytag: member="FusionEngine::ResourceLoader::VerifyPackage" ref="cde9dd477c57a4eb0f2120e08a12b1f6" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc, const std::string &amp;path)" --><p>
+<a class="anchor" name="88a5996ef5b73a8ca770b33bb515bc0e"></a><!-- doxytag: member="FusionEngine::ResourceLoader::VerifyPackage" ref="88a5996ef5b73a8ca770b33bb515bc0e" args="(RakNet::BitStream *stream)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -259,25 +199,10 @@ Shorthand for <code>VerifyPackage(name, crc, "Levels/");</code> where Levels/ is
         <tr>
           <td class="md" nowrap valign="top">bool FusionEngine::ResourceLoader::VerifyPackage           </td>
           <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>path</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
+          <td class="md" nowrap valign="top">RakNet::BitStream *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>stream</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
         </tr>
       </table>
     </td>
@@ -291,99 +216,20 @@ Shorthand for <code>VerifyPackage(name, crc, "Levels/");</code> where Levels/ is
     <td>
 
 <p>
-Verifies the existance and crc of a package. 
+Executed client-side when a VerifyPackage packet is received. 
 <p>
+Verifies the existance and crc of a package.<p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>The filename of the package.</td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>crc</em>&nbsp;</td><td>The crc that should be valid with the package.</td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>path</em>&nbsp;</td><td>The path the package should reside in. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>stream</em>&nbsp;</td><td>The VerifyPackage bitstream sent from the server. </td></tr>
   </table>
 </dl>
     </td>
   </tr>
 </table>
-<a class="anchor" name="e3c75a66206b7726cf5135100cb1b5b0"></a><!-- doxytag: member="FusionEngine::ResourceLoader::VerifyShip" ref="e3c75a66206b7726cf5135100cb1b5b0" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::ResourceLoader::VerifyShip           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a ship package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Ships/");</code> where Ships/ is the local ship package directory.     </td>
-  </tr>
-</table>
-<a class="anchor" name="80738afc7fdf15b7736ebb6a4eec780d"></a><!-- doxytag: member="FusionEngine::ResourceLoader::VerifyWeapon" ref="80738afc7fdf15b7736ebb6a4eec780d" args="(const std::string &amp;name, const boost::crc_32_type &amp;crc)" --><p>
-<table class="mdTable" cellpadding="2" cellspacing="0">
-  <tr>
-    <td class="mdRow">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td class="md" nowrap valign="top">bool FusionEngine::ResourceLoader::VerifyWeapon           </td>
-          <td class="md" valign="top">(&nbsp;</td>
-          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="md" nowrap align="right"></td>
-          <td class="md"></td>
-          <td class="md" nowrap>const boost::crc_32_type &amp;&nbsp;</td>
-          <td class="mdname" nowrap> <em>crc</em></td>
-        </tr>
-        <tr>
-          <td class="md"></td>
-          <td class="md">)&nbsp;</td>
-          <td class="md" colspan="2"></td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<table cellspacing="5" cellpadding="0" border="0">
-  <tr>
-    <td>
-      &nbsp;
-    </td>
-    <td>
-
-<p>
-Verifies the existance and crc of a weapon package. 
-<p>
-Shorthand for <code>VerifyPackage(name, crc, "Weapons/");</code> where Weapons/ is the local weapons package directory.     </td>
-  </tr>
-</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionResourceLoader.h<li>F:/Projects/Fusion/FusionEngine/FusionResourceLoader.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

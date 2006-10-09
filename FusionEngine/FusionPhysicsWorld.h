@@ -69,7 +69,7 @@ namespace FusionEngine
 		 * \param two The object which may be colliding against param one.
 		 */
 		CL_Vector2 &_checkVectorForCollisions(const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
-			 const FusionPhsicsBody *one, const FusionPhysicsBody *two) const;
+			 const FusionPhysicsBody *one, const FusionPhysicsBody *two) const;
 
 	private:
 		//! All physical objects controled by this world.

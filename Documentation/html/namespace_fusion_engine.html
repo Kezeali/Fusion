@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li id="current"><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -83,9 +84,15 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> represents a moveable object with sub-objects.  <a href="class_fusion_engine_1_1_fusion_node.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_pack_sync_client.html">PackSyncClient</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer.  <a href="class_fusion_engine_1_1_pack_sync_client.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_pack_sync_host.html">PackSyncHost</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer.  <a href="class_fusion_engine_1_1_pack_sync_host.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.  <a href="class_fusion_engine_1_1_fusion_physics_body.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Should be abstract (Not ATM...) class; the basis for movable/colliding objects.  <a href="class_fusion_engine_1_1_fusion_physics_body.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_collision_grid.html">FusionPhysicsCollisionGrid</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Compartmentises collision checking to keep redundant checks to a minimum.  <a href="class_fusion_engine_1_1_fusion_physics_collision_grid.html#_details">More...</a><br></td></tr>
@@ -100,13 +107,13 @@
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Each body can have a derived class for different collison responses :D.  <a href="class_fusion_engine_1_1_fusion_physics_response.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Abstract (Not ATM... maybe never) class, the basis for movable/colliding objects.  <a href="class_fusion_engine_1_1_fusion_physics_static.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Abstract (Not ATM... maybe never) class, the basis for colliding but non-moving objects.  <a href="class_fusion_engine_1_1_fusion_physics_static.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Ease of storage for holes. Not used ATM.  <a href="struct_fusion_engine_1_1_hole.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html">FusionPhysicsTerrain</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">An implimentation of PhysicsBody. Handles bitmask based collisions.  <a href="class_fusion_engine_1_1_fusion_physics_terrain.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">An implimentation of <a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a>. Handles bitmask based collisions.  <a href="class_fusion_engine_1_1_fusion_physics_terrain.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The controller for moving objects - this takes data (eg. velocity, force) from Bodies and moves them (the bodies do no movement themselves.).  <a href="class_fusion_engine_1_1_fusion_physics_world.html#_details">More...</a><br></td></tr>
@@ -166,9 +173,9 @@ typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" vali
 <tr><td colspan="2"><br><h2>Enumerations</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom">{ <br>
 &nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85">CID_SYSTEM</a> =  1, 
-<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96">CID_FILETRANSFER</a> =  2, 
-<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018">CID_GAME</a> =  4, 
-<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def497c1b12d2fdefd6f684b10fded4c387">CID_CHAT</a> =  8, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191defc2ee1134780ccf3dddc1dd3a0c0914ce">CID_FILESYS</a> =  2, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018">CID_GAME</a> =  3, 
+<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def497c1b12d2fdefd6f684b10fded4c387">CID_CHAT</a> =  4, 
 <br>
 &nbsp;&nbsp;<a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def4417fdb7af2dd4752aa5324915a46e75">MTID_NEWPLAYER</a> =  16, 
 <a class="el" href="namespace_fusion_engine.html#6904447ab87ac636b731c19773191def1ba28f121e1dacf634eb68be3df460c6">MTID_STARTTRANSFER</a> =  16, 
@@ -195,9 +202,30 @@ typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" vali
 const unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#a9b2229b4283fbda5a07f96ea21c3f07">g_MaxPlayers</a> = 4</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Max players per client. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="76502e3bd4b83c59deae5f14d19041c8"></a><!-- doxytag: member="FusionEngine::g_ChannelNum" ref="76502e3bd4b83c59deae5f14d19041c8" args="" -->
+const unsigned short&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#76502e3bd4b83c59deae5f14d19041c8">g_ChannelNum</a> = 4</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The amount of ordering channels defined. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="3714c1c2cfc5bcfe3114739f89bf6863"></a><!-- doxytag: member="FusionEngine::ShipsPath" ref="3714c1c2cfc5bcfe3114739f89bf6863" args="" -->
+const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#3714c1c2cfc5bcfe3114739f89bf6863">ShipsPath</a> = &quot;Ships/&quot;</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Ship packages, including trailing slash. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="59d6220dbbfc731ce3d0f3bed7b022e0"></a><!-- doxytag: member="FusionEngine::LevelsPath" ref="59d6220dbbfc731ce3d0f3bed7b022e0" args="" -->
+const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#59d6220dbbfc731ce3d0f3bed7b022e0">LevelsPath</a> = &quot;Levels/&quot;</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path to Level packages, including trailing slash. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="bf5449758db0e5cf9e355eceb3541776"></a><!-- doxytag: member="FusionEngine::WeaponsPath" ref="bf5449758db0e5cf9e355eceb3541776" args="" -->
+const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#bf5449758db0e5cf9e355eceb3541776">WeaponsPath</a> = &quot;Weapons/&quot;</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The relative path th Weapon packages, including trailing slash. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-<a class="el" href="namespace_fusion.html">Fusion</a>. <hr><h2>Enumeration Type Documentation</h2>
+<a class="el" href="namespace_fusion.html">Fusion</a>. 
+<p>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000011">Todo:</a></b></dt><dd>Replace Boost crc use with RakNet CRC </dd></dl>
+
+<p>
+<hr><h2>Enumeration Type Documentation</h2>
 <a class="anchor" name="6904447ab87ac636b731c19773191def"></a><!-- doxytag: member="FusionEngine::@0" ref="6904447ab87ac636b731c19773191def" args="" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
@@ -223,8 +251,8 @@ Channels.
 <dl compact><dt><b>Enumerator: </b></dt><dd>
 <table border="0" cellspacing="2" cellpadding="0">
 <tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85"></a><!-- doxytag: member="CID_SYSTEM" ref="6904447ab87ac636b731c19773191defb8b1504989b725888e2768e043f6fb85" args="" -->CID_SYSTEM</em>&nbsp;</td><td>
-(0000 0001) </td></tr>
-<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96"></a><!-- doxytag: member="CID_FILETRANSFER" ref="6904447ab87ac636b731c19773191def2c65c3613afde29c568a4a2a10237d96" args="" -->CID_FILETRANSFER</em>&nbsp;</td><td>
+ignore these -&gt; (0000 0001) it only applied when I was using binary flags </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191defc2ee1134780ccf3dddc1dd3a0c0914ce"></a><!-- doxytag: member="CID_FILESYS" ref="6904447ab87ac636b731c19773191defc2ee1134780ccf3dddc1dd3a0c0914ce" args="" -->CID_FILESYS</em>&nbsp;</td><td>
 (0000 0010) </td></tr>
 <tr><td valign="top"><em><a class="anchor" name="6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018"></a><!-- doxytag: member="CID_GAME" ref="6904447ab87ac636b731c19773191def8380ba05db1df7beb30c84921b6af018" args="" -->CID_GAME</em>&nbsp;</td><td>
 (0000 0100) </td></tr>
@@ -292,7 +320,7 @@ Returns whether one is greater than two.
     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:19 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

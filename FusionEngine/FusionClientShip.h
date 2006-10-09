@@ -30,6 +30,7 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionShipState.h"
+#include "FusionInputData.h"
 #include "FusionShipDrawable.h"
 
 namespace FusionEngine

@@ -1,6 +1,4 @@
 
-#include "FusionEngineCommon.h"
-
 /// Class
 #include "FusionResourceLoader.h"
 
@@ -11,15 +9,11 @@
 #include "FusionShipResource.h"
 #include "FusionDestructableImage.h"
 
+#include "FusionPaths.h"
+
 using namespace FusionEngine;
 
 // Look, nice formatting :D
-////////////
-/// Statics:
-ResourceLoader::ShipsPath = "Ships/";
-ResourceLoader::LevelsPath = "Levels/";
-ResourceLoader::WeaponsPath = "Weapons/";
-
 ///////////
 /// Public:
 StringVector ResourceLoader::GetInstalledShips()

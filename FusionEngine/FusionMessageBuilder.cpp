@@ -26,6 +26,25 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const ShipState &input, Player
 
 	RakNet::BitStream out_stream;
 
+	// PlayerID
+	out_stream.Write(input.PID);
+	// Pos
+	out_stream.Write(input.Position.x);
+	out_stream.Write(input.Position.y);
+	// Vel
+	out_stream.Write(input.Velocity.x);
+	out_stream.Write(input.Velocity.y);
+	// Rotation / RotVel
+	out_stream.Write(input.Rotation);
+	out_stream.Write(input.RotationalVelocity);
+	// Active weapons
+	out_stream.Write(input.current_primary);
+	out_stream.Write(input.current_secondary);
+	out_stream.Write(input.current_bomb);
+	// Available components
+	out_stream.Write(input.engines);
+	out_stream.Write(input.weapons);
+
 	return (new FusionMessage(CID_GAME, MTID_SHIPFRAME, playerid, out_stream.GetData()));
 }
 
@@ -33,8 +52,10 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const FusionEngine::Projectile
 {
 	RakNet::BitStream out_stream;
 
+	// PlayerID (owner)
+	out_stream.Write(input.PID);
 	// Unique Identifier
-	out_stream.Write(input.UID);
+	out_stream.Write(input.OID);
 	// Pos
 	out_stream.Write(input.Position.x);
 	out_stream.Write(input.Position.y);
@@ -65,42 +86,41 @@ FusionMessage *FusionMessageBuilder::BuildMessage(Packet *packet, PlayerInd play
 	{
 		m = new FusionMessage(CID_SYSTEM, MTID_NEWPLAYER, playerid, data);
 	}
+
 	/// File transfer messages
 	// Ship data
-	if (packetid == MTID_STARTTRANSFER)
+	else if (packetid == MTID_STARTTRANSFER)
 	{
 		m = new FusionMessage(CID_FILESYS, MTID_STARTTRANSFER, playerid, data);
 	}
+
 	/// Gameplay messages
 	// Ship data
-	if (packetid == MTID_SHIPFRAME)
-		{
-			m = new FusionMessage(CID_GAME, MTID_SHIPFRAME, playerid, data);
-		}
-		// Projectile data
-		else if ((packetid & MTID_PROJECTILEFRAME) > 0)
-		{
-			m = new FusionMessage(CID_GAME, MTID_PROJECTILEFRAME, playerid, data);
-		}
-	}
-	// Chat messages
-	else if ((packetid & CID_GAME) > 0)
+	else if (packetid == MTID_SHIPFRAME)
 	{
-		// To all players chat data
-		if ((packetid & MTID_CHALL) > 0)
-		{
-			m = new FusionMessage(CID_GAME, MTID_CHALL, playerid, data);
-		}
-		// To team chat data
-		else if ((packetid & MTID_CHTEAM) > 0)
-		{
-			m = new FusionMessage(CID_GAME, MTID_CHTEAM, playerid, data);
-		}
-		// To a specific player chat data
-		else if ((packetid & MTID_CHONE) > 0)
-		{
-			m = new FusionMessage(CID_GAME, MTID_CHONE, playerid, data);
-		}
+		m = new FusionMessage(CID_GAME, MTID_SHIPFRAME, playerid, data);
+	}
+	// Projectile data
+	else if (packetid == MTID_PROJECTILEFRAME)
+	{
+		m = new FusionMessage(CID_GAME, MTID_PROJECTILEFRAME, playerid, data);
+	}
+
+	/// Chat messages
+	// To all players chat data
+	else if (packetid == MTID_CHALL)
+	{
+		m = new FusionMessage(CID_CHAT, MTID_CHALL, playerid, data);
+	}
+	// To team chat data
+	else if (packetid == MTID_CHTEAM)
+	{
+		m = new FusionMessage(CID_CHAT, MTID_CHTEAM, playerid, data);
+	}
+	// To a specific player chat data
+	else if (packetid == MTID_CHONE)
+	{
+		m = new FusionMessage(CID_CHAT, MTID_CHONE, playerid, data);
 	}
 
 	return m;
@@ -109,7 +129,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(Packet *packet, PlayerInd play
 FusionMessage *FusionMessageBuilder::BuildEventMessage(Packet *packet, PlayerInd playerind)
 {
 	unsigned char type = _getPacketIdentifier(packet);
-	FusionMessage* m = new FusionMessage(0, type, playerind, packet->data);
+	return (new FusionMessage(0, type, playerind, packet->data));
 }
 
 unsigned char FusionMessageBuilder::_getPacketIdentifier(Packet *p)

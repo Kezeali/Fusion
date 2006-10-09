@@ -44,7 +44,7 @@ namespace FusionEngine
 		//[depreciated] friend class boost::serialization::access;
 
 		//! The unique identifier of the ship this state reffers to
-		PlayerInd UID;
+		PlayerInd PID;
 
 		//@{
 		//! Position and velocity vars.

@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -21,7 +22,7 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html">FusionPhysicsTerrain</a></div>
-<h1>FusionEngine::FusionPhysicsTerrain Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsTerrain" --><!-- doxytag: inherits="FusionEngine::FusionPhysicsStatic" -->An implimentation of PhysicsBody. Handles bitmask based collisions.  
+<h1>FusionEngine::FusionPhysicsTerrain Class Reference</h1><!-- doxytag: class="FusionEngine::FusionPhysicsTerrain" --><!-- doxytag: inherits="FusionEngine::FusionPhysicsStatic" -->An implimentation of <a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a>. Handles bitmask based collisions.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionPhysicsTerrain.h&gt;</code>
@@ -53,8 +54,8 @@ virtual&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="c
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#98d334313db3a14e34089e13cfd4b791">MakeHole</a> (int x, int y, int radius)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Marks a point with a hole, so the Environment will create one there. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="95bc9cab1a12f4e99c202740e8eb9664"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::GetNextHole" ref="95bc9cab1a12f4e99c202740e8eb9664" args="()" -->
-<a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#95bc9cab1a12f4e99c202740e8eb9664">GetNextHole</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="3bf63981ac67a19d00cf7d22c6bfa6bb"></a><!-- doxytag: member="FusionEngine::FusionPhysicsTerrain::PopNextHole" ref="3bf63981ac67a19d00cf7d22c6bfa6bb" args="()" -->
+<a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#3bf63981ac67a19d00cf7d22c6bfa6bb">PopNextHole</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the next unmade hole. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_terrain.html#0aa9b3a0c0f9d147f077756c2abf33eb">_madeHole</a> (const CL_Surface *surface)</td></tr>
@@ -67,10 +68,10 @@ std::deque&lt; <a class="el" href="struct_fusion_engine_1_1_hole.html">Hole</a> 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">List of unmade holes. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-An implimentation of PhysicsBody. Handles bitmask based collisions. 
+An implimentation of <a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a>. Handles bitmask based collisions. 
 <p>
-Has functions for removing sections of the bitmask.<p>
-<dl compact><dt><b>See also:</b></dt><dd>FusionBody | <a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a>. </dd></dl>
+Has functions for removing sections of the bitmask (to be used in collision callbacks of the bodies that can destroy it.)<p>
+<dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_physics_static.html">FusionPhysicsStatic</a> | <a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html">FusionPhysicsWorld</a>. </dd></dl>
 
 <p>
 <hr><h2>Constructor &amp; Destructor Documentation</h2>
@@ -142,7 +143,7 @@ When the Environment has finished making a hole in the terrain image, it calls t
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsTerrain.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsTerrain.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

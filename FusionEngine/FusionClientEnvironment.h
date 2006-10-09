@@ -69,11 +69,14 @@ namespace FusionEngine
 		//! Constructor
 		ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options);
 
+		//! Destructor
+		~ClientEnvironment();
+
 	public:
 		//! A list of ships
-		typedef std::vector<FusionClientShip> ShipList;
+		typedef std::vector<FusionClientShip*> ShipList;
 		//! A list of projectiles
-		typedef std::vector<FusionProjectile> ProjectileList;
+		typedef std::vector<FusionProjectile*> ProjectileList;
 		//! A list of resources
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
 
@@ -120,7 +123,14 @@ namespace FusionEngine
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		const ShipResource &GetShipResourceByID(std::string id) const;
 
+		//! Leaves the client environment cleanly.
+		void _quit();
+
 	private:
+		//! If this is set to true, the update command will return false next time it runs
+		//!  (thus quitting the gameplay.)
+		bool m_Quit;
+
 		//! Number of players in the env
 		unsigned int m_NumPlayers;
 
@@ -151,7 +161,7 @@ namespace FusionEngine
 		//! List of ships currently in the environment
 		ShipList m_Ships;
 		//! List of Projectiles currently in the environment
-		ProjectilesList m_Projectiles;
+		ProjectileList m_Projectiles;
 
 		//! List of ship resources in loaded.
 		/*!
@@ -167,6 +177,13 @@ namespace FusionEngine
 		void send();
 		//! Receive all packets
 		bool receive();
+
+		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship
+		//! \todo Maybe this should be in a helper class? meh, I think that will 
+		//! overcomplicate things, especially as my current goal is "just make it compile"!
+		void installShipFrameFromMessage(FusionMessage *m);
+		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
+		void installProjectileFrameFromMessage(FusionMessage *m);
 
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();

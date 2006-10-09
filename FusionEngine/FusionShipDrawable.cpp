@@ -1,10 +1,11 @@
 
 #include "FusionEngineCommon.h"
 
-/// STL
-
 /// Class
 #include "FusionShipDrawable.h"
+
+#include "FusionClientEnvironment.h"
+#include "FusionNode.h"
 
 using namespace FusionEngine;
 
@@ -23,8 +24,8 @@ void FusionShipDrawable::SetResource(const std::string &resid)
 
 void FusionShipDrawable::Draw()
 {
-	CL_Vector pos = m_ParentNode->GetGlobalPosition();
+	CL_Vector2 pos = m_ParentNode->GetGlobalPosition();
 	float rot = m_ParentNode->GetGlobalFacing();
 
-	m_Env->GetShipResourceByID(m_ResourceID);
+	m_Env->GetShipResourceByID(m_ResourceID).Images.Body->draw(pos.x, pos.y);
 }

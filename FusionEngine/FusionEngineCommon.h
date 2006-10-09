@@ -31,10 +31,11 @@
 
 #include "FusionStringVector.h"
 
-// Forward declarations
 namespace FusionEngine
 {
-	class FusionClientEnvironment;
+	// Forward declarations
+	class ServerEnvironment;
+	class ClientEnvironment;
 	class FusionScene;
 	class FusionNode;
 	struct ShipState;
@@ -50,6 +51,7 @@ namespace FusionEngine
 
 	// Global typedefs
 	typedef unsigned short PlayerInd;
+	typedef unsigned short ObjectID;
 }
 
 #endif

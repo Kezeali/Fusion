@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -59,6 +60,7 @@ std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Represents a ship visually. 
 <p>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000012">Todo:</a></b></dt><dd>I don't think drawables should be able to draw themselves I think they should just create a queue internally of the things they want drawn, then the clientenv can draw thoes things. This removes the circular dependancy. Perhaps Drawables could be simply used to store resID's, and drawing could be done completely by the clientenv (or a graphics mangaer) reading scrips... either that or I could just leave it as it is AND ACTUALLY FINISH THIS DAMN THING!! FUCK IT, I don't need your so-called object-orentation and morals!... On a lighter note, this todo is kinda long, I wonder if Doxygen will still use it...</dd></dl>
 <dl compact><dt><b>Remarks:</b></dt><dd>An instance of this object looks after each ship in the scene. </dd></dl>
 
 <p>
@@ -136,7 +138,7 @@ This function is only used on client-side, as it is used to ensure weapons / eng
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionShipDrawable.h<li>F:/Projects/Fusion/FusionEngine/FusionShipDrawable.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

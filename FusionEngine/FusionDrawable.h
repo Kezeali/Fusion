@@ -9,9 +9,6 @@
 
 // STL
 
-// Fusion
-#include "FusionNode.h"
-
 
 namespace FusionEngine
 {
@@ -63,7 +60,7 @@ namespace FusionEngine
 		 */
 		virtual bool IsInScene() const;
 
-	private:
+	protected:
 		//! The node which controls this objects position.
 		FusionNode *m_ParentNode;
 

@@ -8,13 +8,22 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionDrawable.h"
-#include "FusionClientEnvironment.h"
 
 namespace FusionEngine
 {
 	/*!
 	 * \brief
 	 * Represents a ship visually.
+	 *
+	 * \todo I don't think drawables should be able to draw themselves
+	 * I think they should just create a queue internally of the things they
+	 * want drawn, then the clientenv can draw thoes things. This removes
+	 * the circular dependancy. Perhaps Drawables could be simply used to
+	 * store resID's, and drawing could be done completely by the clientenv
+	 * (or a graphics mangaer) reading scrips... either that or I could
+	 * just leave it as it is AND ACTUALLY FINISH THIS DAMN THING!! FUCK IT, I don't
+	 * need your so-called object-orentation and morals!... On a lighter note,
+	 * this todo is kinda long, I wonder if Doxygen will still use it...
 	 *
 	 * \remarks
 	 * An instance of this object looks after each ship in the scene.

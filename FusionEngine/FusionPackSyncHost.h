@@ -45,12 +45,23 @@ namespace FusionEngine
 	 */
 	class PackSyncHost
 	{
+	public:
 		//! Constructor
 		PackSyncHost(RakPeerInterface *peer);
+		//! Destructor
+		~PackSyncHost();
+
+		//! Clears (if necessary) and rebuilds the file lists
+		void Initialise();
 
 	protected:
+		//! Main plugin
 		DirectoryDeltaTransfer *m_SyncPlugin;
+		//! Transfer helper
 		FileListTransfer *m_TransferPlugin;
+
+		//! The network interface this is attached to
+		RakPeerInterface *m_Peer;
 	};
 
 }

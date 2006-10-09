@@ -1,4 +1,8 @@
+
 #include "FusionDrawable.h"
+
+// Fusion
+#include "FusionNode.h"
 
 using namespace FusionEngine;
 
@@ -15,7 +19,7 @@ FusionDrawable::~FusionDrawable(void)
 	}
 }
 
-FusionNode *FusionDrawable::GetParentSceneNode()
+FusionNode *FusionDrawable::GetParentSceneNode() const
 {
 	return m_ParentNode;
 }
@@ -25,28 +29,14 @@ void FusionDrawable::_notifyAttached(FusionNode *parent)
 	m_ParentNode = parent;
 }
 
-bool FusionDrawable::IsAttached()
+bool FusionDrawable::IsAttached() const
 {
-	return (m_ParentNode != NULL);
+	return (m_ParentNode != 0);
 }
 
-bool FusionDrawable::IsInScene()
+bool FusionDrawable::IsInScene() const
 {
-	if (mParentNode != 0)
-	{
-		if (mParentIsTagPoint)
-		{
-			TagPoint* tp = static_cast<TagPoint*>(mParentNode);
-			return tp->getParentEntity()->isInScene();
-		}
-		else
-		{
-			SceneNode* sn = static_cast<SceneNode*>(mParentNode);
-			return sn->isInSceneGraph();
-		}
-	}
-	else
-	{
-		return false;
-	}
+	if (m_ParentNode != 0)
+		return m_ParentNode->IsInSceneGraph();
+	return false;
 }

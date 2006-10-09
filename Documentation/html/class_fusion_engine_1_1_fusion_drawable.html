@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -44,16 +45,21 @@ Inheritance diagram for FusionEngine::FusionDrawable:<p><center><img src="class_
 <tr><td class="memItemLeft" nowrap align="right" valign="top">virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#501de2b325a48a539e88a38a7aa1b01e">Draw</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Draws the drawable.  <a href="#501de2b325a48a539e88a38a7aa1b01e"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="259f5572dc4b98cd3f1d1c11b829f6df"></a><!-- doxytag: member="FusionEngine::FusionDrawable::GetParentSceneNode" ref="259f5572dc4b98cd3f1d1c11b829f6df" args="() const " -->
-virtual <a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#259f5572dc4b98cd3f1d1c11b829f6df">GetParentSceneNode</a> () const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="4260eb00a59b4fc9e7c8a65fdf4a97d5"></a><!-- doxytag: member="FusionEngine::FusionDrawable::GetParentSceneNode" ref="4260eb00a59b4fc9e7c8a65fdf4a97d5" args="() const " -->
+virtual <a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#4260eb00a59b4fc9e7c8a65fdf4a97d5">GetParentSceneNode</a> () const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns the <a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> to which this object is attached. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="677a72b4924b97e213a55b2b1aa27609"></a><!-- doxytag: member="FusionEngine::FusionDrawable::_notifyAttached" ref="677a72b4924b97e213a55b2b1aa27609" args="(FusionNode *parent)" -->
 virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#677a72b4924b97e213a55b2b1aa27609">_notifyAttached</a> (<a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *parent)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Internal method called to notify the object that it has been attached to a node. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#937a3ababddc49f3ef27778cfd170dfd">IsInScene</a> () const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#4f0d6fc0008a0c2746f382d4b84f9849">IsInScene</a> () const </td></tr>
 
+<tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="b154a5fa81a489ab13605eebcb0c8159"></a><!-- doxytag: member="FusionEngine::FusionDrawable::m_ParentNode" ref="b154a5fa81a489ab13605eebcb0c8159" args="" -->
+<a class="el" href="class_fusion_engine_1_1_fusion_node.html">FusionNode</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#b154a5fa81a489ab13605eebcb0c8159">m_ParentNode</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The node which controls this objects position. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Base class for objects controlled by a node. 
@@ -99,13 +105,13 @@ The implementation of this function should draw something at the given position 
 Reimplemented in <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionEngine::FusionShipDrawable</a>, and <a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html#404d718a9210edb9b356685122eac8b7">FusionEngine::FusionShipEngine</a>.    </td>
   </tr>
 </table>
-<a class="anchor" name="937a3ababddc49f3ef27778cfd170dfd"></a><!-- doxytag: member="FusionEngine::FusionDrawable::IsInScene" ref="937a3ababddc49f3ef27778cfd170dfd" args="() const " --><p>
+<a class="anchor" name="4f0d6fc0008a0c2746f382d4b84f9849"></a><!-- doxytag: member="FusionEngine::FusionDrawable::IsInScene" ref="4f0d6fc0008a0c2746f382d4b84f9849" args="() const " --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">virtual bool FusionEngine::FusionDrawable::IsInScene           </td>
+          <td class="md" nowrap valign="top">bool FusionDrawable::IsInScene           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>          </td>
           <td class="md" valign="top">&nbsp;)&nbsp;</td>
@@ -128,7 +134,7 @@ Returns true if this object is attached to a SceneNode or TagPoint, and this Sce
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionDrawable.h<li>F:/Projects/Fusion/FusionEngine/FusionDrawable.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:20 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

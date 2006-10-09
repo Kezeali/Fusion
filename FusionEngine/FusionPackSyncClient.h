@@ -29,7 +29,9 @@
 
 #include "FusionEngineCommon.h"
 
-#include "../RakNet/RakPeer.h"
+#include "../RakNet/RakPeerInterface.h"
+#include "../RakNet/DirectoryDeltaTransfer.h"
+#include "../RakNet/FileListTransfer.h"
 
 //#include <boost/archive/text_oarchive.hpp>
 //#include <boost/archive/text_iarchive.hpp>
@@ -41,10 +43,25 @@ namespace FusionEngine
 	 * \brief
 	 * Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer
 	 */
-	class FusionPackSyncClient
+	class PackSyncClient
 	{
+	public:
 		//! Constructor
-		FusionPackSyncClient(RakPeer *peer);
+		PackSyncClient(RakPeerInterface *peer);
+		//! Destructor
+		~PackSyncClient();
+
+		//! Clears (if necessary) and rebuilds the file lists
+		void Initialise();
+
+	protected:
+		//! Main plugin
+		DirectoryDeltaTransfer *m_SyncPlugin;
+		//! Transfer helper
+		FileListTransfer *m_TransferPlugin;
+
+		//! The network interface this is attached to
+		RakPeerInterface *m_Peer;
 	};
 
 }

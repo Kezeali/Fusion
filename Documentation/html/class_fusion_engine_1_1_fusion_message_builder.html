@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -37,27 +38,107 @@ static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMe
 static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#7da55a3462d5f058b812b9612d6c5196">BuildMessage</a> (const <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> &amp;input, PlayerInd playerid)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> (usually outgoing). <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="d01f311f32cbba65fd0658e1fe593b58"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="d01f311f32cbba65fd0658e1fe593b58" args="(const Packet *packet, PlayerInd playerid)" -->
-static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#d01f311f32cbba65fd0658e1fe593b58">BuildMessage</a> (const Packet *packet, PlayerInd playerid)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#80397b0a3d3d93f04ef63e130a575e90">BuildMessage</a> (Packet *packet, PlayerInd playerid)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a network packet (usually incoming). <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="175036e887fdabdd20586694282655ee"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildEventMessage" ref="175036e887fdabdd20586694282655ee" args="(const Packet *packet, PlayerInd playerind)" -->
-static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#175036e887fdabdd20586694282655ee">BuildEventMessage</a> (const Packet *packet, PlayerInd playerind)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a network packet (usually incoming).  <a href="#80397b0a3d3d93f04ef63e130a575e90"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="b5faf190f2829f82bdf6161d96b80c23"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildEventMessage" ref="b5faf190f2829f82bdf6161d96b80c23" args="(Packet *packet, PlayerInd playerind)" -->
+static <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#b5faf190f2829f82bdf6161d96b80c23">BuildEventMessage</a> (Packet *packet, PlayerInd playerind)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Builds a message from a RakNet engine message (I call these 'events'). <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="b5a3b488f43b53c53f42b1ad659fb11c"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::_getPacketIdentifier" ref="b5a3b488f43b53c53f42b1ad659fb11c" args="(Packet *p)" -->
 static unsigned char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#b5a3b488f43b53c53f42b1ad659fb11c">_getPacketIdentifier</a> (Packet *p)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Extract the id from the packet. Internal use only. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">static RakNetTime&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#e786b8c23612695ab7b458194c11ac1c">_getPacketTime</a> (Packet *p)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Extract the timestamp from the packet.  <a href="#e786b8c23612695ab7b458194c11ac1c"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="11419595a4a3a1a3131346bbd03175a8"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::_getHeaderLength" ref="11419595a4a3a1a3131346bbd03175a8" args="(Packet *p)" -->
+static int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_message_builder.html#11419595a4a3a1a3131346bbd03175a8">_getHeaderLength</a> (Packet *p)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get the length of the packet header (ID and Timestamp). Internal use only. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Not quite a factory. 
 <p>
 Creates <a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> objects from either game structs or RakNet Packets. 
 <p>
+<hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="e786b8c23612695ab7b458194c11ac1c"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::_getPacketTime" ref="e786b8c23612695ab7b458194c11ac1c" args="(Packet *p)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">RakNetTime FusionMessageBuilder::_getPacketTime           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">Packet *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>p</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap><code> [static]</code></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Extract the timestamp from the packet. 
+<p>
+Internal use only <dl compact><dt><b>Returns:</b></dt><dd>0 if no timestamp is present </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="80397b0a3d3d93f04ef63e130a575e90"></a><!-- doxytag: member="FusionEngine::FusionMessageBuilder::BuildMessage" ref="80397b0a3d3d93f04ef63e130a575e90" args="(Packet *packet, PlayerInd playerid)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_fusion_message.html">FusionMessage</a> * FusionMessageBuilder::BuildMessage           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">Packet *&nbsp;</td>
+          <td class="mdname" nowrap> <em>packet</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>PlayerInd&nbsp;</td>
+          <td class="mdname" nowrap> <em>playerid</em></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"><code> [static]</code></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Builds a message from a network packet (usually incoming). 
+<p>
+System messages<p>
+File transfer messages<p>
+Gameplay messages<p>
+Chat messages     </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionMessageBuilder.h<li>F:/Projects/Fusion/FusionEngine/FusionMessageBuilder.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:20 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

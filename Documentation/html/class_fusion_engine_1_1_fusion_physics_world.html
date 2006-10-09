@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -61,9 +62,9 @@ int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#3cde41203638fd3e0706b61edb92a611">_checkCollision</a> (const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *two)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation for its namesake.  <a href="#3cde41203638fd3e0706b61edb92a611"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">CL_Vector2 &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#293368307d38680127f6b4c940f7f1c5">_checkVectorForCollisions</a> (const CL_Vector2 &amp;vector_one, const CL_Vector2 &amp;vector_two, const FusionPhsicsBody *one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *two) const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">CL_Vector2 &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_physics_world.html#8049be174e44fb68997a997d5d5db94f">_checkVectorForCollisions</a> (const CL_Vector2 &amp;vector_one, const CL_Vector2 &amp;vector_two, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *one, const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *two) const </td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation to check for collisions on moving objects.  <a href="#293368307d38680127f6b4c940f7f1c5"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Used internally by RunSimulation to check for collisions on moving objects.  <a href="#8049be174e44fb68997a997d5d5db94f"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The controller for moving objects - this takes data (eg. velocity, force) from Bodies and moves them (the bodies do no movement themselves.). 
@@ -117,13 +118,13 @@ Used internally by RunSimulation for its namesake.
     </td>
   </tr>
 </table>
-<a class="anchor" name="293368307d38680127f6b4c940f7f1c5"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_checkVectorForCollisions" ref="293368307d38680127f6b4c940f7f1c5" args="(const CL_Vector2 &amp;vector_one, const CL_Vector2 &amp;vector_two, const FusionPhsicsBody *one, const FusionPhysicsBody *two) const " --><p>
+<a class="anchor" name="8049be174e44fb68997a997d5d5db94f"></a><!-- doxytag: member="FusionEngine::FusionPhysicsWorld::_checkVectorForCollisions" ref="8049be174e44fb68997a997d5d5db94f" args="(const CL_Vector2 &amp;vector_one, const CL_Vector2 &amp;vector_two, const FusionPhysicsBody *one, const FusionPhysicsBody *two) const " --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">CL_Vector2&amp; FusionEngine::FusionPhysicsWorld::_checkVectorForCollisions           </td>
+          <td class="md" nowrap valign="top">CL_Vector2 &amp; FusionPhysicsWorld::_checkVectorForCollisions           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">const CL_Vector2 &amp;&nbsp;</td>
           <td class="mdname" nowrap> <em>vector_one</em>, </td>
@@ -137,7 +138,7 @@ Used internally by RunSimulation for its namesake.
         <tr>
           <td class="md" nowrap align="right"></td>
           <td class="md"></td>
-          <td class="md" nowrap>const FusionPhsicsBody *&nbsp;</td>
+          <td class="md" nowrap>const <a class="el" href="class_fusion_engine_1_1_fusion_physics_body.html">FusionPhysicsBody</a> *&nbsp;</td>
           <td class="mdname" nowrap> <em>one</em>, </td>
         </tr>
         <tr>
@@ -289,7 +290,7 @@ Does movement and collision detection.
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionPhysicsWorld.h<li>F:/Projects/Fusion/FusionEngine/FusionPhysicsWorld.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:21 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

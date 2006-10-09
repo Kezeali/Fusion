@@ -454,6 +454,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPaths.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsBody.h"
 				>
 			</File>

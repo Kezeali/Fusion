@@ -44,6 +44,7 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 	ResourceLoader *resLoader = new ResourceLoader();
 	resLoader->LoadShips(resLoader->GetInstalledShips());
 
+	// Try to setup the gameplay env
 	ClientEnvironment *env = new ClientEnvironment(hostname, port, options);
 	keepGoing = env->Initialise(resLoader);
 
@@ -58,6 +59,9 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 		keepGoing = env->Update(split);
 		env->Draw();
 	}
+
+	delete env;
+	delete resLoader;
 
 }
 

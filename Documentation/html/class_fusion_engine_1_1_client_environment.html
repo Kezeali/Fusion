@@ -10,6 +10,7 @@
     <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
     <li><a href="namespaces.html"><span>Namespaces</span></a></li>
     <li id="current"><a href="annotated.html"><span>Classes</span></a></li>
+    <li><a href="files.html"><span>Files</span></a></li>
     <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
     <li><a href="examples.html"><span>Examples</span></a></li>
   </ul></div>
@@ -37,12 +38,12 @@ Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="c
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_client_environment-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Types</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="75b10eaf6654d8c2c82fbd3f2c5c4acb"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipList" ref="75b10eaf6654d8c2c82fbd3f2c5c4acb" args="" -->
-typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#75b10eaf6654d8c2c82fbd3f2c5c4acb">ShipList</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7affdfb440c17573c80cea56d511a286"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipList" ref="7affdfb440c17573c80cea56d511a286" args="" -->
+typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#7affdfb440c17573c80cea56d511a286">ShipList</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of ships. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="0fbeb585182a9d740d6d146af02ab58f"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ProjectileList" ref="0fbeb585182a9d740d6d146af02ab58f" args="" -->
-typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_projectile.html">FusionProjectile</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#0fbeb585182a9d740d6d146af02ab58f">ProjectileList</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c52c30c1da0073c4090ce665d33f2fb4"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ProjectileList" ref="c52c30c1da0073c4090ce665d33f2fb4" args="" -->
+typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_projectile.html">FusionProjectile</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#c52c30c1da0073c4090ce665d33f2fb4">ProjectileList</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of projectiles. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7100a0c25c23e735be794d0cef841f3a"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipResourceMap" ref="7100a0c25c23e735be794d0cef841f3a" args="" -->
@@ -63,13 +64,17 @@ typedef std::vector&lt; <a class="el" href="struct_fusion_engine_1_1_ship_input.
 &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#3b680e7181828ed1f96a1d1040e0584a">ClientEnvironment</a> (const std::string &amp;hostname, const std::string &amp;port, <a class="el" href="class_fusion_engine_1_1_client_options.html">ClientOptions</a> *options)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="bea3556857e1db7d2f8280049f02def5"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::~ClientEnvironment" ref="bea3556857e1db7d2f8280049f02def5" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#bea3556857e1db7d2f8280049f02def5">~ClientEnvironment</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9c56fe319b09004ccab38beca01ed9ac"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Initialise" ref="9c56fe319b09004ccab38beca01ed9ac" args="(ResourceLoader *resources)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#9c56fe319b09004ccab38beca01ed9ac">Initialise</a> (<a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a> *resources)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#d8d63d5b553836c616ba0a471970bd37">Update</a> (unsigned int split)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">Update</a> (unsigned int split)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does everything.  <a href="#d8d63d5b553836c616ba0a471970bd37"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does everything.  <a href="#65a19c773d309b8de83b1448dd28e095"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2bf0282838c804fbdecd1512f290c057"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Draw" ref="2bf0282838c804fbdecd1512f290c057" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#2bf0282838c804fbdecd1512f290c057">Draw</a> ()</td></tr>
 
@@ -78,23 +83,27 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 const <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#7ecc9c588d76db0ed3992bb512b93fd9">GetShipResourceByID</a> (std::string id) const </td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a48aa19e6f5cd93a72211d7fd0ec854a"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::_quit" ref="a48aa19e6f5cd93a72211d7fd0ec854a" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#a48aa19e6f5cd93a72211d7fd0ec854a">_quit</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Leaves the client environment cleanly. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The client gameplay environment. 
 <p>
-<dl compact><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> should probably inherit from a common parent.</dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> should probably inherit from a common parent.</dd></dl>
 This is where all the gameplay stuff goes on at the client-side. Moving / drawing ships, syncing with server, prediction, etc. is all controlled from here. That isn't to say just this one class does all thoes things, this class just controlls the activities of other, more specific classes which do.<p>
 <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> | <a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionInput</a> | FusionNetworkingHandler. </dd></dl>
 
 <p>
 <hr><h2>Member Function Documentation</h2>
-<a class="anchor" name="d8d63d5b553836c616ba0a471970bd37"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Update" ref="d8d63d5b553836c616ba0a471970bd37" args="(unsigned int split)" --><p>
+<a class="anchor" name="65a19c773d309b8de83b1448dd28e095"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Update" ref="65a19c773d309b8de83b1448dd28e095" args="(unsigned int split)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">void ClientEnvironment::Update           </td>
+          <td class="md" nowrap valign="top">bool ClientEnvironment::Update           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="md" nowrap valign="top">unsigned int&nbsp;</td>
           <td class="mdname1" valign="top" nowrap> <em>split</em>          </td>
@@ -120,7 +129,7 @@ Actually, this function just does the following:<ol type=1>
 <p>
 <dl compact><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>split</em>&nbsp;</td><td>The amount of time since <a class="el" href="class_fusion_engine_1_1_client_environment.html#d8d63d5b553836c616ba0a471970bd37">ClientEnvironment::Update()</a> was lass called. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>split</em>&nbsp;</td><td>The amount of time since <a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">ClientEnvironment::Update()</a> was lass called. </td></tr>
   </table>
 </dl>
     </td>
@@ -128,7 +137,7 @@ Actually, this function just does the following:<ol type=1>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.h<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Thu Oct 5 22:58:20 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>
