@@ -74,15 +74,18 @@ void ClientEnvironment::Draw()
 	m_Scene->Draw();
 }
 
-ShipResource *ClientEnvironment::GetShipResourceByID(std::string id)
+ShipResource *ClientEnvironment::GetShipResourceByID(std::string id) const
 {
 	//! \todo catch errors.
 	return m_ShipResources[id];
 }
 
-void ClientEnvironment::_quit()
+void ClientEnvironment::_quit(std::string message)
 {
 	m_Quit = true;
+	// TODO: Call a method to set the LastError property here
+	//  (so FusionGame can read the property, and display
+	//  an error message for the user.)
 }
 
 void ClientEnvironment::send()

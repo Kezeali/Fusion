@@ -121,10 +121,13 @@ namespace FusionEngine
 		void Draw();
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
-		const ShipResource &GetShipResourceByID(std::string id) const;
+		ShipResource *GetShipResourceByID(std::string id) const;
 
 		//! Leaves the client environment cleanly.
-		void _quit();
+		/*!
+		 * \param message The explaination to give to the user
+		 */
+		void _quit(std::string message);
 
 	private:
 		//! If this is set to true, the update command will return false next time it runs

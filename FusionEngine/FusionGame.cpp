@@ -11,11 +11,10 @@
 using namespace FusionEngine;
 
 FusionGame::FusionGame()
-: m_KeepGoing(true)
 {
 }
 
-void FusionGame::RunClient(const std::string &hostname, const std::string &port, const ClientOptions &options)
+void FusionGame::RunClient(const std::string &hostname, const std::string &port, ClientOptions *options)
 {
 	/*
 	CL_SetupNetwork setup_network;
@@ -65,7 +64,7 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 
 }
 
-void FusionGame::RunServer(const std::string port, const ServerOptions &options)
+void FusionGame::RunServer(const std::string port, const ServerOptions *options)
 {
 	/*
 	CL_SetupNetwork setup_network;

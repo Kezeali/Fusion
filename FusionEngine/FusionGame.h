@@ -41,9 +41,9 @@ namespace FusionEngine
 		FusionGame();
 
 		//! Starts the game as a client
-		void RunClient(const std::string &hostname, const std::string &port, ClientOptions *options);
+		void RunClient(const std::string &hostname, const std::string &port, const ClientOptions *options);
 		//! Starts the server (dedicated)
-		void RunServer(const std::string &port, ServerOptions *options);
+		void RunServer(const std::string &port, const ServerOptions *options);
 
 	};
 
