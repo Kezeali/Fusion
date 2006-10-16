@@ -45,8 +45,8 @@ namespace FusionEngine
 		FusionMessage();
 		//! Constructor. +channel +type +playerIndex
 		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd);
-		//! Constructor. +channel +type +playerIndex +message
-		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message);
+		//! Constructor. +channel +type +playerIndex +message +length
+		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message, unsigned int length);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
@@ -60,6 +60,11 @@ namespace FusionEngine
 		RakNet::BitStream *GetBitStream();
 		//! Returns a timestamped bitstream
 		RakNet::BitStream *GetTimedBitStream();
+
+		//! Sets the length of the data
+		void SetLength(unsigned int length);
+		//! Returns the length of the data
+		unsigned int GetLength() const;
 
 		//! Read PlayerInd
 		const PlayerInd GetPlayerInd() const;
@@ -107,6 +112,8 @@ namespace FusionEngine
 		//! The system time when this message was created
 		unsigned int m_Timestamp;
 
+		//! Data length
+		unsigned int m_Length;
 		//! The message serialised
 		unsigned char *m_Message;
 

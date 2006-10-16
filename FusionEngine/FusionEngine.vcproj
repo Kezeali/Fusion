@@ -251,6 +251,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetworkUtils.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNode.cpp"
 				>
 			</File>
@@ -386,6 +390,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionErrorTypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionGame.h"
 				>
 			</File>
@@ -439,6 +447,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionNetworkTypes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionNetworkUtils.h"
 				>
 			</File>
 			<File

@@ -42,6 +42,7 @@
 #include "FusionInputHandler.h"
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
+#include "FusionErrorTypes.h"
 
 namespace FusionEngine
 {
@@ -127,7 +128,7 @@ namespace FusionEngine
 		/*!
 		 * \param message The explaination to give to the user
 		 */
-		void _quit(std::string message);
+		void _quit(ErrorType type);
 
 	private:
 		//! If this is set to true, the update command will return false next time it runs

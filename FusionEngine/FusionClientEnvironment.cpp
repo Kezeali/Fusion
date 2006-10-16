@@ -80,7 +80,7 @@ ShipResource *ClientEnvironment::GetShipResourceByID(std::string id) const
 	return m_ShipResources[id];
 }
 
-void ClientEnvironment::_quit(std::string message)
+void ClientEnvironment::_quit(ErrorType type)
 {
 	m_Quit = true;
 	// TODO: Call a method to set the LastError property here
@@ -104,7 +104,7 @@ bool ClientEnvironment::receive()
 		{
 		case ID_REMOTE_CONNECTION_LOST:
 			// Perhaps we should show a connection lost message here?
-			_quit();
+			_quit(UNEXPECTEDDISCONNECT);
 			break;
 		}
 
@@ -130,18 +130,24 @@ bool ClientEnvironment::receive()
 	//! \todo System, etc. messages in the ClientEnvironment
 }
 
+void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
+{
+	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
+
+	bs.Read();
+}
+
+void ClientEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
+{
+}
+
 void ClientEnvironment::gatherLocalInput()
 {
 	ShipInputList ship_input = m_InputManager->GetAllShipInputs();
 
-	for (int i = 0; i < m_Options->NumPlayers; i++)
+	for (unsigned int i = 0; i < m_Options->NumPlayers; i++)
 	{
-		m_Ships[i].m_Input.thrust = ship_input[i].thrust;
-		m_Ships[i].m_Input.left = ship_input[i].left;
-		m_Ships[i].m_Input.right = ship_input[i].right;
-		m_Ships[i].m_Input.primary = ship_input[i].primary;
-		m_Ships[i].m_Input.secondary = ship_input[i].secondary;
-		m_Ships[i].m_Input.bomb = ship_input[i].bomb;
+		m_Ships[i]->SetInputState(ship_input[i]);
 	}
 }
 
@@ -155,8 +161,8 @@ void ClientEnvironment::updateAllPositions(unsigned int split)
 }
 
 //void ClientEnvironment::updateSceneGraph()
-{
-}
+//{
+//}
 
 // IGNORE THE FOLLOWING CODE, the scene now draws everthing!
 //

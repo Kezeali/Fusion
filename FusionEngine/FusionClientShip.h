@@ -54,8 +54,8 @@ namespace FusionEngine
 	 */
 	class FusionClientShip
 	{
-		friend class FusionServerEnvironment;
-		friend class FusionClientEnvironment;
+		friend class ServerEnvironment;
+		friend class ClientEnvironment;
 	public:
 		FusionClientShip();
 		FusionClientShip(ShipState initState);
@@ -75,6 +75,11 @@ namespace FusionEngine
 		 * associated with this Ship will be set too.
 		 */
 		void SetPosition(const CL_Vector2 &position, bool physics = false);
+
+		//! Ship state
+		void GetShipState(ShipState input);
+		//! Input state
+		void SetInputState(ShipInput input);
 
 		//! Guess
 		ShipState *GetShipState() const;

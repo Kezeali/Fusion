@@ -1,6 +1,9 @@
 
 #include "FusionNetworkClient.h"
 
+/// Fusion
+#include "FusionNetworkUtils.h"
+
 using namespace FusionEngine;
 
 FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port)
@@ -10,7 +13,7 @@ FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::str
 	m_RakClient->Connect(host.c_str(), atoi(port.c_str()), atoi(port.c_str()), 0, 0);
 
 	// Required for timestamps (it should be on by default anyway)
-	rakClient->StartOccasionalPing();
+	m_RakClient->StartOccasionalPing();
 }
 
 FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port, ClientOptions *options)
@@ -99,7 +102,7 @@ void FusionNetworkClient::run()
 
 bool FusionNetworkClient::handleRakPackets(Packet *p)
 {
-	unsigned char packetId = FusionMessageBuilder::_getPacketIdentifier(p);
+	unsigned char packetId = NetUtils::GetPacketIdentifier(p);
 	switch (packetId)
 	{
 		// Give the client env any messages it should handle.

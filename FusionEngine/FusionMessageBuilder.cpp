@@ -1,6 +1,7 @@
 
 #include "FusionMessageBuilder.h"
 
+/// Fusion
 #include "FusionNetworkTypes.h"
 
 /// RakNet
@@ -130,50 +131,4 @@ FusionMessage *FusionMessageBuilder::BuildEventMessage(Packet *packet, PlayerInd
 {
 	unsigned char type = _getPacketIdentifier(packet);
 	return (new FusionMessage(0, type, playerind, packet->data));
-}
-
-unsigned char FusionMessageBuilder::_getPacketIdentifier(Packet *p)
-{
-	if (p==0)
-		return 255;
-
-	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
-	{
-		assert(p->length > sizeof(unsigned char) + sizeof(RakNetTime));
-		return (unsigned char) p->data[sizeof(unsigned char) + sizeof(RakNetTime)];
-	}
-	else
-		return (unsigned char) p->data[0];
-}
-
-RakNetTime FusionMessageBuilder::_getPacketTime(Packet *p)
-{
-	assert(p);
-
-	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
-	{
-		// Make sure there actually is a timestamp here
-		assert(p->length >= sizeof(unsigned char) + sizeof(RakNetTime));
-
-		RakNetTime time = 0;
-
-		RakNet::BitStream timeBS(p->data+1, sizeof(unsigned int), false);
-		timeBS.Read(time);
-
-		return time;
-	}
-	else
-		return (RakNetTime)0;
-}
-
-int FusionMessageBuilder::_getHeaderLength(Packet *p)
-{
-	assert(p);
-
-	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
-	{
-		return (int) sizeof(unsigned char) + sizeof(RakNetTime);
-	}
-	else
-		return (int) sizeof(unsigned char);
 }

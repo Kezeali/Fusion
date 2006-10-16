@@ -64,7 +64,7 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 
 }
 
-void FusionGame::RunServer(const std::string port, const ServerOptions *options)
+void FusionGame::RunServer(const std::string &port, ServerOptions *options)
 {
 	/*
 	CL_SetupNetwork setup_network;

@@ -20,31 +20,16 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionGame
-#define Header_FusionEngine_FusionGame
-
-#if _MSC_VER > 1000
-#pragma once
-#endif
-
-/// Fusion
-#include "FusionClientOptions.h"
-#include "FusionServerOptions.h"
+#ifndef Header_FusionEngine_ErrorTypes
+#define Header_FusionEngine_ErrorTypes
 
 namespace FusionEngine
 {
 
-	//! Gameplay overlord
-	class FusionGame
+	enum ErrorType
 	{
-	public:
-		FusionGame();
-
-		//! Starts the game as a client
-		void RunClient(const std::string &hostname, const std::string &port, ClientOptions *options);
-		//! Starts the server (dedicated)
-		void RunServer(const std::string &port, ServerOptions *options);
-
+		UNEXPECTEDDISCONNECT,
+		BANNED
 	};
 
 }

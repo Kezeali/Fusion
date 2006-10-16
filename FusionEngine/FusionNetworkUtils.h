@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionMessageBuilder
-#define Header_FusionEngine_FusionMessageBuilder
+#ifndef Header_FusionEngine_NetUtils
+#define Header_FusionEngine_NetUtils
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,33 +29,36 @@
 
 #include "FusionEngineCommon.h"
 
-#include "FusionMessage.h"
-#include "FusionShipState.h"
-#include "FusionProjectileState.h"
-
 #include "../RakNet/NetworkTypes.h"
+#include "../RakNet/Bitstream.h"
 
 namespace FusionEngine
 {
-
-	//! Not quite a factory.
-	/*!
-	 * Creates FusionMessage objects from either game structs or RakNet Packets.
-	 */
-	class FusionMessageBuilder
+	//! Network Utils
+	class NetUtils
 	{
 	public:
-		//! Builds a message from a ShipState (usually outgoing)
-		static FusionMessage *BuildMessage(const ShipState &input, PlayerInd playerid);
-		//! Builds a message from a ProjectileState (usually outgoing)
-		static FusionMessage *BuildMessage(const ProjectileState &input, PlayerInd playerid);
+		//! Extract the id from the packet.
+		static unsigned char GetPacketIdentifier(Packet *p);
 
-		//! Builds a message from a network packet (usually incoming)
-		static FusionMessage *BuildMessage(Packet *packet, PlayerInd playerid);
+		//! Extract the id from the packet from data.
+		static unsigned char GetPacketIdentifier(unsigned char *data, unsigned int length);
 
-		//! Builds a message from a RakNet engine message (I call these 'events')
-		static FusionMessage *BuildEventMessage(Packet *packet, PlayerInd playerind);
 
+		//! Extract the timestamp from the packet.
+		//! \returns 0 if no timestamp is present
+		static RakNetTime GetPacketTime(Packet *p);
+
+		//! Extract the timestamp from the packet from data.
+		//! \returns 0 if no timestamp is present
+		static RakNetTime GetPacketTime(unsigned char *data, unsigned int length);
+
+
+		//! Get the length of the packet header (ID and Timestamp).
+		static int GetHeaderLength(Packet *p);
+
+		//! Get the length of the packet header (ID and Timestamp) from data.
+		static int GetHeaderLength(unsigned char *data);
 	};
 
 }

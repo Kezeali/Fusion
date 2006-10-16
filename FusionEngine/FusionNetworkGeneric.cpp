@@ -1,6 +1,9 @@
 
 #include "FusionNetworkServer.h"
 
+/// Fusion
+#include "FusionNetworkUtils.h"
+
 using namespace FusionEngine;
 
 FusionNetworkGeneric::FusionNetworkGeneric(const std::string &port)
@@ -60,30 +63,16 @@ EventQueue &FusionNetworkGeneric::GetEvents()
 
 bool FusionNetworkGeneric::handleRakPackets(Packet *p)
 {
-	unsigned char packetId = FusionMessageBuilder::_getPacketIdentifier(p);
+	unsigned char packetId = NetUtils::GetPacketIdentifier(p);
 	switch (packetId)
 	{
 		// Give the server env any messages it should handle.
 	case ID_NEW_INCOMING_CONNECTION:
 	case ID_DISCONNECTION_NOTIFICATION:
-		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, m_PlayerIDMap[p->playerIndex]));
+		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, 0));
 		return true;
 		break;
 	}
 
 	return false;
-}
-
-unsigned char FusionNetworkServer::getPacketIdentifier(Packet *p)
-{
-	if (p==0)
-		return 255;
-
-	if ((unsigned char)p->data[0] == ID_TIMESTAMP)
-	{
-		assert(p->length > sizeof(unsigned char) + sizeof(unsigned long));
-		return (unsigned char) p->data[sizeof(unsigned char) + sizeof(unsigned long)];
-	}
-	else
-		return (unsigned char) p->data[0];
 }

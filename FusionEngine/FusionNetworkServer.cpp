@@ -1,6 +1,9 @@
 
 #include "FusionNetworkServer.h"
 
+/// Fusion
+#include "FusionNetworkUtils.h"
+
 using namespace FusionEngine;
 
 FusionNetworkServer::FusionNetworkServer(const std::string &port)
@@ -57,7 +60,7 @@ void FusionNetworkServer::run()
 
 bool FusionNetworkServer::handleRakPackets(Packet *p)
 {
-	unsigned char packetId = FusionMessageBuilder::_getPacketIdentifier(p);
+	unsigned char packetId = NetUtils::GetPacketIdentifier(p);
 	switch (packetId)
 	{
 		// Give the server env any messages it should handle.

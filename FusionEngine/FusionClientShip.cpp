@@ -76,6 +76,31 @@ void FusionClientShip::SetPosition(const CL_Vector2 &position, bool physics)
 		m_PhysicalBody->_setPosition(position);
 }
 
+void FusionClientShip::SetShipState(ShipState state)
+{
+	m_CurrentState.Velocity = state.Velocity;
+	m_CurrentState.Position = state.Position;
+	m_CurrentState.Rotation = state.Rotation;
+	m_CurrentState.RotationalVelocity = state.RotationalVelocity;
+
+	m_CurrentState.current_primary = state.current_primary;
+	m_CurrentState.current_secondary = state.current_secondary;
+	m_CurrentState.current_bomb = state.current_bomb;
+
+	m_CurrentState.engines = state.engines;
+	m_CurrentState.weapons = state.weapons;
+}
+
+void FusionClientShip::SetInputState(ShipInput input)
+{
+	m_Input.thrust = input.thrust;
+	m_Input.left = input.left;
+	m_Input.right = input.right;
+	m_Input.primary = input.primary;
+	m_Input.secondary = input.secondary;
+	m_Input.bomb = input.bomb;
+}
+
 const ShipState &FusionClientShip::GetShipState() const
 {
 	return m_CurrentState;
