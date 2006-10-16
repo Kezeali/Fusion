@@ -50,7 +50,7 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * The client gameplay environment.
-	 * 
+	 *
 	 * \todo ClientEnvironment and ServerEnvironment should probably inherit from
 	 * a common parent.
 	 *
@@ -93,7 +93,7 @@ namespace FusionEngine
 		 *
 		 * Actually, this function just does the following:
 		 * -# Queries FusionInput for input data
-		 * -# Queries FusionNetwork for new messages. 
+		 * -# Queries FusionNetwork for new messages.
 		 * -# Updates the state of all objects based on any frames received. It does this by
 		 *    finding the time of the received frame in the history, then interpolating
 		 *    between the closest stored frames to that time, to check if the local movements
@@ -175,7 +175,7 @@ namespace FusionEngine
 
 		//! Send all packets
 		/*!
-		 * "Sending" can be done here (ofcourse, FusionNetwork will have done the real 
+		 * "Sending" can be done here (ofcourse, FusionNetwork will have done the real
 		 * receiving, this just handles the data from it.)
 		 */
 		void send();
@@ -183,15 +183,18 @@ namespace FusionEngine
 		bool receive();
 
 		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship
-		//! \todo Maybe this should be in a helper class? meh, I think that will 
+		//! \todo Maybe this should be in a helper class? meh, I think that will
 		//! overcomplicate things, especially as my current goal is "just make it compile"!
 		void installShipFrameFromMessage(FusionMessage *m);
+		//! See installShipFrameFromMessage()... for input
+		void installShipInputFromMessage(FusionMessage *m);
 		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
 		void installProjectileFrameFromMessage(FusionMessage *m);
 
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();
 		/*!
+		 * [depreciated] by installShipFrameFromMessage()
 		 * Updates the state structures of local and remote ships.
 		 */
 		void updateShipStates();
@@ -207,7 +210,7 @@ namespace FusionEngine
 		 * \brief
 		 * Updates the scene graph. ie. tells all ships to call UpdateNode();
 		 * so they draw in the right place.
-		 * 
+		 *
 		 * \remarks
 		 * This is now depreciated, as FusionClientShip#SetPosition does this.
 		 * BTW, set position and set accel. / force should remain seperate

@@ -27,5 +27,5 @@ void FusionShipDrawable::Draw()
 	CL_Vector2 pos = m_ParentNode->GetGlobalPosition();
 	float rot = m_ParentNode->GetGlobalFacing();
 
-	m_Env->GetShipResourceByID(m_ResourceID).Images.Body->draw(pos.x, pos.y);
+	m_Env->GetShipResourceByID(m_ResourceID)->Images.Body->draw(pos.x, pos.y);
 }

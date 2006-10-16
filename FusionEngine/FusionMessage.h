@@ -54,7 +54,7 @@ namespace FusionEngine
 		//! Write data
 		void Write(unsigned char *message);
 		//! Read data
-		const unsigned char *Read() const;
+		unsigned char *Read() const;
 
 		//! Returns a bitstream containing all the data for RakNet to send
 		RakNet::BitStream *GetBitStream();

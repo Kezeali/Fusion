@@ -42,7 +42,7 @@ void FusionMessage::Write(unsigned char *message)
 	m_Message = message;
 }
 
-const unsigned char *FusionMessage::Read() const
+unsigned char *FusionMessage::Read() const
 {
 	return m_Message;
 }

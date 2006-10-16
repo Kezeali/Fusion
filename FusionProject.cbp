@@ -9,12 +9,12 @@
 		<Option virtualFolders="" />
 		<Build>
 			<Target title="default">
-				<Option output="F:\Projects\Fusion\FusionProject.exe" prefix_auto="0" extension_auto="0" />
+				<Option output=".\bin\FusionProject.exe" prefix_auto="0" extension_auto="0" />
 				<Option type="0" />
 				<Option compiler="gcc" />
 				<Option projectResourceIncludeDirsRelation="0" />
 				<Compiler>
-					<Add option="-DWIN32 _DEBUG _WINDOWS" />
+					<Add option="-DWIN32" />
 				</Compiler>
 			</Target>
 		</Build>

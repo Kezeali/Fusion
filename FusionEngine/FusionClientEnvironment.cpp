@@ -64,7 +64,7 @@ bool ClientEnvironment::Update(unsigned int split)
 	// Update all the client only stuff (particle systems, falling engines, etc.)
 	//updateNonSynced();
 
-	//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false, 
+	//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false,
 	//! or perhaps an error, when update fails... Or perhaps I should use exceptions here?
 	return true;
 }
@@ -132,9 +132,44 @@ bool ClientEnvironment::receive()
 
 void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
 {
+    ShipState state;
+    PlayerInd pid; // unsigned int?
+
 	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
 
-	bs.Read();
+    // Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
+    bs.Read(pid);
+
+	bs.Read(state.Position.x);
+	bs.Read(state.Position.y);
+
+	bs.Read(state.Velocity.x);
+	bs.Read(state.Velocity.y);
+
+	bs.Read(state.Rotation);
+	bs.Read(state.RotationalVelocity);
+
+	bs.Read(state.current_primary);
+	bs.Read(state.current_secondary);
+	bs.Read(state.current_bomb);
+
+	bs.Read(state.engines);
+	bs.Read(state.weapons);
+
+	m_Ships[pid]->SetShipState(state);
+}
+
+void ClientEnvironment::installShipInputFromMessage(FusionMessage *m)
+{
+    ShipInput state;
+    PlayerInd pid; // unsigned int?
+
+	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
+
+    // Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
+    bs.Read(pid);
+
+	m_Ships[pid]->SetInputState(state);
 }
 
 void ClientEnvironment::installProjectileFrameFromMessage(FusionMessage *m)

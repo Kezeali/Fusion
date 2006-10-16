@@ -7,8 +7,14 @@
 	<File name="FusionEngine\FusionBitmask.h" open="0" top="0" tabpos="0">
 		<Cursor position="897" topLine="99" />
 	</File>
-	<File name="FusionEngine\FusionClientEnvironment.h" open="0" top="0" tabpos="0">
-		<Cursor position="4676" topLine="112" />
+	<File name="FusionEngine\FusionClientEnvironment.cpp" open="1" top="1" tabpos="1">
+		<Cursor position="4310" topLine="135" />
+	</File>
+	<File name="FusionEngine\FusionClientEnvironment.h" open="1" top="0" tabpos="3">
+		<Cursor position="6925" topLine="181" />
+	</File>
+	<File name="FusionEngine\FusionClientShip.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="0" topLine="73" />
 	</File>
 	<File name="FusionEngine\FusionDemo.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="1690" topLine="57" />
@@ -43,8 +49,14 @@
 	<File name="FusionEngine\FusionInputMap.h" open="0" top="0" tabpos="0">
 		<Cursor position="1049" topLine="32" />
 	</File>
+	<File name="FusionEngine\FusionMessage.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="858" topLine="75" />
+	</File>
 	<File name="FusionEngine\FusionMessage.h" open="0" top="0" tabpos="0">
-		<Cursor position="3463" topLine="93" />
+		<Cursor position="3681" topLine="101" />
+	</File>
+	<File name="FusionEngine\FusionMessageBuilder.cpp" open="1" top="0" tabpos="2">
+		<Cursor position="0" topLine="23" />
 	</File>
 	<File name="FusionEngine\FusionMessageBuilder.h" open="0" top="0" tabpos="0">
 		<Cursor position="2432" topLine="49" />
@@ -97,23 +109,23 @@
 	<File name="FusionEngine\FusionServerOptions.h" open="0" top="0" tabpos="0">
 		<Cursor position="1506" topLine="23" />
 	</File>
-	<File name="FusionEngine\FusionShipDrawable.cpp" open="1" top="0" tabpos="0">
-		<Cursor position="591" topLine="0" />
+	<File name="FusionEngine\FusionShipDrawable.cpp" open="0" top="0" tabpos="1">
+		<Cursor position="560" topLine="7" />
 	</File>
 	<File name="FusionEngine\FusionShipDrawable.h" open="0" top="0" tabpos="0">
 		<Cursor position="1956" topLine="46" />
 	</File>
-	<File name="FusionEngine\FusionShipEngine.cpp" open="1" top="1" tabpos="1">
-		<Cursor position="71" topLine="0" />
+	<File name="FusionEngine\FusionShipEngine.cpp" open="0" top="0" tabpos="2">
+		<Cursor position="324" topLine="0" />
 	</File>
 	<File name="FusionEngine\FusionShipEngine.h" open="0" top="0" tabpos="0">
-		<Cursor position="185" topLine="0" />
+		<Cursor position="633" topLine="10" />
 	</File>
 	<File name="FusionEngine\FusionShipResource.h" open="0" top="0" tabpos="0">
-		<Cursor position="1259" topLine="27" />
+		<Cursor position="796" topLine="42" />
 	</File>
 	<File name="FusionEngine\FusionShipState.h" open="0" top="0" tabpos="0">
-		<Cursor position="2525" topLine="71" />
+		<Cursor position="1447" topLine="29" />
 	</File>
 	<File name="FusionEngine\FusionShipWeapon.h" open="0" top="0" tabpos="0">
 		<Cursor position="748" topLine="0" />
