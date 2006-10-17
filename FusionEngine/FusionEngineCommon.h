@@ -50,8 +50,8 @@ namespace FusionEngine
 	class FusionPhysicsCollisionGrid;
 
 	// Global typedefs
-	typedef unsigned short PlayerInd;
-	typedef unsigned short ObjectID;
+	typedef unsigned short PlayerInd; // ...
+	typedef unsigned short ObjectID;  // Does there really need to be both of these?
 }
 
 #endif

@@ -7,11 +7,11 @@
 	<File name="FusionEngine\FusionBitmask.h" open="0" top="0" tabpos="0">
 		<Cursor position="897" topLine="99" />
 	</File>
-	<File name="FusionEngine\FusionClientEnvironment.cpp" open="1" top="1" tabpos="1">
-		<Cursor position="4310" topLine="135" />
+	<File name="FusionEngine\FusionClientEnvironment.cpp" open="1" top="0" tabpos="1">
+		<Cursor position="4366" topLine="154" />
 	</File>
 	<File name="FusionEngine\FusionClientEnvironment.h" open="1" top="0" tabpos="3">
-		<Cursor position="6925" topLine="181" />
+		<Cursor position="6925" topLine="37" />
 	</File>
 	<File name="FusionEngine\FusionClientShip.cpp" open="0" top="0" tabpos="0">
 		<Cursor position="0" topLine="73" />
@@ -56,10 +56,10 @@
 		<Cursor position="3681" topLine="101" />
 	</File>
 	<File name="FusionEngine\FusionMessageBuilder.cpp" open="1" top="0" tabpos="2">
-		<Cursor position="0" topLine="23" />
+		<Cursor position="2102" topLine="59" />
 	</File>
-	<File name="FusionEngine\FusionMessageBuilder.h" open="0" top="0" tabpos="0">
-		<Cursor position="2432" topLine="49" />
+	<File name="FusionEngine\FusionMessageBuilder.h" open="1" top="1" tabpos="4">
+		<Cursor position="1912" topLine="42" />
 	</File>
 	<File name="FusionEngine\FusionNetworkClient.h" open="0" top="0" tabpos="0">
 		<Cursor position="3633" topLine="103" />

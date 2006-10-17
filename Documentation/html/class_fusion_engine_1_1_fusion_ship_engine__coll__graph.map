@@ -1,4 +1,3 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_drawable.html 12,104 220,131
-rect $class_fusion_engine_1_1_fusion_node.html 147,14 328,40
-rect $class_fusion_engine_1_1_fusion_scene.html 248,104 437,131
+rect $class_fusion_engine_1_1_fusion_drawable.html 7,7 215,34
+rect $class_fusion_engine_1_1_client_environment.html 239,7 460,34

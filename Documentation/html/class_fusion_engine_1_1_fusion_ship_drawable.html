@@ -41,9 +41,17 @@ Inheritance diagram for FusionEngine::FusionShipDrawable:<p><center><img src="cl
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_ship_drawable-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="5ef3dce6496e384baecc7993cfcead62"></a><!-- doxytag: member="FusionEngine::FusionShipDrawable::FusionShipDrawable" ref="5ef3dce6496e384baecc7993cfcead62" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#5ef3dce6496e384baecc7993cfcead62">FusionShipDrawable</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="66355570311f15e71c03a778eab19ec9"></a><!-- doxytag: member="FusionEngine::FusionShipDrawable::~FusionShipDrawable" ref="66355570311f15e71c03a778eab19ec9" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#66355570311f15e71c03a778eab19ec9">~FusionShipDrawable</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor. <br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#f3a75c98470b8e00292c3fc375a549ef">SetResource</a> (const std::string &amp;resid)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">[depreciated] This is now done by <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#f30e1ac8574c6024f3cbb0f1ed418cdb">FusionClientShip::SetPosition</a>  <a href="#f3a75c98470b8e00292c3fc375a549ef"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows the <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a> to set the resourceid for this drawable.  <a href="#f3a75c98470b8e00292c3fc375a549ef"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">Draw</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Draws the drawable.  <a href="#96a2ad97b6bba86127d1d2010f2c9519"></a><br></td></tr>
@@ -60,7 +68,7 @@ std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Represents a ship visually. 
 <p>
-<dl compact><dt><b><a class="el" href="todo.html#_todo000012">Todo:</a></b></dt><dd>I don't think drawables should be able to draw themselves I think they should just create a queue internally of the things they want drawn, then the clientenv can draw thoes things. This removes the circular dependancy. Perhaps Drawables could be simply used to store resID's, and drawing could be done completely by the clientenv (or a graphics mangaer) reading scrips... either that or I could just leave it as it is AND ACTUALLY FINISH THIS DAMN THING!! FUCK IT, I don't need your so-called object-orentation and morals!... On a lighter note, this todo is kinda long, I wonder if Doxygen will still use it...</dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000013">Todo:</a></b></dt><dd>Perhaps Drawables could be simply used to store resID's, and drawing could be done completely by the clientenv (or a graphics mangaer) reading scrips... either that or I could just leave it as it is AND ACTUALLY FINISH THIS DAMN THING!! I don't need your so-called object-orentation and morals!... On a lighter note, this todo is kinda long, I wonder if Doxygen will still use it...</dd></dl>
 <dl compact><dt><b>Remarks:</b></dt><dd>An instance of this object looks after each ship in the scene. </dd></dl>
 
 <p>
@@ -128,7 +136,7 @@ Reimplemented from <a class="el" href="class_fusion_engine_1_1_fusion_drawable.h
     <td>
 
 <p>
-[depreciated] This is now done by <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html#f30e1ac8574c6024f3cbb0f1ed418cdb">FusionClientShip::SetPosition</a> 
+Allows the <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a> to set the resourceid for this drawable. 
 <p>
 Moves the ship and all its attached accessories.<p>
 This function is only used on client-side, as it is used to ensure weapons / engines update their absolute positions for drawing. The server doesn't care about drawing weapons / engines - only their relative positions for fireing, and whether they are still attached, which are stored in <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> and <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a> respectively.<p>
@@ -138,7 +146,7 @@ This function is only used on client-side, as it is used to ensure weapons / eng
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionShipDrawable.h<li>F:/Projects/Fusion/FusionEngine/FusionShipDrawable.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 17 21:14:58 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

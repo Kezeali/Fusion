@@ -79,14 +79,12 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#2bf0282838c804fbdecd1512f290c057">Draw</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Draws stuff. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7ecc9c588d76db0ed3992bb512b93fd9"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::GetShipResourceByID" ref="7ecc9c588d76db0ed3992bb512b93fd9" args="(std::string id) const " -->
-const <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#7ecc9c588d76db0ed3992bb512b93fd9">GetShipResourceByID</a> (std::string id) const </td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#27b2b4cb7295d27487f52e09a32f8408">GetShipResourceByID</a> (const std::string &amp;id)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a48aa19e6f5cd93a72211d7fd0ec854a"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::_quit" ref="a48aa19e6f5cd93a72211d7fd0ec854a" args="()" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#a48aa19e6f5cd93a72211d7fd0ec854a">_quit</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc.  <a href="#27b2b4cb7295d27487f52e09a32f8408"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#6b6ea42e22a2680fdfb07d3261890eca">_quit</a> (ErrorType type)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Leaves the client environment cleanly. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Leaves the client environment cleanly.  <a href="#6b6ea42e22a2680fdfb07d3261890eca"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The client gameplay environment. 
@@ -97,6 +95,72 @@ This is where all the gameplay stuff goes on at the client-side. Moving / drawin
 
 <p>
 <hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="6b6ea42e22a2680fdfb07d3261890eca"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::_quit" ref="6b6ea42e22a2680fdfb07d3261890eca" args="(ErrorType type)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void ClientEnvironment::_quit           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">ErrorType&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>type</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Leaves the client environment cleanly. 
+<p>
+<dl compact><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>message</em>&nbsp;</td><td>The explaination to give to the user </td></tr>
+  </table>
+</dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="27b2b4cb7295d27487f52e09a32f8408"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::GetShipResourceByID" ref="27b2b4cb7295d27487f52e09a32f8408" args="(const std::string &amp;id)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> * ClientEnvironment::GetShipResourceByID           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>id</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc. 
+<p>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>catch errors. </dd></dl>
+    </td>
+  </tr>
+</table>
 <a class="anchor" name="65a19c773d309b8de83b1448dd28e095"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Update" ref="65a19c773d309b8de83b1448dd28e095" args="(unsigned int split)" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
@@ -137,7 +201,7 @@ Actually, this function just does the following:<ol type=1>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.h<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 17 21:14:57 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

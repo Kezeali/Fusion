@@ -43,12 +43,22 @@ namespace FusionEngine
 	 */
 	struct ShipInput
 	{
+		//! Player index
+		PlayerInd pid;
+
+		//! Thrust
 		bool thrust;
+		//! Reverse
 		bool reverse;
+		//! Left
 		bool left;
+		//! Right
 		bool right;
+		//! Primary
 		bool primary;
+		//! Secondary
 		bool secondary;
+		//! Bomb
 		bool bomb;
 	};
 

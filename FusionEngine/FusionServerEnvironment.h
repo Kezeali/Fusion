@@ -35,10 +35,14 @@
 #include "FusionServerOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
-#include "FusionShip.h"
+#include "FusionClientShip.h"
+#include "FusionProjectile.h"
 #include "FusionResourceLoader.h"
 #include "FusionShipResource.h"
 #include "FusionInputHandler.h"
+#include "FusionNetworkServer.h"
+#include "FusionPhysicsWorld.h"
+#include "FusionErrorTypes.h"
 
 namespace FusionEngine
 {
@@ -58,10 +62,24 @@ namespace FusionEngine
 	class ServerEnvironment
 	{
 	public:
-		ServerEnvironment(ServerOptions *options);
+		//! Starts the server
+		ServerEnvironment(const std::string &port, ServerOptions *options);
 
+	public:
+		//! A list of ships
+		typedef std::vector<FusionClientShip*> ShipList;
+		//! A list of projectiles
+		typedef std::vector<FusionProjectile*> ProjectileList;
+		//! A list of resources
+		typedef std::map<std::string, ShipResource*> ShipResourceMap;
+
+		//! A list of inputs
+		typedef std::vector<ShipInput> ShipInputList;
+
+		//! What the hell is this? I don't remember adding this :P Bah, messy
 		int numPlayers;
 
+		//! Init
 		bool Initialise(ResourceLoader *resources);
 
 		/*!
@@ -76,18 +94,28 @@ namespace FusionEngine
 		 */
 		bool Update(unsigned int split);
 
+		//! Draws
 		void Draw();
 
 	private:
+		//! Phys
 		FusionPhysicsWorld *m_PhysicsWorld;
+		//! Scene
 		FusionScene *m_Scene;
+		//! Options
+		ServerOptions *m_Options;
+		//! InputManager
 		FusionInput *m_InputManager;
-		FusionNetwork *m_NetworkManager;
+		//! NetMan
+		FusionNetworkServer *m_NetworkManager;
 
-		std::set<FusionShip> m_Ships;
-		std::set<FusionProjectile> m_Projectiles;
+		//! Ship List
+		ShipList m_Ships;
+		//! Projectiles
+		ProjectileList m_Projectiles;
 
-		std::map<std::string, ShipResource*> m_ShipResources;
+		//! ResMap
+		ShipResourceMap m_ShipResources;
 
 		/*!
 		 * Updates the state structures of all ships.

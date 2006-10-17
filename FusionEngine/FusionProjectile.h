@@ -45,11 +45,23 @@ namespace FusionEngine
 	class FusionProjectile
 	{
 	public:
+		//! Basic Constructor
 		FusionProjectile();
+		//! Constructor +state
+		FusionProjectile(ProjectileState initialState);
+		//! Destructor
 		~FusionProjectile();
 
 	public:
-		ProjectileState CurrentState;
+		//! Sets the state
+		void SetState(ProjectileState state);
+
+		//! Guess
+		const ProjectileState &GetState() const;
+
+	protected:
+		//! The current state
+		ProjectileState m_CurrentState;
 
 	};
 

@@ -31,6 +31,7 @@
 
 #include "FusionMessage.h"
 #include "FusionShipState.h"
+#include "FusionInputData.h"
 #include "FusionProjectileState.h"
 
 #include "../RakNet/NetworkTypes.h"
@@ -41,6 +42,8 @@ namespace FusionEngine
 	//! Not quite a factory.
 	/*!
 	 * Creates FusionMessage objects from either game structs or RakNet Packets.
+	 * \todo impliement a GenericEnviroment class (for Client and Server env to inherit from)
+	 * and move the functionality from this class there.
 	 */
 	class FusionMessageBuilder
 	{
@@ -49,6 +52,8 @@ namespace FusionEngine
 		static FusionMessage *BuildMessage(const ShipState &input, PlayerInd playerid);
 		//! Builds a message from a ProjectileState (usually outgoing)
 		static FusionMessage *BuildMessage(const ProjectileState &input, PlayerInd playerid);
+		//! Builds a message from a InputState (usually outgoing)
+		static FusionMessage *BuildMessage(const ShipInput &input, PlayerInd playerid);
 
 		//! Builds a message from a network packet (usually incoming)
 		static FusionMessage *BuildMessage(Packet *packet, PlayerInd playerid);

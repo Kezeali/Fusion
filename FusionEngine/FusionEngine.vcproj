@@ -538,10 +538,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionShipEngineDrawable.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionShipFactory.h"
 				>
 			</File>

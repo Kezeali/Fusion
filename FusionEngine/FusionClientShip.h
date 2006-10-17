@@ -77,20 +77,20 @@ namespace FusionEngine
 		void SetPosition(const CL_Vector2 &position, bool physics = false);
 
 		//! Ship state
-		void GetShipState(ShipState input);
+		void SetShipState(ShipState input);
 		//! Input state
 		void SetInputState(ShipInput input);
 
 		//! Guess
-		ShipState *GetShipState() const;
+		const ShipState &GetShipState() const;
 		//! Self explainatory
-		ShipInput *GetInputState() const;
+		const ShipInput &GetInputState() const;
 
 		//! [depreciated] You know it
 		//std::string GetShipResource() const;
 
 		//! Reverts all state data
-		void RevertToInitialState() const;
+		void RevertToInitialState();
 
 	protected:
 		// Is this needed?

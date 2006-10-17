@@ -26,9 +26,12 @@
 
 using namespace FusionEngine;
 
-ServerEnvironment(ServerOptions *options)
+ServerEnvironment::ServerEnvironment(const std::string &port, ServerOptions *options)
 : m_Options(options)
 {
+	// The server doesn't need an input handler; uses commandline
+	//m_InputManager = new FusionInput((*m_Options));
+	m_NetworkManager = new FusionNetworkServer(port, options);
 	m_Scene = new FusionScene();
 }
 
@@ -38,8 +41,9 @@ bool ServerEnvironment::Initialise(ResourceLoader *resources)
 	return true;
 }
 
-void ServerEnvironment::Update(unsigned int split)
+bool ServerEnvironment::Update(unsigned int split)
 {
+	return true; // mwahaha
 }
 
 void ServerEnvironment::updateShipStates()

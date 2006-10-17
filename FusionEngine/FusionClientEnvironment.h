@@ -122,7 +122,7 @@ namespace FusionEngine
 		void Draw();
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
-		ShipResource *GetShipResourceByID(std::string id) const;
+		ShipResource *GetShipResourceByID(const std::string &id);
 
 		//! Leaves the client environment cleanly.
 		/*!
@@ -186,8 +186,9 @@ namespace FusionEngine
 		//! \todo Maybe this should be in a helper class? meh, I think that will
 		//! overcomplicate things, especially as my current goal is "just make it compile"!
 		void installShipFrameFromMessage(FusionMessage *m);
-		//! See installShipFrameFromMessage()... for input
+		//! Extracts the InputState, and puts it into the relavant ship.
 		void installShipInputFromMessage(FusionMessage *m);
+
 		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
 		void installProjectileFrameFromMessage(FusionMessage *m);
 

@@ -35,6 +35,10 @@
 namespace FusionEngine
 {
 
+	//! Engine flag settings
+	enum ActiveEngines{ LEFT, RIGHT };
+	//! Weapon flag settings
+	enum ActiveWeapons{ PRIMARY, SECONDARY };
 	/*!
 	 * \brief
 	 * Ship state syncronisation structure. Supports serialization.
@@ -53,6 +57,9 @@ namespace FusionEngine
 		float Rotation;
 		float RotationalVelocity;
 		//@}
+
+		//! Health
+		int health;
 
 		//@{
 		//! Selected weapon (Resource ID's).
@@ -85,7 +92,7 @@ namespace FusionEngine
 		//! See ShipState#engines for info.
 		cl_uint8 weapons;
 
-	private:
+	//private:
 		//template <class Archive>
 		//void serialize(Archive &ar, unsigned int ver);
 	};

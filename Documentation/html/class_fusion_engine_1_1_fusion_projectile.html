@@ -36,6 +36,27 @@ Collaboration diagram for FusionEngine::FusionProjectile:<p><center><img src="cl
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#adbe63e24adf5ced135d96ab97fa9f84">FusionProjectile</a> ()</td></tr>
 
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Basic Constructor.  <a href="#adbe63e24adf5ced135d96ab97fa9f84"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#4e5c94dd5da68dcbb89759ceb06458d0">FusionProjectile</a> (<a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> initialState)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Constructor +state.  <a href="#4e5c94dd5da68dcbb89759ceb06458d0"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a5318bb13646acaf68ca70b5ec4393a6"></a><!-- doxytag: member="FusionEngine::FusionProjectile::~FusionProjectile" ref="a5318bb13646acaf68ca70b5ec4393a6" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#a5318bb13646acaf68ca70b5ec4393a6">~FusionProjectile</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="5ca1f77825303e772e5f94fb37afb6f1"></a><!-- doxytag: member="FusionEngine::FusionProjectile::SetState" ref="5ca1f77825303e772e5f94fb37afb6f1" args="(ProjectileState state)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#5ca1f77825303e772e5f94fb37afb6f1">SetState</a> (<a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> state)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sets the state. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2a331b501e4d8c121c79f27f896d69a0"></a><!-- doxytag: member="FusionEngine::FusionProjectile::GetState" ref="2a331b501e4d8c121c79f27f896d69a0" args="() const " -->
+const <a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#2a331b501e4d8c121c79f27f896d69a0">GetState</a> () const </td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Guess. <br></td></tr>
+<tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="76304d8b7b8298289758df041bfb1fb0"></a><!-- doxytag: member="FusionEngine::FusionProjectile::m_CurrentState" ref="76304d8b7b8298289758df041bfb1fb0" args="" -->
+<a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_projectile.html#76304d8b7b8298289758df041bfb1fb0">m_CurrentState</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The current state. <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Holds all state information for each projectile. 
@@ -69,12 +90,44 @@ An instance of this object holds the state data for each projectile in the game.
     <td>
 
 <p>
+Basic Constructor. 
+<p>
+State     </td>
+  </tr>
+</table>
+<a class="anchor" name="4e5c94dd5da68dcbb89759ceb06458d0"></a><!-- doxytag: member="FusionEngine::FusionProjectile::FusionProjectile" ref="4e5c94dd5da68dcbb89759ceb06458d0" args="(ProjectileState initialState)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">FusionProjectile::FusionProjectile           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="struct_fusion_engine_1_1_projectile_state.html">ProjectileState</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>initialState</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Constructor +state. 
+<p>
 State     </td>
   </tr>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionProjectile.h<li>F:/Projects/Fusion/FusionEngine/FusionProjectile.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 17 21:14:57 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

@@ -74,7 +74,7 @@ void ClientEnvironment::Draw()
 	m_Scene->Draw();
 }
 
-ShipResource *ClientEnvironment::GetShipResourceByID(std::string id) const
+ShipResource *ClientEnvironment::GetShipResourceByID(const std::string &id)
 {
 	//! \todo catch errors.
 	return m_ShipResources[id];
@@ -128,17 +128,17 @@ bool ClientEnvironment::receive()
 	}
 
 	//! \todo System, etc. messages in the ClientEnvironment
+	return true;
 }
 
 void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
 {
-    ShipState state;
-    PlayerInd pid; // unsigned int?
+	ShipState state;
 
 	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
 
-    // Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-    bs.Read(pid);
+	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
+	bs.Read(state.PID); 
 
 	bs.Read(state.Position.x);
 	bs.Read(state.Position.y);
@@ -149,6 +149,8 @@ void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
 	bs.Read(state.Rotation);
 	bs.Read(state.RotationalVelocity);
 
+	bs.Read(state.health);
+
 	bs.Read(state.current_primary);
 	bs.Read(state.current_secondary);
 	bs.Read(state.current_bomb);
@@ -156,24 +158,51 @@ void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
 	bs.Read(state.engines);
 	bs.Read(state.weapons);
 
-	m_Ships[pid]->SetShipState(state);
+	m_Ships[state.PID]->SetShipState(state);
 }
 
 void ClientEnvironment::installShipInputFromMessage(FusionMessage *m)
 {
-    ShipInput state;
-    PlayerInd pid; // unsigned int?
+	ShipInput state;
 
 	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
 
-    // Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-    bs.Read(pid);
+	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
+	bs.Read(state.pid);
 
-	m_Ships[pid]->SetInputState(state);
+	bs.Read(state.thrust);
+	bs.Read(state.reverse);
+	bs.Read(state.left);
+	bs.Read(state.right);
+
+	bs.Read(state.primary);
+	bs.Read(state.secondary);
+	bs.Read(state.bomb);
+
+	m_Ships[state.pid]->SetInputState(state);
 }
 
 void ClientEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
 {
+	ProjectileState state;
+
+	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
+
+	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
+	bs.Read(state.PID);
+	
+	bs.Read(state.OID);
+
+	bs.Read(state.Position.x);
+	bs.Read(state.Position.y);
+
+	bs.Read(state.Velocity.x);
+	bs.Read(state.Velocity.y);
+
+	bs.Read(state.Rotation);
+	bs.Read(state.RotationalVelocity);
+
+	m_Projectiles[state.OID]->SetState(state);
 }
 
 void ClientEnvironment::gatherLocalInput()

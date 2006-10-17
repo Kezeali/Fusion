@@ -60,7 +60,7 @@ namespace FusionEngine
 		float RotationalVelocity;
 		//@}
 
-	private:
+	//private:
 		//template <class Archive>
 		//void serialize(Archive &ar, unsigned int ver);
 	};

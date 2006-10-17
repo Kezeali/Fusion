@@ -5,6 +5,7 @@
 
 /// Fusion
 #include "FusionNode.h"
+#include "FusionPhysicsBody.h"
 
 /// Class
 #include "FusionClientShip.h"
@@ -14,44 +15,47 @@ using namespace FusionEngine;
 FusionClientShip::FusionClientShip()
 {
 	/// Input
-	Input.thrust = false;
-	Input.reverse = false;
-	Input.left = false;
-	Input.right = false;
-	Input.primary = false;
-	Input.secondary = false;
-	Input.bomb = false;
+	m_Input.pid = 0;
+	m_Input.thrust = false;
+	m_Input.reverse = false;
+	m_Input.left = false;
+	m_Input.right = false;
+	m_Input.primary = false;
+	m_Input.secondary = false;
+	m_Input.bomb = false;
 
 	/// State
-	InitialState.position = CL_Vector2::ZERO;
-	InitialState.velocity = CL_Vector2::ZERO;
-	InitialState.facing = 0;
-	InitialState.spin = 0;
+	m_InitialState.PID = 0;
+	m_InitialState.Position = CL_Vector2::ZERO;
+	m_InitialState.Velocity = CL_Vector2::ZERO;
+	m_InitialState.Rotation = 0;
+	m_InitialState.RotationalVelocity = 0;
 
-	InitialState.mass = 0;
-	InitialState.current_primary = -1;
-	InitialState.current_secondary = -1;
-	InitialState.current_bomb = -1;
-	InitialState.engines = LEFT | RIGHT;
-	InitialState.weapons = PRIMARY | SECONDARY;
+	m_InitialState.health = 0;
+	m_InitialState.current_primary = -1;
+	m_InitialState.current_secondary = -1;
+	m_InitialState.current_bomb = -1;
+	m_InitialState.engines = LEFT | RIGHT;
+	m_InitialState.weapons = PRIMARY | SECONDARY;
 
-	CurrentState = InitialState;
+	m_CurrentState = m_InitialState;
 }
 
 FusionClientShip::FusionClientShip(ShipState initState)
 {
 	/// Input
-	Input.thrust = false;
-	Input.reverse = false;
-	Input.left = false;
-	Input.right = false;
-	Input.primary = false;
-	Input.secondary = false;
-	Input.bomb = false;
+	m_Input.pid = initState.PID;
+	m_Input.thrust = false;
+	m_Input.reverse = false;
+	m_Input.left = false;
+	m_Input.right = false;
+	m_Input.primary = false;
+	m_Input.secondary = false;
+	m_Input.bomb = false;
 
 	/// State
-	InitialState = initState;
-	CurrentState = initState;
+	m_InitialState = initState;
+	m_CurrentState = initState;
 }
 
 FusionClientShip::~FusionClientShip()
@@ -78,10 +82,14 @@ void FusionClientShip::SetPosition(const CL_Vector2 &position, bool physics)
 
 void FusionClientShip::SetShipState(ShipState state)
 {
+	m_CurrentState = state;
+	/*
 	m_CurrentState.Velocity = state.Velocity;
 	m_CurrentState.Position = state.Position;
 	m_CurrentState.Rotation = state.Rotation;
 	m_CurrentState.RotationalVelocity = state.RotationalVelocity;
+
+	m_CurrentState.health = state.health;
 
 	m_CurrentState.current_primary = state.current_primary;
 	m_CurrentState.current_secondary = state.current_secondary;
@@ -89,16 +97,20 @@ void FusionClientShip::SetShipState(ShipState state)
 
 	m_CurrentState.engines = state.engines;
 	m_CurrentState.weapons = state.weapons;
+	*/
 }
 
 void FusionClientShip::SetInputState(ShipInput input)
 {
+	m_Input = input;
+	/*
 	m_Input.thrust = input.thrust;
 	m_Input.left = input.left;
 	m_Input.right = input.right;
 	m_Input.primary = input.primary;
 	m_Input.secondary = input.secondary;
 	m_Input.bomb = input.bomb;
+	*/
 }
 
 const ShipState &FusionClientShip::GetShipState() const
@@ -108,7 +120,7 @@ const ShipState &FusionClientShip::GetShipState() const
 
 const ShipInput &FusionClientShip::GetInputState() const
 {
-	return m_InitialState;
+	return m_Input;
 }
 
 //std::string FusionClientShip::GetShipResource() const

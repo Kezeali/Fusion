@@ -22,7 +22,7 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html">FusionShipEngine</a></div>
-<h1>FusionEngine::FusionShipEngine Class Reference</h1><!-- doxytag: class="FusionEngine::FusionShipEngine" --><!-- doxytag: inherits="FusionEngine::FusionDrawable" -->Represents an engine visually.  
+<h1>FusionEngine::FusionShipEngine Class Reference</h1><!-- doxytag: class="FusionEngine::FusionShipEngine" --><!-- doxytag: inherits="FusionEngine::FusionDrawable" -->Represents an engine (thruster) visually.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionShipEngine.h&gt;</code>
@@ -35,28 +35,36 @@ Inheritance diagram for FusionEngine::FusionShipEngine:<p><center><img src="clas
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::FusionShipEngine:<p><center><img src="class_fusion_engine_1_1_fusion_ship_engine__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_fusion_ship_engine__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_fusion_ship_engine__coll__map">
-<area href="class_fusion_engine_1_1_fusion_drawable.html" shape="rect" coords="12,104,220,131" alt="">
-<area href="class_fusion_engine_1_1_fusion_node.html" shape="rect" coords="147,14,328,40" alt="">
-<area href="class_fusion_engine_1_1_fusion_scene.html" shape="rect" coords="248,104,437,131" alt="">
+<area href="class_fusion_engine_1_1_fusion_drawable.html" shape="rect" coords="7,7,215,34" alt="">
+<area href="class_fusion_engine_1_1_client_environment.html" shape="rect" coords="239,7,460,34" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_fusion_ship_engine-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html#404d718a9210edb9b356685122eac8b7">Draw</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html#ccf087b184a710fc35818ad0803d6ef8">Draw</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Draws the drawable.  <a href="#404d718a9210edb9b356685122eac8b7"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Draws the drawable.  <a href="#ccf087b184a710fc35818ad0803d6ef8"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="847636d9cf50cf76d3bd3a7c88c2805c"></a><!-- doxytag: member="FusionEngine::FusionShipEngine::m_Env" ref="847636d9cf50cf76d3bd3a7c88c2805c" args="" -->
+<a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html#847636d9cf50cf76d3bd3a7c88c2805c">m_Env</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows the engine drawable to access the relavant <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a>. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="39f4d92fbdc41d6cb13ac3698633072c"></a><!-- doxytag: member="FusionEngine::FusionShipEngine::m_ResourceID" ref="39f4d92fbdc41d6cb13ac3698633072c" args="" -->
+std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_ship_engine.html#39f4d92fbdc41d6cb13ac3698633072c">m_ResourceID</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Resource (sent by <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a>). <br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-Represents an engine visually. 
+Represents an engine (thruster) visually. 
 <p>
 <hr><h2>Member Function Documentation</h2>
-<a class="anchor" name="404d718a9210edb9b356685122eac8b7"></a><!-- doxytag: member="FusionEngine::FusionShipEngine::Draw" ref="404d718a9210edb9b356685122eac8b7" args="()" --><p>
+<a class="anchor" name="ccf087b184a710fc35818ad0803d6ef8"></a><!-- doxytag: member="FusionEngine::FusionShipEngine::Draw" ref="ccf087b184a710fc35818ad0803d6ef8" args="()" --><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
       <table cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="md" nowrap valign="top">virtual void FusionEngine::FusionShipEngine::Draw           </td>
+          <td class="md" nowrap valign="top">void FusionShipEngine::Draw           </td>
           <td class="md" valign="top">(&nbsp;</td>
           <td class="mdname1" valign="top" nowrap>          </td>
           <td class="md" valign="top">&nbsp;)&nbsp;</td>
@@ -88,9 +96,9 @@ The implementation of this function should draw something at the given position 
 Reimplemented from <a class="el" href="class_fusion_engine_1_1_fusion_drawable.html#501de2b325a48a539e88a38a7aa1b01e">FusionEngine::FusionDrawable</a>.    </td>
   </tr>
 </table>
-<hr>The documentation for this class was generated from the following file:<ul>
-<li>F:/Projects/Fusion/FusionEngine/FusionShipEngine.h</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Mon Oct 9 22:18:56 2006 for Fusion by&nbsp;
+<hr>The documentation for this class was generated from the following files:<ul>
+<li>F:/Projects/Fusion/FusionEngine/FusionShipEngine.h<li>F:/Projects/Fusion/FusionEngine/FusionShipEngine.cpp</ul>
+<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 17 21:14:58 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>
