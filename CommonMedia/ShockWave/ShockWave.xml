@@ -14,5 +14,5 @@
 	<primaryWeapon x="7" y="7" image="pri" />
 	<secondaryWeapon x="24" y="7" image="sec" />
 	<physics mass="10" engineforce="100" rotationvelocity="10" />
-        <gameplay health="10" />
+  <gameplay health="10" />
 </FusionShip>

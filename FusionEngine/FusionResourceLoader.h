@@ -30,6 +30,9 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
+	 *
+	 * \todo Arg, I just found out that CL_Archive isn't finished, so I'm switching to
+	 * LZMA compression via the 7zip SDK :(
 	 */
 	class ResourceLoader
 	{
@@ -174,7 +177,7 @@ namespace FusionEngine
 		 * \brief
 		 * Checks a loaded document for validity as a ship definiiton.
 		 */
-		bool verifyShipDocument(const CL_DomDocument *document);
+		bool verifyShipDocument(CL_DomDocument *document);
 		/*!
 		 * \brief
 		 * Checks a loaded document for validity as a level definiiton.
@@ -199,7 +202,7 @@ namespace FusionEngine
 		 * \returns
 		 * A PackageResources object containing all resources.
 		 */
-		PackageResources parseResources(const CL_DomDocument *document, const CL_Zip_Archive *arc);
+		PackageResources parseResources(CL_DomDocument *document, CL_Zip_Archive *arc);
 
 		/*!
 		 * \brief
@@ -213,15 +216,15 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Checks the passed list for the specified file.
+		 * Checks the given list for the specified file.
 		 *
 		 * Used for checking if a resource specified in a definition actually exists in the
 		 * package!
+		 *
+		 * \param[in] filename The name of the file to be checked
+		 * \param[in] filelist The list to search for the given filename
 		 */
-		bool checkInList(
-			const std::string &filename,
-			StringVector filelist
-			);
+		bool checkInList(const std::string &filename, std::vector<CL_Zip_FileEntry> filelist);
 	};
 
 }
