@@ -26,6 +26,9 @@ bool ClientEnvironment::Initialise(ResourceLoader *resources)
 	//m_NetManThread = new CL_Thread(m_NetworkManager, false);
 	//m_NetManThread->start();
 
+	if (resLoader->LoadVerified() == false)
+		return false;
+
 	m_ShipResources = resources->GetLoadedShips();
 	return true;
 }
@@ -138,7 +141,7 @@ void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
 	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
 
 	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-	bs.Read(state.PID); 
+	bs.Read(state.PID);
 
 	bs.Read(state.Position.x);
 	bs.Read(state.Position.y);
@@ -190,7 +193,7 @@ void ClientEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
 
 	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
 	bs.Read(state.PID);
-	
+
 	bs.Read(state.OID);
 
 	bs.Read(state.Position.x);

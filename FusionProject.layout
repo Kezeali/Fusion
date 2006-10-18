@@ -8,9 +8,9 @@
 		<Cursor position="897" topLine="99" />
 	</File>
 	<File name="FusionEngine\FusionClientEnvironment.cpp" open="1" top="0" tabpos="1">
-		<Cursor position="4366" topLine="154" />
+		<Cursor position="805" topLine="16" />
 	</File>
-	<File name="FusionEngine\FusionClientEnvironment.h" open="1" top="0" tabpos="3">
+	<File name="FusionEngine\FusionClientEnvironment.h" open="0" top="0" tabpos="3">
 		<Cursor position="6925" topLine="37" />
 	</File>
 	<File name="FusionEngine\FusionClientShip.cpp" open="0" top="0" tabpos="0">
@@ -37,6 +37,9 @@
 	<File name="FusionEngine\FusionGUI_Options.h" open="0" top="0" tabpos="0">
 		<Cursor position="148" topLine="0" />
 	</File>
+	<File name="FusionEngine\FusionGame.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="416" topLine="12" />
+	</File>
 	<File name="FusionEngine\FusionInputData.h" open="0" top="0" tabpos="0">
 		<Cursor position="1711" topLine="40" />
 	</File>
@@ -55,10 +58,10 @@
 	<File name="FusionEngine\FusionMessage.h" open="0" top="0" tabpos="0">
 		<Cursor position="3681" topLine="101" />
 	</File>
-	<File name="FusionEngine\FusionMessageBuilder.cpp" open="1" top="0" tabpos="2">
+	<File name="FusionEngine\FusionMessageBuilder.cpp" open="0" top="0" tabpos="2">
 		<Cursor position="2102" topLine="59" />
 	</File>
-	<File name="FusionEngine\FusionMessageBuilder.h" open="1" top="1" tabpos="4">
+	<File name="FusionEngine\FusionMessageBuilder.h" open="0" top="0" tabpos="4">
 		<Cursor position="1912" topLine="42" />
 	</File>
 	<File name="FusionEngine\FusionNetworkClient.h" open="0" top="0" tabpos="0">
@@ -94,8 +97,11 @@
 	<File name="FusionEngine\FusionProjectileState.h" open="0" top="0" tabpos="0">
 		<Cursor position="2055" topLine="47" />
 	</File>
-	<File name="FusionEngine\FusionResourceLoader.h" open="0" top="0" tabpos="0">
-		<Cursor position="4484" topLine="164" />
+	<File name="FusionEngine\FusionResourceLoader.cpp" open="1" top="1" tabpos="2">
+		<Cursor position="2105" topLine="110" />
+	</File>
+	<File name="FusionEngine\FusionResourceLoader.h" open="1" top="0" tabpos="3">
+		<Cursor position="5240" topLine="183" />
 	</File>
 	<File name="FusionEngine\FusionScene.h" open="0" top="0" tabpos="0">
 		<Cursor position="472" topLine="0" />

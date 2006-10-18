@@ -7,7 +7,6 @@
 
 /// Fusion
 #include "FusionShipResource.h"
-#include "FusionDestructableImage.h"
 
 #include "FusionPaths.h"
 
@@ -105,11 +104,11 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 	CL_DomDocument doc;
 	doc.load(arc.open_source(filename), true, true);
 
-	if (!verifyShipDocument(doc))
+	if (!verifyShipDocument(&doc))
 		return NULL;
 
 	// Build a resource list
-	PackageManager resourceList = parseResources(cElement);
+	PackageResources resourceList = parseResources(cElement);
 
 	// Get the root element (document level element)
 	CL_DomElement root = doc.get_document_element();
@@ -120,52 +119,56 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 
 	// Walk through each node to gather remaining information
 	CL_DomNode cNode = root.get_first_child();
-	CL_DomElement cElement = NULL;
+	CL_DomElement cElement;
 
-	while (cNode != NULL)
+	while (cNode.get_node_type() == NULL_NODE)
 	{
-		if ((cElement = cNode.to_element()) != NULL)
+		cElement = cNode.to_element();
+		if (cElement.get_node_type() == NULL_NODE)
 		{
 			std::string image(cElement.get_attribute("image"));
 
-			switch (cElement.get_tag_name())
+			std::string tag_name = cElement.get_tag_name();
+			if (tag_name == "body")
 			{
-			case "body":
-				res->images.Body =
+				res->Images.Body =
 					FusionDestructableImage(resourceList[image]);
-				break;
+			}
 
-			case "leftEngine":
+			if (tag_name == "leftEngine")
+			{
 				CL_Point point = getPoint(cElement);
 
-				res->positions.SecondaryWeapon point;
-				res->images.LeftEngine =
+				res->Positions.SecondaryWeapon point;
+				res->Images.LeftEngine =
 					new CL_Surface(resourceList[image]);
-				break;
+			}
 
-			case "rightEngine":
+			if (tag_name == "rightEngine")
+			{
 				CL_Point point = getPoint(cElement);
 
-				res->positions.SecondaryWeapon point;
-				res->images.RightEngine =
+				res->Positions.SecondaryWeapon point;
+				res->Images.RightEngine =
 					new CL_Surface(resourceList[image]);
-				break;
+			}
 
-			case "primaryWeapon":
+			if (tag_name == "primaryWeapon")
+			{
 				CL_Point point = getPoint(cElement);
 
-				res->positions.SecondaryWeapon point;
-				res->images.PrimaryWeapon =
+				res->Positions.SecondaryWeapon point;
+				res->Images.PrimaryWeapon =
 					new CL_Surface(resourceList[image]);
-				break;
+			}
 
-			case "secondaryWeapon":
+			if (tag_name == "secondaryWeapon")
+			{
 				CL_Point point = getPoint(cElement);
 
-				res->positions.SecondaryWeapon point;
-				res->images.SecondaryWeapon =
+				res->Positions.SecondaryWeapon point;
+				res->Images.SecondaryWeapon =
 					new CL_Surface(resourceList[image]);
-				break;
 			}
 		}
 	} do (current = cNode.get_next_sibling());
