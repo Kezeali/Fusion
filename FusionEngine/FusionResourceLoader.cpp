@@ -97,7 +97,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 	ShipResource *res = NULL;
 
 	// Open the archive
-	CL_Zip_Archive arc(filename);
+	//CL_Zip_Archive arc(filename);
 
 	// Load the xml definition file from the package
 	CL_DomDocument doc;
@@ -276,7 +276,8 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 	SurfaceMap sf_list;
 	SoundBufferMap snd_list;
 
-	std::vector<CL_Zip_FileEntry> arcFiles = arc->get_file_list();
+	//std::vector<CL_Zip_FileEntry> arcFiles = arc->get_file_list();
+	StringVector arcFiles =
 
 	CL_DomNodeList resourceNodes =
 		document->get_elements_by_tag_name("resources");
@@ -307,7 +308,9 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 
 			// Makes sure the archive contains the listed file, and load it to mem
 			if (checkInList(file, arcFiles))
-				sf_list[name] = new CL_Surface(CL_ProviderFactory::load(arc->open_source(file)));
+			{
+				sf_list[name] = new CL_Surface(file);
+			}
 		}
 
 		// Sounds
@@ -319,12 +322,11 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 			std::string name(sound.get_attribute("name"));
 			std::string file(sound.get_attribute("file"));
 
-			if (snd_list.find("name") != snd_list.end())
-				return NULL;
-
 			// same as in Images above
 			if (checkInList(file, arcFiles))
-				snd_list[name] = new CL_SoundBuffer(CL_ProviderFactory::load(arc->open_source(file)));
+			{
+				snd_list[name] = new CL_SoundBuffer(file);
+			}
 		}
 	}
 
@@ -336,24 +338,24 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 	return res;
 }
 
-CL_Point ResourceLoader::getPoint(const CL_DomElement *element);
+CL_Point ResourceLoader::getPoint(const CL_DomElement *element)
 {
 	// Return a zero point if the data is incomplete
-	if (!(element.has_attribute("x") & element.has_attribute("y")))
+	if (!(element->has_attribute("x") & element->has_attribute("y")))
 		return CL_Point(0, 0);
 
-	int x = CL_String::to_int(element.get_attribute("x"));
-	int y = CL_String::to_int(element.get_attribute("y"));
+	int x = CL_String::to_int(element->get_attribute("x"));
+	int y = CL_String::to_int(element->get_attribute("y"));
 
 	return CL_Point(x, y);
 }
 
-bool ResourceLoader::checkInList(const std::string &filename, std::vector<CL_Zip_FileEntry> filelist)
+bool ResourceLoader::checkInList(const std::string &filename, std::vector<std::string> filelist)
 {
-	std::vector<CL_Zip_FileEntry>::iterator it;
+	std::vector<std::string>::iterator it;
 	for (it = filelist.begin(); it != filelist.end(); ++it)
 	{
-		if (filename == (*it).get_filename())
+		if (filename == (*it))
 			return true;
 	}
 

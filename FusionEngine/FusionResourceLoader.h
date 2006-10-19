@@ -31,8 +31,8 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources for gameplay.
 	 *
-	 * \todo Arg, I just found out that CL_Archive isn't finished, so I'm switching to
-	 * LZMA compression via the 7zip SDK :(
+	 * \todo Arg, I just found out that CL_Archive isn't finished, so I'll either use
+	 * zipios++ or impliment my own decompression classes based on god ole zlib
 	 */
 	class ResourceLoader
 	{
