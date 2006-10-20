@@ -7,6 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		39FC8FAB0AE8850800331CB2 /* bitmask.c in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8F9F0AE8850800331CB2 /* bitmask.c */; };
+		39FC8FAC0AE8850800331CB2 /* bitmask.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA00AE8850800331CB2 /* bitmask.h */; };
+		39FC8FAD0AE8850800331CB2 /* FusionBitmask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FA10AE8850800331CB2 /* FusionBitmask.cpp */; };
+		39FC8FAE0AE8850800331CB2 /* FusionBitmask.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA20AE8850800331CB2 /* FusionBitmask.h */; };
+		39FC8FAF0AE8850800331CB2 /* FusionNetworkMessageQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FA30AE8850800331CB2 /* FusionNetworkMessageQueue.cpp */; };
+		39FC8FB00AE8850800331CB2 /* FusionNetworkMessageQueue.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA40AE8850800331CB2 /* FusionNetworkMessageQueue.h */; };
+		39FC8FB10AE8850800331CB2 /* FusionNetworkTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA50AE8850800331CB2 /* FusionNetworkTypes.h */; };
+		39FC8FB20AE8850800331CB2 /* FusionPhysicsCollisionGrid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FA60AE8850800331CB2 /* FusionPhysicsCollisionGrid.cpp */; };
+		39FC8FB30AE8850800331CB2 /* FusionPhysicsCollisionGrid.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA70AE8850800331CB2 /* FusionPhysicsCollisionGrid.h */; };
+		39FC8FB40AE8850800331CB2 /* FusionPhysicsTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FA80AE8850800331CB2 /* FusionPhysicsTypes.h */; };
+		39FC8FB50AE8850800331CB2 /* FusionShipResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FA90AE8850800331CB2 /* FusionShipResponse.cpp */; };
+		39FC8FB60AE8850800331CB2 /* FusionShipResponse.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FAA0AE8850800331CB2 /* FusionShipResponse.h */; };
+		39FC8FCE0AE88C7400331CB2 /* FileVerifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FBC0AE88C7400331CB2 /* FileVerifier.cpp */; };
+		39FC8FCF0AE88C7400331CB2 /* FileVerifier.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FBD0AE88C7400331CB2 /* FileVerifier.h */; };
+		39FC8FD00AE88C7400331CB2 /* FusionErrorTypes.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FBE0AE88C7400331CB2 /* FusionErrorTypes.h */; };
+		39FC8FD10AE88C7400331CB2 /* FusionMessageBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FBF0AE88C7400331CB2 /* FusionMessageBuilder.cpp */; };
+		39FC8FD20AE88C7400331CB2 /* FusionMessageBuilder.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FC00AE88C7400331CB2 /* FusionMessageBuilder.h */; };
+		39FC8FD30AE88C7400331CB2 /* FusionNetworkGeneric.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FC10AE88C7400331CB2 /* FusionNetworkGeneric.cpp */; };
+		39FC8FD40AE88C7400331CB2 /* FusionNetworkGeneric.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FC20AE88C7400331CB2 /* FusionNetworkGeneric.h */; };
+		39FC8FD50AE88C7400331CB2 /* FusionNetworkServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FC30AE88C7400331CB2 /* FusionNetworkServer.cpp */; };
+		39FC8FD60AE88C7400331CB2 /* FusionNetworkServer.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FC40AE88C7400331CB2 /* FusionNetworkServer.h */; };
+		39FC8FD70AE88C7400331CB2 /* FusionNetworkUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FC50AE88C7400331CB2 /* FusionNetworkUtils.cpp */; };
+		39FC8FD80AE88C7400331CB2 /* FusionNetworkUtils.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FC60AE88C7400331CB2 /* FusionNetworkUtils.h */; };
+		39FC8FD90AE88C7400331CB2 /* FusionPackSyncClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FC70AE88C7400331CB2 /* FusionPackSyncClient.cpp */; };
+		39FC8FDA0AE88C7400331CB2 /* FusionPackSyncClient.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FC80AE88C7400331CB2 /* FusionPackSyncClient.h */; };
+		39FC8FDB0AE88C7400331CB2 /* FusionPackSyncHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FC90AE88C7400331CB2 /* FusionPackSyncHost.cpp */; };
+		39FC8FDC0AE88C7400331CB2 /* FusionPackSyncHost.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FCA0AE88C7400331CB2 /* FusionPackSyncHost.h */; };
+		39FC8FDD0AE88C7400331CB2 /* FusionPaths.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FCB0AE88C7400331CB2 /* FusionPaths.h */; };
+		39FC8FDE0AE88C7400331CB2 /* FusionPhysicsStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FCC0AE88C7400331CB2 /* FusionPhysicsStatic.cpp */; };
+		39FC8FDF0AE88C7400331CB2 /* FusionProjectileState.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FCD0AE88C7400331CB2 /* FusionProjectileState.h */; };
+		39FC8FE20AE88D0A00331CB2 /* FusionArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39FC8FE00AE88D0A00331CB2 /* FusionArchive.cpp */; };
+		39FC8FE30AE88D0A00331CB2 /* FusionArchive.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 39FC8FE10AE88D0A00331CB2 /* FusionArchive.h */; };
 		81180DA00A54985100E0FD72 /* FusionPhysicsBody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */; };
 		81581E3F0AC21985003AB035 /* FusionGame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE59B0A52184C00BE09C4 /* FusionGame.cpp */; };
 		81581E480AC21EAD003AB035 /* FusionPhysicsStatic.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81581E470AC21EAD003AB035 /* FusionPhysicsStatic.h */; };
@@ -42,12 +74,8 @@
 		81CCE5DD0A52184C00BE09C4 /* FusionClientShip.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5910A52184C00BE09C4 /* FusionClientShip.h */; };
 		81CCE5DE0A52184C00BE09C4 /* FusionDemo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5920A52184C00BE09C4 /* FusionDemo.cpp */; };
 		81CCE5DF0A52184C00BE09C4 /* FusionDemo.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5930A52184C00BE09C4 /* FusionDemo.h */; };
-		81CCE5E00A52184C00BE09C4 /* FusionDestructableImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5940A52184C00BE09C4 /* FusionDestructableImage.cpp */; };
-		81CCE5E10A52184C00BE09C4 /* FusionDestructableImage.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5950A52184C00BE09C4 /* FusionDestructableImage.h */; };
 		81CCE5E20A52184C00BE09C4 /* FusionDrawable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5960A52184C00BE09C4 /* FusionDrawable.cpp */; };
 		81CCE5E30A52184C00BE09C4 /* FusionDrawable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5970A52184C00BE09C4 /* FusionDrawable.h */; };
-		81CCE5E40A52184C00BE09C4 /* FusionEngine.vcproj in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5980A52184C00BE09C4 /* FusionEngine.vcproj */; };
-		81CCE5E50A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5990A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user */; };
 		81CCE5E60A52184C00BE09C4 /* FusionEngineCommon.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE59A0A52184C00BE09C4 /* FusionEngineCommon.h */; };
 		81CCE5E80A52184C00BE09C4 /* FusionGame.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE59C0A52184C00BE09C4 /* FusionGame.h */; };
 		81CCE5E90A52184C00BE09C4 /* FusionGUI_MainMenu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE59D0A52184C00BE09C4 /* FusionGUI_MainMenu.cpp */; };
@@ -66,8 +94,6 @@
 		81CCE5F60A52184C00BE09C4 /* FusionNetworkClient.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5AA0A52184C00BE09C4 /* FusionNetworkClient.h */; };
 		81CCE5F70A52184C00BE09C4 /* FusionNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5AB0A52184C00BE09C4 /* FusionNode.cpp */; };
 		81CCE5F80A52184C00BE09C4 /* FusionNode.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5AC0A52184C00BE09C4 /* FusionNode.h */; };
-		81CCE5F90A52184C00BE09C4 /* FusionPackSync_Client.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5AD0A52184C00BE09C4 /* FusionPackSync_Client.h */; };
-		81CCE5FA0A52184C00BE09C4 /* FusionPackSync_Host.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5AE0A52184C00BE09C4 /* FusionPackSync_Host.h */; };
 		81CCE5FB0A52184C00BE09C4 /* FusionPhysicsBody.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5AF0A52184C00BE09C4 /* FusionPhysicsBody.h */; };
 		81CCE5FC0A52184C00BE09C4 /* FusionPhysicsElipse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5B00A52184C00BE09C4 /* FusionPhysicsElipse.cpp */; };
 		81CCE5FD0A52184C00BE09C4 /* FusionPhysicsElipse.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5B10A52184C00BE09C4 /* FusionPhysicsElipse.h */; };
@@ -92,7 +118,6 @@
 		81CCE6100A52184C00BE09C4 /* FusionShipDrawable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5C40A52184C00BE09C4 /* FusionShipDrawable.h */; };
 		81CCE6110A52184C00BE09C4 /* FusionShipEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5C50A52184C00BE09C4 /* FusionShipEngine.cpp */; };
 		81CCE6120A52184C00BE09C4 /* FusionShipEngine.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5C60A52184C00BE09C4 /* FusionShipEngine.h */; };
-		81CCE6130A52184C00BE09C4 /* FusionShipEngineDrawable.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5C70A52184C00BE09C4 /* FusionShipEngineDrawable.h */; };
 		81CCE6140A52184C00BE09C4 /* FusionShipFactory.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5C80A52184C00BE09C4 /* FusionShipFactory.h */; };
 		81CCE6150A52184C00BE09C4 /* FusionShipFrame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5C90A52184C00BE09C4 /* FusionShipFrame.cpp */; };
 		81CCE6160A52184C00BE09C4 /* FusionShipFrame.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5CA0A52184C00BE09C4 /* FusionShipFrame.h */; };
@@ -101,7 +126,6 @@
 		81CCE6190A52184C00BE09C4 /* FusionShipState.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5CD0A52184C00BE09C4 /* FusionShipState.h */; };
 		81CCE61A0A52184C00BE09C4 /* FusionShipWeapon.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5CE0A52184C00BE09C4 /* FusionShipWeapon.h */; };
 		81CCE61B0A52184C00BE09C4 /* FusionState.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5CF0A52184C00BE09C4 /* FusionState.h */; };
-		81CCE61C0A52184C00BE09C4 /* FusionStateData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5D00A52184C00BE09C4 /* FusionStateData.cpp */; };
 		81CCE61D0A52184C00BE09C4 /* FusionStateManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 81CCE5D10A52184C00BE09C4 /* FusionStateManager.cpp */; };
 		81CCE61E0A52184C00BE09C4 /* FusionStateManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5D20A52184C00BE09C4 /* FusionStateManager.h */; };
 		81CCE61F0A52184C00BE09C4 /* FusionStringVector.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 81CCE5D30A52184C00BE09C4 /* FusionStringVector.h */; };
@@ -123,10 +147,7 @@
 				81CCE5DB0A52184C00BE09C4 /* FusionClientOptions.h in CopyFiles */,
 				81CCE5DD0A52184C00BE09C4 /* FusionClientShip.h in CopyFiles */,
 				81CCE5DF0A52184C00BE09C4 /* FusionDemo.h in CopyFiles */,
-				81CCE5E10A52184C00BE09C4 /* FusionDestructableImage.h in CopyFiles */,
 				81CCE5E30A52184C00BE09C4 /* FusionDrawable.h in CopyFiles */,
-				81CCE5E40A52184C00BE09C4 /* FusionEngine.vcproj in CopyFiles */,
-				81CCE5E50A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user in CopyFiles */,
 				81CCE5E60A52184C00BE09C4 /* FusionEngineCommon.h in CopyFiles */,
 				81CCE5E80A52184C00BE09C4 /* FusionGame.h in CopyFiles */,
 				81CCE5EA0A52184C00BE09C4 /* FusionGUI_MainMenu.h in CopyFiles */,
@@ -138,8 +159,6 @@
 				81CCE5F40A52184C00BE09C4 /* FusionMessage.h in CopyFiles */,
 				81CCE5F60A52184C00BE09C4 /* FusionNetworkClient.h in CopyFiles */,
 				81CCE5F80A52184C00BE09C4 /* FusionNode.h in CopyFiles */,
-				81CCE5F90A52184C00BE09C4 /* FusionPackSync_Client.h in CopyFiles */,
-				81CCE5FA0A52184C00BE09C4 /* FusionPackSync_Host.h in CopyFiles */,
 				81CCE5FB0A52184C00BE09C4 /* FusionPhysicsBody.h in CopyFiles */,
 				81CCE5FD0A52184C00BE09C4 /* FusionPhysicsElipse.h in CopyFiles */,
 				81CCE5FE0A52184C00BE09C4 /* FusionPhysicsProperties.h in CopyFiles */,
@@ -153,7 +172,6 @@
 				81CCE60E0A52184C00BE09C4 /* FusionServerOptions.h in CopyFiles */,
 				81CCE6100A52184C00BE09C4 /* FusionShipDrawable.h in CopyFiles */,
 				81CCE6120A52184C00BE09C4 /* FusionShipEngine.h in CopyFiles */,
-				81CCE6130A52184C00BE09C4 /* FusionShipEngineDrawable.h in CopyFiles */,
 				81CCE6140A52184C00BE09C4 /* FusionShipFactory.h in CopyFiles */,
 				81CCE6160A52184C00BE09C4 /* FusionShipFrame.h in CopyFiles */,
 				81CCE6180A52184C00BE09C4 /* FusionShipResource.h in CopyFiles */,
@@ -171,12 +189,62 @@
 				81697F460AC0FB2900D37199 /* RakPeerInterface.h in CopyFiles */,
 				81697F470AC0FB2900D37199 /* RakServerInterface.h in CopyFiles */,
 				81581E480AC21EAD003AB035 /* FusionPhysicsStatic.h in CopyFiles */,
+				39FC8FAC0AE8850800331CB2 /* bitmask.h in CopyFiles */,
+				39FC8FAE0AE8850800331CB2 /* FusionBitmask.h in CopyFiles */,
+				39FC8FB00AE8850800331CB2 /* FusionNetworkMessageQueue.h in CopyFiles */,
+				39FC8FB10AE8850800331CB2 /* FusionNetworkTypes.h in CopyFiles */,
+				39FC8FB30AE8850800331CB2 /* FusionPhysicsCollisionGrid.h in CopyFiles */,
+				39FC8FB40AE8850800331CB2 /* FusionPhysicsTypes.h in CopyFiles */,
+				39FC8FB60AE8850800331CB2 /* FusionShipResponse.h in CopyFiles */,
+				39FC8FCF0AE88C7400331CB2 /* FileVerifier.h in CopyFiles */,
+				39FC8FD00AE88C7400331CB2 /* FusionErrorTypes.h in CopyFiles */,
+				39FC8FD20AE88C7400331CB2 /* FusionMessageBuilder.h in CopyFiles */,
+				39FC8FD40AE88C7400331CB2 /* FusionNetworkGeneric.h in CopyFiles */,
+				39FC8FD60AE88C7400331CB2 /* FusionNetworkServer.h in CopyFiles */,
+				39FC8FD80AE88C7400331CB2 /* FusionNetworkUtils.h in CopyFiles */,
+				39FC8FDA0AE88C7400331CB2 /* FusionPackSyncClient.h in CopyFiles */,
+				39FC8FDC0AE88C7400331CB2 /* FusionPackSyncHost.h in CopyFiles */,
+				39FC8FDD0AE88C7400331CB2 /* FusionPaths.h in CopyFiles */,
+				39FC8FDF0AE88C7400331CB2 /* FusionProjectileState.h in CopyFiles */,
+				39FC8FE30AE88D0A00331CB2 /* FusionArchive.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		39FC8F9F0AE8850800331CB2 /* bitmask.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = bitmask.c; sourceTree = "<group>"; };
+		39FC8FA00AE8850800331CB2 /* bitmask.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = bitmask.h; sourceTree = "<group>"; };
+		39FC8FA10AE8850800331CB2 /* FusionBitmask.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionBitmask.cpp; sourceTree = "<group>"; };
+		39FC8FA20AE8850800331CB2 /* FusionBitmask.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionBitmask.h; sourceTree = "<group>"; };
+		39FC8FA30AE8850800331CB2 /* FusionNetworkMessageQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionNetworkMessageQueue.cpp; sourceTree = "<group>"; };
+		39FC8FA40AE8850800331CB2 /* FusionNetworkMessageQueue.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionNetworkMessageQueue.h; sourceTree = "<group>"; };
+		39FC8FA50AE8850800331CB2 /* FusionNetworkTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionNetworkTypes.h; sourceTree = "<group>"; };
+		39FC8FA60AE8850800331CB2 /* FusionPhysicsCollisionGrid.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPhysicsCollisionGrid.cpp; sourceTree = "<group>"; };
+		39FC8FA70AE8850800331CB2 /* FusionPhysicsCollisionGrid.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsCollisionGrid.h; sourceTree = "<group>"; };
+		39FC8FA80AE8850800331CB2 /* FusionPhysicsTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsTypes.h; sourceTree = "<group>"; };
+		39FC8FA90AE8850800331CB2 /* FusionShipResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionShipResponse.cpp; sourceTree = "<group>"; };
+		39FC8FAA0AE8850800331CB2 /* FusionShipResponse.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionShipResponse.h; sourceTree = "<group>"; };
+		39FC8FBC0AE88C7400331CB2 /* FileVerifier.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FileVerifier.cpp; sourceTree = "<group>"; };
+		39FC8FBD0AE88C7400331CB2 /* FileVerifier.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FileVerifier.h; sourceTree = "<group>"; };
+		39FC8FBE0AE88C7400331CB2 /* FusionErrorTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionErrorTypes.h; sourceTree = "<group>"; };
+		39FC8FBF0AE88C7400331CB2 /* FusionMessageBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionMessageBuilder.cpp; sourceTree = "<group>"; };
+		39FC8FC00AE88C7400331CB2 /* FusionMessageBuilder.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionMessageBuilder.h; sourceTree = "<group>"; };
+		39FC8FC10AE88C7400331CB2 /* FusionNetworkGeneric.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionNetworkGeneric.cpp; sourceTree = "<group>"; };
+		39FC8FC20AE88C7400331CB2 /* FusionNetworkGeneric.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionNetworkGeneric.h; sourceTree = "<group>"; };
+		39FC8FC30AE88C7400331CB2 /* FusionNetworkServer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionNetworkServer.cpp; sourceTree = "<group>"; };
+		39FC8FC40AE88C7400331CB2 /* FusionNetworkServer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionNetworkServer.h; sourceTree = "<group>"; };
+		39FC8FC50AE88C7400331CB2 /* FusionNetworkUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionNetworkUtils.cpp; sourceTree = "<group>"; };
+		39FC8FC60AE88C7400331CB2 /* FusionNetworkUtils.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionNetworkUtils.h; sourceTree = "<group>"; };
+		39FC8FC70AE88C7400331CB2 /* FusionPackSyncClient.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPackSyncClient.cpp; sourceTree = "<group>"; };
+		39FC8FC80AE88C7400331CB2 /* FusionPackSyncClient.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionPackSyncClient.h; sourceTree = "<group>"; };
+		39FC8FC90AE88C7400331CB2 /* FusionPackSyncHost.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPackSyncHost.cpp; sourceTree = "<group>"; };
+		39FC8FCA0AE88C7400331CB2 /* FusionPackSyncHost.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionPackSyncHost.h; sourceTree = "<group>"; };
+		39FC8FCB0AE88C7400331CB2 /* FusionPaths.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionPaths.h; sourceTree = "<group>"; };
+		39FC8FCC0AE88C7400331CB2 /* FusionPhysicsStatic.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPhysicsStatic.cpp; sourceTree = "<group>"; };
+		39FC8FCD0AE88C7400331CB2 /* FusionProjectileState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionProjectileState.h; sourceTree = "<group>"; };
+		39FC8FE00AE88D0A00331CB2 /* FusionArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = FusionArchive.cpp; sourceTree = "<group>"; };
+		39FC8FE10AE88D0A00331CB2 /* FusionArchive.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FusionArchive.h; sourceTree = "<group>"; };
 		81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPhysicsBody.cpp; sourceTree = "<group>"; };
 		81581E470AC21EAD003AB035 /* FusionPhysicsStatic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsStatic.h; sourceTree = "<group>"; };
 		81697DA00AC0EA6900D37199 /* ClanApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ClanApp.framework; path = "../ClanLib-0.8.0/MacOSX/ClanApp.framework"; sourceTree = SOURCE_ROOT; };
@@ -211,12 +279,8 @@
 		81CCE5910A52184C00BE09C4 /* FusionClientShip.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionClientShip.h; sourceTree = "<group>"; };
 		81CCE5920A52184C00BE09C4 /* FusionDemo.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionDemo.cpp; sourceTree = "<group>"; };
 		81CCE5930A52184C00BE09C4 /* FusionDemo.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionDemo.h; sourceTree = "<group>"; };
-		81CCE5940A52184C00BE09C4 /* FusionDestructableImage.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionDestructableImage.cpp; sourceTree = "<group>"; };
-		81CCE5950A52184C00BE09C4 /* FusionDestructableImage.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionDestructableImage.h; sourceTree = "<group>"; };
 		81CCE5960A52184C00BE09C4 /* FusionDrawable.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionDrawable.cpp; sourceTree = "<group>"; };
 		81CCE5970A52184C00BE09C4 /* FusionDrawable.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionDrawable.h; sourceTree = "<group>"; };
-		81CCE5980A52184C00BE09C4 /* FusionEngine.vcproj */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = text.xml; path = FusionEngine.vcproj; sourceTree = "<group>"; };
-		81CCE5990A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = text.xml; path = FusionEngine.vcproj.RELTO.MCS.user; sourceTree = "<group>"; };
 		81CCE59A0A52184C00BE09C4 /* FusionEngineCommon.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionEngineCommon.h; sourceTree = "<group>"; };
 		81CCE59B0A52184C00BE09C4 /* FusionGame.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionGame.cpp; sourceTree = "<group>"; };
 		81CCE59C0A52184C00BE09C4 /* FusionGame.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionGame.h; sourceTree = "<group>"; };
@@ -236,8 +300,6 @@
 		81CCE5AA0A52184C00BE09C4 /* FusionNetworkClient.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionNetworkClient.h; sourceTree = "<group>"; };
 		81CCE5AB0A52184C00BE09C4 /* FusionNode.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionNode.cpp; sourceTree = "<group>"; };
 		81CCE5AC0A52184C00BE09C4 /* FusionNode.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionNode.h; sourceTree = "<group>"; };
-		81CCE5AD0A52184C00BE09C4 /* FusionPackSync_Client.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionPackSync_Client.h; sourceTree = "<group>"; };
-		81CCE5AE0A52184C00BE09C4 /* FusionPackSync_Host.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionPackSync_Host.h; sourceTree = "<group>"; };
 		81CCE5AF0A52184C00BE09C4 /* FusionPhysicsBody.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsBody.h; sourceTree = "<group>"; };
 		81CCE5B00A52184C00BE09C4 /* FusionPhysicsElipse.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionPhysicsElipse.cpp; sourceTree = "<group>"; };
 		81CCE5B10A52184C00BE09C4 /* FusionPhysicsElipse.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionPhysicsElipse.h; sourceTree = "<group>"; };
@@ -262,7 +324,6 @@
 		81CCE5C40A52184C00BE09C4 /* FusionShipDrawable.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipDrawable.h; sourceTree = "<group>"; };
 		81CCE5C50A52184C00BE09C4 /* FusionShipEngine.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionShipEngine.cpp; sourceTree = "<group>"; };
 		81CCE5C60A52184C00BE09C4 /* FusionShipEngine.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipEngine.h; sourceTree = "<group>"; };
-		81CCE5C70A52184C00BE09C4 /* FusionShipEngineDrawable.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipEngineDrawable.h; sourceTree = "<group>"; };
 		81CCE5C80A52184C00BE09C4 /* FusionShipFactory.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipFactory.h; sourceTree = "<group>"; };
 		81CCE5C90A52184C00BE09C4 /* FusionShipFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionShipFrame.cpp; sourceTree = "<group>"; };
 		81CCE5CA0A52184C00BE09C4 /* FusionShipFrame.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipFrame.h; sourceTree = "<group>"; };
@@ -271,12 +332,11 @@
 		81CCE5CD0A52184C00BE09C4 /* FusionShipState.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipState.h; sourceTree = "<group>"; };
 		81CCE5CE0A52184C00BE09C4 /* FusionShipWeapon.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionShipWeapon.h; sourceTree = "<group>"; };
 		81CCE5CF0A52184C00BE09C4 /* FusionState.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionState.h; sourceTree = "<group>"; };
-		81CCE5D00A52184C00BE09C4 /* FusionStateData.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionStateData.cpp; sourceTree = "<group>"; };
 		81CCE5D10A52184C00BE09C4 /* FusionStateManager.cpp */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.cpp.cpp; path = FusionStateManager.cpp; sourceTree = "<group>"; };
 		81CCE5D20A52184C00BE09C4 /* FusionStateManager.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionStateManager.h; sourceTree = "<group>"; };
 		81CCE5D30A52184C00BE09C4 /* FusionStringVector.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = FusionStringVector.h; sourceTree = "<group>"; };
 		81CCE5D40A52184C00BE09C4 /* Prereq.h */ = {isa = PBXFileReference; fileEncoding = 7; lastKnownFileType = sourcecode.c.h; path = Prereq.h; sourceTree = "<group>"; };
-		8DD76F6C0486A84900D96B5E /* Fusion */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = Fusion; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD76F6C0486A84900D96B5E /* Fusion */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Fusion; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6859E8B029090EE04C91782 /* Fusion.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Fusion.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -363,6 +423,38 @@
 		81CCE5880A52184C00BE09C4 /* FusionEngine */ = {
 			isa = PBXGroup;
 			children = (
+				39FC8FE00AE88D0A00331CB2 /* FusionArchive.cpp */,
+				39FC8FE10AE88D0A00331CB2 /* FusionArchive.h */,
+				39FC8FBC0AE88C7400331CB2 /* FileVerifier.cpp */,
+				39FC8FBD0AE88C7400331CB2 /* FileVerifier.h */,
+				39FC8FBE0AE88C7400331CB2 /* FusionErrorTypes.h */,
+				39FC8FBF0AE88C7400331CB2 /* FusionMessageBuilder.cpp */,
+				39FC8FC00AE88C7400331CB2 /* FusionMessageBuilder.h */,
+				39FC8FC10AE88C7400331CB2 /* FusionNetworkGeneric.cpp */,
+				39FC8FC20AE88C7400331CB2 /* FusionNetworkGeneric.h */,
+				39FC8FC30AE88C7400331CB2 /* FusionNetworkServer.cpp */,
+				39FC8FC40AE88C7400331CB2 /* FusionNetworkServer.h */,
+				39FC8FC50AE88C7400331CB2 /* FusionNetworkUtils.cpp */,
+				39FC8FC60AE88C7400331CB2 /* FusionNetworkUtils.h */,
+				39FC8FC70AE88C7400331CB2 /* FusionPackSyncClient.cpp */,
+				39FC8FC80AE88C7400331CB2 /* FusionPackSyncClient.h */,
+				39FC8FC90AE88C7400331CB2 /* FusionPackSyncHost.cpp */,
+				39FC8FCA0AE88C7400331CB2 /* FusionPackSyncHost.h */,
+				39FC8FCB0AE88C7400331CB2 /* FusionPaths.h */,
+				39FC8FCC0AE88C7400331CB2 /* FusionPhysicsStatic.cpp */,
+				39FC8FCD0AE88C7400331CB2 /* FusionProjectileState.h */,
+				39FC8F9F0AE8850800331CB2 /* bitmask.c */,
+				39FC8FA00AE8850800331CB2 /* bitmask.h */,
+				39FC8FA10AE8850800331CB2 /* FusionBitmask.cpp */,
+				39FC8FA20AE8850800331CB2 /* FusionBitmask.h */,
+				39FC8FA30AE8850800331CB2 /* FusionNetworkMessageQueue.cpp */,
+				39FC8FA40AE8850800331CB2 /* FusionNetworkMessageQueue.h */,
+				39FC8FA50AE8850800331CB2 /* FusionNetworkTypes.h */,
+				39FC8FA60AE8850800331CB2 /* FusionPhysicsCollisionGrid.cpp */,
+				39FC8FA70AE8850800331CB2 /* FusionPhysicsCollisionGrid.h */,
+				39FC8FA80AE8850800331CB2 /* FusionPhysicsTypes.h */,
+				39FC8FA90AE8850800331CB2 /* FusionShipResponse.cpp */,
+				39FC8FAA0AE8850800331CB2 /* FusionShipResponse.h */,
 				81180D9F0A54985100E0FD72 /* FusionPhysicsBody.cpp */,
 				81CCE5890A52184C00BE09C4 /* Common.cpp */,
 				81CCE58A0A52184C00BE09C4 /* Common.h */,
@@ -375,12 +467,8 @@
 				81CCE5910A52184C00BE09C4 /* FusionClientShip.h */,
 				81CCE5920A52184C00BE09C4 /* FusionDemo.cpp */,
 				81CCE5930A52184C00BE09C4 /* FusionDemo.h */,
-				81CCE5940A52184C00BE09C4 /* FusionDestructableImage.cpp */,
-				81CCE5950A52184C00BE09C4 /* FusionDestructableImage.h */,
 				81CCE5960A52184C00BE09C4 /* FusionDrawable.cpp */,
 				81CCE5970A52184C00BE09C4 /* FusionDrawable.h */,
-				81CCE5980A52184C00BE09C4 /* FusionEngine.vcproj */,
-				81CCE5990A52184C00BE09C4 /* FusionEngine.vcproj.RELTO.MCS.user */,
 				81CCE59A0A52184C00BE09C4 /* FusionEngineCommon.h */,
 				81CCE59B0A52184C00BE09C4 /* FusionGame.cpp */,
 				81CCE59C0A52184C00BE09C4 /* FusionGame.h */,
@@ -400,8 +488,6 @@
 				81CCE5AA0A52184C00BE09C4 /* FusionNetworkClient.h */,
 				81CCE5AB0A52184C00BE09C4 /* FusionNode.cpp */,
 				81CCE5AC0A52184C00BE09C4 /* FusionNode.h */,
-				81CCE5AD0A52184C00BE09C4 /* FusionPackSync_Client.h */,
-				81CCE5AE0A52184C00BE09C4 /* FusionPackSync_Host.h */,
 				81CCE5AF0A52184C00BE09C4 /* FusionPhysicsBody.h */,
 				81CCE5B00A52184C00BE09C4 /* FusionPhysicsElipse.cpp */,
 				81CCE5B10A52184C00BE09C4 /* FusionPhysicsElipse.h */,
@@ -426,7 +512,6 @@
 				81CCE5C40A52184C00BE09C4 /* FusionShipDrawable.h */,
 				81CCE5C50A52184C00BE09C4 /* FusionShipEngine.cpp */,
 				81CCE5C60A52184C00BE09C4 /* FusionShipEngine.h */,
-				81CCE5C70A52184C00BE09C4 /* FusionShipEngineDrawable.h */,
 				81CCE5C80A52184C00BE09C4 /* FusionShipFactory.h */,
 				81CCE5C90A52184C00BE09C4 /* FusionShipFrame.cpp */,
 				81CCE5CA0A52184C00BE09C4 /* FusionShipFrame.h */,
@@ -435,7 +520,6 @@
 				81CCE5CD0A52184C00BE09C4 /* FusionShipState.h */,
 				81CCE5CE0A52184C00BE09C4 /* FusionShipWeapon.h */,
 				81CCE5CF0A52184C00BE09C4 /* FusionState.h */,
-				81CCE5D00A52184C00BE09C4 /* FusionStateData.cpp */,
 				81CCE5D10A52184C00BE09C4 /* FusionStateManager.cpp */,
 				81CCE5D20A52184C00BE09C4 /* FusionStateManager.h */,
 				81CCE5D30A52184C00BE09C4 /* FusionStringVector.h */,
@@ -499,7 +583,6 @@
 				81CCE5DA0A52184C00BE09C4 /* FusionClientOptions.cpp in Sources */,
 				81CCE5DC0A52184C00BE09C4 /* FusionClientShip.cpp in Sources */,
 				81CCE5DE0A52184C00BE09C4 /* FusionDemo.cpp in Sources */,
-				81CCE5E00A52184C00BE09C4 /* FusionDestructableImage.cpp in Sources */,
 				81CCE5E20A52184C00BE09C4 /* FusionDrawable.cpp in Sources */,
 				81CCE5E90A52184C00BE09C4 /* FusionGUI_MainMenu.cpp in Sources */,
 				81CCE5EB0A52184C00BE09C4 /* FusionGUI_Options.cpp in Sources */,
@@ -521,10 +604,23 @@
 				81CCE6110A52184C00BE09C4 /* FusionShipEngine.cpp in Sources */,
 				81CCE6150A52184C00BE09C4 /* FusionShipFrame.cpp in Sources */,
 				81CCE6170A52184C00BE09C4 /* FusionShipResource.cpp in Sources */,
-				81CCE61C0A52184C00BE09C4 /* FusionStateData.cpp in Sources */,
 				81CCE61D0A52184C00BE09C4 /* FusionStateManager.cpp in Sources */,
 				81180DA00A54985100E0FD72 /* FusionPhysicsBody.cpp in Sources */,
 				81581E3F0AC21985003AB035 /* FusionGame.cpp in Sources */,
+				39FC8FAB0AE8850800331CB2 /* bitmask.c in Sources */,
+				39FC8FAD0AE8850800331CB2 /* FusionBitmask.cpp in Sources */,
+				39FC8FAF0AE8850800331CB2 /* FusionNetworkMessageQueue.cpp in Sources */,
+				39FC8FB20AE8850800331CB2 /* FusionPhysicsCollisionGrid.cpp in Sources */,
+				39FC8FB50AE8850800331CB2 /* FusionShipResponse.cpp in Sources */,
+				39FC8FCE0AE88C7400331CB2 /* FileVerifier.cpp in Sources */,
+				39FC8FD10AE88C7400331CB2 /* FusionMessageBuilder.cpp in Sources */,
+				39FC8FD30AE88C7400331CB2 /* FusionNetworkGeneric.cpp in Sources */,
+				39FC8FD50AE88C7400331CB2 /* FusionNetworkServer.cpp in Sources */,
+				39FC8FD70AE88C7400331CB2 /* FusionNetworkUtils.cpp in Sources */,
+				39FC8FD90AE88C7400331CB2 /* FusionPackSyncClient.cpp in Sources */,
+				39FC8FDB0AE88C7400331CB2 /* FusionPackSyncHost.cpp in Sources */,
+				39FC8FDE0AE88C7400331CB2 /* FusionPhysicsStatic.cpp in Sources */,
+				39FC8FE20AE88D0A00331CB2 /* FusionArchive.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

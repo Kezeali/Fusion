@@ -98,6 +98,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 
 	// Open the archive
 	//CL_Zip_Archive arc(filename);
+	FusionEngine::Archive arc(filename);
 
 	// Load the xml definition file from the package
 	CL_DomDocument doc;
@@ -106,7 +107,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 	if (!verifyShipDocument(&doc))
 		return NULL;
 
-	
+
 	// Build a resource list
 	PackageResources resourceList = parseResources(&doc, &arc);
 
@@ -139,7 +140,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 				CL_Point point = getPoint(&cElement);
 
 				res->Positions.LeftEngine = point;
-				res->Images.Engine = resourceList.Images[image];
+				res->Images.LeftEngine = resourceList.Images[image];
 			}
 
 			if (tag_name == "rightEngine")
@@ -147,7 +148,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 				CL_Point point = getPoint(&cElement);
 
 				res->Positions.RightEngine = point;
-				res->Images.Engine = resourceList.Images[image];
+				res->Images.RightEngine = resourceList.Images[image];
 			}
 
 			if (tag_name == "primaryWeapon")

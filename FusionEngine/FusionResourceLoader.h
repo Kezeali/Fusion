@@ -202,7 +202,7 @@ namespace FusionEngine
 		 * \returns
 		 * A PackageResources object containing all resources.
 		 */
-		PackageResources parseResources(CL_DomDocument *document, CL_Zip_Archive *arc);
+		PackageResources parseResources(CL_DomDocument *document, Archive *arc);
 
 		/*!
 		 * \brief
@@ -224,7 +224,7 @@ namespace FusionEngine
 		 * \param[in] filename The name of the file to be checked
 		 * \param[in] filelist The list to search for the given filename
 		 */
-		bool checkInList(const std::string &filename, std::vector<CL_Zip_FileEntry> filelist);
+		bool checkInList(const std::string &filename, StringVector filelist);
 	};
 
 }
