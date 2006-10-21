@@ -1,12 +1,13 @@
 
 #include "FusionEngineCommon.h"
 
+/// Class
+#include "FusionGame.h"
+
 /// Fusion
 #include "FusionResourceLoader.h"
 #include "FusionClientEnvironment.h"
-
-/// Class
-#include "FusionGame.h"
+#include "FusionStateManager.h"
 
 using namespace FusionEngine;
 
@@ -16,13 +17,18 @@ FusionGame::FusionGame()
 
 void FusionGame::RunClient(const std::string &hostname, const std::string &port, ClientOptions *options)
 {
-	bool keepGoing = false;
+	//! \todo FusionGame GUI (for displaying error messages.)
+	//CL_GUIManager gui();
 
-	ResourceLoader *resLoader = new ResourceLoader();
+	bool keepGoing = false;
+	Error *lastError = NULL;
 
 	// Try to setup the gameplay env
+	StateManager *state_man = new StateManager();
 	ClientEnvironment *env = new ClientEnvironment(hostname, port, options);
-	keepGoing = env->Initialise(resLoader);
+
+	// Start the state manager
+	keepGoing = state_man->SetExclusive(env);
 
 	unsigned int lastTime = CL_System::get_time();
 	unsigned int split = 0;
@@ -32,12 +38,19 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 		split = CL_System::get_time() - lastTime;
 		lastTime = CL_System::get_time();
 
-		keepGoing = env->Update(split);
-		env->Draw();
+		if ((keepGoing = state_man->Update(split)) == false)
+			lastError = state_man->GetLastError();
+
+		// Stop if any states think we should
+		keepGoing = state_man->KeepGoing();
+
+		state_man->Draw();
 	}
 
-	delete env;
-	delete resLoader;
+	state_man->Clear();
+
+	if (lastError != NULL)
+
 
 	/*
 	CL_SetupNetwork setup_network;

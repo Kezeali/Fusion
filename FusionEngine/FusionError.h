@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Elliot Hayward
+  Copyright (c) 2006 FusionTeam
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -23,13 +23,47 @@
 #ifndef Header_FusionEngine_ErrorTypes
 #define Header_FusionEngine_ErrorTypes
 
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionEngineCommon.h"
+
 namespace FusionEngine
 {
 
-	enum ErrorType
+	//! Message passed to FusionGame when an unexpected quit event arises
+	/*!
+	 * The primary "quit event" is a state update returning false.
+	 */
+	class Error
 	{
-		UNEXPECTEDDISCONNECT,
-		BANNED
+	public:
+		//! Types of errors that can cause a quit event
+		enum ErrorType
+		{
+			NONE,
+			UNEXPECTEDDISCONNECT,
+			BANNED
+		};
+	public:
+		//! Basic constructor
+		Error();
+		//! Constructor +type +message
+		Error(ErrorType type, const std::string &message);
+
+	public:
+		//! Retrieves the type (of the error which caused the unexpected quit.)
+		ErrorType GetType() const;
+		//! Retrieves the human readable message.
+		const std::string &GetMessage() const;
+
+	protected:
+		//! Stores the error type
+		ErrorType m_Type;
+		//! Stores the message
+		std::string m_Message;
+
 	};
 
 }

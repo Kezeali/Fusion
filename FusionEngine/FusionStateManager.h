@@ -1,9 +1,35 @@
+/*
+  Copyright (c) 2006 FusionTeam
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef Header_FusionEngine_StateManager
 #define Header_FusionEngine_StateManager
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
+
+#include "FusionEngineCommon.h"
+
+#include "FusionState.h"
 
 namespace FusionEngine
 {
@@ -20,55 +46,44 @@ namespace FusionEngine
 	class StateManager
 	{
 	public:
-		typedef CL_SharedPtr<UCThing> SharedState;
-		typedef vector<SharedState> SharedStateList;
-
-	private:
-		SharedStateList m_States;
+		//! Self managing state pointer
+		typedef CL_SharedPtr<FusionState> SharedState;
+		//! List of states
+		typedef std::vector<SharedState> StateList;
 
 	public:
-		StateManager() {}
+		//! Basic constructor
+		StateManager();
 
-		void SetExclusive(UCThing *type)
-		{
-			if (!m_States.empty())
-			{
-				SharedStateList::iterator it;
-				for (it = m_States.begin(); it != m_States.end(); ++it)
-				{
-					// no cleanup function, just print some trash
-					cout << "Cleaning up: " << (*it)->x << endl;
-				}
-				m_States.clear();
-			}
+	public:
+		//! Removes all other states and adds the state specified.
+		bool SetExclusive(FusionState *state);
 
-			SharedState state(type);
-			m_States.push_back(state);
-		}
+		//! Adds the state specified
+		bool AddState(FusionState *state);
 
-		void AddState(UCThing *type)
-		{
-			SharedState state(type);
-			m_States.push_back(state);
-		}
+		//! Removes the state specified
+		void RemoveState(FusionState *state);
 
-		void RemoveState(UCThing *state)
-		{
-			SharedStateList::iterator it;
-			for (it = m_States.begin(); it != m_States.end();)
-			{
-				if (it->get() == state)
-				{
-					// no cleanup function, just print some trash
-					cout << "Cleaning up: " << (*it)->x << endl;
-					it = m_States.erase(it);
-				}
-				else
-				{
-					++it;
-				}
-			}
-		}
+		//! Updates all states
+		bool Update(unsigned int split);
+		//! Draws all states
+		void Draw();
+
+		//! Returns false after a state requests quit
+		bool KeepGoing() const;
+
+		//! Retreives the last error reported by a state
+		Error *GetLastError() const;
+
+	protected:
+		//! List of all running states
+		StateList m_States;
+		//! Set to false if when FusionState#KeepGoing() returns false.
+		bool m_KeepGoing;
+		//! Last error
+		Error *m_LastError;
+
 	};
 
 }

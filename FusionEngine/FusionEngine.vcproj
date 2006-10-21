@@ -191,10 +191,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionClientEnvironment.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionClientOptions.cpp"
 				>
 			</File>
@@ -208,6 +204,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionDrawable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEnvironmentClient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionError.cpp"
 				>
 			</File>
 			<File
@@ -311,10 +315,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionServerEnvironment.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionServerOptions.cpp"
 				>
 			</File>
@@ -336,6 +336,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipResponse.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionState.cpp"
 				>
 			</File>
 			<File
@@ -410,7 +414,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionErrorTypes.h"
+				RelativePath=".\FusionError.h"
 				>
 			</File>
 			<File
@@ -582,7 +586,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionStateGamePlay.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionStateManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStateMessage.h"
 				>
 			</File>
 			<File

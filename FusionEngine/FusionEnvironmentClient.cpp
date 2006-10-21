@@ -1,5 +1,5 @@
 
-#include "FusionClientEnvironment.h"
+#include "FusionEnvironmentClient.h"
 
 using namespace FusionEngine;
 

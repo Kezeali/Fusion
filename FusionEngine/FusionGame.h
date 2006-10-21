@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Elliot Hayward
+  Copyright (c) 2006 FusionTeam
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -35,6 +35,9 @@ namespace FusionEngine
 {
 
 	//! Gameplay overlord
+	/*!
+	 * Initialises a number of things then runs and maintains the state manager.
+	 */
 	class FusionGame
 	{
 	public:

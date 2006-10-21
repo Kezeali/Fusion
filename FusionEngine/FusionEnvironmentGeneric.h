@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Elliot Hayward
+  Copyright (c) 2006 FusionTeam
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -32,7 +32,6 @@
 /// STL
 
 /// Fusion
-#include "FusionStateManager.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
 #include "FusionResourceLoader.h"
@@ -45,7 +44,8 @@ namespace FusionEngine
 {
 
 	//! The virtual environment! (pun?)
-	class GenericEnvironment
+	//! Now this' a FusionState; whatchu gonna do about it?
+	class GenericEnvironment : public FusionState
 	{
 	public:
 		//! Basic Constructor
