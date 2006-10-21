@@ -26,10 +26,8 @@ bool ClientEnvironment::Initialise(ResourceLoader *resources)
 	//m_NetManThread = new CL_Thread(m_NetworkManager, false);
 	//m_NetManThread->start();
 
-	if (resLoader->LoadVerified() == false)
-		return false;
+	//! \todo START FILE SYNC STATE HERE!!! (that will load verified ships)
 
-	m_ShipResources = resources->GetLoadedShips();
 	return true;
 }
 

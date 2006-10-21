@@ -25,7 +25,7 @@
 <h1>FusionEngine::ClientEnvironment Class Reference</h1><!-- doxytag: class="FusionEngine::ClientEnvironment" -->The client gameplay environment.  
 <a href="#_details">More...</a>
 <p>
-<code>#include &lt;FusionClientEnvironment.h&gt;</code>
+<code>#include &lt;FusionEnvironmentClient.h&gt;</code>
 <p>
 Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="class_fusion_engine_1_1_client_environment__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_client_environment__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_client_environment__coll__map">
@@ -37,24 +37,6 @@ Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="c
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_client_environment-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
-<tr><td colspan="2"><br><h2>Public Types</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7affdfb440c17573c80cea56d511a286"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipList" ref="7affdfb440c17573c80cea56d511a286" args="" -->
-typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_client_ship.html">FusionClientShip</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#7affdfb440c17573c80cea56d511a286">ShipList</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of ships. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c52c30c1da0073c4090ce665d33f2fb4"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ProjectileList" ref="c52c30c1da0073c4090ce665d33f2fb4" args="" -->
-typedef std::vector&lt; <a class="el" href="class_fusion_engine_1_1_fusion_projectile.html">FusionProjectile</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#c52c30c1da0073c4090ce665d33f2fb4">ProjectileList</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of projectiles. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="7100a0c25c23e735be794d0cef841f3a"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipResourceMap" ref="7100a0c25c23e735be794d0cef841f3a" args="" -->
-typedef std::map&lt; std::string,<br>
- <a class="el" href="class_fusion_engine_1_1_ship_resource.html">ShipResource</a> * &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#7100a0c25c23e735be794d0cef841f3a">ShipResourceMap</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of resources. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="6a8f5e962c5c68bd430b3670269e48a4"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ShipInputList" ref="6a8f5e962c5c68bd430b3670269e48a4" args="" -->
-typedef std::vector&lt; <a class="el" href="struct_fusion_engine_1_1_ship_input.html">ShipInput</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#6a8f5e962c5c68bd430b3670269e48a4">ShipInputList</a></td></tr>
-
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A list of inputs. <br></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="c90cf4a3c787ec082b398c35504cd1ef"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::ClientEnvironment" ref="c90cf4a3c787ec082b398c35504cd1ef" args="()" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#c90cf4a3c787ec082b398c35504cd1ef">ClientEnvironment</a> ()</td></tr>
@@ -68,10 +50,9 @@ typedef std::vector&lt; <a class="el" href="struct_fusion_engine_1_1_ship_input.
 &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#bea3556857e1db7d2f8280049f02def5">~ClientEnvironment</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Destructor. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="9c56fe319b09004ccab38beca01ed9ac"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Initialise" ref="9c56fe319b09004ccab38beca01ed9ac" args="(ResourceLoader *resources)" -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#9c56fe319b09004ccab38beca01ed9ac">Initialise</a> (<a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a> *resources)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#9c56fe319b09004ccab38beca01ed9ac">Initialise</a> (<a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a> *resources)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>.  <a href="#9c56fe319b09004ccab38beca01ed9ac"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">Update</a> (unsigned int split)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does everything.  <a href="#65a19c773d309b8de83b1448dd28e095"></a><br></td></tr>
@@ -89,7 +70,7 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 The client gameplay environment. 
 <p>
-<dl compact><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> should probably inherit from a common parent.</dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> should probably inherit from a common parent.</dd></dl>
 This is where all the gameplay stuff goes on at the client-side. Moving / drawing ships, syncing with server, prediction, etc. is all controlled from here. That isn't to say just this one class does all thoes things, this class just controlls the activities of other, more specific classes which do.<p>
 <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> | <a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionInput</a> | FusionNetworkingHandler. </dd></dl>
 
@@ -157,7 +138,38 @@ Leaves the client environment cleanly.
 <p>
 Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc. 
 <p>
-<dl compact><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>catch errors. </dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd>catch errors. </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="9c56fe319b09004ccab38beca01ed9ac"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Initialise" ref="9c56fe319b09004ccab38beca01ed9ac" args="(ResourceLoader *resources)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">bool ClientEnvironment::Initialise           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>resources</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>. 
+<p>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>START FILE SYNC STATE HERE!!! (that will load verified ships) </dd></dl>
     </td>
   </tr>
 </table>
@@ -200,8 +212,8 @@ Actually, this function just does the following:<ol type=1>
   </tr>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
-<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.h<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Tue Oct 17 21:14:57 2006 for Fusion by&nbsp;
+<li>F:/Projects/Fusion/FusionEngine/FusionEnvironmentClient.h<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.cpp</ul>
+<hr size="1"><address style="align: right;"><small>Generated on Sat Oct 21 16:47:03 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

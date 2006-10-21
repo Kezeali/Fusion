@@ -1,2 +1,4 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_game.html 8,7 195,33
+rect $class_fusion_engine_1_1_fusion_drawable.html 7,32 215,59
+rect $class_fusion_engine_1_1_fusion_ship_drawable.html 263,7 497,34
+rect $class_fusion_engine_1_1_fusion_ship_engine.html 271,58 489,84

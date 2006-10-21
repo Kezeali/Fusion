@@ -1,2 +1,3 @@
 base referer
-rect $class_fusion_engine_1_1_fusion_message_builder.html 8,7 253,33
+rect $class_fusion_engine_1_1_fusion_message.html 7,7 212,33
+rect $class_fusion_engine_1_1_fusion_ship_frame.html 261,7 477,33

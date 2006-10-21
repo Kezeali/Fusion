@@ -7,6 +7,7 @@
 
 /// Fusion
 #include "FusionShipResource.h"
+#include "FusionArchive.h"
 
 #include "FusionPaths.h"
 
@@ -98,18 +99,28 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 
 	// Open the archive
 	//CL_Zip_Archive arc(filename);
-	FusionEngine::Archive arc(filename);
+
+	Archive *arc = new Archive(filename);
+	// Try to decompress the arc
+	if (!arc->Decompress())
+		return res;
 
 	// Load the xml definition file from the package
 	CL_DomDocument doc;
-	doc.load(arc.open_source(filename), true, true);
+
+	// See if the def file extracted
+	std::string def_file = arc->GetFile(filename);
+	if (def_file.empty())
+		return res;
+
+	doc.load(new CL_InputSource_File(def_file), true, true);
 
 	if (!verifyShipDocument(&doc))
 		return NULL;
 
 
 	// Build a resource list
-	PackageResources resourceList = parseResources(&doc, &arc);
+	PackageResources resourceList = parseResources(&doc, arc);
 
 	// Get the root element (document level element)
 	CL_DomElement root = doc.get_document_element();
@@ -272,13 +283,13 @@ bool ResourceLoader::verifyShipDocument(CL_DomDocument *document)
 	}
 }
 
-ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *document, CL_Zip_Archive *arc)
+ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *document, Archive *arc)
 {
 	SurfaceMap sf_list;
 	SoundBufferMap snd_list;
 
 	//std::vector<CL_Zip_FileEntry> arcFiles = arc->get_file_list();
-	StringVector arcFiles =
+	StringVector arcFiles = arc->GetFileList();
 
 	CL_DomNodeList resourceNodes =
 		document->get_elements_by_tag_name("resources");
@@ -310,7 +321,8 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 			// Makes sure the archive contains the listed file, and load it to mem
 			if (checkInList(file, arcFiles))
 			{
-				sf_list[name] = new CL_Surface(file);
+				// Uses Archive::GetFile() to get the path to the file
+				sf_list[name] = new CL_Surface(arc->GetFile(file));
 			}
 		}
 
@@ -326,7 +338,7 @@ ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *
 			// same as in Images above
 			if (checkInList(file, arcFiles))
 			{
-				snd_list[name] = new CL_SoundBuffer(file);
+				snd_list[name] = new CL_SoundBuffer(arc->GetFile(file));
 			}
 		}
 	}

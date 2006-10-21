@@ -74,16 +74,6 @@ namespace FusionEngine
 		~ClientEnvironment();
 
 	public:
-		//! A list of ships
-		typedef std::vector<FusionClientShip*> ShipList;
-		//! A list of projectiles
-		typedef std::vector<FusionProjectile*> ProjectileList;
-		//! A list of resources
-		typedef std::map<std::string, ShipResource*> ShipResourceMap;
-
-		//! A list of inputs
-		typedef std::vector<ShipInput> ShipInputList;
-
 		//! Pulls the resources from the ResourceLoader
 		bool Initialise(ResourceLoader *resources);
 

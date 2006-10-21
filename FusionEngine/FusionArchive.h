@@ -23,27 +23,74 @@
 #ifndef Header_FusionEngine_Archive
 #define Header_FusionEngine_Archive
 
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionEngineCommon.h"
+
+#include "../minizip/unzip.h"
+
 namespace FusionEngine
 {
+	//! Decompression in-a-box.
+	/*!
+	 * ATM, you can't set the output path as I'm just putting everthing into 
+	 * FusionEngine#TempPath.
+	 */
 	class Archive
 	{
 	public:
 		//! Basic constructor
 		Archive();
 		//! Constructor +choose file
-		Archive(std::string filename);
+		Archive(const std::string &filename);
 
 		//! Destructor
 		~Archive();
 	public:
 		//! Associates an archive with this object.
-		void Open(std::string filename);
+		void Open(const std::string &filename);
 		//! Decompresses the archive associated with this object (to TempPath)
-		void Decompress();
+		bool Decompress();
 		//! Returns a list of paths to the files which have been decompressed by this object
-		StringVector GetFileList();
+		const StringVector &GetFileList() const;
+		//! Finds the path to the file requested if it has been decompressed from this archive
+		std::string GetFile(const std::string &file);
 		//! Deletes all the files which have been decompressed by this object
+		/*!
+		 * \remarks MCS - This does nothing (but tells you it :D)
+		 * \todo Cross-platform file deletion for Archive#DeleteTemps().
+		 */
 		void DeleteTemps();
+
+	protected:
+		//! List of the files which have been successfully decompressed from this archive.
+		StringVector m_FileList;
+		//! Path to the archive to decompress
+		std::string m_ZipFile;
+
+		//! Extracts a file from archive
+		/*!
+		 * If the currentfile file is successfully decompressed, this method will add
+		 * it its relative path/name to m_FileList.
+		 */
+		int do_extract_currentfile(
+			unzFile uf,
+			const int popt_extract_without_path,
+			const char* password);
+
+		//! Extracts all files from archive
+		int do_extract(
+			unzFile uf,
+			const int opt_extract_without_path,
+			const char* password);
+
+		//! Sets the date of extracted files
+		void change_file_date(
+			const char *filename,
+			uLong dosdate,
+			tm_unz tmu_date);
 
 	};
 }

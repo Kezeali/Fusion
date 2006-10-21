@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionArchive.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionBitmask.cpp"
 				>
 			</File>
@@ -338,6 +342,10 @@
 				RelativePath=".\FusionStateManager.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FusionStatePackSync.cpp"
+				>
+			</File>
 			<Filter
 				Name="examples"
 				ParseFiles="false"
@@ -362,11 +370,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionBitmask.h"
+				RelativePath=".\FusionArchive.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionClientEnvironment.h"
+				RelativePath=".\FusionBitmask.h"
 				>
 			</File>
 			<File
@@ -387,6 +395,18 @@
 			</File>
 			<File
 				RelativePath=".\FusionEngineCommon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEnvironmentClient.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEnvironmentGeneric.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEnvironmentServer.h"
 				>
 			</File>
 			<File
@@ -522,10 +542,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionServerEnvironment.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionServerOptions.h"
 				>
 			</File>
@@ -567,6 +583,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStatePackSync.h"
 				>
 			</File>
 			<File
@@ -633,6 +653,62 @@
 			</File>
 			<File
 				RelativePath="..\RakNet\RakServerInterface.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="minizip"
+			>
+			<File
+				RelativePath="..\minizip\crypt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\ioapi.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\ioapi.h"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\iowin32.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\iowin32.h"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\miniunz.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\minizip.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\mztools.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\mztools.h"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\unzip.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\unzip.h"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\zip.c"
+				>
+			</File>
+			<File
+				RelativePath="..\minizip\zip.h"
 				>
 			</File>
 		</Filter>
