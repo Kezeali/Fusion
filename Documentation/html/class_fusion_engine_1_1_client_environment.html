@@ -22,18 +22,21 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a></div>
-<h1>FusionEngine::ClientEnvironment Class Reference</h1><!-- doxytag: class="FusionEngine::ClientEnvironment" -->The client gameplay environment.  
+<h1>FusionEngine::ClientEnvironment Class Reference</h1><!-- doxytag: class="FusionEngine::ClientEnvironment" --><!-- doxytag: inherits="FusionEngine::GenericEnvironment" -->The client gameplay environment.  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionEnvironmentClient.h&gt;</code>
 <p>
-Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="class_fusion_engine_1_1_client_environment__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_client_environment__coll__map" alt="Collaboration graph"></center>
+Inherits <a class="el" href="class_fusion_engine_1_1_generic_environment.html">FusionEngine::GenericEnvironment</a>.
+<p>
+Inheritance diagram for FusionEngine::ClientEnvironment:<p><center><img src="class_fusion_engine_1_1_client_environment__inherit__graph.png" border="0" usemap="#_fusion_engine_1_1_client_environment__inherit__map" alt="Inheritance graph"></center>
+<map name="_fusion_engine_1_1_client_environment__inherit__map">
+<area href="class_fusion_engine_1_1_generic_environment.html" shape="rect" coords="7,81,241,108" alt="">
+<area href="class_fusion_engine_1_1_fusion_state.html" shape="rect" coords="33,7,215,33" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="class_fusion_engine_1_1_client_environment__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_client_environment__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_client_environment__coll__map">
-<area href="class_fusion_engine_1_1_client_options.html" shape="rect" coords="28,9,220,36" alt="">
-<area href="class_fusion_engine_1_1_fusion_scene.html" shape="rect" coords="30,60,219,87" alt="">
-<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="8,111,240,137" alt="">
-<area href="class_fusion_engine_1_1_fusion_network_client.html" shape="rect" coords="7,161,242,188" alt="">
-<area href="class_fusion_engine_1_1_fusion_input.html" shape="rect" coords="34,212,215,239" alt="">
+<area href="class_fusion_engine_1_1_generic_environment.html" shape="rect" coords="7,7,241,34" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_client_environment-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -55,7 +58,7 @@ Collaboration diagram for FusionEngine::ClientEnvironment:<p><center><img src="c
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>.  <a href="#9c56fe319b09004ccab38beca01ed9ac"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">Update</a> (unsigned int split)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Does everything.  <a href="#65a19c773d309b8de83b1448dd28e095"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Runs and maintains the statemanager and states.  <a href="#65a19c773d309b8de83b1448dd28e095"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="2bf0282838c804fbdecd1512f290c057"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Draw" ref="2bf0282838c804fbdecd1512f290c057" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html#2bf0282838c804fbdecd1512f290c057">Draw</a> ()</td></tr>
 
@@ -72,7 +75,7 @@ The client gameplay environment.
 <p>
 <dl compact><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a> should probably inherit from a common parent.</dd></dl>
 This is where all the gameplay stuff goes on at the client-side. Moving / drawing ships, syncing with server, prediction, etc. is all controlled from here. That isn't to say just this one class does all thoes things, this class just controlls the activities of other, more specific classes which do.<p>
-<dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> | <a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionInput</a> | FusionNetworkingHandler. </dd></dl>
+<dl compact><dt><b>See also:</b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_scene.html">FusionScene</a> | <a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionInput</a> | FusionNetworkingHandler | <a class="el" href="class_fusion_engine_1_1_generic_environment.html">GenericEnvironment</a>. </dd></dl>
 
 <p>
 <hr><h2>Member Function Documentation</h2>
@@ -108,7 +111,9 @@ Leaves the client environment cleanly.
     <tr><td valign="top"></td><td valign="top"><em>message</em>&nbsp;</td><td>The explaination to give to the user </td></tr>
   </table>
 </dl>
-    </td>
+
+<p>
+Reimplemented from <a class="el" href="class_fusion_engine_1_1_generic_environment.html#ce91edec533685f1c53796f82e959915">FusionEngine::GenericEnvironment</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="27b2b4cb7295d27487f52e09a32f8408"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::GetShipResourceByID" ref="27b2b4cb7295d27487f52e09a32f8408" args="(const std::string &amp;id)" --><p>
@@ -139,7 +144,9 @@ Leaves the client environment cleanly.
 Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#96a2ad97b6bba86127d1d2010f2c9519">FusionShipDrawable::Draw()</a> to get the sprite, etc. 
 <p>
 <dl compact><dt><b><a class="el" href="todo.html#_todo000004">Todo:</a></b></dt><dd>catch errors. </dd></dl>
-    </td>
+
+<p>
+Reimplemented from <a class="el" href="class_fusion_engine_1_1_generic_environment.html#a1aafbf914edecd72253a0e6dda39782">FusionEngine::GenericEnvironment</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="9c56fe319b09004ccab38beca01ed9ac"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Initialise" ref="9c56fe319b09004ccab38beca01ed9ac" args="(ResourceLoader *resources)" --><p>
@@ -170,7 +177,9 @@ Called by <a class="el" href="class_fusion_engine_1_1_fusion_ship_drawable.html#
 Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resource_loader.html">ResourceLoader</a>. 
 <p>
 <dl compact><dt><b><a class="el" href="todo.html#_todo000002">Todo:</a></b></dt><dd>START FILE SYNC STATE HERE!!! (that will load verified ships) </dd></dl>
-    </td>
+
+<p>
+Reimplemented from <a class="el" href="class_fusion_engine_1_1_generic_environment.html#f9db0e4d0d88f570ddb05f309d750197">FusionEngine::GenericEnvironment</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="65a19c773d309b8de83b1448dd28e095"></a><!-- doxytag: member="FusionEngine::ClientEnvironment::Update" ref="65a19c773d309b8de83b1448dd28e095" args="(unsigned int split)" --><p>
@@ -184,7 +193,7 @@ Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resourc
           <td class="md" nowrap valign="top">unsigned int&nbsp;</td>
           <td class="mdname1" valign="top" nowrap> <em>split</em>          </td>
           <td class="md" valign="top">&nbsp;)&nbsp;</td>
-          <td class="md" nowrap></td>
+          <td class="md" nowrap><code> [virtual]</code></td>
         </tr>
       </table>
     </td>
@@ -198,22 +207,17 @@ Pulls the resources from the <a class="el" href="class_fusion_engine_1_1_resourc
     <td>
 
 <p>
-Does everything. 
+Runs and maintains the statemanager and states. 
 <p>
-Actually, this function just does the following:<ol type=1>
-<li>Queries <a class="el" href="class_fusion_engine_1_1_fusion_input.html">FusionInput</a> for input data</li><li>Queries FusionNetwork for new messages.</li><li>Updates the state of all objects based on any frames received. It does this by finding the time of the received frame in the history, then interpolating between the closest stored frames to that time, to check if the local movements match up with the remote ones. If they don't, the gameplay is run through again from that point (without drawing of course!), using the new frame and any input from subsiquent keyframes (where the input changed) in that time period, to place the object at the correct position.</li><li>Updates the positions of all objects based on their current state / inputs. This provides pridictive movement if no new frames were received.</li><li>Using their current state and inputs in the prevoius steps, it builds a new frame for each local ship.</li><li>Decides whether enough time has passed to allow an update, and adds the current frame of each ship to the message queue and history if it has.</li><li>Sends everything in the message queue (this may include non-gameplay messages added to the queue by other threads (eg from the console and chat) too, but we don't care about them - I may even give them their own queue and/or socket).</li><li>Sets the positions of the ship nodes by calling UpdateNode on each ship.</li><li>Updates the positions of all non-synced objects (this doesn't include weapons, engines, etc. because those are child nodes and moved with their parents.)</li></ol>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000003">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">ClientEnvironment::Update()</a> and <a class="el" href="class_fusion_engine_1_1_server_environment.html#7d686f916585bf2be9fe2402a50b6ef4">ServerEnvironment::Update()</a> should return false, or perhaps an error, when update fails... Or perhaps I should use exceptions here? </dd></dl>
+
 <p>
-<dl compact><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>split</em>&nbsp;</td><td>The amount of time since <a class="el" href="class_fusion_engine_1_1_client_environment.html#65a19c773d309b8de83b1448dd28e095">ClientEnvironment::Update()</a> was lass called. </td></tr>
-  </table>
-</dl>
-    </td>
+Reimplemented from <a class="el" href="class_fusion_engine_1_1_generic_environment.html#e4b3408e2e7b7795eb9a519e9981a3b7">FusionEngine::GenericEnvironment</a>.    </td>
   </tr>
 </table>
 <hr>The documentation for this class was generated from the following files:<ul>
-<li>F:/Projects/Fusion/FusionEngine/FusionEnvironmentClient.h<li>F:/Projects/Fusion/FusionEngine/FusionClientEnvironment.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Oct 21 16:47:03 2006 for Fusion by&nbsp;
+<li>F:/Projects/Fusion/FusionEngine/FusionEnvironmentClient.h<li>F:/Projects/Fusion/FusionEngine/FusionEnvironmentClient.cpp</ul>
+<hr size="1"><address style="align: right;"><small>Generated on Sun Oct 22 23:40:23 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

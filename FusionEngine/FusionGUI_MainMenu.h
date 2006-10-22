@@ -27,44 +27,36 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
+#include "FusionGUI.h"
+
 namespace Fusion
 {
 
 	/*!
 	 * \brief
-	 * [depreciated] GUI for fusion mainmenu
-	 * \todo Replace CL_GuiManager with CEGUI
+	 * GUI for fusion mainmenu
 	 */
-	class FusionGUI_MainMenu
+	class FusionGUI_MainMenu : public FusionGUI
 	{
 	public:
+		//! Basic constructor
+		FusionGUI_MainMenu();
 		/*!
+		* \brief
 		* Constructor.
-		*
-		* \param resources
-		* Where to get the components from.
-		*
-		* \param parent
-		* The parent of this component. Usually the main CL_GUIManager.
-		*
-		* \param deck
-		* The deck this component resides in.
 		*/
-		FusionGUI_MainMenu(CL_ResourceManager *resources, CL_Component *parent, CL_Deck *deck);
+		FusionGUI_MainMenu(const std::string &scheme);
 
 	public:
-		static const std::string Name = "main_menu";
+		//! Init gui
+		bool Initialise();
 
-		virtual CL_Component *GetComponent();
+		void onCreateClicked();
+		void onJoinClicked();
+		void onOptsClicked();
 
-		void on_createClicked();
-		void on_joinClicked();
-		void on_optsClicked();
-
-	protected:
-		CL_Deck *m_Deck;
-		CL_ComponentManager m_ComponentManager;
-		CL_SlotContainer m_Slots;
 	};
 
 }

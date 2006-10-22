@@ -1,29 +1,40 @@
-#include "FusionEngineCommon.h"
-
-/// STL
-
-/// Fusion
-
 /// Class
 #include "FusionGUI_Options.h"
 
+/// Fusion
+
 using namespace Fusion;
 
-FusionGUI_Options::FusionGUI_Options(CL_ResourceManager *resources, CL_Component *parent, CL_Deck *deck)
-: m_ComponentManager(FusionGUI_Options::Name, resources, parent), m_Deck(deck)
-{
-	//! 'Create Game' button
-	CL_Button *button_ctrls;
-	m_ComponentManager.get_component("Button_Options_Controls", &button_ctrls);
-	m_Slots.connect(button_ctrls->sig_clicked(), this, on_createClicked);
+FusionGUI_Options::DefaultScheme = "MainMenu";
 
-	//! 'Join Game' button
-	CL_Button *button_gfx;
-	m_ComponentManager.get_component("Button_Options_Graphics", &button_gfx);
-	m_Slots.connect(button_gfx->sig_clicked(), this, on_joinClicked);
+FusionGUI_Options::FusionGUI_Options()
+: m_CurrentGUI(DefaultScheme)
+{
 }
 
-FusionGUI_MainMenu::GetComponent()
+FusionGUI_Options::FusionGUI_Options(const std::string &scheme)
+: m_CurrentGUI(scheme)
 {
-	return component_manager.get_component(FusionGUI_Options::Name);
+}
+
+FusionGUI_Options::Initialise()
+{
+	WindowManager& winMgr = WindowManager::getSingleton();
+
+	CEGUI::SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+
+	// Mouse Events
+	m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionGUI::onMouseDown);
+	m_Slots.connect(CL_Mouse::sig_key_up(), this, &FusionGUI::onMouseUp);
+	m_Slots.connect(CL_Mouse::sig_move(), this, &FusionGUI::onMouseMove);
+	// KBD events
+	m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionGUI::onKeyDown);
+	m_Slots.connect(CL_Keyboard::sig_key_up(), this, &FusionGUI::onKeyUp);
+
+	/*
+	static_cast<PushButton *> (
+		winMgr.getWindow("OptionsMenu/Save"))->subscribeEvent(
+		PushButton::EventClicked,
+		Event::Subscriber(&FusionGUI_Options::onSaveClicked, this));
+		*/
 }

@@ -30,10 +30,13 @@
 <a href="class_fusion_engine_1_1_fusion_game-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
 <tr><td colspan="2"><br><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="e3333d3fc4f79ba9a0630269d0a0aae3"></a><!-- doxytag: member="FusionEngine::FusionGame::RunClient" ref="e3333d3fc4f79ba9a0630269d0a0aae3" args="(const std::string &amp;hostname, const std::string &amp;port, ClientOptions *options)" -->
-void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html#e3333d3fc4f79ba9a0630269d0a0aae3">RunClient</a> (const std::string &amp;hostname, const std::string &amp;port, <a class="el" href="class_fusion_engine_1_1_client_options.html">ClientOptions</a> *options)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="ec0153214129199511c3c2a2a1f147dc"></a><!-- doxytag: member="FusionEngine::FusionGame::FusionGame" ref="ec0153214129199511c3c2a2a1f147dc" args="()" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html#ec0153214129199511c3c2a2a1f147dc">FusionGame</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Starts the game as a client. <br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Basic Constructor. <br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html#e3333d3fc4f79ba9a0630269d0a0aae3">RunClient</a> (const std::string &amp;hostname, const std::string &amp;port, <a class="el" href="class_fusion_engine_1_1_client_options.html">ClientOptions</a> *options)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Starts the game as a client.  <a href="#e3333d3fc4f79ba9a0630269d0a0aae3"></a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="421f16e3cd5228a635b3ae3f66f89e7d"></a><!-- doxytag: member="FusionEngine::FusionGame::RunServer" ref="421f16e3cd5228a635b3ae3f66f89e7d" args="(const std::string &amp;port, ServerOptions *options)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html#421f16e3cd5228a635b3ae3f66f89e7d">RunServer</a> (const std::string &amp;port, <a class="el" href="class_fusion_engine_1_1_server_options.html">ServerOptions</a> *options)</td></tr>
 
@@ -42,9 +45,58 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 <hr><a name="_details"></a><h2>Detailed Description</h2>
 Gameplay overlord. 
 <p>
+Initialises a number of things then runs and maintains the state manager. 
+<p>
+<hr><h2>Member Function Documentation</h2>
+<a class="anchor" name="e3333d3fc4f79ba9a0630269d0a0aae3"></a><!-- doxytag: member="FusionEngine::FusionGame::RunClient" ref="e3333d3fc4f79ba9a0630269d0a0aae3" args="(const std::string &amp;hostname, const std::string &amp;port, ClientOptions *options)" --><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">void FusionGame::RunClient           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const std::string &amp;&nbsp;</td>
+          <td class="mdname" nowrap> <em>hostname</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap>const std::string &amp;&nbsp;</td>
+          <td class="mdname" nowrap> <em>port</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td class="md"></td>
+          <td class="md" nowrap><a class="el" href="class_fusion_engine_1_1_client_options.html">ClientOptions</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>options</em></td>
+        </tr>
+        <tr>
+          <td class="md"></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Starts the game as a client. 
+<p>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000008">Todo:</a></b></dt><dd><a class="el" href="class_fusion_engine_1_1_fusion_game.html">FusionGame</a> <a class="el" href="class_fusion_engine_1_1_g_u_i.html">GUI</a> (for displaying error messages.) </dd></dl>
+    </td>
+  </tr>
+</table>
 <hr>The documentation for this class was generated from the following files:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionGame.h<li>F:/Projects/Fusion/FusionEngine/FusionGame.cpp</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Oct 21 16:47:04 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Oct 22 23:40:23 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

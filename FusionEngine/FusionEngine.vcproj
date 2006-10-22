@@ -243,6 +243,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionGUI_MainMenu.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGUI_Options.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionInputData.h"
 				>
 			</File>
@@ -582,6 +590,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGUI_MainMenu.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGUI_Options.cpp"
 				>
 			</File>
 			<File

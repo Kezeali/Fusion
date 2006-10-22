@@ -22,18 +22,28 @@
   </ul></div>
 <div class="nav">
 <a class="el" href="namespace_fusion_engine.html">FusionEngine</a>::<a class="el" href="class_fusion_engine_1_1_generic_environment.html">GenericEnvironment</a></div>
-<h1>FusionEngine::GenericEnvironment Class Reference</h1><!-- doxytag: class="FusionEngine::GenericEnvironment" -->The virtual environment! (pun?).  
+<h1>FusionEngine::GenericEnvironment Class Reference</h1><!-- doxytag: class="FusionEngine::GenericEnvironment" --><!-- doxytag: inherits="FusionEngine::FusionState" -->The virtual environment! (pun?) Now this' a <a class="el" href="class_fusion_engine_1_1_fusion_state.html">FusionState</a>; whatchu gonna do about it?  
 <a href="#_details">More...</a>
 <p>
 <code>#include &lt;FusionEnvironmentGeneric.h&gt;</code>
 <p>
-Collaboration diagram for FusionEngine::GenericEnvironment:<p><center><img src="class_fusion_engine_1_1_generic_environment__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_generic_environment__coll__map" alt="Collaboration graph"></center>
+Inherits <a class="el" href="class_fusion_engine_1_1_fusion_state.html">FusionEngine::FusionState</a>.
+<p>
+Inherited by <a class="el" href="class_fusion_engine_1_1_client_environment.html">FusionEngine::ClientEnvironment</a>.
+<p>
+Inheritance diagram for FusionEngine::GenericEnvironment:<p><center><img src="class_fusion_engine_1_1_generic_environment__inherit__graph.png" border="0" usemap="#_fusion_engine_1_1_generic_environment__inherit__map" alt="Inheritance graph"></center>
+<map name="_fusion_engine_1_1_generic_environment__inherit__map">
+<area href="class_fusion_engine_1_1_client_environment.html" shape="rect" coords="13,156,235,183" alt="">
+<area href="class_fusion_engine_1_1_fusion_state.html" shape="rect" coords="33,7,215,33" alt="">
+</map>
+<center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center>Collaboration diagram for FusionEngine::GenericEnvironment:<p><center><img src="class_fusion_engine_1_1_generic_environment__coll__graph.png" border="0" usemap="#_fusion_engine_1_1_generic_environment__coll__map" alt="Collaboration graph"></center>
 <map name="_fusion_engine_1_1_generic_environment__coll__map">
-<area href="class_fusion_engine_1_1_client_options.html" shape="rect" coords="28,9,220,36" alt="">
-<area href="class_fusion_engine_1_1_fusion_scene.html" shape="rect" coords="29,60,219,87" alt="">
-<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="8,111,240,137" alt="">
-<area href="class_fusion_engine_1_1_fusion_network_client.html" shape="rect" coords="7,161,241,188" alt="">
-<area href="class_fusion_engine_1_1_fusion_input.html" shape="rect" coords="33,212,215,239" alt="">
+<area href="class_fusion_engine_1_1_fusion_state.html" shape="rect" coords="33,7,215,33" alt="">
+<area href="class_fusion_engine_1_1_client_options.html" shape="rect" coords="28,57,220,84" alt="">
+<area href="class_fusion_engine_1_1_fusion_scene.html" shape="rect" coords="29,108,219,135" alt="">
+<area href="class_fusion_engine_1_1_fusion_physics_world.html" shape="rect" coords="8,159,240,185" alt="">
+<area href="class_fusion_engine_1_1_fusion_network_client.html" shape="rect" coords="7,209,241,236" alt="">
+<area href="class_fusion_engine_1_1_fusion_input.html" shape="rect" coords="33,260,215,287" alt="">
 </map>
 <center><font size="2">[<a href="graph_legend.html">legend</a>]</font></center><a href="class_fusion_engine_1_1_generic_environment-members.html">List of all members.</a><table border="0" cellpadding="0" cellspacing="0">
 <tr><td></td></tr>
@@ -155,7 +165,7 @@ unsigned int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">List of ship resources in loaded.  <a href="#4a1c3734e1d89e7094eea92bccecd522"></a><br></td></tr>
 </table>
 <hr><a name="_details"></a><h2>Detailed Description</h2>
-The virtual environment! (pun?). 
+The virtual environment! (pun?) Now this' a <a class="el" href="class_fusion_engine_1_1_fusion_state.html">FusionState</a>; whatchu gonna do about it? 
 <p>
 <hr><h2>Member Function Documentation</h2>
 <a class="anchor" name="ce91edec533685f1c53796f82e959915"></a><!-- doxytag: member="FusionEngine::GenericEnvironment::_quit" ref="ce91edec533685f1c53796f82e959915" args="(ErrorType type)" --><p>
@@ -190,7 +200,9 @@ Leaves the client environment cleanly.
     <tr><td valign="top"></td><td valign="top"><em>message</em>&nbsp;</td><td>The explaination to give to the user </td></tr>
   </table>
 </dl>
-    </td>
+
+<p>
+Reimplemented in <a class="el" href="class_fusion_engine_1_1_client_environment.html#6b6ea42e22a2680fdfb07d3261890eca">FusionEngine::ClientEnvironment</a>.    </td>
   </tr>
 </table>
 <a class="anchor" name="d3e8ca16f7b782773bde57ee151e2c6b"></a><!-- doxytag: member="FusionEngine::GenericEnvironment::installShipFrameFromMessage" ref="d3e8ca16f7b782773bde57ee151e2c6b" args="(FusionMessage *m)" --><p>
@@ -220,7 +232,7 @@ Leaves the client environment cleanly.
 <p>
 Takes a received message, extracts the <a class="el" href="struct_fusion_engine_1_1_ship_state.html">ShipState</a>, and puts it into the relavant ship. 
 <p>
-<dl compact><dt><b><a class="el" href="todo.html#_todo000008">Todo:</a></b></dt><dd>Maybe this should be in a helper class? meh, I think that will overcomplicate things, especially as my current goal is "just make it compile"! </dd></dl>
+<dl compact><dt><b><a class="el" href="todo.html#_todo000007">Todo:</a></b></dt><dd>Maybe this should be in a helper class? meh, I think that will overcomplicate things, especially as my current goal is "just make it compile"! </dd></dl>
     </td>
   </tr>
 </table>
@@ -389,7 +401,7 @@ Maps ships to shipnames     </td>
 </table>
 <hr>The documentation for this class was generated from the following file:<ul>
 <li>F:/Projects/Fusion/FusionEngine/FusionEnvironmentGeneric.h</ul>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Oct 21 16:47:04 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Oct 22 23:40:23 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>

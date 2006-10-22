@@ -42,15 +42,21 @@
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_drawable.html">FusionDrawable</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Base class for objects controlled by a node.  <a href="class_fusion_engine_1_1_fusion_drawable.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_g_u_i.html">GUI</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Wrapper for CEGUI - for "FusionEngine", the gameplay portion of fusion.  <a href="class_fusion_engine_1_1_g_u_i.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_client_environment.html">ClientEnvironment</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The client gameplay environment.  <a href="class_fusion_engine_1_1_client_environment.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_generic_environment.html">GenericEnvironment</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The virtual environment! (pun?).  <a href="class_fusion_engine_1_1_generic_environment.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The virtual environment! (pun?) Now this' a <a class="el" href="class_fusion_engine_1_1_fusion_state.html">FusionState</a>; whatchu gonna do about it?  <a href="class_fusion_engine_1_1_generic_environment.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_server_environment.html">ServerEnvironment</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The client gameplay environment.  <a href="class_fusion_engine_1_1_server_environment.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_error.html">Error</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Message passed to <a class="el" href="class_fusion_engine_1_1_fusion_game.html">FusionGame</a> when an unexpected quit event arises.  <a href="class_fusion_engine_1_1_error.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_game.html">FusionGame</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Gameplay overlord.  <a href="class_fusion_engine_1_1_fusion_game.html#_details">More...</a><br></td></tr>
@@ -170,13 +176,16 @@
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">A weapon drawable, what it actually draws is defined by a script.  <a href="class_fusion_engine_1_1_fusion_ship_weapon.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_state.html">FusionState</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The base class for FusionState-s.  <a href="class_fusion_engine_1_1_fusion_state.html#_details">More...</a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The abstract base for FusionStates.  <a href="class_fusion_engine_1_1_fusion_state.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_fusion_state_game_play.html">FusionStateGamePlay</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Gameplay state. Dunno Why I made this (see <a class="el" href="class_fusion_engine_1_1_generic_environment.html">GenericEnvironment</a> - it's actually used.).  <a href="class_fusion_engine_1_1_fusion_state_game_play.html#_details">More...</a><br></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_state_manager.html">StateManager</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">This class manages what can happen and when, while the game is running.  <a href="class_fusion_engine_1_1_state_manager.html#_details">More...</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_fusion_engine_1_1_state_message.html">StateMessage</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Allows states to request actions from the <a class="el" href="class_fusion_engine_1_1_state_manager.html">StateManager</a>.  <a href="class_fusion_engine_1_1_state_message.html#_details">More...</a><br></td></tr>
 <tr><td colspan="2"><br><h2>Typedefs</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="77f24d39cb48a9f0579b53997867516a"></a><!-- doxytag: member="FusionEngine::StringVector" ref="77f24d39cb48a9f0579b53997867516a" args="" -->
 typedef std::vector&lt; std::string &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_fusion_engine.html#77f24d39cb48a9f0579b53997867516a">StringVector</a></td></tr>
@@ -342,7 +351,7 @@ Returns whether one is greater than two.
     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Oct 21 16:47:03 2006 for Fusion by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Oct 22 23:40:23 2006 for Fusion by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.6-NO </small></address>
 </body>
