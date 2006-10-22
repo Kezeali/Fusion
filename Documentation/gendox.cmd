@@ -1,1 +1,1 @@
-F:\Dev\doxygen\bin\doxygen DoxyfileEx
+doxygen.exe DoxyfileEx

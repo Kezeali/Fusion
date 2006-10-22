@@ -7,8 +7,13 @@ StateManager::StateManager()
 {
 }
 
-void StateManager::SetExclusive(FusionState *state)
+bool StateManager::SetExclusive(FusionState *state)
 {
+	// Try to initialise the new state
+	if (state->Initialise() == false)
+		return false;
+
+	// Remove all the current states
 	if (!m_States.empty())
 	{
 		StateList::iterator it;
@@ -19,20 +24,24 @@ void StateManager::SetExclusive(FusionState *state)
 		m_States.clear();
 	}
 
-	SharedState state(type);
-	m_States.push_back(state);
+	// Add the new state if it managed to init
+	SharedState state_spt(state);
+	m_States.push_back(state_spt);
 
-	// Finally, initialise the state
-	state->Initialise();
+	return true;
 }
 
-void StateManager::AddState(FusionState *state)
+bool StateManager::AddState(FusionState *state)
 {
-	SharedState state(type);
-	m_States.push_back(state);
+	// Try to initialise the state
+	if (state->Initialise() == false)
+		return false;
 
-	// Finally, initialise the state
-	state->Initialise();
+	// Add the state if it managed to init
+	SharedState state_spt(state);
+	m_States.push_back(state_spt);
+
+	return true;
 }
 
 void StateManager::RemoveState(FusionState *state)
@@ -63,11 +72,15 @@ bool StateManager::Update(unsigned int split)
 		if (!(*it)->KeepGoing())
 			m_KeepGoing = false;
 
+		// Try to update the state
 		if ((*it)->Update(split) == false)
 		{
-			// Record the error
+			// If the state fails to update:
+			//  Record the error
 			m_LastError = (*it)->GetLastError();
-			// Remove the state if it falied to update
+			//  Tell the state to clean up
+			(*it)->CleanUp();
+			//  Remove the state
 			it = m_States.erase(it);
 		}
 	}

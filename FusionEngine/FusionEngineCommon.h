@@ -34,6 +34,7 @@
 namespace FusionEngine
 {
 	// Forward declarations
+	class GenericEnviornment;
 	class ServerEnvironment;
 	class ClientEnvironment;
 	class FusionScene;
@@ -48,6 +49,10 @@ namespace FusionEngine
 	class FusionPhysicsWorld;
 	class FusionPhysicsBody;
 	class FusionPhysicsCollisionGrid;
+	class FusionState;
+	class FusionStatePackSync;
+	class FusionStateMessage;
+	class StateManager;
 
 	// Global typedefs
 	typedef unsigned short PlayerInd; // ...

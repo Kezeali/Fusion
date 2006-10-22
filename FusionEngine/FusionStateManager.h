@@ -57,9 +57,17 @@ namespace FusionEngine
 
 	public:
 		//! Removes all other states and adds the state specified.
+		/*!
+		 * \retval True if the state initialised successfully
+		 * \retval False otherwise
+		 */
 		bool SetExclusive(FusionState *state);
 
 		//! Adds the state specified
+		/*!
+		 * \retval True if the state initialised successfully
+		 * \retval False otherwise
+		 */
 		bool AddState(FusionState *state);
 
 		//! Removes the state specified

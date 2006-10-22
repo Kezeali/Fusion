@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<GUIScheme Name="SharpHourSkin">
+	<Imageset Name="SharpHour-Images" Filename="SharpHour.imageset" />
+	<LookNFeel Filename="SharpHour.looknfeel" />
+	<WindowSet Filename="CEGUIFalagardBase" />
+	<FalagardMapping WindowType="SharpHour/Titlebar" TargetType="Falagard/Titlebar" LookNFeel="SharpHour/Titlebar" />
+	<FalagardMapping WindowType="SharpHour/Button" TargetType="Falagard/Button" LookNFeel="SharpHour/Button" />
+	<FalagardMapping WindowType="SharpHour/FrameWindow" TargetType="Falagard/FrameWindow" LookNFeel="SharpHour/FrameWindow" />
+	<FalagardMapping WindowType="SharpHour/Editbox" TargetType="Falagard/Editbox" LookNFeel="SharpHour/Editbox" />
+	<FalagardMapping WindowType="SharpHour/VerticalScrollbarThumb" TargetType="Falagard/Thumb" LookNFeel="SharpHour/VerticalScrollbarThumb" />
+	<FalagardMapping WindowType="SharpHour/VerticalScrollbar" TargetType="Falagard/Scrollbar" LookNFeel="SharpHour/VerticalScrollbar" />
+	<FalagardMapping WindowType="SharpHour/HorizontalScrollbarThumb" TargetType="Falagard/Thumb" LookNFeel="SharpHour/HorizontalScrollbarThumb" />
+	<FalagardMapping WindowType="SharpHour/HorizontalScrollbar" TargetType="Falagard/Scrollbar" LookNFeel="SharpHour/HorizontalScrollbar" />
+	<FalagardMapping WindowType="SharpHour/StaticImage" TargetType="Falagard/StaticImage" LookNFeel="SharpHour/StaticImage" />
+	<FalagardMapping WindowType="SharpHour/StaticText" TargetType="Falagard/StaticText" LookNFeel="SharpHour/StaticText" />
+	<FalagardMapping WindowType="SharpHour/Listbox" TargetType="Falagard/Listbox" LookNFeel="SharpHour/Listbox" />
+	<FalagardMapping WindowType="SharpHour/MultiLineEditbox" TargetType="Falagard/MultiLineEditbox" LookNFeel="SharpHour/MultiLineEditbox" />
+	<FalagardMapping WindowType="SharpHour/MultiColumnList" TargetType="Falagard/MultiColumnList" LookNFeel="SharpHour/MultiColumnList" />
+	<FalagardMapping WindowType="SharpHour/ListHeader" TargetType="Falagard/ListHeader" LookNFeel="SharpHour/ListHeader" />
+	<FalagardMapping WindowType="SharpHour/ListHeaderSegment" TargetType="Falagard/ListHeaderSegment" LookNFeel="SharpHour/ListHeaderSegment" />
+	<FalagardMapping WindowType="SharpHour/TabButton" TargetType="Falagard/TabButton" LookNFeel="SharpHour/TabButton" />
+	<FalagardMapping WindowType="SharpHour/TabControl" TargetType="Falagard/TabControl" LookNFeel="SharpHour/TabControl" />
+	<FalagardMapping WindowType="SharpHour/TabPane" TargetType="Falagard/TabPane" LookNFeel="SharpHour/TabPane" />
+
+<!--	
+	<FalagardMapping WindowType="SharpHour/ComboDropList" TargetType="Falagard/ComboDropList" LookNFeel="SharpHour/ComboDropList" />
+	<FalagardMapping WindowType="SharpHour/ComboboxButton" TargetType="Falagard/Button" LookNFeel="SharpHour/ComboboxButton" />
+	<FalagardMapping WindowType="SharpHour/Combobox" TargetType="Falagard/Combobox" LookNFeel="SharpHour/Combobox" />
+	<FalagardMapping WindowType="SharpHour/ProgressBar" TargetType="Falagard/ProgressBar" LookNFeel="SharpHour/ProgressBar" />
+	<FalagardMapping WindowType="SharpHour/ScrollablePane" TargetType="Falagard/ScrollablePane" LookNFeel="SharpHour/ScrollablePane" />
+	<FalagardMapping WindowType="SharpHour/Checkbox" TargetType="Falagard/Checkbox" LookNFeel="SharpHour/Checkbox" />
+	<FalagardMapping WindowType="SharpHour/RadioButton" TargetType="Falagard/RadioButton" LookNFeel="SharpHour/RadioButton" />
+	<FalagardMapping WindowType="SharpHour/ScrollablePane" TargetType="Falagard/ScrollablePane" LookNFeel="SharpHour/ScrollablePane" />
+-->
+</GUIScheme>

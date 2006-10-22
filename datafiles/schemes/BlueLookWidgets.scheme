@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+<GUIScheme Name="BlueLookWidgets">
+	<WindowSet Filename="CEGUIBlueLook">
+		<WindowFactory Name="BlueLook/AlternateProgressBar" />
+		<WindowFactory Name="BlueLook/Button" />
+		<WindowFactory Name="BlueLook/Checkbox" />
+		<WindowFactory Name="BlueLook/CloseButton" />
+		<WindowFactory Name="BlueLook/Combobox" />
+		<WindowFactory Name="BlueLook/ComboDropList" />
+		<WindowFactory Name="BlueLook/ComboEditbox" />
+		<WindowFactory Name="BlueLook/Editbox" />
+		<WindowFactory Name="BlueLook/FrameWindow" />
+		<WindowFactory Name="BlueLook/LargeVerticalScrollbar" />
+		<WindowFactory Name="BlueLook/LargeVerticalScrollbarThumb" />
+		<WindowFactory Name="BlueLook/Listbox" />
+		<WindowFactory Name="BlueLook/ListHeader" />
+		<WindowFactory Name="BlueLook/ListHeaderSegment" />
+		<WindowFactory Name="BlueLook/HorizontalScrollbar" />
+		<WindowFactory Name="BlueLook/HorizontalScrollbarThumb" />
+		<WindowFactory Name="BlueLook/MultiColumnList" />
+		<WindowFactory Name="BlueLook/MultiLineEditbox" />
+		<WindowFactory Name="BlueLook/ProgressBar" />
+		<WindowFactory Name="BlueLook/RadioButton" />
+		<WindowFactory Name="BlueLook/Slider" />
+		<WindowFactory Name="BlueLook/SliderThumb" />
+		<WindowFactory Name="BlueLook/StaticImage" />
+		<WindowFactory Name="BlueLook/StaticText" />
+		<WindowFactory Name="BlueLook/TabButton" />
+		<WindowFactory Name="BlueLook/TabControl" />
+		<WindowFactory Name="BlueLook/TabPane" />
+		<WindowFactory Name="BlueLook/Titlebar" />
+		<WindowFactory Name="BlueLook/VerticalScrollbar" />
+		<WindowFactory Name="BlueLook/VerticalScrollbarThumb" />
+		<WindowFactory Name="BlueLook/VUMeter" />
+	</WindowSet>
+</GUIScheme>

@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<Imageset Name="SharpHour-Images" Imagefile="datafiles/imagesets/sharphour.tga" NativeHorzRes="800" NativeVertRes="600" AutoScaled="false">
+	<Image Name="GenericBrush" XPos="36" YPos="2" Width="1" Height="1" />
+	<Image Name="ListboxSelectionBrush" XPos="36" YPos="2" Width="1" Height="1" />
+	<Image Name="FrameTopLeft" XPos="22" YPos="11" Width="8" Height="8" />
+	<Image Name="FrameTopRight" XPos="32" YPos="11" Width="8" Height="8" />
+	<Image Name="FrameBottomLeft" XPos="32" YPos="1" Width="8" Height="8" />
+	<Image Name="FrameBottomRight" XPos="22" YPos="1" Width="8" Height="8" />
+	<Image Name="FrameLeft" XPos="22" YPos="25" Width="8" Height="1" />
+	<Image Name="FrameRight" XPos="22" YPos="22" Width="8" Height="1" />
+	<Image Name="FrameTop" XPos="33" YPos="21" Width="1" Height="8" />
+	<Image Name="FrameBottom" XPos="36" YPos="21" Width="1" Height="8" />
+	<Image Name="ScrollUpArrow" XPos="5" YPos="50" Width="20" Height="20" />
+	<Image Name="ScrollDownArrow" XPos="25" YPos="50" Width="20" Height="20" />
+	<Image Name="VertScrollContainer" XPos="25" YPos="71" Width="20" Height="18" />
+	<Image Name="ScrollLeftArrow" XPos="45" YPos="70" Width="20" Height="20" />
+	<Image Name="ScrollRightArrow" XPos="45" YPos="50" Width="20" Height="20" />
+	<Image Name="HorzScrollContainer" XPos="66" YPos="50" Width="18" Height="20" />
+	<Image Name="ScrollbarThumb" XPos="5" YPos="70" Width="20" Height="20" />
+	<Image Name="ShadowBrush" XPos="48" YPos="1" Width="24" Height="24" />
+	<Image Name="TitleBar" XPos="23" YPos="30" Width="1" Height="3" />
+	<Image Name="TitleBarLeft" XPos="26" YPos="30" Width="3" Height="3" />
+	<Image Name="TitleBarRight" XPos="30" YPos="30" Width="3" Height="3" />
+	
+	<Image Name="HeaderMainBrush" XPos="36" YPos="2" Width="1" Height="1" />
+	<Image Name="HeaderBottomEdge" XPos="40" YPos="21" Width="1" Height="4" />
+	<Image Name="HeaderSplitter" XPos="39" YPos="20" Width="2" Height="8" />
+	<Image Name="LargeLeftArrow" XPos="2" YPos="65" Width="5" Height="9" />
+	<Image Name="LargeRightArrow" XPos="9" YPos="65" Width="5" Height="9" />
+	<Image Name="LargeUpArrow" XPos="2" YPos="76" Width="9" Height="5" />
+	<Image Name="LargeDownArrow" XPos="2" YPos="83" Width="9" Height="5" />
+	<Image Name="SmallLeftArrow" XPos="17" YPos="73" Width="5" Height="5" />
+	<Image Name="SmallRightArrow" XPos="24" YPos="73" Width="5" Height="5" />
+	<Image Name="SmallUpArrow" XPos="17" YPos="80" Width="5" Height="5" />
+	<Image Name="SmallDownArrow" XPos="24" YPos="80" Width="5" Height="5" />
+	
+	<Image Name="MouseArrow" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="NSSizingCursorImage" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="EWSizingCursorImage" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="NWSESizingCursorImage" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="NESWSizingCursorImage" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="MouseEsWeCursor" XPos="1" YPos="1" Width="12" Height="18" />
+	<Image Name="MouseMoveCursor" XPos="1" YPos="1" Width="12" Height="18" />
+
+</Imageset>

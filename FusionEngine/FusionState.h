@@ -27,6 +27,12 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
+/// Fusion
+#include "FusionStateMessage.h"
+#include "FusionError.h"
+
 namespace FusionEngine
 {
 

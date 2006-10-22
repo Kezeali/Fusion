@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<GUIScheme Name="BlueLookWidgetAliases">
+	<WindowAlias Alias="Blue AltProgressBar" Target="BlueLook/AlternateProgressBar" />
+	<WindowAlias Alias="Blue Button" Target="BlueLook/Button" />
+	<WindowAlias Alias="Blue Checkbox" Target="BlueLook/Checkbox" />
+	<WindowAlias Alias="Blue Close Button" Target="BlueLook/CloseButton" />
+	<WindowAlias Alias="Blue Combobox" Target="BlueLook/Combobox" />
+	<WindowAlias Alias="Blue ComboDropList" Target="BlueLook/ComboDropList" />
+	<WindowAlias Alias="Blue ComboEditbox" Target="BlueLook/ComboEditbox" />
+	<WindowAlias Alias="Blue Editbox" Target="BlueLook/Editbox" />
+	<WindowAlias Alias="Blue Frame Window" Target="BlueLook/FrameWindow" />
+	<WindowAlias Alias="Blue Listbox" Target="BlueLook/Listbox" />
+	<WindowAlias Alias="Blue ListHeader" Target="BlueLook/ListHeader" />
+	<WindowAlias Alias="Blue ListHeaderSegment" Target="BlueLook/ListHeaderSegment" />
+	<WindowAlias Alias="Blue MiniHorzScrollbar" Target="BlueLook/HorizontalScrollbar" />
+	<WindowAlias Alias="Blue MiniHorzScrollbarThumb" Target="BlueLook/HorizontalScrollbarThumb" />
+	<WindowAlias Alias="Blue MiniVertScrollbar" Target="BlueLook/VerticalScrollbar" />
+	<WindowAlias Alias="Blue MiniVertScrollbarThumb" Target="BlueLook/VerticalScrollbarThumb" />
+	<WindowAlias Alias="Blue MultiColumnList" Target="BlueLook/MultiColumnList" />
+	<WindowAlias Alias="Blue MultiLineEditbox" Target="BlueLook/MultiLineEditbox" />
+	<WindowAlias Alias="Blue ProgressBar" Target="BlueLook/ProgressBar" />
+	<WindowAlias Alias="Blue RadioButton" Target="BlueLook/RadioButton" />
+	<WindowAlias Alias="Blue Slider" Target="BlueLook/Slider" />
+	<WindowAlias Alias="Blue Slider Thumb" Target="BlueLook/SliderThumb" />
+	<WindowAlias Alias="Blue StaticImage" Target="BlueLook/StaticImage" />
+	<WindowAlias Alias="Blue StaticText" Target="BlueLook/StaticText" />
+	<WindowAlias Alias="Blue Tab Button" Target="BlueLook/TabButton" />
+	<WindowAlias Alias="Blue Tab Pane" Target="BlueLook/TabPane" />
+	<WindowAlias Alias="Blue Tab Control" Target="BlueLook/TabControl" />
+	<WindowAlias Alias="Blue Titlebar" Target="BlueLook/Titlebar" />
+	<WindowAlias Alias="Blue VertScrollbar" Target="BlueLook/LargeVerticalScrollbar" />
+	<WindowAlias Alias="Blue VertScrollbarThumb" Target="BlueLook/LargeVerticalScrollbarThumb" />
+</GUIScheme>
+
