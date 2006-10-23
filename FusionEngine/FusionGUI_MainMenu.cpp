@@ -7,12 +7,18 @@
 #include "FusionGUI_Options.h"
 #include "FusionGame.h"
 
+/// CEGUI
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/openglrenderer.h>
+
 using namespace Fusion;
 
-FusionGUI_MainMenu::DefaultScheme = "MainMenu";
+FusionGUI_MainMenu::DefaultScheme = "BlueLook";
+FusionGUI_MainMenu::DefaultLayout = "MainMenu";
 
 FusionGUI_MainMenu::FusionGUI_MainMenu()
-: m_CurrentGUI(DefaultScheme)
+: m_CurrentScheme(DefaultScheme),
+m_CurrentLayout(DefaultLayout)
 {
 }
 
@@ -23,9 +29,14 @@ FusionGUI_MainMenu::FusionGUI_MainMenu(const std::string &scheme)
 
 bool FusionGUI_MainMenu::Initialise()
 {
-	WindowManager& winMgr = WindowManager::getSingleton();
+	using namespace CEGUI;
 
-	CEGUI::SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+	SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+
+	WindowManager& winMgr = WindowManager::getSingleton();
+	winMgr.loadWindowLayout(m_CurrentLayout);
+
+	ImagesetManager::getSingleton().createImagesetFromImageFile("LogoImage", "FusionLogo.png");
 
 	// Mouse Events
 	m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionGUI::onMouseDown);
@@ -34,6 +45,10 @@ bool FusionGUI_MainMenu::Initialise()
 	// KBD events
 	m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionGUI::onKeyDown);
 	m_Slots.connect(CL_Keyboard::sig_key_up(), this, &FusionGUI::onKeyUp);
+
+	// 'Logo' static image
+	winMgr.getWindow("MainMenu/FusionLogo")->setProperty(
+		"Image", "set:LogoImage image:full_image");
 
 	// 'Create Game' button
 	static_cast<PushButton *> (

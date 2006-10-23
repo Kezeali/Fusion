@@ -50,6 +50,8 @@ namespace Fusion
 	public:
 		//! The default scheme file to load
 		static const std::string DefaultScheme;
+		//! The default layout file to load
+		static const std::string DefaultLayout;
 
 	public:
 		//! Inits the gui
@@ -62,8 +64,10 @@ namespace Fusion
 		virtual void Draw();
 
 	protected:
+		//! Name of the config file for the skin
+		std::string m_CurrentScheme;
 		//! Name of the config file for the current gui page
-		std::string m_CurrentGUI;
+		std::string m_CurrentLayout;
 
 		//! Holds events
 		CL_SlotContainer m_Slots;

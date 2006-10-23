@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<Imageset Name="SharpHour-Images" Imagefile="datafiles/imagesets/sharphour.tga" NativeHorzRes="800" NativeVertRes="600" AutoScaled="false">
+<Imageset Name="SharpHour-Images" Imagefile="sharphour.tga" NativeHorzRes="800" NativeVertRes="600" AutoScaled="false">
 	<Image Name="GenericBrush" XPos="36" YPos="2" Width="1" Height="1" />
 	<Image Name="ListboxSelectionBrush" XPos="36" YPos="2" Width="1" Height="1" />
 	<Image Name="FrameTopLeft" XPos="22" YPos="11" Width="8" Height="8" />

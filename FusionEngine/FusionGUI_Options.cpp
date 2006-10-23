@@ -3,9 +3,14 @@
 
 /// Fusion
 
+/// CEGUI
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/openglrenderer.h>
+
 using namespace Fusion;
 
-FusionGUI_Options::DefaultScheme = "MainMenu";
+FusionGUI_Options::DefaultScheme = "BlueLook";
+FusionGUI_MainMenu::DefaultLayout = "OptionsMenu";
 
 FusionGUI_Options::FusionGUI_Options()
 : m_CurrentGUI(DefaultScheme)
@@ -19,9 +24,12 @@ FusionGUI_Options::FusionGUI_Options(const std::string &scheme)
 
 FusionGUI_Options::Initialise()
 {
-	WindowManager& winMgr = WindowManager::getSingleton();
+	using namespace CEGUI;
 
-	CEGUI::SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+	SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+
+	WindowManager& winMgr = WindowManager::getSingleton();
+	winMgr.loadWindowLayout(m_CurrentLayout);
 
 	// Mouse Events
 	m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionGUI::onMouseDown);

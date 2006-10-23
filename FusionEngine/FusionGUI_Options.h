@@ -29,6 +29,8 @@
 
 #include "FusionEngineCommon.h"
 
+#include "FusionGUI.h"
+
 namespace Fusion
 {
 
