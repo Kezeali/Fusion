@@ -22,7 +22,7 @@ FusionGUI_Options::FusionGUI_Options(const std::string &scheme)
 {
 }
 
-FusionGUI_Options::Initialise()
+bool FusionGUI_Options::Initialise()
 {
 	using namespace CEGUI;
 
@@ -39,10 +39,14 @@ FusionGUI_Options::Initialise()
 	m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionGUI::onKeyDown);
 	m_Slots.connect(CL_Keyboard::sig_key_up(), this, &FusionGUI::onKeyUp);
 
-	/*
+	// 'Save' button
 	static_cast<PushButton *> (
 		winMgr.getWindow("OptionsMenu/Save"))->subscribeEvent(
 		PushButton::EventClicked,
 		Event::Subscriber(&FusionGUI_Options::onSaveClicked, this));
-		*/
+		
+}
+
+void FusionGUI_Options::onSaveClicked()
+{
 }

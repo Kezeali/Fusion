@@ -45,6 +45,7 @@ namespace FusionEngine
 	 * for ships, or global input - such as opening the console / menu (which have their
 	 * own input handlers) or quitting the game.
 	 *
+	 * \todo Make InputManager a singleton.
 	 */
 	class FusionInput
 	{
@@ -91,8 +92,8 @@ namespace FusionEngine
 		GlobalInput GetGlobalInputs() const;
 
 	private:
-		//! IH ignores gameplay inputs while this is true
-		bool m_Suspend;
+		//! InputHandler ignores gameplay inputs while this is true
+		bool m_Active;
 		/*!
 		 * \brief
 		 * Not used yet.

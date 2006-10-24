@@ -32,6 +32,8 @@
 /// STL
 
 /// Fusion
+#include "FusionEnvironmentGeneric.h"
+
 #include "FusionClientOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"

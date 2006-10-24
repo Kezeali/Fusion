@@ -68,16 +68,30 @@ bool FusionGUI_MainMenu::Initialise()
 		PushButton::EventClicked,
 		Event::Subscriber(&FusionGUI_MainMenu::onCreateClicked, this));
 
+	// 'ServerIP' editbox
+	//  Nothing to do
+
+	// 'ServerPort' editbox
+	Editbox* ip_box = static_cast<Editbox*>(winMgr.getWindow("MainMenu/ServerPort"));
+	ip_box->setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
+
+	// 'ListenPort' editbox
+	Editbox* ip_box = static_cast<Editbox*>(winMgr.getWindow("MainMenu/ListenPort"));
+	ip_box->setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
+
 	return true;
 }
 
 void FusionGUI_MainMenu::onCreateClicked()
 {
-	FusionEngine::FusionGame *game = new FusionEngine::FusionGame;
+	FusionEngine::FusionGame *game = new FusionEngine::FusionGame();
+	game->RunServer();
 }
 
 void FusionGUI_MainMenu::onJoinClicked()
 {
+	FusionEngine::FusionGame *game = new FusionEngine::FusionGame();
+	game->RunClient();
 }
 
 void FusionGUI_MainMenu::onOptsClicked()

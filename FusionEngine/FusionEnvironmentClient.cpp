@@ -37,6 +37,21 @@ bool ClientEnvironment::Update(unsigned int split)
 	if (m_Quit)
 		return false;
 
+	// Show menu
+	if (m_InputManager->GetGlobalInputs().menu)
+	{
+		// Add the options state, and tell it where to find the InputManager
+		//  (this is only a temporary hack, until I bother to make ImputManager a singleton.)
+		_pushMessage(new StateMessage(StateMessage::ADDSTATE, new GUI_Options(m_InputManager)));
+	}
+	// Show console
+	if (m_InputManager->GetGlobalInputs().console)
+	{
+		// Add the console state, and tell it where to find the InputManager
+		//  (this is only a temporary hack, until I bother to make ImputManager a singleton.)
+		_pushMessage(new StateMessage(StateMessage::ADDSTATE, new GUI_Console(m_InputManager)));
+	}
+
 	// Setup local frames
 	gatherLocalInput();
 

@@ -32,6 +32,8 @@
 /// STL
 
 /// Fusion
+#include "FusionState.h"
+
 #include "FusionScene.h"
 #include "FusionNode.h"
 #include "FusionResourceLoader.h"

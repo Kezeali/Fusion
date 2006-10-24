@@ -5,12 +5,12 @@
 using namespace FusionEngine;
 
 FusionInput::FusionInput()
-: m_Suspend(false)
+: m_Active(true)
 {
 }
 
 FusionInput::FusionInput(const ClientOptions &from)
-: m_Suspend(false)
+: m_Active(true)
 {
 	m_GlobalInputMap = from.GlobalInputs;
 	m_PlayerInputMaps = from.PlayerInputs;
@@ -22,23 +22,25 @@ bool FusionInput::Test()
 	if (CL_Keyboard::get_device_count() == 0)
 		return false;
 
+	/* This isn't really needed... If the device isn't there it won't cause a problem
 	PlayerInputMapList::iterator it;
 	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 	{
 		switch (it->type)
 		{
-		case InputDevType::Gamepad:
+		case Gamepad:
 			// Check if a gamepad exists at the required index.
 			if (CL_Joystick::get_device_count() < it->index)
 				return false;
 			break;
 
-		case InputDevType::Mouse:
+		case Mouse:
 			if (!CL_Mouse::get_device_count())
 				return false;
 			break;
 		}
 	}
+	*/
 
 	return true;
 }
@@ -58,12 +60,12 @@ void FusionInput::Initialise()
 
 void FusionInput::Activate()
 {
-	m_Suspend = false;
+	m_Active = false;
 }
 
 void FusionInput::Suspend()
 {
-	m_Suspend = true;
+	m_Active = true;
 }
 
 void FusionInput::SetInputMaps(const FusionEngine::ClientOptions &from)
@@ -89,78 +91,106 @@ GlobalInput FusionInput::GetGlobalInputs() const
 
 void FusionInput::onKeyDown(const CL_InputEvent &key)
 {
-	PlayerInputMapList::iterator it;
-	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
+	// Global inputs (assumes keyboard device is used)
+	if (key.device.get_name() == CL_Keyboard::get_device().get_name())
 	{
-		if (key.device.get_name() != it->device->get_name())
-			continue;
+		if (key.id == m_GlobalInputMap.menu)
+			m_GlobalInputData.menu = true;
+		if (key.id == m_GlobalInputMap.console)
+			m_GlobalInputData.console = true;
+	}
+	// Player inputs
+	if (m_Active)
+	{
+		//PlayerInputMapList::iterator it;
+		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 
-		if(key.id == it->thrust)
+		for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
 		{
-		    m_ShipInputData[i].thrust = true;
-		}
-		if(key.id == it->reverse)
-		{
-		    m_ShipInputData[i].reverse = true;
-		}
-		if(key.id == it->left)
-		{
-		    m_ShipInputData[i].left = true;
-		}
-		if(key.id == it->right)
-		{
-		    m_ShipInputData[i].right = true;
-		}
-		if(key.id == it->primary)
-		{
-		    m_ShipInputData[i].primary = true;
-		}
-		if(key.id == it->secondary)
-		{
-		    m_ShipInputData[i].secondary = true;
-		}
-		if(key.id == it->bomb)
-		{
-			m_ShipInputData[i].bomb = true;
+			if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
+				continue;
+
+			if(key.id == m_PlayerInputMaps[i].thrust)
+			{
+				m_ShipInputData[i].thrust = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].reverse)
+			{
+				m_ShipInputData[i].reverse = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].left)
+			{
+				m_ShipInputData[i].left = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].right)
+			{
+				m_ShipInputData[i].right = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].primary)
+			{
+				m_ShipInputData[i].primary = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].secondary)
+			{
+				m_ShipInputData[i].secondary = true;
+			}
+			if(key.id == m_PlayerInputMaps[i].bomb)
+			{
+				m_ShipInputData[i].bomb = true;
+			}
 		}
 	}
 }
 
 void FusionInput::onKeyUp(const CL_InputEvent &key)
 {
-	PlayerInputMapList::iterator it;
-	for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
+	// Global inputs (assumes keyboard device is used)
+	if (key.device.get_name() == CL_Keyboard::get_device().get_name())
 	{
-		if (key.device.get_name() != it->device.get_name())
-			continue;
+		if (key.id == m_GlobalInputMap.menu)
+			m_GlobalInputData.menu = false;
+		if (key.id == m_GlobalInputMap.console)
+			m_GlobalInputData.console = false;
+	}
 
-		if(key.id == it->thrust)
+	// Player inputs
+	if (m_Active)
+	{
+		//PlayerInputMapList::iterator it;
+		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
+		for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
 		{
-		    m_ShipInputData[i].thrust = false;
-		}
-		if(key.id == it->reverse)
-		{
-		    m_ShipInputData[i].reverse = false;
-		}
-		if(key.id == it->left)
-		{
-		    m_ShipInputData[i].left = false;
-		}
-		if(key.id == it->right)
-		{
-		    m_ShipInputData[i].right = false;
-		}
-		if(key.id == it->primary)
-		{
-		    m_ShipInputData[i].primary = false;
-		}
-		if(key.id == it->secondary)
-		{
-		    m_ShipInputData[i].secondary = false;
-		}
-		if(key.id == it->bomb)
-		{
-			m_ShipInputData[i].bomb = false;
+			if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
+				continue;
+
+			if(key.id == m_PlayerInputMaps[i].thrust)
+			{
+				m_ShipInputData[i].thrust = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].reverse)
+			{
+				m_ShipInputData[i].reverse = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].left)
+			{
+				m_ShipInputData[i].left = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].right)
+			{
+				m_ShipInputData[i].right = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].primary)
+			{
+				m_ShipInputData[i].primary = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].secondary)
+			{
+				m_ShipInputData[i].secondary = false;
+			}
+			if(key.id == m_PlayerInputMaps[i].bomb)
+			{
+				m_ShipInputData[i].bomb = false;
+			}
 		}
 	}
 }

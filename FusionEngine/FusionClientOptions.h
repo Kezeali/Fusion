@@ -27,7 +27,10 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
 #include "FusionInputMap.h"
+#include "FusionPlayerOptions.h"
 
 namespace FusionEngine
 {
@@ -44,11 +47,11 @@ namespace FusionEngine
 	public:
 		//! Maximum messages per second (how oftern to send / receive states)
 		unsigned int MaxMessageRate;
-		//! Sleep timer for network thread (for raknet)
-		unsigned int NetDelay;
+
 	};
 
 	/*!
+	 * \brief
 	 * Encapsulates client-side options.
 	 */
 	class ClientOptions
@@ -61,10 +64,16 @@ namespace FusionEngine
 		//! Number of local players
 		unsigned int NumPlayers;
 
-		typedef std::vector<PlayerInputMap> PlayerInputMapList;
+		//! General Player options list
+		typedef std::vector<PlayerOptions> PlayerOptionsList;
+		//! Player Input mappings list
+		typedef std::vector<PlayerInputMap> PlayerInputsList;
+
+		//! General player options (other than inputs)
+		PlayerOptionsList PlayerOptions;
 
 		//! Player input mappings
-		PlayerInputMapList PlayerInputs;
+		PlayerInputsList PlayerInputs;
 		//! Global input mappings
 		GlobalInputMap GlobalInputs;
 
@@ -75,6 +84,12 @@ namespace FusionEngine
 		void DefaultPlayerControls(PlayerInd player);
 		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
+
+		//! Saves the current options to a file
+		bool SaveToFile(const std::string &filename);
+		//! Loads a set of options from a file
+		bool LoadFromFile(const std::string &filename);
+
 	};
 
 }

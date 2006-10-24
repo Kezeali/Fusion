@@ -53,8 +53,11 @@ namespace Fusion
 		//! Init gui
 		bool Initialise();
 
+		//! Called when the Create button is clicked
 		void onCreateClicked();
+		//! Called when the Join button is clicked
 		void onJoinClicked();
+		//! Called when the Options button is clicked
 		void onOptsClicked();
 
 	};

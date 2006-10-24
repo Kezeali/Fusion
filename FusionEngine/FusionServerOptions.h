@@ -27,6 +27,8 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
 namespace FusionEngine
 {
 
@@ -37,6 +39,7 @@ namespace FusionEngine
 		//! Constructor
 		ServerOptions();
 
+	public:
 		//! Max connections
 		unsigned int MaxClients;
 		//! Maximum messages per second (how oftern to send states to a specific client)
@@ -45,6 +48,11 @@ namespace FusionEngine
 		unsigned int NetDelay;
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
 		int BitmaskResolution;
+
+		//! Saves the current options to a file
+		bool SaveToFile(const std::string &filename);
+		//! Loads a set of options from a file
+		bool LoadFromFile(const std::string &filename);
 
 	};
 

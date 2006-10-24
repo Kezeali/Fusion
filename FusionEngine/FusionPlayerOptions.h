@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_Fusion_FusionGUI_Options
-#define Header_Fusion_FusionGUI_Options
+#ifndef Header_FusionEngine_PlayerOptions
+#define Header_FusionEngine_PlayerOptions
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,28 +29,23 @@
 
 #include "FusionEngineCommon.h"
 
-#include "FusionGUI.h"
-
-namespace Fusion
+namespace FusionEngine
 {
 
-	//! Options gui
-	class FusionGUI_Options : public FusionGUI
+	/*!
+	 * \brief
+	 * Encapsulates per-player client-side options.
+	 *
+	 * Stores: <br>
+	 * Nothing ATM.
+	 * 
+	 * Doesn't store: <br>
+	 * - The ship type (ShipResource) (this is chosen after connecting to the server.) <br>
+	 * - Inputs (This is stored directly in the client options for ease of access.) <br>
+	 */
+	class PlayerOptions
 	{
 	public:
-		//! Basic constructor
-		FusionGUI_Options();
-		/*!
-		* Constructor.
-		*/
-		FusionGUI_Options(const std::string &scheme);
-
-	public:
-		//! Init the gui
-		bool Initialise();
-
-		//! Called when the Save button is clicked
-		void onSaveClicked();
 
 	};
 

@@ -24,27 +24,7 @@
                 <Property Name="Text" Value="Welcome to Fusion Beta" />
             </AutoWindow>
             <AutoWindow NameSuffix="__auto_closebutton__" />
-            <Window Type="BlueLook/Button" Name="StartClient" >
-                <Property Name="Text" Value="Join Server" />
-                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
-                <Property Name="UnifiedAreaRect" Value="{{0.682001,0},{0.241867,0},{0.936879,0},{0.361605,0}}" />
-            </Window>
-            <Window Type="BlueLook/Editbox" Name="ServerIP" >
-                <Property Name="Text" Value=" " />
-                <Property Name="MaxTextLength" Value="1073741823" />
-                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
-                <Property Name="UnifiedAreaRect" Value="{{0.068263,0},{0.243735,0},{0.464637,0},{0.356648,0}}" />
-            </Window>
-            <Window Type="BlueLook/Editbox" Name="ServerPort" >
-                <Property Name="MaxTextLength" Value="1073741823" />
-                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
-                <Property Name="UnifiedAreaRect" Value="{{0.485382,0},{0.242737,0},{0.666402,0},{0.357329,0}}" />
-            </Window>
-            <Window Type="BlueLook/Editbox" Name="ListenPort" >
-                <Property Name="MaxTextLength" Value="1073741823" />
-                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
-                <Property Name="UnifiedAreaRect" Value="{{0.0939046,0},{0.603541,0},{0.270614,0},{0.710869,0}}" />
-            </Window>
+
             <Window Type="BlueLook/StaticText" Name="Tag_Hostname" >
                 <Property Name="Text" Value="Server Hostname or IP" />
                 <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
@@ -75,7 +55,26 @@
                     <AutoWindow NameSuffix="__auto_thumb__" />
                 </AutoWindow>
             </Window>
-            <Window Type="BlueLook/StaticText" Name="Listen Port" >
+
+            <Window Type="BlueLook/Editbox" Name="ServerIP" >
+                <Property Name="MaxTextLength" Value="1073741823" />
+                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
+                <Property Name="UnifiedAreaRect" Value="{{0.068263,0},{0.243735,0},{0.464637,0},{0.356648,0}}" />
+            </Window>
+            <Window Type="BlueLook/Editbox" Name="ServerPort" >
+                <Property Name="MaxTextLength" Value="1073741823" />
+                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
+                <Property Name="UnifiedAreaRect" Value="{{0.485382,0},{0.242737,0},{0.666402,0},{0.357329,0}}" />
+            </Window>
+            
+            <Window Type="BlueLook/Button" Name="StartClient" >
+                <Property Name="Text" Value="Join Server" />
+                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
+                <Property Name="UnifiedAreaRect" Value="{{0.682001,0},{0.241867,0},{0.936879,0},{0.361605,0}}" />
+            </Window>
+            
+            
+            <Window Type="BlueLook/StaticText" Name="Tag_ListenPort" >
                 <Property Name="Text" Value="Listen on port:" />
                 <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
                 <Property Name="UnifiedAreaRect" Value="{{0.0628838,0},{0.499008,0},{0.295639,0},{0.61347,0}}" />
@@ -90,6 +89,13 @@
                     <AutoWindow NameSuffix="__auto_thumb__" />
                 </AutoWindow>
             </Window>
+
+            <Window Type="BlueLook/Editbox" Name="ListenPort" >
+                <Property Name="MaxTextLength" Value="1073741823" />
+                <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
+                <Property Name="UnifiedAreaRect" Value="{{0.0939046,0},{0.603541,0},{0.270614,0},{0.710869,0}}" />
+            </Window>
+
             <Window Type="BlueLook/Button" Name="StartServer" >
                 <Property Name="Text" Value="Start Server" />
                 <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />

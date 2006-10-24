@@ -5,14 +5,17 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
 namespace FusionEngine
 {
 
-	//! Possable input devices.
+	/* Possable input devices.
 	struct InputDevType
 	{
 		enum { Keyboard = 0, Gamepad = 1, Mouse = 2};
 	};
+	*/
 
 	/*!
 	 * \brief
@@ -21,11 +24,10 @@ namespace FusionEngine
 	class PlayerInputMap
 	{
 	public:
-		PlayerInputMap()
-			: type(InputDevType::Keyboard),
-			index(0)
-		{
-		}
+		//! Constructor
+		PlayerInputMap() {}
+
+	public:
 
 		int thrust;
 		int reverse;
@@ -35,11 +37,8 @@ namespace FusionEngine
 		int secondary;
 		int bomb;
 
-		//! The device these inputs should be taken from.
-		unsigned int type;
-		//! The index of the device these inputs should be taken from.
-		int index;
-		CL_InputDevice *device;
+		//! The device from which these inputs should be taken.
+		CL_InputDevice device;
 	};
 
 	/*!
@@ -48,13 +47,19 @@ namespace FusionEngine
 	 *
 	 * \remarks
 	 * Note that this class has no 'type' (device) attribute because global inputs are
-	 * allways from the keyboard.
+	 * always from the keyboard.
 	 */
 	class GlobalInputMap
 	{
 	public:
+		//! Open menu
 		int menu;
+		//! Bring up console
 		int console;
+
+		//! [depreciated] Input manager assumes KB for simplicity's sake. 
+		//! The device from which these inputs should be taken.
+		CL_InputDevice device;
 	};
 
 }
