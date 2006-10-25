@@ -52,6 +52,12 @@ namespace FusionEngine
 		*/
 		GUI(CEGUI::Renderer *renderer);
 
+	protected:
+		//! The default scheme file to load
+		static const std::string DefaultScheme;
+		//! The default layout file to load
+		static const std::string DefaultLayout;
+
 	public:
 		//! Inits the gui
 		virtual bool Initialise();
@@ -66,12 +72,15 @@ namespace FusionEngine
 		virtual void CleanUp();
 
 	protected:
+		//! Name of the config file for the skin
+		std::string m_CurrentScheme;
 		//! Name of the config file for the current gui page
-		std::string m_CurrentGUI;
+		std::string m_CurrentLayout;
 
 		//! Holds events
 		CL_SlotContainer m_Slots;
 
+	public:
 		//! Tells CEGUI when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &key);
 		//! Tells CEGUI when a mouse button is released

@@ -7,14 +7,12 @@
 
 using namespace FusionEngine;
 
-GUI::GUI()
-{
-	CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
-	new CEGUI::System(renderer);
-}
+const std::string GUI::DefaultScheme = "BlueLook";
+const std::string GUI::DefaultLayout = "MainMenu";
 
-GUI::GUI(const std::string &gui)
-: m_CurrentGUI(gui)
+GUI::GUI()
+: m_CurrentScheme(DefaultScheme),
+m_CurrentLayout(DefaultLayout)
 {
 	CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
 	new CEGUI::System(renderer);
@@ -22,7 +20,6 @@ GUI::GUI(const std::string &gui)
 
 bool GUI::Initialise()
 {
-	CEGUI::SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
 	// Mouse Events
 	m_Slots.connect(CL_Mouse::sig_key_down(), this, &GUI::onMouseDown);
 	m_Slots.connect(CL_Mouse::sig_key_up(), this, &GUI::onMouseUp);

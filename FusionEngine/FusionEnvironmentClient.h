@@ -44,7 +44,7 @@
 #include "FusionInputHandler.h"
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
-#include "FusionErrorTypes.h"
+#include "FusionError.h"
 
 namespace FusionEngine
 {
@@ -88,35 +88,22 @@ namespace FusionEngine
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		ShipResource *GetShipResourceByID(const std::string &id);
 
-		//! Leaves the client environment cleanly.
-		/*!
-		 * \param message The explaination to give to the user
-		 */
-		void _quit(ErrorType type);
-
 	private:
-		//! If this is set to true, the update command will return false next time it runs
-		//!  (thus quitting the gameplay.)
-		bool m_Quit;
+		//! Options
+		ClientOptions *m_Options;
+		//! High level input manager
+		FusionInput *m_InputManager;
+		//! NetMan
+		FusionNetworkClient *m_NetworkManager;
 
+		//! Player ID of the current player
+		PlayerInd m_PlayerID;
 		//! Number of players in the env
 		unsigned int m_NumPlayers;
 
-		/*!
-		 * \brief
-		 * Updates the scene graph. ie. tells all ships to call UpdateNode();
-		 * so they draw in the right place.
-		 *
-		 * \remarks
-		 * This is now depreciated, as FusionClientShip#SetPosition does this.
-		 * BTW, set position and set accel. / force should remain seperate
-		 * as you might only have a few of them changing sometimes (efficiancy.)
-		 */
-		//void updateSceneGraph();
+		//! Updates the input structures of all local ships.
+		void gatherLocalInput();
 
-		// Deprecated - level and ships are now nodes so the scene draws them.
-		/*void drawLevel();
-		void drawShip(FusionShip ship);*/
 	};
 
 }

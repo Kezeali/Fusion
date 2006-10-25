@@ -47,7 +47,7 @@ namespace Fusion
 		//! Destructor
 		virtual ~FusionGUI();
 
-	public:
+	protected:
 		//! The default scheme file to load
 		static const std::string DefaultScheme;
 		//! The default layout file to load

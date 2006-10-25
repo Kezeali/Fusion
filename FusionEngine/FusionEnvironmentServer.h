@@ -32,6 +32,8 @@
 /// STL
 
 /// Fusion
+#include "FusionEnvironmentGeneric.h"
+
 #include "FusionServerOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
@@ -42,7 +44,7 @@
 #include "FusionInputHandler.h"
 #include "FusionNetworkServer.h"
 #include "FusionPhysicsWorld.h"
-#include "FusionErrorTypes.h"
+#include "FusionError.h"
 
 namespace FusionEngine
 {
@@ -66,19 +68,6 @@ namespace FusionEngine
 		ServerEnvironment(const std::string &port, ServerOptions *options);
 
 	public:
-		//! A list of ships
-		typedef std::vector<FusionClientShip*> ShipList;
-		//! A list of projectiles
-		typedef std::vector<FusionProjectile*> ProjectileList;
-		//! A list of resources
-		typedef std::map<std::string, ShipResource*> ShipResourceMap;
-
-		//! A list of inputs
-		typedef std::vector<ShipInput> ShipInputList;
-
-		//! What the hell is this? I don't remember adding this :P Bah, messy
-		int numPlayers;
-
 		//! Init
 		bool Initialise(ResourceLoader *resources);
 
@@ -98,14 +87,8 @@ namespace FusionEngine
 		void Draw();
 
 	private:
-		//! Phys
-		FusionPhysicsWorld *m_PhysicsWorld;
-		//! Scene
-		FusionScene *m_Scene;
 		//! Options
 		ServerOptions *m_Options;
-		//! InputManager
-		FusionInput *m_InputManager;
 		//! NetMan
 		FusionNetworkServer *m_NetworkManager;
 
@@ -118,25 +101,6 @@ namespace FusionEngine
 		ShipResourceMap m_ShipResources;
 
 		/*!
-		 * Updates the state structures of all ships.
-		 *
-		 * This is a method called by Update,
-     * it takes the data received from the
-     * clients (or for the ClientEnv version,
-     * it takes the data from the keyboard)
-     * and puts it into FusionShip.shipstate .
-		 *
-		 * REMEMBER, this method simply takes data received by FusionImput
-		 * and FusionNetwork and inserts it into the correct state objects for
-		 * each ship; updateAllPositions does all the real work!
-		 *
-		 * \remarks
-		 * MCS - don't ask me why this description is so different to the
-		 * ClientEnvironment one :P it was C&P'ed from an IM convo between me
-		 * and Bruski...
-		 */
-		void updateShipStates();
-		/*!
 		 * \brief
 		 * Updates the positions of all syncronised objects.
 		 *
@@ -145,6 +109,11 @@ namespace FusionEngine
      * that handles drawing, it's seperate
      * form the rest of the ship 'cause that
      * makes it more generic.)
+		 *
+		 * \remarks
+		 * MCS - don't ask me why this description is so different to the
+		 * ClientEnvironment one :P it was C&P'ed from an IM convo between me
+		 * and Bruski...
 		 */
 		void updateAllPositions(unsigned int split);
 	};

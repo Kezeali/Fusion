@@ -10,9 +10,10 @@
 //! \todo Replace Boost crc use with RakNet CRC
 //#include <boost/crc.hpp>
 
+/// Fusion
 #include "FusionShipResource.h"
-
 #include "FileVerifier.h"
+#include "FusionArchive.h"
 
 namespace FusionEngine
 {

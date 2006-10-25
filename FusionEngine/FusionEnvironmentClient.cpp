@@ -1,6 +1,8 @@
 
 #include "FusionEnvironmentClient.h"
 
+#include "FusionEngineGUI_Options.h"
+
 using namespace FusionEngine;
 
 ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options)
@@ -96,16 +98,13 @@ ShipResource *ClientEnvironment::GetShipResourceByID(const std::string &id)
 	return m_ShipResources[id];
 }
 
-void ClientEnvironment::_quit(ErrorType type)
-{
-	m_Quit = true;
-	// TODO: Call a method to set the LastError property here
-	//  (so FusionGame can read the property, and display
-	//  an error message for the user.)
-}
-
 void ClientEnvironment::send()
 {
+	FusionMessage *m = FusionMessageBuilder::BuildMessage((*it)->m_CurrentState, m_PlayerID);
+	m_NetworkManager->QueueMessage(m, CID_GAME);
+
+	//! \todo chat
+	//m_NetworkManager->QueueMessage(m, CID_CHAT);
 }
 
 bool ClientEnvironment::receive()
@@ -119,8 +118,7 @@ bool ClientEnvironment::receive()
 		switch (type)
 		{
 		case ID_REMOTE_CONNECTION_LOST:
-			// Perhaps we should show a connection lost message here?
-			_quit(UNEXPECTEDDISCONNECT);
+			_quit(new Error(Error::UNEXPECTEDDISCONNECT, "Remote Connection Lost"));
 			break;
 		}
 
@@ -147,80 +145,6 @@ bool ClientEnvironment::receive()
 	return true;
 }
 
-void ClientEnvironment::installShipFrameFromMessage(FusionMessage *m)
-{
-	ShipState state;
-
-	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
-
-	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-	bs.Read(state.PID);
-
-	bs.Read(state.Position.x);
-	bs.Read(state.Position.y);
-
-	bs.Read(state.Velocity.x);
-	bs.Read(state.Velocity.y);
-
-	bs.Read(state.Rotation);
-	bs.Read(state.RotationalVelocity);
-
-	bs.Read(state.health);
-
-	bs.Read(state.current_primary);
-	bs.Read(state.current_secondary);
-	bs.Read(state.current_bomb);
-
-	bs.Read(state.engines);
-	bs.Read(state.weapons);
-
-	m_Ships[state.PID]->SetShipState(state);
-}
-
-void ClientEnvironment::installShipInputFromMessage(FusionMessage *m)
-{
-	ShipInput state;
-
-	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
-
-	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-	bs.Read(state.pid);
-
-	bs.Read(state.thrust);
-	bs.Read(state.reverse);
-	bs.Read(state.left);
-	bs.Read(state.right);
-
-	bs.Read(state.primary);
-	bs.Read(state.secondary);
-	bs.Read(state.bomb);
-
-	m_Ships[state.pid]->SetInputState(state);
-}
-
-void ClientEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
-{
-	ProjectileState state;
-
-	RakNet::BitStream bs(m->Read(), m->GetLength(), false);
-
-	// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
-	bs.Read(state.PID);
-
-	bs.Read(state.OID);
-
-	bs.Read(state.Position.x);
-	bs.Read(state.Position.y);
-
-	bs.Read(state.Velocity.x);
-	bs.Read(state.Velocity.y);
-
-	bs.Read(state.Rotation);
-	bs.Read(state.RotationalVelocity);
-
-	m_Projectiles[state.OID]->SetState(state);
-}
-
 void ClientEnvironment::gatherLocalInput()
 {
 	ShipInputList ship_input = m_InputManager->GetAllShipInputs();
@@ -230,52 +154,3 @@ void ClientEnvironment::gatherLocalInput()
 		m_Ships[i]->SetInputState(ship_input[i]);
 	}
 }
-
-void ClientEnvironment::updateShipStates()
-{
-}
-
-void ClientEnvironment::updateAllPositions(unsigned int split)
-{
-	m_PhysicsWorld->RunSimulation(split);
-}
-
-//void ClientEnvironment::updateSceneGraph()
-//{
-//}
-
-// IGNORE THE FOLLOWING CODE, the scene now draws everthing!
-//
-//void ClientEnvironment::drawLevel()
-//{
-//}
-
-//void ClientEnvironment::drawShip(FusionShip ship)
-//{
-
-//
-//	ShipResource *res = m_ShipResources[ship.ResourceID];
-//	Node
-//
-//	res->images.Body.GetImage()->draw(
-//		positions.Body.x,
-//		positions.Body.y);
-//
-//	res->images.LeftEngine->draw(
-//		positions.LeftEngine.x,
-//		positions.LeftEngine.y);
-//
-//	res->images.RightEngine->draw(
-//		positions.RightEngine.x,
-//		positions.RightEngine.y);
-//
-//	res->images.PrimaryWeapon->draw(
-//		positions.PrimaryWeapon.x,
-//		positions.PrimaryWeapon.y);
-//
-//	res->images.SecondaryWeapon->draw(
-//		positions.SecondaryWeapon.x,
-//		positions.SecondaryWeapon.y);
-//
-//    ;
-//}

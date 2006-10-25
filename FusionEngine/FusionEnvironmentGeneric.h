@@ -40,7 +40,7 @@
 #include "FusionShipResource.h"
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
-#include "FusionErrorTypes.h"
+#include "FusionError.h"
 
 namespace FusionEngine
 {
@@ -68,25 +68,25 @@ namespace FusionEngine
 
 	public:
 		//! Pulls the resources from the ResourceLoader
-		bool Initialise(ResourceLoader *resources);
+		virtual bool Initialise(ResourceLoader *resources);
 
 		/*!
 		 * \brief
 		 * Runs the statemanager.
 		 */
-		bool Update(unsigned int split);
+		virtual bool Update(unsigned int split);
 
 		//! Draws stuff
-		void Draw();
+		virtual void Draw();
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
-		ShipResource *GetShipResourceByID(const std::string &id);
+		virtual ShipResource *GetShipResourceByID(const std::string &id);
 
-		//! Leaves the client environment cleanly.
+		//! Leaves the environment cleanly.
 		/*!
-		 * \param message The explaination to give to the user
+		 * \param e The explaination to give to the user
 		 */
-		void _quit(ErrorType type);
+		virtual void _quit(Error *e);
 
 	protected:
 		//! If this is set to true, the update command will return false next time it runs
@@ -98,10 +98,6 @@ namespace FusionEngine
 
 		//! SceneGraph
 		FusionScene *m_Scene;
-		//! Options (controlls, etc.)
-		ClientOptions *m_Options;
-		//! High level input manager
-		FusionInput *m_InputManager;
 		//! High level network manager
 		FusionNetworkClient *m_NetworkManager;
 		//! High level physics manager
@@ -136,27 +132,28 @@ namespace FusionEngine
 		 * "Sending" can be done here (ofcourse, FusionNetwork will have done the real
 		 * receiving, this just handles the data from it.)
 		 */
-		void send();
+		virtual void send() = 0;
 		//! Receive all packets
-		bool receive();
+		virtual bool receive() = 0;
 
 		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship
 		//! \todo Maybe this should be in a helper class? meh, I think that will
 		//! overcomplicate things, especially as my current goal is "just make it compile"!
-		void installShipFrameFromMessage(FusionMessage *m);
+		virtual void installShipFrameFromMessage(FusionMessage *m);
 		//! Extracts the InputState, and puts it into the relavant ship.
-		void installShipInputFromMessage(FusionMessage *m);
+		virtual void installShipInputFromMessage(FusionMessage *m);
 
 		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
-		void installProjectileFrameFromMessage(FusionMessage *m);
+		virtual void installProjectileFrameFromMessage(FusionMessage *m);
 
 		//! Updates the input structures of all local ships.
-		void gatherLocalInput();
+		virtual void gatherLocalInput() = 0;
+
 		/*!
 		 * [depreciated] by installShipFrameFromMessage()
 		 * Updates the state structures of local and remote ships.
 		 */
-		void updateShipStates();
+		virtual void updateShipStates() = 0;
 		/*!
 		 * \brief
 		 * Updates the positions of all syncronised objects.
@@ -164,7 +161,19 @@ namespace FusionEngine
 		 * FusionPhysics methods should be called here.
 		 * Provides predictive movement based on current velocity etc.
 		 */
-		void updateAllPositions(unsigned int split);
+		virtual void updateAllPositions(unsigned int split);
+		/*!
+		 * \brief
+		 * Updates the scene graph. ie. tells all ships to call UpdateNode();
+		 * so they draw in the right place.
+		 *
+		 * \remarks
+		 * This is now depreciated, as FusionClientShip#SetPosition does this.
+		 * BTW, set position and set accel. / force should remain seperate
+		 * as you might only have a few of them changing sometimes (efficiancy.)
+		 */
+		//void updateSceneGraph();
+
 	};
 
 }

@@ -219,6 +219,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEngineGUI_Options.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironmentClient.h"
 				>
 			</File>
@@ -581,7 +585,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEngineGUI_Options.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironmentClient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEnvironmentGeneric.cpp"
 				>
 			</File>
 			<File

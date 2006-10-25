@@ -13,8 +13,8 @@
 
 using namespace Fusion;
 
-FusionGUI_MainMenu::DefaultScheme = "BlueLook";
-FusionGUI_MainMenu::DefaultLayout = "MainMenu";
+std::string FusionGUI_MainMenu::DefaultScheme = "BlueLook";
+std::string FusionGUI_MainMenu::DefaultLayout = "MainMenu";
 
 FusionGUI_MainMenu::FusionGUI_MainMenu()
 : m_CurrentScheme(DefaultScheme),
@@ -31,20 +31,12 @@ bool FusionGUI_MainMenu::Initialise()
 {
 	using namespace CEGUI;
 
-	SchemeManager::getSingleton().loadScheme(m_CurrentGUI);
+	SchemeManager::getSingleton().loadScheme(m_CurrentScheme);
 
 	WindowManager& winMgr = WindowManager::getSingleton();
 	winMgr.loadWindowLayout(m_CurrentLayout);
 
 	ImagesetManager::getSingleton().createImagesetFromImageFile("LogoImage", "FusionLogo.png");
-
-	// Mouse Events
-	m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionGUI::onMouseDown);
-	m_Slots.connect(CL_Mouse::sig_key_up(), this, &FusionGUI::onMouseUp);
-	m_Slots.connect(CL_Mouse::sig_move(), this, &FusionGUI::onMouseMove);
-	// KBD events
-	m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionGUI::onKeyDown);
-	m_Slots.connect(CL_Keyboard::sig_key_up(), this, &FusionGUI::onKeyUp);
 
 	// 'Logo' static image
 	winMgr.getWindow("MainMenu/FusionLogo")->setProperty(
@@ -79,7 +71,8 @@ bool FusionGUI_MainMenu::Initialise()
 	Editbox* ip_box = static_cast<Editbox*>(winMgr.getWindow("MainMenu/ListenPort"));
 	ip_box->setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
 
-	return true;
+	// Call base function (to init KB/Mouse handling)
+	return FusionGUI::Initialise();
 }
 
 void FusionGUI_MainMenu::onCreateClicked()
