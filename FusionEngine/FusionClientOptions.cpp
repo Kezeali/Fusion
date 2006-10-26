@@ -81,3 +81,8 @@ void ClientOptions::DefaultGlobalControls()
 	GlobalInputs.menu = CL_KEY_ESCAPE;
 	GlobalInputs.console = '`';
 }
+
+bool ClientOptions::SaveToFile(const std::string &filename)
+{
+    CL_DomDocument doc;
+}

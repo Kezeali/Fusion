@@ -33,9 +33,11 @@ int FusionDemo::main(int argc, char **argv)
 
 		// Initialise options
 		m_ClientOpts = new ClientOptions();
+		m_ClientOpts->LoadFromFile("clientcfg.xml");
 		m_ServerOpts = new ServerOptions();
+		m_ServerOpts->LoadFromFile("servercfg.xml");
 
-		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu();
+		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu(m_ClientOpts);
 		mainmenu->Initialise();
 
 		unsigned int lastTime = CL_System::get_time();

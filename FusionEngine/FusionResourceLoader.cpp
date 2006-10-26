@@ -105,7 +105,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 	if (!arc->Decompress())
 		return res;
 
-	// Load the xml definition file from the package
+	// Initialise the xml document obj
 	CL_DomDocument doc;
 
 	// See if the def file extracted
@@ -113,6 +113,7 @@ ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
 	if (def_file.empty())
 		return res;
 
+    // Load the xml definition file from the package
 	doc.load(new CL_InputSource_File(def_file), true, true);
 
 	if (!verifyShipDocument(&doc))
