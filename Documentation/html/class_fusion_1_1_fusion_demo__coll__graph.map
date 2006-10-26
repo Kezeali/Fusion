@@ -1,8 +1,0 @@
-base referer
-rect $class_fusion_1_1_fusion_g_u_i___main_menu.html 7,97 210,124
-rect $class_fusion_1_1_fusion_g_u_i.html 151,7 284,33
-rect $class_fusion_1_1_fusion_g_u_i___options.html 234,97 420,124
-rect $class_fusion_engine_1_1_server_options.html 444,97 642,124
-rect $class_fusion_engine_1_1_client_options.html 666,97 858,124
-rect $class_fusion_engine_1_1_global_input_map.html 543,7 748,33
-rect $class_fusion_engine_1_1_network_settings.html 772,7 980,33
