@@ -17,14 +17,15 @@ std::string FusionGUI_MainMenu::DefaultScheme = "BlueLook";
 std::string FusionGUI_MainMenu::DefaultLayout = "MainMenu";
 
 FusionGUI_MainMenu::FusionGUI_MainMenu()
-: m_CurrentScheme(DefaultScheme),
-m_CurrentLayout(DefaultLayout)
 {
+    m_CurrentScheme = DefaultScheme;
+	m_CurrentLayout = "MainMenu";
 }
 
 FusionGUI_MainMenu::FusionGUI_MainMenu(const std::string &scheme)
-: m_CurrentGUI(scheme)
 {
+    m_CurrentScheme = DefaultScheme;
+	m_CurrentLayout = "OptionsMenu";
 }
 
 bool FusionGUI_MainMenu::Initialise()
@@ -77,8 +78,11 @@ bool FusionGUI_MainMenu::Initialise()
 
 void FusionGUI_MainMenu::onCreateClicked()
 {
-	FusionEngine::FusionGame *game = new FusionEngine::FusionGame();
-	game->RunServer();
+    using namespace CEGUI;
+
+    std::string port = WindowManager::getSingleton().getWindow("MainMenu/ListenPort")->getText();
+
+	FusionEngine::FusionGame::RunServer(port, new ServerOptions());
 }
 
 void FusionGUI_MainMenu::onJoinClicked()

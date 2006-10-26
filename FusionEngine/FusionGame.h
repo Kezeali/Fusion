@@ -41,14 +41,10 @@ namespace FusionEngine
 	class FusionGame
 	{
 	public:
-		//! Basic Constructor
-		FusionGame();
-
-	public:
-		//! Starts the game as a client
-		void RunClient(const std::string &hostname, const std::string &port, ClientOptions *options);
+        //! Starts the game as a client
+		static void RunClient(const std::string &hostname, const std::string &port, ClientOptions *options);
 		//! Starts the server (dedicated)
-		void RunServer(const std::string &port, ServerOptions *options);
+		static void RunServer(const std::string &port, ServerOptions *options);
 
 	};
 

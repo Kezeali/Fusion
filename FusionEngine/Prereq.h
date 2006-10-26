@@ -1,3 +1,8 @@
+/*!
+ * \file Prereq.h
+ * [depreciated]
+ */
+
 #ifndef Header_FusionPrereq
 #define Header_FusionPrereq
 
