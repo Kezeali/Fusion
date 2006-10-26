@@ -13,18 +13,17 @@
 
 using namespace Fusion;
 
-std::string FusionGUI_MainMenu::DefaultScheme = "BlueLook";
-std::string FusionGUI_MainMenu::DefaultLayout = "MainMenu";
-
 FusionGUI_MainMenu::FusionGUI_MainMenu()
 {
     m_CurrentScheme = DefaultScheme;
 	m_CurrentLayout = "MainMenu";
 }
 
-FusionGUI_MainMenu::FusionGUI_MainMenu(const std::string &scheme)
+FusionGUI_MainMenu::FusionGUI_MainMenu(FusionEngine::ClientOptions *clientopts, FusionEngine::ServerOptions* serveropts)
+: m_ClientOpts(clientopts),
+m_ServerOpts(serveropts)
 {
-    m_CurrentScheme = DefaultScheme;
+	m_CurrentScheme = DefaultScheme;
 	m_CurrentLayout = "OptionsMenu";
 }
 
@@ -44,8 +43,7 @@ bool FusionGUI_MainMenu::Initialise()
 		"Image", "set:LogoImage image:full_image");
 
 	// 'Create Game' button
-	static_cast<PushButton *> (
-		winMgr.getWindow("MainMenu/StartServer"))->subscribeEvent(
+	winMgr.getWindow("MainMenu/StartServer")->subscribeEvent(
 		PushButton::EventClicked,
 		Event::Subscriber(&FusionGUI_MainMenu::onCreateClicked, this));
 
@@ -65,32 +63,41 @@ bool FusionGUI_MainMenu::Initialise()
 	//  Nothing to do
 
 	// 'ServerPort' editbox
-	Editbox* ip_box = static_cast<Editbox*>(winMgr.getWindow("MainMenu/ServerPort"));
-	ip_box->setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
+	static_cast<Editbox*>(winMgr.getWindow("MainMenu/ServerPort"))->
+		setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
 
 	// 'ListenPort' editbox
-	Editbox* ip_box = static_cast<Editbox*>(winMgr.getWindow("MainMenu/ListenPort"));
-	ip_box->setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
+	static_cast<Editbox*>(winMgr.getWindow("MainMenu/ListenPort"))->
+		setValidationString("\\d{0,5}"); // Only allow numbers, up to 5 chars
 
 	// Call base function (to init KB/Mouse handling)
 	return FusionGUI::Initialise();
 }
 
-void FusionGUI_MainMenu::onCreateClicked()
+bool FusionGUI_MainMenu::onCreateClicked(const CEGUI::EventArgs& e)
 {
-    using namespace CEGUI;
+	using namespace CEGUI;
+	std::string port = WindowManager::getSingleton().getWindow("MainMenu/ListenPort")->getText().c_str();
 
-    std::string port = WindowManager::getSingleton().getWindow("MainMenu/ListenPort")->getText();
+	FusionEngine::FusionGame::RunServer(port, m_ServerOpts);
 
-	FusionEngine::FusionGame::RunServer(port, new ServerOptions());
+	// Cegui like to know when events were handled successfully.
+	return true;
 }
 
-void FusionGUI_MainMenu::onJoinClicked()
+bool FusionGUI_MainMenu::onJoinClicked(const CEGUI::EventArgs& e)
 {
-	FusionEngine::FusionGame *game = new FusionEngine::FusionGame();
-	game->RunClient();
+	using namespace CEGUI;
+	std::string hostname = WindowManager::getSingleton().getWindow("MainMenu/ServerIP")->getText().c_str();
+	std::string port = WindowManager::getSingleton().getWindow("MainMenu/ServerPort")->getText().c_str();
+
+	FusionEngine::FusionGame::RunClient(hostname, port, m_ClientOpts);
+
+	return true;
 }
 
-void FusionGUI_MainMenu::onOptsClicked()
+bool FusionGUI_MainMenu::onOptsClicked(const CEGUI::EventArgs& e)
 {
+	//FusionGUI_Options *opts = new FusionGUI_Options();
+	return true;
 }

@@ -16,6 +16,13 @@ FusionGUI_Options::FusionGUI_Options()
 	m_CurrentLayout = "OptionsMenu";
 }
 
+FusionGUI_Options::FusionGUI_Options(FusionEngine::ClientOptions *clientopts)
+: m_ClientOpts(clientopts)
+{
+	m_CurrentScheme = DefaultScheme;
+	m_CurrentLayout = "OptionsMenu";
+}
+
 bool FusionGUI_Options::Initialise()
 {
 	using namespace CEGUI;
@@ -35,6 +42,9 @@ bool FusionGUI_Options::Initialise()
 	return FusionGUI::Initialise();
 }
 
-void FusionGUI_Options::onSaveClicked()
+bool FusionGUI_Options::onSaveClicked(const CEGUI::EventArgs& e)
 {
+	m_ClientOpts->Save();
+
+	return true;
 }

@@ -49,10 +49,16 @@ namespace FusionEngine
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
 		int BitmaskResolution;
 
+		//! Saves to the most recently loaded file.
+		bool Save();
 		//! Saves the current options to a file
 		bool SaveToFile(const std::string &filename);
 		//! Loads a set of options from a file
 		bool LoadFromFile(const std::string &filename);
+
+	protected:
+		//! Last opened options file
+		std::string m_Filename;
 
 	};
 

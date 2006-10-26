@@ -27,9 +27,13 @@
 #pragma once
 #endif
 
+#include "FusionEngineCommon.h"
+
 /// Fusion
 #include "FusionClientOptions.h"
 #include "FusionServerOptions.h"
+#include "FusionGUI_MainMenu.h"
+#include "FusionGUI_Options.h"
 
 #include "FusionGame.h"
 
@@ -45,15 +49,13 @@ namespace Fusion
 	 * (read - might) be a shared library (for ease of updating), so a seperate
 	 * frontend will need to be created.
 	 */
-	class FusionDemo : public CL_Application
+	class FusionDemo : public CL_ClanApplication
 	{
 	public:
 		FusionEngine::ClientOptions *m_ClientOpts;
 		FusionEngine::ServerOptions *m_ServerOpts;
 
 	private:
-		CL_GUIManager *m_GuiManager;
-		CL_Deck *m_GuiDeck;
 		FusionGUI_MainMenu *m_GuiMenu;
 		FusionGUI_Options *m_GuiOptions;
 

@@ -29,7 +29,11 @@
 
 #include "FusionEngineCommon.h"
 
+/// Fusion
 #include "FusionGUI.h"
+
+#include "FusionClientOptions.h"
+#include "FusionServerOptions.h"
 
 namespace Fusion
 {
@@ -47,18 +51,24 @@ namespace Fusion
 		* \brief
 		* Constructor.
 		*/
-		FusionGUI_MainMenu(const std::string &scheme);
+		FusionGUI_MainMenu(FusionEngine::ClientOptions *clientopts, FusionEngine::ServerOptions *serveropts);
 
 	public:
 		//! Init gui
 		bool Initialise();
 
 		//! Called when the Create button is clicked
-		void onCreateClicked();
+		bool onCreateClicked(const CEGUI::EventArgs& e);
 		//! Called when the Join button is clicked
-		void onJoinClicked();
+		bool onJoinClicked(const CEGUI::EventArgs& e);
 		//! Called when the Options button is clicked
-		void onOptsClicked();
+		bool onOptsClicked(const CEGUI::EventArgs& e);
+
+	protected:
+		//! Options to send to the game
+		FusionEngine::ClientOptions *m_ClientOpts;
+		//! Options to send to the game
+		FusionEngine::ServerOptions *m_ServerOpts;
 
 	};
 

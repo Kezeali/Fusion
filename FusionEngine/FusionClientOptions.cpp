@@ -82,7 +82,18 @@ void ClientOptions::DefaultGlobalControls()
 	GlobalInputs.console = '`';
 }
 
+bool ClientOptions::Save()
+{
+	return true;
+}
+
 bool ClientOptions::SaveToFile(const std::string &filename)
 {
     CL_DomDocument doc;
+		return true;
+}
+
+bool ClientOptions::LoadFromFile(const std::string &filename)
+{
+	return true;
 }

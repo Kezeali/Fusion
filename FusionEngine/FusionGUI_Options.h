@@ -29,7 +29,10 @@
 
 #include "FusionEngineCommon.h"
 
+/// Fusion
 #include "FusionGUI.h"
+
+#include "FusionClientOptions.h"
 
 namespace Fusion
 {
@@ -40,17 +43,19 @@ namespace Fusion
 	public:
 		//! Basic constructor
 		FusionGUI_Options();
-		/*!
-		* Constructor.
-		*/
-		FusionGUI_Options(const std::string &scheme);
+		//! Constructor
+		FusionGUI_Options(FusionEngine::ClientOptions *clientopts);
 
 	public:
 		//! Init the gui
 		bool Initialise();
 
 		//! Called when the Save button is clicked
-		void onSaveClicked();
+		bool onSaveClicked(const CEGUI::EventArgs& e);
+
+	protected:
+		//! The options to edit / save to
+		FusionEngine::ClientOptions *m_ClientOpts;
 
 	};
 

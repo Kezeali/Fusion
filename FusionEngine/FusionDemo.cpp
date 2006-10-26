@@ -1,23 +1,15 @@
 
-#include "FusionEngineCommon.h"
-
-/// STL
+#include "FusionDemo.h"
 
 /// Fusion
-#include "FusionClientOptions.h"
-#include "FusionServerOptions.h"
-#include "FusionGUI_MainMenu.h"
-#include "FusionGUI_Options.h"
-
-/// Class
-#include "FusionDemo.h"
 
 using namespace FusionEngine;
 
-namespace Fusion
-{
 // Create a global instance.
 Fusion::FusionDemo app;
+
+namespace Fusion
+{
 
 int FusionDemo::main(int argc, char **argv)
 {
@@ -37,19 +29,19 @@ int FusionDemo::main(int argc, char **argv)
 		m_ServerOpts = new ServerOptions();
 		m_ServerOpts->LoadFromFile("servercfg.xml");
 
-		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu(m_ClientOpts);
+		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu(m_ClientOpts, m_ServerOpts);
 		mainmenu->Initialise();
 
 		unsigned int lastTime = CL_System::get_time();
-        unsigned int split = 0;
+		unsigned int split = 0;
 
 		while (!m_Quit)
 		{
-		    split = CL_System::get_time() - lastTime;
-            lastTime = CL_System::get_time();
+			split = CL_System::get_time() - lastTime;
+			lastTime = CL_System::get_time();
 
-		    mainmenu->Update(split);
-		    mainmenu->Draw();
+			mainmenu->Update(split);
+			mainmenu->Draw();
 
 			CL_Display::flip();
 			CL_System::keep_alive();
@@ -64,20 +56,6 @@ int FusionDemo::main(int argc, char **argv)
 	}
 
 	return 0;
-}
-
-void FusionDemo::RunClient()
-{
-		FusionGame *game = new FusionGame();
-		game->RunClient("localhost", "4444", m_ClientOpts);
-		delete game;
-}
-
-void FusionDemo::RunServer()
-{
-		FusionGame *game = new FusionGame();
-		game->RunServer("4444", m_ServerOpts);
-		delete game;
 }
 
 }
