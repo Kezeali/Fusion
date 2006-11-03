@@ -73,6 +73,9 @@ namespace FusionEngine
 		//! Removes the state specified
 		void RemoveState(FusionState *state);
 
+		//! Removes all states
+		void Clear();
+
 		//! Updates all states
 		bool Update(unsigned int split);
 		//! Draws all states

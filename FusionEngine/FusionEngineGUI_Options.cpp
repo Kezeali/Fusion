@@ -9,6 +9,7 @@ using namespace FusionEngine;
 
 GUI_Options::GUI_Options()
 {
+	m_CurrentScheme = DefaultScheme;
 	m_CurrentLayout = "OptionsMenu";
 	//! \todo Make GUI schemes load dynamicaly
 
@@ -16,6 +17,7 @@ GUI_Options::GUI_Options()
 	new CEGUI::System(renderer);
 }
 
+/*
 GUI_Options::GUI_Options(FusionInput *inputmanager)
 : m_InputManager(inputmanager)
 {
@@ -24,11 +26,13 @@ GUI_Options::GUI_Options(FusionInput *inputmanager)
 	CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
 	new CEGUI::System(renderer);
 }
+*/
 
 bool GUI_Options::Initialise()
 {
 	// Stops the input manager from trying to gather player inputs
-	m_InputManager->Suspend();
+	//m_InputManager->Suspend();
+	FusionInput::getSingleton().Suspend();
 
 	using namespace CEGUI;
 
@@ -36,8 +40,6 @@ bool GUI_Options::Initialise()
 
 	WindowManager& winMgr = WindowManager::getSingleton();
 	winMgr.loadWindowLayout(m_CurrentLayout);
-
-	ImagesetManager::getSingleton().createImagesetFromImageFile("LogoImage", "FusionLogo.png");
 
 	//! \todo Make FusionGUI_Options#onSaveClicked send a message to the state man to remove the state et. al.
 	// 'Save' button
@@ -63,5 +65,6 @@ void GUI_Options::Draw()
 
 void GUI_Options::CleanUp()
 {
-	m_InputManager->Activate();
+	//m_InputManager->Activate();
+	FusionInput::getSingleton().Activate();
 }

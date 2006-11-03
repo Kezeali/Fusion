@@ -6,22 +6,17 @@
 
 /// Fusion
 #include "FusionResourceLoader.h"
-#include "FusionClientEnvironment.h"
+#include "FusionEnvironmentClient.h"
+#include "FusionEnvironmentServer.h"
+
 #include "FusionStateManager.h"
+#include "FusionError.h"
 
 using namespace FusionEngine;
 
-FusionGame::FusionGame()
-{
-}
-
 void FusionGame::RunClient(const std::string &hostname, const std::string &port, ClientOptions *options)
 {
-	//! \todo FusionGame GUI (for displaying error messages.)
-	//CL_GUIManager gui();
-
 	bool keepGoing = false;
-	Error *lastError = NULL;
 
 	// Try to setup the gameplay env
 	StateManager *state_man = new StateManager();
@@ -38,8 +33,11 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 		split = CL_System::get_time() - lastTime;
 		lastTime = CL_System::get_time();
 
-		if ((keepGoing = state_man->Update(split)) == false)
-			lastError = state_man->GetLastError();
+		//if ((keepGoing = state_man->Update(split)) == false)
+			//lastError = state_man->GetLastError();
+
+		// Stop if any states encounter an error
+		keepGoing = state_man->Update(split);
 
 		// Stop if any states think we should
 		keepGoing = state_man->KeepGoing();
@@ -49,8 +47,51 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 
 	state_man->Clear();
 
-	if (lastError != NULL)
+	//! \todo Report errors in FusionGame in some way other than cout...
+	Error *lastError = state_man->GetLastError();
+	if (lastError != 0)
+		std::cout << lastError->GetError() << std::endl;
 
+}
+
+void FusionGame::RunServer(const std::string &port, ServerOptions *options)
+{
+	bool keepGoing = false;
+
+	// Try to setup the server env
+	StateManager *state_man = new StateManager();
+	ServerEnvironment *env = new ServerEnvironment(port, options);
+
+	// Start the state manager
+	keepGoing = state_man->SetExclusive(env);
+
+	unsigned int lastTime = CL_System::get_time();
+	unsigned int split = 0;
+
+	while (keepGoing)
+	{
+		split = CL_System::get_time() - lastTime;
+		lastTime = CL_System::get_time();
+
+		// Stop if any states encounter an error
+		keepGoing = state_man->Update(split);
+
+		// Stop if any states think we should
+		keepGoing = state_man->KeepGoing();
+
+		// I guess this doesn't do anything for the server :P
+		//  Maybe it could output to the console...
+		state_man->Draw();
+	}
+
+	state_man->Clear();
+
+	//! \todo Report errors in FusionGame in some way other than cout...
+	Error *lastError = state_man->GetLastError();
+	if (lastError != 0)
+		std::cout << lastError->GetError() << std::endl;
+
+}
 
 	/*
 	CL_SetupNetwork setup_network;
@@ -73,34 +114,6 @@ void FusionGame::RunClient(const std::string &hostname, const std::string &port,
 	server_ip.set_address(hostname, port);
 	netgame->connect(server_ip);
 	*/
-}
-
-void FusionGame::RunServer(const std::string &port, ServerOptions *options)
-{
-	bool keepGoing = false;
-
-	ResourceLoader *resLoader = new ResourceLoader();
-	resLoader->LoadShips(resLoader->GetInstalledShips());
-
-	// Try to setup the gameplay env
-	ServerEnvironment *env = new ServerEnvironment(port, options);
-	keepGoing = env->Initialise(resLoader);
-
-	unsigned int lastTime = CL_System::get_time();
-	unsigned int split = 0;
-
-	while (keepGoing)
-	{
-		split = CL_System::get_time() - lastTime;
-		lastTime = CL_System::get_time();
-
-		keepGoing = env->Update(split);
-		env->Draw(); // I guess this doesn't do anything :P maybe it could output to the console...
-	}
-
-	delete env;
-	delete resLoader;
-
 	/*
 	CL_SetupNetwork setup_network;
 	CL_NetSession *netgame = NULL;
@@ -115,4 +128,3 @@ void FusionGame::RunServer(const std::string &port, ServerOptions *options)
 	//start the server listening for client activity
 	netgame->start_listen(port);
 	*/
-}

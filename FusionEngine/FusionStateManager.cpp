@@ -59,6 +59,19 @@ void StateManager::RemoveState(FusionState *state)
 	}
 }
 
+void StateManager::Clear()
+{
+	if (!m_States.empty())
+	{
+		StateList::iterator it;
+		for (it = m_States.begin(); it != m_States.end(); ++it)
+		{
+			(*it)->CleanUp();
+		}
+		m_States.clear();
+	}
+}
+
 bool StateManager::Update(unsigned int split)
 {
 	// All states have encountered errors - nothing to do

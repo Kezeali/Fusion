@@ -30,6 +30,8 @@
 #include "FusionEngineCommon.h"
 
 /// Fusion
+#include "FusionSingleton.h"
+
 #include "FusionInputMap.h"
 #include "FusionInputData.h"
 #include "FusionClientOptions.h"
@@ -47,7 +49,7 @@ namespace FusionEngine
 	 *
 	 * \todo Make InputManager a singleton.
 	 */
-	class FusionInput
+	class FusionInput : public FusionEngine::Singleton<FusionInput>
 	{
 	public:
 		// Basic constructor.
@@ -61,6 +63,7 @@ namespace FusionEngine
 		//! Typedef for ship inputs
 		typedef std::vector<ShipInput> ShipInputList;
 
+	public:
 		/*!
 		 * \brief
 		 * Finds required devices.

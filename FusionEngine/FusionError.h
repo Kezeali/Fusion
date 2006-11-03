@@ -56,7 +56,12 @@ namespace FusionEngine
 		//! Retrieves the type (of the error which caused the unexpected quit.)
 		ErrorType GetType() const;
 		//! Retrieves the human readable message.
-		const std::string &GetMessage() const;
+		/*!
+		 * \remarks
+		 * MCS - I can't call this GetMessage because of a stupid windows macro 
+		 * which redefines that as GetMessageW!
+		 */
+		const std::string &GetError() const;
 
 	protected:
 		//! Stores the error type

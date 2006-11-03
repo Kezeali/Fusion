@@ -41,6 +41,8 @@
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
 #include "FusionError.h"
+#include "FusionClientShip.h"
+#include "FusionProjectile.h"
 
 namespace FusionEngine
 {
@@ -51,9 +53,9 @@ namespace FusionEngine
 	{
 	public:
 		//! Basic Constructor
-		GenericEnvironment();
+		GenericEnvironment() : m_Abort(false), m_NumPlayers(0) {}
 		//! Virtual destructor
-		virtual ~GenericEnvironment();
+		virtual ~GenericEnvironment() {}
 
 	public:
 		//! A list of ships
@@ -67,31 +69,31 @@ namespace FusionEngine
 		typedef std::vector<ShipInput> ShipInputList;
 
 	public:
-		//! Pulls the resources from the ResourceLoader
-		virtual bool Initialise(ResourceLoader *resources);
+		//! Pulls the resources from the ResourceLoader and some other stuff
+		virtual bool Initialise() = 0;
 
 		/*!
 		 * \brief
 		 * Runs the statemanager.
 		 */
-		virtual bool Update(unsigned int split);
+		virtual bool Update(unsigned int split) = 0;
 
 		//! Draws stuff
-		virtual void Draw();
+		virtual void Draw() = 0;
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
 
 		//! Leaves the environment cleanly.
 		/*!
-		 * \param e The explaination to give to the user
+		 * \param[in] e The explaination to give to the user
 		 */
-		virtual void _quit(Error *e);
+		void _quit(Error *e);
 
 	protected:
 		//! If this is set to true, the update command will return false next time it runs
 		//!  (thus quitting the gameplay.)
-		bool m_Quit;
+		bool m_Abort;
 
 		//! Number of players in the env
 		unsigned int m_NumPlayers;
@@ -102,19 +104,6 @@ namespace FusionEngine
 		FusionNetworkClient *m_NetworkManager;
 		//! High level physics manager
 		FusionPhysicsWorld *m_PhysicsWorld;
-
-		//! Thread from which the network manager works
-		/*!
-		 * \remarks
-		 * Having the FusionNetworkClient object running in another
-		 * thread removes the nessescity to limit it's working time
-		 * per step (that is to say, it can take as long as it needs
-		 * process every packet, as it won't hold up the redraw.)
-		 * This may turn out to be more of a performance hit than just
-		 * limiting it's working time, but it's easyer to remove code
-		 * than write it in later :P
-		 */
-		CL_Thread *m_NetManThread;
 
 		//! List of ships currently in the environment
 		ShipList m_Ships;
@@ -146,14 +135,6 @@ namespace FusionEngine
 		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
 		virtual void installProjectileFrameFromMessage(FusionMessage *m);
 
-		//! Updates the input structures of all local ships.
-		virtual void gatherLocalInput() = 0;
-
-		/*!
-		 * [depreciated] by installShipFrameFromMessage()
-		 * Updates the state structures of local and remote ships.
-		 */
-		virtual void updateShipStates() = 0;
 		/*!
 		 * \brief
 		 * Updates the positions of all syncronised objects.

@@ -67,7 +67,7 @@ namespace FusionEngine
 	class ClientEnvironment : public GenericEnvironment
 	{
 	public:
-		//! Constructor
+		//! Basic constructor
 		ClientEnvironment();
 		//! Constructor
 		ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options);
@@ -76,8 +76,8 @@ namespace FusionEngine
 		~ClientEnvironment();
 
 	public:
-		//! Pulls the resources from the ResourceLoader
-		bool Initialise(ResourceLoader *resources);
+		//! Pulls the resources from the ResourceLoader and some other stuff
+		bool Initialise();
 
 		//! Runs and maintains the statemanager and states
 		bool Update(unsigned int split);
@@ -85,14 +85,14 @@ namespace FusionEngine
 		//! Draws stuff
 		void Draw();
 
-		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
-		ShipResource *GetShipResourceByID(const std::string &id);
-
 	private:
+		//! The address of the server
+		std::string m_Hostname;
+		//! The port to use
+		std::string m_Port;
+
 		//! Options
 		ClientOptions *m_Options;
-		//! High level input manager
-		FusionInput *m_InputManager;
 		//! NetMan
 		FusionNetworkClient *m_NetworkManager;
 
@@ -100,6 +100,11 @@ namespace FusionEngine
 		PlayerInd m_PlayerID;
 		//! Number of players in the env
 		unsigned int m_NumPlayers;
+
+		//! Implimentation of GeneircEnvironment#Send
+		void send();
+		//! Implimentation of GeneircEnvironment#Receive
+		bool receive();
 
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();

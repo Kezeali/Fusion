@@ -7,11 +7,12 @@
 
 #include "FusionEngineCommon.h"
 
-//! \todo Replace Boost crc use with RakNet CRC
-//#include <boost/crc.hpp>
-
 /// Fusion
+#include "FusionSingleton.h"
+
 #include "FusionShipResource.h"
+#include "FusionLevelResource.h"
+#include "FusionWeaponResource.h"
 #include "FileVerifier.h"
 #include "FusionArchive.h"
 
@@ -31,11 +32,8 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
-	 *
-	 * \todo Arg, I just found out that CL_Archive isn't finished, so I'll either use
-	 * zipios++ or impliment my own decompression classes based on god ole zlib
 	 */
-	class ResourceLoader
+	class ResourceLoader : public Singleton<ResourceLoader>
 	{
 	public:
 		//! Constructor
@@ -51,13 +49,13 @@ namespace FusionEngine
 
 		//! Map of ships
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
-		//typedef std::map<std::string, WeaponResource*> WeaponResourcePtrMap;
+		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
-		//! Self exp.
+		//! Returns a list of packages found after the Ships path
 		static StringVector GetInstalledShips();
-		//! Self exp.
+		///! Returns a list of packages found after the Levels path
 		static StringVector GetInstalledLevels();
-		//! Self exp.
+		//! Returns a list of packages found after the Weapons path
 		static StringVector GetInstalledWeapons();
 
 		/*!
@@ -65,6 +63,12 @@ namespace FusionEngine
 		 * Clears and deletes all loaded resources.
 		 */
 		void ClearAll();
+		//! Deletes all loaded ships
+		void DeleteShips();
+		//! Deletes the loaded level
+		inline void DeleteLevel() { delete m_LevelResource; }
+		//! Deletes all loaded weapons
+		void DeleteWeapons();
 
 		/*!
 		 * \brief
@@ -130,8 +134,11 @@ namespace FusionEngine
 		 * verified packages (that is, packages with the correct filename and crc.)
 		 */
 		bool LoadShips(StringVector names);
-		// bool LoadLevel(const std::string &name);
-		// bool LoadWeapons(StringVector names);
+		bool LoadLevel(const std::string &name);
+		bool LoadWeapons(StringVector names);
+
+		//! Loads the given level only if it has been verified.
+		bool LoadLevelVerified(const std::string &name);
 
 		/*!
 		 * \brief
@@ -140,7 +147,9 @@ namespace FusionEngine
 		 * The ResourceLoader class stores a list of packages verified with VerifyPackage,
 		 * VerifyShip, VerifyLevel and VerifyWeapon. This function iterates through that list,
 		 * loading all resources. Using this method is recomended over directly calling
-		 * LoadShips, LoadLevel, and LoadWeapons.
+		 * LoadShips, and LoadWeapons. LoadLevelVerified should be called for levels.
+		 * <br>
+		 * If this fails, you should call ClearAll to destroy any invalid data.
 		 *
 		 * \remarks
 		 * This method still has a return value (is failable) because even though the packages
@@ -149,30 +158,52 @@ namespace FusionEngine
 		 */
 		bool LoadVerified();
 
+		//! Clears the verified packages lists
+		void ResetVerified();
+
 		/*!
 		 * \brief
 		 * Checks a loaded document for validity as a ship definiiton.
 		 */
 		ShipResourceMap GetLoadedShips();
-		// LevelResource* GetLoadedLevel();
-		// WeaponResourcePtrMap GetLoadedWeapons();
+		LevelResource* GetLoadedLevel();
+		WeaponResourceMap GetLoadedWeapons();
 
 	private:
 
 		//! Encapsulates resource maps of various types.
 		struct PackageResources
 		{
+			//! Image files mapped to tags
 			SurfaceMap Images;
+			//! Sound files mapped to tags
 			SoundBufferMap Sounds;
 		};
 
-		ShipResourceMap m_ShipResources;
-		// LevelResource* m_LevelResource;
-		// WeaponResourcePtrMap m_WeaponResources;
+		//! A list of ship packages which passed verification
+		StringVector m_VerifiedShips;
+		//! A list of level packages which passed verification
+		/*!
+		 * This list all verified level packages, so LoadLevelVerified can ensure any
+		 * particular level package has been verified before attempting to load them.
+		 */
+		StringVector m_VerifiedLevels;
+		//! A list of weapon packages which passed verification
+		StringVector m_VerifiedWeapons;
 
+		//! Loaded ships
+		ShipResourceMap m_ShipResources;
+		//! Loaded levels
+		LevelResource* m_LevelResource;
+		//! Loaded weapons
+		WeaponResourceMap m_WeaponResources;
+
+		//! Loads a ship
 		ShipResource* parseShipDefinition(const std::string &filename);
-		//LevelResource* parseShipDefinition(const std::string &filename);
-		//WeaponResource* parseShipDefinition(const std::string &filename);
+		//! Loads a level
+		LevelResource* parseLevelDefinition(const std::string &filename);
+		//! Loads a weapon
+		WeaponResource* parseWeaponDefinition(const std::string &filename);
 
 		/*!
 		 * \brief
@@ -183,12 +214,12 @@ namespace FusionEngine
 		 * \brief
 		 * Checks a loaded document for validity as a level definiiton.
 		 */
-		//bool verifyLevelDocument(const CL_DomDocument *document);
+		bool verifyLevelDocument(CL_DomDocument *document);
 		/*!
 		 * \brief
 		 * Checks a loaded document for validity as a weapon definiiton.
 		 */
-		//bool verifyWeaponDocument(const CL_DomDocument *document);
+		bool verifyWeaponDocument(CL_DomDocument *document);
 
 		/*!
 		 * \brief
@@ -197,7 +228,7 @@ namespace FusionEngine
 		 * As all package documents use the same format for listing resources, only the one
 		 * method is needed.
 		 *
-		 * \param document
+		 * \param[in] document
 		 * A loaded definition document.
 		 *
 		 * \returns

@@ -50,10 +50,8 @@ namespace FusionEngine
 		/*!
 		* \brief
 		* Constructor.
-		* \todo
-		* Make InputManager a singleton so I don't need to pass an instance to GUI_Options.
 		*/
-		GUI_Options(FusionInput *inputmanager);
+		//GUI_Options(FusionInput *inputmanager);
 
 	public:
 		//! Inits the gui
@@ -67,10 +65,6 @@ namespace FusionEngine
 
 		//! Unbinds
 		void CleanUp();
-
-	protected:
-		//! The input manager to suspend. Will be [depreciated] when input manager becomes a singleton.
-		FusionInput *m_InputManager;
 
 	};
 

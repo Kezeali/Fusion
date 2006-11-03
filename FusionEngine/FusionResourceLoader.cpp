@@ -64,30 +64,132 @@ StringVector ResourceLoader::GetInstalledWeapons()
 	return list;
 }
 
+void ResourceLoader::ClearAll()
+{
+	DeleteShips();
+	DeleteLevel();
+	DeleteWeapons();
+
+	ResetVerified();
+}
+
+void ResourceLoader::DeleteShips()
+{
+		ShipResourceMap::iterator it = m_ShipResources.begin();
+		for (; it != m_ShipResources.end(); ++it)
+		{
+			delete ( (*it).second );
+		}
+		m_ShipResources.clear();
+}
+
+void ResourceLoader::DeleteWeapons()
+{
+	WeaponResourceMap::iterator it = m_WeaponResources.begin();
+	for (; it != m_WeaponResources.end(); ++it)
+	{
+		delete ( (*it).second );
+	}
+	m_WeaponResources.clear();
+}
+
 // Returns false if any ships aren't found.
 bool ResourceLoader::LoadShips(StringVector names)
 {
-    ShipResourceMap ships;
+	ShipResourceMap ships;
 
-    StringVector::iterator it;
-    for (it = names.begin(); it != names.end(); ++it)
-    {
-			ShipResource *ship = parseShipDefinition(*it);
+	StringVector::iterator it;
+	for (it = names.begin(); it != names.end(); ++it)
+	{
+		ShipResource *ship = parseShipDefinition(*it);
 
-			if (ship != NULL)
-				ships[*it] = ship;
-			else
-				return false;
-    }
+		if (ship != NULL)
+			ships[*it] = ship;
+		else
+			return false;
+	}
 
-    m_ShipResources = ships;
+	//std::copy(ships.begin(), ships.end(), m_ShipResources.end());
+	m_ShipResources = ships;
 
 	return true;
+}
+
+bool ResourceLoader::LoadLevel(const std::string &name)
+{
+	LevelResource *level = parseLevelDefinition(name);
+
+	if (level != NULL)
+		m_LevelResource = level;
+	else
+		return false;
+
+	return true;
+}
+
+bool ResourceLoader::LoadWeapons(StringVector names)
+{
+	WeaponResourceMap weapons;
+
+	StringVector::iterator it;
+	for (it = names.begin(); it != names.end(); ++it)
+	{
+		WeaponResource *weapon = parseWeaponDefinition(*it);
+
+		if (weapon != NULL)
+			weapons[*it] = weapon;
+		else
+			return false;
+	}
+
+	m_WeaponResources = weapons;
+
+	return true;
+}
+
+bool ResourceLoader::LoadLevelVerified(const std::string &name)
+{
+	// Make sure the requested level has been verified
+	StringVector::iterator it = m_VerifiedLevels.begin();
+	for (; it != m_VerifiedLevels.end(); ++it)
+	{
+		// If the requested level is found in the verified list, try to load it
+		if ((*it) == name)
+			return LoadLevel(name);
+	}
+
+	return false;
+}
+
+bool ResourceLoader::LoadVerified()
+{
+	return (
+		LoadShips(m_VerifiedShips) &
+		LoadWeapons(m_VerifiedWeapons)
+	);
+}
+
+void ResourceLoader::ResetVerified()
+{
+	m_VerifiedShips.clear();
+	m_VerifiedWeapons.clear();
+	m_VerifiedLevels.clear();
 }
 
 ResourceLoader::ShipResourceMap ResourceLoader::GetLoadedShips()
 {
 	return m_ShipResources;
+}
+
+LevelResource *ResourceLoader::GetLoadedLevel()
+{
+	assert(m_LevelResource);
+	return m_LevelResource;
+}
+
+ResourceLoader::WeaponResourceMap ResourceLoader::GetLoadeWeapons()
+{
+	return m_WeaponResources;
 }
 
 ////////////
@@ -282,6 +384,9 @@ bool ResourceLoader::verifyShipDocument(CL_DomDocument *document)
 		// Get the next node
 		cNode = cNode.get_next_sibling();
 	}
+
+	// Finally, if all tests passed, return true
+	return true;
 }
 
 ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *document, Archive *arc)

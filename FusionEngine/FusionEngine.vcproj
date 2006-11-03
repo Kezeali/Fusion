@@ -219,6 +219,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEngineGUI_Console.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEngineGUI_Options.h"
 				>
 			</File>
@@ -264,6 +268,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputMap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLevelResource.h"
 				>
 			</File>
 			<File
@@ -411,6 +419,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionSingleton.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionState.h"
 				>
 			</File>
@@ -432,6 +444,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStringVector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionWeaponResource.h"
 				>
 			</File>
 			<File
@@ -585,6 +601,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEngineGUI_Console.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEngineGUI_Options.cpp"
 				>
 			</File>
@@ -722,10 +742,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipFrame.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionShipResource.cpp"
 				>
 			</File>
 			<File

@@ -71,7 +71,7 @@ namespace FusionEngine
 		 */
 		void _pushMessage(StateMessage *m);
 
-		//! Gets the quit event
+		//! Returns the most recent abort message encountered
 		Error *GetLastError() const;
 
 	protected:

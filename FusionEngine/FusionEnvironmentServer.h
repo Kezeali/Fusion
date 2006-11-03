@@ -61,15 +61,20 @@ namespace FusionEngine
 	 * \see
 	 * FusionScene | FusionInput | FusionNetworkingHandler.
 	 */
-	class ServerEnvironment
+	class ServerEnvironment : public GenericEnvironment
 	{
 	public:
+		//! Basic Constructor
+		ServerEnvironment() {}
 		//! Starts the server
 		ServerEnvironment(const std::string &port, ServerOptions *options);
 
+		//! Destructor
+		~ServerEnvironment();
+
 	public:
 		//! Init
-		bool Initialise(ResourceLoader *resources);
+		bool Initialise();
 
 		/*!
 		 * \brief
@@ -87,6 +92,9 @@ namespace FusionEngine
 		void Draw();
 
 	private:
+		//! The port to use
+		std::string m_Port;
+
 		//! Options
 		ServerOptions *m_Options;
 		//! NetMan
@@ -97,8 +105,10 @@ namespace FusionEngine
 		//! Projectiles
 		ProjectileList m_Projectiles;
 
-		//! ResMap
-		ShipResourceMap m_ShipResources;
+		//! Send all packets
+		void send();
+		//! Receive all packets
+		bool receive();
 
 		/*!
 		 * \brief

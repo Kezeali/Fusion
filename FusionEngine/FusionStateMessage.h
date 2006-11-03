@@ -17,11 +17,12 @@ namespace FusionEngine
 	public:
 		//! Types of messages
 		enum StateMessageType { ADDSTATE, REMOVESTATE };
+
 	public:
 		//! Basic constructor
 		StateMessage();
 		//! Constructor +type +data
-		StateMessage(StateMessageType *type, FusionState *data);
+		StateMessage(StateMessageType type, FusionState *data);
 
 	public:
 		//! Retreives the state type
