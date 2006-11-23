@@ -8,7 +8,7 @@
 #include "FusionEngineCommon.h"
 
 /// Fusion
-#include "FusionBody.h"
+#include "FusionPhysicsBody.h"
 
 namespace FusionEngine
 {

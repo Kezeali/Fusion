@@ -52,7 +52,7 @@ void FusionPhysicsBody::ApplyForce(const CL_Vector2 &force)
 
 void FusionPhysicsBody::SetRotationalVelocity(const float velocity)
 {
-	m_Velocity = velocity;
+	m_RotationalVelocity = velocity;
 }
 
 void FusionPhysicsBody::SetColBitmask(const FusionEngine::FusionBitmask &bitmask)
@@ -125,22 +125,22 @@ bool FusionPhysicsBody::GetUseDistCollisions()
 	return m_UsesDist;
 }
 
-CL_Vector2 &FusionPhysicsBody::GetPosition() const
+const CL_Vector2 &FusionPhysicsBody::GetPosition() const
 {
 	return m_Position;
 }
 
-CL_Point &FusionPhysicsBody::GetPositionPoint() const
+const CL_Point &FusionPhysicsBody::GetPositionPoint() const
 {
 	return CL_Point(m_Position.x, m_Position.y);
 }
 
-CL_Vector2 &FusionPhysicsBody::GetAcceleration() const
+const CL_Vector2 &FusionPhysicsBody::GetAcceleration() const
 {
 	return m_Acceleration;
 }
 
-CL_Vector2 &FusionPhysicsBody::GetVelocity() const
+const CL_Vector2 &FusionPhysicsBody::GetVelocity() const
 {
 	return m_Velocity;
 }
@@ -190,7 +190,7 @@ void FusionPhysicsBody::_setCCIndex(int ind)
 	m_CCIndex = ind;
 }
 
-void FusionPhysicsBody::_getCCIndex() const
+int FusionPhysicsBody::_getCCIndex() const
 {
 	return m_CCIndex;
 }

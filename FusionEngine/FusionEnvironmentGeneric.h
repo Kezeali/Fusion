@@ -70,16 +70,16 @@ namespace FusionEngine
 
 	public:
 		//! Pulls the resources from the ResourceLoader and some other stuff
-		virtual bool Initialise() = 0;
+		//virtual bool Initialise() = 0;
 
 		/*!
 		 * \brief
 		 * Runs the statemanager.
 		 */
-		virtual bool Update(unsigned int split) = 0;
+		//virtual bool Update(unsigned int split) = 0;
 
 		//! Draws stuff
-		virtual void Draw() = 0;
+		//virtual void Draw() = 0;
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);

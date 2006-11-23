@@ -51,9 +51,9 @@ namespace FusionEngine
 
 	public:
 		//! What to do if a collision is detected
-		virtual void CollisionResponse(void) {};
+		virtual void CollisionResponse(void) =0;
 		//! What to do if an absolute position for a collision is given
-		virtual void CollisionResponse(const CL_Vector2 &collision_point);
+		virtual void CollisionResponse(const CL_Vector2 &collision_point) =0;
 
 	protected:
 		FusionPhysicsBody *m_Owner;

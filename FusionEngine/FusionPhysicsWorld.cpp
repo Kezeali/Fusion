@@ -39,7 +39,7 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 			for (; it != bodies.end(); ++it)
 			{
 				if (_checkCollision(cBod, (*it)))
-					cBod->m_CollisionResponse
+					cBod->m_CollisionResponse();
 			}
 		}
 		// Check for collisions of moving objects.

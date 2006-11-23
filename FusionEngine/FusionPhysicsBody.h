@@ -63,6 +63,7 @@ namespace FusionEngine
 	{
 		friend class FusionPhysicsWorld;
 	public:
+		//FusionPhysicsBody();
 		//! Constructor.
 		/*!
 		 * \param world
@@ -136,10 +137,10 @@ namespace FusionEngine
 
 		//@{
 		//! State retreival.
-		virtual CL_Vector2 &GetPosition() const;
-		virtual CL_Point &GetPositionPoint() const;
-		virtual CL_Vector2 &GetAcceleration() const;
-		virtual CL_Vector2 &GetVelocity() const;
+		virtual const CL_Vector2 &GetPosition() const;
+		virtual const CL_Point &GetPositionPoint() const;
+		virtual const CL_Vector2 &GetAcceleration() const;
+		virtual const CL_Vector2 &GetVelocity() const;
 
 		virtual float GetRotationalVelocity() const;
 		virtual float GetRotation() const;

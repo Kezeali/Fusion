@@ -11,7 +11,7 @@
 using namespace FusionEngine;
 
 FusionPhysicsElipse::FusionPhysicsElipse(FusionPhysicsWorld *world)
-: m_World(world)
+: FusionPhysicsBody(world)
 {
 }
 

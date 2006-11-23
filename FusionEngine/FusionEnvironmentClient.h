@@ -85,6 +85,9 @@ namespace FusionEngine
 		//! Draws stuff
 		void Draw();
 
+		//! Cleans up, we assume
+		void CleanUp();
+
 	private:
 		//! The address of the server
 		std::string m_Hostname;

@@ -91,6 +91,9 @@ namespace FusionEngine
 		//! Draws
 		void Draw();
 
+		//! Cleans up, we assume
+		void CleanUp();
+
 	private:
 		//! The port to use
 		std::string m_Port;

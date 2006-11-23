@@ -23,8 +23,7 @@ FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::str
 	m_RakClient->Connect(
 		host.c_str(),
 		atoi(port.c_str()),
-		atoi(port.c_str()), 0,
-		options->NetworkOptions.NetDelay);
+		atoi(port.c_str()), 0, 0);
 
 	// Required for timestamps (it should be on by default anyway)
 	m_RakClient->StartOccasionalPing();

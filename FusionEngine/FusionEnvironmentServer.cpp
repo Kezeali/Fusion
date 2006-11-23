@@ -33,6 +33,11 @@ void ServerEnvironment::Draw()
 {
 }
 
+void ServerEnvironment::CleanUp()
+{
+
+}
+
 void ServerEnvironment::send()
 {
 }

@@ -32,7 +32,7 @@ void FusionNetworkMessageQueue::Resize(unsigned short channels)
 
 ///////////////////
 // Get all Messages
-MessageQueue *FusionNetworkMessageQueue::_getInMessages(int channel) const
+FusionNetworkMessageQueue::MessageQueue *FusionNetworkMessageQueue::_getInMessages(int channel)
 {
 	m_Mutex->enter();
 
@@ -42,7 +42,7 @@ MessageQueue *FusionNetworkMessageQueue::_getInMessages(int channel) const
 	m_Mutex->leave();
 }
 
-MessageQueue *FusionNetworkMessageQueue::_getOutMessages(int channel)
+FusionNetworkMessageQueue::MessageQueue *FusionNetworkMessageQueue::_getOutMessages(int channel)
 {
 	m_Mutex->enter();
 

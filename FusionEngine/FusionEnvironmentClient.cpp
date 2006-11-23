@@ -94,6 +94,11 @@ void ClientEnvironment::Draw()
 	m_Scene->Draw();
 }
 
+void ClientEnvironment::CleanUp()
+{
+	//Pooface
+}
+
 void ClientEnvironment::send()
 {
 	// Send local ship state
