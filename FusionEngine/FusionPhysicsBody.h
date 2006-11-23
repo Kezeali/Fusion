@@ -36,10 +36,7 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Should be abstract (Not ATM...) class; the basis for movable/colliding objects.
-	 *
-	 * ATM, this class only supports AABB (Axis-Aligned Bounding Boxes) I don't really
-	 * think BB's are necessary... Bah
+	 * The basis for movable/colliding objects.
 	 *
 	 * \remarks
 	 * With regurad to the state stored in this class:
@@ -53,6 +50,8 @@ namespace FusionEngine
 	 * to fit the bitmask if it rotates.)
 	 * <br>
 	 * MCS - AABBs are not yet implimented
+	 * <br>
+	 * MCS - perhaps this should be abstract an class. 
 	 *
 	 * \todo AABB for FusionPhysicsBody
 	 *
@@ -83,7 +82,7 @@ namespace FusionEngine
 
 	public:
 		//! Does what you think it does.
-		void SetMass(float mass);
+		virtual void SetMass(float mass);
 
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
@@ -115,9 +114,9 @@ namespace FusionEngine
 		/*!
 		 * I think these are self explanatory.
 		 */
-		void SetUsePixelCollisions(bool usePixel);
-		void SetUseAABBCollisions(bool useAABB);
-		void SetUseDistCollisions(bool useDist);
+		virtual void SetUsePixelCollisions(bool usePixel);
+		virtual void SetUseAABBCollisions(bool useAABB);
+		virtual void SetUseDistCollisions(bool useDist);
 		//@}
 
 		//@{
@@ -125,9 +124,9 @@ namespace FusionEngine
 		 * Collision type property retrieval.
 		 * I think these are self explanatory.
 		 */
-		bool GetUsePixelCollisions();
-		bool GetUseAABBCollisions();
-		bool GetUseDistCollisions();
+		virtual bool GetUsePixelCollisions();
+		virtual bool GetUseAABBCollisions();
+		virtual bool GetUseDistCollisions();
 		//@}
 
 		//! Calls the collision response
@@ -155,6 +154,9 @@ namespace FusionEngine
 		virtual void _setRotation(const float rotation);
 		//@}
 
+		//@{
+		//! Used internally by CollisionGrid
+
 		//! Stores the Collision Grid Pos; the position on the grid.
 		void _setCGPos(int ind);
 		//! Retreives the Collision Grid Pos - required for sorting etc.
@@ -163,17 +165,22 @@ namespace FusionEngine
 		void _setCCIndex(int ind);
 		//! Retreives the Collision Cell Index
 		int _getCCIndex() const;
+		//@}
 
 	protected:
+		//@{
+		//! Used internally by CollisionGrid
+
 		//! Collision Grid Index
 		int m_CGPos;
 		//! Collision Grid Index
 		int m_CCIndex;
+		//@}
 
 		//! Containing world
 		FusionPhysicsWorld *m_World;
-		//! \\see FusionPhysicsResponse
-		FusionPhysicsResponse m_CollisionResponse;
+		//! \see FusionPhysicsResponse
+		FusionPhysicsResponse *m_CollisionResponse;
 
 		//! The unique ID for the current object
 		/*!

@@ -31,7 +31,7 @@ void FusionPhysicsWorld::RunSimulation(unsigned int split)
 
 		// Collision detection
 		CL_Vector2 cVel = cBod->GetVelocity();
-		if (cVel > 0)
+		if (cVel != 0)
 		{
 			PhysicsBodyList bodies = m_CollisionGrid->FindAdjacentBodies(cBod);
 			PhysicsBodyList::iterator it = bodies.begin();

@@ -4,7 +4,7 @@
 /// Class
 #include "FusionShipDrawable.h"
 
-#include "FusionClientEnvironment.h"
+#include "FusionEnvironmentClient.h"
 #include "FusionNode.h"
 
 using namespace FusionEngine;

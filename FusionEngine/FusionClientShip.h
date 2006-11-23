@@ -31,7 +31,7 @@
 
 #include "FusionShipState.h"
 #include "FusionInputData.h"
-#include "FusionShipDrawable.h"
+//#include "FusionShipDrawable.h"
 
 namespace FusionEngine
 {
@@ -45,12 +45,12 @@ namespace FusionEngine
 	 *
 	 * \remarks
 	 * DON'T LET THE NAME FOOL YOU: due to poor foresight, this class was left with
-	 * a misnomer and is infact used by both ClientEnvironment and ServerEnvironment
+	 * a misnomer, and is infact used by both ClientEnvironment and ServerEnvironment
 	 * :P <br>
 	 * An instance of this object holds the state data for each ship in the game.
 	 * <br>
 	 * ClientEnvironment and ServerEnvironment have friend access to
-	 * this class, for efficiant updating.
+	 * this class, for efficiant updating. This may, however, be removed at some point.
 	 */
 	class FusionClientShip
 	{

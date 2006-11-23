@@ -32,15 +32,7 @@ namespace FusionEngine
 		 * \brief
 		 * Draws the drawable.
 		 *
-		 * The implementation of this function should draw something at the given position and
-		 * rotation. It is the implementors responsibility to decide what is done with the
-		 * parameters.
-		 *
-		 * \param position
-		 * The absolute position of the attached node.
-		 *
-		 * \param facing
-		 * The absolute rotation of the attached node.
+		 * The implementation of this function should draw something.
 		 */
 		virtual void Draw();
 

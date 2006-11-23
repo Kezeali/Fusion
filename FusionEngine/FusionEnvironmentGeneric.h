@@ -81,6 +81,9 @@ namespace FusionEngine
 		//! Draws stuff
 		//virtual void Draw() = 0;
 
+		//! Returns the index of the newly created ship
+		virtual int CreateShip(const ShipState &state) =0;
+
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
 
