@@ -39,7 +39,7 @@ protected:
 
 public:
 	L_EffectEmitter(L_ParticleEffect* effect);
-	L_ParticleEffect* emit( int x_pos, int y_pos );
+	L_ParticleEffect* emit( L_REAL x_pos, L_REAL y_pos );
 
 };
 

@@ -41,7 +41,7 @@ FusionClientShip::FusionClientShip()
 	m_CurrentState = m_InitialState;
 }
 
-FusionClientShip::FusionClientShip(ShipState initState)
+FusionClientShip::FusionClientShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node)
 {
 	/// Input
 	m_Input.pid = initState.PID;
@@ -56,6 +56,28 @@ FusionClientShip::FusionClientShip(ShipState initState)
 	/// State
 	m_InitialState = initState;
 	m_CurrentState = initState;
+
+	/// Body
+	m_PhysicalBody = body;
+
+	/// Node
+	m_Node = node;
+}
+
+FusionClientShip::FusionClientShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node)
+{
+	/// Input
+	m_Input = initInput;
+
+	/// State
+	m_InitialState = initState;
+	m_CurrentState = initState;
+
+	/// Body
+	m_PhysicalBody = body;
+
+	/// Node
+	m_Node = node;
 }
 
 FusionClientShip::~FusionClientShip()
@@ -121,6 +143,26 @@ const ShipState &FusionClientShip::GetShipState() const
 const ShipInput &FusionClientShip::GetInputState() const
 {
 	return m_Input;
+}
+
+void FusionClientShip::SetSceneNode(FusionNode *node)
+{
+	m_Node = node;
+}
+
+const FusionNode *FusionClientShip::GetSceneNode() const
+{
+	return m_Node;
+}
+
+void FusionClientShip::SetPhysicalBody(FusionPhysicsBody *body)
+{
+	m_PhysicalBody = body;
+}
+
+const FusionPhysicsBody *FusionClientShip::GetPhysicalBody() const
+{
+	return m_PhysicalBody;
 }
 
 //std::string FusionClientShip::GetShipResource() const

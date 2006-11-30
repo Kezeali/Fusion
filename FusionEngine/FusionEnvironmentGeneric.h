@@ -62,8 +62,14 @@ namespace FusionEngine
 		typedef std::vector<FusionClientShip*> ShipList;
 		//! A list of projectiles
 		typedef std::vector<FusionProjectile*> ProjectileList;
-		//! A list of resources
+
+		//! Map of ship res. names to ship resources
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
+		//! \see ShipResourceMap
+		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
+
+		//! A list of playerID's mapped to resourceID's
+		typedef std::map<PlayerInd, std::string> PlayerShipResMap
 
 		//! A list of inputs
 		typedef std::vector<ShipInput> ShipInputList;
@@ -82,7 +88,7 @@ namespace FusionEngine
 		//virtual void Draw() = 0;
 
 		//! Returns the index of the newly created ship
-		virtual int CreateShip(const ShipState &state) =0;
+		virtual void CreateShip(const ShipState &state) =0;
 
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
@@ -119,13 +125,16 @@ namespace FusionEngine
 		 */
 		ShipResourceMap m_ShipResources;
 
+		//! Map of players to their associated ship resource
+		PlayerShipResMap m_PlayerResourceIds;
+
 		//! Send all packets
-		/*!
-		 * "Sending" can be done here (ofcourse, FusionNetwork will have done the real
-		 * receiving, this just handles the data from it.)
-		 */
 		virtual void send() = 0;
 		//! Receive all packets
+		/*!
+		 * "Receiving" can be done here - of-course, FusionNetwork will have done the real
+		 * receiving, this just handles the data from it.
+		 */
 		virtual bool receive() = 0;
 
 		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship

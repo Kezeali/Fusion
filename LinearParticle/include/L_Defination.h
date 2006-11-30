@@ -31,6 +31,7 @@
 #include <ClanLib/application.h>
 #include <ClanLib/display.h>
 #include <float.h>
+#include <math.h>
 
 
 //#define L_USING_DOUBLE
@@ -45,14 +46,19 @@
 	#define L_REAL double
 	#define L_SIN(x) sin(x)
 	#define L_COS(x) cos(x)
+	#define L_SQRT(x) sqrt(x)
+	#define L_ATAN2(y,x) atan2(y,x)
 	#define L_REAL_MIN DBL_MIN
 
 #else
 	#define L_REAL float
 	#define L_SIN(x) sinf(x)
 	#define L_COS(x) cosf(x)
+	#define L_SQRT(x) sqrtf(x)
+	#define L_ATAN2(y,x) atan2f(y,x)
 	#define L_REAL_MIN FLT_MIN
 #endif
+
 
 #define L_PARTICLE_TYPE_LIMIT 10
 

@@ -403,6 +403,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionShipHealth.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionShipResource.h"
 				>
 			</File>
@@ -742,6 +746,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipFrame.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionShipHealth.cpp"
 				>
 			</File>
 			<File

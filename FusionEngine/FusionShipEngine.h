@@ -15,7 +15,7 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Represents an engine (thruster) visually.
+	 * Represents an engine (thrustor) visually.
 	 */
 	class FusionShipEngine : public FusionDrawable
 	{
@@ -30,7 +30,8 @@ namespace FusionEngine
 	protected:
 		//! The image to draw
 		CL_Surface *m_Image;
-		//! Allows the engine drawable to access the relavant ShipResource
+
+		//! [depreciated] for simplicity's sake. Allows the engine drawable to access the relavant ShipResource
 		//ClientEnvironment *m_Env;
 
 		//! Resource (sent by FusionClientShip)

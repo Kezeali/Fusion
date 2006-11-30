@@ -30,7 +30,7 @@
 #include "L_ParticleEffect.h"
 
 
-//! Explosion effect, suitable for explosion, smoking effects
+//! Explosion effect, suitable to be used for explosion, smoking effects.
 class L_ExplosionEffect : public L_ParticleEffect
 {
 

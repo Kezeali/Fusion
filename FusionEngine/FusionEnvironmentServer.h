@@ -94,6 +94,9 @@ namespace FusionEngine
 		//! Cleans up, we assume
 		void CleanUp();
 
+		//! Creates a new ship defined by the given state
+		void CreateShip(const ShipState &state);
+
 	private:
 		//! The port to use
 		std::string m_Port;
@@ -103,10 +106,10 @@ namespace FusionEngine
 		//! NetMan
 		FusionNetworkServer *m_NetworkManager;
 
-		//! Ship List
-		ShipList m_Ships;
-		//! Projectiles
-		ProjectileList m_Projectiles;
+		////! Ship List
+		//ShipList m_Ships;
+		////! Projectiles
+		//ProjectileList m_Projectiles;
 
 		//! Send all packets
 		void send();

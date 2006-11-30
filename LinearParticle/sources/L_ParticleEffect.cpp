@@ -46,13 +46,9 @@ L_ParticleEffect::L_ParticleEffect(int period_t, int x, int y)
 	total_auto_p = 0;
 
 	istriggered = false;
-
 	period = period_t;
-
 	counter = period;
-
 	life = L_INFINITE_LIFE;
-
 	addit_vector_enabled = false;
 }
 
@@ -95,7 +91,7 @@ L_ParticleEffect::L_ParticleEffect(const L_ParticleEffect& cpy)
 L_ParticleEffect::~L_ParticleEffect()
 {
 	std::list<L_Particle*>::iterator iter = particle_list.begin();
-	while(iter != particle_list.end())
+	while( iter != particle_list.end() )
 	{
 		iter = particle_list.erase(iter);
 	}
@@ -105,7 +101,7 @@ L_ParticleEffect::~L_ParticleEffect()
 int L_ParticleEffect::add(L_Particle* fl_p, L_REAL prob)
 {
 	//Particle adding fails
-	if(num_particle_type >= L_PARTICLE_TYPE_LIMIT)
+	if( num_particle_type >= L_PARTICLE_TYPE_LIMIT )
 	{
 		#ifdef L_DEBUG_MODE
 			std::cout<<"LinearParticle : Could not add more than "<<L_PARTICLE_TYPE_LIMIT<<" particles for an effect."<<std::endl;
@@ -118,7 +114,7 @@ int L_ParticleEffect::add(L_Particle* fl_p, L_REAL prob)
 	{
 		fl_particle[num_particle_type] = fl_p;
 
-		if(prob >= 0)
+		if( prob >= 0 )
 		{
 			if(cumulative_prob + prob > 1)
 			{
@@ -161,7 +157,7 @@ void L_ParticleEffect::set_position(L_REAL x, L_REAL y)
 
 void L_ParticleEffect::set_velocity(L_REAL x_length, L_REAL y_length)
 {
-	velocity.set(x_length,y_length);
+	velocity.set( x_length, y_length );
 }
 
 
@@ -180,8 +176,7 @@ void L_ParticleEffect::set_size_distortion(L_REAL size_dis)
 void L_ParticleEffect::set_life_distortion(int life_dis)
 {
 	life_distortion = life_dis;
-
-	if(life_distortion < 0)
+	if( life_distortion < 0 )
 		life_distortion = -life_distortion;
 }
 
@@ -201,7 +196,7 @@ void L_ParticleEffect::set_life(int effect_life)
 L_REAL L_ParticleEffect::rand_size(void)
 {
 	L_REAL current_size_dis = L_RAND_REAL_1() * size_distortion;
-	if(rand() % 2 == 0)
+	if( rand()%2 == 0 )
 		current_size_dis = -current_size_dis;
 
 	return current_size_dis;
@@ -318,8 +313,8 @@ void L_ParticleEffect::creating_process(void)
 		{
 			loop_counter=0;
 
-			//===========New Method==========
-			int time_elapesed_minus_i = time_elapesed-i;
+			//===================================
+			int time_elapesed_minus_i = time_elapesed - i;
 			int period_minus_counter = period-counter;
 
 			if(time_elapesed_minus_i < period_minus_counter)
@@ -335,7 +330,7 @@ void L_ParticleEffect::creating_process(void)
 				i += period_minus_counter;
 				loop_counter += period_minus_counter;
 			}
-			//==============================
+			//===================================
 
 			motion_process(loop_counter);
 			activate_particle(loop_counter);
@@ -393,9 +388,9 @@ int L_ParticleEffect::get_period(void)
 
 void L_ParticleEffect::initialize(void)
 {
-	// initialize the prob of each added particle
+	// initialize prob for each added particle
 	int i;
-	for(i=0;i<num_particle_type;i++)
+	for( i=0; i<num_particle_type; i++ )
 	{
 		if(particle_prob[i] == -1)
 			particle_prob[i] = (1 - cumulative_prob) / total_auto_p;
@@ -406,11 +401,9 @@ void L_ParticleEffect::initialize(void)
 void L_ParticleEffect::draw(int x_shift, int y_shift)
 {
 	std::list<L_Particle*>::iterator iter = particle_list.begin();
-
 	while( iter != particle_list.end() )
 	{
 		(*iter)->draw(x_shift, y_shift);
-
 		iter++;
 	}
 }
@@ -419,10 +412,9 @@ void L_ParticleEffect::draw(int x_shift, int y_shift)
 void L_ParticleEffect::activate_particle(int time_elapesed_t)
 {
 	std::list<L_Particle*>::iterator iter = particle_list.begin();
-
-	while(iter != particle_list.end())
+	while( iter != particle_list.end() )
 	{
-		if((*iter)->get_remaininig_life() < 0)
+		if( (*iter)->get_remaininig_life() < 0 )
 		{
 			iter = particle_list.erase(iter);
 		}

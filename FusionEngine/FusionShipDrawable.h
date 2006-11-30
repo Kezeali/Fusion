@@ -51,17 +51,25 @@ namespace FusionEngine
 		 */
 		//void UpdateNode();
 
-		//! Allows the FusionClientShip to set the resourceid for this drawable
-		void SetResource(const std::string &resid);
+		//! Sets the image this drawable should draw
+		void SetImage(CL_Surface *image);
+
+		////! Allows the FusionClientShip to set the resourceid for this drawable
+		//void SetResource(const std::string &resid);
 
 		virtual void Draw();
 
 	protected:
+		/*! \brief The image to draw.
+		 * This is my "Occam's razor" fix for the over-reliance-on-clientEnv problem :P
+		 */
+		CL_Surface *m_Image;
+
 		//! Allows the ship drawable to access the relavant ShipResource
-		ClientEnvironment *m_Env;
+		//ClientEnvironment *m_Env;
 
 		//! Resource (sent by FusionClientShip)
-		std::string m_ResourceID;
+		//std::string m_ResourceID;
 	};
 
 }

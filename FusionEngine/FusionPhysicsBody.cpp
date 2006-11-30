@@ -19,7 +19,7 @@ m_Velocity(CL_Vector2::ZERO)
 {
 }
 
-FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, const FusionPhysicsResponse &response)
+FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, FusionPhysicsResponse *response)
 : m_World(world),
 m_CollisionResponse(response),
 m_Acceleration(CL_Vector2::ZERO),

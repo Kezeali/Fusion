@@ -49,6 +49,9 @@ namespace FusionEngine
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
 		int BitmaskResolution;
 
+		//! The initial (maximum) health for ships
+		int MaxHealth;
+
 		//! Saves to the most recently loaded file.
 		bool Save();
 		//! Saves the current options to a file

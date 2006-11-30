@@ -47,13 +47,14 @@ namespace FusionEngine
 		//! Map of sound buffers
 		typedef std::map<std::string, CL_SoundBuffer*> SoundBufferMap;
 
-		//! Map of ships
+		//! Map of ship res. names to ship resources
 		typedef std::map<std::string, ShipResource*> ShipResourceMap;
+		//! \see ShipResourceMap
 		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
 		//! Returns a list of packages found after the Ships path
 		static StringVector GetInstalledShips();
-		///! Returns a list of packages found after the Levels path
+		//! Returns a list of packages found after the Levels path
 		static StringVector GetInstalledLevels();
 		//! Returns a list of packages found after the Weapons path
 		static StringVector GetInstalledWeapons();
@@ -163,7 +164,7 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Checks a loaded document for validity as a ship definiiton.
+		 * Returns maps to all loaded ships.
 		 */
 		ShipResourceMap GetLoadedShips();
 		LevelResource* GetLoadedLevel();

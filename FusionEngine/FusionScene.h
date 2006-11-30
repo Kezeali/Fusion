@@ -54,15 +54,15 @@ namespace FusionEngine
 
 		//! Sets the drawing mode
 		/*!
-		 * True for flat (ignores child/parent ordering)
-		 * False for graph (cascade draws from the scene node)
+		 * True for flat (ignores child/parent ordering)<br>
+		 * False for graph (cascade drawing from the root node)
 		 */
 		virtual void SetDrawingMode(bool flat);
 
 		//! Use this to enable or disable global (flat) sorting
 		/*!
-		 * Flat sorting should only be used if you aren't drawin using the
-		 * scene graph (flat drawing)
+		 * Flat sorting should only be used if you aren't drawing using the
+		 * scene graph (i.e. you are using flat drawing)
 		 */
 		virtual void SetEnableSorting(bool enable);
 

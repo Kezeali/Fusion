@@ -1,7 +1,7 @@
 
 #include "FusionShipEngine.h"
 
-#include "FusionClientEnvironment.h"
+//#include "FusionClientEnvironment.h"
 #include "FusionNode.h"
 
 using namespace FusionEngine;
@@ -20,7 +20,7 @@ void FusionShipEngine::SetResource(const std::string &resid)
 
 void FusionShipEngine::Draw()
 {
-    CL_Vector2 pos = m_ParentNode->GetPosition();
+  CL_Vector2 pos = m_ParentNode->GetPosition();
 
 	m_Image->draw(pos.x, pos.y);
 	//m_Env->GetShipResourceByID(m_ResourceID)->Images.LeftEngine->draw(pos.x, pos.y);

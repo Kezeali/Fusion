@@ -24,7 +24,6 @@
 
 
 #include "L_Vector.h"
-#include <math.h>
 
 
 L_Vector::L_Vector()
@@ -155,7 +154,7 @@ L_REAL L_Vector::dot_product(const L_Vector& vector_in )
 
 L_REAL L_Vector::get_magnitude(void)
 {
-    return sqrtf( x*x + y*y );
+    return L_SQRT( x*x + y*y );
 }
 
 
@@ -168,7 +167,7 @@ L_REAL L_Vector::get_sqr_magnitude(void)
 L_REAL L_Vector::get_radian(void)
 {
 	if( x != 0 && y != 0 )
-		return atan2(y, x);
+		return L_ATAN2(y, x);
 
 	return L_REAL_MIN;
 }

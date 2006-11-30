@@ -1,6 +1,8 @@
 
 #include "FusionEnvironmentServer.h"
 
+#include "FusionShipDrawable.h"
+
 using namespace FusionEngine;
 
 ServerEnvironment::ServerEnvironment(const std::string &port, ServerOptions *options)
@@ -36,6 +38,16 @@ void ServerEnvironment::Draw()
 void ServerEnvironment::CleanUp()
 {
 
+}
+
+void ClientEnvironment::CreateShip(const ShipState &state)
+{
+	FusionNode *node = m_Scene->CreateNode();
+
+	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
+	m_PhysicsWorld->AddBody(pbod);
+
+	m_Ships.push_back(new FusionClientShip(state, pbod, node));
 }
 
 void ServerEnvironment::send()

@@ -25,8 +25,13 @@ namespace FusionEngine
 	class FusionDrawable
 	{
 	public:
+		//! Constructor
 		FusionDrawable();
+		//! Destructor
 		virtual ~FusionDrawable();
+
+		//! Updates the drawable
+		//virtual void Update(unsigned int split);
 
 		/*!
 		 * \brief
@@ -42,15 +47,18 @@ namespace FusionEngine
 		//! Internal method called to notify the object that it has been attached to a node.
 		virtual void _notifyAttached(FusionNode* parent);
 
-		// Returns true if this object is attached to a SceneNode or TagPoint.
+		// Returns true if this object is attached to a SceneNode.
 		virtual bool IsAttached() const;
 
 		/*!
-		 * Returns true if this object is attached to a SceneNode or TagPoint,
-		 * and this SceneNode / TagPoint is currently in an active part of the
+		 * Returns true if this object is attached to a SceneNode,
+		 * and this SceneNode is currently in an active part of the
 		 * scene graph.
 		 */
 		virtual bool IsInScene() const;
+
+		//! Returns true if this object uses the update functionality
+		//virtual bool IsUpdateable() const;
 
 	protected:
 		//! The node which controls this objects position.

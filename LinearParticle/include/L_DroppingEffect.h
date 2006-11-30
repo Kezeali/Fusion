@@ -30,7 +30,7 @@
 #include "L_ParticleEffect.h"
 
 
-//! The simplest among particle effects. It puts particle on its position
+//! The simplest among particle effects. It drops a particle on its position each period.
 class L_DroppingEffect : public L_ParticleEffect
 {
 

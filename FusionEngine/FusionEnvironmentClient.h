@@ -88,6 +88,9 @@ namespace FusionEngine
 		//! Cleans up, we assume
 		void CleanUp();
 
+		//! Creates a new ship defined by the given state
+		void CreateShip(const ShipState &state);
+
 	private:
 		//! The address of the server
 		std::string m_Hostname;
@@ -99,10 +102,11 @@ namespace FusionEngine
 		//! NetMan
 		FusionNetworkClient *m_NetworkManager;
 
+		//! The maximum health as set by the server
+		int m_MaxHealth;
+
 		//! Player ID of the current player
 		PlayerInd m_PlayerID;
-		//! Number of players in the env
-		unsigned int m_NumPlayers;
 
 		//! Implimentation of GeneircEnvironment#Send
 		void send();

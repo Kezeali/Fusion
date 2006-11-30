@@ -38,7 +38,7 @@ public:
 
 	/** Initialize LinearParticle. Call this before using LinearParticle. \n
 	particle_pool_size : maximum number of existing particles allowed (the default size
-	is 5000), set to higher number if you need more particles to exist simultaneously. */
+	is 5000), set to higher number to allow more particles to exist simultaneously. */
 	static void init(int particle_pool_size=5000);
 
 	/** Deinitialize LinearParticle. Call this when LinearParticle is no longer to be used. */

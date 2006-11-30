@@ -308,6 +308,18 @@ namespace FusionEngine
 
 		 /*!
 		  * \brief
+			* Updates all updateable drawables.
+			*
+			* Used internally by FusionScene.
+			*
+			* \param[in] split Time since last update
+			* \param[in] cascade
+			* If this is true, the _drawupdate() will cascade down the graph.
+			*/
+		 //virtual void _drawupdate(unsigned int split, bool cascade);
+
+		 /*!
+		  * \brief
 			* Sorts child nodes by their depth attribute.
 			*
 			* This sorts nodes so their position in the scene graph reflects their m_Depth
@@ -317,7 +329,7 @@ namespace FusionEngine
 			* \remarks
 			* <b>On Efficiancy:</b><br>
 			* It is more efficiant to use FusionScene#Sort() in FusionScene <b>if</b>
-			* drawing isn't done in cascade mode (e.g. by calling mynode->_draw(true);). 
+			* drawing is done in flat mode (by calling eachnode->_draw(false);). 
 			* <p>
 			* <b>Only</b> use this method if you plan on doing something like:
 			* <br>

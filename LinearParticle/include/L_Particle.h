@@ -82,7 +82,6 @@ class L_Particle
 {
 
 private:
-	//========
 	CL_Surface* surface;
 	L_Vector vec;
 	L_Vector accel_vec_1d_to_2d;
@@ -164,7 +163,7 @@ public:
 	void set_life(int life_t);
 
 	/** Set rebirth flag. If rebirth is enabled, the particle will never be removed automatically. */
-	void set_rebirth(bool rebirth_t = true);
+	void set_rebirth(bool rebirth_t=true);
 
 	void set_color(const L_Color& color);
 

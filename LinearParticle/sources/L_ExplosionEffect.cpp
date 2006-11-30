@@ -72,7 +72,7 @@ void L_ExplosionEffect::howto_emit_particle(void)
 
 	num_particles = min_particles + rand() % (max_particles - min_particles + 1);
 
-	for(j=0 ; j<num_particles; j++)
+	for( j=0; j<num_particles; j++ )
 	{
 		radian = L_RAND_REAL_2()*L_2PI;
 

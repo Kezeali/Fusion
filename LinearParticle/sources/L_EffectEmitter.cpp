@@ -33,7 +33,7 @@ L_EffectManager()
 }
 
 
-L_ParticleEffect* L_EffectEmitter::emit( int x_pos, int y_pos )
+L_ParticleEffect* L_EffectEmitter::emit( L_REAL x_pos, L_REAL y_pos )
 {
     L_ParticleEffect* new_effect;
 
@@ -55,7 +55,6 @@ L_ParticleEffect* L_EffectEmitter::emit( int x_pos, int y_pos )
 
 		return NULL;
 	}
-
 
 	new_effect->x_pos = x_pos;
 	new_effect->y_pos = y_pos;

@@ -52,7 +52,7 @@ protected:
 	int life_distortion;
 	bool follow_shooting;
 
-	L_REAL time_elapesed;
+	int time_elapesed;
 
 	bool istriggered;
 
@@ -60,7 +60,6 @@ protected:
 	int counter;
 
 	int life; //L_INFINITE_LIFE for infinite life
-
 
 	bool addit_vector_enabled;
 	L_Vector addit_vector;
@@ -74,7 +73,6 @@ protected:
 
 	//create a particle
 	void create_particle(L_REAL in_x, L_REAL in_y, L_Vector* vec_t = NULL);
-	//void create_particle(int in_x, int in_y, L_Vector* vec_t = NULL);
 
 	//make the effect move
 	void motion_process(L_REAL time_elapesed);
@@ -106,7 +104,7 @@ public:
 	/** Add a particle type for the effect and probability for the particle to be chosen for every emission. \n
 	Note : If no probabily is specified, the particle will get the remaining probability to 1 ( if more than 1 probability non-specified particle,
 	remaining probability to 1 will be equally divided for each. Maximum number of particle types is limited to 10. */
-	int add(L_Particle* fl_p, L_REAL prob = -1);
+	int add(L_Particle* fl_p, L_REAL prob=-1);
 
 	/** Copy effect's velocity from "v_t". */
 	void set_velocity(const L_Vector& v_t);
@@ -121,7 +119,7 @@ public:
 	void set_position(L_REAL x, L_REAL y);
 
 	/** Apply randomization for particles' initial rotation. */
-	void set_par_random_rotation(bool par_rand_rot = true);
+	void set_par_random_rotation(bool par_rand_rot=true);
 
 	/** Apply distortion on particle's size. \n
 	Each particle would have certain degree of different size if "size_dis" is greater than 0. */
@@ -137,7 +135,7 @@ public:
 	/** Set the particle to face the direction of emission(regardless directions changes after)\n
 	Note : Degree distortion is disabled, if you need the particles to follow\n
 	its velocity direction even after the emission, please use L_Particle::rotating4();*/
-	void set_follow_shooting(bool flag = true);
+	void set_follow_shooting(bool flag=true);
 
 	/** Add additional vector for emitted particle, can be used for interia effect */
 	void set_addit_vector(const L_Vector& v_t);

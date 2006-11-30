@@ -3,7 +3,11 @@
 
 /// Fusion
 #include "FusionStatePackSync.h"
-///  Gui states
+#include "FusionShipResponse.h"
+#include "FusionShipDrawable.h"
+#include "FusionShipEngine.h"
+#include "FusionShipHealth.h"
+/// Gui states
 #include "FusionEngineGUI_Options.h"
 #include "FusionEngineGUI_Console.h"
 
@@ -96,7 +100,45 @@ void ClientEnvironment::Draw()
 
 void ClientEnvironment::CleanUp()
 {
-	//Pooface
+	//nothing
+}
+
+void ClientEnvironment::CreateShip(const ShipState &state)
+{
+	// Create the main node
+	FusionNode *node_s = m_Scene->CreateNode();
+	// Create the engine nodes
+	FusionNode *node_len = m_Scene->CreateNode();
+	FusionNode *node_ren = m_Scene->CreateNode();
+
+	// Get the resource for the ship
+	ShipResource *res = m_ShipResources[m_PlayerResourceIds[state.PID]];
+
+	// Create and attach drawables
+	//  Ship
+	FusionShipDrawable *d_ship = new FusionShipDrawable;
+	d_ship->SetImage(res->Images.Body);
+	//  Health
+	ShipHealthDrawable *d_health = new ShipHealthDrawable;
+	d_health->SetHealth(state.health);
+	d_health->SetMax(m_MaxHealth);
+	d_health->SetWidth(res->Images.Body->get_width());
+	//  Engines
+	FusionShipEngine *d_len = new FusionShipEngine;
+	d_eng->SetImage(res->Images.Engine);
+	FusionShipEngine *d_ren = new FusionShipEngine;
+	d_eng->SetImage(res->Images.Engine);
+
+	node_s->AttachDrawable(d_ship);
+	node_len->AttachDrawable(d_len);
+	node_ren->AttachDrawable(d_ren);
+
+	// Create the physical body
+	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
+	m_PhysicsWorld->AddBody(pbod);
+
+	// Create a ship and add it to the list
+	m_Ships.push_back(new FusionClientShip(state, pbod, node));
 }
 
 void ClientEnvironment::send()

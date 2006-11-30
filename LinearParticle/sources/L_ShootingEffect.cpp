@@ -29,7 +29,6 @@
 L_ShootingEffect::L_ShootingEffect(int x, int y, const L_Vector& shooting_vector_t, int period_t, int particle_per_time_t) :
 L_ParticleEffect(period_t,x,y)
 {
-	//shooting_vector = shooting_vector_t;
 	set_shooting_vector(shooting_vector_t);
 	particle_per_time = particle_per_time_t;
 	angle_interval = 0;

@@ -57,8 +57,13 @@ namespace FusionEngine
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
 	public:
+		//! Don't use this
 		FusionClientShip();
-		FusionClientShip(ShipState initState);
+		//! Constructor. W/O inputs.
+		FusionClientShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node);
+		//! Constructor. 
+		FusionClientShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node);
+		//! Destructor
 		~FusionClientShip();
 
 	public:
@@ -84,7 +89,16 @@ namespace FusionEngine
 		//! Guess
 		const ShipState &GetShipState() const;
 		//! Self explainatory
-		const ShipInput &GetInputState() const;
+		const ShipInput &GetInputState() const;	
+
+		//! Scene node
+		void SetSceneNode(FusionNode *input);
+		//! Self explainatory
+		const FusionNode *GetSceneNode() const;
+		//! Physics body
+		void SetPhysicalBody(FusionPhysicsBody *input);
+		//! Self explainatory
+		const FusionPhysicsBody *GetPhysicalBody() const;
 
 		//! [depreciated] You know it
 		//std::string GetShipResource() const;

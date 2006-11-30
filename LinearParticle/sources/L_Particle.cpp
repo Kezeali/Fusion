@@ -81,7 +81,7 @@ L_Particle::L_Particle(const L_Particle& par)
 L_Particle::L_Particle(CL_Surface* surf, int life_t)
 {
 	surface = surf;
-	L_SET_ADDITIVE_BLENDING(*surface); //surface is set to additive blending
+	L_SET_ADDITIVE_BLENDING(*surface);
 
 	life = life_t;
 	remaining_life = life_t;

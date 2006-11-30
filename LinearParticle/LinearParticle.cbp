@@ -19,7 +19,7 @@
 				<Option projectResourceIncludeDirsRelation="2"/>
 				<Compiler>
 					<Add option="-march=i686"/>
-					<Add option="-O3"/>
+					<Add option="-O2"/>
 					<Add option="-W"/>
 				</Compiler>
 				<Linker>
@@ -40,6 +40,9 @@
 					<Add option="-g"/>
 					<Add option="-DL_DEBUG_MODE"/>
 				</Compiler>
+				<Linker>
+					<Add option="/DEBUG"/>
+				</Linker>
 			</Target>
 		</Build>
 		<Compiler>

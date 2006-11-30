@@ -73,10 +73,10 @@ namespace FusionEngine
 		/*!
 		 * \param world
 		 * The world in which this body resides.
-		 * \param props
-		 * The basics physical properties to initialise this body with.
+		 * \param response
+		 * The response object to call on upon a collision.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, const FusionPhysicsResponse &response);
+		FusionPhysicsBody(FusionPhysicsWorld *world, FusionPhysicsResponse *response);
 		//! Virtual destructor.
 		virtual ~FusionPhysicsBody();
 
