@@ -451,6 +451,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionTheme.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionWeaponResource.h"
 				>
 			</File>
@@ -762,6 +766,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStatePackSync.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionTheme.cpp"
 				>
 			</File>
 			<Filter

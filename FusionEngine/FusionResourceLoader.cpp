@@ -78,7 +78,7 @@ void ResourceLoader::DeleteShips()
 		ShipResourceMap::iterator it = m_ShipResources.begin();
 		for (; it != m_ShipResources.end(); ++it)
 		{
-			delete ( (*it).second );
+			delete ( it->second );
 		}
 		m_ShipResources.clear();
 }
@@ -88,7 +88,7 @@ void ResourceLoader::DeleteWeapons()
 	WeaponResourceMap::iterator it = m_WeaponResources.begin();
 	for (; it != m_WeaponResources.end(); ++it)
 	{
-		delete ( (*it).second );
+		delete ( it->second );
 	}
 	m_WeaponResources.clear();
 }

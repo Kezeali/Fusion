@@ -29,8 +29,10 @@ namespace FusionEngine
 		ShipHealthDrawable();
 
 	public:
+		//! Sets the image to use for particles
+		void SetParticleImage(CL_Surface *image);
 		//! Sets the width of the health bar
-		void SetWidth(float width);
+		void SetWidth(int width);
 		//! Sets the maximum health
 		void SetMax(int max);
 		//! Sets the value of health to be drawn
@@ -44,13 +46,20 @@ namespace FusionEngine
 
 	protected:
 		//! The width of the health bar
-		float m_Width;
+		int m_Width;
 		//! The maximum health possible
 		int m_Max;
 		//! The most recently reported health
 		int m_Value;
 		//! If the health has changed since the last update, this will be the difference
 		int m_Delta;
+
+		//! The surface to use for particles
+		CL_Surface *m_Image;
+		//! Particle type to use in effects
+		L_Particle *m_ParticleType;
+		//! Particle effect to use
+		L_ShootingEffect *m_Effect;
 	};
 
 }

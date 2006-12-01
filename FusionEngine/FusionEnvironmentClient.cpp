@@ -117,21 +117,21 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 
 	// Create children and their drawables
 	//  Engines
-	if (state.engines & ActiveEngines::LEFT)
+	if (state.engines & LEFT)
 	{
 		FusionNode *node_len = node->CreateChildNode(res->Positions.LeftEngine);
 		// Attach Drawable
-		FusionShipEngine *d_len = new FusionShipEngine;
-		d_eng->SetImage(res->Images.Engine);
-		node_len->AttachDynamicDrawable(d_len);
+		FusionShipEngine *draw = new FusionShipEngine;
+		draw->SetImage(res->Images.LeftEngine);
+		node_len->AttachDynamicDrawable(draw);
 	}
-	if (state.engines & ActiveEngines::RIGHT)
+	if (state.engines & RIGHT)
 	{
 		FusionNode *node_ren = node->CreateChildNode(res->Positions.RightEngine);
 		// Attach Drawable
-		FusionShipEngine *d_ren = new FusionShipEngine;
-		d_eng->SetImage(res->Images.Engine);
-		node_ren->AttachDynamicDrawable(d_ren);
+		FusionShipEngine *draw = new FusionShipEngine;
+		draw->SetImage(res->Images.RightEngine);
+		node_ren->AttachDynamicDrawable(draw);
 	}
 	//  Weapons
 	FusionNode *node_priw = node->CreateChildNode(res->Positions.PrimaryWeapon);

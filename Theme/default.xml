@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<Theme>
+	<image name="images/particles/star" file="star.png" />
+	<image name="images/particles/generic" file="light16p.png" />
+	<sound name="sounds/spawn" file="PowerUp.wav" />
+</Theme>
