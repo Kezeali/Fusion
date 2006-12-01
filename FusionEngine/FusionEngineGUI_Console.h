@@ -20,47 +20,48 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_Common
-#define Header_FusionEngine_Common
+#ifndef Header_FusionEngine_GUI_Console
+#define Header_FusionEngine_GUI_Console
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "Common.h"
+#include "FusionEngineCommon.h"
 
-// LinearParticle
-#include "..\LinearParticle\include\L_ParticleSystem.h"
+#include "FusionEngineGUI.h"
+#include "FusionInputHandler.h"
 
-
-#include "FusionStringVector.h"
+#include <CEGUI/CEGUI.h>
 
 namespace FusionEngine
 {
-	// Forward declarations
-	class GenericEnviornment;
-	class ServerEnvironment;
-	class ClientEnvironment;
-	class FusionScene;
-	class FusionNode;
-	struct ShipState;
-	struct ShipInput;
-	struct ProjectileState;
-	class FusionShip;
-	class FusionProjectile;
-	class ShipResource;
-	class FusionPhysicsResponse;
-	class FusionPhysicsWorld;
-	class FusionPhysicsBody;
-	class FusionPhysicsCollisionGrid;
-	class FusionState;
-	class FusionStatePackSync;
-	class FusionStateMessage;
-	class StateManager;
 
-	// Global typedefs
-	typedef unsigned short PlayerInd; // ...
-	typedef unsigned short ObjectID;  // Do both of these really need to exist?
+	/*!
+	 * \brief
+	 * Wrapper for CEGUI - for "FusionEngine", the gameplay portion of fusion.
+	 */
+	class GUI_Console : public GUI
+	{
+	public:
+		//! Basic constructor.
+		GUI_Console();
+
+	public:
+		//! Inits the gui
+		bool Initialise();
+
+		//! Updates the inputs
+		bool Update(unsigned int split);
+
+		//! Draws the gui
+		void Draw();
+
+		//! Unbinds
+		void CleanUp();
+
+	};
+
 }
 
 #endif

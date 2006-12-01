@@ -37,7 +37,7 @@
 #include "FusionServerOptions.h"
 #include "FusionScene.h"
 #include "FusionNode.h"
-#include "FusionClientShip.h"
+#include "FusionShip.h"
 #include "FusionProjectile.h"
 #include "FusionResourceLoader.h"
 #include "FusionShipResource.h"

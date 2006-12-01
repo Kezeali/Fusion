@@ -34,9 +34,6 @@ Copyright (c) 2006 FusionTeam
 
 namespace FusionEngine
 {
-	//! Returns whether one is greater than two. \see std::sort()
-	bool DepthIsLess(FusionNode *one, FusionNode *two);
-
 	/*!
 	 * \brief
 	 * FusionNode represents a moveable object with sub-objects.
@@ -63,7 +60,7 @@ namespace FusionEngine
 		 * \brief
 		 * Constructor. Should only be called by FusionScene.
 		 *
-		 * \param creator
+		 * \param[in] creator
 		 * The scene which will control this node.
 		 *
 		 * \remarks
@@ -119,7 +116,9 @@ namespace FusionEngine
 		 */
 		virtual float GetFacing() const;
 
+		//! used internally
 		virtual const CL_Vector2 &_getDerivedPosition() const;
+		//! used internally
 		virtual float _getDerivedFacing() const;
 
 		//! Used when drawing nodes.
@@ -127,32 +126,65 @@ namespace FusionEngine
 		//! Used when drawing nodes.
 		virtual float GetGlobalFacing() const;
 
+		//! Saves the current state as the 'initial' state
 		void SetInitialState();
+		//! Resets to the state saved as the 'initial' state
 		void ResetToInitialState();
 
 		//! Self explanitory.
 		ChildNodeList GetChildren() const;
 
-		//! Self explanitory.
+		//! Gets a list of normal attached drawables
 		DrawableList GetAttachedDrawables() const;
+		//! Gets a list of dynamic attached drawables
+		DrawableList GetAttachedDynamicDrawables() const;
+		//! Gets a list of all attached drawables
+		DrawableList GetAllAttachedDrawables() const;
 
 		/*!
 		 * \brief
 		 * Attaches a FusionDrawable object to the node.
 		 * 
-		 * \param draw
+		 * \param[in] draw
 		 * A pointer to the FusionDrawable.
 		 */
 		void AttachDrawable(FusionDrawable *draw);
+
+		/*!
+		 * \brief
+		 * Attaches a dynamic FusionDrawable object to the node.
+		 *
+		 * Drawables attached via this method go into a different list to ones
+		 * attached via the normal AttachDrawable(), and have their 
+		 * FusionDrawable#Update() methods called automatically every step.
+		 *
+		 * \param[in] draw
+		 * A pointer to the FusionDrawable.
+		 */
+		void AttachDynamicDrawable(FusionDrawable *draw);
 		
 		/*!
 		 * \brief
 		 * Removes an attached drawable.
 		 * 
-		 * \param child
+		 * \param[in] child
 		 * A pointer to the attached object to remove.
 		 */
 		void DetachDrawable(FusionDrawable *draw);
+
+		/*!
+		 * \brief
+		 * Removes and destroys all drawables attached to this node.
+		 *
+		 * \remarks
+		 * There is no "DetachAndDestroyDrawable(* mydrawable)" method, as, if you
+		 * have a pointer to the drawable, you can just detach it and destroy it
+		 * yourself! Unlike nodes, you don't have to worry about orphaning children.
+		 */
+		void DetachAndDestroyAllDrawables();
+
+		//! Updates all dynamic drawables
+		void UpdateDynamics(unsigned int split);
 
 		/*!
 		 * (mainly)Internal method for setting whether the node is in the scene graph.
@@ -168,7 +200,7 @@ namespace FusionEngine
 		 * has a smaller overhead.
 		 *
 		 * \remarks
-		 * Only SceneManager should call this!
+		 * Only the Scene manager should call this!
 		 */
 		virtual void _notifyRootNode() { m_InSceneGraph = true; }
 
@@ -182,12 +214,12 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Creates a node below this on in the tree.
+		 * Creates a node below this one in the tree.
 		 * 
-		 * \param position
+		 * \param[in] position
 		 * The initial position relative to the parent.
 		 * 
-		 * \param facing
+		 * \param[in] facing
 		 * The initial facing (degrees) relative to the parent.
 		 *
 		 * \returns
@@ -195,6 +227,23 @@ namespace FusionEngine
 		 */
 		FusionNode *CreateChildNode(
 			const CL_Vector2 &position = CL_Vector2::ZERO,
+			float facing = 0);
+
+		/*!
+		 * \brief
+		 * Creates a node below this one in the tree.
+		 * 
+		 * \param[in] position
+		 * The initial position relative to the parent.
+		 * 
+		 * \param[in] facing
+		 * The initial facing (degrees) relative to the parent.
+		 *
+		 * \returns
+		 * A pointer to the node created.
+		 */
+		FusionNode *CreateChildNode(
+			const CL_Point &position = CL_Point(0,0),
 			float facing = 0);
 		
 		/*!
@@ -376,6 +425,8 @@ namespace FusionEngine
 		ChildNodeList m_Children;
 		//! Drawables attached to this node.
 		DrawableList m_AttachedObjects;
+		//! Dynamic Drawables attached to this node.
+		DrawableList m_AttachedDynamics;
 		//! The depth at which this node is drawn.
 		int m_Depth;
 
@@ -456,6 +507,12 @@ namespace FusionEngine
 		float m_InitialFacing;
 
 	};
+
+	//! Returns whether one is less than two. \see std::sort()
+	bool DepthIsLess(FusionNode *one, FusionNode *two)
+	{
+		return (one->GetDepth() < two->GetDepth());
+	}
 
 }
 

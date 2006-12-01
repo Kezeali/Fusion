@@ -30,11 +30,6 @@ namespace FusionEngine
 		 * was created.
 		 */
 		ShipState state;
-
-	private:
-		//--- FusionMessage / serilizeable implimentation
-		template <class Archive>
-		void serialize(Archive &ar, const unsigned int ver);
 	};
 
 }

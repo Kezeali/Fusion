@@ -40,14 +40,14 @@ void ServerEnvironment::CleanUp()
 
 }
 
-void ClientEnvironment::CreateShip(const ShipState &state)
+void ServerEnvironment::CreateShip(const ShipState &state)
 {
 	FusionNode *node = m_Scene->CreateNode();
 
 	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
 	m_PhysicsWorld->AddBody(pbod);
 
-	m_Ships.push_back(new FusionClientShip(state, pbod, node));
+	m_Ships.push_back(new FusionShip(state, pbod, node));
 }
 
 void ServerEnvironment::send()

@@ -34,7 +34,7 @@ namespace FusionEngine
 		//! [depreciated] for simplicity's sake. Allows the engine drawable to access the relavant ShipResource
 		//ClientEnvironment *m_Env;
 
-		//! Resource (sent by FusionClientShip)
+		//! Resource (sent by FusionShip)
 		//std::string m_ResourceID;
 	};
 

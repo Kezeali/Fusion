@@ -29,7 +29,7 @@
 
 #include "FusionEngineCommon.h"
 
-#include "FusionClientShip.h"
+#include "FusionShip.h"
 #include "FusionShipState.h"
 
 

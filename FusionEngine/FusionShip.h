@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionClientShip
-#define Header_FusionEngine_FusionClientShip
+#ifndef Header_FusionEngine_FusionShip
+#define Header_FusionEngine_FusionShip
 
 #if _MSC_VER > 1000
 #pragma once
@@ -44,40 +44,42 @@ namespace FusionEngine
 	 * via the public members.
 	 *
 	 * \remarks
-	 * DON'T LET THE NAME FOOL YOU: due to poor foresight, this class was left with
-	 * a misnomer, and is infact used by both ClientEnvironment and ServerEnvironment
-	 * :P <br>
 	 * An instance of this object holds the state data for each ship in the game.
 	 * <br>
 	 * ClientEnvironment and ServerEnvironment have friend access to
 	 * this class, for efficiant updating. This may, however, be removed at some point.
+	 * <br>
+	 * 2006/12/01: Rather than having engines fall off when the player is damaged,
+	 * it would be cool if you could use them as a sort of kamakaze attack - they
+	 * could be jettasoned at will to home on the nearest ship, causing insta-gib on
+	 * impact. :)
 	 */
-	class FusionClientShip
+	class FusionShip
 	{
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
 	public:
 		//! Don't use this
-		FusionClientShip();
+		FusionShip();
 		//! Constructor. W/O inputs.
-		FusionClientShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node);
+		FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node);
 		//! Constructor. 
-		FusionClientShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node);
+		FusionShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node);
 		//! Destructor
-		~FusionClientShip();
+		~FusionShip();
 
 	public:
 		//! Set Vel
 		/*!
-		 * \param physics If this is true, the velocity of the PhysicsBody
-		 * associated with this Ship will be set too. This defaults to false,
+		 * \param[in] physics If this is true, the velocity of the PhysicsBody
+		 * associated with this Ship will be set also. This defaults to false,
 		 * as a PhysicsBody is usually the /source/ of this information. 
 		 */
 		void SetVelocity(const CL_Vector2 &velocity, bool physics = false);
 		//! Set Pos
 		/*!
-		 * \param physics If this is true, the position of the PhysicsBody
-		 * associated with this Ship will be set too.
+		 * \param[in] physics If this is true, the position of the PhysicsBody
+		 * associated with this Ship will be set also.
 		 */
 		void SetPosition(const CL_Vector2 &position, bool physics = false);
 
@@ -107,13 +109,19 @@ namespace FusionEngine
 		void RevertToInitialState();
 
 	protected:
-		// Is this needed?
+		// Is this needed? - 2006/09/08: no
 		//ClientEnvironment *m_Environment;
 
-		//! Associated node
+		//! Main associated node
 		FusionNode *m_Node;
-		//! [depreciated] FusionNode lists all attached drawables. Associated drawable
-		//FusionShipDrawable *m_Drawable;
+		//! Left engine node
+		FusionNode *m_LEngNode;
+		//! Right engine node
+		FusionNode *m_REngNode;
+		//! Primary weapon node
+		FusionNode *m_PriWepNode;
+		//! Secondary weapon node
+		FusionNode *m_SecWepNode;
 		
 		//! \see FusionPhysicsBody
 		FusionPhysicsBody *m_PhysicalBody;

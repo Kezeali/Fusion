@@ -38,30 +38,80 @@ FusionNode::~FusionNode()
 	m_AttachedObjects.clear();
 }
 
-bool DepthIsLess(FusionNode *one, FusionNode *two)
-{
-	return (one->GetDepth() < two->GetDepth());
-}
-
 void FusionNode::AttachDrawable(FusionDrawable *draw)
 {
 	m_AttachedObjects.push_back(draw);
-	draw->_notifyAttached(this);
+	draw->_notifyAttached(this, false);
+}
+
+void FusionNode::AttachDynamicDrawable(FusionDrawable *draw)
+{
+	m_AttachedDynamics.push_back(draw);
+	draw->_notifyAttached(this, true);
 }
 
 void FusionNode::DetachDrawable(FusionDrawable *draw)
 {
-	DrawableList::iterator it = m_AttachedObjects.begin();
-	for (; it != m_AttachedObjects.end(); ++it )
+	if (draw->IsDynamic())
 	{
-		if ((*it) == draw)
+		// Dynamic drawables
+		DrawableList::iterator it = m_AttachedDynamics.begin();
+		for (; it != m_AttachedDynamics.end(); ++it )
 		{
-			m_AttachedObjects.erase(it);
-			break;
+			if ((*it) == draw)
+			{
+				m_AttachedDynamics.erase(it);
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Normal drawables
+		DrawableList::iterator it = m_AttachedObjects.begin();
+		for (; it != m_AttachedObjects.end(); ++it )
+		{
+			if ((*it) == draw)
+			{
+				m_AttachedObjects.erase(it);
+				break;
+			}
 		}
 	}
 
 	draw->_notifyAttached(NULL);
+}
+
+void FusionNode::DetachAndDestroyAllDrawables()
+{
+	{
+		DrawableList::iterator it = m_AttachedObjects.begin();
+		for (; it != m_AttachedObjects.end(); ++it)
+		{
+			delete (*it);
+		}
+	}
+
+	m_AttachedObjects.clear();
+
+	{
+		DrawableList::iterator it = m_AttachedDynamics.begin();
+		for (; it != m_AttachedDynamics.end(); ++it)
+		{
+			delete (*it);
+		}
+	}
+
+	m_AttachedDynamics.clear();
+}
+
+void FusionNode::UpdateDynamics(unsigned int split)
+{
+	DrawableList::iterator it = m_AttachedDynamics.begin();
+	for (; it != m_AttachedDynamics.end(); ++it)
+	{
+		(*it)->Update(split);
+	}
 }
 
 void FusionNode::NeedUpdate()
@@ -243,6 +293,22 @@ FusionNode::DrawableList FusionNode::GetAttachedDrawables() const
 	return m_AttachedObjects;
 }
 
+FusionNode::DrawableList FusionNode::GetAttachedDynamicDrawables() const
+{
+	return m_AttachedDynamics;
+}
+
+FusionNode::DrawableList FusionNode::GetAllAttachedDrawables() const
+{
+	DrawableList list;
+	DrawableList::iterator dest = list.begin();
+	std::merge(m_AttachedObjects.begin(), m_AttachedObjects.end(), 
+		m_AttachedDynamics.begin(), m_AttachedDynamics.end(),
+		dest);
+
+	return list;
+}
+
 void FusionNode::_setParent(FusionNode* parent)
 {
 	m_Parent = parent;
@@ -296,6 +362,18 @@ FusionNode *FusionNode::CreateChildNode(const CL_Vector2 &position, float facing
 	return child;
 }
 
+FusionNode *FusionNode::CreateChildNode(const CL_Point &position, float facing)
+{
+	assert(m_Creator);
+
+	FusionNode *child = m_Creator->CreateNode();
+	child->SetPosition(CL_Vector2(position.x, position.y));
+	child->SetFacing(facing);
+	AddChild(child);
+
+	return child;
+}
+
 void FusionNode::AddChild(FusionNode* child)
 {
 	// Don't give nodes multiple parents!
@@ -322,9 +400,9 @@ void FusionNode::RemoveChild(FusionNode* child)
 
 void FusionNode::RemoveAndDestroyChild(FusionNode *child)
 {
-	delete child;
-
 	RemoveChild(child);
+
+	delete child;
 }
 
 void FusionNode::RemoveAndDestroyAllChildren()

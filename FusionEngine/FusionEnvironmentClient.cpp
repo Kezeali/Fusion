@@ -32,17 +32,18 @@ ClientEnvironment::~ClientEnvironment()
 
 bool ClientEnvironment::Initialise()
 {
+	// Particle system
+	L_ParticleSystem::init();
+	// Input manager
 	FusionInput::getSingleton().Initialise();
-	//m_InputManager->Initialise();
-
-	// Not doing threading any more, 'cause that's just how we roll
-	//m_NetManThread = new CL_Thread(m_NetworkManager, false);
-	//m_NetManThread->start();
-
 	// Setup and run the package syncroniser
 	PackSyncState *ps = new PackSyncState();
 	ps->MakeClient(m_Hostname, m_Port);
 	_pushMessage(new StateMessage(StateMessage::ADDSTATE, ps));
+
+	// Not doing threading any more, 'cause that's just how we roll
+	//m_NetManThread = new CL_Thread(m_NetworkManager, false);
+	//m_NetManThread->start();
 
 	return true;
 }
@@ -82,6 +83,8 @@ bool ClientEnvironment::Update(unsigned int split)
 	if (!receive())
 		return false;
 
+	m_Scene->UpdateDynamics(split);
+
 	// Move/rotate ships based on the received/predicted frames
 	//updateSceneGraph();
 
@@ -100,45 +103,63 @@ void ClientEnvironment::Draw()
 
 void ClientEnvironment::CleanUp()
 {
-	//nothing
+	// Particle system
+	L_ParticleSystem::deinit();
 }
 
 void ClientEnvironment::CreateShip(const ShipState &state)
 {
 	// Create the main node
-	FusionNode *node_s = m_Scene->CreateNode();
-	// Create the engine nodes
-	FusionNode *node_len = m_Scene->CreateNode();
-	FusionNode *node_ren = m_Scene->CreateNode();
+	FusionNode *node = m_Scene->CreateNode();
 
 	// Get the resource for the ship
 	ShipResource *res = m_ShipResources[m_PlayerResourceIds[state.PID]];
 
-	// Create and attach drawables
-	//  Ship
-	FusionShipDrawable *d_ship = new FusionShipDrawable;
-	d_ship->SetImage(res->Images.Body);
-	//  Health
-	ShipHealthDrawable *d_health = new ShipHealthDrawable;
-	d_health->SetHealth(state.health);
-	d_health->SetMax(m_MaxHealth);
-	d_health->SetWidth(res->Images.Body->get_width());
+	// Create children and their drawables
 	//  Engines
-	FusionShipEngine *d_len = new FusionShipEngine;
-	d_eng->SetImage(res->Images.Engine);
-	FusionShipEngine *d_ren = new FusionShipEngine;
-	d_eng->SetImage(res->Images.Engine);
+	if (state.engines & ActiveEngines::LEFT)
+	{
+		FusionNode *node_len = node->CreateChildNode(res->Positions.LeftEngine);
+		// Attach Drawable
+		FusionShipEngine *d_len = new FusionShipEngine;
+		d_eng->SetImage(res->Images.Engine);
+		node_len->AttachDynamicDrawable(d_len);
+	}
+	if (state.engines & ActiveEngines::RIGHT)
+	{
+		FusionNode *node_ren = node->CreateChildNode(res->Positions.RightEngine);
+		// Attach Drawable
+		FusionShipEngine *d_ren = new FusionShipEngine;
+		d_eng->SetImage(res->Images.Engine);
+		node_ren->AttachDynamicDrawable(d_ren);
+	}
+	//  Weapons
+	FusionNode *node_priw = node->CreateChildNode(res->Positions.PrimaryWeapon);
+	//! \todo Weapon drawables
+	FusionNode *node_secw = node->CreateChildNode(res->Positions.SecondaryWeapon);
 
-	node_s->AttachDrawable(d_ship);
-	node_len->AttachDrawable(d_len);
-	node_ren->AttachDrawable(d_ren);
+
+	// Create and attach main drawables
+	//  Ship
+	FusionShipDrawable *draw_ship = new FusionShipDrawable;
+	draw_ship->SetImage(res->Images.Body);
+	//  Health
+	ShipHealthDrawable *draw_health = new ShipHealthDrawable;
+	draw_health->SetHealth(state.health);
+	draw_health->SetMax(m_MaxHealth);
+	draw_health->SetWidth(res->Images.Body->get_width());
+
+	//  Attach
+	node->AttachDrawable(draw_ship);
+	node->AttachDynamicDrawable(draw_health);
+
 
 	// Create the physical body
 	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
 	m_PhysicsWorld->AddBody(pbod);
 
 	// Create a ship and add it to the list
-	m_Ships.push_back(new FusionClientShip(state, pbod, node));
+	m_Ships.push_back(new FusionShip(state, pbod, node));
 }
 
 void ClientEnvironment::send()

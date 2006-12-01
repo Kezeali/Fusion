@@ -47,7 +47,7 @@ FusionNode *FusionScene::CreateNode()
 	return node;
 }
 
-void FusionScene::DestroySceneNode(FusionNode *node, bool destroy_children)
+void FusionScene::DestroySceneNode(FusionNode *node, bool destroy_children, bool destroy_drawables)
 {
 	if (node == m_RootNode)
 		throw new CL_Error("Ai' pitty da foo who try to delete da root node!");
@@ -62,7 +62,19 @@ void FusionScene::DestroySceneNode(FusionNode *node, bool destroy_children)
 	if (destroy_children)
 		node->RemoveAndDestroyAllChildren();
 
+	if (destroy_drawables)
+		node->DetachAndDestroyAllDrawables();
+
 	delete node;
+}
+
+void FusionScene::UpdateDynamics(unsigned int split)
+{
+	FusionNode::ChildNodeList::iterator it = m_SceneNodes.begin();
+	for (; it != m_SceneNodes.end(); ++it)
+	{
+		(*it)->UpdateDynamics(split);
+	}
 }
 
 void FusionScene::Draw()

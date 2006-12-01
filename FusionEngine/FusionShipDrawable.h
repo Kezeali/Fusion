@@ -36,7 +36,7 @@ namespace FusionEngine
 	public:
 		/*!
 		 * \brief
-		 * [depreciated] This is now done by FusionClientShip#SetPosition
+		 * [depreciated] This is now done by FusionShip#SetPosition
 		 *
 		 * Moves the ship and all its attached accessories.
 		 *
@@ -54,7 +54,7 @@ namespace FusionEngine
 		//! Sets the image this drawable should draw
 		void SetImage(CL_Surface *image);
 
-		////! Allows the FusionClientShip to set the resourceid for this drawable
+		////! Allows the FusionShip to set the resourceid for this drawable
 		//void SetResource(const std::string &resid);
 
 		virtual void Draw();
@@ -68,7 +68,7 @@ namespace FusionEngine
 		//! Allows the ship drawable to access the relavant ShipResource
 		//ClientEnvironment *m_Env;
 
-		//! Resource (sent by FusionClientShip)
+		//! Resource (sent by FusionShip)
 		//std::string m_ResourceID;
 	};
 

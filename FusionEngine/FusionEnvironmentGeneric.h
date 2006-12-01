@@ -41,7 +41,7 @@
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
 #include "FusionError.h"
-#include "FusionClientShip.h"
+#include "FusionShip.h"
 #include "FusionProjectile.h"
 
 namespace FusionEngine
@@ -59,7 +59,7 @@ namespace FusionEngine
 
 	public:
 		//! A list of ships
-		typedef std::vector<FusionClientShip*> ShipList;
+		typedef std::vector<FusionShip*> ShipList;
 		//! A list of projectiles
 		typedef std::vector<FusionProjectile*> ProjectileList;
 
@@ -69,7 +69,7 @@ namespace FusionEngine
 		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
 		//! A list of playerID's mapped to resourceID's
-		typedef std::map<PlayerInd, std::string> PlayerShipResMap
+		typedef std::map<PlayerInd, std::string> PlayerShipResMap;
 
 		//! A list of inputs
 		typedef std::vector<ShipInput> ShipInputList;
@@ -161,7 +161,7 @@ namespace FusionEngine
 		 * so they draw in the right place.
 		 *
 		 * \remarks
-		 * This is now depreciated, as FusionClientShip#SetPosition does this.
+		 * This is now depreciated, as FusionShip#SetPosition does this.
 		 * BTW, set position and set accel. / force should remain seperate
 		 * as you might only have a few of them changing sometimes (efficiancy.)
 		 */

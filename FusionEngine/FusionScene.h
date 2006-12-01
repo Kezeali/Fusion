@@ -41,13 +41,16 @@ namespace FusionEngine
 		//! Runs the node factory to give you a node
 		virtual FusionNode *CreateNode();
 		//! Destroys a node cleanly
-		virtual void DestroySceneNode(FusionNode *node, bool destroy_children = true);
+		virtual void DestroySceneNode(FusionNode *node, bool destroy_children = true, bool destroy_drawables = true);
 
 		/*!
 		 * \brief
 		 * Removes and deletes all nodes in the scene.
 		 */
 		virtual void CleanScene();
+
+		//! Updates dynamic drawables
+		virtual void UpdateDynamics(unsigned int split);
 
 		//! Updates nodes and draws them.
 		virtual void Draw();

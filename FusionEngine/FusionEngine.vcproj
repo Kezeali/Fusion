@@ -199,10 +199,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionClientShip.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
@@ -384,6 +380,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionServerOptions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionShip.h"
 				>
 			</File>
 			<File
@@ -589,10 +589,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionClientShip.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionDemo.cpp"
 				>
 			</File>
@@ -737,15 +733,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionShip.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionShipDrawable.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionShipEngine.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionShipFrame.cpp"
 				>
 			</File>
 			<File

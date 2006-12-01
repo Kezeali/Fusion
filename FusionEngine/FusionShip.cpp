@@ -8,11 +8,11 @@
 #include "FusionPhysicsBody.h"
 
 /// Class
-#include "FusionClientShip.h"
+#include "FusionShip.h"
 
 using namespace FusionEngine;
 
-FusionClientShip::FusionClientShip()
+FusionShip::FusionShip()
 {
 	/// Input
 	m_Input.pid = 0;
@@ -41,7 +41,7 @@ FusionClientShip::FusionClientShip()
 	m_CurrentState = m_InitialState;
 }
 
-FusionClientShip::FusionClientShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node)
+FusionShip::FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node)
 {
 	/// Input
 	m_Input.pid = initState.PID;
@@ -64,7 +64,7 @@ FusionClientShip::FusionClientShip(ShipState initState, FusionPhysicsBody *body,
 	m_Node = node;
 }
 
-FusionClientShip::FusionClientShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node)
+FusionShip::FusionShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node)
 {
 	/// Input
 	m_Input = initInput;
@@ -80,12 +80,12 @@ FusionClientShip::FusionClientShip(ShipState initState, ShipInput initInput, Fus
 	m_Node = node;
 }
 
-FusionClientShip::~FusionClientShip()
+FusionShip::~FusionShip()
 {
 	// Nothing to do here
 }
 
-void FusionClientShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
+void FusionShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
 {
 	m_CurrentState.Velocity = velocity;
 
@@ -93,7 +93,7 @@ void FusionClientShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
 		m_PhysicalBody->_setVelocity(velocity);
 }
 
-void FusionClientShip::SetPosition(const CL_Vector2 &position, bool physics)
+void FusionShip::SetPosition(const CL_Vector2 &position, bool physics)
 {
 	m_CurrentState.Position = position;
 
@@ -102,7 +102,7 @@ void FusionClientShip::SetPosition(const CL_Vector2 &position, bool physics)
 		m_PhysicalBody->_setPosition(position);
 }
 
-void FusionClientShip::SetShipState(ShipState state)
+void FusionShip::SetShipState(ShipState state)
 {
 	m_CurrentState = state;
 	/*
@@ -122,7 +122,7 @@ void FusionClientShip::SetShipState(ShipState state)
 	*/
 }
 
-void FusionClientShip::SetInputState(ShipInput input)
+void FusionShip::SetInputState(ShipInput input)
 {
 	m_Input = input;
 	/*
@@ -135,42 +135,42 @@ void FusionClientShip::SetInputState(ShipInput input)
 	*/
 }
 
-const ShipState &FusionClientShip::GetShipState() const
+const ShipState &FusionShip::GetShipState() const
 {
 	return m_CurrentState;
 }
 
-const ShipInput &FusionClientShip::GetInputState() const
+const ShipInput &FusionShip::GetInputState() const
 {
 	return m_Input;
 }
 
-void FusionClientShip::SetSceneNode(FusionNode *node)
+void FusionShip::SetSceneNode(FusionNode *node)
 {
 	m_Node = node;
 }
 
-const FusionNode *FusionClientShip::GetSceneNode() const
+const FusionNode *FusionShip::GetSceneNode() const
 {
 	return m_Node;
 }
 
-void FusionClientShip::SetPhysicalBody(FusionPhysicsBody *body)
+void FusionShip::SetPhysicalBody(FusionPhysicsBody *body)
 {
 	m_PhysicalBody = body;
 }
 
-const FusionPhysicsBody *FusionClientShip::GetPhysicalBody() const
+const FusionPhysicsBody *FusionShip::GetPhysicalBody() const
 {
 	return m_PhysicalBody;
 }
 
-//std::string FusionClientShip::GetShipResource() const
+//std::string FusionShip::GetShipResource() const
 //{
 //	return m_ResourceID;
 //}
 
-void FusionClientShip::RevertToInitialState()
+void FusionShip::RevertToInitialState()
 {
 	m_CurrentState = m_InitialState;
 }

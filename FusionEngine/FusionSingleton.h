@@ -20,47 +20,55 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_Common
-#define Header_FusionEngine_Common
+#ifndef Header_FusionEngine_Singleton
+#define Header_FusionEngine_Singleton
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "Common.h"
-
-// LinearParticle
-#include "..\LinearParticle\include\L_ParticleSystem.h"
-
-
-#include "FusionStringVector.h"
-
 namespace FusionEngine
 {
-	// Forward declarations
-	class GenericEnviornment;
-	class ServerEnvironment;
-	class ClientEnvironment;
-	class FusionScene;
-	class FusionNode;
-	struct ShipState;
-	struct ShipInput;
-	struct ProjectileState;
-	class FusionShip;
-	class FusionProjectile;
-	class ShipResource;
-	class FusionPhysicsResponse;
-	class FusionPhysicsWorld;
-	class FusionPhysicsBody;
-	class FusionPhysicsCollisionGrid;
-	class FusionState;
-	class FusionStatePackSync;
-	class FusionStateMessage;
-	class StateManager;
 
-	// Global typedefs
-	typedef unsigned short PlayerInd; // ...
-	typedef unsigned short ObjectID;  // Do both of these really need to exist?
+	/*!
+	* \brief
+	* Template class for creating singleton classes.
+	*/
+	template<typename T> class Singleton
+	{
+	public:
+		//! Constructor
+		Singleton( void )
+		{
+			assert( !ms_Singleton );
+			ms_Singleton = static_cast<T*>(this);
+		}
+		//! Destructor
+		~Singleton( void )
+		{
+			assert( ms_Singleton );
+			ms_Singleton = 0;
+		}
+
+	public:
+		//! Returns the static instance of singleton
+		static T& getSingleton( void )
+		{
+			assert( ms_Singleton );
+			return ( *ms_Singleton );
+		}
+		//! Returns a pointer to the static instance of singleton
+		static T* getSingletonPtr( void )
+		{
+			return ( ms_Singleton );
+		}
+
+	protected:
+		//! The instance
+		static T *ms_Singleton;
+
+	};
+
 }
 
 #endif

@@ -15,12 +15,7 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Base class for objects controlled by a node.
-	 *
-	 * The main use of this class is the Draw() method, which is called by the scene passing
-	 * draw position and facing. A later implementation may have the scene setting some
-	 * position / facing attributes, to act as a cache or something and therefore allow for
-	 * drawing / updates out of frame (ie. while the scene isn't drawing.)
+	 * Abstract base for objects which need to track a node.
 	 */
 	class FusionDrawable
 	{
@@ -30,8 +25,14 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~FusionDrawable();
 
-		//! Updates the drawable
-		//virtual void Update(unsigned int split);
+		/*!
+		 * \brief
+		 * Updates the drawable
+		 *
+		 * The implementation of this function should update anything that
+		 * needs to change over time.
+		 */
+		virtual void Update(unsigned int split) {}
 
 		/*!
 		 * \brief
@@ -39,30 +40,33 @@ namespace FusionEngine
 		 *
 		 * The implementation of this function should draw something.
 		 */
-		virtual void Draw();
+		virtual void Draw() =0;
 
 		//! Returns the FusionNode to which this object is attached.
-		virtual FusionNode *GetParentSceneNode() const;
+		FusionNode *GetParentSceneNode() const;
 
 		//! Internal method called to notify the object that it has been attached to a node.
-		virtual void _notifyAttached(FusionNode* parent);
+		void _notifyAttached(FusionNode* parent, bool dynamic = false);
 
 		// Returns true if this object is attached to a SceneNode.
-		virtual bool IsAttached() const;
+		bool IsAttached() const;
 
 		/*!
 		 * Returns true if this object is attached to a SceneNode,
 		 * and this SceneNode is currently in an active part of the
 		 * scene graph.
 		 */
-		virtual bool IsInScene() const;
+		bool IsInScene() const;
 
 		//! Returns true if this object uses the update functionality
-		//virtual bool IsUpdateable() const;
+		bool IsDynamic() const;
 
 	protected:
 		//! The node which controls this objects position.
 		FusionNode *m_ParentNode;
+
+		//! Will be set to true by the node if this is attached as a dynamic drawable
+		bool m_Dynamic;
 
 	};
 
