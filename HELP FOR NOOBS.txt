@@ -2,11 +2,20 @@
 Decompress the following files into the following places, then add 
 <whereever>/include/ and <whereever>/lib/ to your global search directories:
 
-ClanLib and Boost includes - <whereever>/include/:
-http://homepages.ihug.co.nz/~mariahayward/include.7z
+ClanLib and angelscript includes
+ Get them from:
+  http://homepages.ihug.co.nz/~mariahayward/include.7z
 
-ClanLib and Boost libraries - <whereever>/lib/:
-http://homepages.ihug.co.nz/~mariahayward/lib.7z
+ Extract to:
+  <whereever>/include/
+
+
+ClanLib and angelscript libraries
+ Get them from:
+  http://homepages.ihug.co.nz/~mariahayward/lib.7z
+
+ Extract to:
+  <whereever>/lib/
 
 -------Setting up MSVC++-------------------
 In MSVC++ 7, go to 
@@ -29,3 +38,6 @@ In MSVC++ 7, go to
 
 4. Done
 Click "Ok" at the bottom of the dialog to save the changes.
+
+-------Any Problems?-----------------------
+If you still can't compile, remind me to update the lib packages :P

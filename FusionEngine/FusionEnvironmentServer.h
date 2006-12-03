@@ -101,10 +101,12 @@ namespace FusionEngine
 		//! The port to use
 		std::string m_Port;
 
-		//! Options
-		ServerOptions *m_Options;
 		//! NetMan
 		FusionNetworkServer *m_NetworkManager;
+
+		//! Options
+		ServerOptions *m_Options;
+
 
 		////! Ship List
 		//ShipList m_Ships;
@@ -115,6 +117,22 @@ namespace FusionEngine
 		void send();
 		//! Receive all packets
 		bool receive();
+
+		/*!
+		 * \brief
+		 * Gets the next available PID.
+		 *
+		 * This gets a new player ID, which can be assigned to a new player.
+		 */
+		PlayerInd getNextPID();
+
+		/*!
+		 * \brief
+		 * Gets the next available spawn position from the map.
+		 *
+		 * If the map has no available spawn positions, .
+		 */
+		const CL_Vector2 &getSpawnPos(PlayerInd pid);
 
 		/*!
 		 * \brief
@@ -131,7 +149,7 @@ namespace FusionEngine
 		 * ClientEnvironment one :P it was C&P'ed from an IM convo between me
 		 * and Bruski...
 		 */
-		void updateAllPositions(unsigned int split);
+		//void updateAllPositions(unsigned int split);
 	};
 
 }

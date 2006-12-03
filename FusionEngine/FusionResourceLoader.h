@@ -32,6 +32,8 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
+	 *
+	 * \todo Impliment PhysFS, rather than my own crappy archive reading.
 	 */
 	class ResourceLoader : public Singleton<ResourceLoader>
 	{
@@ -67,7 +69,7 @@ namespace FusionEngine
 		//! Deletes all loaded ships
 		void DeleteShips();
 		//! Deletes the loaded level
-		inline void DeleteLevel() { delete m_LevelResource; }
+		void DeleteLevel() { delete m_LevelResource; }
 		//! Deletes all loaded weapons
 		void DeleteWeapons();
 

@@ -42,6 +42,10 @@ namespace FusionEngine
 	 * LOADING to GAMEPLAY - and also running multiple concurrent states - such as GAMEPLAY
 	 * + MENU. Some states also have their own state managers, for instance GAMEPLAY has a
 	 * state manager for switching between NORMAL, PAUSED, and RESULT states.
+	 * <br>
+	 * I use shared pointers here in the hopes that it will prevent states from causing
+	 * memory leaks if they are 'lost' (added incorrectly for example.) and so that
+	 * they can be removed from the list without being deleted immeadiately.
 	 */
 	class StateManager
 	{

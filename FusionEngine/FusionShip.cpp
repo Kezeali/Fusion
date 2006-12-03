@@ -102,6 +102,14 @@ void FusionShip::SetPosition(const CL_Vector2 &position, bool physics)
 		m_PhysicalBody->_setPosition(position);
 }
 
+void FusionShip::SetRotationalVelocity(float velocity, bool physics)
+{
+	m_CurrentState.RotationalVelocity = velocity;
+
+	if (physics)
+		m_PhysicalBody->SetRotationalVelocity(velocity);
+}
+
 void FusionShip::SetShipState(ShipState state)
 {
 	m_CurrentState = state;

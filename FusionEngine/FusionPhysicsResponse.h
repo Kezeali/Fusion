@@ -31,12 +31,11 @@
 
 namespace FusionEngine
 {
+
 	/*!
 	 * \brief
+	 * [depreciated]
 	 * Each body can have a derived class for different collison responses :D.
-	 *
-	 * \remarks
-	 * MCS - This is probably one of my best ideas on the physics front.
 	 *
 	 * \see
 	 * FusionPhysicsBody
@@ -51,9 +50,9 @@ namespace FusionEngine
 
 	public:
 		//! What to do if a collision is detected
-		virtual void CollisionResponse(void) =0;
+		virtual void CollisionResponse(const FusionPhysicsBody *other) =0;
 		//! What to do if an absolute position for a collision is given
-		virtual void CollisionResponse(const CL_Vector2 &collision_point) =0;
+		virtual void CollisionResponse(const FusionPhysicsBody *other, const CL_Vector2 &collision_point) =0;
 
 	protected:
 		FusionPhysicsBody *m_Owner;

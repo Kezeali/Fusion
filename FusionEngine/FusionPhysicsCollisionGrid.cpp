@@ -108,14 +108,18 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 
 	int grid_pos = body->_getCGPos();
 
+	// Static objects (always returned)
+	bodies.resize(m_Static.size());
+	std::copy(m_Static.begin(), m_Static.end(), bodies.begin());
+
 	// Find adjacent cells and copy their data
-	// Local cell:
+	//  Local cell:
 	cell = &m_Grid[grid_pos];
 
-	bodies.reserve(cell->size());
-	std::copy(cell->begin(), cell->end(), bodies.begin());
+	bodies.reserve(bodies.size() + cell->size());
+	std::copy(cell->begin(), cell->end(), bodies.end());
 
-	// Left Hand cell (only if this isn't the left edge):
+	//  Left Hand cell (only if this isn't the left edge):
 	if (grid_pos % m_GridWidth > 0)
 	{
 		cell = &m_Grid[grid_pos - 1];
@@ -124,7 +128,7 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 		std::copy(cell->begin(), cell->end(), bodies.end());
 	}
 
-	// Right Hand cell:
+	//  Right Hand cell:
 	if ((grid_pos + 1) % m_GridWidth > 0)
 	{
 		cell = &m_Grid[grid_pos + 1];
@@ -133,7 +137,7 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 		std::copy(cell->begin(), cell->end(), bodies.end());
 	}
 
-	// Cell above:
+	//  Cell above:
 	if (grid_pos >= m_GridWidth)
 	{
 		cell = &m_Grid[grid_pos - m_GridWidth];
@@ -142,7 +146,7 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 		std::copy(cell->begin(), cell->end(), bodies.end());
 	}
 
-	// Cell below:
+	//  Cell below:
 	if (grid_pos < m_GridWidth * (m_GridHeight -1))
 	{
 		cell = &m_Grid[grid_pos + m_GridWidth];

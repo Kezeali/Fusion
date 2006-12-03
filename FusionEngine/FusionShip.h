@@ -41,7 +41,7 @@ namespace FusionEngine
 	 *
 	 * State information such as current buttons pressed and health is stored in
 	 * this class. Other classes that need such information can gain access to it
-	 * via the public members.
+	 * via the public methods.
 	 *
 	 * \remarks
 	 * An instance of this object holds the state data for each ship in the game.
@@ -82,6 +82,18 @@ namespace FusionEngine
 		 * associated with this Ship will be set also.
 		 */
 		void SetPosition(const CL_Vector2 &position, bool physics = false);
+		//! Set rv
+		/*!
+		 * \param[in] physics If this is true, the rot. velocity of the PhysicsBody
+		 * associated with this Ship will be set also.
+		 */
+		void SetRotationalVelocity(float velocity, bool physics);
+		//! Set rot
+		/*!
+		 * \param[in] physics If this is true, the rot. of the PhysicsBody
+		 * associated with this Ship will be set also.
+		 */
+		void SetRotation(float rotation, bool physics);
 
 		//! Ship state
 		void SetShipState(ShipState input);

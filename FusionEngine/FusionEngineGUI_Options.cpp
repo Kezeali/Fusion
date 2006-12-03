@@ -41,12 +41,11 @@ bool GUI_Options::Initialise()
 	WindowManager& winMgr = WindowManager::getSingleton();
 	winMgr.loadWindowLayout(m_CurrentLayout);
 
-	//! \todo Make FusionGUI_Options#onSaveClicked send a message to the state man to remove the state et. al.
 	// 'Save' button
-	//static_cast<PushButton *> (
-		//winMgr.getWindow("OptionsMenu/Save"))->subscribeEvent(
-		//PushButton::EventClicked,
-		//Event::Subscriber(&FusionGUI_Options::onSaveClicked, this));
+	static_cast<PushButton *> (
+		winMgr.getWindow("Options/Quit"))->subscribeEvent(
+		PushButton::EventClicked,
+		Event::Subscriber(&GUI_Options::onQuitClicked, this));
 
 	// Call base function (to init KB/Mouse handling)
 	return GUI::Initialise();
@@ -67,4 +66,11 @@ void GUI_Options::CleanUp()
 {
 	//m_InputManager->Activate();
 	FusionInput::getSingleton().Activate();
+}
+
+bool GUI_Options::onQuitClicked(const CEGUI::EventArgs& e)
+{
+	_pushMessage(new StateMessage(StateMessage::QUIT, 0));
+
+	return true;
 }

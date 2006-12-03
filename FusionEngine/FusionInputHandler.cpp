@@ -5,15 +5,15 @@
 using namespace FusionEngine;
 
 FusionInput::FusionInput()
-: m_Active(true)
+: m_Active(false)
 {
 }
 
-FusionInput::FusionInput(const ClientOptions &from)
+FusionInput::FusionInput(const ClientOptions *from)
 : m_Active(true)
 {
-	m_GlobalInputMap = from.GlobalInputs;
-	m_PlayerInputMaps = from.PlayerInputs;
+	m_GlobalInputMap = from->GlobalInputs;
+	m_PlayerInputMaps = from->PlayerInputs;
 }
 
 bool FusionInput::Test()
@@ -68,10 +68,10 @@ void FusionInput::Suspend()
 	m_Active = true;
 }
 
-void FusionInput::SetInputMaps(const FusionEngine::ClientOptions &from)
+void FusionInput::SetInputMaps(const FusionEngine::ClientOptions *from)
 {
-	m_GlobalInputMap = from.GlobalInputs;
-	m_PlayerInputMaps = from.PlayerInputs;
+	m_GlobalInputMap = from->GlobalInputs;
+	m_PlayerInputMaps = from->PlayerInputs;
 }
 
 ShipInput FusionInput::GetShipInputs(PlayerInd player) const

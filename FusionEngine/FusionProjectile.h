@@ -59,6 +59,9 @@ namespace FusionEngine
 		//! Guess
 		const ProjectileState &GetState() const;
 
+		//! Callback
+		void CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+
 	protected:
 		//! The current state
 		ProjectileState m_CurrentState;

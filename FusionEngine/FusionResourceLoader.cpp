@@ -2,9 +2,6 @@
 /// Class
 #include "FusionResourceLoader.h"
 
-/// Boost [depreciated]
-//#include <boost/crc.hpp>
-
 /// Fusion
 #include "FusionShipResource.h"
 #include "FusionArchive.h"
@@ -187,7 +184,7 @@ LevelResource *ResourceLoader::GetLoadedLevel()
 	return m_LevelResource;
 }
 
-ResourceLoader::WeaponResourceMap ResourceLoader::GetLoadeWeapons()
+ResourceLoader::WeaponResourceMap ResourceLoader::GetLoadedWeapons()
 {
 	return m_WeaponResources;
 }

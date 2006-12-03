@@ -57,36 +57,36 @@ namespace FusionEngine
 		//! System channel message types
 
 		//! (0001 0000)
-		MTID_NEWPLAYER = 16,
+		MTID_NEWPLAYER = 1,
 		//@}
 
 		//@{
 		//! File transfer channel message types
 
 		//! (0001 0000)
-		MTID_STARTTRANSFER = 16,
+		MTID_STARTTRANSFER = 1,
 		//@}
 
 		//@{
 		//! Gameplay channel message types
 
 		//! (0001 0000)
-		MTID_SHIPFRAME = 16,
+		MTID_SHIPFRAME = 1,
 		//! (0010 0000)
-		MTID_PROJECTILEFRAME = 32,
+		MTID_PROJECTILEFRAME = 2,
 		//! (0100 0000) Low priority
-		MTID_TERRAINBITMASK = 64,
+		MTID_TERRAINBITMASK = 3,
 		//@}
 
 		//@{
 		//! Chat channel message types
 
 		//! (0001 0000)
-		MTID_CHALL = 16,
+		MTID_CHALL = 1,
 		//! (0010 0000)
-		MTID_CHTEAM = 32,
+		MTID_CHTEAM = 2,
 		//! (0100 0000)
-		MTID_CHONE = 64
+		MTID_CHONE = 3
 		//@}
 	};
 

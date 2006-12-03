@@ -18,7 +18,7 @@ ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::str
 m_Port(port),
 m_Options(options)
 {
-	new FusionInput((*m_Options)); // initialises the fusion input singleton
+	new FusionInput(m_Options); // initialises the fusion input singleton
 	m_NetworkManager = new FusionNetworkClient(hostname, port, options);
 	m_Scene = new FusionScene();
 }
@@ -85,15 +85,16 @@ bool ClientEnvironment::Update(unsigned int split)
 
 	m_Scene->UpdateDynamics(split);
 
-	// Move/rotate ships based on the received/predicted frames
-	//updateSceneGraph();
-
-	// Update all the client only stuff (particle systems, falling engines, etc.)
-	//updateNonSynced();
-
 	//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false,
 	//! or perhaps an error, when update fails... Or perhaps I should use exceptions here?
 	return true;
+
+
+
+	// Move/rotate ships based on the received/predicted frames
+	//updateSceneGraph();
+	// Update all the client only stuff (particle systems, falling engines, etc.)
+	//updateNonSynced();
 }
 
 void ClientEnvironment::Draw()
@@ -165,16 +166,18 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 void ClientEnvironment::send()
 {
 	// Send local ship state
+	for (unsigned int i =0; i<m_Options->NumPlayers; i++)
 	{
 		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[m_PlayerID]->GetShipState(), m_PlayerID
+			m_Ships[m_PlayerIDs[i]]->GetShipState(), m_PlayerIDs[i]
 			);
 		m_NetworkManager->QueueMessage(m, CID_GAME);
 	}
 	// And local input state
+	for (unsigned int i =0; i<m_NumPlayers; i++)
 	{
 		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[m_PlayerID]->GetInputState(), m_PlayerID
+			m_Ships[m_PlayerIDs[i]]->GetInputState(), m_PlayerIDs[i]
 			);
 		m_NetworkManager->QueueMessage(m, CID_GAME);
 	}
@@ -194,7 +197,7 @@ bool ClientEnvironment::receive()
 		switch (type)
 		{
 		case ID_REMOTE_CONNECTION_LOST:
-			_quit(new Error(Error::UNEXPECTEDDISCONNECT, "Remote Connection Lost"));
+			_error(new Error(Error::UNEXPECTEDDISCONNECT, "Remote Connection Lost"));
 			break;
 		}
 

@@ -12,7 +12,7 @@ namespace FusionEngine
 		L_MotionController motionCtrl;
 		motionCtrl.set_1d_acceleration(-0.2f);
 		m_ParticleType = new L_Particle(m_Image, 3);
-		m_ParticleType->set_motion_controller(motionCtrl);
+		m_ParticleType->set_motion_controller(&motionCtrl);
 
 		L_Vector up; up.set2(0.4, L_DEGREE_TO_RADIAN(-90));
 

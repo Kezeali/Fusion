@@ -7,7 +7,7 @@
 
 #include "FusionEngineCommon.h"
 
-/// Fusion
+/// Inherited
 #include "FusionPhysicsStatic.h"
 
 namespace FusionEngine
@@ -25,29 +25,27 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * An implimentation of FusionPhysicsStatic. Handles bitmask based collisions.
+	 * To terrain what FusionShip is to ships.
 	 *
 	 * Has functions for removing sections of the bitmask (to be used in
 	 * collision callbacks of the bodies that can destroy it.)
 	 *
 	 * \sa
-	 * FusionPhysicsStatic | FusionPhysicsWorld.
+	 * TerrainResource
 	 */
-	class FusionPhysicsTerrain : public FusionPhysicsStatic
+	class Terrain
 	{
 	public:
 		/*!
 		 * \brief
 		 * Constructor.
-		 *
-		 * \param world
-		 * The world in which this body resides.
 		 */
-		FusionPhysicsTerrain(FusionPhysicsWorld *world);
+		Terrain();
 		//! Virtual destructor.
-		virtual ~FusionPhysicsTerrain();
+		virtual ~Terrain();
 
 	public:
+		void 
 		//! Marks a point with a hole, so the Environment will create one there
 		void MakeHole(int x, int y, int radius);
 

@@ -8,15 +8,15 @@
         <Property Name="BackgroundEnabled" Value="False" />
         <Property Name="Image" Value="set:BGImages image:Options" />
 
-        <Window Type="BlueLook/FrameWindow" Name="OptionsMenu" >
-            <Property Name="Text" Value="Options Menu" />
+        <Window Type="BlueLook/FrameWindow" Name="Options" >
+            <Property Name="Text" Value="Options" />
             <Property Name="TitlebarFont" Value="Commonwealth-10" />
             <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
             <Property Name="TitlebarEnabled" Value="True" />
             <Property Name="UnifiedAreaRect" Value="{{0.199463,0},{0.285272,0},{0.768238,0},{0.733527,0}}" />
 
-            <Window Type="BlueLook/Button" Name="Save" >
-                <Property Name="Text" Value="Save" />
+            <Window Type="BlueLook/Button" Name="Quit" >
+                <Property Name="Text" Value="Quit" />
                 <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
                 <Property Name="UnifiedAreaRect" Value="{{0.313776,0},{0.598074,0},{0.563776,0},{0.712535,0}}" />
             </Window>

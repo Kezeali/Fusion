@@ -14,7 +14,7 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * An implimentation of PhysicsBody. Handles distance based collisions.
+	 * An implimentation of PhysicsBody.
 	 * 
 	 * \sa
 	 * FusionBody | FusionPhysicsWorld.

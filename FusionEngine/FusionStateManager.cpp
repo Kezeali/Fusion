@@ -57,6 +57,10 @@ void StateManager::RemoveState(FusionState *state)
 			break;
 		}
 	}
+
+	// Quit if the state removed was the last
+	if (m_States.empty())
+		m_KeepGoing = false;
 }
 
 void StateManager::Clear()
@@ -74,6 +78,10 @@ void StateManager::Clear()
 
 bool StateManager::Update(unsigned int split)
 {
+	// If game should have quit, but for some reason update is being called again...
+	if (!m_KeepGoing)
+		return true;
+
 	// All states have encountered errors - nothing to do
 	if (m_States.empty())
 		return false;
@@ -81,9 +89,24 @@ bool StateManager::Update(unsigned int split)
 	StateList::iterator it;
 	for (it = m_States.begin(); it != m_States.end(); ++it)
 	{
-		// If this state thinks the game should end, tell the everything else.
-		if (!(*it)->KeepGoing())
-			m_KeepGoing = false;
+		// Check state messages
+		StateMessage *m = (*it)->PopMessage();
+		while (m != 0)
+		{
+			switch (m->GetType())
+			{
+			case StateMessage::ADDSTATE:
+				AddState(m->GetData());
+				break;
+			case StateMessage::REMOVESTATE:
+				RemoveState(m->GetData());
+				break;
+			case StateMessage::QUIT:
+				Clear();
+				m_KeepGoing = false;
+				break;
+			}
+		}
 
 		// Try to update the state
 		if ((*it)->Update(split) == false)
@@ -93,10 +116,12 @@ bool StateManager::Update(unsigned int split)
 			m_LastError = (*it)->GetLastError();
 			//  Tell the state to clean up
 			(*it)->CleanUp();
-			//  Remove the state
+			//  Remove the state and jump to the next iteration
 			it = m_States.erase(it);
 		}
 	}
+
+	return true;
 }
 
 void StateManager::Draw()

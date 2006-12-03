@@ -1,42 +1,42 @@
 
-#include "FusionEngineCommon.h"
-
-/// STL
-
-/// Fusion
-
 /// Class
 #include "FusionPhysicsTerrain.h"
 
-using namespace FusionEngine;
+/// Fusion
+#include "FusionPhysicsWorld.h"
 
-FusionPhysicsTerrain::FusionPhysicsTerrain(FusionPhysicsWorld *world)
-: m_World(world)
+namespace FusionEngine
 {
-}
 
-FusionPhysicsTerrain::~FusionPhysicsTerrain()
-{
-}
+	FusionPhysicsTerrain::FusionPhysicsTerrain(FusionPhysicsWorld *world)
+		: FusionPhysicsStatic(world)
+	{
+	}
 
-void FusionPhysicsTerrain::MakeHole(int x, int y, int radius)
-{
-	Hole h;
-	h.x = x; h.y = y;
-	h.radius = radius;
+	FusionPhysicsTerrain::~FusionPhysicsTerrain()
+	{
+	}
 
-	m_Holes.push_back(h);
-}
+	void FusionPhysicsTerrain::MakeHole(int x, int y, int radius)
+	{
+		Hole h;
+		h.x = x; h.y = y;
+		h.radius = radius;
 
-Hole FusionPhysicsTerrain::PopNextHole()
-{
-	Hole h = m_Holes.front();
-	m_Holes.pop_front();
+		m_Holes.push_back(h);
+	}
 
-	return h;
-}
+	Hole FusionPhysicsTerrain::PopNextHole()
+	{
+		Hole h = m_Holes.front();
+		m_Holes.pop_front();
 
-void FusionPhysicsTerrain::_madeHole(surface)
-{
-	m_Bitmask.SetFromSurface(surface, m_World->GetBitmaskRes(), 128);
+		return h;
+	}
+
+	void FusionPhysicsTerrain::_madeHole(const CL_Surface *surface)
+	{
+		m_Bitmask.SetFromSurface(surface, m_World->GetBitmaskRes(), 128);
+	}
+
 }

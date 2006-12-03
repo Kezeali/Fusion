@@ -16,7 +16,13 @@ namespace FusionEngine
 	{
 	public:
 		//! Types of messages
-		enum StateMessageType { ADDSTATE, REMOVESTATE };
+		/*!
+		 * \remarks
+		 * Use of REMOVESTATE is preffered over QUIT if you want to quit the game,
+		 * as this ensures other states can finish their processes before the game
+		 * ends.
+		 */
+		enum StateMessageType { ADDSTATE, REMOVESTATE, QUIT };
 
 	public:
 		//! Basic constructor

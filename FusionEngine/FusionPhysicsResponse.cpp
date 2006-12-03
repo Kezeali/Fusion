@@ -1,17 +1,16 @@
 #include "FusionPhysicsResponse.h"
-/// Fusion
 
-#include "FusionPhysicsBody.h"
-
-
-using namespace FusionEngine;
-
-FusionPhysicsResponse::FusionPhysicsResponse()
+namespace FusionEngine
 {
-}
 
-FusionPhysicsResponse::~FusionPhysicsResponse()
-{
+	FusionPhysicsResponse::FusionPhysicsResponse()
+	{
+	}
+
+	FusionPhysicsResponse::~FusionPhysicsResponse()
+	{
+	}
+
 }
 
 //void FusionPhysicsResponse::CollisionResponse()

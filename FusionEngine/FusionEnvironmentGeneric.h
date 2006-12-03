@@ -29,11 +29,10 @@
 
 #include "FusionEngineCommon.h"
 
-/// STL
-
-/// Fusion
+/// Inherited
 #include "FusionState.h"
 
+/// Fusion
 #include "FusionScene.h"
 #include "FusionNode.h"
 #include "FusionResourceLoader.h"
@@ -93,18 +92,22 @@ namespace FusionEngine
 		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
 
-		//! Leaves the environment cleanly.
+		//! Leaves the environment cleanly after an error.
 		/*!
+		 * \remarks
+		 * If you wan't to leave the env without an error, use the state
+		 * message system to remove the env state.
+		 *
 		 * \param[in] e The explaination to give to the user
 		 */
-		void _quit(Error *e);
+		void _error(Error *e);
 
 	protected:
 		//! If this is set to true, the update command will return false next time it runs
 		//!  (thus quitting the gameplay.)
 		bool m_Abort;
-
-		//! Number of players in the env
+		
+		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
 		unsigned int m_NumPlayers;
 
 		//! SceneGraph
@@ -154,7 +157,8 @@ namespace FusionEngine
 		 * FusionPhysics methods should be called here.
 		 * Provides predictive movement based on current velocity etc.
 		 */
-		virtual void updateAllPositions(unsigned int split);
+		void updateAllPositions(unsigned int split);
+
 		/*!
 		 * \brief
 		 * Updates the scene graph. ie. tells all ships to call UpdateNode();

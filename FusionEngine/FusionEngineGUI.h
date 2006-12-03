@@ -29,8 +29,10 @@
 
 #include "FusionEngineCommon.h"
 
+/// Inherited
 #include "FusionState.h"
 
+/// CEGUI
 #include <CEGUI/CEGUI.h>
 
 namespace FusionEngine

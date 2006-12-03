@@ -29,6 +29,7 @@
 
 #include "FusionEngineCommon.h"
 
+/// Inherited
 #include "FusionPhysicsResponse.h"
 
 namespace FusionEngine

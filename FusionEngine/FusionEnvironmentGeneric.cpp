@@ -9,7 +9,7 @@ ShipResource *GenericEnvironment::GetShipResourceByID(const std::string &id)
 	return m_ShipResources[id];
 }
 
-void GenericEnvironment::_quit(Error *e)
+void GenericEnvironment::_error(Error *e)
 {
 	m_LastError = e;
 	m_Abort = true;
@@ -92,6 +92,17 @@ void GenericEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
 void GenericEnvironment::updateAllPositions(unsigned int split)
 {
 	m_PhysicsWorld->RunSimulation(split);
+
+	// Update ships
+	ShipList::iterator it = m_Ships.begin();
+	for (; it != m_Ships.end(); ++it)
+	{
+		FusionPhysicsBody *body = (*it)->GetPhysicalBody();
+
+		(*it)->SetVelocity(body->GetVelocity());
+		(*it)->SetPosition(body->GetPosition());
+		(*it)->Set
+	}
 }
 
 

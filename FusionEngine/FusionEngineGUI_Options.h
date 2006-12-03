@@ -66,6 +66,9 @@ namespace FusionEngine
 		//! Unbinds
 		void CleanUp();
 
+		//! Quits the game
+		bool GUI_Options::onQuitClicked(const CEGUI::EventArgs& e);
+
 	};
 
 }

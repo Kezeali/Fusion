@@ -120,6 +120,13 @@ namespace FusionEngine
 		BodyList m_Bodies;
 		//! Guess :P
 		BodyListCollection m_Grid;
+		//! Static objects are listed here.
+		/*!
+		 * These are allways returned when FindAdjacentBodies() is called - this
+		 * shouldn't create a preformance issue, as generally the only static
+		 * object is the terrain.
+		 */
+		BodyList m_Static;
 
 		//! Self explainatory (nb. this replaces m_Bodies.)
 		BodyList m_BodiesToUpdate;

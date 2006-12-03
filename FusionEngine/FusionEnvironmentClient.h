@@ -67,6 +67,10 @@ namespace FusionEngine
 	class ClientEnvironment : public GenericEnvironment
 	{
 	public:
+		//! A list of local player numbers (0 to g_MaxPlayers) 
+		typedef std::vector<PlayerInd> LocalPlayerIdList;
+
+	public:
 		//! Basic constructor
 		ClientEnvironment();
 		//! Constructor
@@ -105,8 +109,8 @@ namespace FusionEngine
 		//! The maximum health as set by the server
 		int m_MaxHealth;
 
-		//! Player ID of the current player
-		PlayerInd m_PlayerID;
+		//! Player IDs of the local players
+		LocalPlayerIdList m_PlayerIDs;
 
 		//! Implimentation of GeneircEnvironment#Send
 		void send();

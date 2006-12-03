@@ -29,9 +29,10 @@
 
 #include "FusionEngineCommon.h"
 
-/// Fusion
+/// Inherited
 #include "FusionSingleton.h"
 
+/// Fusion
 #include "FusionInputMap.h"
 #include "FusionInputData.h"
 #include "FusionClientOptions.h"
@@ -55,7 +56,7 @@ namespace FusionEngine
 		// Basic constructor.
 		FusionInput();
 		// Constructor. +ClientOptions
-		FusionInput(const ClientOptions &from);
+		FusionInput(const ClientOptions *from);
 
 	public:
 		//! Typedef for ship inputs
@@ -85,7 +86,7 @@ namespace FusionEngine
 		void Suspend();
 
 		//! Sets up inputs
-		void SetInputMaps(const ClientOptions &from);
+		void SetInputMaps(const ClientOptions *from);
 
 		//! Returns the currently pressed inputs for the given ship.
 		ShipInput GetShipInputs(PlayerInd player) const;

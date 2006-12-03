@@ -1,7 +1,12 @@
 
 #include "FusionEnvironmentServer.h"
 
+/// Fusion
+#include "FusionStatePackSync.h"
+#include "FusionShipResponse.h"
 #include "FusionShipDrawable.h"
+#include "FusionShipEngine.h"
+#include "FusionShipHealth.h"
 
 using namespace FusionEngine;
 
@@ -28,7 +33,28 @@ bool ServerEnvironment::Initialise()
 
 bool ServerEnvironment::Update(unsigned int split)
 {
-	return true; // mwahaha
+	// Tells the game to abort the client environment (by returning false)
+	if (m_Abort)
+		return false;
+
+	// Update the states of all local objects based on the gathered input
+	updateAllPositions(split);
+
+	// Check the network for packets
+	m_NetworkManager->run();
+
+	// Send everything in the message queue
+	send();
+
+	// Read any frames / messages received between this update and the last
+	if (!receive())
+		return false;
+
+	m_Scene->UpdateDynamics(split);
+
+	//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false,
+	//! or perhaps an error, when update fails... Or perhaps I should use exceptions here?
+	return true;
 }
 
 void ServerEnvironment::Draw()
@@ -64,18 +90,96 @@ void ServerEnvironment::CreateShip(const ShipState &state)
 
 	// Create a ship and add it to the list
 	m_Ships.push_back(new FusionShip(state, pbod, node));
+
+	m_NumPlayers += 1;
 }
 
 void ServerEnvironment::send()
 {
+	// Send all ship states
+	for (unsigned int i =0; i<m_NumPlayers; i++)
+	{
+		FusionMessage *m = FusionMessageBuilder::BuildMessage(
+			m_Ships[i]->GetShipState(), i
+			);
+		m_NetworkManager->QueueMessage(m, CID_GAME);
+	}
+	// And local input state
+	for (unsigned int i =0; i<m_NumPlayers; i++)
+	{
+		FusionMessage *m = FusionMessageBuilder::BuildMessage(
+			m_Ships[i]->GetInputState(), i
+			);
+		m_NetworkManager->QueueMessage(m, CID_GAME);
+	}
+
+	//! \todo chat
+	//m_NetworkManager->QueueMessage(m, CID_CHAT);
 }
 
 bool ServerEnvironment::receive()
 {
-	return false;
+	// Check events (important messages)
+	FusionMessage *e = m_NetworkManager->GetNextEvent();
+	while (e)
+	{
+		const unsigned char type = e->GetType();
+		switch (type)
+		{
+		case ID_REMOTE_CONNECTION_LOST:
+			e->GetPlayerInd();
+			break;
+		}
+
+		e = m_NetworkManager->GetNextEvent();
+	}
+
+	// System messages
+	{
+		FusionMessage *m = m_NetworkManager->GetNextMessage(CID_SYSTEM);
+		while (m)
+		{
+			const unsigned char type = m->GetType();
+			switch (type)
+			{
+			case MTID_NEWPLAYER:
+				ShipState state;
+				state.PID = getNextPID();
+				// It shouldn't matter if someone's sitting on this spawn, they'll
+				//  just get pushed out of the way / destroyed.
+				state.Position = getSpawnPos(state.PID);
+				CreateShip(state);
+				break;
+			}
+		}
+
+		m = m_NetworkManager->GetNextMessage(CID_SYSTEM);
+	}
+
+	// Gameplay Messages
+	{
+		FusionMessage *m = m_NetworkManager->GetNextMessage(CID_GAME);
+		while (m)
+		{
+			const unsigned char type = m->GetType();
+			switch (type)
+			{
+			case MTID_SHIPFRAME:
+				// I call another method here, because, well... because that's how I roll ;)
+				installShipFrameFromMessage(m);
+				break;
+			}
+
+			m = m_NetworkManager->GetNextMessage(CID_GAME);
+		}
+	}
+
+	return true;
 }
 
-void ServerEnvironment::updateAllPositions(unsigned int split)
+PlayerInd ServerEnvironment::getNextPID()
 {
-	m_PhysicsWorld->RunSimulation(split);
+	// This must be above 1 (numplayers starts at 0, hence the +1), and goes up
+	//  by one per player, so this is the simplest way to generate it.
+	return m_NumPlayers+1;
 }
