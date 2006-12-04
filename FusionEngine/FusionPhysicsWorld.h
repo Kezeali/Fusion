@@ -54,7 +54,7 @@ namespace FusionEngine
 		//! Returned by _checkVectorForCollisions()
 		struct CollisionPoint
 		{
-			bool is_colliding;
+			bool point_found;
 			CL_Vector2 collision_point;
 		};
 

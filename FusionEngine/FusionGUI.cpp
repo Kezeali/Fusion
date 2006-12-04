@@ -1,21 +1,7 @@
 
 #include "FusionGUI.h"
 
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-
 using namespace Fusion;
-
-FusionGUI::FusionGUI()
-{
-	CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
-	new CEGUI::System(renderer);
-}
-
-FusionGUI::~FusionGUI()
-{
-	//delete CEGUI::System::getSingletonPtr();
-}
 
 bool FusionGUI::Initialise()
 {

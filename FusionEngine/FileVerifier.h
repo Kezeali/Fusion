@@ -13,7 +13,7 @@ public:
 	// Serializes all files that have checksums generated for them.
 	// Used by the sender
 	void Serialize(RakNet::BitStream *bitStream);
-	
+
 	// Returns the name of the file that failed
 	// Deserializes a set of files from Serialize
 	// On failure, return the filename of the file that failed or "Invalid bitstream"
@@ -23,7 +23,7 @@ public:
 	// Adds a file to be verified.
 	// Required file - the sender must serialize this file in the list of files or validation fails
 	// Otherwise, the file must match if it exists - otherwise it is ignored.
-    void AddFileForVerification(char *filename, bool requiredFile);
+	void AddFileForVerification(char *filename, bool requiredFile);
 
 	// Overridable - called from DeserializeAndValidate when a file that is not known about is serialized.
 	// Return true on allow the file, false to fail validation
@@ -31,7 +31,7 @@ public:
 
 private:
 	// Returns the index where the file was found, or -1 if not found
-    int FindFileInList(char *filename);
+	int FindFileInList(char *filename);
 	struct FileWithCheckSum
 	{
 		char fileName[256];

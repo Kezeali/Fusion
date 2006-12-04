@@ -29,6 +29,7 @@
 
 #include "FusionEngineCommon.h"
 
+/// Fusion
 #include "FusionBitmask.h"
 #include "FusionPhysicsCallback.h"
 
@@ -76,7 +77,7 @@ namespace FusionEngine
 		 * \param response
 		 * The response function to call on upon a collision.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, PhysicsFunctor *response);
+		FusionPhysicsBody(FusionPhysicsWorld *world, CollisionCallback response);
 
 	public:
 		//! Sets the type ID for this object.
@@ -150,6 +151,10 @@ namespace FusionEngine
 		void SetUserData(void *userdata);
 		//! Retrives user data
 		const void *GetUserData() const;
+
+		//! Sets the collision response callback
+		void SetCollisionCallback(const CollisionCallback &method);
+
 		//! Calls the collision response (if this body has one.)
 		void CollisionResponse(FusionPhysicsBody *other);
 		//! Calls the collision response (if this body has one) with a reference point.
@@ -158,9 +163,13 @@ namespace FusionEngine
 		//@{
 		//! State retreival.
 		virtual const CL_Vector2 &GetPosition() const;
-		virtual const CL_Point &GetPositionPoint() const;
+		// Integer point used as that makes this eaisier to pass to FusionBitmask
+		virtual CL_Point GetPositionPoint() const;
+		virtual const CL_Vector2 &GetForce() const;
 		virtual const CL_Vector2 &GetAcceleration() const;
 		virtual const CL_Vector2 &GetVelocity() const;
+
+		virtual float GetFrictionConstant() const;
 
 		virtual float GetRotationalVelocity() const;
 		virtual float GetRotation() const;
@@ -202,8 +211,8 @@ namespace FusionEngine
 		//! Containing world
 		FusionPhysicsWorld *m_World;
 
-		//! \see PhysicsCallback
-		PhysicsFunctor *m_CollisionResponse;
+		//! \see FusionPhysicsCallback.h
+		CollisionCallback m_CollisionResponse;
 		//! Data which may be useful for collision responses, etc.
 		void *m_UserData;
 
@@ -234,6 +243,7 @@ namespace FusionEngine
 		//! "State" stuff.
 		float m_Mass;
 		float m_Radius;
+		float m_FrictionConst;
 
 		CL_Vector2 m_AppliedForce;
 		CL_Vector2 m_Acceleration;

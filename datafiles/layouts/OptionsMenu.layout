@@ -2,7 +2,7 @@
 
 <GUILayout >
     <Window Type="BlueLook/StaticImage" Name="Root" >
-				<Property Name="UnifiedPosition" Value="{{0,0},{0,0}}" />
+		<Property Name="UnifiedPosition" Value="{{0,0},{0,0}}" />
         <Property Name="UnifiedSize" Value="{{1,0},{1,0}}" />
         <Property Name="FrameEnabled" Value="False" />
         <Property Name="BackgroundEnabled" Value="False" />

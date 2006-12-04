@@ -3,7 +3,8 @@
 
 /// Fusion
 #include "FusionStatePackSync.h"
-#include "FusionShipResponse.h"
+
+#include "FusionPhysicsCallback.h"
 #include "FusionShipDrawable.h"
 #include "FusionShipEngine.h"
 #include "FusionShipHealth.h"
@@ -18,6 +19,8 @@ ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::str
 m_Port(port),
 m_Options(options)
 {
+	new ScriptingEngine();
+	new ResourceLoader();
 	new FusionInput(m_Options); // initialises the fusion input singleton
 	m_NetworkManager = new FusionNetworkClient(hostname, port, options);
 	m_Scene = new FusionScene();
@@ -25,6 +28,7 @@ m_Options(options)
 
 ClientEnvironment::~ClientEnvironment()
 {
+	delete ScriptingEngine::getSingletonPtr();
 	delete FusionInput::getSingletonPtr();
 	delete m_NetworkManager;
 	delete m_Scene;
@@ -124,7 +128,7 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 		// Attach Drawable
 		FusionShipEngine *draw = new FusionShipEngine;
 		draw->SetImage(res->Images.LeftEngine);
-		node_len->AttachDynamicDrawable(draw);
+		node_len->AttachDrawable(draw);
 	}
 	if (state.engines & RIGHT)
 	{
@@ -132,7 +136,7 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 		// Attach Drawable
 		FusionShipEngine *draw = new FusionShipEngine;
 		draw->SetImage(res->Images.RightEngine);
-		node_ren->AttachDynamicDrawable(draw);
+		node_ren->AttachDrawable(draw);
 	}
 	//  Weapons
 	FusionNode *node_priw = node->CreateChildNode(res->Positions.PrimaryWeapon);
@@ -152,13 +156,12 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 
 	//  Attach
 	node->AttachDrawable(draw_ship);
-	node->AttachDynamicDrawable(draw_health);
-
+	node->AttachDynamicDrawable(draw_health);	
 
 	// Create the physical body
-	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
+	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld);
 	m_PhysicsWorld->AddBody(pbod);
-
+	
 	// Create a ship and add it to the list
 	m_Ships.push_back(new FusionShip(state, pbod, node));
 }

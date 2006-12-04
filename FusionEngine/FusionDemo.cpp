@@ -18,7 +18,6 @@ int FusionDemo::main(int argc, char **argv)
 		CL_SetupCore setup_core;
 		CL_SetupDisplay setup_display;
 		CL_SetupGL setup_gl;
-		CL_SetupGUI setup_gui;
 
 		// Create displaywindow
 		CL_DisplayWindow display("Fusion Gameplay Demo", 640, 480);
@@ -29,24 +28,34 @@ int FusionDemo::main(int argc, char **argv)
 		m_ServerOpts = new ServerOptions();
 		m_ServerOpts->LoadFromFile("servercfg.xml");
 
+		CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
+		new CEGUI::System(renderer);
+
 		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu(m_ClientOpts, m_ServerOpts);
 		mainmenu->Initialise();
 
 		unsigned int lastTime = CL_System::get_time();
 		unsigned int split = 0;
 
-		while (!m_Quit)
+		bool keep_going = true;
+
+		// This loop remains in 'stasis' after the game has started (FusionGame 
+		//  locks the execution with its own loop), until the game quits and
+		//  FusionDemo regains control.
+		while (!m_Quit && keep_going)
 		{
 			split = CL_System::get_time() - lastTime;
 			lastTime = CL_System::get_time();
 
-			mainmenu->Update(split);
+			keep_going = mainmenu->Update(split);
 			mainmenu->Draw();
 
 			CL_Display::flip();
 			CL_System::keep_alive();
 		}
 
+		delete mainmenu;
+		delete CEGUI::System::getSingletonPtr();
 		delete m_ClientOpts;
 		delete m_ServerOpts;
 	}

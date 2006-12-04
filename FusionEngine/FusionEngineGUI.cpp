@@ -1,10 +1,6 @@
 
 #include "FusionEngineGUI.h"
 
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-#include <CEGUI/CEGUILua.h>
-
 using namespace FusionEngine;
 
 const std::string GUI::DefaultScheme = "BlueLook";
@@ -14,8 +10,6 @@ GUI::GUI()
 : m_CurrentScheme(DefaultScheme),
 m_CurrentLayout(DefaultLayout)
 {
-	CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
-	new CEGUI::System(renderer);
 }
 
 bool GUI::Initialise()

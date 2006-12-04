@@ -42,12 +42,22 @@ namespace FusionEngine
 		// as these structs are only instanciated here.
 		struct
 		{
+			//! Unique name
 			std::string Name;
+			//! Short description
 			std::string Tag;
+			//! Full Description
 			std::string Description;
 		}
 		//! Package properties
 		General;
+
+		struct
+		{
+			Script *CollisionScript;
+		}
+		//! Various scripts
+		Scripts;
 
 		struct
 		{

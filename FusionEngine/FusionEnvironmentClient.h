@@ -31,19 +31,29 @@
 
 /// STL
 
-/// Fusion
+/// Inherited
 #include "FusionEnvironmentGeneric.h"
 
+/// Fusion
 #include "FusionClientOptions.h"
+
 #include "FusionScene.h"
 #include "FusionNode.h"
+
 #include "FusionShip.h"
 #include "FusionProjectile.h"
+#include "FusionLevel.h"
+
 #include "FusionResourceLoader.h"
+#include "FusionLevelResource.h"
 #include "FusionShipResource.h"
+#include "FusionWeaponResource.h"
+
+#include "FusionScriptingEngine.h"
 #include "FusionInputHandler.h"
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
+
 #include "FusionError.h"
 
 namespace FusionEngine

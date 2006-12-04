@@ -47,15 +47,13 @@ namespace FusionEngine
 	 * FusionEngine contains only gameplay functions, so all input is either contol input
 	 * for ships, or global input - such as opening the console / menu (which have their
 	 * own input handlers) or quitting the game.
-	 *
-	 * \todo Make InputManager a singleton.
 	 */
 	class FusionInput : public FusionEngine::Singleton<FusionInput>
 	{
 	public:
-		// Basic constructor.
+		//! Basic constructor.
 		FusionInput();
-		// Constructor. +ClientOptions
+		//! Constructor. +ClientOptions
 		FusionInput(const ClientOptions *from);
 
 	public:

@@ -3,10 +3,6 @@
 
 /// Fusion
 
-/// CEGUI
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-
 using namespace Fusion;
 
 

@@ -32,7 +32,6 @@
 #include "FusionEngineGUI.h"
 #include "FusionInputHandler.h"
 
-#include <CEGUI/CEGUI.h>
 
 namespace FusionEngine
 {

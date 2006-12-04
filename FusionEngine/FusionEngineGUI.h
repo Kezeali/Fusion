@@ -32,8 +32,6 @@
 /// Inherited
 #include "FusionState.h"
 
-/// CEGUI
-#include <CEGUI/CEGUI.h>
 
 namespace FusionEngine
 {
@@ -47,12 +45,6 @@ namespace FusionEngine
 	public:
 		//! Basic constructor.
 		GUI();
-
-		/*!
-		* \brief
-		* Constructor.
-		*/
-		GUI(CEGUI::Renderer *renderer);
 
 	protected:
 		//! The default scheme file to load

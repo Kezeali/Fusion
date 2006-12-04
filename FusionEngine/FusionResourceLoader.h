@@ -7,13 +7,13 @@
 
 #include "FusionEngineCommon.h"
 
-/// Fusion
+/// Inherited
 #include "FusionSingleton.h"
 
+// Fusion
 #include "FusionShipResource.h"
 #include "FusionLevelResource.h"
 #include "FusionWeaponResource.h"
-#include "FileVerifier.h"
 #include "FusionArchive.h"
 
 namespace FusionEngine
@@ -28,6 +28,11 @@ namespace FusionEngine
 	public:
 		enum Type { Ship, Level, Weapon, FileNotFound, UnknownType };
 	};
+
+	//! Data (extracted from a Message) used to verify a package
+	struct PackageVerificationData
+	{
+		std::string filename;
 
 	/*!
 	 * \brief
@@ -54,6 +59,7 @@ namespace FusionEngine
 		//! \see ShipResourceMap
 		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
+	public:
 		//! Returns a list of packages found after the Ships path
 		static StringVector GetInstalledShips();
 		//! Returns a list of packages found after the Levels path

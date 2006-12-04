@@ -37,6 +37,10 @@
 
 #include "FusionGame.h"
 
+/// CEGUI
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/openglrenderer.h>
+
 namespace Fusion
 {
 
@@ -66,9 +70,6 @@ namespace Fusion
 
 		//! Quits the demo by setting m_Quit to true.
 		void Quit() { m_Quit = true; }
-
-		void RunClient();
-		void RunServer();
 
 	private:
 		void setupGui();

@@ -29,9 +29,20 @@
 
 #include "Common.h"
 
-// LinearParticle
+/// Boost
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
+/// LinearParticle
 #include "..\LinearParticle\include\L_ParticleSystem.h"
 
+/// AngelScript
+//#define AS_USE_NAMESPACE
+#include <angelscript.h>
+
+/// CEGUI
+#include <CEGUI/CEGUI.h>
+#include <CEGUI/openglrenderer.h>
 
 #include "FusionStringVector.h"
 

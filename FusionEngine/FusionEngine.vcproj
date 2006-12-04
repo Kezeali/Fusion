@@ -267,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLevel.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLevelResource.h"
 				>
 			</File>
@@ -351,10 +355,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsTerrain.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionPhysicsTypes.h"
 				>
 			</File>
@@ -380,6 +380,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionScene.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScript.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptingEngine.h"
 				>
 			</File>
 			<File
@@ -447,7 +455,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionStatePackSync.h"
+				RelativePath=".\FusionStatePackSyncClient.h"
 				>
 			</File>
 			<File
@@ -585,6 +593,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FileVerifier.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionArchive.cpp"
 				>
 			</File>
@@ -653,6 +665,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLevel.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLoadingState.cpp"
 				>
 			</File>
@@ -717,10 +733,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsTerrain.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionPhysicsWorld.cpp"
 				>
 			</File>
@@ -734,6 +746,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionScene.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScript.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptingEngine.cpp"
 				>
 			</File>
 			<File
@@ -769,7 +789,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionStatePackSync.cpp"
+				RelativePath=".\FusionStatePackSyncClient.cpp"
 				>
 			</File>
 			<File

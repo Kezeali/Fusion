@@ -1,9 +1,6 @@
 
 #include "FusionEngineGUI_Options.h"
 
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-#include <CEGUI/CEGUILua.h>
 
 using namespace FusionEngine;
 

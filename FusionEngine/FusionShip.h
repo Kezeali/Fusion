@@ -120,6 +120,10 @@ namespace FusionEngine
 		//! Reverts all state data
 		void RevertToInitialState();
 
+		//! What to do if an absolute position for a collision is given
+		void CollisionResponse(const FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+
+
 	protected:
 		// Is this needed? - 2006/09/08: no
 		//ClientEnvironment *m_Environment;

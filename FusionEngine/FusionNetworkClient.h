@@ -44,14 +44,8 @@ namespace FusionEngine
 	 * \brief
 	 * Handles network communicaion for the client in-game.
 	 *
-	 * \todo FusionNetworkClient and FusionNetworkServer should probably inherit from
-	 * a common parent, as they recreate alot of each of their methods :(
-	 *
 	 * This class gathers messages received from the host, sorts them, and allows the
 	 * ClientEnvironment to access them.
-	 * <br>
-	 * This impliments CL_Runnable; but the funny thing is, it isn't on-its-own thread safe -
-	 * the storage class FusionNetworkMessageQueue is... I guess that just makes it tidier?
 	 */
 	class FusionNetworkClient : public FusionNetworkGeneric
 	{
@@ -111,6 +105,9 @@ namespace FusionEngine
 		void run();
 
 	protected:
+		//! \todo Work out whether NetworkClient/Server needs a options object.
+		ClientOptions *m_Options;
+
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
 

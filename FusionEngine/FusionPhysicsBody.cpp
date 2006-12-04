@@ -26,7 +26,7 @@ namespace FusionEngine
 	{
 	}
 
-	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, PhysicsFunctor *response)
+	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response)
 		: m_World(world),
 		m_CollisionResponse(response),
 		m_Acceleration(CL_Vector2::ZERO),
@@ -45,10 +45,6 @@ namespace FusionEngine
 	{
 	}
 
-	FusionPhysicsBody::~FusionPhysicsBody()
-	{
-	}
-
 	void FusionPhysicsBody::SetType(int type)
 	{
 		m_Type = type;
@@ -64,17 +60,17 @@ namespace FusionEngine
 		m_Radius = radius;
 	}
 
-	void FusionPhysicsBody::GetType(int type)
+	int FusionPhysicsBody::GetType()
 	{
 		return m_Type;
 	}
 
-	void FusionPhysicsBody::GetMass(float mass)
+	float FusionPhysicsBody::GetMass()
 	{
 		return m_Mass;
 	}
 
-	void FusionPhysicsBody::GetRadius(float radius)
+	float FusionPhysicsBody::GetRadius()
 	{
 		return m_Radius;
 	}
@@ -84,9 +80,9 @@ namespace FusionEngine
 		m_AppliedForce += force;
 	}
 
-	void FusionPhysicsBody:SetFrictionConstant(float constant)
+	void FusionPhysicsBody::SetFrictionConstant(float constant)
 	{
-		m_FrictionConstant = constant;
+		m_FrictionConst = constant;
 	}
 
 	void FusionPhysicsBody::SetRotationalVelocity(float velocity)
@@ -174,16 +170,21 @@ namespace FusionEngine
 		return m_UserData;
 	}
 
+	void FusionPhysicsBody::SetCollisionCallback(const CollisionCallback &method)
+	{
+		m_CollisionResponse = method;
+	}
+
 	void FusionPhysicsBody::CollisionResponse(FusionPhysicsBody *other)
 	{
 		if (m_CollisionResponse != 0)
-			(*m_CollisionResponseother)(other);
+			m_CollisionResponse(other, CL_Vector2::ZERO);
 	}
 
 	void FusionPhysicsBody::CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point)
 	{
 		if (m_CollisionResponse != 0)
-			(*m_CollisionResponse)(other, collision_point);
+			m_CollisionResponse(other, collision_point);
 	}
 
 	const CL_Vector2 &FusionPhysicsBody::GetPosition() const
@@ -191,9 +192,14 @@ namespace FusionEngine
 		return m_Position;
 	}
 
-	const CL_Point &FusionPhysicsBody::GetPositionPoint() const
+	CL_Point FusionPhysicsBody::GetPositionPoint() const
 	{
 		return CL_Point(m_Position.x, m_Position.y);
+	}
+
+	const CL_Vector2 &FusionPhysicsBody::GetForce() const
+	{
+		return m_AppliedForce;
 	}
 
 	const CL_Vector2 &FusionPhysicsBody::GetAcceleration() const
@@ -204,6 +210,11 @@ namespace FusionEngine
 	const CL_Vector2 &FusionPhysicsBody::GetVelocity() const
 	{
 		return m_Velocity;
+	}
+
+	float FusionPhysicsBody::GetFrictionConstant() const
+	{
+		return m_FrictionConst;
 	}
 
 	float FusionPhysicsBody::GetRotationalVelocity() const

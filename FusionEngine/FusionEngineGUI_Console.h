@@ -32,14 +32,13 @@
 #include "FusionEngineGUI.h"
 #include "FusionInputHandler.h"
 
-#include <CEGUI/CEGUI.h>
 
 namespace FusionEngine
 {
 
 	/*!
 	 * \brief
-	 * Wrapper for CEGUI - for "FusionEngine", the gameplay portion of fusion.
+	 * Displays and runs a console
 	 */
 	class GUI_Console : public GUI
 	{
@@ -59,6 +58,32 @@ namespace FusionEngine
 
 		//! Unbinds
 		void CleanUp();
+
+		//! Runs on enter key presses to execute commands
+		bool onEditBoxAccepted(const CEGUI::EventArgs& e);
+
+		//! Runs on key up to scroll the history
+		bool onEditBoxKeyUp(const CEGUI::EventArgs &e);
+
+	private:
+		//! The current index in the history buffer.
+		int m_HistoryPos;
+		//! The raw history (for using up to enter previous commands)
+		std::vector<CEGUI::String> m_History;
+
+		//! True if recent is in history.
+		/*!
+		 * This gets set to true if the last edited text in the command box has been
+		 * added to the history - i.e. the user scrolled up while they were typing it.
+		 */
+		bool m_RecentInHistory;
+
+		//! Pointer to the root window for convenience.
+		CEGUI::Window *m_Wind;
+		//! Pointer to the command editbox for convenience.
+		CEGUI::Editbox *m_EditBox;
+		//! Pointer to the history multi-line editbox for convenience.
+		CEGUI::MultiLineEditbox *m_HistoryBox;
 
 	};
 

@@ -29,8 +29,6 @@
 
 #include "FusionEngineCommon.h"
 
-#include <CEGUI/CEGUI.h>
-
 namespace Fusion
 {
 
@@ -42,10 +40,10 @@ namespace Fusion
 	{
 	public:
 		//! Basic constructor.
-		FusionGUI();
+		FusionGUI() {}
 
 		//! Destructor
-		virtual ~FusionGUI();
+		virtual ~FusionGUI() {}
 
 	protected:
 		//! The default scheme file to load

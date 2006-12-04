@@ -17,15 +17,17 @@ FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::str
 }
 
 FusionNetworkClient::FusionNetworkClient(const std::string &host, const std::string &port, ClientOptions *options)
-: FusionNetworkGeneric(host, port)
+: FusionNetworkGeneric(host, port), m_Options(options)
 {
+	unsigned short local_port = options->NetworkOptions.LocalPort;
+
 	m_RakClient = RakNetworkFactory::GetRakClientInterface();
 	m_RakClient->Connect(
 		host.c_str(),
 		atoi(port.c_str()),
-		atoi(port.c_str()), 0, 0);
+		local_port, 0, 0);
 
-	// Required for timestamps (it should be on by default anyway)
+	// Required for timestamps (it should be on by default anyway, so JIC)
 	m_RakClient->StartOccasionalPing();
 }
 

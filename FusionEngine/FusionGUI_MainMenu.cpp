@@ -7,15 +7,11 @@
 #include "FusionGUI_Options.h"
 #include "FusionGame.h"
 
-/// CEGUI
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-
 using namespace Fusion;
 
 FusionGUI_MainMenu::FusionGUI_MainMenu()
 {
-    m_CurrentScheme = DefaultScheme;
+  m_CurrentScheme = DefaultScheme;
 	m_CurrentLayout = "MainMenu";
 }
 
@@ -24,7 +20,7 @@ FusionGUI_MainMenu::FusionGUI_MainMenu(FusionEngine::ClientOptions *clientopts, 
 m_ServerOpts(serveropts)
 {
 	m_CurrentScheme = DefaultScheme;
-	m_CurrentLayout = "OptionsMenu";
+	m_CurrentLayout = "MainMenu";
 }
 
 bool FusionGUI_MainMenu::Initialise()

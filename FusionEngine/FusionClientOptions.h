@@ -48,6 +48,9 @@ namespace FusionEngine
 		//! Maximum messages per second (how oftern to send / receive states)
 		unsigned int MaxMessageRate;
 
+		//! The local port (to connect from)
+		unsigned short LocalPort;
+
 	};
 
 	/*!

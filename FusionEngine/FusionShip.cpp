@@ -59,6 +59,9 @@ FusionShip::FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode 
 
 	/// Body
 	m_PhysicalBody = body;
+	// Pass the physical body the collision callback
+	body->SetCollisionCallback(boost::bind(&FusionShip::CollisionResponse, this, _1, _2));
+	/*CreateCCB<FusionShip>(ship, &FusionShip::CollisionResponse);*/
 
 	/// Node
 	m_Node = node;
@@ -181,4 +184,14 @@ const FusionPhysicsBody *FusionShip::GetPhysicalBody() const
 void FusionShip::RevertToInitialState()
 {
 	m_CurrentState = m_InitialState;
+}
+
+void FusionShip::CollisionResponse(const FusionEngine::FusionPhysicsBody *other, const CL_Vector2 &collision_point)
+{
+	if (collision_point != CL_Vector2::ZERO)
+		// We'd better hope the point given is accurate!
+		m_PhysicalBody->_setPosition(collision_point);
+
+	//m_PhysicalBody->_setForce(CL_Vector2::ZERO);
+	m_PhysicalBody->ApplyForce(-m_PhysicalBody->GetVelocity());
 }
