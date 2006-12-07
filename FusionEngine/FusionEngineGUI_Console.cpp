@@ -1,6 +1,9 @@
 
 #include "FusionEngineGUI_Console.h"
 
+/// Fusion
+#include "FusionConsole.h"
+
 
 namespace FusionEngine
 {
@@ -22,6 +25,9 @@ namespace FusionEngine
 			);
 	}
 
+	/////////////////
+	/// Public
+
 	bool GUI_Console::Initialise()
 	{
 		// Stops the input manager from trying to gather player inputs
@@ -39,6 +45,9 @@ namespace FusionEngine
 			winMgr.getWindow("Console/Wind/Editbox"))->subscribeEvent(
 			Editbox::EventTextAccepted,
 			Event::Subscriber(&GUI_Console::onEditBoxAccepted, this));
+
+		// Connect to the newline signal from the console
+		m_Slots.connect(Console::getSingleton().OnNewLine, this, &GUI_Console::onConsoleNewLine);
 
 		// Call base function (to init KB/Mouse handling)
 		return GUI::Initialise();
@@ -72,14 +81,10 @@ namespace FusionEngine
 			// Reset history position
 			m_HistoryPos = m_History.size();
 
-			// Append newline to this entry
-			edit_text += '\n';
-			// Append new text to history output
-			m_HistoryBox->setText(m_HistoryBox->getText() + edit_text);
-			// Scroll to bottom of history output
-			m_HistoryBox->setCaratIndex(static_cast<size_t>(-1));
-			// Erase text in text entry box.
-			m_EditBox->setText("");
+			// Put the text in the display
+			enterText(edit_text);
+
+			Console::getSingleton().Add(
 
 			// Something has been entered into the history, so even if the
 			//  user has been scrolling up with un-submitted text in the editbox,
@@ -164,6 +169,28 @@ namespace FusionEngine
 		}
 
 		return true;
+	}
+
+	void GUI_Console::onConsoleNewLine(const std::string &data)
+	{
+	}
+
+	/////////////////
+	/// Private
+
+	void GUI_Console::enterText(const CEGUI::String &text)
+	{
+		if (!text.empty())
+		{
+			// Append newline to this entry
+			text += '\n';
+			// Append new text to history output
+			m_HistoryBox->setText(m_HistoryBox->getText() + edit_text);
+			// Scroll to bottom of history output
+			m_HistoryBox->setCaratIndex(static_cast<size_t>(-1));
+			// Erase text in text entry box.
+			m_EditBox->setText("");
+		}
 	}
 
 }

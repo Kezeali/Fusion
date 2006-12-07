@@ -39,8 +39,8 @@
 #include "FusionError.h"
 
 /// RakNet
-#include "../RakNet/RakNetworkFactory.h"
-#include "../RakNet/RakPeerInterface.h"
+#include <RakNet/RakNetworkFactory.h>
+#include <RakNet/RakPeerInterface.h>
 
 namespace FusionEngine
 {
@@ -50,12 +50,11 @@ namespace FusionEngine
 	 * State to be run when packages should be syncronised.
 	 *
 	 * PackSyncClientState runs a client Pack syncroniser. This class
-	 * acts as a wrapper to PackSyncClient and creats a new connection so it
+	 * creats a new connection so it
 	 * can connect to a seperate dedicated File sync server, and so
 	 * as to not interfere with system/gameplay messages (though it usually
 	 * runs before anything else, so this may be a non-issue...)
 	 *
-	 * \todo Remove RakNet from the SVN, the lib is too big
 	 * \todo CRC verification.
 	 */
 	class PackSyncClientState : public FusionState
@@ -65,6 +64,26 @@ namespace FusionEngine
 		PackSyncClientState(const std::string &host, const std::string &port);
 		//! Deconstructor
 		~PackSyncClientState();
+
+	public:
+		class DispFileReceived : public FileListTransferCBInterface
+		{
+		public:
+			void OnFile(
+				unsigned fileIndex,
+				char *filename,
+				unsigned char *fileData,
+				unsigned compressedTransmissionLength,
+				unsigned finalDataLength,
+				unsigned short setID,
+				unsigned setCount,	
+				unsigned setTotalCompressedTransmissionLength,
+				unsigned setTotalFinalLength)
+			{
+				char *buffer;
+				sprintf(buffer, "%i. %i/%i %s %ib->%ib / %ib->%ib\n", setID, fileIndex, setCount, filename, compressedTransmissionLength, finalDataLength, setTotalCompressedTransmissionLength, setTotalFinalLength);
+			}
+		} m_TransferCallback;
 
 	public:
 		//! Initialises the link and GUI

@@ -183,6 +183,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FrontendGUI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FrontendMenu_MainMenu.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FrontendMenu_Options.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Fusion.h"
 				>
 			</File>
@@ -199,6 +211,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionConsole.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
@@ -208,18 +224,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionEngineCommon.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineGUI.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineGUI_Console.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineGUI_Options.h"
 				>
 			</File>
 			<File
@@ -247,14 +251,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionGUI_MainMenu.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionGUI_Options.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionInputData.h"
 				>
 			</File>
@@ -275,7 +271,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLogger.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionMap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionMenu_Console.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionMenu_Options.h"
 				>
 			</File>
 			<File
@@ -593,10 +601,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FileVerifier.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionArchive.cpp"
 				>
 			</File>
@@ -605,7 +609,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionClientLoadingState.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionClientOptions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionConsole.cpp"
 				>
 			</File>
 			<File
@@ -669,7 +681,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionLoadingState.cpp"
+				RelativePath=".\FusionLogger.cpp"
 				>
 			</File>
 			<File
@@ -754,6 +766,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionScriptingEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionServerLoadingState.cpp"
 				>
 			</File>
 			<File

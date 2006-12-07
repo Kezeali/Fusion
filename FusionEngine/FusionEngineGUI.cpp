@@ -8,8 +8,16 @@ const std::string GUI::DefaultLayout = "MainMenu";
 
 GUI::GUI()
 : m_CurrentScheme(DefaultScheme),
-m_CurrentLayout(DefaultLayout)
+m_CurrentLayout(DefaultLayout),
+m_OwnRenderer(false)
 {
+	// Create a new system if need be.
+	if (!CEGUI::System::getSingletonPtr())
+	{
+		CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
+		new CEGUI::System(renderer);
+		m_OwnRenderer = true;
+	}
 }
 
 bool GUI::Initialise()

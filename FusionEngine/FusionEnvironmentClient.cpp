@@ -19,7 +19,6 @@ ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::str
 m_Port(port),
 m_Options(options)
 {
-	new ScriptingEngine();
 	new ResourceLoader();
 	new FusionInput(m_Options); // initialises the fusion input singleton
 	m_NetworkManager = new FusionNetworkClient(hostname, port, options);
@@ -28,7 +27,6 @@ m_Options(options)
 
 ClientEnvironment::~ClientEnvironment()
 {
-	delete ScriptingEngine::getSingletonPtr();
 	delete FusionInput::getSingletonPtr();
 	delete m_NetworkManager;
 	delete m_Scene;
@@ -168,25 +166,53 @@ void ClientEnvironment::CreateShip(const ShipState &state)
 
 void ClientEnvironment::send()
 {
-	// Send local ship state
-	for (unsigned int i =0; i<m_Options->NumPlayers; i++)
+	// Message per second limiter:
+	if (CL_System::get_time() > m_MessageDelay)
 	{
-		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[m_PlayerIDs[i]]->GetShipState(), m_PlayerIDs[i]
-			);
-		m_NetworkManager->QueueMessage(m, CID_GAME);
+		// It's been one second, so allow more messages in the next second:
+		m_MessageDelay = CL_System::get_time() + 1000;
+		m_MessagesSent = 0;
 	}
-	// And local input state
-	for (unsigned int i =0; i<m_NumPlayers; i++)
+	// Don't send more messages than the client's network settings allow
+	if (m_MessagesSent < m_Options->mNetworkOptions.mMaxMessageRate)
 	{
-		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[m_PlayerIDs[i]]->GetInputState(), m_PlayerIDs[i]
-			);
-		m_NetworkManager->QueueMessage(m, CID_GAME);
+
+		for (unsigned int i =0; i<m_Options->NumPlayers; i++)
+		{
+			// Send local ship states
+			//  Check whether an update is necessary for the current ship:
+			if (m_Ships[m_PlayerIDs[i]]->StateHasChanged())
+			{
+				// _stateSynced() makes StateHasChanged() return false until the state
+				//  has actually changed from what it is now:
+				m_Ships[m_PlayerIDs[i]]->_stateSynced(); 
+				m_MessagesSent++;
+
+				FusionMessage *m = MessageBuilder::BuildMessage(
+					m_Ships[m_PlayerIDs[i]]->GetShipState(), m_PlayerIDs[i]
+				);
+				m_NetworkManager->QueueMessage(m, CID_GAME);
+			}
+
+			// ... And local input states
+			//  Check whether an update is necessary for the current ship:
+			if (m_Ships[m_PlayerIDs[i]]->InputHasChanged())
+			{
+				m_Ships[m_PlayerIDs[i]]->_inputSynced(); 
+				m_MessagesSent++;
+
+				FusionMessage *m = MessageBuilder::BuildMessage(
+					m_Ships[m_PlayerIDs[i]]->GetInputState(), m_PlayerIDs[i]
+				);
+				m_NetworkManager->QueueMessage(m, CID_GAME);
+			}
+		}
+		
 	}
 
-	//! \todo chat
-	//m_NetworkManager->QueueMessage(m, CID_CHAT);
+	//! \todo GUI_Chat
+	// In GUI_Chat: (pass the network man to GUI_Chat on construction)
+	//  m_NetworkManager->QueueMessage(m, CID_CHAT);
 }
 
 bool ClientEnvironment::receive()

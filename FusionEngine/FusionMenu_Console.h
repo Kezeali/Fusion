@@ -29,9 +29,11 @@
 
 #include "FusionEngineCommon.h"
 
+/// Inherited
 #include "FusionEngineGUI.h"
-#include "FusionInputHandler.h"
 
+/// Fusion
+#include "FusionInputHandler.h"
 
 namespace FusionEngine
 {
@@ -65,6 +67,12 @@ namespace FusionEngine
 		//! Runs on key up to scroll the history
 		bool onEditBoxKeyUp(const CEGUI::EventArgs &e);
 
+		//! Gathers data added to the console from other sources
+		void onConsoleNewLine(const std::string &data);
+
+	private:
+		void enterText(const CEGUI::String &text);
+
 	private:
 		//! The current index in the history buffer.
 		int m_HistoryPos;
@@ -84,6 +92,8 @@ namespace FusionEngine
 		CEGUI::Editbox *m_EditBox;
 		//! Pointer to the history multi-line editbox for convenience.
 		CEGUI::MultiLineEditbox *m_HistoryBox;
+
+		CL_Slot m_OnNewLineSlot;
 
 	};
 

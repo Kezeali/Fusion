@@ -122,6 +122,18 @@ namespace FusionEngine
 		//! Player IDs of the local players
 		LocalPlayerIdList m_PlayerIDs;
 
+		//! Timer for message rate limiting
+		/*!
+		 * Each time a batch of messages is queued, this will be set to the
+		 * current time + one sec so that the Messages/second options can
+		 * be obeyed.
+		 */
+		unsigned int m_MessageDelay;
+
+		//! Gameplay Messages queued in the last second
+		unsigned int m_MessagesSent;
+
+	private:
 		//! Implimentation of GeneircEnvironment#Send
 		void send();
 		//! Implimentation of GeneircEnvironment#Receive

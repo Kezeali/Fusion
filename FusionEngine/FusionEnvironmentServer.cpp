@@ -96,25 +96,54 @@ void ServerEnvironment::CreateShip(const ShipState &state)
 
 void ServerEnvironment::send()
 {
-	// Send all ship states
-	for (unsigned int i =0; i<m_NumPlayers; i++)
+	// Message per second limiter:
+	if (CL_System::get_time() > m_MessageDelay)
 	{
-		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[i]->GetShipState(), i
-			);
-		m_NetworkManager->QueueMessage(m, CID_GAME);
+		// It's been one second, so allow more messages in the next second:
+		m_MessageDelay = CL_System::get_time() + 1000;
+		m_MessagesSent = 0;
 	}
-	// And local input state
-	for (unsigned int i =0; i<m_NumPlayers; i++)
+	// Don't send more messages than the client's network settings allow
+	if (m_MessagesSent < m_Options->mNetworkOptions.mMaxMessageRate)
 	{
-		FusionMessage *m = FusionMessageBuilder::BuildMessage(
-			m_Ships[i]->GetInputState(), i
-			);
-		m_NetworkManager->QueueMessage(m, CID_GAME);
+
+		ShipList::iterator it = m_Ships.begin();
+		for (; it != m_Ships.end; ++it)
+		{
+			// Send all ship states
+			//  Check whether an update is necessary for the current ship:
+			if ((*it)->StateHasChanged())
+			{
+				// _stateSynced() makes StateHasChanged() return false until the state
+				//  has actually changed from what it is now:
+				(*it)->_stateSynced(); 
+				m_MessagesSent++;
+
+				FusionMessage *m = MessageBuilder::BuildMessage(
+					(*it)->GetShipState(), (*it)->GetShipState().PID
+					);
+				m_NetworkManager->QueueMessage(m, CID_GAME);
+			}
+
+			// ... And all input states
+			//  Check whether an update is necessary for the current ship:
+			if ((*it)->InputHasChanged())
+			{
+				(*it)->_inputSynced(); 
+				m_MessagesSent++;
+
+				FusionMessage *m = MessageBuilder::BuildMessage(
+					(*it)->GetInputState(), (*it)->GetShipState().PID
+					);
+				m_NetworkManager->QueueMessage(m, CID_GAME);
+			}
+		}
+
 	}
 
-	//! \todo chat
-	//m_NetworkManager->QueueMessage(m, CID_CHAT);
+	//! \todo GUI_Chat
+	// In GUI_Chat: (pass the network man to GUI_Chat on construction)
+	//  m_NetworkManager->QueueMessage(m, CID_CHAT);
 }
 
 bool ServerEnvironment::receive()

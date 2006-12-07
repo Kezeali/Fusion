@@ -1,23 +1,38 @@
 
 #include "FusionServerOptions.h"
 
-using namespace FusionEngine;
-
-ServerOptions::ServerOptions()
+namespace FusionEngine
 {
-}
 
-bool ServerOptions::Save()
-{
-	return true;
-}
+	ServerOptions::ServerOptions()
+		: mMaxClients(32),
+		mNetDelay(0),
+		mBitmaskResolution(100),
+		mMaxHealth(100)
+	{
+	}
 
-bool ServerOptions::SaveToFile(const std::string &filename)
-{
-	return true;
-}
+	ServerOptions::ServerOptions(const std::string &filename)
+	{
+		ServerOptions();
 
-bool ServerOptions::LoadFromFile(const std::string &filename)
-{
-	return true;
+		if (!LoadFromFile(filename))
+			SaveToFile(filename);
+	}
+
+	bool ServerOptions::Save()
+	{
+		return true;
+	}
+
+	bool ServerOptions::SaveToFile(const std::string &filename)
+	{
+		return true;
+	}
+
+	bool ServerOptions::LoadFromFile(const std::string &filename)
+	{
+		return true;
+	}
+
 }

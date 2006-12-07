@@ -68,6 +68,9 @@ namespace FusionEngine
 	class FusionStatePackSync;
 	class FusionStateMessage;
 	class StateManager;
+	class Script;
+	class ScriptingEngine;
+	class Archive;
 
 	// Global typedefs
 	typedef unsigned short PlayerInd; // ...

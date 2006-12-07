@@ -66,13 +66,13 @@ bool FusionNetworkGeneric::handleRakPackets(Packet *p)
 	unsigned char packetId = NetUtils::GetPacketIdentifier(p);
 	switch (packetId)
 	{
-		// Give the server env any messages it should handle.
+		// Grab any event's that should be handled
 	case ID_NEW_INCOMING_CONNECTION:
 	case ID_DISCONNECTION_NOTIFICATION:
-		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, 0));
+		m_Queue->_addEvent(MessageBuilder::BuildMessage(p, 0));
 		return true;
-		break;
+	case 
 	}
 
-	return false;
+	return true;
 }

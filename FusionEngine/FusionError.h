@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_ErrorTypes
-#define Header_FusionEngine_ErrorTypes
+#ifndef Header_FusionEngine_Error
+#define Header_FusionEngine_Error
 
 #if _MSC_VER > 1000
 #pragma once
@@ -32,19 +32,31 @@
 namespace FusionEngine
 {
 
-	//! Message passed to FusionGame when an unexpected quit event arises
+	//! Encapsulates an fatal-error message.
 	/*!
-	 * The primary "quit event" is a state update returning false.
+	 * Used primarily by Colsole, Logger, and StateManager.  This is only used
+	 * for fatal errors, where FusionGame will have to show something to the
+	 * user.
+	 *
+	 * \remarks
+	 * This is the message passed to FusionGame when an unexpected error arises,
+	 * which is usually when a state update returns false.
+	 * <br>
+	 * REMEMBER: Exceptions are for programming mistakes, Errors are for user
+	 * mistakes.
 	 */
 	class Error
 	{
 	public:
-		//! Types of errors that can cause a quit event
+		//! Types of errors
 		enum ErrorType
 		{
 			NONE,
 			UNEXPECTEDDISCONNECT,
-			BANNED
+			BANNED,
+			PACKSYNC,
+			PACKVERIFY,
+			PACKLOAD
 		};
 	public:
 		//! Basic constructor

@@ -30,26 +30,39 @@
 #include "FusionEngineCommon.h"
 
 #include "FusionInputMap.h"
-#include "FusionPlayerOptions.h"
 
 namespace FusionEngine
 {
-	//! Max players per client
+	//! Max local (split-screen) players per client
 	const unsigned int g_MaxPlayers = 4;
 
-	//! Settings for network related stuff.
-	class NetworkSettings
+	//! Settings specfic to each player
+	struct PlayerOptions
 	{
-	public:
-		//! Constructor
-		NetworkSettings();
+		//! Constructor.
+		PlayerOptions()
+			: mHUD(true)
+		{}
 
-	public:
-		//! Maximum messages per second (how oftern to send / receive states)
-		unsigned int MaxMessageRate;
+		//! Display the HUD for this player
+		bool mHUD;
+	};
+
+	//! Settings for network related stuff.
+	struct NetworkSettings
+	{
+		//! Constructor
+		NetworkSettings()
+			: mMaxMessageRate(100),
+			mLocalPort(1337)
+		{
+		}
+
+		//! Maximum messages per second
+		unsigned int mMaxMessageRate;
 
 		//! The local port (to connect from)
-		unsigned short LocalPort;
+		unsigned short mLocalPort;
 
 	};
 
@@ -62,26 +75,32 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		ClientOptions();
+		//! Constructor +file
+		ClientOptions(const std::string &filename);
 
 	public:
-		//! Number of local players
-		unsigned int NumPlayers;
-
 		//! General Player options list
 		typedef std::vector<PlayerOptions> PlayerOptionsList;
 		//! Player Input mappings list
 		typedef std::vector<PlayerInputMap> PlayerInputsList;
 
+	public:
+		//! Number of local players
+		unsigned int mNumPlayers;
+
+		//! True if console history should be logged.
+		bool mConsoleLogging;
+
 		//! General player options (other than inputs)
-		PlayerOptionsList PlayerOptions;
+		PlayerOptionsList mPlayerOptions;
 
 		//! Player input mappings
-		PlayerInputsList PlayerInputs;
+		PlayerInputsList mPlayerInputs;
 		//! Global input mappings
-		GlobalInputMap GlobalInputs;
+		GlobalInputMap mGlobalInputs;
 
 		//! Nework options
-		NetworkSettings NetworkOptions;
+		NetworkSettings mNetworkOptions;
 
 		//! Set the controls for defaults
 		void DefaultPlayerControls(PlayerInd player);

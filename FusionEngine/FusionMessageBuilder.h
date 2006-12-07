@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionMessageBuilder
-#define Header_FusionEngine_FusionMessageBuilder
+#ifndef Header_FusionEngine_MessageBuilder
+#define Header_FusionEngine_MessageBuilder
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,7 +34,7 @@
 #include "FusionInputData.h"
 #include "FusionProjectileState.h"
 
-#include "../RakNet/NetworkTypes.h"
+#include <RakNet/NetworkTypes.h>
 
 namespace FusionEngine
 {
@@ -45,7 +45,7 @@ namespace FusionEngine
 	 * \todo impliement a GenericEnviroment class (for Client and Server env to inherit from)
 	 * and move the functionality from this class there.
 	 */
-	class FusionMessageBuilder
+	class MessageBuilder
 	{
 	public:
 		//! Builds a message from a ShipState (usually outgoing)

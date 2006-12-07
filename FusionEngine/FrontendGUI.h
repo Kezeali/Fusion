@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_GUI
-#define Header_FusionEngine_GUI
+#ifndef Header_Fusion_FusionGUI
+#define Header_Fusion_FusionGUI
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,22 +29,35 @@
 
 #include "FusionEngineCommon.h"
 
-/// Inherited
-#include "FusionState.h"
-
-
-namespace FusionEngine
+namespace Fusion
 {
 
 	/*!
 	 * \brief
-	 * Wrapper for CEGUI - for "FusionEngine", the gameplay portion of fusion.
+	 * Wrapper for CEGUI - used by the main menu
 	 */
-	class GUI : public FusionState
+	class FrontendGUI
 	{
 	public:
 		//! Basic constructor.
-		GUI();
+		FusionGUI()
+			: m_OwnRenderer(false)
+		{
+			// Create a new system if need be.
+			if (!CEGUI::System::getSingletonPtr())
+			{
+				CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
+				new CEGUI::System(renderer);
+				m_OwnRenderer = true;
+			}
+		}
+		//! Destructor
+		virtual ~FusionGUI()
+		{
+			// Delete the system if it was created by this object
+			if (m_OwnRenderer)
+				delete CEGUI::System::getSingletonPtr();
+		}
 
 	protected:
 		//! The default scheme file to load
@@ -62,9 +75,6 @@ namespace FusionEngine
 		//! Draws the gui
 		virtual void Draw();
 
-		//! Unbinds
-		virtual void CleanUp();
-
 	protected:
 		//! Name of the config file for the skin
 		std::string m_CurrentScheme;
@@ -74,7 +84,6 @@ namespace FusionEngine
 		//! Holds events
 		CL_SlotContainer m_Slots;
 
-	public:
 		//! Tells CEGUI when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &key);
 		//! Tells CEGUI when a mouse button is released

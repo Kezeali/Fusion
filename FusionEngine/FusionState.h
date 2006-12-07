@@ -36,6 +36,12 @@
 namespace FusionEngine
 {
 
+	//! Self managing state pointer
+	/*!
+	 * Use it!
+	 */
+	typedef CL_SharedPtr<FusionState> SharedState;
+
 	/*!
 	 * \brief
 	 * The abstract base for FusionStates.

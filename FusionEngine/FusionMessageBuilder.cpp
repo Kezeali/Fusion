@@ -1,21 +1,14 @@
 
-#include "FusionMessageBuilder.h"
+#include "MessageBuilder.h"
 
 /// Fusion
 #include "FusionNetworkTypes.h"
 #include "FusionNetworkUtils.h"
 
-/// RakNet
-#include "../RakNet/PacketEnumerations.h"
-
-//! \todo for some reason boost's serialization doesn't work with RakNet, so we might
-//! as well remove the dependancy on boost altogether.
-
-//#include <boost/archive/text_iarchive.hpp>
 
 using namespace FusionEngine;
 
-FusionMessage *FusionMessageBuilder::BuildMessage(const ShipState &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const ShipState &input, PlayerInd playerid)
 {
 	/*
 	// serialise the input and push it into the stream via boost::archive
@@ -56,7 +49,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const ShipState &input, Player
 	return m;
 }
 
-FusionMessage *FusionMessageBuilder::BuildMessage(const FusionEngine::ProjectileState &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const FusionEngine::ProjectileState &input, PlayerInd playerid)
 {
 	RakNet::BitStream out_stream;
 
@@ -83,7 +76,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const FusionEngine::Projectile
 	return m;
 }
 
-FusionMessage *FusionMessageBuilder::BuildMessage(const ShipInput &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const ShipInput &input, PlayerInd playerid)
 {
 	RakNet::BitStream out_stream;
 
@@ -109,7 +102,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(const ShipInput &input, Player
 	return m;
 }
 
-FusionMessage *FusionMessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
 {
 	FusionMessage *m;
 	unsigned char packetid = NetUtils::GetPacketIdentifier(packet);
@@ -166,7 +159,7 @@ FusionMessage *FusionMessageBuilder::BuildMessage(Packet *packet, PlayerInd play
 	return m;
 }
 
-FusionMessage *FusionMessageBuilder::BuildEventMessage(Packet *packet, PlayerInd playerind)
+FusionMessage *MessageBuilder::BuildEventMessage(Packet *packet, PlayerInd playerind)
 {
 	unsigned char type = NetUtils::GetPacketIdentifier(packet);
 

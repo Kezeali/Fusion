@@ -43,21 +43,28 @@ namespace FusionEngine
 	 * + MENU. Some states also have their own state managers, for instance GAMEPLAY has a
 	 * state manager for switching between NORMAL, PAUSED, and RESULT states.
 	 * <br>
-	 * I use shared pointers here in the hopes that it will prevent states from causing
-	 * memory leaks if they are 'lost' (added incorrectly for example.) and so that
-	 * they can be removed from the list without being deleted immeadiately.
+	 * When adding states, the SharedPtr. forms of the methods are preffered, as
+	 * that way I can trust you to not delete them! 
+	 *
+	 * \remarks
+	 * I use shared pointers here in the hopes that it will prevent states from 
+	 * causing memory leaks if they are 'lost' (added incorrectly for example.) and so 
+	 * that they can be removed from the list without being deleted immeadiately.
+	 *
 	 */
 	class StateManager
 	{
 	public:
-		//! Self managing state pointer
-		typedef CL_SharedPtr<FusionState> SharedState;
 		//! List of states
 		typedef std::vector<SharedState> StateList;
+		//! Queue of states
+		typedef std::deque<SharedState> StateQueue;
 
 	public:
 		//! Basic constructor
 		StateManager();
+		//! Destructor
+		~StateManager();
 
 	public:
 		//! Removes all other states and adds the state specified.
@@ -67,6 +74,13 @@ namespace FusionEngine
 		 */
 		bool SetExclusive(FusionState *state);
 
+		//! Adds the next state in the queue to the execution list
+		/*!
+		 * \retval True if the state initialised successfully
+		 * \retval False otherwise
+		 */
+		bool RunNextQueueState();
+
 		//! Adds the state specified
 		/*!
 		 * \retval True if the state initialised successfully
@@ -74,11 +88,39 @@ namespace FusionEngine
 		 */
 		bool AddState(FusionState *state);
 
+		//! Adds the specified shared ptr. to a state
+		/*!
+		 * \retval True if the state initialised successfully
+		 * \retval False otherwise
+		 */
+		bool AddState(SharedState state);
+
+		//! Adds the state specified to the queue
+		/*!
+		 * When all currently running states are complete, this state will run.
+		 */
+		void AddStateToQueue(FusionState *state);
+
+		//! Adds the specified shared ptr. to a state, to the queue
+		/*!
+		 * When all currently running states are complete, this state will run.
+		 */
+		void AddStateToQueue(SharedState state);
+
 		//! Removes the state specified
 		void RemoveState(FusionState *state);
 
-		//! Removes all states
+		//! Removes the state specified from the queue
+		void RemoveStateFromQueue(FusionState *state);
+
+		//! Removes all states (including queued)
 		void Clear();
+
+		//! Removes active states
+		void ClearActive();
+
+		//! Removes queued states
+		void ClearQueue();
 
 		//! Updates all states
 		bool Update(unsigned int split);
@@ -94,6 +136,8 @@ namespace FusionEngine
 	protected:
 		//! List of all running states
 		StateList m_States;
+		//! List of all not-running states
+		StateQueue m_Queued;
 		//! Set to false if when FusionState#KeepGoing() returns false.
 		bool m_KeepGoing;
 		//! Last error

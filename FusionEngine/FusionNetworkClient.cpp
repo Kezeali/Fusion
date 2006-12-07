@@ -46,18 +46,23 @@ void FusionNetworkClient::run()
 	// Receive
 	Packet *p = m_RakClient->Receive();
 
-	// We don't want the client to get stuck updating if there's tonnes of packets:
-	unsigned int i_time = CL_System::get_time();
-	unsigned int d_time = 0;
-	while (p && d_time < 100);
-	{
-		bool sysPacket = handleRakPackets(p);
+	//unsigned int e_time = CL_System::get_time() + m_Options->mNetworkOptions.mNetDelay;
+	// The same e_time applies to both receive and send
 
-		// If it wasn't a rakNet packet, we can deal with it
-		if (!sysPacket)
+	 //&& CL_System::get_time() < e_time
+	while (p)
+	{
+		// Queue packets that should be considered events
+		bool handle = !handleRakPackets(p);
+
+		// Don't handle non-fusion packets (might be file transfer packets).
+		handle = NetUtils::IsFusionPacket(p);
+
+		// If it wasn't queued as an event, we can deal with it.
+		if (handle)
 		{
 			// playerid is set to 0, as only the server needs to know that
-			FusionMessage *m = FusionMessageBuilder::BuildMessage(p, 0);
+			FusionMessage *m = MessageBuilder::BuildMessage(p, 0);
 			m_Queue->_addInMessage(m, m->GetChannel());
 		}
 
@@ -65,8 +70,6 @@ void FusionNetworkClient::run()
 
 		// Check for more packets
 		p = m_RakClient->Receive();
-
-		d_time = CL_System::get_time() - i_time;
 	}
 
 	///////
@@ -75,9 +78,8 @@ void FusionNetworkClient::run()
 	{
 		FusionMessage *m = m_Queue->_getOutMessage(chan);
 
-		i_time = CL_System::get_time();
-		d_time = 0;
-		while (m > 0 && d_time < 100);
+		 //&& CL_System::get_time() < e_time
+		while (m)
 		{
 			// System messages - RELIABLE, HIGH_PRIORITY, no timestamps
 			if (m->GetChannel() == CID_SYSTEM)
@@ -92,10 +94,8 @@ void FusionNetworkClient::run()
 			if (m->GetChannel() == CID_CHAT)
 				m_RakClient->Send(m->GetTimedBitStream(), LOW_PRIORITY, RELIABLE, CID_CHAT);
 
-			// Check for more packets
-			p = m_RakClient->Receive();
-
-			d_time = CL_System::get_time() - i_time;
+			// Check for more messages
+			FusionMessage *m = m_Queue->_getOutMessage(chan);
 		}
 	}
 }
@@ -111,7 +111,7 @@ bool FusionNetworkClient::handleRakPackets(Packet *p)
 	case ID_NO_FREE_INCOMING_CONNECTIONS:
 	case ID_DISCONNECTION_NOTIFICATION:
 	case ID_CONNECTION_LOST:
-		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, 0));
+		m_Queue->_addEvent(MessageBuilder::BuildMessage(p, 0));
 		return true;
 		break;
 	}

@@ -33,6 +33,7 @@
 #include "FusionSingleton.h"
 
 /// Fusion
+#include "FusionScript.h"
 
 namespace FusionEngine
 {
@@ -72,7 +73,7 @@ namespace FusionEngine
 		//! Executes the given funcion in Script
 		/*!
 		 * If the Script is already registered, it's entire containing module
-		 * will be executed. The script / module will be built if nescissary.
+		 * will be executed. The script / module will be built if necessary.
 		 *
 		 * \param[in] script A loaded Script object 
 		 * \returns The exit status of the script
@@ -116,7 +117,7 @@ namespace FusionEngine
 		asIScriptEngine *m_asEngine;
 
 		//! Active contexts
-		std::vector<asIScriptContext> m_Contexts;
+		std::vector<asIScriptContext*> m_Contexts;
 
 	};
 

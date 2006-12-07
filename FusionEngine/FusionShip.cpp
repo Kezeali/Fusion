@@ -13,6 +13,8 @@
 using namespace FusionEngine;
 
 FusionShip::FusionShip()
+: m_StateChanged(true),
+m_InputChanged(true)
 {
 	/// Input
 	m_Input.pid = 0;
@@ -42,6 +44,8 @@ FusionShip::FusionShip()
 }
 
 FusionShip::FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node)
+: m_StateChanged(true),
+m_InputChanged(true)
 {
 	/// Input
 	m_Input.pid = initState.PID;
@@ -68,6 +72,8 @@ FusionShip::FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode 
 }
 
 FusionShip::FusionShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node)
+: m_StateChanged(true),
+m_InputChanged(true)
 {
 	/// Input
 	m_Input = initInput;
@@ -92,6 +98,8 @@ void FusionShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
 {
 	m_CurrentState.Velocity = velocity;
 
+	m_StateChanged = true;
+
 	if (physics)
 		m_PhysicalBody->_setVelocity(velocity);
 }
@@ -99,6 +107,8 @@ void FusionShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
 void FusionShip::SetPosition(const CL_Vector2 &position, bool physics)
 {
 	m_CurrentState.Position = position;
+
+	m_StateChanged = true;
 
 	m_Node->SetPosition(position);
 	if (physics)
@@ -109,6 +119,8 @@ void FusionShip::SetRotationalVelocity(float velocity, bool physics)
 {
 	m_CurrentState.RotationalVelocity = velocity;
 
+	m_StateChanged = true;
+
 	if (physics)
 		m_PhysicalBody->SetRotationalVelocity(velocity);
 }
@@ -116,6 +128,8 @@ void FusionShip::SetRotationalVelocity(float velocity, bool physics)
 void FusionShip::SetShipState(ShipState state)
 {
 	m_CurrentState = state;
+
+	m_StateChanged = true;
 	/*
 	m_CurrentState.Velocity = state.Velocity;
 	m_CurrentState.Position = state.Position;
@@ -136,6 +150,8 @@ void FusionShip::SetShipState(ShipState state)
 void FusionShip::SetInputState(ShipInput input)
 {
 	m_Input = input;
+
+	m_InputChanged = true;
 	/*
 	m_Input.thrust = input.thrust;
 	m_Input.left = input.left;

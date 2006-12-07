@@ -114,6 +114,36 @@ namespace FusionEngine
 		//! Self explainatory
 		const FusionPhysicsBody *GetPhysicalBody() const;
 
+		//! Returns true if the input have changed recently.
+		/*!
+		 * Returns true if the input data stored here has been changed since the last
+		 * call to _inputSynced().
+		 */
+		bool InputHasChanged() const;
+		//! Returns true if the state have changed recently.
+		/*!
+		 * Returns true if the state stored here has been changed since the last
+		 * call to _stateSynced().
+		 */
+		bool StateHasChanged() const;
+
+		//! Makes InputHasChanged return false.
+		/*!
+		 * This should be called after input data has been read from this 'ship'
+		 * (that is to say, this 'player data storeage location') so that no
+		 * unnecessary packets will be sent.
+		 *
+		 * \sa ClientEnvironment#send() | ServerEnvironment#send()
+		 */
+		bool _inputSynced() const;
+		//! Makes StateHasChanged return false.
+		/*!
+		 * This should be called after state data has been read from this 'ship'
+		 * (that is to say, this 'player data storeage location') so that no
+		 * unnecessary packets will be sent.
+		 */
+		bool _stateSynced() const;
+
 		//! [depreciated] You know it
 		//std::string GetShipResource() const;
 
@@ -151,6 +181,11 @@ namespace FusionEngine
 		ShipState m_CurrentState;
 		//! Default (initial) spacial attributes
 		ShipState m_InitialState;
+
+		//! True if the input state has been modified
+		bool m_InputChanged;
+		//! True if the ShipState has been modified
+		bool m_StateChanged;
 	};
 
 }

@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_Fusion_FusionGUI
-#define Header_Fusion_FusionGUI
+#ifndef Header_FusionEngine_GUI
+#define Header_FusionEngine_GUI
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,21 +29,25 @@
 
 #include "FusionEngineCommon.h"
 
-namespace Fusion
+/// Inherited
+#include "FusionState.h"
+#include "FusionSingleton.h"
+
+namespace FusionEngine
 {
 
 	/*!
 	 * \brief
-	 * Wrapper for CEGUI (for the fusion frontend.)
+	 * Wrapper for CEGUI - for "FusionEngine", the gameplay portion of fusion.
 	 */
-	class FusionGUI
+	class GUI : public FusionState, Singleton<GUI>
 	{
 	public:
 		//! Basic constructor.
-		FusionGUI() {}
+		GUI();
 
 		//! Destructor
-		virtual ~FusionGUI() {}
+		~GUI();
 
 	protected:
 		//! The default scheme file to load
@@ -61,6 +65,9 @@ namespace Fusion
 		//! Draws the gui
 		virtual void Draw();
 
+		//! Unbinds
+		virtual void CleanUp();
+
 	protected:
 		//! Name of the config file for the skin
 		std::string m_CurrentScheme;
@@ -70,6 +77,7 @@ namespace Fusion
 		//! Holds events
 		CL_SlotContainer m_Slots;
 
+	public:
 		//! Tells CEGUI when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &key);
 		//! Tells CEGUI when a mouse button is released

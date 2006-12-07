@@ -10,11 +10,13 @@
 /// Inherited
 #include "FusionSingleton.h"
 
-// Fusion
+/// Fusion
 #include "FusionShipResource.h"
 #include "FusionLevelResource.h"
 #include "FusionWeaponResource.h"
-#include "FusionArchive.h"
+
+/// RakNet
+#include <RakNet/Bitstream.h>
 
 namespace FusionEngine
 {
@@ -28,11 +30,6 @@ namespace FusionEngine
 	public:
 		enum Type { Ship, Level, Weapon, FileNotFound, UnknownType };
 	};
-
-	//! Data (extracted from a Message) used to verify a package
-	struct PackageVerificationData
-	{
-		std::string filename;
 
 	/*!
 	 * \brief
@@ -88,10 +85,24 @@ namespace FusionEngine
 		 *
 		 * \returns
 		 * The PackageType of the package.
-		 * If the file isn't found it returns FileNotFound.
-		 * If the package is of unknown (invalid) type, it returns UnkownType.
+		 * \retval FileNotFound
+		 * If the file isn't found.
+		 * \retval UnknownType
+		 * If the package is of unknown (invalid) type.
 		 */
 		PackageType GetPackageType(const std::string &name);
+
+		//! Gets a verification bitstream for the given package.
+		/*!
+		 * Gets a bitstream which can be sent to a client (assuming the client
+		 * is in the Loading state) to make the client verify the package.
+		 *
+		 * \param[out] stream
+		 * The stream to write to.
+		 * \param[in] name
+		 * The file to verify.
+		 */
+		void GetVerification(RakNet::BitStream *stream, const std::string &name);
 
 		/*!
 		 * \brief
@@ -99,38 +110,10 @@ namespace FusionEngine
 		 *
 		 * Verifies the existance and crc of a package.
 		 *
-		 * \param stream
+		 * \param[in] stream
 		 * The VerifyPackage bitstream sent from the server.
 		 */
 		bool VerifyPackage(RakNet::BitStream *stream);
-		//bool VerifyPackage(const std::string &name, const boost::crc_32_type &crc, const std::string &path);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a ship package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Ships/");</code>
-		 * where Ships/ is the local ship package directory.
-		 */
-		//bool VerifyShip(const std::string &name, const boost::crc_32_type &crc);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a level package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Levels/");</code>
-		 * where Levels/ is the local level package directory.
-		 */
-		//bool VerifyLevel(const std::string &name, const boost::crc_32_type &crc);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a weapon package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Weapons/");</code>
-		 * where Weapons/ is the local weapons package directory.
-		 */
-		//bool VerifyWeapon(const std::string &name, const boost::crc_32_type &crc);
 
 		/*!
 		 * \brief
@@ -148,7 +131,6 @@ namespace FusionEngine
 
 		//! Loads the given level only if it has been verified.
 		bool LoadLevelVerified(const std::string &name);
-
 		/*!
 		 * \brief
 		 * Loads all packages previously verified.
@@ -269,5 +251,34 @@ namespace FusionEngine
 	};
 
 }
+
+		//bool VerifyPackage(const std::string &name, const boost::crc_32_type &crc, const std::string &path);
+		/*!
+		 * \brief
+		 * Verifies the existance and crc of a ship package.
+		 *
+		 * Shorthand for
+		 *  <code>VerifyPackage(name, crc, "Ships/");</code>
+		 * where Ships/ is the local ship package directory.
+		 */
+		//bool VerifyShip(const std::string &name, const boost::crc_32_type &crc);
+		/*!
+		 * \brief
+		 * Verifies the existance and crc of a level package.
+		 *
+		 * Shorthand for
+		 *  <code>VerifyPackage(name, crc, "Levels/");</code>
+		 * where Levels/ is the local level package directory.
+		 */
+		//bool VerifyLevel(const std::string &name, const boost::crc_32_type &crc);
+		/*!
+		 * \brief
+		 * Verifies the existance and crc of a weapon package.
+		 *
+		 * Shorthand for
+		 *  <code>VerifyPackage(name, crc, "Weapons/");</code>
+		 * where Weapons/ is the local weapons package directory.
+		 */
+		//bool VerifyWeapon(const std::string &name, const boost::crc_32_type &crc);
 
 #endif

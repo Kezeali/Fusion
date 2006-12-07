@@ -42,7 +42,7 @@ namespace Fusion
 	 * \brief
 	 * GUI for fusion mainmenu
 	 */
-	class FusionGUI_MainMenu : public FusionGUI
+	class FusionGUI_MainMenu
 	{
 	public:
 		//! Basic constructor

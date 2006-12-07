@@ -46,7 +46,7 @@ void FusionNetworkServer::run()
 		if (!sysPacket)
 		{
 			PlayerIndex pind = (PlayerIndex)p->playerIndex;
-			FusionMessage *m = FusionMessageBuilder::BuildMessage(p, m_PlayerIDMap[pind]);
+			FusionMessage *m = MessageBuilder::BuildMessage(p, m_PlayerIDMap[pind]);
 			m_Queue->_addInMessage(m, m->GetChannel());
 		}
 
@@ -66,7 +66,7 @@ bool FusionNetworkServer::handleRakPackets(Packet *p)
 		// Give the server env any messages it should handle.
 	case ID_NEW_INCOMING_CONNECTION:
 	case ID_DISCONNECTION_NOTIFICATION:
-		m_Queue->_addEvent(FusionMessageBuilder::BuildMessage(p, m_PlayerIDMap[p->playerIndex]));
+		m_Queue->_addEvent(MessageBuilder::BuildMessage(p, m_PlayerIDMap[p->playerIndex]));
 		return true;
 		break;
 	}

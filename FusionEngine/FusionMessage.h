@@ -29,8 +29,8 @@
 
 #include "FusionEngineCommon.h"
 
-#include "../RakNet/Bitstream.h"
-#include "../RakNet/GetTime.h"
+#include <RakNet/Bitstream.h>
+#include <RakNet/GetTime.h>
 
 namespace FusionEngine
 {
@@ -96,7 +96,7 @@ namespace FusionEngine
 		 * The channel for the message.
 		 *
 		 * This helps the FusionNetworkClient decide where to put a new message.
-		 * FusionMessageBuilder calculates this from the message ID.
+		 * MessageBuilder calculates this from the message ID.
 		 */
 		int m_Channel;
 

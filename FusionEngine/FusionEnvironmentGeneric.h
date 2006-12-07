@@ -139,6 +139,7 @@ namespace FusionEngine
 		//! Map of players to their associated ship resource
 		PlayerShipResMap m_PlayerResourceIds;
 
+	protected:
 		//! Send all packets
 		virtual void send() = 0;
 		//! Receive all packets

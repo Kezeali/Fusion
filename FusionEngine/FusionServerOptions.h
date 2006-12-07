@@ -38,19 +38,21 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		ServerOptions();
+		//! Constructor +file
+		ServerOptions(const std::string &filename);
 
 	public:
 		//! Max connections
-		unsigned int MaxClients;
+		unsigned int mMaxClients;
 		//! Maximum messages per second (how oftern to send states to a specific client)
-		std::vector<PlayerInd> MaxMessageRate;
-		//! Underlying send rate limiter
-		unsigned int NetDelay;
+		std::vector<PlayerInd> mMaxMessageRate;
+		//! Underlying send rate limiter (max time the net can take per step)
+		unsigned int mNetDelay;
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
-		int BitmaskResolution;
+		int mBitmaskResolution;
 
 		//! The initial (maximum) health for ships
-		int MaxHealth;
+		int mMaxHealth;
 
 		//! Saves to the most recently loaded file.
 		bool Save();

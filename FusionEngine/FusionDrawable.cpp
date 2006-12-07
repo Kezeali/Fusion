@@ -15,7 +15,7 @@ m_Dynamic(false)
 FusionDrawable::~FusionDrawable(void)
 {
 	// Shouldn't need to do this, but just in case we still have a parent,
-	//  this'll be nescissary
+	//  this'll be necessary.
 	if (m_ParentNode)
 	{
 		m_ParentNode->DetachDrawable(this);

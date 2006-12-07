@@ -3,7 +3,6 @@
 #include "FusionResourceLoader.h"
 
 /// Fusion
-#include "FusionShipResource.h"
 #include "FusionArchive.h"
 
 #include "FusionPaths.h"
@@ -61,15 +60,6 @@ StringVector ResourceLoader::GetInstalledWeapons()
 	return list;
 }
 
-void ResourceLoader::ClearAll()
-{
-	DeleteShips();
-	DeleteLevel();
-	DeleteWeapons();
-
-	ResetVerified();
-}
-
 void ResourceLoader::DeleteShips()
 {
 		ShipResourceMap::iterator it = m_ShipResources.begin();
@@ -88,6 +78,15 @@ void ResourceLoader::DeleteWeapons()
 		delete ( it->second );
 	}
 	m_WeaponResources.clear();
+}
+
+void ResourceLoader::ClearAll()
+{
+	DeleteShips();
+	DeleteLevel();
+	DeleteWeapons();
+
+	ResetVerified();
 }
 
 // Returns false if any ships aren't found.

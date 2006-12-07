@@ -28,8 +28,7 @@ int FusionDemo::main(int argc, char **argv)
 		m_ServerOpts = new ServerOptions();
 		m_ServerOpts->LoadFromFile("servercfg.xml");
 
-		CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);
-		new CEGUI::System(renderer);
+		FusionGUI *gui = new FusionGUI();
 
 		FusionGUI_MainMenu *mainmenu = new FusionGUI_MainMenu(m_ClientOpts, m_ServerOpts);
 		mainmenu->Initialise();
@@ -55,7 +54,7 @@ int FusionDemo::main(int argc, char **argv)
 		}
 
 		delete mainmenu;
-		delete CEGUI::System::getSingletonPtr();
+		delete gui;
 		delete m_ClientOpts;
 		delete m_ServerOpts;
 	}

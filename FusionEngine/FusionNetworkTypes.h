@@ -26,8 +26,8 @@
  * that is stupidly complicated and limiting.
  */
 
-#ifndef Header_FusionEngine_FusionNetworkTypes
-#define Header_FusionEngine_FusionNetworkTypes
+#ifndef Header_FusionEngine_NetworkTypes
+#define Header_FusionEngine_NetworkTypes
 
 #if _MSC_VER > 1000
 #pragma once
@@ -37,56 +37,74 @@ namespace FusionEngine
 {
 	//! The amount of ordering channels defined
 	const unsigned short g_ChannelNum = 4;
-	//! Channels
-	enum
+
+	//! Channel IDs
+	/*!
+	 * These are used to sort messages in the MessageQueue. In the actual
+	 * packet, they come in the char after the Type ID (MTID_...)
+	 */
+	enum ChannelIDs
 	{
 		//@{
 		//! Channels
 
-		//! ignore these -> (0000 0001) it only applied when I was using binary flags
-		CID_SYSTEM = 1,
-		//! (0000 0010)
-		CID_FILESYS = 2,
-		//! (0000 0100)
-		CID_GAME = 3,
-		//! (0000 1000)
-		CID_CHAT = 4,
+		//! System messages
+		CID_SYSTEM = 0,
+		//! File messages
+		CID_FILESYS,
+		//! Gameplay messages
+		CID_GAME,
+		//! Chat messages
+		CID_CHAT
 		//@}
+	};
 
+
+	//! Fusion message types
+	/*!
+	 * [client|server] indicates what type of peer can receive
+	 * this type - [client] means client can receive it.
+	 */
+	enum NetworkTypes
+	{
 		//@{
 		//! System channel message types
 
-		//! (0001 0000)
-		MTID_NEWPLAYER = 1,
+		//! [client|server] On new player
+		MTID_NEWPLAYER = ID_USER_PACKET_ENUM,
 		//@}
 
 		//@{
 		//! File transfer channel message types
 
-		//! (0001 0000)
-		MTID_STARTTRANSFER = 1,
+		//! [client|server]
+		MTID_STARTSYNC,
+		//! [client]
+		MTID_VERIFYPACKAGE,
 		//@}
 
 		//@{
 		//! Gameplay channel message types
 
-		//! (0001 0000)
-		MTID_SHIPFRAME = 1,
-		//! (0010 0000)
-		MTID_PROJECTILEFRAME = 2,
-		//! (0100 0000) Low priority
-		MTID_TERRAINBITMASK = 3,
+		//! [client|server]
+		MTID_SHIPFRAME,
+		//! [client|server]
+		MTID_PROJECTILEFRAME,
+		//! [client]
+		MTID_MAKEHOLE,
+		//! [client] Low priority
+		MTID_TERRAINBITMASK,
 		//@}
 
 		//@{
 		//! Chat channel message types
 
-		//! (0001 0000)
-		MTID_CHALL = 1,
-		//! (0010 0000)
-		MTID_CHTEAM = 2,
-		//! (0100 0000)
-		MTID_CHONE = 3
+		//! [client|server] On client, this is just used to choose the heading in the console
+		MTID_CHALL,
+		//! [client|server] On client, this is just used to choose the heading in the console
+		MTID_CHTEAM,
+		//! [client|server] On client, this is just used to choose the heading in the console
+		MTID_CHONE
 		//@}
 	};
 

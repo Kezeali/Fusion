@@ -102,7 +102,8 @@ namespace FusionEngine
 
 			(*it)->SetVelocity(body->GetVelocity());
 			(*it)->SetPosition(body->GetPosition());
-			(*it)->Set
+			(*it)->SetRotationalVelocity(body->GetRotationalVelocity());
+			(*it)->SetRotation(body->GetRotation());
 		}
 	}
 

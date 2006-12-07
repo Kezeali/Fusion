@@ -30,7 +30,7 @@
 namespace FusionEngine
 {
 
-	/*!
+ /*!
 	* \brief
 	* Template class for creating singleton classes.
 	*/
@@ -48,6 +48,48 @@ namespace FusionEngine
 		{
 			assert( ms_Singleton );
 			ms_Singleton = 0;
+		}
+
+	public:
+		//! Returns the static instance of singleton
+		static T& getSingleton( void )
+		{
+			assert( ms_Singleton );
+			return ( *ms_Singleton );
+		}
+		//! Returns a pointer to the static instance of singleton
+		static T* getSingletonPtr( void )
+		{
+			return ( ms_Singleton );
+		}
+
+	protected:
+		//! The instance
+		static T *ms_Singleton;
+
+	};
+
+ /*!
+	* \brief
+	* Template class for creating weak singleton classes.
+	*
+	* Weak singletons can have more than one instance, and only
+	* the first one is stored as the singleton.
+	*/
+	template<typename T> class WeakSingleton
+	{
+	public:
+		//! Constructor
+		Singleton( void )
+		{
+			if( !ms_Singleton );
+				ms_Singleton = static_cast<T*>(this);
+		}
+		//! Destructor
+		~Singleton( void )
+		{
+			if( ms_Singleton == this);
+				ms_Singleton = 0;
 		}
 
 	public:
