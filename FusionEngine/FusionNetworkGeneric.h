@@ -29,30 +29,31 @@
 
 #include "FusionEngineCommon.h"
 
-#include "../RakNet/RakServerInterface.h"
-#include "../RakNet/RakNetworkFactory.h"
-#include "../RakNet/PacketEnumerations.h"
+#include <RakNet/RakNetworkFactory.h>
+#include <RakNet/PacketEnumerations.h>
+#include <RakNet/RakNetStatistics.h>
 
 /// Fusion
-#include "FusionMessage.h"
-#include "FusionMessageBuilder.h"
-#include "FusionNetworkMessageQueue.h"
+#include "FusionNetworkPacketQueue.h"
 #include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
 
+	//! Stores event packet information.
+	struct Event
+	{
+		//! The ID for the event packet.
+		unsigned char eventID;
+		//! The player ID from the event data, if applicable.
+		PlayerID playerID;
+	};
+
 	/*!
 	 * \brief
 	 * Generic methods for FusionNetworkServer and FusionNetworkClient
-	 *
-	 * Handles network communicaion for the server in-game.
-	 *
-	 * <br>
-	 * This impliments CL_Runnable; but the funny thing is, it isn't on-its-own thread safe -
-	 * the storage class FusionNetworkMessageQueue is... I guess that just makes it tidier?
 	 */
-	class FusionNetworkGeneric : public CL_Runnable
+	class FusionNetworkGeneric
 	{
 	public:
 		//! Basic constructor. Don't use.
@@ -60,7 +61,7 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Sets up a generic network. Probably used by the server
+		 * Sets up a generic network. Probably used by the server.
 		 *
 		 * \param port
 		 * The port of the server.
@@ -79,56 +80,99 @@ namespace FusionEngine
 		 */
 		FusionNetworkGeneric(const std::string &host, const std::string &port);
 
-		/*!
-		 * \brief
-		 * Sets up a network server. Gets settings from a ServerOptions object.
-		 *
-		 * \param port
-		 * The port of the server.
-		 *
-		 * \param options
-		 * Object to load options from (max. rate, packet interval, etc.)
-		 */
-		//FusionNetworkGeneric(const std::string &port, ServerOptions *options);
-
 		//! Virtual destructor
 		virtual ~FusionNetworkGeneric();
 
 	public:
-		//! A group of messages
-		typedef std::deque<FusionMessage*> MessageQueue;
-		//! Maps Fusion player ids to RakNet player indexes
-		typedef std::map<PlayerIndex, FusionEngine::PlayerInd> PlayerIDMap;
+		//! Maps Fusion player ids to RakNet PlayerIDs
+		typedef std::map<FusionEngine::PlayerInd, PlayerID> PlayerIDMap;
+		//! Type for storing events
+		typedef std::deque<Event*> EventQueue;
 
-		//! Adds a message to the outgoing queue.
-		virtual void QueueMessage(FusionMessage *message, int channel);
-		//! Gets the message from the front of the incomming queue.
+	public:
+		//! Sends a message of undefined type.
+		void SendRaw(char *data, char channel);
+		//! Sends a Add player message.
 		/*!
+		 * This will optimise sending for high reliablility, which is required
+		 * for AddPlayer messages.
+		 */
+		void SendAddPlayer();
+		//! Sends a Remove player message.
+		void SendRemovePlayer(PlayerInd player);
+		//! Sends a ShipState message.
+		void SendShipState(const ShipState &state);
+		//! Sends a Chat message.
+		void SendChatter(const std::string &message);
+
+
+		//! Gets packets from the network. Implimented by specialisations.
+		virtual void Receive() =0;
+
+		//! Gets the message from the front of the incomming queue, in the given channel.
+		/*!
+		 * <b> This method is Thread-safe </b>
+		 * <br>
 		 * Remember to delete the message when you're done!
 		 */
-		virtual FusionMessage *GetNextMessage(int channel);
-
-		//! [depreciated] Use GetNextMessage instead.
-		//MessageQueue GetAllMessages(int channel);
-
-		//! Updates the network. Must be implimented by specialisations
-		virtual void run() {}
-
-		//! Allows the ServerEnvironment, etc. to access the NetEvent queue
-		virtual FusionMessage *GetNextEvent() const;
+		Packet *PopNextMessage(char channel);
+		//! Gets the next item in the event queue.
+		/*!
+		 * When a RakNet system packet, such as ID_CONNECTION_LOST, is received 
+		 * its ID will be extracted and stored in the event queue. 
+		 */
+		unsigned char PopNextEvent() const;
+		//! Destroys all Events in the event queue.
+		void ClearEvents();
 
 	protected:
 		//! The hostname (or ip) and port to use.
 		std::string m_Host, m_Port;
 
-		//! Threadsafe, organised package storage
-		FusionNetworkMessageQueue *m_Queue;
+		//! Threadsafe, organised packet storage
+		PacketQueue *m_Queue;
 
-		//! Check if a packet can be handled by the network client
-		virtual bool handleRakPackets(Packet *p);
+		//! Event storage
+		EventQueue m_Events;
 
-		//! Converts packets into messages and sorts them.
-		//onPacketReceive();
+	protected:
+		//! Sends data. Implemented by specialisations.
+		virtual void send(char *message, PacketPriority priority, PacketReliability reliability, char channel) =0;
+
+		//! Returns true if the packet passed is a RakNet system message.
+		/*!
+		 * If the packet is a system message, and a type of system message which the
+		 * Environment should be aware of, its info will added to the event queue.
+		 * Non-event system messages types will be handled or ignored without their 
+		 * ID being added to the event queue.
+		 * <br>
+		 * The following ID's will be added to the event queue if they are found:
+		 * <ul>
+		 * <b>Client Remote events</b><br>
+		 * <size="-1">(events which don't apply to this client, but
+		 *  may be useful to know about)</size>
+		 * <li>ID_REMOTE_DISCONNECTION_NOTIFICATION
+		 * <li>ID_REMOTE_CONNECTION_LOST
+		 * <li>ID_REMOTE_NEW_INCOMING_CONNECTION
+		 * <li>ID_REMOTE_EXISTING_CONNECTION
+		 * <b>Client events</b>
+		 * <li>ID_CONNECTION_BANNED
+		 * <li>ID_CONNECTION_REQUEST_ACCEPTED
+		 * <li>ID_NO_FREE_INCOMING_CONNECTIONS
+		 * <li>ID_INVALID_PASSWORD
+		 * <b>Server events</b>
+		 * <li>ID_NEW_INCOMING_CONNECTION
+		 * <b>Client & Server events</b>
+		 * <li>ID_DISCONNECTION_NOTIFICATION
+		 * <li>ID_CONNECTION_LOST
+		 * <li>ID_RECEIVED_STATIC_DATA
+		 * <li>ID_MODIFIED_PACKET
+		 * <li>ID_CONNECTION_ATTEMPT_FAILED
+		 *  (I don't know how this message could arrive! Does it get sent to loopback?)
+		 * </ul>
+		 */
+		bool grabEvents(Packet *p);
+
 	};
 
 }

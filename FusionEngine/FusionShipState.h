@@ -63,9 +63,9 @@ namespace FusionEngine
 
 		//@{
 		//! Selected weapon (Resource ID's).
-		int current_primary;
-		int current_secondary;
-		int current_bomb;
+		std::string current_primary;
+		std::string current_secondary;
+		std::string current_bomb;
 		//@}
 		/*!
 		 * \remarks

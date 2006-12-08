@@ -303,7 +303,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionNetworkMessageQueue.h"
+				RelativePath=".\FusionNetworkPacketQueue.h"
 				>
 			</File>
 			<File
@@ -701,7 +701,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionNetworkMessageQueue.cpp"
+				RelativePath=".\FusionNetworkPacketQueue.cpp"
 				>
 			</File>
 			<File

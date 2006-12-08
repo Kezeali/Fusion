@@ -34,77 +34,47 @@
 namespace FusionEngine
 {
 
-	//! Thread safe message storage
+	//! Thread safe message storage and access
 	/*!
+	 * <b> This class is Thread-safe </b>
+	 * <br>
 	 * Possably [depreciated]... ATM seems useable, but all this stuff could be done in
 	 * NetworkClient (at the expense of its simplicity.) Also, the thread safety is now
 	 * redundant - FusionNetworkClient / FusionNetworkServer run in the main thread.
 	 */
-	class FusionNetworkMessageQueue
+	class PacketQueue
 	{
 	public:
 		//! Constructor
-		FusionNetworkMessageQueue();
+		PacketQueue();
 		//! Destructor
-		~FusionNetworkMessageQueue();
+		~PacketQueue();
 
 	public:
 		//! A group of messages
-		typedef std::deque<FusionMessage*> MessageQueue;
+		typedef std::deque<Packet*> MessageQueue;
 		//! A group of channels (each containing messages)
 		typedef std::vector<MessageQueue> ChannelList;
-
-		//! A group of net events.
-		typedef std::vector<FusionMessage*> EventList;
 
 		//! Use this to pre-allocate the required channels
 		/*!
 		 * This should be called before any retreival functions, to avoid
 		 * accessing null space.
 		 */
-		void Resize(unsigned short channels);
+		void Resize(unsigned int channels);
 
-		//! Used internally by FusionNetwork[Client|Server]. Threadsafe.
-		MessageQueue *_getInMessages(int channel);
-		//! Used internally... by nothing really :P Threadsafe.
-		MessageQueue *_getOutMessages(int channel);
-
-		//! Used internally by FusionNetworkReceiver. Threadsafe.
-		void _addInMessage(FusionMessage *message, int channel);
-		//! Used internally by FusionNetworkSender. Threadsafe.
-		void _addOutMessage(FusionMessage *message, int channel);
+		//! Used internally by FusionNetworkGeneric#Receive(). Threadsafe.
+		void PushMessage(Packet *message, char channel);
 
 		//! Used internally. Gets the next message. Null if none
-		FusionMessage *_getInMessage(int channel);
-		//! Used internally. Gets the next message. Null if none
-		FusionMessage *_getOutMessage(int channel);
+		Packet *PopMessage(char channel);
 
-		//! Used internally. Allows the CE to act on network events
-		/*!
-		 * \param messageId The packet ID which CE should act on.
-		 */
-		void _addEvent(FusionMessage *message);
-		//! Gets the next event. See #GetEvents()
-		FusionMessage *GetEvent();
-		//! Allows the ClientEnvironment, etc. to access the NetEvent queue
-		const EventList GetEvents();
-
-		//! Deletes all messages in the event list, and clears the list.
-		void ClearEvents();
-		//! Deletes messages in the in queue
-		void ClearInMessages();
-		//! Deletes messages in the out queue
-		void ClearOutMessages();
+		//! Deletes messages in the queue
+		void ClearMessages();
 
 	protected:
-		//! Teh in queuez
-		ChannelList m_InChannels;
-
-		//! Teh out queuez
-		ChannelList m_OutChannels;
-
-		//! List of network events
-		EventList m_EventList;
+		//! Channels for received packets
+		ChannelList m_Channels;
 
 		/*!
 		 * \brief

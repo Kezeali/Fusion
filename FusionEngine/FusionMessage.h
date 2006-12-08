@@ -29,9 +29,6 @@
 
 #include "FusionEngineCommon.h"
 
-#include <RakNet/Bitstream.h>
-#include <RakNet/GetTime.h>
-
 namespace FusionEngine
 {
 
@@ -43,74 +40,47 @@ namespace FusionEngine
 	public:
 		//! Basic Constructor. Don't use
 		FusionMessage();
-		//! Constructor. +channel +type +playerIndex
-		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd);
-		//! Constructor. +channel +type +playerIndex +message +length
-		FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message, unsigned int length);
+		//! Constructor
+		FusionMessage(unsigned char *message, unsigned int length);
+		//! Constructor. +channel +type +playerID
+		FusionMessage(unsigned char channel, unsigned char type, PlayerID client);
+		//! Constructor. +channel +type +playerID +message +length
+		FusionMessage(unsigned char channel, unsigned char type, PlayerID client, unsigned char *message, unsigned int length);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
 	public:
-		//! Write data
-		void Write(unsigned char *message);
-		//! Read data
+		//! Sets the message data
+		/*!
+		 * This will completely overwrite the data stored in the message
+		 */
+		void Write(unsigned char *data);
+		//! Returns the message data
 		unsigned char *Read() const;
 
-		//! Returns a bitstream containing all the data for RakNet to send
-		RakNet::BitStream *GetBitStream();
-		//! Returns a timestamped bitstream
-		RakNet::BitStream *GetTimedBitStream();
+		//! Reads the message data with the header removed
+		/*!
+		 * \param[out] buffer The buffer into which the data should be read.
+		 */
+		void ReadWithoutHeader(unsigned char *buffer) const;
 
 		//! Sets the length of the data
 		void SetLength(unsigned int length);
 		//! Returns the length of the data
 		unsigned int GetLength() const;
 
-		//! Read PlayerInd
-		const PlayerInd GetPlayerInd() const;
-		//! Read type
-		const unsigned char GetType() const;
-		//! Read channel
-		const unsigned char GetChannel() const;
+		//! Read PlayerID
+		PlayerID GetPlayerInd() const;
 
 	private:
-		/*!
-		 * \brief
-		 * The specific type of message.
-		 *
-		 * eg. if it were in the gameplay channel, it could be a 'player frame' type, 'change
-		 * state' type, etc.
-		 *
-		 * \remarks
-		 * The following remark is [depreciated]; it only applied when messages were
-		 * serialised objects.
-		 * <br>
-		 * This should only be considered slightly more specific than the channel, and more
-		 * specifics of the message should be controlled by the implementation. For example,
-		 * the 'change state' type could have another member, m_State holding the acutal
-		 * state-name to change to.
-		 */
-		int m_Type;
-		/*!
-		 * \brief
-		 * The channel for the message.
-		 *
-		 * This helps the FusionNetworkClient decide where to put a new message.
-		 * MessageBuilder calculates this from the message ID.
-		 */
-		int m_Channel;
-
-		//! The player from whence it came
+		//! The client from whence it came
 		/*!
 		 * \remarks
 		 * Remember: this property is server-side only; if a client wants to
 		 * know what ship/object to apply a message to it looks at the ID stored
 		 * in the received data.
 		 */
-		PlayerInd m_PlayerInd;
-
-		//! The system time when this message was created
-		unsigned int m_Timestamp;
+		PlayerID m_ClientID;
 
 		//! Data length
 		unsigned int m_Length;

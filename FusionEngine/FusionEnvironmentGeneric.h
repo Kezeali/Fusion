@@ -55,7 +55,6 @@ namespace FusionEngine
 {
 
 	//! The virtual environment! (pun?)
-	//! Now this' a FusionState; whatchu gonna do about it?
 	class GenericEnvironment : public FusionState
 	{
 	public:
@@ -66,14 +65,9 @@ namespace FusionEngine
 
 	public:
 		//! A list of ships
-		typedef std::vector<FusionShip*> ShipList;
+		typedef std::map<PlayerInd, FusionShip*> ShipList;
 		//! A list of projectiles
-		typedef std::vector<FusionProjectile*> ProjectileList;
-
-		//! Map of ship res. names to ship resources
-		typedef std::map<std::string, ShipResource*> ShipResourceMap;
-		//! \see ShipResourceMap
-		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
+		typedef std::map<ObjectID, FusionProjectile*> ProjectileList;
 
 		//! A list of playerID's mapped to resourceID's
 		typedef std::map<PlayerInd, std::string> PlayerShipResMap;
@@ -111,8 +105,11 @@ namespace FusionEngine
 		void _error(Error *e);
 
 	protected:
-		//! If this is set to true, the update command will return false next time it runs
-		//!  (thus quitting the gameplay.)
+		//! True if the environment should abort next Update.
+		/*!
+		 * If this is set to true, the Update method will return false next time it runs
+		 *  (thus quitting the gameplay.)
+		 */
 		bool m_Abort;
 		
 		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
@@ -120,8 +117,6 @@ namespace FusionEngine
 
 		//! SceneGraph
 		FusionScene *m_Scene;
-		//! High level network manager
-		FusionNetworkClient *m_NetworkManager;
 		//! High level physics manager
 		FusionPhysicsWorld *m_PhysicsWorld;
 
@@ -130,14 +125,24 @@ namespace FusionEngine
 		//! List of Projectiles currently in the environment
 		ProjectileList m_Projectiles;
 
-		//! List of ship resources in loaded.
+		//! List of ship resources in use.
 		/*!
-		 * Maps ships to shipnames
+		 * Maps Package names to Resources
 		 */
 		ShipResourceMap m_ShipResources;
+		//! List of weapon resources in use.
+		/*!
+		 * Maps Package names to Resources
+		 */
+		WeaponResourceMap m_WeaponResources;
 
-		//! Map of players to their associated ship resource
-		PlayerShipResMap m_PlayerResourceIds;
+		//! Map of players linked to their chosen ship resource
+		/*!
+		 * Used when ship resources are reloaded (e.g. at a level change)
+		 * and thus m_ShipResources is out of date; this map allows the
+		 * correct Resource pointers to be mapped to the correct PlayerInds.
+		 */
+		PlayerShipResMap m_PlayerShipResourceIds;
 
 	protected:
 		//! Send all packets
@@ -149,15 +154,22 @@ namespace FusionEngine
 		 */
 		virtual bool receive() = 0;
 
+		//! Builds a message from a ShipState (usually outgoing)
+		FusionMessage *BuildMessage(const ShipState &input);
+		//! Builds a message from a ProjectileState (usually outgoing)
+		FusionMessage *BuildMessage(const ProjectileState &input);
+		//! Builds a message from a InputState (usually outgoing)
+		FusionMessage *BuildMessage(const ShipInput &input);
+
 		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship
 		//! \todo Maybe this should be in a helper class? meh, I think that will
 		//! overcomplicate things, especially as my current goal is "just make it compile"!
-		virtual void installShipFrameFromMessage(FusionMessage *m);
+		void installShipFrameFromMessage(FusionMessage *m);
 		//! Extracts the InputState, and puts it into the relavant ship.
-		virtual void installShipInputFromMessage(FusionMessage *m);
+		void installShipInputFromMessage(FusionMessage *m);
 
 		//! Takes a received message, extracts the ProjectileState, and puts it into the relavant proj.
-		virtual void installProjectileFrameFromMessage(FusionMessage *m);
+		void installProjectileFrameFromMessage(FusionMessage *m);
 
 		/*!
 		 * \brief

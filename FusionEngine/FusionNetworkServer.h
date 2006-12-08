@@ -30,8 +30,6 @@
 #include "FusionEngineCommon.h"
 
 #include "../RakNet/RakServerInterface.h"
-#include "../RakNet/RakNetworkFactory.h"
-#include "../RakNet/PacketEnumerations.h"
 
 /// Fusion
 #include "FusionNetworkGeneric.h"
@@ -91,6 +89,17 @@ namespace FusionEngine
 		~FusionNetworkServer();
 
 	public:
+		//! Returns true if the mRate for a particular client hasn't been exceeded.		
+		/*!
+		 * First, the client in which the given player resides is found.
+		 * If (GetStatistics()->bitsPerSecond) > (mRate) more data
+		 * has been sent in the current second than the client's options
+		 * allow, and thus SendAllowed() will return false.
+		 *
+		 * \param[in] player The player whose client should be checked.
+		 */
+		bool SendAllowed(PlayerInd player) const;
+
 		//! Updates the network
 		void run();
 
@@ -100,9 +109,6 @@ namespace FusionEngine
 
 		//! Map of local player indexes, indexed by RakNet PlayerIDs
 		PlayerIDMap m_PlayerIDMap;
-
-		//! Check if a packet can be handled by without Environment (game) intervention.
-		bool handleRakPackets(Packet *p);
 
 	};
 

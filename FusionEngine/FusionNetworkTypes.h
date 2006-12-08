@@ -65,13 +65,15 @@ namespace FusionEngine
 	 * [client|server] indicates what type of peer can receive
 	 * this type - [client] means client can receive it.
 	 */
-	enum NetworkTypes
+	enum MessageTypes
 	{
 		//@{
 		//! System channel message types
 
-		//! [client|server] On new player
-		MTID_NEWPLAYER = ID_USER_PACKET_ENUM,
+		//! [client|server] When new players join (as clients can have more than one player)
+		MTID_ADDPLAYER = ID_USER_PACKET_ENUM,
+		//! [client|server]
+		MTID_REMOVEPLAYER,
 		//@}
 
 		//@{
@@ -80,6 +82,8 @@ namespace FusionEngine
 		//! [client|server]
 		MTID_STARTSYNC,
 		//! [client]
+		MTID_ENDSYNC,
+		//! [client] If a package fails to verify, the client simply disconnects (thus no VERIFYFAILED is necessary)
 		MTID_VERIFYPACKAGE,
 		//@}
 

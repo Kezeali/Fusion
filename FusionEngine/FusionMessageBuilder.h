@@ -58,7 +58,7 @@ namespace FusionEngine
 		//! Builds a message from a network packet (usually incoming)
 		static FusionMessage *BuildMessage(Packet *packet, PlayerInd playerid);
 
-		//! Builds a message from a RakNet engine message (I call these 'events')
+		//! Builds a message from a RakNet system message (I call these 'events')
 		static FusionMessage *BuildEventMessage(Packet *packet, PlayerInd playerind);
 
 	};

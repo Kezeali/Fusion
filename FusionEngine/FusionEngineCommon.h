@@ -73,8 +73,9 @@ namespace FusionEngine
 	class Archive;
 
 	// Global typedefs
-	typedef unsigned short PlayerInd; // ...
-	typedef unsigned short ObjectID;  // Do both of these really need to exist?
+	typedef unsigned short PlayerInd;
+	typedef unsigned short ObjectID;
+	//typedef std::string ResourceID;
 }
 
 #endif

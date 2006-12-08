@@ -5,7 +5,9 @@
 #include "FusionNetworkUtils.h"
 
 /// RakNet
-#include "../RakNet/PacketEnumerations.h"
+#include <RakNet/Bitstream.h>
+#include <RakNet/GetTime.h>
+#include <RakNet/PacketEnumerations.h>
 
 using namespace FusionEngine;
 
@@ -47,13 +49,13 @@ unsigned char *FusionMessage::Read() const
 	return m_Message;
 }
 
-RakNet::BitStream *FusionMessage::GetBitStream()
+RakNet::BitStream *FusionMessage::MakeBitStream()
 {
 	RakNet::BitStream *bs = new RakNet::BitStream(m_Message, m_Length, true);
 	return bs;
 }
 
-RakNet::BitStream *FusionMessage::GetTimedBitStream()
+RakNet::BitStream *FusionMessage::MakeTimedBitStream()
 {
 	RakNet::BitStream *bs = new RakNet::BitStream;
 	bs->Write((unsigned char)ID_TIMESTAMP);
@@ -82,17 +84,7 @@ unsigned int FusionMessage::GetLength() const
 	return m_Length;
 }
 
-const PlayerInd FusionMessage::GetPlayerInd() const
+const PlayerID FusionMessage::GetPlayerID() const
 {
-	return m_PlayerInd;
-}
-
-const unsigned char FusionMessage::GetType() const
-{
-	return m_Type;
-}
-
-const unsigned char FusionMessage::GetChannel() const
-{
-	return m_Channel;
+	return m_PlayerID;
 }

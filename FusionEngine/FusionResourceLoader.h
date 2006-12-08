@@ -21,6 +21,11 @@
 namespace FusionEngine
 {
 
+	//! Map of ship res. names to ship resources
+	typedef std::map<std::string, ShipResource*> ShipResourceMap;
+	//! \see ShipResourceMap
+	typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
+
 	/*!
 	 * \brief
 	 * Returned by GetPackageType().
@@ -50,11 +55,6 @@ namespace FusionEngine
 		typedef std::map<std::string, CL_Surface*> SurfaceMap;
 		//! Map of sound buffers
 		typedef std::map<std::string, CL_SoundBuffer*> SoundBufferMap;
-
-		//! Map of ship res. names to ship resources
-		typedef std::map<std::string, ShipResource*> ShipResourceMap;
-		//! \see ShipResourceMap
-		typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
 	public:
 		//! Returns a list of packages found after the Ships path

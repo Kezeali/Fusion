@@ -29,9 +29,7 @@
 
 #include "FusionEngineCommon.h"
 
-#include "../RakNet/RakClientInterface.h"
-#include "../RakNet/RakNetworkFactory.h"
-#include "../RakNet/PacketEnumerations.h"
+#include <RakNet/RakClientInterface.h>
 
 /// Fusion
 #include "FusionNetworkGeneric.h"
@@ -101,6 +99,14 @@ namespace FusionEngine
 		~FusionNetworkClient();
 
 	public:
+		//! Returns true if the mRate for this client hasn't been exceeded.		
+		/*!
+		 * If (GetStatistics()->bitsPerSecond) > (mRate) more data
+		 * has been sent in the current second than the client's options
+		 * allow, and thus SendAllowed() will return false.
+		 */
+		bool SendAllowed() const;
+
 		//! Updates the network
 		void run();
 
@@ -113,9 +119,6 @@ namespace FusionEngine
 
 		//! Threadsafe, organised package storage
 		FusionNetworkMessageQueue *m_Queue;
-
-		//! Check if a packet can be handled by without Environment (game) intervention.
-		bool handleRakPackets(Packet *p);
 
 	};
 

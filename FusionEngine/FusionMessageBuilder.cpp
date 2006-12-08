@@ -1,5 +1,5 @@
 
-#include "MessageBuilder.h"
+#include "FusionMessageBuilder.h"
 
 /// Fusion
 #include "FusionNetworkTypes.h"
@@ -8,7 +8,7 @@
 
 using namespace FusionEngine;
 
-FusionMessage *MessageBuilder::BuildMessage(const ShipState &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const ShipState &input)
 {
 	/*
 	// serialise the input and push it into the stream via boost::archive
@@ -111,7 +111,7 @@ FusionMessage *MessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
 	int data_length = packet->length - head_length;
 
 	unsigned char *data = new unsigned char[data_length];
-	memcpy(data+head_length, packet->data, data_length);
+	memcpy(data, packet->data+head_length, data_length);
 
 	/// System messages
 	// New player

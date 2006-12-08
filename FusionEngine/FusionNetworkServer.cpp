@@ -37,12 +37,14 @@ FusionNetworkServer::~FusionNetworkServer()
 
 void FusionNetworkServer::run()
 {
+	//////////
+	// Receive
 	Packet *p = m_RakServer->Receive();
 	while (p)
 	{
 		bool sysPacket = handleRakPackets(p);
 
-		// If it wasn't a rakNet packet, we can deal with it
+		// If it wasn't a rakNet system packet, queue up a message
 		if (!sysPacket)
 		{
 			PlayerIndex pind = (PlayerIndex)p->playerIndex;
@@ -55,21 +57,31 @@ void FusionNetworkServer::run()
 		// Check for more packets
 		p = m_RakServer->Receive();
 	}
-}
 
-
-bool FusionNetworkServer::handleRakPackets(Packet *p)
-{
-	unsigned char packetId = NetUtils::GetPacketIdentifier(p);
-	switch (packetId)
+	///////
+	// Send
+	for (int chan = 0; chan < g_ChannelNum; chan++)
 	{
-		// Give the server env any messages it should handle.
-	case ID_NEW_INCOMING_CONNECTION:
-	case ID_DISCONNECTION_NOTIFICATION:
-		m_Queue->_addEvent(MessageBuilder::BuildMessage(p, m_PlayerIDMap[p->playerIndex]));
-		return true;
-		break;
-	}
+		FusionMessage *m = m_Queue->_getOutMessage(chan);
 
-	return false;
+		 //&& CL_System::get_time() < e_time
+		while (m)
+		{
+			// System messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
+			if (chan == CID_SYSTEM)
+				m_RakClient->Send(m->GetBitStream(), HIGH_PRIORITY, RELIABLE_SEQUENCED, CID_SYSTEM);
+			// File messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
+			else if (chan == CID_FILESYS)
+				m_RakClient->Send(m->GetBitStream(), MEDIUM_PRIORITY, RELIABLE_SEQUENCED, CID_FILESYS);
+			// Gameplay messages - UNRELIABLE_SEQUENCED, MEDIUM_PRIORITY, timestamps
+			else if (chan == CID_GAME)
+				m_RakClient->Send(m->GetTimedBitStream(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
+			// Chat messages - RELIABLE, LOW_PRIORITY, timestamps
+			else if (chan == CID_CHAT)
+				m_RakClient->Send(m->GetTimedBitStream(), LOW_PRIORITY, RELIABLE, CID_CHAT);
+
+			// Check for more messages
+			FusionMessage *m = m_Queue->_getOutMessage(chan);
+		}
+	}
 }
