@@ -204,10 +204,6 @@ void FusionShip::RevertToInitialState()
 
 void FusionShip::CollisionResponse(const FusionEngine::FusionPhysicsBody *other, const CL_Vector2 &collision_point)
 {
-	if (collision_point != CL_Vector2::ZERO)
-		// We'd better hope the point given is accurate!
-		m_PhysicalBody->_setPosition(collision_point);
-
 	//m_PhysicalBody->_setForce(CL_Vector2::ZERO);
 	m_PhysicalBody->ApplyForce(-m_PhysicalBody->GetVelocity());
 }

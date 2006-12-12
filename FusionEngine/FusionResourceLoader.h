@@ -40,7 +40,7 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources for gameplay.
 	 *
-	 * \todo Impliment PhysFS, rather than my own crappy archive reading.
+	 * \todo Impliment PhysFS or boost::filesystem, rather than my own crappy archive reading.
 	 */
 	class ResourceLoader : public Singleton<ResourceLoader>
 	{

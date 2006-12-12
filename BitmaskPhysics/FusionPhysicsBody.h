@@ -94,6 +94,8 @@ namespace FusionEngine
 		int GetType();
 		//! Gets the mass of this object
 		virtual float GetMass();
+		//! Gets one over mass
+		virtual float GetInverseMass();
 		//! Gets the radius of this object
 		virtual float GetRadius();
 
@@ -105,9 +107,11 @@ namespace FusionEngine
 		 */
 		virtual void ApplyForce(float force);
 		//! Sets the constant used to apply damping to the body's movement.
-		virtual void SetFrictionCoefficient(float friction);
+		virtual void SetCoefficientOfFriction(float damping);
+		//! Sets the constant used to apply bounce to the body's collisions.
+		virtual void SetCoefficientOfRestitution(float bounce);
 		//! We don't care about yo' torque.
-		virtual void SetRotationalVelocity(const float velocity);
+		virtual void SetRotationalVelocity(float velocity);
 
 		//@{
 		//! Properties.
@@ -119,12 +123,25 @@ namespace FusionEngine
 
 		//@{
 		//! Property retreival.
-		virtual const FusionBitmask *GetColBitmask() const;
+
+		virtual FusionBitmask *GetColBitmask() const;
 		//! Returns true if the given point is solid
 		/*!
+		 * <p>
 		 * Quick access to the bitmask function FusionBitmask#GetBit()
+		 * </p>
+		 * If 'auto_offset' is true, the function will automatically offset the given
+		 * 'point' relative to this body's current position, and scale it to match
+		 * the the bitmask's PPB setting. <br>
+		 * This is usually required because GetBit isn't designed to act as a collision
+		 * detection function.
+		 *
+		 * \param point
+		 * The point on the bitmask to check, starting at (0,0).
+		 * \param auto_offset
+		 * Automatically offset the 'point' param.
 		 */
-		virtual bool GetColPoint(CL_Point point) const;
+		virtual bool GetColPoint(const CL_Point &point, bool auto_offset = true) const;
 		virtual CL_Rectf GetColAABB() const;
 		virtual float GetColDist() const;
 		//@}
@@ -140,7 +157,7 @@ namespace FusionEngine
 		//@}
 
 		//@{
-		/**
+		/*!
 		 * Collision type property retrieval.
 		 * I think these are self explanatory.
 		 */
@@ -175,11 +192,60 @@ namespace FusionEngine
 		virtual const CL_Vector2 &GetAcceleration() const;
 		virtual const CL_Vector2 &GetVelocity() const;
 
-		virtual float GetFrictionCoefficient() const;
+		//! Guess
+		virtual float GetCoefficientOfFriction() const;
+		//! Yep
+		virtual float GetCoefficientOfRestitution() const;
 
 		virtual float GetRotationalVelocity() const;
 		virtual float GetRotation() const;
 		//@}
+
+		//! Returns true if this object is active.
+		/*!
+		 * Objects which haven't had calls to any property modifying methods in a while
+		 * will become in-active, and will be ignored during FusionPhysicsWorld#RunSimulation()
+		 */
+		bool IsActive() const;
+
+		//! Sets m_Active to true.
+		/*!
+		 * m_Active will be set to true, and m_DeactivationTime will be set to
+		 * the current time + m_DeactivationTimePeriod. 
+		 * <br>
+		 * Allows FusionPhysicsWorld to deactivate bodies.
+		 */
+		void _activate();
+
+		//! Sets m_Active to false.
+		/*!
+		 * Allows FusionPhysicsWorld to deactivate bodies.
+		 */
+		void _deactivate();
+
+		//! Sets m_DeactivationTimePeriod.
+		/*!
+		 * Sets the deactivation period (the period used to set the deactivation time.)
+		 */
+		void SetDeactivationPeriod(unsigned int period);
+
+		//! Gets m_DeactivationTimePeriod.
+		/*!
+		 * Returns the period used to set the deactivation time.
+		 */
+		unsigned int GetDeactivationPeriod() const;
+
+		//! Sets m_DeactivationTime.
+		/*!
+		 * Manual set for deactivation time
+		 */
+		void _setDeactivationTime(unsigned int time);
+
+		//! Gets m_DeactivationTime.
+		/*!
+		 * Returns the time after which this body should be deactivated.
+		 */
+		unsigned int GetDeactivationTime() const;
 
 		//@{
 		//! For syncronising client-side only, shouldn't be called otherwise.
@@ -208,6 +274,23 @@ namespace FusionEngine
 		void _setCCIndex(int ind);
 		//! Retreives the Collision Cell Index
 		int _getCCIndex() const;
+
+		//! Sets m_GotCGUpdate to true.
+		/*!
+		 * Allows the collision grid to tell this body that it's update request has been noted.
+		 */
+		void _notifyCGwillUpdate();
+		//! Returns m_GotCGUpdate.
+		/*!
+		 * Allows the collision grid to see if this body has already requested an update.
+		 */
+		bool _CGwillUpdate() const;
+		//! Sets m_GotCGUpdate to false.
+		/*!
+		 * Allows the collision grid to tell this body that it's previously requested 
+		 * update has been completed.
+		 */
+		void _notifyCGUpdated();
 		//@}
 
 	protected:
@@ -218,6 +301,9 @@ namespace FusionEngine
 		int m_CGPos;
 		//! Collision Grid Index
 		int m_CCIndex;
+
+		//! True if FusionPhysicsCollisionGrid#_updateThis(thisobject) has been called.
+		bool m_GotCGUpdate;
 		//@}
 
 		//! Containing world
@@ -233,6 +319,15 @@ namespace FusionEngine
 		 * This is used to identify objects in collision responses
 		 */
 		int m_Type;
+
+		//! True when the body is active.
+		bool m_Active;
+
+		//! The time after which this body should deactivate, if nothing happens to it.
+		unsigned int m_DeactivationTime;
+
+		//! The period used to set m_DeactivationTime.
+		unsigned int m_DeactivationTimePeriod;
 
 		//! bitmask
 		FusionBitmask *m_Bitmask;
@@ -254,9 +349,12 @@ namespace FusionEngine
 		//@{
 		//! "State" stuff.
 		float m_Mass;
+		float m_InverseMass;
 		float m_Radius;
-		//! Linear damping, a.k.a coefficient of friction
+		//! Linear damping, a.k.a. coefficient of friction
 		float m_LinearDamping;
+		//! Bounce, a.k.a. coefficient of restitution
+		float m_Bounce;
 
 		CL_Vector2 m_AppliedForce;
 		CL_Vector2 m_Acceleration;

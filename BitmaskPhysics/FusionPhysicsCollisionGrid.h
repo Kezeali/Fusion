@@ -109,7 +109,7 @@ namespace FusionEngine
 		 * Finds the correct position (i.e. vector index) within the collision grid
 		 * for a specific body.
 		 */
-		int _getGridPosition(FusionPhysicsBody *body);
+		unsigned int _getGridPosition(FusionPhysicsBody *body);
 
 	protected:
 		//! The ratio of the grid coords to the physics world coords.

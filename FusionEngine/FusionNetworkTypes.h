@@ -74,12 +74,39 @@ namespace FusionEngine
 		MTID_ADDPLAYER = ID_USER_PACKET_ENUM,
 		//! [client|server]
 		MTID_REMOVEPLAYER,
+		//! [client|server] ShipPackageID and Name for the player
+		MTID_PLAYERCONFIG,
+		//! [client]
+		MTID_CHANGEMAP,
+		//! [server]
+		/*!
+		 * If the server receives this message during a game, it will send the client the
+		 * current gamestate, in the form of reliable ADDPLAYER and SHIPFRAME packets, etc.
+		 * The client sends this message at the begining of the ClientEnvironment process,
+		 * so the first thing the ClientEnvrionment (ClientNetworkManager to be precise)
+		 * receives should be those all important game state messages.
+		 */
+		MTID_NEEDGAMESTATE,
+		//! [server|client]
+		MTID_CHANGETEAM,
+		//! [server|client]
+		MTID_CHANGENAME,
 		//@}
 
 		//@{
 		//! File transfer channel message types
 
 		//! [client|server]
+		/*!
+		 * Client-side Structure:<br>
+		 * <ol>
+		 * <li> [char]     MTID_STARTSYNC
+		 * <li> [PlayerInd]Ship to which this applies
+		 * <li> [float]    x origin
+		 * <li> [float]    y origin
+		 * <li> [float]    direction at origin
+		 * </ol>
+		 */
 		MTID_STARTSYNC,
 		//! [client]
 		MTID_ENDSYNC,
@@ -90,12 +117,28 @@ namespace FusionEngine
 		//@{
 		//! Gameplay channel message types
 
-		//! [client|server]
-		MTID_SHIPFRAME,
-		//! [client|server]
-		MTID_PROJECTILEFRAME,
-		//! [client]
+		//! [client|server] High priority
+		MTID_CHANGEWEAPON,
+		//! [client|server] High priority
+		/*!
+		 * Structure:<br>
+		 * <ol>
+		 * <li> [char]     ID_TIMESTAMP
+		 * <li> [long]     Time
+		 * <li> [char]     MTID_FIREWEAPON
+		 * <li> [PlayerInd]Ship to which this applies
+		 * <li> [float]    x origin
+		 * <li> [float]    y origin
+		 * <li> [float]    direction at origin
+		 * </ol>
+		 */
+		MTID_FIREWEAPON,
+		//! [client] High priority
 		MTID_MAKEHOLE,
+		//! [client|server] Low priority
+		MTID_SHIPFRAME,
+		//! [client|server] Low Priority
+		MTID_PROJECTILEFRAME,
 		//! [client] Low priority
 		MTID_TERRAINBITMASK,
 		//@}

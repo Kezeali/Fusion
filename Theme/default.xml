@@ -2,5 +2,6 @@
 <Theme>
 	<image name="images/particles/star" file="star.png" />
 	<image name="images/particles/generic" file="light16p.png" />
+	<image name="images/general/hole" file="circle.png" />
 	<sound name="sounds/spawn" file="PowerUp.wav" />
 </Theme>

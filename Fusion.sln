@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FusionEngine", "FusionEngine\FusionEngine.vcproj", "{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitmaskPhysics", "BitmaskPhysics\BitmaskPhysics.vcproj", "{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}.Debug|Win32.Build.0 = Debug|Win32
 		{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}.Release|Win32.ActiveCfg = Release|Win32
 		{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}.Release|Win32.Build.0 = Release|Win32
+		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Debug|Win32.Build.0 = Debug|Win32
+		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Release|Win32.ActiveCfg = Release|Win32
+		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -13,6 +13,7 @@ namespace FusionEngine
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_IsColliding(false),
+		m_Active(true),
 		m_Type(0),
 		m_Mass(0.f),
 		m_Radius(0),
@@ -26,12 +27,13 @@ namespace FusionEngine
 	{
 	}
 
-	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response)
+	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, CollisionCallback response)
 		: m_World(world),
 		m_CollisionResponse(response),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_IsColliding(false),
+		m_Active(true),
 		m_Type(0),
 		m_Mass(0.f),
 		m_Radius(0),
@@ -53,6 +55,7 @@ namespace FusionEngine
 	void FusionPhysicsBody::SetMass(float mass)
 	{
 		m_Mass = mass;
+		m_InverseMass = 1.0f / mass;
 	}
 
 	void FusionPhysicsBody::SetRadius(float radius)
@@ -70,6 +73,11 @@ namespace FusionEngine
 		return m_Mass;
 	}
 
+	float FusionPhysicsBody::GetInverseMass()
+	{
+		return m_InverseMass;
+	}
+
 	float FusionPhysicsBody::GetRadius()
 	{
 		return m_Radius;
@@ -78,25 +86,36 @@ namespace FusionEngine
 	void FusionPhysicsBody::ApplyForce(const CL_Vector2 &force)
 	{
 		m_AppliedForce += force;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::ApplyForce(float force)
 	{
 		CL_Vector2 force_vector(sinf(force), cosf(force));
 		m_AppliedForce += force_vector;
+
+		_activate();
 	}
 
-	void FusionPhysicsBody::SetFrictionCoefficient(float coefficient)
+	void FusionPhysicsBody::SetCoefficientOfFriction(float damping)
 	{
-		m_LinearDamping = coefficient;
+		m_LinearDamping = damping;
+	}
+
+	void FusionPhysicsBody::SetCoefficientOfRestitution(float bounce)
+	{
+		m_Bounce = bounce;
 	}
 
 	void FusionPhysicsBody::SetRotationalVelocity(float velocity)
 	{
 		m_RotationalVelocity = velocity;
+
+		_activate();
 	}
 
-	void FusionPhysicsBody::SetColBitmask(const FusionEngine::FusionBitmask &bitmask)
+	void FusionPhysicsBody::SetColBitmask(FusionEngine::FusionBitmask *bitmask)
 	{
 		m_Bitmask = bitmask;
 	}
@@ -121,9 +140,21 @@ namespace FusionEngine
 		return m_Bitmask;
 	}
 
-	bool FusionPhysicsBody::GetColPoint(CL_Point point) const
+	bool FusionPhysicsBody::GetColPoint(const CL_Point &point, bool auto_offset) const
 	{
-		return m_Bitmask.GetBit(point);
+		if (auto_offset)
+		{
+			CL_Point pos = GetPositionPoint();
+			// Offset
+			CL_Point scaled_point = (point - pos);
+			// Scale
+			scaled_point.x /= m_Bitmask->GetPPB();
+			scaled_point.y /= m_Bitmask->GetPPB();
+
+			return m_Bitmask->GetBit(scaled_point);
+		}
+		else
+			return m_Bitmask->GetBit(point);
 	}
 
 	CL_Rectf FusionPhysicsBody::GetColAABB() const
@@ -218,9 +249,14 @@ namespace FusionEngine
 		return m_Velocity;
 	}
 
-	float FusionPhysicsBody::GetFrictionConstant() const
+	float FusionPhysicsBody::GetCoefficientOfFriction() const
 	{
-		return m_FrictionConst;
+		return m_LinearDamping;
+	}
+
+	float FusionPhysicsBody::GetCoefficientOfRestitution() const
+	{
+		return m_Bounce;
 	}
 
 	float FusionPhysicsBody::GetRotationalVelocity() const
@@ -233,29 +269,80 @@ namespace FusionEngine
 		return m_Rotation;
 	}
 
+	bool FusionPhysicsBody::IsActive() const
+	{
+		return m_Active;
+	}
+
+	void FusionPhysicsBody::_activate()
+	{
+		m_Active = true;
+
+		m_DeactivationTime = CL_System::get_time() + m_DeactivationTimePeriod;
+	}
+
+	void FusionPhysicsBody::_deactivate()
+	{
+		// Stop moving - we don't want it flying off into deep space ;)
+		m_Acceleration = CL_Vector2::ZERO;
+		m_Velocity = CL_Vector2::ZERO;
+
+		m_Active = false;
+	}
+
+	void FusionPhysicsBody::SetDeactivationPeriod(unsigned int period)
+	{
+		m_DeactivationTimePeriod = period;
+	}
+
+	unsigned int FusionPhysicsBody::GetDeactivationPeriod() const
+	{
+		return m_DeactivationTimePeriod;
+	}
+
+	void FusionPhysicsBody::_setDeactivationTime(unsigned int time)
+	{
+		m_DeactivationTime = time;
+	}
+
+	unsigned int FusionPhysicsBody::GetDeactivationTime() const
+	{
+		return m_DeactivationTime;
+	}
+
 	void FusionPhysicsBody::_setPosition(const CL_Vector2 &position)
 	{
 		m_Position = position;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::_setForce(const CL_Vector2 &force)
 	{
 		m_AppliedForce = force;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::_setAcceleration(const CL_Vector2 &acceleration)
 	{
 		m_Acceleration = acceleration;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::_setVelocity(const CL_Vector2 &velocity)
 	{
 		m_Velocity = velocity;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::_setRotation(const float rotation)
 	{
 		m_Rotation = rotation;
+
+		_activate();
 	}
 
 	void FusionPhysicsBody::_setCGPos(int ind)
@@ -276,6 +363,21 @@ namespace FusionEngine
 	int FusionPhysicsBody::_getCCIndex() const
 	{
 		return m_CCIndex;
+	}
+
+	void FusionPhysicsBody::_notifyCGwillUpdate()
+	{
+		m_GotCGUpdate = true;
+	}
+
+	bool FusionPhysicsBody::_CGwillUpdate() const
+	{
+		return m_GotCGUpdate;
+	}
+
+	void FusionPhysicsBody::_notifyCGUpdated()
+	{
+		m_GotCGUpdate = false;
 	}
 
 }

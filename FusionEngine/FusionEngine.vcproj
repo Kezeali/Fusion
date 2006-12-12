@@ -367,6 +367,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicsUtils.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsWorld.h"
 				>
 			</File>
@@ -464,6 +468,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStatePackSyncClient.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStateSetupShips.h"
 				>
 			</File>
 			<File
@@ -742,6 +750,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsStatic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsUtils.cpp"
 				>
 			</File>
 			<File

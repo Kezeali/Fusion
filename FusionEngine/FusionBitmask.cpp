@@ -90,28 +90,32 @@ bool FusionBitmask::GetBit(const CL_Point &point) const
 	return (bitmask_getbit(m_Bitmask, point.x, point.y) == 1) ? true : false;
 }
 
-bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask &other, const CL_Point &offset)
+bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 {
 	assert(m_BitmaskCreated);
-	return (bitmask_overlap(m_Bitmask, other.m_Bitmask, offset.x, offset.y) == 1) ? true : false;
+	return (bitmask_overlap(m_Bitmask, other->m_Bitmask, offset.x, offset.y) == 1) ? true : false;
 }
 
-const CL_Point &FusionBitmask::OverlapPoint(const FusionEngine::FusionBitmask &other, const CL_Point &offset)
+const CL_Point &FusionBitmask::OverlapPoint(const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 {
 	assert(m_BitmaskCreated);
 	int x, y;
-	x = y = -1;
+	x = y = 0;
 
-	bitmask_overlap_pos(m_Bitmask, other.m_Bitmask, offset.x, offset.y, &x, &y);
-	return CL_Point(x, y);
+	if (bitmask_overlap_pos(m_Bitmask, other->m_Bitmask, offset.x, offset.y, &x, &y))
+	{
+		CL_Point(x, y);
+	}
+
+	return false;
 }
 
-const CL_Vector2 &FusionBitmask::CalcCollisionNormal(const FusionEngine::FusionBitmask &other, const CL_Point &offset)
+const CL_Vector2 &FusionBitmask::CalcCollisionNormal(const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 {
-	int dx = bitmask_overlap_area(m_Bitmask, other.m_Bitmask, offset.x+1, offset.y) - 
-         bitmask_overlap_area(m_Bitmask, other.m_Bitmask, offset.x-1, offset.y);
-	int dy = bitmask_overlap_area(m_Bitmask, other.m_Bitmask, offset.x, offset.y+1) - 
-         bitmask_overlap_area(m_Bitmask, other.m_Bitmask, offset.x, offset.y-1);
+	int dx = bitmask_overlap_area(m_Bitmask, other->m_Bitmask, offset.x+1, offset.y) - 
+         bitmask_overlap_area(m_Bitmask, other->m_Bitmask, offset.x-1, offset.y);
+	int dy = bitmask_overlap_area(m_Bitmask, other->m_Bitmask, offset.x, offset.y+1) - 
+         bitmask_overlap_area(m_Bitmask, other->m_Bitmask, offset.x, offset.y-1);
 
 	return CL_Vector2(dx, dy);
 }
