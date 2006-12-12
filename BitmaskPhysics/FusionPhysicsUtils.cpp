@@ -235,6 +235,7 @@ namespace FusionEngine
 			CL_Point offset = CL_Point(one_pos.x - two_pos.x, one_pos.y - two_pos.y);
 			return (one->GetColBitmask()->Overlap(two->GetColBitmask(), offset));
 		}
+
 		// Check for bitmask collisons against non-bitmask objects
 		//  ATM this ignores dist colisions and AABB's; just works with a point
 		else if (one->GetUsePixelCollisions() ^ two->GetUsePixelCollisions())
@@ -303,8 +304,13 @@ namespace FusionEngine
 		// Bitmask - bitmask collision
 		if (body->GetUsePixelCollisions() & other->GetUsePixelCollisions())
 		{
+			CL_Vector2 normal;
+
 			CL_Point offset = CL_Point(body_pos.x - other_pos.x, body_pos.y - other_pos.y);
-			body->GetColBitmask()->CalcCollisionNormal(output, other->GetColBitmask(), offset);
+			body->GetColBitmask()->CalcCollisionNormal(&normal, other->GetColBitmask(), offset);
+
+			normal.unitize();
+			memcpy(output, &normal, sizeof(CL_Vector2));
 		}
 
 		// AABB - bitmask collision
@@ -335,6 +341,7 @@ namespace FusionEngine
 
 			// The normal returned will be from the circle, we want the opposite
 			normal *= -1;
+			normal.unitize();
 			memcpy(output, &normal, sizeof(CL_Vector2));
 		}
 
@@ -342,21 +349,25 @@ namespace FusionEngine
 		else if (body->GetUsePixelCollisions())
 		{
 			CL_Point offset = CL_Point(other_pos.x - body_pos.x, other_pos.y - body_pos.y);
+			CL_Vector2 normal;
 
 			FusionBitmask* bm = body->GetColBitmask();
 
 			// Collide the other bitmask with a new circle bitmask and find the collision normal
 			bm->CalcCollisionNormal(
-				output,
+				&normal,
 				new FusionBitmask(1.0f, bm->GetPPB()), offset);
+
+			normal.unitize();
+			memcpy(output, &normal, sizeof(CL_Vector2));
 		}
 
 		// Assume distance (circular) object collision
 		else
 		{
 			// Vector from center to point of collision
-			CL_Vector2 d = body_pos - other_pos;
-			CL_Vector2 normal = d / d.length();
+			CL_Vector2 normal = body_pos - other_pos;
+			normal.unitize();
 			memcpy(output, &normal, sizeof(CL_Vector2));
 		}
 

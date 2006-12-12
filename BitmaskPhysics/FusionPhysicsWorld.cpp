@@ -410,28 +410,39 @@ namespace FusionEngine
 							cBod_poc, Other_poc,
 							cBod, Other);
 
+						CL_Vector2 bounce_veloc = veloc;
+
+						float speed = bounce_veloc.unitize(); //normalise
+
+						// Compute Reflection
+						bounce_veloc = (normal*(2*normal.dot(-bounce_veloc))) + bounce_veloc ;
+						bounce_veloc.unitize();
+						bounce_veloc = bounce_veloc*speed;	
+
+						veloc = bounce_veloc;
+
 						// Find the perpendicular vector to the vector from the object
 						//  to the point of collision
 						// perpendicular(position - point-of-collision)
-						CL_Vector2 pos_collision_perp = position - poc;
-						pos_collision_perp.y = -pos_collision_perp.y;
+						//CL_Vector2 pos_collision_perp = position - poc;
+						//pos_collision_perp.y = -pos_collision_perp.y;
 
-						// -elasticity * velocity o collision normal
-						float impulse_numerator = -(1.0f + bounce) * veloc.dot(normal);
+						//// -elasticity * velocity o collision normal
+						//float impulse_numerator = -(1.0f + bounce) * veloc.dot(normal);
 
-						// perpendicular(position - point-of-collision) o collision normal
-						float perp_dot = pos_collision_perp.dot(normal);
+						//// perpendicular(position - point-of-collision) o collision normal
+						//float perp_dot = pos_collision_perp.dot(normal);
 
-						// pos_collision_perp o collision normal / mass
-						float impulse_denominator = cBod->GetInverseMass() * perp_dot * perp_dot;
+						//// pos_collision_perp o collision normal / mass
+						//float impulse_denominator = cBod->GetInverseMass() * perp_dot * perp_dot;
 
-						if (impulse_denominator == 0) // oh noes
-							continue;
+						//if (impulse_denominator == 0) // oh noes
+						//	continue;
 
-						float impulse = impulse_numerator / impulse_denominator;
+						//float impulse = impulse_numerator / impulse_denominator;
 
-						// velocity + impulse / mass * collision normal
-						veloc += normal * ( impulse * cBod->GetInverseMass() );
+						//// velocity + impulse / mass * collision normal
+						//veloc += normal * ( impulse * cBod->GetInverseMass() );
 
 						//cBod->ApplyForce( normal * ( impulse * cBod->GetInverseMass() ) );
 
