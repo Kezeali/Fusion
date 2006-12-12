@@ -195,6 +195,15 @@ namespace FusionEngine
 		 */
 		void Initialise(int level_x, int level_y);
 
+		//! Activates wrap around
+		void ActivateWrapAround();
+
+		//! Deactivates wrap around
+		void DeactivateWrapAround();
+
+		//! Deactivates wrap around
+		bool UseWrapAround() const;
+
 		//! Set the time in milis for bodies to de-activate after.
 		void SetBodyDeactivationPeriod(unsigned int millis);
 		//! Returns the current deactivation period for bodies.

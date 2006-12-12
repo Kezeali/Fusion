@@ -292,10 +292,14 @@ namespace FusionEngine
 
 				if (m_Wrap)
 				{
+					if (position.x >= m_Width-1 || position.x <= 1
+						|| position.y >= m_Height-1 || position.y <= 1)
+					{
 						// Wrap around
 						cBod->_setPosition(CL_Vector2(
 							fe_wrap<int>(position.x, 1, m_Width-1), fe_wrap<int>(position.y, 1, m_Height-1)
 							));
+					}
 				}
 
 
@@ -344,7 +348,6 @@ namespace FusionEngine
 				// Rotation
 				cBod->m_Rotation += cBod->m_RotationalVelocity;
 
-
 				//////////////////////
 				// Collision detection
 				//  Check for collisions of active objects.
@@ -372,7 +375,14 @@ namespace FusionEngine
 					CL_Vector2 cBod_poc; 
 					CL_Vector2 Other_poc;
 
+
 					bool collision = false;
+
+					//if (PhysUtil::FindCollisions(
+						//	&cBod_poc, &Other_poc, 
+						//	veloc, Other->GetVelocity(), 
+						//	cBod, Other))
+						//	collision = true;
 
 					if (PhysUtil::CollisionCheck(
 						cBod->GetPosition(), Other->GetPosition(),
@@ -383,15 +393,8 @@ namespace FusionEngine
 						Other_poc = Other->GetPosition();
 						collision = true;
 					}
-
-					//if (PhysUtil::FindCollisions(
-					//	&cBod_poc, &Other_poc, 
-					//	veloc, Other->GetVelocity(), 
-					//	cBod, Other))
-					//	collision = true;
-
 					// If any of the collision checks found collisions
-					if (collision)
+					while (collision)
 					{
 						CL_Vector2 normal;
 						PhysUtil::CalculateNormal(&normal, cBod_poc, Other_poc, cBod, Other);
@@ -421,40 +424,29 @@ namespace FusionEngine
 
 						veloc = bounce_veloc;
 
-						// Find the perpendicular vector to the vector from the object
-						//  to the point of collision
-						// perpendicular(position - point-of-collision)
-						//CL_Vector2 pos_collision_perp = position - poc;
-						//pos_collision_perp.y = -pos_collision_perp.y;
-
-						//// -elasticity * velocity o collision normal
-						//float impulse_numerator = -(1.0f + bounce) * veloc.dot(normal);
-
-						//// perpendicular(position - point-of-collision) o collision normal
-						//float perp_dot = pos_collision_perp.dot(normal);
-
-						//// pos_collision_perp o collision normal / mass
-						//float impulse_denominator = cBod->GetInverseMass() * perp_dot * perp_dot;
-
-						//if (impulse_denominator == 0) // oh noes
-						//	continue;
-
-						//float impulse = impulse_numerator / impulse_denominator;
-
-						//// velocity + impulse / mass * collision normal
-						//veloc += normal * ( impulse * cBod->GetInverseMass() );
-
-						//cBod->ApplyForce( normal * ( impulse * cBod->GetInverseMass() ) );
+						cBod->m_Position += veloc;
 
 
 						///////////
 						// Finally, call the objects collision response
-						//cBod->CollisionResponse(Other, poc);
+						cBod->CollisionResponse(Other, poc);
 
-					} // if (collision)
+						if (PhysUtil::CollisionCheck(
+							cBod->GetPosition(), Other->GetPosition(),
+							cBod, Other))
+						{
+							// The collision is at the current positions.
+							cBod_poc = cBod->GetPosition();
+							Other_poc = Other->GetPosition();
+							collision = true;
+						}
+						else
+							collision = false;
+
+					} // while (collision)
 				} // for (it_b)
 
-
+				
 				// Check whether this object should be deactivate
 				if (CL_System::get_time() > cBod->GetDeactivationTime())
 					cBod->_deactivate();
@@ -471,6 +463,31 @@ namespace FusionEngine
 		m_CollisionGrid->Resort();
 	}
 
+	// Find the perpendicular vector to the vector from the object
+	//  to the point of collision
+	// perpendicular(position - point-of-collision)
+	//CL_Vector2 pos_collision_perp = position - poc;
+	//pos_collision_perp.y = -pos_collision_perp.y;
+
+	//// -elasticity * velocity o collision normal
+	//float impulse_numerator = -(1.0f + bounce) * veloc.dot(normal);
+
+	//// perpendicular(position - point-of-collision) o collision normal
+	//float perp_dot = pos_collision_perp.dot(normal);
+
+	//// pos_collision_perp o collision normal / mass
+	//float impulse_denominator = cBod->GetInverseMass() * perp_dot * perp_dot;
+
+	//if (impulse_denominator == 0) // oh noes
+	//	continue;
+
+	//float impulse = impulse_numerator / impulse_denominator;
+
+	//// velocity + impulse / mass * collision normal
+	//veloc += normal * ( impulse * cBod->GetInverseMass() );
+
+	//cBod->ApplyForce( normal * ( impulse * cBod->GetInverseMass() ) );
+
 	void FusionPhysicsWorld::Initialise(int level_x, int level_y)
 	{
 		Clear();
@@ -479,6 +496,21 @@ namespace FusionEngine
 
 		m_Width = level_x;
 		m_Height = level_y;
+	}
+
+	void FusionPhysicsWorld::ActivateWrapAround()
+	{
+		m_Wrap = true;
+	}
+
+	void FusionPhysicsWorld::DeactivateWrapAround()
+	{
+		m_Wrap = false;
+	}
+
+	bool FusionPhysicsWorld::UseWrapAround() const
+	{
+		return m_Wrap;
 	}
 
 	void FusionPhysicsWorld::SetBodyDeactivationPeriod(unsigned int millis)

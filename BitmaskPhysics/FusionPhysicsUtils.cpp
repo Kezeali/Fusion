@@ -224,7 +224,7 @@ namespace FusionEngine
 
 			// The required distance to create a collision against object one
 			//  is expanded by the distance of the other.
-			float dist = (one->GetColDist() + two->GetColDist());
+			float dist = ( one->GetColDist() + two->GetColDist() )/2;
 
 			return (dp.squared_length() < (dist * dist));
 		}
@@ -332,10 +332,11 @@ namespace FusionEngine
 
 			FusionBitmask* bm = other->GetColBitmask();
 
+			int ppb = bm->GetPPB();
 			// Collide a new circle bitmask with the other bitmask and find the collision normal
 			bm->CalcCollisionNormal(
 				&normal,
-				new FusionBitmask(CL_Size(50, 50), bm->GetPPB()), offset);
+				new FusionBitmask(CL_Size(ppb*2, ppb*2), ppb), offset);
 			//CL_Point body_pt = CL_Point(body_pos.x, body_pos.y);
 			//other->GetColPoint(body_pt);
 

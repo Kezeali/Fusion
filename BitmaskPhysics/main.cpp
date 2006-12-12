@@ -90,7 +90,8 @@ class BitmaskTest : public CL_ClanApplication
 		m_World->Initialise(800, 600);
 		m_World->SetBodyDeactivationPeriod(4000);
 		m_World->SetMaxVelocity(20);
-		m_World->SetBitmaskRes(50);
+		m_World->SetBitmaskRes(10);
+		m_World->ActivateWrapAround();
 
 		// Ship
 		m_ShipGraphical = new CL_Surface("../Body.png");
@@ -157,8 +158,6 @@ class BitmaskTest : public CL_ClanApplication
 
 			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
 		}
-
-		FusionBitmask *testmask = new FusionBitmask(CL_Size(50,50), 10);
 		
 		int back_pos = 0;
 		float sur_y = 250.f;
@@ -223,7 +222,6 @@ class BitmaskTest : public CL_ClanApplication
 				m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
 				);
 
-			testmask->DisplayBits(50, 50);
 			/*params.rotate_origin = origin_center;
 			params.rotate_angle = m_TerrainPhysical->GetRotation();
 			params.destX = m_TerrainPhysical->GetPosition().x;
