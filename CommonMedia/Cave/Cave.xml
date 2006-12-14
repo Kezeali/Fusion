@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<FusionWeapon tag="Cave">
+	<name>The Cave of LevelTest</name>
+	<description>Tests level loading.</description>
+
+	<global>
+		<friction>0.1</friction>
+	</global>
+
+	<region name="incrfriction">
+		<bounds type="rect">
+			<x>10</x>
+			<y>10</y>
+			<width>100</width>
+			<height>100</height>
+		</bounds>
+		
+		<scripting script="Cave.as">
+			<onEnter>void onEnterRegionMoreFriction()</step>
+			<step>void onStepRegionMoreFriction()</step>
+		</scripting>
+	</region>
+
+	<region name="gravity">
+		<bounds type="circle">
+			<x>10</x>
+			<y>10</y>
+			<radius>100</radius>
+		</bounds>
+		
+		<scripting script="Cave.as">
+			<onEnter>void 
+			<step>void onRegionGravity()</step>
+		</scripting>
+	</region>
+
+</FusionWeapon>

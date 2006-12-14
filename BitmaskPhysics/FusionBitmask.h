@@ -47,10 +47,6 @@ namespace FusionEngine
 	class FusionBitmask
 	{
 	public:
-		friend std::istream &operator>> (std::istream &is, FusionBitmask *obj);
-		friend std::ostream &operator<< (std::ostream &os, const FusionBitmask *obj);
-
-	public:
 		//! Basic constructor. Don't use.
 		FusionBitmask();
 
@@ -242,12 +238,6 @@ namespace FusionEngine
 		int m_MaskHeight;
 
 	};
-
-	//! Stream input operator
-	std::istream &operator>> ( std::istream &is, FusionBitmask &bitmask );
-
-	//! Stream output operator
-	std::ostream &operator<< ( std::ostream &os, const FusionBitmask &bitmask );
 
 }
 

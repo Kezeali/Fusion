@@ -33,21 +33,50 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
-/// LinearParticle
-#include "..\LinearParticle\include\L_ParticleSystem.h"
-
 /// AngelScript
 //#define AS_USE_NAMESPACE
 #include <angelscript.h>
 
-/// CEGUI
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
-
-#include "FusionStringVector.h"
-
 namespace FusionEngine
 {
+	// Useful inline functions
+	//! Returns the bigger value
+	template<class T>
+	inline const T &fe_max(const T &a, const T &b) {return (a > b) ? a : b; }
+	//! Returns the smaller value
+	template<class T>
+	inline const T &fe_min(const T &a, const T &b) {return (a < b) ? a : b; }
+	//! Wraps a around if it is below lb or above ub
+	template<class T>
+	inline const T &fe_wrap(const T &a, const T &lb, const T &ub) 
+	{
+		// This basically ammounts to:
+		//  if (a <= lb) return ub;
+		//  else if (a > ub) return lb;
+		//  else return a;
+		return a <= lb ? ub : (a >= ub ? lb : a);
+		// It's so unreadable, it must be efficiant... Right? :P
+	}
+	//! Returns a if it is no less than lb, and no greater than ub
+	template <class T>
+	inline const T &fe_clamped(const T &a, const T &lb, const T &ub) 
+	{
+		return a < lb ? lb : (ub < a ? ub : a); 
+	}
+	//! Sets a to no less than lb, and no greater than ub
+	template <class T>
+	inline void fe_clamp(T &a, const T &lb, const T &ub) 
+	{
+		if (a < lb) 
+		{
+			a = lb; 
+		}
+		else if (ub <= a) 
+		{
+			a = ub;
+		}
+	}
+
 	// Forward declarations
 	class GenericEnviornment;
 	class ServerEnvironment;
@@ -60,7 +89,6 @@ namespace FusionEngine
 	class FusionShip;
 	class FusionProjectile;
 	class ShipResource;
-	class FusionPhysicsResponse;
 	class FusionPhysicsWorld;
 	class FusionPhysicsBody;
 	class FusionPhysicsCollisionGrid;

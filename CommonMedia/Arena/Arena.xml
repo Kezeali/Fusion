@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<FusionWeapon tag="Arena">
+	<name>1v1 Arena</name>
+	<description>Matches up players in 1on1 battles. Players can also spectate</description>
+
+	<global>
+		<friction>0.1</friction>
+	</global>
+	
+	<effect name="fireworks">
+		<particles>
+			<count>10</count>
+			<image>dot.png</image>
+		</particles>
+		<flash>
+			<period>1</period>
+			<!-- Colour intensities for the flash -->
+			<colour>
+				<r>250</r>
+				<g>250</r>
+				<b>250</r>
+			</colour>
+		</flash>
+	</effect>
+
+	<region name="incrfriction">
+		<bounds type="rect">
+			<x>10</x>
+			<y>10</y>
+			<width>100</width>
+			<height>100</height>
+		</bounds>
+		
+		<scripting script="Cave.as">
+			<onEnter>void onEnterRegionMoreFriction()</step>
+			<step>void onStepRegionMoreFriction()</step>
+		</scripting>
+	</region>
+
+	<region name="gravity">
+		<bounds type="circle">
+			<x>10</x>
+			<y>10</y>
+			<radius>100</radius>
+		</bounds>
+		
+		<scripting script="Cave.as">
+			<onEnter>void 
+			<step>void onRegionGravity()</step>
+		</scripting>
+	</region>
+
+</FusionWeapon>

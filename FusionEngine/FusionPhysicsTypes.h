@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsTypes
-#define Header_FusionEngine_FusionPhysicsTypes
+#ifndef Header_FusionEngine_PhysicsTypes
+#define Header_FusionEngine_PhysicsTypes
 
 #if _MSC_VER > 1000
 #pragma once
@@ -31,12 +31,12 @@ namespace FusionEngine
 {
 
 	//! Types of bodies
-	enum
+	enum PhysicsTypes
 	{
 		PB_SHIP,
 		PB_PROJECTILE,
 		PB_TERRAIN
-	}
+	};
 
 }
 

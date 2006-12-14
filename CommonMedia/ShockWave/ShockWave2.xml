@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<FusionShip tag="ShockWave">
-	<name>Shock Wave</name>
-	<description>Built to test the ship loading system.</description>
+<FusionShip tag="ShockWave2">
+	<name>Shock Wave 2</name>
+	<description>Built to test the ship loading system. Again!</description>
 	
-	<health>100</health>
+	<health>10</health>
   
 	<body>Body.png</body>
 	<leftEngine>
 		<x>3</x>
 		<y>24</y>
 		<image>SWEngine.png</image>
-		
-		<scripting script="ShockWave.as">
-			<jettasonstep></jettasonstep>
-		</scripting>
 	</leftEngine>
 	<rightEngine>
 		<x>28</x>
@@ -32,8 +28,8 @@
 	</secondaryWeapon>
 	
 	<physics>
-		<mass>10</mass>
+		<mass>4</mass>
 		<engineforce>1</engineforce>
-		<rotationvelocity>10</rotationvelocity>
+		<rotationvelocity>12</rotationvelocity>
 	</physics>
 </FusionShip>

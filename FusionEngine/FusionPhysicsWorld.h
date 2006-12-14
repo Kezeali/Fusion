@@ -10,7 +10,14 @@
 
 namespace FusionEngine
 {
+
+	static const float g_PhysGridScale = 0.01f;
+	static const float g_PhysCollisionJump = 0.2f;
+
 	//! Used for initialising bodies.
+	/*!
+	 * \todo Add 'bounce'
+	 */
 	struct PhysicalProperties
 	{
 		//! Constructor
@@ -20,28 +27,42 @@ namespace FusionEngine
 
 			position(CL_Vector2::ZERO),
 
-			rotation(0.0f)
+			rotation(0.0f),
+
+			use_bitmask(false),
+			use_aabb(false),
+			use_dist(false),
+			bitmask(0),
+			dist(0)
 			{}
 
-		//! Mass
+		//! Mass.
 		float mass;
-		//! Radius
+		//! Radius.
 		float radius;
 
-		//! Initial Position
+		//! Initial Position.
 		CL_Vector2 position;
 
-		//! Initial Rotation
+		//! Initial Rotation.
 		float rotation;
-	};
 
-	//! Returned by _checkVectorForCollisions().
-	struct CollisionPoint
-	{
-		//! True if a collision occored.
-		bool point_found;
-		//! The point of collision if one occored.
-		CL_Vector2 collision_point;
+		//! Use Pixel based collision detection.
+		bool use_bitmask;
+		//! Use the given bitmask.
+		FusionBitmask *bitmask;
+		//! Use AABB based collision detection.
+		bool use_aabb;
+		//! Make an AABB with the given (upright) dimensions
+		float aabb_x, aabb_y;
+		//! Use BB based collision detection.
+		bool use_bb;
+		//! Make a BB with the given dimensions
+		float bb_x, bb_y;
+		//! Use Distance based collision detection.
+		bool use_dist;
+		//! Use the given distance (for distance based collisions.)
+		float dist;
 	};
 
 	/*!
@@ -51,6 +72,13 @@ namespace FusionEngine
 	 *
 	 * It is recomended that you use the factory methods (CreateBody(...), 
 	 * DestroyBody(...)) rather than the 
+	 *
+	 * \todo Activation / deactivation for objects which aren't moving.
+	 *
+	 * Objects should notify the world on property changes (_setPosition, etc)
+	 * so the world can decide whether to activate them, and if a body doesn't
+	 * notify over a long period of time, it gets de-activated (checks can be done
+	 * at the end of RunSimulation.)
 	 *
 	 * \see
 	 * FusionPhysicsWorld | FusionPhysicsElipse.
@@ -65,7 +93,7 @@ namespace FusionEngine
 
 	public:
 		//! List of PhysicsBodies
-		typedef std::vector<FusionPhysicsBody *> PhysicsBodyList;
+		typedef std::vector<FusionPhysicsBody *> BodyList;
 
 	public:
 		//! [depreciated] Adds a body to the world so it will have physics applied to it.
@@ -101,7 +129,7 @@ namespace FusionEngine
 		 * \param[in] type The type of body.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateBody(FusionPhysicsResponse *response, int type);
+		FusionPhysicsBody *CreateBody(CollisionCallback response, int type);
 		//! Creates a body in the world so it will have physics applied to it.
 		/*!
 		 * \param[in] response A pointer to the response object.
@@ -109,13 +137,48 @@ namespace FusionEngine
 		 * \param[in] props Properties to initialise the body with.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateBody(FusionPhysicsResponse *response, int type, const PhysicalProperties &props);
+		FusionPhysicsBody *CreateBody(CollisionCallback response, int type, const PhysicalProperties &props);
 		//! Destroys the given body.
 		/*!
 		 * \param[in] body Pointer to the body to remove.
 		 */
 		void DestroyBody(FusionPhysicsBody *body);
-		//! Removes all bodies.
+
+		//! Creates a static body in the world so it will have collision detection applied to it.
+		/*!
+		 * \param[in] type The type of body.
+		 * \returns A const pointer to the body created.
+		 */
+		FusionPhysicsBody *CreateStatic(int type);
+		//! Creates a static body in the world so it will have collision detection applied to it.
+		/*!
+		 * \param[in] type The type of body.
+		 * \param[in] props Properties to initialise the body with.
+		 * \returns A const pointer to the body created.
+		 */
+		FusionPhysicsBody *CreateStatic(int type, const PhysicalProperties &props);
+		//! Creates a static body in the world so it will have collision detection applied to it.
+		/*!
+		 * \param[in] response A pointer to the response object.
+		 * \param[in] type The type of body.
+		 * \returns A const pointer to the body created.
+		 */
+		FusionPhysicsBody *CreateStatic(CollisionCallback response, int type);
+		//! Creates a static body in the world so it will have collision detection applied to it.
+		/*!
+		 * \param[in] response A pointer to the response object.
+		 * \param[in] type The type of body.
+		 * \param[in] props Properties to initialise the body with.
+		 * \returns A const pointer to the body created.
+		 */
+		FusionPhysicsBody *CreateStatic(CollisionCallback response, int type, const PhysicalProperties &props);
+		//! Destroys the given static body.
+		/*!
+		 * \param[in] body Pointer to the body to remove.
+		 */
+		void DestroyStatic(FusionPhysicsBody *body);
+
+		//! Removes all bodies and statics.
 		void Clear();
 
 		//! Does movement and collision detection.
@@ -131,23 +194,35 @@ namespace FusionEngine
 		 * \remarks
 		 * Remember to add a terrain body for the new level! (use AddBody())
 		 */
-		void LevelChange(int level_x, int level_y);
+		void Initialise(int level_x, int level_y);
+
+		//! Activates wrap around
+		void ActivateWrapAround();
+
+		//! Deactivates wrap around
+		void DeactivateWrapAround();
+
+		//! Deactivates wrap around
+		bool UseWrapAround() const;
+
+		//! Set the time in milis for bodies to de-activate after.
+		void SetBodyDeactivationPeriod(unsigned int millis);
+		//! Returns the current deactivation period for bodies.
+		unsigned int GetBodyDeactivationPeriod() const;
 
 		//! Allows the maximum velocity to be set
 		void SetMaxVelocity(float maxvel);
 		//! Returns the current maximum velocity
 		float GetMaxVelocity() const;
 
-		//! Allows the bitmask resolution to be set (pixels per bit)
+		//! Allows the bitmask scale to be set (pixels per bit)
 		void SetBitmaskRes(int ppb);
-		//! Returns the res bodies should use for their bitmasks
+		//! Returns the scale bodies should use for their bitmasks
 		int GetBitmaskRes() const;
-
-	public:
 
 	private:
 		//! All physical objects controled by this world.
-		PhysicsBodyList m_Bodies;
+		BodyList m_Bodies;
 
 		//! Collision list.
 		FusionPhysicsCollisionGrid *m_CollisionGrid;
@@ -158,10 +233,20 @@ namespace FusionEngine
 		 * shouldn't create a preformance issue, as generally the only static
 		 * object is the terrain.
 		 */
-		PhysicsBodyList m_Static;
+		BodyList m_Static;
 
 		//! World dimensions
 		int m_Width, m_Height;
+
+		//! True if objects should wrap around.
+		/*!
+		 * Wrap-around is not yet implemented.
+		 * \todo Implement wrap-around.
+		 */
+		bool m_Wrap;
+
+		//! All newly created bodies will have their deactivaion period to this.
+		unsigned int m_DeactivationPeriod;
 
 		//! The squared maximum velocity for a moving body.
 		float m_MaxVelocitySquared;

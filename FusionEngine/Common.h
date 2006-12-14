@@ -20,6 +20,9 @@
 #include <deque>
 #include <algorithm>
 
+#include <iostream>
+#include <fstream>
+
 // ClanLib
 #include <ClanLib/core.h>
 #include <ClanLib/network.h>

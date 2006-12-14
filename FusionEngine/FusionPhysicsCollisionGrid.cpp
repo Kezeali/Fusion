@@ -34,7 +34,7 @@ void FusionPhysicsCollisionGrid::AddBody(FusionPhysicsBody *body)
 void FusionPhysicsCollisionGrid::RemoveBody(FusionPhysicsBody *body)
 {
 	// Each body stores its node index
-	BodyList node = m_Grid[(*body)->_getCGPos()];
+	BodyList node = m_Grid[body->_getCGPos()];
 
 	// Find the body in its node
 	{
@@ -69,12 +69,12 @@ void FusionPhysicsCollisionGrid::ResortAll()
 
 	m_BodiesToUpdate.clear();
 
-	BodyListCollection::iterator cell;
+	BodyListCollection::iterator node;
 	BodyList::iterator body;
 
-	for (cell = m_Grid.begin(); cell != m_Grid.end(); ++cell)
+	for (node = m_Grid.begin(); node != m_Grid.end(); ++node)
 	{
-		for (body = (*cell).begin(); body != (*cell).end(); ++body)
+		for (body = (*node).begin(); body != (*node).end(); ++body)
 		{
 			m_BodiesToUpdate.push_back((*body));
 		}
@@ -102,28 +102,30 @@ void FusionPhysicsCollisionGrid::Clear()
 
 void FusionPhysicsCollisionGrid::Resort()
 {
-	BodyList::iterator body;
-
-	for (body = m_BodiesToUpdate.begin(); body != m_BodiesToUpdate.end(); ++body)
+	BodyList::iterator body = m_BodiesToUpdate.begin();
+	for (; body != m_BodiesToUpdate.end(); body++)
 	{
+		// Tell the body it can request an update again if it wants
+		(*body)->_notifyCGUpdated();
+
 		// Find the node the body should move to, based on its physical location
 		int pos = _getGridPosition((*body));
 		// Check if the object actually needs to be updated :P
-		if (pos == (*body)->_getCGPos())
+		if (pos != (*body)->_getCGPos())
 		{
 			// Remove the body form its current position in the grid
 
 			// Each body stores its node index
-			BodyList node = m_Grid[(*body)->_getCGPos()];
+			BodyList *node = &m_Grid[(*body)->_getCGPos()];
 
 			// Find the body in its (old) node
 			{
-				BodyList::iterator node_it = node.begin();
-				for (; node_it != node.end(); ++node_it)
+				BodyList::iterator node_it = node->begin();
+				for (; node_it != node->end(); ++node_it)
 				{
-					if ((*node_it) == body)
+					if ((*node_it) == (*body))
 					{
-						node.erase(node_it);
+						node->erase(node_it);
 						break;
 					}
 				}
@@ -142,9 +144,13 @@ void FusionPhysicsCollisionGrid::Resort()
 
 void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 {
+	assert(scale > 0.0f && scale <= 1.0f);
+
 	m_GridScale = scale;
 	m_GridWidth = int((level_x * scale) + 0.5);
 	m_GridHeight = int((level_y * scale) + 0.5);
+
+	assert(m_GridWidth * m_GridHeight < m_Grid.max_size());
 
 	// Preallocate the grid.
 	m_Grid.resize(m_GridWidth * m_GridHeight);
@@ -153,7 +159,7 @@ void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(FusionEngine::FusionPhysicsBody *body)
 {
 	FusionPhysicsCollisionGrid::BodyList bodies;
-	FusionPhysicsCollisionGrid::BodyList *cell;
+	FusionPhysicsCollisionGrid::BodyList *node;
 
 	int grid_pos = body->_getCGPos();
 
@@ -163,45 +169,57 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 
 	// Find adjacent cells and copy their data
 	//  Local cell:
-	cell = &m_Grid[grid_pos];
+	node = &m_Grid[grid_pos];
 
-	bodies.reserve(bodies.size() + cell->size());
-	std::copy(cell->begin(), cell->end(), bodies.end());
+	bodies.resize(bodies.size() + node->size());
+	std::copy(node->begin(), node->end(), bodies.begin());
 
 	//  Left Hand cell (only if this isn't the left edge):
 	if (grid_pos % m_GridWidth > 0)
 	{
-		cell = &m_Grid[grid_pos - 1];
+		node = &m_Grid[grid_pos - 1];
 
-		bodies.reserve(bodies.size() + cell->size());
-		std::copy(cell->begin(), cell->end(), bodies.end());
+		// Store the length before resize
+		size_t length = bodies.size();
+
+		bodies.resize(bodies.size() + node->size());
+		std::copy(node->begin(), node->end(), bodies.begin() + length);
 	}
 
 	//  Right Hand cell:
 	if ((grid_pos + 1) % m_GridWidth > 0)
 	{
-		cell = &m_Grid[grid_pos + 1];
+		node = &m_Grid[grid_pos + 1];
 
-		bodies.reserve(bodies.size() + cell->size());
-		std::copy(cell->begin(), cell->end(), bodies.end());
+		// Store the length before resize
+		size_t length = bodies.size();
+
+		bodies.resize(bodies.size() + node->size());
+		std::copy(node->begin(), node->end(), bodies.begin() + length);
 	}
 
 	//  Cell above:
 	if (grid_pos >= m_GridWidth)
 	{
-		cell = &m_Grid[grid_pos - m_GridWidth];
+		node = &m_Grid[grid_pos - m_GridWidth];
 		
-		bodies.reserve(bodies.size() + cell->size());
-		std::copy(cell->begin(), cell->end(), bodies.end());
+		// Store the length before resize
+		size_t length = bodies.size();
+
+		bodies.resize(bodies.size() + node->size());
+		std::copy(node->begin(), node->end(), bodies.begin() + length);
 	}
 
 	//  Cell below:
 	if (grid_pos < m_GridWidth * (m_GridHeight -1))
 	{
-		cell = &m_Grid[grid_pos + m_GridWidth];
+		node = &m_Grid[grid_pos + m_GridWidth];
 		
-		bodies.reserve(bodies.size() + cell->size());
-		std::copy(cell->begin(), cell->end(), bodies.end());
+		// Store the length before resize
+		size_t length = bodies.size();
+
+		bodies.resize(bodies.size() + node->size());
+		std::copy(node->begin(), node->end(), bodies.begin() + length);
 	}
 
 	return bodies;
@@ -209,7 +227,12 @@ FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBod
 
 void FusionPhysicsCollisionGrid::_updateThis(FusionEngine::FusionPhysicsBody *body)
 {
-	m_BodiesToUpdate.push_back(body);
+	if (!body->_CGwillUpdate())
+	{
+		// Make sure the body doesn't try to update again till Resort has been called.
+		body->_notifyCGwillUpdate();
+		m_BodiesToUpdate.push_back(body);
+	}
 }
 
 /* [removed] Pointer used now
@@ -219,18 +242,17 @@ void FusionPhysicsCollisionGrid::_updateThis(int cgind)
 }
 */
 
-int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPhysicsBody *body)
+unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPhysicsBody *body)
 {
-	int pos, x, y;
-	x = int(body->GetPosition().x * m_GridScale);
-	y = int(body->GetPosition().y * m_GridScale);
+	unsigned int pos, x, y;
+	x = unsigned int(body->GetPosition().x * m_GridScale);
+	y = unsigned int(body->GetPosition().y * m_GridScale);
 
 	pos = y * m_GridWidth + x;
 
-	// Check whether the pos found is outside the grid
-	if (pos >= m_Grid.size())
-	{
-	}
+	// Make sure the pos found is inside the grid
+	//assert(pos < m_GridWidth * m_GridHeight);
+	fe_clamp<unsigned int>(pos, 0, m_Grid.size());
 
 	return pos;
 }
