@@ -9,10 +9,12 @@ namespace FusionEngine
 
 	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world)
 		: m_World(world),
+		m_CollisionFlags(C_NONE),
 		m_CollisionResponse(0),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_IsColliding(false),
+		m_GotCGUpdate(false),
 		m_Active(true),
 		m_Type(0),
 		m_Mass(0.f),
@@ -29,10 +31,12 @@ namespace FusionEngine
 
 	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, CollisionCallback response)
 		: m_World(world),
+		m_CollisionFlags(C_NONE),
 		m_CollisionResponse(response),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_IsColliding(false),
+		m_GotCGUpdate(false),
 		m_Active(true),
 		m_Type(0),
 		m_Mass(0.f),
@@ -54,8 +58,18 @@ namespace FusionEngine
 
 	void FusionPhysicsBody::SetMass(float mass)
 	{
-		m_Mass = mass;
-		m_InverseMass = 1.0f / mass;
+		if (mass == 0.0f)
+		{
+			m_CollisionFlags |= C_STATIC;
+
+			m_Mass = 0.0f;
+			m_InverseMass = 0.0f;
+		}
+		else
+		{
+			m_Mass = mass;
+			m_InverseMass = 1.0f / mass;
+		}
 	}
 
 	void FusionPhysicsBody::SetRadius(float radius)
@@ -105,6 +119,15 @@ namespace FusionEngine
 
 	void FusionPhysicsBody::SetCoefficientOfRestitution(float bounce)
 	{
+		if (bounce == 0.0f)
+		{
+			m_CollisionFlags ^= C_BOUNCE;
+		}
+		else
+		{
+			m_CollisionFlags |= C_BOUNCE;
+		}
+
 		m_Bounce = bounce;
 	}
 
@@ -140,6 +163,16 @@ namespace FusionEngine
 		return m_Bitmask;
 	}
 
+	CL_Rectf FusionPhysicsBody::GetColAABB() const
+	{
+		return m_AABB;
+	}
+
+	float FusionPhysicsBody::GetColDist() const
+	{
+		return m_ColDist;
+	}
+
 	bool FusionPhysicsBody::GetColPoint(const CL_Point &point, bool auto_offset) const
 	{
 		if (auto_offset)
@@ -155,16 +188,6 @@ namespace FusionEngine
 		}
 		else
 			return m_Bitmask->GetBit(point);
-	}
-
-	CL_Rectf FusionPhysicsBody::GetColAABB() const
-	{
-		return m_AABB;
-	}
-
-	float FusionPhysicsBody::GetColDist() const
-	{
-		return m_ColDist;
 	}
 
 	void FusionPhysicsBody::SetUsePixelCollisions(bool usePixel)
@@ -222,6 +245,21 @@ namespace FusionEngine
 	{
 		if (m_CollisionResponse != 0)
 			m_CollisionResponse(other, collision_point);
+	}
+
+	int FusionPhysicsBody::GetCollisionFlags() const
+	{
+		return m_CollisionFlags;
+	}
+
+	bool FusionPhysicsBody::CheckCollisionFlag(int flag)
+	{
+		return (m_CollisionFlags & flag);
+	}
+
+	void FusionPhysicsBody::_setCollisionFlags(int flags)
+	{
+		m_CollisionFlags = flags;
 	}
 
 	const CL_Vector2 &FusionPhysicsBody::GetPosition() const

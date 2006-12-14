@@ -147,6 +147,7 @@ namespace FusionEngine
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this);
 		body->SetType(type);
+		body->SetMass(0.0f);
 
 		m_Static.push_back(body);
 
@@ -157,6 +158,8 @@ namespace FusionEngine
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this);
 		body->SetType(type);
+		body->SetMass(0.0f);
+
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
 
@@ -180,6 +183,7 @@ namespace FusionEngine
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
+		body->SetMass(0.0f);
 
 		m_Static.push_back(body);
 
@@ -190,6 +194,8 @@ namespace FusionEngine
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
+		body->SetMass(0.0f);
+
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
 
@@ -283,21 +289,21 @@ namespace FusionEngine
 				accel = (force - dampForce) * cBod->GetInverseMass() * split;
 				veloc = veloc + accel;
 
-				// [depreciated] by _deactivate()
-				//if (veloc.squared_length() < 0.001f)
-				//{
-				//	accel = CL_Vector2::ZERO;
-				//	veloc = CL_Vector2::ZERO;
-				//}
-
-				if (m_Wrap)
+				////////////////////
+				// Wrap or pop back
+				if (position.x >= m_Width-1 || position.x <= 1
+					|| position.y >= m_Height-1 || position.y <= 1)
 				{
-					if (position.x >= m_Width-1 || position.x <= 1
-						|| position.y >= m_Height-1 || position.y <= 1)
+					if (m_Wrap)
 					{
-						// Wrap around
 						cBod->_setPosition(CL_Vector2(
 							fe_wrap<int>(position.x, 1, m_Width-1), fe_wrap<int>(position.y, 1, m_Height-1)
+							));
+					}
+					else
+					{
+						cBod->_setPosition(CL_Vector2(
+							fe_clamped<int>(position.x, 1, m_Width-1), fe_clamped<int>(position.y, 1, m_Height-1)
 							));
 					}
 				}
@@ -339,14 +345,6 @@ namespace FusionEngine
 				// All forces applied in the previous step have been converted to motion.
 				cBod->_setForce(CL_Vector2::ZERO);
 
-				///////////////
-				// Apply motion
-
-				// Move along velocity vector, or move to point of collision - veloc will be set to
-				//  the relavant one
-				cBod->m_Position += veloc;
-				// Rotation
-				cBod->m_Rotation += cBod->m_RotationalVelocity;
 
 				//////////////////////
 				// Collision detection
@@ -378,13 +376,15 @@ namespace FusionEngine
 
 					bool collision = false;
 
-					//if (PhysUtil::FindCollisions(
-						//	&cBod_poc, &Other_poc, 
-						//	veloc, Other->GetVelocity(), 
-						//	cBod, Other))
-						//	collision = true;
+					if (PhysUtil::FindCollisions(
+							&cBod_poc, &Other_poc, 
+							veloc, Other->GetVelocity(), 
+							cBod, Other))
+					{
+							collision = true;
+					}
 
-					if (PhysUtil::CollisionCheck(
+					else if (PhysUtil::CollisionCheck(
 						cBod->GetPosition(), Other->GetPosition(),
 						cBod, Other))
 					{
@@ -394,18 +394,115 @@ namespace FusionEngine
 						collision = true;
 					}
 					// If any of the collision checks found collisions
-					while (collision)
+					if (collision)
 					{
 						CL_Vector2 normal;
 						PhysUtil::CalculateNormal(&normal, cBod_poc, Other_poc, cBod, Other);
-
-						//! \todo Collision response for dynamic -> static collisions
-						//  Use collision props flag system like bullet
 
 						///////////////////////
 						// (simple) Collision response
 						CL_Vector2 position = cBod->GetPosition();
 						float bounce = cBod->GetCoefficientOfRestitution();
+
+						if (normal == CL_Vector2::ZERO)
+						{
+							CL_Vector2 jump_point; 
+							CL_Vector2 o_point; // Not used
+
+							float facing = cBod->GetRotation();
+				
+							// Get a really long vector
+							CL_Vector2 escape_ray;
+							escape_ray.x = -sinf(facing) * 500;
+							escape_ray.y = cosf(facing) * 500;
+
+							if (PhysUtil::FindCollisions(
+								&jump_point, &o_point, 
+								escape_ray, CL_Vector2::ZERO, 
+								cBod, Other, 0.1f, false))
+							{
+
+								std::cout << "Executed warp manuver from: " << std::endl
+									<< cBod->m_Position.x << "," << cBod->m_Position.y << " to: " << std::endl
+									<< jump_point.x << "," << jump_point.y << std::endl;
+
+								cBod->m_Position = jump_point;
+
+								continue;
+							}
+							// here we should do something like find vector to nearest surface
+							// or just pop back to somewhere
+						}
+
+						// Normal * veloc should multiply to a nevative (should be opposite
+						//  directions) if they don't, the normal is invalid.
+						if (normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
+						{
+							// Pop back a lot
+							cBod->m_Position = cBod_poc + normal * -g_PhysCollisionJump;
+
+							// Stop movement
+							veloc = CL_Vector2::ZERO;
+							cBod->_setAcceleration(CL_Vector2::ZERO);
+							//cBod->_setVelocity(CL_Vector2::ZERO);
+
+							std::cout << "Executed emergency popback to: " 
+								<< cBod->m_Position.x << "," << cBod->m_Position.y << std::endl;
+							continue;
+						}
+
+						// Pop back a bit
+						CL_Vector2 pos = cBod->m_Position;
+
+						cBod->m_Position = cBod_poc + normal * g_PhysCollisionJump;
+						cBod->_setAcceleration(CL_Vector2::ZERO);
+						cBod->_setVelocity(CL_Vector2::ZERO);
+
+						pos = cBod->m_Position - pos;
+						float p_l = pos.length();
+
+						if (Other->GetCollisionFlags() & C_STATIC)
+						{
+							// Collision with static
+
+							CL_Vector2 bounce_force = veloc * cBod->GetInverseMass();
+
+							float speed = bounce_force.unitize(); //normalise
+
+							// Compute Reflection
+							bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
+							bounce_force.unitize();
+							bounce_force = bounce_force * speed * bounce;
+
+							// *mass to conserve momentum
+							veloc = bounce_force * cBod->GetMass();
+
+							//cBod->_setVelocity(veloc);
+
+							//cBod->m_Position += veloc;
+						}
+						else
+						{
+							// Collision with non-static
+
+							// (velocity - other velocity) / (mass + other mass)
+							CL_Vector2 bounce_force = ( veloc - Other->GetVelocity() ) * ( cBod->GetInverseMass() + Other->GetInverseMass() );
+
+							float speed = bounce_force.unitize(); //normalise
+
+							// Compute Reflection
+							bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
+							bounce_force.unitize();
+							bounce_force = bounce_force*speed;	
+
+							// *other mass only, to conserve momentum
+							veloc = bounce_force * Other->GetMass();
+
+							//cBod->_setVelocity(veloc);
+
+							//cBod->m_Position += veloc;
+						}
+
 
 						CL_Vector2 poc;
 						PhysUtil::GuessPointOfCollision(
@@ -413,47 +510,55 @@ namespace FusionEngine
 							cBod_poc, Other_poc,
 							cBod, Other);
 
-						CL_Vector2 bounce_veloc = veloc;
-
-						float speed = bounce_veloc.unitize(); //normalise
-
-						// Compute Reflection
-						bounce_veloc = (normal*(2*normal.dot(-bounce_veloc))) + bounce_veloc ;
-						bounce_veloc.unitize();
-						bounce_veloc = bounce_veloc*speed;	
-
-						veloc = bounce_veloc;
-
-						cBod->m_Position += veloc;
-
-
 						///////////
 						// Finally, call the objects collision response
 						cBod->CollisionResponse(Other, poc);
 
-						if (PhysUtil::CollisionCheck(
-							cBod->GetPosition(), Other->GetPosition(),
-							cBod, Other))
-						{
-							// The collision is at the current positions.
-							cBod_poc = cBod->GetPosition();
-							Other_poc = Other->GetPosition();
-							collision = true;
-						}
-						else
-							collision = false;
+						//if (PhysUtil::CollisionCheck(
+						//	cBod->GetPosition(), Other->GetPosition(),
+						//	cBod, Other))
+						//{
+						//	// The collision is at the current positions.
+						//	cBod_poc = cBod->GetPosition();
+						//	Other_poc = Other->GetPosition();
+						//	collision = true;
+						//}
+						//else
+						//	collision = false;
 
 					} // while (collision)
 				} // for (it_b)
 
+				///////////////
+				// Apply motion
+
+				// Move along velocity vector
+				cBod->m_Position += veloc;
+				// Rotation
+				cBod->m_Rotation += cBod->m_RotationalVelocity * split;
+
 				
 				// Check whether this object should be deactivate
-				if (CL_System::get_time() > cBod->GetDeactivationTime())
+				/*!
+				 * \todo Fix deactivation - It should compare the velocity to some minimum value,
+				 * then start the deactivation timer.
+				 *
+				 * Like this:
+				 * \code
+				 * if (veloc.squared_length() < 0.001f)
+				 * {
+				 * 	accel = CL_Vector2::ZERO;
+				 * 	veloc = CL_Vector2::ZERO;
+				 * }
+				 * \endcode
+				 */
+
+				cBod->_setDeactivationTime(cBod->GetDeactivationTime() - split);
+				if (cBod->GetDeactivationTime() <= 0)
 					cBod->_deactivate();
 
-				// Another (better?) way to get the deactivation time
-				/*cBod->_setDeactivationTime(cBod->GetDeactivationTime() - split);
-				if (cBod->GetDeactivationTime() <= 0)*/
+				/*if (CL_System::get_time() > cBod->GetDeactivationTime())
+					cBod->_deactivate();*/
 
 			} // if( IsActive() )
 

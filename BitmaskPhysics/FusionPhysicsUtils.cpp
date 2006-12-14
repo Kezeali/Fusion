@@ -81,14 +81,18 @@ namespace FusionEngine
 		CL_Vector2 *output_one, CL_Vector2 *output_two,
 		const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
 		const FusionPhysicsBody *one, const FusionPhysicsBody *two,
-		float epsilon)
+		float epsilon, bool find_close)
 	{
 		// Positions
 		CL_Vector2 pos_one = one->GetPosition();
 		CL_Vector2 pos_two = two->GetPosition();
 
+		// Squared movement vector lengths (speed2) (used for checking for movement)
+		float speed2_one = vector_one.squared_length();
+		float speed2_two = vector_two.squared_length();
+
 		// Objects not moving - don't use vector check
-		if (vector_one.squared_length() == 0 || vector_two.squared_length() == 0)
+		if (speed2_one == 0 && speed2_two == 0)
 		{
 			if (CollisionCheck(pos_one, pos_two, one, two))
 			{
@@ -115,10 +119,7 @@ namespace FusionEngine
 		//  assume there are no collisions along the given vectors.
 		bool collision_found = false;
 
-
-		//////////////////////////////////////////////
-		// First we decide on the bounds of the search
-
+		// OLD INTERSECTION FINDER (doesn't work as well as the ClanLib one)
 		// Find the point of intersection and check wheter it's valid
 		/*CL_Vector2 intersec;
 		CalculateVectorIntersection(
@@ -126,36 +127,66 @@ namespace FusionEngine
 			pos_one, pos_two,
 			vector_one, vector_two);*/
 
-		float line_a[] = {pos_one.x, pos_one.y, vector_one.x, vector_one.y};
-		float line_b[] = {pos_two.x, pos_two.y, vector_two.x, vector_two.y};
-		float *line_a_ptr = line_a;
-		float *line_b_ptr = line_b;
 
-		//if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
-		if (CL_LineMath::intersects(line_a_ptr, line_b_ptr))
+		//////////////////////////////////////////////
+		// First we decide on the bounds of the search
+
+		// Will be set to false if a point of intersection is found
+		bool no_interection = true;
+
+		// Don't bother trying to find intersections for tiny velocities!
+		//if (speed2_one < g_PhysGenericFuzz || speed2_two < g_PhysGenericFuzz)
+		//{
+		//	// Whole line
+		//	startpt_one = pos_one;
+		//	startpt_two = pos_two;
+		//	endpt_one   = pos_one + vector_one;
+		//	endpt_two   = pos_two + vector_two;
+		//}
+
+		if (speed2_one > g_PhysGenericFuzz)
 		{
-			// If a point of intersection was found, find the first place where the
-			//  two objects collide /before/ there
-			CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
 
-			CL_Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
+			// INTERSECTION DOESN'T SEEM TO WORK
+			// (it doesn't check bounds)
 
-			startpt_one = pos_one;
-			endpt_one   = intersec;
-			startpt_two = pos_two;
-			endpt_two   = intersec;
+			float line_a[] = {pos_one.x, pos_one.y, vector_one.x, vector_one.y};
+			float line_b[] = {pos_two.x, pos_two.y, vector_two.x, vector_two.y};
+			float *line_a_ptr = line_a;
+			float *line_b_ptr = line_b;
+
+			if (CL_LineMath::intersects(line_a_ptr, line_b_ptr))
+			{
+				// If a point of intersection was found, find the first place where the
+				//  two objects collide /before/ there
+				CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
+
+				CL_Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
+
+				if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
+				{
+					startpt_one = pos_one;
+					endpt_one   = intersec;
+					startpt_two = pos_two;
+					endpt_two   = intersec;
+
+					no_interection = false;
+				}
+			}
+			if (no_interection)
+			{
+				// If no point of intersection was found, find the first place where the
+				//  objects collide anywhere along the vector.
+
+				startpt_one = pos_one;
+				startpt_two = pos_two;
+				endpt_one   = pos_one + vector_one;
+				endpt_two   = pos_two + vector_two;
+			}
+
 		}
-		else
-		{
-			// If no point of intersection was found, find the first place where the
-			//  objects collide anywhere along the vector.
 
-			startpt_one = pos_one;
-			startpt_two = pos_two;
-			endpt_one   = pos_one + vector_one;
-			endpt_two   = pos_two + vector_two;
 
-		}
 
 		//////////////////////////////
 		// Now we do the binary search
@@ -171,6 +202,7 @@ namespace FusionEngine
 		int i = g_PhysMaxSearchItterations;
 		while ((dist_squared > epsilon) && i--)
 		{
+
 			// Find the midpoints along the check vectors
 			//  (via mid = a + half distance(a to b) )
 			checkpt_one = startpt_one + (endpt_one - startpt_one)/2;
@@ -178,21 +210,51 @@ namespace FusionEngine
 
 			if (CollisionCheck(checkpt_one, checkpt_two, one, two))
 			{
-				// Collision must be before this point, so move the
-				//  end bounds back
-				endpt_one = checkpt_one;
-				endpt_two = checkpt_two;
+				if (find_close)
+				{
+					// Find the first point of collision
 
-				// We can safely say that the objects collide /somewhere/ along the
-				//  given vectors
-				collision_found = true;
+					// Collision must be before this point, so move the
+					//  end bounds back
+					endpt_one = checkpt_one;
+					endpt_two = checkpt_two;
+
+					// We can safely say that the objects collide /somewhere/ along the
+					//  given vectors
+					collision_found = true;
+				}
+				else
+				{
+					// Find the _last_ point of collision
+					
+					startpt_one = checkpt_one;
+					startpt_two = checkpt_two;
+					// In this case we don't set collision found to true, as we only
+					//  want to do that for the last point of collision
+				}
 			}
 			else
 			{
-				// Collision must be after this point, so move the
-				//  start bounds forward
-				startpt_one = checkpt_one;
-				startpt_two = checkpt_two;
+				if (find_close)
+				{
+					// Find the first point of collision
+
+					// Collision must be after this point, so move the
+					//  start bounds forward
+					startpt_one = checkpt_one;
+					startpt_two = checkpt_two;
+				}
+				else
+				{
+					// Find the _last_ point of collision
+
+					endpt_one = checkpt_one;
+					endpt_two = checkpt_two;
+
+					// We set collision found to true, in the assumption that if
+					//  there is no collision here, the one we found previously was the last
+					collision_found = true;
+				}
 			}
 
 			//// Start point has reached the original end point, or vice versa.
@@ -224,7 +286,7 @@ namespace FusionEngine
 
 			// The required distance to create a collision against object one
 			//  is expanded by the distance of the other.
-			float dist = ( one->GetColDist() + two->GetColDist() )/2;
+			float dist = ( one->GetColDist() + two->GetColDist() );
 
 			return (dp.squared_length() < (dist * dist));
 		}
@@ -233,7 +295,7 @@ namespace FusionEngine
 		else if (one->GetUsePixelCollisions() & two->GetUsePixelCollisions())
 		{
 			CL_Point offset = CL_Point(one_pos.x - two_pos.x, one_pos.y - two_pos.y);
-			return (one->GetColBitmask()->Overlap(two->GetColBitmask(), offset));
+			return (two->GetColBitmask()->Overlap(one->GetColBitmask(), offset));
 		}
 
 		// Check for bitmask collisons against non-bitmask objects
@@ -301,14 +363,24 @@ namespace FusionEngine
 		const CL_Vector2 &body_pos, const CL_Vector2 &other_pos,
 		const FusionPhysicsBody *body, const FusionPhysicsBody *other)
 	{		
+		// Distance (circular) object collision
+		if (body->GetUseDistCollisions() & other->GetUseDistCollisions())
+		{
+			// Vector from center to point of collision
+			CL_Vector2 normal = body_pos - other_pos;
+			normal.unitize();
+			memcpy(output, &normal, sizeof(CL_Vector2));
+		}
+
 		// Bitmask - bitmask collision
-		if (body->GetUsePixelCollisions() & other->GetUsePixelCollisions())
+		else if (body->GetUsePixelCollisions() & other->GetUsePixelCollisions())
 		{
 			CL_Vector2 normal;
 
 			CL_Point offset = CL_Point(body_pos.x - other_pos.x, body_pos.y - other_pos.y);
-			body->GetColBitmask()->CalcCollisionNormal(&normal, other->GetColBitmask(), offset);
+			other->GetColBitmask()->CalcCollisionNormal(&normal, body->GetColBitmask(), offset);
 
+			normal *= -1;
 			normal.unitize();
 			memcpy(output, &normal, sizeof(CL_Vector2));
 		}
@@ -359,15 +431,6 @@ namespace FusionEngine
 				&normal,
 				new FusionBitmask(1.0f, bm->GetPPB()), offset);
 
-			normal.unitize();
-			memcpy(output, &normal, sizeof(CL_Vector2));
-		}
-
-		// Assume distance (circular) object collision
-		else
-		{
-			// Vector from center to point of collision
-			CL_Vector2 normal = body_pos - other_pos;
 			normal.unitize();
 			memcpy(output, &normal, sizeof(CL_Vector2));
 		}

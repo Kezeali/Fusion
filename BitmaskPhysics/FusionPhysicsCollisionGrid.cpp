@@ -103,12 +103,15 @@ void FusionPhysicsCollisionGrid::Clear()
 void FusionPhysicsCollisionGrid::Resort()
 {
 	BodyList::iterator body = m_BodiesToUpdate.begin();
-	for (; body != m_BodiesToUpdate.end(); ++body)
+	for (; body != m_BodiesToUpdate.end(); body++)
 	{
+		// Tell the body it can request an update again if it wants
+		(*body)->_notifyCGUpdated();
+
 		// Find the node the body should move to, based on its physical location
 		int pos = _getGridPosition((*body));
 		// Check if the object actually needs to be updated :P
-		if (pos == (*body)->_getCGPos())
+		if (pos != (*body)->_getCGPos())
 		{
 			// Remove the body form its current position in the grid
 
@@ -128,8 +131,6 @@ void FusionPhysicsCollisionGrid::Resort()
 				}
 			}
 
-			// Tell the body it can request an update again if it wants
-			(*body)->_notifyCGUpdated();
 			// Put the body into its new node
 			(*body)->_setCGPos(pos);
 			(*body)->_setCCIndex(m_Grid[pos].size());
@@ -250,7 +251,8 @@ unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPh
 	pos = y * m_GridWidth + x;
 
 	// Make sure the pos found is inside the grid
-	assert(pos < m_GridWidth * m_GridHeight);
+	//assert(pos < m_GridWidth * m_GridHeight);
+	fe_clamp<unsigned int>(pos, 0, m_Grid.size());
 
 	return pos;
 }

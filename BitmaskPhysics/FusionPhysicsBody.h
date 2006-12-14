@@ -35,6 +35,21 @@
 
 namespace FusionEngine
 {
+	//! Collision type flags
+	/*!
+	 * Flags used by FusionPhysicsWorld to decide what type of collision
+	 * detection/response to use.
+	 */
+	enum CollisionFlags
+	{
+		//! (0000)
+		C_NONE = 0,
+		//! (0001)
+		C_STATIC = 1,
+		//! (0010)
+		C_BOUNCE = 2
+	};
+
 	/*!
 	 * \brief
 	 * The basis for movable/colliding objects.
@@ -125,7 +140,10 @@ namespace FusionEngine
 		//! Property retreival.
 
 		virtual FusionBitmask *GetColBitmask() const;
-		//! Returns true if the given point is solid
+		virtual CL_Rectf GetColAABB() const;
+		virtual float GetColDist() const;
+
+		//! Returns true if the given point is solid.
 		/*!
 		 * <p>
 		 * Quick access to the bitmask function FusionBitmask#GetBit()
@@ -133,7 +151,7 @@ namespace FusionEngine
 		 * If 'auto_offset' is true, the function will automatically offset the given
 		 * 'point' relative to this body's current position, and scale it to match
 		 * the the bitmask's PPB setting. <br>
-		 * This is usually required because GetBit isn't designed to act as a collision
+		 * This is oftern required, because GetBit isn't designed to act as a collision
 		 * detection function.
 		 *
 		 * \param point
@@ -142,8 +160,6 @@ namespace FusionEngine
 		 * Automatically offset the 'point' param.
 		 */
 		virtual bool GetColPoint(const CL_Point &point, bool auto_offset = true) const;
-		virtual CL_Rectf GetColAABB() const;
-		virtual float GetColDist() const;
 		//@}
 
 		//@{
@@ -151,6 +167,7 @@ namespace FusionEngine
 		/*!
 		 * I think these are self explanatory.
 		 */
+
 		virtual void SetUsePixelCollisions(bool usePixel);
 		virtual void SetUseAABBCollisions(bool useAABB);
 		virtual void SetUseDistCollisions(bool useDist);
@@ -181,6 +198,19 @@ namespace FusionEngine
 		void CollisionResponse(FusionPhysicsBody *other);
 		//! Calls the collision response (if this body has one) with a reference point.
 		void CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+
+		//! Returns the current collision config.
+		int GetCollisionFlags() const;
+
+		//! Returns true if the given flag is set.
+		bool CheckCollisionFlag(int flag);
+
+		//! Allows the collision flags to be set manually
+		/*!
+		 * This isn't usually necessary, as collision flags get set by relavant
+		 * methods (e.g. If SetMass(0) is called, the C_STATIC flag will be set.)
+		 */
+		void _setCollisionFlags(int flags);
 
 		//@{
 		//! State retreival.
@@ -313,6 +343,8 @@ namespace FusionEngine
 		CollisionCallback m_CollisionResponse;
 		//! Data which may be useful for collision responses, etc.
 		void *m_UserData;
+		//! Collision flags, such as C_STATIC
+		int m_CollisionFlags;
 
 		//! The ID for the current object's type
 		/*!

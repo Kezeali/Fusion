@@ -138,6 +138,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib RakNetLibStatic.lib"
 				LinkIncremental="1"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -264,6 +265,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLevel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLevelRegion.h"
 				>
 			</File>
 			<File
@@ -488,58 +493,6 @@
 			</File>
 			<File
 				RelativePath=".\Prereq.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="RakNet"
-			>
-			<File
-				RelativePath="..\RakNet\BitStream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\DirectoryDeltaTransfer.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\Export.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\NetworkTypes.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\PacketEnumerations.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\PacketPriority.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakClientInterface.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakNetDefines.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakNetStatistics.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakNetworkFactory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakPeerInterface.h"
-				>
-			</File>
-			<File
-				RelativePath="..\RakNet\RakServerInterface.h"
 				>
 			</File>
 		</Filter>

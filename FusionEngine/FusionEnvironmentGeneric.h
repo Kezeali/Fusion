@@ -91,8 +91,11 @@ namespace FusionEngine
 		//! Returns the index of the newly created ship
 		virtual void CreateShip(const ShipState &state) =0;
 
-		//! Called by FusionShipDrawable#Draw() to get the sprite, etc.
+		//! I don't think this is used.
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
+
+		//! Detonate the given projectile
+		virtual void Detonate(const Projectile *projectile);
 
 		//! Leaves the environment cleanly after an error.
 		/*!

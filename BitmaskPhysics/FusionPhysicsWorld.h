@@ -11,7 +11,8 @@
 namespace FusionEngine
 {
 
-	const float g_PhysGridScale = 0.001f;
+	static const float g_PhysGridScale = 0.01f;
+	static const float g_PhysCollisionJump = 0.2f;
 
 	//! Used for initialising bodies.
 	/*!

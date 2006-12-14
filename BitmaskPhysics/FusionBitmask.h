@@ -29,16 +29,27 @@
 
 #include "FusionEngineCommon.h"
 
+
 #include "bitmask.h"
+
 
 namespace FusionEngine
 {
+
 	/*!
 	 * \brief
 	 * OO wrapper for Ulf Ekstrom's bitmask library.
+	 *
+	 * \remarks
+	 * By default, all collision detection (overlap) functions autoscale the given
+	 * offset, to match the Bits per Pixel of this bitmask. 
 	 */
 	class FusionBitmask
 	{
+	public:
+		friend std::istream &operator>> (std::istream &is, FusionBitmask *obj);
+		friend std::ostream &operator<< (std::ostream &os, const FusionBitmask *obj);
+
 	public:
 		//! Basic constructor. Don't use.
 		FusionBitmask();
@@ -82,6 +93,12 @@ namespace FusionEngine
 	public:
 		//! Debug
 		void DisplayBits(int x_offset, int y_offset);
+
+		//! Gets the current bits, so the can be saved or transfered
+		void ToStream(std::ostream &os) const;
+
+		//! Sets the bitmask from the given cache
+		void SetFromStream(std::istream &is);
 
 		//! Creates a circular bitmask of the given radius.
 		/*!
@@ -131,7 +148,7 @@ namespace FusionEngine
 		 * \param[in] offset
 		 * The offset from (0,0) on this bitmask.
 		 */
-		void Draw(const FusionBitmask *other, const CL_Point &offset);
+		void Draw(const FusionBitmask *other, const CL_Point &offset, bool auto_scale = true);
 
 		//! Removes the given bitmask to this one.
 		/*!
@@ -142,7 +159,7 @@ namespace FusionEngine
 		 * \param[in] offset
 		 * The offset from (0,0) on this bitmask.
 		 */
-		void Erase(const FusionBitmask *other, const CL_Point &offset);
+		void Erase(const FusionBitmask *other, const CL_Point &offset, bool auto_scale = true);
 
 		//! Returns the Pixels per Bit property of this bitmask.
 		/*!
@@ -214,8 +231,10 @@ namespace FusionEngine
 		//! [depreciated] This isn't really necessary.
 		bool m_BitmaskCreated;
 
-		//! The gridsize used to create this bitmask
+		//! The gridsize used to create this bitmask.
 		int m_PPB;
+		//! Bits per Pixel, the inverted PPB.
+		float m_PPBInverse;
 
 		//! Width of the bitmask, to prevent checks going out of bounds.
 		int m_MaskWidth;
@@ -223,6 +242,12 @@ namespace FusionEngine
 		int m_MaskHeight;
 
 	};
+
+	//! Stream input operator
+	std::istream &operator>> ( std::istream &is, FusionBitmask &bitmask );
+
+	//! Stream output operator
+	std::ostream &operator<< ( std::ostream &os, const FusionBitmask &bitmask );
 
 }
 

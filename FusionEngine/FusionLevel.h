@@ -55,6 +55,9 @@ namespace FusionEngine
 		 */
 		void _madeHole(const CL_Surface *surface);
 
+		//! Run region scrips on the given ship
+		void RunRegionScripts(const FusionShip *ship);
+
 	protected:
 		//! List of unmade holes.
 		std::deque<Hole> m_Holes;

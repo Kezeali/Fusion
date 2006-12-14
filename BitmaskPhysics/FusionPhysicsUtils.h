@@ -33,6 +33,8 @@ namespace FusionEngine
 {
 	//! Maximum itterations for point-of-collision binary searches
 	const int g_PhysMaxSearchItterations = 50;
+	//! Accuracy of comparasons
+	const float g_PhysGenericFuzz = 0.001f;
 
 	static float MIN_DIFF(float a, float b, float c)
 	{
@@ -87,15 +89,20 @@ namespace FusionEngine
 		 * The movement vector for object one.
 		 * \param[in] vector_two
 		 * The movement vector for object two.
-		 * \param[in] one The object to check for collisions against.
-		 * \param[in] two The object which may be colliding against 'one'.
-		 * \param[in] fuzz The accuracy to which the point of collision will be found.
+		 * \param[in] one 
+		 * The object to check for collisions against.
+		 * \param[in] two
+		 * The object which may be colliding against 'one'.
+		 * \param[in] fuzz
+		 * The accuracy to which the point of collision will be found.
+		 * \param[in] find_close
+		 * Whether to return the closest point (true), or the furthermost point (false)
 		 */
 		static bool FindCollisions(
 			CL_Vector2 *output_one, CL_Vector2 *output_two,
 			const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two,
-			float epsilon = 0.01f);
+			float epsilon = 0.01f, bool find_close = true);
 
 		//! Checks the given point for a collisino between two bodies.
 		/*!

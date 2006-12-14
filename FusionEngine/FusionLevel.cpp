@@ -30,4 +30,14 @@ namespace FusionEngine
 		m_Bitmask.SetFromSurface(surface, m_World->GetBitmaskRes(), 128);
 	}
 
+	void Level::RunRegionScripts(const FusionEngine::FusionShip *ship)
+	{
+		RegionList::iterator it = m_Regions.begin();
+		for (; it != m_Regions.end(); ++it)
+		{
+			CL_Pointf position = ship->GetPosition();
+			if (1)
+
+	}
+
 }

@@ -134,8 +134,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ws2_32.lib"
 				LinkIncremental="1"
-				IgnoreDefaultLibraryNames="libcmt"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -197,10 +198,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsElipse.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionPhysicsUtils.cpp"
 				>
 			</File>
@@ -244,10 +241,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsCollisionGrid.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionPhysicsElipse.h"
 				>
 			</File>
 			<File

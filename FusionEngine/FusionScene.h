@@ -18,7 +18,22 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * FusionScene provides easy memory management for FusionNodes.
+	 * FusionScene provides easy management for FusionNodes.
+	 *
+	 * Assuming you have a pointer to a FusionScene object called 'scene',
+	 * you can create new scene nodes as follows:
+	 * \code
+	 * //...
+	 * FusionNode* child = scene->CreateNode();
+	 * scene->GetRootNode()->AddChild(child);
+	 * //...
+	 * \endcode
+	 * or
+	 * \code
+	 * //...
+	 * FusionNode *child = scene->GetRootNode()->CreateChildNode();
+	 * //...
+	 * \endcode
 	 * 
 	 * \sa
 	 * FusionNode

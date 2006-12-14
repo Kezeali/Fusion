@@ -8,13 +8,14 @@
 #include "FusionPhysicsTypes.h"
 #include "FusionPhysicsCallback.h"
 
-const float g_ThrustForce = 2.5f;
+const float g_ThrustForce = 1.5f;
 
 using namespace FusionEngine;
 
 class BitmaskTest : public CL_ClanApplication
 {
 	FusionBitmask *m_ShipBitmask;
+	FusionBitmask *m_DroneBitmask;
 	FusionBitmask *m_TerrainBitmask;
 
 	FusionPhysicsWorld *m_World;
@@ -42,6 +43,17 @@ class BitmaskTest : public CL_ClanApplication
 			m_ShipPhysical->_setPosition(CL_Vector2(50.0f,50.0f));
 		}
 
+		// Warp
+		if (CL_Keyboard::get_keycode('W'))
+		{
+			float a = m_ShipPhysical->GetRotation() * PI/180.0f;
+			CL_Vector2 force = m_ShipPhysical->GetPosition();
+			force.x += sinf(a)*g_ThrustForce;
+			force.y += -cosf(a)*g_ThrustForce;
+
+			m_ShipPhysical->_setPosition(force);
+		}
+
 		if (CL_Keyboard::get_keycode(CL_KEY_DOWN))
 		{
 			float a = m_ShipPhysical->GetRotation() * PI/180.0f;
@@ -62,10 +74,10 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
-			m_ShipPhysical->SetRotationalVelocity(-2.0f);
+			m_ShipPhysical->SetRotationalVelocity(-0.2f);
 
 		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
-			m_ShipPhysical->SetRotationalVelocity(2.0f);
+			m_ShipPhysical->SetRotationalVelocity(0.2f);
 
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
@@ -80,45 +92,50 @@ class BitmaskTest : public CL_ClanApplication
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
 
-		CL_DisplayWindow display("Display", 800, 600);
+		CL_DisplayWindow display("Display", 1024, 600);
 
 		CL_ConsoleWindow console("Console");
 		console.redirect_stdio();
 
 		// World
 		m_World = new FusionPhysicsWorld();
-		m_World->Initialise(800, 600);
+		m_World->Initialise(1024, 768);
 		m_World->SetBodyDeactivationPeriod(4000);
 		m_World->SetMaxVelocity(20);
-		m_World->SetBitmaskRes(10);
-		m_World->ActivateWrapAround();
+		m_World->SetBitmaskRes(4);
+		m_World->DeactivateWrapAround();
 
 		// Ship
 		m_ShipGraphical = new CL_Surface("../Body.png");
 		m_ShipGraphical->set_rotation_hotspot(origin_center);
 
-		//m_ShipBitmask = new FusionBitmask;
+		m_ShipBitmask = new FusionBitmask;
 		//m_ShipBitmask->SetFromSurface(m_ShipGraphical, m_World->GetBitmaskRes());
+		m_ShipBitmask->SetFromRadius(m_ShipGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
 
 		{
 			PhysicalProperties props;
-			props.mass = 40;
+			props.mass = 20;
 			props.position = CL_Vector2(48.f, 120.f);
 			props.radius = 50;
 			props.rotation = 0;
 			props.use_dist = true;
-			props.dist = m_ShipGraphical->get_width();
-		//props.use_bitmask = true;
-		//props.bitmask = m_ShipBitmask;
+			props.dist = m_ShipGraphical->get_width() * 0.5;
+			props.use_bitmask = true;
+			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
 			m_ShipPhysical->SetCoefficientOfFriction(0.3f);
-			m_ShipPhysical->SetCoefficientOfRestitution(0.5f);
+			m_ShipPhysical->SetCoefficientOfRestitution(0.8f);
 		}
 
 		// Drone
 		m_DroneGraphical = new CL_Surface("../Body.png");
 		m_DroneGraphical->set_rotation_hotspot(origin_center);
+
+		m_DroneBitmask = new FusionBitmask;
+		m_DroneBitmask->SetFromSurface(m_DroneGraphical, m_World->GetBitmaskRes());
+		//m_DroneBitmask->SetFromRadius(m_DroneGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
 
 		{
 			PhysicalProperties props;
@@ -127,11 +144,13 @@ class BitmaskTest : public CL_ClanApplication
 			props.radius = 50;
 			props.rotation = 0;
 			props.use_dist = true;
-			props.dist = m_DroneGraphical->get_width();
+			props.dist = m_DroneGraphical->get_width() * 0.5;
+			props.use_bitmask = true;
+			props.bitmask = m_DroneBitmask;
 
 			m_DronePhysical = m_World->CreateBody(PB_SHIP, props);
 			m_DronePhysical->SetCoefficientOfFriction(0.2f);
-			m_DronePhysical->SetCoefficientOfRestitution(0.5f);
+			m_DronePhysical->SetCoefficientOfRestitution(0.8f);
 		}
 
 		// Hole
@@ -146,12 +165,39 @@ class BitmaskTest : public CL_ClanApplication
 		m_TerrainCanvas = new CL_Canvas(*m_TerrainGraphical);
 
 		m_TerrainBitmask = new FusionBitmask;
-		m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes());
+		bool bitmaskLoaded = false;
+		{
+			std::ifstream ifs("bitmask");
+			if (ifs.is_open())
+			{
+				//std::stringstream temp;
+				//ifs >> temp;
+
+				m_TerrainBitmask->SetFromStream(ifs);
+
+				//ifs >> m_TerrainBitmask;
+
+				bitmaskLoaded = true;
+			}
+		}
+		// Create and save the mask if it couldn't be loaded from a cache
+		if (!bitmaskLoaded)
+		{
+			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes());
+
+			std::ofstream ofs("bitmask");
+			{
+				m_TerrainBitmask->ToStream(ofs);
+				//ofs << m_TerrainBitmask;
+			}
+		}
+
+		//m_TerrainBitmask->SetFromDimensions(::CL_Size(600, 200), m_World->GetBitmaskRes());
 
 		{
 			PhysicalProperties props;
-			props.mass = 5000;
-			props.position = CL_Vector2(20.0f, 220.0f);
+			props.mass = 0.0f;
+			props.position = CL_Vector2(0.0f, 220.0f);
 			props.rotation = 0;
 			props.use_bitmask = true;
 			props.bitmask = m_TerrainBitmask;
@@ -163,7 +209,8 @@ class BitmaskTest : public CL_ClanApplication
 		float sur_y = 250.f;
 		float sur_x = 400.f;
 
-		bool active = true;
+		unsigned int inputTimer = 0;
+		bool debug = true;
 		
 		unsigned int lastframe = CL_System::get_time();
 		unsigned int split = 0;
@@ -175,33 +222,18 @@ class BitmaskTest : public CL_ClanApplication
 			//(back_pos > 1000) ? back_pos = 0 : back_pos++;
 			//sur_x = sinf(back_pos / 100.0f) * 100.0f + 400.0f;
 
-			if (CL_Keyboard::get_keycode('P'))
-			{
-				active = !active;
-			}
 
-			if (active)
-			{
-				split = CL_System::get_time() - lastframe;
-				lastframe = CL_System::get_time();
+			split = CL_System::get_time() - lastframe;
+			lastframe = CL_System::get_time();
 
-				// Move the ship
-				Update(split);
-			}
+			// Move the ship
+			Update(split);
 
 			// Draw the ship
 			m_ShipGraphical->set_angle(m_ShipPhysical->GetRotation());
 			m_ShipGraphical->draw(
-				m_ShipPhysical->GetPosition().x - (0.5*m_ShipPhysical->GetColDist()),
-				m_ShipPhysical->GetPosition().y - (0.5*m_ShipPhysical->GetColDist())
-				);
+				m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
 
-			// Draw the drone
-			m_DroneGraphical->set_angle(m_DronePhysical->GetRotation());
-			m_DroneGraphical->draw(
-				m_DronePhysical->GetPosition().x - (0.5*m_DronePhysical->GetColDist()),
-				m_DronePhysical->GetPosition().y - (0.5*m_DronePhysical->GetColDist())
-				);
 			/*CL_Surface_DrawParams2 params;
 			params.rotate_origin = origin_center;
 			params.rotate_angle = m_ShipPhysical->GetRotation();
@@ -210,39 +242,74 @@ class BitmaskTest : public CL_ClanApplication
 
 			m_ShipGraphical->draw(params);*/
 
-			// Draw the terrain
-			// The following should be in the terrain impact callback (make hole)
-			//  m_TerrainCanvas->sync_surface();
 
-			m_TerrainGraphical->draw(
-				m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
-				);
+			// Draw the drone
+			m_DroneGraphical->set_angle(m_DronePhysical->GetRotation());
+			m_DroneGraphical->draw(
+				m_DronePhysical->GetPosition().x, m_DronePhysical->GetPosition().y);
 
-			m_TerrainBitmask->DisplayBits(
-				m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
-				);
 
-			/*params.rotate_origin = origin_center;
-			params.rotate_angle = m_TerrainPhysical->GetRotation();
-			params.destX = m_TerrainPhysical->GetPosition().x;
-			params.destY = m_TerrainPhysical->GetPosition().y;
+			if (CL_Keyboard::get_keycode('7'))
+			{
+				float cor = m_ShipPhysical->GetCoefficientOfRestitution();
+				m_ShipPhysical->SetCoefficientOfRestitution(cor + 0.1f);
+			}
+			if (CL_Keyboard::get_keycode('4'))
+			{
+				float cor = m_DronePhysical->GetCoefficientOfRestitution();
+				m_DronePhysical->SetCoefficientOfRestitution(cor - 0.1f);
+			}
 
-			m_TerrainGraphical->draw(params);*/
+			if (CL_Keyboard::get_keycode('8'))
+			{
+				float cor = m_DronePhysical->GetCoefficientOfRestitution();
+				m_DronePhysical->SetCoefficientOfRestitution(cor + 0.1f);
+			}
+			if (CL_Keyboard::get_keycode('2'))
+			{
+				float cor = m_DronePhysical->GetCoefficientOfRestitution();
+				m_DronePhysical->SetCoefficientOfRestitution(cor - 0.1f);
+			}
 
-			//float impact_radius = 32.0f;
+			unsigned int time = CL_System::get_time();
+			if (inputTimer <= time && CL_Keyboard::get_keycode('D'))
+			{
+				inputTimer = time + 1000;
+				debug = !debug;
+			}
+			if (debug)
+			{
+				m_TerrainBitmask->DisplayBits(
+					m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y);
 
-			//CL_Pointf ship_pt(
-			//	m_Ship.position.x - sur_x,
-			//	m_Ship.position.y - sur_y
-			//	);
-			//CL_Size size(impact_radius *2, impact_radius *2);
-			//CL_Rect rect(CL_Point(ship_pt), size);
+				m_ShipBitmask->DisplayBits(
+					m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
+
+				m_DroneBitmask->DisplayBits(
+					m_DronePhysical->GetPosition().x, m_DronePhysical->GetPosition().y);
+			}
+			else
+			{
+				// Draw the terrain
+				// The following should be in the terrain impact callback (make hole)
+				//  m_TerrainCanvas->sync_surface();
+
+				m_TerrainGraphical->draw(
+					m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
+					);
+
+				/*params.rotate_origin = origin_center;
+				params.rotate_angle = m_TerrainPhysical->GetRotation();
+				params.destX = m_TerrainPhysical->GetPosition().x;
+				params.destY = m_TerrainPhysical->GetPosition().y;
+
+				m_TerrainGraphical->draw(params);*/
+			}
 
 			//damage.draw(rect, canvas.get_gc());
 			//canvas.sync_surface();
 
 			display.flip();
-			CL_System::sleep(5);
 			CL_System::keep_alive();
 		}
 

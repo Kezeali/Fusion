@@ -7,7 +7,11 @@
 
 #include "FusionEngineCommon.h"
 
+/// Inherited
 #include "FusionDrawable.h"
+
+/// Fusion
+#include "FusionShip.h"
 
 namespace FusionEngine
 {
@@ -64,6 +68,9 @@ namespace FusionEngine
 		 * This is my "Occam's razor" fix for the over-reliance-on-clientEnv problem :P
 		 */
 		CL_Surface *m_Image;
+
+		//! The ship associated with this drawable
+		FusionShip *m_Ship;
 
 		//! Allows the ship drawable to access the relavant ShipResource
 		//ClientEnvironment *m_Env;
