@@ -14,6 +14,36 @@ namespace FusionEngine
 	static const float g_PhysGridScale = 0.01f;
 	static const float g_PhysCollisionJump = 0.2f;
 
+	//! Represents a collision
+	struct Collision
+	{
+		Collision() {};
+
+		Collision(
+			const CL_Vector2 &normal,
+			FusionPhysicsBody *first, FusionPhysicsBody *second,
+			const CL_Vector2 &first_pac, const CL_Vector2 &second_pac)
+			: Normal(normal),
+			First(first),
+			Second(second),
+			First_Position(first_pac),
+			Second_Position(second_pac)
+		{}
+
+		//! Collision normal (for First)
+		CL_Vector2 Normal;
+
+		//! First object in the collision
+		FusionPhysicsBody *First;
+		//! Second object in the collision
+		FusionPhysicsBody *Second;
+
+		//! Position of the first object during the collision
+		CL_Vector2 First_Position;
+		//! Position of the second object during the collision
+		CL_Vector2 Second_Position;
+	};
+
 	//! Used for initialising bodies.
 	/*!
 	 * \todo Add 'bounce'
@@ -24,9 +54,9 @@ namespace FusionEngine
 		PhysicalProperties()
 			: mass(0.0f),
 			radius(0.0f),
+			bounce(0.0f),
 
 			position(CL_Vector2::ZERO),
-
 			rotation(0.0f),
 
 			use_bitmask(false),
@@ -38,12 +68,13 @@ namespace FusionEngine
 
 		//! Mass.
 		float mass;
-		//! Radius.
+		//! Radius. Not used
 		float radius;
+		//! Coefficiant of restitution
+		float bounce;
 
 		//! Initial Position.
 		CL_Vector2 position;
-
 		//! Initial Rotation.
 		float rotation;
 
@@ -63,6 +94,7 @@ namespace FusionEngine
 		bool use_dist;
 		//! Use the given distance (for distance based collisions.)
 		float dist;
+
 	};
 
 	/*!
@@ -92,8 +124,9 @@ namespace FusionEngine
 		virtual ~FusionPhysicsWorld();
 
 	public:
-		//! List of PhysicsBodies
-		typedef std::vector<FusionPhysicsBody *> BodyList;
+		//! List of Collsions
+		typedef std::vector<Collision *> CollisionList;
+		//typedef std::vector<FusionPhysicsBody *> BodyList;
 
 	public:
 		//! [depreciated] Adds a body to the world so it will have physics applied to it.
@@ -210,6 +243,11 @@ namespace FusionEngine
 		//! Returns the current deactivation period for bodies.
 		unsigned int GetBodyDeactivationPeriod() const;
 
+		//! Sets the minimum velocity a body can be moving before it will be deactivated.
+		void SetDeactivationVelocity(float mixvel);
+		//! Returns the minimum velocity a body can be moving before it will be deactivated.
+		float GetDeactivationVelocity() const;
+
 		//! Allows the maximum velocity to be set
 		void SetMaxVelocity(float maxvel);
 		//! Returns the current maximum velocity
@@ -239,14 +277,18 @@ namespace FusionEngine
 		int m_Width, m_Height;
 
 		//! True if objects should wrap around.
-		/*!
-		 * Wrap-around is not yet implemented.
-		 * \todo Implement wrap-around.
-		 */
 		bool m_Wrap;
+
+		//! Speed scale
+		float m_StepMagnitude;
 
 		//! All newly created bodies will have their deactivaion period to this.
 		unsigned int m_DeactivationPeriod;
+
+		//! The squared minimum velocity for a moving body.
+		float m_DeactivationVelocitySquared;
+		//! The minimum velocity for a moving body.
+		float m_DeactivationVelocity;
 
 		//! The squared maximum velocity for a moving body.
 		float m_MaxVelocitySquared;

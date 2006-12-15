@@ -1,5 +1,2 @@
 You'll need Doxygen and dot (you can get dot from the graphvis project.)
-Use DoxyfileEx as the config. for Doxygen.
-
-If you can't get dot to run on your computer, use Doxyfile_NoDot.
-Please don't commit Doxyfile_NoDot documentation.
+Use Doxyfile as the config. for Doxygen.

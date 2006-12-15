@@ -71,6 +71,9 @@ namespace FusionEngine
 	 *
 	 * \todo AABB for FusionPhysicsBody
 	 *
+	 * \todo Perhaps bodies should have ApplyPosition and ApplyRotation methods, rather
+	 * than giving FusionPhysicsWorld friend access...
+	 *
 	 * \see
 	 * FusionPhysicsWorld | FusionFhysicsElipse.
 	 */
@@ -240,10 +243,10 @@ namespace FusionEngine
 
 		//! Sets m_Active to true.
 		/*!
-		 * m_Active will be set to true, and m_DeactivationTime will be set to
-		 * the current time + m_DeactivationTimePeriod. 
+		 * m_Active will be set to true, and m_DeactivationCounter will be set to
+		 * m_DeactivationPeriod. 
 		 * <br>
-		 * Allows FusionPhysicsWorld to deactivate bodies.
+		 * Allows FusionPhysicsWorld to activate bodies.
 		 */
 		void _activate();
 
@@ -253,29 +256,42 @@ namespace FusionEngine
 		 */
 		void _deactivate();
 
-		//! Sets m_DeactivationTimePeriod.
+		//! Sets m_Active to false when m_DeactivationCounter reaches zero.
+		/*!
+		 * Allows FusionPhysicsWorld to deactivate bodies after a period.
+		 *
+		 * \param[in] split
+		 * The amount of time since the last step (i.e. the amount to decrease the
+		 * deactivation counter by.)
+		 */
+		void _deactivateAfterCountdown(unsigned int split);
+
+		//! Sets the value of m_DeactivationCounter.
+		/*!
+		 * Generally, _deactivateAfterCountdown() should be used rather than this.
+		 */
+		void _setDeactivationCount(unsigned int count);
+
+		//! Returns the value of m_DeactivationCounter.
+		/*!
+		 * Returns the ammount of time left before this body deactivates.
+		 */
+		unsigned int GetDeactivationCount() const;
+
+		//! Sets m_DeactivationPeriod.
 		/*!
 		 * Sets the deactivation period (the period used to set the deactivation time.)
+		 *
+		 * \param[in] period
+		 * The value to set to.
 		 */
 		void SetDeactivationPeriod(unsigned int period);
 
-		//! Gets m_DeactivationTimePeriod.
+		//! Gets m_DeactivationPeriod.
 		/*!
-		 * Returns the period used to set the deactivation time.
+		 * Returns the period used to set the deactivation counter.
 		 */
 		unsigned int GetDeactivationPeriod() const;
-
-		//! Sets m_DeactivationTime.
-		/*!
-		 * Manual set for deactivation time
-		 */
-		void _setDeactivationTime(unsigned int time);
-
-		//! Gets m_DeactivationTime.
-		/*!
-		 * Returns the time after which this body should be deactivated.
-		 */
-		unsigned int GetDeactivationTime() const;
 
 		//@{
 		//! For syncronising client-side only, shouldn't be called otherwise.
@@ -292,6 +308,13 @@ namespace FusionEngine
 		//! Sets the rotation.
 		virtual void _setRotation(float rotation);
 		//@}
+
+		//! Adds the given body to the collision list
+		void _notifyCollisionWith(FusionPhysicsBody *other);
+		//! Checks for the given body on the collision list
+		bool IsCollidingWith(FusionPhysicsBody *other) const;
+		//! Clears the collision list
+		void ClearCollisions();
 
 		//@{
 		//! Used internally by CollisionGrid
@@ -355,11 +378,11 @@ namespace FusionEngine
 		//! True when the body is active.
 		bool m_Active;
 
-		//! The time after which this body should deactivate, if nothing happens to it.
-		unsigned int m_DeactivationTime;
+		//! The time left before this body deactivates, if nothing happens to it.
+		int m_DeactivationCounter;
 
-		//! The period used to set m_DeactivationTime.
-		unsigned int m_DeactivationTimePeriod;
+		//! The period used to set m_DeactivationCounter.
+		unsigned int m_DeactivationPeriod;
 
 		//! bitmask
 		FusionBitmask *m_Bitmask;
@@ -368,8 +391,8 @@ namespace FusionEngine
 		//! dist
 		float m_ColDist;
 
-		//! I don't think this is used...
-		bool m_IsColliding;
+		//! Lists the bodies which have signaled that they are colliding with this one
+		BodyList m_CollidingBodies;
 
 		//! Bitmask collisions
 		bool m_UsesPixel;

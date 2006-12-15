@@ -3,7 +3,7 @@
 	<name>Shock Wave 2</name>
 	<description>Built to test the ship loading system. Again!</description>
 	
-	<health>10</health>
+	<health>20</health>
   
 	<body>Body.png</body>
 	<leftEngine>
@@ -28,8 +28,8 @@
 	</secondaryWeapon>
 	
 	<physics>
-		<mass>4</mass>
-		<engineforce>1</engineforce>
+		<mass>10</mass>
+		<engineforce>0.25</engineforce>
 		<rotationvelocity>12</rotationvelocity>
 	</physics>
 </FusionShip>

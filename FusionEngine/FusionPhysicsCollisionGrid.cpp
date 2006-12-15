@@ -156,10 +156,10 @@ void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 	m_Grid.resize(m_GridWidth * m_GridHeight);
 }
 
-FusionPhysicsCollisionGrid::BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(FusionEngine::FusionPhysicsBody *body)
+BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(FusionEngine::FusionPhysicsBody *body)
 {
-	FusionPhysicsCollisionGrid::BodyList bodies;
-	FusionPhysicsCollisionGrid::BodyList *node;
+	BodyList bodies;
+	BodyList *node;
 
 	int grid_pos = body->_getCGPos();
 
@@ -252,7 +252,7 @@ unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPh
 
 	// Make sure the pos found is inside the grid
 	//assert(pos < m_GridWidth * m_GridHeight);
-	fe_clamp<unsigned int>(pos, 0, m_Grid.size());
+	fe_clamp<unsigned int>(pos, 0, m_Grid.size()-1);
 
 	return pos;
 }

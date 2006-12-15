@@ -22,6 +22,21 @@
 		<sounds>
 			<creation>fire.wav</creation>
 			<detonation>bang.wav</detonation>
+		</sounds>
+		
+		<effect name="targetAquired">
+			<particles>
+				<count>10</count>
+				<image>dot.png</image>
+			</particles>
+			<sound>target_aquired.wav</sound>
+		</effect>
+		
+		<detonation>
+			<image>flash.png</image>
+			<duration>4</duration>
+		</detonation>
+		
 		<contrail>
 			<duration>10</duration>
 			<colour>
@@ -31,11 +46,13 @@
 			</colour>
 			<image>smoke.png</image>
 		</contrail>
+		
 		<payload>
 			<damage>0</damage>
 			<blastradius>0</blastradius>
 			<damageterrain>false</damageterrain>
 		</payload>
+		
 		<physics>
 			<mass>10</mass>
 			<engineforce>10</engineforce>
@@ -51,20 +68,24 @@
 
 	<projectile name="cluster">
 		<image>bit.png</image>
+		
 		<detonation>
 			<image>flash.png</image>
 			<duration>4</duration>
 		</detonation>
+		
 		<payload>
 			<damage>10</damage>
 			<blastradius>10</blastradius>
 			<damageterrain>true</damageterrain>
 		</payload>
+		
 		<physics>
 			<mass>2</mass>
 			<engineforce>10</engineforce>
 			<facemotion>false</facemotion>
 		</physics>
+		
 		<scripting script="SeekerMissile.as">
 			<step>void clusterStep()</step>
 			<onanycollision>void clusterOnCollision(int, int)</onanycollision>

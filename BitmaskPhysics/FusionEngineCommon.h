@@ -39,16 +39,21 @@
 
 namespace FusionEngine
 {
+	static const double g_DegToRad = M_PI/180.0f;
 	// Useful inline functions
+	static inline float fe_degtorad(float deg) { return deg * g_DegToRad; }
+
+
 	//! Returns the bigger value
 	template<class T>
-	inline const T &fe_max(const T &a, const T &b) {return (a > b) ? a : b; }
+	static inline const T &fe_max(const T &a, const T &b) {return (a > b) ? a : b; }
 	//! Returns the smaller value
 	template<class T>
-	inline const T &fe_min(const T &a, const T &b) {return (a < b) ? a : b; }
+	static inline const T &fe_min(const T &a, const T &b) {return (a < b) ? a : b; }
+
 	//! Wraps a around if it is below lb or above ub
 	template<class T>
-	inline const T &fe_wrap(const T &a, const T &lb, const T &ub) 
+	static inline const T &fe_wrap(const T &a, const T &lb, const T &ub) 
 	{
 		// This basically ammounts to:
 		//  if (a <= lb) return ub;
@@ -57,25 +62,28 @@ namespace FusionEngine
 		return a <= lb ? ub : (a >= ub ? lb : a);
 		// It's so unreadable, it must be efficiant... Right? :P
 	}
+
+
 	//! Returns a if it is no less than lb, and no greater than ub
 	template <class T>
-	inline const T &fe_clamped(const T &a, const T &lb, const T &ub) 
+	static inline const T &fe_clamped(const T &a, const T &lb, const T &ub) 
 	{
 		return a < lb ? lb : (ub < a ? ub : a); 
 	}
 	//! Sets a to no less than lb, and no greater than ub
 	template <class T>
-	inline void fe_clamp(T &a, const T &lb, const T &ub) 
+	static inline void fe_clamp(T &a, const T &lb, const T &ub) 
 	{
 		if (a < lb) 
 		{
 			a = lb; 
 		}
-		else if (ub <= a) 
+		else if (ub < a) 
 		{
 			a = ub;
 		}
 	}
+
 
 	// Forward declarations
 	class GenericEnviornment;
@@ -98,12 +106,17 @@ namespace FusionEngine
 	class StateManager;
 	class Script;
 	class ScriptingEngine;
-	class Archive;
 
 	// Global typedefs
 	typedef unsigned short PlayerInd;
 	typedef unsigned short ObjectID;
 	//typedef std::string ResourceID;
+
+	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
+	typedef std::vector<std::string> StringVector;
+
+	//! Type for a list of bodies
+	typedef std::vector<FusionPhysicsBody *> BodyList;
 }
 
 #endif

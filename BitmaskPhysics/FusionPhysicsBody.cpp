@@ -13,9 +13,10 @@ namespace FusionEngine
 		m_CollisionResponse(0),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
-		m_IsColliding(false),
 		m_GotCGUpdate(false),
 		m_Active(true),
+		m_DeactivationCounter(0),
+		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
 		m_Type(0),
 		m_Mass(0.f),
 		m_Radius(0),
@@ -35,9 +36,10 @@ namespace FusionEngine
 		m_CollisionResponse(response),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
-		m_IsColliding(false),
 		m_GotCGUpdate(false),
 		m_Active(true),
+		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
+		m_DeactivationCounter(0),
 		m_Type(0),
 		m_Mass(0.f),
 		m_Radius(0),
@@ -106,7 +108,11 @@ namespace FusionEngine
 
 	void FusionPhysicsBody::ApplyForce(float force)
 	{
-		CL_Vector2 force_vector(sinf(force), cosf(force));
+		// Apply a force towards the current facing
+		CL_Vector2 force_vector(
+			sinf(fe_degtorad( m_Rotation )) * force,
+			-cosf(fe_degtorad( m_Rotation )) * force
+			);
 		m_AppliedForce += force_vector;
 
 		_activate();
@@ -135,7 +141,9 @@ namespace FusionEngine
 	{
 		m_RotationalVelocity = velocity;
 
-		_activate();
+		// Don't activate if this was a call to stop rotation!
+		if (velocity != 0)
+			_activate();
 	}
 
 	void FusionPhysicsBody::SetColBitmask(FusionEngine::FusionBitmask *bitmask)
@@ -254,7 +262,7 @@ namespace FusionEngine
 
 	bool FusionPhysicsBody::CheckCollisionFlag(int flag)
 	{
-		return (m_CollisionFlags & flag);
+		return (m_CollisionFlags & flag) == 1 ? true : false;
 	}
 
 	void FusionPhysicsBody::_setCollisionFlags(int flags)
@@ -316,7 +324,7 @@ namespace FusionEngine
 	{
 		m_Active = true;
 
-		m_DeactivationTime = CL_System::get_time() + m_DeactivationTimePeriod;
+		m_DeactivationCounter = m_DeactivationPeriod;
 	}
 
 	void FusionPhysicsBody::_deactivate()
@@ -328,60 +336,83 @@ namespace FusionEngine
 		m_Active = false;
 	}
 
+	void FusionPhysicsBody::_deactivateAfterCountdown(unsigned int split)
+	{
+		m_DeactivationCounter -= split;
+
+		if (m_DeactivationCounter <= 0)
+			_deactivate();
+	}
+
+	void FusionPhysicsBody::_setDeactivationCount(unsigned int count)
+	{
+		m_DeactivationCounter = count;
+	}
+
+	unsigned int FusionPhysicsBody::GetDeactivationCount() const
+	{
+		return m_DeactivationCounter;
+	}
+
 	void FusionPhysicsBody::SetDeactivationPeriod(unsigned int period)
 	{
-		m_DeactivationTimePeriod = period;
+		m_DeactivationPeriod = period;
 	}
 
 	unsigned int FusionPhysicsBody::GetDeactivationPeriod() const
 	{
-		return m_DeactivationTimePeriod;
+		return m_DeactivationPeriod;
 	}
 
-	void FusionPhysicsBody::_setDeactivationTime(unsigned int time)
-	{
-		m_DeactivationTime = time;
-	}
-
-	unsigned int FusionPhysicsBody::GetDeactivationTime() const
-	{
-		return m_DeactivationTime;
-	}
 
 	void FusionPhysicsBody::_setPosition(const CL_Vector2 &position)
 	{
 		m_Position = position;
-
-		_activate();
 	}
 
 	void FusionPhysicsBody::_setForce(const CL_Vector2 &force)
 	{
 		m_AppliedForce = force;
-
-		_activate();
 	}
 
 	void FusionPhysicsBody::_setAcceleration(const CL_Vector2 &acceleration)
 	{
 		m_Acceleration = acceleration;
-
-		_activate();
 	}
 
 	void FusionPhysicsBody::_setVelocity(const CL_Vector2 &velocity)
 	{
 		m_Velocity = velocity;
-
-		_activate();
 	}
 
 	void FusionPhysicsBody::_setRotation(const float rotation)
 	{
 		m_Rotation = rotation;
-
-		_activate();
 	}
+
+
+	void FusionPhysicsBody::_notifyCollisionWith(FusionEngine::FusionPhysicsBody *other)
+	{
+		m_CollidingBodies.push_back(other);
+	}
+
+	bool FusionPhysicsBody::IsCollidingWith(FusionEngine::FusionPhysicsBody *other) const
+	{
+		BodyList::const_iterator it = m_CollidingBodies.begin();
+		for (; it != m_CollidingBodies.end(); ++it)
+		{
+			if ((*it) == other)
+				return true;
+		}
+
+		return false;
+	}
+
+	void FusionPhysicsBody::ClearCollisions()
+	{
+		m_CollidingBodies.clear();
+	}
+
 
 	void FusionPhysicsBody::_setCGPos(int ind)
 	{

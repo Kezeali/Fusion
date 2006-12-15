@@ -7,12 +7,21 @@ void seekerCreation()
 
 void seekerStep()
 {
-	// Finds the ship nearest this missile and moves towards it
-	Vector aim = GetUnitVectorToNearestShip();
-	aim.x = aim.x * m_engineforce;
-	aim.y = aim.y * m_engineforce;
-	// Applys the given force vector
-	ApplyForce(aim);
+	// Finds the ship nearest this ship and moves towards it
+	float distance = GetDistanceToNearestShip();
+	if (distance < 100)
+	{
+		if (m_velocity.x == 0 && m_velocity.y == 0)
+		{
+			CreateEffect("targetAquired", m_position.x, m_position.y);
+		}
+		
+		Vector aim = GetUnitVectorToNearestShip();
+		aim.x = aim.x * m_engineforce;
+		aim.y = aim.y * m_engineforce;
+		// Applys the given force vector
+		ApplyForce(aim);
+	}
 }
 
 void clusterStep()

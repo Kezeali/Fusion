@@ -46,9 +46,11 @@ namespace FusionEngine
 		~FusionPhysicsCollisionGrid();
 
 	public:
-		//** Typedefs **
-		typedef std::vector<FusionPhysicsBody *> BodyList;
+		//typedef std::vector<FusionPhysicsBody *> BodyList;
+		//! Type for a collection of BodyLists
 		typedef std::vector<BodyList> BodyListCollection;
+
+	public:
 
 		//! Adds an already existing body to the grid.
 		void AddBody(FusionPhysicsBody *body);

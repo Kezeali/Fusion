@@ -480,10 +480,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionStringVector.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionTheme.h"
 				>
 			</File>
@@ -493,62 +489,6 @@
 			</File>
 			<File
 				RelativePath=".\Prereq.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="minizip"
-			>
-			<File
-				RelativePath="..\minizip\crypt.h"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\ioapi.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\ioapi.h"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\iowin32.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\iowin32.h"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\miniunz.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\minizip.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\mztools.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\mztools.h"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\unzip.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\unzip.h"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\zip.c"
-				>
-			</File>
-			<File
-				RelativePath="..\minizip\zip.h"
 				>
 			</File>
 		</Filter>
@@ -777,15 +717,6 @@
 				RelativePath=".\FusionTheme.cpp"
 				>
 			</File>
-			<Filter
-				Name="examples"
-				ParseFiles="false"
-				>
-				<File
-					RelativePath=".\examples\fusionscene_example.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

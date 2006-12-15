@@ -36,6 +36,8 @@
 namespace FusionEngine
 {
 
+	static const int g_BitmaskCacheVersion = 1;
+
 	/*!
 	 * \brief
 	 * OO wrapper for Ulf Ekstrom's bitmask library.
@@ -94,14 +96,14 @@ namespace FusionEngine
 		void ToStream(std::ostream &os) const;
 
 		//! Sets the bitmask from the given cache
-		void SetFromStream(std::istream &is);
+		bool SetFromStream(std::istream &is);
 
 		//! Creates a circular bitmask of the given radius.
 		/*!
-		 * FIX ME: this seems to create a semi circle only!
-		 *
-		 * \param radius Radius, in pixels, of the bitmask.
-		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 * \param radius
+		 * Radius, in pixels, of the bitmask.
+		 * \param gridsize
+		 * The amount of pixels per bit in the bitmask.
 		 */
 		void SetFromRadius(float radius, int gridsize);
 

@@ -8,14 +8,15 @@
 #include "FusionPhysicsTypes.h"
 #include "FusionPhysicsCallback.h"
 
-const float g_ThrustForce = 1.5f;
+const int g_NumDrones = 4;
+const float g_ThrustForce = 0.2f;
 
 using namespace FusionEngine;
 
 class BitmaskTest : public CL_ClanApplication
 {
 	FusionBitmask *m_ShipBitmask;
-	FusionBitmask *m_DroneBitmask;
+	FusionBitmask *m_DroneBitmask[4];
 	FusionBitmask *m_TerrainBitmask;
 
 	FusionPhysicsWorld *m_World;
@@ -23,8 +24,8 @@ class BitmaskTest : public CL_ClanApplication
 	CL_Surface *m_ShipGraphical;
 	FusionPhysicsBody *m_ShipPhysical;
 
-	CL_Surface *m_DroneGraphical;
-	FusionPhysicsBody *m_DronePhysical;
+	CL_Surface *m_DroneGraphical[g_NumDrones];
+	FusionPhysicsBody *m_DronePhysical[g_NumDrones];
 
 	CL_Surface *m_TerrainGraphical;
 	FusionPhysicsBody *m_TerrainPhysical;
@@ -46,7 +47,7 @@ class BitmaskTest : public CL_ClanApplication
 		// Warp
 		if (CL_Keyboard::get_keycode('W'))
 		{
-			float a = m_ShipPhysical->GetRotation() * PI/180.0f;
+			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			CL_Vector2 force = m_ShipPhysical->GetPosition();
 			force.x += sinf(a)*g_ThrustForce;
 			force.y += -cosf(a)*g_ThrustForce;
@@ -56,7 +57,7 @@ class BitmaskTest : public CL_ClanApplication
 
 		if (CL_Keyboard::get_keycode(CL_KEY_DOWN))
 		{
-			float a = m_ShipPhysical->GetRotation() * PI/180.0f;
+			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			CL_Vector2 force;
 			force.x = -sinf(a)*g_ThrustForce;
 			force.y = cosf(a)*g_ThrustForce;
@@ -65,7 +66,7 @@ class BitmaskTest : public CL_ClanApplication
 		}
 		else if (CL_Keyboard::get_keycode(CL_KEY_UP))
 		{
-			float a = m_ShipPhysical->GetRotation() * PI/180.0f;
+			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			CL_Vector2 force;
 			force.x = sinf(a)*g_ThrustForce;
 			force.y = -cosf(a)*g_ThrustForce;
@@ -82,6 +83,27 @@ class BitmaskTest : public CL_ClanApplication
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
 
+		// Homing mode for drone 0
+		if (CL_Keyboard::get_keycode('H'))
+		{
+			m_DronePhysical[0]->SetRotationalVelocity(0.0f);
+
+			CL_Vector2 aim = m_ShipPhysical->GetPosition() - m_DronePhysical[0]->GetPosition();
+			aim.unitize();
+
+			m_DronePhysical[0]->ApplyForce(aim * g_ThrustForce);
+		}
+		else
+		{
+			for (int i = 0; i < g_NumDrones; i++)
+			{
+				m_DronePhysical[i]->SetRotationalVelocity(0.2f);
+				m_DronePhysical[i]->ApplyForce(g_ThrustForce);
+			}
+		}
+
+		
+
 		m_World->RunSimulation(split);
 
 		return true;
@@ -92,17 +114,18 @@ class BitmaskTest : public CL_ClanApplication
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
 
-		CL_DisplayWindow display("Display", 1024, 600);
-
-		CL_ConsoleWindow console("Console");
+		CL_ConsoleWindow console("Console", 80, 10);
 		console.redirect_stdio();
+
+		CL_DisplayWindow display("Display", 1024, 580);
 
 		// World
 		m_World = new FusionPhysicsWorld();
-		m_World->Initialise(1024, 768);
-		m_World->SetBodyDeactivationPeriod(4000);
+		m_World->Initialise(1024, 580);
 		m_World->SetMaxVelocity(20);
-		m_World->SetBitmaskRes(4);
+		m_World->SetBodyDeactivationPeriod(20000);
+		m_World->SetDeactivationVelocity(0.05f);
+		m_World->SetBitmaskRes(2);
 		m_World->DeactivateWrapAround();
 
 		// Ship
@@ -115,7 +138,7 @@ class BitmaskTest : public CL_ClanApplication
 
 		{
 			PhysicalProperties props;
-			props.mass = 20;
+			props.mass = 20.0f;
 			props.position = CL_Vector2(48.f, 120.f);
 			props.radius = 50;
 			props.rotation = 0;
@@ -125,38 +148,42 @@ class BitmaskTest : public CL_ClanApplication
 			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
-			m_ShipPhysical->SetCoefficientOfFriction(0.3f);
-			m_ShipPhysical->SetCoefficientOfRestitution(0.8f);
+			m_ShipPhysical->SetCoefficientOfFriction(0.4f);
+			m_ShipPhysical->SetCoefficientOfRestitution(0.6f);
 		}
 
-		// Drone
-		m_DroneGraphical = new CL_Surface("../Body.png");
-		m_DroneGraphical->set_rotation_hotspot(origin_center);
-
-		m_DroneBitmask = new FusionBitmask;
-		m_DroneBitmask->SetFromSurface(m_DroneGraphical, m_World->GetBitmaskRes());
-		//m_DroneBitmask->SetFromRadius(m_DroneGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
-
+		// Drones
+		for (int i = 0; i < g_NumDrones; i++)
 		{
-			PhysicalProperties props;
-			props.mass = 20;
-			props.position = CL_Vector2(480.f, 120.f);
-			props.radius = 50;
-			props.rotation = 0;
-			props.use_dist = true;
-			props.dist = m_DroneGraphical->get_width() * 0.5;
-			props.use_bitmask = true;
-			props.bitmask = m_DroneBitmask;
+			m_DroneGraphical[i] = new CL_Surface("../Body.png");
+			m_DroneGraphical[i]->set_rotation_hotspot(origin_center);
 
-			m_DronePhysical = m_World->CreateBody(PB_SHIP, props);
-			m_DronePhysical->SetCoefficientOfFriction(0.2f);
-			m_DronePhysical->SetCoefficientOfRestitution(0.8f);
+			m_DroneBitmask[i] = new FusionBitmask;
+			m_DroneBitmask[i]->SetFromRadius(16.0f, m_World->GetBitmaskRes());
+			//m_DroneBitmask->SetFromRadius(m_DroneGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
+
+			{
+				PhysicalProperties props;
+				props.mass = 15.0f;
+				props.position = CL_Vector2(480.f, 120.f);
+				props.radius = 50;
+				props.rotation = 0;
+				props.use_dist = true;
+				props.dist = m_DroneGraphical[i]->get_width() * 0.5;
+				props.use_bitmask = true;
+				props.bitmask = m_DroneBitmask[i];
+
+				m_DronePhysical[i] = m_World->CreateBody(PB_SHIP, props);
+			}
+
+			m_DronePhysical[i]->SetCoefficientOfFriction(0.6f);
+			m_DronePhysical[i]->SetCoefficientOfRestitution(0.6f);
 		}
 
 		// Hole
-		m_Damage = new CL_Surface("../circle.png");
+		/*m_Damage = new CL_Surface("../circle.png");
 		m_Damage->set_rotation_hotspot(origin_center);
-		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);
+		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);*/
 
 		// Terrain
 		m_TerrainGraphical = new CL_Surface("../Terrain.png", CL_Surface::flag_keep_pixelbuffer);
@@ -170,24 +197,20 @@ class BitmaskTest : public CL_ClanApplication
 			std::ifstream ifs("bitmask");
 			if (ifs.is_open())
 			{
-				//std::stringstream temp;
-				//ifs >> temp;
-
-				m_TerrainBitmask->SetFromStream(ifs);
+				bitmaskLoaded = m_TerrainBitmask->SetFromStream(ifs);
 
 				//ifs >> m_TerrainBitmask;
-
-				bitmaskLoaded = true;
 			}
 		}
 		// Create and save the mask if it couldn't be loaded from a cache
 		if (!bitmaskLoaded)
 		{
-			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes());
+			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes(), 25);
 
 			std::ofstream ofs("bitmask");
 			{
 				m_TerrainBitmask->ToStream(ofs);
+
 				//ofs << m_TerrainBitmask;
 			}
 		}
@@ -229,52 +252,28 @@ class BitmaskTest : public CL_ClanApplication
 			// Move the ship
 			Update(split);
 
-			// Draw the ship
-			m_ShipGraphical->set_angle(m_ShipPhysical->GetRotation());
-			m_ShipGraphical->draw(
-				m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
 
-			/*CL_Surface_DrawParams2 params;
-			params.rotate_origin = origin_center;
-			params.rotate_angle = m_ShipPhysical->GetRotation();
-			params.destX = m_ShipPhysical->GetPosition().x;
-			params.destY = m_ShipPhysical->GetPosition().y;
+			// Modify various params
+			unsigned int time = CL_System::get_time();
 
-			m_ShipGraphical->draw(params);*/
-
-
-			// Draw the drone
-			m_DroneGraphical->set_angle(m_DronePhysical->GetRotation());
-			m_DroneGraphical->draw(
-				m_DronePhysical->GetPosition().x, m_DronePhysical->GetPosition().y);
-
-
-			if (CL_Keyboard::get_keycode('7'))
+			if (inputTimer <= time && CL_Keyboard::get_keycode('Q'))
 			{
+				inputTimer = time + 500;
+
 				float cor = m_ShipPhysical->GetCoefficientOfRestitution();
 				m_ShipPhysical->SetCoefficientOfRestitution(cor + 0.1f);
 			}
-			if (CL_Keyboard::get_keycode('4'))
+			if (inputTimer <= time && CL_Keyboard::get_keycode('A'))
 			{
-				float cor = m_DronePhysical->GetCoefficientOfRestitution();
-				m_DronePhysical->SetCoefficientOfRestitution(cor - 0.1f);
+				inputTimer = time + 500;
+
+				float cor = m_ShipPhysical->GetCoefficientOfRestitution();
+				m_ShipPhysical->SetCoefficientOfRestitution(cor - 0.1f);
 			}
 
-			if (CL_Keyboard::get_keycode('8'))
-			{
-				float cor = m_DronePhysical->GetCoefficientOfRestitution();
-				m_DronePhysical->SetCoefficientOfRestitution(cor + 0.1f);
-			}
-			if (CL_Keyboard::get_keycode('2'))
-			{
-				float cor = m_DronePhysical->GetCoefficientOfRestitution();
-				m_DronePhysical->SetCoefficientOfRestitution(cor - 0.1f);
-			}
-
-			unsigned int time = CL_System::get_time();
 			if (inputTimer <= time && CL_Keyboard::get_keycode('D'))
 			{
-				inputTimer = time + 1000;
+				inputTimer = time + 500;
 				debug = !debug;
 			}
 			if (debug)
@@ -285,13 +284,17 @@ class BitmaskTest : public CL_ClanApplication
 				m_ShipBitmask->DisplayBits(
 					m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
 
-				m_DroneBitmask->DisplayBits(
-					m_DronePhysical->GetPosition().x, m_DronePhysical->GetPosition().y);
+				for (int i = 0; i < g_NumDrones; i++)
+				{
+					m_DroneBitmask[i]->DisplayBits(
+						m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
+				}
 			}
 			else
 			{
 				// Draw the terrain
 				// The following should be in the terrain impact callback (make hole)
+				//  m_Damage.draw(rect, m_TerrainCanvas.get_gc());
 				//  m_TerrainCanvas->sync_surface();
 
 				m_TerrainGraphical->draw(
@@ -304,10 +307,29 @@ class BitmaskTest : public CL_ClanApplication
 				params.destY = m_TerrainPhysical->GetPosition().y;
 
 				m_TerrainGraphical->draw(params);*/
-			}
 
-			//damage.draw(rect, canvas.get_gc());
-			//canvas.sync_surface();
+				// Draw the ship
+				m_ShipGraphical->set_angle(m_ShipPhysical->GetRotation());
+				m_ShipGraphical->draw(
+					m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
+
+				/*CL_Surface_DrawParams2 params;
+				params.rotate_origin = origin_center;
+				params.rotate_angle = m_ShipPhysical->GetRotation();
+				params.destX = m_ShipPhysical->GetPosition().x;
+				params.destY = m_ShipPhysical->GetPosition().y;
+
+				m_ShipGraphical->draw(params);*/
+
+
+				// Draw the drones
+				for (int i = 0; i < g_NumDrones; i++)
+				{
+					m_DroneGraphical[i]->set_angle(m_DronePhysical[i]->GetRotation());
+					m_DroneGraphical[i]->draw(
+						m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
+				}
+			}
 
 			display.flip();
 			CL_System::keep_alive();

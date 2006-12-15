@@ -63,6 +63,8 @@ namespace FusionEngine
 
 	void FusionBitmask::ToStream(std::ostream &os) const
 	{
+		os << g_BitmaskCacheVersion;
+		os << '|';
 		os << m_Bitmask->w;
 		os << '|';
 		os << m_Bitmask->h;
@@ -76,18 +78,20 @@ namespace FusionEngine
 			for (int x = 0; x < m_MaskWidth; x++)
 			{
 				os << bitmask_getbit(m_Bitmask, x, y);
-				os << '|';
 			}
 		}
 
-		//os << bitmask.ToStream();
-		//return os;
 	}
 
-	void FusionBitmask::SetFromStream(std::istream &is)
+	bool FusionBitmask::SetFromStream(std::istream &is)
 	{
+		char d[sizeof(int)];
+		// Make sure it has the right version
+		is.getline(&d[0], sizeof(int), '|');
+		if (atoi(d) != g_BitmaskCacheVersion)
+			return false;
+
 		// Read the dimensions
-		char d[sizeof(BITW)];
 		is.getline(&d[0], sizeof(int), '|');
 		m_MaskWidth = atoi(d);
 
@@ -113,14 +117,14 @@ namespace FusionEngine
 		{
 			for (int x = 0; x < m_MaskWidth; x++)
 			{
-				is.getline(&d[0], sizeof(int), '|');
+				d[0] = is.get();
 				int bit = atoi(d);
 				if (bit == 1)
 					bitmask_setbit(m_Bitmask, x, y);
 			}
 		}
 
-		//return is;
+		return true;
 	}
 
 
@@ -158,10 +162,10 @@ namespace FusionEngine
 		
 		for (float i = 1.0f; i < mask_radius; i++)
 		{
-			for (float a = 0.0f; a < 360.0f; a++)
+			for (float a = 0.0f; a < 2*PI; a+=0.1f)
 			{
-				bit.x = int( sin(a) * i + mask_radius);
-				bit.y = int( cos(a) * i + mask_radius);
+				bit.x = int( sinf(a) * i + mask_radius);
+				bit.y = int( cosf(a) * i + mask_radius);
 				fe_clamp(bit.x, 0, mask_width);
 				fe_clamp(bit.y, 0, mask_width);
 
@@ -210,6 +214,8 @@ namespace FusionEngine
 
 	void FusionBitmask::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold)
 	{
+		int sur_w = surface->get_width();
+		int sur_h = surface->get_height();
 		int mask_w = int(surface->get_width() / gridsize);
 		int mask_h = int(surface->get_height() / gridsize);
 
@@ -234,14 +240,15 @@ namespace FusionEngine
 		m_PPB = gridsize;
 		m_PPBInverse = 1.0f/(float)gridsize;
 
+		CL_PixelBuffer pdat = surface->get_pixeldata();
+
 		for (int x = 0; x < mask_w; x++)
 			for (int y = 0; y < mask_h; y++)
 			{
-				int sur_x = int( floor(float(x * gridsize)) );
-				int sur_y = int( floor(float(y * gridsize)) );
-				if (surface->get_pixeldata().get_pixel(sur_x, sur_y).get_alpha() >= threshold)
+				int sur_x = fe_clamped<int>( int( x * gridsize ), 0, sur_w);
+				int sur_y = fe_clamped<int>( int( y * gridsize ), 0, sur_h);
+				if (pdat.get_pixel(sur_x, sur_y).get_alpha() >= threshold)
 				{
-					std::cout << "Compiling Bitmask: SetBit " << x << "," << y << std::endl;
 					bitmask_setbit(m_Bitmask, x, y);
 				}
 			}
