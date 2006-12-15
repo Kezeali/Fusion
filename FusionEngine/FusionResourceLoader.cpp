@@ -426,6 +426,8 @@ namespace FusionEngine
 				{
 					// Uses Archive::GetFile() to get the path to the file
 					sf_list[name] = new CL_Surface(arc->GetFile(file));
+
+					//sf_list[name] = new CL_Surface(CL_PNGProvider(file, phys_source));
 				}
 			}
 

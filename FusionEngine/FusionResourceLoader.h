@@ -40,7 +40,17 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources for gameplay.
 	 *
-	 * \todo Impliment PhysFS or boost::filesystem, rather than my own crappy archive reading.
+	 * \todo Impliment PhysFS or boost::filesystem <br>
+	 * First, create InputSourceProvider_PhysFS (based on CL_InputSourceProvider_File) <br>
+	 * Then, create InputSource_PhysFile (based on CL_InputSource_File) <br>
+	 * pass *physFSProvider = new InputSourceProvider_PhysFS("Resource Package");
+	 * to the generic package parser method <br>
+	 * <br>
+	 * In the generic package parser: <br>
+	 * search for .xml files in the archive (using PhysFS directly) <br>
+	 * Read the xml file to find out what type of resource it defines <br>
+	 * Call the specific resource parser for that type of resource <br>
+	 * Use CL_Surface("physfs filename" , physFSProvider);
 	 */
 	class ResourceLoader : public Singleton<ResourceLoader>
 	{

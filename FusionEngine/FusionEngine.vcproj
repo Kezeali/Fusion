@@ -264,6 +264,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionInputSourceProvider_PhysFS.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLevel.h"
 				>
 			</File>

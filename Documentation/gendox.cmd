@@ -1,1 +1,1 @@
-doxygen.exe DoxyfileEx
+doxygen.exe Doxyfile
