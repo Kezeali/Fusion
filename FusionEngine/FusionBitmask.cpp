@@ -256,7 +256,7 @@ namespace FusionEngine
 
 	void FusionBitmask::Draw(const FusionBitmask *other, const CL_Point &offset, bool auto_scale)
 	{
-		assert(m_Bitmask);
+		cl_assert(m_Bitmask);
 
 		int scaled_x = offset.x;
 		int scaled_y = offset.y;
@@ -284,7 +284,7 @@ namespace FusionEngine
 
 	void FusionBitmask::Erase(const FusionBitmask *other, const CL_Point &offset, bool auto_scale)
 	{
-		assert(m_Bitmask);
+		cl_assert(m_Bitmask);
 
 		int scaled_x = offset.x;
 		int scaled_y = offset.y;
@@ -320,9 +320,9 @@ namespace FusionEngine
 
 	bool FusionBitmask::GetBit(const CL_Point &point) const
 	{
-		assert(m_Bitmask);
+		cl_assert(m_Bitmask);
 
-		// We don't use assert here, because point may be passed from the 
+		// We don't use cl_assert here, because point may be passed from the 
 		//  collision detection, which I wouldn't trust, even at release. ;)
 		if ((point.x > m_MaskWidth) | (point.y > m_MaskHeight) | (point.x < 0) | (point.y < 0))
 			return false; // Out of range!
@@ -332,7 +332,7 @@ namespace FusionEngine
 
 	bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		assert(m_Bitmask);
+		cl_assert(m_Bitmask);
 
 		int scaled_x = int( offset.x * m_PPBInverse );
 		int scaled_y = int( offset.y * m_PPBInverse );
@@ -342,7 +342,7 @@ namespace FusionEngine
 
 	bool FusionBitmask::OverlapPoint(CL_Point *output, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		assert(m_Bitmask);
+		cl_assert(m_Bitmask);
 		int x, y;
 		x = y = 0;
 
@@ -360,8 +360,8 @@ namespace FusionEngine
 
 	bool FusionBitmask::OverlapPoint(int *x_out, int *y_out, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		assert(m_Bitmask);
-		assert(x_out && y_out);
+		cl_assert(m_Bitmask);
+		cl_assert(x_out && y_out);
 
 		int scaled_x = int( offset.x * m_PPBInverse );
 		int scaled_y = int( offset.y * m_PPBInverse );

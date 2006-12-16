@@ -40,7 +40,7 @@ namespace Fusion
 	{
 	public:
 		//! Basic constructor.
-		FusionGUI()
+		FrontendGUI()
 			: m_OwnRenderer(false)
 		{
 			// Create a new system if need be.

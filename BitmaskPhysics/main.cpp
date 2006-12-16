@@ -155,7 +155,7 @@ class BitmaskTest : public CL_ClanApplication
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
 		{
-			m_DroneGraphical[i] = new CL_Surface("../Body.png");
+			m_DroneGraphical[i] = new CL_Surface("./Body.png");
 			m_DroneGraphical[i]->set_rotation_hotspot(origin_center);
 
 			m_DroneBitmask[i] = new FusionBitmask;
@@ -181,12 +181,12 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		// Hole
-		/*m_Damage = new CL_Surface("../circle.png");
+		/*m_Damage = new CL_Surface("./circle.png");
 		m_Damage->set_rotation_hotspot(origin_center);
 		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);*/
 
 		// Terrain
-		m_TerrainGraphical = new CL_Surface("../Terrain.png", CL_Surface::flag_keep_pixelbuffer);
+		m_TerrainGraphical = new CL_Surface("./Terrain.png", CL_Surface::flag_keep_pixelbuffer);
 		m_TerrainGraphical->set_rotation_hotspot(origin_center);
 
 		m_TerrainCanvas = new CL_Canvas(*m_TerrainGraphical);

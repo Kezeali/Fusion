@@ -212,6 +212,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionCommon.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionConsole.h"
 				>
 			</File>
@@ -221,10 +225,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionDrawable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineCommon.h"
 				>
 			</File>
 			<File
@@ -261,6 +261,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputMap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputSource_PhysFS.h"
 				>
 			</File>
 			<File
@@ -341,6 +345,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPaths.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysFS.h"
 				>
 			</File>
 			<File
@@ -534,18 +542,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEngineGUI.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineGUI_Console.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionEngineGUI_Options.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionEnvironmentClient.cpp"
 				>
 			</File>
@@ -579,6 +575,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputSource_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputSourceProvider_PhysFS.cpp"
 				>
 			</File>
 			<File
@@ -627,6 +631,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPackSyncHost.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysFS.cpp"
 				>
 			</File>
 			<File

@@ -27,6 +27,8 @@
 #pragma once
 #endif
 
+#include "Common.h"
+
 namespace FusionEngine
 {
 
@@ -40,13 +42,13 @@ namespace FusionEngine
 		//! Constructor
 		Singleton( void )
 		{
-			assert( !ms_Singleton );
+			cl_assert( !ms_Singleton );
 			ms_Singleton = static_cast<T*>(this);
 		}
 		//! Destructor
 		~Singleton( void )
 		{
-			assert( ms_Singleton );
+			cl_assert( ms_Singleton );
 			ms_Singleton = 0;
 		}
 
@@ -54,7 +56,7 @@ namespace FusionEngine
 		//! Returns the static instance of singleton
 		static T& getSingleton( void )
 		{
-			assert( ms_Singleton );
+			cl_assert( ms_Singleton );
 			return ( *ms_Singleton );
 		}
 		//! Returns a pointer to the static instance of singleton
@@ -96,7 +98,7 @@ namespace FusionEngine
 		//! Returns the static instance of singleton
 		static T& getSingleton( void )
 		{
-			assert( ms_Singleton );
+			cl_assert( ms_Singleton );
 			return ( *ms_Singleton );
 		}
 		//! Returns a pointer to the static instance of singleton

@@ -40,7 +40,7 @@ namespace FusionEngine
 
 	void ShipHealthDrawable::SetHealth(int value)
 	{
-		assert(value < m_Max);
+		cl_assert(value < m_Max);
 
 		// Add health-lost particle effect
 		if (value < m_Value)

@@ -144,13 +144,13 @@ void FusionPhysicsCollisionGrid::Resort()
 
 void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 {
-	assert(scale > 0.0f && scale <= 1.0f);
+	cl_assert(scale > 0.0f && scale <= 1.0f);
 
 	m_GridScale = scale;
 	m_GridWidth = int((level_x * scale) + 0.5);
 	m_GridHeight = int((level_y * scale) + 0.5);
 
-	assert(m_GridWidth * m_GridHeight < m_Grid.max_size());
+	cl_assert(m_GridWidth * m_GridHeight < m_Grid.max_size());
 
 	// Preallocate the grid.
 	m_Grid.resize(m_GridWidth * m_GridHeight);
@@ -251,7 +251,7 @@ unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPh
 	pos = y * m_GridWidth + x;
 
 	// Make sure the pos found is inside the grid
-	//assert(pos < m_GridWidth * m_GridHeight);
+	//cl_assert(pos < m_GridWidth * m_GridHeight);
 	fe_clamp<unsigned int>(pos, 0, m_Grid.size()-1);
 
 	return pos;

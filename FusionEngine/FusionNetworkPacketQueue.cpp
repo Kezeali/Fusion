@@ -40,7 +40,7 @@ namespace FusionEngine
 		m_Mutex->enter();
 
 		// Make sure the channel exists first
-		assert(m_Channels.size() > channel);
+		cl_assert(m_Channels.size() > channel);
 
 		if (m_Channels[channel].empty())
 			return 0;

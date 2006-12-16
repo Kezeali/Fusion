@@ -9,7 +9,7 @@ namespace FusionEngine
 
 	bool NetUtils::IsFusionPacket(Packet *p)
 	{
-		assert(p);
+		cl_assert(p);
 		return IsFusionPacket(p->data);
 	}
 
@@ -34,10 +34,10 @@ namespace FusionEngine
 
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			// This assert is kinda useless, blame the RakNet guy (his code :P)
+			// This cl_assert is kinda useless, blame the RakNet guy (his code :P)
 			//  If you wan't to make sure the packet is valid, it shouldn't just happen in
 			//  debug releases!
-			//assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
+			//cl_assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
 
 			if (length > sizeof(unsigned char) + sizeof(RakNetTime))
 				// Get data at [ID_TIMESTAMP + time]
@@ -61,10 +61,10 @@ namespace FusionEngine
 
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			// This assert is kinda useless, blame the RakNet guy (his code :P)
+			// This cl_assert is kinda useless, blame the RakNet guy (his code :P)
 			//  If you wan't to make sure the packet is valid, it shouldn't just happen in
 			//  debug releases!
-			//assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
+			//cl_assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
 
 			if (length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime))
 				// Get data at [ID_TIMESTAMP + time + MTID_]
@@ -79,7 +79,7 @@ namespace FusionEngine
 
 	RakNetTime NetUtils::GetPacketTime(Packet *p)
 	{
-		assert(p);
+		cl_assert(p);
 		return GetPacketTime(p->data, p->length);
 	}
 
@@ -87,7 +87,7 @@ namespace FusionEngine
 	{
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			//assert(length >= sizeof(unsigned char) + sizeof(RakNetTime));
+			//cl_assert(length >= sizeof(unsigned char) + sizeof(RakNetTime));
 			// Make sure there actually is a timestamp here (even if that's all there is)
 			if (length >= sizeof(unsigned char) + sizeof(RakNetTime))
 			{
@@ -107,7 +107,7 @@ namespace FusionEngine
 
 	int NetUtils::GetHeaderLength(Packet *p)
 	{
-		assert(p);
+		cl_assert(p);
 		return GetHeaderLength(p->data);
 	}
 

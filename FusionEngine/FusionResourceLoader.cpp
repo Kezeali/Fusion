@@ -180,7 +180,7 @@ namespace FusionEngine
 
 	LevelResource *ResourceLoader::GetLoadedLevel()
 	{
-		assert(m_LevelResource);
+		cl_assert(m_LevelResource);
 		return m_LevelResource;
 	}
 

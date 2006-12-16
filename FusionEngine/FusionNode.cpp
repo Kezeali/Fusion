@@ -352,7 +352,7 @@ bool FusionNode::IsInSceneGraph() const
 
 FusionNode *FusionNode::CreateChildNode(const CL_Vector2 &position, float facing)
 {
-	assert(m_Creator);
+	cl_assert(m_Creator);
 
 	FusionNode *child = m_Creator->CreateNode();
 	child->SetPosition(position);
@@ -364,7 +364,7 @@ FusionNode *FusionNode::CreateChildNode(const CL_Vector2 &position, float facing
 
 FusionNode *FusionNode::CreateChildNode(const CL_Point &position, float facing)
 {
-	assert(m_Creator);
+	cl_assert(m_Creator);
 
 	FusionNode *child = m_Creator->CreateNode();
 	child->SetPosition(CL_Vector2(position.x, position.y));

@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FusionEngine", "FusionEngin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitmaskPhysics", "BitmaskPhysics\BitmaskPhysics.vcproj", "{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PHYSFSTest", "PHYSFSTest\PHYSFSTest.vcproj", "{7F8A90A9-C73B-4CA7-BBD8-66CBF7039C33}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Debug|Win32.Build.0 = Debug|Win32
 		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Release|Win32.ActiveCfg = Release|Win32
 		{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}.Release|Win32.Build.0 = Release|Win32
+		{7F8A90A9-C73B-4CA7-BBD8-66CBF7039C33}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7F8A90A9-C73B-4CA7-BBD8-66CBF7039C33}.Debug|Win32.Build.0 = Debug|Win32
+		{7F8A90A9-C73B-4CA7-BBD8-66CBF7039C33}.Release|Win32.ActiveCfg = Release|Win32
+		{7F8A90A9-C73B-4CA7-BBD8-66CBF7039C33}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
