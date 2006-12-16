@@ -27,7 +27,7 @@ Copyright (c) 2006 FusionTeam
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 /// Fusion
 #include "FusionDrawable.h"

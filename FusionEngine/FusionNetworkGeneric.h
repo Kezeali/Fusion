@@ -27,7 +27,7 @@
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 #include <RakNet/RakNetworkFactory.h>
 #include <RakNet/PacketEnumerations.h>

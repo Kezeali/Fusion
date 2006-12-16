@@ -20,14 +20,14 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_GUI
-#define Header_FusionEngine_GUI
+#ifndef Header_Fusion_GUI
+#define Header_Fusion_GUI
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 /// Inherited
 #include "FusionState.h"
@@ -70,11 +70,20 @@ namespace FusionEngine
 		//! Unbinds
 		virtual void CleanUp();
 
+		//! Adds the given window layout (to the root window)
+		virtual bool AddWindow(const std::string &window);
+
+		//!Removes the given window
+		virtual bool RemoveWindow(const std::string &window);
+
 	protected:
 		//! Name of the config file for the skin
 		std::string m_CurrentScheme;
 		//! Name of the config file for the current gui page
 		std::string m_CurrentLayout;
+
+		//! Lists added windows
+		std::vector<std::string> m_CurrentWindows;
 
 		//! Holds events
 		CL_SlotContainer m_Slots;

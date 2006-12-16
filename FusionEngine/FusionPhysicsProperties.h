@@ -26,7 +26,7 @@
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 namespace FusionEngine
 {
