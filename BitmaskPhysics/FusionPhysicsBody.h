@@ -27,7 +27,7 @@
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 /// Fusion
 #include "FusionBitmask.h"
@@ -62,7 +62,7 @@ namespace FusionEngine
 	 * to know of ShipResource.
 	 * <br>
 	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
-	 * This class just stores data, and keeps that data valid (i.e. modify the AABB
+	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
 	 * to fit the bitmask if it rotates.)
 	 * <br>
 	 * MCS - AABBs are not yet implimented
@@ -119,11 +119,11 @@ namespace FusionEngine
 
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
-		//! Preferably this is used to move the body.
+		//! Preferably this is used to move the body (if it has rotational velocity.)
 		/*!
-		 * Applies force based on the current orientation.
+		 * Applies force based on the current orientation and rotational velocity.
 		 */
-		virtual void ApplyForce(float force);
+		virtual void ApplyEngineForce(float force);
 		//! Sets the constant used to apply damping to the body's movement.
 		virtual void SetCoefficientOfFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
@@ -412,6 +412,8 @@ namespace FusionEngine
 		float m_Bounce;
 
 		CL_Vector2 m_AppliedForce;
+		float m_AppliedEngineForce;
+
 		CL_Vector2 m_Acceleration;
 		CL_Vector2 m_Velocity;
 		CL_Vector2 m_Position;

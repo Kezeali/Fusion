@@ -182,7 +182,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Common.cpp"
+				RelativePath="..\FusionEngine\Common.cpp"
 				>
 			</File>
 			<File
@@ -220,7 +220,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Common.h"
+				RelativePath="..\FusionEngine\Common.h"
 				>
 			</File>
 			<File
@@ -228,7 +228,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEngineCommon.h"
+				RelativePath="..\FusionEngine\FusionCommon.h"
 				>
 			</File>
 			<File

@@ -54,14 +54,15 @@
 		</payload>
 		
 		<physics>
-			<mass>10</mass>
-			<engineforce>10</engineforce>
+			<mass>6</mass>
+			<engineforce>0.01</engineforce>
 			<facemotion>true</facemotion>
 		</physics>
 		
 		<scripting script="SeekerMissile/SeekerMissile.as">
 			<creation>void seekerCreation()</creation>
 			<step>void seekerStep()</step>
+			<onownercollision></onownercollision>
 			<onanycollision>void seekerOnCollision(int, int)</onanycollision>
 		</scripting>
 	</projectile>

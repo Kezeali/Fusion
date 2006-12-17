@@ -2,7 +2,8 @@ void seekerCreation()
 {
 	// I just made this to show that you can have a creation method for projectiles... I don't have anything important for it to do...
 	
-	ApplyForce(m_engineforce);
+	// Applies a force toward the current facing
+	ApplyEngineForce(m_engineforce);
 }
 
 void seekerStep()
@@ -11,16 +12,22 @@ void seekerStep()
 	float distance = GetDistanceToNearestShip();
 	if (distance < 100)
 	{
-		if (m_velocity.x == 0 && m_velocity.y == 0)
+		if (m_velocity.length() <= m_engineforce)
 		{
 			CreateEffect("targetAquired", m_position.x, m_position.y);
 		}
 		
+		// If we're near a ship, move faster
 		Vector aim = GetUnitVectorToNearestShip();
-		aim.x = aim.x * m_engineforce;
-		aim.y = aim.y * m_engineforce;
+		aim.x = aim.x * m_engineforce + 0.2;
+		aim.y = aim.y * m_engineforce + 0.2;
 		// Applys the given force vector
 		ApplyForce(aim);
+	}
+	else
+	{
+		// If we aren't near a ship, move slower
+		ApplyEngineForce(m_engineforce);
 	}
 }
 

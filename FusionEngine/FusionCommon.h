@@ -144,7 +144,7 @@ namespace FusionEngine
 	typedef std::vector<std::string> StringVector;
 
 	//! Type for a list of bodies
-	typedef std::vector<FusionPhysicsBody *> BodyList;
+	typedef std::list<FusionPhysicsBody *> BodyList;
 }
 
 #endif

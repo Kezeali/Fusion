@@ -4,7 +4,7 @@
 #pragma once
 #endif
 
-#include "FusionEngineCommon.h"
+#include "FusionCommon.h"
 
 #include "FusionPhysicsBody.h"
 
@@ -125,7 +125,7 @@ namespace FusionEngine
 
 	public:
 		//! List of Collsions
-		typedef std::vector<Collision *> CollisionList;
+		typedef std::list<Collision *> CollisionList;
 		//typedef std::vector<FusionPhysicsBody *> BodyList;
 
 	public:
