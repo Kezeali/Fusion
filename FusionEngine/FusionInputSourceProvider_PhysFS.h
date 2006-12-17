@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 FusionTeam
+  Copyright (c) 2006 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,11 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
 #ifndef Header_InputSourceProvider_PhysFS
@@ -31,19 +36,22 @@
 
 #include "PhysFS.h"
 
-//namespace FusionEngine
-//{
 
 	class InputSourceProvider_PhysFS : public CL_InputSourceProvider
 	{
 	public:
-		//! Construtcs a file input source provider.
+		//! Construtcs a physfs input source provider.
 		/*!
+		 * <p>
 		 * If the (path) given is not already in the PhysFS search path, it will be
 		 * added, and removed when this object is destroyed. <br>
 		 * If the (path) given <i>is</i> in the PhysFS search path, it will not be
 		 * added, and will of course remain in the search path after this object is
 		 * destroyed.
+		 * </p>
+		 * If a directory is added, the archives it contains will not be; use
+		 * SetupPhysFS#add_subdirectory() rather than adding the path here if
+		 * that is required.
 		 *
 		 *
 		 * \param[in] path
@@ -53,24 +61,32 @@
 		InputSourceProvider_PhysFS(const std::string &path = "");
 
 		//! Destructor
-		~InputSourceProvider_PhysFS();
+		virtual ~InputSourceProvider_PhysFS();
 
 	public:
-		//: Open input source using file as its source.
-		//param filename: Filename to open.
-		//return: InputSource for the file.
+		//! Create an input source for the given file.
+		/*!
+		 * \param filename
+		 * Filename to open.
+		 *
+		 * \returns
+		 * PhysFS InputSource for the file.
+		 */
 		virtual CL_InputSource *open_source(const std::string &filename);
 
-		//: Get full path to source:
+		//! Gets the full path to source
 		virtual std::string get_pathname(const std::string &filename);
 
-		//: Returns a new inputsource provider object that uses a new path relative to current one.
+		//! Returns a new inputsource provider object that uses a new path relative to current one.
 		virtual CL_InputSourceProvider *create_relative(const std::string &path);
 
-		//: Clone the provider.
-		//- <p>Creates a new instance of the class with the same internal data.
-		//- This is equivaled to <i>new CL_InputSourceProvider_File(get_path())</i>.</p>
-		//return: New instance of the current provider.
+		//! Clone the provider.
+		/*!
+		 * Creates a new instance of the class with the same internal data.
+		 *
+		 * \returns
+		 * New instance of the current provider.
+		 */
 		virtual CL_InputSourceProvider *clone();
 
 	private:
@@ -78,7 +94,5 @@
 		//! Will be true if the path had to be added to the search path (and thus will be removed upon destruction.)
 		bool m_PathAdded;
 	};
-
-//}
 
 #endif

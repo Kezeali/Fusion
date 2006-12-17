@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 FusionTeam
+  Copyright (c) 2006 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -36,7 +36,10 @@
 namespace FusionEngine
 {
 
-	static const int g_BitmaskCacheVersion = 1;
+	//! Used to confirm that the file being read is a bitmask file.
+	static const int g_BitmaskCacheFiletype = 0x17122006;
+	//! The version of bitmask cache that can be read by this class
+	static const unsigned char g_BitmaskCacheVersion = 2;
 
 	/*!
 	 * \brief
@@ -49,7 +52,7 @@ namespace FusionEngine
 	class FusionBitmask
 	{
 	public:
-		//! Basic constructor. Don't use.
+		//! Basic constructor.
 		FusionBitmask();
 
 		/*!
@@ -89,14 +92,76 @@ namespace FusionEngine
 		~FusionBitmask();
 
 	public:
-		//! Debug
+
+		//! Save to a buffer.
+		/*!
+		 * \param[out] buffer
+		 * Pass a pointer here to the buffer into which data should be written.
+		 *
+		 * \param[in] len
+		 * The length of the buffer (i.e. the maximum amount of data to write to it)
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
+		int Save(void *buffer, int len);
+
+		//! Load from a buffer
+		/*!
+		 * \param[in] buffer
+		 * The buffer from which to read data.
+		 *
+		 * \param[in] len
+		 * The length of (buffer).
+		 *
+		 * \returns
+		 * True if the bitmask loaded successfully, false otherwise.
+		 */
+		bool Load(void *buffer, int len);
+
+		//! Save to a device.
+		/*!
+		 * \param[in] name
+		 * Name of the file to be created.
+		 *
+		 * \param[in] provider
+		 * The output source provider to use when creating the file.
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
+		int Save(const std::string &name, CL_OutputSourceProvider *provider = 0);
+
+		//! Load from a device.
+		/*!
+		 * \param[in] name
+		 * The file to open for reading.
+		 *
+		 * \param[in] provider
+		 * The input source provider to use when opening the file.
+		 *
+		 * \returns
+		 * True if the bitmask loaded successfully, false otherwise.
+		 */
+		bool Load(const std::string &name, CL_InputSourceProvider *provider = 0);
+
+
+		//! Debug only, to be removed
 		void DisplayBits(int x_offset, int y_offset);
 
-		//! Gets the current bits, so the can be saved or transfered
-		void ToStream(std::ostream &os) const;
 
-		//! Sets the bitmask from the given cache
-		bool SetFromStream(std::istream &is);
+		//! [removed] Gets the current bits, so the can be saved or transfered
+		void ToStream(std::ostream &os) const {};
+
+		//! [removed] Sets the bitmask from the given cache
+		bool SetFromStream(std::istream &is) { return false; }
+
 
 		//! Creates a circular bitmask of the given radius.
 		/*!
@@ -234,9 +299,9 @@ namespace FusionEngine
 		//! Bits per Pixel, the inverted PPB.
 		float m_PPBInverse;
 
-		//! Width of the bitmask, to prevent checks going out of bounds.
+		//! [depreciated] Width of the bitmask, to prevent checks going out of bounds.
 		int m_MaskWidth;
-		//! Height of the bitmask, to prevent checks going out of bounds.
+		//! [depreciated] Height of the bitmask, to prevent checks going out of bounds.
 		int m_MaskHeight;
 
 	};

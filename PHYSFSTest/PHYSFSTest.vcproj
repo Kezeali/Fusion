@@ -186,6 +186,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionOutputSource_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionOutputSourceProvider_PhysFS.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysFS.cpp"
 				>
 			</File>
@@ -209,6 +217,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputSourceProvider_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionOutputSource_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionOutputSourceProvider_PhysFS.h"
 				>
 			</File>
 			<File

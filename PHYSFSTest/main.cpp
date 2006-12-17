@@ -42,8 +42,8 @@ class PhysFSTest : public CL_ClanApplication
 			}
 
 			// Configure physFS for this app
-			SetupPhysFS::configure("FusionTeam", "Test", "ZIP");
-			SetupPhysFS::add_subdirectory("Data/", false, "ZIP");
+			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");
+			SetupPhysFS::add_subdirectory("Data/", "ZIP", true);
 
 
 			// Display the current search path

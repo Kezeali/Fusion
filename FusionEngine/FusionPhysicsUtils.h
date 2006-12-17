@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 FusionTeam
+  Copyright (c) 2006 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -48,7 +48,10 @@ namespace FusionEngine
 
 	//! Methods which may be useful in relation to physics and collision detection.
 	/*!
-	 * \todo AABB and BB collision detection
+	 * \todo AABB and BB collision detection.
+	 *
+	 * \todo Get rid of memcpy where CL_Vector2::operator= could be used, because
+	 * copying two (int)s should be faster than copying a whole CL_Vector2...
 	 */
 	class PhysUtil
 	{
@@ -56,17 +59,23 @@ namespace FusionEngine
 		//! Finds the actual point of collision between two objects.
 		/*!
 		 * This will approximate the actual point of collision of two objects
-		 * known to collide, assuming the given points are the points-of-first-
+		 * known to collide, assuming the given points are the positions-of-first-
 		 * collision (Given by PhysUtil#FindCollision(), for example.)
 		 *
 		 * \param[out] output
 		 * The position of collision, if one is found.
+		 *
 		 * \param[in] pos_one
-		 * The position to consider object one to be at when checking.
+		 * The position to consider object (one) to be at when checking.
+		 *
 		 * \param[in] pos_one 
-		 * The position to consider object two to be at when checking
-		 * \param[in] other
-		 * The object which may be colliding against this.
+		 * The position to consider object (two) to be at when checking.
+		 *
+		 * \param[in] one
+		 * The the first object involved the collision.
+		 *
+		 * \param[in] two
+		 * The second object involved in the collision.
 		 */
 		static bool GuessPointOfCollision(
 			CL_Vector2 *output,
@@ -104,9 +113,14 @@ namespace FusionEngine
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two,
 			float epsilon = 0.01f, bool find_close = true);
 
-		//! Checks the given point for a collisino between two bodies.
+		//! Checks the given point for a collision between two bodies.
 		/*!
 		 * FindCollisions() uses this function at various points to find collisions.
+		 *
+		 * \remarks
+		 * If at all possible, try to avoid needing to make bitmask against non-bitmask
+		 * collision checks (by making sure all objects have a bitmask) as it can throw 
+		 * errors if done wrong.
 		 *
 		 * \param[in] pos_one
 		 * The position to consider object one to be at when checking.
@@ -121,8 +135,10 @@ namespace FusionEngine
 			const CL_Vector2 &pos_one, const CL_Vector2 &two_pos,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
 
-		//! Gets the intersection of two vectors.
+		//! [depreciated] Use the ClanLib line math function.
 		/*!
+		 * Gets the intersection of two vectors.
+		 *
 		 * This returns a point of intersection assuming the vectors have infinate
 		 * length (starting at pos_one and pos_two, and with the gradients given by
 		 * vector_one and vector_two), so the point returned may not be within the
@@ -143,9 +159,14 @@ namespace FusionEngine
 
 		//! Returns true if the point is within the given vectors.
 		/*!
+		 * <p>
 		 * If the given point resides within the rectange definded by the extremities of
 		 * the given vectors (that is to say, the smallest rectange that would fully contain
 		 * the given vectors) this function will return true.
+		 * </p>
+		 * Only use this if you already know the point lies on an infinate line from
+		 * the given vectors. (e.g. if the point was returned by 
+		 * CL_LineMath#get_intersection())
 		 *
 		 * \param[in] pos_one The starting point (offset) of the first vector
 		 * \param[in] pos_two The starting point (offset) of the second vector

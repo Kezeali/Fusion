@@ -45,10 +45,155 @@ namespace FusionEngine
 	}
 
 
+	int FusionBitmask::Save(void *buffer, int len)
+	{
+		CL_OutputSource_Memory source;
+
+		// Mark this as bitmask data
+		source.write_uint32(g_BitmaskCacheFiletype);
+		source.write_uint8(g_BitmaskCacheVersion);
+
+		// Dimensions and scale
+		source.write_int32(m_Bitmask->w);
+		source.write_int32(m_Bitmask->h);
+		source.write_int32(m_PPB);
+
+		// Write bitmask data
+		for (int y = 0; y < m_Bitmask->w; y++)
+		{
+			for (int x = 0; x < m_Bitmask->h; x++)
+			{
+				source.write_bool8( bitmask_getbit(m_Bitmask, x, y) ? true : false );
+			}
+		}
+
+		// Shove everything into the buffer
+		if (source.size() > len)
+			return (-1);
+
+		memcpy(buffer, source.get_data().c_str(), source.size());
+
+		return source.size();
+	}
+
+	bool FusionBitmask::Load(void *buffer, int len)
+	{
+		CL_InputSource_Memory source(buffer, len);
+
+		// Make sure the data provided is valid
+		int type = source.read_uint32();
+		int version = source.read_uint8();
+
+		if( type != g_BitmaskCacheFiletype )
+			throw CL_Error("Data received is not bitmask data.");
+		if( version != g_BitmaskCacheVersion )
+			throw CL_Error( CL_String::format("Bitmask version %1 is unsupported. Supported version: %2.", version, g_BitmaskCacheVersion) );
+
+
+		// Dimensions and scale
+		int mask_w = source.read_int32();
+		int mask_h = source.read_int32();
+		m_PPB = source.read_int32();
+
+		m_PPBInverse = 1.0f/m_PPB;
+
+		
+		// Allocate memory
+		if (!m_Bitmask)
+			m_Bitmask = bitmask_create(mask_w, mask_h);
+		else
+		{
+			bitmask_free(m_Bitmask);
+			m_Bitmask = bitmask_create(mask_w, mask_h);
+		}
+
+		// Read the bitmask data
+		for (int y = 0; y < mask_h; y++)
+		{
+			for (int x = 0; x < mask_w; x++)
+			{
+				if (source.read_bool8())
+					bitmask_setbit(m_Bitmask, x, y);
+			}
+		}
+
+		return true;
+	}
+
+	int FusionBitmask::Save(const std::string &name, CL_OutputSourceProvider *provider)
+	{
+		CL_OutputSource *source = provider->open_source(name);
+
+		// Mark this as bitmask data
+		source->write_uint32(g_BitmaskCacheFiletype);
+		source->write_uint8(g_BitmaskCacheVersion);
+
+		// Dimensions and scale
+		source->write_int32(m_Bitmask->w);
+		source->write_int32(m_Bitmask->h);
+		source->write_int32(m_PPB);
+
+		// Write bitmask data
+		for (int y = 0; y < m_Bitmask->w; y++)
+		{
+			for (int x = 0; x < m_Bitmask->h; x++)
+			{
+				source->write_bool8( bitmask_getbit(m_Bitmask, x, y) ? true : false );
+			}
+		}
+
+		return source->size();
+	}
+
+	bool FusionBitmask::Load(const std::string &name, CL_InputSourceProvider *provider)
+	{
+		CL_InputSource *source = provider->open_source(name);
+
+		// Make sure the data provided is valid
+		int type = source->read_uint32();
+		int version = source->read_uint8();
+
+		if( type != g_BitmaskCacheFiletype )
+			throw CL_Error("Data received is not bitmask data.");
+		if( version != g_BitmaskCacheVersion )
+			throw CL_Error( CL_String::format("Bitmask version %1 is unsupported. Supported version: %2.", version, g_BitmaskCacheVersion) );
+
+
+		// Dimensions and scale
+		int mask_w = source->read_int32();
+		int mask_h = source->read_int32();
+		m_PPB = source->read_int32();
+
+		m_PPBInverse = 1.0f/m_PPB;
+
+
+		// Allocate memory
+		if (!m_Bitmask)
+			m_Bitmask = bitmask_create(mask_w, mask_h);
+		else
+		{
+			bitmask_free(m_Bitmask);
+			m_Bitmask = bitmask_create(mask_w, mask_h);
+		}
+
+		// Read the bitmask data
+		for (int y = 0; y < mask_h; y++)
+		{
+			for (int x = 0; x < mask_w; x++)
+			{
+				if (source->read_bool8())
+					bitmask_setbit(m_Bitmask, x, y);
+			}
+		}
+
+		return true;
+	}
+
+
 	void FusionBitmask::DisplayBits(int x_offset, int y_offset)
 	{
-		for (int y = 0; y < m_MaskHeight; y++)
-			for (int x = 0; x < m_MaskWidth; x++)
+		for (int y = 0; y < m_Bitmask->h; y++)
+			for (int x = 0; x < m_Bitmask->w; x++)
 			{
 				if (bitmask_getbit(m_Bitmask, x, y))
 				{
@@ -61,71 +206,71 @@ namespace FusionEngine
 	}
 
 
-	void FusionBitmask::ToStream(std::ostream &os) const
-	{
-		os << g_BitmaskCacheVersion;
-		os << '|';
-		os << m_Bitmask->w;
-		os << '|';
-		os << m_Bitmask->h;
-		os << '|';
+	//void FusionBitmask::ToStream(std::ostream &os) const
+	//{
+	//	os << g_BitmaskCacheVersion;
+	//	os << '|';
+	//	os << m_Bitmask->w;
+	//	os << '|';
+	//	os << m_Bitmask->h;
+	//	os << '|';
 
-		os << m_PPB;
-		os << '|';
+	//	os << m_PPB;
+	//	os << '|';
 
-		for (int y = 0; y < m_MaskHeight; y++)
-		{
-			for (int x = 0; x < m_MaskWidth; x++)
-			{
-				os << bitmask_getbit(m_Bitmask, x, y);
-			}
-		}
+	//	for (int y = 0; y < m_MaskHeight; y++)
+	//	{
+	//		for (int x = 0; x < m_MaskWidth; x++)
+	//		{
+	//			os << bitmask_getbit(m_Bitmask, x, y);
+	//		}
+	//	}
 
-	}
+	//}
 
-	bool FusionBitmask::SetFromStream(std::istream &is)
-	{
-		char d[sizeof(int)];
-		// Make sure it has the right version
-		is.getline(&d[0], sizeof(int), '|');
-		if (atoi(d) != g_BitmaskCacheVersion)
-			return false;
+	//bool FusionBitmask::SetFromStream(std::istream &is)
+	//{
+	//	char d[sizeof(int)];
+	//	// Make sure it has the right version
+	//	is.getline(&d[0], sizeof(int), '|');
+	//	if (atoi(d) != g_BitmaskCacheVersion)
+	//		return false;
 
-		// Read the dimensions
-		is.getline(&d[0], sizeof(int), '|');
-		m_MaskWidth = atoi(d);
+	//	// Read the dimensions
+	//	is.getline(&d[0], sizeof(int), '|');
+	//	m_MaskWidth = atoi(d);
 
-		is.getline(&d[0], sizeof(int), '|');
-		m_MaskHeight = atoi(d);
+	//	is.getline(&d[0], sizeof(int), '|');
+	//	m_MaskHeight = atoi(d);
 
-		is.getline(&d[0], sizeof(int), '|');
-		m_PPB = atoi(d);
+	//	is.getline(&d[0], sizeof(int), '|');
+	//	m_PPB = atoi(d);
 
-		m_PPBInverse = 1.0f/(float)m_PPB;
+	//	m_PPBInverse = 1.0f/(float)m_PPB;
 
-		// Allocate the memory
-		if (!m_Bitmask)
-			m_Bitmask = bitmask_create(m_MaskWidth, m_MaskHeight);
-		else
-		{
-			bitmask_free(m_Bitmask);
-			m_Bitmask = bitmask_create(m_MaskWidth, m_MaskHeight);
-		}
+	//	// Allocate the memory
+	//	if (!m_Bitmask)
+	//		m_Bitmask = bitmask_create(m_MaskWidth, m_MaskHeight);
+	//	else
+	//	{
+	//		bitmask_free(m_Bitmask);
+	//		m_Bitmask = bitmask_create(m_MaskWidth, m_MaskHeight);
+	//	}
 
-		// Read the bits
-		for (int y = 0; y < m_MaskHeight; y++)
-		{
-			for (int x = 0; x < m_MaskWidth; x++)
-			{
-				d[0] = is.get();
-				int bit = atoi(d);
-				if (bit == 1)
-					bitmask_setbit(m_Bitmask, x, y);
-			}
-		}
+	//	// Read the bits
+	//	for (int y = 0; y < m_MaskHeight; y++)
+	//	{
+	//		for (int x = 0; x < m_MaskWidth; x++)
+	//		{
+	//			d[0] = is.get();
+	//			int bit = atoi(d);
+	//			if (bit == 1)
+	//				bitmask_setbit(m_Bitmask, x, y);
+	//		}
+	//	}
 
-		return true;
-	}
+	//	return true;
+	//}
 
 
 	void FusionBitmask::SetFromRadius(float radius, int gridsize)
@@ -143,7 +288,7 @@ namespace FusionEngine
 		{
 			m_Bitmask = bitmask_create(mask_width+1, mask_width+1);
 		}
-		else if(mask_width == m_MaskWidth)
+		else if(mask_width == m_Bitmask->w)
 		{
 				bitmask_clear(m_Bitmask);
 		}
@@ -185,7 +330,7 @@ namespace FusionEngine
 		{
 			m_Bitmask = bitmask_create(mask_w, mask_h);
 		}
-		else if (mask_w == m_MaskWidth && mask_h == m_MaskHeight)
+		else if (mask_w == m_Bitmask->w && mask_h == m_Bitmask->h)
 		{
 			bitmask_clear(m_Bitmask);
 		}
@@ -225,7 +370,7 @@ namespace FusionEngine
 		{
 			m_Bitmask = bitmask_create(mask_w, mask_h);
 		}
-		else if (mask_w == m_MaskWidth && mask_h == m_MaskHeight)
+		else if (mask_w == m_Bitmask->w && mask_h == m_Bitmask->h)
 		{
 			bitmask_clear(m_Bitmask);
 		}
@@ -256,7 +401,7 @@ namespace FusionEngine
 
 	void FusionBitmask::Draw(const FusionBitmask *other, const CL_Point &offset, bool auto_scale)
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 
 		int scaled_x = offset.x;
 		int scaled_y = offset.y;
@@ -284,7 +429,7 @@ namespace FusionEngine
 
 	void FusionBitmask::Erase(const FusionBitmask *other, const CL_Point &offset, bool auto_scale)
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 
 		int scaled_x = offset.x;
 		int scaled_y = offset.y;
@@ -320,19 +465,22 @@ namespace FusionEngine
 
 	bool FusionBitmask::GetBit(const CL_Point &point) const
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 
-		// We don't use cl_assert here, because point may be passed from the 
-		//  collision detection, which I wouldn't trust, even at release. ;)
-		if ((point.x > m_MaskWidth) | (point.y > m_MaskHeight) | (point.x < 0) | (point.y < 0))
-			return false; // Out of range!
+
+		if ((point.x > m_Bitmask->w) | (point.y > m_Bitmask->h) | (point.x < 0) | (point.y < 0))
+		{
+			throw CL_Error("Bitmask: point out of range!");
+
+			//return false;
+		}
 
 		return (bitmask_getbit(m_Bitmask, point.x, point.y) == 1) ? true : false;
 	}
 
 	bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 
 		int scaled_x = int( offset.x * m_PPBInverse );
 		int scaled_y = int( offset.y * m_PPBInverse );
@@ -342,7 +490,7 @@ namespace FusionEngine
 
 	bool FusionBitmask::OverlapPoint(CL_Point *output, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 		int x, y;
 		x = y = 0;
 
@@ -360,7 +508,7 @@ namespace FusionEngine
 
 	bool FusionBitmask::OverlapPoint(int *x_out, int *y_out, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
-		cl_assert(m_Bitmask);
+		cl_assert(m_Bitmask != 0);
 		cl_assert(x_out && y_out);
 
 		int scaled_x = int( offset.x * m_PPBInverse );

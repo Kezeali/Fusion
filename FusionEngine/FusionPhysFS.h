@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 FusionTeam
+  Copyright (c) 2006 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,19 +18,23 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
-#ifndef Header_CL_PhysFS
-#define Header_CL_PhysFS
+#ifndef Header_Fusion_PhysFS
+#define Header_Fusion_PhysFS
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include <ClanLib/core.h>
-
 #include "PhysFS.h"
 
+#include <ClanLib/core.h>
 
 //! Like strcmp, but case-insensitive. Hopefully cross-platform.
 static int platform_stricmp(const char *x, const char *y)
@@ -58,8 +62,6 @@ static int platform_stricmp(const char *x, const char *y)
 #include "FusionInputSourceProvider_PhysFS.h"
 #include "FusionInputSource_PhysFS.h"
 
-//namespace FusionEngine
-//{
 
 	class SetupPhysFS
 	{
@@ -156,13 +158,11 @@ static int platform_stricmp(const char *x, const char *y)
 		 * If this is true, archives found in the given directory will be added.
 		 */
 		static bool add_subdirectory(const std::string &path,
-																	bool archivesFirst = false,
-																	const std::string &archiveExt = "");
+																	const std::string &archiveExt = "",
+																	bool archivesFirst = true);
 
 		//! Calls PHYSFS_deinit();
 		static void deinit();
 	};
-
-//} // namespace FusionEngine
 
 #endif

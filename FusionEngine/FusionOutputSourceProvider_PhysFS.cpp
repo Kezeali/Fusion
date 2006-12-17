@@ -18,47 +18,33 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
-#ifndef Header_Fusion_FusionGUI_Options
-#define Header_Fusion_FusionGUI_Options
+#include "FusionOutputSourceProvider_PhysFS.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
+#include "FusionOutputSource_PhysFS.h"
+#include "FusionPhysFS.h"
 
-#include "FusionCommon.h"
-
-/// Fusion
-#include "FusionGUI.h"
-
-#include "FusionClientOptions.h"
-
-namespace Fusion
+OutputSourceProvider_PhysFS::OutputSourceProvider_PhysFS(const std::string &path)
 {
-
-	//! Options gui
-	class FusionGUI_Options : public FusionGUI
-	{
-	public:
-		//! Basic constructor
-		FusionGUI_Options();
-		//! Constructor
-		FusionGUI_Options(FusionEngine::ClientOptions *clientopts);
-
-	public:
-		//! Init the gui
-		bool Initialise();
-
-		//! Called when the Save button is clicked
-		bool onSaveClicked(const CEGUI::EventArgs& e);
-
-	protected:
-		//! The options to edit / save to
-		FusionEngine::ClientOptions *m_ClientOpts;
-
-	};
-
+	m_Provider_path = PHYSFS_getWriteDir();
 }
 
-#endif
+OutputSourceProvider_PhysFS::~OutputSourceProvider_PhysFS()
+{
+}
+
+CL_OutputSource *OutputSourceProvider_PhysFS::open_source(const std::string &filename)
+{
+	return new OutputSource_PhysFS(filename.c_str());
+}
+
+CL_OutputSourceProvider *OutputSourceProvider_PhysFS::clone()
+{
+	return new OutputSourceProvider_PhysFS(m_Provider_path);
+}

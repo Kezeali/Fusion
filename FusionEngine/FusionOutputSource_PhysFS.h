@@ -37,17 +37,17 @@
 #include "PhysFS.h"
 
 
-	class InputSource_PhysFS : public CL_InputSource
+	class OutputSource_PhysFS : public CL_OutputSource
 	{
 	public:
 		//! Input Souce PhysFS constructor.
-		InputSource_PhysFS(const std::string &filename);
+		OutputSource_PhysFS(const std::string &filename);
 
 		//! Cloning constructor
-		InputSource_PhysFS(const InputSource_PhysFS *source);
+		OutputSource_PhysFS(const OutputSource_PhysFS *source);
 
 		//! Destructor
-		virtual ~InputSource_PhysFS();
+		virtual ~OutputSource_PhysFS();
 
 	public:
 		//! Returns current position in input source.
@@ -57,64 +57,55 @@
 		virtual int size() const;
 
 	public:
+		//! Writes a signed 64 bit integer to output source.
+		virtual void write_int64(cl_int64 data);
+
+		//! Writes an unsigned 64 bit integer to output source.
+		virtual void write_uint64(cl_uint64 data);
+
+		//! Writes a signed 32 bit integer to output source.
+		virtual void write_int32(cl_int32 data);
+
+		//! Writes an unsigned 32 bit integer to output source.
+		virtual void write_uint32(cl_uint32 data);
+
+		//! Writes a signed 16 bit integer to output source.
+		virtual void write_int16(cl_int16 data);
+
+		//! Writes an unsigned 16 bit integer to output source.
+		virtual void write_uint16(cl_uint16 data);
+
 		//! Reads larger amounts of data
 		/*!
-		 * \param[out] data
-		 * Pass an array here, where the read data is to be stored.
+		 * \param[in] data
+		 * Points to the array from which data should be written.
 		 *
 		 * \param[in] size
-		 * Number of bytes to read.
+		 * Number of bytes to write.
 		 *
 		 * \returns
-		 * Number of bytes actually read.
+		 * Number of bytes actually written.
 		 */
-		virtual int read(void *data, int size);
+		virtual int write(const void *data, int size);
 
-		//! Opens the input source. By default, it is open.
+		//! Opens the output source. By default, it is open.
 		virtual void open();
 
-		//! Closes the input source.
-		/*!
-		 * This is called automatically at destruction.
-		 */
+		//! Closes the output source.
 		virtual void close();
 
-		//! Make a copy of the current inputsource, at the same read position.
+		//! Makes a copy of the current outputsource; starts at the same write position.
 		/*!
 		 * \returns
-		 * The copy of the input source.
+		 * The copy of the output source.
 		 */
-		virtual CL_InputSource *clone() const;
-
-		//! Seeks to the specified position in the input source.
-		/*!
-		 * \param[in] pos
-		 * Position relative to 'seek_type'.
-		 *
-		 * \param[in] seek_type
-		 * Defines what (pos) is relative to. Can be either seek_set, seek_cur or seek_end.
-		 */
-		virtual void seek(int pos, SeekEnum seek_type);
-
-		//! Pushes the current input source position into a stack.
-		/*!
-		 * The position can be restored again later with pop_position() .
-		 */
-		virtual void push_position();
-
-		//! Pops a previous pushed input source position
-		/*!
-		 * <p>And, of course, seeks to said position.</p>
-		 * A position can be stored with push_position() .
-		 */
-		virtual void pop_position();
-
+		virtual CL_OutputSource *clone();
 
 	private:
-		std::stack<PHYSFS_sint64> m_Stack;
-		std::string m_Filename;
+		unsigned int m_Position;
 		PHYSFS_file *m_PhysFile;
-		PHYSFS_uint64 m_Filesize;
+		std::string m_Filename;
+
 	};
 
 #endif

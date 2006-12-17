@@ -200,10 +200,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionArchive.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionBitmask.h"
 				>
 			</File>
@@ -511,10 +507,6 @@
 			>
 			<File
 				RelativePath=".\Common.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionArchive.cpp"
 				>
 			</File>
 			<File

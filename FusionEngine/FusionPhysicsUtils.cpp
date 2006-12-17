@@ -14,62 +14,59 @@ namespace FusionEngine
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two)
 	{
 
+		// Check for distance collision
+		// This is the preffered method, as it should be the most accurate
+		if (one->GetUseDistCollisions() & two->GetUseDistCollisions())
+		{
+			// Find a vector between the two objects
+			CL_Vector2 d_pos = pos_two - pos_one;
+			// Find the point where the vector reaches the collision distance
+			d_pos	*= one->GetColDist() / d_pos.length();
+
+			// Using overloaded assignment operator rather than memcpy, because
+			//  copying two ints should be faster than copying a whole vector
+			(*output) = d_pos;
+
+			//memcpy(output, &pos, sizeof(CL_Vector2));
+			return true;
+		}
+
 		// Check for bitmask collisions
-		//  These are by far the easiest type of collisions to find a point for
-		//  from a coding stand point (I'm not sure how it performs)
-		if (one->GetUsePixelCollisions() & two->GetUsePixelCollisions())
+		else if (one->GetUsePixelCollisions() & two->GetUsePixelCollisions())
 		{
 			CL_Point offset = CL_Point(pos_one.x - pos_two.x, pos_one.y - pos_two.y);
 
 			CL_Point out_pt;
 			if ((one->GetColBitmask()->OverlapPoint(&out_pt, two->GetColBitmask(), offset)))
 			{
-				memcpy(output, &CL_Vector2(out_pt.x, out_pt.y), sizeof(CL_Vector2));
+				(*output) = CL_Vector2(out_pt.x, out_pt.y);
+
+				//memcpy(output, &CL_Vector2(out_pt.x, out_pt.y), sizeof(CL_Vector2));
 				return true;
 			}
-		}
-
-		// Check for distance collision
-		else if (one->GetUseDistCollisions() & two->GetUseDistCollisions())
-		{
-			// Find the 'CoM'... where mass is the collision distance :P
-			CL_Vector2 pos = (pos_one * one->GetColDist() + pos_two * two->GetColDist());
-
-			pos	*= 1/(one->GetColDist() + two->GetColDist());
-
-
-			memcpy(output, &pos, sizeof(CL_Vector2));
-			return true;
 		}
 		
 		// Check for bitmask collisons against non-bitmask objects
 		// 2006/12/11: I don't know if this works...
-		else
+		else if (one->GetUsePixelCollisions())
 		{
-			CL_Point pospt_one = one->GetPositionPoint();
-			CL_Point pospt_two = two->GetPositionPoint();
 
-			if (one->GetUsePixelCollisions())
+			if ( one->GetColPoint( two->GetPositionPoint() ) )
 			{
-				CL_Point point = pospt_one - pospt_two;
+				(*output) = two->GetPosition();
 
-				if (one->GetColPoint(point))
-				{
-					memcpy(output, &CL_Vector2(point.x, point.y), sizeof(CL_Vector2));
-					return true;
-				}
-
+				//memcpy(output, &CL_Vector2(point.x, point.y), sizeof(CL_Vector2));
+				return true;
 			}
-			else
+		}
+
+		else if (two->GetUsePixelCollisions())
+		{
+			if ( two->GetColPoint( one->GetPositionPoint() ) )
 			{
-				CL_Point point = pospt_two - pospt_one;
-
-				if (two->GetColPoint(one->GetPositionPoint()))
-				{
-					memcpy(output, &CL_Vector2(point.x, point.y), sizeof(CL_Vector2));
-					return true;
-				}
-
+				(*output) = one->GetPosition();
+				//memcpy(output, one->GetPosition(), sizeof(CL_Vector2));
+				return true;
 			}
 		}
 
@@ -96,8 +93,11 @@ namespace FusionEngine
 		{
 			if (CollisionCheck(pos_one, pos_two, one, two))
 			{
-				memcpy(output_one, &pos_one, sizeof(CL_Vector2));
-				memcpy(output_two, &pos_two, sizeof(CL_Vector2));
+				(*output_one) = pos_one;
+				(*output_two) = pos_two;
+
+				//memcpy(output_one, &pos_one, sizeof(CL_Vector2));
+				//memcpy(output_two, &pos_two, sizeof(CL_Vector2));
 				
 				return true;
 			}
@@ -106,12 +106,9 @@ namespace FusionEngine
 		}
 
 		// These temps will store the start and end points while searching.
-		//  The ones prefaced with 'orig' are used in the case that there 
-		//  are no collisions along the given vector
-		//  2006/12/10: The 'orig' var.s aren't used anymore. See 'collision_found' for the replacement
 		CL_Vector2 startpt_one, endpt_one, startpt_two, endpt_two;
 
-		// If the search finishes, we will assume these are set to the points of collision.
+		// If the search finishes, we will assume these are set to the positions of collision.
 		CL_Vector2 checkpt_one, checkpt_two;
 
 		// This will be set to true the first time a CollisionCheck() returns true
@@ -119,71 +116,52 @@ namespace FusionEngine
 		//  assume there are no collisions along the given vectors.
 		bool collision_found = false;
 
-		// OLD INTERSECTION FINDER (doesn't work as well as the ClanLib one)
-		// Find the point of intersection and check wheter it's valid
-		/*CL_Vector2 intersec;
-		CalculateVectorIntersection(
-			&intersec,
-			pos_one, pos_two,
-			vector_one, vector_two);*/
-
-
 		//////////////////////////////////////////////
 		// First we decide on the bounds of the search
 
 		// Will be set to false if a point of intersection is found
 		bool no_interection = true;
 
-		// Don't bother trying to find intersections for tiny velocities!
-		//if (speed2_one < g_PhysGenericFuzz || speed2_two < g_PhysGenericFuzz)
-		//{
-		//	// Whole line
-		//	startpt_one = pos_one;
-		//	startpt_two = pos_two;
-		//	endpt_one   = pos_one + vector_one;
-		//	endpt_two   = pos_two + vector_two;
-		//}
-
-		if (speed2_one > g_PhysGenericFuzz)
+		// Don't bother checking for intersections on really short vectors
+		if (speed2_one > epsilon)
 		{
-
-			// INTERSECTION DOESN'T SEEM TO WORK
-			// (it doesn't check bounds)
 
 			float line_a[] = {pos_one.x, pos_one.y, vector_one.x, vector_one.y};
 			float line_b[] = {pos_two.x, pos_two.y, vector_two.x, vector_two.y};
 			float *line_a_ptr = line_a;
 			float *line_b_ptr = line_b;
 
-			if (CL_LineMath::intersects(line_a_ptr, line_b_ptr))
+			// No point using CL_LineMath::intersects() here, because it only tells
+			//  you if two /infinate/ lines intersect. So we just get a point of inter-
+			//  section and check that it is in the bounds of the actual lines.
+			CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
+
+			CL_Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
+
+			if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
 			{
-				// If a point of intersection was found, find the first place where the
-				//  two objects collide /before/ there
-				CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
-
-				CL_Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
-
-				if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
-				{
-					startpt_one = pos_one;
-					endpt_one   = intersec;
-					startpt_two = pos_two;
-					endpt_two   = intersec;
-
-					no_interection = false;
-				}
-			}
-			if (no_interection)
-			{
-				// If no point of intersection was found, find the first place where the
-				//  objects collide anywhere along the vector.
+				// If a point of intersection was found, set up the search points to
+				//  find the first place where the two objects collide /before/ there
 
 				startpt_one = pos_one;
+				endpt_one   = intersec;
 				startpt_two = pos_two;
-				endpt_one   = pos_one + vector_one;
-				endpt_two   = pos_two + vector_two;
+				endpt_two   = intersec;
+
+				no_interection = false;
 			}
 
+		}
+
+		if (no_interection)
+		{
+			// If no point of intersection was found, set up the search points to
+			//  find the first place where the objects collide anywhere along the vector.
+
+			startpt_one = pos_one;
+			startpt_two = pos_two;
+			endpt_one   = pos_one + vector_one;
+			endpt_two   = pos_two + vector_two;
 		}
 
 
@@ -210,10 +188,9 @@ namespace FusionEngine
 
 			if (CollisionCheck(checkpt_one, checkpt_two, one, two))
 			{
+				// Find the first point of collision
 				if (find_close)
-				{
-					// Find the first point of collision
-
+				{					
 					// Collision must be before this point, so move the
 					//  end bounds back
 					endpt_one = checkpt_one;
@@ -223,10 +200,10 @@ namespace FusionEngine
 					//  given vectors
 					collision_found = true;
 				}
+
+				// Find the _last_ point of collision
 				else
 				{
-					// Find the _last_ point of collision
-					
 					startpt_one = checkpt_one;
 					startpt_two = checkpt_two;
 					// In this case we don't set collision found to true, as we only
@@ -235,19 +212,18 @@ namespace FusionEngine
 			}
 			else
 			{
+				// Find the first point of collision
 				if (find_close)
 				{
-					// Find the first point of collision
-
 					// Collision must be after this point, so move the
 					//  start bounds forward
 					startpt_one = checkpt_one;
 					startpt_two = checkpt_two;
 				}
+
+				// Find the _last_ point of collision
 				else
 				{
-					// Find the _last_ point of collision
-
 					endpt_one = checkpt_one;
 					endpt_two = checkpt_two;
 
@@ -257,11 +233,6 @@ namespace FusionEngine
 				}
 			}
 
-			//// Start point has reached the original end point, or vice versa.
-			////  This usually means that no collisions were found on the first itteration
-			//if (startpt_one == origend_one || startpt_two == origend_two ||
-			//	  endpt_one == origstart_one || endpt_two == origstart_two)
-			//	return false; // There are no collisions!
 
 			// Check how far apart the points found are
 			start_end = startpt_one - endpt_one;
@@ -270,8 +241,11 @@ namespace FusionEngine
 
 		if (collision_found)
 		{
-			memcpy(output_one, &checkpt_one, sizeof(CL_Vector2));
-			memcpy(output_two, &checkpt_two, sizeof(CL_Vector2));
+			(*output_one) = checkpt_one;
+			(*output_two) = checkpt_two;
+
+			//memcpy(output_one, &checkpt_one, sizeof(CL_Vector2));
+			//memcpy(output_two, &checkpt_two, sizeof(CL_Vector2));
 			return true;
 		}
 		return false;
@@ -299,23 +273,15 @@ namespace FusionEngine
 		}
 
 		// Check for bitmask collisons against non-bitmask objects
-		//  ATM this ignores dist colisions and AABB's; just works with a point
-		else if (one->GetUsePixelCollisions() ^ two->GetUsePixelCollisions())
+		// Try to avoid needing to make this type of check (by making sure all objects
+		//  have a bitmask) as it can throw errors if done wrong.
+		else if (one->GetUsePixelCollisions())
 		{
-			// [removed] auto_offset now does this work
-			/*CL_Point pospt_one = one->GetPositionPoint();
-			CL_Point pospt_two = two->GetPositionPoint();*/
-
-			if (one->GetUsePixelCollisions())
-			{
-				//CL_Point point = pospt_two - pospt_one;
-				return (one->GetColPoint( two->GetPositionPoint() ));
-			}
-			else
-			{
-				//CL_Point point = pospt_one - pospt_two;
-				return (two->GetColPoint( one->GetPositionPoint() ));
-			}
+			return (one->GetColPoint( two->GetPositionPoint() ));
+		}
+		else if (two->GetUsePixelCollisions()
+		{
+			return (two->GetColPoint( one->GetPositionPoint() ));
 		}
 
 		// No collision found or unsupported collision methods/combination
