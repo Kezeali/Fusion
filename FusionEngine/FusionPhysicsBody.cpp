@@ -106,14 +106,11 @@ namespace FusionEngine
 		_activate();
 	}
 
-	void FusionPhysicsBody::ApplyForce(float force)
+	void FusionPhysicsBody::ApplyEngineForce(float force)
 	{
-		// Apply a force towards the current facing
-		CL_Vector2 force_vector(
-			sinf(fe_degtorad( m_Rotation )) * force,
-			-cosf(fe_degtorad( m_Rotation )) * force
-			);
-		m_AppliedForce += force_vector;
+		// A force vector will be calculated during the simulation step
+		//  to make sure rotational velocity & step time are taken into account
+		m_AppliedEngineForce += force;
 
 		_activate();
 	}
@@ -391,27 +388,27 @@ namespace FusionEngine
 	}
 
 
-	void FusionPhysicsBody::_notifyCollisionWith(FusionEngine::FusionPhysicsBody *other)
-	{
-		m_CollidingBodies.push_back(other);
-	}
+	//void FusionPhysicsBody::_notifyCollisionWith(FusionEngine::FusionPhysicsBody *other)
+	//{
+	//	m_CollidingBodies.push_back(other);
+	//}
 
-	bool FusionPhysicsBody::IsCollidingWith(FusionEngine::FusionPhysicsBody *other) const
-	{
-		BodyList::const_iterator it = m_CollidingBodies.begin();
-		for (; it != m_CollidingBodies.end(); ++it)
-		{
-			if ((*it) == other)
-				return true;
-		}
+	//bool FusionPhysicsBody::IsCollidingWith(FusionEngine::FusionPhysicsBody *other) const
+	//{
+	//	BodyList::const_iterator it = m_CollidingBodies.begin();
+	//	for (; it != m_CollidingBodies.end(); ++it)
+	//	{
+	//		if ((*it) == other)
+	//			return true;
+	//	}
 
-		return false;
-	}
+	//	return false;
+	//}
 
-	void FusionPhysicsBody::ClearCollisions()
-	{
-		m_CollidingBodies.clear();
-	}
+	//void FusionPhysicsBody::ClearCollisions()
+	//{
+	//	m_CollidingBodies.clear();
+	//}
 
 
 	void FusionPhysicsBody::_setCGPos(int ind)

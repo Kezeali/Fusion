@@ -62,7 +62,7 @@ namespace FusionEngine
 	 * to know of ShipResource.
 	 * <br>
 	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
-	 * This class just stores data, and keeps that data valid (i.e. modify the AABB
+	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
 	 * to fit the bitmask if it rotates.)
 	 * <br>
 	 * MCS - AABBs are not yet implimented
@@ -119,11 +119,11 @@ namespace FusionEngine
 
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
-		//! Preferably this is used to move the body.
+		//! Preferably this is used to move the body (if it has rotational velocity.)
 		/*!
-		 * Applies force based on the current orientation.
+		 * Applies force based on the current orientation and rotational velocity.
 		 */
-		virtual void ApplyForce(float force);
+		virtual void ApplyEngineForce(float force);
 		//! Sets the constant used to apply damping to the body's movement.
 		virtual void SetCoefficientOfFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
@@ -131,17 +131,16 @@ namespace FusionEngine
 		//! We don't care about yo' torque.
 		virtual void SetRotationalVelocity(float velocity);
 
+		//! \name Collision Properties
 		//@{
-		//! Properties.
 		virtual void SetColBitmask(FusionBitmask *bitmask);
 		virtual void SetColAABB(float width, float height);
 		//virtual SetColAABB(const CL_Rectf &bbox);
 		virtual void SetColDist(float dist);
 		//@}
 
+		//! \name Collision property retreival
 		//@{
-		//! Property retreival.
-
 		virtual FusionBitmask *GetColBitmask() const;
 		virtual CL_Rectf GetColAABB() const;
 		virtual float GetColDist() const;
@@ -165,22 +164,23 @@ namespace FusionEngine
 		virtual bool GetColPoint(const CL_Point &point, bool auto_offset = true) const;
 		//@}
 
-		//@{
-		//! Collision type properties.
 		/*!
+		 * \name Collision mode properties
+		 *
 		 * I think these are self explanatory.
 		 */
-
+		//@{
 		virtual void SetUsePixelCollisions(bool usePixel);
 		virtual void SetUseAABBCollisions(bool useAABB);
 		virtual void SetUseDistCollisions(bool useDist);
 		//@}
 
-		//@{
 		/*!
-		 * Collision type property retrieval.
+		 * \name Collision mode retrieval
+		 *
 		 * I think these are self explanatory.
 		 */
+		//@{
 		virtual bool GetUsePixelCollisions() const;
 		virtual bool GetUseAABBCollisions() const;
 		virtual bool GetUseDistCollisions() const;
@@ -215,13 +215,18 @@ namespace FusionEngine
 		 */
 		void _setCollisionFlags(int flags);
 
+		//! \name State retreival.
 		//@{
-		//! State retreival.
+		//! Returns the current position
 		virtual const CL_Vector2 &GetPosition() const;
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		virtual CL_Point GetPositionPoint() const;
-		//! Gets the net force applied to the body.
+
+		//! Gets the net linear force applied to the body.
 		virtual const CL_Vector2 &GetForce() const;
+		//! Gets the net engine force applied to the body.
+		virtual float GetEngineForce() const;
+
 		virtual const CL_Vector2 &GetAcceleration() const;
 		virtual const CL_Vector2 &GetVelocity() const;
 
@@ -293,9 +298,12 @@ namespace FusionEngine
 		 */
 		unsigned int GetDeactivationPeriod() const;
 
+		/*!
+		 * \name State access
+		 *
+		 * For syncronising only, shouldn't be called otherwise.
+		 */
 		//@{
-		//! For syncronising client-side only, shouldn't be called otherwise.
-
 		//! Sets the position.
 		virtual void _setPosition(const CL_Vector2 &position);
 		//! Sets the force.
@@ -309,16 +317,15 @@ namespace FusionEngine
 		virtual void _setRotation(float rotation);
 		//@}
 
-		//! Adds the given body to the collision list
-		void _notifyCollisionWith(FusionPhysicsBody *other);
-		//! Checks for the given body on the collision list
-		bool IsCollidingWith(FusionPhysicsBody *other) const;
-		//! Clears the collision list
-		void ClearCollisions();
+		//! [removed] Adds the given body to the collision list
+		void _notifyCollisionWith(FusionPhysicsBody *other) {};
+		//! [removed] Checks for the given body on the collision list
+		bool IsCollidingWith(FusionPhysicsBody *other) const { return false; };
+		//! [removed] Clears the collision list
+		void ClearCollisions() {};
 
-		//@{
 		//! Used internally by CollisionGrid
-
+		//@{
 		//! Stores the Collision Grid Pos; the position on the grid.
 		void _setCGPos(int ind);
 		//! Retreives the Collision Grid Pos - required for sorting etc.
@@ -347,9 +354,8 @@ namespace FusionEngine
 		//@}
 
 	protected:
+		//! \name Used internally by CollisionGrid
 		//@{
-		//! Used internally by CollisionGrid
-
 		//! Collision Grid Index
 		int m_CGPos;
 		//! Collision Grid Index
@@ -412,6 +418,8 @@ namespace FusionEngine
 		float m_Bounce;
 
 		CL_Vector2 m_AppliedForce;
+		float m_AppliedEngineForce;
+
 		CL_Vector2 m_Acceleration;
 		CL_Vector2 m_Velocity;
 		CL_Vector2 m_Position;

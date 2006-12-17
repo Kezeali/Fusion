@@ -287,6 +287,19 @@ namespace FusionEngine
 				CL_Vector2 position = cBod->GetPosition();
 				CL_Vector2 force = cBod->GetForce();
 
+				// Apply engine force
+				{
+					// Find the direction to apply the engine force
+					float direction =
+						cBod->GetRotation() + cBod->GetRotationalVelocity() * split * 0.5;
+
+					CL_Vector2 force_vector(
+						sinf(fe_degtorad( direction )) * cBod->GetEngineForce();
+						-cosf(fe_degtorad( direction )) * cBod->GetEngineForce();
+						);
+					force += force_vector;
+				}
+
 				CL_Vector2 accel;
 				CL_Vector2 veloc = cBod->GetVelocity();
 				float linDamping = cBod->GetCoefficientOfFriction();
@@ -295,6 +308,7 @@ namespace FusionEngine
 				//CL_Vector2 nveloc = veloc / speed; // normalise
 				CL_Vector2 dampForce = veloc * linDamping;
 
+				// Finally, calculate the velocity
 				accel = (force - dampForce) * cBod->GetInverseMass();
 				veloc = veloc + accel;
 
@@ -326,8 +340,8 @@ namespace FusionEngine
 					cBod->_setAcceleration(CL_Vector2::ZERO);
 
 					//! \todo See which method is faster - trig or non-tirg.
-					//  First Method (trig):
 #ifdef FUSION_PHYS_USE_TRIG
+					//  First Method (trig):
 					// Calculate the maximum x and y velocities for this angle
 					double a = atan(veloc.x/veloc.y);
 					veloc.x = m_MaxVelocity * float(sin(a));
@@ -355,7 +369,7 @@ namespace FusionEngine
 				// All forces applied in the previous step have been converted to motion.
 				cBod->_setForce(CL_Vector2::ZERO);
 
-				//////////////////////
+				///////////////////////
 				// Collision detection
 				//  Check for collisions of active objects.
 

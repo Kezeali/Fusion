@@ -49,8 +49,8 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			CL_Vector2 force = m_ShipPhysical->GetPosition();
-			force.x += sinf(a)*g_ThrustForce;
-			force.y += -cosf(a)*g_ThrustForce;
+			force.x += sinf(a)*2.0f;
+			force.y += -cosf(a)*2.0f;
 
 			m_ShipPhysical->_setPosition(force);
 		}
