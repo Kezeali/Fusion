@@ -74,7 +74,7 @@ InputSource_PhysFS::~InputSource_PhysFS()
 
 int InputSource_PhysFS::read(void *data, int size)
 {
-	return PHYSFS_read(m_PhysFile, data, sizeof(char), size);
+	return PHYSFS_read(m_PhysFile, data, 1, size);
 }
 
 void InputSource_PhysFS::open()

@@ -18,6 +18,11 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_ScriptingEngine
@@ -56,10 +61,10 @@ namespace FusionEngine
 		asIScriptEngine *GetEnginePtr() const;
 
 		//! Adds the given script to a module, but doesn't build or execute it.
-		void RegisterScript(Script *script, char *module);
+		void RegisterScript(Script *script, const char *module);
 
 		//! Builds the given module
-		bool BuildModule(char *module);
+		bool BuildModule(const char *module);
 
 		//! Executes the given funcion in a module.
 		/*!
@@ -68,7 +73,7 @@ namespace FusionEngine
 		 * \param[in] script A built or unbuilt module 
 		 * \returns The exit status of the script
 		 */
-		int ExecuteModule(char *module, char *function);
+		int ExecuteModule(const char *module, const char *function);
 
 		//! Executes the given funcion in Script
 		/*!
@@ -78,7 +83,7 @@ namespace FusionEngine
 		 * \param[in] script A loaded Script object 
 		 * \returns The exit status of the script
 		 */
-		int ExecuteScript(Script *script, char *function);
+		int ExecuteScript(Script *script, const char *function);
 
 		//! Executes the given code string.
 		/*!
@@ -91,7 +96,7 @@ namespace FusionEngine
 		 * Time the script can run before it's aborted. Default 1000 milis
 		 * \returns The exit status of the script (asEXECUTION_ABORTED for timeout)
 		 */
-		int ExecuteString(const std::string &script, char *module, int *context, int timeout = 1000, int keep_context = false);
+		int ExecuteString(const std::string &script, const char *module, int *context, int timeout = 1000, int keep_context = false);
 
 		//! Re-executes the given stored context
 		/*!
@@ -107,7 +112,7 @@ namespace FusionEngine
 		 * \sa
 		 * ExecuteString()
 		 */
-		int ReExecuteString(int context, char *module);
+		int ReExecuteString(int context, const char *module);
 
 		//! Used internally
 		void _lineCallback(asIScriptContext *ctx, int *timeOut);

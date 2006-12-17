@@ -10,7 +10,7 @@
 	<effect name="fireworks">
 		<particles>
 			<count>10</count>
-			<image>dot.png</image>
+			<image>Common/dot.png</image>
 		</particles>
 		<flash>
 			<period>1</period>
@@ -23,7 +23,7 @@
 		</flash>
 	</effect>
 
-	<region name="incrfriction">
+	<region name="fireworks">
 		<bounds type="rect">
 			<x>10</x>
 			<y>10</y>
@@ -31,22 +31,8 @@
 			<height>100</height>
 		</bounds>
 		
-		<scripting script="Cave.as">
-			<onEnter>void onEnterRegionMoreFriction()</step>
-			<step>void onStepRegionMoreFriction()</step>
-		</scripting>
-	</region>
-
-	<region name="gravity">
-		<bounds type="circle">
-			<x>10</x>
-			<y>10</y>
-			<radius>100</radius>
-		</bounds>
-		
-		<scripting script="Cave.as">
-			<onEnter>void 
-			<step>void onRegionGravity()</step>
+		<scripting script="ArenaLevel/Arena.as">
+			<onEnter>void onEnterRegionFireworks()</step>
 		</scripting>
 	</region>
 

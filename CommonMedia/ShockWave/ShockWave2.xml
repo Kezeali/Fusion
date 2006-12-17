@@ -5,26 +5,50 @@
 	
 	<health>20</health>
   
-	<body>Body.png</body>
+	<body>ShockWave/Body.png</body>
 	<leftEngine>
 		<x>3</x>
 		<y>24</y>
-		<image>SWEngine.png</image>
+		<image>ShockWave/SWEngine.png</image>
+
+		<payload>
+			<damage>100</damage>
+			<blastradius>100</blastradius>
+			<damageterrain>true</damageterrain>
+		</payload>
+
+		<scripting script="ShockWave/ShockWave.as">
+			<onjettison>void jettison()</onjettison>
+			<step>void jettisonedStep()</step>
+			<onanycollision>void onCollision(int, int)</onanycollision>
+		</scripting>
 	</leftEngine>
 	<rightEngine>
 		<x>28</x>
 		<y>24</y>
-		<image>SWEngine.png</image>
+		<image>ShockWave/SWEngine.png</image>
+
+		<payload>
+			<damage>100</damage>
+			<blastradius>100</blastradius>
+			<damageterrain>true</damageterrain>
+		</payload>
+
+		<scripting script="ShockWave/ShockWave.as">
+			<onjettison>void jettison()</onjettison>
+			<step>void jettisonedStep()</step>
+			<onanycollision>void onCollision(int, int)</onanycollision>
+		</scripting>
 	</rightEngine>
 	<primaryWeapon>
 		<x>7</x>
 		<y>7</y>
-		<image>SWPrimary.png</image>
+		<image>ShockWave/SWPrimary.png</image>
 	</primaryWeapon>
 	<secondaryWeapon>
 		<x>24</x>
 		<y>7</y>
-		<image>SWSecondary.png</image>
+		<image>ShockWave/SWSecondary.png</image>
 	</secondaryWeapon>
 	
 	<physics>

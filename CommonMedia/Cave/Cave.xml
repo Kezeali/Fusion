@@ -2,6 +2,23 @@
 <FusionWeapon tag="Cave">
 	<name>The Cave of LevelTest</name>
 	<description>Tests level loading.</description>
+	
+	<background>
+		<parallax>1.5</parallax>
+		<scale>4</scale>
+		<image>CaveLevel/bg.png</image>
+	</background>
+	
+	<map>
+		<image>CaveLevel/map.png</image>
+	</map>
+		
+	<foreground>
+		<parallax>0.1</parallax>
+		<image>CaveLevel/fg.png</image>
+	</foreground>
+	
+	<bitmask>CaveLevel/cave.bitmask</bitmask>
 
 	<global>
 		<friction>0.1</friction>
@@ -15,7 +32,7 @@
 			<height>100</height>
 		</bounds>
 		
-		<scripting script="Cave.as">
+		<scripting script="CaveLevel/Cave.as">
 			<onEnter>void onEnterRegionMoreFriction()</step>
 			<step>void onStepRegionMoreFriction()</step>
 		</scripting>
@@ -28,7 +45,7 @@
 			<radius>100</radius>
 		</bounds>
 		
-		<scripting script="Cave.as">
+		<scripting script="CaveLevel/Cave.as">
 			<onEnter>void 
 			<step>void onRegionGravity()</step>
 		</scripting>

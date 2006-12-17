@@ -10,30 +10,30 @@
 			<g>200</r>
 			<b>200</b>
 		</colour>
-		<image>flash.png</image>
+		<image>Common/flash.png</image>
 	</fireeffect>
 	
-	<scripting script="SeekerMissile.as">
+	<scripting script="SeekerMissile/SeekerMissile.as">
 		<onfire>void onFire()</onfire>
 	</scripting>
   
 	<projectile name="seeker">
-		<image>missile.png</image>
+		<image>SeekerMissile/missile.png</image>
 		<sounds>
-			<creation>fire.wav</creation>
-			<detonation>bang.wav</detonation>
+			<creation>SeekerMissile/fire.wav</creation>
+			<detonation>SeekerMissile/bang.wav</detonation>
 		</sounds>
 		
 		<effect name="targetAquired">
 			<particles>
 				<count>10</count>
-				<image>dot.png</image>
+				<image>Common/dot.png</image>
 			</particles>
 			<sound>target_aquired.wav</sound>
 		</effect>
 		
 		<detonation>
-			<image>flash.png</image>
+			<image>Common/flash.png</image>
 			<duration>4</duration>
 		</detonation>
 		
@@ -44,7 +44,7 @@
 				<g>100</r>
 				<b>160</b>
 			</colour>
-			<image>smoke.png</image>
+			<image>Common/smoke.png</image>
 		</contrail>
 		
 		<payload>
@@ -59,7 +59,7 @@
 			<facemotion>true</facemotion>
 		</physics>
 		
-		<scripting script="SeekerMissile.as">
+		<scripting script="SeekerMissile/SeekerMissile.as">
 			<creation>void seekerCreation()</creation>
 			<step>void seekerStep()</step>
 			<onanycollision>void seekerOnCollision(int, int)</onanycollision>
@@ -67,10 +67,10 @@
 	</projectile>
 
 	<projectile name="cluster">
-		<image>bit.png</image>
+		<image>SeekerMissile/bit.png</image>
 		
 		<detonation>
-			<image>flash.png</image>
+			<image>Common/flash.png</image>
 			<duration>4</duration>
 		</detonation>
 		
@@ -86,7 +86,7 @@
 			<facemotion>false</facemotion>
 		</physics>
 		
-		<scripting script="SeekerMissile.as">
+		<scripting script="SeekerMissile/SeekerMissile.as">
 			<step>void clusterStep()</step>
 			<onanycollision>void clusterOnCollision(int, int)</onanycollision>
 		</scripting>

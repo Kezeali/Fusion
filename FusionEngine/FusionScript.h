@@ -18,10 +18,15 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ScriptingEngine
-#define Header_FusionEngine_ScriptingEngine
+#ifndef Header_FusionEngine_Script
+#define Header_FusionEngine_Script
 
 #if _MSC_VER > 1000
 #pragma once
@@ -57,12 +62,17 @@ namespace FusionEngine
 
 	public:
 		//! Retuns the module this script was assigned to by the ScriptingEngine.
-		char *GetModule() const;
+		const char *GetModule() const;
 
 		//! Loads and Initialises this Script from a file
-		bool LoadFile(const std::string &filename);
+		bool LoadFile(const std::string &filename,
+									CL_InputSourceProvider *provider = 0
+									bool delete_provider = true);
 
 		//! Returns the ptr. returned by the script (if applicable)
+		/*!
+		 * \todo Decide whether this should be in the ScriptEngine or here...
+		 */
 		void *GetReturnObject() const;
 
 		//! Sets the module ID.
@@ -70,7 +80,7 @@ namespace FusionEngine
 		 * Allows the ScriptingEngine to store the module ID the which this script
 		 * has been compiled into.
 		 */
-		void _setModule(char *module);
+		void _setModule(const char *module);
 
 		//! Sets m_Registered to true.
 		/*!
