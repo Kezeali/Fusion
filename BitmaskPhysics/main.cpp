@@ -1,17 +1,45 @@
-#include "Common.h"
-#include "FusionCommon.h"
+#include "..\FusionEngine\Common.h"
+#include "..\FusionEngine\FusionCommon.h"
 
-#include "FusionBitmask.h"
-#include "FusionPhysicsWorld.h"
-#include "FusionPhysicsBody.h"
-#include "FusionPhysicsUtils.h"
-#include "FusionPhysicsTypes.h"
-#include "FusionPhysicsCallback.h"
+#include "..\FusionEngine\FusionBitmask.h"
+#include "..\FusionEngine\FusionPhysicsWorld.h"
+#include "..\FusionEngine\FusionPhysicsBody.h"
+#include "..\FusionEngine\FusionPhysicsUtils.h"
+#include "..\FusionEngine\FusionPhysicsTypes.h"
+#include "..\FusionEngine\FusionPhysicsCallback.h"
 
 const int g_NumDrones = 4;
 const float g_ThrustForce = 0.2f;
 
 using namespace FusionEngine;
+
+class SomeHandlerYouAre : public CollisionHandler
+{
+private:
+	FusionPhysicsBody* m_MyBody;
+
+public:
+	SomeHandlerYouAre(FusionPhysicsBody* body)
+		: m_MyBody(body)
+	{
+	}
+
+	bool CanCollideWith(const FusionPhysicsBody *other)
+	{
+		return (other != m_MyBody);
+	}
+
+	void CollisionWith(const FusionPhysicsBody *other, const CL_Vector2 &point)
+	{
+		if (other->GetUserData() != NULL)
+		{
+			char *data = (char *)(other->GetUserData());
+			std::cout << "Egads! " << data << " got me good!" << std::endl;
+		}
+	}
+
+};
+
 
 class BitmaskTest : public CL_ClanApplication
 {
@@ -98,7 +126,7 @@ class BitmaskTest : public CL_ClanApplication
 			for (int i = 0; i < g_NumDrones; i++)
 			{
 				m_DronePhysical[i]->SetRotationalVelocity(0.2f);
-				m_DronePhysical[i]->ApplyForce(g_ThrustForce);
+				m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
 
@@ -129,7 +157,7 @@ class BitmaskTest : public CL_ClanApplication
 		m_World->DeactivateWrapAround();
 
 		// Ship
-		m_ShipGraphical = new CL_Surface("../Body.png");
+		m_ShipGraphical = new CL_Surface("Body.png");
 		m_ShipGraphical->set_rotation_hotspot(origin_center);
 
 		m_ShipBitmask = new FusionBitmask;
@@ -148,14 +176,14 @@ class BitmaskTest : public CL_ClanApplication
 			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
-			m_ShipPhysical->SetCoefficientOfFriction(0.4f);
-			m_ShipPhysical->SetCoefficientOfRestitution(0.6f);
 		}
+		m_ShipPhysical->SetCoefficientOfFriction(0.4f);
+		m_ShipPhysical->SetCoefficientOfRestitution(0.6f);
 
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
 		{
-			m_DroneGraphical[i] = new CL_Surface("./Body.png");
+			m_DroneGraphical[i] = new CL_Surface("Body.png");
 			m_DroneGraphical[i]->set_rotation_hotspot(origin_center);
 
 			m_DroneBitmask[i] = new FusionBitmask;
@@ -165,7 +193,7 @@ class BitmaskTest : public CL_ClanApplication
 			{
 				PhysicalProperties props;
 				props.mass = 15.0f;
-				props.position = CL_Vector2(480.f, 120.f);
+				props.position = CL_Vector2(460.f + 10.0f * i, 120.f);
 				props.radius = 50;
 				props.rotation = 0;
 				props.use_dist = true;
@@ -176,9 +204,15 @@ class BitmaskTest : public CL_ClanApplication
 				m_DronePhysical[i] = m_World->CreateBody(PB_SHIP, props);
 			}
 
-			m_DronePhysical[i]->SetCoefficientOfFriction(0.6f);
+			m_DronePhysical[i]->SetCoefficientOfFriction(0.8f);
 			m_DronePhysical[i]->SetCoefficientOfRestitution(0.6f);
+
+			std::string ud = CL_String::format("Drone %1", i);
+			char *userdata = (char *)malloc( ud.size() +1 );
+			memcpy( userdata, ud.c_str(), ud.size() +1 );
+			m_DronePhysical[i]->SetUserData(userdata);
 		}
+		m_ShipPhysical->SetCollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
 
 		// Hole
 		/*m_Damage = new CL_Surface("./circle.png");
@@ -186,7 +220,7 @@ class BitmaskTest : public CL_ClanApplication
 		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);*/
 
 		// Terrain
-		m_TerrainGraphical = new CL_Surface("./Terrain.png", CL_Surface::flag_keep_pixelbuffer);
+		m_TerrainGraphical = new CL_Surface("Terrain.png", CL_Surface::flag_keep_pixelbuffer);
 		m_TerrainGraphical->set_rotation_hotspot(origin_center);
 
 		m_TerrainCanvas = new CL_Canvas(*m_TerrainGraphical);
@@ -194,10 +228,11 @@ class BitmaskTest : public CL_ClanApplication
 		m_TerrainBitmask = new FusionBitmask;
 		bool bitmaskLoaded = false;
 		{
-			std::ifstream ifs("bitmask");
-			if (ifs.is_open())
+			//std::ifstream ifs("bitmask");
+			//if (ifs.is_open())
 			{
-				bitmaskLoaded = m_TerrainBitmask->SetFromStream(ifs);
+				CL_InputSourceProvider *p = CL_InputSourceProvider::create_file_provider(".");
+				bitmaskLoaded = m_TerrainBitmask->Load("bitmask", p);
 
 				//ifs >> m_TerrainBitmask;
 			}
@@ -207,9 +242,10 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes(), 25);
 
-			std::ofstream ofs("bitmask");
+			//std::ofstream ofs("bitmask");
 			{
-				m_TerrainBitmask->ToStream(ofs);
+				CL_OutputSource_File file("bitmask");
+				m_TerrainBitmask->Save("bitmask", &file);
 
 				//ofs << m_TerrainBitmask;
 			}
@@ -227,6 +263,7 @@ class BitmaskTest : public CL_ClanApplication
 
 			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
 		}
+		m_TerrainPhysical->SetUserData((void *)"Terrain");
 		
 		int back_pos = 0;
 		float sur_y = 250.f;

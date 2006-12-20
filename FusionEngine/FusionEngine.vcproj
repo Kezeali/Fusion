@@ -216,11 +216,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionConsoleGUI.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionDrawable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEffectManager.h"
 				>
 			</File>
 			<File
@@ -245,6 +253,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionGUI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionGUICommon.h"
 				>
 			</File>
 			<File
@@ -281,10 +293,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionLogger.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionMap.h"
 				>
 			</File>
 			<File
@@ -523,6 +531,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionConsoleGUI.cpp"
 				>
 			</File>
 			<File

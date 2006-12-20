@@ -11,6 +11,8 @@ namespace FusionEngine
 		: m_World(world),
 		m_CollisionFlags(C_NONE),
 		m_CollisionResponse(0),
+		m_CollisionHandler(0),
+		m_UserData(0),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_GotCGUpdate(false),
@@ -26,14 +28,17 @@ namespace FusionEngine
 		m_UsesAABB(false),
 		m_UsesDist(false),
 		m_UsesPixel(false),
-		m_Velocity(CL_Vector2::ZERO)
+		m_Velocity(CL_Vector2::ZERO),
+		m_AppliedEngineForce(0)
 	{
 	}
 
-	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, CollisionCallback response)
+	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler)
 		: m_World(world),
 		m_CollisionFlags(C_NONE),
-		m_CollisionResponse(response),
+		m_CollisionResponse(0),
+		m_CollisionHandler(handler),
+		m_UserData(0),
 		m_Acceleration(CL_Vector2::ZERO),
 		m_AppliedForce(CL_Vector2::ZERO),
 		m_GotCGUpdate(false),
@@ -49,7 +54,34 @@ namespace FusionEngine
 		m_UsesAABB(false),
 		m_UsesDist(false),
 		m_UsesPixel(false),
-		m_Velocity(CL_Vector2::ZERO)
+		m_Velocity(CL_Vector2::ZERO),
+		m_AppliedEngineForce(0)
+	{
+	}
+
+	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response)
+		: m_World(world),
+		m_CollisionFlags(C_NONE),
+		m_CollisionResponse(response),
+		m_CollisionHandler(0),
+		m_UserData(0),
+		m_Acceleration(CL_Vector2::ZERO),
+		m_AppliedForce(CL_Vector2::ZERO),
+		m_GotCGUpdate(false),
+		m_Active(true),
+		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
+		m_DeactivationCounter(0),
+		m_Type(0),
+		m_Mass(0.f),
+		m_Radius(0),
+		m_Position(CL_Vector2::ZERO),
+		m_Rotation(0.f),
+		m_RotationalVelocity(0.f),
+		m_UsesAABB(false),
+		m_UsesDist(false),
+		m_UsesPixel(false),
+		m_Velocity(CL_Vector2::ZERO),
+		m_AppliedEngineForce(0)
 	{
 	}
 
@@ -230,26 +262,46 @@ namespace FusionEngine
 		m_UserData = userdata;
 	}
 
-	const void *FusionPhysicsBody::GetUserData() const
+	void *FusionPhysicsBody::GetUserData() const
 	{
 		return m_UserData;
 	}
+
 
 	void FusionPhysicsBody::SetCollisionCallback(const CollisionCallback &method)
 	{
 		m_CollisionResponse = method;
 	}
 
-	void FusionPhysicsBody::CollisionResponse(FusionPhysicsBody *other)
+	void FusionPhysicsBody::SetCollisionHandler(CollisionHandler *handler)
 	{
+		m_CollisionHandler = handler;
+	}
+
+	bool FusionPhysicsBody::CanCollideWith(FusionPhysicsBody *other)
+	{
+		if (m_CollisionHandler != 0)
+			return m_CollisionHandler->CanCollideWith(other);
+
+		return true;
+	}
+
+	void FusionPhysicsBody::CollisionWith(FusionPhysicsBody *other, const CL_Vector2 &collision_point)
+	{
+		if (m_CollisionHandler != 0)
+			m_CollisionHandler->CollisionWith(other, collision_point);
+
 		if (m_CollisionResponse != 0)
-			m_CollisionResponse(other, CL_Vector2::ZERO);
+			m_CollisionResponse(other, collision_point);
 	}
 
 	void FusionPhysicsBody::CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point)
 	{
 		if (m_CollisionResponse != 0)
 			m_CollisionResponse(other, collision_point);
+
+		if (m_CollisionHandler != 0)
+			m_CollisionHandler->CollisionWith(other, collision_point);
 	}
 
 	int FusionPhysicsBody::GetCollisionFlags() const
@@ -280,6 +332,11 @@ namespace FusionEngine
 	const CL_Vector2 &FusionPhysicsBody::GetForce() const
 	{
 		return m_AppliedForce;
+	}
+
+	float FusionPhysicsBody::GetEngineForce() const
+	{
+		return m_AppliedEngineForce;
 	}
 
 	const CL_Vector2 &FusionPhysicsBody::GetAcceleration() const
@@ -370,6 +427,11 @@ namespace FusionEngine
 	void FusionPhysicsBody::_setForce(const CL_Vector2 &force)
 	{
 		m_AppliedForce = force;
+	}
+
+	void FusionPhysicsBody::_setEngineForce(float force)
+	{
+		m_AppliedEngineForce = force;
 	}
 
 	void FusionPhysicsBody::_setAcceleration(const CL_Vector2 &acceleration)

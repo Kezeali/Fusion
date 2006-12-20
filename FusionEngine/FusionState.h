@@ -36,12 +36,6 @@
 namespace FusionEngine
 {
 
-	//! Self managing state pointer
-	/*!
-	 * Use it!
-	 */
-	typedef CL_SharedPtr<FusionState> SharedState;
-
 	/*!
 	 * \brief
 	 * The abstract base for FusionStates.
@@ -58,7 +52,13 @@ namespace FusionEngine
 	class FusionState
 	{
 	public:
+		//! Messages
 		typedef std::deque<StateMessage*> MessageList;
+
+	public:
+		//! Destructor
+		~FusionState();
+
 	public:
 		//! Pure virtual method
 		virtual bool Initialise() = 0;

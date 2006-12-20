@@ -29,13 +29,13 @@
 
 #include "Common.h"
 
-/// Boost
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+// Boost
+//#include <boost/function.hpp>
+//#include <boost/bind.hpp>
 
-/// AngelScript
+// AngelScript
 //#define AS_USE_NAMESPACE
-#include <angelscript.h>
+#include "angelscript.h"
 
 namespace FusionEngine
 {
@@ -144,7 +144,13 @@ namespace FusionEngine
 	typedef std::vector<std::string> StringVector;
 
 	//! Type for a list of bodies
-	typedef std::list<FusionPhysicsBody *> BodyList;
+	typedef std::vector<FusionPhysicsBody *> BodyList;
+
+	//! Self managing state pointer
+	/*!
+	 * Use it!
+	 */
+	typedef CL_SharedPtr<FusionState> SharedState;
 }
 
 #endif

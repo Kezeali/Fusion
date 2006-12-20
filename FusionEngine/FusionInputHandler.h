@@ -94,8 +94,9 @@ namespace FusionEngine
 		GlobalInput GetGlobalInputs() const;
 
 	private:
-		//! InputHandler ignores gameplay inputs while this is true
-		bool m_Active;
+		//! The InputHandler will not be considered active till this reaches zero.
+		int m_SuspendRequests;
+
 		/*!
 		 * \brief
 		 * Not used yet.

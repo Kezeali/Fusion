@@ -38,6 +38,12 @@
 namespace FusionEngine
 {
 
+	struct ConsoleLine
+	{
+		std::string Message;
+		CL_Color Colour;
+	};
+
 	//! Provides console data access to all FusionEngine objects
 	/*!
 	 * This class does not actually do anything with the data it contains,

@@ -14,3 +14,8 @@
 //  makes console messages, so the interested user can check those out if they
 //  really want to :P Anyway, Source does it like that (doesn't show the progr-
 //  ess of data loading, just says "Loading Resources"), so I feel assured.
+
+	// Setup and run the package syncroniser
+	PackSyncState *ps = new PackSyncState();
+	ps->MakeClient(m_Hostname, m_Port);
+	_pushMessage(new StateMessage(StateMessage::ADDSTATE, ps));

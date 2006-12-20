@@ -508,12 +508,6 @@ namespace FusionEngine
 
 	};
 
-	//! Returns whether one is less than two. \see std::sort()
-	bool DepthIsLess(FusionNode *one, FusionNode *two)
-	{
-		return (one->GetDepth() < two->GetDepth());
-	}
-
 }
 
 #endif

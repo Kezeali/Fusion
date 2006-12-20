@@ -127,6 +127,22 @@ namespace FusionEngine
 		 * \param[in] name
 		 * Name of the file to be created.
 		 *
+		 * \param[in] source
+		 * The output source to write to.
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
+		int Save(const std::string &name, CL_OutputSource *source);
+
+		//! Save to a device.
+		/*!
+		 * \param[in] name
+		 * Name of the file to be created.
+		 *
 		 * \param[in] provider
 		 * The output source provider to use when creating the file.
 		 *

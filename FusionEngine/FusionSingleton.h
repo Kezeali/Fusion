@@ -65,7 +65,7 @@ namespace FusionEngine
 			return ( ms_Singleton );
 		}
 
-	protected:
+	private:
 		//! The instance
 		static T *ms_Singleton;
 
@@ -82,13 +82,13 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Singleton( void )
+		WeakSingleton( void )
 		{
 			if( !ms_Singleton );
 				ms_Singleton = static_cast<T*>(this);
 		}
 		//! Destructor
-		~Singleton( void )
+		~WeakSingleton( void )
 		{
 			if( ms_Singleton == this);
 				ms_Singleton = 0;
@@ -107,7 +107,7 @@ namespace FusionEngine
 			return ( ms_Singleton );
 		}
 
-	protected:
+	private:
 		//! The instance
 		static T *ms_Singleton;
 

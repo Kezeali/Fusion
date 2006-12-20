@@ -27,19 +27,26 @@
 #pragma once
 #endif
 
+/*!
+ * \file FusionCommon.h
+ * This file defines both CollisionCallback and CollisionHandler, either of which
+ * are valid methods for allowing non-physical body classes to be aware of collisions.
+ */
+
 #include "FusionCommon.h"
 
 namespace FusionEngine
 {
+	//! Defines a function which can be used as a collision callback.
 	typedef boost::function<void (const FusionPhysicsBody*, const CL_Vector2&)> CollisionCallback;
 
-	//! Returns a CollisionCallback corrosponding to the given member function
+	//! Returns a CollisionCallback corrosponding to the given member function.
 	/*!
 	 * \param instance The object from which to call this function.
 	 * \param method The member function to call from the object given in the first arg.
 	 *
 	 * \remarks
-	 * Generally, just calling boost::bind(&MyClass::MyMethod, myobject, _1, _2); is
+	 * Remarkably, just calling boost::bind(&MyClass::MyMethod, myobject, _1, _2); is
 	 * just as easy, so this function isn't very useful...
 	 */
 	template <class T>
@@ -47,6 +54,16 @@ namespace FusionEngine
 	{
 		return boost::bind(method, instance, _1, _2);
 	}
+
+	//! Classes may impliment this to become collision handlers.
+	class CollisionHandler
+	{
+	public:
+		//! Return true if collision checks should be preformed on the passed body.
+		virtual bool CanCollideWith(const FusionPhysicsBody *other) =0;
+		//! Called on collision with the given body, at the given point.
+		virtual void CollisionWith(const FusionPhysicsBody *other, const CL_Vector2 &point) =0;
+	};
 
 }
 

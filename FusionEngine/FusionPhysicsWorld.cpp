@@ -7,6 +7,47 @@
 
 namespace FusionEngine
 {
+	bool CollisionBefore(Collision *lhs, Collision *rhs)
+	{
+		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+		{
+			if (lhs->First < rhs->Second && lhs->Second < rhs->First)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+	bool CollisionAfter(Collision *lhs, Collision *rhs)
+	{
+		if (lhs->First < rhs->Second && lhs->Second < rhs->First)
+		{
+			if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+	bool CollisionEqual(Collision *lhs, Collision *rhs)
+	{
+		// Both collisions are exactly the same
+		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+		{
+			return true;
+		}
+
+		// Both collisions are essentually the same, with the first and second inverted
+		if (lhs->First == rhs->Second && lhs->Second == rhs->First)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 
 	FusionPhysicsWorld::FusionPhysicsWorld()
 		: m_BitmaskRes(1),
@@ -294,8 +335,8 @@ namespace FusionEngine
 						cBod->GetRotation() + cBod->GetRotationalVelocity() * split * 0.5;
 
 					CL_Vector2 force_vector(
-						sinf(fe_degtorad( direction )) * cBod->GetEngineForce();
-						-cosf(fe_degtorad( direction )) * cBod->GetEngineForce();
+						sinf(fe_degtorad( direction )) * cBod->GetEngineForce(),
+						-cosf(fe_degtorad( direction )) * cBod->GetEngineForce()
 						);
 					force += force_vector;
 				}
@@ -368,6 +409,8 @@ namespace FusionEngine
 
 				// All forces applied in the previous step have been converted to motion.
 				cBod->_setForce(CL_Vector2::ZERO);
+				cBod->_setEngineForce(0);
+
 
 				///////////////////////
 				// Collision detection
@@ -395,52 +438,69 @@ namespace FusionEngine
 
 					FusionPhysicsBody *Other = (*b_it);
 
-					// Find the movement vector for other body
-					CL_Vector2 Other_movement = Other->GetVelocity() * split;
+					if ( cBod->CanCollideWith(Other) )
+					{
 
-					// Position at collisions for each body
-					CL_Vector2 cBod_pac; 
-					CL_Vector2 Other_pac;
+						// Find the movement vector for other body
+						CL_Vector2 Other_movement = Other->GetVelocity() * split;
+
+						// Position at collisions for each body
+						CL_Vector2 cBod_pac; 
+						CL_Vector2 Other_pac;
 
 
-					// Search for collisions
-					if (PhysUtil::FindCollisions(
+						// Search for collisions
+						if (PhysUtil::FindCollisions(
 							&cBod_pac, &Other_pac, 
 							cBod_movement, Other_movement, 
 							cBod, Other))
-					{
-						CL_Vector2 normal;
-						PhysUtil::CalculateNormal(&normal, cBod_pac, Other_pac, cBod, Other);
-
-
-						///////////////////
-						// Error correction
-						if (normal == CL_Vector2::ZERO)
 						{
-							// No need to warp out of non-statics, they should move away eventually
-							if (Other->CheckCollisionFlag(C_STATIC))
+							CL_Vector2 normal;
+							PhysUtil::CalculateNormal(&normal, cBod_pac, Other_pac, cBod, Other);
+
+
+							///////////////////
+							// Error correction
+							if (normal == CL_Vector2::ZERO)
 							{
-								// Try to find a valid normal (we don't want to warp if we don't need to)
-								PhysUtil::CalculateNormal(
-									&normal,
-									cBod_pac + cBod_movement, Other_pac,
-									cBod, Other);
-								if (normal == CL_Vector2::ZERO)
+								// No need to warp out of non-statics, they should move away eventually
+								if (Other->CheckCollisionFlag(C_STATIC))
 								{
-
-									CL_Vector2 jump_point; 
-									CL_Vector2 o_point; // Not used
-
-									float facing = cBod->GetRotation();
-
-									// Get a short vector
-									CL_Vector2 escape_ray;
-
-									for (float a = 0.0f; a < 2*PI; a+=0.1f)
+									// Try to find a valid normal (we don't want to warp if we don't need to)
+									PhysUtil::CalculateNormal(
+										&normal,
+										cBod_pac + cBod_movement, Other_pac,
+										cBod, Other);
+									if (normal == CL_Vector2::ZERO)
 									{
-										escape_ray.x = -sinf(a) * 50.0f;
-										escape_ray.y = cosf(a) * 50.0f;
 
+										CL_Vector2 jump_point; 
+										CL_Vector2 o_point; // Not used
+
+										float facing = cBod->GetRotation();
+
+										// Get a short vector
+										CL_Vector2 escape_ray;
+
+										for (float a = 0.0f; a < 2*PI; a+=0.1f)
+										{
+											escape_ray.x = -sinf(a) * 50.0f;
+											escape_ray.y = cosf(a) * 50.0f;
+
+											if (PhysUtil::FindCollisions(
+												&jump_point, &o_point, 
+												escape_ray, CL_Vector2::ZERO, 
+												cBod, Other, 0.1f, false))
+											{
+												cBod->m_Position = jump_point;
+
+												continue;
+											}
+										}
+
+										// If the short jump failed failed, get a really long vector
+										escape_ray.x = -sinf(facing) * 500.0f;
+										escape_ray.y = cosf(facing) * 500.0f;
 										if (PhysUtil::FindCollisions(
 											&jump_point, &o_point, 
 											escape_ray, CL_Vector2::ZERO, 
@@ -450,57 +510,46 @@ namespace FusionEngine
 
 											continue;
 										}
-									}
 
-									// If the short jump failed failed, get a really long vector
-									escape_ray.x = -sinf(facing) * 500.0f;
-									escape_ray.y = cosf(facing) * 500.0f;
-									if (PhysUtil::FindCollisions(
-										&jump_point, &o_point, 
-										escape_ray, CL_Vector2::ZERO, 
-										cBod, Other, 0.1f, false))
-									{
-										cBod->m_Position = jump_point;
-
-										continue;
 									}
 
 								}
+							} // if (normal == CL_Vector2::ZERO)
 
 
-							}
-						} // if (normal == CL_Vector2::ZERO)
+							// Normal * veloc should multiply to a nevative (should be opposite
+							//  directions) if they don't, the normal is invalid.
+							if (veloc != CL_Vector2::ZERO && normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
+							{
+								// Pop back
+								cBod->m_Position = cBod_pac + normal * -g_PhysCollisionJump;
 
-						// Normal * veloc should multiply to a nevative (should be opposite
-						//  directions) if they don't, the normal is invalid.
-						if (veloc != CL_Vector2::ZERO && normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
-						{
-							// Pop back
-							cBod->m_Position = cBod_pac + normal * -g_PhysCollisionJump;
+								// Stop movement
+								veloc = CL_Vector2::ZERO;
+								cBod->_setAcceleration(CL_Vector2::ZERO);
+								cBod->_setVelocity(CL_Vector2::ZERO);
 
-							// Stop movement
-							veloc = CL_Vector2::ZERO;
-							cBod->_setAcceleration(CL_Vector2::ZERO);
-							cBod->_setVelocity(CL_Vector2::ZERO);
+								continue;
+							} // if (wrong normal direction)
 
-							continue;
-						} // if (wrong normal direction)
+							// End error correction
+							///////////////////////
 
-						// End error correction
-						///////////////////////
+							// Make sure both bodies are active
+							cBod->_activate();
+							Other->_activate();
 
-						// Make sure both bodies are active
-						cBod->_activate();
-						Other->_activate();
+							////////////////////
+							// Add the collision
+							// If there were no errors, add the detected collision to the list
+							collisions.push_back(
+								new Collision(normal, cBod, Other, cBod_pac, Other_pac)
+								);
 
-						////////////////////
-						// Add the collision
-						// If there were no errors, add the detected collision to the list
-						collisions.push_back(
-							new Collision(normal, cBod, Other, cBod_pac, Other_pac)
-							);
+						} // if (collision)
 
-					} // if (collision)
+					} // if ( CanCollideWith() )
+
 				} // for (it_b)
 
 				// End of collision detection
@@ -515,6 +564,12 @@ namespace FusionEngine
 
 		//////////////////////
 		// Collision response
+		// Make sure we don't respond to the same collision twice.
+		collisions.sort(CollisionBefore);
+		collisions.unique(CollisionEqual);
+		collisions.sort(CollisionAfter);
+		collisions.unique(CollisionEqual);
+
 		CollisionList::iterator col_it = collisions.begin();
 		for (;col_it != collisions.end(); ++col_it)
 		{
@@ -635,14 +690,15 @@ namespace FusionEngine
 
 			// Finally, call each object's collision callback
 			// Find the point where the two objects touch
-			CL_Vector2 poc;
+			CL_Vector2 poc = CL_Vector2(0,0);
+
 			PhysUtil::GuessPointOfCollision(
 				&poc,
 				first_pac, second_pac,
 				first, second);
 
-			first->CollisionResponse(first, poc);
-			first->CollisionResponse(second, poc);
+			first->CollisionWith(second, poc);
+			second->CollisionWith(first, poc);
 
 
 		} // for (it_a)

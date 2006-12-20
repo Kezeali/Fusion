@@ -178,7 +178,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\bitmask.c"
+				RelativePath="..\FusionEngine\bitmask.c"
 				>
 			</File>
 			<File
@@ -186,23 +186,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionBitmask.cpp"
+				RelativePath="..\FusionEngine\FusionBitmask.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsBody.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsCollisionGrid.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsUtils.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsWorld.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
 				>
 			</File>
 			<File
@@ -216,7 +216,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\bitmask.h"
+				RelativePath="..\FusionEngine\bitmask.h"
 				>
 			</File>
 			<File
@@ -224,7 +224,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionBitmask.h"
+				RelativePath="..\FusionEngine\FusionBitmask.h"
 				>
 			</File>
 			<File
@@ -232,27 +232,27 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsBody.h"
+				RelativePath="..\FusionEngine\FusionPhysicsBody.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsCallback.h"
+				RelativePath="..\FusionEngine\FusionPhysicsCallback.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsCollisionGrid.h"
+				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsTypes.h"
+				RelativePath="..\FusionEngine\FusionPhysicsTypes.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsUtils.h"
+				RelativePath="..\FusionEngine\FusionPhysicsUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionPhysicsWorld.h"
+				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
 				>
 			</File>
 		</Filter>

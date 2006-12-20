@@ -110,8 +110,14 @@ namespace FusionEngine
 		//! Removes the state specified
 		void RemoveState(FusionState *state);
 
+		//! Removes the state specified
+		void RemoveState(SharedState state);
+
 		//! Removes the state specified from the queue
 		void RemoveStateFromQueue(FusionState *state);
+
+		//! Removes the state specified from the queue
+		void RemoveStateFromQueue(SharedState state);
 
 		//! Removes all states (including queued)
 		void Clear();
@@ -138,6 +144,7 @@ namespace FusionEngine
 		StateList m_States;
 		//! List of all not-running states
 		StateQueue m_Queued;
+
 		//! Set to false if when FusionState#KeepGoing() returns false.
 		bool m_KeepGoing;
 		//! Last error

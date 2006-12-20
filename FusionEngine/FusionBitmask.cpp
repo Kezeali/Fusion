@@ -120,10 +120,8 @@ namespace FusionEngine
 		return true;
 	}
 
-	int FusionBitmask::Save(const std::string &name, CL_OutputSourceProvider *provider)
+	int FusionBitmask::Save(const std::string &name, CL_OutputSource *source)
 	{
-		CL_OutputSource *source = provider->open_source(name);
-
 		// Mark this as bitmask data
 		source->write_uint32(g_BitmaskCacheFiletype);
 		source->write_uint8(g_BitmaskCacheVersion);
@@ -134,20 +132,41 @@ namespace FusionEngine
 		source->write_int32(m_PPB);
 
 		// Write bitmask data
-		for (int y = 0; y < m_Bitmask->w; y++)
+		for (int y = 0; y < m_Bitmask->h; y++)
 		{
-			for (int x = 0; x < m_Bitmask->h; x++)
+			for (int x = 0; x < m_Bitmask->w; x++)
 			{
-				source->write_bool8( bitmask_getbit(m_Bitmask, x, y) ? true : false );
+				source->write_int32( bitmask_getbit(m_Bitmask, x, y) );
+				//source->write_bool8( bitmask_getbit(m_Bitmask, x, y) ? true : false );
 			}
 		}
 
 		return source->size();
 	}
 
+	int FusionBitmask::Save(const std::string &name, CL_OutputSourceProvider *provider)
+	{
+		CL_OutputSource *source = provider->open_source(name);
+
+		if (source == NULL)
+			return (-1);
+
+		return Save(name, source);
+	}
+
 	bool FusionBitmask::Load(const std::string &name, CL_InputSourceProvider *provider)
 	{
-		CL_InputSource *source = provider->open_source(name);
+		CL_InputSource *source;
+
+		try
+		{
+			source = provider->open_source(name);
+		}
+		catch (CL_Error e)
+		{
+			//Console::getSingleton().Add(e.message);
+			return false;
+		}
 
 		// Make sure the data provided is valid
 		int type = source->read_uint32();
@@ -181,7 +200,8 @@ namespace FusionEngine
 		{
 			for (int x = 0; x < mask_w; x++)
 			{
-				if (source->read_bool8())
+				//if (source->read_bool8())
+				if ( source->read_int32() )
 					bitmask_setbit(m_Bitmask, x, y);
 			}
 		}
@@ -197,10 +217,11 @@ namespace FusionEngine
 			{
 				if (bitmask_getbit(m_Bitmask, x, y))
 				{
-					CL_Pointf point(x*m_PPB + x_offset, y*m_PPB + y_offset);
-					CL_Rectf rect(point, CL_Sizef(m_PPB, m_PPB));
+					//CL_Pointf point(x*m_PPB + x_offset, y*m_PPB + y_offset);
+					//CL_Rectf rect(point, CL_Sizef(m_PPB, m_PPB));
 
-					CL_Display::draw_rect(rect, CL_Color::azure);
+					//CL_Display::draw_rect(rect, CL_Color::azure);
+					CL_Display::draw_pixel(x*m_PPB + x_offset, y*m_PPB + y_offset, CL_Color::azure);
 				}
 			}
 	}

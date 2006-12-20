@@ -279,7 +279,7 @@ namespace FusionEngine
 		{
 			return (one->GetColPoint( two->GetPositionPoint() ));
 		}
-		else if (two->GetUsePixelCollisions()
+		else if (two->GetUsePixelCollisions())
 		{
 			return (two->GetColPoint( one->GetPositionPoint() ));
 		}

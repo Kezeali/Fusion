@@ -1,5 +1,28 @@
+/*
+  Copyright (c) 2006 Fusion Project Team
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+*/
+
 #ifndef Header_FusionEngine_FusionPhysicsWorld
 #define Header_FusionEngine_FusionPhysicsWorld
+
 #if _MSC_VER > 1000
 #pragma once
 #endif
@@ -12,13 +35,15 @@ namespace FusionEngine
 {
 
 	static const float g_PhysGridScale = 0.01f;
-	static const float g_PhysCollisionJump = 0.2f;
+	static const float g_PhysCollisionJump = 0.6f;
 
 	//! Represents a collision
 	struct Collision
 	{
+		//! Basic Constructor.
 		Collision() {};
 
+		//! Basic Constructor.
 		Collision(
 			const CL_Vector2 &normal,
 			FusionPhysicsBody *first, FusionPhysicsBody *second,
@@ -42,7 +67,42 @@ namespace FusionEngine
 		CL_Vector2 First_Position;
 		//! Position of the second object during the collision
 		CL_Vector2 Second_Position;
+
+		//friend bool operator< (const Collision &lhs, const Collision &rhs);
+		//friend bool operator== (const Collision &lhs, const Collision &rhs);
+
 	};
+
+
+	//bool operator< (const Collision &lhs, const Collision &rhs)
+	//{
+	//	if (&lhs.First < &rhs.Second && &lhs.Second < &rhs.First)
+	//	{
+	//		if (&lhs.First < &rhs.First && &lhs.Second < &rhs.Second)
+	//		{
+	//			return true;
+	//		}
+	//	}
+
+	//	return false;
+	//}
+
+	//bool operator== (const Collision &lhs, const Collision &rhs)
+	//{
+	//	// Both collisions are exactly the same
+	//	if (&lhs.First < &rhs.First && &lhs.Second < &rhs.Second)
+	//	{
+	//		return true;
+	//	}
+
+	//	// Both collisions are essentually the same, with the first and second inverted
+	//	if (&lhs.First == &rhs.Second && &lhs.Second == &rhs.First)
+	//	{
+	//		return true;
+	//	}
+
+	//	return false;
+	//}
 
 	//! Used for initialising bodies.
 	/*!

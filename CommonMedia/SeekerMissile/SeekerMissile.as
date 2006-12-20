@@ -1,12 +1,13 @@
-void seekerCreation()
+void seekerCreation(int ind)
 {
+	// ind is the object index of this object
 	// I just made this to show that you can have a creation method for projectiles... I don't have anything important for it to do...
 	
 	// Applies a force toward the current facing
-	ApplyEngineForce(m_engineforce);
+	ApplyEngineForce(ind, m_engineforce);
 }
 
-void seekerStep()
+void seekerStep(int ind)
 {
 	// Finds the ship nearest this ship and moves towards it
 	float distance = GetDistanceToNearestShip();
@@ -19,15 +20,15 @@ void seekerStep()
 		
 		// If we're near a ship, move faster
 		Vector aim = GetUnitVectorToNearestShip();
-		aim.x = aim.x * m_engineforce + 0.2;
+		aim.x = aim.x * m_engineforce() + 0.2;
 		aim.y = aim.y * m_engineforce + 0.2;
 		// Applys the given force vector
-		ApplyForce(aim);
+		ApplyForce(ind, aim);
 	}
 	else
 	{
 		// If we aren't near a ship, move slower
-		ApplyEngineForce(m_engineforce);
+		ApplyEngineForce(ind, m_engineforce);
 	}
 }
 

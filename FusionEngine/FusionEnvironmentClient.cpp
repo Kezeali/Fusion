@@ -36,12 +36,10 @@ bool ClientEnvironment::Initialise()
 {
 	// Particle system
 	L_ParticleSystem::init();
+
 	// Input manager
 	FusionInput::getSingleton().Initialise();
-	// Setup and run the package syncroniser
-	PackSyncState *ps = new PackSyncState();
-	ps->MakeClient(m_Hostname, m_Port);
-	_pushMessage(new StateMessage(StateMessage::ADDSTATE, ps));
+	FusionInput::getSingleton().Test();
 
 	// Not doing threading any more, 'cause that's just how we roll
 	//m_NetManThread = new CL_Thread(m_NetworkManager, false);

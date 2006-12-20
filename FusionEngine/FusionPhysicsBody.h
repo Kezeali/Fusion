@@ -88,14 +88,26 @@ namespace FusionEngine
 		 * The world in which this body resides.
 		 */
 		FusionPhysicsBody(FusionPhysicsWorld *world);
+
+		//! Constructor with handler.
+		/*!
+		 * \param[in] world
+		 * The world in which this body resides.
+		 *
+		 * \param[in] handler
+		 * The collision response object.
+		 */
+		FusionPhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler);
+
 		//! Constructor with response param.
 		/*!
 		 * \param world
 		 * The world in which this body resides.
+		 *
 		 * \param response
 		 * The response function to call on upon a collision.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, CollisionCallback response);
+		FusionPhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response);
 
 	public:
 		//! Sets the type ID for this object.
@@ -119,9 +131,11 @@ namespace FusionEngine
 
 		//! Preferably this is used to move the body.
 		virtual void ApplyForce(const CL_Vector2 &force);
-		//! Preferably this is used to move the body (if it has rotational velocity.)
+		//! Applies force based on the current orientation and rotational velocity.
 		/*!
-		 * Applies force based on the current orientation and rotational velocity.
+		 * An engine force vector will be calculated during the simulation step,
+		 * and added to the other forces, to make sure rotational velocity & step time
+		 * are taken into account.
 		 */
 		virtual void ApplyEngineForce(float force);
 		//! Sets the constant used to apply damping to the body's movement.
@@ -192,22 +206,26 @@ namespace FusionEngine
 		 */
 		void SetUserData(void *userdata);
 		//! Retrives user data
-		const void *GetUserData() const;
+		void *GetUserData() const;
 
-		//! Sets the collision response callback
-		void SetCollisionCallback(const CollisionCallback &method);
+		//! Sets a collision response callback
+		void SetCollisionCallback(const CollisionCallback &callback);
 
+		//! Sets a collision handler
+		void SetCollisionHandler(CollisionHandler *handler);
+
+		//! Returns true if the given body can experiance a collision with this one.
+		bool CanCollideWith(FusionPhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void CollisionResponse(FusionPhysicsBody *other);
-		//! Calls the collision response (if this body has one) with a reference point.
+		void CollisionWith(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+
+		//! [depreciated] Use CollisionWith()
 		void CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
 
 		//! Returns the current collision config.
 		int GetCollisionFlags() const;
-
 		//! Returns true if the given flag is set.
 		bool CheckCollisionFlag(int flag);
-
 		//! Allows the collision flags to be set manually
 		/*!
 		 * This isn't usually necessary, as collision flags get set by relavant
@@ -306,8 +324,12 @@ namespace FusionEngine
 		//@{
 		//! Sets the position.
 		virtual void _setPosition(const CL_Vector2 &position);
+
 		//! Sets the force.
 		virtual void _setForce(const CL_Vector2 &force);
+		//! Sets the engine force.
+		virtual void _setEngineForce(float force);
+
 		//! Sets the acceleration.
 		virtual void _setAcceleration(const CL_Vector2 &acceleration);
 		//! Sets the velocity.
@@ -370,6 +392,9 @@ namespace FusionEngine
 
 		//! \see FusionPhysicsCallback.h
 		CollisionCallback m_CollisionResponse;
+		//! Collsion handler
+		CollisionHandler *m_CollisionHandler;
+
 		//! Data which may be useful for collision responses, etc.
 		void *m_UserData;
 		//! Collision flags, such as C_STATIC

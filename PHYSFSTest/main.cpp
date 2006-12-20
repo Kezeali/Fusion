@@ -1,8 +1,8 @@
-#include "Common.h"
+#include "..\FusionEngine\Common.h"
 
-#include "FusionPhysFS.h"
+#include "..\FusionEngine\FusionPhysFS.h"
 
-#include "PhysFS.h"
+#include "..\FusionEngine\PhysFS.h"
 
 //using namespace FusionEngine;
 
@@ -67,6 +67,7 @@ class PhysFSTest : public CL_ClanApplication
 			CL_Surface surface2(png);
 			// ... And finally the shorthand version of the standard way
 			CL_Surface surface3("Body.png");
+
 
 			// Draw!
 			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
