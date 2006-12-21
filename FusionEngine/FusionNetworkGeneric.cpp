@@ -1,5 +1,5 @@
 
-#include "FusionNetworkServer.h"
+#include "FusionNetworkGeneric.h"
 
 /// Fusion
 #include "FusionNetworkUtils.h"
