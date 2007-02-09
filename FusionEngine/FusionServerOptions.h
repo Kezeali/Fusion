@@ -45,7 +45,7 @@ namespace FusionEngine
 		//! Max connections
 		unsigned int mMaxClients;
 		//! Maximum messages per second (how oftern to send states to a specific client)
-		std::vector<PlayerInd> mMaxMessageRate;
+		std::vector<ObjectID> mMaxMessageRate;
 		//! Underlying send rate limiter (max time the net can take per step)
 		unsigned int mNetDelay;
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks

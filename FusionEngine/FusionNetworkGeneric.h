@@ -85,7 +85,7 @@ namespace FusionEngine
 
 	public:
 		//! Maps Fusion player ids to RakNet PlayerIDs
-		typedef std::map<FusionEngine::PlayerInd, PlayerID> PlayerIDMap;
+		typedef std::map<FusionEngine::ObjectID, PlayerID> PlayerIDMap;
 		//! Type for storing events
 		typedef std::deque<Event*> EventQueue;
 
@@ -99,7 +99,7 @@ namespace FusionEngine
 		 */
 		void SendAddPlayer();
 		//! Sends a Remove player message.
-		void SendRemovePlayer(PlayerInd player);
+		void SendRemovePlayer(ObjectID player);
 		//! Sends a ShipState message.
 		void SendShipState(const ShipState &state);
 		//! Sends a Chat message.

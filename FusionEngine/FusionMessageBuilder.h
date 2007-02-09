@@ -49,17 +49,17 @@ namespace FusionEngine
 	{
 	public:
 		//! Builds a message from a ShipState (usually outgoing)
-		static FusionMessage *BuildMessage(const ShipState &input, PlayerInd playerid);
+		static FusionMessage *BuildMessage(const ShipState &input, ObjectID playerid);
 		//! Builds a message from a ProjectileState (usually outgoing)
-		static FusionMessage *BuildMessage(const ProjectileState &input, PlayerInd playerid);
+		static FusionMessage *BuildMessage(const ProjectileState &input, ObjectID playerid);
 		//! Builds a message from a InputState (usually outgoing)
-		static FusionMessage *BuildMessage(const ShipInput &input, PlayerInd playerid);
+		static FusionMessage *BuildMessage(const ShipInput &input, ObjectID playerid);
 
 		//! Builds a message from a network packet (usually incoming)
-		static FusionMessage *BuildMessage(Packet *packet, PlayerInd playerid);
+		static FusionMessage *BuildMessage(Packet *packet, ObjectID playerid);
 
 		//! Builds a message from a RakNet system message (I call these 'events')
-		static FusionMessage *BuildEventMessage(Packet *packet, PlayerInd playerind);
+		static FusionMessage *BuildEventMessage(Packet *packet, ObjectID ObjectID);
 
 	};
 

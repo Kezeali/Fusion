@@ -124,7 +124,7 @@ namespace FusionEngine
 		 *
 		 * This gets a new player ID, which can be assigned to a new player.
 		 */
-		PlayerInd getNextPID();
+		ObjectID getNextPID();
 
 		/*!
 		 * \brief
@@ -132,7 +132,7 @@ namespace FusionEngine
 		 *
 		 * If the map has no available spawn positions, .
 		 */
-		const CL_Vector2 &getSpawnPos(PlayerInd pid);
+		const Vector2 &getSpawnPos(ObjectID pid);
 
 		/*!
 		 * \brief

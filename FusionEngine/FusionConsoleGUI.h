@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsResponse
-#define Header_FusionEngine_FusionPhysicsResponse
+#ifndef Header_Fusion_ConsoleGUI
+#define Header_Fusion_ConsoleGUI
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,33 +29,55 @@
 
 #include "FusionCommon.h"
 
+/// Inherited
+#include "FusionState.h"
+#include "FusionSingleton.h"
+
 namespace FusionEngine
 {
 
 	/*!
 	 * \brief
-	 * [depreciated]
-	 * Each body can have a derived class for different collison responses :D.
-	 *
-	 * \see
-	 * FusionPhysicsBody
+	 * Connects the CEGUI console window with the Console class.
 	 */
-	class FusionPhysicsResponse
+	class ConsoleGUI : public FusionState
 	{
 	public:
-		//! Constructor
-		FusionPhysicsResponse();
-		//! Virtual Destructor
-		virtual ~FusionPhysicsResponse();
+		//! Basic constructor.
+		ConsoleGUI();
+
+		//! Destructor
+		~ConsoleGUI();
 
 	public:
-		//! What to do if a collision is detected
-		virtual void CollisionResponse(const FusionPhysicsBody *other) =0;
-		//! What to do if an absolute position for a collision is given
-		virtual void CollisionResponse(const FusionPhysicsBody *other, const Vector2 &collision_point) =0;
+		//! Inits the gui
+		virtual bool Initialise();
+
+		//! Updates the inputs
+		virtual bool Update(unsigned int split);
+
+		//! Draws the gui
+		virtual void Draw();
+
+		//! Unbinds
+		virtual void CleanUp();
+
+		bool onMouseEnter(const CEGUI::EventArgs& e);
+		bool onMouseLeave(const CEGUI::EventArgs& e);
+		bool onEditBoxAccepted(const CEGUI::EventArgs& e);
+		bool onEditBoxKeyUp(const CEGUI::EventArgs &e);
+		bool onConsoleNewLine(const std::string &data);
 
 	protected:
-		FusionPhysicsBody *m_Owner;
+		CEGUI::Window *m_Wind;
+		CEGUI::Editbox *m_EditBox;
+		CEGUI::MultiLineEditbox *m_HistoryBox;
+
+		int m_HistoryPos;
+		bool m_RecentInHistory;
+
+		//! Enters text
+		void enterText(const CEGUI::String &text);
 
 	};
 

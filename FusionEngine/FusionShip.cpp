@@ -28,8 +28,8 @@ m_InputChanged(true)
 
 	/// State
 	m_InitialState.PID = 0;
-	m_InitialState.Position = CL_Vector2::ZERO;
-	m_InitialState.Velocity = CL_Vector2::ZERO;
+	m_InitialState.Position = Vector2::ZERO;
+	m_InitialState.Velocity = Vector2::ZERO;
 	m_InitialState.Rotation = 0;
 	m_InitialState.RotationalVelocity = 0;
 
@@ -94,7 +94,7 @@ FusionShip::~FusionShip()
 	// Nothing to do here
 }
 
-void FusionShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
+void FusionShip::SetVelocity(const Vector2 &velocity, bool physics)
 {
 	m_CurrentState.Velocity = velocity;
 
@@ -104,7 +104,7 @@ void FusionShip::SetVelocity(const CL_Vector2 &velocity, bool physics)
 		m_PhysicalBody->_setVelocity(velocity);
 }
 
-void FusionShip::SetPosition(const CL_Vector2 &position, bool physics)
+void FusionShip::SetPosition(const Vector2 &position, bool physics)
 {
 	m_CurrentState.Position = position;
 
@@ -202,8 +202,8 @@ void FusionShip::RevertToInitialState()
 	m_CurrentState = m_InitialState;
 }
 
-void FusionShip::CollisionResponse(const FusionEngine::FusionPhysicsBody *other, const CL_Vector2 &collision_point)
+void FusionShip::CollisionResponse(const FusionEngine::FusionPhysicsBody *other, const Vector2 &collision_point)
 {
-	//m_PhysicalBody->_setForce(CL_Vector2::ZERO);
+	//m_PhysicalBody->_setForce(Vector2::ZERO);
 	m_PhysicalBody->ApplyForce(-m_PhysicalBody->GetVelocity());
 }

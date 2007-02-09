@@ -50,8 +50,8 @@ namespace FusionEngine
 	/*!
 	 * \todo AABB and BB collision detection.
 	 *
-	 * \todo Get rid of memcpy where CL_Vector2::operator= could be used, because
-	 * copying two (int)s should be faster than copying a whole CL_Vector2...
+	 * \todo Get rid of memcpy where Vector2::operator= could be used, because
+	 * copying two (int)s should be faster than copying a whole Vector2...
 	 */
 	class PhysUtil
 	{
@@ -78,8 +78,8 @@ namespace FusionEngine
 		 * The second object involved in the collision.
 		 */
 		static bool GuessPointOfCollision(
-			CL_Vector2 *output,
-			const CL_Vector2 &pos_one, const CL_Vector2 &pos_two,
+			Vector2 *output,
+			const Vector2 &pos_one, const Vector2 &pos_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
 
 		//! Used to check for collisions between moving objects.
@@ -108,8 +108,8 @@ namespace FusionEngine
 		 * Whether to return the closest point (true), or the furthermost point (false)
 		 */
 		static bool FindCollisions(
-			CL_Vector2 *output_one, CL_Vector2 *output_two,
-			const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
+			Vector2 *output_one, Vector2 *output_two,
+			const Vector2 &vector_one, const Vector2 &vector_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two,
 			float epsilon = 0.01f, bool find_close = true);
 
@@ -132,7 +132,7 @@ namespace FusionEngine
 		 * The object which may be colliding against param one.
 		 */
 		static bool CollisionCheck(
-			const CL_Vector2 &pos_one, const CL_Vector2 &two_pos,
+			const Vector2 &pos_one, const Vector2 &two_pos,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
 
 		//! [depreciated] Use the ClanLib line math function.
@@ -151,11 +151,11 @@ namespace FusionEngine
 		 * \param[in] vector_one The first vector.
 		 * \param[in] vector_two The second vector.
 		 *
-		 * \returns A CL_Vector2 - The point on the vectors where an intersection is found.
+		 * \returns A Vector2 - The point on the vectors where an intersection is found.
 		 */
-		static void CalculateVectorIntersection(CL_Vector2 *output,
-			const CL_Vector2 &st_one, const CL_Vector2 &st_two,
-			const CL_Vector2 &vector_one, const CL_Vector2 &vector_two);
+		static void CalculateVectorIntersection(Vector2 *output,
+			const Vector2 &st_one, const Vector2 &st_two,
+			const Vector2 &vector_one, const Vector2 &vector_two);
 
 		//! Returns true if the point is within the given vectors.
 		/*!
@@ -177,9 +177,9 @@ namespace FusionEngine
 		 * \retval True If the point 'intersec' is on the given lines
 		 */
 		static bool CheckBoundaries(
-			const CL_Vector2 &pos_one, const CL_Vector2 &pos_two,
-			const CL_Vector2 &vec_one, const CL_Vector2 &vec_two,
-			const CL_Vector2 &intersec);
+			const Vector2 &pos_one, const Vector2 &pos_two,
+			const Vector2 &vec_one, const Vector2 &vec_two,
+			const Vector2 &intersec);
 
 		//! Calculates the normal to the surface of an object, at a certain point.
 		/*!
@@ -196,8 +196,8 @@ namespace FusionEngine
 		 * The body to use if a reference body is required.
 		 */
 		static void CalculateNormal(
-			CL_Vector2 *output,
-			const CL_Vector2 &ref_pos, const CL_Vector2 &other_pos,
+			Vector2 *output,
+			const Vector2 &ref_pos, const Vector2 &other_pos,
 			const FusionPhysicsBody *ref, const FusionPhysicsBody *other);
 
 	};

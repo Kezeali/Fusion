@@ -65,12 +65,12 @@ namespace FusionEngine
 
 	public:
 		//! A list of ships
-		typedef std::map<PlayerInd, FusionShip*> ShipList;
+		typedef std::map<ObjectID, FusionShip*> ShipList;
 		//! A list of projectiles
 		typedef std::map<ObjectID, FusionProjectile*> ProjectileList;
 
 		//! A list of playerID's mapped to resourceID's
-		typedef std::map<PlayerInd, std::string> PlayerShipResMap;
+		typedef std::map<ObjectID, std::string> PlayerShipResMap;
 
 		//! A list of inputs
 		typedef std::vector<ShipInput> ShipInputList;
@@ -143,7 +143,7 @@ namespace FusionEngine
 		/*!
 		 * Used when ship resources are reloaded (e.g. at a level change)
 		 * and thus m_ShipResources is out of date; this map allows the
-		 * correct Resource pointers to be mapped to the correct PlayerInds.
+		 * correct Resource pointers to be mapped to the correct ObjectIDs.
 		 */
 		PlayerShipResMap m_PlayerShipResourceIds;
 

@@ -103,7 +103,7 @@ namespace FusionEngine
 		NetworkSettings mNetworkOptions;
 
 		//! Set the controls for defaults
-		void DefaultPlayerControls(PlayerInd player);
+		void DefaultPlayerControls(ObjectID player);
 		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
 

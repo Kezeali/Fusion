@@ -49,7 +49,7 @@ namespace FusionEngine
 
 	public:
 		void CollisionResponse(void);
-		void CollisionResponse(const CL_Vector2 &collision_point);
+		void CollisionResponse(const Vector2 &collision_point);
 	};
 
 }

@@ -520,7 +520,7 @@ namespace FusionEngine
 
 		if (bitmask_overlap_pos(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y, &x, &y))
 		{
-			memcpy(output, &CL_Point(x, y), sizeof(CL_Vector2));
+			memcpy(output, &CL_Point(x, y), sizeof(Vector2));
 			return true;
 		}
 
@@ -538,7 +538,7 @@ namespace FusionEngine
 		return (bitmask_overlap_pos(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y, x_out, y_out) == 1) ? true : false;
 	}
 
-	void FusionBitmask::CalcCollisionNormal(CL_Vector2 *output, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
+	void FusionBitmask::CalcCollisionNormal(Vector2 *output, const FusionEngine::FusionBitmask *other, const CL_Point &offset)
 	{
 		int scaled_x = int( offset.x * m_PPBInverse );
 		int scaled_y = int( offset.y * m_PPBInverse );
@@ -548,7 +548,7 @@ namespace FusionEngine
 		int dy = bitmask_overlap_area(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y+1) - 
 			bitmask_overlap_area(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y-1);
 
-		memcpy(output, &CL_Vector2(dx, dy), sizeof(CL_Vector2));
+		memcpy(output, &Vector2(dx, dy), sizeof(Vector2));
 	}
 
 }

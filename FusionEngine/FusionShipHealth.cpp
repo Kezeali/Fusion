@@ -58,7 +58,7 @@ namespace FusionEngine
 
 	void ShipHealthDrawable::Draw()
 	{
-		CL_Vector2 pos = m_ParentNode->GetPosition();
+		Vector2 pos = m_ParentNode->GetPosition();
 
 		float len = (float(m_Value)/float(m_Max)) * float(m_Width);
 		CL_Rectf rect(pos.x, pos.y - 6, pos.x + len, pos.y + 1);

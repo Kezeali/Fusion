@@ -14,8 +14,8 @@ namespace FusionEngine
 		// State
 		m_CurrentState.PID = 0;
 		m_CurrentState.OID = 0;
-		m_CurrentState.Position = CL_Vector2::ZERO;
-		m_CurrentState.Velocity = CL_Vector2::ZERO;
+		m_CurrentState.Position = Vector2::ZERO;
+		m_CurrentState.Velocity = Vector2::ZERO;
 		m_CurrentState.Rotation = 0;
 		m_CurrentState.RotationalVelocity = 0;
 

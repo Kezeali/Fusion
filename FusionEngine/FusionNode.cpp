@@ -23,9 +23,9 @@ namespace FusionEngine
 		m_AllowChildSort(false),
 		m_NeedChildSort(false),
 		m_Depth(0),
-		m_Position(CL_Vector2::ZERO),
+		m_Position(Vector2::ZERO),
 		m_Facing(0),
-		m_DerivedPosition(CL_Vector2::ZERO),
+		m_DerivedPosition(Vector2::ZERO),
 		m_DerivedFacing(0)
 	{
 		NeedUpdate();
@@ -155,14 +155,14 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionNode::SetPosition(const CL_Vector2 &position)
+	void FusionNode::SetPosition(const Vector2 &position)
 	{
 		m_Position = position;
 
 		NeedUpdate();
 	}
 
-	const CL_Vector2 &FusionNode::GetPosition() const
+	const Vector2 &FusionNode::GetPosition() const
 	{
 		return m_Position;
 	}
@@ -179,7 +179,7 @@ namespace FusionEngine
 		return m_Facing;
 	}
 
-	const CL_Vector2 &FusionNode::_getDerivedPosition() const
+	const Vector2 &FusionNode::_getDerivedPosition() const
 	{
 		if (m_NeedParentUpdate)
 		{
@@ -201,7 +201,7 @@ namespace FusionEngine
 		return m_DerivedFacing;
 	}
 
-	const CL_Vector2 &FusionNode::GetGlobalPosition() const
+	const Vector2 &FusionNode::GetGlobalPosition() const
 	{
 		return _getDerivedPosition();
 	}
@@ -358,7 +358,7 @@ namespace FusionEngine
 		return m_InSceneGraph;
 	}
 
-	FusionNode *FusionNode::CreateChildNode(const CL_Vector2 &position, float facing)
+	FusionNode *FusionNode::CreateChildNode(const Vector2 &position, float facing)
 	{
 		cl_assert(m_Creator);
 
@@ -375,7 +375,7 @@ namespace FusionEngine
 		cl_assert(m_Creator);
 
 		FusionNode *child = m_Creator->CreateNode();
-		child->SetPosition(CL_Vector2(position.x, position.y));
+		child->SetPosition(Vector2(position.x, position.y));
 		child->SetFacing(facing);
 		AddChild(child);
 

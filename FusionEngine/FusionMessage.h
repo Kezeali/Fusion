@@ -70,7 +70,7 @@ namespace FusionEngine
 		unsigned int GetLength() const;
 
 		//! Read PlayerID
-		PlayerID GetPlayerInd() const;
+		PlayerID GetObjectID() const;
 
 	private:
 		//! The client from whence it came

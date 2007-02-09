@@ -44,7 +44,7 @@ namespace FusionEngine
 	struct ShipInput
 	{
 		//! Player index
-		PlayerInd pid;
+		ObjectID pid;
 
 		//! Thrust
 		bool thrust;

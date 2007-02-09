@@ -62,7 +62,7 @@ namespace FusionEngine
 		const ProjectileState &GetState() const;
 
 		//! Callback
-		void CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+		void CollisionResponse(FusionPhysicsBody *other, const Vector2 &collision_point);
 
 		//! Calls GenericEnvioronment#Detonate(this).
 		/*!

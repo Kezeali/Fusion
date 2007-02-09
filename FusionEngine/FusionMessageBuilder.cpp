@@ -49,7 +49,7 @@ FusionMessage *MessageBuilder::BuildMessage(const ShipState &input)
 	return m;
 }
 
-FusionMessage *MessageBuilder::BuildMessage(const FusionEngine::ProjectileState &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const FusionEngine::ProjectileState &input, ObjectID playerid)
 {
 	RakNet::BitStream out_stream;
 
@@ -76,7 +76,7 @@ FusionMessage *MessageBuilder::BuildMessage(const FusionEngine::ProjectileState 
 	return m;
 }
 
-FusionMessage *MessageBuilder::BuildMessage(const ShipInput &input, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(const ShipInput &input, ObjectID playerid)
 {
 	RakNet::BitStream out_stream;
 
@@ -102,7 +102,7 @@ FusionMessage *MessageBuilder::BuildMessage(const ShipInput &input, PlayerInd pl
 	return m;
 }
 
-FusionMessage *MessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
+FusionMessage *MessageBuilder::BuildMessage(Packet *packet, ObjectID playerid)
 {
 	FusionMessage *m;
 	unsigned char packetid = NetUtils::GetPacketIdentifier(packet);
@@ -159,10 +159,10 @@ FusionMessage *MessageBuilder::BuildMessage(Packet *packet, PlayerInd playerid)
 	return m;
 }
 
-FusionMessage *MessageBuilder::BuildEventMessage(Packet *packet, PlayerInd playerind)
+FusionMessage *MessageBuilder::BuildEventMessage(Packet *packet, ObjectID ObjectID)
 {
 	unsigned char type = NetUtils::GetPacketIdentifier(packet);
 
-	FusionMessage *m = new FusionMessage(0, type, playerind, packet->data, packet->length);
+	FusionMessage *m = new FusionMessage(0, type, ObjectID, packet->data, packet->length);
 	return m;
 }

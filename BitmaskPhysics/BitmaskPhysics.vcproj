@@ -206,6 +206,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionVector2.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -253,6 +257,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVector2.h"
 				>
 			</File>
 		</Filter>

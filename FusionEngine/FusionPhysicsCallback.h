@@ -35,12 +35,16 @@
 
 #include "FusionCommon.h"
 
+// Boost
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
+
 namespace FusionEngine
 {
-	//! Defines a function which can be used as a collision callback.
-	typedef boost::function<void (const FusionPhysicsBody*, const CL_Vector2&)> CollisionCallback;
+	//! [depreciated] Defines a function which can be used as a collision callback.
+	typedef boost::function<void (const FusionPhysicsBody*, const Vector2&)> CollisionCallback;
 
-	//! Returns a CollisionCallback corrosponding to the given member function.
+	//! [depreciated] Returns a CollisionCallback corrosponding to the given member function.
 	/*!
 	 * \param instance The object from which to call this function.
 	 * \param method The member function to call from the object given in the first arg.
@@ -50,7 +54,7 @@ namespace FusionEngine
 	 * just as easy, so this function isn't very useful...
 	 */
 	template <class T>
-	CollisionCallback CreateCCB(T *instance, void(T::*method)(const FusionPhysicsBody*, const CL_Vector2&))
+	CollisionCallback CreateCCB(T *instance, void(T::*method)(const FusionPhysicsBody*, const Vector2&))
 	{
 		return boost::bind(method, instance, _1, _2);
 	}
@@ -62,7 +66,7 @@ namespace FusionEngine
 		//! Return true if collision checks should be preformed on the passed body.
 		virtual bool CanCollideWith(const FusionPhysicsBody *other) =0;
 		//! Called on collision with the given body, at the given point.
-		virtual void CollisionWith(const FusionPhysicsBody *other, const CL_Vector2 &point) =0;
+		virtual void CollisionWith(const FusionPhysicsBody *other, const Vector2 &point) =0;
 	};
 
 }
@@ -97,10 +101,10 @@ namespace FusionEngine
 
 	//! Physics collision response callback type
 	//template <class T>
-	//class CollisionCallback : public Callback2<T*, const FusionPhysicsBody*, const CL_Vector2&>
+	//class CollisionCallback : public Callback2<T*, const FusionPhysicsBody*, const Vector2&>
 	//{
 	//	//! Constructor
-	//	CollisionCallback(FusionShip* instance, void(T::*member)(const FusionPhysicsBody*, const CL_Vector2&))
+	//	CollisionCallback(FusionShip* instance, void(T::*member)(const FusionPhysicsBody*, const Vector2&))
 	//		: Callback2(instance, member)
 	//	{
 	//	}
@@ -109,7 +113,7 @@ namespace FusionEngine
 	//template <class T>
 	//struct CollisionCallback
 	//{
-	//	boost::function<void (T*, const FusionPhysicsBody*, const CL_Vector2&)> m_CallBack;
+	//	boost::function<void (T*, const FusionPhysicsBody*, const Vector2&)> m_CallBack;
 	//}
 
 	////! Abstract base class for callbacks
@@ -118,7 +122,7 @@ namespace FusionEngine
 	//public:
 	//	//! Use like this: (*mycallback)(myparam);
 	//	virtual void operator()(const FusionPhysicsBody *other)=0;
-	//	virtual void operator()(const FusionPhysicsBody *other, const CL_Vector2 &collision_point)=0;
+	//	virtual void operator()(const FusionPhysicsBody *other, const Vector2 &collision_point)=0;
 	//};
 
 
@@ -157,7 +161,7 @@ namespace FusionEngine
 	//		(*m_Instance.*m_FuncPtr)(other);
 	//	};
 	//	//! Use like this: (*mycallback)(myparam, mysecondparam);
-	//	virtual void operator()(const FusionPhysicsBody *other, const CL_Vector2 &collision_point)
+	//	virtual void operator()(const FusionPhysicsBody *other, const Vector2 &collision_point)
 	//	{
 	//		// Execute the callback method of the instance
 	//		(*m_Instance.*m_FuncPtr)(other);
@@ -167,7 +171,7 @@ namespace FusionEngine
 	//	//! Pointer to member function (of class T)
 	//	void (T::*m_FuncPtr)(const FusionPhysicsBody *other);
 	//	//! Pointer to member function (of class T)
-	//	void (T::*m_FuncPtr)(const FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+	//	void (T::*m_FuncPtr)(const FusionPhysicsBody *other, const Vector2 &collision_point);
 	//	//! Pointer to object
 	//	T *m_Instance;
 	//};

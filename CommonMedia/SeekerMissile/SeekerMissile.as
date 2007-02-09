@@ -1,4 +1,4 @@
-void seekerCreation(int ind)
+void seekerCreation(uint16 ind)
 {
 	// ind is the object index of this object
 	// I just made this to show that you can have a creation method for projectiles... I don't have anything important for it to do...
@@ -7,57 +7,58 @@ void seekerCreation(int ind)
 	ApplyEngineForce(ind, m_engineforce);
 }
 
-void seekerStep(int ind)
+void seekerStep(uint16 ind)
 {
 	// Finds the ship nearest this ship and moves towards it
-	float distance = GetDistanceToNearestShip();
+	float distance = GetDistanceToNearestShip(ind);
 	if (distance < 100)
 	{
-		if (m_velocity.length() <= m_engineforce)
+		if (GetObjectVelocity.length() <= Get_engineforce(ind))
 		{
-			CreateEffect("targetAquired", m_position.x, m_position.y);
+			Vector pos = GetObjectPosition(ind);
+			CreateEffect("targetAquired", pos.x, pos.y);
 		}
 		
 		// If we're near a ship, move faster
 		Vector aim = GetUnitVectorToNearestShip();
-		aim.x = aim.x * m_engineforce() + 0.2;
-		aim.y = aim.y * m_engineforce + 0.2;
+		aim.x = aim.x * Get_engineforce(ind) + 0.2;
+		aim.y = aim.y * Get_engineforce(ind) + 0.2;
 		// Applys the given force vector
 		ApplyForce(ind, aim);
 	}
 	else
 	{
 		// If we aren't near a ship, move slower
-		ApplyEngineForce(ind, m_engineforce);
+		ApplyEngineForce(ind);
 	}
 }
 
 void clusterStep()
 {
 	// Applys a force towards the current facing
-	ApplyForce(m_engineforce);
+	ApplyEngineForce(ind);
 }
 
-void seekerOnCollision(int x, int y)
+void seekerOnCollision(uint16 ind, int x, int y)
 {
 	// Mwahahahaha
 	for (int i = 0; i<10; i+=1)
 	{
 		a = 36 * i;
 		// Creates a projectile of the given type at the given coords and starting angle.
-		CreateProjectile("cluster", x, y, a);
+		CreateProjectile(GetOwner(ind), "cluster", x, y, a);
 	}
-	Detonate();
+	Detonate(ind);
 }
 
-void clusterOnCollision(int x, int y)
+void clusterOnCollision(uint16 ind, int x, int y)
 {
 	// Deletes this projectile, after doing the damage specified in the XML config
-	Detonate();
+	Detonate(ind);
 }
 
-void onFire()
+void onFire(uint16 ship)
 {
 	// FireProjectile creates a projectile in the appropriate location for the ship firing it
-	FireProjectile("seeker");
+	FireProjectile(ship, "seeker");
 }

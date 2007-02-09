@@ -12,7 +12,7 @@ namespace FusionEngine
 
 		mPlayerInputs.resize(g_MaxPlayers);
 		// Do the same for all the players
-		for (PlayerInd i=0; i<g_MaxPlayers; i++)
+		for (ObjectID i=0; i<g_MaxPlayers; i++)
 		{
 			DefaultPlayerControls(i);
 		}
@@ -29,7 +29,7 @@ namespace FusionEngine
 			SaveToFile(filename);
 	}
 
-	void ClientOptions::DefaultPlayerControls(PlayerInd player)
+	void ClientOptions::DefaultPlayerControls(ObjectID player)
 	{
 		switch (player)
 		{

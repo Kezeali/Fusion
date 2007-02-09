@@ -20,14 +20,15 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_Fusion_Common
-#define Header_Fusion_Common
+#ifndef Header_FusionEngine_Common
+#define Header_FusionEngine_Common
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
 #include "Common.h"
+#include "FusionVector2.h"
 
 // Boost
 //#include <boost/function.hpp>
@@ -43,8 +44,6 @@ namespace FusionEngine
 	static const double g_DegToRad = M_PI/180.0f;
 
 	// --Useful functions--
-	// Ohh, I'm such a rebel - look at all these macro-type functions in smallcaps!
-
 	//! Converts deg to rad
 	static inline float fe_degtorad(float deg) { return deg * g_DegToRad; }
 
@@ -136,7 +135,6 @@ namespace FusionEngine
 
 
 	// --Typedefs--
-	typedef unsigned short PlayerInd;
 	typedef unsigned short ObjectID;
 	//typedef std::string ResourceID;
 

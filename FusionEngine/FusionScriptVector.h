@@ -25,50 +25,38 @@
 		Elliot Hayward
 */
 
-#include "FusionScriptingEngine.h"
+#ifndef Header_FusionEngine_ScriptVector
+#define Header_FusionEngine_ScriptVector
+
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionCommon.h"
 
 namespace FusionEngine
 {
-	ScriptingEngine::ScriptingEngine()
+
+	class ScriptVector : public Vector2
 	{
-		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+	public:
+		//! Copying constructor.
+		ScriptVector(const ScriptVector &other);
+		//! Init. constructor
+		ScriptVector(float x = 0.0, float y = 0.0);
 
-		registerGlobals();
-	}
+	public:
+		//! Increase reference count
+		void AddRef();
+		//! Decrease reference count. Deletes if refCount = 0
+		void Release();
 
-
-	asIScriptEngine *ScriptingEngine::GetEnginePtr() const
-	{
-		return m_asEngine;
-	}
-
-	void ScriptingEngine::RegisterScript(Script *script, const char *module)
-	{
-	}
-
-	int ScriptingEngine::ExecuteScript(Script *script)
-	{
-	}
-
-	int ScriptingEngine::ExecuteString(const std::string &script, char *module, int *context, int timeout, int keep_context)
-	{
-	}
-
-	int ScriptingEngine::ReExecuteString(int context, char *module)
-	{
-	}
-
-	void ScriptingEngine::_lineCallback(asIScriptContext *ctx, int *timeOut)
-	{
-		// If the time out is reached, abort the script
-		if( *timeOut < CL_System::get_time() )
-			ctx->Abort();
-	}
-
-
-	void ScriptingEngine::registerGlobals()
-	{
-		m_asEngine->RegisterGlobalFunction("", asMETHOD());
-	}
+	protected:
+		//! Destructor
+		~ScriptVector();
+		int m_RefCount;
+	};
 
 }
+
+#endif

@@ -325,8 +325,8 @@ namespace FusionEngine
 			{
 				///////////////////
 				// Prepare Movement
-				CL_Vector2 position = cBod->GetPosition();
-				CL_Vector2 force = cBod->GetForce();
+				Vector2 position = cBod->GetPosition();
+				Vector2 force = cBod->GetForce();
 
 				// Apply engine force
 				{
@@ -334,20 +334,20 @@ namespace FusionEngine
 					float direction =
 						cBod->GetRotation() + cBod->GetRotationalVelocity() * split * 0.5;
 
-					CL_Vector2 force_vector(
+					Vector2 force_vector(
 						sinf(fe_degtorad( direction )) * cBod->GetEngineForce(),
 						-cosf(fe_degtorad( direction )) * cBod->GetEngineForce()
 						);
 					force += force_vector;
 				}
 
-				CL_Vector2 accel;
-				CL_Vector2 veloc = cBod->GetVelocity();
+				Vector2 accel;
+				Vector2 veloc = cBod->GetVelocity();
 				float linDamping = cBod->GetCoefficientOfFriction();
 
 				// Calculate the damping on the x and y components of the force
-				//CL_Vector2 nveloc = veloc / speed; // normalise
-				CL_Vector2 dampForce = veloc * linDamping;
+				//Vector2 nveloc = veloc / speed; // normalise
+				Vector2 dampForce = veloc * linDamping;
 
 				// Finally, calculate the velocity
 				accel = (force - dampForce) * cBod->GetInverseMass();
@@ -360,13 +360,13 @@ namespace FusionEngine
 				{
 					if (m_Wrap)
 					{
-						cBod->_setPosition(CL_Vector2(
+						cBod->_setPosition(Vector2(
 							fe_wrap<int>(position.x, 1, m_Width-1), fe_wrap<int>(position.y, 1, m_Height-1)
 							));
 					}
 					else
 					{
-						cBod->_setPosition(CL_Vector2(
+						cBod->_setPosition(Vector2(
 							fe_clamped<int>(position.x, 1, m_Width-1), fe_clamped<int>(position.y, 1, m_Height-1)
 							));
 					}
@@ -378,7 +378,7 @@ namespace FusionEngine
 				if (veloc.squared_length() > m_MaxVelocitySquared)
 				{
 					// Set acceleration to zero
-					cBod->_setAcceleration(CL_Vector2::ZERO);
+					cBod->_setAcceleration(Vector2::ZERO);
 
 					//! \todo See which method is faster - trig or non-tirg.
 #ifdef FUSION_PHYS_USE_TRIG
@@ -408,7 +408,7 @@ namespace FusionEngine
 				cBod->_setVelocity(veloc);
 
 				// All forces applied in the previous step have been converted to motion.
-				cBod->_setForce(CL_Vector2::ZERO);
+				cBod->_setForce(Vector2::ZERO);
 				cBod->_setEngineForce(0);
 
 
@@ -417,7 +417,7 @@ namespace FusionEngine
 				//  Check for collisions of active objects.
 
 				// Find the movement vector for current body
-				CL_Vector2 cBod_movement = cBod->GetVelocity() * split;
+				Vector2 cBod_movement = cBod->GetVelocity() * split;
 
 				// Find collidable dynamic bodies
 				BodyList check_list = m_CollisionGrid->FindAdjacentBodies(cBod);
@@ -442,11 +442,11 @@ namespace FusionEngine
 					{
 
 						// Find the movement vector for other body
-						CL_Vector2 Other_movement = Other->GetVelocity() * split;
+						Vector2 Other_movement = Other->GetVelocity() * split;
 
 						// Position at collisions for each body
-						CL_Vector2 cBod_pac; 
-						CL_Vector2 Other_pac;
+						Vector2 cBod_pac; 
+						Vector2 Other_pac;
 
 
 						// Search for collisions
@@ -455,13 +455,13 @@ namespace FusionEngine
 							cBod_movement, Other_movement, 
 							cBod, Other))
 						{
-							CL_Vector2 normal;
+							Vector2 normal;
 							PhysUtil::CalculateNormal(&normal, cBod_pac, Other_pac, cBod, Other);
 
 
 							///////////////////
 							// Error correction
-							if (normal == CL_Vector2::ZERO)
+							if (normal == Vector2::ZERO)
 							{
 								// No need to warp out of non-statics, they should move away eventually
 								if (Other->CheckCollisionFlag(C_STATIC))
@@ -471,16 +471,16 @@ namespace FusionEngine
 										&normal,
 										cBod_pac + cBod_movement, Other_pac,
 										cBod, Other);
-									if (normal == CL_Vector2::ZERO)
+									if (normal == Vector2::ZERO)
 									{
 
-										CL_Vector2 jump_point; 
-										CL_Vector2 o_point; // Not used
+										Vector2 jump_point; 
+										Vector2 o_point; // Not used
 
 										float facing = cBod->GetRotation();
 
 										// Get a short vector
-										CL_Vector2 escape_ray;
+										Vector2 escape_ray;
 
 										for (float a = 0.0f; a < 2*PI; a+=0.1f)
 										{
@@ -489,7 +489,7 @@ namespace FusionEngine
 
 											if (PhysUtil::FindCollisions(
 												&jump_point, &o_point, 
-												escape_ray, CL_Vector2::ZERO, 
+												escape_ray, Vector2::ZERO, 
 												cBod, Other, 0.1f, false))
 											{
 												cBod->m_Position = jump_point;
@@ -503,7 +503,7 @@ namespace FusionEngine
 										escape_ray.y = cosf(facing) * 500.0f;
 										if (PhysUtil::FindCollisions(
 											&jump_point, &o_point, 
-											escape_ray, CL_Vector2::ZERO, 
+											escape_ray, Vector2::ZERO, 
 											cBod, Other, 0.1f, false))
 										{
 											cBod->m_Position = jump_point;
@@ -514,20 +514,20 @@ namespace FusionEngine
 									}
 
 								}
-							} // if (normal == CL_Vector2::ZERO)
+							} // if (normal == Vector2::ZERO)
 
 
 							// Normal * veloc should multiply to a nevative (should be opposite
 							//  directions) if they don't, the normal is invalid.
-							if (veloc != CL_Vector2::ZERO && normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
+							if (veloc != Vector2::ZERO && normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
 							{
 								// Pop back
 								cBod->m_Position = cBod_pac + normal * -g_PhysCollisionJump;
 
 								// Stop movement
-								veloc = CL_Vector2::ZERO;
-								cBod->_setAcceleration(CL_Vector2::ZERO);
-								cBod->_setVelocity(CL_Vector2::ZERO);
+								veloc = Vector2::ZERO;
+								cBod->_setAcceleration(Vector2::ZERO);
+								cBod->_setVelocity(Vector2::ZERO);
 
 								continue;
 							} // if (wrong normal direction)
@@ -573,13 +573,13 @@ namespace FusionEngine
 		CollisionList::iterator col_it = collisions.begin();
 		for (;col_it != collisions.end(); ++col_it)
 		{
-			CL_Vector2 normal         = (*col_it)->Normal;
+			Vector2 normal         = (*col_it)->Normal;
 
 			FusionPhysicsBody *first  = (*col_it)->First;
 			FusionPhysicsBody *second = (*col_it)->Second;
 
-			CL_Vector2 first_pac      = (*col_it)->First_Position;
-			CL_Vector2 second_pac     = (*col_it)->Second_Position;
+			Vector2 first_pac      = (*col_it)->First_Position;
+			Vector2 second_pac     = (*col_it)->Second_Position;
 
 						
 			float first_elasticity = first->GetCoefficientOfRestitution();
@@ -587,15 +587,15 @@ namespace FusionEngine
 
 			// Pop back a bit
 			first->m_Position = first_pac + normal * g_PhysCollisionJump;
-			first->_setAcceleration(CL_Vector2::ZERO);
-			//first->_setVelocity(CL_Vector2::ZERO);
+			first->_setAcceleration(Vector2::ZERO);
+			//first->_setVelocity(Vector2::ZERO);
 
 			if (second->GetCollisionFlags() & C_STATIC)
 			{
 				// --Collision with static--
 
 				// Get the speed of the object
-				CL_Vector2 veloc = first->GetVelocity();
+				Vector2 veloc = first->GetVelocity();
 				float speed = veloc.length();
 
 				// speed / mass
@@ -609,7 +609,7 @@ namespace FusionEngine
 
 
 				// --OLD METHOD--
-				//CL_Vector2 bounce_force = veloc * first->GetInverseMass();
+				//Vector2 bounce_force = veloc * first->GetInverseMass();
 
 				//float speed = bounce_force.unitize(); //normalise
 
@@ -627,8 +627,8 @@ namespace FusionEngine
 				// --Collision with non-static--
 
 				// Get the speed of both objects
-				CL_Vector2 first_veloc = first->GetVelocity();
-				CL_Vector2 second_veloc = second->GetVelocity();
+				Vector2 first_veloc = first->GetVelocity();
+				Vector2 second_veloc = second->GetVelocity();
 				float first_speed = first_veloc.length();
 				float second_speed = second_veloc.length();
 
@@ -655,7 +655,7 @@ namespace FusionEngine
 
 				// --OLD METHOD--
 				// First:
-				//CL_Vector2 bounce_force = ( first_veloc - second_veloc ) *
+				//Vector2 bounce_force = ( first_veloc - second_veloc ) *
 				// ( first->GetInverseMass() + second->GetInverseMass() );
 				//float speed = bounce_force.unitize(); //normalise
 
@@ -690,7 +690,7 @@ namespace FusionEngine
 
 			// Finally, call each object's collision callback
 			// Find the point where the two objects touch
-			CL_Vector2 poc = CL_Vector2(0,0);
+			Vector2 poc = Vector2(0,0);
 
 			PhysUtil::GuessPointOfCollision(
 				&poc,
@@ -724,7 +724,7 @@ namespace FusionEngine
 				// This body will probably move, so update it when we resort the gird below...
 				m_CollisionGrid->_updateThis(cBod);
 
-				CL_Vector2 velocity = cBod->GetVelocity();
+				Vector2 velocity = cBod->GetVelocity();
 
 
 				// Move along velocity vector

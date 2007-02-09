@@ -26,7 +26,7 @@ void FusionShipDrawable::Draw()
 {
 	float rot = m_ParentNode->GetGlobalFacing();
 	m_Image->set_angle(rot);
-	CL_Vector2 pos = m_ParentNode->GetGlobalPosition();
+	Vector2 pos = m_ParentNode->GetGlobalPosition();
 	// Maybe CL_Surface_Drawparams should be used here
 	m_Image->draw(pos.x, pos.y);
 

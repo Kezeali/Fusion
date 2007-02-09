@@ -15,19 +15,19 @@ FusionMessage::FusionMessage()
 {
 }
 
-FusionMessage::FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd)
+FusionMessage::FusionMessage(unsigned char channel, unsigned char type, ObjectID ObjectID)
 : m_Channel(channel),
 m_Type(type),
-m_PlayerInd(playerInd)
+m_ObjectID(ObjectID)
 {
 	// Get a timestamp
 	m_Timestamp = RakNet::GetTime();
 }
 
-FusionMessage::FusionMessage(unsigned char channel, unsigned char type, PlayerInd playerInd, unsigned char *message, unsigned int length)
+FusionMessage::FusionMessage(unsigned char channel, unsigned char type, ObjectID ObjectID, unsigned char *message, unsigned int length)
 : m_Channel(channel),
 m_Type(type),
-m_PlayerInd(playerInd),
+m_ObjectID(ObjectID),
 m_Message(message)
 {
 	// Get a timestamp

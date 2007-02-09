@@ -29,7 +29,7 @@ public:
 		return (other != m_MyBody);
 	}
 
-	void CollisionWith(const FusionPhysicsBody *other, const CL_Vector2 &point)
+	void CollisionWith(const FusionPhysicsBody *other, const Vector2 &point)
 	{
 		if (other->GetUserData() != NULL)
 		{
@@ -65,18 +65,18 @@ class BitmaskTest : public CL_ClanApplication
 	{
 		if (CL_Keyboard::get_keycode('R'))
 		{
-			m_ShipPhysical->_setForce(CL_Vector2::ZERO);
-			m_ShipPhysical->_setVelocity(CL_Vector2::ZERO);
-			m_ShipPhysical->_setAcceleration(CL_Vector2::ZERO);
+			m_ShipPhysical->_setForce(Vector2::ZERO);
+			m_ShipPhysical->_setVelocity(Vector2::ZERO);
+			m_ShipPhysical->_setAcceleration(Vector2::ZERO);
 
-			m_ShipPhysical->_setPosition(CL_Vector2(50.0f,50.0f));
+			m_ShipPhysical->_setPosition(Vector2(50.0f,50.0f));
 		}
 
 		// Warp
 		if (CL_Keyboard::get_keycode('W'))
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
-			CL_Vector2 force = m_ShipPhysical->GetPosition();
+			Vector2 force = m_ShipPhysical->GetPosition();
 			force.x += sinf(a)*2.0f;
 			force.y += -cosf(a)*2.0f;
 
@@ -86,7 +86,7 @@ class BitmaskTest : public CL_ClanApplication
 		if (CL_Keyboard::get_keycode(CL_KEY_DOWN))
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
-			CL_Vector2 force;
+			Vector2 force;
 			force.x = -sinf(a)*g_ThrustForce;
 			force.y = cosf(a)*g_ThrustForce;
 
@@ -95,7 +95,7 @@ class BitmaskTest : public CL_ClanApplication
 		else if (CL_Keyboard::get_keycode(CL_KEY_UP))
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
-			CL_Vector2 force;
+			Vector2 force;
 			force.x = sinf(a)*g_ThrustForce;
 			force.y = -cosf(a)*g_ThrustForce;
 
@@ -116,8 +116,8 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			m_DronePhysical[0]->SetRotationalVelocity(0.0f);
 
-			CL_Vector2 aim = m_ShipPhysical->GetPosition() - m_DronePhysical[0]->GetPosition();
-			aim.unitize();
+			Vector2 aim = m_ShipPhysical->GetPosition() - m_DronePhysical[0]->GetPosition();
+			aim.normalize();
 
 			m_DronePhysical[0]->ApplyForce(aim * g_ThrustForce);
 		}
@@ -167,7 +167,7 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			PhysicalProperties props;
 			props.mass = 20.0f;
-			props.position = CL_Vector2(48.f, 120.f);
+			props.position = Vector2(48.f, 120.f);
 			props.radius = 50;
 			props.rotation = 0;
 			props.use_dist = true;
@@ -193,7 +193,7 @@ class BitmaskTest : public CL_ClanApplication
 			{
 				PhysicalProperties props;
 				props.mass = 15.0f;
-				props.position = CL_Vector2(460.f + 10.0f * i, 120.f);
+				props.position = Vector2(460.f + 10.0f * i, 120.f);
 				props.radius = 50;
 				props.rotation = 0;
 				props.use_dist = true;
@@ -256,7 +256,7 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			PhysicalProperties props;
 			props.mass = 0.0f;
-			props.position = CL_Vector2(0.0f, 220.0f);
+			props.position = Vector2(0.0f, 220.0f);
 			props.rotation = 0;
 			props.use_bitmask = true;
 			props.bitmask = m_TerrainBitmask;

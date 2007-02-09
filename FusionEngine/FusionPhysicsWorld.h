@@ -45,9 +45,9 @@ namespace FusionEngine
 
 		//! Basic Constructor.
 		Collision(
-			const CL_Vector2 &normal,
+			const Vector2 &normal,
 			FusionPhysicsBody *first, FusionPhysicsBody *second,
-			const CL_Vector2 &first_pac, const CL_Vector2 &second_pac)
+			const Vector2 &first_pac, const Vector2 &second_pac)
 			: Normal(normal),
 			First(first),
 			Second(second),
@@ -56,7 +56,7 @@ namespace FusionEngine
 		{}
 
 		//! Collision normal (for First)
-		CL_Vector2 Normal;
+		Vector2 Normal;
 
 		//! First object in the collision
 		FusionPhysicsBody *First;
@@ -64,9 +64,9 @@ namespace FusionEngine
 		FusionPhysicsBody *Second;
 
 		//! Position of the first object during the collision
-		CL_Vector2 First_Position;
+		Vector2 First_Position;
 		//! Position of the second object during the collision
-		CL_Vector2 Second_Position;
+		Vector2 Second_Position;
 
 		//friend bool operator< (const Collision &lhs, const Collision &rhs);
 		//friend bool operator== (const Collision &lhs, const Collision &rhs);
@@ -116,7 +116,7 @@ namespace FusionEngine
 			radius(0.0f),
 			bounce(0.0f),
 
-			position(CL_Vector2::ZERO),
+			position(Vector2::ZERO),
 			rotation(0.0f),
 
 			use_bitmask(false),
@@ -134,7 +134,7 @@ namespace FusionEngine
 		float bounce;
 
 		//! Initial Position.
-		CL_Vector2 position;
+		Vector2 position;
 		//! Initial Rotation.
 		float rotation;
 

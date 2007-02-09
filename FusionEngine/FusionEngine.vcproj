@@ -424,6 +424,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptingFunctions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptVector.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionServerOptions.h"
 				>
 			</File>
@@ -497,6 +505,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionTheme.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionVector2.h"
 				>
 			</File>
 			<File
@@ -690,6 +702,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptVector.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionServerLoadingState.cpp"
 				>
 			</File>
@@ -731,6 +747,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionTheme.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionVector2.cpp"
 				>
 			</File>
 		</Filter>

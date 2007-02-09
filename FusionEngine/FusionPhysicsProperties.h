@@ -50,10 +50,10 @@ namespace FusionEngine
 		//@{
 		//! Guess.
 		float m_Mass;
-		CL_Vector2 m_AppliedForce;
-		Cl_Vector2 m_Acceleration;
-		Cl_Vector2 m_Velocity;
-		Cl_Vector2 m_Position;
+		Vector2 m_AppliedForce;
+		Vector2 m_Acceleration;
+		Vector2 m_Velocity;
+		Vector2 m_Position;
 
 		float m_Rotation;
 		/*! 

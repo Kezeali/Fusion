@@ -9,8 +9,8 @@ namespace FusionEngine
 {
 
 	bool PhysUtil::GuessPointOfCollision(
-			CL_Vector2 *output,
-			const CL_Vector2 &pos_one, const CL_Vector2 &pos_two,
+			Vector2 *output,
+			const Vector2 &pos_one, const Vector2 &pos_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two)
 	{
 
@@ -19,7 +19,7 @@ namespace FusionEngine
 		if (one->GetUseDistCollisions() & two->GetUseDistCollisions())
 		{
 			// Find a vector between the two objects
-			CL_Vector2 d_pos = pos_two - pos_one;
+			Vector2 d_pos = pos_two - pos_one;
 			// Find the point where the vector reaches the collision distance
 			d_pos	*= one->GetColDist() / d_pos.length();
 
@@ -27,7 +27,7 @@ namespace FusionEngine
 			//  copying two ints should be faster than copying a whole vector
 			(*output) = d_pos;
 
-			//memcpy(output, &pos, sizeof(CL_Vector2));
+			//memcpy(output, &pos, sizeof(Vector2));
 			return true;
 		}
 
@@ -39,9 +39,9 @@ namespace FusionEngine
 			CL_Point out_pt;
 			if ((one->GetColBitmask()->OverlapPoint(&out_pt, two->GetColBitmask(), offset)))
 			{
-				(*output) = CL_Vector2(out_pt.x, out_pt.y);
+				(*output) = Vector2(out_pt.x, out_pt.y);
 
-				//memcpy(output, &CL_Vector2(out_pt.x, out_pt.y), sizeof(CL_Vector2));
+				//memcpy(output, &Vector2(out_pt.x, out_pt.y), sizeof(Vector2));
 				return true;
 			}
 		}
@@ -55,7 +55,7 @@ namespace FusionEngine
 			{
 				(*output) = two->GetPosition();
 
-				//memcpy(output, &CL_Vector2(point.x, point.y), sizeof(CL_Vector2));
+				//memcpy(output, &Vector2(point.x, point.y), sizeof(Vector2));
 				return true;
 			}
 		}
@@ -65,7 +65,7 @@ namespace FusionEngine
 			if ( two->GetColPoint( one->GetPositionPoint() ) )
 			{
 				(*output) = one->GetPosition();
-				//memcpy(output, one->GetPosition(), sizeof(CL_Vector2));
+				//memcpy(output, one->GetPosition(), sizeof(Vector2));
 				return true;
 			}
 		}
@@ -75,14 +75,14 @@ namespace FusionEngine
 	}
 
 	bool PhysUtil::FindCollisions(
-		CL_Vector2 *output_one, CL_Vector2 *output_two,
-		const CL_Vector2 &vector_one, const CL_Vector2 &vector_two,
+		Vector2 *output_one, Vector2 *output_two,
+		const Vector2 &vector_one, const Vector2 &vector_two,
 		const FusionPhysicsBody *one, const FusionPhysicsBody *two,
 		float epsilon, bool find_close)
 	{
 		// Positions
-		CL_Vector2 pos_one = one->GetPosition();
-		CL_Vector2 pos_two = two->GetPosition();
+		Vector2 pos_one = one->GetPosition();
+		Vector2 pos_two = two->GetPosition();
 
 		// Squared movement vector lengths (speed2) (used for checking for movement)
 		float speed2_one = vector_one.squared_length();
@@ -96,8 +96,8 @@ namespace FusionEngine
 				(*output_one) = pos_one;
 				(*output_two) = pos_two;
 
-				//memcpy(output_one, &pos_one, sizeof(CL_Vector2));
-				//memcpy(output_two, &pos_two, sizeof(CL_Vector2));
+				//memcpy(output_one, &pos_one, sizeof(Vector2));
+				//memcpy(output_two, &pos_two, sizeof(Vector2));
 				
 				return true;
 			}
@@ -106,10 +106,10 @@ namespace FusionEngine
 		}
 
 		// These temps will store the start and end points while searching.
-		CL_Vector2 startpt_one, endpt_one, startpt_two, endpt_two;
+		Vector2 startpt_one, endpt_one, startpt_two, endpt_two;
 
 		// If the search finishes, we will assume these are set to the positions of collision.
-		CL_Vector2 checkpt_one, checkpt_two;
+		Vector2 checkpt_one, checkpt_two;
 
 		// This will be set to true the first time a CollisionCheck() returns true
 		//  during the binary search - if collision check never returns true, we can
@@ -136,7 +136,7 @@ namespace FusionEngine
 			//  section and check that it is in the bounds of the actual lines.
 			CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
 
-			CL_Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
+			Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
 
 			if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
 			{
@@ -174,7 +174,7 @@ namespace FusionEngine
 		//  which will be the current 'check_pt', is the point of collision.
 		//  (But I shouldn't have to tell you that. You _do_ know how a binary search
 		//  works right?)
-		CL_Vector2 start_end = startpt_one - endpt_one;
+		Vector2 start_end = startpt_one - endpt_one;
 		float dist_squared = start_end.squared_length();
 
 		int i = g_PhysMaxSearchItterations;
@@ -183,8 +183,8 @@ namespace FusionEngine
 
 			// Find the midpoints along the check vectors
 			//  (via mid = a + half distance(a to b) )
-			checkpt_one = startpt_one + (endpt_one - startpt_one)/2;
-			checkpt_two = startpt_two + (endpt_two - startpt_two)/2;
+			checkpt_one = startpt_one + (endpt_one - startpt_one)*0.5f;
+			checkpt_two = startpt_two + (endpt_two - startpt_two)*0.5f;
 
 			if (CollisionCheck(checkpt_one, checkpt_two, one, two))
 			{
@@ -244,19 +244,19 @@ namespace FusionEngine
 			(*output_one) = checkpt_one;
 			(*output_two) = checkpt_two;
 
-			//memcpy(output_one, &checkpt_one, sizeof(CL_Vector2));
-			//memcpy(output_two, &checkpt_two, sizeof(CL_Vector2));
+			//memcpy(output_one, &checkpt_one, sizeof(Vector2));
+			//memcpy(output_two, &checkpt_two, sizeof(Vector2));
 			return true;
 		}
 		return false;
 	}
 
-	bool PhysUtil::CollisionCheck(const CL_Vector2 &one_pos, const CL_Vector2 &two_pos, const FusionPhysicsBody *one, const FusionPhysicsBody *two)
+	bool PhysUtil::CollisionCheck(const Vector2 &one_pos, const Vector2 &two_pos, const FusionPhysicsBody *one, const FusionPhysicsBody *two)
 	{
 		// Check for distance collision
 		if (one->GetUseDistCollisions() & two->GetUseDistCollisions())
 		{
-			CL_Vector2 dp = one_pos - two_pos;
+			Vector2 dp = one_pos - two_pos;
 
 			// The required distance to create a collision against object one
 			//  is expanded by the distance of the other.
@@ -289,9 +289,9 @@ namespace FusionEngine
 	}
 
 	void PhysUtil::CalculateVectorIntersection(
-		CL_Vector2 *output,
-		const CL_Vector2 &st_one, const CL_Vector2 &st_two,
-		const CL_Vector2 &vector_one, const CL_Vector2 &vector_two)
+		Vector2 *output,
+		const Vector2 &st_one, const Vector2 &st_two,
+		const Vector2 &vector_one, const Vector2 &vector_two)
 	{
 		float m1 = vector_one.y / vector_one.x;
 		float d1 = st_one.y - m1*st_one.x;
@@ -301,13 +301,13 @@ namespace FusionEngine
 		float cx = ( d2 - d1 )/( m1 - m2 );
 		float cy = m1*cx + d1;
 
-		memcpy(output, &CL_Vector2(cx, cy), sizeof(CL_Vector2));
+		memcpy(output, &Vector2(cx, cy), sizeof(Vector2));
 	}
 
 	bool PhysUtil::CheckBoundaries(
-		const CL_Vector2 &pos_one, const CL_Vector2 &pos_two,
-		const CL_Vector2 &vec_one, const CL_Vector2 &vec_two,
-		const CL_Vector2 &intersec)
+		const Vector2 &pos_one, const Vector2 &pos_two,
+		const Vector2 &vec_one, const Vector2 &vec_two,
+		const Vector2 &intersec)
 	{
 		float cx = intersec.x;
 		float cy = intersec.y;
@@ -325,30 +325,30 @@ namespace FusionEngine
 	}
 
 	void PhysUtil::CalculateNormal(
-		CL_Vector2 *output,
-		const CL_Vector2 &body_pos, const CL_Vector2 &other_pos,
+		Vector2 *output,
+		const Vector2 &body_pos, const Vector2 &other_pos,
 		const FusionPhysicsBody *body, const FusionPhysicsBody *other)
 	{		
 		// Distance (circular) object collision
 		if (body->GetUseDistCollisions() & other->GetUseDistCollisions())
 		{
 			// Vector from center to point of collision
-			CL_Vector2 normal = body_pos - other_pos;
-			normal.unitize();
-			memcpy(output, &normal, sizeof(CL_Vector2));
+			Vector2 normal = body_pos - other_pos;
+			normal.normalize();
+			memcpy(output, &normal, sizeof(Vector2));
 		}
 
 		// Bitmask - bitmask collision
 		else if (body->GetUsePixelCollisions() & other->GetUsePixelCollisions())
 		{
-			CL_Vector2 normal;
+			Vector2 normal;
 
 			CL_Point offset = CL_Point(body_pos.x - other_pos.x, body_pos.y - other_pos.y);
 			other->GetColBitmask()->CalcCollisionNormal(&normal, body->GetColBitmask(), offset);
 
 			normal *= -1;
-			normal.unitize();
-			memcpy(output, &normal, sizeof(CL_Vector2));
+			normal.normalize();
+			memcpy(output, &normal, sizeof(Vector2));
 		}
 
 		// AABB - bitmask collision
@@ -366,7 +366,7 @@ namespace FusionEngine
 		else if (other->GetUsePixelCollisions())
 		{
 			CL_Point offset = CL_Point(body_pos.x - other_pos.x, body_pos.y - other_pos.y);
-			CL_Vector2 normal;
+			Vector2 normal;
 
 			FusionBitmask* bm = other->GetColBitmask();
 
@@ -380,15 +380,15 @@ namespace FusionEngine
 
 			// The normal returned will be from the circle, we want the opposite
 			normal *= -1;
-			normal.unitize();
-			memcpy(output, &normal, sizeof(CL_Vector2));
+			normal.normalize();
+			memcpy(output, &normal, sizeof(Vector2));
 		}
 
 		// Bitmask - non-bitmask collision
 		else if (body->GetUsePixelCollisions())
 		{
 			CL_Point offset = CL_Point(other_pos.x - body_pos.x, other_pos.y - body_pos.y);
-			CL_Vector2 normal;
+			Vector2 normal;
 
 			FusionBitmask* bm = body->GetColBitmask();
 
@@ -397,8 +397,8 @@ namespace FusionEngine
 				&normal,
 				new FusionBitmask(1.0f, bm->GetPPB()), offset);
 
-			normal.unitize();
-			memcpy(output, &normal, sizeof(CL_Vector2));
+			normal.normalize();
+			memcpy(output, &normal, sizeof(Vector2));
 		}
 
 	}

@@ -19,6 +19,6 @@ FusionPhysicsElipse::~FusionPhysicsElipse()
 {
 }
 
-void SetPosition(const CL_Vector2 &position)
+void SetPosition(const Vector2 &position)
 {
 }

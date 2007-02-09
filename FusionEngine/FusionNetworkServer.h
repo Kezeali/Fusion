@@ -98,7 +98,7 @@ namespace FusionEngine
 		 *
 		 * \param[in] player The player whose client should be checked.
 		 */
-		bool SendAllowed(PlayerInd player) const;
+		bool SendAllowed(ObjectID player) const;
 
 		//! Updates the network
 		void run();

@@ -99,7 +99,7 @@ namespace FusionEngine
 		 */
 		FusionPhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler);
 
-		//! Constructor with response param.
+		//! [depreciated] Constructor with response param.
 		/*!
 		 * \param world
 		 * The world in which this body resides.
@@ -130,7 +130,7 @@ namespace FusionEngine
 		virtual float GetRadius();
 
 		//! Preferably this is used to move the body.
-		virtual void ApplyForce(const CL_Vector2 &force);
+		virtual void ApplyForce(const Vector2 &force);
 		//! Applies force based on the current orientation and rotational velocity.
 		/*!
 		 * An engine force vector will be calculated during the simulation step,
@@ -217,10 +217,10 @@ namespace FusionEngine
 		//! Returns true if the given body can experiance a collision with this one.
 		bool CanCollideWith(FusionPhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void CollisionWith(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+		void CollisionWith(FusionPhysicsBody *other, const Vector2 &collision_point);
 
 		//! [depreciated] Use CollisionWith()
-		void CollisionResponse(FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+		void CollisionResponse(FusionPhysicsBody *other, const Vector2 &collision_point);
 
 		//! Returns the current collision config.
 		int GetCollisionFlags() const;
@@ -236,17 +236,17 @@ namespace FusionEngine
 		//! \name State retreival.
 		//@{
 		//! Returns the current position
-		virtual const CL_Vector2 &GetPosition() const;
+		virtual const Vector2 &GetPosition() const;
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		virtual CL_Point GetPositionPoint() const;
 
 		//! Gets the net linear force applied to the body.
-		virtual const CL_Vector2 &GetForce() const;
+		virtual const Vector2 &GetForce() const;
 		//! Gets the net engine force applied to the body.
 		virtual float GetEngineForce() const;
 
-		virtual const CL_Vector2 &GetAcceleration() const;
-		virtual const CL_Vector2 &GetVelocity() const;
+		virtual const Vector2 &GetAcceleration() const;
+		virtual const Vector2 &GetVelocity() const;
 
 		//! Guess
 		virtual float GetCoefficientOfFriction() const;
@@ -323,17 +323,17 @@ namespace FusionEngine
 		 */
 		//@{
 		//! Sets the position.
-		virtual void _setPosition(const CL_Vector2 &position);
+		virtual void _setPosition(const Vector2 &position);
 
 		//! Sets the force.
-		virtual void _setForce(const CL_Vector2 &force);
+		virtual void _setForce(const Vector2 &force);
 		//! Sets the engine force.
 		virtual void _setEngineForce(float force);
 
 		//! Sets the acceleration.
-		virtual void _setAcceleration(const CL_Vector2 &acceleration);
+		virtual void _setAcceleration(const Vector2 &acceleration);
 		//! Sets the velocity.
-		virtual void _setVelocity(const CL_Vector2 &velocity);
+		virtual void _setVelocity(const Vector2 &velocity);
 
 		//! Sets the rotation.
 		virtual void _setRotation(float rotation);
@@ -442,12 +442,12 @@ namespace FusionEngine
 		//! Bounce, a.k.a. coefficient of restitution
 		float m_Bounce;
 
-		CL_Vector2 m_AppliedForce;
+		Vector2 m_AppliedForce;
 		float m_AppliedEngineForce;
 
-		CL_Vector2 m_Acceleration;
-		CL_Vector2 m_Velocity;
-		CL_Vector2 m_Position;
+		Vector2 m_Acceleration;
+		Vector2 m_Velocity;
+		Vector2 m_Position;
 
 		float m_Rotation;
 		//! Current velocity of rotation.

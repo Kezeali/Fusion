@@ -301,7 +301,7 @@ namespace FusionEngine
 		 * \param[in] offset
 		 * The distance between the the bitmasks.
 		 */
-		void CalcCollisionNormal(CL_Vector2 *output, const FusionBitmask *other, const CL_Point &offset);
+		void CalcCollisionNormal(Vector2 *output, const FusionBitmask *other, const CL_Point &offset);
 
 	protected:
 		//! Bitmask n' stuff

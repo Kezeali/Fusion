@@ -54,7 +54,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Basic constructor.
-		ScriptingEngine() { m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION); }
+		ScriptingEngine();
 
 	public:
 		//! Returns a pointer to the AS engine.
@@ -123,6 +123,10 @@ namespace FusionEngine
 
 		//! Active contexts
 		std::vector<asIScriptContext*> m_Contexts;
+
+		
+		//! Registers global methods and functions which scripts can use.
+		void registerGlobals();
 
 	};
 

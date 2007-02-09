@@ -1,13 +1,13 @@
-void jettison()
+void jettison(int p_index)
 {
 }
 
-void jettisonedStep()
+void jettisonedStep(uint16 p_index)
 {
-	ApplyForce(m_engineforce);
+	ApplyEngineForce(p_index);
 }
 
-void onCollision(int x, int y)
+void onCollision(uint16 p_index, int x, int y)
 {
-	Detonate();
+	Detonate(p_index);
 }

@@ -75,13 +75,13 @@ namespace FusionEngine
 		 * associated with this Ship will be set also. This defaults to false,
 		 * as a PhysicsBody is usually the /source/ of this information. 
 		 */
-		void SetVelocity(const CL_Vector2 &velocity, bool physics = false);
+		void SetVelocity(const Vector2 &velocity, bool physics = false);
 		//! Set Pos
 		/*!
 		 * \param[in] physics If this is true, the position of the PhysicsBody
 		 * associated with this Ship will be set also.
 		 */
-		void SetPosition(const CL_Vector2 &position, bool physics = false);
+		void SetPosition(const Vector2 &position, bool physics = false);
 		//! Set rv
 		/*!
 		 * \param[in] physics If this is true, the rot. velocity of the PhysicsBody
@@ -151,7 +151,7 @@ namespace FusionEngine
 		void RevertToInitialState();
 
 		//! What to do if an absolute position for a collision is given
-		void CollisionResponse(const FusionPhysicsBody *other, const CL_Vector2 &collision_point);
+		void CollisionResponse(const FusionPhysicsBody *other, const Vector2 &collision_point);
 
 
 	protected:

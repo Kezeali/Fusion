@@ -62,14 +62,17 @@ namespace FusionEngine
 		typedef std::vector<std::string> ConsoleLines;
 
 	public:
-		//! Adds the given message to the console
+		//! Adds the given message to the console history
 		void Add(const std::string &message);
 
-		//! Adds the given Error to the console
+		//! Adds the given Error to the console history
 		void Add(const Error *error);
 
 		//! Removes all data from the console
 		void Clear();
+
+		//! Returns all the lines that have been added to the console
+		const ConsoleLines &GetHistory() const;
 
 		//! Triggers when new data is added to the console
 		CL_Signal_v1<const std::string &> OnNewLine;

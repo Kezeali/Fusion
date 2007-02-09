@@ -156,7 +156,7 @@ bool ServerEnvironment::receive()
 		switch (type)
 		{
 		case ID_REMOTE_CONNECTION_LOST:
-			e->GetPlayerInd();
+			e->GetObjectID();
 			break;
 		}
 
@@ -206,7 +206,7 @@ bool ServerEnvironment::receive()
 	return true;
 }
 
-PlayerInd ServerEnvironment::getNextPID()
+ObjectID ServerEnvironment::getNextPID()
 {
 	// This must be above 1 (numplayers starts at 0, hence the +1), and goes up
 	//  by one per player, so this is the simplest way to generate it.

@@ -47,7 +47,7 @@ void FusionNetworkServer::run()
 		// If it wasn't a rakNet system packet, queue up a message
 		if (!sysPacket)
 		{
-			PlayerIndex pind = (PlayerIndex)p->playerIndex;
+			PlayerIndex pind = (PlayerIndex)p->PlayerIndex;
 			FusionMessage *m = MessageBuilder::BuildMessage(p, m_PlayerIDMap[pind]);
 			m_Queue->_addInMessage(m, m->GetChannel());
 		}

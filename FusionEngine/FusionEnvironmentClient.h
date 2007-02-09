@@ -78,7 +78,7 @@ namespace FusionEngine
 	{
 	public:
 		//! A list of local player numbers (0 to g_MaxPlayers) 
-		typedef std::vector<PlayerInd> LocalPlayerIdList;
+		typedef std::vector<ObjectID> LocalPlayerIdList;
 
 	public:
 		//! Basic constructor

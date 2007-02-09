@@ -96,7 +96,7 @@ namespace FusionEngine
 		m_PlayerInputMaps = from->PlayerInputs;
 	}
 
-	ShipInput FusionInput::GetShipInputs(PlayerInd player) const
+	ShipInput FusionInput::GetShipInputs(ObjectID player) const
 	{
 		return m_ShipInputData[player];
 	}

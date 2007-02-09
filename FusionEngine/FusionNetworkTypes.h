@@ -101,7 +101,7 @@ namespace FusionEngine
 		 * Client-side Structure:<br>
 		 * <ol>
 		 * <li> [char]     MTID_STARTSYNC
-		 * <li> [PlayerInd]Ship to which this applies
+		 * <li> [ObjectID]Ship to which this applies
 		 * <li> [float]    x origin
 		 * <li> [float]    y origin
 		 * <li> [float]    direction at origin
@@ -126,7 +126,7 @@ namespace FusionEngine
 		 * <li> [char]     ID_TIMESTAMP
 		 * <li> [long]     Time
 		 * <li> [char]     MTID_FIREWEAPON
-		 * <li> [PlayerInd]Ship to which this applies
+		 * <li> [ObjectID]Ship to which this applies
 		 * <li> [float]    x origin
 		 * <li> [float]    y origin
 		 * <li> [float]    direction at origin

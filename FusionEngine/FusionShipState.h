@@ -45,15 +45,15 @@ namespace FusionEngine
 	 */
 	struct ShipState
 	{
-		//[depreciated] friend class boost::serialization::access;
+		//[removed] friend class boost::serialization::access;
 
 		//! The unique identifier of the ship this state reffers to
-		PlayerInd PID;
+		ObjectID PID;
 
 		//@{
 		//! Position and velocity vars.
-		CL_Vector2 Velocity;
-		CL_Vector2 Position;
+		Vector2 Velocity;
+		Vector2 Position;
 		float Rotation;
 		float RotationalVelocity;
 		//@}

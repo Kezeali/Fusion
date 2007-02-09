@@ -89,7 +89,7 @@ namespace FusionEngine
 		 * and update the positions of all of the nodes children to maintain their relative
 		 * positions.
 		 */
-		virtual void SetPosition(const CL_Vector2 &position);
+		virtual void SetPosition(const Vector2 &position);
 		/*!
 		 * \brief
 		 * Gets the position of the node relative to its parent.
@@ -97,7 +97,7 @@ namespace FusionEngine
 		 * \returns
 		 * The position relative to the parent.
 		 */
-		virtual const CL_Vector2 &GetPosition() const;
+		virtual const Vector2 &GetPosition() const;
 
 		/*!
 		 * \brief
@@ -117,12 +117,12 @@ namespace FusionEngine
 		virtual float GetFacing() const;
 
 		//! used internally
-		virtual const CL_Vector2 &_getDerivedPosition() const;
+		virtual const Vector2 &_getDerivedPosition() const;
 		//! used internally
 		virtual float _getDerivedFacing() const;
 
 		//! Used when drawing nodes.
-		virtual const CL_Vector2 &GetGlobalPosition() const;
+		virtual const Vector2 &GetGlobalPosition() const;
 		//! Used when drawing nodes.
 		virtual float GetGlobalFacing() const;
 
@@ -226,7 +226,7 @@ namespace FusionEngine
 		 * A pointer to the node created.
 		 */
 		FusionNode *CreateChildNode(
-			const CL_Vector2 &position = CL_Vector2::ZERO,
+			const Vector2 &position = Vector2::ZERO,
 			float facing = 0);
 
 		/*!
@@ -492,17 +492,17 @@ namespace FusionEngine
 		bool m_AllowChildSort;
 
 		//! The position of the node relative to its parent.
-		CL_Vector2 m_Position;
+		Vector2 m_Position;
 		//! The facing (degrees) of the node relative to its parent.
 		float m_Facing;
 
 		//! The absolute position of the node (used internally).
-		mutable CL_Vector2 m_DerivedPosition;
+		mutable Vector2 m_DerivedPosition;
 		//! The absolute facing (degrees) of the node (used internally).
 		mutable float m_DerivedFacing;
 
 		//! The identity position of the node relative to its parent.
-		CL_Vector2 m_InitialPosition;
+		Vector2 m_InitialPosition;
 		//! The identity facing of the node relative to its parent.
 		float m_InitialFacing;
 
