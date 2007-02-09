@@ -36,7 +36,7 @@ namespace FusionEngine
 
 	void FusionNetworkGeneric::SendAddPlayer()
 	{
-		// The client sends this, the server replies with a PlayerInd in a initial State,
+		// The client sends this, the server replies with a ObjectID in a initial State,
 		//  then the client sends a SendPlayerConfig packet with the ShipPackageID used
 		//  by the player's ship.
 		// THIS SHOULDN'T BE IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
