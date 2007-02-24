@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="BitmaskPhysics"
-	ProjectGUID="{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}"
-	RootNamespace="BitmaskPhysics"
+	Name="Scripting"
+	ProjectGUID="{34CDC924-95E2-46A1-B66A-DE0AD5494FA3}"
+	RootNamespace="Scripting"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -43,7 +43,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -61,7 +61,6 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
-				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -117,7 +116,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -134,9 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
 				LinkIncremental="1"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -206,6 +203,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScript.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptVector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionVector2.cpp"
 				>
 			</File>
@@ -260,7 +269,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScript.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingEngine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingFunctions.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptVector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionVector2.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\Prereq.h"
 				>
 			</File>
 		</Filter>

@@ -44,6 +44,11 @@ namespace FusionEngine
 	 * \endcode
 	 */
 	void SCR_DetonateProjectile(ObjectID index);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_DetonateProjectile
+	 */
+	void SCR_DetonateProjectileG(asIScriptGeneric *gen);
 
 	//! Applys the default thrust to the given object
 	/*!
@@ -59,6 +64,11 @@ namespace FusionEngine
 	 * The index of the object
 	 */
 	void SCR_ApplyEngineForce(ObjectID index);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_ApplyEngineForce
+	 */
+	void SCR_ApplyEngineForceG(asIScriptGeneric *gen);
 
 	//! Applys the given force to the given object
 	/*!
@@ -77,6 +87,11 @@ namespace FusionEngine
 	 * The y parameter of the force to apply
 	 */
 	void SCR_ApplyForce(ObjectID index, float x, float y);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_ApplyForce
+	 */
+	void SCR_ApplyForceG(asIScriptGeneric *gen);
 
 	//! Returns the distance to the nearest ship.
 	/*!
@@ -93,6 +108,11 @@ namespace FusionEngine
 	 * The index of the object to check
 	 */
 	float SCR_GetDistanceToNearestShip(ObjectID index);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_GetDistanceToNearestShip
+	 */
+	void SCR_GetDistanceToNearestShipG(asIScriptGeneric *gen);
 
 	//! Creates the given effect.
 	/*!
@@ -111,6 +131,11 @@ namespace FusionEngine
 	 * The y coord
 	 */
 	void SCR_CreateEffect(std::string name, float x, float y);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_CreateEffect
+	 */
+	void SCR_CreateEffectG(asIScriptGeneric *gen);
 
 	//! Creates a projectile.
 	/*!
@@ -135,6 +160,11 @@ namespace FusionEngine
 	 * The angle
 	 */
 	void SCR_CreateProjectile(ObjectID ship_index, std::string name, float x, float y, float a);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_CreateProjectile
+	 */
+	void SCR_CreateProjectileG(asIScriptGeneric *gen);
 
 	//! A specialisation of CreateProjectile.
 	/*!
@@ -155,6 +185,11 @@ namespace FusionEngine
 	 * The tag of the projectile to fire.
 	 */
 	void SCR_FireProjectile(ObjectID ship_index, std::string name);
+	//! Generic calling convention
+	/*!
+	 * \see SCR_FireProjectile
+	 */
+	void SCR_FireProjectileG(asIScriptGeneric *gen);
 }
 
 #endif

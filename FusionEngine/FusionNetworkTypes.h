@@ -60,10 +60,10 @@ namespace FusionEngine
 	};
 
 
-	//! Fusion message types
+	//! FusionMessage types
 	/*!
 	 * [client|server] indicates what type of peer can receive
-	 * this type - [client] means client can receive it.
+	 * each type - i.e. [client] means only clients can receive it.
 	 */
 	enum MessageTypes
 	{

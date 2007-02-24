@@ -66,7 +66,7 @@ namespace FusionEngine
 
 		//! Loads and Initialises this Script from a file
 		bool LoadFile(const std::string &filename,
-									CL_InputSourceProvider *provider = 0
+									CL_InputSourceProvider *provider = 0,
 									bool delete_provider = true);
 
 		//! Returns the ptr. returned by the script (if applicable)

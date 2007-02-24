@@ -18,6 +18,11 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_FusionPhysicsWorld
@@ -35,7 +40,7 @@ namespace FusionEngine
 {
 
 	static const float g_PhysGridScale = 0.01f;
-	static const float g_PhysCollisionJump = 0.6f;
+	static const float g_PhysCollisionJump = 0.25f;
 
 	//! Represents a collision
 	struct Collision
@@ -62,6 +67,9 @@ namespace FusionEngine
 		FusionPhysicsBody *First;
 		//! Second object in the collision
 		FusionPhysicsBody *Second;
+
+		//! Point of collision
+		Vector2 Contact;
 
 		//! Position of the first object during the collision
 		Vector2 First_Position;

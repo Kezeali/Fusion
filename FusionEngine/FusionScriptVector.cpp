@@ -33,20 +33,26 @@ namespace FusionEngine
 	////////////////
 	// Construction
 	ScriptVector::ScriptVector(const ScriptVector &other)
-		: m_RefCount(1),
-		Vector2(other)
+		: m_RefCount(1)
 	{
+		Data = other.Data;
 	}
 
 	ScriptVector::ScriptVector(float x, float y)
+		: m_RefCount(1)
+	{
+		Data.x = x; Data.y = y;
+	}
+
+	ScriptVector::ScriptVector(const Vector2 &other)
 		: m_RefCount(1),
-		Vector2(x,y)
+		Data(other)
 	{
 	}
 
 	ScriptVector::~ScriptVector()
 	{
-		cl_assert( refCount == 0 );
+		cl_assert( m_RefCount == 0 );
 	}
 
 	//////////////////////
@@ -76,14 +82,28 @@ namespace FusionEngine
 	}
 
 	///////////////////
-	// Operations (wrappers for generic call method)
+	// Operations
 	// Assignment
+	ScriptVector &ScriptVector::operator=(const ScriptVector &other)
+	{
+		Data = other.Data;
+
+		// Return a ref. to this
+		return *this;
+	}
+
 	static void AssignVector_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
 		ScriptVector *thisPointer = (ScriptVector*)gen->GetObject();
 		*thisPointer = *a;
 		gen->SetReturnAddress(thisPointer);
+	}
+
+	ScriptVector &ScriptVector::operator+=(const ScriptVector &other)
+	{
+		Data = other.Data;
+		return *this;
 	}
 
 	static void AddAssignVector_Generic(asIScriptGeneric *gen)
@@ -99,7 +119,7 @@ namespace FusionEngine
 	{
 		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
 		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a == *b;
+		bool r = (*a).Data == (*b).Data;
 		gen->SetReturnDWord(r);
 	}
 
@@ -107,43 +127,17 @@ namespace FusionEngine
 	{
 		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
 		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a != *b;
-		gen->SetReturnDWord(r);
-	}
-
-	static void VectorLesserOrEqual_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a <= *b;
-		gen->SetReturnDWord(r);
-	}
-
-	static void VectorGreaterOrEqual_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a >= *b;
-		gen->SetReturnDWord(r);
-	}
-
-	static void VectorLesser_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a < *b;
-		gen->SetReturnDWord(r);
-	}
-
-	static void VectorGreater_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = *a > *b;
+		bool r = (*a).Data != (*b).Data;
 		gen->SetReturnDWord(r);
 	}
 
 	// Arithmatic
+	ScriptVector *operator+(const ScriptVector &a, const ScriptVector &b)
+	{
+		// Return a new object as a script handle
+		return new ScriptVector(a.Data + b.Data);
+	}
+
 	static void AddVectors_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
@@ -157,15 +151,87 @@ namespace FusionEngine
 	static void VectorLength_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *s = (ScriptVector*)gen->GetObject();
-		float l = s->length();
+		float l = s->Data.length();
 		gen->SetReturnDWord(l);
 	}
 
 	static void VectorSquaredLength_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *s = (ScriptVector*)gen->GetObject();
-		float l = s->squared_length();
+		float l = s->Data.squared_length();
 		gen->SetReturnDWord(l);
+	}
+
+
+	///////
+	// Mem
+	/*!
+	 * A wrapper for the default ScriptVector constructor, since
+	 * it is not possible to take the address of the constructor directly
+	 */
+	static void ConstructScriptVector(ScriptVector *thisPointer)
+	{
+		// Construct the string in the memory received
+		new(thisPointer) ScriptVector();
+	}
+
+	////////////////////////////////
+	// AngelScript type registration
+	void RegisterScriptVector_Native(asIScriptEngine *engine)
+	{
+		int r;
+
+		// Register the type
+		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_CLASS_CDA); cl_assert( r >= 0 );
+
+		// Register the object operator overloads
+		// Note: We don't have to register the destructor, since the object uses reference counting
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_CDECL_OBJLAST); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(ScriptVector,AddRef), asCALL_THISCALL); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(ScriptVector,Release), asCALL_THISCALL); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asMETHODPR(ScriptVector, operator =, (const ScriptVector&), ScriptVector&), asCALL_THISCALL); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADD_ASSIGN, "Vector &f(const Vector &in)", asMETHODPR(ScriptVector, operator+=, (const ScriptVector&), ScriptVector&), asCALL_THISCALL); cl_assert( r >= 0 );
+
+		// Register the global operator overloads
+		// Note: Vector2's methods can be used directly because the
+		// internal Vector2 is placed at the beginning of the class
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asFUNCTIONPR(operator==, (const Vector2 &, const Vector2 &), bool), asCALL_CDECL); cl_assert( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asFUNCTIONPR(operator!=, (const Vector2 &, const Vector2 &), bool), asCALL_CDECL); cl_assert( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTIONPR(operator +, (const ScriptVector &, const ScriptVector &), ScriptVector*), asCALL_CDECL); cl_assert( r >= 0 );
+
+		// Register the object methods
+		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); cl_assert( r >= 0 );
+	}
+
+	void RegisterScriptVector_Generic(asIScriptEngine *engine)
+	{
+		int r;
+
+		// Register the type
+		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_CLASS_CDA); cl_assert( r >= 0 );
+
+		// Register the object operator overloads
+		// Note: We don't have to register the destructor, since the object uses reference counting
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asFUNCTION(VectorAddRef_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asFUNCTION(VectorRelease_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asFUNCTION(AssignVector_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADD_ASSIGN, "Vector &f(const Vector &in)", asFUNCTION(AddAssignVector_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asFUNCTION(VectorEqual_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asFUNCTION(VectorNotEqual_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTION(AddVectors_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+
+		// Register the object methods
+		r = engine->RegisterObjectMethod("Vector", "float length() const", asFUNCTION(VectorLength_Generic), asCALL_GENERIC); cl_assert( r >= 0 );
+	}
+
+	void RegisterScriptVector(asIScriptEngine *engine)
+	{
+		if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+			RegisterScriptVector_Generic(engine);
+		else
+			RegisterScriptVector_Native(engine);
 	}
 
 }

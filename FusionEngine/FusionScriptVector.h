@@ -37,13 +37,16 @@
 namespace FusionEngine
 {
 
-	class ScriptVector : public Vector2
+	//! Reference counting Vector2 for AngelScript
+	class ScriptVector
 	{
 	public:
 		//! Copying constructor.
 		ScriptVector(const ScriptVector &other);
 		//! Init. constructor
 		ScriptVector(float x = 0.0, float y = 0.0);
+		//! Init. constructor
+		ScriptVector(const Vector2 &other);
 
 	public:
 		//! Increase reference count
@@ -51,11 +54,40 @@ namespace FusionEngine
 		//! Decrease reference count. Deletes if refCount = 0
 		void Release();
 
+		//! Assign
+		ScriptVector &operator=(const ScriptVector &other);
+		//! Add-assign
+		ScriptVector &operator+=(const ScriptVector &other);
+
+		//! Actual vector
+		Vector2 Data;
+
 	protected:
 		//! Destructor
 		~ScriptVector();
 		int m_RefCount;
 	};
+
+	//! Register ScriptVector using generic call methods
+	/*!
+	 * Call this function to register the string type
+	 * using native calling conventions
+	 */
+	void RegisterScriptVector_Native(asIScriptEngine *engine);
+
+	//! Register ScriptVector using native call methods
+	/*!
+	 * Use this one instead if native calling conventions
+	 * are not supported on the target platform
+	 */
+	void RegisterScriptVector_Generic(asIScriptEngine *engine);
+
+	//! Automaticaly register ScriptVector (using Native or Generic methods)
+	/*!
+	 * This function will determine the configuration of the engine
+	 * and use one of the two functions below to register the string type
+	 */
+	void RegisterScriptVector(asIScriptEngine *engine);
 
 }
 

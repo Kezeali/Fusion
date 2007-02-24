@@ -8,8 +8,14 @@
 #include "..\FusionEngine\FusionPhysicsTypes.h"
 #include "..\FusionEngine\FusionPhysicsCallback.h"
 
+#include "..\FusionEngine\FusionScript.h"
+#include "..\FusionEngine\FusionScriptingEngine.h"
+#include "..\FusionEngine\FusionScriptingFunctions.h"
+#include "..\FusionEngine\FusionScriptVector.h"
+#include "..\FusionEngine\FusionVector2.h"
+
 const int g_NumDrones = 4;
-const float g_ThrustForce = 2.8f;
+const float g_ThrustForce = 0.2f;
 
 using namespace FusionEngine;
 
@@ -77,8 +83,8 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			Vector2 force = m_ShipPhysical->GetPosition();
-			force.x += sinf(a)*4.0f;
-			force.y += -cosf(a)*4.0f;
+			force.x += sinf(a)*2.0f;
+			force.y += -cosf(a)*2.0f;
 
 			m_ShipPhysical->_setPosition(force);
 		}
@@ -103,10 +109,10 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
-			m_ShipPhysical->SetRotationalVelocity(-2.4f);
+			m_ShipPhysical->SetRotationalVelocity(-0.2f);
 
 		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
-			m_ShipPhysical->SetRotationalVelocity(2.4f);
+			m_ShipPhysical->SetRotationalVelocity(0.2f);
 
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
@@ -125,7 +131,7 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			for (int i = 0; i < g_NumDrones; i++)
 			{
-				m_DronePhysical[i]->SetRotationalVelocity(2.0f);
+				m_DronePhysical[i]->SetRotationalVelocity(0.2f);
 				m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
@@ -166,19 +172,19 @@ class BitmaskTest : public CL_ClanApplication
 
 		{
 			PhysicalProperties props;
-			props.mass = 32.0f;
+			props.mass = 20.0f;
 			props.position = Vector2(48.f, 120.f);
+			props.radius = 50;
 			props.rotation = 0;
 			props.use_dist = true;
-			props.dist = m_ShipGraphical->get_width() * 0.5f;
-			props.radius = props.dist;
+			props.dist = m_ShipGraphical->get_width() * 0.5;
 			props.use_bitmask = true;
 			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
 		}
 		m_ShipPhysical->SetCoefficientOfFriction(0.4f);
-		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
+		m_ShipPhysical->SetCoefficientOfRestitution(0.6f);
 
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
@@ -192,12 +198,12 @@ class BitmaskTest : public CL_ClanApplication
 
 			{
 				PhysicalProperties props;
-				props.mass = 28.0f;
+				props.mass = 15.0f;
 				props.position = Vector2(460.f + 10.0f * i, 120.f);
+				props.radius = 50;
 				props.rotation = 0;
 				props.use_dist = true;
 				props.dist = m_DroneGraphical[i]->get_width() * 0.5;
-				props.radius = props.dist;
 				props.use_bitmask = true;
 				props.bitmask = m_DroneBitmask[i];
 
@@ -205,7 +211,7 @@ class BitmaskTest : public CL_ClanApplication
 			}
 
 			m_DronePhysical[i]->SetCoefficientOfFriction(0.8f);
-			m_DronePhysical[i]->SetCoefficientOfRestitution(0.4f);
+			m_DronePhysical[i]->SetCoefficientOfRestitution(0.6f);
 
 			std::string ud = CL_String::format("Drone %1", i);
 			char *userdata = (char *)malloc( ud.size() +1 );
@@ -264,7 +270,6 @@ class BitmaskTest : public CL_ClanApplication
 			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
 		}
 		m_TerrainPhysical->SetUserData((void *)"Terrain");
-		m_TerrainPhysical->SetCoefficientOfFriction(0.8f);
 		
 		int back_pos = 0;
 		float sur_y = 250.f;

@@ -43,9 +43,11 @@ namespace FusionEngine
 	//! Ratio of degrees to radians
 	static const double g_DegToRad = M_PI/180.0f;
 
-	// --Useful functions--
+	// --General functions--
 	//! Converts deg to rad
-	static inline float fe_degtorad(float deg) { return deg * g_DegToRad; }
+	static inline float fe_degtorad(float deg) { return deg * (float)g_DegToRad; }
+	//! Converts deg to rad (double)
+	static inline double fe_degtorad(double deg) { return deg * g_DegToRad; }
 
 	//! Like strcmp, but case-insensitive
 	static int fe_nocase_strcmp(const char *x, const char *y)
@@ -135,6 +137,7 @@ namespace FusionEngine
 
 
 	// --Typedefs--
+	//! Unique identifier type for game objects
 	typedef unsigned short ObjectID;
 	//typedef std::string ResourceID;
 

@@ -27,6 +27,8 @@
 
 #include "FusionScriptingEngine.h"
 
+#include "FusionScriptingFunctions.h"
+
 namespace FusionEngine
 {
 	ScriptingEngine::ScriptingEngine()
@@ -46,15 +48,15 @@ namespace FusionEngine
 	{
 	}
 
-	int ScriptingEngine::ExecuteScript(Script *script)
+	int ScriptingEngine::ExecuteScript(Script *script, const char *function)
 	{
 	}
 
-	int ScriptingEngine::ExecuteString(const std::string &script, char *module, int *context, int timeout, int keep_context)
+	int ScriptingEngine::ExecuteString(const std::string &script, const char *module, int *context, int timeout, int keep_context)
 	{
 	}
 
-	int ScriptingEngine::ReExecuteString(int context, char *module)
+	int ScriptingEngine::ReExecuteString(int context, const char *module)
 	{
 	}
 
@@ -68,7 +70,19 @@ namespace FusionEngine
 
 	void ScriptingEngine::registerGlobals()
 	{
-		m_asEngine->RegisterGlobalFunction("", asMETHOD());
+		int r;
+
+		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		{
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); assert( r >= 0 );
+
+			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL);
+			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL);
+		}
+		else
+		{
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); assert( r >= 0 );
+		}
 	}
 
 }

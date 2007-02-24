@@ -69,11 +69,13 @@ namespace FusionEngine
 		//! A list of projectiles
 		typedef std::map<ObjectID, FusionProjectile*> ProjectileList;
 
-		//! A list of playerID's mapped to resourceID's
-		typedef std::map<ObjectID, std::string> PlayerShipResMap;
-
 		//! A list of inputs
 		typedef std::vector<ShipInput> ShipInputList;
+
+		//! A list of player ObjectIDs (player IDs) mapped to resourceID's
+		typedef std::map<ObjectID, std::string> ShipResMap;
+		//! A list of projectile ObjectIDs mapped to resourceID's
+		typedef std::map<ObjectID, std::string> ProjectileResMap;
 
 	public:
 		//! Pulls the resources from the ResourceLoader and some other stuff
@@ -95,7 +97,7 @@ namespace FusionEngine
 		virtual ShipResource *GetShipResourceByID(const std::string &id);
 
 		//! Detonate the given projectile
-		virtual void Detonate(const Projectile *projectile);
+		virtual void Detonate(ObjectID index);
 
 		//! Leaves the environment cleanly after an error.
 		/*!

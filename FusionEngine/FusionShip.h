@@ -51,8 +51,8 @@ namespace FusionEngine
 	 * <br>
 	 * 2006/12/01: Rather than having engines fall off when the player is damaged,
 	 * it would be cool if you could use them as a sort of kamakaze attack - they
-	 * could be jettasoned at will to home on the nearest ship, causing insta-gib on
-	 * impact. :)
+	 * could be jettasoned at will to home on the nearest ship, causing instant death
+	 * on impact. :)
 	 */
 	class FusionShip
 	{

@@ -52,28 +52,28 @@ namespace FusionEngine
 	/////////////
 	// Operators
 	// Assignment
-	Vector2& Vector2::operator = (const Vector2& v)
+	Vector2& Vector2::operator=(const Vector2& v)
 	{ 
 		x = v.x;
 		y = v.y;
 		return *this;
 	}
 
-	Vector2 &Vector2::operator += (const Vector2& v)
+	Vector2 &Vector2::operator+=(const Vector2& v)
 	{
 		x += v.x;
 		y += v.y;
 		return *this;
 	}
 
-	Vector2 &Vector2::operator -= (const Vector2& v)
+	Vector2 &Vector2::operator-=(const Vector2& v)
 	{
 		x -= v.x;
 		y -= v.y;
 		return *this;
 	}
 
-	Vector2 &Vector2::operator *= (float s)
+	Vector2 &Vector2::operator*=(float s)
 	{
 		x *= s;
 		y *= s;
@@ -82,46 +82,46 @@ namespace FusionEngine
 
 	//////////////
 	// Comparison
-	bool Vector2::operator == (const Vector2& v) const
+	bool Vector2::operator==(const Vector2& v) const
 	{
 		return ((x == v.x) && (y == v.y));
 	}
 
-	bool Vector2::operator != (const Vector2& v) const
+	bool Vector2::operator!=(const Vector2& v) const
 	{
 		return !(operator == (v));
 	}
 
 	//////////////
 	// Arithmatic
-	Vector2 Vector2::operator + (const Vector2& v) const
+	Vector2 Vector2::operator+(const Vector2& v) const
 	{
 		return Vector2(x + v.x, y + v.y);
 	}
 
-	Vector2 Vector2::operator - (const Vector2& v) const
+	Vector2 Vector2::operator-(const Vector2& v) const
 	{
 		return Vector2(x - v.x, y - v.y);
 	}
 
-	Vector2 Vector2::operator * (float s) const
+	Vector2 Vector2::operator*(float s) const
 	{
 		return Vector2(s * x, s * y);
 	}
 
-	Vector2 operator * (float s, const CL_Vector& v)
+	Vector2 operator*(float s, CL_Vector const &v)
 	{
 		return Vector2(s * v.x, s * v.y);
 	}
 
 
-	Vector2 Vector2::operator - () const
+	Vector2 Vector2::operator-() const
 	{
 		return Vector2(-x, -y);
 	}
 
 
-	float &Vector2::operator [] (int n)
+	float &Vector2::operator[](int n)
 	{
 		switch (n)
 		{
@@ -133,6 +133,8 @@ namespace FusionEngine
 		return dummy;
 	}
 
+	//////////
+	// Methods
 	float Vector2::length() const
 	{
 #ifdef WIN32
@@ -152,6 +154,29 @@ namespace FusionEngine
 		return x*v.x + y*v.y;  
 	}
 
+	float Vector2::cross(const Vector2& v) const
+	{
+		return ( x*v.y - y*v.x );
+	}
+
+	Vector2 Vector2::project(const Vector2& v) const
+	{
+		//       v1 * (v1 dot v2 / v2 dot v2)
+		return ( v * (this->dot(v) / v.dot(v)) );
+	}
+
+	void Vector2::rotate(const Vector2& v)
+	{
+		x = (x   * v.x - y   * v.y);
+		y = (x   * v.y + y   * v.x);
+	}
+
+	void Vector2::unrotate(const Vector2& v)
+	{
+		x = (x   * v.x + y   * v.y);
+		y = (x   * v.y - y   * v.x);
+	}
+
 	float Vector2::normalize()
 	{
 		float f = length();
@@ -161,6 +186,23 @@ namespace FusionEngine
 			y /= f;
 		}
 		return f;
+	}
+
+	Vector2 Vector2::normalized()
+	{
+		Vector2 u;
+		float l = length();
+		if (l!=0)
+		{
+			u.x = this->x/l;
+			u.y = this->y/l;
+		}
+		return u;
+	}
+
+	Vector2 Vector2::perpendicular() const
+	{
+		return Vector2( -y, x );
 	}
 
 	Vector2 Vector2::normal() const

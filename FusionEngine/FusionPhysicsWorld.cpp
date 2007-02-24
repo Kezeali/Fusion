@@ -1,3 +1,31 @@
+/*
+  Copyright (c) 2006 Fusion Project Team
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
+		Dimitrios Christopoulos (dynamic-dynamic object collision response)
+*/
 
 #include "FusionPhysicsWorld.h"
 
@@ -7,6 +35,11 @@
 
 namespace FusionEngine
 {
+	//! Returns true if the first address is lower than the second
+	/*!
+	 * This (along with CollisionAfter()) is used to sort Collision collections
+	 * so that equivilant Collisions are adjcent.
+	 */
 	bool CollisionBefore(Collision *lhs, Collision *rhs)
 	{
 		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
@@ -19,6 +52,11 @@ namespace FusionEngine
 
 		return false;
 	}
+	//! Returns true if the first address is higher than the second
+	/*!
+	 * This (along with CollisionBefore()) is used to sort Collision collections
+	 * so that equivilant Collisions are adjcent.
+	 */
 	bool CollisionAfter(Collision *lhs, Collision *rhs)
 	{
 		if (lhs->First < rhs->Second && lhs->Second < rhs->First)
@@ -31,6 +69,11 @@ namespace FusionEngine
 
 		return false;
 	}
+	//! Returns true if the given Collisions are equal
+	/*!
+	 * Collisions are considered equal if both the First and Second pointers
+	 * have the same address (First and Second point to physical bodies).
+	 */
 	bool CollisionEqual(Collision *lhs, Collision *rhs)
 	{
 		// Both collisions are exactly the same
@@ -301,12 +344,13 @@ namespace FusionEngine
 			m_Static.clear();
 		}
 
-		// Clear the collision grid, JIC Clear isn't being called in the PhysWorld destructor
+		// Clear the collision grid, JIC this isn't being called from the PhysWorld destructor
 		m_CollisionGrid->Clear();
 	}
 
 	void FusionPhysicsWorld::RunSimulation(unsigned int split)
 	{
+		float delta = (float)split * 0.1f;
 
 		// All collisions found in the Prepare Movement stage will be listed here
 		CollisionList collisions;
@@ -319,58 +363,41 @@ namespace FusionEngine
 		BodyList::iterator a_it = m_Bodies.begin();
 		for (;a_it != m_Bodies.end(); ++a_it)
 		{
-			FusionPhysicsBody *cBod = (*a_it);
+			FusionPhysicsBody *b1 = (*a_it);
 
-			if (cBod->IsActive())
+			if (b1->IsActive())
 			{
 				///////////////////
 				// Prepare Movement
-				Vector2 position = cBod->GetPosition();
-				Vector2 force = cBod->GetForce();
+				Vector2 position = b1->GetPosition();
+				Vector2 force = b1->GetForce();
 
 				// Apply engine force
 				{
 					// Find the direction to apply the engine force
 					float direction =
-						cBod->GetRotation() + cBod->GetRotationalVelocity() * split * 0.5;
+						b1->GetRotation();// + b1->GetRotationalVelocity() * delta;
+
+
+					float engine_force = b1->GetEngineForce();
 
 					Vector2 force_vector(
-						sinf(fe_degtorad( direction )) * cBod->GetEngineForce(),
-						-cosf(fe_degtorad( direction )) * cBod->GetEngineForce()
+						sinf(fe_degtorad( direction )) * engine_force,
+						-cosf(fe_degtorad( direction )) * engine_force
 						);
 					force += force_vector;
 				}
 
 				Vector2 accel;
-				Vector2 veloc = cBod->GetVelocity();
-				float linDamping = cBod->GetCoefficientOfFriction();
+				Vector2 veloc = b1->GetVelocity();
+				float linDamping = b1->GetCoefficientOfFriction();
 
-				// Calculate the damping on the x and y components of the force
+				// Calculate the damping on the force
 				//Vector2 nveloc = veloc / speed; // normalise
 				Vector2 dampForce = veloc * linDamping;
 
 				// Finally, calculate the velocity
-				accel = (force - dampForce) * cBod->GetInverseMass();
-				veloc = veloc + accel;
-
-
-				// Wrap or pop back at boundries
-				if (position.x >= m_Width-1 || position.x <= 1
-					|| position.y >= m_Height-1 || position.y <= 1)
-				{
-					if (m_Wrap)
-					{
-						cBod->_setPosition(Vector2(
-							fe_wrap<int>(position.x, 1, m_Width-1), fe_wrap<int>(position.y, 1, m_Height-1)
-							));
-					}
-					else
-					{
-						cBod->_setPosition(Vector2(
-							fe_clamped<int>(position.x, 1, m_Width-1), fe_clamped<int>(position.y, 1, m_Height-1)
-							));
-					}
-				}
+				accel = (force - dampForce) * b1->GetInverseMass();
 
 
 				// m_MaxVelocity is used to prevent objects from reaching crazy speeds
@@ -378,17 +405,17 @@ namespace FusionEngine
 				if (veloc.squared_length() > m_MaxVelocitySquared)
 				{
 					// Set acceleration to zero
-					cBod->_setAcceleration(Vector2::ZERO);
+					b1->_setAcceleration(Vector2::ZERO);
 
 					//! \todo See which method is faster - trig or non-tirg.
 #ifdef FUSION_PHYS_USE_TRIG
-					//  First Method (trig):
+					// Method1 (trig):
 					// Calculate the maximum x and y velocities for this angle
 					double a = atan(veloc.x/veloc.y);
 					veloc.x = m_MaxVelocity * float(sin(a));
 					veloc.y = m_MaxVelocity * float(cos(a));
 #else
-					//  Alternative method (without trig):
+					// Method2 (without trig):
 					// Calculate the maximum x and y velocities for this vector
 					float nx = veloc.x / veloc.length();
 					float ny = veloc.y / veloc.length();
@@ -400,16 +427,35 @@ namespace FusionEngine
 				else
 				{
 					// Set acceleration to the calculated value
-					cBod->_setAcceleration(accel);
+					b1->_setAcceleration(accel);
 				}
 
 				// Set velocity to the calculated (but capped) value.
 				//  This may not be the final value if a collision is detected
-				cBod->_setVelocity(veloc);
+				b1->_setVelocity(veloc);
 
 				// All forces applied in the previous step have been converted to motion.
-				cBod->_setForce(Vector2::ZERO);
-				cBod->_setEngineForce(0);
+				b1->_setForce(Vector2::ZERO);
+				b1->_setEngineForce(0);
+
+
+				// Wrap or pop back at boundries
+				if (position.x >= m_Width-1 || position.x <= 1
+					|| position.y >= m_Height-1 || position.y <= 1)
+				{
+					if (m_Wrap)
+					{
+						b1->_setPosition(Vector2(
+							fe_wrap<float>(position.x, 1.f, (float)m_Width-1), fe_wrap<float>(position.y, 1.f, (float)m_Height-1.f)
+							));
+					}
+					else
+					{
+						b1->_setPosition(Vector2(
+							fe_clamped<float>(position.x, 1.f, (float)m_Width-1.f), fe_clamped<float>(position.y, 1.f, (float)m_Height-1.f)
+							));
+					}
+				}
 
 
 				///////////////////////
@@ -417,10 +463,10 @@ namespace FusionEngine
 				//  Check for collisions of active objects.
 
 				// Find the movement vector for current body
-				Vector2 cBod_movement = cBod->GetVelocity() * split;
+				Vector2 b1_velocity = b1->GetVelocity() * delta + b1->GetAcceleration()*0.5f*delta*delta;
 
 				// Find collidable dynamic bodies
-				BodyList check_list = m_CollisionGrid->FindAdjacentBodies(cBod);
+				BodyList check_list = m_CollisionGrid->FindAdjacentBodies(b1);
 
 				// Append static bodies
 				//  Store the length before resize
@@ -436,27 +482,27 @@ namespace FusionEngine
 					if ((*b_it) == (*a_it))
 						continue;
 
-					FusionPhysicsBody *Other = (*b_it);
+					FusionPhysicsBody *b2 = (*b_it);
 
-					if ( cBod->CanCollideWith(Other) )
+					if ( b1->CanCollideWith(b2) )
 					{
 
-						// Find the movement vector for other body
-						Vector2 Other_movement = Other->GetVelocity() * split;
+						// Find the movement vector for b2 body
+						Vector2 b2_velocity = b2->GetVelocity() * delta + b2->GetAcceleration()*0.5f*delta*delta;
 
 						// Position at collisions for each body
-						Vector2 cBod_pac; 
-						Vector2 Other_pac;
+						Vector2 b1_pac; 
+						Vector2 b2_pac;
 
 
 						// Search for collisions
 						if (PhysUtil::FindCollisions(
-							&cBod_pac, &Other_pac, 
-							cBod_movement, Other_movement, 
-							cBod, Other))
+							&b1_pac, &b2_pac, 
+							b1_velocity, b2_velocity, 
+							b1, b2))
 						{
 							Vector2 normal;
-							PhysUtil::CalculateNormal(&normal, cBod_pac, Other_pac, cBod, Other);
+							PhysUtil::CalculateNormal(&normal, b1_pac, b2_pac, b1, b2);
 
 
 							///////////////////
@@ -464,20 +510,20 @@ namespace FusionEngine
 							if (normal == Vector2::ZERO)
 							{
 								// No need to warp out of non-statics, they should move away eventually
-								if (Other->CheckCollisionFlag(C_STATIC))
+								if (b2->CheckCollisionFlag(C_STATIC))
 								{
 									// Try to find a valid normal (we don't want to warp if we don't need to)
 									PhysUtil::CalculateNormal(
 										&normal,
-										cBod_pac + cBod_movement, Other_pac,
-										cBod, Other);
+										b1_pac + b1_velocity, b2_pac,
+										b1, b2);
 									if (normal == Vector2::ZERO)
 									{
 
 										Vector2 jump_point; 
 										Vector2 o_point; // Not used
 
-										float facing = cBod->GetRotation();
+										float facing = b1->GetRotation();
 
 										// Get a short vector
 										Vector2 escape_ray;
@@ -490,9 +536,9 @@ namespace FusionEngine
 											if (PhysUtil::FindCollisions(
 												&jump_point, &o_point, 
 												escape_ray, Vector2::ZERO, 
-												cBod, Other, 0.1f, false))
+												b1, b2, 0.1f, false))
 											{
-												cBod->m_Position = jump_point;
+												b1->m_Position = jump_point;
 
 												continue;
 											}
@@ -504,9 +550,9 @@ namespace FusionEngine
 										if (PhysUtil::FindCollisions(
 											&jump_point, &o_point, 
 											escape_ray, Vector2::ZERO, 
-											cBod, Other, 0.1f, false))
+											b1, b2, 0.1f, false))
 										{
-											cBod->m_Position = jump_point;
+											b1->m_Position = jump_point;
 
 											continue;
 										}
@@ -517,33 +563,33 @@ namespace FusionEngine
 							} // if (normal == Vector2::ZERO)
 
 
-							// Normal * veloc should multiply to a nevative (should be opposite
-							//  directions) if they don't, the normal is invalid.
-							if (veloc != Vector2::ZERO && normal.x * veloc.x > 0 && normal.y * veloc.y > 0)
-							{
-								// Pop back
-								cBod->m_Position = cBod_pac + normal * -g_PhysCollisionJump;
+							// Normal dot veloc should be negative (should be opposite
+							//  directions) if it isn't, the normal is invalid.
+							//if (veloc != Vector2::ZERO && normal.dot(veloc) > 0.0f)
+							//{
+							//	// Pop back
+							//	b1->_setPosition(b1_pac + normal * -g_PhysCollisionJump);
 
-								// Stop movement
-								veloc = Vector2::ZERO;
-								cBod->_setAcceleration(Vector2::ZERO);
-								cBod->_setVelocity(Vector2::ZERO);
+							//	// Stop movement
+							//	veloc = Vector2::ZERO;
+							//	b1->_setAcceleration(Vector2::ZERO);
+							//	b1->_setVelocity(Vector2::ZERO);
 
-								continue;
-							} // if (wrong normal direction)
+							//	continue;
+							//} // if (wrong normal direction)
 
 							// End error correction
 							///////////////////////
 
 							// Make sure both bodies are active
-							cBod->_activate();
-							Other->_activate();
+							b1->_activate();
+							b2->_activate();
 
 							////////////////////
 							// Add the collision
 							// If there were no errors, add the detected collision to the list
 							collisions.push_back(
-								new Collision(normal, cBod, Other, cBod_pac, Other_pac)
+								new Collision(normal, b1, b2, b1_pac, b2_pac)
 								);
 
 						} // if (collision)
@@ -575,133 +621,96 @@ namespace FusionEngine
 		{
 			Vector2 normal         = (*col_it)->Normal;
 
-			FusionPhysicsBody *first  = (*col_it)->First;
-			FusionPhysicsBody *second = (*col_it)->Second;
+			FusionPhysicsBody *cb1 = (*col_it)->First;
+			FusionPhysicsBody *cb2 = (*col_it)->Second;
 
-			Vector2 first_pac      = (*col_it)->First_Position;
-			Vector2 second_pac     = (*col_it)->Second_Position;
+			Vector2 b1_pos         = (*col_it)->First_Position;
+			Vector2 b2_pos         = (*col_it)->Second_Position;
 
 						
-			float first_elasticity = first->GetCoefficientOfRestitution();
-			float second_elasticity = second->GetCoefficientOfRestitution();
+			float cb1_elasticity = cb1->GetCoefficientOfRestitution();
+			float cb2_elasticity = cb2->GetCoefficientOfRestitution();
+
+			float cb1_friction = cb1->GetCoefficientOfFriction(); // not used
+			float cb2_friction = cb2->GetCoefficientOfFriction();
 
 			// Pop back a bit
-			first->m_Position = first_pac + normal * g_PhysCollisionJump;
-			first->_setAcceleration(Vector2::ZERO);
-			//first->_setVelocity(Vector2::ZERO);
+			//float l_accel = cb1->GetAcceleration().length();
+			float speed = cb1->GetVelocity().length();
+			cb1->_setPosition(b1_pos + normal * (speed + g_PhysCollisionJump));
 
-			if (second->GetCollisionFlags() & C_STATIC)
+			// --Collision with static--
+			if (cb2->GetCollisionFlags() & C_STATIC)
 			{
-				// --Collision with static--
-
-				// Get the speed of the object
-				Vector2 veloc = first->GetVelocity();
-				float speed = veloc.length();
-
-				// speed / mass
-				float bounce_force = speed * first->GetInverseMass();
+				Vector2 v = cb1->GetVelocity();
 
 				// Calculate the deflection velocity
-				veloc = normal * bounce_force * first_elasticity * first->GetMass();
+				Vector2 bounce = v.project((-normal)) * cb1_elasticity;
+				Vector2 frictn = v.project((-normal).perpendicular()) * cb2_friction;
 
-				first->_setVelocity(veloc);
-				//first->m_Position += veloc;
-
-
-				// --OLD METHOD--
-				//Vector2 bounce_force = veloc * first->GetInverseMass();
-
-				//float speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * first_elasticity;
-
-				// *mass to conserve momentum
-				//veloc = bounce_force * first->GetMass();
-
+				cb1->_setVelocity((-bounce) + frictn);
 			}
+			// --Collision with non-static--
 			else
 			{
-				// --Collision with non-static--
+				Vector2 v1 = cb1->GetVelocity();
+				Vector2 v2 = cb2->GetVelocity();
+				float m1 = cb1->GetMass();
+				float m2 = cb2->GetMass();
+				float im1 = cb1->GetInverseMass();
+				float im2 = cb2->GetInverseMass();
 
-				// Get the speed of both objects
-				Vector2 first_veloc = first->GetVelocity();
-				Vector2 second_veloc = second->GetVelocity();
-				float first_speed = first_veloc.length();
-				float second_speed = second_veloc.length();
+				// Get coeff. of elast. and friction
+				float e = cb1_elasticity * cb2_elasticity;
 
-				/////////
-				// FIRST:
-				// (speed - other speed) / (mass + other mass)
-				float bounce_force = ( first_speed - second_speed ) * 
-					( first->GetInverseMass() + second->GetInverseMass() );
+				/////////////////////////////////////
+				// Dimitrios Christopoulos's Solution
+				Vector2 pb1,pb2,dpos,U1x,U1y,U2x,U2y,V1x,V1y,V2x,V2y,
+					vf1,vf2;
+				double a,b;
 
-				first_veloc = normal * bounce_force * first_elasticity * first->GetMass();
+				dpos=(b2_pos-b1_pos).normalized();  // Find X-Axis (delta-position, normalized)
+				a=dpos.dot(v1);                     // Find Projection
+				U1x=dpos*a;                         // Find Projected Vectors
+				U1y=v1-U1x;
 
-				first->_setVelocity(first_veloc);
+				dpos=(pb1-pb2).normalized();        // Same as above, for b2
+				b=dpos.dot(v2);                     // Find Projection
+				U2x=dpos*b;                         // Vectors For The Other Object
+				U2y=v2-U2x;
+
+				V1x=(U1x+U2x-(U1x-U2x))*0.5*m2*im1;  // Now Find New Velocities
+				V2x=(U1x+U2x-(U2x-U1x))*0.5*m1*im2;
+				V1y=U1y*e*m2*im1;
+				V2y=U2y*e*m1*im2;
+
+				vf1=V1x+V1y;                  // Set New Velocity Vectors
+				vf2=V2x+V2y;                  // To The Colliding Balls
 
 
-				//////////
-				// SECOND:
-				// (speed - other speed) / (mass + other mass)
-				bounce_force = ( second_speed - first_speed ) * 
-					( second->GetInverseMass() + first->GetInverseMass() );
-
-				second_veloc = normal * bounce_force * second_elasticity * first->GetMass();
-
-				second->_setVelocity(second_veloc);
-
-				// --OLD METHOD--
-				// First:
-				//Vector2 bounce_force = ( first_veloc - second_veloc ) *
-				// ( first->GetInverseMass() + second->GetInverseMass() );
-				//float speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection for first 
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				// reverse the normalisation of bounce_force
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * first_elasticity;
-
-				// *other mass only, to conserve momentum
-				//first_veloc = bounce_force * second->GetMass();
-
-				// Second:
-				//bounce_force = ( second_veloc - first_veloc ) * 
-				// ( second->GetInverseMass() + first->GetInverseMass() );
-
-				//speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection for second
-				//normal *= -1; // invert the normal
-
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				// reverse the normalisation of bounce_force
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * second_elasticity;
-
-				// *other mass only, to conserve momentum
-				//second_veloc = bounce_force * first->GetMass();
+				cb1->_setVelocity(vf1);
+				cb2->_setVelocity(vf2);
+				
 
 			} // else
 
 
+			//////////
 			// Finally, call each object's collision callback
+
 			// Find the point where the two objects touch
 			Vector2 poc = Vector2(0,0);
 
 			PhysUtil::GuessPointOfCollision(
 				&poc,
-				first_pac, second_pac,
-				first, second);
+				b1_pos, b2_pos,
+				cb1, cb2);
 
-			first->CollisionWith(second, poc);
-			second->CollisionWith(first, poc);
+			cb1->CollisionWith(cb2, poc);
+			cb2->CollisionWith(cb1, poc);
 
 
-		} // for (it_a)
+		} // for (coll_it)
 
 		// End of collision response
 		////////////////////////////
@@ -717,33 +726,38 @@ namespace FusionEngine
 		a_it = m_Bodies.begin();
 		for (;a_it != m_Bodies.end(); ++a_it)
 		{
-			FusionPhysicsBody *cBod = (*a_it);
+			FusionPhysicsBody *b1 = (*a_it);
 
-			if (cBod->IsActive())
+			if (b1->IsActive())
 			{
 				// This body will probably move, so update it when we resort the gird below...
-				m_CollisionGrid->_updateThis(cBod);
+				m_CollisionGrid->_updateThis(b1);
 
-				Vector2 velocity = cBod->GetVelocity();
+				Vector2 velocity = b1->GetVelocity();
+				Vector2 acceleration = b1->GetAcceleration();
+				float rot_velocity = b1->GetRotationalVelocity();
 
-
+				/////////
 				// Move along velocity vector
-				cBod->m_Position += velocity * split;
-				// Rotation
-				cBod->m_Rotation += cBod->GetRotationalVelocity() * split;
+				b1->m_Position += velocity * delta + acceleration*0.5f*delta*delta;
+				b1->m_Velocity += acceleration * delta;
+				/////////
+				// Rotate
+				b1->m_Rotation += rot_velocity * delta;
 
 
 				////////////////////////////////
 				// Deactivate stationary objects
 				 
-				if (velocity.squared_length() > m_DeactivationVelocitySquared)
+				if (velocity.squared_length() > m_DeactivationVelocitySquared ||
+					rot_velocity > 0)
 				{
 					// Reset the deactivation counter
-					cBod->_activate();
+					b1->_activate();
 				}
 				else
 				{
-					cBod->_deactivateAfterCountdown(split);
+					b1->_deactivateAfterCountdown(split);
 				}
 
 			}
@@ -752,6 +766,7 @@ namespace FusionEngine
 
 		// End of movement application
 		//////////////////////////////
+
 
 		// Resort all updated bodies
 		m_CollisionGrid->Resort();
@@ -837,3 +852,184 @@ namespace FusionEngine
 	}
 
 }
+
+				///////////
+				//// cb1:
+				//// If the velocity is the same direction as the normal, bounce forward
+				////float s = v1.dot(normal);
+				////assert(s < 0.0f);
+				//if (v1.dot(normal) < 0.0f)
+				//{
+				//	Vector2 bounce = vi1.project((-normal)) * e;
+				//	Vector2 frictn = vi1.project((-normal).perpendicular());// * u;
+
+				//	cb1->_setVelocity((-bounce) + frictn);
+				//}
+				////else
+				////{
+				////	Vector2 bounce = v1.project(normal) * e;
+				////	Vector2 frictn = v1.project(normal.perpendicular());// * u;
+
+				////	cb1->_setVelocity((-bounce) + frictn);
+				////}
+
+				////////////
+				//// cb2:
+				//// If the velocity is the same direction as the normal
+				////s = v2.dot(normal) > 0.0f ? 1.0f : -1.0f;
+				////if (v2.dot(normal) < 0.0f)
+				////{
+				////	Vector2 bounce = v2.project((-normal)) * e;
+				////	Vector2 frictn = v2.project((-normal).perpendicular());// * u;
+
+				////	cb2->_setVelocity((-bounce) + frictn);
+				////}
+				////else
+				//if (v2.dot(normal) > 0.0f)
+				//{
+				//	Vector2 bounce = vi2.project(normal) * e;
+				//	Vector2 frictn = vi2.project(normal.perpendicular());// * u;
+
+				//	cb2->_setVelocity(bounce + frictn);
+				//}
+
+				//cb1:
+				//float bounce_force = ( cb1_speed - cb2_speed );
+
+				//cb1_veloc += normal * bounce_force * cb1_elasticity * cb1->GetInverseMass();
+				//cb1_veloc += normal * cb1_elasticity * cb1->GetInverseMass();
+
+				//cb1->_setAcceleration(first_veloc);
+				
+
+				//cb2:
+				// (speed - b2 speed) / (mass + b2 mass)
+				/*bounce_force = ( cb2_speed - cb1_speed ) * 
+					( cb2->GetInverseMass() + cb1->GetInverseMass() );*/
+
+				//cb2_veloc += normal * bounce_force * cb2_elasticity * cb2->GetInverseMass();
+				//cb2_veloc += -normal * cb2_elasticity * cb2->GetInverseMass();
+
+				//cb2->_setAcceleration(-cb2_veloc);
+
+
+				/////////
+				//// Prep
+				////
+				//// Get the speed of both objects
+				//Vector2 cb1_veloc = cb1->GetVelocity();
+				//Vector2 cb2_veloc = cb2->GetVelocity();
+				//float cb1_speed = cb1_veloc.length();
+				//float cb2_speed = cb2_veloc.length();
+
+				//// Get coeff. of elast. and friction
+				//float e = cb1_elasticity * cb2_elasticity;
+				////float u = cb1_damping * cb2_damping;
+
+				//// Calc. normal mass
+				//float mass_sum = cb1->GetInverseMass() + cb2->GetInverseMass();
+
+				//Vector2 r1 = normal * -cb1->GetRadius(); //vectors to contact point
+				//Vector2 r2 = normal * cb2->GetRadius();//
+
+				//float r1cn = r1.cross(normal);
+				//float r2cn = r2.cross(normal);
+				//float kn = mass_sum; // Here we /would/ apply rotational properties, but Fusion doesn't use them :P
+				//float nMass = 1.0f/kn;
+
+				//// Difference in velocity
+				//Vector2 dv = cb2_veloc - cb1_veloc;
+
+				//// Calc. bounce
+				//float bounce = normal.dot(cb2_veloc - cb1_veloc) * e;
+
+				//////////////////
+				//// Apply Impluse
+				////
+				//// Normal impluse
+				//float dv_dot_n = dv.dot(normal);
+
+				//float jn = -(bounce + dv_dot_n)*nMass;
+				//jn = fe_max<float>(jn, 0.0f);
+
+				//assert(jn >= 0);
+				//if (jn > 0)
+				//	jn = jn;
+
+
+				//Vector2 j = (normal * jn);// - (normal * u);
+
+				////assert(j.x * cb2_veloc.x >= 0);
+				////assert(j.y * cb2_veloc.y >= 0);
+
+				//cb1_veloc = cb1_veloc + (j * cb1->GetInverseMass());
+				//cb2_veloc = cb2_veloc + (-j * cb2->GetInverseMass());
+
+				////cb1_veloc += bounce;
+				////cb2_veloc -= bounce;
+
+				// --ANOTHER METHOD OF RESPONSE--
+				//// Precompute normal mass
+				//float kNormal = cb1->GetInverseMass() + cb2->GetInverseMass();
+				//float massNormal = 1.0f / kNormal;
+
+				//// Relative velocity
+				//Vector2 dv = cb1_veloc - cb2_veloc;
+
+				//// Compute normal impulse
+				//float vn = dv.dot(normal);
+				//float normalImpulse = massNormal * -vn;
+
+				//// Apply contact impulse
+				//Vector2 impulse = normal * normalImpulse;
+
+				//cb1->m_Velocity -= impulse * cb1->GetInverseMass();
+
+				//cb2->m_Velocity += impulse * cb2->GetInverseMass();
+
+			
+				// --OLDER METHOD OF RESPONSE--
+				// cb1:
+				//Vector2 bounce_force = ( cb1_veloc - cb2_veloc ) *
+				// ( cb1->GetInverseMass() + cb2->GetInverseMass() );
+				//float speed = bounce_force.unitize(); //normalise
+
+				// Compute deflection for cb1 
+				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
+				// reverse the normalisation of bounce_force
+				//bounce_force.unitize();
+				//bounce_force = bounce_force * speed * cb1_elasticity;
+
+				// *other mass only, to conserve momentum
+				//cb1_veloc = bounce_force * cb2->GetMass();
+
+				// cb2:
+				//bounce_force = ( cb2_veloc - cb1_veloc ) * 
+				// ( cb2->GetInverseMass() + cb1->GetInverseMass() );
+
+				//speed = bounce_force.unitize(); //normalise
+
+				// Compute deflection for cb2
+				//normal *= -1; // invert the normal
+
+				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
+				// reverse the normalisation of bounce_force
+				//bounce_force.unitize();
+				//bounce_force = bounce_force * speed * cb2_elasticity;
+
+				// *other mass only, to conserve momentum
+				//cb2_veloc = bounce_force * cb1->GetMass();
+
+
+				// --OLD METHOD--
+				//Vector2 bounce_force = veloc * cb1->GetInverseMass();
+
+				//float speed = bounce_force.unitize(); //normalise
+
+				// Compute deflection
+				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
+				//bounce_force.unitize();
+				//bounce_force = bounce_force * speed * cb1_elasticity;
+
+				// *mass to conserve momentum
+				//veloc = bounce_force * cb1->GetMass();

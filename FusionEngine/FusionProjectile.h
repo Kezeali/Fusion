@@ -64,18 +64,9 @@ namespace FusionEngine
 		//! Callback
 		void CollisionResponse(FusionPhysicsBody *other, const Vector2 &collision_point);
 
-		//! Calls GenericEnvioronment#Detonate(this).
-		/*!
-		 * Script function.
-		 */
-		void Detonate();
-
 	protected:
 		//! The current state
 		ProjectileState m_CurrentState;
-
-		//! The environment
-		GenericEnvironment *m_Environment;
 
 	};
 

@@ -13,7 +13,7 @@ void seekerStep(uint16 ind)
 	float distance = GetDistanceToNearestShip(ind);
 	if (distance < 100)
 	{
-		if (GetObjectVelocity.length() <= Get_engineforce(ind))
+		if (GetObjectVelocity(ind).length() <= Get_engineforce(ind))
 		{
 			Vector pos = GetObjectPosition(ind);
 			CreateEffect("targetAquired", pos.x, pos.y);

@@ -89,7 +89,7 @@ namespace FusionEngine
 		float speed2_two = vector_two.squared_length();
 
 		// Objects not moving - don't use vector check
-		if (speed2_one == 0 && speed2_two == 0)
+		if (speed2_one < epsilon && speed2_two < epsilon)
 		{
 			if (CollisionCheck(pos_one, pos_two, one, two))
 			{

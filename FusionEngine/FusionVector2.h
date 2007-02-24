@@ -61,45 +61,46 @@ namespace FusionEngine
 		///////////////
 		// Assignement
 		//! Assignment operator
-		Vector2 &operator= (const Vector2 &other);
+		Vector2 &operator=(const Vector2 &other);
 		//! Addition assignment operator
-		Vector2 &operator+= (const Vector2 &other);
+		Vector2 &operator+=(const Vector2 &other);
 		//! Subtraction assignment operator
-		Vector2 &operator-= (const Vector2 &other);
+		Vector2 &operator-=(const Vector2 &other);
 		//! Multiplication assignment operator
-		Vector2 &operator*= (float scalar);
+		Vector2 &operator*=(float scalar);
 
 		//////////////
 		// Comparison
 		//! Equivalancy operator
-		bool operator== (const Vector2 &other) const;
+		bool operator==(const Vector2 &other) const;
 		//! Not-equals operator
-		bool operator!= (const Vector2 &other) const;
+		bool operator!=(const Vector2 &other) const;
 
 		//////////////
 		// Arithmatic
 		//! Addition operator
-		Vector2 operator+ (const Vector2 &other) const;
+		Vector2 operator+(const Vector2 &other) const;
 		//! Subtraction operator
-		Vector2 operator- (const Vector2 &other) const;
+		Vector2 operator-(const Vector2 &other) const;
 		//! Multiplication operator
-		Vector2 operator* (float scalar) const;
+		Vector2 operator*(float scalar) const;
 		//! Division operator
 		//Vector2 operator/ (float scalar) const;
 		//! Friend access for multiplication operator
 		/*!
 		 * For Scalar * Vector2 (scalar on LHS, that is)
+		 * \todo Make operator* (scalar * vector) work
 		 */
-		friend Vector2 operator * (float scalar, const Vector2 &vector);
+		friend Vector2 operator*(float scalar, const Vector2 &vector);
 
 		//! Negation operator
-		Vector2 operator- () const;
+		Vector2 operator-() const;
 
 		//! Returns reference to n-th ordinate (0. == x, 1. == y, ...).
 		/*!
 		 * \param n Number of ordinate (starting with 0).
 		 */
-		float& operator [] (int n);
+		float& operator[](int n);
 
 	public:
 		//! The length of the vector
@@ -113,18 +114,50 @@ namespace FusionEngine
 		 */
 		float squared_length() const;
 		//! Returns the dot product
-		float dot(const Vector2 &other) const;
+		float dot(const Vector2& other) const;
+		//! Returns the cross product
+		float cross(const Vector2& other) const;
+		//! Projects this vector onto the given one
+		Vector2 project(const Vector2& other) const;
+		//! Rotates this vector by another
+		/*!
+		 * Uses complex multiplication to rotate (and scale) this by the
+		 * given vector.
+		 */
+		void rotate(const Vector2& other);
+		//! Inverse of Vector2#rotate()
+		void unrotate(const Vector2& other);
 		//! Normalizes this vector
 		/*!
 		 * \returns The orginal length of this vector
 		 */
 		float normalize();
-		//! Returns a normalised, perpendicular vector
+		//! Returns a normalized copy of this vector
 		/*!
+		 * \returns This vector, normalised
+		 */
+		Vector2 normalized();
+		//! Returns a vector perpendicular to this
+		Vector2 perpendicular() const;
+		//! Returns the normal to this vector
+		/*!
+		 * Returns a normalised, perpendicular vector (a 'normal'):
+		 * <br>
 		 * (y,-x)/sqrt(x^2+y^2)
 		 */
 		Vector2 normal() const;
 	};
+
+	//! Uses complex multiplication to rotate (and scale) v1 by v2.
+	static inline Vector2 v2Rotate(const Vector2& v1, const Vector2 &v2)
+	{
+		return Vector2(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
+	}
+	//!  Inverse of FusionEngine#v2Rotate()
+	static inline Vector2 v2UnRotate(const Vector2& v1, const Vector2 &v2)
+	{
+		return Vector2(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
+	}
 
 }
 

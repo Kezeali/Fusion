@@ -326,7 +326,7 @@ namespace FusionEngine
 
 	CL_Point FusionPhysicsBody::GetPositionPoint() const
 	{
-		return CL_Point(m_Position.x, m_Position.y);
+		return CL_Point((int)m_Position.x, (int)m_Position.y);
 	}
 
 	const Vector2 &FusionPhysicsBody::GetForce() const
