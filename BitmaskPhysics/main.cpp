@@ -9,7 +9,7 @@
 #include "..\FusionEngine\FusionPhysicsCallback.h"
 
 const int g_NumDrones = 4;
-const float g_ThrustForce = 2.8f;
+const float g_ThrustForce = 0.2f;
 
 using namespace FusionEngine;
 
@@ -103,10 +103,10 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
-			m_ShipPhysical->SetRotationalVelocity(-2.4f);
+			m_ShipPhysical->SetRotationalVelocity(-0.24f);
 
 		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
-			m_ShipPhysical->SetRotationalVelocity(2.4f);
+			m_ShipPhysical->SetRotationalVelocity(0.24f);
 
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
@@ -125,7 +125,7 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			for (int i = 0; i < g_NumDrones; i++)
 			{
-				m_DronePhysical[i]->SetRotationalVelocity(2.0f);
+				m_DronePhysical[i]->SetRotationalVelocity(0.20f);
 				m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
@@ -166,7 +166,7 @@ class BitmaskTest : public CL_ClanApplication
 
 		{
 			PhysicalProperties props;
-			props.mass = 32.0f;
+			props.mass = 80.0f;
 			props.position = Vector2(48.f, 120.f);
 			props.rotation = 0;
 			props.use_dist = true;
@@ -177,7 +177,7 @@ class BitmaskTest : public CL_ClanApplication
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
 		}
-		m_ShipPhysical->SetCoefficientOfFriction(0.4f);
+		m_ShipPhysical->SetCoefficientOfFriction(0.3f);
 		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
 
 		// Drones
@@ -192,7 +192,7 @@ class BitmaskTest : public CL_ClanApplication
 
 			{
 				PhysicalProperties props;
-				props.mass = 28.0f;
+				props.mass = 60.0f;
 				props.position = Vector2(460.f + 10.0f * i, 120.f);
 				props.rotation = 0;
 				props.use_dist = true;
@@ -204,7 +204,7 @@ class BitmaskTest : public CL_ClanApplication
 				m_DronePhysical[i] = m_World->CreateBody(PB_SHIP, props);
 			}
 
-			m_DronePhysical[i]->SetCoefficientOfFriction(0.8f);
+			m_DronePhysical[i]->SetCoefficientOfFriction(0.3f);
 			m_DronePhysical[i]->SetCoefficientOfRestitution(0.4f);
 
 			std::string ud = CL_String::format("Drone %1", i);

@@ -108,7 +108,7 @@ namespace FusionEngine
 	};
 
 
-	CEGUI::uint CLKeyToCEGUIKey(int key)
+	static CEGUI::uint CLKeyToCEGUIKey(int key)
 	{
 		using namespace CEGUI;
 

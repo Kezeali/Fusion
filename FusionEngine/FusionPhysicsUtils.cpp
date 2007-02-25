@@ -75,7 +75,8 @@ namespace FusionEngine
 	}
 
 	bool PhysUtil::FindCollisions(
-		Vector2 *output_one, Vector2 *output_two,
+		Vector2 *output_a1, Vector2 *output_a2,
+		Vector2 *output_b1, Vector2 *output_b2,
 		const Vector2 &vector_one, const Vector2 &vector_two,
 		const FusionPhysicsBody *one, const FusionPhysicsBody *two,
 		float epsilon, bool find_close)
@@ -88,24 +89,24 @@ namespace FusionEngine
 		float speed2_one = vector_one.squared_length();
 		float speed2_two = vector_two.squared_length();
 
-		// Objects not moving - don't use vector check
-		if (speed2_one < epsilon && speed2_two < epsilon)
-		{
-			if (CollisionCheck(pos_one, pos_two, one, two))
-			{
-				(*output_one) = pos_one;
-				(*output_two) = pos_two;
+		//// Objects not moving - don't use vector check
+		//if (speed2_one < epsilon && speed2_two < epsilon)
+		//{
+		//	if (CollisionCheck(pos_one, pos_two, one, two))
+		//	{
+		//		(*output_a1) = pos_one;
+		//		(*output_a2) = pos_two;
 
-				//memcpy(output_one, &pos_one, sizeof(Vector2));
-				//memcpy(output_two, &pos_two, sizeof(Vector2));
-				
-				return true;
-			}
+		//		//memcpy(output_one, &pos_one, sizeof(Vector2));
+		//		//memcpy(output_two, &pos_two, sizeof(Vector2));
+		//		
+		//		return true;
+		//	}
 
-			return false;
-		}
+		//	return false;
+		//}
 
-		// These temps will store the start and end points while searching.
+		// These will store the start and end points while searching.
 		Vector2 startpt_one, endpt_one, startpt_two, endpt_two;
 
 		// If the search finishes, we will assume these are set to the positions of collision.
@@ -136,7 +137,7 @@ namespace FusionEngine
 			//  section and check that it is in the bounds of the actual lines.
 			CL_Pointf isec_point = CL_LineMath::get_intersection(line_a_ptr, line_b_ptr);
 
-			Vector2 intersec; intersec.x = isec_point.x; intersec.y = isec_point.y;
+			Vector2 intersec(isec_point.x, isec_point.y);
 
 			if (CheckBoundaries(pos_one, pos_two, vector_one, vector_two, intersec))
 			{
@@ -155,13 +156,39 @@ namespace FusionEngine
 
 		if (no_interection)
 		{
-			// If no point of intersection was found, set up the search points to
-			//  find the first place where the objects collide anywhere along the vector.
+			// If no point of intersection was found, set the search points to
+			//  to use the whole vector.
 
 			startpt_one = pos_one;
 			startpt_two = pos_two;
 			endpt_one   = pos_one + vector_one;
 			endpt_two   = pos_two + vector_two;
+		}
+
+		// If the objects are already colliding, expand the search limits
+		if (find_close && CollisionCheck(pos_one, pos_two, one, two))
+		{
+			Vector2 n;
+			CalculateNormal(&n, pos_one, pos_two, one, two);
+			if (two->GetCollisionFlags() & C_STATIC)
+			{
+				Vector2 add1 = n;
+
+				int i = g_PhysMaxSearchItterations;
+				while (CollisionCheck(startpt_one, startpt_two, one, two) && i--)
+				{
+					endpt_one = startpt_one;
+
+					startpt_one += add1;
+				}
+			}
+			else if (one->GetUseDistCollisions() && two->GetUseDistCollisions())
+			{
+				Vector2 d = pos_one - pos_two;
+				float p = ( (one->GetColDist() + one->GetColDist()) - d.length() ) * 0.5f;
+				startpt_one += n*p;
+				startpt_two -= n*p;
+			}
 		}
 
 
@@ -241,8 +268,21 @@ namespace FusionEngine
 
 		if (collision_found)
 		{
-			(*output_one) = checkpt_one;
-			(*output_two) = checkpt_two;
+			// Positions during collision
+			(*output_a1) = checkpt_one;
+			(*output_a2) = checkpt_two;
+
+			// Non-colliding positions
+			if (find_close)
+			{
+				(*output_b1) = startpt_one;
+				(*output_b2) = startpt_two;
+			}
+			else
+			{
+				(*output_b1) = endpt_one;
+				(*output_b2) = endpt_two;
+			}
 
 			//memcpy(output_one, &checkpt_one, sizeof(Vector2));
 			//memcpy(output_two, &checkpt_two, sizeof(Vector2));

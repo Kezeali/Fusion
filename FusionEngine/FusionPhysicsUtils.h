@@ -84,31 +84,51 @@ namespace FusionEngine
 
 		//! Used to check for collisions between moving objects.
 		/*!
-		 * If a collision is found, output_one/output_two will be set to the point along
+		 * <p>
+		 * If a collision is found, output_a1/output_a2 will be set to the point along
 		 * the given vector at which the respective body collides, not the actual point
 		 * of collision (i.e. the point within the two bodies where they touch.) <br>
 		 * If you need the actual point of collision, use GuessPointOfCollision().
+		 * </p>
+		 * output_b1 and output_b2 will be set to the final positions at which each
+		 * body <b>does not</b> collide - this is a safe position to pop back to.
 		 *
 		 * \remarks
 		 * If no collisions are found, <b>output</b> will not be touched.
 		 *
-		 * \param[out] output_one
-		 * The position at which one collides.
+		 * \param[out] output_a1
+		 * The position at which one collides. Use this point when finding a normal
+		 * for bitmask collisions.
+		 * \param[out] output_a2
+		 * The position at which two collides. Use this point when finding a normal
+		 * for bitmask collisions.
+		 *
+		 * \param[out] output_b1
+		 * A position just before one collides.
+		 * \param[out] output_b2
+		 * A position just before two collides.
+		 *
+		 *
 		 * \param[in] vector_one
 		 * The movement vector for object one.
 		 * \param[in] vector_two
 		 * The movement vector for object two.
+		 *
 		 * \param[in] one 
 		 * The object to check for collisions against.
 		 * \param[in] two
 		 * The object which may be colliding against 'one'.
-		 * \param[in] fuzz
+		 *
+		 * \param[in] epsilon
 		 * The accuracy to which the point of collision will be found.
+		 *
 		 * \param[in] find_close
-		 * Whether to return the closest point (true), or the furthermost point (false)
+		 * Whether to return the closest colliding point to the beginning of
+		 * the vector (true), or the furthermost point (false)
 		 */
 		static bool FindCollisions(
-			Vector2 *output_one, Vector2 *output_two,
+			Vector2 *output_a1, Vector2 *output_a2,
+			Vector2 *output_b1, Vector2 *output_b2,
 			const Vector2 &vector_one, const Vector2 &vector_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two,
 			float epsilon = 0.01f, bool find_close = true);

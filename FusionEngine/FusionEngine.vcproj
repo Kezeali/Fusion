@@ -256,10 +256,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionGUICommon.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionInputData.h"
 				>
 			</File>
