@@ -8,14 +8,8 @@
 #include "..\FusionEngine\FusionPhysicsTypes.h"
 #include "..\FusionEngine\FusionPhysicsCallback.h"
 
-#include "..\FusionEngine\FusionScript.h"
-#include "..\FusionEngine\FusionScriptingEngine.h"
-#include "..\FusionEngine\FusionScriptingFunctions.h"
-#include "..\FusionEngine\FusionScriptVector.h"
-#include "..\FusionEngine\FusionVector2.h"
-
 const int g_NumDrones = 4;
-const float g_ThrustForce = 0.2f;
+const float g_ThrustForce = 0.14f;
 
 using namespace FusionEngine;
 
@@ -83,8 +77,8 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			Vector2 force = m_ShipPhysical->GetPosition();
-			force.x += sinf(a)*2.0f;
-			force.y += -cosf(a)*2.0f;
+			force.x += sinf(a)*4.0f;
+			force.y += -cosf(a)*4.0f;
 
 			m_ShipPhysical->_setPosition(force);
 		}
@@ -109,10 +103,10 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
-			m_ShipPhysical->SetRotationalVelocity(-0.2f);
+			m_ShipPhysical->SetRotationalVelocity(-0.3f);
 
 		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
-			m_ShipPhysical->SetRotationalVelocity(0.2f);
+			m_ShipPhysical->SetRotationalVelocity(0.3f);
 
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
@@ -131,7 +125,7 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			for (int i = 0; i < g_NumDrones; i++)
 			{
-				m_DronePhysical[i]->SetRotationalVelocity(0.2f);
+				m_DronePhysical[i]->SetRotationalVelocity(0.25f);
 				m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
@@ -172,19 +166,19 @@ class BitmaskTest : public CL_ClanApplication
 
 		{
 			PhysicalProperties props;
-			props.mass = 20.0f;
+			props.mass = 50.0f;
 			props.position = Vector2(48.f, 120.f);
-			props.radius = 50;
 			props.rotation = 0;
 			props.use_dist = true;
-			props.dist = m_ShipGraphical->get_width() * 0.5;
+			props.dist = m_ShipGraphical->get_width() * 0.5f;
+			props.radius = props.dist;
 			props.use_bitmask = true;
 			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
 		}
-		m_ShipPhysical->SetCoefficientOfFriction(0.4f);
-		m_ShipPhysical->SetCoefficientOfRestitution(0.6f);
+		m_ShipPhysical->SetCoefficientOfFriction(0.25f);
+		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
 
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
@@ -198,20 +192,20 @@ class BitmaskTest : public CL_ClanApplication
 
 			{
 				PhysicalProperties props;
-				props.mass = 15.0f;
+				props.mass = 50.0f;
 				props.position = Vector2(460.f + 10.0f * i, 120.f);
-				props.radius = 50;
 				props.rotation = 0;
 				props.use_dist = true;
 				props.dist = m_DroneGraphical[i]->get_width() * 0.5;
+				props.radius = props.dist;
 				props.use_bitmask = true;
 				props.bitmask = m_DroneBitmask[i];
 
 				m_DronePhysical[i] = m_World->CreateBody(PB_SHIP, props);
 			}
 
-			m_DronePhysical[i]->SetCoefficientOfFriction(0.8f);
-			m_DronePhysical[i]->SetCoefficientOfRestitution(0.6f);
+			m_DronePhysical[i]->SetCoefficientOfFriction(0.25f);
+			m_DronePhysical[i]->SetCoefficientOfRestitution(0.3f);
 
 			std::string ud = CL_String::format("Drone %1", i);
 			char *userdata = (char *)malloc( ud.size() +1 );
@@ -270,6 +264,7 @@ class BitmaskTest : public CL_ClanApplication
 			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
 		}
 		m_TerrainPhysical->SetUserData((void *)"Terrain");
+		m_TerrainPhysical->SetCoefficientOfFriction(0.8f);
 		
 		int back_pos = 0;
 		float sur_y = 250.f;
@@ -296,29 +291,78 @@ class BitmaskTest : public CL_ClanApplication
 			Update(split);
 
 
+			///////////////////////
 			// Modify various params
+			// Current time
 			unsigned int time = CL_System::get_time();
 
+			// Increace bounce
 			if (inputTimer <= time && CL_Keyboard::get_keycode('Q'))
 			{
 				inputTimer = time + 500;
 
-				float cor = m_ShipPhysical->GetCoefficientOfRestitution();
-				m_ShipPhysical->SetCoefficientOfRestitution(cor + 0.1f);
+				float cor = m_ShipPhysical->GetCoefficientOfRestitution() + 0.1f;
+				m_ShipPhysical->SetCoefficientOfRestitution( fe_min(cor, 1.0f) );
+
+				std::cout << cor << std::endl;
 			}
+			// Reduce bounce
 			if (inputTimer <= time && CL_Keyboard::get_keycode('A'))
 			{
 				inputTimer = time + 500;
 
-				float cor = m_ShipPhysical->GetCoefficientOfRestitution();
-				m_ShipPhysical->SetCoefficientOfRestitution(cor - 0.1f);
+				float cor = m_ShipPhysical->GetCoefficientOfRestitution() - 0.1f;
+				m_ShipPhysical->SetCoefficientOfRestitution( fe_max(cor, 0.0f) );
+
+				std::cout << cor << std::endl;
 			}
 
+			// Toggle bounce
+			if (inputTimer <= time && CL_Keyboard::get_keycode('B'))
+			{
+				inputTimer = time + 500;
+
+				// -- off --
+				if (m_ShipPhysical->CheckCollisionFlag(C_BOUNCE))
+				{
+
+					int flags = m_ShipPhysical->GetCollisionFlags();
+					m_ShipPhysical->_setCollisionFlags(flags ^ C_BOUNCE);
+
+					for (int i = 0; i < g_NumDrones; i++)
+					{
+						int flags = m_DronePhysical[i]->GetCollisionFlags();
+						m_DronePhysical[i]->_setCollisionFlags(flags ^ C_BOUNCE);
+					}
+
+					std::cout << "Bounce off" << std::endl;
+
+				}
+				// -- on --
+				else
+				{
+
+					int flags = m_ShipPhysical->GetCollisionFlags();
+					m_ShipPhysical->_setCollisionFlags(flags | C_BOUNCE);
+
+					for (int i = 0; i < g_NumDrones; i++)
+					{
+						int flags = m_DronePhysical[i]->GetCollisionFlags();
+						m_DronePhysical[i]->_setCollisionFlags(flags | C_BOUNCE);
+					}
+
+					std::cout << "Bounce on" << std::endl;
+
+				}
+			}
+			
+			// Toggle debug mode
 			if (inputTimer <= time && CL_Keyboard::get_keycode('D'))
 			{
 				inputTimer = time + 500;
 				debug = !debug;
 			}
+
 			if (debug)
 			{
 				m_TerrainBitmask->DisplayBits(

@@ -311,7 +311,7 @@ namespace FusionEngine
 
 	bool FusionPhysicsBody::CheckCollisionFlag(int flag)
 	{
-		return (m_CollisionFlags & flag) == 1 ? true : false;
+		return (m_CollisionFlags & flag) ? true : false;
 	}
 
 	void FusionPhysicsBody::_setCollisionFlags(int flags)

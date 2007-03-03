@@ -617,92 +617,120 @@ namespace FusionEngine
 			Vector2 b1_pos         = (*col_it)->First_Position;
 			Vector2 b2_pos         = (*col_it)->Second_Position;
 
-						
+
 			float cb1_elasticity = cb1->GetCoefficientOfRestitution();
 			float cb2_elasticity = cb2->GetCoefficientOfRestitution();
 
 			float cb1_friction = cb1->GetCoefficientOfFriction(); // not used
 			float cb2_friction = cb2->GetCoefficientOfFriction();
 
+			Vector2 v1 = cb1->GetVelocity();
+			Vector2 v2 = cb1->GetVelocity();
+
 			// Pop back a bit
-			//Vector2 l_accel = normal * cb1->GetAcceleration().length();
-			//Vector2 speed = normal * cb1->GetVelocity().length();
-			cb1->_setPosition(b1_pos);// + (speed * delta + l_accel*0.5f*delta*delta));// (speed * delta + g_PhysCollisionJump * delta));
+			if (cb1->GetCollisionFlags() ^ C_STATIC)
+				cb1->_setPosition(b1_pos);
+			if (cb2->GetCollisionFlags() ^ C_STATIC)
+				cb2->_setPosition(b2_pos);
 
-			// --Collision with static--
-			if (cb2->GetCollisionFlags() & C_STATIC)
+			// Don't do collision response for objects that don't want it
+			if (cb1->GetCollisionFlags() & C_BOUNCE)
 			{
-				//cb1->GetAcceleration() * delta;
-				Vector2 v = cb1->GetVelocity();
 
-				// Calculate the deflection velocity
-				if (v.dot(normal) < 0)
+				// --Collision with static--
+				if (cb2->GetCollisionFlags() & C_STATIC)
 				{
-					Vector2 bounce = v.project((-normal)) * cb1_elasticity;
-					Vector2 frictn = v.project((-normal).perpendicular()) * cb2_friction;
+					// Calculate the deflection velocity
+					if (v1.dot(normal) < 0)
+					{
+						Vector2 bounce = v1.project((-normal)) * cb1_elasticity;
+						Vector2 frictn = v1.project((-normal).perpendicular()) * cb2_friction;
 
-					cb1->_setVelocity((-bounce) + frictn);
+						cb1->_setVelocity((-bounce) + frictn);
+					}
+					else
+					{
+						Vector2 bounce = v1.project(normal) * cb1_elasticity;
+						Vector2 frictn = v1.project(normal.perpendicular()) * cb2_friction;
+						cb1->_setVelocity(-bounce + frictn);
+					}
 				}
+
+				// --Collision with non-static--
 				else
 				{
-					Vector2 bounce = v.project(normal) * cb1_elasticity;
-					Vector2 frictn = v.project(normal.perpendicular()) * cb2_friction;
-					cb1->_setVelocity(-bounce + frictn);
-				}
-			}
-			// --Collision with non-static--
+					float m1 = cb1->GetMass();
+					float m2 = cb2->GetMass();
+					float im1 = cb1->GetInverseMass();
+					float im2 = cb2->GetInverseMass();
+
+					// Get coeff. of elasticity
+					float e = cb1_elasticity * cb2_elasticity;
+
+
+					// --Dimitrios Christopoulos's Solution--
+					Vector2 pb1,pb2,dpos,U1x,U1y,U2x,U2y,V1x,V1y,V2x,V2y,
+						vf1,vf2;
+					double a,b;
+
+					dpos=(b2_pos-b1_pos).normalized();  // Find X-Axis (delta-position, normalized)
+					a=dpos.dot(v1);                     // Find Projection
+					U1x=dpos*a;                         // Find Projected Vectors
+					U1y=v1-U1x;
+
+					dpos=(pb1-pb2).normalized();        // Same as above, for b2
+					b=dpos.dot(v2);                     // Find Projection
+					U2x=dpos*b;                         // Vectors For The Other Object
+					U2y=v2-U2x;
+
+					//! \todo Improve haphazard bounce and mass effects implementation
+
+					if (cb2->GetCollisionFlags() & C_BOUNCE)
+					{
+						// Both objects want collision response
+						V1x=(U1x+U2x-(U1x-U2x))*0.5* m2*im1;  // Now Find New Velocities
+						V2x=(U1x+U2x-(U2x-U1x))*0.5* m1*im2;
+						V1y=U1y*e;//*m2*im1;
+						V2y=U2y*e;//*m1*im2;
+
+
+						vf1=V1x+V1y;                  // Set New Velocity Vectors
+						vf2=V2x+V2y;
+
+
+						cb1->_setVelocity(vf1); //.normalized()) );
+						cb2->_setVelocity(vf2); //.normalized()) );
+					}
+					else
+					{
+						// Only b1 wants collision response
+						V1x=(U1x+U2x-(U1x-U2x))*1.0f* m2*im1;  // Now Find New Velocities
+						V1y=U1y*e;//*m2*im1;
+
+						vf1=V1x+V1y;                  // Set New Velocity Vectors
+
+						cb1->_setVelocity(vf1); //.normalized()) );
+					} // else [if (cb1->GetCollisionFlags() & C_BOUNCE)]
+
+
+				} // else  [if (cb1->GetCollisionFlags() & C_STATIC)]
+
+			} // if (cb1->GetCollisionFlags() & C_BOUNCE)
+
 			else
 			{
-				Vector2 v1 = cb1->GetVelocity();
-				Vector2 v2 = cb1->GetVelocity();
-				float m1 = cb1->GetMass();
-				float m2 = cb2->GetMass();
-				float im1 = cb1->GetInverseMass();
-				float im2 = cb2->GetInverseMass();
+				// Prevent pentration between non-bouncing objects by
+				// removing the component of velocity towards the other object
+				Vector2 vx1 = v1.project(normal.perpendicular());
+				Vector2 vx2 = v2.project(normal.perpendicular());
 
-				// Get coeff. of elasticity
-				float e = cb1_elasticity * cb2_elasticity;
-				float mt = 1.0f/(m1 + m2);
-
-				float s1 = -(v1.length());
-				float s2 = v2.length();
-
-				s1 = s1*((m1-m2)*mt) + s2*((2*m2)*mt);
-				s2 = s1*((2*m1)*mt) + s2*((m2-m1)*mt);
-
-				// --Dimitrios Christopoulos's Solution--
-				Vector2 pb1,pb2,dpos,U1x,U1y,U2x,U2y,V1x,V1y,V2x,V2y,
-					vf1,vf2;
-				double a,b;
-
-				dpos=(b2_pos-b1_pos).normalized();  // Find X-Axis (delta-position, normalized)
-				a=dpos.dot(v1);                     // Find Projection
-				U1x=dpos*a;                         // Find Projected Vectors
-				U1y=v1-U1x;
-
-				dpos=(pb1-pb2).normalized();        // Same as above, for b2
-				b=dpos.dot(v2);                     // Find Projection
-				U2x=dpos*b;                         // Vectors For The Other Object
-				U2y=v2-U2x;
-
-				V1x=(U1x+U2x-(U1x-U2x))*0.5* m2*im1;  // Now Find New Velocities
-				V2x=(U1x+U2x-(U2x-U1x))*0.5* m1*im2;
-				V1y=U1y*e;//*m2*im1;
-				V2y=U2y*e;//*m1*im2;
-
-				vf1=V1x+V1y;                  // Set New Velocity Vectors
-				vf2=V2x+V2y;                  // To The Colliding Balls
-
-
-				cb1->_setVelocity((vf1));//.normalized()) );
-				cb2->_setVelocity((vf2));//.normalized()) );
-				
-
-			} // else
+				cb1->_setVelocity(vx1);
+				cb1->_setVelocity(vx2);
+			} // else [if (cb1->GetCollisionFlags() & C_BOUNCE)]
 
 
 			//////////
-			// Finally, call each object's collision callback
+			// Call each object's collision callback
 
 			// Find the point where the two objects touch
 			Vector2 poc = Vector2(0,0);
