@@ -1,10 +1,10 @@
 void seekerCreation(uint16 ind)
 {
 	// ind is the object index of this object
-	// I just made this to show that you can have a creation method for projectiles... I don't have anything important for it to do...
+	// This is just to show that you can have a creation method for projectiles... I don't have anything important to do here
 	
 	// Applies a force toward the current facing
-	ApplyEngineForce(ind, m_engineforce);
+	ApplyEngineForce(ind, Get_engineforce(ind));
 }
 
 void seekerStep(uint16 ind)
@@ -28,7 +28,7 @@ void seekerStep(uint16 ind)
 	}
 	else
 	{
-		// If we aren't near a ship, move slower
+		// If we aren't near a ship, move slower (normal speed that is)
 		ApplyEngineForce(ind);
 	}
 }

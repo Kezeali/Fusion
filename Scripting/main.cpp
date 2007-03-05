@@ -8,6 +8,9 @@
 #include "..\FusionEngine\FusionPhysicsTypes.h"
 #include "..\FusionEngine\FusionPhysicsCallback.h"
 
+#include "..\FusionEngine\FusionScriptingEngine.h"
+#include "..\FusionEngine\FusionScript.h"
+
 const int g_NumDrones = 4;
 const float g_ThrustForce = 0.14f;
 
@@ -41,7 +44,7 @@ public:
 };
 
 
-class BitmaskTest : public CL_ClanApplication
+class ScriptingTest : public CL_ClanApplication
 {
 	FusionBitmask *m_ShipBitmask;
 	FusionBitmask *m_DroneBitmask[4];
@@ -60,6 +63,9 @@ class BitmaskTest : public CL_ClanApplication
 	CL_Canvas *m_TerrainCanvas;
 
 	CL_Surface *m_Damage;
+
+	ScriptingEngine *m_ScrEngine;
+	Script *m_DroneScr;
 
 	bool Update(unsigned int split)
 	{
@@ -146,6 +152,10 @@ class BitmaskTest : public CL_ClanApplication
 		console.redirect_stdio();
 
 		CL_DisplayWindow display("Display", 1024, 580);
+
+		// Scripting Engine
+		m_ScrEngine = new ScriptingEngine();
+		m_DroneScr = new Script("
 
 		// World
 		m_World = new FusionPhysicsWorld();

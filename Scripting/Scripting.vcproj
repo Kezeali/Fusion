@@ -175,6 +175,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\FusionEngine\as_scriptstring.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\bitmask.c"
 				>
 			</File>
@@ -208,6 +212,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionScriptingEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingFunctions.cpp"
 				>
 			</File>
 			<File

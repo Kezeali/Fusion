@@ -70,7 +70,8 @@ namespace FusionEngine
 		/*!
 		 * If the module is unbuilt, it will be built.
 		 *
-		 * \param[in] script A built or unbuilt module 
+		 * \param[in] module A built or unbuilt module
+		 *
 		 * \returns The exit status of the script
 		 */
 		int ExecuteModule(const char *module, const char *function);

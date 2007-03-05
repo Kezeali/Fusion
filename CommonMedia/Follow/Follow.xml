@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<FusionAI tag="Follow">
+	<name>Seeker missile</name>
+	<description>Seeks the nearerst ship. Trys to avoid terrain.</description>
+	
+	<scripting script="SeekerMissile/SeekerMissile.as">
+		<step>void step(uint16)</step>
+		<onanycollision>void OnCollision(uint16, int, int)</onanycollision>
+	</scripting>
+</FusionWeapon>

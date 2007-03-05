@@ -69,12 +69,6 @@ namespace FusionEngine
 									CL_InputSourceProvider *provider = 0,
 									bool delete_provider = true);
 
-		//! Returns the ptr. returned by the script (if applicable)
-		/*!
-		 * \todo Decide whether this should be in the ScriptEngine or here...
-		 */
-		void *GetReturnObject() const;
-
 		//! Sets the module ID.
 		/*!
 		 * Allows the ScriptingEngine to store the module ID the which this script

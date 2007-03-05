@@ -14,7 +14,7 @@
 	</fireeffect>
 	
 	<scripting script="SeekerMissile/SeekerMissile.as">
-		<onfire>void onFire()</onfire>
+		<onfire>void onFire(uint16)</onfire>
 	</scripting>
   
 	<projectile name="seeker">
@@ -60,10 +60,10 @@
 		</physics>
 		
 		<scripting script="SeekerMissile/SeekerMissile.as">
-			<creation>void seekerCreation()</creation>
-			<step>void seekerStep()</step>
+			<creation>void seekerCreation(uint16)</creation>
+			<step>void seekerStep(uint16)</step>
 			<onownercollision></onownercollision>
-			<onanycollision>void seekerOnCollision(int, int)</onanycollision>
+			<onanycollision>void seekerOnCollision(uint16, int, int)</onanycollision>
 		</scripting>
 	</projectile>
 
@@ -88,8 +88,8 @@
 		</physics>
 		
 		<scripting script="SeekerMissile/SeekerMissile.as">
-			<step>void clusterStep()</step>
-			<onanycollision>void clusterOnCollision(int, int)</onanycollision>
+			<step>void clusterStep(uint16)</step>
+			<onanycollision>void clusterOnCollision(uint16, int, int)</onanycollision>
 		</scripting>
 	</projectile>
 </FusionWeapon>

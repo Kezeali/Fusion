@@ -28,6 +28,8 @@
 #include "FusionScriptingEngine.h"
 
 #include "FusionScriptingFunctions.h"
+#include "as_scriptstring.h"
+#include "FusionScriptVector.h"
 
 namespace FusionEngine
 {
@@ -72,16 +74,21 @@ namespace FusionEngine
 	{
 		int r;
 
+		// Register types
+		RegisterScriptString(m_asEngine);
+		RegisterScriptVector(m_asEngine);
+
+		// Register functions
 		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); assert( r >= 0 );
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
 
-			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL);
-			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL);
+			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
 		}
 		else
 		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); assert( r >= 0 );
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
 		}
 	}
 
