@@ -334,6 +334,10 @@ namespace FusionEngine
 		virtual void _setAcceleration(const Vector2 &acceleration);
 		//! Sets the velocity.
 		virtual void _setVelocity(const Vector2 &velocity);
+		//! Sets the engine displacement. (displacement due to engine force)
+		virtual void _setEngineDisplacement(const Vector2 &velocity);
+		//! Gets the engine displacement. (displacement due to engine force)
+		virtual const Vector2 &_getEngineDisplacement() const;
 
 		//! Sets the rotation.
 		virtual void _setRotation(float rotation);
@@ -447,6 +451,8 @@ namespace FusionEngine
 
 		Vector2 m_Acceleration;
 		Vector2 m_Velocity;
+		Vector2 m_EngineDisplacement;
+		//std::vector<Vector2> m_DisplacementPath;
 		Vector2 m_Position;
 
 		float m_Rotation;

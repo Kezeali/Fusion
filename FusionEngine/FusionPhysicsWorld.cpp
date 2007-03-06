@@ -351,6 +351,10 @@ namespace FusionEngine
 	void FusionPhysicsWorld::RunSimulation(unsigned int split)
 	{
 		float delta = (float)split;// * 0.1f;
+		bool d = false;
+		//Vector2 engine_displacement;
+		//engine_displacement.x = 0.0f;
+		//engine_displacement.y = 0.0f;
 
 		// All collisions found in the Prepare Movement stage will be listed here
 		CollisionList collisions;
@@ -365,42 +369,61 @@ namespace FusionEngine
 		{
 			FusionPhysicsBody *b1 = (*a_it);
 
+			Vector2 acceleration;
+			Vector2 velocity = b1->GetVelocity();
+
 			if (b1->IsActive())
 			{
 				Vector2 position = b1->GetPosition();
 				Vector2 force = b1->GetForce();
+				float engine_force = b1->GetEngineForce();
 
-				// Apply engine force
-				{
-					// Find the direction to apply the engine force
-					float direction =
-						b1->GetRotation();// + b1->GetRotationalVelocity() * delta;
-
-					float engine_force = b1->GetEngineForce();
-
-					Vector2 force_vector(
-						sinf(fe_degtorad( direction )) * engine_force,
-						-cosf(fe_degtorad( direction )) * engine_force
-						);
-					force += force_vector;
-				}
-
-				Vector2 accel;
-				Vector2 veloc = b1->GetVelocity();
 				float linDamping = b1->GetCoefficientOfFriction();
 
 				// Calculate the damping on the force
-				//Vector2 nveloc = veloc / speed; // normalise
-				Vector2 dampForce = veloc * linDamping;
+				Vector2 dampForce = velocity * linDamping;
 
 				// Finally, calculate the acceleration
-				accel = (force - dampForce) * b1->GetInverseMass();
+				acceleration = (force - dampForce) * b1->GetInverseMass();
+
+
+				Vector2 engine_displacement;
+				// Apply engine force
+				//if (engine_force != 0.0f)
+				{
+					//Vector2 v = b1->GetVelocity();
+					//Vector2 n = v.normal();
+					Vector2 v = b1->GetVelocity();
+
+					int i=0;
+					while (i++ <= delta)
+					{
+						// Find the direction to apply the engine force
+						float direction =
+							b1->GetRotation() + b1->GetRotationalVelocity() * i;
+
+						Vector2 force_vector(
+							sinf(fe_degtorad( direction )) * engine_force,
+							-cosf(fe_degtorad( direction )) * engine_force
+							);
+						
+						// Calculate the damping on the force
+						Vector2 dampForce = v * linDamping;
+
+						// Finally, calculate the acceleration
+						Vector2 a = (force_vector - dampForce) * b1->GetInverseMass();
+
+						engine_displacement += v + a*0.5f;
+						v += a;
+					}
+				}
+
 
 				///////////////////
 				// Cap the velocity
 				// m_MaxVelocity is used to prevent objects from reaching crazy speeds
 				//  because a lazy level designer didn't put damping triggers in the level.
-				if (veloc.squared_length() > m_MaxVelocitySquared)
+				if (velocity.squared_length() > m_MaxVelocitySquared)
 				{
 					// Set acceleration to zero
 					b1->_setAcceleration(Vector2::ZERO);
@@ -409,28 +432,29 @@ namespace FusionEngine
 #ifdef FUSION_PHYS_USE_TRIG
 					// Method1 (trig):
 					// Calculate the maximum x and y velocities for this angle
-					double a = atan(veloc.x/veloc.y);
-					veloc.x = m_MaxVelocity * float(sin(a));
-					veloc.y = m_MaxVelocity * float(cos(a));
+					double a = atan(velocity.x/velocity.y);
+					velocity.x = m_MaxVelocity * float(sin(a));
+					velocity.y = m_MaxVelocity * float(cos(a));
 #else
 					// Method2 (without trig):
 					// Calculate the maximum x and y velocities for this vector
-					float nx = veloc.x / veloc.length();
-					float ny = veloc.y / veloc.length();
+					float nx = velocity.x / velocity.length();
+					float ny = velocity.y / velocity.length();
 
-					veloc.x = m_MaxVelocity * nx;
-					veloc.y = m_MaxVelocity * ny;
+					velocity.x = m_MaxVelocity * nx;
+					velocity.y = m_MaxVelocity * ny;
 #endif //FUSION_PHYS_USE_TRIG
 				}
 				else
 				{
 					// Set acceleration to the calculated value
-					b1->_setAcceleration(accel);
+					b1->_setAcceleration(acceleration);
 				}
 
 				// Set velocity to the capped value.
 				//  This may not be the final value if a collision is detected
-				b1->_setVelocity(veloc);
+				b1->_setVelocity(velocity);
+				b1->_setEngineDisplacement(engine_displacement);
 				// End Cap the velocity
 				///////////////////////
 
@@ -773,6 +797,7 @@ namespace FusionEngine
 
 				/////////
 				// Move along velocity vector
+				b1->m_Position += b1->_getEngineDisplacement();
 				b1->m_Position += velocity * delta + acceleration*0.5f*delta*delta;
 				b1->m_Velocity += acceleration * delta;
 				/////////

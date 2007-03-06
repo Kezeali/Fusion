@@ -85,21 +85,23 @@ class BitmaskTest : public CL_ClanApplication
 
 		if (CL_Keyboard::get_keycode(CL_KEY_DOWN))
 		{
-			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
-			Vector2 force;
-			force.x = -sinf(a)*g_ThrustForce;
-			force.y = cosf(a)*g_ThrustForce;
+			//float a = fe_degtorad( m_ShipPhysical->GetRotation() );
+			//Vector2 force;
+			//force.x = -sinf(a)*g_ThrustForce;
+			//force.y = cosf(a)*g_ThrustForce;
 
-			m_ShipPhysical->ApplyForce(force);
+			//m_ShipPhysical->ApplyForce(force);
+			m_ShipPhysical->ApplyEngineForce(-g_ThrustForce);
 		}
 		else if (CL_Keyboard::get_keycode(CL_KEY_UP))
 		{
-			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
-			Vector2 force;
-			force.x = sinf(a)*g_ThrustForce;
-			force.y = -cosf(a)*g_ThrustForce;
+			//float a = fe_degtorad( m_ShipPhysical->GetRotation() );
+			//Vector2 force;
+			//force.x = sinf(a)*g_ThrustForce;
+			//force.y = -cosf(a)*g_ThrustForce;
 
-			m_ShipPhysical->ApplyForce(force);
+			//m_ShipPhysical->ApplyForce(force);
+			m_ShipPhysical->ApplyEngineForce(g_ThrustForce);
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
@@ -126,7 +128,7 @@ class BitmaskTest : public CL_ClanApplication
 			for (int i = 0; i < g_NumDrones; i++)
 			{
 				m_DronePhysical[i]->SetRotationalVelocity(0.25f);
-				m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
+				//m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
 
@@ -212,7 +214,7 @@ class BitmaskTest : public CL_ClanApplication
 			memcpy( userdata, ud.c_str(), ud.size() +1 );
 			m_DronePhysical[i]->SetUserData(userdata);
 		}
-		m_ShipPhysical->SetCollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
+		//m_ShipPhysical->SetCollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
 
 		// Hole
 		/*m_Damage = new CL_Surface("./circle.png");

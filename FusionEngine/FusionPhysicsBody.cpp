@@ -29,7 +29,8 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0)
+		m_AppliedEngineForce(0),
+		m_EngineDisplacement(Vector2::ZERO)
 	{
 	}
 
@@ -55,7 +56,8 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0)
+		m_AppliedEngineForce(0),
+		m_EngineDisplacement(Vector2::ZERO)
 	{
 	}
 
@@ -81,7 +83,8 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0)
+		m_AppliedEngineForce(0),
+		m_EngineDisplacement(Vector2::ZERO)
 	{
 	}
 
@@ -442,6 +445,16 @@ namespace FusionEngine
 	void FusionPhysicsBody::_setVelocity(const Vector2 &velocity)
 	{
 		m_Velocity = velocity;
+	}
+
+	void FusionPhysicsBody::_setEngineDisplacement(const Vector2 &displacement)
+	{
+		m_EngineDisplacement = displacement;
+	}
+
+	const Vector2 &FusionPhysicsBody::_getEngineDisplacement() const
+	{
+		return m_EngineDisplacement;
 	}
 
 	void FusionPhysicsBody::_setRotation(const float rotation)
