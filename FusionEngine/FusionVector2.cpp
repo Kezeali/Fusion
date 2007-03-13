@@ -177,6 +177,12 @@ namespace FusionEngine
 		y = (x   * v.y - y   * v.x);
 	}
 
+	float Vector2::angleFrom(const Vector2& v)
+	{
+		return ( atan2(this->y,this->x) - atan2(v.y,v.x) );
+		//return acosf(this->dot(v));
+	}
+
 	float Vector2::normalize()
 	{
 		float f = length();

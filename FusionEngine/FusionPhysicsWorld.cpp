@@ -351,7 +351,6 @@ namespace FusionEngine
 	void FusionPhysicsWorld::RunSimulation(unsigned int split)
 	{
 		float delta = (float)split;// * 0.1f;
-		bool d = false;
 		//Vector2 engine_displacement;
 		//engine_displacement.x = 0.0f;
 		//engine_displacement.y = 0.0f;
@@ -376,7 +375,6 @@ namespace FusionEngine
 			{
 				Vector2 position = b1->GetPosition();
 				Vector2 force = b1->GetForce();
-				float engine_force = b1->GetEngineForce();
 
 				float linDamping = b1->GetCoefficientOfFriction();
 
@@ -386,42 +384,11 @@ namespace FusionEngine
 				// Finally, calculate the acceleration
 				acceleration = (force - dampForce) * b1->GetInverseMass();
 
-
-				Vector2 engine_displacement;
-				// Apply engine force
-				//if (engine_force != 0.0f)
-				{
-					//Vector2 v = b1->GetVelocity();
-					//Vector2 n = v.normal();
-					Vector2 v = b1->GetVelocity();
-
-					int i=0;
-					while (i++ <= delta)
-					{
-						// Find the direction to apply the engine force
-						float direction =
-							b1->GetRotation() + b1->GetRotationalVelocity() * i;
-
-						Vector2 force_vector(
-							sinf(fe_degtorad( direction )) * engine_force,
-							-cosf(fe_degtorad( direction )) * engine_force
-							);
-						
-						// Calculate the damping on the force
-						Vector2 dampForce = v * linDamping;
-
-						// Finally, calculate the acceleration
-						Vector2 a = (force_vector - dampForce) * b1->GetInverseMass();
-
-						engine_displacement += v + a*0.5f;
-						v += a;
-					}
-				}
-
+				velocity = acceleration * delta;
 
 				///////////////////
 				// Cap the velocity
-				// m_MaxVelocity is used to prevent objects from reaching crazy speeds
+				// m_MaxVelocity is used to prevent objects from reaching excessive speeds
 				//  because a lazy level designer didn't put damping triggers in the level.
 				if (velocity.squared_length() > m_MaxVelocitySquared)
 				{
@@ -454,13 +421,12 @@ namespace FusionEngine
 				// Set velocity to the capped value.
 				//  This may not be the final value if a collision is detected
 				b1->_setVelocity(velocity);
-				b1->_setEngineDisplacement(engine_displacement);
 				// End Cap the velocity
 				///////////////////////
 
 				// Prepare forces for next step.
 				b1->_setForce(Vector2::ZERO);
-				b1->_setEngineForce(0);
+				//b1->_setRelativeForce(Vector2::ZERO);
 
 
 				// Wrap or pop back at boundries
@@ -487,7 +453,7 @@ namespace FusionEngine
 				//  Check for collisions of active objects.
 
 				// Find the movement vector for current body
-				Vector2 b1_velocity = b1->GetVelocity() * delta + b1->GetAcceleration()*0.5f*delta*delta;
+				Vector2 b1_displacement = b1->GetVelocity() * delta + b1->GetAcceleration()*0.5f*delta*delta;
 
 				// Find collidable dynamic bodies
 				BodyList check_list = m_CollisionGrid->FindAdjacentBodies(b1);
@@ -512,7 +478,7 @@ namespace FusionEngine
 					{
 
 						// Find the movement vector for b2 body
-						Vector2 b2_velocity = b2->GetVelocity() * delta + b2->GetAcceleration()*0.5f*delta*delta;
+						Vector2 b2_displacement = b2->GetVelocity() * delta + b2->GetAcceleration()*0.5f*delta*delta;
 
 						// Contact positions for each body will go here
 						Vector2 b1_ct; 
@@ -525,7 +491,7 @@ namespace FusionEngine
 						if (PhysUtil::FindCollisions(
 							&b1_ct, &b2_ct, 
 							&b1_nc, &b2_nc, 
-							b1_velocity, b2_velocity, 
+							b1_displacement, b2_displacement, 
 							b1, b2))
 						{
 							Vector2 normal;
@@ -541,7 +507,7 @@ namespace FusionEngine
 									// Try to find a valid normal (we don't want to warp if we don't need to)
 									PhysUtil::CalculateNormal(
 										&normal,
-										b1_ct + b1_velocity, b2_ct,
+										b1_ct + b1_displacement, b2_ct,
 										b1, b2);
 									if (normal == Vector2::ZERO)
 									{
@@ -797,9 +763,9 @@ namespace FusionEngine
 
 				/////////
 				// Move along velocity vector
-				b1->m_Position += b1->_getEngineDisplacement();
 				b1->m_Position += velocity * delta + acceleration*0.5f*delta*delta;
 				b1->m_Velocity += acceleration * delta;
+
 				/////////
 				// Rotate
 				b1->m_Rotation += rot_velocity * delta;
@@ -911,6 +877,123 @@ namespace FusionEngine
 	}
 
 }
+
+				// Apply relative force
+				//if (engine_force != 0.0f)
+				//{
+				//	//Vector2 v = b1->GetVelocity();
+				//	//Vector2 n = v.normal();
+
+				//	// force initial
+				//	Vector2 fi = b1->GetRelativeForce();
+				//	Vector2 v = b1->GetVelocity();
+
+				//	// force final
+				//	//Vector2 ff = fi
+
+				//	//float angle = ff.angleFrom(fi);
+
+				//	// Calculate the damping on the force
+				//	Vector2 dampForce = v * linDamping;
+
+				//	// Valculate the acceleration
+				//	Vector2 a = (fi - dampForce) * b1->GetInverseMass();
+
+				//	// Then the initial velocity is:
+				//	Vector2 vi = a*delta;
+
+
+				//	// Now for Vf
+				//	float speed = vi.length();
+
+				//	float direction =
+				//		fe_degtorad(
+				//			b1->GetRotation() + b1->GetRotationalVelocity() * delta
+				//			);
+
+				//	Vector2 vf(
+				//		sinf( direction ) * speed,
+				//		-cosf( direction ) * speed
+				//		);
+
+				//	float angle = vf.angleFrom(vi);
+
+				//	float dist = speed * delta + a.length() *0.5f*delta*delta;
+
+				//	// Calculate the radius (r = Segment/theta)
+				//	float r = dist / angle;
+
+				//	// Displacement
+				//	Vector2 p(
+				//		r*sinf(angle),
+				//		r*-cosf(angle)
+				//		);
+
+				//	//velocity += p;
+				//}
+
+
+				//Vector2 fi = b1->GetRelativeForce();
+				//if (fi.length() > 0.0f)
+				//{
+				//	//Vector2 v = b1->GetVelocity();
+				//	//Vector2 n = v.normal();
+
+				//	// force initial
+				//	//Vector2 fi = b1->GetRelativeForce();
+
+				//	// force final
+				//	//Vector2 ff = fi
+
+				//	//float angle = ff.angleFrom(fi);
+
+				//	// Calculate the damping on the force
+				//	//Vector2 dampForce = velocity * b1->GetCoefficientOfFriction();
+
+				//	// Valculate the acceleration
+				//	Vector2 a = fi * b1->GetInverseMass();
+
+				//	// Then the initial velocity is:
+				//	Vector2 vi = a*delta;
+
+
+				//	// Now for Vf
+				//	float speed = vi.length();
+
+				//	float direction =
+				//		fe_degtorad(
+				//			b1->GetRotation() + b1->GetRotationalVelocity() * delta
+				//			);
+
+				//	Vector2 vf(
+				//		sinf( direction ) * speed,
+				//		-cosf( direction ) * speed
+				//		);
+
+				//	float angle = vi.angleFrom(vf);
+
+				//	if (angle > 0.1f)
+				//	{
+				//		float dist = speed * delta;// + a.length() *0.5f*delta*delta;
+
+				//		// Calculate the radius (r = Segment/theta)
+				//		float r = dist / angle;
+
+				//		// Displacement
+				//		Vector2 p(
+				//			r*sinf(angle),
+				//			r*-cosf(angle)
+				//			);
+
+				//		b1->m_Position += p*delta;
+				//		//velocity += p;
+				//	}
+				//	else
+				//		b1->m_Position += vi*delta;
+				//}
+				//b1->_setRelativeForce(Vector2::ZERO);
+
+
 
 				///////////
 				//// cb1:

@@ -42,12 +42,19 @@ namespace FusionEngine
 {
 	//! Ratio of degrees to radians
 	static const double g_DegToRad = M_PI/180.0f;
+	static const double g_RadToDeg = 180.0f/M_PI;
 
 	// --General functions--
 	//! Converts deg to rad
 	static inline float fe_degtorad(float deg) { return deg * (float)g_DegToRad; }
 	//! Converts deg to rad (double)
 	static inline double fe_degtorad(double deg) { return deg * g_DegToRad; }
+
+	//! Converts rad to deg
+	static inline float fe_radtodeg(float rad) { return rad * (float)g_RadToDeg; }
+	//! Converts rad deg (double)
+	static inline double fe_radtodeg(double rad) { return rad * g_RadToDeg; }
+
 
 	//! Like strcmp, but case-insensitive
 	static int fe_nocase_strcmp(const char *x, const char *y)

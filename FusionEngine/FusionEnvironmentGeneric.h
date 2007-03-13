@@ -85,16 +85,19 @@ namespace FusionEngine
 		 * \brief
 		 * Runs the statemanager.
 		 */
-		//virtual bool Update(unsigned int split) = 0;
+		//virtual bool Update(unsigned int split);
 
 		//! Draws stuff
-		//virtual void Draw() = 0;
+		//virtual void Draw();
 
 		//! Returns the index of the newly created ship
 		virtual void CreateShip(const ShipState &state) =0;
 
 		//! I don't think this is used.
-		virtual ShipResource *GetShipResourceByID(const std::string &id);
+		//virtual ShipResource *GetShipResourceByID(const std::string &id);
+
+		//! I don't think this is used.
+		//virtual ShipResource *GetProjectileResourceByID(const std::string &id);
 
 		//! Detonate the given projectile
 		virtual void Detonate(ObjectID index);

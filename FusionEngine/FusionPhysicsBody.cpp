@@ -29,8 +29,7 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0),
-		m_EngineDisplacement(Vector2::ZERO)
+		m_AppliedRelativeForce(0)
 	{
 	}
 
@@ -56,8 +55,7 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0),
-		m_EngineDisplacement(Vector2::ZERO)
+		m_AppliedRelativeForce(0)
 	{
 	}
 
@@ -83,8 +81,7 @@ namespace FusionEngine
 		m_UsesDist(false),
 		m_UsesPixel(false),
 		m_Velocity(Vector2::ZERO),
-		m_AppliedEngineForce(0),
-		m_EngineDisplacement(Vector2::ZERO)
+		m_AppliedRelativeForce(0)
 	{
 	}
 
@@ -141,11 +138,27 @@ namespace FusionEngine
 		_activate();
 	}
 
-	void FusionPhysicsBody::ApplyEngineForce(float force)
+	void FusionPhysicsBody::ApplyForceRelative(const Vector2 &force)
 	{
-		// A force vector will be calculated during the simulation step
-		//  to make sure rotational velocity & step time are taken into account
-		m_AppliedEngineForce += force;
+		float mag = force.length();
+		Vector2 force_relative(
+			sinf(fe_degtorad( m_Rotation )) * mag,
+			-cosf(fe_degtorad( m_Rotation )) * mag
+			);
+		//m_AppliedRelativeForce += force_relative;
+		m_AppliedForce += force_relative;
+
+		_activate();
+	}
+
+	void FusionPhysicsBody::ApplyForceRelative(float force)
+	{
+		Vector2 force_vector(
+			sinf(fe_degtorad( m_Rotation )) * force,
+			-cosf(fe_degtorad( m_Rotation )) * force
+			);
+		//m_AppliedRelativeForce += force_vector;
+		m_AppliedForce += force_vector;
 
 		_activate();
 	}
@@ -169,12 +182,22 @@ namespace FusionEngine
 		m_Bounce = bounce;
 	}
 
+	void FusionPhysicsBody::SetRotationalVelocityRad(float velocity)
+	{
+		m_RotationalVelocity = velocity;
+	}
+
+	void FusionPhysicsBody::SetRotationalVelocityDeg(float velocity)
+	{
+		m_RotationalVelocity = fe_degtorad(velocity);
+	}
+
 	void FusionPhysicsBody::SetRotationalVelocity(float velocity)
 	{
 		m_RotationalVelocity = velocity;
 
 		// Don't activate if this was a call to stop rotation!
-		if (velocity != 0)
+		if (velocity)
 			_activate();
 	}
 
@@ -337,9 +360,9 @@ namespace FusionEngine
 		return m_AppliedForce;
 	}
 
-	float FusionPhysicsBody::GetEngineForce() const
+	const Vector2& FusionPhysicsBody::GetRelativeForce() const
 	{
-		return m_AppliedEngineForce;
+		return m_AppliedRelativeForce;
 	}
 
 	const Vector2 &FusionPhysicsBody::GetAcceleration() const
@@ -362,9 +385,29 @@ namespace FusionEngine
 		return m_Bounce;
 	}
 
+	float FusionPhysicsBody::GetRotationalVelocityRad() const
+	{
+		return m_RotationalVelocity;
+	}
+
+	float FusionPhysicsBody::GetRotationalVelocityDeg() const
+	{
+		return fe_radtodeg(m_RotationalVelocity);
+	}
+
 	float FusionPhysicsBody::GetRotationalVelocity() const
 	{
 		return m_RotationalVelocity;
+	}
+
+	float FusionPhysicsBody::GetRotationRad() const
+	{
+		return m_Rotation;
+	}
+
+	float FusionPhysicsBody::GetRotationDeg() const
+	{
+		return fe_radtodeg(m_Rotation);
 	}
 
 	float FusionPhysicsBody::GetRotation() const
@@ -432,9 +475,9 @@ namespace FusionEngine
 		m_AppliedForce = force;
 	}
 
-	void FusionPhysicsBody::_setEngineForce(float force)
+	void FusionPhysicsBody::_setRelativeForce(const Vector2 &force, float direction)
 	{
-		m_AppliedEngineForce = force;
+		m_AppliedRelativeForce = force;
 	}
 
 	void FusionPhysicsBody::_setAcceleration(const Vector2 &acceleration)
@@ -447,14 +490,14 @@ namespace FusionEngine
 		m_Velocity = velocity;
 	}
 
-	void FusionPhysicsBody::_setEngineDisplacement(const Vector2 &displacement)
+	void FusionPhysicsBody::_setRotationRad(const float rotation)
 	{
-		m_EngineDisplacement = displacement;
+		m_Rotation = rotation;
 	}
 
-	const Vector2 &FusionPhysicsBody::_getEngineDisplacement() const
+	void FusionPhysicsBody::_setRotationDeg(const float rotation)
 	{
-		return m_EngineDisplacement;
+		m_Rotation = fe_degtorad(rotation);
 	}
 
 	void FusionPhysicsBody::_setRotation(const float rotation)

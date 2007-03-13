@@ -127,6 +127,12 @@ namespace FusionEngine
 		void rotate(const Vector2& other);
 		//! Inverse of Vector2#rotate()
 		void unrotate(const Vector2& other);
+		//! Returns the angle between two vectors
+		/*!
+		 * Returns the angle <i>from</i> the given vector; i.e. if the given
+		 * other vector is ahead of this, the angle returned will be negative.
+		 */
+		float angleFrom(const Vector2& other);
 		//! Normalizes this vector
 		/*!
 		 * \returns The orginal length of this vector

@@ -91,7 +91,7 @@ class BitmaskTest : public CL_ClanApplication
 			//force.y = cosf(a)*g_ThrustForce;
 
 			//m_ShipPhysical->ApplyForce(force);
-			m_ShipPhysical->ApplyEngineForce(-g_ThrustForce);
+			m_ShipPhysical->ApplyForceRelative(-g_ThrustForce);
 		}
 		else if (CL_Keyboard::get_keycode(CL_KEY_UP))
 		{
@@ -101,7 +101,7 @@ class BitmaskTest : public CL_ClanApplication
 			//force.y = -cosf(a)*g_ThrustForce;
 
 			//m_ShipPhysical->ApplyForce(force);
-			m_ShipPhysical->ApplyEngineForce(g_ThrustForce);
+			m_ShipPhysical->ApplyForceRelative(g_ThrustForce);
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))

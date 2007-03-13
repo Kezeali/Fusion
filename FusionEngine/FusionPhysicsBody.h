@@ -133,16 +133,27 @@ namespace FusionEngine
 		virtual void ApplyForce(const Vector2 &force);
 		//! Applies force based on the current orientation and rotational velocity.
 		/*!
+		 * <p>
+		 * This allows a force to be applied relative to the ships facing over
+		 * the next step - such as a thrust force.
+		 * </p>
+		 * The following information is [depreciated]
 		 * An engine force vector will be calculated during the simulation step,
 		 * and added to the other forces, to make sure rotational velocity & step time
 		 * are taken into account.
 		 */
-		virtual void ApplyEngineForce(float force);
+		virtual void ApplyForceRelative(const Vector2 &force);
+		//! Applies (scalar) force based on the current orientation and rotational velocity.
+		virtual void ApplyForceRelative(float force);
 		//! Sets the constant used to apply damping to the body's movement.
 		virtual void SetCoefficientOfFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
 		virtual void SetCoefficientOfRestitution(float bounce);
 		//! We don't care about yo' torque.
+		virtual void SetRotationalVelocityRad(float velocity);
+		//! We don't care about yo' torque.
+		virtual void SetRotationalVelocityDeg(float velocity);
+
 		virtual void SetRotationalVelocity(float velocity);
 
 		//! \name Collision Properties
@@ -240,10 +251,10 @@ namespace FusionEngine
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		virtual CL_Point GetPositionPoint() const;
 
-		//! Gets the net linear force applied to the body.
+		//! Gets the net constant (i.e. not 'relative') force applied to the body.
 		virtual const Vector2 &GetForce() const;
-		//! Gets the net engine force applied to the body.
-		virtual float GetEngineForce() const;
+		//! Gets the net relative force applied to the body.
+		virtual const Vector2& GetRelativeForce() const;
 
 		virtual const Vector2 &GetAcceleration() const;
 		virtual const Vector2 &GetVelocity() const;
@@ -253,8 +264,14 @@ namespace FusionEngine
 		//! Yep
 		virtual float GetCoefficientOfRestitution() const;
 
-		virtual float GetRotationalVelocity() const;
+		virtual float GetRotationRad() const;
+		virtual float GetRotationDeg() const;
+
+		virtual float GetRotationalVelocityRad() const;
+		virtual float GetRotationalVelocityDeg() const;
+
 		virtual float GetRotation() const;
+		virtual float GetRotationalVelocity() const;
 		//@}
 
 		//! Returns true if this object is active.
@@ -327,19 +344,26 @@ namespace FusionEngine
 
 		//! Sets the force.
 		virtual void _setForce(const Vector2 &force);
-		//! Sets the engine force.
-		virtual void _setEngineForce(float force);
+		//! Sets the force.
+		/*!
+		 * \param force
+		 * The force to set.
+		 *
+		 * \param direction
+		 * [not implemented] The direction relative to which the force should be set.
+		 */
+		virtual void _setRelativeForce(const Vector2 &force, float direction =0);
 
 		//! Sets the acceleration.
 		virtual void _setAcceleration(const Vector2 &acceleration);
 		//! Sets the velocity.
 		virtual void _setVelocity(const Vector2 &velocity);
-		//! Sets the engine displacement. (displacement due to engine force)
-		virtual void _setEngineDisplacement(const Vector2 &velocity);
-		//! Gets the engine displacement. (displacement due to engine force)
-		virtual const Vector2 &_getEngineDisplacement() const;
 
 		//! Sets the rotation.
+		virtual void _setRotationRad(float rotation);
+		//! Sets the rotation (in degrees).
+		virtual void _setRotationDeg(float rotation);
+
 		virtual void _setRotation(float rotation);
 		//@}
 
@@ -447,15 +471,18 @@ namespace FusionEngine
 		float m_Bounce;
 
 		Vector2 m_AppliedForce;
-		float m_AppliedEngineForce;
+		Vector2 m_AppliedRelativeForce;
 
 		Vector2 m_Acceleration;
 		Vector2 m_Velocity;
-		Vector2 m_EngineDisplacement;
 		//std::vector<Vector2> m_DisplacementPath;
+		Vector2 m_Displacement;
 		Vector2 m_Position;
 
+		float m_RotationDeg;
 		float m_Rotation;
+
+		float m_RotationalVelocityDeg;
 		//! Current velocity of rotation.
 		/*!
 		 * \remarks
