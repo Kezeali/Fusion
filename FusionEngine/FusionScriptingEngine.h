@@ -125,7 +125,7 @@ namespace FusionEngine
 		//! Active contexts
 		std::vector<asIScriptContext*> m_Contexts;
 
-		
+	private:
 		//! Registers global methods and functions which scripts can use.
 		void registerGlobals();
 

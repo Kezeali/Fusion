@@ -155,7 +155,7 @@ class ScriptingTest : public CL_ClanApplication
 
 		// Scripting Engine
 		m_ScrEngine = new ScriptingEngine();
-		m_DroneScr = new Script("
+		m_DroneScr = new Script("Drone.as");
 
 		// World
 		m_World = new FusionPhysicsWorld();

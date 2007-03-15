@@ -36,6 +36,10 @@
 
 namespace FusionEngine
 {
+	//! Registers methods useful to weapon scripts
+	void RegisterWeaponMethods();
+	//! Registers methods to be used from the console
+	void RegisterConsoleMethods();
 	//! Detonates the given object
 	/*!
 	 * Script function:
@@ -190,6 +194,15 @@ namespace FusionEngine
 	 * \see SCR_FireProjectile
 	 */
 	void SCR_FireProjectileG(asIScriptGeneric *gen);
+
+	//! Lists the current projectiles in the console
+	void CON_ListProjectiles();
+
+	//! Lists the current projectiles in the console
+	/*!
+	 * Generic calling convention
+	 */
+	void CON_ListProjectilesG(asIScriptGeneric *gen);
 }
 
 #endif

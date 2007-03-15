@@ -79,17 +79,8 @@ namespace FusionEngine
 		RegisterScriptVector(m_asEngine);
 
 		// Register functions
-		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
-
-			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-		}
-		else
-		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-		}
+		RegisterWeaponMethods();
+		RegisterConsoleMethods();
 	}
 
 }

@@ -102,6 +102,12 @@ namespace FusionEngine
 		//! Detonate the given projectile
 		virtual void Detonate(ObjectID index);
 
+		//! Returns a list of projectiles
+		virtual const ProjectileList& GetProjectileList() const;
+
+		//! Returns a list of ships
+		virtual const ShipList& GetShipList() const;
+
 		//! Leaves the environment cleanly after an error.
 		/*!
 		 * \remarks

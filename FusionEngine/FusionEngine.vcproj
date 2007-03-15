@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionAIManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionBitmask.h"
 				>
 			</File>
@@ -527,6 +531,10 @@
 			</File>
 			<File
 				RelativePath=".\Common.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionAIManager.cpp"
 				>
 			</File>
 			<File

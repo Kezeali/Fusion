@@ -384,7 +384,7 @@ namespace FusionEngine
 				// Finally, calculate the acceleration
 				acceleration = (force - dampForce) * b1->GetInverseMass();
 
-				velocity = acceleration * delta;
+				//velocity = acceleration * delta;
 
 				///////////////////
 				// Cap the velocity

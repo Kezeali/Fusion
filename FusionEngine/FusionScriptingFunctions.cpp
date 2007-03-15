@@ -25,8 +25,56 @@
 		Elliot Hayward
 */
 
-#include "FusionScript.h"
+#include "FusionScriptingFunctions.h"
+
+#include "FusionConsole.h"
 
 namespace FusionEngine
 {
+
+	void RegisterWeaponMethods()
+	{
+		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		{
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+
+			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+		}
+		else
+		{
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+		}
+	}
+
+	void RegisterConsoleMethods()
+	{
+		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		{
+			r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileList), asCALL_CDECL); cl_assert( r >= 0 );
+			
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+
+			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+		}
+		else
+		{
+			r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileListG), asCALL_CDECL); cl_assert( r >= 0 );
+
+
+			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+		}
+	}
+
+	void CON_ListProjectiles()
+	{
+		Console::getSingletonPtr()->Add();
+	}
+
+	void CON_ListProjectilesG(asIScriptGeneric* gen)
+	{
+		Console::getSingletonPtr()->Add();
+	}
+
 }
