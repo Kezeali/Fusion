@@ -27,6 +27,8 @@
 		Dimitrios Christopoulos (dynamic-dynamic object collision response)
 */
 
+#include "Common.h"
+
 #include "FusionPhysicsWorld.h"
 
 /// Fusion
@@ -176,7 +178,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionCallback response, int type)
+	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionHandler* response, int type)
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
@@ -188,7 +190,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionCallback response, int type, const PhysicalProperties &props)
+	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionHandler* response, int type, const PhysicalProperties &props)
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
@@ -271,7 +273,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionCallback response, int type)
+	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionHandler* response, int type)
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
@@ -282,7 +284,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionCallback response, int type, const PhysicalProperties &props)
+	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionHandler* response, int type, const PhysicalProperties &props)
 	{
 		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
 		body->SetType(type);
@@ -351,9 +353,6 @@ namespace FusionEngine
 	void FusionPhysicsWorld::RunSimulation(unsigned int split)
 	{
 		float delta = (float)split;// * 0.1f;
-		//Vector2 engine_displacement;
-		//engine_displacement.x = 0.0f;
-		//engine_displacement.y = 0.0f;
 
 		// All collisions found in the Prepare Movement stage will be listed here
 		CollisionList collisions;
@@ -384,6 +383,7 @@ namespace FusionEngine
 				// Finally, calculate the acceleration
 				acceleration = (force - dampForce) * b1->GetInverseMass();
 
+				// We don't do this quite yet (the commented out line)
 				//velocity = acceleration * delta;
 
 				///////////////////

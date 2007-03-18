@@ -45,7 +45,8 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough="precomp.h"
+				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
+				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -121,6 +122,8 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
+				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
@@ -289,6 +292,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLevelResource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLog.h"
 				>
 			</File>
 			<File
@@ -515,10 +522,6 @@
 				RelativePath=".\FusionWeaponResource.h"
 				>
 			</File>
-			<File
-				RelativePath=".\Prereq.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -611,6 +614,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLevel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLog.cpp"
 				>
 			</File>
 			<File

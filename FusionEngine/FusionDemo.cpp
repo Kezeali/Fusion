@@ -58,8 +58,13 @@ int FusionDemo::main(int argc, char **argv)
 		delete m_ClientOpts;
 		delete m_ServerOpts;
 	}
+	catch (std::string message)
+	{
+		std::cout << message << std::endl;
+	}
 	catch (CL_Error err)
 	{
+		//! \todo GUI errors
 		std::cout << "Exception caught: " << err.message.c_str() << std::endl;
 	}
 

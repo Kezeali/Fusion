@@ -230,7 +230,7 @@ namespace FusionEngine
 		 * \param[in] type The type of body.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateBody(CollisionCallback response, int type);
+		FusionPhysicsBody *CreateBody(CollisionHandler *response, int type);
 		//! Creates a body in the world so it will have physics applied to it.
 		/*!
 		 * \param[in] response A pointer to the response object.
@@ -238,7 +238,7 @@ namespace FusionEngine
 		 * \param[in] props Properties to initialise the body with.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateBody(CollisionCallback response, int type, const PhysicalProperties &props);
+		FusionPhysicsBody *CreateBody(CollisionHandler *response, int type, const PhysicalProperties &props);
 		//! Destroys the given body.
 		/*!
 		 * \param[in] body Pointer to the body to remove.
@@ -264,7 +264,7 @@ namespace FusionEngine
 		 * \param[in] type The type of body.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateStatic(CollisionCallback response, int type);
+		FusionPhysicsBody *CreateStatic(CollisionHandler* response, int type);
 		//! Creates a static body in the world so it will have collision detection applied to it.
 		/*!
 		 * \param[in] response A pointer to the response object.
@@ -272,7 +272,7 @@ namespace FusionEngine
 		 * \param[in] props Properties to initialise the body with.
 		 * \returns A const pointer to the body created.
 		 */
-		FusionPhysicsBody *CreateStatic(CollisionCallback response, int type, const PhysicalProperties &props);
+		FusionPhysicsBody *CreateStatic(CollisionHandler* response, int type, const PhysicalProperties &props);
 		//! Destroys the given static body.
 		/*!
 		 * \param[in] body Pointer to the body to remove.

@@ -1,4 +1,6 @@
 
+#include "Common.h"
+
 #include "FusionBitmask.h"
 
 namespace FusionEngine

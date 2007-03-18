@@ -115,6 +115,7 @@ namespace FusionEngine
 			// Put the text in the display
 			enterText(edit_text);
 
+
 			// Store the text in the console
 			Console::getSingleton().Add(edit_text);
 

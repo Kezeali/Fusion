@@ -31,6 +31,7 @@
 
 /// Inherited
 #include "FusionState.h"
+#include "FusionSingleton.cpp"
 
 /// Fusion
 #include "FusionScene.h"
@@ -51,11 +52,12 @@
 
 #include "FusionError.h"
 
+
 namespace FusionEngine
 {
 
 	//! The virtual environment! (pun?)
-	class GenericEnvironment : public FusionState
+	class GenericEnvironment : public FusionState, public Singleton<GenericEnvironment>
 	{
 	public:
 		//! Basic Constructor
@@ -78,18 +80,6 @@ namespace FusionEngine
 		typedef std::map<ObjectID, std::string> ProjectileResMap;
 
 	public:
-		//! Pulls the resources from the ResourceLoader and some other stuff
-		//virtual bool Initialise() = 0;
-
-		/*!
-		 * \brief
-		 * Runs the statemanager.
-		 */
-		//virtual bool Update(unsigned int split);
-
-		//! Draws stuff
-		//virtual void Draw();
-
 		//! Returns the index of the newly created ship
 		virtual void CreateShip(const ShipState &state) =0;
 
@@ -114,9 +104,10 @@ namespace FusionEngine
 		 * If you wan't to leave the env without an error, use the state
 		 * message system to remove the env state.
 		 *
-		 * \param[in] e The explaination to give to the user
+		 * \param[in] type The explaination to give to the user
+		 * \param[in] message The explaination to give to the user
 		 */
-		void _error(Error *e);
+		void _abort(ErrorType type, const std::string &message);
 
 	protected:
 		//! True if the environment should abort next Update.

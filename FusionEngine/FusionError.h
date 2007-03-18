@@ -32,18 +32,15 @@
 namespace FusionEngine
 {
 
-	//! Encapsulates an fatal-error message.
+	//! Fusion Exception class.
 	/*!
 	 * Used primarily by Colsole, Logger, and StateManager.  This is only used
 	 * for fatal errors, where FusionGame will have to show something to the
 	 * user.
 	 *
 	 * \remarks
-	 * This is the message passed to FusionGame when an unexpected error arises,
+	 * This is the message thrown to FusionGame when an unexpected error arises,
 	 * which is usually when a state update returns false.
-	 * <br>
-	 * REMEMBER: Exceptions are for programming mistakes, Errors are for user
-	 * mistakes.
 	 */
 	class Error
 	{
@@ -51,13 +48,26 @@ namespace FusionEngine
 		//! Types of errors
 		enum ErrorType
 		{
-			NONE,
-			UNEXPECTEDDISCONNECT,
+			//! None / trivial
+			NONE = 0,
+			//! An internal error of unspecified (but critical) type
+			INTERNAL_ERROR,
+			//! Disconnected for some (unusual) reason
+			UNEXPECTED_DISCONNECT,
+			//! You can't connect to this server
 			BANNED,
+			//! A package couldn't be sync'ed
 			PACKSYNC,
+			//! A package is damaged
 			PACKVERIFY,
-			PACKLOAD
+			//! A package couldn't be loaded (out of memory?)
+			PACKLOAD,
+			//! A file couldn't be found
+			FILE_NOT_FOUND,
+			//! Logger error (obviously these won't be logged!)
+			LOGFILE_ERROR
 		};
+
 	public:
 		//! Basic constructor
 		Error();
@@ -73,7 +83,7 @@ namespace FusionEngine
 		 * MCS - I can't call this GetMessage because of a stupid windows macro 
 		 * which redefines that as GetMessageW!
 		 */
-		const std::string &GetError() const;
+		const std::string& GetError() const;
 
 	protected:
 		//! Stores the error type

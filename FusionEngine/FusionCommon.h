@@ -18,6 +18,12 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
 #ifndef Header_FusionEngine_Common
@@ -29,6 +35,7 @@
 
 #include "Common.h"
 #include "FusionVector2.h"
+#include "FusionError.h"
 
 // Boost
 //#include <boost/function.hpp>
@@ -141,6 +148,9 @@ namespace FusionEngine
 	class StateManager;
 	class Script;
 	class ScriptingEngine;
+	class Error;
+	class Logger;
+	class Console;
 
 
 	// --Typedefs--

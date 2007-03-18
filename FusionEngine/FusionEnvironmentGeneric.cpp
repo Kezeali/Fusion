@@ -4,15 +4,9 @@
 namespace FusionEngine
 {
 
-	ShipResource *GenericEnvironment::GetShipResourceByID(const std::string &id)
+	void GenericEnvironment::_abort(ErrorType type, const std::string& message)
 	{
-		//! \todo catch errors.
-		return m_ShipResources[id];
-	}
-
-	void GenericEnvironment::_error(Error *e)
-	{
-		m_LastError = e;
+		throw Error(type, message);
 		m_Abort = true;
 	}
 

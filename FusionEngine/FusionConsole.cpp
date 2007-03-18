@@ -4,10 +4,15 @@
 namespace FusionEngine
 {
 
+	Console::Console()
+	{
+	}
+
 	void Console::Add(const std::string &message)
 	{
 		m_Data.push_back(message);
 
+		// Signal
 		OnNewLine(message);
 	}
 
@@ -15,6 +20,7 @@ namespace FusionEngine
 	{
 		m_Data.push_back(error->GetError());
 
+		// Signal
 		OnNewLine(error->GetError());
 	}
 
@@ -22,10 +28,11 @@ namespace FusionEngine
 	{
 		m_Data.clear();
 
+		// Signal
 		OnClear();
 	}
 
-	const ColsoleLines &Console::GetHistory() const
+	const Console::ConsoleLines& Console::GetHistory() const
 	{
 		return m_Data;
 	}

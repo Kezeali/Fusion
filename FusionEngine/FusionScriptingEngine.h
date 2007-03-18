@@ -50,7 +50,7 @@ namespace FusionEngine
 	 * \sa
 	 * Singleton
 	 */
-	class ScriptingEngine : public FusionEngine::Singleton<ScriptingEngine>
+	class ScriptingEngine : public Singleton<ScriptingEngine>
 	{
 	public:
 		//! Basic constructor.

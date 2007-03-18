@@ -28,7 +28,7 @@
 #endif
 
 /*!
- * \file FusionCommon.h
+ * \file FusionCollisionCallback.h
  * This file defines both CollisionCallback and CollisionHandler, either of which
  * are valid methods for allowing non-physical body classes to be aware of collisions.
  */

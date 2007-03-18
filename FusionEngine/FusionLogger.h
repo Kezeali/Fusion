@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,12 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
 #ifndef Header_FusionEngine_Logger
@@ -29,23 +35,47 @@
 
 #include "FusionCommon.h"
 
-#include "FusionError.h"
+/// Inherited
+#include "FusionSingleton.h"
+
+#include "FusionLog.h"
 
 namespace FusionEngine
 {
 
+	//! Data entered into the console
+	const std::string g_LogConsole = "console";
+	//! Exceptions not specific to client or server
+	const std::string g_LogException = "error";
+	//! Exceptions in client
+	const std::string g_LogExceptionClient = g_LogException + "_client";
+	//! Exceptions in server
+	const std::string g_LogExceptionServer = g_LogException + "_server";
+
 	//! Provides logfile access to all FusionEngine objects
 	/*!
-	 * This manages and
+	 * Manages logfiles
+	 *
+	 * \todo Allow mapping of log tags to other tags - i.e. if someone
+	 *  calls Logger::Add("Arrrrg", "mylogfile"); and one previously called
+	 *  Logger::MapTag("mylogfile", "betterlogfilename"); then "Arrrrg" would
+	 *  be added to the file "betterlogfilename-<date>.<logext>"
 	 */
-	class Logger : public Singleton<Console>
+	class Logger : public Singleton<Logger>
 	{
+	public:
+		//! Maps tags to LogFiles
+		typedef std::map<std::string, Log*> LogList;
+
 	public:
 		//! Basic constructor
 		Logger();
 
 		//! Constructor +console_logging
 		Logger(bool console_logging);
+
+		//! Destructor
+		~Logger();
 
 	public:
 		//! Console logging prints all console messages to a log.
@@ -54,6 +84,76 @@ namespace FusionEngine
 		 * capture messages.
 		 */
 		void ActivateConsoleLogging();
+		//! Disconnects from the console
+		void DisableConsoleLogging();
+
+		//! Sets the extension given to logfiles
+		void SetExt(const std::string& ext);
+		//! Gets the extension currently given to logfiles
+		const std::string& GetExt() const;
+
+		//! Activates or disables the appension of dates to log names
+		void SetUseDating(bool useDating);
+
+		//! Returns true if dating is active
+		inline bool GetUseDating() { return m_UseDating; }
+
+		//! Opens or creates the logfile corresponding to the given tag
+		/*!
+		 * Opens/creates the specified file and adds the opening line (date, etc.). If
+		 * the file already exists, the opening line will be appended to the end.
+		 *
+		 * \param[in] tag
+		 * Tag to open
+		 *
+		 * \param[in] keep_file_open
+		 * If true, the file will be kept open between writes. This is useful for
+		 * logs that are written to regularly and/or a lot.
+		 */
+		Log* BeginLog(const std::string& tag, bool keep_file_open = true);
+
+		//! Adds a header to an already open log
+		/*!
+		 * Opens the specified file and adds the opening line (date, etc.). If
+		 * the file already exists, the opening line will be appended to the end.
+		 *
+		 * \param[in] log
+		 * Existing logfile to open
+		 */
+		void BeginLog(Log *log);
+
+		//! Gets the log corresponding to the given tag.
+		/*!
+		 * \todo Perhaps this should throw an INVALID_PARAMETERS exception
+		 *  if the tag isn't found.
+		 *
+		 * \param[in] tag
+		 * Tag to find
+		 *
+		 * \returns Log*
+		 * If the tag exists
+		 */
+		Log* GetLog(const std::string& tag);
+
+		//! Prints the footer to the given log
+		void EndLog(Log *log);
+
+		//! Finds the given log and calls Log#EndLog(Log*)
+		void EndLog(const std::string& tag);
+
+		//! Closes a logfile and removes it from the list
+		/*!
+		 * \param log
+		 * The logfile to close
+		 */
+		void RemoveAndDestroyLog(const std::string& tag);
+
+		//! Closes a logfile and removes it from the list
+		/*!
+		 * \param log
+		 * The logfile to close
+		 */
+		void RemoveAndDestroyLog(Log* log);
 
 		//! Adds the given message to the given log
 		/*!
@@ -61,15 +161,13 @@ namespace FusionEngine
 		 * otherwise specified, to create the log-file name. If the resulting
 		 * filename does not exist, it will be created.
 		 */
-		void Add(const std::string &message, const std::string &tag);
+		void Add(const std::string &message, const std::string &tag = g_LogException, LogSeverity severity = LOG_NORMAL);
 
 		//! Adds the given Error to the given log
 		/*!
-		 * The given tag will be appended with a date and .log extension, unless
-		 * otherwise specified, to create the log-file name. If the resulting
-		 * filename does not exist, it will be created.
+		 * Formats the given error to a string, then calls the normal Add()
 		 */
-		void Add(const Error *error, const std::string &tag);
+		void Add(const Error* error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
 		void onConsoleNewline(const std::string &message);
@@ -77,6 +175,44 @@ namespace FusionEngine
 	protected:
 		//! True if console logging is active
 		bool m_ConsoleLogging;
+		//! True if dating is active
+		bool m_UseDating;
+		std::string m_Ext;
+
+		LogList m_Logs;
+
+		CL_Slot m_ConsoleOnNewLineSlot;
+
+	protected:
+		//! Opens a logfile (creates it if it doesn't exist)
+		/*!
+		 * Always returns a FusionEngine#Log. Throws an exception otherwise.
+		 * <br>
+		 * If the log is created, a header will be added
+		 *
+		 * \param tag
+		 * The tag to look for and create a file for if necessary
+		 *
+		 * \param keepopen
+		 * If the log is must be created, this will be its keepopen setting
+		 */
+		Log* openLog(const std::string& tag, bool keepopen = false);
+
+		//! Opens the given log. Will not add header.
+		/*!
+		 * Even if the log has to be created, no header will be added
+		 *
+		 * \param tag
+		 * The tag to look for and create a file for if necessary
+		 *
+		 * \param keepopen
+		 * If the log is must be created, this will be its keepopen setting
+		 */
+		Log* openHeadlessLog(const std::string& tag, bool keepopen = false);
+
+
+		//! Makes a filename for the given tag
+		std::string filename(const std::string& tag) const;
 
 	};
 

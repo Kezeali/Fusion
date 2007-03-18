@@ -40,8 +40,8 @@ namespace FusionEngine
 
 	struct ConsoleLine
 	{
-		std::string Message;
-		CL_Color Colour;
+		std::string message;
+		CL_Color colour;
 	};
 
 	//! Provides console data access to all FusionEngine objects
@@ -72,7 +72,7 @@ namespace FusionEngine
 		void Clear();
 
 		//! Returns all the lines that have been added to the console
-		const ConsoleLines &GetHistory() const;
+		const ConsoleLines& GetHistory() const;
 
 		//! Triggers when new data is added to the console
 		CL_Signal_v1<const std::string &> OnNewLine;

@@ -31,7 +31,6 @@
 
 /// Inherited
 #include "FusionState.h"
-#include "FusionSingleton.h"
 
 namespace FusionEngine
 {
@@ -75,6 +74,8 @@ namespace FusionEngine
 
 		int m_HistoryPos;
 		bool m_RecentInHistory;
+
+		CL_SlotContainer m_Slots;
 
 		//! Enters text
 		void enterText(const CEGUI::String &text);

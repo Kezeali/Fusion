@@ -27,6 +27,8 @@
 		Magnus Norddahl (Some code from ClanLib's CL_Vector is used)
 */
 
+#include "Common.h"
+
 #include "FusionVector2.h"
 
 namespace FusionEngine

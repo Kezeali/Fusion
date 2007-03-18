@@ -1,6 +1,7 @@
 #include "..\FusionEngine\Common.h"
 
 #include "..\FusionEngine\FusionPhysFS.h"
+#include "..\FusionEngine\FusionLogger.h"
 
 #include "..\FusionEngine\PhysFS.h"
 
@@ -21,6 +22,8 @@ class PhysFSTest : public CL_ClanApplication
 
 		try
 		{
+			FusionEngine::Logger* logger = new FusionEngine::Logger();
+
 			// List version info
 			PHYSFS_Version compiled;
 			PHYSFS_Version linked;
@@ -33,13 +36,25 @@ class PhysFSTest : public CL_ClanApplication
 				linked.major, linked.minor, linked.patch);
 
 
+			logger->SetUseDating(true);
+			logger->BeginLog("error", true);
 			// List filetypes
+			logger->Add("PhysFS File Types");
+
 			const PHYSFS_ArchiveInfo **i;
 			for (i = PHYSFS_supportedArchiveTypes(); *i != NULL; i++)
 			{
 				std::cout << "Supported archive: " << (*i)->extension << " which is "
 					<< (*i)->description << "." << std::endl;
+				logger->Add((*i)->description);
 			}
+
+			//{
+			//	std::ofstream file("error.log", std::ios::app|std::ios::out);
+			//	file << "test";
+			//}
+
+			delete logger;
 
 			// Configure physFS for this app
 			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");

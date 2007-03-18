@@ -45,6 +45,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
+				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -182,11 +183,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionError.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLog.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLogger.cpp"
 				>
 			</File>
 			<File
@@ -216,11 +233,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsole.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionError.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.h"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLog.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLogger.h"
 				>
 			</File>
 			<File

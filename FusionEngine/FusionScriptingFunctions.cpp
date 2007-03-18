@@ -27,6 +27,10 @@
 
 #include "FusionScriptingFunctions.h"
 
+/// Fusion
+#include "FusionEnvironmentGeneric.h"
+#include "FusionShip.h"
+#include "FusionProjectile.h"
 #include "FusionConsole.h"
 
 namespace FusionEngine
@@ -69,7 +73,16 @@ namespace FusionEngine
 
 	void CON_ListProjectiles()
 	{
-		Console::getSingletonPtr()->Add();
+		GenericEnvironment::ProjectileList list =
+			GenericEnvironment::getSingletonPtr()->GetProjectileList();
+
+		GenericEnvironment::ProjectileList::iterator it = 
+			list.begin();
+
+		for (; it != list.end(); ++it)
+		{
+			Console::getSingletonPtr()->Add( it->second->ToString() );
+		}
 	}
 
 	void CON_ListProjectilesG(asIScriptGeneric* gen)
