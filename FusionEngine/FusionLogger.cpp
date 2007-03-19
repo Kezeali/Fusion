@@ -37,15 +37,10 @@
 namespace FusionEngine
 {
 
-	Logger::Logger()
-		: m_ConsoleLogging(false),
-		m_UseDating(true),
-		m_Ext("log")
-	{
-	}
-
 	Logger::Logger(bool console_logging)
-		: m_ConsoleLogging(console_logging)
+		: m_ConsoleLogging(console_logging),
+		m_UseDating(true),
+		m_Ext(g_LogDefaultExt)
 	{
 		if (m_ConsoleLogging)
 			ActivateConsoleLogging();
@@ -224,6 +219,9 @@ namespace FusionEngine
 		{
 			Log* log = openLog(tag);
 			log->LogMessage(message, severity);
+
+			if (!log->GetKeepOpen())
+				RemoveAndDestroyLog(tag);
 		}
 		catch (LogfileException e)
 		{
@@ -282,7 +280,10 @@ namespace FusionEngine
 
 	std::string Logger::filename(const std::string& tag) const
 	{
-		std::string filename;// = CL_System::get_exe_path() + LogfilePath;
+		std::stringstream filename;
+		
+		// Add the path to where logfiles are to be stored
+		filename << LogfilePath;
 
 		if (m_UseDating)
 		{
@@ -290,15 +291,15 @@ namespace FusionEngine
 			time_t ctTime; time(&ctTime);
 			pTime = localtime( &ctTime );
 
-			std::stringstream name;
-
-			// <tag>-<year><month><day>.<m_Ext>
-			name << tag << "-"
+			// Build a dated filename in the format:
+			//  <tag>-<year><month><day>.<m_Ext>
+			filename << tag << "-"
 				<< std::setw(2) << std::setfill('0') << pTime->tm_year +1900
 				<< std::setw(2) << std::setfill('0') << pTime->tm_mon +1
 				<< std::setw(2) << std::setfill('0') << pTime->tm_mday 
 				<< "." << m_Ext;
-			name.flush();
+
+			//filename.flush();
 
 			// The unsafe way to do it
 			//char temp[1024];
@@ -307,14 +308,15 @@ namespace FusionEngine
 			//	tag, pTime->tm_year, pTime->tm_mon +1, pTime->tm_mday, m_Ext);
 			//filename += temp;
 
-			filename += name.str();
+			//filename += name.str();
 		}
 		else
 		{
-			filename += tag + "." + m_Ext;
+			filename << tag << "." << m_Ext;
 		}
 
-		return filename;
+		filename.flush();
+		return filename.str();
 	}
 
 }

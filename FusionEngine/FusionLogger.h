@@ -52,9 +52,16 @@ namespace FusionEngine
 	//! Exceptions in server
 	const std::string g_LogExceptionServer = g_LogException + "_server";
 
+	//! Default extension for logfiles (excluding the dot).
+	static const std::string g_LogDefaultExt = "log";
+
 	//! Provides logfile access to all FusionEngine objects
 	/*!
 	 * Manages logfiles
+	 *
+	 * \remarks
+	 * !(keep open) desn't seem to work. For now, everything defaults to
+	 * (keep open) to subdue this bug.
 	 *
 	 * \todo Allow mapping of log tags to other tags - i.e. if someone
 	 *  calls Logger::Add("Arrrrg", "mylogfile"); and one previously called
@@ -68,11 +75,8 @@ namespace FusionEngine
 		typedef std::map<std::string, Log*> LogList;
 
 	public:
-		//! Basic constructor
-		Logger();
-
 		//! Constructor +console_logging
-		Logger(bool console_logging);
+		Logger(bool console_logging = false);
 
 		//! Destructor
 		~Logger();
@@ -196,7 +200,7 @@ namespace FusionEngine
 		 * \param keepopen
 		 * If the log is must be created, this will be its keepopen setting
 		 */
-		Log* openLog(const std::string& tag, bool keepopen = false);
+		Log* openLog(const std::string& tag, bool keepopen = true);
 
 		//! Opens the given log. Will not add header.
 		/*!
@@ -208,10 +212,14 @@ namespace FusionEngine
 		 * \param keepopen
 		 * If the log is must be created, this will be its keepopen setting
 		 */
-		Log* openHeadlessLog(const std::string& tag, bool keepopen = false);
+		Log* openHeadlessLog(const std::string& tag, bool keepopen = true);
 
 
 		//! Makes a filename for the given tag
+		/*!
+		 * If dating is active, the filename format will be: <br>
+		 * <code> [tag]-[year][month][day].[m_Ext] </code>
+		 */
 		std::string filename(const std::string& tag) const;
 
 	};

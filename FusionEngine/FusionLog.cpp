@@ -87,10 +87,11 @@ namespace FusionEngine
 			time_t ctTime; time(&ctTime);
 			pTime = localtime( &ctTime );
 
-			m_Logfile << std::setw(2) << std::setfill('0') << pTime->tm_hour
+			m_Logfile
+				<< "[" << std::setw(2) << std::setfill('0') << pTime->tm_hour
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec 
-				<< ": " << message << std::endl;
+				<< "]  " << message << std::endl;
 			//m_Logfile << pTime->tm_hour
 			//	<< ":"  << pTime->tm_min
 			//	<< ":"  << pTime->tm_sec 

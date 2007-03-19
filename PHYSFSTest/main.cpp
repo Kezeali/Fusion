@@ -1,6 +1,7 @@
 #include "..\FusionEngine\Common.h"
 
 #include "..\FusionEngine\FusionPhysFS.h"
+#include "..\FusionEngine\FusionConsole.h"
 #include "..\FusionEngine\FusionLogger.h"
 
 #include "..\FusionEngine\PhysFS.h"
@@ -22,7 +23,8 @@ class PhysFSTest : public CL_ClanApplication
 
 		try
 		{
-			FusionEngine::Logger* logger = new FusionEngine::Logger();
+			new FusionEngine::Console;
+			FusionEngine::Logger* logger = new FusionEngine::Logger(true);
 
 			// List version info
 			PHYSFS_Version compiled;
@@ -37,16 +39,17 @@ class PhysFSTest : public CL_ClanApplication
 
 
 			logger->SetUseDating(true);
-			logger->BeginLog("error", true);
+			logger->BeginLog("console", true);
 			// List filetypes
-			logger->Add("PhysFS File Types");
+			logger->Add("PhysFS File Types", "console");
 
 			const PHYSFS_ArchiveInfo **i;
 			for (i = PHYSFS_supportedArchiveTypes(); *i != NULL; i++)
 			{
 				std::cout << "Supported archive: " << (*i)->extension << " which is "
 					<< (*i)->description << "." << std::endl;
-				logger->Add((*i)->description);
+
+				FusionEngine::Console::getSingletonPtr()->Add((*i)->description);
 			}
 
 			//{
@@ -55,6 +58,7 @@ class PhysFSTest : public CL_ClanApplication
 			//}
 
 			delete logger;
+			delete FusionEngine::Console::getSingletonPtr();
 
 			// Configure physFS for this app
 			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");

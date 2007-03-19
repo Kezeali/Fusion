@@ -60,7 +60,12 @@ namespace FusionEngine
 
 	};
 
-	//! Represents a logfile (usually within FusionEngine::Logger)
+	//! Represents a logfile (usually within FusionEngine#Logger)
+	/*!
+	 * \remarks
+	 * !(keep open) desn't seem to work. For now, everything in
+	 * FusionEngine#Logger defaults to (keep open) to subdue this bug.
+	 */
 	class Log
 	{
 	public:
