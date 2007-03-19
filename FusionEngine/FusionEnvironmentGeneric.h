@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,11 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_GenericEnvironment
@@ -158,6 +163,9 @@ namespace FusionEngine
 		 * receiving, this just handles the data from it.
 		 */
 		virtual bool receive() = 0;
+
+		//! Waits until the frame rate set in Options is reached
+		void limitFPS();
 
 		//! Builds a message from a ShipState (usually outgoing)
 		FusionMessage *BuildMessage(const ShipState &input);

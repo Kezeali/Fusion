@@ -4,6 +4,12 @@
 namespace FusionEngine
 {
 
+	void GenericEnvironment::limitFrames(unsigned int split)
+	{
+		// m_FrameLength is set to 1000/Options::MaxFPS
+		CL_System::sleep(m_FrameLength-split);
+	}
+
 	void GenericEnvironment::_abort(ErrorType type, const std::string& message)
 	{
 		throw Error(type, message);
