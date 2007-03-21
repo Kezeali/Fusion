@@ -182,7 +182,12 @@ bool ServerEnvironment::receive()
 
 				CreateShip(state);
 
-				m_NetworkManager->SendAddPlayer(getOldPlayerIDFromAddPlayerMessage(m), state);
+				ObjectID oldPID;
+				RakNet::BitStream bs(m->ReadWithoutHeader(), m->GetDataLength(), false);
+				
+				bs.Read(oldPID);
+
+				m_NetworkManager->SendAddPlayer(oldPID, state);
 				break;
 			}
 		}

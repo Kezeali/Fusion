@@ -107,6 +107,8 @@ namespace FusionEngine
 		//! Options
 		ServerOptions *m_Options;
 
+		unsigned int m_MessageDelay;
+
 
 		////! Ship List
 		//ShipList m_Ships;

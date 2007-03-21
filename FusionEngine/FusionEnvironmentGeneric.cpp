@@ -21,8 +21,8 @@ namespace FusionEngine
 	{
 		ShipState state;
 
-		RakNet::BitStream bs(m->ReadData(), m->GetDataLength(), false);
-		// ReadData wont return a timestamp or other header info, so we don't worry about that
+		RakNet::BitStream bs(m->ReadWithoutHeader(), m->GetDataLength(), false);
+		// ReadWithoutHeader wont return a timestamp or other header info, so we don't worry about that
 
 		bs.Read(state.PID);
 
@@ -51,7 +51,7 @@ namespace FusionEngine
 	{
 		ShipInput state;
 
-		RakNet::BitStream bs(m->Read(), m->GetLength(), false);
+		RakNet::BitStream bs(m->ReadWithoutHeader(), m->GetLength(), false);
 
 		// Data in Messages shouldn't have a timestamp anyway, so we don't worry about that
 		bs.Read(state.pid);
@@ -72,7 +72,7 @@ namespace FusionEngine
 	{
 		ProjectileState state;
 
-		RakNet::BitStream bs(m->Read(), m->GetLength(), false);
+		RakNet::BitStream bs(m->ReadWithoutHeader(), m->GetLength(), false);
 
 		bs.Read(state.PID);
 
