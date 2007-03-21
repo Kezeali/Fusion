@@ -63,21 +63,18 @@ namespace FusionEngine
 	 * \brief
 	 * The client gameplay environment.
 	 *
-	 * \todo ClientEnvironment and ServerEnvironment should probably inherit from
-	 * a common parent.
-	 *
 	 * This is where all the gameplay stuff goes on at the client-side.
 	 * Moving / drawing ships, syncing with server, prediction, etc. is all controlled
 	 * from here. That isn't to say just this one class does all thoes things, this
 	 * class just controlls the activities of other, more specific classes which do.
 	 *
 	 * \see
-	 * FusionScene | FusionInput | FusionNetworkingHandler | GenericEnvironment.
+	 * FusionScene | FusionInput | ResourceLoader | FusionNetworkGeneral | GenericEnvironment | ClientOptions.
 	 */
 	class ClientEnvironment : public GenericEnvironment
 	{
 	public:
-		//! A list of local player numbers (0 to g_MaxPlayers) 
+		//! A list of local player IDs (0 to g_MaxPlayers) 
 		typedef std::vector<ObjectID> LocalPlayerIdList;
 
 	public:

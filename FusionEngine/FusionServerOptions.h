@@ -50,6 +50,8 @@ namespace FusionEngine
 		unsigned int mNetDelay;
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
 		int mBitmaskResolution;
+				
+		unsigned int mMaxFPS;
 
 		//! The initial (maximum) health for ships
 		int mMaxHealth;

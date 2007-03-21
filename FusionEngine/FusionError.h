@@ -65,7 +65,9 @@ namespace FusionEngine
 			//! A file couldn't be found
 			FILE_NOT_FOUND,
 			//! Logger error (obviously these won't be logged!)
-			LOGFILE_ERROR
+			LOGFILE_ERROR,
+			//! The method being called is not implemented
+			NOT_IMPLEMENTED
 		};
 
 	public:

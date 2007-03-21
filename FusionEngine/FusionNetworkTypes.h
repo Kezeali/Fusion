@@ -71,6 +71,15 @@ namespace FusionEngine
 		//! System channel message types
 
 		//! [client|server] When new players join (as clients can have more than one player)
+		/*!
+		 * Server-side Structure:<br>
+		 * <ol>
+		 * <li> [char]     MTID_ADDPLAYER
+		 * <li> [ObjectID] The prelim. ID the client gave this ship
+		 * <li> [ObjectID] The ID allocated to this ship
+		 * <li> The rest is the same format as MTID_SHIPFRAME
+		 * </ol>
+		 */
 		MTID_ADDPLAYER = ID_USER_PACKET_ENUM,
 		//! [client|server]
 		MTID_REMOVEPLAYER,
@@ -101,10 +110,7 @@ namespace FusionEngine
 		 * Client-side Structure:<br>
 		 * <ol>
 		 * <li> [char]     MTID_STARTSYNC
-		 * <li> [ObjectID]Ship to which this applies
-		 * <li> [float]    x origin
-		 * <li> [float]    y origin
-		 * <li> [float]    direction at origin
+		 * <li> TODO: other stuff?
 		 * </ol>
 		 */
 		MTID_STARTSYNC,
@@ -126,8 +132,8 @@ namespace FusionEngine
 		 * <li> [char]     ID_TIMESTAMP
 		 * <li> [long]     Time
 		 * <li> [char]     MTID_FIREWEAPON
-		 * <li> [ObjectID]Ship to which this applies
-		 * <li> [float]    x origin
+		 * <li> [ObjectID] Ship to which this applies
+		 * <li> [float]    x origin (of the ship? I think so...)
 		 * <li> [float]    y origin
 		 * <li> [float]    direction at origin
 		 * </ol>

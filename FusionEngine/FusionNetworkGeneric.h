@@ -96,6 +96,8 @@ namespace FusionEngine
 		/*!
 		 * This will optimise sending for high reliablility, which is required
 		 * for AddPlayer messages.
+		 *
+		 * THIS SHOULDN'T BE IMPLEMENTED IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
 		 */
 		void SendAddPlayer();
 		//! Sends a Remove player message.

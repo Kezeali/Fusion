@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 	Portions Copyright (C) Scott Bilas, 2000
 
   This software is provided 'as-is', without any express or implied warranty.

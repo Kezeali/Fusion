@@ -57,9 +57,9 @@ namespace FusionEngine
 		//! The surface to use for particles
 		CL_Surface *m_Image;
 		//! Particle type to use in effects
-		L_Particle *m_ParticleType;
+		//L_Particle *m_ParticleType;
 		//! Particle effect to use
-		L_ShootingEffect *m_Effect;
+		//L_ShootingEffect *m_Effect;
 	};
 
 }

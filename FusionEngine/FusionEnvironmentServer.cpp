@@ -2,7 +2,6 @@
 #include "FusionEnvironmentServer.h"
 
 /// Fusion
-#include "FusionStatePackSync.h"
 #include "FusionShipResponse.h"
 #include "FusionShipDrawable.h"
 #include "FusionShipEngine.h"
@@ -17,6 +16,8 @@ m_Options(options)
 	m_PhysicsWorld = new FusionPhysicsWorld();
 	m_NetworkManager = new FusionNetworkServer(port, options);
 	m_Scene = new FusionScene();
+
+	m_FrameTime = (int)(1000/options->mMaxFPS);
 }
 
 ServerEnvironment::~ServerEnvironment()
@@ -72,7 +73,7 @@ void ServerEnvironment::CreateShip(const ShipState &state)
 	FusionNode *node = m_Scene->CreateNode();
 
 	// Get the resource for the ship
-	ShipResource *res = m_ShipResources[m_PlayerResourceIds[state.PID]];
+	ShipResource *res = ResourceLoader::getSingletonPtr()->GetLoadedShips()[m_ShipResources[state.PID]];
 
 	// Create children
 	//  Engines
@@ -84,12 +85,15 @@ void ServerEnvironment::CreateShip(const ShipState &state)
 	FusionNode *node_priw = node->CreateChildNode(res->Positions.PrimaryWeapon);
 	FusionNode *node_secw = node->CreateChildNode(res->Positions.SecondaryWeapon);
 
-	// Create the physical body
-	FusionPhysicsBody *pbod = new FusionPhysicsBody(m_PhysicsWorld, new FusionShipResponse);
-	m_PhysicsWorld->AddBody(pbod);
+	// Create the physical body (without collision handler, as
+	//  the ship will add itself as the collision handler on construction)
+	FusionPhysicsBody *physbod = new FusionPhysicsBody(m_PhysicsWorld);
+	m_PhysicsWorld->AddBody(physbod);
 
-	// Create a ship and add it to the list
-	m_Ships.push_back(new FusionShip(state, pbod, node));
+	// Create a ship container and map it to the given PID
+	m_Ships.insert(
+		ShipList::value_type(state.PID, new FusionShip(state, physbod, node))
+		);
 
 	m_NumPlayers += 1;
 }
@@ -172,12 +176,13 @@ bool ServerEnvironment::receive()
 			switch (type)
 			{
 			case MTID_NEWPLAYER:
-				ShipState state;
-				state.PID = getNextPID();
 				// It shouldn't matter if someone's sitting on this spawn, they'll
 				//  just get pushed out of the way / destroyed.
-				state.Position = getSpawnPos(state.PID);
+				ShipState state = getSpawnState(getNextPID());
+
 				CreateShip(state);
+
+				m_NetworkManager->SendAddPlayer(getOldPlayerIDFromAddPlayerMessage(m), state);
 				break;
 			}
 		}

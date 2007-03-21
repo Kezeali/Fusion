@@ -29,6 +29,9 @@
 
 #include "FusionCommon.h"
 
+/// Inherited
+#include "FusionPhysicsCallback.h"
+
 #include "FusionShipState.h"
 #include "FusionInputData.h"
 //#include "FusionShipDrawable.h"
@@ -54,7 +57,7 @@ namespace FusionEngine
 	 * could be jettasoned at will to home on the nearest ship, causing instant death
 	 * on impact. :)
 	 */
-	class FusionShip
+	class FusionShip : public CollisionHandler
 	{
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
@@ -150,8 +153,10 @@ namespace FusionEngine
 		//! Reverts all state data
 		void RevertToInitialState();
 
+		bool CanCollideWith(const FusionPhysicsBody *other);
+
 		//! What to do if an absolute position for a collision is given
-		void CollisionResponse(const FusionPhysicsBody *other, const Vector2 &collision_point);
+		void CollisionWith(const FusionPhysicsBody *other, const Vector2 &collision_point);
 
 
 	protected:

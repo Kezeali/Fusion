@@ -36,7 +36,7 @@
 
 /// Inherited
 #include "FusionState.h"
-#include "FusionSingleton.cpp"
+#include "FusionSingleton.h"
 
 /// Fusion
 #include "FusionScene.h"
@@ -61,12 +61,20 @@
 namespace FusionEngine
 {
 
+	//! Default milis per frame
+	const unsigned int g_DefaultFrameTime = 33;
+
 	//! The virtual environment! (pun?)
 	class GenericEnvironment : public FusionState, public Singleton<GenericEnvironment>
 	{
 	public:
 		//! Basic Constructor
-		GenericEnvironment() : m_Abort(false), m_NumPlayers(0) {}
+		GenericEnvironment()
+			: m_Abort(false),
+			m_NumPlayers(0),
+			m_FrameTime(g_DefaultFrameTime)
+		{}
+
 		//! Virtual destructor
 		virtual ~GenericEnvironment() {}
 
@@ -112,7 +120,7 @@ namespace FusionEngine
 		 * \param[in] type The explaination to give to the user
 		 * \param[in] message The explaination to give to the user
 		 */
-		void _abort(ErrorType type, const std::string &message);
+		void _abort(Error::ErrorType type, const std::string &message);
 
 	protected:
 		//! True if the environment should abort next Update.
@@ -124,6 +132,9 @@ namespace FusionEngine
 		
 		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
 		unsigned int m_NumPlayers;
+
+		//! Miliseconds per frame
+		unsigned int m_FrameTime;
 
 		//! SceneGraph
 		FusionScene *m_Scene;
@@ -137,22 +148,14 @@ namespace FusionEngine
 
 		//! List of ship resources in use.
 		/*!
-		 * Maps Package names to Resources
+		 * Maps ObjectIDs to Resource Tags
 		 */
-		ShipResourceMap m_ShipResources;
+		ShipResMap m_ShipResources;
 		//! List of weapon resources in use.
 		/*!
-		 * Maps Package names to Resources
+		 * Maps ObjectIDs to Resource Tags
 		 */
-		WeaponResourceMap m_WeaponResources;
-
-		//! Map of players linked to their chosen ship resource
-		/*!
-		 * Used when ship resources are reloaded (e.g. at a level change)
-		 * and thus m_ShipResources is out of date; this map allows the
-		 * correct Resource pointers to be mapped to the correct ObjectIDs.
-		 */
-		PlayerShipResMap m_PlayerShipResourceIds;
+		ProjectileResMap m_WeaponResources;
 
 	protected:
 		//! Send all packets
@@ -165,7 +168,7 @@ namespace FusionEngine
 		virtual bool receive() = 0;
 
 		//! Waits until the frame rate set in Options is reached
-		void limitFPS();
+		void limitFrames();
 
 		//! Builds a message from a ShipState (usually outgoing)
 		FusionMessage *BuildMessage(const ShipState &input);

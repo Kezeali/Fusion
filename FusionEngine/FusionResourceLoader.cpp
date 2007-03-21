@@ -180,13 +180,25 @@ namespace FusionEngine
 
 	LevelResource *ResourceLoader::GetLoadedLevel()
 	{
-		cl_assert(m_LevelResource);
+		cl_assert(m_LevelResource != NULL);
 		return m_LevelResource;
 	}
 
 	WeaponResourceMap ResourceLoader::GetLoadedWeapons()
 	{
 		return m_WeaponResources;
+	}
+
+	ShipResource* ResourceLoader::GetShipResource(const std::string &name) const
+	{
+		throw Error(Error::NOT_IMPLEMENTED, "Not Implemented");
+		return NULL;
+	}
+
+	WeaponResource* ResourceLoader::GetWeaponResource(const std::string &name) const
+	{
+		throw Error(Error::NOT_IMPLEMENTED, "Not Implemented");
+		return NULL;
 	}
 
 	////////////

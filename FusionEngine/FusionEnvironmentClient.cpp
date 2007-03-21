@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -28,8 +28,6 @@
 #include "FusionEnvironmentClient.h"
 
 /// Fusion
-#include "FusionStatePackSync.h"
-
 #include "FusionPhysicsCallback.h"
 #include "FusionShipDrawable.h"
 #include "FusionShipEngine.h"
@@ -43,7 +41,8 @@ using namespace FusionEngine;
 ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options)
 : m_Hostname(hostname),
 m_Port(port),
-m_Options(options)
+m_Options(options),
+m_FrameTime(g_DefaultFrameTime)
 {
 	new ResourceLoader();
 	new FusionInput(m_Options); // initialises the fusion input singleton
@@ -79,6 +78,9 @@ bool ClientEnvironment::Update(unsigned int split)
 	// Tells the game to abort the client environment (by returning false)
 	if (m_Abort)
 		return false;
+
+	// Don't do anything till we're going slow enough
+	limitFrames();
 
 	// Show menu
 	if (FusionInput::getSingleton().GetGlobalInputs().menu)

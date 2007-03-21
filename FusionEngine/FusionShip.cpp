@@ -63,8 +63,10 @@ m_InputChanged(true)
 
 	/// Body
 	m_PhysicalBody = body;
-	// Pass the physical body the collision callback
-	body->SetCollisionCallback(boost::bind(&FusionShip::CollisionResponse, this, _1, _2));
+	// Ships are their own collision handlers
+	body->SetCollisionHandler(this);
+
+	/*body->SetCollisionCallback(boost::bind(&FusionShip::CollisionResponse, this, _1, _2));*/
 	/*CreateCCB<FusionShip>(ship, &FusionShip::CollisionResponse);*/
 
 	/// Node
@@ -84,6 +86,7 @@ m_InputChanged(true)
 
 	/// Body
 	m_PhysicalBody = body;
+	body->SetCollisionHandler(this);
 
 	/// Node
 	m_Node = node;
@@ -202,8 +205,12 @@ void FusionShip::RevertToInitialState()
 	m_CurrentState = m_InitialState;
 }
 
-void FusionShip::CollisionResponse(const FusionEngine::FusionPhysicsBody *other, const Vector2 &collision_point)
+bool FusionShip::CanCollideWith(const FusionEngine::FusionPhysicsBody *other)
 {
-	//m_PhysicalBody->_setForce(Vector2::ZERO);
-	m_PhysicalBody->ApplyForce(-m_PhysicalBody->GetVelocity());
+	return true;
+}
+
+void FusionShip::CollisionWith(const FusionEngine::FusionPhysicsBody *other, const Vector2 &collision_point)
+{
+	
 }

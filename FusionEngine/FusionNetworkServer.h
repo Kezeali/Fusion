@@ -100,7 +100,9 @@ namespace FusionEngine
 		 */
 		bool SendAllowed(ObjectID player) const;
 
-		//! Updates the network
+		virtual void Receive() {}
+
+		//! [depreciated] by Receive() and Send*() (and send()) methods. Updates the network
 		void run();
 
 	protected:
@@ -109,6 +111,11 @@ namespace FusionEngine
 
 		//! Map of local player indexes, indexed by RakNet PlayerIDs
 		PlayerIDMap m_PlayerIDMap;
+
+	protected:
+		// Send implementation
+		virtual void send(char *message, PacketPriority priority, PacketReliability reliability, char channel) 
+		{}
 
 	};
 

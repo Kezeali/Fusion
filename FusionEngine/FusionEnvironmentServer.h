@@ -130,9 +130,17 @@ namespace FusionEngine
 		 * \brief
 		 * Gets the next available spawn position from the map.
 		 *
-		 * If the map has no available spawn positions, .
+		 * Depending on the map, this may be set for each player
+		 * (thus based on the given PID) or it may be random.
+		 *
+		 * \remarks
+		 * An exception will be thrown if the map has no available spawn positions.
+		 * Whether adding another player will cause the max-players for this map
+		 * to be exceeded should be checked before adding the player.
+		 * Obviously this is a non-issue for maps in which the spawn is randomly
+		 * selected.
 		 */
-		const Vector2 &getSpawnPos(ObjectID pid);
+		ShipState getSpawnState(ObjectID pid);
 
 		/*!
 		 * \brief

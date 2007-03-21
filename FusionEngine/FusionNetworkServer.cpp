@@ -20,7 +20,7 @@ FusionNetworkServer::FusionNetworkServer(const std::string &port, ServerOptions 
 : FusionNetworkGeneric(port)
 {
 	m_RakServer = RakNetworkFactory::GetRakServerInterface();
-	m_RakServer->Start(options->MaxClients, 0, options->NetDelay, atoi(port.c_str()));
+	m_RakServer->Start(options->mMaxClients, 0, options->mNetDelay, atoi(port.c_str()));
 
 	// Required for timestamps (it should be on by default anyway)
 	m_RakServer->StartOccasionalPing();
@@ -42,10 +42,11 @@ void FusionNetworkServer::run()
 	Packet *p = m_RakServer->Receive();
 	while (p)
 	{
-		bool sysPacket = handleRakPackets(p);
+		//bool sysPacket = grabEvents(p);
 
-		// If it wasn't a rakNet system packet, queue up a message
-		if (!sysPacket)
+		// grabEvents(*p) handles system-related messages
+		//  If it wasn't a rakNet system packet, queue up a message
+		if (!grabEvents(p))
 		{
 			PlayerIndex pind = (PlayerIndex)p->PlayerIndex;
 			FusionMessage *m = MessageBuilder::BuildMessage(p, m_PlayerIDMap[pind]);

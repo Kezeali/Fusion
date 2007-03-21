@@ -48,8 +48,8 @@ namespace FusionEngine
 		virtual ~FusionShipResponse();
 
 	public:
-		void CollisionResponse(void);
-		void CollisionResponse(const Vector2 &collision_point);
+		void CollisionResponse(const FusionPhysicsBody *other);
+		void CollisionResponse(const FusionPhysicsBody *other, const Vector2 &collision_point);
 	};
 
 }

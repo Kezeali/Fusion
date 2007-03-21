@@ -172,6 +172,11 @@ namespace FusionEngine
 		LevelResource* GetLoadedLevel();
 		WeaponResourceMap GetLoadedWeapons();
 
+		//! Gets one loaded ship by tag
+		ShipResource* GetShipResource(const std::string& name) const;
+		//! Gets one loaded weapon by tag
+		WeaponResource* GetWeaponResource(const std::string& name) const;
+
 	private:
 
 		//! Encapsulates resource maps of various types.

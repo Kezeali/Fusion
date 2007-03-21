@@ -117,9 +117,6 @@ namespace FusionEngine
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
 
-		//! Threadsafe, organised package storage
-		FusionNetworkMessageQueue *m_Queue;
-
 	};
 
 }
