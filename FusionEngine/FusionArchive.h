@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,11 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_Archive
@@ -35,8 +40,24 @@ namespace FusionEngine
 {
 	//! Decompression in-a-box.
 	/*!
+	 * <p>
 	 * ATM, you can't set the output path as I'm just putting everthing into 
 	 * FusionEngine#TempPath.
+	 * </p>
+	 *
+	 * <b>An example of useage:</b>
+	 * \code
+	 * 		// Open the archive
+	 *		Archive *arc = new Archive(filename);
+	 *		// Try to decompress the arc
+	 *		if (!arc->Decompress())
+	 *			return res;
+	 *
+	 *		// See if the def file extracted
+	 *		std::string def_file = arc->GetFile(filename);
+	 *		if (def_file.empty())
+	 *			return res;
+	 * \endcode
 	 */
 	class Archive
 	{

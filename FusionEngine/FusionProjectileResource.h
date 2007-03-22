@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_LevelResource
-#define Header_FusionEngine_LevelResource
+#ifndef Header_FusionEngine_ProjectileResource
+#define Header_FusionEngine_ProjectileResource
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,34 +34,24 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
-
 namespace FusionEngine
 {
-	class SpawnLocation
 	/*!
 	 * \brief
-	 * Stores information loaded from a level package.
+	 * The resource data for the projectile sections of packages
+	 *
+	 * \sa WeaponResource | ShipResource
 	 */
-	class LevelResource : public Resource
+	class ProjectileResource : public Resource
 	{
 	public:
-		//! An array of spawn locations
-		typedef std::vector<SpawnLocation> SpawnList;
-
-	public:
-		// Note that the struct names here don't matter,
-		// as these structs are only instanciated here.
 		struct
 		{
-			// Number of spawn locations
-			unsigned int Count;
-			// Whether this map supports teams (the spawns have a team defined)
-			bool TeamSupport;
-			//
-			SpawnList SpawnLocations;
+			float Damage;
+			float BlastRadius;
+			bool DamageTerrain;
 		}
-		Spawn;
+		Payload;
 
 	};
 

@@ -26,6 +26,14 @@ namespace FusionEngine
 	//! \see ShipResourceMap
 	typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
+	class PackageLoadException : public Error
+	{
+	public:
+		PackageLoadException(const std::string& message)
+			: Error(Error::ErrorType::PACKLOAD, message)
+		{}
+	};
+
 	/*!
 	 * \brief
 	 * Returned by GetPackageType().
@@ -188,6 +196,9 @@ namespace FusionEngine
 			SoundBufferMap Sounds;
 		};
 
+		SurfaceMap m_Images;
+		SoundBufferMap m_Sounds;
+
 		//! A list of ship packages which passed verification
 		StringVector m_VerifiedShips;
 		//! A list of level packages which passed verification
@@ -206,6 +217,7 @@ namespace FusionEngine
 		//! Loaded weapons
 		WeaponResourceMap m_WeaponResources;
 
+	protected:
 		//! Loads a ship
 		ShipResource* parseShipDefinition(const std::string &filename);
 		//! Loads a level
@@ -213,9 +225,20 @@ namespace FusionEngine
 		//! Loads a weapon
 		WeaponResource* parseWeaponDefinition(const std::string &filename);
 
+		//! Parses the element for engine data
+		ShipEngineElement* parseShipEngineElement(CL_DomElement *element);
+		//! Parses the element for weapon data
+		ShipWeaponElement* parseShipWeaponElement(CL_DomElement *element);
+
+		//! Creates the projectile to be used for a ships special weapon
+		ProjectileResource* buildProjectileFromEngineElement(CL_DomElement *element);
+
 		/*!
 		 * \brief
 		 * Checks a loaded document for validity as a ship definiiton.
+		 *
+		 * Reads the document to confirm that there is exactly one of each
+		 * non-optional element.
 		 */
 		bool verifyShipDocument(CL_DomDocument *document);
 		/*!
@@ -231,6 +254,7 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
+		 * [depreciated]
 		 * Reads a list of resources from a package definition.
 		 *
 		 * As all package documents use the same format for listing resources, only the one
@@ -253,6 +277,24 @@ namespace FusionEngine
 		 * If the given element has no x/y attribute, the point (0, 0) is returned.
 		 */
 		CL_Point getPoint(const CL_DomElement *element);
+
+		/*!
+		 * \brief
+		 * Returns a surface of the image element given.
+		 *
+		 * If the given image has already been loaded by the resource loader,
+		 * the same pointer will be returned.
+		 */
+		CL_Surface* getImage(const CL_DomElement *element);
+
+		/*!
+		 * \brief
+		 * Returns a soundbuffer for the sound element given.
+		 *
+		 * If the given sound has already been loaded by the resource loader,
+		 * the same pointer will be returned.
+		 */
+		CL_SoundBuffer* getSound(const CL_DomElement *element);
 
 		/*!
 		 * \brief

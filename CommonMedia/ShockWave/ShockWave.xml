@@ -5,7 +5,9 @@
 	
 	<health>100</health>
   
-	<body>ShockWave/Body.png</body>
+	<body>
+		<image>ShockWave/Body.png</image>
+	</body>
 	<leftEngine>
 		<x>3</x>
 		<y>24</y>

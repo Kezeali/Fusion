@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_LevelResource
-#define Header_FusionEngine_LevelResource
+#ifndef Header_FusionEngine_Resource
+#define Header_FusionEngine_Resource
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,34 +34,24 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
-
 namespace FusionEngine
 {
-	class SpawnLocation
 	/*!
 	 * \brief
-	 * Stores information loaded from a level package.
+	 * Base for resource types
 	 */
-	class LevelResource : public Resource
+	class Resource
 	{
-	public:
-		//! An array of spawn locations
-		typedef std::vector<SpawnLocation> SpawnList;
-
 	public:
 		// Note that the struct names here don't matter,
 		// as these structs are only instanciated here.
 		struct
 		{
-			// Number of spawn locations
-			unsigned int Count;
-			// Whether this map supports teams (the spawns have a team defined)
-			bool TeamSupport;
-			//
-			SpawnList SpawnLocations;
+			std::string Name;
+			std::string Tag;
+			std::string Description;
 		}
-		Spawn;
+		General;
 
 	};
 

@@ -6,8 +6,6 @@
 
 #include "..\FusionEngine\PhysFS.h"
 
-//using namespace FusionEngine;
-
 class PhysFSTest : public CL_ClanApplication
 {
 	virtual int main(int argc, char **argv)
@@ -39,7 +37,9 @@ class PhysFSTest : public CL_ClanApplication
 
 
 			logger->SetUseDating(true);
-			logger->BeginLog("console", true);
+			logger->BeginLog("another log", false);
+			logger->Add("hello", "another log");
+			logger->EndLog("another log");
 			// List filetypes
 			logger->Add("PhysFS File Types", "console");
 

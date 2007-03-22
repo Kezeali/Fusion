@@ -29,32 +29,23 @@
 
 #include "FusionCommon.h"
 
+#include "FusionResource.h"
+#include "FusionProjectileResource.h"
+
 namespace FusionEngine
 {
 	/*!
 	 * \brief
 	 * Stores information loaded from a weapon package.
 	 */
-	class WeaponResource
+	class WeaponResource : public Resource
 	{
 	public:
 		// Note that struct typenames aren't used,
 		// as these structs are only instanciated here.
 		struct
 		{
-			//! Unique name
-			std::string Name;
-			//! Short description
-			std::string Tag;
-			//! Full Description
-			std::string Description;
-		}
-		//! Package properties
-		General;
-
-		struct
-		{
-			Script *CollisionScript;
+			Script CollisionScript;
 		}
 		//! Various scripts
 		Scripts;

@@ -51,10 +51,10 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * The client gameplay environment.
+	 * The server gameplay environment.
 	 *
-	 * This is where all the gameplay stuff goes on at the client-side.
-	 * Moving / drawing ships, syncing with server, prediction, etc. is all controlled
+	 * This is where all the gameplay stuff goes on at the server-side.
+	 * Moving ships, syncing clients, running AI, etc. are all controlled
 	 * from here. That isn't to say just this one class does all thoes things, this
 	 * class just controlls the activities of other, more specific classes which do.
 	 *

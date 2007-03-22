@@ -29,6 +29,8 @@
 
 #include "FusionCommon.h"
 
+#include "FusionResource.h"
+
 namespace FusionEngine
 {
 	/*!
@@ -46,7 +48,7 @@ namespace FusionEngine
 	 * nodes and give FusionDrawableObject-s something to draw. On the server they are
 	 * used to initilise FusionServerShip-s.
 	 */
-	class ShipResource
+	class ShipResource : public Resource
 	{
 	public:
 		//! Desturctor. Deletes heap resources
@@ -62,14 +64,6 @@ namespace FusionEngine
 	public:
 		// Note that the struct names here don't matter,
 		// as these structs are only instanciated here.
-		struct
-		{
-			std::string Name;
-			std::string Tag;
-			std::string Description;
-		}
-		General;
-
 		struct
 		{
 			CL_Point LeftEngine;
@@ -98,7 +92,7 @@ namespace FusionEngine
 		   *
 		   * \remarks
 		   * FusionPhysicsBody has RotationalVelocity [note 'al'], that being the
-		   * <i>current</i> velocity of rotation. Yeah, just don't question my naming;
+		   * <i>current</i> velocity of rotation. Yeah, just don't question the naming;
 			 * It seemed logical at the time damnit!
 		   */
 			float RotationVelocity;

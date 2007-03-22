@@ -100,7 +100,7 @@ namespace FusionEngine
 
 	Log* Logger::BeginLog(const std::string& tag, bool keepopen)
 	{
-		Log* log;
+		Log* log = NULL;
 
 		try
 		{

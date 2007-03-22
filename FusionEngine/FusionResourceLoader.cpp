@@ -90,7 +90,7 @@ namespace FusionEngine
 		ResetVerified();
 	}
 
-	// Returns false if any ships aren't found.
+	// Returns false if a ship isn't found.
 	bool ResourceLoader::LoadShips(StringVector names)
 	{
 		ShipResourceMap ships;
@@ -203,26 +203,10 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
-	ShipResource* ResourceLoader::parseShipDefinition(const std::string &filename)
+	ShipResource* ResourceLoader::parseShipDefinition(CL_DomDocument *doc)
 	{
 		// The return object.
 		ShipResource *res = NULL;
-
-		// Open the archive
-		//CL_Zip_Archive arc(filename);
-
-		Archive *arc = new Archive(filename);
-		// Try to decompress the arc
-		if (!arc->Decompress())
-			return res;
-
-		// Initialise the xml document obj
-		CL_DomDocument doc;
-
-		// See if the def file extracted
-		std::string def_file = arc->GetFile(filename);
-		if (def_file.empty())
-			return res;
 
 		// Load the xml definition file from the package
 		doc.load(new CL_InputSource_File(def_file), true, true);
@@ -242,17 +226,20 @@ namespace FusionEngine
 		std::string desc(root.get_attribute("desc", "No description available"));
 
 		// Walk through each node to gather remaining information
-		CL_DomNode cNode = root.get_first_child();
-		CL_DomElement cElement;
+		CL_DomNode currentNode = root.get_first_child();
+		CL_DomElement currentElement;
 
+		// while there is another node (NULL_NODE is only returned
+		//  when we reach the eof)
 		while (cNode.get_node_type() != CL_DomNode::NULL_NODE)
 		{
-			cElement = cNode.to_element();
-			if (cElement.get_node_type() == CL_DomNode::NULL_NODE)
-			{
-				std::string image(cElement.get_attribute("image"));
+			currentElement = cNode.to_element();
 
-				std::string tag_name = cElement.get_tag_name();
+			// if the node was successfully converted into an element ...
+			if (currentElement.get_node_type() == CL_DomNode::NULL_NODE)
+			{
+				std::string tag_name = currentElement.get_tag_name();
+
 				if (tag_name == "body")
 				{
 					res->Images.Body = resourceList.Images[image];
@@ -260,36 +247,30 @@ namespace FusionEngine
 
 				if (tag_name == "leftEngine")
 				{
-					CL_Point point = getPoint(&cElement);
-
-					res->Positions.LeftEngine = point;
-					res->Images.LeftEngine = resourceList.Images[image];
+					res->Positions.LeftEngine = getPoint(&currentElement);
+					res->Images.LeftEngine    = getImage(&currentElement);
 				}
 
 				if (tag_name == "rightEngine")
 				{
-					CL_Point point = getPoint(&cElement);
 
-					res->Positions.RightEngine = point;
-					res->Images.RightEngine = resourceList.Images[image];
+					res->Positions.RightEngine = getPoint(&currentElement);
+					res->Images.RightEngine    = getImage(&currentElement);
 				}
 
 				if (tag_name == "primaryWeapon")
 				{
-					CL_Point point = getPoint(&cElement);
-
-					res->Positions.PrimaryWeapon = point;
-					res->Images.PrimaryWeapon = resourceList.Images[image];
+					res->Positions.PrimaryWeapon = getPoint(&currentElement);
+					res->Images.PrimaryWeapon    = getImage(&currentElement);
 				}
 
 				if (tag_name == "secondaryWeapon")
 				{
-					CL_Point point = getPoint(&cElement);
-
-					res->Positions.SecondaryWeapon = point;
-					res->Images.SecondaryWeapon = resourceList.Images[image];
+					res->Positions.SecondaryWeapon = getPoint(&currentElement);
+					res->Images.SecondaryWeapon    = getImage(&currentElement);
 				}
-			}
+			} // End if (currentElement.get_node_type() == CL_DomNode::NULL_NODE)
+
 			// Get the next node
 			cNode = cNode.get_next_sibling();
 		}
@@ -301,98 +282,138 @@ namespace FusionEngine
 	{
 		CL_DomElement root = document->get_document_element();
 
-		// Make sure the xml is a ship definition!
+		// Make sure the xml is a ship definition. (even though this
+		//  should have been checked for this method to be called.)
 		if (root.get_tag_name() != "FusionShip")
 			return false;
 
-		CL_DomNode cNode = root.get_first_child();
-		CL_DomElement cElement;
+		// Check that there is a tag
+		if (!root.has_attribute("tag"))
+			return false;
 
+
+		int countBody =0, countLeft=0, countRight=0,
+			countPrimary =0, countSecondary =0,
+			countPhysics =0, countHealth =0;
+
+		// Get the first node
+		CL_DomNode cNode = root.get_first_child();
 		while (cNode.get_node_type() != CL_DomNode::NULL_NODE)
 		{
 			if (cNode.is_element())
 			{
 				// Convert the node to an element
-				cElement = cNode.to_element();
+				CL_DomElement cElement = cNode.to_element();
 
 				std::string elem_name = cElement.get_node_name();
 
-				///////////////////
-				// Resource Elements
-				if (elem_name == "resources")
-				{
-					// Check if there are any resources listed here
-					if (cElement.has_child_nodes())
-					{
-						CL_DomNodeList cResList = cElement.get_child_nodes();
+				////////////////////////////////
+				// Name and description elements
+				if (elem_name == "name" && ++countName > 1)
+						return false;
 
-						for (int i = 0; i < cResList.get_length(); i++)
-						{
-							CL_DomNode item = cResList.item(i);
+				else if (elem_name == "description" && ++countDescription > 1)
+						return false;
 
-							// Escape if the current node isn't an element
-							//  (very unlikely... but we wan't to be failsafe :P)
-							if (item.is_element() == false)
-								continue;
-							CL_DomElement cRes = item.to_element();
-
-							std::string res_type = cRes.get_node_name();
-
-							////////////////////////////
-							// Image and Sound Resources
-							if (res_type == "image" || res_type == "sound")
-							{
-								if (!(cRes.has_attribute("name") & cRes.has_attribute("file")))
-									return false;
-							}
-						}
-					}
-				}
+				// Health
+				else if (elem_name == "health" && ++countHealth > 1)
+						return false;
+	
 
 				////////////////////////
 				// Body graphic settings
-				if (elem_name == "body")
+				else if (elem_name == "body")
 				{
-					if (!cElement.has_attribute("image"))
+					if (++countBody > 1)
+						return false;
+
+					if (cElement.get_elements_by_tag_name("image").get_length() != 1)
 						return false;
 				}
 
 				/////////////////////////
 				// Other graphic settings
-				if (elem_name == "leftEngine" || elem_name == "rightEngine"
+				else if (elem_name == "leftEngine" || elem_name == "rightEngine"
 					|| elem_name == "primaryWeapon" || elem_name == "secondaryWeapon")
 				{
-					if (!cElement.has_attribute("image"))
+
+					int countElemImage =0, countElemX =0, countElemY =0;
+
+					// Count each subnode type
+					CL_DomNode subNode = root.get_first_child();
+					while (subNode.get_node_type() != CL_DomNode::NULL_NODE)
+					{
+						if (subNode.is_element())
+						{
+							elem_name = subNode.get_node_name();
+
+							if (elem_name == "image" && ++countElemImage > 1)
+								return false;
+
+							if (elem_name == "x" && ++countElemX > 1)
+								return false;
+
+							if (elem_name == "y" && ++countElemY > 1)
+								return false;
+
+						} // End if (subNode.is_element())
+
+						subNode = subNode.get_next_sibling();
+					} // End while (subNode.get_node_type() != CL_DomNode::NULL_NODE)
+
+					if (countElemImage == 0 && countElemX == 0 && countElemY == 0)
 						return false;
-					if (!cElement.has_attribute("x"))
-						return false;
-					if (!cElement.has_attribute("y"))
-						return false;
-				}
+
+				} // End if (elem_name == "leftEngine || ...)
 
 				/////////////////////
 				// Physical settings
-				if (elem_name == "physics")
+				else if (elem_name == "physics")
 				{
-					if (!cElement.has_attribute("mass"))
-						return false;
-					if (!cElement.has_attribute("engineforce"))
-						return false;
-					if (!cElement.has_attribute("rotationvelocity"))
-						return false;
-				}
 
-				////////////////////
-				// Gameplay settings
-				if (elem_name == "gameplay")
-				{
-					if (!cElement.has_attribute("health"))
+					int countElemMass =0, countElemForce =0, countElemRotation =0;
+
+					// Count each subnode type
+					CL_DomNode subNode = root.get_first_child();
+					while (subNode.get_node_type() != CL_DomNode::NULL_NODE)
+					{
+						if (subNode.is_element())
+						{
+							elem_name = subNode.get_node_name();
+
+							if (elem_name == "mass" && ++countElemMass > 1)
+								return false;
+
+							if (elem_name == "engineforce" && ++countElemForce > 1)
+								return false;
+
+							if (elem_name == "rotationvelocity" && ++countElemRotation > 1)
+								return false;
+
+						} // End if (subNode.is_element())
+
+						subNode = subNode.get_next_sibling();
+					} // End while (subNode.get_node_type() != CL_DomNode::NULL_NODE)
+
+					if (countElemMass == 0 && countElemForce == 0 && countElemRotation == 0)
 						return false;
-				}
-			} // cNode.is_element
-			// Get the next node
+
+				} // End if (elem_name == "physics")
+
+			} // End if (cNode.is_element())
+
+			// Get the next node itteration
 			cNode = cNode.get_next_sibling();
-		}
+		} // End while (cNode.get_node_type() != CL_DomNode::NULL_NODE)
+
+
+		// We've finished reading the file, so these should be exactly 1, we
+		//  don't need to check < 2 because that is checked during the loop
+		if (countBody == 0 && 
+			countLeft == 0 && countRight == 0 && 
+			countPrimary == 0 && countSecondary == 0 &&
+			countPhysics == 0 && countHealth == 0)
+			return false;
 
 		// Finally, if all tests passed, return true
 		return true;
@@ -428,8 +449,9 @@ namespace FusionEngine
 				std::string name(image.get_attribute("name"));
 				std::string file(image.get_attribute("file"));
 
-				// Umm, what exactly was this line supposed to do? Why would sf_list contain
-				//  "name" anyway?! I must have been really out-of-it when I worte this i guess :P
+				// [removed] Umm, what exactly was this line supposed to do? Why would
+				//  sf_list contain \"name\" anyway?! Must have been really out-of-it when
+				//  I coded this I guess :P
 				//if (sf_list.find("name") != sf_list.end())
 				//return PackageResources();
 

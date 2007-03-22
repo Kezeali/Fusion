@@ -411,7 +411,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionProjectileResource.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionProjectileState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionResource.h"
 				>
 			</File>
 			<File

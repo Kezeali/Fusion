@@ -32,11 +32,15 @@
 			<sound>target_aquired.wav</sound>
 		</effect>
 		
+		<!-- An Effect will be created based on this data.
+			In other words, this section could be replaced with an effect section like the one above
+			and called from the script on detonation -->
 		<detonation>
 			<image>Common/flash.png</image>
 			<duration>4</duration>
 		</detonation>
 		
+		<!-- As above, an Effect will be created based on this data -->
 		<contrail>
 			<duration>10</duration>
 			<colour>

@@ -34,6 +34,7 @@
 #endif
 
 #include "Common.h"
+
 #include "FusionVector2.h"
 #include "FusionError.h"
 
@@ -51,7 +52,10 @@ namespace FusionEngine
 	static const double g_DegToRad = M_PI/180.0f;
 	static const double g_RadToDeg = 180.0f/M_PI;
 
+	////////////////////////
 	// --General functions--
+	////////////////////////
+
 	//! Converts deg to rad
 	static inline float fe_degtorad(float deg) { return deg * (float)g_DegToRad; }
 	//! Converts deg to rad (double)
@@ -127,7 +131,9 @@ namespace FusionEngine
 	}
 
 
+	///////////////////////////
 	// --Forward declarations--
+	///////////////////////////
 	class Archive;
 	class GenericEnviornment;
 	class ServerEnvironment;
@@ -154,7 +160,10 @@ namespace FusionEngine
 	class Console;
 
 
+	///////////////
 	// --Typedefs--
+	///////////////
+
 	//! Unique identifier type for game objects
 	typedef unsigned short ObjectID;
 	//typedef std::string ResourceID;

@@ -123,7 +123,7 @@ namespace FusionEngine
 		// Try to open the file if it should be closed
 		if (!m_KeepOpen)
 		{
-			open();
+			//open();
 		}
 
 		// ... otherwise the file should be open already
@@ -138,7 +138,6 @@ namespace FusionEngine
 	void Log::close()
 	{
 		m_Logfile.flush();
-		m_Logfile.close();
 	}
 
 	void Log::reClose()
