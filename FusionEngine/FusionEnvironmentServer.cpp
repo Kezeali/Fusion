@@ -10,7 +10,8 @@
 using namespace FusionEngine;
 
 ServerEnvironment::ServerEnvironment(const std::string &port, ServerOptions *options)
-: m_Port(port),
+: FusionState(true),
+m_Port(port),
 m_Options(options)
 {
 	m_PhysicsWorld = new FusionPhysicsWorld();

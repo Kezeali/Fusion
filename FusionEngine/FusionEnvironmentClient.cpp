@@ -39,7 +39,8 @@
 using namespace FusionEngine;
 
 ClientEnvironment::ClientEnvironment(const std::string &hostname, const std::string &port, ClientOptions *options)
-: m_Hostname(hostname),
+: FusionState(true), 
+m_Hostname(hostname),
 m_Port(port),
 m_Options(options),
 m_FrameTime(g_DefaultFrameTime)

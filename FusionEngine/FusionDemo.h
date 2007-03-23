@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_Fusion_Info
-#define Header_Fusion_Info
+#ifndef Header_Fusion_Demo
+#define Header_Fusion_Demo
 
 #if _MSC_VER > 1000
 #pragma once
@@ -30,39 +30,19 @@
 #include "FusionCommon.h"
 
 /// Fusion
-#include "FusionClientOptions.h"
-#include "FusionServerOptions.h"
-#include "FusionGUI_MainMenu.h"
-#include "FusionGUI_Options.h"
-
 #include "FusionGame.h"
 
-/// CEGUI
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/openglrenderer.h>
 
 namespace Fusion
 {
 
 	/*!
 	 * \brief
-	 * A simplified form of the Fusion front-end.
-	 *
-	 * This is the gui menu system that will be used untill the gameplay system
-	 * (FusionEngine) is completed. When the FusionEngine is completed, it will
-	 * (read - might) be a shared library (for ease of updating), so a seperate
-	 * frontend will need to be created.
+	 * Entry-point for the incomplete project.
 	 */
 	class FusionDemo : public CL_ClanApplication
 	{
-	public:
-		FusionEngine::ClientOptions *m_ClientOpts;
-		FusionEngine::ServerOptions *m_ServerOpts;
-
 	private:
-		FusionGUI_MainMenu *m_GuiMenu;
-		FusionGUI_Options *m_GuiOptions;
-
 		bool m_Quit;
 
 	public:
@@ -70,10 +50,6 @@ namespace Fusion
 
 		//! Quits the demo by setting m_Quit to true.
 		void Quit() { m_Quit = true; }
-
-	private:
-		void setupGui();
-		void on_guiPaint();
 	};
 
 }

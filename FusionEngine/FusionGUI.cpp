@@ -5,7 +5,8 @@ namespace FusionEngine
 {
 
 	GUI::GUI()
-		: m_CurrentScheme(DefaultScheme),
+		: FusionState(false), // GUI is non-blockin by default
+		m_CurrentScheme(DefaultScheme),
 		m_CurrentLayout(DefaultLayout)
 	{
 		// Create a new system

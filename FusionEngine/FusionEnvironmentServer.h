@@ -58,6 +58,9 @@ namespace FusionEngine
 	 * from here. That isn't to say just this one class does all thoes things, this
 	 * class just controlls the activities of other, more specific classes which do.
 	 *
+	 * \remarks
+	 * State is non-blocking
+	 *
 	 * \see
 	 * FusionScene | FusionInput | FusionNetworkingHandler.
 	 */

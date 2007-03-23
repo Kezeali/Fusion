@@ -48,7 +48,20 @@ namespace FusionEngine
 		 * as this ensures other states can finish their processes before the game
 		 * ends. Not that I adhear to that rule :P
 		 */
-		enum StateMessageType { ADDSTATE, REMOVESTATE, QUEUESTATE, UNQUEUESTATE, QUIT };
+		enum StateMessageType {
+			//! Add a new state
+			ADDSTATE,
+			//! Remove a state
+			REMOVESTATE,
+			//! Add a state to the queue
+			QUEUESTATE,
+			//! Remove a state from the queue
+			UNQUEUESTATE,
+			//! Add the next state in the queue to the active states
+			RUNNEXTSTATE,
+			//! Quit the state manager
+			QUIT
+		};
 
 	public:
 		//! Basic constructor

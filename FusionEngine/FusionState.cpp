@@ -47,4 +47,14 @@ namespace FusionEngine
 		return m_LastError;
 	}
 
+	void FusionState::SetBlocking(bool blocking) const
+	{
+		m_Blocking = blocking;
+	}
+
+	bool FusionState::IsBlocking() const
+	{
+		return m_Blocking;
+	}
+
 }

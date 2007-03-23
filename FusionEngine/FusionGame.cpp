@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -46,25 +46,82 @@
 namespace FusionEngine
 {
 
-	void FusionGame::RunClient(const std::string &hostname, const std::string &port, ClientOptions *options)
+	void FusionGame::Run(const CmdOptions* opts)
 	{
 		bool keepGoing = false;
 
-		new Console();
-		Logger *log = new Logger();
-		if (options->mConsoleLogging)
-			log->ActivateConsoleLogging();
-
 		try
 		{
-			// Try to setup the gameplay env
-			StateManager *state_man = new StateManager();
-			SharedState load(new ClientLoadingState(hostname, port, options));
-			SharedState env(new ClientEnvironment(hostname, port, options));
+			new Console();
+			Logger *logger = new Logger();
 
-			// Start the state manager
-			keepGoing = state_man->SetExclusive(load);
-			state_man->AddStateToQueue(env);
+			// Initialise options
+			m_ClientOpts = new ClientOptions();
+			m_ClientOpts->LoadFromFile("clientcfg.xml");
+			m_ServerOpts = new ServerOptions();
+			m_ServerOpts->LoadFromFile("servercfg.xml");
+
+			if (m_ClientOpts->mConsoleLogging)
+				logger->ActivateConsoleLogging();
+
+			StateManager *state_man = new StateManager();
+
+			// Host option is set
+			if (opts->OptionExists("host"))
+			{
+				std::string hostname = opts->GetOption("host");
+				std::string port = opts->GetOption("port");
+
+				if (port.empty())
+					port = g_DefaultPort;
+
+
+				// Set up the initial states for instant-action
+				SharedState gui(new GUI(hostname, port, m_ClientOpts));
+				SharedState load(new ClientLoadingState(hostname, port, m_ClientOpts));
+				SharedState env(new ClientEnvironment(hostname, port, m_ClientOpts));
+
+				// Init the state manager
+				keepGoing = state_man->SetExclusive(load);
+				state_man->AddState(gui);
+
+				state_man->AddStateToQueue(env);
+			}
+
+			// dedicated_server option is set
+			else if (opts->OptionExists("dedicated_server"))
+			{
+				std::string port = opts->GetOption("port");
+
+				if (port.empty())
+					port = g_DefaultPort;
+
+
+				// Set up the initial states for dedicated-server
+				SharedState gui(new GUI(hostname, port, m_ClientOpts));
+				SharedState load(new ServerLoadingState(port, m_ServerOpts));
+				SharedState env(new ServerEnvironment(port, m_ServerOpts));
+
+				// Init the state manager
+				keepGoing = state_man->SetExclusive(load);
+				state_man->AddState(gui);
+
+				state_man->AddStateToQueue(env);
+			}
+
+			// Normal startup
+			else
+			{
+				// Set up the initial for the menu
+				SharedState gui(new GUI(hostname, port, m_ClientOpts));
+				SharedState menu(new MainMenu(hostname, port, m_ClientOpts));
+				
+
+				// Init the state manager
+				keepGoing = state_man->SetExclusive(gui);
+				state_man->AddState(menu);
+			}
+
 
 			unsigned int lastTime = CL_System::get_time();
 			unsigned int split = 0;
@@ -74,7 +131,7 @@ namespace FusionEngine
 				split = CL_System::get_time() - lastTime;
 				lastTime = CL_System::get_time();
 
-				// Stop if any states encounter an error
+				// Stop if any states don't update
 				keepGoing = state_man->Update(split);
 
 				// Stop if any states think we should
@@ -84,77 +141,88 @@ namespace FusionEngine
 			}
 
 			state_man->Clear();
+
+			delete state_man;
 		}
 		catch (Error e)
 		{
-			std::cout << e.GetError() << std::endl;
+			Logger* logger = Logger::getSingletonPtr();
+			Console* console = Console::getSingletonPtr();
 
-			logger->Add(e, g_LogExceptionClient, LOG_CRITICAL);
-
-			delete Console::getSingletonPtr();
-			delete logger;
-
-			throw "Fusion aborted with the error: " + e.GetError();
-		}
-
-		delete state_man;
-
-	}
-
-	void FusionGame::RunServer(const std::string &port, ServerOptions *options)
-	{
-		bool keepGoing = false;
-
-		Console *console = new Console();
-		Logger *logger = new Logger();
-		if (options->mConsoleLogging)
-			log->ActivateConsoleLogging();
-
-		try
-		{
-
-			// Try to setup the server env
-			StateManager *state_man = new StateManager();
-			SharedState load(new ServerLoadingState(port, options));
-			SharedState env(new ServerEnvironment(port, options));
-
-			// Start the state manager
-			keepGoing = state_man->SetExclusive(load);
-			state_man->AddStateToQueue(env);
-
-			unsigned int lastTime = CL_System::get_time();
-			unsigned int split = 0;
-
-			while (keepGoing)
-			{
-				split = CL_System::get_time() - lastTime;
-				lastTime = CL_System::get_time();
-
-				// Stop if any states encounter an error
-				keepGoing = state_man->Update(split);
-
-				// Stop if any states think we should
-				keepGoing = state_man->KeepGoing();
-
-				// I guess this doesn't do anything for the server :P
-				//  Maybe it could output to the console...
-				state_man->Draw();
-			}
-
-			state_man->Clear();
-		}
-		catch (Error e)
-		{
-			console->Add(e.GetError());
-			logger->Add(e, g_LogExceptionServer, LOG_CRITICAL);
+			console->Add("Fusion aborted with the error: " + e.GetError());
+			logger->Add(e, g_LogException, LOG_CRITICAL);
 
 			delete console;
 			delete logger;
+		}
+		catch (CL_Error err)
+		{
+			Logger* logger = Logger::getSingletonPtr();
+			Console* console = Console::getSingletonPtr();
 
-			throw CL_Error( "Fusion aborted with the error: " + e.GetError() );
+			console->Add("ClanLib aborted with the error: " + e.GetError());
+			logger->Add(e, g_LogException, LOG_CRITICAL);
+
+			delete console;
+			delete logger;
 		}
 
 	}
+
+	//void FusionGame::RunServer(const std::string &port, ServerOptions *options)
+	//{
+	//	bool keepGoing = false;
+
+	//	Console *console = new Console();
+	//	Logger *logger = new Logger();
+	//	if (options->mConsoleLogging)
+	//		log->ActivateConsoleLogging();
+
+	//	try
+	//	{
+
+	//		// Try to setup the server env
+	//		StateManager *state_man = new StateManager();
+	//		SharedState load(new ServerLoadingState(port, options));
+	//		SharedState env(new ServerEnvironment(port, options));
+
+	//		// Start the state manager
+	//		keepGoing = state_man->SetExclusive(load);
+	//		state_man->AddStateToQueue(env);
+
+	//		unsigned int lastTime = CL_System::get_time();
+	//		unsigned int split = 0;
+
+	//		while (keepGoing)
+	//		{
+	//			split = CL_System::get_time() - lastTime;
+	//			lastTime = CL_System::get_time();
+
+	//			// Stop if any states encounter an error
+	//			keepGoing = state_man->Update(split);
+
+	//			// Stop if any states think we should
+	//			keepGoing = state_man->KeepGoing();
+
+	//			// I guess this doesn't do anything for the server :P
+	//			//  Maybe it could output to the console...
+	//			state_man->Draw();
+	//		}
+
+	//		state_man->Clear();
+	//	}
+	//	catch (Error e)
+	//	{
+	//		console->Add(e.GetError());
+	//		logger->Add(e, g_LogExceptionServer, LOG_CRITICAL);
+
+	//		delete console;
+	//		delete logger;
+
+	//		throw CL_Error( "Fusion aborted with the error: " + e.GetError() );
+	//	}
+
+	//}
 
 }
 

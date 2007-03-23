@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scripting", "Scripting\Scri
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SingletonInheritanceTest", "SingletonInheritanceTest\SingletonInheritanceTest.vcproj", "{7F4BD9DF-A116-4CF2-AE0D-967B0FB96F8C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VectorTest", "VectorTest\VectorTest.vcproj", "{CF413B59-2857-4482-8854-47296B296574}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,10 @@ Global
 		{7F4BD9DF-A116-4CF2-AE0D-967B0FB96F8C}.Debug|Win32.Build.0 = Debug|Win32
 		{7F4BD9DF-A116-4CF2-AE0D-967B0FB96F8C}.Release|Win32.ActiveCfg = Release|Win32
 		{7F4BD9DF-A116-4CF2-AE0D-967B0FB96F8C}.Release|Win32.Build.0 = Release|Win32
+		{CF413B59-2857-4482-8854-47296B296574}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CF413B59-2857-4482-8854-47296B296574}.Debug|Win32.Build.0 = Debug|Win32
+		{CF413B59-2857-4482-8854-47296B296574}.Release|Win32.ActiveCfg = Release|Win32
+		{CF413B59-2857-4482-8854-47296B296574}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

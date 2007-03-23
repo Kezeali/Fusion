@@ -15,7 +15,13 @@
 //  really want to :P Anyway, Source does it like that (doesn't show the progr-
 //  ess of data loading, just says "Loading Resources"), so I feel assured.
 
+	// In constructor
+	FusionState(true)... // loading state is always blocking
+
 	// Setup and run the package syncroniser
 	PackSyncState *ps = new PackSyncState();
 	ps->MakeClient(m_Hostname, m_Port);
 	_pushMessage(new StateMessage(StateMessage::ADDSTATE, ps));
+
+	// ... And when finished:
+	_pushMessage(new StateMessage(StateMessage::REMOVESTATE, this));

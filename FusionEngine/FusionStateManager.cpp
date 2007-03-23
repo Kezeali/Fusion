@@ -40,7 +40,7 @@ namespace FusionEngine
 	bool StateManager::SetExclusive(FusionState *state)
 	{
 		// Try to initialise the new state
-		if (state->Initialise() == false)
+		if (!state->Initialise())
 			return false;
 
 		// Remove all the current states
@@ -70,15 +70,9 @@ namespace FusionEngine
 
 	bool StateManager::AddState(FusionState *state)
 	{
-		// Try to initialise the state
-		if (state->Initialise() == false)
-			return false;
-
-		// Make a shared ptr out of the given pointer and store it
-		SharedState state_spt(state);
-		m_States.push_back(state_spt);
-
-		return true;
+		// Make a shared ptr out of the given pointer and add it
+		//SharedState state_spt(state);
+		return AddState(SharedState(state) );
 	}
 
 	bool StateManager::AddState(SharedState state)
@@ -96,8 +90,8 @@ namespace FusionEngine
 
 	void StateManager::AddStateToQueue(FusionState *state)
 	{
-		SharedState spt_state(state);
-		m_Queued.push_back(spt_state);
+		//SharedState spt_state(state);
+		m_Queued.push_back( SharedState(state) );
 	}
 
 	void StateManager::AddStateToQueue(SharedState state)
@@ -108,6 +102,8 @@ namespace FusionEngine
 
 	void StateManager::RemoveState(FusionState *state)
 	{
+		bool blocking = false;
+
 		StateList::iterator it;
 		for (it = m_States.begin(); it != m_States.end(); ++it)
 		{
@@ -115,33 +111,37 @@ namespace FusionEngine
 			{
 				(*it)->CleanUp();
 				m_States.erase(it);
-
-				break;
 			}
+			else
+				blocking |= (*it)->IsBlocking();
 		}
 
-		// Quit cleanly if the state removed was the last
-		if (m_States.empty())
-			m_KeepGoing = false;
+		// If none of the states left over are blocking, we can run the next queued state
+		if (!blocking)
+			RunNextQueueState();
 	}
 
 	void StateManager::RemoveState(SharedState state)
 	{
+		bool blocking = false;
+
 		StateList::iterator it;
 		for (it = m_States.begin(); it != m_States.end(); ++it)
 		{
-			if ((*it) == state)
+			// Compare pointers (note use of CL_SharedPtr::get())
+			if ((*it).get() == state.get())
 			{
 				(*it)->CleanUp();
 				m_States.erase(it);
-
-				break;
 			}
+			else
+				// Check if any of the states NOT removed ARE blocking
+				blocking |= (*it)->IsBlocking();
 		}
 
-		// Quit cleanly if the state removed was the last
-		if (m_States.empty())
-			m_KeepGoing = false;
+		// If none of the states left over are blocking, we can run the next queued state
+		if (!blocking)
+			RunNextQueueState();
 	}
 
 
@@ -163,7 +163,7 @@ namespace FusionEngine
 		StateQueue::iterator it;
 		for (it = m_Queued.begin(); it != m_Queued.end(); ++it)
 		{
-			if ((*it) == state)
+			if ((*it).get() == state.get())
 			{
 				m_Queued.erase(it);
 				break;
@@ -235,12 +235,20 @@ namespace FusionEngine
 				case StateMessage::UNQUEUESTATE:
 					RemoveStateFromQueue(m->GetData());
 					break;
+				case StateMessage::RUNNEXTSTATE:
+					RunNextQueueState();
+					break;
 				case StateMessage::QUIT:
 					Clear();
 					m_KeepGoing = false;
 					break;
 				}
-			}
+
+				// Clean up
+				delete m;
+				// Get the next message
+				m = (*it)->PopMessage();
+			} // while (m != 0)
 
 			// Try to update the state
 			if ((*it)->Update(split) == false)

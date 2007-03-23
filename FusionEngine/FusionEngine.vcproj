@@ -215,6 +215,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionCmdOptions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionCommon.h"
 				>
 			</File>
@@ -558,6 +562,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionClientOptions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionCmdOptions.cpp"
 				>
 			</File>
 			<File

@@ -39,15 +39,21 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * The abstract base for FusionStates.
-	 *
+	 * 
 	 * Each state controls a specific task while the game runs. For example there is a
 	 * LOADING state, which controls connecting to the server, downloading files, and
 	 * finally loading the the requried data.
 	 *
 	 * \remarks
+	 * <p>
 	 * Each state should require no knowlage of its StateManager, so they are never
 	 * provided with access to it. This is because allowing states to modify the state
 	 * manager could cause serious problems when running multiple states concurrently.
+	 * </p>
+	 *
+	 * Another thing to note is that all states are blocking by default. This means that
+	 * they will not allow queued states to run until they are finished. This can be deactivated
+	 * via <code>SetBlocking(false)</code> or on construction.
 	 */
 	class FusionState
 	{
@@ -56,6 +62,9 @@ namespace FusionEngine
 		typedef std::deque<StateMessage*> MessageList;
 
 	public:
+		FusionState(bool blocking = true)
+			: m_Blocking(blocking)
+		{}
 		//! Destructor
 		~FusionState();
 
@@ -80,11 +89,19 @@ namespace FusionEngine
 		//! Returns the most recent abort message encountered
 		Error *GetLastError() const;
 
+		//! Sets the blocking mode for this state
+		void SetBlocking(bool blocking) const;
+
+		//! Checks the blocking mode for this state
+		bool IsBlocking() const;
+
 	protected:
 		//! Messages to the state manager
 		MessageList m_Messages;
-		//! Last error
+		//! [depreciated] Last error
 		Error *m_LastError;
+		//! If this is true, queued states won't become active (automaticaly, that is) until this state is removed
+		bool m_Blocking;
 
 	};
 

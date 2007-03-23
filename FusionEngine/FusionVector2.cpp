@@ -181,8 +181,8 @@ namespace FusionEngine
 
 	float Vector2::angleFrom(const Vector2& v)
 	{
-		return ( atan2(this->y,this->x) - atan2(v.y,v.x) );
-		//return acosf(this->dot(v));
+		//return ( atan2(this->y,this->x) - atan2(v.y,v.x) );
+		return acosf( this->dot(v) / (this->length()*v.length()) );
 	}
 
 	float Vector2::normalize()

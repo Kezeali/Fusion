@@ -43,6 +43,9 @@ namespace FusionEngine
 	 * Wrapper for CEGUI - for the gameplay portion of fusion.
 	 * This is the only GUI class used ingame - Windows such as Console and
 	 * Options, and the HUD, are loaded into this object.
+	 *
+	 * \remarks
+	 * State is non-blocking
 	 */
 	class GUI : public FusionState, Singleton<GUI>
 	{

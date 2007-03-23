@@ -92,10 +92,6 @@ namespace FusionEngine
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec 
 				<< "]  " << message << std::endl;
-			//m_Logfile << pTime->tm_hour
-			//	<< ":"  << pTime->tm_min
-			//	<< ":"  << pTime->tm_sec 
-			//	<< ": " << message << std::endl;
 		}
 
 		reClose();
@@ -120,14 +116,8 @@ namespace FusionEngine
 
 	void Log::reOpen()
 	{
-		// Try to open the file if it should be closed
-		if (!m_KeepOpen)
-		{
-			//open();
-		}
-
-		// ... otherwise the file should be open already
-		else if (!m_Logfile.is_open())
+		// The file should be open already
+		if (!m_Logfile.is_open())
 		{
 			throw LogfileException(
 				CL_String::format("Logfile '%1' should have been open, but wasn't", m_Filename)

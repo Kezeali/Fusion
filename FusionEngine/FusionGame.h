@@ -31,6 +31,8 @@
 #include "FusionClientOptions.h"
 #include "FusionServerOptions.h"
 
+#include "FusionCmdOptions.h"
+
 namespace FusionEngine
 {
 
@@ -41,11 +43,18 @@ namespace FusionEngine
 	class FusionGame
 	{
 	public:
-        //! Starts the game as a client
-		static void RunClient(const std::string &hostname, const std::string &port, ClientOptions *options);
+    //! Starts the game as a client
+		/*!
+		 * \param opts
+		 * Parsed options from the commandline.
+		 */
+		void Run(const CmdOptions* opts);
 		//! Starts the server (dedicated)
-		static void RunServer(const std::string &port, ServerOptions *options);
+		//static void RunServer(const std::string &port, ServerOptions *options);
 
+	protected:
+		ClientOptions* m_ClientOpts;
+		ServerOptions* m_ServerOpts;
 	};
 
 }
