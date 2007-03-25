@@ -36,39 +36,20 @@
 namespace FusionEngine
 {
 
-	void RegisterWeaponMethods()
+	void SCR_DetonateProjectile(ObjectID index)
 	{
-		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
-
-			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-		}
-		else
-		{
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-		}
+		GenericEnvironment::getSingletonPtr()->Detonate(index);
 	}
 
-	void RegisterConsoleMethods()
+	void SCR_DetonateProjectileG(asIScriptGeneric* gen)
 	{
-		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		{
-			r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileList), asCALL_CDECL); cl_assert( r >= 0 );
-			
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+		ObjectID index = gen->GetArgDWord(0);
+		GenericEnvironment::getSingletonPtr()->Detonate(index);
+	}
 
-			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-			r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-		}
-		else
-		{
-			r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileListG), asCALL_CDECL); cl_assert( r >= 0 );
-
-
-			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-		}
+	void SCR_ApplyEngineForce(ObjectID index)
+	{
+		GenericEnvironment::getSingletonPtr()->ApplyEngineForce(index);
 	}
 
 	void CON_ListProjectiles()

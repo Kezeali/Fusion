@@ -43,6 +43,9 @@
 namespace FusionEngine
 {
 
+	static const g_ASConfigConsole = "Console";
+	static const g_ASConfigWeapon = "Weapon";
+
 	/*!
 	 * \brief
 	 * Provides scripting support, and access to it, for all FusionEngine objects.
@@ -128,6 +131,11 @@ namespace FusionEngine
 	private:
 		//! Registers global methods and functions which scripts can use.
 		void registerGlobals();
+
+		//! Registers methods useful to weapon scripts
+		void registerWeaponMethods();
+		//! Registers methods to be used from the console
+		void registerConsoleMethods();
 
 	};
 

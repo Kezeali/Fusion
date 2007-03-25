@@ -4,6 +4,8 @@
 /// Fusion
 #include "FusionNetworkUtils.h"
 
+#include <RakNet/BitStream.h>
+
 namespace FusionEngine
 {
 
@@ -29,18 +31,21 @@ namespace FusionEngine
 		delete m_Queue;
 	}
 
-	void FusionNetworkGeneric::SendRaw(char *data, char channel)
+	void FusionNetworkGeneric::SendRaw(char *data, int len)
 	{
-		send(data, MEDIUM_PRIORITY, RELIABLE, channel);
+		send(data, len, MEDIUM_PRIORITY, RELIABLE, (char)CID_NONE);
 	}
 
-	void FusionNetworkGeneric::SendAddPlayer()
+	void FusionNetworkGeneric::SendShipState(const ShipState& state)
 	{
-		// The client sends this, the server replies with a ObjectID in a initial State,
-		//  then the client sends a SendPlayerConfig packet with the ShipPackageID used
-		//  by the player's ship.
-		// THIS SHOULDN'T BE IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
-		send(data, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+		unsigned char* buf;
+		int length;
+
+		length = state.Serialize(buf);
+
+		length = addHeader(buf, length, true, MTID_SHIPFRAME, CID_GAME);
+
+		send(buf, length, LOW_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
 	}
 
 	Packet *FusionNetworkGeneric::PopNextMessage(char channel)
@@ -65,6 +70,46 @@ namespace FusionEngine
 		}
 
 		m_Events.clear();
+	}
+
+	int FusionNetworkGeneric::addHeader(unsigned char* buf, const unsigned char* data, int length, bool timeStamp, MessageType mtid, ChannelID cid)
+	{
+		// Space for [ID_TIMESTAMP <timestamp> MTID_x CID_x]
+		size_t bufLen;
+		if (timeStamp)
+			bufLen = g_HeaderLengthTimestamp + len;
+		else
+			bufLen = g_HeaderLength + len;
+
+		buf = malloc(bufLen);
+
+		//! \todo Optimise this
+		RakNet::BitStream bitStream(bufLen);
+		if (timeStamp)
+		{
+			bitStream.Write(ID_TIMESTAMP);
+			bitStream.Write(RakNet::GetTime());
+		}
+		bitStream.Write(mtid);
+		bitStream.Write(cid);
+
+		int bitStrLen = bitStream.GetNumberOfBytesUsed();
+
+		memcpy(buf, b.GetData(), bitStrLen);
+		memcpy(buf+bitStrLen, data, len);
+
+		return (int)bufLen;
+	}
+
+	int FusionNetworkGeneric::removeHeader(unsigned char* buf, const unsigned char* data, int dataLen)
+	{
+		int headLen = NetUtils::GetHeaderLength(data);
+		int bufLen = dataLen - headLen;
+
+		buf = malloc(bufLen);
+		memcpy(buf, data+headLen, bufLen);
+
+		return bufLen;
 	}
 
 	bool FusionNetworkGeneric::grabEvents(Packet *p)

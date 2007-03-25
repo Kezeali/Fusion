@@ -99,8 +99,7 @@ namespace FusionEngine
 		 */
 		void SetKeepOpen(bool keepOpen);
 		//! Returns the value of m_KeepOpen
-		inline bool GetKeepOpen() const
-		{ return m_KeepOpen; }
+		inline bool GetKeepOpen() const { return m_KeepOpen; }
 
 		//! Adds the given string to the logfile, as is
 		void LogVerbatim(const std::string& text);

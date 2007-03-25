@@ -38,7 +38,14 @@
 
 namespace FusionEngine
 {
-	class SpawnLocation
+
+	//! Stores spawn locations
+	struct SpawnLocation
+	{
+		int Team;
+		Vector2 Position;
+	};
+
 	/*!
 	 * \brief
 	 * Stores information loaded from a level package.
@@ -57,8 +64,10 @@ namespace FusionEngine
 			// Number of spawn locations
 			unsigned int Count;
 			// Whether this map supports teams (the spawns have a team defined)
+			//  Team games can still be played on non-team supported levels, but spawn
+			//  locations will (obviously) be chosen randomly.
 			bool TeamSupport;
-			//
+			// List of spawn locations
 			SpawnList SpawnLocations;
 		}
 		Spawn;

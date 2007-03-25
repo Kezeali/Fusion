@@ -28,10 +28,10 @@ m_InputChanged(true)
 
 	/// State
 	m_InitialState.PID = 0;
-	m_InitialState.Position = Vector2::ZERO;
-	m_InitialState.Velocity = Vector2::ZERO;
-	m_InitialState.Rotation = 0;
-	m_InitialState.RotationalVelocity = 0;
+	m_InitialState.position = Vector2::ZERO;
+	m_InitialState.velocity = Vector2::ZERO;
+	m_InitialState.rotation = 0;
+	m_InitialState.rotationalVelocity = 0;
 
 	m_InitialState.health = 0;
 	m_InitialState.current_primary = -1;
@@ -99,7 +99,7 @@ FusionShip::~FusionShip()
 
 void FusionShip::SetVelocity(const Vector2 &velocity, bool physics)
 {
-	m_CurrentState.Velocity = velocity;
+	m_CurrentState.velocity = velocity;
 
 	m_StateChanged = true;
 
@@ -109,7 +109,7 @@ void FusionShip::SetVelocity(const Vector2 &velocity, bool physics)
 
 void FusionShip::SetPosition(const Vector2 &position, bool physics)
 {
-	m_CurrentState.Position = position;
+	m_CurrentState.position = position;
 
 	m_StateChanged = true;
 
@@ -120,7 +120,7 @@ void FusionShip::SetPosition(const Vector2 &position, bool physics)
 
 void FusionShip::SetRotationalVelocity(float velocity, bool physics)
 {
-	m_CurrentState.RotationalVelocity = velocity;
+	m_CurrentState.rotationalVelocity = velocity;
 
 	m_StateChanged = true;
 

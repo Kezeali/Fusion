@@ -135,7 +135,7 @@ namespace FusionEngine
 	// --Forward declarations--
 	///////////////////////////
 	class Archive;
-	class GenericEnviornment;
+	class GenericEnvironment;
 	class ServerEnvironment;
 	class ClientEnvironment;
 	class FusionScene;

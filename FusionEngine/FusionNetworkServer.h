@@ -96,7 +96,8 @@ namespace FusionEngine
 		 * has been sent in the current second than the client's options
 		 * allow, and thus SendAllowed() will return false.
 		 *
-		 * \param[in] player The player whose client should be checked.
+		 * \param[in] player
+		 * The player whose client should be checked.
 		 */
 		bool SendAllowed(ObjectID player) const;
 

@@ -30,6 +30,7 @@
 #include "FusionCommon.h"
 
 #include <RakNet/RakNetworkFactory.h>
+#include <RakNet/NetworkTypes.h>
 #include <RakNet/PacketEnumerations.h>
 #include <RakNet/RakNetStatistics.h>
 
@@ -99,7 +100,7 @@ namespace FusionEngine
 		 *
 		 * THIS SHOULDN'T BE IMPLEMENTED IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
 		 */
-		void SendAddPlayer();
+		virtual void SendAddPlayer()=0;
 		//! Sends a Remove player message.
 		void SendRemovePlayer(ObjectID player);
 		//! Sends a ShipState message.
@@ -139,7 +140,69 @@ namespace FusionEngine
 
 	protected:
 		//! Sends data. Implemented by specialisations.
-		virtual void send(char *message, PacketPriority priority, PacketReliability reliability, char channel) =0;
+		/*!
+		 * \param[out] data
+		 * The data to write to
+		 *
+		 * \param[in] length
+		 * The current length of the data
+		 *
+		 * \param[in] timeStamp
+		 * True if a timestamp should be added
+		 *
+		 * \param[in] mtid
+		 * The type ID of this message
+		 *
+		 * \param[in] cid
+		 * The channel ID for this message.
+		 *
+		 *
+		 * \returns
+		 * Returns the length of the data after the header is added.
+		 */
+		virtual bool send(char *message, int length, PacketPriority priority, PacketReliability reliability, ChannelID channel) =0;
+
+		//! Adds a header to the given packet data
+		/*!
+		 * \param[out] buffer
+		 * The mem to write to
+		 *
+		 * \param[in] buffer
+		 * The data for the packet
+		 *
+		 * \param[in] length
+		 * The current length of the data
+		 *
+		 * \param[in] timeStamp
+		 * True if a timestamp should be added
+		 *
+		 * \param[in] mtid
+		 * The type ID of this message
+		 *
+		 * \param[in] cid
+		 * The channel ID for this message.
+		 *
+		 *
+		 * \returns
+		 * Returns the length of the data after the header is added.
+		 */
+		int addHeader(unsigned char* buffer, const unsigned char* data, int length, bool timeStamp, MessageType mtid, ChannelID cid);
+
+		//! Removes the header from the given packet data
+		/*!
+		 * \param[out] buffer
+		 * The mem to write to
+		 *
+		 * \param[in] data
+		 * The packet data to remove the header form
+		 *
+		 * \param[in] length
+		 * The current length of the data
+		 *
+		 * \returns
+		 * Returns the length of the data after the header is added.
+		 */
+		int removeHeader(unsigned char* buffer, const unsigned char* data, int length);
 
 		//! Returns true if the packet passed is a RakNet system message.
 		/*!

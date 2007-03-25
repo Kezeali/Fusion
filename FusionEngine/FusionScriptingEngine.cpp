@@ -83,4 +83,51 @@ namespace FusionEngine
 		RegisterConsoleMethods();
 	}
 
+	
+	void registerWeaponMethods()
+	{
+		r = m_asEngine->BeginConfigGroup(g_ASConfigWeapon); cl_assert( r >= 0 );
+		{
+			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+			{
+				r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+
+				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+			}
+			else
+			{
+				r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+
+				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16)", asFUNCTION(SCR_ApplyForceG), asCALL_CDECL); cl_assert( r >= 0 );
+			}
+		}
+		r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
+	}
+
+	void registerConsoleMethods()
+	{
+		r = m_asEngine->BeginConfigGroup(g_ASConfigConsole); cl_assert( r >= 0 );
+		{
+			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+			{
+				r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileList), asCALL_CDECL); cl_assert( r >= 0 );
+
+				r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+
+				r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+			}
+			else
+			{
+				r = m_asEngine->RegisterGlobalFunction("GetProjectileList", asFUNCTION(SCR_GetProjectileListG), asCALL_CDECL); cl_assert( r >= 0 );
+
+
+				r = m_asEngine->RegisterGlobalFunction("DetonateProjectile", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+			}
+		}
+		r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
+	}
+
 }

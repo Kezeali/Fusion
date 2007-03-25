@@ -4,6 +4,11 @@
 namespace FusionEngine
 {
 
+	void GenericEnvironment::DetonateProjectile(ObjectID index)
+	{
+		ResourceLoader::getSingletonPtr()-> m_WeaponResources[index];
+	}
+
 	void GenericEnvironment::limitFrames(unsigned int split)
 	{
 		// m_FrameTime is set to 1000/Options::MaxFPS

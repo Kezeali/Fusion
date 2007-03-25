@@ -29,9 +29,6 @@
 
 #include "FusionCommon.h"
 
-//#include <boost/archive/text_oarchive.hpp>
-//#include <boost/archive/text_iarchive.hpp>
-
 namespace FusionEngine
 {
 
@@ -42,6 +39,10 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Ship state syncronisation structure. Supports serialization.
+	 *
+	 * \todo Make all struct members (including but not exclusive
+	 *  to: ClientOptions, ShipState, ShipInput.) lower case initial, camelcase.
+	 *  Except PID and OID, as these are all-caps (and 'cause I feel like it)
 	 */
 	struct ShipState
 	{
@@ -52,10 +53,10 @@ namespace FusionEngine
 
 		//@{
 		//! Position and velocity vars.
-		Vector2 Velocity;
-		Vector2 Position;
-		float Rotation;
-		float RotationalVelocity;
+		Vector2 velocity;
+		Vector2 position;
+		float rotation;
+		float rotationalVelocity;
 		//@}
 
 		//! Health
@@ -92,9 +93,17 @@ namespace FusionEngine
 		//! See ShipState#engines for info.
 		cl_uint8 weapons;
 
-	//private:
-		//template <class Archive>
-		//void serialize(Archive &ar, unsigned int ver);
+		//! Creates a string from this state
+		/*!
+		 * \param[out] buffer
+		 * Where to write the data
+		 *
+		 * \returns
+		 * Returns the length of the output
+		 */
+		int Save(char* buffer) const;
+		//! Updates this state based on the given packet
+		static ShipState Load(const char* data, int length);
 	};
 
 }

@@ -131,6 +131,33 @@ namespace FusionEngine
 		//! Updates the input structures of all local ships.
 		void gatherLocalInput();
 
+		/*!
+		 * \brief
+		 * Gets a local PID
+		 *
+		 * This gets a new player ID, which should be replaced by a valid one from the
+		 * server.
+		 */
+		ObjectID getNextPID();
+
+		/*!
+		 * \brief
+		 * Gets a local OID
+		 *
+		 * This gets a new object ID, which should be replaced by a valid one from the
+		 * server.
+		 */
+		ObjectID getNextOID();
+
+		/*!
+		 * \brief
+		 * Gets the next available spawn position from the map.
+		 *
+		 * This will attempt to find a spawn position with no players nearby. If none
+		 * can be found, the "next" spawn will be used (next ID in the list).
+		 */
+		ShipState getSpawnState();
+
 	};
 
 }

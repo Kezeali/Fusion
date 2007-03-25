@@ -64,6 +64,11 @@ namespace FusionEngine
 	//! Default milis per frame
 	const unsigned int g_DefaultFrameTime = 33;
 
+	//! Lowest OID
+	const ObjectID g_BaseOID = 100;
+	//! Lowest PID
+	const ObjectID g_BasePID = 1;
+
 	//! The virtual environment! (pun?)
 	class GenericEnvironment : public FusionState, public Singleton<GenericEnvironment>
 	{
@@ -72,7 +77,9 @@ namespace FusionEngine
 		GenericEnvironment()
 			: m_Abort(false),
 			m_NumPlayers(0),
-			m_FrameTime(g_DefaultFrameTime)
+			m_FrameTime(g_DefaultFrameTime),
+			m_NextOID(g_BaseOID),
+			m_NextPID(g_BasePID)
 		{}
 
 		//! Virtual destructor
@@ -103,7 +110,7 @@ namespace FusionEngine
 		//virtual ShipResource *GetProjectileResourceByID(const std::string &id);
 
 		//! Detonate the given projectile
-		virtual void Detonate(ObjectID index);
+		virtual void DetonateProjectile(ObjectID index);
 
 		//! Returns a list of projectiles
 		virtual const ProjectileList& GetProjectileList() const;
@@ -132,6 +139,11 @@ namespace FusionEngine
 		
 		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
 		unsigned int m_NumPlayers;
+
+		//! Next assignable PID
+		ObjectID m_NextPID;
+		//! Next assignable OID
+		ObjectID m_NextOID;
 
 		//! Miliseconds per frame
 		unsigned int m_FrameTime;
@@ -162,7 +174,7 @@ namespace FusionEngine
 		virtual void send() = 0;
 		//! Receive all packets
 		/*!
-		 * "Receiving" can be done here - of-course, FusionNetwork will have done the real
+		 * "Receiving" can be done here - of course, FusionNetwork will have done the real
 		 * receiving, this just handles the data from it.
 		 */
 		virtual bool receive() = 0;
@@ -171,6 +183,8 @@ namespace FusionEngine
 		void limitFrames();
 
 		//! Builds a message from a ShipState (usually outgoing)
+		//! \todo Put all this stuff (message building and parsing) into the
+		//!  relavant classes - e.g. Ship state should build and parse MTID_SHIPFRAME packets
 		FusionMessage *BuildMessage(const ShipState &input);
 		//! Builds a message from a ProjectileState (usually outgoing)
 		FusionMessage *BuildMessage(const ProjectileState &input);
@@ -178,8 +192,8 @@ namespace FusionEngine
 		FusionMessage *BuildMessage(const ShipInput &input);
 
 		//! Takes a received message, extracts the ShipState, and puts it into the relavant ship
-		//! \todo Maybe this should be in a helper class? meh, I think that will
-		//! overcomplicate things, especially as my current goal is "just make it compile"!
+		//! \todo Get rid of these methods, just use the parsing built into the relavant
+		//!  classes; call said parsing methods from within the environments receive() method.
 		void installShipFrameFromMessage(FusionMessage *m);
 		//! Extracts the InputState, and puts it into the relavant ship.
 		void installShipInputFromMessage(FusionMessage *m);

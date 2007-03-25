@@ -108,7 +108,12 @@ namespace FusionEngine
 		bool SendAllowed() const;
 
 		//! Updates the network
-		void run();
+		/*!
+		 * Acts as Fusion Network's sorting office. Game packets are checks and sorted
+		 * into catagory queues (channels) while critical infrastructure packets are added
+		 * to the 'Events' list.
+		 */
+		void Receive();
 
 	protected:
 		//! \todo Work out whether NetworkClient/Server needs a options object.
@@ -116,6 +121,10 @@ namespace FusionEngine
 
 		//! The underlying network interface (clientside, but it's really just a RakPeer...)
 		RakClientInterface *m_RakClient;
+
+	protected:
+		//! Implementation of FusionNetworkGeneric#send()
+		bool send(char *message, int length, PacketPriority priority, PacketReliability reliability, ChannelID channel);
 
 	};
 

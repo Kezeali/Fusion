@@ -33,8 +33,27 @@
 #pragma once
 #endif
 
+#include <RakNet/NetworkTypes.h>
+
 namespace FusionEngine
 {
+
+	//! The length of a header with a timestamp
+	/*!
+	 * Consists of: <br>
+	 * <code>[ID_TIMESTAMP]+[RakNetTime]+[MTID_x]+[CID_x]</code>
+	 */
+	const size_t g_HeaderLengthTimestamp =
+		sizeof(unsigned char) + sizeof(RakNetTime) +
+		sizeof(unsigned char) + sizeof(unsigned char);
+
+	//! The length of a header without a timestamp
+	/*!
+	 * Consists of: <br>
+	 * <code>[MTID_x]+[CID_x]</code>
+	 */
+	const size_t g_HeaderLength = sizeof(unsigned char) + sizeof(unsigned char);
+
 	//! The amount of ordering channels defined
 	const unsigned short g_ChannelNum = 4;
 
@@ -43,7 +62,7 @@ namespace FusionEngine
 	 * These are used to sort messages in the MessageQueue. In the actual
 	 * packet, they come in the char after the Type ID (MTID_...)
 	 */
-	enum ChannelIDs
+	enum ChannelID
 	{
 		//@{
 		//! Channels
@@ -55,7 +74,9 @@ namespace FusionEngine
 		//! Gameplay messages
 		CID_GAME,
 		//! Chat messages
-		CID_CHAT
+		CID_CHAT,
+		//! No channel
+		CID_NONE = 255
 		//@}
 	};
 
@@ -65,25 +86,52 @@ namespace FusionEngine
 	 * [client|server] indicates what type of peer can receive
 	 * each type - i.e. [client] means only clients can receive it.
 	 */
-	enum MessageTypes
+	enum MessageType
 	{
 		//@{
 		//! System channel message types
 
-		//! [client|server] When new players join (as clients can have more than one player)
+		//! [client|server] When new players join (clients can have more than one player)
 		/*!
 		 * Server-side Structure:<br>
 		 * <ol>
-		 * <li> [char]     MTID_ADDPLAYER
-		 * <li> [ObjectID] The prelim. ID the client gave this ship
-		 * <li> [ObjectID] The ID allocated to this ship
-		 * <li> The rest is the same format as MTID_SHIPFRAME
+		 * <li> [char]         MTID_ADDPLAYER
+		 * <li> [ObjectID]     The prelim. ID the client gave this ship
+		 * <li> [unsigned int] The team this player wants to join
+		 * <li> [string]       The ship resource tag of this players chosen ship
+		 * <li> [string]       The nickname for this player
+		 * </ol>
+		 *
+		 * <p>NB: The Resource ID and name can also arrive via MTID_PLAYERCONFIG</p>
+		 *
+		 * <br>
+		 * Client-side Structure:<br>
+		 * <ol>
+		 * <li> [char]         MTID_ADDPLAYER
+		 * <li> [ObjectID]     The ID given to this ship by the server
+		 * <li> [unsigned int] The team the player is on
+		 * <li> [string]       The ship resource tag of this players chosen ship
+		 * <li> [string]       The nickname for this player
 		 * </ol>
 		 */
 		MTID_ADDPLAYER = ID_USER_PACKET_ENUM,
+		//! [client] The server has allowed a local player to join
+		/*!
+		 * Structure:<br>
+		 * <ol>
+		 * <li> [char]     MTID_ADDALLOWED
+		 * <li> [ObjectID] The prelim. ID the client gave this ship
+		 * <li> [ObjectID] The 'official' ID gaven to this ship by the server
+		 * <li> The rest is the same format as MTID_SHIPFRAME
+		 * </ol>
+		 */
+		MTID_ADDALLOWED,
 		//! [client|server]
 		MTID_REMOVEPLAYER,
 		//! [client|server] ShipPackageID and Name for the player
+		/*!
+		 * Like AddPlayer, but for ships that already exist
+		 */
 		MTID_PLAYERCONFIG,
 		//! [client]
 		MTID_CHANGEMAP,

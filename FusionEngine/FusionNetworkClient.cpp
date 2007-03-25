@@ -76,30 +76,32 @@ namespace FusionEngine
 		}
 	}
 
+	void FusionNetworkGeneric::SendAddPlayer()
+	{
+		// The client sends this, the server replies with a MTID_ADDALLOWED,
+		//  then the client sends a SendPlayerConfig packet with the ShipPackageID used
+		//  by the player's ship.
+		send(data, length, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+	}
+
 	///////////
 	// Private
-	FusionNetworkClient::send(unsigned char *message, PacketPriority priority, PacketReliability reliability, char channel)
+	bool FusionNetworkClient::send(unsigned char *message, int len, PacketPriority priority, PacketReliability reliability, char channel)
 	{
-			//&& CL_System::get_time() < e_time
-			while (m)
-			{
-				// System messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
-				if (chan == CID_SYSTEM)
-					m_RakClient->Send(m->GetBitStream(), HIGH_PRIORITY, RELIABLE_SEQUENCED, CID_SYSTEM);
-				// File messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
-				else if (chan == CID_FILESYS)
-					m_RakClient->Send(m->GetBitStream(), MEDIUM_PRIORITY, RELIABLE_SEQUENCED, CID_FILESYS);
-				// Gameplay messages - UNRELIABLE_SEQUENCED, MEDIUM_PRIORITY, timestamps
-				else if (chan == CID_GAME)
-					m_RakClient->Send(m->GetTimedBitStream(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
-				// Chat messages - RELIABLE, LOW_PRIORITY, timestamps
-				else if (chan == CID_CHAT)
-					m_RakClient->Send(m->GetTimedBitStream(), LOW_PRIORITY, RELIABLE, CID_CHAT);
+		return m_RakClient->Send(message, len, priority, reliability, channel);
 
-				// Check for more messages
-				FusionMessage *m = m_Queue->_getOutMessage(chan);
-			}
-		}
+		//// System messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
+		//if (chan == CID_SYSTEM)
+		//	m_RakClient->Send(message, HIGH_PRIORITY, RELIABLE_SEQUENCED, CID_SYSTEM);
+		//// File messages - RELIABLE_SEQUENCED, HIGH_PRIORITY, no timestamps
+		//else if (chan == CID_FILESYS)
+		//	m_RakClient->Send(message, MEDIUM_PRIORITY, RELIABLE_SEQUENCED, CID_FILESYS);
+		//// Gameplay messages - UNRELIABLE_SEQUENCED, MEDIUM_PRIORITY, timestamps
+		//else if (chan == CID_GAME)
+		//	m_RakClient->Send(stampTime(message), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
+		//// Chat messages - RELIABLE, LOW_PRIORITY, timestamps
+		//else if (chan == CID_CHAT)
+		//	m_RakClient->Send(stampTime(message), LOW_PRIORITY, RELIABLE, CID_CHAT);
 	}
 
 }

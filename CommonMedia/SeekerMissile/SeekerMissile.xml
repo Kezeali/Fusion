@@ -59,7 +59,7 @@
 		
 		<physics>
 			<mass>6</mass>
-			<engineforce>0.01</engineforce>
+			<engineforce>0.2</engineforce>
 			<facemotion>true</facemotion>
 		</physics>
 		

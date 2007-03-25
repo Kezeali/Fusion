@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,12 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
 #ifndef Header_FusionEngine_ServerEnvironment
@@ -100,7 +106,7 @@ namespace FusionEngine
 		//! Creates a new ship defined by the given state
 		void CreateShip(const ShipState &state);
 
-	private:
+	protected:
 		//! The port to use
 		std::string m_Port;
 
@@ -118,6 +124,7 @@ namespace FusionEngine
 		////! Projectiles
 		//ProjectileList m_Projectiles;
 
+	protected:
 		//! Send all packets
 		void send();
 		//! Receive all packets
@@ -133,19 +140,20 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
+		 * Gets the next available OID.
+		 *
+		 * This gets a new object ID, which can be assigned to a new player.
+		 */
+		ObjectID getNextOID();
+
+		/*!
+		 * \brief
 		 * Gets the next available spawn position from the map.
 		 *
-		 * Depending on the map, this may be set for each player
-		 * (thus based on the given PID) or it may be random.
-		 *
-		 * \remarks
-		 * An exception will be thrown if the map has no available spawn positions.
-		 * Whether adding another player will cause the max-players for this map
-		 * to be exceeded should be checked before adding the player.
-		 * Obviously this is a non-issue for maps in which the spawn is randomly
-		 * selected.
+		 * This will attempt to find a spawn position with no players nearby. If none
+		 * can be found, the "next" spawn will be used (next ID in the list).
 		 */
-		ShipState getSpawnState(ObjectID pid);
+		ShipState getSpawnState();
 
 		/*!
 		 * \brief

@@ -23,7 +23,7 @@ namespace FusionEngine
 
 	////////////////
 	// Add a message
-	void PacketQueue::PushMessage(FusionMessage *message, char channel)
+	void PacketQueue::PushMessage(Packet *message, char channel)
 	{
 		m_Mutex->enter();
 

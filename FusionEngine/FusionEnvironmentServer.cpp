@@ -219,7 +219,10 @@ bool ServerEnvironment::receive()
 
 ObjectID ServerEnvironment::getNextPID()
 {
-	// This must be above 1 (numplayers starts at 0, hence the +1), and goes up
-	//  by one per player, so this is the simplest way to generate it.
-	return m_NumPlayers+1;
+	return (ObjectID)(m_NextPID++);
+}
+
+ObjectID ServerEnvironment::getNextOID()
+{
+	return (ObjectID)(m_NextOID++);
 }

@@ -199,10 +199,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Fusion.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionAIManager.h"
 				>
 			</File>
@@ -766,6 +762,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionShipResponse.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionShipState.cpp"
 				>
 			</File>
 			<File

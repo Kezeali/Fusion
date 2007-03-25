@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -34,7 +34,7 @@
 namespace FusionEngine
 {
 	//! Max local (split-screen) players per client
-	const unsigned int g_MaxPlayers = 4;
+	static const unsigned int g_MaxPlayers = 4;
 
 	//! Settings specfic to each player
 	struct PlayerOptions
@@ -53,13 +53,13 @@ namespace FusionEngine
 	{
 		//! Constructor
 		NetworkSettings()
-			: mMaxMessageRate(100),
+			: mRate(100),
 			mLocalPort(1337)
 		{
 		}
 
 		//! Maximum messages per second
-		unsigned int mMaxMessageRate;
+		unsigned int mRate;
 
 		//! The local port (to connect from)
 		unsigned short mLocalPort;

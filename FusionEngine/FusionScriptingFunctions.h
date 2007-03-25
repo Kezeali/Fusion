@@ -36,15 +36,12 @@
 
 namespace FusionEngine
 {
-	//! Registers methods useful to weapon scripts
-	void RegisterWeaponMethods();
-	//! Registers methods to be used from the console
-	void RegisterConsoleMethods();
+
 	//! Detonates the given object
 	/*!
 	 * Script function:
 	 * \code
-	 * Detonate(int)
+	 * Detonate(uint16)
 	 * \endcode
 	 */
 	void SCR_DetonateProjectile(ObjectID index);

@@ -18,7 +18,7 @@ namespace FusionEngine
 		if (data==0)
 			return 255;
 
-		// All fusion packed IDs are greater than / = ID_USER_PACKET_ENUM
+		// All fusion packet IDs are greater than or equal to ID_USER_PACKET_ENUM
 		return ( data[0] >= unsigned char(ID_USER_PACKET_ENUM) );
 	}
 
@@ -61,17 +61,17 @@ namespace FusionEngine
 
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			// This cl_assert is kinda useless, blame the RakNet guy (his code :P)
+			// This assert is kinda useless, blame the RakNet guy (his code :P)
 			//  If you wan't to make sure the packet is valid, it shouldn't just happen in
 			//  debug releases!
-			//cl_assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
+			//assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
 
 			if (length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime))
 				// Get data at [ID_TIMESTAMP + time + MTID_]
 				return (unsigned char) data[sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime)];
 		}
 		else
-			// Get data at [MTID_]
+			// Get data at [CID_]
 			return (unsigned char) data[sizeof(unsigned char)];
 
 		return 255;
@@ -117,10 +117,14 @@ namespace FusionEngine
 		{
 			// Fusion packets have two IDs (Type and Channel)
 			if (NetUtils::IsFusionPacket(data))
-				return (int)( sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime) );
+				return (int)( sizeof(unsigned char) + sizeof(RakNetTime) + sizeof(unsigned char) + sizeof(unsigned char) );
 			else
-				return (int)( sizeof(unsigned char) + sizeof(RakNetTime) );
+				return (int)( sizeof(unsigned char) + sizeof(RakNetTime) + sizeof(unsigned char) );
 		}
+
+		// Fusion packets have two IDs (Type and Channel)
+		else if (NetUtils::IsFusionPacket(data))
+			return (int)( sizeof(unsigned char) + sizeof(unsigned char) );
 		else
 			return (int) sizeof(unsigned char);
 	}
