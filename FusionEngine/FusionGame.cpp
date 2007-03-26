@@ -31,6 +31,8 @@
 #include "FusionGame.h"
 
 /// Fusion
+#include "FusionGUI.h"
+
 #include "FusionScriptingEngine.h"
 
 #include "FusionPackSyncClient.h"
@@ -77,7 +79,7 @@ namespace FusionEngine
 
 
 				// Set up the initial states for instant-action
-				SharedState gui(new GUI(hostname, port, m_ClientOpts));
+				SharedState gui(new GUI());
 				SharedState load(new ClientLoadingState(hostname, port, m_ClientOpts));
 				SharedState env(new ClientEnvironment(hostname, port, m_ClientOpts));
 
@@ -88,8 +90,8 @@ namespace FusionEngine
 				state_man->AddStateToQueue(env);
 			}
 
-			// dedicated_server option is set
-			else if (opts->OptionExists("dedicated_server"))
+			// start_server option is set
+			else if (opts->OptionExists("start_server"))
 			{
 				std::string port = opts->GetOption("port");
 
@@ -98,7 +100,7 @@ namespace FusionEngine
 
 
 				// Set up the initial states for dedicated-server
-				SharedState gui(new GUI(hostname, port, m_ClientOpts));
+				SharedState gui(new GUI());
 				SharedState load(new ServerLoadingState(port, m_ServerOpts));
 				SharedState env(new ServerEnvironment(port, m_ServerOpts));
 
@@ -113,8 +115,8 @@ namespace FusionEngine
 			else
 			{
 				// Set up the initial for the menu
-				SharedState gui(new GUI(hostname, port, m_ClientOpts));
-				SharedState menu(new MainMenu(hostname, port, m_ClientOpts));
+				SharedState gui(new GUI());
+				SharedState menu(new MainMenu());
 				
 
 				// Init the state manager

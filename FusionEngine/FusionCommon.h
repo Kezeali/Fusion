@@ -140,9 +140,9 @@ namespace FusionEngine
 	class ClientEnvironment;
 	class FusionScene;
 	class FusionNode;
-	struct ShipState;
-	struct ShipInput;
-	struct ProjectileState;
+	class ShipState;
+	class ShipInput;
+	class ProjectileState;
 	class FusionShip;
 	class FusionProjectile;
 	class ShipResource;
@@ -158,6 +158,10 @@ namespace FusionEngine
 	class Error;
 	class Logger;
 	class Console;
+	class ClientLoadingState;
+	class ServerLoadingState;
+	class ClientLoadingSyncCallback;
+	class ServerLoadingSyncCallback;
 
 
 	///////////////

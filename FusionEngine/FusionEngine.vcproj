@@ -187,23 +187,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FrontendGUI.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FrontendMenu_MainMenu.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FrontendMenu_Options.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionAIManager.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionBitmask.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionClientLoadingState.h"
 				>
 			</File>
 			<File
@@ -216,6 +208,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionCommon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionConnectionManager.h"
 				>
 			</File>
 			<File
@@ -511,10 +507,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionStatePackSyncClient.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionStateSetupShips.h"
 				>
 			</File>
@@ -565,6 +557,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionConnectionManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionConsole.cpp"
 				>
 			</File>
@@ -602,14 +598,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionGUI.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionGUI_MainMenu.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionGUI_Options.cpp"
 				>
 			</File>
 			<File
@@ -713,6 +701,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionProjectileState.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionResourceLoader.cpp"
 				>
 			</File>
@@ -774,10 +766,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionStatePackSyncClient.cpp"
 				>
 			</File>
 			<File

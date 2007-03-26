@@ -26,48 +26,31 @@
 
 */
 
-#ifndef Header_FusionEngine_FusionPackSyncClient
-#define Header_FusionEngine_FusionPackSyncClient
-
-#if _MSC_VER > 1000
-#pragma once
-#endif
-
-#include "FusionCommon.h"
-
-#include <RakNet/RakPeerInterface.h>
-#include <RakNet/DirectoryDeltaTransfer.h>
-#include <RakNet/FileListTransfer.h>
-
+#include "FusionConnectionManager.h"
 
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer
-	 */
-	class PackSyncClient
+	const RakClientInterface* ConnectionManager::GetClient(const std::string& host, unsigned short hostPort, unsigned short localPort)
 	{
-	public:
-		//! Constructor
-		PackSyncClient(RakPeerInterface *peer);
-		//! Destructor
-		~PackSyncClient();
+		std::string tag = CL_String::format("%1:%2", host, hostPort);
 
-		//! Clears (if necessary) and rebuilds the file lists
-		void Initialise();
+		// Try to find an existing connection
+		ClientConnectionsList::iterator i = m_ClientConnections.find(tag);
+		if (i != m_ClientConnections.end())
+			return (*i);
 
-	protected:
-		//! Main plugin
-		DirectoryDeltaTransfer *m_SyncPlugin;
-		//! Transfer helper
-		FileListTransfer *m_TransferPlugin;
+		// Create a new connection
+		RakClientInterface* peer = RakNetworkFactory::GetRakClientInterface();
+		peer->Connect(host.c_str(), hostPort, localPort, 0, 0);
 
-		//! The network interface this is attached to
-		RakPeerInterface *m_Peer;
-	};
+		// Required for timestamps (it should be on by default anyway)
+		peer->StartOccasionalPing();
+
+		m_ClientConnections.insert(
+			ClientConnectionsList::value_type(tag, peer)
+			);
+
+	}
 
 }
-
-#endif

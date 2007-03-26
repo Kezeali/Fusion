@@ -1,13 +1,13 @@
 
+#include "FusionCommon.h"
+
 #include "FusionGUI.h"
 
 namespace FusionEngine
 {
 
 	GUI::GUI()
-		: FusionState(false), // GUI is non-blockin by default
-		m_CurrentScheme(DefaultScheme),
-		m_CurrentLayout(DefaultLayout)
+		: FusionState(false) // GUI is non-blockin by default
 	{
 		// Create a new system
 		CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0);

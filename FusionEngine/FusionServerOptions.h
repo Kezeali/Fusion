@@ -51,7 +51,12 @@ namespace FusionEngine
 		unsigned int mNetDelay;
 		//! The 'pixels per bit' (resolution) setting to use for bitmasks
 		int mBitmaskResolution;
-				
+
+		//! Address of the fileserver
+		std::string mFileServerHost;
+		short mFileServerPort;
+		
+		//! Max FPS for server (value also sent to clients on connect)
 		unsigned int mMaxFPS;
 
 		//! The initial (maximum) health for ships

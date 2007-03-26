@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_FusionPackSyncClient
-#define Header_FusionEngine_FusionPackSyncClient
+#ifndef Header_FusionEngine_ConnectionManager
+#define Header_FusionEngine_ConnectionManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -35,9 +35,12 @@
 
 #include "FusionCommon.h"
 
+/// Inherited
+#include "FusionSingleton.h"
+
+#include <RakNet/RakClientInterface.h>
+#include <RakNet/RakServerInterface.h>
 #include <RakNet/RakPeerInterface.h>
-#include <RakNet/DirectoryDeltaTransfer.h>
-#include <RakNet/FileListTransfer.h>
 
 
 namespace FusionEngine
@@ -45,27 +48,33 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Syncronises data files. ATM, basically a high-level interface to DirectoryDeltaTransfer
+	 * Creates and maintains network connections
 	 */
-	class PackSyncClient
+	class ConnectionManager : public Singleton<ConnectionManager>
 	{
 	public:
-		//! Constructor
-		PackSyncClient(RakPeerInterface *peer);
-		//! Destructor
-		~PackSyncClient();
+		//! List of client connections
+		typedef std::map<std::string, RakClientInterface*> ClientConnectionsList;
 
-		//! Clears (if necessary) and rebuilds the file lists
-		void Initialise();
+	public:
+		/*!
+		 * \brief
+		 * Constructor
+		 */
+		ConnectionManager();
+
+		//! Destructor
+		~ConnectionManager();
+
+	public:
+		//! Creates a client-side connection
+		const RakClientInterface* GetClient(const std::string& host, unsigned short hostPort, unsigned short localPort));
+
 
 	protected:
-		//! Main plugin
-		DirectoryDeltaTransfer *m_SyncPlugin;
-		//! Transfer helper
-		FileListTransfer *m_TransferPlugin;
+		//! Client-side connections
+		ClientConnectionsList *m_ClientConnections;
 
-		//! The network interface this is attached to
-		RakPeerInterface *m_Peer;
 	};
 
 }

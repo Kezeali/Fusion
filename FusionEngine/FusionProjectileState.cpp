@@ -35,17 +35,19 @@
 namespace FusionEngine
 {
 
-	ShipState::ShipState(const char* data, int length)
+	ProjectileState::ProjectileState(const char* data, int length)
 	{
 		load(data, length);
 	}
 
-	int ShipState::Save(char* buffer) const
+	int ProjectileState::Save(char* buffer) const
 	{
 		RakNet::BitStream out_stream;
 
 		// PlayerID
 		out_stream.Write(PID);
+		// ObjectID
+		out_stream.Write(OID);
 		// Pos
 		out_stream.Write(position.x);
 		out_stream.Write(position.y);
@@ -55,13 +57,6 @@ namespace FusionEngine
 		// Rotation / RotVel
 		out_stream.Write(rotation);
 		out_stream.Write(rotationalVelocity);
-		// Active weapons
-		out_stream.Write(current_primary);
-		out_stream.Write(current_secondary);
-		out_stream.Write(current_bomb);
-		// Available components
-		out_stream.Write(engines);
-		out_stream.Write(weapons);
 
 		int bufLen = out_stream.GetNumberOfBytesUsed();
 
@@ -72,11 +67,13 @@ namespace FusionEngine
 		return bufLen;
 	}
 
-	void ShipState::load(const char* data, int length)
+	void ProjectileState::load(const char* data, int length)
 	{
 		RakNet::BitStream stream(data, length, false);
 
 		stream.Read(PID);
+
+		stream.Read(OID);
 
 		stream.Read(position.x);
 		stream.Read(position.y);
@@ -86,13 +83,6 @@ namespace FusionEngine
 
 		stream.Read(rotation);
 		stream.Read(rotationalVelocity);
-
-		stream.Read(current_primary);
-		stream.Read(current_secondary);
-		stream.Read(current_bomb);
-
-		stream.Read(engines);
-		stream.Read(weapons);
 
 	}
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,12 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+		
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
 #ifndef Header_FusionEngine_FusionShipState
@@ -44,10 +50,14 @@ namespace FusionEngine
 	 *  to: ClientOptions, ShipState, ShipInput.) lower case initial, camelcase.
 	 *  Except PID and OID, as these are all-caps (and 'cause I feel like it)
 	 */
-	struct ShipState
+	class ShipState
 	{
-		//[removed] friend class boost::serialization::access;
+	public:
+		ShipState() {}
 
+		ShipState(const char* data, int length);
+
+	public:
 		//! The unique identifier of the ship this state reffers to
 		ObjectID PID;
 
@@ -102,8 +112,10 @@ namespace FusionEngine
 		 * Returns the length of the output
 		 */
 		int Save(char* buffer) const;
-		//! Updates this state based on the given packet
-		static ShipState Load(const char* data, int length);
+
+	protected:
+		//! Updates this state based on the given packet data
+		void load(const char* data, int length);
 	};
 
 }

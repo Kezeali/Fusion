@@ -33,7 +33,8 @@ void PackSyncClient::Initialise()
 	if (m_SyncPlugin->GetNumberOfFilesForUpload() > 0)
 		m_SyncPlugin->ClearUploads();
 
-	m_SyncPlugin->AddUploadsFromSubdirectory(ShipsPath.c_str());
-	m_SyncPlugin->AddUploadsFromSubdirectory(LevelsPath.c_str());
-	m_SyncPlugin->AddUploadsFromSubdirectory(WeaponsPath.c_str());
+	m_SyncPlugin->DownloadFromSubdirectory(
+		PackagesPath.c_str(), PackagesPath.c_str(),
+		true, m_Peer->GetPlayerIDFromIndex(0), File
+		);
 }
