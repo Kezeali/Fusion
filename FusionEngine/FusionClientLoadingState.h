@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_FusionPackSyncClient
-#define Header_FusionEngine_FusionPackSyncClient
+#ifndef Header_FusionEngine_ClientLoadingState
+#define Header_FusionEngine_ClientLoadingState
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,10 +36,15 @@
 #include "FusionCommon.h"
 
 /// Inherited
-#include "FusionState.h"
+#include "FusionLoadingState.h"
 
-#include <RakNet/RakPeerInterface.h>
+#include "FusionLoadingTransferCallback.h"
+
+#include <RakNet/RakClientInterface.h>
 #include <RakNet/FileListTransfer.h>
+#include <RakNet/FileListTransferCBInterface.h>
+
+#include <CEGUI/CEGUI.h>
 
 
 namespace FusionEngine
@@ -54,14 +59,13 @@ namespace FusionEngine
 	 * to the RakNet class in question. ClientLoadingState, ServerLoadingState,
 	 * FusionNetworkClient, and FusionNetworkServer would all use one of these two
 	 */
-	class ClientLoadingState : public FusionState
+	class ClientLoadingState : public LoadingState, FileListTransferCBInterface
 	{
 	public:
-		ClientLoadingState(RakClientInterface)
-			: FusionState(true),
-			m_Server(peer)
-		{}
+		//! Constructor
+		ClientLoadingState(RakClientInterface* peer, const std::string& host, unsigned short port, ClientOptions* options);
 
+		//! Destructor
 		~ClientLoadingState();
 
 	public:
@@ -74,16 +78,7 @@ namespace FusionEngine
 		//! CleanUp
 		void CleanUp();
 
-	};
-
-
-	//! Updates the loading GUI when a file is synced
-	class ClientLoadingSyncCallback : public FileListTransferCBInterface
-	{
-	public:
-		ClientLoadingSyncCallback();
-
-	public:
+		//! Implementation of FileListTransferCBInterface#OnFile()
 		void OnFile(
 			unsigned fileIndex,
 			char *filename,
@@ -94,11 +89,35 @@ namespace FusionEngine
 			unsigned setCount,	
 			unsigned setTotalCompressedTransmissionLength,
 			unsigned setTotalFinalLength,
-			unsigned char context)
-		{
-			if (setCount > 0)
-				OnFileSignal(fileIndex/setCount);
-		}
+			unsigned char context);
+
+	protected:
+		//! Peer to make the main connection on
+		RakClientInterface* m_MainConnection;
+		//! Peer to make the file sync connection on
+		RakClientInterface* m_FileConnection;
+
+		//! Host to connect to
+		std::string m_Host;
+		//! Port on the host
+		unsigned short m_Port;
+		//! Options
+		ClientOptions *m_Options;
+
+		//! Pack sync client
+		PackSyncClient* m_PackSyncClient;
+
+		LoadingStage m_Stage;
+
+
+		//! Current loading progress (percent)
+		float m_Progress;
+
+		//! Progress bar for the GUI
+		CEGUI::ProgressBar* m_ProgressBar;
+
 	};
 
 }
+
+#endif

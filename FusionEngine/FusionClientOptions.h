@@ -37,8 +37,9 @@ namespace FusionEngine
 	static const unsigned int g_MaxPlayers = 4;
 
 	//! Settings specfic to each player
-	struct PlayerOptions
+	class PlayerOptions
 	{
+	public:
 		//! Constructor.
 		PlayerOptions()
 			: mHUD(true)
@@ -49,8 +50,9 @@ namespace FusionEngine
 	};
 
 	//! Settings for network related stuff.
-	struct NetworkSettings
+	class NetworkSettings
 	{
+	public:
 		//! Constructor
 		NetworkSettings()
 			: mRate(100),

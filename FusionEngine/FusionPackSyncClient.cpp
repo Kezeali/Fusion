@@ -5,9 +5,15 @@
 
 using namespace FusionEngine;
 
-PackSyncClient::PackSyncClient(RakPeerInterface *peer)
-: m_Peer(peer)
+PackSyncClient::PackSyncClient(RakPeerInterface *peer, FileListTransferCBInterface* fileCallback)
+: m_Peer(peer),
+m_FileCallback(fileCallback)
 {
+	//! \todo Is this ok?
+	cl_assert(peer != NULL);
+	if (!peer->IsActive())
+		throw Error::UNEXPECTED_DISCONNECT;
+
 	// install the directory transfer plugin...
 	m_TransferPlugin = new FileListTransfer();
 	peer->AttachPlugin(m_TransferPlugin);
@@ -35,6 +41,7 @@ void PackSyncClient::Initialise()
 
 	m_SyncPlugin->DownloadFromSubdirectory(
 		PackagesPath.c_str(), PackagesPath.c_str(),
-		true, m_Peer->GetPlayerIDFromIndex(0), File
+		true, m_Peer->GetPlayerIDFromIndex(0), m_FileCallback,
+		HIGH_PRIORITY, 0
 		);
 }

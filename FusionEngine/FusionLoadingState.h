@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ConnectionManager
-#define Header_FusionEngine_ConnectionManager
+#ifndef Header_FusionEngine_LoadingState
+#define Header_FusionEngine_LoadingState
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,40 +36,57 @@
 #include "FusionCommon.h"
 
 /// Inherited
-#include "FusionSingleton.h"
+#include "FusionState.h"
+
+#include "FusionLoadingTransferCallback.h"
 
 #include <RakNet/RakClientInterface.h>
-#include <RakNet/RakServerInterface.h>
-#include <RakNet/RakPeerInterface.h>
+#include <RakNet/FileListTransfer.h>
+#include <RakNet/FileListTransferCBInterface.h>
+
+#include <CEGUI/CEGUI.h>
 
 
 namespace FusionEngine
 {
 
+	//! Basic LoadingStage manager
 	/*!
-	 * \brief
-	 * Creates and maintains network connections
+	 * Can be used to make an extendable loader. May be implemented later.
+	 * For now, loading states just use an enum and switch-cases to manage loading stages
 	 */
-	class ConnectionManager : public Singleton<ConnectionManager>
+	class LoadingState : public FusionState
 	{
 	public:
-		/*!
-		 * \brief
-		 * Constructor
-		 */
-		ConnectionManager();
-
-		//! Destructor
-		~ConnectionManager();
+		//! A queue of loading stages to execute
+		typedef std::deque<LoadingStage> StageQueue;
+		//! Shared ptr for stages
+		typedef CL_SharedPtr<LoadingStage> SharedStage;
 
 	public:
-		//! Creates a client-side connection
-		RakClientInterface* GetGameClient(const std::string& host, unsigned short hostPort, unsigned short localPort));
+		//! Constructor
+		LoadingState();
+
+		//! Destructor
+		~LoadingState();
+
+	public:
+		//! Adds a loaing stage to this loader
+		void AddLoaingStage(SharedStage stage);
+
+		//! Initialise
+		bool Initialise();
+		//! Update
+		bool Update(unsigned int split);
+		//! Draw
+		void Draw();
+		//! CleanUp
+		void CleanUp();
 
 
 	protected:
-		//! Client-side connection
-		RakClientInterface *m_ClientConnections;
+		//! Loading stages currently queued
+		StageQueue m_LoadingStages;
 
 	};
 

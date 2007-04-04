@@ -51,7 +51,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		PackSyncClient(RakPeerInterface *peer);
+		PackSyncClient(RakPeerInterface *peer, FileListTransferCBInterface* fileCallback);
 		//! Destructor
 		~PackSyncClient();
 
@@ -63,6 +63,9 @@ namespace FusionEngine
 		DirectoryDeltaTransfer *m_SyncPlugin;
 		//! Transfer helper
 		FileListTransfer *m_TransferPlugin;
+
+		//! Called when files are received
+		FileListTransferCBInterface* m_FileCallback;
 
 		//! The network interface this is attached to
 		RakPeerInterface *m_Peer;

@@ -291,6 +291,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLoadingStage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLoadingState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLoadingTransferCallback.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLog.h"
 				>
 			</File>

@@ -135,9 +135,14 @@ namespace FusionEngine
 	// --Forward declarations--
 	///////////////////////////
 	class Archive;
+	class ClientOptions;
+	class ServerOptions;
 	class GenericEnvironment;
 	class ServerEnvironment;
 	class ClientEnvironment;
+	class FusionNetworkGeneric;
+	class FusionNetworkServer;
+	class FusionNetworkClient;
 	class FusionScene;
 	class FusionNode;
 	class ShipState;
@@ -162,6 +167,8 @@ namespace FusionEngine
 	class ServerLoadingState;
 	class ClientLoadingSyncCallback;
 	class ServerLoadingSyncCallback;
+	class PackSyncClient;
+	class PackSyncServer;
 
 
 	///////////////

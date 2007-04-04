@@ -34,14 +34,13 @@
 #include "FusionGUI.h"
 
 #include "FusionScriptingEngine.h"
-
+#include "FusionStateManager.h"
 #include "FusionPackSyncClient.h"
 #include "FusionEnvironmentClient.h"
 #include "FusionEnvironmentServer.h"
+#include "FusionClientLoadingState.h"
 
-#include "FusionStateManager.h"
 #include "FusionError.h"
-
 #include "FusionConsole.h"
 #include "FusionLogger.h"
 

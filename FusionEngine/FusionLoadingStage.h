@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ConnectionManager
-#define Header_FusionEngine_ConnectionManager
+#ifndef Header_FusionEngine_ClientLoadingState
+#define Header_FusionEngine_ClientLoadingState
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,40 +36,50 @@
 #include "FusionCommon.h"
 
 /// Inherited
-#include "FusionSingleton.h"
+#include "FusionState.h"
+
+#include "FusionLoadingTransferCallback.h"
 
 #include <RakNet/RakClientInterface.h>
-#include <RakNet/RakServerInterface.h>
-#include <RakNet/RakPeerInterface.h>
+#include <RakNet/FileListTransfer.h>
+#include <RakNet/FileListTransferCBInterface.h>
+
+#include <CEGUI/CEGUI.h>
 
 
 namespace FusionEngine
 {
 
+	//! Syncs packages, loads data, shows gui.
 	/*!
-	 * \brief
-	 * Creates and maintains network connections
+	 * \todo
+	 * Some sort of FusionState based singleton wrapper for RakClientInterface and
+	 * RakServerInterface which can create, store and destroy the peer from
+	 * loading till quiting. This could wrap functions, or just allow access directly
+	 * to the RakNet class in question. ClientLoadingState, ServerLoadingState,
+	 * FusionNetworkClient, and FusionNetworkServer would all use one of these two
 	 */
-	class ConnectionManager : public Singleton<ConnectionManager>
+	class LoadingStage
 	{
 	public:
-		/*!
-		 * \brief
-		 * Constructor
-		 */
-		ConnectionManager();
+		//! Constructor
+		LoadingStage();
 
 		//! Destructor
-		~ConnectionManager();
+		~LoadingStage();
 
 	public:
-		//! Creates a client-side connection
-		RakClientInterface* GetGameClient(const std::string& host, unsigned short hostPort, unsigned short localPort));
-
+		//! Initialise
+		bool Initialise();
+		//! Update
+		bool Update(unsigned int split);
+		//! Draw
+		void Draw();
+		//! CleanUp
+		void CleanUp();
 
 	protected:
-		//! Client-side connection
-		RakClientInterface *m_ClientConnections;
+
 
 	};
 
