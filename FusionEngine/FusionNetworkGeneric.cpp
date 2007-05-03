@@ -53,7 +53,7 @@ namespace FusionEngine
 		return m_Queue->PopMessage(channel);
 	}
 
-	Packet *FusionNetworkGeneric::PopNextEvent() const
+	Event *FusionNetworkGeneric::PopNextEvent() const
 	{
 		Event *e = m_Events.front();
 		m_Events.pop_front();
@@ -137,7 +137,7 @@ namespace FusionEngine
 		case ID_CONNECTION_ATTEMPT_FAILED:
 			Event e = new Event;
 			e.eventID = packetID;
-			e.playerID = p->playerId;
+			e.SystemAddress = p->playerId;
 			m_Events.push_back(e);
 			return true;
 		default:

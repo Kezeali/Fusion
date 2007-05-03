@@ -132,13 +132,34 @@ namespace FusionEngine
 				split = CL_System::get_time() - lastTime;
 				lastTime = CL_System::get_time();
 
-				// Stop if any states don't update
-				keepGoing = state_man->Update(split);
+				// Catch trivial errors without stopping the game
+				try
+				{
+					// Stop if any states don't update
+					keepGoing = state_man->Update(split);
 
-				// Stop if any states think we should
-				keepGoing = state_man->KeepGoing();
+					// Stop if any states think we should
+					keepGoing = state_man->KeepGoing();
 
-				state_man->Draw();
+					state_man->Draw();
+				}
+				catch (Error e)
+				{
+					// Not critical and trivial, so record it in the console and continue
+					if (!e.IsCritical() && e.GetType() == Error::TRIVIAL)
+						Console::getSingletonPtr()->Add(e.GetError());
+
+					// Critical, exit the game and log the message
+					else if (e.IsCritical())
+						throw;
+
+					// Non-critical
+					else
+					{
+						// Show error message box (GUI)
+					}
+				}
+
 			}
 
 			state_man->Clear();

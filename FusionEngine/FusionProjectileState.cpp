@@ -44,7 +44,7 @@ namespace FusionEngine
 	{
 		RakNet::BitStream out_stream;
 
-		// PlayerID
+		// SystemAddress
 		out_stream.Write(PID);
 		// ObjectID
 		out_stream.Write(OID);

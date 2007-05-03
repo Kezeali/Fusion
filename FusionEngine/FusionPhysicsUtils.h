@@ -53,9 +53,8 @@ namespace FusionEngine
 	 * \todo Get rid of memcpy where Vector2::operator= could be used, because
 	 * copying two (int)s should be faster than copying a whole Vector2...
 	 */
-	class PhysUtil
+	namespace PhysUtil
 	{
-	public:
 		//! Finds the actual point of collision between two objects.
 		/*!
 		 * This will approximate the actual point of collision of two objects
@@ -77,7 +76,7 @@ namespace FusionEngine
 		 * \param[in] two
 		 * The second object involved in the collision.
 		 */
-		static bool GuessPointOfCollision(
+		bool GuessPointOfCollision(
 			Vector2 *output,
 			const Vector2 &pos_one, const Vector2 &pos_two,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
@@ -126,7 +125,7 @@ namespace FusionEngine
 		 * Whether to return the closest colliding point to the beginning of
 		 * the vector (true), or the furthermost point (false)
 		 */
-		static bool FindCollisions(
+		bool FindCollisions(
 			Vector2 *output_a1, Vector2 *output_a2,
 			Vector2 *output_b1, Vector2 *output_b2,
 			const Vector2 &vector_one, const Vector2 &vector_two,
@@ -151,7 +150,7 @@ namespace FusionEngine
 		 * \param[in] two
 		 * The object which may be colliding against param one.
 		 */
-		static bool CollisionCheck(
+		bool CollisionCheck(
 			const Vector2 &pos_one, const Vector2 &two_pos,
 			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
 
@@ -173,7 +172,7 @@ namespace FusionEngine
 		 *
 		 * \returns A Vector2 - The point on the vectors where an intersection is found.
 		 */
-		static void CalculateVectorIntersection(Vector2 *output,
+		void CalculateVectorIntersection(Vector2 *output,
 			const Vector2 &st_one, const Vector2 &st_two,
 			const Vector2 &vector_one, const Vector2 &vector_two);
 
@@ -196,7 +195,7 @@ namespace FusionEngine
 		 *
 		 * \retval True If the point 'intersec' is on the given lines
 		 */
-		static bool CheckBoundaries(
+		bool CheckBoundaries(
 			const Vector2 &pos_one, const Vector2 &pos_two,
 			const Vector2 &vec_one, const Vector2 &vec_two,
 			const Vector2 &intersec);
@@ -215,7 +214,7 @@ namespace FusionEngine
 		 * \param[in] ref
 		 * The body to use if a reference body is required.
 		 */
-		static void CalculateNormal(
+		void CalculateNormal(
 			Vector2 *output,
 			const Vector2 &ref_pos, const Vector2 &other_pos,
 			const FusionPhysicsBody *ref, const FusionPhysicsBody *other);

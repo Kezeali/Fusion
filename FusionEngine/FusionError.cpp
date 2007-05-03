@@ -1,25 +1,35 @@
 
 #include "FusionError.h"
 
-using namespace FusionEngine;
-
-Error::Error()
-: m_Type(NONE)
+namespace FusionEngine
 {
-}
 
-Error::Error(Error::ErrorType type, const std::string &message)
-: m_Type(type),
-m_Message(message)
-{
-}
+	Error::Error()
+		: m_Type(NONE),
+		m_Critical(false)
+	{
+	}
 
-Error::ErrorType Error::GetType() const
-{
-	return m_Type;
-}
+	Error::Error(Error::ErrorType type, const std::string &message, bool critical)
+		: m_Type(type),
+		m_Message(message),
+		m_Critical(critical)
+	{
+	}
 
-const std::string &Error::GetError() const
-{
-	return m_Message;
+	Error::ErrorType Error::GetType() const
+	{
+		return m_Type;
+	}
+
+	const std::string &Error::GetError() const
+	{
+		return m_Message;
+	}
+
+	bool Error::IsCritical() const
+	{
+		return m_Critical;
+	}
+
 }

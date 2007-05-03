@@ -240,9 +240,13 @@ namespace FusionEngine
 		void CollisionResponse(FusionPhysicsBody *other, const Vector2 &collision_point);
 
 		//! Returns the current collision config.
+		int GetCollisionFlags();
+		//! Returns the current collision config.
 		int GetCollisionFlags() const;
 		//! Returns true if the given flag is set.
 		bool CheckCollisionFlag(int flag);
+		//! Returns true if the given flag is set.
+		bool CheckCollisionFlag(int flag) const;
 		//! Allows the collision flags to be set manually
 		/*!
 		 * This isn't usually necessary, as collision flags get set by relavant

@@ -47,7 +47,7 @@ namespace FusionEngine
 		//! The ID for the event packet.
 		unsigned char eventID;
 		//! The player ID from the event data, if applicable.
-		PlayerID playerID;
+		SystemAddress systemAddress;
 	};
 
 	/*!
@@ -85,8 +85,8 @@ namespace FusionEngine
 		virtual ~FusionNetworkGeneric();
 
 	public:
-		//! Maps Fusion player ids to RakNet PlayerIDs
-		typedef std::map<FusionEngine::ObjectID, PlayerID> PlayerIDMap;
+		//! Maps Fusion player ids to RakNet SystemAddresss
+		typedef std::map<FusionEngine::ObjectID, SystemAddress> SystemAddressMap;
 		//! Type for storing events
 		typedef std::deque<Event*> EventQueue;
 

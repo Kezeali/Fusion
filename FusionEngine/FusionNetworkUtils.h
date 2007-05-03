@@ -35,9 +35,8 @@
 namespace FusionEngine
 {
 	//! Network Utils
-	class NetUtils
+	namespace NetUtils
 	{
-	public:
 		//! Checks if this packet has a non-RakNet type.
 		static bool IsFusionPacket(Packet *p);
 		//! Checks if this packet data has a non-RakNet type.

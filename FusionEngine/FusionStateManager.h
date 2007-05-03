@@ -72,7 +72,7 @@ namespace FusionEngine
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool SetExclusive(FusionState *state);
+		bool SetExclusive(SharedState state);
 
 		//! Adds the next state in the queue to the execution list
 		/*!
@@ -136,9 +136,6 @@ namespace FusionEngine
 		//! Returns false after a state requests quit
 		bool KeepGoing() const;
 
-		//! Retreives the last error reported by a state
-		Error *GetLastError() const;
-
 	protected:
 		//! List of all running states
 		StateList m_States;
@@ -147,8 +144,6 @@ namespace FusionEngine
 
 		//! Set to false if when FusionState#KeepGoing() returns false.
 		bool m_KeepGoing;
-		//! Last error
-		Error *m_LastError;
 
 	};
 

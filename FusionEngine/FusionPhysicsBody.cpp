@@ -332,12 +332,22 @@ namespace FusionEngine
 			m_CollisionHandler->CollisionWith(other, collision_point);
 	}
 
+	int FusionPhysicsBody::GetCollisionFlags()
+	{
+		return m_CollisionFlags;
+	}
+
 	int FusionPhysicsBody::GetCollisionFlags() const
 	{
 		return m_CollisionFlags;
 	}
 
 	bool FusionPhysicsBody::CheckCollisionFlag(int flag)
+	{
+		return (m_CollisionFlags & flag) ? true : false;
+	}
+
+	bool FusionPhysicsBody::CheckCollisionFlag(int flag) const
 	{
 		return (m_CollisionFlags & flag) ? true : false;
 	}

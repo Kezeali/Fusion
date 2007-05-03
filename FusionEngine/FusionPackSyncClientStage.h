@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ClientLoadingState
-#define Header_FusionEngine_ClientLoadingState
+#ifndef Header_FusionEngine_PackSyncClientStage
+#define Header_FusionEngine_PackSyncClientStage
 
 #if _MSC_VER > 1000
 #pragma once
@@ -38,57 +38,64 @@
 /// Inherited
 #include "FusionLoadingState.h"
 
-
-#include <CEGUI/CEGUI.h>
+#include <RakNet/RakPeerInterface.h>
+#include <RakNet/FileListTransfer.h>
+#include <RakNet/FileListTransferCBInterface.h>
 
 
 namespace FusionEngine
 {
 
-	//! Syncs packages, loads data, shows gui.
+	//! Syncs packages
 	/*!
-	 * \todo
-	 * Some sort of FusionState based singleton wrapper for RakClientInterface and
-	 * RakServerInterface which can create, store and destroy the peer from
-	 * loading till quiting. This could wrap functions, or just allow access directly
-	 * to the RakNet class in question. ClientLoadingState, ServerLoadingState,
-	 * FusionNetworkClient, and FusionNetworkServer would all use one of these two
 	 */
-	class ClientLoadingState : public LoadingState
+	class PackSyncClientStage : public LoadingStage, FileListTransferCBInterface
 	{
 	public:
-		//! Constructor
-		ClientLoadingState(RakPeerInterface* peer, const std::string& host, unsigned short port, ClientOptions* options);
+		//! Constructor +connected server peer +options
+		PackSyncClientStage(RakClientInterface* peer, ClientOptions* options);
 
 		//! Destructor
-		~ClientLoadingState();
+		~PackSyncClientStage();
 
 	public:
 		//! Initialise
 		bool Initialise();
 		//! Update
-		bool Update(unsigned int split);
-		//! Draw
-		void Draw();
+		float Update(unsigned int split);
 		//! CleanUp
 		void CleanUp();
 
+		//! Implementation of FileListTransferCBInterface#OnFile()
+		void OnFile(
+			unsigned fileIndex,
+			char *filename,
+			char *fileData,
+			unsigned compressedTransmissionLength,
+			unsigned finalDataLength,
+			unsigned short setID,
+			unsigned setCount,	
+			unsigned setTotalCompressedTransmissionLength,
+			unsigned setTotalFinalLength,
+			unsigned char context);
+
 	protected:
 		//! Peer to make the main connection on
-		RakPeerInterface* m_MainConnection;
+		RakClientInterface* m_MainConnection;
+		//! Peer to make the file sync connection on
+		RakClientInterface* m_FileConnection;
 
-		//! Host to connect to
+		//! File host to connect to
 		std::string m_Host;
-		//! Port on the host
+		//! Port on the file host
 		unsigned short m_Port;
+
 		//! Options
 		ClientOptions *m_Options;
 
 		//! Pack sync client
 		PackSyncClient* m_PackSyncClient;
 
-		//! Progress bar for the GUI
-		CEGUI::ProgressBar* m_ProgressBar;
 
 	};
 

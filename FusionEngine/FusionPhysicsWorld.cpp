@@ -661,7 +661,7 @@ namespace FusionEngine
 					// --Dimitrios Christopoulos's Solution--
 					Vector2 pb1,pb2,dpos,U1x,U1y,U2x,U2y,V1x,V1y,V2x,V2y,
 						vf1,vf2;
-					double a,b;
+					float a,b;
 
 					dpos=(b2_pos-b1_pos).normalized();  // Find X-Axis (delta-position, normalized)
 					a=dpos.dot(v1);                     // Find Projection

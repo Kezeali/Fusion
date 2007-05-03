@@ -33,6 +33,10 @@
 #pragma once
 #endif
 
+//! XML version to write to the xml declaration of new files
+#define XML_STANDARD "1.0"
+
+
 #include "Common.h"
 
 #include "FusionVector2.h"
@@ -42,14 +46,21 @@
 //#include <boost/function.hpp>
 //#include <boost/bind.hpp>
 
+// TinyXML
+//#define TIXML_USE_STL
+#include "../tinyxml/tinyxml.h"
+
 // AngelScript
-//#define AS_USE_NAMESPACE
+//not #define AS_USE_NAMESPACE
 #include "angelscript.h"
 
+//! \todo Load exception error messages from XML
 namespace FusionEngine
 {
+
 	//! Ratio of degrees to radians
 	static const double g_DegToRad = M_PI/180.0f;
+	//! Ratio of radians to degrees
 	static const double g_RadToDeg = 180.0f/M_PI;
 
 	////////////////////////
@@ -163,12 +174,14 @@ namespace FusionEngine
 	class Error;
 	class Logger;
 	class Console;
+	class LoadingState;
 	class ClientLoadingState;
 	class ServerLoadingState;
 	class ClientLoadingSyncCallback;
 	class ServerLoadingSyncCallback;
 	class PackSyncClient;
 	class PackSyncServer;
+	class LoadingStage;
 
 
 	///////////////

@@ -110,8 +110,8 @@ namespace FusionEngine
 		//! The underlying network interface (serverside, but it's really just a RakPeer...)
 		RakServerInterface *m_RakServer;
 
-		//! Map of local player indexes, indexed by RakNet PlayerIDs
-		PlayerIDMap m_PlayerIDMap;
+		//! Map of local player indexes, indexed by RakNet SystemAddresss
+		SystemAddressMap m_SystemAddressMap;
 
 	protected:
 		// Send implementation

@@ -84,7 +84,7 @@ unsigned int FusionMessage::GetLength() const
 	return m_Length;
 }
 
-const PlayerID FusionMessage::GetPlayerID() const
+const SystemAddress FusionMessage::GetSystemAddress() const
 {
-	return m_PlayerID;
+	return m_SystemAddress;
 }

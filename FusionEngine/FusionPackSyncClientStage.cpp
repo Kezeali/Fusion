@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,38 +18,50 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+		
+		
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
-#include "FusionState.h"
-
-
-#include "FusionStateMessage.h"
-#include "FusionError.h"
+#include "FusionPackSyncClientStage.h"
 
 namespace FusionEngine
 {
 
-	StateMessage *FusionState::PopMessage()
+	float PackSyncClientStage::Update(unsigned int split)
 	{
-		StateMessage *ret = m_Messages.front();
-		m_Messages.pop_front();
+		switch (m_Stage)
+		{
+		case PSCS_QUERY:
+			// Ask the server where the fileserver is...
+			m_Stage = PSCS_CONNECT;
+			break;
+		case PSCS_CONNECT:
+			// Wait for a reply with the fileserver address...
+			// Connect to the given address a reply is received...
+			m_Stage = PSCS_SYNC;
+			case 
 
-		return ret;
-	}
-
-	void FusionState::_pushMessage(StateMessage *m)
+	void PackSyncClientStage::OnFile(
+		unsigned fileIndex,
+		char *filename,
+		char *fileData,
+		unsigned compressedTransmissionLength,
+		unsigned finalDataLength,
+		unsigned short setID,
+		unsigned setCount,	
+		unsigned setTotalCompressedTransmissionLength,
+		unsigned setTotalFinalLength,
+		unsigned char context)
 	{
-		m_Messages.push_back(m);
-	}
-
-	void FusionState::SetBlocking(bool blocking) const
-	{
-		m_Blocking = blocking;
-	}
-
-	bool FusionState::IsBlocking() const
-	{
-		return m_Blocking;
+		if (setCount > 0)
+		{
+			m_Progress = fileIndex/setCount;
+		}
+		
 	}
 
 }

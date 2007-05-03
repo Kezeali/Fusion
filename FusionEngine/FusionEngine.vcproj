@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib RakNetLibStaticDebug.lib"
+				AdditionalDependencies="../tinyxml/tinyxmld_STL.lib ws2_32.lib RakNetLibStaticDebug.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -139,7 +139,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib RakNetLibStatic.lib"
+				AdditionalDependencies="../tinyxml/tinyxml_STL.lib ws2_32.lib RakNetLibStatic.lib"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -211,7 +211,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionConnectionManager.h"
+				RelativePath=".\FusionConnectionStage.h"
 				>
 			</File>
 			<File
@@ -291,15 +291,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLoadingException.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLoadingStage.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionLoadingState.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionLoadingTransferCallback.h"
 				>
 			</File>
 			<File
@@ -316,14 +316,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionMenu_Options.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionMessage.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionMessageBuilder.h"
 				>
 			</File>
 			<File
@@ -356,6 +348,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPackSyncClient.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPackSyncClientStage.h"
 				>
 			</File>
 			<File
@@ -569,7 +565,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionConnectionManager.cpp"
+				RelativePath=".\FusionConnectionStage.cpp"
 				>
 			</File>
 			<File
@@ -629,6 +625,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLoadingStage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLoadingState.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLog.cpp"
 				>
 			</File>
@@ -670,6 +674,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPackSyncClient.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPackSyncClientStage.cpp"
 				>
 			</File>
 			<File

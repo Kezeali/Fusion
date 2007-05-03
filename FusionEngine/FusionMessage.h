@@ -42,10 +42,10 @@ namespace FusionEngine
 		FusionMessage();
 		//! Constructor
 		FusionMessage(unsigned char *message, unsigned int length);
-		//! Constructor. +channel +type +playerID
-		FusionMessage(unsigned char channel, unsigned char type, PlayerID client);
-		//! Constructor. +channel +type +playerID +message +length
-		FusionMessage(unsigned char channel, unsigned char type, PlayerID client, unsigned char *message, unsigned int length);
+		//! Constructor. +channel +type +SystemAddress
+		FusionMessage(unsigned char channel, unsigned char type, SystemAddress client);
+		//! Constructor. +channel +type +SystemAddress +message +length
+		FusionMessage(unsigned char channel, unsigned char type, SystemAddress client, unsigned char *message, unsigned int length);
 		//! virtual Destructor
 		virtual ~FusionMessage();
 
@@ -69,8 +69,8 @@ namespace FusionEngine
 		//! Returns the length of the data
 		unsigned int GetLength() const;
 
-		//! Read PlayerID
-		PlayerID GetObjectID() const;
+		//! Read SystemAddress
+		SystemAddress GetObjectID() const;
 
 	private:
 		//! The client from whence it came
@@ -80,7 +80,7 @@ namespace FusionEngine
 		 * know what ship/object to apply a message to it looks at the ID stored
 		 * in the received data.
 		 */
-		PlayerID m_ClientID;
+		SystemAddress m_ClientID;
 
 		//! Data length
 		unsigned int m_Length;

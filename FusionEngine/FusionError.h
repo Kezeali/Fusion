@@ -48,9 +48,9 @@ namespace FusionEngine
 		//! Types of errors
 		enum ErrorType
 		{
-			//! None / trivial
-			NONE = 0,
-			//! An internal error of unspecified (but critical) type
+			//! Trivial
+			TRIVIAL = 0,
+			//! An internal error of unspecified type
 			INTERNAL_ERROR,
 			//! Disconnected for some (unusual) reason
 			UNEXPECTED_DISCONNECT,
@@ -66,6 +66,8 @@ namespace FusionEngine
 			FILE_NOT_FOUND,
 			//! Logger error (obviously these won't be logged!)
 			LOGFILE_ERROR,
+			//! Generic error within a loading stage or the loader itself
+			LOADING,
 			//! The method being called is not implemented
 			NOT_IMPLEMENTED
 		};
@@ -74,7 +76,7 @@ namespace FusionEngine
 		//! Basic constructor
 		Error();
 		//! Constructor +type +message
-		Error(ErrorType type, const std::string &message);
+		Error(ErrorType type, const std::string &message, bool critical = false);
 
 	public:
 		//! Retrieves the type (of the error which caused the unexpected quit.)
@@ -86,12 +88,15 @@ namespace FusionEngine
 		 * which redefines that as GetMessageW!
 		 */
 		const std::string& GetError() const;
+		//! Returns true if the error type of this error object is severe
+		bool IsCritical() const;
 
 	protected:
 		//! Stores the error type
 		ErrorType m_Type;
 		//! Stores the message
 		std::string m_Message;
+		bool m_Critical;
 
 	};
 

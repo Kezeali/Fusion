@@ -86,9 +86,6 @@ namespace FusionEngine
 		 */
 		void _pushMessage(StateMessage *m);
 
-		//! Returns the most recent abort message encountered
-		Error *GetLastError() const;
-
 		//! Sets the blocking mode for this state
 		void SetBlocking(bool blocking) const;
 
@@ -98,8 +95,6 @@ namespace FusionEngine
 	protected:
 		//! Messages to the state manager
 		MessageList m_Messages;
-		//! [depreciated] Last error
-		Error *m_LastError;
 		//! If this is true, queued states won't become active (automaticaly, that is) until this state is removed
 		bool m_Blocking;
 

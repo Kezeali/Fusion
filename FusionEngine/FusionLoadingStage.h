@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ClientLoadingState
-#define Header_FusionEngine_ClientLoadingState
+#ifndef Header_FusionEngine_LoadingStage
+#define Header_FusionEngine_LoadingStage
 
 #if _MSC_VER > 1000
 #pragma once
@@ -35,30 +35,11 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
-#include "FusionState.h"
-
-#include "FusionLoadingTransferCallback.h"
-
-#include <RakNet/RakClientInterface.h>
-#include <RakNet/FileListTransfer.h>
-#include <RakNet/FileListTransferCBInterface.h>
-
-#include <CEGUI/CEGUI.h>
-
 
 namespace FusionEngine
 {
 
-	//! Syncs packages, loads data, shows gui.
-	/*!
-	 * \todo
-	 * Some sort of FusionState based singleton wrapper for RakClientInterface and
-	 * RakServerInterface which can create, store and destroy the peer from
-	 * loading till quiting. This could wrap functions, or just allow access directly
-	 * to the RakNet class in question. ClientLoadingState, ServerLoadingState,
-	 * FusionNetworkClient, and FusionNetworkServer would all use one of these two
-	 */
+	//! A specific stage within the loading process
 	class LoadingStage
 	{
 	public:
@@ -70,16 +51,54 @@ namespace FusionEngine
 
 	public:
 		//! Initialise
-		bool Initialise();
+		virtual bool Initialise()=0;
 		//! Update
-		bool Update(unsigned int split);
-		//! Draw
-		void Draw();
+		/*!
+		 * \returns
+		 * Returns the current progress.
+		 */
+		virtual float Update(unsigned int split)=0;
 		//! CleanUp
-		void CleanUp();
+		virtual void CleanUp()=0;
+
+		const std::string& GetName() const
+		{
+			return m_Name;
+		}
+
+		const std::string& GetDescription() const
+		{
+			return m_Description;
+		}
+
+		//! Returns the current progress
+		float GetProgress() const
+		{
+			return m_Progress;
+		}
+
+		//! Returns true if this stage is finished
+		bool IsDone() const
+		{
+			return m_Done;
+		}
+
+		bool Failed() const
+		{
+			return m_Failed;
+		}
 
 	protected:
+		//! Current loading progress (percent)
+		float m_Progress;
 
+		//! Set to true if this stage is finsihed
+		bool m_Done;
+		//! Set to true if this stage failed
+		bool m_Failed;
+
+		std::string m_Name;
+		std::string m_Description;
 
 	};
 

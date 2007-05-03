@@ -38,30 +38,47 @@
 /// Inherited
 #include "FusionState.h"
 
-#include "FusionLoadingTransferCallback.h"
-
-#include <RakNet/RakClientInterface.h>
-#include <RakNet/FileListTransfer.h>
-#include <RakNet/FileListTransferCBInterface.h>
-
-#include <CEGUI/CEGUI.h>
+#include "FusionLoadingStage.h"
+#include "FusionLoadingException.h"
 
 
 namespace FusionEngine
 {
 
+	//! Shared ptr for stages
+	typedef CL_SharedPtr<LoadingStage> SharedStage;
+
 	//! Basic LoadingStage manager
 	/*!
-	 * Can be used to make an extendable loader. May be implemented later.
-	 * For now, loading states just use an enum and switch-cases to manage loading stages
+	 * Can be used to make an extendable loader. Implementations must define 
+	 * FusionState#Initialise(), FusionState#Draw() and FusionState#CleanUp().
+	 * FusionState#Update() is defined, and runs the loading stage manager.
+	 *
+	 * \remarks
+	 * Just something to think about:
+	 * <code>
+	 *  if (myPtr)
+	 *	{
+	 *		//Execute normally
+	 *	}
+	 *	// if the active stage ptr. is null, something bad has happened (probably...)
+	 *	else
+	 *	{
+	 *		// I like this sort of wording, it gives me that warm fuzzy feeling
+	 *		std::string message = CL_String::format(
+	 *			"Loading stage object destroyed prematurely.\n\n%1", e.GetError()
+	 *			);
+	 *		// ... yep, that's some ter-meen-lologgy for ya
+	 *		throw Error(Error::INTERNAL_ERROR, message, true);
+	 *	}
+	 * </code>
+	 * hmmm...
 	 */
 	class LoadingState : public FusionState
 	{
 	public:
 		//! A queue of loading stages to execute
-		typedef std::deque<LoadingStage> StageQueue;
-		//! Shared ptr for stages
-		typedef CL_SharedPtr<LoadingStage> SharedStage;
+		typedef std::deque<SharedStage> StageQueue;
 
 	public:
 		//! Constructor
@@ -71,22 +88,52 @@ namespace FusionEngine
 		~LoadingState();
 
 	public:
-		//! Adds a loaing stage to this loader
-		void AddLoaingStage(SharedStage stage);
+		//! Adds a loading stage to this loader
+		void AddLoadingStage(SharedStage stage);
 
-		//! Initialise
-		bool Initialise();
-		//! Update
+		//! Removes a loading stage from the queue
+		void RemoveLoadingStage(SharedStage stage);
+
+		//! Recalculates the progress per stage scale
+		/*!
+		 * This should be called after all loading stages have been added, and before
+		 * Update() is called.
+		 */
+		void RecalculateProgressScale();
+
+		//! Removes all states (including queued)
+		void Clear();
+
+		//! Implementation of FusionState#Update()
 		bool Update(unsigned int split);
-		//! Draw
-		void Draw();
-		//! CleanUp
-		void CleanUp();
 
 
 	protected:
 		//! Loading stages currently queued
-		StageQueue m_LoadingStages;
+		StageQueue m_Stages;
+
+		//! The stage being executed
+		SharedStage m_ActiveStage;
+
+		//! Overall progress of the load
+		float m_Progress;
+		//! Progress scaler
+		/*!
+		 * The ratio to which the progress of each stage is scaled before it
+		 * is applied to the overall progress.
+		 */
+		float m_StageProgressScale;
+
+		//! True if the loader has finished (e.g. when all stages are complete)
+		bool m_Finished;
+
+	protected:
+		//! Initilises the next stage and sets it as active
+		/*! 
+		 * Does not do anything with the previously active stage, so that stage's
+		 * LoadingStage#CleanUp() should be called before this is called.
+		 */
+		void runNextStage();
 
 	};
 

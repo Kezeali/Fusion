@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,6 +18,12 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+		
+		
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
 #include "FusionStateManager.h"
@@ -32,12 +38,9 @@ namespace FusionEngine
 	StateManager::~StateManager()
 	{
 		Clear();
-
-		if (m_LastError)
-			delete m_LastError;
 	}
 
-	bool StateManager::SetExclusive(FusionState *state)
+	bool StateManager::SetExclusive(SharedState state)
 	{
 		// Try to initialise the new state
 		if (!state->Initialise())
@@ -55,8 +58,8 @@ namespace FusionEngine
 		}
 
 		// Add the new state if it managed to init.
-		SharedState state_spt(state);
-		m_States.push_back(state_spt);
+		//SharedState state_spt(state);
+		m_States.push_back(state);
 
 		return true;
 	}
@@ -128,8 +131,8 @@ namespace FusionEngine
 		StateList::iterator it;
 		for (it = m_States.begin(); it != m_States.end(); ++it)
 		{
-			// Compare pointers (note use of CL_SharedPtr::get())
-			if ((*it).get() == state.get())
+			// Compare pointers
+			if ((*it) == state)
 			{
 				(*it)->CleanUp();
 				m_States.erase(it);
@@ -251,15 +254,17 @@ namespace FusionEngine
 			} // while (m != 0)
 
 			// Try to update the state
-			if ((*it)->Update(split) == false)
+			if (!(*it)->Update(split))
 			{
-				// If the state fails to update:
-				//  Record the error
-				m_LastError = (*it)->GetLastError();
+				// Clean up
+				Clear();
+
+				throw Error(Error::INTERNAL_ERROR, "A subsystem exited uncleanly");
+
 				//  Tell the state to clean up
-				(*it)->CleanUp();
+				//(*it)->CleanUp();
 				//  Remove the state and jump to the next iteration
-				it = m_States.erase(it);
+				//it = m_States.erase(it);
 			}
 		}
 

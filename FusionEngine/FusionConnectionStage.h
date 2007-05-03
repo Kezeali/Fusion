@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ClientLoadingState
-#define Header_FusionEngine_ClientLoadingState
+#ifndef Header_FusionEngine_ConnectionStage
+#define Header_FusionEngine_ConnectionStage
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,59 +36,56 @@
 #include "FusionCommon.h"
 
 /// Inherited
-#include "FusionLoadingState.h"
+#include "FusionLoadingStage.h"
 
+#include "FusionLoadingException.h"
 
-#include <CEGUI/CEGUI.h>
+#include <RakNet/RakPeerInterface.h>
 
 
 namespace FusionEngine
 {
 
-	//! Syncs packages, loads data, shows gui.
-	/*!
-	 * \todo
-	 * Some sort of FusionState based singleton wrapper for RakClientInterface and
-	 * RakServerInterface which can create, store and destroy the peer from
-	 * loading till quiting. This could wrap functions, or just allow access directly
-	 * to the RakNet class in question. ClientLoadingState, ServerLoadingState,
-	 * FusionNetworkClient, and FusionNetworkServer would all use one of these two
-	 */
-	class ClientLoadingState : public LoadingState
+	//! Could be useful...
+	int g_DefaultTimeout = 2000;
+
+	//! Connects the given peer to the given server
+	class ConnectionStage : public LoadingStage
 	{
 	public:
+		//! Stages during loading
+		enum CLSStage { CS_STARTUP = 0, CS_CONNECTING = 50, CS_DONE = 100 };
+
+	public:
 		//! Constructor
-		ClientLoadingState(RakPeerInterface* peer, const std::string& host, unsigned short port, ClientOptions* options);
+		ConnectionStage(RakPeerInterface* peer, const char* address, unsigned short port, unsigned short localPort, unsigned short maxConnections, int threadSleep, int timeout);
 
 		//! Destructor
-		~ClientLoadingState();
+		~ConnectionStage();
 
 	public:
 		//! Initialise
 		bool Initialise();
 		//! Update
-		bool Update(unsigned int split);
-		//! Draw
-		void Draw();
+		float Update(unsigned int split);
 		//! CleanUp
 		void CleanUp();
 
+		//! Sets the connection timeout
+		void SetTimeout(int time);
+		//! Returns connection timeout
+		int GetTimeout() const;
+
 	protected:
-		//! Peer to make the main connection on
-		RakPeerInterface* m_MainConnection;
-
-		//! Host to connect to
-		std::string m_Host;
-		//! Port on the host
-		unsigned short m_Port;
-		//! Options
-		ClientOptions *m_Options;
-
-		//! Pack sync client
-		PackSyncClient* m_PackSyncClient;
-
-		//! Progress bar for the GUI
-		CEGUI::ProgressBar* m_ProgressBar;
+		RakPeerInterface* m_Connection;
+		const char* m_Address;
+		unsigned short m_RemotePort;
+		unsigned short m_LocalPort;
+		unsigned short m_MaxConnections;
+		int m_ThreadSleep;
+		CLSStage m_Stage;
+		int m_RunningTime;
+		int m_Timeout;
 
 	};
 

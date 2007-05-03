@@ -49,7 +49,7 @@ void FusionNetworkServer::run()
 		if (!grabEvents(p))
 		{
 			PlayerIndex pind = (PlayerIndex)p->PlayerIndex;
-			FusionMessage *m = MessageBuilder::BuildMessage(p, m_PlayerIDMap[pind]);
+			FusionMessage *m = MessageBuilder::BuildMessage(p, m_SystemAddressMap[pind]);
 			m_Queue->_addInMessage(m, m->GetChannel());
 		}
 

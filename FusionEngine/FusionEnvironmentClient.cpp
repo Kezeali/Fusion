@@ -200,7 +200,7 @@ namespace FusionEngine
 
 			for (unsigned int i =0; i<m_Options->NumPlayers; i++)
 			{
-				FusionShip* currentShip = m_Ships[m_PlayerIDs[i]];
+				FusionShip* currentShip = m_Ships[m_SystemAddresses[i]];
 
 				// Send local ship states
 				// -Check whether an update is necessary for the current ship:
@@ -215,13 +215,13 @@ namespace FusionEngine
 
 				// ... And local input states
 				//  Check whether an update is necessary for the current ship:
-				if (m_Ships[m_PlayerIDs[i]]->InputHasChanged())
+				if (m_Ships[m_SystemAddresses[i]]->InputHasChanged())
 				{
-					m_Ships[m_PlayerIDs[i]]->_inputSynced(); 
+					m_Ships[m_SystemAddresses[i]]->_inputSynced(); 
 					m_MessagesSent++;
 
 					FusionMessage *m = MessageBuilder::BuildMessage(
-						m_Ships[m_PlayerIDs[i]]->GetInputState(), m_PlayerIDs[i]
+						m_Ships[m_SystemAddresses[i]]->GetInputState(), m_SystemAddresses[i]
 					);
 					m_NetworkManager->QueueMessage(m, CID_GAME);
 				}

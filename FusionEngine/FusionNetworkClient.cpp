@@ -59,7 +59,7 @@ namespace FusionEngine
 			// If it wasn't queued as an event, we can deal with it.
 			if (!sysPacket)
 			{
-				// playerid is set to 0, as only the server needs to know that
+				// SystemAddress is set to 0, as only the server needs to know that
 				FusionMessage *m = MessageBuilder::BuildMessage(p, 0);
 				m_Queue->_addInMessage(m, m->GetChannel());
 			}

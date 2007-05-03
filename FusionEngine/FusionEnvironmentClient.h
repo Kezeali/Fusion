@@ -78,7 +78,7 @@ namespace FusionEngine
 	{
 	public:
 		//! A list of local player IDs (0 to g_MaxPlayers) 
-		typedef std::vector<ObjectID> LocalPlayerIdList;
+		typedef std::vector<ObjectID> LocalSystemAddressList;
 
 	public:
 		//! Basic constructor
@@ -120,7 +120,7 @@ namespace FusionEngine
 		int m_MaxHealth;
 
 		//! Player IDs of the local players
-		LocalPlayerIdList m_PlayerIDs;
+		LocalSystemAddressList m_SystemAddresses;
 
 	private:
 		//! Implimentation of GeneircEnvironment#Send

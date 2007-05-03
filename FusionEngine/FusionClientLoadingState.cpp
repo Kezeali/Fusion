@@ -37,10 +37,6 @@ namespace FusionEngine
 		m_PackSyncClient = new PackSyncClient(fsPeer, this);
 
 		m_ProgressBar = static_cast<ProgressBar*>(WindowManager::getSingleton().getWindow("Loading/Wind/ProgBar"));
-
-		SharedStage connect;
-
-		AddLoadingStage();
 	}
 
 	ClientLoadingState::~ClientLoadingState()
@@ -49,14 +45,25 @@ namespace FusionEngine
 
 	bool ClientLoadingState::Initialise()
 	{
-		m_Connection->Connect(m_Host.c_str(), m_Port, m_Options->mNetworkOptions.mLocalPort, 0, 0);
+		SharedStage connect(
+			new ConnectionStage(m_MainConnection, m_Host.c_str(), m_Port, m_Options->mNetworkOptions.mLocalPort, 0)
+			);
 
-		m_PackSyncClient->Initialise();
+		AddLoadingStage(connect);
+		//into ConnectionStage -> m_Connection->Connect(m_Host.c_str(), m_Port, m_Options->mNetworkOptions.mLocalPort, 0, 0);
+
+		//into PackSyncClientStage m_PackSyncClient->Initialise();
 	}
 
-	bool ClientLoadingState::Update(unsigned int split)
+	bool ClientLoadingState::Draw(unsigned int split)
 	{
-		
+		// Update the progress bar
+		m_ProgressBar
+
+		// Update the name-tag for this stage of loading
+
+		// Update the description for the progress within this stage
+
 
 		//switch (m_Stage)
 		//{
@@ -71,26 +78,6 @@ namespace FusionEngine
 		//case LOAD_DONE:
 		//	_pushMessage(new StateMessage(StateMessage::REMOVESTATE, this));
 		//}
-	}
-
-	void ClientLoadingState::OnFile(
-		unsigned fileIndex,
-		char *filename,
-		char *fileData,
-		unsigned compressedTransmissionLength,
-		unsigned finalDataLength,
-		unsigned short setID,
-		unsigned setCount,	
-		unsigned setTotalCompressedTransmissionLength,
-		unsigned setTotalFinalLength,
-		unsigned char context)
-	{
-		if (setCount > 0)
-		{
-			m_Progress += m_PerFileinc;
-			m_ProgressBar->setProgress(m_Progress);
-		}
-		
 	}
 
 }

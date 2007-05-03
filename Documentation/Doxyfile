@@ -111,7 +111,7 @@ FILE_PATTERNS          = *.c \
                          *.dox \
                          *.py
 RECURSIVE              = NO
-EXCLUDE                = 
+EXCLUDE                = ../FusionEngine/physfs.h
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = ./examples
@@ -244,7 +244,7 @@ CALL_GRAPH             = NO
 GRAPHICAL_HIERARCHY    = YES
 DIRECTORY_GRAPH        = NO
 DOT_IMAGE_FORMAT       = png
-DOT_PATH               = /usr/local/graphviz-local/bin
+DOT_PATH               = 
 DOTFILE_DIRS           = 
 MAX_DOT_GRAPH_WIDTH    = 1024
 MAX_DOT_GRAPH_HEIGHT   = 1024

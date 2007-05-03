@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,38 +18,35 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+		
+		
+	File Author(s):
+
+		Elliot Hayward
+
 */
 
-#include "FusionState.h"
+#ifndef Header_FusionEngine_LoadingException
+#define Header_FusionEngine_LoadingException
 
+#if _MSC_VER > 1000
+#pragma once
+#endif
 
-#include "FusionStateMessage.h"
-#include "FusionError.h"
+#include "FusionCommon.h"
 
 namespace FusionEngine
 {
 
-	StateMessage *FusionState::PopMessage()
+	//! Exception during loading
+	class LoadingException : public Error
 	{
-		StateMessage *ret = m_Messages.front();
-		m_Messages.pop_front();
-
-		return ret;
-	}
-
-	void FusionState::_pushMessage(StateMessage *m)
-	{
-		m_Messages.push_back(m);
-	}
-
-	void FusionState::SetBlocking(bool blocking) const
-	{
-		m_Blocking = blocking;
-	}
-
-	bool FusionState::IsBlocking() const
-	{
-		return m_Blocking;
-	}
+	public:
+		LoadingException(const std::string& message)
+			: Error(Error::LOADING, message)
+		{}
+	};
 
 }
+
+#endif

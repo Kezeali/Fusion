@@ -1,3 +1,30 @@
+/*
+  Copyright (c) 2006-2007 Fusion Project Team
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
+*/
 
 #include "FusionClientOptions.h"
 
@@ -95,12 +122,78 @@ namespace FusionEngine
 
 	bool ClientOptions::Save()
 	{
+		if (m_LastFile.empty())
+			return false;
+
 		return true;
 	}
 
 	bool ClientOptions::SaveToFile(const std::string &filename)
 	{
-		CL_DomDocument doc;
+		TiXMLDocument doc;
+
+		// Decl
+		TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
+		doc.LinkEndChild( decl ); 
+
+		// Root
+		TiXmlElement * root = new TiXmlElement("ClientOptions");  
+		doc.LinkEndChild( root );  
+
+		// block: player options
+		{
+			TiXmlElement* players = new TiXmlElement( "PlayerOptions" );  
+			root->LinkEndChild( msgs ); 
+
+			TiXmlElement* opt;
+
+			PlayerOptionsList::iterator it;
+
+			for (it=mPlayerOptions.begin(); it != mPlayerOptions.end(); ++it)
+			{
+				//??? should mPlayerOptions be a map? or should we iteratre by index (c-style) here?
+				const std::string& key = (*it).first;
+				const std::string& value = (*it).second;
+
+				opt = new TiXmlElement();  
+				opt->LinkEndChild( new TiXmlText(value.c_str()));  
+
+				players->LinkEndChild( opt );
+			}
+		}
+
+		// block: windows
+		{
+			TiXmlElement* windowsNode = new TiXmlElement( "Windows" );  
+			root->LinkEndChild( windowsNode );  
+
+			list<WindowSettings>::iterator iter;
+
+			for (iter=m_windows.begin(); iter != m_windows.end(); iter++)
+			{
+				const WindowSettings& w=*iter;
+
+				TiXmlElement* window;
+				window = new TiXmlElement( "Window" );  
+				windowsNode->LinkEndChild( window );  
+				window->SetAttribute("name", w.name.c_str());
+				window->SetAttribute("x", w.x);
+				window->SetAttribute("y", w.y);
+				window->SetAttribute("w", w.w);
+				window->SetAttribute("h", w.h);
+			}
+		}
+
+		// block: connection
+		{
+			TiXmlElement * cxn = new TiXmlElement( "Connection" );  
+			root->LinkEndChild( cxn );  
+			cxn->SetAttribute("ip", m_connection.ip.c_str());
+			cxn->SetDoubleAttribute("timeout", m_connection.timeout); 
+		}
+
+		doc.SaveFile(pFilename);  
+
 		return true;
 	}
 
