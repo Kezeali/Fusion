@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 	//! Max local (split-screen) players per client
-	static const unsigned int g_MaxPlayers = 4;
+	static const unsigned int g_MaxLocalPlayers = 4;
 
 	//! Settings specfic to each player
 	class PlayerOptions
@@ -53,6 +53,8 @@ namespace FusionEngine
 
 		//! Display the HUD for this player
 		bool mHUD;
+
+		std::string mName;
 	};
 
 	//! Settings for network related stuff.
@@ -111,7 +113,8 @@ namespace FusionEngine
 		NetworkSettings mNetworkOptions;
 
 		//! Set the controls for defaults
-		void DefaultPlayerControls(ObjectID player);
+		//! \todo Load default player controls from file (very low priority)
+		void DefaultPlayerControls(int player);
 		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
 

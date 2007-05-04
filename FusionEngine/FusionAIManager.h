@@ -45,10 +45,11 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Provides scripting support, and access to it, for all FusionEngine objects.
+	 * AI manager.
 	 *
-	 * \sa
-	 * Singleton
+	 * Lists and runs AIModules
+	 *
+	 * \sa ScriptingEngine | AIModule
 	 */
 	class AIManager
 	{
