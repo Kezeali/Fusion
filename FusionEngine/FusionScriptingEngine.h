@@ -100,7 +100,7 @@ namespace FusionEngine
 		 * Time the script can run before it's aborted. Default 1000 milis
 		 * \returns The exit status of the script (asEXECUTION_ABORTED for timeout)
 		 */
-		int ExecuteString(const std::string &script, const char *module, int *context, int timeout = 1000, int keep_context = false);
+		int ExecuteString(const std::string &script, const char *module, int *context, int timeout = 1000, bool keep_context = false);
 
 		//! Re-executes the given stored context
 		/*!

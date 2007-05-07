@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_AIManager
-#define Header_FusionEngine_AIManager
+#ifndef Header_FusionEngine_AIModule
+#define Header_FusionEngine_AIModule
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,53 +36,40 @@
 
 /// Fusion
 #include "FusionScript.h"
-#include "FusionScriptingEngine.h"
 
 namespace FusionEngine
 {
-
-	const g_ASConfigAI = "AIConfig";
-
 	/*!
 	 * \brief
-	 * AI manager.
+	 * Runs AI Scripts passing them a relavant ship ID
 	 *
-	 * Lists and runs AIModules
+	 * \todo Implement AI supplement system - AI scripts can be augmented by other specific scripts, for example, a basic
+	 *  "aggressive script could be used by any ship on any level, but a CTF level requires specific goals to be
+	 *  accomplished thus a goal-priority system will also have to be implemented.
+	 *  <code>if (getGoalPriority(20) >= getTopPriority()) // do something</code> PERHAPS
 	 *
-	 * \sa ScriptingEngine | AIModule
+	 * \todo Shared goals for team AI (etc.)
+	 *
+	 * \sa
+	 * Singleton
 	 */
-	class AIManager : public Singleton<AIManager>
+	class AIModule
 	{
 	public:
-		//! Creates an AI manager linked to the given scripting engine.
-		AIManager(ScriptingEngine *engine);
+		//! Creates an AI module for the given script and ship.
+		AIModule(Script* scr, ObjectID ship);
 
 	public:
-		void AddGoal(ObjectID group, int id, ObjectID target);
-		ObjectID GetGoal(ObjectID group, int id);
-		
-	private:
-		//! The scripting engine in use
-		ScriptingEngine* m_Engine;
+		//! Executes the ai script, passing the ship id
+		bool Run(unsigned int split);
 
-	private:
-		//! Registers global methods which scripts can use.
-		void registerAIConfiguration();
+		void AddGoal(int id, ObjectID data, std::string tag, GoalPriority priority = GoalPriority::MINIMUM);
+		void AddDecision(std::string tag, bool stay);
+
+	protected:
+		ObjectID m_Target;
 
 	};
-
-	//////////////////
-	// Script methods
-	void AI_AddDecision(ObjectID ship, const std::string& tag);
-	void AI_AddGoal(ObjectID ship, int id, ObjectID target);
-
-	void AI_GetGoal(ObjectID ship, int id);
-
-	void AI_GetCurrentWeapon(ObjectID ship);
-	void AI_GetCurrentAmmo(ObjectID ship);
-	void AI_GetCurrentHealth(ObjectID ship);
-	void AI_GetCurrentFacing(ObjectID ship);
-	void AI_GetNearestShip(ObjectID ship);
 
 }
 

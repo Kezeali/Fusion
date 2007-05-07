@@ -57,13 +57,46 @@ namespace FusionEngine
 			}
 			else
 			{
-				r = m_asEngine->RegisterGlobalFunction("AddDecision", asFUNCTION(AI_AddDecision), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("AddDecision", asFUNCTION(AI_AddDecisionG), asCALL_GENERIC); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForceG), asCALL_CDECL); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForceG), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("ApplyForce", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
 			}
 		}
 		r = asEngine->EndConfigGroup(); cl_assert( r >= 0 );
 	}
+
+
+	//////////////////
+	// Script methods
+	void AI_AddGoal(ObjectID ship, int id, ObjectID target)
+	{
+		AIManager* aiman = AIManager->getSingletonPtr();
+		if (aiman == 0)
+			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+		aiman->AddGoal(ObjectID ship, id, ObjectID target);
+	}
+
+	void AI_AddDecision(ObjectID ship, const std::string& tag)
+	{
+		AIManager* aiman = AIManager->getSingletonPtr();
+		if (aiman == 0)
+			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+		aiman->AddDecision(ObjectID ship, const std::string& tag);
+	}
+
+	ObjectID AI_GetGoal(ObjectID ship, int id);
+	{
+		AIManager* aiman = AIManager->getSingletonPtr();
+		if (aiman == 0)
+			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+		aiman->GetGoal(ObjectID ship, ObjectID target);
+	}
+
+	void AI_GetCurrentWeapon(ObjectID ship);
+	void AI_GetCurrentAmmo(ObjectID ship);
+	void AI_GetCurrentHealth(ObjectID ship);
+	void AI_GetCurrentFacing(ObjectID ship);
+	void AI_GetNearestShip(ObjectID ship);
 
 }

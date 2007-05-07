@@ -99,8 +99,8 @@ namespace FusionEngine
 			{
 				r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_CDECL); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16)", asFUNCTION(SCR_ApplyForceG), asCALL_CDECL); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
 			}
 		}
 		r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );

@@ -194,6 +194,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionAIModule.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionBitmask.cpp"
 				>
 			</File>
@@ -253,6 +257,14 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionAIManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionAIModule.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionAStar.h"
 				>
 			</File>
 			<File
