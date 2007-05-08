@@ -95,6 +95,16 @@ namespace FusionEngine
 		BodyList FindAdjacentBodies(FusionPhysicsBody *body);
 
 		/*!
+		 * \brief Finds bodies adjacent to the cell at the given co-ord
+		 *
+		 * \returns a STL vector of FusionPhysicsBodys
+		 */
+		BodyList FindAdjacentBodies(int x, int y);
+
+		//! Returns the contents of the cells adjacent to the cell at the given index
+		BodyList _findAdjacentBodies(int cell_index);
+
+		/*!
 		 * \brief Ensures a specific body will be updated when #Resort is called.
 		 *
 		 * Used internally by FusionPhysicsWorld when it moves a body.
@@ -108,10 +118,16 @@ namespace FusionEngine
 		//void _updateThis(int cgind);
 
 		/*!
-		 * Finds the correct position (i.e. vector index) within the collision grid
+		 * Finds the correct position (i.e. array index) within the collision grid
 		 * for a specific body.
 		 */
 		unsigned int _getGridPosition(FusionPhysicsBody *body);
+
+		/*!
+		 * Finds the correct position (i.e. array index) within the collision grid
+		 * for a specific x,y co-ord.
+		 */
+		unsigned int _getGridPosition(int x, int y);
 
 	protected:
 		//! The ratio of the grid coords to the physics world coords.

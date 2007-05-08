@@ -161,68 +161,71 @@ void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
 
 BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(FusionEngine::FusionPhysicsBody *body)
 {
-	BodyList bodies;
-	BodyList *node;
+	return _findAdjacentBodies(body->_getCGPos());
+}
 
-	int grid_pos = body->_getCGPos();
+BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(int x, int y)
+{
+	return _findAdjacentBodies(_getGridPosition(x, y));
+}
 
-	// Static objects (always returned) -- 2006/12/09: statics are now handled entirely by PhysicsWorld, so they don't bounce on contact!
-	//bodies.resize(m_Static.size());
-	//std::copy(m_Static.begin(), m_Static.end(), bodies.begin());
+BodyList FusionPhysicsCollisionGrid::_findAdjacentBodies(int cell_index)
+{
+	//! Number of cells accross/down from the given cell considered adjcent
+	static const int _adjStart = -1, _adjEnd = 1;
+	static const int _adjWidth = _adjEnd-_adjStart;
 
-	// Find adjacent cells and copy their data
-	//  Local cell:
-	node = &m_Grid[grid_pos];
+	int xStart, xEnd, yStart, yEnd, croppedWidth, croppedHeigth;
 
-	bodies.resize(bodies.size() + node->size());
-	std::copy(node->begin(), node->end(), bodies.begin());
 
-	//  Left Hand cell (only if this isn't the left edge):
-	if (grid_pos % m_GridWidth > 0)
+	// Constrain xStart+mid and xEnd+mid to the collision grid borders
+	xStart = fe_max(_adjStart, _adjStart - ((cell_index + _adjStart) % m_GridWidth));
+	xEnd = fe_min(_adjEnd, _adjEnd - ((cell_index+1 + _adjEnd) % m_GridWidth));
+
+	// Constrain yStart and yEnd to the collision grid borders
+	yStart = fe_max(_adjStart, -(int)(cell_index/m_GridWidth));
+	yEnd = fe_min(_adjEnd, m_GridHeight-(int)(cell_index/m_GridWidth));
+
+	// Constrained (cropped) width and height
+	croppedWidth = xEnd-xStart;
+	croppedHeigth = yEnd-yStart;
+
+
+	// Size for each adjacent cell, aggregateSize
+	// (notice max width&height, not cropped values, for safety)
+	int size[_adjWidth*_adjWidth], aggrSize = 0;
+
+	// ??? What's faster, checking how big the list needs to be then allocating
+	//  and assigning it (in two loops - i.e. the method implemented below),
+	//  or dynamicaly resizing it as necessary while assigning it in one loop?
+	for (int y = yStart; y < yEnd; y++)
 	{
-		node = &m_Grid[grid_pos - 1];
+		for (int x = xStart; x < xEnd; x++)
+		{
+			int xy_pos = cell_index + y * m_GridWidth + x;
+			int s = m_Grid[xy_pos].size();
 
-		// Store the length before resize
-		size_t length = bodies.size();
-
-		bodies.resize(bodies.size() + node->size());
-		std::copy(node->begin(), node->end(), bodies.begin() + length);
+			size[y*_adjWidth+x] = s;
+			aggrSize += s;
+		}
 	}
 
-	//  Right Hand cell:
-	if ((grid_pos + 1) % m_GridWidth > 0)
+	// Create a container of the calculated size
+	BodyList bodies(aggrSize);
+
+	BodyList::iterator dest_it = bodies.begin();
+	for (int y = yStart; y < yEnd; y++)
 	{
-		node = &m_Grid[grid_pos + 1];
+		for (int x = xStart; x < xEnd; x++)
+		{
+			int xy_pos = cell_index + y * m_GridWidth + x;
+			BodyList* source_cell = &m_Grid[xy_pos];
 
-		// Store the length before resize
-		size_t length = bodies.size();
+			std::copy(source_cell->begin(), source_cell->end(), dest_it);
 
-		bodies.resize(bodies.size() + node->size());
-		std::copy(node->begin(), node->end(), bodies.begin() + length);
-	}
-
-	//  Cell above:
-	if (grid_pos >= m_GridWidth)
-	{
-		node = &m_Grid[grid_pos - m_GridWidth];
-		
-		// Store the length before resize
-		size_t length = bodies.size();
-
-		bodies.resize(bodies.size() + node->size());
-		std::copy(node->begin(), node->end(), bodies.begin() + length);
-	}
-
-	//  Cell below:
-	if (grid_pos < m_GridWidth * (m_GridHeight -1))
-	{
-		node = &m_Grid[grid_pos + m_GridWidth];
-		
-		// Store the length before resize
-		size_t length = bodies.size();
-
-		bodies.resize(bodies.size() + node->size());
-		std::copy(node->begin(), node->end(), bodies.begin() + length);
+			// Record the current position in the list
+			dest_it += size[y*_adjWidth+x];
+		}
 	}
 
 	return bodies;
@@ -247,9 +250,16 @@ void FusionPhysicsCollisionGrid::_updateThis(int cgind)
 
 unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPhysicsBody *body)
 {
-	unsigned int pos, x, y;
-	x = unsigned int(body->GetPosition().x * m_GridScale);
-	y = unsigned int(body->GetPosition().y * m_GridScale);
+	unsigned int x, y;
+	x = (unsigned int)(body->GetPosition().x * m_GridScale);
+	y = (unsigned int)(body->GetPosition().y * m_GridScale);
+
+	return _getGridPosition(x, y);
+}
+
+unsigned int FusionPhysicsCollisionGrid::_getGridPosition(int x, int y)
+{
+	unsigned int pos;
 
 	pos = y * m_GridWidth + x;
 

@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../tinyxml/tinyxmld_STL.lib ws2_32.lib RakNetLibStaticDebug.lib"
+				AdditionalDependencies="../tinyxml/tinyxmld_STL.lib ws2_32.lib RakNetLibStaticDebug.lib opensteerd.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"

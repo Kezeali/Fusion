@@ -112,6 +112,12 @@ namespace FusionEngine
 		//! Detonate the given projectile
 		virtual void DetonateProjectile(ObjectID index);
 
+		//! Returns the ship corresponding to the given ObjectID
+		virtual const FusionShip* GetShip(ObjectID index);
+
+		//! Returns the projectile corresponding to the given ObjectID
+		virtual const FusionProjectile* GetProjectile(ObjectID index);
+
 		//! Returns a list of projectiles
 		virtual const ProjectileList& GetProjectileList() const;
 

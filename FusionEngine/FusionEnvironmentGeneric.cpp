@@ -6,7 +6,18 @@ namespace FusionEngine
 
 	void GenericEnvironment::DetonateProjectile(ObjectID index)
 	{
-		ResourceLoader::getSingletonPtr()-> m_WeaponResources[index];
+		WeaponResource *rsc = 
+			ResourceLoader::getSingletonPtr()->GetWeaponResource(m_WeaponResources[index]);
+	}
+
+	const FusionShip* GenericEnvironment::GetShip(ObjectID index)
+	{
+		return m_Ships[index];
+	}
+
+	const FusionProjectile* GenericEnvironment::GetProjectile(ObjectID index)
+	{
+		return m_Projectiles[index];
 	}
 
 	void GenericEnvironment::limitFrames(unsigned int split)
