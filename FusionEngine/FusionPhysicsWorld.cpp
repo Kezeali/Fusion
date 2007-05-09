@@ -802,7 +802,7 @@ namespace FusionEngine
 	{
 		Clear();
 
-		m_CollisionGrid->SetScale(g_PhysGridScale, level_x, level_y);
+		m_CollisionGrid->SetCellSize(g_PhysGridCellW, g_PhysGridCellH, level_x, level_y);
 
 		m_Width = level_x;
 		m_Height = level_y;
@@ -874,6 +874,11 @@ namespace FusionEngine
 	int FusionPhysicsWorld::GetBitmaskRes() const
 	{
 		return m_BitmaskRes;
+	}
+
+	const FusionPhysicsCollisionGrid* FusionPhysicsWorld::GetCollisionGrid() const
+	{
+		return m_CollisionGrid;
 	}
 
 }

@@ -39,7 +39,8 @@
 namespace FusionEngine
 {
 
-	static const float g_PhysGridScale = 0.01f;
+	static const int g_PhysGridCellW = 128;
+	static const int g_PhysGridCellH = 128;
 	static const float g_PhysCollisionJump = 0.25f;
 
 	//! Represents a collision
@@ -325,6 +326,8 @@ namespace FusionEngine
 		void SetBitmaskRes(int ppb);
 		//! Returns the scale bodies should use for their bitmasks
 		int GetBitmaskRes() const;
+
+		const FusionPhysicsCollisionGrid* GetCollisionGrid() const;
 
 	private:
 		//! All physical objects controled by this world.

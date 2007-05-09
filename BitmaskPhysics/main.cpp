@@ -2,6 +2,7 @@
 #include "..\FusionEngine\FusionCommon.h"
 
 #include "..\FusionEngine\FusionBitmask.h"
+#include "..\FusionEngine\FusionPhysicsCollisionGrid.h"
 #include "..\FusionEngine\FusionPhysicsWorld.h"
 #include "..\FusionEngine\FusionPhysicsBody.h"
 #include "..\FusionEngine\FusionPhysicsUtils.h"
@@ -153,7 +154,7 @@ class BitmaskTest : public CL_ClanApplication
 		m_World = new FusionPhysicsWorld();
 		m_World->Initialise(1024, 580);
 		m_World->SetMaxVelocity(20);
-		m_World->SetBodyDeactivationPeriod(20000);
+		m_World->SetBodyDeactivationPeriod(10000);
 		m_World->SetDeactivationVelocity(0.05f);
 		m_World->SetBitmaskRes(2);
 		m_World->DeactivateWrapAround();
@@ -367,6 +368,8 @@ class BitmaskTest : public CL_ClanApplication
 
 			if (debug)
 			{
+				m_World->GetCollisionGrid()->DebugDraw();
+
 				m_TerrainBitmask->DisplayBits(
 					m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y);
 

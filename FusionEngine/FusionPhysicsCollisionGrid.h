@@ -40,8 +40,8 @@ namespace FusionEngine
 
 		//! Constructor
 		FusionPhysicsCollisionGrid();
-		//! Constructor + initialiser
-		FusionPhysicsCollisionGrid(float scale, int level_x, int level_y);
+		//! Constructor + initialization
+		FusionPhysicsCollisionGrid(int cell_w, int cell_h, int level_x, int level_y);
 		//! Destructor
 		~FusionPhysicsCollisionGrid();
 
@@ -72,8 +72,9 @@ namespace FusionEngine
 		//! Moves bodies which have marked themselves as needing an update.
 		void Resort();
 		/*!
-		 * \brief Sets the grid scale.
+		 * \brief [depreciated], use SetCellSize().
 		 *
+		 * Sets the grid scale.
 		 * The level dimensions must be provided to work out the new grid
 		 * dimensions.
 		 *
@@ -83,8 +84,25 @@ namespace FusionEngine
 		 * \param level_x Self explanatory.
 		 */
 		void SetScale(float scale, int level_x, int level_y);
-		//! Retreives the scale property.
-		float GetScale() const;
+		//! [depreciated] Retreives the length of the scale vector.
+		float GetScale() const { assert(0); }
+
+		/*!
+		 * \brief Sets the grid scale.
+		 *
+		 * The level dimensions must be provided to work out the new grid
+		 * dimensions.
+		 *
+		 * \param cell_w
+		 * The width of each cell in pixels.
+		 *
+		 * \param level_x Self explanatory.
+		 */
+		void SetCellSize(int cell_w, int cell_h, int level_x, int level_y);
+		//! Get cell width property
+		int GetCellWidth() const;
+		//! Get cell height property
+		int GetCellHeight() const;
 		/*!
 		 * \brief Checks for bodies which may collide with the given body.
 		 *
@@ -99,10 +117,15 @@ namespace FusionEngine
 		 *
 		 * \returns a STL vector of FusionPhysicsBodys
 		 */
-		BodyList FindAdjacentBodies(int x, int y);
+		BodyList FindAdjacentBodies(float x, float y);
 
-		//! Returns the contents of the cells adjacent to the cell at the given index
-		BodyList _findAdjacentBodies(int cell_index);
+		/*!
+		 * \brief
+		 * Returns the contents of the cells adjacent to the cell at the given index
+		 *
+		 * x and y are passed to optimise preformance
+		 */
+		BodyList _findAdjacentBodies(int x, int y, int cell_index);
 
 		/*!
 		 * \brief Ensures a specific body will be updated when #Resort is called.
@@ -121,17 +144,29 @@ namespace FusionEngine
 		 * Finds the correct position (i.e. array index) within the collision grid
 		 * for a specific body.
 		 */
-		unsigned int _getGridPosition(FusionPhysicsBody *body);
+		unsigned int _getGridPosition(FusionPhysicsBody *body) const;
 
 		/*!
 		 * Finds the correct position (i.e. array index) within the collision grid
 		 * for a specific x,y co-ord.
 		 */
-		unsigned int _getGridPosition(int x, int y);
+		unsigned int _getGridPosition(float x, float y) const;
+
+		//! Converts the given x ord grid scale
+		inline unsigned int _scaleX(float x) const;
+		//! Converts the given y ord grid scale
+		inline unsigned int _scaleY(float y) const;
+
+		//! Converts the given grid co-ord to an array index
+		inline int _getIndex(int gx, int gy) const;
+
+		void DebugDraw() const;
 
 	protected:
+		//! Cell width and height
+		int m_CellWidth, m_CellHeight;
 		//! The ratio of the grid coords to the physics world coords.
-		float m_GridScale;
+		double m_GridXScale, m_GridYScale;
 		//! The dimensions of the grid.
 		int m_GridWidth, m_GridHeight;
 		//! [depreciated] All bodies which have been added are listed here, for resort purposes.
