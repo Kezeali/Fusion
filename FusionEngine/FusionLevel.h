@@ -7,7 +7,7 @@
 
 #include "FusionCommon.h"
 
-#include "../micropather/micropather.h"
+#include "micropather.h"
 
 /// Fusion
 #include "FusionPhysicsBody.h"
