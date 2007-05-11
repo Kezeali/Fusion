@@ -26,41 +26,25 @@ namespace FusionEngine
 	 * need your so-called object-orentation and morals!... On a lighter note,
 	 * this todo is kinda long, I wonder if Doxygen will still use it...
 	 *
-	 * \remarks
-	 * An instance of this object looks after each ship in the scene.
+	 * \sa
+	 * FusionShip | ShipResource
 	 */
 	class FusionShipDrawable : public FusionDrawable
 	{
 	public:
 		//! Constructor
-		FusionShipDrawable();
+		FusionShipDrawable(const std::string& resource_id);
 		//! Destructor
 		~FusionShipDrawable();
 
 	public:
-		/*!
-		 * \brief
-		 * [depreciated] This is now done by FusionShip#SetPosition
-		 *
-		 * Moves the ship and all its attached accessories.
-		 *
-		 * This function is only used on client-side, as it is used to ensure
-		 * weapons / engines update their absolute positions for drawing. The server doesn't
-		 * care about drawing weapons / engines - only their relative positions for fireing,
-		 * and whether they are still attached, which are stored in ShipResource and ShipState
-		 * respectively.
-		 *
-		 * \sa
-		 * FusionScene | FusionNode | FusionShip | ShipState | ShipResource
-		 */
-		//void UpdateNode();
-
-		//! Sets the image this drawable should draw
+		//! Maybe [depreciated] Sets the image this drawable should draw
 		void SetImage(CL_Surface *image);
 
-		////! Allows the FusionShip to set the resourceid for this drawable
-		//void SetResource(const std::string &resid);
+		//! Sets the resourceid for this drawable
+		void SetResource(const std::string &resid);
 
+		//! Draws
 		virtual void Draw();
 
 	protected:
@@ -75,8 +59,8 @@ namespace FusionEngine
 		//! Allows the ship drawable to access the relavant ShipResource
 		//ClientEnvironment *m_Env;
 
-		//! Resource (sent by FusionShip)
-		//std::string m_ResourceID;
+		//! Resource
+		std::string m_ResourceID;
 	};
 
 }

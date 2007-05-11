@@ -3,8 +3,6 @@
 #include "FusionResourceLoader.h"
 
 /// Fusion
-#include "FusionArchive.h"
-
 #include "FusionPaths.h"
 
 namespace FusionEngine

@@ -283,6 +283,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLevelDrawable.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLevelRegion.h"
 				>
 			</File>
@@ -546,6 +550,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionAIManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionAStarGraph.cpp"
 				>
 			</File>
 			<File

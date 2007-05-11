@@ -1,4 +1,4 @@
-#ifndef Header_FusionEngine_ResourceLoader
+  #ifndef Header_FusionEngine_ResourceLoader
 #define Header_FusionEngine_ResourceLoader
 
 #if _MSC_VER > 1000

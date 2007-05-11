@@ -58,8 +58,9 @@ namespace FusionEngine
 	 * ApplyEngineForce(uint16)
 	 * \endcode
 	 *
-	 * \todo Make sure object IDs are created outside the PID range,
-	 *  else SCR_ApplyEngineForce() wont work!
+	 * \todo Store engine force such that this method can be applied directly
+	 * to the physical body (so we don't have to search for the given ID - we
+	 * just get the physical body corresponding to that ID from a map).
 	 *
 	 * \param index
 	 * The index of the object

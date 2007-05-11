@@ -7,12 +7,14 @@
 
 #include "FusionCommon.h"
 
+#include "../micropather/micropather.h"
+
 /// Fusion
 #include "FusionPhysicsBody.h"
 
 namespace FusionEngine
 {
-	//! Ease of storage for holes. Not used ATM.
+	//! Ease of storage for holes.
 	struct Hole
 	{
 		//! x loc
@@ -33,11 +35,14 @@ namespace FusionEngine
 	 * \sa
 	 * LevelResource | FusionShip
 	 */
-	class Level
+	class Level : public micropather::Graph
 	{
 	public:
+		//! Hole queue
+		typedef std::deque<Hole> HoleQueue;
+	public:
 		//! Constructor.
-		Level() {}
+		Level(FusionPhysicsBody* body, FusionNode *node);
 		//! Virtual destructor.
 		virtual ~Level() {}
 
@@ -50,20 +55,30 @@ namespace FusionEngine
 
 		//! This is called by the Environment on hole creation.
 		/*!
-		 * When the Environment has finished making a hole in the terrain image,
-		 * it calls this so the FusionPhysicsTerrain will update its bitmask.
+		 * When the Environment has validated the new hole, it calls this to make sure
+		 * the bitmask is updated.
 		 */
 		void _madeHole(const CL_Surface *surface);
 
 		//! Run region scrips on the given ship
 		void RunRegionScripts(const FusionShip *ship);
 
+		//! Implementation of micropather#Graph#LeastCostEstimate()
+		float LeastCostEstimate(void* stateStart, void* stateEnd);
+
 	protected:
 		//! List of unmade holes.
-		std::deque<Hole> m_Holes;
+		HoleQueue m_Holes;
 
+		int m_BitmaskRes;
 		//! The physical body associated with this object
-		FusionPhysicsBody *m_PhysBody;
+		FusionPhysicsBody *m_TerrainBody;
+
+		//! Scene node
+		FusionNode* m_Node;
+
+		//! Scene drawable
+		LevelDrawable* m_TerrainDrawable;
 
 	};
 

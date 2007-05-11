@@ -16,7 +16,7 @@ namespace FusionEngine
 		std::string full_path = FusionEngine::ThemePath + name;
 
 		// Initialise ClanLib XML stuff
-		CL_DomDocument doc;
+		TiXMLDocument doc;
 		doc.load(new CL_InputSource_File(full_path), true, true);
 
 		CL_DomElement root_node = doc.get_document_element();

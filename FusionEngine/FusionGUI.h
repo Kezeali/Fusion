@@ -53,7 +53,7 @@ namespace FusionEngine
 	 * \remarks
 	 * State is non-blocking
 	 */
-	class GUI : public FusionState, Singleton<GUI>
+	class GUI : public FusionState, public Singleton<GUI>
 	{
 	public:
 		//! Basic constructor.

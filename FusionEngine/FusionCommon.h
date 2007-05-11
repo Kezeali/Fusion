@@ -157,7 +157,7 @@ namespace FusionEngine
 	class FusionScene;
 	class FusionNode;
 	class ShipState;
-	class ShipInput;
+	struct ShipInput;
 	class ProjectileState;
 	class FusionShip;
 	class FusionProjectile;

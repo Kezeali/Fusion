@@ -269,6 +269,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionAStarGraph.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionBitmask.h"
 				>
 			</File>

@@ -14,13 +14,13 @@ const float g_ThrustForce = 0.14f;
 
 using namespace FusionEngine;
 
-class SomeHandlerYouAre : public CollisionHandler
+class OutputUserData : public CollisionHandler
 {
 private:
 	FusionPhysicsBody* m_MyBody;
 
 public:
-	SomeHandlerYouAre(FusionPhysicsBody* body)
+	OutputUserData(FusionPhysicsBody* body)
 		: m_MyBody(body)
 	{
 	}
@@ -35,7 +35,7 @@ public:
 		if (other->GetUserData() != NULL)
 		{
 			char *data = (char *)(other->GetUserData());
-			std::cout << "Egads! " << data << " got me good!" << std::endl;
+			std::cout << "Egads! " << data << " got me!" << std::endl;
 		}
 	}
 
@@ -183,6 +183,8 @@ class BitmaskTest : public CL_ClanApplication
 		m_ShipPhysical->SetCoefficientOfFriction(0.25f);
 		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
 
+		m_ShipPhysical->SetCollisionHandler(new OutputUserData(m_ShipPhysical));
+
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
 		{
@@ -215,7 +217,6 @@ class BitmaskTest : public CL_ClanApplication
 			memcpy( userdata, ud.c_str(), ud.size() +1 );
 			m_DronePhysical[i]->SetUserData(userdata);
 		}
-		//m_ShipPhysical->SetCollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
 
 		// Hole
 		/*m_Damage = new CL_Surface("./circle.png");

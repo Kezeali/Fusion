@@ -4,35 +4,43 @@
 /// Class
 #include "FusionShipDrawable.h"
 
-//#include "FusionEnvironmentClient.h"
+#include "FusionResourceLoader.h"
+#include "FusionShipResource.h"
 #include "FusionNode.h"
 
 using namespace FusionEngine;
 
-FusionShipDrawable::FusionShipDrawable()
+FusionShipDrawable::FusionShipDrawable(const std::string& resource_id)
 {
+	m_ResourceID = resource_id;
 }
 
 FusionShipDrawable::~FusionShipDrawable()
 {
 }
 
-//void FusionShipDrawable::SetResource(const std::string &resid)
-//{
-//	m_ResourceID = resid;
-//}
+void FusionShipDrawable::SetResource(const std::string &resid)
+{
+	m_ResourceID = resid;
+}
+
 
 void FusionShipDrawable::Draw()
 {
 	float rot = m_ParentNode->GetGlobalFacing();
-	m_Image->set_angle(rot);
 	Vector2 pos = m_ParentNode->GetGlobalPosition();
-	// Maybe CL_Surface_Drawparams should be used here
-	m_Image->draw(pos.x, pos.y);
+	// Get resource form the rscmgr singleton
+	ShipResource* rsc = ResourceLoader::getSingletonPtr()->GetShipResource(m_ResourceID);
 
-	// This is really messy - really, the env should draw this ships, because
-	//  it has direct access to the resources, and this should just queue up
-	//  draw events (or something.)
+	CL_Surface_DrawParams2 dp;
+	// Set the params
+	dp.rotate_angle = rot;
+	dp.destX = pos.x;
+	dp.destY = pos.y;
 
-	//m_Env->GetShipResourceByID(m_ResourceID)->Images.Body->draw(pos.x, pos.y);
+	// We don't really care about these...
+	dp.alpha = 255;
+
+	// Finally, draw the image
+	rsc->Images.Body->draw(dp);
 }

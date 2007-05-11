@@ -183,9 +183,6 @@ namespace FusionEngine
 		//! \see FusionPhysicsBody
 		FusionPhysicsBody *m_PhysicalBody;
 
-		//! [depreciated] Allows this object to find its resource in the client env
-		//std::string m_ResourceID;
-
 		//! Input state
 		ShipInput m_Input;
 		//! Current spacial attributes

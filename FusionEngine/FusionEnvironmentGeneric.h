@@ -64,10 +64,13 @@ namespace FusionEngine
 	//! Default milis per frame
 	const unsigned int g_DefaultFrameTime = 33;
 
-	//! Lowest OID
-	const ObjectID g_BaseOID = 100;
-	//! Lowest PID
+	//! Lowest OID (OIDs below this are reserved)
+	const ObjectID g_BaseOID = 1;
+	//! [depreciated] Lowest PID
 	const ObjectID g_BasePID = 1;
+
+	//! Max OID assignable
+	const ObjectID g_MaxOID = 65535;
 
 	//! The virtual environment! (pun?)
 	class GenericEnvironment : public FusionState, public Singleton<GenericEnvironment>
@@ -91,7 +94,10 @@ namespace FusionEngine
 		//! A list of projectiles
 		typedef std::map<ObjectID, FusionProjectile*> ProjectileList;
 
-		//! A list of inputs
+		//! A list of FusionPhysicsBodys 
+		typedef std::map<ObjectID, FusionPhysicsBody*> BodyList;
+
+		//! A list of inputs WHY IS THIS HERE? WHAT IS THIS FOR?
 		typedef std::vector<ShipInput> ShipInputList;
 
 		//! A list of player ObjectIDs (player IDs) mapped to resourceID's
@@ -117,6 +123,8 @@ namespace FusionEngine
 
 		//! Returns the projectile corresponding to the given ObjectID
 		virtual const FusionProjectile* GetProjectile(ObjectID index);
+
+		virtual const FusionPhysicsBody* GetBody(ObjectID index);
 
 		//! Returns a list of projectiles
 		virtual const ProjectileList& GetProjectileList() const;
@@ -186,7 +194,7 @@ namespace FusionEngine
 		virtual bool receive() = 0;
 
 		//! Waits until the frame rate set in Options is reached
-		void limitFrames();
+		void limitFrames(unsigned int split);
 
 		//! Builds a message from a ShipState (usually outgoing)
 		//! \todo Put all this stuff (message building and parsing) into the

@@ -16,6 +16,9 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
+	 *
+	 * \todo
+	 * Load message strings into theme
 	 */
 	class Theme : public Singleton<Theme>
 	{

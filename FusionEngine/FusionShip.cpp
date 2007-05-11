@@ -45,7 +45,11 @@ m_InputChanged(true)
 
 FusionShip::FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node)
 : m_StateChanged(true),
-m_InputChanged(true)
+m_InputChanged(true),
+m_InitialState(initState),
+m_CurrentState(initState),
+m_PhysicalBody(body),
+m_Node(node)
 {
 	/// Input
 	m_Input.pid = initState.PID;
@@ -57,26 +61,18 @@ m_InputChanged(true)
 	m_Input.secondary = false;
 	m_Input.bomb = false;
 
-	/// State
-	m_InitialState = initState;
-	m_CurrentState = initState;
-
-	/// Body
-	m_PhysicalBody = body;
 	// Ships are their own collision handlers
 	body->SetCollisionHandler(this);
 
 	/*body->SetCollisionCallback(boost::bind(&FusionShip::CollisionResponse, this, _1, _2));*/
 	/*CreateCCB<FusionShip>(ship, &FusionShip::CollisionResponse);*/
-
-	/// Node
-	m_Node = node;
 }
 
 FusionShip::FusionShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node)
-: m_StateChanged(true),
-m_InputChanged(true)
+: 
+m_Input(initInput)
 {
+	FusionShip(initState, body, node);
 	/// Input
 	m_Input = initInput;
 
