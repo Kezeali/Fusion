@@ -44,7 +44,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
 				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
@@ -199,6 +199,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionAStar.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionAStarPathway.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionBitmask.cpp"
 				>
 			</File>
@@ -269,7 +277,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionAStarGraph.h"
+				RelativePath="..\FusionEngine\FusionAStarPathway.h"
 				>
 			</File>
 			<File

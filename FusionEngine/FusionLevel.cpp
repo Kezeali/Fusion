@@ -54,6 +54,7 @@ namespace FusionEngine
 	float Level::LeastCostEstimate(void *stateStart, void *stateEnd)
 	{
 		// Convert states to points and find the distance
+		(int*)(stateStart)
 		return 0.0f;
 	}
 

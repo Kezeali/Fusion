@@ -219,4 +219,40 @@ namespace FusionEngine
 		return Vector2( y/l, -x/l );
 	}
 
+	// Static
+	float Vector2::pointToSegmentDistance(const Vector2& point,
+	                                      const Vector2& ep0,
+	                                      const Vector2& ep1,
+	                                      float segmentLength,
+	                                      const Vector2& segmentNormal,
+	                                      float& segmentProjection,
+	                                      Vector2& chosen)
+	{
+		// convert the test point to be "local" to ep0
+		Vector2 local = point - ep0;
+
+		// find the projection of "local" onto "segmentNormal"
+		segmentProjection = segmentNormal.dot(local);
+
+		// handle boundary cases: when projection is not on segment, the
+		// nearest point is one of the endpoints of the segment
+		if (segmentProjection < 0)
+		{
+			chosen = ep0;
+			segmentProjection = 0;
+			return Vector2::distance(point, ep0);
+		}
+		if (segmentProjection > segmentLength)
+		{
+			chosen = ep1;
+			segmentProjection = segmentLength;
+			return Vector2::distance(point, ep1);
+		}
+
+		// otherwise nearest point is projection point on segment
+		chosen = segmentNormal * segmentProjection;
+		chosen +=  ep0;
+		return Vector2::distance(point, chosen);
+	}
+
 }

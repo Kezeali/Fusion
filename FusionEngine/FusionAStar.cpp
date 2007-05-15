@@ -23,56 +23,27 @@
 	File Author(s):
 
 		Elliot Hayward
+
 */
 
-#ifndef Header_FusionEngine_AStar
-#define Header_FusionEngine_AStar
-
-#if _MSC_VER > 1000
-#pragma once
-#endif
-
-#include "FusionCommon.h"
-
-#include "FusionLevel.h"
-
-#include "micropather.h"
+#include "FusionAStar.h"
 
 namespace FusionEngine
 {
-	/*!
-	 * \brief
-	 * Stores all AStarPathways.
-	 */
-	class AStar
+
+	AStar::AStar(micropather::Graph* graph, int width)
+		: m_Graph(graph),
+		m_Width(width)
 	{
-	public:
-		typedef std::vector<AStarPathway*> PathList;
+	}
 
-	public:
-		//! Constructor.
-		/*!
-		 * Graph will usually be a FusionEngine#Level object.
-		 */
-		AStar(micropather::Graph* graph, int width);
-		//! Constructor
-		AStar(Level* graph);
+	AStar::AStar(Level* level)
+		: m_Graph(level)
 
-	public:
-		//! Finds and stores a path, returning an index that can be used to access the steering pathway
-		int Solve(const Vector2& start, const Vector2& end);
-		//! Gets a path to be used by steer
-		AStarPathway* GetPathway(int index);
-
-
-	protected:
-		PathList m_Paths;
-
-		micropather::Graph* m_Graph;
-		micropather::MicroPather* m_Pather;
-
-	};
+	AStar::Solve(const FusionEngine::Vector2 &start, const FusionEngine::Vector2 &end)
+	{
+		void* startState = (void*) start.y * m_Graph
+		std::vector<void*> path;
+		int r = m_Pather->Solve(startState, endState
 
 }
-
-#endif

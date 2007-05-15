@@ -153,6 +153,41 @@ namespace FusionEngine
 		 * (y,-x)/sqrt(x^2+y^2)
 		 */
 		Vector2 normal() const;
+
+		//! Returns the distance between two vectors as points
+		static float distance(const Vector2& p1, const Vector2& p2)
+		{
+			return (p1-p2).length();
+		}
+
+		//! Compute minimum distance from a point to a line segment
+		/*!
+		 * \param[in] point
+		 * The point
+		 *
+		 * \param[in] ep0
+		 * Point 0 on the line
+		 *
+		 * \param[in] ep1
+		 * Point 1 on the line
+		 *
+		 * \param[in] segmentLength
+		 * Length of the segment (usualy used by caller also, so no point calculating it again)
+		 *
+		 * \param[out] segmentProjection
+		 * Segment projection (<code>segmentNormal.dot(point - ep0)</code>). Rather than
+		 * calling dot again later on the same params, this is used (optimisation)
+		 *
+		 * \param[out] segmentProjection
+		 * The point on the line chosen as the nearest point to the one given
+		 */
+		static float pointToSegmentDistance(const Vector2& point,
+	                               const Vector2& ep0,
+	                               const Vector2& ep1,
+	                               float segmentLength,
+	                               const Vector2& segmentNormal,
+	                               float& segmentProjection,
+	                               Vector2& chosen);
 	};
 
 	//! Uses complex multiplication to rotate (and scale) v1 by v2.
