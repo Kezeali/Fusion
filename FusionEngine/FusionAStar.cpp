@@ -39,11 +39,13 @@ namespace FusionEngine
 
 	AStar::AStar(Level* level)
 		: m_Graph(level)
+	{
+	}
 
 	AStar::Solve(const FusionEngine::Vector2 &start, const FusionEngine::Vector2 &end)
 	{
-		void* startState = (void*) start.y * m_Graph
+		void* startState = (void*) start.y * m_Width + start.x;
 		std::vector<void*> path;
-		int r = m_Pather->Solve(startState, endState
+		int r = m_Pather->Solve(startState, endState, &path, 
 
 }

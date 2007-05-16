@@ -72,6 +72,9 @@ namespace FusionEngine
 		//! Health
 		int health;
 
+		//! Last projectile fired
+		ObjectID last_projectile;
+
 		//@{
 		//! Selected weapon (Resource ID's).
 		std::string current_primary;

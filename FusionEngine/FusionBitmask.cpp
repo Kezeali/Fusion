@@ -490,15 +490,24 @@ namespace FusionEngine
 	{
 		cl_assert(m_Bitmask != 0);
 
-
 		if ((point.x > m_Bitmask->w) | (point.y > m_Bitmask->h) | (point.x < 0) | (point.y < 0))
 		{
-			throw CL_Error("Bitmask: point out of range!");
-
-			//return false;
+			throw Error(Error::TRIVIAL, "Bitmask: point out of range!");
 		}
 
-		return (bitmask_getbit(m_Bitmask, point.x, point.y) == 1) ? true : false;
+		return (bool)bitmask_getbit(m_Bitmask, point.x, point.y);
+	}
+
+	bool FusionBitmask::GetBit(int x, int y) const
+	{
+		cl_assert(m_Bitmask != 0);
+
+		if ((x > m_Bitmask->w) | (y > m_Bitmask->h) | (x < 0) | (y < 0))
+		{
+			throw Error(Error::TRIVIAL, "Bitmask: point out of range!");
+		}
+
+		return (bool)bitmask_getbit(m_Bitmask, x, y);
 	}
 
 	bool FusionBitmask::Overlap(const FusionEngine::FusionBitmask *other, const CL_Point &offset)

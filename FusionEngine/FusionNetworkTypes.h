@@ -171,6 +171,8 @@ namespace FusionEngine
 		//@{
 		//! Gameplay channel message types
 
+		//! [client|server] Med priority. Weapons held by a ship
+		MTID_HELDWEAPONS,
 		//! [client|server] High priority
 		MTID_CHANGEWEAPON,
 		//! [client|server] High priority
@@ -181,9 +183,9 @@ namespace FusionEngine
 		 * <li> [long]     Time
 		 * <li> [char]     MTID_FIREWEAPON
 		 * <li> [ObjectID] Ship to which this applies
-		 * <li> [float]    x origin (of the ship? I think so...)
-		 * <li> [float]    y origin
-		 * <li> [float]    direction at origin
+		 * <li> [float]    x of the ship
+		 * <li> [float]    y of the ship
+		 * <li> [float]    direction of the ship
 		 * </ol>
 		 */
 		MTID_FIREWEAPON,

@@ -14,7 +14,7 @@
 
 namespace FusionEngine
 {
-	//! Ease of storage for holes.
+	//! Data for un-created holes
 	struct Hole
 	{
 		//! x loc
@@ -25,6 +25,13 @@ namespace FusionEngine
 		int radius;
 	};
 
+	//! Nodes within the AStar map
+	struct MapNode
+	{
+		Vector2* state;
+		float weight;
+	}
+
 	/*!
 	 * \brief
 	 * Level is to terrain what FusionShip is to ships.
@@ -33,7 +40,7 @@ namespace FusionEngine
 	 * collision callbacks of the bodies that can destroy it.)
 	 *
 	 * \sa
-	 * LevelResource | FusionShip
+	 * LevelResource | LevelRegion
 	 */
 	class Level : public micropather::Graph
 	{
@@ -63,8 +70,17 @@ namespace FusionEngine
 		//! Run region scrips on the given ship
 		void RunRegionScripts(const FusionShip *ship);
 
+		//! Util for creating the path cost graph
+		void InitAStarGraph();
+
 		//! Implementation of micropather#Graph#LeastCostEstimate()
 		float LeastCostEstimate(void* stateStart, void* stateEnd);
+
+		//! Implementation of micropather#Graph#AdjacentCost()
+		void AdjacentCost(void* state, std::vector<micropather::StateCost> *adjacent);
+
+		//! Implementation of micropather#Graph#PrintStateInfo()
+		void PrintStateInfo(void* state);
 
 	protected:
 		//! List of unmade holes.
@@ -79,6 +95,9 @@ namespace FusionEngine
 
 		//! Scene drawable
 		LevelDrawable* m_TerrainDrawable;
+
+		int m_Width;
+		int m_Height;
 
 	};
 

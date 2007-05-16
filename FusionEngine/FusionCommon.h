@@ -203,6 +203,9 @@ namespace FusionEngine
 	 * Use it!
 	 */
 	typedef CL_SharedPtr<FusionState> SharedState;
+
+	//! ID for script functions
+	typedef std::string ScriptFuncSig;
 }
 
 #endif

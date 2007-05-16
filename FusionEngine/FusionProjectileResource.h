@@ -40,6 +40,13 @@ namespace FusionEngine
 	 * \brief
 	 * The resource data for the projectile sections of packages
 	 *
+	 * \todo Allow weapons to override the hard-coded drawing method with
+	 *  a scripted method. Scripts should draw using Effects and basic drawing
+	 *  functions such as draw_lines (polygon tool) and others built into ClanLib.
+	 *
+	 * \todo Physics functions for weapon scripts (to allow for grappling-hook
+	 *  functionality, etc.)
+	 *
 	 * \sa WeaponResource | ShipResource
 	 */
 	class ProjectileResource : public Resource

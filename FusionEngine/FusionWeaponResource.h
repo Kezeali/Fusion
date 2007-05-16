@@ -43,12 +43,28 @@ namespace FusionEngine
 	public:
 		// Note that struct typenames aren't used,
 		// as these structs are only instanciated here.
+
 		struct
 		{
-			Script CollisionScript;
+			//! \todo fix this
+			FusionEngine::Script Script;
+
+			ScriptFuncSig onfire;
+			// player pressed fire while the weapon was unloaded - only for
+			//  ReloadTime = -1 weapons
+			ScriptFuncSig ontrigger; 
+			ScriptFuncSig creation;
 		}
-		//! Various scripts
+		//! Weapon script
 		Scripts;
+
+		struct
+		{
+			//! -1 means the weapon only reloads when the primary projectile detonates
+			int ReloadTime;
+		}
+		Behaviour;
+
 
 		struct
 		{

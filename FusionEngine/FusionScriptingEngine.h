@@ -39,12 +39,13 @@
 
 /// Fusion
 #include "FusionScript.h"
+#include "FusionScriptVector.h"
 
 namespace FusionEngine
 {
 
-	static const g_ASConfigConsole = "Console";
-	static const g_ASConfigWeapon = "Weapon";
+	static const std::string g_ASConfigConsole = "Console";
+	static const std::string g_ASConfigWeapon = "Weapon";
 
 	/*!
 	 * \brief

@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_AStar
-#define Header_FusionEngine_AStar
+#ifndef Header_FusionEngine_AStarPathway
+#define Header_FusionEngine_AStarPathway
 
 #if _MSC_VER > 1000
 #pragma once
@@ -50,7 +50,7 @@ namespace FusionEngine
 		AStarPathway(const int pointCount, const Vector2 points[], const float radius, const bool cyclic);
 
 	public:
-		//! Util for construction
+		//! [depreciated] Util for construction
 		void Initialize(const int pointCount,
 		                const Vector2 points[],
 		                const float radius,

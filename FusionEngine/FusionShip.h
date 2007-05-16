@@ -68,6 +68,12 @@ namespace FusionEngine
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
 	public:
+		//! A list of ObjectIDs
+		typedef std::vector<ObjectID> ObjectList;
+		//! A list of weapons
+		typedef std::vector<std::string> WeaponList;
+
+	public:
 		//! Don't use this
 		FusionShip();
 		//! Constructor. W/O inputs.
@@ -159,9 +165,10 @@ namespace FusionEngine
 		//! Reverts all state data
 		void RevertToInitialState();
 
+		//! Implementation of CollisionHandler#CanCollideWith()
 		bool CanCollideWith(const FusionPhysicsBody *other);
 
-		//! What to do if an absolute position for a collision is given
+		//! Implementation of CollisionHandler#CollisionWith()
 		void CollisionWith(const FusionPhysicsBody *other, const Vector2 &collision_point);
 
 
@@ -180,8 +187,25 @@ namespace FusionEngine
 		//! Secondary weapon node
 		FusionNode *m_SecWepNode;
 		
+		//! Body
 		//! \see FusionPhysicsBody
 		FusionPhysicsBody *m_PhysicalBody;
+
+		//! Weapons available to this ship
+		/*!
+		 * This is kept localy on client and server (notice it isn't
+		 * in ShipState) and occasionally sync-ed with MTID_HELDWEAPONS.
+		 *
+		 * \remarks
+		 * For non-pickup gamemodes, this will simply be ResourceLoader->LoadedWeapons.
+		 */
+		WeaponList m_HeldWeapons;
+
+		//! Projectiles owned by this ship
+		/*!
+		 * Useful for scripting and debug
+		 */
+		ObjectList m_Projectiles;
 
 		//! Input state
 		ShipInput m_Input;

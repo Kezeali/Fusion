@@ -44,6 +44,9 @@ namespace FusionEngine
 		//! Copying constructor.
 		ScriptVector(const ScriptVector &other);
 		//! Init. constructor
+		/*!
+		 * Are these defaults necessary?
+		 */
 		ScriptVector(float x = 0.0, float y = 0.0);
 		//! Init. constructor
 		ScriptVector(const Vector2 &other);

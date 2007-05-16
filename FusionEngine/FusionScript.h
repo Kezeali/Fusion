@@ -34,9 +34,6 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
-#include "FusionSingleton.h"
-
 /// Fusion
 
 namespace FusionEngine

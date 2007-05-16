@@ -8,12 +8,15 @@
 namespace FusionEngine
 {
 
-	Level::Level(FusionPhysicsBody* body, FusionNode* node)
-		: m_TerrainBody(body),
+	Level::Level(int width, int height, FusionPhysicsBody* body, FusionNode* node)
+		: m_Width(width),
+		m_Height(height),
+		m_TerrainBody(body),
 		m_Node(node)
 	{
 		m_BitmaskRes = body->GetColBitmask()->GetPPB();
-		//surface, m_World->GetBitmaskRes(), 128
+
+		InitAStarGraph();
 	}
 
 	void Level::MakeHole(int x, int y, int radius)
@@ -51,11 +54,20 @@ namespace FusionEngine
 
 	}
 
+	void Level::InitAStarGraph()
+	{
+		for (int y = 0; y < ;
+	}
+
 	float Level::LeastCostEstimate(void *stateStart, void *stateEnd)
 	{
 		// Convert states to points and find the distance
-		(int*)(stateStart)
-		return 0.0f;
+		return ( (*(Vector2*)stateEnd) - (*(Vector2*)stateStart) ).length();
+	}
+
+	void Level::AdjacentCost(void *state, std::vector<micropather::StateCost> *adjacent)
+	{
+		((Vector2*)state);
 	}
 
 }

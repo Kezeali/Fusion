@@ -34,20 +34,11 @@ namespace FusionEngine
 {
 
 	AStarPathway::AStarPathway(const int pointCount, const Vector2 points[], const float radius, const bool cyclic)
+		: m_Radius(radius),
+		m_Cyclic(cyclic),
+		m_PointCount(pointCount),
+		m_TotalPathLength(0)
 	{
-		Initialize(pointCount, points, radius, cyclic);
-	}
-
-	void AStarPathway::Initialize(const int pointCount,
-		                            const Vector2 points[],
-		                            const float radius,
-		                            const bool cyclic)
-	{
-		// set data members, allocate arrays
-		m_Radius = radius;
-		m_Cyclic = cyclic;
-		m_PointCount = pointCount;
-		m_TotalPathLength = 0;
 		if (m_Cyclic) m_PointCount++;
 		m_Lengths = new float  [m_PointCount];
 		m_Points  = new Vector2[m_PointCount];
@@ -75,6 +66,13 @@ namespace FusionEngine
 				m_TotalPathLength += m_Lengths[i];
 			}
 		}
+	}
+
+	void AStarPathway::Initialize(const int pointCount,
+		                            const Vector2 points[],
+		                            const float radius,
+		                            const bool cyclic)
+	{
 	}
 
 	Vector2 AStarPathway::mapPointToPath(const Vector2& point, Vector2& tangent, float& outside)

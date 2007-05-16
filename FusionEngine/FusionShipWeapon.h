@@ -5,6 +5,10 @@
 #pragma once
 #endif
 
+#include "FusionCommon.h"
+
+#include "FusionDrawable.h"
+
 namespace FusionEngine
 {
 
@@ -12,16 +16,13 @@ namespace FusionEngine
 	 * \brief
 	 * A weapon drawable, what it actually draws is defined by a script.
 	 *
-	 * An example of a weapon could be a spacebeam, yeah. I got the spacebeam. Yeah.
+	 * An example of a weapon could be a spacebeam, yeah. I got the spacebeam, yeah.
 	 */
-	class FusionShipWeapon
+	class FusionShipWeapon : public FusionDrawable
 	{
 	public:
 
-		int WeaponID;       /*! not sure how to do this, suppose just a series of
-                                constants, ballistic, consta-beam, self propelled
-                                etc,
-                                Have them loaded from XML, but thats your job elliot :P */
+		int WeaponID;
 		virtual void Draw();
 	};
 
