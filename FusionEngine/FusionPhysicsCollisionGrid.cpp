@@ -205,7 +205,7 @@ namespace FusionEngine
 
 	BodyList FusionPhysicsCollisionGrid::_findAdjacentBodies(int grid_x, int grid_y, int cell_index)
 	{
-		//! Number of cells accross/down from the given cell considered adjcent
+		// Number of cells accross/down from the given cell considered adjcent
 		static const int _adjStart = -1, _adjEnd = 1;
 		static const int _adjWidth = 3;
 

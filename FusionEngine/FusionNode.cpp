@@ -203,6 +203,8 @@ namespace FusionEngine
 
 	const Vector2 &FusionNode::GetGlobalPosition() const
 	{
+		// Note: this is a good method because calculations only have to be made up to
+		//  the highest node that has moved (and don't forget that this time!)
 		return _getDerivedPosition();
 	}
 
@@ -230,7 +232,7 @@ namespace FusionEngine
 		// Allow further updates to be requested.
 		m_ParentNotified = false;
 
-		// Exit if there is reason to update
+		// Exit if there is no reason to update
 		if (!cascade && !m_NeedParentUpdate && !m_NeedChildUpdate && !parentHasChanged)
 		{
 			return;
@@ -257,8 +259,6 @@ namespace FusionEngine
 			{
 				(*it)->_update(true, true);
 			}
-
-			m_ChildrenToUpdate.clear();
 		}
 		else
 		{
@@ -269,10 +269,9 @@ namespace FusionEngine
 			{
 				(*it)->_update(true, false);
 			}
-
-			m_ChildrenToUpdate.clear();
 		}
 
+		m_ChildrenToUpdate.clear();
 		m_NeedChildUpdate = false;
 	}
 
