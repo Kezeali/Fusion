@@ -179,10 +179,17 @@ namespace FusionEngine
 		y = (x   * v.y - y   * v.x);
 	}
 
-	float Vector2::angleFrom(const Vector2& v)
+	float Vector2::angleFrom(const Vector2& b)
 	{
-		//return ( atan2(this->y,this->x) - atan2(v.y,v.x) );
-		return acosf( this->dot(v) / (this->length()*v.length()) );
+		float cosine = this->x * b.x + this->y * b.y / (this->length() * b.length());
+		// rounding errors might make dotproduct out of range for cosine
+		if (cosine > 1) cosine = 1;
+		else if (cosine < -1) cosine = -1;
+
+		if ((this->x * b.y - this->y * b.x) < 0)
+			return -acos(cosine);
+		else
+			return acos(cosine);
 	}
 
 	float Vector2::normalize()

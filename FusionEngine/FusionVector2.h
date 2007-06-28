@@ -129,7 +129,6 @@ namespace FusionEngine
 		void unrotate(const Vector2& other);
 		//! Returns the angle between two vectors
 		/*!
-		 * <b>The following statement is [depreciated]:</b>
 		 * Returns the angle <i>from</i> the given vector; i.e. if the given
 		 * other vector is ahead of this, the angle returned will be negative.
 		 */

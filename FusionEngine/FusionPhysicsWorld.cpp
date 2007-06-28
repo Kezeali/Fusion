@@ -24,7 +24,7 @@
 
 		Elliot Hayward
 
-		Dimitrios Christopoulos (dynamic-dynamic object collision response)
+		Dimitrios Christopoulos (dynamic object collision response)
 */
 
 #include "Common.h"
