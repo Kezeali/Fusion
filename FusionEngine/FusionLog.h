@@ -121,8 +121,13 @@ namespace FusionEngine
 		 */
 		void Flush();
 
+		bool IsEnded() const { return m_Ended; }
+
+		void _setIsEnded(bool ended) { m_Ended = ended; }
+
 	protected:
 		bool m_KeepOpen;
+		bool m_Ended;
 		std::string m_Tag;
 		std::string m_Filename;
 		std::ofstream m_Logfile;

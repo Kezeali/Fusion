@@ -13,6 +13,12 @@
 namespace FusionEngine
 {
 
+	//! Resource tree for 
+	static const std::string g_Viewport1p_Tree = "gui/viewport1p";
+	static const std::string g_Viewport1p_1 = g_Viewport1p_Tree + "/1";
+
+	static const std::string g_Viewport1p_Tree = "gui/viewport1p";
+	static const std::string g_Viewport1p_1 = g_Viewport1p_Tree + "/1";
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
@@ -38,6 +44,7 @@ namespace FusionEngine
 		/*!
 		 * \brief
 		 * Loads the given theme file.
+		 *
 		 * \returns
 		 * False if any files are not found.
 		 */
@@ -48,6 +55,21 @@ namespace FusionEngine
 		 * Clears and deletes all loaded resources.
 		 */
 		void Unload();
+
+		/*!
+		 * \brief
+		 * Loads the given section of a theme file
+		 *
+		 * \retval false
+		 * If any files are not found, or the tree isn't explicitly defined.
+		 */
+		bool LoadTree(const std::string &name);
+
+		/*!
+		 * \brief
+		 * Unloads the resources in the given branch.
+		 */
+		void UnloadTree(const std::string &name);
 
 		/*!
 		 * \brief
@@ -63,6 +85,27 @@ namespace FusionEngine
 		 * A pointer to the requested sound, or NULL if no such tag exists.
 		 */
 		CL_SoundBuffer *GetSound(const std::string &tag);
+
+	protected:
+		bool loadImages(
+
+		/*!
+		 * \brief
+		 * Returns the pixel the given percentage from the left of the window.
+		 */
+		static int Theme::percentToXPoint(int percent)
+		{
+			return CL_Display::get_width() * percent * 0.01;
+		}
+
+		/*!
+		 * \brief
+		 * Returns the pixel the given percentage from the top of the window.
+		 */
+		static int Theme::percentToYPoint(int percent)
+		{
+			return CL_Display::get_height() * percent * 0.01;
+		}
 
 	private:
 

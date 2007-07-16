@@ -52,7 +52,9 @@ namespace FusionEngine
 		LogList::iterator i;
 		for (i = m_Logs.begin(); i != m_Logs.end(); ++i)
 		{
-			EndLog(i->second);
+			if (!i->second->IsEnded()) {
+				EndLog(i->second);
+			}
 			delete i->second;
 		}
 	}
@@ -116,6 +118,8 @@ namespace FusionEngine
 			header << "-------------------- Log began on " << tstr << " --------------------";
 
 			log->LogVerbatim(header.str());
+
+			log->_setIsEnded(false);
 		}
 		catch (LogfileException e)
 		{
@@ -141,6 +145,8 @@ namespace FusionEngine
 			header << "-------------------- Log began on " << tstr << " --------------------";
 
 			log->LogVerbatim(header.str());
+
+			log->_setIsEnded(false);
 		}
 		catch (LogfileException e)
 		{
@@ -164,6 +170,8 @@ namespace FusionEngine
 			header << "-------------------- Log ended on " << tstr << " --------------------";
 
 			log->LogVerbatim(header.str());
+
+			log->_setIsEnded(true);
 		}
 		catch (LogfileException e)
 		{

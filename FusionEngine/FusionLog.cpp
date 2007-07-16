@@ -38,6 +38,7 @@ namespace FusionEngine
 	Log::Log(const std::string& tag, const std::string& filename, bool keep_open)
 		: m_Filename(filename),
 		m_KeepOpen(keep_open),
+		m_Ended(true),
 		m_Tag(tag),
 		m_Verbosity(VBO_HIGH)
 	{
