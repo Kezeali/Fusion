@@ -256,6 +256,14 @@ namespace FusionEngine
 		 * \retval true If the bit is solid solid
 		 */
 		bool GetBit(const CL_Point &point) const;
+		//! Returns the solidality of the bit at the given point.
+		/*!
+		 * \param point
+		 * A point giving the x and y co-ords to check
+		 *
+		 * \retval true If the bit is solid solid
+		 */
+		bool GetBit(int x, int y) const;
 
 		//! Tells ya if there's a collision between this object and the one given
 		bool Overlap(const FusionBitmask *other, const CL_Point &offset);

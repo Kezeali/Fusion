@@ -117,5 +117,5 @@ void FusionScene::Sort()
 {
 	m_NeedSort = false;
 
-	std::sort(m_SceneNodes.begin(), m_SceneNodes.end(), DepthIsLess);
+	std::sort(m_SceneNodes.begin(), m_SceneNodes.end(), FusionEngine::DepthIsLess);
 }

@@ -47,7 +47,7 @@ namespace FusionEngine
 		struct
 		{
 			//! \todo fix this
-			FusionEngine::Script Script;
+			Script script;
 
 			ScriptFuncSig onfire;
 			// player pressed fire while the weapon was unloaded - only for

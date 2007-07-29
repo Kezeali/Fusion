@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="Scripting"
-	ProjectGUID="{34CDC924-95E2-46A1-B66A-DE0AD5494FA3}"
-	RootNamespace="Scripting"
+	Name="GUI"
+	ProjectGUID="{87D11081-1126-427C-80EB-E7CEE46660BF}"
+	RootNamespace="GUI"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -43,10 +43,8 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
-				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -62,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opensteerd.lib"
+				AdditionalDependencies="CEGUIBase_d.lib OpenGLGUIRenderer_d.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -74,6 +72,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -120,7 +119,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -137,6 +136,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="CEGUIBase.lib OpenGLGUIRenderer.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -179,39 +179,35 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\FusionEngine\as_scriptstring.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\bitmask.c"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\Common.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionAIManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAIModule.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAStar.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAStarPathway.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionBitmask.cpp"
+				RelativePath="..\FusionEngine\FusionClientOptions.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsole.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionConsoleGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionError.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionInputHandler.cpp"
 				>
 			</File>
 			<File
@@ -223,47 +219,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsUtils.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScript.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptingEngine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptingFunctions.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptVector.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionState.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionStateManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionVector2.cpp"
 				>
 			</File>
 			<File
@@ -277,39 +237,35 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\FusionEngine\bitmask.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\Common.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionAIManager.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAIModule.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAStar.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionAStarPathway.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionBitmask.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionCommon.h"
+				RelativePath="..\FusionEngine\FusionClientOptions.h"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsole.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionConsoleGUI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionError.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionGUI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionInputHandler.h"
 				>
 			</File>
 			<File
@@ -321,43 +277,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCallback.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsTypes.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsUtils.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScript.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptingEngine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptingFunctions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionScriptVector.h"
+				RelativePath="..\FusionEngine\FusionSingleton.h"
 				>
 			</File>
 			<File
@@ -369,11 +289,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionVector2.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\Prereq.h"
+				RelativePath="..\FusionEngine\FusionStateMessage.h"
 				>
 			</File>
 		</Filter>

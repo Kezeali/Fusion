@@ -6,13 +6,6 @@
 namespace FusionEngine
 {
 
-	//! Returns whether one is less than two. \see std::sort()
-	bool DepthIsLess(FusionNode *one, FusionNode *two)
-	{
-		return (one->GetDepth() < two->GetDepth());
-	}
-
-
 	FusionNode::FusionNode(FusionScene *creator)
 		: m_Creator(creator),
 		m_Parent(0),
