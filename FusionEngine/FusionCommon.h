@@ -26,6 +26,14 @@
 
 */
 
+/*! @mainpage Fusion
+ *
+ * Fusion is a multiplayer, 2D / top-down shooter, based on a
+ * highly scriptable and extendable engine.
+ *
+ * Go to http://steelfusion.sourceforge.net/ for more information.
+ */
+
 #ifndef Header_FusionEngine_Common
 #define Header_FusionEngine_Common
 

@@ -111,7 +111,8 @@ FILE_PATTERNS          = *.c \
                          *.dox \
                          *.py
 RECURSIVE              = NO
-EXCLUDE                = ../FusionEngine/physfs.h
+EXCLUDE                = ../FusionEngine/physfs.h \
+                         ../Fusion/micropather/micropather.h
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXAMPLE_PATH           = ./examples
