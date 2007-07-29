@@ -26,12 +26,12 @@ namespace FusionEngine
 {
 
 	FusionInput::FusionInput()
-		: m_Active(false)
+		: m_SuspendRequests(0)
 	{
 	}
 
 	FusionInput::FusionInput(const ClientOptions *from)
-		: m_Active(true)
+		: m_SuspendRequests(0)
 	{
 		m_GlobalInputMap = from->GlobalInputs;
 		m_PlayerInputMaps = from->PlayerInputs;
@@ -68,6 +68,7 @@ namespace FusionEngine
 
 	void FusionInput::Initialise()
 	{
+		m_SuspendRequests = 0;
 		// Activate Key Down signal handler
 		m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionInput::onKeyDown);
 		m_Slots.connect(CL_Joystick::sig_key_down(), this, &FusionInput::onKeyDown);

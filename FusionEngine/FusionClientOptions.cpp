@@ -32,20 +32,20 @@ namespace FusionEngine
 {
 
 	ClientOptions::ClientOptions()
-		: mNumPlayers(0)
+		: NumPlayers(0)
 	{
 		// Set the global controls to some valid values.
 		DefaultGlobalControls();
 
-		mPlayerInputs.resize(g_MaxPlayers);
+		PlayerInputs.resize(g_MaxLocalPlayers);
 		// Do the same for all the players
-		for (ObjectID i=0; i<g_MaxPlayers; i++)
+		for (ObjectID i=0; i<g_MaxLocalPlayers; i++)
 		{
 			DefaultPlayerControls(i);
 		}
 
 		// Make sure there's enough room for all the player options objects
-		mPlayerOptions.resize(g_MaxPlayers);
+		PlayerOptions.resize(g_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename)
@@ -62,53 +62,53 @@ namespace FusionEngine
 		{
 			// Player 1
 		case 0:
-			mPlayerInputs[0].thrust = CL_KEY_UP;
-			mPlayerInputs[0].reverse = CL_KEY_DOWN;
-			mPlayerInputs[0].left = CL_KEY_LEFT;
-			mPlayerInputs[0].right = CL_KEY_RIGHT;
-			mPlayerInputs[0].primary = CL_KEY_DIVIDE;
-			mPlayerInputs[0].secondary = CL_KEY_DECIMAL;
-			mPlayerInputs[0].bomb = ',';
+			PlayerInputs[0].thrust = CL_KEY_UP;
+			PlayerInputs[0].reverse = CL_KEY_DOWN;
+			PlayerInputs[0].left = CL_KEY_LEFT;
+			PlayerInputs[0].right = CL_KEY_RIGHT;
+			PlayerInputs[0].primary = CL_KEY_DIVIDE;
+			PlayerInputs[0].secondary = CL_KEY_PERIOD;
+			PlayerInputs[0].bomb = ',';
 			break;
 			// Player 2
 		case 1:
-			mPlayerInputs[1].thrust = CL_KEY_W;
-			mPlayerInputs[1].reverse = CL_KEY_S;
-			mPlayerInputs[1].left = CL_KEY_A;
-			mPlayerInputs[1].right = CL_KEY_D;
-			mPlayerInputs[1].primary = CL_KEY_Q;
-			mPlayerInputs[1].secondary = CL_KEY_E;
-			mPlayerInputs[1].bomb = CL_KEY_R;
+			PlayerInputs[1].thrust = CL_KEY_W;
+			PlayerInputs[1].reverse = CL_KEY_S;
+			PlayerInputs[1].left = CL_KEY_A;
+			PlayerInputs[1].right = CL_KEY_D;
+			PlayerInputs[1].primary = CL_KEY_Q;
+			PlayerInputs[1].secondary = CL_KEY_E;
+			PlayerInputs[1].bomb = CL_KEY_R;
 			break;
 			// Player 3
 		case 2:
-			mPlayerInputs[2].thrust = CL_KEY_U;
-			mPlayerInputs[2].reverse = CL_KEY_J;
-			mPlayerInputs[2].left = CL_KEY_H;
-			mPlayerInputs[2].right = CL_KEY_K;
-			mPlayerInputs[2].primary = CL_KEY_Y;
-			mPlayerInputs[2].secondary = CL_KEY_I;
-			mPlayerInputs[2].bomb = CL_KEY_B;
+			PlayerInputs[2].thrust = CL_KEY_U;
+			PlayerInputs[2].reverse = CL_KEY_J;
+			PlayerInputs[2].left = CL_KEY_H;
+			PlayerInputs[2].right = CL_KEY_K;
+			PlayerInputs[2].primary = CL_KEY_Y;
+			PlayerInputs[2].secondary = CL_KEY_I;
+			PlayerInputs[2].bomb = CL_KEY_B;
 			break;
 			// Player 4
 		case 3:
-			mPlayerInputs[3].thrust = CL_KEY_NUMPAD8;
-			mPlayerInputs[3].reverse = CL_KEY_NUMPAD5;
-			mPlayerInputs[3].left = CL_KEY_NUMPAD4;
-			mPlayerInputs[3].right = CL_KEY_NUMPAD6;
-			mPlayerInputs[3].primary = CL_KEY_NUMPAD7;
-			mPlayerInputs[3].secondary = CL_KEY_NUMPAD9;
-			mPlayerInputs[3].bomb = CL_KEY_NUMPAD0;
+			PlayerInputs[3].thrust = CL_KEY_NUMPAD8;
+			PlayerInputs[3].reverse = CL_KEY_NUMPAD5;
+			PlayerInputs[3].left = CL_KEY_NUMPAD4;
+			PlayerInputs[3].right = CL_KEY_NUMPAD6;
+			PlayerInputs[3].primary = CL_KEY_NUMPAD7;
+			PlayerInputs[3].secondary = CL_KEY_NUMPAD9;
+			PlayerInputs[3].bomb = CL_KEY_NUMPAD0;
 			break;
 			// Greater than 4 players (just in case)
 		default:
-			mPlayerInputs[player].thrust = CL_KEY_W;
-			mPlayerInputs[player].reverse = CL_KEY_S;
-			mPlayerInputs[player].left = CL_KEY_A;
-			mPlayerInputs[player].right = CL_KEY_D;
-			mPlayerInputs[player].primary = CL_KEY_Q;
-			mPlayerInputs[player].secondary = CL_KEY_E;
-			mPlayerInputs[player].bomb = CL_KEY_R;
+			PlayerInputs[player].thrust = CL_KEY_W;
+			PlayerInputs[player].reverse = CL_KEY_S;
+			PlayerInputs[player].left = CL_KEY_A;
+			PlayerInputs[player].right = CL_KEY_D;
+			PlayerInputs[player].primary = CL_KEY_Q;
+			PlayerInputs[player].secondary = CL_KEY_E;
+			PlayerInputs[player].bomb = CL_KEY_R;
 			break;
 		}
 
@@ -116,83 +116,83 @@ namespace FusionEngine
 
 	void ClientOptions::DefaultGlobalControls()
 	{
-		mGlobalInputs.menu = CL_KEY_ESCAPE;
-		mGlobalInputs.console = '`';
+		GlobalInputs.menu = CL_KEY_ESCAPE;
+		GlobalInputs.console = '`';
 	}
 
 	bool ClientOptions::Save()
 	{
 		if (m_LastFile.empty())
 			return false;
-
-		return true;
+		else
+			return SaveToFile(m_LastFile);
 	}
 
 	bool ClientOptions::SaveToFile(const std::string &filename)
 	{
-		TiXMLDocument doc;
+		//TiXmlDocument doc;
 
-		// Decl
-		TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
-		doc.LinkEndChild( decl ); 
+		//// Decl
+		//TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
+		//doc.LinkEndChild( decl ); 
 
-		// Root
-		TiXmlElement * root = new TiXmlElement("ClientOptions");  
-		doc.LinkEndChild( root );  
+		//// Root
+		//TiXmlElement * root = new TiXmlElement("ClientOptions");  
+		//doc.LinkEndChild( root );  
 
-		// block: player options
-		{
-			TiXmlElement* players = new TiXmlElement( "PlayerOptions" );  
-			root->LinkEndChild( msgs ); 
+		//// block: player options
+		//{
+		//	TiXmlElement* players = new TiXmlElement( "PlayerOptions" );  
+		//	root->LinkEndChild( players ); 
 
-			TiXmlElement* opt;
+		//	TiXmlElement* opt;
 
-			PlayerOptionsList::iterator it;
+		//	PlayerOptionsList::iterator it;
 
-			for (it=mPlayerOptions.begin(); it != mPlayerOptions.end(); ++it)
-			{
-				//??? should mPlayerOptions be a map? or should we iteratre by index (c-style) here?
-				const std::string& key = (*it).first;
-				const std::string& value = (*it).second;
+		//	for (it=PlayerOptions.begin(); it != PlayerOptions.end(); ++it)
+		//	{
+		//		//??? should mPlayerOptions be a map? or should we iteratre by index (c-style) here?
+		//		const std::string& key = (*it).first;
+		//		const std::string& value = (*it).second;
 
-				opt = new TiXmlElement();  
-				opt->LinkEndChild( new TiXmlText(value.c_str()));  
+		//		opt = new TiXmlElement();  
+		//		opt->LinkEndChild( new TiXmlText(value.c_str()));  
 
-				players->LinkEndChild( opt );
-			}
-		}
+		//		players->LinkEndChild( opt );
+		//	}
+		//}
 
-		// block: windows
-		{
-			TiXmlElement* windowsNode = new TiXmlElement( "Windows" );  
-			root->LinkEndChild( windowsNode );  
+		//// block: windows
+		//{
+		//	TiXmlElement* windowsNode = new TiXmlElement( "Windows" );  
+		//	root->LinkEndChild( windowsNode );  
 
-			list<WindowSettings>::iterator iter;
+		//	list<WindowSettings>::iterator iter;
 
-			for (iter=m_windows.begin(); iter != m_windows.end(); iter++)
-			{
-				const WindowSettings& w=*iter;
+		//	for (iter=m_windows.begin(); iter != m_windows.end(); iter++)
+		//	{
+		//		const WindowSettings& w=*iter;
 
-				TiXmlElement* window;
-				window = new TiXmlElement( "Window" );  
-				windowsNode->LinkEndChild( window );  
-				window->SetAttribute("name", w.name.c_str());
-				window->SetAttribute("x", w.x);
-				window->SetAttribute("y", w.y);
-				window->SetAttribute("w", w.w);
-				window->SetAttribute("h", w.h);
-			}
-		}
+		//		TiXmlElement* window;
+		//		window = new TiXmlElement( "Window" );  
+		//		windowsNode->LinkEndChild( window );  
+		//		window->SetAttribute("name", w.name.c_str());
+		//		window->SetAttribute("x", w.x);
+		//		window->SetAttribute("y", w.y);
+		//		window->SetAttribute("w", w.w);
+		//		window->SetAttribute("h", w.h);
+		//	}
+		//}
 
-		// block: connection
-		{
-			TiXmlElement * cxn = new TiXmlElement( "Connection" );  
-			root->LinkEndChild( cxn );  
-			cxn->SetAttribute("ip", m_connection.ip.c_str());
-			cxn->SetDoubleAttribute("timeout", m_connection.timeout); 
-		}
+		//// block: connection
+		//{
+		//	TiXmlElement * cxn = new TiXmlElement( "Connection" );  
+		//	root->LinkEndChild( cxn );  
+		//	cxn->SetAttribute("ip", m_connection.ip.c_str());
+		//	cxn->SetDoubleAttribute("timeout", m_connection.timeout); 
+		//}
 
-		doc.SaveFile(pFilename);  
+		//doc.SaveFile(pFilename);  
 
 		return true;
 	}

@@ -37,6 +37,13 @@
 namespace FusionEngine
 {
 
+	Logger::Logger()
+		: m_ConsoleLogging(false),
+		m_UseDating(true),
+		m_Ext(g_LogDefaultExt)
+	{
+	}
+
 	Logger::Logger(bool console_logging)
 		: m_ConsoleLogging(console_logging),
 		m_UseDating(true),
@@ -57,12 +64,14 @@ namespace FusionEngine
 			}
 			delete i->second;
 		}
+		// Make sure we are disconnected from the console
+		DisableConsoleLogging();
 	}
 
 	void Logger::ActivateConsoleLogging()
 	{
 		m_ConsoleOnNewLineSlot =
-			Console::getSingleton().OnNewLine.connect(this, &Logger::onConsoleNewline);
+			Console::getSingleton().OnNewLine.connect(this, &Logger::onConsoleNewLine);
 		m_ConsoleLogging = true;
 
 		Console::getSingletonPtr()->Add("Console Logging enabled");
@@ -100,13 +109,18 @@ namespace FusionEngine
 	//	return m_Dating;
 	//}
 
-	Log* Logger::BeginLog(const std::string& tag, bool keepopen)
+	void Logger::TagLink(const std::string& tag, const std::string& alias)
+	{
+		m_Logs.insert( LogList::value_type(alias, GetLog(tag)) );
+	}
+
+	Log* Logger::BeginLog(const std::string& tag, bool safe)
 	{
 		Log* log = NULL;
 
 		try
 		{
-			log = openHeadlessLog(tag, keepopen);
+			log = openHeadlessLog(tag, safe);
 
 			std::stringstream header;
 
@@ -175,9 +189,9 @@ namespace FusionEngine
 		}
 		catch (LogfileException e)
 		{
-			// We don't want to get stuck in a loop, so disable console logging
+			// We don't want to get stuck in a loop, so we disable console logging first
 			DisableConsoleLogging();
-			Console::getSingletonPtr()->Add(e.GetError());
+			SendToConsole(&e);
 		}
 	}
 
@@ -227,32 +241,29 @@ namespace FusionEngine
 		{
 			Log* log = openLog(tag);
 			log->LogMessage(message, severity);
-
-			if (!log->GetKeepOpen())
-				RemoveAndDestroyLog(tag);
 		}
 		catch (LogfileException e)
 		{
 			DisableConsoleLogging();
-			std::cout << e.GetError() << std::endl;
+			SendToConsole(&e);
 		}
 	}
 
 	void Logger::Add(const Error* error, const std::string& tag, LogSeverity severity)
 	{
 		std::string message =
-			CL_String::format("Error [%1]: %2", error->GetType(), error->GetError());
+			CL_String::format("Error [Type %1]: %2", error->GetType(), error->GetError());
 
 		Add(message, tag, severity);
 	}
 
-	void Logger::onConsoleNewline(const std::string &message)
+	void Logger::onConsoleNewLine(const std::string &message)
 	{
 		Add(message, g_LogConsole);
 	}
 
 
-	Log* Logger::openLog(const std::string& tag, bool keepopen)
+	Log* Logger::openLog(const std::string& tag, bool safe)
 	{
 		LogList::iterator it = m_Logs.find(tag);
 		if (it != m_Logs.end())
@@ -260,7 +271,7 @@ namespace FusionEngine
 		
 		else
 		{
-			Log* log = new Log(tag, filename(tag), keepopen);
+			Log* log = new Log(tag, filename(tag), safe);
 			// Add this log to the list
 			m_Logs.insert( LogList::value_type(tag, log) );
 

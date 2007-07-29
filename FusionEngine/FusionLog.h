@@ -69,10 +69,10 @@ namespace FusionEngine
 	class Log
 	{
 	public:
-		//! Determines how sever log messages must be before they are actually logged
+		//! Determines how severe log messages must be before they are actually logged
 		enum LogVerbosity
 		{
-			//! = LOG_<minimum>
+			//! = LOG_TRIVIAL
 			VBO_LOW = 1,
 			//! = LOG_MAX / 2
 			VBO_MEDIUM = 2,
@@ -83,8 +83,10 @@ namespace FusionEngine
 		};
 
 	public:
-		//! Constructor +tag +filename +keep_open
-		Log(const std::string& tag, const std::string& filename, bool keep_open);
+		//! Constructor +tag +filename +safe
+		Log(const std::string& tag, const std::string& filename, bool safe);
+		//! Constructor +tag +filename +safe +verbosity
+		Log(const std::string& tag, const std::string& filename, bool safe, LogVerbosity verbosity);
 		//! Destructor
 		~Log();
 
@@ -97,9 +99,14 @@ namespace FusionEngine
 		 * Depending on the setting, the this method will automatically open
 		 * or close the file (as well as setting the value of m_KeepOpen)
 		 */
-		void SetKeepOpen(bool keepOpen);
-		//! Returns the value of m_KeepOpen
-		inline bool GetKeepOpen() const { return m_KeepOpen; }
+		void SetSafe(bool safe);
+		//! Returns true if safe mode is activated
+		bool IsSafe() const;
+
+		//! Sets the verbosity level
+		void SetVerbosity(LogVerbosity verbosity);
+		//! Returns the verbosity level
+		LogVerbosity GetVerbosity() const;
 
 		//! Adds the given string to the logfile, as is
 		void LogVerbatim(const std::string& text);
@@ -126,7 +133,7 @@ namespace FusionEngine
 		void _setIsEnded(bool ended) { m_Ended = ended; }
 
 	protected:
-		bool m_KeepOpen;
+		bool m_Safe;
 		bool m_Ended;
 		std::string m_Tag;
 		std::string m_Filename;
@@ -136,13 +143,14 @@ namespace FusionEngine
 	protected:
 		//! Just opens the file
 		void open();
-		//! Opens the file if and only if m_KeepOpen is false
-		void reOpen();
+		//! Makes sure the file is open
+		void verifyOpen();
 
 		//! Closes the file
 		void close();
-		//! Closes the file if and only if m_KeepOpen is false
-		void reClose();
+
+		//! Flushes the file if m_Safe is true
+		void flushForSafety();
 	};
 
 }

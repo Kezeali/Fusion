@@ -34,13 +34,8 @@ namespace FusionEngine
 
 	//! Fusion Exception class.
 	/*!
-	 * Used primarily by Colsole, Logger, and StateManager.  This is only used
-	 * for fatal errors, where FusionGame will have to show something to the
-	 * user.
+	 * Generic exceptions
 	 *
-	 * \remarks
-	 * This is the message thrown to FusionGame when an unexpected error arises,
-	 * which is usually when a state update returns false.
 	 */
 	class Error
 	{

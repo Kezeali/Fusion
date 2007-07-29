@@ -40,6 +40,7 @@
 #include "FusionSingleton.h"
 
 #include <CEGUI/CEGUI.h>
+#include <CEGUI/openglrenderer.h>
 
 namespace FusionEngine
 {
@@ -55,6 +56,14 @@ namespace FusionEngine
 	 */
 	class GUI : public FusionState, public Singleton<GUI>
 	{
+	public:
+		enum Modifiers
+		{
+			NOMOD = 0,
+			SHIFT = 1,
+			CTRL = 2,
+			ALT = 4
+		};
 	public:
 		//! Basic constructor.
 		GUI();
@@ -81,6 +90,12 @@ namespace FusionEngine
 		//!Removes the given window
 		virtual bool RemoveWindow(const std::string &window);
 
+		//! Adds the given window layout (to the root window)
+		virtual bool AddWindow(CEGUI::Window *window);
+
+		//!Removes the given window
+		virtual bool RemoveWindow(CEGUI::Window *window);
+
 		//! Sets the period of time the mouse will be shown after it stops moving
 		void SetMouseShowPeriod(unsigned int period);
 
@@ -101,6 +116,8 @@ namespace FusionEngine
 		//! When this reaches zero, the mouse will be hidden
 		int m_ShowMouseTimer;
 
+		short m_Modifiers;
+
 	public:
 		//! Tells CEGUI when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &key);
@@ -113,7 +130,6 @@ namespace FusionEngine
 		virtual void onKeyDown(const CL_InputEvent &key);
 		//! Tells CEGUI when a keyboard key is released
 		virtual void onKeyUp(const CL_InputEvent &key);
-
 	};
 
 
@@ -130,9 +146,12 @@ namespace FusionEngine
 		case CL_KEY_ESCAPE:       return Key::Escape;
 		case CL_KEY_SPACE:        return Key::Space;
 		case CL_KEY_COMMA:        return Key::Comma;
-		case CL_KEY_SUBTRACT:     return Key::Minus;
-		case CL_KEY_DECIMAL:      return Key::Period;
-		case CL_KEY_DIVIDE:       return Key::Slash;
+#ifdef CL_KEY_MINUS
+		case CL_KEY_MINUS:        return Key::Minus;
+#endif
+#ifdef CL_KEY_PERIOD
+		case CL_KEY_PERIOD:       return Key::Period;
+#endif
 		case CL_KEY_0:            return Key::Zero;
 		case CL_KEY_1:            return Key::One;
 		case CL_KEY_2:            return Key::Two;
@@ -180,12 +199,18 @@ namespace FusionEngine
 		case CL_KEY_NUMPAD7:      return Key::Numpad7;
 		case CL_KEY_NUMPAD8:      return Key::Numpad8;
 		case CL_KEY_NUMPAD9:      return Key::Numpad9;
+#ifdef CL_KEY_DECIMAL
 		case CL_KEY_DECIMAL:      return Key::Decimal;
-		case CL_KEY_DIVIDE:       return Key::Divide;
-		case CL_KEY_MULTIPLY:     return Key::Multiply;
-		case CL_KEY_SUBTRACT:     return Key::Subtract;
+#endif
+		case CL_KEY_DIVIDE:       return Key::Divide; //or Key::Slash
+#ifdef CL_KEY_MULTIPLY
+		case CL_KEY_MULTIPLY:      return Key::Multiply;
+#endif
+		case CL_KEY_SUBTRACT:     return Key::Subtract; // or Key::Minus;
+#ifdef CL_KEY_ADD
 		case CL_KEY_ADD:          return Key::Add;
-		case CL_KEY_ENTER:        return Key::NumpadEnter;
+#endif
+		case CL_KEY_NUMPAD_ENTER:        return Key::NumpadEnter;
 			// My numpad has no equals key...
 		//case '=':                 return Key::NumpadEquals;
 		case CL_KEY_UP:           return Key::ArrowUp;
@@ -218,8 +243,12 @@ namespace FusionEngine
 		case CL_KEY_LSHIFT:       return Key::LeftShift;
 		case CL_KEY_RCONTROL:     return Key::RightControl;
 		case CL_KEY_LCONTROL:     return Key::LeftControl;
+#ifdef CL_KEY_RALT
 		case CL_KEY_RALT:         return Key::RightAlt;
+#endif
+#ifdef CL_KEY_LALT
 		case CL_KEY_LALT:         return Key::LeftAlt;
+#endif
 		case CL_KEY_LWIN:         return Key::LeftWindows;
 		case CL_KEY_RWIN:         return Key::RightWindows;
 		//case CL_KEY_SYSREQ:       return Key::SysRq;
@@ -230,9 +259,9 @@ namespace FusionEngine
 		case ':':                 return Key::Colon;
 		case ';':                 return Key::Semicolon;
 		case '=':                 return Key::Equals;
-		case '(':                 return Key::LeftBracket;
+		//case '(':                 return Key::LeftBracket;
 		case ')':                 return Key::RightBracket;
-		case '\\':                return Key::Backslash;
+		//case '\\':                return Key::Backslash;
 
 		default:                return 0;
 		}

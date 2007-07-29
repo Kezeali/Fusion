@@ -43,7 +43,9 @@
 
 namespace FusionEngine
 {
+	static const size_t g_ConsoleDefaultMaxData = 65535;
 
+	//! Not Used
 	struct ConsoleLine
 	{
 		std::string message;
@@ -65,11 +67,21 @@ namespace FusionEngine
 
 	public:
 		//! Lines in the console
-		typedef std::vector<std::string> ConsoleLines;
+		typedef std::deque<std::string> ConsoleLines;
+
+		//! Message header types
+		enum MessageType {
+			MTNORMAL = 0,
+			MTERROR,
+			MTWARNING
+		};
 
 	public:
 		//! Adds the given message to the console history
 		void Add(const std::string &message);
+
+		//! Adds the given message, after prepending it with a heading of the specified type, to the console history
+		void Add(const std::string &message, MessageType type);
 
 		//! Adds the given Error to the console history
 		void Add(const Error *error);
@@ -90,7 +102,45 @@ namespace FusionEngine
 		//! Lists all the data which has been added to the console.
 		ConsoleLines m_Data;
 
+		size_t m_MaxData;
+
 	};
+	
+	//! Static method to safely add a message to the singleton object
+	static void SendToConsole(const std::string &message)
+	{
+		Console* c = Console::getSingletonPtr();
+		if (c != NULL)
+		{
+			c->Add(message);
+		}
+		//! \todo Throw exception if the console hasn't been created.
+	}
+
+	//! Static method to safely add a message to the singleton object
+	/*!
+	* \sa Console#Add(const std::string, MessageType)
+	*/
+	static void SendToConsole(const std::string &message, Console::MessageType type)
+	{
+		Console* c = Console::getSingletonPtr();
+		if (c != NULL)
+		{
+			c->Add(message, type);
+		}
+		//! \todo Throw exception if the console hasn't been created.
+	}
+
+	//! Static method to safely add a message to the singleton object
+	static void SendToConsole(const Error *error)
+	{
+		Console* c = Console::getSingletonPtr();
+		if (c != NULL)
+		{
+			c->Add(error->GetError(), (error->GetType() == Error::TRIVIAL) ? Console::MTWARNING : Console::MTERROR);
+		}
+		//! \todo Throw exception if the console hasn't been created.
+	}
 
 }
 

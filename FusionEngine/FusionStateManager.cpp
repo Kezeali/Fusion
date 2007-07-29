@@ -81,7 +81,7 @@ namespace FusionEngine
 	bool StateManager::AddState(SharedState state)
 	{
 		// Try to initialise the state
-		if (state->Initialise() == false)
+		if (!state->Initialise())
 			return false;
 
 		// Add the state if it managed to init.

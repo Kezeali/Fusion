@@ -57,11 +57,7 @@ namespace FusionEngine
 
 	//! Provides logfile access to all FusionEngine objects
 	/*!
-	 * Manages logfiles
-	 *
-	 * \remarks
-	 * !(keep open) desn't seem to work. For now, everything defaults to
-	 * (keep open) to subdue this bug.
+	 * Manages logfiles.
 	 *
 	 * \todo Allow mapping of log tags to other tags - i.e. if someone
 	 *  calls Logger::Add("Arrrrg", "mylogfile"); and one previously called
@@ -75,8 +71,10 @@ namespace FusionEngine
 		typedef std::map<std::string, Log*> LogList;
 
 	public:
+		//! Constructor
+		Logger();
 		//! Constructor +console_logging
-		Logger(bool console_logging = false);
+		Logger(bool console_logging);
 
 		//! Destructor
 		~Logger();
@@ -96,11 +94,21 @@ namespace FusionEngine
 		//! Gets the extension currently given to logfiles
 		const std::string& GetExt() const;
 
-		//! Activates or disables the appension of dates to log names
+		//! Activates or disables the addition of dates to log file names
 		void SetUseDating(bool useDating);
 
 		//! Returns true if dating is active
 		inline bool GetUseDating() { return m_UseDating; }
+
+		//! Maps the given alias tag to an existing tag
+		/*!
+		 * \param[in] alias
+		 * The new tag which will redirect to the other given tag
+		 *
+		 * \param[in] tag
+		 * The existing tag to which 'alias' will redirect
+		 */
+		void TagLink(const std::string& tag, const std::string& alias);
 
 		//! Opens or creates the logfile corresponding to the given tag
 		/*!
@@ -110,11 +118,10 @@ namespace FusionEngine
 		 * \param[in] tag
 		 * Tag to open
 		 *
-		 * \param[in] keep_file_open
-		 * If true, the file will be kept open between writes. This is useful for
-		 * logs that are written to regularly and/or a lot.
+		 * \param[in] safe
+		 * If true, the file will be flushed after every write.
 		 */
-		Log* BeginLog(const std::string& tag, bool keep_file_open = true);
+		Log* BeginLog(const std::string& tag, bool safe = true);
 
 		//! Adds a header to an already open log
 		/*!
@@ -174,7 +181,7 @@ namespace FusionEngine
 		void Add(const Error* error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
-		void onConsoleNewline(const std::string &message);
+		void onConsoleNewLine(const std::string &message);
 
 	protected:
 		//! True if console logging is active
@@ -192,27 +199,28 @@ namespace FusionEngine
 		/*!
 		 * Always returns a FusionEngine#Log. Throws an exception otherwise.
 		 * <br>
-		 * If the log is created, a header will be added
+		 * If the log has to be created, a header will be added by calling Log#BeginLog()
 		 *
 		 * \param tag
 		 * The tag to look for and create a file for if necessary
 		 *
-		 * \param keepopen
-		 * If the log is must be created, this will be its keepopen setting
+		 * \param safe
+		 * If the log is must be created, this will be its 'safe' setting
 		 */
-		Log* openLog(const std::string& tag, bool keepopen = true);
+		Log* openLog(const std::string& tag, bool safe = true);
 
 		//! Opens the given log. Will not add header.
 		/*!
-		 * Even if the log has to be created, no header will be added
+		 * Even if the log has to be created, no header will be added. i.e. this method
+		 * will never call Log#BeginLog()
 		 *
 		 * \param tag
 		 * The tag to look for and create a file for if necessary
 		 *
-		 * \param keepopen
-		 * If the log is must be created, this will be its keepopen setting
+		 * \param safe
+		 * If the log is must be created, this will be its 'safe' setting
 		 */
-		Log* openHeadlessLog(const std::string& tag, bool keepopen = true);
+		Log* openHeadlessLog(const std::string& tag, bool safe = true);
 
 
 		//! Makes a filename for the given tag

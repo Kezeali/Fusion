@@ -1,2 +1,2 @@
 <?xml version="1.0" ?>
-<Font Name="Verdana-8" Filename="datafiles/fonts/verdana.ttf" Type="Dynamic" Size="8" NativeHorzRes="800" NativeVertRes="600" AutoScaled="true"/>
+<Font Name="Verdana-8" Filename="verdana.ttf" Type="FreeType" Size="8" NativeHorzRes="800" NativeVertRes="600" AutoScaled="true"/>

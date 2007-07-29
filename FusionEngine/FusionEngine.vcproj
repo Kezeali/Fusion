@@ -223,6 +223,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionConsoleStdOutWriter.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
@@ -586,6 +590,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionConsoleGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionConsoleStdOutWriter.cpp"
 				>
 			</File>
 			<File

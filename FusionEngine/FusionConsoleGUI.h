@@ -32,8 +32,12 @@
 /// Inherited
 #include "FusionState.h"
 
+#include <CEGUI/CEGUI.h>
+
 namespace FusionEngine
 {
+
+	static const size_t g_ConGUIDefaultMaxHistory = 255;
 
 	/*!
 	 * \brief
@@ -44,6 +48,9 @@ namespace FusionEngine
 	public:
 		//! Basic constructor.
 		ConsoleGUI();
+
+		//! Constructor +max_history
+		ConsoleGUI(size_t max_history);
 
 		//! Destructor
 		~ConsoleGUI();
@@ -61,24 +68,36 @@ namespace FusionEngine
 		//! Unbinds
 		virtual void CleanUp();
 
+		//! Sets the max number of items to keep in the entry history
+		void SetMaxHistory(unsigned int max);
+		//! Returns the max number of items that will be kept in the entry history.
+		unsigned int GetMaxHistory() const;
+
 		bool onMouseEnter(const CEGUI::EventArgs& e);
 		bool onMouseLeave(const CEGUI::EventArgs& e);
 		bool onEditBoxAccepted(const CEGUI::EventArgs& e);
 		bool onEditBoxKeyUp(const CEGUI::EventArgs &e);
-		bool onConsoleNewLine(const std::string &data);
+
+		void onConsoleNewLine(const std::string &data);
+		void onConsoleClear();
 
 	protected:
 		CEGUI::Window *m_Wind;
 		CEGUI::Editbox *m_EditBox;
 		CEGUI::MultiLineEditbox *m_HistoryBox;
 
+		std::deque<CEGUI::String> m_History;
 		int m_HistoryPos;
 		bool m_RecentInHistory;
 
-		CL_SlotContainer m_Slots;
+		size_t m_MaxHistory;
+
+		//CL_SlotContainer m_Slots;
+		CL_Slot m_ConsoleOnNewLineSlot;
+		CL_Slot m_ConsoleOnClearSlot;
 
 		//! Enters text
-		void enterText(const CEGUI::String &text);
+		void enterText(CEGUI::String text);
 
 	};
 

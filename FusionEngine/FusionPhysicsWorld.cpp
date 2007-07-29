@@ -34,6 +34,7 @@
 /// Fusion
 #include "FusionPhysicsCollisionGrid.h"
 #include "FusionPhysicsUtils.h"
+#include "FusionConsole.h"
 
 namespace FusionEngine
 {
@@ -810,6 +811,8 @@ namespace FusionEngine
 
 	void FusionPhysicsWorld::ActivateWrapAround()
 	{
+		SendToConsole("Wrap around activated");
+		SendToConsole("Wrap around is unstable and may cause unexpected behaviour", Console::MTWARNING);
 		m_Wrap = true;
 	}
 

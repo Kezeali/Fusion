@@ -34,7 +34,7 @@
             <Property Name="UnifiedMaxSize" Value="{{1,0},{1,0}}" />
             <Property Name="UnifiedPosition" Value="{{0,7},{0,35}}" />
             <Property Name="UnifiedSize" Value="{{1,-14},{1,-75}}" />
-            <Property Name="Text">History:</Property>
+            <Property Name="Text" Value=""/>
               
         </Window>
     </Window>

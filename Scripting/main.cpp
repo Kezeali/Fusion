@@ -1,12 +1,17 @@
 #include "..\FusionEngine\Common.h"
 #include "..\FusionEngine\FusionCommon.h"
 
+#include "..\FusionEngine\FusionLogger.h"
+#include "..\FusionEngine\FusionConsole.h"
+
 #include "..\FusionEngine\FusionBitmask.h"
 #include "..\FusionEngine\FusionPhysicsWorld.h"
 #include "..\FusionEngine\FusionPhysicsBody.h"
 #include "..\FusionEngine\FusionPhysicsUtils.h"
 #include "..\FusionEngine\FusionPhysicsTypes.h"
 #include "..\FusionEngine\FusionPhysicsCallback.h"
+
+#include "..\FusionEngine\FusionStateManager.h"
 
 #include "..\FusionEngine\FusionScriptingEngine.h"
 #include "..\FusionEngine\FusionScript.h"

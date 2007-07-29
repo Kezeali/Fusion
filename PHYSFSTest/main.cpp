@@ -2,6 +2,7 @@
 
 #include "..\FusionEngine\FusionPhysFS.h"
 #include "..\FusionEngine\FusionConsole.h"
+#include "..\FusionEngine\FusionConsoleStdOutWriter.h"
 #include "..\FusionEngine\FusionLogger.h"
 
 #include "..\FusionEngine\PhysFS.h"
@@ -21,8 +22,11 @@ class PhysFSTest : public CL_ClanApplication
 
 		try
 		{
-			new FusionEngine::Console;
-			FusionEngine::Logger* logger = new FusionEngine::Logger(true);
+			using namespace FusionEngine;
+			new Console;
+			ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
+			cout->Activate();
+			Logger* logger = new Logger(true);
 
 			// List version info
 			PHYSFS_Version compiled;
@@ -35,21 +39,36 @@ class PhysFSTest : public CL_ClanApplication
 			printf("Linked against PhysFS version %d.%d.%d.\n",
 				linked.major, linked.minor, linked.patch);
 
+			Error* trivial = 
+				new Error(Error::TRIVIAL, "An error is about to happen");
+			Error* err = 
+				new Error(Error::INTERNAL_ERROR, "Nothing Happened");
 
 			logger->SetUseDating(true);
 			logger->BeginLog("another log", false);
+			// Add a normal message
 			logger->Add("hello", "another log");
+			// Add an error
+			logger->Add(err, "another log");
 			logger->EndLog("another log");
+			logger->RemoveAndDestroyLog("another log");
+
+			// Send a warning to the console
+			SendToConsole(trivial);
+			// Send an error to the console
+			SendToConsole(err);
+
 			// List filetypes
-			logger->Add("PhysFS File Types", "console");
+			logger->Add("PhysFS File Types:", "console");
 
 			const PHYSFS_ArchiveInfo **i;
 			for (i = PHYSFS_supportedArchiveTypes(); *i != NULL; i++)
 			{
-				std::cout << "Supported archive: " << (*i)->extension << " which is "
-					<< (*i)->description << "." << std::endl;
+				//std::cout << "Supported archive: " << (*i)->extension << " which is "
+				//	<< (*i)->description << "." << std::endl;
 
-				FusionEngine::Console::getSingletonPtr()->Add((*i)->description);
+				//FusionEngine::Console::getSingletonPtr()->Add((*i)->description);
+				SendToConsole((*i)->description);
 			}
 
 			//{
@@ -58,7 +77,7 @@ class PhysFSTest : public CL_ClanApplication
 			//}
 
 			delete logger;
-			delete FusionEngine::Console::getSingletonPtr();
+			delete Console::getSingletonPtr();
 
 			// Configure physFS for this app
 			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");

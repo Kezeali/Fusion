@@ -330,6 +330,7 @@ namespace FusionEngine
 		const FusionPhysicsCollisionGrid* GetCollisionGrid() const;
 
 	private:
+		Console m_Console;
 		//! All physical objects controled by this world.
 		BodyList m_Bodies;
 

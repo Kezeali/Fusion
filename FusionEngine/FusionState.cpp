@@ -31,6 +31,9 @@ namespace FusionEngine
 
 	StateMessage *FusionState::PopMessage()
 	{
+		if (m_Messages.empty())
+			return 0;
+
 		StateMessage *ret = m_Messages.front();
 		m_Messages.pop_front();
 
@@ -42,7 +45,7 @@ namespace FusionEngine
 		m_Messages.push_back(m);
 	}
 
-	void FusionState::SetBlocking(bool blocking) const
+	void FusionState::SetBlocking(bool blocking)
 	{
 		m_Blocking = blocking;
 	}

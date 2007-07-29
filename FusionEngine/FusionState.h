@@ -66,7 +66,8 @@ namespace FusionEngine
 			: m_Blocking(blocking)
 		{}
 		//! Destructor
-		~FusionState();
+		~FusionState()
+		{}
 
 	public:
 		//! Pure virtual method
@@ -87,7 +88,7 @@ namespace FusionEngine
 		void _pushMessage(StateMessage *m);
 
 		//! Sets the blocking mode for this state
-		void SetBlocking(bool blocking) const;
+		void SetBlocking(bool blocking);
 
 		//! Checks the blocking mode for this state
 		bool IsBlocking() const;

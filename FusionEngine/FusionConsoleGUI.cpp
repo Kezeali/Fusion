@@ -22,15 +22,30 @@
 
 #include "FusionConsoleGUI.h"
 
+#include "FusionInputHandler.h"
+
 #include "FusionGUI.h"
 #include "FusionConsole.h"
+
 #include <CEGUI/CEGUI.h>
+#include <CEGUI/falagard/CEGUIFalWidgetLookManager.h>
 
 namespace FusionEngine
 {
 
 	ConsoleGUI::ConsoleGUI()
+		: m_MaxHistory(g_ConGUIDefaultMaxHistory)
 	{
+	}
+
+	ConsoleGUI::ConsoleGUI(size_t max_history)
+	{
+		m_MaxHistory = max_history;
+	}
+
+	ConsoleGUI::~ConsoleGUI()
+	{
+		Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
 	}
 
 	/////////////////
@@ -40,43 +55,78 @@ namespace FusionEngine
 	{
 		using namespace CEGUI;
 
-		WindowManager& winMgr = WindowManager::getSingleton();
-		Window *console_sheet = winMgr.loadWindowLayout("Console.layout");
-
-
-		m_Wind = static_cast<CEGUI::Window*> (
-			winMgr.getWindow("Console/Wind")
-			);
-		m_EditBox = static_cast<CEGUI::Editbox*> (
-			winMgr.getWindow("Console/Wind/Editbox")
-			);
-		m_HistoryBox = static_cast<CEGUI::MultiLineEditbox*> (
-			winMgr.getWindow("Console/Wind/History")
-			);
-
-		// Subscribe to the KeyUp event to capture enter presses
-		m_EditBox->subscribeEvent(
-			Editbox::EventTextAccepted,
-			Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this));
-
-		// Connect to the newline signal from the console
-		m_Slots.connect(Console::getSingleton().OnNewLine, this, &ConsoleGUI::onConsoleNewLine);
-
-
-		// Fill the console with the past history
-		Console::ConsoleLines lines = Console::getSingleton().GetHistory();
-
-		Console::ConsoleLines::iterator it = lines.begin();
-		for (; it != lines.end(); ++it)
+		Window *console_sheet = 0;
+		try
 		{
-			enterText( (*it) );
-		}
+			WindowManager& winMgr = WindowManager::getSingleton();
 
-		GUI::getSingleton().AddWindow(console_sheet);
+			console_sheet = winMgr.loadWindowLayout("Console.layout");
+
+			//m_Wind = static_cast<CEGUI::Window*> (
+			//	winMgr.getWindow("Vanilla/Console")
+			//	);
+			//m_EditBox = static_cast<CEGUI::Editbox*> (
+			//	winMgr.getWindow("Vanilla/Console/Editbox")
+			//	);
+			//m_HistoryBox = static_cast<CEGUI::MultiLineEditbox*> (
+			//	winMgr.getWindow("Vanilla/Console/History")
+			//	);
+			m_Wind = static_cast<CEGUI::Window*> (
+				winMgr.getWindow("Console/Wind")
+				);
+			m_EditBox = static_cast<CEGUI::Editbox*> (
+				winMgr.getWindow("Console/Wind/Editbox")
+				);
+			m_HistoryBox = static_cast<CEGUI::MultiLineEditbox*> (
+				winMgr.getWindow("Console/Wind/History")
+				);
+
+			// Capture editbox accepted (e.g. enter pressed) events
+			m_EditBox->subscribeEvent(
+				Editbox::EventTextAccepted,
+				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this));
+			// Submit button
+			m_Wind->getChild(1)->subscribeEvent(
+				PushButton::EventClicked,
+				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this));
+			// Key events to scroll history
+			m_Wind->subscribeEvent(
+				Window::EventKeyDown,
+				Event::Subscriber(&ConsoleGUI::onEditBoxKeyUp, this));
+
+			// Connect to the newline signal from the console
+			//m_Slots.connect(Console::getSingleton().OnNewLine, this, &ConsoleGUI::onConsoleNewLine);
+			m_ConsoleOnNewLineSlot = 
+				Console::getSingleton().OnNewLine.connect(this, &ConsoleGUI::onConsoleNewLine);
+
+			m_ConsoleOnClearSlot =
+				Console::getSingleton().OnClear.connect(this, &ConsoleGUI::onConsoleClear);
+
+			// Fill the console with the past history
+			Console::ConsoleLines lines = Console::getSingleton().GetHistory();
+
+			Console::ConsoleLines::iterator it = lines.begin();
+			for (; it != lines.end(); ++it)
+			{
+				enterText( (*it) );
+			}
+
+			// Finally, add the window to the GUI, and hope
+			bool success = GUI::getSingleton().AddWindow(console_sheet);
+			//background->activate();
+			return success;
+
+		}
+		catch (CEGUI::Exception& e)
+		{
+			SendToConsole(e.getMessage().c_str(), Console::MTERROR);
+			return false;
+		}
 	}
 
 	bool ConsoleGUI::Update(unsigned int split)
 	{
+		return true;
 	}
 
 	void ConsoleGUI::Draw()
@@ -88,15 +138,31 @@ namespace FusionEngine
 		FusionInput::getSingleton().Activate();
 	}
 
+	void ConsoleGUI::SetMaxHistory(unsigned int max)
+	{
+		m_MaxHistory = max;
+		m_History.resize(max);
+		m_HistoryPos = m_History.size();
+	}
+
+	unsigned int ConsoleGUI::GetMaxHistory() const
+	{
+		return m_MaxHistory;
+	}
+
 	bool ConsoleGUI::onMouseEnter(const CEGUI::EventArgs& e)
 	{
 		// Stops the input manager from trying to gather player inputs
 		FusionInput::getSingleton().Suspend();
+
+		return true;
 	}
 
 	bool ConsoleGUI::onMouseLeave(const CEGUI::EventArgs& e)
 	{
 		FusionInput::getSingleton().Activate();
+
+		return true;
 	}
 
 	bool ConsoleGUI::onEditBoxAccepted(const CEGUI::EventArgs& e)
@@ -109,15 +175,18 @@ namespace FusionEngine
 		{
 			// Add this entry to the command history buffer
 			m_History.push_back(edit_text);
+			// Limit History size
+			if (m_History.size() >= m_MaxHistory)
+				m_History.pop_front();
 			// Reset history position
 			m_HistoryPos = m_History.size();
 
 			// Put the text in the display
-			enterText(edit_text);
+			// - Removed because this is done via a signal from the console after SendToConsole(..) is called
+			//enterText(edit_text);
 
-
-			// Store the text in the console
-			Console::getSingleton().Add(edit_text);
+			// Store the text in the Console
+			SendToConsole(edit_text.c_str());
 
 			// Erase text in text entry box.
 			m_EditBox->setText("");
@@ -212,17 +281,22 @@ namespace FusionEngine
 		enterText(data);
 	}
 
+	void ConsoleGUI::onConsoleClear()
+	{
+		m_HistoryBox->setText("");
+	}
+
 	/////////////////
 	/// Private
 
-	void ConsoleGUI::enterText(const CEGUI::String &text)
+	void ConsoleGUI::enterText(CEGUI::String text)
 	{
 		if (!text.empty())
 		{
 			// Append newline to this entry
-			text += '\n';
+			text += "\n";
 			// Append new text to history output
-			m_HistoryBox->setText(m_HistoryBox->getText() + edit_text);
+			m_HistoryBox->setText(m_HistoryBox->getText() + text);
 			// Scroll to bottom of history output
 			m_HistoryBox->setCaratIndex(static_cast<size_t>(-1));
 		}

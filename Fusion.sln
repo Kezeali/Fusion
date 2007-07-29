@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Scripting", "Scripting\Scri
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SceneGraph", "SceneGraph\SceneGraph.vcproj", "{95C330C6-74CF-402F-A329-65D89E98E207}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI", "GUI\GUI.vcproj", "{87D11081-1126-427C-80EB-E7CEE46660BF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -37,6 +39,10 @@ Global
 		{95C330C6-74CF-402F-A329-65D89E98E207}.Debug|Win32.Build.0 = Debug|Win32
 		{95C330C6-74CF-402F-A329-65D89E98E207}.Release|Win32.ActiveCfg = Release|Win32
 		{95C330C6-74CF-402F-A329-65D89E98E207}.Release|Win32.Build.0 = Release|Win32
+		{87D11081-1126-427C-80EB-E7CEE46660BF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{87D11081-1126-427C-80EB-E7CEE46660BF}.Debug|Win32.Build.0 = Debug|Win32
+		{87D11081-1126-427C-80EB-E7CEE46660BF}.Release|Win32.ActiveCfg = Release|Win32
+		{87D11081-1126-427C-80EB-E7CEE46660BF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

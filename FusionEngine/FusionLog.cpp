@@ -35,9 +35,9 @@
 namespace FusionEngine
 {
 
-	Log::Log(const std::string& tag, const std::string& filename, bool keep_open)
+	Log::Log(const std::string& tag, const std::string& filename, bool safe)
 		: m_Filename(filename),
-		m_KeepOpen(keep_open),
+		m_Safe(safe),
 		m_Ended(true),
 		m_Tag(tag),
 		m_Verbosity(VBO_HIGH)
@@ -47,40 +47,45 @@ namespace FusionEngine
 
 	Log::~Log()
 	{
-		close();
+		Flush();
 	}
 
-	void Log::SetKeepOpen(bool keepOpen)
+	void Log::SetSafe(bool safe)
 	{
-		// Since m_KeepOpen should still be false, Log::open() will open the file.
-		//  If m_KeepOpen is true, the file doesn't need to be opened anyway, so
-		//  nothing will happen here.
-		//
-		//  That is to say, this will:
-		//  o Open m_Filename if m_KeepOpen is false (it shouldn't already be open)
-		//  o Check whether m_Filename is open if m_KeepOpen (it should already be open)
-		if (keepOpen)
-			reOpen();
+		// Flush immeadiatly, to be extra safe ;)
+		if (safe)
+			Flush();
 
-		else
-			close();
-
-		m_KeepOpen = keepOpen;
+		m_Safe = safe;
 	}
-			
+
+	bool Log::IsSafe() const
+	{
+		return m_Safe;
+	}
+
+	void Log::SetVerbosity(Log::LogVerbosity verbosity)
+	{
+		m_Verbosity = verbosity;
+	}
+
+	Log::LogVerbosity Log::GetVerbosity() const
+	{
+		return m_Verbosity;
+	}
 
 	void Log::LogVerbatim(const std::string& text)
 	{
-		reOpen();
+		verifyOpen();
 		
 		m_Logfile << text << std::endl;
 
-		reClose();
+		flushForSafety();
 	}
 
 	void Log::LogMessage(const std::string& message, LogSeverity severity)
 	{
-		reOpen();
+		verifyOpen();
 
 		if ((m_Verbosity + severity) >= VBO_THRESHOLD)
 		{
@@ -95,7 +100,7 @@ namespace FusionEngine
 				<< "]  " << message << std::endl;
 		}
 
-		reClose();
+		flushForSafety();
 	}
 
 	void Log::Flush()
@@ -115,9 +120,8 @@ namespace FusionEngine
 		}
 	}
 
-	void Log::reOpen()
+	void Log::verifyOpen()
 	{
-		// The file should be open already
 		if (!m_Logfile.is_open())
 		{
 			throw LogfileException(
@@ -126,17 +130,10 @@ namespace FusionEngine
 		}
 	}
 
-	void Log::close()
+	void Log::flushForSafety()
 	{
-		m_Logfile.flush();
-	}
-
-	void Log::reClose()
-	{
-		if (!m_KeepOpen)
-		{
-			close();
-		}
+		if (m_Safe)
+			Flush();
 	}
 
 }

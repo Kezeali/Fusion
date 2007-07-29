@@ -79,6 +79,9 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Encapsulates client-side options.
+	 *
+	 * \todo Make member variable identifiers consistant over all classes by prepending them with
+	 * 'm_', even public members
 	 */
 	class ClientOptions
 	{
@@ -96,25 +99,25 @@ namespace FusionEngine
 
 	public:
 		//! Number of local players
-		unsigned int mNumPlayers;
+		unsigned int NumPlayers;
 
 		//! True if console history should be logged.
-		bool mConsoleLogging;
+		bool ConsoleLogging;
 
 		//! General player options (other than inputs)
-		PlayerOptionsList mPlayerOptions;
+		PlayerOptionsList PlayerOptions;
 
 		//! Player input mappings
-		PlayerInputsList mPlayerInputs;
+		PlayerInputsList PlayerInputs;
 		//! Global input mappings
-		GlobalInputMap mGlobalInputs;
+		GlobalInputMap GlobalInputs;
 
 		//! Nework options
-		NetworkSettings mNetworkOptions;
+		NetworkSettings NetworkOptions;
 
 		//! Set the controls for defaults
 		//! \todo Load default player controls from file (very low priority)
-		void DefaultPlayerControls(int player);
+		void DefaultPlayerControls(ObjectID player);
 		//! Sets all the controls to the defaults
 		void DefaultGlobalControls();
 

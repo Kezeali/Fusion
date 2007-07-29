@@ -3,8 +3,8 @@
 
 namespace FusionEngine
 {
-
 	Console::Console()
+		: m_MaxData(g_ConsoleDefaultMaxData)
 	{
 	}
 
@@ -12,16 +12,42 @@ namespace FusionEngine
 	{
 		m_Data.push_back(message);
 
+		if (m_Data.size() > m_MaxData)
+			m_Data.pop_front();
+
 		// Signal
 		OnNewLine(message);
 	}
 
-	void Console::Add(const FusionEngine::Error *error)
+	void Console::Add(const std::string& message, MessageType type)
 	{
-		m_Data.push_back(error->GetError());
+		std::string headedMessage = message;
+		switch (type)
+		{
+		case MTNORMAL:
+			// headedMessage = message;
+			break;
+		case MTWARNING:
+			headedMessage = CL_String::format("Warning: %1", message);
+			break;
+		case MTERROR:
+			headedMessage = CL_String::format("**Error: %1", message);
+			break;
+		}
+
+		// Add the message to the console data
+		m_Data.push_back(headedMessage);
+
+		if (m_Data.size() > m_MaxData)
+			m_Data.pop_front();
 
 		// Signal
-		OnNewLine(error->GetError());
+		OnNewLine(headedMessage);
+	}
+
+	void Console::Add(const FusionEngine::Error *error)
+	{
+		Add(error->GetError(), error->GetType() == Error::TRIVIAL ? Console::MTWARNING : Console::MTERROR);
 	}
 
 	void Console::Clear()

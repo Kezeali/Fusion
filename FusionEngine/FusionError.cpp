@@ -5,7 +5,7 @@ namespace FusionEngine
 {
 
 	Error::Error()
-		: m_Type(NONE),
+		: m_Type(TRIVIAL),
 		m_Critical(false)
 	{
 	}

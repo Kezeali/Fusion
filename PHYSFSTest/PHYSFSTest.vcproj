@@ -187,6 +187,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionError.cpp"
 				>
 			</File>
@@ -234,6 +238,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsole.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.h"
 				>
 			</File>
 			<File
