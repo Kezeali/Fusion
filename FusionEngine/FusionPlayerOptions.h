@@ -37,10 +37,10 @@ namespace FusionEngine
 	 * Encapsulates per-player client-side options.
 	 *
 	 * Stores: <br>
-	 * Nothing ATM.
+	 * Nothing ATM. To be removed???
 	 * 
 	 * Doesn't store: <br>
-	 * - The ship type (ShipResource) (this is chosen after connecting to the server.) <br>
+	 * - The ship type (ShipResourceBundle) (this is chosen after connecting to the server.) <br>
 	 * - Inputs (This is stored directly in the client options for ease of access.) <br>
 	 */
 	class PlayerOptions

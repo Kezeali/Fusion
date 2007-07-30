@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_LevelResource
-#define Header_FusionEngine_LevelResource
+#ifndef Header_FusionEngine_LevelResourceBundle
+#define Header_FusionEngine_LevelResourceBundle
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,7 +34,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
+#include "FusionResourceBundle.h"
 
 namespace FusionEngine
 {
@@ -50,7 +50,7 @@ namespace FusionEngine
 	 * \brief
 	 * Stores information loaded from a level package.
 	 */
-	class LevelResource : public Resource
+	class LevelResourceBundle : public ResourceBundle
 	{
 	public:
 		//! An array of spawn locations

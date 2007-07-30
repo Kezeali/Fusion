@@ -27,7 +27,7 @@ namespace FusionEngine
 	 * this todo is kinda long, I wonder if Doxygen will still use it...
 	 *
 	 * \sa
-	 * FusionShip | ShipResource
+	 * FusionShip | ShipResourceBundle
 	 */
 	class FusionShipDrawable : public FusionDrawable
 	{
@@ -51,7 +51,7 @@ namespace FusionEngine
 		/*! \brief The image to draw.
 		 * This is my "Occam's razor" fix for the over-reliance-on-clientEnv problem :P
 		 */
-		CL_Surface *m_Image;
+		ResourcePointer<CL_Surface> m_Image;
 
 		//! The ship associated with this drawable
 		FusionShip *m_Ship;

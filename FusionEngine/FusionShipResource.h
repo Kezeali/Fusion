@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_ShipResource
-#define Header_FusionEngine_ShipResource
+#ifndef Header_FusionEngine_ShipResourceBundle
+#define Header_FusionEngine_ShipResourceBundle
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,7 +29,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
+#include "FusionResourceBundle.h"
 
 namespace FusionEngine
 {
@@ -48,7 +48,7 @@ namespace FusionEngine
 	 * nodes and give FusionDrawableObject-s something to draw. On the server they are
 	 * used to initilise FusionServerShip-s.
 	 */
-	class ShipResource : public Resource
+	class ShipResourceBundle : public ResourceBundle
 	{
 	public:
 		// Note that the struct names here don't matter,

@@ -1,5 +1,5 @@
-#ifndef Header_FusionEngine_ResourceLoader
-#define Header_FusionEngine_ResourceLoader
+#ifndef Header_FusionEngine_Theme
+#define Header_FusionEngine_Theme
 
 #if _MSC_VER > 1000
 #pragma once

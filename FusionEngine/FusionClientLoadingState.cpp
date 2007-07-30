@@ -1,6 +1,6 @@
 // The loading state should first connect to the server and find out where the 
 //  fileserver is, then use that data to initialise the pack sync client.
-//  once the pack sync client has run, it should create the resource loader
+//  once the pack sync client has run, it should create the resource mgr.
 //  and ask the server what ships to load, the server will then send
 //  VerifyPackage packets, with which the resource loader will verify
 //  each package. LoadVerified will then be called on the resource loader.
@@ -19,7 +19,7 @@
 
 #include "FusionClientOptions.h"
 #include "FusionPackSyncClient.h"
-#include "FusionResourceLoader.h"
+#include "FusionResourceManager.h"
 
 #include <RakNet/RakClientInterface.h>
 
@@ -49,6 +49,13 @@ namespace FusionEngine
 			new ConnectionStage(m_MainConnection, m_Host.c_str(), m_Port, m_Options->mNetworkOptions.mLocalPort, 0)
 			);
 
+		// This method means this class (and the equivilant server
+		//  class) could eventually be replaced with a script (and a
+		//  different class to run the relivant script). As a side
+		//  note: scripts would have access to a 'SetProgress'
+		//  function, which would have differing effects depending
+		//  on whether the script was running in a dedicated
+		//  server (commandline), or a GUI environment.
 		AddLoadingStage(connect);
 		//into ConnectionStage -> m_Connection->Connect(m_Host.c_str(), m_Port, m_Options->mNetworkOptions.mLocalPort, 0, 0);
 
@@ -72,7 +79,7 @@ namespace FusionEngine
 		//case LOAD_RESOURCES:
 		//	// If sync is finished, make sure the progress bar is at the file loading position
 		//	m_Progress = PROG_BEGINFILELOAD;
-		//	ResourceLoader::getSingletonPtr();
+		//	ResourceManager::getSingletonPtr();
 		//	f
 		//	break;
 		//case LOAD_DONE:

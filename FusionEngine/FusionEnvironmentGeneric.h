@@ -46,10 +46,10 @@
 #include "FusionProjectile.h"
 #include "FusionLevel.h"
 
-#include "FusionResourceLoader.h"
-#include "FusionLevelResource.h"
-#include "FusionShipResource.h"
-#include "FusionWeaponResource.h"
+#include "FusionResourceManager.h"
+#include "FusionLevelResourceBundle.h"
+#include "FusionShipResourceBundle.h"
+#include "FusionWeaponResourceBundle.h"
 
 #include "FusionScriptingEngine.h"
 #include "FusionNetworkClient.h"

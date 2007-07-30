@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ProjectileResource
-#define Header_FusionEngine_ProjectileResource
+#ifndef Header_FusionEngine_ProjectileResourceBundle
+#define Header_FusionEngine_ProjectileResourceBundle
 
 #if _MSC_VER > 1000
 #pragma once
@@ -47,9 +47,9 @@ namespace FusionEngine
 	 * \todo Physics functions for weapon scripts (to allow for grappling-hook
 	 *  functionality, etc.)
 	 *
-	 * \sa WeaponResource | ShipResource
+	 * \sa WeaponResourceBundle | ShipResourceBundle
 	 */
-	class ProjectileResource : public Resource
+	class ProjectileResourceBundle : public ResourceBundle
 	{
 	public:
 		struct

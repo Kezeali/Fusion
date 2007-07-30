@@ -4,8 +4,8 @@
 /// Class
 #include "FusionShipDrawable.h"
 
-#include "FusionResourceLoader.h"
-#include "FusionShipResource.h"
+#include "FusionResourceManager.h"
+#include "FusionShipResourceBundle.h"
 #include "FusionNode.h"
 
 using namespace FusionEngine;
@@ -30,7 +30,7 @@ void FusionShipDrawable::Draw()
 	float rot = m_ParentNode->GetGlobalFacing();
 	Vector2 pos = m_ParentNode->GetGlobalPosition();
 	// Get resource form the rscmgr singleton
-	ShipResource* rsc = ResourceManager::getSingletonPtr()->GetShipResource(m_ResourceID);
+	ShipResourceBundle* rsc = ResourceManager::getSingletonPtr()->GetShipResource(m_ResourceID);
 
 	CL_Surface_DrawParams2 dp;
 	// Set the params

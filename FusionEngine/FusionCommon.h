@@ -169,7 +169,7 @@ namespace FusionEngine
 	class ProjectileState;
 	class FusionShip;
 	class FusionProjectile;
-	class ShipResource;
+	class ShipResourceBundle;
 	class FusionPhysicsWorld;
 	class FusionPhysicsBody;
 	class FusionPhysicsCollisionGrid;

@@ -197,7 +197,7 @@ namespace FusionEngine
 		 * in ShipState) and occasionally sync-ed with MTID_HELDWEAPONS.
 		 *
 		 * \remarks
-		 * For non-pickup gamemodes, this will simply be ResourceLoader->LoadedWeapons.
+		 * For non-powerup gamemodes, this will simply be ResourceManager->LoadedWeapons.
 		 */
 		WeaponList m_HeldWeapons;
 

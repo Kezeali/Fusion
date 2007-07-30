@@ -46,7 +46,7 @@ namespace FusionEngine
 	 * A Region (script trigger) within a level.
 	 *
 	 * \sa
-	 * Level | LevelResource
+	 * Level | LevelResourceBundle
 	 */
 	class LevelRegion : public micropather::Graph
 	{

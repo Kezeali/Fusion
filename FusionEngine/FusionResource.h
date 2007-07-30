@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_Resource
-#define Header_FusionEngine_Resource
+#ifndef Header_FusionEngine_ResourceBundle
+#define Header_FusionEngine_ResourceBundle
 
 #if _MSC_VER > 1000
 #pragma once
@@ -40,7 +40,7 @@ namespace FusionEngine
 	 * \brief
 	 * Base for resource collections
 	 */
-	class Resource
+	class ResourceBundle
 	{
 	public:
 		// Note that the struct type name here doesn't matter,

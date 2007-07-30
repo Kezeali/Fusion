@@ -60,7 +60,7 @@ namespace FusionEngine
 		 * Current velocity of rotation.
 		 *
 		 * \remarks
-		 * (ShipResource has RotationVelocity [no 'al'], that being the <i>maximum</i>
+		 * (ShipResourceBundle has RotationVelocity [no 'al'], that being the <i>maximum</i>
 		 * velocity of rotation.)
 		 */
 		float m_RotationalVelocity;

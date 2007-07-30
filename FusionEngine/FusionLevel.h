@@ -40,7 +40,7 @@ namespace FusionEngine
 	 * collision callbacks of the bodies that can destroy it.)
 	 *
 	 * \sa
-	 * LevelResource | LevelRegion
+	 * LevelResourceBundle | LevelRegion
 	 */
 	class Level : public micropather::Graph
 	{

@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_WeaponResource
-#define Header_FusionEngine_WeaponResource
+#ifndef Header_FusionEngine_WeaponResourceBundle
+#define Header_FusionEngine_WeaponResourceBundle
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,8 +29,8 @@
 
 #include "FusionCommon.h"
 
-#include "FusionResource.h"
-#include "FusionProjectileResource.h"
+#include "FusionResourceBundle.h"
+#include "FusionProjectileResourceBundle.h"
 
 namespace FusionEngine
 {
@@ -38,7 +38,7 @@ namespace FusionEngine
 	 * \brief
 	 * Stores information loaded from a weapon package.
 	 */
-	class WeaponResource : public Resource
+	class WeaponResourceBundle : public ResourceBundle
 	{
 	public:
 		// Note that struct typenames aren't used,
@@ -46,8 +46,7 @@ namespace FusionEngine
 
 		struct
 		{
-			//! \todo fix this
-			Script* script;
+			ResourcePointer<Script> script;
 
 			ScriptFuncSig onfire;
 			// player pressed fire while the weapon was unloaded - only for

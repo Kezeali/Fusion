@@ -46,7 +46,7 @@ namespace FusionEngine
 		m_Options(options),
 		m_FrameTime(g_DefaultFrameTime)
 	{
-		new ResourceLoader();
+		new ResourceManager();
 		new FusionInput(m_Options); // initialises the fusion input singleton
 		m_NetworkManager = new FusionNetworkClient(hostname, port, options);
 		m_Scene = new FusionScene();
@@ -144,7 +144,7 @@ namespace FusionEngine
 		FusionNode *node = m_Scene->CreateNode();
 
 		// Get the resource for the ship
-		ShipResource *res = m_ShipResources[m_PlayerResourceIds[state.PID]];
+		ShipResourceBundle *res = m_ShipResources[m_PlayerResourceIds[state.PID]];
 
 		// Create children and their drawables
 		//  Engines

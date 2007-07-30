@@ -54,6 +54,9 @@ namespace FusionEngine
 	 * FusionState#Initialise(), FusionState#Draw() and FusionState#CleanUp().
 	 * FusionState#Update() is defined, and runs the loading stage manager.
 	 *
+	 * For example, a script-based loader could be implemented which simply runs
+	 * a script - the script would initialize and handle LoadingStages.
+	 *
 	 * \remarks
 	 * Just something to think about:
 	 * <code>
@@ -98,6 +101,9 @@ namespace FusionEngine
 		/*!
 		 * This should be called after all loading stages have been added, and before
 		 * Update() is called.
+		 *
+		 * \todo Remove this, and put the functionality in AddLoadingStage() (that
+		 * will be more convinient for scripting)
 		 */
 		void RecalculateProgressScale();
 

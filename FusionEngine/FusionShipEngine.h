@@ -21,7 +21,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Sets the image this drawable should draw
-		void SetImage(CL_Surface *image);
+		void SetImage(ResourcePointer<CL_Surface> *image);
 		//void SetResource(const std::string &resid);
 
 		//! Draws the damn thing
@@ -29,13 +29,7 @@ namespace FusionEngine
 
 	protected:
 		//! The image to draw
-		CL_Surface *m_Image;
-
-		//! [depreciated] for simplicity's sake. Allows the engine drawable to access the relavant ShipResource
-		//ClientEnvironment *m_Env;
-
-		//! Resource (sent by FusionShip)
-		//std::string m_ResourceID;
+		ResourcePointer<CL_Surface> m_Image;
 	};
 
 }

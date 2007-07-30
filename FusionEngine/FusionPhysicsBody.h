@@ -65,7 +65,7 @@ namespace FusionEngine
 	 * For FusionShips this should be initialisd by the ShipFactory when it creates
 	 * a new ship. It should remain indipendant of the ClientEnvironment after that
 	 * point - all modification to it can be done manually, rather than requiring it
-	 * to know of ShipResource.
+	 * to know of ShipResourceBundle.
 	 * <br>
 	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
 	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
@@ -496,7 +496,7 @@ namespace FusionEngine
 		//! Current velocity of rotation.
 		/*!
 		 * \remarks
-		 * (ShipResource has RotationVelocity [no 'al'], that being the <i>maximum</i>
+		 * (ShipResourceBundle has RotationVelocity [no 'al'], that being the <i>maximum</i>
 		 * velocity of rotation.)
 		 */
 		float m_RotationalVelocity;
