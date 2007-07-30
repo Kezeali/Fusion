@@ -74,7 +74,7 @@ void ServerEnvironment::CreateShip(const ShipState &state)
 	FusionNode *node = m_Scene->CreateNode();
 
 	// Get the resource for the ship
-	ShipResource *res = ResourceLoader::getSingletonPtr()->GetLoadedShips()[m_ShipResources[state.PID]];
+	ShipResource *res = ResourceManager::getSingletonPtr()->GetLoadedShips()[m_ShipResources[state.PID]];
 
 	// Create children
 	//  Engines

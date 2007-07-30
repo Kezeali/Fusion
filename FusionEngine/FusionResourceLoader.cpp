@@ -11,7 +11,7 @@ namespace FusionEngine
 	// Look, nice formatting :D
 	///////////
 	/// Public:
-	StringVector ResourceLoader::GetInstalledShips()
+	StringVector ResourceManager::GetInstalledShips()
 	{
 		StringVector list;
 
@@ -27,7 +27,7 @@ namespace FusionEngine
 		return list;
 	}
 
-	StringVector ResourceLoader::GetInstalledLevels()
+	StringVector ResourceManager::GetInstalledLevels()
 	{
 		StringVector list;
 
@@ -43,7 +43,7 @@ namespace FusionEngine
 		return list;
 	}
 
-	StringVector ResourceLoader::GetInstalledWeapons()
+	StringVector ResourceManager::GetInstalledWeapons()
 	{
 		StringVector list;
 
@@ -59,7 +59,7 @@ namespace FusionEngine
 		return list;
 	}
 
-	void ResourceLoader::DeleteShips()
+	void ResourceManager::DeleteShips()
 	{
 		ShipResourceMap::iterator it = m_ShipResources.begin();
 		for (; it != m_ShipResources.end(); ++it)
@@ -69,7 +69,7 @@ namespace FusionEngine
 		m_ShipResources.clear();
 	}
 
-	void ResourceLoader::DeleteWeapons()
+	void ResourceManager::DeleteWeapons()
 	{
 		WeaponResourceMap::iterator it = m_WeaponResources.begin();
 		for (; it != m_WeaponResources.end(); ++it)
@@ -79,17 +79,34 @@ namespace FusionEngine
 		m_WeaponResources.clear();
 	}
 
-	void ResourceLoader::ClearAll()
+	void ResourceManager::DeleteLevel()
+	{
+		delete m_LevelResource;
+	}
+
+	void ResourceManager::DeleteImages()
+	{
+		SurfaceMap::iterator it = m_Images.begin();
+		for (; it != m_Images.end(); ++it)
+		{
+			delete ( it->second );
+		}
+		m_Images.clear();
+	}
+
+	void ResourceManager::ClearAll()
 	{
 		DeleteShips();
 		DeleteLevel();
 		DeleteWeapons();
 
 		ResetVerified();
+
+		CleanUnusedResources();
 	}
 
 	// Returns false if a ship isn't found.
-	bool ResourceLoader::LoadShips(StringVector names)
+	bool ResourceManager::LoadShips(StringVector names)
 	{
 		ShipResourceMap ships;
 
@@ -110,7 +127,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ResourceLoader::LoadLevel(const std::string &name)
+	bool ResourceManager::LoadLevel(const std::string &name)
 	{
 		LevelResource *level = parseLevelDefinition(name);
 
@@ -122,7 +139,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ResourceLoader::LoadWeapons(StringVector names)
+	bool ResourceManager::LoadWeapons(StringVector names)
 	{
 		WeaponResourceMap weapons;
 
@@ -142,7 +159,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ResourceLoader::LoadLevelVerified(const std::string &name)
+	bool ResourceManager::LoadLevelVerified(const std::string &name)
 	{
 		// Make sure the requested level has been verified
 		StringVector::iterator it = m_VerifiedLevels.begin();
@@ -156,7 +173,7 @@ namespace FusionEngine
 		return false;
 	}
 
-	bool ResourceLoader::LoadVerified()
+	bool ResourceManager::LoadVerified()
 	{
 		return (
 			LoadShips(m_VerifiedShips) &
@@ -164,36 +181,36 @@ namespace FusionEngine
 			);
 	}
 
-	void ResourceLoader::ResetVerified()
+	void ResourceManager::ResetVerified()
 	{
 		m_VerifiedShips.clear();
 		m_VerifiedWeapons.clear();
 		m_VerifiedLevels.clear();
 	}
 
-	ShipResourceMap ResourceLoader::GetLoadedShips()
+	ShipResourceMap ResourceManager::GetLoadedShips()
 	{
 		return m_ShipResources;
 	}
 
-	LevelResource *ResourceLoader::GetLoadedLevel()
+	LevelResource *ResourceManager::GetLoadedLevel()
 	{
 		cl_assert(m_LevelResource != NULL);
 		return m_LevelResource;
 	}
 
-	WeaponResourceMap ResourceLoader::GetLoadedWeapons()
+	WeaponResourceMap ResourceManager::GetLoadedWeapons()
 	{
 		return m_WeaponResources;
 	}
 
-	ShipResource* ResourceLoader::GetShipResource(const std::string &name) const
+	ShipResource* ResourceManager::GetShipResource(const std::string &name) const
 	{
 		throw Error(Error::NOT_IMPLEMENTED, "Not Implemented");
 		return NULL;
 	}
 
-	WeaponResource* ResourceLoader::GetWeaponResource(const std::string &name) const
+	WeaponResource* ResourceManager::GetWeaponResource(const std::string &name) const
 	{
 		throw Error(Error::NOT_IMPLEMENTED, "Not Implemented");
 		return NULL;
@@ -201,7 +218,7 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
-	ShipResource* ResourceLoader::parseShipDefinition(CL_DomDocument *doc)
+	ShipResource* ResourceManager::parseShipDefinition(CL_DomDocument *doc)
 	{
 		// The return object.
 		ShipResource *res = NULL;
@@ -276,7 +293,7 @@ namespace FusionEngine
 		return res;
 	}
 
-	bool ResourceLoader::verifyShipDocument(CL_DomDocument *document)
+	bool ResourceManager::verifyShipDocument(CL_DomDocument *document)
 	{
 		CL_DomElement root = document->get_document_element();
 
@@ -417,7 +434,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	ResourceLoader::PackageResources ResourceLoader::parseResources(CL_DomDocument *document, Archive *arc)
+	ResourceManager::PackageResources ResourceManager::parseResources(CL_DomDocument *document, Archive *arc)
 	{
 		SurfaceMap sf_list;
 		SoundBufferMap snd_list;
@@ -488,7 +505,7 @@ namespace FusionEngine
 		return res;
 	}
 
-	CL_Point ResourceLoader::getPoint(const CL_DomElement *element)
+	CL_Point ResourceManager::getPoint(const CL_DomElement *element)
 	{
 		// Return a zero point if the data is incomplete
 		if (!(element->has_attribute("x") & element->has_attribute("y")))
@@ -500,7 +517,7 @@ namespace FusionEngine
 		return CL_Point(x, y);
 	}
 
-	bool ResourceLoader::checkInList(const std::string &filename, std::vector<std::string> filelist)
+	bool ResourceManager::checkInList(const std::string &filename, std::vector<std::string> filelist)
 	{
 		std::vector<std::string>::iterator it;
 		for (it = filelist.begin(); it != filelist.end(); ++it)

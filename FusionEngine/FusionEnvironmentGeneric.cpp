@@ -7,7 +7,7 @@ namespace FusionEngine
 	void GenericEnvironment::DetonateProjectile(ObjectID index)
 	{
 		WeaponResource *rsc = 
-			ResourceLoader::getSingletonPtr()->GetWeaponResource(m_WeaponResources[index]);
+			ResourceManager::getSingletonPtr()->GetWeaponResource(m_WeaponResources[index]);
 	}
 
 	const FusionShip* GenericEnvironment::GetShip(ObjectID index)

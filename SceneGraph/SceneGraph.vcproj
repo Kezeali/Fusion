@@ -191,6 +191,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionDrawable.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionError.cpp"
 				>
 			</File>
@@ -208,18 +212,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionScene.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipDrawable.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipEngine.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipHealth.cpp"
 				>
 			</File>
 			<File
@@ -261,6 +253,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionDrawable.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionError.h"
 				>
 			</File>
@@ -278,18 +274,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionScene.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipDrawable.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipEngine.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionShipHealth.h"
 				>
 			</File>
 			<File

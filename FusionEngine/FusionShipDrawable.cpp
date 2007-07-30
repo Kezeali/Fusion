@@ -30,7 +30,7 @@ void FusionShipDrawable::Draw()
 	float rot = m_ParentNode->GetGlobalFacing();
 	Vector2 pos = m_ParentNode->GetGlobalPosition();
 	// Get resource form the rscmgr singleton
-	ShipResource* rsc = ResourceLoader::getSingletonPtr()->GetShipResource(m_ResourceID);
+	ShipResource* rsc = ResourceManager::getSingletonPtr()->GetShipResource(m_ResourceID);
 
 	CL_Surface_DrawParams2 dp;
 	// Set the params

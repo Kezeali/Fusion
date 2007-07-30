@@ -47,7 +47,7 @@ namespace FusionEngine
 		struct
 		{
 			//! \todo fix this
-			Script script;
+			Script* script;
 
 			ScriptFuncSig onfire;
 			// player pressed fire while the weapon was unloaded - only for
@@ -60,7 +60,7 @@ namespace FusionEngine
 
 		struct
 		{
-			//! -1 means the weapon only reloads when the primary projectile detonates
+			// -1 means the weapon only reloads when the primary projectile detonates
 			int ReloadTime;
 		}
 		Behaviour;

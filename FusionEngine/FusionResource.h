@@ -38,12 +38,12 @@ namespace FusionEngine
 {
 	/*!
 	 * \brief
-	 * Base for resource types
+	 * Base for resource collections
 	 */
 	class Resource
 	{
 	public:
-		// Note that the struct names here don't matter,
+		// Note that the struct type name here doesn't matter,
 		// as these structs are only instanciated here.
 		struct
 		{

@@ -51,17 +51,6 @@ namespace FusionEngine
 	class ShipResource : public Resource
 	{
 	public:
-		//! Desturctor. Deletes heap resources
-		~ShipResource()
-		{
-			delete Images.Body;
-			delete Images.LeftEngine;
-			delete Images.RightEngine;
-			delete Images.PrimaryWeapon;
-			delete Images.SecondaryWeapon;
-		}
-
-	public:
 		// Note that the struct names here don't matter,
 		// as these structs are only instanciated here.
 		struct

@@ -20,7 +20,7 @@ class GUITest : public CL_ClanApplication
 		CL_ConsoleWindow console("GUI Test");
 		console.redirect_stdio();
 
-		CL_DisplayWindow* display = new CL_DisplayWindow("GUI Test: Display", 640, 480);
+		CL_DisplayWindow display("GUI Test: Display", 640, 480);
 
 		Logger* logger = 0;
 		ConsoleStdOutWriter* cout = 0;
@@ -35,7 +35,7 @@ class GUITest : public CL_ClanApplication
 			//logger->TagLink("console", "con");
 			//logger->Add("Testing", "con");
 
-			CL_OpenGLState gl_state(display->get_gc());
+			CL_OpenGLState gl_state(display.get_gc());
 			gl_state.set_active();
 
 			StateManager* stateman = new StateManager();
@@ -62,7 +62,7 @@ class GUITest : public CL_ClanApplication
 			// Loop thing
 			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
 			{
-				//display->get_gc()->clear(CL_Color(180, 220, 255));
+				//display.get_gc()->clear(CL_Color(180, 220, 255));
 				glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	// This Will Clear The Background Color To Black
 				glClearDepth(1.0);						// Enables Clearing Of The Depth Buffer
 				glDepthFunc(GL_LESS);					// The Type Of Depth Test To Do
@@ -91,7 +91,7 @@ class GUITest : public CL_ClanApplication
 				}
 
 
-				display->flip();
+				display.flip();
 				CL_System::keep_alive(4);
 
 				gl_state.set_active();
@@ -112,8 +112,6 @@ class GUITest : public CL_ClanApplication
 		if (cout != 0)
 			delete cout;
 		delete Console::getSingletonPtr();
-
-		delete display;
 
 		// Zero!
 		return 0;

@@ -62,13 +62,13 @@ namespace FusionEngine
 	 * Call the specific resource parser for that type of resource <br>
 	 * Use CL_Surface("physfs filename" , physFSProvider);
 	 */
-	class ResourceLoader : public Singleton<ResourceLoader>
+	class ResourceManager : public Singleton<ResourceLoader>
 	{
 	public:
 		//! Constructor
-		ResourceLoader() {}
+		ResourceManager() {}
 		//! Destructor
-		~ResourceLoader() { ClearAll(); }
+		~ResourceManager() { ClearAll(); }
 
 	public:
 		//! Map of surfaces
@@ -92,9 +92,15 @@ namespace FusionEngine
 		//! Deletes all loaded ships
 		void DeleteShips();
 		//! Deletes the loaded level
-		void DeleteLevel() { delete m_LevelResource; }
+		void DeleteLevel();
 		//! Deletes all loaded weapons
 		void DeleteWeapons();
+		//! Deletes surfaces
+		void DeleteImages();
+		//! Deletes soundbuffers
+		void DeleteSounds();
+		//! Deletes scripts
+		void DeleteScripts();
 
 		/*!
 		 * \brief
@@ -110,7 +116,7 @@ namespace FusionEngine
 		 * \retval UnknownType
 		 * If the package is of unknown (invalid) type.
 		 */
-		PackageType GetPackageType(const std::string &name);
+		//PackageType GetPackageType(const std::string &name);
 
 		//! Gets a verification bitstream for the given package.
 		/*!

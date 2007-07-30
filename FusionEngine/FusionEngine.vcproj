@@ -439,6 +439,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionResourcePointer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScene.h"
 				>
 			</File>
