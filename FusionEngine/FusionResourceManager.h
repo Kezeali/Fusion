@@ -33,7 +33,7 @@ namespace FusionEngine
 	{
 	public:
 		PackageLoadException(const std::string& message)
-			: Error(Error::ErrorType::PACKLOAD, message)
+			: Exception(Exception::ExceptionType::PACKLOAD, message)
 		{}
 	};
 
@@ -172,18 +172,22 @@ namespace FusionEngine
 		//! Clears the verified packages lists
 		void ResetVerified();
 
+		//! Returns a ResourcePointer to the given Resource (of type T)
+		template<typename T>
+		ResourcePointer<T> GetResource(const ResourceTag& tag);
+
 		/*!
 		 * \brief
 		 * Returns maps to all loaded ships.
 		 */
 		//ShipResourceMap GetLoadedShips();
-		LevelResourceBundle* GetLoadedLevel();
+		//LevelResourceBundle* GetLoadedLevel();
 		//WeaponResourceMap GetLoadedWeapons();
 
-		//! Gets one loaded ship by tag
-		ShipResourceBundle* GetShipResource(const std::string& name) const;
-		//! Gets one loaded weapon by tag
-		WeaponResourceBundle* GetWeaponResource(const std::string& name) const;
+		////! Gets one loaded ship by tag
+		//ShipResourceBundle* GetShipResource(const std::string& name) const;
+		////! Gets one loaded weapon by tag
+		//WeaponResourceBundle* GetWeaponResource(const std::string& name) const;
 
 	private:
 

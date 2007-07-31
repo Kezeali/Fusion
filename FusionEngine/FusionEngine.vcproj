@@ -251,7 +251,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionError.h"
+				RelativePath=".\FusionException.h"
 				>
 			</File>
 			<File
@@ -625,7 +625,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionError.cpp"
+				RelativePath=".\FusionException.cpp"
 				>
 			</File>
 			<File

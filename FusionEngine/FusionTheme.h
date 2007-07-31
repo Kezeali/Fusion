@@ -21,7 +21,9 @@ namespace FusionEngine
 	static const std::string g_Viewport1p_1 = g_Viewport1p_Tree + "/1";
 	/*!
 	 * \brief
-	 * Loads and stores resources for gameplay.
+	 * Loads and stores resources for gui elements
+	 *
+	 * May be merged with ResourceManager at some point...
 	 *
 	 * \todo
 	 * Load message strings into theme
@@ -71,20 +73,23 @@ namespace FusionEngine
 		 */
 		void UnloadTree(const std::string &name);
 
+		//! Returns a resource of type T
+		template<typename T>
+		T* GetResource(const std::string& tag);
 		/*!
 		 * \brief
 		 * Gets the image associated with the given tag.
 		 * \returns
 		 * A pointer to the requested image, or NULL if no such tag exists.
 		 */
-		CL_Surface *GetImage(const std::string &tag);
+		//CL_Surface *GetImage(const std::string &tag);
 		/*!
 		 * \brief
 		 * Gets the sound associated with the given tag.
 		 * \returns
 		 * A pointer to the requested sound, or NULL if no such tag exists.
 		 */
-		CL_SoundBuffer *GetSound(const std::string &tag);
+		//CL_SoundBuffer *GetSound(const std::string &tag);
 
 	protected:
 		bool loadImages(
