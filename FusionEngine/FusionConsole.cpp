@@ -28,10 +28,10 @@ namespace FusionEngine
 			// headedMessage = message;
 			break;
 		case MTWARNING:
-			headedMessage = CL_String::format("Warning: %1", message);
+			headedMessage = CL_String::format("##  Warning: %1", message);
 			break;
 		case MTERROR:
-			headedMessage = CL_String::format("**Error: %1", message);
+			headedMessage = CL_String::format("**Exception: %1", message);
 			break;
 		}
 
@@ -45,9 +45,9 @@ namespace FusionEngine
 		OnNewLine(headedMessage);
 	}
 
-	void Console::Add(const FusionEngine::Error *error)
+	void Console::Add(const FusionEngine::Exception *ex)
 	{
-		Add(error->GetError(), error->GetType() == Error::TRIVIAL ? Console::MTWARNING : Console::MTERROR);
+		Add(ex->GetError(), ex->GetType() == Exception::TRIVIAL ? Console::MTWARNING : Console::MTERROR);
 	}
 
 	void Console::Clear()

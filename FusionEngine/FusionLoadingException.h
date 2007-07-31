@@ -39,11 +39,11 @@ namespace FusionEngine
 {
 
 	//! Exception during loading
-	class LoadingException : public Error
+	class LoadingException : public Exception
 	{
 	public:
 		LoadingException(const std::string& message)
-			: Error(Error::LOADING, message)
+			: Exception(Exception::LOADING, message)
 		{}
 	};
 

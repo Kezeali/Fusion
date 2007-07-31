@@ -11,9 +11,12 @@
 #include "FusionSingleton.h"
 
 /// Fusion
-#include "FusionShipResource.h"
-#include "FusionLevelResource.h"
-#include "FusionWeaponResource.h"
+#include "FusionResource.h"
+#include "FusionResourcePointer.h"
+
+#include "FusionShipResourceBundle.h"
+#include "FusionLevelResourceBundle.h"
+#include "FusionWeaponResourceBundle.h"
 
 /// RakNet
 #include <RakNet/Bitstream.h>
@@ -21,10 +24,10 @@
 namespace FusionEngine
 {
 
-	//! Map of ship res. names to ship resources
-	typedef std::map<std::string, ShipResource*> ShipResourceMap;
-	//! \see ShipResourceMap
-	typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
+	////! Map of ship res. names to ship resources
+	//typedef std::map<std::string, ShipResource*> ShipResourceMap;
+	////! \see ShipResourceMap
+	//typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
 
 	class PackageLoadException : public Error
 	{
@@ -65,16 +68,13 @@ namespace FusionEngine
 	class ResourceManager : public Singleton<ResourceLoader>
 	{
 	public:
+		typedef std::map<ResourceTag, Resource> ResourceMap;
+
+	public:
 		//! Constructor
 		ResourceManager() {}
 		//! Destructor
 		~ResourceManager() { ClearAll(); }
-
-	public:
-		//! Map of surfaces
-		typedef std::map<std::string, CL_Surface*> SurfaceMap;
-		//! Map of sound buffers
-		typedef std::map<std::string, CL_SoundBuffer*> SoundBufferMap;
 
 	public:
 		//! Returns a list of packages found after the Ships path
@@ -84,23 +84,17 @@ namespace FusionEngine
 		//! Returns a list of packages found after the Weapons path
 		static StringVector GetInstalledWeapons();
 
+		//! Deletes all loaded resources
+		void DeleteResources();
+
+		//! Runs garbage collection
+		void DisposeUnusedResources();
+
+		//! Clears the resource manager
 		/*!
-		 * \brief
-		 * Clears and deletes all loaded resources.
+		 * Clears all resources.
 		 */
 		void ClearAll();
-		//! Deletes all loaded ships
-		void DeleteShips();
-		//! Deletes the loaded level
-		void DeleteLevel();
-		//! Deletes all loaded weapons
-		void DeleteWeapons();
-		//! Deletes surfaces
-		void DeleteImages();
-		//! Deletes soundbuffers
-		void DeleteSounds();
-		//! Deletes scripts
-		void DeleteScripts();
 
 		/*!
 		 * \brief
@@ -128,7 +122,7 @@ namespace FusionEngine
 		 * \param[in] name
 		 * The file to verify.
 		 */
-		void GetVerification(RakNet::BitStream *stream, const std::string &name);
+		//void GetVerification(RakNet::BitStream *stream, const std::string &name);
 
 		/*!
 		 * \brief
@@ -139,7 +133,7 @@ namespace FusionEngine
 		 * \param[in] stream
 		 * The VerifyPackage bitstream sent from the server.
 		 */
-		bool VerifyPackage(RakNet::BitStream *stream);
+		//bool VerifyPackage(RakNet::BitStream *stream);
 
 		/*!
 		 * \brief
@@ -182,28 +176,28 @@ namespace FusionEngine
 		 * \brief
 		 * Returns maps to all loaded ships.
 		 */
-		ShipResourceMap GetLoadedShips();
-		LevelResource* GetLoadedLevel();
-		WeaponResourceMap GetLoadedWeapons();
+		//ShipResourceMap GetLoadedShips();
+		LevelResourceBundle* GetLoadedLevel();
+		//WeaponResourceMap GetLoadedWeapons();
 
 		//! Gets one loaded ship by tag
-		ShipResource* GetShipResource(const std::string& name) const;
+		ShipResourceBundle* GetShipResource(const std::string& name) const;
 		//! Gets one loaded weapon by tag
-		WeaponResource* GetWeaponResource(const std::string& name) const;
+		WeaponResourceBundle* GetWeaponResource(const std::string& name) const;
 
 	private:
 
 		//! Encapsulates resource maps of various types.
-		struct PackageResources
-		{
-			//! Image files mapped to tags
-			SurfaceMap Images;
-			//! Sound files mapped to tags
-			SoundBufferMap Sounds;
-		};
+		//struct PackageResources
+		//{
+		//	//! Image files mapped to tags
+		//	SurfaceMap Images;
+		//	//! Sound files mapped to tags
+		//	SoundBufferMap Sounds;
+		//};
 
-		SurfaceMap m_Images;
-		SoundBufferMap m_Sounds;
+		//SurfaceMap m_Images;
+		//SoundBufferMap m_Sounds;
 
 		//! A list of ship packages which passed verification
 		StringVector m_VerifiedShips;
@@ -216,12 +210,8 @@ namespace FusionEngine
 		//! A list of weapon packages which passed verification
 		StringVector m_VerifiedWeapons;
 
-		//! Loaded ships
-		ShipResourceMap m_ShipResources;
-		//! Loaded levels
-		LevelResource* m_LevelResource;
-		//! Loaded weapons
-		WeaponResourceMap m_WeaponResources;
+		//! Resource bundles
+		ResourceBundleMap m_ResourceBundles;
 
 	protected:
 		//! Loads a ship

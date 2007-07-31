@@ -73,7 +73,7 @@ namespace FusionEngine
 	{
 		AIManager* aiman = AIManager->getSingletonPtr();
 		if (aiman == 0)
-			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+			throw Exception(Exception::INTERNAL_ERROR, "AIManager not initialised");
 		aiman->AddGoal(ObjectID ship, id, ObjectID target);
 	}
 
@@ -81,7 +81,7 @@ namespace FusionEngine
 	{
 		AIManager* aiman = AIManager->getSingletonPtr();
 		if (aiman == 0)
-			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+			throw Exception(Exception::INTERNAL_ERROR, "AIManager not initialised");
 		aiman->AddDecision(ObjectID ship, const std::string& tag);
 	}
 
@@ -89,7 +89,7 @@ namespace FusionEngine
 	{
 		AIManager* aiman = AIManager->getSingletonPtr();
 		if (aiman == 0)
-			throw Error(Error::INTERNAL_ERROR, "AIManager not initialised");
+			throw Exception(Exception::INTERNAL_ERROR, "AIManager not initialised");
 		aiman->GetGoal(ObjectID ship, ObjectID target);
 	}
 

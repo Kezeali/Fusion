@@ -245,7 +245,7 @@ namespace FusionEngine
 			switch (type)
 			{
 			case ID_REMOTE_CONNECTION_LOST:
-				_abort(Error::UNEXPECTED_DISCONNECT, "Remote Connection Lost");
+				throw Exception(ExceptionType::NETWORK, "Remote Connection Lost");
 				break;
 			}
 

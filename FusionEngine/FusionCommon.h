@@ -48,7 +48,7 @@
 #include "Common.h"
 
 #include "FusionVector2.h"
-#include "FusionError.h"
+#include "FusionException.h"
 
 // Boost
 //#include <boost/function.hpp>
@@ -179,7 +179,7 @@ namespace FusionEngine
 	class StateManager;
 	class Script;
 	class ScriptingEngine;
-	class Error;
+	class Exception;
 	class Logger;
 	class Console;
 	class LoadingState;
@@ -211,6 +211,9 @@ namespace FusionEngine
 	 * Use it!
 	 */
 	typedef CL_SharedPtr<FusionState> SharedState;
+
+	//! Resource tags (aka. names/handles)
+	typedef std::string ResourceTag;
 
 	//! ID for script functions
 	typedef std::string ScriptFuncSig;

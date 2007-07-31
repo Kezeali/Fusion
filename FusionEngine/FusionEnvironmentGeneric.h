@@ -55,7 +55,7 @@
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
 
-#include "FusionError.h"
+#include "FusionException.h"
 
 
 namespace FusionEngine
@@ -78,8 +78,7 @@ namespace FusionEngine
 	public:
 		//! Basic Constructor
 		GenericEnvironment()
-			: m_Abort(false),
-			m_NumPlayers(0),
+			: m_NumPlayers(0),
 			m_FrameTime(g_DefaultFrameTime),
 			m_NextOID(g_BaseOID),
 			m_NextPID(g_BasePID)
@@ -132,25 +131,7 @@ namespace FusionEngine
 		//! Returns a list of ships
 		virtual const ShipList& GetShipList() const;
 
-		//! Leaves the environment cleanly after an error.
-		/*!
-		 * \remarks
-		 * If you wan't to leave the env without an error, use the state
-		 * message system to remove the env state.
-		 *
-		 * \param[in] type The explaination to give to the user
-		 * \param[in] message The explaination to give to the user
-		 */
-		void _abort(Error::ErrorType type, const std::string &message);
-
-	protected:
-		//! True if the environment should abort next Update.
-		/*!
-		 * If this is set to true, the Update method will return false next time it runs
-		 *  (thus quitting the gameplay.)
-		 */
-		bool m_Abort;
-		
+	protected:		
 		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
 		unsigned int m_NumPlayers;
 

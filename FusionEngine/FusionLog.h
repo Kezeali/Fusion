@@ -51,11 +51,11 @@ namespace FusionEngine
 	};
 
 	//! Exception type for FusionEngine#Log and FusionEngine#Logger
-	class LogfileException : public Error
+	class LogfileException : public Exception
 	{
 	public:
 		LogfileException(const std::string& message)
-			: Error(Error::LOGFILE_ERROR, message)
+			: Exception(Exception::LOGFILE_ERROR, message)
 		{}
 
 	};

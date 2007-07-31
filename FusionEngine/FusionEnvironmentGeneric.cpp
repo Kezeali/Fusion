@@ -27,12 +27,6 @@ namespace FusionEngine
 			CL_System::sleep(m_FrameTime-split);
 	}
 
-	void GenericEnvironment::_abort(ErrorType type, const std::string& message)
-	{
-		throw Error(type, message);
-		m_Abort = true;
-	}
-
 	void GenericEnvironment::installShipFrameFromMessage(FusionMessage *m)
 	{
 		ShipState state;

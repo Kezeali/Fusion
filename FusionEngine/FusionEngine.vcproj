@@ -435,7 +435,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionResourceLoader.h"
+				RelativePath=".\FusionResourceBundle.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionResourceManager.h"
 				>
 			</File>
 			<File
@@ -749,7 +753,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionResourceLoader.cpp"
+				RelativePath=".\FusionResourceManager.cpp"
 				>
 			</File>
 			<File

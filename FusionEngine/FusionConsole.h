@@ -132,12 +132,12 @@ namespace FusionEngine
 	}
 
 	//! Static method to safely add a message to the singleton object
-	static void SendToConsole(const Error *error)
+	static void SendToConsole(const Exception *ex)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
 		{
-			c->Add(error->GetError(), (error->GetType() == Error::TRIVIAL) ? Console::MTWARNING : Console::MTERROR);
+			c->Add(ex->GetError(), (ex->GetType() == Exception::TRIVIAL) ? Console::MTWARNING : Console::MTERROR);
 		}
 		//! \todo Throw exception if the console hasn't been created.
 	}

@@ -40,7 +40,7 @@
 #include "FusionEnvironmentServer.h"
 #include "FusionClientLoadingState.h"
 
-#include "FusionError.h"
+#include "FusionException.h"
 #include "FusionConsole.h"
 #include "FusionLogger.h"
 
@@ -113,7 +113,7 @@ namespace FusionEngine
 			// Normal startup
 			else
 			{
-				// Set up the initial for the menu
+				// Set up the initial states for the menu
 				SharedState gui(new GUI());
 				SharedState menu(new MainMenu());
 				
@@ -132,7 +132,7 @@ namespace FusionEngine
 				split = CL_System::get_time() - lastTime;
 				lastTime = CL_System::get_time();
 
-				// Catch trivial errors without stopping the game
+				// Catch trivial exceptions without stopping the game
 				try
 				{
 					// Stop if any states don't update
@@ -143,10 +143,10 @@ namespace FusionEngine
 
 					state_man->Draw();
 				}
-				catch (Error e)
+				catch (Exception e)
 				{
 					// Not critical and trivial, so record it in the console and continue
-					if (!e.IsCritical() && e.GetType() == Error::TRIVIAL)
+					if (!e.IsCritical() && e.GetType() == Exception::TRIVIAL)
 						Console::getSingletonPtr()->Add(e.GetError());
 
 					// Critical, exit the game and log the message
@@ -156,7 +156,12 @@ namespace FusionEngine
 					// Non-critical
 					else
 					{
-						// Show error message box (GUI)
+						GUI* gui = GUI::getSingletonPtr();
+						if (gui == NULL)
+							throw Exception(ExceptionType::INTERNAL_ERROR, "FusionGame::Run - GUI not initialised", true);
+
+						// Do something like this...
+						//gui.ShowMessageBox(...);
 					}
 				}
 
@@ -166,26 +171,22 @@ namespace FusionEngine
 
 			delete state_man;
 		}
-		catch (Error e)
+		catch (Exception e)
 		{
 			Logger* logger = Logger::getSingletonPtr();
-			Console* console = Console::getSingletonPtr();
 
-			console->Add("Fusion aborted with the error: " + e.GetError());
 			logger->Add(e, g_LogException, LOG_CRITICAL);
 
-			delete console;
+			delete Console::getSingletonPtr();
 			delete logger;
 		}
 		catch (CL_Error err)
 		{
 			Logger* logger = Logger::getSingletonPtr();
-			Console* console = Console::getSingletonPtr();
 
-			console->Add("ClanLib aborted with the error: " + e.GetError());
 			logger->Add(e, g_LogException, LOG_CRITICAL);
 
-			delete console;
+			delete Console::getSingletonPtr();
 			delete logger;
 		}
 

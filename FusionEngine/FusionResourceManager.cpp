@@ -59,50 +59,32 @@ namespace FusionEngine
 		return list;
 	}
 
-	void ResourceManager::DeleteShips()
+	void ResourceManager::DisposeUnusedResources()
 	{
-		ShipResourceMap::iterator it = m_ShipResources.begin();
-		for (; it != m_ShipResources.end(); ++it)
+#ifdef RESMAN_USEGARBAGELIST
+		ResourceGarbageList::iterator it = m_ResourceGarbage.begin();
+		for (; it != m_ResourceGarbage.end(); ++it)
 		{
-			delete ( it->second );
+			Resource res = m_Resources.find(*it);
+			if (res != m_Resources.end())
+				m_Resources.erase(res);
 		}
-		m_ShipResources.clear();
+		m_ResourceGarbage.clear();
+#else
+		ResourceMap::iterator it = m
+#endif
 	}
 
-	void ResourceManager::DeleteWeapons()
+	void ResourceManager::DeleteResources()
 	{
-		WeaponResourceMap::iterator it = m_WeaponResources.begin();
-		for (; it != m_WeaponResources.end(); ++it)
-		{
-			delete ( it->second );
-		}
-		m_WeaponResources.clear();
-	}
-
-	void ResourceManager::DeleteLevel()
-	{
-		delete m_LevelResource;
-	}
-
-	void ResourceManager::DeleteImages()
-	{
-		SurfaceMap::iterator it = m_Images.begin();
-		for (; it != m_Images.end(); ++it)
-		{
-			delete ( it->second );
-		}
-		m_Images.clear();
+		m_Resources.clear();
 	}
 
 	void ResourceManager::ClearAll()
 	{
-		DeleteShips();
-		DeleteLevel();
-		DeleteWeapons();
-
 		ResetVerified();
 
-		CleanUnusedResources();
+		DeleteResources();
 	}
 
 	// Returns false if a ship isn't found.

@@ -12,7 +12,7 @@ m_FileCallback(fileCallback)
 	//! \todo Is this ok?
 	cl_assert(peer != NULL);
 	if (!peer->IsActive())
-		throw Error::UNEXPECTED_DISCONNECT;
+		throw Exception(Exception::NETWORK, "failed to construct PSC");
 
 	// install the directory transfer plugin...
 	m_TransferPlugin = new FileListTransfer();

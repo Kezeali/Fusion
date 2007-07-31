@@ -105,7 +105,7 @@ namespace FusionEngine
 		 * \todo Remove this, and put the functionality in AddLoadingStage() (that
 		 * will be more convinient for scripting)
 		 */
-		void RecalculateProgressScale();
+		//void RecalculateProgressScale();
 
 		//! Removes all states (including queued)
 		void Clear();

@@ -68,14 +68,6 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadingState::RecalculateProgressScale()
-	{
-		if (m_Stages.empty())
-			throw Error(Error::INTERNAL_ERROR, "Trying to calculate loading stage percentage with no loading stages");
-		
-		m_StageProgressScale = 1.f / m_Stages.size();
-	}
-
 	void LoadingState::Clear()
 	{
 		// Clean up the currently running stage
@@ -142,6 +134,14 @@ namespace FusionEngine
 		return true;
 	}
 
+	void LoadingState::recalculateProgressScale()
+	{
+		if (m_Stages.empty())
+			m_StageProgressScale = 0.01;
+		
+		m_StageProgressScale = 1.f / m_Stages.size();
+	}
+
 	void LoadingState::runNextStage()
 	{
 		m_ActiveStage = m_Stages.front();
@@ -156,7 +156,7 @@ namespace FusionEngine
 			// Throw an exception
 			std::string message = 
 				CL_String::format("Loading stage '%1' failed to initialize.", m_ActiveStage->GetName());
-			throw Error(Error::INTERNAL_ERROR, message);
+			throw LoadingException(message);
 		}
 	}
 
