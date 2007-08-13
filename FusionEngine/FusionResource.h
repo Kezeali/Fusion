@@ -49,9 +49,17 @@ namespace FusionEngine
 	class Resource
 	{
 	public:
+		static const char* s_ResourceType_STRING = "STRING";
+		static const char* s_ResourceType_IMAGE = "IMAGE";
+
+	public:
 		//! Constructor
 		template<typename T>
-		Resource(ResourceTag tag, T* ptr);
+		Resource(const char* type, ResourceTag tag, std::string text, T* ptr);
+
+	public:
+		ResourceTag GetTag() const;
+		const std::string &GetText() const;
 	};
 
 }

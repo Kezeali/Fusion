@@ -54,7 +54,7 @@
 #include "FusionNetworkClient.h"
 #include "FusionPhysicsWorld.h"
 
-#include "FusionError.h"
+#include "FusionException.h"
 
 namespace FusionEngine
 {

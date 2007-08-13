@@ -39,7 +39,7 @@
 #include "FusionSingleton.h"
 
 /// Fusion
-#include "FusionError.h"
+#include "FusionException.h"
 
 namespace FusionEngine
 {
@@ -84,7 +84,7 @@ namespace FusionEngine
 		void Add(const std::string &message, MessageType type);
 
 		//! Adds the given Error to the console history
-		void Add(const Error *error);
+		void Add(const Exception *error);
 
 		//! Removes all data from the console
 		void Clear();

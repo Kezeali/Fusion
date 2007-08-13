@@ -178,7 +178,7 @@ namespace FusionEngine
 		/*!
 		 * Formats the given error to a string, then calls the normal Add()
 		 */
-		void Add(const Error* error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
+		void Add(const Exception* error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
 		void onConsoleNewLine(const std::string &message);

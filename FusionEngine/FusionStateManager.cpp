@@ -259,7 +259,7 @@ namespace FusionEngine
 				// Clean up
 				Clear();
 
-				throw Error(Error::INTERNAL_ERROR, "A subsystem exited uncleanly");
+				throw Exception(Exception::INTERNAL_ERROR, "A subsystem exited uncleanly");
 
 				//  Tell the state to clean up
 				//(*it)->CleanUp();

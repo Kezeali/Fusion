@@ -218,6 +218,24 @@ namespace FusionEngine
 		ResourceBundleMap m_ResourceBundles;
 
 	protected:
+		/*!
+		 * \brief
+		 * Returns the pixel the given percentage from the left of the window.
+		 */
+		int percentToAbsX(int percent)
+		{
+			return CL_Display::get_width() * percent * 0.01;
+		}
+
+		/*!
+		 * \brief
+		 * Returns the pixel the given percentage from the top of the window.
+		 */
+		int percentToAbsY(int percent)
+		{
+			return CL_Display::get_height() * percent * 0.01;
+		}
+
 		//! Loads a ship
 		ShipResource* parseShipDefinition(const std::string &filename);
 		//! Loads a level

@@ -94,24 +94,6 @@ namespace FusionEngine
 	protected:
 		bool loadImages(
 
-		/*!
-		 * \brief
-		 * Returns the pixel the given percentage from the left of the window.
-		 */
-		static int Theme::percentToXPoint(int percent)
-		{
-			return CL_Display::get_width() * percent * 0.01;
-		}
-
-		/*!
-		 * \brief
-		 * Returns the pixel the given percentage from the top of the window.
-		 */
-		static int Theme::percentToYPoint(int percent)
-		{
-			return CL_Display::get_height() * percent * 0.01;
-		}
-
 	private:
 
 		//! Loaded gfx

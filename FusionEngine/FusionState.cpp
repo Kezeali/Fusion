@@ -24,7 +24,7 @@
 
 
 #include "FusionStateMessage.h"
-#include "FusionError.h"
+#include "FusionException.h"
 
 namespace FusionEngine
 {

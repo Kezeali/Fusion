@@ -34,7 +34,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionError.h"
+#include "FusionException.h"
 
 //#define VBO_THRESHOLD 4
 

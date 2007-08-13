@@ -34,7 +34,10 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * [depreciated]
+	 * [depreciated] See CollisionHandler. (Aparently I forgot that I implemented 
+	 * this so I created CollisionHandler. Now I've used CollisionHandler so 
+	 * I'll stick with that)
+	 *
 	 * Each body can have a derived class for different collison responses :D.
 	 *
 	 * \see

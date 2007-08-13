@@ -28,7 +28,7 @@
 #include "FusionLog.h"
 
 /// Fusion
-#include "FusionError.h"
+#include "FusionException.h"
 
 #include <time.h>
 

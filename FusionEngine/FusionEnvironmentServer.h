@@ -50,7 +50,7 @@
 #include "FusionInputHandler.h"
 #include "FusionNetworkServer.h"
 #include "FusionPhysicsWorld.h"
-#include "FusionError.h"
+#include "FusionException.h"
 
 namespace FusionEngine
 {

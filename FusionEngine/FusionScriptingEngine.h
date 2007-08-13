@@ -76,7 +76,7 @@ namespace FusionEngine
 		 *
 		 * \param[in] module A built or unbuilt module
 		 *
-		 * \returns The exit status of the script
+		 * \returns The exit status of the function
 		 */
 		int ExecuteModule(const char *module, const char *function);
 
@@ -86,9 +86,12 @@ namespace FusionEngine
 		 * will be executed. The script / module will be built if necessary.
 		 *
 		 * \param[in] script A loaded Script object 
-		 * \returns The exit status of the script
+		 * \returns The exit status of the function
 		 */
 		int ExecuteScript(Script *script, const char *function);
+
+		//! Executes the given ScriptReference
+		int Execute(ScriptReference* scref);
 
 		//! Executes the given code string.
 		/*!

@@ -28,7 +28,7 @@
 #include "FusionLogger.h"
 
 /// Fusion
-#include "FusionError.h"
+#include "FusionException.h"
 #include "FusionConsole.h"
 #include "FusionPaths.h"
 
@@ -249,7 +249,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Logger::Add(const Error* error, const std::string& tag, LogSeverity severity)
+	void Logger::Add(const Exception* error, const std::string& tag, LogSeverity severity)
 	{
 		std::string message =
 			CL_String::format("Error [Type %1]: %2", error->GetType(), error->GetError());

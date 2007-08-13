@@ -463,6 +463,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptReference.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptVector.h"
 				>
 			</File>
@@ -770,6 +774,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionScriptingFunctions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptReference.cpp"
 				>
 			</File>
 			<File

@@ -199,6 +199,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionException.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionLog.cpp"
 				>
 			</File>
@@ -258,6 +262,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionError.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionException.h"
 				>
 			</File>
 			<File

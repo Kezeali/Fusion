@@ -191,10 +191,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionError.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
 				>
 			</File>
@@ -242,10 +238,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionError.h"
 				>
 			</File>
 			<File
