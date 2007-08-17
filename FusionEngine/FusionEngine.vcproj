@@ -439,6 +439,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionResourceLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionResourceManager.h"
 				>
 			</File>
@@ -536,6 +540,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateSetupShips.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStringLoader.h"
 				>
 			</File>
 			<File
@@ -757,6 +765,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionResource.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionResourceManager.cpp"
 				>
 			</File>
@@ -822,6 +834,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStringLoader.cpp"
 				>
 			</File>
 			<File

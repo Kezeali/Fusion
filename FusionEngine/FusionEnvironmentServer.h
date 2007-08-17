@@ -166,7 +166,7 @@ namespace FusionEngine
      * makes it more generic.)
 		 *
 		 * \remarks
-		 * MCS - don't ask me why this description is so different to the
+		 * Me - don't ask me why this description is so different to the
 		 * ClientEnvironment one :P it was C&P'ed from an IM convo between me
 		 * and Bruski...
 		 */

@@ -67,13 +67,13 @@ namespace FusionEngine
 	 * point - all modification to it can be done manually, rather than requiring it
 	 * to know of ShipResourceBundle.
 	 * <br>
-	 * MCS - Just one other key thing to remember, FusionPhysicsBody is brainless!
+	 * Me - Just one other key thing to remember, FusionPhysicsBody is mindless!
 	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
 	 * to fit the bitmask if it rotates.)
 	 * <br>
-	 * MCS - AABBs are not yet implimented
+	 * Me - AABBs are not yet implimented
 	 * <br>
-	 * MCS - perhaps this should be abstract an class. 
+	 * Me - perhaps this should be abstract an class. 
 	 *
 	 * \todo AABB for FusionPhysicsBody
 	 *
@@ -81,7 +81,7 @@ namespace FusionEngine
 	 * than giving FusionPhysicsWorld friend access...
 	 *
 	 * \see
-	 * FusionPhysicsWorld | FusionFhysicsElipse.
+	 * FusionPhysicsWorld.
 	 */
 	class FusionPhysicsBody
 	{

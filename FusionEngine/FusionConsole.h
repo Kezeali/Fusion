@@ -77,6 +77,11 @@ namespace FusionEngine
 		};
 
 	public:
+		//! Returns the exception marker
+		const std::string& GetExceptionMarker() const;
+		//! Returns the warning marker
+		const std::string& GetWarningMarker() const;
+
 		//! Adds the given message to the console history
 		void Add(const std::string &message);
 

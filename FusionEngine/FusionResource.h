@@ -30,6 +30,7 @@
 
 #if _MSC_VER > 1000
 #	pragma once
+#endif
 
 #include "FusionCommon.h"
 
@@ -43,23 +44,144 @@ namespace FusionEngine
 	 * If a Resource object is deleted, it will delete the data it points to and notify
 	 * all related ResourcePointer objects that they have been invalidated.
 	 *
-	 * \sa ResourceManager | ResourcePointer
+	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
 	template<typename T>
 	class Resource
 	{
+	protected:
+		std::string m_Type;
+		ResourceTag m_Tag;
+		std::string m_Text;
+		T* m_Data;
+		bool m_Valid;
+		int m_RefCount;
+
 	public:
-		static const char* s_ResourceType_STRING = "STRING";
-		static const char* s_ResourceType_IMAGE = "IMAGE";
+		CL_Signal_v0 OnDestruction;
+		CL_Signal_v0 OnInvalidation;
 
 	public:
 		//! Constructor
 		template<typename T>
-		Resource(const char* type, ResourceTag tag, std::string text, T* ptr);
+		Resource(const char* type, const ResourceTag &tag, std::string text, T* ptr)
+			: m_Type(type),
+			m_Tag(tag),
+			m_Text(text),
+			m_Data(ptr),
+			m_RefCount(0)
+		{
+			if (ptr != 0)
+				_setValid(true);
+		}
+
+		~Resource()
+		{
+			// Fire Signal
+			OnDestruction();
+
+			if (m_Data != 0)
+				delete m_Data;
+		}
 
 	public:
-		ResourceTag GetTag() const;
-		const std::string &GetText() const;
+		//! Returns the type name (of resource loader to be used for this resource)
+		const char* GetType() const
+		{
+			return m_Type;
+		}
+		//! Returns the resource tag which should point to the Rsc
+		ResourceTag GetTag() const
+		{
+			return m_Tag;
+		}
+		//! Returns the text description of this resource (used by the ResourceLoader)
+		const std::string &GetText() const
+		{
+			return m_Text;
+		}
+
+		//! Specifically for StringLoader
+		/*!
+		 * Allows StringLoader to save memory by making the Data property point directly
+		 * to the Text property (yes, this is very dumb... but I can't think of a better way '_')
+		 */
+		std::string *_getTextPtr()
+		{
+			return &m_Text;
+		}
+
+		//! Sets the data
+		template<typename T>
+		void SetDataPtr(T* ptr)
+		{
+			m_Data = ptr;
+		}
+
+		//! Operator version of SetDataPtr()
+		template<typename T>
+		void operator=(T* ptr)
+		{
+			m_Data = ptr;
+		}
+
+		//! Returns the resource ptr
+		template<typename T>
+		T* GetDataPtr()
+		{
+			return m_Data;
+		}
+
+		//! Returns the resource object
+		template<typename T>
+		T &GetData() const
+		{
+			return *m_Data;
+		}
+
+		//! Operator version of GetData()
+		template<typename T>
+		T* operator->()
+		{
+			return m_Data;
+		}
+
+		//! Validates / invalidates this resource
+		/*!
+		 * A resource is valid if the pointer is valid. A resource becomes
+		 * invalid when it fails to load or it is cleaned up by garbage
+		 * collection.
+		 * This method is to be used by a ResourceLoader whenever it validates
+		 * / invalidates a resource.
+		 */
+		void _setValid(bool valid)
+		{
+			m_Valid = valid;
+		}
+
+		//! Returns true if the resource ptr is valid
+		bool IsValid() const
+		{
+			return m_Valid;
+		}
+
+		//! Increments ref count
+		void AddRef()
+		{
+			m_RefCount++;
+		}
+
+		//! Decrements ref count
+		void DropRef()
+		{
+			m_RefCount--;
+		}
+
+		//! Returns true if this resource is referenced
+		bool IsReferenced() const
+		{
+			return m_RefCount > 0;
+		}
 	};
 
 }

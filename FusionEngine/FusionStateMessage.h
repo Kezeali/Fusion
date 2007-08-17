@@ -90,7 +90,7 @@ namespace FusionEngine
 		StateMessageType m_Type;
 		//! Stores custom message data
 		/*!
-		 * \remarks MCS - Since all messages pass states ATM, this is typed as a
+		 * \remarks Me - Since all messages pass states ATM, this is typed as a
 		 * SharedState, rather than a void*.
 		 */
 		SharedState m_Data;

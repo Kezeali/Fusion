@@ -14,26 +14,17 @@
 #include "FusionResource.h"
 #include "FusionResourcePointer.h"
 
-#include "FusionShipResourceBundle.h"
-#include "FusionLevelResourceBundle.h"
-#include "FusionWeaponResourceBundle.h"
-
 /// RakNet
 #include <RakNet/Bitstream.h>
 
 namespace FusionEngine
 {
 
-	////! Map of ship res. names to ship resources
-	//typedef std::map<std::string, ShipResource*> ShipResourceMap;
-	////! \see ShipResourceMap
-	//typedef std::map<std::string, WeaponResource*> WeaponResourceMap;
-
-	class PackageLoadException : public Error
+	class ResourceManagerException : public Exception
 	{
 	public:
-		PackageLoadException(const std::string& message)
-			: Exception(Exception::ExceptionType::PACKLOAD, message)
+		ResourceManagerException(const std::string& message)
+			: Exception(Exception::ExceptionType::INTERNAL_ERROR, message)
 		{}
 	};
 
@@ -51,6 +42,8 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources for gameplay.
 	 *
+	 * \todo Load exception error messages from XML
+	 *
 	 * \todo Impliment PhysFS <br>
 	 * DONE: create InputSourceProvider_PhysFS (based on CL_InputSourceProvider_File) <br>
 	 * DONE: create InputSource_PhysFile (based on CL_InputSource_File) <br>
@@ -64,31 +57,36 @@ namespace FusionEngine
 	 * Read the xml files to find out what type of resources they define <br>
 	 * Call the specific resource parser for that type of resource <br>
 	 * Use CL_Surface("physfs filename" , physFSProvider);
+	 *
+	 * \sa Resource | ResourcePointer | ResourceLoader
 	 */
-	class ResourceManager : public Singleton<ResourceLoader>
+	class ResourceManager : public Singleton<ResourceManager>
 	{
 	public:
-		typedef std::map<ResourceTag, Resource> ResourceMap;
+		//! Maps ResourceTag keys to Resource ptrs
+		typedef std::map<ResourceTag, Resource*> ResourceMap;
+		//! Maps Resource types to ResourceLoader objects
+		typedef std::map<const char *, ResourceLoader*> ResourceLoaderMap;
 
 	public:
 		//! Constructor
-		ResourceManager() {}
+		ResourceManager(char **argv);
 		//! Destructor
-		~ResourceManager() { ClearAll(); }
+		~ResourceManager();
 
 	public:
-		//! Returns a list of packages found after the Ships path
-		static StringVector GetInstalledShips();
-		//! Returns a list of packages found after the Levels path
-		static StringVector GetInstalledLevels();
-		//! Returns a list of packages found after the Weapons path
-		static StringVector GetInstalledWeapons();
-
-		//! Deletes all loaded resources
-		void DeleteResources();
+		//! Configures the resource manager
+		void Configure();
+		//! Checks the filesystem for packages and returns the names of all found
+		StringVector ListAvailablePackages();
+		//! Checks the filesystem for packages and returns the /filenames/ of all found
+		StringVector ListAvailablePackageFiles();
 
 		//! Runs garbage collection
 		void DisposeUnusedResources();
+
+		//! Deletes all loaded resources
+		void DeleteResources();
 
 		//! Clears the resource manager
 		/*!
@@ -110,7 +108,7 @@ namespace FusionEngine
 		 * \retval UnknownType
 		 * If the package is of unknown (invalid) type.
 		 */
-		//PackageType GetPackageType(const std::string &name);
+		PackageType GetPackageType(const std::string &name);
 
 		//! Gets a verification bitstream for the given package.
 		/*!
@@ -123,6 +121,35 @@ namespace FusionEngine
 		 * The file to verify.
 		 */
 		//void GetVerification(RakNet::BitStream *stream, const std::string &name);
+
+		//! Returns a collection of tokens representing the given wildcard expression
+		StringVector TokeniseExpression(const std::string &expression);
+
+		//! Compares a string to a wildcard expression
+		bool CheckAgainstExpression(const std::string &str, const std::string &expression);
+		//! Compares a string to a wildcard expression
+		bool CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens);
+		//! Compares a string to a wildcard expression
+		bool CheckAgainstExpression(const std::string &str, StringVector expressionTokens);
+
+		//! Lists filenames matching the given expression
+		StringVector Find(const std::string &expression, bool case_sensitive = true, bool recursive = false);
+
+		//! Lists filenames matching the given expression, below the given path
+		/*!
+		 * If depth is set >1 and recursive is false, this method will go 'depth' folders deep in the
+		 * filesystem below the Search Path. If recursive is true, it will ignore 'depth' and go as 
+		 * deep as possible.
+		 */
+		StringVector Find(const std::string &path, const std::string &expression, int depth, bool case_sensitive = true, bool recursive = true);
+
+		//! Finds and opens the given package
+		/*!
+		 * Checks for the given package and opens it if it is found.
+		 *
+		 * \returns null if no package with the given name is found
+		 */
+		TiXmlDocument* OpenPackage(const std::string &name);
 
 		/*!
 		 * \brief
@@ -137,20 +164,16 @@ namespace FusionEngine
 
 		/*!
 		 * \brief
-		 * Forces the resource loader to load the defined ships.
-		 *
-		 * Calls parseShipDefinition on each of the packages named in the vector.
-		 *
-		 * \remarks
-		 * It is recomended that LoadVerified be used instead, as it will load only previously
-		 * verified packages (that is, packages with the correct filename and crc.)
+		 * Loads the given package
 		 */
-		bool LoadShips(StringVector names);
-		bool LoadLevel(const std::string &name);
-		bool LoadWeapons(StringVector names);
+		bool LoadPackage(const std::string &name);
 
-		//! Loads the given level only if it has been verified.
-		bool LoadLevelVerified(const std::string &name);
+		/*!
+		 * \brief
+		 * Loads the listed packages
+		 */
+		bool LoadPackages(StringVector names);
+
 		/*!
 		 * \brief
 		 * Loads all packages previously verified.
@@ -176,46 +199,16 @@ namespace FusionEngine
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag& tag);
 
-		/*!
-		 * \brief
-		 * Returns maps to all loaded ships.
-		 */
-		//ShipResourceMap GetLoadedShips();
-		//LevelResourceBundle* GetLoadedLevel();
-		//WeaponResourceMap GetLoadedWeapons();
-
-		////! Gets one loaded ship by tag
-		//ShipResourceBundle* GetShipResource(const std::string& name) const;
-		////! Gets one loaded weapon by tag
-		//WeaponResourceBundle* GetWeaponResource(const std::string& name) const;
-
 	private:
+		bool m_PhysFSConfigured;
 
-		//! Encapsulates resource maps of various types.
-		//struct PackageResources
-		//{
-		//	//! Image files mapped to tags
-		//	SurfaceMap Images;
-		//	//! Sound files mapped to tags
-		//	SoundBufferMap Sounds;
-		//};
+		//! A list of packages which passed verification
+		StringVector m_VerifiedPackages;
 
-		//SurfaceMap m_Images;
-		//SoundBufferMap m_Sounds;
+		//! Resources
+		ResourceMap m_Resources;
 
-		//! A list of ship packages which passed verification
-		StringVector m_VerifiedShips;
-		//! A list of level packages which passed verification
-		/*!
-		 * This list all verified level packages, so LoadLevelVerified can ensure any
-		 * particular level package has been verified before attempting to load them.
-		 */
-		StringVector m_VerifiedLevels;
-		//! A list of weapon packages which passed verification
-		StringVector m_VerifiedWeapons;
-
-		//! Resource bundles
-		ResourceBundleMap m_ResourceBundles;
+		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
 		/*!
@@ -236,56 +229,6 @@ namespace FusionEngine
 			return CL_Display::get_height() * percent * 0.01;
 		}
 
-		//! Loads a ship
-		ShipResource* parseShipDefinition(const std::string &filename);
-		//! Loads a level
-		LevelResource* parseLevelDefinition(const std::string &filename);
-		//! Loads a weapon
-		WeaponResource* parseWeaponDefinition(const std::string &filename);
-
-		//! Parses the element for engine data
-		ShipEngineElement* parseShipEngineElement(CL_DomElement *element);
-		//! Parses the element for weapon data
-		ShipWeaponElement* parseShipWeaponElement(CL_DomElement *element);
-
-		//! Creates the projectile to be used for a ships special weapon
-		ProjectileResource* buildProjectileFromEngineElement(CL_DomElement *element);
-
-		/*!
-		 * \brief
-		 * Checks a loaded document for validity as a ship definiiton.
-		 *
-		 * Reads the document to confirm that there is exactly one of each
-		 * non-optional element.
-		 */
-		bool verifyShipDocument(CL_DomDocument *document);
-		/*!
-		 * \brief
-		 * Checks a loaded document for validity as a level definiiton.
-		 */
-		bool verifyLevelDocument(CL_DomDocument *document);
-		/*!
-		 * \brief
-		 * Checks a loaded document for validity as a weapon definiiton.
-		 */
-		bool verifyWeaponDocument(CL_DomDocument *document);
-
-		/*!
-		 * \brief
-		 * [depreciated]
-		 * Reads a list of resources from a package definition.
-		 *
-		 * As all package documents use the same format for listing resources, only the one
-		 * method is needed.
-		 *
-		 * \param[in] document
-		 * A loaded definition document.
-		 *
-		 * \returns
-		 * A PackageResources object containing all resources.
-		 */
-		PackageResources parseResources(CL_DomDocument *document, Archive *arc);
-
 		/*!
 		 * \brief
 		 * Gets a point form the 'x' and 'y' attributes of an element.
@@ -295,24 +238,6 @@ namespace FusionEngine
 		 * If the given element has no x/y attribute, the point (0, 0) is returned.
 		 */
 		CL_Point getPoint(const CL_DomElement *element);
-
-		/*!
-		 * \brief
-		 * Returns a surface of the image element given.
-		 *
-		 * If the given image has already been loaded by the resource loader,
-		 * the same pointer will be returned.
-		 */
-		CL_Surface* getImage(const CL_DomElement *element);
-
-		/*!
-		 * \brief
-		 * Returns a soundbuffer for the sound element given.
-		 *
-		 * If the given sound has already been loaded by the resource loader,
-		 * the same pointer will be returned.
-		 */
-		CL_SoundBuffer* getSound(const CL_DomElement *element);
 
 		/*!
 		 * \brief
@@ -328,34 +253,5 @@ namespace FusionEngine
 	};
 
 }
-
-		//bool VerifyPackage(const std::string &name, const boost::crc_32_type &crc, const std::string &path);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a ship package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Ships/");</code>
-		 * where Ships/ is the local ship package directory.
-		 */
-		//bool VerifyShip(const std::string &name, const boost::crc_32_type &crc);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a level package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Levels/");</code>
-		 * where Levels/ is the local level package directory.
-		 */
-		//bool VerifyLevel(const std::string &name, const boost::crc_32_type &crc);
-		/*!
-		 * \brief
-		 * Verifies the existance and crc of a weapon package.
-		 *
-		 * Shorthand for
-		 *  <code>VerifyPackage(name, crc, "Weapons/");</code>
-		 * where Weapons/ is the local weapons package directory.
-		 */
-		//bool VerifyWeapon(const std::string &name, const boost::crc_32_type &crc);
 
 #endif

@@ -49,7 +49,8 @@ namespace FusionEngine
 	* \brief
 	* Template class for creating singleton classes.
 	*/
-	template<typename T> class Singleton
+	template<typename T>
+	class Singleton
 	{
 		//! The instance
 		static T* ms_Singleton;

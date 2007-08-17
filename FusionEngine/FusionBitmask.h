@@ -208,7 +208,7 @@ namespace FusionEngine
 		//! Creates a bitmask from an internal image.
 		/*!
 		 * \remarks
-		 * MCS - I don't know if I should define the solid parts by alpha or colour...
+		 * Me - I don't know if I should define the solid parts by alpha or colour...
 		 * I think just checking alpha is faster so I'm using that; but if you want to
 		 * change it, feel free :P
 		 *

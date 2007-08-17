@@ -30,6 +30,7 @@
 
 #if _MSC_VER > 1000
 #	pragma once
+#endif
 
 #include "Common.h"
 
@@ -45,17 +46,63 @@ namespace FusionEngine
 	 * related to it will be freed next time the ResourceManager does
 	 * garbage collection
 	 * (e.g. between levels, /after/ loading the next level's data
-	 *  - to minimise unnecessary re-loading)
+	 * (to minimise unnecessary re-loading))
 	 *
 	 * \sa ResourceManager | Resource
 	 */
 	template<typename T>
 	class ResourcePointer
 	{
+	protected:
+		Resource<T>* m_Resource;
+
+		CL_Slot m_ResourceDestructionSlot;
+
 	public:
 		//! Constructor
 		template<typename T>
-		ResourcePointer(T* ptr);
+		ResourcePointer(Resource<T>* resource)
+			: m_Resource(resource)
+		{
+			resource->AddRef();
+			m_ResourceDestructionSlot = resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+		}
+
+		//! Destructor
+		~ResourcePointer()
+		{
+			m_Resource->DropRef();
+		}
+
+	public:
+		//! Returns the resource data ptr
+		T* GetDataPtr()
+		{
+			if (m_Resource != 0)
+				return m_Resource->GetDataPtr();
+			else
+				return 0;
+		}
+
+		//! Returns the resource data ptr
+		T const* GetDataPtr() const
+		{
+			if (m_Resource != 0)
+				return m_Resource->GetDataPtr();
+			else
+				return 0;
+		}
+
+		bool IsValid() const
+		{
+			// Checks that the resource exists at all before checking that it is valid
+			return m_Resource == 0 ? false : m_Resource->IsValid();
+		}
+
+		void onResourceDestruction()
+		{
+			m_Resource = 0;
+		}
 	};
 
 }

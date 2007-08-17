@@ -8,6 +8,18 @@ namespace FusionEngine
 	{
 	}
 
+	const std::string &Console::GetExceptionMarker() const
+	{
+		static std::string strExMkr("**");
+		return strExMkr;
+	}
+
+	const std::string &Console::GetWarningMarker() const
+	{
+		static std::string strWnMkr("##");
+		return strWnMkr;
+	}
+
 	void Console::Add(const std::string &message)
 	{
 		m_Data.push_back(message);
@@ -28,10 +40,10 @@ namespace FusionEngine
 			// headedMessage = message;
 			break;
 		case MTWARNING:
-			headedMessage = CL_String::format("##  Warning: %1", message);
+			headedMessage = CL_String::format(GetWarningMarker() + " Warning:   %1", message);
 			break;
 		case MTERROR:
-			headedMessage = CL_String::format("**Exception: %1", message);
+			headedMessage = CL_String::format(GetExceptionMarker() + " Exception: %1", message);
 			break;
 		}
 

@@ -7,8 +7,161 @@
 
 #include "..\FusionEngine\PhysFS.h"
 
+using namespace FusionEngine;
+
 class PhysFSTest : public CL_ClanApplication
 {
+
+	bool m_PhysFSConfigured;
+	
+	StringVector TokeniseExpression(const std::string &expression)
+	{
+		StringVector expressionTokens;
+		StringVector expressionTokens1, expressionTokens2;
+
+		size_t mid = expression.find("*");
+
+		// If more tokens are found
+		if (mid != std::string::npos)
+		{
+			expressionTokens1 = TokeniseExpression( expression.substr(0, mid) );
+			expressionTokens2 = TokeniseExpression( expression.substr(mid+1) );
+
+			expressionTokens.resize(expressionTokens1.size() + expressionTokens2.size());
+
+			std::copy(expressionTokens1.begin(), expressionTokens1.end(), expressionTokens.begin());
+			std::copy(expressionTokens2.begin(), expressionTokens2.end(), expressionTokens.begin()+expressionTokens1.size());
+
+
+			//std::string token1 = expression.substr(0, mid);
+			//std::string token2 = expression.substr(mid+1);
+
+			//if (!token1.empty())
+			//	expressionTokens.push_back( token1 );
+			//if (!token2.empty())
+			//	expressionTokens.push_back( token2 );
+		}
+		else if (!expression.empty())
+			expressionTokens.push_back(expression);
+
+		return expressionTokens;
+	}
+
+	bool CheckAgainstExpression(const std::string &str, const std::string &expression)
+	{
+		CheckAgainstExpression(str, TokeniseExpression(expression));
+	}
+
+	bool CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens)
+	{
+		size_t strPos = 0;
+		bool optionalSection = false, optionFound = false;
+		StringVector::iterator it = expressionTokens.begin();
+		for (; it != expressionTokens.end(); ++it)
+		{
+			// Detect options
+			if ((*it) == "[")
+			{
+				optionalSection = true;
+				optionFound = false;
+				continue; // We don't need to check for the [!
+			}
+			if ((*it) == "]")
+			{
+				if (optionFound)
+					return false;
+
+				optionalSection = false;
+				continue; // We don't need to check for the ]!
+			}
+
+			// Skip all options till the end of the current section (after an option has been found)
+			if (optionalSection && optionFound)
+				continue;
+
+			// We search from the last found token (all tokens must exist /in the correct order/ for the string to match)
+			strPos = str.find(*it, strPos);
+			if (!optionalSection && strPos == std::string::npos)
+				return false;
+
+			else if (strPos != std::string::npos)
+				optionFound = true;
+
+		}
+		return true;
+	}
+
+	bool CheckAgainstExpression(const std::string &str, StringVector expressionTokens)
+	{
+		size_t strPos = 0;
+		StringVector::iterator it = expressionTokens.begin();
+		for (; it != expressionTokens.end(); ++it)
+		{
+			// We search from the last found token (all tokens must exist /in the correct order/ for the string to match)
+			strPos = str.find(*it, strPos);
+			if (strPos == std::string::npos)
+				return false;
+
+		}
+		return true;
+	}
+
+	// This the the purest form of the Find method
+	StringVector Find(const std::string &expression)
+	{
+		StringVector list;
+
+		StringVector expressionTokens = TokeniseExpression(expression);
+
+		if (m_PhysFSConfigured)
+		{
+			char **files = PHYSFS_enumerateFiles("");
+			if (files != NULL)
+			{
+				int file_count;
+				char **i;
+				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
+				{
+					std::string file(*i);
+					if (CheckAgainstExpression(file, expressionTokens))
+						list.push_back(file);
+				}
+
+				PHYSFS_freeList(files);
+			}
+		}
+
+		return list;
+	}
+
+	// This has been replaced with Find(<ex>, false) in ResourceManager
+	StringVector FindCaseless(const std::string &expression)
+	{
+		StringVector list;
+
+		StringVector expressionTokens = TokeniseExpression(fe_newupper(expression));
+
+		if (m_PhysFSConfigured)
+		{
+			char **files = PHYSFS_enumerateFiles("");
+			if (files != NULL)
+			{
+				int file_count;
+				char **i;
+				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
+				{
+					std::string file(*i);
+					if (CheckAgainstExpression(fe_newupper(file), expressionTokens))
+						list.push_back(file);
+				}
+
+				PHYSFS_freeList(files);
+			}
+		}
+
+		return list;
+	}
+
 	virtual int main(int argc, char **argv)
 	{
 		CL_SetupDisplay disp_setup;
@@ -39,10 +192,10 @@ class PhysFSTest : public CL_ClanApplication
 			printf("Linked against PhysFS version %d.%d.%d.\n",
 				linked.major, linked.minor, linked.patch);
 
-			Error* trivial = 
-				new Error(Error::TRIVIAL, "An error is about to happen");
-			Error* err = 
-				new Error(Error::INTERNAL_ERROR, "Nothing Happened");
+			Exception* trivial = 
+				new Exception(Exception::TRIVIAL, "An error is about to happen");
+			Exception* err = 
+				new Exception(Exception::INTERNAL_ERROR, "Just kidding :)");
 
 			logger->SetUseDating(true);
 			logger->BeginLog("another log", false);
@@ -76,19 +229,27 @@ class PhysFSTest : public CL_ClanApplication
 			//	file << "test";
 			//}
 
-			delete logger;
-			delete Console::getSingletonPtr();
-
 			// Configure physFS for this app
 			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");
 			SetupPhysFS::add_subdirectory("Data/", "ZIP", true);
+
+			///////////////////
+			m_PhysFSConfigured = true;
+			///////////////////
 
 
 			// Display the current search path
 			char **it ;
 			for (it = PHYSFS_getSearchPath(); *it != NULL; it++)
 			{
-				std::cout << (*it) << std::endl;
+				SendToConsole((*it));
+			}
+
+			SendToConsole("Searching for '*.xml':");
+			StringVector xmlFiles = FindCaseless("*.xml");
+			for (int i = 0; i < xmlFiles.size(); i++)
+			{
+				SendToConsole("\t" + xmlFiles[i]);
 			}
 
 
@@ -106,6 +267,9 @@ class PhysFSTest : public CL_ClanApplication
 			// ... And finally the shorthand version of the standard way
 			CL_Surface surface3("Body.png");
 
+
+			delete logger;
+			delete Console::getSingletonPtr();
 
 			// Draw!
 			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))

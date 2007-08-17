@@ -29,7 +29,7 @@
 /*! @mainpage Fusion
  *
  * Fusion is a multiplayer, 2D / top-down shooter, based on a
- * highly scriptable and extendable engine.
+ * scriptable and highly extendable engine.
  *
  * Go to http://steelfusion.sourceforge.net/ for more information.
  */
@@ -62,7 +62,6 @@
 //not #define AS_USE_NAMESPACE
 #include "angelscript.h"
 
-//! \todo Load exception error messages from XML
 namespace FusionEngine
 {
 
@@ -70,6 +69,7 @@ namespace FusionEngine
 	static const double g_DegToRad = M_PI/180.0f;
 	//! Ratio of radians to degrees
 	static const double g_RadToDeg = 180.0f/M_PI;
+
 
 	////////////////////////
 	// --General functions--
@@ -85,6 +85,53 @@ namespace FusionEngine
 	//! Converts rad deg (double)
 	static inline double fe_radtodeg(double rad) { return rad * g_RadToDeg; }
 
+	//! Returns the given string in upper case
+	static std::string fe_newupper(const std::string &str)
+	{
+		std::string upper(str);
+		std::transform(str.begin(), str.end(), upper.begin(), toupper);
+		return upper;
+	}
+
+	//! Returns the given string in upper case
+	static std::string fe_newlower(const std::string &str)
+	{
+		std::string lower(str);
+		std::transform(str.begin(), str.end(), lower.begin(), tolower);
+		return lower;
+	}
+
+	//! toupper()-like function for C++ strings
+	/*!
+	 * Transformation is done directly to the passed object
+	 */
+	static void fe_toupper(std::string &str)
+	{
+		std::transform(str.begin(), str.end(), str.begin(), toupper);
+	}
+
+	//! toupper()-like function for C++ strings
+	/*!
+	 * Transformation is done directly to the passed object
+	 */
+	static void fe_tolower(std::string &str)
+	{
+		std::transform(str.begin(), str.end(), str.begin(), tolower);
+	}
+
+	//! toupper() function for C strings
+	/*!
+	 * \param[out] upper
+	 * A pointer to the allocated memory in which the upper-case string will written
+	 *
+	 * \param[in] str
+	 * The null-terminated string to make uppercase
+	 */
+	static void fe_toupper(char *upper, const char *str)
+	{
+		for (unsigned int i = 0; i < strlen(str); i++)
+			upper[i] = toupper(str[i]);
+	}
 
 	//! Like strcmp, but case-insensitive
 	static int fe_nocase_strcmp(const char *x, const char *y)
@@ -153,6 +200,7 @@ namespace FusionEngine
 	///////////////////////////
 	// --Forward declarations--
 	///////////////////////////
+	//! \todo List forward declarations in alphabetical order
 	class Archive;
 	class ClientOptions;
 	class ServerOptions;
@@ -190,6 +238,8 @@ namespace FusionEngine
 	class PackSyncClient;
 	class PackSyncServer;
 	class LoadingStage;
+	template<typename T>
+	class Resource;
 
 
 	///////////////

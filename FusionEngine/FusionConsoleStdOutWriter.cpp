@@ -44,13 +44,16 @@ namespace FusionEngine
 
 	void ConsoleStdOutWriter::onConsoleNewline(const std::string &message)
 	{
-		if (message.substr(0, 2) == "**")
+		std::string e_marker = Console::getSingleton().GetExceptionMarker();
+		std::string w_marker = Console::getSingleton().GetWarningMarker();
+
+		if (message.substr(0, e_marker.length()) == e_marker)
 		{
-			std::cout << "** " << message.substr(2) << std::endl;
+			std::cout << "** " << message.substr(e_marker.length()) << std::endl;
 		}
-		else if (message.substr(0, 7) == "Warning")
+		else if (message.substr(0, w_marker.length()) == w_marker)
 		{
-			std::cout << "++ " << message << std::endl;
+			std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
 		}
 		else
 		{

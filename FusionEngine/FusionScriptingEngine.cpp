@@ -28,6 +28,7 @@
 #include "FusionScriptingEngine.h"
 
 #include "FusionScriptingFunctions.h"
+#include "FusionScriptReference.h"
 #include "as_scriptstring.h"
 #include "FusionScriptVector.h"
 
@@ -48,11 +49,29 @@ namespace FusionEngine
 
 	void ScriptingEngine::RegisterScript(Script *script, const char *module)
 	{
+		m_asEngine->AddScriptSection(module, 0, script->
 	}
 
 	int ScriptingEngine::ExecuteScript(Script *script, const char *function)
 	{
-		return 0;
+		int funcID = m_asEngine->GetFunctionIDByDecl(script->GetModule(), function);
+
+		asIScriptContext* cont = m_asEngine->CreateContext();
+		int r = cont->Prepare(funcID);
+		if (r < 0)
+			return r;
+		m_Contexts.push_back(cont);
+		return cont->Execute();
+	}
+
+	int ScriptingEngine::Execute(ScriptReference *scref)
+	{
+		asIScriptContext* cont = m_asEngine->CreateContext();
+		int r = cont->Prepare(scref->GetFunctionID());
+		if (r < 0)
+			return r;
+		m_Contexts.push_back(cont);
+		return cont->Execute();
 	}
 
 	int ScriptingEngine::ExecuteString(const std::string &script, const char *module, int *context, int timeout, bool keep_context)
