@@ -55,7 +55,7 @@
     </WidgetLook>
 
     <WidgetLook name="SharpHour/Titlebar">
-        <Property name="CaptionColour" value="FFFFFFFF" />
+			<PropertyDefinition name="CaptionColour" initialValue="FFFFFFFF" redrawOnWrite="true" />
         <ImagerySection name="caption">
             <TextComponent>
                 <Area>
@@ -115,10 +115,10 @@
     </WidgetLook>
 
     <WidgetLook name="SharpHour/TabButton">
-        <Property name="NormalTextColour" value="FF000000" />
-        <Property name="HoverTextColour" value="FF000000" />
-        <Property name="PushedTextColour" value="FF000000" />
-        <Property name="DisabledTextColour" value="FF000000" />
+        <PropertyDefinition name="NormalTextColour" value="FF000000" />
+        <PropertyDefinition name="HoverTextColour" value="FF000000" />
+        <PropertyDefinition name="PushedTextColour" value="FF000000" />
+        <PropertyDefinition name="DisabledTextColour" value="FF000000" />
         <Property name="WantsMultiClickEvents" value="False" />
         <ImagerySection name="frame">
             <FrameComponent>
@@ -253,10 +253,10 @@
     </WidgetLook>
 
     <WidgetLook name="SharpHour/Button">
-        <Property name="NormalTextColour" value="FF000000" />
-        <Property name="HoverTextColour" value="FF000000" />
-        <Property name="PushedTextColour" value="FF000000" />
-        <Property name="DisabledTextColour" value="FF000000" />
+        <PropertyDefinition name="NormalTextColour" initialValue="FFFFFFFF" redrawOnWrite="true" />
+        <PropertyDefinition name="HoverTextColour" value="FF000000" />
+        <PropertyDefinition name="PushedTextColour" value="FF000000" />
+        <PropertyDefinition name="DisabledTextColour" value="FF000000" />
         <Property name="WantsMultiClickEvents" value="False" />
         <ImagerySection name="label">
             <TextComponent>
@@ -512,11 +512,11 @@
     </WidgetLook>
 
     <WidgetLook name="SharpHour/Editbox">
-        <PropertyDefinition name="ReadOnlyBGColour" initialValue="FFDFDFDF" />
-        <Property name="NormalTextColour" value="FF000000" />
-        <Property name="SelectedTextColour" value="FFFFFFFF" />
-        <Property name="ActiveSelectionColour" value="FF607FFF" />
-        <Property name="InactiveSelectionColour" value="FF808080" />
+        <PropertyDefinition name="ReadOnlyBGColour" initialValue="FFDFDFDF" redrawOnWrite="true" />
+				<PropertyDefinition name="NormalTextColour" initialValue="FF000000" redrawOnWrite="true" />
+				<PropertyDefinition name="SelectedTextColour" initialValue="FFFFFFFF" redrawOnWrite="true" />
+				<PropertyDefinition name="ActiveSelectionColour" initialValue="FF607FFF" redrawOnWrite="true" />
+				<PropertyDefinition name="InactiveSelectionColour" initialValue="FF808080" redrawOnWrite="true" />
         <NamedArea name="TextArea">
             <Area>
                 <Dim type="LeftEdge" ><AbsoluteDim value="7" /></Dim>
@@ -1334,10 +1334,10 @@
 
     <WidgetLook name="SharpHour/MultiLineEditbox">
         <Property name="SelectionBrushImage" value="set:SharpHour-Images image:GenericBrush" />
-        <Property name="NormalTextColour" value="FF000000" />
-        <Property name="SelectedTextColour" value="FFFFFFFF" />
-        <Property name="ActiveSelectionColour" value="FF607FFF" />
-        <Property name="InactiveSelectionColour" value="FF808080" />
+        <PropertyDefinition name="NormalTextColour" initialValue="FF000000" redrawOnWrite="true" />
+				<PropertyDefinition name="SelectedTextColour" initialValue="FFFFFFFF" redrawOnWrite="true" />
+				<PropertyDefinition name="ActiveSelectionColour" initialValue="FF607FFF" redrawOnWrite="true" />
+				<PropertyDefinition name="InactiveSelectionColour" initialValue="FF808080" redrawOnWrite="true" />
         <NamedArea name="TextArea">
             <Area>
                 <Dim type="LeftEdge" ><ImageDim imageset="SharpHour-Images" image="FrameLeft" dimension="Width" /></Dim>
