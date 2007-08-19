@@ -1,6 +1,6 @@
 @echo off 
 
-set CCCC_ENV="E:\Program Files\CCCC\cccc_env.bat"
+set CCCC_ENV="E:\Program Files (x86)\CCCC\cccc_env.bat"
 set CCCC_EXE=cccc.exe
 
 if not exist %CCCC_ENV% goto noEnv

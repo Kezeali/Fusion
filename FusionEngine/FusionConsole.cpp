@@ -59,7 +59,7 @@ namespace FusionEngine
 
 	void Console::Add(const FusionEngine::Exception *ex)
 	{
-		Add(ex->GetError(), ex->GetType() == Exception::TRIVIAL ? Console::MTWARNING : Console::MTERROR);
+		Add(ex->GetDescription(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
 	}
 
 	void Console::Clear()

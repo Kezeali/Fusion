@@ -1,12 +1,14 @@
-#include "..\FusionEngine\Common.h"
+#include "../FusionEngine/Common.h"
 
-#include "..\FusionEngine\FusionConsole.h"
-#include "..\FusionEngine\FusionConsoleStdOutWriter.h"
-#include "..\FusionEngine\FusionLogger.h"
+#include "../FusionEngine/FusionConsole.h"
+#include "../FusionEngine/FusionConsoleStdOutWriter.h"
+#include "../FusionEngine/FusionLogger.h"
 
-#include "..\FusionEngine\FusionStateManager.h"
-#include "..\FusionEngine\FusionGUI.h"
-#include "..\FusionEngine\FusionConsoleGUI.h"
+#include "../FusionEngine/FusionInputHandler.h"
+
+#include "../FusionEngine/FusionStateManager.h"
+#include "../FusionEngine/FusionGUI.h"
+#include "../FusionEngine/FusionConsoleGUI.h"
 
 using namespace FusionEngine;
 
@@ -37,6 +39,8 @@ class GUITest : public CL_ClanApplication
 
 			CL_OpenGLState gl_state(display.get_gc());
 			gl_state.set_active();
+
+			new FusionInput();
 
 			StateManager* stateman = new StateManager();
 
@@ -77,6 +81,15 @@ class GUITest : public CL_ClanApplication
 
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
+
+				// Reload the GUI
+				if (CL_Keyboard::get_keycode('R'))
+				{
+					conGUI->CleanUp();
+					gui->CleanUp();
+					gui->Initialise();
+					conGUI->Initialise();
+				}
 
 				try
 				{

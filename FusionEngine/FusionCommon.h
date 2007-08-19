@@ -48,7 +48,12 @@
 #include "Common.h"
 
 #include "FusionVector2.h"
+
 #include "FusionException.h"
+#include "FusionFileSystemException.h"
+#include "FusionFileNotFoundException.h"
+#include "FusionFileTypeException.h"
+#include "FusionInvalidArgumentException.h"
 
 // Boost
 //#include <boost/function.hpp>
@@ -228,6 +233,7 @@ namespace FusionEngine
 	class Script;
 	class ScriptingEngine;
 	class Exception;
+	class FileSystemException;
 	class Logger;
 	class Console;
 	class LoadingState;

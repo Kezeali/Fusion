@@ -11,23 +11,21 @@ namespace FusionEngine
 
 	GUI::GUI()
 		: FusionState(false), // GUI is non-blockin by default
-		m_Modifiers(NOMOD)
+		m_Modifiers(NOMOD),
+		m_MouseShowPeriod(1000),
+		m_ShowMouseTimer(1000)
 	{
 	}
 
 	GUI::~GUI()
 	{
-		CEGUI::System* guiSys = CEGUI::System::getSingletonPtr();
-		if (guiSys != NULL)
-		{
-			CEGUI::Renderer* renderer = guiSys->getRenderer();
-			delete guiSys;
-			delete renderer;
-		}
+		CleanUp();
 	}
 
 	bool GUI::Initialise()
 	{
+		CL_Display::get_current_window()->hide_cursor();
+
 		try
 		{
 			using namespace CEGUI;
@@ -57,6 +55,9 @@ namespace FusionEngine
 			SchemeManager::getSingleton().loadScheme("SharpHour.scheme");
 			SchemeManager::getSingleton().loadScheme("WindowsLook.scheme");
 			SchemeManager::getSingleton().loadScheme("VanillaSkin.scheme");
+
+			// Cursor
+			System::getSingleton().setDefaultMouseCursor("SharpHour-Images", "MouseArrow");
 
 			// -- Create the root window --
 			WindowManager& winMgr = WindowManager::getSingleton();
@@ -120,9 +121,16 @@ namespace FusionEngine
 
 	void GUI::CleanUp()
 	{
-		CEGUI::Renderer* renderer = CEGUI::System::getSingleton().getRenderer();
-		delete CEGUI::System::getSingletonPtr();
-		delete renderer;
+		CEGUI::System* guiSys = CEGUI::System::getSingletonPtr();
+		if (guiSys != NULL)
+		{
+			CEGUI::Renderer* renderer = guiSys->getRenderer();
+			delete guiSys;
+			delete renderer;
+		}
+		m_Slots.disconnect_all();
+
+		CL_Display::get_current_window()->show_cursor();
 	}
 
 	bool GUI::AddWindow(const std::string& window)

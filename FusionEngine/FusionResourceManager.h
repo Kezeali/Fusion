@@ -211,6 +211,7 @@ namespace FusionEngine
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
+		RNode createResourceNode(TiXmlElement* xmlNode);
 		/*!
 		 * \brief
 		 * Returns the pixel the given percentage from the left of the window.

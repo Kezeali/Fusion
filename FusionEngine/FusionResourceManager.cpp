@@ -237,6 +237,12 @@ namespace FusionEngine
 	{
 		TiXmlDocument* doc = OpenPackage(name);
 
+		TiXmlNode* root = doc->RootElement();
+		m_RootRNode.AddChildNode(createResourceNode(root));
+
+		// The root node is simply called "" (nothing), thus the paths for finding
+		//  resources always start with "/Fusion/", the initial "/" signifying the 
+		//  trailing slash after the nameless root node ;)
 
 		return true;
 	}
@@ -270,6 +276,27 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
+	RNode ResourceManager::createResourceNode(TiXmlElement* xmlNode)
+	{
+		RNode* node;
+
+		TiXmlAttribute* typeAttr = xmlNode->Attribute("type");
+		if (typeAttr != NULL)
+			loadResource(typeAttr->Value(), xmlNode->FirstChild()->Value());
+
+		TiXmlElement *child;
+		for (child = xmlNode->FirstChildElement(); child; child = child->NextSiblingElement())
+		{
+			node.AddChildNode( createResourceNode(child) );
+		}
+
+		return node;
+	}
+
+	void ResourceManager::loadResource(const char* type, const char* text)
+	{
+	}
+
 	CL_Point ResourceManager::getPoint(const CL_DomElement *element)
 	{
 		// Return a zero point if the data is incomplete

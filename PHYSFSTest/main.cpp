@@ -1,4 +1,4 @@
-#include "..\FusionEngine\Common.h"
+#include "..\FusionEngine\FusionCommon.h"
 
 #include "..\FusionEngine\FusionPhysFS.h"
 #include "..\FusionEngine\FusionConsole.h"
@@ -171,7 +171,7 @@ class PhysFSTest : public CL_ClanApplication
 		CL_ConsoleWindow console("PhysFS Test");
 		console.redirect_stdio();
 
-		CL_DisplayWindow display("PhysFS Test: Display", 640, 200);
+		CL_DisplayWindow display("PhysFS Test: Display", 480, 200);
 
 		try
 		{
@@ -193,9 +193,15 @@ class PhysFSTest : public CL_ClanApplication
 				linked.major, linked.minor, linked.patch);
 
 			Exception* trivial = 
-				new Exception(Exception::TRIVIAL, "An error is about to happen");
+				new Exception("main", "An error is about to happen", false);
 			Exception* err = 
-				new Exception(Exception::INTERNAL_ERROR, "Just kidding :)");
+				new Exception("main", "Just kidding :)", true);
+
+			FileSystemException* fsEx =
+				new FileSystemException("main");
+
+			FileNotFoundException* fnfEx = 
+				new FileNotFoundException("main", "floobly.flo");
 
 			logger->SetUseDating(true);
 			logger->BeginLog("another log", false);
@@ -206,13 +212,18 @@ class PhysFSTest : public CL_ClanApplication
 			logger->EndLog("another log");
 			logger->RemoveAndDestroyLog("another log");
 
+			SendToConsole("Testing Exception output:");
 			// Send a warning to the console
 			SendToConsole(trivial);
 			// Send an error to the console
 			SendToConsole(err);
 
+			SendToConsole(fsEx);
+
+			SendToConsole(fnfEx);
+
 			// List filetypes
-			logger->Add("PhysFS File Types:", "console");
+			SendToConsole("PhysFS File Types:");
 
 			const PHYSFS_ArchiveInfo **i;
 			for (i = PHYSFS_supportedArchiveTypes(); *i != NULL; i++)
@@ -221,7 +232,7 @@ class PhysFSTest : public CL_ClanApplication
 				//	<< (*i)->description << "." << std::endl;
 
 				//FusionEngine::Console::getSingletonPtr()->Add((*i)->description);
-				SendToConsole((*i)->description);
+				SendToConsole("\t" + std::string((*i)->description));
 			}
 
 			//{
@@ -239,14 +250,15 @@ class PhysFSTest : public CL_ClanApplication
 
 
 			// Display the current search path
+			SendToConsole("PHYSFS search path:");
 			char **it ;
 			for (it = PHYSFS_getSearchPath(); *it != NULL; it++)
 			{
-				SendToConsole((*it));
+				SendToConsole("\t" + std::string(*it));
 			}
 
-			SendToConsole("Searching for '*.xml':");
-			StringVector xmlFiles = FindCaseless("*.xml");
+			SendToConsole("Testing PHYSFS Find - Searching for '*body*':");
+			StringVector xmlFiles = FindCaseless("*body*");
 			for (int i = 0; i < xmlFiles.size(); i++)
 			{
 				SendToConsole("\t" + xmlFiles[i]);

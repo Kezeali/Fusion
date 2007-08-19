@@ -142,7 +142,7 @@ namespace FusionEngine
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
 		{
-			c->Add(ex->GetError(), (ex->GetType() == Exception::TRIVIAL) ? Console::MTWARNING : Console::MTERROR);
+			c->Add(ex->ToString(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
 		}
 		//! \todo Throw exception if the console hasn't been created.
 	}

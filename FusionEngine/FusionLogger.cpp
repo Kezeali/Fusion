@@ -135,11 +135,11 @@ namespace FusionEngine
 
 			log->_setIsEnded(false);
 		}
-		catch (LogfileException e)
+		catch (LogfileException &e)
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
-			Console::getSingletonPtr()->Add(e.GetError());
+			Console::getSingletonPtr()->Add(e.ToString());
 		}
 
 		return log;
@@ -162,11 +162,11 @@ namespace FusionEngine
 
 			log->_setIsEnded(false);
 		}
-		catch (LogfileException e)
+		catch (LogfileException& e)
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
-			Console::getSingletonPtr()->Add(e.GetError());
+			Console::getSingletonPtr()->Add(e.ToString());
 		}
 	}
 
@@ -187,7 +187,7 @@ namespace FusionEngine
 
 			log->_setIsEnded(true);
 		}
-		catch (LogfileException e)
+		catch (LogfileException& e)
 		{
 			// We don't want to get stuck in a loop, so we disable console logging first
 			DisableConsoleLogging();
@@ -252,7 +252,7 @@ namespace FusionEngine
 	void Logger::Add(const Exception* error, const std::string& tag, LogSeverity severity)
 	{
 		std::string message =
-			CL_String::format("Error [Type %1]: %2", error->GetType(), error->GetError());
+			CL_String::format("Error: %1", error->ToString());
 
 		Add(message, tag, severity);
 	}

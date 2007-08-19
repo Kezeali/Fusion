@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007 Fusion Project Team
+  Copyright (c) 2006 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -18,44 +18,44 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
 */
 
-#include "FusionStringLoader.h"
+#ifndef Header_FusionEngine_FileSystemException
+#define Header_FusionEngine_FileSystemException
 
-#include "FusionResource.h"
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionException.h"
 
 namespace FusionEngine
 {
 
-	const std::string &StringLoader::GetType() const
+	//! File system exception class
+	class FileSystemException : public Exception
 	{
-		static std::string strType("STRING");
-		return strType;
-	}
+		static std::string s_Message;
+	public:
+		//! Constructor
+		FileSystemException() : Exception() {}
+		//! Constructor
+		FileSystemException(const std::string& origin)
+			: Exception(origin, s_Message)
+		{
+		}
+		//! Constructor
+		FileSystemException(const std::string& origin, const std::string& message)
+			: Exception(origin, message)
+		{
+		}
 
-	Resource<std::string>* StringLoader::LoadResource(FusionEngine::ResourceTag tag, const std::string &text)
-	{
-		Resource<std::string> rsc(GetType().c_str(), tag, text, (std::string*)0);
-		rsc.SetDataPtr(rsc._getTextPtr());
-		return rsc;
-	}
+	public:
+		//! Returns the name of this exception class
+		virtual std::string GetName() const;
 
-	void StringLoader::ReloadResource(Resource<std::string> *resource)
-	{
-		if (resource->IsValid())
-			return;
-
-		resource->_setValid(true);
-	}
-
-	void StringLoader::UnloadResource(Resource<std::string> *resource)
-	{
-		resource->_setValid(false);
-	}
+	};
 
 }
+
+#endif

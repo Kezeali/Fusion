@@ -45,7 +45,7 @@ namespace FusionEngine
 
 	ConsoleGUI::~ConsoleGUI()
 	{
-		Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
+		FusionInput::getSingleton().Activate();
 	}
 
 	/////////////////
@@ -82,17 +82,30 @@ namespace FusionEngine
 				);
 
 			// Capture editbox accepted (e.g. enter pressed) events
-			m_EditBox->subscribeEvent(
+			m_EventConnections.push_back(
+				m_EditBox->subscribeEvent(
 				Editbox::EventTextAccepted,
-				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this));
+				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this)));
 			// Submit button
-			m_Wind->getChild(1)->subscribeEvent(
+			m_EventConnections.push_back(
+				m_Wind->getChild(1)->subscribeEvent(
 				PushButton::EventClicked,
-				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this));
+				Event::Subscriber(&ConsoleGUI::onEditBoxAccepted, this)));
 			// Key events to scroll history
-			m_Wind->subscribeEvent(
+			m_EventConnections.push_back(
+				m_Wind->subscribeEvent(
 				Window::EventKeyDown,
-				Event::Subscriber(&ConsoleGUI::onEditBoxKeyUp, this));
+				Event::Subscriber(&ConsoleGUI::onEditBoxKeyUp, this)));
+
+			// Input activation/suspension
+			m_EventConnections.push_back(
+				m_Wind->subscribeEvent(
+				Window::EventActivated,
+				Event::Subscriber(&ConsoleGUI::onMouseEnter, this)));
+
+			m_EventConnections.push_back(m_Wind->subscribeEvent(
+				Window::EventDeactivated,
+				Event::Subscriber(&ConsoleGUI::onMouseLeave, this)));
 
 			// Connect to the newline signal from the console
 			//m_Slots.connect(Console::getSingleton().OnNewLine, this, &ConsoleGUI::onConsoleNewLine);
@@ -136,6 +149,15 @@ namespace FusionEngine
 	void ConsoleGUI::CleanUp()
 	{
 		FusionInput::getSingleton().Activate();
+
+		Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
+		Console::getSingleton().OnClear.disconnect(m_ConsoleOnClearSlot);
+
+		EventConnectionList::iterator it = m_EventConnections.begin();
+		for (; it != m_EventConnections.end(); ++it)
+		{
+			(*it)->disconnect();
+		}
 	}
 
 	void ConsoleGUI::SetMaxHistory(unsigned int max)
@@ -155,12 +177,16 @@ namespace FusionEngine
 		// Stops the input manager from trying to gather player inputs
 		FusionInput::getSingleton().Suspend();
 
+		SendToConsole("Game input suspended");
+
 		return true;
 	}
 
 	bool ConsoleGUI::onMouseLeave(const CEGUI::EventArgs& e)
 	{
 		FusionInput::getSingleton().Activate();
+
+		SendToConsole("Game input activated");
 
 		return true;
 	}

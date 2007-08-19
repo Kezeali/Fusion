@@ -37,7 +37,11 @@
 namespace FusionEngine
 {
 
+	//! Max length of the input history list
 	static const size_t g_ConGUIDefaultMaxHistory = 255;
+
+	//! Event Connections
+	typedef std::list<CEGUI::Event::Connection> EventConnectionList;
 
 	/*!
 	 * \brief
@@ -95,6 +99,8 @@ namespace FusionEngine
 		//CL_SlotContainer m_Slots;
 		CL_Slot m_ConsoleOnNewLineSlot;
 		CL_Slot m_ConsoleOnClearSlot;
+
+		EventConnectionList m_EventConnections;
 
 		//! Enters text
 		void enterText(CEGUI::String text);

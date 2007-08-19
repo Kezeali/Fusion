@@ -23,39 +23,21 @@
 	File Author(s):
 
 		Elliot Hayward
+
 */
 
-#include "FusionStringLoader.h"
-
-#include "FusionResource.h"
+#include "FusionFileNotFoundException.h"
 
 namespace FusionEngine
 {
 
-	const std::string &StringLoader::GetType() const
-	{
-		static std::string strType("STRING");
-		return strType;
-	}
+	std::string FileNotFoundException::s_Message = "File not found";
+	std::string FileNotFoundException::s_Message_filename = "The file '%1' could not be found";
 
-	Resource<std::string>* StringLoader::LoadResource(FusionEngine::ResourceTag tag, const std::string &text)
+	std::string FileNotFoundException::GetName() const
 	{
-		Resource<std::string> rsc(GetType().c_str(), tag, text, (std::string*)0);
-		rsc.SetDataPtr(rsc._getTextPtr());
-		return rsc;
-	}
-
-	void StringLoader::ReloadResource(Resource<std::string> *resource)
-	{
-		if (resource->IsValid())
-			return;
-
-		resource->_setValid(true);
-	}
-
-	void StringLoader::UnloadResource(Resource<std::string> *resource)
-	{
-		resource->_setValid(false);
+		static std::string strName("FusionEngine::FileNotFoundException");
+		return strName;
 	}
 
 }

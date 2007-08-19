@@ -175,9 +175,9 @@ namespace FusionEngine
 		int version = source->read_uint8();
 
 		if( type != g_BitmaskCacheFiletype )
-			throw CL_Error("Data received is not bitmask data.");
+			throw FileTypeException("FusionBitmask::Load", "bitmask");
 		if( version != g_BitmaskCacheVersion )
-			throw CL_Error( CL_String::format("Bitmask version %1 is unsupported. Supported version: %2.", version, g_BitmaskCacheVersion) );
+			throw FileTypeException("FusionBitmask::Load", "Bitmask", version, g_BitmaskCacheVersion);
 
 
 		// Dimensions and scale
@@ -492,7 +492,7 @@ namespace FusionEngine
 
 		if ((point.x > m_Bitmask->w) | (point.y > m_Bitmask->h) | (point.x < 0) | (point.y < 0))
 		{
-			throw Exception(Exception::TRIVIAL, "FusionBitmask::GetBit - point out of range!");
+			throw InvalidArgumentException("FusionBitmask::GetBit", "point");
 		}
 
 		return (bool)bitmask_getbit(m_Bitmask, point.x, point.y);
@@ -504,7 +504,7 @@ namespace FusionEngine
 
 		if ((x > m_Bitmask->w) | (y > m_Bitmask->h) | (x < 0) | (y < 0))
 		{
-			throw Exception(Exception::TRIVIAL, "FusionBitmask::GetBit - point out of range!");
+			throw InvalidArgumentException("FusionBitmask::GetBit", "x, y");
 		}
 
 		return (bool)bitmask_getbit(m_Bitmask, x, y);

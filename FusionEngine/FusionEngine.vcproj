@@ -255,6 +255,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionFileNotFoundException.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionFileSystemException.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionFileTypeException.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionGame.h"
 				>
 			</File>
@@ -280,6 +292,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputSourceProvider_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInvalidArgumentException.h"
 				>
 			</File>
 			<File
@@ -451,11 +467,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionRNode.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScene.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionScript.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedControlLoader.h"
 				>
 			</File>
 			<File
@@ -641,6 +665,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionFileNotFoundException.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionFileSystemException.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionFileTypeException.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionGame.cpp"
 				>
 			</File>
@@ -658,6 +694,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputSourceProvider_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInvalidArgumentException.cpp"
 				>
 			</File>
 			<File

@@ -203,6 +203,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionFileNotFoundException.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileSystemException.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionGUI.cpp"
 				>
 			</File>
@@ -258,6 +266,14 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionException.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileNotFoundException.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileSystemException.h"
 				>
 			</File>
 			<File

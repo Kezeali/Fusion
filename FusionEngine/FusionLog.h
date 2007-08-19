@@ -51,14 +51,15 @@ namespace FusionEngine
 	};
 
 	//! Exception type for FusionEngine#Log and FusionEngine#Logger
-	class LogfileException : public Exception
-	{
-	public:
-		LogfileException(const std::string& message)
-			: Exception(Exception::LOGFILE_ERROR, message)
-		{}
+	//class LogfileException : public Exception
+	//{
+	//public:
+	//	LogfileException(const std::string& message)
+	//		: Exception(Exception::LOGFILE_ERROR, message)
+	//	{}
+	typedef FileSystemException LogfileException;
 
-	};
+	//};
 
 	//! Represents a logfile (usually within FusionEngine#Logger)
 	/*!

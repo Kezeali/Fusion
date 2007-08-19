@@ -192,6 +192,18 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionException.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileSystemException.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileTypeException.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
 				>
 			</File>
@@ -235,6 +247,18 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionCommon.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionException.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileSystemException.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionFileTypeException.h"
 				>
 			</File>
 			<File

@@ -254,18 +254,7 @@ namespace FusionEngine
 			} // while (m != 0)
 
 			// Try to update the state
-			if (!(*it)->Update(split))
-			{
-				// Clean up
-				Clear();
-
-				throw Exception(Exception::INTERNAL_ERROR, "A subsystem exited uncleanly");
-
-				//  Tell the state to clean up
-				//(*it)->CleanUp();
-				//  Remove the state and jump to the next iteration
-				//it = m_States.erase(it);
-			}
+			(*it)->Update(split);
 		}
 
 		return true;

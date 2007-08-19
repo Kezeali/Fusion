@@ -41,6 +41,8 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
+	 * Loads STRING type Resources.
+	 *
 	 * STRING type Resources are just the raw data from the resource file
 	 * (literally the 'Text' property of the Resource), so this Loader
 	 * just makes the Data (ptr) property point to the Text property ;)
@@ -59,11 +61,11 @@ namespace FusionEngine
 		const std::string &GetType() const;
 
 		//! Returns a resource
-		Resource<std::string>* LoadResource(ResourceTag tag, const std::string &text);
+		Resource<std::string> LoadResource(ResourceTag tag, const std::string &text);
 		//! Validates the given resource
-		void ReloadResource(Resource<std::string>* resource);
+		void ReloadResource(Resource<std::string> resource);
 		//! Invalidates the given resource
-		void UnloadResource(Resource<std::string>* resource);
+		void UnloadResource(Resource<std::string> resource);
 
 	protected:
 		const std::string *m_Resource;

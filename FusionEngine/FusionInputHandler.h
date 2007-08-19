@@ -44,11 +44,11 @@ namespace FusionEngine
 	 * \brief
 	 * Provides an interface to an input buffer optimised for FusionEngine.
 	 *
-	 * FusionEngine contains only gameplay functions, so all input is either contol input
-	 * for ships, or global input - such as opening the console / menu (which have their
+	 * All input handled by this class is either contol input for ships, or
+	 * global input - such as opening the console / menu (which have their
 	 * own input handlers) or quitting the game.
 	 *
-	 * \todo Remove hardcoded controls - implement command mapping system (low priority)
+	 * \todo Remove hardcoded control map
 	 */
 	class FusionInput : public FusionEngine::Singleton<FusionInput>
 	{
@@ -59,6 +59,141 @@ namespace FusionEngine
 		FusionInput(const ClientOptions *from);
 
 	public:
+		//! Provides control information
+		class Control
+		{
+		public:
+			std::string m_Name;
+			int m_Button;
+			std::string m_ButtonName;
+			bool m_State;
+			CL_InputDevice m_Device;
+		public:
+			//! Constructor
+			Control()
+				: m_State(false),
+				m_Button(0),
+				m_Device(CL_Keyboard::get_device())
+			{}
+			//! Constructor +stuff
+			Control(std::string name, int button, std::string buttonName)
+				: m_Name(name),
+				m_Button(button),
+				m_ButtonName(buttonName),
+				m_State(false),
+				m_Device(CL_Keyboard::get_device())
+			{}
+			//! Constructor +stuff +device
+			Control(std::string name, int button, std::string buttonName, const CL_InputDevice& device)
+				: m_Name(name),
+				m_Button(button),
+				m_ButtonName(buttonName),
+				m_State(false),
+				m_Device(device)
+			{}
+		public:
+			//! Retrieves the Name property
+			const std::string& GetName() const
+			{
+				return m_Name;
+			}
+			//! Sets the Name property
+			void SetName(const std::string& name)
+			{
+				m_Name = name;
+			}
+
+			//! Retrieves the Button property
+			int GetButton() const
+			{
+				return m_Button;
+			}
+			//! Sets the Button property
+			void SetButton(int button)
+			{
+				m_Button = button;
+			}
+
+			//! Retrieves the ButtonName property
+			const std::string& GetButtonName() const
+			{
+				return m_ButtonName;
+			}
+			//! Sets the ButtonName property
+			void SetButton(const std::string&  buttonName)
+			{
+				m_ButtonName = buttonName;
+			}
+
+			//! Retrieves the State property
+			int GetState() const
+			{
+				return m_State;
+			}
+			//! Sets the State property
+			void SetState(bool state)
+			{
+				m_State = state;
+			}
+
+			//! Retrieves the Device property
+			const CL_InputDevice& GetDevice() const
+			{
+				return m_Device;
+			}
+			//! Sets the Device property
+			void SetButton(const CL_InputDevice&  device)
+			{
+				m_Device = device;
+			}
+
+			//! Returns true if the given InputEvent signifies that this control is active
+			/*!
+			 * (i.e. the user is pressing this button)
+			 */
+			virtual bool Matches(const CL_InputEvent& inputEvent)
+			{
+				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
+			}
+			//! Updates the control
+			virtual bool UpdateState(const CL_InputEvent& inputEvent)
+			{
+				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
+			}
+			//! Updates the control if it matches
+			virtual bool UpdateState(const CL_InputEvent& inputEvent)
+			{
+				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
+			}
+		};
+
+		//! Analog control
+		class AnalogControl : public Control
+		{
+		public:
+			//! Deadzone
+			float m_AxisThreshold;
+		public:
+			//! Constructor
+			AnalogControl() : Control(), m_AxisThreshold(1.0f) {}
+			//! Also a constructor
+			AnalogControl(const std::string& name, int button, float threshold, const std::string& buttonName) 
+				: Control(name, button, buttonName, CL_Joystick::get_device()),
+				m_AxisThreshold(threshold) 
+			{}
+			//! And another constructor!
+			AnalogControl(const std::string& name, int button, float threshold, const std::string& buttonName, const CL_InputDevice& device) 
+				: Control(name, button, buttonName, device),
+				m_AxisThreshold(threshold)
+			{}
+		public:
+		};
+
+		//! \todo MouseControl : public AnalogControl
+
+		//! Input names mapped to controls
+		typedef std::map<std::string, Control> ControlMap;
+
 		//! Typedef for ship inputs
 		typedef std::vector<PlayerInputMap> PlayerInputMapList;
 		//! Typedef for ship inputs
@@ -96,6 +231,7 @@ namespace FusionEngine
 		GlobalInput GetGlobalInputs() const;
 
 	private:
+		ControlMap m_ControlMap;
 		//! The InputHandler will not be considered active till this reaches zero.
 		int m_SuspendRequests;
 

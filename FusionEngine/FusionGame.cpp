@@ -143,7 +143,7 @@ namespace FusionEngine
 
 					state_man->Draw();
 				}
-				catch (Exception e)
+				catch (Exception &e)
 				{
 					// Not critical and trivial, so record it in the console and continue
 					if (!e.IsCritical() && e.GetType() == Exception::TRIVIAL)
@@ -171,7 +171,7 @@ namespace FusionEngine
 
 			delete state_man;
 		}
-		catch (Exception e)
+		catch (Exception& e)
 		{
 			Logger* logger = Logger::getSingletonPtr();
 

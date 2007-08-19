@@ -27,7 +27,7 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "Common.h"
 
 namespace FusionEngine
 {
@@ -35,25 +35,16 @@ namespace FusionEngine
 	//! Fusion exception class.
 	/*!
 	 * Generic exception class
-	 * <br>
-	 * On loading exception strings form XML:<br>
-	 * An exception constructor would look as follows
-	 * NOTE: this doesn't work, as Exception (the superclass
-	 * constructor) must be called in the initialisation list
-	 * so we'll need to fiture out another way
-	 * <code>
-	 * MyException(std::string variable1, std::string variable2)
-	 * {
-	 *	std::string format = Theme::getSingleton().getResource<std::string>("exceptions/myexception/format");
-	 *	std::string message = CL_String::format(format, variable1, variable2);
-	 *	Exception(Exception::TRIVIAL, message);
-	 * }
-	 * </code>
 	 */
 	class Exception
 	{
 	public:
 		//! Types of Exceptions
+		/*!
+		 * Do not use these! This method was stupid; it is much better
+		 * to simply use different classes for each exception type, as
+		 * these can be caught seperatly.
+		 */
 		enum ExceptionType
 		{
 			//! Trivial
@@ -82,90 +73,45 @@ namespace FusionEngine
 		//! Basic constructor
 		Exception();
 		//! Constructor +type +message
-		/*!
-		 * There is no constructor sans-'type'... Which is to say 
-		 * 'type' must be specified here; if you are going to use the
-		 * Generic-Exception class (slacker), you can at least specify
-		 * a type!
-		 */
-		Exception(ExceptionType type, const std::string &message, bool critical = false);
+		Exception(ExceptionType type, const std::string &message, bool critical);
+		//! Constructor +message
+		Exception(const std::string &origin, bool critical = false);
+		//! Constructor +origin +message
+		Exception(const std::string &origin, const std::string &message, bool critical = false);
 
 	public:
 		//! Retrieves the type
 		ExceptionType GetType() const;
+		//! Retrieves the exception class name
+		virtual std::string GetName() const;
+		//! Sets the Origin property
+		virtual void SetOrigin(const std::string& origin);
+		//! Retrieves the origin
+		virtual const std::string& GetOrigin() const;
 		//! Retrieves the human readable message.
 		/*!
 		 * \remarks
 		 * Me - I can't call this GetMessage because of a stupid windows macro 
 		 * which redefines that as GetMessageW!
 		 */
-		const std::string& GetError() const;
+		virtual std::string GetDescription() const;
+
 		//! Returns true if the error type of this Exception object is severe
 		bool IsCritical() const;
 
-		//! Returns a string for an exception message (always, even if the given 'resource' is invalid)
-		static std::string GetString(const std::string &origin, const std::string &resource)
-		{
-			// This doesn't need to be in the header (not a template) but it's probably best for readabilities sake
-			return origin + grabReliableString(resource);
-		}
-
-		//! Returns a string for an exception message (always)
+		//! Returns a string representing the exception object
 		/*!
-		 * \param[in] p1
-		 * Pass a param here if the message requires it
+		 * A string in the following format will be returned: <br>
+		 * "<Name> in <Origin>: <Description/Message>"
 		 */
-		template<class Param1>
-		static std::string GetString(const std::string &origin, const std::string &resource, const Param1 &p1)
-		{
-			return origin + CL_String::format<Param1>(grabReliableString(resource, 1), p1);
-		}
-
-		//! Returns a string for an exception message (always)
-		/*!
-		 * \param[in] p[n]
-		 * Pass a param here if the message requires it
-		 */
-		template<class Param1, class Param2>
-		static std::string GetString(const std::string &origin, const std::string &resource, const Param1 &p1, const Param1 &p2)
-		{
-			return origin + CL_String::format<Param1, Param2>(grabReliableString(resource, 2), p1, p2);
-		}
-
-		//! Returns a string for an exception message (always)
-		/*!
-		 * \param[in] p[n]
-		 * Pass a param here if the message requires it
-		 */
-		template<class Param1, class Param2, class Param3>
-		static std::string GetString(const std::string &origin, const std::string &resource, const Param1 &p1, const Param2 &p2, const Param3 &p3)
-		{
-			return origin + CL_String::format<Param1, Param2, Param3>(grabReliableString(resource, 3), p1, p2, p3);
-		}
-
-		//! Returns a string for an exception message (always)
-		/*!
-		 * \param[in] p[n]
-		 * Pass a param here if the message requires it
-		 */
-		template<class Param1, class Param2, class Param3, class Param4>
-		static std::string GetString(const std::string &origin, const std::string &resource, const Param1 &p1, const Param2 &p2, const Param3 &p3, const Param4 &p4)
-		{
-			return origin + CL_String::format<Param1, Param2, Param3, Param4>(grabReliableString(resource, 4), p1, p2, p3, p4);
-		}
-
-	protected:
-		//! Always returns a string
-		/*!
-		 * \todo Make this (and GetString()) seperate from Exception (Exception shouldn't depend ResourceManager!)
-		 * Gets the string from the given resource, or makes one up if that is impossible
-		 */
-		static std::string grabReliableString(const std::string& resource, int args = 0);
+		virtual std::string ToString() const;
 
 	protected:
 		//! Stores the error type
 		ExceptionType m_Type;
-		//! Stores the message
+		std::string m_Name;
+		std::string m_Origin;
+		//! Stores the message (usually used as the Description property)
 		std::string m_Message;
 		bool m_Critical;
 

@@ -66,6 +66,7 @@ namespace FusionEngine
 			CTRL = 2,
 			ALT = 4
 		};
+
 	public:
 		//! Basic constructor.
 		GUI();
@@ -110,7 +111,7 @@ namespace FusionEngine
 		//! Lists added windows
 		std::vector<std::string> m_CurrentWindows;
 
-		//! Holds events
+		//! Holds slots
 		CL_SlotContainer m_Slots;
 
 		//! How long after the mouse stops moving until it fades
