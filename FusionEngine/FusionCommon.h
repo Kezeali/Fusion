@@ -49,6 +49,8 @@
 
 #include "FusionVector2.h"
 
+#include "FusionSlotContainer.h"
+
 #include "FusionException.h"
 #include "FusionFileSystemException.h"
 #include "FusionFileNotFoundException.h"

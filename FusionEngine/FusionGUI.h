@@ -112,7 +112,7 @@ namespace FusionEngine
 		std::vector<std::string> m_CurrentWindows;
 
 		//! Holds slots
-		CL_SlotContainer m_Slots;
+		SlotContainer m_Slots;
 
 		//! How long after the mouse stops moving until it fades
 		unsigned int m_MouseShowPeriod;

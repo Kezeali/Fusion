@@ -156,14 +156,20 @@ namespace FusionEngine
 				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
 			}
 			//! Updates the control
-			virtual bool UpdateState(const CL_InputEvent& inputEvent)
+			virtual void UpdateState(const CL_InputEvent& inputEvent)
 			{
-				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
+				m_State = true;
 			}
 			//! Updates the control if it matches
-			virtual bool UpdateState(const CL_InputEvent& inputEvent)
+			virtual bool UpdateIfMatches(const CL_InputEvent& inputEvent)
 			{
-				return inputEvent.device.get_id() == m_Device.get_id() && inputEvent.id == m_Button;
+				if (Matches(inputEvent))
+				{
+					UpdateState(inputEvent);
+					return true;
+				}
+				else
+					return false;
 			}
 		};
 
@@ -173,6 +179,7 @@ namespace FusionEngine
 		public:
 			//! Deadzone
 			float m_AxisThreshold;
+			float m_Position;
 		public:
 			//! Constructor
 			AnalogControl() : Control(), m_AxisThreshold(1.0f) {}
@@ -187,9 +194,62 @@ namespace FusionEngine
 				m_AxisThreshold(threshold)
 			{}
 		public:
+			//! Returns true if the given InputEvent signifies that this control is active
+			virtual bool Matches(const CL_InputEvent& inputEvent)
+			{
+				return Control::Matches(inputEvent) && inputEvent.axis_pos == m_AxisThreshold;
+			}
+			//! Updates the control
+			virtual void UpdateState(const CL_InputEvent& inputEvent)
+			{
+				Control::UpdateState(inputEvent);
+				m_Position = inputEvent.axis_pos;
+			}
+
+			//! Retreives the Position property
+			float GetPosition() const
+			{
+				return m_Position;
+			}
 		};
 
-		//! \todo MouseControl : public AnalogControl
+		//! Analog control
+		/*!
+		 * \todo make this simply modify m_Position in Analog control
+		 * (i.e. treat mouse x and mouse y as sepreate axis', and thus 
+		 * allow them to be mapped to different Control objects)
+		 */
+		class MouseControl : public AnalogControl
+		{
+		public:
+			Vector2 m_MousePosition;
+		public:
+			//! Constructor
+			MouseControl() : Control(), m_AxisThreshold(1.0f) {}
+			//! Also a constructor
+			MouseControl(const std::string& name, int button, float threshold, const std::string& buttonName) 
+				: Control(name, button, buttonName, CL_Joystick::get_device()),
+				m_AxisThreshold(threshold) 
+			{}
+			//! And another constructor!
+			MouseControl(const std::string& name, int button, float threshold, const std::string& buttonName, const CL_InputDevice& device) 
+				: Control(name, button, buttonName, device),
+				m_AxisThreshold(threshold)
+			{}
+		public:
+			//! Returns true if the given InputEvent signifies that this control is active
+			virtual bool Matches(const CL_InputEvent& inputEvent)
+			{
+				return AnalogControl::Matches(inputEvent) && inputEvent.axis_pos == m_AxisThreshold;
+			}
+			//! Updates the control
+			virtual void UpdateState(const CL_InputEvent& inputEvent)
+			{
+				AnalogControl::UpdateState(inputEvent);
+				m_MousePosition.x = inputEvent.mouse_pos.x;
+				m_MousePosition.y = inputEvent.mouse_pos.y;
+			}
+		};
 
 		//! Input names mapped to controls
 		typedef std::map<std::string, Control> ControlMap;

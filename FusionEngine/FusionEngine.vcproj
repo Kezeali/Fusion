@@ -239,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntity.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironmentClient.h"
 				>
 			</File>
@@ -544,6 +548,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionSingleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionSlotContainer.h"
 				>
 			</File>
 			<File

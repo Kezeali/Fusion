@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -201,6 +201,27 @@ namespace FusionEngine
 	 * Generic calling convention
 	 */
 	void CON_ListProjectilesG(asIScriptGeneric *gen);
+
+	//! Retreives the Text property of the given resource
+	std::string ENT_GetResourceText(std::string name);
+
+	//! Gets a ResourcePointer and adds it to the given entity
+	/*!
+	 * The resource will be accessable with the localKey given.
+	 */
+	void ENT_AddResource(std::string entName, std::string localKey, std::string name);
+
+	//! Removes the given resource
+	void ENT_RemoveResource(std::string entName, std::string key);
+
+		//! Gets a ResourcePointer and adds it to the given entity
+	/*!
+	 * The resource will be accessable with the localKey given.
+	 */
+	void ENT_AttachChildNode(std::string entName, std::string localKey, std::string name);
+
+	//! Removes the given resource
+	void ENT_DetachChildNode(std::string entName, std::string key);
 }
 
 #endif
