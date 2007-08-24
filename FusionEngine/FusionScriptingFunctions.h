@@ -202,6 +202,15 @@ namespace FusionEngine
 	 */
 	void CON_ListProjectilesG(asIScriptGeneric *gen);
 
+	//! Prints the given string to the console
+	void CON_Print(std::string str);
+
+	//! Prints the given string to the console
+	/*!
+	 * General calling convention
+	 */
+	void CON_PrintG(asIScriptGeneric* gen);
+
 	//! Retreives the Text property of the given resource
 	std::string ENT_GetResourceText(std::string name);
 

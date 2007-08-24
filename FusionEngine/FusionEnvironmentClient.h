@@ -74,7 +74,7 @@ namespace FusionEngine
 	 * \see
 	 * FusionScene | FusionInput | ResourceLoader | FusionNetworkGeneral | GenericEnvironment | ClientOptions.
 	 */
-	class ClientEnvironment : public GenericEnvironment
+	class ClientEnvironment : public Environment
 	{
 	public:
 		//! A list of local player IDs (0 to g_MaxPlayers) 

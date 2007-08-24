@@ -116,7 +116,15 @@ namespace FusionEngine
 
 	void GUI::Draw()
 	{
-		CEGUI::System::getSingleton().renderGUI();
+		try
+		{
+			CEGUI::System::getSingleton().renderGUI();
+		}
+		catch (CEGUI::Exception& e)
+		{
+			SendToConsole(e.getMessage().c_str(), Console::MTERROR);
+			return false;
+		}
 	}
 
 	void GUI::CleanUp()

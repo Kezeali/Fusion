@@ -243,6 +243,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityFactory.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironmentClient.h"
 				>
 			</File>

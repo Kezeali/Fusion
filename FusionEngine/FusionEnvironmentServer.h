@@ -70,7 +70,7 @@ namespace FusionEngine
 	 * \see
 	 * FusionScene | FusionInput | FusionNetworkingHandler.
 	 */
-	class ServerEnvironment : public GenericEnvironment
+	class ServerEnvironment : public Environment
 	{
 	public:
 		//! Basic Constructor

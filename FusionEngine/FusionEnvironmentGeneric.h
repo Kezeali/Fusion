@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_GenericEnvironment
-#define Header_FusionEngine_GenericEnvironment
+#ifndef Header_FusionEngine_Environment
+#define Header_FusionEngine_Environment
 
 #if _MSC_VER > 1000
 #pragma once
@@ -73,11 +73,11 @@ namespace FusionEngine
 	const ObjectID g_MaxOID = 65535;
 
 	//! The virtual environment! (pun?)
-	class GenericEnvironment : public FusionState, public Singleton<GenericEnvironment>
+	class Environment : public FusionState, public Singleton<Environment>
 	{
 	public:
 		//! Basic Constructor
-		GenericEnvironment()
+		Environment()
 			: m_NumPlayers(0),
 			m_FrameTime(g_DefaultFrameTime),
 			m_NextOID(g_BaseOID),
@@ -85,7 +85,7 @@ namespace FusionEngine
 		{}
 
 		//! Virtual destructor
-		virtual ~GenericEnvironment() {}
+		virtual ~Environment() {}
 
 	public:
 		//! A list of ships

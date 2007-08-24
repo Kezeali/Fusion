@@ -4,30 +4,30 @@
 namespace FusionEngine
 {
 
-	void GenericEnvironment::DetonateProjectile(ObjectID index)
+	void Environment::DetonateProjectile(ObjectID index)
 	{
 		WeaponResourceBundle *rsc = 
 			ResourceManager::getSingletonPtr()->GetWeaponResourceBundle(m_WeaponResources[index]);
 	}
 
-	const FusionShip* GenericEnvironment::GetShip(ObjectID index)
+	const FusionShip* Environment::GetShip(ObjectID index)
 	{
 		return m_Ships[index];
 	}
 
-	const FusionProjectile* GenericEnvironment::GetProjectile(ObjectID index)
+	const FusionProjectile* Environment::GetProjectile(ObjectID index)
 	{
 		return m_Projectiles[index];
 	}
 
-	void GenericEnvironment::limitFrames(unsigned int split)
+	void Environment::limitFrames(unsigned int split)
 	{
 		// m_FrameTime is set to 1000/Options::MaxFPS
 		if ((m_FrameTime-split) > 0)
 			CL_System::sleep(m_FrameTime-split);
 	}
 
-	void GenericEnvironment::installShipFrameFromMessage(FusionMessage *m)
+	void Environment::installShipFrameFromMessage(FusionMessage *m)
 	{
 		ShipState state;
 
@@ -57,7 +57,7 @@ namespace FusionEngine
 		m_Ships[state.PID]->SetShipState(state);
 	}
 
-	void GenericEnvironment::installShipInputFromMessage(FusionMessage *m)
+	void Environment::installShipInputFromMessage(FusionMessage *m)
 	{
 		ShipInput state;
 
@@ -78,7 +78,7 @@ namespace FusionEngine
 		m_Ships[state.pid]->SetInputState(state);
 	}
 
-	void GenericEnvironment::installProjectileFrameFromMessage(FusionMessage *m)
+	void Environment::installProjectileFrameFromMessage(FusionMessage *m)
 	{
 		ProjectileState state;
 
@@ -100,7 +100,7 @@ namespace FusionEngine
 		m_Projectiles[state.OID]->SetState(state);
 	}
 
-	void GenericEnvironment::updateAllPositions(unsigned int split)
+	void Environment::updateAllPositions(unsigned int split)
 	{
 		m_PhysicsWorld->RunSimulation(split);
 

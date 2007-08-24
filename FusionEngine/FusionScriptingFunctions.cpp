@@ -38,28 +38,24 @@ namespace FusionEngine
 
 	void SCR_DetonateProjectile(ObjectID index)
 	{
-		GenericEnvironment::getSingletonPtr()->Detonate(index);
+		Environment::getSingletonPtr()->Detonate(index);
 	}
 
 	void SCR_DetonateProjectileG(asIScriptGeneric* gen)
 	{
 		ObjectID index = gen->GetArgDWord(0);
-		GenericEnvironment::getSingletonPtr()->Detonate(index);
+		Environment::getSingletonPtr()->Detonate(index);
 	}
 
 	void SCR_ApplyEngineForce(ObjectID index)
 	{
-		GenericEnvironment::getSingletonPtr()->ApplyEngineForce(index);
+		Environment::getSingletonPtr()->ApplyEngineForce(index);
 	}
 
 	void CON_ListProjectiles()
 	{
-		GenericEnvironment::ProjectileList list =
-			GenericEnvironment::getSingletonPtr()->GetProjectileList();
-
-		GenericEnvironment::ProjectileList::iterator it = 
-			list.begin();
-
+		Environment::ProjectileList list = Environment::getSingletonPtr()->GetProjectileList();
+		Environment::ProjectileList::iterator it = list.begin();
 		for (; it != list.end(); ++it)
 		{
 			Console::getSingletonPtr()->Add( it->second->ToString() );

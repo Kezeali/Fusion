@@ -211,7 +211,7 @@ namespace FusionEngine
 	class Archive;
 	class ClientOptions;
 	class ServerOptions;
-	class GenericEnvironment;
+	class Environment;
 	class ServerEnvironment;
 	class ClientEnvironment;
 	class FusionNetworkGeneric;
