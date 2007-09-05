@@ -62,15 +62,6 @@ namespace FusionEngine
 
 			console_sheet = winMgr.loadWindowLayout("Console.layout");
 
-			//m_Wind = static_cast<CEGUI::Window*> (
-			//	winMgr.getWindow("Vanilla/Console")
-			//	);
-			//m_EditBox = static_cast<CEGUI::Editbox*> (
-			//	winMgr.getWindow("Vanilla/Console/Editbox")
-			//	);
-			//m_HistoryBox = static_cast<CEGUI::MultiLineEditbox*> (
-			//	winMgr.getWindow("Vanilla/Console/History")
-			//	);
 			m_Wind = static_cast<CEGUI::Window*> (
 				winMgr.getWindow("Console/Wind")
 				);
@@ -126,7 +117,6 @@ namespace FusionEngine
 
 			// Finally, add the window to the GUI, and hope
 			bool success = GUI::getSingleton().AddWindow(console_sheet);
-			//background->activate();
 			return success;
 
 		}
@@ -148,6 +138,7 @@ namespace FusionEngine
 
 	void ConsoleGUI::CleanUp()
 	{
+		CEGUI::WindowManager::getSingleton().destroyWindow("Console/Wind");
 		FusionInput::getSingleton().Activate();
 
 		Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);

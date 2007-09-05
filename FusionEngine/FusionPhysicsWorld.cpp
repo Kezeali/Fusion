@@ -80,7 +80,7 @@ namespace FusionEngine
 	bool CollisionEqual(Collision *lhs, Collision *rhs)
 	{
 		// Both collisions are exactly the same
-		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+		if (lhs->First == rhs->First && lhs->Second == rhs->Second)
 		{
 			return true;
 		}
@@ -95,7 +95,7 @@ namespace FusionEngine
 	}
 
 
-	FusionPhysicsWorld::FusionPhysicsWorld()
+	PhysicsWorld::PhysicsWorld()
 		: m_BitmaskRes(1),
 		m_Wrap(false),
 		m_Width(1), m_Height(1),
@@ -109,20 +109,20 @@ namespace FusionEngine
 		m_CollisionGrid = new FusionPhysicsCollisionGrid();
 	}
 
-	FusionPhysicsWorld::~FusionPhysicsWorld()
+	PhysicsWorld::~PhysicsWorld()
 	{
 		Clear();
 		delete m_CollisionGrid;
 	}
 
-	void FusionPhysicsWorld::AddBody(FusionPhysicsBody *body)
+	void PhysicsWorld::AddBody(PhysicsBody *body)
 	{
 		m_Bodies.push_back(body);
 
 		m_CollisionGrid->AddBody(body);
 	}
 	
-	void FusionPhysicsWorld::RemoveBody(FusionPhysicsBody *body)
+	void PhysicsWorld::RemoveBody(PhysicsBody *body)
 	{
 		m_CollisionGrid->RemoveBody(body);
 
@@ -139,9 +139,9 @@ namespace FusionEngine
 
 	///////////
 	// Dynamic
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(int type)
+	PhysicsBody *PhysicsWorld::CreateBody(int type)
 	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this);
+		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
 
 		m_Bodies.push_back(body);
@@ -151,49 +151,9 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(int type, const PhysicalProperties &props)
+	PhysicsBody *PhysicsWorld::CreateBody(int type, const PhysicalProperties &props)
 	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this);
-		body->SetType(type);
-		body->SetMass(props.mass);
-		body->SetRadius(props.radius);
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-		body->SetCoefficientOfRestitution(props.bounce);
-
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
-
-		m_Bodies.push_back(body);
-
-		m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionHandler* response, int type)
-	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
-		body->SetType(type);
-
-		m_Bodies.push_back(body);
-
-		m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	FusionPhysicsBody *FusionPhysicsWorld::CreateBody(CollisionHandler* response, int type, const PhysicalProperties &props)
-	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
+		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
 		body->SetMass(props.mass);
 		body->SetRadius(props.radius);
@@ -219,7 +179,47 @@ namespace FusionEngine
 		return body;
 	}
 
-	void FusionPhysicsWorld::DestroyBody(FusionPhysicsBody *body)
+	PhysicsBody *PhysicsWorld::CreateBody(CollisionHandler* response, int type)
+	{
+		PhysicsBody *body = new PhysicsBody(this, response);
+		body->SetType(type);
+
+		m_Bodies.push_back(body);
+
+		m_CollisionGrid->AddBody(body);
+
+		return body;
+	}
+
+	PhysicsBody *PhysicsWorld::CreateBody(CollisionHandler* response, int type, const PhysicalProperties &props)
+	{
+		PhysicsBody *body = new PhysicsBody(this, response);
+		body->SetType(type);
+		body->SetMass(props.mass);
+		body->SetRadius(props.radius);
+		body->_setPosition(props.position);
+		body->_setRotation(props.rotation);
+		body->SetCoefficientOfRestitution(props.bounce);
+
+		// BM
+		body->SetUsePixelCollisions(props.use_bitmask);
+		if (props.bitmask)
+			body->SetColBitmask(props.bitmask);
+		// AABB
+		body->SetUseAABBCollisions(props.use_aabb);
+		body->SetColAABB(props.aabb_x, props.aabb_y);
+		// DIST
+		body->SetUseDistCollisions(props.use_dist);
+		body->SetColDist(props.dist);
+
+		m_Bodies.push_back(body);
+
+		m_CollisionGrid->AddBody(body);
+
+		return body;
+	}
+
+	void PhysicsWorld::DestroyBody(PhysicsBody *body)
 	{
 		m_CollisionGrid->RemoveBody(body);
 
@@ -238,9 +238,9 @@ namespace FusionEngine
 
 	//////////
 	// Static
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(int type)
+	PhysicsBody *PhysicsWorld::CreateStatic(int type)
 	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this);
+		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
 		body->SetMass(0.0f);
 
@@ -249,45 +249,9 @@ namespace FusionEngine
 		return body;
 	}
 
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(int type, const PhysicalProperties &props)
+	PhysicsBody *PhysicsWorld::CreateStatic(int type, const PhysicalProperties &props)
 	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this);
-		body->SetType(type);
-		body->SetMass(0.0f);
-
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
-
-		m_Static.push_back(body);
-
-		return body;
-	}
-
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionHandler* response, int type)
-	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
-		body->SetType(type);
-		body->SetMass(0.0f);
-
-		m_Static.push_back(body);
-
-		return body;
-	}
-
-	FusionPhysicsBody *FusionPhysicsWorld::CreateStatic(CollisionHandler* response, int type, const PhysicalProperties &props)
-	{
-		FusionPhysicsBody *body = new FusionPhysicsBody(this, response);
+		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
 		body->SetMass(0.0f);
 
@@ -310,7 +274,43 @@ namespace FusionEngine
 		return body;
 	}
 
-	void FusionPhysicsWorld::DestroyStatic(FusionPhysicsBody *body)
+	PhysicsBody *PhysicsWorld::CreateStatic(CollisionHandler* response, int type)
+	{
+		PhysicsBody *body = new PhysicsBody(this, response);
+		body->SetType(type);
+		body->SetMass(0.0f);
+
+		m_Static.push_back(body);
+
+		return body;
+	}
+
+	PhysicsBody *PhysicsWorld::CreateStatic(CollisionHandler* response, int type, const PhysicalProperties &props)
+	{
+		PhysicsBody *body = new PhysicsBody(this, response);
+		body->SetType(type);
+		body->SetMass(0.0f);
+
+		body->_setPosition(props.position);
+		body->_setRotation(props.rotation);
+
+		// BM
+		body->SetUsePixelCollisions(props.use_bitmask);
+		if (props.bitmask)
+			body->SetColBitmask(props.bitmask);
+		// AABB
+		body->SetUseAABBCollisions(props.use_aabb);
+		body->SetColAABB(props.aabb_x, props.aabb_y);
+		// DIST
+		body->SetUseDistCollisions(props.use_dist);
+		body->SetColDist(props.dist);
+
+		m_Static.push_back(body);
+
+		return body;
+	}
+
+	void PhysicsWorld::DestroyStatic(PhysicsBody *body)
 	{
 		BodyList::iterator it = m_Static.begin();
 		for (; it != m_Static.end(); ++it)
@@ -325,7 +325,7 @@ namespace FusionEngine
 		delete body;
 	}
 
-	void FusionPhysicsWorld::Clear()
+	void PhysicsWorld::Clear()
 	{
 		{
 			BodyList::iterator it = m_Bodies.begin();
@@ -351,7 +351,7 @@ namespace FusionEngine
 		m_CollisionGrid->Clear();
 	}
 
-	void FusionPhysicsWorld::RunSimulation(unsigned int split)
+	void PhysicsWorld::RunSimulation(unsigned int split)
 	{
 		float delta = (float)split;// * 0.1f;
 
@@ -366,7 +366,7 @@ namespace FusionEngine
 		BodyList::iterator a_it = m_Bodies.begin();
 		for (;a_it != m_Bodies.end(); ++a_it)
 		{
-			FusionPhysicsBody *b1 = (*a_it);
+			PhysicsBody *b1 = (*a_it);
 
 			Vector2 acceleration;
 			Vector2 velocity = b1->GetVelocity();
@@ -473,7 +473,7 @@ namespace FusionEngine
 					if ((*b_it) == (*a_it))
 						continue;
 
-					FusionPhysicsBody *b2 = (*b_it);
+					PhysicsBody *b2 = (*b_it);
 
 					if ( b1->CanCollideWith(b2) )
 					{
@@ -602,8 +602,8 @@ namespace FusionEngine
 		{
 			Vector2 normal         = (*col_it)->Normal;
 
-			FusionPhysicsBody *cb1 = (*col_it)->First;
-			FusionPhysicsBody *cb2 = (*col_it)->Second;
+			PhysicsBody *cb1 = (*col_it)->First;
+			PhysicsBody *cb2 = (*col_it)->Second;
 
 			Vector2 b1_pos         = (*col_it)->First_Position;
 			Vector2 b2_pos         = (*col_it)->Second_Position;
@@ -751,7 +751,7 @@ namespace FusionEngine
 		a_it = m_Bodies.begin();
 		for (;a_it != m_Bodies.end(); ++a_it)
 		{
-			FusionPhysicsBody *b1 = (*a_it);
+			PhysicsBody *b1 = (*a_it);
 
 			if (b1->IsActive())
 			{
@@ -799,7 +799,7 @@ namespace FusionEngine
 	}
 
 
-	void FusionPhysicsWorld::Initialise(int level_x, int level_y)
+	void PhysicsWorld::Initialise(int level_x, int level_y)
 	{
 		Clear();
 
@@ -809,24 +809,25 @@ namespace FusionEngine
 		m_Height = level_y;
 	}
 
-	void FusionPhysicsWorld::ActivateWrapAround()
+	void PhysicsWorld::ActivateWrapAround()
 	{
-		SendToConsole("Wrap around activated");
+		SendToConsole("World: Wrap around activated");
 		SendToConsole("Wrap around is unstable and may cause unexpected behaviour", Console::MTWARNING);
 		m_Wrap = true;
 	}
 
-	void FusionPhysicsWorld::DeactivateWrapAround()
+	void PhysicsWorld::DeactivateWrapAround()
 	{
+		SendToConsole("World: Wrap around deactivated");
 		m_Wrap = false;
 	}
 
-	bool FusionPhysicsWorld::UseWrapAround() const
+	bool PhysicsWorld::UseWrapAround() const
 	{
 		return m_Wrap;
 	}
 
-	void FusionPhysicsWorld::SetBodyDeactivationPeriod(unsigned int millis)
+	void PhysicsWorld::SetBodyDeactivationPeriod(unsigned int millis)
 	{
 		// Only update if necessary (as this could be time consuming with a lot of bodies)
 		if (m_DeactivationPeriod != millis)
@@ -841,45 +842,45 @@ namespace FusionEngine
 		}
 	}
 
-	unsigned int FusionPhysicsWorld::GetBodyDeactivationPeriod() const
+	unsigned int PhysicsWorld::GetBodyDeactivationPeriod() const
 	{
 		return m_DeactivationPeriod;
 	}
 
-	void FusionPhysicsWorld::SetDeactivationVelocity(float minvel)
+	void PhysicsWorld::SetDeactivationVelocity(float minvel)
 	{
 		m_DeactivationVelocity = minvel;
 		m_DeactivationVelocitySquared = minvel * minvel;
 	}
 
-	float FusionPhysicsWorld::GetDeactivationVelocity() const
+	float PhysicsWorld::GetDeactivationVelocity() const
 	{
 		return m_DeactivationVelocity;
 	}
 
 
-	void FusionPhysicsWorld::SetMaxVelocity(float maxvel)
+	void PhysicsWorld::SetMaxVelocity(float maxvel)
 	{
 		m_MaxVelocity = maxvel;
 		m_MaxVelocitySquared = maxvel * maxvel;
 	}
 
-	float FusionPhysicsWorld::GetMaxVelocity() const
+	float PhysicsWorld::GetMaxVelocity() const
 	{
 		return m_MaxVelocity;
 	}
 
-	void FusionPhysicsWorld::SetBitmaskRes(int ppb)
+	void PhysicsWorld::SetBitmaskRes(int ppb)
 	{
 		m_BitmaskRes = ppb;
 	}
 
-	int FusionPhysicsWorld::GetBitmaskRes() const
+	int PhysicsWorld::GetBitmaskRes() const
 	{
 		return m_BitmaskRes;
 	}
 
-	const FusionPhysicsCollisionGrid* FusionPhysicsWorld::GetCollisionGrid() const
+	const FusionPhysicsCollisionGrid* PhysicsWorld::GetCollisionGrid() const
 	{
 		return m_CollisionGrid;
 	}

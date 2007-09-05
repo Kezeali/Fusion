@@ -46,14 +46,13 @@ namespace FusionEngine
 	 *
 	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
-	template<typename T>
 	class Resource
 	{
 	protected:
 		std::string m_Type;
 		ResourceTag m_Tag;
-		std::string m_Text;
-		T* m_Data;
+		std::string m_Path;
+		void* m_Data;
 		bool m_Valid;
 		int m_RefCount;
 
@@ -63,11 +62,22 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
+		Resource()
+			: m_Type(""),
+			m_Tag(""),
+			m_Path(""),
+			m_Data(0),
+			m_RefCount(0)
+		{
+			_setValid(false);
+		}
+
+		//! Constructor
 		template<typename T>
-		Resource(const char* type, const ResourceTag &tag, std::string text, T* ptr)
+		Resource(const char* type, const ResourceTag &tag, std::string path, T* ptr)
 			: m_Type(type),
 			m_Tag(tag),
-			m_Text(text),
+			m_Path(path),
 			m_Data(ptr),
 			m_RefCount(0)
 		{
@@ -77,7 +87,8 @@ namespace FusionEngine
 
 		~Resource()
 		{
-			// Fire Signal
+			// Fire Signals
+			OnInvalidation();
 			OnDestruction();
 
 			if (m_Data != 0)
@@ -98,7 +109,12 @@ namespace FusionEngine
 		//! Returns the text description of this resource (used by the ResourceLoader)
 		const std::string &GetText() const
 		{
-			return m_Text;
+			return m_Path;
+		}
+		//! Returns the path property
+		const std::string& GetPath() const
+		{
+			return m_Path;
 		}
 
 		//! Specifically for StringLoader
@@ -111,23 +127,33 @@ namespace FusionEngine
 			return &m_Text;
 		}
 
-		//! Sets the data
+		//! Sets the data (with given type)
 		template<typename T>
 		void SetDataPtr(T* ptr)
 		{
 			m_Data = ptr;
 		}
-
-		//! Operator version of SetDataPtr()
-		template<typename T>
-		void operator=(T* ptr)
+		//! Sets the data
+		void SetDataPtr(void* ptr)
 		{
 			m_Data = ptr;
 		}
 
-		//! Returns the resource ptr
+		//! Operator version of SetDataPtr()
+		void operator=(void* ptr)
+		{
+			m_Data = ptr;
+		}
+
+		//! Returns the resource ptr (static cast)
 		template<typename T>
 		T* GetDataPtr()
+		{
+			return static_cast<T*>(m_Data);
+		}
+
+		//! Returns the resource ptr
+		void* GetDataPtr()
 		{
 			return m_Data;
 		}
@@ -136,14 +162,7 @@ namespace FusionEngine
 		template<typename T>
 		T &GetData() const
 		{
-			return *m_Data;
-		}
-
-		//! Operator version of GetData()
-		template<typename T>
-		T* operator->()
-		{
-			return m_Data;
+			return *(static_cast<T*>(m_Data));
 		}
 
 		//! Validates / invalidates this resource
@@ -157,6 +176,8 @@ namespace FusionEngine
 		void _setValid(bool valid)
 		{
 			m_Valid = valid;
+			if (!valid)
+				OnInvalidation();
 		}
 
 		//! Returns true if the resource ptr is valid

@@ -228,6 +228,8 @@ namespace FusionEngine
 			for (int x = xStart; x <= xEnd; x++)
 			{
 				int xy_pos = cell_index + y * m_GridWidth + x;
+				if (xy_pos > m_Grid.size()-1)
+					continue;
 
 				aggrSize += m_Grid[xy_pos].size();
 			}
@@ -242,6 +244,8 @@ namespace FusionEngine
 			for (int x = xStart; x <= xEnd; x++)
 			{
 				int xy_pos = cell_index + y * m_GridWidth + x;
+				if (xy_pos > m_Grid.size()-1)
+					continue;
 				BodyList* source_cell = &m_Grid[xy_pos];
 
 				std::copy(source_cell->begin(), source_cell->end(), dest_it);
@@ -295,10 +299,10 @@ namespace FusionEngine
 
 	inline int FusionPhysicsCollisionGrid::_getIndex(int gx, int gy) const
 	{
-		unsigned int index = gy * m_GridWidth + gx;
+		int index = gy * m_GridWidth + gx;
 
 		// Make sure the index found is inside the grid
-		fe_clamp<unsigned int>(index, 0, (int)m_Grid.size()-1);
+		fe_clamp<int>(index, 0, (int)m_Grid.size()-1);
 
 		return (int)index;
 	}

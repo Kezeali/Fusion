@@ -29,10 +29,10 @@
 
 #include "FusionCommon.h"
 
-#include <RakNet/RakNetworkFactory.h>
-#include <RakNet/NetworkTypes.h>
-#include <RakNet/PacketEnumerations.h>
-#include <RakNet/RakNetStatistics.h>
+//#include <RakNet/RakNetworkFactory.h>
+//#include <RakNet/NetworkTypes.h>
+//#include <RakNet/PacketEnumerations.h>
+//#include <RakNet/RakNetStatistics.h>
 
 /// Fusion
 #include "FusionNetworkPacketQueue.h"
@@ -54,11 +54,11 @@ namespace FusionEngine
 	 * \brief
 	 * Generic methods for FusionNetworkServer and FusionNetworkClient
 	 */
-	class FusionNetworkGeneric
+	class Network
 	{
 	public:
 		//! Basic constructor. Don't use.
-		FusionNetworkGeneric() {}
+		Network() {}
 
 		/*!
 		 * \brief
@@ -67,7 +67,7 @@ namespace FusionEngine
 		 * \param port
 		 * The port of the server.
 		 */
-		FusionNetworkGeneric(const std::string &port);
+		Network(const std::string &port);
 
 		/*!
 		 * \brief
@@ -79,10 +79,10 @@ namespace FusionEngine
 		 * \param port
 		 * The port of the server.
 		 */
-		FusionNetworkGeneric(const std::string &host, const std::string &port);
+		Network(const std::string &host, const std::string &port);
 
 		//! Virtual destructor
-		virtual ~FusionNetworkGeneric();
+		virtual ~Network();
 
 	public:
 		//! Maps Fusion player ids to RakNet SystemAddresss

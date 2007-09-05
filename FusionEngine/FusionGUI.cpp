@@ -17,6 +17,16 @@ namespace FusionEngine
 	{
 	}
 
+	GUI::GUI(CL_DisplayWindow* window)
+		: FusionState(false), // GUI is non-blockin by default
+		m_Modifiers(NOMOD),
+		m_MouseShowPeriod(1000),
+		m_ShowMouseTimer(1000)
+	{
+		m_GLState = CL_OpenGLState(window->get_gc());
+		m_GLState.set_active();
+	}
+
 	GUI::~GUI()
 	{
 		CleanUp();
@@ -118,12 +128,12 @@ namespace FusionEngine
 	{
 		try
 		{
+			m_GLState.set_active();
 			CEGUI::System::getSingleton().renderGUI();
 		}
 		catch (CEGUI::Exception& e)
 		{
 			SendToConsole(e.getMessage().c_str(), Console::MTERROR);
-			return false;
 		}
 	}
 

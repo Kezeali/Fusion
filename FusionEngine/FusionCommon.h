@@ -197,7 +197,7 @@ namespace FusionEngine
 		{
 			a = lb; 
 		}
-		else if (ub < a) 
+		else if (a > ub) 
 		{
 			a = ub;
 		}

@@ -192,6 +192,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsole.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionException.cpp"
 				>
 			</File>
@@ -201,6 +205,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionFileTypeException.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionInvalidArgumentException.cpp"
 				>
 			</File>
 			<File
@@ -250,6 +258,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsole.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionException.h"
 				>
 			</File>
@@ -259,6 +271,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionFileTypeException.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionInvalidArgumentException.h"
 				>
 			</File>
 			<File

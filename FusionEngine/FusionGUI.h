@@ -70,6 +70,8 @@ namespace FusionEngine
 	public:
 		//! Basic constructor.
 		GUI();
+		//! Constructor.
+		GUI(CL_DisplayWindow* window);
 
 		//! Destructor
 		~GUI();
@@ -120,6 +122,9 @@ namespace FusionEngine
 		int m_ShowMouseTimer;
 
 		short m_Modifiers;
+
+		// Resets the gl state
+		CL_OpenGLState m_GLState;
 
 	public:
 		//! Tells CEGUI when a mouse button is pressed

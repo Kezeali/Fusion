@@ -54,14 +54,22 @@ namespace FusionEngine
 	class ResourcePointer
 	{
 	protected:
-		Resource<T>* m_Resource;
+		Resource* m_Resource;
 
 		CL_Slot m_ResourceDestructionSlot;
 
 	public:
+		//! Basic Constructor
+		/*!
+		 * Creates an invalid resource pointer
+		 */
+		ResourcePointer()
+			: m_Resource(0)
+		{
+		}
+
 		//! Constructor
-		template<typename T>
-		ResourcePointer(Resource<T>* resource)
+		ResourcePointer(Resource* resource)
 			: m_Resource(resource)
 		{
 			resource->AddRef();
@@ -71,11 +79,13 @@ namespace FusionEngine
 		//! Destructor
 		~ResourcePointer()
 		{
-			m_Resource->DropRef();
+			if (m_Resource != 0)
+				m_Resource->DropRef();
 		}
 
 	public:
 		//! Returns the resource data ptr
+		template<typename T>
 		T* GetDataPtr()
 		{
 			if (m_Resource != 0)
@@ -85,6 +95,7 @@ namespace FusionEngine
 		}
 
 		//! Returns the resource data ptr
+		template<typename T>
 		T const* GetDataPtr() const
 		{
 			if (m_Resource != 0)

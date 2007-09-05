@@ -85,40 +85,36 @@ namespace FusionEngine
 		limitFrames();
 
 		// Show menu
-		if (FusionInput::getSingleton().GetGlobalInputs().menu)
+		if (FusionInput::getSingleton().IsButtonDown("global.menu"))
 		{
 			// Add the options state
-			_pushMessage(new StateMessage(StateMessage::ADDSTATE, new GUI_Options()));
+			_pushMessage(new StateMessage(StateMessage::ADDSTATE, new Menu()));
 		}
 		// Show console
-		if (FusionInput::getSingleton().GetGlobalInputs().console)
+		if (FusionInput::getSingleton().IsButtonDown("global.console"))
 		{
 			// Add the console state
-			_pushMessage(new StateMessage(StateMessage::ADDSTATE, new GUI_Console()));
+			_pushMessage(new StateMessage(StateMessage::ADDSTATE, new ConsoleGUI()));
 		}
-
-		// Setup local frames
-		gatherLocalInput();
-
-		// Update the states of all local objects based on the gathered input
-		updateAllPositions(split);
 
 		// Check the network for packets
 		m_NetworkManager->run();
 
-		// Send everything in the message queue
+		// Read any messages received between this update and the last
+		receive();
+
+		// Setup local inputs
+		gatherInput();
+
+		// Run the simulation (iterates through all entity states since 
+		//  the last verified)
+		simulate(split);
+
+		// Send the final states to the server
 		send();
 
-		// Read any frames / messages received between this update and the last
-		if (!receive())
-			return false;
 
-		m_Scene->UpdateDynamics(split);
-
-		//! \todo ClientEnvironment#Update() and ServerEnvironment#Update() should return false,
-		//! or perhaps an error, when update fails... Or perhaps I should use exceptions here?
 		return true;
-
 
 
 		// Move/rotate ships based on the received/predicted frames

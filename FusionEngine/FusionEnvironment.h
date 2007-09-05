@@ -88,6 +88,13 @@ namespace FusionEngine
 		virtual ~Environment() {}
 
 	public:
+		//! A list of entities
+		/*!
+		 * Used for listing Ships and projectiles, etc.
+		 * basically any networked entity.
+		 */
+		typedef std::map<ObjectID, Entity*> EntityList;
+
 		//! A list of ships
 		typedef std::map<ObjectID, FusionShip*> ShipList;
 		//! A list of projectiles
@@ -99,10 +106,8 @@ namespace FusionEngine
 		//! A list of inputs WHY IS THIS HERE? WHAT IS THIS FOR?
 		typedef std::vector<ShipInput> ShipInputList;
 
-		//! A list of player ObjectIDs (player IDs) mapped to resourceID's
-		typedef std::map<ObjectID, std::string> ShipResMap;
-		//! A list of projectile ObjectIDs mapped to resourceID's
-		typedef std::map<ObjectID, std::string> ProjectileResMap;
+		//! Maps an object ID to the object's entity type
+		typedef std::map<ObjectID, std::string> ObjectTypeMap;
 
 	public:
 		//! Returns the index of the newly created ship
@@ -115,21 +120,19 @@ namespace FusionEngine
 		//virtual ShipResource *GetProjectileResourceByID(const std::string &id);
 
 		//! Detonate the given projectile
-		virtual void DetonateProjectile(ObjectID index);
+		virtual void Detonate(ObjectID index);
 
 		//! Returns the ship corresponding to the given ObjectID
-		virtual const FusionShip* GetShip(ObjectID index);
+		virtual const Entity* GetShip(ObjectID index);
 
 		//! Returns the projectile corresponding to the given ObjectID
-		virtual const FusionProjectile* GetProjectile(ObjectID index);
-
-		virtual const FusionPhysicsBody* GetBody(ObjectID index);
+		virtual const Entity* GetProjectile(ObjectID index);
 
 		//! Returns a list of projectiles
-		virtual const ProjectileList& GetProjectileList() const;
+		virtual const EntityList& GetProjectileList() const;
 
 		//! Returns a list of ships
-		virtual const ShipList& GetShipList() const;
+		virtual const EntityList& GetShipList() const;
 
 	protected:		
 		//! Number of players in the game (total, ClientOptions#NumPlayers is local only)
@@ -149,20 +152,21 @@ namespace FusionEngine
 		FusionPhysicsWorld *m_PhysicsWorld;
 
 		//! List of ships currently in the environment
-		ShipList m_Ships;
+		EntityList m_Ships;
 		//! List of Projectiles currently in the environment
-		ProjectileList m_Projectiles;
+		EntityList m_Projectiles;
 
-		//! List of ship resources in use.
+		//! List of ship types in use.
 		/*!
-		 * Maps ObjectIDs to Resource Tags
+		 * Types of ships being used by each player
 		 */
-		ShipResMap m_ShipResources;
-		//! List of weapon resources in use.
+		ObjectTypeMap m_PlayerInfos;
+
+		//! List of weapon types in use.
 		/*!
-		 * Maps ObjectIDs to Resource Tags
+		 * List of entity typenames
 		 */
-		ProjectileResMap m_WeaponResources;
+		StringVector m_WeaponTypes;
 
 	protected:
 		//! Send all packets

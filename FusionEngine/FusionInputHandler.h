@@ -197,7 +197,7 @@ namespace FusionEngine
 			//! Returns true if the given InputEvent signifies that this control is active
 			virtual bool Matches(const CL_InputEvent& inputEvent)
 			{
-				return Control::Matches(inputEvent) && inputEvent.axis_pos == m_AxisThreshold;
+				return Control::Matches(inputEvent) && inputEvent.axis_pos >= m_AxisThreshold;
 			}
 			//! Updates the control
 			virtual void UpdateState(const CL_InputEvent& inputEvent)
@@ -214,40 +214,52 @@ namespace FusionEngine
 		};
 
 		//! Analog control
-		/*!
-		 * \todo make this simply modify m_Position in Analog control
-		 * (i.e. treat mouse x and mouse y as sepreate axis', and thus 
-		 * allow them to be mapped to different Control objects)
-		 */
 		class MouseControl : public AnalogControl
 		{
 		public:
-			Vector2 m_MousePosition;
+			//! Defines the specific meanings of the Button property's value for this class
+			enum MouseAxisID { MOUSEX, MOUSEY };
+			// Used to calculate delta (which is the value stored in the Position property)
+			int m_PreviousAbsPosition;
+			// 1 / screen dimension
+			float m_Scale;
 		public:
 			//! Constructor
-			MouseControl() : Control(), m_AxisThreshold(1.0f) {}
+			MouseControl() : AnalogControl(), m_PreviousAbsPosition(0) {}
 			//! Also a constructor
-			MouseControl(const std::string& name, int button, float threshold, const std::string& buttonName) 
-				: Control(name, button, buttonName, CL_Joystick::get_device()),
-				m_AxisThreshold(threshold) 
+			MouseControl(const std::string& name, int id, float threshold, const std::string& buttonName) 
+				: AnalogControl(name, id, threshold, buttonName, CL_Mouse::get_device()),
+				m_PreviousAbsPosition(0)
 			{}
 			//! And another constructor!
-			MouseControl(const std::string& name, int button, float threshold, const std::string& buttonName, const CL_InputDevice& device) 
-				: Control(name, button, buttonName, device),
-				m_AxisThreshold(threshold)
+			MouseControl(const std::string& name, int id, float threshold, const std::string& buttonName, const CL_InputDevice& device) 
+				: AnalogControl(name, id, threshold, buttonName, device),
+				m_PreviousAbsPosition(0)
 			{}
 		public:
 			//! Returns true if the given InputEvent signifies that this control is active
 			virtual bool Matches(const CL_InputEvent& inputEvent)
 			{
-				return AnalogControl::Matches(inputEvent) && inputEvent.axis_pos == m_AxisThreshold;
+				float delta;
+				if (m_Button == MOUSEX)
+				{
+					delta = (m_PreviousAbsPosition - inputEvent.mouse_pos.x) * FusionInput::getSingleton().GetMouseSensitivity();
+					return inputEvent.device.get_id() == m_Device.get_id() && delta >= m_AxisThreshold;
+				}
+				else
+				{
+					delta = m_PreviousAbsPosition - inputEvent.mouse_pos.y;
+					return inputEvent.device.get_id() == m_Device.get_id() && delta >= m_AxisThreshold;
+				}
 			}
 			//! Updates the control
 			virtual void UpdateState(const CL_InputEvent& inputEvent)
 			{
 				AnalogControl::UpdateState(inputEvent);
-				m_MousePosition.x = inputEvent.mouse_pos.x;
-				m_MousePosition.y = inputEvent.mouse_pos.y;
+				if (m_Button == MOUSEX)
+					m_Position = m_PreviousAbsPosition - inputEvent.mouse_pos.x; // m_Position stores delta
+				else
+					m_Position = m_PreviousAbsPosition - inputEvent.mouse_pos.y;
 			}
 		};
 
@@ -283,6 +295,14 @@ namespace FusionEngine
 		//! Sets up inputs
 		void SetInputMaps(const ClientOptions *from);
 
+		void MapControl(int keysym, const std::string& name);
+
+		const Control &GetControl(const std::string& name) const;
+		bool IsButtonDown(const std::string& name) const;
+		float GetAnalogValue(const std::string& name) const;
+
+		float GetMouseSensitivity() const;
+
 		//! Returns the currently pressed inputs for the given ship.
 		ShipInput GetShipInputs(ObjectID player) const;
 		//! Returns the currently pressed inputs for all ships.
@@ -314,12 +334,21 @@ namespace FusionEngine
 		//! Global input state data
 		GlobalInput m_GlobalInputData;
 
+		// Mouse movement multiplier
+		float m_MouseSensitivity;
+
+		// Used when polling mouse movement
+		int m_DisplayCenterX;
+		int m_DisplayCenterY;
+
 		//! Handle keyboard / keybased input. Down
 		void onKeyDown(const CL_InputEvent &key);
 		//! Handle keyboard / keybased input. Up
 		void onKeyUp(const CL_InputEvent &key);
 		// Other imput devices not yet implimented.
-		//void OnPointerMove(const CL_InputEvent &e);
+		//void OnAxisMove(const CL_InputEvent &e);
+		//! Handle screen resize
+		void onDisplayResize(int w, int h);
 	};
 
 }

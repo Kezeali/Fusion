@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsBody
-#define Header_FusionEngine_FusionPhysicsBody
+#ifndef Header_FusionEngine_PhysicsBody
+#define Header_FusionEngine_PhysicsBody
 
 #if _MSC_VER > 1000
 #pragma once
@@ -67,7 +67,7 @@ namespace FusionEngine
 	 * point - all modification to it can be done manually, rather than requiring it
 	 * to know of ShipResourceBundle.
 	 * <br>
-	 * Me - Just one other key thing to remember, FusionPhysicsBody is mindless!
+	 * Me - Just one other key thing to remember, PhysicsBody is mindless!
 	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
 	 * to fit the bitmask if it rotates.)
 	 * <br>
@@ -75,25 +75,25 @@ namespace FusionEngine
 	 * <br>
 	 * Me - perhaps this should be abstract an class. 
 	 *
-	 * \todo AABB for FusionPhysicsBody
+	 * \todo AABB for PhysicsBody
 	 *
 	 * \todo Perhaps bodies should have ApplyPosition and ApplyRotation methods, rather
 	 * than giving FusionPhysicsWorld friend access...
 	 *
 	 * \see
-	 * FusionPhysicsWorld.
+	 * PhysicsWorld.
 	 */
-	class FusionPhysicsBody
+	class PhysicsBody
 	{
-		friend class FusionPhysicsWorld;
+		friend class PhysicsWorld;
 	public:
-		//FusionPhysicsBody();
+		//PhysicsBody();
 		//! Constructor.
 		/*!
 		 * \param world
 		 * The world in which this body resides.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world);
+		PhysicsBody(FusionPhysicsWorld *world);
 
 		//! Constructor with handler.
 		/*!
@@ -103,7 +103,7 @@ namespace FusionEngine
 		 * \param[in] handler
 		 * The collision response object.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler);
+		PhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler);
 
 		//! [depreciated] Constructor with response param.
 		/*!
@@ -113,7 +113,7 @@ namespace FusionEngine
 		 * \param response
 		 * The response function to call on upon a collision.
 		 */
-		FusionPhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response);
+		PhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response);
 
 	public:
 		//! Sets the type ID for this object.
@@ -232,12 +232,12 @@ namespace FusionEngine
 		void SetCollisionHandler(CollisionHandler *handler);
 
 		//! Returns true if the given body can experiance a collision with this one.
-		bool CanCollideWith(FusionPhysicsBody *other);
+		bool CanCollideWith(PhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void CollisionWith(FusionPhysicsBody *other, const Vector2 &collision_point);
+		void CollisionWith(PhysicsBody *other, const Vector2 &collision_point);
 
 		//! [depreciated] Use CollisionWith()
-		void CollisionResponse(FusionPhysicsBody *other, const Vector2 &collision_point);
+		void CollisionResponse(PhysicsBody *other, const Vector2 &collision_point);
 
 		//! Returns the current collision config.
 		int GetCollisionFlags();
@@ -378,9 +378,9 @@ namespace FusionEngine
 		//@}
 
 		//! [removed] Adds the given body to the collision list
-		void _notifyCollisionWith(FusionPhysicsBody *other) {};
+		void _notifyCollisionWith(PhysicsBody *other) {};
 		//! [removed] Checks for the given body on the collision list
-		bool IsCollidingWith(FusionPhysicsBody *other) const { return false; };
+		bool IsCollidingWith(PhysicsBody *other) const { return false; };
 		//! [removed] Clears the collision list
 		void ClearCollisions() {};
 

@@ -247,11 +247,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEnvironmentClient.h"
+				RelativePath=".\FusionEnvironment.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEnvironmentGeneric.h"
+				RelativePath=".\FusionEnvironmentClient.h"
 				>
 			</File>
 			<File
@@ -420,6 +420,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsResponse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsShape.h"
 				>
 			</File>
 			<File
@@ -598,6 +602,10 @@
 				RelativePath=".\FusionWeaponResource.h"
 				>
 			</File>
+			<File
+				RelativePath=".\gpc4cp.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -661,11 +669,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEnvironmentClient.cpp"
+				RelativePath=".\FusionEnvironment.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionEnvironmentGeneric.cpp"
+				RelativePath=".\FusionEnvironmentClient.cpp"
 				>
 			</File>
 			<File
@@ -898,6 +906,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionVector2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\gpc4cp.c"
 				>
 			</File>
 		</Filter>
