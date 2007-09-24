@@ -1,173 +1,135 @@
+/*
+  Copyright (c) 2007 Fusion Project Team
 
-#include "FusionNetworkGeneric.h"
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
 
-/// Fusion
-#include "FusionNetworkUtils.h"
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
 
-#include <RakNet/BitStream.h>
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+
+		
+	File Author(s):
+
+		Elliot Hayward
+
+*/
+#include "FusionNetwork.h"
 
 namespace FusionEngine
 {
 
-	FusionNetworkGeneric::FusionNetworkGeneric(const std::string &port)
-		: m_Port(port)
+	Network::Network()
 	{
-		// Init the queue
-		m_Queue = new FusionNetworkMessageQueue();
-		m_Queue->Resize(FusionEngine::g_ChannelNum);
 	}
 
-	FusionNetworkGeneric::FusionNetworkGeneric(const std::string &host, const std::string &port)
-		: m_Host(host),
-		m_Port(port)
+	Network::~Network()
 	{
-		// Init the queue
-		m_Queue = new FusionNetworkMessageQueue();
-		m_Queue->Resize(FusionEngine::g_ChannelNum);
 	}
 
-	FusionNetworkGeneric::~FusionNetworkGeneric()
+	bool Network::SendToChannel(bool timestamped, char type, char subtype, char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
-		delete m_Queue;
+		// Add the given subType to the beginning of the data string
+		char* subTypedData = new char[length+1];
+		subTypedData[0] = subtype;
+		memcpy(subTypedData+1, data, length);
+
+		bool success = Send(timestamped, type, subTypedData, length+1, priority, reliability, channel, destination);
+		delete[] subTypedData;
+		return success;
 	}
 
-	void FusionNetworkGeneric::SendRaw(char *data, int len)
+	bool Network::SendRaw(char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
-		send(data, len, MEDIUM_PRIORITY, RELIABLE, (char)CID_NONE);
+		return Send(false, 0, data, length, priority, reliability, channel, destination);
 	}
 
-	void FusionNetworkGeneric::SendShipState(const ShipState& state)
+	void Network::PushBackPacket(IPacket *packet, bool toHead)
 	{
-		unsigned char* buf;
-		int length;
-
-		length = state.Serialize(buf);
-
-		length = addHeader(buf, length, true, MTID_SHIPFRAME, CID_GAME);
-
-		send(buf, length, LOW_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
+		//! \todo Implement a default Network#PushBackPacket() (other than just deleting the packet!)
+		DeallocatePacket( packet );
 	}
 
-	Packet *FusionNetworkGeneric::PopNextMessage(char channel)
+	void Network::DeallocatePacket(IPacket *packet)
 	{
-		return m_Queue->PopMessage(channel);
+		delete packet;
 	}
 
-	Event *FusionNetworkGeneric::PopNextEvent() const
+	int Network::GetPing(const NetHandle& handle)
 	{
-		Event *e = m_Events.front();
-		m_Events.pop_front();
-		return e;
+		return 0;
 	}
 
-	void FusionNetworkGeneric::ClearEvents()
-	{
-		// Each Message
-		EventQueue::iterator it = m_Events.begin();
-		for (; it != m_Events.end(); ++it)
-		{
-			delete (*it);
-		}
+	//void Network::SendRaw(char *data, int len)
+	//{
+	//	send(data, len, MEDIUM_PRIORITY, RELIABLE, (char)CID_NONE);
+	//}
 
-		m_Events.clear();
-	}
+	//void Network::SendShipState(const ShipState& state)
+	//{
+	//	unsigned char* buf;
+	//	int length;
 
-	int FusionNetworkGeneric::addHeader(unsigned char* buf, const unsigned char* data, int length, bool timeStamp, MessageType mtid, ChannelID cid)
-	{
-		// Space for [ID_TIMESTAMP <timestamp> MTID_x CID_x]
-		size_t bufLen;
-		if (timeStamp)
-			bufLen = g_HeaderLengthTimestamp + len;
-		else
-			bufLen = g_HeaderLength + len;
+	//	length = state.Serialize(buf);
 
-		buf = malloc(bufLen);
+	//	length = addHeader(buf, length, true, MTID_SHIPFRAME, CID_GAME);
 
-		//! \todo Optimise this
-		RakNet::BitStream bitStream(bufLen);
-		if (timeStamp)
-		{
-			bitStream.Write(ID_TIMESTAMP);
-			bitStream.Write(RakNet::GetTime());
-		}
-		bitStream.Write(mtid);
-		bitStream.Write(cid);
+	//	send(buf, length, LOW_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
+	//}
 
-		int bitStrLen = bitStream.GetNumberOfBytesUsed();
+	//Packet *Network::PopNextMessage(char channel)
+	//{
+	//	return m_Queue->PopMessage(channel);
+	//}
 
-		memcpy(buf, b.GetData(), bitStrLen);
-		memcpy(buf+bitStrLen, data, len);
+	//Event *Network::PopNextEvent() const
+	//{
+	//	Event *e = m_Events.front();
+	//	m_Events.pop_front();
+	//	return e;
+	//}
 
-		return (int)bufLen;
-	}
+	//void Network::ClearEvents()
+	//{
+	//	// Each Message
+	//	EventQueue::iterator it = m_Events.begin();
+	//	for (; it != m_Events.end(); ++it)
+	//	{
+	//		delete (*it);
+	//	}
 
-	int FusionNetworkGeneric::removeHeader(unsigned char* buf, const unsigned char* data, int dataLen)
-	{
-		int headLen = NetUtils::GetHeaderLength(data);
-		int bufLen = dataLen - headLen;
+	//	m_Events.clear();
+	//}
 
-		buf = malloc(bufLen);
-		memcpy(buf, data+headLen, bufLen);
+	//void FusionNetworkGeneric::_notifyNetEvent(unsigned char messageId)
+	//{
+	//m_Mutex->enter();
 
-		return bufLen;
-	}
+	////add event
 
-	bool FusionNetworkGeneric::grabEvents(Packet *p)
-	{
-		unsigned char packetId = NetUtils::GetPacketIdentifier(p);
-		switch (packetId)
-		{
-			// Grab any event's that should be handled
-		case ID_REMOTE_DISCONNECTION_NOTIFICATION:
-		case ID_REMOTE_CONNECTION_LOST:
-		case ID_REMOTE_NEW_INCOMING_CONNECTION:
-		case ID_REMOTE_EXISTING_CONNECTION:
+	//m_Mutex->notify();
+	//m_Mutex->leave();
+	//}
 
-		case ID_CONNECTION_BANNED:
-		case ID_CONNECTION_REQUEST_ACCEPTED:
-		case ID_NO_FREE_INCOMING_CONNECTIONS:
-		case ID_INVALID_PASSWORD:
+	//EventQueue &FusionNetworkGeneric::GetEvents()
+	//{
+	//m_Mutex->enter();
 
-		case ID_NEW_INCOMING_CONNECTION:
+	////return events
 
-		case ID_DISCONNECTION_NOTIFICATION:
-		case ID_CONNECTION_LOST:
-		case ID_RECEIVED_STATIC_DATA:
-		case ID_MODIFIED_PACKET:
-		case ID_CONNECTION_ATTEMPT_FAILED:
-			Event e = new Event;
-			e.eventID = packetID;
-			e.SystemAddress = p->playerId;
-			m_Events.push_back(e);
-			return true;
-		default:
-			// I'm not sure if all compilers can handle not having default...
-			//  So JIC
-			break;
-		}
+	//m_Mutex->notify();
+	//m_Mutex->leave();
+	//}
 
-		return false;
-	}
-
-	/*
-	void FusionNetworkGeneric::_notifyNetEvent(unsigned char messageId)
-	{
-	m_Mutex->enter();
-
-	//add event
-
-	m_Mutex->notify();
-	m_Mutex->leave();
-	}
-
-	EventQueue &FusionNetworkGeneric::GetEvents()
-	{
-	m_Mutex->enter();
-
-	//return events
-
-	m_Mutex->notify();
-	m_Mutex->leave();
-	}
-	*/
 }

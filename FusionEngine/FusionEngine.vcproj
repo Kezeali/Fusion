@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionLinkedNode.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionLoadingException.h"
 				>
 			</File>
@@ -351,11 +355,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetwork.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNetworkClient.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionNetworkGeneric.h"
+				RelativePath=".\FusionNetworkedEntityManager.h"
 				>
 			</File>
 			<File
@@ -376,6 +384,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionNode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPacketDispatcher.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPacketHandler.h"
 				>
 			</File>
 			<File
@@ -456,6 +472,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionProjectileState.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionRakNetwork.h"
 				>
 			</File>
 			<File
@@ -669,6 +689,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntity.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironment.cpp"
 				>
 			</File>
@@ -749,11 +773,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionNetworkClient.cpp"
+				RelativePath=".\FusionNetwork.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FusionNetworkGeneric.cpp"
+				RelativePath=".\FusionNetworkClient.cpp"
 				>
 			</File>
 			<File
@@ -770,6 +794,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionNode.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPacketDispatcher.cpp"
 				>
 			</File>
 			<File
@@ -822,6 +850,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionProjectileState.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionRakNetwork.cpp"
 				>
 			</File>
 			<File

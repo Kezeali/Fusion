@@ -34,10 +34,7 @@ namespace FusionEngine
 
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			// This cl_assert is kinda useless, blame the RakNet guy (his code :P)
-			//  If you wan't to make sure the packet is valid, it shouldn't just happen in
-			//  debug releases!
-			//cl_assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
+			//assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
 
 			if (length > sizeof(unsigned char) + sizeof(RakNetTime))
 				// Get data at [ID_TIMESTAMP + time]
@@ -61,9 +58,6 @@ namespace FusionEngine
 
 		if ((unsigned char)data[0] == ID_TIMESTAMP)
 		{
-			// This assert is kinda useless, blame the RakNet guy (his code :P)
-			//  If you wan't to make sure the packet is valid, it shouldn't just happen in
-			//  debug releases!
 			//assert(length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime));
 
 			if (length > sizeof(unsigned char) + sizeof(unsigned char) + sizeof(RakNetTime))

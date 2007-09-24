@@ -29,7 +29,7 @@
 
 #include "FusionCommon.h"
 
-#include "../RakNet/NetworkTypes.h"
+#include "../RakNet/RakNetTypes.h"
 #include "../RakNet/Bitstream.h"
 
 namespace FusionEngine

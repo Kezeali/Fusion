@@ -24,7 +24,7 @@ namespace FusionEngine
 	{
 	public:
 		ResourceManagerException(const std::string& message)
-			: Exception(Exception::ExceptionType::INTERNAL_ERROR, message)
+			: Exception(Exception::INTERNAL_ERROR, message)
 		{}
 	};
 

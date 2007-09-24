@@ -246,7 +246,6 @@ namespace FusionEngine
 	class PackSyncClient;
 	class PackSyncServer;
 	class LoadingStage;
-	template<typename T>
 	class Resource;
 
 

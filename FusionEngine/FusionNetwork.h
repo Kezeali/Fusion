@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2006 Fusion Project Team
+ Copyright (c) 2007 Fusion Project Team
 
  This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionNetworkGeneric
-#define Header_FusionEngine_FusionNetworkGeneric
+#ifndef Header_FusionEngine_NetworkGeneric
+#define Header_FusionEngine_NetworkGeneric
 
 #if _MSC_VER > 1000
 #pragma once
@@ -29,214 +29,236 @@
 
 #include "FusionCommon.h"
 
-//#include <RakNet/RakNetworkFactory.h>
-//#include <RakNet/NetworkTypes.h>
-//#include <RakNet/PacketEnumerations.h>
-//#include <RakNet/RakNetStatistics.h>
-
-/// Fusion
-#include "FusionNetworkPacketQueue.h"
+// Fusion
 #include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
 
-	//! Stores event packet information.
-	struct Event
+	//! Fusion Packet priority enumeration
+	enum NetPriority
 	{
-		//! The ID for the event packet.
-		unsigned char eventID;
-		//! The player ID from the event data, if applicable.
-		SystemAddress systemAddress;
+		HIGH_PRIORITY = 1,
+		MEDIUM_PRIORITY,
+		LOW_PRIORITY
+	};
+
+	//! Fusion Packet reliability enumeration
+	enum NetReliability
+	{
+		UNRELIABLE,
+		UNRELIABLE_SEQUENCED,
+		RELIABLE,
+		RELIABLE_ORDERED,
+		RELIABLE_SEQUENCED
+	};
+
+	typedef unsigned int NetTime;
+
+	typedef std::string NetHandle;
+
+	class IPacket
+	{
+	public:
+		//! Returns the packet data (after the header) as a string
+		virtual std::string GetDataString() = 0;
+		//! Returns the packet data after the header
+		virtual const char* GetData() const = 0;
+		//! Returns the data length
+		virtual unsigned int GetLength() const = 0;
+		//! Returns the Message Identifier for the packet
+		virtual unsigned char GetType() const = 0;
+		//! Returns true if the packet is timestamped
+		virtual bool IsTimeStamped() const = 0;
+		//! Returns the timestamp value
+		virtual NetTime GetTime() const = 0;
+		//! Returns the UID for the system that sent this message
+		virtual const NetHandle& GetSystemHandle() const = 0;
+
+	};
+
+	//! Default IPacket implementation
+	class NetPacket : public IPacket
+	{
+	public:
+		NetHandle m_Origin;
+		bool m_TimeStamped;
+		NetTime m_Time;
+		unsigned char m_Type;
+		unsigned char m_Channel;
+		unsigned char* m_Data;
+		unsigned int m_Length;
+
+	public:
+		NetPacket(NetHandle origin, bool timestamped, NetTime time, char type, const char* data, unsigned int length)
+			: m_TimeStamped(timestamped),
+			m_Time(time),
+			m_Type(type),
+			m_Length(length),
+			m_Origin(origin)
+		{
+			m_Data = new unsigned char[length];
+			memcpy(m_Data, data, length);
+		}
+		//! Virtual desturctor
+		virtual ~NetPacket()
+		{
+			delete[] m_Data;
+		}
+
+		virtual std::string GetDataString()
+		{
+			return std::string(m_Data, m_Data + m_Length);
+		}
+		virtual const char* GetData() const
+		{
+			return (char*) m_Data;
+		}
+		virtual unsigned int GetLength() const
+		{
+			return m_Length;
+		}
+		virtual unsigned char GetType() const
+		{
+			return m_Type;
+		}
+		virtual bool IsTimeStamped() const
+		{
+			return m_TimeStamped;
+		}
+		virtual NetTime GetTime() const
+		{
+			return m_Time;
+		}
+		virtual const NetHandle& GetSystemHandle() const
+		{
+			return m_Origin;
+		}
 	};
 
 	/*!
 	 * \brief
-	 * Generic methods for FusionNetworkServer and FusionNetworkClient
+	 * Network Interface
 	 */
 	class Network
 	{
 	public:
-		//! Basic constructor. Don't use.
-		Network() {}
-
-		/*!
-		 * \brief
-		 * Sets up a generic network. Probably used by the server.
-		 *
-		 * \param port
-		 * The port of the server.
-		 */
-		Network(const std::string &port);
-
-		/*!
-		 * \brief
-		 * Sets up a generic network. Probably used by the client (has host)
-		 *
-		 * \param host
-		 * The hostname of the server.
-		 *
-		 * \param port
-		 * The port of the server.
-		 */
-		Network(const std::string &host, const std::string &port);
+		//! Basic constructor.
+		Network();
 
 		//! Virtual destructor
 		virtual ~Network();
 
 	public:
-		//! Maps Fusion player ids to RakNet SystemAddresss
-		typedef std::map<FusionEngine::ObjectID, SystemAddress> SystemAddressMap;
-		//! Type for storing events
-		typedef std::deque<Event*> EventQueue;
+		//! Starts the network
+		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0) = 0;
+		//! Starts listening
+		virtual void StartListening(unsigned short incommingPort) = 0;
+		//! Connects to a server
+		virtual bool Connect(const std::string &host, unsigned short port) = 0;
 
-	public:
-		//! Sends a message of undefined type.
-		void SendRaw(char *data, char channel);
-		//! Sends a Add player message.
+		//! Sends a packet containing ONLY the given data
+		virtual bool SendRaw(char *data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel,
+			const NetHandle& destination);
+
+		//! Sends a message
 		/*!
-		 * This will optimise sending for high reliablility, which is required
-		 * for AddPlayer messages.
+		 * Special send wrapper adds a channel type ID to the packet
 		 *
-		 * THIS SHOULDN'T BE IMPLEMENTED IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
-		 */
-		virtual void SendAddPlayer()=0;
-		//! Sends a Remove player message.
-		void SendRemovePlayer(ObjectID player);
-		//! Sends a ShipState message.
-		void SendShipState(const ShipState &state);
-		//! Sends a Chat message.
-		void SendChatter(const std::string &message);
-
-
-		//! Gets packets from the network. Implimented by specialisations.
-		virtual void Receive() =0;
-
-		//! Gets the message from the front of the incomming queue, in the given channel.
-		/*!
-		 * <b> This method is Thread-safe </b>
-		 * <br>
-		 * Remember to delete the message when you're done!
-		 */
-		Packet *PopNextMessage(char channel);
-		//! Gets the next item in the event queue.
-		/*!
-		 * When a RakNet system packet, such as ID_CONNECTION_LOST, is received 
-		 * its ID will be extracted and stored in the event queue. 
-		 */
-		unsigned char PopNextEvent() const;
-		//! Destroys all Events in the event queue.
-		void ClearEvents();
-
-	protected:
-		//! The hostname (or ip) and port to use.
-		std::string m_Host, m_Port;
-
-		//! Threadsafe, organised packet storage
-		PacketQueue *m_Queue;
-
-		//! Event storage
-		EventQueue m_Events;
-
-	protected:
-		//! Sends data. Implemented by specialisations.
-		/*!
-		 * \param[out] data
-		 * The data to write to
-		 *
-		 * \param[in] length
-		 * The current length of the data
-		 *
-		 * \param[in] timeStamp
+		 * \param[in] timestamped
 		 * True if a timestamp should be added
 		 *
-		 * \param[in] mtid
-		 * The type ID of this message
+		 * \param[in] type
+		 * The channel type ID
 		 *
-		 * \param[in] cid
-		 * The channel ID for this message.
-		 *
-		 *
-		 * \returns
-		 * Returns the length of the data after the header is added.
-		 */
-		virtual bool send(char *message, int length, PacketPriority priority, PacketReliability reliability, ChannelID channel) =0;
-
-		//! Adds a header to the given packet data
-		/*!
-		 * \param[out] buffer
-		 * The mem to write to
-		 *
-		 * \param[in] buffer
-		 * The data for the packet
-		 *
-		 * \param[in] length
-		 * The current length of the data
-		 *
-		 * \param[in] timeStamp
-		 * True if a timestamp should be added
-		 *
-		 * \param[in] mtid
-		 * The type ID of this message
-		 *
-		 * \param[in] cid
-		 * The channel ID for this message.
-		 *
-		 *
-		 * \returns
-		 * Returns the length of the data after the header is added.
-		 */
-		int addHeader(unsigned char* buffer, const unsigned char* data, int length, bool timeStamp, MessageType mtid, ChannelID cid);
-
-		//! Removes the header from the given packet data
-		/*!
-		 * \param[out] buffer
-		 * The mem to write to
+		 * \param[in] subtype
+		 * The type ID
 		 *
 		 * \param[in] data
-		 * The packet data to remove the header form
+		 * The data send
 		 *
 		 * \param[in] length
-		 * The current length of the data
+		 * The length of the data
+		 *
+		 */
+		bool SendToChannel(bool timestamped, char type, char subtype, char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel, 
+			const NetHandle& destination);
+
+		//! Sends data.
+		/*!
+		 * The implementation should format and send the message as
+		 * described by the given parameters, or as close to the
+		 * description as possible.
 		 *
 		 * \returns
-		 * Returns the length of the data after the header is added.
+		 * True if the data was sent
 		 */
-		int removeHeader(unsigned char* buffer, const unsigned char* data, int length);
+		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel,
+			const NetHandle& destination) = 0;
 
-		//! Returns true if the packet passed is a RakNet system message.
-		/*!
-		 * If the packet is a system message, and a type of system message which the
-		 * Environment should be aware of, its info will added to the event queue.
-		 * Non-event system messages types will be handled or ignored without their 
-		 * ID being added to the event queue.
-		 * <br>
-		 * The following ID's will be added to the event queue if they are found:
-		 * <ul>
-		 * <b>Client Remote events</b><br>
-		 * <size="-1">(events which don't apply to this client, but
-		 *  may be useful to know about)</size>
-		 * <li>ID_REMOTE_DISCONNECTION_NOTIFICATION
-		 * <li>ID_REMOTE_CONNECTION_LOST
-		 * <li>ID_REMOTE_NEW_INCOMING_CONNECTION
-		 * <li>ID_REMOTE_EXISTING_CONNECTION
-		 * <b>Client events</b>
-		 * <li>ID_CONNECTION_BANNED
-		 * <li>ID_CONNECTION_REQUEST_ACCEPTED
-		 * <li>ID_NO_FREE_INCOMING_CONNECTIONS
-		 * <li>ID_INVALID_PASSWORD
-		 * <b>Server events</b>
-		 * <li>ID_NEW_INCOMING_CONNECTION
-		 * <b>Client & Server events</b>
-		 * <li>ID_DISCONNECTION_NOTIFICATION
-		 * <li>ID_CONNECTION_LOST
-		 * <li>ID_RECEIVED_STATIC_DATA
-		 * <li>ID_MODIFIED_PACKET
-		 * <li>ID_CONNECTION_ATTEMPT_FAILED
-		 *  (I don't know how this message could arrive! Does it get sent to loopback?)
-		 * </ul>
-		 */
-		bool grabEvents(Packet *p);
+		//! Gets packets from the network.
+		virtual IPacket* Receive() = 0;
+
+		//! Puts the given packet back on the receive buffer
+		virtual void PushBackPacket(IPacket* packet, bool toHead = false);
+		//! Deletes the given packet
+		virtual void DeallocatePacket(IPacket* packet);
+
+		//! Returns the latest ping to the given NetID
+		virtual int GetPing(const NetHandle& handle);
+
+	protected:
+		////! [dp]
+		//virtual bool send(bool timestamped, char type, unsigned char *data, unsigned int length, 
+		//	NetPriority priority, NetReliability reliability, char channel, 
+		//	NetHandle destination) {}
+		////! [dp]
+		//virtual IPacket* receive() {}
+
+	public:
+		////! Sends a Add player message.
+		///*!
+		// * This will optimise sending for high reliablility, which is required
+		// * for AddPlayer messages.
+		// *
+		// * THIS SHOULDN'T BE IMPLEMENTED IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
+		// */
+		//virtual void SendAddPlayer()=0;
+		////! Sends a Remove player message.
+		//void SendRemovePlayer(ObjectID player);
+		////! Sends a ShipState message.
+		//void SendShipState(const ShipState &state);
+		////! Sends a Chat message.
+		//void SendChatter(const std::string &message);
+
+		////! Gets the message from the front of the incomming queue, in the given channel.
+		///*!
+		// * <b> This method is Thread-safe </b>
+		// * <br>
+		// * Remember to delete the message when you're done!
+		// */
+		//Packet *PopNextMessage(char channel);
+		////! Gets the next item in the event queue.
+		///*!
+		// * When a RakNet system packet, such as ID_CONNECTION_LOST, is received 
+		// * its ID will be extracted and stored in the event queue. 
+		// */
+		//unsigned char PopNextEvent() const;
+		////! Destroys all Events in the event queue.
+		//void ClearEvents();
+
+	protected:
+		////! The hostname (or ip) and port to use.
+		//std::string m_Host, m_Port;
+
+		////! Threadsafe, organised packet storage
+		//PacketQueue *m_Queue;
+
+		////! Event storage
+		//EventQueue m_Events;
 
 	};
 

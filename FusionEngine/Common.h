@@ -1,5 +1,5 @@
-#ifndef Header_FusionPrecomp
-#define Header_FusionPrecomp
+#ifndef Header_FusionCommon
+#define Header_FusionCommon
 
 #if _MSC_VER > 1000
 #pragma once

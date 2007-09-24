@@ -19,6 +19,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUIHUDTest", "GUIHUDTest\GU
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GPC4CP", "GPC4CP\GPC4CP.vcproj", "{C5BBA26B-647E-4E5A-90FD-6B128A893C98}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetTest", "NetTest\NetTest.vcproj", "{8C6F3057-1A30-448C-8FEB-AC6B573638A3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -61,6 +63,10 @@ Global
 		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Debug|Win32.Build.0 = Debug|Win32
 		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Release|Win32.ActiveCfg = Release|Win32
 		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Release|Win32.Build.0 = Release|Win32
+		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Debug|Win32.Build.0 = Debug|Win32
+		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Release|Win32.ActiveCfg = Release|Win32
+		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

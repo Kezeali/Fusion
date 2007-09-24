@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2006 Fusion Project Team
+ Copyright (c) 2006-2007 Fusion Project Team
 
  This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -26,57 +26,37 @@
  * that is stupidly complicated and limiting.
  */
 
-#ifndef Header_FusionEngine_NetworkTypes
-#define Header_FusionEngine_NetworkTypes
+#ifndef Header_FusionEngine_MessageIdentifiers
+#define Header_FusionEngine_MessageIdentifiers
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include <RakNet/NetworkTypes.h>
+#include <RakNet/MessageIdentifiers.h>
 
 namespace FusionEngine
 {
-
-	//! The length of a header with a timestamp
-	/*!
-	 * Consists of: <br>
-	 * <code>[ID_TIMESTAMP]+[RakNetTime]+[MTID_x]+[CID_x]</code>
-	 */
-	const size_t g_HeaderLengthTimestamp =
-		sizeof(unsigned char) + sizeof(RakNetTime) +
-		sizeof(unsigned char) + sizeof(unsigned char);
-
-	//! The length of a header without a timestamp
-	/*!
-	 * Consists of: <br>
-	 * <code>[MTID_x]+[CID_x]</code>
-	 */
-	const size_t g_HeaderLength = sizeof(unsigned char) + sizeof(unsigned char);
-
-	//! The amount of ordering channels defined
-	const unsigned short g_ChannelNum = 4;
+	//static const int CHANNEL_SIZE = 20;
 
 	//! Channel IDs
 	/*!
-	 * These are used to sort messages in the MessageQueue. In the actual
+	 * These are used to sort messages (e.g. per subsystem). In the actual
 	 * packet, they come in the char after the Type ID (MTID_...)
 	 */
-	enum ChannelID
+	enum ChannelType
 	{
 		//@{
 		//! Channels
 
 		//! System messages
-		CID_SYSTEM = 0,
-		//! File messages
-		CID_FILESYS,
-		//! Gameplay messages
-		CID_GAME,
-		//! Chat messages
-		CID_CHAT,
+		CID_SYSTEM = 1,
+		//! File channel
+		CID_FILESYNC,
+		//! NetworkedEntityManager channel
+		CID_ENTITYMANAGER,
 		//! No channel
-		CID_NONE = 255
+		CID_MAXCID
 		//@}
 	};
 
@@ -95,7 +75,7 @@ namespace FusionEngine
 		/*!
 		 * Server-side Structure:<br>
 		 * <ol>
-		 * <li> [char]         MTID_ADDPLAYER
+		 * <li> [char]         <channel>
 		 * <li> [ObjectID]     The prelim. ID the client gave this ship
 		 * <li> [unsigned int] The team this player wants to join
 		 * <li> [string]       The ship resource tag of this players chosen ship
@@ -107,7 +87,7 @@ namespace FusionEngine
 		 * <br>
 		 * Client-side Structure:<br>
 		 * <ol>
-		 * <li> [char]         MTID_ADDPLAYER
+		 * <li> [char]         <channel>
 		 * <li> [ObjectID]     The ID given to this ship by the server
 		 * <li> [unsigned int] The team the player is on
 		 * <li> [string]       The ship resource tag of this players chosen ship
@@ -119,7 +99,7 @@ namespace FusionEngine
 		/*!
 		 * Structure:<br>
 		 * <ol>
-		 * <li> [char]     MTID_ADDALLOWED
+		 * <li> [char]     <channel>
 		 * <li> [ObjectID] The prelim. ID the client gave this ship
 		 * <li> [ObjectID] The 'official' ID gaven to this ship by the server
 		 * <li> The rest is the same format as MTID_SHIPFRAME
@@ -157,7 +137,7 @@ namespace FusionEngine
 		/*!
 		 * Client-side Structure:<br>
 		 * <ol>
-		 * <li> [char]     MTID_STARTSYNC
+		 * <li> [char]     <channel>
 		 * <li> TODO: other stuff?
 		 * </ol>
 		 */
@@ -182,6 +162,7 @@ namespace FusionEngine
 		 * <li> [char]     ID_TIMESTAMP
 		 * <li> [long]     Time
 		 * <li> [char]     MTID_FIREWEAPON
+		 * <li> [char]     <channel>
 		 * <li> [ObjectID] Ship to which this applies
 		 * <li> [float]    x of the ship
 		 * <li> [float]    y of the ship
@@ -202,13 +183,16 @@ namespace FusionEngine
 		//@{
 		//! Chat channel message types
 
-		//! [client|server] On client, this is just used to choose the heading in the console
+		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHALL,
-		//! [client|server] On client, this is just used to choose the heading in the console
+		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHTEAM,
-		//! [client|server] On client, this is just used to choose the heading in the console
-		MTID_CHONE
+		//! [client|server] On client, this is just used to choose the heading in the chatlog
+		MTID_CHONE,
 		//@}
+
+		//! Channel messages will have IDs greater than this
+		MTID_CHANNEL
 	};
 
 }
