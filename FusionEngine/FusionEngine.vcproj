@@ -247,6 +247,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityInputManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironment.h"
 				>
 			</File>

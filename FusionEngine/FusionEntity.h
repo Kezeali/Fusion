@@ -38,11 +38,20 @@
 /// Inherited
 #include "FusionPhysicsCallback.h"
 
+#include "FusionScriptingEngine.h"
+
 namespace FusionEngine
 {
 	/*!
 	 * \brief
 	 * In game object base class
+	 *
+	 * This class acts as a wrapper for the script objects which define
+	 * the actual logic for in-game objects, while storing and providing
+	 * access to instances of hard-coded classes for said script objects.
+	 *
+	 * In other words, this helps script objects to be created and used
+	 * almost as easily as hard-coded objects.
 	 */
 	class Enitity : public CollisionHandler
 	{
@@ -59,6 +68,14 @@ namespace FusionEngine
 				: m_Name(name),
 				m_Data(data)
 			{
+			}
+			std::string GetValueString() const
+			{
+				return *((std::string*)m_Data);
+			}
+			std::string GetValueInt() const
+			{
+				return *((int*)m_Data);
 			}
 		};
 		//! A list of ObjectIDs
@@ -91,14 +108,14 @@ namespace FusionEngine
 		void SetRotation(float rotation);
 
 		//! Ship state
-		void SetProperties(EntityProperties props);
+		void SetProperties(const PropertyList& props);
 		//! Input state
-		void SetInput(EntityInput input);
+		void SetInput(const PropertyList& input);
 
 		//! Guess
-		const EntityProperties &GetProperties() const;
+		const PropertyList &GetProperties() const;
 		//! Self explainatory
-		const EntityInput &GetInput() const;
+		const PropertyList &GetInput() const;
 
 		EntityState GetState() const;
 		void SetState(EntityState state);
@@ -116,6 +133,7 @@ namespace FusionEngine
 		 */
 		void Simulate(StateID state);
 
+		PropertyPointer GetProperty(const std::string& name);
 		std::string SerializeState() const;
 		void DeserializeState(const std::string& state);
 
@@ -171,6 +189,9 @@ namespace FusionEngine
 	protected:
 		// Is this needed? - 2006/09/08: no
 		//ClientEnvironment *m_Environment;
+
+		// The actual entity logic (for which this C++ class is simply a wrapper)
+		asIScriptStruct* m_ScriptObject;
 
 		//! Main associated node
 		FusionNode *m_Node;

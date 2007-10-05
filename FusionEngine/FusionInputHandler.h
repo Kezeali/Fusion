@@ -43,12 +43,6 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Provides an interface to an input buffer optimised for FusionEngine.
-	 *
-	 * All input handled by this class is either contol input for ships, or
-	 * global input - such as opening the console / menu (which have their
-	 * own input handlers) or quitting the game.
-	 *
-	 * \todo Remove hardcoded control map
 	 */
 	class FusionInput : public FusionEngine::Singleton<FusionInput>
 	{

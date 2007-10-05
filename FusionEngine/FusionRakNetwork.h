@@ -137,6 +137,8 @@ namespace FusionEngine
 		virtual void StartListening(unsigned short incommingPort);
 		//! Connects to a server
 		virtual bool Connect(const std::string &host, unsigned short port);
+		//! Disconnects cleanly
+		virtual void Disconnect();
 
 		//! Sends data as-is
 		virtual bool SendRaw(char* data, unsigned int length,

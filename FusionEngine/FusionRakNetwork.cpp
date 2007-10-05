@@ -164,6 +164,11 @@ namespace FusionEngine
 			return false;
 	}
 
+	void RakNetwork::Disconnect()
+	{
+		m_NetInterface->Shutdown(100);
+	}
+
 	bool RakNetwork::Send(bool timestamped, char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
 		RakNet::BitStream bits;
