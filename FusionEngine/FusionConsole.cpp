@@ -6,6 +6,7 @@ namespace FusionEngine
 	Console::Console()
 		: m_MaxData(g_ConsoleDefaultMaxData)
 	{
+		m_Data.resize(m_MaxData);
 	}
 
 	const std::string &Console::GetExceptionMarker() const
@@ -64,10 +65,13 @@ namespace FusionEngine
 
 	void Console::Clear()
 	{
-		m_Data.clear();
+		if (!m_Data.empty())
+		{
+			m_Data.clear();
 
-		// Signal
-		OnClear();
+			// Signal
+			OnClear();
+		}
 	}
 
 	const Console::ConsoleLines& Console::GetHistory() const

@@ -30,9 +30,9 @@
 namespace FusionEngine
 {
 
-	const char *Script::GetModule() const
+	const char* Script::GetModule() const
 	{
-		return m_Module;
+		return m_Module.c_str();
 	}
 
 	bool Script::LoadFile(const std::string &filename, 
@@ -66,6 +66,23 @@ namespace FusionEngine
 
 		// Delete the provider
 		if (delete_provider) delete provider;
+
+		return true;
+	}
+
+	void Script::_setModule(const char *module)
+	{
+		m_Module = *module;
+	}
+
+	void Script::_notifyRegistration()
+	{
+		m_Registered = true;
+	}
+
+	const std::string& Script::GetScript() const
+	{
+		return m_Script;
 	}
 
 }

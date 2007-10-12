@@ -17,7 +17,7 @@
 #ifndef SCRIPTSTRING_H
 #define SCRIPTSTRING_H
 
-#include <angelscript.h>
+#include "angelscript.h"
 #include <string>
 
 BEGIN_AS_NAMESPACE
@@ -54,6 +54,9 @@ void RegisterScriptString_Native(asIScriptEngine *engine);
 // Use this one instead if native calling conventions
 // are not supported on the target platform
 void RegisterScriptString_Generic(asIScriptEngine *engine);
+
+// This function will register utility functions for the script string
+void RegisterScriptStringUtils(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 

@@ -83,7 +83,7 @@ namespace FusionEngine
 			//background->setProperty("BackgroundEnabled", "false");
 			//// set the background image
 			//background->setProperty("Image", "set:BackgroundImage image:full_image");
-			CEGUI::Window* background = winMgr.createWindow("DefaultWindow");
+			CEGUI::Window* background = winMgr.createWindow("SharpHour/StaticImage");
 			// install this as the root GUI sheet
 			System::getSingleton().setGUISheet(background);
 

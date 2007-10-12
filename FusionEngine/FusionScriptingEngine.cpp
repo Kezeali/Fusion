@@ -27,18 +27,20 @@
 
 #include "FusionScriptingEngine.h"
 
-#include "FusionScriptingFunctions.h"
+//#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
 #include "as_scriptstring.h"
 #include "FusionScriptVector.h"
 
 namespace FusionEngine
 {
+
 	ScriptingEngine::ScriptingEngine()
 	{
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
-		registerGlobals();
+		if (m_asEngine != NULL)
+			registerGlobals();
 	}
 
 
@@ -49,7 +51,13 @@ namespace FusionEngine
 
 	void ScriptingEngine::RegisterScript(Script *script, const char *module)
 	{
-		m_asEngine->AddScriptSection(module, 0, script->
+		int r;
+		r = m_asEngine->AddScriptSection(module, 0, script->GetScript().c_str(), script->GetScript().length());
+		if (r >= 0)
+		{
+			script->_setModule(module);
+			script->_notifyRegistration();
+		}
 	}
 
 	int ScriptingEngine::ExecuteScript(Script *script, const char *function)
@@ -64,10 +72,10 @@ namespace FusionEngine
 		return cont->Execute();
 	}
 
-	int ScriptingEngine::Execute(ScriptReference *scref)
+	int ScriptingEngine::Execute(ScriptReference scref)
 	{
 		asIScriptContext* cont = m_asEngine->CreateContext();
-		int r = cont->Prepare(scref->GetFunctionID());
+		int r = cont->Prepare(scref.GetFunctionID());
 		if (r < 0)
 			return r;
 		m_Contexts.push_back(cont);
@@ -76,12 +84,29 @@ namespace FusionEngine
 
 	int ScriptingEngine::ExecuteString(const std::string &script, const char *module, int *context, int timeout, bool keep_context)
 	{
-		return 0;
+		int r = 0;
+		if (context != NULL)
+		{
+			asIScriptContext* pContext = m_asEngine->CreateContext();
+			if (pContext != NULL)
+			{
+				m_Contexts.push_back(pContext);
+				*context = m_Contexts.size()-1;
+
+				r = m_asEngine->ExecuteString(module, script.c_str(), &pContext);
+			}
+		}
+		else
+			r = m_asEngine->ExecuteString(module, script.c_str());
+
+		return r;
 	}
 
 	int ScriptingEngine::ReExecuteString(int context, const char *module)
 	{
-		return 0;
+		int r;
+		r = m_Contexts[context]->Execute();
+		return r;
 	}
 
 	void ScriptingEngine::_lineCallback(asIScriptContext *ctx, int *timeOut)
@@ -98,63 +123,67 @@ namespace FusionEngine
 		RegisterScriptString(m_asEngine);
 		RegisterScriptVector(m_asEngine);
 
+		//m_asEngine->RegisterGlobalProperty("g_Environment", Environment::getSingletonPtr());
+
+		//! \todo Console, etc methods should be registered by the relavant classes. Weapons now fall under Entity, so there are no relavant methods to be registered for Weapons only
+
 		// Register functions
-		registerWeaponMethods();
-		registerConsoleMethods();
+		//registerWeaponMethods();
+		//registerConsoleMethods();
 	}
 
 	
-	void ScriptingEngine::registerWeaponMethods()
-	{
-		int r;
+	//void ScriptingEngine::registerWeaponMethods()
+	//{
+	//	int r;
 
-		r = m_asEngine->BeginConfigGroup(g_ASConfigWeapon.c_str()); cl_assert( r >= 0 );
-		{
-			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-			{
-				r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+	//	r = m_asEngine->BeginConfigGroup(g_ASConfigWeapon.c_str()); cl_assert( r >= 0 );
+	//	{
+	//		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	//		{
+	//			r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-			}
-			else
-			{
-				r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+	//		}
+	//		else
+	//		{
+	//			r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-			}
-		}
-		r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
-	}
+	//			r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//		}
+	//	}
+	//	r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
+	//}
 
 
-	void ScriptingEngine::registerConsoleMethods()
-	{
-		int r;
+	//void ScriptingEngine::registerConsoleMethods()
+	//{
+	//	int r;
 
-		r = m_asEngine->BeginConfigGroup(g_ASConfigConsole.c_str()); cl_assert( r >= 0 );
-		{
-			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-			{
-				r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectiles), asCALL_CDECL); cl_assert( r >= 0 );
+	//	r = m_asEngine->BeginConfigGroup(g_ASConfigConsole.c_str()); cl_assert( r >= 0 );
+	//	{
+	//		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	//		{
+	//			r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectiles), asCALL_CDECL); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-			}
-			else
-			{
-				r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectilesG), asCALL_CDECL); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
+	//		}
+	//		else
+	//		{
+	//			r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectilesG), asCALL_CDECL); cl_assert( r >= 0 );
 
-				r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-				
-				r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-				r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-			}
-		}
-		r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
-	}
+	//			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//			
+	//			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//			r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
+	//		}
+	//	}
+	//	r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
+	//}
 
 }

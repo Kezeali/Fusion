@@ -27,6 +27,8 @@
 #include "FusionGUI.h"
 #include "FusionConsole.h"
 
+#include "FusionScriptingEngine.h"
+
 #include <CEGUI/CEGUI.h>
 #include <CEGUI/falagard/CEGUIFalWidgetLookManager.h>
 
@@ -187,11 +189,11 @@ namespace FusionEngine
 		using namespace CEGUI;
 
 		// Get text out of the command entry box
-		String edit_text(m_EditBox->getText());
-		if (!edit_text.empty())
+		String editText(m_EditBox->getText());
+		if (!editText.empty())
 		{
 			// Add this entry to the command history buffer
-			m_History.push_back(edit_text);
+			m_History.push_back(editText);
 			// Limit History size
 			if (m_History.size() >= m_MaxHistory)
 				m_History.pop_front();
@@ -203,7 +205,7 @@ namespace FusionEngine
 			//enterText(edit_text);
 
 			// Store the text in the Console
-			SendToConsole(edit_text.c_str());
+			SendToConsole(editText.c_str());
 
 			// Erase text in text entry box.
 			m_EditBox->setText("");
@@ -216,6 +218,8 @@ namespace FusionEngine
 
 		// re-activate the text entry box
 		m_EditBox->activate();
+
+		ScriptingEngine::getSingleton().ExecuteString(editText.c_str(), 0);
 
 		return true;
 	}

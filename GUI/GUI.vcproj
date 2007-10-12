@@ -60,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="CEGUIBase_d.lib OpenGLGUIRenderer_d.lib"
+				AdditionalDependencies="CEGUIBase_d.lib OpenGLGUIRenderer_d.lib angelscriptd.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -179,6 +179,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath="..\FusionEngine\as_scriptstring.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\Common.cpp"
 				>
 			</File>
@@ -227,11 +231,31 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScript.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptReference.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptVector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionState.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionStateManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVector2.cpp"
 				>
 			</File>
 			<File
@@ -290,6 +314,22 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLogger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScript.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptingEngine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptReference.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptVector.h"
 				>
 			</File>
 			<File

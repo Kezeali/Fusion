@@ -34,16 +34,17 @@ namespace FusionEngine
 
 	//! Fusion exception class.
 	/*!
-	 * Generic exception class
+	 * \todo Exception factory (FusionExceptionFactory.h; inherit
+	 * all Exception headers) - with methods to create exceptions of every
+	 * type + every message format (a lot of mindeless typing, but worth it
+	 * in the long run as an OO solution)
 	 */
 	class Exception
 	{
 	public:
-		//! Types of Exceptions
+		//! [depreciated] Types of Exceptions
 		/*!
-		 * Do not use these! This method was stupid; it is much better
-		 * to simply use different classes for each exception type, as
-		 * these can be caught seperatly.
+		 * Do not use these!
 		 */
 		enum ExceptionType
 		{
@@ -80,7 +81,7 @@ namespace FusionEngine
 		Exception(const std::string &origin, const std::string &message, bool critical = false);
 
 	public:
-		//! Retrieves the type
+		//! [depreciated] Retrieves the type
 		ExceptionType GetType() const;
 		//! Retrieves the exception class name
 		virtual std::string GetName() const;
@@ -96,7 +97,7 @@ namespace FusionEngine
 		 */
 		virtual std::string GetDescription() const;
 
-		//! Returns true if the error type of this Exception object is severe
+		//! [depreciated] Returns true if the error type of this Exception object is severe
 		bool IsCritical() const;
 
 		//! Returns a string representing the exception object

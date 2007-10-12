@@ -34,6 +34,11 @@
  * Go to http://steelfusion.sourceforge.net/ for more information.
  */
 
+/*!
+ * \todo
+ * Implement a better assert (than cl_assert)
+ */
+
 #ifndef Header_FusionEngine_Common
 #define Header_FusionEngine_Common
 
@@ -209,6 +214,7 @@ namespace FusionEngine
 	///////////////////////////
 	//! \todo List forward declarations in alphabetical order
 	class Archive;
+	class Control;
 	class ClientOptions;
 	class ServerOptions;
 	class Environment;

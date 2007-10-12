@@ -189,6 +189,16 @@ namespace FusionEngine
 	                               Vector2& chosen);
 	};
 
+	static bool v2Equal(const Vector2& v1, const Vector2 &v2)
+	{
+		return (v1.x == v2.x) && (v1.y == v2.y);
+	}
+
+	static bool v2NotEqual(const Vector2& v1, const Vector2 &v2)
+	{
+		return (v1.x != v2.x) || (v1.y != v2.y);
+	}
+
 	//! Uses complex multiplication to rotate (and scale) v1 by v2.
 	static inline Vector2 v2Rotate(const Vector2& v1, const Vector2 &v2)
 	{

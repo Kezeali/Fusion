@@ -23,7 +23,7 @@ namespace FusionEngine
 	 * store resID's, and drawing could be done completely by the clientenv
 	 * (or a graphics mangaer) reading scrips... either that or I could
 	 * just leave it as it is AND ACTUALLY FINISH THIS DAMN THING!! I don't
-	 * need your so-called object-orentation and morals!... On a lighter note,
+	 * need your petty object-orentation!... On a lighter note,
 	 * this todo is kinda long, I wonder if Doxygen will still use it...
 	 *
 	 * \sa
@@ -51,7 +51,7 @@ namespace FusionEngine
 		/*! \brief The image to draw.
 		 * This is my "Occam's razor" fix for the over-reliance-on-clientEnv problem :P
 		 */
-		ResourcePointer<CL_Surface> m_Image;
+		ResourcePointer m_Image;
 
 		//! The ship associated with this drawable
 		FusionShip *m_Ship;

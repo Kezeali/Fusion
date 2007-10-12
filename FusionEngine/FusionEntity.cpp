@@ -37,7 +37,7 @@ namespace FusionEngine
 			m_PhysicalBody->_setVelocity(velocity);
 	}
 
-	void FusionShip::SetPosition(const Vector2 &position)
+	void Entity::SetPosition(const Vector2 &position)
 	{
 		m_CurrentState.position = position;
 
@@ -48,7 +48,7 @@ namespace FusionEngine
 			m_PhysicalBody->_setPosition(position);
 	}
 
-	void FusionShip::SetRotationalVelocity(float velocity, bool physics)
+	void Entity::SetRotationalVelocity(float velocity, bool physics)
 	{
 		m_CurrentState.rotationalVelocity = velocity;
 
@@ -56,28 +56,6 @@ namespace FusionEngine
 
 		if (physics)
 			m_PhysicalBody->SetRotationalVelocity(velocity);
-	}
-
-	void FusionShip::SetShipState(ShipState state)
-	{
-		m_CurrentState = state;
-
-		m_StateChanged = true;
-		/*
-		m_CurrentState.Velocity = state.Velocity;
-		m_CurrentState.Position = state.Position;
-		m_CurrentState.Rotation = state.Rotation;
-		m_CurrentState.RotationalVelocity = state.RotationalVelocity;
-
-		m_CurrentState.health = state.health;
-
-		m_CurrentState.current_primary = state.current_primary;
-		m_CurrentState.current_secondary = state.current_secondary;
-		m_CurrentState.current_bomb = state.current_bomb;
-
-		m_CurrentState.engines = state.engines;
-		m_CurrentState.weapons = state.weapons;
-		*/
 	}
 
 	void FusionShip::SetInputState(ShipInput input)

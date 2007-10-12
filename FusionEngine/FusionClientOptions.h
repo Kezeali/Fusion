@@ -35,7 +35,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionInputMap.h"
+#include "FusionControl.h"
 
 namespace FusionEngine
 {
@@ -48,32 +48,13 @@ namespace FusionEngine
 	public:
 		//! Constructor.
 		PlayerOptions()
-			: mHUD(true)
+			: m_HUD(true)
 		{}
 
 		//! Display the HUD for this player
-		bool mHUD;
+		bool m_HUD;
 
-		std::string mName;
-	};
-
-	//! Settings for network related stuff.
-	class NetworkSettings
-	{
-	public:
-		//! Constructor
-		NetworkSettings()
-			: mRate(100),
-			mLocalPort(1337)
-		{
-		}
-
-		//! Maximum messages per second
-		unsigned int mRate;
-
-		//! The local port (to connect from)
-		unsigned short mLocalPort;
-
+		std::string m_Name;
 	};
 
 	/*!
@@ -83,43 +64,59 @@ namespace FusionEngine
 	 * \todo Make member variable identifiers consistant over all classes by prepending them with
 	 * 'm_', even public members
 	 */
-	class ClientOptions
+	class ClientOptions : public Singleton<ClientOptions>
 	{
 	public:
 		//! Constructor
 		ClientOptions();
 		//! Constructor +file
 		ClientOptions(const std::string &filename);
+		//! Clears controls
+		~ClientOptions();
+
+	public:
+		//! Wrapper for singleton version
+		static ClientOptions& current()
+		{
+			return getSingleton();
+		}
 
 	public:
 		//! General Player options list
 		typedef std::vector<PlayerOptions> PlayerOptionsList;
-		//! Player Input mappings list
-		typedef std::vector<PlayerInputMap> PlayerInputsList;
+		//! Player Input mappings list.
+		typedef std::vector<Control> ControlsList;
 
 	public:
 		//! Number of local players
-		unsigned int NumPlayers;
+		unsigned int m_NumLocalPlayers;
 
 		//! True if console history should be logged.
-		bool ConsoleLogging;
+		bool m_ConsoleLogging;
 
 		//! General player options (other than inputs)
-		PlayerOptionsList PlayerOptions;
+		PlayerOptionsList m_PlayerOptions;
+
+		//! Controls
+		ControlsList m_Controls;
+
+		//! Maximum messages per second
+		unsigned int m_Rate;
+
+		//! The local port (to connect from)
+		unsigned short m_LocalPort;
 
 		//! Player input mappings
-		PlayerInputsList PlayerInputs;
+		//PlayerInputsList PlayerInputs;
 		//! Global input mappings
-		GlobalInputMap GlobalInputs;
+		//GlobalInputMap GlobalInputs;
 
-		//! Nework options
-		NetworkSettings NetworkOptions;
-
-		//! Set the controls for defaults
-		//! \todo Load default player controls from file (very low priority)
-		void DefaultPlayerControls(ObjectID player);
-		//! Sets all the controls to the defaults
-		void DefaultGlobalControls();
+	public:
+		////! Set the controls for defaults
+		////! \todo Load default player controls from file (very low priority)
+		//void DefaultPlayerControls(ObjectID player);
+		////! Sets all the controls to the defaults
+		//void DefaultGlobalControls();
 
 		//! Saves to the most recently loaded file.
 		bool Save();
@@ -133,6 +130,38 @@ namespace FusionEngine
 		std::string m_LastFile;
 
 	};
+
+	static unsigned int NumLocalPlayers()
+	{
+		return ClientOptions::current().m_NumLocalPlayers;
+	}
+
+	static bool IsConsoleLogging()
+	{
+		return ClientOptions::current().m_ConsoleLogging;
+	}
+
+	static unsigned int Rate()
+	{
+		return ClientOptions::current().m_Rate;
+	}
+
+	static unsigned int ClientPort()
+	{
+		return ClientOptions::current().m_LocalPort;
+	}
+
+	static const std::string& PlayerName(unsigned int p)
+	{
+		cl_assert(p < NumLocalPlayers());
+		return ClientOptions::current().m_PlayerOptions[p].m_Name;
+	}
+
+	static bool PlayerUseHud(unsigned int p)
+	{
+		cl_assert(p < NumLocalPlayers());
+		return ClientOptions::current().m_PlayerOptions[p].m_HUD;
+	}
 
 }
 

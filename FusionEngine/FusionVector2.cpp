@@ -91,7 +91,7 @@ namespace FusionEngine
 
 	bool Vector2::operator!=(const Vector2& v) const
 	{
-		return !(operator == (v));
+		return (x != v.x) || (y != v.y);
 	}
 
 	//////////////

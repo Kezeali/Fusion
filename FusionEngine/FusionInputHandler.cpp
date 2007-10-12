@@ -33,8 +33,7 @@ namespace FusionEngine
 	FusionInput::FusionInput(const ClientOptions *from)
 		: m_SuspendRequests(0)
 	{
-		m_GlobalInputMap = from->GlobalInputs;
-		m_PlayerInputMaps = from->PlayerInputs;
+		SetInputMaps(from);
 	}
 
 	bool FusionInput::Test()
@@ -71,17 +70,23 @@ namespace FusionEngine
 		m_SuspendRequests = 0;
 		// Activate Key Down signal handler
 		m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionInput::onKeyDown);
-		m_Slots.connect(CL_Joystick::sig_key_down(), this, &FusionInput::onKeyDown);
-		m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionInput::onKeyDown);
+		if (CL_Joystick::get_device_count() > 0)
+			m_Slots.connect(CL_Joystick::sig_key_down(), this, &FusionInput::onKeyDown);
+		if (CL_Mouse::get_device_count() > 0)
+			m_Slots.connect(CL_Mouse::sig_key_down(), this, &FusionInput::onKeyDown);
 
 		// ... and Key Up
 		m_Slots.connect(CL_Keyboard::sig_key_up(), this, &FusionInput::onKeyUp);
-		m_Slots.connect(CL_Joystick::sig_key_up(), this, &FusionInput::onKeyUp);
-		m_Slots.connect(CL_Mouse::sig_key_up(), this, &FusionInput::onKeyUp);
+		if (CL_Joystick::get_device_count() > 0)
+			m_Slots.connect(CL_Joystick::sig_key_up(), this, &FusionInput::onKeyUp);
+		if (CL_Mouse::get_device_count() > 0)
+			m_Slots.connect(CL_Mouse::sig_key_up(), this, &FusionInput::onKeyUp);
 
 		// Analog inputs
-		m_Slots.connect(CL_Joystick::sig_move(), this, &FusionInput::onKeyDown);
-		m_Slots.connect(CL_Mouse::sig_move(), this, &FusionInput::onKeyDown);
+		if (CL_Joystick::get_device_count() > 0)
+			m_Slots.connect(CL_Joystick::sig_move(), this, &FusionInput::onKeyDown);
+		if (CL_Mouse::get_device_count() > 0)
+			m_Slots.connect(CL_Mouse::sig_move(), this, &FusionInput::onKeyDown);
 
 		m_Slots.connect(CL_Display::sig_resize(), this, &FusionInput::onDisplayResize);
 	}
@@ -99,8 +104,76 @@ namespace FusionEngine
 
 	void FusionInput::SetInputMaps(const FusionEngine::ClientOptions *from)
 	{
-		m_GlobalInputMap = from->GlobalInputs;
-		m_PlayerInputMaps = from->PlayerInputs;
+		//m_GlobalInputMap = from->GlobalInputs;
+		//m_PlayerInputMaps = from->PlayerInputs;
+
+		// Read the controls from the options object and add them to the input mappings
+		for (ClientOptions::ControlsList::const_iterator it = from->m_Controls.begin();
+			it != from->m_Controls.end(); ++it)
+		{
+			this->m_ControlMap[(*it).GetName()] = (*it);
+		}
+
+		//for (ClientOptions::ControlsList::iterator it = from->m_Controls.begin();
+		//	it != from->m_Controls.end(); ++it)
+		//{
+		//	// second is the button id, first is the control name (short desc.)
+		//	this->MapControl((*it).second, (*it).first);
+		//}
+	}
+
+	void FusionInput::MapControl(int keysym, const std::string &name, unsigned int filter)
+	{
+		std::string buttonName = "Unknown";
+		CL_InputDevice dev = CL_Keyboard::get_device();
+		buttonName = dev.get_key_name(keysym);
+
+		m_ControlMap[CL_String::from_int(filter) + name] = 
+			Control(CL_String::from_int(filter) + name, keysym, buttonName, dev);
+	}
+
+	void FusionInput::MapControl(int keysym, const std::string &name, CL_InputDevice device, unsigned int filter)
+	{
+		std::string buttonName = "Unknown";
+		buttonName = device.get_key_name(keysym);
+
+		m_ControlMap[CL_String::from_int(filter) + name] = 
+			Control(CL_String::from_int(filter) + name, keysym, buttonName, device);
+	}
+
+	const Control& FusionInput::GetControl(const std::string &name, unsigned int filter) const
+	{
+		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+		if (it != m_ControlMap.end())
+			return (*it).second;
+
+		throw Exception();
+		//return m_ControlMap[CL_String::from_int(filter) + name];
+	}
+
+	bool FusionInput::IsButtonDown(const std::string &name, unsigned int filter) const
+	{
+		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+		if (it != m_ControlMap.end())
+			return (*it).second.GetState();
+
+		return false;
+		//return m_ControlMap[CL_String::from_int(filter) + name];
+	}
+
+	float FusionInput::GetAnalogValue(const std::string &name, unsigned int filter) const
+	{
+		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+		if (it != m_ControlMap.end())
+			return (*it).second.GetPosition();
+
+		return false;
+		//return m_ControlMap[CL_String::from_int(filter) + name];
+	}
+
+	float FusionInput::GetMouseSensitivity() const
+	{
+		return m_MouseSensitivity;
 	}
 
 	ShipInput FusionInput::GetShipInputs(ObjectID player) const
@@ -127,9 +200,9 @@ namespace FusionEngine
 		ControlMap::iterator it = m_ControlMap.begin();
 		for (; it != m_ControlMap.end(); ++it)
 		{
-			Control control = (*it).second;
-			if (control.Matches(key))
-				control.UpdateState(key);
+			Control* control = &(*it).second;
+			if (control->Matches(key))
+				control->UpdateState(key);
 		}
 
 		
@@ -148,40 +221,40 @@ namespace FusionEngine
 		//PlayerInputMapList::iterator it;
 		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
 
-		for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
-		{
-			if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
-				continue;
+		//for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
+		//{
+		//	if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
+		//		continue;
 
-			if(key.id == m_PlayerInputMaps[i].thrust)
-			{
-				m_ShipInputData[i].thrust = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].reverse)
-			{
-				m_ShipInputData[i].reverse = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].left)
-			{
-				m_ShipInputData[i].left = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].right)
-			{
-				m_ShipInputData[i].right = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].primary)
-			{
-				m_ShipInputData[i].primary = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].secondary)
-			{
-				m_ShipInputData[i].secondary = true;
-			}
-			if(key.id == m_PlayerInputMaps[i].bomb)
-			{
-				m_ShipInputData[i].bomb = true;
-			}
-		}
+		//	if(key.id == m_PlayerInputMaps[i].thrust)
+		//	{
+		//		m_ShipInputData[i].thrust = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].reverse)
+		//	{
+		//		m_ShipInputData[i].reverse = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].left)
+		//	{
+		//		m_ShipInputData[i].left = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].right)
+		//	{
+		//		m_ShipInputData[i].right = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].primary)
+		//	{
+		//		m_ShipInputData[i].primary = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].secondary)
+		//	{
+		//		m_ShipInputData[i].secondary = true;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].bomb)
+		//	{
+		//		m_ShipInputData[i].bomb = true;
+		//	}
+		//}
 	}
 
 	void FusionInput::onKeyUp(const CL_InputEvent &key)
@@ -193,9 +266,9 @@ namespace FusionEngine
 		ControlMap::iterator it = m_ControlMap.begin();
 		for (; it != m_ControlMap.end(); ++it)
 		{
-			Control control = (*it).second;
-			if (control.Matches(key))
-				control.UpdateState(key);
+			Control *control = &(*it).second;
+			if (control->Matches(key))
+				control->UpdateState(key);
 		}
 
 
@@ -213,40 +286,40 @@ namespace FusionEngine
 
 		//PlayerInputMapList::iterator it;
 		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
-		for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
-		{
-			if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
-				continue;
+		//for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
+		//{
+		//	if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
+		//		continue;
 
-			if(key.id == m_PlayerInputMaps[i].thrust)
-			{
-				m_ShipInputData[i].thrust = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].reverse)
-			{
-				m_ShipInputData[i].reverse = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].left)
-			{
-				m_ShipInputData[i].left = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].right)
-			{
-				m_ShipInputData[i].right = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].primary)
-			{
-				m_ShipInputData[i].primary = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].secondary)
-			{
-				m_ShipInputData[i].secondary = false;
-			}
-			if(key.id == m_PlayerInputMaps[i].bomb)
-			{
-				m_ShipInputData[i].bomb = false;
-			}
-		}
+		//	if(key.id == m_PlayerInputMaps[i].thrust)
+		//	{
+		//		m_ShipInputData[i].thrust = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].reverse)
+		//	{
+		//		m_ShipInputData[i].reverse = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].left)
+		//	{
+		//		m_ShipInputData[i].left = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].right)
+		//	{
+		//		m_ShipInputData[i].right = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].primary)
+		//	{
+		//		m_ShipInputData[i].primary = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].secondary)
+		//	{
+		//		m_ShipInputData[i].secondary = false;
+		//	}
+		//	if(key.id == m_PlayerInputMaps[i].bomb)
+		//	{
+		//		m_ShipInputData[i].bomb = false;
+		//	}
+		//}
 	}
 
 	void FusionInput::onDisplayResize(int w, int h)

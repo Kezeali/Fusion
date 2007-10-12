@@ -35,7 +35,7 @@ namespace FusionEngine
 	{
 	}
 
-	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler)
+	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, ICollisionHandler *handler)
 		: m_World(world),
 		m_CollisionFlags(C_NONE),
 		m_CollisionResponse(0),
@@ -301,7 +301,7 @@ namespace FusionEngine
 		m_CollisionResponse = method;
 	}
 
-	void FusionPhysicsBody::SetCollisionHandler(CollisionHandler *handler)
+	void FusionPhysicsBody::SetCollisionHandler(ICollisionHandler *handler)
 	{
 		m_CollisionHandler = handler;
 	}

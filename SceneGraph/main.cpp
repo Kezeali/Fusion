@@ -23,7 +23,7 @@ const float g_ThrustForce = 0.14f;
 
 using namespace FusionEngine;
 
-class OutputUserData : public CollisionHandler
+class OutputUserData : public ICollisionHandler
 {
 private:
 	FusionPhysicsBody* m_MyBody;
@@ -194,7 +194,7 @@ class BitmaskTest : public CL_ClanApplication
 		m_ShipPhysical->SetCoefficientOfFriction(0.25f);
 		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
 
-		m_ShipPhysical->SetCollisionHandler(new OutputUserData(m_ShipPhysical));
+		m_ShipPhysical->SetICollisionHandler(new OutputUserData(m_ShipPhysical));
 
 		// -- Create ship scene node --
 		m_Ship = m_Scene->GetRootNode()->CreateChildNode(m_ShipPhysical->GetPosition(), m_ShipPhysical->GetRotation());

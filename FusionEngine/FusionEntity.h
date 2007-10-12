@@ -42,6 +42,25 @@
 
 namespace FusionEngine
 {
+
+	/*!
+	 * \brief
+	 * Input structure for entities
+	 *
+	 * \todo Perhaps this should be implemented entirely at a script level?
+	 */
+	class EntityInput
+	{
+	public:
+		//! Adds a variable to the input structure
+		void AddKey(const std::string& name) {}//;
+		//! Check a var
+		bool GetInput(const std::string& name) {}//;
+
+		char* Serialize() {}//;
+		void Deserialize(char* data) {}//;
+	};
+
 	/*!
 	 * \brief
 	 * In game object base class
@@ -50,10 +69,12 @@ namespace FusionEngine
 	 * the actual logic for in-game objects, while storing and providing
 	 * access to instances of hard-coded classes for said script objects.
 	 *
-	 * In other words, this helps script objects to be created and used
+	 * Hopefully, this will help script objects to be created and used
 	 * almost as easily as hard-coded objects.
+	 *
+	 * \todo perhaps there will be no drawables, just child entities (with drawing defined at script level)
 	 */
-	class Enitity : public CollisionHandler
+	class Enitity : public FusionNode, public ICollisionHandler
 	{
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
@@ -73,7 +94,7 @@ namespace FusionEngine
 			{
 				return *((std::string*)m_Data);
 			}
-			std::string GetValueInt() const
+			int GetValueInt() const
 			{
 				return *((int*)m_Data);
 			}
@@ -117,30 +138,33 @@ namespace FusionEngine
 		//! Self explainatory
 		const PropertyList &GetInput() const;
 
-		EntityState GetState() const;
-		void SetState(EntityState state);
+		//EntityState GetState() const;
+		//void SetState(EntityState state);
 		//! Validates the given state (this will become the sync point)
 		/*!
 		 * Only after ValidateState has been called should irreversable changes be made,
 		 * e.g. terrain destruction
 		 */
-		void ValidateState(StateID state);
+		//void ValidateState(StateID state);
 
 		//! Adds a simulation state
 		/*!
 		 * Sets the state to the stored state (history) corresponding to the given ID, and runs
 		 * the Simulate script for this entity.
 		 */
-		void Simulate(StateID state);
+		void Simulate();
 
 		PropertyPointer GetProperty(const std::string& name);
 		std::string SerializeState() const;
 		void DeserializeState(const std::string& state);
 
-		//! Scene node
-		void SetSceneNode(FusionNode *input);
-		//! Self explainatory
-		const FusionNode *GetSceneNode() const;
+		//! Returns a human-readable string
+		std::string ToString() const;
+
+		////! Scene node
+		//void SetSceneNode(FusionNode *input);
+		////! Self explainatory
+		//const FusionNode *GetSceneNode() const;
 		//! Physics body
 		void SetPhysicalBody(FusionPhysicsBody *input);
 		//! Self explainatory
@@ -179,10 +203,10 @@ namespace FusionEngine
 		//! Reverts all state data
 		void RevertToInitialState();
 
-		//! Implementation of CollisionHandler#CanCollideWith()
+		//! Implementation of ICollisionHandler#CanCollideWith()
 		bool CanCollideWith(const FusionPhysicsBody *other);
 
-		//! Implementation of CollisionHandler#CollisionWith()
+		//! Implementation of ICollisionHandler#CollisionWith()
 		void CollisionWith(const FusionPhysicsBody *other, const Vector2 &collision_point);
 
 
@@ -193,8 +217,6 @@ namespace FusionEngine
 		// The actual entity logic (for which this C++ class is simply a wrapper)
 		asIScriptStruct* m_ScriptObject;
 
-		//! Main associated node
-		FusionNode *m_Node;
 		//! Body
 		FusionPhysicsBody *m_Body;
 

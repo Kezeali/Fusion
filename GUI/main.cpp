@@ -10,7 +10,29 @@
 #include "../FusionEngine/FusionGUI.h"
 #include "../FusionEngine/FusionConsoleGUI.h"
 
+#include "../FusionEngine/FusionScriptingEngine.h"
+
 using namespace FusionEngine;
+
+// Function implementation with native calling convention
+void PrintString(std::string &str)
+{
+	SendToConsole(str);
+}
+
+// Function implementation with generic script interface
+void PrintString_Generic(asIScriptGeneric *gen)
+{
+	std::string *str = (std::string*)gen->GetArgAddress(0);
+	SendToConsole(*str);
+}
+
+void ClearConsole()
+{
+	Console* con = Console::getSingletonPtr();
+	if (con != NULL)
+		con->Clear();
+}
 
 class GUITest : public CL_ClanApplication
 {
@@ -40,7 +62,28 @@ class GUITest : public CL_ClanApplication
 			CL_OpenGLState gl_state(display.get_gc());
 			gl_state.set_active();
 
-			new FusionInput();
+			new ScriptingEngine;
+			int r;
+			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+			{
+				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+				ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Clear()", asFUNCTION(ClearConsole), asCALL_CDECL);
+			}
+			else
+			{
+				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
+			}
+
+			FusionInput* input = new FusionInput();
+			if (!input->Test())
+				throw CL_Error("Input handler could not be started.");
+			input->Initialise();
+			SendToConsole("InputHandler started successfully");
+
+			input->MapControl(CL_KEY_UP, "P1Thrust");
+			input->MapControl('R', "LetterR");
+			input->MapControl(CL_KEY_CONTROL, "KeyCtrl");
+
 
 			StateManager* stateman = new StateManager();
 
@@ -61,6 +104,7 @@ class GUITest : public CL_ClanApplication
 			gluPerspective(45.0f,(GLfloat)640/(GLfloat)480,0.1f,100.0f);
 
 
+			bool p1thrusting = false;
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
 			// Loop thing
@@ -82,8 +126,17 @@ class GUITest : public CL_ClanApplication
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
 
+				if (input->IsButtonDown("P1Thrust") != p1thrusting)
+				{
+					p1thrusting = !p1thrusting;
+					if (p1thrusting)
+						SendToConsole("P1 is moving!");
+					else
+						SendToConsole("P1 has stopped moving");
+				}
+
 				// Reload the GUI
-				if (CL_Keyboard::get_keycode('R'))
+				if (input->IsButtonDown("LetterR"))
 				{
 					conGUI->CleanUp();
 					gui->CleanUp();

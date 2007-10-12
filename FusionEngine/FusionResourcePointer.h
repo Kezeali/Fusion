@@ -58,6 +58,9 @@ namespace FusionEngine
 
 		CL_Slot m_ResourceDestructionSlot;
 
+		static unsigned long ms_NextHash;
+		unsigned long m_Hash;
+
 	public:
 		//! Basic Constructor
 		/*!
@@ -66,21 +69,32 @@ namespace FusionEngine
 		ResourcePointer()
 			: m_Resource(0)
 		{
+			m_Hash = ms_NextHash++;
 		}
 
 		//! Constructor
 		ResourcePointer(Resource* resource)
 			: m_Resource(resource)
 		{
-			resource->AddRef();
+			m_Hash = ms_NextHash++;
+			resource->AddRef(this);
 			m_ResourceDestructionSlot = resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+		}
+
+		//! Copy constructor
+		ResourcePointer(ResourcePointer& other)
+			: m_Resource(other.m_Resource)
+		{
+			m_Hash = ms_NextHash++;
+			m_Resource->AddRef(this);
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
 		}
 
 		//! Destructor
 		~ResourcePointer()
 		{
 			if (m_Resource != 0)
-				m_Resource->DropRef();
+				m_Resource->DropRef(this);
 		}
 
 	public:
@@ -89,7 +103,7 @@ namespace FusionEngine
 		T* GetDataPtr()
 		{
 			if (m_Resource != 0)
-				return m_Resource->GetDataPtr();
+				return m_Resource->GetDataPtr<T>();
 			else
 				return 0;
 		}
@@ -99,7 +113,7 @@ namespace FusionEngine
 		T const* GetDataPtr() const
 		{
 			if (m_Resource != 0)
-				return m_Resource->GetDataPtr();
+				return m_Resource->GetDataPtr<T>();
 			else
 				return 0;
 		}
@@ -108,6 +122,11 @@ namespace FusionEngine
 		{
 			// Checks that the resource exists at all before checking that it is valid
 			return m_Resource == 0 ? false : m_Resource->IsValid();
+		}
+
+		unsigned long GetHash() const
+		{
+			return m_Hash;
 		}
 
 		void onResourceDestruction()

@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2006 Andreas Jönsson
+   Copyright (c) 2003-2007 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -24,7 +24,7 @@
    The original version of this library can be located at:
    http://www.angelcode.com/angelscript/
 
-   Andreas Jönsson
+   Andreas Jonsson
    andreas@angelcode.com
 */
 
@@ -53,23 +53,22 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        20701
+#define ANGELSCRIPT_VERSION        21100
 #define ANGELSCRIPT_VERSION_MAJOR  2
-#define ANGELSCRIPT_VERSION_MINOR  7
-#define ANGELSCRIPT_VERSION_BUILD  1
-#define ANGELSCRIPT_VERSION_STRING "2.7.1a"
+#define ANGELSCRIPT_VERSION_MINOR  11
+#define ANGELSCRIPT_VERSION_BUILD  0
+#define ANGELSCRIPT_VERSION_STRING "2.11.0 WIP"
 
 // Data types
 
 class asIScriptEngine;
 class asIScriptContext;
 class asIScriptGeneric;
-class asIScriptAny;
 class asIScriptStruct;
 class asIScriptArray;
 class asIBinaryStream;
 
-// 
+//
 // asBYTE  =  8 bits
 // asWORD  = 16 bits
 // asDWORD = 32 bits
@@ -82,14 +81,17 @@ typedef unsigned int   asUINT;
 #ifdef __LP64__
     typedef unsigned int  asDWORD;
     typedef unsigned long asQWORD;
+    typedef long asINT64;
     typedef asQWORD asPWORD;
 #else
     typedef unsigned long asDWORD;
     typedef asDWORD asPWORD;
   #if defined(__GNUC__) || defined(__MWERKS__)
     typedef unsigned long long asQWORD;
+    typedef long long asINT64;
   #else
     typedef unsigned __int64 asQWORD;
+    typedef __int64 asINT64;
   #endif
 #endif
 
@@ -173,10 +175,15 @@ extern "C"
 	// Thread support
 	AS_API int asThreadCleanup();
 
+	// Memory management
+	AS_API int asSetGlobalMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	AS_API int asResetGlobalMemoryFunctions();
+
 #ifdef AS_C_INTERFACE
 	AS_API int               asEngine_AddRef(asIScriptEngine *e);
 	AS_API int               asEngine_Release(asIScriptEngine *e);
-	AS_API int               asEngine_SetCommonObjectMemoryFunctions(asIScriptEngine *e, asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc);
+	AS_API int               asEngine_SetEngineProperty(asIScriptEngine *e, asDWORD property, asPWORD value);
+	AS_API asPWORD           asEngine_GetEngineProperty(asIScriptEngine *e, asDWORD property);
 	AS_API int               asEngine_SetMessageCallback(asIScriptEngine *e, asFUNCTION_t callback, void *obj, asDWORD callConv);
 	AS_API int               asEngine_ClearMessageCallback(asIScriptEngine *e);
 	AS_API int               asEngine_RegisterObjectType(asIScriptEngine *e, const char *name, int byteSize, asDWORD flags);
@@ -193,13 +200,9 @@ extern "C"
 	AS_API int               asEngine_EndConfigGroup(asIScriptEngine *e);
 	AS_API int               asEngine_RemoveConfigGroup(asIScriptEngine *e, const char *groupName);
 	AS_API int               asEngine_SetConfigGroupModuleAccess(asIScriptEngine *e, const char *groupName, const char *module, bool hasAccess);
-	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0, bool makeCopy = true);
+	AS_API int               asEngine_AddScriptSection(asIScriptEngine *e, const char *module, const char *name, const char *code, int codeLength, int lineOffset = 0);
 	AS_API int               asEngine_Build(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_Discard(asIScriptEngine *e, const char *module);
-#ifdef AS_DEPRECATED
-	AS_API int               asEngine_GetModuleIndex(asIScriptEngine *e, const char *module);
-	AS_API const char *      asEngine_GetModuleNameFromIndex(asIScriptEngine *e, int index, int *length = 0);
-#endif
 	AS_API int               asEngine_GetFunctionCount(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetFunctionIDByIndex(asIScriptEngine *e, const char *module, int index);
 	AS_API int               asEngine_GetFunctionIDByName(asIScriptEngine *e, const char *module, const char *name);
@@ -229,12 +232,21 @@ extern "C"
 	AS_API int               asEngine_UnbindAllImportedFunctions(asIScriptEngine *e, const char *module);
 	AS_API int               asEngine_GetTypeIdByDecl(asIScriptEngine *e, const char *module, const char *decl);
 	AS_API const char *      asEngine_GetTypeDeclaration(asIScriptEngine *e, int typeId, int *length = 0);
+	AS_API int               asEngine_GetSizeOfPrimitiveType(asIScriptEngine *e, int typeId);
 	AS_API int               asEngine_SetDefaultContextStackSize(asIScriptEngine *e, asUINT initial, asUINT maximum);
 	AS_API asIScriptContext *asEngine_CreateContext(asIScriptEngine *e);
 	AS_API void *            asEngine_CreateScriptObject(asIScriptEngine *e, int typeId);
+	AS_API void *            asEngine_CreateScriptObjectCopy(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_CopyScriptObject(asIScriptEngine *e, void *dstObj, void *srcObj, int typeId);
+	AS_API void              asEngine_ReleaseScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_AddRefScriptObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API bool              asEngine_IsHandleCompatibleWithObject(asIScriptEngine *e, void *obj, int objTypeId, int handleTypeId);
+	AS_API int               asEngine_CompareScriptObjects(asIScriptEngine *e, bool &result, int behaviour, void *leftObj, void *rightObj, int typeId);
 	AS_API int               asEngine_ExecuteString(asIScriptEngine *e, const char *module, const char *script, asIScriptContext **ctx, asDWORD flags);
 	AS_API int               asEngine_GarbageCollect(asIScriptEngine *e, bool doFullCycle = true);
 	AS_API int               asEngine_GetObjectsInGarbageCollectorCount(asIScriptEngine *e);
+	AS_API void              asEngine_NotifyGarbageCollectorOfNewObject(asIScriptEngine *e, void *obj, int typeId);
+	AS_API void              asEngine_GCEnumCallback(asIScriptEngine *e, void *obj);
 	AS_API int               asEngine_SaveByteCode(asIScriptEngine *e, const char *module, asBINARYWRITEFUNC_t outFunc, void *outParam);
 	AS_API int               asEngine_LoadByteCode(asIScriptEngine *e, const char *module, asBINARYREADFUNC_t inFunc, void *inParam);
 
@@ -243,19 +255,25 @@ extern "C"
 	AS_API asIScriptEngine *asContext_GetEngine(asIScriptContext *c);
 	AS_API int              asContext_GetState(asIScriptContext *c);
 	AS_API int              asContext_Prepare(asIScriptContext *c, int funcID);
+	AS_API int              asContext_SetArgByte(asIScriptContext *c, asUINT arg, asBYTE value);
+	AS_API int              asContext_SetArgWord(asIScriptContext *c, asUINT arg, asWORD value);
 	AS_API int              asContext_SetArgDWord(asIScriptContext *c, asUINT arg, asDWORD value);
 	AS_API int              asContext_SetArgQWord(asIScriptContext *c, asUINT arg, asQWORD value);
 	AS_API int              asContext_SetArgFloat(asIScriptContext *c, asUINT arg, float value);
 	AS_API int              asContext_SetArgDouble(asIScriptContext *c, asUINT arg, double value);
 	AS_API int              asContext_SetArgAddress(asIScriptContext *c, asUINT arg, void *addr);
 	AS_API int              asContext_SetArgObject(asIScriptContext *c, asUINT arg, void *obj);
+	AS_API void *           asContext_GetArgPointer(asIScriptContext *c, asUINT arg);
 	AS_API int              asContext_SetObject(asIScriptContext *c, void *obj);
+	AS_API asBYTE           asContext_GetReturnByte(asIScriptContext *c);
+	AS_API asWORD           asContext_GetReturnWord(asIScriptContext *c);
 	AS_API asDWORD          asContext_GetReturnDWord(asIScriptContext *c);
 	AS_API asQWORD          asContext_GetReturnQWord(asIScriptContext *c);
 	AS_API float            asContext_GetReturnFloat(asIScriptContext *c);
 	AS_API double           asContext_GetReturnDouble(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnAddress(asIScriptContext *c);
 	AS_API void *           asContext_GetReturnObject(asIScriptContext *c);
+	AS_API void *           asContext_GetReturnPointer(asIScriptContext *c);
 	AS_API int              asContext_Execute(asIScriptContext *c);
 	AS_API int              asContext_Abort(asIScriptContext *c);
 	AS_API int              asContext_Suspend(asIScriptContext *c);
@@ -277,29 +295,33 @@ extern "C"
 	AS_API const char *     asContext_GetVarDeclaration(asIScriptContext *c, int varIndex, int *length = 0, int stackLevel = 0);
 	AS_API int              asContext_GetVarTypeId(asIScriptContext *c, int varIndex, int stackLevel = -1);
 	AS_API void *           asContext_GetVarPointer(asIScriptContext *c, int varIndex, int stackLevel = 0);
-
+	AS_API int              asContext_GetThisTypeId(asIScriptContext *c, int stackLevel = -1);
+	AS_API void *           asContext_GetThisPointer(asIScriptContext *c, int stackLevel = -1);
+	AS_API void *           asContext_SetUserData(asIScriptContext *c, void *data);
+	AS_API void *           asContext_GetUserData(asIScriptContext *c);
 
 	AS_API asIScriptEngine *asGeneric_GetEngine(asIScriptGeneric *g);
+	AS_API int              asGeneric_GetFunctionId(asIScriptGeneric *g);
 	AS_API void *           asGeneric_GetObject(asIScriptGeneric *g);
+	AS_API asBYTE           asGeneric_GetArgByte(asIScriptGeneric *g, asUINT arg);
+	AS_API asWORD           asGeneric_GetArgWord(asIScriptGeneric *g, asUINT arg);
 	AS_API asDWORD          asGeneric_GetArgDWord(asIScriptGeneric *g, asUINT arg);
 	AS_API asQWORD          asGeneric_GetArgQWord(asIScriptGeneric *g, asUINT arg);
 	AS_API float            asGeneric_GetArgFloat(asIScriptGeneric *g, asUINT arg);
 	AS_API double           asGeneric_GetArgDouble(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgAddress(asIScriptGeneric *g, asUINT arg);
 	AS_API void *           asGeneric_GetArgObject(asIScriptGeneric *g, asUINT arg);
+	AS_API void *           asGeneric_GetArgPointer(asIScriptGeneric *g, asUINT arg);
+	AS_API int              asGeneric_GetArgTypeId(asIScriptGeneric *g, asUINT arg);
+	AS_API int              asGeneric_SetReturnByte(asIScriptGeneric *g, asBYTE val);
+	AS_API int              asGeneric_SetReturnWord(asIScriptGeneric *g, asWORD val);
 	AS_API int              asGeneric_SetReturnDWord(asIScriptGeneric *g, asDWORD val);
 	AS_API int              asGeneric_SetReturnQWord(asIScriptGeneric *g, asQWORD val);
 	AS_API int              asGeneric_SetReturnFloat(asIScriptGeneric *g, float val);
 	AS_API int              asGeneric_SetReturnDouble(asIScriptGeneric *g, double val);
 	AS_API int              asGeneric_SetReturnAddress(asIScriptGeneric *g, void *addr);
 	AS_API int              asGeneric_SetReturnObject(asIScriptGeneric *g, void *obj);
-
-	AS_API int  asAny_AddRef(asIScriptAny *a);
-	AS_API int  asAny_Release(asIScriptAny *a);
-	AS_API void asAny_Store(asIScriptAny *a, void *ref, int typeId);
-	AS_API int  asAny_Retrieve(asIScriptAny *a, void *ref, int typeId);
-	AS_API int  asAny_GetTypeId(asIScriptAny *a);
-	AS_API int  asAny_CopyFrom(asIScriptAny *a, asIScriptAny *other);
+	AS_API void *           asGeneric_GetReturnPointer(asIScriptGeneric *g);
 
 	AS_API int         asStruct_AddRef(asIScriptStruct *s);
 	AS_API int         asStruct_Release(asIScriptStruct *s);
@@ -333,10 +355,11 @@ public:
 	virtual int Release() = 0;
 
 	// Engine configuration
+	virtual int     SetEngineProperty(asDWORD property, asPWORD value) = 0;
+	virtual asPWORD GetEngineProperty(asDWORD property) = 0;
+
 	virtual int SetMessageCallback(const asUPtr &callback, void *obj, asDWORD callConv) = 0;
 	virtual int ClearMessageCallback() = 0;
-
-	virtual int SetCommonObjectMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc) = 0;
 
 	virtual int RegisterObjectType(const char *name, int byteSize, asDWORD flags) = 0;
 	virtual int RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset) = 0;
@@ -358,14 +381,10 @@ public:
 	virtual int SetConfigGroupModuleAccess(const char *groupName, const char *module, bool hasAccess) = 0;
 
 	// Script modules
-	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0, bool makeCopy = true) = 0;
+	virtual int AddScriptSection(const char *module, const char *name, const char *code, size_t codeLength, int lineOffset = 0) = 0;
 	virtual int Build(const char *module) = 0;
     virtual int Discard(const char *module) = 0;
 	virtual int ResetModule(const char *module) = 0;
-#ifdef AS_DEPRECATED
-	virtual int GetModuleIndex(const char *module) = 0;
-	virtual const char *GetModuleNameFromIndex(int index, int *length = 0) = 0;
-#endif
 
 	// Script functions
 	virtual int GetFunctionCount(const char *module) = 0;
@@ -381,7 +400,7 @@ public:
 	virtual int GetMethodIDByIndex(int typeId, int index) = 0;
 	virtual int GetMethodIDByName(int typeId, const char *name) = 0;
 	virtual int GetMethodIDByDecl(int typeId, const char *decl) = 0;
-	
+
 	// Script global variables
 	virtual int GetGlobalVarCount(const char *module) = 0;
 	virtual int GetGlobalVarIDByIndex(const char *module, int index) = 0;
@@ -390,9 +409,6 @@ public:
 	virtual const char *GetGlobalVarDeclaration(int gvarID, int *length = 0) = 0;
 	virtual const char *GetGlobalVarName(int gvarID, int *length = 0) = 0;
 	virtual void *GetGlobalVarPointer(int gvarID) = 0;
-#ifdef AS_DEPRECATED
-	virtual int GetGlobalVarPointer(int gvarID, void **ptr) = 0;
-#endif
 
 	// Dynamic binding between modules
 	virtual int GetImportedFunctionCount(const char *module) = 0;
@@ -408,24 +424,27 @@ public:
 	// Type identification
 	virtual int GetTypeIdByDecl(const char *module, const char *decl) = 0;
 	virtual const char *GetTypeDeclaration(int typeId, int *length = 0) = 0;
+	virtual int GetSizeOfPrimitiveType(int typeId) = 0;
 
 	// Script execution
 	virtual int SetDefaultContextStackSize(asUINT initial, asUINT maximum) = 0;
 	virtual asIScriptContext *CreateContext() = 0;
-#ifdef AS_DEPRECATED
-	virtual int CreateContext(asIScriptContext **ctx) = 0;
-#endif
 	virtual void *CreateScriptObject(int typeId) = 0;
+	virtual void *CreateScriptObjectCopy(void *obj, int typeId) = 0;
+	virtual void CopyScriptObject(void *dstObj, void *srcObj, int typeId) = 0;
+	virtual void ReleaseScriptObject(void *obj, int typeId) = 0;
+	virtual void AddRefScriptObject(void *obj, int typeId) = 0;
+	virtual bool IsHandleCompatibleWithObject(void *obj, int objTypeId, int handleTypeId) = 0;
+	virtual int CompareScriptObjects(bool &result, int behaviour, void *leftObj, void *rightObj, int typeId) = 0;
 
 	// String interpretation
-#ifdef AS_DEPRECATED
-	virtual int ExecuteString(const char *module, const char *script, asIOutputStream *out, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
-#endif
 	virtual int ExecuteString(const char *module, const char *script, asIScriptContext **ctx = 0, asDWORD flags = 0) = 0;
 
 	// Garbage collection
 	virtual int GarbageCollect(bool doFullCycle = true) = 0;
 	virtual int GetObjectsInGarbageCollectorCount() = 0;
+	virtual void NotifyGarbageCollectorOfNewObject(void *obj, int typeId) = 0;
+	virtual void GCEnumCallback(void *obj) = 0;
 
 	// Bytecode Saving/Loading
 	virtual int SaveByteCode(const char *module, asIBinaryStream *out) = 0;
@@ -450,21 +469,27 @@ public:
 
 	virtual int Prepare(int funcID) = 0;
 
+	virtual int SetArgByte(asUINT arg, asBYTE value) = 0;
+	virtual int SetArgWord(asUINT arg, asWORD value) = 0;
 	virtual int SetArgDWord(asUINT arg, asDWORD value) = 0;
 	virtual int SetArgQWord(asUINT arg, asQWORD value) = 0;
 	virtual int SetArgFloat(asUINT arg, float value) = 0;
 	virtual int SetArgDouble(asUINT arg, double value) = 0;
 	virtual int SetArgAddress(asUINT arg, void *addr) = 0;
 	virtual int SetArgObject(asUINT arg, void *obj) = 0;
+	virtual void *GetArgPointer(asUINT arg) = 0;
 
 	virtual int SetObject(void *obj) = 0;
 
+	virtual asBYTE  GetReturnByte() = 0;
+	virtual asWORD  GetReturnWord() = 0;
 	virtual asDWORD GetReturnDWord() = 0;
 	virtual asQWORD GetReturnQWord() = 0;
 	virtual float   GetReturnFloat() = 0;
 	virtual double  GetReturnDouble() = 0;
 	virtual void   *GetReturnAddress() = 0;
 	virtual void   *GetReturnObject() = 0;
+	virtual void   *GetReturnPointer() = 0;
 
 	virtual int Execute() = 0;
 	virtual int Abort() = 0;
@@ -488,11 +513,16 @@ public:
 	virtual int GetCallstackFunction(int index) = 0;
 	virtual int GetCallstackLineNumber(int index, int *column = 0) = 0;
 
-	virtual int GetVarCount(int stackLevel = -1) = 0;
+	virtual int         GetVarCount(int stackLevel = -1) = 0;
 	virtual const char *GetVarName(int varIndex, int *length = 0, int stackLevel = -1) = 0;
 	virtual const char *GetVarDeclaration(int varIndex, int *length = 0, int stackLevel = -1) = 0;
-	virtual int GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
-	virtual void *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+	virtual int         GetVarTypeId(int varIndex, int stackLevel = -1) = 0;
+	virtual void       *GetVarPointer(int varIndex, int stackLevel = -1) = 0;
+	virtual int         GetThisTypeId(int stackLevel = -1) = 0;
+    virtual void       *GetThisPointer(int stackLevel = -1) = 0;
+
+	virtual void *SetUserData(void *data) = 0;
+	virtual void *GetUserData() = 0;
 
 protected:
 	virtual ~asIScriptContext() {}
@@ -503,41 +533,33 @@ class asIScriptGeneric
 public:
 	virtual asIScriptEngine *GetEngine() = 0;
 
+	virtual int     GetFunctionId() = 0;
+
 	virtual void   *GetObject() = 0;
 
+	virtual asBYTE  GetArgByte(asUINT arg) = 0;
+	virtual asWORD  GetArgWord(asUINT arg) = 0;
 	virtual asDWORD GetArgDWord(asUINT arg) = 0;
 	virtual asQWORD GetArgQWord(asUINT arg) = 0;
 	virtual float   GetArgFloat(asUINT arg) = 0;
 	virtual double  GetArgDouble(asUINT arg) = 0;
 	virtual void   *GetArgAddress(asUINT arg) = 0;
 	virtual void   *GetArgObject(asUINT arg) = 0;
+	virtual void   *GetArgPointer(asUINT arg) = 0;
+	virtual int     GetArgTypeId(asUINT arg) = 0;
 
+	virtual int     SetReturnByte(asBYTE val) = 0;
+	virtual int     SetReturnWord(asWORD val) = 0;
 	virtual int     SetReturnDWord(asDWORD val) = 0;
 	virtual int     SetReturnQWord(asQWORD val) = 0;
 	virtual int     SetReturnFloat(float val) = 0;
 	virtual int     SetReturnDouble(double val) = 0;
 	virtual int     SetReturnAddress(void *addr) = 0;
 	virtual int     SetReturnObject(void *obj) = 0;
+	virtual void   *GetReturnPointer() = 0;
 
 protected:
 	virtual ~asIScriptGeneric() {}
-};
-
-class asIScriptAny
-{
-public:
-	// Memory management
-	virtual int AddRef() = 0;
-	virtual int Release() = 0;
-
-	// Contained value
-	virtual void Store(void *ref, int typeId) = 0;
-	virtual int  Retrieve(void *ref, int typeId) = 0;
-	virtual int  GetTypeId() = 0;
-	virtual int  CopyFrom(asIScriptAny *other) = 0;
-
-protected:
-	virtual ~asIScriptAny() {}
 };
 
 class asIScriptStruct
@@ -594,6 +616,12 @@ public:
 
 // Enumerations and constants
 
+// Engine properties
+
+const asDWORD asEP_ALLOW_UNSAFE_REFERENCES = 1;	// Default: false
+const asDWORD asEP_OPTIMIZE_BYTECODE       = 2;	// Default: true
+const asDWORD asEP_COPY_SCRIPT_SECTIONS    = 3; // Default: true
+
 // Calling conventions and flags
 
 const asDWORD asCALL_CDECL            = 0;
@@ -605,19 +633,24 @@ const asDWORD asCALL_GENERIC          = 5;
 
 // Object type flags
 
-const asDWORD asOBJ_CLASS             = 1;
-const asDWORD asOBJ_CLASS_CONSTRUCTOR = 2;
-const asDWORD asOBJ_CLASS_DESTRUCTOR  = 4;
-const asDWORD asOBJ_CLASS_ASSIGNMENT  = 8;
-const asDWORD asOBJ_CLASS_C           = (asOBJ_CLASS + asOBJ_CLASS_CONSTRUCTOR);
-const asDWORD asOBJ_CLASS_CD          = (asOBJ_CLASS + asOBJ_CLASS_CONSTRUCTOR + asOBJ_CLASS_DESTRUCTOR);
-const asDWORD asOBJ_CLASS_CA          = (asOBJ_CLASS + asOBJ_CLASS_CONSTRUCTOR + asOBJ_CLASS_ASSIGNMENT);
-const asDWORD asOBJ_CLASS_CDA         = (asOBJ_CLASS + asOBJ_CLASS_CONSTRUCTOR + asOBJ_CLASS_DESTRUCTOR + asOBJ_CLASS_ASSIGNMENT);
-const asDWORD asOBJ_CLASS_D           = (asOBJ_CLASS + asOBJ_CLASS_DESTRUCTOR);
-const asDWORD asOBJ_CLASS_A           = (asOBJ_CLASS + asOBJ_CLASS_ASSIGNMENT);
-const asDWORD asOBJ_CLASS_DA          = (asOBJ_CLASS + asOBJ_CLASS_DESTRUCTOR + asOBJ_CLASS_ASSIGNMENT);
-const asDWORD asOBJ_PRIMITIVE         = 16;
-const asDWORD asOBJ_FLOAT             = 17;
+const asDWORD asOBJ_REF                   = 1;
+const asDWORD asOBJ_VALUE                 = 2;
+const asDWORD asOBJ_GC                    = 4;
+const asDWORD asOBJ_POD                   = 8;
+const asDWORD asOBJ_APP_CLASS             = 0x100;
+const asDWORD asOBJ_APP_CLASS_CONSTRUCTOR = 0x200;
+const asDWORD asOBJ_APP_CLASS_DESTRUCTOR  = 0x400;
+const asDWORD asOBJ_APP_CLASS_ASSIGNMENT  = 0x800;
+const asDWORD asOBJ_APP_CLASS_C           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR);
+const asDWORD asOBJ_APP_CLASS_CD          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR);
+const asDWORD asOBJ_APP_CLASS_CA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
+const asDWORD asOBJ_APP_CLASS_CDA         = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
+const asDWORD asOBJ_APP_CLASS_D           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR);
+const asDWORD asOBJ_APP_CLASS_A           = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT);
+const asDWORD asOBJ_APP_CLASS_DA          = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT);
+const asDWORD asOBJ_APP_PRIMITIVE         = 0x1000;
+const asDWORD asOBJ_APP_FLOAT             = 0x2000;
+const asDWORD asOBJ_MASK_VALID_FLAGS      = 0x3F0F;
 
 // Behaviours
 
@@ -662,8 +695,14 @@ const asDWORD asBEHAVE_INDEX         = 33;
 const asDWORD asBEHAVE_NEGATE        = 34;
 const asDWORD asBEHAVE_ADDREF        = 35;
 const asDWORD asBEHAVE_RELEASE       = 36;
-const asDWORD asBEHAVE_ALLOC         = 37;
-const asDWORD asBEHAVE_FREE          = 38;
+const asDWORD asBEHAVE_FIRST_GC      = 37;
+ const asDWORD asBEHAVE_GETREFCOUNT   = 37;
+ const asDWORD asBEHAVE_SETGCFLAG     = 38;
+ const asDWORD asBEHAVE_GETGCFLAG     = 39;
+ const asDWORD asBEHAVE_ENUMREFS      = 40;
+ const asDWORD asBEHAVE_RELEASEREFS   = 41;
+const asDWORD asBEHAVE_LAST_GC       = 41;
+const asDWORD asBEHAVE_FACTORY       = 42;
 
 // Return codes
 
@@ -690,6 +729,7 @@ const int asCANT_BIND_ALL_FUNCTIONS              = -19;
 const int asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20;
 const int asWRONG_CONFIG_GROUP                   = -21;
 const int asCONFIG_GROUP_IS_IN_USE               = -22;
+const int asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23;
 
 // Context states
 
@@ -727,7 +767,6 @@ const int asTYPEID_OBJHANDLE      = 0x40000000;
 const int asTYPEID_HANDLETOCONST  = 0x20000000;
 const int asTYPEID_MASK_OBJECT    = 0x1C000000;
 const int  asTYPEID_APPOBJECT      = 0x04000000;
-const int  asTYPEID_SCRIPTANY      = 0x08000000;
 const int  asTYPEID_SCRIPTSTRUCT   = 0x0C000000;
 const int  asTYPEID_SCRIPTARRAY    = 0x10000000;
 const int asTYPEID_MASK_SEQNBR    = 0x03FFFFFF;

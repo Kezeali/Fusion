@@ -32,20 +32,22 @@ namespace FusionEngine
 {
 
 	ClientOptions::ClientOptions()
-		: NumPlayers(0)
+		: m_NumPlayers(0),
+		m_Rate(100),
+		m_LocalPort(1337)
 	{
-		// Set the global controls to some valid values.
-		DefaultGlobalControls();
+		//// Set the global controls to some valid values.
+		//DefaultGlobalControls();
 
-		PlayerInputs.resize(g_MaxLocalPlayers);
-		// Do the same for all the players
-		for (ObjectID i=0; i<g_MaxLocalPlayers; i++)
-		{
-			DefaultPlayerControls(i);
-		}
+		//PlayerInputs.resize(g_MaxLocalPlayers);
+		//// Do the same for all the players
+		//for (ObjectID i=0; i<g_MaxLocalPlayers; i++)
+		//{
+		//	DefaultPlayerControls(i);
+		//}
 
 		// Make sure there's enough room for all the player options objects
-		PlayerOptions.resize(g_MaxLocalPlayers);
+		m_PlayerOptions.resize(g_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename)
@@ -56,68 +58,10 @@ namespace FusionEngine
 			SaveToFile(filename);
 	}
 
-	void ClientOptions::DefaultPlayerControls(ObjectID player)
+	ClientOptions::~ClientOptions()
 	{
-		switch (player)
-		{
-			// Player 1
-		case 0:
-			PlayerInputs[0].thrust = CL_KEY_UP;
-			PlayerInputs[0].reverse = CL_KEY_DOWN;
-			PlayerInputs[0].left = CL_KEY_LEFT;
-			PlayerInputs[0].right = CL_KEY_RIGHT;
-			PlayerInputs[0].primary = CL_KEY_DIVIDE;
-			PlayerInputs[0].secondary = CL_KEY_PERIOD;
-			PlayerInputs[0].bomb = ',';
-			break;
-			// Player 2
-		case 1:
-			PlayerInputs[1].thrust = CL_KEY_W;
-			PlayerInputs[1].reverse = CL_KEY_S;
-			PlayerInputs[1].left = CL_KEY_A;
-			PlayerInputs[1].right = CL_KEY_D;
-			PlayerInputs[1].primary = CL_KEY_Q;
-			PlayerInputs[1].secondary = CL_KEY_E;
-			PlayerInputs[1].bomb = CL_KEY_R;
-			break;
-			// Player 3
-		case 2:
-			PlayerInputs[2].thrust = CL_KEY_U;
-			PlayerInputs[2].reverse = CL_KEY_J;
-			PlayerInputs[2].left = CL_KEY_H;
-			PlayerInputs[2].right = CL_KEY_K;
-			PlayerInputs[2].primary = CL_KEY_Y;
-			PlayerInputs[2].secondary = CL_KEY_I;
-			PlayerInputs[2].bomb = CL_KEY_B;
-			break;
-			// Player 4
-		case 3:
-			PlayerInputs[3].thrust = CL_KEY_NUMPAD8;
-			PlayerInputs[3].reverse = CL_KEY_NUMPAD5;
-			PlayerInputs[3].left = CL_KEY_NUMPAD4;
-			PlayerInputs[3].right = CL_KEY_NUMPAD6;
-			PlayerInputs[3].primary = CL_KEY_NUMPAD7;
-			PlayerInputs[3].secondary = CL_KEY_NUMPAD9;
-			PlayerInputs[3].bomb = CL_KEY_NUMPAD0;
-			break;
-			// Greater than 4 players (just in case)
-		default:
-			PlayerInputs[player].thrust = CL_KEY_W;
-			PlayerInputs[player].reverse = CL_KEY_S;
-			PlayerInputs[player].left = CL_KEY_A;
-			PlayerInputs[player].right = CL_KEY_D;
-			PlayerInputs[player].primary = CL_KEY_Q;
-			PlayerInputs[player].secondary = CL_KEY_E;
-			PlayerInputs[player].bomb = CL_KEY_R;
-			break;
-		}
-
-	}
-
-	void ClientOptions::DefaultGlobalControls()
-	{
-		GlobalInputs.menu = CL_KEY_ESCAPE;
-		GlobalInputs.console = '`';
+		m_PlayerOptions.clear();
+		m_Controls.clear();
 	}
 
 	bool ClientOptions::Save()
@@ -201,5 +145,69 @@ namespace FusionEngine
 	{
 		return true;
 	}
+
+	//void ClientOptions::DefaultPlayerControls(ObjectID player)
+	//{
+	//	switch (player)
+	//	{
+	//		// Player 1
+	//	case 0:
+	//		PlayerInputs[0].thrust = CL_KEY_UP;
+	//		PlayerInputs[0].reverse = CL_KEY_DOWN;
+	//		PlayerInputs[0].left = CL_KEY_LEFT;
+	//		PlayerInputs[0].right = CL_KEY_RIGHT;
+	//		PlayerInputs[0].primary = CL_KEY_DIVIDE;
+	//		PlayerInputs[0].secondary = CL_KEY_PERIOD;
+	//		PlayerInputs[0].bomb = ',';
+	//		break;
+	//		// Player 2
+	//	case 1:
+	//		PlayerInputs[1].thrust = CL_KEY_W;
+	//		PlayerInputs[1].reverse = CL_KEY_S;
+	//		PlayerInputs[1].left = CL_KEY_A;
+	//		PlayerInputs[1].right = CL_KEY_D;
+	//		PlayerInputs[1].primary = CL_KEY_Q;
+	//		PlayerInputs[1].secondary = CL_KEY_E;
+	//		PlayerInputs[1].bomb = CL_KEY_R;
+	//		break;
+	//		// Player 3
+	//	case 2:
+	//		PlayerInputs[2].thrust = CL_KEY_U;
+	//		PlayerInputs[2].reverse = CL_KEY_J;
+	//		PlayerInputs[2].left = CL_KEY_H;
+	//		PlayerInputs[2].right = CL_KEY_K;
+	//		PlayerInputs[2].primary = CL_KEY_Y;
+	//		PlayerInputs[2].secondary = CL_KEY_I;
+	//		PlayerInputs[2].bomb = CL_KEY_B;
+	//		break;
+	//		// Player 4
+	//	case 3:
+	//		PlayerInputs[3].thrust = CL_KEY_NUMPAD8;
+	//		PlayerInputs[3].reverse = CL_KEY_NUMPAD5;
+	//		PlayerInputs[3].left = CL_KEY_NUMPAD4;
+	//		PlayerInputs[3].right = CL_KEY_NUMPAD6;
+	//		PlayerInputs[3].primary = CL_KEY_NUMPAD7;
+	//		PlayerInputs[3].secondary = CL_KEY_NUMPAD9;
+	//		PlayerInputs[3].bomb = CL_KEY_NUMPAD0;
+	//		break;
+	//		// Greater than 4 players (just in case)
+	//	default:
+	//		PlayerInputs[player].thrust = CL_KEY_W;
+	//		PlayerInputs[player].reverse = CL_KEY_S;
+	//		PlayerInputs[player].left = CL_KEY_A;
+	//		PlayerInputs[player].right = CL_KEY_D;
+	//		PlayerInputs[player].primary = CL_KEY_Q;
+	//		PlayerInputs[player].secondary = CL_KEY_E;
+	//		PlayerInputs[player].bomb = CL_KEY_R;
+	//		break;
+	//	}
+
+	//}
+
+	//void ClientOptions::DefaultGlobalControls()
+	//{
+	//	GlobalInputs.menu = CL_KEY_ESCAPE;
+	//	GlobalInputs.console = '`';
+	//}
 
 }

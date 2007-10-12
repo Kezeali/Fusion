@@ -35,7 +35,7 @@
 namespace FusionEngine
 {
 
-	//! Manages client-side prediction and entity sync
+	//! Manages client-side entity sync
 	class NetworkedEntityManager : public PacketHandler
 	{
 	public:

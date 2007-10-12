@@ -102,7 +102,7 @@ namespace FusionEngine
 
 	ScriptVector &ScriptVector::operator+=(const ScriptVector &other)
 	{
-		Data = other.Data;
+		Data += other.Data;
 		return *this;
 	}
 
@@ -152,14 +152,14 @@ namespace FusionEngine
 	{
 		ScriptVector *s = (ScriptVector*)gen->GetObject();
 		float l = s->Data.length();
-		gen->SetReturnDWord(l);
+		gen->SetReturnFloat(l);
 	}
 
 	static void VectorSquaredLength_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *s = (ScriptVector*)gen->GetObject();
 		float l = s->Data.squared_length();
-		gen->SetReturnDWord(l);
+		gen->SetReturnFloat(l);
 	}
 
 
@@ -175,6 +175,44 @@ namespace FusionEngine
 		new(thisPointer) ScriptVector();
 	}
 
+	// This is the string factory that creates new strings for the script based on string literals
+	static ScriptVector *VectorFactory(float x, float y)
+	{
+		return new ScriptVector(x, y);
+	}
+
+	static void VectorFactory_Generic(asIScriptGeneric *gen)
+	{
+		float x = gen->GetArgFloat(0);
+		float y = gen->GetArgFloat(1);
+		ScriptVector *ret = VectorFactory(x, y);
+		gen->SetReturnAddress(ret);
+	}
+
+	// This is the default string factory, that is responsible for creating empty string objects, e.g. when a variable is declared
+	static ScriptVector *VectorDefaultFactory()
+	{
+		// Allocate and initialize with the default constructor
+		return new ScriptVector();
+	}
+
+	static void VectorDefaultFactory_Generic(asIScriptGeneric *gen)
+	{
+		*(ScriptVector**)gen->GetReturnPointer() = VectorDefaultFactory();
+	}
+
+	static ScriptVector *VectorCopyFactory(const ScriptVector &other)
+	{
+		// Allocate and initialize with the copy constructor
+		return new ScriptVector(other);
+	}
+
+	static void VectorCopyFactory_Generic(asIScriptGeneric *gen)
+	{
+		ScriptVector *other = (ScriptVector *)gen->GetArgObject(0);
+		*(ScriptVector**)gen->GetReturnPointer() = VectorCopyFactory(*other);
+	}
+
 	////////////////////////////////
 	// AngelScript type registration
 	void RegisterScriptVector_Native(asIScriptEngine *engine)
@@ -182,11 +220,17 @@ namespace FusionEngine
 		int r;
 
 		// Register the type
-		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_CLASS_CDA); cl_assert( r >= 0 );
+		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); cl_assert( r >= 0 );
+
+		// Register factory methods
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)",     asFUNCTION(VectorFactory), asCALL_CDECL); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory), asCALL_CDECL); assert( r >= 0 );
+		
+		// Note: We don't have to register the destructor, since the object uses reference counting
+		//r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_CDECL_OBJLAST); cl_assert( r >= 0 );
 
 		// Register the object operator overloads
-		// Note: We don't have to register the destructor, since the object uses reference counting
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_CDECL_OBJLAST); cl_assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(ScriptVector,AddRef), asCALL_THISCALL); cl_assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(ScriptVector,Release), asCALL_THISCALL); cl_assert( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asMETHODPR(ScriptVector, operator =, (const ScriptVector&), ScriptVector&), asCALL_THISCALL); cl_assert( r >= 0 );
@@ -195,8 +239,8 @@ namespace FusionEngine
 		// Register the global operator overloads
 		// Note: Vector2's methods can be used directly because the
 		// internal Vector2 is placed at the beginning of the class
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asFUNCTIONPR(operator==, (const Vector2 &, const Vector2 &), bool), asCALL_CDECL); cl_assert( r >= 0 );
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asFUNCTIONPR(operator!=, (const Vector2 &, const Vector2 &), bool), asCALL_CDECL); cl_assert( r >= 0 );
+		//r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator==, (const Vector2 &), bool), asCALL_THISCALL); cl_assert( r >= 0 );
+		//r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator!=, (const Vector2 &), bool), asCALL_THISCALL); cl_assert( r >= 0 );
 		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTIONPR(operator +, (const ScriptVector &, const ScriptVector &), ScriptVector*), asCALL_CDECL); cl_assert( r >= 0 );
 
 		// Register the object methods
@@ -208,7 +252,11 @@ namespace FusionEngine
 		int r;
 
 		// Register the type
-		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_CLASS_CDA); cl_assert( r >= 0 );
+		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); cl_assert( r >= 0 );
+
+		// Register factory methods
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const string &in)", asFUNCTION(VectorCopyFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 		// Register the object operator overloads
 		// Note: We don't have to register the destructor, since the object uses reference counting

@@ -40,6 +40,7 @@
 /// Fusion
 #include "FusionScript.h"
 #include "FusionScriptVector.h"
+#include "FusionScriptReference.h"
 
 namespace FusionEngine
 {
@@ -91,7 +92,7 @@ namespace FusionEngine
 		int ExecuteScript(Script *script, const char *function);
 
 		//! Executes the given ScriptReference
-		int Execute(ScriptReference* scref);
+		int Execute(ScriptReference scref);
 
 		//! Executes the given code string.
 		/*!
@@ -104,7 +105,7 @@ namespace FusionEngine
 		 * Time the script can run before it's aborted. Default 1000 milis
 		 * \returns The exit status of the script (asEXECUTION_ABORTED for timeout)
 		 */
-		int ExecuteString(const std::string &script, const char *module, int *context, int timeout = 1000, bool keep_context = false);
+		int ExecuteString(const std::string &script, const char *module, int* context = NULL, int timeout = 1000, bool keep_context = false);
 
 		//! Re-executes the given stored context
 		/*!
@@ -136,10 +137,10 @@ namespace FusionEngine
 		//! Registers global methods and functions which scripts can use.
 		void registerGlobals();
 
-		//! Registers methods useful to weapon scripts
-		void registerWeaponMethods();
-		//! Registers methods to be used from the console
-		void registerConsoleMethods();
+		////! Registers methods useful to weapon scripts
+		//void registerWeaponMethods();
+		////! Registers methods to be used from the console
+		//void registerConsoleMethods();
 
 	};
 

@@ -179,7 +179,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	PhysicsBody *PhysicsWorld::CreateBody(CollisionHandler* response, int type)
+	PhysicsBody *PhysicsWorld::CreateBody(ICollisionHandler* response, int type)
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);
@@ -191,7 +191,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	PhysicsBody *PhysicsWorld::CreateBody(CollisionHandler* response, int type, const PhysicalProperties &props)
+	PhysicsBody *PhysicsWorld::CreateBody(ICollisionHandler* response, int type, const PhysicalProperties &props)
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);
@@ -274,7 +274,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	PhysicsBody *PhysicsWorld::CreateStatic(CollisionHandler* response, int type)
+	PhysicsBody *PhysicsWorld::CreateStatic(ICollisionHandler* response, int type)
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);
@@ -285,7 +285,7 @@ namespace FusionEngine
 		return body;
 	}
 
-	PhysicsBody *PhysicsWorld::CreateStatic(CollisionHandler* response, int type, const PhysicalProperties &props)
+	PhysicsBody *PhysicsWorld::CreateStatic(ICollisionHandler* response, int type, const PhysicalProperties &props)
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);

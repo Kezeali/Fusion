@@ -44,6 +44,13 @@ namespace FusionEngine
 	 * If a Resource object is deleted, it will delete the data it points to and notify
 	 * all related ResourcePointer objects that they have been invalidated.
 	 *
+	 * \todo
+	 * Replace reference counting with 'ticket' system - ResourcePointers will call
+	 * <code>AddRef(this);</code>
+	 * to get a ticket (i.e. be added to the hash map), then call 
+	 * <code>DropRef(this);</code>
+	 * when done.
+	 *
 	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
 	class Resource
@@ -73,8 +80,19 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		template<typename T>
-		Resource(const char* type, const ResourceTag &tag, std::string path, T* ptr)
+		Resource(const char* type, const ResourceTag &tag, const std::string& path, void* ptr)
+			: m_Type(type),
+			m_Tag(tag),
+			m_Path(path),
+			m_Data(ptr),
+			m_RefCount(0)
+		{
+			if (ptr != 0)
+				_setValid(true);
+		}
+
+		//! Constructor
+		Resource(const std::string& type, const ResourceTag &tag, const std::string& path, void* ptr)
 			: m_Type(type),
 			m_Tag(tag),
 			m_Path(path),
@@ -92,7 +110,10 @@ namespace FusionEngine
 			OnDestruction();
 
 			if (m_Data != 0)
+			{
+				throw 
 				delete m_Data;
+			}
 		}
 
 	public:
@@ -145,11 +166,11 @@ namespace FusionEngine
 			m_Data = ptr;
 		}
 
-		//! Returns the resource ptr (static cast)
+		//! Returns the resource ptr (cast)
 		template<typename T>
 		T* GetDataPtr()
 		{
-			return static_cast<T*>(m_Data);
+			return dynamic_cast<T*>(m_Data);
 		}
 
 		//! Returns the resource ptr
@@ -162,7 +183,8 @@ namespace FusionEngine
 		template<typename T>
 		T &GetData() const
 		{
-			return *(static_cast<T*>(m_Data));
+			cl_assert(IsValid());
+			return *(dynamic_cast<T*>(m_Data));
 		}
 
 		//! Validates / invalidates this resource

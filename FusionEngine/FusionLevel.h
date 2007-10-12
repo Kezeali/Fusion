@@ -30,7 +30,7 @@ namespace FusionEngine
 	{
 		Vector2* state;
 		float weight;
-	}
+	};
 
 	/*!
 	 * \brief

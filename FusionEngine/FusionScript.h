@@ -81,12 +81,14 @@ namespace FusionEngine
 		 */
 		void _notifyRegistration();
 
+		const std::string& GetScript() const;
+
 	private:
 		//! Unique module ID.
 		/*!
 		 * The unique ID for the module in which this script resides.
 		 */
-		char *m_Module;
+		std::string m_Module;
 
 		//! Stores the raw script.
 		std::string m_Script;

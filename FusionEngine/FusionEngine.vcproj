@@ -207,6 +207,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionCommand.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionCommon.h"
 				>
 			</File>
@@ -224,6 +228,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionConsoleStdOutWriter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionControl.h"
 				>
 			</File>
 			<File
@@ -694,6 +702,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEntityInputManager.cpp"
 				>
 			</File>
 			<File

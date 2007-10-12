@@ -63,7 +63,7 @@ namespace FusionEngine
 	 * could be jettasoned at will to home on the nearest ship, causing instant death
 	 * on impact. :)
 	 */
-	class FusionShip : public CollisionHandler
+	class FusionShip : public ICollisionHandler
 	{
 		friend class ServerEnvironment;
 		friend class ClientEnvironment;
@@ -165,10 +165,10 @@ namespace FusionEngine
 		//! Reverts all state data
 		void RevertToInitialState();
 
-		//! Implementation of CollisionHandler#CanCollideWith()
+		//! Implementation of ICollisionHandler#CanCollideWith()
 		bool CanCollideWith(const FusionPhysicsBody *other);
 
-		//! Implementation of CollisionHandler#CollisionWith()
+		//! Implementation of ICollisionHandler#CollisionWith()
 		void CollisionWith(const FusionPhysicsBody *other, const Vector2 &collision_point);
 
 

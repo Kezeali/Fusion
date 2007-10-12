@@ -21,7 +21,7 @@ const float g_ThrustForce = 0.14f;
 
 using namespace FusionEngine;
 
-class SomeHandlerYouAre : public CollisionHandler
+class SomeHandlerYouAre : public ICollisionHandler
 {
 private:
 	FusionPhysicsBody* m_MyBody;
@@ -227,7 +227,7 @@ class ScriptingTest : public CL_ClanApplication
 			memcpy( userdata, ud.c_str(), ud.size() +1 );
 			m_DronePhysical[i]->SetUserData(userdata);
 		}
-		m_ShipPhysical->SetCollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
+		m_ShipPhysical->SetICollisionHandler(new SomeHandlerYouAre(m_DronePhysical[0]));
 
 		// Hole
 		/*m_Damage = new CL_Surface("./circle.png");

@@ -29,7 +29,7 @@
 
 /*!
  * \file FusionCollisionCallback.h
- * This file defines both CollisionCallback and CollisionHandler, either of which
+ * This file defines both CollisionCallback and ICollisionHandler, either of which
  * are valid methods for allowing non-physical body classes to be aware of collisions.
  */
 
@@ -60,7 +60,7 @@ namespace FusionEngine
 	}
 
 	//! Classes may impliment this to become collision handlers.
-	class CollisionHandler
+	class ICollisionHandler
 	{
 	public:
 		//! Return true if collision checks should be preformed on the passed body.

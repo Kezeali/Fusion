@@ -43,7 +43,7 @@
 
 namespace FusionEngine
 {
-	static const size_t g_ConsoleDefaultMaxData = 65535;
+	static const size_t g_ConsoleDefaultMaxData = 1000;
 
 	//! Not Used
 	struct ConsoleLine
@@ -58,6 +58,11 @@ namespace FusionEngine
 	 * but instead uses callbacks to allow other classes to deal with console
 	 * data. On that note, this is also not a script executor; the console
 	 * GUI does that.
+	 *
+	 * \todo Store ConsoleLines as circular 
+	 * linked list (or something else that doesn't require data manipulation
+	 * to remove items from the beginning - could it be done with a vector and
+	 * stored positions?)
 	 */
 	class Console : public Singleton<Console>
 	{

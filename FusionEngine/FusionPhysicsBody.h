@@ -103,7 +103,7 @@ namespace FusionEngine
 		 * \param[in] handler
 		 * The collision response object.
 		 */
-		PhysicsBody(FusionPhysicsWorld *world, CollisionHandler *handler);
+		PhysicsBody(FusionPhysicsWorld *world, ICollisionHandler *handler);
 
 		//! [depreciated] Constructor with response param.
 		/*!
@@ -229,7 +229,7 @@ namespace FusionEngine
 		void SetCollisionCallback(const CollisionCallback &callback);
 
 		//! Sets a collision handler
-		void SetCollisionHandler(CollisionHandler *handler);
+		void SetCollisionHandler(ICollisionHandler *handler);
 
 		//! Returns true if the given body can experiance a collision with this one.
 		bool CanCollideWith(PhysicsBody *other);
@@ -431,7 +431,7 @@ namespace FusionEngine
 		//! \see FusionPhysicsCallback.h
 		CollisionCallback m_CollisionResponse;
 		//! Collsion handler
-		CollisionHandler *m_CollisionHandler;
+		ICollisionHandler *m_CollisionHandler;
 
 		//! Data which may be useful for collision responses, etc.
 		void *m_UserData;
