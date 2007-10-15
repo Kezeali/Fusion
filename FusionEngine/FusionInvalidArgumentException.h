@@ -32,7 +32,7 @@
 namespace FusionEngine
 {
 
-	//! File system exception class
+	//! Invalid argument exception class
 	class InvalidArgumentException : public Exception
 	{
 		static std::string s_Message;

@@ -33,12 +33,6 @@ namespace FusionEngine
 {
 
 	//! Fusion exception class.
-	/*!
-	 * \todo Exception factory (FusionExceptionFactory.h; inherit
-	 * all Exception headers) - with methods to create exceptions of every
-	 * type + every message format (a lot of mindeless typing, but worth it
-	 * in the long run as an OO solution)
-	 */
 	class Exception
 	{
 	public:
@@ -75,10 +69,13 @@ namespace FusionEngine
 		Exception();
 		//! Constructor +type +message
 		Exception(ExceptionType type, const std::string &message, bool critical);
-		//! Constructor +message
-		Exception(const std::string &origin, bool critical = false);
+
+		//! Constructor +origin
+		Exception(const std::string &origin);
 		//! Constructor +origin +message
-		Exception(const std::string &origin, const std::string &message, bool critical = false);
+		Exception(const std::string &origin, const std::string &message);
+		//! Constructor +origin +message +file +line
+		Exception(const std::string &origin, const std::string &message, const char* file, long line);
 
 	public:
 		//! [depreciated] Retrieves the type
@@ -92,8 +89,8 @@ namespace FusionEngine
 		//! Retrieves the human readable message.
 		/*!
 		 * \remarks
-		 * Me - I can't call this GetMessage because of a stupid windows macro 
-		 * which redefines that as GetMessageW!
+		 * Me - I can't call this GetMessage because of a windows macro 
+		 * which redefines that as GetMessageW! :\
 		 */
 		virtual std::string GetDescription() const;
 
@@ -108,12 +105,15 @@ namespace FusionEngine
 		virtual std::string ToString() const;
 
 	protected:
-		//! Stores the error type
-		ExceptionType m_Type;
+		std::string m_File;
+		long m_Line;
 		std::string m_Name;
 		std::string m_Origin;
 		//! Stores the message (usually used as the Description property)
 		std::string m_Message;
+
+		// [depreciated]
+		ExceptionType m_Type;
 		bool m_Critical;
 
 	};

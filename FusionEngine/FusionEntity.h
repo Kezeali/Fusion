@@ -35,10 +35,11 @@
 
 #include "FusionCommon.h"
 
+#include "FusionScriptingEngine.h"
+#include "FusionCommand.h"
+
 /// Inherited
 #include "FusionPhysicsCallback.h"
-
-#include "FusionScriptingEngine.h"
 
 namespace FusionEngine
 {
@@ -48,6 +49,8 @@ namespace FusionEngine
 	 * Input structure for entities
 	 *
 	 * \todo Perhaps this should be implemented entirely at a script level?
+	 *
+	 * \todo Rename this as Command
 	 */
 	class EntityInput
 	{
@@ -65,14 +68,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 *
-	 * This class acts as a wrapper for the script objects which define
-	 * the actual logic for in-game objects, while storing and providing
-	 * access to instances of hard-coded classes for said script objects.
-	 *
-	 * Hopefully, this will help script objects to be created and used
-	 * almost as easily as hard-coded objects.
-	 *
-	 * \todo perhaps there will be no drawables, just child entities (with drawing defined at script level)
+	 * \todo perhaps there will be no drawables, just child entities (with drawing defined in the derived Entity implementation, or at script level)
 	 */
 	class Enitity : public FusionNode, public ICollisionHandler
 	{
@@ -108,7 +104,7 @@ namespace FusionEngine
 		typedef std::map<std::string, PropertyPointer> PropertyList;
 
 		//! List of entities
-		typdef std::map<std::string, Entity*> EntityList;
+		typedef std::map<std::string, Entity*> EntityList;
 
 	public:
 		//! Constructor
@@ -152,14 +148,15 @@ namespace FusionEngine
 		 * Sets the state to the stored state (history) corresponding to the given ID, and runs
 		 * the Simulate script for this entity.
 		 */
-		void Simulate();
+		virtual void Simulate();
 
 		PropertyPointer GetProperty(const std::string& name);
-		std::string SerializeState() const;
-		void DeserializeState(const std::string& state);
+
+		virtual std::string SerializeState() const;
+		virtual void DeserializeState(const std::string& state);
 
 		//! Returns a human-readable string
-		std::string ToString() const;
+		virtual std::string ToString() const;
 
 		////! Scene node
 		//void SetSceneNode(FusionNode *input);
@@ -213,9 +210,6 @@ namespace FusionEngine
 	protected:
 		// Is this needed? - 2006/09/08: no
 		//ClientEnvironment *m_Environment;
-
-		// The actual entity logic (for which this C++ class is simply a wrapper)
-		asIScriptStruct* m_ScriptObject;
 
 		//! Body
 		FusionPhysicsBody *m_Body;

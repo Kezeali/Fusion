@@ -34,6 +34,13 @@
 
 #include "FusionCommon.h"
 
+#ifdef _DEBUG
+#include "FusionConsole.h"
+#endif
+
+// Undefine this to use pure ref-counting
+#define FSN_RESOURCE_USE_TICKETS
+
 namespace FusionEngine
 {
 
@@ -45,16 +52,18 @@ namespace FusionEngine
 	 * all related ResourcePointer objects that they have been invalidated.
 	 *
 	 * \todo
-	 * Replace reference counting with 'ticket' system - ResourcePointers will call
-	 * <code>AddRef(this);</code>
-	 * to get a ticket (i.e. be added to the hash map), then call 
-	 * <code>DropRef(this);</code>
-	 * when done.
+	 * Fix copy constructor so Resources can be stored in stl containers without wrapping them in shared_ptrs
 	 *
 	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
 	class Resource
 	{
+	public:
+		//! Used for ticketing
+		typedef unsigned int ResourcePtrTicket;
+		//! Ticket list
+		typedef std::vector<ResourcePtrTicket> TicketList;
+
 	protected:
 		std::string m_Type;
 		ResourceTag m_Tag;
@@ -62,6 +71,9 @@ namespace FusionEngine
 		void* m_Data;
 		bool m_Valid;
 		int m_RefCount;
+		ResourcePtrTicket m_NextTicket;
+		// Ticket version (replaces RefCount)
+		TicketList m_RefTickets;
 
 	public:
 		CL_Signal_v0 OnDestruction;
@@ -85,7 +97,8 @@ namespace FusionEngine
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
-			m_RefCount(0)
+			m_RefCount(0),
+			m_NextTicket(0)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -97,7 +110,8 @@ namespace FusionEngine
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
-			m_RefCount(0)
+			m_RefCount(0),
+			m_NextTicket(0)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -109,25 +123,29 @@ namespace FusionEngine
 			OnInvalidation();
 			OnDestruction();
 
-			if (m_Data != 0)
+#ifdef _DEBUG
+			if (m_Data != NULL || m_Valid)
 			{
-				throw 
-				delete m_Data;
+				SendToConsole("Resource '" + m_Tag + "' was not properly dellocated before deletion!");
 			}
+#endif
 		}
 
 	public:
 		//! Returns the type name (of resource loader to be used for this resource)
 		const char* GetType() const
 		{
-			return m_Type;
+			return m_Type.c_str();
 		}
 		//! Returns the resource tag which should point to the Rsc
 		ResourceTag GetTag() const
 		{
 			return m_Tag;
 		}
-		//! Returns the text description of this resource (used by the ResourceLoader)
+		//! [depreciated] Returns the text property.
+		/*!
+		 * The text property is no longer present, so this just returns Path
+		 */
 		const std::string &GetText() const
 		{
 			return m_Path;
@@ -141,37 +159,25 @@ namespace FusionEngine
 		//! Specifically for StringLoader
 		/*!
 		 * Allows StringLoader to save memory by making the Data property point directly
-		 * to the Text property (yes, this is very dumb... but I can't think of a better way '_')
+		 * to the Path property (yes, this is very dumb... but I can't think of a better way '_')
 		 */
 		std::string *_getTextPtr()
 		{
-			return &m_Text;
+			return &m_Path;
 		}
 
-		//! Sets the data (with given type)
-		template<typename T>
-		void SetDataPtr(T* ptr)
-		{
-			m_Data = ptr;
-		}
 		//! Sets the data
 		void SetDataPtr(void* ptr)
 		{
 			m_Data = ptr;
 		}
 
-		//! Operator version of SetDataPtr()
-		void operator=(void* ptr)
-		{
-			m_Data = ptr;
-		}
-
-		//! Returns the resource ptr (cast)
-		template<typename T>
-		T* GetDataPtr()
-		{
-			return dynamic_cast<T*>(m_Data);
-		}
+		////! Returns the resource ptr (cast)
+		//template<typename T>
+		//T* GetDataPtr()
+		//{
+		//	return dynamic_cast<T*>(m_Data);
+		//}
 
 		//! Returns the resource ptr
 		void* GetDataPtr()
@@ -209,10 +215,10 @@ namespace FusionEngine
 		}
 
 		//! Increments ref count
-		void AddRef()
-		{
-			m_RefCount++;
-		}
+		//void AddRef()
+		//{
+		//	m_RefCount++;
+		//}
 
 		//! Decrements ref count
 		void DropRef()
@@ -220,10 +226,44 @@ namespace FusionEngine
 			m_RefCount--;
 		}
 
+		//! Increments ref count
+		ResourcePtrTicket AddRef()
+		{
+#ifdef FSN_RESOURCE_USE_TICKETS
+			m_RefTickets.push_back(m_NextTicket);
+			return m_NextTicket++;
+#else
+			return m_RefCount++;
+#endif
+		}
+
+		//! Decrements ref count
+		void DropRef(ResourcePtrTicket ticket)
+		{
+#ifdef FSN_RESOURCE_USE_TICKETS
+			for (TicketList::iterator it = m_RefTickets.begin(); it != m_RefTickets.end(); ++it)
+			{
+				if (*it == ticket)
+				{
+					m_RefTickets.erase(it);
+					break;
+				}
+			}
+
+#else
+			m_RefCount--;
+#endif
+		}
+
 		//! Returns true if this resource is referenced
 		bool IsReferenced() const
 		{
+#ifdef FSN_RESOURCE_USE_TICKETS
+			return !m_RefTickets.empty();
+
+#else
 			return m_RefCount > 0;
+#endif
 		}
 	};
 

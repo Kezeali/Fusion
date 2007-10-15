@@ -18,13 +18,14 @@ namespace FusionEngine
 	}
 
 	GUI::GUI(CL_DisplayWindow* window)
-		: FusionState(false), // GUI is non-blockin by default
+		: FusionState(false), /* GUI is non-blockin by default */
 		m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
-		m_ShowMouseTimer(1000)
+		m_ShowMouseTimer(1000),
+		m_Display(window->get_gc())
 	{
+		// Just in case, I guess? (re-initialized in GUI::Initialise() after the CEGUI renderer has been setup)
 		m_GLState = CL_OpenGLState(window->get_gc());
-		m_GLState.set_active();
 	}
 
 	GUI::~GUI()
@@ -40,8 +41,11 @@ namespace FusionEngine
 		{
 			using namespace CEGUI;
 			// -- Create a new system and renderer --
-			CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0, 640, 480);
+			CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0, m_Display->get_width(), m_Display->get_height());
 			new CEGUI::System(renderer);
+
+			m_GLState = CL_OpenGLState(m_Display);
+			m_GLState.set_active();
 
 			// -- Setup the resource paths and groups --
 			DefaultResourceProvider* rp = static_cast<DefaultResourceProvider*>
@@ -109,16 +113,23 @@ namespace FusionEngine
 
 	bool GUI::Update(unsigned int split)
 	{
-		CEGUI::System::getSingleton().injectTimePulse((float)(split*0.001));
+		try
+		{
+			CEGUI::System::getSingleton().injectTimePulse((float)(split*0.001));
 
-		// Hide the cursor if the timeout has been reached
-		if ( m_ShowMouseTimer <= 0 )
-		{
-			CEGUI::MouseCursor::getSingleton().hide();
+			// Hide the cursor if the timeout has been reached
+			if ( m_ShowMouseTimer <= 0 )
+			{
+				CEGUI::MouseCursor::getSingleton().hide();
+			}
+			else
+			{
+				m_ShowMouseTimer -= split;
+			}
 		}
-		else
+		catch (CEGUI::Exception& e)
 		{
-			m_ShowMouseTimer -= split;
+			SendToConsole(e.getMessage().c_str(), Console::MTERROR);
 		}
 
 		return true;

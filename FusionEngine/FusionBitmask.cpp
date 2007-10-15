@@ -164,7 +164,7 @@ namespace FusionEngine
 		{
 			source = provider->open_source(name);
 		}
-		catch (CL_Error e)
+		catch (CL_Error& e)
 		{
 			//Console::getSingleton().Add(e.message);
 			return false;

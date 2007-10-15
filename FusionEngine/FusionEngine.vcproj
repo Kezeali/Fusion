@@ -275,6 +275,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionExceptionFactory.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionFileNotFoundException.h"
 				>
 			</File>
@@ -336,10 +340,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionLinkedNode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionLoadingException.h"
 				>
 			</File>
 			<File
@@ -524,6 +524,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionScriptedControlLoader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedEntity.h"
 				>
 			</File>
 			<File

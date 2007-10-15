@@ -34,8 +34,8 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * [depreciated] See CollisionHandler. (Aparently I forgot that I implemented 
-	 * this so I created CollisionHandler. Now I've used CollisionHandler so 
+	 * [depreciated] See ICollisionHandler. (Aparently I forgot that I implemented 
+	 * this so I created ICollisionHandler. Now I've used ICollisionHandler so 
 	 * I'll stick with that)
 	 *
 	 * Each body can have a derived class for different collison responses :D.

@@ -42,12 +42,18 @@ namespace FusionEngine
 		FileNotFoundException() : FileSystemException() {}
 		//! Constructor
 		FileNotFoundException(const std::string& origin)
-			: FileSystemException(origin, s_Message)
+			: FileSystemException(origin)
 		{
 		}
 		//! Constructor
-		FileNotFoundException(const std::string& origin, const std::string& filename)
-			: FileSystemException(origin, CL_String::format(s_Message_filename, filename))
+		FileNotFoundException(const std::string& origin, const std::string& message)
+			: FileSystemException(origin, message)
+		{
+		}
+
+		//! Constructor
+		FileNotFoundException(const std::string& origin, const std::string& message, const char* file, long line)
+			: FileSystemException(origin, message, file, line)
 		{
 		}
 

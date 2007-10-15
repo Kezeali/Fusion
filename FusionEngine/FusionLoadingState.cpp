@@ -109,18 +109,15 @@ namespace FusionEngine
 		try
 		{
 			// Update the current stage
-			m_Progress = m_ActiveStage->Update(split)*m_StageProgressScale;
+			m_Progress = m_ActiveStage->Update(split) * m_StageProgressScale;
 		}
-		catch (LoadingException e)
+		catch (Exception& e)
 		{
-			Console::getSingletonPtr()->Add(e.GetError());
-
 			std::string message = CL_String::format(
-				"Loading stage '%1' failed to complete:\n\n%2",
-				m_ActiveStage->GetName(), e.GetError()
+				"Loading stage '%1' failed to complete: %2",
+				m_ActiveStage->GetName(), e.GetDescription()
 				);
-			throw Error(Error::LOADING, message, false);
-
+			SendToConsole(message);
 		}
 
 		if (m_ActiveStage->IsDone())

@@ -37,6 +37,8 @@
 
 #include "FusionControl.h"
 
+#include "FusionSingleton.h"
+
 namespace FusionEngine
 {
 	//! Max local (split-screen) players per client

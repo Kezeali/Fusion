@@ -34,23 +34,31 @@
 
 #include "Common.h"
 
+#ifdef _DEBUG
+#include "FusionConsole.h"
+#endif
+
 namespace FusionEngine
 {
 
-	//! The ResourcePointer system is a simple garbage collection system.
+	//! The ResourceToken system is a simple garbage collection system.
 	/*!
 	 * The ResourceManager manages a collection owning pointers
 	 * (Resource objects) and, via reference counting, is notified when
-	 * a resource has no external references (ResourcePointers) remaining.
+	 * a resource has no external references (ResourceToken) remaining.
 	 * If a resource has no related external references, the memory
 	 * related to it will be freed next time the ResourceManager does
 	 * garbage collection
 	 * (e.g. between levels, /after/ loading the next level's data
 	 * (to minimise unnecessary re-loading))
 	 *
+	 * \todo Rename as ResourceToken
+	 *
+	 * \todo Make this copyable (fix copy-constructor / assignment constructor)
+	 *
 	 * \sa ResourceManager | Resource
 	 */
-	template<typename T>
+	template<typename T = void*>
 	class ResourcePointer
 	{
 	protected:
@@ -58,8 +66,11 @@ namespace FusionEngine
 
 		CL_Slot m_ResourceDestructionSlot;
 
-		static unsigned long ms_NextHash;
 		unsigned long m_Hash;
+
+		bool m_Valid;
+
+		Resource::ResourcePtrTicket m_Ticket;
 
 	public:
 		//! Basic Constructor
@@ -67,43 +78,84 @@ namespace FusionEngine
 		 * Creates an invalid resource pointer
 		 */
 		ResourcePointer()
-			: m_Resource(0)
+			: m_Resource(0),
+			m_Ticket(0),
+			m_Valid(false)
 		{
-			m_Hash = ms_NextHash++;
 		}
 
 		//! Constructor
 		ResourcePointer(Resource* resource)
-			: m_Resource(resource)
+			: m_Resource(resource),
+			m_Valid(true)
 		{
-			m_Hash = ms_NextHash++;
-			resource->AddRef(this);
+			m_Ticket = resource->AddRef();
 			m_ResourceDestructionSlot = resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
 		}
 
 		//! Copy constructor
-		ResourcePointer(ResourcePointer& other)
-			: m_Resource(other.m_Resource)
+		template <typename Y>
+		explicit ResourcePointer(ResourcePointer<Y>& other)
+			: m_Resource(other.m_Resource),
+			m_Valid(true)
 		{
-			m_Hash = ms_NextHash++;
-			m_Resource->AddRef(this);
+			m_Ticket = m_Resource->AddRef();
 			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
 		}
+
+		template <typename Y>
+		ResourcePointer(ResourcePointer<Y> const& other)
+			: m_Resource(other.m_Resource), 
+			m_Ticket(other.m_Ticket),
+			m_Valid(true)
+		{
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+		}
+
+		ResourcePointer(ResourcePointer const& other)
+			: m_Resource(other.m_Resource), 
+			m_Ticket(other.m_Ticket),
+			m_Valid(true)
+		{
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+		}
+
 
 		//! Destructor
 		~ResourcePointer()
 		{
+#ifdef _DEBUG
+			SendToConsole("ResourcePointer deleted");
+#endif
 			if (m_Resource != 0)
-				m_Resource->DropRef(this);
+				m_Resource->DropRef(this->GetTicket());
 		}
 
 	public:
+		template<class Y>
+		ResourcePointer & operator=(ResourcePointer<Y> const & r)
+		{
+			m_Resource = r.m_Resource;
+			m_Ticket = r.m_Ticket;
+			m_Valid = r.m_Valid;
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			return *this;
+		}
+		ResourcePointer & operator=(ResourcePointer const & r)
+		{
+			m_Resource = r.m_Resource;
+			m_Ticket = r.m_Ticket;
+			m_Valid = r.m_Valid;
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			return *this;
+		}
+
 		//! Returns the resource data ptr
 		template<typename T>
 		T* GetDataPtr()
 		{
 			if (m_Resource != 0)
-				return m_Resource->GetDataPtr<T>();
+				return (T*)m_Resource->GetDataPtr();
 			else
 				return 0;
 		}
@@ -113,9 +165,29 @@ namespace FusionEngine
 		T const* GetDataPtr() const
 		{
 			if (m_Resource != 0)
-				return m_Resource->GetDataPtr<T>();
+				return (T*)m_Resource->GetDataPtr();
 			else
 				return 0;
+		}
+
+		//! Indirect member access operator.
+		T* operator->()
+		{ return (T*)m_Resource->GetDataPtr(); }
+
+		T const* operator->() const
+		{ return (const T*)m_Resource->GetDataPtr(); }
+
+		void SetTarget(Resource* resource)
+		{
+			if (m_Resource != NULL)
+			{
+				m_Resource->OnDestruction.disconnect(m_ResourceDestructionSlot);
+				m_Resource->DropRef(m_Ticket);
+			}
+
+			m_Resource = resource;
+			m_Ticket = m_Resource->AddRef();
+			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
 		}
 
 		bool IsValid() const
@@ -124,13 +196,14 @@ namespace FusionEngine
 			return m_Resource == 0 ? false : m_Resource->IsValid();
 		}
 
-		unsigned long GetHash() const
+		Resource::ResourcePtrTicket GetTicket() const
 		{
-			return m_Hash;
+			return m_Ticket;
 		}
 
 		void onResourceDestruction()
 		{
+			m_Valid = false;
 			m_Resource = 0;
 		}
 	};

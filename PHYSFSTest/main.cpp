@@ -296,7 +296,7 @@ class PhysFSTest : public CL_ClanApplication
 				CL_System::keep_alive(4);
 			}
 		}
-		catch (CL_Error e)
+		catch (CL_Error& e)
 		{
 			// O noes!
 			std::cout << e.message << std::endl;

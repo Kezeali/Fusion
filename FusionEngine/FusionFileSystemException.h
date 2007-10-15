@@ -41,12 +41,18 @@ namespace FusionEngine
 		FileSystemException() : Exception() {}
 		//! Constructor
 		FileSystemException(const std::string& origin)
-			: Exception(origin, s_Message)
+			: Exception(origin)
 		{
 		}
 		//! Constructor
 		FileSystemException(const std::string& origin, const std::string& message)
 			: Exception(origin, message)
+		{
+		}
+
+		//! Constructor (full)
+		FileSystemException(const std::string& origin, const std::string& message, const char* file, long line)
+			: Exception(origin, message, file, line)
 		{
 		}
 

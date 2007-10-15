@@ -124,7 +124,12 @@ namespace FusionEngine
 		{
 			c->Add(message);
 		}
-		//! \todo Throw exception if the console hasn't been created.
+
+		// If the console hasn't been created, just send the message to standard output
+		else
+		{
+			std::cout << message << std::endl;
+		}
 	}
 
 	//! Static method to safely add a message to the singleton object
@@ -138,18 +143,28 @@ namespace FusionEngine
 		{
 			c->Add(message, type);
 		}
-		//! \todo Throw exception if the console hasn't been created.
+
+		// If the console hasn't been created, just send the message to standard output
+		else
+		{
+			std::cout << message << std::endl;
+		}
 	}
 
 	//! Static method to safely add a message to the singleton object
-	static void SendToConsole(const Exception *ex)
+	static void SendToConsole(const Exception &ex)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
 		{
-			c->Add(ex->ToString(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
+			c->Add(ex.ToString(), Console::MTERROR);
 		}
-		//! \todo Throw exception if the console hasn't been created.
+
+		// If the console hasn't been created, just send the message to standard output
+		else
+		{
+			std::cout << ex.ToString() << std::endl;
+		}
 	}
 
 }

@@ -32,7 +32,7 @@ namespace FusionEngine
 {
 
 	ClientOptions::ClientOptions()
-		: m_NumPlayers(0),
+		: m_NumLocalPlayers(0),
 		m_Rate(100),
 		m_LocalPort(1337)
 	{

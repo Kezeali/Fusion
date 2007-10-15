@@ -46,24 +46,20 @@ namespace FusionEngine
 	 * \sa
 	 * StringLoader | ImageLoader | ResourceManager
 	 */
-	template<typename T>
 	class ResourceLoader
 	{
 	public:
-		//! Basic constructor.
-		ResourceLoader();
-
-	public:
 		//! Returns the type identifier for resources this loader can deal with
 		virtual const std::string &GetType() const = 0;
+
 		//! Loads the resource reffered to by the given text
-		
-		virtual Resource<T> LoadResource(ResourceTag tag, const std::string &text) = 0;
+		virtual Resource* LoadResource(const std::string& tag, const std::string &text) = 0;
+
 		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		
-		virtual void ReloadResource(Resource<T> resource) = 0;
+		virtual void ReloadResource(Resource * resource) = 0;
+
 		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(Resource<T> resource) = 0;
+		virtual void UnloadResource(Resource * resource) = 0;
 
 	};
 

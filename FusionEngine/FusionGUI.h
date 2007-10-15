@@ -126,6 +126,8 @@ namespace FusionEngine
 		// Resets the gl state
 		CL_OpenGLState m_GLState;
 
+		CL_GraphicContext* m_Display;
+
 	public:
 		//! Tells CEGUI when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &key);

@@ -135,7 +135,7 @@ namespace FusionEngine
 
 			log->_setIsEnded(false);
 		}
-		catch (LogfileException &e)
+		catch (FileSystemException &e)
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
@@ -187,11 +187,11 @@ namespace FusionEngine
 
 			log->_setIsEnded(true);
 		}
-		catch (LogfileException& e)
+		catch (FileSystemException& e)
 		{
 			// We don't want to get stuck in a loop, so we disable console logging first
 			DisableConsoleLogging();
-			SendToConsole(&e);
+			SendToConsole(e);
 		}
 	}
 
@@ -242,10 +242,10 @@ namespace FusionEngine
 			Log* log = openLog(tag);
 			log->LogMessage(message, severity);
 		}
-		catch (LogfileException e)
+		catch (FileSystemException& e)
 		{
 			DisableConsoleLogging();
-			SendToConsole(&e);
+			SendToConsole(e);
 		}
 	}
 

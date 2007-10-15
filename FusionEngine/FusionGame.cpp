@@ -180,7 +180,7 @@ namespace FusionEngine
 			delete Console::getSingletonPtr();
 			delete logger;
 		}
-		catch (CL_Error err)
+		catch (CL_Error& err)
 		{
 			Logger* logger = Logger::getSingletonPtr();
 

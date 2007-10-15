@@ -32,28 +32,36 @@ namespace FusionEngine
 {
 
 	Exception::Exception()
-		: m_Type(TRIVIAL),
-		m_Critical(false)
+		: m_Line(0)
 	{
 	}
 
 	Exception::Exception(Exception::ExceptionType type, const std::string &message, bool critical)
 		: m_Type(type),
 		m_Message(message),
-		m_Critical(critical)
+		m_Critical(critical),
+		m_Line(0)
 	{
 	}
 
-	Exception::Exception(const std::string &origin, bool critical)
+	Exception::Exception(const std::string &origin)
 		: m_Origin(origin),
-		m_Critical(critical)
+		m_Line(0)
 	{
 	}
 
-	Exception::Exception(const std::string& origin, const std::string &message, bool critical)
+	Exception::Exception(const std::string& origin, const std::string &message)
 		: m_Origin(origin),
 		m_Message(message),
-		m_Critical(critical)
+		m_Line(0)
+	{
+	}
+
+	Exception::Exception(const std::string& origin, const std::string &message, const char* file, long line)
+		: m_Origin(origin),
+		m_Message(message),
+		m_File(file),
+		m_Line(line)
 	{
 	}
 
@@ -90,13 +98,18 @@ namespace FusionEngine
 
 	std::string Exception::ToString() const
 	{
-		std::string str = GetName() + " in " + GetOrigin();
-		std::string description = GetDescription();
+		//! \todo Use StringStream here
 
-		if (description.empty())
-			return str;
-		else
-			return str + ": " + GetDescription();
+		std::string str = GetName() + " in " + GetOrigin();
+
+		if (m_Line > 0)
+			str += "(" + m_File + ":" + CL_String::from_int((int)m_Line) + ")";
+
+		std::string description = GetDescription();
+		if (!description.empty())
+			str += ": " + GetDescription();
+
+		return str;
 	}
 
 }

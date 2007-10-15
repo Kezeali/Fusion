@@ -27,7 +27,7 @@ namespace Fusion
 			delete game;
 
 		}
-		catch (CL_Error err)
+		catch (CL_Error& err)
 		{
 			// TODO: cross-platform GUI error box (wxwidgets?)
 			std::cerr << "Failed to initialise ClanLib: " << err.message.c_str() << std::endl;
