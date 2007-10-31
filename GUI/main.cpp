@@ -15,52 +15,56 @@
 #include "../FusionEngine/FusionResource.h"
 #include "../FusionEngine/FusionResourcePointer.h"
 #include "../FusionEngine/FusionResourceLoader.h"
+#include "../FusionEngine/FusionXMLLoader.h"
+#include "../FusionEngine/FusionAudioLoader.h"
+#include "../FusionEngine/FusionImageLoader.h"
+#include "../FusionEngine/FusionResourceManager.h"
 
-#include <boost/shared_ptr.hpp>
+#include <boost/smart_ptr.hpp>
 
 using namespace FusionEngine;
 
-class ImageLoader : public ResourceLoader
+static void ConstructSurface(CL_Surface *thisPointer)
 {
-public:
-	ImageLoader()
-	{
-	}
+	new(thisPointer) CL_Surface();
+}
 
-	const std::string &GetType() const
-	{
-		static std::string strType("IMAGE");
-		return strType;
-	}
+static void DestructSurface(CL_Surface *thisPointer)
+{
+	thisPointer->~CL_Surface();
+}
 
-	Resource* LoadResource(const std::string& tag, const std::string &path)
-	{
-		Resource* rsc = new Resource(GetType().c_str(), tag, path, new CL_Surface(path));
-		return rsc;
-	}
+static void drawSurface(CL_Surface *thisPointer, float x, float y)
+{
+	thisPointer->draw(x, y);
+}
 
-	void ReloadResource(Resource* resource)
-	{
-		if (resource->IsValid())
-		{
-			delete resource->GetDataPtr();
-		}
+void RegisterCLSurface(asIScriptEngine *engine)
+{
+	int r;
 
-		resource->SetDataPtr(new CL_Surface(resource->GetPath()));
+	// Register the bstr type
+	r = engine->RegisterObjectType("cl_surface", sizeof(CL_Surface), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
 
-		resource->_setValid(true);
-	}
+	// Register the object operator overloads
+	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructSurface), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructSurface),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_ASSIGNMENT, "cl_surface &f(const cl_surface &in)", asMETHODPR(CL_Surface, operator =, (const CL_Surface&), CL_Surface&), asCALL_THISCALL); assert( r >= 0 );
 
-	void UnloadResource(Resource* resource)
-	{
-		if (resource->IsValid())
-			delete resource->GetDataPtr();
-		resource->SetDataPtr(NULL);
+	// Register the object methods
+	r = engine->RegisterObjectMethod("cl_surface", "void draw(float, float)", asFUNCTIONPR(drawSurface,(float, float),void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+}
 
-		resource->_setValid(false);
-	}
+static void DrawImage(ResourcePointer<CL_Surface> *lhs, float x, float y)
+{
+	if (!lhs->IsValid())
+		return;
 
-};
+	CL_Surface* data = lhs->GetDataPtr();
+	if (data != NULL)
+		data->draw(x, y);
+}
+
 
 // Function implementation with native calling convention
 void PrintString(std::string &str)
@@ -82,21 +86,43 @@ void ClearConsole()
 		con->Clear();
 }
 
+ResourcePointer<CL_Surface> StaticGet(std::string& path);
 void StaticLoadResource(std::string& path);
 void StaticUnloadResource(std::string& tag);
 void StaticQuit();
 
+static const char *script1 =
+"class ship                                    \n"
+"{                                             \n"
+"    Image body;                               \n"
+"    void Preload()                            \n"
+"    {                                         \n"
+"        body = Get(\"body.png\");             \n"
+"        Print(\"Preloaded\");                 \n"
+"    }                                         \n"
+"    void Draw(float x, float y)               \n"
+"    {                                         \n"
+"        body.draw(x, y);                      \n"
+"    }                                         \n"
+"};                                            \n"
+"void Test()                                   \n"
+"{                                             \n"
+"   Get(\"body.png\").get().draw(10, 10); \n"
+"}                                             \n"
+"                                              \n";
+
 class GUITest : public CL_ClanApplication
 {
 public:
-	typedef std::map<std::string, boost::shared_ptr<Resource>> ResourceList;
+	//typedef std::vector<boost::shared_ptr<ResourcePointer>> DataList;
 
-	// ResourceManager properties
-	ResourceList m_Resources;
-	ImageLoader* m_ImgLoader;
+	//// ResourceManager properties
+	//ResourceList m_Resources;
+	//ImageLoader* m_ImgLoader;
 
-	// Entity properties
+	//// Entity properties
 	ResourcePointer<CL_Surface> m_ImageA, m_ImageB, m_ImageC;
+	ResourceManager* m_ResMan ;
 	int m_NextImage;
 
 	bool m_Quit;
@@ -106,25 +132,30 @@ public:
 	{
 		SendToConsole("Loading: " + path);
 
-		Resource* res = m_ImgLoader->LoadResource(path, path);
-
-		m_Resources[path] = ( boost::shared_ptr<Resource>(res) );
-
-		switch (m_NextImage)
+		try
 		{
-		case 0:
-			m_ImageA = ResourcePointer<CL_Surface>(res);
-			break;
-		case 1:
-			m_ImageB = ResourcePointer<CL_Surface>(res);
-			break;
-		case 2:
-			m_ImageC = ResourcePointer<CL_Surface>(res);
-			break;
-		};
-		++m_NextImage;
+			switch (m_NextImage)
+			{
+			case 0:
+				m_ImageA = m_ResMan->GetResource<CL_Surface>(path);
+				break;
+			case 1:
+				m_ImageB = m_ResMan->GetResource<CL_Surface>(path);
+				break;
+			case 2:
+				m_ImageC = m_ResMan->GetResource<CL_Surface>(path);
+				break;
+			};
+			++m_NextImage;
 
-		SendToConsole("Done loading " + path);
+			SendToConsole("Done loading " + path);
+
+		}
+		catch (FileSystemException& e)
+		{
+			SendToConsole("Failed to load: " + e.GetDescription());
+		}
+
 	}
 
 	// Unloads a resource
@@ -132,19 +163,23 @@ public:
 	{
 		SendToConsole("Unloading: " + tag);
 
-		Resource* res = m_Resources[tag].get();
-		if (res == NULL)
-		{
-			SendToConsole("Resource '" + tag + "' doesn't exist, aborting.");
-			return;
-		}
+		if (m_ImageA.GetTag() == tag)
+			m_ImageA.Release();
 
-		m_ImgLoader->UnloadResource(res);
-		m_Resources.erase(tag);
+		else if (m_ImageB.GetTag() == tag)
+			m_ImageB.Release();
 
-		--m_NextImage;
+		else if (m_ImageC.GetTag() == tag)
+			m_ImageC.Release();
+
+		m_ResMan->DisposeUnusedResources();
 
 		SendToConsole("Unloaded " + tag);
+	}
+
+	ResourcePointer<CL_Surface> Get(std::string& path)
+	{
+		return m_ResMan->GetResource<CL_Surface>(path);
 	}
 
 	void Quit()
@@ -180,21 +215,40 @@ public:
 			//CL_OpenGLState gl_state(display.get_gc());
 			//gl_state.set_active();
 
-			new ScriptingEngine;
+			ScriptingEngine* scEngW = new ScriptingEngine;
+			asIScriptEngine* scrEngine = ScriptingEngine::getSingleton().GetEnginePtr();
 			int r;
 			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 			{
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Load(string &in)", asFUNCTION(StaticLoadResource), asCALL_CDECL); assert( r >= 0 );
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Unload(string &in)", asFUNCTION(StaticUnloadResource), asCALL_CDECL); assert( r >= 0 );
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Clear()", asFUNCTION(ClearConsole), asCALL_CDECL); assert( r >= 0 );
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Quit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
-				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Exit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
+				RegisterCLSurface(ScriptingEngine::getSingleton().GetEnginePtr());
+				RegisterResourcePointer<CL_Surface>("Image", "cl_surface", ScriptingEngine::getSingleton().GetEnginePtr());
+				r = scrEngine->RegisterObjectMethod("Image",
+					"void draw(float, float)",
+					asFUNCTIONPR(DrawImage, (float, float), void),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register draw");
+
+				r = scrEngine->RegisterGlobalFunction("Image Get(string &in)", asFUNCTION(StaticGet), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("void Load(string &in)", asFUNCTION(StaticLoadResource), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("void Unload(string &in)", asFUNCTION(StaticUnloadResource), asCALL_CDECL); assert( r >= 0 );
+
+				r = scrEngine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("void Clear()", asFUNCTION(ClearConsole), asCALL_CDECL); assert( r >= 0 );
+
+				r = scrEngine->RegisterGlobalFunction("void Quit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("void exit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
+
+				//r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterObjectType("image", sizeof(ResourcePointer<CL_Surface>)); assert( r >= 0 );
+				//r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterObjectType("image", sizeof(ResourcePointer<CL_Surface>));
+				//assert( r >= 0 );
 			}
 			else
 			{
 				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
 			}
+
+			scEngW->AddCode(script1, 0);
+			scEngW->BuildModule(0);
 
 			FusionInput* input = new FusionInput();
 			if (!input->Test())
@@ -207,6 +261,8 @@ public:
 			input->MapControl(CL_KEY_CONTROL, "KeyCtrl");
 			input->MapControl(CL_KEY_BACKSPACE, "DeleteResource");
 
+			m_ResMan = new ResourceManager(argv);
+
 
 			StateManager* stateman = new StateManager();
 
@@ -218,9 +274,19 @@ public:
 			//stateman->AddState(conGUI);
 
 			// Load a resource
-			m_NextImage = 0;
-			m_ImgLoader = new ImageLoader();
-			LoadResource(std::string("body.png"));
+			m_ResMan->PreloadResource("IMAGE", "body.png", "body.png");
+
+
+			int shipTypeId = scrEngine->GetTypeIdByDecl(0, "ship");
+			asIScriptStruct* shipObject = (asIScriptStruct*)scrEngine->CreateScriptObject(shipTypeId);
+
+			int preloadId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Preload()");
+			asIScriptContext* context = scrEngine->CreateContext();
+			context->Prepare(preloadId);
+			context->SetObject(shipObject);
+			context->Execute();
+
+			int drawId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Draw(float x, float y)");
 
 
 			bool p1thrusting = false;
@@ -265,12 +331,21 @@ public:
 				if (m_ImageC.IsValid())
 					m_ImageC->draw(50, 50);
 
+				if (!CL_Keyboard::get_keycode(CL_KEY_SPACE))
+				{
+					asIScriptContext* context = scrEngine->CreateContext();
+					context->Prepare(drawId);
+					context->SetObject(shipObject);
+					context->SetArgFloat(0, 10);
+					context->SetArgFloat(1, 10);
+					context->Execute();
+					context->Release();
+				}
+
 				stateman->Update(split);
 				stateman->Draw();
-				//GUI::getSingleton().Update(1);
-				//GUI::getSingleton().Draw();
 
-				display.flip();
+				display.flip(0);
 				CL_System::keep_alive();
 
 				//gl_state.set_active();
@@ -296,6 +371,11 @@ public:
 		return 0;
 	}
 } app;
+
+ResourcePointer<CL_Surface> StaticGet(std::string& path)
+{
+	return app.Get(path);
+}
 
 void StaticLoadResource(std::string &path)
 {

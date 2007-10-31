@@ -42,11 +42,29 @@
 #include "FusionScriptVector.h"
 #include "FusionScriptReference.h"
 
+#include "FusionConsole.h"
+
 namespace FusionEngine
 {
 
 	static const std::string g_ASConfigConsole = "Console";
 	static const std::string g_ASConfigWeapon = "Weapon";
+
+	class COutStream
+	{
+	public:
+		void Callback(asSMessageInfo *msg) 
+		{ 
+			const char *msgType = 0;
+			if( msg->type == 0 ) msgType = "Error  ";
+			if( msg->type == 1 ) msgType = "Warning";
+			if( msg->type == 2 ) msgType = "Info   ";
+
+			char buffer[255];
+			sprintf(buffer, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
+			SendToConsole(std::string(buffer), Console::MTWARNING);
+		}
+	};
 
 	/*!
 	 * \brief
@@ -57,6 +75,7 @@ namespace FusionEngine
 	 */
 	class ScriptingEngine : public Singleton<ScriptingEngine>
 	{
+		COutStream m_Out;
 	public:
 		//! Basic constructor.
 		ScriptingEngine();
@@ -67,6 +86,9 @@ namespace FusionEngine
 
 		//! Adds the given script to a module, but doesn't build or execute it.
 		void RegisterScript(Script *script, const char *module);
+
+		//! Adds code to the given module
+		bool AddCode(const std::string& script, const char *module);
 
 		//! Builds the given module
 		bool BuildModule(const char *module);

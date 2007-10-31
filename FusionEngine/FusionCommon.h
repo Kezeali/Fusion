@@ -36,7 +36,7 @@
 
 /*!
  * \todo
- * Implement a better assert (than cl_assert)
+ * Implement a better assert macro (than cl_assert)
  */
 
 #ifndef Header_FusionEngine_Common
@@ -57,10 +57,11 @@
 #include "FusionSlotContainer.h"
 
 #include "FusionException.h"
-#include "FusionFileSystemException.h"
-#include "FusionFileNotFoundException.h"
-#include "FusionFileTypeException.h"
-#include "FusionInvalidArgumentException.h"
+#include "FusionExceptionFactory.h"
+//#include "FusionFileSystemException.h"
+//#include "FusionFileNotFoundException.h"
+//#include "FusionFileTypeException.h"
+//#include "FusionInvalidArgumentException.h"
 
 // Boost
 //#include <boost/function.hpp>
@@ -252,7 +253,7 @@ namespace FusionEngine
 	class PackSyncClient;
 	class PackSyncServer;
 	class LoadingStage;
-	class Resource;
+	class ResourceContainer;
 
 
 	///////////////

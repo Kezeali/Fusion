@@ -29,7 +29,7 @@
 
 //#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
-#include "as_scriptstring.h"
+#include "scriptstring.h"
 #include "FusionScriptVector.h"
 
 namespace FusionEngine
@@ -40,7 +40,10 @@ namespace FusionEngine
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		if (m_asEngine != NULL)
+		{
+			m_asEngine->SetMessageCallback(asMETHOD(COutStream,Callback), &m_Out, asCALL_THISCALL);
 			registerGlobals();
+		}
 	}
 
 
@@ -60,6 +63,30 @@ namespace FusionEngine
 		}
 	}
 
+	bool ScriptingEngine::AddCode(const std::string& script, const char *module)
+	{
+		int r;
+		r = m_asEngine->AddScriptSection(module, 0, script.c_str(), script.length());
+		return r >= 0;
+	}
+
+	bool ScriptingEngine::BuildModule(const char* module)
+	{
+		return m_asEngine->Build(module) >= 0;
+	}
+
+	int ScriptingEngine::ExecuteModule(const char* module, const char* function)
+	{
+		int funcID = m_asEngine->GetFunctionIDByDecl(module, function);
+
+		asIScriptContext* cont = m_asEngine->CreateContext();
+		int r = cont->Prepare(funcID);
+		if (r < 0)
+			return r;
+		//m_Contexts.push_back(cont);
+		return cont->Execute();
+	}
+
 	int ScriptingEngine::ExecuteScript(Script *script, const char *function)
 	{
 		int funcID = m_asEngine->GetFunctionIDByDecl(script->GetModule(), function);
@@ -68,7 +95,7 @@ namespace FusionEngine
 		int r = cont->Prepare(funcID);
 		if (r < 0)
 			return r;
-		m_Contexts.push_back(cont);
+		//m_Contexts.push_back(cont);
 		return cont->Execute();
 	}
 
@@ -78,7 +105,7 @@ namespace FusionEngine
 		int r = cont->Prepare(scref.GetFunctionID());
 		if (r < 0)
 			return r;
-		m_Contexts.push_back(cont);
+		//m_Contexts.push_back(cont);
 		return cont->Execute();
 	}
 

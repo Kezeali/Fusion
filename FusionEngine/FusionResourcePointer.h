@@ -32,14 +32,31 @@
 #	pragma once
 #endif
 
-#include "Common.h"
+#include "FusionCommon.h"
+
+#include "FusionResource.h"
 
 #ifdef _DEBUG
 #include "FusionConsole.h"
 #endif
 
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+
+/*!
+ * Define FSN_RESOURCEPOINTER_USE_WEAKPTR to use built-in reference counting for garbage collection.
+ * Otherwise boost::shared_ptr will be used. <br>
+ * Using shared_ptr makes the implementation much simpler on my side :)
+ */
+#define FSN_RESOURCEPOINTER_USE_WEAKPTR
+
 namespace FusionEngine
 {
+
+	//! Resource container shared pointer
+	typedef boost::shared_ptr<ResourceContainer> ResourceSpt;
+	//! Resource container weak pointer
+	typedef boost::weak_ptr<ResourceContainer> ResourceWpt;
 
 	//! The ResourceToken system is a simple garbage collection system.
 	/*!
@@ -52,25 +69,25 @@ namespace FusionEngine
 	 * (e.g. between levels, /after/ loading the next level's data
 	 * (to minimise unnecessary re-loading))
 	 *
-	 * \todo Rename as ResourceToken
+	 * \todo Make this copyable (fix copy-constructor / assignment op.)
 	 *
-	 * \todo Make this copyable (fix copy-constructor / assignment constructor)
-	 *
-	 * \sa ResourceManager | Resource
+	 * \sa ResourceManager | ResourceContainer
 	 */
-	template<typename T = void*>
+	template<typename T>
 	class ResourcePointer
 	{
 	protected:
-		Resource* m_Resource;
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 
-		CL_Slot m_ResourceDestructionSlot;
+		ResourceWpt m_ResourceBox;
+		ResourceContainer::ResourcePtrTicket m_Ticket;
 
-		unsigned long m_Hash;
+		mutable std::string m_Tag;
 
-		bool m_Valid;
+#else
 
-		Resource::ResourcePtrTicket m_Ticket;
+		ResourceSpt m_ResourceBox;
+#endif
 
 	public:
 		//! Basic Constructor
@@ -78,135 +95,439 @@ namespace FusionEngine
 		 * Creates an invalid resource pointer
 		 */
 		ResourcePointer()
-			: m_Resource(0),
-			m_Ticket(0),
-			m_Valid(false)
+			: m_Ticket(0)
 		{
 		}
 
 		//! Constructor
-		ResourcePointer(Resource* resource)
-			: m_Resource(resource),
-			m_Valid(true)
+		ResourcePointer(ResourceSpt resource)
+			: m_ResourceBox(resource)
 		{
+#if defined (FSN_RESOURCEPOINTER_USE_WEAKPTR)
+
 			m_Ticket = resource->AddRef();
-			m_ResourceDestructionSlot = resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+#endif
 		}
 
 		//! Copy constructor
-		template <typename Y>
-		explicit ResourcePointer(ResourcePointer<Y>& other)
-			: m_Resource(other.m_Resource),
-			m_Valid(true)
-		{
-			m_Ticket = m_Resource->AddRef();
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
-		}
+		//template <typename Y>
+		//explicit ResourcePointer(ResourcePointer<Y> const& other)
+		//	: m_ResourceBox(other.m_ResourceBox)
+		//{
+		//	m_Ticket = r.m_Ticket;
+		//	//m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+		//}
 
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 		template <typename Y>
 		ResourcePointer(ResourcePointer<Y> const& other)
-			: m_Resource(other.m_Resource), 
-			m_Ticket(other.m_Ticket),
-			m_Valid(true)
+			: m_ResourceBox(other.m_ResourceBox)
 		{
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			if (ResourceSpt r = m_ResourceBox.lock())
+				m_Ticket = r->AddRef();
+
 		}
+#endif
+
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 
 		ResourcePointer(ResourcePointer const& other)
-			: m_Resource(other.m_Resource), 
-			m_Ticket(other.m_Ticket),
-			m_Valid(true)
+			: m_ResourceBox(other.m_ResourceBox)
 		{
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			if (ResourceSpt r = m_ResourceBox.lock())
+				m_Ticket = r->AddRef();
 		}
+
+#endif
 
 
 		//! Destructor
 		~ResourcePointer()
 		{
-#ifdef _DEBUG
-			SendToConsole("ResourcePointer deleted");
+//#if defined (_DEBUG) && defined(FSN_RESOURCEPOINTER_USE_WEAKPTR)
+//			SendToConsole("ResourcePointer<" + std::string(typeid(T).name()) +"> to " + 
+//				(IsValid() ? "\'" + m_ResourceBox.lock()->GetPath() + "\'" : "invalid resource") + " deleted");
+//#elif defined (_DEBUG)
+//			SendToConsole("ResourcePointer<" + std::string(typeid(T).name()) +"> to " + 
+//				(IsValid() ? "\'" + m_ResourceBox->GetPath() + "\'" : "invalid resource") + " deleted");
+//#endif
+
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				r->DropRef(m_Ticket);
 #endif
-			if (m_Resource != 0)
-				m_Resource->DropRef(this->GetTicket());
 		}
 
 	public:
+
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+		//! Templated assignment operator
 		template<class Y>
 		ResourcePointer & operator=(ResourcePointer<Y> const & r)
 		{
-			m_Resource = r.m_Resource;
-			m_Ticket = r.m_Ticket;
-			m_Valid = r.m_Valid;
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			m_ResourceBox = r.m_ResourceBox;
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				m_Ticket = r->AddRef();
 			return *this;
 		}
+#endif
+
+
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+		//! Assignment operator for weak_ptr version
 		ResourcePointer & operator=(ResourcePointer const & r)
 		{
-			m_Resource = r.m_Resource;
-			m_Ticket = r.m_Ticket;
-			m_Valid = r.m_Valid;
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+			m_ResourceBox = r.m_ResourceBox;
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				m_Ticket = r->AddRef();
+
 			return *this;
 		}
 
-		//! Returns the resource data ptr
-		template<typename T>
-		T* GetDataPtr()
+#endif
+
+		const std::string& GetTag() const
 		{
-			if (m_Resource != 0)
-				return (T*)m_Resource->GetDataPtr();
-			else
-				return 0;
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				m_Tag = r->GetTag();
+			return m_Tag;
+
+#else
+			return m_ResourceBox->GetTag();
+
+#endif
 		}
 
 		//! Returns the resource data ptr
-		template<typename T>
-		T const* GetDataPtr() const
+		T* GetDataPtr()
 		{
-			if (m_Resource != 0)
-				return (T*)m_Resource->GetDataPtr();
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				return (T*)r->GetDataPtr();
 			else
 				return 0;
+
+#else
+
+			return (T*)m_ResourceBox->GetDataPtr();
+
+#endif
+		}
+
+		//! Returns the resource data ptr
+		T const* GetDataPtr() const
+		{
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				return (const T*)r->GetDataPtr();
+			else
+				return 0;
+
+#else
+
+			return (const T*)m_ResourceBox->GetDataPtr();
+
+#endif
 		}
 
 		//! Indirect member access operator.
 		T* operator->()
-		{ return (T*)m_Resource->GetDataPtr(); }
+		{
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				return (T*)r->GetDataPtr();
+			else
+				FSN_EXCEPT(ExCode::ResourceNotLoaded, "ResourcePointer::operator->()", "Resource doesn't exist");
+#else
+
+			// using shared_ptr makes the implementation much simpler on my side :)
+			return (T*)m_ResourceBox->GetDataPtr();
+
+#endif
+		}
 
 		T const* operator->() const
-		{ return (const T*)m_Resource->GetDataPtr(); }
-
-		void SetTarget(Resource* resource)
 		{
-			if (m_Resource != NULL)
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
+				return (const T*)r->GetDataPtr();
+			else
+				FSN_EXCEPT(ExCode::ResourceNotLoaded, "ResourcePointer::operator->()", "Resource doesn't exist");
+#else
+
+			// using shared_ptr makes the implementation much simpler on my side :)
+			return (const T*)m_ResourceBox->GetDataPtr();
+
+#endif
+		}
+
+		void SetTarget(ResourceSpt resource)
+		{
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+			Release();
+#endif
+
+			m_ResourceBox = resource;
+
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+			m_Ticket = m_ResourceBox->AddRef();
+#endif
+		}
+
+		void Release()
+		{
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			if (ResourceSpt r = m_ResourceBox.lock())
 			{
-				m_Resource->OnDestruction.disconnect(m_ResourceDestructionSlot);
-				m_Resource->DropRef(m_Ticket);
+				r->DropRef(m_Ticket);
 			}
 
-			m_Resource = resource;
-			m_Ticket = m_Resource->AddRef();
-			m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
+#else
+
+			m_ResourceBox.reset();
+
+#endif
 		}
 
 		bool IsValid() const
 		{
-			// Checks that the resource exists at all before checking that it is valid
-			return m_Resource == 0 ? false : m_Resource->IsValid();
-		}
+			// Check that this pointer is valid (the resource container exists), before checking that the data is valid
 
-		Resource::ResourcePtrTicket GetTicket() const
-		{
-			return m_Ticket;
+#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
+
+			ResourceSpt r = m_ResourceBox.lock();
+			return r ? r->IsValid() : false;
+
+#else
+
+			return m_ResourceBox ? m_ResourceBox->IsValid() : false; 
+#endif
 		}
 
 		void onResourceDestruction()
 		{
-			m_Valid = false;
-			m_Resource = 0;
+			// nothing
 		}
 	};
+
+
+
+	template <typename T>
+	class resourcePointerRegisterHelper
+	{
+	public:
+		static void Construct(ResourcePointer<T>* in)
+		{
+			new (in) ResourcePointer<T>();
+		}
+
+		static void Destruct(ResourcePointer<T>* in)
+		{
+			in->~ResourcePointer<T>();
+		}
+
+		static void CopyConstruct(const ResourcePointer<T>& rhs, ResourcePointer<T>* in)
+		{
+			new (in) ResourcePointer<T>(rhs);
+		}
+
+		//static void NumConstruct(int size, ResourcePointer<T>* in)
+		//{
+		//	new (in) ResourcePointer<T>(size);
+		//}
+
+		static ResourcePointer<T>& Assign(const ResourcePointer<T>& rhs, ResourcePointer<T>* lhs)
+		{
+			*lhs = rhs;
+			return *lhs;
+		}
+
+//		static T* Index(int i, ResourcePointer<T>* lhs)
+//		{
+//
+//#ifdef AS_VECTOR_ASSERTBOUNDS
+//			assert(i >= 0 && i < lhs->size() && "Array index out of bounds.");
+//#endif
+//
+//#ifdef AS_VECTOR_CHECKBOUNDS
+//			if (i < 0 || i >= (signed)lhs->size())
+//			{
+//				asIScriptContext* context = asGetActiveContext();
+//				if( context )
+//					context->SetException("Array Index Out of Bounds.");
+//				return 0;
+//			}
+//#endif
+//
+//			return &(*lhs)[i];
+//		}
+
+		static std::string GetTag(ResourcePointer<T>* lhs)
+		{
+			return lhs->GetTag();
+		}
+
+		static T* GetData(ResourcePointer<T>* lhs)
+		{
+			return (T*)lhs->GetDataPtr();
+		}
+
+		//static void PushBack(const T& in, ResourcePointer<T> *lhs)
+		//{
+		//	lhs->push_back(in);
+		//}
+
+		//static void PopBack(ResourcePointer<T>* lhs)
+		//{
+		//	lhs->pop_back();
+		//}
+
+		/*	static void Erase(int i, std::vector<T>* lhs)
+		{
+		lhs->erase(Index(i,lhs));
+		}
+
+		static void Insert(int i, const T& e, std::vector<T>* lhs)
+		{
+		lhs->insert(Index(i,lhs), e);
+		}
+		*/
+	};
+
+	template <typename T>
+	void RegisterResourcePointer(const std::string V_AS,  //The typename of the resource inside AS
+		const std::string T_AS,  //Template parameter typename in AS - must already be
+		asIScriptEngine* engine) //registered (or be primitive type)!!
+	{
+		assert(engine && "Passed NULL engine pointer to registerVector");
+
+		int error_code = 0;
+
+		//// Register the parameter type
+		//error_code = engine->RegisterObjectType(T_AS.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+		//assert( error_code >= 0 );
+
+		//// Register the object operator overloads for the sub-type
+		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_CONSTRUCT,  "void f()", asFUNCTION(ConstructType), asCALL_CDECL_OBJLAST); 
+		//assert( error_code >= 0 );
+		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_DESTRUCT,   "void f()", asFUNCTION(DestructType),  asCALL_CDECL_OBJLAST); 
+		//assert( error_code >= 0 );
+		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_ASSIGNMENT, std::string(T_AS+" &f(const "+T_AS+" &in)").c_str(), asMETHODPR(T, operator =, (const T&), T&), asCALL_THISCALL); 
+		//assert( error_code >= 0 );
+
+		error_code = engine->RegisterObjectType(V_AS.c_str(), sizeof(ResourcePointer<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+		assert(error_code >= 0 && "Failed to register object type");
+
+		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(), 
+			asBEHAVE_CONSTRUCT, 
+			"void f()", 
+			asFUNCTION(resourcePointerRegisterHelper<T>::Construct), 
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register constructor");
+
+		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+			asBEHAVE_DESTRUCT,
+			"void f()",
+			asFUNCTION(resourcePointerRegisterHelper<T>::Destruct),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register destructor");
+
+		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+			asBEHAVE_CONSTRUCT,
+			(std::string("void f(")+V_AS+"&in)").c_str(),
+			asFUNCTION(resourcePointerRegisterHelper<T>::CopyConstruct),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register copy constructor");
+
+		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+		//	asBEHAVE_CONSTRUCT,
+		//	"void f(int)",
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::NumConstruct),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register construct(size)");
+
+		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		//	"string GetTag()",
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::GetTag),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register GetTag");
+
+		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+			(T_AS+"& get()").c_str(),
+			asFUNCTION(resourcePointerRegisterHelper<T>::GetData),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register GetData");
+
+		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+		//	asBEHAVE_INDEX,
+		//	(T_AS+"& f(int)").c_str(),
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::Index),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register operator[]");
+
+		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+		//	asBEHAVE_INDEX,
+		//	("const "+T_AS+"& f(int) const").c_str(),
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::Index),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register operator[]");
+
+		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+		//	asBEHAVE_ASSIGNMENT,
+		//	(V_AS+"& f(const "+V_AS+"&in)").c_str(),
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register operator=");
+
+		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		//	"int size() const",
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::Size),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register size");
+
+		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		//	"void resize(int)",
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::Resize),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register resize");
+
+		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		//	(std::string("void push_back(")+T_AS+"&in)").c_str(),
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::PushBack),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register push_back");
+
+		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		//	"void pop_back()",
+		//	asFUNCTION(resourcePointerRegisterHelper<T>::PopBack),
+		//	asCALL_CDECL_OBJLAST);
+		//assert(error_code >= 0 && "Failed to register pop_back");
+
+		/*	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		"void erase(int)",
+		asFUNCTION(vectorRegisterHelper<T>::Erase),
+		asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register erase");
+
+		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+		(std::string("void insert(int, const ")+T_AS+"&)").c_str(),
+		asFUNCTION(vectorRegisterHelper<T>::Insert),
+		asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register insert");
+		*/
+	}
 
 }
 

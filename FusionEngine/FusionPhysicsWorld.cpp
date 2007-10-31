@@ -106,7 +106,13 @@ namespace FusionEngine
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
 
-		m_CollisionGrid = new FusionPhysicsCollisionGrid();
+		cpInitChipmunk();
+		cpResetShapeIdCounter();
+		m_ChipSpace = cpSpaceNew();
+		cpSpaceResizeStaticHash(m_ChipSpace, 10.0, 9999);
+		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 99);
+
+		//m_CollisionGrid = new FusionPhysicsCollisionGrid();
 	}
 
 	PhysicsWorld::~PhysicsWorld()

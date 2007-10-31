@@ -38,11 +38,32 @@
 #include "FusionConsole.h"
 #endif
 
-// Undefine this to use pure ref-counting
-#define FSN_RESOURCE_USE_TICKETS
+/*!
+ * Define FSN_RESOURCE_USE_TICKETS to use ticketed ref-counting
+ */
+//#define FSN_RESOURCE_USE_TICKETS
 
 namespace FusionEngine
 {
+
+	//class ResourceDeletionListener
+	//{
+	//public:
+	//	void ResourceDeleted()
+	//	{
+	//		m_Valid = false;
+	//	}
+	//	void SetValid(bool valid)
+	//	{
+	//		m_Valid = valid;
+	//	}
+	//	bool ResourceExists()
+	//	{
+	//		return m_Valid;
+	//	}
+	//private:
+	//	bool m_Valid;
+	//}
 
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
@@ -56,7 +77,7 @@ namespace FusionEngine
 	 *
 	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
-	class Resource
+	class ResourceContainer
 	{
 	public:
 		//! Used for ticketing
@@ -81,7 +102,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		Resource()
+		ResourceContainer()
 			: m_Type(""),
 			m_Tag(""),
 			m_Path(""),
@@ -92,7 +113,7 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		Resource(const char* type, const ResourceTag &tag, const std::string& path, void* ptr)
+		ResourceContainer(const char* type, const ResourceTag &tag, const std::string& path, void* ptr)
 			: m_Type(type),
 			m_Tag(tag),
 			m_Path(path),
@@ -105,7 +126,7 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		Resource(const std::string& type, const ResourceTag &tag, const std::string& path, void* ptr)
+		ResourceContainer(const std::string& type, const ResourceTag &tag, const std::string& path, void* ptr)
 			: m_Type(type),
 			m_Tag(tag),
 			m_Path(path),
@@ -117,16 +138,16 @@ namespace FusionEngine
 				_setValid(true);
 		}
 
-		~Resource()
+		~ResourceContainer()
 		{
 			// Fire Signals
 			OnInvalidation();
 			OnDestruction();
 
 #ifdef _DEBUG
-			if (m_Data != NULL || m_Valid)
+			if (m_Valid || m_Data != NULL)
 			{
-				SendToConsole("Resource '" + m_Tag + "' was not properly dellocated before deletion!");
+				SendToConsole("Resource '" + m_Tag + "' may not have been properly dellocated before deletion.");
 			}
 #endif
 		}
@@ -138,7 +159,7 @@ namespace FusionEngine
 			return m_Type.c_str();
 		}
 		//! Returns the resource tag which should point to the Rsc
-		ResourceTag GetTag() const
+		const ResourceTag& GetTag() const
 		{
 			return m_Tag;
 		}

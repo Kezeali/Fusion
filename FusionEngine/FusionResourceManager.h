@@ -1,5 +1,32 @@
-  #ifndef Header_FusionEngine_ResourceLoader
-#define Header_FusionEngine_ResourceLoader
+/*
+  Copyright (c) 2006-2007 Fusion Project Team
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+*/
+
+#ifndef Header_FusionEngine_ResourceManager
+#define Header_FusionEngine_ResourceManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -13,20 +40,23 @@
 /// Fusion
 #include "FusionResource.h"
 #include "FusionResourcePointer.h"
+#include "FusionResourceLoader.h"
 
 /// RakNet
 #include <RakNet/Bitstream.h>
 
+#include <boost/shared_ptr.hpp>
+
 namespace FusionEngine
 {
 
-	class ResourceManagerException : public Exception
-	{
-	public:
-		ResourceManagerException(const std::string& message)
-			: Exception(Exception::INTERNAL_ERROR, message)
-		{}
-	};
+	//class ResourceManagerException : public Exception
+	//{
+	//public:
+	//	ResourceManagerException(const std::string& message)
+	//		: Exception(Exception::INTERNAL_ERROR, message)
+	//	{}
+	//};
 
 	/*!
 	 * \brief
@@ -41,8 +71,6 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Loads and stores resources for gameplay.
-	 *
-	 * \todo Load exception error messages from XML
 	 *
 	 * \todo Impliment PhysFS <br>
 	 * DONE: create InputSourceProvider_PhysFS (based on CL_InputSourceProvider_File) <br>
@@ -63,10 +91,15 @@ namespace FusionEngine
 	class ResourceManager : public Singleton<ResourceManager>
 	{
 	public:
+		// this is now defined in ResourcePointer:
+		//typedef boost::shared_ptr<Resource> ResourceSpt;
+
+		//! ResourceLoader pointer
+		typedef boost::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
-		typedef std::map<ResourceTag, Resource*> ResourceMap;
+		typedef std::map<ResourceTag, ResourceSpt> ResourceMap;
 		//! Maps Resource types to ResourceLoader objects
-		typedef std::map<const char *, ResourceLoader*> ResourceLoaderMap;
+		typedef std::map<std::string, ResourceLoaderSpt> ResourceLoaderMap;
 
 	public:
 		//! Constructor
@@ -77,10 +110,10 @@ namespace FusionEngine
 	public:
 		//! Configures the resource manager
 		void Configure();
-		//! Checks the filesystem for packages and returns the names of all found
-		StringVector ListAvailablePackages();
-		//! Checks the filesystem for packages and returns the /filenames/ of all found
-		StringVector ListAvailablePackageFiles();
+		////! Checks the filesystem for packages and returns the names of all found
+		//StringVector ListAvailablePackages();
+		//! Checks the filesystem and returns the filenames of all found
+		StringVector ListFiles();
 
 		//! Runs garbage collection
 		void DisposeUnusedResources();
@@ -108,7 +141,7 @@ namespace FusionEngine
 		 * \retval UnknownType
 		 * If the package is of unknown (invalid) type.
 		 */
-		PackageType GetPackageType(const std::string &name);
+		//PackageType GetPackageType(const std::string &name);
 
 		//! Gets a verification bitstream for the given package.
 		/*!
@@ -143,61 +176,102 @@ namespace FusionEngine
 		 */
 		StringVector Find(const std::string &path, const std::string &expression, int depth, bool case_sensitive = true, bool recursive = true);
 
-		//! Finds and opens the given package
-		/*!
-		 * Checks for the given package and opens it if it is found.
-		 *
-		 * \returns null if no package with the given name is found
-		 */
-		TiXmlDocument* OpenPackage(const std::string &name);
+		////! Finds and opens the given package
+		///*!
+		// * Checks for the given package and opens it if it is found.
+		// *
+		// * \returns null if no package with the given name is found
+		// */
+		//TiXmlDocument* OpenPackage(const std::string &name);
 
-		/*!
-		 * \brief
-		 * Executed client-side when a VerifyPackage packet is received.
-		 *
-		 * Verifies the existance and crc of a package.
-		 *
-		 * \param[in] stream
-		 * The VerifyPackage bitstream sent from the server.
-		 */
-		//bool VerifyPackage(RakNet::BitStream *stream);
+		///*!
+		// * \brief
+		// * Executed client-side when a VerifyPackage packet is received.
+		// *
+		// * Verifies the existance and crc of a package.
+		// *
+		// * \param[in] stream
+		// * The VerifyPackage bitstream sent from the server.
+		// */
+		////bool VerifyPackage(RakNet::BitStream *stream);
 
-		/*!
-		 * \brief
-		 * Loads the given package
-		 */
-		bool LoadPackage(const std::string &name);
+		///*!
+		// * \brief
+		// * Loads the given package
+		// */
+		//bool LoadPackage(const std::string &name);
 
-		/*!
-		 * \brief
-		 * Loads the listed packages
-		 */
-		bool LoadPackages(StringVector names);
+		///*!
+		// * \brief
+		// * Loads the listed packages
+		// */
+		//bool LoadPackages(StringVector names);
 
-		/*!
-		 * \brief
-		 * Loads all packages previously verified.
-		 *
-		 * The ResourceLoader class stores a list of packages verified with VerifyPackage,
-		 * VerifyShip, VerifyLevel and VerifyWeapon. This function iterates through that list,
-		 * loading all resources. Using this method is recomended over directly calling
-		 * LoadShips, and LoadWeapons. LoadLevelVerified should be called for levels.
-		 * <br>
-		 * If this fails, you should call ClearAll to destroy any invalid data.
-		 *
-		 * \remarks
-		 * This method still has a return value (is failable) because even though the packages
-		 * will have been verified as consistant with the server, the server may have bad
-		 * packages installed!
-		 */
-		bool LoadVerified();
+		///*!
+		// * \brief
+		// * Loads all packages previously verified.
+		// *
+		// * The ResourceLoader class stores a list of packages verified with VerifyPackage,
+		// * VerifyShip, VerifyLevel and VerifyWeapon. This function iterates through that list,
+		// * loading all resources. Using this method is recomended over directly calling
+		// * LoadShips, and LoadWeapons. LoadLevelVerified should be called for levels.
+		// * <br>
+		// * If this fails, you should call ClearAll to destroy any invalid data.
+		// *
+		// * \remarks
+		// * This method can fail, because even though the packages
+		// * will have been verified as consistant with the server, the server may have bad
+		// * packages installed!
+		// */
+		//bool LoadVerified();
 
-		//! Clears the verified packages lists
-		void ResetVerified();
+		////! Clears the verified packages lists
+		//void ResetVerified();
+
+		void AddDefaultLoaders();
+
+		//! Assigns the given resource loader plugin to its relavant resource type
+		void AddResourceLoader(ResourceLoader* loader);
+
+		//! Loads a resource; optional custom tag
+		void PreloadResource(const std::string& type, const std::string& path, const ResourceTag& tag);
+
+		//! Loads a resource
+		void PreloadResource(const std::string& type, const std::string& path);
 
 		//! Returns a ResourcePointer to the given Resource (of type T)
+		//template<typename T>
+		//ResourcePointer<T> GetResource(const ResourceTag& tag);
+
 		template<typename T>
-		ResourcePointer<T> GetResource(const ResourceTag& tag);
+		ResourcePointer<T> GetResource(const ResourceTag &tag)
+		{
+			PreloadResource(GetResourceType(T()), tag);
+
+			ResourceSpt sptRes = m_Resources[tag];
+			if (!sptRes->IsValid())
+			{
+				InputSourceProvider_PhysFS provider("");
+				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
+			}
+
+			return ResourcePointer<T>(sptRes);
+		}
+
+		template<typename T>
+		ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
+		{
+			PreloadResource(type, tag);
+
+			ResourceSpt sptRes = m_Resources[tag];
+			if (!sptRes->IsValid())
+			{
+				InputSourceProvider_PhysFS provider("");
+				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
+			}
+
+			return ResourcePointer<T>(sptRes);
+		}
 
 	private:
 		bool m_PhysFSConfigured;
@@ -208,17 +282,20 @@ namespace FusionEngine
 		//! Resources
 		ResourceMap m_Resources;
 
+		//! Garbage
+		ResourceMap m_Garbage;
+
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
-		RNode createResourceNode(TiXmlElement* xmlNode);
+		//RNode createResourceNode(TiXmlElement* xmlNode);
 		/*!
 		 * \brief
 		 * Returns the pixel the given percentage from the left of the window.
 		 */
 		int percentToAbsX(int percent)
 		{
-			return CL_Display::get_width() * percent * 0.01;
+			return (int)(CL_Display::get_width() * percent * 0.01);
 		}
 
 		/*!
@@ -227,7 +304,7 @@ namespace FusionEngine
 		 */
 		int percentToAbsY(int percent)
 		{
-			return CL_Display::get_height() * percent * 0.01;
+			return (int)(CL_Display::get_height() * percent * 0.01);
 		}
 
 		/*!

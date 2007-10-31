@@ -36,15 +36,29 @@
 
 #include "FusionResource.h"
 
+#include "FusionInputSource_PhysFS.h"
+#include "FusionInputSourceProvider_PhysFS.h"
+
 namespace FusionEngine
 {
+
+	//! Allows the ResourceManager to select a resource loader by type
+	template<class T>
+	static inline std::string GetResourceType(T)
+	{
+		return "INVALID";
+	}
+
+	//! Generates a specialization for the given resource data-type
+	#define REGISTER_RESOURCE_TYPE(c, t) \
+	template<> static inline std::string GetResourceType<c>(c) { return t; }
 
 	/*!
 	 * \brief
 	 * Interface for resource loaders used by ResourceManager
 	 *
 	 * \sa
-	 * StringLoader | ImageLoader | ResourceManager
+	 * ImageLoader | Resource | ResourceManager
 	 */
 	class ResourceLoader
 	{
@@ -53,13 +67,14 @@ namespace FusionEngine
 		virtual const std::string &GetType() const = 0;
 
 		//! Loads the resource reffered to by the given text
-		virtual Resource* LoadResource(const std::string& tag, const std::string &text) = 0;
+		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider)
+			throw(FileSystemException) = 0;
 
 		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		virtual void ReloadResource(Resource * resource) = 0;
+		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider) = 0;
 
 		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(Resource * resource) = 0;
+		virtual void UnloadResource(ResourceContainer * resource) = 0;
 
 	};
 

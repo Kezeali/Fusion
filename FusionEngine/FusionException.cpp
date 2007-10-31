@@ -44,24 +44,27 @@ namespace FusionEngine
 	{
 	}
 
-	Exception::Exception(const std::string &origin)
+	Exception::Exception(const std::string& name, const std::string &origin)
 		: m_Origin(origin),
-		m_Line(0)
+		m_Line(0),
+		m_Name(name)
 	{
 	}
 
-	Exception::Exception(const std::string& origin, const std::string &message)
+	Exception::Exception(const std::string& name, const std::string& origin, const std::string &message)
 		: m_Origin(origin),
 		m_Message(message),
-		m_Line(0)
+		m_Line(0),
+		m_Name(name)
 	{
 	}
 
-	Exception::Exception(const std::string& origin, const std::string &message, const char* file, long line)
+	Exception::Exception(const std::string& name, const std::string& origin, const std::string &message, const char* file, long line)
 		: m_Origin(origin),
 		m_Message(message),
 		m_File(file),
-		m_Line(line)
+		m_Line(line),
+		m_Name(name)
 	{
 	}
 
@@ -70,9 +73,9 @@ namespace FusionEngine
 		return m_Type;
 	}
 
-	std::string Exception::GetName() const
+	const std::string& Exception::GetName() const
 	{
-		static std::string strName("FusionEngine::Exception");
+		static std::string strName("FusionEngine::" + m_Name);
 		return strName;
 	}
 

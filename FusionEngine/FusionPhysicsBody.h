@@ -37,6 +37,7 @@
 
 /// Fusion
 #include "FusionBitmask.h"
+#include "FusionPhysicsShape.h"
 #include "FusionPhysicsCallback.h"
 
 namespace FusionEngine
@@ -85,6 +86,7 @@ namespace FusionEngine
 	 */
 	class PhysicsBody
 	{
+		typedef std::vector<Shape> ShapeList;
 		friend class PhysicsWorld;
 	public:
 		//PhysicsBody();
@@ -414,6 +416,9 @@ namespace FusionEngine
 		//@}
 
 	protected:
+		cpBody *m_Body;
+
+		cpShape *m_Shape;
 		//! \name Used internally by CollisionGrid
 		//@{
 		//! Collision Grid Index

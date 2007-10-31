@@ -29,5 +29,6 @@
 #include <ClanLib/gl.h>
 #include <ClanLib/gui.h>
 #include <ClanLib/sound.h>
+#include <ClanLib/vorbis.h>
 
 #endif

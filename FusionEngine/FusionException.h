@@ -71,17 +71,17 @@ namespace FusionEngine
 		Exception(ExceptionType type, const std::string &message, bool critical);
 
 		//! Constructor +origin
-		Exception(const std::string &origin);
+		Exception(const std::string& name, const std::string &origin);
 		//! Constructor +origin +message
-		Exception(const std::string &origin, const std::string &message);
+		Exception(const std::string& name, const std::string &origin, const std::string &message);
 		//! Constructor +origin +message +file +line
-		Exception(const std::string &origin, const std::string &message, const char* file, long line);
+		Exception(const std::string& name, const std::string &origin, const std::string &message, const char* file, long line);
 
 	public:
 		//! [depreciated] Retrieves the type
 		ExceptionType GetType() const;
 		//! Retrieves the exception class name
-		virtual std::string GetName() const;
+		virtual const std::string &GetName() const;
 		//! Sets the Origin property
 		virtual void SetOrigin(const std::string& origin);
 		//! Retrieves the origin
@@ -116,6 +116,46 @@ namespace FusionEngine
 		ExceptionType m_Type;
 		bool m_Critical;
 
+	};
+
+		//! File system exception class
+	class FileSystemException : public Exception
+	{
+	public:
+		//! Constructor
+		FileSystemException(const std::string& name, const std::string& origin, const std::string& message, const char* file, long line)
+			: Exception("FileSystemException" + name, origin, message, file, line)
+		{
+		}
+		//! Constructor (full)
+		FileSystemException(const std::string& origin, const std::string& message, const char* file, long line)
+			: Exception("FileSystemException", origin, message, file, line)
+		{
+		}
+
+	};
+	//! FileNotFoundException class (self explainatory, I would hope ;) )
+	class FileNotFoundException : public FileSystemException
+	{
+	public:
+		//! Constructor
+		FileNotFoundException(const std::string& origin, const std::string& description, const char* file, long line)
+			: FileSystemException("FileNotFoundException", origin, description, file, line) {}
+	};
+	//! FileNotFoundException class (self explainatory, I would hope ;) )
+	class FileTypeException : public FileSystemException
+	{
+	public:
+		//! Constructor
+		FileTypeException(const std::string& origin, const std::string& description, const char* file, long line)
+			: FileSystemException("FileNotFoundException", origin, description, file, line) {}
+	};
+	//! RNF exception
+	class ResourceNotLoadedException : public Exception 
+	{
+	public:
+		ResourceNotLoadedException(const std::string& origin, const std::string& description, const char* file, long line)
+			: Exception("UnimplementedException", description, origin, file, line) {}
 	};
 
 }

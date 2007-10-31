@@ -67,7 +67,11 @@ bool SetupPhysFS::add_subdirectory(const std::string &path,
 																	 bool archivesFirst)
 {
 	// Get the absoulte path to the given directory (or archive)
-	std::string full_path = std::string( PHYSFS_getRealDir(path.c_str()) ) + path;
+	const char* dir = PHYSFS_getRealDir(path.c_str());
+	if (dir == NULL)
+		return false;
+
+	std::string full_path = std::string( dir ) + path;
 
 	// Add the directory to the end of the search path
 	if (PHYSFS_addToSearchPath(full_path.c_str(), 1) == 0)

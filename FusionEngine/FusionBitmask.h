@@ -28,9 +28,9 @@
 #endif
 
 #include "FusionCommon.h"
+#include <chipmunk.h>
 
-
-#include "bitmask.h"
+//#include "bitmask.h"
 
 
 namespace FusionEngine

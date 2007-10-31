@@ -3,10 +3,15 @@
 #include "FusionResourceManager.h"
 
 /// Fusion
+#include "FusionConsole.h"
+
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
 #include "FusionInputSourceProvider_PhysFS.h"
 #include "FusionInputSource_PhysFS.h"
+
+#include "FusionImageLoader.h"
+#include "FusionAudioLoader.h"
 
 namespace FusionEngine
 {
@@ -14,7 +19,10 @@ namespace FusionEngine
 	ResourceManager::ResourceManager(char **argv)
 		: m_PhysFSConfigured(false)
 	{
-		SetupPhysFS::init(argv[0]);
+		int ok = SetupPhysFS::init(argv[0]);
+		assert(ok);
+
+		Configure();
 	}
 
 	ResourceManager::~ResourceManager()
@@ -32,13 +40,16 @@ namespace FusionEngine
 		// A package (xml file) will contain all the ResourceManager config info
 		//  and will be placed in the working directory of the game. This file will list all
 		//  paths to be added to the search path, as well as the config info.
-		SetupPhysFS::configure("Case Software", "Fusion", "ZIP");
-		SetupPhysFS::add_subdirectory("Packages/", "ZIP", true);
+		SetupPhysFS::configure("CardboardBox Software", "Fusion", "ZIP");
+		if (!SetupPhysFS::add_subdirectory("Packages/", "ZIP", true))
+			SendToConsole("Default resource path could not be located");
 
 		m_PhysFSConfigured = true;
+
+		AddDefaultLoaders();
 	}
 
-	StringVector ResourceManager::ListInstalledPackageFiles()
+	StringVector ResourceManager::ListFiles()
 	{
 		StringVector list;
 
@@ -55,9 +66,7 @@ namespace FusionEngine
 
 		// List all files (remember, physfs will also find files in the native filesystem)
 		char **files = PHYSFS_enumerateFiles("");
-		if (files == NULL)
-			throw ResourceManagerException(Exception::GetString("ResourceManager::ListInstalledPackageFiles()", "/strings/exceptions/ResourceManager/t0001"));
-		else
+		if (files != NULL)
 		{
 			int file_count;
 			char **i;
@@ -72,17 +81,40 @@ namespace FusionEngine
 
 	void ResourceManager::DisposeUnusedResources()
 	{
+		// not yet implemented
 #ifdef RESMAN_USEGARBAGELIST
-		ResourceGarbageList::iterator it = m_ResourceGarbage.begin();
-		for (; it != m_ResourceGarbage.end(); ++it)
+		ResourceGarbageList::iterator it = m_Garbage.begin();
+		for (; it != m_Garbage.end(); ++it)
 		{
 			Resource res = m_Resources.find(*it);
 			if (res != m_Resources.end())
 				m_Resources.erase(res);
 		}
-		m_ResourceGarbage.clear();
+		m_Garbage.clear();
 #else
-		ResourceMap::iterator it = m_Resources.iterator();
+
+		ResourceMap::iterator it = m_Resources.begin();
+		ResourceMap::iterator end = m_Resources.end();
+		for (; it != end; ++it)
+		{
+			ResourceSpt& res = (*it).second;
+
+#if defined(FSN_RESOURCEPOINTER_USE_WEAKPTR)
+
+			if ( !res->IsReferenced() )
+			{
+
+#else
+
+			if (res.unique())
+			{
+
+#endif
+				m_ResourceLoaders[res->GetType()]->UnloadResource(res.get());
+				//it = m_Resources.erase(it);
+			}
+		}
+
 #endif
 	}
 
@@ -93,7 +125,7 @@ namespace FusionEngine
 
 	void ResourceManager::ClearAll()
 	{
-		ResetVerified();
+		//ResetVerified();
 
 		DeleteResources();
 	}
@@ -126,7 +158,7 @@ namespace FusionEngine
 
 	bool ResourceManager::CheckAgainstExpression(const std::string &str, const std::string &expression)
 	{
-		CheckAgainstExpression(str, TokeniseExpression(expression));
+		return CheckAgainstExpression(str, TokeniseExpression(expression));
 	}
 
 	bool ResourceManager::CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens)
@@ -185,7 +217,7 @@ namespace FusionEngine
 
 	StringVector ResourceManager::Find(const std::string &expression, bool case_sensitive, bool recursive)
 	{
-		return Find("", expression, case_sensitive, 0, case_sensitive, recursive);
+		return Find("", expression, 0, case_sensitive, recursive);
 	}
 
 	StringVector ResourceManager::Find(const std::string &path, const std::string &expression, int depth, bool case_sensitive, bool recursive)
@@ -225,89 +257,142 @@ namespace FusionEngine
 		return list;
 	}
 
-	TiXmlDocument* ResourceManager::OpenPackage(const std::string &name)
+	//TiXmlDocument* ResourceManager::OpenPackage(const std::string &name)
+	//{
+	//	if (m_PhysFSConfigured)
+	//	{
+	//		Find("*.xml");
+	//	}
+	//}
+
+	//bool ResourceManager::LoadPackage(const std::string &name)
+	//{
+	//	TiXmlDocument* doc = OpenPackage(name);
+
+	//	TiXmlNode* root = doc->RootElement();
+	//	m_RootRNode.AddChildNode(createResourceNode(root));
+
+	//	// The root node is simply called "" (nothing), thus the paths for finding
+	//	//  resources always start with "/Fusion/", the initial "/" signifying the 
+	//	//  trailing slash after the nameless root node ;)
+
+	//	return true;
+	//}
+
+	//bool ResourceManager::LoadPackages(StringVector names)
+	//{
+	//	StringVector::iterator it;
+	//	for (it = names.begin(); it != names.end(); ++it)
+	//	{
+	//		if (!LoadPackage(*it))
+	//			return false;
+	//	}
+
+	//	return true;
+	//}
+
+	//bool ResourceManager::LoadVerified()
+	//{
+	//	return LoadPackages(m_VerifiedPackages);
+	//}
+
+	//void ResourceManager::ResetVerified()
+	//{
+	//	m_VerifiedPackages.clear();
+	//}
+
+	void ResourceManager::AddDefaultLoaders()
 	{
-		if (m_PhysFSConfigured)
+		AddResourceLoader(new ImageLoader());
+		AddResourceLoader(new AudioLoader());
+		AddResourceLoader(new AudioStreamLoader());
+	}
+
+	void ResourceManager::AddResourceLoader(ResourceLoader* loader)
+	{
+		m_ResourceLoaders[loader->GetType()] = ResourceLoaderSpt(loader);
+	}
+
+	void ResourceManager::PreloadResource(const std::string& type, const std::string& path, const ResourceTag& tag)
+	{
+		ResourceMap::iterator existing = m_Resources.find(tag);
+		if (existing == m_Resources.end())
 		{
-			Find("*.xml");
+			InputSourceProvider_PhysFS provider("");
+
+			ResourceLoaderMap::iterator loader = m_ResourceLoaders.find(type);
+			if (loader == m_ResourceLoaders.end())
+			{
+				FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + type + "'");
+			}
+
+			ResourceContainer* res;
+			try
+			{
+				res = loader->second->LoadResource(tag, path, &provider);
+			}
+			catch (CL_Error&)
+			{
+				FSN_EXCEPT(ExCode::FileSystem, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
+			}
+
+			m_Resources[tag] = ResourceSpt(res);
 		}
 	}
 
-	bool ResourceManager::LoadPackage(const std::string &name)
+	void ResourceManager::PreloadResource(const std::string& type, const std::string& path)
 	{
-		TiXmlDocument* doc = OpenPackage(name);
-
-		TiXmlNode* root = doc->RootElement();
-		m_RootRNode.AddChildNode(createResourceNode(root));
-
-		// The root node is simply called "" (nothing), thus the paths for finding
-		//  resources always start with "/Fusion/", the initial "/" signifying the 
-		//  trailing slash after the nameless root node ;)
-
-		return true;
+		PreloadResource(type, path, path);
 	}
 
-	bool ResourceManager::LoadPackages(StringVector names)
-	{
-		StringVector::iterator it;
-		for (it = names.begin(); it != names.end(); ++it)
-		{
-			if (!LoadPackage(*it))
-				return false;
-		}
+	//template<typename T>
+	//ResourcePointer<T> ResourceManager::GetResource(const ResourceTag &tag)
+	//{
+	//	PreloadResource(GetResourceType(T).c_str(), tag);
 
-		return true;
-	}
+	//	Resource& res = (*m_Resources[tag]);
+	//	if (!res.IsValid())
+	//	{
+	//		m_ResourceLoaders[res.GetType()]->ReloadResource(res);
+	//	}
 
-	bool ResourceManager::LoadVerified()
-	{
-		return LoadPackages(m_VerifiedPackages);
-	}
-
-	void ResourceManager::ResetVerified()
-	{
-		m_VerifiedPackages.clear();
-	}
-
-	template<typename T>
-	ResourcePointer<T> ResourceManager::GetResource(const ResourceTag &tag)
-	{
-	}
+	//	return ResourcePointer<T>(res);
+	//}
 
 	////////////
 	/// Private:
-	RNode ResourceManager::createResourceNode(TiXmlElement* xmlNode)
-	{
-		RNode* node;
+	//RNode ResourceManager::createResourceNode(TiXmlElement* xmlNode)
+	//{
+	//	RNode* node;
 
-		TiXmlAttribute* typeAttr = xmlNode->Attribute("type");
-		if (typeAttr != NULL)
-			loadResource(typeAttr->Value(), xmlNode->FirstChild()->Value());
+	//	TiXmlAttribute* typeAttr = xmlNode->Attribute("type");
+	//	if (typeAttr != NULL)
+	//		loadResource(typeAttr->Value(), xmlNode->FirstChild()->Value());
 
-		TiXmlElement *child;
-		for (child = xmlNode->FirstChildElement(); child; child = child->NextSiblingElement())
-		{
-			node.AddChildNode( createResourceNode(child) );
-		}
+	//	TiXmlElement *child;
+	//	for (child = xmlNode->FirstChildElement(); child; child = child->NextSiblingElement())
+	//	{
+	//		node.AddChildNode( createResourceNode(child) );
+	//	}
 
-		return node;
-	}
+	//	return node;
+	//}
 
-	void ResourceManager::loadResource(const char* type, const char* text)
-	{
-	}
+	//void ResourceManager::loadResource(const char* type, const char* text)
+	//{
+	//}
 
-	CL_Point ResourceManager::getPoint(const CL_DomElement *element)
-	{
-		// Return a zero point if the data is incomplete
-		if (!(element->has_attribute("x") & element->has_attribute("y")))
-			return CL_Point(0, 0);
+	//CL_Point ResourceManager::getPoint(const CL_DomElement *element)
+	//{
+	//	// Return a zero point if the data is incomplete
+	//	if (!(element->has_attribute("x") & element->has_attribute("y")))
+	//		return CL_Point(0, 0);
 
-		int x = CL_String::to_int(element->get_attribute("x"));
-		int y = CL_String::to_int(element->get_attribute("y"));
+	//	int x = CL_String::to_int(element->get_attribute("x"));
+	//	int y = CL_String::to_int(element->get_attribute("y"));
 
-		return CL_Point(x, y);
-	}
+	//	return CL_Point(x, y);
+	//}
 
 	bool ResourceManager::checkInList(const std::string &filename, std::vector<std::string> filelist)
 	{

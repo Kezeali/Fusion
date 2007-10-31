@@ -157,7 +157,7 @@ namespace FusionEngine
 	{
 		m_MaxHistory = max;
 		m_History.resize(max);
-		m_HistoryPos = m_History.size();
+		m_HistoryPos = (int)m_History.size();
 	}
 
 	unsigned int ConsoleGUI::GetMaxHistory() const
@@ -198,7 +198,7 @@ namespace FusionEngine
 			if (m_History.size() >= m_MaxHistory)
 				m_History.pop_front();
 			// Reset history position
-			m_HistoryPos = m_History.size();
+			m_HistoryPos = (int)m_History.size();
 
 			// Put the text in the display
 			// - Removed because this is done via a signal from the console after SendToConsole(..) is called
@@ -232,7 +232,7 @@ namespace FusionEngine
 		{
 		case Key::ArrowUp:
 			// Save the current value to the history if it isn't already part of it
-			if (m_HistoryPos == static_cast<int>(m_History.size()))
+			if (m_HistoryPos == (int)m_History.size())
 			{
 				String edit_text(m_EditBox->getText());
 				if (!edit_text.empty())
@@ -243,7 +243,7 @@ namespace FusionEngine
 					// Push the item
 					m_History.push_back(edit_text);
 					// Reset history position
-					m_HistoryPos = m_History.size();
+					m_HistoryPos = (int)m_History.size();
 				}
 			}
 
@@ -265,7 +265,7 @@ namespace FusionEngine
 		case Key::ArrowDown:
 			m_HistoryPos = ceguimin(m_HistoryPos + 1, static_cast<int>(m_History.size()));
 			// Within the history buffer:
-			if (m_HistoryPos < static_cast<int>(m_History.size()))
+			if (m_HistoryPos < (int)m_History.size())
 			{
 				m_EditBox->setText(m_History[m_HistoryPos]);
 				m_EditBox->setCaratIndex(static_cast<size_t>(-1));
@@ -277,7 +277,7 @@ namespace FusionEngine
 			}
 
 			// If this is the bottom of the list...
-			if (m_HistoryPos+1 == static_cast<int>(m_History.size()))
+			if (m_HistoryPos+1 == (int)m_History.size())
 			{
 				//... and if the current item was never submitted, erase it from the history.
 				if (m_RecentInHistory)

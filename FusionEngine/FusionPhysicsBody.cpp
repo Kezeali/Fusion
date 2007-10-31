@@ -33,6 +33,15 @@ namespace FusionEngine
 		m_Velocity(Vector2::ZERO),
 		m_AppliedRelativeForce(0)
 	{
+		m_Body = cpBodyNew(1.0, cpMomentForPoly(1.0, num, verts, cpvzero));
+		m_Body->p = cpv(-280, 240);
+		cpSpaceAddBody(m_Space, m_Body);
+		m_Shape = cpPolyShapeNew(m_Body, num, verts, cpvzero);
+		m_Shape->e = 0.0; m_Shape->u = 1.5;
+		m_Shape->collision_type = 1;
+		cpSpaceAddShape(m_Space, m_Shape);
+		cpShapeDestroy(m_Shape);
+		cpBodyDestroy(m_Body);
 	}
 
 	FusionPhysicsBody::FusionPhysicsBody(FusionPhysicsWorld *world, ICollisionHandler *handler)

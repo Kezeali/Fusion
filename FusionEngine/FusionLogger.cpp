@@ -34,6 +34,11 @@
 
 #include <time.h>
 
+#if _MSC_VER > 1000
+# pragma warning(push)
+# pragma warning(disable:4996) // unsafe (depreciated) function warnings
+#endif
+
 namespace FusionEngine
 {
 
@@ -259,7 +264,8 @@ namespace FusionEngine
 
 	void Logger::onConsoleNewLine(const std::string &message)
 	{
-		Add(message, g_LogConsole);
+		if (m_ConsoleLogging)
+			Add(message, g_LogConsole);
 	}
 
 
@@ -273,7 +279,7 @@ namespace FusionEngine
 		{
 			Log* log = new Log(tag, filename(tag), safe);
 			// Add this log to the list
-			m_Logs.insert( LogList::value_type(tag, log) );
+			m_Logs[tag] = log;
 
 			BeginLog(log);
 
@@ -291,7 +297,7 @@ namespace FusionEngine
 		{
 			Log* log = new Log(tag, filename(tag), keepopen);
 			// Add this log to the list
-			m_Logs.insert( LogList::value_type(tag, log) );
+			m_Logs[tag] = log;
 
 			return log;
 		}
@@ -339,3 +345,7 @@ namespace FusionEngine
 	}
 
 }
+
+#if _MSC_VER > 1000
+# pragma warning(pop)
+#endif

@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "PhysFS.h"
+#include "physfs.h"
 
 #include <ClanLib/core.h>
 

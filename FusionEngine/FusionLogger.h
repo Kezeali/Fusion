@@ -30,7 +30,7 @@
 #define Header_FusionEngine_Logger
 
 #if _MSC_VER > 1000
-#pragma once
+# pragma once
 #endif
 
 #include "FusionCommon.h"

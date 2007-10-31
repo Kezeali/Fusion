@@ -121,6 +121,7 @@
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
+				RuntimeTypeInfo="false"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
 				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
@@ -188,6 +189,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionAIManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionAudioLoader.h"
 				>
 			</File>
 			<File
@@ -279,23 +284,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionFileNotFoundException.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionFileSystemException.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionFileTypeException.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionGame.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionGUI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionImageLoader.h"
 				>
 			</File>
 			<File
@@ -316,10 +313,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputSourceProvider_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInvalidArgumentException.h"
 				>
 			</File>
 			<File
@@ -665,6 +658,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionAudioLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionBitmask.cpp"
 				>
 			</File>
@@ -729,23 +726,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionFileNotFoundException.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionFileSystemException.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionFileTypeException.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionGame.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionImageLoader.cpp"
 				>
 			</File>
 			<File
@@ -758,10 +747,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputSourceProvider_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInvalidArgumentException.cpp"
 				>
 			</File>
 			<File
@@ -850,6 +835,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsResponse.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicsShape.cpp"
 				>
 			</File>
 			<File
