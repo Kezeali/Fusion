@@ -114,7 +114,7 @@ namespace FusionEngine
 
 		if (!m_Logfile.is_open())//m_Logfile.fail())
 		{
-			FSN_EXCEPT(ExCode::FileSystem,
+			FSN_EXCEPT(ExCode::IO,
 				"Log::open",
 				CL_String::format("The logfile '%1' could not be opened", m_Filename));
 		}
@@ -124,7 +124,7 @@ namespace FusionEngine
 	{
 		if (!m_Logfile.is_open())
 		{
-			FSN_EXCEPT(ExCode::FileSystem,
+			FSN_EXCEPT(ExCode::IO,
 				"Log::verifyOpen",
 				CL_String::format("Logfile '%1' should have been open, but wasn't", m_Filename));
 		}

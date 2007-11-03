@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsWorld
-#define Header_FusionEngine_FusionPhysicsWorld
+#ifndef Header_FusionEngine_PhysicsWorld
+#define Header_FusionEngine_PhysicsWorld
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,8 +34,8 @@
 
 #include "FusionCommon.h"
 
-#include "PhysicsBody.h"
-#include <chipmunk.h>
+#include "FusionPhysicsBody.h"
+#include "FusionPhysicsCallback.h"
 
 namespace FusionEngine
 {
@@ -54,15 +54,15 @@ namespace FusionEngine
 		PhysicalProperties()
 			: mass(0.0f),
 			radius(0.0f),
-			bounce(0.0f),
+			//bounce(0.0f),
 
 			position(Vector2::ZERO),
 			rotation(0.0f),
 
-			use_bitmask(false),
-			use_aabb(false),
+			//use_bitmask(false),
+			//use_aabb(false),
+			//bitmask(0),
 			use_dist(false),
-			bitmask(0),
 			dist(0)
 			{}
 
@@ -70,26 +70,26 @@ namespace FusionEngine
 		float mass;
 		//! Radius. Not used
 		float radius;
-		//! Coefficiant of restitution
-		float bounce;
+		////! Coefficiant of restitution
+		//float bounce;
 
 		//! Initial Position.
 		Vector2 position;
 		//! Initial Rotation.
 		float rotation;
 
-		//! Use Pixel based collision detection.
-		bool use_bitmask;
-		//! Use the given bitmask.
-		FusionBitmask *bitmask;
-		//! Use AABB based collision detection.
-		bool use_aabb;
-		//! Make an AABB with the given (upright) dimensions
-		float aabb_x, aabb_y;
-		//! Use BB based collision detection.
-		bool use_bb;
-		//! Make a BB with the given dimensions
-		float bb_x, bb_y;
+		////! Use Pixel based collision detection.
+		//bool use_bitmask;
+		////! Use the given bitmask.
+		//Bitmask *bitmask;
+		////! Use AABB based collision detection.
+		//bool use_aabb;
+		////! Make an AABB with the given (upright) dimensions
+		//float aabb_x, aabb_y;
+		////! Use BB based collision detection.
+		//bool use_bb;
+		////! Make a BB with the given dimensions
+		//float bb_x, bb_y;
 		//! Use Distance based collision detection.
 		bool use_dist;
 		//! Use the given distance (for distance based collisions.)
@@ -123,7 +123,7 @@ namespace FusionEngine
 
 	public:
 		//! List of Collsions
-		typedef std::list<Collision *> CollisionList;
+		//typedef std::list<Collision *> CollisionList;
 		//typedef std::vector<PhysicsBody *> BodyList;
 
 	public:
@@ -209,6 +209,20 @@ namespace FusionEngine
 		 */
 		void DestroyStatic(PhysicsBody *body);
 
+		void AddShape(Shape* shape);
+
+		void AddStaticShape(Shape* shape);
+
+		void RemoveShape(Shape* shape);
+
+		void RemoveStaticShape(Shape* shape);
+
+		//! \todo Shape factory methods?
+		//Shape* CreateShape();
+		//Shape* CreateStaticShape();
+		//void DestroyShape(Shape* shape);
+		//void DestroyStaticShape(Shape* shape);
+
 		//! Removes all bodies and statics.
 		void Clear();
 
@@ -217,6 +231,8 @@ namespace FusionEngine
 		 * \param split Step magnitude (millis since last step.)
 		 */
 		void RunSimulation(unsigned int split);
+
+		void DebugDraw();
 
 		//! Resets the CollisonGrid and sets the borders up, etc.
 		/*!
@@ -251,12 +267,20 @@ namespace FusionEngine
 		//! Returns the current maximum velocity
 		float GetMaxVelocity() const;
 
-		//! Allows the bitmask scale to be set (pixels per bit)
-		//void SetBitmaskRes(int ppb);
-		//! Returns the scale bodies should use for their bitmasks
-		//int GetBitmaskRes() const;
+		void SetDamping(float damping);
+		float GetDamping() const;
 
-		//const FusionPhysicsCollisionGrid* GetCollisionGrid() const;
+		//! Allows the bitmask scale to be set (pixels per bit)
+		void SetBitmaskRes(int ppb);
+		//! Returns the scale bodies should use for their bitmasks
+		int GetBitmaskRes() const;
+
+		//const CollisionGrid* GetCollisionGrid() const;
+
+		cpSpace* GetChipSpace() const
+		{
+			return m_ChipSpace;
+		}
 
 	private:
 		// Chipmunk space
@@ -265,8 +289,8 @@ namespace FusionEngine
 		//! All physical objects controled by this world.
 		BodyList m_Bodies;
 
-		//! Collision list.
-		FusionPhysicsCollisionGrid *m_CollisionGrid;
+		//! Body hash map / query interface
+		//CollisionGrid *m_CollisionGrid;
 
 		//! Static objects are listed here.
 		/*!
@@ -301,6 +325,59 @@ namespace FusionEngine
 		//! The resolution to use for bitmasks
 		int m_BitmaskRes;
 	};
+
+	static void drawPolyShape(cpShape *shape)
+	{
+		cpBody *body = shape->body;
+		cpPolyShape *poly = (cpPolyShape *)shape;
+
+		int num = poly->numVerts;
+		cpVect *verts = poly->verts;
+
+		glBegin(GL_LINE_LOOP);
+		for(int i=0; i<num; i++){
+			cpVect v = cpvadd(body->p, cpvrotate(verts[i], body->rot));
+			glVertex2f(v.x, v.y);
+		} glEnd();
+	}
+
+	static void drawCircle(cpFloat x, cpFloat y, cpFloat r, cpFloat a)
+	{
+		const int segs = 6;
+		const cpFloat coef = 2.0*M_PI/(cpFloat)segs;
+
+		glBegin(GL_LINE_STRIP); {
+			for(int n = 0; n <= segs; n++){
+				cpFloat rads = n*coef;
+				glVertex2f(r*cos(rads + a) + x, r*sin(rads + a) + y);
+			}
+			glVertex2f(x,y);
+		} glEnd();
+	}
+
+	static void drawCircleShape(cpShape *shape)
+	{
+		cpBody *body = shape->body;
+		cpCircleShape *circle = (cpCircleShape *)shape;
+		cpVect c = cpvadd(body->p, cpvrotate(circle->c, body->rot));
+
+		clColor3f(shape->e, shape->u, 1.0f);
+		drawCircle(c.x, c.y, circle->r, body->a);
+	}
+
+	static void drawObject(void *ptr, void *unused)
+	{
+		cpShape *shape = (cpShape *)ptr;
+		CL_Display::draw_pixel(shape->body->p.x, shape->body->p.y, CL_Color::aliceblue);
+
+		switch (shape->type)
+		{
+		case CP_POLY_SHAPE:
+			drawPolyShape(shape);
+		case CP_CIRCLE_SHAPE:
+			drawCircleShape(shape);
+		}
+	}
 
 }
 

@@ -32,67 +32,67 @@
 #include "FusionPhysicsWorld.h"
 
 /// Fusion
-#include "FusionPhysicsCollisionGrid.h"
-#include "FusionPhysicsUtils.h"
+//#include "FusionPhysicsCollisionGrid.h"
+//#include "FusionPhysicsUtils.h"
 #include "FusionConsole.h"
 
 namespace FusionEngine
 {
-	//! Returns true if the first address is lower than the second
-	/*!
-	 * This (along with CollisionAfter()) is used to sort Collision collections
-	 * so that equivilant Collisions are adjcent.
-	 */
-	bool CollisionBefore(Collision *lhs, Collision *rhs)
-	{
-		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
-		{
-			if (lhs->First < rhs->Second && lhs->Second < rhs->First)
-			{
-				return true;
-			}
-		}
+	////! Returns true if the first address is lower than the second
+	///*!
+	// * This (along with CollisionAfter()) is used to sort Collision collections
+	// * so that equivilant Collisions are adjcent.
+	// */
+	//bool CollisionBefore(Collision *lhs, Collision *rhs)
+	//{
+	//	if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+	//	{
+	//		if (lhs->First < rhs->Second && lhs->Second < rhs->First)
+	//		{
+	//			return true;
+	//		}
+	//	}
 
-		return false;
-	}
-	//! Returns true if the first address is higher than the second
-	/*!
-	 * This (along with CollisionBefore()) is used to sort Collision collections
-	 * so that equivilant Collisions are adjcent.
-	 */
-	bool CollisionAfter(Collision *lhs, Collision *rhs)
-	{
-		if (lhs->First < rhs->Second && lhs->Second < rhs->First)
-		{
-			if (lhs->First < rhs->First && lhs->Second < rhs->Second)
-			{
-				return true;
-			}
-		}
+	//	return false;
+	//}
+	////! Returns true if the first address is higher than the second
+	///*!
+	// * This (along with CollisionBefore()) is used to sort Collision collections
+	// * so that equivilant Collisions are adjcent.
+	// */
+	//bool CollisionAfter(Collision *lhs, Collision *rhs)
+	//{
+	//	if (lhs->First < rhs->Second && lhs->Second < rhs->First)
+	//	{
+	//		if (lhs->First < rhs->First && lhs->Second < rhs->Second)
+	//		{
+	//			return true;
+	//		}
+	//	}
 
-		return false;
-	}
-	//! Returns true if the given Collisions are equal
-	/*!
-	 * Collisions are considered equal if both the First and Second pointers
-	 * have the same address (First and Second point to physical bodies).
-	 */
-	bool CollisionEqual(Collision *lhs, Collision *rhs)
-	{
-		// Both collisions are exactly the same
-		if (lhs->First == rhs->First && lhs->Second == rhs->Second)
-		{
-			return true;
-		}
+	//	return false;
+	//}
+	////! Returns true if the given Collisions are equal
+	///*!
+	// * Collisions are considered equal if both the First and Second pointers
+	// * have the same address (First and Second point to physical bodies).
+	// */
+	//bool CollisionEqual(Collision *lhs, Collision *rhs)
+	//{
+	//	// Both collisions are exactly the same
+	//	if (lhs->First == rhs->First && lhs->Second == rhs->Second)
+	//	{
+	//		return true;
+	//	}
 
-		// Both collisions are essentually the same, with the first and second inverted
-		if (lhs->First == rhs->Second && lhs->Second == rhs->First)
-		{
-			return true;
-		}
+	//	// Both collisions are essentually the same, with the first and second inverted
+	//	if (lhs->First == rhs->Second && lhs->Second == rhs->First)
+	//	{
+	//		return true;
+	//	}
 
-		return false;
-	}
+	//	return false;
+	//}
 
 
 	PhysicsWorld::PhysicsWorld()
@@ -109,28 +109,28 @@ namespace FusionEngine
 		cpInitChipmunk();
 		cpResetShapeIdCounter();
 		m_ChipSpace = cpSpaceNew();
-		cpSpaceResizeStaticHash(m_ChipSpace, 10.0, 9999);
-		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 99);
 
-		//m_CollisionGrid = new FusionPhysicsCollisionGrid();
+		//m_CollisionGrid = new CollisionGrid();
 	}
 
 	PhysicsWorld::~PhysicsWorld()
 	{
 		Clear();
-		delete m_CollisionGrid;
+		//delete m_CollisionGrid;
 	}
 
 	void PhysicsWorld::AddBody(PhysicsBody *body)
 	{
 		m_Bodies.push_back(body);
 
-		m_CollisionGrid->AddBody(body);
+		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+		//m_CollisionGrid->AddBody(body);
 	}
 	
 	void PhysicsWorld::RemoveBody(PhysicsBody *body)
 	{
-		m_CollisionGrid->RemoveBody(body);
+		//m_CollisionGrid->RemoveBody(body);
+		cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
 
 		BodyList::iterator it = m_Bodies.begin();
 		for (; it != m_Bodies.end(); ++it)
@@ -152,7 +152,9 @@ namespace FusionEngine
 
 		m_Bodies.push_back(body);
 
-		m_CollisionGrid->AddBody(body);
+		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+
+		//m_CollisionGrid->AddBody(body);
 
 		return body;
 	}
@@ -165,22 +167,29 @@ namespace FusionEngine
 		body->SetRadius(props.radius);
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
-		body->SetCoefficientOfRestitution(props.bounce);
 
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
+		//// BM
+		//body->SetUsePixelCollisions(props.use_bitmask);
+		//if (props.bitmask)
+		//	body->SetColBitmask(props.bitmask);
+		//// AABB
+		//body->SetUseAABBCollisions(props.use_aabb);
+		//body->SetColAABB(props.aabb_x, props.aabb_y);
+		//// DIST
+		//body->SetUseDistCollisions(props.use_dist);
+		//body->SetColDist(props.dist);
 
 		m_Bodies.push_back(body);
 
-		m_CollisionGrid->AddBody(body);
+		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+
+		if (props.use_dist)
+		{
+			Shape* shape = new CircleShape(body, 0, props.dist, cpvzero);
+			body->AttachShape(shape);
+			AddShape(shape);
+		}
+		//m_CollisionGrid->AddBody(body);
 
 		return body;
 	}
@@ -192,7 +201,8 @@ namespace FusionEngine
 
 		m_Bodies.push_back(body);
 
-		m_CollisionGrid->AddBody(body);
+		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+		//m_CollisionGrid->AddBody(body);
 
 		return body;
 	}
@@ -205,29 +215,30 @@ namespace FusionEngine
 		body->SetRadius(props.radius);
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
-		body->SetCoefficientOfRestitution(props.bounce);
 
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
+		//// BM
+		//body->SetUsePixelCollisions(props.use_bitmask);
+		//if (props.bitmask)
+		//	body->SetColBitmask(props.bitmask);
+		//// AABB
+		//body->SetUseAABBCollisions(props.use_aabb);
+		//body->SetColAABB(props.aabb_x, props.aabb_y);
+		//// DIST
+		//body->SetUseDistCollisions(props.use_dist);
+		//body->SetColDist(props.dist);
 
 		m_Bodies.push_back(body);
+		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
 
-		m_CollisionGrid->AddBody(body);
+		//m_CollisionGrid->AddBody(body);
 
 		return body;
 	}
 
 	void PhysicsWorld::DestroyBody(PhysicsBody *body)
 	{
-		m_CollisionGrid->RemoveBody(body);
+		//m_CollisionGrid->RemoveBody(body);
+		cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
 
 		BodyList::iterator it = m_Bodies.begin();
 		for (; it != m_Bodies.end(); ++it)
@@ -248,7 +259,7 @@ namespace FusionEngine
 	{
 		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
-		body->SetMass(0.0f);
+		body->SetMass(g_PhysStaticMass);
 
 		m_Static.push_back(body);
 
@@ -259,21 +270,21 @@ namespace FusionEngine
 	{
 		PhysicsBody *body = new PhysicsBody(this);
 		body->SetType(type);
-		body->SetMass(0.0f);
+		body->SetMass(g_PhysStaticMass);
 
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
 
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
+		//// BM
+		//body->SetUsePixelCollisions(props.use_bitmask);
+		//if (props.bitmask)
+		//	body->SetColBitmask(props.bitmask);
+		//// AABB
+		//body->SetUseAABBCollisions(props.use_aabb);
+		//body->SetColAABB(props.aabb_x, props.aabb_y);
+		//// DIST
+		//body->SetUseDistCollisions(props.use_dist);
+		//body->SetColDist(props.dist);
 
 		m_Static.push_back(body);
 
@@ -284,7 +295,7 @@ namespace FusionEngine
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);
-		body->SetMass(0.0f);
+		body->SetMass(g_PhysStaticMass);
 
 		m_Static.push_back(body);
 
@@ -295,21 +306,21 @@ namespace FusionEngine
 	{
 		PhysicsBody *body = new PhysicsBody(this, response);
 		body->SetType(type);
-		body->SetMass(0.0f);
+		body->SetMass(g_PhysStaticMass);
 
 		body->_setPosition(props.position);
 		body->_setRotation(props.rotation);
 
-		// BM
-		body->SetUsePixelCollisions(props.use_bitmask);
-		if (props.bitmask)
-			body->SetColBitmask(props.bitmask);
-		// AABB
-		body->SetUseAABBCollisions(props.use_aabb);
-		body->SetColAABB(props.aabb_x, props.aabb_y);
-		// DIST
-		body->SetUseDistCollisions(props.use_dist);
-		body->SetColDist(props.dist);
+		//// BM
+		//body->SetUsePixelCollisions(props.use_bitmask);
+		//if (props.bitmask)
+		//	body->SetColBitmask(props.bitmask);
+		//// AABB
+		//body->SetUseAABBCollisions(props.use_aabb);
+		//body->SetColAABB(props.aabb_x, props.aabb_y);
+		//// DIST
+		//body->SetUseDistCollisions(props.use_dist);
+		//body->SetColDist(props.dist);
 
 		m_Static.push_back(body);
 
@@ -329,6 +340,30 @@ namespace FusionEngine
 		}
 
 		delete body;
+	}
+
+	void PhysicsWorld::AddShape(Shape* shape)
+	{
+		// Check the body type, and process accordingly
+		if (shape->GetBody() && shape->GetBody()->IsStatic())
+			AddStaticShape(shape);
+		else
+			cpSpaceAddShape(m_ChipSpace, shape->GetShape());
+	}
+
+	void PhysicsWorld::AddStaticShape(Shape* shape)
+	{
+		cpSpaceAddStaticShape(m_ChipSpace, shape->GetShape());
+	}
+
+	void PhysicsWorld::RemoveShape(Shape* shape)
+	{
+		cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
+	}
+
+	void PhysicsWorld::RemoveStaticShape(Shape* shape)
+	{
+		cpSpaceRemoveStaticShape(m_ChipSpace, shape->GetShape());
 	}
 
 	void PhysicsWorld::Clear()
@@ -353,455 +388,28 @@ namespace FusionEngine
 			m_Static.clear();
 		}
 
-		// Clear the collision grid, JIC this isn't being called from the PhysWorld destructor
-		m_CollisionGrid->Clear();
+		//cpSpaceFreeChildren(m_ChipSpace);
+		cpSpaceDestroy(m_ChipSpace);
+
+		// Clear the collision grid
+		//m_CollisionGrid->Clear();
 	}
 
 	void PhysicsWorld::RunSimulation(unsigned int split)
 	{
-		float delta = (float)split;// * 0.1f;
-
-		// All collisions found in the Prepare Movement stage will be listed here
-		CollisionList collisions;
-
-		///////////////////
-		// Prepare Movement
-
-		// In the following section, we check for collisions and calculate the velocity
-		//  for the body
-		BodyList::iterator a_it = m_Bodies.begin();
-		for (;a_it != m_Bodies.end(); ++a_it)
-		{
-			PhysicsBody *b1 = (*a_it);
-
-			Vector2 acceleration;
-			Vector2 velocity = b1->GetVelocity();
-
-			if (b1->IsActive())
-			{
-				Vector2 position = b1->GetPosition();
-				Vector2 force = b1->GetForce();
-
-				float linDamping = b1->GetCoefficientOfFriction();
-
-				// Calculate the damping on the force
-				Vector2 dampForce = velocity * linDamping;
-
-				// Finally, calculate the acceleration
-				acceleration = (force - dampForce) * b1->GetInverseMass();
-
-				// We don't do this quite yet (the commented out line)
-				//velocity = acceleration * delta;
-
-				///////////////////
-				// Cap the velocity
-				// m_MaxVelocity is used to prevent objects from reaching excessive speeds
-				//  because a lazy level designer didn't put damping triggers in the level.
-				if (velocity.squared_length() > m_MaxVelocitySquared)
-				{
-					// Set acceleration to zero
-					b1->_setAcceleration(Vector2::ZERO);
-
-					//! \todo See which method is faster - trig or non-tirg.
-#ifdef FUSION_PHYS_USE_TRIG
-					// Method1 (trig):
-					// Calculate the maximum x and y velocities for this angle
-					double a = atan(velocity.x/velocity.y);
-					velocity.x = m_MaxVelocity * float(sin(a));
-					velocity.y = m_MaxVelocity * float(cos(a));
-#else
-					// Method2 (without trig):
-					// Calculate the maximum x and y velocities for this vector
-					float nx = velocity.x / velocity.length();
-					float ny = velocity.y / velocity.length();
-
-					velocity.x = m_MaxVelocity * nx;
-					velocity.y = m_MaxVelocity * ny;
-#endif //FUSION_PHYS_USE_TRIG
-				}
-				else
-				{
-					// Set acceleration to the calculated value
-					b1->_setAcceleration(acceleration);
-				}
-
-				// Set velocity to the capped value.
-				//  This may not be the final value if a collision is detected
-				b1->_setVelocity(velocity);
-				// End Cap the velocity
-				///////////////////////
-
-				// Prepare forces for next step.
-				b1->_setForce(Vector2::ZERO);
-				//b1->_setRelativeForce(Vector2::ZERO);
-
-
-				// Wrap or pop back at boundries
-				if (position.x >= m_Width-1 || position.x <= 1
-					|| position.y >= m_Height-1 || position.y <= 1)
-				{
-					if (m_Wrap)
-					{
-						b1->_setPosition(Vector2(
-							fe_wrap<float>(position.x, 1.f, (float)m_Width-1), fe_wrap<float>(position.y, 1.f, (float)m_Height-1.f)
-							));
-					}
-					else
-					{
-						b1->_setPosition(Vector2(
-							fe_clamped<float>(position.x, 1.f, (float)m_Width-1.f), fe_clamped<float>(position.y, 1.f, (float)m_Height-1.f)
-							));
-					}
-				}
-
-
-				///////////////////////
-				// Collision detection
-				//  Check for collisions of active objects.
-
-				// Find the movement vector for current body
-				Vector2 b1_displacement = b1->GetVelocity() * delta + b1->GetAcceleration()*0.5f*delta*delta;
-
-				// Find collidable dynamic bodies
-				BodyList check_list = m_CollisionGrid->FindAdjacentBodies(b1);
-
-				// Append static bodies
-				//  Store the length before resize
-				size_t length = check_list.size();
-				//  Resize and copy
-				check_list.resize(check_list.size() + m_Static.size());
-				std::copy(m_Static.begin(), m_Static.end(), check_list.begin() + length);
-
-				BodyList::iterator b_it = check_list.begin();
-				for (; b_it != check_list.end(); ++b_it)
-				{
-					// Don't let objects collide against themselves!
-					if ((*b_it) == (*a_it))
-						continue;
-
-					PhysicsBody *b2 = (*b_it);
-
-					if ( b1->CanCollideWith(b2) )
-					{
-
-						// Find the movement vector for b2 body
-						Vector2 b2_displacement = b2->GetVelocity() * delta + b2->GetAcceleration()*0.5f*delta*delta;
-
-						// Contact positions for each body will go here
-						Vector2 b1_ct; 
-						Vector2 b2_ct;
-						// Non-contact positions
-						Vector2 b1_nc;
-						Vector2 b2_nc;
-
-						// Search for collisions
-						if (PhysUtil::FindCollisions(
-							&b1_ct, &b2_ct, 
-							&b1_nc, &b2_nc, 
-							b1_displacement, b2_displacement, 
-							b1, b2))
-						{
-							Vector2 normal;
-							PhysUtil::CalculateNormal(&normal, b1_ct, b2_ct, b1, b2);
-
-							///////////////////
-							// Error correction
-							if (normal == Vector2::ZERO)
-							{
-								// No need to warp out of non-statics, they should move away eventually
-								if (b2->CheckCollisionFlag(C_STATIC))
-								{
-									// Try to find a valid normal (we don't want to warp if we don't need to)
-									PhysUtil::CalculateNormal(
-										&normal,
-										b1_ct + b1_displacement, b2_ct,
-										b1, b2);
-									if (normal == Vector2::ZERO)
-									{
-
-										Vector2 jump_point; 
-										Vector2 nu; // Not used
-
-										float facing = b1->GetRotation();
-
-										// Get a short vector
-										Vector2 escape_ray;
-
-										for (float a = 0.0f; a < 2*PI; a+=0.1f)
-										{
-											escape_ray.x = -sinf(a) * 50.0f;
-											escape_ray.y = cosf(a) * 50.0f;
-
-											if (PhysUtil::FindCollisions(
-												&jump_point, &nu, 
-												&nu, &nu,
-												escape_ray, Vector2::ZERO, 
-												b1, b2, 0.1f, false))
-											{
-												b1->m_Position = jump_point;
-
-												continue;
-											}
-										}
-
-										// If the short jump failed failed, get a really long vector
-										escape_ray.x = -sinf(facing) * 500.0f;
-										escape_ray.y = cosf(facing) * 500.0f;
-										if (PhysUtil::FindCollisions(
-											&jump_point, &nu,
-											&nu, &nu,
-											escape_ray, Vector2::ZERO, 
-											b1, b2, 0.1f, false))
-										{
-											b1->m_Position = jump_point;
-
-											continue;
-										}
-
-									}
-
-								}
-							} // if (normal == Vector2::ZERO)
-
-							// End error correction
-							///////////////////////
-
-							// Make sure both bodies are active
-							b1->_activate();
-							b2->_activate();
-
-							////////////////////
-							// Add the collision
-							// If there were no errors, add the detected collision to the list
-							//  Notice the non-contact (_nc) positions are used here, this
-							//  will be used to correct the penetration later
-							collisions.push_back(
-								new Collision(normal, b1, b2, b1_nc, b2_nc)
-								);
-
-						} // if (collision)
-
-					} // if ( CanCollideWith() )
-
-				} // for (it_b)
-
-				// End of collision detection
-				/////////////////////////////
-
-			} // if( IsActive() )
-
-		} // for (it_a)
-
-		// End of movement preperation
-		//////////////////////////////
-
-		//////////////////////
-		// Collision response
-		// Make sure we don't respond to the same collision twice.
-		collisions.sort(CollisionBefore);
-		collisions.unique(CollisionEqual);
-		collisions.sort(CollisionAfter);
-		collisions.unique(CollisionEqual);
-
-		CollisionList::iterator col_it = collisions.begin();
-		for (;col_it != collisions.end(); ++col_it)
-		{
-			Vector2 normal         = (*col_it)->Normal;
-
-			PhysicsBody *cb1 = (*col_it)->First;
-			PhysicsBody *cb2 = (*col_it)->Second;
-
-			Vector2 b1_pos         = (*col_it)->First_Position;
-			Vector2 b2_pos         = (*col_it)->Second_Position;
-
-
-			float cb1_elasticity = cb1->GetCoefficientOfRestitution();
-			float cb2_elasticity = cb2->GetCoefficientOfRestitution();
-
-			float cb1_friction = cb1->GetCoefficientOfFriction(); // not used
-			float cb2_friction = cb2->GetCoefficientOfFriction();
-
-			Vector2 v1 = cb1->GetVelocity();
-			Vector2 v2 = cb1->GetVelocity();
-
-			// Pop back a bit
-			if (cb1->GetCollisionFlags() ^ C_STATIC)
-				cb1->_setPosition(b1_pos);
-			if (cb2->GetCollisionFlags() ^ C_STATIC)
-				cb2->_setPosition(b2_pos);
-
-			// Don't do collision response for objects that don't want it
-			if (cb1->GetCollisionFlags() & C_BOUNCE)
-			{
-
-				// --Collision with static--
-				if (cb2->GetCollisionFlags() & C_STATIC)
-				{
-					// Calculate the deflection velocity
-					if (v1.dot(normal) < 0)
-					{
-						Vector2 bounce = v1.project((-normal)) * cb1_elasticity;
-						Vector2 frictn = v1.project((-normal).perpendicular()) * cb2_friction;
-
-						cb1->_setVelocity((-bounce) + frictn);
-					}
-					else
-					{
-						Vector2 bounce = v1.project(normal) * cb1_elasticity;
-						Vector2 frictn = v1.project(normal.perpendicular()) * cb2_friction;
-						cb1->_setVelocity(-bounce + frictn);
-					}
-				}
-
-				// --Collision with non-static--
-				else
-				{
-					float m1 = cb1->GetMass();
-					float m2 = cb2->GetMass();
-					float im1 = cb1->GetInverseMass();
-					float im2 = cb2->GetInverseMass();
-
-					// Get coeff. of elasticity
-					float e = cb1_elasticity * cb2_elasticity;
-
-
-					// --Dimitrios Christopoulos's Solution--
-					Vector2 pb1,pb2,dpos,U1x,U1y,U2x,U2y,V1x,V1y,V2x,V2y,
-						vf1,vf2;
-					float a,b;
-
-					dpos=(b2_pos-b1_pos).normalized();  // Find X-Axis (delta-position, normalized)
-					a=dpos.dot(v1);                     // Find Projection
-					U1x=dpos*a;                         // Find Projected Vectors
-					U1y=v1-U1x;
-
-					dpos=(pb1-pb2).normalized();        // Same as above, for b2
-					b=dpos.dot(v2);                     // Find Projection
-					U2x=dpos*b;                         // Vectors For The Other Object
-					U2y=v2-U2x;
-
-					//! \todo Improve haphazard bounce and mass effects implementation
-
-					if (cb2->GetCollisionFlags() & C_BOUNCE)
-					{
-						// Both objects want collision response
-						V1x=(U1x+U2x-(U1x-U2x))*0.5* m2*im1;  // Now Find New Velocities
-						V2x=(U1x+U2x-(U2x-U1x))*0.5* m1*im2;
-						V1y=U1y*e;//*m2*im1;
-						V2y=U2y*e;//*m1*im2;
-
-
-						vf1=V1x+V1y;                  // Set New Velocity Vectors
-						vf2=V2x+V2y;
-
-
-						cb1->_setVelocity(vf1); //.normalized()) );
-						cb2->_setVelocity(vf2); //.normalized()) );
-					}
-					else
-					{
-						// Only b1 wants collision response
-						V1x=(U1x+U2x-(U1x-U2x))*1.0f* m2*im1;  // Now Find New Velocities
-						V1y=U1y*e;//*m2*im1;
-
-						vf1=V1x+V1y;                  // Set New Velocity Vectors
-
-						cb1->_setVelocity(vf1); //.normalized()) );
-					} // else [if (cb1->GetCollisionFlags() & C_BOUNCE)]
-
-
-				} // else  [if (cb1->GetCollisionFlags() & C_STATIC)]
-
-			} // if (cb1->GetCollisionFlags() & C_BOUNCE)
-
-			else
-			{
-				// Prevent pentration between non-bouncing objects by
-				// removing the component of velocity towards the other object
-				Vector2 vx1 = v1.project(normal.perpendicular());
-				Vector2 vx2 = v2.project(normal.perpendicular());
-
-				cb1->_setVelocity(vx1);
-				cb1->_setVelocity(vx2);
-			} // else [if (cb1->GetCollisionFlags() & C_BOUNCE)]
-
-
-			//////////
-			// Call each object's collision callback
-
-			// Find the point where the two objects touch
-			Vector2 poc = Vector2(0,0);
-
-			PhysUtil::GuessPointOfCollision(
-				&poc,
-				b1_pos, b2_pos,
-				cb1, cb2);
-
-			cb1->CollisionWith(cb2, poc);
-			cb2->CollisionWith(cb1, poc);
-
-
-		} // for (coll_it)
-
-		// End of collision response
-		////////////////////////////
-
-
-		/////////////////
-		// Apply movement
-
-		// All bodies have now been allowed to check for collisions in their
-		//  current state, so we can now move them to a new state.
-		//  This must be done in a seperate loop, or only one body in each collision
-		//  will be able to detect the impact.
-		a_it = m_Bodies.begin();
-		for (;a_it != m_Bodies.end(); ++a_it)
-		{
-			PhysicsBody *b1 = (*a_it);
-
-			if (b1->IsActive())
-			{
-				// This body will probably move, so update it when we resort the gird below...
-				m_CollisionGrid->_updateThis(b1);
-
-				Vector2 velocity = b1->GetVelocity();
-				Vector2 acceleration = b1->GetAcceleration();
-				float rot_velocity = b1->GetRotationalVelocity();
-
-				/////////
-				// Move along velocity vector
-				b1->m_Position += velocity * delta + acceleration*0.5f*delta*delta;
-				b1->m_Velocity += acceleration * delta;
-
-				/////////
-				// Rotate
-				b1->m_Rotation += rot_velocity * delta;
-
-
-				////////////////////////////////
-				// Deactivate stationary objects
-				 
-				if (velocity.squared_length() > m_DeactivationVelocitySquared ||
-					rot_velocity > 0)
-				{
-					// Reset the deactivation counter
-					b1->_activate();
-				}
-				else
-				{
-					b1->_deactivateAfterCountdown(split);
-				}
-
-			}
-
-		} // for (it_a)
-
-		// End of movement application
-		//////////////////////////////
-
-
-		// Resort all updated bodies
-		m_CollisionGrid->Resort();
+		//for (BodyList::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
+		//{
+		//	(*it)->_setRotation((*it)->GetChipBody()->a);
+		//	//(*it)->_setVelocity((*it)->GetVelocity()*0.75f);
+		//}
+		cpFloat dt = 1.0/60.0/1.0;
+		cpSpaceStep(m_ChipSpace, dt);
+	}
+
+	void PhysicsWorld::DebugDraw()
+	{
+		cpSpaceHashEach(m_ChipSpace->staticShapes, &drawObject, NULL);
+		cpSpaceHashEach(m_ChipSpace->activeShapes, &drawObject, NULL);
 	}
 
 
@@ -809,7 +417,17 @@ namespace FusionEngine
 	{
 		Clear();
 
-		m_CollisionGrid->SetCellSize(g_PhysGridCellW, g_PhysGridCellH, level_x, level_y);
+		cpResetShapeIdCounter();
+		cpSpaceInit(m_ChipSpace);
+
+		//m_ChipSpace->iterations = 5;
+		cpSpaceResizeStaticHash(m_ChipSpace, 6.0, 4999);
+		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 99);
+
+		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, 0, &bodyCollFunc, this);
+		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, g_PhysBodyCpCollisionType, &bodyCollFunc, this);
+
+		//m_CollisionGrid->SetCellSize(g_PhysGridCellW, g_PhysGridCellH, level_x, level_y);
 
 		m_Width = level_x;
 		m_Height = level_y;
@@ -876,6 +494,17 @@ namespace FusionEngine
 		return m_MaxVelocity;
 	}
 
+	void PhysicsWorld::SetDamping(float damping)
+	{
+		if (damping < 1.1f)
+			m_ChipSpace->damping = damping;
+	}
+
+	float PhysicsWorld::GetDamping() const
+	{
+		return m_ChipSpace->damping;
+	}
+
 	void PhysicsWorld::SetBitmaskRes(int ppb)
 	{
 		m_BitmaskRes = ppb;
@@ -886,10 +515,10 @@ namespace FusionEngine
 		return m_BitmaskRes;
 	}
 
-	const FusionPhysicsCollisionGrid* PhysicsWorld::GetCollisionGrid() const
-	{
-		return m_CollisionGrid;
-	}
+	//const CollisionGrid* PhysicsWorld::GetCollisionGrid() const
+	//{
+	//	return m_CollisionGrid;
+	//}
 
 }
 

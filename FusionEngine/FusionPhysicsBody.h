@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+Copyright (c) 2006-2007 Fusion Project Team
 
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
+This software is provided 'as-is', without any express or implied warranty.
+In noevent will the authors be held liable for any damages arising from the
+use of this software.
 
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
+1. The origin of this software must not be misrepresented; you must not
+claim that you wrote the original software. If you use this software in a
+product, an acknowledgment in the product documentation would be
+appreciated but is not required.
 
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
+2. Altered source versions must be plainly marked as such, and must not
+be misrepresented as being the original software.
 
-    3. This notice may not be removed or altered from any source distribution.
+3. This notice may not be removed or altered from any source distribution.
 
 
-	File Author(s):
+File Author(s):
 
-		Elliot Hayward
+Elliot Hayward
 
 */
 
@@ -36,9 +36,10 @@
 #include "FusionCommon.h"
 
 /// Fusion
-#include "FusionBitmask.h"
 #include "FusionPhysicsShape.h"
 #include "FusionPhysicsCallback.h"
+
+#include <boost/ptr_container/ptr_vector.hpp>
 
 namespace FusionEngine
 {
@@ -57,26 +58,15 @@ namespace FusionEngine
 		C_BOUNCE = 2
 	};
 
+	static float g_PhysStaticMass = INFINITY;
+	static int g_PhysBodyCpCollisionType = 1;
+
 	/*!
 	 * \brief
 	 * The basis for movable/colliding objects.
 	 *
-	 * \remarks
-	 * With regurad to the state stored in this class:
-	 * For FusionShips this should be initialisd by the ShipFactory when it creates
-	 * a new ship. It should remain indipendant of the ClientEnvironment after that
-	 * point - all modification to it can be done manually, rather than requiring it
-	 * to know of ShipResourceBundle.
-	 * <br>
-	 * Me - Just one other key thing to remember, PhysicsBody is mindless!
-	 * This class just stores data, and keeps that data valid (e.g. modifies the AABB
-	 * to fit the bitmask if it rotates.)
-	 * <br>
-	 * Me - AABBs are not yet implimented
 	 * <br>
 	 * Me - perhaps this should be abstract an class. 
-	 *
-	 * \todo AABB for PhysicsBody
 	 *
 	 * \todo Perhaps bodies should have ApplyPosition and ApplyRotation methods, rather
 	 * than giving FusionPhysicsWorld friend access...
@@ -86,7 +76,7 @@ namespace FusionEngine
 	 */
 	class PhysicsBody
 	{
-		typedef std::vector<Shape> ShapeList;
+		typedef boost::ptr_vector<Shape> ShapeList;
 		friend class PhysicsWorld;
 	public:
 		//PhysicsBody();
@@ -95,7 +85,7 @@ namespace FusionEngine
 		 * \param world
 		 * The world in which this body resides.
 		 */
-		PhysicsBody(FusionPhysicsWorld *world);
+		PhysicsBody(PhysicsWorld *world);
 
 		//! Constructor with handler.
 		/*!
@@ -105,7 +95,7 @@ namespace FusionEngine
 		 * \param[in] handler
 		 * The collision response object.
 		 */
-		PhysicsBody(FusionPhysicsWorld *world, ICollisionHandler *handler);
+		PhysicsBody(PhysicsWorld *world, ICollisionHandler *handler);
 
 		//! [depreciated] Constructor with response param.
 		/*!
@@ -115,13 +105,17 @@ namespace FusionEngine
 		 * \param response
 		 * The response function to call on upon a collision.
 		 */
-		PhysicsBody(FusionPhysicsWorld *world, const CollisionCallback &response);
+		PhysicsBody(PhysicsWorld *world, const CollisionCallback &response);
+
+		~PhysicsBody();
 
 	public:
 		//! Sets the type ID for this object.
 		void SetType(int type);
 		//! Does what you think it does.
 		virtual void SetMass(float mass);
+		
+		virtual void RecalculateInertia();
 		//! Sets the radius used for torque equations.
 		/*
 		 * There are no torque equations ATM, but may be in the future...
@@ -166,17 +160,32 @@ namespace FusionEngine
 
 		//! \name Collision Properties
 		//@{
-		virtual void SetColBitmask(FusionBitmask *bitmask);
-		virtual void SetColAABB(float width, float height);
+		//virtual void SetColBitmask(FusionBitmask *bitmask);
+		//virtual void SetColAABB(float width, float height);
 		//virtual SetColAABB(const CL_Rectf &bbox);
-		virtual void SetColDist(float dist);
+		//virtual void SetColDist(float dist);
 		//@}
 
+		cpBody* GetChipBody() const;
+
+		virtual void AttachShape(Shape* shape);
+		virtual void DetachShape(Shape* shape);
+		virtual void ClearShapes();
+
+		void AttachJoint(cpJoint* joint);
+		void DetachJoint(cpJoint* joint);
+		void ClearJoints();
+
+		void Clear();
+
+		void SetAllShapesElasticity(float e);
+		void SetAllShapesFriction(float u);
+
+		virtual void CacheBB();
 		//! \name Collision property retreival
 		//@{
-		virtual FusionBitmask *GetColBitmask() const;
-		virtual CL_Rectf GetColAABB() const;
-		virtual float GetColDist() const;
+		//virtual FusionBitmask *GetColBitmask() const;
+		virtual CL_Rectf GetAABB() const;
 
 		//! Returns true if the given point is solid.
 		/*!
@@ -194,7 +203,7 @@ namespace FusionEngine
 		 * \param auto_offset
 		 * Automatically offset the 'point' param.
 		 */
-		virtual bool GetColPoint(const CL_Point &point, bool auto_offset = true) const;
+		//virtual bool GetColPoint(const CL_Point &point, bool auto_offset = true) const;
 		//@}
 
 		/*!
@@ -203,9 +212,9 @@ namespace FusionEngine
 		 * I think these are self explanatory.
 		 */
 		//@{
-		virtual void SetUsePixelCollisions(bool usePixel);
-		virtual void SetUseAABBCollisions(bool useAABB);
-		virtual void SetUseDistCollisions(bool useDist);
+		//virtual void SetUsePixelCollisions(bool usePixel);
+		//virtual void SetUseAABBCollisions(bool useAABB);
+		//virtual void SetUseDistCollisions(bool useDist);
 		//@}
 
 		/*!
@@ -214,9 +223,9 @@ namespace FusionEngine
 		 * I think these are self explanatory.
 		 */
 		//@{
-		virtual bool GetUsePixelCollisions() const;
-		virtual bool GetUseAABBCollisions() const;
-		virtual bool GetUseDistCollisions() const;
+		//virtual bool GetUsePixelCollisions() const;
+		//virtual bool GetUseAABBCollisions() const;
+		//virtual bool GetUseDistCollisions() const;
 		//@}
 
 		//! Sets the user data
@@ -236,10 +245,13 @@ namespace FusionEngine
 		//! Returns true if the given body can experiance a collision with this one.
 		bool CanCollideWith(PhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void CollisionWith(PhysicsBody *other, const Vector2 &collision_point);
+		void CollisionWith(PhysicsBody *other, const std::vector<Contact> &collision_point);
 
 		//! [depreciated] Use CollisionWith()
-		void CollisionResponse(PhysicsBody *other, const Vector2 &collision_point);
+		void CollisionResponse(PhysicsBody *other, const std::vector<Contact> &collision_point);
+
+		//! Returns true if this is a static body (infinate mass & inertia)
+		bool IsStatic() const;
 
 		//! Returns the current collision config.
 		int GetCollisionFlags();
@@ -252,24 +264,24 @@ namespace FusionEngine
 		//! Allows the collision flags to be set manually
 		/*!
 		 * This isn't usually necessary, as collision flags get set by relavant
-		 * methods (e.g. If SetMass(0) is called, the C_STATIC flag will be set.)
+		 * methods (e.g. If SetMass(g_PhysStaticMass) is called, the C_STATIC flag will be set.)
 		 */
 		void _setCollisionFlags(int flags);
 
 		//! \name State retreival.
 		//@{
 		//! Returns the current position
-		virtual const Vector2 &GetPosition() const;
+		virtual const Vector2 &GetPosition();
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		virtual CL_Point GetPositionPoint() const;
 
 		//! Gets the net constant (i.e. not 'relative') force applied to the body.
-		virtual const Vector2 &GetForce() const;
+		virtual const Vector2 &GetForce();
 		//! Gets the net relative force applied to the body.
 		virtual const Vector2& GetRelativeForce() const;
 
 		virtual const Vector2 &GetAcceleration() const;
-		virtual const Vector2 &GetVelocity() const;
+		virtual const Vector2 &GetVelocity();
 
 		//! Guess
 		virtual float GetCoefficientOfFriction() const;
@@ -358,7 +370,7 @@ namespace FusionEngine
 		virtual void _setForce(const Vector2 &force);
 		//! Sets the force.
 		/*!
-		 * \param force
+		  * \param force
 		 * The force to set.
 		 *
 		 * \param direction
@@ -418,7 +430,7 @@ namespace FusionEngine
 	protected:
 		cpBody *m_Body;
 
-		cpShape *m_Shape;
+		ShapeList m_Shapes;
 		//! \name Used internally by CollisionGrid
 		//@{
 		//! Collision Grid Index
@@ -426,12 +438,12 @@ namespace FusionEngine
 		//! Collision Grid Index
 		int m_CCIndex;
 
-		//! True if FusionPhysicsCollisionGrid#_updateThis(thisobject) has been called.
+		//! True if CollisionGrid#_updateThis(thisobject) has been called.
 		bool m_GotCGUpdate;
 		//@}
 
 		//! Containing world
-		FusionPhysicsWorld *m_World;
+		PhysicsWorld *m_World;
 
 		//! \see FusionPhysicsCallback.h
 		CollisionCallback m_CollisionResponse;
@@ -459,11 +471,11 @@ namespace FusionEngine
 		unsigned int m_DeactivationPeriod;
 
 		//! bitmask
-		FusionBitmask *m_Bitmask;
+		//FusionBitmask *m_Bitmask;
 		//! aabb
 		CL_Rectf m_AABB;
 		//! dist
-		float m_ColDist;
+		float m_Radius;
 
 		//! Lists the bodies which have signaled that they are colliding with this one
 		BodyList m_CollidingBodies;
@@ -479,7 +491,6 @@ namespace FusionEngine
 		//! "State" stuff.
 		float m_Mass;
 		float m_InverseMass;
-		float m_Radius;
 		//! Linear damping, a.k.a. coefficient of friction
 		float m_LinearDamping;
 		//! Bounce, a.k.a. coefficient of restitution
@@ -508,6 +519,29 @@ namespace FusionEngine
 		//@}
 
 	};
+
+	static int bodyCollFunc(cpShape *a, cpShape *b, cpContact *contacts, int numContacts, cpFloat normal_coef, void *data)
+	{
+		if (a->data == NULL || b->data == NULL)
+			return 1;
+
+		PhysicsBody* aBody = (PhysicsBody*)a->data;
+		PhysicsBody* bBody = (PhysicsBody*)b->data;
+
+		std::vector<Contact> contactList;
+		for (int i = 0; i < numContacts; i++)
+		{
+			contactList.push_back( Contact(contacts[i]) );
+		}
+
+		aBody->CollisionWith(bBody, contactList);
+		bBody->CollisionWith(aBody, contactList);
+
+		if (aBody->CanCollideWith(bBody) && bBody->CanCollideWith(aBody))
+			return 1;
+
+		return 0;
+	}
 
 }
 

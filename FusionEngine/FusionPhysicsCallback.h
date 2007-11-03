@@ -41,8 +41,54 @@
 
 namespace FusionEngine
 {
+
+	//! Collision contact point
+	class Contact
+	{
+	private:
+		Vector2 m_Position;
+		Vector2 m_Normal;
+
+	public:
+		Contact(const cpContact& contact)
+		{
+			m_Position.x = contact.p.x;
+			m_Position.y = contact.p.y;
+
+			m_Normal.x = contact.n.x;
+			m_Normal.y = contact.n.y;
+		}
+
+		Contact(const Vector2& p, const Vector2& n)
+		{
+			m_Position = p;
+			m_Normal = n;
+		}
+
+	public:
+		void SetPosioin(const Vector2& v)
+		{
+			m_Position = v;
+		}
+
+		void SetNormal(const Vector2& n)
+		{
+			m_Normal = n;
+		}
+
+		const Vector2& GetPosiion() const
+		{
+			return m_Position;
+		}
+
+		const Vector2& GetNormal() const
+		{
+			return m_Normal;
+		}
+	};
+
 	//! [depreciated] Defines a function which can be used as a collision callback.
-	typedef boost::function<void (const FusionPhysicsBody*, const Vector2&)> CollisionCallback;
+	typedef boost::function<void (const PhysicsBody*, const std::vector<Contact>&)> CollisionCallback;
 
 	//! [depreciated] Returns a CollisionCallback corrosponding to the given member function.
 	/*!
@@ -54,7 +100,7 @@ namespace FusionEngine
 	 * just as easy, so this function isn't very useful...
 	 */
 	template <class T>
-	CollisionCallback CreateCCB(T *instance, void(T::*method)(const FusionPhysicsBody*, const Vector2&))
+	CollisionCallback CreateCCB(T *instance, void(T::*method)(const PhysicsBody*, const Vector2&))
 	{
 		return boost::bind(method, instance, _1, _2);
 	}
@@ -64,9 +110,9 @@ namespace FusionEngine
 	{
 	public:
 		//! Return true if collision checks should be preformed on the passed body.
-		virtual bool CanCollideWith(const FusionPhysicsBody *other) =0;
+		virtual bool CanCollideWith(const PhysicsBody *other) =0;
 		//! Called on collision with the given body, at the given point.
-		virtual void CollisionWith(const FusionPhysicsBody *other, const Vector2 &point) =0;
+		virtual void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts) =0;
 	};
 
 }

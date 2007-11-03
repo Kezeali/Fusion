@@ -63,6 +63,9 @@
 //#include "FusionFileTypeException.h"
 //#include "FusionInvalidArgumentException.h"
 
+// Chipmunk
+#include <chipmunk.h>
+
 // Boost
 //#include <boost/function.hpp>
 //#include <boost/bind.hpp>
@@ -232,9 +235,10 @@ namespace FusionEngine
 	class FusionShip;
 	class FusionProjectile;
 	class ShipResourceBundle;
-	class FusionPhysicsWorld;
-	class FusionPhysicsBody;
-	class FusionPhysicsCollisionGrid;
+	class PhysicsWorld;
+	class PhysicsBody;
+	class Shape;
+	class CollisionGrid;
 	class FusionState;
 	class FusionStatePackSync;
 	class FusionStateMessage;
@@ -268,7 +272,7 @@ namespace FusionEngine
 	typedef std::vector<std::string> StringVector;
 
 	//! Type for a list of bodies
-	typedef std::vector<FusionPhysicsBody*> BodyList;
+	typedef std::vector<PhysicsBody*> BodyList;
 
 	//! Self managing state pointer
 	/*!

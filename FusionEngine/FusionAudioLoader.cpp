@@ -82,7 +82,7 @@ namespace FusionEngine
 		}
 		catch (CL_Error&)
 		{
-			FSN_EXCEPT(ExCode::FileSystem, "AudioLoader::loadSound", "'" + path + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "AudioLoader::loadSound", "'" + path + "' could not be loaded");
 		}
 		
 		CL_SoundBuffer* sur = new CL_SoundBuffer( sp );
@@ -111,7 +111,7 @@ namespace FusionEngine
 		}
 		catch (CL_Error&)
 		{
-			FSN_EXCEPT(ExCode::FileSystem, "AudioStreamLoader::loadSound", "'" + path + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "AudioStreamLoader::loadSound", "'" + path + "' could not be loaded");
 		}
 		
 		CL_SoundBuffer* sur = new CL_SoundBuffer( sp );

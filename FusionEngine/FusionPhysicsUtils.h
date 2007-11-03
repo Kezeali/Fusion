@@ -79,7 +79,7 @@ namespace FusionEngine
 		bool GuessPointOfCollision(
 			Vector2 *output,
 			const Vector2 &pos_one, const Vector2 &pos_two,
-			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
+			const PhysicsBody *one, const PhysicsBody *two);
 
 		//! Used to check for collisions between moving objects.
 		/*!
@@ -129,7 +129,7 @@ namespace FusionEngine
 			Vector2 *output_a1, Vector2 *output_a2,
 			Vector2 *output_b1, Vector2 *output_b2,
 			const Vector2 &vector_one, const Vector2 &vector_two,
-			const FusionPhysicsBody *one, const FusionPhysicsBody *two,
+			const PhysicsBody *one, const PhysicsBody *two,
 			float epsilon = 0.01f, bool find_close = true);
 
 		//! Checks the given point for a collision between two bodies.
@@ -152,7 +152,7 @@ namespace FusionEngine
 		 */
 		bool CollisionCheck(
 			const Vector2 &pos_one, const Vector2 &two_pos,
-			const FusionPhysicsBody *one, const FusionPhysicsBody *two);
+			const PhysicsBody *one, const PhysicsBody *two);
 
 		//! [depreciated] Use the ClanLib line math function.
 		/*!
@@ -217,7 +217,7 @@ namespace FusionEngine
 		void CalculateNormal(
 			Vector2 *output,
 			const Vector2 &ref_pos, const Vector2 &other_pos,
-			const FusionPhysicsBody *ref, const FusionPhysicsBody *other);
+			const PhysicsBody *ref, const PhysicsBody *other);
 
 	};
 

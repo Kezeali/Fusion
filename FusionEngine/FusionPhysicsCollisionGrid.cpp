@@ -6,7 +6,7 @@
 namespace FusionEngine
 {
 
-	FusionPhysicsCollisionGrid::FusionPhysicsCollisionGrid()
+	CollisionGrid::CollisionGrid()
 		: m_CellWidth(1),
 		m_CellHeight(1),
 		m_GridXScale(1.f),
@@ -16,17 +16,17 @@ namespace FusionEngine
 	{
 	}
 
-	FusionPhysicsCollisionGrid::FusionPhysicsCollisionGrid(int cell_w, int cell_h, int level_w, int level_h)
+	CollisionGrid::CollisionGrid(int cell_w, int cell_h, int level_w, int level_h)
 	{
 		SetCellSize(cell_w, cell_h, level_w, level_h);
 	}
 
-	FusionPhysicsCollisionGrid::~FusionPhysicsCollisionGrid()
+	CollisionGrid::~CollisionGrid()
 	{
 		Clear();
 	}
 
-	void FusionPhysicsCollisionGrid::AddBody(FusionPhysicsBody *body)
+	void CollisionGrid::AddBody(PhysicsBody *body)
 	{
 		int pos = _getGridPosition(body);
 
@@ -35,7 +35,7 @@ namespace FusionEngine
 		m_Grid[pos].push_back(body);
 	}
 
-	void FusionPhysicsCollisionGrid::RemoveBody(FusionPhysicsBody *body)
+	void CollisionGrid::RemoveBody(PhysicsBody *body)
 	{
 		// Each body stores its node index
 		BodyList node = m_Grid[body->_getCGPos()];
@@ -67,7 +67,7 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionPhysicsCollisionGrid::ResortAll()
+	void CollisionGrid::ResortAll()
 	{
 		// This fn. just adds all bodies in the grid to the update list...
 
@@ -85,13 +85,13 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionPhysicsCollisionGrid::ForceResortAll()
+	void CollisionGrid::ForceResortAll()
 	{
 		ResortAll();
 		Resort();
 	}
 
-	void FusionPhysicsCollisionGrid::Clear()
+	void CollisionGrid::Clear()
 	{
 		// Clean the grid, but don't destroy the grid itself.
 		BodyListCollection::iterator it;
@@ -104,7 +104,7 @@ namespace FusionEngine
 		m_BodiesToUpdate.clear();
 	}
 
-	void FusionPhysicsCollisionGrid::Resort()
+	void CollisionGrid::Resort()
 	{
 		BodyList::iterator body = m_BodiesToUpdate.begin();
 		for (; body != m_BodiesToUpdate.end(); body++)
@@ -146,7 +146,7 @@ namespace FusionEngine
 		m_BodiesToUpdate.clear();
 	}
 
-	void FusionPhysicsCollisionGrid::SetScale(float scale, int level_x, int level_y)
+	void CollisionGrid::SetScale(float scale, int level_x, int level_y)
 	{
 		assert(0);
 		//cl_assert(scale > 0.0f && scale <= 1.0f);
@@ -163,7 +163,7 @@ namespace FusionEngine
 		//m_Grid.resize(m_GridWidth * m_GridHeight);
 	}
 
-	void FusionPhysicsCollisionGrid::SetCellSize(int cell_w, int cell_h, int level_w, int level_h)
+	void CollisionGrid::SetCellSize(int cell_w, int cell_h, int level_w, int level_h)
 	{
 		m_CellWidth = cell_w;
 		m_CellHeight = cell_h;
@@ -180,30 +180,30 @@ namespace FusionEngine
 		m_Grid.resize(m_GridWidth * m_GridHeight);
 	}
 
-	int FusionPhysicsCollisionGrid::GetCellWidth() const
+	int CollisionGrid::GetCellWidth() const
 	{
 		return m_CellWidth;
 	}
 
-	int FusionPhysicsCollisionGrid::GetCellHeight() const
+	int CollisionGrid::GetCellHeight() const
 	{
 		return m_CellHeight;
 	}
 
-	BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(FusionEngine::FusionPhysicsBody *body)
+	BodyList CollisionGrid::FindAdjacentBodies(PhysicsBody *body)
 	{
 		Vector2 p = body->GetPosition();
 		return _findAdjacentBodies(_scaleX(p.x), _scaleY(p.y), body->_getCGPos());
 	}
 
-	BodyList FusionPhysicsCollisionGrid::FindAdjacentBodies(float x, float y)
+	BodyList CollisionGrid::FindAdjacentBodies(float x, float y)
 	{
 		int gx = _scaleX(x);
 		int gy = _scaleY(y);
 		return _findAdjacentBodies(gx, gy, _getIndex(gx, gy));
 	}
 
-	BodyList FusionPhysicsCollisionGrid::_findAdjacentBodies(int grid_x, int grid_y, int cell_index)
+	BodyList CollisionGrid::_findAdjacentBodies(int grid_x, int grid_y, int cell_index)
 	{
 		// Number of cells accross/down from the given cell considered adjcent
 		static const int _adjStart = -1, _adjEnd = 1;
@@ -259,7 +259,7 @@ namespace FusionEngine
 		return bodies;
 	}
 
-	void FusionPhysicsCollisionGrid::_updateThis(FusionEngine::FusionPhysicsBody *body)
+	void CollisionGrid::_updateThis(PhysicsBody *body)
 	{
 		if (!body->_CGwillUpdate())
 		{
@@ -269,13 +269,13 @@ namespace FusionEngine
 		}
 	}
 
-	unsigned int FusionPhysicsCollisionGrid::_getGridPosition(FusionEngine::FusionPhysicsBody *body) const
+	unsigned int CollisionGrid::_getGridPosition(PhysicsBody *body) const
 	{
 		Vector2 p = body->GetPosition();
 		return _getGridPosition(p.x, p.y);
 	}
 
-	unsigned int FusionPhysicsCollisionGrid::_getGridPosition(float x, float y) const
+	unsigned int CollisionGrid::_getGridPosition(float x, float y) const
 	{
 		// gridx, gridy
 		unsigned int gx, gy;
@@ -287,17 +287,17 @@ namespace FusionEngine
 		return _getIndex(gx, gy);
 	}
 
-	inline unsigned int FusionPhysicsCollisionGrid::_scaleX(float x) const
+	inline unsigned int CollisionGrid::_scaleX(float x) const
 	{
 		return (unsigned int)(x * m_GridXScale);
 	}
 
-	inline unsigned int FusionPhysicsCollisionGrid::_scaleY(float y) const
+	inline unsigned int CollisionGrid::_scaleY(float y) const
 	{
 		return (unsigned int)(y * m_GridYScale);
 	}
 
-	inline int FusionPhysicsCollisionGrid::_getIndex(int gx, int gy) const
+	inline int CollisionGrid::_getIndex(int gx, int gy) const
 	{
 		int index = gy * m_GridWidth + gx;
 
@@ -307,7 +307,7 @@ namespace FusionEngine
 		return (int)index;
 	}
 
-	void FusionPhysicsCollisionGrid::DebugDraw() const
+	void CollisionGrid::DebugDraw() const
 	{
 		for (int y = 0; y < m_GridHeight; y++)
 			for (int x = 0; x < m_GridWidth; x++)
@@ -344,7 +344,7 @@ namespace FusionEngine
 		//croppedWidth = xEnd-xStart;
 		//croppedHeigth = yEnd-yStart;
 
-	//BodyList FusionPhysicsCollisionGrid::_findAdjacentBodies(int cell_index)
+	//BodyList CollisionGrid::_findAdjacentBodies(int cell_index)
 	//{
 	//	//! Number of cells accross/down from the given cell considered adjcent
 	//	static const int _adjStart = -1, _adjEnd = 1;
@@ -409,7 +409,7 @@ namespace FusionEngine
 	//}
 
 	/* [removed] Pointer used now
-	void FusionPhysicsCollisionGrid::_updateThis(int cgind)
+	void CollisionGrid::_updateThis(int cgind)
 	{
 	m_BodiesToUpdate.push_back(cgind);
 	}

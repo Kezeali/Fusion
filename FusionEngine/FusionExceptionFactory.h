@@ -40,7 +40,7 @@ namespace FusionEngine
 		enum ExceptionCodes
 		{
 			Base,
-			FileSystem,
+			IO,
 			FileNotFound,
 			FileType,
 			ResourceNotLoaded
@@ -84,7 +84,7 @@ namespace FusionEngine
 
 		//! Creates a FileSystemException
 		static FileSystemException Create(
-			ExceptionClass<ExCode::FileSystem> type, 
+			ExceptionClass<ExCode::IO> type, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
 			return FileSystemException(origin, message, file, line);

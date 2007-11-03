@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionPhysicsCollisionGrid
-#define Header_FusionEngine_FusionPhysicsCollisionGrid
+#ifndef Header_FusionEngine_CollisionGrid
+#define Header_FusionEngine_CollisionGrid
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,16 +34,16 @@
 namespace FusionEngine
 {
 	//! Compartmentises collision checking to keep redundant checks to a minimum.
-	class FusionPhysicsCollisionGrid
+	class CollisionGrid
 	{
 	public:
 
 		//! Constructor
-		FusionPhysicsCollisionGrid();
+		CollisionGrid();
 		//! Constructor + initialization
-		FusionPhysicsCollisionGrid(int cell_w, int cell_h, int level_x, int level_y);
+		CollisionGrid(int cell_w, int cell_h, int level_x, int level_y);
 		//! Destructor
-		~FusionPhysicsCollisionGrid();
+		~CollisionGrid();
 
 	public:
 		//typedef std::vector<FusionPhysicsBody *> BodyList;
@@ -53,15 +53,15 @@ namespace FusionEngine
 	public:
 
 		//! Adds an already existing body to the grid.
-		void AddBody(FusionPhysicsBody *body);
+		void AddBody(PhysicsBody *body);
 		//! Removes the given body from the grid.
-		void RemoveBody(FusionPhysicsBody *body);
+		void RemoveBody(PhysicsBody *body);
 		/*!
 		 * \brief Places all bodies at their correct positions within the grid.
 		 *
 		 * This action is not immediate, the actual sort takes place the next
-		 * time FusionPhysicsCollisionGrid#Resort() is called.
-		 * Call FusionPhysicsCollisionGrid#ForceResortAll() for an 
+		 * time CollisionGrid#Resort() is called.
+		 * Call CollisionGrid#ForceResortAll() for an 
 		 * immeadiate resort.
 		 */
 		void ResortAll();
@@ -110,7 +110,7 @@ namespace FusionEngine
 		 *
 		 * \returns a STL vector of FusionPhysicsBodys
 		 */
-		BodyList FindAdjacentBodies(FusionPhysicsBody *body);
+		BodyList FindAdjacentBodies(PhysicsBody *body);
 
 		/*!
 		 * \brief Finds bodies adjacent to the cell at the given co-ord
@@ -132,7 +132,7 @@ namespace FusionEngine
 		 *
 		 * Used internally by FusionPhysicsWorld when it moves a body.
 		 */
-		void _updateThis(FusionPhysicsBody *body);
+		void _updateThis(PhysicsBody *body);
 		/*!
 		 * [depreciated] Ensures a specific body will be updated when #Resort is called.
 		 *
@@ -144,7 +144,7 @@ namespace FusionEngine
 		 * Finds the correct position (i.e. array index) within the collision grid
 		 * for a specific body.
 		 */
-		unsigned int _getGridPosition(FusionPhysicsBody *body) const;
+		unsigned int _getGridPosition(PhysicsBody *body) const;
 
 		/*!
 		 * Finds the correct position (i.e. array index) within the collision grid

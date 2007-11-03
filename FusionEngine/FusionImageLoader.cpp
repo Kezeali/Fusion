@@ -80,7 +80,7 @@ namespace FusionEngine
 		}
 		catch (CL_Error&)
 		{
-			FSN_EXCEPT(ExCode::FileSystem, "ImageLoader::loadSurface", "'" + path + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "ImageLoader::loadSurface", "'" + path + "' could not be loaded");
 		}
 		
 		CL_Surface* sur = new CL_Surface( sp );

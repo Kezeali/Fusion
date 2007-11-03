@@ -2,35 +2,35 @@
 #include "../FusionEngine/FusionCommon.h"
 
 #include "../FusionEngine/FusionBitmask.h"
-#include "../FusionEngine/FusionPhysicsCollisionGrid.h"
+//#include "../FusionEngine/FusionPhysicsCollisionGrid.h"
 #include "../FusionEngine/FusionPhysicsWorld.h"
 #include "../FusionEngine/FusionPhysicsBody.h"
-#include "../FusionEngine/FusionPhysicsUtils.h"
+//#include "../FusionEngine/FusionPhysicsUtils.h"
 #include "../FusionEngine/FusionPhysicsTypes.h"
 #include "../FusionEngine/FusionPhysicsCallback.h"
 
 const int g_NumDrones = 4;
-const float g_ThrustForce = 0.14f;
+const float g_ThrustForce = 3.0f;
 
 using namespace FusionEngine;
 
 class OutputUserData : public ICollisionHandler
 {
 private:
-	FusionPhysicsBody* m_MyBody;
+	PhysicsBody* m_MyBody;
 
 public:
-	OutputUserData(FusionPhysicsBody* body)
+	OutputUserData(PhysicsBody* body)
 		: m_MyBody(body)
 	{
 	}
 
-	bool CanCollideWith(const FusionPhysicsBody *other)
+	bool CanCollideWith(const PhysicsBody *other)
 	{
 		return (other != m_MyBody);
 	}
 
-	void CollisionWith(const FusionPhysicsBody *other, const Vector2 &point)
+	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts)
 	{
 		if (other->GetUserData() != NULL)
 		{
@@ -41,29 +41,89 @@ public:
 
 };
 
+class BitmaskTest;
+
+class Explosive : public ICollisionHandler
+{
+	BitmaskTest* m_Env;
+	PhysicsBody* m_MyBody;
+
+public:
+	Explosive(BitmaskTest* env, PhysicsBody* body)
+		: m_Env(env),
+		m_MyBody(body)
+	{
+	}
+
+	bool CanCollideWith(const PhysicsBody *other)
+	{
+		return true;
+	}
+
+	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts);
+};
 
 class BitmaskTest : public CL_ClanApplication
 {
-	FusionBitmask *m_ShipBitmask;
-	FusionBitmask *m_DroneBitmask[4];
-	FusionBitmask *m_TerrainBitmask;
+	//Bitmask *m_ShipBitmask;
+	//Bitmask *m_DroneBitmask[4];
 
-	FusionPhysicsWorld *m_World;
+	PhysicsWorld *m_World;
+
+	CL_Surface* m_ProjectileGFX;
+	std::vector<PhysicsBody*> m_Projectiles;
+	std::vector<PhysicsBody*> m_DeleteQueue;
 
 	CL_Surface *m_ShipGraphical;
-	FusionPhysicsBody *m_ShipPhysical;
+	PhysicsBody *m_ShipPhysical;
 
 	CL_Surface *m_DroneGraphical[g_NumDrones];
-	FusionPhysicsBody *m_DronePhysical[g_NumDrones];
+	PhysicsBody *m_DronePhysical[g_NumDrones];
 
 	CL_Surface *m_TerrainGraphical;
-	FusionPhysicsBody *m_TerrainPhysical;
+	PhysicsBody *m_TerrainPhysical;
+	Bitmask *m_TerrainBitmask;
 	CL_Canvas *m_TerrainCanvas;
 
+	PhysicsBody* m_DamageBody;
 	CL_Surface *m_Damage;
 
+	bool firing;
+
+public:
+	void Detonate(PhysicsBody* body, float radius, const Vector2& position)
+	{
+		float scale = (1.0/8.0f)*(radius+2);
+		int x_offset = m_TerrainPhysical->GetPosition().x;
+		int y_offset = m_TerrainPhysical->GetPosition().y;
+
+		m_Damage->set_scale(scale, scale);
+		m_Damage->draw(position.x-x_offset, position.y-y_offset, m_TerrainCanvas->get_gc() );
+		m_DamageBody->_setPosition(Vector2::ZERO);
+		CircleShape shape(m_DamageBody, 0.f, radius, cpvzero);
+		m_TerrainBitmask->Erase(&shape, position);
+
+		for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
+		{
+			if ((*it) == body)
+			{
+				m_Projectiles.erase(it);
+				m_DeleteQueue.push_back(body);
+				break;
+			}
+		}
+	}
+
+private:
 	bool Update(unsigned int split)
 	{
+		// Delete detonated bodies
+		for (std::vector<PhysicsBody*>::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
+		{
+			m_World->DestroyBody((*it));
+		}
+		m_DeleteQueue.clear();
+
 		if (CL_Keyboard::get_keycode('R'))
 		{
 			m_ShipPhysical->_setForce(Vector2::ZERO);
@@ -106,10 +166,10 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
-			m_ShipPhysical->SetRotationalVelocity(-0.3f);
+			m_ShipPhysical->SetRotationalVelocity(-2.f);
 
 		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
-			m_ShipPhysical->SetRotationalVelocity(0.3f);
+			m_ShipPhysical->SetRotationalVelocity(2.f);
 
 		else
 			m_ShipPhysical->SetRotationalVelocity(0);
@@ -128,14 +188,38 @@ class BitmaskTest : public CL_ClanApplication
 		{
 			for (int i = 0; i < g_NumDrones; i++)
 			{
-				m_DronePhysical[i]->SetRotationalVelocity(0.25f);
+				m_DronePhysical[i]->SetRotationalVelocity(0.5f);
 				//m_DronePhysical[i]->ApplyEngineForce(g_ThrustForce);
 			}
 		}
 
-		
+		if (CL_Keyboard::get_keycode(CL_KEY_SPACE) != firing && (firing = !firing))
+		{
+			float rad =  m_ProjectileGFX->get_width() * 0.5f;
 
-		m_World->RunSimulation(split);
+			float a = m_ShipPhysical->GetRotation();
+			Vector2 position = m_ShipPhysical->GetPosition();
+			position.x += sinf(a) * (m_ShipPhysical->GetRadius() + rad);
+			position.y += -cosf(a) * (m_ShipPhysical->GetRadius() + rad);
+
+			PhysicalProperties props;
+			props.mass = 1.f;
+			props.position = position;
+			props.rotation = a;
+			props.use_dist = true;
+			props.dist = rad-1.0;
+			props.radius = props.dist;
+
+			PhysicsBody* body = m_World->CreateBody(PB_PROJECTILE, props);
+			body->SetCollisionHandler(new Explosive(this, body));
+			body->_setVelocity(m_ShipPhysical->GetVelocity());
+			body->ApplyForceRelative(20.0f);
+
+			m_Projectiles.push_back(body);
+		}
+
+		//for (int i = 0; i < (int)(split*0.1f)+1; i++)
+			m_World->RunSimulation(10);
 
 		return true;
 	}
@@ -150,67 +234,70 @@ class BitmaskTest : public CL_ClanApplication
 
 		CL_DisplayWindow display("Display", 1024, 580);
 
+		firing = false;
+
 		// World
-		m_World = new FusionPhysicsWorld();
+		m_World = new PhysicsWorld();
 		m_World->Initialise(1024, 580);
 		m_World->SetMaxVelocity(20);
+		m_World->SetDamping(0.8);
 		m_World->SetBodyDeactivationPeriod(10000);
 		m_World->SetDeactivationVelocity(0.05f);
-		m_World->SetBitmaskRes(2);
+		m_World->SetBitmaskRes(4);
 		m_World->DeactivateWrapAround();
 
 		// Ship
 		m_ShipGraphical = new CL_Surface("Body.png");
 		m_ShipGraphical->set_rotation_hotspot(origin_center);
+		m_ShipGraphical->set_alignment(origin_center);
 
-		m_ShipBitmask = new FusionBitmask;
+		//m_ShipBitmask = new Bitmask;
 		//m_ShipBitmask->SetFromSurface(m_ShipGraphical, m_World->GetBitmaskRes());
-		m_ShipBitmask->SetFromRadius(m_ShipGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
+		//m_ShipBitmask->SetFromRadius(m_ShipGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
 
 		{
 			PhysicalProperties props;
-			props.mass = 50.0f;
+			props.mass = 0.4f;
 			props.position = Vector2(48.f, 120.f);
 			props.rotation = 0;
 			props.use_dist = true;
 			props.dist = m_ShipGraphical->get_width() * 0.5f;
 			props.radius = props.dist;
-			props.use_bitmask = true;
-			props.bitmask = m_ShipBitmask;
 
 			m_ShipPhysical = m_World->CreateBody(PB_SHIP, props);
 		}
 		m_ShipPhysical->SetCoefficientOfFriction(0.25f);
 		m_ShipPhysical->SetCoefficientOfRestitution(0.25f);
 
-		m_ShipPhysical->SetICollisionHandler(new OutputUserData(m_ShipPhysical));
+		m_ShipPhysical->SetCollisionHandler(new OutputUserData(m_ShipPhysical));
 
 		// Drones
 		for (int i = 0; i < g_NumDrones; i++)
 		{
 			m_DroneGraphical[i] = new CL_Surface("Body.png");
 			m_DroneGraphical[i]->set_rotation_hotspot(origin_center);
+			m_DroneGraphical[i]->set_alignment(origin_center);
 
-			m_DroneBitmask[i] = new FusionBitmask;
-			m_DroneBitmask[i]->SetFromRadius(16.0f, m_World->GetBitmaskRes());
+			//m_DroneBitmask[i] = new FusionBitmask;
+			//m_DroneBitmask[i]->SetFromRadius(16.0f, m_World->GetBitmaskRes());
 			//m_DroneBitmask->SetFromRadius(m_DroneGraphical->get_width()*0.5f, m_World->GetBitmaskRes());
 
 			{
 				PhysicalProperties props;
-				props.mass = 50.0f;
+				props.mass = 1.0f;
 				props.position = Vector2(460.f + 10.0f * i, 120.f);
 				props.rotation = 0;
 				props.use_dist = true;
 				props.dist = m_DroneGraphical[i]->get_width() * 0.5;
 				props.radius = props.dist;
-				props.use_bitmask = true;
-				props.bitmask = m_DroneBitmask[i];
+				//props.use_bitmask = true;
+				//props.bitmask = m_DroneBitmask[i];
 
 				m_DronePhysical[i] = m_World->CreateBody(PB_SHIP, props);
 			}
 
 			m_DronePhysical[i]->SetCoefficientOfFriction(0.25f);
-			m_DronePhysical[i]->SetCoefficientOfRestitution(0.3f);
+			m_DronePhysical[i]->SetCoefficientOfRestitution(0.0f);
 
 			std::string ud = CL_String::format("Drone %1", i);
 			char *userdata = (char *)malloc( ud.size() +1 );
@@ -219,56 +306,55 @@ class BitmaskTest : public CL_ClanApplication
 		}
 
 		// Hole
-		/*m_Damage = new CL_Surface("./circle.png");
-		m_Damage->set_rotation_hotspot(origin_center);
-		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);*/
+		m_Damage = new CL_Surface("./circle.png");
+		m_Damage->set_alignment(origin_center);
+		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);
+		m_DamageBody = m_World->CreateStatic(0);
+
+		m_ProjectileGFX = new CL_Surface("./circle.png");
+		m_ProjectileGFX->set_alignment(origin_center);
 
 		// Terrain
 		m_TerrainGraphical = new CL_Surface("Terrain.png", CL_Surface::flag_keep_pixelbuffer);
-		m_TerrainGraphical->set_rotation_hotspot(origin_center);
-
 		m_TerrainCanvas = new CL_Canvas(*m_TerrainGraphical);
 
-		m_TerrainBitmask = new FusionBitmask;
+		{
+			PhysicalProperties props;
+			props.mass = g_PhysStaticMass;
+			props.position = Vector2(0.0f, 220.0f);
+			props.rotation = 0;
+
+			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
+		}
+		m_TerrainPhysical->SetUserData((void *)"Terrain");
+		m_TerrainPhysical->SetCoefficientOfFriction(0.8f);
+
+		m_TerrainBitmask = new Bitmask(m_World->GetChipSpace(), m_TerrainPhysical);
 		bool bitmaskLoaded = false;
 		{
-			//std::ifstream ifs("bitmask");
-			//if (ifs.is_open())
 			{
 				CL_InputSourceProvider *p = CL_InputSourceProvider::create_file_provider(".");
-				bitmaskLoaded = m_TerrainBitmask->Load("bitmask", p);
-
-				//ifs >> m_TerrainBitmask;
+				try
+				{
+					bitmaskLoaded = m_TerrainBitmask->Load("bitmask", p);
+				}
+				catch (FileTypeException& ex)
+				{
+					bitmaskLoaded = false;
+					std::cout << ex.ToString() << std::endl;
+				}
 			}
 		}
 		// Create and save the mask if it couldn't be loaded from a cache
 		if (!bitmaskLoaded)
 		{
 			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes(), 25);
-
-			//std::ofstream ofs("bitmask");
 			{
 				CL_OutputSource_File file("bitmask");
 				m_TerrainBitmask->Save("bitmask", &file);
-
-				//ofs << m_TerrainBitmask;
 			}
 		}
-
 		//m_TerrainBitmask->SetFromDimensions(::CL_Size(600, 200), m_World->GetBitmaskRes());
-
-		{
-			PhysicalProperties props;
-			props.mass = 0.0f;
-			props.position = Vector2(0.0f, 220.0f);
-			props.rotation = 0;
-			props.use_bitmask = true;
-			props.bitmask = m_TerrainBitmask;
-
-			m_TerrainPhysical = m_World->CreateStatic(PB_TERRAIN, props);
-		}
-		m_TerrainPhysical->SetUserData((void *)"Terrain");
-		m_TerrainPhysical->SetCoefficientOfFriction(0.8f);
 		
 		int back_pos = 0;
 		float sur_y = 250.f;
@@ -369,19 +455,21 @@ class BitmaskTest : public CL_ClanApplication
 
 			if (debug)
 			{
-				m_World->GetCollisionGrid()->DebugDraw();
+				//m_World->GetCollisionGrid()->DebugDraw();
 
-				m_TerrainBitmask->DisplayBits(
-					m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y);
+				//m_TerrainBitmask->DisplayBits(
+				//	m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y);
 
-				m_ShipBitmask->DisplayBits(
-					m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
+				m_World->DebugDraw();
 
-				for (int i = 0; i < g_NumDrones; i++)
-				{
-					m_DroneBitmask[i]->DisplayBits(
-						m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
-				}
+				//m_ShipBitmask->DisplayBits(
+				//	m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
+
+				//for (int i = 0; i < g_NumDrones; i++)
+				//{
+				//	m_DroneBitmask[i]->DisplayBits(
+				//		m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
+				//}
 			}
 			else
 			{
@@ -401,8 +489,15 @@ class BitmaskTest : public CL_ClanApplication
 
 				m_TerrainGraphical->draw(params);*/
 
+				for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
+				{
+					PhysicsBody* body = (*it);
+					m_ProjectileGFX->set_angle(body->GetRotation());
+					m_ProjectileGFX->draw(body->GetPosition().x, body->GetPosition().y);
+				}
+
 				// Draw the ship
-				m_ShipGraphical->set_angle(m_ShipPhysical->GetRotation());
+				m_ShipGraphical->set_angle(m_ShipPhysical->GetRotationDeg());
 				m_ShipGraphical->draw(
 					m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
 
@@ -414,20 +509,27 @@ class BitmaskTest : public CL_ClanApplication
 
 				m_ShipGraphical->draw(params);*/
 
+				//m_ProjectileGFX->set_angle(m_ProjectileGFX
+
 
 				// Draw the drones
 				for (int i = 0; i < g_NumDrones; i++)
 				{
-					m_DroneGraphical[i]->set_angle(m_DronePhysical[i]->GetRotation());
+					m_DroneGraphical[i]->set_angle(m_DronePhysical[i]->GetRotationDeg());
 					m_DroneGraphical[i]->draw(
 						m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
 				}
 			}
 
 			display.flip();
-			CL_System::keep_alive();
+			CL_System::keep_alive(2);
 		}
 
 		return 0;
 	}
 } app;
+
+void Explosive::CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts)
+{
+	m_Env->Detonate(m_MyBody, 32, contacts.front().GetPosiion());
+}

@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Chipmunk_d.lib"
+				AdditionalDependencies="chipmunk_d.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -137,7 +137,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib chipmunk.lib"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -201,27 +201,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionFileSystemException.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionFileTypeException.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInvalidArgumentException.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsUtils.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
 				>
 			</File>
 			<File
@@ -267,18 +251,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionFileSystemException.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionFileTypeException.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInvalidArgumentException.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionPhysicsBody.h"
 				>
 			</File>
@@ -287,15 +259,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCollisionGrid.h"
+				RelativePath="..\FusionEngine\FusionPhysicsShape.h"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsTypes.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsUtils.h"
 				>
 			</File>
 			<File

@@ -13,7 +13,7 @@ namespace FusionEngine
 	bool PhysUtil::GuessPointOfCollision(
 			Vector2 *output,
 			const Vector2 &pos_one, const Vector2 &pos_two,
-			const FusionPhysicsBody *one, const FusionPhysicsBody *two)
+			const PhysicsBody *one, const PhysicsBody *two)
 	{
 
 		// Check for distance collision

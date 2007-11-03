@@ -631,10 +631,6 @@
 				RelativePath=".\FusionWeaponResource.h"
 				>
 			</File>
-			<File
-				RelativePath=".\gpc4cp.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -947,10 +943,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionVector2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\gpc4cp.c"
 				>
 			</File>
 		</Filter>

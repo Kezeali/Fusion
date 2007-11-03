@@ -333,7 +333,7 @@ namespace FusionEngine
 			}
 			catch (CL_Error&)
 			{
-				FSN_EXCEPT(ExCode::FileSystem, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
+				FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
 			}
 
 			m_Resources[tag] = ResourceSpt(res);
