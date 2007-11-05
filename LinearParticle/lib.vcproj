@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="BitmaskPhysics"
-	ProjectGUID="{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}"
-	RootNamespace="BitmaskPhysics"
+	Name="lib"
+	ProjectGUID="{4F937030-663A-4ED4-AEDB-A1DF9A0DEB32}"
+	RootNamespace="lib"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -17,9 +17,9 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory=".\lib"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="1"
 			>
 			<Tool
@@ -40,13 +40,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderThrough="Common.h"
-				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -61,19 +60,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="chipmunk_d.lib ..\LinearParticle\lib\LinearParticle_d.lib"
-				LinkIncremental="2"
-				IgnoreDefaultLibraryNames="libcmt"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\LinearParticle_d.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -85,20 +76,14 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory=".\lib"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -119,8 +104,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\LinearParticle\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				AdditionalIncludeDirectories=".\include"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -137,21 +122,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="chipmunk.lib ..\LinearParticle\lib\LinearParticle.lib"
-				LinkIncremental="1"
-				IgnoreDefaultLibraryNames=""
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\LinearParticle.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -161,12 +136,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -182,43 +151,51 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\FusionEngine\bitmask.c"
+				RelativePath=".\sources\L_DroppingEffect.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\Common.cpp"
+				RelativePath=".\sources\L_EffectEmitter.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionBitmask.cpp"
+				RelativePath=".\sources\L_EffectManager.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionConsole.cpp"
+				RelativePath=".\sources\L_ExplosionEffect.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionException.cpp"
+				RelativePath=".\sources\L_MotionController.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
+				RelativePath=".\sources\L_MultipleEffectEmitter.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
+				RelativePath=".\sources\L_Particle.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
+				RelativePath=".\sources\L_ParticleEffect.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionVector2.cpp"
+				RelativePath=".\sources\L_ParticleMem.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\main.cpp"
+				RelativePath=".\sources\L_ParticleSystem.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\L_ShootingEffect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\sources\L_Vector.cpp"
 				>
 			</File>
 		</Filter>
@@ -228,51 +205,59 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\FusionEngine\bitmask.h"
+				RelativePath=".\include\L_Defination.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\Common.h"
+				RelativePath=".\include\L_DroppingEffect.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionBitmask.h"
+				RelativePath=".\include\L_EffectEmitter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionCommon.h"
+				RelativePath=".\include\L_EffectManager.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionConsole.h"
+				RelativePath=".\include\L_ExplosionEffect.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionException.h"
+				RelativePath=".\sources\L_Extended.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.h"
+				RelativePath=".\include\L_MotionController.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsCallback.h"
+				RelativePath=".\sources\L_MultipleEffectEmitter.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsShape.h"
+				RelativePath=".\include\L_Particle.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsTypes.h"
+				RelativePath=".\include\L_ParticleEffect.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
+				RelativePath=".\include\L_ParticleMem.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionVector2.h"
+				RelativePath=".\include\L_ParticleSystem.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\L_ShootingEffect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\include\L_Vector.h"
 				>
 			</File>
 		</Filter>

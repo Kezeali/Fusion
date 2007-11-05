@@ -77,6 +77,9 @@ public:
 };
 
 
+typedef void L_PRERUN_USERFUNC(L_Particle&, const void*);
+
+
 //! Particle entity for being attached to ParticleEffect.
 class L_Particle
 {
@@ -126,7 +129,10 @@ private:
 	//==========================
 
 	char coloring_switch;
-	bool rebirth;
+
+	L_PRERUN_USERFUNC* prerun_user_func;
+	void* prerun_user_data;
+
 
 	inline void coloring_process(void);
 	inline void sizing_process(void);
@@ -147,23 +153,21 @@ public:
 	/** Copy contructor ( it does not copy all variables ) */
 	L_Particle(const L_Particle& par);
 
-	/** Contructor */
+	/** Contructor \n
+	life_t : pass L_INFINITE_LIFE to have infinite life particle */
 	L_Particle(CL_Surface* surface_t, int life_t);
 
 
 	void copy_from(const L_Particle& par);
 
-	//======================== Set Attributes Funtions ===============================
 
+	//======================== Set Attributes Funtions ===============================
 
 	/** Set the current size and reference size of particle, the sizing effect is relative to reference size. */
 	void set_size(L_REAL size);
 
-	/** Set life in miliseconds. */
+	/** Set the life in miliseconds, pass L_INFINITE_LIFE for infinite life. */
 	void set_life(int life_t);
-
-	/** Set rebirth flag. If rebirth is enabled, the particle will never be removed automatically. */
-	void set_rebirth(bool rebirth_t=true);
 
 	void set_color(const L_Color& color);
 
@@ -179,27 +183,36 @@ public:
 	set by rotating2(). */
 	void set_rotation2(L_REAL radian);
 
-	/** Assign motion controller for complex motion. */
+	/** Assign a motion controller for complex motion. */
 	void set_motion_controller(L_MotionController* motion_ctr);
 
 	/** Set blending mode of particle ( particle is in L_ADDITIVE_BLENDING blending mode \n
 	by default ). Available blending mode : L_NORMAL_BLENDING, L_ADDITIVE_BLENDING */
 	void set_blending_mode(int mode);
 
+	/** Set user call back function.
+	The user function is called at least once per frame before calling run(int). \n
+	<small>L_PRERUN_USERFUNC : \n
+	&nbsp;&nbsp; void callback_function(L_Particle& particle, const void* user_data)</small> */
+	void set_prerun_callback(L_PRERUN_USERFUNC* user_func, void* user_data);
+
+	/** This particle will be removed in run(int) after this function has been called. */
+	void remove(void);
+
 	//coloring_type = 1a
-	/** Set coloring effect, particle changes from current color(at "begin_at") to "color1_t"(at the end). */
+	/** Set coloring effect, the particle changes from current color(at "begin_at") to "color1_t"(at the end). */
 	void coloring1(const L_Color& color1_t, L_REAL begin_at=0);
 
 	//coloring_type = 1b
-	/** Set coloring effect, color of particle changes from color1(at "begin_at") to "color2"(at the end). */
+	/** Set coloring effect, the color of particle changes from color1(at "begin_at") to "color2"(at the end). */
 	void coloring2(const L_Color& color1_t, const L_Color& color2_t, L_REAL begin_at=0);
 
 	//coloring_type = 2
-	/** Set coloring effect, particle keeps switching colors with duration of "switch_time_t"(in milisecs). */
+	/** Set coloring effect, the particle keeps switching colors with duration of "switch_time_t"(in milisecs). */
 	void coloring3(const L_Color& color1_t, const L_Color& color2_t, unsigned int switch_time_t, L_REAL begin_at=0);
 
 	//sizing_type = 1a
-	/** Set sizing effect, particle changes from current size(at "begin_at") to "size_r"(at the end). */
+	/** Set sizing effect, the particle changes from current size(at "begin_at") to "size_r"(at the end). */
 	void sizing1(L_REAL size_r, L_REAL begin_at=0);
 
 	//sizing_type = 1b
@@ -207,24 +220,33 @@ public:
 	void sizing2(L_REAL size_r1, L_REAL size_r2, L_REAL begin_at=0);
 
 	//sizing_type = 2
-	/** Set sizing effect, the size of particle changes in amount of "size_r" value every milisecs. No Zero Limit*/
+	/** Set sizing effect, the size of particle changes in amount of "size_r" value every millisec. */
 	void sizing3(L_REAL size_r, L_REAL begin_at=0);
 
 	//rotating type = 1
-	/** Set rotating effect, particle rotates in amount of "radian_t" every cycle. */
+	/** Set rotating effect, the particle rotates in amount of "radian_t" every millisec. */
 	void rotating1(L_REAL radian_t, L_REAL begin_at=0);
 
 	//rotating type = 2
-	/** Set rotating effect, particle rotates in total amount of "radian_t" in its life. */
+	/** Set rotating effect, the particle rotates in total amount of "radian_t" in its life. */
 	void rotating2(L_REAL radian_t, L_REAL begin_at=0);
 
 	//rotating type = 3
-	/** Set rotating effect, particle rotates in randomly. */
+	/** Set rotating effect, the particle rotates randomly. */
 	void rotating3(L_REAL begin_at=0);
 
 	//rotating type = 4
-	/** Set rotating effect, particle always face to the direction of its velocity. */
+	/** Set rotating effect, the particle always face to the direction of its velocity. */
 	void rotating4(L_REAL begin_at=0);
+
+	/** Disable coloring effect. */
+	void disable_coloring(void);
+
+	/** Disable sizing effect. */
+	void disable_sizing(void);
+
+	/** Disable rotating effect. */
+	void disable_rotating(void);
 
 	//================================== End =========================================
 
@@ -242,17 +264,17 @@ public:
 	int get_remaininig_life(void);
 
 	bool is_alive(void);
-	//=================================== End =======================================
+	//=================================== End ========================================
 
 
 
 	// initialization before running, called by particle effect in the creation process
 	void initialize(void);
 
-	/** Pass frame time for this function to activate the particle. */
+	/** Pass the frame time for this function to activate the particle. */
 	void run(int time_elapesed_t);
 
-	/** Draw particle with screen position shift options. */
+	/** Draw the particle with screen position shift option. */
 	void draw(int x_shift=0, int y_shift=0);
 
 };

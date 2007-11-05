@@ -64,6 +64,12 @@ void L_ExplosionEffect::set_speed_distortion(L_REAL speed_dis_t)
 }
 
 
+void L_ExplosionEffect::set_explosion_level(L_REAL level)
+{
+	explosion_level = level;
+}
+
+
 void L_ExplosionEffect::howto_emit_particle(void)
 {
 	static L_REAL radian;
@@ -89,4 +95,10 @@ void L_ExplosionEffect::howto_emit_particle(void)
 
 		create_particle(x_pos,y_pos,&v_t);
 	}
+}
+
+
+L_ParticleEffect* L_ExplosionEffect::new_clone(void)
+{
+	return new L_ExplosionEffect(*this);
 }

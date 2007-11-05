@@ -27,15 +27,12 @@
 #include "L_ParticleMem.h"
 
 
-#define L_INFINITE_LIFE INT_MAX
-
-
 L_ParticleEffect::L_ParticleEffect(int period_t, int x, int y)
 {
 	x_pos = x;
 	y_pos = y;
 
-	par_randrot_on = false;
+	rotation_distortion = 0;
 	size_distortion = 0;
 	life_distortion = 0;
 	follow_shooting = false;
@@ -69,7 +66,7 @@ L_ParticleEffect::L_ParticleEffect(const L_ParticleEffect& cpy)
 	x_pos = cpy.x_pos;
 	y_pos = cpy.y_pos;
 
-	par_randrot_on = cpy.par_randrot_on;
+	rotation_distortion = cpy.rotation_distortion;
 	size_distortion = cpy.size_distortion;
 	life_distortion = cpy.life_distortion;
 	follow_shooting = cpy.follow_shooting;
@@ -161,9 +158,9 @@ void L_ParticleEffect::set_velocity(L_REAL x_length, L_REAL y_length)
 }
 
 
-void L_ParticleEffect::set_par_random_rotation(bool par_rand_rot)
+void L_ParticleEffect::set_rotation_distortion(L_REAL rotation_dis)
 {
-	par_randrot_on = par_rand_rot;
+	rotation_distortion = rotation_dis;
 }
 
 
@@ -261,12 +258,12 @@ void L_ParticleEffect::create_particle(L_REAL in_x, L_REAL in_y, L_Vector* vec_t
 
 	if(follow_shooting)
 	{
-		par_new->set_rotation(vec_t->get_radian());
+		par_new->set_rotation(vec_t->get_angle());
 	}
 
-	else if(par_randrot_on)
+	else if(rotation_distortion != 0)
 	{
-		par_new->set_rotation2(L_RAND_REAL_2()*L_2PI);
+		par_new->set_rotation2((L_RAND_REAL_1()-0.5f)*rotation_distortion);
 	}
 
 	if(size_distortion != 0)
@@ -303,7 +300,7 @@ void L_ParticleEffect::motion_process(L_REAL time_elapesed)
 
 void L_ParticleEffect::creating_process(void)
 {
-	if( istriggered && life >= 0 )
+	if( istriggered && life > 0 )
 	{
 		static int i;
 		static int loop_counter;
@@ -414,15 +411,15 @@ void L_ParticleEffect::activate_particle(int time_elapesed_t)
 	std::list<L_Particle*>::iterator iter = particle_list.begin();
 	while( iter != particle_list.end() )
 	{
-		if( (*iter)->get_remaininig_life() < 0 )
+		if( (*iter)->is_alive() )
 		{
-			iter = particle_list.erase(iter);
+			(*iter)->run(time_elapesed_t);
+			iter++;
 		}
 
 		else
 		{
-			(*iter)->run(time_elapesed_t);
-			iter++;
+			iter = particle_list.erase(iter);
 		}
 	}
 

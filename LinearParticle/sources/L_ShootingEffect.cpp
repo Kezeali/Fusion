@@ -26,11 +26,11 @@
 #include "L_ShootingEffect.h"
 
 
-L_ShootingEffect::L_ShootingEffect(int x, int y, const L_Vector& shooting_vector_t, int period_t, int particle_per_time_t) :
+L_ShootingEffect::L_ShootingEffect(int x, int y, const L_Vector& shooting_vector_t, int period_t, int particle_per_period_t) :
 L_ParticleEffect(period_t,x,y)
 {
 	set_shooting_vector(shooting_vector_t);
-	particle_per_time = particle_per_time_t;
+	particle_per_period = particle_per_period_t;
 	angle_interval = 0;
 	width_interval = 0;
 	speed_dis = 0;
@@ -44,7 +44,7 @@ L_ParticleEffect(cpy)
 	angle_interval = cpy.angle_interval;
 	width_interval = cpy.width_interval;
 	speed_dis = cpy.speed_dis;
-	particle_per_time = cpy.particle_per_time;
+	particle_per_period = cpy.particle_per_period;
 
 	shooting_magnitude_cache = cpy.shooting_magnitude_cache;
 	shooting_angle_cache = cpy.shooting_angle_cache;
@@ -62,9 +62,9 @@ void L_ShootingEffect::howto_emit_particle(void)
 
 	static int j;
 
-	shooting_angle_cache = shooting_vector.get_radian();
+	shooting_angle_cache = shooting_vector.get_angle();
 
-	for(j=0;j<particle_per_time;j++)
+	for(j=0;j<particle_per_period;j++)
 	{
 		// === shooting interval(angle) ===
 		if(angle_interval == 0)
@@ -113,7 +113,7 @@ void L_ShootingEffect::set_shooting_vector(const L_Vector& vector)
 	shooting_vector = vector;
 
 	shooting_magnitude_cache = shooting_vector.get_magnitude();
-	shooting_angle_cache = shooting_vector.get_radian();
+	shooting_angle_cache = shooting_vector.get_angle();
 }
 
 
@@ -123,6 +123,12 @@ void L_ShootingEffect::set_shooting_vector(L_REAL magnitude, L_REAL radian)
 	shooting_angle_cache = radian;
 
 	shooting_vector.set2(shooting_magnitude_cache, shooting_angle_cache);
+}
+
+
+void L_ShootingEffect::set_particle_per_period(int num)
+{
+	particle_per_period = num;
 }
 
 
@@ -158,4 +164,10 @@ void L_ShootingEffect::set_speed_distortion(L_REAL speed_dis_t)
 L_Vector L_ShootingEffect::get_shooting_vector(void)
 {
 	return shooting_vector;
+}
+
+
+L_ParticleEffect* L_ShootingEffect::new_clone(void)
+{
+	return new L_ShootingEffect(*this);
 }

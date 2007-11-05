@@ -47,7 +47,7 @@ protected:
 
 	L_Vector velocity;
 
-	bool par_randrot_on;
+	L_REAL rotation_distortion;
 	L_REAL size_distortion;
 	int life_distortion;
 	bool follow_shooting;
@@ -103,38 +103,39 @@ public:
 
 	/** Add a particle type for the effect and probability for the particle to be chosen for every emission. \n
 	Note : If no probabily is specified, the particle will get the remaining probability to 1 ( if more than 1 probability non-specified particle,
-	remaining probability to 1 will be equally divided for each. Maximum number of particle types is limited to 10. */
+	remaining probability to 1 will be equally divided for each. Maximum number of particle types is limited to 8. */
 	int add(L_Particle* fl_p, L_REAL prob=-1);
 
 	/** Copy effect's velocity from "v_t". */
 	void set_velocity(const L_Vector& v_t);
 
-	/** Set effect's velocity(vector) using X length and Y length.\n
-	Note : Use this function rather than set_position() if possible, internally there is calculation to ensure better\n
-	pattern consistency even in jecky framerate environment. If you require to control exact position\n
-	with no any accumulated error, call additional set_position() after run().*/
+	/** Set effect's velocity(vector) using X length and Y length. \n
+	Note : Use this function rather than set_position() if possible, internally there is calculation to have better
+	motion even in jecky framerate environment. If you require to control exact position with no any accumulated
+	error, call additional set_position() after run().*/
 	void set_velocity(L_REAL x_length, L_REAL y_length);
 
 	/** Set position. */
 	void set_position(L_REAL x, L_REAL y);
 
-	/** Apply randomization for particles' initial rotation. */
-	void set_par_random_rotation(bool par_rand_rot=true);
+	/** Apply distortion for particles' initial rotation (in radian). \n
+	rotation_dis : 0 - 2 PI, 0 to disable the distortion */
+	void set_rotation_distortion(L_REAL rotation_dis);
 
-	/** Apply distortion on particle's size. \n
-	Each particle would have certain degree of different size if "size_dis" is greater than 0. */
+	/** Apply distortion for particles' size. \n
+	size_dis : 0 to disable the distortion */
 	void set_size_distortion(L_REAL size_dis);
 
-	/** Apply distortion on particle's life. \n
-	Each particle would have certain degree of different length of life if "life_dis" is greater than 0. */
+	/** Apply distortion for particles' life. \n
+	life_dis : 0 to disable the distortion */
 	void set_life_distortion(int life_dis);
 
-	/** Set effect's life, L_INFINITE_LIFE for infinite life. */
+	/** Set the effect's life, L_INFINITE_LIFE for infinite life. */
 	void set_life(int effect_life);
 
-	/** Set the particle to face the direction of emission(regardless directions changes after)\n
-	Note : Degree distortion is disabled, if you need the particles to follow\n
-	its velocity direction even after the emission, please use L_Particle::rotating4();*/
+	/** Set the particles facing to the direction of its initial velocity. \n
+	Note : Rotation distortion will be disabled, if you need the particles always to face its
+	velocity direction even after the velocity has been changed, please use L_Particle::rotating4(). */
 	void set_follow_shooting(bool flag=true);
 
 	/** Add additional vector for emitted particle, can be used for interia effect */
@@ -159,12 +160,15 @@ public:
 	/** Trigger particle emission. */
 	void trigger(void);
 
-	/** Initialization, must be called before calling run(int). */
+	/** Initialization, must be called (once) before calling run(int). */
 	void initialize(void);
 
 	void run(int time_elapesed_t);
 
 	void draw(int x_shift=0, int y_shift=0);
+
+	/** Create a clone this particle effect. */
+	virtual L_ParticleEffect* new_clone(void) = 0;
 
 	/** Run all particles in the list( by calling run(int) function of particles ) with certain time. \n
 	Basically this is used to resolve the inaccuracy of particle emission and movement when the frame rate is low,

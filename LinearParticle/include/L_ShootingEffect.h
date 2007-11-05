@@ -38,7 +38,7 @@ protected:
 	L_REAL angle_interval;
 	int width_interval;
 	L_REAL speed_dis;
-	int particle_per_time;
+	int particle_per_period;
 
 	L_Vector shooting_vector;
 	L_REAL shooting_magnitude_cache;
@@ -50,8 +50,8 @@ public:
 
 	/** shooting_vector_t : shooting direction and magnitude \n
 	period_t : time(milisec) for next shooting \n
-	particle_per_time_t : number of particles for one emission */
-	L_ShootingEffect(int x, int y, const L_Vector& shooting_vector_t, int period_t, int particle_per_time_t=1);
+	particle_per_period_t : number of particles for a period */
+	L_ShootingEffect(int x, int y, const L_Vector& shooting_vector_t, int period_t, int particle_per_period_t=1);
 
 	/** Copy contructor */
 	L_ShootingEffect(const L_ShootingEffect& cpy);
@@ -61,6 +61,9 @@ public:
 
 	/** Set shooting vector by using magnitude and radian. */
 	void set_shooting_vector(L_REAL magnitude, L_REAL radian);
+
+	/** Set number of particles to be emitted for a period. */
+	void set_particle_per_period(int num);
 
 	/** Set field of shooting, set 0 value(default value) to have beam emission. */
 	void set_angle_interval(L_REAL radian);
@@ -74,6 +77,8 @@ public:
 
 	/** Get current shooting vector. */
 	L_Vector get_shooting_vector(void);
+
+	virtual L_ParticleEffect* new_clone(void);
 
 };
 

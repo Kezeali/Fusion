@@ -1,6 +1,7 @@
 //===============================================================================
 //
 // LinearParticle Copyright (c) 2006 Wong Chin Foo
+// LinearParticle Extended Copyright 2007 Elliot Hayward
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,26 +24,37 @@
 //===============================================================================
 
 
-#include "L_DroppingEffect.h"
+#ifndef LEXT_MULTIPLEEFFECTEMITTER_H
+#define LEXT_MULTIPLEEFFECTEMITTER_H
 
+#include "L_Extended.h"
+#include "L_EffectManager.h"
 
-L_DroppingEffect::L_DroppingEffect(int x, int y, int period_t) :
-L_ParticleEffect(period_t,x,y)
-{}
+LPEXTENDED_NAMESPACE_BEGIN
 
-
-L_DroppingEffect::L_DroppingEffect(const L_DroppingEffect& cpy) :
-L_ParticleEffect(cpy)
-{}
-
-
-void L_DroppingEffect::howto_emit_particle(void)
+//! Effect emitter can be used to emit multiple effects easily.
+class MultipleEffectEmitter : public L_EffectManager
 {
-	create_particle(x_pos,y_pos);
-}
+public:
+	typedef std::vector<L_ParticleEffect*> ParticleEffectList;
 
+protected:
+	ParticleEffectList effect_list;
 
-L_ParticleEffect* L_DroppingEffect::new_clone(void)
-{
-	return new L_DroppingEffect(*this);
-}
+public:
+	MultipleEffectEmitter();
+	//! Constructs an emitter using the given list of effects
+	MultipleEffectEmitter(ParticleEffectList effect_list);
+	//! Creates new instances of all effects in the list
+	void emit( L_REAL x_pos, L_REAL y_pos );
+	//! Adds the given effect type to the effect list
+	/*!
+	 *  A new instance (copy) of this effect will be emited when emit is called
+	 */
+	void add_type(L_ParticleEffect* effect);
+
+};
+
+LPEXTENDED_NAMESPACE_END
+
+#endif

@@ -57,7 +57,6 @@ void L_EffectManager::draw(int x_offset, int y_offset)
 	while( iter != effect_list.end() )
 	{
 		(*iter)->draw(x_offset,y_offset);
-
 		iter++;
 	}
 }
@@ -70,7 +69,7 @@ void L_EffectManager::run(int time_elapesed_t, bool trigger_all)
 	while( iter != effect_list.end() )
 	{
 	    // delete dead effect which does not contain particle
-		if( (*iter)->get_life() < 0  && (*iter)->get_particle_num() <= 0 )
+		if( (*iter)->get_life() <= 0  && (*iter)->get_particle_num() <= 0 )
 		{
 		   	delete *iter;
 			iter = effect_list.erase(iter);
@@ -78,14 +77,13 @@ void L_EffectManager::run(int time_elapesed_t, bool trigger_all)
 
 		else
 		{
-			if(trigger_all) // can remove this next time.
+			if(trigger_all)
 				(*iter)->trigger();
 
 			(*iter)->run(time_elapesed_t);
 
 			iter++;
 		}
-
 	}
 }
 

@@ -1,6 +1,7 @@
 //===============================================================================
 //
 // LinearParticle Copyright (c) 2006 Wong Chin Foo
+// LinearParticle Extended Copyright 2007 Elliot Hayward
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -22,27 +23,20 @@
 //
 //===============================================================================
 
+#ifndef LINEARPARTICLE_EXTENDED_H
+#define LINEARPARTICLE_EXTENDED_H
 
-#include "L_DroppingEffect.h"
+#ifdef LPEXT_USE_NAMESPACE
+ #define LPEXTENDED_NAMESPACE_BEGIN namespace LinearParticleExt {
+ #define LPEXTENDED_NAMESPACE_END }
+#else
+ #define LPEXTENDED_NAMESPACE_BEGIN
+ #define LPEXTENDED_NAMESPACE_END
+#endif
 
+#include <vector>
 
-L_DroppingEffect::L_DroppingEffect(int x, int y, int period_t) :
-L_ParticleEffect(period_t,x,y)
-{}
+#include "L_ParticleSystem.h"
+#include "L_MultipleEffectEmitter.h"
 
-
-L_DroppingEffect::L_DroppingEffect(const L_DroppingEffect& cpy) :
-L_ParticleEffect(cpy)
-{}
-
-
-void L_DroppingEffect::howto_emit_particle(void)
-{
-	create_particle(x_pos,y_pos);
-}
-
-
-L_ParticleEffect* L_DroppingEffect::new_clone(void)
-{
-	return new L_DroppingEffect(*this);
-}
+#endif

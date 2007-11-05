@@ -59,6 +59,10 @@ public:
 	to be applied for each particle. */
 	void set_speed_distortion(L_REAL speed_dis_t);
 
+	void set_explosion_level(L_REAL level);
+
+	virtual L_ParticleEffect* new_clone(void);
+
 };
 
 

@@ -54,6 +54,8 @@ namespace FusionEngine
 	*/
 	class Bitmask
 	{
+	private:
+		typedef std::set<cpShape*> ShapeList;
 	public:
 		//! Basic constructor.
 		Bitmask(cpSpace* space, PhysicsBody* body);
@@ -241,7 +243,9 @@ namespace FusionEngine
 		* \param[in] offset
 		* The offset from (0,0) on this bitmask.
 		*/
-		void Erase(const Shape *other, const Vector2 &offset = Vector2(), bool auto_scale = true);
+		void Erase(const Shape *other, const Vector2 &offset = Vector2());
+
+		void Update();
 
 		//! Returns the Pixels per Bit property of this bitmask.
 		/*!
@@ -314,23 +318,34 @@ namespace FusionEngine
 		*/
 		//void CalcCollisionNormal(Vector2 *output, const FusionBitmask *other, const CL_Point &offset);
 
-		static int eraseFunc(void *p1, void *p2, void *data)
+		struct EraseData
 		{
-			cpShape *a = (cpShape *)p1;
-			cpShape *b = (cpShape *)p2;
-			Bitmask *terrain = (Bitmask*)data;
-			cpSpace *space = terrain->getSpace();
-			cpBody *body = terrain->getBody();
+			cpShape *other;
+			cpSpace *space;
+			ShapeList *list;
+		};
 
-			b->e = 0.f;
+		//static int eraseFunc(void *p1, void *p2, void *data)
+		static void eraseFunc(void *p1, void *p2)
+		{
+			cpShape *b = (cpShape *)p1;
+			EraseData* d = (EraseData*)p2;
+			ShapeList* removeList = d->list;
+			cpShape* a = d->other;
+			//cpShape *b = (cpShape *)p2;
+			//Bitmask *terrain = (Bitmask*)p2;
+			//cpSpace *space = terrain->getSpace();
+			//cpBody *body = terrain->getBody();
+			//ShapeList* removeList = (ShapeList*)data;
 
-			//// Reject any of the simple cases
-			//if(
-			//	// BBoxes must overlap
-			//	!cpBBintersects(a->bb, b->bb)
-			//	// Don't collide shapes attached to the same body.
-			//	|| a->body == b->body
-			//	) return 0;
+			// Reject any of the simple cases
+			if(
+				// BBoxes must overlap
+				!cpBBintersects(a->bb, b->bb)
+				// Don't collide shapes attached to the same body.
+				|| a->body == b->body
+				//) return 0;
+				) return;
 
 
 			cpShape *c_a = a;
@@ -344,12 +359,15 @@ namespace FusionEngine
 			// Narrow-phase collision detection.
 			cpContact *contacts = NULL;
 			int numContacts = cpCollideShapes(c_a, c_b, &contacts);
-			if(!numContacts) return 0; // Shapes are not colliding.
+			//if(!numContacts) return 0; // Shapes are not colliding.
+			if (!numContacts) return;
 			free(contacts);
 
-			cpSpaceRemoveStaticShape(space, b);
+			removeList->insert(b);
+			//cpSpaceRemoveStaticShape(space, b);
 
-			return 0;
+			//return 0;
+			return;
 		}
 
 	protected:
@@ -360,6 +378,7 @@ namespace FusionEngine
 		cpBody* m_Body;
 		cpSpace* m_Space;
 		PhysicsBody* m_PhysBody;
+		ShapeList m_RemoveQueue;
 
 		//! [depreciated] This isn't really necessary.
 		bool m_BitmaskCreated;

@@ -132,7 +132,7 @@ namespace FusionEngine
 		m_PPB = source.read_int32();
 
 		m_PPBInverse = 1.0f/m_PPB;
-		m_BitRadius = m_PPB * 0.67; // do we need to scale this, or can we just use PPB?
+		m_BitRadius = m_PPB * 0.7; // do we need to scale this, or can we just use PPB?
 
 		
 		m_Bits = boost::dynamic_bitset<>(m_Width*m_Height);
@@ -223,7 +223,7 @@ namespace FusionEngine
 		m_PPB = source->read_int32();
 
 		m_PPBInverse = 1.0f/m_PPB;
-		m_BitRadius = m_PPB;
+		m_BitRadius = m_PPB*0.7;
 
 		
 		m_Bits.clear();
@@ -350,7 +350,7 @@ namespace FusionEngine
 		float mask_radius = radius * m_PPBInverse;
 		m_Width = m_Height = int( mask_radius * 2 ) + 1;
 
-		m_BitRadius = m_PPB*0.67;
+		m_BitRadius = m_PPB*0.7;
 		
 		m_Bits.clear();
 		m_Bits.resize(m_Width*m_Height);
@@ -404,7 +404,7 @@ namespace FusionEngine
 		m_PPB = gridsize;
 		m_PPBInverse = 1.0f/(float)gridsize;
 
-		m_BitRadius = m_PPB;
+		m_BitRadius = m_PPB*0.7;
 
 
 		m_Bits.clear();
@@ -454,7 +454,7 @@ namespace FusionEngine
 	//		bitmask_draw(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y);
 	//}
 
-	void Bitmask::Erase(const Shape *eraser, const Vector2 &offset, bool auto_scale)
+	void Bitmask::Erase(const Shape *eraser, const Vector2 &offset)
 	{
 		cpShape* shape = eraser->GetShape();
 		if (offset != Vector2::ZERO)
@@ -462,8 +462,21 @@ namespace FusionEngine
 			shape->body->p = cpv(offset.x, offset.y);
 			cpShapeCacheBB(shape);
 		}
-		cpSpaceHashQuery(m_Space->staticShapes, shape, shape->bb, &eraseFunc, this);
+		//cpSpaceHashQuery(m_Space->staticShapes, shape, shape->bb, &eraseFunc, &m_RemoveQueue);
+		EraseData data;
+		data.space = m_Space;
+		data.list = &m_RemoveQueue;
+		data.other = shape;
+		cpSpaceHashEach(m_Space->staticShapes, &eraseFunc, &data);
 	}
+
+	void Bitmask::Update()
+	{
+		for (ShapeList::iterator it = m_RemoveQueue.begin(), end = m_RemoveQueue.end(); it != end; ++it)
+			cpSpaceRemoveStaticShape(m_Space, (*it));
+		m_RemoveQueue.clear();
+	}
+
 	//{
 	//	cl_assert(m_Bitmask != 0);
 

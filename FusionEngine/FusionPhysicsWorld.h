@@ -232,7 +232,8 @@ namespace FusionEngine
 		 */
 		void RunSimulation(unsigned int split);
 
-		void DebugDraw();
+		//! Draws all shapes in the simulation
+		void DebugDraw(bool fast = true);
 
 		//! Resets the CollisonGrid and sets the borders up, etc.
 		/*!
@@ -249,7 +250,7 @@ namespace FusionEngine
 		//! Deactivates wrap around
 		void DeactivateWrapAround();
 
-		//! Deactivates wrap around
+		//! Returns true if wrap around is active
 		bool UseWrapAround() const;
 
 		//! Set the time in milis for bodies to de-activate after.
@@ -269,6 +270,9 @@ namespace FusionEngine
 
 		void SetDamping(float damping);
 		float GetDamping() const;
+
+		void SetGravity(const Vector2& grav_vector);
+		Vector2 GetGravity() const;
 
 		//! Allows the bitmask scale to be set (pixels per bit)
 		void SetBitmaskRes(int ppb);
@@ -298,10 +302,10 @@ namespace FusionEngine
 		 * shouldn't create a preformance issue, as generally the only static
 		 * object is the terrain.
 		 */
-		BodyList m_Static;
+		BodyList m_Statics;
 
 		//! World dimensions
-		int m_Width, m_Height;
+		float m_Width, m_Height;
 
 		//! True if objects should wrap around.
 		bool m_Wrap;
@@ -324,6 +328,10 @@ namespace FusionEngine
 
 		//! The resolution to use for bitmasks
 		int m_BitmaskRes;
+
+		private:
+			static void constrainBorders(void* ptr, void* data);
+			static void wrapAround(void* ptr, void* data);
 	};
 
 	static void drawPolyShape(cpShape *shape)
@@ -343,7 +351,7 @@ namespace FusionEngine
 
 	static void drawCircle(cpFloat x, cpFloat y, cpFloat r, cpFloat a)
 	{
-		const int segs = 6;
+		const int segs = 8;
 		const cpFloat coef = 2.0*M_PI/(cpFloat)segs;
 
 		glBegin(GL_LINE_STRIP); {
@@ -361,7 +369,6 @@ namespace FusionEngine
 		cpCircleShape *circle = (cpCircleShape *)shape;
 		cpVect c = cpvadd(body->p, cpvrotate(circle->c, body->rot));
 
-		clColor3f(shape->e, shape->u, 1.0f);
 		drawCircle(c.x, c.y, circle->r, body->a);
 	}
 
@@ -370,6 +377,7 @@ namespace FusionEngine
 		cpShape *shape = (cpShape *)ptr;
 		CL_Display::draw_pixel(shape->body->p.x, shape->body->p.y, CL_Color::aliceblue);
 
+		clColor3f(shape->e, shape->u, shape->id*0.0001);
 		switch (shape->type)
 		{
 		case CP_POLY_SHAPE:
@@ -377,6 +385,17 @@ namespace FusionEngine
 		case CP_CIRCLE_SHAPE:
 			drawCircleShape(shape);
 		}
+	}
+
+
+	static void drawBodyPoint(void *ptr, void *unused)
+	{
+		cpShape *shape = (cpShape *)ptr;
+		cpCircleShape* circle = (cpCircleShape*)shape;
+		cpVect v = cpvadd(circle->c, shape->body->p);
+
+		clColor3f(shape->e, shape->u, shape->id*0.0001);
+		clVertex2f(v.x, v.y);
 	}
 
 }

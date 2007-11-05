@@ -1,6 +1,7 @@
 //===============================================================================
 //
 // LinearParticle Copyright (c) 2006 Wong Chin Foo
+// LinearParticle Extended Copyright 2007 Elliot Hayward
 //
 // This software is provided 'as-is', without any express or implied
 // warranty. In no event will the authors be held liable for any damages
@@ -23,26 +24,34 @@
 //===============================================================================
 
 
-#include "L_DroppingEffect.h"
+#include "L_MultipleEffectEmitter.h"
 
+LPEXTENDED_NAMESPACE_BEGIN
 
-L_DroppingEffect::L_DroppingEffect(int x, int y, int period_t) :
-L_ParticleEffect(period_t,x,y)
-{}
-
-
-L_DroppingEffect::L_DroppingEffect(const L_DroppingEffect& cpy) :
-L_ParticleEffect(cpy)
-{}
-
-
-void L_DroppingEffect::howto_emit_particle(void)
+MultipleEffectEmitter::MultipleEffectEmitter(ParticleEffectList effect_list) :
+L_EffectManager()
 {
-	create_particle(x_pos,y_pos);
+	this->effect_list = effect_list;
 }
 
 
-L_ParticleEffect* L_DroppingEffect::new_clone(void)
+void MultipleEffectEmitter::emit( L_REAL x_pos, L_REAL y_pos )
 {
-	return new L_DroppingEffect(*this);
+	for (ParticleEffectList::iterator it = effect_list.begin(), end = effect_list.end(); it != end; ++it)
+	{
+		L_ParticleEffect* effect_type = (*it);
+		L_ParticleEffect* new_effect = effect_type->new_clone();
+
+		new_effect->x_pos = x_pos;
+		new_effect->y_pos = y_pos;
+
+		add(new_effect);
+	}
 }
+
+void MultipleEffectEmitter::add_type(L_ParticleEffect *effect)
+{
+	effect_list.push_back(effect);
+}
+
+LPEXTENDED_NAMESPACE_END

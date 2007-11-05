@@ -70,7 +70,10 @@ public:
 	/** Set 2D accleration for particle(s). */
 	void set_2d_acceleration(const L_Vector& vector);
 
-	/** Set point of gravity to attract particle(s). */
+	/** Set point of gravity to attract particle(s). \n
+	Note : For time based system, manual sub-stepping is required in order to run
+	precisely when this gravitation point acceleration is used (refer to cmotion
+	example). */
 	void set_point_acceleration(L_REAL x_pos, L_REAL y_pos, L_REAL magnitude);
 
 	/** Set maximum speed limit for particle(s). */

@@ -66,7 +66,6 @@ L_Particle::L_Particle(const L_Particle& par)
 	radian = par.radian;
 	radian_rm = par.radian_rm;
 	coloring_switch = par.coloring_switch;
-	rebirth = par.rebirth;
 
 	coloring_starting_time = par.coloring_starting_time;
 	sizing_starting_time = par.sizing_starting_time;
@@ -75,6 +74,9 @@ L_Particle::L_Particle(const L_Particle& par)
 	coloring_starting_f = par.coloring_starting_f;
 	sizing_starting_f = par.sizing_starting_f;
 	rotating_starting_f = par.rotating_starting_f;
+
+	prerun_user_func = par.prerun_user_func;
+	prerun_user_data = par.prerun_user_data;
 }
 
 
@@ -103,7 +105,6 @@ L_Particle::L_Particle(CL_Surface* surf, int life_t)
 	sizing_type = 0;
 	rotating_type = 0;
 	coloring_switch = 0;
-	rebirth = false;
 
 	coloring_starting_time = INT_MIN;
 	sizing_starting_time = INT_MIN;
@@ -112,6 +113,9 @@ L_Particle::L_Particle(CL_Surface* surf, int life_t)
 	coloring_starting_f = 0;
 	sizing_starting_f = 0;
 	rotating_starting_f = 0;
+
+	prerun_user_func = NULL;
+	prerun_user_data = NULL;
 }
 
 
@@ -151,7 +155,6 @@ void L_Particle::copy_from(const L_Particle& par)
 	radian = par.radian;
 	radian_rm = par.radian_rm;
 	coloring_switch = par.coloring_switch;
-	rebirth = par.rebirth;
 
 	coloring_starting_time = par.coloring_starting_time;
 	sizing_starting_time = par.sizing_starting_time;
@@ -160,6 +163,9 @@ void L_Particle::copy_from(const L_Particle& par)
 	coloring_starting_f = par.coloring_starting_f;
 	sizing_starting_f = par.sizing_starting_f;
 	rotating_starting_f = par.rotating_starting_f;
+
+	prerun_user_func = par.prerun_user_func;
+	prerun_user_data = par.prerun_user_data;
 }
 
 
@@ -186,12 +192,6 @@ void L_Particle::set_life(int life_t)
 
 	if( rotating_starting_time > INT_MIN )
 		set_rotating_sp(rotating_starting_f);
-}
-
-
-void L_Particle::set_rebirth(bool rebirth_t)
-{
-	rebirth = rebirth_t;
 }
 
 
@@ -259,6 +259,19 @@ void L_Particle::set_blending_mode(int mode)
 
 	else if( mode == L_ADDITIVE_BLENDING )
 		L_SET_ADDITIVE_BLENDING(*surface);
+}
+
+
+void L_Particle::set_prerun_callback(L_PRERUN_USERFUNC* user_func, void* user_data)
+{
+	prerun_user_func = user_func;
+	prerun_user_data = user_data;
+}
+
+
+void L_Particle::remove(void)
+{
+	remaining_life = 0;
 }
 
 
@@ -410,6 +423,24 @@ void L_Particle::rotating4(L_REAL begin_at)
 }
 
 
+void L_Particle::disable_coloring(void)
+{
+	coloring_starting_time = INT_MIN;
+}
+
+
+void L_Particle::disable_sizing(void)
+{
+	sizing_starting_time = INT_MIN;
+}
+
+
+void L_Particle::disable_rotating(void)
+{
+	rotating_starting_time = INT_MIN;
+}
+
+
 L_REAL L_Particle::get_size(void)
 {
 	return current_size;
@@ -442,7 +473,7 @@ int L_Particle::get_remaininig_life(void)
 
 bool L_Particle::is_alive(void)
 {
-	if(remaining_life < 0)
+	if(remaining_life <= 0)
 		return false;
 
 	else
@@ -457,6 +488,10 @@ void L_Particle::coloring_process(void)
 		//coloring_type = 1a 1b
 		if(coloring_type == 1)
 		{
+			// HACK: sometimes coloring_starting_time = 0 so we get a /0 exception below. I'm not sure exactly why this is
+			//  and I don't really care, so rather than fix the problem I just ignore it
+			if (coloring_starting_time == 0)
+				coloring_starting_time = 1;
 			current_color.a = color1.a - (color1.a - color2.a) * (coloring_starting_time - remaining_life)/coloring_starting_time;
 			current_color.r = color1.r - (color1.r - color2.r) * (coloring_starting_time - remaining_life)/coloring_starting_time;
 			current_color.g = color1.g - (color1.g - color2.g) * (coloring_starting_time - remaining_life)/coloring_starting_time;
@@ -543,7 +578,7 @@ void L_Particle::rotating_process(void)
 		//rotating_type = 4
 		else
 		{
-			float current_radian_t = vec.get_radian();
+			L_REAL current_radian_t = vec.get_angle();
 
 			if( current_radian_t != L_REAL_MIN )
 				current_radian = radian_rm + current_radian_t;
@@ -581,6 +616,7 @@ void L_Particle::motion_process(void)
 
 void L_Particle::initialize(void)
 {
+	time_elapesed = 0;
 	coloring_process();
 	sizing_process();
 	rotating_process();
@@ -591,12 +627,15 @@ void L_Particle::run(int time_elapesed_t)
 {
 	time_elapesed = time_elapesed_t;
 
+	if( prerun_user_func )
+		prerun_user_func(*this, prerun_user_data);
+
 	coloring_process();
 	sizing_process();
 	rotating_process();
 	motion_process();
 
-	if( !rebirth )
+	if(life < L_INFINITE_LIFE)
 		remaining_life -= time_elapesed_t;
 }
 

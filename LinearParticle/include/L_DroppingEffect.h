@@ -43,6 +43,7 @@ public:
 	L_DroppingEffect(int x, int y, int period_t);
 	L_DroppingEffect(const L_DroppingEffect& cpy);
 
+	virtual L_ParticleEffect* new_clone(void);
 };
 
 

@@ -53,16 +53,18 @@ public:
 	void normalize(void);
 	void scale(L_REAL amount);
 	void negate(void);
-	L_Vector operator + ( const L_Vector& vector_in );
-	L_Vector operator - ( const L_Vector& vector_in );
+	L_Vector operator + ( const L_Vector& vector_in ) const;
+	L_Vector operator - ( const L_Vector& vector_in ) const;
 	L_Vector operator = ( const L_Vector& vector_in );
-	L_REAL dot_product(const L_Vector& vector_in );
+	void operator += ( const L_Vector& vector_in );
+	void operator -= ( const L_Vector& vector_in );
+	L_REAL dot_product(const L_Vector& vector_in ) const;
 
-	L_REAL get_magnitude(void);
-	L_REAL get_sqr_magnitude(void);
-	L_REAL get_radian(void);
-	L_Vector get_normalized_vector(void);
-	L_Vector get_scaled_vector(L_REAL amount);
+	L_REAL get_magnitude(void) const;
+	L_REAL get_sqr_magnitude(void) const;
+	L_REAL get_angle(void) const; // get angle in radian unit
+	L_Vector get_normalized_vector(void) const;
+	L_Vector get_scaled_vector(L_REAL amount) const;
 
 };
 

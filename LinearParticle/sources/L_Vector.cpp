@@ -125,13 +125,13 @@ void L_Vector::negate(void)
 }
 
 
-L_Vector L_Vector::operator + ( const L_Vector& vector_in )
+L_Vector L_Vector::operator + ( const L_Vector& vector_in ) const
 {
 	return L_Vector( x+vector_in.x, y+vector_in.y );
 }
 
 
-L_Vector L_Vector::operator - ( const L_Vector& vector_in )
+L_Vector L_Vector::operator - ( const L_Vector& vector_in ) const
 {
 	return L_Vector( x-vector_in.x, y-vector_in.y );
 }
@@ -146,25 +146,39 @@ L_Vector L_Vector::operator = ( const L_Vector& vector_in )
 }
 
 
-L_REAL L_Vector::dot_product(const L_Vector& vector_in )
+void L_Vector::operator += ( const L_Vector& vector_in )
+{
+	x += vector_in.x;
+	y += vector_in.y;
+}
+
+
+void L_Vector::operator -= ( const L_Vector& vector_in )
+{
+	x -= vector_in.x;
+	y -= vector_in.y;
+}
+
+
+L_REAL L_Vector::dot_product(const L_Vector& vector_in ) const
 {
 	return ( x*vector_in.x + y*vector_in.y );
 }
 
 
-L_REAL L_Vector::get_magnitude(void)
+L_REAL L_Vector::get_magnitude(void) const
 {
     return L_SQRT( x*x + y*y );
 }
 
 
-L_REAL L_Vector::get_sqr_magnitude(void)
+L_REAL L_Vector::get_sqr_magnitude(void) const
 {
 	return x*x + y*y;
 }
 
 
-L_REAL L_Vector::get_radian(void)
+L_REAL L_Vector::get_angle(void) const
 {
 	if( x != 0 && y != 0 )
 		return L_ATAN2(y, x);
@@ -173,7 +187,7 @@ L_REAL L_Vector::get_radian(void)
 }
 
 
-L_Vector L_Vector::get_normalized_vector(void)
+L_Vector L_Vector::get_normalized_vector(void) const
 {
 	L_Vector vector;
 
@@ -190,7 +204,7 @@ L_Vector L_Vector::get_normalized_vector(void)
 }
 
 
-L_Vector L_Vector::get_scaled_vector(L_REAL amount)
+L_Vector L_Vector::get_scaled_vector(L_REAL amount) const
 {
 	return L_Vector(x*amount, y*amount);
 }

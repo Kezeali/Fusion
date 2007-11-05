@@ -9,6 +9,8 @@
 #include "../FusionEngine/FusionPhysicsTypes.h"
 #include "../FusionEngine/FusionPhysicsCallback.h"
 
+#include "../LinearParticle/include/L_Extended.h"
+
 const int g_NumDrones = 4;
 const float g_ThrustForce = 3.0f;
 
@@ -47,17 +49,19 @@ class Explosive : public ICollisionHandler
 {
 	BitmaskTest* m_Env;
 	PhysicsBody* m_MyBody;
+	bool m_HasExploded;
 
 public:
 	Explosive(BitmaskTest* env, PhysicsBody* body)
 		: m_Env(env),
-		m_MyBody(body)
+		m_MyBody(body),
+		m_HasExploded(false)
 	{
 	}
 
 	bool CanCollideWith(const PhysicsBody *other)
 	{
-		return true;
+		return !m_HasExploded;
 	}
 
 	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts);
@@ -88,12 +92,18 @@ class BitmaskTest : public CL_ClanApplication
 	PhysicsBody* m_DamageBody;
 	CL_Surface *m_Damage;
 
-	bool firing;
+	int m_ReloadTime;
+
+	L_ExplosionEffect* m_ExplosionEffect;
+	L_DroppingEffect* m_DroppingEffect;
+	L_EffectEmitter* m_ParticleEmitter;
+	L_MotionController m_ParticleMoCon;
+	L_MotionController m_SmokeMoCon;
 
 public:
 	void Detonate(PhysicsBody* body, float radius, const Vector2& position)
 	{
-		float scale = (1.0/8.0f)*(radius+2);
+		float scale = (1.0/8.0f)*(radius+8);
 		int x_offset = m_TerrainPhysical->GetPosition().x;
 		int y_offset = m_TerrainPhysical->GetPosition().y;
 
@@ -102,6 +112,10 @@ public:
 		m_DamageBody->_setPosition(Vector2::ZERO);
 		CircleShape shape(m_DamageBody, 0.f, radius, cpvzero);
 		m_TerrainBitmask->Erase(&shape, position);
+
+		m_ParticleEmitter->emit(position.x, position.y);
+		m_DroppingEffect->trigger();
+		m_DroppingEffect->set_position(position.x, position.y);
 
 		for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
 		{
@@ -117,12 +131,7 @@ public:
 private:
 	bool Update(unsigned int split)
 	{
-		// Delete detonated bodies
-		for (std::vector<PhysicsBody*>::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
-		{
-			m_World->DestroyBody((*it));
-		}
-		m_DeleteQueue.clear();
+		m_ReloadTime -= split;
 
 		if (CL_Keyboard::get_keycode('R'))
 		{
@@ -193,8 +202,10 @@ private:
 			}
 		}
 
-		if (CL_Keyboard::get_keycode(CL_KEY_SPACE) != firing && (firing = !firing))
+		if (m_ReloadTime <= 0 && CL_Keyboard::get_keycode(CL_KEY_SPACE))
 		{
+			m_ReloadTime = 550;
+
 			float rad =  m_ProjectileGFX->get_width() * 0.5f;
 
 			float a = m_ShipPhysical->GetRotation();
@@ -213,13 +224,25 @@ private:
 			PhysicsBody* body = m_World->CreateBody(PB_PROJECTILE, props);
 			body->SetCollisionHandler(new Explosive(this, body));
 			body->_setVelocity(m_ShipPhysical->GetVelocity());
-			body->ApplyForceRelative(20.0f);
+			body->ApplyForceRelative(200.0f);
 
 			m_Projectiles.push_back(body);
 		}
 
-		//for (int i = 0; i < (int)(split*0.1f)+1; i++)
+		for (int i = 0; i < (int)(split*0.1f)+1; i++)
 			m_World->RunSimulation(10);
+
+		m_ParticleEmitter->run(split);
+		m_DroppingEffect->run(split);
+
+		// Delete detonated bodies
+		for (std::vector<PhysicsBody*>::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
+		{
+			m_World->DestroyBody((*it));
+		}
+		m_DeleteQueue.clear();
+		// Removes bits
+		m_TerrainBitmask->Update();
 
 		return true;
 	}
@@ -232,19 +255,64 @@ private:
 		CL_ConsoleWindow console("Console", 80, 10);
 		console.redirect_stdio();
 
-		CL_DisplayWindow display("Display", 1024, 580);
+		CL_DisplayWindow display("Display", 1024, 768);
 
-		firing = false;
+		// Particle system
+		L_ParticleSystem::init();
+
+		m_ParticleMoCon.set_1d_acceleration(-0.0004);
+
+		CL_Surface explosionGfx("explosion.png");
+		explosionGfx.set_alignment(origin_center);
+
+		CL_Surface smokeGfx("smoke.png");
+		smokeGfx.set_alignment(origin_center);
+
+		L_Particle particle(&explosionGfx, 4);
+		particle.set_color( L_Color(255,110,60,255) );
+		particle.coloring2( L_Color(255,255,255,100), L_Color(0,255,60,60), 1);
+		particle.sizing2( 1.6, 0.4 );
+		particle.set_motion_controller(&m_ParticleMoCon);
+
+		L_Particle smoke(&smokeGfx, 1200);
+		smoke.set_color( L_Color(200,150,150,255) );
+		smoke.coloring2( L_Color(120,110,110,250), L_Color(60,60,65,180), 250 );
+		smoke.set_size(0.36f);
+		smoke.rotating1(0.0001f);
+		smoke.sizing3 ( 0.001f, 50);
+		smoke.set_velocity(L_Vector(0.1f, 0.f));
+		smoke.set_motion_controller(&m_ParticleMoCon);
+
+		m_ExplosionEffect = new L_ExplosionEffect(0,0,18,3,5,0.8f);
+		m_ExplosionEffect->add(&particle);
+		m_ExplosionEffect->set_life(100); //set life of this effect
+		m_ExplosionEffect->set_rotation_distortion(L_2PI);
+		m_ExplosionEffect->set_size_distortion(0.8);
+		m_ExplosionEffect->set_life_distortion(200); //set life distortion for particles
+		m_ExplosionEffect->set_speed_distortion(0.4f);
+		m_ExplosionEffect->initialize();
+
+		m_DroppingEffect = new L_ExplosionEffect(0, 0, 1);
+		m_DroppingEffect->add(&smoke);
+		m_DroppingEffect->set_life(1);
+		m_DroppingEffect->set_rotation_distortion(0.004f);
+		m_DroppingEffect->initialize();
+
+		m_ParticleEmitter  = new MultipleEffectEmitter();
+		m_ParticleEmitter->add_type(m_ExplosionEffect);
+		m_ParticleEmitter->add_type(m_DroppingEffect);
 
 		// World
 		m_World = new PhysicsWorld();
-		m_World->Initialise(1024, 580);
+		m_World->Initialise(2000, 2000);
 		m_World->SetMaxVelocity(20);
 		m_World->SetDamping(0.8);
 		m_World->SetBodyDeactivationPeriod(10000);
 		m_World->SetDeactivationVelocity(0.05f);
 		m_World->SetBitmaskRes(4);
 		m_World->DeactivateWrapAround();
+
+		//m_World->SetGravity(Vector2(0, 98));
 
 		// Ship
 		m_ShipGraphical = new CL_Surface("Body.png");
@@ -361,7 +429,9 @@ private:
 		float sur_x = 400.f;
 
 		unsigned int inputTimer = 0;
-		bool debug = true;
+		bool debug = false;
+
+		m_ReloadTime = 0;
 		
 		unsigned int lastframe = CL_System::get_time();
 		unsigned int split = 0;
@@ -385,6 +455,15 @@ private:
 			// Modify various params
 			// Current time
 			unsigned int time = CL_System::get_time();
+
+			if (inputTimer <= time && CL_Keyboard::get_keycode('F'))
+			{
+				inputTimer = time + 1000;
+				if (display.is_fullscreen())
+					display.set_windowed();
+				else
+					display.set_fullscreen();
+			}
 
 			// Increace bounce
 			if (inputTimer <= time && CL_Keyboard::get_keycode('Q'))
@@ -453,23 +532,13 @@ private:
 				debug = !debug;
 			}
 
+			const Vector2& tv = m_ShipPhysical->GetPosition();
+			float x = fe_clamped(tv.x - display.get_gc()->get_width() *0.5f, 0.f, (float)(m_TerrainGraphical->get_width() - display.get_gc()->get_width()));
+			float y = fe_clamped(tv.y - display.get_gc()->get_height()*0.5f, 0.f, (float)(m_TerrainGraphical->get_height() - display.get_gc()->get_height()));
+			display.get_gc()->set_translate(-x, -y);
 			if (debug)
 			{
-				//m_World->GetCollisionGrid()->DebugDraw();
-
-				//m_TerrainBitmask->DisplayBits(
-				//	m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y);
-
-				m_World->DebugDraw();
-
-				//m_ShipBitmask->DisplayBits(
-				//	m_ShipPhysical->GetPosition().x, m_ShipPhysical->GetPosition().y);
-
-				//for (int i = 0; i < g_NumDrones; i++)
-				//{
-				//	m_DroneBitmask[i]->DisplayBits(
-				//		m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
-				//}
+				m_World->DebugDraw(false);
 			}
 			else
 			{
@@ -519,6 +588,10 @@ private:
 					m_DroneGraphical[i]->draw(
 						m_DronePhysical[i]->GetPosition().x, m_DronePhysical[i]->GetPosition().y);
 				}
+
+				// Draw particles
+				m_ParticleEmitter->draw();
+				m_DroppingEffect->draw();
 			}
 
 			display.flip();
@@ -531,5 +604,9 @@ private:
 
 void Explosive::CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts)
 {
-	m_Env->Detonate(m_MyBody, 32, contacts.front().GetPosiion());
+	if (!m_HasExploded)
+	{
+		m_HasExploded = true;
+		m_Env->Detonate(m_MyBody, 32, m_MyBody->GetPosition());
+	}
 }

@@ -35,26 +35,7 @@ L_EffectManager()
 
 L_ParticleEffect* L_EffectEmitter::emit( L_REAL x_pos, L_REAL y_pos )
 {
-    L_ParticleEffect* new_effect;
-
-	if( typeid(*effect_type) == typeid(L_ExplosionEffect) )
-		new_effect = new L_ExplosionEffect( *(static_cast<L_ExplosionEffect*>(effect_type)) );
-
-	else if( typeid(*effect_type) == typeid(L_ShootingEffect) )
-		new_effect = new L_ShootingEffect( *(static_cast<L_ShootingEffect*>(effect_type)) );
-
-	else if( typeid(*effect_type) == typeid(L_DroppingEffect) )
-		new_effect = new L_DroppingEffect( *(static_cast<L_DroppingEffect*>(effect_type)) );
-
-
-	else
-	{
-		#ifdef L_DEBUG_MODE
-			std::cout<<"LinearParticle : Unknown Effect Type"<<std::endl;
-		#endif
-
-		return NULL;
-	}
+	L_ParticleEffect* new_effect = effect_type->new_clone();
 
 	new_effect->x_pos = x_pos;
 	new_effect->y_pos = y_pos;

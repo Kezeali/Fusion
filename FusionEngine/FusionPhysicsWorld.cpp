@@ -261,7 +261,7 @@ namespace FusionEngine
 		body->SetType(type);
 		body->SetMass(g_PhysStaticMass);
 
-		m_Static.push_back(body);
+		m_Statics.push_back(body);
 
 		return body;
 	}
@@ -286,7 +286,7 @@ namespace FusionEngine
 		//body->SetUseDistCollisions(props.use_dist);
 		//body->SetColDist(props.dist);
 
-		m_Static.push_back(body);
+		m_Statics.push_back(body);
 
 		return body;
 	}
@@ -297,7 +297,7 @@ namespace FusionEngine
 		body->SetType(type);
 		body->SetMass(g_PhysStaticMass);
 
-		m_Static.push_back(body);
+		m_Statics.push_back(body);
 
 		return body;
 	}
@@ -322,19 +322,19 @@ namespace FusionEngine
 		//body->SetUseDistCollisions(props.use_dist);
 		//body->SetColDist(props.dist);
 
-		m_Static.push_back(body);
+		m_Statics.push_back(body);
 
 		return body;
 	}
 
 	void PhysicsWorld::DestroyStatic(PhysicsBody *body)
 	{
-		BodyList::iterator it = m_Static.begin();
-		for (; it != m_Static.end(); ++it)
+		BodyList::iterator it = m_Statics.begin();
+		for (; it != m_Statics.end(); ++it)
 		{
 			if ((*it) == body)
 			{
-				m_Static.erase(it);
+				m_Statics.erase(it);
 				break;
 			}
 		}
@@ -379,13 +379,13 @@ namespace FusionEngine
 		}
 
 		{
-			BodyList::iterator it = m_Static.begin();
-			for (; it != m_Static.end(); ++it)
+			BodyList::iterator it = m_Statics.begin();
+			for (; it != m_Statics.end(); ++it)
 			{
 				delete (*it);
 			}
 
-			m_Static.clear();
+			m_Statics.clear();
 		}
 
 		//cpSpaceFreeChildren(m_ChipSpace);
@@ -395,21 +395,65 @@ namespace FusionEngine
 		//m_CollisionGrid->Clear();
 	}
 
-	void PhysicsWorld::RunSimulation(unsigned int split)
+	void PhysicsWorld::constrainBorders(void* ptr, void* data)
 	{
-		//for (BodyList::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
-		//{
-		//	(*it)->_setRotation((*it)->GetChipBody()->a);
-		//	//(*it)->_setVelocity((*it)->GetVelocity()*0.75f);
-		//}
-		cpFloat dt = 1.0/60.0/1.0;
-		cpSpaceStep(m_ChipSpace, dt);
+		cpBody* body = (cpBody*)ptr;
+		PhysicsWorld* world = (PhysicsWorld*)data;
+
+		if (body->p.x < 0.0f || body->p.x > world->m_Width)
+			body->v.x = 0.0f;
+		if (body->p.y < 0.0f || body->p.y > world->m_Height)
+			body->v.y = 0.0f;
+
+		body->p.x = fe_clamped(body->p.x, 0.0f, world->m_Width);
+		body->p.y = fe_clamped(body->p.y, 0.0f, world->m_Height);
 	}
 
-	void PhysicsWorld::DebugDraw()
+	void PhysicsWorld::wrapAround(void* ptr, void* data)
 	{
-		cpSpaceHashEach(m_ChipSpace->staticShapes, &drawObject, NULL);
-		cpSpaceHashEach(m_ChipSpace->activeShapes, &drawObject, NULL);
+		cpBody* body = (cpBody*)ptr;
+		PhysicsWorld* world = (PhysicsWorld*)data;
+
+		if (body->p.x > world->m_Width)
+			body->p.x = 0.1f;
+		else if (body->p.x < 0.0f)
+			body->p.x = world->m_Width;
+
+		if (body->p.y > world->m_Height)
+			body->p.y = 0.1f;
+		else if (body->p.y < 0.0f)
+			body->p.y = world->m_Height;
+	}
+
+	void PhysicsWorld::RunSimulation(unsigned int split)
+	{
+		cpFloat dt = 1.0/60.0/1.0;
+		cpSpaceStep(m_ChipSpace, dt);
+
+		if (m_Wrap)
+			cpArrayEach(m_ChipSpace->bodies, &wrapAround, this);
+		else
+			cpArrayEach(m_ChipSpace->bodies, &constrainBorders, this);
+		//for (BodyList::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
+		//{
+		//}
+	}
+
+	void PhysicsWorld::DebugDraw(bool fast)
+	{
+		if (fast)
+		{
+			CL_Display::draw_pixel(0, 0, CL_Color::white);
+			clBegin(GL_POLYGON);
+			cpSpaceHashEach(m_ChipSpace->staticShapes, &drawBodyPoint, NULL);
+			cpSpaceHashEach(m_ChipSpace->activeShapes, &drawBodyPoint, NULL);
+			clEnd();
+		}
+		else
+		{
+			cpSpaceHashEach(m_ChipSpace->staticShapes, &drawObject, NULL);
+			cpSpaceHashEach(m_ChipSpace->activeShapes, &drawObject, NULL);
+		}
 	}
 
 
@@ -421,8 +465,8 @@ namespace FusionEngine
 		cpSpaceInit(m_ChipSpace);
 
 		//m_ChipSpace->iterations = 5;
-		cpSpaceResizeStaticHash(m_ChipSpace, 6.0, 4999);
-		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 99);
+		cpSpaceResizeStaticHash(m_ChipSpace, 10.0, 4999);
+		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 999);
 
 		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, 0, &bodyCollFunc, this);
 		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, g_PhysBodyCpCollisionType, &bodyCollFunc, this);
@@ -436,7 +480,6 @@ namespace FusionEngine
 	void PhysicsWorld::ActivateWrapAround()
 	{
 		SendToConsole("World: Wrap around activated");
-		SendToConsole("Wrap around is unstable and may cause unexpected behaviour", Console::MTWARNING);
 		m_Wrap = true;
 	}
 
@@ -504,6 +547,17 @@ namespace FusionEngine
 	{
 		return m_ChipSpace->damping;
 	}
+
+	void PhysicsWorld::SetGravity(const Vector2& grav_vector)
+	{
+		m_ChipSpace->gravity = cpv(grav_vector.x, grav_vector.y);
+	}
+
+	Vector2 PhysicsWorld::GetGravity() const
+	{
+		return Vector2(m_ChipSpace->gravity.x, m_ChipSpace->gravity.y);
+	}
+ 
 
 	void PhysicsWorld::SetBitmaskRes(int ppb)
 	{
