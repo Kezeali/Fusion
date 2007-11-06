@@ -28,16 +28,21 @@
 
 LPEXTENDED_NAMESPACE_BEGIN
 
+MultipleEffectEmitter::MultipleEffectEmitter()
+: L_EffectManager()
+{
+}
+
 MultipleEffectEmitter::MultipleEffectEmitter(ParticleEffectList effect_list) :
 L_EffectManager()
 {
-	this->effect_list = effect_list;
+	this->effect_type_list = effect_list;
 }
 
 
 void MultipleEffectEmitter::emit( L_REAL x_pos, L_REAL y_pos )
 {
-	for (ParticleEffectList::iterator it = effect_list.begin(), end = effect_list.end(); it != end; ++it)
+	for (ParticleEffectList::iterator it = effect_type_list.begin(), end = effect_type_list.end(); it != end; ++it)
 	{
 		L_ParticleEffect* effect_type = (*it);
 		L_ParticleEffect* new_effect = effect_type->new_clone();
@@ -51,7 +56,7 @@ void MultipleEffectEmitter::emit( L_REAL x_pos, L_REAL y_pos )
 
 void MultipleEffectEmitter::add_type(L_ParticleEffect *effect)
 {
-	effect_list.push_back(effect);
+	effect_type_list.push_back(effect);
 }
 
 LPEXTENDED_NAMESPACE_END

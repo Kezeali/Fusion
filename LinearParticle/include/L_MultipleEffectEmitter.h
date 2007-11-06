@@ -39,7 +39,7 @@ public:
 	typedef std::vector<L_ParticleEffect*> ParticleEffectList;
 
 protected:
-	ParticleEffectList effect_list;
+	ParticleEffectList effect_type_list;
 
 public:
 	MultipleEffectEmitter();

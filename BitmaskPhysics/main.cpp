@@ -11,6 +11,8 @@
 
 #include "../LinearParticle/include/L_Extended.h"
 
+#include "../rstream/mersenne.h"
+
 const int g_NumDrones = 4;
 const float g_ThrustForce = 3.0f;
 
@@ -95,15 +97,18 @@ class BitmaskTest : public CL_ClanApplication
 	int m_ReloadTime;
 
 	L_ExplosionEffect* m_ExplosionEffect;
+	L_ExplosionEffect* m_SmokeEffect;
 	L_DroppingEffect* m_DroppingEffect;
-	L_EffectEmitter* m_ParticleEmitter;
+	MultipleEffectEmitter* m_ParticleEmitter;
 	L_MotionController m_ParticleMoCon;
+	L_MotionController m_GravityMoCon;
 	L_MotionController m_SmokeMoCon;
+	RStream *m_Random;
 
 public:
 	void Detonate(PhysicsBody* body, float radius, const Vector2& position)
 	{
-		float scale = (1.0/8.0f)*(radius+8);
+		float scale = (1.0/8.0f)*(radius);
 		int x_offset = m_TerrainPhysical->GetPosition().x;
 		int y_offset = m_TerrainPhysical->GetPosition().y;
 
@@ -114,8 +119,14 @@ public:
 		m_TerrainBitmask->Erase(&shape, position);
 
 		m_ParticleEmitter->emit(position.x, position.y);
-		m_DroppingEffect->trigger();
-		m_DroppingEffect->set_position(position.x, position.y);
+		for (int i = 0; i < 15; ++i)
+		{
+			float r_x = m_Random->distributed(0, 5);
+			float r_y = m_Random->distributed(0, 5);
+			L_ParticleEffect* new_effect = m_SmokeEffect->new_clone();
+			new_effect->set_position(position.x+r_x, position.y+r_y);
+			m_ParticleEmitter->add(new_effect);
+		}
 
 		for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
 		{
@@ -143,17 +154,17 @@ private:
 		}
 
 		// Warp
-		if (CL_Keyboard::get_keycode('W'))
+		if (CL_Keyboard::get_keycode(CL_KEY_UP))
 		{
-			float a = fe_degtorad( m_ShipPhysical->GetRotation() );
+			float a = m_ShipPhysical->GetRotation();
 			Vector2 force = m_ShipPhysical->GetPosition();
-			force.x += sinf(a)*4.0f;
-			force.y += -cosf(a)*4.0f;
+			force.x += sinf(a)*8.0f;
+			force.y += -cosf(a)*8.0f;
 
 			m_ShipPhysical->_setPosition(force);
 		}
 
-		if (CL_Keyboard::get_keycode(CL_KEY_DOWN))
+		if (CL_Keyboard::get_keycode('S'))
 		{
 			//float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			//Vector2 force;
@@ -163,7 +174,7 @@ private:
 			//m_ShipPhysical->ApplyForce(force);
 			m_ShipPhysical->ApplyForceRelative(-g_ThrustForce);
 		}
-		else if (CL_Keyboard::get_keycode(CL_KEY_UP))
+		else if (CL_Keyboard::get_keycode('W'))
 		{
 			//float a = fe_degtorad( m_ShipPhysical->GetRotation() );
 			//Vector2 force;
@@ -172,12 +183,19 @@ private:
 
 			//m_ShipPhysical->ApplyForce(force);
 			m_ShipPhysical->ApplyForceRelative(g_ThrustForce);
+
+			const Vector2 &p = m_ShipPhysical->GetPosition();
+			const Vector2 &v = m_ShipPhysical->GetVelocity();
+
+			m_DroppingEffect->set_position(p.x, p.y);
+			//m_DroppingEffect->set_velocity(v.x, v.y);
+			m_DroppingEffect->trigger();
 		}
 
-		if (CL_Keyboard::get_keycode(CL_KEY_LEFT))
+		if (CL_Keyboard::get_keycode('A'))
 			m_ShipPhysical->SetRotationalVelocity(-2.f);
 
-		else if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
+		else if (CL_Keyboard::get_keycode('D'))
 			m_ShipPhysical->SetRotationalVelocity(2.f);
 
 		else
@@ -224,14 +242,16 @@ private:
 			PhysicsBody* body = m_World->CreateBody(PB_PROJECTILE, props);
 			body->SetCollisionHandler(new Explosive(this, body));
 			body->_setVelocity(m_ShipPhysical->GetVelocity());
-			body->ApplyForceRelative(200.0f);
+			body->ApplyForceRelative(250.0f);
 
 			m_Projectiles.push_back(body);
 		}
 
-		for (int i = 0; i < (int)(split*0.1f)+1; i++)
+		for (int i = (int)(split*0.1f+0.5f); i > 0; i--)
 			m_World->RunSimulation(10);
 
+		if (CL_Keyboard::get_keycode(CL_KEY_SHIFT))
+			split = (int)(split*0.1f);
 		m_ParticleEmitter->run(split);
 		m_DroppingEffect->run(split);
 
@@ -249,6 +269,7 @@ private:
 
 	virtual int main(int argc, char **argv)
 	{
+		CL_SetupCore core;
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
 
@@ -257,50 +278,74 @@ private:
 
 		CL_DisplayWindow display("Display", 1024, 768);
 
+		// Random
+		m_Random = new RStream(CL_System::get_time());
+
 		// Particle system
 		L_ParticleSystem::init();
 
-		m_ParticleMoCon.set_1d_acceleration(-0.0004);
+		m_ParticleMoCon.set_1d_acceleration(-0.0004f);
+		m_GravityMoCon.set_2d_acceleration(L_Vector(0.f, 0.0015f));
 
 		CL_Surface explosionGfx("explosion.png");
 		explosionGfx.set_alignment(origin_center);
-
 		CL_Surface smokeGfx("smoke.png");
 		smokeGfx.set_alignment(origin_center);
+		CL_Surface lightGfx("light16p.png");
+		lightGfx.set_alignment(origin_center);
 
-		L_Particle particle(&explosionGfx, 4);
-		particle.set_color( L_Color(255,110,60,255) );
-		particle.coloring2( L_Color(255,255,255,100), L_Color(0,255,60,60), 1);
-		particle.sizing2( 1.6, 0.4 );
-		particle.set_motion_controller(&m_ParticleMoCon);
+		L_Particle exPart1(&explosionGfx, 150);
+		exPart1.set_color( L_Color(255,110,60,255) );
+		exPart1.coloring2( L_Color(255,255,250,100), L_Color(60,0,255,60));
+		exPart1.sizing2( 1.6, 0.4 );
+		exPart1.set_motion_controller(&m_ParticleMoCon);
 
-		L_Particle smoke(&smokeGfx, 1200);
-		smoke.set_color( L_Color(200,150,150,255) );
-		smoke.coloring2( L_Color(120,110,110,250), L_Color(60,60,65,180), 250 );
-		smoke.set_size(0.36f);
+		L_Particle exPart2(&lightGfx, 355);
+		exPart2.set_color( L_Color(140,130,130,10) );
+		exPart2.coloring2( L_Color(140,130,130,10), L_Color(255,150,20,1), -0.1f);
+		exPart2.set_size(0.6f);
+		exPart2.sizing2( 0.6, 0.00001f);
+		exPart2.rotating4();
+		exPart2.set_motion_controller(&m_GravityMoCon);
+
+		L_Particle smoke(&smokeGfx, 600);
+		smoke.set_color( L_Color(255,200,110,110) );
+		smoke.coloring2( L_Color(250,180,110,110), L_Color(1,60,60,65) );
+		smoke.set_size(0.2f);
 		smoke.rotating1(0.0001f);
-		smoke.sizing3 ( 0.001f, 50);
-		smoke.set_velocity(L_Vector(0.1f, 0.f));
+		smoke.sizing3 ( 0.002f, 50);
 		smoke.set_motion_controller(&m_ParticleMoCon);
 
-		m_ExplosionEffect = new L_ExplosionEffect(0,0,18,3,5,0.8f);
-		m_ExplosionEffect->add(&particle);
+		L_Particle engineTrail(&lightGfx, 240);
+		engineTrail.set_color( L_Color(255,110,110,255) );
+		engineTrail.coloring2( L_Color(255,110,110,255), L_Color(80,100,1,1), 0.001f);
+		engineTrail.sizing2( 1.4, 0.1f );
+		//engineTrail.rotating3();
+
+		m_ExplosionEffect = new L_ExplosionEffect(0,0,18,30,38,0.5f);
+		m_ExplosionEffect->add(&exPart1, 0.3f);
+		m_ExplosionEffect->add(&exPart2, 0.7f);
 		m_ExplosionEffect->set_life(100); //set life of this effect
 		m_ExplosionEffect->set_rotation_distortion(L_2PI);
 		m_ExplosionEffect->set_size_distortion(0.8);
-		m_ExplosionEffect->set_life_distortion(200); //set life distortion for particles
-		m_ExplosionEffect->set_speed_distortion(0.4f);
+		m_ExplosionEffect->set_life_distortion(50); //set life distortion for particles
+		m_ExplosionEffect->set_speed_distortion(0.1f);
 		m_ExplosionEffect->initialize();
 
-		m_DroppingEffect = new L_ExplosionEffect(0, 0, 1);
-		m_DroppingEffect->add(&smoke);
-		m_DroppingEffect->set_life(1);
-		m_DroppingEffect->set_rotation_distortion(0.004f);
+		m_SmokeEffect = new L_ExplosionEffect(0, 0, 606, 1, 2, 0.f);
+		m_SmokeEffect->add(&smoke);
+		m_SmokeEffect->set_life(600);
+		m_SmokeEffect->set_rotation_distortion(1.f);
+		//m_SmokeEffect->set_speed_distortion(0.00001f);
+		m_SmokeEffect->initialize();
+
+		m_DroppingEffect = new L_DroppingEffect(0, 0, 30);
+		m_DroppingEffect->add(&engineTrail);
 		m_DroppingEffect->initialize();
 
 		m_ParticleEmitter  = new MultipleEffectEmitter();
 		m_ParticleEmitter->add_type(m_ExplosionEffect);
-		m_ParticleEmitter->add_type(m_DroppingEffect);
+		//m_ParticleEmitter->add_type(m_SmokeEffect);
 
 		// World
 		m_World = new PhysicsWorld();
@@ -438,7 +483,12 @@ private:
 
 		while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
 		{
-			display.get_gc()->clear(CL_Color(128, 200, 236));
+			if (CL_Keyboard::get_keycode('L'))
+				display.get_gc()->clear(CL_Color(255, 255, 255));
+			else if (CL_Keyboard::get_keycode('K'))
+				display.get_gc()->clear(CL_Color(0, 0, 0));
+			else
+				display.get_gc()->clear(CL_Color(128, 200, 236));
 
 			//(back_pos > 1000) ? back_pos = 0 : back_pos++;
 			//sur_x = sinf(back_pos / 100.0f) * 100.0f + 400.0f;
@@ -476,7 +526,7 @@ private:
 				std::cout << cor << std::endl;
 			}
 			// Reduce bounce
-			if (inputTimer <= time && CL_Keyboard::get_keycode('A'))
+			if (inputTimer <= time && CL_Keyboard::get_keycode('Z'))
 			{
 				inputTimer = time + 500;
 
@@ -526,7 +576,7 @@ private:
 			}
 			
 			// Toggle debug mode
-			if (inputTimer <= time && CL_Keyboard::get_keycode('D'))
+			if (inputTimer <= time && CL_Keyboard::get_keycode('P'))
 			{
 				inputTimer = time + 500;
 				debug = !debug;

@@ -221,6 +221,10 @@
 				RelativePath=".\main.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\rstream\mersenne.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -273,6 +277,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionVector2.h"
+				>
+			</File>
+			<File
+				RelativePath="..\rstream\mersenne.h"
 				>
 			</File>
 		</Filter>
