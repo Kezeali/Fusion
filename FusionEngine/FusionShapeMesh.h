@@ -46,130 +46,130 @@ namespace FusionEngine
 	static const unsigned char g_BitmaskCacheVersion = 3;
 
 	/*!
-	* \brief
-	* Terrain physical shape
-	*
-	* Fakes the functionality of the Bitmask class from previous versions
-	* of Fusion Physics, using chipmunk shapes
-	*/
-	class Bitmask
+	 * \brief
+	 * Terrain physical shape
+	 *
+	 * Fakes the functionality of the Bitmask class from previous versions
+	 * of Fusion Physics, using chipmunk shapes
+	 */
+	class ShapeMesh
 	{
 	private:
 		typedef std::set<cpShape*> ShapeList;
 	public:
 		//! Basic constructor.
-		Bitmask(cpSpace* space, PhysicsBody* body);
+		ShapeMesh(PhysicsWorld* world, PhysicsBody* body);
 
 		/*!
-		* Creates a bitmask from an external bitmask file.
-		*
-		* \param filename The image to base the mask on.
-		* \param gridsize The amount of pixels per bit in the bitmask.
-		* \param threshold The alpha value above which pixels are considered opaque.
-		*/
-		Bitmask(cpSpace* space, const std::string &filename, int gridsize, unsigned int threshold);
+		 * Creates a bitmask from an external bitmask file.
+		 *
+		 * \param filename The image to base the mask on.
+		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 * \param threshold The alpha value above which pixels are considered opaque.
+		 */
+		//ShapeMesh(cpSpace* space, const std::string &filename, int gridsize, unsigned int threshold);
 		/*!
-		* Creates a bitmask from an internal image.
-		*
-		* \param filename The image to base the mask on.
-		* \param gridsize The amount of pixels per bit in the bitmask.
-		* \param threshold The alpha value above which pixels are considered opaque.
-		*/
-		Bitmask(cpSpace* space, const CL_Surface *surface, int gridsize, unsigned int threshold);
+		 * Creates a bitmask from an internal image.
+		 *
+		 * \param filename The image to base the mask on.
+		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 * \param threshold The alpha value above which pixels are considered opaque.
+		 */
+		//ShapeMesh(cpSpace* space, const CL_Surface *surface, int gridsize, unsigned int threshold);
 		/*!
-		* Creates a circular bitmask of the given radius.
-		*
-		* \param radius Radius, in pixels, of the bitmask.
-		* \param gridsize The amount of pixels per bit in the bitmask.
-		*/
-		Bitmask(cpSpace* space, float radius, int gridsize);
+		 * Creates a circular bitmask of the given radius.
+		 *
+		 * \param radius Radius, in pixels, of the bitmask.
+		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 */
+		//ShapeMesh(cpSpace* space, float radius, int gridsize);
 		/*!
-		* Creates a rectangular bitmask of the given dimensions.
-		*
-		* \param[in] dimensions
-		* Size, in pixels, of the bitmask.
-		* \param[in] gridsize
-		* The amount of pixels per bit in the bitmask.
-		*/
-		Bitmask(cpSpace* space, const CL_Size &dimensions, int gridsize);
+		 * Creates a rectangular bitmask of the given dimensions.
+		 *
+		 * \param[in] dimensions
+		 * Size, in pixels, of the bitmask.
+		 * \param[in] gridsize
+		 * The amount of pixels per bit in the bitmask.
+		 */
+		//ShapeMesh(cpSpace* space, const CL_Size &dimensions, int gridsize);
 
 		//! Destructor.
-		~Bitmask();
+		~ShapeMesh();
 
 	public:
 
 		//! Save to a buffer.
 		/*!
-		* \param[out] buffer
-		* Pass a pointer here to the buffer into which data should be written.
-		*
-		* \param[in] len
-		* The length of the buffer (i.e. the maximum amount of data to write to it)
-		*
-		* \returns
-		* The actual amount of data written.
-		*
-		* \retval -1
-		* If the write fails.
-		*/
+		 * \param[out] buffer
+		 * Pass a pointer here to the buffer into which data should be written.
+		 *
+		 * \param[in] len
+		 * The length of the buffer (i.e. the maximum amount of data to write to it)
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
 		int Save(void *buffer, int len);
 
 		//! Load from a buffer
 		/*!
-		* \param[in] buffer
-		* The buffer from which to read data.
-		*
-		* \param[in] len
-		* The length of (buffer).
-		*
-		* \returns
-		* True if the bitmask loaded successfully, false otherwise.
-		*/
+		 * \param[in] buffer
+		 * The buffer from which to read data.
+		 *
+		 * \param[in] len
+		 * The length of (buffer).
+		 *
+		 * \returns
+		 * True if the bitmask loaded successfully, false otherwise.
+		 */
 		bool Load(void *buffer, int len);
 
 		//! Save to a device.
 		/*!
-		* \param[in] name
-		* Name of the file to be created.
-		*
-		* \param[in] source
-		* The output source to write to.
-		*
-		* \returns
-		* The actual amount of data written.
-		*
-		* \retval -1
-		* If the write fails.
-		*/
+		 * \param[in] name
+		 * Name of the file to be created.
+		 *
+		 * \param[in] source
+		 * The output source to write to.
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
 		int Save(const std::string &name, CL_OutputSource *source);
 
 		//! Save to a device.
 		/*!
-		* \param[in] name
-		* Name of the file to be created.
-		*
-		* \param[in] provider
-		* The output source provider to use when creating the file.
-		*
-		* \returns
-		* The actual amount of data written.
-		*
-		* \retval -1
-		* If the write fails.
-		*/
+		 * \param[in] name
+		 * Name of the file to be created.
+		 *
+		 * \param[in] provider
+		 * The output source provider to use when creating the file.
+		 *
+		 * \returns
+		 * The actual amount of data written.
+		 *
+		 * \retval -1
+		 * If the write fails.
+		 */
 		int Save(const std::string &name, CL_OutputSourceProvider *provider = 0);
 
 		//! Load from a device.
 		/*!
-		* \param[in] name
-		* The file to open for reading.
-		*
-		* \param[in] provider
-		* The input source provider to use when opening the file.
-		*
-		* \returns
-		* True if the bitmask loaded successfully, false otherwise.
-		*/
+		 * \param[in] name
+		 * The file to open for reading.
+		 *
+		 * \param[in] provider
+		 * The input source provider to use when opening the file.
+		 *
+		 * \returns
+		 * True if the bitmask loaded successfully, false otherwise.
+		 */
 		bool Load(const std::string &name, CL_InputSourceProvider *provider = 0);
 
 
@@ -186,106 +186,107 @@ namespace FusionEngine
 
 		//! Creates a circular bitmask of the given radius.
 		/*!
-		* \param radius
-		* Radius, in pixels, of the bitmask.
-		* \param gridsize
-		* The amount of pixels per bit in the bitmask.
-		*/
+		 * \param radius
+		 * Radius, in pixels, of the bitmask.
+		 * \param gridsize
+		 * The amount of pixels per bit in the bitmask.
+		 */
 		void SetFromRadius(float radius, int gridsize);
 
 		/*!
-		* Creates a rectangular bitmask of the given dimensions.
-		*
-		* \param[in] dimensions
-		* Size, in pixels, of the bitmask.
-		* \param[in] gridsize
-		* The amount of pixels per bit in the bitmask.
-		*/
+		 * Creates a rectangular bitmask of the given dimensions.
+		 *
+		 * \param[in] dimensions
+		 * Size, in pixels, of the bitmask.
+		 * \param[in] gridsize
+		 * The amount of pixels per bit in the bitmask.
+		 */
 		void SetFromDimensions(const CL_Size &dimensions, int gridsize);
 
 		//! Creates a bitmask from an external image file.
 		/*!
-		* \param filename The image to base the mask on.
-		* \param gridsize The amount of pixels per bit in the bitmask.
-		* \param threshold The alpha value above which pixels are considered opaque.
-		*/
+		 * \param filename The image to base the mask on.
+		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 * \param threshold The alpha value above which pixels are considered opaque.
+		 */
 		void SetFromImage(const std::string &filename, int gridsize, unsigned int threshold = 128);
 		//! Creates a bitmask from an internal image.
 		/*!
-		* \remarks
-		* Me - I don't know if I should define the solid parts by alpha or colour...
-		* I think just checking alpha is faster so I'm using that; but if you want to
-		* change it, feel free :P
-		*
-		* \param filename The image to base the mask on.
-		* \param gridsize The amount of pixels per bit in the bitmask.
-		* \param threshold The alpha value above which pixels are considered opaque.
-		*/
+		 * \remarks
+		 * Me - I don't know if I should define the solid parts by alpha or colour...
+		 * I think just checking alpha is faster so I'm using that; but if you want to
+		 * change it, feel free :P
+		 *
+		 * \param filename The image to base the mask on.
+		 * \param gridsize The amount of pixels per bit in the bitmask.
+		 * \param threshold The alpha value above which pixels are considered opaque.
+		 */
 		void SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold = 128);
 
 		//! Adds the given bitmask to this one.
 		/*!
-		* Gets the points from this mask AND the points from the other mask.
-		*
-		* \param[in] other
-		* The bitmask to add.
-		* \param[in] offset
-		* The offset from (0,0) on this bitmask.
-		*/
-		void Draw(const Shape *other, const CL_Point &offset, bool auto_scale = true);
+		 * Gets the points from this mask AND the points from the other mask.
+		 *
+		 * \param[in] other
+		 * The bitmask to add.
+		 * \param[in] offset
+		 * The offset from (0,0) on this bitmask.
+		 */
+		void Draw(const Vector2 &position, const float radius);
 
-		//! Removes the given bitmask to this one.
+		//! Removes shapes
 		/*!
-		* Puts zeros on this bitmask where 'other' has ones.
-		*
-		* \param[in] other
-		* The bitmask to remove.
-		* \param[in] offset
-		* The offset from (0,0) on this bitmask.
-		*/
-		void Erase(const Shape *other, const Vector2 &offset = Vector2());
+		 * Removes shapes in a radius (circle)
+		 */
+		void Erase(const Vector2 &position, const float radius);
+
+		//! Removes shapes
+		/*!
+		 * Removes shapes in a polygon
+		 */
+		void Erase(const Vector2& position, const std::vector<Vector2>& polygon);
 
 		void Update();
 
 		//! Returns the Pixels per Bit property of this bitmask.
 		/*!
-		* PPB aka gridsize.
-		* \returns
-		* The PPB (gridsize) which was used to create this bitmask.
-		*/
+		 * PPB aka gridsize.
+		 * \returns
+		 * The PPB (gridsize) which was used to create this bitmask.
+		 */
 		int GetPPB() const;
 
 		//! Returns the solidality of the bit at the given point.
 		/*!
-		* \param point
-		* A point giving the x and y co-ords to check
-		*
-		* \retval true If the bit is solid solid
-		*/
+		 * \param point
+		 * A point giving the x and y co-ords to check
+		 *
+		 * \retval true If the bit is solid solid
+		 */
 		bool GetBit(const CL_Point &point) const;
 		//! Returns the solidality of the bit at the given point.
 		/*!
-		* \param point
-		* A point giving the x and y co-ords to check
-		*
-		* \retval true If the bit is solid solid
-		*/
+		 * \param point
+		 * A point giving the x and y co-ords to check
+		 *
+		 * \retval true If the bit is solid solid
+		 */
 		bool GetBit(int x, int y) const;
 
 		//! Tells ya if there's a collision between this object and the one given
 		//bool Overlap(const Shape *other, const CL_Point &offset);
 		//! Same as FusionBitmask#Overlap, but this tells you the first of intersection.
 		/*!
-		* \param[out] output
-		* Will be set to the first point of overlap found.
-		* \param[in] other
-		* The bitmask to check against.
-		* \param[in] offset
-		* The distance between the the bitmasks.
-		*
-		* \retval true If a point was found - output will be set to this point.
-		* \retval false If a point was not found - output will not be touched.
-		*/
+		 * \param[out] output
+		 * Will be set to the first point of overlap found.
+		 * \param[in] other
+		 * The bitmask to check against.
+		 * \param[in] offset
+		 * The distance between the the bitmasks.
+		 *
+		 * \retval true If a point was found - output will be set to this point.
+		 * \retval false If a point was not found - output will not be touched.
+		 */
 		//bool OverlapPoint(CL_Point *output, const FusionBitmask *other, const CL_Point &offset);
 		//! Same as FusionBitmask#Overlap, but this tells you the first of intersection.
 		/*!
@@ -371,17 +372,20 @@ namespace FusionEngine
 		}
 
 	protected:
-		//! Bitmask n' stuff
+		// Bitmask
 		//bitmask_t *m_Bitmask;
+		// Used for saving and loading
 		boost::dynamic_bitset<> m_Bits;
-		cpSpaceHash* m_Shapes;
-		cpBody* m_Body;
-		cpSpace* m_Space;
-		PhysicsBody* m_PhysBody;
-		ShapeList m_RemoveQueue;
+		//cpSpaceHash* m_Shapes;
+		typedef std::list<Shape*> ShapeBin;
+		typedef std::vector<Shape*> ShapeGrid;
+		ShapeGrid m_Shapes;
 
-		//! [depreciated] This isn't really necessary.
-		bool m_BitmaskCreated;
+		PhysicsBody* m_Body;
+		cpSpace* m_Space;
+		PhysicsWorld* m_World;
+		cpBody* m_ChipBody;
+		ShapeList m_RemoveQueue;
 
 		//! The gridsize used to create this bitmask.
 		int m_PPB;
@@ -389,6 +393,8 @@ namespace FusionEngine
 		float m_PPBInverse;
 
 		float m_BitRadius;
+
+		Vector2 m_Offset;
 
 		//! Width
 		int m_Width;
@@ -399,7 +405,7 @@ namespace FusionEngine
 		//! Returns the applicable body
 		cpBody* getBody() const
 		{
-			return m_Body;
+			return m_ChipBody;
 		}
 		//! Returns the applicable space
 		cpSpace* getSpace() const
@@ -408,25 +414,16 @@ namespace FusionEngine
 		}
 
 		//! Adds a pixel to the terrain
-		inline void addBit(float x, float y)
-		{
-			int b = (int)x + (int)y*m_Width;
-			m_Bits[b] = true;
-			cpShape* shape = cpCircleShapeNew(m_Body, m_BitRadius, cpv(x*m_PPB, y*m_PPB));
-			shape->e = 1.0; shape->u = 1.0;
-			shape->collision_type = g_PhysBodyCpCollisionType;
-			shape->data = m_PhysBody;
-			cpSpaceAddStaticShape(m_Space, shape);
-		}
+		void addBit(float x, float y);
 
 	};
 
 	// BBfunc callback for the spatial hash.
-	static cpBB bbfunc(void *ptr)
-	{
-		cpShape *shape = (cpShape *)ptr;
-		return shape->bb;
-	}
+	//static cpBB bbfunc(void *ptr)
+	//{
+	//	cpShape *shape = (cpShape *)ptr;
+	//	return shape->bb;
+	//}
 
 }
 

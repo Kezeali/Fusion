@@ -217,6 +217,9 @@ namespace FusionEngine
 
 		void RemoveStaticShape(Shape* shape);
 
+		//cpShape* createSimpleStatic(PhysicsBody* body = NULL);
+		//void removeSimpleStatic(cpShape* shape);
+
 		//! \todo Shape factory methods?
 		//Shape* CreateShape();
 		//Shape* CreateStaticShape();
@@ -292,6 +295,10 @@ namespace FusionEngine
 
 		//! All physical objects controled by this world.
 		BodyList m_Bodies;
+		// Bodies to be deleted after the simulation is complete
+		BodyList m_DeleteQueue;
+
+		bool m_RunningSimulation;
 
 		//! Body hash map / query interface
 		//CollisionGrid *m_CollisionGrid;

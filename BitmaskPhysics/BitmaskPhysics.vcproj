@@ -190,10 +190,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionBitmask.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionConsole.cpp"
 				>
 			</File>
@@ -211,6 +207,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionShapeMesh.cpp"
 				>
 			</File>
 			<File
@@ -237,10 +237,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\Common.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionBitmask.h"
 				>
 			</File>
 			<File
@@ -273,6 +269,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionShapeMesh.h"
 				>
 			</File>
 			<File

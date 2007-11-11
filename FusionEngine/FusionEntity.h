@@ -234,6 +234,9 @@ namespace FusionEngine
 		 */
 		ObjectList m_Projectiles;
 
+		//! Will be set to true if theis entity has been marked for detination (to allow chain detonations)
+		bool m_Detonated;
+
 		//! Input state
 		ShipInput m_Input;
 		//! Current spacial attributes

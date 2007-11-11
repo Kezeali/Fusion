@@ -168,13 +168,13 @@ namespace FusionEngine
 
 		cpBody* GetChipBody() const;
 
-		virtual void AttachShape(Shape* shape);
-		virtual void DetachShape(Shape* shape);
-		virtual void ClearShapes();
+		virtual void AttachShape(Shape* shape, bool toWorld = true);
+		virtual void DetachShape(Shape* shape, bool fromWorld = true);
+		virtual void ClearShapes(bool fromWorld = true);
 
-		void AttachJoint(cpJoint* joint);
-		void DetachJoint(cpJoint* joint);
-		void ClearJoints();
+		void AttachJoint(cpJoint* joint, bool toWorld = true);
+		void DetachJoint(cpJoint* joint, bool fromWorld = true);
+		void ClearJoints(bool fromWorld = true);
 
 		void Clear();
 

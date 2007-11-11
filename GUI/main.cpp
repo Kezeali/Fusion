@@ -65,6 +65,37 @@ static void DrawImage(ResourcePointer<CL_Surface> *lhs, float x, float y)
 		data->draw(x, y);
 }
 
+static void PlayAudio(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
+{
+	if (!lhs->IsValid())
+		return;
+
+	CL_SoundBuffer* data = lhs->GetDataPtr();
+	if (data != NULL)
+		data->play(looping);
+}
+
+static TiXmlNode* XmlDocument_FirstChild(ResourcePointer<TiXmlDocument>* lhs, std::string& value)
+{
+	if (!lhs->IsValid())
+		return NULL;
+
+	TiXmlDocument* data = lhs->GetDataPtr();
+	if (data != NULL)
+	{
+		if (value.empty())
+			return data->FirstChild();
+		else
+			return data->FirstChild(value.c_str());
+	}
+	else
+		return NULL;
+}
+
+static std::string XmlNode_Value(TiXmlNode* lhs)
+{
+	return std::string(lhs->Value());
+}
 
 // Function implementation with native calling convention
 void PrintString(std::string &str)
@@ -86,7 +117,9 @@ void ClearConsole()
 		con->Clear();
 }
 
-ResourcePointer<CL_Surface> StaticGet(std::string& path);
+ResourcePointer<CL_Surface> StaticGetImage(std::string& path);
+ResourcePointer<CL_SoundBuffer> StaticGetSound(std::string& path);
+ResourcePointer<TiXmlDocument> StaticGetXml(std::string& path);
 void StaticLoadResource(std::string& path);
 void StaticUnloadResource(std::string& tag);
 void StaticQuit();
@@ -97,7 +130,7 @@ static const char *script1 =
 "    Image body;                               \n"
 "    void Preload()                            \n"
 "    {                                         \n"
-"        body = Get(\"body.png\");             \n"
+"        body = GetImage(\"body.png\");             \n"
 "        Print(\"Preloaded\");                 \n"
 "    }                                         \n"
 "    void Draw(float x, float y)               \n"
@@ -107,7 +140,7 @@ static const char *script1 =
 "};                                            \n"
 "void Test()                                   \n"
 "{                                             \n"
-"   Get(\"body.png\").get().draw(10, 10); \n"
+"   GetImage(\"body.png\").get().draw(10, 10);    \n"
 "}                                             \n"
 "                                              \n";
 
@@ -191,8 +224,13 @@ public:
 	{
 		m_Quit = false;
 
+		CL_SetupCore core_setup;
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
+		CL_SetupSound sound_setup;
+		CL_SetupVorbis voirbis_setup;
+
+		CL_SoundOutput sound_output(44100);
 
 		CL_ConsoleWindow console("GUI Test");
 		console.redirect_stdio();
@@ -226,9 +264,37 @@ public:
 					"void draw(float, float)",
 					asFUNCTIONPR(DrawImage, (float, float), void),
 					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register draw");
+				assert(r >= 0 && "Failed to register draw()");
 
-				r = scrEngine->RegisterGlobalFunction("Image Get(string &in)", asFUNCTION(StaticGet), asCALL_CDECL); assert( r >= 0 );
+				RegisterResourcePointer<CL_SoundBuffer>("Sound", ScriptingEngine::getSingleton().GetEnginePtr());
+				r = scrEngine->RegisterObjectMethod("Sound",
+					"void play(bool)",
+					asFUNCTIONPR(PlayAudio, (bool), void),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register play()");
+
+				r = scrEngine->RegisterObjectType("XmlNode", sizeof(TiXmlNode), asOBJ_REF); assert( r >= 0 );
+				//r = scrEngine->RegisterObjectMethod("XmlNode",
+				//	"string value()",
+				//	asMETHODPR(TiXmlNode, Value, (void), std::string),
+				//	asCALL_THISCALL);
+				r = scrEngine->RegisterObjectMethod("XmlNode",
+					"string& value()",
+					asFUNCTIONPR(XmlNode_Value, (void), std::string),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register Value()");
+				//r = engine->RegisterObjectMethod("cl_surface", "void draw(float, float)", asFUNCTIONPR(drawSurface,(float, float),void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+
+				RegisterResourcePointer<TiXmlDocument>("XmlDocument", ScriptingEngine::getSingleton().GetEnginePtr());
+				r = scrEngine->RegisterObjectMethod("XmlDocument",
+					"XmlNode@ first_child(string& value)",
+					asFUNCTIONPR(XmlDocument_FirstChild, (std::string&), TiXmlNode*),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register first_child()");
+
+				r = scrEngine->RegisterGlobalFunction("Image GetImage(string &in)", asFUNCTION(StaticGetImage), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("Sound GetSound(string &in)", asFUNCTION(StaticGetSound), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("XmlDocument GetXML(string &in)", asFUNCTION(StaticGetXml), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void Load(string &in)", asFUNCTION(StaticLoadResource), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void Unload(string &in)", asFUNCTION(StaticUnloadResource), asCALL_CDECL); assert( r >= 0 );
 
@@ -262,6 +328,7 @@ public:
 			input->MapControl(CL_KEY_BACKSPACE, "DeleteResource");
 
 			m_ResMan = new ResourceManager(argv);
+			m_ResMan->AddResourceLoader(new XMLLoader());
 
 
 			StateManager* stateman = new StateManager();
@@ -342,11 +409,17 @@ public:
 					context->Release();
 				}
 
+				
 				stateman->Update(split);
 				stateman->Draw();
 
 				display.flip(0);
+				// Catch failures to load resources
+				try {
 				CL_System::keep_alive();
+				} catch (FusionEngine::FileSystemException& ex) {
+					SendToConsole(ex);
+				}
 
 				//gl_state.set_active();
 			}
@@ -372,9 +445,19 @@ public:
 	}
 } app;
 
-ResourcePointer<CL_Surface> StaticGet(std::string& path)
+ResourcePointer<CL_Surface> StaticGetImage(std::string& path)
 {
 	return app.Get(path);
+}
+
+ResourcePointer<CL_SoundBuffer> StaticGetSound(std::string& path)
+{
+	return ResourceManager::getSingleton().GetResource<CL_SoundBuffer>(path, "AUDIO");
+}
+
+ResourcePointer<TiXmlDocument> StaticGetXml(std::string& path)
+{
+	return ResourceManager::getSingleton().GetResource<TiXmlDocument>(path, "XML");
 }
 
 void StaticLoadResource(std::string &path)

@@ -224,9 +224,9 @@ namespace FusionEngine
 	class Environment;
 	class ServerEnvironment;
 	class ClientEnvironment;
-	class FusionNetworkGeneric;
-	class FusionNetworkServer;
-	class FusionNetworkClient;
+	class Network;
+	class NetworkServer;
+	class NetworkClient;
 	class FusionScene;
 	class FusionNode;
 	class ShipState;

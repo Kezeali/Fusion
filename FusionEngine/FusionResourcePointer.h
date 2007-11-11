@@ -407,6 +407,39 @@ namespace FusionEngine
 	};
 
 	template <typename T>
+	void RegisterResourcePointer(const std::string type_name, asIScriptEngine* engine)
+	{
+		assert(engine && "Passed NULL engine pointer to registerVector");
+
+		int error_code = 0;
+
+		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(ResourcePointer<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+		assert(error_code >= 0 && "Failed to register object type");
+
+		error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
+			asBEHAVE_CONSTRUCT, 
+			"void f()", 
+			asFUNCTION(resourcePointerRegisterHelper<T>::Construct), 
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register constructor");
+
+		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
+			asBEHAVE_DESTRUCT,
+			"void f()",
+			asFUNCTION(resourcePointerRegisterHelper<T>::Destruct),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register destructor");
+
+		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
+			asBEHAVE_CONSTRUCT,
+			(std::string("void f(")+type_name+"&in)").c_str(),
+			asFUNCTION(resourcePointerRegisterHelper<T>::CopyConstruct),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register copy constructor");
+
+	}
+
+	template <typename T>
 	void RegisterResourcePointer(const std::string V_AS,  //The typename of the resource inside AS
 		const std::string T_AS,  //Template parameter typename in AS - must already be
 		asIScriptEngine* engine) //registered (or be primitive type)!!

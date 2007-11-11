@@ -1,90 +1,98 @@
 
 #include "Common.h"
 
-#include "FusionBitmask.h"
+#include "FusionShapeMesh.h"
 
 #include "FusionPhysicsBody.h"
+#include "FusionPhysicsWorld.h"
 
 namespace FusionEngine
 {
 
 	///////////
-	// Bitmask
-	Bitmask::Bitmask(cpSpace* space, PhysicsBody* body)
+	// ShapeMesh
+	ShapeMesh::ShapeMesh(PhysicsWorld* world, PhysicsBody* body)
 		: m_PPB(10),
 		m_Width(0),
-		m_Height(0)
+		m_Height(0),
+		m_World(world)
 	{
-		m_Space = space;
+		m_Space = world->GetChipSpace();
 		//m_Body = cpBodyNew(INFINITY, INFINITY);
 		//m_Body->p.x = position.x;
 		//m_Body->p.y = position.y;
-		m_Body = body->GetChipBody();
-		m_PhysBody = body;
+		m_Body = body;
+		m_ChipBody = body->GetChipBody();
 
 		//m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
-		m_Shapes = NULL;
+		//m_Shapes = NULL;
 	}
 
-	Bitmask::Bitmask(cpSpace* space, const std::string &filename, int gridsize, unsigned int threshold)
-		: m_PPB(10),
-		m_Width(0),
-		m_Height(0)
+	//ShapeMesh::ShapeMesh(cpSpace* space, const std::string &filename, int gridsize, unsigned int threshold)
+	//	: m_PPB(10),
+	//	m_Width(0),
+	//	m_Height(0)
+	//{
+	//	m_Space = space;
+	//	m_Body = cpBodyNew(INFINITY, INFINITY);
+
+	//	m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
+	//	SetFromImage(filename, gridsize, threshold);
+	//}
+
+	//ShapeMesh::ShapeMesh(cpSpace* space, const CL_Surface *surface, int gridsize, unsigned int threshold)
+	//	: m_PPB(10),
+	//	m_Width(0),
+	//	m_Height(0)
+	//{
+	//	m_Space = space;
+	//	m_Body = cpBodyNew(INFINITY, INFINITY);
+
+	//	m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
+	//	SetFromSurface(surface, gridsize, threshold);
+	//}
+
+	//ShapeMesh::ShapeMesh(cpSpace* space, float radius, int gridsize)
+	//	: m_PPB(10),
+	//	m_Width(0),
+	//	m_Height(0)
+	//{
+	//	m_Space = space;
+	//	m_Body = cpBodyNew(INFINITY, INFINITY);
+
+	//	m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
+	//	SetFromRadius(radius, gridsize);
+	//}
+
+	//ShapeMesh::ShapeMesh(cpSpace* space, const CL_Size &dimensions, int gridsize)
+	//	: m_PPB(10),
+	//	m_Width(0),
+	//	m_Height(0)
+	//{
+	//	m_Space = space;
+	//	m_Body = cpBodyNew(INFINITY, INFINITY);
+
+	//	m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
+	//	SetFromDimensions(dimensions, gridsize);
+	//}
+
+
+	ShapeMesh::~ShapeMesh()
 	{
-		m_Space = space;
-		m_Body = cpBodyNew(INFINITY, INFINITY);
+		m_World->RemoveBody(m_Body);
+		delete m_Body;
 
-		m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
-		SetFromImage(filename, gridsize, threshold);
-	}
-
-	Bitmask::Bitmask(cpSpace* space, const CL_Surface *surface, int gridsize, unsigned int threshold)
-		: m_PPB(10),
-		m_Width(0),
-		m_Height(0)
-	{
-		m_Space = space;
-		m_Body = cpBodyNew(INFINITY, INFINITY);
-
-		m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
-		SetFromSurface(surface, gridsize, threshold);
-	}
-
-	Bitmask::Bitmask(cpSpace* space, float radius, int gridsize)
-		: m_PPB(10),
-		m_Width(0),
-		m_Height(0)
-	{
-		m_Space = space;
-		m_Body = cpBodyNew(INFINITY, INFINITY);
-
-		m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
-		SetFromRadius(radius, gridsize);
-	}
-
-	Bitmask::Bitmask(cpSpace* space, const CL_Size &dimensions, int gridsize)
-		: m_PPB(10),
-		m_Width(0),
-		m_Height(0)
-	{
-		m_Space = space;
-		m_Body = cpBodyNew(INFINITY, INFINITY);
-
-		m_Shapes = cpSpaceHashNew(m_PPB, 10000, &bbfunc);
-		SetFromDimensions(dimensions, gridsize);
+		for (ShapeGrid::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+		{
+			delete (*it);
+		}
+		m_Shapes.clear();
+		//if (m_Shapes)
+		//	cpSpaceHashFree(m_Shapes);
 	}
 
 
-	Bitmask::~Bitmask()
-	{
-		if (m_Body)
-			cpBodyFree(m_Body);
-		if (m_Shapes)
-			cpSpaceHashFree(m_Shapes);
-	}
-
-
-	int Bitmask::Save(void *buffer, int len)
+	int ShapeMesh::Save(void *buffer, int len)
 	{
 		CL_OutputSource_Memory source;
 
@@ -112,7 +120,7 @@ namespace FusionEngine
 		return source.size();
 	}
 
-	bool Bitmask::Load(void *buffer, int len)
+	bool ShapeMesh::Load(void *buffer, int len)
 	{
 		CL_InputSource_Memory source(buffer, len);
 
@@ -145,11 +153,7 @@ namespace FusionEngine
 			{
 				if (source.read_bool8())
 				{
-					m_Bits[b] = true;
-					cpShape* shape = cpCircleShapeNew(m_Body, m_BitRadius, cpv(x*m_PPB, y*m_PPB));
-					shape->e = 1.0; shape->u = 1.0;
-					shape->collision_type = g_PhysBodyCpCollisionType;
-					cpSpaceAddStaticShape(m_Space, shape);
+					addBit(x, y);
 				}
 				b++;
 			}
@@ -158,7 +162,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	int Bitmask::Save(const std::string &name, CL_OutputSource *source)
+	int ShapeMesh::Save(const std::string &name, CL_OutputSource *source)
 	{
 		// Mark this as bitmask data
 		source->write_uint32(g_BitmaskCacheFiletype);
@@ -178,7 +182,7 @@ namespace FusionEngine
 		return source->size();
 	}
 
-	int Bitmask::Save(const std::string &name, CL_OutputSourceProvider *provider)
+	int ShapeMesh::Save(const std::string &name, CL_OutputSourceProvider *provider)
 	{
 		CL_OutputSource *source = provider->open_source(name);
 
@@ -192,7 +196,7 @@ namespace FusionEngine
 		return saved;
 	}
 
-	bool Bitmask::Load(const std::string &name, CL_InputSourceProvider *provider)
+	bool ShapeMesh::Load(const std::string &name, CL_InputSourceProvider *provider)
 	{
 		CL_InputSource *source;
 
@@ -229,6 +233,8 @@ namespace FusionEngine
 		m_Bits.clear();
 		m_Bits.resize(m_Width*m_Height);
 
+		m_Shapes.resize(m_Width*m_Height);
+
 		// Read the bitmask data
 		int b = 0;
 		for (int y = 0; y < m_Height; y++)
@@ -238,12 +244,7 @@ namespace FusionEngine
 				//if (source->read_bool8())
 				if ( source->read_int32() )
 				{
-					m_Bits[b] = true;
-					cpShape* shape = cpCircleShapeNew(m_Body, m_BitRadius, cpv(x*m_PPB, y*m_PPB));
-					shape->e = 1.0; shape->u = 1.0;
-					shape->collision_type = g_PhysBodyCpCollisionType;
-					shape->data = m_PhysBody;
-					cpSpaceAddStaticShape(m_Space, shape);
+					addBit(x, y);
 				}
 
 				b++;
@@ -258,7 +259,7 @@ namespace FusionEngine
 	}
 
 
-	void Bitmask::DisplayBits(int x_offset, int y_offset, CL_Color col)
+	void ShapeMesh::DisplayBits(int x_offset, int y_offset, CL_Color col)
 	{
 		for (int y = 0; y < m_Height; y++)
 			for (int x = 0; x < m_Width; x++)
@@ -342,7 +343,7 @@ namespace FusionEngine
 	//}
 
 
-	void Bitmask::SetFromRadius(float radius, int gridsize)
+	void ShapeMesh::SetFromRadius(float radius, int gridsize)
 	{
 		m_PPB = gridsize;
 		m_PPBInverse = 1.0f/(float)gridsize;
@@ -354,6 +355,8 @@ namespace FusionEngine
 		
 		m_Bits.clear();
 		m_Bits.resize(m_Width*m_Height);
+
+		m_Shapes.resize(m_Width*m_Height);
 
 		// Build the mask
 		int x = 0;
@@ -373,7 +376,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Bitmask::SetFromDimensions(const CL_Size &dimensions, int gridsize)
+	void ShapeMesh::SetFromDimensions(const CL_Size &dimensions, int gridsize)
 	{
 		m_Width = int(dimensions.width / gridsize);
 		m_Height = int(dimensions.height / gridsize);
@@ -385,16 +388,20 @@ namespace FusionEngine
 		
 		m_Bits.clear();
 		m_Bits.resize(m_Width*m_Height, true);
+
+		m_Shapes.resize(m_Width*m_Height);
+
+		for (int x = 0; x < m_Width; ++x) for (int y = 0; y < m_Height; ++y) addBit(x, y);
 	}
 
-	void Bitmask::SetFromImage(const std::string &filename, int gridsize, unsigned int threshold)
+	void ShapeMesh::SetFromImage(const std::string &filename, int gridsize, unsigned int threshold)
 	{
 		CL_Surface *source = &CL_Surface(filename);
 
 		SetFromSurface(source, gridsize);
 	}
 
-	void Bitmask::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold)
+	void ShapeMesh::SetFromSurface(const CL_Surface *surface, int gridsize, unsigned int threshold)
 	{
 		int sur_w = surface->get_width();
 		int sur_h = surface->get_height();
@@ -410,6 +417,8 @@ namespace FusionEngine
 		m_Bits.clear();
 		m_Bits.resize(m_Width*m_Height);
 
+		m_Shapes.resize(m_Width*m_Height);
+
 		CL_PixelBuffer pdat = surface->get_pixeldata();
 
 		for (int x = 0; x < m_Width; x++)
@@ -424,8 +433,24 @@ namespace FusionEngine
 			}
 	}
 
-	void Bitmask::Draw(const Shape *other, const CL_Point &offset, bool auto_scale)
+	void ShapeMesh::Draw(const Vector2 &position, const float radius)
 	{
+		// Build the mask
+		int x = 0;
+		int y = 0;
+
+		for (float i = 1.0f; i < radius; i++)
+		{
+			for (float a = 0.0f; a < 2*PI; a+=0.1f)
+			{
+				x = int( sinf(a) * i + radius + position.x);
+				y = int( cosf(a) * i + radius + position.y);
+				fe_clamp(x, 0, m_Width);
+				fe_clamp(y, 0, m_Width);
+
+				addBit(x, y);
+			}
+		}
 	}
 	//{
 	//	cl_assert(m_Bitmask != 0);
@@ -454,23 +479,75 @@ namespace FusionEngine
 	//		bitmask_draw(m_Bitmask, other->m_Bitmask, scaled_x, scaled_y);
 	//}
 
-	void Bitmask::Erase(const Shape *eraser, const Vector2 &offset)
+	void ShapeMesh::Erase(const Vector2 &position, const float radius)
 	{
-		cpShape* shape = eraser->GetShape();
-		if (offset != Vector2::ZERO)
+		// Get a bounding box for the area to be erased
+		//cpBB bb;
+		//bb.l = position.x - radius;
+		//bb.r = position.x + radius;
+		//bb.t = position.y + radius;
+		//bb.b = position.y - radius;
+
+		//cpSpaceHashQuery(m_Shapes, NULL, bb, &listShapesFunc, &shapesToRemove);
+
+		float radius2 = radius*radius;
+
+		Vector2 offset = m_Body->GetPosition();
+
+		// BB co-ords
+		float l = position.x - offset.x - radius;
+		float r = position.x - offset.x + radius;
+		float t = position.y - offset.y - radius;
+		float b = position.y - offset.y + radius;
+
+		// Hash-like co-ords
+		unsigned int grid_l = fe_clamped(l * m_PPBInverse, 0.f, (float)m_Width);
+		unsigned int grid_r = fe_clamped(r * m_PPBInverse, 0.f, (float)m_Width);
+		unsigned int grid_t = fe_clamped(t * m_PPBInverse, 0.f, (float)m_Height);
+		unsigned int grid_b = fe_clamped(b * m_PPBInverse, 0.f, (float)m_Height);
+
+		for (int i = grid_l; i <= grid_r; i++)
 		{
-			shape->body->p = cpv(offset.x, offset.y);
-			cpShapeCacheBB(shape);
+			for (int j = grid_t; j <= grid_b; j++)
+			{
+				int index = (i + j * m_Width);
+				if (index >= m_Shapes.size()) continue;
+				Shape* shape = m_Shapes[index];
+
+				if (shape == NULL) continue;
+
+				Vector2 v = shape->GetPosition();
+				v2Subtract(v, position, v);
+
+				if (v.squared_length() < radius2)
+				{
+					m_World->RemoveShape(shape);
+					m_Shapes[index] = NULL;
+				}
+			}
 		}
-		//cpSpaceHashQuery(m_Space->staticShapes, shape, shape->bb, &eraseFunc, &m_RemoveQueue);
-		EraseData data;
-		data.space = m_Space;
-		data.list = &m_RemoveQueue;
-		data.other = shape;
-		cpSpaceHashEach(m_Space->staticShapes, &eraseFunc, &data);
 	}
 
-	void Bitmask::Update()
+	void ShapeMesh::Erase(const FusionEngine::Vector2 &position, const std::vector<Vector2> &polygon)
+	{
+	}
+
+	//{
+	//	cpShape* shape = eraser->GetShape();
+	//	if (offset != Vector2::ZERO)
+	//	{
+	//		shape->body->p = cpv(offset.x, offset.y);
+	//		cpShapeCacheBB(shape);
+	//	}
+	//	//cpSpaceHashQuery(m_Space->staticShapes, shape, shape->bb, &eraseFunc, &m_RemoveQueue);
+	//	EraseData data;
+	//	data.space = m_Space;
+	//	data.list = &m_RemoveQueue;
+	//	data.other = shape;
+	//	cpSpaceHashEach(m_Space->staticShapes, &eraseFunc, &data);
+	//}
+
+	void ShapeMesh::Update()
 	{
 		for (ShapeList::iterator it = m_RemoveQueue.begin(), end = m_RemoveQueue.end(); it != end; ++it)
 			cpSpaceRemoveStaticShape(m_Space, (*it));
@@ -506,13 +583,13 @@ namespace FusionEngine
 	//}
 
 
-	int Bitmask::GetPPB() const
+	int ShapeMesh::GetPPB() const
 	{
 		return m_PPB;
 	}
 
 
-	bool Bitmask::GetBit(const CL_Point &point) const
+	bool ShapeMesh::GetBit(const CL_Point &point) const
 	{
 		return true;
 	}
@@ -527,7 +604,7 @@ namespace FusionEngine
 	//	return (bool)bitmask_getbit(m_Bitmask, point.x, point.y);
 	//}
 
-	bool Bitmask::GetBit(int x, int y) const
+	bool ShapeMesh::GetBit(int x, int y) const
 	{
 		return true;
 	}
@@ -593,5 +670,32 @@ namespace FusionEngine
 
 	//	memcpy(output, &Vector2(dx, dy), sizeof(Vector2));
 	//}
+
+	void ShapeMesh::addBit(float x, float y)
+	{
+		int b = (int)x + (int)y*m_Width;
+		m_Bits[b] = true;
+
+		CircleShape* shape = new CircleShape(m_Body, m_BitRadius, Vector2(x*m_PPB+m_Offset.x, y*m_PPB+m_Offset.y));
+		m_Body->AttachShape(shape);
+		//m_World->AddShape(shape);
+
+		if (m_Shapes[b] != NULL)
+		{
+			m_World->RemoveShape(m_Shapes[b]);
+			m_Shapes[b] = NULL;
+		}
+
+		if (b == m_Shapes.size())
+			m_Shapes.push_back(shape);
+		else
+			m_Shapes[b] = shape;
+
+		//cpShape* shape = cpCircleShapeNew(m_Body, m_BitRadius, cpv(x*m_PPB, y*m_PPB));
+		//shape->e = 1.0; shape->u = 1.0;
+		//shape->collision_type = g_PhysBodyCpCollisionType;
+		//shape->data = m_PhysBody;
+		//cpSpaceAddStaticShape(m_Space, shape);
+	}
 
 }

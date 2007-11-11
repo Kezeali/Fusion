@@ -189,12 +189,50 @@ namespace FusionEngine
 	                               Vector2& chosen);
 	};
 
-	static bool v2Equal(const Vector2& v1, const Vector2 &v2)
+	static inline void v2Add(const Vector2& a, const Vector2& b, Vector2& c)
+	{
+		c.x = a.x + b.x;
+		c.y = a.y + b.y;
+	}
+
+	static inline void v2Subtract(const Vector2& a, const Vector2& b, Vector2& c )
+	{
+		c.x = a.x - b.x;
+		c.y = a.y - b.y;
+	}
+
+	static inline void v2Multiply(const Vector2& a, float b, Vector2& c )
+	{
+		c.x = a.x * b;
+		c.y = a.y * b;
+	}
+
+	static inline void v2Multiply(const Vector2& a, const Vector2& b, Vector2& c )
+	{				  
+		c.x = a.x * b.x;
+		c.y = a.y * b.y;
+	}
+
+
+	static inline void v2Divide(const Vector2& a, float b, Vector2& c )
+	{
+		float bInv = 1.0f / b;
+		c.x = a.x * bInv;
+		c.y = a.y * bInv;
+	}
+
+	static inline void v2Divide(const Vector2& a, const Vector2& b, Vector2& c )
+	{
+		c.x = a.x / b.x;
+		c.y = a.y / b.y;
+	}
+
+	static inline bool v2Equal(const Vector2& v1, const Vector2 &v2)
 	{
 		return (v1.x == v2.x) && (v1.y == v2.y);
 	}
 
-	static bool v2NotEqual(const Vector2& v1, const Vector2 &v2)
+	static inline bool v2NotEqual(const Vector2& v1, const Vector2 &v2)
 	{
 		return (v1.x != v2.x) || (v1.y != v2.y);
 	}

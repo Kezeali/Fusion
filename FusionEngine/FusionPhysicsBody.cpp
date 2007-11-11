@@ -206,17 +206,20 @@ namespace FusionEngine
 		return m_Body;
 	}
 
-	void PhysicsBody::AttachShape(Shape* shape)
+	void PhysicsBody::AttachShape(Shape* shape, bool toWorld)
 	{
 		shape->SetBody(this);
 		shape->GetShape()->collision_type = g_PhysBodyCpCollisionType;
 
 		cpBodySetMoment(m_Body, m_Body->i + shape->GetInertia());
 
+		// Add to world
+		m_World->AddShape(shape);
+
 		m_Shapes.push_back(shape);
 	}
 
-	void PhysicsBody::DetachShape(Shape* shape)
+	void PhysicsBody::DetachShape(Shape* shape, bool remove /* = true */)
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
@@ -225,29 +228,35 @@ namespace FusionEngine
 				cpBodySetMoment(m_Body, m_Body->i - shape->GetInertia());
 				shape->SetBody(NULL);
 				m_Shapes.erase(it);
+
+				// Remove from world
+				if (remove)
+					m_World->RemoveShape(shape);
 			}
 		}
 	}
 
-	void PhysicsBody::ClearShapes()
+	void PhysicsBody::ClearShapes(bool fromWorld /* = true */)
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			m_World->RemoveShape(&(*it));
 			it->SetBody(NULL);
+
+			if (fromWorld)
+				m_World->RemoveShape(&(*it));
 		}
 		m_Shapes.clear();
 	}
 
-	void PhysicsBody::AttachJoint(cpJoint* joint)
+	void PhysicsBody::AttachJoint(cpJoint* joint, bool toWorld)
 	{
 	}
 
-	void PhysicsBody::DetachJoint(cpJoint* joint)
+	void PhysicsBody::DetachJoint(cpJoint* joint, bool fromWorld)
 	{
 	}
 
-	void PhysicsBody::ClearJoints()
+	void PhysicsBody::ClearJoints(bool fromWorld)
 	{
 	}
 

@@ -327,14 +327,14 @@ namespace FusionEngine
 			}
 
 			ResourceContainer* res;
-			try
-			{
+			//try
+			//{
 				res = loader->second->LoadResource(tag, path, &provider);
-			}
-			catch (CL_Error&)
-			{
-				FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
-			}
+			//}
+			//catch (CL_Error&)
+			//{
+			//	FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
+			//}
 
 			m_Resources[tag] = ResourceSpt(res);
 		}

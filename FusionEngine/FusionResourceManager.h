@@ -72,6 +72,8 @@ namespace FusionEngine
 	 * \brief
 	 * Loads and stores resources for gameplay.
 	 *
+	 * \todo Add XMLloader to default loaders
+	 *
 	 * \todo Impliment PhysFS <br>
 	 * DONE: create InputSourceProvider_PhysFS (based on CL_InputSourceProvider_File) <br>
 	 * DONE: create InputSource_PhysFile (based on CL_InputSource_File) <br>

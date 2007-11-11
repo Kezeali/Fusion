@@ -196,10 +196,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionBitmask.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionClientLoadingState.h"
 				>
 			</File>
@@ -241,6 +237,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionDemo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionDestructible.h"
 				>
 			</File>
 			<File
@@ -544,6 +544,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionShapeMesh.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionShip.h"
 				>
 			</File>
@@ -655,10 +659,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionAudioLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionBitmask.cpp"
 				>
 			</File>
 			<File
@@ -899,6 +899,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionServerOptions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionShapeMesh.cpp"
 				>
 			</File>
 			<File

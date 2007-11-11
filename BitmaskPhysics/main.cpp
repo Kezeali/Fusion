@@ -1,7 +1,7 @@
 #include "../FusionEngine/Common.h"
 #include "../FusionEngine/FusionCommon.h"
 
-#include "../FusionEngine/FusionBitmask.h"
+#include "../FusionEngine/FusionShapeMesh.h"
 //#include "../FusionEngine/FusionPhysicsCollisionGrid.h"
 #include "../FusionEngine/FusionPhysicsWorld.h"
 #include "../FusionEngine/FusionPhysicsBody.h"
@@ -13,8 +13,10 @@
 
 #include "../rstream/mersenne.h"
 
+#include <boost/smart_ptr.hpp>
+
 const int g_NumDrones = 4;
-const float g_ThrustForce = 3.0f;
+const float g_ThrustForce = 2.6f;
 
 using namespace FusionEngine;
 
@@ -47,23 +49,56 @@ public:
 
 class BitmaskTest;
 
+class Projectile
+{
+	PhysicsBody* m_Body;
+
+public:
+	Projectile(PhysicsBody* body)
+		: m_Body(body),
+		m_Detonated(false)
+	{}
+
+	bool m_Detonated;
+
+	const Vector2& GetPosition() const
+	{
+		return m_Body->GetPosition();
+	}
+
+	bool IsDetonated() const
+	{
+		return m_Detonated;
+	}
+
+	PhysicsBody* GetBody() const
+	{
+		return m_Body;
+	}
+
+};
+
+typedef CL_SharedPtr<Projectile> ProjectilePtr;
+
 class Explosive : public ICollisionHandler
 {
 	BitmaskTest* m_Env;
-	PhysicsBody* m_MyBody;
+	ProjectilePtr m_MyBody;
 	bool m_HasExploded;
+	float m_Payload;
 
 public:
-	Explosive(BitmaskTest* env, PhysicsBody* body)
+	Explosive(BitmaskTest* env, ProjectilePtr body, float payload)
 		: m_Env(env),
 		m_MyBody(body),
+		m_Payload(payload),
 		m_HasExploded(false)
 	{
 	}
 
 	bool CanCollideWith(const PhysicsBody *other)
 	{
-		return !m_HasExploded;
+		return true;
 	}
 
 	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts);
@@ -77,8 +112,35 @@ class BitmaskTest : public CL_ClanApplication
 	PhysicsWorld *m_World;
 
 	CL_Surface* m_ProjectileGFX;
-	std::vector<PhysicsBody*> m_Projectiles;
-	std::vector<PhysicsBody*> m_DeleteQueue;
+
+	typedef std::list<ProjectilePtr> ProjectileList;
+	ProjectileList m_Projectiles;
+	ProjectileList m_DetonationQueue;
+
+	class Explosion //: public Entity
+	{
+	public:
+		//! Speed is the fraction of the radius to fill per mili-second
+		Explosion(const Vector2& position, float radius, float speed, BitmaskTest* env)
+			: m_Position(position), m_Radius(radius), m_Speed(speed), m_Env(env), m_Extent(0.f) {}
+
+		void Simulate(unsigned int dt) { m_Extent += m_Radius * m_Speed * dt + 0.5f; if (m_Extent <= m_Radius) m_Env->DetonateWithin(m_Position, m_Extent); }
+		bool Done() { return (m_Extent >= m_Radius); }
+
+		const Vector2& GetPosition() const { return m_Position; }
+		float GetExtent() const { return m_Extent; }
+
+	protected:
+		Vector2 m_Position;
+		float m_Radius;
+		float m_Speed;
+		float m_Extent;
+
+		BitmaskTest* m_Env;
+	};
+
+	typedef std::list<Explosion> ExplosionList;
+	ExplosionList m_Explosions;
 
 	CL_Surface *m_ShipGraphical;
 	PhysicsBody *m_ShipPhysical;
@@ -88,7 +150,7 @@ class BitmaskTest : public CL_ClanApplication
 
 	CL_Surface *m_TerrainGraphical;
 	PhysicsBody *m_TerrainPhysical;
-	Bitmask *m_TerrainBitmask;
+	ShapeMesh *m_TerrainShapes;
 	CL_Canvas *m_TerrainCanvas;
 
 	PhysicsBody* m_DamageBody;
@@ -106,35 +168,85 @@ class BitmaskTest : public CL_ClanApplication
 	RStream *m_Random;
 
 public:
-	void Detonate(PhysicsBody* body, float radius, const Vector2& position)
+	void Detonate(ProjectilePtr projectile, float radius, const Vector2& position)
 	{
-		float scale = (1.0/8.0f)*(radius);
-		int x_offset = m_TerrainPhysical->GetPosition().x;
-		int y_offset = m_TerrainPhysical->GetPosition().y;
-
-		m_Damage->set_scale(scale, scale);
-		m_Damage->draw(position.x-x_offset, position.y-y_offset, m_TerrainCanvas->get_gc() );
-		m_DamageBody->_setPosition(Vector2::ZERO);
-		CircleShape shape(m_DamageBody, 0.f, radius, cpvzero);
-		m_TerrainBitmask->Erase(&shape, position);
-
-		m_ParticleEmitter->emit(position.x, position.y);
-		for (int i = 0; i < 15; ++i)
+		if (!projectile->IsDetonated())
 		{
-			float r_x = m_Random->distributed(0, 5);
-			float r_y = m_Random->distributed(0, 5);
-			L_ParticleEffect* new_effect = m_SmokeEffect->new_clone();
-			new_effect->set_position(position.x+r_x, position.y+r_y);
-			m_ParticleEmitter->add(new_effect);
-		}
+			float scale = (1.0/8.0f)*(radius);
+			int x_offset = m_TerrainPhysical->GetPosition().x;
+			int y_offset = m_TerrainPhysical->GetPosition().y;
 
-		for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
-		{
-			if ((*it) == body)
+			m_Damage->set_scale(scale, scale);
+			m_Damage->draw(position.x-x_offset, position.y-y_offset, m_TerrainCanvas->get_gc() );
+			m_DamageBody->_setPosition(Vector2::ZERO);
+			m_TerrainShapes->Erase(position, radius);
+
+			m_Explosions.push_back(Explosion(position, radius, 0.005f, this));
+
+			m_ParticleEmitter->emit(position.x, position.y);
+			for (int i = 0; i < 32; ++i)
 			{
-				m_Projectiles.erase(it);
-				m_DeleteQueue.push_back(body);
-				break;
+				float r_x = m_Random->ranged(-radius, radius);
+				float r_y = m_Random->ranged(-radius, radius);
+				L_ParticleEffect* new_effect = m_SmokeEffect->new_clone();
+				new_effect->set_position(position.x+r_x, position.y+r_y);
+				m_ParticleEmitter->add(new_effect);
+			}
+
+			projectile->m_Detonated = true;
+		}
+	}
+
+	void DetonateWithin(const Vector2& position, float radius)
+	{
+		if (m_Projectiles.empty())
+			return;
+
+		Vector2 v; float radius2 = radius * radius;
+		for (ProjectileList::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
+		{
+			v2Subtract((*it)->GetPosition(), position, v);
+			if (v.squared_length() < radius2)
+			{
+				Detonate((*it), radius, (*it)->GetPosition());
+			}
+
+		}
+	}
+
+	void RunDetonations()
+	{
+		//if (m_DetonationQueue.empty())
+		//	return;
+		if (m_Projectiles.empty())
+			return;
+
+		for (ProjectileList::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
+		{
+			if ((*it)->IsDetonated())
+			{
+				m_World->DestroyBody((*it)->GetBody());
+
+				it = m_Projectiles.erase(it);
+				end = m_Projectiles.end();
+				if (it == end)
+					break;
+			}
+		}
+		//m_DetonationQueue.clear();
+	}
+
+	void RunExplosions(unsigned int dt)
+	{
+		for (ExplosionList::iterator it = m_Explosions.begin(), end = m_Explosions.end(); it != end; ++it)
+		{
+			(*it).Simulate(dt);
+			if ((*it).Done())
+			{
+				it = m_Explosions.erase(it);
+				end = m_Explosions.end();
+				if (it == end)
+					break;
 			}
 		}
 	}
@@ -220,6 +332,8 @@ private:
 			}
 		}
 
+		if (CL_Keyboard::get_keycode(CL_KEY_LCONTROL))
+			m_ReloadTime -= 51;
 		if (m_ReloadTime <= 0 && CL_Keyboard::get_keycode(CL_KEY_SPACE))
 		{
 			m_ReloadTime = 550;
@@ -236,33 +350,28 @@ private:
 			props.position = position;
 			props.rotation = a;
 			props.use_dist = true;
-			props.dist = rad-1.0;
+			props.dist = rad-1.0f;
 			props.radius = props.dist;
 
 			PhysicsBody* body = m_World->CreateBody(PB_PROJECTILE, props);
-			body->SetCollisionHandler(new Explosive(this, body));
+			ProjectilePtr projectile(new Projectile(body));
+			body->SetCollisionHandler(new Explosive(this, projectile, 24));
 			body->_setVelocity(m_ShipPhysical->GetVelocity());
 			body->ApplyForceRelative(250.0f);
 
-			m_Projectiles.push_back(body);
+			m_Projectiles.push_back(projectile);
 		}
 
 		for (int i = (int)(split*0.1f+0.5f); i > 0; i--)
 			m_World->RunSimulation(10);
 
+		RunExplosions(split);
+		RunDetonations();
+
 		if (CL_Keyboard::get_keycode(CL_KEY_SHIFT))
 			split = (int)(split*0.1f);
 		m_ParticleEmitter->run(split);
 		m_DroppingEffect->run(split);
-
-		// Delete detonated bodies
-		for (std::vector<PhysicsBody*>::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
-		{
-			m_World->DestroyBody((*it));
-		}
-		m_DeleteQueue.clear();
-		// Removes bits
-		m_TerrainBitmask->Update();
 
 		return true;
 	}
@@ -293,6 +402,9 @@ private:
 		smokeGfx.set_alignment(origin_center);
 		CL_Surface lightGfx("light16p.png");
 		lightGfx.set_alignment(origin_center);
+
+		CL_Surface shockWaveGfx("light16p.png");
+		shockWaveGfx.set_alignment(origin_center);
 
 		L_Particle exPart1(&explosionGfx, 150);
 		exPart1.set_color( L_Color(255,110,60,255) );
@@ -370,7 +482,7 @@ private:
 
 		{
 			PhysicalProperties props;
-			props.mass = 0.4f;
+			props.mass = 0.2f;
 			props.position = Vector2(48.f, 120.f);
 			props.rotation = 0;
 			props.use_dist = true;
@@ -424,7 +536,7 @@ private:
 		m_Damage->set_blend_func(blend_zero, blend_one_minus_src_alpha);
 		m_DamageBody = m_World->CreateStatic(0);
 
-		m_ProjectileGFX = new CL_Surface("./circle.png");
+		m_ProjectileGFX = new CL_Surface("light16p.png");
 		m_ProjectileGFX->set_alignment(origin_center);
 
 		// Terrain
@@ -442,14 +554,16 @@ private:
 		m_TerrainPhysical->SetUserData((void *)"Terrain");
 		m_TerrainPhysical->SetCoefficientOfFriction(0.8f);
 
-		m_TerrainBitmask = new Bitmask(m_World->GetChipSpace(), m_TerrainPhysical);
+		m_TerrainShapes = new ShapeMesh(m_World, m_TerrainPhysical);
 		bool bitmaskLoaded = false;
+		// Profiling
+		unsigned int loadStart = CL_System::get_time();
 		{
 			{
 				CL_InputSourceProvider *p = CL_InputSourceProvider::create_file_provider(".");
 				try
 				{
-					bitmaskLoaded = m_TerrainBitmask->Load("bitmask", p);
+					bitmaskLoaded = m_TerrainShapes->Load("bitmask", p);
 				}
 				catch (FileTypeException& ex)
 				{
@@ -461,12 +575,17 @@ private:
 		// Create and save the mask if it couldn't be loaded from a cache
 		if (!bitmaskLoaded)
 		{
-			m_TerrainBitmask->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes(), 25);
+			m_TerrainShapes->SetFromSurface(m_TerrainGraphical, m_World->GetBitmaskRes(), 25);
 			{
 				CL_OutputSource_File file("bitmask");
-				m_TerrainBitmask->Save("bitmask", &file);
+				m_TerrainShapes->Save("bitmask", &file);
 			}
 		}
+		unsigned int timeToLoad = CL_System::get_time() - loadStart;
+		if (bitmaskLoaded)
+			std::cout << "Took " << timeToLoad << " milis to load the terrain from a binary file" << std::endl;
+		else
+			std::cout << "Took " << timeToLoad << " milis to load the terrain from a texture in memory" << std::endl;
 		//m_TerrainBitmask->SetFromDimensions(::CL_Size(600, 200), m_World->GetBitmaskRes());
 		
 		int back_pos = 0;
@@ -486,9 +605,14 @@ private:
 			if (CL_Keyboard::get_keycode('L'))
 				display.get_gc()->clear(CL_Color(255, 255, 255));
 			else if (CL_Keyboard::get_keycode('K'))
-				display.get_gc()->clear(CL_Color(0, 0, 0));
-			else
 				display.get_gc()->clear(CL_Color(128, 200, 236));
+			else
+				display.get_gc()->clear(CL_Color(0, 0, 0));
+
+			if (CL_Keyboard::get_keycode('G'))
+				m_World->SetGravity(Vector2(0, 98));
+			if (CL_Keyboard::get_keycode('T'))
+				m_World->SetGravity(Vector2(0.f, 0.f));
 
 			//(back_pos > 1000) ? back_pos = 0 : back_pos++;
 			//sur_x = sinf(back_pos / 100.0f) * 100.0f + 400.0f;
@@ -589,14 +713,19 @@ private:
 			if (debug)
 			{
 				m_World->DebugDraw(false);
+
+				for (ExplosionList::iterator it = m_Explosions.begin(), end = m_Explosions.end(); it != end; it++)
+				{
+					float scale = (*it).GetExtent()/8.f;
+					const Vector2& pos = (*it).GetPosition();
+					shockWaveGfx.set_scale(scale, scale);
+					shockWaveGfx.draw(pos.x, pos.y);
+				}
 			}
 			else
 			{
-				// Draw the terrain
-				// The following should be in the terrain impact callback (make hole)
-				//  m_Damage.draw(rect, m_TerrainCanvas.get_gc());
-				//  m_TerrainCanvas->sync_surface();
 
+				// Draw the terrain
 				m_TerrainGraphical->draw(
 					m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
 					);
@@ -608,9 +737,9 @@ private:
 
 				m_TerrainGraphical->draw(params);*/
 
-				for (std::vector<PhysicsBody*>::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
+				for (ProjectileList::iterator it = m_Projectiles.begin(), end = m_Projectiles.end(); it != end; ++it)
 				{
-					PhysicsBody* body = (*it);
+					PhysicsBody* body = (*it)->GetBody();
 					m_ProjectileGFX->set_angle(body->GetRotation());
 					m_ProjectileGFX->draw(body->GetPosition().x, body->GetPosition().y);
 				}
@@ -654,9 +783,9 @@ private:
 
 void Explosive::CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts)
 {
-	if (!m_HasExploded)
+	if (!m_HasExploded && !CL_Keyboard::get_keycode(CL_KEY_RCONTROL))
 	{
 		m_HasExploded = true;
-		m_Env->Detonate(m_MyBody, 32, m_MyBody->GetPosition());
+		m_Env->Detonate(m_MyBody, m_Payload, m_MyBody->GetPosition());
 	}
 }

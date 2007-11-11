@@ -101,7 +101,8 @@ namespace FusionEngine
 		m_Width(1), m_Height(1),
 		m_DeactivationPeriod(100),
 		m_DeactivationVelocity(0.001f),
-		m_MaxVelocity(100.0f)
+		m_MaxVelocity(100.0f),
+		m_RunningSimulation(false)
 	{
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
@@ -123,14 +124,18 @@ namespace FusionEngine
 	{
 		m_Bodies.push_back(body);
 
-		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+		// Don't ad it if it's static
+		if (!body->IsStatic())
+			cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
 		//m_CollisionGrid->AddBody(body);
 	}
 	
 	void PhysicsWorld::RemoveBody(PhysicsBody *body)
 	{
 		//m_CollisionGrid->RemoveBody(body);
-		cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
+		// Static bodies don't get added to the space
+		if (!body->IsStatic())
+			cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
 
 		BodyList::iterator it = m_Bodies.begin();
 		for (; it != m_Bodies.end(); ++it)
@@ -185,7 +190,7 @@ namespace FusionEngine
 
 		if (props.use_dist)
 		{
-			Shape* shape = new CircleShape(body, 0, props.dist, cpvzero);
+			Shape* shape = new CircleShape(body, 0, props.dist, Vector2::ZERO);
 			body->AttachShape(shape);
 			AddShape(shape);
 		}
@@ -237,20 +242,27 @@ namespace FusionEngine
 
 	void PhysicsWorld::DestroyBody(PhysicsBody *body)
 	{
-		//m_CollisionGrid->RemoveBody(body);
-		cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
-
-		BodyList::iterator it = m_Bodies.begin();
-		for (; it != m_Bodies.end(); ++it)
+		if (m_RunningSimulation)
 		{
-			if ((*it) == body)
-			{
-				m_Bodies.erase(it);
-				break;
-			}
+			m_DeleteQueue.push_back(body);
 		}
+		else
+		{
+			//m_CollisionGrid->RemoveBody(body);
+			cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
 
-		delete body;
+			BodyList::iterator it = m_Bodies.begin();
+			for (; it != m_Bodies.end(); ++it)
+			{
+				if ((*it) == body)
+				{
+					m_Bodies.erase(it);
+					break;
+				}
+			}
+
+			delete body;
+		}
 	}
 
 	//////////
@@ -358,7 +370,10 @@ namespace FusionEngine
 
 	void PhysicsWorld::RemoveShape(Shape* shape)
 	{
-		cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
+		if (shape->GetBody() && shape->GetBody()->IsStatic())
+			RemoveStaticShape(shape);
+		else
+			cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
 	}
 
 	void PhysicsWorld::RemoveStaticShape(Shape* shape)
@@ -427,8 +442,19 @@ namespace FusionEngine
 
 	void PhysicsWorld::RunSimulation(unsigned int split)
 	{
+		m_RunningSimulation = true; // bodies can't be deleted
+
 		cpFloat dt = 1.0/60.0/1.0;
 		cpSpaceStep(m_ChipSpace, dt);
+
+		m_RunningSimulation = false; // bodies can be deleted
+
+		// Delete bodies
+		for (BodyList::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
+		{
+			DestroyBody((*it));
+		}
+		m_DeleteQueue.clear();
 
 		if (m_Wrap)
 			cpArrayEach(m_ChipSpace->bodies, &wrapAround, this);
