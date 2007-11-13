@@ -50,7 +50,6 @@ namespace FusionEngine
 			delete resource->GetDataPtr();
 		}
 
-		//! \todo ???Set inputsourceprovider for ResourceLoaders on construction
 		CL_Surface* sur = loadSurface(resource->GetPath(), provider);
 
 		resource->SetDataPtr(sur);
@@ -67,16 +66,15 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	CL_Surface* ImageLoader::loadSurface(const std::string &path, CL_InputSourceProvider* provider)
+	CL_Surface* ImageLoader::loadSurface(const std::string &path, CL_InputSourceProvider* notUsed)
 	{
-		if (provider == NULL)
-			provider = CL_InputSourceProvider::create_file_provider(".");
+		InputSourceProvider_PhysFS provider("");
 
 		std::string& ext = CL_String::get_extension(path);
 		CL_PixelBuffer sp;
 		try
 		{
-			sp = CL_ProviderFactory::load(path, ext, provider);
+			sp = CL_ProviderFactory::load(path, ext, &provider);
 		}
 		catch (CL_Error&)
 		{

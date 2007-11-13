@@ -275,6 +275,22 @@ namespace FusionEngine
 			return ResourcePointer<T>(sptRes);
 		}
 
+		//! Optimised version of GetResource
+		template<typename T>
+		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
+		{
+			PreloadResource(GetResourceType(T()), tag);
+
+			ResourceSpt sptRes = m_Resources[tag];
+			if (!sptRes->IsValid())
+			{
+				InputSourceProvider_PhysFS provider("");
+				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
+			}
+
+			out = ResourcePointer<T>(sptRes);
+		}
+
 	private:
 		bool m_PhysFSConfigured;
 

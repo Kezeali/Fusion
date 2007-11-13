@@ -69,16 +69,17 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	CL_SoundBuffer* AudioLoader::loadSound(const std::string &path, CL_InputSourceProvider* provider)
+	CL_SoundBuffer* AudioLoader::loadSound(const std::string &path, CL_InputSourceProvider* notUsed)
 	{
-		if (provider == NULL)
-			provider = CL_InputSourceProvider::create_file_provider(".");
+		//if (provider == NULL)
+		//	provider = CL_InputSourceProvider::create_file_provider(".");
+		InputSourceProvider_PhysFS provider("");
 
 		//std::string& ext = CL_String::get_extension(path);
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(path, false, "", provider);
+			sp = CL_SoundProviderFactory::load(path, false, "",& provider);
 		}
 		catch (CL_Error&)
 		{
@@ -98,16 +99,17 @@ namespace FusionEngine
 		return strType;
 	}
 
-	CL_SoundBuffer* AudioStreamLoader::loadSound(const std::string &path, CL_InputSourceProvider* provider)
+	CL_SoundBuffer* AudioStreamLoader::loadSound(const std::string &path, CL_InputSourceProvider* notUsed)
 	{
-		if (provider == NULL)
-			provider = CL_InputSourceProvider::create_file_provider(".");
+		//if (provider == NULL)
+		//	provider = CL_InputSourceProvider::create_file_provider(".");
+		InputSourceProvider_PhysFS provider("");
 
 		//std::string& ext = CL_String::get_extension(path);
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(path, true, "", provider);
+			sp = CL_SoundProviderFactory::load(path, true, "", &provider);
 		}
 		catch (CL_Error&)
 		{

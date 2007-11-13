@@ -41,7 +41,9 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Provides scripting for FusionEngine objects.
+	 * Loads a text file as a string
+	 * 
+	 * \todo Rename Script -> TextFile
 	 *
 	 * \sa
 	 * ScriptingEngine
@@ -66,6 +68,9 @@ namespace FusionEngine
 									CL_InputSourceProvider *provider = 0,
 									bool delete_provider = true);
 
+		//! Sets the string data for this object
+		void SetString(const std::string& str) { m_Script = str; }
+
 		//! Sets the module ID.
 		/*!
 		 * Allows the ScriptingEngine to store the module ID the which this script
@@ -81,6 +86,7 @@ namespace FusionEngine
 		 */
 		void _notifyRegistration();
 
+		//! \todo Rename GetScript -> GetString
 		const std::string& GetScript() const;
 
 	private:
@@ -101,9 +107,6 @@ namespace FusionEngine
 
 		//! True if this Script has been registered.
 		bool m_Registered;
-
-		//! Stores the returned object.
-		void *m_RetObj;
 
 	};
 

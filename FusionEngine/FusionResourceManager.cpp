@@ -318,8 +318,6 @@ namespace FusionEngine
 		ResourceMap::iterator existing = m_Resources.find(tag);
 		if (existing == m_Resources.end())
 		{
-			InputSourceProvider_PhysFS provider("");
-
 			ResourceLoaderMap::iterator loader = m_ResourceLoaders.find(type);
 			if (loader == m_ResourceLoaders.end())
 			{
@@ -329,7 +327,7 @@ namespace FusionEngine
 			ResourceContainer* res;
 			//try
 			//{
-				res = loader->second->LoadResource(tag, path, &provider);
+				res = loader->second->LoadResource(tag, path, NULL);
 			//}
 			//catch (CL_Error&)
 			//{

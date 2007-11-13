@@ -253,10 +253,10 @@ namespace FusionEngine
 			CEGUI::System::getSingleton().injectMouseButtonUp(CEGUI::X2Button);
 			break;
 		case CL_MOUSE_WHEEL_UP:
-			CEGUI::System::getSingleton().injectMouseWheelChange(0.1);
+			CEGUI::System::getSingleton().injectMouseWheelChange(0.5);
 			break;
 		case CL_MOUSE_WHEEL_DOWN:
-			CEGUI::System::getSingleton().injectMouseWheelChange(-0.1);
+			CEGUI::System::getSingleton().injectMouseWheelChange(-0.5);
 			break;
 		}
 

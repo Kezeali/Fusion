@@ -47,7 +47,7 @@ namespace FusionEngine
 
 	ConsoleGUI::~ConsoleGUI()
 	{
-		FusionInput::getSingleton().Activate();
+		//FusionInput::getSingleton().Activate();
 	}
 
 	/////////////////

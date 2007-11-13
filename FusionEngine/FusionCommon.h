@@ -76,7 +76,7 @@
 
 // AngelScript
 //not #define AS_USE_NAMESPACE
-#include "angelscript.h"
+#include <angelscript.h>
 
 namespace FusionEngine
 {

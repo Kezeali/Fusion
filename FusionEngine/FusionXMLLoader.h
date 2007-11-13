@@ -43,7 +43,7 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Loads Images
+	 * Loads xml documents
 	 *
 	 * \sa
 	 * ResourceLoader

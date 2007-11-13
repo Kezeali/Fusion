@@ -437,6 +437,13 @@ namespace FusionEngine
 			asCALL_CDECL_OBJLAST);
 		assert(error_code >= 0 && "Failed to register copy constructor");
 
+		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
+			asBEHAVE_ASSIGNMENT,
+			(type_name+"& f(const "+type_name+"&in)").c_str(),
+			asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register assignment operator");
+
 	}
 
 	template <typename T>
@@ -484,6 +491,13 @@ namespace FusionEngine
 			asCALL_CDECL_OBJLAST);
 		assert(error_code >= 0 && "Failed to register copy constructor");
 
+		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
+			asBEHAVE_ASSIGNMENT,
+			(V_AS+"& f(const "+V_AS+"&in)").c_str(),
+			asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register assignment operator");
+
 		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		//	asBEHAVE_CONSTRUCT,
 		//	"void f(int)",
@@ -491,11 +505,11 @@ namespace FusionEngine
 		//	asCALL_CDECL_OBJLAST);
 		//assert(error_code >= 0 && "Failed to register construct(size)");
 
-		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
-		//	"string GetTag()",
-		//	asFUNCTION(resourcePointerRegisterHelper<T>::GetTag),
-		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register GetTag");
+		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
+			"string& GetTag()",
+			asFUNCTION(resourcePointerRegisterHelper<T>::GetTag),
+			asCALL_CDECL_OBJLAST);
+		assert(error_code >= 0 && "Failed to register GetTag");
 
 		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 			(T_AS+"& get()").c_str(),

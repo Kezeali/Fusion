@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -36,12 +36,13 @@ namespace FusionEngine
 {
 
 	ScriptingEngine::ScriptingEngine()
+		: m_DefaultTimeout(g_ScriptDefaultTimeout)
 	{
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		if (m_asEngine != NULL)
 		{
-			m_asEngine->SetMessageCallback(asMETHOD(COutStream,Callback), &m_Out, asCALL_THISCALL);
+			m_asEngine->SetMessageCallback(asMETHOD(ScriptingEngine,_messageCallback), this, asCALL_THISCALL);
 			registerGlobals();
 		}
 	}
@@ -75,74 +76,157 @@ namespace FusionEngine
 		return m_asEngine->Build(module) >= 0;
 	}
 
-	int ScriptingEngine::ExecuteModule(const char* module, const char* function)
+	ScriptReturn ScriptingEngine::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
 	{
 		int funcID = m_asEngine->GetFunctionIDByDecl(module, function);
 
 		asIScriptContext* cont = m_asEngine->CreateContext();
+		ScriptReturn scxt(cont);
+
 		int r = cont->Prepare(funcID);
 		if (r < 0)
-			return r;
-		//m_Contexts.push_back(cont);
-		return cont->Execute();
-	}
+			return scxt;
 
-	int ScriptingEngine::ExecuteScript(Script *script, const char *function)
-	{
-		int funcID = m_asEngine->GetFunctionIDByDecl(script->GetModule(), function);
-
-		asIScriptContext* cont = m_asEngine->CreateContext();
-		int r = cont->Prepare(funcID);
-		if (r < 0)
-			return r;
-		//m_Contexts.push_back(cont);
-		return cont->Execute();
-	}
-
-	int ScriptingEngine::Execute(ScriptReference scref)
-	{
-		asIScriptContext* cont = m_asEngine->CreateContext();
-		int r = cont->Prepare(scref.GetFunctionID());
-		if (r < 0)
-			return r;
-		//m_Contexts.push_back(cont);
-		return cont->Execute();
-	}
-
-	int ScriptingEngine::ExecuteString(const std::string &script, const char *module, int *context, int timeout, bool keep_context)
-	{
-		int r = 0;
-		if (context != NULL)
+		int timeoutTime;
+		if (timeout > 0)
 		{
-			asIScriptContext* pContext = m_asEngine->CreateContext();
-			if (pContext != NULL)
-			{
-				m_Contexts.push_back(pContext);
-				*context = m_Contexts.size()-1;
-
-				r = m_asEngine->ExecuteString(module, script.c_str(), &pContext);
-			}
+			timeoutTime = CL_System::get_time() + timeout;
+			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_STDCALL);
 		}
-		else
-			r = m_asEngine->ExecuteString(module, script.c_str());
 
-		return r;
+		cont->Execute();
+
+		return scxt;
 	}
 
-	int ScriptingEngine::ReExecuteString(int context, const char *module)
+#ifndef SCRIPT_ARG_USE_TEMPLATE
+	ScriptReturn ScriptingEngine::Execute(ScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
-		int r;
-		r = m_Contexts[context]->Execute();
-		return r;
+		asIScriptContext* cont = m_asEngine->CreateContext();
+		ScriptReturn scxt(cont);
+
+		int r = cont->Prepare(function.GetFunctionID());
+		if (r < 0)
+			return scxt;
+
+		int timeoutTime;
+		if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+		{
+			timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+		}
+
+		cont->Execute();
+		return scxt;
 	}
 
-	void ScriptingEngine::_lineCallback(asIScriptContext *ctx, int *timeOut)
+	ScriptReturn ScriptingEngine::Execute(ScriptObject object, ScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
-		// If the time out is reached, abort the script
-		if( *timeOut < CL_System::get_time() )
-			ctx->Abort();
+		asIScriptContext* cont = m_asEngine->CreateContext();
+		ScriptReturn scxt(cont);
+
+		int r = cont->Prepare(method.GetFunctionID());
+		if (r < 0)
+			return scxt;
+
+		int timeoutTime;
+		if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+		{
+			timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+		}
+
+		r = cont->SetObject(object.GetScriptStruct());
+		if (r < 0)
+			return scxt;
+
+		cont->Execute();
+		return scxt;
+	}
+#endif
+
+	ScriptContext ScriptingEngine::ExecuteString(const std::string &script, const char *module, int timeout)
+	{
+		asIScriptContext* ctx = m_asEngine->CreateContext();
+		ScriptContext sctx(ctx);
+
+		if (ctx != NULL)
+			m_asEngine->ExecuteString(module, script.c_str(), &ctx);
+
+		return sctx;
 	}
 
+	void ScriptingEngine::ReExecute(ScriptContext& context)
+	{
+		context.Execute();
+	}
+
+	void ScriptingEngine::SetDefaultTimeout(unsigned int timeout)
+	{
+		m_DefaultTimeout = timeout;
+	}
+
+	unsigned int ScriptingEngine::GetDefaultTimeout() const
+	{
+		return m_DefaultTimeout;
+	}
+
+	ScriptMethod ScriptingEngine::GetFunction(const char* module, const std::string& signature)
+	{
+		int funcID = m_asEngine->GetFunctionIDByDecl(module, signature.c_str());
+		return ScriptMethod(module, signature, funcID);
+	}
+
+	bool ScriptingEngine::GetFunction(ScriptMethod& out, const char* module, const std::string& signature)
+	{
+		int funcID = m_asEngine->GetFunctionIDByDecl(module, signature.c_str());
+		if (funcID < 0)
+			return false;
+
+		out.SetModule(module);
+		out.SetSignature(signature);
+		out.SetFunctionID(funcID);
+
+		return true;
+	}
+
+	ScriptClass ScriptingEngine::GetClass(const char* module, const std::string& type_name)
+	{
+		int id = m_asEngine->GetTypeIdByDecl(module, type_name.c_str());
+		return ScriptClass(this, module, type_name, id);
+	}
+
+	ScriptObject ScriptingEngine::CreateObject(const char* module, const std::string& type_name)
+	{
+		int id = m_asEngine->GetTypeIdByDecl(module, type_name.c_str());
+		asIScriptStruct* obj = (asIScriptStruct*)m_asEngine->CreateScriptObject(id);
+		return ScriptObject(obj);
+	}
+
+	ScriptMethod ScriptingEngine::GetClassMethod(ScriptClass type, const std::string& signature)
+	{
+		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
+		ScriptMethod method(type.GetModule(), signature, id);
+		return method;
+	}
+
+	ScriptMethod ScriptingEngine::GetClassMethod(ScriptObject type, const std::string& signature)
+	{
+		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
+		ScriptMethod method(0, signature, id);
+		return method;
+	}
+
+	void ScriptingEngine::_messageCallback(asSMessageInfo* msg)
+	{ 
+		const char *msgType = 0;
+		if( msg->type == 0 ) msgType = "Error  ";
+		if( msg->type == 1 ) msgType = "Warning";
+		if( msg->type == 2 ) msgType = "Info   ";
+
+		std::string formatted = CL_String::format("ScriptManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message);
+		SendToConsole(formatted);
+	}
 
 	void ScriptingEngine::registerGlobals()
 	{

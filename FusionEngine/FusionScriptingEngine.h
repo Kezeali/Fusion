@@ -44,27 +44,27 @@
 
 #include "FusionConsole.h"
 
+
+#define SCRIPT_ARG_USE_TEMPLATE
+
 namespace FusionEngine
 {
 
 	static const std::string g_ASConfigConsole = "Console";
 	static const std::string g_ASConfigWeapon = "Weapon";
 
-	class COutStream
+	//! Aborts the given ctx if the current time is after the given time
+	/*!
+	 * \remarks
+	 * This has to be static so we can (easily) have a different timeoutTime for
+	 * concurrently running scripts.
+	 */
+	static void TimeoutCallback(asIScriptContext *ctx, int* timeoutTime)
 	{
-	public:
-		void Callback(asSMessageInfo *msg) 
-		{ 
-			const char *msgType = 0;
-			if( msg->type == 0 ) msgType = "Error  ";
-			if( msg->type == 1 ) msgType = "Warning";
-			if( msg->type == 2 ) msgType = "Info   ";
-
-			char buffer[255];
-			sprintf(buffer, "%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, msgType, msg->message);
-			SendToConsole(std::string(buffer), Console::MTWARNING);
-		}
-	};
+		// If the time out is reached, abort the script
+		if( *timeoutTime < CL_System::get_time() )
+			ctx->Abort();
+	}
 
 	/*!
 	 * \brief
@@ -75,7 +75,6 @@ namespace FusionEngine
 	 */
 	class ScriptingEngine : public Singleton<ScriptingEngine>
 	{
-		COutStream m_Out;
 	public:
 		//! Basic constructor.
 		ScriptingEngine();
@@ -101,21 +100,277 @@ namespace FusionEngine
 		 *
 		 * \returns The exit status of the function
 		 */
-		int ExecuteModule(const char *module, const char *function);
+		ScriptReturn Execute(const char *module, const char *function, unsigned int timeout = 0);
 
-		//! Executes the given funcion in Script
-		/*!
-		 * If the Script is already registered, it's entire containing module
-		 * will be executed. The script / module will be built if necessary.
-		 *
-		 * \param[in] script A loaded Script object 
-		 * \returns The exit status of the function
-		 */
-		int ExecuteScript(Script *script, const char *function);
+#ifdef SCRIPT_ARG_USE_TEMPLATE
+		//! Executes the given function
+		ScriptReturn Execute(ScriptMethod function)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
 
-		//! Executes the given ScriptReference
-		int Execute(ScriptReference scref);
+			int r = cont->Prepare(function.GetFunctionID());
+			if (r < 0)
+				return scxt;
 
+			int timeoutTime;
+			if (function.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (function.GetTimeout() > 0 ? function.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			cont->Execute();
+			return scxt;
+		}
+
+		//! Executes the given method
+		ScriptReturn Execute(ScriptObject object, ScriptMethod method)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			assert(method.GetFunctionID() == m_asEngine->GetMethodIDByDecl(object.GetTypeId(), method.GetSignature().c_str()));
+
+			int r = cont->Prepare(method.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			r = cont->SetObject(object.GetScriptStruct());
+			if (r < 0)
+				return scxt;
+
+			cont->Execute();
+			return scxt;
+		}
+
+		//! Executes the given function
+		template<typename T1>
+		ScriptReturn Execute(ScriptMethod method, T1 p1)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(function.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given function
+		template<typename T1, typename T2>
+		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(function.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given function
+		template<typename T1, typename T2, typename T3>
+		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2, T3 p3)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(function.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+			setArgument(cont, 2, p3);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given function
+		template<typename T1, typename T2, typename T3, typename T4>
+		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(function.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+			setArgument(cont, 2, p3);
+			setArgument(cont, 3, p4);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			cont->Execute();
+			return scxt;
+		}
+
+		//! Executes the given method
+		template<typename T1>
+		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(method.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			r = cont->SetObject(object.GetScriptStruct());
+			if (r < 0)
+				return scxt;
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given method
+		template<typename T1, typename T2>
+		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(method.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			r = cont->SetObject(object.GetScriptStruct());
+			if (r < 0)
+				return scxt;
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given method
+		template<typename T1, typename T2, typename T3>
+		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2, T3 p3)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(method.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+			setArgument(cont, 2, p3);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			r = cont->SetObject(object.GetScriptStruct());
+			if (r < 0)
+				return scxt;
+
+			cont->Execute();
+			return scxt;
+		}
+		//! Executes the given method
+		template<typename T1, typename T2, typename T3, typename T4>
+		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
+		{
+			asIScriptContext* cont = m_asEngine->CreateContext();
+			ScriptReturn scxt(cont);
+
+			int r = cont->Prepare(method.GetFunctionID());
+			if (r < 0)
+				return scxt;
+
+			setArgument(cont, 0, p1);
+			setArgument(cont, 1, p2);
+			setArgument(cont, 2, p3);
+			setArgument(cont, 3, p4);
+
+			int timeoutTime;
+			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
+			{
+				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
+				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
+			}
+
+			r = cont->SetObject(object.GetScriptStruct());
+			if (r < 0)
+				return scxt;
+
+			cont->Execute();
+			return scxt;
+		}
+#else
+		//! Executes the given function
+		ScriptReturn Execute(ScriptMethod scref, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
+
+		//! Executes the given method
+		ScriptReturn Execute(ScriptObject obj, ScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
+#endif
 		//! Executes the given code string.
 		/*!
 		 * \param[in] script A string containing as code to compile.
@@ -127,7 +382,7 @@ namespace FusionEngine
 		 * Time the script can run before it's aborted. Default 1000 milis
 		 * \returns The exit status of the script (asEXECUTION_ABORTED for timeout)
 		 */
-		int ExecuteString(const std::string &script, const char *module, int* context = NULL, int timeout = 1000, bool keep_context = false);
+		ScriptReturn ExecuteString(const std::string &script, const char *module, int timeout = 5000);
 
 		//! Re-executes the given stored context
 		/*!
@@ -143,19 +398,84 @@ namespace FusionEngine
 		 * \sa
 		 * ExecuteString()
 		 */
-		int ReExecuteString(int context, const char *module);
+		void ReExecute(ScriptContext& context);
+
+		void SetDefaultTimeout(unsigned int timeout);
+		unsigned int GetDefaultTimeout() const;
+
+		//! Returns a method object for the given function
+		ScriptMethod GetFunction(const char* module, const std::string& signature);
+		//! Returns a method object for the given function
+		bool GetFunction(ScriptMethod& out, const char* module, const std::string& signature);
+		//! Returns a class object corresponding to the given typename
+		ScriptClass GetClass(const char* module, const std::string& type_name);
+		//! Returns an object of the class corresponding to the given typename
+		ScriptObject CreateObject(const char* module, const std::string& type_name);
+		ScriptMethod GetClassMethod(ScriptClass type, const std::string& signature);
+
+		ScriptMethod GetClassMethod(ScriptObject type, const std::string& signature);
 
 		//! Used internally
-		void _lineCallback(asIScriptContext *ctx, int *timeOut);
+		void _messageCallback(asSMessageInfo *msg);
 
 	private:
 		//! AngelScript Engine
 		asIScriptEngine *m_asEngine;
 
 		//! Active contexts
-		std::vector<asIScriptContext*> m_Contexts;
+		//std::vector<asIScriptContext*> m_Contexts;
+
+		unsigned int m_DefaultTimeout;
 
 	private:
+		//! Sets the given argument in the given context
+		template<class T>
+		void setArgument(asIScriptContext* cxt, int arg, T value)
+		{
+			cxt->SetArgObject(arg, (void*)value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<void*>(asIScriptContext* cxt, int arg, void* value)
+		{
+			cxt->SetArgObject(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<bool>(asIScriptContext* cxt, int arg, bool value)
+		{
+			cxt->SetArgByte(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<short>(asIScriptContext* cxt, int arg, short value)
+		{
+			cxt->SetArgWord(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<int>(asIScriptContext* cxt, int arg, int value)
+		{
+			cxt->SetArgDWord(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<unsigned int>(asIScriptContext* cxt, int arg, unsigned int value)
+		{
+			cxt->SetArgDWord(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<float>(asIScriptContext* cxt, int arg, float value)
+		{
+			cxt->SetArgFloat(arg, value);
+		}
+		//! Sets the given argument in the given context
+		template<>
+		void setArgument<double>(asIScriptContext* cxt, int arg, double value)
+		{
+			cxt->SetArgDouble(arg, value);
+		}
 		//! Registers global methods and functions which scripts can use.
 		void registerGlobals();
 

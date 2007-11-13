@@ -16,6 +16,7 @@
 #include "../FusionEngine/FusionResourcePointer.h"
 #include "../FusionEngine/FusionResourceLoader.h"
 #include "../FusionEngine/FusionXMLLoader.h"
+#include "../FusionEngine/FusionTextLoader.h"
 #include "../FusionEngine/FusionAudioLoader.h"
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionResourceManager.h"
@@ -65,6 +66,29 @@ static void DrawImage(ResourcePointer<CL_Surface> *lhs, float x, float y)
 		data->draw(x, y);
 }
 
+static void ConstructSoundSession(CL_SoundBuffer_Session *thisPointer)
+{
+	new(thisPointer) CL_SoundBuffer_Session();
+}
+
+static void DestructSoundSession(CL_SoundBuffer_Session *thisPointer)
+{
+	thisPointer->~CL_SoundBuffer_Session();
+}
+
+static CL_SoundBuffer_Session PrepareSession(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
+{
+	if (!lhs->IsValid())
+		FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
+
+	CL_SoundBuffer* data = lhs->GetDataPtr();
+	if (data != NULL)
+		return data->prepare(looping);
+
+	else
+		FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
+}
+
 static void PlayAudio(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
 {
 	if (!lhs->IsValid())
@@ -75,7 +99,41 @@ static void PlayAudio(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
 		data->play(looping);
 }
 
-static TiXmlNode* XmlDocument_FirstChild(ResourcePointer<TiXmlDocument>* lhs, std::string& value)
+static void StopSBuffer(ResourcePointer<CL_SoundBuffer> *lhs)
+{
+	if (!lhs->IsValid())
+		return;
+
+	CL_SoundBuffer* data = lhs->GetDataPtr();
+	if (data != NULL)
+		data->stop();
+}
+
+static bool IsPlayingSBuffer(ResourcePointer<CL_SoundBuffer> *lhs)
+{
+	if (!lhs->IsValid())
+		return false;
+
+	CL_SoundBuffer* data = lhs->GetDataPtr();
+	if (data != NULL)
+		return data->is_playing();
+
+	return false;
+}
+
+std::string data;
+static std::string& GetText(std::string& path)
+{
+	ResourcePointer<std::string> resource = ResourceManager::getSingleton().GetResource<std::string>(path);
+	if (resource.IsValid())
+		data = *(resource.GetDataPtr());
+	else
+		data = "";
+	return data;
+}
+
+
+static TiXmlNode* XmlDocument_FirstChild(ResourcePointer<TiXmlDocument>* lhs)
 {
 	if (!lhs->IsValid())
 		return NULL;
@@ -83,18 +141,15 @@ static TiXmlNode* XmlDocument_FirstChild(ResourcePointer<TiXmlDocument>* lhs, st
 	TiXmlDocument* data = lhs->GetDataPtr();
 	if (data != NULL)
 	{
-		if (value.empty())
-			return data->FirstChild();
-		else
-			return data->FirstChild(value.c_str());
+		return data->FirstChild();
 	}
 	else
 		return NULL;
 }
 
-static std::string XmlNode_Value(TiXmlNode* lhs)
+static const char* XmlNode_Value(TiXmlNode* lhs)
 {
-	return std::string(lhs->Value());
+	return lhs->Value();
 }
 
 // Function implementation with native calling convention
@@ -128,21 +183,42 @@ static const char *script1 =
 "class ship                                    \n"
 "{                                             \n"
 "    Image body;                               \n"
+"    Sound engineSound;                        \n"
 "    void Preload()                            \n"
 "    {                                         \n"
-"        body = GetImage(\"body.png\");             \n"
+"        body = GetImage(\"body.png\");        \n"
+"        engineSound =GetSound(\"engine.wav\");\n"
 "        Print(\"Preloaded\");                 \n"
 "    }                                         \n"
 "    void Draw(float x, float y)               \n"
 "    {                                         \n"
 "        body.draw(x, y);                      \n"
 "    }                                         \n"
+"    void Update(uint dt)                      \n"
+"    {                                         \n"
+"                                              \n"
+"    }                                         \n"
 "};                                            \n"
 "void Test()                                   \n"
 "{                                             \n"
-"   GetImage(\"body.png\").get().draw(10, 10);    \n"
+"   GetImage(\"body.png\").get().draw(10, 10); \n"
 "}                                             \n"
 "                                              \n";
+
+	class Command
+	{
+	public:
+		Command() {}
+
+	public:
+		bool m_Thrust;
+		bool m_Left;
+		bool m_Right;
+		bool m_PrimaryFire;
+		bool m_SecondaryFire;
+		bool m_SpecialFire;
+		
+	};
 
 class GUITest : public CL_ClanApplication
 {
@@ -272,29 +348,52 @@ public:
 					asFUNCTIONPR(PlayAudio, (bool), void),
 					asCALL_CDECL_OBJFIRST);
 				assert(r >= 0 && "Failed to register play()");
-
-				r = scrEngine->RegisterObjectType("XmlNode", sizeof(TiXmlNode), asOBJ_REF); assert( r >= 0 );
-				//r = scrEngine->RegisterObjectMethod("XmlNode",
-				//	"string value()",
-				//	asMETHODPR(TiXmlNode, Value, (void), std::string),
-				//	asCALL_THISCALL);
-				r = scrEngine->RegisterObjectMethod("XmlNode",
-					"string& value()",
-					asFUNCTIONPR(XmlNode_Value, (void), std::string),
+				r = scrEngine->RegisterObjectMethod("Sound",
+					"void stop()",
+					asFUNCTIONPR(StopSBuffer, (void), void),
 					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register Value()");
-				//r = engine->RegisterObjectMethod("cl_surface", "void draw(float, float)", asFUNCTIONPR(drawSurface,(float, float),void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+				assert(r >= 0 && "Failed to register stop()");
+				r = scrEngine->RegisterObjectMethod("Sound",
+					"bool is_playing()",
+					asFUNCTIONPR(IsPlayingSBuffer, (void), bool),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register is_playing()");
+
+				r = scrEngine->RegisterObjectType("SoundSession", sizeof(CL_SoundBuffer_Session), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+				assert(r >= 0 && "Failed to register object type");
+					// Register the object operator overloads
+				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_CONSTRUCT,  "void f()", asFUNCTION(ConstructSoundSession), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_DESTRUCT,   "void f()", asFUNCTION(DestructSoundSession),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
+				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_ASSIGNMENT, "SoundSession &f(const SoundSession &in)", asMETHODPR(CL_SoundBuffer_Session, operator =, (const CL_SoundBuffer_Session&), CL_SoundBuffer_Session&), asCALL_THISCALL); assert( r >= 0 );
+
+				r = scrEngine->RegisterObjectMethod("SoundSession",
+					"void play()",
+					asMETHOD(CL_SoundBuffer_Session, play),
+					asCALL_THISCALL);
+				assert(r >= 0 && "Failed to register play()");
+				r = scrEngine->RegisterObjectMethod("SoundSession",
+					"void stop()",
+					asMETHOD(CL_SoundBuffer_Session, stop),
+					asCALL_THISCALL);
+				assert(r >= 0 && "Failed to register stop()");
+				r = scrEngine->RegisterObjectMethod("SoundSession",
+					"bool is_playing()",
+					asMETHOD(CL_SoundBuffer_Session, is_playing),
+					asCALL_THISCALL);
+				assert(r >= 0 && "Failed to register is_playing()");
+
+				r = scrEngine->RegisterObjectMethod("Sound",
+					"SoundSession prepare(bool)",
+					asFUNCTIONPR(PrepareSession, (bool), CL_SoundBuffer_Session),
+					asCALL_CDECL_OBJFIRST);
+				assert(r >= 0 && "Failed to register prepare()");
 
 				RegisterResourcePointer<TiXmlDocument>("XmlDocument", ScriptingEngine::getSingleton().GetEnginePtr());
-				r = scrEngine->RegisterObjectMethod("XmlDocument",
-					"XmlNode@ first_child(string& value)",
-					asFUNCTIONPR(XmlDocument_FirstChild, (std::string&), TiXmlNode*),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register first_child()");
 
 				r = scrEngine->RegisterGlobalFunction("Image GetImage(string &in)", asFUNCTION(StaticGetImage), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("Sound GetSound(string &in)", asFUNCTION(StaticGetSound), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("XmlDocument GetXML(string &in)", asFUNCTION(StaticGetXml), asCALL_CDECL); assert( r >= 0 );
+				r = scrEngine->RegisterGlobalFunction("string& GetText(string &in)", asFUNCTION(GetText), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void Load(string &in)", asFUNCTION(StaticLoadResource), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void Unload(string &in)", asFUNCTION(StaticUnloadResource), asCALL_CDECL); assert( r >= 0 );
 
@@ -304,17 +403,20 @@ public:
 				r = scrEngine->RegisterGlobalFunction("void Quit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void exit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
 
-				//r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterObjectType("image", sizeof(ResourcePointer<CL_Surface>)); assert( r >= 0 );
-				//r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterObjectType("image", sizeof(ResourcePointer<CL_Surface>));
-				//assert( r >= 0 );
+
+				r = scrEngine->RegisterObjectType("Command", sizeof(Command), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+				assert(r >= 0 && "Failed to register object type");
+				r = scrEngine->RegisterObjectProperty("Command", "bool thrust", offsetof(Command, m_Thrust));
+				assert(r >= 0 && "Failed to register object type");
+				scrEngine->RegisterObjectProperty("Command", "bool left", offsetof(Command, m_Left));
+				scrEngine->RegisterObjectProperty("Command", "bool right", offsetof(Command, m_Right));
+				scrEngine->RegisterObjectProperty("Command", "bool primary_fire", offsetof(Command, m_PrimaryFire));
 			}
 			else
 			{
 				r = ScriptingEngine::getSingleton().GetEnginePtr()->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString_Generic), asCALL_GENERIC); assert( r >= 0 );
 			}
 
-			scEngW->AddCode(script1, 0);
-			scEngW->BuildModule(0);
 
 			FusionInput* input = new FusionInput();
 			if (!input->Test())
@@ -329,7 +431,14 @@ public:
 
 			m_ResMan = new ResourceManager(argv);
 			m_ResMan->AddResourceLoader(new XMLLoader());
+			m_ResMan->AddResourceLoader(new TextLoader());
 
+			//scEngW->AddCode(script1, 0);
+			ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
+			if (!shipScript.IsValid())
+				throw CL_Error("Oh snap! Couldn't load ship.as!");
+			scEngW->AddCode(shipScript->c_str(), 0);
+			scEngW->BuildModule(0);
 
 			StateManager* stateman = new StateManager();
 
@@ -344,16 +453,27 @@ public:
 			m_ResMan->PreloadResource("IMAGE", "body.png", "body.png");
 
 
-			int shipTypeId = scrEngine->GetTypeIdByDecl(0, "ship");
-			asIScriptStruct* shipObject = (asIScriptStruct*)scrEngine->CreateScriptObject(shipTypeId);
+			ScriptClass shipClass = scEngW->GetClass(0, "ship");
+			ScriptObject ship = shipClass.Instantiate();
 
-			int preloadId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Preload()");
-			asIScriptContext* context = scrEngine->CreateContext();
-			context->Prepare(preloadId);
-			context->SetObject(shipObject);
-			context->Execute();
+			ScriptMethod preload = scEngW->GetClassMethod(ship, "void Preload()");//shipClass.GetMethod("void Preload()");
+			preload.SetTimeout(10000);
+			scEngW->Execute(ship, preload);
 
-			int drawId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Draw(float x, float y)");
+			ScriptMethod draw = shipClass.GetMethod("void Draw()");
+			ScriptMethod simulate = shipClass.GetMethod("void Simulate(uint)");
+			ScriptMethod setCommand = shipClass.GetMethod("void SetCommand(Command)");
+			//int shipTypeId = scrEngine->GetTypeIdByDecl(0, "ship");
+			//asIScriptStruct* shipObject = (asIScriptStruct*)scrEngine->CreateScriptObject(shipTypeId);
+
+			//int preloadId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Preload()");
+			//asIScriptContext* context = scrEngine->CreateContext();
+			//context->Prepare(preloadId);
+			//context->SetObject(shipObject);
+			//context->Execute();
+
+			//int drawId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Draw()");
+			//int updateID = scrEngine->GetMethodIDByDecl(shipTypeId, "void Update(uint dt)");
 
 
 			bool p1thrusting = false;
@@ -362,29 +482,27 @@ public:
 			// Loop thing
 			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE) && !m_Quit)
 			{
-				display.get_gc()->clear(CL_Color(180, 220, 255));
+				// Catch failures to load resources
+				try {
+				CL_System::keep_alive();
+				} catch (FusionEngine::FileSystemException& ex) {
+					SendToConsole(ex);
+				}
 
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
 
-				if (input->IsButtonDown("P1Thrust") != p1thrusting)
-				{
-					p1thrusting = !p1thrusting;
-					if (p1thrusting)
-						SendToConsole("P1 is moving!");
-					else
-						SendToConsole("P1 has stopped moving");
-				}
-
 				// Reload the GUI
-				if (input->IsButtonDown("LetterR"))
-				{
-					conGUI->CleanUp();
-					gui->CleanUp();
-					gui->Initialise();
-					conGUI->Initialise();
-				}
+				//if (input->IsButtonDown("LetterR"))
+				//{
+				//	conGUI->CleanUp();
+				//	gui->CleanUp();
+				//	gui->Initialise();
+				//	conGUI->Initialise();
+				//}
 								
+				// Clear the display
+				display.get_gc()->clear(CL_Color(180, 220, 255));
 				//for (int i = 0; i < 10; i++)
 				//{
 				//	ResourcePointer<CL_Surface> &rscPtr = m_Images[i];
@@ -397,16 +515,18 @@ public:
 					m_ImageB->draw(50, 50);
 				if (m_ImageC.IsValid())
 					m_ImageC->draw(50, 50);
+				
+
+				Command cmd;
+				cmd.m_Thrust = input->IsButtonDown("P1Thrust");
+				
+				scEngW->Execute(ship, setCommand, &cmd);
+
+				scEngW->Execute(ship, simulate, split);
 
 				if (!CL_Keyboard::get_keycode(CL_KEY_SPACE))
 				{
-					asIScriptContext* context = scrEngine->CreateContext();
-					context->Prepare(drawId);
-					context->SetObject(shipObject);
-					context->SetArgFloat(0, 10);
-					context->SetArgFloat(1, 10);
-					context->Execute();
-					context->Release();
+					scEngW->Execute(ship, draw);
 				}
 
 				
@@ -414,13 +534,6 @@ public:
 				stateman->Draw();
 
 				display.flip(0);
-				// Catch failures to load resources
-				try {
-				CL_System::keep_alive();
-				} catch (FusionEngine::FileSystemException& ex) {
-					SendToConsole(ex);
-				}
-
 				//gl_state.set_active();
 			}
 

@@ -620,6 +620,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionTextLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionTheme.h"
 				>
 			</File>
@@ -641,10 +645,6 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\as_scriptstring.cpp"
-				>
-			</File>
 			<File
 				RelativePath=".\Common.cpp"
 				>
@@ -939,6 +939,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStringLoader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionTextLoader.cpp"
 				>
 			</File>
 			<File

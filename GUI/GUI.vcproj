@@ -267,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionTextLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionVector2.cpp"
 				>
 			</File>
@@ -382,6 +386,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionStateMessage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionTextLoader.h"
 				>
 			</File>
 			<File
