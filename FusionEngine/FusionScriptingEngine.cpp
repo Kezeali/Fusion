@@ -29,8 +29,10 @@
 
 //#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
-#include "scriptstring.h"
+// Scripting extensions
 #include "FusionScriptVector.h"
+#include "stdstring.h"
+#include "scriptmath.h"
 
 namespace FusionEngine
 {
@@ -43,7 +45,7 @@ namespace FusionEngine
 		if (m_asEngine != NULL)
 		{
 			m_asEngine->SetMessageCallback(asMETHOD(ScriptingEngine,_messageCallback), this, asCALL_THISCALL);
-			registerGlobals();
+			registerTypes();
 		}
 	}
 
@@ -228,11 +230,13 @@ namespace FusionEngine
 		SendToConsole(formatted);
 	}
 
-	void ScriptingEngine::registerGlobals()
+	void ScriptingEngine::registerTypes()
 	{
 		// Register types
-		RegisterScriptString(m_asEngine);
+		RegisterStdString(m_asEngine);
 		RegisterScriptVector(m_asEngine);
+
+		//RegisterScriptString(m_asEngine);
 
 		//m_asEngine->RegisterGlobalProperty("g_Environment", Environment::getSingletonPtr());
 

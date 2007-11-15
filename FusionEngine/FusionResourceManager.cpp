@@ -13,6 +13,9 @@
 #include "FusionImageLoader.h"
 #include "FusionAudioLoader.h"
 
+#include "FusionScriptingEngine.h"
+#include "FusionScriptTypeRegistrationUtils.h"
+
 namespace FusionEngine
 {
 
@@ -257,6 +260,263 @@ namespace FusionEngine
 		return list;
 	}
 
+	void ResourceManager::AddDefaultLoaders()
+	{
+		AddResourceLoader(new ImageLoader());
+		AddResourceLoader(new AudioLoader());
+		AddResourceLoader(new AudioStreamLoader());
+	}
+
+	void ResourceManager::AddResourceLoader(ResourceLoader* loader)
+	{
+		m_ResourceLoaders[loader->GetType()] = ResourceLoaderSpt(loader);
+	}
+
+	void ResourceManager::PretagResource(const std::string& type, const std::string& path, const ResourceTag& tag)
+	{
+		ResourceMap::iterator existing = m_Resources.find(tag);
+		if (existing == m_Resources.end())
+		{
+			ResourceLoaderMap::iterator loader = m_ResourceLoaders.find(type);
+			if (loader == m_ResourceLoaders.end())
+			{
+				FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + type + "'");
+			}
+
+			ResourceContainer* res;
+			//try
+			//{
+				res = loader->second->LoadResource(tag, path, NULL);
+			//}
+			//catch (CL_Error&)
+			//{
+			//	FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
+			//}
+
+			m_Resources[tag] = ResourceSpt(res);
+		}
+	}
+
+	void ResourceManager::PreloadResource(const std::string& type, const std::string& path)
+	{
+		PretagResource(type, path, path);
+	}
+
+	void ResourceManager::RegisterScriptElements(ScriptingEngine* manager)
+	{
+		asIScriptEngine* engine = manager->GetEnginePtr();
+		int r;
+		r = engine->RegisterObjectType("ResourceManager", sizeof(ResourceManager), asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("ResourceManager", "void Cache(string &in, string &in)", asMETHOD(ResourceManager, PreloadResource), asCALL_THISCALL); assert( r >= 0 );
+
+		// TODO: put all this type registration stuff into another header, then implement a 'plugin' type system
+		//  where new script types can be passed in a simmilar way to ResourceLoaders
+		registerXMLType(engine);
+		registerImageType(engine);
+		registerSoundType(engine);
+
+		r = engine->RegisterObjectMethod("ResourceManager", "Image GetImage(string &in)", asFUNCTION(ResourceManager_GetImage), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("ResourceManager", "Sound GetSound(string &in)", asFUNCTION(ResourceManager_GetSound), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("ResourceManager", "XmlDocument GetXML(string &in)", asFUNCTION(ResourceManager_GetXml), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("ResourceManager", "string GetText(string &in)", asFUNCTION(ResourceManager_GetText), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+
+		r = engine->RegisterGlobalProperty("ResourceManager resource_manager", this);
+		r = engine->RegisterGlobalProperty("ResourceManager file", this);
+	}
+
+	//template<typename T>
+	//ResourcePointer<T> ResourceManager::GetResource(const ResourceTag &tag)
+	//{
+	//	PreloadResource(GetResourceType(T).c_str(), tag);
+
+	//	Resource& res = (*m_Resources[tag]);
+	//	if (!res.IsValid())
+	//	{
+	//		m_ResourceLoaders[res.GetType()]->ReloadResource(res);
+	//	}
+
+	//	return ResourcePointer<T>(res);
+	//}
+
+	////////////
+	/// Private:
+	void ResourceManager::registerXMLType(asIScriptEngine* engine)
+	{
+		int r;
+
+		RegisterResourcePointer<TiXmlDocument>("XmlDocument", engine);
+
+		RegisterTypePOD<TiXmlNode>("XmlNode", engine);
+
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"string find(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_String, (std::string&), std::string),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"string xpath_string(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_String, (std::string&), std::string),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"double xpath_double(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_Double, (std::string&), double),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"float xpath_float(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_Float, (std::string&), float),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"int xpath_int(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_Int, (std::string&), int),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath_int(string& in)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_Int, (std::string&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, string &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_CheckedString, (std::string&, std::string&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, double &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_CheckedDouble, (std::string&, double&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, float &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_CheckedFloat, (std::string&, float&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, int &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_Int, (std::string&, int&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, uint &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_CheckedUInt, (std::string&, unsigned int&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+		r = engine->RegisterObjectMethod("XmlDocument",
+			"bool xpath(string &in, bool &out)",
+			asFUNCTIONPR(XML_ExecuteXPathExpr_CheckedBool, (std::string&, bool&), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register a method");
+
+		//r = engine->RegisterObjectMethod("XmlDocument",
+		//	"string& get_root_name()",
+		//	asFUNCTIONPR(XML_GetRootName, (std::string&), std::string&),
+		//	asCALL_CDECL_OBJFIRST);
+
+		//r = engine->RegisterObjectMethod("XmlDocument",
+		//	"XmlNode get_root()",
+		//	asFUNCTIONPR(XML_GetRoot, (void), TiXmlNode),
+		//	asCALL_CDECL_OBJFIRST);
+
+		//r = engine->RegisterObjectMethod("XmlDocument",
+		//	"XmlNode xpath_node(string &in)",
+		//	asFUNCTIONPR(XML_GetRoot, (void), TiXmlNode),
+		//	asCALL_CDECL_OBJFIRST);
+		//r = engine->RegisterObjectMethod("XmlDocument",
+		//	"string& find(XmlNode &in, string& in)",
+		//	asFUNCTIONPR(XML_ExecuteXPathExpr_String, (std::string&), std::string&),
+		//	asCALL_CDECL_OBJFIRST);
+		// /document/element will get the element name
+		// /document/element/ will get the text child (if one exists)
+
+
+		//r = engine->RegisterObjectMethod("XmlNode",
+		//	"string& get_text()",
+		//	asFUNCTIONPR(XMLNode_GetText, (void), std::string&),
+		//	asCALL_CDECL_OBJFIRST);
+		//assert(r >= 0 && "Failed to register get_text()");
+
+		//r = engine->RegisterObjectMethod("XmlNode",
+		//	"string& get_attribute(string &in)",
+		//	asFUNCTIONPR(TiXmlNode, (std::string&), std::string&),
+		//	asCALL_CDECL_OBJFIRST);
+		//assert(r >= 0 && "Failed to register get_text()");
+	}
+
+	void ResourceManager::registerImageType(asIScriptEngine* engine)
+	{
+		RegisterResourcePointer<CL_Surface>("Image", engine);
+
+		int r;
+		r = engine->RegisterObjectMethod("Image",
+			"void draw(float, float)",
+			asFUNCTIONPR(Image_Draw, (float, float), void),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register draw()");
+	}
+
+	void ResourceManager::registerSoundType(asIScriptEngine* engine)
+	{
+		RegisterType<CL_SoundBuffer_Session>("SoundSession", engine);
+
+		int r;
+		r = engine->RegisterObjectMethod("SoundSession",
+			"void play()",
+			asMETHOD(CL_SoundBuffer_Session, play),
+			asCALL_THISCALL);
+		assert(r >= 0 && "Failed to register play()");
+		r = engine->RegisterObjectMethod("SoundSession",
+			"void stop()",
+			asMETHOD(CL_SoundBuffer_Session, stop),
+			asCALL_THISCALL);
+		assert(r >= 0 && "Failed to register stop()");
+		r = engine->RegisterObjectMethod("SoundSession",
+			"bool is_playing()",
+			asMETHOD(CL_SoundBuffer_Session, is_playing),
+			asCALL_THISCALL);
+		assert(r >= 0 && "Failed to register is_playing()");
+
+
+		RegisterResourcePointer<CL_SoundBuffer>("Sound", engine);
+
+		r = engine->RegisterObjectMethod("Sound",
+			"SoundSession prepare(bool)",
+			asFUNCTIONPR(Sound_Prepare, (bool), CL_SoundBuffer_Session),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register prepare()");
+		r = engine->RegisterObjectMethod("Sound",
+			"SoundSession play(bool)",
+			asFUNCTIONPR(Sound_Play, (bool), CL_SoundBuffer_Session),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register play()");
+		r = engine->RegisterObjectMethod("Sound",
+			"void stop()",
+			asFUNCTIONPR(Sound_Stop, (void), void),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register stop()");
+		r = engine->RegisterObjectMethod("Sound",
+			"bool is_playing()",
+			asFUNCTIONPR(Sound_IsPlaying, (void), bool),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register is_playing()");
+	}
+
+	bool ResourceManager::checkInList(const std::string &filename, std::vector<std::string> filelist)
+	{
+		std::vector<std::string>::iterator it;
+		for (it = filelist.begin(); it != filelist.end(); ++it)
+		{
+			if (filename == (*it))
+				return true;
+		}
+
+		return false;
+	}
+
+
 	//TiXmlDocument* ResourceManager::OpenPackage(const std::string &name)
 	//{
 	//	if (m_PhysFSConfigured)
@@ -301,64 +561,7 @@ namespace FusionEngine
 	//	m_VerifiedPackages.clear();
 	//}
 
-	void ResourceManager::AddDefaultLoaders()
-	{
-		AddResourceLoader(new ImageLoader());
-		AddResourceLoader(new AudioLoader());
-		AddResourceLoader(new AudioStreamLoader());
-	}
 
-	void ResourceManager::AddResourceLoader(ResourceLoader* loader)
-	{
-		m_ResourceLoaders[loader->GetType()] = ResourceLoaderSpt(loader);
-	}
-
-	void ResourceManager::PreloadResource(const std::string& type, const std::string& path, const ResourceTag& tag)
-	{
-		ResourceMap::iterator existing = m_Resources.find(tag);
-		if (existing == m_Resources.end())
-		{
-			ResourceLoaderMap::iterator loader = m_ResourceLoaders.find(type);
-			if (loader == m_ResourceLoaders.end())
-			{
-				FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + type + "'");
-			}
-
-			ResourceContainer* res;
-			//try
-			//{
-				res = loader->second->LoadResource(tag, path, NULL);
-			//}
-			//catch (CL_Error&)
-			//{
-			//	FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
-			//}
-
-			m_Resources[tag] = ResourceSpt(res);
-		}
-	}
-
-	void ResourceManager::PreloadResource(const std::string& type, const std::string& path)
-	{
-		PreloadResource(type, path, path);
-	}
-
-	//template<typename T>
-	//ResourcePointer<T> ResourceManager::GetResource(const ResourceTag &tag)
-	//{
-	//	PreloadResource(GetResourceType(T).c_str(), tag);
-
-	//	Resource& res = (*m_Resources[tag]);
-	//	if (!res.IsValid())
-	//	{
-	//		m_ResourceLoaders[res.GetType()]->ReloadResource(res);
-	//	}
-
-	//	return ResourcePointer<T>(res);
-	//}
-
-	////////////
-	/// Private:
 	//RNode ResourceManager::createResourceNode(TiXmlElement* xmlNode)
 	//{
 	//	RNode* node;
@@ -392,16 +595,5 @@ namespace FusionEngine
 	//	return CL_Point(x, y);
 	//}
 
-	bool ResourceManager::checkInList(const std::string &filename, std::vector<std::string> filelist)
-	{
-		std::vector<std::string>::iterator it;
-		for (it = filelist.begin(); it != filelist.end(); ++it)
-		{
-			if (filename == (*it))
-				return true;
-		}
-
-		return false;
-	}
 
 }

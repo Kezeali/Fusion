@@ -536,6 +536,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptTypeRegistrationUtils.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptVector.h"
 				>
 			</File>

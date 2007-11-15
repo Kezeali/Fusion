@@ -11,6 +11,7 @@
 #include "../FusionEngine/FusionConsoleGUI.h"
 
 #include "../FusionEngine/FusionScriptingEngine.h"
+#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 
 #include "../FusionEngine/FusionResource.h"
 #include "../FusionEngine/FusionResourcePointer.h"
@@ -24,133 +25,6 @@
 #include <boost/smart_ptr.hpp>
 
 using namespace FusionEngine;
-
-static void ConstructSurface(CL_Surface *thisPointer)
-{
-	new(thisPointer) CL_Surface();
-}
-
-static void DestructSurface(CL_Surface *thisPointer)
-{
-	thisPointer->~CL_Surface();
-}
-
-static void drawSurface(CL_Surface *thisPointer, float x, float y)
-{
-	thisPointer->draw(x, y);
-}
-
-void RegisterCLSurface(asIScriptEngine *engine)
-{
-	int r;
-
-	// Register the bstr type
-	r = engine->RegisterObjectType("cl_surface", sizeof(CL_Surface), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); assert( r >= 0 );
-
-	// Register the object operator overloads
-	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructSurface), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_DESTRUCT,   "void f()",                    asFUNCTION(DestructSurface),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("cl_surface", asBEHAVE_ASSIGNMENT, "cl_surface &f(const cl_surface &in)", asMETHODPR(CL_Surface, operator =, (const CL_Surface&), CL_Surface&), asCALL_THISCALL); assert( r >= 0 );
-
-	// Register the object methods
-	r = engine->RegisterObjectMethod("cl_surface", "void draw(float, float)", asFUNCTIONPR(drawSurface,(float, float),void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-}
-
-static void DrawImage(ResourcePointer<CL_Surface> *lhs, float x, float y)
-{
-	if (!lhs->IsValid())
-		return;
-
-	CL_Surface* data = lhs->GetDataPtr();
-	if (data != NULL)
-		data->draw(x, y);
-}
-
-static void ConstructSoundSession(CL_SoundBuffer_Session *thisPointer)
-{
-	new(thisPointer) CL_SoundBuffer_Session();
-}
-
-static void DestructSoundSession(CL_SoundBuffer_Session *thisPointer)
-{
-	thisPointer->~CL_SoundBuffer_Session();
-}
-
-static CL_SoundBuffer_Session PrepareSession(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
-{
-	if (!lhs->IsValid())
-		FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
-
-	CL_SoundBuffer* data = lhs->GetDataPtr();
-	if (data != NULL)
-		return data->prepare(looping);
-
-	else
-		FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
-}
-
-static void PlayAudio(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
-{
-	if (!lhs->IsValid())
-		return;
-
-	CL_SoundBuffer* data = lhs->GetDataPtr();
-	if (data != NULL)
-		data->play(looping);
-}
-
-static void StopSBuffer(ResourcePointer<CL_SoundBuffer> *lhs)
-{
-	if (!lhs->IsValid())
-		return;
-
-	CL_SoundBuffer* data = lhs->GetDataPtr();
-	if (data != NULL)
-		data->stop();
-}
-
-static bool IsPlayingSBuffer(ResourcePointer<CL_SoundBuffer> *lhs)
-{
-	if (!lhs->IsValid())
-		return false;
-
-	CL_SoundBuffer* data = lhs->GetDataPtr();
-	if (data != NULL)
-		return data->is_playing();
-
-	return false;
-}
-
-std::string data;
-static std::string& GetText(std::string& path)
-{
-	ResourcePointer<std::string> resource = ResourceManager::getSingleton().GetResource<std::string>(path);
-	if (resource.IsValid())
-		data = *(resource.GetDataPtr());
-	else
-		data = "";
-	return data;
-}
-
-
-static TiXmlNode* XmlDocument_FirstChild(ResourcePointer<TiXmlDocument>* lhs)
-{
-	if (!lhs->IsValid())
-		return NULL;
-
-	TiXmlDocument* data = lhs->GetDataPtr();
-	if (data != NULL)
-	{
-		return data->FirstChild();
-	}
-	else
-		return NULL;
-}
-
-static const char* XmlNode_Value(TiXmlNode* lhs)
-{
-	return lhs->Value();
-}
 
 // Function implementation with native calling convention
 void PrintString(std::string &str)
@@ -172,9 +46,6 @@ void ClearConsole()
 		con->Clear();
 }
 
-ResourcePointer<CL_Surface> StaticGetImage(std::string& path);
-ResourcePointer<CL_SoundBuffer> StaticGetSound(std::string& path);
-ResourcePointer<TiXmlDocument> StaticGetXml(std::string& path);
 void StaticLoadResource(std::string& path);
 void StaticUnloadResource(std::string& tag);
 void StaticQuit();
@@ -334,69 +205,6 @@ public:
 			int r;
 			if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
 			{
-				RegisterCLSurface(ScriptingEngine::getSingleton().GetEnginePtr());
-				RegisterResourcePointer<CL_Surface>("Image", "cl_surface", ScriptingEngine::getSingleton().GetEnginePtr());
-				r = scrEngine->RegisterObjectMethod("Image",
-					"void draw(float, float)",
-					asFUNCTIONPR(DrawImage, (float, float), void),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register draw()");
-
-				RegisterResourcePointer<CL_SoundBuffer>("Sound", ScriptingEngine::getSingleton().GetEnginePtr());
-				r = scrEngine->RegisterObjectMethod("Sound",
-					"void play(bool)",
-					asFUNCTIONPR(PlayAudio, (bool), void),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register play()");
-				r = scrEngine->RegisterObjectMethod("Sound",
-					"void stop()",
-					asFUNCTIONPR(StopSBuffer, (void), void),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register stop()");
-				r = scrEngine->RegisterObjectMethod("Sound",
-					"bool is_playing()",
-					asFUNCTIONPR(IsPlayingSBuffer, (void), bool),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register is_playing()");
-
-				r = scrEngine->RegisterObjectType("SoundSession", sizeof(CL_SoundBuffer_Session), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
-				assert(r >= 0 && "Failed to register object type");
-					// Register the object operator overloads
-				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_CONSTRUCT,  "void f()", asFUNCTION(ConstructSoundSession), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_DESTRUCT,   "void f()", asFUNCTION(DestructSoundSession),  asCALL_CDECL_OBJLAST); assert( r >= 0 );
-				r = scrEngine->RegisterObjectBehaviour("SoundSession", asBEHAVE_ASSIGNMENT, "SoundSession &f(const SoundSession &in)", asMETHODPR(CL_SoundBuffer_Session, operator =, (const CL_SoundBuffer_Session&), CL_SoundBuffer_Session&), asCALL_THISCALL); assert( r >= 0 );
-
-				r = scrEngine->RegisterObjectMethod("SoundSession",
-					"void play()",
-					asMETHOD(CL_SoundBuffer_Session, play),
-					asCALL_THISCALL);
-				assert(r >= 0 && "Failed to register play()");
-				r = scrEngine->RegisterObjectMethod("SoundSession",
-					"void stop()",
-					asMETHOD(CL_SoundBuffer_Session, stop),
-					asCALL_THISCALL);
-				assert(r >= 0 && "Failed to register stop()");
-				r = scrEngine->RegisterObjectMethod("SoundSession",
-					"bool is_playing()",
-					asMETHOD(CL_SoundBuffer_Session, is_playing),
-					asCALL_THISCALL);
-				assert(r >= 0 && "Failed to register is_playing()");
-
-				r = scrEngine->RegisterObjectMethod("Sound",
-					"SoundSession prepare(bool)",
-					asFUNCTIONPR(PrepareSession, (bool), CL_SoundBuffer_Session),
-					asCALL_CDECL_OBJFIRST);
-				assert(r >= 0 && "Failed to register prepare()");
-
-				RegisterResourcePointer<TiXmlDocument>("XmlDocument", ScriptingEngine::getSingleton().GetEnginePtr());
-
-				r = scrEngine->RegisterGlobalFunction("Image GetImage(string &in)", asFUNCTION(StaticGetImage), asCALL_CDECL); assert( r >= 0 );
-				r = scrEngine->RegisterGlobalFunction("Sound GetSound(string &in)", asFUNCTION(StaticGetSound), asCALL_CDECL); assert( r >= 0 );
-				r = scrEngine->RegisterGlobalFunction("XmlDocument GetXML(string &in)", asFUNCTION(StaticGetXml), asCALL_CDECL); assert( r >= 0 );
-				r = scrEngine->RegisterGlobalFunction("string& GetText(string &in)", asFUNCTION(GetText), asCALL_CDECL); assert( r >= 0 );
-				r = scrEngine->RegisterGlobalFunction("void Load(string &in)", asFUNCTION(StaticLoadResource), asCALL_CDECL); assert( r >= 0 );
-				r = scrEngine->RegisterGlobalFunction("void Unload(string &in)", asFUNCTION(StaticUnloadResource), asCALL_CDECL); assert( r >= 0 );
-
 				r = scrEngine->RegisterGlobalFunction("void Print(string &in)", asFUNCTION(PrintString), asCALL_CDECL); assert( r >= 0 );
 				r = scrEngine->RegisterGlobalFunction("void Clear()", asFUNCTION(ClearConsole), asCALL_CDECL); assert( r >= 0 );
 
@@ -404,8 +212,8 @@ public:
 				r = scrEngine->RegisterGlobalFunction("void exit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
 
 
-				r = scrEngine->RegisterObjectType("Command", sizeof(Command), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
-				assert(r >= 0 && "Failed to register object type");
+				RegisterType<Command>("Command", scrEngine);
+
 				r = scrEngine->RegisterObjectProperty("Command", "bool thrust", offsetof(Command, m_Thrust));
 				assert(r >= 0 && "Failed to register object type");
 				scrEngine->RegisterObjectProperty("Command", "bool left", offsetof(Command, m_Left));
@@ -433,6 +241,8 @@ public:
 			m_ResMan->AddResourceLoader(new XMLLoader());
 			m_ResMan->AddResourceLoader(new TextLoader());
 
+			m_ResMan->RegisterScriptElements(scEngW);
+
 			//scEngW->AddCode(script1, 0);
 			ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
 			if (!shipScript.IsValid())
@@ -450,7 +260,7 @@ public:
 			//stateman->AddState(conGUI);
 
 			// Load a resource
-			m_ResMan->PreloadResource("IMAGE", "body.png", "body.png");
+			m_ResMan->PretagResource("IMAGE", "body.png", "body.png");
 
 
 			ScriptClass shipClass = scEngW->GetClass(0, "ship");
@@ -557,21 +367,6 @@ public:
 		return 0;
 	}
 } app;
-
-ResourcePointer<CL_Surface> StaticGetImage(std::string& path)
-{
-	return app.Get(path);
-}
-
-ResourcePointer<CL_SoundBuffer> StaticGetSound(std::string& path)
-{
-	return ResourceManager::getSingleton().GetResource<CL_SoundBuffer>(path, "AUDIO");
-}
-
-ResourcePointer<TiXmlDocument> StaticGetXml(std::string& path)
-{
-	return ResourceManager::getSingleton().GetResource<TiXmlDocument>(path, "XML");
-}
 
 void StaticLoadResource(std::string &path)
 {

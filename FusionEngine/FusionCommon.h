@@ -71,8 +71,22 @@
 //#include <boost/bind.hpp>
 
 // TinyXML
-//#define TIXML_USE_STL
+#define USE_TINYXPATH
+
+#ifdef USE_TINYXPATH
+# define TIXML_USE_STL
+#include "../tinyxpath/xpath_static.h"
+
+#else
+//#ifndef TIXML_USE_STL
+//# define TIXML_USE_STL
+//#endif
+#ifndef TIXML_USE_TICPP
+# define TIXML_USE_TICPP
+#endif
 #include "../tinyxml/tinyxml.h"
+#endif
+
 
 // AngelScript
 //not #define AS_USE_NAMESPACE

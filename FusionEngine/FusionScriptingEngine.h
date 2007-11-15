@@ -42,6 +42,8 @@
 #include "FusionScriptVector.h"
 #include "FusionScriptReference.h"
 
+#include "FusionScriptTypeRegistrationUtils.h"
+
 #include "FusionConsole.h"
 
 
@@ -129,8 +131,6 @@ namespace FusionEngine
 		{
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
-
-			assert(method.GetFunctionID() == m_asEngine->GetMethodIDByDecl(object.GetTypeId(), method.GetSignature().c_str()));
 
 			int r = cont->Prepare(method.GetFunctionID());
 			if (r < 0)
@@ -477,7 +477,7 @@ namespace FusionEngine
 			cxt->SetArgDouble(arg, value);
 		}
 		//! Registers global methods and functions which scripts can use.
-		void registerGlobals();
+		void registerTypes();
 
 		////! Registers methods useful to weapon scripts
 		//void registerWeaponMethods();

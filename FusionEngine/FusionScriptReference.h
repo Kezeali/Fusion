@@ -39,6 +39,7 @@ namespace FusionEngine
 
 	static const unsigned int g_ScriptDefaultTimeout = 1000;
 
+	//! Used by non-template versions of ScriptingEngine#Execute
 	class ScriptArgument
 	{
 	public:
@@ -112,25 +113,6 @@ namespace FusionEngine
 	};
 
 	typedef ScriptContext ScriptReturn;
-	// Context with return accessors to get the return value
-	//class ScriptReturn : protected ScriptContext
-	//{
-	//public:
-	//	ScriptReturn(asIScriptContext* ctx);
-
-	//public:
-	//	float GetValueFloat() const;
-	//	double GetValueDouble() const;
-	//	void* GetPointer() const;
-	//	template<typename T>
-	//	T* GetValueObject() const
-	//	{
-	//		return (T*)m_Context->GetReturnObject();
-	//	}
-
-	//	//! Returns true if the function executed successfully
-	//	bool IsOk() const;
-	//}
 
 	//! Stores data needed to execute a script function
 	/*!
