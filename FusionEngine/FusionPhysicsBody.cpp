@@ -99,6 +99,40 @@ namespace FusionEngine
 		cpBodyFree(m_Body);
 	}
 
+	PhysicsBody::PhysicsBody()
+		: m_World(0),
+		m_CollisionFlags(C_NONE),
+		m_CollisionResponse(0),
+		m_CollisionHandler(0),
+		m_UserData(0),
+		m_Acceleration(Vector2::ZERO),
+		m_AppliedForce(Vector2::ZERO),
+		m_GotCGUpdate(false),
+		m_Active(true),
+		m_DeactivationCounter(0),
+		m_DeactivationPeriod(100),
+		m_Type(0),
+		m_Mass(0.f),
+		m_Radius(0),
+		m_Position(Vector2::ZERO),
+		m_Rotation(0.f),
+		m_RotationalVelocity(0.f),
+		m_UsesAABB(false),
+		m_UsesDist(false),
+		m_UsesPixel(false),
+		m_Velocity(Vector2::ZERO),
+		m_AppliedRelativeForce(0)
+	{
+		m_Body = cpBodyNew(m_Mass, 0.0);
+		m_Body->p = cpv(0, 0);
+	}
+
+	void PhysicsBody::SetWorld(PhysicsWorld* world)
+	{
+		m_World = world;
+		m_DeactivationPeriod = world->GetBodyDeactivationPeriod();
+	}
+
 	void PhysicsBody::SetType(int type)
 	{
 		m_Type = type;

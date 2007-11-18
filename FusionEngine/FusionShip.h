@@ -77,7 +77,7 @@ namespace FusionEngine
 		//! Don't use this
 		FusionShip();
 		//! Constructor. W/O inputs.
-		FusionShip(ShipState initState, FusionPhysicsBody *body, FusionNode *node);
+		FusionShip(ShipState initState, PhysicsBody *body, FusionNode *node);
 		//! Constructor. 
 		FusionShip(ShipState initState, ShipInput initInput, FusionPhysicsBody *body, FusionNode *node);
 		//! Destructor

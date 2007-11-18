@@ -29,7 +29,7 @@ using namespace FusionEngine;
 // Function implementation with native calling convention
 void PrintString(std::string &str)
 {
-	SendToConsole(str);
+	SendToConsole("Script says: " + str);
 }
 
 // Function implementation with generic script interface

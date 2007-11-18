@@ -126,7 +126,7 @@ namespace FusionEngine
 
 	//! Registers a REF NOHANDLE type (no constructor)
 	template <typename T>
-	void RegisterTypePOD(const std::string& type_name, asIScriptEngine* engine)
+	void RegisterTypeNoHandle(const std::string& type_name, asIScriptEngine* engine)
 	{
 		assert(engine && "Passed NULL engine pointer to registerVector");
 

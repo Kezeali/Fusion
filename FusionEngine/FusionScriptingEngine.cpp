@@ -55,15 +55,9 @@ namespace FusionEngine
 		return m_asEngine;
 	}
 
-	void ScriptingEngine::RegisterScript(Script *script, const char *module)
+	void ScriptingEngine::RegisterGlobalObject(const char *decl, void* ptr)
 	{
-		int r;
-		r = m_asEngine->AddScriptSection(module, 0, script->GetScript().c_str(), script->GetScript().length());
-		if (r >= 0)
-		{
-			script->_setModule(module);
-			script->_notifyRegistration();
-		}
+		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); assert( r >= 0 );
 	}
 
 	bool ScriptingEngine::AddCode(const std::string& script, const char *module)
@@ -205,14 +199,14 @@ namespace FusionEngine
 		return ScriptObject(obj);
 	}
 
-	ScriptMethod ScriptingEngine::GetClassMethod(ScriptClass type, const std::string& signature)
+	ScriptMethod ScriptingEngine::GetClassMethod(ScriptClass& type, const std::string& signature)
 	{
 		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
 		ScriptMethod method(type.GetModule(), signature, id);
 		return method;
 	}
 
-	ScriptMethod ScriptingEngine::GetClassMethod(ScriptObject type, const std::string& signature)
+	ScriptMethod ScriptingEngine::GetClassMethod(ScriptObject& type, const std::string& signature)
 	{
 		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
 		ScriptMethod method(0, signature, id);
@@ -233,6 +227,7 @@ namespace FusionEngine
 	void ScriptingEngine::registerTypes()
 	{
 		// Register types
+		RegisterScriptMath(m_asEngine);
 		RegisterStdString(m_asEngine);
 		RegisterScriptVector(m_asEngine);
 
@@ -247,29 +242,15 @@ namespace FusionEngine
 		//registerConsoleMethods();
 	}
 
-	
-	//void ScriptingEngine::registerWeaponMethods()
+	//void ScriptingEngine::RegisterScript(Script *script, const char *module)
 	//{
 	//	int r;
-
-	//	r = m_asEngine->BeginConfigGroup(g_ASConfigWeapon.c_str()); cl_assert( r >= 0 );
+	//	r = m_asEngine->AddScriptSection(module, 0, script->GetScript().c_str(), script->GetScript().length());
+	//	if (r >= 0)
 	//	{
-	//		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	//		{
-	//			r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
-
-	//			r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-	//			r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-	//		}
-	//		else
-	//		{
-	//			r = m_asEngine->RegisterGlobalFunction("void DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-
-	//			r = m_asEngine->RegisterGlobalFunction("void ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-	//			r = m_asEngine->RegisterGlobalFunction("void ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-	//		}
+	//		script->_setModule(module);
+	//		script->_notifyRegistration();
 	//	}
-	//	r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
 	//}
 
 

@@ -444,6 +444,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicsScriptTypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsShape.h"
 				>
 			</File>
@@ -481,6 +485,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionRakNetwork.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionRefCounted.h"
 				>
 			</File>
 			<File

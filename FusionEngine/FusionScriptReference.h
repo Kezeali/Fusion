@@ -123,6 +123,7 @@ namespace FusionEngine
 	private:
 		typedef ScriptArgument::DataType DataType;
 	public:
+		ScriptMethod() : m_FunctionID(-1), m_Timeout(0), m_Module(0) {}
 		//! Constructor
 		ScriptMethod(ScriptingEngine* manager, const char* module, const std::string& signature);
 		//! Constructor
@@ -140,6 +141,8 @@ namespace FusionEngine
 		void SetTimeout(unsigned int timeout);
 
 		DataType GetArgType(unsigned int argIndex);
+
+		bool IsValid() const;
 
 	protected:
 		const char* m_Module;
@@ -160,6 +163,7 @@ namespace FusionEngine
 	class ScriptObject
 	{
 	public:
+		ScriptObject() : m_Struct(0) {}
 		//! Constructor
 		ScriptObject(asIScriptStruct* script_struct);
 		//! Copy constructor
@@ -177,6 +181,8 @@ namespace FusionEngine
 	public:
 		int GetTypeId() const;
 		asIScriptStruct* GetScriptStruct() const;
+		
+		bool IsValid() const;
 
 	protected:
 		asIScriptStruct* m_Struct;
@@ -200,6 +206,8 @@ namespace FusionEngine
 		const std::string& GetDeclaration() const;
 		ScriptMethod GetMethod(const std::string& signature) const;
 		ScriptObject Instantiate();
+
+		bool IsValid() const;
 
 	protected:
 		const char* m_Module;

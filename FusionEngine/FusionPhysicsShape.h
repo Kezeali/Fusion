@@ -35,6 +35,7 @@
 
 #include "FusionCommon.h"
 
+#include "FusionRefCounted.h"
 #include "FusionPhysicsBody.h"
 
 namespace FusionEngine
@@ -48,7 +49,7 @@ namespace FusionEngine
 	//};
 
 	//! Shape class
-	class Shape
+	class Shape : public RefCounted
 	{
 	public:
 		Shape(PhysicsBody* body);
@@ -93,7 +94,7 @@ namespace FusionEngine
 	};
 
 	//! PolyShape Shape implementations
-	class PolyShape : public Shape
+	class PolyShape : public Shape 
 	{
 	public:
 		PolyShape(PhysicsBody* body, int num, cpVect* verts, const Vector2& offset);

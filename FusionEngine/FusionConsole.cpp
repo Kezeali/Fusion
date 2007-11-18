@@ -1,6 +1,9 @@
 
 #include "FusionConsole.h"
 
+#include "FusionScriptingEngine.h"
+#include "FusionScriptTypeRegistrationUtils.h"
+
 namespace FusionEngine
 {
 	Console::Console()
@@ -63,6 +66,21 @@ namespace FusionEngine
 		Add(ex->GetDescription(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
 	}
 
+	void Console::PrintLn(const std::string &message)
+	{
+		Add(message);
+	}
+
+	void Console::PrintLn_int(int message)
+	{
+		Add(CL_String::from_int(message));
+	}
+
+	void Console::PrintLn_double(double message)
+	{
+		Add(CL_String::from_double(message));
+	}
+
 	void Console::Clear()
 	{
 		if (!m_Data.empty())
@@ -77,6 +95,24 @@ namespace FusionEngine
 	const Console::ConsoleLines& Console::GetHistory() const
 	{
 		return m_Data;
+	}
+
+	void Console::RegisterScriptElements(ScriptingEngine *manager)
+	{
+#ifndef FSN_DONT_USE_SCRIPTING
+		int r;
+		asIScriptEngine* engine = manager->GetEnginePtr();
+
+		RegisterTypeNoHandle<Console>("Console", engine);
+		
+		engine->RegisterObjectMethod("Console", "void println(string &in)", asMETHOD(Console, PrintLn), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Console", "void println(int)", asMETHOD(Console, PrintLn_int), asCALL_THISCALL);
+		engine->RegisterObjectMethod("Console", "void println(double)", asMETHOD(Console, PrintLn_double), asCALL_THISCALL);
+
+		engine->RegisterObjectMethod("Console", "void clear()", asMETHOD(Console, Clear), asCALL_THISCALL);
+
+		manager->RegisterGlobalObject("Console console", this);
+#endif
 	}
 
 }

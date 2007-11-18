@@ -50,33 +50,41 @@ namespace FusionEngine
 	ScriptContext::ScriptContext(asIScriptContext* ctx)
 		: m_Context(ctx)
 	{
-		ctx->AddRef();
+		if (m_Context != NULL)
+			ctx->AddRef();
 	}
 
 	ScriptContext::ScriptContext(const ScriptContext& other)
 	{
 		m_Context = other.m_Context;
-		m_Context->AddRef();
+		if (m_Context != NULL)
+			m_Context->AddRef();
 	}
 
 	ScriptContext::~ScriptContext()
 	{
-		m_Context->Release();
+		if (m_Context != NULL)
+			m_Context->Release();
 	}
 
 	int ScriptContext::Execute() const
 	{
-		return m_Context->Execute();
+		if (m_Context != NULL)
+			return m_Context->Execute();
+		else
+			return -1;
 	}
 
 	void ScriptContext::Suspend() const
 	{
-		m_Context->Suspend();
+		if (m_Context != NULL)
+			m_Context->Suspend();
 	}
 
 	void ScriptContext::Abort() const
 	{
-		m_Context->Abort();
+		if (m_Context != NULL)
+			m_Context->Abort();
 	}
 
 	asIScriptContext* ScriptContext::GetContext() const
@@ -86,11 +94,17 @@ namespace FusionEngine
 
 	bool ScriptContext::WasSuccessful() const
 	{
+		if (m_Context == NULL)
+			return false;
+
 		return m_Context->GetState() >= 0;
 	}
 
 	bool ScriptContext::RaisedException() const
 	{
+		if (m_Context == NULL)
+			return false;
+
 		return m_Context->GetState() == asEXECUTION_EXCEPTION;
 	}
 
@@ -101,16 +115,25 @@ namespace FusionEngine
 
 	float ScriptContext::GetValueFloat() const
 	{
+		if (m_Context == NULL)
+			return 0.f;
+
 		return m_Context->GetReturnFloat();
 	}
 
 	double ScriptContext::GetValueDouble() const
 	{
+		if (m_Context == NULL)
+			return 0.0;
+
 		return m_Context->GetReturnDouble();
 	}
 
 	void* ScriptContext::GetPointer() const
 	{
+		if (m_Context == NULL)
+			return NULL;
+
 		return m_Context->GetReturnPointer();
 	}
 
@@ -182,6 +205,11 @@ namespace FusionEngine
 			return ScriptArgument::NO_ARG;
 
 		return m_ArgTypes[argIndex];
+	}
+
+	bool ScriptMethod::IsValid() const
+	{
+		return m_FunctionID >= 0;
 	}
 
 	void ScriptMethod::parseSignature()
@@ -282,9 +310,19 @@ namespace FusionEngine
 
 	ScriptObject ScriptClass::Instantiate()
 	{
-		asIScriptStruct* scriptStruct = (asIScriptStruct*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
-		ScriptObject object(scriptStruct);
-		return object;
+		if (IsValid())
+		{
+			asIScriptStruct* scriptStruct = (asIScriptStruct*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
+			ScriptObject object(scriptStruct);
+			return object;
+		}
+		else
+			return ScriptObject();
+	}
+
+	bool ScriptClass::IsValid() const
+	{
+		return m_TypeID >= 0;
 	}
 
 	
@@ -312,6 +350,11 @@ namespace FusionEngine
 	asIScriptStruct* ScriptObject::GetScriptStruct() const
 	{
 		return m_Struct;
+	}
+
+	bool ScriptObject::IsValid() const
+	{
+		return m_Struct != NULL;
 	}
 
 }

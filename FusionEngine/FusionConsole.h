@@ -72,7 +72,7 @@ namespace FusionEngine
 
 	public:
 		//! Lines in the console
-		typedef std::deque<std::string> ConsoleLines;
+		typedef std::list<std::string> ConsoleLines;
 
 		//! Message header types
 		enum MessageType {
@@ -96,11 +96,22 @@ namespace FusionEngine
 		//! Adds the given Error to the console history
 		void Add(const Exception *error);
 
+		//! Adds the given message to the console history
+		void PrintLn(const std::string &message);
+
+		//! Adds the given int to the console history
+		void PrintLn_int(int message);
+
+		//! Adds the given double to the console history
+		void PrintLn_double(double message);
+
 		//! Removes all data from the console
 		void Clear();
 
 		//! Returns all the lines that have been added to the console
 		const ConsoleLines& GetHistory() const;
+
+		void RegisterScriptElements(ScriptingEngine* manager);
 
 		//! Triggers when new data is added to the console
 		CL_Signal_v1<const std::string &> OnNewLine;

@@ -29,12 +29,6 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
-#include "FusionSingleton.h"
-
-#include "FusionInputHandler.h"
-#include "FusionEntity.h"
-
 namespace FusionEngine
 {
 
@@ -47,7 +41,14 @@ namespace FusionEngine
 	class Command
 	{
 	public:
-		Command();
+		Command()
+			: m_Thrust(false),
+			m_Left(false),
+			m_Right(false),
+			m_PrimaryFire(false),
+			m_SecondaryFire(false),
+			m_SpecialFire(false)
+		{}
 
 	public:
 		bool m_Thrust;

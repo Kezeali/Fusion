@@ -86,7 +86,10 @@ namespace FusionEngine
 		asIScriptEngine *GetEnginePtr() const;
 
 		//! Adds the given script to a module, but doesn't build or execute it.
-		void RegisterScript(Script *script, const char *module);
+		//void RegisterScript(Script *script, const char *module);
+
+		//! Registers a global object (type must already be registered)
+		void RegisterGlobalObject(const char *decl, void* ptr);
 
 		//! Adds code to the given module
 		bool AddCode(const std::string& script, const char *module);
@@ -106,8 +109,11 @@ namespace FusionEngine
 
 #ifdef SCRIPT_ARG_USE_TEMPLATE
 		//! Executes the given function
-		ScriptReturn Execute(ScriptMethod function)
+		ScriptReturn Execute(ScriptMethod &function)
 		{
+			if (!function.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -127,8 +133,11 @@ namespace FusionEngine
 		}
 
 		//! Executes the given method
-		ScriptReturn Execute(ScriptObject object, ScriptMethod method)
+		ScriptReturn Execute(ScriptObject &object, ScriptMethod &method)
 		{
+			if (!object.IsValid() || !method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -153,8 +162,11 @@ namespace FusionEngine
 
 		//! Executes the given function
 		template<typename T1>
-		ScriptReturn Execute(ScriptMethod method, T1 p1)
+		ScriptReturn Execute(ScriptMethod& method, T1 p1)
 		{
+			if (!method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -176,8 +188,11 @@ namespace FusionEngine
 		}
 		//! Executes the given function
 		template<typename T1, typename T2>
-		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2)
+		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2)
 		{
+			if (!method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -200,8 +215,11 @@ namespace FusionEngine
 		}
 		//! Executes the given function
 		template<typename T1, typename T2, typename T3>
-		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2, T3 p3)
+		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2, T3 p3)
 		{
+			if (!method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -225,8 +243,11 @@ namespace FusionEngine
 		}
 		//! Executes the given function
 		template<typename T1, typename T2, typename T3, typename T4>
-		ScriptReturn Execute(ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
+		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
+			if (!method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -252,8 +273,11 @@ namespace FusionEngine
 
 		//! Executes the given method
 		template<typename T1>
-		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1)
+		ScriptReturn Execute(ScriptObject& object, ScriptMethod& method, T1 p1)
 		{
+			if (!object.IsValid() || !method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -279,8 +303,11 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2>
-		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2)
+		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2)
 		{
+			if (!object.IsValid() || !method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -307,8 +334,11 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2, typename T3>
-		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2, T3 p3)
+		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2, T3 p3)
 		{
+			if (!object.IsValid() || !method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -336,8 +366,11 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2, typename T3, typename T4>
-		ScriptReturn Execute(ScriptObject object, ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
+		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
+			if (!object.IsValid() || !method.IsValid())
+				return ScriptContext(NULL);
+
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
@@ -369,7 +402,7 @@ namespace FusionEngine
 		ScriptReturn Execute(ScriptMethod scref, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
 
 		//! Executes the given method
-		ScriptReturn Execute(ScriptObject obj, ScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
+		ScriptReturn Execute(ScriptObject& obj, ScriptMethod& method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
 #endif
 		//! Executes the given code string.
 		/*!
@@ -411,9 +444,9 @@ namespace FusionEngine
 		ScriptClass GetClass(const char* module, const std::string& type_name);
 		//! Returns an object of the class corresponding to the given typename
 		ScriptObject CreateObject(const char* module, const std::string& type_name);
-		ScriptMethod GetClassMethod(ScriptClass type, const std::string& signature);
+		ScriptMethod GetClassMethod(ScriptClass& type, const std::string& signature);
 
-		ScriptMethod GetClassMethod(ScriptObject type, const std::string& signature);
+		ScriptMethod GetClassMethod(ScriptObject& type, const std::string& signature);
 
 		//! Used internally
 		void _messageCallback(asSMessageInfo *msg);

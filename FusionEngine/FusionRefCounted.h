@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ResourcePointer
-#define Header_FusionEngine_ResourcePointer
+#ifndef Header_FusionEngine_RefCounted
+#define Header_FusionEngine_RefCounted
 
 #if _MSC_VER > 1000
 #	pragma once
@@ -34,35 +34,65 @@
 
 #include "FusionCommon.h"
 
-#include "ScriptingEngine.h"
+#include "FusionScriptingEngine.h"
 
 namespace FusionEngine
 {
 
-	template<class T, const char* NAME>
+	class RefCounted;
+
+	static RefCounted* RefCountedFactory();
+
+	//template <class T>
 	class RefCounted
 	{
+	private:
+		int m_RefCount;
+
 	public:
-		addRef()
+		RefCounted()
 		{
-			++m_RC_RefCount;
+			m_RefCount = 0;
 		}
-		release()
+		void addRef()
 		{
-			if (--m_RC_RefCount == 0)
+			++m_RefCount;
+		}
+		void release()
+		{
+			if (--m_RefCount == 0)
 				delete this;
 		}
 
-		registerType(asIScriptEngine* engine)
+		template <class T>
+		static void registerType(asIScriptEngine* engine, const std::string& name)
 		{
 			int r;
 			
-			r = engine->RegisterObjectType(NAME, sizeof(T), asOBJ_REF); assert(r >= 0);
-			r = engine->RegisterObjectBehaviour(NAME, asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
-			r = engine->RegisterObjectBehaviour(NAME, asBEHAVE_RELEASE
+			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); assert(r >= 0);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCountedFactory), asCALL_CDECL);
+
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
+
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asMETHOD(RefCounted, operator=), asCALL_THISCALL);
 		}
 
+		RefCounted &operator=(const RefCounted& rhs)
+		{
+			//*((T)this) T::= (T)rhs;
+			this->m_RefCount = 0;
+			return *this;
+		}
+
+	};
+
+	static RefCounted* RefCountedFactory()
+	{
+		RefCounted* obj = new RefCounted();
+		return obj;
 	}
+
 }
 
 #endif

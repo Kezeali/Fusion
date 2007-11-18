@@ -35,6 +35,7 @@ Elliot Hayward
 
 #include "FusionCommon.h"
 
+#include "FusionRefCounted.h"
 /// Fusion
 #include "FusionPhysicsShape.h"
 #include "FusionPhysicsCallback.h"
@@ -74,11 +75,12 @@ namespace FusionEngine
 	 * \see
 	 * PhysicsWorld.
 	 */
-	class PhysicsBody
+	class PhysicsBody : public RefCounted
 	{
 		typedef boost::ptr_vector<Shape> ShapeList;
 		friend class PhysicsWorld;
 	public:
+		PhysicsBody();
 		//PhysicsBody();
 		//! Constructor.
 		/*!
@@ -110,6 +112,7 @@ namespace FusionEngine
 		~PhysicsBody();
 
 	public:
+		void SetWorld(PhysicsWorld* world);
 		//! Sets the type ID for this object.
 		void SetType(int type);
 		//! Does what you think it does.
