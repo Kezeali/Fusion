@@ -245,6 +245,12 @@ namespace FusionEngine
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); cl_assert( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,getX), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,getY), asCALL_THISCALL); assert( r >= 0 );
+
+		r = engine->RegisterObjectProperty("Vector", "float x", offsetof(Vector2,x)); assert( r >= 0 );
+		r = engine->RegisterObjectProperty("Vector", "float y", offsetof(Vector2,y)); assert( r >= 0 );
 	}
 
 	void RegisterScriptVector_Generic(asIScriptEngine *engine)

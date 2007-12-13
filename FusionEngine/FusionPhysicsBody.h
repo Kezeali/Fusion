@@ -40,7 +40,8 @@ Elliot Hayward
 #include "FusionPhysicsShape.h"
 #include "FusionPhysicsCallback.h"
 
-#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/ptr_container/ptr_list.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace FusionEngine
 {
@@ -62,6 +63,9 @@ namespace FusionEngine
 	static float g_PhysStaticMass = INFINITY;
 	static int g_PhysBodyCpCollisionType = 1;
 
+	//! Shape Smart Ptr type
+	typedef boost::shared_ptr<Shape> ShapePtr;
+
 	/*!
 	 * \brief
 	 * The basis for movable/colliding objects.
@@ -77,9 +81,35 @@ namespace FusionEngine
 	 */
 	class PhysicsBody : public RefCounted
 	{
-		typedef boost::ptr_vector<Shape> ShapeList;
+		//typedef boost::ptr_list<Shape> ShapeList;
+		typedef std::list<ShapePtr> ShapeList;
+		//typedef std::list<Shape*> ShapeList;
 		friend class PhysicsWorld;
 	public:
+		//PhysicsBody(PhysicsBody& other)
+		//	: m_Body(other.m_Body),
+		//	m_World(other.m_World),
+		//	m_Type(other.m_Type),
+		//	m_CollisionHandler(other.m_CollisionHandler),
+		//	m_UserData(other.m_UserData),
+		//	m_Active(other.m_Active)
+		//{
+		//	m_Shapes.assign(other.m_Shapes.begin(), other.m_Shapes.end());
+		//}
+
+		//PhysicsBody& operator=(PhysicsBody& rhs)
+		//{
+		//	m_Shapes = rhs.m_Shapes.release();
+		//	m_Body = rhs.m_Body;
+		//	m_World = rhs.m_World;
+		//	m_Type = rhs.m_Type;
+		//	m_CollisionHandler = rhs.m_CollisionHandler;
+		//	m_UserData = rhs.m_UserData;
+		//	m_Active = rhs.m_Active;
+
+		//	return *this;
+		//}
+
 		PhysicsBody();
 		//PhysicsBody();
 		//! Constructor.
@@ -481,7 +511,7 @@ namespace FusionEngine
 		float m_Radius;
 
 		//! Lists the bodies which have signaled that they are colliding with this one
-		BodyList m_CollidingBodies;
+		//BodyList m_CollidingBodies;
 
 		//! Bitmask collisions
 		bool m_UsesPixel;

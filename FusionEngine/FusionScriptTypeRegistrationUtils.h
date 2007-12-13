@@ -119,7 +119,7 @@ namespace FusionEngine
 
 		int error_code = 0;
 
-		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS);
+		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
 		assert(error_code >= 0 && "Failed to register object type");
 
 	}

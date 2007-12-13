@@ -41,7 +41,26 @@ namespace FusionEngine
 
 	class RefCounted;
 
-	static RefCounted* RefCountedFactory();
+	//static RefCounted* RefCountedFactory();
+
+	template <class T>
+	static T* RefCountedFactory()
+	{
+		T* obj = new T();
+		return obj;
+	}
+
+	//template <class T>
+	//class RefCountedHelper
+	//{
+	//public:
+	//	static T& Assign(const T& rhs, T* lhs)
+	//	{
+	//		*lhs = rhs;
+	//		(RefCounted*)lhs->ResetRefCount();
+	//		return *lhs;
+	//	}
+	//}
 
 	//template <class T>
 	class RefCounted
@@ -52,7 +71,7 @@ namespace FusionEngine
 	public:
 		RefCounted()
 		{
-			m_RefCount = 0;
+			m_RefCount = 1;
 		}
 		void addRef()
 		{
@@ -65,33 +84,35 @@ namespace FusionEngine
 		}
 
 		template <class T>
+		static T& Assign(const T& rhs, T* lhs)
+		{
+			*lhs = rhs;
+			RefCounted* lhs_rc = dynamic_cast<RefCounted*>(lhs);
+			lhs_rc->m_RefCount = 1;
+			return *lhs;
+		}
+
+		template <class T>
 		static void registerType(asIScriptEngine* engine, const std::string& name)
 		{
 			int r;
 			
 			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); assert(r >= 0);
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCountedFactory), asCALL_CDECL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCountedFactory<T>), asCALL_CDECL);
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asMETHOD(RefCounted, operator=), asCALL_THISCALL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJLAST);
 		}
 
-		RefCounted &operator=(const RefCounted& rhs)
-		{
-			//*((T)this) T::= (T)rhs;
-			this->m_RefCount = 0;
-			return *this;
-		}
+		//static RefCounted* RefCountedFactory()
+		//{
+		//	RefCounted* obj = new RefCounted();
+		//	return obj;
+		//}
 
 	};
-
-	static RefCounted* RefCountedFactory()
-	{
-		RefCounted* obj = new RefCounted();
-		return obj;
-	}
 
 }
 

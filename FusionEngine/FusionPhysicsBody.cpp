@@ -165,8 +165,14 @@ namespace FusionEngine
 	void PhysicsBody::RecalculateInertia()
 	{
 		float moment = 0;
+#ifdef PHYSBODY_USE_BOOST_PTRLIST
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
+#else
+		for (ShapeList::iterator p_it = m_Shapes.begin(), end = m_Shapes.end(); p_it != end; ++p_it)
+		{
+			ShapeList::value_type it = (*p_it);
+#endif
 			moment += it->GetInertia();
 		}
 		cpBodySetMoment(m_Body, moment);
@@ -250,14 +256,15 @@ namespace FusionEngine
 		// Add to world
 		m_World->AddShape(shape);
 
-		m_Shapes.push_back(shape);
+		m_Shapes.push_back(ShapePtr(shape));
 	}
 
 	void PhysicsBody::DetachShape(Shape* shape, bool remove /* = true */)
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			if (it->GetShape() == shape->GetShape())
+			ShapePtr itpShape = (*it);
+			if (itpShape->GetShape() == shape->GetShape())
 			{
 				cpBodySetMoment(m_Body, m_Body->i - shape->GetInertia());
 				shape->SetBody(NULL);
@@ -274,10 +281,11 @@ namespace FusionEngine
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			it->SetBody(NULL);
+			ShapePtr shape = (*it);
+			shape->SetBody(NULL);
 
 			if (fromWorld)
-				m_World->RemoveShape(&(*it));
+				m_World->RemoveShape(shape);
 		}
 		m_Shapes.clear();
 	}
@@ -304,7 +312,7 @@ namespace FusionEngine
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			it->GetShape()->e = e;
+			(*it)->GetShape()->e = e;
 		}
 	}
 
@@ -312,7 +320,7 @@ namespace FusionEngine
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			it->GetShape()->u = u;
+			(*it)->GetShape()->u = u;
 		}
 	}
 
@@ -392,10 +400,12 @@ namespace FusionEngine
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
-			m_AABB.left = fe_min( it->GetShape()->bb.l, m_AABB.left );
-			m_AABB.right = fe_max( it->GetShape()->bb.r, m_AABB.right );
-			m_AABB.top = fe_min( it->GetShape()->bb.b, m_AABB.top );
-			m_AABB.bottom = fe_max( it->GetShape()->bb.t, m_AABB.bottom );
+			ShapePtr shape = (*it);
+
+			m_AABB.left = fe_min( shape->GetShape()->bb.l, m_AABB.left );
+			m_AABB.right = fe_max( shape->GetShape()->bb.r, m_AABB.right );
+			m_AABB.top = fe_min( shape->GetShape()->bb.b, m_AABB.top );
+			m_AABB.bottom = fe_max( shape->GetShape()->bb.t, m_AABB.bottom );
 		}
 	}
 

@@ -103,6 +103,8 @@ namespace FusionEngine
 		float& operator[](int n);
 
 	public:
+		inline float getX() const { return x; }
+		inline float getY() const { return y; }
 		//! The length of the vector
 		/*!
 		 * \returns sqrt(x^2+y^2)

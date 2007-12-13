@@ -211,8 +211,10 @@ namespace FusionEngine
 		void AddStaticShape(Shape* shape);
 
 		void RemoveShape(Shape* shape);
+		void RemoveShape(ShapePtr shape);
 
 		void RemoveStaticShape(Shape* shape);
+		void RemoveStaticShape(ShapePtr shape);
 
 		//cpShape* createSimpleStatic(PhysicsBody* body = NULL);
 		//void removeSimpleStatic(cpShape* shape);

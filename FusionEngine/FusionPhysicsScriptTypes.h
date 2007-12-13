@@ -45,7 +45,12 @@
 namespace FusionEngine
 {
 
-	void PhysBodyConstructor(PhysicsWorld* world, PhysicsBody* obj)
+	void PhysBodyConstructor(PhysicsBody* obj)
+	{
+		new(obj) PhysicsBody();
+	}
+
+	void PhysBodyConstructor_World(PhysicsWorld* world, PhysicsBody* obj)
 	{
 		new(obj) PhysicsBody(world);
 	}
@@ -55,14 +60,22 @@ namespace FusionEngine
 		lhs->_setPosition(Vector2(x, y));
 	}
 
+	void PhysBody_GetPosition(Vector2 &out, PhysicsBody* lhs)
+	{
+		out = lhs->GetPosition();
+	}
+
 
 	static void registerPhysBodyMethods(asIScriptEngine* engine)
 	{
 		int r;
-		r = engine->RegisterObjectBehaviour("Body", asBEHAVE_CONSTRUCT, "void f(World@)", asFUNCTIONPR(PhysBodyConstructor, (PhysicsWorld*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		//r = engine->RegisterObjectBehaviour("Body", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(PhysBodyConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void set_world(World)", asMETHOD(PhysicsBody, SetWorld), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asMETHOD(PhysicsBody, SetMass), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void attach_shape(Shape@)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
+		//r = engine->RegisterObjectMethod("Body", "void attach_shape(Shape)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void attach_shape(CircleShape)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_position(float, float)", asFUNCTION(PhysBody_SetPosition), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTIONPR(PhysBody_GetPosition,(void),Vector2), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	}
 
 	void ConstructCircleShape(PhysicsBody *o, float centre, float outer, CircleShape *obj)
@@ -78,8 +91,8 @@ namespace FusionEngine
 	static void registerPhysShapeMethods(asIScriptEngine* engine)
 	{
 		int r;
-		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float, CircleShape*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, CircleShape*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body&,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float, CircleShape*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body&,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, CircleShape*), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	}
 
 	PhysicsBody* PhysWorld_CreateBody(PhysicsWorld* lhs)
@@ -90,17 +103,21 @@ namespace FusionEngine
 	static void registerPhysWorldMethods(asIScriptEngine* engine)
 	{
 		int r;
-		r = engine->RegisterObjectMethod("World", "void create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void attach_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  assert( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "Body@ create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void attach_body(Body&)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  assert( r >= 0 );
 	}
 
 	static void RegisterPhysicsTypes(asIScriptEngine* engine)
 	{
+		//RegisterType<PhysicsBody>("Body", engine);
 		PhysicsBody::registerType<PhysicsBody>(engine, "Body");
-		Shape::registerType<Shape>(engine, "Shape");
-		CircleShape::registerType<CircleShape>(engine, "CircleShape");
+		//RegisterTypePOD<Shape>("Shape", engine);
+		//Shape::registerType<Shape>(engine, "Shape");
+		RegisterType<CircleShape>("CircleShape", engine);
+		//CircleShape::registerType<CircleShape>(engine, "CircleShape");
 		//PhysicsWorld::registerType(engine);
-		RegisterTypeNoHandle<PhysicsWorld>("World", engine);
+		//RegisterTypeNoHandle<PhysicsWorld>("World", engine);
+		RegisterTypePOD<PhysicsWorld>("World", engine);
 
 		registerPhysBodyMethods(engine);
 		registerPhysShapeMethods(engine);

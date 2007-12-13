@@ -52,6 +52,12 @@ namespace FusionEngine
 	class Shape : public RefCounted
 	{
 	public:
+		Shape() {}
+		//Shape(const Shape& other)
+		//	: m_Body(other.m_Body),
+		//	m_Offset(other.m_Offset),
+		//	m_Shape(other.m_Shape)
+		//{}
 		Shape(PhysicsBody* body);
 		Shape(PhysicsBody* body, const Vector2& offset);
 		~Shape();
@@ -112,6 +118,7 @@ namespace FusionEngine
 	class CircleShape : public Shape
 	{
 	public:
+		CircleShape() {}
 		CircleShape(PhysicsBody* body, float centreRad, float outerRad, const Vector2& offset);
 		CircleShape(PhysicsBody* body, float radius, const Vector2& offset);
 		~CircleShape();

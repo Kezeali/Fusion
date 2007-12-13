@@ -376,7 +376,20 @@ namespace FusionEngine
 			cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
 	}
 
+	void PhysicsWorld::RemoveShape(ShapePtr shape)
+	{
+		if (shape->GetBody() && shape->GetBody()->IsStatic())
+			RemoveStaticShape(shape);
+		else
+			cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
+	}
+
 	void PhysicsWorld::RemoveStaticShape(Shape* shape)
+	{
+		cpSpaceRemoveStaticShape(m_ChipSpace, shape->GetShape());
+	}
+
+	void PhysicsWorld::RemoveStaticShape(ShapePtr shape)
 	{
 		cpSpaceRemoveStaticShape(m_ChipSpace, shape->GetShape());
 	}
