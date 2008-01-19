@@ -453,9 +453,16 @@ namespace FusionEngine
 		RegisterResourcePointer<CL_Surface>("Image", engine);
 
 		int r;
+		// draw(x, y)
 		r = engine->RegisterObjectMethod("Image",
 			"void draw(float, float)",
 			asFUNCTIONPR(Image_Draw, (float, float), void),
+			asCALL_CDECL_OBJFIRST);
+		assert(r >= 0 && "Failed to register draw()");
+		// draw(x, y, angle)
+		r = engine->RegisterObjectMethod("Image",
+			"void draw(float, float, float)",
+			asFUNCTIONPR(Image_Draw_Angle, (float, float, float), void),
 			asCALL_CDECL_OBJFIRST);
 		assert(r >= 0 && "Failed to register draw()");
 	}

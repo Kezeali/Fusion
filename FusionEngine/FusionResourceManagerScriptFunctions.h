@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ResourceManager
-#define Header_FusionEngine_ResourceManager
+#ifndef Header_FusionEngine_ResourceManagerScripting
+#define Header_FusionEngine_ResourceManagerScripting
 
 #if _MSC_VER > 1000
 #pragma once
@@ -80,7 +80,7 @@ namespace FusionEngine
 	}
 
 	//! Draws the image pointed to by the given resource pointer
-	static void Image_Draw(ResourcePointer<CL_Surface> *lhs, float x, float y, float angle)
+	static void Image_Draw_Angle(ResourcePointer<CL_Surface> *lhs, float x, float y, float angle)
 	{
 		if (!lhs->IsValid())
 			return;
@@ -89,10 +89,41 @@ namespace FusionEngine
 		if (data != NULL)
 		{
 			CL_Surface_DrawParams2 dp;
-			dp.rotate_angle = angle;
+			dp.srcX = 0;
+			dp.srcY = 0;
+			dp.srcWidth = data->get_width();
+			dp.srcHeight = data->get_height();
+			dp.destX = 0;
+			dp.destY = 0;
+			dp.destZ = 0;
+			dp.red = 255;
+			dp.green = 255;
+			dp.blue = 255;
+			dp.alpha = 255;
+			//dp.blend_src = CL_BlendFunc::blend_one;
+			//dp.blend_dest = CL_BlendFunc::blend_one;
+			//dp.blendfunc_src_alpha = CL_BlendFunc::blend_one;
+			//dp.blendfunc_dest_alpha = CL_BlendFunc::blend_one;
+			dp.scale_x = 1.0;
+			dp.scale_y = 1.0;
+			dp.translate_origin = CL_Origin::origin_top_left;
+			dp.translate_x = 0;
+			dp.translate_y = 0;
+			dp.rotate_angle = 0.0;
+			dp.rotate_pitch = 0.0;
+			dp.rotate_yaw = 0.0;
+			dp.rotate_origin = CL_Origin::origin_top_left;
+			dp.rotate_x = 0;
+			dp.rotate_y = 0;
+			dp.sub_pixel_accuracy = true;
+
+			dp.rotate_origin = CL_Origin::origin_center;
+			dp.rotate_angle = fe_radtodeg( angle );
 			dp.destX = x;
 			dp.destY = y;
 			data->draw(dp);
+			//data->set_angle(fe_radtodeg(angle));
+			//data->draw(x, y);
 		}
 	}
 
@@ -320,3 +351,5 @@ namespace FusionEngine
 	}
 
 }
+
+#endif

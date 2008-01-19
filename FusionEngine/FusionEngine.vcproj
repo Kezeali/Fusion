@@ -508,6 +508,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionResourceManagerScriptFunctions.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionResourcePointer.h"
 				>
 			</File>
