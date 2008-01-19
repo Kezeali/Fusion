@@ -63,9 +63,10 @@ namespace FusionEngine
 		~Shape();
 
 	public:
-		virtual cpShape* GetShape() const;
+		cpShape* GetShape() const;
 
-		virtual cpFloat GetInertia(float mass = 0) const = 0;
+		//virtual cpFloat GetInertia(float mass = 0) const = 0;
+		cpFloat GetInertia(float mass = 0) const;
 
 		void SetBody(PhysicsBody* body)
 		{
@@ -108,7 +109,7 @@ namespace FusionEngine
 
 	public:
 		//cpShape* GetShape() const;
-		virtual cpFloat GetInertia(float mass) const;
+		cpFloat GetInertia(float mass) const;
 
 	protected:
 		//cpPolyShape* m_Poly;
@@ -125,7 +126,7 @@ namespace FusionEngine
 
 	public:
 		//cpShape* GetShape() const;
-		virtual cpFloat GetInertia(float mass) const;
+		cpFloat GetInertia(float mass) const;
 
 		void SetHoop(float centreRad, float outerRad);
 

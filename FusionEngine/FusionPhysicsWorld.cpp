@@ -127,6 +127,8 @@ namespace FusionEngine
 		// Don't ad it if it's static
 		if (!body->IsStatic())
 			cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+
+		body->SetWorld(this); // :)
 		//m_CollisionGrid->AddBody(body);
 	}
 	
@@ -146,6 +148,11 @@ namespace FusionEngine
 				break;
 			}
 		}
+	}
+
+	const BodyList& PhysicsWorld::GetBodies() const
+	{
+		return m_Bodies;
 	}
 
 	///////////

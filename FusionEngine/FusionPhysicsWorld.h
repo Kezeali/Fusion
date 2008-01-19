@@ -124,7 +124,7 @@ namespace FusionEngine
 		//typedef std::vector<PhysicsBody *> BodyList;
 
 	public:
-		//! [depreciated] Adds a body to the world so it will have physics applied to it.
+		//! Adds a body to the world so it will have physics applied to it.
 		/*!
 		 * This is retainded not only for backwards compatibility, but also to allow you 
 		 * to bypass the factory methods and add your crazy custom-class bodies.
@@ -132,11 +132,14 @@ namespace FusionEngine
 		 * \param body Pointer to the body to add.
 		 */
 		void AddBody(PhysicsBody *body);
-		//! [depreciated] Removes the given body.
+		//! Removes the given body.
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
 		void RemoveBody(PhysicsBody *body);
+
+		//! Returns a list of bodies currently in the world
+		const BodyList& GetBodies() const;
 
 		//! Creates a body in the world so it will have physics applied to it.
 		/*!

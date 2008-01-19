@@ -2,6 +2,8 @@
 /// Class
 #include "FusionResourceManager.h"
 
+#include "FusionResourceManagerScriptFunctions.h"
+
 /// Fusion
 #include "FusionConsole.h"
 

@@ -339,7 +339,8 @@ namespace FusionEngine
 
 	ScriptObject::~ScriptObject()
 	{
-		m_Struct->Release();
+		if (m_Struct != NULL)
+			m_Struct->Release();
 	}
 
 	int ScriptObject::GetTypeId() const

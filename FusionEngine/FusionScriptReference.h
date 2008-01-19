@@ -163,7 +163,7 @@ namespace FusionEngine
 	class ScriptObject
 	{
 	public:
-		ScriptObject() : m_Struct(0) {}
+		ScriptObject() : m_Struct(NULL) {}
 		//! Constructor
 		ScriptObject(asIScriptStruct* script_struct);
 		//! Copy constructor

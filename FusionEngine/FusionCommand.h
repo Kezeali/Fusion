@@ -47,16 +47,26 @@ namespace FusionEngine
 			m_Right(false),
 			m_PrimaryFire(false),
 			m_SecondaryFire(false),
-			m_SpecialFire(false)
+			m_SpecialFire(false),
+			m_ButtonDelta(0)
 		{}
 
 	public:
+		// 0000 0001 (1)
 		bool m_Thrust;
+		// 0000 0010 (2)
 		bool m_Left;
+		// 0000 0100 (4)
 		bool m_Right;
+		// 0000 1000 (8)
 		bool m_PrimaryFire;
+		// 0001 0000 (16)
 		bool m_SecondaryFire;
+		// 0010 0000 (32)
 		bool m_SpecialFire;
+
+		// 'Button-has-changed' flags
+		unsigned int m_ButtonDelta;
 		
 	};
 

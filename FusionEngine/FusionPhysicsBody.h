@@ -146,7 +146,7 @@ namespace FusionEngine
 		//! Sets the type ID for this object.
 		void SetType(int type);
 		//! Does what you think it does.
-		virtual void SetMass(float mass);
+		void SetMass(float mass);
 		
 		virtual void RecalculateInertia();
 		//! Sets the radius used for torque equations.
@@ -158,7 +158,7 @@ namespace FusionEngine
 		//! Gets the type of this object
 		int GetType();
 		//! Gets the mass of this object
-		virtual float GetMass();
+		float GetMass();
 		//! Gets one over mass
 		virtual float GetInverseMass();
 		//! Gets the radius of this object
@@ -177,9 +177,9 @@ namespace FusionEngine
 		 * and added to the other forces, to make sure rotational velocity & step time
 		 * are taken into account.
 		 */
-		virtual void ApplyForceRelative(const Vector2 &force);
+		void ApplyForceRelative(const Vector2 &force);
 		//! Applies (scalar) force based on the current orientation and rotational velocity.
-		virtual void ApplyForceRelative(float force);
+		void ApplyForceRelative(float force);
 		//! Sets the constant used to apply damping to the body's movement.
 		virtual void SetCoefficientOfFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
@@ -189,7 +189,7 @@ namespace FusionEngine
 		//! We don't care about yo' torque.
 		virtual void SetRotationalVelocityDeg(float velocity);
 
-		virtual void SetRotationalVelocity(float velocity);
+		void SetRotationalVelocity(float velocity);
 
 		//! \name Collision Properties
 		//@{
@@ -201,9 +201,9 @@ namespace FusionEngine
 
 		cpBody* GetChipBody() const;
 
-		virtual void AttachShape(Shape* shape, bool toWorld = true);
-		virtual void DetachShape(Shape* shape, bool fromWorld = true);
-		virtual void ClearShapes(bool fromWorld = true);
+		void AttachShape(Shape* shape);
+		void DetachShape(Shape* shape);
+		void ClearShapes(bool fromWorld = true);
 
 		void AttachJoint(cpJoint* joint, bool toWorld = true);
 		void DetachJoint(cpJoint* joint, bool fromWorld = true);
@@ -304,17 +304,17 @@ namespace FusionEngine
 		//! \name State retreival.
 		//@{
 		//! Returns the current position
-		virtual const Vector2 &GetPosition();
+		const Vector2 &GetPosition();
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
-		virtual CL_Point GetPositionPoint() const;
+		CL_Point GetPositionPoint() const;
 
 		//! Gets the net constant (i.e. not 'relative') force applied to the body.
-		virtual const Vector2 &GetForce();
+		const Vector2 &GetForce();
 		//! Gets the net relative force applied to the body.
 		virtual const Vector2& GetRelativeForce() const;
 
-		virtual const Vector2 &GetAcceleration() const;
-		virtual const Vector2 &GetVelocity();
+		const Vector2 &GetAcceleration() const;
+		const Vector2 &GetVelocity();
 
 		//! Guess
 		virtual float GetCoefficientOfFriction() const;
@@ -327,8 +327,8 @@ namespace FusionEngine
 		virtual float GetRotationalVelocityRad() const;
 		virtual float GetRotationalVelocityDeg() const;
 
-		virtual float GetRotation() const;
-		virtual float GetRotationalVelocity() const;
+		float GetRotation() const;
+		float GetRotationalVelocity() const;
 		//@}
 
 		//! Returns true if this object is active.
@@ -397,7 +397,7 @@ namespace FusionEngine
 		 */
 		//@{
 		//! Sets the position.
-		virtual void _setPosition(const Vector2 &position);
+		void _setPosition(const Vector2 &position);
 
 		//! Sets the force.
 		virtual void _setForce(const Vector2 &force);

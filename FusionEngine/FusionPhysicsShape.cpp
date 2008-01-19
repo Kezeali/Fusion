@@ -54,6 +54,16 @@ namespace FusionEngine
 			m_Body->DetachShape(this);
 	}
 
+	cpFloat Shape::GetInertia(float mass) const
+	{
+		if (m_Shape->type == CP_POLY_SHAPE)
+			return ((PolyShape*)this)->GetInertia(mass);
+		else if (m_Shape->type == CP_CIRCLE_SHAPE)
+			return ((CircleShape*)this)->GetInertia(mass);
+		else
+			return 0;
+	}
+
 	bool Shape::IsStatic() const
 	{
 		if (m_Body)

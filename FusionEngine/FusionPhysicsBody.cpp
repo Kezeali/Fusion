@@ -246,7 +246,7 @@ namespace FusionEngine
 		return m_Body;
 	}
 
-	void PhysicsBody::AttachShape(Shape* shape, bool toWorld)
+	void PhysicsBody::AttachShape(Shape* shape)
 	{
 		shape->SetBody(this);
 		shape->GetShape()->collision_type = g_PhysBodyCpCollisionType;
@@ -259,7 +259,7 @@ namespace FusionEngine
 		m_Shapes.push_back(ShapePtr(shape));
 	}
 
-	void PhysicsBody::DetachShape(Shape* shape, bool remove /* = true */)
+	void PhysicsBody::DetachShape(Shape* shape)
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
@@ -269,10 +269,6 @@ namespace FusionEngine
 				cpBodySetMoment(m_Body, m_Body->i - shape->GetInertia());
 				shape->SetBody(NULL);
 				m_Shapes.erase(it);
-
-				// Remove from world
-				if (remove)
-					m_World->RemoveShape(shape);
 			}
 		}
 	}
@@ -335,7 +331,7 @@ namespace FusionEngine
 	{
 		if (bounce == 0.0f)
 		{
-			m_CollisionFlags ^= C_BOUNCE;
+			m_CollisionFlags &= ~C_BOUNCE;
 		}
 		else
 		{
@@ -351,7 +347,6 @@ namespace FusionEngine
 	{
 		m_RotationalVelocity = velocity;
 		m_Body->w = velocity;
-		cpBodySetAngle(m_Body, m_Body->a + velocity);
 	}
 
 	void PhysicsBody::SetRotationalVelocityDeg(float velocity)
@@ -364,7 +359,7 @@ namespace FusionEngine
 	{
 		m_RotationalVelocity = velocity;
 
-		m_Body->w = m_RotationalVelocity;
+		m_Body->w = velocity;
 
 		// Don't activate if this was a call to stop rotation!
 		if (velocity)
