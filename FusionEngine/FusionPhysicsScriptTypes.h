@@ -84,12 +84,14 @@ namespace FusionEngine
 		//r = engine->RegisterObjectMethod("Body", "void set_world(World)", asMETHOD(PhysicsBody, SetWorld), asCALL_THISCALL); assert( r >= 0 );
 		//r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asMETHOD(PhysicsBody, SetMass), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asFUNCTION(PhysBody_SetMass), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		//r = engine->RegisterObjectMethod("Body", "void attach_shape(Shape)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void attach_shape(CircleShape@)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_position(float, float)", asFUNCTION(PhysBody_SetPosition), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTIONPR(PhysBody_GetPosition,(void),Vector2), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_position()", asMETHOD(PhysicsBody,GetPosition), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void apply_force(Vector &in)", asMETHOD(PhysicsBody, ApplyForce), asCALL_THISCALL); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_force()", asMETHOD(PhysicsBody,GetForce), asCALL_THISCALL); assert( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void apply_thrust(float)", asFUNCTION(PhysBody_ApplyForceRelative), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody,GetVelocity), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "void set_rotational_velocity(float)", asMETHOD(PhysicsBody, SetRotationalVelocity), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "float get_rotational_velocity()", asMETHOD(PhysicsBody, GetRotationalVelocity), asCALL_THISCALL); assert(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetRotation), asCALL_THISCALL); assert(r >= 0);
@@ -144,6 +146,8 @@ namespace FusionEngine
 		//r = engine->RegisterObjectMethod("World", "Body create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
 		r = engine->RegisterObjectMethod("World", "void attach_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  assert( r >= 0 );
 		r = engine->RegisterObjectMethod("World", "void list_bodies()", asFUNCTION(PhysicsWorld_ListBodies), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void enable_wraparound()", asMETHOD(PhysicsWorld,ActivateWrapAround), asCALL_THISCALL);  assert( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void disable_wraparound()", asMETHOD(PhysicsWorld,DeactivateWrapAround), asCALL_THISCALL);  assert( r >= 0 );
 	}
 
 	// NB: Virtual functions may cause errors

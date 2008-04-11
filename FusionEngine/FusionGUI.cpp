@@ -3,8 +3,13 @@
 
 #include "FusionGUI.h"
 
-#include <CEGUI/CEGUIDefaultResourceProvider.h>
+#include "FusionCEGUIPhysFSResourceProvider.h"
 #include "FusionConsole.h"
+
+#include "FusionResourceManager.h"
+
+#include <CEGUI/CEGUITinyXMLParser.h>
+#include <CEGUI/CEGUIDefaultResourceProvider.h>
 
 namespace FusionEngine
 {
@@ -24,13 +29,25 @@ namespace FusionEngine
 		m_ShowMouseTimer(1000),
 		m_Display(window->get_gc())
 	{
-		// Just in case, I guess? (re-initialized in GUI::Initialise() after the CEGUI renderer has been setup)
+		// Just in case, I guess? (re-initialized in GUI::Initialise() after the CEGUI renderer has been set up)
 		m_GLState = CL_OpenGLState(window->get_gc());
 	}
 
 	GUI::~GUI()
 	{
 		CleanUp();
+	}
+
+	void GUI::Configure(const std::string& fname)
+	{
+		//ResourcePointer<TiXmlDocument> cfgResource = ResourceManager::getSingleton().GetResource("CEGUIConfig.xml", "XML");
+
+		//if (cfgResource.IsValid())
+		//{
+		//	TiXmlDocument* cfgDoc = cfgResource.GetDataPtr();
+		//	
+		//	TinyXPath::S_xpath_string(cfgDoc->RootElement(), "/ceguiconfig/paths/datafiles");
+		//}
 	}
 
 	bool GUI::Initialise()
@@ -40,23 +57,27 @@ namespace FusionEngine
 		try
 		{
 			using namespace CEGUI;
-			// -- Create a new system and renderer --
+			// -- Create a new system, renderer and resource provider --
 			CEGUI::OpenGLRenderer *renderer = new CEGUI::OpenGLRenderer(0, m_Display->get_width(), m_Display->get_height());
-			new CEGUI::System(renderer);
+			PhysFSResourceProvider* rp = new PhysFSResourceProvider(); // custom PhysFS resource provider
+
+			new CEGUI::System(renderer, rp);
+			CEGUI::Logger::getSingleton().setLoggingLevel(Insane);
+
+			//CEGUI::DefaultResourceProvider* rp = static_cast<CEGUI::DefaultResourceProvider*>
+   //     (CEGUI::System::getSingleton().getResourceProvider());
 
 			m_GLState = CL_OpenGLState(m_Display);
 			m_GLState.set_active();
 
 			// -- Setup the resource paths and groups --
-			DefaultResourceProvider* rp = static_cast<DefaultResourceProvider*>
-				(System::getSingleton().getResourceProvider());
 
-			rp->setResourceGroupDirectory("schemes", "../datafiles/schemes/");
-			rp->setResourceGroupDirectory("imagesets", "../datafiles/imagesets/");
-			rp->setResourceGroupDirectory("fonts", "../datafiles/fonts/");
-			rp->setResourceGroupDirectory("layouts", "../datafiles/layouts/");
-			rp->setResourceGroupDirectory("looknfeels", "../datafiles/looknfeel/");
-			rp->setResourceGroupDirectory("lua_scripts", "../datafiles/lua_scripts/");
+			rp->setResourceGroupDirectory("schemes", "datafiles/schemes/");
+			rp->setResourceGroupDirectory("imagesets", "datafiles/imagesets/");
+			rp->setResourceGroupDirectory("fonts", "datafiles/fonts/");
+			rp->setResourceGroupDirectory("layouts", "datafiles/layouts/");
+			rp->setResourceGroupDirectory("looknfeels", "datafiles/looknfeel/");
+			rp->setResourceGroupDirectory("lua_scripts", "datafiles/lua_scripts/");
 
 		  Imageset::setDefaultResourceGroup("imagesets");
       Font::setDefaultResourceGroup("fonts");
@@ -93,6 +114,8 @@ namespace FusionEngine
 
 			// -- Load a font --
 			FontManager::getSingleton().createFont("defaultfont.font");
+
+			//CEGUI::Logger::getSingleton().setLoggingLevel(Standard);
 		}
 		catch (CEGUI::Exception& e)
 		{

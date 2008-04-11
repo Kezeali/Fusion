@@ -28,6 +28,10 @@
 
 #include "FusionClientOptions.h"
 
+#include "FusionResourceManager.h"
+
+#include "FusionXMLLoader.h"
+
 namespace FusionEngine
 {
 
@@ -51,8 +55,11 @@ namespace FusionEngine
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename)
+		: m_NumLocalPlayers(0),
+		m_Rate(100),
+		m_LocalPort(1337)
 	{
-		ClientOptions();
+		m_PlayerOptions.resize(g_MaxLocalPlayers);
 
 		if (!LoadFromFile(filename))
 			SaveToFile(filename);
@@ -143,7 +150,109 @@ namespace FusionEngine
 
 	bool ClientOptions::LoadFromFile(const std::string &filename)
 	{
+		ResourceManager *rm = ResourceManager::getSingletonPtr();
+		if (rm == NULL)
+			return false;
+
+		try
+		{
+			ResourcePointer<TiXmlDocument> docResource = rm->GetResource<TiXmlDocument>(filename);
+			if (!docResource.IsValid())
+				throw FileNotFoundException("ClientOptions::LoadFromFile", "Couldn't open resource '" + filename + "'", __FILE__, __LINE__);
+
+			ticpp::Document doc(docResource.GetDataPtr());
+			ticpp::Element* pElem = doc.FirstChildElement();
+
+			if (pElem->Value() != "clientoptions")
+				throw FileTypeException("InputPluginLoader::LoadInputs", filename + " is not a client options file", __FILE__, __LINE__);
+
+			ticpp::Iterator< ticpp::Element > child;
+			for ( child = child.begin( pElem ); child != child.end(); child++ )
+			{
+				if (child->Value() == "var")
+				{
+					std::string name = child->GetAttribute("name");
+					if (name.empty()) continue;
+					std::string value = child->GetAttribute("value");
+					m_Variables[name] = value;
+
+					// Set hard-coded options
+					fe_tolower(value);
+					if (name == "console_logging")
+						m_ConsoleLogging = (value == "1" || value == "t" || value == "true");
+					else if (name == "num_local_players")
+						child->GetAttribute("value", &m_NumLocalPlayers);
+					else if (name == "localport")
+						child->GetAttribute("value", &m_LocalPort);
+				}
+				else if (child->Value() == "keys")
+				{
+					loadKeys(*child);
+				}
+			}
+		}
+		catch (ticpp::Exception &ex)
+		{
+			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
+
+			throw FileSystemException("ClientOptions::LoadFromFile", ex.what(), __FILE__, __LINE__);
+		}
+
 		return true;
+	}
+
+	bool ClientOptions::GetOption(const std::string &name, std::string *ret)
+	{
+		VarList::iterator itVar = m_Variables.find(name);
+		if (itVar == m_Variables.end())
+			return false;
+
+		ret->assign(itVar->second);
+		return true;
+	}
+
+	bool ClientOptions::GetOption(const std::string &name, int *ret)
+	{
+		VarList::iterator itVar = m_Variables.find(name);
+		if (itVar == m_Variables.end())
+			return false;
+
+		*ret = CL_String::to_int(itVar->second);
+		return true;
+	}
+
+	std::string ClientOptions::GetOption_str(const std::string &name)
+	{
+		return m_Variables[name];
+	}
+
+	bool ClientOptions::GetOption_bool(const std::string &name)
+	{
+		std::string value = m_Variables[name];
+		fe_tolower(value);
+		return (value == "1" || value == "t" || value == "true");
+	}
+
+	void ClientOptions::loadKeys(const ticpp::Element &keysroot)
+	{
+		if (keysroot.Value() != "keys")
+			return;
+
+		std::string player = keysroot.GetAttribute("player");
+		if (player == "default")
+			player = "";
+
+		ticpp::Iterator< ticpp::Element > child;
+		for ( child = child.begin( &keysroot ); child != child.end(); child++ )
+		{
+			if (child->Value() != "bind")
+				continue;
+
+			std::string key = child->GetAttribute("key");
+			std::string command = child->GetAttribute("command");
+
+			m_Controls.push_back( Control(player + command, key.c_str()[0], key, CL_Keyboard::get_device()) );
+		}
 	}
 
 	//void ClientOptions::DefaultPlayerControls(ObjectID player)

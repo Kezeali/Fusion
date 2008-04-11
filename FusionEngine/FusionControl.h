@@ -45,42 +45,42 @@ namespace FusionEngine
 		//! Defines the specific meanings of the Button property's value for this class
 		enum MouseAxisID { MOUSEX, MOUSEY };
 
-		std::string m_Name;
-		int m_Button;
-		std::string m_ButtonName;
+		// The name of the input which uses this control
+		std::string m_InputName;
+		// Universal name for the control (key, button, stick, etc.)
+		std::string m_ControlName;
 		CL_InputDevice m_Device;
+		// Cached control ID, used by the InputManager
+		int m_Code;
 		bool m_Analog;
-
-		bool m_State;
+		// 'Dead zone'
 		float m_AxisThreshold;
-		float m_Position;
+
+		InputState m_State;
+		
 
 	public:
 		//! Constructor
 		Control()
-			: m_State(false),
-			m_Button(0),
+			: m_Code(0),
 			m_Analog(false),
 			m_Device(CL_Keyboard::get_device()),
 			m_AxisThreshold(1.0f)
 		{}
 		//! Constructor +stuff
-		Control(std::string name, int button, std::string buttonName)
+		Control(std::string name, std::string controlName)
 			: m_Name(name),
-			m_Button(button),
 			m_Analog(false),
 			m_ButtonName(buttonName),
-			m_State(false),
 			m_Device(CL_Keyboard::get_device()),
 			m_AxisThreshold(1.0f)
 		{}
 		//! Constructor +stuff +device
-		Control(std::string name, int button, std::string buttonName, const CL_InputDevice& device)
+		Control(std::string name, std::string buttonName, const CL_InputDevice& device, int code)
 			: m_Name(name),
-			m_Button(button),
 			m_ButtonName(buttonName),
-			m_State(false),
 			m_Device(device),
+			m_Button(code),
 			m_AxisThreshold(1.0f)
 		{
 			if (device.get_type() == CL_InputDevice::joystick)
@@ -90,45 +90,45 @@ namespace FusionEngine
 		}
 	public:
 		//! Retrieves the Name property
-		const std::string& GetName() const
+		const std::string& GetInputName() const
 		{
-			return m_Name;
+			return m_InputName;
 		}
 		//! Sets the Name property
-		void SetName(const std::string& name)
+		void SetInputName(const std::string& name)
 		{
-			m_Name = name;
+			m_InputName = name;
 		}
 
-		//! Retrieves the Button property
-		int GetButton() const
+		//! Retrieves the Code property
+		int GetCode() const
 		{
-			return m_Button;
+			return m_Code;
 		}
-		//! Sets the Button property
-		void SetButton(int button)
+		//! Sets the Code property
+		void SetCode(int button)
 		{
-			m_Button = button;
+			m_Code = button;
 		}
 
-		//! Retrieves the ButtonName property
+		//! Retrieves the ControlName property
 		const std::string& GetButtonName() const
 		{
 			return m_ButtonName;
 		}
 		//! Sets the ButtonName property
-		void SetButton(const std::string&  buttonName)
+		void SetButton(const std::string& buttonName)
 		{
 			m_ButtonName = buttonName;
 		}
 
 		//! Retrieves the State property
-		bool GetState() const
+		bool IsDown() const
 		{
 			return m_State;
 		}
 		//! Sets the State property
-		void SetState(bool state)
+		void SetDown(bool state)
 		{
 			m_State = state;
 		}
@@ -139,7 +139,7 @@ namespace FusionEngine
 			return m_Position;
 		}
 		//! Sets the State property
-		void SetState(float position)
+		void SetPosition(float position)
 		{
 			m_Position = position;
 		}

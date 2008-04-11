@@ -18,24 +18,19 @@ class ship
 
 	void Preload()
 	{
-		imgBody = file.GetImage("body.png");
-		engineSounds.resize(2);
-		engineSounds[0] = file.GetSound("engine1.wav"); // short name
-		engineSounds[1] = resource_manager.GetSound("engine2.wav"); // full name
-
-		soundTimer = 0;
-		nextSound = 1;
-
 		XmlDocument entityDoc = file.GetXML("myship.xml");
 
-		console.println("loading: " + entityDoc.find("/entity/name/text()"));
+		console.println("Loading: " + entityDoc.find("/entity/name/text()"));
+
+		string body_file = entityDoc.xpath_string("/entity/images/body/text()");
+		string sound1_file = entityDoc.xpath_string("/entity/sounds/engine1/text()");
+		string sound2_file = entityDoc.xpath_string("/entity/sounds/engine2/text()");
 
 		if (!entityDoc.xpath("/entity/mass/text()", mass))
 		{
-			console.println("Couldnt load mass :(");
+			console.println("Couldn't load mass :(");
 			mass = 1.0;
 		}
-
 		if (!entityDoc.xpath("/entity/engineForce/text()", engineForce))
 		{
 			console.println("Couldnt load speed :(");
@@ -59,32 +54,41 @@ class ship
 		console.println("Rotation speed: " + rotVelocity);
 		console.println("Radius: " + radius);
 
-		// Physical properties
-		console.println("Creating body");
-		@physBody = @Body();
-		console.println("Body created.");
+		if (!body_file.empty())
+			imgBody = file.GetImage(body_file);
+		else
+			console.println("Preload failed: image tag incomplete");
 
-		console.println("Adding body to world");
+		if (!sound1_file.empty() && !sound2_file.empty())
+		{
+			engineSounds.resize(2);
+			engineSounds[0] = file.GetSound(sound1_file); // short name for the res_man object ('file')
+			engineSounds[1] = resource_manager.GetSound(sound2_file); // full name for the res_man object
+		}
+		else
+			console.println("Preload failed: one or more sound tags incomplete");
+
+		soundTimer = 0;
+		nextSound = 1;
+
+		// Physical properties
+		@physBody = @Body();
 		world.attach_body(physBody);
 
-		console.println("Setting position");
 		physBody.set_position(50, 120);
-
-		console.println("Setting mass");
 		physBody.set_mass(mass);
-		console.println("Success!");
 
 		CircleShape @shape = @CircleShape(physBody, 0.0f, radius);
-		console.println("Attaching shape");
 		physBody.attach_shape(shape);
 
-		console.println("Press [Primary Fire] to display print info");
+		console.println("Press [Primary Fire] to print info");
 	}
 	void DebugOutput()
 	{
-		Vector p; physBody.get_position(p);
+		Vector p = physBody.get_position();
+		Vector v = physBody.get_velocity();
 		console.println("p: " + p.x + ", " + p.y);
-		console.println("v: NOT IMPLEMENTED");
+		console.println("v: " + v.x + ", " + v.y);
 		console.println("r: " + physBody.get_angle());
 		console.println("w: " + physBody.get_rotational_velocity());
 	}
@@ -119,40 +123,43 @@ class ship
 		commandThrustChanged = false;
 	}
 
-	void SetCommand(Command cmd)
+	void SetCommand(int tick, int player)
 	{
-		commandThrustChanged = 
-			(currentCommand.thrust != cmd.thrust);
-
-		if (cmd.thrust)
-		{
+		// The new method:
+		if (input.is_active(player, tick, "thrust"))
 			physBody.apply_thrust(engineForce);
+		// ... this way 'input' (InputHandler) can store, serialize / deserialize
+		//  command objects any way it likes and thus we have a central location for
+		//  the back buffers, packet data generation, and using input (as above).
 
-			//if (currentCommand.thrust != cmd.thrust)
-			//	currentCommand.button_delta = currentCommand.button_delta | 1;
-			//else
-			//	currentCommand.button_delta &= ~1;
-		}
 
-		if (cmd.left)
-		{
-			physBody.set_rotational_velocity(-rotVelocity);
-		}
-		else if (cmd.right)
-		{
-			physBody.set_rotational_velocity(rotVelocity);
-		}
-		else
-		{
-			//console.println("Setting omega to 0");
-			physBody.set_rotational_velocity(0);
-			//console.println("Omega: " + physBody.get_rotational_velocity());
-		}
+		//commandThrustChanged = 
+		//	(currentCommand.thrust != cmd.thrust);
 
-		currentCommand = cmd;
+		//if (cmd.thrust)
+		//{
+		//	physBody.apply_thrust(engineForce);
+		//}
 
-		// Print debug info
-		if (cmd.primary_fire)
-			DebugOutput();
+		//if (cmd.left)
+		//{
+		//	physBody.set_rotational_velocity(-rotVelocity);
+		//}
+		//else if (cmd.right)
+		//{
+		//	physBody.set_rotational_velocity(rotVelocity);
+		//}
+		//else
+		//{
+		//	//console.println("Setting omega to 0");
+		//	physBody.set_rotational_velocity(0);
+		//	//console.println("Omega: " + physBody.get_rotational_velocity());
+		//}
+
+		//currentCommand = cmd;
+
+		//// Print debug info
+		//if (cmd.primary)
+		//	DebugOutput();
 	}
 };

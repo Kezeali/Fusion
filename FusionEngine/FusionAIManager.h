@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	const g_ASConfigAI = "AIConfig";
+	//const g_ASConfigAI = "AIConfig";
 
 	/*!
 	 * \brief

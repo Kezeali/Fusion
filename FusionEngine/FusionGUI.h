@@ -77,6 +77,8 @@ namespace FusionEngine
 		~GUI();
 
 	public:
+		//! Sets gui config
+		virtual void Configure(const std::string& configfilename);
 		//! Inits the gui
 		virtual bool Initialise();
 

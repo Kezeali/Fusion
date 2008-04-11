@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="FusionEngine"
 	ProjectGUID="{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}"
 	RootNamespace="FusionEngine"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -67,6 +68,8 @@
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -86,9 +89,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -147,6 +147,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -166,9 +168,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -193,6 +192,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionAudioLoader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionCEGUIPhysFSResourceProvider.h"
 				>
 			</File>
 			<File
@@ -288,6 +291,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionGlobalSystemsManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionGUI.h"
 				>
 			</File>
@@ -304,7 +311,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionInputHandler_ClanLib.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputHandler_OIS.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionInputMap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputPluginLoader.h"
 				>
 			</File>
 			<File
@@ -678,6 +697,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionCEGUIPhysFSResourceProvider.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionClientLoadingState.cpp"
 				>
 			</File>
@@ -751,6 +774,18 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputHandler_ClanLib.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputHandler_OIS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionInputPluginLoader.cpp"
 				>
 			</File>
 			<File

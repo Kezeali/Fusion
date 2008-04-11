@@ -36,7 +36,7 @@
 #include "FusionCommon.h"
 
 #include "FusionScriptingEngine.h"
-#include "FusionCommand.h"
+//#include "FusionCommand.h"
 
 /// Inherited
 #include "FusionPhysicsCallback.h"

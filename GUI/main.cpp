@@ -244,14 +244,17 @@ public:
 			m_ResMan->RegisterScriptElements(scEngW);
 
 			//scEngW->AddCode(script1, 0);
-			ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
-			if (!shipScript.IsValid())
-				throw CL_Error("Oh snap! Couldn't load ship.as!");
-			scEngW->AddCode(shipScript->c_str(), 0);
-			scEngW->BuildModule(0);
+			//ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
+			//if (!shipScript.IsValid())
+			//	throw CL_Error("Oh snap! Couldn't load ship.as!");
+			//scEngW->AddCode(shipScript->c_str(), 0);
+			//scEngW->BuildModule(0);
 
 			StateManager* stateman = new StateManager();
 
+			// Make sure GC is set correctly
+			CL_OpenGLState state(display.get_gc());
+			state.set_active();
 			GUI* gui = new GUI(&display);
 			stateman->AddState(gui);
 
@@ -263,16 +266,16 @@ public:
 			m_ResMan->PretagResource("IMAGE", "body.png", "body.png");
 
 
-			ScriptClass shipClass = scEngW->GetClass(0, "ship");
-			ScriptObject ship = shipClass.Instantiate();
+			//ScriptClass shipClass = scEngW->GetClass(0, "ship");
+			//ScriptObject ship = shipClass.Instantiate();
 
-			ScriptMethod preload = scEngW->GetClassMethod(ship, "void Preload()");//shipClass.GetMethod("void Preload()");
-			preload.SetTimeout(10000);
-			scEngW->Execute(ship, preload);
+			//ScriptMethod preload = scEngW->GetClassMethod(ship, "void Preload()");//shipClass.GetMethod("void Preload()");
+			//preload.SetTimeout(10000);
+			//scEngW->Execute(ship, preload);
 
-			ScriptMethod draw = shipClass.GetMethod("void Draw()");
-			ScriptMethod simulate = shipClass.GetMethod("void Simulate(uint)");
-			ScriptMethod setCommand = shipClass.GetMethod("void SetCommand(Command)");
+			//ScriptMethod draw = shipClass.GetMethod("void Draw()");
+			//ScriptMethod simulate = shipClass.GetMethod("void Simulate(uint)");
+			//ScriptMethod setCommand = shipClass.GetMethod("void SetCommand(Command)");
 			//int shipTypeId = scrEngine->GetTypeIdByDecl(0, "ship");
 			//asIScriptStruct* shipObject = (asIScriptStruct*)scrEngine->CreateScriptObject(shipTypeId);
 
@@ -327,17 +330,17 @@ public:
 					m_ImageC->draw(50, 50);
 				
 
-				Command cmd;
-				cmd.m_Thrust = input->IsButtonDown("P1Thrust");
-				
-				scEngW->Execute(ship, setCommand, &cmd);
+				//Command cmd;
+				//cmd.m_Thrust = input->IsButtonDown("P1Thrust");
+				//
+				//scEngW->Execute(ship, setCommand, &cmd);
 
-				scEngW->Execute(ship, simulate, split);
+				//scEngW->Execute(ship, simulate, split);
 
-				if (!CL_Keyboard::get_keycode(CL_KEY_SPACE))
-				{
-					scEngW->Execute(ship, draw);
-				}
+				//if (!CL_Keyboard::get_keycode(CL_KEY_SPACE))
+				//{
+				//	scEngW->Execute(ship, draw);
+				//}
 
 				
 				stateman->Update(split);

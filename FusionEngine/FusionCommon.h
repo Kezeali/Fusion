@@ -74,8 +74,10 @@
 #define USE_TINYXPATH
 
 #ifdef USE_TINYXPATH
+# define TIXML_USE_TICPP
 # define TIXML_USE_STL
-#include "../tinyxpath/xpath_static.h"
+#include "../tinyxpathpp/xpath_static.h"
+#include "../tinyxpathpp/ticpp.h"
 
 #else
 //#ifndef TIXML_USE_STL
@@ -185,6 +187,17 @@ namespace FusionEngine
 #endif
 	}
 
+	//! Converts an int to a C string
+	//static inline void fe_itoa(int v, char &buffer, int radix = 10)
+	//{
+	//	_itoa_s(v, buffer, radix);
+	//}
+//#ifdef _WIN32
+//#define fe_itoa(v, &buffer, radix) _itoa_s(v, buffer, radix)
+//#else
+//#define fe_itoa(v, &buffer, radix) itoa(v, buffer, radix)
+//#endif
+
 
 	//! Returns the bigger value
 	template<class T>
@@ -231,7 +244,7 @@ namespace FusionEngine
 	// --Forward declarations--
 	///////////////////////////
 	//! \todo List forward declarations in alphabetical order
-	class Archive;
+	//class Archive;
 	class Control;
 	class ClientOptions;
 	class ServerOptions;
@@ -272,6 +285,7 @@ namespace FusionEngine
 	class PackSyncServer;
 	class LoadingStage;
 	class ResourceContainer;
+	class InputPluginLoader;
 
 
 	///////////////

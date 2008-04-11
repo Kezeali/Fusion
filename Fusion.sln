@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FusionEngine", "FusionEngine\FusionEngine.vcproj", "{B4FF5612-A23D-4947-BF3F-E2CFF816C7FF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BitmaskPhysics", "BitmaskPhysics\BitmaskPhysics.vcproj", "{2E1C63BB-FD5B-45AE-8C84-0271A2508C2C}"
@@ -16,8 +16,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ResourceManagerTest", "ResourceManagerTest\ResourceManagerTest.vcproj", "{4DBD9BF0-8E93-483D-8AE2-09C8998847F0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUIHUDTest", "GUIHUDTest\GUIHUDTest.vcproj", "{0B69F515-5536-4515-A78D-7F4B11464C37}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GPC4CP", "GPC4CP\GPC4CP.vcproj", "{C5BBA26B-647E-4E5A-90FD-6B128A893C98}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NetTest", "NetTest\NetTest.vcproj", "{8C6F3057-1A30-448C-8FEB-AC6B573638A3}"
 EndProject
@@ -59,10 +57,6 @@ Global
 		{0B69F515-5536-4515-A78D-7F4B11464C37}.Debug|Win32.Build.0 = Debug|Win32
 		{0B69F515-5536-4515-A78D-7F4B11464C37}.Release|Win32.ActiveCfg = Release|Win32
 		{0B69F515-5536-4515-A78D-7F4B11464C37}.Release|Win32.Build.0 = Release|Win32
-		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Debug|Win32.Build.0 = Debug|Win32
-		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Release|Win32.ActiveCfg = Release|Win32
-		{C5BBA26B-647E-4E5A-90FD-6B128A893C98}.Release|Win32.Build.0 = Release|Win32
 		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Debug|Win32.Build.0 = Debug|Win32
 		{8C6F3057-1A30-448C-8FEB-AC6B573638A3}.Release|Win32.ActiveCfg = Release|Win32

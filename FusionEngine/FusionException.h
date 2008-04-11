@@ -124,7 +124,7 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		FileSystemException(const std::string& name, const std::string& origin, const std::string& message, const char* file, long line)
-			: Exception("FileSystemException" + name, origin, message, file, line)
+			: Exception("FileSystemException:" + name, origin, message, file, line)
 		{
 		}
 		//! Constructor (full)

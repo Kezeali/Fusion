@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2008 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -29,6 +29,8 @@
 
 #include "FusionCommon.h"
 
+#include <OIS/OIS.h>
+
 /// Inherited
 #include "FusionSingleton.h"
 
@@ -40,6 +42,67 @@
 
 namespace FusionEngine
 {
+	static const float g_InputAnalogFuzz = 0.005f;
+
+	/*!
+	 * \brief
+	 * Used by the control human-readable name map. Loaded from XML
+	 */
+	class KeyName
+	{
+	public:
+		// String mapped to this key (used in config files, internally, etc.)
+		std::string m_Name;
+		// Control device
+		std::string m_Device;
+		// Scancode, button ID - however the device identifies this control
+		int m_Code;
+		// Shown in the UI
+		std::string m_Description;
+	};
+
+	class InputState
+	{
+	public:
+		InputState()
+			: m_Down(false), m_Value(0.0f)
+		{}
+		bool m_Down;
+		bool m_Changed; // If the button was pressed / released / both since the last command
+		float m_Value;
+	};
+
+	class Command
+	{
+	public:
+		typedef std::map<std::string, InputState> InputStateMap;
+		InputStateMap m_States;
+
+		void SetState(const std::string &input_name, bool isDown, bool value)
+		{
+			InputState &state = m_States[input_name];
+			state.m_Down = isDown;
+			state.m_Value = value;
+		}
+
+		void GetDelta(const Command &previousCommand)
+		{
+			for (InputStateMap::iterator it = previousCommand.m_States.begin(), end = previousCommand.m_States.end(); it != end; ++it)
+			{
+				InputState &currentState = m_States[it->first];
+				if (it->second.m_Down != currentState.m_Down || abs(it->second.m_Value - currentState.m_Value) > g_InputAnalogFuzz)
+					currentState.m_Changed = true;
+		}
+
+		bool IsDown(const std::string &input)
+		{
+			return m_States[input].m_Down;
+		}
+		float GetValue(const std::string &input)
+		{
+			return m_States[input].m_Value;
+		}
+	};
 
 	/*!
 	 * \brief
@@ -51,24 +114,25 @@ namespace FusionEngine
 	 * to provide access to each player's Input. Like 
 	 * <code>PlayerInputs::getSingleton().player[1].IsButtonPressed("Left");</code>
 	 */
-	class FusionInput : public FusionEngine::Singleton<FusionInput>
+	class InputManager : public FusionEngine::Singleton<InputManager>
 	{
 	public:
 		//! Basic constructor.
-		FusionInput();
+		InputManager();
+		//! Constructor.
+		InputManager(CL_DisplayWindow *window);
 		//! Constructor. +ClientOptions
-		FusionInput(const ClientOptions *from);
+		InputManager(CL_DisplayWindow *window, const ClientOptions *from);
+		//! Deconstructor
+		~InputManager();
 
 	public:
 		//! Input names mapped to controls
 		typedef std::map<std::string, Control> ControlMap;
 
-		//! Typedef for ship inputs
-		typedef std::vector<PlayerInputMap> PlayerInputMapList;
-		//! Typedef for ship inputs
-		typedef std::vector<ShipInput> ShipInputList;
-
-		enum ControlDeviceType { KEYBOARD, GAMEPAD, MOUSE, NOTHING };
+		//typedef std::map<std::string, InputState> Command;
+		typedef std::vector<Command> CommandList;
+		typedef std::vector<CommandList> PlayerCommandLists;
 
 	public:
 		/*!
@@ -84,12 +148,16 @@ namespace FusionEngine
 		 * \sa PlayerInputMap | GlobalInputMap
 		 */
 		bool Test();
-		//! Sets up the input slots.
+		//! Sets up the input manager.
 		void Initialise();
+		//! Drops any settings
+		void CleanUp();
 		//! Activates the input handler.
 		void Activate();
 		//! Unbinds inputs. Call when going to the menu.
 		void Suspend();
+
+		void Update(unsigned int split);
 
 		//! Sets up inputs
 		void SetInputMaps(const ClientOptions *from);
@@ -101,19 +169,28 @@ namespace FusionEngine
 		bool IsButtonDown(const std::string& name, unsigned int filter = 0) const;
 		float GetAnalogValue(const std::string& name, unsigned int filter = 0) const;
 
+		void CreateCommand(int tick, unsigned int split, unsigned int player);
+
 		float GetMouseSensitivity() const;
 
-		//! Returns the currently pressed inputs for the given ship.
-		ShipInput GetShipInputs(ObjectID player) const;
-		//! Returns the currently pressed inputs for all ships.
-		ShipInputList GetAllShipInputs() const;
-		//! Returns the currently pressed global inputs.
-		GlobalInput GetGlobalInputs() const;
+		////! Returns the currently pressed inputs for the given ship.
+		//ShipInput GetShipInputs(ObjectID player) const;
+		////! Returns the currently pressed inputs for all ships.
+		//ShipInputList GetAllShipInputs() const;
+		////! Returns the currently pressed global inputs.
+		//GlobalInput GetGlobalInputs() const;
 
 	private:
 		ControlMap m_ControlMap;
+
+		//PlayerCommandLists m_PlayerCommands;
+
+		InputPluginLoader *m_PluginLoader;
+
 		//! The InputHandler will not be considered active till this reaches zero.
 		int m_SuspendRequests;
+
+		unsigned int m_CommandBufferLength;
 
 		/*!
 		 * \brief
@@ -124,15 +201,15 @@ namespace FusionEngine
 		//! Slot container for inputs
 		CL_SlotContainer m_Slots;
 
-		//! Individual input setup
-		PlayerInputMapList m_PlayerInputMaps;
-		//! Global input setup
-		GlobalInputMap m_GlobalInputMap;
+		////! Individual input setup
+		//PlayerInputMapList m_PlayerInputMaps;
+		////! Global input setup
+		//GlobalInputMap m_GlobalInputMap;
 
-		//! Individual input state data
-		ShipInputList m_ShipInputData;
-		//! Global input state data
-		GlobalInput m_GlobalInputData;
+		////! Individual input state data
+		//ShipInputList m_ShipInputData;
+		////! Global input state data
+		//GlobalInput m_GlobalInputData;
 
 		// Mouse movement multiplier
 		float m_MouseSensitivity;
@@ -140,6 +217,9 @@ namespace FusionEngine
 		// Used when polling mouse movement
 		int m_DisplayCenterX;
 		int m_DisplayCenterY;
+
+		//! Loads human readable and UI control (key / button, etc) names
+		void loadControlNames(const ticpp::Document& defDocument);
 
 		//! Handle keyboard / keybased input. Down
 		void onKeyDown(const CL_InputEvent &key);

@@ -30,7 +30,10 @@
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionResourceManager.h"
 
-#include "../FusionEngine/FusionCommand.h"
+#include "../FusionEngine/FusionInputPluginLoader.h"
+#include "../FusionEngine/FusionClientOptions.h"
+
+//#include "../FusionEngine/FusionCommand.h"
 
 #include <boost/smart_ptr.hpp>
 
@@ -138,13 +141,35 @@ private:
 
 	bool Update(unsigned int split)
 	{
-		Command cmd;
-		cmd.m_Thrust = m_Input->IsButtonDown("Thrust", 0);
-		cmd.m_Left = m_Input->IsButtonDown("Left", 0);
-		cmd.m_Right = m_Input->IsButtonDown("Right", 0);
-		cmd.m_PrimaryFire = m_Input->IsButtonDown("PrimaryFire", 0);
+		//Command cmd;
+		//cmd.m_Thrust = m_Input->IsButtonDown("Thrust", 0);
+		//cmd.m_Left = m_Input->IsButtonDown("Left", 0);
+		//cmd.m_Right = m_Input->IsButtonDown("Right", 0);
+		//cmd.m_PrimaryFire = m_Input->IsButtonDown("PrimaryFire", 0);
 
-		m_ScriptManager->Execute(mso_Ship, msm_SetCommand, &cmd);
+		ScriptObject cmd = m_ScriptManager->CreateObject(0, "Command");
+		// TODO: write the script fn generator to create the function which will create
+		//  command objects (in InputPL)
+
+		asIScriptStruct *cmdStruct = cmd.GetScriptStruct();
+		bool bTrue = true;
+		for (int i = 0; i<cmdStruct->GetPropertyCount(); i++)
+		{
+			std::string prop(cmdStruct->GetPropertyName(i));
+			if (prop == "delta")
+				continue;
+
+			if (m_Input->IsButtonDown(prop, 1))
+			{
+				bool *someCmd = (bool*)cmdStruct->GetPropertyPointer(i);
+				someCmd = &bTrue;
+			}
+		}
+
+		bool *someCmd = (bool*)cmdStruct->GetPropertyPointer(0);
+		someCmd = &bTrue;
+
+		m_ScriptManager->Execute(mso_Ship, msm_SetCommand, cmdStruct);
 
 		m_ScriptManager->Execute(mso_Ship, msm_Simulate, split);
 
@@ -158,17 +183,17 @@ private:
 
 	void registerScriptTypes(ScriptingEngine* manager)
 	{
-		int r;
-		asIScriptEngine* engine = manager->GetEnginePtr();
+		//int r;
+		//asIScriptEngine* engine = manager->GetEnginePtr();
 
-		RegisterType<Command>("Command", engine);
+		//RegisterType<Command>("Command", engine);
 
-		r = engine->RegisterObjectProperty("Command", "bool thrust", offsetof(Command, m_Thrust));
-		assert(r >= 0 && "Failed to register object type");
-		engine->RegisterObjectProperty("Command", "bool left", offsetof(Command, m_Left));
-		engine->RegisterObjectProperty("Command", "bool right", offsetof(Command, m_Right));
-		engine->RegisterObjectProperty("Command", "bool primary_fire", offsetof(Command, m_PrimaryFire));
-		engine->RegisterObjectProperty("Command", "bool button_delta", offsetof(Command, m_ButtonDelta));
+		//r = engine->RegisterObjectProperty("Command", "bool thrust", offsetof(Command, m_Thrust));
+		//assert(r >= 0 && "Failed to register object type");
+		//engine->RegisterObjectProperty("Command", "bool left", offsetof(Command, m_Left));
+		//engine->RegisterObjectProperty("Command", "bool right", offsetof(Command, m_Right));
+		//engine->RegisterObjectProperty("Command", "bool primary_fire", offsetof(Command, m_PrimaryFire));
+		//engine->RegisterObjectProperty("Command", "bool button_delta", offsetof(Command, m_ButtonDelta));
 	}
 
 public:
@@ -189,146 +214,179 @@ public:
 
 		Logger* logger = 0;
 		ConsoleStdOutWriter* cout = 0;
+		Console* console = 0;
 
-		Console* console = new Console;
-		cout = new ConsoleStdOutWriter();
-		cout->Activate();
-		logger = new Logger(true);
-
-		////////////////////
-		// Scripting Manager
-		m_ScriptManager = new ScriptingEngine;
-		asIScriptEngine* asEngine = m_ScriptManager->GetEnginePtr();
-
-		registerScriptTypes(m_ScriptManager);
-		RegisterPhysicsTypes(asEngine);
-
-		/////////////////
-		// Input Manager
-		m_Input = new FusionInput();
-
-		if (!m_Input->Test())
-			throw CL_Error("Input handler could not be started.");
-		m_Input->Initialise();
-		SendToConsole("InputHandler started successfully");
-
-		m_Input->MapControl('W', "Thrust", 0);
-		m_Input->MapControl('A', "Left", 0);
-		m_Input->MapControl('D', "Right", 0);
-		m_Input->MapControl(CL_KEY_SPACE, "PrimaryFire", 0);
-
-		m_Input->MapControl('B', "Debug", 0);
-	
-		////////////////////
-		// Resource Manager
-		m_ResMan = new ResourceManager(argv);
-		m_ResMan->AddResourceLoader(new XMLLoader());
-		m_ResMan->AddResourceLoader(new TextLoader());
-
-		///////////////////////
-		// Register globals and some more types
-		m_World = new PhysicsWorld();
-		m_ScriptManager->RegisterGlobalObject("World world", (void*) m_World);
-
-		m_ResMan->RegisterScriptElements(m_ScriptManager);
-		console->RegisterScriptElements(m_ScriptManager);
-
-		////////////////////////////
-		// GUI state & StateManager
-		new GUI(&dispWindow);
-		StateManager *stateman = new StateManager();
-		stateman->AddState(GUI::getSingletonPtr());
-
-		ConsoleGUI* conGUI = new ConsoleGUI();
-		conGUI->Initialise();
-		//stateman->AddState(conGUI);
-
-		////////////////
-		// Phys World
-		m_World->Initialise(800, 600);
-		m_World->SetMaxVelocity(20);
-		m_World->SetDamping(0.8);
-		m_World->SetBodyDeactivationPeriod(10000);
-		m_World->SetDeactivationVelocity(0.05f);
-		m_World->SetBitmaskRes(4);
-		m_World->DeactivateWrapAround();
-
-
-		//////////////////
-		// Load some code
-		ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
-		if (!shipScript.IsValid())
-			throw CL_Error("Oh snap! Couldn't load ship.as!");
-		// Compile the code
-		m_ScriptManager->AddCode(shipScript->c_str(), 0);
-		if (!m_ScriptManager->BuildModule(0))
+		try
 		{
-			conWindow.display_close_message();
-			return 1;
-		}
+			console = new Console;
+			cout = new ConsoleStdOutWriter();
+			cout->Activate();
+			logger = new Logger(false);
 
-		/////////////////////////
-		// Get script references
-		mso_Ship = m_ScriptManager->CreateObject(0, "ship");
+			////////////////////
+			// Scripting Manager
+			m_ScriptManager = new ScriptingEngine;
+			asIScriptEngine* asEngine = m_ScriptManager->GetEnginePtr();
 
-		ScriptMethod preload = m_ScriptManager->GetClassMethod(mso_Ship, "void Preload()");
-#ifdef _DEBUG
-		preload.SetTimeout(300000); // Give it some extra time to run
-#else
-		preload.SetTimeout(10000);
-#endif
-		m_ScriptManager->Execute(mso_Ship, preload);
-
-		msm_Simulate = m_ScriptManager->GetClassMethod(mso_Ship, "void Simulate(uint)");
-		msm_SetCommand = m_ScriptManager->GetClassMethod(mso_Ship, "void SetCommand(Command)");
-		msm_Draw = m_ScriptManager->GetClassMethod(mso_Ship, "void Draw()");
-
-		msm_DebugPrint = m_ScriptManager->GetClassMethod(mso_Ship, "void DebugOutput()");
-
-
-		unsigned int inputTimer = 0;
-		bool debug = true;
+			registerScriptTypes(m_ScriptManager);
+			RegisterPhysicsTypes(asEngine);
 		
-		unsigned int lastframe = CL_System::get_time();
-		unsigned int split = 0;
+			////////////////////
+			// Resource Manager
+			m_ResMan = new ResourceManager(argv);
+			m_ResMan->AddResourceLoader(new XMLLoader());
+			m_ResMan->AddResourceLoader(new TextLoader());
 
-		while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
-		{
-			dispWindow.get_gc()->clear(CL_Color(0, 0, 0));
+			//////////////////////
+			// Load client options
+			ClientOptions* co = new ClientOptions("clientoptions.xml");
 
-			split = CL_System::get_time() - lastframe;
-			lastframe = CL_System::get_time();
+			if (co->GetOption_bool("console_logging"))
+				logger->ActivateConsoleLogging();
 
-			CL_System::keep_alive();
+			/////////////////
+			// Input Manager
+			m_Input = new FusionInput(co);
 
-			stateman->Update(split);
-			// Move the ships
-			Update(split);
+			if (!m_Input->Test())
+				throw CL_Error("Input handler could not be started.");
+			m_Input->Initialise();
+			SendToConsole("InputHandler started successfully");
+
+			///////////////////////
+			// Register globals and some more types
+			m_World = new PhysicsWorld();
+			m_ScriptManager->RegisterGlobalObject("World world", (void*) m_World);
+
+			m_ResMan->RegisterScriptElements(m_ScriptManager);
+			console->RegisterScriptElements(m_ScriptManager);
+
+			////////////////////////////
+			// GUI state & StateManager
+			CL_OpenGLState state(dispWindow.get_gc());
+			state.set_active(); // Makes sure GC is set correctly
+
+			new GUI(&dispWindow);
+			StateManager *stateman = new StateManager();
+			stateman->AddState(GUI::getSingletonPtr());
+
+			boost::shared_ptr<ConsoleGUI> conGUI = boost::shared_ptr<ConsoleGUI>(new ConsoleGUI());
+			//stateman->AddState(conGUI);
+			conGUI->Initialise();
+
+			////////////////
+			// Phys World
+			m_World->Initialise(800, 600);
+			m_World->SetMaxVelocity(20);
+			m_World->SetDamping(0.8);
+			m_World->SetBodyDeactivationPeriod(10000);
+			m_World->SetDeactivationVelocity(0.05f);
+			m_World->SetBitmaskRes(4);
+			m_World->DeactivateWrapAround();
+
+			/////////////////////////
+			// Load inputs (controls)
+			//m_Input->MapControl('W', "Thrust", 0);
+			//m_Input->MapControl('A', "Left", 0);
+			//m_Input->MapControl('D', "Right", 0);
+			//m_Input->MapControl(CL_KEY_SPACE, "PrimaryFire", 0);
+
+			//m_Input->MapControl('B', "Debug", 0);
+
+			//InputPluginLoader ipl;
+			//{
+			//	ResourcePointer<TiXmlDocument> inputDoc = m_ResMan->GetResource<TiXmlDocument>("input/coreinputs.xml");
+			//	ipl.LoadInputs(inputDoc.GetDataPtr());
+			//}
+			//ipl.CreateCommandClass(m_ScriptManager);
+
+			//////////////////
+			// Load some code
+			ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
+			if (!shipScript.IsValid())
+				throw CL_Error("Oh snap! Couldn't load ship.as!");
+			// Compile the code
+			m_ScriptManager->AddCode(shipScript->c_str(), 0);
+			if (!m_ScriptManager->BuildModule(0))
+			{
+				conWindow.display_close_message();
+				return 1;
+			}
+
+			/////////////////////////
+			// Get script references
+			mso_Ship = m_ScriptManager->CreateObject(0, "ship");
+
+			ScriptMethod preload = m_ScriptManager->GetClassMethod(mso_Ship, "void Preload()");
+	#ifdef _DEBUG
+			preload.SetTimeout(300000); // Give it some extra time to run
+	#else
+			preload.SetTimeout(10000);
+	#endif
+			m_ScriptManager->Execute(mso_Ship, preload);
+
+			msm_Simulate = m_ScriptManager->GetClassMethod(mso_Ship, "void Simulate(uint)");
+			msm_SetCommand = m_ScriptManager->GetClassMethod(mso_Ship, "void SetCommand(Command)");
+			msm_Draw = m_ScriptManager->GetClassMethod(mso_Ship, "void Draw()");
+
+			msm_DebugPrint = m_ScriptManager->GetClassMethod(mso_Ship, "void DebugOutput()");
 
 
-			// Current time
-			unsigned int time = CL_System::get_time();
-
-
-			// Draw the terrain
-			//m_TerrainGraphical->draw(
-			//	m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
-			//	);
-
-			m_ScriptManager->Execute(mso_Ship, msm_Draw);
-
+			unsigned int inputTimer = 0;
+			bool debug = true;
 			
-			stateman->Draw();
+			unsigned int lastframe = CL_System::get_time();
+			unsigned int split = 0;
 
-			dispWindow.flip();
+			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
+			{
+				dispWindow.get_gc()->clear(CL_Color(0, 0, 0));
+
+				split = CL_System::get_time() - lastframe;
+				lastframe = CL_System::get_time();
+
+				CL_System::keep_alive();
+
+				stateman->Update(split);
+				// Move the ships
+				Update(split);
+
+
+				// Current time
+				unsigned int time = CL_System::get_time();
+
+
+				// Draw the terrain
+				//m_TerrainGraphical->draw(
+				//	m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
+				//	);
+
+				m_ScriptManager->Execute(mso_Ship, msm_Draw);
+
+				
+				stateman->Draw();
+
+				dispWindow.flip();
+			}
+
+		}
+		catch (FusionEngine::Exception& ex)
+		{
+			std::cout << ex.ToString();
+			conWindow.display_close_message();
+		}
+		catch (CL_Error& ex)
+		{
+			std::cout << ex.message;
+			conWindow.display_close_message();
 		}
 
-		delete conGUI;
 		if (logger != 0)
 			delete logger;
 		if (cout != 0)
 			delete cout;
-		delete Console::getSingletonPtr();
+		if (console != 0)
+			delete console;
 
 
 		return 0;

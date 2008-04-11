@@ -92,11 +92,12 @@ namespace FusionEngine
 
 			// Input activation/suspension
 			m_EventConnections.push_back(
-				m_Wind->subscribeEvent(
+				m_EditBox->subscribeEvent(
 				Window::EventActivated,
 				Event::Subscriber(&ConsoleGUI::onMouseEnter, this)));
 
-			m_EventConnections.push_back(m_Wind->subscribeEvent(
+			m_EventConnections.push_back(
+				m_EditBox->subscribeEvent(
 				Window::EventDeactivated,
 				Event::Subscriber(&ConsoleGUI::onMouseLeave, this)));
 
@@ -111,14 +112,16 @@ namespace FusionEngine
 			// Fill the console with the past history
 			Console::ConsoleLines lines = Console::getSingleton().GetHistory();
 
+
+			// Finally, add the window to the GUI, and hope
+			bool success = GUI::getSingleton().AddWindow(console_sheet);
+
 			Console::ConsoleLines::iterator it = lines.begin();
 			for (; it != lines.end(); ++it)
 			{
 				enterText( (*it) );
 			}
 
-			// Finally, add the window to the GUI, and hope
-			bool success = GUI::getSingleton().AddWindow(console_sheet);
 			return success;
 
 		}
@@ -316,8 +319,36 @@ namespace FusionEngine
 		{
 			// Append newline to this entry
 			text += "\n";
+			CEGUI::String currentText = m_HistoryBox->getText();
+
+			//! \todo Fix historyBox size-cap hack
+			if (currentText.size() > 5000)
+			{
+				CEGUI::String::size_type offset = 0;
+				int cutoff = currentText.size() * 0.50;
+
+				offset = currentText.find('\n', cutoff);
+				// We may encounter a really long line which doesn't allow the offset to
+				//  be between 'end' and 'currentText.size()': in this case we find the closest line in the backward direction
+				if (offset >= currentText.size())
+				{
+					offset = currentText.rfind('\n', cutoff);
+				}
+
+				if (offset == 0)
+					m_HistoryBox->setText(""); // The entire buffer was one line, remove the whole thing
+				else if (offset < currentText.size())
+					m_HistoryBox->setText(currentText.c_str() + offset);
+			}
+
+			//std::cout << m_HistoryBox->getName() << std::endl;
+			//std::cout << CEGUI::System::getSingleton().getDefaultXMLParserName() << ", " <<
+			//	CEGUI::WindowManager::getSingleton().isWindowPresent("Console/Wind") << std::endl;
+			//std::cout << currentText << ", " << text << std::endl;
 			// Append new text to history output
-			m_HistoryBox->setText(m_HistoryBox->getText() + text);
+			CEGUI::String ccText = currentText + text;
+			m_HistoryBox->setText(ccText);
+
 			// Scroll to bottom of history output
 			m_HistoryBox->setCaratIndex(static_cast<size_t>(-1));
 		}

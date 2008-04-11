@@ -72,6 +72,10 @@ namespace FusionEngine
 	 * \brief
 	 * Provides scripting support, and access to it, for all FusionEngine objects.
 	 *
+	 * \todo Scripted extensions ('mods') will be called 'Plug-ins'. There will be a gui thing called
+	 *  'Plug-in controls' which finds configurable controls in all the loaded plug-ins and allows
+	 *  the user to configure them.
+	 *
 	 * \sa
 	 * Singleton
 	 */

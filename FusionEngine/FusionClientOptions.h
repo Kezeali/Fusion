@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2008 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -35,14 +35,27 @@
 
 #include "FusionCommon.h"
 
-#include "FusionControl.h"
-
 #include "FusionSingleton.h"
 
 namespace FusionEngine
 {
 	//! Max local (split-screen) players per client
 	static const unsigned int g_MaxLocalPlayers = 4;
+
+	/*!
+	 * \brief Input binding from XML
+	 *
+	 * \remarks
+	 * It should be fine to define this here - it is only used by InputManager (actually.k.a. InputHandler, 
+	 * because I can't be bothered renaming since that dark and stupid time when I first wrote it :\)
+	 * which #includes this file.
+	 */
+	class InputBinding
+	{
+		std::string m_Player; // This may not be needed, just here prelim.
+		std::string m_Input;
+		std::string m_Key;
+	};
 
 	//! Settings specfic to each player
 	class PlayerOptions
@@ -87,7 +100,9 @@ namespace FusionEngine
 		//! General Player options list
 		typedef std::vector<PlayerOptions> PlayerOptionsList;
 		//! Player Input mappings list.
-		typedef std::vector<Control> ControlsList;
+		typedef std::vector<InputBinding> ControlsList;
+
+		typedef std::map<std::string, std::string> VarList;
 
 	public:
 		//! Number of local players
@@ -108,6 +123,7 @@ namespace FusionEngine
 		//! The local port (to connect from)
 		unsigned short m_LocalPort;
 
+		VarList m_Variables;
 		//! Player input mappings
 		//PlayerInputsList PlayerInputs;
 		//! Global input mappings
@@ -126,6 +142,14 @@ namespace FusionEngine
 		bool SaveToFile(const std::string &filename);
 		//! Loads a set of options from a file
 		bool LoadFromFile(const std::string &filename);
+
+
+		bool GetOption(const std::string &name, std::string *val);
+		bool GetOption(const std::string &name, int *ret);
+		std::string GetOption_str(const std::string &name);
+		bool GetOption_bool(const std::string &name);
+
+		void loadKeys(const ticpp::Element &keysroot);
 
 	protected:
 		//! Last opened options file

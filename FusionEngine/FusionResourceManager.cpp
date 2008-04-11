@@ -42,11 +42,11 @@ namespace FusionEngine
 	/// Public:
 	void ResourceManager::Configure()
 	{
-		// A package (xml file) will contain all the ResourceManager config info
+		// A xml file will contain all the ResourceManager config info
 		//  and will be placed in the working directory of the game. This file will list all
 		//  paths to be added to the search path, as well as the config info.
-		SetupPhysFS::configure("CardboardBox Software", "Fusion", "ZIP");
-		if (!SetupPhysFS::add_subdirectory("Packages/", "ZIP", true))
+		SetupPhysFS::configure("CardboardBox Software", "Fusion", "7z");
+		if (!SetupPhysFS::add_subdirectory("Packages/", "7z", false))
 			SendToConsole("Default resource path could not be located");
 
 		m_PhysFSConfigured = true;
