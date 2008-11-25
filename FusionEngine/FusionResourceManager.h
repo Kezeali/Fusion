@@ -105,7 +105,9 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		ResourceManager(char **argv);
+		ResourceManager(char *arg0);
+		//! Constructor - gets equivilant of arg0 from CL_System::get_exe_path()
+		ResourceManager();
 		//! Destructor
 		~ResourceManager();
 
@@ -158,17 +160,21 @@ namespace FusionEngine
 		//void GetVerification(RakNet::BitStream *stream, const std::string &name);
 
 		//! Returns a collection of tokens representing the given wildcard expression
-		StringVector TokeniseExpression(const std::string &expression);
+		StringVector TokenisePattern(const std::string &expression);
 
-		//! Compares a string to a wildcard expression
-		bool CheckAgainstExpression(const std::string &str, const std::string &expression);
-		//! Compares a string to a wildcard expression
-		bool CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens);
-		//! Compares a string to a wildcard expression
-		bool CheckAgainstExpression(const std::string &str, StringVector expressionTokens);
+		//! Compares a string to a wildcard string
+		bool CheckAgainstPattern(const std::string &str, const std::string &expression);
+		//! Compares a string to a wildcard string
+		bool CheckAgainstPatternWithOptions(const std::string &str, StringVector expressionTokens);
+		//! Compares a string to a wildcard string
+		bool CheckAgainstPattern(const std::string &str, StringVector expressionTokens);
+
+		//! Returns the first matching string
+		std::string FindFirst(const std::string &pattern, bool case_sensitive = true, bool recursive = false);
+		std::string FindFirst(const std::string &path, const std::string &pattern, int depth, bool case_sensitive = true, bool recursive = true);
 
 		//! Lists filenames matching the given expression
-		StringVector Find(const std::string &expression, bool case_sensitive = true, bool recursive = false);
+		StringVector Find(const std::string &pattern, bool case_sensitive = true, bool recursive = false);
 
 		//! Lists filenames matching the given expression, below the given path
 		/*!
@@ -176,7 +182,7 @@ namespace FusionEngine
 		 * filesystem below the Search Path. If recursive is true, it will ignore 'depth' and go as 
 		 * deep as possible.
 		 */
-		StringVector Find(const std::string &path, const std::string &expression, int depth, bool case_sensitive = true, bool recursive = true);
+		StringVector Find(const std::string &path, const std::string &pattern, int depth, bool case_sensitive = true, bool recursive = true);
 
 		////! Finds and opens the given package
 		///*!
@@ -294,6 +300,57 @@ namespace FusionEngine
 			}
 
 			out = ResourcePointer<T>(sptRes);
+		}
+
+		// How many characters from the beginning before a and b diverge
+		unsigned long quickCompare(const std::string &a, const std::string &b)
+		{
+			const char* a_cstr = a.c_str();
+			const char* b_cstr = b.c_str();
+			unsigned int length = fe_min(a.length(), b.length());
+
+			for (int i = 0; i < length; i++)
+			{
+				if (a_cstr[i] != b_cstr[i]) return i;
+			}
+		}
+
+		template<typename T>
+		ResourcePointer<T> OpenOrCreateResource(const ResourceTag &path)
+		{
+			std::string match = FindFirst(path);
+			if (match.empty()) // No match
+			{
+				std::string writePath(PHYSFS_getWriteDir());
+				// Whether the given 'path' is an existing, absolute path
+				if (PHYSFS_isDirectory(CL_String::get_path(path).c_str()))
+				{
+					// If the given path is existing and absolute, make sure it is within the PhysFS write folder
+					if (path.find(writePath) == std::string::npos)
+					{
+						FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
+							"Can't create '" + path + "' as it is not within the write path (" + writePath + ")");
+					}
+				}
+				else
+				{
+					// Convert the relative path to an absolute path within the write folder
+					writePath = writePath + path;
+
+					std::string folder(CL_String::get_path(writePath));
+					if (!PHYSFS_isDirectory(folder.c_str()))
+						FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
+						"Can't create '" + writePath + "' as '" + folder + "' does not exist");
+				}
+				// Create the file
+				std::ofstream resourceFile;
+				resourceFile.open(writePath.c_str(), std::ios::out|std::ios::binary);
+				resourceFile.close();
+
+				match = writePath;
+			}
+			
+			return GetResource<T>(match);
 		}
 
 		void RegisterScriptElements(ScriptingEngine* manager);

@@ -52,6 +52,7 @@ namespace FusionEngine
 
 		// Make sure there's enough room for all the player options objects
 		m_PlayerOptions.resize(g_MaxLocalPlayers);
+		m_PlayerVariables.resize(g_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename)
@@ -60,6 +61,7 @@ namespace FusionEngine
 		m_LocalPort(1337)
 	{
 		m_PlayerOptions.resize(g_MaxLocalPlayers);
+		m_PlayerVariables.resize(g_MaxLocalPlayers);
 
 		if (!LoadFromFile(filename))
 			SaveToFile(filename);
@@ -81,69 +83,36 @@ namespace FusionEngine
 
 	bool ClientOptions::SaveToFile(const std::string &filename)
 	{
-		//TiXmlDocument doc;
+		ResourcePointer<TiXmlDocument> docResource = ResourceManager::getSingleton().OpenOrCreateResource<TiXmlDocument>(filename);
+		ticpp::Document doc(docResource.GetDataPtr());
 
-		//// Decl
-		//TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
-		//doc.LinkEndChild( decl ); 
+		// Decl
+		ticpp::Declaration decl( XML_STANDARD, "", "" );
+		doc.LinkEndChild( &decl ); 
 
-		//// Root
-		//TiXmlElement * root = new TiXmlElement("ClientOptions");  
-		//doc.LinkEndChild( root );  
+		// Root
+		ticpp::Element root("clientoptions");
+		doc.LinkEndChild( &root );
 
-		//// block: player options
-		//{
-		//	TiXmlElement* players = new TiXmlElement( "PlayerOptions" );  
-		//	root->LinkEndChild( players ); 
+		insertVarMapIntoDOM(root, m_Variables);
 
-		//	TiXmlElement* opt;
+		for (int i = 0; i <= m_NumLocalPlayers; ++i)
+		{
+			ticpp::Element player("playeroptions");
+			root.LinkEndChild( &player ); 
 
-		//	PlayerOptionsList::iterator it;
+			std::string playerAttribute;
+			if (i == 0)
+				playerAttribute = "default";
+			else
+				playerAttribute = CL_String::from_int(i);
+			player.SetAttribute("player", playerAttribute.c_str());
 
-		//	for (it=PlayerOptions.begin(); it != PlayerOptions.end(); ++it)
-		//	{
-		//		//??? should mPlayerOptions be a map? or should we iteratre by index (c-style) here?
-		//		const std::string& key = (*it).first;
-		//		const std::string& value = (*it).second;
+			insertVarMapIntoDOM(player, m_PlayerVariables[i]);
+		}
 
-		//		opt = new TiXmlElement();  
-		//		opt->LinkEndChild( new TiXmlText(value.c_str()));  
-
-		//		players->LinkEndChild( opt );
-		//	}
-		//}
-
-		//// block: windows
-		//{
-		//	TiXmlElement* windowsNode = new TiXmlElement( "Windows" );  
-		//	root->LinkEndChild( windowsNode );  
-
-		//	list<WindowSettings>::iterator iter;
-
-		//	for (iter=m_windows.begin(); iter != m_windows.end(); iter++)
-		//	{
-		//		const WindowSettings& w=*iter;
-
-		//		TiXmlElement* window;
-		//		window = new TiXmlElement( "Window" );  
-		//		windowsNode->LinkEndChild( window );  
-		//		window->SetAttribute("name", w.name.c_str());
-		//		window->SetAttribute("x", w.x);
-		//		window->SetAttribute("y", w.y);
-		//		window->SetAttribute("w", w.w);
-		//		window->SetAttribute("h", w.h);
-		//	}
-		//}
-
-		//// block: connection
-		//{
-		//	TiXmlElement * cxn = new TiXmlElement( "Connection" );  
-		//	root->LinkEndChild( cxn );  
-		//	cxn->SetAttribute("ip", m_connection.ip.c_str());
-		//	cxn->SetDoubleAttribute("timeout", m_connection.timeout); 
-		//}
-
-		//doc.SaveFile(pFilename);  
+		//doc.SaveFile(filename);
+		doc.SaveFile();
 
 		return true;
 	}
@@ -176,7 +145,7 @@ namespace FusionEngine
 					std::string value = child->GetAttribute("value");
 					m_Variables[name] = value;
 
-					// Set hard-coded options
+					// Set legacy (hard-coded) options
 					fe_tolower(value);
 					if (name == "console_logging")
 						m_ConsoleLogging = (value == "1" || value == "t" || value == "true");
@@ -184,6 +153,10 @@ namespace FusionEngine
 						child->GetAttribute("value", &m_NumLocalPlayers);
 					else if (name == "localport")
 						child->GetAttribute("value", &m_LocalPort);
+				}
+				else if (child->Value() == "playeroptions")
+				{
+					loadPlayerOptions(*child.Get());
 				}
 				else if (child->Value() == "keys")
 				{
@@ -203,7 +176,7 @@ namespace FusionEngine
 
 	bool ClientOptions::GetOption(const std::string &name, std::string *ret)
 	{
-		VarList::iterator itVar = m_Variables.find(name);
+		VarMap::iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
@@ -211,9 +184,11 @@ namespace FusionEngine
 		return true;
 	}
 
+	// Could cache these conversions, but options are retrieved so infrequently
+	//  that that would be a waste of effort
 	bool ClientOptions::GetOption(const std::string &name, int *ret)
 	{
-		VarList::iterator itVar = m_Variables.find(name);
+		VarMap::iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
@@ -233,6 +208,51 @@ namespace FusionEngine
 		return (value == "1" || value == "t" || value == "true");
 	}
 
+	void ClientOptions::insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars)
+	{
+		for (VarMap::const_iterator it = vars.begin(), end = vars.end(); it != end; ++it)
+		{
+			ticpp::Element var("var");
+			var.SetAttribute("name", it->first.c_str());
+			var.SetAttribute("value", it->second.c_str());
+			parent.LinkEndChild( &var );
+		}
+	}
+
+	void ClientOptions::loadPlayerOptions(const ticpp::Element &opts_root)
+	{
+		if (!CL_String::compare_nocase(opts_root.Value(), "playeroptions"))
+			return;
+
+		std::string player = opts_root.GetAttribute("player");
+		unsigned int playerNum = 0;
+		if (!CL_String::compare_nocase(player, "default"))
+		{
+			if (!fe_issimplenumeric(player))
+				return;
+
+			playerNum = CL_String::to_int(player);
+		}
+
+		if (playerNum > m_NumLocalPlayers || playerNum > m_PlayerVariables.size())
+			return;
+
+		VarMap playerVars = m_PlayerVariables[playerNum];
+
+		ticpp::Iterator< ticpp::Element > child;
+		for ( child = child.begin( &opts_root ); child != child.end(); child++ )
+		{
+			if (CL_String::compare_nocase(child->Value(), "var"))
+			{
+				std::string name = child->GetAttribute("name");
+				if (name.empty()) continue;
+
+				std::string value = child->GetAttribute("value");
+				playerVars[name] = value;
+			}
+		}
+	}
+
 	void ClientOptions::loadKeys(const ticpp::Element &keysroot)
 	{
 		if (keysroot.Value() != "keys")
@@ -243,15 +263,16 @@ namespace FusionEngine
 			player = "";
 
 		ticpp::Iterator< ticpp::Element > child;
-		for ( child = child.begin( &keysroot ); child != child.end(); child++ )
+		ticpp::Iterator< ticpp::Element > end;
+		for (child = child.begin( &keysroot ), end = child.end(); child != end; child++)
 		{
 			if (child->Value() != "bind")
 				continue;
 
 			std::string key = child->GetAttribute("key");
-			std::string command = child->GetAttribute("command");
+			std::string input = child->GetAttribute("input");
 
-			m_Controls.push_back( Control(player + command, key.c_str()[0], key, CL_Keyboard::get_device()) );
+			m_Controls.push_back( InputBinding(input, key, player) );
 		}
 	}
 

@@ -49,7 +49,7 @@ class PhysFSTest : public CL_ClanApplication
 
 	bool CheckAgainstExpression(const std::string &str, const std::string &expression)
 	{
-		CheckAgainstExpression(str, TokeniseExpression(expression));
+		return CheckAgainstExpression(str, TokeniseExpression(expression));
 	}
 
 	bool CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens)
@@ -162,6 +162,79 @@ class PhysFSTest : public CL_ClanApplication
 		return list;
 	}
 
+	typedef std::map<std::string, std::string> VarMap;
+
+	//void insertVarMapIntoDOM(ticpp::Element &parent, VarMap vars)
+	//{
+	//	for (VarMap::iterator it = vars.begin(), end = vars.end(); it != end; ++it)
+	//	{
+	//		//TiXmlElement *var = new TiXmlElement("var");
+	//		ticpp::Element var("var");
+	//		var.SetAttribute("name", it->first.c_str());
+	//		var.SetAttribute("value", it->second.c_str());
+	//		parent.LinkEndChild( &var );
+	//	}
+	//}
+
+	//void testOutput()
+	//{
+	//	//TiXmlDocument doc;
+	//	ticpp::Document doc;
+
+	//	// Decl
+	//	//TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
+	//	ticpp::Declaration decl( XML_STANDARD, "", "" );
+	//	doc.LinkEndChild( &decl ); 
+
+	//	// Root
+	//	//TiXmlElement * root = new TiXmlElement("clientoptions");  
+	//	ticpp::Element root("clientoptions");
+	//	doc.LinkEndChild( &root );
+
+	//	{
+	//		VarMap vars;
+	//		vars["fullscreen"] = "false";
+
+	//		insertVarMapIntoDOM(root, vars);
+	//	}
+
+	//	{
+	//		int plNum = 4;
+	//		VarMap vars[5];
+	//		vars[0]["name"] = "Player";
+	//		vars[0]["hud"] = "true";
+	//		vars[1]["name"] = "Sam";
+	//		vars[1]["hud"] = "false";
+	//		vars[2]["name"] = "Lara";
+	//		vars[2]["hud"] = "true";
+	//		vars[3]["name"] = "Bill";
+	//		vars[3]["hud"] = "true";
+	//		vars[4]["name"] = "Phil";
+	//		vars[4]["hud"] = "false";
+
+	//		for (int i = 0; i <= plNum; ++i)
+	//		{
+	//			//TiXmlElement* player = new TiXmlElement( "playeroptions" );  
+	//			ticpp::Element player("playeroptions");
+	//			root.LinkEndChild( &player ); 
+
+	//			std::string playerAttribute;
+	//			if (i == 0)
+	//				playerAttribute = "default";
+	//			else
+	//				playerAttribute = CL_String::from_int(i);
+	//			player.SetAttribute("player", playerAttribute.c_str());
+
+	//			insertVarMapIntoDOM(player, vars[i]);
+	//		}
+	//	}
+
+	//	// Save to a file
+	//	std::string filename("test.xml");
+
+	//	doc.SaveFile(filename);
+	//}
+
 	virtual int main(int argc, char **argv)
 	{
 		CL_SetupDisplay disp_setup;
@@ -192,16 +265,12 @@ class PhysFSTest : public CL_ClanApplication
 			printf("Linked against PhysFS version %d.%d.%d.\n",
 				linked.major, linked.minor, linked.patch);
 
-			Exception* trivial = 
-				new Exception("main", "An error is about to happen", false);
-			Exception* err = 
-				new Exception("main", "Just kidding :)", true);
+			Exception trivial("main", "An error is about to happen");
+			Exception err("main", "Just kidding :)");
 
-			FileSystemException* fsEx =
-				new FileSystemException("main");
+			FileSystemException fsEx("main", "I can has mouse?", "main.cpp", 201);
 
-			FileNotFoundException* fnfEx = 
-				new FileNotFoundException("main", "floobly.flo");
+			FileNotFoundException fnfEx("main", "floobly.flo", "main.cpp", 204);
 
 			logger->SetUseDating(true);
 			logger->BeginLog("another log", false);
@@ -278,6 +347,9 @@ class PhysFSTest : public CL_ClanApplication
 			CL_Surface surface2(png);
 			// ... And finally the shorthand version of the standard way
 			CL_Surface surface3("Body.png");
+
+			//testOutput();
+
 
 
 			delete logger;

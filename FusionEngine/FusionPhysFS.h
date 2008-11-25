@@ -61,6 +61,8 @@ static int platform_stricmp(const char *x, const char *y)
 
 #include "FusionInputSourceProvider_PhysFS.h"
 #include "FusionInputSource_PhysFS.h"
+#include "FusionOutputSourceProvider_PhysFS.h"
+#include "FusionOutputSource_PhysFS.h"
 
 
 	class SetupPhysFS
@@ -82,7 +84,7 @@ static int platform_stricmp(const char *x, const char *y)
 		 * </p>
 		 *
 		 * \param argv0
-		 * Pass argv[0] or NULL here.
+		 * Pass argv[0], CL_System::get_exe_path() or NULL here.
 		 *
 		 * \returns
 		 * True if initialisation was successful.
@@ -92,9 +94,12 @@ static int platform_stricmp(const char *x, const char *y)
 		//! Configures PhysFS.
 		/*!
 		 * <p>
-		 * This will call PHYSFS_setSaneConfig(organisation
-		 *                                     appName
-		 *                                     archiveExt
+		 * This will call PHYSFS_setSaneConfig(organisation,
+		 *                                     appName,
+		 *                                     archiveExt,
+		 *                                     includeCdRoms,
+		 *                                     archivesFirst);
+		 * </p>
 		 * <p>
 		 * The write directory will be created at [user]/.organisation/appName
 		 * </p>
@@ -116,11 +121,6 @@ static int platform_stricmp(const char *x, const char *y)
 		 * True to search archives first (before directories) when looking for files.
 		 * Ignored if you don't specify (archiveExt).
 		 *
-		 *
-		 * \remarks
-		 * PhysFS preffers you to hand it argv[0] so it can try to find the base
-		 * directory from it. It's pretty damn annoying, since ClanLib could just
-		 * /tell/ it where to look (with CL_System::get_exe_path()) *sigh*.
 		 *
 		 * \returns
 		 * True if configuration was successful.

@@ -35,10 +35,9 @@
 #include "FusionSingleton.h"
 
 /// Fusion
-#include "FusionInputMap.h"
-#include "FusionInputData.h"
+//#include "FusionInputMap.h"
+//#include "FusionInputData.h"
 #include "FusionClientOptions.h"
-#include "FusionControl.h"
 
 namespace FusionEngine
 {
@@ -51,21 +50,64 @@ namespace FusionEngine
 	class KeyName
 	{
 	public:
+		KeyName()
+			: m_Name(""),
+			m_Device(""),
+			m_Code(0),
+			m_Description("")
+		{
+		}
+
+		KeyName(std::string name, std::string device, int code, std::string description)
+			: m_Name(name),
+			m_Device(device),
+			m_Code(code),
+			m_Description(description)
+		{
+		}
 		// String mapped to this key (used in config files, internally, etc.)
 		std::string m_Name;
 		// Control device
 		std::string m_Device;
-		// Scancode, button ID - however the device identifies this control
+		// Scancode, button ID - whatever the device uses to identifies this input
 		int m_Code;
 		// Shown in the UI
 		std::string m_Description;
+	};
+
+	/*!
+	 * \brief
+	 * Parsed input binding
+	 *
+	 * \see XmlInputBinding
+	 */
+	class InputBinding
+	{
+		unsigned int m_Player;
+		std::string m_Input; // The 'agency' this control provides :P
+		std::string m_Key; // The short-name of the key on the keyboard / button on the controler
+
+	public:
+		InputBinding(const XmlInputBinding& rawBinding)
+		{
+			m_Player = CL_String::to_int(rawBinding.m_Player);
+			m_Input = rawBinding.m_Input;
+			m_Key = rawBinding.m_Key;
+		}
+
+		InputBinding(unsigned int player, std::string input, std::string key)
+			: m_Player(player),
+			m_Input(input),
+			m_Key(key)
+		{
+		}
 	};
 
 	class InputState
 	{
 	public:
 		InputState()
-			: m_Down(false), m_Value(0.0f)
+			: m_Down(false), m_Changed(false), m_Value(0.0f)
 		{}
 		bool m_Down;
 		bool m_Changed; // If the button was pressed / released / both since the last command
@@ -78,14 +120,14 @@ namespace FusionEngine
 		typedef std::map<std::string, InputState> InputStateMap;
 		InputStateMap m_States;
 
-		void SetState(const std::string &input_name, bool isDown, bool value)
+		void SetState(const std::string &input_name, bool isDown, float value)
 		{
 			InputState &state = m_States[input_name];
 			state.m_Down = isDown;
 			state.m_Value = value;
 		}
 
-		void GetDelta(const Command &previousCommand)
+		void CheckForChanges(const Command &previousCommand)
 		{
 			for (InputStateMap::iterator it = previousCommand.m_States.begin(), end = previousCommand.m_States.end(); it != end; ++it)
 			{
@@ -128,9 +170,9 @@ namespace FusionEngine
 
 	public:
 		//! Input names mapped to controls
-		typedef std::map<std::string, Control> ControlMap;
+		typedef std::map<std::string, InputBinding> ControlMap;
 
-		//typedef std::map<std::string, InputState> Command;
+		typedef std::map<std::string, InputState> Command;
 		typedef std::vector<Command> CommandList;
 		typedef std::vector<CommandList> PlayerCommandLists;
 
@@ -154,7 +196,7 @@ namespace FusionEngine
 		void CleanUp();
 		//! Activates the input handler.
 		void Activate();
-		//! Unbinds inputs. Call when going to the menu.
+		//! Begins ignoring input events. Call when going to the menu.
 		void Suspend();
 
 		void Update(unsigned int split);
@@ -162,10 +204,13 @@ namespace FusionEngine
 		//! Sets up inputs
 		void SetInputMaps(const ClientOptions *from);
 
-		void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
-		void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
+		void MapControl(unsigned int player, const std::string &name, int keycode);
+		CL_InputDevice& GetDevice(const std::string &name);
 
-		const Control &GetControl(const std::string& name, unsigned int filter = 0) const;
+		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
+		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
+
+		//const Control &GetControl(const std::string& name, unsigned int filter = 0) const;
 		bool IsButtonDown(const std::string& name, unsigned int filter = 0) const;
 		float GetAnalogValue(const std::string& name, unsigned int filter = 0) const;
 
@@ -181,9 +226,9 @@ namespace FusionEngine
 		//GlobalInput GetGlobalInputs() const;
 
 	private:
-		ControlMap m_ControlMap;
+		ControlMap m_InputMap;
 
-		//PlayerCommandLists m_PlayerCommands;
+		PlayerCommandLists m_PlayerCommands;
 
 		InputPluginLoader *m_PluginLoader;
 

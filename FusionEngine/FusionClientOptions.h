@@ -46,15 +46,22 @@ namespace FusionEngine
 	 * \brief Input binding from XML
 	 *
 	 * \remarks
-	 * It should be fine to define this here - it is only used by InputManager (actually.k.a. InputHandler, 
-	 * because I can't be bothered renaming since that dark and stupid time when I first wrote it :\)
+	 * It should be fine to define this here - it is only used by InputManager
 	 * which #includes this file.
 	 */
-	class InputBinding
+	class XmlInputBinding
 	{
-		std::string m_Player; // This may not be needed, just here prelim.
-		std::string m_Input;
-		std::string m_Key;
+		std::string m_Player;
+		std::string m_Input; // The 'agency' this control provides :P
+		std::string m_Key; // The key on the keyboard / button on the controler
+
+	public:
+		InputBinding(std::string input, std::string key, std::string player)
+			: m_Input(input),
+			m_Key(key),
+			m_Player(player)
+		{
+		}
 	};
 
 	//! Settings specfic to each player
@@ -97,33 +104,38 @@ namespace FusionEngine
 		}
 
 	public:
-		//! General Player options list
+		//! [depreciated] General Player options list
 		typedef std::vector<PlayerOptions> PlayerOptionsList;
 		//! Player Input mappings list.
 		typedef std::vector<InputBinding> ControlsList;
 
-		typedef std::map<std::string, std::string> VarList;
+		typedef std::map<std::string, std::string> VarMap;
+
+		// Each player has their own var map
+		typedef std::vector<VarMap> PlayerVarMapList;
 
 	public:
-		//! Number of local players
-		unsigned int m_NumLocalPlayers;
-
-		//! True if console history should be logged.
+		//! [depreciated] True if console history should be logged.
 		bool m_ConsoleLogging;
 
-		//! General player options (other than inputs)
+		//! [depreciated] General player options (other than inputs)
 		PlayerOptionsList m_PlayerOptions;
+
+		//! [depreciated] Maximum messages per second
+		unsigned int m_Rate;
+
+		//! [depreciated] The local port (to connect from)
+		unsigned short m_LocalPort;
+
+		//! Number of local players
+		unsigned int m_NumLocalPlayers;
 
 		//! Controls
 		ControlsList m_Controls;
 
-		//! Maximum messages per second
-		unsigned int m_Rate;
+		VarMap m_Variables;
+		PlayerVarMapList m_PlayerVariables;
 
-		//! The local port (to connect from)
-		unsigned short m_LocalPort;
-
-		VarList m_Variables;
 		//! Player input mappings
 		//PlayerInputsList PlayerInputs;
 		//! Global input mappings
@@ -149,6 +161,8 @@ namespace FusionEngine
 		std::string GetOption_str(const std::string &name);
 		bool GetOption_bool(const std::string &name);
 
+		void insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars);
+		void loadPlayerOptions(const ticpp::Element &opts_root);
 		void loadKeys(const ticpp::Element &keysroot);
 
 	protected:

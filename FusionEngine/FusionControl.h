@@ -56,7 +56,7 @@ namespace FusionEngine
 		// 'Dead zone'
 		float m_AxisThreshold;
 
-		InputState m_State;
+		//InputState m_State;
 		
 
 	public:

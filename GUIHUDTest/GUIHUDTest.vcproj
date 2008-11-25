@@ -241,6 +241,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.cpp"
 				>
 			</File>
@@ -400,6 +408,14 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLogger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.h"
 				>
 			</File>
 			<File

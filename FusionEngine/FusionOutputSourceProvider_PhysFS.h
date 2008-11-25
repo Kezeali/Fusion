@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_InputSourceProvider_PhysFS
-#define Header_InputSourceProvider_PhysFS
+#ifndef Header_OutputSourceProvider_PhysFS
+#define Header_OutputSourceProvider_PhysFS
 
 #if _MSC_VER > 1000
 #pragma once

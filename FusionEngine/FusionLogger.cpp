@@ -254,10 +254,10 @@ namespace FusionEngine
 		}
 	}
 
-	void Logger::Add(const Exception* error, const std::string& tag, LogSeverity severity)
+	void Logger::Add(const Exception& error, const std::string& tag, LogSeverity severity)
 	{
 		std::string message =
-			CL_String::format("Error: %1", error->ToString());
+			CL_String::format("Error: %1", error.ToString());
 
 		Add(message, tag, severity);
 	}

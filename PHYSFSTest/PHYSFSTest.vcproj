@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
+				PreprocessorDefinitions="FSN_DONT_USE_SCRIPTING;WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="physfsd.lib"
+				AdditionalDependencies="../tinyxpathpp/tinyxpathd.lib physfsd.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -194,14 +194,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionFileNotFoundException.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionFileSystemException.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
 				>
 			</File>
@@ -215,14 +207,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLogger.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.cpp"
 				>
 			</File>
 			<File
@@ -260,6 +244,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionExceptionFactory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionFileNotFoundException.h"
 				>
 			</File>
@@ -281,14 +269,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLogger.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.h"
 				>
 			</File>
 			<File

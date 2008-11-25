@@ -162,56 +162,70 @@ namespace FusionEngine
 		for (ClientOptions::ControlsList::const_iterator it = from->m_Controls.begin();
 			it != from->m_Controls.end(); ++it)
 		{
-			MapControl(it->m_Key.c_str(), it->m_Input, it->m_Player);
+			m_InputMap[it->m_Player + it->m_Input] = InputBinding(*it);
 		}
 	}
 
-	void InputManager::MapControl(int keysym, const std::string &name, unsigned int filter)
+	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &shortname)
 	{
-		std::string buttonName = "Unknown";
-		CL_InputDevice dev = CL_Keyboard::get_device();
-		buttonName = dev.get_key_name(keysym);
-
-		m_ControlMap[CL_String::from_int(filter) + name] = 
-			Control(CL_String::from_int(filter) + name, keysym, buttonName, dev);
+		std::string playerStr(CL_String::from_int(player));
+		m_InputMap[playerStr + input] = InputBinding(player, keycode, player);
 	}
 
-	void InputManager::MapControl(int keysym, const std::string &name, CL_InputDevice device, unsigned int filter)
+	CL_InputDevice &InputManager::GetDevice(const std::string &name)
 	{
-		std::string buttonName = "Unknown";
-		buttonName = device.get_key_name(keysym);
-
-		m_ControlMap[CL_String::from_int(filter) + name] = 
-			Control(CL_String::from_int(filter) + name, keysym, buttonName, device);
+		if (name == "keyboard")
+			return CL_Keyboard::get_device();
+		else if (name == "gamepad")
+			return CL_Keyboard::get_device();
 	}
 
-	const Control& InputManager::GetControl(const std::string &name, unsigned int filter) const
-	{
-		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-		if (it != m_ControlMap.end())
-			return (*it).second;
+	//void InputManager::MapControl(int keysym, const std::string &name, unsigned int filter)
+	//{
+	//	std::string buttonName = "Unknown";
+	//	CL_InputDevice dev = CL_Keyboard::get_device();
+	//	buttonName = dev.get_key_name(keysym);
 
-		throw Exception();
-		//return m_ControlMap[CL_String::from_int(filter) + name];
-	}
+	//	m_ControlMap[CL_String::from_int(filter) + name] = 
+	//		Control(CL_String::from_int(filter) + name, keysym, buttonName, dev);
+	//}
 
-	bool InputManager::IsButtonDown(const std::string &name, unsigned int filter) const
-	{
-		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-		if (it != m_ControlMap.end())
-			return (*it).second.IsDown();
+	//void InputManager::MapControl(int keysym, const std::string &name, CL_InputDevice device, unsigned int filter)
+	//{
+	//	std::string buttonName = "Unknown";
+	//	buttonName = device.get_key_name(keysym);
 
-		return false;
-	}
+	//	m_ControlMap[CL_String::from_int(filter) + name] = 
+	//		Control(CL_String::from_int(filter) + name, keysym, buttonName, device);
+	//}
 
-	float InputManager::GetAnalogValue(const std::string &name, unsigned int filter) const
-	{
-		ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-		if (it != m_ControlMap.end())
-			return (*it).second.GetPosition();
+	//const Control& InputManager::GetControl(const std::string &name, unsigned int filter) const
+	//{
+	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+	//	if (it != m_ControlMap.end())
+	//		return (*it).second;
 
-		return 0.0f;
-	}
+	//	throw Exception();
+	//	//return m_ControlMap[CL_String::from_int(filter) + name];
+	//}
+
+	//bool InputManager::IsButtonDown(const std::string &name, unsigned int filter) const
+	//{
+	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+	//	if (it != m_ControlMap.end())
+	//		return (*it).second.IsDown();
+
+	//	return false;
+	//}
+
+	//float InputManager::GetAnalogValue(const std::string &name, unsigned int filter) const
+	//{
+	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
+	//	if (it != m_ControlMap.end())
+	//		return (*it).second.GetPosition();
+
+	//	return 0.0f;
+	//}
 
 	void InputManager::CreateCommand(int tick, unsigned int split, unsigned int player)
 	{

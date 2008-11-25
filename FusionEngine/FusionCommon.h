@@ -117,6 +117,96 @@ namespace FusionEngine
 	//! Converts rad deg (double)
 	static inline double fe_radtodeg(double rad) { return rad * g_RadToDeg; }
 
+	/*!
+	 * /brief
+	 * Determines whether a string contains only alphabet characters
+	 */
+	static bool fe_isalpha(const std::string &str)
+	{
+		for (std::string::const_iterator it = str.begin(), end = str.end(); it != end; ++it)
+		{
+			if (!isalpha(*it))
+				return false;
+		}
+		return true;
+	}
+
+	/*!
+	 * /brief
+	 * Determines whether a string contains only numeric characters (digits 1-9)
+	 *
+	 * /remarks
+	 * This will not work for floating point or negative numbers, as they contain punctuation.
+	 */
+	static bool fe_issimplenumeric(const std::string &str)
+	{
+		if (str.empty())
+			return false;
+
+		for (std::string::const_iterator it = str.begin(), end = str.end(); it != end; ++it)
+		{
+			if (!isdigit(*it))
+				return false;
+		}
+		return true;
+	}
+
+	/*!
+	 * /brief
+	 * Determines whether a string is a number
+	 */
+	static bool fe_isnumeric(const std::string &str)
+	{
+		// Empty string is not considered numeric
+		if (str.empty())
+			return false;
+
+		// 0 - start: accept '-' to 1; digit to 1; '.' to 2; else to 3
+		// 1 - success: accept digit to ; '.' to 2; else to 3
+		// 2 - success: accept digit to 2; else to 3
+		// 3 - accept anything to 3
+		int state = 0;
+		for (std::string::const_iterator it = str.begin(), end = str.end(); it != end; ++it)
+		{
+			switch (state)
+			{
+			case 0:
+				if (*it == '-')
+					state = 1;
+				else if (*it == '.')
+					state = 2;
+				else if (isdigit(*it))
+					state = 1;
+				else
+					state = 3;
+				break;
+
+			case 1:
+				if (*it == '.')
+					state = 2;
+				else if (!isdigit(*it))
+					state = 3;
+				break;
+
+			case 2:
+				if (!isdigit(*it))
+					state = 3;
+				break;
+
+			case 3:
+				return false;
+
+			default:
+				return false;
+			}
+		}
+
+		// state can't be 3 at this point (since that would have already returned false)
+		//  and we've already ruled out state 0 (the only way it could still
+		//  be at 0 is an empty string, which is checked at the start)
+		return true;
+	}
+
 	//! Returns the given string in upper case
 	static std::string fe_newupper(const std::string &str)
 	{

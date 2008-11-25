@@ -233,7 +233,7 @@ public:
 		
 			////////////////////
 			// Resource Manager
-			m_ResMan = new ResourceManager(argv);
+			m_ResMan = new ResourceManager(argv[0]);
 			m_ResMan->AddResourceLoader(new XMLLoader());
 			m_ResMan->AddResourceLoader(new TextLoader());
 

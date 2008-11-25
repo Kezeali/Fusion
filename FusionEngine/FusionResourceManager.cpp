@@ -21,10 +21,19 @@
 namespace FusionEngine
 {
 
-	ResourceManager::ResourceManager(char **argv)
+	ResourceManager::ResourceManager()
 		: m_PhysFSConfigured(false)
 	{
-		int ok = SetupPhysFS::init(argv[0]);
+		bool ok = SetupPhysFS::init(CL_System::get_exe_path().c_str());
+		assert(ok);
+
+		Configure();
+	}
+
+	ResourceManager::ResourceManager(char *arg0)
+		: m_PhysFSConfigured(false)
+	{
+		int ok = SetupPhysFS::init(arg0);
 		assert(ok);
 
 		Configure();
@@ -135,58 +144,60 @@ namespace FusionEngine
 		DeleteResources();
 	}
 
-	StringVector ResourceManager::TokeniseExpression(const std::string &expression)
+	StringVector ResourceManager::TokenisePattern(const std::string &expression)
 	{
-		StringVector expressionTokens;
-		StringVector expressionTokens1, expressionTokens2;
+		return CL_String::tokenize(expression, "*", true);
+		//StringVector expressionTokens;
+		//StringVector expressionTokens1, expressionTokens2;
 
-		size_t mid = expression.find("*");
+		//size_t mid = expression.find("*");
 
-		// If another marker is found
-		if (mid != std::string::npos)
-		{
-			// Split the expression into sub-expressions around the marker (tokens)
-			expressionTokens1 = TokeniseExpression( expression.substr(0, mid) );
-			expressionTokens2 = TokeniseExpression( expression.substr(mid+1) );
+		//// If another marker is found
+		//if (mid != std::string::npos)
+		//{
+		//	// Split the expression into sub-expressions around the marker (tokens)
+		//	expressionTokens1 = TokeniseExpression( expression.substr(0, mid) );
+		//	expressionTokens2 = TokeniseExpression( expression.substr(mid+1) );
 
-			expressionTokens.resize(expressionTokens1.size() + expressionTokens2.size());
+		//	expressionTokens.resize(expressionTokens1.size() + expressionTokens2.size());
 
-			std::copy(expressionTokens1.begin(), expressionTokens1.end(), expressionTokens.begin());
-			std::copy(expressionTokens2.begin(), expressionTokens2.end(), expressionTokens.begin()+expressionTokens1.size());
-		}
-		// If no markers were found, add this sub-expression (token)
-		else if (!expression.empty())
-			expressionTokens.push_back(expression);
+		//	std::copy(expressionTokens1.begin(), expressionTokens1.end(), expressionTokens.begin());
+		//	std::copy(expressionTokens2.begin(), expressionTokens2.end(), expressionTokens.begin()+expressionTokens1.size());
+		//}
+		//// If no markers were found, add this sub-expression (token)
+		//else if (!expression.empty())
+		//	expressionTokens.push_back(expression);
 
-		return expressionTokens;
+		//return expressionTokens;
 	}
 
-	bool ResourceManager::CheckAgainstExpression(const std::string &str, const std::string &expression)
+	bool ResourceManager::CheckAgainstPattern(const std::string &str, const std::string &expression)
 	{
-		return CheckAgainstExpression(str, TokeniseExpression(expression));
+		return CheckAgainstPattern(str, TokenisePattern(expression));
 	}
 
-	bool ResourceManager::CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens)
+	bool ResourceManager::CheckAgainstPatternWithOptions(const std::string &str, StringVector expressionTokens)
 	{
+		//! \todo Convert this to a finite state machine
 		size_t strPos = 0;
 		bool optionalSection = false, optionFound = false;
 		StringVector::iterator it = expressionTokens.begin();
 		for (; it != expressionTokens.end(); ++it)
 		{
 			// Detect options
-			if ((*it) == "[")
+			if (!optionalSection && (*it) == "[")
 			{
 				optionalSection = true;
 				optionFound = false;
-				continue; // We don't need to check for the [!
+				continue; // We don't need to check str for '['!
 			}
-			if ((*it) == "]")
+			if (optionalSection && (*it) == "]")
 			{
-				if (optionFound)
+				if (!optionFound)
 					return false;
 
 				optionalSection = false;
-				continue; // We don't need to check for the ]!
+				continue; // We don't need to check str for ']'!
 			}
 
 			// Skip all options till the end of the current section (after an option has been found)
@@ -205,7 +216,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ResourceManager::CheckAgainstExpression(const std::string &str, StringVector expressionTokens)
+	bool ResourceManager::CheckAgainstPattern(const std::string &str, StringVector expressionTokens)
 	{
 		size_t strPos = 0;
 		StringVector::iterator it = expressionTokens.begin();
@@ -220,20 +231,18 @@ namespace FusionEngine
 		return true;
 	}
 
-	StringVector ResourceManager::Find(const std::string &expression, bool case_sensitive, bool recursive)
+	std::string ResourceManager::FindFirst(const std::string &pattern, bool case_sensitive, bool recursive)
 	{
-		return Find("", expression, 0, case_sensitive, recursive);
+		return FindFirst("", pattern, 0, case_sensitive, recursive);
 	}
 
-	StringVector ResourceManager::Find(const std::string &path, const std::string &expression, int depth, bool case_sensitive, bool recursive)
+	std::string ResourceManager::FindFirst(const std::string &path, const std::string &pattern, int depth, bool case_sensitive, bool recursive)
 	{
-		StringVector list;
-
-		StringVector expressionTokens;
+		StringVector patternTokens;
 		if (case_sensitive)
-			expressionTokens = TokeniseExpression(expression);
+			patternTokens = TokenisePattern(pattern);
 		else
-			expressionTokens = TokeniseExpression(fe_newupper(expression));
+			patternTokens = TokenisePattern(fe_newupper(pattern));
 
 		if (m_PhysFSConfigured)
 		{
@@ -246,12 +255,61 @@ namespace FusionEngine
 				{
 					// If recursive is set, search within sub-folders
 					if ((recursive || depth--) && PHYSFS_isDirectory(*i))
-						Find(std::string(*i), expression, depth, case_sensitive, recursive);
+					{
+						std::string subMatch = FindFirst(std::string(*i), pattern, depth, case_sensitive, recursive);
+						if (!subMatch.empty())
+							return subMatch;
+					}
 
 					std::string file(*i);
 					// Do the relevant check for case (in)sensitive searches
-					if ((case_sensitive && CheckAgainstExpression(file, expressionTokens)) ||
-						(!case_sensitive && CheckAgainstExpression(fe_newupper(file), expressionTokens)))
+					if ((case_sensitive && CheckAgainstPattern(file, patternTokens)) ||
+						(!case_sensitive && CheckAgainstPattern(fe_newupper(file), patternTokens)))
+						return file;
+				}
+
+				PHYSFS_freeList(files);
+			}
+		}
+
+		return "";
+	}
+
+	StringVector ResourceManager::Find(const std::string &pattern, bool case_sensitive, bool recursive)
+	{
+		return Find("", pattern, 0, case_sensitive, recursive);
+	}
+
+	StringVector ResourceManager::Find(const std::string &path, const std::string &pattern, int depth, bool case_sensitive, bool recursive)
+	{
+		StringVector list;
+
+		StringVector patternTokens;
+		if (case_sensitive)
+			patternTokens = TokenisePattern(pattern);
+		else
+			patternTokens = TokenisePattern(fe_newupper(pattern));
+
+		if (m_PhysFSConfigured)
+		{
+			char **files = PHYSFS_enumerateFiles(path.c_str());
+			if (files != NULL)
+			{
+				int file_count;
+				char **i;
+				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
+				{
+					// If recursive is set, search within sub-folders
+					if ((recursive || depth--) && PHYSFS_isDirectory(*i))
+					{
+						StringVector subList = Find(std::string(*i), pattern, depth, case_sensitive, recursive);
+						list.insert(list.end(), subList.begin(), subList.end());
+					}
+
+					std::string file(*i);
+					// Do the relevant check for case (in)sensitive searches
+					if ((case_sensitive && CheckAgainstPattern(file, patternTokens)) ||
+						(!case_sensitive && CheckAgainstPattern(fe_newupper(file), patternTokens)))
 						list.push_back(file);
 				}
 
