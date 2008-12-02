@@ -107,9 +107,16 @@ namespace FusionEngine
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
 
-		cpInitChipmunk();
-		cpResetShapeIdCounter();
-		m_ChipSpace = cpSpaceNew();
+		m_WorldAABB.lowerBound.Set(-10000.0f, -10000.0f);
+		m_WorldAABB.upperBound.Set(10000.0f, 10000.0f);
+		b2Vec2 gravity(0.0f, 30.0f);
+		bool doSleep = true;
+
+		m_BxWorld = new b2World(m_WorldAABB, gravity, doSleep);
+
+		//cpInitChipmunk();
+		//cpResetShapeIdCounter();
+		//m_ChipSpace = cpSpaceNew();
 
 		//m_CollisionGrid = new CollisionGrid();
 	}
@@ -126,7 +133,7 @@ namespace FusionEngine
 
 		// Don't ad it if it's static
 		if (!body->IsStatic())
-			cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
+			m_BxWorld->CreateBody(body->GetChipBody());
 
 		body->SetWorld(this); // :)
 		//m_CollisionGrid->AddBody(body);
@@ -197,7 +204,7 @@ namespace FusionEngine
 
 		if (props.use_dist)
 		{
-			Shape* shape = new CircleShape(body, 0, props.dist, Vector2::ZERO);
+			Shape* shape = new CircleShape(body, 0, props.dist, Vector2::zero());
 			body->AttachShape(shape);
 			AddShape(shape);
 		}
@@ -596,7 +603,7 @@ namespace FusionEngine
 
 	void PhysicsWorld::SetGravity(const Vector2& grav_vector)
 	{
-		m_ChipSpace->gravity = cpv(grav_vector.x, grav_vector.y);
+		m_BxWorld->SetGravity(grav_vector.x, grav_vector.y);
 	}
 
 	Vector2 PhysicsWorld::GetGravity() const
@@ -735,7 +742,7 @@ namespace FusionEngine
 				//	else
 				//		b1->m_Position += vi*delta;
 				//}
-				//b1->_setRelativeForce(Vector2::ZERO);
+				//b1->_setRelativeForce(Vector2::zero());
 
 
 

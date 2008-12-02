@@ -59,7 +59,7 @@ namespace FusionEngine
 			radius(0.0f),
 			//bounce(0.0f),
 
-			position(Vector2::ZERO),
+			position(Vector2::zero()),
 			rotation(0.0f),
 
 			//use_bitmask(false),
@@ -131,12 +131,12 @@ namespace FusionEngine
 		 *
 		 * \param body Pointer to the body to add.
 		 */
-		void AddBody(PhysicsBody *body);
+		//void AddBody(PhysicsBody *body);
 		//! Removes the given body.
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
-		void RemoveBody(PhysicsBody *body);
+		//void RemoveBody(PhysicsBody *body);
 
 		//! Returns a list of bodies currently in the world
 		const BodyList& GetBodies() const;
@@ -286,14 +286,19 @@ namespace FusionEngine
 
 		//const CollisionGrid* GetCollisionGrid() const;
 
-		cpSpace* GetChipSpace() const
+		b2World* GetInternalSpace() const
 		{
-			return m_ChipSpace;
+			return m_BxWorld;
 		}
 
 	private:
 		// Chipmunk space
-		cpSpace* m_ChipSpace;
+		//cpSpace* m_ChipSpace;
+
+		// Box2d world
+		b2World *m_BxWorld;
+
+		b2AABB m_WorldAABB;
 
 		//! All physical objects controled by this world.
 		BodyList m_Bodies;
@@ -343,55 +348,69 @@ namespace FusionEngine
 			static void wrapAround(void* ptr, void* data);
 	};
 
-	static void drawPolyShape(cpShape *shape)
+	static void drawPolyShape(b2Shape *shape)
 	{
-		cpBody *body = shape->body;
-		cpPolyShape *poly = (cpPolyShape *)shape;
+		b2Body *body = shape->GetBody();
+		b2PolygonShape *polygon = (b2PolygonShape*)shape;
 
-		int num = poly->numVerts;
-		cpVect *verts = poly->verts;
+		int num = polygon->GetVertexCount();
+		const b2Vec2 *verts = polygon->GetVertices();
+
+
+		b2Vec2 vec = body->GetPosition() + (polygon->GetVertices())[0];
+		int start_x = fe_lround(vec.x);
+		int start_y = fe_lround(vec.y);
+		int x, y;
 
 		glBegin(GL_LINE_LOOP);
-		for(int i=0; i<num; i++){
-			cpVect v = cpvadd(body->p, cpvrotate(verts[i], body->rot));
-			glVertex2f(v.x, v.y);
-		} glEnd();
+		for (unsigned int i = 1; i < unsigned int(num); i++) {
+
+			vec = body->GetPosition() + (polygon->GetVertices())[i];
+			x = fe_lround(vec.x);
+			y = fe_lround(vec.y);
+
+			glVertex2f(x, y);
+		}
+		glVertex2f(start_x, start_y);
+		glEnd();
+
 	}
 
-	static void drawCircle(cpFloat x, cpFloat y, cpFloat r, cpFloat a)
+	static void drawCircle(float32 x, float32 y, float32 r, float32 a)
 	{
 		const int segs = 8;
-		const cpFloat coef = 2.0*M_PI/(cpFloat)segs;
+		const float32 coef = 2.0*M_PI / (float32)segs;
 
 		glBegin(GL_LINE_STRIP); {
 			for(int n = 0; n <= segs; n++){
-				cpFloat rads = n*coef;
+				float32 rads = n*coef;
 				glVertex2f(r*cos(rads + a) + x, r*sin(rads + a) + y);
 			}
 			glVertex2f(x,y);
 		} glEnd();
 	}
 
-	static void drawCircleShape(cpShape *shape)
+	static void drawCircleShape(b2Shape *shape)
 	{
-		cpBody *body = shape->body;
-		cpCircleShape *circle = (cpCircleShape *)shape;
-		cpVect c = cpvadd(body->p, cpvrotate(circle->c, body->rot));
+		b2Body *body = shape->GetBody();
+		b2CircleShape *circle = (b2CircleShape *)shape;
+		b2Vec2 c = body->GetWorldCenter() + circle->GetLocalPosition();
 
-		drawCircle(c.x, c.y, circle->r, body->a);
+		drawCircle(c.x, c.y, circle->GetRadius(), body->GetAngle());
 	}
 
 	static void drawObject(void *ptr, void *unused)
 	{
-		cpShape *shape = (cpShape *)ptr;
-		CL_Display::draw_pixel(shape->body->p.x, shape->body->p.y, CL_Color::aliceblue);
+		b2Shape *shape = (b2Shape *)ptr;
+		b2Vec2 pos = shape->GetBody()->GetPosition();
+		CL_Display::draw_pixel(pos.x, pos.y, CL_Color::aliceblue);
 
-		clColor3f(shape->e, shape->u, shape->id*0.0001);
-		switch (shape->type)
+		clColor3f(shape->GetRestitution(), shape->GetFriction(), 0.8f);
+		switch (shape->GetType())
 		{
-		case CP_POLY_SHAPE:
+		case b2ShapeType::e_polygonShape:
 			drawPolyShape(shape);
-		case CP_CIRCLE_SHAPE:
+		case b2ShapeType::e_circleShape:
 			drawCircleShape(shape);
 		}
 	}
@@ -399,11 +418,11 @@ namespace FusionEngine
 
 	static void drawBodyPoint(void *ptr, void *unused)
 	{
-		cpShape *shape = (cpShape *)ptr;
-		cpCircleShape* circle = (cpCircleShape*)shape;
-		cpVect v = cpvadd(circle->c, shape->body->p);
+		b2Shape *shape = (b2Shape*)ptr;
+		b2CircleShape* circle = (b2CircleShape*)shape;
+		b2Vec2 v = circle->GetLocalPosition() + shape->GetBody()->GetPosition();
 
-		clColor3f(shape->e, shape->u, shape->id*0.0001);
+		clColor3f(shape->GetRestitution(), shape->GetFriction(), 0.8f);
 		clVertex2f(v.x, v.y);
 	}
 
