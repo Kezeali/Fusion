@@ -49,9 +49,9 @@ namespace FusionEngine
 			for (InputKeyMap::iterator it = m_Inputs.begin(); it != m_Inputs.end(); ++it)
 			{
 				std::string input = (*it).first;
-				std::string control = (*it).second;
+				std::string key = (*it).second;
 
-				FusionInput::getSingleton().IsButtonDown(control);
+				//InputManager::getSingleton().IsButtonDown(key);
 			}
 		}
 	}

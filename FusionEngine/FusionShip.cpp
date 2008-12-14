@@ -28,8 +28,8 @@ m_InputChanged(true)
 
 	/// State
 	m_InitialState.PID = 0;
-	m_InitialState.position = Vector2::ZERO;
-	m_InitialState.velocity = Vector2::ZERO;
+	m_InitialState.position = Vector2::zero();
+	m_InitialState.velocity = Vector2::zero();
 	m_InitialState.rotation = 0;
 	m_InitialState.rotationalVelocity = 0;
 

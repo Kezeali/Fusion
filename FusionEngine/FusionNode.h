@@ -34,6 +34,53 @@ Copyright (c) 2006-2007 Fusion Project Team
 
 namespace FusionEngine
 {
+	class INode : public RefCounted
+	{
+		virtual void StoreState(Action &state) = 0;
+		virtual void LoadState(const Action &state) = 0;
+
+		virtual void Update(unsigned int split) = 0;
+		virtual void Draw() = 0;
+
+		/*!
+		* \brief
+		 * Sets the position of the node relative to its parent.
+		 * 
+		 * \param position
+		 * The relative position to move to.
+		 * 
+		 * Set position will move a node to the specified position relative to its parent,
+		 * and update the positions of all of the nodes children to maintain their relative
+		 * positions.
+		 */
+		virtual void SetPosition(const Vector2 &position) = 0;
+		/*!
+		 * \brief
+		 * Gets the position of the node relative to its parent.
+		 * 
+		 * \returns
+		 * The position relative to the parent.
+		 */
+		virtual const Vector2 &GetPosition() const = 0;
+
+		/*!
+		 * \brief
+		 * Sets the facing (degrees) of the node relative to its parent.
+		 * 
+		 * \param angle
+		 * The angle in degrees relative to the objects parent.
+		 */
+		virtual void SetFacing(float angle) = 0;
+		/*!
+		 * \brief
+		 * Gets the facing (degrees) of the node relative to its parent.
+		 * 
+		 * \returns
+		 * The angle in degrees relative to the objects parent.
+		 */
+		virtual float GetFacing() const = 0;
+	};
+
 	/*!
 	 * \brief
 	 * FusionNode represents a moveable object with sub-objects.
@@ -51,9 +98,9 @@ namespace FusionEngine
 	 * also moved to maintain their positions at the top and bottom of the sprite. 
 	 * 
 	 * \see
-	 * FusionScene | FusionShip | FusionShipWeapon | FusionShipEngine.
+	 * Scene
 	 */
-	class FusionNode
+	class SceneNode : public RefCounted
 	{
 	public:
 		/*!
@@ -70,13 +117,22 @@ namespace FusionEngine
 		 * bad form), but that doesn't mean it should be used outside of the FusionScene /
 		 * FusionNode based classes!
 		 */
-		FusionNode(FusionScene *creator);
+		SceneNode(Scene *creator);
 		//! Virtual destructor.
-		virtual ~FusionNode();
+		virtual ~SceneNode();
 
 	public:
-		typedef std::vector<FusionNode*> ChildNodeList;
-		typedef std::vector<FusionDrawable*> DrawableList;
+		typedef std::vector<SceneNode*> ChildNodeList;
+		typedef std::vector<Action> StateList;
+
+		virtual void StoreState(Action &state);
+		virtual void LoadState(const Action &state);
+
+		//! \todo Set controller
+		void SetController(ISceneNodeController *controller);
+
+		//! Updates all dynamic drawables
+		virtual void Update(unsigned int split);
 
 		/*!
 		* \brief
@@ -127,64 +183,9 @@ namespace FusionEngine
 		virtual float GetGlobalFacing() const;
 
 		//! Saves the current state as the 'initial' state
-		void SetInitialState();
+		//void SetInitialState();
 		//! Resets to the state saved as the 'initial' state
-		void ResetToInitialState();
-
-		//! Self explanitory.
-		ChildNodeList GetChildren() const;
-
-		//! Gets a list of normal attached drawables
-		DrawableList GetAttachedDrawables() const;
-		//! Gets a list of dynamic attached drawables
-		DrawableList GetAttachedDynamicDrawables() const;
-		//! Gets a list of all attached drawables
-		DrawableList GetAllAttachedDrawables() const;
-
-		/*!
-		 * \brief
-		 * Attaches a FusionDrawable object to the node.
-		 * 
-		 * \param[in] draw
-		 * A pointer to the FusionDrawable.
-		 */
-		void AttachDrawable(FusionDrawable *draw);
-
-		/*!
-		 * \brief
-		 * Attaches a dynamic FusionDrawable object to the node.
-		 *
-		 * Drawables attached via this method go into a different list to ones
-		 * attached via the normal AttachDrawable(), and have their 
-		 * FusionDrawable#Update() methods called automatically every step.
-		 *
-		 * \param[in] draw
-		 * A pointer to the FusionDrawable.
-		 */
-		void AttachDynamicDrawable(FusionDrawable *draw);
-		
-		/*!
-		 * \brief
-		 * Removes an attached drawable.
-		 * 
-		 * \param[in] child
-		 * A pointer to the attached object to remove.
-		 */
-		void DetachDrawable(FusionDrawable *draw);
-
-		/*!
-		 * \brief
-		 * Removes and destroys all drawables attached to this node.
-		 *
-		 * \remarks
-		 * There is no "DetachAndDestroyDrawable(* mydrawable)" method, as, if you
-		 * have a pointer to the drawable, you can just detach it and destroy it
-		 * yourself! Unlike nodes, you don't have to worry about orphaning children.
-		 */
-		void DetachAndDestroyAllDrawables();
-
-		//! Updates all dynamic drawables
-		void UpdateDynamics(unsigned int split);
+		//void ResetToInitialState();
 
 		/*!
 		 * (mainly)Internal method for setting whether the node is in the scene graph.
@@ -226,7 +227,7 @@ namespace FusionEngine
 		 * A pointer to the node created.
 		 */
 		FusionNode *CreateChildNode(
-			const Vector2 &position = Vector2::ZERO,
+			const Vector2 &position = Vector2::zero(),
 			float facing = 0);
 
 		/*!
@@ -265,7 +266,7 @@ namespace FusionEngine
 		 * \param child
 		 * A pointer to the child node.
 		 */
-		void AddChild(FusionNode *child);
+		void AddChild(SceneNode *child);
 
 		/*!
 		 * \brief
@@ -274,7 +275,10 @@ namespace FusionEngine
 		 * \param child
 		 * A pointer to the child to remove.
 		 */
-		void RemoveChild(FusionNode *child);
+		void RemoveChild(SceneNode *child);
+
+		//! Self explanitory.
+		ChildNodeList GetChildren() const;
 
 		/*!
 		 * \brief

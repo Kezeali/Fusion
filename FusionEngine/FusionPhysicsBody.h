@@ -41,7 +41,6 @@ Elliot Hayward
 #include "FusionPhysicsCallback.h"
 
 #include <boost/ptr_container/ptr_list.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace FusionEngine
 {
@@ -50,21 +49,19 @@ namespace FusionEngine
 	 * Flags used by FusionPhysicsWorld to decide what type of collision
 	 * detection/response to use.
 	 */
-	enum CollisionFlags
-	{
-		//! (0000)
-		C_NONE = 0,
-		//! (0001)
-		C_STATIC = 1,
-		//! (0010)
-		C_BOUNCE = 2
-	};
+	//enum CollisionFlags
+	//{
+	//	//! (0000)
+	//	C_NONE = 0,
+	//	//! (0001)
+	//	C_STATIC = 1,
+	//	//! (0010)
+	//	C_BOUNCE = 2
+	//};
 
-	static float g_PhysStaticMass = INFINITY;
+	static float g_PhysStaticMass = 0.f;
 	static int g_PhysBodyCpCollisionType = 1;
 
-	//! Shape Smart Ptr type
-	typedef boost::shared_ptr<Shape> ShapePtr;
 
 	/*!
 	 * \brief
@@ -79,37 +76,13 @@ namespace FusionEngine
 	 * \see
 	 * PhysicsWorld.
 	 */
-	class PhysicsBody : public RefCounted
+	class PhysicsBody : public ISceneNodeController
 	{
 		//typedef boost::ptr_list<Shape> ShapeList;
 		typedef std::list<ShapePtr> ShapeList;
 		//typedef std::list<Shape*> ShapeList;
 		friend class PhysicsWorld;
 	public:
-		//PhysicsBody(PhysicsBody& other)
-		//	: m_Body(other.m_Body),
-		//	m_World(other.m_World),
-		//	m_Type(other.m_Type),
-		//	m_CollisionHandler(other.m_CollisionHandler),
-		//	m_UserData(other.m_UserData),
-		//	m_Active(other.m_Active)
-		//{
-		//	m_Shapes.assign(other.m_Shapes.begin(), other.m_Shapes.end());
-		//}
-
-		//PhysicsBody& operator=(PhysicsBody& rhs)
-		//{
-		//	m_Shapes = rhs.m_Shapes.release();
-		//	m_Body = rhs.m_Body;
-		//	m_World = rhs.m_World;
-		//	m_Type = rhs.m_Type;
-		//	m_CollisionHandler = rhs.m_CollisionHandler;
-		//	m_UserData = rhs.m_UserData;
-		//	m_Active = rhs.m_Active;
-
-		//	return *this;
-		//}
-
 		PhysicsBody();
 		//PhysicsBody();
 		//! Constructor.
@@ -127,21 +100,21 @@ namespace FusionEngine
 		 * \param[in] handler
 		 * The collision response object.
 		 */
-		PhysicsBody(PhysicsWorld *world, ICollisionHandler *handler);
+		//PhysicsBody(PhysicsWorld *world, ICollisionHandler *handler);
 
-		//! [depreciated] Constructor with response param.
-		/*!
-		 * \param world
-		 * The world in which this body resides.
-		 *
-		 * \param response
-		 * The response function to call on upon a collision.
-		 */
-		PhysicsBody(PhysicsWorld *world, const CollisionCallback &response);
-
+		//! Destructor
 		~PhysicsBody();
 
 	public:
+		//! \remarks Gets a b2Body from PhysicsWorld by asking it to substantiate 'this'
+		void Initialize(const PhysicsWorld *world = NULL);
+		//! Insert the set body properties into the Box2D objects
+		void CommitProperties();
+
+		b2BodyDef *GetBodyDef() const;
+
+		b2Body *GetB2Body() const;
+
 		void SetWorld(PhysicsWorld* world);
 		//! Sets the type ID for this object.
 		void SetType(int type);
@@ -199,15 +172,20 @@ namespace FusionEngine
 		//virtual void SetColDist(float dist);
 		//@}
 
-		cpBody* GetChipBody() const;
+		b2Body* GetInternalBody() const;
 
 		void AttachShape(Shape* shape);
 		void DetachShape(Shape* shape);
-		void ClearShapes(bool fromWorld = true);
+		void ClearShapes();
 
-		void AttachJoint(cpJoint* joint, bool toWorld = true);
-		void DetachJoint(cpJoint* joint, bool fromWorld = true);
-		void ClearJoints(bool fromWorld = true);
+		const ShapeList &GetShapes() const;
+
+		Shape *GetShape(b2Shape *internalShape) const;
+		Shape *GetShape(const std::string &name) const;
+
+		void AttachJoint(b2Joint* joint, bool toWorld = true);
+		void DetachJoint(b2Joint* joint, bool fromWorld = true);
+		void ClearJoints();
 
 		void Clear();
 
@@ -270,7 +248,7 @@ namespace FusionEngine
 		void *GetUserData() const;
 
 		//! Sets a collision response callback
-		void SetCollisionCallback(const CollisionCallback &callback);
+		//void SetCollisionCallback(const CollisionCallback &callback);
 
 		//! Sets a collision handler
 		void SetCollisionHandler(ICollisionHandler *handler);
@@ -278,33 +256,35 @@ namespace FusionEngine
 		//! Returns true if the given body can experiance a collision with this one.
 		bool CanCollideWith(PhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void CollisionWith(PhysicsBody *other, const std::vector<Contact> &collision_point);
+		void AddContact(PhysicsBody *other, const Contact &contact);
+		//! Called when a collision ends
+		void RemoveContact(Shape *shape);
 
 		//! [depreciated] Use CollisionWith()
-		void CollisionResponse(PhysicsBody *other, const std::vector<Contact> &collision_point);
+		//void CollisionResponse(PhysicsBody *other, const std::vector<Contact> &collision_point);
 
 		//! Returns true if this is a static body (infinate mass & inertia)
 		bool IsStatic() const;
 
 		//! Returns the current collision config.
-		int GetCollisionFlags();
+		//int GetCollisionFlags();
 		//! Returns the current collision config.
-		int GetCollisionFlags() const;
+		//int GetCollisionFlags() const;
 		//! Returns true if the given flag is set.
-		bool CheckCollisionFlag(int flag);
+		//bool CheckCollisionFlag(int flag);
 		//! Returns true if the given flag is set.
-		bool CheckCollisionFlag(int flag) const;
+		//bool CheckCollisionFlag(int flag) const;
 		//! Allows the collision flags to be set manually
 		/*!
 		 * This isn't usually necessary, as collision flags get set by relavant
 		 * methods (e.g. If SetMass(g_PhysStaticMass) is called, the C_STATIC flag will be set.)
 		 */
-		void _setCollisionFlags(int flags);
+		//void _setCollisionFlags(int flags);
 
 		//! \name State retreival.
 		//@{
 		//! Returns the current position
-		const Vector2 &GetPosition();
+		virtual const Vector2 &GetPosition();
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		CL_Point GetPositionPoint() const;
 
@@ -329,6 +309,9 @@ namespace FusionEngine
 
 		float GetRotation() const;
 		float GetRotationalVelocity() const;
+
+		//! ISceneNodeController implementation
+		virtual float GetFacing() const;
 		//@}
 
 		//! Returns true if this object is active.
@@ -461,7 +444,10 @@ namespace FusionEngine
 		//@}
 
 	protected:
-		cpBody *m_Body;
+		ISceneNode *m_SceneNode;
+
+		b2Body *m_BxBody;
+		b2BodyDef *m_BxBodyDef;
 
 		ShapeList m_Shapes;
 		//! \name Used internally by CollisionGrid
@@ -479,14 +465,14 @@ namespace FusionEngine
 		PhysicsWorld *m_World;
 
 		//! \see FusionPhysicsCallback.h
-		CollisionCallback m_CollisionResponse;
+		//CollisionCallback m_CollisionResponse;
 		//! Collsion handler
 		ICollisionHandler *m_CollisionHandler;
 
 		//! Data which may be useful for collision responses, etc.
 		void *m_UserData;
 		//! Collision flags, such as C_STATIC
-		int m_CollisionFlags;
+		//int m_CollisionFlags;
 
 		//! The ID for the current object's type
 		/*!
@@ -553,28 +539,28 @@ namespace FusionEngine
 
 	};
 
-	static int bodyCollFunc(cpShape *a, cpShape *b, cpContact *contacts, int numContacts, cpFloat normal_coef, void *data)
-	{
-		if (a->data == NULL || b->data == NULL)
-			return 1;
+	//static int bodyCollFunc(b2Shape *a, b2Shape *b, b2ContactPoint *contacts, int numContacts, cpFloat normal_coef, void *data)
+	//{
+	//	if (a->data == NULL || b->data == NULL)
+	//		return 1;
 
-		PhysicsBody* aBody = (PhysicsBody*)a->data;
-		PhysicsBody* bBody = (PhysicsBody*)b->data;
+	//	PhysicsBody* aBody = (PhysicsBody*)a->data;
+	//	PhysicsBody* bBody = (PhysicsBody*)b->data;
 
-		std::vector<Contact> contactList;
-		for (int i = 0; i < numContacts; i++)
-		{
-			contactList.push_back( Contact(contacts[i]) );
-		}
+	//	std::vector<Contact> contactList;
+	//	for (int i = 0; i < numContacts; i++)
+	//	{
+	//		contactList.push_back( Contact(contacts[i]) );
+	//	}
 
-		aBody->CollisionWith(bBody, contactList);
-		bBody->CollisionWith(aBody, contactList);
+	//	aBody->CollisionWith(bBody, contactList);
+	//	bBody->CollisionWith(aBody, contactList);
 
-		if (aBody->CanCollideWith(bBody) && bBody->CanCollideWith(aBody))
-			return 1;
+	//	if (aBody->CanCollideWith(bBody) && bBody->CanCollideWith(aBody))
+	//		return 1;
 
-		return 0;
-	}
+	//	return 0;
+	//}
 
 }
 

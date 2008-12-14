@@ -32,43 +32,49 @@
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Input thing-a-ma-bob
-	 *
-	 * Commands are much like quake engine usercmds or 'The Zen of Networked Physics' (by Glenn Fiedler)s 'Move' class
-	 */
-	class Command
+	class InputState
 	{
 	public:
-		Command()
-			: m_Thrust(false),
-			m_Left(false),
-			m_Right(false),
-			m_PrimaryFire(false),
-			m_SecondaryFire(false),
-			m_SpecialFire(false),
-			m_ButtonDelta(0)
+		InputState()
+			: m_Down(false), m_Changed(false), m_Value(0.0f)
 		{}
+		bool m_Down;
+		bool m_Changed; // If the button was pressed / released / both since the last command
+		float m_Value;
+	};
+
+	class Command
+	{
+	protected:
+		typedef std::tr1::unordered_map<std::string, InputState> InputStateMap;
+
+		InputStateMap m_InputStates;
+
+		ScriptObject m_ScriptCommand;
 
 	public:
-		// 0000 0001 (1)
-		bool m_Thrust;
-		// 0000 0010 (2)
-		bool m_Left;
-		// 0000 0100 (4)
-		bool m_Right;
-		// 0000 1000 (8)
-		bool m_PrimaryFire;
-		// 0001 0000 (16)
-		bool m_SecondaryFire;
-		// 0010 0000 (32)
-		bool m_SpecialFire;
+		Command()
+		{
+		}
 
-		// 'Button-has-changed' flags
-		unsigned int m_ButtonDelta;
-		
+		Command(InputStateMap::size_type size)
+		{
+			m_InputStates.rehash(size);
+		}
+
+		//! Copy
+		Command(const Command& other)
+		{
+			m_InputStates = other.m_InputStates;
+		}
+
+		ScriptObject GetScriptCommand()
+		{
+			return m_ScriptCommand;
+		}
+
 	};
+	//typedef std::map<std::string, InputState> Command;
 
 }
 

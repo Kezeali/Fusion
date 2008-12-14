@@ -267,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironment.h"
 				>
 			</File>
@@ -540,6 +544,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionScene.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionSceneNodeController.h"
 				>
 			</File>
 			<File

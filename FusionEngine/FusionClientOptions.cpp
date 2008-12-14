@@ -272,7 +272,7 @@ namespace FusionEngine
 			std::string key = child->GetAttribute("key");
 			std::string input = child->GetAttribute("input");
 
-			m_Controls.push_back( InputBinding(input, key, player) );
+			m_Controls.push_back( XmlInputBinding(input, key, player) );
 		}
 	}
 

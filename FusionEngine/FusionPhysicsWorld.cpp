@@ -127,369 +127,249 @@ namespace FusionEngine
 		//delete m_CollisionGrid;
 	}
 
-	void PhysicsWorld::AddBody(PhysicsBody *body)
+	b2Body* PhysicsWorld::SubstantiateBody(const PhysicsBodyPtr &body)
 	{
-		m_Bodies.push_back(body);
+		b2Body* bxBody = m_BxWorld->CreateBody(body->GetBodyDef());
+		m_Bodies[bxBody] = body;
+	}
 
-		// Don't ad it if it's static
-		if (!body->IsStatic())
-			m_BxWorld->CreateBody(body->GetChipBody());
-
-		body->SetWorld(this); // :)
-		//m_CollisionGrid->AddBody(body);
+	void PhysicsWorld::RemoveBody(PhysicsBodyPtr &body)
+	{
+		m_Bodies.erase(body->GetB2Body());
 	}
 	
-	void PhysicsWorld::RemoveBody(PhysicsBody *body)
+	void PhysicsWorld::BodyDeleted(PhysicsBodyPtr &body)
 	{
-		//m_CollisionGrid->RemoveBody(body);
-		// Static bodies don't get added to the space
-		if (!body->IsStatic())
-			cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
-
-		BodyList::iterator it = m_Bodies.begin();
-		for (; it != m_Bodies.end(); ++it)
-		{
-			if ((*it) == body)
-			{
-				m_Bodies.erase(it);
-				break;
-			}
-		}
+		m_BxWorld->DestroyBody(body->GetB2Body());
 	}
 
-	const BodyList& PhysicsWorld::GetBodies() const
+	const PhysicsWorld::BodyMap& PhysicsWorld::GetBodies() const
 	{
 		return m_Bodies;
 	}
 
-	///////////
-	// Dynamic
-	PhysicsBody *PhysicsWorld::CreateBody(int type)
-	{
-		PhysicsBody *body = new PhysicsBody(this);
-		body->SetType(type);
-
-		m_Bodies.push_back(body);
-
-		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
-
-		//m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateBody(int type, const PhysicalProperties &props)
-	{
-		PhysicsBody *body = new PhysicsBody(this);
-		body->SetType(type);
-		body->SetMass(props.mass);
-		body->SetRadius(props.radius);
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-
-		//// BM
-		//body->SetUsePixelCollisions(props.use_bitmask);
-		//if (props.bitmask)
-		//	body->SetColBitmask(props.bitmask);
-		//// AABB
-		//body->SetUseAABBCollisions(props.use_aabb);
-		//body->SetColAABB(props.aabb_x, props.aabb_y);
-		//// DIST
-		//body->SetUseDistCollisions(props.use_dist);
-		//body->SetColDist(props.dist);
-
-		m_Bodies.push_back(body);
-
-		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
-
-		if (props.use_dist)
-		{
-			Shape* shape = new CircleShape(body, 0, props.dist, Vector2::zero());
-			body->AttachShape(shape);
-			AddShape(shape);
-		}
-		//m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateBody(ICollisionHandler* response, int type)
-	{
-		PhysicsBody *body = new PhysicsBody(this, response);
-		body->SetType(type);
-
-		m_Bodies.push_back(body);
-
-		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
-		//m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateBody(ICollisionHandler* response, int type, const PhysicalProperties &props)
-	{
-		PhysicsBody *body = new PhysicsBody(this, response);
-		body->SetType(type);
-		body->SetMass(props.mass);
-		body->SetRadius(props.radius);
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-
-		//// BM
-		//body->SetUsePixelCollisions(props.use_bitmask);
-		//if (props.bitmask)
-		//	body->SetColBitmask(props.bitmask);
-		//// AABB
-		//body->SetUseAABBCollisions(props.use_aabb);
-		//body->SetColAABB(props.aabb_x, props.aabb_y);
-		//// DIST
-		//body->SetUseDistCollisions(props.use_dist);
-		//body->SetColDist(props.dist);
-
-		m_Bodies.push_back(body);
-		cpSpaceAddBody(m_ChipSpace, body->GetChipBody());
-
-		//m_CollisionGrid->AddBody(body);
-
-		return body;
-	}
-
-	void PhysicsWorld::DestroyBody(PhysicsBody *body)
-	{
-		if (m_RunningSimulation)
-		{
-			m_DeleteQueue.push_back(body);
-		}
-		else
-		{
-			//m_CollisionGrid->RemoveBody(body);
-			cpSpaceRemoveBody(m_ChipSpace, body->GetChipBody());
-
-			BodyList::iterator it = m_Bodies.begin();
-			for (; it != m_Bodies.end(); ++it)
-			{
-				if ((*it) == body)
-				{
-					m_Bodies.erase(it);
-					break;
-				}
-			}
-
-			delete body;
-		}
-	}
-
-	//////////
-	// Static
-	PhysicsBody *PhysicsWorld::CreateStatic(int type)
-	{
-		PhysicsBody *body = new PhysicsBody(this);
-		body->SetType(type);
-		body->SetMass(g_PhysStaticMass);
-
-		m_Statics.push_back(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateStatic(int type, const PhysicalProperties &props)
-	{
-		PhysicsBody *body = new PhysicsBody(this);
-		body->SetType(type);
-		body->SetMass(g_PhysStaticMass);
-
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-
-		//// BM
-		//body->SetUsePixelCollisions(props.use_bitmask);
-		//if (props.bitmask)
-		//	body->SetColBitmask(props.bitmask);
-		//// AABB
-		//body->SetUseAABBCollisions(props.use_aabb);
-		//body->SetColAABB(props.aabb_x, props.aabb_y);
-		//// DIST
-		//body->SetUseDistCollisions(props.use_dist);
-		//body->SetColDist(props.dist);
-
-		m_Statics.push_back(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateStatic(ICollisionHandler* response, int type)
-	{
-		PhysicsBody *body = new PhysicsBody(this, response);
-		body->SetType(type);
-		body->SetMass(g_PhysStaticMass);
-
-		m_Statics.push_back(body);
-
-		return body;
-	}
-
-	PhysicsBody *PhysicsWorld::CreateStatic(ICollisionHandler* response, int type, const PhysicalProperties &props)
-	{
-		PhysicsBody *body = new PhysicsBody(this, response);
-		body->SetType(type);
-		body->SetMass(g_PhysStaticMass);
-
-		body->_setPosition(props.position);
-		body->_setRotation(props.rotation);
-
-		//// BM
-		//body->SetUsePixelCollisions(props.use_bitmask);
-		//if (props.bitmask)
-		//	body->SetColBitmask(props.bitmask);
-		//// AABB
-		//body->SetUseAABBCollisions(props.use_aabb);
-		//body->SetColAABB(props.aabb_x, props.aabb_y);
-		//// DIST
-		//body->SetUseDistCollisions(props.use_dist);
-		//body->SetColDist(props.dist);
-
-		m_Statics.push_back(body);
-
-		return body;
-	}
-
-	void PhysicsWorld::DestroyStatic(PhysicsBody *body)
-	{
-		BodyList::iterator it = m_Statics.begin();
-		for (; it != m_Statics.end(); ++it)
-		{
-			if ((*it) == body)
-			{
-				m_Statics.erase(it);
-				break;
-			}
-		}
-
-		delete body;
-	}
-
-	void PhysicsWorld::AddShape(Shape* shape)
-	{
-		// Check the body type, and process accordingly
-		if (shape->GetBody() && shape->GetBody()->IsStatic())
-			AddStaticShape(shape);
-		else
-			cpSpaceAddShape(m_ChipSpace, shape->GetShape());
-	}
-
-	void PhysicsWorld::AddStaticShape(Shape* shape)
-	{
-		cpSpaceAddStaticShape(m_ChipSpace, shape->GetShape());
-	}
-
-	void PhysicsWorld::RemoveShape(Shape* shape)
-	{
-		if (shape->GetBody() && shape->GetBody()->IsStatic())
-			RemoveStaticShape(shape);
-		else
-			cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
-	}
-
-	void PhysicsWorld::RemoveShape(ShapePtr shape)
-	{
-		if (shape->GetBody() && shape->GetBody()->IsStatic())
-			RemoveStaticShape(shape);
-		else
-			cpSpaceRemoveShape(m_ChipSpace, shape->GetShape());
-	}
-
-	void PhysicsWorld::RemoveStaticShape(Shape* shape)
-	{
-		cpSpaceRemoveStaticShape(m_ChipSpace, shape->GetShape());
-	}
-
-	void PhysicsWorld::RemoveStaticShape(ShapePtr shape)
-	{
-		cpSpaceRemoveStaticShape(m_ChipSpace, shape->GetShape());
-	}
-
 	void PhysicsWorld::Clear()
 	{
+		m_Bodies.clear();
+
+		//{
+		//	BodyMap::iterator it = m_Statics.begin();
+		//	for (; it != m_Statics.end(); ++it)
+		//	{
+		//		delete (*it);
+		//	}
+
+		//	m_Statics.clear();
+		//}
+	}
+
+	//void PhysicsWorld::constrainBorders(void* ptr, void* data)
+	//{
+	//	cpBody* body = (cpBody*)ptr;
+	//	PhysicsWorld* world = (PhysicsWorld*)data;
+
+	//	if (body->p.x < 0.0f || body->p.x > world->m_Width)
+	//		body->v.x = 0.0f;
+	//	if (body->p.y < 0.0f || body->p.y > world->m_Height)
+	//		body->v.y = 0.0f;
+
+	//	body->p.x = fe_clamped(body->p.x, 0.0f, world->m_Width);
+	//	body->p.y = fe_clamped(body->p.y, 0.0f, world->m_Height);
+	//}
+
+	//void PhysicsWorld::wrapAround(void* ptr, void* data)
+	//{
+	//	cpBody* body = (cpBody*)ptr;
+	//	PhysicsWorld* world = (PhysicsWorld*)data;
+
+	//	if (body->p.x > world->m_Width)
+	//		body->p.x = 0.1f;
+	//	else if (body->p.x < 0.0f)
+	//		body->p.x = world->m_Width;
+
+	//	if (body->p.y > world->m_Height)
+	//		body->p.y = 0.1f;
+	//	else if (body->p.y < 0.0f)
+	//		body->p.y = world->m_Height;
+	//}
+
+	void PhysicsWorld::constrainBodies()
+	{
+		for (BodyMap::iterator it = m_Bodies.begin(), end = m_DeleteQueue.end(); it != end; ++it)
 		{
-			BodyList::iterator it = m_Bodies.begin();
-			for (; it != m_Bodies.end(); ++it)
+			PhysicsBody* body = it->second;
+
+			if (m_Wrap)
 			{
-				delete (*it);
+				Vector2 position = body->GetPosition();
+				if (position.x > m_Width)
+					position.x = 0.1f;
+				else if (position.x < 0.0f)
+					position.x = m_Width;
+
+				if (position.y > m_Height)
+					position.y = 0.1f;
+				else if (position.y < 0.0f)
+					position.y = m_Height;
+
+				body->_setPosition(position);
 			}
-
-			m_Bodies.clear();
-		}
-
-		{
-			BodyList::iterator it = m_Statics.begin();
-			for (; it != m_Statics.end(); ++it)
+			else
 			{
-				delete (*it);
+				Vector2 position = body->GetPosition();
+				Vector2 velocity = body->GetVelocity();
+
+				if (position.x < 0.0f || position.x > m_Width)
+					velocity.x = 0.0f;
+				if (position.y < 0.0f || position.y > m_Height)
+					velocity.y = 0.0f;
+
+				body->_setVelocity(velocity);
+
+				position.x = fe_clamped(position.x, 0.0f, m_Width);
+				position.y = fe_clamped(position.y, 0.0f, m_Height);
+
+				body->_setPosition(position);
 			}
-
-			m_Statics.clear();
 		}
-
-		//cpSpaceFreeChildren(m_ChipSpace);
-		cpSpaceDestroy(m_ChipSpace);
-
-		// Clear the collision grid
-		//m_CollisionGrid->Clear();
 	}
 
-	void PhysicsWorld::constrainBorders(void* ptr, void* data)
+	void PhysicsWorld::RunSimulation(float delta_milis)
 	{
-		cpBody* body = (cpBody*)ptr;
-		PhysicsWorld* world = (PhysicsWorld*)data;
+		for (ForceList::iterator it = m_ForceQueue.begin(), end = m_ForceQueue.end(); it != end; ++it)
+			it->ApplyForce();
 
-		if (body->p.x < 0.0f || body->p.x > world->m_Width)
-			body->v.x = 0.0f;
-		if (body->p.y < 0.0f || body->p.y > world->m_Height)
-			body->v.y = 0.0f;
-
-		body->p.x = fe_clamped(body->p.x, 0.0f, world->m_Width);
-		body->p.y = fe_clamped(body->p.y, 0.0f, world->m_Height);
-	}
-
-	void PhysicsWorld::wrapAround(void* ptr, void* data)
-	{
-		cpBody* body = (cpBody*)ptr;
-		PhysicsWorld* world = (PhysicsWorld*)data;
-
-		if (body->p.x > world->m_Width)
-			body->p.x = 0.1f;
-		else if (body->p.x < 0.0f)
-			body->p.x = world->m_Width;
-
-		if (body->p.y > world->m_Height)
-			body->p.y = 0.1f;
-		else if (body->p.y < 0.0f)
-			body->p.y = world->m_Height;
-	}
-
-	void PhysicsWorld::RunSimulation(unsigned int split)
-	{
 		m_RunningSimulation = true; // bodies can't be deleted
 
-		cpFloat dt = 1.0/60.0/1.0;
-		cpSpaceStep(m_ChipSpace, dt);
+		float32 dt = delta_milis * 0.001;
+		if (dt > 0.0f)
+			m_BxWorld->Step(dt, m_VelocityIterations, m_PositionIterations);
+		else
+			m_BxWorld->Step(dt, 0, 0);
 
 		m_RunningSimulation = false; // bodies can be deleted
 
 		// Delete bodies
-		for (BodyList::iterator it = m_DeleteQueue.begin(), end = m_DeleteQueue.end(); it != end; ++it)
-		{
-			DestroyBody((*it));
-		}
 		m_DeleteQueue.clear();
 
-		if (m_Wrap)
-			cpArrayEach(m_ChipSpace->bodies, &wrapAround, this);
-		else
-			cpArrayEach(m_ChipSpace->bodies, &constrainBorders, this);
-		//for (BodyList::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
+		//UpdateContacts();
+
+		//constrainBodies();
+	}
+
+	void PhysicsWorld::OnContactAdd(const b2ContactPoint *contact)
+	{
+		BodyMap::iterator found_body1 = m_Bodies.find(contact.shape1->GetBody());
+		BodyMap::iterator found_body2 = m_Bodies.find(contact.shape2->GetBody());
+		if (find_body1 == m_Bodies.end() && find_body1->second != NULL)
+		{
+			PhysicsBody *body1 = found_body1->second;
+
+			if (found_body2 != m_Bodies.end())
+			{
+				PhysicsBody *body2 = found_body2->second;
+				body1->CollisionWith(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+			}
+		}
+
+
+		if (found_body2 == m_Bodies.end() && found_body2->second != NULL)
+		{
+			PhysicsBody *body2 = found_body2->second;
+
+			if (found_body1 != m_Bodies.end())
+			{
+				PhysicsBody *body1 = found_body2->second;
+				body2->CollisionWith(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+			}
+		}
+	}
+
+	void PhysicsWorld::OnContactPersist(const b2ContactPoint *contact)
+	{
+	}
+
+	void PhysicsWorld::OnContactRemove(const b2ContactPoint *contact)
+	{
+		BodyMap::iterator found_body = m_Bodies.find(contact.shape1->GetBody());
+		if (found_body == m_Bodies.end() && found_body->second != NULL)
+		{
+			PhysicsBody *body = find_body;
+			body->RemoveContact(body->GetShape(contact.shape1));
+		}
+
+		found_body = m_Bodies.find(contact.shape2->GetBody());
+		if (found_body == m_Bodies.end() && found_body->second != NULL)
+		{
+			PhysicsBody *body = objects_list[contact.shape2->GetBody()];
+			body->RemoveContact(body->GetShape(contact.shape2));
+		}
+	}
+
+	void PhysicsWorld::UpdateContacts()
+	{
+		for (ContactList::iterator it = m_NewContacts.begin(), end = m_NewContacts.end(); it != end; ++i)
+		{
+			b2ContactPoint contact = (*it);
+
+			BodyMap::iterator found_body1 = m_Bodies.find(contact.shape1->GetBody());
+			BodyMap::iterator found_body2 = m_Bodies.find(contact.shape2->GetBody());
+			if (find_body1 == m_Bodies.end() && find_body1->second != NULL)
+			{
+				PhysicsBody *body1 = found_body1->second;
+
+				if (found_body2 != m_Bodies.end())
+				{
+					PhysicsBody *body2 = found_body2->second;
+					body1->CollisionWith(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+				}
+			}
+
+
+			if (found_body2 == m_Bodies.end() && found_body2->second != NULL)
+			{
+				PhysicsBody *body2 = found_body2->second;
+
+				if (found_body1 != m_Bodies.end())
+				{
+					PhysicsBody *body1 = found_body2->second;
+					body2->CollisionWith(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+				}
+			}
+		}
+
+		//for (ContactList::iterator it = m_ActiveContacts.begin(), end = m_ActiveContacts.end(); it != end; ++it)
 		//{
 		//}
+
+		for (ContactList::iterator it = m_EndedContacts.begin(), end = m_EndedContacts.end(); it != end; ++it)
+		{
+			b2ContactPoint contact = it;
+
+			BodyMap::iterator found_body = m_Bodies.find(contact.shape1->GetBody());
+			if (found_body == m_Bodies.end() && found_body->second != NULL)
+			{
+					PhysicsBody *body = find_body;
+					collider->RemoveContact(collider->GetShape(contact.shape1));
+			}
+
+			found_body = m_Bodies.find(contact.shape2->GetBody());
+			if (found_body == m_Bodies.end() && found_body->second != NULL)
+			{
+					PhysicsBody *body = objects_list[contact.shape2->GetBody()];
+					collider->RemoveContact(collider->GetShape(contact.shape2));
+			}
+		}
+
+		ClearContacts();
+	}
+
+
+	void PhysicsWorld::ClearContacts()
+	{
+		m_NewContacts.clear();
+		m_ActiveContacts.clear();
+		m_EndedContacts.clear();
 	}
 
 	void PhysicsWorld::DebugDraw(bool fast)
@@ -498,14 +378,21 @@ namespace FusionEngine
 		{
 			CL_Display::draw_pixel(0, 0, CL_Color::white);
 			clBegin(GL_POLYGON);
-			cpSpaceHashEach(m_ChipSpace->staticShapes, &drawBodyPoint, NULL);
-			cpSpaceHashEach(m_ChipSpace->activeShapes, &drawBodyPoint, NULL);
+			for (BodyMap::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
+			{
+				drawBodyPoint(it->first);
+			}
 			clEnd();
 		}
 		else
 		{
-			cpSpaceHashEach(m_ChipSpace->staticShapes, &drawObject, NULL);
-			cpSpaceHashEach(m_ChipSpace->activeShapes, &drawObject, NULL);
+			for (BodyMap::iterator bodyIt = m_Bodies.begin(), bodyEnd = m_Bodies.end(); bodyIt != bodyEnd; ++bodyIt)
+			{
+				PhysicsBody *body = bodyIt->second;
+				for (PhysicsBody::ShapeList::iterator shapeIt = body->GetShapes().begin(), shapeEnd = body->GetShapes().end();
+					shapeIt != shapeEnd; ++shapeIt)
+					drawObject(*shapeIt);
+			}
 		}
 	}
 
@@ -622,307 +509,24 @@ namespace FusionEngine
 		return m_BitmaskRes;
 	}
 
-	//const CollisionGrid* PhysicsWorld::GetCollisionGrid() const
-	//{
-	//	return m_CollisionGrid;
-	//}
+	ContactListener::ContactListener(const PhysicsWorld *world)
+		: m_World(world)
+	{
+	}
+
+	void ContactListener::Add(const b2ContactPoint *point)
+	{
+		m_World->OnContactAdd(point);
+	}
+
+	void ContactListener::Persist(const b2ContactPoint* point)
+	{
+		m_World->OnContactPersist(point);
+	}
+
+	void ContactListener::Remove(const b2ContactPoint* point)
+	{
+		m_World->OnContactRemove(point);
+	}
 
 }
-
-				// Apply relative force
-				//if (engine_force != 0.0f)
-				//{
-				//	//Vector2 v = b1->GetVelocity();
-				//	//Vector2 n = v.normal();
-
-				//	// force initial
-				//	Vector2 fi = b1->GetRelativeForce();
-				//	Vector2 v = b1->GetVelocity();
-
-				//	// force final
-				//	//Vector2 ff = fi
-
-				//	//float angle = ff.angleFrom(fi);
-
-				//	// Calculate the damping on the force
-				//	Vector2 dampForce = v * linDamping;
-
-				//	// Valculate the acceleration
-				//	Vector2 a = (fi - dampForce) * b1->GetInverseMass();
-
-				//	// Then the initial velocity is:
-				//	Vector2 vi = a*delta;
-
-
-				//	// Now for Vf
-				//	float speed = vi.length();
-
-				//	float direction =
-				//		fe_degtorad(
-				//			b1->GetRotation() + b1->GetRotationalVelocity() * delta
-				//			);
-
-				//	Vector2 vf(
-				//		sinf( direction ) * speed,
-				//		-cosf( direction ) * speed
-				//		);
-
-				//	float angle = vf.angleFrom(vi);
-
-				//	float dist = speed * delta + a.length() *0.5f*delta*delta;
-
-				//	// Calculate the radius (r = Segment/theta)
-				//	float r = dist / angle;
-
-				//	// Displacement
-				//	Vector2 p(
-				//		r*sinf(angle),
-				//		r*-cosf(angle)
-				//		);
-
-				//	//velocity += p;
-				//}
-
-
-				//Vector2 fi = b1->GetRelativeForce();
-				//if (fi.length() > 0.0f)
-				//{
-				//	//Vector2 v = b1->GetVelocity();
-				//	//Vector2 n = v.normal();
-
-				//	// force initial
-				//	//Vector2 fi = b1->GetRelativeForce();
-
-				//	// force final
-				//	//Vector2 ff = fi
-
-				//	//float angle = ff.angleFrom(fi);
-
-				//	// Calculate the damping on the force
-				//	//Vector2 dampForce = velocity * b1->GetCoefficientOfFriction();
-
-				//	// Valculate the acceleration
-				//	Vector2 a = fi * b1->GetInverseMass();
-
-				//	// Then the initial velocity is:
-				//	Vector2 vi = a*delta;
-
-
-				//	// Now for Vf
-				//	float speed = vi.length();
-
-				//	float direction =
-				//		fe_degtorad(
-				//			b1->GetRotation() + b1->GetRotationalVelocity() * delta
-				//			);
-
-				//	Vector2 vf(
-				//		sinf( direction ) * speed,
-				//		-cosf( direction ) * speed
-				//		);
-
-				//	float angle = vi.angleFrom(vf);
-
-				//	if (angle > 0.1f)
-				//	{
-				//		float dist = speed * delta;// + a.length() *0.5f*delta*delta;
-
-				//		// Calculate the radius (r = Segment/theta)
-				//		float r = dist / angle;
-
-				//		// Displacement
-				//		Vector2 p(
-				//			r*sinf(angle),
-				//			r*-cosf(angle)
-				//			);
-
-				//		b1->m_Position += p*delta;
-				//		//velocity += p;
-				//	}
-				//	else
-				//		b1->m_Position += vi*delta;
-				//}
-				//b1->_setRelativeForce(Vector2::zero());
-
-
-
-				///////////
-				//// cb1:
-				//// If the velocity is the same direction as the normal, bounce forward
-				////float s = v1.dot(normal);
-				////assert(s < 0.0f);
-				//if (v1.dot(normal) < 0.0f)
-				//{
-				//	Vector2 bounce = vi1.project((-normal)) * e;
-				//	Vector2 frictn = vi1.project((-normal).perpendicular());// * u;
-
-				//	cb1->_setVelocity((-bounce) + frictn);
-				//}
-				////else
-				////{
-				////	Vector2 bounce = v1.project(normal) * e;
-				////	Vector2 frictn = v1.project(normal.perpendicular());// * u;
-
-				////	cb1->_setVelocity((-bounce) + frictn);
-				////}
-
-				////////////
-				//// cb2:
-				//// If the velocity is the same direction as the normal
-				////s = v2.dot(normal) > 0.0f ? 1.0f : -1.0f;
-				////if (v2.dot(normal) < 0.0f)
-				////{
-				////	Vector2 bounce = v2.project((-normal)) * e;
-				////	Vector2 frictn = v2.project((-normal).perpendicular());// * u;
-
-				////	cb2->_setVelocity((-bounce) + frictn);
-				////}
-				////else
-				//if (v2.dot(normal) > 0.0f)
-				//{
-				//	Vector2 bounce = vi2.project(normal) * e;
-				//	Vector2 frictn = vi2.project(normal.perpendicular());// * u;
-
-				//	cb2->_setVelocity(bounce + frictn);
-				//}
-
-				//cb1:
-				//float bounce_force = ( cb1_speed - cb2_speed );
-
-				//cb1_veloc += normal * bounce_force * cb1_elasticity * cb1->GetInverseMass();
-				//cb1_veloc += normal * cb1_elasticity * cb1->GetInverseMass();
-
-				//cb1->_setAcceleration(first_veloc);
-				
-
-				//cb2:
-				// (speed - b2 speed) / (mass + b2 mass)
-				/*bounce_force = ( cb2_speed - cb1_speed ) * 
-					( cb2->GetInverseMass() + cb1->GetInverseMass() );*/
-
-				//cb2_veloc += normal * bounce_force * cb2_elasticity * cb2->GetInverseMass();
-				//cb2_veloc += -normal * cb2_elasticity * cb2->GetInverseMass();
-
-				//cb2->_setAcceleration(-cb2_veloc);
-
-
-				/////////
-				//// Prep
-				////
-				//// Get the speed of both objects
-				//Vector2 cb1_veloc = cb1->GetVelocity();
-				//Vector2 cb2_veloc = cb2->GetVelocity();
-				//float cb1_speed = cb1_veloc.length();
-				//float cb2_speed = cb2_veloc.length();
-
-				//// Get coeff. of elast. and friction
-				//float e = cb1_elasticity * cb2_elasticity;
-				////float u = cb1_damping * cb2_damping;
-
-				//// Calc. normal mass
-				//float mass_sum = cb1->GetInverseMass() + cb2->GetInverseMass();
-
-				//Vector2 r1 = normal * -cb1->GetRadius(); //vectors to contact point
-				//Vector2 r2 = normal * cb2->GetRadius();//
-
-				//float r1cn = r1.cross(normal);
-				//float r2cn = r2.cross(normal);
-				//float kn = mass_sum; // Here we /would/ apply rotational properties, but Fusion doesn't use them :P
-				//float nMass = 1.0f/kn;
-
-				//// Difference in velocity
-				//Vector2 dv = cb2_veloc - cb1_veloc;
-
-				//// Calc. bounce
-				//float bounce = normal.dot(cb2_veloc - cb1_veloc) * e;
-
-				//////////////////
-				//// Apply Impluse
-				////
-				//// Normal impluse
-				//float dv_dot_n = dv.dot(normal);
-
-				//float jn = -(bounce + dv_dot_n)*nMass;
-				//jn = fe_max<float>(jn, 0.0f);
-
-				//assert(jn >= 0);
-				//if (jn > 0)
-				//	jn = jn;
-
-
-				//Vector2 j = (normal * jn);// - (normal * u);
-
-				////assert(j.x * cb2_veloc.x >= 0);
-				////assert(j.y * cb2_veloc.y >= 0);
-
-				//cb1_veloc = cb1_veloc + (j * cb1->GetInverseMass());
-				//cb2_veloc = cb2_veloc + (-j * cb2->GetInverseMass());
-
-				////cb1_veloc += bounce;
-				////cb2_veloc -= bounce;
-
-				// --ANOTHER METHOD OF RESPONSE--
-				//// Precompute normal mass
-				//float kNormal = cb1->GetInverseMass() + cb2->GetInverseMass();
-				//float massNormal = 1.0f / kNormal;
-
-				//// Relative velocity
-				//Vector2 dv = cb1_veloc - cb2_veloc;
-
-				//// Compute normal impulse
-				//float vn = dv.dot(normal);
-				//float normalImpulse = massNormal * -vn;
-
-				//// Apply contact impulse
-				//Vector2 impulse = normal * normalImpulse;
-
-				//cb1->m_Velocity -= impulse * cb1->GetInverseMass();
-
-				//cb2->m_Velocity += impulse * cb2->GetInverseMass();
-
-			
-				// --OLDER METHOD OF RESPONSE--
-				// cb1:
-				//Vector2 bounce_force = ( cb1_veloc - cb2_veloc ) *
-				// ( cb1->GetInverseMass() + cb2->GetInverseMass() );
-				//float speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection for cb1 
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				// reverse the normalisation of bounce_force
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * cb1_elasticity;
-
-				// *other mass only, to conserve momentum
-				//cb1_veloc = bounce_force * cb2->GetMass();
-
-				// cb2:
-				//bounce_force = ( cb2_veloc - cb1_veloc ) * 
-				// ( cb2->GetInverseMass() + cb1->GetInverseMass() );
-
-				//speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection for cb2
-				//normal *= -1; // invert the normal
-
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				// reverse the normalisation of bounce_force
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * cb2_elasticity;
-
-				// *other mass only, to conserve momentum
-				//cb2_veloc = bounce_force * cb1->GetMass();
-
-
-				// --OLD METHOD--
-				//Vector2 bounce_force = veloc * cb1->GetInverseMass();
-
-				//float speed = bounce_force.unitize(); //normalise
-
-				// Compute deflection
-				//bounce_force = (normal*(2*normal.dot(-bounce_force))) + bounce_force;
-				//bounce_force.unitize();
-				//bounce_force = bounce_force * speed * cb1_elasticity;
-
-				// *mass to conserve momentum
-				//veloc = bounce_force * cb1->GetMass();

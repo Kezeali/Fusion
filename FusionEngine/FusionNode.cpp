@@ -1,12 +1,12 @@
 
 /// Fusion
 #include "FusionScene.h"
-#include "FusionNode.h"
+#include "BaseSceneNode.h"
 
 namespace FusionEngine
 {
 
-	FusionNode::FusionNode(FusionScene *creator)
+	BaseSceneNode::BaseSceneNode(FusionScene *creator)
 		: m_Creator(creator),
 		m_Parent(0),
 		m_NeedChildUpdate(false),
@@ -16,16 +16,16 @@ namespace FusionEngine
 		m_AllowChildSort(false),
 		m_NeedChildSort(false),
 		m_Depth(0),
-		m_Position(Vector2::ZERO),
+		m_Position(Vector2::zero()),
 		m_Facing(0),
-		m_DerivedPosition(Vector2::ZERO),
+		m_DerivedPosition(Vector2::zero()),
 		m_DerivedFacing(0)
 	{
 		NeedUpdate();
 	}
 
 
-	FusionNode::~FusionNode()
+	BaseSceneNode::~BaseSceneNode()
 	{
 		// This tells all of this nodes children that they have been orphaned
 		_setInSceneGraph(false);
@@ -39,19 +39,19 @@ namespace FusionEngine
 		m_AttachedObjects.clear();
 	}
 
-	void FusionNode::AttachDrawable(FusionDrawable *draw)
+	void BaseSceneNode::AttachDrawable(FusionDrawable *draw)
 	{
 		m_AttachedObjects.push_back(draw);
 		draw->_notifyAttached(this, false);
 	}
 
-	void FusionNode::AttachDynamicDrawable(FusionDrawable *draw)
+	void BaseSceneNode::AttachDynamicDrawable(FusionDrawable *draw)
 	{
 		m_AttachedDynamics.push_back(draw);
 		draw->_notifyAttached(this, true);
 	}
 
-	void FusionNode::DetachDrawable(FusionDrawable *draw)
+	void BaseSceneNode::DetachDrawable(FusionDrawable *draw)
 	{
 		if (draw->IsDynamic())
 		{
@@ -83,7 +83,7 @@ namespace FusionEngine
 		draw->_notifyAttached(NULL);
 	}
 
-	void FusionNode::DetachAndDestroyAllDrawables()
+	void BaseSceneNode::DetachAndDestroyAllDrawables()
 	{
 		{
 			DrawableList::iterator it = m_AttachedObjects.begin();
@@ -106,7 +106,7 @@ namespace FusionEngine
 		m_AttachedDynamics.clear();
 	}
 
-	void FusionNode::UpdateDynamics(unsigned int split)
+	void BaseSceneNode::UpdateDynamics(unsigned int split)
 	{
 		DrawableList::iterator it = m_AttachedDynamics.begin();
 		for (; it != m_AttachedDynamics.end(); ++it)
@@ -115,7 +115,7 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionNode::NeedUpdate()
+	void BaseSceneNode::NeedUpdate()
 	{
 		m_NeedParentUpdate = true;
 		m_NeedChildUpdate = true;
@@ -130,7 +130,7 @@ namespace FusionEngine
 		m_ChildrenToUpdate.clear();
 	}
 
-	void FusionNode::_requestUpdate(FusionNode *child)
+	void BaseSceneNode::_requestUpdate(BaseSceneNode *child)
 	{
 		// If everything is going to be updated anyway, this doesn't matter.
 		if (m_NeedChildUpdate)
@@ -148,31 +148,31 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionNode::SetPosition(const Vector2 &position)
+	void BaseSceneNode::SetPosition(const Vector2 &position)
 	{
 		m_Position = position;
 
 		NeedUpdate();
 	}
 
-	const Vector2 &FusionNode::GetPosition() const
+	const Vector2 &BaseSceneNode::GetPosition() const
 	{
 		return m_Position;
 	}
 
-	void FusionNode::SetFacing(float angle)
+	void BaseSceneNode::SetFacing(float angle)
 	{
 		m_Facing = angle;
 
 		NeedUpdate();
 	}
 
-	float FusionNode::GetFacing() const
+	float BaseSceneNode::GetFacing() const
 	{
 		return m_Facing;
 	}
 
-	const Vector2 &FusionNode::_getDerivedPosition() const
+	const Vector2 &BaseSceneNode::_getDerivedPosition() const
 	{
 		if (m_NeedParentUpdate)
 		{
@@ -183,7 +183,7 @@ namespace FusionEngine
 		return m_DerivedPosition;
 	}
 
-	float FusionNode::_getDerivedFacing() const
+	float BaseSceneNode::_getDerivedFacing() const
 	{
 		if (m_NeedParentUpdate)
 		{
@@ -194,25 +194,25 @@ namespace FusionEngine
 		return m_DerivedFacing;
 	}
 
-	const Vector2 &FusionNode::GetGlobalPosition() const
+	const Vector2 &BaseSceneNode::GetGlobalPosition() const
 	{
 		// Note: this is a good method because calculations only have to be made up to
 		//  the highest node that has moved (and don't forget that this time!)
 		return _getDerivedPosition();
 	}
 
-	float FusionNode::GetGlobalFacing() const
+	float BaseSceneNode::GetGlobalFacing() const
 	{
 		return _getDerivedFacing();
 	}
 
-	void FusionNode::SetInitialState()
+	void BaseSceneNode::SetInitialState()
 	{
 		m_InitialPosition = m_Position;
 		m_InitialFacing = m_Facing;
 	}
 
-	void FusionNode::ResetToInitialState()
+	void BaseSceneNode::ResetToInitialState()
 	{
 		m_Position = m_InitialPosition;
 		m_Facing = m_InitialFacing;
@@ -220,7 +220,7 @@ namespace FusionEngine
 		NeedUpdate();
 	}
 
-	void FusionNode::_update(bool cascade, bool parentHasChanged)
+	void BaseSceneNode::_update(bool cascade, bool parentHasChanged)
 	{
 		// Allow further updates to be requested.
 		m_ParentNotified = false;
@@ -268,7 +268,7 @@ namespace FusionEngine
 		m_NeedChildUpdate = false;
 	}
 
-	void FusionNode::_updateFromParent() const
+	void BaseSceneNode::_updateFromParent() const
 	{
 		if (m_Parent)
 		{
@@ -283,22 +283,22 @@ namespace FusionEngine
 		}
 	}
 
-	FusionNode::ChildNodeList FusionNode::GetChildren() const
+	BaseSceneNode::ChildNodeList BaseSceneNode::GetChildren() const
 	{
 		return m_Children;
 	}
 
-	FusionNode::DrawableList FusionNode::GetAttachedDrawables() const
+	BaseSceneNode::DrawableList BaseSceneNode::GetAttachedDrawables() const
 	{
 		return m_AttachedObjects;
 	}
 
-	FusionNode::DrawableList FusionNode::GetAttachedDynamicDrawables() const
+	BaseSceneNode::DrawableList BaseSceneNode::GetAttachedDynamicDrawables() const
 	{
 		return m_AttachedDynamics;
 	}
 
-	FusionNode::DrawableList FusionNode::GetAllAttachedDrawables() const
+	BaseSceneNode::DrawableList BaseSceneNode::GetAllAttachedDrawables() const
 	{
 		DrawableList list;
 		DrawableList::iterator dest = list.begin();
@@ -309,7 +309,7 @@ namespace FusionEngine
 		return list;
 	}
 
-	void FusionNode::_setParent(FusionNode* parent)
+	void BaseSceneNode::_setParent(BaseSceneNode* parent)
 	{
 		m_Parent = parent;
 
@@ -326,12 +326,12 @@ namespace FusionEngine
 		}
 	}
 
-	FusionNode *FusionNode::GetParent() const
+	BaseSceneNode *BaseSceneNode::GetParent() const
 	{
 		return m_Parent;
 	}
 
-	void FusionNode::_setInSceneGraph(bool inSceneGraph)
+	void BaseSceneNode::_setInSceneGraph(bool inSceneGraph)
 	{
 		if (inSceneGraph != m_InSceneGraph)
 		{
@@ -345,16 +345,16 @@ namespace FusionEngine
 		}
 	}
 
-	bool FusionNode::IsInSceneGraph() const
+	bool BaseSceneNode::IsInSceneGraph() const
 	{
 		return m_InSceneGraph;
 	}
 
-	FusionNode *FusionNode::CreateChildNode(const Vector2 &position, float facing)
+	BaseSceneNode *BaseSceneNode::CreateChildNode(const Vector2 &position, float facing)
 	{
 		cl_assert(m_Creator);
 
-		FusionNode *child = m_Creator->CreateNode();
+		BaseSceneNode *child = m_Creator->CreateNode();
 		child->SetPosition(position);
 		child->SetFacing(facing);
 		AddChild(child);
@@ -362,11 +362,11 @@ namespace FusionEngine
 		return child;
 	}
 
-	FusionNode *FusionNode::CreateChildNode(const CL_Point &position, float facing)
+	BaseSceneNode *BaseSceneNode::CreateChildNode(const CL_Point &position, float facing)
 	{
 		cl_assert(m_Creator);
 
-		FusionNode *child = m_Creator->CreateNode();
+		BaseSceneNode *child = m_Creator->CreateNode();
 		child->SetPosition(Vector2(position.x, position.y));
 		child->SetFacing(facing);
 		AddChild(child);
@@ -374,7 +374,7 @@ namespace FusionEngine
 		return child;
 	}
 
-	void FusionNode::AddChild(FusionNode* child)
+	void BaseSceneNode::AddChild(BaseSceneNode* child)
 	{
 		// Don't give nodes multiple parents!
 		if (child->GetParent())
@@ -387,7 +387,7 @@ namespace FusionEngine
 			m_NeedChildSort = true;
 	}
 
-	void FusionNode::RemoveChild(FusionNode* child)
+	void BaseSceneNode::RemoveChild(BaseSceneNode* child)
 	{
 		ChildNodeList::iterator it = m_Children.begin();
 		for (; it != m_Children.end(); ++it)
@@ -398,14 +398,14 @@ namespace FusionEngine
 		child->_setParent(NULL);
 	}
 
-	void FusionNode::RemoveAndDestroyChild(FusionNode *child)
+	void BaseSceneNode::RemoveAndDestroyChild(BaseSceneNode *child)
 	{
 		RemoveChild(child);
 
 		delete child;
 	}
 
-	void FusionNode::RemoveAndDestroyAllChildren()
+	void BaseSceneNode::RemoveAndDestroyAllChildren()
 	{
 		ChildNodeList::iterator it;
 		for (it = m_Children.begin(); it != m_Children.end(); ++it)
@@ -419,7 +419,7 @@ namespace FusionEngine
 		m_Children.clear();
 	}
 
-	void FusionNode::_draw(bool cascade) const
+	void BaseSceneNode::_draw(bool cascade) const
 	{
 		// Nodes shouldn't be drawn if they haven't been added to the graph
 		// (although the scene might try to because of the way it finds nodes to draw.)
@@ -442,7 +442,7 @@ namespace FusionEngine
 		}
 	}
 
-	void FusionNode::_sortChildren(bool cascade)
+	void BaseSceneNode::_sortChildren(bool cascade)
 	{
 		std::sort(m_Children.begin(), m_Children.end(), DepthIsLess);
 
@@ -458,26 +458,26 @@ namespace FusionEngine
 		m_NeedChildSort = false;
 	}
 
-	int FusionNode::GetDepth() const
+	int BaseSceneNode::GetDepth() const
 	{
 		return m_Depth;
 	}
 
-	void FusionNode::SetDepth(int depth)
+	void BaseSceneNode::SetDepth(int depth)
 	{
 		m_Depth = depth;
 
 		NeedSort();
 	}
 
-	void FusionNode::NeedSort()
+	void BaseSceneNode::NeedSort()
 	{
 		m_Parent->_requestSort(this);
 		// This requests a global sort (used for flat-scene drawing)
 		m_Creator->_requestSort();
 	}
 
-	void FusionNode::_requestSort(FusionNode *child)
+	void BaseSceneNode::_requestSort(BaseSceneNode *child)
 	{
 		if (m_AllowChildSort)
 		{
@@ -485,12 +485,12 @@ namespace FusionEngine
 		}
 	}
 
-	bool FusionNode::GetAllowSort() const
+	bool BaseSceneNode::GetAllowSort() const
 	{
 		return m_AllowChildSort;
 	}
 
-	void FusionNode::SetAllowSort(bool allow, bool cascade)
+	void BaseSceneNode::SetAllowSort(bool allow, bool cascade)
 	{
 		m_AllowChildSort = allow;
 

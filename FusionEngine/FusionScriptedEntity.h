@@ -44,8 +44,12 @@ namespace FusionEngine
 	{
 	protected:
 		// The actual entity logic (for which this C++ class is simply a wrapper)
-		asIScriptStruct* m_ScriptObject;
+		ScriptObject m_ScriptObject;
 
+	public:
+		virtual void SetPosition()
+		{
+		}
 	};
 
 }

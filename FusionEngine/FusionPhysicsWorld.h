@@ -100,6 +100,23 @@ namespace FusionEngine
 
 	};
 
+	class ContactListener : public b2ContactListener
+	{
+	public:
+		ContactListener(const PhysicsWorld *world);
+
+		virtual void Add(const b2ContactPoint* point);
+		virtual void Persist(const b2ContactPoint* point);
+		virtual void Remove(const b2ContactPoint* point);
+		virtual void Result(const b2ContactResult* point) {}
+
+	protected:
+
+		PhysicsWorld *m_World;
+	};
+
+	typedef std::tr1::shared_ptr<PhysicsBody> PhysicsBodyPtr;
+
 	/*!
 	 * \brief
 	 * The controller for moving objects
@@ -110,8 +127,9 @@ namespace FusionEngine
 	 * \see
 	 * PhysicsBody.
 	 */
-	class PhysicsWorld// : public RefCounted<PhysicsWorld, "PhysicsWorld">
+	class PhysicsWorld : public BaseScene
 	{
+		friend class ContactListener;
 	public:
 		//! Constructor.
 		PhysicsWorld();
@@ -123,101 +141,26 @@ namespace FusionEngine
 		//typedef std::list<Collision *> CollisionList;
 		//typedef std::vector<PhysicsBody *> BodyList;
 
+		typedef std::tr1::unordered_map<b2Body*, PhysicsBodyPtr> BodyMap;
+
+		typedef std::list<b2ContactPoint> ContactList;
+
 	public:
-		//! Adds a body to the world so it will have physics applied to it.
-		/*!
-		 * This is retainded not only for backwards compatibility, but also to allow you 
-		 * to bypass the factory methods and add your crazy custom-class bodies.
-		 *
-		 * \param body Pointer to the body to add.
-		 */
-		//void AddBody(PhysicsBody *body);
-		//! Removes the given body.
+		//! Adds the given body to the world and initializes it
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
-		//void RemoveBody(PhysicsBody *body);
+		b2Body *SubstantiateBody(const PhysicsBodyPtr &body);
+		//! Removes the given body from the world.
+		/*!
+		 * \param body Pointer to the body to remove.
+		 */
+		void RemoveBody(PhysicsBodyPtr &body);
+
+		void BodyDeleted(PhysicsBodyPtr &body);
 
 		//! Returns a list of bodies currently in the world
-		const BodyList& GetBodies() const;
-
-		//! Creates a body in the world so it will have physics applied to it.
-		/*!
-		 * \param[in] type The type of body.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateBody(int type);
-		//! Creates a body in the world so it will have physics applied to it.
-		/*!
-		 * \param[in] type The type of body.
-		 * \param[in] props Properties to initialise the body with.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateBody(int type, const PhysicalProperties &props);
-		//! Creates a body in the world so it will have physics applied to it.
-		/*!
-		 * \param[in] response A pointer to the response object.
-		 * \param[in] type The type of body.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateBody(ICollisionHandler *response, int type);
-		//! Creates a body in the world so it will have physics applied to it.
-		/*!
-		 * \param[in] response A pointer to the response object.
-		 * \param[in] type The type of body.
-		 * \param[in] props Properties to initialise the body with.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateBody(ICollisionHandler *response, int type, const PhysicalProperties &props);
-		//! Destroys the given body.
-		/*!
-		 * \param[in] body Pointer to the body to remove.
-		 */
-		void DestroyBody(PhysicsBody *body);
-
-		//! Creates a static body in the world so it will have collision detection applied to it.
-		/*!
-		 * \param[in] type The type of body.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateStatic(int type);
-		//! Creates a static body in the world so it will have collision detection applied to it.
-		/*!
-		 * \param[in] type The type of body.
-		 * \param[in] props Properties to initialise the body with.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateStatic(int type, const PhysicalProperties &props);
-		//! Creates a static body in the world so it will have collision detection applied to it.
-		/*!
-		 * \param[in] response A pointer to the response object.
-		 * \param[in] type The type of body.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateStatic(ICollisionHandler* response, int type);
-		//! Creates a static body in the world so it will have collision detection applied to it.
-		/*!
-		 * \param[in] response A pointer to the response object.
-		 * \param[in] type The type of body.
-		 * \param[in] props Properties to initialise the body with.
-		 * \returns A const pointer to the body created.
-		 */
-		PhysicsBody *CreateStatic(ICollisionHandler* response, int type, const PhysicalProperties &props);
-		//! Destroys the given static body.
-		/*!
-		 * \param[in] body Pointer to the body to remove.
-		 */
-		void DestroyStatic(PhysicsBody *body);
-
-		void AddShape(Shape* shape);
-
-		void AddStaticShape(Shape* shape);
-
-		void RemoveShape(Shape* shape);
-		void RemoveShape(ShapePtr shape);
-
-		void RemoveStaticShape(Shape* shape);
-		void RemoveStaticShape(ShapePtr shape);
+		const BodyMap& GetBodies() const;
 
 		//cpShape* createSimpleStatic(PhysicsBody* body = NULL);
 		//void removeSimpleStatic(cpShape* shape);
@@ -234,8 +177,16 @@ namespace FusionEngine
 		//! Does movement and collision detection.
 		/*!
 		 * \param split Step magnitude (millis since last step.)
+		 *
 		 */
-		void RunSimulation(unsigned int split);
+		void RunSimulation(unsigned int delta_milis);
+
+		//! Called automatically by Box2D during RunSimulation (via a contact listener)
+		void OnContactAdd(const b2ContactPoint *contact);
+		//! Called automatically by Box2D during RunSimulation (via a contact listener)
+		void OnContactPersist(const b2ContactPoint *contact);
+		//! Called automatically by Box2D during RunSimulation (via a contact listener)
+		void OnContactRemove(const b2ContactPoint *contact);
 
 		//! Draws all shapes in the simulation
 		void DebugDraw(bool fast = true);
@@ -301,22 +252,18 @@ namespace FusionEngine
 		b2AABB m_WorldAABB;
 
 		//! All physical objects controled by this world.
-		BodyList m_Bodies;
+		BodyMap m_Bodies;
 		// Bodies to be deleted after the simulation is complete
 		BodyList m_DeleteQueue;
 
 		bool m_RunningSimulation;
 
-		//! Body hash map / query interface
-		//CollisionGrid *m_CollisionGrid;
+		int m_VelocityIterations;
+		int m_PositionIterations;
 
-		//! Static objects are listed here.
-		/*!
-		 * These are allways collision checked against every other object - this
-		 * shouldn't create a preformance issue, as generally the only static
-		 * object is the terrain.
-		 */
-		BodyList m_Statics;
+		ContactList m_NewContacts;
+		ContactList m_ActiveContacts;
+		ContactList m_EndedContacts;
 
 		//! World dimensions
 		float m_Width, m_Height;
@@ -346,6 +293,8 @@ namespace FusionEngine
 		private:
 			static void constrainBorders(void* ptr, void* data);
 			static void wrapAround(void* ptr, void* data);
+
+			void wrapBodiesAround();
 	};
 
 	static void drawPolyShape(b2Shape *shape)
@@ -399,9 +348,8 @@ namespace FusionEngine
 		drawCircle(c.x, c.y, circle->GetRadius(), body->GetAngle());
 	}
 
-	static void drawObject(void *ptr, void *unused)
+	void drawObject(b2Shape *shape)
 	{
-		b2Shape *shape = (b2Shape *)ptr;
 		b2Vec2 pos = shape->GetBody()->GetPosition();
 		CL_Display::draw_pixel(pos.x, pos.y, CL_Color::aliceblue);
 
@@ -416,13 +364,11 @@ namespace FusionEngine
 	}
 
 
-	static void drawBodyPoint(void *ptr, void *unused)
+	void drawBodyPoint(b2Body *body)
 	{
-		b2Shape *shape = (b2Shape*)ptr;
-		b2CircleShape* circle = (b2CircleShape*)shape;
-		b2Vec2 v = circle->GetLocalPosition() + shape->GetBody()->GetPosition();
+		b2Vec2 v = body->GetWorldCenter();
 
-		clColor3f(shape->GetRestitution(), shape->GetFriction(), 0.8f);
+		clColor3f(0.8f, 0.8f, 0.8f);
 		clVertex2f(v.x, v.y);
 	}
 

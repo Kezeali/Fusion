@@ -46,7 +46,7 @@ namespace FusionEngine
 		FusionNode *GetParentSceneNode() const;
 
 		//! Internal method called to notify the object that it has been attached to a node.
-		void _notifyAttached(FusionNode* parent, bool dynamic = false);
+		void _notifyAttached(FusionNode* owner);
 
 		// Returns true if this object is attached to a SceneNode.
 		bool IsAttached() const;
@@ -58,16 +58,9 @@ namespace FusionEngine
 		 */
 		bool IsInScene() const;
 
-		//! Returns true if this object uses the update functionality
-		bool IsDynamic() const;
-
 	protected:
 		//! The node which controls this objects position.
 		FusionNode *m_ParentNode;
-
-		//! Will be set to true by the node if this is attached as a dynamic drawable
-		bool m_Dynamic;
-
 	};
 
 }

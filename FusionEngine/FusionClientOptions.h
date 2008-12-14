@@ -51,12 +51,13 @@ namespace FusionEngine
 	 */
 	class XmlInputBinding
 	{
+	public:
 		std::string m_Player;
 		std::string m_Input; // The 'agency' this control provides :P
 		std::string m_Key; // The key on the keyboard / button on the controler
 
 	public:
-		InputBinding(std::string input, std::string key, std::string player)
+		XmlInputBinding(std::string input, std::string key, std::string player)
 			: m_Input(input),
 			m_Key(key),
 			m_Player(player)
@@ -107,7 +108,7 @@ namespace FusionEngine
 		//! [depreciated] General Player options list
 		typedef std::vector<PlayerOptions> PlayerOptionsList;
 		//! Player Input mappings list.
-		typedef std::vector<InputBinding> ControlsList;
+		typedef std::vector<XmlInputBinding> ControlsList;
 
 		typedef std::map<std::string, std::string> VarMap;
 

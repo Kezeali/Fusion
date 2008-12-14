@@ -67,44 +67,15 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * In game object base class
-	 *
-	 * \todo perhaps there will be no drawables, just child entities (with drawing defined in the derived Entity implementation, or at script level)
 	 */
-	class Enitity : public FusionNode, public ICollisionHandler
+	class Enitity : public SceneNode, public ICollisionHandler
 	{
-		friend class ServerEnvironment;
-		friend class ClientEnvironment;
 	public:
-		class PropertyPointer
-		{
-		public:
-			void* m_Data;
-			std::string m_Name;
-		public:
-			PropertyPointer(const std::string& name, void* data)
-				: m_Name(name),
-				m_Data(data)
-			{
-			}
-			std::string GetValueString() const
-			{
-				return *((std::string*)m_Data);
-			}
-			int GetValueInt() const
-			{
-				return *((int*)m_Data);
-			}
-		};
 		//! A list of ObjectIDs
 		typedef std::vector<ObjectID> ObjectList;
-		//! A list of weapons
-		typedef std::vector<std::string> WeaponList;
 
 		//! List of properties
 		typedef std::map<std::string, PropertyPointer> PropertyList;
-
-		//! List of entities
-		typedef std::map<std::string, Entity*> EntityList;
 
 	public:
 		//! Constructor

@@ -7,7 +7,6 @@
 
 #include "FusionCommon.h"
 
-// Fusion
 
 namespace FusionEngine
 {
@@ -18,7 +17,7 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * FusionScene provides easy management for FusionNodes.
+	 * Scene provides easy management for SceneNodes.
 	 *
 	 * Assuming you have a pointer to a FusionScene object called 'scene',
 	 * you can create new scene nodes as follows:
@@ -38,54 +37,30 @@ namespace FusionEngine
 	 * \sa
 	 * FusionNode
 	 */
-	class FusionScene
+	class IScene
 	{
 	public:
-		//! Constructor
-		FusionScene();
-		//! Destructor
-		~FusionScene();
-
-	public:
-		//! A list of scene nodes
-		typedef std::vector<FusionNode*> SceneNodeList;
-
 		//! Gives you access to the root node
-		virtual FusionNode *GetRootNode() const;
+		virtual ISceneNode *GetRootNode() const = 0;
 
-		//! Runs the node factory to give you a node
-		virtual FusionNode *CreateNode();
+		//! Adds the given node to the scene
+		virtual void AddNode(std::string key, ISceneNode *node) = 0;
+		//! Removes the given node from the scene
+		virtual void RemoveNode(std::string key) = 0;
 		//! Destroys a node cleanly
-		virtual void DestroySceneNode(FusionNode *node, bool destroy_children = true, bool destroy_drawables = true);
+		virtual void DestroySceneNode(ISceneNode *node, bool destroy_children = true) = 0;
 
 		/*!
 		 * \brief
 		 * Removes and deletes all nodes in the scene.
 		 */
-		virtual void CleanScene();
+		virtual void CleanScene() = 0;
 
-		//! Updates dynamic drawables
-		virtual void UpdateDynamics(unsigned int split);
+		//! Updates nodes
+		virtual void Update(unsigned int split) = 0;
 
 		//! Updates nodes and draws them.
-		virtual void Draw();
-
-		//! Sets the drawing mode
-		/*!
-		 * True for flat (ignores child/parent ordering)<br>
-		 * False for graph (cascade drawing from the root node)
-		 */
-		virtual void SetDrawingMode(bool flat);
-
-		//! Use this to enable or disable global (flat) sorting
-		/*!
-		 * Flat sorting should only be used if you aren't drawing using the
-		 * scene graph (i.e. you are using flat drawing)
-		 */
-		virtual void SetEnableSorting(bool enable);
-
-		//! Allows nodes to request a global (flat) sort when their depth changes
-		virtual void _requestSort();
+		virtual void Draw() = 0;
 
 		/*!
 		 * \brief
@@ -96,13 +71,75 @@ namespace FusionEngine
 		 * <br>
 		 * This is only used when nodes aren't drawn via the graph (flat drawing).
 		 */
-		 virtual void Sort();
+		 virtual void Sort() = 0;
+	};
+
+	class Scene
+	{	
+	public:
+		//! Constructor
+		Scene();
+		//! Destructor
+		virtual ~Scene();
+
+	public:
+		//! A list of scene nodes
+		typedef std::map<std::string, SceneNode*> NodeList;
+
+		//! Gives you access to the root node
+		virtual SceneNode *GetRootNode() const;
+
+		//! Runs the node factory to give you a node
+		virtual void AddNode(ISceneNode *node);
+		virtual void RemoveNode(ISceneNode *node);
+		//! Destroys a node cleanly
+		virtual void DestroySceneNode(ISceneNode *node, bool destroy_children = true, bool destroy_drawables = true);
+
+		/*!
+		* \brief
+		* Removes and deletes all nodes in the scene.
+		*/
+		virtual void CleanScene();
+
+		//! Updates nodes
+		virtual void Update(unsigned int split);
+
+		//! Updates nodes and draws them.
+		virtual void Draw();
+
+		//! Sets the drawing mode
+		/*!
+		* True for flat (ignores child/parent ordering)<br>
+		* False for graph (cascade drawing from the root node)
+		*/
+		virtual void SetDrawingMode(bool flat);
+
+		//! Use this to enable or disable global (flat) sorting
+		/*!
+		* Flat sorting should only be used if you aren't drawing using the
+		* scene graph (i.e. you are using flat drawing)
+		*/
+		virtual void SetEnableSorting(bool enable);
+
+		//! Allows nodes to request a global (flat) sort when their depth changes
+		virtual void _requestSort();
+
+		/*!
+		* \brief
+		* Sorts child nodes in the global (flat) list by their depth attribute.
+		*
+		* This sorts nodes so their position in the scene graph reflects their m_Depth
+		* attribute, in other words nodes with a lower m_Depth are drawn first.
+		* <br>
+		* This is only used when nodes aren't drawn via the graph (flat drawing).
+		*/
+		virtual void Sort();
 
 	protected:
-		//! All nodes created by this scene are listed here.
-		SceneNodeList m_SceneNodes;
+		//! Used for mem-management
+		SceneNodeList m_Entities;
 		//! The node to which all other nodes are children
-		FusionNode *m_RootNode;
+		SimpleSceneNode *m_RootNode;
 
 		//! If this is true, the scene ignores parent/child relationships
 		bool m_FlatScene;
@@ -112,6 +149,7 @@ namespace FusionEngine
 		//! Makes the graph resort if a nodes depth changes
 		bool m_NeedSort;
 	};
+
 
 }
 

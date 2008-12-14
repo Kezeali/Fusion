@@ -23,6 +23,7 @@
 #include "FusionInputHandler.h"
 
 #include "FusionInputPluginLoader.h"
+#include "FusionResourceManager.h"
 
 namespace FusionEngine
 {
@@ -39,15 +40,7 @@ namespace FusionEngine
 		m_CommandBufferLength(128)
 	{
 		m_PluginLoader = new InputPluginLoader();
-	}
-
-	InputManager::FusionInput(CL_DisplayWindow *window, const ClientOptions *from)
-		: m_SuspendRequests(0),
-		m_CommandBufferLength(128)
-	{
-		m_PluginLoader = new InputPluginLoader();
-
-		SetInputMaps(from);
+		//! \todo Store the window so input can be grabbed from it
 	}
 
 	InputManager::~InputManager()
@@ -59,34 +52,16 @@ namespace FusionEngine
 	{
 		// Keyboard is always required (for global input)
 		if (CL_Keyboard::get_device_count() == 0)
-			return false;
-
-		// This isn't really needed... If the device isn't there it won't cause a problem
-		//PlayerInputMapList::iterator it;
-		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
-		//{
-		//switch (it->type)
-		//{
-		//case Gamepad:
-		//// Check if a gamepad exists at the required index.
-		//if (CL_Joystick::get_device_count() < it->index)
-		//return false;
-		//break;
-
-		//case Mouse:
-		//if (!CL_Mouse::get_device_count())
-		//return false;
-		//break;
-		//}
-		//}
-		
+			return false;		
 
 		return true;
 	}
 
-	void InputManager::Initialise()
+	void InputManager::Initialise(ResourceManager *resMan, const ClientOptions *cliOpts)
 	{
 		m_SuspendRequests = 0;
+
+#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
 		// Activate Key Down signal handler
 		m_Slots.connect(CL_Keyboard::sig_key_down(), this, &FusionInput::onKeyDown);
 		if (CL_Joystick::get_device_count() > 0)
@@ -107,37 +82,71 @@ namespace FusionEngine
 		if (CL_Mouse::get_device_count() > 0)
 			m_Slots.connect(CL_Mouse::sig_move(), this, &FusionInput::onKeyDown);
 
+#endif
+
 		m_Slots.connect(CL_Display::sig_resize(), this, &FusionInput::onDisplayResize);
 
-		ResourcePointer<TiXmlDocument> inputDoc = m_ResMan->GetResource<TiXmlDocument>("input/coreinputs.xml");
+		int numPlayers = 0;
+		if (!cliOpts->GetOption("num_local_players", &numPlayers))
+			FSN_EXCEPT(ExCode::ResourceNotLoaded, "InputManager::Initialise", "Options file is missing 'num_local_players'");
+		
+
+		ResourcePointer<TiXmlDocument> inputDoc = resMan->GetResource<TiXmlDocument>("input/coreinputs.xml");
 		m_PluginLoader->LoadInputs(inputDoc.GetDataPtr());
-		m_PluginLoader->GetInputs();
+
+		m_PlayerCommands.resize(g_MaxLocalPlayers);
+		const InputPluginLoader::InputTypeList &inputTypes = m_PluginLoader->GetInputs();
+		buildCommandBuffers(inputTypes);
+
+		ResourcePointer<TiXmlDocument> keyDoc = resMan->GetResource<TiXmlDocument>("input/keys.xml");
+		loadKeyInfo(inputDoc.GetDataPtr());
+
+		SetInputMaps(cliOpts);
 	}
 
-	void InputManager::loadControlNames(const ticpp::Document &doc)
+	void InputManager::buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes)
+	{
+		Command cmd;
+		for(InputPluginLoader::InputTypeList::const_iterator it = inputTypes.begin(), end = inputTypes.end();
+			it != end; ++it)
+		{
+			cmd[it->m_Name] = InputState();			
+		}
+
+		std::for_each(m_PlayerCommands.begin(), m_PlayerCommands.end(), resize(m_CommandBufferLength, cmd));
+	}
+
+	void InputManager::loadKeyInfo(const ticpp::Document &doc)
 	{
 		ticpp::Element* elem = doc.FirstChildElement();
 
-		if (elem->Value() != "controlnames")
-			throw FileTypeException("InputManager::loadControlNames", "Not a control definition file", __FILE__, __LINE__);
+		if (elem->Value() != "keyinfo")
+			throw FileTypeException("InputManager::loadKeyInfo", "Not a keyinfo definition file", __FILE__, __LINE__);
 
 		ticpp::Iterator< ticpp::Element > child( "key" );
 		for ( child = child.begin( elem ); child != child.end(); child++ )
 		{
-			KeyName kname;
-			kname.m_Device = child->GetAttributeOrDefault("device", "keyboard");
-			child->GetAttributeOrDefault("id", &kname.m_Code, 0);
-			kname.m_Name = child->GetAttribute("shortname");
-			kname.m_Description = child->GetAttributeOrDefault("name", kname.m_Name);
+			KeyInfo kinfo;
+			kinfo.m_Device = child->GetAttributeOrDefault("device", "keyboard");
+			child->GetAttributeOrDefault("id", &kinfo.m_Code, 0);
+			kinfo.m_Name = child->GetAttribute("shortname");
+			kinfo.m_Description = child->GetAttributeOrDefault("name", kinfo.m_Name);
 
-			if (kname.m_Name.empty())
-				throw FileTypeException("InputManager::loadControlNames", "The keyname document contains incomplete tags", __FILE__, __LINE__);
+			if (kinfo.m_Name.empty())
+				throw FileTypeException("InputManager::loadKeyInfo", "The keyinfo document contains incomplete tags", __FILE__, __LINE__);
+
+			m_KeyInfo[kinfo.m_Name] = kinfo;
 		}
 	}
 
 	void InputManager::CleanUp()
 	{
 		m_PluginLoader->Clear();
+
+		m_KeyInfo.clear();
+		m_KeyBindings.clear();
+
+		m_PlayerCommands.clear();
 	}
 
 	void InputManager::Update(unsigned int split)
@@ -158,18 +167,23 @@ namespace FusionEngine
 
 	void InputManager::SetInputMaps(const FusionEngine::ClientOptions *from)
 	{
-		// Read the controls from the options object and add them to the input mappings
+		// Read the controls from the options object and add them to the input bindings
 		for (ClientOptions::ControlsList::const_iterator it = from->m_Controls.begin();
 			it != from->m_Controls.end(); ++it)
 		{
-			m_InputMap[it->m_Player + it->m_Input] = InputBinding(*it);
+			unsigned int player = CL_String::to_int(it->m_Player);
+			const std::string &input = it->m_Input;
+			KeyInfo &key = m_KeyInfo[it->m_Key];
+			m_KeyBindings[it->m_Key] = InputBinding(player, input, key);
 		}
 	}
 
 	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &shortname)
 	{
 		std::string playerStr(CL_String::from_int(player));
-		m_InputMap[playerStr + input] = InputBinding(player, keycode, player);
+		KeyInfo &key = m_KeyInfo[shortname];
+		//m_InputBindings[playerStr + input] = InputBinding(player, input, key);
+		m_KeyBindings[shortname] = InputBinding(player, input, key);
 	}
 
 	CL_InputDevice &InputManager::GetDevice(const std::string &name)
@@ -177,6 +191,13 @@ namespace FusionEngine
 		if (name == "keyboard")
 			return CL_Keyboard::get_device();
 		else if (name == "gamepad")
+			return CL_Joystick::get_device();
+		else if (name.length() > sizeof("gamepad") && name.substr(0, sizeof("gamepad")) == "gamepad")
+		{
+			int num = CL_String::to_int(name.substr(8));
+			return CL_Joystick::get_device(num);
+		}
+		else
 			return CL_Keyboard::get_device();
 	}
 
@@ -229,22 +250,58 @@ namespace FusionEngine
 
 	void InputManager::CreateCommand(int tick, unsigned int split, unsigned int player)
 	{
-		int localPlayers = 0;
-		ClientOptions::getSingleton().GetOption("num_local_players", &localPlayers);
+		if (m_SuspendRequests != 0)
+			return;
 
-		for (ControlMap::iterator it = m_ControlMap.begin(), end = m_ControlMap.end(); it != end; ++it)
+		//int localPlayers = 0;
+		//ClientOptions::getSingleton().GetOption("num_local_players", &localPlayers);
+
+#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
+		/////
+		// Event Input
+		///////
+
+		// Update the requested player's command for this tick to the current command for said player
+		Command &currentCommand = m_CurrentCommands[player];
+		m_PlayerCommands[player][tick % m_CommandBufferLength] = currentCommand;
+
+#elif FE_INPUT_METHOD == FE_INPUTMETHOD_BUFFERED
+		/////
+		// Buffered Input
+		///////
+		FE_EXCEPT(ExCode::Base, "InputManager::CreateCommand", "Buffered input is not implemented");
+
+#else
+		/////
+		// Unbuffered Input
+		///////
+
+		// Grab the command to be updated in the command history
+		Command &tickCommand = m_PlayerCommands[player][tick%m_CommandBufferLength];
+		// Update all the bindings in the command
+		for (Command::iterator it = tickCommand.begin(), end = tickCommand.end(); it != end; ++it)
 		{
-			std::string inputName = it->first.substr(1);
-			for (int i=0; i<localPlayers; i++)
-			{
-				std::string strI = CL_String::from_int(i);
-				if (it->first.substr(0,strI.length()) == strI)
-				{
-					Command &cmd = m_PlayerCommands[i][tick%m_CommandBufferLength];
-					cmd.SetState(inputName, it->second.IsDown(), it->second.GetValue());
-				}
-			}
+			const std::string &inputName = it->first;
+			// Grab the state for the input to be updated
+			InputState &state = it->second;
+			// Grab the key binding
+			InputBinding &binding = m_KeyBindings[inputName];
+
+			CL_InputDevice &dev = GetDevice(binding.m_Key.m_Device);
+
+			bool nowDown = dev.get_keycode(binding.m_Key.m_Code);
+			float nowAxis = dev.get_axis(binding.m_Key.m_Code);
+			//! \todo Axis threshold option
+			state.m_Changed = state.m_Down != nowDown || abs(state.m_Value - nowAxis) > 0.1f;
+			state.m_Down = nowDown;
+			state.m_Value = nowAxis;
 		}
+#endif
+	}
+
+	const Command &InputManager::GetCommand(unsigned int player, int tick)
+	{
+		return m_PlayerCommands[player][tick % m_CommandBufferLength];
 	}
 
 	float InputManager::GetMouseSensitivity() const
@@ -252,150 +309,50 @@ namespace FusionEngine
 		return m_MouseSensitivity;
 	}
 
-	//ShipInput FusionInput::GetShipInputs(ObjectID player) const
-	//{
-	//	return m_ShipInputData[player];
-	//}
-
-	//std::vector<ShipInput> FusionInput::GetAllShipInputs() const
-	//{
-	//	return m_ShipInputData;
-	//}
-
-	//GlobalInput FusionInput::GetGlobalInputs() const
-	//{
-	//	return m_GlobalInputData;
-	//}
-
 	void InputManager::onKeyDown(const CL_InputEvent &key)
 	{	
+#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
 		if (m_SuspendRequests != 0)
 			return;
 
-		// Control Map system
-		ControlMap::iterator it = m_ControlMap.begin();
-		for (; it != m_ControlMap.end(); ++it)
+		// Iterate player input lists to update the current commands
+		CommandList::iterator it = m_CurrentCommands.begin(), end = m_CurrentCommands.end();
+		for (; it != end; ++it)
 		{
-			Control* control = &(*it).second;
-			if (control->Matches(key))
-				control->UpdateState(key);
+			//! \todo Reduce this to one map search. Maybe even use hash maps for speed
+			std::string &shortname = m_KeyInfo[key.id ^ (int)key.device.get_type()].m_Name;
+			InputBinding &binding = m_KeyBindings[shortname];
+			std::string &input = binding.m_Input;
+			
+			InputState &state = it[input];
+			state.m_Changed = !state.m_Down || abs(state.m_Value - key.axis_pos) > 0.1f;
+			state.m_Down = true;
+			state.m_Value = key.axis_pos;
 		}
-
-		
-		//// Global inputs (assumes keyboard device is used)
-		//if (key.device.get_name() == CL_Keyboard::get_device().get_name())
-		//{
-		//	if (key.id == m_GlobalInputMap.menu)
-		//		m_GlobalInputData.menu = true;
-		//	if (key.id == m_GlobalInputMap.console)
-		//		m_GlobalInputData.console = true;
-		//}
-
-
-		// Player inputs
-
-		//PlayerInputMapList::iterator it;
-		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
-
-		//for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
-		//{
-		//	if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
-		//		continue;
-
-		//	if(key.id == m_PlayerInputMaps[i].thrust)
-		//	{
-		//		m_ShipInputData[i].thrust = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].reverse)
-		//	{
-		//		m_ShipInputData[i].reverse = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].left)
-		//	{
-		//		m_ShipInputData[i].left = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].right)
-		//	{
-		//		m_ShipInputData[i].right = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].primary)
-		//	{
-		//		m_ShipInputData[i].primary = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].secondary)
-		//	{
-		//		m_ShipInputData[i].secondary = true;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].bomb)
-		//	{
-		//		m_ShipInputData[i].bomb = true;
-		//	}
-		//}
+#endif
 	}
 
 	void InputManager::onKeyUp(const CL_InputEvent &key)
 	{
+#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
 		if (m_SuspendRequests != 0)
 			return;
 
-		// Control Map system
-		ControlMap::iterator it = m_ControlMap.begin();
-		for (; it != m_ControlMap.end(); ++it)
+		// Iterate player input lists to update the current commands
+		CommandList::iterator it = m_CurrentCommands.begin(), end = m_CurrentCommands.end();
+		for (; it != end; ++it)
 		{
-			Control *control = &(*it).second;
-			if (control->Matches(key))
-				control->UpdateState(key);
+			//! \todo Reduce this to one map search. Maybe even use hash maps for speed
+			std::string &shortname = m_KeyInfo[key.id ^ (int)key.device.get_type()].m_Name;
+			InputBinding &binding = m_KeyBindings[shortname];
+			std::string &input = binding.m_Input;
+			
+			InputState &state = it[input];
+			state.m_Changed = state.m_Down || abs(state.m_Value - key.axis_pos) > 0.1f;
+			state.m_Down = false;
+			state.m_Value = key.axis_pos;
 		}
-
-
-		//// Global inputs (assumes keyboard device is used)
-		//if (key.device.get_name() == CL_Keyboard::get_device().get_name())
-		//{
-		//	if (key.id == m_GlobalInputMap.menu)
-		//		m_GlobalInputData.menu = false;
-		//	if (key.id == m_GlobalInputMap.console)
-		//		m_GlobalInputData.console = false;
-		//}
-
-
-		// Player inputs
-
-		//PlayerInputMapList::iterator it;
-		//for (it = m_PlayerInputMaps.begin(); it != m_PlayerInputMaps.end(); ++it)
-		//for (unsigned int i = 0; i < m_PlayerInputMaps.size(); i++)
-		//{
-		//	if (key.device.get_name() != m_PlayerInputMaps[i].device.get_name())
-		//		continue;
-
-		//	if(key.id == m_PlayerInputMaps[i].thrust)
-		//	{
-		//		m_ShipInputData[i].thrust = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].reverse)
-		//	{
-		//		m_ShipInputData[i].reverse = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].left)
-		//	{
-		//		m_ShipInputData[i].left = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].right)
-		//	{
-		//		m_ShipInputData[i].right = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].primary)
-		//	{
-		//		m_ShipInputData[i].primary = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].secondary)
-		//	{
-		//		m_ShipInputData[i].secondary = false;
-		//	}
-		//	if(key.id == m_PlayerInputMaps[i].bomb)
-		//	{
-		//		m_ShipInputData[i].bomb = false;
-		//	}
-		//}
+#endif
 	}
 
 	void InputManager::onDisplayResize(int w, int h)

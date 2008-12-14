@@ -534,7 +534,7 @@ namespace FusionEngine
 
 	//{
 	//	cpShape* shape = eraser->GetShape();
-	//	if (offset != Vector2::ZERO)
+	//	if (offset != Vector2::zero())
 	//	{
 	//		shape->body->p = cpv(offset.x, offset.y);
 	//		cpShapeCacheBB(shape);

@@ -33,9 +33,9 @@
 
 namespace FusionEngine
 {
-	const Vector2 Vector2::ZERO(0.0f,0.0f);
-	const Vector2 Vector2::UNIT_X(1.0f,0.0f);
-	const Vector2 Vector2::UNIT_Y(0.0f,1.0f);
+	const Vector2<float> Vector2<float>::ZERO(0.0f,0.0f);
+	const Vector2<float> Vector2<float>::UNIT_X(1.0f,0.0f);
+	const Vector2<float> Vector2<float>::UNIT_Y(0.0f,1.0f);
 
 	////////////////
 	// Construction
@@ -44,6 +44,13 @@ namespace FusionEngine
 		x = other.x;
 		y = other.y;
 	}
+
+	//Vector2::Vector2(const b2Vec2 &other)
+	//{
+	//	x = other.x;
+	//	y = other.y;
+	//}
+
 
 	Vector2::Vector2(float x, float y)
 	{

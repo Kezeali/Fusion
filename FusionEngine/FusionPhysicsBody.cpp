@@ -9,104 +9,14 @@
 namespace FusionEngine
 {
 
-	PhysicsBody::PhysicsBody(PhysicsWorld *world)
-		: m_World(world),
-		m_CollisionFlags(C_NONE),
-		m_CollisionResponse(0),
-		m_CollisionHandler(0),
-		m_UserData(0),
-		m_Acceleration(Vector2::ZERO),
-		m_AppliedForce(Vector2::ZERO),
-		m_GotCGUpdate(false),
-		m_Active(true),
-		m_DeactivationCounter(0),
-		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
-		m_Type(0),
-		m_Mass(0.f),
-		m_Radius(0),
-		m_Position(Vector2::ZERO),
-		m_Rotation(0.f),
-		m_RotationalVelocity(0.f),
-		m_UsesAABB(false),
-		m_UsesDist(false),
-		m_UsesPixel(false),
-		m_Velocity(Vector2::ZERO),
-		m_AppliedRelativeForce(0)
-	{
-		m_Body = cpBodyNew(m_Mass, 0.0);
-		m_Body->p = cpv(0, 0);
-	}
-
-	PhysicsBody::PhysicsBody(PhysicsWorld *world, ICollisionHandler *handler)
-		: m_World(world),
-		m_CollisionFlags(C_NONE),
-		m_CollisionResponse(0),
-		m_CollisionHandler(handler),
-		m_UserData(0),
-		m_Acceleration(Vector2::ZERO),
-		m_AppliedForce(Vector2::ZERO),
-		m_GotCGUpdate(false),
-		m_Active(true),
-		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
-		m_DeactivationCounter(0),
-		m_Type(0),
-		m_Mass(0.f),
-		m_Radius(0),
-		m_Position(Vector2::ZERO),
-		m_Rotation(0.f),
-		m_RotationalVelocity(0.f),
-		m_UsesAABB(false),
-		m_UsesDist(false),
-		m_UsesPixel(false),
-		m_Velocity(Vector2::ZERO),
-		m_AppliedRelativeForce(0)
-	{
-		m_Body = cpBodyNew(m_Mass, 0.0);
-		m_Body->p = cpv(m_Position.x, m_Position.y);
-	}
-
-	PhysicsBody::PhysicsBody(PhysicsWorld *world, const CollisionCallback &response)
-		: m_World(world),
-		m_CollisionFlags(C_NONE),
-		m_CollisionResponse(response),
-		m_CollisionHandler(0),
-		m_UserData(0),
-		m_Acceleration(Vector2::ZERO),
-		m_AppliedForce(Vector2::ZERO),
-		m_GotCGUpdate(false),
-		m_Active(true),
-		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
-		m_DeactivationCounter(0),
-		m_Type(0),
-		m_Mass(0.f),
-		m_Radius(0),
-		m_Position(Vector2::ZERO),
-		m_Rotation(0.f),
-		m_RotationalVelocity(0.f),
-		m_UsesAABB(false),
-		m_UsesDist(false),
-		m_UsesPixel(false),
-		m_Velocity(Vector2::ZERO),
-		m_AppliedRelativeForce(0)
-	{
-		m_Body = cpBodyNew(m_Mass, 0.0);
-		m_Body->p = cpv(m_Position.x, m_Position.y);
-	}
-
-	PhysicsBody::~PhysicsBody()
-	{
-		Clear();
-		cpBodyFree(m_Body);
-	}
-
 	PhysicsBody::PhysicsBody()
 		: m_World(0),
-		m_CollisionFlags(C_NONE),
-		m_CollisionResponse(0),
+		//m_CollisionFlags(C_NONE),
+		//m_CollisionResponse(0),
 		m_CollisionHandler(0),
 		m_UserData(0),
-		m_Acceleration(Vector2::ZERO),
-		m_AppliedForce(Vector2::ZERO),
+		m_Acceleration(Vector2::zero()),
+		m_AppliedForce(Vector2::zero()),
 		m_GotCGUpdate(false),
 		m_Active(true),
 		m_DeactivationCounter(0),
@@ -114,17 +24,111 @@ namespace FusionEngine
 		m_Type(0),
 		m_Mass(0.f),
 		m_Radius(0),
-		m_Position(Vector2::ZERO),
+		m_Position(Vector2::zero()),
 		m_Rotation(0.f),
 		m_RotationalVelocity(0.f),
 		m_UsesAABB(false),
 		m_UsesDist(false),
 		m_UsesPixel(false),
-		m_Velocity(Vector2::ZERO),
+		m_Velocity(Vector2::zero()),
 		m_AppliedRelativeForce(0)
 	{
-		m_Body = cpBodyNew(m_Mass, 0.0);
-		m_Body->p = cpv(0, 0);
+		m_BxBodyDef = new b2BodyDef();
+		m_BxBodyDef->allowSleep = true;
+		m_BxBodyDef->linearDamping = 0.0f;
+		m_BxBodyDef->angularDamping = 0.01f;
+
+		m_BxBodyDef->position.Set(0.0f, 0.0f);
+	}
+
+	PhysicsBody::PhysicsBody(PhysicsWorld *world)
+		: m_World(world),
+		//m_CollisionFlags(C_NONE),
+		//m_CollisionResponse(0),
+		m_CollisionHandler(0),
+		m_UserData(0),
+		m_Acceleration(Vector2::zero()),
+		m_AppliedForce(Vector2::zero()),
+		m_GotCGUpdate(false),
+		m_Active(true),
+		m_DeactivationCounter(0),
+		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
+		m_Type(0),
+		m_Mass(0.f),
+		m_Radius(0),
+		m_Position(Vector2::zero()),
+		m_Rotation(0.f),
+		m_RotationalVelocity(0.f),
+		m_UsesAABB(false),
+		m_UsesDist(false),
+		m_UsesPixel(false),
+		m_Velocity(Vector2::zero()),
+		m_AppliedRelativeForce(0)
+	{
+		m_BxBodyDef = new b2BodyDef();
+		m_BxBodyDef->allowSleep = true;
+		m_BxBodyDef->linearDamping = 0.0f;
+		m_BxBodyDef->angularDamping = 0.01f;
+
+		m_BxBodyDef->position.Set(0.0f, 0.0f);
+
+		Initialize(world);
+	}
+
+	PhysicsBody::~PhysicsBody()
+	{
+		Clear();
+		if(m_BxBody)
+		{
+			m_World->BodyDeleted(this);
+			m_BxBody = NULL;
+		}
+	}
+
+	void PhysicsBody::Initialize(const PhysicsWorld *world /* = NULL */)
+	{
+		if (world != NULL)
+			m_World = world;
+
+		if(!m_BxBody)
+		{
+			m_BxBody = m_World->SubstantiateBody(this);
+		}
+
+		SetSpeedXY(m_InitialSpeed);
+		CommitProperties();
+	}
+
+	void PhysicsBody::CommitProperties()
+	{
+		if(m_BxBody)
+		{
+			m_BxBody->SetBullet(m_Bullet);
+
+			m_BxBody->SetUserData(m_UserData);
+
+			b2MassData massData;
+			massData.mass = m_Mass;
+			massData.center.SetZero();
+			massData.I = 0.0f;
+			m_body->SetMass(&massData);
+
+			for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; it++)
+			{
+				(*it)->SetBody(this);
+				(*it)->UpdateProperties();
+			}
+		}
+	}
+
+	b2BodyDef *PhysicsBody::GetBodyDef() const
+	{
+		return m_BxBodyDef;
+	}
+
+	b2Body *PhysicsBody::GetB2Body() const
+	{
+		return m_BxBody;
 	}
 
 	void PhysicsBody::SetWorld(PhysicsWorld* world)
@@ -142,24 +146,22 @@ namespace FusionEngine
 	{
 		if (mass == 0.0f)
 		{
-			m_Mass = 0.0f;
+			m_BxBody->SetMass(0.0f);
 			m_InverseMass = 0.0f;
 		}
-		else if (mass == g_PhysStaticMass)
+		if (mass == g_PhysStaticMass)
 		{
-			m_CollisionFlags |= C_STATIC;
+			//m_CollisionFlags |= C_STATIC;
 			m_Mass = g_PhysStaticMass;
 			m_InverseMass = 0.0f;
-			cpBodySetMoment(m_Body, INFINITY);
+			cpBodySetMoment(m_BxBody, INFINITY);
 		}
 		else
 		{
-			m_CollisionFlags &= ~C_STATIC;
+			//m_CollisionFlags &= ~C_STATIC;
 			m_Mass = mass;
 			m_InverseMass = 1.0f / mass;
 		}
-
-		cpBodySetMass(m_Body, m_Mass);
 	}
 
 	void PhysicsBody::RecalculateInertia()
@@ -175,7 +177,7 @@ namespace FusionEngine
 #endif
 			moment += it->GetInertia();
 		}
-		cpBodySetMoment(m_Body, moment);
+		cpBodySetMoment(m_BxBody, moment);
 	}
 
 	void PhysicsBody::SetRadius(float radius)
@@ -207,7 +209,7 @@ namespace FusionEngine
 	{
 		//m_AppliedForce += force;
 
-		cpBodyApplyImpulse(m_Body, cpv(force.x, force.y), cpvzero);//m_Body->p);
+		cpBodyApplyImpulse(m_BxBody, cpv(force.x, force.y), cpvzero);//m_BxBody->p);
 
 		_activate();
 	}
@@ -222,7 +224,7 @@ namespace FusionEngine
 		//m_AppliedRelativeForce += force_relative;
 		//m_AppliedForce += force_relative;
 
-		cpBodyApplyImpulse(m_Body, cpv(force_relative.x, force_relative.y), m_Body->p);
+		cpBodyApplyImpulse(m_BxBody, cpv(force_relative.x, force_relative.y), m_BxBody->p);
 
 		_activate();
 	}
@@ -236,14 +238,13 @@ namespace FusionEngine
 		//m_AppliedRelativeForce += force_vector;
 		//m_AppliedForce += force_vector;
 
-		cpBodyApplyImpulse(m_Body, cpv(force_vector.x, force_vector.y), m_Body->p);
+		cpBodyApplyImpulse(m_BxBody, cpv(force_vector.x, force_vector.y), m_BxBody->p);
 
 		_activate();
 	}
 
-	cpBody* PhysicsBody::GetChipBody() const
+	void PhysicsBody::ClearForces()
 	{
-		return m_Body;
 	}
 
 	void PhysicsBody::AttachShape(Shape* shape)
@@ -251,7 +252,7 @@ namespace FusionEngine
 		shape->SetBody(this);
 		shape->GetShape()->collision_type = g_PhysBodyCpCollisionType;
 
-		cpBodySetMoment(m_Body, m_Body->i + shape->GetInertia());
+		cpBodySetMoment(m_BxBody, m_BxBody->i + shape->GetInertia());
 
 		// Add to world
 		m_World->AddShape(shape);
@@ -266,24 +267,44 @@ namespace FusionEngine
 			ShapePtr itpShape = (*it);
 			if (itpShape->GetShape() == shape->GetShape())
 			{
-				cpBodySetMoment(m_Body, m_Body->i - shape->GetInertia());
+				cpBodySetMoment(m_BxBody, m_BxBody->i - shape->GetInertia());
 				shape->SetBody(NULL);
 				m_Shapes.erase(it);
 			}
 		}
 	}
 
-	void PhysicsBody::ClearShapes(bool fromWorld /* = true */)
+	void PhysicsBody::ClearShapes()
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
 			ShapePtr shape = (*it);
 			shape->SetBody(NULL);
-
-			if (fromWorld)
-				m_World->RemoveShape(shape);
 		}
 		m_Shapes.clear();
+	}
+
+	const ShapeList &GetShapes() const
+	{
+		return m_Shapes;
+	}
+
+	Shape *PhysicsBody::GetShape(b2Shape *shape)
+	{
+		for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+			if((*it)->GetShape() == shape)
+				return *it;
+
+		return NULL;
+	}
+
+	Shape *PhysicsBody::GetShape(const std::string &name)
+	{
+		for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+			if((*it)->GetName() == name)
+				return *it;
+
+		return NULL;
 	}
 
 	void PhysicsBody::AttachJoint(cpJoint* joint, bool toWorld)
@@ -294,12 +315,13 @@ namespace FusionEngine
 	{
 	}
 
-	void PhysicsBody::ClearJoints(bool fromWorld)
+	void PhysicsBody::ClearJoints()
 	{
 	}
 
 	void PhysicsBody::Clear()
 	{
+		ClearForces();
 		ClearShapes();
 		ClearJoints();
 	}
@@ -329,14 +351,14 @@ namespace FusionEngine
 
 	void PhysicsBody::SetCoefficientOfRestitution(float bounce)
 	{
-		if (bounce == 0.0f)
-		{
-			m_CollisionFlags &= ~C_BOUNCE;
-		}
-		else
-		{
-			m_CollisionFlags |= C_BOUNCE;
-		}
+		//if (bounce == 0.0f)
+		//{
+		//	m_CollisionFlags &= ~C_BOUNCE;
+		//}
+		//else
+		//{
+		//	m_CollisionFlags |= C_BOUNCE;
+		//}
 
 		m_Bounce = bounce;
 
@@ -346,20 +368,20 @@ namespace FusionEngine
 	void PhysicsBody::SetRotationalVelocityRad(float velocity)
 	{
 		m_RotationalVelocity = velocity;
-		m_Body->w = velocity;
+		m_BxBody->w = velocity;
 	}
 
 	void PhysicsBody::SetRotationalVelocityDeg(float velocity)
 	{
 		m_RotationalVelocity = fe_degtorad(velocity);
-		m_Body->w = m_RotationalVelocity;
+		m_BxBody->w = m_RotationalVelocity;
 	}
 
 	void PhysicsBody::SetRotationalVelocity(float velocity)
 	{
 		m_RotationalVelocity = velocity;
 
-		m_Body->w = velocity;
+		m_BxBody->w = velocity;
 
 		// Don't activate if this was a call to stop rotation!
 		if (velocity)
@@ -472,10 +494,10 @@ namespace FusionEngine
 	}
 
 
-	void PhysicsBody::SetCollisionCallback(const CollisionCallback &method)
-	{
-		m_CollisionResponse = method;
-	}
+	//void PhysicsBody::SetCollisionCallback(const CollisionCallback &method)
+	//{
+	//	m_CollisionResponse = method;
+	//}
 
 	void PhysicsBody::SetCollisionHandler(ICollisionHandler *handler)
 	{
@@ -490,70 +512,76 @@ namespace FusionEngine
 		return true;
 	}
 
-	void PhysicsBody::CollisionWith(PhysicsBody *other, const std::vector<Contact> &contacts)
+	void PhysicsBody::AddContact(PhysicsBody *other, const Contact &contact)
 	{
 		if (m_CollisionHandler != 0)
-			m_CollisionHandler->CollisionWith(other, contacts);
+			m_CollisionHandler->AddContact(other, contact);
 
-		if (m_CollisionResponse != 0)
-			m_CollisionResponse(other, contacts);
+		//if (m_CollisionResponse != 0)
+		//	m_CollisionResponse(other, contacts);
 	}
 
-	void PhysicsBody::CollisionResponse(PhysicsBody *other, const std::vector<Contact> &contacts)
+	void PhysicsBody::RemoveContact(const Contact &contact)
 	{
-		if (m_CollisionResponse != 0)
-			m_CollisionResponse(other, contacts);
-
 		if (m_CollisionHandler != 0)
-			m_CollisionHandler->CollisionWith(other, contacts);
+			m_CollisionHandler->RemoveContact(contact);
 	}
+
+	//void PhysicsBody::CollisionResponse(PhysicsBody *other, const std::vector<Contact> &contacts)
+	//{
+	//	if (m_CollisionResponse != 0)
+	//		m_CollisionResponse(other, contacts);
+
+	//	if (m_CollisionHandler != 0)
+	//		m_CollisionHandler->CollisionWith(other, contacts);
+	//}
 
 	bool PhysicsBody::IsStatic() const
 	{
 		return CheckCollisionFlag(C_STATIC);
 	}
 
-	int PhysicsBody::GetCollisionFlags()
-	{
-		return m_CollisionFlags;
-	}
+	//int PhysicsBody::GetCollisionFlags()
+	//{
+	//	return m_CollisionFlags;
+	//}
 
-	int PhysicsBody::GetCollisionFlags() const
-	{
-		return m_CollisionFlags;
-	}
+	//int PhysicsBody::GetCollisionFlags() const
+	//{
+	//	return m_CollisionFlags;
+	//}
 
-	bool PhysicsBody::CheckCollisionFlag(int flag)
-	{
-		return (m_CollisionFlags & flag) ? true : false;
-	}
+	//bool PhysicsBody::CheckCollisionFlag(int flag)
+	//{
+	//	return (m_CollisionFlags & flag) ? true : false;
+	//}
 
-	bool PhysicsBody::CheckCollisionFlag(int flag) const
-	{
-		return (m_CollisionFlags & flag) ? true : false;
-	}
+	//bool PhysicsBody::CheckCollisionFlag(int flag) const
+	//{
+	//	return (m_CollisionFlags & flag) ? true : false;
+	//}
 
-	void PhysicsBody::_setCollisionFlags(int flags)
-	{
-		m_CollisionFlags = flags;
-	}
+	//void PhysicsBody::_setCollisionFlags(int flags)
+	//{
+	//	m_CollisionFlags = flags;
+	//}
 
 	const Vector2 &PhysicsBody::GetPosition()
 	{
-		m_Position.x = m_Body->p.x;
-		m_Position.y = m_Body->p.y;
+		m_Position.x = m_BxBody->p.x;
+		m_Position.y = m_BxBody->p.y;
 		return m_Position;
 	}
 
 	CL_Point PhysicsBody::GetPositionPoint() const
 	{
-		return CL_Point((int)m_Body->p.x, (int)m_Body->p.y);
+		return CL_Point((int)m_BxBody->p.x, (int)m_BxBody->p.y);
 	}
 
 	const Vector2 &PhysicsBody::GetForce()
 	{
-		m_AppliedForce.x = m_Body->f.x;
-		m_AppliedForce.y = m_Body->f.y;
+		m_AppliedForce.x = m_BxBody->f.x;
+		m_AppliedForce.y = m_BxBody->f.y;
 		return m_AppliedForce;
 	}
 
@@ -569,8 +597,8 @@ namespace FusionEngine
 
 	const Vector2 &PhysicsBody::GetVelocity()
 	{
-		m_Velocity.x = m_Body->v.x;
-		m_Velocity.y = m_Body->v.y;
+		m_Velocity.x = m_BxBody->v.x;
+		m_Velocity.y = m_BxBody->v.y;
 		return m_Velocity;
 	}
 
@@ -601,17 +629,17 @@ namespace FusionEngine
 
 	float PhysicsBody::GetRotationRad() const
 	{
-		return m_Body->a;
+		return m_BxBody->a;
 	}
 
 	float PhysicsBody::GetRotationDeg() const
 	{
-		return fe_radtodeg(m_Body->a);
+		return fe_radtodeg(m_BxBody->a);
 	}
 
 	float PhysicsBody::GetRotation() const
 	{
-		return m_Body->a;
+		return m_BxBody->a;
 	}
 
 	bool PhysicsBody::IsActive() const
@@ -629,8 +657,8 @@ namespace FusionEngine
 	void PhysicsBody::_deactivate()
 	{
 		// Stop moving - we don't want it flying off into deep space ;)
-		m_Acceleration = Vector2::ZERO;
-		m_Velocity = Vector2::ZERO;
+		m_Acceleration = Vector2::zero();
+		m_Velocity = Vector2::zero();
 
 		m_Active = false;
 	}
@@ -666,9 +694,15 @@ namespace FusionEngine
 
 	void PhysicsBody::_setPosition(const Vector2 &position)
 	{
-		m_Position = position;
-		m_Body->p.x = position.x;
-		m_Body->p.y = position.y;
+		//m_Position = position;
+		if(m_BxBody)
+		{
+			m_BxBody->SetXForm(b2Vec2(position.x, position.y), m_BxBody->GetAngle());
+		}
+		else
+		{
+			m_BodyDef->position.Set(position.x, position.y);
+		}
 	}
 
 	void PhysicsBody::_setForce(const Vector2 &force)
@@ -686,30 +720,73 @@ namespace FusionEngine
 		m_Acceleration = acceleration;
 	}
 
+	void PhysicalObj::SetSpeedXY (Point2d vector)
+{
+  if(m_body){
+  if (EqualsZero(vector.x)) vector.x = 0;
+  if (EqualsZero(vector.y)) vector.y = 0;
+  bool was_moving = IsMoving();
+
+    // setting to FreeFall is done in StartMoving()
+    m_body->SetLinearVelocity(b2Vec2(vector.x,vector.y));
+    if (!was_moving && IsMoving()) {
+      UpdateTimeOfLastMove();
+      StartMoving();
+      m_body->WakeUp();
+    }
+  }else{
+    m_initial_speed = vector;
+  }
+}
+
+
 	void PhysicsBody::_setVelocity(const Vector2 &velocity)
 	{
 		m_Velocity = velocity;
 
-		m_Body->v.x = velocity.x;
-		m_Body->v.y = velocity.y;
+		m_BxBody->v.x = velocity.x;
+		m_BxBody->v.y = velocity.y;
+
+		if(m_body)
+		{
+			if (fe_fzero(vector.x))
+				vector.x = 0;
+			if (fe_fzero(vector.y))
+				vector.y = 0;
+
+			bool was_moving = IsMoving();
+
+			// setting to FreeFall is done in StartMoving()
+			m_body->SetLinearVelocity(b2Vec2(vector.x,vector.y));
+			if (!was_moving && IsMoving())
+			{
+				UpdateTimeOfLastMove();
+				StartMoving();
+				m_body->WakeUp();
+			}
+		}
+		else
+		{
+			m_initial_speed = vector;
+		}
 	}
 
 	void PhysicsBody::_setRotationRad(const float rotation)
 	{
 		m_Rotation = rotation;
-		cpBodySetAngle(m_Body, rotation);
+		cpBodySetAngle(m_BxBody, rotation);
 	}
 
 	void PhysicsBody::_setRotationDeg(const float rotation)
 	{
 		m_Rotation = fe_degtorad(rotation);
-		cpBodySetAngle(m_Body, fe_degtorad(rotation));
+		cpBodySetAngle(m_BxBody, fe_degtorad(rotation));
 	}
 
 	void PhysicsBody::_setRotation(const float rotation)
 	{
 		m_Rotation = rotation;
-		cpBodySetAngle(m_Body, rotation);
+		cpBodySetAngle(m_BxBody, rotation);
 	}
 
 

@@ -129,7 +129,7 @@ public:
 	//GUIHUDTest() : CL_ClanApplication() {}
 private:
 	PhysicsWorld *m_World;
-	FusionInput *m_Input;
+	InputManager *m_Input;
 	ScriptingEngine *m_ScriptManager;
 	ResourceManager *m_ResMan;
 
@@ -153,7 +153,8 @@ private:
 
 		asIScriptStruct *cmdStruct = cmd.GetScriptStruct();
 		bool bTrue = true;
-		for (int i = 0; i<cmdStruct->GetPropertyCount(); i++)
+		int propertyCount = cmdStruct->GetPropertyCount();
+		for (int i = 0; i < propertyCount; i++)
 		{
 			std::string prop(cmdStruct->GetPropertyName(i));
 			if (prop == "delta")
@@ -234,6 +235,7 @@ public:
 			////////////////////
 			// Resource Manager
 			m_ResMan = new ResourceManager(argv[0]);
+			m_ResMan->Configure();
 			m_ResMan->AddResourceLoader(new XMLLoader());
 			m_ResMan->AddResourceLoader(new TextLoader());
 
@@ -246,12 +248,12 @@ public:
 
 			/////////////////
 			// Input Manager
-			m_Input = new FusionInput(co);
+			m_Input = new InputManager(&dispWindow);
 
 			if (!m_Input->Test())
-				throw CL_Error("Input handler could not be started.");
-			m_Input->Initialise();
-			SendToConsole("InputHandler started successfully");
+				throw CL_Error("Input manager could not be started.");
+			m_Input->Initialise(m_ResMan, co);
+			SendToConsole("Input manager started successfully");
 
 			///////////////////////
 			// Register globals and some more types
@@ -278,7 +280,7 @@ public:
 			// Phys World
 			m_World->Initialise(800, 600);
 			m_World->SetMaxVelocity(20);
-			m_World->SetDamping(0.8);
+			m_World->SetDamping(0.8f);
 			m_World->SetBodyDeactivationPeriod(10000);
 			m_World->SetDeactivationVelocity(0.05f);
 			m_World->SetBitmaskRes(4);

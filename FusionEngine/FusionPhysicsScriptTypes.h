@@ -99,7 +99,7 @@ namespace FusionEngine
 
 	void ConstructCircleShape(PhysicsBody *o, float centre, float outer, CircleShape *obj)
 	{
-		new(&obj) CircleShape(o, centre, outer, Vector2::ZERO);
+		new(&obj) CircleShape(o, centre, outer, Vector2::zero());
 	}
 
 	void ConstructCircleShapeOffset(PhysicsBody *o, float centre, float outer, float offset_x, float offset_y, CircleShape *obj)
@@ -109,7 +109,7 @@ namespace FusionEngine
 
 	CircleShape* CircleShapeFactory(PhysicsBody *body, float centre, float outer)
 	{
-		return new CircleShape(body, centre, outer, Vector2::ZERO);
+		return new CircleShape(body, centre, outer, Vector2::zero());
 	}
 
 	static void registerPhysShapeMethods(asIScriptEngine* engine)
@@ -127,12 +127,12 @@ namespace FusionEngine
 
 	void PhysicsWorld_ListBodies(PhysicsWorld* lhs)
 	{
-		const BodyList& bodies = lhs->GetBodies();
+		const PhysicsWorld::BodyMap& bodies = lhs->GetBodies();
 
 		std::string output = CL_String::format("Active bodies: (%1)\n", (int)bodies.size());
-		for (BodyList::const_iterator it = bodies.begin(), end = bodies.end(); it != end; ++it)
+		for (PhysicsWorld::BodyMap::const_iterator it = bodies.begin(), end = bodies.end(); it != end; ++it)
 		{
-			PhysicsBody* body = (*it);
+			PhysicsBody* body = it->second;
 			const Vector2& p = body->GetPosition();
 			
 			output += CL_String::format("\t ( %1 , %2 )", p.x, p.y);

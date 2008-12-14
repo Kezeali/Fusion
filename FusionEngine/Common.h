@@ -21,6 +21,9 @@
 #include <iomanip>
 #include <fstream>
 
+// STL TR1
+#include <unordered_map>
+
 // ClanLib
 #include <ClanLib/core.h>
 #include <ClanLib/network.h>

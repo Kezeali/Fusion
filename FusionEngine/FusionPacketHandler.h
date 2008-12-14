@@ -25,8 +25,8 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_PacketDispatcher
-#define Header_FusionEngine_PacketDispatcher
+#ifndef Header_FusionEngine_PacketHandler
+#define Header_FusionEngine_PacketHandler
 
 #if _MSC_VER > 1000
 #pragma once
@@ -56,7 +56,7 @@ namespace FusionEngine
 
 	//! Network packet routing
 	/*!
-	 * Linked list based (semi) implementation
+	 * Linked list based partial implementation
 	 *
 	 * \sa ListPacketDispatcher
 	 */

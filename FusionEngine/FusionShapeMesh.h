@@ -55,7 +55,7 @@ namespace FusionEngine
 	class ShapeMesh
 	{
 	private:
-		typedef std::set<cpShape*> ShapeList;
+		typedef std::list<Shape*> ShapeList;
 	public:
 		//! Basic constructor.
 		ShapeMesh(PhysicsWorld* world, PhysicsBody* body);

@@ -80,9 +80,9 @@ class BitmaskTest : public CL_ClanApplication
 	{
 		if (CL_Keyboard::get_keycode('R'))
 		{
-			m_ShipPhysical->_setForce(Vector2::ZERO);
-			m_ShipPhysical->_setVelocity(Vector2::ZERO);
-			m_ShipPhysical->_setAcceleration(Vector2::ZERO);
+			m_ShipPhysical->_setForce(Vector2::zero());
+			m_ShipPhysical->_setVelocity(Vector2::zero());
+			m_ShipPhysical->_setAcceleration(Vector2::zero());
 
 			m_ShipPhysical->_setPosition(Vector2(50.0f,50.0f));
 		}

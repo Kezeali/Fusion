@@ -178,7 +178,7 @@ public:
 
 			m_Damage->set_scale(scale, scale);
 			m_Damage->draw(position.x-x_offset, position.y-y_offset, m_TerrainCanvas->get_gc() );
-			m_DamageBody->_setPosition(Vector2::ZERO);
+			m_DamageBody->_setPosition(Vector2::zero());
 			m_TerrainShapes->Erase(position, radius);
 
 			m_Explosions.push_back(Explosion(position, radius, 0.005f, this));
@@ -258,9 +258,9 @@ private:
 
 		if (CL_Keyboard::get_keycode('R'))
 		{
-			m_ShipPhysical->_setForce(Vector2::ZERO);
-			m_ShipPhysical->_setVelocity(Vector2::ZERO);
-			m_ShipPhysical->_setAcceleration(Vector2::ZERO);
+			m_ShipPhysical->_setForce(Vector2::zero());
+			m_ShipPhysical->_setVelocity(Vector2::zero());
+			m_ShipPhysical->_setAcceleration(Vector2::zero());
 
 			m_ShipPhysical->_setPosition(Vector2(50.0f,50.0f));
 		}

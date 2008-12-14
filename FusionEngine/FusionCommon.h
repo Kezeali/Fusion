@@ -64,7 +64,9 @@
 //#include "FusionInvalidArgumentException.h"
 
 // Chipmunk
-#include <chipmunk.h>
+//#include <chipmunk.h>
+
+#include <Box2D.h>
 
 // Boost
 //#include <boost/function.hpp>
@@ -97,25 +99,35 @@
 namespace FusionEngine
 {
 
+	typedef Vector2T<float> Vector2;
+
 	//! Ratio of degrees to radians
-	static const double g_DegToRad = M_PI/180.0f;
+	static const double s_DegToRad = M_PI/180.0f;
 	//! Ratio of radians to degrees
-	static const double g_RadToDeg = 180.0f/M_PI;
+	static const double s_RadToDeg = 180.0f/M_PI;
+
+	static const double s_FloatComparisonEpsilon = 0.05;
 
 
 	////////////////////////
 	// --General functions--
 	////////////////////////
 
+	static inline bool fe_fzero(float value) { return fabs(value) <= (float)s_FloatComparisonEpsilon; }
+	static inline bool fe_fzero(double value) { return fabs(value) <= s_FloatComparisonEpsilon; }
+
+	static inline bool fe_fequal(float a, float b) { return fabs(a-b) <= (float)s_FloatComparisonEpsilon; }
+	static inline bool fe_fequal(double a, double b) { return fabs(a-b) <= s_FloatComparisonEpsilon; }
+
 	//! Converts deg to rad
-	static inline float fe_degtorad(float deg) { return deg * (float)g_DegToRad; }
+	static inline float fe_degtorad(float deg) { return deg * (float)s_DegToRad; }
 	//! Converts deg to rad (double)
-	static inline double fe_degtorad(double deg) { return deg * g_DegToRad; }
+	static inline double fe_degtorad(double deg) { return deg * s_DegToRad; }
 
 	//! Converts rad to deg
-	static inline float fe_radtodeg(float rad) { return rad * (float)g_RadToDeg; }
+	static inline float fe_radtodeg(float rad) { return rad * (float)s_RadToDeg; }
 	//! Converts rad deg (double)
-	static inline double fe_radtodeg(double rad) { return rad * g_RadToDeg; }
+	static inline double fe_radtodeg(double rad) { return rad * s_RadToDeg; }
 
 	/*!
 	 * /brief
@@ -288,17 +300,22 @@ namespace FusionEngine
 //#define fe_itoa(v, &buffer, radix) itoa(v, buffer, radix)
 //#endif
 
+	//! Returns rounded value converted to long int
+	static inline long int fe_lround(double v) { return static_cast<long int>( v + (v > 0.0 ? 0.5 : -0.5) ); }
+	//! Returns rounded value
+	template<typename T>
+	static inline T fe_round(T v) { return fe_lround(static_cast<double>(v)); }
 
 	//! Returns the bigger value
 	template<class T>
-	static inline const T &fe_max(const T &a, const T &b) {return (a > b) ? a : b; }
+	static inline T fe_max(const T &a, const T &b) { return (a > b) ? a : b; }
 	//! Returns the smaller value
 	template<class T>
-	static inline const T &fe_min(const T &a, const T &b) {return (a < b) ? a : b; }
+	static inline T fe_min(const T &a, const T &b) { return (a < b) ? a : b; }
 
 	//! Wraps a around if it is below lb or above ub
 	template<class T>
-	static inline const T &fe_wrap(const T &a, const T &lb, const T &ub) 
+	static inline T fe_wrap(const T &a, const T &lb, const T &ub) 
 	{
 		// This basically ammounts to:
 		//  if (a <= lb) return ub;
@@ -329,6 +346,12 @@ namespace FusionEngine
 		}
 	}
 
+	//! Converts Box2D Vector2 to FE Vector2
+	static inline Vector2 b2v2(const b2Vec2 &other)
+	{
+		return Vector2(other.x, other.y);
+	}
+
 
 	///////////////////////////
 	// --Forward declarations--
@@ -344,14 +367,13 @@ namespace FusionEngine
 	class Network;
 	class NetworkServer;
 	class NetworkClient;
-	class FusionScene;
-	class FusionNode;
+	class Scene;
+	class INode;
 	class ShipState;
 	struct ShipInput;
 	class ProjectileState;
 	class FusionShip;
 	class FusionProjectile;
-	class ShipResourceBundle;
 	class PhysicsWorld;
 	class PhysicsBody;
 	class Shape;
@@ -375,6 +397,7 @@ namespace FusionEngine
 	class PackSyncServer;
 	class LoadingStage;
 	class ResourceContainer;
+	class ResourceManager;
 	class InputPluginLoader;
 
 

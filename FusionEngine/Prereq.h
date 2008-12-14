@@ -57,12 +57,12 @@ namespace FusionEngine
     #else
     #   if FUSION_COMPILER == FUSION_COMPILER_MSVC
     #       if FUSION_COMP_VER > 1300 && !defined(_STLP_MSVC)
-    #           define HashMap ::stdext::hash_map
+		#           define HashMap ::std::tr1::unordered_map
     #       else
-    #           define HashMap ::std::hash_map
+    #           define HashMap ::std:::unordered_map
     #       endif
     #   else
-    #       define HashMap ::std::hash_map
+    #       define HashMap ::std::unordered_map
     #   endif
     #endif
 

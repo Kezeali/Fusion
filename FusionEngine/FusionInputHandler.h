@@ -35,9 +35,15 @@
 #include "FusionSingleton.h"
 
 /// Fusion
-//#include "FusionInputMap.h"
-//#include "FusionInputData.h"
 #include "FusionClientOptions.h"
+#include "FusionCommand.h"
+#include "FusionInputPluginLoader.h"
+
+#define FE_INPUTMETHOD_UNBUFFERED 0
+#define FE_INPUTMETHOD_EVENTS 1
+#define FE_INPUTMETHOD_BUFFERED 2
+
+#define FE_INPUT_METHOD FE_INPUTMETHOD_UNBUFFERED
 
 namespace FusionEngine
 {
@@ -47,10 +53,10 @@ namespace FusionEngine
 	 * \brief
 	 * Used by the control human-readable name map. Loaded from XML
 	 */
-	class KeyName
+	class KeyInfo
 	{
 	public:
-		KeyName()
+		KeyInfo()
 			: m_Name(""),
 			m_Device(""),
 			m_Code(0),
@@ -58,7 +64,7 @@ namespace FusionEngine
 		{
 		}
 
-		KeyName(std::string name, std::string device, int code, std::string description)
+		KeyInfo(std::string name, std::string device, int code, std::string description)
 			: m_Name(name),
 			m_Device(device),
 			m_Code(code),
@@ -83,19 +89,25 @@ namespace FusionEngine
 	 */
 	class InputBinding
 	{
+	public:
 		unsigned int m_Player;
 		std::string m_Input; // The 'agency' this control provides :P
-		std::string m_Key; // The short-name of the key on the keyboard / button on the controler
+		//std::string m_Key; // The short-name of the key on the keyboard / button on the controler
+		KeyInfo m_Key;
 
 	public:
-		InputBinding(const XmlInputBinding& rawBinding)
+		/*InputBinding(const XmlInputBinding& rawBinding)
 		{
 			m_Player = CL_String::to_int(rawBinding.m_Player);
 			m_Input = rawBinding.m_Input;
 			m_Key = rawBinding.m_Key;
+		}*/
+		InputBinding()
+			: m_Player(0)
+		{
 		}
 
-		InputBinding(unsigned int player, std::string input, std::string key)
+		InputBinding(unsigned int player, const std::string &input, KeyInfo &key)
 			: m_Player(player),
 			m_Input(input),
 			m_Key(key)
@@ -103,18 +115,7 @@ namespace FusionEngine
 		}
 	};
 
-	class InputState
-	{
-	public:
-		InputState()
-			: m_Down(false), m_Changed(false), m_Value(0.0f)
-		{}
-		bool m_Down;
-		bool m_Changed; // If the button was pressed / released / both since the last command
-		float m_Value;
-	};
-
-	class Command
+	/*class Command
 	{
 	public:
 		typedef std::map<std::string, InputState> InputStateMap;
@@ -129,11 +130,12 @@ namespace FusionEngine
 
 		void CheckForChanges(const Command &previousCommand)
 		{
-			for (InputStateMap::iterator it = previousCommand.m_States.begin(), end = previousCommand.m_States.end(); it != end; ++it)
+			for (InputStateMap::const_iterator it = previousCommand.m_States.begin(), end = previousCommand.m_States.end(); it != end; ++it)
 			{
 				InputState &currentState = m_States[it->first];
 				if (it->second.m_Down != currentState.m_Down || abs(it->second.m_Value - currentState.m_Value) > g_InputAnalogFuzz)
 					currentState.m_Changed = true;
+			}
 		}
 
 		bool IsDown(const std::string &input)
@@ -144,7 +146,7 @@ namespace FusionEngine
 		{
 			return m_States[input].m_Value;
 		}
-	};
+	};*/
 
 	/*!
 	 * \brief
@@ -163,16 +165,20 @@ namespace FusionEngine
 		InputManager();
 		//! Constructor.
 		InputManager(CL_DisplayWindow *window);
-		//! Constructor. +ClientOptions
-		InputManager(CL_DisplayWindow *window, const ClientOptions *from);
 		//! Deconstructor
 		~InputManager();
 
 	public:
-		//! Input names mapped to controls
-		typedef std::map<std::string, InputBinding> ControlMap;
+		//! Key code ^ device mapped to KeyInfos
+		typedef std::map<long, KeyInfo> KeyInfoMap;
+		//! Short names mapped to KeyInfos
+		typedef std::tr1::unordered_map<std::string, KeyInfo> ShortNameMap;
 
-		typedef std::map<std::string, InputState> Command;
+		//! Input names mapped to bindings
+		typedef std::map<std::string, InputBinding> InputMap;
+		//! Key shortnames mapped to inputs (i.e. bindings)
+		typedef std::map<std::string, InputBinding> KeyMap;
+
 		typedef std::vector<Command> CommandList;
 		typedef std::vector<CommandList> PlayerCommandLists;
 
@@ -191,7 +197,7 @@ namespace FusionEngine
 		 */
 		bool Test();
 		//! Sets up the input manager.
-		void Initialise();
+		void Initialise(ResourceManager *resMan, const ClientOptions *from);
 		//! Drops any settings
 		void CleanUp();
 		//! Activates the input handler.
@@ -204,17 +210,18 @@ namespace FusionEngine
 		//! Sets up inputs
 		void SetInputMaps(const ClientOptions *from);
 
-		void MapControl(unsigned int player, const std::string &name, int keycode);
+		void MapControl(unsigned int player, const std::string &name, const std::string &shortname);
 		CL_InputDevice& GetDevice(const std::string &name);
 
 		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
 		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
 
 		//const Control &GetControl(const std::string& name, unsigned int filter = 0) const;
-		bool IsButtonDown(const std::string& name, unsigned int filter = 0) const;
-		float GetAnalogValue(const std::string& name, unsigned int filter = 0) const;
+		bool IsButtonDown(const std::string& name, unsigned int player = 0) const;
+		float GetAnalogValue(const std::string& name, unsigned int player = 0) const;
 
 		void CreateCommand(int tick, unsigned int split, unsigned int player);
+		const Command &GetCommand(unsigned int player, int tick);
 
 		float GetMouseSensitivity() const;
 
@@ -226,8 +233,20 @@ namespace FusionEngine
 		//GlobalInput GetGlobalInputs() const;
 
 	private:
-		ControlMap m_InputMap;
+#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
+		NameMap m_KeyInfo;
+#else
+		ShortNameMap m_KeyInfo;
+#endif
+		
 
+		// Still not sure if this is needed (vs m_KeyBindings)
+		InputMap m_InputBindings;
+		KeyMap m_KeyBindings;
+
+		//! Current input states
+		CommandList m_CurrentCommands;
+		//! Input state history
 		PlayerCommandLists m_PlayerCommands;
 
 		InputPluginLoader *m_PluginLoader;
@@ -263,8 +282,10 @@ namespace FusionEngine
 		int m_DisplayCenterX;
 		int m_DisplayCenterY;
 
+		//! Builds the command buffers for each player
+		void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes)
 		//! Loads human readable and UI control (key / button, etc) names
-		void loadControlNames(const ticpp::Document& defDocument);
+		void loadKeyInfo(const ticpp::Document& defDocument);
 
 		//! Handle keyboard / keybased input. Down
 		void onKeyDown(const CL_InputEvent &key);

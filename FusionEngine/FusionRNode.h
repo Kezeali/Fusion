@@ -211,7 +211,7 @@ namespace FusionEngine
 		 * A pointer to the node created.
 		 */
 		FusionNode *CreateChildNode(
-			const Vector2 &position = Vector2::ZERO,
+			const Vector2 &position = Vector2::zero(),
 			float facing = 0);
 
 		/*!

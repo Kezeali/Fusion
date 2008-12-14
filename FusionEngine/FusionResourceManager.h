@@ -303,13 +303,13 @@ namespace FusionEngine
 		}
 
 		// How many characters from the beginning before a and b diverge
-		unsigned long quickCompare(const std::string &a, const std::string &b)
+		std::string::size_type quickCompare(const std::string &a, const std::string &b)
 		{
 			const char* a_cstr = a.c_str();
 			const char* b_cstr = b.c_str();
-			unsigned int length = fe_min(a.length(), b.length());
+			std::string::size_type length = fe_min(a.length(), b.length());
 
-			for (int i = 0; i < length; i++)
+			for (std::string::size_type i = 0; i < length; i++)
 			{
 				if (a_cstr[i] != b_cstr[i]) return i;
 			}
@@ -326,7 +326,7 @@ namespace FusionEngine
 				if (PHYSFS_isDirectory(CL_String::get_path(path).c_str()))
 				{
 					// If the given path is existing and absolute, make sure it is within the PhysFS write folder
-					if (path.find(writePath) == std::string::npos)
+					if (quickCompare(path, writePath) >= writePath.length())
 					{
 						FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
 							"Can't create '" + path + "' as it is not within the write path (" + writePath + ")");

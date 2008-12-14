@@ -84,7 +84,7 @@ namespace FusionEngine
 		catch (CL_Error&)
 		{
 			delete data;
-			FSN_EXCEPT(ExCode::IO, "ScriptLoader::loadDocument", "'" + path + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "TextLoader::load", "'" + path + "' could not be loaded");
 		}
 
 		return data;

@@ -38,6 +38,8 @@
 #include "FusionRefCounted.h"
 #include "FusionPhysicsBody.h"
 
+#include <boost/shared_ptr.hpp>
+
 namespace FusionEngine
 {
 
@@ -52,87 +54,137 @@ namespace FusionEngine
 	class Shape : public RefCounted
 	{
 	public:
-		Shape() {}
-		//Shape(const Shape& other)
-		//	: m_Body(other.m_Body),
-		//	m_Offset(other.m_Offset),
-		//	m_Shape(other.m_Shape)
-		//{}
-		Shape(PhysicsBody* body);
-		Shape(PhysicsBody* body, const Vector2& offset);
-		~Shape();
+		Shape();
+		Shape(b2Body* body);
+		Shape(const Vector2& offset);
+		virtual ~Shape();
 
 	public:
-		cpShape* GetShape() const;
+		// Should this be CommitProperties to match PhysicsBody#CommitProperties()?
+		virtual void UpdateProperties() = 0;
 
-		//virtual cpFloat GetInertia(float mass = 0) const = 0;
-		cpFloat GetInertia(float mass = 0) const;
+		const b2Shape* GetShape() const;
 
-		void SetBody(PhysicsBody* body)
-		{
-			m_Body = body;
-			GetShape()->data = m_Body;
-		}
+		void SetBody(b2Body* body);
+		const b2Body* GetBody() const;
 
-		PhysicsBody* GetBody() const
-		{
-			return m_Body;
-		}
+		void SetFilter(b2FilterData filter);
+		const b2FilterData& GetFilter() const;
+		void SetFriction(double friction);
+		void SetMass(int mass);
+		void SetName(const std::string &name);
+		const std::string &GetName() const;
 
-		bool IsStatic() const;
+		void SetOffset(const Vector2& offset);
+		const Vector2& GetOffset() const;
+
+		//! Set the offset to make the position the given world co-ord
+		void SetOffset_Abs(const Vector2 &position);
 
 		Vector2 GetPosition() const;
 
-		void SetOffset(const Vector2& offset)
-		{
-			m_Offset.x = offset.x;
-			m_Offset.y = offset.y;
-		}
+		bool IsStatic() const;
 
-		const Vector2& GetOffset() const
-		{
-			return m_Offset;
-		}
+		virtual double GetInitialWidth() const = 0;
+		virtual double GetInitialHeight() const = 0;
+		// returns current max width (taking angle into account)
+		virtual double GetCurrentWidth() const = 0;
+		// returns current max height (taking angle into account)
+		virtual double GetCurrentHeight() const = 0;
+
+		virtual double GetCurrentMinX() const = 0;
+		virtual double GetCurrentMaxX() const = 0;
+		virtual double GetCurrentMinY() const = 0;
+		virtual double GetCurrentMaxY() const = 0;
+
+		//virtual cpFloat GetInertia(float mass = 0) const = 0;
+		//float32 GetInertia(float mass = 0) const;
 
 	protected:
-		PhysicsBody* m_Body;
+		b2FilterData m_Filter;
+		double m_Friction;
+		int m_Mass;
+		std::string m_Name;
 		Vector2 m_Offset;
-		cpShape* m_Shape;
+
+		b2Body* m_BxBody;
+		b2Shape *m_BxShape;
 	};
+
+	//! Shape Smart Ptr type
+	typedef boost::shared_ptr<Shape> ShapePtr;
 
 	//! PolyShape Shape implementations
 	class PolyShape : public Shape 
 	{
 	public:
-		PolyShape(PhysicsBody* body, int num, cpVect* verts, const Vector2& offset);
+		PolyShape();
+		PolyShape(std::vector<Vector2>& verts, const Vector2& offset = Vector2::zero());
 		~PolyShape();
 
 	public:
+		void AddPoint(Vector2 point);
+		void Clear();
+
+		virtual void UpdateProperties();
+
+		virtual double GetInitialWidth() const;
+		virtual double GetInitialHeight() const;
+		virtual double GetCurrentWidth() const;
+		virtual double GetCurrentHeight() const;
+
+		virtual double GetCurrentMinX() const;
+		virtual double GetCurrentMaxX() const;
+		virtual double GetCurrentMinY() const;
+		virtual double GetCurrentMaxY() const;
 		//cpShape* GetShape() const;
-		cpFloat GetInertia(float mass) const;
+		//float32 GetInertia(float mass) const;
 
 	protected:
 		//cpPolyShape* m_Poly;
+		std::vector<Vector2> m_PointList;
+	};
+
+	class RectangleShape : public PolyShape
+	{
+	public:
+		RectangleShape(double width = 10.0, double height = 10.0);
+
+		virtual void UpdateProperties();
+
+	protected:
+		double m_Width;
+		double m_Height;
 	};
 
 	//! CircleShape Shape implementations
 	class CircleShape : public Shape
 	{
 	public:
-		CircleShape() {}
-		CircleShape(PhysicsBody* body, float centreRad, float outerRad, const Vector2& offset);
-		CircleShape(PhysicsBody* body, float radius, const Vector2& offset);
+		CircleShape();
+		CircleShape(float radius, const Vector2& offset = Vector2::zero());
 		~CircleShape();
 
 	public:
-		//cpShape* GetShape() const;
-		cpFloat GetInertia(float mass) const;
+		virtual void UpdateProperties();
 
-		void SetHoop(float centreRad, float outerRad);
+		virtual double GetCurrentWidth() const;
+		virtual double GetCurrentHeight() const;
+		virtual double GetInitialWidth() const;
+		virtual double GetInitialHeight() const;
+
+		virtual double GetCurrentMinX() const;
+		virtual double GetCurrentMaxX() const;
+		virtual double GetCurrentMinY() const;
+		virtual double GetCurrentMaxY() const;
+		//cpShape* GetShape() const;
+		//float32 GetInertia(float mass) const;
+
+		//void SetHoop(float centreRad, float outerRad);
 
 	protected:
 		//cpCircleShape* m_Shape;
-		float m_Centre;
+		//float m_Centre;
 		float m_Radius;
 	};
 

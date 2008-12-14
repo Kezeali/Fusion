@@ -144,7 +144,7 @@ namespace FusionEngine
 	void ConsoleGUI::CleanUp()
 	{
 		CEGUI::WindowManager::getSingleton().destroyWindow("Console/Wind");
-		FusionInput::getSingleton().Activate();
+		InputManager::getSingleton().Activate();
 
 		Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
 		Console::getSingleton().OnClear.disconnect(m_ConsoleOnClearSlot);
@@ -171,7 +171,7 @@ namespace FusionEngine
 	bool ConsoleGUI::onMouseEnter(const CEGUI::EventArgs& e)
 	{
 		// Stops the input manager from trying to gather player inputs
-		FusionInput::getSingleton().Suspend();
+		InputManager::getSingleton().Suspend();
 
 		SendToConsole("Game input suspended");
 
@@ -180,7 +180,7 @@ namespace FusionEngine
 
 	bool ConsoleGUI::onMouseLeave(const CEGUI::EventArgs& e)
 	{
-		FusionInput::getSingleton().Activate();
+		InputManager::getSingleton().Activate();
 
 		SendToConsole("Game input activated");
 

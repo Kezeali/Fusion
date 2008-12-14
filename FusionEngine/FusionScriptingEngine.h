@@ -61,7 +61,7 @@ namespace FusionEngine
 	 * This has to be static so we can (easily) have a different timeoutTime for
 	 * concurrently running scripts.
 	 */
-	static void TimeoutCallback(asIScriptContext *ctx, int* timeoutTime)
+	static void TimeoutCallback(asIScriptContext *ctx, unsigned int* timeoutTime)
 	{
 		// If the time out is reached, abort the script
 		if( *timeoutTime < CL_System::get_time() )

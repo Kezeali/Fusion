@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+Copyright (c) 2006-2008 Fusion Project Team
 
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
+This software is provided 'as-is', without any express or implied warranty.
+In noevent will the authors be held liable for any damages arising from the
+use of this software.
 
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
 
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
+1. The origin of this software must not be misrepresented; you must not
+claim that you wrote the original software. If you use this software in a
+product, an acknowledgment in the product documentation would be
+appreciated but is not required.
 
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
+2. Altered source versions must be plainly marked as such, and must not
+be misrepresented as being the original software.
 
-    3. This notice may not be removed or altered from any source distribution.
+3. This notice may not be removed or altered from any source distribution.
 
 
-	File Author(s):
+File Author(s):
 
-		Elliot Hayward
+Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_Vector2
@@ -34,129 +34,262 @@
 
 #include "Common.h"
 
+
 namespace FusionEngine
 {
 
-	//! A 2D vector class
-	class Vector2
+	//! Templatized 2D vector class
+	template<class T>
+	class Vector2T
 	{
 	public:
 		//! Copying constructor.
-		Vector2(const Vector2 &other);
+		Vector2T(const Vector2T<T> &other)
+		{
+			x = other.x;
+			y = other.y;
+		}
+		//! Convert from Box2D vector
+		//Vector2T(const b2Vec2 &other);
 		//! Init. constructor
-		Vector2(float x = 0.0, float y = 0.0);
+		Vector2T(T x = 0.0, T y = 0.0)
+		{
+			this->x = x;
+			this->y = y;
+		}
 
 	public:
 		//! Coordinates
-		float x, y;
-
-		//! (0,0)
-		static const Vector2 ZERO;
-		//! (1,0)
-		static const Vector2 UNIT_X;
-		//! (0,1)
-		static const Vector2 UNIT_Y;
+		T x, y;
 
 	public:
+		static inline Vector2T<T> zero()
+		{
+			return new Vector2<T>(0, 0);
+		}
+
+		static inline Vector2T<T> unit_x()
+		{
+			return new Vector2<T>(1, 0);
+		}
+
+		static inline Vector2T<T> unit_y()
+		{
+			return new Vector2<T>(0, 1);
+		}
 		///////////////
 		// Assignement
 		//! Assignment operator
-		Vector2 &operator=(const Vector2 &other);
+		Vector2T<T> &operator=(const Vector2T<T> &other)
+		{ 
+			x = v.x;
+			y = v.y;
+			return *this;
+		}
 		//! Addition assignment operator
-		Vector2 &operator+=(const Vector2 &other);
+		Vector2T<T> &operator+=(const Vector2T<T> &other)
+		{
+			x += v.x;
+			y += v.y;
+			return *this;
+		}
+
 		//! Subtraction assignment operator
-		Vector2 &operator-=(const Vector2 &other);
+		Vector2T<T> &operator-=(const Vector2T<T> &other)
+		{
+			x -= v.x;
+			y -= v.y;
+			return *this;
+		}
 		//! Multiplication assignment operator
-		Vector2 &operator*=(float scalar);
+		Vector2T<T> &operator*=(T scalar)
+		{
+			x *= s;
+			y *= s;
+			return *this;
+		}
 
 		//////////////
 		// Comparison
 		//! Equivalancy operator
-		bool operator==(const Vector2 &other) const;
+		bool operator==(const Vector2T<T> &other) const
+		{
+			return ((x == v.x) && (y == v.y));
+		}
 		//! Not-equals operator
-		bool operator!=(const Vector2 &other) const;
+		bool operator!=(const Vector2T<T> &other) const
+		{
+			return (x != v.x) || (y != v.y);
+		}
 
 		//////////////
 		// Arithmatic
 		//! Addition operator
-		Vector2 operator+(const Vector2 &other) const;
+		Vector2T<T> operator+(const Vector2T<T> &other) const
+		{
+			return Vector2T<T>(x + v.x, y + v.y);
+		}
 		//! Subtraction operator
-		Vector2 operator-(const Vector2 &other) const;
+		Vector2T<T> operator-(const Vector2T<T> &other) const
+		{
+			return Vector2T<T>(x - v.x, y - v.y);
+		}
 		//! Multiplication operator
-		Vector2 operator*(float scalar) const;
+		Vector2T<T> operator*(T scalar) const
+		{
+			return Vector2T<T>(s * x, s * y);
+		}
 		//! Division operator
-		//Vector2 operator/ (float scalar) const;
+		//Vector2T operator/ (float scalar) const;
 		//! Friend access for multiplication operator
 		/*!
 		 * For Scalar * Vector2 (scalar on LHS, that is)
 		 * \todo Make operator* (scalar * vector) work
 		 */
-		friend Vector2 operator*(float scalar, const Vector2 &vector);
+		friend Vector2T<T> operator*(T scalar, const Vector2T<T> &vector);
 
 		//! Negation operator
-		Vector2 operator-() const;
+		Vector2T<T> operator-() const
+		{
+			return Vector2T<T>(-x, -y);
+		}
 
-		//! Returns reference to n-th ordinate (0. == x, 1. == y, ...).
+		//! Returns reference to n-th ordinate (0 == x, 1 == y).
 		/*!
 		 * \param n Number of ordinate (starting with 0).
 		 */
-		float& operator[](int n);
+		T& operator[](int n)
+		{
+			switch (n)
+			{
+			case 0:	return x;
+			case 1: return y;
+			}
+
+			static float dummy = 0.0f;
+			return dummy;
+		}
 
 	public:
-		inline float getX() const { return x; }
-		inline float getY() const { return y; }
+		inline T getX() const { return x; }
+		inline T getY() const { return y; }
 		//! The length of the vector
 		/*!
 		 * \returns sqrt(x^2+y^2)
 		 */
-		float length() const;
+		float length() const
+		{
+#ifdef WIN32
+			return sqrt(x*x + y*y);
+#else
+			return std::sqrt(x*x + y*y);
+#endif
+		}
 		//! The squared length of the vector
 		/*!
 		 * \returns x^2+y^2
 		 */
-		float squared_length() const;
+		float squared_length() const
+		{
+			return (x*x + y*y);
+		}
 		//! Returns the dot product
-		float dot(const Vector2& other) const;
+		float dot(const Vector2T<T>& other) const
+		{
+			return x*v.x + y*v.y;  
+		}
 		//! Returns the cross product
-		float cross(const Vector2& other) const;
+		float cross(const Vector2T<T>& other) const
+		{
+			return ( x*v.y - y*v.x );
+		}
 		//! Projects this vector onto the given one
-		Vector2 project(const Vector2& other) const;
+		Vector2T<T> project(const Vector2T<T>& other) const
+		{
+			//       v1 * (v1 dot v2 / v2 dot v2)
+			return ( v * (this->dot(v) / v.dot(v)) );
+		}
 		//! Rotates this vector by another
 		/*!
 		 * Uses complex multiplication to rotate (and scale) this by the
 		 * given vector.
 		 */
-		void rotate(const Vector2& other);
-		//! Inverse of Vector2#rotate()
-		void unrotate(const Vector2& other);
+		void rotate(const Vector2T<T>& other)
+		{
+			x = (x   * v.x - y   * v.y);
+			y = (x   * v.y + y   * v.x);
+		}
+		//! Inverse of Vector2T#rotate()
+		void unrotate(const Vector2T<T>& other)
+		{
+			x = (x   * v.x + y   * v.y);
+			y = (x   * v.y - y   * v.x);
+		}
 		//! Returns the angle between two vectors
 		/*!
 		 * Returns the angle <i>from</i> the given vector; i.e. if the given
 		 * other vector is ahead of this, the angle returned will be negative.
 		 */
-		float angleFrom(const Vector2& other);
+		float angleFrom(const Vector2T<T>& other)
+		{
+			float cosine = this->x * b.x + this->y * b.y / (this->length() * b.length());
+			// rounding errors might make dotproduct out of range for cosine
+			if (cosine > 1) cosine = 1;
+			else if (cosine < -1) cosine = -1;
+
+			if ((this->x * b.y - this->y * b.x) < 0)
+				return -acos(cosine);
+			else
+				return acos(cosine);
+		}
 		//! Normalizes this vector
 		/*!
 		 * \returns The orginal length of this vector
 		 */
-		float normalize();
+		float normalize()
+		{
+			float f = length();
+			if (f!=0)
+			{
+				x /= f;
+				y /= f;
+			}
+			return f;
+		}
 		//! Returns a normalized copy of this vector
 		/*!
-		 * \returns This vector, normalised
-		 */
-		Vector2 normalized();
+		* \returns This vector, normalised
+		*/
+		Vector2T<T> normalized()
+		{
+			Vector2T<T> u;
+			float l = length();
+			if (l!=0)
+			{
+				u.x = this->x/l;
+				u.y = this->y/l;
+			}
+			return u;
+		}
 		//! Returns a vector perpendicular to this
-		Vector2 perpendicular() const;
+		Vector2T<T> perpendicular() const
+		{
+			return Vector2T<T>( -y, x );
+		}
 		//! Returns the normal to this vector
 		/*!
 		 * Returns a normalised, perpendicular vector (a 'normal'):
 		 * <br>
 		 * (y,-x)/sqrt(x^2+y^2)
 		 */
-		Vector2 normal() const;
+		Vector2T<T> normal() const
+		{
+			float l = length();
+			return Vector2T<T>( y/l, -x/l );
+		}
 
 		//! Returns the distance between two vectors as points
-		static float distance(const Vector2& p1, const Vector2& p2)
+		static float distance(const Vector2T<T>& p1, const Vector2T<T>& p2)
 		{
 			return (p1-p2).length();
 		}
@@ -182,72 +315,108 @@ namespace FusionEngine
 		 * \param[out] segmentProjection
 		 * The point on the line chosen as the nearest point to the one given
 		 */
-		static float pointToSegmentDistance(const Vector2& point,
-	                               const Vector2& ep0,
-	                               const Vector2& ep1,
-	                               float segmentLength,
-	                               const Vector2& segmentNormal,
-	                               float& segmentProjection,
-	                               Vector2& chosen);
+		static float pointToSegmentDistance(const Vector2T<T>& point,
+			const Vector2T<T>& ep0,
+			const Vector2T<T>& ep1,
+			float segmentLength,
+			const Vector2T<T>& segmentNormal,
+			float& segmentProjection,
+			Vector2T<T>& chosen)
+		{
+			// convert the test point to be "local" to ep0
+			Vector2T<T> local = point - ep0;
+
+			// find the projection of "local" onto "segmentNormal"
+			segmentProjection = segmentNormal.dot(local);
+
+			// handle boundary cases: when projection is not on segment, the
+			// nearest point is one of the endpoints of the segment
+			if (segmentProjection < 0)
+			{
+				chosen = ep0;
+				segmentProjection = 0;
+				return Vector2T<T>::distance(point, ep0);
+			}
+			if (segmentProjection > segmentLength)
+			{
+				chosen = ep1;
+				segmentProjection = segmentLength;
+				return Vector2T<T>::distance(point, ep1);
+			}
+
+			// otherwise nearest point is projection point on segment
+			chosen = segmentNormal * segmentProjection;
+			chosen +=  ep0;
+			return Vector2T<T>::distance(point, chosen);
+		}
 	};
 
-	static inline void v2Add(const Vector2& a, const Vector2& b, Vector2& c)
+	template <class T>
+	static inline void v2Add(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c)
 	{
 		c.x = a.x + b.x;
 		c.y = a.y + b.y;
 	}
 
-	static inline void v2Subtract(const Vector2& a, const Vector2& b, Vector2& c )
+	template <class T>
+	static inline void v2Subtract(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
 	{
 		c.x = a.x - b.x;
 		c.y = a.y - b.y;
 	}
 
-	static inline void v2Multiply(const Vector2& a, float b, Vector2& c )
+	template <class T>
+	static inline void v2Multiply(const Vector2T<T>& a, float b, Vector2T<T>& c )
 	{
 		c.x = a.x * b;
 		c.y = a.y * b;
 	}
 
-	static inline void v2Multiply(const Vector2& a, const Vector2& b, Vector2& c )
+	template <class T>
+	static inline void v2Multiply(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
 	{				  
 		c.x = a.x * b.x;
 		c.y = a.y * b.y;
 	}
 
-
-	static inline void v2Divide(const Vector2& a, float b, Vector2& c )
+	template <class T>
+	static inline void v2Divide(const Vector2T<T>& a, float b, Vector2T<T>& c )
 	{
 		float bInv = 1.0f / b;
 		c.x = a.x * bInv;
 		c.y = a.y * bInv;
 	}
 
-	static inline void v2Divide(const Vector2& a, const Vector2& b, Vector2& c )
+	template <class T>
+	static inline void v2Divide(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
 	{
 		c.x = a.x / b.x;
 		c.y = a.y / b.y;
 	}
 
-	static inline bool v2Equal(const Vector2& v1, const Vector2 &v2)
+	template <class T>
+	static inline bool v2Equal(const Vector2T<T>& v1, const Vector2T<T> &v2)
 	{
 		return (v1.x == v2.x) && (v1.y == v2.y);
 	}
 
-	static inline bool v2NotEqual(const Vector2& v1, const Vector2 &v2)
+	template <class T>
+	static inline bool v2NotEqual(const Vector2T<T>& v1, const Vector2T<T> &v2)
 	{
 		return (v1.x != v2.x) || (v1.y != v2.y);
 	}
 
 	//! Uses complex multiplication to rotate (and scale) v1 by v2.
-	static inline Vector2 v2Rotate(const Vector2& v1, const Vector2 &v2)
+	template <class T>
+	static inline Vector2T<T> v2Rotate(const Vector2T<T>& v1, const Vector2T<T> &v2)
 	{
-		return Vector2(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
+		return Vector2T<T>(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
 	}
 	//!  Inverse of FusionEngine#v2Rotate()
-	static inline Vector2 v2UnRotate(const Vector2& v1, const Vector2 &v2)
+	template <class T>
+	static inline Vector2T<T> v2UnRotate(const Vector2T<T>& v1, const Vector2T<T> &v2)
 	{
-		return Vector2(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
+		return Vector2T<T>(v1.x*v2.x - v1.y*v2.y, v1.x*v2.y + v1.y*v2.x);
 	}
 
 }
