@@ -1,1 +1,1 @@
-NetTest.exe -c 192.168.1.12
+..\debug\NetTest.exe -c 127.0.0.1

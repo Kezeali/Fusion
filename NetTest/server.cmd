@@ -1,1 +1,1 @@
-NetTest.exe -s 16
+..\debug\NetTest.exe -s 16

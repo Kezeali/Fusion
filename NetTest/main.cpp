@@ -10,7 +10,119 @@ using namespace FusionEngine;
 const float s_DefaultTightness = 0.25f;
 const float s_SmoothTightness = 0.1f;
 
-const unsigned int s_SendInterval = 50;
+const unsigned int s_SendInterval = 63;
+
+template <class T>
+class Record
+{
+public:
+	Record()
+		: time(0)
+	{
+	}
+	Record(unsigned long _time, T& _value)
+		: time(_time), value(_value)
+	{
+	}
+
+	unsigned long time;
+	T value;
+};
+template<class T>
+class History
+{
+public:
+	typedef Record<T> record_type;
+	typedef std::deque<record_type> container_type;
+	typedef container_type::iterator iterator;
+	typedef container_type::const_iterator const_iterator;
+
+	History()
+	{
+	}
+
+	History(IndexType _size)
+	{
+		m_Data.resize(_size);
+	}
+
+	void resize(IndexType _size)
+	{
+		m_Data.resize(_size);
+	}
+
+	record_type& operator[](unsigned int _Keyval)
+	{
+		return m_Data[_Keyval];
+	}
+
+	// Pops records off up to the given time, then pushes the given value on to the back
+	void set_back(unsigned int _time, const &T _value)
+	{
+		if (_time > front().time)
+			return;
+
+		while (back().time < _time)
+			pop();
+
+		m_Data.push_back(record_type(_time, _value);
+	}
+
+	void push(unsigned long _time, const &T _value)
+	{
+		m_Data.push_front(record_type(_time, _value));
+	}
+
+	// Pops off records until 'back' is at the given time
+	record_type& pop(unsigned long _time)
+	{
+		while (back().time < _time)
+			m_Data.pop_back();
+		return back();
+	}
+
+	record_type& pop()
+	{
+		return m_Data.pop_back();
+	}
+
+	void clear()
+	{
+		m_Data.clear();
+	}
+
+	record_type& back()
+	{
+		return m_Data.back();
+	}
+
+	record_type& front()
+	{
+		return m_Data.front();
+	}
+
+	iterator& begin()
+	{
+		return m_Data.begin();
+	}
+
+	const_iterator& begin() const
+	{
+		return m_Data.begin();
+	}
+
+	iterator& end()
+	{
+		return m_Data.end();
+	}
+
+	const_iterator& end() const
+	{
+		return m_Data.end();
+	}
+	
+	container_type m_Data;
+};
 
 class TestApp : public CL_ClanApplication
 {
@@ -20,6 +132,36 @@ class TestApp : public CL_ClanApplication
 
 	bool m_Interpolate;
 	float m_Tightness;
+	
+	struct Action
+	{
+		float x, y;
+		bool valid;
+		Action()
+			: x(0.f), y(0.f), valid(false)
+		{
+		}
+		Action(float _x, float _y)
+			: x(_x), y(_y), valid(true)
+		{
+		}
+	};
+	typedef History<Action> ActionList;
+	struct Command
+	{
+		Command()
+			: up(false), down(false), left(false), right(false)
+		{
+		}
+
+		Command(bool _up, bool _down, bool _left, bool _right)
+			: up(_up), down(_down), left(_left), right(_right)
+		{
+		}
+
+		bool up, down, left, right;
+	};
+	typedef History<Command> CommandList;
 
 	class Ship
 	{
@@ -29,11 +171,19 @@ class TestApp : public CL_ClanApplication
 		float x, y;
 		bool up, down, left, right;
 
+		// Used by server
+		unsigned int lastReceivedCommand;
+		//unsigned int currentCommand;
+		ActionList actionList;
+		CommandList commandList;
+
 		Ship()
 			: id(0),
 			x(0.f), y(0.f),
 			sendDelay(0)
 		{
+			//actionList.resize(512);
+			//commandList.resize(512);
 		}
 
 		Ship(ObjectID _id)
@@ -41,16 +191,52 @@ class TestApp : public CL_ClanApplication
 			x(0.f), y(0.f),
 			sendDelay(0)
 		{
+			//actionList.resize(512);
+			//commandList.resize(512);
+		}
+
+		void saveCommand(unsigned long tick)
+		{
+			commandList.push(tick, Command(up, down, left, right));
+		}
+
+		void rewindCommand(unsigned long tick)
+		{
+			Command &command = commandList.pop(tick);
+			up = command.up;
+			down = command.down;
+			left = command.left;
+			right = command.right;
+		}
+
+		void saveAction(unsigned long tick)
+		{
+			actionList[tick] = Action(x, y);
+		}
+
+		bool checkState(unsigned long tick, float x, float y)
+		{
+			Action &action = actionList[tick];
+			return action.valid && !fe_fequal(action.x, x) || !fe_fequal(action.y, y);
+		}
+
+		void rewindState(unsigned long tick)
+		{
+			Action &action = actionList[tick];
+			if (action.valid)
+				return;
+			x = action.x;
+			y = action.y;
 		}
 	};
 
 	unsigned long m_CommandNumber;
 
 	// For server side
-	typedef std::map<NetHandle, Ship> ClientShipMap;
+	typedef std::tr1::unordered_map<NetHandle, Ship> ClientShipMap;
 
 	// For client side
-	typedef std::map<ObjectID, Ship> ShipMap;
+	typedef std::tr1::unordered_map<ObjectID, Ship> ShipMap;
 
 	virtual int main(int argc, char **argv)
 	{
@@ -115,6 +301,8 @@ class TestApp : public CL_ClanApplication
 		CL_ResourceManager resources("font.xml");
 		CL_Font font1("Font1", &resources);
 
+		// Simulation speed
+		const unsigned int split = 16;
 
 		if (server)
 		{
@@ -128,13 +316,15 @@ class TestApp : public CL_ClanApplication
 			{
 				//int sendDelay = 0;
 				unsigned int lastframe = CL_System::get_time();
-				unsigned int split = 0;
+				unsigned int frameTime = 0;
 				// Loop thing
 				while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
 				{
 					display.get_gc()->clear(CL_Color(180, 220, 255));
 
-					split = CL_System::get_time() - lastframe;
+					frameTime += CL_System::get_time() - lastframe;
+					if (frameTime > 80)
+						frameTime = 80;
 					lastframe = CL_System::get_time();
 
 					p = NULL;
@@ -176,9 +366,12 @@ class TestApp : public CL_ClanApplication
 						{
 							// Send the verification
 							RakNet::BitStream bits;
+							bits.Write(m_CommandNumber + 1);
 							bits.Write(nextId);
 							m_Network->Send(false, MTID_ADDALLOWED, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
 								FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, p->GetSystemHandle());
+
+							std::cout << "Add Allowed: ID: " << nextId << " At: " << m_CommandNumber << std::endl;
 
 							// Tell all the other clients to add this object
 							for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
@@ -221,30 +414,83 @@ class TestApp : public CL_ClanApplication
 							bits.Read(ship.left);
 							bits.Read(ship.right);
 
+							ship.saveCommand(time);
+
+							//ship.lastReceivedCommand = fe_max(time, ship.lastReceivedCommand);
+
 							float x, y;
 
 							bits.Read(x);
 							bits.Read(y);
+
+							if (ship.checkState(time, x, y))
+							{
+								// Rewind everyone
+								for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+								{
+									Ship &rewindShip = (*it).second;
+									rewindShip.rewindState(time);
+								}
+								// Simulate up to the current time
+								for (unsigned int t = time; t < m_CommandNumber; t++)
+								{
+									ship.saveCommand(t);
+									for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+									{
+										Ship &simShip = (*it).second;
+										if (simShip.id != ship.id)
+											simShip.rewindCommand(t);
+										
+										float up = simShip.up ? -1.f : 0.f;
+										float down = simShip.down ? 1.f : 0.f;
+										float left = simShip.left ? -1.f : 0.f;
+										float right = simShip.right ? 1.f : 0.f;
+										simShip.x += 0.3f * split * (left + right);
+										simShip.y += 0.3f * split * (up + down);
+
+										fe_clamp(simShip.x, 0.f, (float)display.get_width());
+										fe_clamp(simShip.y, 0.f, (float)display.get_height());
+
+										simShip.saveAction(t);
+									}
+								}
+								//ship.rewindCommand(m_CommandNumber);
+							}
 						}
 
 						m_Network->DeallocatePacket(p);
 					}
 
 
+					long frameTimeLeft = frameTime;
+					while (frameTimeLeft >= split)
+					{
+						frameTimeLeft -= split;
+						for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+						{
+							Ship &ship = (*it).second;
+
+							// Simulate
+							float up = ship.up ? -1.f : 0.f;
+							float down = ship.down ? 1.f : 0.f;
+							float left = ship.left ? -1.f : 0.f;
+							float right = ship.right ? 1.f : 0.f;
+							ship.x += 0.3f * split * (left + right);
+							ship.y += 0.3f * split * (up + down);
+
+							fe_clamp(ship.x, 0.f, (float)display.get_width());
+							fe_clamp(ship.y, 0.f, (float)display.get_height());
+
+							ship.saveCommand(m_CommandNumber);
+							ship.saveAction(m_CommandNumber);
+						}
+
+						m_CommandNumber++;
+					}
+
 					for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 					{
 						Ship &ship = (*it).second;
-
-						// Simulate
-						float up = ship.up ? -1.f : 0.f;
-						float down = ship.down ? 1.f : 0.f;
-						float left = ship.left ? -1.f : 0.f;
-						float right = ship.right ? 1.f : 0.f;
-						ship.x += 0.3f * split * (left + right);
-						ship.y += 0.3f * split * (up + down);
-
-						fe_clamp(ship.x, 0.f, (float)display.get_width());
-						fe_clamp(ship.y, 0.f, (float)display.get_height());
 
 						// Draw debug info
 						display.get_gc()->draw_rect(CL_Rectf(ship.x, ship.y, ship.x + 10, ship.y + 10), CL_Color::black);
@@ -276,7 +522,6 @@ class TestApp : public CL_ClanApplication
 						} // end if (should send)
 					}
 
-					m_CommandNumber++;
 					display.flip();
 					CL_System::keep_alive();
 				}
@@ -342,13 +587,15 @@ class TestApp : public CL_ClanApplication
 			{
 				int sendDelay = 0;
 				unsigned int lastframe = CL_System::get_time();
-				unsigned int split = 0;
+				unsigned int frameTime = 0;
 				// Loop thing
 				while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
 				{
 					display.get_gc()->clear(CL_Color(180, 220, 255));
 
-					split = CL_System::get_time() - lastframe;
+					frameTime += CL_System::get_time() - lastframe;
+					if (frameTime > 64)
+						frameTime = 64;
 					lastframe = CL_System::get_time();
 
 					p = NULL;
@@ -391,10 +638,13 @@ class TestApp : public CL_ClanApplication
 						{
 							ObjectID object_id;
 							RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), false);
+							bits.Read(m_CommandNumber);
 							bits.Read(object_id);
 
 							ships[object_id] = Ship(object_id);
 							myShip = &ships[object_id];
+
+							std::cout << "Add Allowed: ID: " << object_id << " At: " << m_CommandNumber << std::endl;
 						}
 
 						if (p->GetType() == MTID_CHALL)
@@ -480,15 +730,24 @@ class TestApp : public CL_ClanApplication
 						myShip->right = false;
 					}
 
-					// Predict simulation
-					float up = myShip->up ? -1.f : 0.f;
-					float down = myShip->down ? 1.f : 0.f;
-					float left = myShip->left ? -1.f : 0.f;
-					float right = myShip->right ? 1.f : 0.f;
-					myShip->x += 0.3f * split * (left + right);
-					myShip->y += 0.3f * split * (up + down);
+					myShip->saveCommand(m_CommandNumber);
 
-					if ((myShip->sendDelay -= split) <= 0)
+					long frameTimeLeft = frameTime;
+					while (frameTimeLeft >= split)
+					{
+						frameTimeLeft -= split;
+						// Predict simulation
+						float up = myShip->up ? -1.f : 0.f;
+						float down = myShip->down ? 1.f : 0.f;
+						float left = myShip->left ? -1.f : 0.f;
+						float right = myShip->right ? 1.f : 0.f;
+						myShip->x += 0.3f * split * (left + right);
+						myShip->y += 0.3f * split * (up + down);
+
+						m_CommandNumber++;
+					}
+
+					if ((myShip->sendDelay -= frameTime) <= 0)
 					{
 						myShip->sendDelay = s_SendInterval;
 
@@ -516,7 +775,6 @@ class TestApp : public CL_ClanApplication
 
 					font1.draw(320, 16, "Ping: " + CL_String::from_int(m_Network->GetPing(serverHandle)));
 
-					m_CommandNumber++;
 					display.flip();
 					CL_System::keep_alive();
 				}
