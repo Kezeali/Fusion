@@ -5,6 +5,8 @@
 
 #include <RakNet/BitStream.h>
 
+#include <boost/circular_buffer.hpp>
+
 using namespace FusionEngine;
 
 const float s_DefaultTightness = 0.25f;
@@ -16,74 +18,125 @@ template <class T>
 class Record
 {
 public:
+	typedef unsigned long time_type;
+
 	Record()
 		: time(0)
 	{
 	}
-	Record(unsigned long _time, T& _value)
+	Record(time_type _time, T& _value)
 		: time(_time), value(_value)
 	{
 	}
 
-	unsigned long time;
+	time_type time;
 	T value;
 };
+
 template<class T>
 class History
 {
 public:
 	typedef Record<T> record_type;
-	typedef std::deque<record_type> container_type;
-	typedef container_type::iterator iterator;
-	typedef container_type::const_iterator const_iterator;
+	typedef typename record_type::time_type time_type;
+
+	typedef boost::circular_buffer<record_type> container_type;
+	typedef typename container_type::size_type size_type;
+	typedef typename container_type::iterator iterator;
+	typedef typename container_type::const_iterator const_iterator;
+
+	typedef std::tr1::unordered_map<time_type, size_type> timetoindex_map_type;
 
 	History()
+		: m_Front(0)
 	{
 	}
 
-	History(IndexType _size)
+	History(size_type _size)
+		: m_Front(0)
 	{
-		m_Data.resize(_size);
+		m_Data.set_capacity(_size);
+		m_TimeToIndex.resize(_size);
 	}
 
-	void resize(IndexType _size)
+	void resize(size_type _size)
 	{
-		m_Data.resize(_size);
+		m_Data.set_capacity(_size);
+		m_TimeToIndex.resize(_size);
 	}
 
-	record_type& operator[](unsigned int _Keyval)
+	record_type& operator[](size_type _Keyval)
 	{
 		return m_Data[_Keyval];
 	}
 
-	// Pops records off up to the given time, then pushes the given value on to the back
-	void set_back(unsigned int _time, const &T _value)
+	void set_front(time_type _time)
 	{
-		if (_time > front().time)
-			return;
-
-		while (back().time < _time)
-			pop();
-
-		m_Data.push_back(record_type(_time, _value));
 	}
 
-	void push(unsigned long _time, const &T _value)
+	void push(time_type _time, const T& _value)
 	{
 		m_Data.push_front(record_type(_time, _value));
+		m_TimeToIndex[_time] = m_Front;
+		m_Front = fe_wrap(m_Front + 1, 0, m_Data.capacity());
+	}
+
+	iterator &find(time_type _time)
+	{
+		if (m_Data.empty())
+			return m_Data.end();
+
+		return m_Data.begin() + m_TimeToIndex[_time];
+	}
+
+	iterator &find_closest(time_type _time)
+	{
+		if (m_Data.empty())
+			return m_Data.end();
+
+		size_type low = 0;
+		size_type high = m_Data.size() - 1;
+		size_type mid = (low + high) / 2;
+		while (low <= high)
+		{
+			mid = (low + high) / 2;
+			record_type &midrecord = m_Data[mid];
+			if (midrecord.time > value)
+				high = mid - 1;
+			else if (midrecord.time < value)
+				low = mid + 1;
+			else
+				return m_Data.begin() + mid; // found
+		}
+		return m_Data.begin() + mid; // not found (return closest)
 	}
 
 	// Pops off records until 'back' is at the given time
-	record_type& pop(unsigned long _time)
+	void pop(time_type _time)
 	{
+		if (m_Data.empty())
+			return;
+
 		while (back().time < _time)
+		{
+			if (m_Data.size() == 1) break;
 			m_Data.pop_back();
-		return back();
+		}
 	}
 
-	record_type& pop()
+	void pop()
 	{
-		return m_Data.pop_back();
+		m_Data.pop_back();
+	}
+
+	bool empty()
+	{
+		return m_Data.empty();
+	}
+
+	size_type size()
+	{
+		return m_Data.size();
 	}
 
 	void clear()
@@ -101,27 +154,29 @@ public:
 		return m_Data.front();
 	}
 
-	iterator& begin()
+	iterator begin()
 	{
 		return m_Data.begin();
 	}
 
-	const_iterator& begin() const
+	const_iterator begin() const
 	{
 		return m_Data.begin();
 	}
 
-	iterator& end()
+	iterator end()
 	{
 		return m_Data.end();
 	}
 
-	const_iterator& end() const
+	const_iterator end() const
 	{
 		return m_Data.end();
 	}
 	
+	size_type m_Front;
 	container_type m_Data;
+	timetoindex_map_type m_TimeToIndex;
 };
 
 class TestApp : public CL_ClanApplication
@@ -146,7 +201,7 @@ class TestApp : public CL_ClanApplication
 		{
 		}
 	};
-	typedef History<Action> ActionList;
+	typedef History<Action> ActionHistory;
 	struct Command
 	{
 		Command()
@@ -161,7 +216,7 @@ class TestApp : public CL_ClanApplication
 
 		bool up, down, left, right;
 	};
-	typedef History<Command> CommandList;
+	typedef History<Command> CommandHistory;
 
 	class Ship
 	{
@@ -174,8 +229,10 @@ class TestApp : public CL_ClanApplication
 		// Used by server
 		unsigned int lastReceivedCommand;
 		//unsigned int currentCommand;
-		ActionList actionList;
-		CommandList commandList;
+		ActionHistory actionList;
+		CommandHistory commandList;
+		ActionHistory::iterator currentAction;
+		CommandHistory::iterator currentCommand;
 
 		Ship()
 			: id(0),
@@ -195,11 +252,6 @@ class TestApp : public CL_ClanApplication
 			commandList.resize(1000);
 		}
 
-		void correctCommand(unsigned long tick)
-		{
-			commandList.correct(tick, Command(up, down, left, right));
-		}
-
 		void saveCommand(unsigned long tick)
 		{
 			commandList.push(tick, Command(up, down, left, right));
@@ -207,7 +259,18 @@ class TestApp : public CL_ClanApplication
 
 		void rewindCommand(unsigned long tick)
 		{
-			Command &command = commandList.pop(tick);
+			currentCommand = commandList.find_closest(tick);
+			Command &command = currentCommand->value;
+			up = command.up;
+			down = command.down;
+			left = command.left;
+			right = command.right;
+		}
+
+		// Finds the command closest to the given time
+		void nextCommand(unsigned long tick)
+		{
+			Command &command = (++currentCommand)->value;
 			up = command.up;
 			down = command.down;
 			left = command.left;
@@ -216,23 +279,30 @@ class TestApp : public CL_ClanApplication
 
 		void saveAction(unsigned long tick)
 		{
-			actionList[tick] = Action(x, y);
+			actionList.push(tick, Action(x, y));
 		}
 
-		bool checkState(unsigned long tick, float x, float y)
+		bool checkAction(unsigned long tick, float x, float y)
 		{
-			Action &action = actionList.pop(tick);
+			Action &action = actionList.find(tick)->value;
 			return action.valid && !fe_fequal(action.x, x) || !fe_fequal(action.y, y);
 		}
 
-		void rewindState(unsigned long tick)
+		void rewindAction(unsigned long tick)
 		{
-			Action &action = actionList[tick];
-			if (action.valid)
-				return;
+			currentAction = actionList.find_closest(tick);
+			actionList.pop_front(currentAction->time);
+			Action &action = currentAction->value;
 			x = action.x;
 			y = action.y;
 		}
+
+		/*void nextAction()
+		{
+			Action &action = ++currentAction->value;
+			x = action.x;
+			y = action.y;
+		}*/
 	};
 
 	unsigned long m_CommandNumber;
@@ -428,13 +498,14 @@ class TestApp : public CL_ClanApplication
 							bits.Read(x);
 							bits.Read(y);
 
-							if (ship.checkState(time, x, y))
+							if (ship.checkAction(time, x, y))
 							{
 								// Rewind everyone
 								for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 								{
 									Ship &rewindShip = (*it).second;
-									rewindShip.rewindState(time);
+									rewindShip.rewindAction(time);
+									//rewindShip.clearActions();
 								}
 								// Simulate up to the current time
 								for (unsigned int t = time; t < m_CommandNumber; t++)
@@ -486,7 +557,7 @@ class TestApp : public CL_ClanApplication
 							fe_clamp(ship.x, 0.f, (float)display.get_width());
 							fe_clamp(ship.y, 0.f, (float)display.get_height());
 
-							ship.saveCommand(m_CommandNumber);
+							//ship.saveCommand(m_CommandNumber);
 							ship.saveAction(m_CommandNumber);
 						}
 
