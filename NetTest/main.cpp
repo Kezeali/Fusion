@@ -5,6 +5,7 @@
 
 #include <RakNet/BitStream.h>
 
+#define BOOST_CB_DISABLE_DEBUG // Allows overwritten CB iterators to remain valid
 #include <boost/circular_buffer.hpp>
 
 using namespace FusionEngine;
@@ -24,7 +25,7 @@ public:
 		: time(0)
 	{
 	}
-	Record(time_type _time, T& _value)
+	Record(time_type _time, const T& _value)
 		: time(_time), value(_value)
 	{
 	}
@@ -56,13 +57,13 @@ public:
 		: m_Front(0)
 	{
 		m_Data.set_capacity(_size);
-		m_TimeToIndex.resize(_size);
+		//m_TimeToIndex.resize(_size);
 	}
 
-	void resize(size_type _size)
+	void set_capacity(size_type _size)
 	{
 		m_Data.set_capacity(_size);
-		m_TimeToIndex.resize(_size);
+		//m_TimeToIndex.resize(_size);
 	}
 
 	record_type& operator[](size_type _Keyval)
@@ -70,45 +71,80 @@ public:
 		return m_Data[_Keyval];
 	}
 
-	void set_front(time_type _time)
+	iterator find(time_type _time)
 	{
+		//if (m_Data.empty())
+		//	return m_Data.end();
+
+		//size_type index = m_TimeToIndex[_time];
+		//if (index >= m_Data.size())
+		//	return m_Data.end();
+
+		//return m_Data.begin() + index;
+		
+		if (m_Data.empty())
+			return m_Data.end();
+
+		size_type test = m_Data.size();
+		if (m_Data.size() == 1)
+			return m_Data.begin();
+
+		size_type low = 0;
+		size_type high = m_Data.size() - 1;
+		size_type mid = (low + high) / 2;
+		iterator midrecord;
+		while (low <= high)
+		{
+			mid = (low + high) / 2;
+			midrecord = m_Data.begin() + mid;
+			if (midrecord->time > _time)
+			{
+				if (mid == 0) break;
+				high = mid - 1;
+			}
+			else if (midrecord->time < _time)
+				low = mid + 1;
+			else
+				return midrecord; // found
+		}
+		return m_Data.end(); // not found
+	}
+
+	iterator find_closest(time_type _time)
+	{
+		if (m_Data.empty())
+			return m_Data.end();
+
+		size_type test = m_Data.size();
+		if (m_Data.size() == 1)
+			return m_Data.begin();
+
+		size_type low = 0;
+		size_type high = m_Data.size() - 1;
+		size_type mid = (low + high) / 2;
+		iterator midrecord;
+		while (low <= high)
+		{
+			mid = (low + high) / 2;
+			midrecord = m_Data.begin() + mid;
+			if (midrecord->time > _time)
+			{
+				if (mid == 0) break;
+				high = mid - 1;
+			}
+			else if (midrecord->time < _time)
+				low = mid + 1;
+			else
+				return midrecord; // found
+		}
+		return midrecord; // not found (return closest)
 	}
 
 	void push(time_type _time, const T& _value)
 	{
 		m_Data.push_front(record_type(_time, _value));
-		m_TimeToIndex[_time] = m_Front;
-		m_Front = fe_wrap(m_Front + 1, 0, m_Data.capacity());
-	}
-
-	iterator &find(time_type _time)
-	{
-		if (m_Data.empty())
-			return m_Data.end();
-
-		return m_Data.begin() + m_TimeToIndex[_time];
-	}
-
-	iterator &find_closest(time_type _time)
-	{
-		if (m_Data.empty())
-			return m_Data.end();
-
-		size_type low = 0;
-		size_type high = m_Data.size() - 1;
-		size_type mid = (low + high) / 2;
-		while (low <= high)
-		{
-			mid = (low + high) / 2;
-			record_type &midrecord = m_Data[mid];
-			if (midrecord.time > value)
-				high = mid - 1;
-			else if (midrecord.time < value)
-				low = mid + 1;
-			else
-				return m_Data.begin() + mid; // found
-		}
-		return m_Data.begin() + mid; // not found (return closest)
+		//m_TimeToIndex[_time] = m_Front;
+		m_Front = fe_wrap(m_Front + 1, (size_type)0, m_Data.capacity()); // This figures out where the next record will go in the circular buffer
 	}
 
 	// Pops off records until 'back' is at the given time
@@ -127,6 +163,30 @@ public:
 	void pop()
 	{
 		m_Data.pop_back();
+	}
+
+	void pop_front(time_type _time)
+	{
+		if (m_Data.empty())
+			return;
+
+		while (front().time > _time)
+		{
+			if (m_Data.size() == 1) break;
+			m_Data.pop_front();
+		}
+
+		fe_clamp(m_Front, (size_type)0, m_Data.size());
+	}
+
+	void erase_after(iterator _front)
+	{
+		if (m_Data.empty() || _front == m_Data.end())
+			return;
+
+		m_Data.erase(_front + 1, m_Data.end());
+
+		fe_clamp(m_Front, (size_type)0, m_Data.size());
 	}
 
 	bool empty()
@@ -172,6 +232,14 @@ public:
 	const_iterator end() const
 	{
 		return m_Data.end();
+	}
+
+	void previous(iterator &it)
+	{
+		if (it == begin())
+			it = end() - 1;
+		else
+			--it;
 	}
 	
 	size_type m_Front;
@@ -223,11 +291,10 @@ class TestApp : public CL_ClanApplication
 	public:
 		int sendDelay;
 		ObjectID id;
-		float x, y;
+		float x, y, net_x, net_y;
 		bool up, down, left, right;
 
-		// Used by server
-		unsigned int lastReceivedCommand;
+		unsigned long mostRecentCommand;
 		//unsigned int currentCommand;
 		ActionHistory actionList;
 		CommandHistory commandList;
@@ -237,19 +304,27 @@ class TestApp : public CL_ClanApplication
 		Ship()
 			: id(0),
 			x(0.f), y(0.f),
-			sendDelay(0)
+			net_x(0.f), net_y(0.f),
+			sendDelay(0),
+			mostRecentCommand(0)
 		{
-			actionList.resize(1000);
-			commandList.resize(1000);
+			actionList.set_capacity(1000);
+			commandList.set_capacity(1000);
+			currentAction = actionList.begin();
+			currentCommand = commandList.begin();
 		}
 
 		Ship(ObjectID _id)
 			: id(_id),
 			x(0.f), y(0.f),
-			sendDelay(0)
+			net_x(0.f), net_y(0.f),
+			sendDelay(0),
+			mostRecentCommand(0)
 		{
-			actionList.resize(1000);
-			commandList.resize(1000);
+			actionList.set_capacity(1000);
+			commandList.set_capacity(1000);
+			currentAction = actionList.begin();
+			currentCommand = commandList.begin();
 		}
 
 		void saveCommand(unsigned long tick)
@@ -259,7 +334,54 @@ class TestApp : public CL_ClanApplication
 
 		void rewindCommand(unsigned long tick)
 		{
+			if (commandList.empty())
+				return;
+
 			currentCommand = commandList.find_closest(tick);
+			if (currentCommand == commandList.end())
+				return;
+
+			if (currentCommand->time > tick && currentCommand != commandList.begin())
+				--currentCommand;
+
+			// Confirm the found command
+			//if (currentCommand->time > tick)
+			//	currentCommand = commandList.begin();
+			//for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->time < tick; ++it)
+			//{
+			//	// Find the command closest to the given tick
+			//	if (tick - it->time < tick - currentCommand->time)
+			//		currentCommand = it;
+			//}
+			//if (currentCommand == commandList.end())
+			//	return;
+
+			currentCommand = commandList.begin();
+			for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->time < tick; ++it)
+			{
+				// Find the command closest to the given tick
+				if (tick - it->time < tick - currentCommand->time)
+					currentCommand = it;
+			}
+			if (currentCommand == commandList.end())
+				return;
+
+			Command &command = currentCommand->value;
+			up = command.up;
+			down = command.down;
+			left = command.left;
+			right = command.right;
+		}
+
+		void nextCommand()
+		{
+			if (commandList.empty())
+				return;
+
+			//commandList.next(currentCommand);
+			if (++currentCommand == commandList.end())
+				return;
+
 			Command &command = currentCommand->value;
 			up = command.up;
 			down = command.down;
@@ -270,7 +392,39 @@ class TestApp : public CL_ClanApplication
 		// Finds the command closest to the given time
 		void nextCommand(unsigned long tick)
 		{
-			Command &command = (++currentCommand)->value;
+			if (commandList.empty())
+				return;
+
+			if (currentCommand == commandList.end())
+				return;
+
+			//CommandHistory::iterator end = currentCommand;
+			//commandList.previous(end);
+			//CommandHistory::iterator nextCommand = currentCommand;
+			//commandList.next(nextCommand);
+			//while (nextCommand != end && nextCommand->time < tick)
+			//{
+			//	// Find the command closest to the given tick
+			//	if (tick - nextCommand->time < tick - currentCommand->time)
+			//		currentCommand = nextCommand;
+			//	commandList.next(nextCommand);
+			//}
+
+			// Make sure we start the search before the requested tick
+			if (currentCommand->time > tick)
+				currentCommand = commandList.begin();
+
+			for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->time < tick; ++it)
+			{
+				// Find the command closest to the given tick
+				if (tick - it->time < tick - currentCommand->time)
+					currentCommand = it;
+			}
+
+			if (currentCommand == commandList.end())
+				return;
+
+			Command &command = currentCommand->value;
 			up = command.up;
 			down = command.down;
 			left = command.left;
@@ -282,23 +436,65 @@ class TestApp : public CL_ClanApplication
 			actionList.push(tick, Action(x, y));
 		}
 
+		// Returns true if the stored action at the given tick is different to the given x, y values
 		bool checkAction(unsigned long tick, float x, float y)
 		{
-			Action &action = actionList.find(tick)->value;
-			return action.valid && !fe_fequal(action.x, x) || !fe_fequal(action.y, y);
+			if (actionList.empty())
+				return false;
+
+			ActionHistory::iterator _where = actionList.find(tick);
+			if (_where == actionList.end())
+				return false;
+
+			Action &action = _where->value;
+			return !fe_fequal(action.x, x) || !fe_fequal(action.y, y);
 		}
 
-		void rewindAction(unsigned long tick)
+		// Returns true if a suitable action was found
+		bool checkRewindAction(unsigned long tick, float x, float y)
 		{
+			if (actionList.empty())
+				return false;
+
 			currentAction = actionList.find_closest(tick);
-			actionList.pop_front(currentAction->time);
+			if (currentAction == actionList.end())
+				return false;
+
+			Action &action = currentAction->value;
+			if (!fe_fequal(action.x, x, 0.5f) || !fe_fequal(action.y, y, 0.5f))
+				return false;
+			
+			actionList.erase_after(currentAction);
+
+			x = action.x;
+			y = action.y;
+
+			return true;
+		}
+
+		// Returns true if an action was found
+		bool rewindAction(unsigned long tick)
+		{
+			if (actionList.empty())
+				return false;
+
+			currentAction = actionList.find(tick);
+			if (currentAction == actionList.end())
+				return false;
+
+			actionList.erase_after(currentAction);
 			Action &action = currentAction->value;
 			x = action.x;
 			y = action.y;
+
+			return true;
 		}
 
 		/*void nextAction()
 		{
+			if (actionList.empty())
+				return;
+
 			Action &action = ++currentAction->value;
 			x = action.x;
 			y = action.y;
@@ -418,19 +614,19 @@ class TestApp : public CL_ClanApplication
 						{
 							std::cout << "Connection Lost" << std::endl;
 
-							ClientShipMap::iterator it = clientShips.find(p->GetSystemHandle());
-							if (it != clientShips.end())
+							ClientShipMap::iterator _where = clientShips.find(p->GetSystemHandle());
+							if (_where != clientShips.end())
 							{
 								// Tell the other clients
 								RakNet::BitStream bits;
-								bits.Write(it->second.id);
+								bits.Write(_where->second.id);
 								for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 								{
 									m_Network->Send(false, MTID_REMOVEPLAYER, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
 										FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, it->first);
 								}
 
-								clientShips.erase(it);
+								clientShips.erase(_where);
 							}
 						}
 
@@ -472,9 +668,10 @@ class TestApp : public CL_ClanApplication
 						else if (p->GetType() == MTID_SHIPFRAME)
 						{
 							ObjectID object_id;
-							unsigned int time;
+							unsigned long time;
 
-							Ship &ship = clientShips[p->GetSystemHandle()];
+							const NetHandle &systemHandle = p->GetSystemHandle();
+							Ship &ship = clientShips[systemHandle];
 
 							RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), true);
 							bits.Read(object_id);
@@ -498,39 +695,56 @@ class TestApp : public CL_ClanApplication
 							bits.Read(x);
 							bits.Read(y);
 
+							// Lag compensation (check that the given ship is more-or-less in sync)
 							if (ship.checkAction(time, x, y))
 							{
-								// Rewind everyone
-								for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+								typedef std::list<Ship*> rewindList;
+								rewindList rewindable;
+								// The rewind can only happen if there is a suitable stored action
+								if (ship.rewindAction(time))
 								{
-									Ship &rewindShip = (*it).second;
-									rewindShip.rewindAction(time);
-									//rewindShip.clearActions();
-								}
-								// Simulate up to the current time
-								for (unsigned int t = time; t < m_CommandNumber; t++)
-								{
-									ship.saveCommand(t);
+									//ship.rewindCommand(time);
+									rewindable.push_back(&ship);
+
+									// Rewind everyone
 									for (ClientShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 									{
-										Ship &simShip = (*it).second;
-										if (simShip.id != ship.id)
-											simShip.rewindCommand(t);
-										
-										float up = simShip.up ? -1.f : 0.f;
-										float down = simShip.down ? 1.f : 0.f;
-										float left = simShip.left ? -1.f : 0.f;
-										float right = simShip.right ? 1.f : 0.f;
-										simShip.x += 0.3f * split * (left + right);
-										simShip.y += 0.3f * split * (up + down);
+										Ship &rewindShip = it->second;
+										if (rewindShip.id == ship.id) // out-of-sync ship has already been rewound
+											continue;
 
-										fe_clamp(simShip.x, 0.f, (float)display.get_width());
-										fe_clamp(simShip.y, 0.f, (float)display.get_height());
+										// We can only rewind ships that we have data for at the given tick
+										if (rewindShip.rewindAction(time))
+										{
+											//rewindShip.clearActionsAfter(time);
+											rewindShip.rewindCommand(time);
+											rewindable.push_back(&(it->second));
+										}
+									}
+									// Simulate up to the current time
+									for (unsigned int t = time; t < m_CommandNumber; t++)
+									{
+										//ship.saveCommand(t);
+										for (rewindList::iterator it = rewindable.begin(), end = rewindable.end(); it != end; ++it)
+										{
+											Ship *simShip = (*it);
+											//if (simShip->id != ship.id)
+											simShip->nextCommand(t);
 
-										simShip.saveAction(t);
+											float up = simShip->up ? -1.f : 0.f;
+											float down = simShip->down ? 1.f : 0.f;
+											float left = simShip->left ? -1.f : 0.f;
+											float right = simShip->right ? 1.f : 0.f;
+											simShip->x += 0.3f * split * (left + right);
+											simShip->y += 0.3f * split * (up + down);
+
+											fe_clamp(simShip->x, 0.f, (float)display.get_width());
+											fe_clamp(simShip->y, 0.f, (float)display.get_height());
+
+											simShip->saveAction(t);
+										}
 									}
 								}
-								//ship.rewindCommand(m_CommandNumber);
 							}
 						}
 
@@ -729,12 +943,12 @@ class TestApp : public CL_ClanApplication
 						if (p->GetType() == MTID_SHIPFRAME)
 						{
 							ObjectID object_id;
-							int time;
+							unsigned long commandNumber;
 
 							RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), false);
 							bits.Read(object_id);
 
-							bits.Read(time);
+							bits.Read(commandNumber);
 
 							Ship &ship = ships[object_id];
 
@@ -747,20 +961,28 @@ class TestApp : public CL_ClanApplication
 							bits.Read(x);
 							bits.Read(y);
 
-							if (m_Interpolate && object_id == myShip->id)
+							if (ship.mostRecentCommand < commandNumber)
 							{
-								if (abs(m_Tightness - s_DefaultTightness) < 0.009f && abs(ship.x - x) > 0.1f)
-									m_Tightness = s_SmoothTightness;
+								ship.mostRecentCommand = commandNumber;
+								ship.net_x = x;
+								ship.net_y = y;
 
-								ship.x = ship.x + (x - ship.x) * m_Tightness;
-								ship.y = ship.y + (y - ship.y) * m_Tightness;
+								//! \todo build interpolation into a network var class (replace ship.x/ship.y with said class)
+								if (m_Interpolate && object_id == myShip->id)
+								{
+									if (abs(m_Tightness - s_DefaultTightness) < 0.009f && abs(ship.x - x) > 0.1f)
+										m_Tightness = s_SmoothTightness;
 
-								m_Tightness += (s_DefaultTightness - m_Tightness) * 0.01f;
-							}
-							else
-							{
-								ship.x = x;
-								ship.y = y;
+									ship.x = ship.x + (x - ship.x) * m_Tightness;
+									ship.y = ship.y + (y - ship.y) * m_Tightness;
+
+									m_Tightness += (s_DefaultTightness - m_Tightness) * 0.01f;
+								}
+								else
+								{
+									ship.x = x;
+									ship.y = y;
+								}
 							}
 						}
 
@@ -806,8 +1028,6 @@ class TestApp : public CL_ClanApplication
 						myShip->right = false;
 					}
 
-					myShip->saveCommand(m_CommandNumber);
-
 					long frameTimeLeft = frameTime;
 					while (frameTimeLeft >= split)
 					{
@@ -838,6 +1058,9 @@ class TestApp : public CL_ClanApplication
 
 						bits.Write(myShip->x);
 						bits.Write(myShip->y);
+
+						myShip->saveAction(m_CommandNumber);
+						myShip->saveCommand(m_CommandNumber);
 
 						m_Network->Send(true, MTID_SHIPFRAME, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
 							FusionEngine::HIGH_PRIORITY, FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);

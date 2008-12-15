@@ -116,8 +116,14 @@ namespace FusionEngine
 	static inline bool fe_fzero(float value) { return fabs(value) <= (float)s_FloatComparisonEpsilon; }
 	static inline bool fe_fzero(double value) { return fabs(value) <= s_FloatComparisonEpsilon; }
 
+	static inline bool fe_fzero(float value, float e) { return fabs(value) <= e; }
+	static inline bool fe_fzero(double value, double e) { return fabs(value) <= e; }
+
 	static inline bool fe_fequal(float a, float b) { return fabs(a-b) <= (float)s_FloatComparisonEpsilon; }
 	static inline bool fe_fequal(double a, double b) { return fabs(a-b) <= s_FloatComparisonEpsilon; }
+
+	static inline bool fe_fequal(float a, float b, float e) { return fabs(a-b) <= e; }
+	static inline bool fe_fequal(double a, double b, double e) { return fabs(a-b) <= e; }
 
 	//! Converts deg to rad
 	static inline float fe_degtorad(float deg) { return deg * (float)s_DegToRad; }
@@ -318,11 +324,11 @@ namespace FusionEngine
 	static inline T fe_wrap(const T &a, const T &lb, const T &ub) 
 	{
 		// This basically ammounts to:
-		//  if (a <= lb) return ub;
-		//  else if (a > ub) return lb;
+		//  if (a <= lb) return a + ub;
+		//  else if (a > ub) return a - ub;
 		//  else return a;
-		return a <= lb ? ub : (a >= ub ? lb : a);
-		// It's so unreadable, it must be efficiant... Right? :P
+		return a <= lb ? a + ub : (a >= ub ? a - ub : a);
+		// It's so unreadable it must be efficiant... Right? :P
 	}
 
 
