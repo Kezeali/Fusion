@@ -65,7 +65,7 @@ public:
 		while (back().time < _time)
 			pop();
 
-		m_Data.push_back(record_type(_time, _value);
+		m_Data.push_back(record_type(_time, _value));
 	}
 
 	void push(unsigned long _time, const &T _value)
@@ -182,8 +182,8 @@ class TestApp : public CL_ClanApplication
 			x(0.f), y(0.f),
 			sendDelay(0)
 		{
-			//actionList.resize(512);
-			//commandList.resize(512);
+			actionList.resize(1000);
+			commandList.resize(1000);
 		}
 
 		Ship(ObjectID _id)
@@ -191,8 +191,13 @@ class TestApp : public CL_ClanApplication
 			x(0.f), y(0.f),
 			sendDelay(0)
 		{
-			//actionList.resize(512);
-			//commandList.resize(512);
+			actionList.resize(1000);
+			commandList.resize(1000);
+		}
+
+		void correctCommand(unsigned long tick)
+		{
+			commandList.correct(tick, Command(up, down, left, right));
 		}
 
 		void saveCommand(unsigned long tick)
@@ -216,7 +221,7 @@ class TestApp : public CL_ClanApplication
 
 		bool checkState(unsigned long tick, float x, float y)
 		{
-			Action &action = actionList[tick];
+			Action &action = actionList.pop(tick);
 			return action.valid && !fe_fequal(action.x, x) || !fe_fequal(action.y, y);
 		}
 
