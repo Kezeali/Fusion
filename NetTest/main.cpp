@@ -66,6 +66,9 @@ public:
 	typedef typename container_type::iterator iterator;
 	typedef typename container_type::const_iterator const_iterator;
 
+	typedef typename container_type::reference reference;
+	typedef typename container_type::const_reference const_reference;
+
 	typedef std::tr1::unordered_map<time_type, size_type> timetoindex_map_type;
 
 	History()
@@ -273,9 +276,14 @@ public:
 		return m_Data.empty();
 	}
 
-	size_type size()
+	size_type size() const
 	{
 		return m_Data.size();
+	}
+
+	size_type capacity() const
+	{
+		return m_Data.capacity();
 	}
 
 	void clear()
@@ -285,10 +293,30 @@ public:
 
 	record_type& back()
 	{
-		return m_Data.back();
+		return oldest();
 	}
 
 	record_type& front()
+	{
+		return newest();
+	}
+
+	reference oldest()
+	{
+		return m_Data.back();
+	}
+
+	reference newest()
+	{
+		return m_Data.front();
+	}
+
+	const_reference oldest() const
+	{
+		return m_Data.back();
+	}
+
+	const_reference newest() const
 	{
 		return m_Data.front();
 	}
@@ -626,7 +654,7 @@ class TestApp : public CL_ClanApplication
 		}*/
 	};
 
-	unsigned long m_CommandNumber;
+	unsigned long m_CommandNumber, m_LatestReceivedTick;
 
 	typedef std::tr1::shared_ptr<Ship> ShipPtr;
 	// For server side
@@ -725,6 +753,9 @@ class TestApp : public CL_ClanApplication
 
 		// Simulation speed
 		const unsigned int split = 33;
+
+		m_CommandNumber = 0;
+		m_LatestReceivedTick = 0;
 
 		if (server)
 		{
@@ -854,6 +885,8 @@ class TestApp : public CL_ClanApplication
 
 							ship->saveCommand(commandNumber);
 
+							ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
+
 							float x, y;
 
 							bits.Read(x);
@@ -972,14 +1005,14 @@ class TestApp : public CL_ClanApplication
 						display.get_gc()->fill_rect(CL_Rectf(ship->x, ship->y, ship->x + 10, ship->y + 10), CL_Color::darkblue);
 						font1.draw(ship->x, ship->y + 12, CL_String::from_double(ship->currentTick));
 
-						if ((ship->sendDelay -= split) <= 0)
+						if ((ship->sendDelay -= frameTime) <= 0)
 						{
 							ship->sendDelay = s_SendInterval;
 							// Send data
 
 							RakNet::BitStream bits;
 							bits.Write(ship->id);
-							bits.Write(m_CommandNumber);
+							bits.Write(ship->currentTick);
 
 							bits.Write(ship->up);
 							bits.Write(ship->down);
@@ -1159,10 +1192,9 @@ class TestApp : public CL_ClanApplication
 								bits.Read(y);
 
 								// Correct prediction errors
-								//if (myShip != NULL && ship->id == myShip->id && ship->checkAction(commandNumber, Action(x, y)))
 								{
 									ship->rewindAction(commandNumber);
-									ship->cullActions();
+									ship->cullActions(); // Current action is confirmed (erase previous actions)
 									for (unsigned int t = commandNumber; t < m_CommandNumber; t++)
 									{
 										ship->nextCommand(t);
@@ -1194,6 +1226,8 @@ class TestApp : public CL_ClanApplication
 							bits.Read(object_id);
 
 							bits.Read(commandNumber);
+
+							m_LatestReceivedTick = fe_max(commandNumber, m_LatestReceivedTick);
 
 							ShipMap::iterator _where = ships.find(object_id);
 							if (_where != ships.end())
@@ -1262,16 +1296,21 @@ class TestApp : public CL_ClanApplication
 					if (myShips.empty())
 						continue;
 
-					for (ShipMap::iterator it = myShips.begin(), end = myShips.end(); it != end; ++it)
+					// Interpolate ticks to catch up with server
+					long tickDelta = m_LatestReceivedTick - m_CommandNumber;
+					if (abs(tickDelta) > 1000)
+						m_CommandNumber += (unsigned long)((m_LatestReceivedTick - m_CommandNumber) * 0.1f);
+
+					long frameTimeLeft = frameTime;
+					while (frameTimeLeft >= split)
 					{
-						ShipPtr myShip = it->second;
-
-						get_input(myShip);
-
-						long frameTimeLeft = frameTime;
-						while (frameTimeLeft >= split)
+						frameTimeLeft -= split;
+						for (ShipMap::iterator it = myShips.begin(), end = myShips.end(); it != end; ++it)
 						{
-							frameTimeLeft -= split;
+							ShipPtr myShip = it->second;
+
+							get_input(myShip);
+
 							// Predict simulation
 							float up = myShip->up ? -1.f : 0.f;
 							float down = myShip->down ? 1.f : 0.f;
@@ -1283,36 +1322,38 @@ class TestApp : public CL_ClanApplication
 							fe_clamp(myShip->x, 0.f, (float)display.get_width());
 							fe_clamp(myShip->y, 0.f, (float)display.get_height());
 
-							m_CommandNumber++;
+							bool importantCommand = myShip->commandList.front().value != myShip->GetCommand();
+							if (importantCommand || (myShip->sendDelay -= split) <= 0)
+							{
+								myShip->sendDelay = s_SendInterval;
+
+								RakNet::BitStream bits;
+								bits.Write(myShip->id);
+								bits.Write(m_CommandNumber);
+
+								bits.Write(myShip->up);
+								bits.Write(myShip->down);
+								bits.Write(myShip->left);
+								bits.Write(myShip->right);
+
+								bits.Write(myShip->x);
+								bits.Write(myShip->y);
+
+								// Actions only have to be saved for sent commands, since the server wont make corrections
+								//  to actions it doesn't know we've taken!
+								myShip->saveAction(m_CommandNumber);
+								myShip->saveCommand(m_CommandNumber);
+
+								if (importantCommand)
+									std::cout << m_CommandNumber << " (important)" << std::endl;
+
+								m_Network->Send(true, MTID_ENTITYFRAME, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
+									FusionEngine::HIGH_PRIORITY, importantCommand ? FusionEngine::RELIABLE : FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);
+							}
 						}
 
-						bool importantCommand = myShip->commandList.back().value != myShip->GetCommand();
-						if (importantCommand || (myShip->sendDelay -= frameTime) <= 0)
-						{
-							myShip->sendDelay = s_SendInterval;
-
-							RakNet::BitStream bits;
-							bits.Write(myShip->id);
-							bits.Write(m_CommandNumber);
-
-							bits.Write(myShip->up);
-							bits.Write(myShip->down);
-							bits.Write(myShip->left);
-							bits.Write(myShip->right);
-
-							bits.Write(myShip->x);
-							bits.Write(myShip->y);
-
-							myShip->saveAction(m_CommandNumber);
-							myShip->saveCommand(m_CommandNumber);
-
-							if (importantCommand)
-								std::cout << m_CommandNumber << " (important)" << std::endl;
-
-							m_Network->Send(true, MTID_ENTITYFRAME, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
-								FusionEngine::HIGH_PRIORITY, importantCommand ? FusionEngine::RELIABLE : FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);
-						}
-					}
+						++m_CommandNumber;
+					} // ends while (frameTimeLeft)
 
 					for (ShipMap::iterator it = ships.begin(); it != ships.end(); ++it)
 					{
