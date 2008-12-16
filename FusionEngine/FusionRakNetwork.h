@@ -94,7 +94,7 @@ namespace FusionEngine
 		RakNetPacket(Packet *originalPacket);
 
 		//! Constructor
-		RakNetPacket(NetHandle hash, Packet *originalPacket);
+		RakNetPacket(NetHandle from, Packet *originalPacket);
 
 		//! Virtual destructor
 		virtual ~RakNetPacket();
@@ -133,8 +133,6 @@ namespace FusionEngine
 	protected:
 		//! Starts the network
 		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0);
-		//! [dp] Starts listening
-		virtual void StartListening(unsigned short incommingPort);
 		//! Connects to a server
 		virtual bool Connect(const std::string &host, unsigned short port);
 		//! Disconnects cleanly
@@ -147,12 +145,11 @@ namespace FusionEngine
 		/*!
 		 * <p>Formats the packet as follows:</p>
 		 *
-		 * <b>The Fusion Packet Format
+		 * <b>Packet Format
 		 * <ol>
-		 *  <li> [char]      Time stamp marker (indicates the packet is timestamped)
+		 *  <li> [bool]      Time stamp marker (indicates the packet is timestamped)
 		 *  <li> [uint]      Time stamp (if the time stamp marker was included)
 		 *  <li> [char]      Type ID
-		 *  <li> [char]      Sub ID (optional)
 		 *  <li> [...]       Data
 		 * </ol>
 		 */
@@ -176,93 +173,46 @@ namespace FusionEngine
 		virtual int GetAveragePing(const NetHandle& handle);
 		virtual int GetLowestPing(const NetHandle& handle);
 
-		RakPeerInterface* GetRakNetPeer() const;
+		inline const RakPeerInterface* GetRakNetPeer() const { return m_NetInterface; }
+
+		//! Uses RakPeerInterface#ApplyNetworkSimulator to introduce fake lag
+		/*!
+		 * \param minLagMilis
+		 * The minimum amount of lag time (milisecods) applied to communications
+		 *
+		 * \param variance
+		 * Extra lag time (milisecods) which may be randomly applied
+		 */
+		virtual void SetDebugLag(unsigned int minLagMilis, unsigned int variance);
+		//! Uses RakPeerInterface#ApplyNetworkSimulator to introduce fake packet loss
+		/*!
+		 * \param allowBps
+		 * Maximum bits per second before packet loss
+		 */
+		virtual void SetDebugPacketLoss(double allowBps);
+
+		//! Returns the current fake lag setting
+		virtual unsigned int GetDebugLagMin() const;
+		//! Returns the current fake lag variance setting
+		virtual unsigned int GetDebugLagVariance() const;
+		//! Returns the current fake packet loss setting
+		virtual double GetDebugAllowBps() const;
 
 		
 	protected:
 		RakPeerInterface* m_NetInterface;
 		SystemAddressMap m_SystemAddresses;
 
+		// Network Simulator settings
+		unsigned int m_MinLagMilis;
+		unsigned int m_LagVariance;
+		double m_AllowBps;
+
 	protected:
 		//! Returns a RakNet enum for the given FusionEngine enum
 		inline PacketPriority rakPriority(NetPriority priority);
 		//! Returns a RakNet enum for the given FusionEngine enum
 		inline PacketReliability rakReliability(NetReliability reliability);
-		////! [dp] Adds a header to the given packet data
-		///*!
-		// * \param[out] buffer
-		// * The mem to write to
-		// *
-		// * \param[in] buffer
-		// * The data for the packet
-		// *
-		// * \param[in] length
-		// * The current length of the data
-		// *
-		// * \param[in] timeStamp
-		// * True if a timestamp should be added
-		// *
-		// * \param[in] mtid
-		// * The type ID of this message
-		// *
-		// * \param[in] cid
-		// * The channel ID for this message.
-		// *
-		// *
-		// * \returns
-		// * Returns the length of the data after the header is added.
-		// */
-		//unsigned int addHeader(unsigned char* buffer, const unsigned char* data, unsigned int length, bool timeStamp, unsigned char mtid);
-
-		////! [dp] Removes the header from the given packet data
-		///*!
-		// * \param[out] buffer
-		// * The mem to write to
-		// *
-		// * \param[in] data
-		// * The packet data to remove the header form
-		// *
-		// * \param[in] length
-		// * The current length of the data
-		// *
-		// * \returns
-		// * Returns the length of the data after the header is added.
-		// */
-		//unsigned int removeHeader(unsigned char* buffer, const unsigned char* data, unsigned int length);
-
-		////! [dp] Returns true if the packet passed is a RakNet system message.
-		///*!
-		// * If the packet is a system message, and a type of system message which the
-		// * Environment should be aware of, its info will added to the event queue.
-		// * Non-event system messages types will be handled or ignored without their 
-		// * ID being added to the event queue.
-		// * <br>
-		// * The following ID's will be added to the event queue if they are found:
-		// * <ul>
-		// * <b>Client Remote events</b><br>
-		// * <size="-1">(events which don't apply to this client, but
-		// *  may be useful to know about)</size>
-		// * <li>ID_REMOTE_DISCONNECTION_NOTIFICATION
-		// * <li>ID_REMOTE_CONNECTION_LOST
-		// * <li>ID_REMOTE_NEW_INCOMING_CONNECTION
-		// * <li>ID_REMOTE_EXISTING_CONNECTION
-		// * <b>Client events</b>
-		// * <li>ID_CONNECTION_BANNED
-		// * <li>ID_CONNECTION_REQUEST_ACCEPTED
-		// * <li>ID_NO_FREE_INCOMING_CONNECTIONS
-		// * <li>ID_INVALID_PASSWORD
-		// * <b>Server events</b>
-		// * <li>ID_NEW_INCOMING_CONNECTION
-		// * <b>Client & Server events</b>
-		// * <li>ID_DISCONNECTION_NOTIFICATION
-		// * <li>ID_CONNECTION_LOST
-		// * <li>ID_RECEIVED_STATIC_DATA
-		// * <li>ID_MODIFIED_PACKET
-		// * <li>ID_CONNECTION_ATTEMPT_FAILED
-		// *  (I don't know how this message could arrive! Does it get sent to loopback?)
-		// * </ul>
-		// */
-		//bool isChaff(Packet *p);
 	};
 
 }

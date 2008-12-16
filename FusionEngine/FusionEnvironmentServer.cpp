@@ -204,7 +204,7 @@ bool ServerEnvironment::receive()
 			const unsigned char type = m->GetType();
 			switch (type)
 			{
-			case MTID_SHIPFRAME:
+			case MTID_ENTITYFRAME:
 				// I call another method here, because, well... because that's how I roll ;)
 				installShipFrameFromMessage(m);
 				break;

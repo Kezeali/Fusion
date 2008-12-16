@@ -102,7 +102,7 @@ namespace FusionEngine
 		 * <li> [char]     <channel>
 		 * <li> [ObjectID] The prelim. ID the client gave this ship
 		 * <li> [ObjectID] The 'official' ID gaven to this ship by the server
-		 * <li> The rest is the same format as MTID_SHIPFRAME
+		 * <li> The rest is the same format as MTID_ENTITYFRAME
 		 * </ol>
 		 */
 		MTID_ADDALLOWED,
@@ -173,9 +173,9 @@ namespace FusionEngine
 		//! [client] High priority
 		MTID_MAKEHOLE,
 		//! [client|server] Low priority
-		MTID_SHIPFRAME,
-		//! [client|server] Low Priority
-		MTID_PROJECTILEFRAME,
+		MTID_ENTITYFRAME,
+		//! [client] Low Priority
+		MTID_CORRECTION,
 		//! [client] Low priority
 		MTID_TERRAINBITMASK,
 		//@}

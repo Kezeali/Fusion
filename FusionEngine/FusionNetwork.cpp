@@ -38,6 +38,11 @@ namespace FusionEngine
 	{
 	}
 
+	bool Network::SendRaw(char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	{
+		return Send(false, 0, data, length, priority, reliability, channel, destination);
+	}
+
 	bool Network::SendToChannel(bool timestamped, char type, char subtype, char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
 		// Add the given subType to the beginning of the data string
@@ -50,9 +55,9 @@ namespace FusionEngine
 		return success;
 	}
 
-	bool Network::SendRaw(char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	bool Network::Send(bool timestamped, char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
-		return Send(false, 0, data, length, priority, reliability, channel, destination);
+		return Send(timestamped, type, (char*)data, length, priority, reliability, channel, destination);
 	}
 
 	void Network::PushBackPacket(IPacket *packet, bool toHead)
@@ -70,66 +75,5 @@ namespace FusionEngine
 	{
 		return 0;
 	}
-
-	//void Network::SendRaw(char *data, int len)
-	//{
-	//	send(data, len, MEDIUM_PRIORITY, RELIABLE, (char)CID_NONE);
-	//}
-
-	//void Network::SendShipState(const ShipState& state)
-	//{
-	//	unsigned char* buf;
-	//	int length;
-
-	//	length = state.Serialize(buf);
-
-	//	length = addHeader(buf, length, true, MTID_SHIPFRAME, CID_GAME);
-
-	//	send(buf, length, LOW_PRIORITY, UNRELIABLE_SEQUENCED, CID_GAME);
-	//}
-
-	//Packet *Network::PopNextMessage(char channel)
-	//{
-	//	return m_Queue->PopMessage(channel);
-	//}
-
-	//Event *Network::PopNextEvent() const
-	//{
-	//	Event *e = m_Events.front();
-	//	m_Events.pop_front();
-	//	return e;
-	//}
-
-	//void Network::ClearEvents()
-	//{
-	//	// Each Message
-	//	EventQueue::iterator it = m_Events.begin();
-	//	for (; it != m_Events.end(); ++it)
-	//	{
-	//		delete (*it);
-	//	}
-
-	//	m_Events.clear();
-	//}
-
-	//void FusionNetworkGeneric::_notifyNetEvent(unsigned char messageId)
-	//{
-	//m_Mutex->enter();
-
-	////add event
-
-	//m_Mutex->notify();
-	//m_Mutex->leave();
-	//}
-
-	//EventQueue &FusionNetworkGeneric::GetEvents()
-	//{
-	//m_Mutex->enter();
-
-	////return events
-
-	//m_Mutex->notify();
-	//m_Mutex->leave();
-	//}
 
 }

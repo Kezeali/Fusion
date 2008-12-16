@@ -183,7 +183,7 @@ namespace FusionEngine
 
 		//! Builds a message from a ShipState (usually outgoing)
 		//! \todo Put all this stuff (message building and parsing) into the
-		//!  relavant classes - e.g. Ship state should build and parse MTID_SHIPFRAME packets
+		//!  relavant classes - e.g. Ship state should build and parse MTID_ENTITYFRAME packets
 		FusionMessage *BuildMessage(const ShipState &input);
 		//! Builds a message from a ProjectileState (usually outgoing)
 		FusionMessage *BuildMessage(const ProjectileState &input);

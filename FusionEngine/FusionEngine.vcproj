@@ -511,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionRakStream.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionRefCounted.h"
 				>
 			</File>

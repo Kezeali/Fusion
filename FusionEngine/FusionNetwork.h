@@ -152,8 +152,6 @@ namespace FusionEngine
 	public:
 		//! Starts the network
 		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0) = 0;
-		//! Starts listening
-		virtual void StartListening(unsigned short incommingPort) = 0;
 		//! Connects to a server
 		virtual bool Connect(const std::string &host, unsigned short port) = 0;
 		//! Disconnects cleanly
@@ -166,13 +164,13 @@ namespace FusionEngine
 
 		//! Sends a message
 		/*!
-		 * Special send wrapper adds a channel type ID to the packet
+		 * Special send wrapper which adds an extra type ID to the packet
 		 *
 		 * \param[in] timestamped
 		 * True if a timestamp should be added
 		 *
 		 * \param[in] type
-		 * The channel type ID
+		 * The extra type ID
 		 *
 		 * \param[in] subtype
 		 * The type ID
@@ -186,6 +184,11 @@ namespace FusionEngine
 		 */
 		bool SendToChannel(bool timestamped, char type, char subtype, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel, 
+			const NetHandle& destination);
+
+		//! Wrapper to deal with RakNet (and it's stupid use of unsigned char*)
+		bool Send(bool timestamped, char type, unsigned char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle& destination);
 
 		//! Sends data.
@@ -212,56 +215,28 @@ namespace FusionEngine
 		//! Returns the latest ping to the given NetID
 		virtual int GetPing(const NetHandle& handle);
 
-	protected:
-		////! [dp]
-		//virtual bool send(bool timestamped, char type, unsigned char *data, unsigned int length, 
-		//	NetPriority priority, NetReliability reliability, char channel, 
-		//	NetHandle destination) {}
-		////! [dp]
-		//virtual IPacket* receive() {}
+		//! Adds some lag time to communications
+		/*!
+		 * \param minLagMilis
+		 * The minimum amount of lag time applied to communications
+		 *
+		 * \param variance
+		 * Extra lag time which may be randomly applied
+		 */
+		virtual void SetDebugLag(unsigned int minLagMilis, unsigned int variance) {}
+		//! Drops data as it exceeds the given amount
+		/*!
+		 * \param allowBps
+		 * Maximum bits per second before packet loss
+		 */
+		virtual void SetDebugPacketLoss(double allowBps) {}
 
-	public:
-		////! Sends a Add player message.
-		///*!
-		// * This will optimise sending for high reliablility, which is required
-		// * for AddPlayer messages.
-		// *
-		// * THIS SHOULDN'T BE IMPLEMENTED IN GENERIC, CLIENT AND SERVER USE ADDPLAYER DIFFERENTLY
-		// */
-		//virtual void SendAddPlayer()=0;
-		////! Sends a Remove player message.
-		//void SendRemovePlayer(ObjectID player);
-		////! Sends a ShipState message.
-		//void SendShipState(const ShipState &state);
-		////! Sends a Chat message.
-		//void SendChatter(const std::string &message);
-
-		////! Gets the message from the front of the incomming queue, in the given channel.
-		///*!
-		// * <b> This method is Thread-safe </b>
-		// * <br>
-		// * Remember to delete the message when you're done!
-		// */
-		//Packet *PopNextMessage(char channel);
-		////! Gets the next item in the event queue.
-		///*!
-		// * When a RakNet system packet, such as ID_CONNECTION_LOST, is received 
-		// * its ID will be extracted and stored in the event queue. 
-		// */
-		//unsigned char PopNextEvent() const;
-		////! Destroys all Events in the event queue.
-		//void ClearEvents();
-
-	protected:
-		////! The hostname (or ip) and port to use.
-		//std::string m_Host, m_Port;
-
-		////! Threadsafe, organised packet storage
-		//PacketQueue *m_Queue;
-
-		////! Event storage
-		//EventQueue m_Events;
-
+		//! Returns the current fake lag setting
+		virtual unsigned int GetDebugLagMin() const { return 0; }
+		//! Returns the current fake lag variance setting
+		virtual unsigned int GetDebugLagVariance() const { return 0; }
+		//! Returns the current fake packet loss setting
+		virtual double GetDebugAllowBps() const { return 0.0; }
 	};
 
 }

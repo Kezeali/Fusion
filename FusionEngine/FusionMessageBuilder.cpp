@@ -42,7 +42,7 @@ FusionMessage *MessageBuilder::BuildMessage(const ShipState &input)
 
 	FusionMessage *m = new FusionMessage(
 		CID_GAME,
-		MTID_SHIPFRAME,
+		MTID_ENTITYFRAME,
 		SystemAddress,
 		out_stream.GetData(),
 		(unsigned int)out_stream.GetNumberOfBytesUsed());
@@ -129,9 +129,9 @@ FusionMessage *MessageBuilder::BuildMessage(Packet *packet, ObjectID SystemAddre
 
 	/// Gameplay messages
 	// Ship data
-	else if (packetid == MTID_SHIPFRAME)
+	else if (packetid == MTID_ENTITYFRAME)
 	{
-		m = new FusionMessage(CID_GAME, MTID_SHIPFRAME, SystemAddress, data, packet->length);
+		m = new FusionMessage(CID_GAME, MTID_ENTITYFRAME, SystemAddress, data, packet->length);
 	}
 	// Projectile data
 	else if (packetid == MTID_PROJECTILEFRAME)

@@ -213,6 +213,10 @@
 				RelativePath="..\FusionEngine\FusionRakNetwork.h"
 				>
 			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionRakStream.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

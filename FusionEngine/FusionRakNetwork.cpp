@@ -58,9 +58,9 @@ namespace FusionEngine
 		bits.Read(type);
 	}
 
-	RakNetPacket::RakNetPacket(NetHandle hash, Packet* originalPacket)
+	RakNetPacket::RakNetPacket(NetHandle from, Packet* originalPacket)
 		: m_OriginalPacket(originalPacket),
-		m_Handle(hash)
+		m_Handle(from)
 	{
 		RakNet::BitStream bits(originalPacket->data, originalPacket->bitSize / 8, false);
 		// Timestamp
@@ -128,6 +128,8 @@ namespace FusionEngine
 	/////////////
 	// RakNetwork
 	RakNetwork::RakNetwork()
+		: m_MinLagMilis(0), m_LagVariance(0),
+		m_AllowBps(0.0)
 	{
 		m_NetInterface = RakNetworkFactory::GetRakPeerInterface();
 	}
@@ -147,10 +149,6 @@ namespace FusionEngine
 		}
 		else
 			return false;
-	}
-
-	void RakNetwork::StartListening(unsigned short incommingPort)
-	{
 	}
 
 	bool RakNetwork::Connect(const std::string& host, unsigned short port)
@@ -194,65 +192,14 @@ namespace FusionEngine
 		if (rakPacket == 0)
 			return 0;
 
-		std::string hash(rakPacket->systemAddress.ToString());
-		m_SystemAddresses.insert( SystemAddressMap::value_type(hash, rakPacket->systemAddress) );
+		NetHandle handle(rakPacket->systemAddress.ToString());
+		m_SystemAddresses.insert( SystemAddressMap::value_type(handle, rakPacket->systemAddress) );
 
 		return new RakNetPacket(rakPacket);
-
-		//RakNet::BitStream bits(rakPacket->data, rakPacket->bitSize * 8, false);
-
-		//// Timestamp
-		//bool timestamped = false;
-		//NetTime time = 0;
-		//if (rakPacket->data[0] == ID_TIMESTAMP)
-		//{
-		//	char idTimestamp;
-		//	bits.Read(idTimestamp);
-		//	bits.Read(time);
-		//	timestamped = true;
-		//}
-
-		//// Type
-		//char type;
-		//bits.Read(type);
-
-		//// Origin
-		//int systemIndex = m_NetInterface->GetIndexFromSystemAddress(rakPacket->systemAddress);
-		//NetHandle origin = systemIndex;
-
-		//// Length
-		//unsigned int header, length;
-		//if (timestamped)
-		//	header = g_HeaderLengthTimestamp;
-		//else
-		//	header = g_HeaderLength;
-
-		//length = rakPacket->length - header;
-
-		// Now we have all the info we need to create a FusionEngine compatable packet
-		//return new RakNetPacket(rakPacket, origin, timestamped, time, type, rakPacket->data + header, length);
 	}
 
 	void RakNetwork::PushBackPacket(IPacket *packet, bool toHead)
 	{
-		// Copy the data from the fusion packet to the raknet packet
-		//size_t header = (packet->IsTimeStamped() ? g_HeaderLengthTimestamp : g_HeaderLength);
-		//Packet* rakPacket = 
-		//	m_NetInterface->AllocatePacket(packet->GetLength() + header);
-
-		//if (packet->IsTimeStamped())
-		//{
-		//	rakPacket->data[0] = ID_TIMESTAMP;
-		//	rakPacket->data[1] = packet->GetTime();
-		//	rakPacket->data[2] = packet->GetType();
-		//}
-		//else
-		//{
-		//	rakPacket->data[0] = packet->GetType();
-		//}
-		//memcpy(rakPacket->data + header, packet->GetData(), packet->GetLength());
-
-		//m_NetInterface->PushBackPacket(rakPacket, toHead);
 		RakNetPacket* nativePacket = dynamic_cast<RakNetPacket*>(packet);
 		if (nativePacket != 0)
 			m_NetInterface->PushBackPacket(nativePacket->m_OriginalPacket, toHead);
@@ -294,10 +241,34 @@ namespace FusionEngine
 		return m_NetInterface->GetLowestPing(m_SystemAddresses[handle]);
 	}
 
-	RakPeerInterface* RakNetwork::GetRakNetPeer() const
+	void RakNetwork::SetDebugLag(unsigned int minLagMilis, unsigned int variance)
 	{
-		return m_NetInterface;
+		m_MinLagMilis = minLagMilis;
+		m_LagVariance = variance;
+		m_NetInterface->ApplyNetworkSimulator(m_AllowBps, (unsigned short)minLagMilis, (unsigned short)variance);
 	}
+
+	void RakNetwork::SetDebugPacketLoss(double allowBps)
+	{
+		m_AllowBps = allowBps;
+		m_NetInterface->ApplyNetworkSimulator(allowBps, (unsigned short)m_MinLagMilis, (unsigned short)m_LagVariance);
+	}
+
+	unsigned int RakNetwork::GetDebugLagMin() const
+	{
+		return m_MinLagMilis;
+	}
+
+	unsigned int RakNetwork::GetDebugLagVariance() const
+	{
+		return m_LagVariance;
+	}
+
+	double RakNetwork::GetDebugAllowBps() const
+	{
+		return m_AllowBps;
+	}
+
 
 	inline PacketPriority RakNetwork::rakPriority(NetPriority priority)
 	{
