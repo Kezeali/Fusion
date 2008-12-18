@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionHistory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionNetwork.h"
 				>
 			</File>
