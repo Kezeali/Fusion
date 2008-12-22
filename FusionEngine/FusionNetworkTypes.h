@@ -90,7 +90,7 @@ namespace FusionEngine
 		 * <li> [char]         <channel>
 		 * <li> [ObjectID]     The ID given to this ship by the server
 		 * <li> [unsigned int] The team the player is on
-		 * <li> [string]       The ship resource tag of this players chosen ship
+		 * <li> [string]       The entity class name of this players chosen ship
 		 * <li> [string]       The nickname for this player
 		 * </ol>
 		 */
@@ -108,13 +108,8 @@ namespace FusionEngine
 		MTID_ADDALLOWED,
 		//! [client|server]
 		MTID_REMOVEPLAYER,
-		//! [client|server] ShipPackageID and Name for the player
-		/*!
-		 * Like AddPlayer, but for ships that already exist
-		 */
-		MTID_PLAYERCONFIG,
-		//! [client]
-		MTID_CHANGEMAP,
+		//! [client|server] Updates the gamemode class entity name
+		MTID_CHANGEMODE,
 		//! [server]
 		/*!
 		 * If the server receives this message during a game, it will send the client the
@@ -124,8 +119,6 @@ namespace FusionEngine
 		 * receives should be those all important game state messages.
 		 */
 		MTID_NEEDGAMESTATE,
-		//! [server|client]
-		MTID_CHANGETEAM,
 		//! [server|client]
 		MTID_CHANGENAME,
 		//@}
@@ -151,33 +144,12 @@ namespace FusionEngine
 		//@{
 		//! Gameplay channel message types
 
-		//! [client|server] Med priority. Weapons held by a ship
-		MTID_HELDWEAPONS,
-		//! [client|server] High priority
-		MTID_CHANGEWEAPON,
-		//! [client|server] High priority
-		/*!
-		 * Structure:<br>
-		 * <ol>
-		 * <li> [char]     ID_TIMESTAMP
-		 * <li> [long]     Time
-		 * <li> [char]     MTID_FIREWEAPON
-		 * <li> [char]     <channel>
-		 * <li> [ObjectID] Ship to which this applies
-		 * <li> [float]    x of the ship
-		 * <li> [float]    y of the ship
-		 * <li> [float]    direction of the ship
-		 * </ol>
-		 */
-		MTID_FIREWEAPON,
-		//! [client] High priority
-		MTID_MAKEHOLE,
 		//! [client|server] Low priority
-		MTID_ENTITYFRAME,
-		//! [client] Low Priority
+		MTID_ENTITYMOVE,
+		//! [client] High Priority
 		MTID_CORRECTION,
-		//! [client] Low priority
-		MTID_TERRAINBITMASK,
+		//! [server] High priority
+		MTID_IMPORTANTMOVE,
 		//@}
 
 		//@{

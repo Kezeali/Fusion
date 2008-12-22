@@ -3,11 +3,12 @@
 #include "../FusionEngine/FusionNetwork.h"
 #include "../FusionEngine/FusionRakNetwork.h"
 #include "../FusionEngine/FusionRakStream.h"
+#include "../FusionEngine/FusionHistory.h"
 
 #include <RakNet/BitStream.h>
 
-#define BOOST_CB_DISABLE_DEBUG // Allows overwritten CB iterators to remain valid
-#include <boost/circular_buffer.hpp>
+//#define BOOST_CB_DISABLE_DEBUG // Allows overwritten CB iterators to remain valid
+//#include <boost/circular_buffer.hpp>
 
 using namespace FusionEngine;
 
@@ -16,345 +17,8 @@ const float s_SmoothTightness = 0.1f;
 
 const unsigned int s_SendInterval = 63;
 
-template <class T>
-class Record
-{
-public:
-	typedef unsigned long time_type;
-
-	Record()
-		: time(0)
-	{
-	}
-	Record(time_type _time, const T& _value)
-		: time(_time), value(_value)
-	{
-	}
-
-	time_type time;
-	T value;
-};
-
-// Hashes up to the history size then wraps around
-//template<class _Kty>
-//class HistoryHasher : public std::unary_function<_Kty, size_t>
-//{
-//public:
-//	HistoryHasher()
-//		: m_upper(0)
-//	typedef Hash = std::tr1::hash<_Kty>;
-//	size_t operator()(const _Kty& _Keyval) const
-//	{
-//		if (m_upper == 0)
-//			return Hash(_Keyval);
-//		else
-//			return fe_wrap(Hash(_Keyval), (size_t)0, m_upper);
-//	}
-//
-//	size_t m_upper;
-//};
-
-template<class T>
-class History
-{
-public:
-	typedef Record<T> record_type;
-	typedef typename record_type::time_type time_type;
-
-	typedef boost::circular_buffer<record_type> container_type;
-	typedef typename container_type::size_type size_type;
-	typedef typename container_type::iterator iterator;
-	typedef typename container_type::const_iterator const_iterator;
-
-	typedef typename container_type::reference reference;
-	typedef typename container_type::const_reference const_reference;
-
-	typedef std::tr1::unordered_map<time_type, size_type> timetoindex_map_type;
-
-	History()
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		: m_Front(0)
-#endif
-	{
-	}
-
-	History(size_type _size)
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		: m_Front(0)
-#endif
-	{
-		m_Data.set_capacity(_size);
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		m_TimeToIndex = timetoindex_map_type(_size);
-#endif
-	}
-
-	void set_capacity(size_type _size)
-	{
-		m_Data.set_capacity(_size);
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		m_TimeToIndex = timetoindex_map_type(_size);
-#endif
-	}
-
-	record_type& operator[](size_type _Keyval)
-	{
-		return m_Data[_Keyval];
-	}
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-	size_type& timetoindex(const time_type &_time)
-	{
-		// wraps the index to the capacity
-		return m_TimeToIndex[fe_wrap(_time, (time_type)0, (time_type)m_Data.capacity()];
-	}
-#endif
-
-	iterator find(time_type _time)
-	{
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		if (m_Data.empty())
-			return m_Data.end();
-
-		size_type index = m_TimeToIndex[_time];
-		if (index >= m_Data.size())
-			return m_Data.end();
-
-		iterator _where = m_Data.begin() + index;
-		if (_where->time != _time)
-		{
-			// erase outdated time mapping
-			m_TimeToIndex.erase(_where);
-			return m_Data.end();
-		}
-
-		return _where;
-		
-#else
-		if (m_Data.empty())
-			return m_Data.end();
-
-		size_type test = m_Data.size();
-		if (m_Data.size() == 1)
-			return m_Data.begin();
-
-		size_type low = 0;
-		size_type high = m_Data.size() - 1;
-		size_type mid = (low + high) / 2;
-		iterator midrecord;
-		while (low <= high)
-		{
-			mid = (low + high) / 2;
-			midrecord = m_Data.begin() + mid;
-			if (midrecord->time > _time)
-			{
-				if (mid == 0) break;
-				high = mid - 1;
-			}
-			else if (midrecord->time < _time)
-				low = mid + 1;
-			else
-				return midrecord; // found
-		}
-		return m_Data.end(); // not found
-#endif
-	}
-
-	iterator find_closest(time_type _time)
-	{
-		if (m_Data.empty())
-			return m_Data.end();
-
-		size_type test = m_Data.size();
-		if (m_Data.size() == 1)
-			return m_Data.begin();
-
-		size_type low = 0;
-		size_type high = m_Data.size() - 1;
-		size_type mid = (low + high) / 2;
-		iterator midrecord;
-		while (low <= high)
-		{
-			mid = (low + high) / 2;
-			midrecord = m_Data.begin() + mid;
-			if (midrecord->time > _time)
-			{
-				if (mid == 0) break;
-				high = mid - 1;
-			}
-			else if (midrecord->time < _time)
-				low = mid + 1;
-			else
-				return midrecord; // found
-		}
-		return midrecord; // not found (return closest)
-	}
-
-	void push(time_type _time, const T& _value)
-	{
-		m_Data.push_front(record_type(_time, _value));
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		m_TimeToIndex[_time] = m_Front;
-		m_Front = fe_wrap(m_Front + 1, (size_type)0, m_Data.capacity()); // This figures out where the next record will go in the circular buffer
-#endif
-	}
-
-	// Pops off records until 'back' is at the given time
-	void pop(time_type _time)
-	{
-		if (m_Data.empty())
-			return;
-
-		while (back().time < _time)
-		{
-			if (m_Data.size() == 1) break;
-#ifdef FE_HISTORY_USE_HASHSEARCH
-			m_TimeToIndex.erase(back().time);
-#endif
-			m_Data.pop_back();
-		}
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		fe_clamp(m_Front, (size_type)0, m_Data.size());
-#endif
-	}
-
-	void pop()
-	{
-		m_Data.pop_back();
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		fe_clamp(m_Front, (size_type)0, m_Data.size());
-#endif
-	}
-
-	void pop_front(time_type _time)
-	{
-		if (m_Data.empty())
-			return;
-
-		while (front().time > _time)
-		{
-			if (m_Data.size() == 1) break;
-#ifdef FE_HISTORY_USE_HASHSEARCH
-			m_TimeToIndex.erase(front().time);
-#endif
-			m_Data.pop_front();
-		}
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		fe_clamp(m_Front, (size_type)0, m_Data.size());
-#endif
-	}
-
-	void erase_before(iterator _back)
-	{
-		if (m_Data.empty() || _back == m_Data.begin())
-			return;
-
-		m_Data.rerase(_back - 1, m_Data.begin());
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		fe_clamp(m_Front, (size_type)0, m_Data.size());
-#endif
-	}
-
-	void erase_after(iterator _front)
-	{
-		if (m_Data.empty() || _front == m_Data.end())
-			return;
-
-		m_Data.erase(_front + 1, m_Data.end());
-
-#ifdef FE_HISTORY_USE_HASHSEARCH
-		fe_clamp(m_Front, (size_type)0, m_Data.size());
-#endif
-	}
-
-	bool empty()
-	{
-		return m_Data.empty();
-	}
-
-	size_type size() const
-	{
-		return m_Data.size();
-	}
-
-	size_type capacity() const
-	{
-		return m_Data.capacity();
-	}
-
-	void clear()
-	{
-		m_Data.clear();
-	}
-
-	record_type& back()
-	{
-		return oldest();
-	}
-
-	record_type& front()
-	{
-		return newest();
-	}
-
-	reference oldest()
-	{
-		return m_Data.back();
-	}
-
-	reference newest()
-	{
-		return m_Data.front();
-	}
-
-	const_reference oldest() const
-	{
-		return m_Data.back();
-	}
-
-	const_reference newest() const
-	{
-		return m_Data.front();
-	}
-
-	iterator begin()
-	{
-		return m_Data.begin();
-	}
-
-	const_iterator begin() const
-	{
-		return m_Data.begin();
-	}
-
-	iterator end()
-	{
-		return m_Data.end();
-	}
-
-	const_iterator end() const
-	{
-		return m_Data.end();
-	}
-
-	void previous(iterator &it)
-	{
-		if (it == begin())
-			it = end() - 1;
-		else
-			--it;
-	}
-
-	container_type m_Data;
-#ifdef FE_HISTORY_USE_HASHSEARCH
-	size_type m_Front;
-	timetoindex_map_type m_TimeToIndex;
-#endif
-};
+// Simulation speed
+const unsigned int split = 33;
 
 class TestApp : public CL_ClanApplication
 {
@@ -378,7 +42,7 @@ class TestApp : public CL_ClanApplication
 		{
 		}
 	};
-	typedef History<Action> ActionHistory;
+	typedef HistoryBuffer<Action> ActionHistory;
 	struct Command
 	{
 		Command()
@@ -403,7 +67,7 @@ class TestApp : public CL_ClanApplication
 
 		bool up, down, left, right;
 	};
-	typedef History<Command> CommandHistory;
+	typedef HistoryList<Command> CommandHistory;
 
 	class Ship
 	{
@@ -461,8 +125,36 @@ class TestApp : public CL_ClanApplication
 
 		void saveCommand(unsigned long tick)
 		{
-			commandList.push(tick, Command(up, down, left, right));
+			commandList.add(tick, Command(up, down, left, right));
 		}
+
+		void saveCommand(unsigned long tick, const Command &command)
+		{
+			commandList.add(tick, command);
+		}
+
+		//void changeCommand(unsigned long tick, const Command &command)
+		//{
+		//	CommandHistory::iterator _where = commandList.find_closest(tick);
+		//	if (_where == commandList.end())
+		//	{
+		//		commandList.add(tick, command);
+		//		return;
+		//	}
+
+		//	if (_where->first == tick)
+		//	{
+		//		commandList.set(_where, tick, command);
+		//		return;
+		//	}
+
+		//	if (_where->first > tick && _where != commandList.begin())
+		//		--_where;
+		//	else if (_where->first < tick)
+		//		++_where;
+		//		
+		//	commandList.insert(_where, tick, command);
+		//}
 
 		bool checkCommand(unsigned long tick, const Command &expected)
 		{
@@ -470,13 +162,13 @@ class TestApp : public CL_ClanApplication
 			if (_where == commandList.end())
 				return true;
 
-			if (_where->time > tick)
+			if (_where->first > tick)
 				if (_where == commandList.begin())
 					return true;
 				else
 					--_where;
 
-			return _where->value != expected;
+			return _where->second != expected;
 		}
 
 		void rewindCommand(unsigned long tick)
@@ -488,27 +180,27 @@ class TestApp : public CL_ClanApplication
 			if (currentCommand == commandList.end())
 				return;
 
-			if (currentCommand->time > tick && currentCommand != commandList.begin())
+			if (currentCommand->first > tick && currentCommand != commandList.begin())
 				--currentCommand;
 
 			// Confirm the found command (in case the buffer is out of order)
-			if (currentCommand->time > tick)
+			if (currentCommand->first > tick)
 			{
 				currentCommand = commandList.begin();
-				for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->time < tick; ++it)
+				for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->first < tick; ++it)
 				{
 					// Find the command closest to the given tick
-					if (tick - it->time < tick - currentCommand->time)
+					if (tick - it->first < tick - currentCommand->first)
 						currentCommand = it;
 				}
 				if (currentCommand == commandList.end())
 					return;
 
-				if (currentCommand->time > tick && currentCommand != commandList.begin())
+				if (currentCommand->first > tick && currentCommand != commandList.begin())
 					--currentCommand;
 			}
 
-			Command &command = currentCommand->value;
+			Command &command = currentCommand->second;
 			up = command.up;
 			down = command.down;
 			left = command.left;
@@ -517,14 +209,13 @@ class TestApp : public CL_ClanApplication
 
 		void nextCommand()
 		{
-			if (commandList.empty())
+			if (commandList.empty() || currentCommand == commandList.end())
 				return;
 
-			//commandList.next(currentCommand);
 			if (++currentCommand == commandList.end())
 				return;
 
-			Command &command = currentCommand->value;
+			Command &command = currentCommand->second;
 			up = command.up;
 			down = command.down;
 			left = command.left;
@@ -544,33 +235,38 @@ class TestApp : public CL_ClanApplication
 			//commandList.previous(end);
 			//CommandHistory::iterator nextCommand = currentCommand;
 			//commandList.next(nextCommand);
-			//while (nextCommand != end && nextCommand->time < tick)
+			//while (nextCommand != end && nextCommand->first < tick)
 			//{
 			//	// Find the command closest to the given tick
-			//	if (tick - nextCommand->time < tick - currentCommand->time)
+			//	if (tick - nextCommand->first < tick - currentCommand->first)
 			//		currentCommand = nextCommand;
 			//	commandList.next(nextCommand);
 			//}
 
 			// Make sure we start the search before the requested tick
-			if (currentCommand->time > tick)
+			if (currentCommand->first > tick)
 				currentCommand = commandList.begin();
 
-			for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->time < tick; ++it)
+			for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->first < tick; ++it)
 			{
 				// Find the command closest to the given tick
-				if (tick - it->time < tick - currentCommand->time)
+				if (tick - it->first < tick - currentCommand->first)
 					currentCommand = it;
 			}
 
 			if (currentCommand == commandList.end())
 				return;
 
-			Command &command = currentCommand->value;
+			Command &command = currentCommand->second;
 			up = command.up;
 			down = command.down;
 			left = command.left;
 			right = command.right;
+		}
+
+		void cullCommands(unsigned long tick)
+		{
+			commandList.remove_before(tick);
 		}
 
 		void saveAction(unsigned long tick)
@@ -593,7 +289,7 @@ class TestApp : public CL_ClanApplication
 			if (_where == actionList.end())
 				return false;
 
-			Action &action = _where->value;
+			Action &action = _where->second;
 			return !fe_fequal(action.x, expected.x, e) || !fe_fequal(action.y, expected.y, e);
 		}
 
@@ -608,7 +304,7 @@ class TestApp : public CL_ClanApplication
 			if (currentAction == actionList.end())
 				return false;
 
-			Action &action = currentAction->value;
+			Action &action = currentAction->second;
 			if (!fe_fequal(action.x, x, 0.5f) || !fe_fequal(action.y, y, 0.5f))
 				return false;
 			
@@ -624,14 +320,14 @@ class TestApp : public CL_ClanApplication
 		bool rewindAction(unsigned long tick)
 		{
 			if (actionList.empty())
-				return false;
+				return true;
 
 			currentAction = actionList.find(tick);
 			if (currentAction == actionList.end())
 				return false;
 
 			actionList.erase_after(currentAction);
-			Action &action = currentAction->value;
+			Action &action = currentAction->second;
 			x = action.x;
 			y = action.y;
 
@@ -640,21 +336,15 @@ class TestApp : public CL_ClanApplication
 
 		void cullActions()
 		{
-			actionList.erase_before(currentAction);
+			actionList.clear();
+			//actionList.erase_before(currentAction);
 		}
 
-		/*void nextAction()
-		{
-			if (actionList.empty())
-				return;
-
-			Action &action = ++currentAction->value;
-			x = action.x;
-			y = action.y;
-		}*/
 	};
 
 	unsigned long m_CommandNumber, m_LatestReceivedTick;
+
+	float m_WorldWidth, m_WorldHeight;
 
 	typedef std::tr1::shared_ptr<Ship> ShipPtr;
 	// For server side
@@ -683,9 +373,46 @@ class TestApp : public CL_ClanApplication
 		if (CL_Keyboard::get_keycode(CL_KEY_RIGHT))
 			myShip->right = true;
 		else
-		{
 			myShip->right = false;
+	}
+
+	bool is_local(const ShipPtr ship, const ShipMap myShips)
+	{
+		return ship->local;
+		//return myShips.find(ship->id) != myShips.end();
+	}
+
+	// Correct prediction errors
+	void correct(const ShipPtr ship, unsigned long commandNumber, const Action& correctAction)
+	{
+		std::cout << "Correcting action " << commandNumber << "...";
+		//ship->rewindAction(commandNumber);
+		ship->cullActions(); // Current action is confirmed (erase previous actions)
+		ship->x = correctAction.x;
+		ship->y = correctAction.y;
+		ship->saveAction(commandNumber);
+		ship->rewindCommand(commandNumber);
+		for (unsigned long t = commandNumber; t <= m_CommandNumber; t++)
+		{
+			// Redo simulation
+			float up = ship->up ? -1.f : 0.f;
+			float down = ship->down ? 1.f : 0.f;
+			float left = ship->left ? -1.f : 0.f;
+			float right = ship->right ? 1.f : 0.f;
+			ship->x += 0.2f * split * (left + right);
+			ship->y += 0.2f * split * (up + down);
+
+			fe_clamp(ship->x, 0.f, m_WorldWidth);
+			fe_clamp(ship->y, 0.f, m_WorldHeight);
+
+			ship->saveAction(commandNumber);
+			ship->nextCommand(t);
 		}
+		// Make sure we're back on the current command
+		ship->nextCommand();
+
+		std::cout << " Server state: " << correctAction.x << "," << correctAction.y
+			<< "  Current local state " << ship->x << "," << ship->y << std::endl;
 	}
 
 	virtual int main(int argc, char **argv)
@@ -705,6 +432,9 @@ class TestApp : public CL_ClanApplication
 		bool client = false, server = false;
 		int maxPlayers = 16;
 		std::string host = "127.0.0.1";
+
+		m_WorldWidth = (float)display.get_width();
+		m_WorldHeight = (float)display.get_height();
 		
 		while (m_Argp.next())
 		{
@@ -751,9 +481,6 @@ class TestApp : public CL_ClanApplication
 		CL_ResourceManager resources("font.xml");
 		CL_Font font1("Font1", &resources);
 
-		// Simulation speed
-		const unsigned int split = 33;
-
 		m_CommandNumber = 0;
 		m_LatestReceivedTick = 0;
 
@@ -764,6 +491,7 @@ class TestApp : public CL_ClanApplication
 			IPacket* p;
 			NetShipMap clientShips;
 			unsigned int nextId = 0;
+			ActionHistory corrections(1000);
 
 			try
 			{
@@ -859,7 +587,83 @@ class TestApp : public CL_ClanApplication
 							clientShips[p->GetSystemHandle()] = ship;
 						}
 
-						else if (p->GetType() == MTID_ENTITYFRAME)
+						else if (p->GetType() == MTID_IMPORTANTMOVE)
+						{
+							ObjectID object_id;
+							unsigned long commandNumber;
+
+							const NetHandle &systemHandle = p->GetSystemHandle();
+							ShipPtr ship = clientShips[systemHandle];
+
+							RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), true);
+							bits.Read(object_id);
+
+							if (object_id != ship->id)
+								std::cout << "Warning: A client is sending data for another client's ship" << std::endl;
+
+							bits.Read(commandNumber);
+
+							bits.Read(ship->up);
+							bits.Read(ship->down);
+							bits.Read(ship->left);
+							bits.Read(ship->right);
+
+							ship->saveCommand(commandNumber);
+
+							// Lag compensation (check that the given ship is more-or-less in sync)
+							//if (needsCorrection/* || ship->checkAction(commandNumber, x, y)*/)
+							{
+								//typedef ShipWptr std::tr1::weak_ptr<Ship>;
+								typedef std::list<ShipPtr> rewindList;
+								rewindList rewindable;
+								// The rewind can only happen if there is a suitable stored action
+								ship->rewindAction(commandNumber);
+								{
+									rewindable.push_back(ship);
+
+									// Rewind everyone
+									for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+									{
+										ShipPtr rewindingShip = it->second;
+										if (rewindingShip->id == ship->id) // this ship has already been rewound
+											continue;
+
+										// We can only rewind ships that we have data for at the given tick
+										if (rewindingShip->rewindAction(commandNumber))
+										{
+											//rewindingShip.clearActionsAfter(commandNumber);
+											rewindingShip->rewindCommand(commandNumber);
+											rewindable.push_back(rewindingShip);
+										}
+									}
+									// Simulate up to the current tick
+									for (unsigned long t = commandNumber; t <= ship->currentTick; t++)
+									{
+										//ship->saveCommand(t);
+										for (rewindList::iterator it = rewindable.begin(), end = rewindable.end(); it != end; ++it)
+										{
+											ShipPtr simShip = (*it);
+											//if (simShip->id != ship->id)
+											simShip->nextCommand(t);
+
+											float up = simShip->up ? -1.f : 0.f;
+											float down = simShip->down ? 1.f : 0.f;
+											float left = simShip->left ? -1.f : 0.f;
+											float right = simShip->right ? 1.f : 0.f;
+											simShip->x += 0.2f * split * (left + right);
+											simShip->y += 0.2f * split * (up + down);
+
+											fe_clamp(simShip->x, 0.f, m_WorldWidth);
+											fe_clamp(simShip->y, 0.f, m_WorldHeight);
+
+											simShip->saveAction(t);
+										}
+									}
+								}
+							}
+						}
+
+						else if (p->GetType() == MTID_ENTITYMOVE)
 						{
 							ObjectID object_id;
 							unsigned long commandNumber;
@@ -883,9 +687,10 @@ class TestApp : public CL_ClanApplication
 
 							bool needsCorrection = ship->checkCommand(commandNumber, ship->GetCommand());
 
-							ship->saveCommand(commandNumber);
-
 							ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
+							//ship->currentTick = ship->mostRecentCommand;
+							// Sanity check
+							fe_clamp(ship->currentTick, (unsigned long)0, m_CommandNumber);
 
 							float x, y;
 
@@ -893,62 +698,12 @@ class TestApp : public CL_ClanApplication
 							bits.Read(y);
 
 							if (previousCommand != ship->GetCommand())
-								std::cout << commandNumber << " (important)" << (needsCorrection ? " correcting" : "") << std::endl;
-
-							// Lag compensation (check that the given ship is more-or-less in sync)
-							if (needsCorrection/* || ship->checkAction(commandNumber, x, y)*/)
 							{
-								//typedef ShipWptr std::tr1::weak_ptr<Ship>;
-								typedef std::list<ShipPtr> rewindList;
-								rewindList rewindable;
-								// The rewind can only happen if there is a suitable stored action
-								if (ship->rewindAction(commandNumber))
-								{
-									rewindable.push_back(ship);
-
-									// Rewind everyone
-									for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
-									{
-										ShipPtr rewindingShip = it->second;
-										if (rewindingShip->id == ship->id) // out-of-sync ship has already been rewound
-											continue;
-
-										// We can only rewind ships that we have data for at the given tick
-										if (rewindingShip->rewindAction(commandNumber))
-										{
-											//rewindingShip.clearActionsAfter(commandNumber);
-											rewindingShip->rewindCommand(commandNumber);
-											rewindable.push_back(rewindingShip);
-										}
-									}
-									// Simulate up to the current tick
-									for (unsigned int t = commandNumber; t < ship->currentTick; t++)
-									{
-										//ship->saveCommand(t);
-										for (rewindList::iterator it = rewindable.begin(), end = rewindable.end(); it != end; ++it)
-										{
-											ShipPtr simShip = (*it);
-											//if (simShip->id != ship->id)
-											simShip->nextCommand(t);
-
-											float up = simShip->up ? -1.f : 0.f;
-											float down = simShip->down ? 1.f : 0.f;
-											float left = simShip->left ? -1.f : 0.f;
-											float right = simShip->right ? 1.f : 0.f;
-											simShip->x += 0.3f * split * (left + right);
-											simShip->y += 0.3f * split * (up + down);
-
-											fe_clamp(simShip->x, 0.f, (float)display.get_width());
-											fe_clamp(simShip->y, 0.f, (float)display.get_height());
-
-											simShip->saveAction(t);
-										}
-									}
-								}
+								std::cout << commandNumber << " (important)" << (needsCorrection ? " correcting" : "") << std::endl;
 							}
 
 							// Tell the client if it has made a prediction error
-							if (ship->checkAction(commandNumber, Action(x, y), 1.05f))
+							if (ship->checkAction(commandNumber, Action(x, y), 1.0f))
 							{
 								RakNet::BitStream correctionBits;
 								bits.Write(ship->id);
@@ -957,8 +712,10 @@ class TestApp : public CL_ClanApplication
 								bits.Write(ship->x);
 								bits.Write(ship->y);
 
+								corrections.push(commandNumber, Action(ship->x, ship->y));
+
 								m_Network->Send(true, MTID_CORRECTION, (char*)correctionBits.GetData(), correctionBits.GetNumberOfBytesUsed(),
-									FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 1, systemHandle);
+									FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE_ORDERED, 1, systemHandle);
 							}
 						}
 
@@ -975,35 +732,111 @@ class TestApp : public CL_ClanApplication
 						for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 						{
 							ShipPtr ship = it->second;
+							if (ship->currentTick <= ship->mostRecentCommand)
+							{
+								// Simulate
+								float up = ship->up ? -1.f : 0.f;
+								float down = ship->down ? 1.f : 0.f;
+								float left = ship->left ? -1.f : 0.f;
+								float right = ship->right ? 1.f : 0.f;
+								ship->x += 0.2f * split * (left + right);
+								ship->y += 0.2f * split * (up + down);
 
-							// Simulate
-							float up = ship->up ? -1.f : 0.f;
-							float down = ship->down ? 1.f : 0.f;
-							float left = ship->left ? -1.f : 0.f;
-							float right = ship->right ? 1.f : 0.f;
-							ship->x += 0.3f * split * (left + right);
-							ship->y += 0.3f * split * (up + down);
+								fe_clamp(ship->x, 0.f, m_WorldWidth);
+								fe_clamp(ship->y, 0.f, m_WorldHeight);
 
-							fe_clamp(ship->x, 0.f, (float)display.get_width());
-							fe_clamp(ship->y, 0.f, (float)display.get_height());
+								//ship->saveCommand(m_CommandNumber);
+								ship->saveAction(ship->currentTick);
 
-							//ship->saveCommand(m_CommandNumber);
-							ship->saveAction(ship->currentTick);
-
-							++ship->currentTick;
+								++ship->currentTick;
+							}
 						}
 
 						m_CommandNumber++;
 					}
 
+					//// Rewind all ships as far as they can go
+					//unsigned long oldestTick = m_CommandNumber;
+					//for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+					//{
+					//	ShipPtr rewindingShip = it->second;
+
+					//	unsigned long commandNumber = rewindingShip->actionList.oldest().first;
+
+					//	oldestTick = fe_min(commandNumber, oldestTick);
+
+					//	// We can only rewind ships that we have data for at the given tick
+					//	if (rewindingShip->rewindAction(commandNumber))
+					//	{
+					//		rewindingShip->rewindCommand(commandNumber);
+					//	}
+					//}
+
+					//// Simulate up to the current tick
+					//for (unsigned int t = oldestTick; t < m_CommandNumber; t++)
+					//{
+					//	//ship->saveCommand(t);
+					//	for (NetShipMap::iterator it = clientShips.begin(), end = clientShips.end(); it != end; ++it)
+					//	{
+					//		ShipPtr simShip = it->second;
+					//		// check 
+					//		if (simShip->currentTick < t)
+					//			continue;
+
+					//		simShip->nextCommand(t);
+
+					//		float up = simShip->up ? -1.f : 0.f;
+					//		float down = simShip->down ? 1.f : 0.f;
+					//		float left = simShip->left ? -1.f : 0.f;
+					//		float right = simShip->right ? 1.f : 0.f;
+					//		simShip->x += 0.2f * split * (left + right);
+					//		simShip->y += 0.2f * split * (up + down);
+
+					//		fe_clamp(simShip->x, 0.f, (float)display.get_width());
+					//		fe_clamp(simShip->y, 0.f, (float)display.get_height());
+
+					//		simShip->saveAction(t);
+					//	}
+					//}
+
+					CL_Color drawColor = CL_Color::azure;
+					drawColor.set_alpha(80);
+					CL_Color correctionColor = CL_Color::red;
+					drawColor.set_alpha(85);
 					for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 					{
 						ShipPtr ship = it->second;
 
-						// Draw debug info
-						display.get_gc()->draw_rect(CL_Rectf(ship->x, ship->y, ship->x + 10, ship->y + 10), CL_Color::black);
+						// Draw debug infoc
+						font1.set_alpha(100);
+						for (ActionHistory::iterator actIt = corrections.begin(), actEnd = corrections.end();
+							actIt != actEnd; ++actIt)
+						{
+							Action& act = actIt->second;
+							display.get_gc()->fill_rect(CL_Rectf(act.x, act.y, act.x + 10, act.y + 10), correctionColor);
+						}
+						for (ActionHistory::iterator actIt = ship->actionList.begin(), actEnd = ship->actionList.end();
+							actIt != actEnd; ++actIt)
+						{
+							// Draw history buffers
+							Action& act = actIt->second;
+							display.get_gc()->fill_rect(CL_Rectf(act.x, act.y, act.x + 10, act.y + 10), drawColor);
+
+							CommandHistory::iterator whatCommand = ship->commandList.find(actIt->first);
+							if (whatCommand != ship->commandList.end())
+							{
+								std::string commandStr = CL_String::from_int((int)actIt->first);
+								commandStr += CL_String::format("%1%2%3%4", 
+									(whatCommand->second.up ? "up" : ""),
+									(whatCommand->second.down ? "down" : ""),
+									(whatCommand->second.left ? "left" : ""),
+									(whatCommand->second.right ? "right" : ""));
+								font1.draw((int)act.x-16, (int)act.y-2, commandStr);
+							}
+						}
+						font1.set_alpha(255);
 						display.get_gc()->fill_rect(CL_Rectf(ship->x, ship->y, ship->x + 10, ship->y + 10), CL_Color::darkblue);
-						font1.draw(ship->x, ship->y + 12, CL_String::from_double(ship->currentTick));
+						font1.draw((int)ship->x, (int)ship->y + 14, CL_String::from_int((int)ship->currentTick));
 
 						if ((ship->sendDelay -= frameTime) <= 0)
 						{
@@ -1025,7 +858,7 @@ class TestApp : public CL_ClanApplication
 							for (NetShipMap::iterator client = clientShips.begin(); client != clientShips.end(); ++client)
 							{
 								NetHandle clientHandle = (*client).first;
-								m_Network->Send(true, MTID_ENTITYFRAME, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
+								m_Network->Send(true, MTID_ENTITYMOVE, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
 									FusionEngine::HIGH_PRIORITY, FusionEngine::UNRELIABLE_SEQUENCED, 1, clientHandle);
 							}
 						} // end if (should send)
@@ -1181,43 +1014,23 @@ class TestApp : public CL_ClanApplication
 							RakStream bits(p);
 							bits.Read(object_id);
 
-							ShipMap::iterator _where = ships.find(object_id);
-							if (_where != ships.end())
+							ShipMap::iterator _who = ships.find(object_id);
+							if (_who != ships.end())
 							{
-								ShipPtr ship = _where->second;
+								ShipPtr ship = _who->second;
 								bits.Read(commandNumber);
 
 								float x = 0.f, y = 0.f;
 								bits.Read(x);
 								bits.Read(y);
 
-								// Correct prediction errors
-								{
-									ship->rewindAction(commandNumber);
-									ship->cullActions(); // Current action is confirmed (erase previous actions)
-									for (unsigned int t = commandNumber; t < m_CommandNumber; t++)
-									{
-										ship->nextCommand(t);
-										// Redo simulation
-										float up = ship->up ? -1.f : 0.f;
-										float down = ship->down ? 1.f : 0.f;
-										float left = ship->left ? -1.f : 0.f;
-										float right = ship->right ? 1.f : 0.f;
-										ship->x += 0.3f * split * (left + right);
-										ship->y += 0.3f * split * (up + down);
-
-										fe_clamp(ship->x, 0.f, (float)display.get_width());
-										fe_clamp(ship->y, 0.f, (float)display.get_height());
-
-										ship->saveAction(commandNumber);
-									}
-									// Make sure we're back on the current command
-									ship->nextCommand();
-								}
+								ship->cullActions();
+								ship->cullCommands(commandNumber);
+								correct(ship, commandNumber, Action(x, y));
 							}
 						}
 
-						if (p->GetType() == MTID_ENTITYFRAME)
+						if (p->GetType() == MTID_ENTITYMOVE)
 						{
 							ObjectID object_id;
 							unsigned long commandNumber;
@@ -1243,27 +1056,35 @@ class TestApp : public CL_ClanApplication
 								bits.Read(x);
 								bits.Read(y);
 
-								if (ship->mostRecentCommand < commandNumber)
+								if (is_local(ship, myShips))
 								{
-									ship->mostRecentCommand = commandNumber;
-									ship->net_x = x;
-									ship->net_y = y;
-
-									//! \todo build interpolation into a network var class (replace ship::x/ship::y with said class)
-									if (m_Interpolate && (!ship->local || !(ship->up && ship->down && ship->left && ship->right)))
+									if (ship->checkAction(commandNumber, Action(x, y), 1.0f))
+										correct(ship, commandNumber, Action(x, y));
+								}
+								else
+								{
+									if (ship->mostRecentCommand < commandNumber)
 									{
-										if (abs(m_Tightness - s_DefaultTightness) < 0.009f && abs(ship->x - x) > 0.1f)
-											m_Tightness = s_SmoothTightness;
+										ship->mostRecentCommand = commandNumber;
+										/*ship->net_x = x;
+										ship->net_y = y;*/
+										
+										//! \todo build interpolation into a network var class (replace ship::x/ship::y with said class)
+										if (m_Interpolate && (!ship->local || !(ship->up && ship->down && ship->left && ship->right)))
+										{
+											if (abs(m_Tightness - s_DefaultTightness) < 0.009f && abs(ship->x - x) > 0.1f)
+												m_Tightness = s_SmoothTightness;
 
-										ship->x = ship->x + (x - ship->x) * m_Tightness;
-										ship->y = ship->y + (y - ship->y) * m_Tightness;
+											ship->x = ship->x + (x - ship->x) * m_Tightness;
+											ship->x = ship->x + (y - ship->x) * m_Tightness;
 
-										m_Tightness += (s_DefaultTightness - m_Tightness) * 0.01f;
-									}
-									else
-									{
-										ship->x = x;
-										ship->y = y;
+											m_Tightness += (s_DefaultTightness - m_Tightness) * 0.01f;
+										}
+										else
+										{
+											ship->x = x;
+											ship->y = y;
+										}
 									}
 								}
 
@@ -1297,9 +1118,9 @@ class TestApp : public CL_ClanApplication
 						continue;
 
 					// Interpolate ticks to catch up with server
-					long tickDelta = m_LatestReceivedTick - m_CommandNumber;
-					if (abs(tickDelta) > 1000)
-						m_CommandNumber += (unsigned long)((m_LatestReceivedTick - m_CommandNumber) * 0.1f);
+					//long tickDelta = m_LatestReceivedTick - m_CommandNumber;
+					//if (abs(tickDelta) > 1000)
+					//	m_CommandNumber += (long)((m_LatestReceivedTick - m_CommandNumber) * 0.1f);
 
 					long frameTimeLeft = frameTime;
 					while (frameTimeLeft >= split)
@@ -1316,13 +1137,17 @@ class TestApp : public CL_ClanApplication
 							float down = myShip->down ? 1.f : 0.f;
 							float left = myShip->left ? -1.f : 0.f;
 							float right = myShip->right ? 1.f : 0.f;
-							myShip->x += 0.3f * split * (left + right);
-							myShip->y += 0.3f * split * (up + down);
+							myShip->x += 0.2f * split * (left + right);
+							myShip->y += 0.2f * split * (up + down);
 
-							fe_clamp(myShip->x, 0.f, (float)display.get_width());
-							fe_clamp(myShip->y, 0.f, (float)display.get_height());
+							fe_clamp(myShip->x, 0.f, m_WorldWidth);
+							fe_clamp(myShip->y, 0.f, m_WorldHeight);
 
-							bool importantCommand = myShip->commandList.front().value != myShip->GetCommand();
+							myShip->saveAction(m_CommandNumber);
+
+							bool importantCommand = false;
+							if (!myShip->commandList.empty())
+								importantCommand = myShip->commandList.newest().second != myShip->GetCommand();
 							if (importantCommand || (myShip->sendDelay -= split) <= 0)
 							{
 								myShip->sendDelay = s_SendInterval;
@@ -1341,13 +1166,13 @@ class TestApp : public CL_ClanApplication
 
 								// Actions only have to be saved for sent commands, since the server wont make corrections
 								//  to actions it doesn't know we've taken!
-								myShip->saveAction(m_CommandNumber);
+								//myShip->saveAction(m_CommandNumber);
 								myShip->saveCommand(m_CommandNumber);
 
 								if (importantCommand)
 									std::cout << m_CommandNumber << " (important)" << std::endl;
 
-								m_Network->Send(true, MTID_ENTITYFRAME, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
+								m_Network->Send(true, importantCommand ? MTID_IMPORTANTMOVE : MTID_ENTITYMOVE, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
 									FusionEngine::HIGH_PRIORITY, importantCommand ? FusionEngine::RELIABLE : FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);
 							}
 						}
@@ -1358,6 +1183,41 @@ class TestApp : public CL_ClanApplication
 					for (ShipMap::iterator it = ships.begin(); it != ships.end(); ++it)
 					{
 						ShipPtr ship = it->second;
+						if (CL_Keyboard::get_keycode('H'))
+						{
+							for (ActionHistory::iterator actIt = ship->actionList.begin(), actEnd = ship->actionList.end();
+								actIt != actEnd; ++actIt)
+							{
+								Action &act = actIt->second;
+								CL_Surface_DrawParams2 dp;
+								dp.srcX = 0;
+								dp.srcY = 0;
+								dp.srcWidth = shipSurface->get_width();
+								dp.srcHeight = shipSurface->get_height();
+								dp.destX = act.x;
+								dp.destY = act.y;
+								dp.destZ = 0.0;
+								dp.red = 0.99;
+								dp.green = 1.0;
+								dp.blue = 0.8;
+								dp.alpha = 0.4;
+
+								shipSurface->get_blend_func(dp.blend_src, dp.blend_dest);
+
+								dp.scale_x = 1.0;
+								dp.scale_y = 1.0;
+								dp.translate_origin = origin_top_left;
+								dp.translate_x = 0;
+								dp.translate_y = 0;
+								dp.rotate_angle = 0;
+								dp.rotate_pitch = 0;
+								dp.rotate_yaw = 0;
+								dp.rotate_origin = origin_center;
+								dp.rotate_x = 0;
+								dp.rotate_y = 0;
+								shipSurface->draw(dp);
+							}
+						}
 						shipSurface->draw(ship->x, ship->y);
 						font1.draw((int)ship->x, (int)ship->y, CL_String::from_int(ship->id));
 					}

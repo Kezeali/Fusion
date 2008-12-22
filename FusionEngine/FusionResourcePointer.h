@@ -48,7 +48,7 @@
  * Otherwise boost::shared_ptr will be used. <br>
  * Using shared_ptr makes the implementation much simpler on my side :)
  */
-#define FSN_RESOURCEPOINTER_USE_WEAKPTR
+//#define FSN_RESOURCEPOINTER_USE_WEAKPTR
 
 namespace FusionEngine
 {

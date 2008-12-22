@@ -180,7 +180,7 @@ namespace FusionEngine
 		//! Specifically for StringLoader
 		/*!
 		 * Allows StringLoader to save memory by making the Data property point directly
-		 * to the Path property (yes, this is very dumb... but I can't think of a better way '_')
+		 * to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
 		 */
 		std::string *_getTextPtr()
 		{
