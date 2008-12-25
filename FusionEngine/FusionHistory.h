@@ -54,110 +54,47 @@ namespace FusionEngine
 		T value;
 	};
 
-	template <class Kt, class T, class Cont2>
-	class MirroredValueManager
-	{
-	public:
-		typedef typename MirroredValue<T> mirroredvalue_type;
-		typedef typename mirroredvalue_type::value_ptr value_ptr;
+	//class MirroredValueManager
+	//{
+	//public:
+	//	typedef typename MirroredValue<T> mirroredvalue_type;
+	//	typedef typename mirroredvalue_type::value_ptr value_ptr;
 
-		typedef std::tr1::unordered_map<Kt, T> indexer_type;
+	//	typedef std::tr1::unordered_map<Kt, T> indexer_type;
 
-		//! Initialize a new mirrored value container manager
-		MirroredValueManager()
-		{
-		}
+	//	//! Initialize a new mirrored value container manager
+	//	MirroredValueManager()
+	//	{
+	//	}
 
-		//! Copy data from the given containers
-		MirroredValueManager(const indexer_type& indexer, const Cont2& cont2)
-			: m_cont1(cont1), m_cont2(cont2)
-		{
-		}
+	//	//! Copy data from the given containers
+	//	MirroredValueManager(const indexer_type& indexer, const Cont2& cont2)
+	//		: m_cont1(cont1), m_cont2(cont2)
+	//	{
+	//	}
 
-		void Add(const Kt& key, const T& value)
-		{
-			value_ptr valuePtr(new T(value));
-			mirroredvalue_type indexerMv(valuePtr, this, 1);
-			mirroredvalue_type containerMv(valuePtr, this 2);
+	//	void Add(const Kt& key, const T& value)
+	//	{
+	//		value_ptr valuePtr(new T(value));
+	//		mirroredvalue_type indexerMv(valuePtr, this, 1);
+	//		mirroredvalue_type containerMv(valuePtr, this 2);
 
-			m_indexer.insert(indexer_type::value_type(key, indexerMv));
-			m_cont2.push_back(containerMv);
-		}
+	//		m_indexer.insert(indexer_type::value_type(key, indexerMv));
+	//		m_cont2.push_back(containerMv);
+	//	}
 
-		void Remove(mirroredvalue_type *mirroredValue)
-		{
-			if (mirroredValue->m_container == 2)
-				m_cont1.erase(mirroredValue->m_iterator);
-			else if (mirroredValue->m_container == 1)
-				m_cont2.erase(mirroredValue->m_iterator);
-		}
+	//	void Remove(mirroredvalue_type *mirroredValue)
+	//	{
+	//		if (mirroredValue->m_container == 2)
+	//			m_cont1.erase(mirroredValue->m_iterator);
+	//		else if (mirroredValue->m_container == 1)
+	//			m_cont2.erase(mirroredValue->m_iterator);
+	//	}
 
-	protected:
-		indexer_type m_indexer;
-		Cont2 m_cont2;
-	};
-
-	//! Use this class to share a value between two containers
-	template <class T>
-	class MirroredValue
-	{
-	public:
-		typedef std::tr1::shared_ptr<T> value_ptr;
-
-		MirroredValue()
-			: m_container(0),
-			m_manager(NULL)
-		{
-		}
-
-	private:
-		MirroredValue(const value_ptr &_value, const MirroredValueManager const* manager, int container)
-			: m_value(_value),
-			m_manager(manager),
-			m_container(container)
-		{
-		}
-
-		MirroredValue(const MirroredValue& other)
-			: m_value(other.m_value),
-			m_manager(other.m_manager),
-			m_container(other.m_container)
-		{
-		}
-
-	public:
-		~MirroredValue()
-		{
-			if (m_manager != NULL)
-				m_manager->Remove(this);
-		}
-
-		//! Indirect member access operator.
-		T* operator->()
-		{
-			return m_value.get();
-		}
-
-		T const* operator->() const
-		{
-			return (const T*)m_value.get();
-		}
-
-		T& operator*()
-		{
-			return *(m_value.get());
-		}
-
-		const T& operator*() const
-		{
-			return *(m_value.get());
-		}
-
-		value_ptr m_value;
-
-		MirroredValueManager* m_manager;
-		int m_container;
-	};
+	//protected:
+	//	indexer_type m_indexer;
+	//	Cont2 m_cont2;
+	//};
 
 	//! Probably better than HistoryBuffer in every way
 	template <class T, class Alloc = std::allocator<T>>
@@ -174,13 +111,79 @@ namespace FusionEngine
 		typedef typename container_type::reference reference;
 		typedef typename container_type::const_reference const_reference;
 
-		typedef std::tr1::unordered_map<time_type, iterator> timemap_type;
-		typedef typename timemap_type::value_type indexer_value_type;
+		typedef std::tr1::unordered_map<time_type, iterator> indexer_type;
+		typedef typename indexer_type::value_type indexer_value_type;
 
 		typedef size_t size_type;
 
+		typedef typename MirroredValue<T> mirroredvalue_type;
+		typedef typename mirroredvalue_type::value_ptr value_ptr;
 
-		timemap_type m_indexer;
+		template <class T, class Iter>
+		class MirroredValue
+		{
+		public:
+			typedef std::tr1::shared_ptr<T> value_ptr;
+
+			MirroredValue()
+				: //m_container(0),
+			m_manager(NULL)
+			{
+			}
+
+			MirroredValue(const value_ptr &_value, Iter it, const HistoryList const* manager)
+				: m_value(_value),
+				m_manager(manager),
+				m_iterator(it)
+			{
+			}
+
+			MirroredValue(const MirroredValue& other)
+				: m_value(other.m_value),
+				m_manager(other.m_manager),
+				m_iterator(other.it)
+			{
+			}
+
+			~MirroredValue()
+			{
+				if (m_manager != NULL)
+					m_manager->Remove(m_iterator);
+			}
+
+			void set_iterator(Iter it)
+			{
+			}
+
+			//! Indirect member access operator.
+			T* operator->()
+			{
+				return m_value.get();
+			}
+
+			T const* operator->() const
+			{
+				return (const T*)m_value.get();
+			}
+
+			T& operator*()
+			{
+				return *(m_value.get());
+			}
+
+			const T& operator*() const
+			{
+				return *(m_value.get());
+			}
+
+			value_ptr m_value;
+
+			MirroredValueManager* m_manager;
+			Iter m_iterator;
+		};
+
+
+		indexer_type m_indexer;
 		container_type m_data;
 
 		size_type m_size;
@@ -284,6 +287,19 @@ namespace FusionEngine
 		reference newest()
 		{
 			return back();
+		}
+
+		void _make_value()
+		{
+			value_ptr valuePtr(new T(value));
+			mirroredvalue_type mirroredValue(valuePtr, this);
+
+			indexer_type::iterator _where1 = m_indexer.insert(indexer_type::value_type(key, mirroredValue));
+			m_indexer[key].second.set_iterator(_where1);
+
+			m_data.push_back(mirroredValue);
+			iterator _where2 = m_data.end();
+			m_data.back().set_iterator(_where2);
 		}
 
 		//! Pushes a record on to the back of the history list
@@ -395,7 +411,7 @@ namespace FusionEngine
 			if (empty())
 				return end();
 
-			timemap_type::iterator _where = m_indexer.find(_time);
+			indexer_type::iterator _where = m_indexer.find(_time);
 			if(_where != m_indexer.end())
 				return _where->second;
 			else
