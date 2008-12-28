@@ -54,51 +54,331 @@ namespace FusionEngine
 		T value;
 	};
 
-	//class MirroredValueManager
+	// Garbage collected record
+	//template <class T>
+	//class GCRecord
 	//{
 	//public:
-	//	typedef typename MirroredValue<T> mirroredvalue_type;
-	//	typedef typename mirroredvalue_type::value_ptr value_ptr;
+	//	typedef unsigned long time_type;
+	//	typedef std::tr1::unordered_map<time_type, std::set<GCRecord<T>>::iterator> container_type;
 
-	//	typedef std::tr1::unordered_map<Kt, T> indexer_type;
-
-	//	//! Initialize a new mirrored value container manager
-	//	MirroredValueManager()
+	//	GCRecord()
+	//		: m_time(0)
+	//	{
+	//	}
+	//	GCRecord(time_type _time, const T& _value, container_type *container_ptr)
+	//		: m_time(_time), m_value(_value), m_container_ptr(container_ptr)
 	//	{
 	//	}
 
-	//	//! Copy data from the given containers
-	//	MirroredValueManager(const indexer_type& indexer, const Cont2& cont2)
-	//		: m_cont1(cont1), m_cont2(cont2)
+	//	~GCRecord()
 	//	{
+	//		m_container_ptr->erase(m_time);
 	//	}
 
-	//	void Add(const Kt& key, const T& value)
-	//	{
-	//		value_ptr valuePtr(new T(value));
-	//		mirroredvalue_type indexerMv(valuePtr, this, 1);
-	//		mirroredvalue_type containerMv(valuePtr, this 2);
+	//	time_type m_time;
+	//	T m_value;
 
-	//		m_indexer.insert(indexer_type::value_type(key, indexerMv));
-	//		m_cont2.push_back(containerMv);
-	//	}
+	//	container_type *m_container_ptr;
+	//};
 
-	//	void Remove(mirroredvalue_type *mirroredValue)
-	//	{
-	//		if (mirroredValue->m_container == 2)
-	//			m_cont1.erase(mirroredValue->m_iterator);
-	//		else if (mirroredValue->m_container == 1)
-	//			m_cont2.erase(mirroredValue->m_iterator);
-	//	}
+	// Most operations in log. time, find exact item in constant time
+	template <class T>
+	class HistorySet
+	{
+	public:
+		typedef unsigned long time_type;
 
-	//protected:
-	//	indexer_type m_indexer;
-	//	Cont2 m_cont2;
+		typedef std::pair<time_type, T> value_type;
+		//typedef Record<T> value_type;
+
+		struct record_before
+		{
+			bool operator()(const value_type& left, const value_type& right) const
+			{
+				return left.first < right.first;
+			}
+		};
+
+		typedef std::set<value_type, record_before> container_type;
+		typedef typename container_type::iterator iterator;
+		typedef typename container_type::const_iterator const_iterator;
+		typedef typename container_type::reference reference;
+		typedef typename container_type::const_reference const_reference;
+
+		//typedef std::tr1::unordered_map<time_type, iterator> indexer_type;
+		//typedef typename indexer_type::value_type indexer_value_type;
+
+		typedef size_t size_type;
+
+
+		//indexer_type m_indexer;
+		container_type m_data;
+
+		size_type m_capacity;
+
+		HistorySet()
+			: m_capacity(400)
+		{
+		}
+
+		HistorySet(size_type capacity)
+			: m_capacity(capacity)
+		{
+		}
+
+		bool empty() const
+		{
+			return size() == 0;
+		}
+
+		size_type size() const
+		{
+			return m_data.size();
+		}
+
+		//! If _capacity is < size(), data is completely erased (which is a bug, but not a significant one)
+		void set_capacity(size_type _capacity)
+		{
+			if (_capacity < m_data.size())
+				m_data.clear(); // BUG
+			//m_indexer.rehash((size_type)(_capacity * 1.5));
+
+			m_capacity = _capacity;
+		}
+
+		//T& operator[](time_type _key)
+		//{
+		//	iterator _where = m_indexer.find(_key);
+		//	if (_where == m_indexer.end())
+		//	{
+		//		add(_key, T());
+		//		return back();
+		//	}
+
+		//	return (**_where).m_value;
+		//}
+
+		iterator begin()
+		{
+			return m_data.begin();
+		}
+
+		iterator end()
+		{
+			return m_data.end();
+		}
+
+		const_iterator begin() const
+		{
+			return m_data.begin();
+		}
+
+		const_iterator end() const
+		{
+			return m_data.end();
+		}
+
+		reference front()
+		{
+			return *m_data.begin();
+		}
+
+		const_reference front() const
+		{
+			return *m_data.begin();
+		}
+
+		reference back()
+		{
+			return *(--m_data.end());
+		}
+
+		const_reference back() const
+		{
+			return *(--m_data.end());
+		}
+
+		reference oldest()
+		{
+			return front();
+		}
+
+		reference newest()
+		{
+			return back();
+		}
+
+		void push_back(time_type key, const T& value)
+		{
+			m_data.insert( end(), value_type(key, value) );
+			//m_indexer.insert( indexer_value_type(key, --end()) );
+			//++m_size;
+			clamp_to_capacity();
+		}
+
+		//! Pushes a record on to the front of the history list
+		void push_front(time_type key, const T& value)
+		{
+			m_data.insert( begin(), value_type(key, value) );
+			//m_indexer.insert( indexer_value_type(key, begin()) );
+			//++m_size;
+			clamp_to_capacity();
+		}
+
+		void insert(time_type time, const T& value)
+		{
+			_where = m_data.insert(value_type(time, value));
+			//m_indexer.insert( indexer_value_type(time, _where) );
+			//++m_size;
+			clamp_to_capacity();
+		}
+
+		void insert(iterator _where, time_type time, const T& value)
+		{
+			_where = m_data.insert(_where, value_type(time, value));
+			//m_indexer.insert( indexer_value_type(time, _where) );
+			//++m_size;
+			clamp_to_capacity();
+		}
+
+		void replace(iterator _where, const T& value)
+		{
+			//time_type time = _where->first;
+			//_where = m_data.erase(_where);
+			//m_data.insert(_where, value_type(time, value));
+			_where->second = value;
+		}
+
+		void replace(time_type time, const T& value)
+		{
+			m_data.find(time).second = value;
+		}
+
+		//! Adds a new record, maintaining the list order
+		/*!
+		 * List order is oldest -> most recent, from begin() to end().
+		 *
+		 * Adds records as follows:
+		 * * If time falls after all current records: the new record will be added
+		 * to the end of the list.
+		 * * If time falls before all current records: the new record will be added
+		 * to the begining of the list.
+		 * * If time falls between the begining and end of the list, and no other
+		 * records currently in the list have the same time: the new record will be
+		 * inserted in the appropriate order.
+		 * * If a record with the given time already exists in the list: the new
+		 * record will overwrite the old one;
+		 */
+		void add(time_type time, const T& value)
+		{
+			iterator _where = m_data.lower_bound(value_type(time, value));
+			if (_where != end() && _where->first == time)
+				_where->second = value;
+			else
+			{
+				m_data.insert(_where, value_type(time, value));
+				//++m_size;
+				clamp_to_capacity();
+			}
+
+			//iterator _where = find(time);
+			//if (_where != end())
+			//{
+			//	replace(_where, value);
+			//}
+			//else if (empty() || time < front().first)
+			//{
+			//	push_front(time, value);
+			//}
+			//else if (time > back().first)
+			//{
+			//	push_back(time, value);
+			//}
+			//else
+			//{
+			//	_where = find_closest(time);
+			//	if (_where->first < time)
+			//		++_where;
+			//	insert(_where, time, value);
+			//}
+		}
+
+		void remove_before(time_type time)
+		{
+			//iterator _where = begin();
+			//while (_where != end())
+			//{
+			//	if (_where->first >= time)
+			//		break;
+
+			//	m_data.erase(_where);
+			//	//m_indexer.erase(_where->first);
+			//}
+			m_data.erase( begin(), --m_data.lower_bound(value_type(time, T())) );
+		}
+
+		void clamp_to_capacity()
+		{
+			if (m_data.size() > m_capacity)
+			{
+				//iterator rem_it = begin();
+				//time_type time = rem_it->first;
+				//m_data.erase(rem_it);
+				//m_indexer.erase(time);
+				//--m_size;
+				m_data.erase(begin());
+			}
+		}
+
+		iterator find(time_type _time)
+		{
+			if (empty())
+				return end();
+
+			//indexer_type::iterator _where = m_indexer.find(_time);
+			//if(_where != m_indexer.end())
+			//	return _where->second;
+			//else
+			//	return end();
+
+			return m_data.find( value_type(_time, T()) );
+		}
+
+		iterator find_closest(time_type _time)
+		{
+			if (empty())
+				return end();
+
+			iterator _where = find(_time);
+			if (_where != end())
+				return _where; // found exact match
+
+			_where = m_data.lower_bound( value_type(_time, T()) );
+			if (_where != m_data.begin() && abs(_where->m_time - _time) > ((_where - 1)->m_time - _time))
+				--_where;
+			return _where;
+		}
+
+		iterator lower_bound(time_type _time)
+		{
+			if (empty())
+				return end();
+
+			return m_data.lower_bound( value_type(_time, T()) );
+		}
+	};
+
+	//template <class Iter>
+	//class IMirroredValueManager
+	//{
+	//public:
+	//	void _remove(Iter iter) = 0;
 	//};
 
 	//! Probably better than HistoryBuffer in every way
 	template <class T, class Alloc = std::allocator<T>>
-	class HistoryList
+	class HistoryList// : IMirroredValueManager
 	{
 	public:
 		typedef unsigned long time_type;
@@ -116,72 +396,71 @@ namespace FusionEngine
 
 		typedef size_t size_type;
 
-		typedef typename MirroredValue<T> mirroredvalue_type;
-		typedef typename mirroredvalue_type::value_ptr value_ptr;
+	//template <class vT, class Iter>
+	//	class MirroredValue
+	//	{
+	//	public:
+	//		typedef std::tr1::shared_ptr<vT> value_ptr;
 
-		template <class T, class Iter>
-		class MirroredValue
-		{
-		public:
-			typedef std::tr1::shared_ptr<T> value_ptr;
+	//		MirroredValue()
+	//			: //m_container(0),
+	//		m_manager(NULL)
+	//		{
+	//		}
 
-			MirroredValue()
-				: //m_container(0),
-			m_manager(NULL)
-			{
-			}
+	//		MirroredValue(const value_ptr &_value, const HistoryList<vT> const* manager)
+	//			: m_value(_value),
+	//			m_manager(manager)
+	//		{
+	//		}
 
-			MirroredValue(const value_ptr &_value, Iter it, const HistoryList const* manager)
-				: m_value(_value),
-				m_manager(manager),
-				m_iterator(it)
-			{
-			}
+	//		MirroredValue(const MirroredValue<vT, Iter>& other)
+	//			: m_value(other.m_value),
+	//			m_manager(other.m_manager),
+	//			m_mirroriterator(other.m_mirroriterator)
+	//		{
+	//		}
 
-			MirroredValue(const MirroredValue& other)
-				: m_value(other.m_value),
-				m_manager(other.m_manager),
-				m_iterator(other.it)
-			{
-			}
+	//		~MirroredValue()
+	//		{
+	//			if (m_manager != NULL)
+	//				m_manager->_remove(m_mirroriterator);
+	//		}
 
-			~MirroredValue()
-			{
-				if (m_manager != NULL)
-					m_manager->Remove(m_iterator);
-			}
+	//		void set_iterator(Iter mirror_it)
+	//		{
+	//			m_mirroriterator = mirror_it;
+	//		}
 
-			void set_iterator(Iter it)
-			{
-			}
+	//		//! Indirect member access operator.
+	//		T* operator->()
+	//		{
+	//			return m_value.get();
+	//		}
 
-			//! Indirect member access operator.
-			T* operator->()
-			{
-				return m_value.get();
-			}
+	//		T const* operator->() const
+	//		{
+	//			return (const T*)m_value.get();
+	//		}
 
-			T const* operator->() const
-			{
-				return (const T*)m_value.get();
-			}
+	//		T& operator*()
+	//		{
+	//			return *(m_value.get());
+	//		}
 
-			T& operator*()
-			{
-				return *(m_value.get());
-			}
+	//		const T& operator*() const
+	//		{
+	//			return *(m_value.get());
+	//		}
 
-			const T& operator*() const
-			{
-				return *(m_value.get());
-			}
+	//		value_ptr m_value;
 
-			value_ptr m_value;
-
-			MirroredValueManager* m_manager;
-			Iter m_iterator;
-		};
-
+	//		HistoryList<vT>* m_manager;
+	//		Iter m_iterator;
+	//	};
+	//	typedef typename MirroredValue<T, indexer_type::iterator> indexer_mval_type;
+	//	typedef typename MirroredValue<T, container_type::iterator> container_mval_type;
+	//	typedef typename container_mval_type::value_ptr value_ptr;
 
 		indexer_type m_indexer;
 		container_type m_data;
@@ -289,18 +568,49 @@ namespace FusionEngine
 			return back();
 		}
 
-		void _make_value()
-		{
-			value_ptr valuePtr(new T(value));
-			mirroredvalue_type mirroredValue(valuePtr, this);
+		//void _remove(mirroredvalue_type mival)
+		//{
+		//	m_indexer.erase(mival.m_iterator);
+		//	m_data.erase(mival.m_iterator);
+		//}
 
-			indexer_type::iterator _where1 = m_indexer.insert(indexer_type::value_type(key, mirroredValue));
-			m_indexer[key].second.set_iterator(_where1);
+		//enum Operation { PUSH_BACK, PUSH_FRONT, INSERT };
+		//void mirrored_insert(Operation op, time_type key, value_ptr valuePtr)
+		//{
+		//	indexer_mval_type indexerValue(valuePtr, this);
+		//	container_mval_type containerValue(valuePtr, this);
 
-			m_data.push_back(mirroredValue);
-			iterator _where2 = m_data.end();
-			m_data.back().set_iterator(_where2);
-		}
+		//	std::pair<indexer_type::iterator, bool> insertion =
+		//		m_indexer.insert(indexer_type::value_type(key, indexerValue));
+
+		//	// 'second' is false if the given key was a duplicate
+		//	if (insertion.second)
+		//	{
+		//		iterator listIter;
+
+		//		if (op == PUSH_BACK)
+		//		{
+		//			m_data.push_back(containerValue);
+		//			listIter = --(m_data.end());
+		//		}
+		//		else if (op == PUSH_FRONT)
+		//		{
+		//			m_data.push_front(containerValue);
+		//			listIter = m_data.begin();
+		//		}
+		//		else //insert
+		//		{
+		//			m_data.insert
+		//		}
+
+		//		insertion.first->second.set_iterator(listIter);
+		//		m_data.back().set_iterator(insertion.first);
+
+		//		++m_size;
+
+		//		clamp_to_capacity();
+		//	}
+		//}
 
 		//! Pushes a record on to the back of the history list
 		/*!
@@ -311,10 +621,9 @@ namespace FusionEngine
 		 */
 		void push_back(time_type key, const T& value)
 		{
-			m_data.push_back(value_type(key, value));
+			m_data.push_back( value_type(key, value) );
 			m_indexer.insert( indexer_value_type(key, --end()) );
 			++m_size;
-
 			clamp_to_capacity();
 		}
 
@@ -322,7 +631,7 @@ namespace FusionEngine
 		void push_front(time_type key, const T& value)
 		{
 			m_data.push_front(value_type(key, value));
-			m_indexer.insert( indexer_value_type(key, --end()) );
+			m_indexer.insert( indexer_value_type(key, begin()) );
 			++m_size;
 
 			clamp_to_capacity();
@@ -330,16 +639,19 @@ namespace FusionEngine
 
 		void insert(iterator _where, time_type time, const T& value)
 		{
-			m_data.insert(_where, value_type(time, value));
+			_where = m_data.insert(_where, value_type(time, value));
+			m_indexer.insert( indexer_value_type(time, _where) );
 
+			++m_size;
 			clamp_to_capacity();
 		}
 
 		void replace(iterator _where, const T& value)
 		{
-			time_type time = _where->first;
-			_where = m_data.erase(_where);
-			m_data.insert(_where, value_type(time, value));
+			//time_type time = _where->first;
+			//_where = m_data.erase(_where);
+			//m_data.insert(_where, value_type(time, value));
+			_where->second = value;
 		}
 
 		//! Adds a new record, maintaining the list order
@@ -390,7 +702,7 @@ namespace FusionEngine
 					break;
 
 				m_data.erase(_where);
-				m_indexer.erase(_where->first);
+				//m_indexer.erase(_where->first);
 			}
 		}
 
@@ -638,6 +950,8 @@ namespace FusionEngine
 		{
 			m_Data.insert(_where, record_type(_time, _value));
 			m_TimeToIndex[_time] = _where;
+			if (m_Data.full())
+				m_TimeToIndex.erase(m_Data.back().first);
 		}
 
 		void push(time_type _time, const T& _value)

@@ -23,6 +23,7 @@
 
 // STL TR1
 #include <unordered_map>
+#include <unordered_set>
 
 // ClanLib
 #include <ClanLib/core.h>
