@@ -144,6 +144,8 @@ namespace FusionEngine
 		//@{
 		//! Gameplay channel message types
 
+		//! Gives the client a hint about what it's starting tick should be
+		MTID_STARTTICK,
 		//! [client|server] Low priority
 		MTID_ENTITYMOVE,
 		//! [client] High Priority

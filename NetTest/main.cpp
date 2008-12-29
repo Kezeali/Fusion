@@ -6,6 +6,7 @@
 #include "../FusionEngine/FusionHistory.h"
 
 #include <RakNet/BitStream.h>
+#include <RakNet/GetTime.h>
 
 //#define BOOST_CB_DISABLE_DEBUG // Allows overwritten CB iterators to remain valid
 //#include <boost/circular_buffer.hpp>
@@ -15,10 +16,12 @@ using namespace FusionEngine;
 const float s_DefaultTightness = 0.25f;
 const float s_SmoothTightness = 0.1f;
 
-const unsigned int s_SendInterval = 63;
+const unsigned int s_SendInterval = 100;
 
 // Simulation speed
 const unsigned int split = 33;
+
+const float s_Speed = 0.05f;
 
 class TestApp : public CL_ClanApplication
 {
@@ -42,7 +45,7 @@ class TestApp : public CL_ClanApplication
 		{
 		}
 	};
-	typedef HistoryBuffer<Action> ActionHistory;
+	typedef Buffer<Action> ActionHistory;
 	struct Command
 	{
 		Command()
@@ -98,7 +101,7 @@ class TestApp : public CL_ClanApplication
 			local(false)
 		{
 			actionList.set_capacity(1000);
-			commandList.set_capacity(1000);
+			commandList.set_capacity(500);
 			currentAction = actionList.begin();
 			currentCommand = commandList.begin();
 		}
@@ -174,8 +177,8 @@ class TestApp : public CL_ClanApplication
 			if (currentCommand == commandList.end())
 				return;
 
-			//if (currentCommand->first > tick && currentCommand != commandList.begin())
-			//	--currentCommand;
+			if (currentCommand->first > tick && currentCommand != commandList.begin())
+				--currentCommand;
 
 			//// Confirm the found command (in case the buffer is out of order)
 			//if (currentCommand->first > tick)
@@ -238,14 +241,19 @@ class TestApp : public CL_ClanApplication
 			//}
 
 			// Make sure we start the search before the requested tick
-			if (currentCommand->first > tick)
-				currentCommand = commandList.begin();
+			//if (currentCommand->first > tick)
+			//	currentCommand = commandList.begin();
 
-			for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->first < tick; ++it)
+			for (CommandHistory::iterator it = currentCommand, end = commandList.end();
+				it != end && it->first <= tick; ++it)
 			{
 				// Find the command closest to the given tick
-				if (tick - it->first < tick - currentCommand->first)
-					currentCommand = it;
+				//if (tick - it->first < tick - currentCommand->first)
+				currentCommand = it;
+				//if (it->first > tick)
+				//{
+				//	break;
+				//}
 			}
 
 			if (currentCommand == commandList.end())
@@ -336,7 +344,7 @@ class TestApp : public CL_ClanApplication
 
 	};
 
-	unsigned long m_CommandNumber, m_LatestReceivedTick;
+	unsigned long m_CommandNumber, m_LatestReceivedTick, m_MostRecentSyncTick;
 
 	float m_WorldWidth, m_WorldHeight;
 
@@ -368,6 +376,8 @@ class TestApp : public CL_ClanApplication
 			myShip->right = true;
 		else
 			myShip->right = false;
+
+		CL_System::keep_alive();
 	}
 
 	bool is_local(const ShipPtr ship, const ShipMap myShips)
@@ -385,28 +395,29 @@ class TestApp : public CL_ClanApplication
 		ship->x = correctAction.x;
 		ship->y = correctAction.y;
 		ship->saveAction(commandNumber);
-		ship->rewindCommand(commandNumber);
-		for (unsigned long t = commandNumber; t <= m_CommandNumber; t++)
+		ship->rewindCommand(commandNumber + 1);
+		for (unsigned long t = commandNumber + 1; t <= m_CommandNumber; t++)
 		{
+			ship->nextCommand(t);
+
 			// Redo simulation
 			float up = ship->up ? -1.f : 0.f;
 			float down = ship->down ? 1.f : 0.f;
 			float left = ship->left ? -1.f : 0.f;
 			float right = ship->right ? 1.f : 0.f;
-			ship->x += 0.2f * split * (left + right);
-			ship->y += 0.2f * split * (up + down);
+			ship->x += s_Speed * split * (left + right);
+			ship->y += s_Speed * split * (up + down);
 
 			fe_clamp(ship->x, 0.f, m_WorldWidth);
 			fe_clamp(ship->y, 0.f, m_WorldHeight);
 
 			ship->saveAction(commandNumber);
-			ship->nextCommand(t);
 		}
 		// Make sure we're back on the current command
 		ship->nextCommand();
 
-		std::cout << " Server state: " << correctAction.x << "," << correctAction.y
-			<< "  Current local state " << ship->x << "," << ship->y << std::endl;
+		std::cout << " Server: (" << commandNumber << ")" << correctAction.x << "," << correctAction.y
+			<< "  Current local (" << m_CommandNumber << ")" << ship->x << "," << ship->y << std::endl;
 	}
 
 	virtual int main(int argc, char **argv)
@@ -485,7 +496,7 @@ class TestApp : public CL_ClanApplication
 			IPacket* p;
 			NetShipMap clientShips;
 			unsigned int nextId = 0;
-			ActionHistory corrections(1000);
+			boost::circular_buffer<std::pair<unsigned long, Action>> corrections(200);
 
 			try
 			{
@@ -498,8 +509,8 @@ class TestApp : public CL_ClanApplication
 					display.get_gc()->clear(CL_Color(180, 220, 255));
 
 					frameTime += CL_System::get_time() - lastframe;
-					if (frameTime > 132)
-						frameTime = 132;
+					/*if (frameTime > 132)
+						frameTime = 132;*/
 					lastframe = CL_System::get_time();
 
 					p = NULL;
@@ -512,6 +523,11 @@ class TestApp : public CL_ClanApplication
 						else if (p->GetType()==ID_NEW_INCOMING_CONNECTION)
 						{
 							std::cout << "New incomming connection" << std::endl;
+
+							RakNet::BitStream bits;
+							bits.Write((m_CommandNumber+1));
+							m_Network->Send(false, MTID_STARTTICK, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
+								FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, p->GetSystemHandle());
 						}
 
 						else if (p->GetType() == ID_CONNECTION_LOST || p->GetType() == ID_DISCONNECTION_NOTIFICATION)
@@ -535,7 +551,9 @@ class TestApp : public CL_ClanApplication
 						}
 
 						else if (p->GetType() == MTID_CHALL)
+						{
 							std::cout << "Server received: '" << p->GetDataString() << "' at " << p->GetTime() << " ticks" << std::endl;
+						}
 
 						else if (p->GetType() == MTID_ADDPLAYER)
 						{
@@ -611,13 +629,14 @@ class TestApp : public CL_ClanApplication
 							std::cout << commandNumber << " (important) " << x << ", " << y << std::endl;
 
 							ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
+							ship->currentTick = fe_max(commandNumber, ship->currentTick);
 
-							ship->up = up;
-							ship->down = down;
-							ship->left = left;
-							ship->right = right;
+							//ship->up = up;
+							//ship->down = down;
+							//ship->left = left;
+							//ship->right = right;
 
-							ship->saveCommand(commandNumber);
+							ship->saveCommand(commandNumber, Command(up, down, left, right));
 
 							// Lag compensation (check that the given ship is more-or-less in sync)
 							//if (needsCorrection/* || ship->checkAction(commandNumber, x, y)*/)
@@ -629,6 +648,7 @@ class TestApp : public CL_ClanApplication
 						{
 							ObjectID object_id;
 							unsigned long commandNumber;
+							unsigned long tick;
 
 							const NetHandle &systemHandle = p->GetSystemHandle();
 							ShipPtr ship = clientShips[systemHandle];
@@ -639,7 +659,8 @@ class TestApp : public CL_ClanApplication
 							if (object_id != ship->id)
 								std::cout << "Warning: A client is sending data for another client's ship" << std::endl;
 
-							bits.Read(commandNumber);
+							bits.Read(tick); // the client's current tick when this packet was sent
+							bits.Read(commandNumber); // the important command required for this tick
 
 							//Command previousCommand = ship->GetCommand();
 							bool up, down, left, right;
@@ -648,14 +669,15 @@ class TestApp : public CL_ClanApplication
 							bits.Read(left);
 							bits.Read(right);
 
-							ship->saveCommand(commandNumber, Command(up, down, left, right));
+							//ship->saveCommand(commandNumber, Command(up, down, left, right));
 
 							//bool needsCorrection = ship->checkCommand(commandNumber, ship->GetCommand());
 
-							ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
-							//ship->currentTick = ship->mostRecentCommand;
+							// Make sure the required important command has been received
+							if (ship->mostRecentCommand >= commandNumber)
+								ship->currentTick = fe_max(tick, ship->currentTick);
 							// Sanity check
-							fe_clamp(ship->currentTick, (unsigned long)0, m_CommandNumber);
+							//fe_clamp(ship->currentTick, (unsigned long)0, m_CommandNumber);
 
 							float x, y;
 
@@ -673,81 +695,63 @@ class TestApp : public CL_ClanApplication
 						p = m_Network->Receive();
 					}
 
-					// Simulate up to the most recent tick possible
-					// m_MostRecentSyncTick is the minimum of the most recent tick received from each client
-					while (m_MostRecentSyncTick > m_CommandNumber)
+					if (!clientShips.empty())
 					{
-						frameTimeLeft -= split;
-						for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
+						unsigned long mostRecentSyncTick = clientShips.begin()->second->currentTick;
+						for (NetShipMap::iterator it = clientShips.begin(), end = clientShips.end(); it != end; ++it)
 						{
 							ShipPtr ship = it->second;
-							//if (ship->currentTick <= ship->mostRecentCommand)
-							{
-								// Simulate
-								float up = ship->up ? -1.f : 0.f;
-								float down = ship->down ? 1.f : 0.f;
-								float left = ship->left ? -1.f : 0.f;
-								float right = ship->right ? 1.f : 0.f;
-								ship->x += 0.2f * split * (left + right);
-								ship->y += 0.2f * split * (up + down);
-
-								fe_clamp(ship->x, 0.f, m_WorldWidth);
-								fe_clamp(ship->y, 0.f, m_WorldHeight);
-
-								ship->saveAction(ship->currentTick);
-								// Go to the next received command
-								simShip->nextCommand(ship->currentTick);
-
-								++ship->currentTick;
-							}
+							mostRecentSyncTick = fe_min(mostRecentSyncTick, ship->currentTick);
+							ship->currentCommand = ship->commandList.begin();
 						}
 
-						m_CommandNumber++;
+						// Simulate up to the most recent tick possible
+						// mostRecentSyncTick is the minimum of the most recent tick received from each client
+						while (m_CommandNumber <= mostRecentSyncTick)
+						{
+							//frameTimeLeft -= split;
+							for (NetShipMap::iterator it = clientShips.begin(), end = clientShips.end(); it != end; ++it)
+							{
+								ShipPtr ship = it->second;
+								//if (ship->currentTick <= ship->mostRecentCommand)
+								{
+									ship->nextCommand(m_CommandNumber);
+
+									// Simulate
+									float up = ship->up ? -1.f : 0.f;
+									float down = ship->down ? 1.f : 0.f;
+									float left = ship->left ? -1.f : 0.f;
+									float right = ship->right ? 1.f : 0.f;
+									ship->x += s_Speed * split * (left + right);
+									ship->y += s_Speed * split * (up + down);
+
+									fe_clamp(ship->x, 0.f, m_WorldWidth);
+									fe_clamp(ship->y, 0.f, m_WorldHeight);
+
+									ship->saveAction(m_CommandNumber);
+									// Go to the next received command
+									//ship->nextCommand(m_CommandNumber);
+
+									//++ship->currentTick;
+
+									//if (ship->currentCommand->first == m_CommandNumber)
+									//{
+									//	RakNet::BitStream correctionBits;
+									//	bits.Write(ship->id);
+									//	bits.Write(commandNumber);
+
+									//	bits.Write(ship->x);
+									//	bits.Write(ship->y);
+
+									//	m_Network->Send(true, MTID_CORRECTION, (char*)correctionBits.GetData(), correctionBits.GetNumberOfBytesUsed(),
+									//		FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE_ORDERED, 1, systemHandle);
+									//}
+								}
+							}
+
+							m_CommandNumber++;
+						}
 					}
-
-					//// Rewind all ships as far as they can go
-					//unsigned long oldestTick = m_CommandNumber;
-					//for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
-					//{
-					//	ShipPtr rewindingShip = it->second;
-
-					//	unsigned long commandNumber = rewindingShip->actionList.oldest().first;
-
-					//	oldestTick = fe_min(commandNumber, oldestTick);
-
-					//	// We can only rewind ships that we have data for at the given tick
-					//	if (rewindingShip->rewindAction(commandNumber))
-					//	{
-					//		rewindingShip->rewindCommand(commandNumber);
-					//	}
-					//}
-
-					//// Simulate up to the current tick
-					//for (unsigned int t = oldestTick; t < m_CommandNumber; t++)
-					//{
-					//	//ship->saveCommand(t);
-					//	for (NetShipMap::iterator it = clientShips.begin(), end = clientShips.end(); it != end; ++it)
-					//	{
-					//		ShipPtr simShip = it->second;
-					//		// check 
-					//		if (simShip->currentTick < t)
-					//			continue;
-
-					//		simShip->nextCommand(t);
-
-					//		float up = simShip->up ? -1.f : 0.f;
-					//		float down = simShip->down ? 1.f : 0.f;
-					//		float left = simShip->left ? -1.f : 0.f;
-					//		float right = simShip->right ? 1.f : 0.f;
-					//		simShip->x += 0.2f * split * (left + right);
-					//		simShip->y += 0.2f * split * (up + down);
-
-					//		fe_clamp(simShip->x, 0.f, (float)display.get_width());
-					//		fe_clamp(simShip->y, 0.f, (float)display.get_height());
-
-					//		simShip->saveAction(t);
-					//	}
-					//}
 
 					CL_Color drawColor = CL_Color::azure;
 					drawColor.set_alpha(80);
@@ -757,7 +761,7 @@ class TestApp : public CL_ClanApplication
 					{
 						ShipPtr ship = it->second;
 
-						// Draw debug infoc
+						// Draw debug info
 						font1.set_alpha(100);
 						for (ActionHistory::iterator actIt = corrections.begin(), actEnd = corrections.end();
 							actIt != actEnd; ++actIt)
@@ -788,6 +792,8 @@ class TestApp : public CL_ClanApplication
 						display.get_gc()->fill_rect(CL_Rectf(ship->x, ship->y, ship->x + 10, ship->y + 10), CL_Color::darkblue);
 						font1.draw((int)ship->x, (int)ship->y + 14, CL_String::from_int((int)ship->currentTick));
 
+						ship->commandList.clear();
+
 						if ((ship->sendDelay -= frameTime) <= 0)
 						{
 							ship->sendDelay = s_SendInterval;
@@ -795,7 +801,7 @@ class TestApp : public CL_ClanApplication
 
 							RakNet::BitStream bits;
 							bits.Write(ship->id);
-							bits.Write(ship->currentTick);
+							bits.Write(m_CommandNumber-1);
 
 							bits.Write(ship->up);
 							bits.Write(ship->down);
@@ -805,12 +811,19 @@ class TestApp : public CL_ClanApplication
 							bits.Write(ship->x);
 							bits.Write(ship->y);
 
+							corrections.push_back(std::pair<unsigned long, Action>(m_CommandNumber, Action(ship->x, ship->y)));
+
 							for (NetShipMap::iterator client = clientShips.begin(); client != clientShips.end(); ++client)
 							{
 								NetHandle clientHandle = (*client).first;
 								m_Network->Send(true, MTID_ENTITYMOVE, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
 									FusionEngine::HIGH_PRIORITY, FusionEngine::UNRELIABLE_SEQUENCED, 1, clientHandle);
 							}
+
+							// Heartbeat
+							NetHandle clientHandle = it->first;
+							m_Network->Send(true, MTID_STARTSYNC, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
+								FusionEngine::MEDIUM_PRIORITY, FusionEngine::RELIABLE_SEQUENCED, 2, clientHandle);
 						} // end if (should send)
 					}
 
@@ -887,15 +900,19 @@ class TestApp : public CL_ClanApplication
 				int sendDelay = 0;
 				unsigned int lastframe = CL_System::get_time();
 				unsigned int frameTime = 0;
+
+				RakNetTime beginAt;
 				// Loop thing
 				while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
 				{
 					display.get_gc()->clear(CL_Color(180, 220, 255));
 
 					frameTime += CL_System::get_time() - lastframe;
-					if (frameTime > 132)
-						frameTime = 132;
+					if (frameTime > 512)
+						frameTime = 512;
 					lastframe = CL_System::get_time();
+
+					beginAt = RakNet::GetTime();
 
 					p = NULL;
 					p = m_Network->Receive();
@@ -953,6 +970,12 @@ class TestApp : public CL_ClanApplication
 							std::cout << "Add Allowed: ID: " << object_id << " At: " << m_CommandNumber << std::endl;
 						}
 
+						if (p->GetType() == MTID_STARTTICK)
+						{
+							RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), false);
+							bits.Read(m_CommandNumber);
+						}
+
 						if (p->GetType() == MTID_CHALL)
 							std::cout << "Received: '" << p->GetDataString() << "' at " << p->GetTime() << " ticks" << std::endl;
 
@@ -1008,6 +1031,8 @@ class TestApp : public CL_ClanApplication
 
 								if (is_local(ship, myShips))
 								{
+									//ship->cullActions();
+									ship->cullCommands(commandNumber);
 									if (ship->checkAction(commandNumber, Action(x, y), 1.0f))
 										correct(ship, commandNumber, Action(x, y));
 								}
@@ -1048,6 +1073,9 @@ class TestApp : public CL_ClanApplication
 						p = m_Network->Receive();
 					}
 
+					RakNetTime receiveTime = RakNet::GetTime() - beginAt;
+					beginAt = RakNet::GetTime();
+
 					if (CL_Keyboard::get_keycode(CL_KEY_RETURN))
 					{
 						m_Network->Send(true, MTID_CHALL, "Hi", 2, 
@@ -1087,13 +1115,14 @@ class TestApp : public CL_ClanApplication
 							float down = myShip->down ? 1.f : 0.f;
 							float left = myShip->left ? -1.f : 0.f;
 							float right = myShip->right ? 1.f : 0.f;
-							myShip->x += 0.2f * split * (left + right);
-							myShip->y += 0.2f * split * (up + down);
+							myShip->x += s_Speed * split * (left + right);
+							myShip->y += s_Speed * split * (up + down);
 
 							fe_clamp(myShip->x, 0.f, m_WorldWidth);
 							fe_clamp(myShip->y, 0.f, m_WorldHeight);
 
 							myShip->saveAction(m_CommandNumber);
+							//myShip->saveCommand(m_CommandNumber);
 
 							bool importantCommand = false;
 							if (!myShip->commandList.empty())
@@ -1105,6 +1134,8 @@ class TestApp : public CL_ClanApplication
 								RakNet::BitStream bits;
 								bits.Write(myShip->id);
 								bits.Write(m_CommandNumber);
+								if (!importantCommand)
+									bits.Write(myShip->mostRecentCommand);
 
 								bits.Write(myShip->up);
 								bits.Write(myShip->down);
@@ -1120,7 +1151,10 @@ class TestApp : public CL_ClanApplication
 								myShip->saveCommand(m_CommandNumber);
 
 								if (importantCommand)
+								{
+									myShip->mostRecentCommand = m_CommandNumber;
 									std::cout << m_CommandNumber << " (important)" << std::endl;
+								}
 
 								m_Network->Send(true, importantCommand ? MTID_IMPORTANTMOVE : MTID_ENTITYMOVE, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
 									FusionEngine::HIGH_PRIORITY, importantCommand ? FusionEngine::RELIABLE_ORDERED : FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);
@@ -1129,6 +1163,9 @@ class TestApp : public CL_ClanApplication
 
 						++m_CommandNumber;
 					} // ends while (frameTimeLeft)
+
+					RakNetTime simTime = RakNet::GetTime() - beginAt;
+					beginAt = RakNet::GetTime();
 
 					for (ShipMap::iterator it = ships.begin(); it != ships.end(); ++it)
 					{
@@ -1174,6 +1211,12 @@ class TestApp : public CL_ClanApplication
 
 					font1.draw(290, 16, "Ping: " + CL_String::from_int(m_Network->GetPing(serverHandle)));
 					font1.draw(250, 40, "Command: " + CL_String::from_int(m_CommandNumber));
+
+					RakNetTime renderTime = RakNet::GetTime() - beginAt;
+
+					font1.draw(2, 0, "Receiving took " + CL_String::from_int(receiveTime));
+					font1.draw(2, 22, "Simulating took " + CL_String::from_int(simTime));
+					font1.draw(2, 44, "Rendering took " + CL_String::from_int(renderTime));
 
 					display.flip();
 					CL_System::keep_alive();

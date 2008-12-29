@@ -324,11 +324,10 @@ namespace FusionEngine
 	static inline T fe_wrap(const T &a, const T &lb, const T &ub) 
 	{
 		// This basically ammounts to:
-		//  if (a <= lb) return a + ub;
+		//  if (a < lb) return a + ub;
 		//  else if (a > ub) return a - ub;
 		//  else return a;
-		return a <= lb ? a + ub : (a >= ub ? a - ub : a);
-		// It's so unreadable it must be efficiant... Right? :P
+		return a < lb ? a + ub : (a > ub ? a - ub : a);
 	}
 
 

@@ -132,6 +132,11 @@ namespace FusionEngine
 			return size() == 0;
 		}
 
+		void clear()
+		{
+			m_data.clear();
+		}
+
 		size_type size() const
 		{
 			return m_data.size();
@@ -315,7 +320,13 @@ namespace FusionEngine
 			//	m_data.erase(_where);
 			//	//m_indexer.erase(_where->first);
 			//}
-			m_data.erase( begin(), --m_data.lower_bound(value_type(time, T())) );
+			if (!m_data.empty())
+			{
+				iterator to = m_data.lower_bound(value_type(time, T()));
+				if (to != begin())
+					--to;
+				m_data.erase(begin(), to);
+			}
 		}
 
 		void clamp_to_capacity()
@@ -783,15 +794,15 @@ namespace FusionEngine
 		typedef typename container_type::reference reference;
 		typedef typename container_type::const_reference const_reference;
 
-		typedef std::tr1::unordered_map<time_type, iterator> timetoindex_type;
+		typedef std::tr1::unordered_map<time_type, size_type> timetoindex_type;
 
 		HistoryBuffer()
-			//: m_Front(0)
+			: m_Back(0)
 		{
 		}
 
 		HistoryBuffer(size_type _size)
-			: //m_Front(0),
+			: m_Back(0),
 			m_Data(_size)
 		{
 		}
@@ -816,14 +827,14 @@ namespace FusionEngine
 			if (_match == m_TimeToIndex.end())
 				return m_Data.end();
 
-			if (_match->second == m_Data.end())
+			if (_match->second >= m_Data.size())
 			{
 				// erase outdated time mapping
 				m_TimeToIndex.erase(_match);
 				return m_Data.end();
 			}
 
-			iterator _where = _match->second;
+			iterator _where = begin() + _match->second;
 			if (_where->first != _time)
 			{
 				// erase outdated time mapping
@@ -867,42 +878,43 @@ namespace FusionEngine
 			return _where; // not found (return closest)
 		}
 
-		//size_type index_of(time_type _time)
-		//{
-		//	if (m_Data.empty())
-		//		return m_Data.size();
+		size_type index_of(time_type _time)
+		{
+			if (m_Data.empty())
+				return m_Data.size();
 
-		//	size_type index = m_TimeToIndex.find(_time);
-		//	if (index >= m_Data.size())
-		//		return m_Data.size();
+			size_type index = m_TimeToIndex.find(_time);
+			if (index >= m_Data.size())
+				return m_Data.size();
 
-		//	// Outdated record (bug?)
-		//	if (m_Data[index].time != _time)
-		//		return m_Data.size();
+			// Outdated record (bug?)
+			cl_assert(m_Data[index].first == _time);
+			//if (m_Data[index].first != _time)
+			//	return m_Data.size();
 
-		//	return index;
-		//}
+			return index;
+		}
 
-		//size_type index_of_closest(time_type _time)
-		//{
-		//	if (m_Data.empty())
-		//		return m_Data.end();
+		size_type index_of_closest(time_type _time)
+		{
+			if (m_Data.empty())
+				return m_Data.end();
 
-		//	size_type test = m_Data.size();
-		//	if (m_Data.size() == 1)
-		//		return m_Data.begin();
+			size_type test = m_Data.size();
+			if (m_Data.size() == 1)
+				return m_Data.begin();
 
-		//	// Try to find the exact record
-		//	size_type index = index_of(_time);
-		//	if (index < m_Data.size())
-		//		return m_Data[index];
+			// Try to find the exact record
+			size_type index = index_of(_time);
+			if (index < m_Data.size())
+				return m_Data[index];
 
-		//	iterator _where = find_closest(_time);
-		//	if (_where == end())
-		//		return size();
+			iterator _where = find_closest(_time);
+			if (_where == end())
+				return size();
 
-		//	return index_of(_where->time);
-		//}
+			return index_of(_where->first);
+		}
 
 		//! Smartly chooses to set(), push() or insert() to get best performance
 		void add(time_type _time, const T& _value)
@@ -920,7 +932,9 @@ namespace FusionEngine
 		//! \remarks Runs in constant time
 		void set(time_type _time, const T& _value)
 		{
-			set(m_TimeToIndex[_time], _time, _value);
+			timetoindex_type::iterator _where = m_TimeToIndex.find(_time);
+			if (_where != m_TimeToIndex.end())
+				set(_where->second, _time, _value);
 		}
 
 		/*void set(size_type _index, time_type _time, const T& _value)
@@ -928,78 +942,63 @@ namespace FusionEngine
 			m_Data[_index] = record_type(_time, _value);
 		}*/
 
-		void set(iterator _where, time_type _time, const T& _value)
+		void set(size_type index, time_type _time, const T& _value)
 		{
-			(*_where) = record_type(_time, _value);
+			m_Data[index] = record_type(_time, _value);
 		}
 
 		//! \remarks Runs in linear time (proportional to size())
 		void insert(time_type _time, const T& _value)
 		{
+			cl_assert(false);
+
 			iterator _where = find_closest(_time);
 			if (_where != m_Data.begin() && _where->first > _time)
 				--_where;
 			else if (_where != m_Data.end() && _where->first < _time)
 				++_where;
 
+			if (m_Data.full())
+				m_TimeToIndex.erase(m_Data.back().first);
+
+			m_TimeToIndex[_time] = index_of(_where->first);
 			m_Data.insert(_where, record_type(_time, _value));
-			m_TimeToIndex[_time] = _where;
 		}
 
 		void insert(iterator _where, time_type _time, const T& _value)
 		{
-			m_Data.insert(_where, record_type(_time, _value));
-			m_TimeToIndex[_time] = _where;
+			cl_assert(false);
+
 			if (m_Data.full())
 				m_TimeToIndex.erase(m_Data.back().first);
+
+			m_TimeToIndex[_time] = index_of(_where->first);
+			m_Data.insert(_where, record_type(_time, _value));
 		}
 
 		void push(time_type _time, const T& _value)
 		{
-			m_Data.push_front(value_type(_time, _value));
-
-			// Update the indexer
-			m_TimeToIndex[_time] = m_Data.end() - 1;
 			if (m_Data.full())
 				m_TimeToIndex.erase(m_Data.back().first);
 
+			cl_assert(_time > front().first);
+
+			m_Data.push_back(value_type(_time, _value));
+
+			// Update the indexer
+			m_TimeToIndex[_time] = m_Back;
+
 			// This figures out where the next record will go in the circular buffer
-			//m_Front = fe_wrap(m_Front + 1, (size_type)0, m_Data.capacity());
+			m_Back = fe_wrap(m_Back + 1, (size_type)0, m_Data.capacity() - 1);
 		}
 
-		// Pops off records until 'back' is at the given time
+		// Pops off records until 'front' is at the given time
 		void pop(time_type _time)
 		{
 			if (m_Data.empty())
 				return;
 
-			while (back().first < _time)
-			{
-				if (m_Data.size() == 1) break;
-
-				m_TimeToIndex.erase(back().first);
-
-				m_Data.pop_back();
-			}
-
-
-			//fe_clamp(m_Front, (size_type)0, m_Data.size());
-		}
-
-		void pop()
-		{
-			m_Data.pop_back();
-			m_TimeToIndex.erase(back().first);
-
-			//fe_clamp(m_Front, (size_type)0, m_Data.size());
-		}
-
-		void pop_front(time_type _time)
-		{
-			if (m_Data.empty())
-				return;
-
-			while (front().first > _time)
+			while (front().first < _time)
 			{
 				if (m_Data.size() == 1) break;
 
@@ -1009,7 +1008,33 @@ namespace FusionEngine
 			}
 
 
-			//fe_clamp(m_Front, (size_type)0, m_Data.size());
+			fe_clamp(m_Back, (size_type)0, m_Data.size());
+		}
+
+		void pop()
+		{
+			m_Data.pop_front();
+			m_TimeToIndex.erase(front().first);
+
+			fe_clamp(m_Back, (size_type)0, m_Data.size());
+		}
+
+		void pop_back(time_type _time)
+		{
+			if (m_Data.empty())
+				return;
+
+			while (front().first > _time)
+			{
+				if (m_Data.size() == 1) break;
+
+				m_TimeToIndex.erase(back().first);
+
+				m_Data.pop_back();
+			}
+
+
+			fe_clamp(m_Back, (size_type)0, m_Data.size());
 		}
 
 		void erase_before(iterator _back)
@@ -1023,7 +1048,7 @@ namespace FusionEngine
 				it = m_Data.erase(it);
 			}
 
-			//fe_clamp(m_Front, (size_type)0, m_Data.size());
+			fe_clamp(m_Back, (size_type)0, m_Data.size());
 		}
 
 		void erase_after(iterator _front)
@@ -1032,6 +1057,8 @@ namespace FusionEngine
 				return;
 
 			m_Data.erase(_front + 1, m_Data.end());
+
+			fe_clamp(m_Back, (size_type)0, m_Data.size());
 		}
 
 		bool empty()
@@ -1054,36 +1081,37 @@ namespace FusionEngine
 			m_Data.clear();
 			m_TimeToIndex.clear();
 
+			m_Back = 0;
 		}
 
 		reference back()
 		{
-			return oldest();
+			return m_Data.back();
 		}
 
 		reference front()
 		{
-			return newest();
+			return m_data.front();
 		}
 
 		reference oldest()
 		{
-			return m_Data.back();
+			return front();
 		}
 
 		reference newest()
 		{
-			return m_Data.front();
+			return back();
 		}
 
 		const_reference oldest() const
 		{
-			return m_Data.back();
+			return front();
 		}
 
 		const_reference newest() const
 		{
-			return m_Data.front();
+			return back();
 		}
 
 		iterator begin()
@@ -1108,7 +1136,7 @@ namespace FusionEngine
 
 		container_type m_Data;
 
-		//size_type m_Front;
+		//size_type m_Back;
 		timetoindex_type m_TimeToIndex;
 
 	};
@@ -1272,11 +1300,11 @@ namespace FusionEngine
 
 			size_type low = 0;
 			size_type high = m_Data.size() - 1;
-			size_type mid = (low + high) / 2;
+			size_type mid = (size_type)((low + high) / 2 + 0.5);
 			iterator midrecord;
 			while (low <= high)
 			{
-				mid = (low + high) / 2;
+				mid = (size_type)((low + high) / 2 + 0.5);
 				midrecord = m_Data.begin() + mid;
 				if (midrecord->first > _time)
 				{
@@ -1302,11 +1330,11 @@ namespace FusionEngine
 
 			size_type low = 0;
 			size_type high = m_Data.size() - 1;
-			size_type mid = (low + high) / 2;
+			size_type mid = (size_type)((low + high) / 2 + 0.5);
 			iterator midrecord;
 			while (low <= high)
 			{
-				mid = (low + high) / 2;
+				mid = (size_type)((low + high) / 2 + 0.5);
 				midrecord = m_Data.begin() + mid;
 				if (midrecord->first > _time)
 				{
@@ -1384,66 +1412,65 @@ namespace FusionEngine
 		iterator insert(iterator _where, time_type _time, const T& _value)
 		{
 			if (m_Data.full())
-				m_Data.pop_back();
+				m_Data.pop_front();
 			return m_Data.insert(_where, record_type(time, _value));
 		}
 
 		void update(size_type _at, time_type _time, const T& _value)
 		{
-			_where = m_Data.erase(_where);
-			m_Data.insert(_where, record_type(_time, _value));
+			m_Data[_at] = record_type(_time, _value);
 		}
 
 
 		void push(time_type _time, const T& _value)
 		{
-			m_Data.push_front(record_type(_time, _value));
+			m_Data.push_back(record_type(_time, _value));
 		}
 
-		// Pops off records until 'back' is at the given time
+		// Pops off records until 'front' is at the given time
 		void pop(time_type _time)
 		{
 			if (m_Data.empty())
 				return;
 
-			while (back().time < _time)
-			{
-				if (m_Data.size() == 1) break;
-				m_Data.pop_back();
-			}
-		}
-
-		void pop()
-		{
-			m_Data.pop_back();
-		}
-
-		void pop_front(time_type _time)
-		{
-			if (m_Data.empty())
-				return;
-
-			while (front().time > _time)
+			while (front().time < _time)
 			{
 				if (m_Data.size() == 1) break;
 				m_Data.pop_front();
 			}
 		}
 
-		void erase_before(iterator _back)
+		void pop()
+		{
+			m_Data.pop_front();
+		}
+
+		void pop_back(time_type _time)
+		{
+			if (m_Data.empty())
+				return;
+
+			while (back().time > _time)
+			{
+				if (m_Data.size() == 1) break;
+				m_Data.pop_back();
+			}
+		}
+
+		void erase_before(iterator _front)
 		{
 			if (m_Data.empty() || _back == m_Data.begin())
 				return;
 
-			m_Data.rerase(_back - 1, m_Data.begin());
+			m_Data.rerase(_front - 1, m_Data.begin());
 		}
 
-		void erase_after(iterator _front)
+		void erase_after(iterator _back)
 		{
-			if (m_Data.empty() || _front == m_Data.end())
+			if (m_Data.empty() || _back == m_Data.end())
 				return;
 
-			m_Data.erase(_front + 1, m_Data.end());
+			m_Data.erase(_back + 1, m_Data.end());
 		}
 
 		bool empty()
@@ -1468,32 +1495,32 @@ namespace FusionEngine
 
 		record_type& back()
 		{
-			return oldest();
+			return m_Data.back();
 		}
 
 		record_type& front()
 		{
-			return newest();
+			return m_Data.front();
 		}
 
 		reference oldest()
 		{
-			return m_Data.back();
+			return front();
 		}
 
 		reference newest()
 		{
-			return m_Data.front();
+			return back();
 		}
 
 		const_reference oldest() const
 		{
-			return m_Data.back();
+			return m_Data.front();
 		}
 
 		const_reference newest() const
 		{
-			return m_Data.front();
+			return m_Data.back();
 		}
 
 		iterator begin()
