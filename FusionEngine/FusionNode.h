@@ -100,7 +100,7 @@ namespace FusionEngine
 	 * \see
 	 * Scene
 	 */
-	class SceneNode : public RefCounted
+	class SceneNode
 	{
 	public:
 		/*!

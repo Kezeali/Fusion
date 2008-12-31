@@ -68,7 +68,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Enitity : public SceneNode, public ICollisionHandler
+	class Enitity : public SceneNode, public ICollisionHandler, public RefCounted
 	{
 	public:
 		//! A list of ObjectIDs

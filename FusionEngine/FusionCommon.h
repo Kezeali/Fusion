@@ -101,12 +101,14 @@ namespace FusionEngine
 
 	typedef Vector2T<float> Vector2;
 
-	//! Ratio of degrees to radians
-	static const double s_DegToRad = M_PI/180.0f;
-	//! Ratio of radians to degrees
-	static const double s_RadToDeg = 180.0f/M_PI;
+	static const float s_pi = 3.1415926f;
 
-	static const double s_FloatComparisonEpsilon = 0.05;
+	//! Ratio of degrees to radians
+	static const float s_DegToRad = s_pi/180.0f;
+	//! Ratio of radians to degrees
+	static const float s_RadToDeg = 180.0f/s_pi;
+
+	static const double s_FloatComparisonEpsilon = 0.009;
 
 
 	////////////////////////
@@ -126,12 +128,12 @@ namespace FusionEngine
 	static inline bool fe_fequal(double a, double b, double e) { return fabs(a-b) <= e; }
 
 	//! Converts deg to rad
-	static inline float fe_degtorad(float deg) { return deg * (float)s_DegToRad; }
+	static inline float fe_degtorad(float deg) { return deg * s_DegToRad; }
 	//! Converts deg to rad (double)
 	static inline double fe_degtorad(double deg) { return deg * s_DegToRad; }
 
 	//! Converts rad to deg
-	static inline float fe_radtodeg(float rad) { return rad * (float)s_RadToDeg; }
+	static inline float fe_radtodeg(float rad) { return rad * s_RadToDeg; }
 	//! Converts rad deg (double)
 	static inline double fe_radtodeg(double rad) { return rad * s_RadToDeg; }
 
@@ -307,10 +309,10 @@ namespace FusionEngine
 //#endif
 
 	//! Returns rounded value converted to long int
-	static inline long int fe_lround(double v) { return static_cast<long int>( v + (v > 0.0 ? 0.5 : -0.5) ); }
+	static inline long int fe_lround(double v) { return static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
 	//! Returns rounded value
 	template<typename T>
-	static inline T fe_round(T v) { return fe_lround(static_cast<double>(v)); }
+	static inline T fe_round(T v) { return (T)static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
 
 	//! Returns the bigger value
 	template<class T>

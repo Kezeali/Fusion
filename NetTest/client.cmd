@@ -1,1 +1,1 @@
-..\debug\NetTest.exe -c 127.0.0.1
+..\debug\NetTest.exe -c127.0.0.1

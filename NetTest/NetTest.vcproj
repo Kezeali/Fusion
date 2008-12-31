@@ -199,6 +199,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\App.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\Common.h"
 				>
 			</File>
@@ -220,6 +224,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionRakStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Ship.h"
 				>
 			</File>
 		</Filter>

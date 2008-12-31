@@ -223,7 +223,7 @@ namespace FusionEngine
 
 	int RakNetwork::GetPing(const NetHandle& handle)
 	{
-		return m_NetInterface->GetLastPing(m_SystemAddresses[handle]);
+		return m_NetInterface->GetAveragePing(m_SystemAddresses[handle]);
 	}
 
 	int RakNetwork::GetLastPing(const NetHandle& handle)
