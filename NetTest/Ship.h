@@ -174,7 +174,7 @@ struct Command
 
 	bool up, down, left, right;
 };
-typedef HistorySet<Command> CommandHistory;
+typedef Buffer<Command> CommandHistory;
 
 class Ship
 {
@@ -232,15 +232,23 @@ public:
 		return Command(up, down, left, right);
 	}
 
-	void saveCommand(unsigned long tick)
+	void SetCommand(const Command& command)
 	{
-		commandList.add(tick, Command(up, down, left, right));
+		up = command.up;
+		down = command.down;
+		left = command.left;
+		right = command.right;
 	}
 
-	void saveCommand(unsigned long tick, const Command &command)
-	{
-		commandList.add(tick, command);
-	}
+	//void saveCommand(unsigned long tick)
+	//{
+	//	commandList.add(tick, Command(up, down, left, right));
+	//}
+
+	//void saveCommand(unsigned long tick, const Command &command)
+	//{
+	//	commandList.add(tick, command);
+	//}
 
 	//void changeCommand(unsigned long tick, const Command &command)
 	//{
@@ -265,188 +273,155 @@ public:
 	//	commandList.insert(_where, tick, command);
 	//}
 
-	bool checkCommand(unsigned long tick, const Command &expected)
-	{
-		CommandHistory::iterator _where = commandList.lower_bound(tick);
-		if (_where == commandList.end())
-			return true;
+	//bool checkCommand(unsigned long tick, const Command &expected)
+	//{
+	//	CommandHistory::iterator _where = commandList.lower_bound(tick);
+	//	if (_where == commandList.end())
+	//		return true;
 
-		return _where->second != expected;
-	}
+	//	return _where->second != expected;
+	//}
 
-	void rewindCommand(unsigned long tick)
-	{
-		if (commandList.empty())
-			return;
+	//void rewindCommand(unsigned long tick)
+	//{
+	//	if (commandList.empty())
+	//		return;
 
-		currentCommand = commandList.lower_bound(tick);
-		if (currentCommand == commandList.end())
-			return;
+	//	currentCommand = commandList.lower_bound(tick);
+	//	if (currentCommand == commandList.end())
+	//		return;
 
-		if (currentCommand->first > tick && currentCommand != commandList.begin())
-			--currentCommand;
+	//	if (currentCommand->first > tick && currentCommand != commandList.begin())
+	//		--currentCommand;
 
-		//// Confirm the found command (in case the buffer is out of order)
-		//if (currentCommand->first > tick)
-		//{
-		//	currentCommand = commandList.begin();
-		//	for (CommandHistory::iterator it = currentCommand, end = commandList.end(); it != end && it->first < tick; ++it)
-		//	{
-		//		// Find the command closest to the given tick
-		//		if (tick - it->first < tick - currentCommand->first)
-		//			currentCommand = it;
-		//	}
-		//	if (currentCommand == commandList.end())
-		//		return;
+	//	Command &command = currentCommand->second;
+	//	up = command.up;
+	//	down = command.down;
+	//	left = command.left;
+	//	right = command.right;
+	//}
 
-		//	if (currentCommand->first > tick && currentCommand != commandList.begin())
-		//		--currentCommand;
-		//}
+	//void nextCommand()
+	//{
+	//	if (commandList.empty() || currentCommand == commandList.end())
+	//		return;
 
-		Command &command = currentCommand->second;
-		up = command.up;
-		down = command.down;
-		left = command.left;
-		right = command.right;
-	}
+	//	if (++currentCommand == commandList.end())
+	//		return;
 
-	void nextCommand()
-	{
-		if (commandList.empty() || currentCommand == commandList.end())
-			return;
-
-		if (++currentCommand == commandList.end())
-			return;
-
-		Command &command = currentCommand->second;
-		up = command.up;
-		down = command.down;
-		left = command.left;
-		right = command.right;
-	}
+	//	Command &command = currentCommand->second;
+	//	up = command.up;
+	//	down = command.down;
+	//	left = command.left;
+	//	right = command.right;
+	//}
 
 	// Finds the command closest to the given time
-	void nextCommand(unsigned long tick)
-	{
-		if (commandList.empty())
-			return;
+	//void nextCommand(unsigned long tick)
+	//{
+	//	if (commandList.empty())
+	//		return;
 
-		if (currentCommand == commandList.end())
-			return;
+	//	if (currentCommand == commandList.end())
+	//		return;
 
-		//CommandHistory::iterator end = currentCommand;
-		//commandList.previous(end);
-		//CommandHistory::iterator nextCommand = currentCommand;
-		//commandList.next(nextCommand);
-		//while (nextCommand != end && nextCommand->first < tick)
-		//{
-		//	// Find the command closest to the given tick
-		//	if (tick - nextCommand->first < tick - currentCommand->first)
-		//		currentCommand = nextCommand;
-		//	commandList.next(nextCommand);
-		//}
+	//	for (CommandHistory::iterator it = currentCommand, end = commandList.end();
+	//		it != end && it->first <= tick; ++it)
+	//	{
+	//		// Find the command closest to the given tick
+	//		//if (tick - it->first < tick - currentCommand->first)
+	//		currentCommand = it;
+	//		//if (it->first > tick)
+	//		//{
+	//		//	break;
+	//		//}
+	//	}
 
-		// Make sure we start the search before the requested tick
-		//if (currentCommand->first > tick)
-		//	currentCommand = commandList.begin();
+	//	if (currentCommand == commandList.end())
+	//		return;
 
-		for (CommandHistory::iterator it = currentCommand, end = commandList.end();
-			it != end && it->first <= tick; ++it)
-		{
-			// Find the command closest to the given tick
-			//if (tick - it->first < tick - currentCommand->first)
-			currentCommand = it;
-			//if (it->first > tick)
-			//{
-			//	break;
-			//}
-		}
+	//	Command &command = currentCommand->second;
+	//	up = command.up;
+	//	down = command.down;
+	//	left = command.left;
+	//	right = command.right;
+	//}
 
-		if (currentCommand == commandList.end())
-			return;
+	//void cullCommands(unsigned long tick)
+	//{
+	//	commandList.remove_before(tick);
+	//}
 
-		Command &command = currentCommand->second;
-		up = command.up;
-		down = command.down;
-		left = command.left;
-		right = command.right;
-	}
+	//void saveAction(unsigned long tick)
+	//{
+	//	actionList.push_back(tick, Action(x, y));
+	//}
 
-	void cullCommands(unsigned long tick)
-	{
-		commandList.remove_before(tick);
-	}
-
-	void saveAction(unsigned long tick)
-	{
-		actionList.push(tick, Action(x, y));
-	}
-
-	bool checkAction(unsigned long tick, float x, float y)
-	{
-		return checkAction(tick, Action(x, y), (float)s_FloatComparisonEpsilon);
-	}
+	//bool checkAction(unsigned long tick, float x, float y)
+	//{
+	//	return checkAction(tick, Action(x, y), (float)s_FloatComparisonEpsilon);
+	//}
 
 	// Returns true if the stored action at the given tick is different to the given x, y values
-	bool checkAction(unsigned long tick, const Action& expected, float e)
-	{
-		if (actionList.empty())
-			return false;
+	//bool checkAction(unsigned long tick, const Action& expected, float e)
+	//{
+	//	if (actionList.empty())
+	//		return false;
 
-		ActionHistory::iterator _where = actionList.find(tick);
-		if (_where == actionList.end())
-			return false;
+	//	ActionHistory::iterator _where = actionList.find(tick);
+	//	if (_where == actionList.end())
+	//		return false;
 
-		Action &action = _where->second;
-		return !fe_fequal(action.x, expected.x, e) || !fe_fequal(action.y, expected.y, e);
-	}
+	//	Action &action = _where->second;
+	//	return !fe_fequal(action.x, expected.x, e) || !fe_fequal(action.y, expected.y, e);
+	//}
 
 
 	// Returns true if a suitable action was found
-	bool checkRewindAction(unsigned long tick, float x, float y)
-	{
-		if (actionList.empty())
-			return false;
+	//bool checkRewindAction(unsigned long tick, float x, float y)
+	//{
+	//	if (actionList.empty())
+	//		return false;
 
-		currentAction = actionList.find_closest(tick);
-		if (currentAction == actionList.end())
-			return false;
+	//	currentAction = actionList.find_closest(tick);
+	//	if (currentAction == actionList.end())
+	//		return false;
 
-		Action &action = currentAction->second;
-		if (!fe_fequal(action.x, x, 0.5f) || !fe_fequal(action.y, y, 0.5f))
-			return false;
+	//	Action &action = currentAction->second;
+	//	if (!fe_fequal(action.x, x, 0.5f) || !fe_fequal(action.y, y, 0.5f))
+	//		return false;
 
-		actionList.erase_after(currentAction);
+	//	actionList.erase_after(currentAction);
 
-		x = action.x;
-		y = action.y;
+	//	x = action.x;
+	//	y = action.y;
 
-		return true;
-	}
+	//	return true;
+	//}
 
 	// Returns true if an action was found
-	bool rewindAction(unsigned long tick)
-	{
-		if (actionList.empty())
-			return true;
+	//bool rewindAction(unsigned long tick)
+	//{
+	//	if (actionList.empty())
+	//		return true;
 
-		currentAction = actionList.find(tick);
-		if (currentAction == actionList.end())
-			return false;
+	//	currentAction = actionList.find(tick);
+	//	if (currentAction == actionList.end())
+	//		return false;
 
-		actionList.erase_after(currentAction);
-		Action &action = currentAction->second;
-		x = action.x;
-		y = action.y;
+	//	actionList.erase_after(currentAction);
+	//	Action &action = currentAction->second;
+	//	x = action.x;
+	//	y = action.y;
 
-		return true;
-	}
+	//	return true;
+	//}
 
-	void cullActions()
-	{
-		actionList.clear();
-		//actionList.erase_before(currentAction);
-	}
+	//void cullActions()
+	//{
+	//	actionList.clear();
+	//	//actionList.erase_before(currentAction);
+	//}
 
 };
 

@@ -39,7 +39,7 @@ private:
 
 	typedef std::tr1::shared_ptr<Ship> ShipPtr;
 	// For server side
-	typedef std::tr1::unordered_map<NetHandle, ShipPtr> NetShipMap;
+	typedef std::tr1::unordered_multimap<NetHandle, ShipPtr> NetShipMap;
 	// For client side
 	typedef std::tr1::unordered_map<ObjectID, ShipPtr> ShipMap;
 
@@ -162,10 +162,6 @@ int TestApp::run(const std::vector<CL_String> &args, CL_DisplayWindow& display)
 	m_ic = display.get_ic();
 	m_gc = display.get_gc();
 
-	CL_Rect viewport = display.get_viewport();
-	viewport.translate(2, 10);
-	m_gc.set_viewport(viewport);
-
 	bool client = false, server = false;
 	int maxPlayers = 16;
 	std::string host = "127.0.0.1";
@@ -178,15 +174,15 @@ int TestApp::run(const std::vector<CL_String> &args, CL_DisplayWindow& display)
 
 	for (std::vector<CL_String>::const_iterator it = args.begin() + 1, end = args.end(); it != end; ++it)
 	{
-		CL_String arg = *it;
+		CL_String arg = *it, val;
 		if (arg.length() < 3)
 			continue;
 		switch (arg[1]) 
 		{
 		case 'c':
 			client = true;
-			arg = arg.substr(2);
-			host = std::string(arg.begin(), arg.end());
+			val = arg.substr(2);
+			host = std::string(val.begin(), val.end());
 			break;
 		case 's':
 			server = true;
@@ -206,15 +202,15 @@ int TestApp::run(const std::vector<CL_String> &args, CL_DisplayWindow& display)
 
 	if (!client && !server)
 	{
-		std::cout << "Press 'S' in the display window to start as a server" << std::endl;
-		std::cout << "Press 'C' in the display window to start as a client" << std::endl;
+		CL_Console::write_line("Press 'S' in the display window to start as a server");
+		CL_Console::write_line("Press 'C' in the display window to start as a client");
 		while (1)
 		{
 			m_gc.clear(CL_Colorf(0.2f, 0.6f, 1.0f));
 
 			m_gc.set_font(font1);
-			m_gc.draw_text(3, 2, "Press 'S' to start as a server");
-			m_gc.draw_text(3, 20, "Press 'C' to start as a client");
+			m_gc.draw_text(3, 13, "Press 'S' to start as a server");
+			m_gc.draw_text(3, 30, "Press 'C' to start as a client");
 
 			if (m_ic.get_keyboard().get_keycode('S'))
 			{
@@ -299,8 +295,8 @@ void TestApp::run_client(const std::string& host)
 	shipSprite = CL_Sprite(sprDesc, m_gc);
 
 	if (!m_Network->Connect(host, 40001))
-		std::cout << "Connect failed";
-	std::cout << "Connecting to host at " + host + "..." << std::endl;
+		CL_Console::write_line("Connect failed");
+	CL_Console::write("Connecting to host at %1...", host.c_str());
 	IPacket* p;
 	while (1)
 	{
@@ -315,7 +311,7 @@ void TestApp::run_client(const std::string& host)
 			}
 			if (p->GetType()==ID_CONNECTION_ATTEMPT_FAILED)
 			{
-				std::cout << "Failed :(";
+				CL_Console::write_line(" failed :(");
 				m_Network->DeallocatePacket(p);
 				throw CL_Exception("Failed to connect");
 			}
@@ -324,7 +320,7 @@ void TestApp::run_client(const std::string& host)
 		}
 		CL_System::sleep(30);
 	}
-	std::cout << "done!" << std::endl;
+	CL_Console::write_line(" done!");
 
 	// Request a ship
 	{
@@ -392,9 +388,11 @@ void TestApp::run_client(const std::string& host)
 
 		RakNetTimeNS renderTime = RakNet::GetTimeNS() - beginAt;
 
-		m_gc.draw_text(2, 0, "Receiving took " + CL_StringHelp::uint_to_text(receiveTime));
-		m_gc.draw_text(2, 22, "Simulating took " + CL_StringHelp::uint_to_text(simTime));
-		m_gc.draw_text(2, 44, "Rendering took " + CL_StringHelp::uint_to_text(renderTime));
+		m_gc.draw_text(2, 22, "Receiving took " + CL_StringHelp::uint_to_text(receiveTime));
+		m_gc.draw_text(2, 43, "Simulating took " + CL_StringHelp::uint_to_text(simTime));
+		m_gc.draw_text(2, 64, "Rendering took " + CL_StringHelp::uint_to_text(renderTime));
+
+		m_window.flip();
 
 		if (CL_DisplayMessageQueue::has_messages())
 			CL_DisplayMessageQueue::process();
@@ -412,11 +410,11 @@ void TestApp::server_receive()
 	while (p!=NULL)
 	{
 		if (p->GetType()==ID_CONNECTION_REQUEST)
-			std::cout << "Connection request" << std::endl;
+			CL_Console::write_line("Connection request");
 
 		else if (p->GetType()==ID_NEW_INCOMING_CONNECTION)
 		{
-			std::cout << "New incomming connection" << std::endl;
+			CL_Console::write_line("New incomming connection");
 
 			RakNet::BitStream bits;
 			bits.Write((m_CommandNumber+1));
@@ -426,27 +424,26 @@ void TestApp::server_receive()
 
 		else if (p->GetType() == ID_CONNECTION_LOST || p->GetType() == ID_DISCONNECTION_NOTIFICATION)
 		{
-			std::cout << "Connection Lost" << std::endl;
+			CL_Console::write_line("Connection Lost");
 
-			NetShipMap::iterator _where = clientShips.find(p->GetSystemHandle());
-			if (_where != clientShips.end())
+			std::pair<NetShipMap::iterator, NetShipMap::iterator> _where = clientShips.equal_range(p->GetSystemHandle());
+			for (NetShipMap::iterator it = _where.first; it != _where.second; ++it)
 			{
 				// Tell the other clients
 				RakNet::BitStream bits;
-				bits.Write(_where->second->id);
+				bits.Write(it->second->id);
 				for (NetShipMap::iterator it = clientShips.begin(); it != clientShips.end(); ++it)
 				{
 					m_Network->Send(false, MTID_REMOVEPLAYER, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(),
 						FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, it->first);
 				}
-
-				clientShips.erase(_where);
 			}
+			clientShips.erase(p->GetSystemHandle());
 		}
 
 		else if (p->GetType() == MTID_CHALL)
 		{
-			std::cout << "Server received: '" << p->GetDataString() << "' at " << p->GetTime() << " ticks" << std::endl;
+			CL_Console::write_line("Server received: '%1' at %2 ticks", p->GetDataString(), p->GetTime());
 		}
 
 		else if (p->GetType() == MTID_ADDPLAYER)
@@ -466,7 +463,7 @@ void TestApp::server_receive()
 					FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, p->GetSystemHandle());
 			}
 
-			std::cout << "Add Allowed: ID (for client entity " << clientShipId << "): " << nextId << " At: " << m_CommandNumber << std::endl;
+			CL_Console::write_line("Add Allowed: ID (for client entity %1): %2 At: %3", clientShipId, nextId, m_CommandNumber);
 
 			// Tell all the other clients to add this object
 			RakNet::BitStream toOldPlayers;
@@ -490,98 +487,51 @@ void TestApp::server_receive()
 			// Create a ship for the new player
 			ShipPtr ship(new Ship(nextId++));
 			ship->sendDelay = 1000;
-			clientShips[p->GetSystemHandle()] = ship;
-		}
-
-		else if (p->GetType() == MTID_IMPORTANTMOVE)
-		{
-			ObjectID object_id;
-			unsigned long commandNumber;
-
-			const NetHandle &systemHandle = p->GetSystemHandle();
-			ShipPtr ship = clientShips[systemHandle];
-
-			RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), true);
-			bits.Read(object_id);
-
-			if (object_id != ship->id)
-				std::cout << "Warning: A client is sending data for another client's ship" << std::endl;
-
-			bits.Read(commandNumber);
-
-			bool up, down, left, right;
-			bits.Read(up);
-			bits.Read(down);
-			bits.Read(left);
-			bits.Read(right);
-
-			float x, y;
-
-			bits.Read(x);
-			bits.Read(y);
-
-			std::cout << commandNumber << " (important) " << x << ", " << y << std::endl;
-
-			ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
-			ship->currentTick = fe_max(commandNumber, ship->currentTick);
-
-			//ship->up = up;
-			//ship->down = down;
-			//ship->left = left;
-			//ship->right = right;
-
-			ship->saveCommand(commandNumber, Command(up, down, left, right));
-
-			// Lag compensation (check that the given ship is more-or-less in sync)
-			//if (needsCorrection/* || ship->checkAction(commandNumber, x, y)*/)
-
-			std::cout << " to " << ship->x << ", " << ship->y << std::endl;
+			clientShips.insert(NetShipMap::value_type(p->GetSystemHandle(), ship));
 		}
 
 		else if (p->GetType() == MTID_ENTITYMOVE)
 		{
+			int nInputInPacket, nShipsInPacket; // ships in the package
 			ObjectID object_id;
 			unsigned long commandNumber;
-			unsigned long tick;
-
-			const NetHandle &systemHandle = p->GetSystemHandle();
-			ShipPtr ship = clientShips[systemHandle];
 
 			RakNet::BitStream bits((unsigned char*)p->GetData(), p->GetLength(), true);
-			bits.Read(object_id);
 
-			if (object_id != ship->id)
-				std::cout << "Warning: A client is sending data for another client's ship" << std::endl;
+			bits.Read(commandNumber);
 
-			bits.Read(tick); // the client's current tick when this packet was sent
-			bits.Read(commandNumber); // the important command required for this tick
+			bits.Read(nInputInPacket);
+			for (int i = 0; i < nInputInPacket; ++i)
+			{
+				bits.Read(object_id);
+				ShipMap::iterator it = ships.find(object_id);
+				ShipPtr ship = it->second;
 
-			//Command previousCommand = ship->GetCommand();
-			bool up, down, left, right;
-			bits.Read(up);
-			bits.Read(down);
-			bits.Read(left);
-			bits.Read(right);
+				bool up, down, left, right;
+				bits.Read(up);
+				bits.Read(down);
+				bits.Read(left);
+				bits.Read(right);
 
-			//ship->saveCommand(commandNumber, Command(up, down, left, right));
+				ship->commandList.push_back(commandNumber, Command(up, down, left, right));
+			}
 
-			//bool needsCorrection = ship->checkCommand(commandNumber, ship->GetCommand());
+			bits.Read(nShipsInPacket);
+			for (int i = 0; i < nShipsInPacket; ++i)
+			{
+				bits.Read(object_id);
+				ShipMap::iterator it = ships.find(object_id);
+				ShipPtr ship = it->second;
 
-			// Make sure the required important command has been received
-			if (ship->mostRecentCommand >= commandNumber)
-				ship->currentTick = fe_max(tick, ship->currentTick);
-			// Sanity check
-			//fe_clamp(ship->currentTick, (unsigned long)0, m_CommandNumber);
+				float x, y;
+				bits.Read(x);
+				bits.Read(y);
 
-			float x, y;
+				ship->actionList.push_back(commandNumber, Action(x, y));
 
-			bits.Read(x);
-			bits.Read(y);
-
-			//if (previousCommand != ship->GetCommand())
-			//{
-			//	std::cout << commandNumber << " (important)" << (needsCorrection ? " correcting" : "") << std::endl;
-			//}
+				if (ship->mostRecentCommand >= commandNumber)
+					ship->mostRecentCommand = fe_max(tick, ship->mostRecentCommand);
+			}
 		}
 
 		m_Network->DeallocatePacket(p);
@@ -594,11 +544,11 @@ void TestApp::server_simulate(float dt)
 {
 	if (!clientShips.empty())
 	{
-		unsigned long mostRecentSyncTick = clientShips.begin()->second->currentTick;
+		unsigned long mostRecentSyncTick = clientShips.begin()->second->mostRecentCommand;
 		for (NetShipMap::iterator it = clientShips.begin(), end = clientShips.end(); it != end; ++it)
 		{
 			ShipPtr ship = it->second;
-			mostRecentSyncTick = fe_min(mostRecentSyncTick, ship->currentTick);
+			mostRecentSyncTick = fe_min(mostRecentSyncTick, ship->mostRecentCommand);
 			ship->currentCommand = ship->commandList.begin();
 		}
 
@@ -751,7 +701,7 @@ void TestApp::client_receive()
 	{
 		if (p->GetType() == ID_REMOTE_NEW_INCOMING_CONNECTION)
 		{
-			std::cout << "Another player has joined the current server" << std::endl;
+			CL_Console::write_line("Another player has joined the current server");
 		}
 
 		if (p->GetType() == MTID_REMOVEPLAYER)
@@ -781,9 +731,9 @@ void TestApp::client_receive()
 			if (ships.find(object_id) == ships.end())
 				ships[object_id] = ShipPtr(new Ship(object_id));
 			else
-				std::cout << "Server asked us to re-add player. Request ignored. ID: " << object_id << std::endl;
+				CL_Console::write_line("Server asked us to re-add player. Request ignored. ID: %1", object_id);
 
-			std::cout << "New Player: ID: " << object_id << std::endl;
+			CL_Console::write_line("New Player: ID: %1", object_id);
 		}
 
 		if (p->GetType() == MTID_ADDALLOWED)
@@ -798,7 +748,7 @@ void TestApp::client_receive()
 			ships[object_id] = myShip;
 			myShips[object_id] = myShip;
 
-			std::cout << "Add Allowed: ID: " << object_id << " At: " << m_CommandNumber << std::endl;
+			CL_Console::write_line("Add Allowed: ID: %1 At: %2", object_id, m_CommandNumber);
 		}
 
 		if (p->GetType() == MTID_STARTTICK)
@@ -808,7 +758,7 @@ void TestApp::client_receive()
 		}
 
 		if (p->GetType() == MTID_CHALL)
-			std::cout << "Received: '" << p->GetDataString() << "' at " << p->GetTime() << " ticks" << std::endl;
+			CL_Console::write_line("Received: '%1' at %2 ticks", p->GetDataString(), p->GetTime());
 
 		if (p->GetType() == MTID_CORRECTION)
 		{
@@ -859,7 +809,7 @@ void TestApp::client_receive()
 
 				CommandHistory::iterator checkCmd = ship->commandList.lower_bound(commandNumber);
 				if (checkCmd != ship->commandList.end() && received != checkCmd->second)
-					std::cout << commandNumber << " Server out of sync" << std::endl;
+					CL_Console::write_line("%1 Server out of sync", commandNumber);
 
 				float x = 0.f, y = 0.f;
 				bits.Read(x);
@@ -984,7 +934,7 @@ void TestApp::client_send(float dt)
 			if (importantCommand)
 			{
 				myShip->mostRecentCommand = m_CommandNumber;
-				std::cout << m_CommandNumber << " (important)" << std::endl;
+				CL_Console::write_line("%1 (important)", m_CommandNumber);
 			}
 
 			m_Network->Send(true, importantCommand ? MTID_IMPORTANTMOVE : MTID_ENTITYMOVE, (char*)bits.GetData(), bits.GetNumberOfBytesUsed(), 
@@ -1019,7 +969,7 @@ void TestApp::client_render(float dt)
 	m_gc.draw_text(250, 40, cl_format("Command: %1", (unsigned int)m_CommandNumber));
 
 	m_SpriteBatch.flush();
-	m_window.flip();
+	//m_window.flip();
 }
 
 void TestApp::draw_rectangle(const CL_Rectf &rect, const CL_Colorf &color)

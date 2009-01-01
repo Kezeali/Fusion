@@ -916,7 +916,7 @@ namespace FusionEngine
 			return index_of(_where->first);
 		}
 
-		//! Smartly chooses to set(), push() or insert() to get best performance
+		//! Smartly chooses to set(), push_back() or insert() to get best performance
 		void add(time_type _time, const T& _value)
 		{
 			iterator _where = find_closest(_time);
@@ -924,7 +924,7 @@ namespace FusionEngine
 			if (_where->first == _time)
 				set(_time, _value);
 			else if (_where == end())
-				push(_time, _value);
+				push_back(_time, _value);
 			else
 				insert(_where, _time, _value);
 		}
@@ -1422,13 +1422,13 @@ namespace FusionEngine
 		}
 
 
-		void push(time_type _time, const T& _value)
+		void push_back(time_type _time, const T& _value)
 		{
 			m_Data.push_back(record_type(_time, _value));
 		}
 
 		// Pops off records until 'front' is at the given time
-		void pop(time_type _time)
+		void pop_front(time_type _time)
 		{
 			if (m_Data.empty())
 				return;
@@ -1440,7 +1440,7 @@ namespace FusionEngine
 			}
 		}
 
-		void pop()
+		void pop_front()
 		{
 			m_Data.pop_front();
 		}
