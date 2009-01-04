@@ -82,30 +82,30 @@ namespace FusionEngine
 		//! Assignment operator
 		Vector2T<T> &operator=(const Vector2T<T> &other)
 		{ 
-			x = v.x;
-			y = v.y;
+			x = other.x;
+			y = other.y;
 			return *this;
 		}
 		//! Addition assignment operator
 		Vector2T<T> &operator+=(const Vector2T<T> &other)
 		{
-			x += v.x;
-			y += v.y;
+			x += other.x;
+			y += other.y;
 			return *this;
 		}
 
 		//! Subtraction assignment operator
 		Vector2T<T> &operator-=(const Vector2T<T> &other)
 		{
-			x -= v.x;
-			y -= v.y;
+			x -= other.x;
+			y -= other.y;
 			return *this;
 		}
 		//! Multiplication assignment operator
 		Vector2T<T> &operator*=(T scalar)
 		{
-			x *= s;
-			y *= s;
+			x *= scalar;
+			y *= scalar;
 			return *this;
 		}
 
@@ -114,12 +114,12 @@ namespace FusionEngine
 		//! Equivalancy operator
 		bool operator==(const Vector2T<T> &other) const
 		{
-			return ((x == v.x) && (y == v.y));
+			return ((x == other.x) && (y == other.y));
 		}
 		//! Not-equals operator
 		bool operator!=(const Vector2T<T> &other) const
 		{
-			return (x != v.x) || (y != v.y);
+			return (x != other.x) || (y != other.y);
 		}
 
 		//////////////
@@ -127,12 +127,12 @@ namespace FusionEngine
 		//! Addition operator
 		Vector2T<T> operator+(const Vector2T<T> &other) const
 		{
-			return Vector2T<T>(x + v.x, y + v.y);
+			return Vector2T<T>(x + other.x, y + other.y);
 		}
 		//! Subtraction operator
 		Vector2T<T> operator-(const Vector2T<T> &other) const
 		{
-			return Vector2T<T>(x - v.x, y - v.y);
+			return Vector2T<T>(x - other.x, y - other.y);
 		}
 		//! Multiplication operator
 		Vector2T<T> operator*(T scalar) const
@@ -196,18 +196,18 @@ namespace FusionEngine
 		//! Returns the dot product
 		float dot(const Vector2T<T>& other) const
 		{
-			return x*v.x + y*v.y;  
+			return x*other.x + y*other.y;  
 		}
 		//! Returns the cross product
 		float cross(const Vector2T<T>& other) const
 		{
-			return ( x*v.y - y*v.x );
+			return ( x*other.y - y*other.x );
 		}
 		//! Projects this vector onto the given one
 		Vector2T<T> project(const Vector2T<T>& other) const
 		{
 			//       v1 * (v1 dot v2 / v2 dot v2)
-			return ( v * (this->dot(v) / v.dot(v)) );
+			return ( (*this) * (this->dot(other) / other.dot(other)) );
 		}
 		//! Rotates this vector by another
 		/*!
@@ -216,14 +216,14 @@ namespace FusionEngine
 		 */
 		void rotate(const Vector2T<T>& other)
 		{
-			x = (x   * v.x - y   * v.y);
-			y = (x   * v.y + y   * v.x);
+			x = (x   * other.x - y   * other.y);
+			y = (x   * other.y + y   * other.x);
 		}
 		//! Inverse of Vector2T#rotate()
 		void unrotate(const Vector2T<T>& other)
 		{
-			x = (x   * v.x + y   * v.y);
-			y = (x   * v.y - y   * v.x);
+			x = (x   * other.x + y   * other.y);
+			y = (x   * other.y - y   * other.x);
 		}
 		//! Returns the angle between two vectors
 		/*!
@@ -232,12 +232,12 @@ namespace FusionEngine
 		 */
 		float angleFrom(const Vector2T<T>& other)
 		{
-			float cosine = this->x * b.x + this->y * b.y / (this->length() * b.length());
+			float cosine = this->x * other.x + this->y * other.y / (this->length() * other.length());
 			// rounding errors might make dotproduct out of range for cosine
 			if (cosine > 1) cosine = 1;
 			else if (cosine < -1) cosine = -1;
 
-			if ((this->x * b.y - this->y * b.x) < 0)
+			if ((this->x * other.y - this->y * other.x) < 0)
 				return -acos(cosine);
 			else
 				return acos(cosine);

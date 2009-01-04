@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AuthorityManager.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\Common.h"
 				>
 			</File>

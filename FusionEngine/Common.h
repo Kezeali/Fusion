@@ -16,6 +16,7 @@
 #include <set>
 #include <deque>
 #include <algorithm>
+#include <numeric>
 
 #include <iostream>
 #include <iomanip>

@@ -1294,10 +1294,6 @@ namespace FusionEngine
 			if (m_Data.empty())
 				return m_Data.end();
 
-			size_type test = m_Data.size();
-			if (m_Data.size() == 1)
-				return m_Data.begin();
-
 			size_type low = 0;
 			size_type high = m_Data.size() - 1;
 			size_type mid = (size_type)((low + high) / 2 + 0.5);
@@ -1459,7 +1455,7 @@ namespace FusionEngine
 
 		void erase_before(iterator _front)
 		{
-			if (m_Data.empty() || _back == m_Data.begin())
+			if (m_Data.empty() || _front == m_Data.begin())
 				return;
 
 			m_Data.rerase(_front - 1, m_Data.begin());

@@ -141,8 +141,8 @@ namespace FusionEngine
 		~ResourceContainer()
 		{
 			// Fire Signals
-			OnInvalidation();
-			OnDestruction();
+			OnInvalidation.invoke();
+			OnDestruction.invoke();
 
 #ifdef _DEBUG
 			if (m_Valid || m_Data != NULL)

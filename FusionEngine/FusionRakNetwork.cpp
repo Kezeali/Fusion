@@ -172,10 +172,10 @@ namespace FusionEngine
 		RakNet::BitStream bits;
 		if (timestamped)
 		{
-			bits.Write((unsigned char)ID_TIMESTAMP);
+			bits.Write((MessageID)ID_TIMESTAMP);
 			bits.Write(RakNet::GetTime());
 		}
-		bits.Write(type);
+		bits.Write((MessageID)type);
 		bits.Write(data, length);
 
 		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, m_SystemAddresses[destination], false);

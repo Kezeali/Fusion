@@ -31,6 +31,8 @@ namespace FusionEngine
 {
 
 	Network::Network()
+		: m_SmoothedPing(0.f),
+		m_SPTightness(0.1f)
 	{
 	}
 
@@ -74,6 +76,27 @@ namespace FusionEngine
 	int Network::GetPing(const NetHandle& handle)
 	{
 		return 0;
+	}
+
+	int Network::GetLastPing(const NetHandle& handle)
+	{
+		return 0;
+	}
+
+	int Network::GetAveragePing(const NetHandle& handle)
+	{
+		return 0;
+	}
+
+	int Network::GetLowestPing(const NetHandle& handle)
+	{
+		return 0;
+	}
+
+	int Network::GetSmoothedPing(const NetHandle& handle)
+	{
+		m_SmoothedPing = m_SmoothedPing + (GetLastPing(handle) - m_SmoothedPing) * m_SPTightness;
+		return (int)fe_round(m_SmoothedPing);
 	}
 
 }

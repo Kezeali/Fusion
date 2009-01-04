@@ -214,6 +214,11 @@ namespace FusionEngine
 
 		//! Returns the latest ping to the given NetID
 		virtual int GetPing(const NetHandle& handle);
+		virtual int GetLastPing(const NetHandle& handle);
+		virtual int GetAveragePing(const NetHandle& handle);
+		virtual int GetLowestPing(const NetHandle& handle);
+		virtual int GetSmoothedPing(const NetHandle& handle);
+
 
 		//! Adds some lag time to communications
 		/*!
@@ -237,6 +242,10 @@ namespace FusionEngine
 		virtual unsigned int GetDebugLagVariance() const { return 0; }
 		//! Returns the current fake packet loss setting
 		virtual double GetDebugAllowBps() const { return 0.0; }
+
+	protected:
+		float m_SmoothedPing;
+		float m_SPTightness;
 	};
 
 }

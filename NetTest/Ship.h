@@ -138,18 +138,41 @@ public:
 
 struct Action
 {
-	float x, y;
+	Vector2 position;
+	Vector2 velocity;
+	float angle, angularVelocity;
 	//bool valid;
 	Action()
-		: x(0.f), y(0.f)/*, valid(false)*/
+		: angle(0.f), angularVelocity(0.f)
 	{
 	}
-	Action(float _x, float _y)
-		: x(_x), y(_y)/*, valid(true)*/
+	Action(const Vector2& _velocity, float _angularVelocity, const Vector2& _position, float _angle)
+		: velocity(_velocity), angularVelocity(_angularVelocity), position(_position), angle(_angle)
 	{
 	}
 };
-typedef Buffer<Action> ActionHistory;
+
+struct AuthoritativeAction : Action
+{
+	//Action action;
+	ObjectID authId;
+
+	//bool valid;
+	AuthoritativeAction()
+		: Action(),
+		authId(0)
+	{
+	}
+	AuthoritativeAction(ObjectID _authId, const Action& _action)
+		: Action(_action.velocity, _action.angularVelocity, _action.position, _action.angle),
+		authId(_authId)
+	{
+	}
+};
+
+typedef Buffer<AuthoritativeAction> ActionHistory;
+
+
 struct Command
 {
 	Command()
@@ -181,7 +204,10 @@ class Ship
 public:
 	int sendDelay;
 	ObjectID id;
-	float x, y;
+	Vector2 velocity;
+	Vector2 position;
+	float angularVelocity;
+	float angle;
 	Interpolated<float> interp_x;
 	Interpolated<float> interp_y;
 	bool up, down, left, right;
@@ -189,9 +215,10 @@ public:
 	bool local;
 
 	// Client uses this to decide what position to interpolate to
-	unsigned long mostRecentCommand;
+	//unsigned long mostRecentCommand;
 	// Server uses this to keep track of clients with different tick rates
-	unsigned long currentTick;
+	//unsigned long currentTick;
+	unsigned long lastSentTick;
 	ActionHistory actionList;
 	CommandHistory commandList;
 	ActionHistory::iterator currentAction;
@@ -199,14 +226,17 @@ public:
 
 	Ship()
 		: id(0),
-		x(0.f), y(0.f),
+		velocity(0.f, 0.f),
+		position(0.f, 0.f),
 		interp_x(0.f), interp_y(0.f),
+		angularVelocity(0.f),
+		angle(0.f),
 		sendDelay(0),
-		mostRecentCommand(0),
-		currentTick(0),
+		//mostRecentCommand(0),
+		lastSentTick(0),
 		local(false)
 	{
-		actionList.set_capacity(1000);
+		actionList.set_capacity(500);
 		commandList.set_capacity(500);
 		currentAction = actionList.begin();
 		currentCommand = commandList.begin();
@@ -214,15 +244,18 @@ public:
 
 	Ship(ObjectID _id)
 		: id(_id),
-		x(0.f), y(0.f),
+		velocity(0.f, 0.f),
+		position(0.f, 0.f),
 		interp_x(0.f), interp_y(0.f),
+		angularVelocity(0.f),
+		angle(0.f),
 		sendDelay(0),
-		mostRecentCommand(0),
-		currentTick(0),
+		//mostRecentCommand(0),
+		lastSentTick(0),
 		local(false)
 	{
-		actionList.set_capacity(1000);
-		commandList.set_capacity(1000);
+		actionList.set_capacity(500);
+		commandList.set_capacity(500);
 		currentAction = actionList.begin();
 		currentCommand = commandList.begin();
 	}
@@ -230,6 +263,11 @@ public:
 	Command GetCommand()
 	{
 		return Command(up, down, left, right);
+	}
+
+	Action GetAction()
+	{
+		return Action(velocity, angularVelocity, position, angle);
 	}
 
 	void SetCommand(const Command& command)
@@ -240,188 +278,13 @@ public:
 		right = command.right;
 	}
 
-	//void saveCommand(unsigned long tick)
-	//{
-	//	commandList.add(tick, Command(up, down, left, right));
-	//}
-
-	//void saveCommand(unsigned long tick, const Command &command)
-	//{
-	//	commandList.add(tick, command);
-	//}
-
-	//void changeCommand(unsigned long tick, const Command &command)
-	//{
-	//	CommandHistory::iterator _where = commandList.find_closest(tick);
-	//	if (_where == commandList.end())
-	//	{
-	//		commandList.add(tick, command);
-	//		return;
-	//	}
-
-	//	if (_where->first == tick)
-	//	{
-	//		commandList.set(_where, tick, command);
-	//		return;
-	//	}
-
-	//	if (_where->first > tick && _where != commandList.begin())
-	//		--_where;
-	//	else if (_where->first < tick)
-	//		++_where;
-	//		
-	//	commandList.insert(_where, tick, command);
-	//}
-
-	//bool checkCommand(unsigned long tick, const Command &expected)
-	//{
-	//	CommandHistory::iterator _where = commandList.lower_bound(tick);
-	//	if (_where == commandList.end())
-	//		return true;
-
-	//	return _where->second != expected;
-	//}
-
-	//void rewindCommand(unsigned long tick)
-	//{
-	//	if (commandList.empty())
-	//		return;
-
-	//	currentCommand = commandList.lower_bound(tick);
-	//	if (currentCommand == commandList.end())
-	//		return;
-
-	//	if (currentCommand->first > tick && currentCommand != commandList.begin())
-	//		--currentCommand;
-
-	//	Command &command = currentCommand->second;
-	//	up = command.up;
-	//	down = command.down;
-	//	left = command.left;
-	//	right = command.right;
-	//}
-
-	//void nextCommand()
-	//{
-	//	if (commandList.empty() || currentCommand == commandList.end())
-	//		return;
-
-	//	if (++currentCommand == commandList.end())
-	//		return;
-
-	//	Command &command = currentCommand->second;
-	//	up = command.up;
-	//	down = command.down;
-	//	left = command.left;
-	//	right = command.right;
-	//}
-
-	// Finds the command closest to the given time
-	//void nextCommand(unsigned long tick)
-	//{
-	//	if (commandList.empty())
-	//		return;
-
-	//	if (currentCommand == commandList.end())
-	//		return;
-
-	//	for (CommandHistory::iterator it = currentCommand, end = commandList.end();
-	//		it != end && it->first <= tick; ++it)
-	//	{
-	//		// Find the command closest to the given tick
-	//		//if (tick - it->first < tick - currentCommand->first)
-	//		currentCommand = it;
-	//		//if (it->first > tick)
-	//		//{
-	//		//	break;
-	//		//}
-	//	}
-
-	//	if (currentCommand == commandList.end())
-	//		return;
-
-	//	Command &command = currentCommand->second;
-	//	up = command.up;
-	//	down = command.down;
-	//	left = command.left;
-	//	right = command.right;
-	//}
-
-	//void cullCommands(unsigned long tick)
-	//{
-	//	commandList.remove_before(tick);
-	//}
-
-	//void saveAction(unsigned long tick)
-	//{
-	//	actionList.push_back(tick, Action(x, y));
-	//}
-
-	//bool checkAction(unsigned long tick, float x, float y)
-	//{
-	//	return checkAction(tick, Action(x, y), (float)s_FloatComparisonEpsilon);
-	//}
-
-	// Returns true if the stored action at the given tick is different to the given x, y values
-	//bool checkAction(unsigned long tick, const Action& expected, float e)
-	//{
-	//	if (actionList.empty())
-	//		return false;
-
-	//	ActionHistory::iterator _where = actionList.find(tick);
-	//	if (_where == actionList.end())
-	//		return false;
-
-	//	Action &action = _where->second;
-	//	return !fe_fequal(action.x, expected.x, e) || !fe_fequal(action.y, expected.y, e);
-	//}
-
-
-	// Returns true if a suitable action was found
-	//bool checkRewindAction(unsigned long tick, float x, float y)
-	//{
-	//	if (actionList.empty())
-	//		return false;
-
-	//	currentAction = actionList.find_closest(tick);
-	//	if (currentAction == actionList.end())
-	//		return false;
-
-	//	Action &action = currentAction->second;
-	//	if (!fe_fequal(action.x, x, 0.5f) || !fe_fequal(action.y, y, 0.5f))
-	//		return false;
-
-	//	actionList.erase_after(currentAction);
-
-	//	x = action.x;
-	//	y = action.y;
-
-	//	return true;
-	//}
-
-	// Returns true if an action was found
-	//bool rewindAction(unsigned long tick)
-	//{
-	//	if (actionList.empty())
-	//		return true;
-
-	//	currentAction = actionList.find(tick);
-	//	if (currentAction == actionList.end())
-	//		return false;
-
-	//	actionList.erase_after(currentAction);
-	//	Action &action = currentAction->second;
-	//	x = action.x;
-	//	y = action.y;
-
-	//	return true;
-	//}
-
-	//void cullActions()
-	//{
-	//	actionList.clear();
-	//	//actionList.erase_before(currentAction);
-	//}
+	void SetAction(const Action& state)
+	{
+		velocity = state.velocity;
+		position = state.position;
+		angularVelocity = state.angularVelocity;
+		angle = state.angle;
+	}
 
 };
 

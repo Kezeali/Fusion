@@ -75,50 +75,36 @@ namespace FusionEngine
 		/*!
 		 * Server-side Structure:<br>
 		 * <ol>
-		 * <li> [char]         <channel>
 		 * <li> [ObjectID]     The prelim. ID the client gave this ship
-		 * <li> [unsigned int] The team this player wants to join
-		 * <li> [string]       The ship resource tag of this players chosen ship
+		 * <li> [bool]         True if the client wants ownership of this entity
+		 * <li> [string]       The class name of this players chosen entity
 		 * <li> [string]       The nickname for this player
 		 * </ol>
-		 *
-		 * <p>NB: The Resource ID and name can also arrive via MTID_PLAYERCONFIG</p>
 		 *
 		 * <br>
 		 * Client-side Structure:<br>
 		 * <ol>
-		 * <li> [char]         <channel>
 		 * <li> [ObjectID]     The ID given to this ship by the server
-		 * <li> [unsigned int] The team the player is on
-		 * <li> [string]       The entity class name of this players chosen ship
+		 * <li> [bool]         True if the remote client has ownership of this entity
+		 * <li> [ObjectID]     If the previous item is 'true': the authorityID of the client that owns the entity
+		 * <li> [string]       The class name of this players chosen entity
 		 * <li> [string]       The nickname for this player
 		 * </ol>
 		 */
-		MTID_ADDPLAYER = ID_USER_PACKET_ENUM,
-		//! [client] The server has allowed a local player to join
+		MTID_ADDENTITY = ID_USER_PACKET_ENUM,
+		//! [client] The owned entity request was allowed by the server
 		/*!
 		 * Structure:<br>
 		 * <ol>
-		 * <li> [char]     <channel>
 		 * <li> [ObjectID] The prelim. ID the client gave this ship
 		 * <li> [ObjectID] The 'official' ID gaven to this ship by the server
-		 * <li> The rest is the same format as MTID_ENTITYFRAME
 		 * </ol>
 		 */
 		MTID_ADDALLOWED,
 		//! [client|server]
-		MTID_REMOVEPLAYER,
+		MTID_REMOVEENTITY,
 		//! [client|server] Updates the gamemode class entity name
 		MTID_CHANGEMODE,
-		//! [server]
-		/*!
-		 * If the server receives this message during a game, it will send the client the
-		 * current gamestate, in the form of reliable ADDPLAYER and SHIPFRAME packets, etc.
-		 * The client sends this message at the begining of the ClientEnvironment process,
-		 * so the first thing the ClientEnvrionment (ClientNetworkManager to be precise)
-		 * receives should be those all important game state messages.
-		 */
-		MTID_NEEDGAMESTATE,
 		//! [server|client]
 		MTID_CHANGENAME,
 		//@}
@@ -130,8 +116,7 @@ namespace FusionEngine
 		/*!
 		 * Client-side Structure:<br>
 		 * <ol>
-		 * <li> [char]     <channel>
-		 * <li> TODO: other stuff?
+		 * <li> TODO: stuff?
 		 * </ol>
 		 */
 		MTID_STARTSYNC,
@@ -145,7 +130,7 @@ namespace FusionEngine
 		//! Gameplay channel message types
 
 		//! Gives the client a hint about what it's starting tick should be
-		MTID_STARTTICK,
+		MTID_JOINSETUP,
 		//! [client|server] Low priority
 		MTID_ENTITYMOVE,
 		//! [client] High Priority
