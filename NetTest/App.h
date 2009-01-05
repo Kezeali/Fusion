@@ -194,6 +194,8 @@ private:
 	// Used to calculate recent average jitter
 	boost::circular_buffer<int> m_PingBuffer;
 
+	CL_SlotContainer m_Slots;
+
 
 	void get_input(const ShipPtr myShip);
 
@@ -223,6 +225,9 @@ private:
 	void client_render(float tickTime, float accumulatorRemaining);
 
 	void draw_rectangle(const CL_Rectf &rect, const CL_Colorf &color);
+
+	void key_down(const CL_InputEvent& ev, const CL_InputState& state);
+	void key_up(const CL_InputEvent& ev, const CL_InputState& state);
 
 public:
 	int run(const std::vector<CL_String> &args, CL_DisplayWindow& display);
@@ -330,6 +335,10 @@ int TestApp::run(const std::vector<CL_String> &args, CL_DisplayWindow& display)
 
 	m_Network = new RakNetwork();
 
+	// Connect to input events
+	m_Slots.connect(m_ic.get_keyboard().sig_key_down(), this, &TestApp::key_down);
+	m_Slots.connect(m_ic.get_keyboard().sig_key_up(), this, &TestApp::key_up);
+
 	m_CommandNumber = 0;
 	m_LatestReceivedTick = 0;
 
@@ -436,6 +445,7 @@ void TestApp::run_client(const std::string& host)
 	int previousPing = m_Network->GetPing(serverHandle);
 	m_PingBuffer.set_capacity(10000/split);
 
+
 	RakNetTimeNS beginAt;
 	// Loop thing
 	while (!m_ic.get_keyboard().get_keycode(CL_KEY_ESCAPE))
@@ -525,7 +535,9 @@ void TestApp::run_client(const std::string& host)
 		m_gc.draw_text(2, 22, "Receiving took " + CL_StringHelp::uint_to_text(receiveTime));
 		m_gc.draw_text(2, 43, "Simulating took " + CL_StringHelp::uint_to_text(simTime));
 		m_gc.draw_text(2, 64, "Rendering took " + CL_StringHelp::uint_to_text(renderTime));
-		m_gc.draw_text(2, 430, cl_format("Sim speed: %1  Ticks in frame: %2", m_SimAdjust, ticks));
+
+		m_gc.draw_text(2, 400, cl_format("Sim speed: %1  Ticks in frame: %2", m_SimAdjust, ticks));
+		m_gc.draw_text(250, 432, cl_format("Fake Lag: %1  Max BpS: %2", m_Network->GetDebugLagMin(), m_Network->GetDebugAllowBps()));
 
 		m_window.flip();
 
@@ -739,34 +751,33 @@ void TestApp::server_simulate(float ticks)
 			mostRecentSyncTick = fe_min(mostRecentSyncTick, it->second.GetMostRecentTick());
 		}*/
 
+		//for (ShipMap::iterator it = ships.begin(), end = ships.end(); it != end; ++it)
+		//{
+		//	ShipPtr ship = it->second;
 
-		for (ShipMap::iterator it = ships.begin(), end = ships.end(); it != end; ++it)
-		{
-			ShipPtr ship = it->second;
+		//	ship->currentCommand = ship->commandList.begin();
+		//	ship->currentAction = ship->actionList.begin();
 
-			ship->currentCommand = ship->commandList.begin();
-			ship->currentAction = ship->actionList.begin();
+		//	if (!ship->commandList.empty())
+		//	{
+		//		for (CommandHistory::iterator next = ship->commandList.begin() + 1, end = ship->commandList.end();
+		//			next != end; ++next)
+		//		{
+		//			if (next->first == m_CommandNumber)
+		//				ship->currentCommand = next;
+		//		}
+		//	}
 
-			if (!ship->commandList.empty())
-			{
-				for (CommandHistory::iterator next = ship->commandList.begin() + 1, end = ship->commandList.end();
-					next != end; ++next)
-				{
-					if (next->first == m_CommandNumber)
-						ship->currentCommand = next - 1;
-				}
-			}
-
-			if (!ship->actionList.empty())
-			{
-				for (ActionHistory::iterator next = ship->actionList.begin() + 1, end = ship->actionList.end();
-					next != end; ++next)
-				{
-					if (next->first == m_CommandNumber)
-						ship->currentAction = next - 1;
-				}
-			}
-		}
+		//	if (!ship->actionList.empty())
+		//	{
+		//		for (ActionHistory::iterator next = ship->actionList.begin() + 1, end = ship->actionList.end();
+		//			next != end; ++next)
+		//		{
+		//			if (next->first == m_CommandNumber)
+		//				ship->currentAction = next;
+		//		}
+		//	}
+		//}
 
 		// Simulate up to the most recent tick possible
 		// mostRecentSyncTick is the minimum of the most recent ticks received from each client
@@ -777,13 +788,28 @@ void TestApp::server_simulate(float ticks)
 			{
 				ShipPtr ship = it->second;
 
+				if (ship->currentCommand == ship->commandList.end())
+					ship->currentCommand = ship->commandList.begin();
+				if (ship->currentAction == ship->actionList.end())
+					ship->currentAction = ship->actionList.begin();
+
 				// Go to the next command if we've reached it
 				{
 					CommandHistory::iterator next = ship->currentCommand + 1;
 					if (!ship->commandList.empty() && next != ship->commandList.end())
 					{
-						if (next->first == m_CommandNumber)
-							ship->currentCommand = next - 1;
+						if (next->first < m_CommandNumber)
+						{
+							for (CommandHistory::iterator end = ship->commandList.end(); next != end; ++next)
+							{
+								if (next->first == m_CommandNumber)
+									ship->currentCommand = next;
+							}
+							CL_Console::write_line("Client too far behind, dropped commands");
+							//ship->currentCommand = next;
+						}
+						else if (next->first == m_CommandNumber)
+							ship->currentCommand = next;
 					}
 				}
 				// Go to the next action
@@ -791,8 +817,18 @@ void TestApp::server_simulate(float ticks)
 					ActionHistory::iterator next = ship->currentAction + 1;
 					if (!ship->actionList.empty() && next != ship->actionList.end())
 					{
-						if (next->first == m_CommandNumber)
-							ship->currentAction = next - 1;
+						if (next->first < m_CommandNumber)
+						{
+							for (ActionHistory::iterator end = ship->actionList.end(); next != end; ++next)
+							{
+								if (next->first == m_CommandNumber)
+									ship->currentAction = next;
+							}
+							CL_Console::write_line("Client too far behind, dropped actions");
+							//ship->currentAction = next;
+						}
+						else if (next->first == m_CommandNumber)
+							ship->currentAction = next;
 					}
 				}
 
@@ -822,8 +858,8 @@ void TestApp::server_simulate(float ticks)
 		//for (ShipMap::iterator it = ships.begin(), end = ships.end(); it != end; ++it)
 		//{
 		//	ShipPtr ship = it->second;
-		//	ship->actionList.erase_before(ship->currentAction);
-		//	ship->commandList.erase_before(ship->currentCommand);
+		//	ship->currentAction = ship->actionList.erase_before(ship->currentAction);
+		//	ship->currentCommand = ship->commandList.erase_before(ship->currentCommand);
 		//}
 	}
 }
@@ -849,13 +885,13 @@ void TestApp::server_updateAuthority(float dt)
 		//ship->currentCommand = ship->commandList.begin();
 		//ship->currentAction = ship->actionList.begin();
 		// Inject the input for the current tick (if we have one)
-		if (ship->currentCommand != ship->commandList.end() && ship->currentCommand->first == m_CommandNumber)
+		if (ship->currentCommand != ship->commandList.end() && ship->currentCommand->first == m_CommandNumber - 1)
 		{
 			Command& cmd = ship->currentCommand->second;
 			m_AuthorityManager.InjectInput(ship->id, cmd);
 		}
 		// Inject the state for the current tick (if we have one)
-		if (ship->currentAction != ship->actionList.end() && ship->currentAction->first == m_CommandNumber)
+		if (ship->currentAction != ship->actionList.end() && ship->currentAction->first == m_CommandNumber - 1)
 		{
 			AuthoritativeAction& authAct = ship->currentAction->second;
 			m_AuthorityManager.InjectState(authAct.authId, ship->id, authAct);
@@ -988,7 +1024,7 @@ void TestApp::server_render(float dt)
 		m_gc.set_font(font1small);
 		EntityOwnerMap::iterator _where = entityOwnership.find(ship->id);
 		ClientData& client = m_Clients[_where->second];
-		m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 14, cl_format("%1", (unsigned int)client.GetMostRecentTick()));
+		m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 20, cl_format("%1", (unsigned int)client.GetMostRecentTick()));
 
 		CommandHistory::iterator wCommand = ship->currentCommand;
 		if (wCommand != ship->commandList.end())
@@ -997,15 +1033,15 @@ void TestApp::server_render(float dt)
 				(long)wCommand->first,
 				wCommand->second.up ? "*" : " ", wCommand->second.down ? "*" : " ",
 				wCommand->second.left ? "*" : " ", wCommand->second.right ? "*" : " ");
-			m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 24, ccText);
+			m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 30, ccText);
 		}
 
 		CommandHistory::record_type &nCommand = ship->commandList.newest();
-		CL_String lcText = cl_format("Newest %1. U%2 D%3 L%4 R%5",
-			(long)nCommand.first,
+		CL_String lcText = cl_format("Newest %1 (size %2). U%3 D%4 L%5 R%6",
+			(long)nCommand.first, ship->commandList.size(),
 			nCommand.second.up ? "*" : " " , nCommand.second.down ? "*" : " ",
 			nCommand.second.left ? "*" : " ", nCommand.second.right ? "*" : " ");
-		m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 34, lcText);
+		m_gc.draw_text((int)ship->position.x, (int)ship->position.y + 40, lcText);
 	}
 
 	m_gc.set_font(font1);
@@ -1125,8 +1161,8 @@ void TestApp::client_receive()
 
 			// Recalculate ticks ahead
 			int smoothedPing = m_Network->GetSmoothedPing(serverHandle);
-			int jitterAvg = std::accumulate(m_PingBuffer.begin(), m_PingBuffer.end(), 0);
-			jitterAvg = jitterAvg / m_PingBuffer.size();
+			//int jitterAvg = std::accumulate(m_PingBuffer.begin(), m_PingBuffer.end(), 0);
+			//jitterAvg = jitterAvg / m_PingBuffer.size();
 
 			m_TicksAhead = smoothedPing;// + jitterAvg;
 			m_TicksAhead = m_TicksAhead / split + 1;
@@ -1345,6 +1381,52 @@ void TestApp::draw_rectangle(const CL_Rectf &rect, const CL_Colorf &color)
 	vertex_data.set_positions(positions);
 	vertex_data.set_primary_color(color);
 	m_gc.draw_primitives(cl_polygon, 4, vertex_data);
+}
+
+void TestApp::key_down(const CL_InputEvent& ev, const CL_InputState& state)
+{
+}
+
+void TestApp::key_up(const CL_InputEvent& ev, const CL_InputState& state)
+{
+	if (ev.id == 'I')
+	{
+		if (m_Network->GetDebugLagMin() == 0)
+		{
+			m_Network->SetDebugLag(100, 0);
+		}
+		else if (m_Network->GetDebugLagMin() == 100)
+		{
+			m_Network->SetDebugLag(500, 0);
+		}
+		else if (m_Network->GetDebugLagMin() == 500)
+		{
+			m_Network->SetDebugLag(1000, 0);
+		}
+		else if (m_Network->GetDebugLagMin() == 1000)
+		{
+			m_Network->SetDebugLag(2000, 0);
+		}
+		else if (m_Network->GetDebugLagMin() == 2000)
+		{
+			m_Network->SetDebugLag(0, 0);
+		}
+	}
+	if (ev.id == 'K')
+	{
+		if (m_Network->GetDebugAllowBps() == 0)
+		{
+			m_Network->SetDebugPacketLoss(800);
+		}
+		else if (m_Network->GetDebugAllowBps() == 800)
+		{
+			m_Network->SetDebugPacketLoss(500);
+		}
+		else if (m_Network->GetDebugAllowBps() == 500)
+		{
+			m_Network->SetDebugPacketLoss(0);
+		}
+	}
 }
 
 
