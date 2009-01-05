@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -23,8 +23,6 @@
 	File Author(s):
 
 		Elliot Hayward
-
-		Dimitrios Christopoulos (dynamic object collision response)
 */
 
 #include "Common.h"
@@ -127,7 +125,7 @@ namespace FusionEngine
 		//delete m_CollisionGrid;
 	}
 
-	b2Body* PhysicsWorld::SubstantiateBody(const PhysicsBodyPtr &body)
+	b2Body* PhysicsWorld::SubstantiateBody(PhysicsBody *body)
 	{
 		b2Body* bxBody = m_BxWorld->CreateBody(body->GetBodyDef());
 		m_Bodies[bxBody] = body;
@@ -138,7 +136,7 @@ namespace FusionEngine
 		m_Bodies.erase(body->GetB2Body());
 	}
 	
-	void PhysicsWorld::BodyDeleted(PhysicsBodyPtr &body)
+	void PhysicsWorld::BodyDeleted(PhysicsBody *body)
 	{
 		m_BxWorld->DestroyBody(body->GetB2Body());
 	}

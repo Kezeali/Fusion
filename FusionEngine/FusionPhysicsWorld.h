@@ -127,7 +127,7 @@ namespace FusionEngine
 	 * \see
 	 * PhysicsBody.
 	 */
-	class PhysicsWorld : public BaseScene
+	class PhysicsWorld
 	{
 		friend class ContactListener;
 	public:
@@ -150,14 +150,14 @@ namespace FusionEngine
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
-		b2Body *SubstantiateBody(const PhysicsBodyPtr &body);
+		b2Body *SubstantiateBody(PhysicsBody *body);
 		//! Removes the given body from the world.
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
 		void RemoveBody(PhysicsBodyPtr &body);
 
-		void BodyDeleted(PhysicsBodyPtr &body);
+		void BodyDeleted(PhysicsBody *body);
 
 		//! Returns a list of bodies currently in the world
 		const BodyMap& GetBodies() const;

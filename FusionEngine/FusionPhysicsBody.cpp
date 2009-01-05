@@ -85,7 +85,7 @@ namespace FusionEngine
 		}
 	}
 
-	void PhysicsBody::Initialize(const PhysicsWorld *world /* = NULL */)
+	void PhysicsBody::Initialize(PhysicsWorld *world /* = NULL */)
 	{
 		if (world != NULL)
 			m_World = world;
@@ -95,7 +95,7 @@ namespace FusionEngine
 			m_BxBody = m_World->SubstantiateBody(this);
 		}
 
-		SetSpeedXY(m_InitialSpeed);
+		_setVelocity(m_InitialVelocity);
 		CommitProperties();
 	}
 
@@ -111,11 +111,11 @@ namespace FusionEngine
 			massData.mass = m_Mass;
 			massData.center.SetZero();
 			massData.I = 0.0f;
-			m_body->SetMass(&massData);
+			m_BxBody->SetMass(&massData);
 
 			for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; it++)
 			{
-				(*it)->SetBody(this);
+				(*it)->SetBody(m_BxBody);
 				(*it)->UpdateProperties();
 			}
 		}
@@ -144,41 +144,24 @@ namespace FusionEngine
 
 	void PhysicsBody::SetMass(float mass)
 	{
-		if (mass == 0.0f)
-		{
-			m_BxBody->SetMass(0.0f);
-			m_InverseMass = 0.0f;
-		}
-		if (mass == g_PhysStaticMass)
-		{
-			//m_CollisionFlags |= C_STATIC;
-			m_Mass = g_PhysStaticMass;
-			m_InverseMass = 0.0f;
-			cpBodySetMoment(m_BxBody, INFINITY);
-		}
-		else
-		{
-			//m_CollisionFlags &= ~C_STATIC;
-			m_Mass = mass;
-			m_InverseMass = 1.0f / mass;
-		}
+		m_Mass = mass;
 	}
 
-	void PhysicsBody::RecalculateInertia()
-	{
-		float moment = 0;
-#ifdef PHYSBODY_USE_BOOST_PTRLIST
-		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-		{
-#else
-		for (ShapeList::iterator p_it = m_Shapes.begin(), end = m_Shapes.end(); p_it != end; ++p_it)
-		{
-			ShapeList::value_type it = (*p_it);
-#endif
-			moment += it->GetInertia();
-		}
-		cpBodySetMoment(m_BxBody, moment);
-	}
+//	void PhysicsBody::RecalculateInertia()
+//	{
+//		float moment = 0;
+//#ifdef PHYSBODY_USE_BOOST_PTRLIST
+//		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+//		{
+//#else
+//		for (ShapeList::iterator p_it = m_Shapes.begin(), end = m_Shapes.end(); p_it != end; ++p_it)
+//		{
+//			ShapeList::value_type it = (*p_it);
+//#endif
+//			moment += it->GetInertia();
+//		}
+//		cpBodySetMoment(m_BxBody, moment);
+//	}
 
 	void PhysicsBody::SetRadius(float radius)
 	{
@@ -720,26 +703,6 @@ namespace FusionEngine
 		m_Acceleration = acceleration;
 	}
 
-	void PhysicalObj::SetSpeedXY (Point2d vector)
-{
-  if(m_body){
-  if (EqualsZero(vector.x)) vector.x = 0;
-  if (EqualsZero(vector.y)) vector.y = 0;
-  bool was_moving = IsMoving();
-
-    // setting to FreeFall is done in StartMoving()
-    m_body->SetLinearVelocity(b2Vec2(vector.x,vector.y));
-    if (!was_moving && IsMoving()) {
-      UpdateTimeOfLastMove();
-      StartMoving();
-      m_body->WakeUp();
-    }
-  }else{
-    m_initial_speed = vector;
-  }
-}
-
-
 	void PhysicsBody::_setVelocity(const Vector2 &velocity)
 	{
 		m_Velocity = velocity;
@@ -747,7 +710,7 @@ namespace FusionEngine
 		m_BxBody->v.x = velocity.x;
 		m_BxBody->v.y = velocity.y;
 
-		if(m_body)
+		if(m_BxBody)
 		{
 			if (fe_fzero(vector.x))
 				vector.x = 0;
@@ -755,19 +718,10 @@ namespace FusionEngine
 				vector.y = 0;
 
 			bool was_moving = IsMoving();
-
-			// setting to FreeFall is done in StartMoving()
-			m_body->SetLinearVelocity(b2Vec2(vector.x,vector.y));
-			if (!was_moving && IsMoving())
-			{
-				UpdateTimeOfLastMove();
-				StartMoving();
-				m_body->WakeUp();
-			}
 		}
 		else
 		{
-			m_initial_speed = vector;
+			m_InitialVelocity = vector;
 		}
 	}
 

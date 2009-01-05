@@ -26,6 +26,7 @@ public:
 				retVal = testApp.run(args, display);
 			}
 
+			display.get_gc().set_font(CL_Font());
 			return retVal;
 		}
 		catch(CL_Exception& exception)

@@ -1,29 +1,28 @@
 /*
-Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
-This software is provided 'as-is', without any express or implied warranty.
-In noevent will the authors be held liable for any damages arising from the
-use of this software.
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
 
-Permission is granted to anyone to use this software for any purpose,
-including commercial applications, and to alter it and redistribute it
-freely, subject to the following restrictions:
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
 
-1. The origin of this software must not be misrepresented; you must not
-claim that you wrote the original software. If you use this software in a
-product, an acknowledgment in the product documentation would be
-appreciated but is not required.
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
 
-2. Altered source versions must be plainly marked as such, and must not
-be misrepresented as being the original software.
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
 
-3. This notice may not be removed or altered from any source distribution.
+    3. This notice may not be removed or altered from any source distribution.
 
 
-File Author(s):
+	File Author(s):
 
-Elliot Hayward
-
+		Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_PhysicsBody
@@ -76,7 +75,7 @@ namespace FusionEngine
 	 * \see
 	 * PhysicsWorld.
 	 */
-	class PhysicsBody : public ISceneNodeController
+	class PhysicsBody
 	{
 		//typedef boost::ptr_list<Shape> ShapeList;
 		typedef std::list<ShapePtr> ShapeList;
@@ -107,7 +106,7 @@ namespace FusionEngine
 
 	public:
 		//! \remarks Gets a b2Body from PhysicsWorld by asking it to substantiate 'this'
-		void Initialize(const PhysicsWorld *world = NULL);
+		void Initialize(PhysicsWorld *world = NULL);
 		//! Insert the set body properties into the Box2D objects
 		void CommitProperties();
 
@@ -444,8 +443,6 @@ namespace FusionEngine
 		//@}
 
 	protected:
-		ISceneNode *m_SceneNode;
-
 		b2Body *m_BxBody;
 		b2BodyDef *m_BxBodyDef;
 
@@ -505,6 +502,9 @@ namespace FusionEngine
 		bool m_UsesAABB;
 		//! Distance (circle) based collisions
 		bool m_UsesDist;
+
+		Vector2 m_InitialVelocity;
+		bool m_Bullet;
 
 		//@{
 		//! "State" stuff.
