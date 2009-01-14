@@ -5,7 +5,6 @@
 #pragma once
 #endif
 
-// Use cl_assert
 //#include <cassert>
 
 // STL
@@ -28,12 +27,11 @@
 
 // ClanLib
 #include <ClanLib/core.h>
-#include <ClanLib/network.h>
 #include <ClanLib/application.h>
 #include <ClanLib/display.h>
 #include <ClanLib/gl.h>
-#include <ClanLib/gui.h>
 #include <ClanLib/sound.h>
 #include <ClanLib/vorbis.h>
+#include <ClanLib/regexp.h>
 
 #endif

@@ -36,6 +36,7 @@
 
 #include "FusionPhysicsBody.h"
 #include "FusionPhysicsCallback.h"
+#include "FusionPhysicsDebugDraw.h"
 
 #include "FusionRefCounted.h"
 
@@ -115,6 +116,18 @@ namespace FusionEngine
 		PhysicsWorld *m_World;
 	};
 
+	class ContactFilter : public b2ContactFilter
+	{
+	public:
+		ContactFilter(const PhysicsWorld *world);
+
+		virtual bool ShouldCollide(b2Shape *shape1, b2Shape *shape2);
+		virtual bool RayCollide(void *userData, b2Shape *shape);
+
+	protected:
+		PhysicsWorld *m_World;
+	};
+
 	typedef std::tr1::shared_ptr<PhysicsBody> PhysicsBodyPtr;
 
 	/*!
@@ -142,6 +155,8 @@ namespace FusionEngine
 		//typedef std::vector<PhysicsBody *> BodyList;
 
 		typedef std::tr1::unordered_map<b2Body*, PhysicsBodyPtr> BodyMap;
+		//! Type for a list of bodies
+		typedef std::list<PhysicsBodyPtr> BodyList;
 
 		typedef std::list<b2ContactPoint> ContactList;
 
@@ -150,7 +165,7 @@ namespace FusionEngine
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
-		b2Body *SubstantiateBody(PhysicsBody *body);
+		b2Body *SubstantiateBody(PhysicsBodyPtr body);
 		//! Removes the given body from the world.
 		/*!
 		 * \param body Pointer to the body to remove.
@@ -179,7 +194,7 @@ namespace FusionEngine
 		 * \param split Step magnitude (millis since last step.)
 		 *
 		 */
-		void RunSimulation(unsigned int delta_milis);
+		void RunSimulation(float delta_milis);
 
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
 		void OnContactAdd(const b2ContactPoint *contact);
@@ -188,8 +203,12 @@ namespace FusionEngine
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
 		void OnContactRemove(const b2ContactPoint *contact);
 
+		void ClearContacts();
+
+		void SetGCForDebugDraw(CL_GraphicContext gc);
+
 		//! Draws all shapes in the simulation
-		void DebugDraw(bool fast = true);
+		//void DebugDraw(bool fast = true);
 
 		//! Resets the CollisonGrid and sets the borders up, etc.
 		/*!
@@ -246,6 +265,8 @@ namespace FusionEngine
 		// Chipmunk space
 		//cpSpace* m_ChipSpace;
 
+		ContactListener *m_ContactListener;
+		DebugDraw *m_DebugDraw;
 		// Box2d world
 		b2World *m_BxWorld;
 
@@ -291,86 +312,87 @@ namespace FusionEngine
 		int m_BitmaskRes;
 
 		private:
-			static void constrainBorders(void* ptr, void* data);
-			static void wrapAround(void* ptr, void* data);
+			void constrainBodies();
+			//static void constrainBorders(void* ptr, void* data);
+			//static void wrapAround(void* ptr, void* data);
 
-			void wrapBodiesAround();
+			//void wrapBodiesAround();
 	};
 
-	static void drawPolyShape(b2Shape *shape)
-	{
-		b2Body *body = shape->GetBody();
-		b2PolygonShape *polygon = (b2PolygonShape*)shape;
+	//static void drawPolyShape(b2Shape *shape)
+	//{
+	//	b2Body *body = shape->GetBody();
+	//	b2PolygonShape *polygon = (b2PolygonShape*)shape;
 
-		int num = polygon->GetVertexCount();
-		const b2Vec2 *verts = polygon->GetVertices();
-
-
-		b2Vec2 vec = body->GetPosition() + (polygon->GetVertices())[0];
-		int start_x = fe_lround(vec.x);
-		int start_y = fe_lround(vec.y);
-		int x, y;
-
-		glBegin(GL_LINE_LOOP);
-		for (unsigned int i = 1; i < unsigned int(num); i++) {
-
-			vec = body->GetPosition() + (polygon->GetVertices())[i];
-			x = fe_lround(vec.x);
-			y = fe_lround(vec.y);
-
-			glVertex2f(x, y);
-		}
-		glVertex2f(start_x, start_y);
-		glEnd();
-
-	}
-
-	static void drawCircle(float32 x, float32 y, float32 r, float32 a)
-	{
-		const int segs = 8;
-		const float32 coef = 2.0*M_PI / (float32)segs;
-
-		glBegin(GL_LINE_STRIP); {
-			for(int n = 0; n <= segs; n++){
-				float32 rads = n*coef;
-				glVertex2f(r*cos(rads + a) + x, r*sin(rads + a) + y);
-			}
-			glVertex2f(x,y);
-		} glEnd();
-	}
-
-	static void drawCircleShape(b2Shape *shape)
-	{
-		b2Body *body = shape->GetBody();
-		b2CircleShape *circle = (b2CircleShape *)shape;
-		b2Vec2 c = body->GetWorldCenter() + circle->GetLocalPosition();
-
-		drawCircle(c.x, c.y, circle->GetRadius(), body->GetAngle());
-	}
-
-	void drawObject(b2Shape *shape)
-	{
-		b2Vec2 pos = shape->GetBody()->GetPosition();
-		CL_Display::draw_pixel(pos.x, pos.y, CL_Color::aliceblue);
-
-		clColor3f(shape->GetRestitution(), shape->GetFriction(), 0.8f);
-		switch (shape->GetType())
-		{
-		case b2ShapeType::e_polygonShape:
-			drawPolyShape(shape);
-		case b2ShapeType::e_circleShape:
-			drawCircleShape(shape);
-		}
-	}
+	//	int num = polygon->GetVertexCount();
+	//	const b2Vec2 *verts = polygon->GetVertices();
 
 
-	void drawBodyPoint(b2Body *body)
-	{
-		b2Vec2 v = body->GetWorldCenter();
+	//	b2Vec2 vec = body->GetPosition() + (polygon->GetVertices())[0];
+	//	int start_x = fe_lround(vec.x);
+	//	int start_y = fe_lround(vec.y);
+	//	int x, y;
 
-		clColor3f(0.8f, 0.8f, 0.8f);
-		clVertex2f(v.x, v.y);
-	}
+	//	clBegin(CL_LINE_LOOP);
+	//	for (unsigned int i = 1; i < unsigned int(num); i++) {
+
+	//		vec = body->GetPosition() + (polygon->GetVertices())[i];
+	//		x = fe_lround(vec.x);
+	//		y = fe_lround(vec.y);
+
+	//		clVertex2f(x, y);
+	//	}
+	//	clVertex2f(start_x, start_y);
+	//	clEnd();
+
+	//}
+
+	//static void drawCircle(float32 x, float32 y, float32 r, float32 a)
+	//{
+	//	const int segs = 8;
+	//	const float32 coef = 2.0*s_pi / (float32)segs;
+
+	//	clBegin(CL_LINE_STRIP); {
+	//		for(int n = 0; n <= segs; n++){
+	//			float32 rads = n*coef;
+	//			clVertex2f(r*cos(rads + a) + x, r*sin(rads + a) + y);
+	//		}
+	//		clVertex2f(x,y);
+	//	} clEnd();
+	//}
+
+	//static void drawCircleShape(b2Shape *shape)
+	//{
+	//	b2Body *body = shape->GetBody();
+	//	b2CircleShape *circle = (b2CircleShape *)shape;
+	//	b2Vec2 c = body->GetWorldCenter() + circle->GetLocalPosition();
+
+	//	drawCircle(c.x, c.y, circle->GetRadius(), body->GetAngle());
+	//}
+
+	//void drawObject(b2Shape *shape)
+	//{
+	//	b2Vec2 pos = shape->GetBody()->GetPosition();
+	//	//CL_Display::draw_pixel(pos.x, pos.y, CL_Color::aliceblue);
+
+	//	clColor3f(shape->GetRestitution(), shape->GetFriction(), 0.8f);
+	//	switch (shape->GetType())
+	//	{
+	//	case b2ShapeType::e_polygonShape:
+	//		drawPolyShape(shape);
+	//	case b2ShapeType::e_circleShape:
+	//		drawCircleShape(shape);
+	//	}
+	//}
+
+
+	//void drawBodyPoint(b2Body *body)
+	//{
+	//	b2Vec2 v = body->GetWorldCenter();
+
+	//	clColor3f(0.8f, 0.8f, 0.8f);
+	//	clVertex2f(v.x, v.y);
+	//}
 
 }
 

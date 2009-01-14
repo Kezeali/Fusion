@@ -1,4 +1,6 @@
 
+#include "Common.h"
+
 /// Class
 #include "FusionResourceManager.h"
 
@@ -139,8 +141,6 @@ namespace FusionEngine
 
 	void ResourceManager::ClearAll()
 	{
-		//ResetVerified();
-
 		DeleteResources();
 	}
 
@@ -176,46 +176,6 @@ namespace FusionEngine
 		return CheckAgainstPattern(str, TokenisePattern(expression));
 	}
 
-	bool ResourceManager::CheckAgainstPatternWithOptions(const std::string &str, StringVector expressionTokens)
-	{
-		//! \todo Convert this to a finite state machine
-		size_t strPos = 0;
-		bool optionalSection = false, optionFound = false;
-		StringVector::iterator it = expressionTokens.begin();
-		for (; it != expressionTokens.end(); ++it)
-		{
-			// Detect options
-			if (!optionalSection && (*it) == "[")
-			{
-				optionalSection = true;
-				optionFound = false;
-				continue; // We don't need to check str for '['!
-			}
-			if (optionalSection && (*it) == "]")
-			{
-				if (!optionFound)
-					return false;
-
-				optionalSection = false;
-				continue; // We don't need to check str for ']'!
-			}
-
-			// Skip all options till the end of the current section (after an option has been found)
-			if (optionalSection && optionFound)
-				continue;
-
-			// We search from the last found token (all tokens must exist /in the correct order/ for the string to match)
-			strPos = str.find(*it, strPos);
-			if (!optionalSection && strPos == std::string::npos)
-				return false;
-
-			else if (strPos != std::string::npos)
-				optionFound = true;
-
-		}
-		return true;
-	}
-
 	bool ResourceManager::CheckAgainstPattern(const std::string &str, StringVector expressionTokens)
 	{
 		size_t strPos = 0;
@@ -231,41 +191,41 @@ namespace FusionEngine
 		return true;
 	}
 
-	std::string ResourceManager::FindFirst(const std::string &pattern, bool case_sensitive, bool recursive)
+	std::string ResourceManager::FindFirst(const std::string &expression, bool recursive, bool case_sensitive)
 	{
 		return FindFirst("", pattern, 0, case_sensitive, recursive);
 	}
 
-	std::string ResourceManager::FindFirst(const std::string &path, const std::string &pattern, int depth, bool case_sensitive, bool recursive)
+	std::string ResourceManager::FindFirst(const std::string &path, const std::string &expression, int depth, bool recursive, bool case_sensitive)
 	{
-		StringVector patternTokens;
-		if (case_sensitive)
-			patternTokens = TokenisePattern(pattern);
-		else
-			patternTokens = TokenisePattern(fe_newupper(pattern));
-
 		if (m_PhysFSConfigured)
 		{
+			// Compile the regular expression
+			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));
+
 			char **files = PHYSFS_enumerateFiles(path.c_str());
 			if (files != NULL)
 			{
-				int file_count;
 				char **i;
-				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
+				for (i = files; *i != NULL; i++)
 				{
-					// If recursive is set, search within sub-folders
-					if ((recursive || depth--) && PHYSFS_isDirectory(*i))
-					{
-						std::string subMatch = FindFirst(std::string(*i), pattern, depth, case_sensitive, recursive);
-						if (!subMatch.empty())
-							return subMatch;
-					}
-
 					std::string file(*i);
-					// Do the relevant check for case (in)sensitive searches
-					if ((case_sensitive && CheckAgainstPattern(file, patternTokens)) ||
-						(!case_sensitive && CheckAgainstPattern(fe_newupper(file), patternTokens)))
+					if (regexp.search(file.c_str(), file.length()).is_match())
 						return file;
+				}
+
+				// If recursive is set (or depth > 0), search within sub-folders
+				if (recursive || depth--)
+				{
+					for (i = files; *i != NULL; i++)
+					{
+						if (PHYSFS_isDirectory(*i))
+						{
+							std::string subMatch = FindFirst(std::string(*i), pattern, depth, case_sensitive, recursive);
+							if (!subMatch.empty())
+								return subMatch;
+						}
+					}
 				}
 
 				PHYSFS_freeList(files);
@@ -275,23 +235,20 @@ namespace FusionEngine
 		return "";
 	}
 
-	StringVector ResourceManager::Find(const std::string &pattern, bool case_sensitive, bool recursive)
+	StringVector ResourceManager::Find(const std::string &expression, bool recursive, bool case_sensitive)
 	{
 		return Find("", pattern, 0, case_sensitive, recursive);
 	}
 
-	StringVector ResourceManager::Find(const std::string &path, const std::string &pattern, int depth, bool case_sensitive, bool recursive)
+	StringVector ResourceManager::Find(const std::string &path, const std::string &expression, int depth, bool recursive, bool case_sensitive)
 	{
 		StringVector list;
 
-		StringVector patternTokens;
-		if (case_sensitive)
-			patternTokens = TokenisePattern(pattern);
-		else
-			patternTokens = TokenisePattern(fe_newupper(pattern));
-
 		if (m_PhysFSConfigured)
 		{
+			// Compile the regular expression
+			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));
+
 			char **files = PHYSFS_enumerateFiles(path.c_str());
 			if (files != NULL)
 			{
@@ -299,7 +256,7 @@ namespace FusionEngine
 				char **i;
 				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
 				{
-					// If recursive is set, search within sub-folders
+					// If recursive is set (or depth > 0), search within sub-folders
 					if ((recursive || depth--) && PHYSFS_isDirectory(*i))
 					{
 						StringVector subList = Find(std::string(*i), pattern, depth, case_sensitive, recursive);
@@ -307,9 +264,7 @@ namespace FusionEngine
 					}
 
 					std::string file(*i);
-					// Do the relevant check for case (in)sensitive searches
-					if ((case_sensitive && CheckAgainstPattern(file, patternTokens)) ||
-						(!case_sensitive && CheckAgainstPattern(fe_newupper(file), patternTokens)))
+					if (regexp.search(file.c_str(), file.length()).is_match())
 						list.push_back(file);
 				}
 
@@ -322,17 +277,17 @@ namespace FusionEngine
 
 	void ResourceManager::AddDefaultLoaders()
 	{
-		AddResourceLoader(new ImageLoader());
-		AddResourceLoader(new AudioLoader());
-		AddResourceLoader(new AudioStreamLoader());
+		AddResourceLoader(ResourceLoaderSpt(new ImageLoader()));
+		AddResourceLoader(ResourceLoaderSpt(new AudioLoader()));
+		AddResourceLoader(ResourceLoaderSpt(new AudioStreamLoader()));
 	}
 
-	void ResourceManager::AddResourceLoader(ResourceLoader* loader)
+	void ResourceManager::AddResourceLoader(ResourceLoaderSpt loader)
 	{
-		m_ResourceLoaders[loader->GetType()] = ResourceLoaderSpt(loader);
+		m_ResourceLoaders[loader->GetType()] = loader;
 	}
 
-	void ResourceManager::PretagResource(const std::string& type, const std::string& path, const ResourceTag& tag)
+	void ResourceManager::TagResource(const std::string& type, const std::string& path, const ResourceTag& tag)
 	{
 		ResourceMap::iterator existing = m_Resources.find(tag);
 		if (existing == m_Resources.end())
@@ -359,7 +314,7 @@ namespace FusionEngine
 
 	void ResourceManager::PreloadResource(const std::string& type, const std::string& path)
 	{
-		PretagResource(type, path, path);
+		TagResource(type, path, path);
 	}
 
 	void ResourceManager::RegisterScriptElements(ScriptingEngine* manager)

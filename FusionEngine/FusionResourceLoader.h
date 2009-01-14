@@ -42,16 +42,16 @@
 namespace FusionEngine
 {
 
-	//! Allows the ResourceManager to select a resource loader by type
+	//! Allows the ResourceManager to select a resource loader by typename
 	template<class T>
-	static inline std::string GetResourceType(T)
+	static inline std::string GetResourceType()
 	{
 		return "INVALID";
 	}
 
 	//! Generates a specialization for the given resource data-type
 	#define REGISTER_RESOURCE_TYPE(c, t) \
-	template<> static inline std::string GetResourceType<c>(c) { return t; }
+	template<> static inline std::string GetResourceType<c>() { return t; }
 
 	/*!
 	 * \brief
@@ -67,8 +67,7 @@ namespace FusionEngine
 		virtual const std::string &GetType() const = 0;
 
 		//! Loads the resource reffered to by the given text
-		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider)
-			throw(FileSystemException) = 0;
+		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider) = 0;
 
 		//! Reloads the given resource (which has been cleaned up by garbage collection)
 		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider) = 0;

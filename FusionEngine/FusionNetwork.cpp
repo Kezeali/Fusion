@@ -93,10 +93,15 @@ namespace FusionEngine
 		return 0;
 	}
 
-	int Network::GetSmoothedPing(const NetHandle& handle)
+	float Network::GetSmoothedPing(const NetHandle& handle)
 	{
 		m_SmoothedPing = m_SmoothedPing + (GetLastPing(handle) - m_SmoothedPing) * m_SPTightness;
-		return (int)fe_round(m_SmoothedPing);
+		return m_SmoothedPing;
+	}
+
+	void Network::SetSmoothingTightness(float tightness)
+	{
+		m_SPTightness = tightness;
 	}
 
 }

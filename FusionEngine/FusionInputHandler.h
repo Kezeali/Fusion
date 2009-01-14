@@ -252,7 +252,7 @@ namespace FusionEngine
 		InputPluginLoader *m_PluginLoader;
 
 		//! The InputHandler will not be considered active till this reaches zero.
-		int m_SuspendRequests;
+		std::tr1::unordered_set<int> m_SuspendRequests;
 
 		unsigned int m_CommandBufferLength;
 

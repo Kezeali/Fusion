@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -31,12 +31,12 @@
  * Fusion is a multiplayer, 2D / top-down shooter, based on a
  * scriptable and highly extendable engine.
  *
- * Go to http://steelfusion.sourceforge.net/ for more information.
+ * The project website is at http://steelfusion.sourceforge.net/
  */
 
 /*!
  * \todo
- * Implement a better assert macro (than cl_assert)
+ * Implement an assert macro
  */
 
 #ifndef Header_FusionEngine_Common
@@ -418,9 +418,6 @@ namespace FusionEngine
 
 	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
 	typedef std::vector<std::string> StringVector;
-
-	//! Type for a list of bodies
-	typedef std::vector<PhysicsBody*> BodyList;
 
 	//! Self managing state pointer
 	/*!

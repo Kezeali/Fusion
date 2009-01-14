@@ -51,7 +51,7 @@ namespace FusionEngine
 	//};
 
 	//! Shape class
-	class Shape : public RefCounted
+	class Shape
 	{
 	public:
 		Shape();

@@ -60,10 +60,10 @@ public:
 	bool IsFree(ObjectID id) const;
 
 	Authority &GetEntityAuthority(ObjectID id);
-	const Authority &GetEntityAuthority(ObjectID id) const;
+	//const Authority &GetEntityAuthority(ObjectID id) const;
 
 	ObjectID GetEntityAuthorityId(ObjectID id);
-	ObjectID GetEntityAuthorityId(ObjectID id) const;
+	//ObjectID GetEntityAuthorityId(ObjectID id) const;
 
 	size_t EntityCount() const;
 
@@ -163,6 +163,12 @@ protected:
 
 	AuthorityState m_AuthorityState;
 	SimulationState m_SimulationState;
+
+	typedef std::tr1::unordered_map<ObjectID, Command> EntityInputs;
+	typedef std::tr1::unordered_map<ObjectID, Action> EntityStates;
+	// Client input buffer
+	EntityInputs m_CurrentInput;
+	EntityStates m_CurrentState;
 };
 
 
@@ -198,20 +204,20 @@ const EntitySimulationState& SimulationState::GetState(ObjectID id) const
 
 Command& SimulationState::GetInput(ObjectID id)
 {
-	assert(m_Entities.find(id) != m_Entities.end());
-	return m_Entities.find(id)->second.m_Input;
+	//assert(m_Entities.find(id) != m_Entities.end());
+	return m_Entities[id].m_Input;
 }
 
 Action& SimulationState::GetAction(ObjectID id)
 {
-	assert(m_Entities.find(id) != m_Entities.end());
-	return m_Entities.find(id)->second.m_Action;
+	//assert(m_Entities.find(id) != m_Entities.end());
+	return m_Entities[id].m_Action;
 }
 
 bool SimulationState::IsEnabled(ObjectID id)
 {
-	assert(m_Entities.find(id) != m_Entities.end());
-	return m_Entities.find(id)->second.m_Enabled;
+	//assert(m_Entities.find(id) != m_Entities.end());
+	return m_Entities[id].m_Enabled;
 }
 
 void SimulationState::SetEntityInput(ObjectID id, const Command& input)
@@ -253,27 +259,28 @@ bool AuthorityState::IsFree(ObjectID id) const
 
 Authority& AuthorityState::GetEntityAuthority(ObjectID id)
 {
-	AuthorityMap::iterator _where = m_EntityAuthority.find(id);
-	assert(_where != m_EntityAuthority.end());
-	return _where->second;
+	//AuthorityMap::iterator _where = m_EntityAuthority.find(id);
+	//assert(_where != m_EntityAuthority.end());
+	//return _where->second;
+	return m_EntityAuthority[id];
 }
 
-const Authority& AuthorityState::GetEntityAuthority(ObjectID id) const
-{
-	AuthorityMap::const_iterator _where = m_EntityAuthority.find(id);
-	assert(_where != m_EntityAuthority.end());
-	return _where->second;
-}
+//const Authority& AuthorityState::GetEntityAuthority(ObjectID id) const
+//{
+//	AuthorityMap::const_iterator _where = m_EntityAuthority.find(id);
+//	assert(_where != m_EntityAuthority.end());
+//	return _where->second;
+//}
 
 ObjectID AuthorityState::GetEntityAuthorityId(ObjectID id)
 {
 	return GetEntityAuthority(id).m_AuthorityId;
 }
 
-ObjectID AuthorityState::GetEntityAuthorityId(ObjectID id) const
-{
-	return GetEntityAuthority(id).m_AuthorityId;
-}
+//ObjectID AuthorityState::GetEntityAuthorityId(ObjectID id) const
+//{
+//	return GetEntityAuthority(id).m_AuthorityId;
+//}
 
 AuthorityState::size_type AuthorityState::EntityCount() const
 {
@@ -328,9 +335,12 @@ void AuthorityManager::InjectInput(ObjectID entityId, const Command& input)
 	//assert( playerId < MaxPlayers );
 
 	m_SimulationState.GetInput(entityId) = input;
+	// Client buffers the most recent input to apply at the next Update
+	if (m_LocalAuthorityId > 1)
+		m_CurrentInput[entityId] = input;
 }
 
-void AuthorityManager::InjectState(ObjectID authorityId, ObjectID entityId, const Action& cubeState)
+void AuthorityManager::InjectState(ObjectID authorityId, ObjectID entityId, const Action& state)
 {
 	//assert(authorityId >= -1);
 	//assert(authorityId < MaxPlayers);
@@ -357,7 +367,10 @@ void AuthorityManager::InjectState(ObjectID authorityId, ObjectID entityId, cons
 		m_AuthorityState.GetEntityAuthority(entityId).m_AuthorityId = authorityId;
 
 	// set cube state
-	m_SimulationState.GetAction(entityId) = cubeState;
+	m_SimulationState.GetAction(entityId) = state;
+
+	if (m_LocalAuthorityId > 1)
+		m_CurrentState[entityId] = state;
 }
 
 Authority& AuthorityManager::GetEntityAuthority(FusionEngine::ObjectID id)
@@ -384,6 +397,21 @@ void AuthorityManager::Update(float deltaTime)
 {
 	//assert( localAuthorityId >= 0 );
 	//assert( localAuthorityId < MaxPlayers );
+
+	if (m_LocalAuthorityId > 1)
+	{
+		for (EntityInputs::iterator it = m_CurrentInput.begin(), end = m_CurrentInput.end(); it != end; ++it)
+		{
+			m_SimulationState.GetInput(it->first) = it->second;
+		}
+		for (EntityStates::iterator it = m_CurrentState.begin(), end = m_CurrentState.end(); it != end; ++it)
+		{
+			m_SimulationState.GetAction(it->first) = it->second;
+		}
+
+		m_CurrentInput.clear();
+		m_CurrentState.clear();
+	}
 
 	// detect local authority changes
 	//m_AuthorityState.m_Size = simulationState.numCubes;

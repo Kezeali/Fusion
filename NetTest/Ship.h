@@ -236,8 +236,8 @@ public:
 		lastSentTick(0),
 		local(false)
 	{
-		actionList.set_capacity(100);
-		commandList.set_capacity(100);
+		actionList.set_capacity(64);
+		commandList.set_capacity(64);
 		currentAction = actionList.begin();
 		currentCommand = commandList.begin();
 	}
@@ -254,8 +254,8 @@ public:
 		lastSentTick(0),
 		local(false)
 	{
-		actionList.set_capacity(100);
-		commandList.set_capacity(100);
+		actionList.set_capacity(64);
+		commandList.set_capacity(64);
 		currentAction = actionList.begin();
 		currentCommand = commandList.begin();
 	}

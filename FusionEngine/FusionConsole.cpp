@@ -12,19 +12,19 @@ namespace FusionEngine
 		m_Data.resize(m_MaxData);
 	}
 
-	const std::string &Console::GetExceptionMarker() const
+	const std::wstring &Console::GetExceptionMarker() const
 	{
-		static std::string strExMkr("**");
+		static std::wstring strExMkr(L"**");
 		return strExMkr;
 	}
 
-	const std::string &Console::GetWarningMarker() const
+	const std::wstring &Console::GetWarningMarker() const
 	{
-		static std::string strWnMkr("##");
+		static std::wstring strWnMkr(L"##");
 		return strWnMkr;
 	}
 
-	void Console::Add(const std::string &message)
+	void Console::Add(const std::wstring &message)
 	{
 		m_Data.push_back(message);
 
@@ -32,22 +32,22 @@ namespace FusionEngine
 			m_Data.pop_front();
 
 		// Signal
-		OnNewLine(message);
+		OnNewLine.invoke(message);
 	}
 
-	void Console::Add(const std::string& message, MessageType type)
+	void Console::Add(const std::wstring& message, MessageType type)
 	{
-		std::string headedMessage = message;
+		std::wstring headedMessage = message;
 		switch (type)
 		{
 		case MTNORMAL:
 			// headedMessage = message;
 			break;
 		case MTWARNING:
-			headedMessage = CL_String::format(GetWarningMarker() + " Warning:   %1", message);
+			headedMessage = cl_format(GetWarningMarker() + L" Warning:   %1", message);
 			break;
 		case MTERROR:
-			headedMessage = CL_String::format(GetExceptionMarker() + " Exception: %1", message);
+			headedMessage = cl_format(GetExceptionMarker() + L" Exception: %1", message);
 			break;
 		}
 
@@ -58,27 +58,27 @@ namespace FusionEngine
 			m_Data.pop_front();
 
 		// Signal
-		OnNewLine(headedMessage);
+		OnNewLine.invoke(headedMessage);
 	}
 
-	void Console::Add(const FusionEngine::Exception *ex)
-	{
-		Add(ex->GetDescription(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
-	}
+	//void Console::Add(const FusionEngine::Exception *ex)
+	//{
+	//	Add(ex->GetDescription(), ex->IsCritical() ? Console::MTERROR : Console::MTWARNING);
+	//}
 
 	void Console::PrintLn(const std::string &message)
 	{
-		Add(message);
+		Add(std::wstring(message.begin(), message.end()));
 	}
 
 	void Console::PrintLn_int(int message)
 	{
-		Add(CL_String::from_int(message));
+		Add(CL_StringHelp::int_to_text(message));
 	}
 
 	void Console::PrintLn_double(double message)
 	{
-		Add(CL_String::from_double(message));
+		Add(CL_StringHelp::double_to_text(message));
 	}
 
 	void Console::Clear()
@@ -88,7 +88,7 @@ namespace FusionEngine
 			m_Data.clear();
 
 			// Signal
-			OnClear();
+			OnClear.invoke();
 		}
 	}
 

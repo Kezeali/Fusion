@@ -1453,20 +1453,20 @@ namespace FusionEngine
 			}
 		}
 
-		void erase_before(iterator _front)
+		iterator erase_before(iterator _front)
 		{
 			if (m_Data.empty() || _front == m_Data.begin())
-				return;
+				return m_Data.begin();
 
-			m_Data.rerase(_front - 1, m_Data.begin());
+			return m_Data.rerase(m_Data.begin(), _front - 1);
 		}
 
-		void erase_after(iterator _back)
+		iterator erase_after(iterator _back)
 		{
 			if (m_Data.empty() || _back == m_Data.end())
-				return;
+				return m_Data.end();
 
-			m_Data.erase(_back + 1, m_Data.end());
+			return m_Data.erase(_back + 1, m_Data.end());
 		}
 
 		bool empty()

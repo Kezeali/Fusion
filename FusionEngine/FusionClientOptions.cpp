@@ -69,8 +69,10 @@ namespace FusionEngine
 
 	ClientOptions::~ClientOptions()
 	{
+		m_Mutex.lock();
 		m_PlayerOptions.clear();
 		m_Controls.clear();
+		m_Mutex.unlock();
 	}
 
 	bool ClientOptions::Save()
@@ -83,6 +85,8 @@ namespace FusionEngine
 
 	bool ClientOptions::SaveToFile(const std::string &filename)
 	{
+		m_Mutex.lock();
+
 		ResourcePointer<TiXmlDocument> docResource = ResourceManager::getSingleton().OpenOrCreateResource<TiXmlDocument>(filename);
 		ticpp::Document doc(docResource.GetDataPtr());
 
@@ -114,6 +118,7 @@ namespace FusionEngine
 		//doc.SaveFile(filename);
 		doc.SaveFile();
 
+		m_Mutex.unlock();
 		return true;
 	}
 
@@ -125,6 +130,8 @@ namespace FusionEngine
 
 		try
 		{
+			m_Mutex.lock();
+
 			ResourcePointer<TiXmlDocument> docResource = rm->GetResource<TiXmlDocument>(filename);
 			if (!docResource.IsValid())
 				throw FileNotFoundException("ClientOptions::LoadFromFile", "Couldn't open resource '" + filename + "'", __FILE__, __LINE__);
@@ -170,12 +177,41 @@ namespace FusionEngine
 
 			throw FileSystemException("ClientOptions::LoadFromFile", ex.what(), __FILE__, __LINE__);
 		}
+		finally
+		{
+			m_Mutex.unlock();
+		}
 
+		return true;
+	}
+
+	bool ClientOptions::SetOption(const std::string &name, const std::string &value)
+	{
+		m_Mutex.lock();
+		m_Variables[name] = value;
+		m_Mutex.unlock();
+		return true;
+	}
+
+	void ClientOptions::SetMultipleOptions(const std::tr1::unordered_map<std::string, std::string> &pairs)
+	{
+		m_Mutex.lock();
+		m_Variables.insert(pairs.begin(), pairs.end());
+		m_Mutex.unlock();
+	}
+
+	bool ClientOptions::SetPlayerOption(int player, const std::string &name, const std::string &value)
+	{
+		CL_MutexSection mutex_lock(&m_Mutex);
+		if (player >= m_NumLocalPlayers)
+			return false;
+		m_PlayerVariables[player][name] = value;
 		return true;
 	}
 
 	bool ClientOptions::GetOption(const std::string &name, std::string *ret)
 	{
+		CL_MutexSection mutex_lock(&m_Mutex);
 		VarMap::iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
@@ -188,6 +224,7 @@ namespace FusionEngine
 	//  that that would be a waste of effort
 	bool ClientOptions::GetOption(const std::string &name, int *ret)
 	{
+		CL_MutexSection mutex_lock(&m_Mutex);
 		VarMap::iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
@@ -198,14 +235,33 @@ namespace FusionEngine
 
 	std::string ClientOptions::GetOption_str(const std::string &name)
 	{
+		CL_MutexSection mutex_lock(&m_Mutex);
 		return m_Variables[name];
 	}
 
 	bool ClientOptions::GetOption_bool(const std::string &name)
 	{
+		m_Mutex.lock();
 		std::string value = m_Variables[name];
+		m_Mutex.unlock();
 		fe_tolower(value);
 		return (value == "1" || value == "t" || value == "true");
+	}
+
+	bool ClientOptions::GetPlayerOption(int player, const std::string &name, std::string *value)
+	{
+		CL_MutexSection mutex_lock(&m_Mutex);
+		if (player >= m_NumLocalPlayers)
+			return false;
+
+		const VarMap &playerVars = m_PlayerVariables[player];
+
+		VarMap::const_iterator _where = playerVars.find(name);
+		if (_where == playerVars.end())
+			return false;
+
+		ret->assign(_where->second);
+		return true;
 	}
 
 	void ClientOptions::insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars)

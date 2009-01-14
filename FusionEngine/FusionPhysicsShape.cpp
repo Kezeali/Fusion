@@ -269,7 +269,7 @@ namespace FusionEngine
 
 		assert(polygon->GetVertexCount() > 0);
 
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
 		double width = 0;
@@ -294,7 +294,7 @@ namespace FusionEngine
 
 		assert(polygon->GetVertexCount() > 0);
 
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
 		double height = 0;
@@ -318,11 +318,10 @@ namespace FusionEngine
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
 		assert(polygon->GetVertexCount() > 0);
 
-		double minx = verts[0].x;
-
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
+		double minx = verts[0].x;
 		for (unsigned int i = 1; i < unsigned int(vertCount); i++) {
 
 			if (verts[i].x < minx)
@@ -335,14 +334,12 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMaxX() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-
 		assert(polygon->GetVertexCount() > 0);
 
-		double maxx = verts[0].x;
-
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
+		double maxx = verts[0].x;
 		for (unsigned int i = 1; i < unsigned int(vertCount); i++) {
 
 			if (verts[i].x > maxx)
@@ -355,14 +352,12 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMinY() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-
 		assert(polygon->GetVertexCount() > 0);
 
-		double miny = verts[0].y;
-
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
+		double miny = verts[0].y;
 		for (unsigned int i = 1; i < unsigned int(vertCount); i++) {
 
 			if (verts[i].y < miny)
@@ -375,14 +370,12 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMaxY() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-
 		assert(polygon->GetVertexCount() > 0);
 
-		double maxy = verts[0].y;
-
-		int32 &vertCount = polygon->GetVertexCount();
+		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
 
+		double maxy = verts[0].y;
 		for (unsigned int i = 1; i < unsigned int(vertCount); i++) {
 
 			if (verts[i].y > maxy)

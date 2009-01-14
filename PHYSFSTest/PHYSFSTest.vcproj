@@ -194,14 +194,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionLog.cpp"
 				>
 			</File>
@@ -253,14 +245,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionFileSystemException.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.h"
 				>
 			</File>
 			<File

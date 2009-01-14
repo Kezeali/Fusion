@@ -65,17 +65,17 @@ namespace FusionEngine
 	public:
 		static inline Vector2T<T> zero()
 		{
-			return new Vector2<T>(0, 0);
+			return Vector2T<T>(0, 0);
 		}
 
 		static inline Vector2T<T> unit_x()
 		{
-			return new Vector2<T>(1, 0);
+			return Vector2T<T>(1, 0);
 		}
 
 		static inline Vector2T<T> unit_y()
 		{
-			return new Vector2<T>(0, 1);
+			return Vector2T<T>(0, 1);
 		}
 		///////////////
 		// Assignement

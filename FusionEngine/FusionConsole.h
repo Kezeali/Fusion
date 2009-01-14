@@ -72,7 +72,7 @@ namespace FusionEngine
 
 	public:
 		//! Lines in the console
-		typedef std::list<std::string> ConsoleLines;
+		typedef std::list<std::wstring> ConsoleLines;
 
 		//! Message header types
 		enum MessageType {
@@ -83,18 +83,18 @@ namespace FusionEngine
 
 	public:
 		//! Returns the exception marker
-		const std::string& GetExceptionMarker() const;
+		const std::wstring& GetExceptionMarker() const;
 		//! Returns the warning marker
-		const std::string& GetWarningMarker() const;
+		const std::wstring& GetWarningMarker() const;
 
 		//! Adds the given message to the console history
-		void Add(const std::string &message);
+		void Add(const std::wstring &message);
 
 		//! Adds the given message, after prepending it with a heading of the specified type, to the console history
-		void Add(const std::string &message, MessageType type);
+		void Add(const std::wstring &message, MessageType type);
 
 		//! Adds the given Error to the console history
-		void Add(const Exception *error);
+		//void Add(const Exception *error);
 
 		//! Adds the given message to the console history
 		void PrintLn(const std::string &message);
@@ -114,7 +114,7 @@ namespace FusionEngine
 		void RegisterScriptElements(ScriptingEngine* manager);
 
 		//! Triggers when new data is added to the console
-		CL_Signal_v1<const std::string &> OnNewLine;
+		CL_Signal_v1<const std::wstring &> OnNewLine;
 
 		//! Triggers when the console is cleared
 		CL_Signal_v0 OnClear;
@@ -128,7 +128,7 @@ namespace FusionEngine
 	};
 	
 	//! Static method to safely add a message to the singleton object
-	static void SendToConsole(const std::string &message)
+	static void SendToConsole(const std::wstring &message)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
@@ -139,15 +139,20 @@ namespace FusionEngine
 		// If the console hasn't been created, just send the message to standard output
 		else
 		{
-			std::cout << message << std::endl;
+			std::cout << message.c_str() << std::endl;
 		}
+	}
+
+	static void SendToConsole(const std::string &message)
+	{
+		SendToConsole(std::wstring(message.begin(), message.end()));
 	}
 
 	//! Static method to safely add a message to the singleton object
 	/*!
 	* \sa Console#Add(const std::string, MessageType)
 	*/
-	static void SendToConsole(const std::string &message, Console::MessageType type)
+	static void SendToConsole(const std::wstring &message, Console::MessageType type)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
@@ -158,8 +163,13 @@ namespace FusionEngine
 		// If the console hasn't been created, just send the message to standard output
 		else
 		{
-			std::cout << message << std::endl;
+			std::cout << message.c_str() << std::endl;
 		}
+	}
+
+	static void SendToConsole(const std::string &message, Console::MessageType type)
+	{
+		SendToConsole(std::wstring(message.begin(), message.end()), type);
 	}
 
 	//! Static method to safely add a message to the singleton object
@@ -168,7 +178,8 @@ namespace FusionEngine
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
 		{
-			c->Add(ex.ToString(), Console::MTERROR);
+			std::string message = ex.ToString();
+			c->Add(std::wstring(message.begin(), message.end()), Console::MTERROR);
 		}
 
 		// If the console hasn't been created, just send the message to standard output

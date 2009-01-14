@@ -19,7 +19,7 @@
 using namespace FusionEngine;
 
 const unsigned int s_HighSendInterval = 1000/10;
-const unsigned int s_LowSendInterval = 1000/30;
+const unsigned int s_LowSendInterval = 1000/20;
 const unsigned int s_PacketSize = 1000; // 1000kBytes
 
 // Simulation speed
@@ -134,12 +134,13 @@ private:
 	//  ticksAhead = ESAping + mean jitter -> not sure about this. what needs to be done
 	//        here is to bias the ESAping with the jitter. Perhaps the jitter could be used to adjust a smoothing algo
 	//  ticksAhead = ticksAhead / tickTime (aka. split) -> 'normalize' ticksAhead
-	unsigned long m_TicksAhead;
+	float m_TicksAhead;
 	float m_SimAdjust;
 
 	long m_SendDelay;
 
 	float m_Tightness;
+	float m_SimSpeedUpTightness, m_SimSpeedDownTightness;
 
 	float m_WorldWidth, m_WorldHeight;
 
@@ -193,6 +194,8 @@ private:
 
 	// Used to calculate recent average jitter
 	boost::circular_buffer<int> m_PingBuffer;
+
+	typedef std::multiset<int> PingSet;
 
 	CL_SlotContainer m_Slots;
 
@@ -359,7 +362,7 @@ void TestApp::run_server(unsigned short maxPlayers)
 
 	nextId = 0;
 	nextAuthId = 2;
-	sentActions = boost::circular_buffer<std::pair<unsigned long, Action>>(200);
+	sentActions = boost::circular_buffer<std::pair<unsigned long, Action>>(20);
 
 	//int sendDelay = 0;
 	unsigned int lastframe = CL_System::get_time();
@@ -399,6 +402,8 @@ void TestApp::run_client(const std::string& host)
 	m_Network->Startup(1, 40000, 1);
 
 	m_Tightness = s_DefaultTightness;
+	m_SimSpeedUpTightness = s_DefaultTightness;
+	m_SimSpeedDownTightness = s_SmoothTightness;
 
 	m_SpriteBatch = CL_SpriteRenderBatch(m_gc);
 
@@ -438,15 +443,16 @@ void TestApp::run_client(const std::string& host)
 
 	int sendDelay = 0;
 	unsigned int lastframe = CL_System::get_time();
-	unsigned int accumulator = 0;
+	long accumulator = 0;
 
 	m_Tick = m_CommandNumber;
 
 	int previousPing = m_Network->GetPing(serverHandle);
 	m_PingBuffer.set_capacity(10000/split);
+	m_Network->SetSmoothingTightness(0.05f);
 
 
-	RakNetTimeNS beginAt;
+	RakNetTime beginAt;
 	// Loop thing
 	while (!m_ic.get_keyboard().get_keycode(CL_KEY_ESCAPE))
 	{
@@ -462,11 +468,6 @@ void TestApp::run_client(const std::string& host)
 				FusionEngine::LOW_PRIORITY, FusionEngine::RELIABLE, 0, serverHandle);
 		}
 
-		if (m_Tightness > 0.1f && m_ic.get_keyboard().get_keycode(CL_KEY_END))
-			m_Tightness -= 0.1f;
-		else if (m_Tightness < 0.9f && m_ic.get_keyboard().get_keycode(CL_KEY_HOME))
-			m_Tightness += 0.1f;
-
 		// Grab input
 		for (ShipMap::iterator it = myShips.begin(), end = myShips.end(); it != end; ++it)
 		{
@@ -474,15 +475,17 @@ void TestApp::run_client(const std::string& host)
 		}
 
 		const int ping = m_Network->GetLastPing(serverHandle);
-		m_PingBuffer.push_back(ping - previousPing);
+		const int jitter = abs(ping - previousPing);
+		if (jitter > 0)
+			m_PingBuffer.push_back(jitter);
 		previousPing = ping;
 
-		beginAt = RakNet::GetTimeNS();
+		beginAt = RakNet::GetTime();
 
 		client_receive();
 
-		RakNetTimeNS receiveTime = RakNet::GetTimeNS() - beginAt;
-		beginAt = RakNet::GetTimeNS();
+		RakNetTime receiveTime = RakNet::GetTime() - beginAt;
+		beginAt = RakNet::GetTime();
 
 		long ticks = 0;
 		while (accumulator >= split)
@@ -491,8 +494,8 @@ void TestApp::run_client(const std::string& host)
 
 			// Adjust sim speed to keep just ahead of the server
 			long curTicksAhead = m_CommandNumber - m_LatestReceivedTick;
-			if (curTicksAhead != m_TicksAhead)
-				m_Tightness = 0.1f;
+			//if (curTicksAhead != m_TicksAhead)
+				//m_Tightness = 0.1f;
 
 			if (curTicksAhead < (long)m_TicksAhead) // Not far enough ahead
 				m_SimAdjust = m_SimAdjust + (1.25f - m_SimAdjust) * m_Tightness;
@@ -501,7 +504,7 @@ void TestApp::run_client(const std::string& host)
 				
 			fe_clamp(m_SimAdjust, 0.75f, 1.25f);
 
-			m_Tightness += (0.25f - m_Tightness) * 0.01f;
+			//m_Tightness += (0.25f - m_Tightness) * 0.01f;
 
 			m_LastTick = m_Tick;
 			m_Tick += m_SimAdjust;
@@ -517,7 +520,7 @@ void TestApp::run_client(const std::string& host)
 
 		m_TicksAhead += ticks; // Keep ahead until we receive another packet from the server
 
-		RakNetTimeNS simTime = RakNet::GetTimeNS() - beginAt;
+		RakNetTime simTime = RakNet::GetTime() - beginAt;
 
 		client_updateAuthority(ticks * split);
 		if ((m_SendDelay -= ticks * split) <= 0)
@@ -526,18 +529,18 @@ void TestApp::run_client(const std::string& host)
 			client_send(ticks * split);
 		}
 
-		beginAt = RakNet::GetTimeNS();
+		beginAt = RakNet::GetTime();
 
 		client_render(split, accumulator);
 
-		RakNetTimeNS renderTime = RakNet::GetTimeNS() - beginAt;
+		RakNetTime renderTime = RakNet::GetTime() - beginAt;
 
 		m_gc.draw_text(2, 22, "Receiving took " + CL_StringHelp::uint_to_text(receiveTime));
 		m_gc.draw_text(2, 43, "Simulating took " + CL_StringHelp::uint_to_text(simTime));
 		m_gc.draw_text(2, 64, "Rendering took " + CL_StringHelp::uint_to_text(renderTime));
 
-		m_gc.draw_text(2, 400, cl_format("Sim speed: %1  Ticks in frame: %2", m_SimAdjust, ticks));
-		m_gc.draw_text(250, 432, cl_format("Fake Lag: %1  Max BpS: %2", m_Network->GetDebugLagMin(), m_Network->GetDebugAllowBps()));
+		m_gc.draw_text(2, 412, cl_format("Sim speed: %1 (Tightness: %2)  Ticks in frame: %3", m_SimAdjust, m_Tightness, ticks));
+		m_gc.draw_text(250, 436, cl_format("Fake Lag: %1 +~%2  Max BpS: %3", m_Network->GetDebugLagMin(), m_Network->GetDebugLagVariance(), m_Network->GetDebugAllowBps()));
 
 		m_window.flip();
 
@@ -912,9 +915,9 @@ void TestApp::server_updateAuthority(float dt)
 
 void TestApp::server_send(float dt)
 {
-	typedef std::map<ObjectID, ShipPtr> SendPriorityQueue;
+	typedef std::multimap<ObjectID, ShipPtr> SendPriorityQueue;
 
-	const AuthorityState& authority = m_AuthorityManager.GetAuthorityState();
+	AuthorityState authority = m_AuthorityManager.GetAuthorityState();
 	// Order entities by send priority
 	SendPriorityQueue priority;
 	for (ShipMap::iterator it = ships.begin(), end = ships.end(); it != end; ++it)
@@ -929,7 +932,7 @@ void TestApp::server_send(float dt)
 	}
 
 	// Build and send packets to each client
-	for (ClientMap::iterator clientIt = m_Clients.begin(), end = m_Clients.end(); clientIt != end; ++clientIt)
+	for (ClientMap::iterator clientIt = m_Clients.begin(), clientEnd = m_Clients.end(); clientIt != clientEnd; ++clientIt)
 	{
 		ClientData &client = clientIt->second;
 
@@ -987,6 +990,12 @@ void TestApp::server_send(float dt)
 
 		m_Network->Send(true, MTID_ENTITYMOVE, fullPacket.GetData(), fullPacket.GetNumberOfBytesUsed(), 
 			FusionEngine::HIGH_PRIORITY, FusionEngine::UNRELIABLE_SEQUENCED, 1, client.GetSystemHandle());
+
+		if ((m_CommandNumber % 30) == 0)
+		{
+			m_Network->Send(true, MTID_CORRECTION, "", 0, 
+				FusionEngine::LOW_PRIORITY, FusionEngine::RELIABLE, 0, client.GetSystemHandle());
+		}
 	}
 }
 
@@ -1020,7 +1029,7 @@ void TestApp::server_render(float dt)
 			draw_rectangle(CL_Rectf(authAct.position.x, authAct.position.y, authAct.position.x + 10, authAct.position.y + 10), drawColor);
 		}
 		draw_rectangle(CL_Rectf(ship->position.x, ship->position.y, ship->position.x + 10, ship->position.y + 10), CL_Colorf::darkblue);
-		
+
 		m_gc.set_font(font1small);
 		EntityOwnerMap::iterator _where = entityOwnership.find(ship->id);
 		ClientData& client = m_Clients[_where->second];
@@ -1046,6 +1055,8 @@ void TestApp::server_render(float dt)
 
 	m_gc.set_font(font1);
 	m_gc.draw_text(250, 40, cl_format("Command: %1", (unsigned int)m_CommandNumber));
+
+	m_gc.draw_text(245, 436, cl_format("Fake Lag: %1 +~%2  Max BpS: %3", m_Network->GetDebugLagMin(), m_Network->GetDebugLagVariance(), m_Network->GetDebugAllowBps()));
 
 	m_window.flip();
 }
@@ -1160,12 +1171,34 @@ void TestApp::client_receive()
 			m_LatestReceivedTick = fe_max(commandNumber, m_LatestReceivedTick);
 
 			// Recalculate ticks ahead
-			int smoothedPing = m_Network->GetSmoothedPing(serverHandle);
-			//int jitterAvg = std::accumulate(m_PingBuffer.begin(), m_PingBuffer.end(), 0);
-			//jitterAvg = jitterAvg / m_PingBuffer.size();
+			float smoothedPing = m_Network->GetSmoothedPing(serverHandle);
 
-			m_TicksAhead = smoothedPing;// + jitterAvg;
-			m_TicksAhead = m_TicksAhead / split + 1;
+			float jitterAvg = 0;
+			if (!m_PingBuffer.empty())
+			{
+				// Sort the jitter buffer
+				PingSet orderedPings(m_PingBuffer.begin(), m_PingBuffer.end());
+				std::vector<int> pingArray(orderedPings.begin(), orderedPings.end());
+				int medianPing = pingArray[pingArray.size()/2.0+0.5];
+				// Remove outliers
+				PingSet::iterator bound = orderedPings.lower_bound(medianPing - 10);
+				if (bound != orderedPings.end())
+					orderedPings.erase(orderedPings.begin(), bound);
+				bound = orderedPings.upper_bound(medianPing + 12);
+				if (bound != orderedPings.end())
+					orderedPings.erase(bound, orderedPings.end());
+				// Get the average jitter over the remaining (i.e. validated) jitter samples
+				jitterAvg = std::accumulate(orderedPings.begin(), orderedPings.end(), 0);
+				jitterAvg = jitterAvg / m_PingBuffer.size();
+				if (((long)(m_Tick) % 100) <= 2)
+					CL_Console::write_line("%1 Jitter: %2 (med: %3)", m_Tick, jitterAvg, medianPing);
+			}
+
+			float newTicksAhead = (unsigned long)((smoothedPing + jitterAvg) / split) + 1; // +1 for ceiling
+			if (newTicksAhead > m_TicksAhead)
+				m_TicksAhead = m_TicksAhead + (newTicksAhead - m_TicksAhead) * m_SimSpeedUpTightness;
+			else
+				m_TicksAhead = m_TicksAhead + (newTicksAhead - m_TicksAhead) * m_SimSpeedDownTightness;
 
 			unsigned short nEntitiesInPacket = 0;
 			bool containsInput;
@@ -1174,6 +1207,8 @@ void TestApp::client_receive()
 			{
 				bits.Read(object_id);
 				ShipMap::iterator it = ships.find(object_id);
+				if (it == ships.end())
+					continue;
 				ShipPtr ship = it->second;
 
 				bits.Read(containsInput);
@@ -1199,7 +1234,7 @@ void TestApp::client_receive()
 
 				bits.Read(state.angle);
 
-				m_AuthorityManager.InjectState(authority_id, object_id, state);
+				m_AuthorityManager.InjectState(1, object_id, state);
 
 				//if (ship->mostRecentCommand >= commandNumber)
 				//	ship->mostRecentCommand = fe_max(commandNumber, ship->mostRecentCommand);
@@ -1266,7 +1301,7 @@ void TestApp::client_updateAuthority(float dt)
 
 void TestApp::client_send(float dt)
 {
-	typedef std::set<ShipMap::value_type, SendPriority> SendPriorityQueue;
+	typedef std::multiset<ShipMap::value_type, SendPriority> SendPriorityQueue;
 
 	if (ships.empty())
 		return;
@@ -1335,6 +1370,12 @@ void TestApp::client_send(float dt)
 
 	m_Network->Send(true, MTID_ENTITYMOVE, fullPacket.GetData(), fullPacket.GetNumberOfBytesUsed(), 
 		FusionEngine::HIGH_PRIORITY, FusionEngine::UNRELIABLE_SEQUENCED, 1, serverHandle);
+
+	if ((m_CommandNumber % 30) == 0)
+	{
+		m_Network->Send(true, MTID_CORRECTION, "", 0, 
+			FusionEngine::LOW_PRIORITY, FusionEngine::RELIABLE, 0, serverHandle);
+	}
 }
 
 void TestApp::client_render(float tickTime, float accumulatorRemaining)
@@ -1359,9 +1400,10 @@ void TestApp::client_render(float tickTime, float accumulatorRemaining)
 		m_gc.draw_text((int)ship->position.x, (int)ship->position.y, cl_format("%1", ship->id));
 	}
 
-	m_gc.draw_text(290, 16, cl_format("Ping: %1", m_Network->GetPing(serverHandle)));
+	m_gc.draw_text(260, 16, cl_format("Ping: %1", m_Network->GetSmoothedPing(serverHandle)));
 	m_gc.draw_text(250, 38, cl_format("Tick: %1", m_Tick));
-	m_gc.draw_text(210, 51, cl_format("Ticks Ahead Target: %1", (unsigned int)m_TicksAhead));
+	m_gc.draw_text(204, 51, cl_format("Ticks Ahead Target: %1", (unsigned int)m_TicksAhead));
+	m_gc.draw_text(250, 62, cl_format("(Tightness Up: %1 Down: %2)", m_SimSpeedUpTightness, m_SimSpeedDownTightness));
 
 	m_SpriteBatch.flush();
 	//m_window.flip();
@@ -1391,25 +1433,54 @@ void TestApp::key_up(const CL_InputEvent& ev, const CL_InputState& state)
 {
 	if (ev.id == 'I')
 	{
+		int lagVari = m_Network->GetDebugLagVariance();
 		if (m_Network->GetDebugLagMin() == 0)
 		{
-			m_Network->SetDebugLag(100, 0);
+			m_Network->SetDebugLag(100, lagVari);
 		}
 		else if (m_Network->GetDebugLagMin() == 100)
 		{
-			m_Network->SetDebugLag(500, 0);
+			m_Network->SetDebugLag(500, lagVari);
 		}
 		else if (m_Network->GetDebugLagMin() == 500)
 		{
-			m_Network->SetDebugLag(1000, 0);
+			m_Network->SetDebugLag(1000, lagVari);
 		}
 		else if (m_Network->GetDebugLagMin() == 1000)
 		{
-			m_Network->SetDebugLag(2000, 0);
+			m_Network->SetDebugLag(2000, lagVari);
 		}
 		else if (m_Network->GetDebugLagMin() == 2000)
 		{
-			m_Network->SetDebugLag(0, 0);
+			m_Network->SetDebugLag(0, lagVari);
+		}
+	}
+	if (ev.id == 'O')
+	{
+		int lagMin = m_Network->GetDebugLagMin();
+		if (m_Network->GetDebugLagVariance() == 0)
+		{
+			m_Network->SetDebugLag(lagMin, 10);
+		}
+		else if (m_Network->GetDebugLagVariance() == 10)
+		{
+			m_Network->SetDebugLag(lagMin, 50);
+		}
+		else if (m_Network->GetDebugLagVariance() == 50)
+		{
+			m_Network->SetDebugLag(lagMin, 100);
+		}
+		else if (m_Network->GetDebugLagVariance() == 100)
+		{
+			m_Network->SetDebugLag(lagMin, 500);
+		}
+		else if (m_Network->GetDebugLagVariance() == 500)
+		{
+			m_Network->SetDebugLag(lagMin, 1000);
+		}
+		else if (m_Network->GetDebugLagVariance() == 1000)
+		{
+			m_Network->SetDebugLag(lagMin, 0);
 		}
 	}
 	if (ev.id == 'K')
@@ -1424,8 +1495,38 @@ void TestApp::key_up(const CL_InputEvent& ev, const CL_InputState& state)
 		}
 		else if (m_Network->GetDebugAllowBps() == 500)
 		{
+			m_Network->SetDebugPacketLoss(100);
+		}
+		else if (m_Network->GetDebugAllowBps() == 100)
+		{
 			m_Network->SetDebugPacketLoss(0);
 		}
+	}
+	if (ev.id == 'T')
+	{
+		if (fe_fequal(m_SimSpeedUpTightness, 0.05f))
+			m_SimSpeedUpTightness = 0.1f;
+		else if (fe_fequal(m_SimSpeedUpTightness, 0.1f))
+			m_SimSpeedUpTightness = 0.15f;
+		else if (fe_fequal(m_SimSpeedUpTightness, 0.15f))
+			m_SimSpeedUpTightness = 0.2f;
+		else if (fe_fequal(m_SimSpeedUpTightness, 0.2f))
+			m_SimSpeedUpTightness = 0.25f;
+		else if (fe_fequal(m_SimSpeedUpTightness, 0.25f))
+			m_SimSpeedUpTightness = 0.05f;
+	}
+	if (ev.id == 'Y')
+	{
+		if (fe_fequal(m_SimSpeedDownTightness, 0.05f))
+			m_SimSpeedDownTightness = 0.1f;
+		else if (fe_fequal(m_SimSpeedDownTightness, 0.1f))
+			m_SimSpeedDownTightness = 0.15f;
+		else if (fe_fequal(m_SimSpeedDownTightness, 0.15f))
+			m_SimSpeedDownTightness = 0.2f;
+		else if (fe_fequal(m_SimSpeedDownTightness, 0.2f))
+			m_SimSpeedDownTightness = 0.25f;
+		else if (fe_fequal(m_SimSpeedDownTightness, 0.25f))
+			m_SimSpeedDownTightness = 0.05f;
 	}
 }
 

@@ -65,27 +65,11 @@ namespace FusionEngine
 		}
 	};
 
-	//! Settings specfic to each player
-	class PlayerOptions
-	{
-	public:
-		//! Constructor.
-		PlayerOptions()
-			: m_HUD(true)
-		{}
-
-		//! Display the HUD for this player
-		bool m_HUD;
-
-		std::string m_Name;
-	};
-
 	/*!
 	 * \brief
 	 * Encapsulates client-side options.
 	 *
-	 * \todo Make member variable identifiers consistant over all classes by prepending them with
-	 * 'm_', even public members
+	 * \remarks Threadsafe
 	 */
 	class ClientOptions : public Singleton<ClientOptions>
 	{
@@ -105,29 +89,15 @@ namespace FusionEngine
 		}
 
 	public:
-		//! [depreciated] General Player options list
-		typedef std::vector<PlayerOptions> PlayerOptionsList;
 		//! Player Input mappings list.
 		typedef std::vector<XmlInputBinding> ControlsList;
 
-		typedef std::map<std::string, std::string> VarMap;
+		typedef std::tr1::unordered_map<std::string, std::string> VarMap;
 
 		// Each player has their own var map
 		typedef std::vector<VarMap> PlayerVarMapList;
 
 	public:
-		//! [depreciated] True if console history should be logged.
-		bool m_ConsoleLogging;
-
-		//! [depreciated] General player options (other than inputs)
-		PlayerOptionsList m_PlayerOptions;
-
-		//! [depreciated] Maximum messages per second
-		unsigned int m_Rate;
-
-		//! [depreciated] The local port (to connect from)
-		unsigned short m_LocalPort;
-
 		//! Number of local players
 		unsigned int m_NumLocalPlayers;
 
@@ -157,18 +127,26 @@ namespace FusionEngine
 		bool LoadFromFile(const std::string &filename);
 
 
+		bool SetOption(const std::string& name, const std::string& value);
+		void SetMultipleOptions(const std::tr1::unordered_map<std::string, std::string>& pairs);
+
+		bool SetPlayerOption(int player, const std::string& name, const std::string& value);
+
 		bool GetOption(const std::string &name, std::string *val);
 		bool GetOption(const std::string &name, int *ret);
 		std::string GetOption_str(const std::string &name);
 		bool GetOption_bool(const std::string &name);
 
+		bool GetPlayerOption(int player, const std::string& name, std::string *val);
+
+	protected:
+		CL_Mutex m_Mutex;
+		//! Last opened options file
+		std::string m_LastFile;
+
 		void insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars);
 		void loadPlayerOptions(const ticpp::Element &opts_root);
 		void loadKeys(const ticpp::Element &keysroot);
-
-	protected:
-		//! Last opened options file
-		std::string m_LastFile;
 
 	};
 
@@ -179,29 +157,29 @@ namespace FusionEngine
 
 	static bool IsConsoleLogging()
 	{
-		return ClientOptions::current().m_ConsoleLogging;
+		return false;//ClientOptions::current().m_ConsoleLogging;
 	}
 
 	static unsigned int Rate()
 	{
-		return ClientOptions::current().m_Rate;
+		return 0;//ClientOptions::current().m_Rate;
 	}
 
 	static unsigned int ClientPort()
 	{
-		return ClientOptions::current().m_LocalPort;
+		return 0;//ClientOptions::current().m_LocalPort;
 	}
 
 	static const std::string& PlayerName(unsigned int p)
 	{
 		cl_assert(p < NumLocalPlayers());
-		return ClientOptions::current().m_PlayerOptions[p].m_Name;
+		return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
 	}
 
 	static bool PlayerUseHud(unsigned int p)
 	{
 		cl_assert(p < NumLocalPlayers());
-		return ClientOptions::current().m_PlayerOptions[p].m_HUD;
+		return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
 	}
 
 }

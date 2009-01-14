@@ -47,7 +47,6 @@
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -61,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../tinyxpath/tinyxpathd.lib CEGUIBase_d.lib OpenGLGUIRenderer_d.lib angelscriptd.lib physfsd.lib"
+				AdditionalDependencies="../tinyxpath/tinyxpathd.lib RocketCore_d.lib EMPCore_d.lib angelscriptd.lib physfsd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="libcmt"
@@ -137,7 +136,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../tinyxpath/tinyxpath.lib CEGUIBase.lib CEGUITinyXMLParser.lib OpenGLGUIRenderer.lib angelscript.lib physfs.lib"
+				AdditionalDependencies="../tinyxpath/tinyxpath.lib RocketCore.lib EMPCore.lib angelscript.lib physfs.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -220,14 +219,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionInputHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.cpp"
 				>
 			</File>
 			<File

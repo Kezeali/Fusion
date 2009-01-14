@@ -40,13 +40,13 @@ namespace FusionEngine
 		: m_Type(type),
 		m_Message(message),
 		m_Critical(critical),
-		m_Line(0)
+		m_Line(-1)
 	{
 	}
 
 	Exception::Exception(const std::string& name, const std::string &origin)
 		: m_Origin(origin),
-		m_Line(0),
+		m_Line(-1),
 		m_Name(name)
 	{
 	}
@@ -54,7 +54,7 @@ namespace FusionEngine
 	Exception::Exception(const std::string& name, const std::string& origin, const std::string &message)
 		: m_Origin(origin),
 		m_Message(message),
-		m_Line(0),
+		m_Line(-1),
 		m_Name(name)
 	{
 	}
@@ -104,13 +104,15 @@ namespace FusionEngine
 		//! \todo Use StringStream here
 
 		std::string str = GetName() + " in " + GetOrigin();
+		CL_TempString wLine = CL_StringHelp::int_to_text((int)m_Line);
+		std::string line(wLine.begin(), wLine.end());
 
-		if (m_Line > 0)
-			str += "(" + m_File + ":" + CL_String::from_int((int)m_Line) + ")";
+		if (m_Line >= 0)
+			str += "(" + m_File + ":" + line + ")";
 
 		std::string description = GetDescription();
 		if (!description.empty())
-			str += ": " + GetDescription();
+			str += ": " + description;
 
 		return str;
 	}

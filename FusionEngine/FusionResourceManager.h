@@ -97,11 +97,11 @@ namespace FusionEngine
 		//typedef boost::shared_ptr<Resource> ResourceSpt;
 
 		//! ResourceLoader pointer
-		typedef boost::shared_ptr<ResourceLoader> ResourceLoaderSpt;
+		typedef std::tr1::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
-		typedef std::map<ResourceTag, ResourceSpt> ResourceMap;
+		typedef std::tr1::unordered_map<ResourceTag, ResourceSpt> ResourceMap;
 		//! Maps Resource types to ResourceLoader objects
-		typedef std::map<std::string, ResourceLoaderSpt> ResourceLoaderMap;
+		typedef std::tr1::unordered_map<std::string, ResourceLoaderSpt> ResourceLoaderMap;
 
 	public:
 		//! Constructor
@@ -119,7 +119,7 @@ namespace FusionEngine
 		//! Checks the filesystem and returns the filenames of all found
 		StringVector ListFiles();
 
-		//! Runs garbage collection
+		//! Unloads resource which aren't currently held by any ResourcePointer objects
 		void DisposeUnusedResources();
 
 		//! Deletes all loaded resources
@@ -165,16 +165,14 @@ namespace FusionEngine
 		//! Compares a string to a wildcard string
 		bool CheckAgainstPattern(const std::string &str, const std::string &expression);
 		//! Compares a string to a wildcard string
-		bool CheckAgainstPatternWithOptions(const std::string &str, StringVector expressionTokens);
-		//! Compares a string to a wildcard string
 		bool CheckAgainstPattern(const std::string &str, StringVector expressionTokens);
 
 		//! Returns the first matching string
-		std::string FindFirst(const std::string &pattern, bool case_sensitive = true, bool recursive = false);
-		std::string FindFirst(const std::string &path, const std::string &pattern, int depth, bool case_sensitive = true, bool recursive = true);
+		std::string FindFirst(const std::string &expression, bool recursive = false, bool case_sensitive = true);
+		std::string FindFirst(const std::string &path, const std::string &expression, int depth, bool recursive = true, bool case_sensitive = true);
 
 		//! Lists filenames matching the given expression
-		StringVector Find(const std::string &pattern, bool case_sensitive = true, bool recursive = false);
+		StringVector Find(const std::string &expression, bool recursive = false, bool case_sensitive = true);
 
 		//! Lists filenames matching the given expression, below the given path
 		/*!
@@ -182,7 +180,7 @@ namespace FusionEngine
 		 * filesystem below the Search Path. If recursive is true, it will ignore 'depth' and go as 
 		 * deep as possible.
 		 */
-		StringVector Find(const std::string &path, const std::string &pattern, int depth, bool case_sensitive = true, bool recursive = true);
+		StringVector Find(const std::string &path, const std::string &expression, int depth, bool recursive = true, bool case_sensitive = true);
 
 		////! Finds and opens the given package
 		///*!
@@ -239,15 +237,15 @@ namespace FusionEngine
 		void AddDefaultLoaders();
 
 		//! Assigns the given resource loader plugin to its relavant resource type
-		void AddResourceLoader(ResourceLoader* loader);
+		void AddResourceLoader(ResourceLoaderSpt loader);
 
-		//! Loads a resource; optional custom tag
-		void PretagResource(const std::string& type, const std::string& path, const ResourceTag& tag);
+		//! Loads a resource, gives it a tag
+		void TagResource(const std::string& type, const std::string& path, const ResourceTag& tag);
 
 		//! Loads a resource
 		/*!
 		 * \remarks
-		 * Though this does the same as PretagResource, it must be named differently so that it can be
+		 * Though this does the same as TagResource, it must be named differently so that it can be
 		 * used directly (through a THISCALL) by AScript, which can't deal with overloaded member fn.s
 		 */
 		void PreloadResource(const std::string& type, const std::string& path);
@@ -259,7 +257,7 @@ namespace FusionEngine
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag &tag)
 		{
-			PreloadResource(GetResourceType(T()), tag);
+			PreloadResource(GetResourceType<T>(), tag);
 
 			ResourceSpt sptRes = m_Resources[tag];
 			if (!sptRes->IsValid())
@@ -290,7 +288,7 @@ namespace FusionEngine
 		template<typename T>
 		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
 		{
-			PreloadResource(GetResourceType(T()), tag);
+			PreloadResource(GetResourceType<T>(), tag);
 
 			ResourceSpt sptRes = m_Resources[tag];
 			if (!sptRes->IsValid())

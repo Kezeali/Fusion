@@ -112,27 +112,33 @@ namespace FusionEngine
 
 		m_BxWorld = new b2World(m_WorldAABB, gravity, doSleep);
 
-		//cpInitChipmunk();
-		//cpResetShapeIdCounter();
-		//m_ChipSpace = cpSpaceNew();
+		m_ContactListener = new ContactListener(this);
+		m_BxWorld->SetContactListener(m_ContactListener);
 
-		//m_CollisionGrid = new CollisionGrid();
+		m_DebugDraw = new DebugDraw();
+		m_BxWorld->SetDebugDraw(m_DebugDraw);
 	}
 
 	PhysicsWorld::~PhysicsWorld()
 	{
+		delete m_ContactListener;
+		delete m_DebugDraw;
+		delete m_BxWorld;
 		Clear();
-		//delete m_CollisionGrid;
 	}
 
-	b2Body* PhysicsWorld::SubstantiateBody(PhysicsBody *body)
+	b2Body* PhysicsWorld::SubstantiateBody(PhysicsBodyPtr body)
 	{
 		b2Body* bxBody = m_BxWorld->CreateBody(body->GetBodyDef());
+		body->Initialize(this);
 		m_Bodies[bxBody] = body;
 	}
 
 	void PhysicsWorld::RemoveBody(PhysicsBodyPtr &body)
 	{
+		if (m_RunningSimulation)
+			m_DeleteQueue.push_back(body); // keep a reference (this this is cleared when the simulation finishes)
+
 		m_Bodies.erase(body->GetB2Body());
 	}
 	
@@ -193,9 +199,9 @@ namespace FusionEngine
 
 	void PhysicsWorld::constrainBodies()
 	{
-		for (BodyMap::iterator it = m_Bodies.begin(), end = m_DeleteQueue.end(); it != end; ++it)
+		for (BodyMap::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
 		{
-			PhysicsBody* body = it->second;
+			PhysicsBodyPtr body = it->second;
 
 			if (m_Wrap)
 			{
@@ -257,16 +263,16 @@ namespace FusionEngine
 
 	void PhysicsWorld::OnContactAdd(const b2ContactPoint *contact)
 	{
-		BodyMap::iterator found_body1 = m_Bodies.find(contact.shape1->GetBody());
-		BodyMap::iterator found_body2 = m_Bodies.find(contact.shape2->GetBody());
-		if (find_body1 == m_Bodies.end() && find_body1->second != NULL)
+		BodyMap::iterator found_body1 = m_Bodies.find(contact->shape1->GetBody());
+		BodyMap::iterator found_body2 = m_Bodies.find(contact->shape2->GetBody());
+		if (found_body1 == m_Bodies.end() && found_body2->second != NULL)
 		{
-			PhysicsBody *body1 = found_body1->second;
+			PhysicsBodyPtr body1 = found_body1->second;
 
 			if (found_body2 != m_Bodies.end())
 			{
-				PhysicsBody *body2 = found_body2->second;
-				body1->CollisionWith(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+				PhysicsBodyPtr body2 = found_body2->second;
+				body1->AddContact(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
 			}
 		}
 
@@ -278,7 +284,7 @@ namespace FusionEngine
 			if (found_body1 != m_Bodies.end())
 			{
 				PhysicsBody *body1 = found_body2->second;
-				body2->CollisionWith(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+				body2->AddContact(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
 			}
 		}
 	}
@@ -304,63 +310,63 @@ namespace FusionEngine
 		}
 	}
 
-	void PhysicsWorld::UpdateContacts()
-	{
-		for (ContactList::iterator it = m_NewContacts.begin(), end = m_NewContacts.end(); it != end; ++i)
-		{
-			b2ContactPoint contact = (*it);
+	//void PhysicsWorld::UpdateContacts()
+	//{
+	//	for (ContactList::iterator it = m_NewContacts.begin(), end = m_NewContacts.end(); it != end; ++it)
+	//	{
+	//		b2ContactPoint contact = (*it);
 
-			BodyMap::iterator found_body1 = m_Bodies.find(contact.shape1->GetBody());
-			BodyMap::iterator found_body2 = m_Bodies.find(contact.shape2->GetBody());
-			if (find_body1 == m_Bodies.end() && find_body1->second != NULL)
-			{
-				PhysicsBody *body1 = found_body1->second;
+	//		BodyMap::iterator found_body1 = m_Bodies.find(contact.shape1->GetBody());
+	//		BodyMap::iterator found_body2 = m_Bodies.find(contact.shape2->GetBody());
+	//		if (find_body1 == m_Bodies.end() && find_body1->second != NULL)
+	//		{
+	//			PhysicsBody *body1 = found_body1->second;
 
-				if (found_body2 != m_Bodies.end())
-				{
-					PhysicsBody *body2 = found_body2->second;
-					body1->CollisionWith(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
-				}
-			}
+	//			if (found_body2 != m_Bodies.end())
+	//			{
+	//				PhysicsBody *body2 = found_body2->second;
+	//				body1->CollisionWith(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+	//			}
+	//		}
 
 
-			if (found_body2 == m_Bodies.end() && found_body2->second != NULL)
-			{
-				PhysicsBody *body2 = found_body2->second;
+	//		if (found_body2 == m_Bodies.end() && found_body2->second != NULL)
+	//		{
+	//			PhysicsBody *body2 = found_body2->second;
 
-				if (found_body1 != m_Bodies.end())
-				{
-					PhysicsBody *body1 = found_body2->second;
-					body2->CollisionWith(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
-				}
-			}
-		}
+	//			if (found_body1 != m_Bodies.end())
+	//			{
+	//				PhysicsBody *body1 = found_body2->second;
+	//				body2->CollisionWith(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
+	//			}
+	//		}
+	//	}
 
-		//for (ContactList::iterator it = m_ActiveContacts.begin(), end = m_ActiveContacts.end(); it != end; ++it)
-		//{
-		//}
+	//	//for (ContactList::iterator it = m_ActiveContacts.begin(), end = m_ActiveContacts.end(); it != end; ++it)
+	//	//{
+	//	//}
 
-		for (ContactList::iterator it = m_EndedContacts.begin(), end = m_EndedContacts.end(); it != end; ++it)
-		{
-			b2ContactPoint contact = it;
+	//	for (ContactList::iterator it = m_EndedContacts.begin(), end = m_EndedContacts.end(); it != end; ++it)
+	//	{
+	//		b2ContactPoint contact = it;
 
-			BodyMap::iterator found_body = m_Bodies.find(contact.shape1->GetBody());
-			if (found_body == m_Bodies.end() && found_body->second != NULL)
-			{
-					PhysicsBody *body = find_body;
-					collider->RemoveContact(collider->GetShape(contact.shape1));
-			}
+	//		BodyMap::iterator found_body = m_Bodies.find(contact.shape1->GetBody());
+	//		if (found_body == m_Bodies.end() && found_body->second != NULL)
+	//		{
+	//				PhysicsBody *body = find_body;
+	//				collider->RemoveContact(collider->GetShape(contact.shape1));
+	//		}
 
-			found_body = m_Bodies.find(contact.shape2->GetBody());
-			if (found_body == m_Bodies.end() && found_body->second != NULL)
-			{
-					PhysicsBody *body = objects_list[contact.shape2->GetBody()];
-					collider->RemoveContact(collider->GetShape(contact.shape2));
-			}
-		}
+	//		found_body = m_Bodies.find(contact.shape2->GetBody());
+	//		if (found_body == m_Bodies.end() && found_body->second != NULL)
+	//		{
+	//				PhysicsBody *body = objects_list[contact.shape2->GetBody()];
+	//				collider->RemoveContact(collider->GetShape(contact.shape2));
+	//		}
+	//	}
 
-		ClearContacts();
-	}
+	//	ClearContacts();
+	//}
 
 
 	void PhysicsWorld::ClearContacts()
@@ -370,29 +376,34 @@ namespace FusionEngine
 		m_EndedContacts.clear();
 	}
 
-	void PhysicsWorld::DebugDraw(bool fast)
+	void SetGCForDebugDraw(CL_GraphicContext gc)
 	{
-		if (fast)
-		{
-			CL_Display::draw_pixel(0, 0, CL_Color::white);
-			clBegin(GL_POLYGON);
-			for (BodyMap::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
-			{
-				drawBodyPoint(it->first);
-			}
-			clEnd();
-		}
-		else
-		{
-			for (BodyMap::iterator bodyIt = m_Bodies.begin(), bodyEnd = m_Bodies.end(); bodyIt != bodyEnd; ++bodyIt)
-			{
-				PhysicsBody *body = bodyIt->second;
-				for (PhysicsBody::ShapeList::iterator shapeIt = body->GetShapes().begin(), shapeEnd = body->GetShapes().end();
-					shapeIt != shapeEnd; ++shapeIt)
-					drawObject(*shapeIt);
-			}
-		}
+		m_DebugDraw->SetGraphicContext(gc);
 	}
+
+	//void PhysicsWorld::DebugDraw(bool fast)
+	//{
+	//	if (fast)
+	//	{
+	//		CL_Display::draw_pixel(0, 0, CL_Color::white);
+	//		clBegin(GL_POLYGON);
+	//		for (BodyMap::iterator it = m_Bodies.begin(), end = m_Bodies.end(); it != end; ++it)
+	//		{
+	//			drawBodyPoint(it->first);
+	//		}
+	//		clEnd();
+	//	}
+	//	else
+	//	{
+	//		for (BodyMap::iterator bodyIt = m_Bodies.begin(), bodyEnd = m_Bodies.end(); bodyIt != bodyEnd; ++bodyIt)
+	//		{
+	//			PhysicsBody *body = bodyIt->second;
+	//			for (PhysicsBody::ShapeList::iterator shapeIt = body->GetShapes().begin(), shapeEnd = body->GetShapes().end();
+	//				shapeIt != shapeEnd; ++shapeIt)
+	//				drawObject(*shapeIt);
+	//		}
+	//	}
+	//}
 
 
 	void PhysicsWorld::Initialise(int level_x, int level_y)

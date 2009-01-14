@@ -443,6 +443,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysFSIODeviceProvider.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsBody.h"
 				>
 			</File>
@@ -680,6 +684,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionViewport.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionVirtualFileSource_PhysFS.h"
 				>
 			</File>
 			<File
@@ -1014,6 +1022,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionVector2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionVirtualFileSource_PhysFS.cpp"
 				>
 			</File>
 		</Filter>

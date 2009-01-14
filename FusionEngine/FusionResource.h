@@ -226,7 +226,7 @@ namespace FusionEngine
 		{
 			m_Valid = valid;
 			if (!valid)
-				OnInvalidation();
+				OnInvalidation.invoke();
 		}
 
 		//! Returns true if the resource ptr is valid

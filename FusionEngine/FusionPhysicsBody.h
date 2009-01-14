@@ -104,9 +104,10 @@ namespace FusionEngine
 		//! Destructor
 		~PhysicsBody();
 
+	protected:
+		//! Called by world when this body is substantiated
+		void Initialize(PhysicsWorld *world);
 	public:
-		//! \remarks Gets a b2Body from PhysicsWorld by asking it to substantiate 'this'
-		void Initialize(PhysicsWorld *world = NULL);
 		//! Insert the set body properties into the Box2D objects
 		void CommitProperties();
 
@@ -119,13 +120,17 @@ namespace FusionEngine
 		void SetType(int type);
 		//! Does what you think it does.
 		void SetMass(float mass);
+		//! Sets the allowSleep property of the BodyDef
+		void SetCanSleep(bool canSleep);
+		//! Sets teh isSleeping property of the BodyDef
+		void SetInitialSleepState(bool isSleeping);
 		
 		virtual void RecalculateInertia();
 		//! Sets the radius used for torque equations.
 		/*
 		 * There are no torque equations ATM, but may be in the future...
 		 */
-		virtual void SetRadius(float radius);
+		//virtual void SetRadius(float radius);
 
 		//! Gets the type of this object
 		int GetType();
@@ -156,12 +161,12 @@ namespace FusionEngine
 		virtual void SetCoefficientOfFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
 		virtual void SetCoefficientOfRestitution(float bounce);
-		//! We don't care about yo' torque.
-		virtual void SetRotationalVelocityRad(float velocity);
-		//! We don't care about yo' torque.
-		virtual void SetRotationalVelocityDeg(float velocity);
+		//! We don't care about that talk.
+		virtual void SetAngularVelocityRad(float velocity);
+		//! We don't care about your torque.
+		virtual void SetAngularVelocityDeg(float velocity);
 
-		void SetRotationalVelocity(float velocity);
+		void SetAngularVelocity(float velocity);
 
 		//! \name Collision Properties
 		//@{
@@ -177,21 +182,23 @@ namespace FusionEngine
 		void DetachShape(Shape* shape);
 		void ClearShapes();
 
-		const ShapeList &GetShapes() const;
+		const ShapeList &GetShapes();
 
-		Shape *GetShape(b2Shape *internalShape) const;
-		Shape *GetShape(const std::string &name) const;
+		ShapePtr GetShape(b2Shape *internalShape);
+		ShapePtr GetShape(b2Shape *internalShape) const;
+		ShapePtr GetShape(const std::string &name);
+		ShapePtr GetShape(const std::string &name) const;
 
-		void AttachJoint(b2Joint* joint, bool toWorld = true);
-		void DetachJoint(b2Joint* joint, bool fromWorld = true);
+		void AddJoint(b2Joint* joint);
+		void RemoveJoint(b2Joint* joint);
 		void ClearJoints();
 
 		void Clear();
 
-		void SetAllShapesElasticity(float e);
-		void SetAllShapesFriction(float u);
+		//void SetAllShapesElasticity(float e);
+		//void SetAllShapesFriction(float u);
 
-		virtual void CacheBB();
+		//virtual void CacheBB();
 		//! \name Collision property retreival
 		//@{
 		//virtual FusionBitmask *GetColBitmask() const;
@@ -257,7 +264,7 @@ namespace FusionEngine
 		//! Calls the collision response (if this body has one.)
 		void AddContact(PhysicsBody *other, const Contact &contact);
 		//! Called when a collision ends
-		void RemoveContact(Shape *shape);
+		void RemoveContact(const Contact &contact);
 
 		//! [depreciated] Use CollisionWith()
 		//void CollisionResponse(PhysicsBody *other, const std::vector<Contact> &collision_point);
@@ -288,11 +295,11 @@ namespace FusionEngine
 		CL_Point GetPositionPoint() const;
 
 		//! Gets the net constant (i.e. not 'relative') force applied to the body.
-		const Vector2 &GetForce();
+		//const Vector2 &GetForce();
 		//! Gets the net relative force applied to the body.
-		virtual const Vector2& GetRelativeForce() const;
+		//virtual const Vector2& GetRelativeForce() const;
 
-		const Vector2 &GetAcceleration() const;
+		//const Vector2 &GetAcceleration() const;
 		const Vector2 &GetVelocity();
 
 		//! Guess
@@ -300,14 +307,14 @@ namespace FusionEngine
 		//! Yep
 		virtual float GetCoefficientOfRestitution() const;
 
-		virtual float GetRotationRad() const;
-		virtual float GetRotationDeg() const;
+		virtual float GetAngleRad() const;
+		virtual float GetAngleDeg() const;
 
-		virtual float GetRotationalVelocityRad() const;
-		virtual float GetRotationalVelocityDeg() const;
+		virtual float GetAngularVelocityRad() const;
+		virtual float GetAngularVelocityDeg() const;
 
-		float GetRotation() const;
-		float GetRotationalVelocity() const;
+		float GetAngle() const;
+		float GetAngularVelocity() const;
 
 		//! ISceneNodeController implementation
 		virtual float GetFacing() const;
@@ -343,13 +350,13 @@ namespace FusionEngine
 		 * The amount of time since the last step (i.e. the amount to decrease the
 		 * deactivation counter by.)
 		 */
-		void _deactivateAfterCountdown(unsigned int split);
+		//void _deactivateAfterCountdown(unsigned int split);
 
 		//! Sets the value of m_DeactivationCounter.
 		/*!
 		 * Generally, _deactivateAfterCountdown() should be used rather than this.
 		 */
-		void _setDeactivationCount(unsigned int count);
+		//void _setDeactivationCount(unsigned int count);
 
 		//! Returns the value of m_DeactivationCounter.
 		/*!
@@ -364,13 +371,13 @@ namespace FusionEngine
 		 * \param[in] period
 		 * The value to set to.
 		 */
-		void SetDeactivationPeriod(unsigned int period);
+		//void SetDeactivationPeriod(unsigned int period);
 
 		//! Gets m_DeactivationPeriod.
 		/*!
 		 * Returns the period used to set the deactivation counter.
 		 */
-		unsigned int GetDeactivationPeriod() const;
+		//unsigned int GetDeactivationPeriod() const;
 
 		/*!
 		 * \name State access
@@ -382,7 +389,7 @@ namespace FusionEngine
 		void _setPosition(const Vector2 &position);
 
 		//! Sets the force.
-		virtual void _setForce(const Vector2 &force);
+		//virtual void _setForce(const Vector2 &force);
 		//! Sets the force.
 		/*!
 		  * \param force
@@ -391,19 +398,19 @@ namespace FusionEngine
 		 * \param direction
 		 * [not implemented] The direction relative to which the force should be set.
 		 */
-		virtual void _setRelativeForce(const Vector2 &force, float direction =0);
+		//virtual void _setRelativeForce(const Vector2 &force, float direction =0);
 
 		//! Sets the acceleration.
-		virtual void _setAcceleration(const Vector2 &acceleration);
+		//virtual void _setAcceleration(const Vector2 &acceleration);
 		//! Sets the velocity.
 		virtual void _setVelocity(const Vector2 &velocity);
 
 		//! Sets the rotation.
-		virtual void _setRotationRad(float rotation);
+		virtual void _setAngleRad(float rotation);
 		//! Sets the rotation (in degrees).
-		virtual void _setRotationDeg(float rotation);
+		virtual void _setAngleDeg(float rotation);
 
-		virtual void _setRotation(float rotation);
+		virtual void _setAngle(float rotation);
 		//@}
 
 		//! [removed] Adds the given body to the collision list
@@ -413,50 +420,50 @@ namespace FusionEngine
 		//! [removed] Clears the collision list
 		void ClearCollisions() {};
 
-		//! Used internally by CollisionGrid
-		//@{
-		//! Stores the Collision Grid Pos; the position on the grid.
-		void _setCGPos(int ind);
-		//! Retreives the Collision Grid Pos - required for sorting etc.
-		int _getCGPos() const;
-		//! [depreciated] Stores the Collision Cell Index; the position within the cell.
-		void _setCCIndex(int ind);
-		//! Retreives the Collision Cell Index
-		int _getCCIndex() const;
+		////! Used internally by CollisionGrid
+		////@{
+		////! Stores the Collision Grid Pos; the position on the grid.
+		//void _setCGPos(int ind);
+		////! Retreives the Collision Grid Pos - required for sorting etc.
+		//int _getCGPos() const;
+		////! [depreciated] Stores the Collision Cell Index; the position within the cell.
+		//void _setCCIndex(int ind);
+		////! Retreives the Collision Cell Index
+		//int _getCCIndex() const;
 
-		//! Sets m_GotCGUpdate to true.
-		/*!
-		 * Allows the collision grid to tell this body that it's update request has been noted.
-		 */
-		void _notifyCGwillUpdate();
-		//! Returns m_GotCGUpdate.
-		/*!
-		 * Allows the collision grid to see if this body has already requested an update.
-		 */
-		bool _CGwillUpdate() const;
-		//! Sets m_GotCGUpdate to false.
-		/*!
-		 * Allows the collision grid to tell this body that it's previously requested 
-		 * update has been completed.
-		 */
-		void _notifyCGUpdated();
-		//@}
+		////! Sets m_GotCGUpdate to true.
+		///*!
+		// * Allows the collision grid to tell this body that it's update request has been noted.
+		// */
+		//void _notifyCGwillUpdate();
+		////! Returns m_GotCGUpdate.
+		///*!
+		// * Allows the collision grid to see if this body has already requested an update.
+		// */
+		//bool _CGwillUpdate() const;
+		////! Sets m_GotCGUpdate to false.
+		///*!
+		// * Allows the collision grid to tell this body that it's previously requested 
+		// * update has been completed.
+		// */
+		//void _notifyCGUpdated();
+		////@}
 
 	protected:
 		b2Body *m_BxBody;
 		b2BodyDef *m_BxBodyDef;
 
 		ShapeList m_Shapes;
-		//! \name Used internally by CollisionGrid
-		//@{
-		//! Collision Grid Index
-		int m_CGPos;
-		//! Collision Grid Index
-		int m_CCIndex;
+		////! \name Used internally by CollisionGrid
+		////@{
+		////! Collision Grid Index
+		//int m_CGPos;
+		////! Collision Grid Index
+		//int m_CCIndex;
 
-		//! True if CollisionGrid#_updateThis(thisobject) has been called.
-		bool m_GotCGUpdate;
-		//@}
+		////! True if CollisionGrid#_updateThis(thisobject) has been called.
+		//bool m_GotCGUpdate;
+		////@}
 
 		//! Containing world
 		PhysicsWorld *m_World;
@@ -519,10 +526,10 @@ namespace FusionEngine
 		Vector2 m_AppliedRelativeForce;
 
 		Vector2 m_Acceleration;
-		Vector2 m_Velocity;
+		Vector2 m_CachedVelocity;
 		//std::vector<Vector2> m_DisplacementPath;
 		Vector2 m_Displacement;
-		Vector2 m_Position;
+		Vector2 m_CachedPosition;
 
 		float m_RotationDeg;
 		float m_Rotation;

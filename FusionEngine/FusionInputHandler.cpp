@@ -59,7 +59,7 @@ namespace FusionEngine
 
 	void InputManager::Initialise(ResourceManager *resMan, const ClientOptions *cliOpts)
 	{
-		m_SuspendRequests = 0;
+		m_SuspendRequests.clear();
 
 #if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
 		// Activate Key Down signal handler
