@@ -48,7 +48,6 @@
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -206,6 +205,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -240,14 +247,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionFileNotFoundException.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionFileSystemException.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionLog.h"
 				>
 			</File>
@@ -257,6 +256,14 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.h"
 				>
 			</File>
 		</Filter>

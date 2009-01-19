@@ -195,10 +195,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionCEGUIPhysFSResourceProvider.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionClientLoadingState.h"
 				>
 			</File>
@@ -886,6 +882,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysFSIODeviceProvider.cpp"
 				>
 			</File>
 			<File

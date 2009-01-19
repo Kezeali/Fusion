@@ -219,6 +219,7 @@ namespace FusionEngine
 		virtual int GetLowestPing(const NetHandle& handle);
 		virtual float GetSmoothedPing(const NetHandle& handle);
 		virtual void SetSmoothingTightness(float tightness);
+		virtual float GetSmoothingTightness();
 
 
 		//! Adds some lag time to communications

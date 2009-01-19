@@ -31,6 +31,8 @@
 #include <ClanLib/Core/IOData/virtual_file_source.h>
 #include <ClanLib/Core/IOData/file.h>
 
+#include "FusionPhysFSIODeviceProvider.h"
+
 class CL_VirtualDirectoryListingEntry;
 
 
@@ -84,9 +86,7 @@ public:
 private:
 	CL_String m_Path;
 
-	CL_ZipArchive zip_archive;
-
-	std::vector<CL_String> m_File_list;
+	std::vector<CL_String> m_FileList;
 
 	// Index of the current file being iterated
 	//  (why the ClanLib devs didn't give next_file() an 

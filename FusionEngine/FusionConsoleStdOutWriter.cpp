@@ -7,28 +7,26 @@ namespace FusionEngine
 	ConsoleStdOutWriter::ConsoleStdOutWriter()
 		: m_Active(false)
 	{
+		// Use the singleton
+		m_ConsoleOnNewLineSlot =
+			Console::getSingleton().OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
+	}
+
+	ConsoleStdOutWriter::ConsoleStdOutWriter(Console* console)
+		: m_Active(false)
+	{
+		// Use the given Console
+		m_ConsoleOnNewLineSlot =
+			console->OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
 	}
 
 	ConsoleStdOutWriter::~ConsoleStdOutWriter()
 	{
-		// Make sure we are disconnected
-		Disable();
 	}
 
-	void ConsoleStdOutWriter::Activate(Console* console)
+	void ConsoleStdOutWriter::Activate()
 	{
-		if (console != NULL)
-		{
-			// Use the given Console
-			m_ConsoleOnNewLineSlot =
-				console->OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
-		}
-		else
-		{
-			// Use the singleton
-			m_ConsoleOnNewLineSlot =
-				Console::getSingleton().OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
-		}
+		m_ConsoleOnNewLineSlot.enable();
 
 		m_Active = true;
 	}
@@ -38,26 +36,29 @@ namespace FusionEngine
 		if (m_Active)
 		{
 			m_Active = false;
-			Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
+			m_ConsoleOnNewLineSlot.disable();
 		}
 	}
 
-	void ConsoleStdOutWriter::onConsoleNewline(const std::string &message)
+	void ConsoleStdOutWriter::onConsoleNewline(const std::wstring &message)
 	{
-		std::string e_marker = Console::getSingleton().GetExceptionMarker();
-		std::string w_marker = Console::getSingleton().GetWarningMarker();
+		std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
+		std::wstring w_marker = Console::getSingleton().GetWarningMarker();
 
 		if (message.substr(0, e_marker.length()) == e_marker)
 		{
-			std::cout << "** " << message.substr(e_marker.length()) << std::endl;
+			CL_Console::write_line( cl_format("** %1", message.substr(e_marker.length())) );
+			//std::cout << "** " << message.substr(e_marker.length()) << std::endl;
 		}
 		else if (message.substr(0, w_marker.length()) == w_marker)
 		{
-			std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
+			CL_Console::write_line( cl_format("++ %1", message.substr(w_marker.length())) );
+			//std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
 		}
 		else
 		{
-			std::cout << "--  " << message << std::endl;
+			CL_Console::write_line( cl_format("-- %1", message) );
+			//std::cout << "--  " << message << std::endl;
 		}
 	}
 

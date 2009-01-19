@@ -29,6 +29,12 @@
 
 #include "PhysFS.h"
 
+SetupPhysFS::SetupPhysFS()
+{
+	CL_String8 path = CL_StringHelp::text_to_local8(CL_System::get_exe_path());
+	init(path.c_str());
+}
+
 SetupPhysFS::SetupPhysFS(const char *argv0)
 {
 	init(argv0);

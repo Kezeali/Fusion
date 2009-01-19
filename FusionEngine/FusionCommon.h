@@ -227,6 +227,24 @@ namespace FusionEngine
 		return true;
 	}
 
+	static std::wstring fe_widen(const std::string &str)
+	{
+		std::wostringstream wstm;
+		const std::ctype<wchar_t>& ctfacet = std::use_facet< std::ctype<wchar_t> >( wstm.getloc() );
+		for( size_t i=0 ; i < str.size() ; ++i )
+			wstm << ctfacet.widen( str[i] );
+		return wstm.str();
+	}
+
+	static std::string fe_narrow(const std::wstring &str)
+	{
+		std::ostringstream stm;
+		const std::ctype<char>& ctfacet = std::use_facet< std::ctype<char> >( stm.getloc() );
+		for( size_t i=0 ; i < str.size() ; ++i )
+			stm << ctfacet.narrow( str[i], 0 );
+		return stm.str();
+	}
+
 	//! Returns the given string in upper case
 	static std::string fe_newupper(const std::string &str)
 	{

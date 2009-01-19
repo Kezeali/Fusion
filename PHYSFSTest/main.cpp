@@ -9,112 +9,21 @@
 
 using namespace FusionEngine;
 
-class PhysFSTest : public CL_ClanApplication
+class PhysFSTest
 {
 
 	bool m_PhysFSConfigured;
-	
-	StringVector TokeniseExpression(const std::string &expression)
-	{
-		StringVector expressionTokens;
-		StringVector expressionTokens1, expressionTokens2;
 
-		size_t mid = expression.find("*");
-
-		// If more tokens are found
-		if (mid != std::string::npos)
-		{
-			expressionTokens1 = TokeniseExpression( expression.substr(0, mid) );
-			expressionTokens2 = TokeniseExpression( expression.substr(mid+1) );
-
-			expressionTokens.resize(expressionTokens1.size() + expressionTokens2.size());
-
-			std::copy(expressionTokens1.begin(), expressionTokens1.end(), expressionTokens.begin());
-			std::copy(expressionTokens2.begin(), expressionTokens2.end(), expressionTokens.begin()+expressionTokens1.size());
-
-
-			//std::string token1 = expression.substr(0, mid);
-			//std::string token2 = expression.substr(mid+1);
-
-			//if (!token1.empty())
-			//	expressionTokens.push_back( token1 );
-			//if (!token2.empty())
-			//	expressionTokens.push_back( token2 );
-		}
-		else if (!expression.empty())
-			expressionTokens.push_back(expression);
-
-		return expressionTokens;
-	}
-
-	bool CheckAgainstExpression(const std::string &str, const std::string &expression)
-	{
-		return CheckAgainstExpression(str, TokeniseExpression(expression));
-	}
-
-	bool CheckAgainstExpressionWithOptions(const std::string &str, StringVector expressionTokens)
-	{
-		size_t strPos = 0;
-		bool optionalSection = false, optionFound = false;
-		StringVector::iterator it = expressionTokens.begin();
-		for (; it != expressionTokens.end(); ++it)
-		{
-			// Detect options
-			if ((*it) == "[")
-			{
-				optionalSection = true;
-				optionFound = false;
-				continue; // We don't need to check for the [!
-			}
-			if ((*it) == "]")
-			{
-				if (optionFound)
-					return false;
-
-				optionalSection = false;
-				continue; // We don't need to check for the ]!
-			}
-
-			// Skip all options till the end of the current section (after an option has been found)
-			if (optionalSection && optionFound)
-				continue;
-
-			// We search from the last found token (all tokens must exist /in the correct order/ for the string to match)
-			strPos = str.find(*it, strPos);
-			if (!optionalSection && strPos == std::string::npos)
-				return false;
-
-			else if (strPos != std::string::npos)
-				optionFound = true;
-
-		}
-		return true;
-	}
-
-	bool CheckAgainstExpression(const std::string &str, StringVector expressionTokens)
-	{
-		size_t strPos = 0;
-		StringVector::iterator it = expressionTokens.begin();
-		for (; it != expressionTokens.end(); ++it)
-		{
-			// We search from the last found token (all tokens must exist /in the correct order/ for the string to match)
-			strPos = str.find(*it, strPos);
-			if (strPos == std::string::npos)
-				return false;
-
-		}
-		return true;
-	}
 
 	// This the the purest form of the Find method
 	StringVector Find(const std::string &expression)
 	{
 		StringVector list;
 
-		StringVector expressionTokens = TokeniseExpression(expression);
-
 		if (m_PhysFSConfigured)
 		{
+			CL_RegExp regExp(expression.c_str());
+
 			char **files = PHYSFS_enumerateFiles("");
 			if (files != NULL)
 			{
@@ -123,35 +32,7 @@ class PhysFSTest : public CL_ClanApplication
 				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
 				{
 					std::string file(*i);
-					if (CheckAgainstExpression(file, expressionTokens))
-						list.push_back(file);
-				}
-
-				PHYSFS_freeList(files);
-			}
-		}
-
-		return list;
-	}
-
-	// This has been replaced with Find(<ex>, false) in ResourceManager
-	StringVector FindCaseless(const std::string &expression)
-	{
-		StringVector list;
-
-		StringVector expressionTokens = TokeniseExpression(fe_newupper(expression));
-
-		if (m_PhysFSConfigured)
-		{
-			char **files = PHYSFS_enumerateFiles("");
-			if (files != NULL)
-			{
-				int file_count;
-				char **i;
-				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
-				{
-					std::string file(*i);
-					if (CheckAgainstExpression(fe_newupper(file), expressionTokens))
+					if (regExp.search(file.c_str(), file.length()).is_match())
 						list.push_back(file);
 				}
 
@@ -235,19 +116,23 @@ class PhysFSTest : public CL_ClanApplication
 	//	doc.SaveFile(filename);
 	//}
 
-	virtual int main(int argc, char **argv)
+public:
+	virtual int main(const std::vector<CL_String> &args)
 	{
+		CL_SetupCore core_setup;
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
-		SetupPhysFS physfs_setup(argv[0]);
+		SetupPhysFS physfs_setup;
 
 		CL_ConsoleWindow console("PhysFS Test");
-		console.redirect_stdio();
+		//console.redirect_stdio();
 
 		CL_DisplayWindow display("PhysFS Test: Display", 480, 200);
 
 		try
 		{
+			CL_GraphicContext gc = display.get_gc();
+
 			using namespace FusionEngine;
 			new Console;
 			ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
@@ -264,32 +149,6 @@ class PhysFSTest : public CL_ClanApplication
 				compiled.major, compiled.minor, compiled.patch);
 			printf("Linked against PhysFS version %d.%d.%d.\n",
 				linked.major, linked.minor, linked.patch);
-
-			Exception trivial("main", "An error is about to happen");
-			Exception err("main", "Just kidding :)");
-
-			FileSystemException fsEx("main", "I can has mouse?", "main.cpp", 201);
-
-			FileNotFoundException fnfEx("main", "floobly.flo", "main.cpp", 204);
-
-			logger->SetUseDating(true);
-			logger->BeginLog("another log", false);
-			// Add a normal message
-			logger->Add("hello", "another log");
-			// Add an error
-			logger->Add(err, "another log");
-			logger->EndLog("another log");
-			logger->RemoveAndDestroyLog("another log");
-
-			SendToConsole("Testing Exception output:");
-			// Send a warning to the console
-			SendToConsole(trivial);
-			// Send an error to the console
-			SendToConsole(err);
-
-			SendToConsole(fsEx);
-
-			SendToConsole(fnfEx);
 
 			// List filetypes
 			SendToConsole("PhysFS File Types:");
@@ -327,26 +186,24 @@ class PhysFSTest : public CL_ClanApplication
 			}
 
 			SendToConsole("Testing PHYSFS Find - Searching for '*body*':");
-			StringVector xmlFiles = FindCaseless("*body*");
+			StringVector xmlFiles = Find("*body*");
 			for (int i = 0; i < xmlFiles.size(); i++)
 			{
 				SendToConsole("\t" + xmlFiles[i]);
 			}
 
 
-			// Get an instance of the custom inputsource
-			InputSourceProvider_PhysFS phys_provider("");
+			// Set up the PhysFS / clanlib virtual file system
+			CL_VirtualFileSystem vfs_physfs(new VirtualFileSource_PhysFS());
+
+			CL_VirtualDirectory vdir(vfs_physfs, "");
 
 			// Initialise some stuff...
 			// .. The PhysFS way
-			CL_PNGProvider phys_png("PhysFSBody.png", &phys_provider);
-			CL_Surface surface(phys_png);
+			CL_Texture surface(gc, "PhysFSBody.png", vdir);
 
 			// ... The standard way
-			CL_PNGProvider png("Body.png");
-			CL_Surface surface2(png);
-			// ... And finally the shorthand version of the standard way
-			CL_Surface surface3("Body.png");
+			CL_Texture surface2(gc, "Body.png");
 
 			//testOutput();
 
@@ -355,27 +212,45 @@ class PhysFSTest : public CL_ClanApplication
 			delete logger;
 			delete Console::getSingletonPtr();
 
-			// Draw!
-			while (!CL_Keyboard::get_keycode(CL_KEY_ESCAPE))
-			{
-				display.get_gc()->clear(CL_Color(180, 220, 255));
+			CL_InputDevice keyboard = display.get_ic().get_keyboard();
 
-				surface.draw(10, 20);
-				surface2.draw(70, 20);
-				surface3.draw(106, 20);
+			// Draw!
+			while (!keyboard.get_keycode(CL_KEY_ESCAPE))
+			{
+				gc.clear(CL_Colorf(0.51f, 0.84f, 0.9f));
+
+				gc.set_texture(0, surface);
+				CL_Draw::texture(gc, CL_Rectf(CL_Pointf(10, 20), surface.get_size()));
+
+				gc.set_texture(0, surface2);
+				CL_Draw::texture(gc, CL_Rectf(CL_Pointf(70, 20), surface2.get_size()));
+
+				if (CL_DisplayMessageQueue::has_messages())
+					CL_DisplayMessageQueue::process();
 
 				display.flip();
-				CL_System::keep_alive(4);
 			}
 		}
-		catch (CL_Error& e)
+		catch (CL_Exception& e)
 		{
 			// O noes!
-			std::cout << e.message << std::endl;
+			CL_Console::write_line( e.message );
 			console.wait_for_key();
 		}
 
 		// It's so zen
 		return 0;
 	}
-} app;
+};
+
+class EntryPoint
+{
+public:
+	static int main(const std::vector<CL_String> &args)
+	{
+		PhysFSTest app;
+		return app.main(args);
+	}
+};
+
+CL_ClanApplication app(&EntryPoint::main);

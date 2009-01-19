@@ -46,18 +46,20 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		ConsoleStdOutWriter();
+		//! Constructor + console
+		ConsoleStdOutWriter(Console *console);
 
 		//! Destructor
 		~ConsoleStdOutWriter();
 
 	public:
 		//! Call to connect to either a given console, or the Console singleton
-		void Activate(Console* console = NULL);
+		void Activate();
 		//! Disconnects from the console
 		void Disable();
 
 		//! Called by the OnNewLine signal from the console
-		void onConsoleNewline(const std::string &message);
+		void onConsoleNewline(const std::wstring &message);
 
 	protected:
 		//! True if this object is connected to a Console

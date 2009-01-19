@@ -104,4 +104,9 @@ namespace FusionEngine
 		m_SPTightness = tightness;
 	}
 
+	float Network::GetSmoothingTightness()
+	{
+		return m_SPTightness;
+	}
+
 }

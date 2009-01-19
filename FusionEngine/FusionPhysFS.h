@@ -59,17 +59,17 @@ static int platform_stricmp(const char *x, const char *y)
 }
 
 
-#include "FusionInputSourceProvider_PhysFS.h"
-#include "FusionInputSource_PhysFS.h"
-#include "FusionOutputSourceProvider_PhysFS.h"
-#include "FusionOutputSource_PhysFS.h"
+#include "FusionVirtualFileSource_PhysFS.h"
+#include "FusionPhysFSIODeviceProvider.h"
 
 
 	class SetupPhysFS
 	{
 	public:
 		//! Constructor
-		SetupPhysFS(const char *argv0 = 0);
+		SetupPhysFS();
+		//! Constructor + argv0
+		SetupPhysFS(const char *argv0);
 
 		//! Destructor
 		~SetupPhysFS();

@@ -79,7 +79,7 @@ namespace FusionEngine
 			Console::getSingleton().OnNewLine.connect(this, &Logger::onConsoleNewLine);
 		m_ConsoleLogging = true;
 
-		Console::getSingletonPtr()->Add("Console Logging enabled");
+		Console::getSingletonPtr()->Add(L"Console Logging enabled");
 	}
 
 	void Logger::DisableConsoleLogging()
@@ -87,9 +87,9 @@ namespace FusionEngine
 		if (m_ConsoleLogging)
 		{
 			m_ConsoleLogging = false;
-			Console::getSingleton().OnNewLine.disconnect(m_ConsoleOnNewLineSlot);
+			m_ConsoleOnNewLineSlot.destroy();
 
-			Console::getSingletonPtr()->Add("Console Logging disabled");
+			Console::getSingletonPtr()->Add(L"Console Logging disabled");
 		}
 	}
 
@@ -144,7 +144,7 @@ namespace FusionEngine
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
-			Console::getSingletonPtr()->Add(e.ToString());
+			Console::getSingletonPtr()->PrintLn(e.ToString());
 		}
 
 		return log;
@@ -171,7 +171,7 @@ namespace FusionEngine
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
-			Console::getSingletonPtr()->Add(e.ToString());
+			Console::getSingletonPtr()->PrintLn(e.ToString());
 		}
 	}
 
@@ -256,16 +256,15 @@ namespace FusionEngine
 
 	void Logger::Add(const Exception& error, const std::string& tag, LogSeverity severity)
 	{
-		std::string message =
-			CL_String::format("Error: %1", error.ToString());
+		std::wstring message = cl_format("Error: %1", error.ToString().c_str());
 
-		Add(message, tag, severity);
+		Add(std::string(message.begin(), message.end()), tag, severity);
 	}
 
-	void Logger::onConsoleNewLine(const std::string &message)
+	void Logger::onConsoleNewLine(const std::wstring &message)
 	{
 		if (m_ConsoleLogging)
-			Add(message, g_LogConsole);
+			Add(std::string(message.begin(), message.end()), g_LogConsole);
 	}
 
 

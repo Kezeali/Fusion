@@ -33,7 +33,7 @@
 #include <ClanLib/Core/IOData/virtual_directory_listing_entry.h>
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_VirtualFileSource_Zip Construction:
+// VirtualFileSource_PhysFS Construction:
 
 VirtualFileSource_PhysFS::VirtualFileSource_PhysFS()
 : m_Index(0)
@@ -45,7 +45,7 @@ VirtualFileSource_PhysFS::~VirtualFileSource_PhysFS()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_VirtualFileSource_Zip Attributes:
+// VirtualFileSource_PhysFS Attributes:
 
 CL_String VirtualFileSource_PhysFS::get_path() const
 {
@@ -53,43 +53,73 @@ CL_String VirtualFileSource_PhysFS::get_path() const
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_VirtualFileSource_Zip Operations:
+// VirtualFileSource_PhysFS Operations:
 
-CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &filename,
+CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
 	CL_File::OpenMode mode,
 	unsigned int access,
 	unsigned int share,
 	unsigned int flags)
 {
-	return zip_archive.open_file(filename);
+	PHYSFS_File *file = NULL;
+	std::string filename(wfilename.begin(), wfilename.end());
+	switch (access)
+	{
+	case CL_File::access_read:
+		file = PHYSFS_openRead(filename.c_str());
+		break;
+
+	case CL_File::access_write:
+		if (!PHYSFS_exists(filename.c_str()) || mode == CL_File::create_always)
+			file = PHYSFS_openWrite(filename.c_str());
+		else
+			file = PHYSFS_openAppend(filename.c_str());
+		break;
+	}
+	if (file == NULL)
+		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1' with the requested access", wfilename));
+
+	return CL_IODevice(new PhysFSIODeviceProvider(file));
 }
 
 
-bool CL_VirtualFileSource_Zip::initialize_directory_listing(const CL_String &path)
+bool VirtualFileSource_PhysFS::initialize_directory_listing(const CL_String &path)
 {
-	file_list = zip_archive.get_file_list();
-	index = 0;
+	char **files = PHYSFS_enumerateFiles("");
+	if (files != NULL)
+	{
+		char **i;
+		for (i = files; *i != NULL; i++)
+			m_FileList.push_back( CL_String(*i) );
+
+		PHYSFS_freeList(files);
+	}
+	m_Index = 0;
 	
-	return !file_list.empty();
+	return !m_FileList.empty();
 }
 
-bool CL_VirtualFileSource_Zip::next_file(CL_VirtualDirectoryListingEntry &entry)
+bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
 {
-	if( file_list.empty() ) 
+	if( m_FileList.empty() ) 
 		return false;
 
-	if( index > file_list.size() - 1 )
+	if( m_Index > m_FileList.size() - 1 )
 		return false;
 
-	entry.set_filename(file_list[index].get_archive_filename());
+	std::string cfilename(m_FileList[m_Index].begin(), m_FileList[m_Index].end());
+
+	bool isDirectory = PHYSFS_isDirectory(cfilename.c_str()) != 0;
+
+	entry.set_filename(m_FileList[m_Index]);
 	entry.set_readable(true);
-	entry.set_directory(false); // todo
-	entry.set_hidden(false); // todo
-	entry.set_writable(false); // todo
-	index++;
+	entry.set_directory(isDirectory);
+	entry.set_hidden(false); // why would you care?
+	entry.set_writable(false); 
+	m_Index++;
 
 	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_VirtualFileSource_Zip Implementation:
+// VirtualFileSource_PhysFS Implementation:

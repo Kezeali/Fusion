@@ -174,14 +174,14 @@ namespace FusionEngine
 		 */
 		void Add(const std::string &message, const std::string &tag = g_LogException, LogSeverity severity = LOG_NORMAL);
 
-		//! Adds the given Error to the given log
+		//! [depreciated] Adds the given error to the given log
 		/*!
 		 * Formats the given error to a string, then calls the normal Add()
 		 */
 		void Add(const Exception& error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
-		void onConsoleNewLine(const std::string &message);
+		void onConsoleNewLine(const std::wstring &message);
 
 	protected:
 		//! True if console logging is active
