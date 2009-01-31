@@ -11,8 +11,6 @@
 
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
-#include "FusionInputSourceProvider_PhysFS.h"
-#include "FusionInputSource_PhysFS.h"
 
 #include "FusionImageLoader.h"
 #include "FusionAudioLoader.h"
@@ -24,16 +22,18 @@ namespace FusionEngine
 {
 
 	ResourceManager::ResourceManager()
-		: m_PhysFSConfigured(false)
+		: m_PhysFSConfigured(false),
+		m_StopEvent(false, false)
 	{
-		bool ok = SetupPhysFS::init(CL_System::get_exe_path().c_str());
+		bool ok = SetupPhysFS::init(fe_narrow(CL_System::get_exe_path()).c_str());
 		assert(ok);
 
 		Configure();
 	}
 
 	ResourceManager::ResourceManager(char *arg0)
-		: m_PhysFSConfigured(false)
+		: m_PhysFSConfigured(false),
+		m_StopEvent(false, false)
 	{
 		int ok = SetupPhysFS::init(arg0);
 		assert(ok);
@@ -63,6 +63,17 @@ namespace FusionEngine
 		m_PhysFSConfigured = true;
 
 		AddDefaultLoaders();
+	}
+
+	void ResourceManager::StartBackgroundPreloadThread()
+	{
+		m_Worker.start(this, &ResourceManager::BackgroundPreload);
+	}
+
+	void ResourceManager::StopBackgroundPreloadThread()
+	{
+		m_StopEvent.set();
+		m_Worker.join();
 	}
 
 	StringVector ResourceManager::ListFiles()
@@ -109,9 +120,8 @@ namespace FusionEngine
 		m_Garbage.clear();
 #else
 
-		ResourceMap::iterator it = m_Resources.begin();
-		ResourceMap::iterator end = m_Resources.end();
-		for (; it != end; ++it)
+		CL_MutexSection resourcesLock(&m_ResourcesMutex);
+		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
 			ResourceSpt& res = (*it).second;
 
@@ -126,8 +136,7 @@ namespace FusionEngine
 			{
 
 #endif
-				m_ResourceLoaders[res->GetType()]->UnloadResource(res.get());
-				//it = m_Resources.erase(it);
+				unloadResource(res);
 			}
 		}
 
@@ -136,6 +145,15 @@ namespace FusionEngine
 
 	void ResourceManager::DeleteResources()
 	{
+		CL_MutexSection resourcesLock(&m_ResourcesMutex);
+		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
+		{
+			unloadResource(it->second);
+		}
+		// There may still be ResourcePointers holding shared_ptrs to the
+		//  ResourceContainers held in m_Resources, but they will simply
+		//  be invalidated by the previous step. In any case, the following
+		//  step means all ResourceContainers will be deleated ASAP.
 		m_Resources.clear();
 	}
 
@@ -277,44 +295,124 @@ namespace FusionEngine
 
 	void ResourceManager::AddDefaultLoaders()
 	{
-		AddResourceLoader(ResourceLoaderSpt(new ImageLoader()));
-		AddResourceLoader(ResourceLoaderSpt(new AudioLoader()));
-		AddResourceLoader(ResourceLoaderSpt(new AudioStreamLoader()));
+		AddResourceLoader(&ResourceLoader_Factory<ImageLoader>);
+		AddResourceLoader(&ResourceLoader_Factory<AudioLoader>);
+		AddResourceLoader(&ResourceLoader_Factory<AudioStreamLoader>);
 	}
 
-	void ResourceManager::AddResourceLoader(ResourceLoaderSpt loader)
+	void ResourceManager::AddResourceLoader(const std::string& type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn, void* userData)
 	{
-		m_ResourceLoaders[loader->GetType()] = loader;
+		m_LoaderMutex.lock();
+		m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
+		m_LoaderMutex.unlock();
 	}
 
-	void ResourceManager::TagResource(const std::string& type, const std::string& path, const ResourceTag& tag)
+	ResourceLoaderSpt ResourceManager::CreateResourceLoader(const std::string& type)
 	{
-		ResourceMap::iterator existing = m_Resources.find(tag);
-		if (existing == m_Resources.end())
+		// Find the factory method for the resourceloader for the given type
+		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(type);
+		if (_where == m_ResourceLoaders.end())
 		{
-			ResourceLoaderMap::iterator loader = m_ResourceLoaders.find(type);
-			if (loader == m_ResourceLoaders.end())
+			loaderMutexSection.unlock();
+			FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + type + "'");
+		}
+
+		// Initialize a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		// Run the factory method and return the result in a shared_ptr
+		return ResourceLoaderSpt(_where->second(vdir));
+	}
+
+	void ResourceManager::BackgroundPreload()
+	{
+		while (true)
+		{
+			// Wait until there is more to load, or a stop event is received
+			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToLoadEvent);
+			// 0 = stop event, -1 = error (otherwise it is
+			//  a ToLoadEvent, meaning the load loop should restart)
+			if (receivedEvent <= 0)
+				break;
+
+			CL_MutexSection toLoadMutexSection(&m_ToLoadMutex);
+			while (!m_ToLoad.empty())
 			{
-				FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + type + "'");
+				ResourceToLoadData toLoadData = m_ToLoad.top();
+				toLoadMutexSection.unlock();
+
+				TagResource(toLoadData.type, toLoadData.path, toLoadData.tag);
+
+				toLoadMutexSection.lock();
+				m_ToLoad.pop();
 			}
-
-			ResourceContainer* res;
-			//try
-			//{
-				res = loader->second->LoadResource(tag, path, NULL);
-			//}
-			//catch (CL_Error&)
-			//{
-			//	FSN_EXCEPT(ExCode::IO, "ResourceManager::PreloadResource", "'" + path + "' could not be loaded");
-			//}
-
-			m_Resources[tag] = ResourceSpt(res);
 		}
 	}
 
-	void ResourceManager::PreloadResource(const std::string& type, const std::string& path)
+	void ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag)
+	{
+		CL_MutexSection resourcesLock(&m_ResourcesMutex);
+
+		// Check whether there is an existing tag pointing to the same resource
+		ResourceMap::iterator existing = m_Resources.find(tag);
+		if (existing != m_Resources.end() && existing->second->GetPath() == path)
+				return; // Tag points to the same resource
+
+		// Create a resource loader using the factory method for the given type
+		ResourceLoaderSpt loader = CreateResourceLoader(type);
+
+		ResourceContainer* res;
+		//try
+		//{
+			res = loader->LoadResource(tag, path);
+		//}
+		//catch (FusionEngine::Exception& e)
+		//{
+		//	throw e;
+		//}
+		//finally
+		//{
+		//	delete loader;
+		//}
+
+		m_Resources[tag] = ResourceSpt(res);
+	}
+
+	void ResourceManager::PreloadResource(const std::string& type, const std::wstring& path)
 	{
 		TagResource(type, path, path);
+	}
+
+	void ResourceManager::PreloadResource_Background(const std::string& type, const std::wstring& path, int priority)
+	{
+		m_ToLoadMutex.lock();
+		m_ToLoad.push(ResourceToLoadData(type, path, path, pritority));
+		m_ToLoadMutex.unlock();
+		
+		m_ToLoadEvent.set();
+	}
+
+	void ResourceManager::UnloadResource(const std::wstring &path)
+	{
+		CL_MutexSection resourcesMutexSection(&m_ResourcesMutex);
+		ResourceMap::iterator _where = m_Resources.find(path);
+		if (_where != m_Resources.end())
+			unloadResource(_where->second);
+	}
+
+	void ResourceManager::UnloadResource_Background(const std::wstring &path)
+	{
+		m_ResourcesMutex.lock();
+		ResourceMap::iterator existing = m_Resources.find(path);
+		if (existing != m_Resources.end() && existing->second->)
+			m_Resources.erase(path);
+		m_ResourcesMutex.unlock();
+
+		m_ToUnloadMutex.lock();
+		m_ToUnload.push_back(path);
+		m_ToUnloadMutex.unlock();
+
+		m_ToUnloadEvent.set();
 	}
 
 	void ResourceManager::RegisterScriptElements(ScriptingEngine* manager)
@@ -356,6 +454,39 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
+	void ResourceManager::loadResource(ResourceSpt &resource)
+	{
+		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
+		if (_where == m_ResourceLoaders.end())
+		{
+			FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + resource->GetType() + "'");
+		}
+
+		// Initialize a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+		// Run the load function
+		ResourceLoader &loader = _where->second;
+		loader.load(resource.get(), vdir, loader.userData);
+	}
+
+	void ResourceManager::unloadResource(ResourceSpt &resource)
+	{
+		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
+
+		if (_where != m_ResourceLoaders.end())
+		{
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+			// Run the load function
+			ResourceLoader &loader = _where->second;
+			loader.unload(resource.get(), vdir, loader.userData);
+		}
+	}
+
 	void ResourceManager::registerXMLType(asIScriptEngine* engine)
 	{
 		int r;

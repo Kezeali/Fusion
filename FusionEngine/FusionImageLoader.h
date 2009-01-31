@@ -46,27 +46,35 @@ namespace FusionEngine
 	 * \sa
 	 * ResourceLoader
 	 */
-	class ImageLoader : public ResourceLoader
-	{
-	public:
-		//! Returns the type identifier for resources this loader can deal with
-		virtual const std::string &GetType() const;
+	//class ImageLoader : public ResourceLoader
+	//{
+	//public:
+	//	ImageLoader(CL_VirtualDirectory vdir)
+	//		: ResourceLoader(vdir)
+	//	{
+	//	}
 
-		//! Loads the resource reffered to by the given text
-		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &text, CL_InputSourceProvider* provider);
+	//	//! Returns the type identifier for resources this loader can deal with
+	//	virtual const std::string &GetType() const;
 
-		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider = NULL);
+	//	//! Loads the resource reffered to by the given text
+	//	virtual ResourceContainer* LoadResource(const std::wstring& tag, const std::wstring &path);
 
-		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(ResourceContainer * resource);
+	//	//! Reloads the given resource (which has been cleaned up by garbage collection)
+	//	virtual void ReloadResource(ResourceContainer * resource);
 
-	protected:
-		CL_Surface* loadSurface(const std::string &path, CL_InputSourceProvider* provider);
+	//	//! Cleans up resource data (for garbage collection)
+	//	virtual void UnloadResource(ResourceContainer * resource);
 
-	};
+	//protected:
+	//	CL_Texture* loadSurface(const std::wstring &path);
 
-	REGISTER_RESOURCE_TYPE(CL_Surface, "IMAGE")
+	//};
+
+	//! Texture resource loader callback
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! Texture resource unloader callback
+	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
 }
 

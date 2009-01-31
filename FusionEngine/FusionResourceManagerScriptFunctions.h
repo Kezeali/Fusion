@@ -40,9 +40,9 @@
 namespace FusionEngine
 {
 	//! Returns a CL_Surface resource pointer
-	static ResourcePointer<CL_Surface> ResourceManager_GetImage(std::string& path, ResourceManager* lhs)
+	static ResourcePointer<CL_Texture> ResourceManager_GetImage(std::string& path, ResourceManager* lhs)
 	{
-		return lhs->GetResource<CL_Surface>(path, "IMAGE");
+		return lhs->GetResource<CL_Texture>(path, "IMAGE");
 	}
 
 	//! Returns a CL_SoundBuffer resource pointer
@@ -69,12 +69,12 @@ namespace FusionEngine
 	}
 
 	//! Draws the image pointed to by the given resource pointer
-	static void Image_Draw(ResourcePointer<CL_Surface> *lhs, float x, float y)
+	static void Image_Draw(ResourcePointer<CL_Texture> *lhs, float x, float y)
 	{
 		if (!lhs->IsValid())
 			return;
 
-		CL_Surface* data = lhs->GetDataPtr();
+		CL_Texture* data = lhs->Get();
 		if (data != NULL)
 			data->draw(x, y);
 	}
@@ -85,45 +85,11 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return;
 
-		CL_Surface* data = lhs->GetDataPtr();
+		CL_Texture* data = lhs->Get();
 		if (data != NULL)
 		{
-			CL_Surface_DrawParams2 dp;
-			dp.srcX = 0;
-			dp.srcY = 0;
-			dp.srcWidth = data->get_width();
-			dp.srcHeight = data->get_height();
-			dp.destX = 0;
-			dp.destY = 0;
-			dp.destZ = 0;
-			dp.red = 255;
-			dp.green = 255;
-			dp.blue = 255;
-			dp.alpha = 255;
-			//dp.blend_src = CL_BlendFunc::blend_one;
-			//dp.blend_dest = CL_BlendFunc::blend_one;
-			//dp.blendfunc_src_alpha = CL_BlendFunc::blend_one;
-			//dp.blendfunc_dest_alpha = CL_BlendFunc::blend_one;
-			dp.scale_x = 1.0;
-			dp.scale_y = 1.0;
-			dp.translate_origin = CL_Origin::origin_top_left;
-			dp.translate_x = 0;
-			dp.translate_y = 0;
-			dp.rotate_angle = 0.0;
-			dp.rotate_pitch = 0.0;
-			dp.rotate_yaw = 0.0;
-			dp.rotate_origin = CL_Origin::origin_top_left;
-			dp.rotate_x = 0;
-			dp.rotate_y = 0;
-			dp.sub_pixel_accuracy = true;
-
-			dp.rotate_origin = CL_Origin::origin_center;
-			dp.rotate_angle = fe_radtodeg( angle );
-			dp.destX = x;
-			dp.destY = y;
-			data->draw(dp);
-			//data->set_angle(fe_radtodeg(angle));
-			//data->draw(x, y);
+			data->set_angle(fe_radtodeg(angle));
+			data->draw(x, y);
 		}
 	}
 
@@ -133,7 +99,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
 
-		CL_SoundBuffer* data = lhs->GetDataPtr();
+		CL_SoundBuffer* data = lhs->Get();
 		if (data != NULL)
 			return data->prepare(looping);
 
@@ -147,7 +113,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return;
 
-		CL_SoundBuffer* data = lhs->GetDataPtr();
+		CL_SoundBuffer* data = lhs->Get();
 		if (data != NULL)
 			data->play(looping);
 	}
@@ -158,7 +124,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return;
 
-		CL_SoundBuffer* data = lhs->GetDataPtr();
+		CL_SoundBuffer* data = lhs->Get();
 		if (data != NULL)
 			data->stop();
 	}
@@ -169,7 +135,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		CL_SoundBuffer* data = lhs->GetDataPtr();
+		CL_SoundBuffer* data = lhs->Get();
 		if (data != NULL)
 			return data->is_playing();
 
@@ -182,7 +148,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return "";
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::S_xpath_string(data->RootElement(), expr.c_str());
 
@@ -195,7 +161,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return 0.0;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::d_xpath_double(data->RootElement(), expr.c_str());
 
@@ -208,7 +174,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return 0.f;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return (float)TinyXPath::d_xpath_double(data->RootElement(), expr.c_str());
 
@@ -221,7 +187,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return 0;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::i_xpath_int(data->RootElement(), expr.c_str());
 
@@ -234,7 +200,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return 0;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return (unsigned int)TinyXPath::d_xpath_double(data->RootElement(), expr.c_str());
 
@@ -247,7 +213,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 		{
 			//std::string uppercaseVal = fe_newupper( TinyXPath::S_xpath_string(data->RootElement(), expr.c_str()) );
@@ -265,7 +231,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::o_xpath_string(data->RootElement(), expr.c_str(), out);
 
@@ -278,7 +244,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::o_xpath_double(data->RootElement(), expr.c_str(), out);
 
@@ -292,7 +258,7 @@ namespace FusionEngine
 			return false;
 
 		double dOut;
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 		{
 			bool success = TinyXPath::o_xpath_double(data->RootElement(), expr.c_str(), dOut);
@@ -310,7 +276,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::o_xpath_int(data->RootElement(), expr.c_str(), out);
 
@@ -324,7 +290,7 @@ namespace FusionEngine
 			return false;
 
 		double dOut;
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 		{
 			bool success = TinyXPath::o_xpath_double(data->RootElement(), expr.c_str(), dOut);
@@ -342,7 +308,7 @@ namespace FusionEngine
 		if (!lhs->IsValid())
 			return false;
 
-		TiXmlDocument* data = lhs->GetDataPtr();
+		TiXmlDocument* data = lhs->Get();
 		if (data != NULL)
 			return TinyXPath::o_xpath_bool(data->RootElement(), expr.c_str(), out);
 

@@ -63,19 +63,17 @@ CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
 {
 	PHYSFS_File *file = NULL;
 	std::string filename(wfilename.begin(), wfilename.end());
-	switch (access)
+	
+	if (access & CL_File::access_write)
 	{
-	case CL_File::access_read:
-		file = PHYSFS_openRead(filename.c_str());
-		break;
-
-	case CL_File::access_write:
 		if (!PHYSFS_exists(filename.c_str()) || mode == CL_File::create_always)
 			file = PHYSFS_openWrite(filename.c_str());
 		else
 			file = PHYSFS_openAppend(filename.c_str());
-		break;
 	}
+	else if (access & CL_File::access_read)
+		file = PHYSFS_openRead(filename.c_str());
+
 	if (file == NULL)
 		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1' with the requested access", wfilename));
 

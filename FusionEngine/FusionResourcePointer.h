@@ -45,7 +45,7 @@
 
 /*!
  * Define FSN_RESOURCEPOINTER_USE_WEAKPTR to use built-in reference counting for garbage collection.
- * Otherwise boost::shared_ptr will be used. <br>
+ * Otherwise std::shared_ptr will be used. <br>
  * Using shared_ptr makes the implementation much simpler on my side :)
  */
 //#define FSN_RESOURCEPOINTER_USE_WEAKPTR
@@ -54,11 +54,11 @@ namespace FusionEngine
 {
 
 	//! Resource container shared pointer
-	typedef boost::shared_ptr<ResourceContainer> ResourceSpt;
+	typedef std::tr1::shared_ptr<ResourceContainer> ResourceSpt;
 	//! Resource container weak pointer
 	typedef boost::weak_ptr<ResourceContainer> ResourceWpt;
 
-	//! The ResourceToken system is a simple garbage collection system.
+	//! The ResourcePointer system is a simple garbage collection system.
 	/*!
 	 * The ResourceManager manages a collection owning pointers
 	 * (Resource objects) and, via reference counting, is notified when
@@ -110,35 +110,14 @@ namespace FusionEngine
 		}
 
 		//! Copy constructor
-		//template <typename Y>
-		//explicit ResourcePointer(ResourcePointer<Y> const& other)
-		//	: m_ResourceBox(other.m_ResourceBox)
-		//{
-		//	m_Ticket = r.m_Ticket;
-		//	//m_ResourceDestructionSlot = m_Resource->OnDestruction.connect(this, &ResourcePointer::onResourceDestruction);
-		//}
-
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-		template <typename Y>
-		ResourcePointer(ResourcePointer<Y> const& other)
+		ResourcePointer(const ResourcePointer<T>& other)
 			: m_ResourceBox(other.m_ResourceBox)
 		{
-			if (ResourceSpt r = m_ResourceBox.lock())
-				m_Ticket = r->AddRef();
-
-		}
-#endif
-
 #ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-		ResourcePointer(ResourcePointer const& other)
-			: m_ResourceBox(other.m_ResourceBox)
-		{
 			if (ResourceSpt r = m_ResourceBox.lock())
 				m_Ticket = r->AddRef();
-		}
-
 #endif
+		}
 
 
 		//! Destructor
@@ -179,7 +158,7 @@ namespace FusionEngine
 #ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 
 		//! Assignment operator for weak_ptr version
-		ResourcePointer & operator=(ResourcePointer const & r)
+		ResourcePointer<T>& operator=(const ResourcePointer<T>& r)
 		{
 			m_ResourceBox = r.m_ResourceBox;
 
@@ -190,6 +169,14 @@ namespace FusionEngine
 		}
 
 #endif
+
+		//! Assignment operator
+		ResourcePointer<T>& operator=(const ResourcePointer<T>& r)
+		{
+			m_ResourceBox = r.m_ResourceBox;
+
+			return *this;
+		}
 
 		const std::string& GetTag() const
 		{
@@ -205,13 +192,23 @@ namespace FusionEngine
 #endif
 		}
 
+		bool Lock()
+		{
+			return m_ResourceBox && m_ResourceBox->Lock();
+		}
+
+		void Unlock()
+		{
+			m_ResourceBox->Unlock();
+		}
+
 		//! Returns the resource data ptr
-		T* GetDataPtr()
+		T* Get()
 		{
 #ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 
 			if (ResourceSpt r = m_ResourceBox.lock())
-				return (T*)r->GetDataPtr();
+				return dynamic_cast<T*>(r->GetDataPtr());
 			else
 				return 0;
 
@@ -223,12 +220,12 @@ namespace FusionEngine
 		}
 
 		//! Returns the resource data ptr
-		T const* GetDataPtr() const
+		T const* Get() const
 		{
 #ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
 
 			if (ResourceSpt r = m_ResourceBox.lock())
-				return (const T*)r->GetDataPtr();
+				return dynamic_cast<const T*>(r->GetDataPtr());
 			else
 				return 0;
 
@@ -316,9 +313,12 @@ namespace FusionEngine
 #endif
 		}
 
-		void onResourceDestruction()
+		//! Called when resource manager invokes OnRemoval in ResourceContainer
+		void onResourceRemoval()
 		{
-			// nothing
+#ifndef FSN_RESOURCEPOINTER_USE_WEAKPTR
+			m_ResourceBox.reset();
+#endif
 		}
 	};
 

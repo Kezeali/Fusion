@@ -133,6 +133,6 @@ void PhysFSIODeviceProvider::init()
 
 void PhysFSIODeviceProvider::deinit()
 {
-	if (PHYSFS_close(m_Handle))
+	if (PHYSFS_close(m_Handle) == 0)
 		throw CL_Exception(cl_text("File failed to close"));
 }

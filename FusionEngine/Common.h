@@ -22,6 +22,7 @@
 #include <fstream>
 
 // STL TR1
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 

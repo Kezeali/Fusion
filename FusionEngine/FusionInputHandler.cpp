@@ -35,12 +35,13 @@ namespace FusionEngine
 		m_PluginLoader = new InputPluginLoader();
 	}
 
-	InputManager::InputManager(CL_DisplayWindow *window)
+	InputManager::InputManager(CL_DisplayWindow window)
 		: m_SuspendRequests(0),
 		m_CommandBufferLength(128)
 	{
 		m_PluginLoader = new InputPluginLoader();
-		//! \todo Store the window so input can be grabbed from it
+		m_InputContext = window.get_ic();
+		m_DisplayWindow = window;
 	}
 
 	InputManager::~InputManager()
@@ -48,10 +49,16 @@ namespace FusionEngine
 		delete m_PluginLoader;
 	}
 
+	void InputManager::SetDisplayWindow(CL_DisplayWindow window)
+	{
+		m_DisplayWindow = window;
+		m_InputContext = window.get_ic();
+	}
+
 	bool InputManager::Test()
 	{
-		// Keyboard is always required (for global input)
-		if (CL_Keyboard::get_device_count() == 0)
+		// Keyboard is always required
+		if (m_InputContext.get_keyboard_count() == 0)
 			return false;		
 
 		return true;
@@ -189,7 +196,7 @@ namespace FusionEngine
 	CL_InputDevice &InputManager::GetDevice(const std::string &name)
 	{
 		if (name == "keyboard")
-			return CL_Keyboard::get_device();
+			return m_InputContext::get_device();
 		else if (name == "gamepad")
 			return CL_Joystick::get_device();
 		else if (name.length() > sizeof("gamepad") && name.substr(0, sizeof("gamepad")) == "gamepad")
@@ -248,7 +255,7 @@ namespace FusionEngine
 	//	return 0.0f;
 	//}
 
-	void InputManager::CreateCommand(int tick, unsigned int split, unsigned int player)
+	Command InputManager::CreateCommand(unsigned int player)
 	{
 		if (m_SuspendRequests != 0)
 			return;
@@ -277,9 +284,11 @@ namespace FusionEngine
 		///////
 
 		// Grab the command to be updated in the command history
-		Command &tickCommand = m_PlayerCommands[player][tick%m_CommandBufferLength];
+		//Command &tickCommand = m_PlayerCommands[player][tick%m_CommandBufferLength];
+
+		Command command;
 		// Update all the bindings in the command
-		for (Command::iterator it = tickCommand.begin(), end = tickCommand.end(); it != end; ++it)
+		for (Command::InputStateMap::iterator it = command.m_InputStates.begin(), end = command.m_InputStates.end(); it != end; ++it)
 		{
 			const std::string &inputName = it->first;
 			// Grab the state for the input to be updated
@@ -292,16 +301,16 @@ namespace FusionEngine
 			bool nowDown = dev.get_keycode(binding.m_Key.m_Code);
 			float nowAxis = dev.get_axis(binding.m_Key.m_Code);
 			//! \todo Axis threshold option
-			state.m_Changed = state.m_Down != nowDown || abs(state.m_Value - nowAxis) > 0.1f;
+			state.m_Changed = state.m_Down != nowDown || fe_fequal(state.m_Value, nowAxis, 0.1f);
 			state.m_Down = nowDown;
 			state.m_Value = nowAxis;
 		}
 #endif
 	}
 
-	const Command &InputManager::GetCommand(unsigned int player, int tick)
+	const Command &InputManager::GetCommand(unsigned int player)
 	{
-		return m_PlayerCommands[player][tick % m_CommandBufferLength];
+		return m_PlayerCommands[player];
 	}
 
 	float InputManager::GetMouseSensitivity() const

@@ -272,7 +272,7 @@ public:
 			StateManager *stateman = new StateManager();
 			stateman->AddState(GUI::getSingletonPtr());
 
-			boost::shared_ptr<ConsoleGUI> conGUI = boost::shared_ptr<ConsoleGUI>(new ConsoleGUI());
+			std::tr1::shared_ptr<ConsoleGUI> conGUI = std::tr1::shared_ptr<ConsoleGUI>(new ConsoleGUI());
 			//stateman->AddState(conGUI);
 			conGUI->Initialise();
 

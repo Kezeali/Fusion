@@ -30,60 +30,37 @@
 namespace FusionEngine
 {
 
-	const std::string &ImageLoader::GetType() const
-	{
-		static std::string strType("IMAGE");
-		return strType;
-	}
-
-	ResourceContainer* ImageLoader::LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider)
-	{
-		CL_Surface* sur = loadSurface(path, provider);
-		ResourceContainer* rsc = new ResourceContainer(this->GetType(), tag, path, sur);
-		return rsc;
-	}
-
-	void ImageLoader::ReloadResource(ResourceContainer* resource, CL_InputSourceProvider* provider)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsValid())
 		{
 			delete resource->GetDataPtr();
 		}
 
-		CL_Surface* sur = loadSurface(resource->GetPath(), provider);
+		CL_String ext = CL_PathHelp::get_extension(path);
+		CL_PixelBuffer sp;
+		try
+		{
+			sp = CL_ImageProviderFactory::load(resource->GetPath, ext, m_Directory);
+		}
+		catch (CL_Exception&)
+		{
+			FSN_WEXCEPT(ExCode::IO, L"ImageLoader::loadSurface", L"'" + path + L"' could not be loaded");
+		}
 
-		resource->SetDataPtr(sur);
+		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
+		resource->SetDataPtr(data);
 
 		resource->_setValid(true);
 	}
 
-	void ImageLoader::UnloadResource(ResourceContainer* resource)
+	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsValid())
 			delete resource->GetDataPtr();
 		resource->SetDataPtr(NULL);
 
 		resource->_setValid(false);
-	}
-
-	CL_Surface* ImageLoader::loadSurface(const std::string &path, CL_InputSourceProvider* notUsed)
-	{
-		InputSourceProvider_PhysFS provider("");
-
-		std::string& ext = CL_String::get_extension(path);
-		CL_PixelBuffer sp;
-		try
-		{
-			sp = CL_ProviderFactory::load(path, ext, &provider);
-		}
-		catch (CL_Error&)
-		{
-			FSN_EXCEPT(ExCode::IO, "ImageLoader::loadSurface", "'" + path + "' could not be loaded");
-		}
-		
-		CL_Surface* sur = new CL_Surface( sp );
-
-		return sur;
 	}
 
 };

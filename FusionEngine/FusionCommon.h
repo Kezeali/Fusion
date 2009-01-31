@@ -444,7 +444,7 @@ namespace FusionEngine
 	typedef CL_SharedPtr<FusionState> SharedState;
 
 	//! Resource tags (aka. names/handles)
-	typedef std::string ResourceTag;
+	typedef std::wstring ResourceTag;
 
 	//! ID for script functions
 	typedef std::string ScriptFuncSig;

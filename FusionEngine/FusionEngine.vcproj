@@ -235,6 +235,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionControlMap.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
@@ -688,6 +692,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionWeaponResource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScriptSharedPtr.h"
 				>
 			</File>
 		</Filter>

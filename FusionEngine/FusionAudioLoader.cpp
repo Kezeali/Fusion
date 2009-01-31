@@ -38,14 +38,14 @@ namespace FusionEngine
 		return strType;
 	}
 
-	ResourceContainer* AudioLoader::LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider)
+	ResourceContainer* AudioLoader::LoadResource(const std::string& tag, const std::string &path)
 	{
 		CL_SoundBuffer* p = loadSound(path, provider);
 		ResourceContainer* rsc = new ResourceContainer(this->GetType(), tag, path, p);
 		return rsc;
 	}
 
-	void AudioLoader::ReloadResource(ResourceContainer* resource, CL_InputSourceProvider* provider)
+	void AudioLoader::ReloadResource(ResourceContainer* resource)
 	{
 		if (resource->IsValid())
 		{
@@ -69,7 +69,7 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	CL_SoundBuffer* AudioLoader::loadSound(const std::string &path, CL_InputSourceProvider* notUsed)
+	CL_SoundBuffer* AudioLoader::loadSound(const std::string &path)
 	{
 		//if (provider == NULL)
 		//	provider = CL_InputSourceProvider::create_file_provider(".");

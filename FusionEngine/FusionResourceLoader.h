@@ -36,22 +36,10 @@
 
 #include "FusionResource.h"
 
-#include "FusionInputSource_PhysFS.h"
-#include "FusionInputSourceProvider_PhysFS.h"
+
 
 namespace FusionEngine
 {
-
-	//! Allows the ResourceManager to select a resource loader by typename
-	template<class T>
-	static inline std::string GetResourceType()
-	{
-		return "INVALID";
-	}
-
-	//! Generates a specialization for the given resource data-type
-	#define REGISTER_RESOURCE_TYPE(c, t) \
-	template<> static inline std::string GetResourceType<c>() { return t; }
 
 	/*!
 	 * \brief
@@ -60,21 +48,77 @@ namespace FusionEngine
 	 * \sa
 	 * ImageLoader | Resource | ResourceManager
 	 */
-	class ResourceLoader
+	//class ResourceLoader
+	//{
+	//protected:
+	//	CL_VirtualDirectory m_Directory;
+	//public:
+	//	//! Constructor - resource manager must pass a VirtualDirectory object for the filesystem in use
+	//	ResourceLoader(CL_VirtualDirectory vdir)
+	//		: m_Directory(vdir)
+	//	{
+	//	}
+
+	//	//! Returns the type identifier for resources this loader can deal with
+	//	virtual const std::string &GetType() const = 0;
+
+	//	//! Loads the resource reffered to by the given text
+	//	virtual ResourceContainer* LoadResource(const std::wstring& tag, const std::wstring &path) = 0;
+
+	//	//! Reloads the given resource
+	//	virtual void ReloadResource(ResourceContainer * resource) = 0;
+
+	//	//! Cleans up resource data
+	//	virtual void UnloadResource(ResourceContainer * resource) = 0;
+
+	//};
+
+	//! Factory method template
+	/*!
+	 * Factory method template for ResourceLoader factory methods,
+	 * which are used by ResourceManager to create ResourceLoader
+	 * objects at runtime
+	 */
+	//template<class T>
+	//static ResourceLoader* ResourceLoader_Factory(CL_VirtualDirectory vdir)
+	//{
+	//	return new T(vdir);
+	//}
+
+	/*! Type for factory function pointer
+	 *
+	 * Factory function pointers are stored in ResourceManager
+	 * at runtime, indexed by the Type string for the
+	 * resource loader they will create.
+	 */
+	//typedef ResourceLoader* (*resourceLoader_creator)(CL_VirtualDirectory vdir);
+
+
+	typedef void (*resourceLoader_Load)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resourceLoader_Unload)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	//! Struct containing resource loader callbacks
+	struct ResourceLoader
 	{
-	public:
-		//! Returns the type identifier for resources this loader can deal with
-		virtual const std::string &GetType() const = 0;
+		resourceLoader_Load load;
+		resourceLoader_Unload unload;
+		void *userData;
+		std::string type;
 
-		//! Loads the resource reffered to by the given text
-		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider) = 0;
+		ResourceLoader(std::string _type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			userData(NULL)
+		{
+		}
 
-		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider) = 0;
-
-		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(ResourceContainer * resource) = 0;
-
+		ResourceLoader(std::string _type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn, void *_userData)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			userData(_userData)
+		{
+		}
 	};
 
 }

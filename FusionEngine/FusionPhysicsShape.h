@@ -112,7 +112,7 @@ namespace FusionEngine
 	};
 
 	//! Shape Smart Ptr type
-	typedef boost::shared_ptr<Shape> ShapePtr;
+	typedef std::tr1::shared_ptr<Shape> ShapePtr;
 
 	//! PolyShape Shape implementations
 	class PolyShape : public Shape 

@@ -122,8 +122,8 @@ namespace FusionEngine
 	// Unicode version
 #ifndef FSN_WEXCEPT
 #define FSN_WEXCEPT(num, src, desc) throw FusionEngine::ExceptionFactory::Create( \
-	FusionEngine::ExceptionClass<num>(), std::string(src.begin(), src.end()), \
-	std::string(desc.begin(), desc.end()), __FILE__, __LINE__ )
+	FusionEngine::ExceptionClass<num>(), fe_narrow(src), \
+	fe_narrow(desc), __FILE__, __LINE__ )
 #endif
 
 

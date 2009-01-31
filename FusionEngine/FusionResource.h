@@ -88,7 +88,7 @@ namespace FusionEngine
 	protected:
 		std::string m_Type;
 		ResourceTag m_Tag;
-		std::string m_Path;
+		std::wstring m_Path;
 		void* m_Data;
 		bool m_Valid;
 		int m_RefCount;
@@ -96,43 +96,64 @@ namespace FusionEngine
 		// Ticket version (replaces RefCount)
 		TicketList m_RefTickets;
 
+		CL_Mutex m_Mutex;
+
+		bool m_ToLoad;
+
 	public:
-		CL_Signal_v0 OnDestruction;
+		CL_Signal_v0 OnRemoval;
 		CL_Signal_v0 OnInvalidation;
 
 	public:
 		//! Constructor
 		ResourceContainer()
 			: m_Type(""),
-			m_Tag(""),
-			m_Path(""),
+			m_Tag(L""),
+			m_Path(L""),
 			m_Data(0),
-			m_RefCount(0)
+			m_RefCount(0),
+			m_ToLoad(false)
 		{
 			_setValid(false);
 		}
 
 		//! Constructor
-		ResourceContainer(const char* type, const ResourceTag &tag, const std::string& path, void* ptr)
+		ResourceContainer(const char* type, const ResourceTag &tag, const std::wstring& path, void* ptr)
 			: m_Type(type),
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
 			m_RefCount(0),
-			m_NextTicket(0)
+			m_NextTicket(0),
+			m_ToLoad(false)
 		{
 			if (ptr != 0)
 				_setValid(true);
 		}
 
 		//! Constructor
-		ResourceContainer(const std::string& type, const ResourceTag &tag, const std::string& path, void* ptr)
+		ResourceContainer(const std::string& type, const ResourceTag &tag, const std::wstring& path, void* ptr)
 			: m_Type(type),
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
 			m_RefCount(0),
-			m_NextTicket(0)
+			m_NextTicket(0),
+			m_ToLoad(false)
+		{
+			if (ptr != 0)
+				_setValid(true);
+		}
+
+		//! Constructor
+		ResourceContainer(const std::string& type, const std::string &tag, const std::string& path, void* ptr)
+			: m_Type(type),
+			m_Tag(fe_widen(tag)),
+			m_Path(fe_widen(path)),
+			m_Data(ptr),
+			m_RefCount(0),
+			m_NextTicket(0),
+			m_ToLoad(false)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -140,14 +161,10 @@ namespace FusionEngine
 
 		~ResourceContainer()
 		{
-			// Fire Signals
-			OnInvalidation.invoke();
-			OnDestruction.invoke();
-
 #ifdef _DEBUG
 			if (m_Valid || m_Data != NULL)
 			{
-				SendToConsole("Resource '" + m_Tag + "' may not have been properly dellocated before deletion.");
+				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion.");
 			}
 #endif
 		}
@@ -163,16 +180,8 @@ namespace FusionEngine
 		{
 			return m_Tag;
 		}
-		//! [depreciated] Returns the text property.
-		/*!
-		 * The text property is no longer present, so this just returns Path
-		 */
-		const std::string &GetText() const
-		{
-			return m_Path;
-		}
 		//! Returns the path property
-		const std::string& GetPath() const
+		const std::wstring& GetPath() const
 		{
 			return m_Path;
 		}
@@ -182,7 +191,7 @@ namespace FusionEngine
 		 * Allows StringLoader to save memory by making the Data property point directly
 		 * to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
 		 */
-		std::string *_getTextPtr()
+		std::wstring *_getTextPtr()
 		{
 			return &m_Path;
 		}
@@ -210,7 +219,7 @@ namespace FusionEngine
 		template<typename T>
 		T &GetData() const
 		{
-			cl_assert(IsValid());
+			assert(IsValid());
 			return *(dynamic_cast<T*>(m_Data));
 		}
 
@@ -229,10 +238,26 @@ namespace FusionEngine
 				OnInvalidation.invoke();
 		}
 
-		//! Returns true if the resource ptr is valid
+		//! Returns true if the resource data is valid
 		bool IsValid() const
 		{
 			return m_Valid;
+		}
+
+		//! Makes this resource immutable
+		bool Lock()
+		{
+			// Only lock if this resource is currently loaded
+			if (IsValid())
+				m_Mutex.lock();
+			else
+				return false;
+		}
+
+		//! Makes this resource mutable
+		void Unlock()
+		{
+			m_Mutex.unlock();
 		}
 
 		//! Increments ref count

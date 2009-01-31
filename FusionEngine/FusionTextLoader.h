@@ -39,8 +39,6 @@
 namespace FusionEngine
 {
 
-	REGISTER_RESOURCE_TYPE(std::string, "TEXT")
-
 	/*!
 	 * \brief
 	 * Loads text files

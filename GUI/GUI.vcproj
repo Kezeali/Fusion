@@ -60,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../tinyxpath/tinyxpathd.lib RocketCore_d.lib EMPCore_d.lib angelscriptd.lib physfsd.lib"
+				AdditionalDependencies="../tinyxpathpp/tinyxpathd.lib RocketCore_d.lib EMPCore_d.lib angelscriptd.lib physfsd.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
 				IgnoreDefaultLibraryNames="libcmt"
@@ -183,10 +183,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionAudioLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionCEGUIPhysFSResourceProvider.cpp"
 				>
 			</File>
 			<File

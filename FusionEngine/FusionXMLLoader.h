@@ -39,8 +39,6 @@
 namespace FusionEngine
 {
 
-	REGISTER_RESOURCE_TYPE(TiXmlDocument, "XML")
-
 	/*!
 	 * \brief
 	 * Loads xml documents

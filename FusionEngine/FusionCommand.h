@@ -46,7 +46,8 @@ namespace FusionEngine
 	class Command
 	{
 	protected:
-		typedef std::tr1::unordered_map<std::string, InputState> InputStateMap;
+		typedef std::tr1::shared_ptr<InputState> InputStatePtr;
+		typedef std::tr1::unordered_map<std::string, InputStatePtr> InputStateMap;
 
 		InputStateMap m_InputStates;
 

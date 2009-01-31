@@ -34,6 +34,8 @@
 
 #include "FusionCommon.h"
 
+#include <queue>
+
 /// Inherited
 #include "FusionSingleton.h"
 
@@ -44,8 +46,6 @@
 
 /// RakNet
 #include <RakNet/Bitstream.h>
-
-#include <boost/shared_ptr.hpp>
 
 namespace FusionEngine
 {
@@ -100,8 +100,33 @@ namespace FusionEngine
 		typedef std::tr1::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
 		typedef std::tr1::unordered_map<ResourceTag, ResourceSpt> ResourceMap;
-		//! Maps Resource types to ResourceLoader objects
-		typedef std::tr1::unordered_map<std::string, ResourceLoaderSpt> ResourceLoaderMap;
+		//! Maps Resource types to ResourceLoader factory methods
+		typedef std::tr1::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
+
+		struct ResourceToLoadData
+		{
+			int priority;
+			std::string type;
+			std::wstring tag;
+			std::wstring path;
+
+			ResourceToLoadData() {}
+
+			ResourceToLoadData(const std::string& _type, const std::wstring& _tag, const std::wstring& _path, int _priority)
+				: priority(_priority),
+				type(_type),
+				tag(_tag),
+				path(_path)
+			{
+			}
+
+			bool operator< (const ResourceToLoadData& rhs) const
+			{
+				return priority < rhs.priority;
+			}   
+		};
+
+		typedef std::priority_queue<ResourceToLoadData> ToLoadQueue;
 
 	public:
 		//! Constructor
@@ -114,6 +139,12 @@ namespace FusionEngine
 	public:
 		//! Configures the resource manager
 		void Configure();
+
+		//! Starts loading resources in the background
+		void StartBackgroundPreloadThread();
+		//! Stops loading resources in the background
+		void StopBackgroundPreloadThread();
+
 		////! Checks the filesystem for packages and returns the names of all found
 		//StringVector ListAvailablePackages();
 		//! Checks the filesystem and returns the filenames of all found
@@ -130,34 +161,6 @@ namespace FusionEngine
 		 * Clears all resources.
 		 */
 		void ClearAll();
-
-		/*!
-		 * \brief
-		 * Deduces the type of resource stored in the given package.
-		 *
-		 * \param name
-		 * The filename of the package.
-		 *
-		 * \returns
-		 * The PackageType of the package.
-		 * \retval FileNotFound
-		 * If the file isn't found.
-		 * \retval UnknownType
-		 * If the package is of unknown (invalid) type.
-		 */
-		//PackageType GetPackageType(const std::string &name);
-
-		//! Gets a verification bitstream for the given package.
-		/*!
-		 * Gets a bitstream which can be sent to a client (assuming the client
-		 * is in the Loading state) to make the client verify the package.
-		 *
-		 * \param[out] stream
-		 * The stream to write to.
-		 * \param[in] name
-		 * The file to verify.
-		 */
-		//void GetVerification(RakNet::BitStream *stream, const std::string &name);
 
 		//! Returns a collection of tokens representing the given wildcard expression
 		StringVector TokenisePattern(const std::string &expression);
@@ -182,65 +185,26 @@ namespace FusionEngine
 		 */
 		StringVector Find(const std::string &path, const std::string &expression, int depth, bool recursive = true, bool case_sensitive = true);
 
-		////! Finds and opens the given package
-		///*!
-		// * Checks for the given package and opens it if it is found.
-		// *
-		// * \returns null if no package with the given name is found
-		// */
-		//TiXmlDocument* OpenPackage(const std::string &name);
-
-		///*!
-		// * \brief
-		// * Executed client-side when a VerifyPackage packet is received.
-		// *
-		// * Verifies the existance and crc of a package.
-		// *
-		// * \param[in] stream
-		// * The VerifyPackage bitstream sent from the server.
-		// */
-		////bool VerifyPackage(RakNet::BitStream *stream);
-
-		///*!
-		// * \brief
-		// * Loads the given package
-		// */
-		//bool LoadPackage(const std::string &name);
-
-		///*!
-		// * \brief
-		// * Loads the listed packages
-		// */
-		//bool LoadPackages(StringVector names);
-
-		///*!
-		// * \brief
-		// * Loads all packages previously verified.
-		// *
-		// * The ResourceLoader class stores a list of packages verified with VerifyPackage,
-		// * VerifyShip, VerifyLevel and VerifyWeapon. This function iterates through that list,
-		// * loading all resources. Using this method is recomended over directly calling
-		// * LoadShips, and LoadWeapons. LoadLevelVerified should be called for levels.
-		// * <br>
-		// * If this fails, you should call ClearAll to destroy any invalid data.
-		// *
-		// * \remarks
-		// * This method can fail, because even though the packages
-		// * will have been verified as consistant with the server, the server may have bad
-		// * packages installed!
-		// */
-		//bool LoadVerified();
-
-		////! Clears the verified packages lists
-		//void ResetVerified();
-
 		void AddDefaultLoaders();
 
-		//! Assigns the given resource loader plugin to its relavant resource type
-		void AddResourceLoader(ResourceLoaderSpt loader);
+		//! Assigns the given ResourceLoader to its relavant resource type
+		void AddResourceLoader(const ResourceLoader& resourceLoader);
+
+		//! Assigns the given ResourceLoader to its relavant resource type
+		void AddResourceLoader(const std::string& type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn, void* userData = NULL);
+
+		//! Runs the factory method to create a resource loader for the given type
+		//ResourceLoaderSpt CreateResourceLoader(const std::string& type);
+
+		//! Loads / unloads resources in another thread
+		/*!
+		 * Loads resources listed in the ToLoad list.<br>
+		 * Unloads resources listed in the ToUnload list.
+		 */
+		void BackgroundPreload();
 
 		//! Loads a resource, gives it a tag
-		void TagResource(const std::string& type, const std::string& path, const ResourceTag& tag);
+		void TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag);
 
 		//! Loads a resource
 		/*!
@@ -248,26 +212,36 @@ namespace FusionEngine
 		 * Though this does the same as TagResource, it must be named differently so that it can be
 		 * used directly (through a THISCALL) by AScript, which can't deal with overloaded member fn.s
 		 */
-		void PreloadResource(const std::string& type, const std::string& path);
+		void PreloadResource(const std::string& type, const std::wstring& path);
+
+		//! Loads a resource
+		/*!
+		 * Loads the resource in another thread
+		 */
+		void PreloadResource_Background(const std::string& type, const std::wstring& path, int priority);
+
+		void UnloadResource(const std::wstring &path);
+
+		void UnloadResource_Background(const std::wstring &path);
 
 		//! Returns a ResourcePointer to the given Resource (of type T)
 		//template<typename T>
 		//ResourcePointer<T> GetResource(const ResourceTag& tag);
 
-		template<typename T>
-		ResourcePointer<T> GetResource(const ResourceTag &tag)
-		{
-			PreloadResource(GetResourceType<T>(), tag);
+		//template<typename T>
+		//ResourcePointer<T> GetResource(const ResourceTag &tag)
+		//{
+		//	PreloadResource(GetResourceType<T>(), tag);
 
-			ResourceSpt sptRes = m_Resources[tag];
-			if (!sptRes->IsValid())
-			{
-				InputSourceProvider_PhysFS provider("");
-				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
-			}
+		//	ResourceSpt sptRes = m_Resources[tag];
+		//	if (!sptRes->IsValid())
+		//	{
+		//		InputSourceProvider_PhysFS provider("");
+		//		m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
+		//	}
 
-			return ResourcePointer<T>(sptRes);
-		}
+		//	return ResourcePointer<T>(sptRes);
+		//}
 
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
@@ -288,10 +262,8 @@ namespace FusionEngine
 		template<typename T>
 		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
 		{
-			PreloadResource(GetResourceType<T>(), tag);
-
 			ResourceSpt sptRes = m_Resources[tag];
-			if (!sptRes->IsValid())
+			if (sptRes && !sptRes->IsValid())
 			{
 				InputSourceProvider_PhysFS provider("");
 				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
@@ -357,39 +329,33 @@ namespace FusionEngine
 		bool m_PhysFSConfigured;
 
 		//! A list of packages which passed verification
-		StringVector m_VerifiedPackages;
+		//StringVector m_VerifiedPackages;
 
-		//! Resources
+		CL_Event m_StopEvent; // Set to stop the worker thread
+		CL_Event m_ToLoadEvent; // Set when there is more data to load
+		CL_Thread m_Worker;
+
+		CL_Mutex m_ToLoadMutex;
+		ToLoadQueue m_ToLoad;
+
+		CL_Mutex m_ResourcesMutex;
+		// Resources
 		ResourceMap m_Resources;
 
-		//! Garbage
+		// Garbage
 		ResourceMap m_Garbage;
 
+		CL_Mutex m_LoaderMutex;
+		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
+		void loadResource(ResourceSpt &resource);
+		void unloadResource(ResourceSpt &resource);
+
 		void registerXMLType(asIScriptEngine* engine);
 		void registerImageType(asIScriptEngine* engine);
 		void registerSoundType(asIScriptEngine* engine);
-
-		//RNode createResourceNode(TiXmlElement* xmlNode);
-		/*!
-		 * \brief
-		 * Returns the pixel the given percentage from the left of the window.
-		 */
-		int percentToAbsX(int percent)
-		{
-			return (int)(CL_Display::get_width() * percent * 0.01);
-		}
-
-		/*!
-		 * \brief
-		 * Returns the pixel the given percentage from the top of the window.
-		 */
-		int percentToAbsY(int percent)
-		{
-			return (int)(CL_Display::get_height() * percent * 0.01);
-		}
 
 		/*!
 		 * \brief

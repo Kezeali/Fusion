@@ -226,20 +226,20 @@ public:
 			}
 
 
-			FusionInput* input = new FusionInput();
+			InputManager* input = new InputManager();
 			if (!input->Test())
 				throw CL_Error("Input handler could not be started.");
 			input->Initialise();
 			SendToConsole("InputHandler started successfully");
 
-			input->MapControl(CL_KEY_UP, "P1Thrust");
+			input->MapControl(0, "P1Thrust", );
 			input->MapControl('R', "LetterR");
 			input->MapControl(CL_KEY_CONTROL, "KeyCtrl");
 			input->MapControl(CL_KEY_BACKSPACE, "DeleteResource");
 
 			m_ResMan = new ResourceManager(argv);
-			m_ResMan->AddResourceLoader(new XMLLoader());
-			m_ResMan->AddResourceLoader(new TextLoader());
+			m_ResMan->AddResourceLoader(&ResourceLoader_Factory<XMLLoader>);
+			m_ResMan->AddResourceLoader(&ResourceLoader_Factory<TextLoader>);
 
 			m_ResMan->RegisterScriptElements(scEngW);
 

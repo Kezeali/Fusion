@@ -39,9 +39,6 @@
 namespace FusionEngine
 {
 
-	//! Define the data class
-	REGISTER_RESOURCE_TYPE(CL_SoundBuffer, "AUDIO")
-
 	/*!
 	 * \brief
 	 * Loads sounds / music

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2008 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionInput
-#define Header_FusionEngine_FusionInput
+#ifndef Header_FusionEngine_InputManager
+#define Header_FusionEngine_InputManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,7 +36,6 @@
 
 /// Fusion
 #include "FusionClientOptions.h"
-#include "FusionCommand.h"
 #include "FusionInputPluginLoader.h"
 
 #define FE_INPUTMETHOD_UNBUFFERED 0
@@ -115,39 +114,6 @@ namespace FusionEngine
 		}
 	};
 
-	/*class Command
-	{
-	public:
-		typedef std::map<std::string, InputState> InputStateMap;
-		InputStateMap m_States;
-
-		void SetState(const std::string &input_name, bool isDown, float value)
-		{
-			InputState &state = m_States[input_name];
-			state.m_Down = isDown;
-			state.m_Value = value;
-		}
-
-		void CheckForChanges(const Command &previousCommand)
-		{
-			for (InputStateMap::const_iterator it = previousCommand.m_States.begin(), end = previousCommand.m_States.end(); it != end; ++it)
-			{
-				InputState &currentState = m_States[it->first];
-				if (it->second.m_Down != currentState.m_Down || abs(it->second.m_Value - currentState.m_Value) > g_InputAnalogFuzz)
-					currentState.m_Changed = true;
-			}
-		}
-
-		bool IsDown(const std::string &input)
-		{
-			return m_States[input].m_Down;
-		}
-		float GetValue(const std::string &input)
-		{
-			return m_States[input].m_Value;
-		}
-	};*/
-
 	/*!
 	 * \brief
 	 * Provides an interface to an input buffer optimised for FusionEngine.
@@ -164,7 +130,7 @@ namespace FusionEngine
 		//! Basic constructor.
 		InputManager();
 		//! Constructor.
-		InputManager(CL_DisplayWindow *window);
+		InputManager(CL_DisplayWindow window);
 		//! Deconstructor
 		~InputManager();
 
@@ -183,6 +149,7 @@ namespace FusionEngine
 		typedef std::vector<CommandList> PlayerCommandLists;
 
 	public:
+		void SetDisplayWindow(CL_DisplayWindow window);
 		/*!
 		 * \brief
 		 * Finds required devices.
@@ -256,12 +223,9 @@ namespace FusionEngine
 
 		unsigned int m_CommandBufferLength;
 
-		/*!
-		 * \brief
-		 * Not used yet.
-		 * \todo pass the diaplay's ic to the object and use that.
-		 */
-		CL_InputContext *m_InputContext;
+
+		CL_DisplayWindow m_DisplayWindow;
+		CL_InputContext m_InputContext;
 		//! Slot container for inputs
 		CL_SlotContainer m_Slots;
 

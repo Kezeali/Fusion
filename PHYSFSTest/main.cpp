@@ -27,9 +27,8 @@ class PhysFSTest
 			char **files = PHYSFS_enumerateFiles("");
 			if (files != NULL)
 			{
-				int file_count;
 				char **i;
-				for (i = files, file_count = 0; *i != NULL; i++, file_count++)
+				for (i = files; *i != NULL; i++)
 				{
 					std::string file(*i);
 					if (regExp.search(file.c_str(), file.length()).is_match())
@@ -135,8 +134,8 @@ public:
 
 			using namespace FusionEngine;
 			new Console;
-			ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
-			cout->Activate();
+			//ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
+			//cout->Activate();
 			Logger* logger = new Logger(true);
 
 			// List version info
@@ -185,8 +184,8 @@ public:
 				SendToConsole("\t" + std::string(*it));
 			}
 
-			SendToConsole("Testing PHYSFS Find - Searching for '*body*':");
-			StringVector xmlFiles = Find("*body*");
+			SendToConsole("Testing PHYSFS Find - Searching for '.Body.':");
+			StringVector xmlFiles = Find(".Body.");
 			for (int i = 0; i < xmlFiles.size(); i++)
 			{
 				SendToConsole("\t" + xmlFiles[i]);

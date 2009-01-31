@@ -68,23 +68,24 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	TiXmlDocument* XMLLoader::loadDocument(const std::string &path)
+	TiXmlDocument* XMLLoader::loadDocument(const std::wstring &path)
 	{
 		TiXmlDocument* doc = new TiXmlDocument;
 		try
 		{
-			InputSourceProvider_PhysFS provider("");
-			boost::shared_ptr<CL_InputSource> in(provider.open_source(path));
+			//InputSourceProvider_PhysFS provider("");
+			//boost::shared_ptr<CL_InputSource> in(provider.open_source(path));
+			CL_IODevice in = m_Directory.open_file(path);
 
 			char filedata[2084];
-			in->read(&filedata, in->size());
+			in.read(&filedata, in.get_size());
 
 			doc->Parse((const char*)filedata, 0, TIXML_ENCODING_UTF8);
 		}
-		catch (CL_Error&)
+		catch (CL_Exception&)
 		{
 			delete doc;
-			FSN_EXCEPT(ExCode::IO, "XMLLoader::loadDocument", "'" + path + "' could not be loaded");
+			FSN_WEXCEPT(ExCode::IO, L"XMLLoader::loadDocument", L"'" + path + L"' could not be loaded");
 		}
 
 		return doc;

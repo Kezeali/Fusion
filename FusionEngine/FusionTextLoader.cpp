@@ -72,19 +72,20 @@ namespace FusionEngine
 		std::string* data = new std::string;
 		try
 		{
-			InputSourceProvider_PhysFS provider("");
-			boost::shared_ptr<CL_InputSource> in(provider.open_source(path));
+			//InputSourceProvider_PhysFS provider("");
+			//boost::shared_ptr<CL_InputSource> in(provider.open_source(path));
+			CL_IODevice in = m_Directory.open_file(path);
 
 			// Read the file
-			int len = in->size();
+			int len = in.get_size();
 			data->resize(len);
 
-			in->read(&(*data)[0], len);
+			in.read(&(*data)[0], len);
 		}
-		catch (CL_Error&)
+		catch (CL_Exception&)
 		{
 			delete data;
-			FSN_EXCEPT(ExCode::IO, "TextLoader::load", "'" + path + "' could not be loaded");
+			FSN_WEXCEPT(ExCode::IO, L"TextLoader::load", L"'" + path + L"' could not be loaded");
 		}
 
 		return data;

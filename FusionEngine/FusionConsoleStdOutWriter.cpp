@@ -42,22 +42,25 @@ namespace FusionEngine
 
 	void ConsoleStdOutWriter::onConsoleNewline(const std::wstring &message)
 	{
-		std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
-		std::wstring w_marker = Console::getSingleton().GetWarningMarker();
+		//std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
+		//std::wstring w_marker = Console::getSingleton().GetWarningMarker();
+
+		std::wstring e_marker = L"**";
+		std::wstring w_marker = L"##";
 
 		if (message.substr(0, e_marker.length()) == e_marker)
 		{
-			CL_Console::write_line( cl_format("** %1", message.substr(e_marker.length())) );
+			CL_Console::write_line( L"** " + message.substr(e_marker.length()) );
 			//std::cout << "** " << message.substr(e_marker.length()) << std::endl;
 		}
 		else if (message.substr(0, w_marker.length()) == w_marker)
 		{
-			CL_Console::write_line( cl_format("++ %1", message.substr(w_marker.length())) );
+			CL_Console::write_line( L"++ " + message.substr(w_marker.length()) );
 			//std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
 		}
 		else
 		{
-			CL_Console::write_line( cl_format("-- %1", message) );
+			CL_Console::write_line( L"-- " + message );
 			//std::cout << "--  " << message << std::endl;
 		}
 	}
