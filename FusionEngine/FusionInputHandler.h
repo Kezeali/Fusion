@@ -219,7 +219,7 @@ namespace FusionEngine
 		InputPluginLoader *m_PluginLoader;
 
 		//! The InputHandler will not be considered active till this reaches zero.
-		std::tr1::unordered_set<int> m_SuspendRequests;
+		int m_SuspendRequests;
 
 		unsigned int m_CommandBufferLength;
 
@@ -247,7 +247,7 @@ namespace FusionEngine
 		int m_DisplayCenterY;
 
 		//! Builds the command buffers for each player
-		void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes)
+		void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes);
 		//! Loads human readable and UI control (key / button, etc) names
 		void loadKeyInfo(const ticpp::Document& defDocument);
 

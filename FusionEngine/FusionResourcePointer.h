@@ -95,8 +95,10 @@ namespace FusionEngine
 		 * Creates an invalid resource pointer
 		 */
 		ResourcePointer()
-			: m_Ticket(0)
 		{
+#if defined (FSN_RESOURCEPOINTER_USE_WEAKPTR)
+			m_Ticket = 0;
+#endif
 		}
 
 		//! Constructor

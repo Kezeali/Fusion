@@ -194,10 +194,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionConsoleGUI.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.cpp"
 				>
 			</File>
@@ -227,6 +223,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp"
 				>
 			</File>
 			<File
@@ -263,6 +263,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionVector2.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp"
 				>
 			</File>
 			<File
@@ -304,10 +308,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionConsoleGUI.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.h"
 				>
 			</File>
@@ -329,6 +329,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLogger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.h"
 				>
 			</File>
 			<File
@@ -373,6 +377,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionTextLoader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.h"
 				>
 			</File>
 			<File

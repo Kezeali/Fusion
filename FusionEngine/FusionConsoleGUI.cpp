@@ -29,9 +29,6 @@
 
 #include "FusionScriptingEngine.h"
 
-#include <CEGUI/CEGUI.h>
-#include <CEGUI/falagard/CEGUIFalWidgetLookManager.h>
-
 namespace FusionEngine
 {
 
@@ -55,9 +52,8 @@ namespace FusionEngine
 
 	bool ConsoleGUI::Initialise()
 	{
-		using namespace CEGUI;
+		using namespace Rocket;
 
-		Window *console_sheet = 0;
 		try
 		{
 			WindowManager& winMgr = WindowManager::getSingleton();
@@ -300,7 +296,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	void ConsoleGUI::onConsoleNewLine(const std::string &data)
+	void ConsoleGUI::onConsoleNewLine(const std::wstring &data)
 	{
 		enterText(data);
 	}

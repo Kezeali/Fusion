@@ -26,19 +26,17 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionClientOptions.h"
 
-#include "FusionResourceManager.h"
-
-#include "FusionXMLLoader.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 
 namespace FusionEngine
 {
 
 	ClientOptions::ClientOptions()
-		: m_NumLocalPlayers(0),
-		m_Rate(100),
-		m_LocalPort(1337)
+		: m_NumLocalPlayers(0)
 	{
 		//// Set the global controls to some valid values.
 		//DefaultGlobalControls();
@@ -51,16 +49,14 @@ namespace FusionEngine
 		//}
 
 		// Make sure there's enough room for all the player options objects
-		m_PlayerOptions.resize(g_MaxLocalPlayers);
+		//m_PlayerOptions.resize(g_MaxLocalPlayers);
 		m_PlayerVariables.resize(g_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename)
-		: m_NumLocalPlayers(0),
-		m_Rate(100),
-		m_LocalPort(1337)
+		: m_NumLocalPlayers(0)
 	{
-		m_PlayerOptions.resize(g_MaxLocalPlayers);
+		//m_PlayerOptions.resize(g_MaxLocalPlayers);
 		m_PlayerVariables.resize(g_MaxLocalPlayers);
 
 		if (!LoadFromFile(filename))
@@ -70,7 +66,7 @@ namespace FusionEngine
 	ClientOptions::~ClientOptions()
 	{
 		m_Mutex.lock();
-		m_PlayerOptions.clear();
+		//m_PlayerOptions.clear();
 		m_Controls.clear();
 		m_Mutex.unlock();
 	}
@@ -87,8 +83,8 @@ namespace FusionEngine
 	{
 		m_Mutex.lock();
 
-		ResourcePointer<TiXmlDocument> docResource = ResourceManager::getSingleton().OpenOrCreateResource<TiXmlDocument>(filename);
-		ticpp::Document doc(docResource.GetDataPtr());
+		//ResourcePointer<TiXmlDocument> docResource = ResourceManager::getSingleton().OpenOrCreateResource<TiXmlDocument>(filename);
+		ticpp::Document doc;
 
 		// Decl
 		ticpp::Declaration decl( XML_STANDARD, "", "" );
@@ -109,14 +105,28 @@ namespace FusionEngine
 			if (i == 0)
 				playerAttribute = "default";
 			else
-				playerAttribute = CL_String::from_int(i);
+				playerAttribute = CL_StringHelp::int_to_local8(i);
 			player.SetAttribute("player", playerAttribute.c_str());
 
 			insertVarMapIntoDOM(player, m_PlayerVariables[i]);
 		}
 
 		//doc.SaveFile(filename);
-		doc.SaveFile();
+
+		// Write file
+		try
+		{
+			// Initialize a vdir
+			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			CL_IODevice in = vdir.open_file(fe_widen(filename), CL_File::create_always, CL_File::access_write);
+
+			in.write(doc.Value().c_str(), doc.Value().length());
+		}
+		catch (CL_Exception&)
+		{
+			//FSN_WEXCEPT(ExCode::IO, L"ClientOptions::SaveToFile", L"'" + filename + L"' could not be saved");
+			return false;
+		}
 
 		m_Mutex.unlock();
 		return true;
@@ -124,19 +134,29 @@ namespace FusionEngine
 
 	bool ClientOptions::LoadFromFile(const std::string &filename)
 	{
-		ResourceManager *rm = ResourceManager::getSingletonPtr();
-		if (rm == NULL)
-			return false;
-
+		CL_MutexSection mutexSection(&m_Mutex);
 		try
 		{
-			m_Mutex.lock();
+			ticpp::Document doc;
 
-			ResourcePointer<TiXmlDocument> docResource = rm->GetResource<TiXmlDocument>(filename);
-			if (!docResource.IsValid())
-				throw FileNotFoundException("ClientOptions::LoadFromFile", "Couldn't open resource '" + filename + "'", __FILE__, __LINE__);
+			// Read file
+			try
+			{
+				// Initialize a vdir
+				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				CL_IODevice in = vdir.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
 
-			ticpp::Document doc(docResource.GetDataPtr());
+				char filedata[2084];
+				in.read(&filedata, in.get_size());
+
+				doc.Parse(std::string(filedata), true, TIXML_ENCODING_UTF8);
+			}
+			catch (CL_Exception&)
+			{
+				//FSN_WEXCEPT(ExCode::IO, L"ClientOptions::SaveToFile", L"'" + filename + L"' could not be saved");
+				return false;
+			}
+
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != "clientoptions")
@@ -151,23 +171,10 @@ namespace FusionEngine
 					if (name.empty()) continue;
 					std::string value = child->GetAttribute("value");
 					m_Variables[name] = value;
-
-					// Set legacy (hard-coded) options
-					fe_tolower(value);
-					if (name == "console_logging")
-						m_ConsoleLogging = (value == "1" || value == "t" || value == "true");
-					else if (name == "num_local_players")
-						child->GetAttribute("value", &m_NumLocalPlayers);
-					else if (name == "localport")
-						child->GetAttribute("value", &m_LocalPort);
 				}
 				else if (child->Value() == "playeroptions")
 				{
 					loadPlayerOptions(*child.Get());
-				}
-				else if (child->Value() == "keys")
-				{
-					loadKeys(*child);
 				}
 			}
 		}
@@ -176,10 +183,6 @@ namespace FusionEngine
 			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
 
 			throw FileSystemException("ClientOptions::LoadFromFile", ex.what(), __FILE__, __LINE__);
-		}
-		finally
-		{
-			m_Mutex.unlock();
 		}
 
 		return true;
@@ -209,7 +212,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ClientOptions::GetOption(const std::string &name, std::string *ret)
+	bool ClientOptions::GetOption(const std::string &name, std::string *ret) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
 		VarMap::iterator itVar = m_Variables.find(name);
@@ -222,24 +225,24 @@ namespace FusionEngine
 
 	// Could cache these conversions, but options are retrieved so infrequently
 	//  that that would be a waste of effort
-	bool ClientOptions::GetOption(const std::string &name, int *ret)
+	bool ClientOptions::GetOption(const std::string &name, int *ret) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
 		VarMap::iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
-		*ret = CL_String::to_int(itVar->second);
+		*ret = CL_StringHelp::local8_to_int(itVar->second);
 		return true;
 	}
 
-	std::string ClientOptions::GetOption_str(const std::string &name)
+	std::string ClientOptions::GetOption_str(const std::string &name) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
 		return m_Variables[name];
 	}
 
-	bool ClientOptions::GetOption_bool(const std::string &name)
+	bool ClientOptions::GetOption_bool(const std::string &name) const
 	{
 		m_Mutex.lock();
 		std::string value = m_Variables[name];
@@ -248,7 +251,7 @@ namespace FusionEngine
 		return (value == "1" || value == "t" || value == "true");
 	}
 
-	bool ClientOptions::GetPlayerOption(int player, const std::string &name, std::string *value)
+	bool ClientOptions::GetPlayerOption(int player, const std::string &name, std::string *value) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
 		if (player >= m_NumLocalPlayers)
@@ -260,7 +263,7 @@ namespace FusionEngine
 		if (_where == playerVars.end())
 			return false;
 
-		ret->assign(_where->second);
+		value->assign(_where->second);
 		return true;
 	}
 
@@ -277,17 +280,17 @@ namespace FusionEngine
 
 	void ClientOptions::loadPlayerOptions(const ticpp::Element &opts_root)
 	{
-		if (!CL_String::compare_nocase(opts_root.Value(), "playeroptions"))
+		if (!CL_StringHelp::compare(opts_root.Value(), "playeroptions", true))
 			return;
 
 		std::string player = opts_root.GetAttribute("player");
 		unsigned int playerNum = 0;
-		if (!CL_String::compare_nocase(player, "default"))
+		if (!CL_StringHelp::compare(player, "default", true))
 		{
 			if (!fe_issimplenumeric(player))
 				return;
 
-			playerNum = CL_String::to_int(player);
+			playerNum = CL_StringHelp::local8_to_int(player);
 		}
 
 		if (playerNum > m_NumLocalPlayers || playerNum > m_PlayerVariables.size())
@@ -298,7 +301,7 @@ namespace FusionEngine
 		ticpp::Iterator< ticpp::Element > child;
 		for ( child = child.begin( &opts_root ); child != child.end(); child++ )
 		{
-			if (CL_String::compare_nocase(child->Value(), "var"))
+			if (CL_StringHelp::compare(child->Value(), "var", true))
 			{
 				std::string name = child->GetAttribute("name");
 				if (name.empty()) continue;
@@ -306,29 +309,6 @@ namespace FusionEngine
 				std::string value = child->GetAttribute("value");
 				playerVars[name] = value;
 			}
-		}
-	}
-
-	void ClientOptions::loadKeys(const ticpp::Element &keysroot)
-	{
-		if (keysroot.Value() != "keys")
-			return;
-
-		std::string player = keysroot.GetAttribute("player");
-		if (player == "default")
-			player = "";
-
-		ticpp::Iterator< ticpp::Element > child;
-		ticpp::Iterator< ticpp::Element > end;
-		for (child = child.begin( &keysroot ), end = child.end(); child != end; child++)
-		{
-			if (child->Value() != "bind")
-				continue;
-
-			std::string key = child->GetAttribute("key");
-			std::string input = child->GetAttribute("input");
-
-			m_Controls.push_back( XmlInputBinding(input, key, player) );
 		}
 	}
 

@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 	//! Max local (split-screen) players per client
-	static const unsigned int g_MaxLocalPlayers = 4;
+	static const unsigned int g_MaxLocalPlayers = 16;
 
 	/*!
 	 * \brief Input binding from XML
@@ -89,9 +89,6 @@ namespace FusionEngine
 		}
 
 	public:
-		//! Player Input mappings list.
-		typedef std::vector<XmlInputBinding> ControlsList;
-
 		typedef std::tr1::unordered_map<std::string, std::string> VarMap;
 
 		// Each player has their own var map
@@ -132,12 +129,12 @@ namespace FusionEngine
 
 		bool SetPlayerOption(int player, const std::string& name, const std::string& value);
 
-		bool GetOption(const std::string &name, std::string *val);
-		bool GetOption(const std::string &name, int *ret);
-		std::string GetOption_str(const std::string &name);
-		bool GetOption_bool(const std::string &name);
+		bool GetOption(const std::string &name, std::string *val) const;
+		bool GetOption(const std::string &name, int *ret) const;
+		std::string GetOption_str(const std::string &name) const;
+		bool GetOption_bool(const std::string &name) const;
 
-		bool GetPlayerOption(int player, const std::string& name, std::string *val);
+		bool GetPlayerOption(int player, const std::string& name, std::string *val) const;
 
 	protected:
 		CL_Mutex m_Mutex;
@@ -172,13 +169,13 @@ namespace FusionEngine
 
 	static const std::string& PlayerName(unsigned int p)
 	{
-		cl_assert(p < NumLocalPlayers());
+		assert(p < NumLocalPlayers());
 		return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
 	}
 
 	static bool PlayerUseHud(unsigned int p)
 	{
-		cl_assert(p < NumLocalPlayers());
+		assert(p < NumLocalPlayers());
 		return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
 	}
 

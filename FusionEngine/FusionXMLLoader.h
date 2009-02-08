@@ -39,32 +39,10 @@
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Loads xml documents
-	 *
-	 * \sa
-	 * ResourceLoader
-	 */
-	class XMLLoader : public ResourceLoader
-	{
-	public:
-		//! Returns the type identifier for resources this loader can deal with
-		virtual const std::string &GetType() const;
+	TiXmlDocument* PhysFSOpen_TiXmDocument(const std::wstring &filename);
 
-		//! Loads the resource reffered to by the given text
-		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &text, CL_InputSourceProvider* provider);
-
-		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider = NULL);
-
-		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(ResourceContainer * resource);
-
-	protected:
-		TiXmlDocument* loadDocument(const std::string &path);
-
-	};
+	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
 }
 

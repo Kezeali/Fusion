@@ -377,6 +377,35 @@ namespace FusionEngine
 		return Vector2(other.x, other.y);
 	}
 
+	//! Asoc. container key class incl. integer and string key
+	/*!
+	 * Structure compatible with std#tr1#hash for use as a key in
+	 * tr1#unordered_map, etc.
+	 */
+	struct PlayerKey
+	{
+		int player;
+		std::string key;
+
+		PlayerKey(int player, const std::string &key)
+			: player(player),
+			key(key)
+		{
+		}
+
+		bool operator== (PlayerKey const& other)
+		{
+			return player == other.player && key == other.key;
+		}
+	};
+
+	//! Hash function for PlayerKey
+	std::size_t hash_value(PlayerKey const& k)
+	{
+		std::tr1::hash<std::string> hasher;
+		return hasher(k.key + k.player);
+	}
+
 
 	///////////////////////////
 	// --Forward declarations--

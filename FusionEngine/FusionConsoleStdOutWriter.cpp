@@ -26,7 +26,7 @@ namespace FusionEngine
 
 	void ConsoleStdOutWriter::Activate()
 	{
-		m_ConsoleOnNewLineSlot.enable();
+		//m_ConsoleOnNewLineSlot.enable();
 
 		m_Active = true;
 	}
@@ -36,7 +36,7 @@ namespace FusionEngine
 		if (m_Active)
 		{
 			m_Active = false;
-			m_ConsoleOnNewLineSlot.disable();
+			//m_ConsoleOnNewLineSlot.disable();
 		}
 	}
 

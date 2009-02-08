@@ -23,7 +23,7 @@
 #include "FusionInputHandler.h"
 
 #include "FusionInputPluginLoader.h"
-#include "FusionResourceManager.h"
+#include "FusionXMLLoader.h"
 
 namespace FusionEngine
 {
@@ -66,7 +66,7 @@ namespace FusionEngine
 
 	void InputManager::Initialise(ResourceManager *resMan, const ClientOptions *cliOpts)
 	{
-		m_SuspendRequests.clear();
+		m_SuspendRequests = 0;
 
 #if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
 		// Activate Key Down signal handler
@@ -91,36 +91,35 @@ namespace FusionEngine
 
 #endif
 
-		m_Slots.connect(CL_Display::sig_resize(), this, &FusionInput::onDisplayResize);
+		m_Slots.connect(m_DisplayWindow.sig_resize(), this, &InputManager::onDisplayResize);
 
 		int numPlayers = 0;
 		if (!cliOpts->GetOption("num_local_players", &numPlayers))
 			FSN_EXCEPT(ExCode::ResourceNotLoaded, "InputManager::Initialise", "Options file is missing 'num_local_players'");
 		
-
-		ResourcePointer<TiXmlDocument> inputDoc = resMan->GetResource<TiXmlDocument>("input/coreinputs.xml");
-		m_PluginLoader->LoadInputs(inputDoc.GetDataPtr());
+		TiXmlDocument* inputDoc = PhysFSOpen_TiXmDocument(L"input/coreinputs.xml");
+		m_PluginLoader->LoadInputs(inputDoc);
 
 		m_PlayerCommands.resize(g_MaxLocalPlayers);
 		const InputPluginLoader::InputTypeList &inputTypes = m_PluginLoader->GetInputs();
 		buildCommandBuffers(inputTypes);
 
-		ResourcePointer<TiXmlDocument> keyDoc = resMan->GetResource<TiXmlDocument>("input/keys.xml");
-		loadKeyInfo(inputDoc.GetDataPtr());
+		TiXmlDocument* keyDoc = PhysFSOpen_TiXmDocument(L"input/keys.xml");
+		loadKeyInfo(keyDoc);
 
 		SetInputMaps(cliOpts);
 	}
 
 	void InputManager::buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes)
 	{
-		Command cmd;
-		for(InputPluginLoader::InputTypeList::const_iterator it = inputTypes.begin(), end = inputTypes.end();
-			it != end; ++it)
-		{
-			cmd[it->m_Name] = InputState();			
-		}
+		//Command cmd;
+		//for(InputPluginLoader::InputTypeList::const_iterator it = inputTypes.begin(), end = inputTypes.end();
+		//	it != end; ++it)
+		//{
+		//	cmd[it->m_Name] = InputState();			
+		//}
 
-		std::for_each(m_PlayerCommands.begin(), m_PlayerCommands.end(), resize(m_CommandBufferLength, cmd));
+		//std::for_each(m_PlayerCommands.begin(), m_PlayerCommands.end(), resize(m_CommandBufferLength, cmd));
 	}
 
 	void InputManager::loadKeyInfo(const ticpp::Document &doc)

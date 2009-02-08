@@ -264,7 +264,7 @@ namespace FusionEngine
 	void Logger::onConsoleNewLine(const std::wstring &message)
 	{
 		if (m_ConsoleLogging)
-			Add(std::string(message.begin(), message.end()), g_LogConsole);
+			Add(fe_narrow(message), g_LogConsole);
 	}
 
 

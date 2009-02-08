@@ -32,6 +32,15 @@
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <ClanLib/Core/IOData/virtual_directory_listing_entry.h>
 
+static std::string narrow(const std::wstring &str)
+{
+	std::ostringstream stm;
+	const std::ctype<char>& ctfacet = std::use_facet< std::ctype<char> >( stm.getloc() );
+	for( size_t i=0 ; i < str.size() ; ++i )
+		stm << ctfacet.narrow( str[i], 0 );
+	return stm.str();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // VirtualFileSource_PhysFS Construction:
 
@@ -62,7 +71,7 @@ CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
 	unsigned int flags)
 {
 	PHYSFS_File *file = NULL;
-	std::string filename(wfilename.begin(), wfilename.end());
+	std::string filename(narrow(wfilename));
 	
 	if (access & CL_File::access_write)
 	{
@@ -105,15 +114,24 @@ bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
 	if( m_Index > m_FileList.size() - 1 )
 		return false;
 
-	std::string cfilename(m_FileList[m_Index].begin(), m_FileList[m_Index].end());
+	std::string cfilename(narrow(m_FileList[m_Index]));
 
 	bool isDirectory = PHYSFS_isDirectory(cfilename.c_str()) != 0;
+	bool isWritable = false;
+
+	std::string writeDir;
+	if (PHYSFS_getWriteDir() != NULL)
+		writeDir = std::string(PHYSFS_getWriteDir());
+
+	std::string fullPath(PHYSFS_getRealDir(cfilename.c_str()));
+	if (fullPath.substr(0, writeDir.size()) == writeDir)
+		isWritable = true;
 
 	entry.set_filename(m_FileList[m_Index]);
 	entry.set_readable(true);
 	entry.set_directory(isDirectory);
 	entry.set_hidden(false); // why would you care?
-	entry.set_writable(false); 
+	entry.set_writable(isWritable); 
 	m_Index++;
 
 	return true;

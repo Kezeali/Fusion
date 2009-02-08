@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_Fusion_GUI
-#define Header_Fusion_GUI
+#ifndef Header_FusionEngine_GUI
+#define Header_FusionEngine_GUI
 
 #if _MSC_VER > 1000
 #pragma once
@@ -39,8 +39,8 @@
 #include "FusionState.h"
 #include "FusionSingleton.h"
 
-//#include <CEGUI/CEGUI.h>
-//#include <CEGUI/openglrenderer.h>
+#include "FusionClanLibRocketInterface.h"
+
 #include <Rocket/Core.h>
 
 namespace FusionEngine
@@ -124,6 +124,10 @@ namespace FusionEngine
 		//CL_OpenGLState m_GLState;
 
 		CL_DisplayWindow m_Display;
+
+		RocketSystem m_RocketSystem;
+		RocketRenderer m_RocketRenderer;
+		RocketFileSystem m_RocketFileSys;
 
 		Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument* m_Document;

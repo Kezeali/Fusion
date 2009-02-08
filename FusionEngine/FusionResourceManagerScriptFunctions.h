@@ -40,58 +40,58 @@
 namespace FusionEngine
 {
 	//! Returns a CL_Surface resource pointer
-	static ResourcePointer<CL_Texture> ResourceManager_GetImage(std::string& path, ResourceManager* lhs)
+	static ResourcePointer<CL_Texture> ResourceManager_GetImage(std::wstring& path, ResourceManager* lhs)
 	{
-		return lhs->GetResource<CL_Texture>(path, "IMAGE");
+		return lhs->GetResource<CL_Texture>(path);
 	}
 
 	//! Returns a CL_SoundBuffer resource pointer
-	static ResourcePointer<CL_SoundBuffer> ResourceManager_GetSound(std::string& path, ResourceManager* lhs)
+	static ResourcePointer<CL_SoundBuffer> ResourceManager_GetSound(std::wstring& path, ResourceManager* lhs)
 	{
 		return lhs->GetResource<CL_SoundBuffer>(path, "AUDIO");
 	}
 
 	//! Returns a XmlDocument resource pointer
-	static ResourcePointer<TiXmlDocument> ResourceManager_GetXml(std::string& path, ResourceManager* lhs)
+	static ResourcePointer<TiXmlDocument> ResourceManager_GetXml(std::wstring& path, ResourceManager* lhs)
 	{
 		return lhs->GetResource<TiXmlDocument>(path, "XML");
 	}
 
 	//! Returns a std::string resource pointer
-	static std::string ResourceManager_GetText(std::string& path, ResourceManager* lhs)
+	static std::string ResourceManager_GetText(std::wstring& path, ResourceManager* lhs)
 	{
 		ResourcePointer<std::string> resource = ResourceManager::getSingleton().GetResource<std::string>(path, "TEXT");
 		if (resource.IsValid())
-			return *(resource.GetDataPtr());
+			return *(resource.Get());
 
 		else
 			return "";
 	}
 
-	//! Draws the image pointed to by the given resource pointer
-	static void Image_Draw(ResourcePointer<CL_Texture> *lhs, float x, float y)
-	{
-		if (!lhs->IsValid())
-			return;
+	////! Draws the image pointed to by the given resource pointer
+	//static void Image_Draw(ResourcePointer<CL_Texture> *lhs, float x, float y)
+	//{
+	//	if (!lhs->IsValid())
+	//		return;
 
-		CL_Texture* data = lhs->Get();
-		if (data != NULL)
-			data->draw(x, y);
-	}
+	//	CL_Texture* data = lhs->Get();
+	//	if (data != NULL)
+	//		data->draw(x, y);
+	//}
 
-	//! Draws the image pointed to by the given resource pointer
-	static void Image_Draw_Angle(ResourcePointer<CL_Surface> *lhs, float x, float y, float angle)
-	{
-		if (!lhs->IsValid())
-			return;
+	////! Draws the image pointed to by the given resource pointer
+	//static void Image_Draw_Angle(ResourcePointer<CL_Surface> *lhs, float x, float y, float angle)
+	//{
+	//	if (!lhs->IsValid())
+	//		return;
 
-		CL_Texture* data = lhs->Get();
-		if (data != NULL)
-		{
-			data->set_angle(fe_radtodeg(angle));
-			data->draw(x, y);
-		}
-	}
+	//	CL_Texture* data = lhs->Get();
+	//	if (data != NULL)
+	//	{
+	//		data->set_angle(fe_radtodeg(angle));
+	//		data->draw(x, y);
+	//	}
+	//}
 
 	//! Returns a CL_SoundBuffer_Session for the given sound
 	static CL_SoundBuffer_Session Sound_Prepare(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)

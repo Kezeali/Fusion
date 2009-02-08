@@ -72,7 +72,7 @@ int PhysFSIODeviceProvider::receive(void *buffer, int size, bool receive_all)
 	if (size == 0)
 		return 0;
 
-	PHYSFS_sint64 lenRet = PHYSFS_read(m_Handle, buffer, sizeof(char), size);
+	PHYSFS_sint64 lenRet = PHYSFS_read(m_Handle, buffer, 1, size);
 	if (lenRet == -1)
 		throw CL_Exception(cl_text("PhysFS: Failed to read file"));
 
@@ -82,7 +82,7 @@ int PhysFSIODeviceProvider::receive(void *buffer, int size, bool receive_all)
 int PhysFSIODeviceProvider::peek(void *data, int len)
 {
 	PHYSFS_sint64 startPos = PHYSFS_tell(m_Handle);
-	PHYSFS_sint64 lengthRead = PHYSFS_read(m_Handle, data, sizeof(char), len);
+	PHYSFS_sint64 lengthRead = PHYSFS_read(m_Handle, data, 1, len);
 	int seekRet = PHYSFS_seek(m_Handle, startPos);
 
 	if (lengthRead == -1 || seekRet == -1)

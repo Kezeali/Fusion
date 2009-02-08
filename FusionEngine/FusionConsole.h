@@ -114,7 +114,7 @@ namespace FusionEngine
 		void RegisterScriptElements(ScriptingEngine* manager);
 
 		//! Triggers when new data is added to the console
-		CL_Signal_v1<const std::wstring &> OnNewLine;
+		CL_Signal_v1<const std::wstring&> OnNewLine;
 
 		//! Triggers when the console is cleared
 		CL_Signal_v0 OnClear;

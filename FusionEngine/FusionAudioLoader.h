@@ -39,45 +39,18 @@
 namespace FusionEngine
 {
 
+	//! Fully loads a sound clip into memory
+	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! Unloads an audio resource
+	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+
+	//! Loads an audio file for streaming
 	/*!
-	 * \brief
-	 * Loads sounds / music
-	 *
-	 * \todo ???Flags for special loading configs (such as streaming audio)
-	 *
-	 * \sa
-	 * ResourceLoader
+	 * Generally used for music.
 	 */
-	class AudioLoader : public ResourceLoader
-	{
-	public:
-		//! Returns the type identifier for resources this loader can deal with
-		virtual const std::string &GetType() const;
-
-		//! Loads the resource reffered to by the given text
-		virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider);
-
-		//! Reloads the given resource (which has been cleaned up by garbage collection)
-		virtual void ReloadResource(ResourceContainer * resource, CL_InputSourceProvider* provider = NULL);
-
-		//! Cleans up resource data (for garbage collection)
-		virtual void UnloadResource(ResourceContainer * resource);
-
-	protected:
-		virtual CL_SoundBuffer* loadSound(const std::string &path, CL_InputSourceProvider* provider);
-
-	};
-
-	class AudioStreamLoader : public AudioLoader
-	{
-	public:
-		//! Returns the type identifier for resources this loader can deal with
-		virtual const std::string &GetType() const;
-
-	protected:
-		virtual CL_SoundBuffer* loadSound(const std::string &path, CL_InputSourceProvider* provider);
-
-	};
+	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! Unloads an audio resource
+	//void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
 }
 

@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionClanLibRocketInterface.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionClientLoadingState.h"
 				>
 			</File>
@@ -328,14 +332,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputPluginLoader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputSource_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputSourceProvider_PhysFS.h"
 				>
 			</File>
 			<File
@@ -721,7 +717,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionCEGUIPhysFSResourceProvider.cpp"
+				RelativePath=".\FusionClanLibRocketInterface.cpp"
 				>
 			</File>
 			<File
@@ -750,6 +746,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionConsoleStdOutWriter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionControlMap.cpp"
 				>
 			</File>
 			<File
@@ -810,14 +810,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputPluginLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputSourceProvider_PhysFS.cpp"
 				>
 			</File>
 			<File

@@ -1,239 +1,41 @@
+/*
+  Copyright (c) 2006-2009 Fusion Project Team
 
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+		
+		
+	File Author(s):
+
+		Elliot Hayward
+
+*/
+
+#include "Common.h"
 #include "FusionCommon.h"
 
 #include "FusionGUI.h"
 
-//#include "FusionCEGUIPhysFSResourceProvider.h"
 #include "FusionConsole.h"
 #include "FusionLogger.h"
 
-//#include "FusionResourceManager.h"
-
-//#include <CEGUI/CEGUITinyXMLParser.h>
-//#include <CEGUI/CEGUIDefaultResourceProvider.h>
-
 namespace FusionEngine
 {
-
-	class RocketSystem : public Rocket::Core::SystemInterface
-	{
-	public:
-		RocketSystem() {}
-	public:
-		virtual float GetElapsedTime();
-		virtual bool LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message);
-	};
-
-	float RocketSystem::GetElapsedTime()
-	{
-		return (float)CL_System::get_time() / 1000.f;
-	}
-
-	bool RocketSystem::LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message)
-	{
-		LogSeverity logLevel = LOG_NORMAL;
-		Console::MessageType mtype = Console::MTWARNING;
-		if (type == EMP::Core::Log::LT_ERROR || type == EMP::Core::Log::LT_ASSERT)
-		{
-			logLevel = LOG_CRITICAL;
-			mtype = Console::MTERROR;
-		}
-		else if (type == EMP::Core::Log::LT_INFO)
-		{
-			logLevel = LOG_TRIVIAL;
-			mtype = Console::MTNORMAL;
-		}
-		Logger::getSingleton().Add(std::string(message.CString()), "rocket_log", logLevel);
-		SendToConsole(std::string(message.CString()), mtype);
-
-		return true;
-	}
-
-	struct GeometryVertex
-	{
-		CL_Vec2f position;
-		CL_Vec2f tex_coord;
-	};
-
-	struct RocketCL_Texture
-	{
-		RocketCL_Texture(CL_Texture tex) : texture(tex) {}
-		CL_Texture texture;
-	};
-
-	struct GeometryData
-	{
-		int num_verticies;
-		CL_VertexArrayBuffer vertex_buffer;
-		RocketCL_Texture* texture;
-	};
-
-	class RocketRenderer : public Rocket::Core::RenderInterface
-	{
-	public:
-		RocketRenderer() {}
-		RocketRenderer(CL_GraphicContext gc);
-
-		typedef std::tr1::unordered_map<CL_String, CL_Texture> TextureMap;
-		typedef std::list<CL_VertexArrayBuffer> GeometryMap;
-	public:
-		//! Called by Rocket when it wants to render geometry that it does not wish to optimise.
-		virtual void RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const EMP::Core::Vector2f& translation);
-
-		//! Called by Rocket when it wants to compile geometry it believes will be static for the forseeable future.
-		virtual Rocket::Core::CompiledGeometryHandle CompileGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture);
-		//! Called by Rocket when it wants to render application-compiled geometry.
-		virtual void RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const EMP::Core::Vector2f& translation);
-		//! Called by Rocket when it wants to release application-compiled geometry.
-		virtual void ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry);
-
-		//! Called by Rocket when it wants to enable or disable scissoring to clip content.
-		virtual void EnableScissorRegion(bool enable);
-		//! Called by Rocket when it wants to change the scissor region.
-		virtual void SetScissorRegion(int x, int y, int width, int height);
-
-		//! Called by Rocket when a texture is required by the library.
-		virtual bool LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source, const EMP::Core::String& source_path);
-		//! Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
-		virtual bool GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions);
-		//! Called by Rocket when a loaded texture is no longer required.
-		virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
-	protected:
-		CL_GraphicContext m_gc;
-
-		int m_Scissor_left;
-		int m_Scissor_top;
-		int m_Scissor_right;
-		int m_Scissor_bottom;
-		//TextureMap m_Textures;
-		//GeometryMap m_Geometry;;
-	};
-
-	RocketRenderer::RocketRenderer(CL_GraphicContext gc)
-		: m_gc(gc)
-	{
-	}
-
-	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const EMP::Core::Vector2f& translation)
-	{
-		SendToConsole(L"Rocket requested uncompiled render; ignored", Console::MTWARNING);
-	}
-
-	Rocket::Core::CompiledGeometryHandle RocketRenderer::CompileGeometry(Rocket::Core::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rocket::Core::TextureHandle texture)
-	{
-		using namespace Rocket;
-
-		CL_VertexArrayBuffer buffer(m_gc, num_indices * sizeof(GeometryVertex));
-
-		buffer.lock(cl_access_write_only);
-		GeometryVertex* buffer_data = (GeometryVertex*) buffer.get_data();
-
-		for (int i = 0; i < num_indices; i++)
-		{
-			int vertex_index = indices[i];
-			buffer_data[i].position.x = vertices[vertex_index].position.x;
-			buffer_data[i].position.y = vertices[vertex_index].position.y;
-
-			buffer_data[i].tex_coord.x = vertices[vertex_index].tex_coord.x;
-			buffer_data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
-		}
-
-		buffer.unlock();
-
-		GeometryData* data = new GeometryData;
-		data->num_verticies = num_indices;
-		data->vertex_buffer = buffer;
-		data->texture = (RocketCL_Texture*)texture;
-
-		//m_Geometry.push_back(buffer);
-		return (Core::CompiledGeometryHandle*)data;
-	}
-
-	void RocketRenderer::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const EMP::Core::Vector2f& translation)
-	{
-		using namespace Rocket;
-
-		GeometryData* data = (GeometryData*)geometry;
-		CL_VertexArrayBuffer vertex_buffer = data->vertex_buffer;
-
-		m_gc.set_map_mode(cl_map_2d_upper_left);
-		m_gc.set_texture(0, data->texture->texture);
-
-		CL_PrimitivesArray prim_array(m_gc);
-		prim_array.set_positions(vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-		prim_array.set_tex_coords(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
-
-		m_gc.draw_primitives(cl_triangles, data->num_verticies, prim_array);
-	}
-
-	void RocketRenderer::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
-	{
-		delete (GeometryData*)geometry;
-	}
-
-	// Called by Rocket when it wants to enable or disable scissoring to clip content.
-	void RocketRenderer::EnableScissorRegion(bool enable)
-	{
-		if (!enable)
-			m_gc.set_cliprect(CL_Rect(0, 0, m_gc.get_width(), m_gc.get_height()));
-		else
-			m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
-	}
-
-	// Called by Rocket when it wants to change the scissor region.
-	void RocketRenderer::SetScissorRegion(int x, int y, int width, int height)
-	{
-		m_Scissor_left = x;
-		m_Scissor_top = y;
-		m_Scissor_right = x + width;
-		m_Scissor_bottom = y + height;
-
-		m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
-	}
-
-	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source, const EMP::Core::String& source_path)
-	{
-		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String((source_path + source).CString()) );
-		if (image.is_null())
-			return false;
-
-		CL_Texture texture(m_gc, cl_texture_2d);
-		texture.set_image(image);
-
-		if (texture.is_null())
-			return false;
-
-		texture_dimensions.x = texture.get_width();
-		texture_dimensions.y = texture.get_height();
-
-		texture_handle = new RocketCL_Texture(texture);
-		return true;
-	}
-
-	// Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
-	bool RocketRenderer::GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions)
-	{
-		static int texture_id = 1;
-
-		int pitch = source_dimensions.x * 4;
-		CL_PixelBuffer image(source_dimensions.x, source_dimensions.y, pitch, CL_PixelFormat::abgr8888, (void*)source);
-
-		CL_Texture texture(m_gc, cl_texture_2d);
-		texture.set_image(image);
-
-		if (texture.is_null())
-			return false;
-
-		texture_handle = new RocketCL_Texture(texture);
-		return true;
-	}
-
-	// Called by Rocket when a loaded texture is no longer required.
-	void RocketRenderer::ReleaseTexture(Rocket::Core::TextureHandle texture)
-	{
-		delete ((RocketCL_Texture*)texture);
-	}
-
 
 	GUI::GUI()
 		: FusionState(false), // GUI is non-blockin by default
@@ -276,13 +78,17 @@ namespace FusionEngine
 		//CL_Display::get_current_window()->hide_cursor();
 		using namespace Rocket;
 
+		
+		Rocket::Core::SetRenderInterface(&m_RocketRenderer);
+		Rocket::Core::SetSystemInterface(&m_RocketSystem);
+		Rocket::Core::SetFileInterface(&m_RocketFileSys);
 		Rocket::Core::Initialise();
 
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
 		
-		m_Document = m_Context->LoadDocument("../../assets/demo.rml");
+		m_Document = m_Context->LoadDocument("gui/demo.rml");
 		if (m_Document != NULL)
 			m_Document->Show();
 

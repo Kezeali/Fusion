@@ -39,38 +39,6 @@
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Loads Images
-	 *
-	 * \sa
-	 * ResourceLoader
-	 */
-	//class ImageLoader : public ResourceLoader
-	//{
-	//public:
-	//	ImageLoader(CL_VirtualDirectory vdir)
-	//		: ResourceLoader(vdir)
-	//	{
-	//	}
-
-	//	//! Returns the type identifier for resources this loader can deal with
-	//	virtual const std::string &GetType() const;
-
-	//	//! Loads the resource reffered to by the given text
-	//	virtual ResourceContainer* LoadResource(const std::wstring& tag, const std::wstring &path);
-
-	//	//! Reloads the given resource (which has been cleaned up by garbage collection)
-	//	virtual void ReloadResource(ResourceContainer * resource);
-
-	//	//! Cleans up resource data (for garbage collection)
-	//	virtual void UnloadResource(ResourceContainer * resource);
-
-	//protected:
-	//	CL_Texture* loadSurface(const std::wstring &path);
-
-	//};
-
 	//! Texture resource loader callback
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 	//! Texture resource unloader callback

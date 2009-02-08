@@ -37,15 +37,15 @@ namespace FusionEngine
 			delete resource->GetDataPtr();
 		}
 
-		CL_String ext = CL_PathHelp::get_extension(path);
+		CL_String ext = CL_PathHelp::get_extension(resource->GetPath());
 		CL_PixelBuffer sp;
 		try
 		{
-			sp = CL_ImageProviderFactory::load(resource->GetPath, ext, m_Directory);
+			sp = CL_ImageProviderFactory::load(resource->GetPath(), ext, vdir);
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"ImageLoader::loadSurface", L"'" + path + L"' could not be loaded");
+			FSN_WEXCEPT(ExCode::IO, L"ImageLoader::loadSurface", L"'" + resource->GetPath() + L"' could not be loaded");
 		}
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);

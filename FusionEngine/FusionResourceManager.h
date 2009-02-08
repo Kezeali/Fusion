@@ -127,6 +127,7 @@ namespace FusionEngine
 		};
 
 		typedef std::priority_queue<ResourceToLoadData> ToLoadQueue;
+		typedef std::tr1::unordered_set<std::wstring> ToUnloadList;
 
 	public:
 		//! Constructor
@@ -162,14 +163,6 @@ namespace FusionEngine
 		 */
 		void ClearAll();
 
-		//! Returns a collection of tokens representing the given wildcard expression
-		StringVector TokenisePattern(const std::string &expression);
-
-		//! Compares a string to a wildcard string
-		bool CheckAgainstPattern(const std::string &str, const std::string &expression);
-		//! Compares a string to a wildcard string
-		bool CheckAgainstPattern(const std::string &str, StringVector expressionTokens);
-
 		//! Returns the first matching string
 		std::string FindFirst(const std::string &expression, bool recursive = false, bool case_sensitive = true);
 		std::string FindFirst(const std::string &path, const std::string &expression, int depth, bool recursive = true, bool case_sensitive = true);
@@ -191,10 +184,7 @@ namespace FusionEngine
 		void AddResourceLoader(const ResourceLoader& resourceLoader);
 
 		//! Assigns the given ResourceLoader to its relavant resource type
-		void AddResourceLoader(const std::string& type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn, void* userData = NULL);
-
-		//! Runs the factory method to create a resource loader for the given type
-		//ResourceLoaderSpt CreateResourceLoader(const std::string& type);
+		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData = NULL);
 
 		//! Loads / unloads resources in another thread
 		/*!
@@ -204,7 +194,7 @@ namespace FusionEngine
 		void BackgroundPreload();
 
 		//! Loads a resource, gives it a tag
-		void TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag);
+		ResourceSpt TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag);
 
 		//! Loads a resource
 		/*!
@@ -212,13 +202,13 @@ namespace FusionEngine
 		 * Though this does the same as TagResource, it must be named differently so that it can be
 		 * used directly (through a THISCALL) by AScript, which can't deal with overloaded member fn.s
 		 */
-		void PreloadResource(const std::string& type, const std::wstring& path);
+		ResourceSpt PreloadResource(const std::string& type, const std::wstring& path);
 
 		//! Loads a resource
 		/*!
 		 * Loads the resource in another thread
 		 */
-		void PreloadResource_Background(const std::string& type, const std::wstring& path, int priority);
+		ResourceSpt PreloadResource_Background(const std::string& type, const std::wstring& path, int priority = 0);
 
 		void UnloadResource(const std::wstring &path);
 
@@ -228,33 +218,17 @@ namespace FusionEngine
 		//template<typename T>
 		//ResourcePointer<T> GetResource(const ResourceTag& tag);
 
-		//template<typename T>
-		//ResourcePointer<T> GetResource(const ResourceTag &tag)
-		//{
-		//	PreloadResource(GetResourceType<T>(), tag);
-
-		//	ResourceSpt sptRes = m_Resources[tag];
-		//	if (!sptRes->IsValid())
-		//	{
-		//		InputSourceProvider_PhysFS provider("");
-		//		m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
-		//	}
-
-		//	return ResourcePointer<T>(sptRes);
-		//}
+		template<typename T>
+		ResourcePointer<T> GetResource(const ResourceTag &tag)
+		{
+			ResourceSpt sptRes = m_Resources[tag];
+			return ResourcePointer<T>(sptRes);
+		}
 
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
 		{
-			PreloadResource(type, tag);
-
 			ResourceSpt sptRes = m_Resources[tag];
-			if (!sptRes->IsValid())
-			{
-				InputSourceProvider_PhysFS provider("");
-				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
-			}
-
 			return ResourcePointer<T>(sptRes);
 		}
 
@@ -263,12 +237,6 @@ namespace FusionEngine
 		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
 		{
 			ResourceSpt sptRes = m_Resources[tag];
-			if (sptRes && !sptRes->IsValid())
-			{
-				InputSourceProvider_PhysFS provider("");
-				m_ResourceLoaders[sptRes->GetType()]->ReloadResource(sptRes.get(), &provider);
-			}
-
 			out = ResourcePointer<T>(sptRes);
 		}
 
@@ -323,7 +291,7 @@ namespace FusionEngine
 			return GetResource<T>(match);
 		}
 
-		void RegisterScriptElements(ScriptingEngine* manager);
+		//void RegisterScriptElements(ScriptingEngine* manager);
 
 	private:
 		bool m_PhysFSConfigured;
@@ -333,10 +301,14 @@ namespace FusionEngine
 
 		CL_Event m_StopEvent; // Set to stop the worker thread
 		CL_Event m_ToLoadEvent; // Set when there is more data to load
+		CL_Event m_ToUnloadEvent;
 		CL_Thread m_Worker;
 
 		CL_Mutex m_ToLoadMutex;
 		ToLoadQueue m_ToLoad;
+
+		CL_Mutex m_ToUnloadMutex;
+		ToUnloadList m_ToUnload;
 
 		CL_Mutex m_ResourcesMutex;
 		// Resources
@@ -353,9 +325,9 @@ namespace FusionEngine
 		void loadResource(ResourceSpt &resource);
 		void unloadResource(ResourceSpt &resource);
 
-		void registerXMLType(asIScriptEngine* engine);
-		void registerImageType(asIScriptEngine* engine);
-		void registerSoundType(asIScriptEngine* engine);
+		//void registerXMLType(asIScriptEngine* engine);
+		//void registerImageType(asIScriptEngine* engine);
+		//void registerSoundType(asIScriptEngine* engine);
 
 		/*!
 		 * \brief

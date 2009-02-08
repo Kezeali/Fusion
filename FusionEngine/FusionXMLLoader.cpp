@@ -32,50 +32,12 @@
 namespace FusionEngine
 {
 
-	const std::string &XMLLoader::GetType() const
-	{
-		static std::string strType("XML");
-		return strType;
-	}
-
-	ResourceContainer* XMLLoader::LoadResource(const std::string& tag, const std::string &path, CL_InputSourceProvider* provider)
-	{
-		TiXmlDocument* dp = loadDocument(path);
-		ResourceContainer* rsc = new ResourceContainer(this->GetType(), tag, path, dp);
-		return rsc;
-	}
-
-	void XMLLoader::ReloadResource(ResourceContainer* resource, CL_InputSourceProvider* provider)
-	{
-		if (resource->IsValid())
-		{
-			delete resource->GetDataPtr();
-		}
-
-		//! \todo ???Set inputsourceprovider for ResourceLoaders on construction
-		TiXmlDocument* dp = loadDocument(resource->GetPath());
-
-		resource->SetDataPtr(dp);
-		resource->_setValid(true);
-	}
-
-	void XMLLoader::UnloadResource(ResourceContainer* resource)
-	{
-		if (resource->IsValid())
-			delete resource->GetDataPtr();
-		resource->SetDataPtr(NULL);
-
-		resource->_setValid(false);
-	}
-
-	TiXmlDocument* XMLLoader::loadDocument(const std::wstring &path)
+	TiXmlDocument* PhysFSOpen_TiXmDocument(const std::wstring &filename)
 	{
 		TiXmlDocument* doc = new TiXmlDocument;
 		try
 		{
-			//InputSourceProvider_PhysFS provider("");
-			//boost::shared_ptr<CL_InputSource> in(provider.open_source(path));
-			CL_IODevice in = m_Directory.open_file(path);
+			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 			char filedata[2084];
 			in.read(&filedata, in.get_size());
@@ -85,10 +47,32 @@ namespace FusionEngine
 		catch (CL_Exception&)
 		{
 			delete doc;
-			FSN_WEXCEPT(ExCode::IO, L"XMLLoader::loadDocument", L"'" + path + L"' could not be loaded");
+			FSN_WEXCEPT(ExCode::IO, L"PhysFSOpen_TiXmlLoader", L"'" + filename + L"' could not be loaded");
 		}
 
 		return doc;
+	}
+
+	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		if (resource->IsValid())
+		{
+			delete resource->GetDataPtr();
+		}
+
+		TiXmlDocument* doc = PhysFSOpen_TiXmDocument(resource->GetPath());
+
+		resource->SetDataPtr(doc);
+		resource->_setValid(true);
+	}
+
+	void UnloadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		if (resource->IsValid())
+			delete resource->GetDataPtr();
+		resource->SetDataPtr(NULL);
+
+		resource->_setValid(false);
 	}
 
 };

@@ -94,17 +94,24 @@ namespace FusionEngine
 	//typedef ResourceLoader* (*resourceLoader_creator)(CL_VirtualDirectory vdir);
 
 
-	typedef void (*resourceLoader_Load)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
-	typedef void (*resourceLoader_Unload)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader
 	{
-		resourceLoader_Load load;
-		resourceLoader_Unload unload;
+		resource_load load;
+		resource_unload unload;
 		void *userData;
 		std::string type;
 
-		ResourceLoader(std::string _type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn)
+		ResourceLoader()
+			: load(NULL),
+			unload(NULL),
+			userData(NULL)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),
@@ -112,7 +119,7 @@ namespace FusionEngine
 		{
 		}
 
-		ResourceLoader(std::string _type, resourceLoader_Load loadFn, resourceLoader_Unload unloadFn, void *_userData)
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, void *_userData)
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),

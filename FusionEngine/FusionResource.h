@@ -129,6 +129,8 @@ namespace FusionEngine
 		{
 			if (ptr != 0)
 				_setValid(true);
+			else
+				_setValid(false);
 		}
 
 		//! Constructor
@@ -143,6 +145,8 @@ namespace FusionEngine
 		{
 			if (ptr != 0)
 				_setValid(true);
+			else
+				_setValid(false);
 		}
 
 		//! Constructor
@@ -157,6 +161,8 @@ namespace FusionEngine
 		{
 			if (ptr != 0)
 				_setValid(true);
+			else
+				_setValid(false);
 		}
 
 		~ResourceContainer()
@@ -171,9 +177,9 @@ namespace FusionEngine
 
 	public:
 		//! Returns the type name (of resource loader to be used for this resource)
-		const char* GetType() const
+		const std::string& GetType() const
 		{
-			return m_Type.c_str();
+			return m_Type;
 		}
 		//! Returns the resource tag which should point to the Rsc
 		const ResourceTag& GetTag() const

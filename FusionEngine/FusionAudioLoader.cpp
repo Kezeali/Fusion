@@ -32,35 +32,29 @@
 namespace FusionEngine
 {
 
-	const std::string &AudioLoader::GetType() const
-	{
-		static std::string strType("AUDIO");
-		return strType;
-	}
-
-	ResourceContainer* AudioLoader::LoadResource(const std::string& tag, const std::string &path)
-	{
-		CL_SoundBuffer* p = loadSound(path, provider);
-		ResourceContainer* rsc = new ResourceContainer(this->GetType(), tag, path, p);
-		return rsc;
-	}
-
-	void AudioLoader::ReloadResource(ResourceContainer* resource)
+	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsValid())
-		{
 			delete resource->GetDataPtr();
+
+		//std::string& ext = CL_String::get_extension(resource->GetPath());
+		CL_SoundProvider* sp;
+		try
+		{
+			sp = CL_SoundProviderFactory::load(resource->GetPath(), false, "", vdir);
 		}
-
-		//! \todo ???Set inputsourceprovider for ResourceLoaders on construction
-		CL_SoundBuffer* p = loadSound(resource->GetPath(), provider);
-
+		catch (CL_Exception&)
+		{
+			FSN_WEXCEPT(ExCode::IO, L"AudioLoader::loadSound", L"'" + resource->GetPath() + L"' could not be loaded");
+		}
+		
+		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
 		resource->SetDataPtr(p);
 
 		resource->_setValid(true);
 	}
 
-	void AudioLoader::UnloadResource(ResourceContainer* resource)
+	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsValid())
 			delete resource->GetDataPtr();
@@ -69,56 +63,35 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	CL_SoundBuffer* AudioLoader::loadSound(const std::string &path)
+	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
-		//if (provider == NULL)
-		//	provider = CL_InputSourceProvider::create_file_provider(".");
-		InputSourceProvider_PhysFS provider("");
+		if (resource->IsValid())
+			delete resource->GetDataPtr();
 
-		//std::string& ext = CL_String::get_extension(path);
+		//std::string& ext = CL_String::get_extension(resource->GetPath());
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(path, false, "",& provider);
+			sp = CL_SoundProviderFactory::load(resource->GetPath(), true, "", vdir);
 		}
-		catch (CL_Error&)
+		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "AudioLoader::loadSound", "'" + path + "' could not be loaded");
+			FSN_WEXCEPT(ExCode::IO, L"AudioStreamLoader::loadSound", L"'" + resource->GetPath() + L"' could not be loaded");
 		}
 		
-		CL_SoundBuffer* sur = new CL_SoundBuffer( sp );
+		CL_SoundBuffer* p = new CL_SoundBuffer( sp );
+		resource->SetDataPtr(p);
 
-		return sur;
+		resource->_setValid(true);
 	}
 
-	//////////
-	// AudioStreamLoader
-	const std::string &AudioStreamLoader::GetType() const
+	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
-		static std::string strType("AUDIO/STREAM");
-		return strType;
-	}
+		if (resource->IsValid())
+			delete resource->GetDataPtr();
+		resource->SetDataPtr(NULL);
 
-	CL_SoundBuffer* AudioStreamLoader::loadSound(const std::string &path, CL_InputSourceProvider* notUsed)
-	{
-		//if (provider == NULL)
-		//	provider = CL_InputSourceProvider::create_file_provider(".");
-		InputSourceProvider_PhysFS provider("");
-
-		//std::string& ext = CL_String::get_extension(path);
-		CL_SoundProvider* sp;
-		try
-		{
-			sp = CL_SoundProviderFactory::load(path, true, "", &provider);
-		}
-		catch (CL_Error&)
-		{
-			FSN_EXCEPT(ExCode::IO, "AudioStreamLoader::loadSound", "'" + path + "' could not be loaded");
-		}
-		
-		CL_SoundBuffer* sur = new CL_SoundBuffer( sp );
-
-		return sur;
+		resource->_setValid(false);
 	}
 
 };

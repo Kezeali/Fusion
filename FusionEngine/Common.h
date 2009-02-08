@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 
 // STL TR1
 #include <memory>
