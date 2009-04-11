@@ -691,6 +691,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionXML.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ScriptSharedPtr.h"
 				>
 			</File>

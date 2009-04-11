@@ -72,7 +72,14 @@
 //#include <boost/function.hpp>
 //#include <boost/bind.hpp>
 
-// TinyXML
+// XML
+#define USE_XERCES
+
+#ifdef USE_XERCES
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xqilla/xqilla-simple.hpp>
+
+#elif defined(USE_TINYXML)
 #define USE_TINYXPATH
 
 #ifdef USE_TINYXPATH
@@ -89,6 +96,7 @@
 # define TIXML_USE_TICPP
 #endif
 #include "../tinyxml/tinyxml.h"
+#endif
 #endif
 
 
@@ -403,7 +411,7 @@ namespace FusionEngine
 	std::size_t hash_value(PlayerKey const& k)
 	{
 		std::tr1::hash<std::string> hasher;
-		return hasher(k.key + k.player);
+		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());
 	}
 
 

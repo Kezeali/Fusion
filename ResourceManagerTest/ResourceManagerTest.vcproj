@@ -230,27 +230,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionXML.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionXMLLoader.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\tinyxml\tinystr.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\tinyxml\tinyxml.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\tinyxml\tinyxmlerror.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\tinyxml\tinyxmlparser.cpp"
 				>
 			</File>
 		</Filter>
@@ -321,6 +309,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionXML.h"
 				>
 			</File>
 			<File

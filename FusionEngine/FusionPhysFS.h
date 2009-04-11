@@ -76,7 +76,7 @@ static int platform_stricmp(const char *x, const char *y)
 
 	public:
 
-		//! Initialises PhysFS for use in InputSource_PhysFS, etc.
+		//! Initialises PhysFS.
 		/*!
 		 * <p>
 		 * Must be called before any instances of InputSourceProvider_PhysFS or
