@@ -27,31 +27,10 @@
 
 #include "FusionXMLLoader.h"
 
-#include <boost/shared_ptr.hpp>
+#include "FusionXML.h"
 
 namespace FusionEngine
 {
-
-	TiXmlDocument* PhysFSOpen_TiXmDocument(const std::wstring &filename)
-	{
-		TiXmlDocument* doc = new TiXmlDocument;
-		try
-		{
-			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
-
-			char filedata[2084];
-			in.read(&filedata, in.get_size());
-
-			doc->Parse((const char*)filedata, 0, TIXML_ENCODING_UTF8);
-		}
-		catch (CL_Exception&)
-		{
-			delete doc;
-			FSN_WEXCEPT(ExCode::IO, L"PhysFSOpen_TiXmlLoader", L"'" + filename + L"' could not be loaded");
-		}
-
-		return doc;
-	}
 
 	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
@@ -60,7 +39,7 @@ namespace FusionEngine
 			delete resource->GetDataPtr();
 		}
 
-		TiXmlDocument* doc = PhysFSOpen_TiXmDocument(resource->GetPath());
+		TiXmlDocument* doc = OpenXml(resource->GetPath(), vdir);
 
 		resource->SetDataPtr(doc);
 		resource->_setValid(true);

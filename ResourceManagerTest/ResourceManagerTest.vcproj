@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="physfsd.lib"
+				AdditionalDependencies="physfsd.lib pcre-static-mt-debug.lib ..\TinyXPathpp\tinyxpath_lib\Debug\tinyxpathd.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames="libcmt"
 				GenerateDebugInformation="true"
@@ -136,7 +136,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="physfs.lib"
+				AdditionalDependencies="physfs.lib ..\TinyXPathpp\tinyxpath_lib\Release\tinyxpath.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"

@@ -29,115 +29,82 @@
 
 #include "FusionXML.h"
 
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/framework/MemBufInputSource.hpp>
-
+#include "FusionPhysFS.h"
 
 namespace FusionEngine
 {
 
-	SetupXml::SetupXml()
+	TiXmlDocument* OpenXml(const std::wstring &filename, CL_VirtualDirectory vdir)
 	{
-		xercesc::XMLPlatformUtils::Initialize();
+		TiXmlDocument* doc = new TiXmlDocument();
+		try
+		{
+			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
+
+			char filedata[2084];
+			in.read(&filedata, in.get_size());
+
+			doc->Parse((const char*)filedata, 0, TIXML_ENCODING_UTF8);
+		}
+		catch (CL_Exception&)
+		{
+			delete doc;
+			FSN_WEXCEPT(ExCode::IO, L"OpenXml", L"'" + filename + L"' could not be opened");
+		}
+
+		return doc;
 	}
 
-	SetupXml::~SetupXml()
+	void SaveXml(TiXmlDocument* doc, const std::wstring &filename, CL_VirtualDirectory vdir)
 	{
-		xercesc::XMLPlatformUtils::Terminate();
+		try
+		{
+			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
+
+			out.write(doc->ValueStr().c_str(), doc->ValueStr().length());
+		}
+		catch (CL_Exception&)
+		{
+			FSN_WEXCEPT(ExCode::IO, L"SaveXml", L"'" + filename + L"' could not be saved");
+		}
 	}
 
-	DomReaderPtr OpenXml(const std::string filename, CL_VirtualDirectory vdir)
+	void SaveString(const std::string &content, const std::wstring &filename, CL_VirtualDirectory vdir)
 	{
-		xercesc::XercesDOMParser* parser = new xercesc::XercesDOMParser();
+		try
+		{
+			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
 
-		xercesc::ErrorHandler* errHandler = (xercesc::ErrorHandler*)new xercesc::HandlerBase();
-		parser->setErrorHandler(errHandler);
-
-		CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
-    size_t length(in.size());
-    XMLByte* buffer(new XMLByte[length]);
-
-    // if in.read() fails, buffer will be an empty string.
-    memset(buffer, 0, length * sizeof(XMLByte));
-    in.read(reinterpret_cast<char*>(buffer), length);
-
-		std::tr1::shared_ptr<xercesc::MemBufInputSource> inputSrc(new xercesc::MemBufInputSource(buffer, length, filename.c_str(), true));
-		parser->parse(*inputSrc);
+			out.write(content.c_str(), content.length());
+		}
+		catch (CL_Exception&)
+		{
+			FSN_WEXCEPT(ExCode::IO, L"SaveString", L"'" + filename + L"' could not be saved");
+		}
 	}
 
-	String DomReader::toString(const XMLCh * ch)
-    {
-        TSharedArray<char> transcoded(XMLString::transcode(ch), XMLChReleaser());
-        String result(transcoded.get());
+	TiXmlDocument* OpenXml_PhysFS(const std::wstring &filename)
+	{
+		// Make a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
-        return result;
-    }
+		return OpenXml(filename, vdir);
+	}
 
-    //-----------------------------------------------------------------------------
-    Uint32 DomReader::getUint32Attribute(DOMElement* element, const char* attributeName)
-    {
-        return boost::lexical_cast<Uint32>(getStringAttribute(element, attributeName));
-    }
+	void SaveXml_PhysFS(TiXmlDocument* doc, const std::wstring &filename)
+	{
+		// make a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
-    //-----------------------------------------------------------------------------
-    ::Real DomReader::getRealAttribute(DOMElement* element, const char* attributeName)
-    {
-        return boost::lexical_cast< ::Real>(getStringAttribute(element, attributeName));
-    }
+		SaveXml(doc, filename, vdir);
+	}
 
-    //-----------------------------------------------------------------------------
-    String DomReader::getStringAttribute(DOMElement* element, const char* attributeName)
-    {
-        XMLChPtr temp(attributeName);
-        return toString(element->getAttribute(temp.get()));
-    }
+	void SaveString_PhysFS(const std::string &content, const std::wstring &filename)
+	{
+		// make a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
-    //-----------------------------------------------------------------------------
-    bool DomReader::getBoolAttribute(DOMElement* element, const char* attributeName)
-    {
-        String temp = getStringAttribute(element, attributeName);
-        return ((temp == "1") || (temp == "true"));
-    }
-
-    //==========================================================================
-    //  DomReader::ElementIterator class implementation
-    //==========================================================================
-    //-----------------------------------------------------------------------------
-    DomReader::ElementIterator::ElementIterator(XERCES_CPP_NAMESPACE::DOMDocument* doc, const char* tagName) :
-       list(doc->getElementsByTagName(XMLChPtr(tagName).get())),
-       index(0)
-    {
-    }
-
-    //-----------------------------------------------------------------------------
-    DomReader::ElementIterator::ElementIterator(XERCES_CPP_NAMESPACE::DOMElement* element, const char* tagName) :
-       list(element->getElementsByTagName(XMLChPtr(tagName).get())),
-       index(0)
-    {
-    }
-
-    //-----------------------------------------------------------------------------
-    DomReader::ElementIterator::ElementIterator(XERCES_CPP_NAMESPACE::DOMNodeList* _list) :
-       list(_list),
-       index(0)
-    {
-    }
-
-    //-----------------------------------------------------------------------------
-    XERCES_CPP_NAMESPACE::DOMElement* DomReader::ElementIterator::nextNode()
-    {
-        while (index < list->getLength())
-        {
-            DOMNode* node = list->item(index);
-            ++index;
-            if (node->getNodeType() == DOMNode::ELEMENT_NODE)
-            {
-                return static_cast<DOMElement*>(node);
-            }
-        }
-        // if we get here, we're out of nodes
-        return NULL;
-    }
+		SaveString(content, filename, vdir);
+	}
 
 }

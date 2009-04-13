@@ -73,7 +73,7 @@
 //#include <boost/bind.hpp>
 
 // XML
-#define USE_XERCES
+#define USE_TINYXML
 
 #ifdef USE_XERCES
 #include <xercesc/util/PlatformUtils.hpp>
@@ -269,6 +269,43 @@ namespace FusionEngine
 		return lower;
 	}
 
+	//! Returns the given text trimed (white-space removed)
+	static std::string fe_trim(const std::string &str)
+	{
+		std::string::size_type first_char = str.find_first_not_of(" \r\n\t");
+		std::string::size_type last_char = str.find_last_not_of(" \r\n\t");
+		if (first_char == CL_String::npos)
+			return std::string();
+		if (last_char == CL_String::npos)
+			return std::string();
+		return str.substr(first_char, last_char - first_char + 1);
+	}
+
+	//! Splits ('tokenizes') the given string at each instance of delim
+	static std::vector<std::string> fe_splitstring(const std::string &str, const std::string &delim, bool skip_empty = true)
+	{
+		std::vector<std::string> result;
+		CL_String::size_type end_pos = 0, begin_pos = 0;
+		while (true)
+		{
+			end_pos = str.find(delim, begin_pos);
+			if (end_pos == CL_String::npos)
+			{
+				if (begin_pos != str.length())
+					result.push_back(str.substr(begin_pos));
+				break;
+			}
+			else
+			{
+				if (!skip_empty || begin_pos != end_pos)
+					result.push_back(str.substr(begin_pos, end_pos-begin_pos));
+
+				begin_pos = end_pos + delim.length();
+			}
+		}
+		return result;
+	}
+
 	//! toupper()-like function for C++ strings
 	/*!
 	 * Transformation is done directly to the passed object
@@ -408,7 +445,7 @@ namespace FusionEngine
 	};
 
 	//! Hash function for PlayerKey
-	std::size_t hash_value(PlayerKey const& k)
+	static std::size_t hash_value(PlayerKey const& k)
 	{
 		std::tr1::hash<std::string> hasher;
 		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());

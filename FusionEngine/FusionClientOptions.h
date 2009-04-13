@@ -98,9 +98,6 @@ namespace FusionEngine
 		//! Number of local players
 		unsigned int m_NumLocalPlayers;
 
-		//! Controls
-		ControlsList m_Controls;
-
 		VarMap m_Variables;
 		PlayerVarMapList m_PlayerVariables;
 
@@ -137,7 +134,7 @@ namespace FusionEngine
 		bool GetPlayerOption(int player, const std::string& name, std::string *val) const;
 
 	protected:
-		CL_Mutex m_Mutex;
+		mutable CL_Mutex m_Mutex;
 		//! Last opened options file
 		std::string m_LastFile;
 

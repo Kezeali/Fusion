@@ -163,9 +163,9 @@ namespace FusionEngine
 	class ScriptObject
 	{
 	public:
-		ScriptObject() : m_Struct(NULL) {}
+		ScriptObject() : m_Object(NULL) {}
 		//! Constructor
-		ScriptObject(asIScriptStruct* script_struct);
+		ScriptObject(asIScriptObject* object);
 		//! Copy constructor
 		ScriptObject(const ScriptObject& other);
 		//! Destructor
@@ -174,18 +174,18 @@ namespace FusionEngine
 		//! Copy assignment
 		//ScriptObject& operator=(const ScriptObject& rhs)
 		//{
-		//	m_Struct = rhs.m_Struct;
-		//	m_Struct->AddRef();
+		//	m_Object = rhs.m_Object;
+		//	m_Object->AddRef();
 		//}
 
 	public:
 		int GetTypeId() const;
-		asIScriptStruct* GetScriptStruct() const;
+		asIScriptObject* GetScriptObject() const;
 		
 		bool IsValid() const;
 
 	protected:
-		asIScriptStruct* m_Struct;
+		asIScriptObject* m_Object;
 	};
 
 	//! Stores script object data

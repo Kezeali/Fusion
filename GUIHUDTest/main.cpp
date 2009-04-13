@@ -151,7 +151,7 @@ private:
 		// TODO: write the script fn generator to create the function which will create
 		//  command objects (in InputPL)
 
-		asIScriptStruct *cmdStruct = cmd.GetScriptStruct();
+		asIScriptObject *cmdStruct = cmd.GetScriptStruct();
 		bool bTrue = true;
 		int propertyCount = cmdStruct->GetPropertyCount();
 		for (int i = 0; i < propertyCount; i++)

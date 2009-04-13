@@ -195,7 +195,7 @@ namespace FusionEngine
 	ScriptObject ScriptingEngine::CreateObject(const char* module, const std::string& type_name)
 	{
 		int id = m_asEngine->GetTypeIdByDecl(module, type_name.c_str());
-		asIScriptStruct* obj = (asIScriptStruct*)m_asEngine->CreateScriptObject(id);
+		asIScriptObject* obj = (asIScriptObject*)m_asEngine->CreateScriptObject(id);
 		obj->AddRef();
 		return ScriptObject(obj);
 	}

@@ -134,7 +134,7 @@ namespace FusionEngine
 		if (m_Context == NULL)
 			return NULL;
 
-		return m_Context->GetReturnPointer();
+		return m_Context->GetAddressOfReturnValue();
 	}
 
 
@@ -144,7 +144,7 @@ namespace FusionEngine
 		m_Timeout(0),
 		m_NoArgs(false)
 	{
-		m_FunctionID = manager->GetEnginePtr()->GetFunctionIDByDecl(module, signature.c_str());
+		m_FunctionID = manager->GetEnginePtr()->GetModule(module)->GetFunctionIdByDecl(signature.c_str());
 	}
 
 	ScriptMethod::ScriptMethod(const char* module, const std::string& signature, int func_id, unsigned int timeout)
@@ -226,12 +226,14 @@ namespace FusionEngine
 			return;
 		}
 
-		std::vector<std::string> args = CL_String::tokenize(working, ",");
+		std::vector<std::string> args = fe_splitstring(working, ",");
 
 		m_ArgTypes.clear();
 		for (int i = 0; i < args.size(); ++i)
 		{
 			std::string& arg = args[i];
+
+			fe_trim(arg);
 
 			if (arg.empty())
 				continue;
@@ -239,9 +241,12 @@ namespace FusionEngine
 			// Pointers are easy to find...
 			size_type indirectionMarkerPos = arg.find("@");
 			if (indirectionMarkerPos != std::string::npos)
+			{
 				m_ArgTypes[i] = Arg::POINTER;
+				continue;
+			}
 
-			// Remove identifier names from the args
+			// Remove identifier from the arg
 			size_type spacePos = arg.find(" ");
 			if (spacePos != std::string::npos)
 				arg = arg.substr(0, spacePos);
@@ -276,7 +281,7 @@ namespace FusionEngine
 		m_Module(module),
 		m_ScriptManager(manager)
 	{
-		m_TypeID = manager->GetEnginePtr()->GetTypeIdByDecl(module, declaration.c_str());
+		m_TypeID = manager->GetEnginePtr()->GetModule(module)->GetTypeIdByDecl(declaration.c_str());
 	}
 
 	ScriptClass::ScriptClass(ScriptingEngine* manager, const char *module, const std::string& declaration, int type_id)
@@ -284,7 +289,7 @@ namespace FusionEngine
 		m_Module(module),
 		m_ScriptManager(manager)
 	{
-		m_TypeID = manager->GetEnginePtr()->GetTypeIdByDecl(module, declaration.c_str());
+		m_TypeID = manager->GetEnginePtr()->GetModule(module)->GetTypeIdByDecl(declaration.c_str());
 	}
 
 	int ScriptClass::GetTypeId() const
@@ -304,7 +309,7 @@ namespace FusionEngine
 
 	ScriptMethod ScriptClass::GetMethod(const std::string& signature) const
 	{
-		int id = m_ScriptManager->GetEnginePtr()->GetMethodIDByDecl(m_TypeID, signature.c_str());
+		int id = m_ScriptManager->GetEnginePtr()->GetObjectTypeById(m_TypeID)->GetMethodIdByDecl(signature.c_str());
 		return ScriptMethod(m_Module, signature, id);
 	}
 
@@ -312,7 +317,7 @@ namespace FusionEngine
 	{
 		if (IsValid())
 		{
-			asIScriptStruct* scriptStruct = (asIScriptStruct*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
+			asIScriptObject* scriptStruct = (asIScriptObject*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
 			ScriptObject object(scriptStruct);
 			return object;
 		}
@@ -326,36 +331,36 @@ namespace FusionEngine
 	}
 
 	
-	ScriptObject::ScriptObject(asIScriptStruct *script_struct)
-		: m_Struct(script_struct)
+	ScriptObject::ScriptObject(asIScriptObject *object)
+		: m_Object(object)
 	{
 	}
 
 	ScriptObject::ScriptObject(const ScriptObject& other)
 	{
-		m_Struct = other.m_Struct;
-		m_Struct->AddRef();
+		m_Object = other.m_Object;
+		m_Object->AddRef();
 	}
 
 	ScriptObject::~ScriptObject()
 	{
-		if (m_Struct != NULL)
-			m_Struct->Release();
+		if (m_Object != NULL)
+			m_Object->Release();
 	}
 
 	int ScriptObject::GetTypeId() const
 	{
-		return m_Struct->GetStructTypeId();
+		return m_Object->GetTypeId();
 	}
 
-	asIScriptStruct* ScriptObject::GetScriptStruct() const
+	asIScriptObject* ScriptObject::GetScriptObject() const
 	{
-		return m_Struct;
+		return m_Object;
 	}
 
 	bool ScriptObject::IsValid() const
 	{
-		return m_Struct != NULL;
+		return m_Object != NULL;
 	}
 
 }

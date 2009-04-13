@@ -156,7 +156,7 @@ namespace FusionEngine
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
 
-			r = cont->SetObject(object.GetScriptStruct());
+			r = cont->SetObject(object.GetScriptObject());
 			if (r < 0)
 				return scxt;
 

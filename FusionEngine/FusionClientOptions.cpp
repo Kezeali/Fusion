@@ -30,7 +30,7 @@
 
 #include "FusionClientOptions.h"
 
-#include "FusionVirtualFileSource_PhysFS.h"
+#include "FusionXML.h"
 
 namespace FusionEngine
 {
@@ -65,10 +65,6 @@ namespace FusionEngine
 
 	ClientOptions::~ClientOptions()
 	{
-		m_Mutex.lock();
-		//m_PlayerOptions.clear();
-		m_Controls.clear();
-		m_Mutex.unlock();
 	}
 
 	bool ClientOptions::Save()
@@ -83,7 +79,6 @@ namespace FusionEngine
 	{
 		m_Mutex.lock();
 
-		//ResourcePointer<TiXmlDocument> docResource = ResourceManager::getSingleton().OpenOrCreateResource<TiXmlDocument>(filename);
 		ticpp::Document doc;
 
 		// Decl
@@ -116,11 +111,7 @@ namespace FusionEngine
 		// Write file
 		try
 		{
-			// Initialize a vdir
-			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-			CL_IODevice in = vdir.open_file(fe_widen(filename), CL_File::create_always, CL_File::access_write);
-
-			in.write(doc.Value().c_str(), doc.Value().length());
+			SaveString_PhysFS(doc.Value(), filename);
 		}
 		catch (CL_Exception&)
 		{
@@ -142,14 +133,7 @@ namespace FusionEngine
 			// Read file
 			try
 			{
-				// Initialize a vdir
-				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				CL_IODevice in = vdir.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
-
-				char filedata[2084];
-				in.read(&filedata, in.get_size());
-
-				doc.Parse(std::string(filedata), true, TIXML_ENCODING_UTF8);
+				doc = ticpp::Document(OpenXml_PhysFS(filename));
 			}
 			catch (CL_Exception&)
 			{
@@ -182,7 +166,7 @@ namespace FusionEngine
 		{
 			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
 
-			throw FileSystemException("ClientOptions::LoadFromFile", ex.what(), __FILE__, __LINE__);
+			FSN_EXCEPT(ExCode::IO, "ClientOptions::LoadFromFile", ex.what());
 		}
 
 		return true;
@@ -215,7 +199,7 @@ namespace FusionEngine
 	bool ClientOptions::GetOption(const std::string &name, std::string *ret) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		VarMap::iterator itVar = m_Variables.find(name);
+		VarMap::const_iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
@@ -228,7 +212,7 @@ namespace FusionEngine
 	bool ClientOptions::GetOption(const std::string &name, int *ret) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		VarMap::iterator itVar = m_Variables.find(name);
+		VarMap::const_iterator itVar = m_Variables.find(name);
 		if (itVar == m_Variables.end())
 			return false;
 
@@ -239,13 +223,20 @@ namespace FusionEngine
 	std::string ClientOptions::GetOption_str(const std::string &name) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		return m_Variables[name];
+
+		VarMap::const_iterator _where = m_Variables.find(name);
+		if (_where == m_Variables.end())
+			return "";
+		return _where->second;
 	}
 
 	bool ClientOptions::GetOption_bool(const std::string &name) const
 	{
 		m_Mutex.lock();
-		std::string value = m_Variables[name];
+		VarMap::const_iterator _where = m_Variables.find(name);
+		std::string value = "";
+		if (_where != m_Variables.end())
+			value = _where->second;
 		m_Mutex.unlock();
 		fe_tolower(value);
 		return (value == "1" || value == "t" || value == "true");

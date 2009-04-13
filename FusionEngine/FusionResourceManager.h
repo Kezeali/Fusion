@@ -74,20 +74,6 @@ namespace FusionEngine
 	 *
 	 * \todo Add XMLloader to default loaders
 	 *
-	 * \todo Impliment PhysFS <br>
-	 * DONE: create InputSourceProvider_PhysFS (based on CL_InputSourceProvider_File) <br>
-	 * DONE: create InputSource_PhysFile (based on CL_InputSource_File) <br>
-	 * <br>
-	 * Pass *physFSProvider = new InputSourceProvider_PhysFS("Resource Package");
-	 * to the generic package parser method <br>
-	 * <br>
-	 * In the generic package parser: <br>
-	 * Search for .xml files in the archive (make a method in ResourceLoader
-	 * that calls PHYSFS_enumerateFiles and returns a string vector) <br>
-	 * Read the xml files to find out what type of resources they define <br>
-	 * Call the specific resource parser for that type of resource <br>
-	 * Use CL_Surface("physfs filename" , physFSProvider);
-	 *
 	 * \sa Resource | ResourcePointer | ResourceLoader
 	 */
 	class ResourceManager : public Singleton<ResourceManager>

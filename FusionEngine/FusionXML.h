@@ -27,9 +27,6 @@
 
 #include "FusionCommon.h"
 
-#include <xercesc/dom/DOM.hpp>
-#include <xqilla/xqilla-simple.hpp>
-
 #ifndef Header_FusionEngine_Xml
 #define Header_FusionEngine_Xml
 
@@ -39,73 +36,26 @@
 
 namespace FusionEngine
 {
-	typedef AutoRelease<xercesc::DOMDocument> DocHandle;
-	typedef xercesc::DOMDocument DomDocument;
-	typedef std::tr1::shared_ptr<DomReader> DomReaderPtr;
 
-	class SetupXml
-	{
-	public:
-		//! Constructor
-		SetupXml();
-		//! Destructor
-		~SetupXml();
-	};
+	/*!
+	 * \brief
+	 * Opens an xml file using the given VirtualDirectory object
+	 */
+	TiXmlDocument* OpenXml(const std::wstring &filename, CL_VirtualDirectory vdir);
+	
+	void SaveXml(TiXmlDocument* doc, const std::wstring &filename, CL_VirtualDirectory vdir);
 
-	class DomReader
-	{    
-    public:
-        /*! \brief Default constructor.
-        */
-        DomReader();
+	void SaveString(const std::string &content, const std::wstring &filename, CL_VirtualDirectory vdir);
 
-				/*! \brief Parsing constructor
-				*/
-				DomReader(const std::string& filename, CL_VirtualDirectory vdir);
-    
-        /*! \brief Default destructor.
-        */
-        ~DomReader();
+	/*!
+	 * \brief
+	 * Helper for opening an xml file using PhysFS (which will be the usual way.)
+	 */
+	TiXmlDocument* OpenXml_PhysFS(const std::wstring &filename);
 
-				DomDocument* Parse(const std::string& filename);
+	void SaveXml_PhysFS(TiXmlDocument* doc, const std::wstring &filename);
 
-        void ReleaseDocument();
-
-				/*! \brief Returns the XMLChar as a string
-				*/
-				static CL_String toString(const XMLCh * Ch);
-
-        /** @brief: Returns the value of the specified attribute
-         */
-        static Uint32 getUint32Attribute(XERCES_CPP_NAMESPACE::DOMElement* element, const char* attributeName);
-
-        /** @brief: Returns the value of the specified attribute
-         */
-         static Real getRealAttribute(XERCES_CPP_NAMESPACE::DOMElement* element, const char* attributeName);
-
-        /** @brief: Returns the value of the specified attribute
-         */
-         static String getStringAttribute(XERCES_CPP_NAMESPACE::DOMElement* element, const char* attributeName);
-
-         /** @brief: Returns the value of the specified attribute
-         */
-         static bool getBoolAttribute(XERCES_CPP_NAMESPACE::DOMElement* element, const char* attributeName);
-
-         /** @brief: walks the child subelements (with name tagName) of specified object
-         */
-         class XENOCIDE_BASE_API ElementIterator
-         {
-         public:
-             ElementIterator(XERCES_CPP_NAMESPACE::DOMDocument* doc,     const char* tagName);
-             ElementIterator(XERCES_CPP_NAMESPACE::DOMElement*  element, const char* tagName);
-             ElementIterator(XERCES_CPP_NAMESPACE::DOMNodeList* list);
-
-             XERCES_CPP_NAMESPACE::DOMElement* nextNode();
-         private:
-             XERCES_CPP_NAMESPACE::DOMNodeList* list;
-             Uint32                             index;
-         };
-	};
+	void SaveString_PhysFS(const std::string &content, const std::wstring &filename);
 
 }
 

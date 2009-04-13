@@ -126,7 +126,7 @@ public:
 				if (bodyResource.IsValid())
 				{
 					gc.set_texture(0, bodyTexture);
-					CL_Draw::texture(gc, CL_Rectf(bodyTexture.get_size()));
+					CL_Draw::texture(gc, CL_Rectf(CL_Sizef(bodyTexture.get_size())));
 				}
 				if (logo.IsValid())
 				{

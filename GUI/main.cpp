@@ -277,7 +277,7 @@ public:
 			//ScriptMethod simulate = shipClass.GetMethod("void Simulate(uint)");
 			//ScriptMethod setCommand = shipClass.GetMethod("void SetCommand(Command)");
 			//int shipTypeId = scrEngine->GetTypeIdByDecl(0, "ship");
-			//asIScriptStruct* shipObject = (asIScriptStruct*)scrEngine->CreateScriptObject(shipTypeId);
+			//asIScriptObject* shipObject = (asIScriptObject*)scrEngine->CreateScriptObject(shipTypeId);
 
 			//int preloadId = scrEngine->GetMethodIDByDecl(shipTypeId, "void Preload()");
 			//asIScriptContext* context = scrEngine->CreateContext();
