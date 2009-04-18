@@ -77,7 +77,7 @@ namespace FusionEngine
 		//! Constructor
 		ClientOptions();
 		//! Constructor +file
-		ClientOptions(const std::string &filename);
+		ClientOptions(const std::wstring &filename);
 		//! Clears controls
 		~ClientOptions();
 
@@ -91,6 +91,10 @@ namespace FusionEngine
 	public:
 		typedef std::tr1::unordered_map<std::string, std::string> VarMap;
 
+		//typedef std::tr1::unordered_map<std::string, XmlInputBinding> ControlsList;
+		//! Input mappings list.
+		typedef std::vector<XmlInputBinding> ControlsList;
+
 		// Each player has their own var map
 		typedef std::vector<VarMap> PlayerVarMapList;
 
@@ -101,10 +105,7 @@ namespace FusionEngine
 		VarMap m_Variables;
 		PlayerVarMapList m_PlayerVariables;
 
-		//! Player input mappings
-		//PlayerInputsList PlayerInputs;
-		//! Global input mappings
-		//GlobalInputMap GlobalInputs;
+		ControlsList m_Controls;
 
 	public:
 		////! Set the controls for defaults
@@ -116,9 +117,9 @@ namespace FusionEngine
 		//! Saves to the most recently loaded file.
 		bool Save();
 		//! Saves the current options to a file
-		bool SaveToFile(const std::string &filename);
+		bool SaveToFile(const std::wstring &filename);
 		//! Loads a set of options from a file
-		bool LoadFromFile(const std::string &filename);
+		bool LoadFromFile(const std::wstring &filename);
 
 
 		bool SetOption(const std::string& name, const std::string& value);
@@ -136,7 +137,7 @@ namespace FusionEngine
 	protected:
 		mutable CL_Mutex m_Mutex;
 		//! Last opened options file
-		std::string m_LastFile;
+		std::wstring m_LastFile;
 
 		void insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars);
 		void loadPlayerOptions(const ticpp::Element &opts_root);
@@ -166,13 +167,13 @@ namespace FusionEngine
 
 	static const std::string& PlayerName(unsigned int p)
 	{
-		assert(p < NumLocalPlayers());
+		FSN_ASSERT(p < NumLocalPlayers());
 		return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
 	}
 
 	static bool PlayerUseHud(unsigned int p)
 	{
-		assert(p < NumLocalPlayers());
+		FSN_ASSERT(p < NumLocalPlayers());
 		return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
 	}
 

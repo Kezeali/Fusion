@@ -1,10 +1,10 @@
 #include "../FusionEngine/Common.h"
 #include "../FusionEngine/FusionCommon.h"
 
-#include "../FusionEngine/FusionShapeMesh.h"
+//#include "../FusionEngine/FusionShapeMesh.h"
 #include "../FusionEngine/FusionPhysicsWorld.h"
 #include "../FusionEngine/FusionPhysicsBody.h"
-#include "../FusionEngine/FusionPhysicsTypes.h"
+//#include "../FusionEngine/FusionPhysicsTypes.h"
 #include "../FusionEngine/FusionPhysicsCallback.h"
 
 #include "../FusionEngine/FusionConsole.h"
@@ -25,15 +25,17 @@
 #include "../FusionEngine/FusionResourcePointer.h"
 #include "../FusionEngine/FusionResourceLoader.h"
 #include "../FusionEngine/FusionXMLLoader.h"
-#include "../FusionEngine/FusionTextLoader.h"
+//#include "../FusionEngine/FusionTextLoader.h"
 #include "../FusionEngine/FusionAudioLoader.h"
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionResourceManager.h"
 
-#include "../FusionEngine/FusionInputPluginLoader.h"
+//#include "../FusionEngine/FusionInputPluginLoader.h"
 #include "../FusionEngine/FusionClientOptions.h"
 
 //#include "../FusionEngine/FusionCommand.h"
+
+#include "../FusionEngine/FusionXml.h"
 
 #include <boost/smart_ptr.hpp>
 
@@ -151,7 +153,7 @@ private:
 		// TODO: write the script fn generator to create the function which will create
 		//  command objects (in InputPL)
 
-		asIScriptObject *cmdStruct = cmd.GetScriptStruct();
+		asIScriptObject *cmdStruct = cmd.GetScriptObject();
 		bool bTrue = true;
 		int propertyCount = cmdStruct->GetPropertyCount();
 		for (int i = 0; i < propertyCount; i++)
@@ -304,11 +306,12 @@ public:
 
 			//////////////////
 			// Load some code
-			ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
-			if (!shipScript.IsValid())
-				throw CL_Error("Oh snap! Couldn't load ship.as!");
+			//ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
+			//if (!shipScript.IsValid())
+				//throw CL_Error("Oh snap! Couldn't load ship.as!");
+			std::string shipScript = OpenString_PhysFS("ship.as");
 			// Compile the code
-			m_ScriptManager->AddCode(shipScript->c_str(), 0);
+			m_ScriptManager->AddCode(shipScript, 0);
 			if (!m_ScriptManager->BuildModule(0))
 			{
 				conWindow.display_close_message();

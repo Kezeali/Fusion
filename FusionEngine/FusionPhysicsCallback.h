@@ -51,19 +51,20 @@ namespace FusionEngine
 		Vector2 m_Velocity;
 		Vector2 m_Position;
 		Vector2 m_Normal;
-		ShapePtr m_Shape1, m_Shape2;
+		ShapePtr m_Shape1;
+		ShapePtr m_Shape2;
 
 	public:
-		Contact(const b2ContactPoint& contact , const ShapePtr &shape1, const ShapePtr &shape2)
+		Contact(const b2ContactPoint* contact , const ShapePtr &shape1, const ShapePtr &shape2)
 		{
-			m_Velocity.x = contact.velocity.x;
-			m_Velocity.y = contact.velocity.y;
+			m_Velocity.x = contact->velocity.x;
+			m_Velocity.y = contact->velocity.y;
 
-			m_Position.x = contact.position.x;
-			m_Position.y = contact.position.y;
+			m_Position.x = contact->position.x;
+			m_Position.y = contact->position.y;
 
-			m_Normal.x = contact.normal.x;
-			m_Normal.y = contact.normal.y;
+			m_Normal.x = contact->normal.x;
+			m_Normal.y = contact->normal.y;
 
 			m_Shape1 = shape1;
 			m_Shape2 = shape2;
@@ -137,10 +138,12 @@ namespace FusionEngine
 	public:
 		//! Return true if collision checks should be preformed on the passed body.
 		virtual bool CanCollideWith(const PhysicsBody *other) =0;
-		//! Called on collision with the given body, at the given point.
-		virtual void AddContact(const PhysicsBody *other, const Contact &contact) =0;
+		//! Called on collision with the given body.
+		virtual void ContactBegin(const Contact &contact) =0;
+		//! Called while a contact persists
+		virtual void ContactPersist(const Contact &contact) =0;
 		//! Called when a collision ends
-		virtual void RemoveContact(const Contact &contact) =0;
+		virtual void ContactEnd(const Contact &contact) =0;
 	};
 
 }

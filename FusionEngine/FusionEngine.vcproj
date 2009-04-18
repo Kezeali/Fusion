@@ -191,6 +191,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionAssert.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionAudioLoader.h"
 				>
 			</File>
@@ -710,6 +714,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionAIManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionAssert.cpp"
 				>
 			</File>
 			<File

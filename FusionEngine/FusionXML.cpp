@@ -55,6 +55,25 @@ namespace FusionEngine
 		return doc;
 	}
 
+	std::string OpenString(const std::wstring &filename, CL_VirtualDirectory vdir)
+	{
+		std::string content;
+		try
+		{
+			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
+
+			int len = in.get_size();
+			content.resize(len);
+			in.read(&content[0], len);
+		}
+		catch (CL_Exception&)
+		{
+			FSN_WEXCEPT(ExCode::IO, L"OpenString", L"'" + filename + L"' could not be opened");
+		}
+
+		return content;
+	}
+
 	void SaveXml(TiXmlDocument* doc, const std::wstring &filename, CL_VirtualDirectory vdir)
 	{
 		try
@@ -89,6 +108,14 @@ namespace FusionEngine
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 
 		return OpenXml(filename, vdir);
+	}
+
+	std::string OpenString_PhysFS(const std::wstring &filename)
+	{
+		// Make a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+		return OpenString(filename, vdir);
 	}
 
 	void SaveXml_PhysFS(TiXmlDocument* doc, const std::wstring &filename)

@@ -34,6 +34,24 @@
 namespace FusionEngine
 {
 
+	//! Namespace containing exception types
+	// This is probably a better alternative to the ExCode enum
+	//  (since it would work with a single generic throw method -
+	//  no need for a factory.) The factory is just allows you to
+	//  use error codes to generate exceptions, which is for 
+	//  compatibility with legacy code - which ironically doesn't
+	//  exist in my case (I didn't fully realize this when I was
+	//  following the article this is based on.)
+	//namespace ExCode
+	//{
+	//	typedef Exception Base;
+	//	typedef FileSystemException IO;
+	//	typedef FileNotFoundException FileNotFound;
+	//	typedef FileTypeException FileType;
+	//	typedef NotImplementedException NotImplemented;
+	//	typedef InvalidArgumentException InvalidArgument;
+	//}
+
 	//! Exception codes
 	struct ExCode
 	{
@@ -43,7 +61,8 @@ namespace FusionEngine
 			IO,
 			FileNotFound,
 			FileType,
-			ResourceNotLoaded
+			NotImplemented,
+			InvalidArgument
 		};
 	};
 
@@ -107,11 +126,19 @@ namespace FusionEngine
 		}
 
 		//! Creates a ResourceNotLoadedException
-		static ResourceNotLoadedException Create(
-			ExceptionClass<ExCode::ResourceNotLoaded> type, 
+		static NotImplementedException Create(
+			ExceptionClass<ExCode::NotImplemented> type, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			return ResourceNotLoadedException(origin, message, file, line);
+			return NotImplementedException(origin, message, file, line);
+		}
+
+		//! Creates a InvalidArgumentException
+		static InvalidArgumentException Create(
+			ExceptionClass<ExCode::InvalidArgument> type,
+			const std::string &origin, const std::string &message, const char *file, long line)
+		{
+			return InvalidArgumentException(origin, message, file, line);
 		}
 	};
 

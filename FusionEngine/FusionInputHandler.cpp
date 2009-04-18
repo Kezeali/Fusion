@@ -23,30 +23,28 @@
 #include "FusionInputHandler.h"
 
 #include "FusionInputPluginLoader.h"
-#include "FusionXMLLoader.h"
+#include "FusionXML.h"
 
 namespace FusionEngine
 {
 
 	InputManager::InputManager()
-		: m_SuspendRequests(0),
-		m_CommandBufferLength(128)
+		: m_SuspendRequests(0)
 	{
-		m_PluginLoader = new InputPluginLoader();
+		m_DefinitionLoader = new InputDefinitionLoader();
 	}
 
 	InputManager::InputManager(CL_DisplayWindow window)
-		: m_SuspendRequests(0),
-		m_CommandBufferLength(128)
+		: m_SuspendRequests(0)
 	{
-		m_PluginLoader = new InputPluginLoader();
+		m_DefinitionLoader = new InputDefinitionLoader();
 		m_InputContext = window.get_ic();
 		m_DisplayWindow = window;
 	}
 
 	InputManager::~InputManager()
 	{
-		delete m_PluginLoader;
+		delete m_DefinitionLoader;
 	}
 
 	void InputManager::SetDisplayWindow(CL_DisplayWindow window)
@@ -93,33 +91,18 @@ namespace FusionEngine
 
 		m_Slots.connect(m_DisplayWindow.sig_resize(), this, &InputManager::onDisplayResize);
 
-		int numPlayers = 0;
-		if (!cliOpts->GetOption("num_local_players", &numPlayers))
-			FSN_EXCEPT(ExCode::ResourceNotLoaded, "InputManager::Initialise", "Options file is missing 'num_local_players'");
+		//int numPlayers = 0;
+		//if (!cliOpts->GetOption("num_local_players", &numPlayers))
+		//	FSN_EXCEPT(ExCode::IO, "InputManager::Initialise", "Options file is missing 'num_local_players'");
 		
-		TiXmlDocument* inputDoc = PhysFSOpen_TiXmDocument(L"input/coreinputs.xml");
-		m_PluginLoader->LoadInputs(inputDoc);
+		ticpp::Document inputDoc(OpenXml_PhysFS(L"input/coreinputs.xml"));
+		m_DefinitionLoader->Load(inputDoc);
+		const InputDefinitionLoader::InputDefinitionMap &inputs = m_DefinitionLoader->GetInputDefinitions();
 
-		m_PlayerCommands.resize(g_MaxLocalPlayers);
-		const InputPluginLoader::InputTypeList &inputTypes = m_PluginLoader->GetInputs();
-		buildCommandBuffers(inputTypes);
-
-		TiXmlDocument* keyDoc = PhysFSOpen_TiXmDocument(L"input/keys.xml");
+		ticpp::Document keyDoc(OpenXml_PhysFS(L"input/keys.xml"));
 		loadKeyInfo(keyDoc);
 
 		SetInputMaps(cliOpts);
-	}
-
-	void InputManager::buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes)
-	{
-		//Command cmd;
-		//for(InputPluginLoader::InputTypeList::const_iterator it = inputTypes.begin(), end = inputTypes.end();
-		//	it != end; ++it)
-		//{
-		//	cmd[it->m_Name] = InputState();			
-		//}
-
-		//std::for_each(m_PlayerCommands.begin(), m_PlayerCommands.end(), resize(m_CommandBufferLength, cmd));
 	}
 
 	void InputManager::loadKeyInfo(const ticpp::Document &doc)
@@ -147,12 +130,12 @@ namespace FusionEngine
 
 	void InputManager::CleanUp()
 	{
-		m_PluginLoader->Clear();
+		m_DefinitionLoader->Clear();
 
 		m_KeyInfo.clear();
 		m_KeyBindings.clear();
 
-		m_PlayerCommands.clear();
+		m_InputBindings.clear();
 	}
 
 	void InputManager::Update(unsigned int split)
@@ -174,37 +157,30 @@ namespace FusionEngine
 	void InputManager::SetInputMaps(const FusionEngine::ClientOptions *from)
 	{
 		// Read the controls from the options object and add them to the input bindings
-		for (ClientOptions::ControlsList::const_iterator it = from->m_Controls.begin();
-			it != from->m_Controls.end(); ++it)
+		for (ClientOptions::ControlsList::const_iterator it = from->m_Controls.begin(),
+			end = from->m_Controls.end();
+			it != end; ++it)
 		{
-			unsigned int player = CL_String::to_int(it->m_Player);
+			int player = CL_StringHelp::local8_to_int(it->m_Player);
 			const std::string &input = it->m_Input;
 			KeyInfo &key = m_KeyInfo[it->m_Key];
-			m_KeyBindings[it->m_Key] = InputBinding(player, input, key);
+			//m_KeyBindings[it->m_Key] = InputBinding((unsigned int)player, input, key);
+
+			m_InputBindings[PlayerKey(player, input)] = InputBinding(player, input, key);
 		}
 	}
 
-	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &shortname)
+	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &key_shortname)
 	{
-		std::string playerStr(CL_String::from_int(player));
-		KeyInfo &key = m_KeyInfo[shortname];
-		//m_InputBindings[playerStr + input] = InputBinding(player, input, key);
-		m_KeyBindings[shortname] = InputBinding(player, input, key);
+		//std::string playerStr(CL_StringHelp::int_to_local8(player));
+		KeyInfo &key = m_KeyInfo[key_shortname];
+		m_InputBindings[PlayerKey(player, input)] = InputBinding(player, input, key);
+		//m_KeyBindings[shortname] = InputBinding(player, input, key);
 	}
 
-	CL_InputDevice &InputManager::GetDevice(const std::string &name)
+	CL_InputDevice &InputManager::GetDevice(const std::string &name) const
 	{
-		if (name == "keyboard")
-			return m_InputContext::get_device();
-		else if (name == "gamepad")
-			return CL_Joystick::get_device();
-		else if (name.length() > sizeof("gamepad") && name.substr(0, sizeof("gamepad")) == "gamepad")
-		{
-			int num = CL_String::to_int(name.substr(8));
-			return CL_Joystick::get_device(num);
-		}
-		else
-			return CL_Keyboard::get_device();
+		return m_InputContext.get_device(fe_widen(name));
 	}
 
 	//void InputManager::MapControl(int keysym, const std::string &name, unsigned int filter)
@@ -236,28 +212,50 @@ namespace FusionEngine
 	//	//return m_ControlMap[CL_String::from_int(filter) + name];
 	//}
 
-	//bool InputManager::IsButtonDown(const std::string &name, unsigned int filter) const
-	//{
-	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-	//	if (it != m_ControlMap.end())
-	//		return (*it).second.IsDown();
+	bool InputManager::IsButtonDown(unsigned int player, const std::string &input) const
+	{
+		InputMap::const_iterator _where = m_InputBindings.find(PlayerKey(player, input));
+		if (_where != m_InputBindings.end())
+		{
+			const InputBinding &binding = _where->second;
+			const KeyInfo &key = binding.m_Key;
 
-	//	return false;
-	//}
+			CL_InputDevice &dev = GetDevice(key.m_Device);
+			return dev.get_keycode(key.m_Code);
+		}
 
-	//float InputManager::GetAnalogValue(const std::string &name, unsigned int filter) const
-	//{
-	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-	//	if (it != m_ControlMap.end())
-	//		return (*it).second.GetPosition();
+		return false;
+	}
 
-	//	return 0.0f;
-	//}
+	float InputManager::GetAnalogValue(unsigned int player, const std::string &input) const
+	{
+		InputMap::const_iterator _where = m_InputBindings.find(PlayerKey(player, input));
+		if (_where != m_InputBindings.end())
+		{
+			const InputBinding &binding = _where->second;
+			const KeyInfo &key = binding.m_Key;
+
+			CL_InputDevice &dev = GetDevice(key.m_Device);
+			if (dev.get_type() == CL_InputDevice::joystick)
+				return (float)dev.get_axis(key.m_Code);
+
+			else if (dev.get_type() == CL_InputDevice::pointer)
+			{
+				// Mouse axis keycodes: 0->X, 1->Y
+				if (key.m_Code == 0)
+					return (float)dev.get_x();
+				else if (key.m_Code == 1)
+					return (float) dev.get_y();
+			}
+		}
+
+		return 0.f;
+	}
 
 	Command InputManager::CreateCommand(unsigned int player)
 	{
 		if (m_SuspendRequests != 0)
-			return;
+			return Command();
 
 		//int localPlayers = 0;
 		//ClientOptions::getSingleton().GetOption("num_local_players", &localPlayers);
@@ -287,30 +285,31 @@ namespace FusionEngine
 
 		Command command;
 		// Update all the bindings in the command
-		for (Command::InputStateMap::iterator it = command.m_InputStates.begin(), end = command.m_InputStates.end(); it != end; ++it)
+		for (KeyMap::iterator it = m_KeyBindings.begin(), end = m_KeyBindings.end(); it != end; ++it)
 		{
-			const std::string &inputName = it->first;
-			// Grab the state for the input to be updated
-			InputState &state = it->second;
+			const std::string &keyName = it->first;
 			// Grab the key binding
-			InputBinding &binding = m_KeyBindings[inputName];
+			InputBinding &binding = it->second;
 
 			CL_InputDevice &dev = GetDevice(binding.m_Key.m_Device);
 
 			bool nowDown = dev.get_keycode(binding.m_Key.m_Code);
 			float nowAxis = dev.get_axis(binding.m_Key.m_Code);
 			//! \todo Axis threshold option
-			state.m_Changed = state.m_Down != nowDown || fe_fequal(state.m_Value, nowAxis, 0.1f);
-			state.m_Down = nowDown;
-			state.m_Value = nowAxis;
+			Command::InputStatePtr state = command.GetInputState(binding.m_Input);
+			state->m_Changed = state->m_Down != nowDown || fe_fequal(state->m_Value, nowAxis, 0.1f);
+			state->m_Down = nowDown;
+			state->m_Value = nowAxis;
 		}
+
+		return command;
 #endif
 	}
 
-	const Command &InputManager::GetCommand(unsigned int player)
-	{
-		return m_PlayerCommands[player];
-	}
+	//const Command &InputManager::GetCommand(unsigned int player)
+	//{
+	//	return m_PlayerCommands[player];
+	//}
 
 	float InputManager::GetMouseSensitivity() const
 	{

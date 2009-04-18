@@ -43,6 +43,8 @@ namespace FusionEngine
 	class Vector2T
 	{
 	public:
+		typedef T type;
+	public:
 		//! Copying constructor.
 		Vector2T(const Vector2T<T> &other)
 		{

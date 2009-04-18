@@ -83,6 +83,8 @@ namespace FusionEngine
 		//! Inits the gui
 		virtual bool Initialise();
 
+		void LoadFonts(const char* directory);
+
 		//! Updates the inputs
 		virtual bool Update(unsigned int split);
 
@@ -133,6 +135,7 @@ namespace FusionEngine
 		Rocket::Core::ElementDocument* m_Document;
 
 	public:
+		void initScripting(ScriptingEngine* eng);
 		//! Tells the gui system when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
 		//! Tells the gui system when a mouse button is released

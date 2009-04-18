@@ -188,7 +188,7 @@ namespace FusionEngine
 		asIScriptObject* m_Object;
 	};
 
-	//! Stores script object data
+	//! Stores script type data
 	/*!
 	 * \sa ScriptingEngine
 	 */
@@ -199,8 +199,11 @@ namespace FusionEngine
 		ScriptClass(ScriptingEngine* manager, const char* module, const std::string& declaration);
 		//! Constructor
 		ScriptClass(ScriptingEngine* manager, const char* module, const std::string& declaration, int type_id);
+		//! Constructor
+		ScriptClass(const char *module, asIObjectType* as_type, int type_id);
 
 	public:
+		asIObjectType *GetType() const;
 		int GetTypeId() const;
 		const char* GetModule() const;
 		const std::string& GetDeclaration() const;
@@ -213,8 +216,9 @@ namespace FusionEngine
 		const char* m_Module;
 		std::string m_Decl;
 		int m_TypeID;
+		asIObjectType *m_Type;
 
-		ScriptingEngine* m_ScriptManager;
+		//ScriptingEngine* m_ScriptManager;
 	};
 
 }

@@ -106,6 +106,8 @@ namespace FusionEngine
 		 * If the module is unbuilt, it will be built.
 		 *
 		 * \param[in] module A built or unbuilt module
+		 * \param[in] function Function sig
+		 * \param[in] timeout Timeout in miliseconds. Set to zero to disable timeout.
 		 *
 		 * \returns The exit status of the function
 		 */
@@ -513,6 +515,8 @@ namespace FusionEngine
 		{
 			cxt->SetArgDouble(arg, value);
 		}
+		//! Returns the AngelScript module object with the given name or throws if nosuch exists
+		asIScriptModule *getModuleOrThrow(const char *module) const;
 		//! Registers global methods and functions which scripts can use.
 		void registerTypes();
 

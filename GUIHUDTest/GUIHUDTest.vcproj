@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="tinyxpathpp"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN32;_DEBUG;FSN_ASSERTS_ENABLED;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -181,11 +181,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionAssert.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionAudioLoader.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionCEGUIPhysFSResourceProvider.cpp"
+				RelativePath="..\FusionEngine\FusionClanLibRocketInterface.cpp"
 				>
 			</File>
 			<File
@@ -194,14 +198,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsole.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionConsoleGUI.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.cpp"
 				>
 			</File>
 			<File
@@ -221,18 +217,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionInputPluginLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionLog.cpp"
 				>
 			</File>
@@ -241,15 +225,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp"
 				>
 			</File>
 			<File
@@ -285,10 +265,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionShapeMesh.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionState.cpp"
 				>
 			</File>
@@ -297,11 +273,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionTextLoader.cpp"
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionVector2.cpp"
+				RelativePath="..\FusionEngine\FusionXML.cpp"
 				>
 			</File>
 			<File
@@ -310,22 +286,6 @@
 			</File>
 			<File
 				RelativePath=".\main.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptany.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptdictionary.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptmath.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\stdstring.cpp"
 				>
 			</File>
 		</Filter>
@@ -339,15 +299,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionAssert.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionAudioLoader.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionBitmask.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionCEGUIPhysFSResourceProvider.h"
+				RelativePath="..\FusionEngine\FusionClanLibRocketInterface.h"
 				>
 			</File>
 			<File
@@ -379,6 +339,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionExceptionFactory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionGUI.h"
 				>
 			</File>
@@ -391,18 +355,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionInputPluginLoader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSource_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionInputSourceProvider_PhysFS.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionLog.h"
 				>
 			</File>
@@ -411,15 +363,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionOutputSource_PhysFS.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionOutputSourceProvider_PhysFS.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.h"
 				>
 			</File>
 			<File
@@ -455,10 +403,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionResourceBundle.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionResourceLoader.h"
 				>
 			</File>
@@ -491,10 +435,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionShapeMesh.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionSingleton.h"
 				>
 			</File>
@@ -511,31 +451,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionTextLoader.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionVector2.h"
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionXML.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionXMLLoader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptany.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptdictionary.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\scriptmath.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\stdstring.h"
 				>
 			</File>
 		</Filter>

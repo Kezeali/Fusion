@@ -104,7 +104,7 @@ namespace FusionEngine
 	class ContactListener : public b2ContactListener
 	{
 	public:
-		ContactListener(const PhysicsWorld *world);
+		ContactListener(PhysicsWorld *world);
 
 		virtual void Add(const b2ContactPoint* point);
 		virtual void Persist(const b2ContactPoint* point);
@@ -119,7 +119,7 @@ namespace FusionEngine
 	class ContactFilter : public b2ContactFilter
 	{
 	public:
-		ContactFilter(const PhysicsWorld *world);
+		ContactFilter(PhysicsWorld *world);
 
 		virtual bool ShouldCollide(b2Shape *shape1, b2Shape *shape2);
 		virtual bool RayCollide(void *userData, b2Shape *shape);
@@ -163,16 +163,17 @@ namespace FusionEngine
 	public:
 		//! Adds the given body to the world and initializes it
 		/*!
-		 * \param body Pointer to the body to remove.
+		 * \param body Pointer to the body to add.
 		 */
-		b2Body *SubstantiateBody(PhysicsBodyPtr body);
+		void AddBody(PhysicsBodyPtr body);
 		//! Removes the given body from the world.
 		/*!
 		 * \param body Pointer to the body to remove.
 		 */
-		void RemoveBody(PhysicsBodyPtr &body);
+		void RemoveBody(PhysicsBodyPtr body);
 
-		void BodyDeleted(PhysicsBody *body);
+		//! Internal method called by Body objects upon their destruction
+		void _destroyBody(PhysicsBody *body);
 
 		//! Returns a list of bodies currently in the world
 		const BodyMap& GetBodies() const;
@@ -217,7 +218,7 @@ namespace FusionEngine
 		 * \remarks
 		 * Remember to add a terrain body for the new level! (use AddBody())
 		 */
-		void Initialise(int level_x, int level_y);
+		//void Initialise(int level_x, int level_y);
 
 		//! Activates wrap around
 		void ActivateWrapAround();
@@ -270,7 +271,9 @@ namespace FusionEngine
 		// Box2d world
 		b2World *m_BxWorld;
 
-		b2AABB m_WorldAABB;
+		//b2AABB m_WorldAABB;
+		//b2Vec2 m_Gravity;
+		//bool m_CanSleep;
 
 		//! All physical objects controled by this world.
 		BodyMap m_Bodies;

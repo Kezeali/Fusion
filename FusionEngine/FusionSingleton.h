@@ -59,7 +59,7 @@ namespace FusionEngine
 		//! Constructor
 		Singleton( void )
 		{
-			assert( !ms_Singleton );
+			FSN_ASSERT( !ms_Singleton );
 
 #		if defined( _MSC_VER ) && _MSC_VER < 1200
 			// Old MSVC
@@ -76,7 +76,7 @@ namespace FusionEngine
 		//! Destructor
 		~Singleton( void )
 		{
-			assert( ms_Singleton != NULL );
+			FSN_ASSERT( ms_Singleton != NULL );
 			ms_Singleton = 0;
 		}
 
@@ -84,7 +84,7 @@ namespace FusionEngine
 		//! Returns the static instance of singleton
 		static T& getSingleton( void )
 		{
-			assert( ms_Singleton != NULL );
+			FSN_ASSERT( ms_Singleton != NULL );
 			return ( *ms_Singleton );
 		}
 		//! Returns a pointer to the static instance of singleton
@@ -133,7 +133,7 @@ namespace FusionEngine
 		//! Returns the static instance of singleton
 		static T& getSingleton( void )
 		{
-			cl_assert( ms_Singleton );
+			FSN_ASSERT( ms_Singleton );
 			return ( *ms_Singleton );
 		}
 		//! Returns a pointer to the static instance of singleton

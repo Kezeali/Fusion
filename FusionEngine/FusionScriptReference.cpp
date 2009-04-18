@@ -229,7 +229,7 @@ namespace FusionEngine
 		std::vector<std::string> args = fe_splitstring(working, ",");
 
 		m_ArgTypes.clear();
-		for (int i = 0; i < args.size(); ++i)
+		for (unsigned int i = 0; i < args.size(); ++i)
 		{
 			std::string& arg = args[i];
 
@@ -278,18 +278,27 @@ namespace FusionEngine
 
 	ScriptClass::ScriptClass(ScriptingEngine* manager, const char *module, const std::string& declaration)
 		: m_Decl(declaration),
-		m_Module(module),
-		m_ScriptManager(manager)
+		//m_ScriptManager(manager),
+		m_Module(module)
 	{
 		m_TypeID = manager->GetEnginePtr()->GetModule(module)->GetTypeIdByDecl(declaration.c_str());
+		m_Type = manager->GetEnginePtr()->GetObjectTypeById(m_TypeID);
 	}
 
 	ScriptClass::ScriptClass(ScriptingEngine* manager, const char *module, const std::string& declaration, int type_id)
 		: m_Decl(declaration),
 		m_Module(module),
-		m_ScriptManager(manager)
+		//m_ScriptManager(manager),
+		m_TypeID(type_id),
+		m_Type(manager->GetEnginePtr()->GetObjectTypeById(type_id))
 	{
-		m_TypeID = manager->GetEnginePtr()->GetModule(module)->GetTypeIdByDecl(declaration.c_str());
+	}
+
+	ScriptClass::ScriptClass(const char *module, asIObjectType *as_type, int type_id)
+		: m_Decl(as_type->GetName()),
+		m_Module(module),
+		m_Type(as_type)
+	{
 	}
 
 	int ScriptClass::GetTypeId() const
@@ -309,7 +318,8 @@ namespace FusionEngine
 
 	ScriptMethod ScriptClass::GetMethod(const std::string& signature) const
 	{
-		int id = m_ScriptManager->GetEnginePtr()->GetObjectTypeById(m_TypeID)->GetMethodIdByDecl(signature.c_str());
+		//int id = m_ScriptManager->GetEnginePtr()->GetObjectTypeById(m_TypeID)->GetMethodIdByDecl(signature.c_str());
+		int id = m_Type->GetMethodIdByDecl(signature.c_str());
 		return ScriptMethod(m_Module, signature, id);
 	}
 
@@ -317,9 +327,9 @@ namespace FusionEngine
 	{
 		if (IsValid())
 		{
-			asIScriptObject* scriptStruct = (asIScriptObject*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
-			ScriptObject object(scriptStruct);
-			return object;
+			//asIScriptObject* scriptObject = (asIScriptObject*)m_ScriptManager->GetEnginePtr()->CreateScriptObject(m_TypeID);
+			asIScriptObject *scriptObject = (asIScriptObject*)m_Type->GetEngine()->CreateScriptObject(m_TypeID);
+			return ScriptObject(scriptObject);
 		}
 		else
 			return ScriptObject();
@@ -327,7 +337,8 @@ namespace FusionEngine
 
 	bool ScriptClass::IsValid() const
 	{
-		return m_TypeID >= 0;
+		return m_Type != NULL;
+		//return m_TypeID >= 0;
 	}
 
 	

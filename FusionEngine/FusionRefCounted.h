@@ -97,7 +97,7 @@ namespace FusionEngine
 		{
 			int r;
 			
-			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); assert(r >= 0);
+			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCountedFactory<T>), asCALL_CDECL);
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);

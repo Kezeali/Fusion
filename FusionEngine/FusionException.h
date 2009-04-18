@@ -67,7 +67,7 @@ namespace FusionEngine
 	public:
 		//! Basic constructor
 		Exception();
-		//! Constructor +type +message
+		//! \deprecated Constructor +type +message
 		Exception(ExceptionType type, const std::string &message, bool critical);
 
 		//! Constructor +origin
@@ -78,7 +78,7 @@ namespace FusionEngine
 		Exception(const std::string& name, const std::string &origin, const std::string &message, const char* file, long line);
 
 	public:
-		//! [depreciated] Retrieves the type
+		//! \deprecated Retrieves the type
 		ExceptionType GetType() const;
 		//! Retrieves the exception class name
 		virtual const std::string &GetName() const;
@@ -94,7 +94,7 @@ namespace FusionEngine
 		 */
 		virtual std::string GetDescription() const;
 
-		//! [depreciated] Returns true if the error type of this Exception object is severe
+		//! \deprecated Returns true if the error type of this Exception object is severe
 		bool IsCritical() const;
 
 		//! Returns a string representing the exception object
@@ -150,12 +150,22 @@ namespace FusionEngine
 		FileTypeException(const std::string& origin, const std::string& description, const char* file, long line)
 			: FileSystemException("FileNotFoundException", origin, description, file, line) {}
 	};
-	//! RNF exception
-	class ResourceNotLoadedException : public Exception 
+	//! NotImplemented exception
+	/*!
+	 * For use when a method has not been implemented (but exists as a placeholder).
+	 */
+	class NotImplementedException : public Exception 
 	{
 	public:
-		ResourceNotLoadedException(const std::string& origin, const std::string& description, const char* file, long line)
-			: Exception("UnimplementedException", description, origin, file, line) {}
+		NotImplementedException(const std::string& origin, const std::string& description, const char* file, long line)
+			: Exception("NotImplenetedException", description, origin, file, line) {}
+	};
+	//! InvalidArgument exception
+	class InvalidArgumentException : public Exception
+	{
+	public:
+		InvalidArgumentException(const std::string& origin, const std::string& description, const char* file, long line)
+			: Exception("InvalidArgumentException", description, origin, file, line) {}
 	};
 
 }

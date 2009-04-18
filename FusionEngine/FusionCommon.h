@@ -34,10 +34,6 @@
  * The project website is at http://steelfusion.sourceforge.net/
  */
 
-/*!
- * \todo
- * Implement an assert macro
- */
 
 #ifndef Header_FusionEngine_Common
 #define Header_FusionEngine_Common
@@ -46,16 +42,11 @@
 #pragma once
 #endif
 
-//! XML version to write to the xml declaration of new files
-#define XML_STANDARD "1.0"
-
 
 #include "Common.h"
 
-#include "FusionVector2.h"
-
-#include "FusionSlotContainer.h"
-
+// Errors/Exceptions
+#include "FusionAssert.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 //#include "FusionFileSystemException.h"
@@ -63,9 +54,11 @@
 //#include "FusionFileTypeException.h"
 //#include "FusionInvalidArgumentException.h"
 
-// Chipmunk
-//#include <chipmunk.h>
+#include "FusionVector2.h"
 
+#include "FusionSlotContainer.h"
+
+// Box2d (Physics)
 #include <Box2D.h>
 
 // Boost
@@ -74,6 +67,9 @@
 
 // XML
 #define USE_TINYXML
+
+//! XML version to write to the xml declaration of new files
+#define XML_STANDARD "1.0"
 
 #ifdef USE_XERCES
 #include <xercesc/util/PlatformUtils.hpp>
@@ -437,19 +433,19 @@ namespace FusionEngine
 			key(key)
 		{
 		}
-
-		bool operator== (PlayerKey const& other)
-		{
-			return player == other.player && key == other.key;
-		}
 	};
 
+	bool operator== (PlayerKey const& l, PlayerKey const& r)
+	{
+		return l.player == r.player && l.key == r.key;
+	}
+
 	//! Hash function for PlayerKey
-	static std::size_t hash_value(PlayerKey const& k)
+	/*std::size_t hash_value(PlayerKey const& k)
 	{
 		std::tr1::hash<std::string> hasher;
 		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());
-	}
+	}*/
 
 
 	///////////////////////////
@@ -459,15 +455,11 @@ namespace FusionEngine
 	//class Archive;
 	class Control;
 	class ClientOptions;
-	class ServerOptions;
 	class Environment;
-	class ServerEnvironment;
-	class ClientEnvironment;
 	class Network;
 	class NetworkServer;
 	class NetworkClient;
 	class Scene;
-	class INode;
 	class ShipState;
 	struct ShipInput;
 	class ProjectileState;
@@ -476,7 +468,6 @@ namespace FusionEngine
 	class PhysicsWorld;
 	class PhysicsBody;
 	class Shape;
-	class CollisionGrid;
 	class FusionState;
 	class FusionStatePackSync;
 	class FusionStateMessage;
@@ -497,7 +488,7 @@ namespace FusionEngine
 	class LoadingStage;
 	class ResourceContainer;
 	class ResourceManager;
-	class InputPluginLoader;
+	class InputDefinitionLoader;
 
 
 	///////////////

@@ -36,9 +36,8 @@
 #include "FusionCommon.h"
 
 #include "FusionRefCounted.h"
-#include "FusionPhysicsBody.h"
+//#include "FusionPhysicsBody.h"
 
-#include <boost/shared_ptr.hpp>
 
 namespace FusionEngine
 {
@@ -61,7 +60,7 @@ namespace FusionEngine
 
 	public:
 		// Should this be CommitProperties to match PhysicsBody#CommitProperties()?
-		virtual void UpdateProperties() = 0;
+		virtual void Generate() = 0;
 
 		const b2Shape* GetShape() const;
 
@@ -126,7 +125,7 @@ namespace FusionEngine
 		void AddPoint(Vector2 point);
 		void Clear();
 
-		virtual void UpdateProperties();
+		virtual void Generate();
 
 		virtual double GetInitialWidth() const;
 		virtual double GetInitialHeight() const;
@@ -145,12 +144,13 @@ namespace FusionEngine
 		std::vector<Vector2> m_PointList;
 	};
 
+	//! A prefab PolyShape with four points
 	class RectangleShape : public PolyShape
 	{
 	public:
 		RectangleShape(double width = 10.0, double height = 10.0);
 
-		virtual void UpdateProperties();
+		virtual void Generate();
 
 	protected:
 		double m_Width;
@@ -166,7 +166,7 @@ namespace FusionEngine
 		~CircleShape();
 
 	public:
-		virtual void UpdateProperties();
+		virtual void Generate();
 
 		virtual double GetCurrentWidth() const;
 		virtual double GetCurrentHeight() const;

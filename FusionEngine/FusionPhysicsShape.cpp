@@ -192,7 +192,7 @@ namespace FusionEngine
 		m_PointList.clear();
 	}
 
-	void PolyShape::UpdateProperties()
+	void PolyShape::Generate()
 	{
 		if (m_BxShape)
 		{
@@ -225,7 +225,7 @@ namespace FusionEngine
 
 	double PolyShape::GetInitialWidth() const
 	{
-		assert(m_PointList.size() > 0);
+		FSN_ASSERT(m_PointList.size() > 0);
 
 		double width = 0;
 		double minx = m_PointList[0].x;
@@ -245,7 +245,7 @@ namespace FusionEngine
 
 	double PolyShape::GetInitialHeight() const
 	{
-		assert(m_PointList.size() > 0);
+		FSN_ASSERT(m_PointList.size() > 0);
 
 		double height = 0;
 		double miny = m_PointList[0].y;
@@ -267,7 +267,7 @@ namespace FusionEngine
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
 
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -292,7 +292,7 @@ namespace FusionEngine
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
 
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -316,7 +316,7 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMinX() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -334,7 +334,7 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMaxX() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -352,7 +352,7 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMinY() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -370,7 +370,7 @@ namespace FusionEngine
 	double PolyShape::GetCurrentMaxY() const
 	{
 		b2PolygonShape* polygon = (b2PolygonShape*)m_BxShape;
-		assert(polygon->GetVertexCount() > 0);
+		FSN_ASSERT(polygon->GetVertexCount() > 0);
 
 		int32 vertCount = polygon->GetVertexCount();
 		const b2Vec2 *verts = polygon->GetVertices();
@@ -404,7 +404,7 @@ namespace FusionEngine
 	{
 	}
 
-	void RectangleShape::UpdateProperties()
+	void RectangleShape::Generate()
 	{
 		m_PointList.clear();
 		AddPoint(Vector2(0, 0));
@@ -412,7 +412,7 @@ namespace FusionEngine
 		AddPoint(Vector2(m_Width, m_Height));
 		AddPoint(Vector2(0, m_Height));
 
-		PolyShape::UpdateProperties();
+		PolyShape::Generate();
 	}
 
 
@@ -435,7 +435,7 @@ namespace FusionEngine
 	{
 	}
 
-	void CircleShape::UpdateProperties()
+	void CircleShape::Generate()
 	{
 		if (m_BxShape)
 		{

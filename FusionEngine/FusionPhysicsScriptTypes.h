@@ -50,11 +50,6 @@ namespace FusionEngine
 		new(obj) PhysicsBody();
 	}
 
-	void PhysBodyConstructor_World(PhysicsWorld* world, PhysicsBody* obj)
-	{
-		new(obj) PhysicsBody(world);
-	}
-
 	// Wrapper methods provider easier debugging
 	void PhysBody_SetMass(float m, PhysicsBody* lhs)
 	{
@@ -71,53 +66,53 @@ namespace FusionEngine
 		out = lhs->GetPosition();
 	}
 
-	void PhysBody_ApplyForceRelative(float f, PhysicsBody* lhs)
+	void PhysBody_ApplyForceRelative(float force, PhysicsBody* lhs)
 	{
-		lhs->ApplyForceRelative(f);
+		lhs->ApplyForceRelative(Vector2(0.f, force));
 	}
 
 
 	static void registerPhysBodyMethods(asIScriptEngine* engine)
 	{
 		int r;
-		//r = engine->RegisterObjectBehaviour("Body", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(PhysBodyConstructor), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		//r = engine->RegisterObjectMethod("Body", "void set_world(World)", asMETHOD(PhysicsBody, SetWorld), asCALL_THISCALL); assert( r >= 0 );
-		//r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asMETHOD(PhysicsBody, SetMass), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asFUNCTION(PhysBody_SetMass), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void attach_shape(CircleShape@)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void set_position(float, float)", asFUNCTION(PhysBody_SetPosition), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTIONPR(PhysBody_GetPosition,(void),Vector2), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "const Vector& get_position()", asMETHOD(PhysicsBody,GetPosition), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void apply_force(Vector &in)", asMETHOD(PhysicsBody, ApplyForce), asCALL_THISCALL); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "const Vector& get_force()", asMETHOD(PhysicsBody,GetForce), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void apply_thrust(float)", asFUNCTION(PhysBody_ApplyForceRelative), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody,GetVelocity), asCALL_THISCALL); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "void set_rotational_velocity(float)", asMETHOD(PhysicsBody, SetRotationalVelocity), asCALL_THISCALL); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "float get_rotational_velocity()", asMETHOD(PhysicsBody, GetRotationalVelocity), asCALL_THISCALL); assert(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetRotation), asCALL_THISCALL); assert(r >= 0);
+		//r = engine->RegisterObjectBehaviour("Body", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(PhysBodyConstructor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod("Body", "void set_world(World)", asMETHOD(PhysicsBody, SetWorld), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asMETHOD(PhysicsBody, SetMass), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asFUNCTION(PhysBody_SetMass), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void attach_shape(CircleShape@)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void set_position(float, float)", asFUNCTION(PhysBody_SetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTIONPR(PhysBody_GetPosition,(void),Vector2), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_position()", asMETHOD(PhysicsBody,GetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void apply_force(Vector &in)", asMETHOD(PhysicsBody, ApplyForce), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "void apply_thrust(float)", asFUNCTION(PhysBody_ApplyForceRelative), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "void apply_torque(float)", asMETHOD(PhysicsBody, ApplyTorque), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody,GetVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "void set_angular_velocity(float)", asMETHOD(PhysicsBody, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "float get_angular_velocity()", asMETHOD(PhysicsBody, GetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetRotation), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void ConstructCircleShape(PhysicsBody *o, float centre, float outer, CircleShape *obj)
+	void ConstructCircleShape(float radius, CircleShape *obj)
 	{
-		new(&obj) CircleShape(o, centre, outer, Vector2::zero());
+		new(&obj) CircleShape(radius, Vector2::zero());
 	}
 
-	void ConstructCircleShapeOffset(PhysicsBody *o, float centre, float outer, float offset_x, float offset_y, CircleShape *obj)
+	void ConstructCircleShapeOffset(float radius, float offset_x, float offset_y, CircleShape *obj)
 	{
-		new(&obj) CircleShape(o, centre, outer, Vector2(offset_x, offset_y));
+		new(&obj) CircleShape(radius, Vector2(offset_x, offset_y));
 	}
 
-	CircleShape* CircleShapeFactory(PhysicsBody *body, float centre, float outer)
+	CircleShape* CircleShapeFactory(float radius, float offset_x, float offset_y)
 	{
-		return new CircleShape(body, centre, outer, Vector2::zero());
+		return new CircleShape(radius, Vector2(offset_x, offset_y);
 	}
 
 	static void registerPhysShapeMethods(asIScriptEngine* engine)
 	{
 		int r;
-		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float), void), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float)", asFUNCTION(ConstructCircleShape), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_FACTORY, "CircleShape@ factory(Body@,float,float)", asFUNCTION(CircleShapeFactory), asCALL_CDECL); assert( r >= 0 );
+		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float), void), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float)", asFUNCTION(ConstructCircleShape), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_FACTORY, "CircleShape@ factory(Body@,float,float)", asFUNCTION(CircleShapeFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 	}
 
 	PhysicsBody* PhysWorld_CreateBody(PhysicsWorld* lhs)
@@ -143,11 +138,11 @@ namespace FusionEngine
 	static void registerPhysWorldMethods(asIScriptEngine* engine)
 	{
 		int r;
-		//r = engine->RegisterObjectMethod("World", "Body create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void attach_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  assert( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void list_bodies()", asFUNCTION(PhysicsWorld_ListBodies), asCALL_CDECL_OBJLAST);  assert( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void enable_wraparound()", asMETHOD(PhysicsWorld,ActivateWrapAround), asCALL_THISCALL);  assert( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void disable_wraparound()", asMETHOD(PhysicsWorld,DeactivateWrapAround), asCALL_THISCALL);  assert( r >= 0 );
+		//r = engine->RegisterObjectMethod("World", "Body create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void attach_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void list_bodies()", asFUNCTION(PhysicsWorld_ListBodies), asCALL_CDECL_OBJLAST);  FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void enable_wraparound()", asMETHOD(PhysicsWorld,ActivateWrapAround), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void disable_wraparound()", asMETHOD(PhysicsWorld,DeactivateWrapAround), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
 	}
 
 	// NB: Virtual functions may cause errors

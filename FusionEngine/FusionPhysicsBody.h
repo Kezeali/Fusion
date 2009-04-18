@@ -39,7 +39,6 @@
 #include "FusionPhysicsShape.h"
 #include "FusionPhysicsCallback.h"
 
-#include <boost/ptr_container/ptr_list.hpp>
 
 namespace FusionEngine
 {
@@ -89,7 +88,7 @@ namespace FusionEngine
 		 * \param world
 		 * The world in which this body resides.
 		 */
-		PhysicsBody(PhysicsWorld *world);
+		//PhysicsBody(PhysicsWorld *world);
 
 		//! Constructor with handler.
 		/*!
@@ -106,13 +105,14 @@ namespace FusionEngine
 
 	protected:
 		//! Called by world when this body is substantiated
-		void Initialize(PhysicsWorld *world);
+		//void Initialize(PhysicsWorld *world);
 	public:
 		//! Insert the set body properties into the Box2D objects
 		void CommitProperties();
 
 		b2BodyDef *GetBodyDef() const;
 
+		void _setB2Body(b2Body *b2body);
 		b2Body *GetB2Body() const;
 
 		void SetWorld(PhysicsWorld* world);
@@ -141,31 +141,48 @@ namespace FusionEngine
 		//! Gets the radius of this object
 		virtual float GetRadius();
 
-		//! Preferably this is used to move the body.
+		//! Adds a force to the body
 		virtual void ApplyForce(const Vector2 &force);
-		//! Applies force based on the current orientation and rotational velocity.
+		//! Applies force based on the current orientation.
 		/*!
 		 * <p>
 		 * This allows a force to be applied relative to the ships facing over
 		 * the next step - such as a thrust force.
 		 * </p>
-		 * The following information is [depreciated]
-		 * An engine force vector will be calculated during the simulation step,
-		 * and added to the other forces, to make sure rotational velocity & step time
-		 * are taken into account.
 		 */
-		void ApplyForceRelative(const Vector2 &force);
-		//! Applies (scalar) force based on the current orientation and rotational velocity.
+		virtual void ApplyForceRelative(const Vector2 &force);
+		//! Applies relative scalar force
 		void ApplyForceRelative(float force);
+
+		//! Applies an impulse
+		virtual void ApplyImpulse(const Vector2 &force);
+		//! Applies an impulse based on the current orientation.
+		/*!
+		 * <p>
+		 * This allows an impulse to be applied relative to the ships facing over
+		 * the next step - such as a thrust force.
+		 * </p>
+		 */
+		void ApplyImpulseRelative(const Vector2 &force);
+		//! Applies (scalar) force based on the current orientation and rotational velocity.
+		void ApplyImpulseRelative(float force);
+
+		//! Applies torque
+		virtual void ApplyTorque(float torque);
+
 		//! Sets the constant used to apply damping to the body's movement.
-		virtual void SetCoefficientOfFriction(float damping);
+		//virtual void SetFriction(float damping);
 		//! Sets the constant used to apply bounce to the body's collisions.
-		virtual void SetCoefficientOfRestitution(float bounce);
+		//virtual void SetRestitution(float bounce);
 		//! We don't care about that talk.
 		virtual void SetAngularVelocityRad(float velocity);
-		//! We don't care about your torque.
+		//! We don't care about all this 'torque' business.
 		virtual void SetAngularVelocityDeg(float velocity);
 
+		//! \brief Huh? What? Oh, 'torque'. I see how it is-
+		/*!
+		 * No, no, I'm sure you think it's very important.
+		 */
 		void SetAngularVelocity(float velocity);
 
 		//! \name Collision Properties
@@ -178,8 +195,8 @@ namespace FusionEngine
 
 		b2Body* GetInternalBody() const;
 
-		void AttachShape(Shape* shape);
-		void DetachShape(Shape* shape);
+		void AttachShape(ShapePtr shape);
+		void DetachShape(ShapePtr shape);
 		void ClearShapes();
 
 		const ShapeList &GetShapes();
@@ -262,9 +279,11 @@ namespace FusionEngine
 		//! Returns true if the given body can experiance a collision with this one.
 		bool CanCollideWith(PhysicsBody *other);
 		//! Calls the collision response (if this body has one.)
-		void AddContact(PhysicsBody *other, const Contact &contact);
+		void ContactBegin(const Contact &contact);
+		//! Called while a contact persists
+		void ContactPersist(const Contact &contact);
 		//! Called when a collision ends
-		void RemoveContact(const Contact &contact);
+		void ContactEnd(const Contact &contact);
 
 		//! [depreciated] Use CollisionWith()
 		//void CollisionResponse(PhysicsBody *other, const std::vector<Contact> &collision_point);
@@ -303,9 +322,9 @@ namespace FusionEngine
 		const Vector2 &GetVelocity();
 
 		//! Guess
-		virtual float GetCoefficientOfFriction() const;
+		//virtual float GetFriction() const;
 		//! Yep
-		virtual float GetCoefficientOfRestitution() const;
+		//virtual float GetRestitution() const;
 
 		virtual float GetAngleRad() const;
 		virtual float GetAngleDeg() const;

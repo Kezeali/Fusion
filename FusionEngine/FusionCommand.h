@@ -45,12 +45,12 @@ namespace FusionEngine
 
 	class Command
 	{
-	protected:
+	public:
 		typedef std::tr1::shared_ptr<InputState> InputStatePtr;
 		typedef std::tr1::unordered_map<std::string, InputStatePtr> InputStateMap;
 
+	protected:
 		InputStateMap m_InputStates;
-
 		ScriptObject m_ScriptCommand;
 
 	public:
@@ -72,6 +72,19 @@ namespace FusionEngine
 		ScriptObject GetScriptCommand()
 		{
 			return m_ScriptCommand;
+		}
+
+		const InputStateMap &GetInputStates()
+		{
+			return m_InputStates;
+		}
+
+		InputStatePtr GetInputState(const std::string &input)
+		{
+			InputStateMap::iterator _where = m_InputStates.find(input);
+			if (_where == m_InputStates.end())
+				FSN_EXCEPT(ExCode::InvalidArgument, "Command::GetInputState", "Input dosen't exist - " + input);
+			return _where->second;
 		}
 
 	};

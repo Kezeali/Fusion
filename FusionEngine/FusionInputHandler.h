@@ -74,7 +74,7 @@ namespace FusionEngine
 		std::string m_Name;
 		// Control device
 		std::string m_Device;
-		// Scancode, button ID - whatever the device uses to identifies this input
+		// Scancode, button ID - whatever the device uses to identify this input
 		int m_Code;
 		// Shown in the UI
 		std::string m_Description;
@@ -89,7 +89,7 @@ namespace FusionEngine
 	class InputBinding
 	{
 	public:
-		unsigned int m_Player;
+		int m_Player;
 		std::string m_Input; // The 'agency' this control provides :P
 		//std::string m_Key; // The short-name of the key on the keyboard / button on the controler
 		KeyInfo m_Key;
@@ -106,7 +106,7 @@ namespace FusionEngine
 		{
 		}
 
-		InputBinding(unsigned int player, const std::string &input, KeyInfo &key)
+		InputBinding(int player, const std::string &input, KeyInfo &key)
 			: m_Player(player),
 			m_Input(input),
 			m_Key(key)
@@ -141,7 +141,7 @@ namespace FusionEngine
 		typedef std::tr1::unordered_map<std::string, KeyInfo> ShortNameMap;
 
 		//! Input names mapped to bindings
-		typedef std::map<std::string, InputBinding> InputMap;
+		typedef std::tr1::unordered_map<PlayerKey, InputBinding> InputMap;
 		//! Key shortnames mapped to inputs (i.e. bindings)
 		typedef std::map<std::string, InputBinding> KeyMap;
 
@@ -177,18 +177,20 @@ namespace FusionEngine
 		//! Sets up inputs
 		void SetInputMaps(const ClientOptions *from);
 
-		void MapControl(unsigned int player, const std::string &name, const std::string &shortname);
-		CL_InputDevice& GetDevice(const std::string &name);
+		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname);
+
+		CL_InputDevice& GetDevice(const std::string &name) const;
 
 		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
 		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
 
-		//const Control &GetControl(const std::string& name, unsigned int filter = 0) const;
-		bool IsButtonDown(const std::string& name, unsigned int player = 0) const;
-		float GetAnalogValue(const std::string& name, unsigned int player = 0) const;
+		//const Control &GetControl(const std::string& name) const;
+		bool IsButtonDown(unsigned int player, const std::string& input_name) const;
+		float GetAnalogValue(unsigned int player, const std::string& input_name) const;
 
-		void CreateCommand(int tick, unsigned int split, unsigned int player);
-		const Command &GetCommand(unsigned int player, int tick);
+		//! Probably [depreciated]
+		Command CreateCommand(unsigned int player);
+		//const Command &GetCommand(unsigned int player, int tick);
 
 		float GetMouseSensitivity() const;
 
@@ -207,25 +209,26 @@ namespace FusionEngine
 #endif
 		
 
-		// Still not sure if this is needed (vs m_KeyBindings)
+		// For IsButtonDown(), etc (direct input gathering)
 		InputMap m_InputBindings;
+		// For CreateCommand(), GetCommand() (step-based input gathering)
 		KeyMap m_KeyBindings;
 
 		//! Current input states
 		CommandList m_CurrentCommands;
 		//! Input state history
-		PlayerCommandLists m_PlayerCommands;
+		//PlayerCommandLists m_PlayerCommands;
 
-		InputPluginLoader *m_PluginLoader;
+		InputDefinitionLoader *m_DefinitionLoader;
 
 		//! The InputHandler will not be considered active till this reaches zero.
 		int m_SuspendRequests;
 
-		unsigned int m_CommandBufferLength;
+		//unsigned int m_CommandBufferLength;
 
 
 		CL_DisplayWindow m_DisplayWindow;
-		CL_InputContext m_InputContext;
+		mutable CL_InputContext m_InputContext;
 		//! Slot container for inputs
 		CL_SlotContainer m_Slots;
 
@@ -247,7 +250,7 @@ namespace FusionEngine
 		int m_DisplayCenterY;
 
 		//! Builds the command buffers for each player
-		void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes);
+		//void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes);
 		//! Loads human readable and UI control (key / button, etc) names
 		void loadKeyInfo(const ticpp::Document& defDocument);
 

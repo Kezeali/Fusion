@@ -105,12 +105,13 @@ namespace FusionEngine
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
 
-		m_WorldAABB.lowerBound.Set(-10000.0f, -10000.0f);
-		m_WorldAABB.upperBound.Set(10000.0f, 10000.0f);
+		b2AABB worldAABB;
+		worldAABB.lowerBound.Set(-10000.0f, -10000.0f);
+		worldAABB.upperBound.Set(10000.0f, 10000.0f);
 		b2Vec2 gravity(0.0f, 30.0f);
 		bool doSleep = true;
 
-		m_BxWorld = new b2World(m_WorldAABB, gravity, doSleep);
+		m_BxWorld = new b2World(worldAABB, gravity, doSleep);
 
 		m_ContactListener = new ContactListener(this);
 		m_BxWorld->SetContactListener(m_ContactListener);
@@ -121,20 +122,20 @@ namespace FusionEngine
 
 	PhysicsWorld::~PhysicsWorld()
 	{
+		Clear();
 		delete m_ContactListener;
 		delete m_DebugDraw;
 		delete m_BxWorld;
-		Clear();
 	}
 
-	b2Body* PhysicsWorld::SubstantiateBody(PhysicsBodyPtr body)
+	void PhysicsWorld::AddBody(PhysicsBodyPtr body)
 	{
 		b2Body* bxBody = m_BxWorld->CreateBody(body->GetBodyDef());
-		body->Initialize(this);
+		body->_setB2Body(bxBody);
 		m_Bodies[bxBody] = body;
 	}
 
-	void PhysicsWorld::RemoveBody(PhysicsBodyPtr &body)
+	void PhysicsWorld::RemoveBody(PhysicsBodyPtr body)
 	{
 		if (m_RunningSimulation)
 			m_DeleteQueue.push_back(body); // keep a reference (this this is cleared when the simulation finishes)
@@ -142,7 +143,7 @@ namespace FusionEngine
 		m_Bodies.erase(body->GetB2Body());
 	}
 	
-	void PhysicsWorld::BodyDeleted(PhysicsBody *body)
+	void PhysicsWorld::_destroyBody(PhysicsBody *body)
 	{
 		m_BxWorld->DestroyBody(body->GetB2Body());
 	}
@@ -154,17 +155,10 @@ namespace FusionEngine
 
 	void PhysicsWorld::Clear()
 	{
+		// Body::Destructor calls World::BodyDeleted(self), which destroys the Box2D object
+		//  so this is all that is needed to clear the world.
 		m_Bodies.clear();
-
-		//{
-		//	BodyMap::iterator it = m_Statics.begin();
-		//	for (; it != m_Statics.end(); ++it)
-		//	{
-		//		delete (*it);
-		//	}
-
-		//	m_Statics.clear();
-		//}
+		m_DeleteQueue.clear();
 	}
 
 	//void PhysicsWorld::constrainBorders(void* ptr, void* data)
@@ -240,8 +234,8 @@ namespace FusionEngine
 
 	void PhysicsWorld::RunSimulation(float delta_milis)
 	{
-		for (ForceList::iterator it = m_ForceQueue.begin(), end = m_ForceQueue.end(); it != end; ++it)
-			it->ApplyForce();
+		//for (ForceList::iterator it = m_ForceQueue.begin(), end = m_ForceQueue.end(); it != end; ++it)
+		//	it->ApplyForce();
 
 		m_RunningSimulation = true; // bodies can't be deleted
 
@@ -263,50 +257,48 @@ namespace FusionEngine
 
 	void PhysicsWorld::OnContactAdd(const b2ContactPoint *contact)
 	{
-		BodyMap::iterator found_body1 = m_Bodies.find(contact->shape1->GetBody());
-		BodyMap::iterator found_body2 = m_Bodies.find(contact->shape2->GetBody());
-		if (found_body1 == m_Bodies.end() && found_body2->second != NULL)
+		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
+		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
 		{
-			PhysicsBodyPtr body1 = found_body1->second;
+			PhysicsBodyPtr body1 = it_body1->second;
+			PhysicsBodyPtr body2 = it_body2->second;
 
-			if (found_body2 != m_Bodies.end())
-			{
-				PhysicsBodyPtr body2 = found_body2->second;
-				body1->AddContact(body2, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
-			}
-		}
-
-
-		if (found_body2 == m_Bodies.end() && found_body2->second != NULL)
-		{
-			PhysicsBody *body2 = found_body2->second;
-
-			if (found_body1 != m_Bodies.end())
-			{
-				PhysicsBody *body1 = found_body2->second;
-				body2->AddContact(body1, Contact(contact, body1->GetShape(contact.shape1), body2->GetShape(contact.shape2));
-			}
+			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+			body1->ContactBegin(fsnContact);
+			body2->ContactBegin(fsnContact);
 		}
 	}
 
 	void PhysicsWorld::OnContactPersist(const b2ContactPoint *contact)
 	{
+		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
+		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
+		{
+			PhysicsBodyPtr body1 = it_body1->second;
+			PhysicsBodyPtr body2 = it_body2->second;
+
+			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+			body1->ContactPersist(fsnContact);
+			body2->ContactPersist(fsnContact);
+		}
 	}
 
 	void PhysicsWorld::OnContactRemove(const b2ContactPoint *contact)
 	{
-		BodyMap::iterator found_body = m_Bodies.find(contact.shape1->GetBody());
-		if (found_body == m_Bodies.end() && found_body->second != NULL)
+		// Notify both bodies that the contact has been lost
+		//  (if the respective bodies can be found)
+		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
+		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
 		{
-			PhysicsBody *body = find_body;
-			body->RemoveContact(body->GetShape(contact.shape1));
-		}
+			PhysicsBodyPtr body1 = it_body1->second;
+			PhysicsBodyPtr body2 = it_body2->second;
 
-		found_body = m_Bodies.find(contact.shape2->GetBody());
-		if (found_body == m_Bodies.end() && found_body->second != NULL)
-		{
-			PhysicsBody *body = objects_list[contact.shape2->GetBody()];
-			body->RemoveContact(body->GetShape(contact.shape2));
+			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+			body1->ContactEnd(fsnContact);
+			body2->ContactEnd(fsnContact);
 		}
 	}
 
@@ -376,7 +368,7 @@ namespace FusionEngine
 		m_EndedContacts.clear();
 	}
 
-	void SetGCForDebugDraw(CL_GraphicContext gc)
+	void PhysicsWorld::SetGCForDebugDraw(CL_GraphicContext gc)
 	{
 		m_DebugDraw->SetGraphicContext(gc);
 	}
@@ -406,26 +398,6 @@ namespace FusionEngine
 	//}
 
 
-	void PhysicsWorld::Initialise(int level_x, int level_y)
-	{
-		Clear();
-
-		cpResetShapeIdCounter();
-		cpSpaceInit(m_ChipSpace);
-
-		//m_ChipSpace->iterations = 5;
-		cpSpaceResizeStaticHash(m_ChipSpace, 10.0, 4999);
-		cpSpaceResizeActiveHash(m_ChipSpace, 32.0, 999);
-
-		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, 0, &bodyCollFunc, this);
-		cpSpaceAddCollisionPairFunc(m_ChipSpace, g_PhysBodyCpCollisionType, g_PhysBodyCpCollisionType, &bodyCollFunc, this);
-
-		//m_CollisionGrid->SetCellSize(g_PhysGridCellW, g_PhysGridCellH, level_x, level_y);
-
-		m_Width = level_x;
-		m_Height = level_y;
-	}
-
 	void PhysicsWorld::ActivateWrapAround()
 	{
 		SendToConsole("World: Wrap around activated");
@@ -445,22 +417,11 @@ namespace FusionEngine
 
 	void PhysicsWorld::SetBodyDeactivationPeriod(unsigned int millis)
 	{
-		// Only update if necessary (as this could be time consuming with a lot of bodies)
-		if (m_DeactivationPeriod != millis)
-		{
-			BodyList::iterator it = m_Bodies.begin();
-			for (; it != m_Bodies.end(); ++it)
-			{
-				(*it)->SetDeactivationPeriod(millis);
-			}
-
-			m_DeactivationPeriod = millis;
-		}
 	}
 
 	unsigned int PhysicsWorld::GetBodyDeactivationPeriod() const
 	{
-		return m_DeactivationPeriod;
+		return 0;
 	}
 
 	void PhysicsWorld::SetDeactivationVelocity(float minvel)
@@ -488,23 +449,21 @@ namespace FusionEngine
 
 	void PhysicsWorld::SetDamping(float damping)
 	{
-		if (damping < 1.1f)
-			m_ChipSpace->damping = damping;
 	}
 
 	float PhysicsWorld::GetDamping() const
 	{
-		return m_ChipSpace->damping;
+		return 0.0f;
 	}
 
 	void PhysicsWorld::SetGravity(const Vector2& grav_vector)
 	{
-		m_BxWorld->SetGravity(grav_vector.x, grav_vector.y);
+		m_BxWorld->SetGravity(b2Vec2(grav_vector.x, grav_vector.y));
 	}
 
 	Vector2 PhysicsWorld::GetGravity() const
 	{
-		return Vector2(m_ChipSpace->gravity.x, m_ChipSpace->gravity.y);
+		return b2v2(m_BxWorld->GetGravity());
 	}
  
 
@@ -518,7 +477,10 @@ namespace FusionEngine
 		return m_BitmaskRes;
 	}
 
-	ContactListener::ContactListener(const PhysicsWorld *world)
+	///////
+	// ContactListener
+
+	ContactListener::ContactListener(PhysicsWorld *world)
 		: m_World(world)
 	{
 	}
@@ -536,6 +498,25 @@ namespace FusionEngine
 	void ContactListener::Remove(const b2ContactPoint* point)
 	{
 		m_World->OnContactRemove(point);
+	}
+
+	////////
+	// ContactFilter
+	ContactFilter::ContactFilter(PhysicsWorld *world)
+		: m_World(world)
+	{
+	}
+
+	bool ContactFilter::ShouldCollide(b2Shape *shape1, b2Shape *shape2)
+	{
+		return true;
+		//m_World->OnShouldCollide(shape1, shape2);
+	}
+
+	bool ContactFilter::RayCollide(void *userData, b2Shape *shape)
+	{
+		return true;
+		//m_World->OnRayCollide(userData, shape);
 	}
 
 }

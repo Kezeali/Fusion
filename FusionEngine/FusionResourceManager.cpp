@@ -8,6 +8,7 @@
 
 /// Fusion
 #include "FusionConsole.h"
+#include "FusionLogger.h"
 
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
@@ -28,7 +29,7 @@ namespace FusionEngine
 		m_ToUnloadEvent(false)
 	{
 		bool ok = SetupPhysFS::init(fe_narrow(CL_System::get_exe_path()).c_str());
-		assert(ok);
+		FSN_ASSERT(ok);
 
 		Configure();
 	}
@@ -40,7 +41,7 @@ namespace FusionEngine
 		m_ToUnloadEvent(false)
 	{
 		int ok = SetupPhysFS::init(arg0);
-		assert(ok);
+		FSN_ASSERT(ok);
 
 		Configure();
 	}
@@ -297,7 +298,15 @@ namespace FusionEngine
 				ToUnloadList::iterator _where = m_ToUnload.find(toLoadData.tag);
 				if (_where == m_ToUnload.end())
 				{
-					TagResource(toLoadData.type, toLoadData.path, toLoadData.tag);
+					try
+					{
+						TagResource(toLoadData.type, toLoadData.path, toLoadData.tag);
+					}
+					catch (FileSystemException &ex)
+					{
+						// TODO: call error handler ('m_ErrorHandler' should be in ResourceManager)
+						Logger::getSingleton().Add(ex.GetDescription(), "ResourceManager", LOG_NORMAL);
+					}
 				}
 
 				toLoadMutexSection.lock();

@@ -48,7 +48,17 @@ public:
 			CL_InputDevice keyboard = ic.get_keyboard();
 
 			// Load Resources
-			resMan->PreloadResource("IMAGE", L"body.png");
+
+			try
+			{
+				resMan->PreloadResource("IMAGE", L"body.png");
+			}
+			catch (FileSystemException &ex)
+			{
+				Logger::getSingleton().Add(ex.ToString(), "ResourceManager", LOG_NORMAL);
+				SendToConsole("Failed to load resource: " + ex.GetDescription());
+			}
+
 			ResourcePointer<CL_PixelBuffer> bodyResource = resMan->GetResource<CL_PixelBuffer>(L"body.png");
 			CL_Texture bodyTexture;
 			if (bodyResource.IsValid())

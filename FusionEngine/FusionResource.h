@@ -225,7 +225,7 @@ namespace FusionEngine
 		template<typename T>
 		T &GetData() const
 		{
-			assert(IsValid());
+			FSN_ASSERT(IsValid());
 			return *(dynamic_cast<T*>(m_Data));
 		}
 

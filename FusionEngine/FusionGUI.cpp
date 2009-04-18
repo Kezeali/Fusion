@@ -87,6 +87,8 @@ namespace FusionEngine
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
+
+		LoadFonts("gui/");
 		
 		m_Document = m_Context->LoadDocument("gui/demo.rml");
 		if (m_Document != NULL)
@@ -104,6 +106,20 @@ namespace FusionEngine
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUI::onKeyUp);
 
 		return true;
+	}
+
+	void GUI::LoadFonts(const char* directory)
+	{
+		EMP::Core::String font_names[4];
+		font_names[0] = "Delicious-Roman.otf";
+		font_names[1] = "Delicious-Italic.otf";
+		font_names[2] = "Delicious-Bold.otf";
+		font_names[3] = "Delicious-BoldItalic.otf";
+
+		for (int i = 0; i < sizeof(font_names) / sizeof(EMP::Core::String); i++)
+		{
+			Rocket::Core::FontDatabase::LoadFontFace(EMP::Core::String(directory) + font_names[i]);
+		}
 	}
 
 	bool GUI::Update(unsigned int split)

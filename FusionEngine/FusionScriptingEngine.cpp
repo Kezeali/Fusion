@@ -57,24 +57,29 @@ namespace FusionEngine
 
 	void ScriptingEngine::RegisterGlobalObject(const char *decl, void* ptr)
 	{
-		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); assert( r >= 0 );
+		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
 	}
 
 	bool ScriptingEngine::AddCode(const std::string& script, const char *module)
 	{
 		int r;
-		r = m_asEngine->AddScriptSection(module, 0, script.c_str(), script.length());
+		asIScriptModule* mod = m_asEngine->GetModule(module, asGM_CREATE_IF_NOT_EXISTS);
+		r = mod->AddScriptSection("section", script.c_str(), script.length());
 		return r >= 0;
 	}
 
 	bool ScriptingEngine::BuildModule(const char* module)
 	{
-		return m_asEngine->Build(module) >= 0;
+		asIScriptModule* mod = m_asEngine->GetModule(module);
+		// If the module doesn't exist, return false. Otherwise 
+		//  return true on success
+		if (mod == NULL) return false;
+		else return mod->Build() >= 0;
 	}
 
 	ScriptReturn ScriptingEngine::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
 	{
-		int funcID = m_asEngine->GetFunctionIDByDecl(module, function);
+		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(function);
 
 		asIScriptContext* cont = m_asEngine->CreateContext();
 		ScriptReturn scxt(cont);
@@ -169,13 +174,13 @@ namespace FusionEngine
 
 	ScriptMethod ScriptingEngine::GetFunction(const char* module, const std::string& signature)
 	{
-		int funcID = m_asEngine->GetFunctionIDByDecl(module, signature.c_str());
+		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
 		return ScriptMethod(module, signature, funcID);
 	}
 
 	bool ScriptingEngine::GetFunction(ScriptMethod& out, const char* module, const std::string& signature)
 	{
-		int funcID = m_asEngine->GetFunctionIDByDecl(module, signature.c_str());
+		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
 		if (funcID < 0)
 			return false;
 
@@ -188,13 +193,13 @@ namespace FusionEngine
 
 	ScriptClass ScriptingEngine::GetClass(const char* module, const std::string& type_name)
 	{
-		int id = m_asEngine->GetTypeIdByDecl(module, type_name.c_str());
+		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		return ScriptClass(this, module, type_name, id);
 	}
 
 	ScriptObject ScriptingEngine::CreateObject(const char* module, const std::string& type_name)
 	{
-		int id = m_asEngine->GetTypeIdByDecl(module, type_name.c_str());
+		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		asIScriptObject* obj = (asIScriptObject*)m_asEngine->CreateScriptObject(id);
 		obj->AddRef();
 		return ScriptObject(obj);
@@ -202,14 +207,20 @@ namespace FusionEngine
 
 	ScriptMethod ScriptingEngine::GetClassMethod(ScriptClass& type, const std::string& signature)
 	{
-		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
-		ScriptMethod method(type.GetModule(), signature, id);
-		return method;
+		if (type.IsValid())
+		{
+			int id = m_asEngine->GetObjectTypeById(type.GetTypeId())->GetMethodIdByDecl(signature.c_str());
+			ScriptMethod method(type.GetModule(), signature, id);
+			return method;
+		}
+		else
+			return ScriptMethod();
 	}
 
 	ScriptMethod ScriptingEngine::GetClassMethod(ScriptObject& type, const std::string& signature)
 	{
-		int id = m_asEngine->GetMethodIDByDecl(type.GetTypeId(), signature.c_str());
+		asIObjectType *scriptType = m_asEngine->GetObjectTypeById(type.GetTypeId());
+		int id = scriptType->GetMethodIdByDecl(signature.c_str());
 		ScriptMethod method(0, signature, id);
 		return method;
 	}
@@ -221,8 +232,16 @@ namespace FusionEngine
 		if( msg->type == 1 ) msgType = "Warning";
 		if( msg->type == 2 ) msgType = "Info   ";
 
-		std::string formatted = CL_String::format("ScriptManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message);
+		std::wstring formatted(cl_format("ScriptManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
 		SendToConsole(formatted);
+	}
+
+	asIScriptModule *ScriptingEngine::getModuleOrThrow(const char *module) const
+	{
+		asIScriptModule *mod = m_asEngine->GetModule(module, asGM_ONLY_IF_EXISTS);
+		if (mod == NULL)
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::getModuleOrThrow", "There is no module with the requested name");
+		return mod;
 	}
 
 	void ScriptingEngine::registerTypes()

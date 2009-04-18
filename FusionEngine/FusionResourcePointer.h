@@ -360,7 +360,7 @@ namespace FusionEngine
 //		{
 //
 //#ifdef AS_VECTOR_ASSERTBOUNDS
-//			assert(i >= 0 && i < lhs->size() && "Array index out of bounds.");
+//			FSN_ASSERT(i >= 0 && i < lhs->size() && "Array index out of bounds.");
 //#endif
 //
 //#ifdef AS_VECTOR_CHECKBOUNDS
@@ -411,40 +411,40 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterResourcePointer(const std::string type_name, asIScriptEngine* engine)
 	{
-		assert(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(ResourcePointer<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
-		assert(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
 			asBEHAVE_CONSTRUCT, 
 			"void f()", 
 			asFUNCTION(resourcePointerRegisterHelper<T>::Construct), 
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_DESTRUCT,
 			"void f()",
 			asFUNCTION(resourcePointerRegisterHelper<T>::Destruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register destructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_CONSTRUCT,
 			(std::string("void f(")+type_name+"&in)").c_str(),
 			asFUNCTION(resourcePointerRegisterHelper<T>::CopyConstruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register copy constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_ASSIGNMENT,
 			(type_name+"& f(const "+type_name+"&in)").c_str(),
 			asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register assignment operator");
+		FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
 
 	}
 
@@ -453,128 +453,128 @@ namespace FusionEngine
 		const std::string T_AS,  //Template parameter typename in AS - must already be
 		asIScriptEngine* engine) //registered (or be primitive type)!!
 	{
-		assert(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		//// Register the parameter type
 		//error_code = engine->RegisterObjectType(T_AS.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
-		//assert( error_code >= 0 );
+		//FSN_ASSERT( error_code >= 0 );
 
 		//// Register the object operator overloads for the sub-type
 		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_CONSTRUCT,  "void f()", asFUNCTION(ConstructType), asCALL_CDECL_OBJLAST); 
-		//assert( error_code >= 0 );
+		//FSN_ASSERT( error_code >= 0 );
 		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_DESTRUCT,   "void f()", asFUNCTION(DestructType),  asCALL_CDECL_OBJLAST); 
-		//assert( error_code >= 0 );
+		//FSN_ASSERT( error_code >= 0 );
 		//error_code = engine->RegisterObjectBehaviour(T_AS.c_str(), asBEHAVE_ASSIGNMENT, std::string(T_AS+" &f(const "+T_AS+" &in)").c_str(), asMETHODPR(T, operator =, (const T&), T&), asCALL_THISCALL); 
-		//assert( error_code >= 0 );
+		//FSN_ASSERT( error_code >= 0 );
 
 		error_code = engine->RegisterObjectType(V_AS.c_str(), sizeof(ResourcePointer<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
-		assert(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(), 
 			asBEHAVE_CONSTRUCT, 
 			"void f()", 
 			asFUNCTION(resourcePointerRegisterHelper<T>::Construct), 
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
 
 		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 			asBEHAVE_DESTRUCT,
 			"void f()",
 			asFUNCTION(resourcePointerRegisterHelper<T>::Destruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register destructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
 
 		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 			asBEHAVE_CONSTRUCT,
 			(std::string("void f(")+V_AS+"&in)").c_str(),
 			asFUNCTION(resourcePointerRegisterHelper<T>::CopyConstruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register copy constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
 
 		error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 			asBEHAVE_ASSIGNMENT,
 			(V_AS+"& f(const "+V_AS+"&in)").c_str(),
 			asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register assignment operator");
+		FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
 
 		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		//	asBEHAVE_CONSTRUCT,
 		//	"void f(int)",
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::NumConstruct),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register construct(size)");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register construct(size)");
 
 		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 			"string& GetTag()",
 			asFUNCTION(resourcePointerRegisterHelper<T>::GetTag),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register GetTag");
+		FSN_ASSERT(error_code >= 0 && "Failed to register GetTag");
 
 		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 			(T_AS+"& get()").c_str(),
 			asFUNCTION(resourcePointerRegisterHelper<T>::GetData),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register GetData");
+		FSN_ASSERT(error_code >= 0 && "Failed to register GetData");
 
 		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		//	asBEHAVE_INDEX,
 		//	(T_AS+"& f(int)").c_str(),
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::Index),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register operator[]");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register operator[]");
 
 		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		//	asBEHAVE_INDEX,
 		//	("const "+T_AS+"& f(int) const").c_str(),
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::Index),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register operator[]");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register operator[]");
 
 		//error_code = engine->RegisterObjectBehaviour(V_AS.c_str(),
 		//	asBEHAVE_ASSIGNMENT,
 		//	(V_AS+"& f(const "+V_AS+"&in)").c_str(),
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::Assign),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register operator=");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register operator=");
 
 		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		//	"int size() const",
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::Size),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register size");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register size");
 
 		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		//	"void resize(int)",
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::Resize),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register resize");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register resize");
 
 		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		//	(std::string("void push_back(")+T_AS+"&in)").c_str(),
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::PushBack),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register push_back");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register push_back");
 
 		//error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		//	"void pop_back()",
 		//	asFUNCTION(resourcePointerRegisterHelper<T>::PopBack),
 		//	asCALL_CDECL_OBJLAST);
-		//assert(error_code >= 0 && "Failed to register pop_back");
+		//FSN_ASSERT(error_code >= 0 && "Failed to register pop_back");
 
 		/*	error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		"void erase(int)",
 		asFUNCTION(vectorRegisterHelper<T>::Erase),
 		asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register erase");
+		FSN_ASSERT(error_code >= 0 && "Failed to register erase");
 
 		error_code = engine->RegisterObjectMethod(V_AS.c_str(),
 		(std::string("void insert(int, const ")+T_AS+"&)").c_str(),
 		asFUNCTION(vectorRegisterHelper<T>::Insert),
 		asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register insert");
+		FSN_ASSERT(error_code >= 0 && "Failed to register insert");
 		*/
 	}
 

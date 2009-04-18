@@ -74,40 +74,40 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterType(const std::string& type_name, asIScriptEngine* engine)
 	{
-		assert(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
-		assert(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
 			asBEHAVE_CONSTRUCT, 
 			"void f()", 
 			asFUNCTION(TypeRegisterHelper<T>::Construct), 
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_DESTRUCT,
 			"void f()",
 			asFUNCTION(TypeRegisterHelper<T>::Destruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register destructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_CONSTRUCT,
 			(std::string("void f(")+type_name+"&in)").c_str(),
 			asFUNCTION(TypeRegisterHelper<T>::CopyConstruct),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register copy constructor");
+		FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_ASSIGNMENT,
 			(type_name+"& f(const "+type_name+"&in)").c_str(),
 			asFUNCTION(TypeRegisterHelper<T>::Assign),
 			asCALL_CDECL_OBJLAST);
-		assert(error_code >= 0 && "Failed to register assignment operator");
+		FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
 
 	}
 
@@ -115,12 +115,12 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterTypePOD(const std::string& type_name, asIScriptEngine* engine)
 	{
-		assert(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
-		assert(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 	}
 
@@ -128,12 +128,12 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterTypeNoHandle(const std::string& type_name, asIScriptEngine* engine)
 	{
-		assert(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_REF | asOBJ_NOHANDLE);
-		assert(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 	}
 

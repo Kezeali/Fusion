@@ -53,7 +53,7 @@ namespace FusionEngine
 		m_PlayerVariables.resize(g_MaxLocalPlayers);
 	}
 
-	ClientOptions::ClientOptions(const std::string &filename)
+	ClientOptions::ClientOptions(const std::wstring &filename)
 		: m_NumLocalPlayers(0)
 	{
 		//m_PlayerOptions.resize(g_MaxLocalPlayers);
@@ -75,7 +75,7 @@ namespace FusionEngine
 			return SaveToFile(m_LastFile);
 	}
 
-	bool ClientOptions::SaveToFile(const std::string &filename)
+	bool ClientOptions::SaveToFile(const std::wstring &filename)
 	{
 		m_Mutex.lock();
 
@@ -119,11 +119,13 @@ namespace FusionEngine
 			return false;
 		}
 
+		m_LastFile = filename;
+
 		m_Mutex.unlock();
 		return true;
 	}
 
-	bool ClientOptions::LoadFromFile(const std::string &filename)
+	bool ClientOptions::LoadFromFile(const std::wstring &filename)
 	{
 		CL_MutexSection mutexSection(&m_Mutex);
 		try
@@ -144,7 +146,7 @@ namespace FusionEngine
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != "clientoptions")
-				throw FileTypeException("InputPluginLoader::LoadInputs", filename + " is not a client options file", __FILE__, __LINE__);
+				FSN_WEXCEPT(ExCode::FileType, L"InputPluginLoader::LoadInputs", filename + L" is not a client options file");
 
 			ticpp::Iterator< ticpp::Element > child;
 			for ( child = child.begin( pElem ); child != child.end(); child++ )
@@ -160,6 +162,10 @@ namespace FusionEngine
 				{
 					loadPlayerOptions(*child.Get());
 				}
+				else if (child->Value() == "keys")
+				{
+					loadKeys(*child.Get());
+				}
 			}
 		}
 		catch (ticpp::Exception &ex)
@@ -168,6 +174,8 @@ namespace FusionEngine
 
 			FSN_EXCEPT(ExCode::IO, "ClientOptions::LoadFromFile", ex.what());
 		}
+
+		m_LastFile = filename;
 
 		return true;
 	}
@@ -299,6 +307,41 @@ namespace FusionEngine
 
 				std::string value = child->GetAttribute("value");
 				playerVars[name] = value;
+			}
+		}
+	}
+
+	void ClientOptions::loadKeys(const ticpp::Element &opts_root)
+	{
+		if (!CL_StringHelp::compare(opts_root.Value(), "keys", true))
+			return;
+
+		std::string player = opts_root.GetAttribute("player");
+		unsigned int playerNum = 0;
+		if (!CL_StringHelp::compare(player, "default", true))
+		{
+			if (!fe_issimplenumeric(player))
+				return;
+
+			playerNum = CL_StringHelp::local8_to_int(player);
+		}
+
+		if (playerNum > m_NumLocalPlayers || playerNum > m_PlayerVariables.size())
+			return;
+
+		ticpp::Iterator< ticpp::Element > child;
+		for ( child = child.begin( &opts_root ); child != child.end(); child++ )
+		{
+			if (CL_StringHelp::compare(child->Value(), "bind", true))
+			{
+				std::string name = child->GetAttribute("input");
+				if (name.empty()) continue;
+
+				std::string key = child->GetAttribute("key");
+
+				XmlInputBinding binding(name, key, player);
+
+				m_Controls.push_back(binding);
 			}
 		}
 	}

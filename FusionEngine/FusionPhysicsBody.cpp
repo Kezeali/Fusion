@@ -41,65 +41,60 @@ namespace FusionEngine
 		m_BxBodyDef->position.Set(0.0f, 0.0f);
 	}
 
-	PhysicsBody::PhysicsBody(PhysicsWorld *world)
-		: m_World(world),
-		//m_CollisionFlags(C_NONE),
-		//m_CollisionResponse(0),
-		m_CollisionHandler(0),
-		m_UserData(0),
-		m_Acceleration(Vector2::zero()),
-		m_AppliedForce(Vector2::zero()),
-		//m_GotCGUpdate(false),
-		m_Active(true),
-		m_DeactivationCounter(0),
-		m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
-		m_Type(0),
-		m_Mass(0.f),
-		m_Radius(0),
-		m_CachedPosition(Vector2::zero()),
-		m_Rotation(0.f),
-		m_RotationalVelocity(0.f),
-		//m_UsesAABB(false),
-		//m_UsesDist(false),
-		//m_UsesPixel(false),
-		m_CachedVelocity(Vector2::zero()),
-		m_AppliedRelativeForce(0)
-	{
-		m_BxBodyDef = new b2BodyDef();
-		m_BxBodyDef->allowSleep = true;
-		m_BxBodyDef->linearDamping = 0.0f;
-		m_BxBodyDef->angularDamping = 0.01f;
+	//PhysicsBody::PhysicsBody(PhysicsWorld *world)
+	//	: m_World(world),
+	//	//m_CollisionFlags(C_NONE),
+	//	//m_CollisionResponse(0),
+	//	m_CollisionHandler(0),
+	//	m_UserData(0),
+	//	m_Acceleration(Vector2::zero()),
+	//	m_AppliedForce(Vector2::zero()),
+	//	//m_GotCGUpdate(false),
+	//	m_Active(true),
+	//	m_DeactivationCounter(0),
+	//	m_DeactivationPeriod(world->GetBodyDeactivationPeriod()),
+	//	m_Type(0),
+	//	m_Mass(0.f),
+	//	m_Radius(0),
+	//	m_CachedPosition(Vector2::zero()),
+	//	m_Rotation(0.f),
+	//	m_RotationalVelocity(0.f),
+	//	//m_UsesAABB(false),
+	//	//m_UsesDist(false),
+	//	//m_UsesPixel(false),
+	//	m_CachedVelocity(Vector2::zero()),
+	//	m_AppliedRelativeForce(0)
+	//{
+	//	m_BxBodyDef = new b2BodyDef();
+	//	m_BxBodyDef->allowSleep = true;
+	//	m_BxBodyDef->linearDamping = 0.0f;
+	//	m_BxBodyDef->angularDamping = 0.01f;
 
-		m_BxBodyDef->position.Set(0.0f, 0.0f);
+	//	m_BxBodyDef->position.Set(0.0f, 0.0f);
 
-		Initialize(world);
-	}
+	//	Initialize(world);
+	//}
 
 	PhysicsBody::~PhysicsBody()
 	{
 		Clear();
 		if(m_BxBody)
 		{
-			m_World->BodyDeleted(this);
+			m_World->_destroyBody(this);
 			m_BxBody = NULL;
 		}
 	}
 
-	void PhysicsBody::Initialize(PhysicsWorld *world)
-	{
-		if (world == NULL)
-			return;
+	//void PhysicsBody::Initialize(PhysicsWorld *world)
+	//{
+	//	if (world == NULL)
+	//		return;
 
-		m_World = world;
+	//	m_World = world;
 
-		//if(!m_BxBody)
-		//{
-		//	m_BxBody = m_World->SubstantiateBody(this);
-		//}
-
-		_setVelocity(m_InitialVelocity);
-		CommitProperties();
-	}
+	//	_setVelocity(m_InitialVelocity);
+	//	CommitProperties();
+	//}
 
 	void PhysicsBody::CommitProperties()
 	{
@@ -121,7 +116,7 @@ namespace FusionEngine
 			for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; it++)
 			{
 				(*it)->SetBody(m_BxBody);
-				(*it)->UpdateProperties();
+				(*it)->Generate();
 			}
 		}
 	}
@@ -129,6 +124,11 @@ namespace FusionEngine
 	b2BodyDef *PhysicsBody::GetBodyDef() const
 	{
 		return m_BxBodyDef;
+	}
+
+	void PhysicsBody::_setB2Body(b2Body *b2body)
+	{
+		m_BxBody = b2body;
 	}
 
 	b2Body *PhysicsBody::GetB2Body() const
@@ -206,60 +206,76 @@ namespace FusionEngine
 
 	void PhysicsBody::ApplyForce(const Vector2 &force)
 	{
-		//m_AppliedForce += force;
-
-		m_BxBody->ApplyImpulse(b2Vec2(force.x, force.y), m_BxBody->GetWorldCenter());
-
-		_activate();
+		b2Vec2 worldForce = m_BxBody->GetWorldVector(b2Vec2(force.x, force.y));
+		m_BxBody->ApplyForce(worldForce, m_BxBody->GetWorldCenter());
 	}
 
 	void PhysicsBody::ApplyForceRelative(const Vector2 &force)
 	{
-		float mag = force.length();
-		Vector2 force_relative(
-			sinf( GetAngle() ) * mag,
-			-cosf( GetAngle() ) * mag
-			);
-		//m_AppliedRelativeForce += force_relative;
-		//m_AppliedForce += force_relative;
+		float x = cosf( GetAngle() ) * force.getX() - sinf( GetAngle() ) * force.getY();
+		float y = sinf( GetAngle() ) * force.getX() + cosf( GetAngle() ) * force.getY();
 
-		m_BxBody->ApplyImpulse(b2Vec2(force_relative.x, force_relative.y), m_BxBody->GetWorldCenter());
+		m_BxBody->ApplyForce(b2Vec2(x, y), m_BxBody->GetWorldCenter());
 
-		_activate();
+		//_activate();
 	}
 
 	void PhysicsBody::ApplyForceRelative(float force)
 	{
-		Vector2 force_vector(
-			sinf(GetAngle()) * force,
-			-cosf(GetAngle()) * force
-			);
-		//m_AppliedRelativeForce += force_vector;
-		//m_AppliedForce += force_vector;
+		float x = sinf(GetAngle()) * force;
+		float y = -cosf(GetAngle()) * force;
 
-		m_BxBody->ApplyImpulse(b2Vec2(force_vector.x, force_vector.y), m_BxBody->GetWorldCenter());
+		m_BxBody->ApplyImpulse(b2Vec2(x, y), m_BxBody->GetWorldCenter());
 
-		_activate();
+		//_activate();
+	}
+
+	void PhysicsBody::ApplyImpulse(const Vector2 &force)
+	{
+		//m_AppliedForce += force;
+
+		m_BxBody->ApplyImpulse(b2Vec2(force.x, force.y), m_BxBody->GetWorldCenter());
+
+		//_activate();
+	}
+
+	void PhysicsBody::ApplyImpulseRelative(const Vector2 &force)
+	{
+		float x = cosf( GetAngle() ) * force.getX() - sinf( GetAngle() ) * force.getY();
+		float y = sinf( GetAngle() ) * force.getX() + cosf( GetAngle() ) * force.getY();
+
+		m_BxBody->ApplyImpulse(b2Vec2(x, y), m_BxBody->GetWorldCenter());
+
+		//_activate();
+	}
+
+	void PhysicsBody::ApplyImpulseRelative(float force)
+	{
+		float x = sinf(GetAngle()) * force;
+		float y = -cosf(GetAngle()) * force;
+
+		m_BxBody->ApplyImpulse(b2Vec2(x, y), m_BxBody->GetWorldCenter());
+
+		//_activate();
+	}
+
+	void PhysicsBody::ApplyTorque(float torque)
+	{
+		m_BxBody->ApplyTorque(torque);
 	}
 
 	//void PhysicsBody::ClearForces()
 	//{
 	//}
 
-	void PhysicsBody::AttachShape(Shape* shape)
+	void PhysicsBody::AttachShape(ShapePtr shape)
 	{
 		shape->SetBody(m_BxBody);
-		//shape->GetShape()->collision_type = g_PhysBodyCpCollisionType;
 
-		//cpBodySetMoment(m_BxBody, m_BxBody->i + shape->GetInertia());
-
-		// Add to world
-		//m_World->AddShape(shape);
-
-		m_Shapes.push_back(ShapePtr(shape));
+		m_Shapes.push_back(shape);
 	}
 
-	void PhysicsBody::DetachShape(Shape* shape)
+	void PhysicsBody::DetachShape(ShapePtr shape)
 	{
 		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
 		{
@@ -397,10 +413,6 @@ namespace FusionEngine
 	{
 		m_RotationalVelocity = velocity;
 		m_BxBody->SetAngularVelocity(velocity);
-
-		// Don't activate if this was a call to stop rotation!
-		if (velocity)
-			_activate();
 	}
 
 	//void PhysicsBody::SetColBitmask(FusionEngine::FusionBitmask *bitmask)
@@ -529,19 +541,25 @@ namespace FusionEngine
 		return true;
 	}
 
-	void PhysicsBody::AddContact(PhysicsBody *other, const Contact &contact)
+	void PhysicsBody::ContactBegin(const Contact &contact)
 	{
 		if (m_CollisionHandler != 0)
-			m_CollisionHandler->AddContact(other, contact);
+			m_CollisionHandler->ContactBegin(contact);
 
 		//if (m_CollisionResponse != 0)
 		//	m_CollisionResponse(other, contacts);
 	}
 
-	void PhysicsBody::RemoveContact(const Contact &contact)
+	void PhysicsBody::ContactPersist(const Contact &contact)
 	{
 		if (m_CollisionHandler != 0)
-			m_CollisionHandler->RemoveContact(contact);
+			m_CollisionHandler->ContactPersist(contact);
+	}
+
+	void PhysicsBody::ContactEnd(const Contact &contact)
+	{
+		if (m_CollisionHandler != 0)
+			m_CollisionHandler->ContactEnd(contact);
 	}
 
 	//void PhysicsBody::CollisionResponse(PhysicsBody *other, const std::vector<Contact> &contacts)
@@ -618,15 +636,15 @@ namespace FusionEngine
 		return m_CachedVelocity;
 	}
 
-	float PhysicsBody::GetCoefficientOfFriction() const
-	{
-		return m_LinearDamping;
-	}
+	//float PhysicsBody::GetFriction() const
+	//{
+	//	return m_LinearDamping;
+	//}
 
-	float PhysicsBody::GetCoefficientOfRestitution() const
-	{
-		return m_Bounce;
-	}
+	//float PhysicsBody::GetRestitution() const
+	//{
+	//	return m_Bounce;
+	//}
 
 	float PhysicsBody::GetAngularVelocityRad() const
 	{
