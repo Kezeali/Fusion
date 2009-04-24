@@ -247,6 +247,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionControlSettings.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionDemo.h"
 				>
 			</File>
@@ -311,6 +315,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionHashable.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionImageLoader.h"
 				>
 			</File>
@@ -372,6 +380,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLogger.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLogPhysFS.h"
 				>
 			</File>
 			<File
@@ -699,6 +711,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PhysFS++.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ScriptSharedPtr.h"
 				>
 			</File>
@@ -762,6 +778,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionControlMap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionControlSettings.cpp"
 				>
 			</File>
 			<File
@@ -842,6 +862,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLogger.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLogPhysFS.cpp"
 				>
 			</File>
 			<File
@@ -1038,6 +1062,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionVirtualFileSource_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysFS++.cpp"
 				>
 			</File>
 		</Filter>

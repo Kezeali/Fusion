@@ -45,22 +45,25 @@ namespace FusionEngine
 
 	//! Data entered into the console
 	const std::string g_LogConsole = "console";
-	//! Exceptions not specific to client or server
+	//! Errors not specific to client or server
 	const std::string g_LogException = "error";
-	//! Exceptions in client
+	//! Errors in client
 	const std::string g_LogExceptionClient = g_LogException + "_client";
-	//! Exceptions in server
+	//! Errors in server
 	const std::string g_LogExceptionServer = g_LogException + "_server";
 
 	//! Default extension for logfiles (excluding the dot).
 	static const std::string g_LogDefaultExt = "log";
+
+	typedef std::tr1::shared_ptr<Log> LogPtr;
+
 
 	//! Provides logfile access to all FusionEngine objects
 	/*!
 	 * Manages logfiles.
 	 *
 	 * \todo Allow mapping of log tags to other tags - i.e. if someone
-	 *  calls Logger::Add("Arrrrg", "mylogfile"); and one previously called
+	 *  calls Logger::Add("Arrrrg", "mylogfile"); and you previously called
 	 *  Logger::MapTag("mylogfile", "betterlogfilename"); then "Arrrrg" would
 	 *  be added to the file "betterlogfilename-<date>.<logext>"
 	 */
@@ -68,13 +71,11 @@ namespace FusionEngine
 	{
 	public:
 		//! Maps tags to LogFiles
-		typedef std::map<std::string, Log*> LogList;
+		typedef std::tr1::unordered_map<std::string, LogPtr> LogList;
 
 	public:
 		//! Constructor
 		Logger();
-		//! Constructor +console_logging
-		Logger(bool console_logging);
 
 		//! Destructor
 		~Logger();
@@ -100,15 +101,13 @@ namespace FusionEngine
 		//! Returns true if dating is active
 		inline bool GetUseDating() { return m_UseDating; }
 
-		//! Maps the given alias tag to an existing tag
-		/*!
-		 * \param[in] alias
-		 * The new tag which will redirect to the other given tag
-		 *
-		 * \param[in] tag
-		 * The existing tag to which 'alias' will redirect
-		 */
-		void TagLink(const std::string& tag, const std::string& alias);
+		//! Sets the default threshold for new logs
+		void SetDefaultThreshold(LogSeverity threshold);
+		//! Gets the default threshold
+		inline LogSeverity GetDefaultThreshold() const { return m_DefaultThreshold; }
+
+		//! Opens or creates a logfile
+		LogPtr OpenLog(const std::string& tag);
 
 		//! Opens or creates the logfile corresponding to the given tag
 		/*!
@@ -117,21 +116,8 @@ namespace FusionEngine
 		 *
 		 * \param[in] tag
 		 * Tag to open
-		 *
-		 * \param[in] safe
-		 * If true, the file will be flushed after every write.
 		 */
-		Log* BeginLog(const std::string& tag, bool safe = true);
-
-		//! Adds a header to an already open log
-		/*!
-		 * Opens the specified file and adds the opening line (date, etc.). If
-		 * the file already exists, the opening line will be appended to the end.
-		 *
-		 * \param[in] log
-		 * Existing logfile to open
-		 */
-		void BeginLog(Log *log);
+		LogPtr OpenLog(const std::string& tag, LogSeverity threshold);
 
 		//! Gets the log corresponding to the given tag.
 		/*!
@@ -144,27 +130,27 @@ namespace FusionEngine
 		 * \returns Log*
 		 * If the tag exists
 		 */
-		Log* GetLog(const std::string& tag);
+		LogPtr GetLog(const std::string& tag);
 
 		//! Prints the footer to the given log
-		void EndLog(Log *log);
+		//void EndLog(Log *log);
 
 		//! Finds the given log and calls Log#EndLog(Log*)
-		void EndLog(const std::string& tag);
+		//void EndLog(const std::string& tag);
 
-		//! Closes a logfile and removes it from the list
+		//! Removes a log from the list
 		/*!
 		 * \param log
-		 * The logfile to close
+		 * The log to close
 		 */
-		void RemoveAndDestroyLog(const std::string& tag);
+		void RemoveLog(const std::string& tag);
 
-		//! Closes a logfile and removes it from the list
+		//! Removes a log from the list
 		/*!
 		 * \param log
-		 * The logfile to close
+		 * The log to close
 		 */
-		void RemoveAndDestroyLog(Log* log);
+		void RemoveLog(LogPtr log);
 
 		//! Adds the given message to the given log
 		/*!
@@ -189,6 +175,7 @@ namespace FusionEngine
 		//! True if dating is active
 		bool m_UseDating;
 		std::string m_Ext;
+		LogSeverity m_DefaultThreshold;
 
 		LogList m_Logs;
 
@@ -198,29 +185,14 @@ namespace FusionEngine
 		//! Opens a logfile (creates it if it doesn't exist)
 		/*!
 		 * Always returns a FusionEngine#Log. Throws an exception otherwise.
-		 * <br>
-		 * If the log has to be created, a header will be added by calling Log#BeginLog()
 		 *
 		 * \param tag
 		 * The tag to look for and create a file for if necessary
 		 *
-		 * \param safe
-		 * If the log is must be created, this will be its 'safe' setting
+		 * \param threshold
+		 * The threshold setting for the log
 		 */
-		Log* openLog(const std::string& tag, bool safe = true);
-
-		//! Opens the given log. Will not add header.
-		/*!
-		 * Even if the log has to be created, no header will be added. i.e. this method
-		 * will never call Log#BeginLog()
-		 *
-		 * \param tag
-		 * The tag to look for and create a file for if necessary
-		 *
-		 * \param safe
-		 * If the log is must be created, this will be its 'safe' setting
-		 */
-		Log* openHeadlessLog(const std::string& tag, bool safe = true);
+		LogPtr openLog(const std::string& tag);
 
 
 		//! Makes a filename for the given tag

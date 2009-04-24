@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -35,107 +35,111 @@
 namespace FusionEngine
 {
 
-	Log::Log(const std::string& tag, const std::string& filename, bool safe)
+	Log::Log(const std::string& tag, const std::string& filename)
 		: m_Filename(filename),
-		m_Safe(safe),
-		m_Ended(true),
 		m_Tag(tag),
-		m_Verbosity(VBO_HIGH)
+		m_Threshold(LOG_TRIVIAL)
 	{
-		open();
+		addHeader();
 	}
 
 	Log::~Log()
 	{
-		Flush();
+		addFooter();
 	}
 
-	void Log::SetSafe(bool safe)
+	void Log::addHeader()
 	{
-		// Flush immeadiatly, to be extra safe ;)
-		if (safe)
-			Flush();
+		std::stringstream header;
 
-		m_Safe = safe;
+		// Get the date/time
+		time_t t = time(NULL);
+		std::string tstr = asctime(localtime(&t));
+		tstr[tstr.length() - 1] = 0;
+
+		header << "-------------------- Log began on " << tstr << " --------------------";
+
+		this->AddVerbatim(header.str());
 	}
 
-	bool Log::IsSafe() const
+	void Log::addFooter()
 	{
-		return m_Safe;
+		std::stringstream header;
+
+		// Get the date/time
+		time_t t = time(NULL);
+		std::string tstr = asctime(localtime(&t));
+		tstr[tstr.length() - 1] = 0;
+
+		header << "-------------------- Log ended on " << tstr << " --------------------";
+
+		this->AddVerbatim(header.str());
 	}
 
-	void Log::SetVerbosity(Log::LogVerbosity verbosity)
+	void Log::SetThreshold(LogSeverity threshold)
 	{
-		m_Verbosity = verbosity;
+		m_Threshold = threshold;
 	}
 
-	Log::LogVerbosity Log::GetVerbosity() const
+	LogSeverity Log::GetThreshold() const
 	{
-		return m_Verbosity;
+		return m_Threshold;
 	}
 
-	void Log::LogVerbatim(const std::string& text)
+	void Log::AttachLogFile(LogFilePtr log_file)
 	{
-		verifyOpen();
-		
-		m_Logfile << text << std::endl;
-
-		flushForSafety();
+		m_LogFiles.push_back(log_file);
 	}
 
-	void Log::LogMessage(const std::string& message, LogSeverity severity)
+	void Log::DetachLogFile(LogFilePtr log_file)
 	{
-		verifyOpen();
-
-		if ((m_Verbosity + severity) >= VBO_THRESHOLD)
+		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
+			if ((*it) == log_file)
+			{
+				m_LogFiles.erase(it);
+				break;
+			}
+		}
+	}
+
+	void Log::AddVerbatim(const std::string& text)
+	{
+		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+		{
+			(*it)->Write(text + "\n");
+			(*it)->Flush();
+		}
+	}
+
+	void Log::AddEntry(const std::string& message, LogSeverity severity)
+	{
+		if (severity >= m_Threshold)
+		{
+			std::stringstream tempStream;
+
 			struct tm *pTime;
 			time_t ctTime; time(&ctTime);
 			pTime = localtime( &ctTime );
 
-			m_Logfile
+			tempStream
 				<< "[" << std::setw(2) << std::setfill('0') << pTime->tm_hour
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
-				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec 
+				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec
 				<< "]  " << message << std::endl;
-		}
 
-		flushForSafety();
+			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+			{
+				(*it)->Write(tempStream.str());
+				(*it)->Flush();
+			}
+		}
 	}
 
 	void Log::Flush()
 	{
-		m_Logfile.flush();
-	}
-
-	void Log::open()
-	{
-		m_Logfile.open(m_Filename.c_str(), std::ios::out|std::ios::app);
-
-		if (!m_Logfile.is_open())//m_Logfile.fail())
-		{
-			std::wstring desc = cl_format("The logfile '%1' could not be opened", m_Filename.c_str());
-			FSN_EXCEPT(ExCode::IO,
-				"Log::open",
-				std::string(desc.begin(), desc.end()));
-		}
-	}
-
-	void Log::verifyOpen()
-	{
-		if (!m_Logfile.is_open())
-		{
-			std::wstring desc = cl_format("Logfile '%1' should have been open, but wasn't", m_Filename.c_str());
-			FSN_EXCEPT(ExCode::IO,
-				"Log::verifyOpen",
-				std::string(desc.begin(), desc.end()));
-		}
-	}
-
-	void Log::flushForSafety()
-	{
-		if (m_Safe)
-			Flush();
+		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+			(*it)->Flush();
 	}
 
 }

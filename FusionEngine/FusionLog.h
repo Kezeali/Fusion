@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	//! Level of severity for log messages
+//! Level of severity for log messages
 	enum LogSeverity
 	{
 		LOG_TRIVIAL = 1,
@@ -50,108 +50,76 @@ namespace FusionEngine
 		LOG_MAX
 	};
 
-	//! Exception type for FusionEngine#Log and FusionEngine#Logger
-	//class LogfileException : public Exception
-	//{
-	//public:
-	//	LogfileException(const std::string& message)
-	//		: Exception(Exception::LOGFILE_ERROR, message)
-	//	{}
 	typedef FileSystemException LogfileException;
 
-	//};
+	class ILogFile
+	{
+	public:
+		void Open(const std::string& filename);
+		void Close();
+		void Write(const std::string& entry);
+		void Flush();
+	};
 
-	//! Represents a logfile (usually within FusionEngine#Logger)
+	//! Represents a logfile
 	/*!
-	 * \remarks
-	 * !(keep open) desn't seem to work. For now, everything in
-	 * FusionEngine#Logger defaults to (keep open) to subdue this bug.
+	 * \sa FusionEngine#Logger
 	 */
 	class Log
 	{
 	public:
-		//! Determines how severe log messages must be before they are actually logged
-		enum LogVerbosity
-		{
-			//! = LOG_TRIVIAL
-			VBO_LOW = 1,
-			//! = LOG_MAX / 2
-			VBO_MEDIUM = 2,
-			//! = LOG_MAX - 1
-			VBO_HIGH = 3,
-			//! = LOG_MAX
-			VBO_THRESHOLD = 4
-		};
+		typedef std::tr1::shared_ptr<ILogFile> LogFilePtr;
+		typedef std::vector<LogFilePtr> LogFileList;
 
 	public:
 		//! Constructor +tag +filename +safe
-		Log(const std::string& tag, const std::string& filename, bool safe);
+		Log(const std::string& tag, const std::string& filename);
 		//! Constructor +tag +filename +safe +verbosity
-		Log(const std::string& tag, const std::string& filename, bool safe, LogVerbosity verbosity);
+		Log(const std::string& tag, const std::string& filename, LogSeverity threshold);
 		//! Destructor
 		~Log();
 
 	public:
 		//! Returns the tag given to this log
 		inline const std::string& GetTag() const { return m_Tag; }
-
-		//! Activates / deactivates keep open
-		/*!
-		 * Depending on the setting, the this method will automatically open
-		 * or close the file (as well as setting the value of m_KeepOpen)
-		 */
-		void SetSafe(bool safe);
-		//! Returns true if safe mode is activated
-		bool IsSafe() const;
+		const std::string &GetFilename() const { return m_Filename; }
 
 		//! Sets the verbosity level
-		void SetVerbosity(LogVerbosity verbosity);
+		void SetThreshold(LogSeverity verbosity);
 		//! Returns the verbosity level
-		LogVerbosity GetVerbosity() const;
+		LogSeverity GetThreshold() const;
 
-		//! Adds the given string to the logfile, as is
-		void LogVerbatim(const std::string& text);
+		void AttachLogFile(LogFilePtr log_file);
+		void DetachLogFile(LogFilePtr log_file);
 
-		//! Adds a message to the logfile
+		//! Adds the given string to the log, as is
+		void AddVerbatim(const std::string& text);
+
+		//! Adds an entry to the log
 		/*!
 		 * \param message
-		 * The string to add (verbatim)
+		 * The message to add
 		 *
 		 * \param severity
 		 * The message level (defines whether this is worthy of logging,
 		 * and style of the actual entry in the file)
 		 */
-		void LogMessage(const std::string& message, LogSeverity severity);
+		void AddEntry(const std::string& message, LogSeverity severity);
 
 		//! Force file write
-		/*!
-		 * Useful for logs set to 'keep open' only.
-		 */
 		void Flush();
 
-		bool IsEnded() const { return m_Ended; }
-
-		void _setIsEnded(bool ended) { m_Ended = ended; }
+	protected:
+		void addHeader();
+		void addFooter();
 
 	protected:
-		bool m_Safe;
-		bool m_Ended;
 		std::string m_Tag;
 		std::string m_Filename;
-		std::ofstream m_Logfile;
-		LogVerbosity m_Verbosity;
+		LogSeverity m_Threshold;
 
-	protected:
-		//! Just opens the file
-		void open();
-		//! Makes sure the file is open
-		void verifyOpen();
-
-		//! Closes the file
-		void close();
-
-		//! Flushes the file if m_Safe is true
-		void flushForSafety();
+		LogFileList m_LogFiles;
+		
 	};
 
 }

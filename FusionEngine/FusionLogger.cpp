@@ -32,6 +32,8 @@
 #include "FusionConsole.h"
 #include "FusionPaths.h"
 
+#include "FusionLogPhysFS.h"
+
 #include <time.h>
 
 #if _MSC_VER > 1000
@@ -49,26 +51,10 @@ namespace FusionEngine
 	{
 	}
 
-	Logger::Logger(bool console_logging)
-		: m_ConsoleLogging(console_logging),
-		m_UseDating(true),
-		m_Ext(g_LogDefaultExt)
-	{
-		if (m_ConsoleLogging)
-			ActivateConsoleLogging();
-	}
-
 	Logger::~Logger()
 	{
-		// Destroy all logs
-		LogList::iterator i;
-		for (i = m_Logs.begin(); i != m_Logs.end(); ++i)
-		{
-			if (!i->second->IsEnded()) {
-				EndLog(i->second);
-			}
-			delete i->second;
-		}
+		// Remove all logs
+		m_Logs.clear();
 		// Make sure we are disconnected from the console
 		DisableConsoleLogging();
 	}
@@ -108,37 +94,20 @@ namespace FusionEngine
 		m_UseDating = useDating;
 	}
 
-	// [inlined]
-	//void Logger::GetUseDating()
-	//{
-	//	return m_Dating;
-	//}
-
-	void Logger::TagLink(const std::string& tag, const std::string& alias)
+	void Logger::SetDefaultThreshold(LogSeverity threshold)
 	{
-		m_Logs.insert( LogList::value_type(alias, GetLog(tag)) );
+		m_DefaultThreshold = threshold;
 	}
 
-	Log* Logger::BeginLog(const std::string& tag, bool safe)
+
+	LogPtr Logger::OpenLog(const std::string& tag)
 	{
-		Log* log = NULL;
+		LogPtr log;
 
 		try
 		{
-			log = openHeadlessLog(tag, safe);
-
-			std::stringstream header;
-
-			// Get the date/time
-			time_t t = time(NULL);
-			std::string tstr = asctime(localtime(&t));
-			tstr[tstr.length() - 1] = 0;
-
-			header << "-------------------- Log began on " << tstr << " --------------------";
-
-			log->LogVerbatim(header.str());
-
-			log->_setIsEnded(false);
+			log = openLog(tag);
+			log->SetThreshold(m_DefaultThreshold);
 		}
 		catch (FileSystemException &e)
 		{
@@ -150,102 +119,56 @@ namespace FusionEngine
 		return log;
 	}
 
-	void Logger::BeginLog(Log* log)
+	LogPtr Logger::OpenLog(const std::string& tag, LogSeverity threshold)
 	{
+		LogPtr log;
+
 		try
 		{
-			std::stringstream header;
-
-			// Get the date/time
-			time_t t = time(NULL);
-			std::string tstr = asctime(localtime(&t));
-			tstr[tstr.length() - 1] = 0;
-
-			header << "-------------------- Log began on " << tstr << " --------------------";
-
-			log->LogVerbatim(header.str());
-
-			log->_setIsEnded(false);
+			log = openLog(tag);
+			log->SetThreshold(threshold);
 		}
-		catch (LogfileException& e)
+		catch (FileSystemException &e)
 		{
 			// We don't want to get stuck in a loop, so disable console logging
 			DisableConsoleLogging();
 			Console::getSingletonPtr()->PrintLn(e.ToString());
 		}
+
+		return log;
 	}
 
-	void Logger::EndLog(FusionEngine::Log* log)
+
+
+	void Logger::RemoveLog(const std::string& tag)
 	{
-		try
-		{
-			std::stringstream header;
-
-			// Get the date/time
-			time_t t = time(NULL);
-			std::string tstr = asctime(localtime(&t));
-			tstr[tstr.length() - 1] = 0;
-
-			header << "-------------------- Log ended on " << tstr << " --------------------";
-
-			log->LogVerbatim(header.str());
-
-			log->_setIsEnded(true);
-		}
-		catch (FileSystemException& e)
-		{
-			// We don't want to get stuck in a loop, so we disable console logging first
-			DisableConsoleLogging();
-			SendToConsole(e);
-		}
-	}
-
-	void Logger::EndLog(const std::string& tag)
-	{
-		Log* log = GetLog(tag);
-
-		if (log == NULL) return;
-
-		EndLog(log);
-	}
-
-	void Logger::RemoveAndDestroyLog(const std::string& tag)
-	{
-		LogList::iterator it = m_Logs.find(tag);
-		if (it != m_Logs.end())
-		{
-			Log* log = it->second;
-			m_Logs.erase(it);
-			delete log;
-		}
+		m_Logs.erase(tag);
 	}
 
 
-	void Logger::RemoveAndDestroyLog(Log *log)
+	void Logger::RemoveLog(LogPtr log)
 	{
 		LogList::iterator it = m_Logs.find(log->GetTag());
 		if (it != m_Logs.end())
 		{
 			m_Logs.erase(it);
 		}
-		delete log;
 	}
 
-	Log* Logger::GetLog(const std::string& tag)
+	LogPtr Logger::GetLog(const std::string& tag)
 	{
 		LogList::iterator it = m_Logs.find(tag);
 		if (it != m_Logs.end())
 			return it->second;
 		else
-			return NULL;
+			return LogPtr();
 	}
 
 	void Logger::Add(const std::string& message, const std::string& tag, LogSeverity severity)
 	{
 		try
 		{
-			Log* log = openLog(tag);
-			log->LogMessage(message, severity);
+			openLog(tag)->AddEntry(message, severity);
 		}
 		catch (FileSystemException& e)
 		{
@@ -268,7 +191,7 @@ namespace FusionEngine
 	}
 
 
-	Log* Logger::openLog(const std::string& tag, bool safe)
+	LogPtr Logger::openLog(const std::string& tag)
 	{
 		LogList::iterator it = m_Logs.find(tag);
 		if (it != m_Logs.end())
@@ -276,25 +199,12 @@ namespace FusionEngine
 		
 		else
 		{
-			Log* log = new Log(tag, filename(tag), safe);
-			// Add this log to the list
-			m_Logs[tag] = log;
+			LogPtr log( new Log(tag, filename(tag)) );
 
-			BeginLog(log);
+			// Create a log file
+			Log::LogFilePtr logFile( new PhysFSLogFile() );
+			log->AttachLogFile(logFile);
 
-			return log;
-		}
-	}
-
-	Log* Logger::openHeadlessLog(const std::string& tag, bool keepopen)
-	{
-		LogList::iterator it = m_Logs.find(tag);
-		if (it != m_Logs.end())
-			return it->second;
-
-		else
-		{
-			Log* log = new Log(tag, filename(tag), keepopen);
 			// Add this log to the list
 			m_Logs[tag] = log;
 

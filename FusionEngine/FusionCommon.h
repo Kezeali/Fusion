@@ -58,6 +58,9 @@
 
 #include "FusionSlotContainer.h"
 
+#include "FusionHashable.h"
+
+
 // Box2d (Physics)
 #include <Box2D.h>
 
@@ -99,6 +102,7 @@
 // AngelScript
 //not #define AS_USE_NAMESPACE
 #include <angelscript.h>
+
 
 namespace FusionEngine
 {
@@ -417,36 +421,6 @@ namespace FusionEngine
 	{
 		return Vector2(other.x, other.y);
 	}
-
-	//! Asoc. container key class incl. integer and string key
-	/*!
-	 * Structure compatible with std#tr1#hash for use as a key in
-	 * tr1#unordered_map, etc.
-	 */
-	struct PlayerKey
-	{
-		int player;
-		std::string key;
-
-		PlayerKey(int player, const std::string &key)
-			: player(player),
-			key(key)
-		{
-		}
-	};
-
-	bool operator== (PlayerKey const& l, PlayerKey const& r)
-	{
-		return l.player == r.player && l.key == r.key;
-	}
-
-	//! Hash function for PlayerKey
-	/*std::size_t hash_value(PlayerKey const& k)
-	{
-		std::tr1::hash<std::string> hasher;
-		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());
-	}*/
-
 
 	///////////////////////////
 	// --Forward declarations--
