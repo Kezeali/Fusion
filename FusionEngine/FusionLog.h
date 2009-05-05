@@ -55,10 +55,10 @@ namespace FusionEngine
 	class ILogFile
 	{
 	public:
-		void Open(const std::string& filename);
-		void Close();
-		void Write(const std::string& entry);
-		void Flush();
+		virtual void Open(const std::string& filename) =0;
+		virtual void Close() =0;
+		virtual void Write(const std::string& entry) =0;
+		virtual void Flush() =0;
 	};
 
 	//! Represents a logfile

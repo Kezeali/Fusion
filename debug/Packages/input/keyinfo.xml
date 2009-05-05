@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<keyinfo>
+	<!--This file defines human-readable control names and the config-file shortnames that refer to them-->
+	<!--shortname is used in config-files, etc. 'name' (aka, description) is displayed in the control-setup UI-->
+	<!--A key's shortname must be unique across all devices-->
+	<key shortname="W" device="keyboard" id="17" name="W"/>
+	<key shortname="LSHIFT" device="keyboard" id="43" name="Left Shift"/>
+	<key shortname="PAD7" device="gamepad" id="4" name="Left Shoulder-button"/>
+	<key shortname="MOUSELEFT" device="mouse" id="0" name="Left Button"/>
+	<key shortname="MOUSERIGHT" device="mouse" id="1" name="Right Button"/>
+	<key shortname="MOUSEMIDDLE" device="mouse" id="2" name="Middle Button"/>
+	<key shortname="MOUSEWHEELUP" device="mouse" id="3" name="Scroll-Wheel Up"/>
+	<key shortname="MOUSEWHEELDOWN" device="mouse" id="4" name="Scroll-Wheel Down"/>
+	<key shortname="MOUSEX" device="mouse-pointer" id="0" name="X Position"/>
+	<key shortname="MOUSEY" device="mouse-pointer" id="1" name="Y Position"/>
+	<key shortname="MOUSEXDELTA" device="mouse-axis" id="0" name="X Velocity"/>
+	<key shortname="MOUSEYDELTA" device="mouse-axis" id="1" name="Y Velocity"/>
+</keyinfo>

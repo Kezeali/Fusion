@@ -97,14 +97,14 @@ namespace FusionEngine
 	static CL_SoundBuffer_Session Sound_Prepare(ResourcePointer<CL_SoundBuffer> *lhs, bool looping)
 	{
 		if (!lhs->IsValid())
-			FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
+			FSN_EXCEPT(ExCode::InvalidArgument, "PrepareSession", "The resource is invalid");
 
 		CL_SoundBuffer* data = lhs->Get();
 		if (data != NULL)
 			return data->prepare(looping);
 
 		else
-			FSN_EXCEPT(ExCode::ResourceNotLoaded, "PrepareSession", "The resource is invalid");
+			FSN_EXCEPT(ExCode::InvalidArgument, "PrepareSession", "The resource is invalid");
 	}
 
 	//! Plays the given sound

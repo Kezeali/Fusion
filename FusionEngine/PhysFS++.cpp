@@ -1,7 +1,5 @@
 #include "PhysFS++.h"
 
-#include <OgreException.h>
-
 
 namespace PhysFS
 {

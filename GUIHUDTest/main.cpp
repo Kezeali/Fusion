@@ -125,10 +125,8 @@ using namespace FusionEngine;
 //};
 
 
-class GUIHUDTest : public CL_ClanApplication
+class GUIHUDTest
 {
-public:
-	//GUIHUDTest() : CL_ClanApplication() {}
 private:
 	PhysicsWorld *m_World;
 	InputManager *m_Input;
@@ -162,7 +160,7 @@ private:
 			if (prop == "delta")
 				continue;
 
-			if (m_Input->IsButtonDown(prop, 1))
+			if (m_Input->IsButtonDown(1, prop))
 			{
 				bool *someCmd = (bool*)cmdStruct->GetPropertyPointer(i);
 				someCmd = &bTrue;
@@ -200,7 +198,7 @@ private:
 	}
 
 public:
-	virtual int main(int argc, char **argv)
+	virtual int main(const std::vector<CL_String>& args)
 	{
 		CL_SetupCore core_setup;
 		CL_SetupDisplay disp_setup;
@@ -236,7 +234,7 @@ public:
 		
 			////////////////////
 			// Resource Manager
-			m_ResMan = new ResourceManager(argv[0]);
+			m_ResMan = new ResourceManager();
 			m_ResMan->Configure();
 			m_ResMan->AddResourceLoader(new XMLLoader());
 			m_ResMan->AddResourceLoader(new TextLoader());
@@ -397,4 +395,16 @@ public:
 		return 0;
 	}
 
-} app;
+};
+
+class EntryPoint
+{
+public:
+	static int main(const std::vector<CL_String> &args)
+	{
+		GUIHUDTest app;
+		return app.main(args);
+	}
+}
+
+CL_ClanApplication app(&EntryPoint::main);

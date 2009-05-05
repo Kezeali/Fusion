@@ -315,10 +315,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionCommand.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionCommon.h"
 				>
 			</File>
@@ -344,6 +340,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionGUI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionHashable.h"
 				>
 			</File>
 			<File
@@ -436,6 +436,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionSingleton.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionSlotContainer.h"
 				>
 			</File>
 			<File

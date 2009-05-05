@@ -23,7 +23,7 @@
 		
 	File Author(s):
 
-		Magnus Norddahl (Inspiration in ClanLib)
+		Magnus Norddahl (ClanLib)
 
 		Elliot Hayward (This implementation)
 
@@ -45,7 +45,8 @@ namespace FusionEngine
 	//! Fusion SlotContainer
 	/*!
 	 * Essentually the same as CL_SlotContainer, but with added features
-	 * which make it much more useable
+	 * which make it much more useable. Namely the ability to clear the
+	 * the held slots (disconnect_all()).
 	 */
 	class SlotContainer
 	{

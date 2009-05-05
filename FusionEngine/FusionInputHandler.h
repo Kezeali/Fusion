@@ -29,18 +29,25 @@
 
 #include "FusionCommon.h"
 
-#include <OIS/OIS.h>
+#include <boost/functional/hash.hpp>
 
 /// Inherited
 #include "FusionSingleton.h"
 
 /// Fusion
-#include "FusionClientOptions.h"
-#include "FusionInputPluginLoader.h"
+#include "FusionInputDefinitionLoader.h"
+
+#ifdef _WIN32
+#define FSN_USE_XINPUT
+#endif
+
+// XInput (windows only)
+#ifdef FSN_USE_XINPUT
+#include "FusionXInputController.h"
+#endif
 
 #define FE_INPUTMETHOD_UNBUFFERED 0
-#define FE_INPUTMETHOD_EVENTS 1
-#define FE_INPUTMETHOD_BUFFERED 2
+#define FE_INPUTMETHOD_BUFFERED 1
 
 #define FE_INPUT_METHOD FE_INPUTMETHOD_UNBUFFERED
 
@@ -114,6 +121,34 @@ namespace FusionEngine
 		}
 	};
 
+	struct InputState
+	{
+		InputState()
+			: m_Down(false), m_Value(0.0f), m_ActiveRatio(0.0f), m_Active(false), m_ActiveFirst(false)
+		{}
+		InputState(bool active, float value, float active_percent)
+			: m_Down(active), m_Value(value), m_ActiveRatio(active_percent), m_Active(active), m_ActiveFirst(active)
+		{}
+		InputState(bool active, float value, float active_percent)
+			: m_Down(active), m_Value(value), m_ActiveRatio(active_percent), m_Active(active), m_ActiveFirst(active)
+		{}
+		
+		bool m_Down; // Button / key was active during the step
+		float m_Value; // Axis value, cursor position
+		float m_ActiveRatio; // 0.0 to 1.0: indicates whether the button was pressed / released during the step
+
+		// Used internally
+		//unsigned char m_Step;
+		bool m_Active; // Input is active right now
+		bool m_ActiveFirst;
+		//unsigned char m_TimesActivated; // Times activated during this step
+		//unsigned char m_TimesChanged; // Times activated + times deactivated during this step
+
+		inline bool IsActive() const { return m_Down; }
+		inline float GetValue() const { return m_Value; }
+		inline float GetActiveRatio() const { return m_ActiveRatio; }
+	};
+
 	/*!
 	 * \brief
 	 * Provides an interface to an input buffer optimised for FusionEngine.
@@ -135,18 +170,33 @@ namespace FusionEngine
 		~InputManager();
 
 	public:
-		//! Key code ^ device mapped to KeyInfos
-		typedef std::map<long, KeyInfo> KeyInfoMap;
 		//! Short names mapped to KeyInfos
-		typedef std::tr1::unordered_map<std::string, KeyInfo> ShortNameMap;
+		//typedef std::tr1::unordered_map<std::string, KeyInfo> ShortNameMap;
 
-		//! Input names mapped to bindings
-		typedef std::tr1::unordered_map<PlayerKey, InputBinding> InputMap;
-		//! Key shortnames mapped to inputs (i.e. bindings)
-		typedef std::map<std::string, InputBinding> KeyMap;
+		//! Device / keycode pair type
+		typedef std::pair<std::string, int> DeviceKeycodePair;
+		typedef boost::hash<DeviceKeycodePair> DeviceKeycodePairHashFn;
 
-		typedef std::vector<Command> CommandList;
-		typedef std::vector<CommandList> PlayerCommandLists;
+		//! Key shortname mapped to KeyInfo
+		typedef std::tr1::unordered_map<std::string, KeyInfo> KeyInfoMap;
+
+		//! Keys mapped to bindings
+		typedef std::tr1::unordered_map<DeviceKeycodePair, InputBinding, DeviceKeycodePairHashFn> KeyBindingMap;
+
+		//! Input shortnames mapped to input states
+		typedef std::tr1::unordered_map<std::string, InputState> InputStateMap;
+		//! Input names mapped to input state lists
+		typedef std::vector<InputStateMap> PlayerInputStateMaps;
+
+#ifdef FSN_USE_XINPUT
+		typedef std::vector<XInputController> XInputControllerList;
+
+		typedef std::pair<unsigned int, int> XUserKeycodePair;
+		typedef std::map<XUserKeycodePair, InputBinding> XInputKeyBindingMap;
+#endif
+
+		//typedef std::vector<Command> CommandList;
+		//typedef std::vector<CommandList> PlayerCommandLists;
 
 	public:
 		void SetDisplayWindow(CL_DisplayWindow window);
@@ -164,7 +214,7 @@ namespace FusionEngine
 		 */
 		bool Test();
 		//! Sets up the input manager.
-		void Initialise(ResourceManager *resMan, const ClientOptions *from);
+		void Initialise();
 		//! Drops any settings
 		void CleanUp();
 		//! Activates the input handler.
@@ -175,11 +225,10 @@ namespace FusionEngine
 		void Update(unsigned int split);
 
 		//! Sets up inputs
-		void SetInputMaps(const ClientOptions *from);
+		void LoadInputMaps(const std::wstring& filename);
+		void SaveInputMaps(const std::wstring& filename);
 
 		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname);
-
-		CL_InputDevice& GetDevice(const std::string &name) const;
 
 		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
 		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
@@ -188,8 +237,11 @@ namespace FusionEngine
 		bool IsButtonDown(unsigned int player, const std::string& input_name) const;
 		float GetAnalogValue(unsigned int player, const std::string& input_name) const;
 
+		const InputStateMap &GetInputStateMapForPlayer(int player) const;
+		const PlayerInputStateMaps &GetInputStateMaps() const;
+
 		//! Probably [depreciated]
-		Command CreateCommand(unsigned int player);
+		//Command CreateCommand(unsigned int player);
 		//const Command &GetCommand(unsigned int player, int tick);
 
 		float GetMouseSensitivity() const;
@@ -201,21 +253,34 @@ namespace FusionEngine
 		////! Returns the currently pressed global inputs.
 		//GlobalInput GetGlobalInputs() const;
 
+		CL_Signal_v1<KeyInfo> SignalRawInput;
+
 	private:
-#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
-		NameMap m_KeyInfo;
-#else
-		ShortNameMap m_KeyInfo;
+//#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
+//		NameMap m_KeyInfo;
+//#else
+//		ShortNameMap m_KeyInfo;
+//#endif
+
+#ifdef FSN_USE_XINPUT
+		XInputControllerList m_XInputControllers;
+		XInputKeyBindingMap m_XInputBindings;
 #endif
 		
+		KeyInfoMap m_KeyInfo;
 
-		// For IsButtonDown(), etc (direct input gathering)
-		InputMap m_InputBindings;
-		// For CreateCommand(), GetCommand() (step-based input gathering)
-		KeyMap m_KeyBindings;
+		//// For IsButtonDown(), etc (direct input gathering)
+		//InputMap m_InputBindings;
+		//// For CreateCommand(), GetCommand() (step-based input gathering)
+		//KeyMap m_KeyBindings;
+
+		KeyBindingMap m_KeyBindings;
+
+		PlayerInputStateMaps m_PlayerInputStates;
+
 
 		//! Current input states
-		CommandList m_CurrentCommands;
+		//CommandList m_CurrentCommands;
 		//! Input state history
 		//PlayerCommandLists m_PlayerCommands;
 
@@ -224,13 +289,15 @@ namespace FusionEngine
 		//! The InputHandler will not be considered active till this reaches zero.
 		int m_SuspendRequests;
 
+		unsigned char m_CurrentStep;
+
 		//unsigned int m_CommandBufferLength;
 
 
 		CL_DisplayWindow m_DisplayWindow;
 		mutable CL_InputContext m_InputContext;
 		//! Slot container for inputs
-		CL_SlotContainer m_Slots;
+		SlotContainer m_Slots;
 
 		////! Individual input setup
 		//PlayerInputMapList m_PlayerInputMaps;
@@ -253,6 +320,14 @@ namespace FusionEngine
 		//void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes);
 		//! Loads human readable and UI control (key / button, etc) names
 		void loadKeyInfo(const ticpp::Document& defDocument);
+		//! Loads controls
+		void loadControls(const ticpp::Document &ctrlsDoc);
+		void loadPlayerBinds(const ticpp::Element &ctrls_root);
+
+		//! Saves controls
+		void saveControls(ticpp::Document &ctrlsDoc);
+
+		void onInputEvent(const CL_InputEvent &ev, const CL_InputState &state);
 
 		//! Handle keyboard / keybased input. Down
 		void onKeyDown(const CL_InputEvent &key);

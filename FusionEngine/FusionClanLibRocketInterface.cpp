@@ -31,6 +31,8 @@
 #include "FusionClanLibRocketInterface.h"
 
 #include "PhysFS.h"
+#include "FusionLogger.h"
+#include "FusionConsole.h"
 
 namespace FusionEngine
 {
@@ -250,22 +252,22 @@ namespace FusionEngine
 	{
 		cl_int64 absolute_pos = 0;
 		cl_int64 curPos = (cl_int64)PHYSFS_tell((PHYSFS_File*)file);
-		switch (mode)
+		switch (origin)
 		{
 		case SEEK_SET:
-			absolute_pos = seek_pos;
+			absolute_pos = offset;
 			break;
 
 		case SEEK_CUR:
 			if (curPos == -1)
 				return false;
-			absolute_pos = curPos + seek_pos;
+			absolute_pos = curPos + offset;
 			break;
 
 		case SEEK_END:
-			if (seek_pos > 0)
+			if (offset > 0)
 				return false;
-			absolute_pos = PHYSFS_fileLength((PHYSFS_File*)file) + seek_pos;
+			absolute_pos = PHYSFS_fileLength((PHYSFS_File*)file) + offset;
 			break;
 		}
 

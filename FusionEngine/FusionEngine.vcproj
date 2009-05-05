@@ -215,10 +215,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FusionCommand.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FusionCommon.h"
 				>
 			</File>
@@ -327,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionInputDefinitionLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionInputHandler.h"
 				>
 			</File>
@@ -340,10 +340,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputMap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputPluginLoader.h"
 				>
 			</File>
 			<File
@@ -707,6 +703,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionXInputController.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionXML.h"
 				>
 			</File>
@@ -829,6 +829,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionInputDefinitionLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionInputHandler.cpp"
 				>
 			</File>
@@ -838,10 +842,6 @@
 			</File>
 			<File
 				RelativePath=".\FusionInputHandler_OIS.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FusionInputPluginLoader.cpp"
 				>
 			</File>
 			<File
@@ -1062,6 +1062,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionVirtualFileSource_PhysFS.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionXInputController.cpp"
 				>
 			</File>
 			<File

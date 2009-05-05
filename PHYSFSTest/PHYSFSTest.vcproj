@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionLogPhysFS.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.cpp"
 				>
 			</File>
@@ -213,6 +217,10 @@
 			</File>
 			<File
 				RelativePath=".\main.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\PhysFS++.cpp"
 				>
 			</File>
 		</Filter>
@@ -254,6 +262,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionLogPhysFS.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionPhysFS.h"
 				>
 			</File>
@@ -263,6 +275,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\PhysFS++.h"
 				>
 			</File>
 		</Filter>

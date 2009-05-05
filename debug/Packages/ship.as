@@ -11,14 +11,13 @@ class ship
 	double engineForce;
 	double rotVelocity;
 
-	Command currentCommand;
 	bool commandThrustChanged;
 
 	Body @physBody;
 
 	void Preload()
 	{
-		XmlDocument entityDoc = file.GetXML("myship.xml");
+		XmlDocument entityDoc = OpenXml("myship.xml");
 
 		console.println("Loading: " + entityDoc.find("/entity/name/text()"));
 
@@ -62,8 +61,8 @@ class ship
 		if (!sound1_file.empty() && !sound2_file.empty())
 		{
 			engineSounds.resize(2);
-			engineSounds[0] = file.GetSound(sound1_file); // short name for the res_man object ('file')
-			engineSounds[1] = resource_manager.GetSound(sound2_file); // full name for the res_man object
+			engineSounds[0] = file.GetSound(sound1_file);
+			engineSounds[1] = file.GetSound(sound2_file);
 		}
 		else
 			console.println("Preload failed: one or more sound tags incomplete");
@@ -99,8 +98,10 @@ class ship
 	}
 	void Simulate(uint dt)
 	{
-		if (currentCommand.thrust)
+		if (input.is_active(player, "thrust"))
 		{
+			physBody.apply_thrust(engineForce);
+
 			// Cycle through sounds at an interval
 			soundTimer -= dt;
 			if (soundTimer <= 0)
@@ -121,45 +122,5 @@ class ship
 		}
 
 		commandThrustChanged = false;
-	}
-
-	void SetCommand(int tick, int player)
-	{
-		// The new method:
-		if (input.is_active(player, tick, "thrust"))
-			physBody.apply_thrust(engineForce);
-		// ... this way 'input' (InputHandler) can store, serialize / deserialize
-		//  command objects any way it likes and thus we have a central location for
-		//  the back buffers, packet data generation, and using input (as above).
-
-
-		//commandThrustChanged = 
-		//	(currentCommand.thrust != cmd.thrust);
-
-		//if (cmd.thrust)
-		//{
-		//	physBody.apply_thrust(engineForce);
-		//}
-
-		//if (cmd.left)
-		//{
-		//	physBody.set_rotational_velocity(-rotVelocity);
-		//}
-		//else if (cmd.right)
-		//{
-		//	physBody.set_rotational_velocity(rotVelocity);
-		//}
-		//else
-		//{
-		//	//console.println("Setting omega to 0");
-		//	physBody.set_rotational_velocity(0);
-		//	//console.println("Omega: " + physBody.get_rotational_velocity());
-		//}
-
-		//currentCommand = cmd;
-
-		//// Print debug info
-		//if (cmd.primary)
-		//	DebugOutput();
 	}
 };

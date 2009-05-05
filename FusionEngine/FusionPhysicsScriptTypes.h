@@ -89,7 +89,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody,GetVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "void set_angular_velocity(float)", asMETHOD(PhysicsBody, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "float get_angular_velocity()", asMETHOD(PhysicsBody, GetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetRotation), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	void ConstructCircleShape(float radius, CircleShape *obj)
@@ -104,7 +104,7 @@ namespace FusionEngine
 
 	CircleShape* CircleShapeFactory(float radius, float offset_x, float offset_y)
 	{
-		return new CircleShape(radius, Vector2(offset_x, offset_y);
+		return new CircleShape(radius, Vector2(offset_x, offset_y));
 	}
 
 	static void registerPhysShapeMethods(asIScriptEngine* engine)
@@ -112,25 +112,20 @@ namespace FusionEngine
 		int r;
 		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float), void), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float)", asFUNCTION(ConstructCircleShape), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_FACTORY, "CircleShape@ factory(Body@,float,float)", asFUNCTION(CircleShapeFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
-	}
-
-	PhysicsBody* PhysWorld_CreateBody(PhysicsWorld* lhs)
-	{
-		return lhs->CreateBody(0);
+		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_FACTORY, "CircleShape@ factory(float,float,float)", asFUNCTION(CircleShapeFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 	}
 
 	void PhysicsWorld_ListBodies(PhysicsWorld* lhs)
 	{
 		const PhysicsWorld::BodyMap& bodies = lhs->GetBodies();
 
-		std::string output = CL_String::format("Active bodies: (%1)\n", (int)bodies.size());
+		std::wstring output = cl_format("Active bodies: (%1)\n", (int)bodies.size());
 		for (PhysicsWorld::BodyMap::const_iterator it = bodies.begin(), end = bodies.end(); it != end; ++it)
 		{
-			PhysicsBody* body = it->second;
+			PhysicsBodyPtr body = it->second;
 			const Vector2& p = body->GetPosition();
 			
-			output += CL_String::format("\t ( %1 , %2 )", p.x, p.y);
+			output += cl_format("\t ( %1 , %2 )", p.x, p.y);
 		}
 		SendToConsole(output);
 	}
@@ -149,13 +144,16 @@ namespace FusionEngine
 	static void RegisterPhysicsTypes(asIScriptEngine* engine)
 	{
 		//RegisterType<PhysicsBody>("Body", engine);
-		PhysicsBody::registerType<PhysicsBody>(engine, "Body");
+		//PhysicsBody::registerType<PhysicsBody>(engine, "Body");
 		//RegisterTypePOD<Shape>("Shape", engine);
 		//Shape::registerType<Shape>(engine, "Shape");
 		//RegisterType<CircleShape>("CircleShape", engine);
-		CircleShape::registerType<CircleShape>(engine, "CircleShape");
+		//CircleShape::registerType<CircleShape>(engine, "CircleShape");
 		//PhysicsWorld::registerType(engine);
 		//RegisterTypeNoHandle<PhysicsWorld>("World", engine);
+
+		RegisterType<PhysicsBody>("Body", engine);
+		RegisterType<CircleShape>("CircleShape", engine);
 		RegisterTypePOD<PhysicsWorld>("World", engine);
 
 		registerPhysBodyMethods(engine);

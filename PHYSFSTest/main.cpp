@@ -136,7 +136,7 @@ public:
 			new Console;
 			//ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
 			//cout->Activate();
-			Logger* logger = new Logger(true);
+			Logger* logger = new Logger();
 
 			// List version info
 			PHYSFS_Version compiled;
@@ -213,6 +213,24 @@ public:
 
 			CL_InputDevice keyboard = display.get_ic().get_keyboard();
 
+			CL_InputDevice mouse = display.get_ic().get_mouse();
+
+			m_AxisEventMessage = cl_text("Axis: no events received");
+			m_BallEventMessage = cl_text("Ball: no events received");
+			m_PointEventMessage = cl_text("Pointer: no events received");
+
+			CL_SlotContainer eventSlotContainer;
+			eventSlotContainer.connect(mouse.sig_axis_move(), this, &PhysFSTest::onInputEvent);
+			eventSlotContainer.connect(mouse.sig_ball_move(), this, &PhysFSTest::onInputEvent);
+			eventSlotContainer.connect(mouse.sig_pointer_move(), this, &PhysFSTest::onInputEvent);
+
+			CL_FontDescription desc;
+			desc.set_typeface_name("verdana");
+			desc.set_height(14);
+			CL_Font font(gc, desc);
+
+			gc.set_font(font);
+
 			// Draw!
 			while (!keyboard.get_keycode(CL_KEY_ESCAPE))
 			{
@@ -222,10 +240,14 @@ public:
 				CL_Draw::texture(gc, CL_Rectf(CL_Pointf(10, 20), surface.get_size()));
 
 				gc.set_texture(0, surface2);
-				CL_Draw::texture(gc, CL_Rectf(CL_Pointf(70, 20), surface2.get_size()));
+				CL_Draw::texture(gc, CL_Rectf(CL_Pointf(50, 20), surface2.get_size()));
 
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
+
+				gc.draw_text(80, 16, m_AxisEventMessage, CL_Colorf::black);
+				gc.draw_text(80, 34, m_BallEventMessage);
+				gc.draw_text(80, 52, m_PointEventMessage, CL_Colorf::black);
 
 				display.flip();
 			}
@@ -239,6 +261,26 @@ public:
 
 		// It's so zen
 		return 0;
+	}
+
+	CL_String m_AxisEventMessage;
+	CL_String m_BallEventMessage;
+	CL_String m_PointEventMessage;
+
+	void onInputEvent(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		if (event.type == CL_InputEvent::axis_moved)
+		{
+			m_AxisEventMessage = cl_format("Axis: id: %1  value: %2", event.id, event.axis_pos);
+		}
+		else if (event.type == CL_InputEvent::ball_moved)
+		{
+			m_BallEventMessage = cl_format("Ball: id: %1  value: %2", event.id, event.axis_pos);
+		}
+		else if (event.type == CL_InputEvent::pointer_moved)
+		{
+			m_PointEventMessage = cl_format("Pointer: id: %1  x:%2  y:%3", event.id, event.mouse_pos.x, event.mouse_pos.y);
+		}
 	}
 };
 

@@ -37,7 +37,7 @@ public:
 			new Console;
 			//cout = new ConsoleStdOutWriter(con);
 			//cout->Activate();
-			logger = new Logger(true);
+			logger = new Logger();
 
 			// Setup resource manager
 			ResourceManager* resMan = new ResourceManager();

@@ -28,8 +28,8 @@
 
 /*! @mainpage Fusion
  *
- * Fusion is a multiplayer, 2D / top-down shooter, based on a
- * scriptable and highly extendable engine.
+ * Fusion is a multiplayer focused game engine which can be scripted
+ * with AngleScript.
  *
  * The project website is at http://steelfusion.sourceforge.net/
  */
@@ -97,7 +97,6 @@
 #include "../tinyxml/tinyxml.h"
 #endif
 #endif
-
 
 // AngelScript
 //not #define AS_USE_NAMESPACE

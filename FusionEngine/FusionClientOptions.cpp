@@ -82,26 +82,26 @@ namespace FusionEngine
 		ticpp::Document doc;
 
 		// Decl
-		ticpp::Declaration decl( XML_STANDARD, "", "" );
-		doc.LinkEndChild( &decl ); 
+		ticpp::Declaration *decl = new ticpp::Declaration( XML_STANDARD, "", "" );
+		doc.LinkEndChild( decl ); 
 
 		// Root
-		ticpp::Element root("clientoptions");
-		doc.LinkEndChild( &root );
+		ticpp::Element* root = new ticpp::Element("clientoptions");
+		doc.LinkEndChild( root );
 
 		insertVarMapIntoDOM(root, m_Variables);
 
 		for (int i = 0; i <= m_NumLocalPlayers; ++i)
 		{
-			ticpp::Element player("playeroptions");
-			root.LinkEndChild( &player ); 
+			ticpp::Element* player = new ticpp::Element("playeroptions");
+			root->LinkEndChild( player ); 
 
 			std::string playerAttribute;
 			if (i == 0)
 				playerAttribute = "default";
 			else
 				playerAttribute = CL_StringHelp::int_to_local8(i);
-			player.SetAttribute("player", playerAttribute.c_str());
+			player->SetAttribute("player", playerAttribute.c_str());
 
 			insertVarMapIntoDOM(player, m_PlayerVariables[i]);
 		}
@@ -130,18 +130,8 @@ namespace FusionEngine
 		CL_MutexSection mutexSection(&m_Mutex);
 		try
 		{
-			ticpp::Document doc;
-
-			// Read file
-			try
-			{
-				doc = ticpp::Document(OpenXml_PhysFS(filename));
-			}
-			catch (CL_Exception&)
-			{
-				//FSN_WEXCEPT(ExCode::IO, L"ClientOptions::SaveToFile", L"'" + filename + L"' could not be saved");
-				return false;
-			}
+			// Load the document
+			ticpp::Document doc(OpenXml_PhysFS(filename));
 
 			ticpp::Element* pElem = doc.FirstChildElement();
 
@@ -160,11 +150,7 @@ namespace FusionEngine
 				}
 				else if (child->Value() == "playeroptions")
 				{
-					loadPlayerOptions(*child.Get());
-				}
-				else if (child->Value() == "keys")
-				{
-					loadKeys(*child.Get());
+					loadPlayerOptions(child.Get());
 				}
 			}
 		}
@@ -266,23 +252,24 @@ namespace FusionEngine
 		return true;
 	}
 
-	void ClientOptions::insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars)
+	void ClientOptions::insertVarMapIntoDOM(ticpp::Element* parent, const VarMap &vars)
 	{
 		for (VarMap::const_iterator it = vars.begin(), end = vars.end(); it != end; ++it)
 		{
-			ticpp::Element var("var");
-			var.SetAttribute("name", it->first.c_str());
-			var.SetAttribute("value", it->second.c_str());
-			parent.LinkEndChild( &var );
+			ticpp::Element* var = new ticpp::Element("var");
+			var->SetAttribute("name", it->first.c_str());
+			var->SetAttribute("value", it->second.c_str());
+			parent->LinkEndChild( var );
 		}
 	}
 
-	void ClientOptions::loadPlayerOptions(const ticpp::Element &opts_root)
+	void ClientOptions::loadPlayerOptions(const ticpp::Element *const opts_root)
 	{
-		if (!CL_StringHelp::compare(opts_root.Value(), "playeroptions", true))
+		if (!CL_StringHelp::compare(opts_root->Value(), "playeroptions", true))
 			return;
 
-		std::string player = opts_root.GetAttribute("player");
+		// Get the player number for this group (note that 'default' -> zero)
+		std::string player = opts_root->GetAttribute("player");
 		unsigned int playerNum = 0;
 		if (!CL_StringHelp::compare(player, "default", true))
 		{
@@ -298,7 +285,7 @@ namespace FusionEngine
 		VarMap playerVars = m_PlayerVariables[playerNum];
 
 		ticpp::Iterator< ticpp::Element > child;
-		for ( child = child.begin( &opts_root ); child != child.end(); child++ )
+		for ( child = child.begin( opts_root ); child != child.end(); child++ )
 		{
 			if (CL_StringHelp::compare(child->Value(), "var", true))
 			{
@@ -310,104 +297,5 @@ namespace FusionEngine
 			}
 		}
 	}
-
-	void ClientOptions::loadKeys(const ticpp::Element &opts_root)
-	{
-		if (!CL_StringHelp::compare(opts_root.Value(), "keys", true))
-			return;
-
-		std::string player = opts_root.GetAttribute("player");
-		unsigned int playerNum = 0;
-		if (!CL_StringHelp::compare(player, "default", true))
-		{
-			if (!fe_issimplenumeric(player))
-				return;
-
-			playerNum = CL_StringHelp::local8_to_int(player);
-		}
-
-		if (playerNum > m_NumLocalPlayers || playerNum > m_PlayerVariables.size())
-			return;
-
-		ticpp::Iterator< ticpp::Element > child;
-		for ( child = child.begin( &opts_root ); child != child.end(); child++ )
-		{
-			if (CL_StringHelp::compare(child->Value(), "bind", true))
-			{
-				std::string name = child->GetAttribute("input");
-				if (name.empty()) continue;
-
-				std::string key = child->GetAttribute("key");
-
-				XmlInputBinding binding(name, key, player);
-
-				m_Controls.push_back(binding);
-			}
-		}
-	}
-
-	//void ClientOptions::DefaultPlayerControls(ObjectID player)
-	//{
-	//	switch (player)
-	//	{
-	//		// Player 1
-	//	case 0:
-	//		PlayerInputs[0].thrust = CL_KEY_UP;
-	//		PlayerInputs[0].reverse = CL_KEY_DOWN;
-	//		PlayerInputs[0].left = CL_KEY_LEFT;
-	//		PlayerInputs[0].right = CL_KEY_RIGHT;
-	//		PlayerInputs[0].primary = CL_KEY_DIVIDE;
-	//		PlayerInputs[0].secondary = CL_KEY_PERIOD;
-	//		PlayerInputs[0].bomb = ',';
-	//		break;
-	//		// Player 2
-	//	case 1:
-	//		PlayerInputs[1].thrust = CL_KEY_W;
-	//		PlayerInputs[1].reverse = CL_KEY_S;
-	//		PlayerInputs[1].left = CL_KEY_A;
-	//		PlayerInputs[1].right = CL_KEY_D;
-	//		PlayerInputs[1].primary = CL_KEY_Q;
-	//		PlayerInputs[1].secondary = CL_KEY_E;
-	//		PlayerInputs[1].bomb = CL_KEY_R;
-	//		break;
-	//		// Player 3
-	//	case 2:
-	//		PlayerInputs[2].thrust = CL_KEY_U;
-	//		PlayerInputs[2].reverse = CL_KEY_J;
-	//		PlayerInputs[2].left = CL_KEY_H;
-	//		PlayerInputs[2].right = CL_KEY_K;
-	//		PlayerInputs[2].primary = CL_KEY_Y;
-	//		PlayerInputs[2].secondary = CL_KEY_I;
-	//		PlayerInputs[2].bomb = CL_KEY_B;
-	//		break;
-	//		// Player 4
-	//	case 3:
-	//		PlayerInputs[3].thrust = CL_KEY_NUMPAD8;
-	//		PlayerInputs[3].reverse = CL_KEY_NUMPAD5;
-	//		PlayerInputs[3].left = CL_KEY_NUMPAD4;
-	//		PlayerInputs[3].right = CL_KEY_NUMPAD6;
-	//		PlayerInputs[3].primary = CL_KEY_NUMPAD7;
-	//		PlayerInputs[3].secondary = CL_KEY_NUMPAD9;
-	//		PlayerInputs[3].bomb = CL_KEY_NUMPAD0;
-	//		break;
-	//		// Greater than 4 players (just in case)
-	//	default:
-	//		PlayerInputs[player].thrust = CL_KEY_W;
-	//		PlayerInputs[player].reverse = CL_KEY_S;
-	//		PlayerInputs[player].left = CL_KEY_A;
-	//		PlayerInputs[player].right = CL_KEY_D;
-	//		PlayerInputs[player].primary = CL_KEY_Q;
-	//		PlayerInputs[player].secondary = CL_KEY_E;
-	//		PlayerInputs[player].bomb = CL_KEY_R;
-	//		break;
-	//	}
-
-	//}
-
-	//void ClientOptions::DefaultGlobalControls()
-	//{
-	//	GlobalInputs.menu = CL_KEY_ESCAPE;
-	//	GlobalInputs.console = '`';
-	//}
 
 }

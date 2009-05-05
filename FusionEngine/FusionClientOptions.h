@@ -43,29 +43,6 @@ namespace FusionEngine
 	static const unsigned int g_MaxLocalPlayers = 16;
 
 	/*!
-	 * \brief Input binding from XML
-	 *
-	 * \remarks
-	 * It should be fine to define this here - it is only used by InputManager
-	 * which #includes this file.
-	 */
-	class XmlInputBinding
-	{
-	public:
-		std::string m_Player;
-		std::string m_Input; // The 'agency' this control provides :P
-		std::string m_Key; // The key on the keyboard / button on the controler
-
-	public:
-		XmlInputBinding(std::string input, std::string key, std::string player)
-			: m_Input(input),
-			m_Key(key),
-			m_Player(player)
-		{
-		}
-	};
-
-	/*!
 	 * \brief
 	 * Encapsulates client-side options.
 	 *
@@ -93,7 +70,7 @@ namespace FusionEngine
 
 		//typedef std::tr1::unordered_map<std::string, XmlInputBinding> ControlsList;
 		//! Input mappings list.
-		typedef std::vector<XmlInputBinding> ControlsList;
+		//typedef std::vector<XmlInputBinding> ControlsList;
 
 		// Each player has their own var map
 		typedef std::vector<VarMap> PlayerVarMapList;
@@ -105,7 +82,7 @@ namespace FusionEngine
 		VarMap m_Variables;
 		PlayerVarMapList m_PlayerVariables;
 
-		ControlsList m_Controls;
+		//ControlsList m_Controls;
 
 	public:
 		////! Set the controls for defaults
@@ -139,9 +116,9 @@ namespace FusionEngine
 		//! Last opened options file
 		std::wstring m_LastFile;
 
-		void insertVarMapIntoDOM(ticpp::Element &parent, const VarMap &vars);
-		void loadPlayerOptions(const ticpp::Element &opts_root);
-		void loadKeys(const ticpp::Element &keysroot);
+		void insertVarMapIntoDOM(ticpp::Element* parent, const VarMap &vars);
+		void loadPlayerOptions(const ticpp::Element *const opts_root);
+		//void loadKeys(const ticpp::Element &keysroot);
 
 	};
 

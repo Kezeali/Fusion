@@ -69,7 +69,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Debug\tinyxpathd.lib"
+				OutputFile="..\tinyxpathd.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -142,7 +142,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="Release\tinyxpath.lib"
+				OutputFile="..\tinyxpath.lib"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
