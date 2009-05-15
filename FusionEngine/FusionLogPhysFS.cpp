@@ -27,30 +27,52 @@
 
 #include "FusionLogPhysFS.h"
 
-#include "PhysFS++.h"
+//#include "PhysFS++.h"
 
 
 namespace FusionEngine
 {
 
+	PhysFSLogFile::PhysFSLogFile()
+		: m_Open(false)
+	{
+	}
+
+	PhysFSLogFile::~PhysFSLogFile()
+	{
+		Close();
+	}
+
 	void PhysFSLogFile::Open(const std::string& filename)
 	{
-		m_FileStream.open(filename, PhysFS::OM_APPEND);
+		m_File = PHYSFS_openAppend(filename.c_str());
+		m_Open = m_File == NULL ? false : true;
+		//m_FileStream.open(filename, PhysFS::OM_APPEND);
 	}
 
 	void PhysFSLogFile::Close()
 	{
-		// Nothing to do here: stream closes automatically on destruction
+		if (m_Open)
+		{
+			PHYSFS_close(m_File);
+			m_Open = false;
+		}
 	}
 
 	void PhysFSLogFile::Write(const std::string& entry)
 	{
-		m_FileStream << entry;
+		if (m_Open)
+			PHYSFS_write( m_File, static_cast<const void*>(entry.c_str()), 1, entry.length() );
+		//if (m_FileStream.is_open())
+		//	m_FileStream << entry;
 	}
 
 	void PhysFSLogFile::Flush()
 	{
-		m_FileStream.flush();
+		if (m_Open)
+			PHYSFS_flush(m_File);
+		//if (m_FileStream.is_open())
+		//	m_FileStream.flush();
 	}
 
 }

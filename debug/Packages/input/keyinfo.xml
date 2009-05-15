@@ -3,6 +3,9 @@
 	<!--This file defines human-readable control names and the config-file shortnames that refer to them-->
 	<!--shortname is used in config-files, etc. 'name' (aka, description) is displayed in the control-setup UI-->
 	<!--A key's shortname must be unique across all devices-->
+	<device name="keyboard" uiname="Keyboard">
+		<key shortname="w" code="17" description="W" />
+	</device>
 	<key shortname="W" device="keyboard" id="17" name="W"/>
 	<key shortname="LSHIFT" device="keyboard" id="43" name="Left Shift"/>
 	<key shortname="PAD7" device="gamepad" id="4" name="Left Shoulder-button"/>

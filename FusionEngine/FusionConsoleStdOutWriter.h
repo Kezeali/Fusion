@@ -54,7 +54,7 @@ namespace FusionEngine
 
 	public:
 		//! Call to connect to either a given console, or the Console singleton
-		void Activate();
+		void Enable();
 		//! Disconnects from the console
 		void Disable();
 

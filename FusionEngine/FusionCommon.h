@@ -273,9 +273,9 @@ namespace FusionEngine
 	{
 		std::string::size_type first_char = str.find_first_not_of(" \r\n\t");
 		std::string::size_type last_char = str.find_last_not_of(" \r\n\t");
-		if (first_char == CL_String::npos)
+		if (first_char == std::string::npos)
 			return std::string();
-		if (last_char == CL_String::npos)
+		if (last_char == std::string::npos)
 			return std::string();
 		return str.substr(first_char, last_char - first_char + 1);
 	}
@@ -425,18 +425,14 @@ namespace FusionEngine
 	// --Forward declarations--
 	///////////////////////////
 	//! \todo List forward declarations in alphabetical order
-	//class Archive;
-	class Control;
 	class ClientOptions;
-	class Environment;
 	class Network;
 	class NetworkServer;
 	class NetworkClient;
-	class Scene;
-	class ShipState;
-	struct ShipInput;
+	class Entity;
+	class Node;
+	class EntityManager;
 	class ProjectileState;
-	class FusionShip;
 	class FusionProjectile;
 	class PhysicsWorld;
 	class PhysicsBody;

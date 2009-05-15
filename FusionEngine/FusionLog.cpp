@@ -31,6 +31,7 @@
 #include "FusionException.h"
 
 #include <time.h>
+#include <boost/foreach.hpp>
 
 namespace FusionEngine
 {
@@ -40,40 +41,58 @@ namespace FusionEngine
 		m_Tag(tag),
 		m_Threshold(LOG_TRIVIAL)
 	{
-		addHeader();
 	}
 
 	Log::~Log()
 	{
-		addFooter();
+		addFooterToAll();
 	}
 
-	void Log::addHeader()
+	void Log::addHeaderToAll()
+	{
+		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+		{
+			addHeader(it->second);
+		}
+	}
+
+	void Log::addFooterToAll()
+	{
+		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+		{
+			addFooter(it->second);
+		}
+	}
+
+	void Log::addHeader(LogFilePtr log_file)
 	{
 		std::stringstream header;
 
 		// Get the date/time
 		time_t t = time(NULL);
 		std::string tstr = asctime(localtime(&t));
-		tstr[tstr.length() - 1] = 0;
+		tstr = tstr.substr(0, tstr.length() - 1);
+		//tstr[tstr.length() - 1] = 0;
 
-		header << "-------------------- Log began on " << tstr << " --------------------";
+		header << "------------------ Log began on " << tstr << " ------------------" << std::endl;
 
-		this->AddVerbatim(header.str());
+		log_file->Write(header.str());
 	}
 
-	void Log::addFooter()
+	void Log::addFooter(LogFilePtr log_file)
 	{
 		std::stringstream header;
 
 		// Get the date/time
 		time_t t = time(NULL);
 		std::string tstr = asctime(localtime(&t));
-		tstr[tstr.length() - 1] = 0;
+		tstr = tstr.substr(0, tstr.length() - 1);
+		//tstr[tstr.length() - 1] = 0;
 
-		header << "-------------------- Log ended on " << tstr << " --------------------";
+		header << "------------------ Log ended on " << tstr << " ------------------" << std::endl;
 
-		this->AddVerbatim(header.str());
+		log_file->Write(header.str());
+		log_file->Flush();
 	}
 
 	void Log::SetThreshold(LogSeverity threshold)
@@ -88,27 +107,51 @@ namespace FusionEngine
 
 	void Log::AttachLogFile(LogFilePtr log_file)
 	{
-		m_LogFiles.push_back(log_file);
+		m_LogFiles[log_file->GetType()] = log_file;
+		// Open the file
+		log_file->Open(m_Filename);
+		addHeader(log_file);
 	}
 
 	void Log::DetachLogFile(LogFilePtr log_file)
 	{
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
-			if ((*it) == log_file)
+			if (it->second == log_file)
 			{
+				addFooter(it->second);
+				// Close the file
+				it->second->Close();
 				m_LogFiles.erase(it);
 				break;
 			}
 		}
 	}
 
+	void Log::DetachLogFile(const std::string& type)
+	{
+		LogFileList::iterator _where = m_LogFiles.find(type);
+		if (_where != m_LogFiles.end())
+		{
+			addFooter(_where->second);
+			// Close the file
+			_where->second->Close();
+			m_LogFiles.erase(_where);
+		}
+	}
+
+	bool Log::HasLogFileType(const std::string &type)
+	{
+		LogFileList::iterator _where = m_LogFiles.find(type);
+		return _where != m_LogFiles.end();
+	}
+
 	void Log::AddVerbatim(const std::string& text)
 	{
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
-			(*it)->Write(text + "\n");
-			(*it)->Flush();
+			it->second->Write(text + "\n");
+			it->second->Flush();
 		}
 	}
 
@@ -130,8 +173,8 @@ namespace FusionEngine
 
 			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			{
-				(*it)->Write(tempStream.str());
-				(*it)->Flush();
+				it->second->Write(tempStream.str());
+				it->second->Flush();
 			}
 		}
 	}
@@ -139,7 +182,7 @@ namespace FusionEngine
 	void Log::Flush()
 	{
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
-			(*it)->Flush();
+			it->second->Flush();
 	}
 
 }

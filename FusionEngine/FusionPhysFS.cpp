@@ -27,6 +27,8 @@
 
 #include "FusionPhysFS.h"
 
+#include "FusionPaths.h"
+
 #include "PhysFS.h"
 
 SetupPhysFS::SetupPhysFS()
@@ -56,16 +58,22 @@ bool SetupPhysFS::configure(const std::string &organisation,
 														bool includeCdRoms,
 														bool archivesFirst)
 {
-	return (
-
+	if (
 		PHYSFS_setSaneConfig(
 		organisation.c_str(),
 		appName.c_str(),
 		archiveExt.c_str(),
 		(int)includeCdRoms,
-		(int)archivesFirst)
+		(int)archivesFirst))
+	{
+		PHYSFS_mkdir(FusionEngine::s_PackagesPath.c_str());
+		PHYSFS_mkdir(FusionEngine::s_LogfilePath.c_str());
+		PHYSFS_mkdir(FusionEngine::s_TempPath.c_str());
 
-		? true : false);
+		return true;
+	}
+	else
+		return false;
 }
 
 bool SetupPhysFS::add_subdirectory(const std::string &path,

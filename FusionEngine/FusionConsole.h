@@ -93,6 +93,13 @@ namespace FusionEngine
 		//! Adds the given message, after prepending it with a heading of the specified type, to the console history
 		void Add(const std::wstring &message, MessageType type);
 
+		//! Adds the given message under the given heading
+		/*!
+		 * If the last message added was under the same heading, this message
+		 * will be added directly below it. Otherwise a new heading will be added.
+		 */
+		void Add(const std::wstring& heading, const std::wstring &message);
+
 		//! Adds the given Error to the console history
 		//void Add(const Exception *error);
 
@@ -120,8 +127,12 @@ namespace FusionEngine
 		CL_Signal_v0 OnClear;
 
 	protected:
+		void add_raw(const std::wstring& string);
+	protected:
 		//! Lists all the data which has been added to the console.
 		ConsoleLines m_Data;
+
+		std::wstring m_LastHeading;
 
 		size_t m_MaxData;
 
@@ -143,10 +154,30 @@ namespace FusionEngine
 		}
 	}
 
+	//! Sends a sectioned message to the console
+	static void SendToConsole(const std::wstring& heading, const std::wstring &message)
+	{
+		Console* c = Console::getSingletonPtr();
+		if (c != NULL)
+		{
+			c->Add(heading, message);
+		}
+		// If the console hasn't been created, just send the message to standard output
+		else
+		{
+			std::wcout << heading << ": " << message << std::endl;
+		}
+	}
+
 	static void SendToConsole(const std::string &message)
 	{
-		SendToConsole(std::wstring(message.begin(), message.end()));
+		SendToConsole(fe_widen(message));
 	}
+
+	static void SendToConsole(const std::string& heading, const std::string& message)
+	{
+		SendToConsole(fe_widen(heading), fe_widen(message));
+	} 
 
 	//! Static method to safely add a message to the singleton object
 	/*!

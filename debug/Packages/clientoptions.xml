@@ -11,5 +11,6 @@
 	<playeroptions player="1">
 		<!--Each palyer has their own var-map-->
 		<var name="showhud" value="true"/>
+		<var name="name" value="Player 1"/>
 	</playeroptions>
 </clientoptions>

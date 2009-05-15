@@ -53,7 +53,41 @@
 
 namespace FusionEngine
 {
-	static const float g_InputAnalogFuzz = 0.005f;
+	const float g_InputAnalogFuzz = 0.005f;
+
+	//! \defgroup Config file device identifiers
+	//!@{
+	const char* s_DevKeyboardStr = "keyboard";
+	const char* s_DevGamepadStr = "gamepad";
+	const char* s_DevGamepad_AxisStr = "gamepad-axis";
+	const char* s_DevMouseStr = "mouse";
+	const char* s_DevMouse_PointerStr = "mouse-pointer";
+	const char* s_DevMouse_AxisStr = "mouse-axis";
+	const char* s_DevXInputStr = "xinput";
+	const char* s_DevXInput_AxisStr = "xinput-axis";
+	//!@}
+
+	//! \defgroup Internal device identifiers (used by input manager)
+	//!@{ 
+	const unsigned int s_DevKeyboard = 0;
+	const unsigned int s_DevGamepad = 1;
+	const unsigned int s_DevGamepad_Axis = 2;
+	const unsigned int s_DevMouse = 3;
+	const unsigned int s_DevMouse_Pointer = 4;
+	const unsigned int s_DevMouse_Axis = 5;
+	const unsigned int s_DevXInput = 10;
+	const unsigned int s_DevXInput_Axis = 11;
+	//!@}
+
+	//! Returns the devices name for the device with the given ID
+	unsigned int DeviceNameToID(const std::string& device);
+	//! Returns the ID for the device with the given name
+	const std::string& DeviceIDToName(unsigned int device);
+
+	//! Max devices of one type
+	const unsigned int s_DeviceCountMax = 256;
+	//! For inputs bound to any device
+	const unsigned int s_DeviceIndexAny = s_DeviceCountMax - 1;
 
 	/*!
 	 * \brief
@@ -101,6 +135,11 @@ namespace FusionEngine
 		//std::string m_Key; // The short-name of the key on the keyboard / button on the controler
 		KeyInfo m_Key;
 
+		// Analog filtering settings
+		double m_Threshold;
+		double m_Range;
+		bool m_Cubic;
+
 	public:
 		/*InputBinding(const XmlInputBinding& rawBinding)
 		{
@@ -116,8 +155,63 @@ namespace FusionEngine
 		InputBinding(int player, const std::string &input, KeyInfo &key)
 			: m_Player(player),
 			m_Input(input),
-			m_Key(key)
+			m_Key(key),
+			m_Threshold(0.0),
+			m_Range(1.0),
+			m_Cubic(false)
 		{
+		}
+
+		InputBinding(int player, const std::string &input, KeyInfo &key, double threshold, double range, bool cubic)
+			: m_Player(player),
+			m_Input(input),
+			m_Key(key),
+			m_Threshold(threshold),
+			m_Range(range),
+			m_Cubic(cubic)
+		{
+		}
+
+	public:
+		inline void FilterValue(double &value)
+		{
+			if (!fe_fzero(m_Threshold))
+			{
+				if (value > 0 && value > m_Threshold)
+					value -= m_Threshold;
+				else if (value < 0 && value < m_Threshold)
+					value += m_Threshold;
+
+				else
+					value = 0.0;
+			}
+			// Max out at given range
+			//  Note that m_Range defaults to 1.0 -> full range - in that
+			//  case this simply re-normalizes taking m_Threshold into
+			//  account
+			if (!fe_fzero(m_Range))
+			{
+				if (value < m_Range)
+					value = value / (m_Range - m_Threshold);
+				else
+					value = 1.0;
+			}
+
+			if (m_Cubic)
+				value = value * value * value;
+
+			// Clamp to valid values
+			fe_clamp(value, -1.0, 1.0);
+		}
+
+		void Validate()
+		{
+			fe_clamp(m_Threshold, 0.0, 1.0);
+			fe_clamp(m_Range, 0.0, 1.0);
+
+			// Range must be 10%+
+			if (m_Range < 0.1)
+				m_Range = 1.0;
 		}
 	};
 
@@ -126,11 +220,8 @@ namespace FusionEngine
 		InputState()
 			: m_Down(false), m_Value(0.0f), m_ActiveRatio(0.0f), m_Active(false), m_ActiveFirst(false)
 		{}
-		InputState(bool active, float value, float active_percent)
-			: m_Down(active), m_Value(value), m_ActiveRatio(active_percent), m_Active(active), m_ActiveFirst(active)
-		{}
-		InputState(bool active, float value, float active_percent)
-			: m_Down(active), m_Value(value), m_ActiveRatio(active_percent), m_Active(active), m_ActiveFirst(active)
+		InputState(bool active, float value, float active_ratio)
+			: m_Down(active), m_Value(value), m_ActiveRatio(active_ratio), m_Active(active), m_ActiveFirst(active)
 		{}
 		
 		bool m_Down; // Button / key was active during the step
@@ -147,6 +238,67 @@ namespace FusionEngine
 		inline bool IsActive() const { return m_Down; }
 		inline float GetValue() const { return m_Value; }
 		inline float GetActiveRatio() const { return m_ActiveRatio; }
+	};
+
+	class InputEvent
+	{
+	public:
+		enum InputType
+		{
+			Binary,
+			AnalogNormalized,
+			AnalogAbsolute
+		};
+
+	public:
+		InputEvent()
+			: Down(false), Value(0.0)
+		{}
+
+	public:
+		std::string Input;
+		InputType Type;
+		bool Down;
+		double Value;
+	};
+
+	struct RawInputUserData
+	{
+		unsigned int Type;
+		//std::string Name;
+		unsigned int Index;
+	};
+
+	class RawInput
+	{
+	public:
+		enum EventType
+		{
+			Nothing,
+			Button,
+			Axis,
+			Pointer
+		};
+
+	public:
+		RawInput()
+			: DeviceIndex(0), Code(0),
+			InputType(Nothing),
+			AxisPosition(0.0), ButtonPressed(false)
+		{
+		}
+	public:
+		std::string DeviceType;
+		std::string DeviceName;
+		unsigned int DeviceIndex;
+
+		EventType InputType;
+
+		int Code; // VK code (for buttons)
+
+		Vector2T<int> PointerPosition;
+		double AxisPosition;
+		bool ButtonPressed;
 	};
 
 	/*!
@@ -170,29 +322,30 @@ namespace FusionEngine
 		~InputManager();
 
 	public:
-		//! Short names mapped to KeyInfos
-		//typedef std::tr1::unordered_map<std::string, KeyInfo> ShortNameMap;
-
-		//! Device / keycode pair type
-		typedef std::pair<std::string, int> DeviceKeycodePair;
-		typedef boost::hash<DeviceKeycodePair> DeviceKeycodePairHashFn;
-
 		//! Key shortname mapped to KeyInfo
 		typedef std::tr1::unordered_map<std::string, KeyInfo> KeyInfoMap;
 
+		//! Device / keycode pair type
+		typedef std::pair<unsigned int, int> DeviceKeycodePair;
+		typedef boost::hash<DeviceKeycodePair> DeviceKeycodePairHashFn;
+
 		//! Keys mapped to bindings
-		typedef std::tr1::unordered_map<DeviceKeycodePair, InputBinding, DeviceKeycodePairHashFn> KeyBindingMap;
+		//typedef std::tr1::unordered_map<DeviceKeycodePair, InputBinding, DeviceKeycodePairHashFn> KeyBindingMap;
+		typedef std::tr1::unordered_map<BindingKey, InputBinding> KeyBindingMap;
 
 		//! Input shortnames mapped to input states
 		typedef std::tr1::unordered_map<std::string, InputState> InputStateMap;
-		//! Input names mapped to input state lists
+		//! Input state lists for each player (0 is player 1, etc.)
 		typedef std::vector<InputStateMap> PlayerInputStateMaps;
+
+		//! Current positions of each mouse
+		typedef std::vector<CL_Point> MousePositionList;
 
 #ifdef FSN_USE_XINPUT
 		typedef std::vector<XInputController> XInputControllerList;
 
-		typedef std::pair<unsigned int, int> XUserKeycodePair;
-		typedef std::map<XUserKeycodePair, InputBinding> XInputKeyBindingMap;
+		//typedef std::pair<unsigned int, int> XUserKeycodePair;
+		//typedef std::map<XUserKeycodePair, InputBinding> XInputKeyBindingMap;
 #endif
 
 		//typedef std::vector<Command> CommandList;
@@ -222,13 +375,27 @@ namespace FusionEngine
 		//! Begins ignoring input events. Call when going to the menu.
 		void Suspend();
 
-		void Update(unsigned int split);
+		void Update(float split);
 
 		//! Sets up inputs
 		void LoadInputMaps(const std::wstring& filename);
 		void SaveInputMaps(const std::wstring& filename);
 
-		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname);
+		//! Binds a key to the given input for the given player
+		/*!
+		 * \param player
+		 * The player who's input will be bound to this key [0-...)
+		 *
+		 * \param input_name
+		 * Name for the input to be bound
+		 *
+		 * \param key_shortname
+		 * The shortname for the key to be bound to the input
+		 *
+		 * \param controller_number
+		 * The index of the XBox controller to use (for xinput only, obviously) [0, 4]
+		 */
+		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname, int controller_number = s_DeviceIndexAny);
 
 		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
 		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
@@ -253,7 +420,32 @@ namespace FusionEngine
 		////! Returns the currently pressed global inputs.
 		//GlobalInput GetGlobalInputs() const;
 
-		CL_Signal_v1<KeyInfo> SignalRawInput;
+		CL_Signal_v1<InputEvent> SignalInputChanged;
+		//CL_Signal_v1<InputEvent> SignalInputDeactivated;
+		// Input continues to be pressed as a new step begins
+		CL_Signal_v1<InputEvent> SignalInputSustained;
+
+		//CL_Signal_v1<InputEvent> SignalKeyboardPressed;
+		//CL_Signal_v1<InputEvent> SignalKeyboardReleased;
+
+		//CL_Signal_v1<InputEvent> SignalMousePressed;
+		//CL_Signal_v1<InputEvent> SignalMouseReleased;
+		//CL_Signal_v1<InputEvent> SignalMouseMoved;
+
+		//CL_Signal_v1<InputEvent> SignalGamepadPressed;
+		//CL_Signal_v1<InputEvent> SignalGamepadReleased;
+		//CL_Signal_v1<InputEvent> SignalGamepadAxis;
+
+		//CL_Signal_v1<InputEvent> SignalXInputPressed;
+		//CL_Signal_v1<InputEvent> SignalXInputReleased;
+		//CL_Signal_v1<InputEvent> SignalXInputAxis;
+
+		//! Fires on all input events, passing the raw input data
+		/*!
+		 * Useful for setting up inputs - the other input signals only fire
+		 * when bound controls (keys, buttons, axis') are activated (pressed, moved).
+		 */
+		CL_Signal_v1<RawInput> SignalRawInput;
 
 	private:
 //#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
@@ -264,7 +456,7 @@ namespace FusionEngine
 
 #ifdef FSN_USE_XINPUT
 		XInputControllerList m_XInputControllers;
-		XInputKeyBindingMap m_XInputBindings;
+		//XInputKeyBindingMap m_XInputBindings;
 #endif
 		
 		KeyInfoMap m_KeyInfo;
@@ -276,7 +468,9 @@ namespace FusionEngine
 
 		KeyBindingMap m_KeyBindings;
 
-		PlayerInputStateMaps m_PlayerInputStates;
+		//PlayerInputStateMaps m_PlayerInputStates;
+
+		MousePositionList m_MicePositions;
 
 
 		//! Current input states
@@ -327,12 +521,36 @@ namespace FusionEngine
 		//! Saves controls
 		void saveControls(ticpp::Document &ctrlsDoc);
 
-		void onInputEvent(const CL_InputEvent &ev, const CL_InputState &state);
+		unsigned int getIndexOfControllerCalled(const std::string& name);
+
+		void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
+		void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
+
+		void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
+		void onMouseUp(const CL_InputEvent &ev, const CL_InputState &state);
+		void onMousePointerMove(const CL_InputEvent &ev, const CL_InputState &state);
+		void onMouseBallMove(const CL_InputEvent &ev, const CL_InputState &state);
+
+		void onGamepadPress(const CL_InputEvent &ev, const CL_InputState &state);
+		void onGamepadRelease(const CL_InputEvent &ev, const CL_InputState &state);
+		void onGamepadAxisMove(const CL_InputEvent &ev, const CL_InputState &state);
+
+		void onXInputPress(const XInputEvent &ev);
+		void onXInputRelease(const XInputEvent &ev);
+		void onXInputAxisMove(const XInputEvent &ev);
+
+		//! Invokes SignalRawInput
+		void fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData device_info);
+		//! Invokes SignalRawInput when a XInputEvent is received
+		void fireRawInput_XInput(const XInputEvent& ev);
+
+		//! Process simple ClanLib input events
+		//void processInputEvent(unsigned int device, const CL_InputEvent &ev);
 
 		//! Handle keyboard / keybased input. Down
-		void onKeyDown(const CL_InputEvent &key);
+		//void onKeyDown(const CL_InputEvent &key);
 		//! Handle keyboard / keybased input. Up
-		void onKeyUp(const CL_InputEvent &key);
+		//void onKeyUp(const CL_InputEvent &key);
 		// Other imput devices not yet implimented.
 		//void OnAxisMove(const CL_InputEvent &e);
 		//! Handle screen resize

@@ -24,7 +24,7 @@ namespace FusionEngine
 	{
 	}
 
-	void ConsoleStdOutWriter::Activate()
+	void ConsoleStdOutWriter::Enable()
 	{
 		//m_ConsoleOnNewLineSlot.enable();
 
@@ -42,6 +42,8 @@ namespace FusionEngine
 
 	void ConsoleStdOutWriter::onConsoleNewline(const std::wstring &message)
 	{
+		if (!m_Active)
+			return;
 		//std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
 		//std::wstring w_marker = Console::getSingleton().GetWarningMarker();
 
@@ -50,17 +52,17 @@ namespace FusionEngine
 
 		if (message.substr(0, e_marker.length()) == e_marker)
 		{
-			CL_Console::write_line( L"** " + message.substr(e_marker.length()) );
+			CL_Console::write_line( cl_format(L"** %1", message.substr(e_marker.length()).c_str()) );
 			//std::cout << "** " << message.substr(e_marker.length()) << std::endl;
 		}
 		else if (message.substr(0, w_marker.length()) == w_marker)
 		{
-			CL_Console::write_line( L"++ " + message.substr(w_marker.length()) );
+			CL_Console::write_line( cl_format(L"++ %1", message.substr(w_marker.length()).c_str()) );
 			//std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
 		}
 		else
 		{
-			CL_Console::write_line( L"-- " + message );
+			CL_Console::write_line( cl_format(L"-- %1", message.c_str()) );
 			//std::cout << "--  " << message << std::endl;
 		}
 	}

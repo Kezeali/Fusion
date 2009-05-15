@@ -83,12 +83,28 @@ namespace FusionEngine
 	public:
 		//! Console logging prints all console messages to a log.
 		/*!
+		 * This writes all messages added to the console to a log, as
+		 * opposed to SetLogingToConsole() which makes a log push
+		 * all messages written to it onto the console.
+		 *
 		 * This will connect to the Console#OnNewLine signal to
 		 * capture messages.
 		 */
 		void ActivateConsoleLogging();
 		//! Disconnects from the console
 		void DisableConsoleLogging();
+
+		//! Enables or disables the Console target on the given log
+		void SetLogingToConsole(const std::string& tag, bool activate = true);
+		//! Enables or disables the given targets on the given log
+		void SetTargets(const std::string& tag, bool file, bool console);
+		//! Returns true if the given Log has a Console target
+		bool IsLoggingToConsole(const std::string& tag);
+		//! Returns true if the given Log has a file target
+		bool IsLoggingToFile(const std::string& tag);
+
+		//! Sets the targets that will be attached to new Logs
+		void SetDefaultTargets(bool file, bool console);
 
 		//! Sets the extension given to logfiles
 		void SetExt(const std::string& ext);
@@ -176,6 +192,8 @@ namespace FusionEngine
 		bool m_UseDating;
 		std::string m_Ext;
 		LogSeverity m_DefaultThreshold;
+		bool m_DefaultTarget_File;
+		bool m_DefaultTarget_Console;
 
 		LogList m_Logs;
 

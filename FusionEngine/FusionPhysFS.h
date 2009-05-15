@@ -101,7 +101,8 @@ static int platform_stricmp(const char *x, const char *y)
 		 *                                     archivesFirst);
 		 * </p>
 		 * <p>
-		 * The write directory will be created at [user]/.organisation/appName
+		 * The write folder will be created at [user]/.organisation/appName, and
+		 * will be populated with the basic folders (logs, packages, etc.)
 		 * </p>
 		 *
 		 *

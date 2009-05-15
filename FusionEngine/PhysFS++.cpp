@@ -244,7 +244,7 @@ namespace PhysFS
 
   std::streamsize FileDevice::write(const char* s, std::streamsize n)
   {
-    PHYSFS_sint64 ret = PHYSFS_write(file, s, sizeof(char), (PHYSFS_uint32)n);
+    PHYSFS_sint64 ret = PHYSFS_write(file, s, 1, (PHYSFS_uint32)n);
     if (ret == -1)
       throw Exception(PHYSFS_getLastError());
     return std::streamsize(ret);

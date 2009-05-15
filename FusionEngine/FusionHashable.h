@@ -68,8 +68,8 @@ namespace FusionEngine
 	//! Hashable / sortable key-class for input bindings in the input manager
 	struct BindingKey
 	{
-		int device;
-		int index;
+		unsigned int device;
+		unsigned int index;
 		int code;
 
 		BindingKey()
@@ -79,7 +79,7 @@ namespace FusionEngine
 		{
 		}
 
-		BindingKey(int device_type, int index, int code)
+		BindingKey(unsigned int device_type, unsigned int index, int code)
 			: device(device_type),
 			index(index),
 			code(code)

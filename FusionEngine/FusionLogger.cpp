@@ -31,8 +31,9 @@
 #include "FusionException.h"
 #include "FusionConsole.h"
 #include "FusionPaths.h"
-
+// Log targets (ILogFile implementations)
 #include "FusionLogPhysFS.h"
+#include "FusionLogFileConsole.h"
 
 #include <time.h>
 
@@ -77,6 +78,85 @@ namespace FusionEngine
 
 			Console::getSingletonPtr()->Add(L"Console Logging disabled");
 		}
+	}
+
+	void Logger::SetLogingToConsole(const std::string& tag, bool activate)
+	{
+		if (tag == g_LogConsole) // This would cause a feedback loop
+			return;
+
+		LogList::iterator _where = m_Logs.find(tag);
+		if (_where != m_Logs.end())
+		{
+			if (activate)
+			{
+				Console* currentCnsl = Console::getSingletonPtr();
+				if (currentCnsl == NULL)
+					return; // Can't add a console-logfile if the console doesn't exist :P
+
+				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
+				_where->second->AttachLogFile(logFile);
+			}
+			else
+			{
+				_where->second->DetachLogFile("console");
+			}
+		}
+	}
+
+	void Logger::SetTargets(const std::string& tag, bool file, bool console)
+	{
+		if (tag == g_LogConsole) 
+			return;
+
+		LogList::iterator _where = m_Logs.find(tag);
+		if (_where != m_Logs.end())
+		{
+			if (file)
+			{
+				Log::LogFilePtr logFile(new PhysFSLogFile());
+				_where->second->AttachLogFile(logFile);
+			}
+			else if (!file)
+			{
+				_where->second->DetachLogFile("physfs");
+			}
+
+			// tag must not be g_LogConsole: Can't make the console a target
+			//  for the log that receives mesages from the console (that
+			//  would create a feedback loop)
+			if (console && tag != g_LogConsole)
+			{
+				Console* currentCnsl = Console::getSingletonPtr();
+				if (currentCnsl == NULL)
+					return; // Can't add a console-logfile if the console doesn't exist :P
+
+				Log::LogFilePtr logFile(new ConsoleLogFile(currentCnsl));
+				_where->second->AttachLogFile(logFile);
+			}
+			else if (!console)
+			{
+				_where->second->DetachLogFile("console");
+			}
+		}
+	}
+
+	bool Logger::IsLoggingToConsole(const std::string &tag)
+	{
+		LogList::iterator _where = m_Logs.find(tag);
+		if (_where != m_Logs.end())
+			return _where->second->HasLogFileType("console");
+		else
+			return false;
+	}
+
+	bool Logger::IsLoggingToFile(const std::string &tag)
+	{
+		LogList::iterator _where = m_Logs.find(tag);
+		if (_where != m_Logs.end())
+			return _where->second->HasLogFileType("physfs");
+		else
+			return false;
 	}
 
 	void Logger::SetExt(const std::string &ext)
@@ -201,9 +281,23 @@ namespace FusionEngine
 		{
 			LogPtr log( new Log(tag, filename(tag)) );
 
-			// Create a log file
-			Log::LogFilePtr logFile( new PhysFSLogFile() );
-			log->AttachLogFile(logFile);
+			if (m_DefaultTarget_File)
+			{
+				// Create a log file
+				Log::LogFilePtr logFile( new PhysFSLogFile() );
+				log->AttachLogFile(logFile);
+			}
+			if (m_DefaultTarget_Console)
+			{
+				// Create a console target
+				Console* currentCnsl = Console::getSingletonPtr();
+				// Can't add a console-logfile if the console doesn't exist :P
+				if (currentCnsl == NULL)
+				{
+					Log::LogFilePtr logFile( new ConsoleLogFile(currentCnsl) );
+					log->AttachLogFile(logFile);
+				}
+			}
 
 			// Add this log to the list
 			m_Logs[tag] = log;
@@ -217,7 +311,7 @@ namespace FusionEngine
 		std::stringstream filename;
 		
 		// Add the path to where logfiles are to be stored
-		filename << LogfilePath;
+		filename << s_LogfilePath;
 
 		if (m_UseDating)
 		{

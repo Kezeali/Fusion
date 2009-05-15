@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_PhysFSLogFile
-#define Header_FusionEngine_PhysFSLogFile
+#ifndef Header_FusionEngine_LogFileConsole
+#define Header_FusionEngine_LogFileConsole
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,20 +36,17 @@
 
 #include "FusionLog.h"
 
-#include "PhysFS.h"
-//#include "PhysFS++.h"
-
 namespace FusionEngine
 {
 
-	class PhysFSLogFile : public ILogFile
+	class ConsoleLogFile : public ILogFile
 	{
 	public:
-		PhysFSLogFile();
-		~PhysFSLogFile();
+		ConsoleLogFile();
+		ConsoleLogFile(Console *console);
 
 	public:
-		std::string GetType() const { return "physfs"; }
+		std::string GetType() const { return "console"; }
 
 	public:
 		void Open(const std::string& filename);
@@ -58,8 +55,8 @@ namespace FusionEngine
 		void Flush();
 		
 	protected:
-		PHYSFS_File* m_File;
-		bool m_Open;
+		Console* m_Console;
+		std::string m_Filename;
 	};
 
 }

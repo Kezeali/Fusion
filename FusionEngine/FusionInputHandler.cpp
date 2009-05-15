@@ -29,27 +29,7 @@
 namespace FusionEngine
 {
 
-	// Config file device identifiers
-	static const char* s_DevKeyboardStr = "keyboard";
-	static const char* s_DevGamepadStr = "gamepad";
-	static const char* s_DevGamepad_AxisStr = "gamepad-axis";
-	static const char* s_DevMouseStr = "mouse";
-	static const char* s_DevMouse_PointerStr = "mouse-pointer";
-	static const char* s_DevMouse_AxisStr = "mouse-axis";
-	static const char* s_DevXInputStr = "xinput";
-	static const char* s_DevXInput_AxisStr = "xinput-axis";
-
-	// Internal device identifiers (used by input manager)
-	static const int s_DevKeyboard = 0;
-	static const int s_DevGamepad = 1;
-	static const int s_DevGamepad_Axis = 2;
-	static const int s_DevMouse = 3;
-	static const int s_DevMouse_Pointer = 4;
-	static const int s_DevMouse_Axis = 5;
-	static const int s_DevXInput = 10;
-	static const int s_DevXInput_Axis = 11;
-
-	static inline int DeviceNameToID(const std::string& device)
+	inline unsigned int DeviceNameToID(const std::string& device)
 	{
 		if (device == s_DevKeyboardStr)
 			return s_DevKeyboard;
@@ -72,7 +52,7 @@ namespace FusionEngine
 			return s_DevXInput_Axis;
 	}
 
-	static inline const std::string& DeviceIDToName(int device)
+	inline const std::string& DeviceIDToName(unsigned int device)
 	{
 		if (device == s_DevKeyboard)
 			return s_DevKeyboardStr;
@@ -94,8 +74,6 @@ namespace FusionEngine
 		else if (device == s_DevXInput_Axis)
 			return s_DevXInput_AxisStr;
 	}
-
-	static const int s_DeviceIndexAny = 255;
 
 	InputManager::InputManager()
 		: m_SuspendRequests(0),
@@ -127,7 +105,7 @@ namespace FusionEngine
 	{
 		// Keyboard is always required
 		if (m_InputContext.get_keyboard_count() == 0)
-			return false;		
+			return false;
 
 		return true;
 	}
@@ -136,39 +114,65 @@ namespace FusionEngine
 	{
 		m_SuspendRequests = 0;
 
-		if (m_InputContext.get_keyboard_count() > 0)
+		for (unsigned int i = 0; i < m_InputContext.get_keyboard_count(); i++)
 		{
-			for (int i = 0; i < m_InputContext.get_keyboard_count(); i++)
-			{
-				m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_down(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_up(), this, &InputManager::onInputEvent);
-			}
+			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_down(), this, &InputManager::onKeyDown);
+			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_up(), this, &InputManager::onKeyUp);
+
+			// RawInput signals
+			RawInputUserData ud;
+			ud.Index = i;
+			ud.Type = s_DevKeyboard;
+			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_down(), this, &InputManager::fireRawInput, ud);
+			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_up(), this, &InputManager::fireRawInput, ud);
 		}
-		if (m_InputContext.get_mouse_count() > 0)
+		for (unsigned int i = 0; i < m_InputContext.get_mouse_count(); i++)
 		{
-			for (int i = 0; i < m_InputContext.get_mouse_count(); i++)
-			{
-				m_Slots.connect(m_InputContext.get_mouse(i).sig_axis_move(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_mouse(i).sig_ball_move(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_mouse(i).sig_key_down(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_mouse(i).sig_key_up(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_mouse(i).sig_pointer_move(), this, &InputManager::onInputEvent);
-			}
+			//m_Slots.connect(m_InputContext.get_mouse(i).sig_axis_move(), this, &InputManager::onMouseAxisMove);
+			//m_Slots.connect(m_InputContext.get_mouse(i).sig_ball_move(), this, &InputManager::onMouseBallMove);
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_down(), this, &InputManager::onMouseDown);
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_up(), this, &InputManager::onMouseUp);
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_pointer_move(), this, &InputManager::onMousePointerMove);
+
+			// Raw-input signals
+			RawInputUserData ud;
+			ud.Index = i;
+			ud.Type = s_DevMouse;
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_down(), this, &InputManager::fireRawInput, ud);
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_up(), this, &InputManager::fireRawInput, ud);
+			ud.Type = s_DevMouse_Pointer;
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_pointer_move(), this, &InputManager::fireRawInput, ud);
 		}
-		if (m_InputContext.get_joystick_count() > 0)
+		for (unsigned int i = 0; i < m_InputContext.get_joystick_count(); i++)
 		{
-			for (int i = 0; i < m_InputContext.get_joystick_count(); i++)
-			{
-				m_Slots.connect(m_InputContext.get_joystick(i).sig_axis_move(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_joystick(i).sig_key_down(), this, &InputManager::onInputEvent);
-				m_Slots.connect(m_InputContext.get_joystick(i).sig_key_up(), this, &InputManager::onInputEvent);
-			}
+			m_Slots.connect(m_InputContext.get_joystick(i).sig_axis_move(), this, &InputManager::onGamepadAxisMove);
+			m_Slots.connect(m_InputContext.get_joystick(i).sig_key_down(), this, &InputManager::onGamepadPress);
+			m_Slots.connect(m_InputContext.get_joystick(i).sig_key_up(), this, &InputManager::onGamepadRelease);
+
+			// Raw-input signals
+			RawInputUserData ud;
+			ud.Index = i;
+			ud.Type = s_DevGamepad_Axis;
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_axis_move(), this, &InputManager::fireRawInput, ud);
+			ud.Type = s_DevGamepad;
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_down(), this, &InputManager::fireRawInput, ud);
+			m_Slots.connect(m_InputContext.get_mouse(i).sig_key_up(), this, &InputManager::fireRawInput, ud);
 		}
 #ifdef FSN_USE_XINPUT
 		// List all controllers
-		for (int i = 0; i < XUSER_MAX_COUNT; i++)
+		for (unsigned int i = 0; i < XUSER_MAX_COUNT; i++)
 		{
-			m_XInputControllers.push_back( XInputController(i) );
+			XInputController c(i);
+			m_XInputControllers.push_back( c );
+
+			m_Slots.connect(c.sig_axis_move, this, &InputManager::onXInputAxisMove);
+			m_Slots.connect(c.sig_key_down, this, &InputManager::onXInputPress);
+			m_Slots.connect(c.sig_key_up, this, &InputManager::onXInputRelease);
+
+			// Raw-input signals
+			m_Slots.connect(c.sig_axis_move, this, &InputManager::fireRawInput_XInput);
+			m_Slots.connect(c.sig_key_down, this, &InputManager::fireRawInput_XInput);
+			m_Slots.connect(c.sig_key_up, this, &InputManager::fireRawInput_XInput);
 		}
 #endif
 
@@ -226,42 +230,48 @@ namespace FusionEngine
 	class update_state
 	{
 	public:
-		update_state ( )
+		update_state( )
 		{
 		}
 
-		void operator() (const InputState &elem )
+		void operator() (const InputManager::InputStateMap::value_type &elem)
 		{
-			elem.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
-			elem.m_ActiveFirst = elem.m_Active;
+			elem.second.m_Down = elem.second.m_Active;
+			// So far the input has been active for the entire step, since
+			//  this is the start of the step ;)
+			elem.second.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
+			elem.second.m_ActiveFirst = elem.m_Active;
 		}
 	};
 
-	void InputManager::Update(unsigned int split)
+	void InputManager::Update(float split)
 	{
 		//m_PlayerInputStates.assign(m_NumPlayers, InputStateMap());
 
-		// Perhaps processing should be limited by:
-		//  if ((m_TicksToNextStep - split) < 0)
-		//  {
-		//    m_TicksToNextStep = m_MinTicksPerStep;
-		//  ...
-		if (m_SuspendRequests == 0)
-		{
-			m_CurrentStep++;
 
-			for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
-				it != end; ++it)
+			if (m_SuspendRequests == 0)
 			{
-				std::for_each(it->begin(), it->end(), update_state);
-			}
+				m_CurrentStep++;
+
+				for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
+					it != end; ++it)
+				{
+					std::for_each(it->begin(), it->end(), update_state);
+				}
 
 #ifdef FSN_USE_XINPUT
-			for (XInputKeyBindingMap::iterator it = m_XInputBindings.begin(), end = m_XInputBindings.end();
-				it != end; ++it)
-			{
-			}
+				m_TimeSinceLastPoll += split;
+				if (m_TimeSinceLastPoll >= m_PollingInterval)
+				{
+					m_TimeSinceLastPoll = 0.f;
+					for (XInputControllerList::iterator it = m_XInputControllers.begin(), end = m_XInputControllers.end();
+						it != end; ++it)
+					{
+						it->Poll();
+					}
+				}
 #endif
+			}
 		}
 	}
 
@@ -322,13 +332,22 @@ namespace FusionEngine
 			// The key shortname (unique identifier)
 			std::string keyName = child->GetAttribute("key");
 
-			std::string ctrlNum = child->GetAttribute("controller_number");
+			// Controller number (for XInput)
+			//! \todo Perhaps non-xinput controlers should be accessable by device name?
+			std::string contrlName = child->GetAttribute("controller_number");
+
+			double threshold = 0.0;
+			double range = 1.0;
+			bool cubic = false;
+			child->GetAttribute("threshold", &threshold, false);
+			child->GetAttribute("range", &range, false);
+			child->GetAttribute("cubic", &cubic, false);
 
 
 			KeyInfoMap::const_iterator _where = m_KeyInfo.find(keyName);
 			if (_where == m_KeyInfo.end())
 			{
-				// Invalid shortname -> log error and skip
+				// Invalid shortname: log error and skip
 				Logger::getSingleton().Add(
 					"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
 					g_LogException, LOG_TRIVIAL);
@@ -336,20 +355,29 @@ namespace FusionEngine
 			}
 			KeyInfo &key = m_KeyInfo[keyName];
 			
-			if (key.m_Device == s_DevXInputStr)
+			unsigned int deviceId = DeviceNameToID(key.m_Device);
+
+			// Get the controller index
+			unsigned int ctrlNum = 0;
+			if (deviceId == s_DevXInput || deviceId == s_DevXInput_Axis)
 			{
-				unsigned int ctrlNumInt = 0; // Default to first controller
+				ctrlNum = 0; // Default to first controller
 				if (!ctrlNum.empty())
 				{
-					if (ctrlNum == "any")
-						ctrlNumInt = XUSER_INDEX_ANY;
+					if (contrlName == "any")
+						ctrlNum = XUSER_INDEX_ANY;
 					else
-						ctrlNumInt = CL_StringHelp::local8_to_uint(ctrlNum);
+						ctrlNum = CL_StringHelp::local8_to_uint(contrlName);
 				}
-				m_XInputBindings[XUserKeycodePair(ctrlNumInt, key.m_Code)] = InputBinding(playerNum, input, key);
 			}
 			else
-				m_KeyBindings[DeviceKeycodePair(key.m_Device, key.m_Code)] = InputBinding(playerNum, input, key);
+			{
+				ctrlNum = s_DeviceIndexAny; // Default to 'any' controller
+			}
+
+			InputBinding inputBinding(playerNum, input, key, threshold, range, cubic);
+			inputBinding.Validate();
+			m_KeyBindings[BindingKey(deviceId, ctrlNum, key.m_Code)] = inputBinding;
 		}
 	}
 
@@ -390,7 +418,9 @@ namespace FusionEngine
 		for (KeyBindingMap::iterator it = m_KeyBindings.begin(), end = m_KeyBindings.end();
 			it != end; ++it)
 		{
+			const BindingKey &key = it->first;
 			const InputBinding &binding = it->second;
+			binding.Validate();
 
 			// Get / create the group element for the player this bind applies to
 			ticpp::Element* playerElement = getPlayerElement(binding.m_Player, playerElements, root);
@@ -399,26 +429,40 @@ namespace FusionEngine
 			ticpp::Element* bindElement = new ticpp::Element("bind");
 
 			bindElement->SetAttribute("key", binding.m_Key.m_Name);
+
+			if (key.device == s_DevXInput || key.device == s_DevXInput_Axis)
+				bindElement->SetAttribute("controller_number", key.index);
+
 			bindElement->SetAttribute("input", binding.m_Input);
+
+			// These are optional attributes, so in order to keep the element
+			//  un-cluttered they are only added if they are set to a value
+			//  other than their default.
+			if (binding.m_Threshold > 0.0)
+				bindElement->SetAttribute("threshold", binding.m_Threshold);
+			if (binding.m_Range < 1.0)
+				bindElement->SetAttribute("range", binding.m_Range);
+			if (binding.m_Cubic)
+				bindElement->SetAttribute("cubic", "true");
 
 			playerElement->LinkEndChild(bindElement);
 		}
 	}
 
-	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &key_shortname)
+	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &key_shortname, int controller_number)
 	{
 		//std::string playerStr(CL_StringHelp::int_to_local8(player));
 		KeyInfo &key = m_KeyInfo[key_shortname];
-		m_KeyBindings[DeviceKeycodePair(key.m_Device, key.m_Code)] = InputBinding(player, input, key);
+		m_KeyBindings[BindingKey(DeviceNameToID(key.m_Device), controller_number, key.m_Code)] = InputBinding(player, input, key);
 		//m_KeyBindings[shortname] = InputBinding(player, input, key);
 	}
 
-	int InputManager::GetDeviceIdByName(const std::string &name) const
-	{
-		DeviceNameMap::iterator _where = m_DevNameToId.find(name);
-		if (_where != m_DevNameToId.end())
-			return _where;
-	}
+	//int InputManager::GetDeviceIdByName(const std::string &name) const
+	//{
+	//	DeviceNameMap::iterator _where = m_DevNameToId.find(name);
+	//	if (_where != m_DevNameToId.end())
+	//		return _where;
+	//}
 
 	//void InputManager::MapControl(int keysym, const std::string &name, unsigned int filter)
 	//{
@@ -541,117 +585,453 @@ namespace FusionEngine
 		return m_MouseSensitivity;
 	}
 
-	void InputManager::onKeyboardEvent(const CL_InputEvent &event, const CL_InputState &state)
+	/*unsigned int InputManager::getIndexOfControllerCalled(const std::string &name)
 	{
-		processBinaryInputEvent("keyboard", event, state);
+		for (int i = 0; i < m_InputContext.get_keyboard_count(); i++)
+		{
+			m_DeviceIndicies[m_InputContext.get_keyboard(i).get_name()] = i;
+		}
+	}*/
+
+	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, ev.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = true;
+
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalKeyboardPressed.invoke(synthedEvent);
+
+			//processInputEvent(s_DevKeyboard, event);
+		}
 	}
 
-	void InputManager::onMousePointerEvent(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onKeyUp(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = false;
+
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalKeyboardReleased.invoke(synthedEvent);
+
+			//processInputEvent(s_DevKeyboard, event);
+		}
+	}
+
+	void InputManager::onMouseDown(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, 0, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = true;
+
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalMousePressed.invoke(synthedEvent);
+
+			//processInputEvent(s_DevKeyboard, event);
+		}
+	}
+
+	void InputManager::onMouseUp(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, 0, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = false;
+
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalMouseReleased.invoke(synthedEvent);
+
+			//processInputEvent(s_DevKeyboard, event);
+		}
+	}
+
+	void InputManager::onMousePointerMove(const CL_InputEvent &event, const CL_InputState &state)
 	{
 		// Check for pointer-x bindings
-		KeyBindingMap::iterator _where = m_KeyBindings.find(DeviceKeycodePair("mouse-pointer", 0));
-		if (_where != m_KeyInfo.end())
 		{
-			const InputBinding &binding = _where->second;
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 0));
+			if (_where != m_KeyInfo.end())
+			{
+				const InputBinding& binding = _where->second;
 
-			InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
+				InputEvent synthedEvent;
+				synthedEvent.Input = binding.m_Input;
 
-			inputState.m_Value = (float)event.mouse_pos.x;
+				synthedEvent.Type = InputEvent::AnalogAbsolute;
+				synthedEvent.Value = (double)event.mouse_pos.x;
+				synthedEvent.Down = false;
+
+				SignalInputChanged.invoke(synthedEvent);
+				//SignalMouseMoved.invoke(synthedEvent);
+			}
 		}
 
 		// Check for pointer-y bindings
-		_where = m_KeyBindings.find(DeviceKeycodePair("mouse-pointer", 1));
-		if (_where != m_KeyInfo.end())
 		{
-			const InputBinding &binding = _where->second;
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 1));
+			if (_where != m_KeyInfo.end())
+			{
+				const InputBinding& binding = _where->second;
 
-			InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
+				InputEvent synthedEvent;
+				synthedEvent.Input = binding.m_Input;
 
-			inputState.m_Value = (float)event.mouse_pos.y;
+				synthedEvent.Type = InputEvent::AnalogAbsolute;
+				synthedEvent.Value = (double)event.mouse_pos.y;
+				synthedEvent.Down = false;
+
+				SignalInputChanged.invoke(synthedEvent);
+				//SignalMouseMoved.invoke(synthedEvent);
+			}
+		}
+
+		// Check for delta-x bindings
+		{
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 2));
+			if (_where != m_KeyInfo.end())
+			{
+				const InputBinding& binding = _where->second;
+
+				InputEvent synthedEvent;
+				synthedEvent.Input = binding.m_Input;
+
+				double normalizedValue = (double)(event.mouse_pos.x - m_MicePositions[0].x);
+				normalizedValue = normalizedValue / m_DisplayWindow.get_viewport().get_width();
+				binding.FilterValue(normalizedValue);
+
+				// If the normalized value is zero, no event will be fired
+				if (!fe_fzero(normalizedValue))
+				{
+					synthedEvent.Type = InputEvent::AnalogNormalized;
+					synthedEvent.Value = normalizedValue;
+					synthedEvent.Down = false;
+
+					SignalInputChanged.invoke(synthedEvent);
+				}
+			}
+		}
+
+		// Check for delta-y bindings
+		{
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 3));
+			if (_where != m_KeyInfo.end())
+			{
+				const InputBinding& binding = _where->second;
+
+				InputEvent synthedEvent;
+				synthedEvent.Input = binding.m_Input;
+
+				double normalizedValue = (double)(event.mouse_pos.y - m_MicePositions[0].y);
+				normalizedValue = normalizedValue / m_DisplayWindow.get_viewport().get_height();
+				binding.FilterValue(normalizedValue);
+
+				if (!fe_fzero(normalizedValue))
+				{
+					synthedEvent.Type = InputEvent::AnalogNormalized;
+					synthedEvent.m_Value = normalizedValue;
+					synthedEvent.Down = false;
+
+					SignalInputChanged.invoke(synthedEvent);
+				}
+			}
 		}
 	}
 
-	void InputManager::onMouseBallEvent(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onMouseBallMove(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		// Check for ball-x bindings
-		KeyBindingMap::iterator _where = m_KeyBindings.find(DeviceKeycodePair("mouse-axis", 0));
-		if (_where != m_KeyInfo.end())
-		{
-			const InputBinding &binding = _where->second;
-
-			InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
-
-			inputState.m_Value = (float)event.mouse_pos.x;
-		}
-
-		// Check for ball-y bindings
-		_where = m_KeyBindings.find(DeviceKeycodePair("mouse-axis", 1));
-		if (_where != m_KeyInfo.end())
-		{
-			const InputBinding &binding = _where->second;
-
-			InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
-
-			inputState.m_Value = (float)event.mouse_pos.y;
-		}
+		// Mouse ball events are never fired in the Windows impl. of ClanLib, so this is useless
 	}
 
-	void InputManager::onGamepadAxisEvent(const CL_InputEvent &event, const CL_InputState &state)
+	void InputManager::onGamepadPress(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		processAxisInputEvent("gamepad-axis", event, state);
-	}
-
-	void InputManager::processBinaryInputEvent(const std::string &deviceName, const CL_InputEvent &event, const CL_InputState &state)
-	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(DeviceKeycodePair(deviceName, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, 0, event.id));
 		if (_where != m_KeyBindings.end())
 		{
-			const InputBinding &binding = _where->second;
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
 
-			InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
-			
-			inputState.m_Active = event.type == CL_InputEvent::pressed;
+			synthedEvent.Type == InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = true;
 
-			if (event.type == CL_InputEvent::pressed)
-			{
-				// If a button is pressed at any time during a step,
-				//  the given input is considered active for the entire
-				//  step. Conversely if, and only if, a button is never pressed
-				//  again during a step will it be set to inactive (false)
-				inputState.m_Down = true;
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalGamepadPressed.invoke(synthedEvent);
 
-				// If it was active at the start of this step, since we 
-				//  are now receiving a 'pressed' event, it must have become
-				//  inactive ('released') at some point in-between. Therefor
-				//  this is most likely the 3rd state during this step so
-				//  active ratio = 1/3 = 0.34 (rounded up. since the ratio
-				//  increases every press and there may have been more
-				//  than one press->release flip-flop during this step, even
-				//  unlikely as that is). Otherwise the active ratio is
-				//  0.5, no matter how many times it has been pressed and
-				//  released (given that it is now being pressed.)
-				inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.34f : 0.5f;
-			}
-			if (event.type == CL_InputEvent::released)
-			{
-				// Converse of the above statement
-				inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.5f : 0.34f;
-			}
-
-			// Clamp ActiveRatio
-			if (fe_fequal(inputState.m_ActiveRatio, 1.f, 0.05f))
-				inputState.m_ActiveRatio = 1.f;
-			else if (fe_fequal(inputState.m_ActiveRatio, 0.f, 0.05f))
-				inputState.m_ActiveRatio = 0.f;
-
-			inputState.m_Value = (inputState.m_Active ? 1.f : 0.f) * inputState.m_ActiveRatio;\
+			//processInputEvent(s_DevKeyboard, event);
 		}
 	}
 
-	void InputManager::onAxisInputEvent()
+	void InputManager::onGamepadRelease(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		inputState.m_Value = event.axis_pos;
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, 0, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = true;
+
+			SignalInputChanged.invoke(synthedEvent);
+			//SignalGamepadPressed.invoke(synthedEvent);
+
+			//processInputEvent(s_DevKeyboard, event);
+		}
 	}
+
+	void InputManager::onGamepadAxisMove(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad_Axis, 0, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			const InputBinding& binding = _where->second;
+
+			InputEvent synthedEvent;
+			synthedEvent.Input = binding.m_Input;
+
+			synthedEvent.Type = InputEvent::AnalogNormalized;
+			synthedEvent.Value = event.axis_pos;
+			synthedEvent.Down = false;
+			// Filter the value (apply deadzone / range / NLT)
+			binding.FilterValue(synthedEvent.Value);
+
+			SignalInputChanged.invoke(synthedEvent);
+		}
+	}
+
+	void InputManager::onXInputPress(const XInputEvent &event)
+	{
+		unsigned int index = event.controller->GetUserIndex();
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevXInput, index, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = true;
+
+			SignalInputChanged.invoke(synthedEvent);
+		}
+	}
+
+	void InputManager::onXInputRelease(const XInputEvent &event)
+	{
+		unsigned int index = event.controller->GetUserIndex();
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevXInput, index, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			InputEvent synthedEvent;
+			synthedEvent.Input = _where->second.m_Input;
+
+			synthedEvent.Type = InputEvent::Binary;
+			synthedEvent.Value = 0.0;
+			synthedEvent.Down = false;
+
+			SignalInputChanged.invoke(synthedEvent);
+		}
+	}
+
+	void InputManager::onXInputAxisMove(const XInputEvent &event)
+	{
+		unsigned int index = event.controller->GetUserIndex();
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevXInput_Axis, index, event.id));
+		if (_where != m_KeyBindings.end())
+		{
+			const InputBinding& binding = _where->second;
+
+			InputEvent synthedEvent;
+			synthedEvent.Input = binding.m_Input;
+
+			synthedEvent.Type = InputEvent::AnalogNormalized;
+			synthedEvent.Value = event.axis_pos;
+			synthedEvent.Down = false;
+			// Filter the value (apply deadzone / range / NLT)
+			binding.FilterValue(synthedEvent.Value);
+
+			SignalInputChanged.invoke(synthedEvent);
+		}
+	}
+
+	void InputManager::fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData dev_info)
+	{
+		RawInput rawInput;
+		rawInput.DeviceType = DeviceIDToName(dev_info.Type);
+		rawInput.DeviceIndex = dev_info.Index;
+		rawInput.DeviceName = ev.device.get_name(); //= dev_info.Name;
+
+		if (ev.type == CL_InputEvent::pointer_moved)
+		{
+			rawInput.InputType = RawInput::Pointer;
+			rawInput.Code = 0;
+			
+			rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
+			//rawInput.AxisPosition = 0.0;
+			//rawInput.ButtonPressed = false;
+		}
+		else if (ev.type == CL_InputEvent::axis_moved)
+		{
+			rawInput.InputType = RawInput::Axis;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			rawInput.AxisPosition = ev.axis_pos;
+			//rawInput.ButtonPressed = false;
+		}
+		else if (ev.type == CL_InputEvent::pressed)
+		{
+			rawInput.InputType = RawInput::Button;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			//rawInput.AxisPosition = 0.0;
+			rawInput.ButtonPressed = true;
+		}
+		else if (ev.type == CL_InputEvent::released)
+		{
+			rawInput.InputType = RawInput::Button;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			//rawInput.AxisPosition = 0.0;
+			rawInput.ButtonPressed = false;
+		}
+		else
+		{
+			rawInput.InputType = RawInput::Nothing;
+			rawInput.Code = ev.id;
+		}
+	}
+
+	void InputManager::fireRawInput_XInput(const XInputEvent &ev)
+	{
+		RawInput rawInput;
+		if (ev.type == XInputEvent::axis_moved)
+			rawInput.DeviceType = s_DevXInput_AxisStr;
+		else
+			rawInput.DeviceType = s_DevXInputStr;
+
+		rawInput.DeviceIndex = ev.controller->GetUserIndex();
+		rawInput.DeviceName = "Xbox 360 Gamepad " << rawInput.DeviceIndex;
+
+		if (ev.type == XInputEvent::axis_moved)
+		{
+			rawInput.InputType = RawInput::Axis;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			rawInput.AxisPosition = ev.axis_pos;
+			//rawInput.ButtonPressed = false;
+		}
+		else if (ev.type == XInputEvent::pressed)
+		{
+			rawInput.InputType = RawInput::Button;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			//rawInput.AxisPosition = 0.0;
+			rawInput.ButtonPressed = true;
+		}
+		else if (ev.type == XInputEvent::released)
+		{
+			rawInput.InputType = RawInput::Button;
+			rawInput.Code = ev.id;
+			
+			//rawInput.PointerPosition = Vector2T<int>();
+			//rawInput.AxisPosition = 0.0;
+			rawInput.ButtonPressed = false;
+		}
+		else
+		{
+			rawInput.InputType = RawInput::Nothing;
+			rawInput.Code = ev.id;
+		}
+	}
+
+	//void InputManager::processInputEvent(unsigned int device, const CL_InputEvent &ev)
+	//{
+	//	KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(device, 0, ev.id));
+	//	if (_where != m_KeyBindings.end())
+	//	{
+	//		if (ev.type == CL_InputEvent::pressed)
+	//			SignalInputChanged.invoke(_where->second.m_Key);
+	//		if (ev.type == CL_InputEvent::released)
+	//			SignalInputChanged.invoke(_where->second.m_Key);
+	//	}
+	//}
+
+	//void InputManager::processBinaryInputEvent(const std::string &deviceName, const CL_InputEvent &event, const CL_InputState &state)
+	//{
+	//	KeyBindingMap::iterator _where = m_KeyBindings.find(DeviceKeycodePair(deviceName, event.id));
+	//	if (_where != m_KeyBindings.end())
+	//	{
+	//		const InputBinding &binding = _where->second;
+
+	//		InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
+
+	//		inputState.m_Active = event.type == CL_InputEvent::pressed;
+
+	//		if (event.type == CL_InputEvent::pressed)
+	//		{
+	//			// If a button is pressed at any time during a step,
+	//			//  the given input is considered active for the entire
+	//			//  step. Conversely if, and only if, a button is never pressed
+	//			//  again during a step will it be set to inactive (false)
+	//			inputState.m_Down = true;
+
+	//			// If it was active at the start of this step, since we 
+	//			//  are now receiving a 'pressed' event, it must have become
+	//			//  inactive ('released') at some point in-between. Therefor
+	//			//  this is most likely the 3rd state during this step so
+	//			//  active ratio = 1/3 = 0.34 (rounded up. since the ratio
+	//			//  increases every press and there may have been more
+	//			//  than one press->release flip-flop during this step, even
+	//			//  unlikely as that is). Otherwise the active ratio is
+	//			//  0.5, no matter how many times it has been pressed and
+	//			//  released (given that it is now being pressed.)
+	//			inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.34f : 0.5f;
+	//		}
+	//		if (event.type == CL_InputEvent::released)
+	//		{
+	//			// Converse of the above statement
+	//			inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.5f : 0.34f;
+	//		}
+
+	//		// Clamp ActiveRatio
+	//		if (fe_fequal(inputState.m_ActiveRatio, 1.f, 0.05f))
+	//			inputState.m_ActiveRatio = 1.f;
+	//		else if (fe_fequal(inputState.m_ActiveRatio, 0.f, 0.05f))
+	//			inputState.m_ActiveRatio = 0.f;
+
+	//		inputState.m_Value = (inputState.m_Active ? 1.f : 0.f) * inputState.m_ActiveRatio;\
+	//	}
+	//}
 
 //	void InputManager::onKeyDown(const CL_InputEvent &key)
 //	{

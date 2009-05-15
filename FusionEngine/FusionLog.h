@@ -52,16 +52,26 @@ namespace FusionEngine
 
 	typedef FileSystemException LogfileException;
 
+	//! LogFile (log target) interface
 	class ILogFile
 	{
 	public:
+		//! Returns a string identifing the type
+		/*!
+		 * \remarks
+		 * This is used to make sure Logs only have one LogFile of any given type.
+		 */
+		virtual std::string GetType() const =0;
+	public:
+		//! \todo This should be OnAttach() (Calling it 'open' is inaccurate)
 		virtual void Open(const std::string& filename) =0;
+		//! \todo This should be OnDetach() (calling it 'close' is inaccurate - the LogFile should close automatically on destruction)
 		virtual void Close() =0;
 		virtual void Write(const std::string& entry) =0;
 		virtual void Flush() =0;
 	};
 
-	//! Represents a logfile
+	//! Represents a Log
 	/*!
 	 * \sa FusionEngine#Logger
 	 */
@@ -69,7 +79,7 @@ namespace FusionEngine
 	{
 	public:
 		typedef std::tr1::shared_ptr<ILogFile> LogFilePtr;
-		typedef std::vector<LogFilePtr> LogFileList;
+		typedef std::map<std::string, LogFilePtr> LogFileList;
 
 	public:
 		//! Constructor +tag +filename +safe
@@ -89,8 +99,13 @@ namespace FusionEngine
 		//! Returns the verbosity level
 		LogSeverity GetThreshold() const;
 
+		//! Attaches a new target
 		void AttachLogFile(LogFilePtr log_file);
 		void DetachLogFile(LogFilePtr log_file);
+		//! Detaches the target with the given type
+		void DetachLogFile(const std::string& type);
+		//! Returns true if a logfile of the given type is attached
+		bool HasLogFileType(const std::string& type);
 
 		//! Adds the given string to the log, as is
 		void AddVerbatim(const std::string& text);
@@ -110,8 +125,11 @@ namespace FusionEngine
 		void Flush();
 
 	protected:
-		void addHeader();
-		void addFooter();
+		void addHeader(LogFilePtr log_file);
+		void addFooter(LogFilePtr log_file);
+
+		void addHeaderToAll();
+		void addFooterToAll();
 
 	protected:
 		std::string m_Tag;

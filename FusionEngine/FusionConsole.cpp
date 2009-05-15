@@ -24,7 +24,7 @@ namespace FusionEngine
 		return strWnMkr;
 	}
 
-	void Console::Add(const std::wstring &message)
+	void Console::add_raw(const std::wstring& message)
 	{
 		m_Data.push_back(message);
 
@@ -33,6 +33,28 @@ namespace FusionEngine
 
 		// Signal
 		OnNewLine.invoke(message);
+	}
+
+	inline std::wstring nHyphens(std::wstring::size_type n)
+	{
+		// Could do this with a table, but I don't care that much
+		std::wstring string;
+		for (std::wstring::size_type i=0; i<n; i++)
+			string += L"-";
+		return string;
+	}
+
+	void Console::Add(const std::wstring &message)
+	{
+		// Close the grouped entries section
+		if (!m_LastHeading.empty())
+		{
+			m_LastHeading = L"";
+			// Add a closing line
+			add_raw( L"}" );
+		}
+
+		add_raw(message);
 	}
 
 	void Console::Add(const std::wstring& message, MessageType type)
@@ -52,13 +74,22 @@ namespace FusionEngine
 		}
 
 		// Add the message to the console data
-		m_Data.push_back(headedMessage);
+		Add(headedMessage);
+	}
 
-		if (m_Data.size() > m_MaxData)
-			m_Data.pop_front();
+	void Console::Add(const std::wstring& heading, const std::wstring& message)
+	{
+		if (heading != m_LastHeading)
+		{
+			// Add new heading (will also close the current heading if there is one)
+			Add(L"[" + heading + L"]:");
+			add_raw(L"{");
+		}
 
-		// Signal
-		OnNewLine.invoke(headedMessage);
+		// Add the message
+		add_raw(L" " + message);
+
+		m_LastHeading = heading;
 	}
 
 	//void Console::Add(const FusionEngine::Exception *ex)
