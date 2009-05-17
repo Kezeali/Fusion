@@ -37,7 +37,7 @@ namespace TinyXPath
 class byte_stream
 {
    /// Length of the total string, + 1
-   unsigned u_length;
+   size_t u_length;
    /// Total string
    _byte_ * bp_in;
    /// Current read position
