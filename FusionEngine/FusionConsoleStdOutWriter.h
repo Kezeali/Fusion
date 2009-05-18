@@ -59,13 +59,13 @@ namespace FusionEngine
 		void Disable();
 
 		//! Called by the OnNewLine signal from the console
-		void onConsoleNewline(const std::wstring &message);
+		void onConsoleNewline(const std::string &message);
 
 	protected:
 		//! True if this object is connected to a Console
 		bool m_Active;
 
-		CL_Slot m_ConsoleOnNewLineSlot;
+		boost::signals2::connection m_ConsoleOnNewLineSlot;
 
 	};
 

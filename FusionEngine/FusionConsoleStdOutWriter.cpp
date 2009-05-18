@@ -1,6 +1,8 @@
 
 #include "FusionConsoleStdOutWriter.h"
 
+#include <boost/bind.hpp>
+
 namespace FusionEngine
 {
 
@@ -9,7 +11,7 @@ namespace FusionEngine
 	{
 		// Use the singleton
 		m_ConsoleOnNewLineSlot =
-			Console::getSingleton().OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
+			Console::getSingleton().OnNewLine.connect(boost::bind(&ConsoleStdOutWriter::onConsoleNewline, this, _1));
 	}
 
 	ConsoleStdOutWriter::ConsoleStdOutWriter(Console* console)
@@ -17,11 +19,12 @@ namespace FusionEngine
 	{
 		// Use the given Console
 		m_ConsoleOnNewLineSlot =
-			console->OnNewLine.connect(this, &ConsoleStdOutWriter::onConsoleNewline);
+			console->OnNewLine.connect(boost::bind(&ConsoleStdOutWriter::onConsoleNewline, this, _1));
 	}
 
 	ConsoleStdOutWriter::~ConsoleStdOutWriter()
 	{
+		m_ConsoleOnNewLineSlot.disconnect();
 	}
 
 	void ConsoleStdOutWriter::Enable()
@@ -40,31 +43,16 @@ namespace FusionEngine
 		}
 	}
 
-	void ConsoleStdOutWriter::onConsoleNewline(const std::wstring &message)
+	void ConsoleStdOutWriter::onConsoleNewline(const std::string &message)
 	{
 		if (!m_Active)
 			return;
 		//std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
 		//std::wstring w_marker = Console::getSingleton().GetWarningMarker();
 
-		std::wstring e_marker = L"**";
-		std::wstring w_marker = L"##";
-
-		if (message.substr(0, e_marker.length()) == e_marker)
-		{
-			CL_Console::write_line( cl_format(L"** %1", message.substr(e_marker.length()).c_str()) );
-			//std::cout << "** " << message.substr(e_marker.length()) << std::endl;
-		}
-		else if (message.substr(0, w_marker.length()) == w_marker)
-		{
-			CL_Console::write_line( cl_format(L"++ %1", message.substr(w_marker.length()).c_str()) );
-			//std::cout << "++ " << message.substr(w_marker.length()) << std::endl;
-		}
-		else
-		{
-			CL_Console::write_line( cl_format(L"-- %1", message.c_str()) );
-			//std::cout << "--  " << message << std::endl;
-		}
+		std::wstring wmessage = cl_text("-- ") + CL_StringHelp::local8_to_text(message.c_str());
+		CL_Console::write_line( wmessage.c_str() );
+		//std::cout << "--  " << message << std::endl;
 	}
 
 }

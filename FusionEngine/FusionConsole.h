@@ -35,15 +35,18 @@
 
 #include "FusionCommon.h"
 
+#include "FusionBoostSignals2.h"
+
 /// Inherited
 #include "FusionSingleton.h"
 
 /// Fusion
-#include "FusionException.h"
+//#include "FusionCircularStringBuffer.h"
 
 namespace FusionEngine
 {
-	static const size_t g_ConsoleDefaultMaxData = 1000;
+	//! Default maximum console buffer length
+	static const size_t s_ConsoleDefaultBufferLength = 3200;
 
 	//! Not Used
 	struct ConsoleLine
@@ -56,13 +59,7 @@ namespace FusionEngine
 	/*!
 	 * This class does not actually do anything with the data it contains,
 	 * but instead uses callbacks to allow other classes to deal with console
-	 * data. On that note, this is also not a script executor; the console
-	 * GUI does that.
-	 *
-	 * \todo Store ConsoleLines as circular 
-	 * linked list (or something else that doesn't require data manipulation
-	 * to remove items from the beginning - could it be done with a vector and
-	 * stored positions?)
+	 * data.
 	 */
 	class Console : public Singleton<Console>
 	{
@@ -72,7 +69,10 @@ namespace FusionEngine
 
 	public:
 		//! Lines in the console
-		typedef std::list<std::wstring> ConsoleLines;
+		//typedef std::list<std::string> ConsoleLines;
+
+		typedef boost::function<std::string (const StringVector&)> CommandCallback;
+		typedef std::tr1::unordered_map<std::string, CommandCallback> CommandCallbackMap;
 
 		//! Message header types
 		enum MessageType {
@@ -83,63 +83,111 @@ namespace FusionEngine
 
 	public:
 		//! Returns the exception marker
-		const std::wstring& GetExceptionMarker() const;
+		const std::string& GetExceptionMarker() const;
 		//! Returns the warning marker
-		const std::wstring& GetWarningMarker() const;
+		const std::string& GetWarningMarker() const;
 
-		//! Adds the given message to the console history
+		void SetBufferLength(std::string::size_type length);
+		std::string::size_type GetBufferLength() const;
+
+		void SetCharacterInterval(std::string::size_type interval);
+		std::string::size_type GetCharacterInterval() const;
+
+		//! Adds the given message to the console history (Wide-Char)
 		void Add(const std::wstring &message);
+		//! Adds the given message to the console history
+		void Add(const std::string &message);
 
 		//! Adds the given message, after prepending it with a heading of the specified type, to the console history
-		void Add(const std::wstring &message, MessageType type);
+		void Add(const std::string &message, MessageType type);
 
 		//! Adds the given message under the given heading
 		/*!
 		 * If the last message added was under the same heading, this message
 		 * will be added directly below it. Otherwise a new heading will be added.
 		 */
-		void Add(const std::wstring& heading, const std::wstring &message);
+		void Add(const std::string& heading, const std::string &message);
+
+		//! Binds the given callback to the given command
+		void BindCommand(const std::string &command, CommandCallback callback);
+
+		//! Runs the given command.
+		/*!
+		 * The callback indexed by the given command name will be called
+		 * and the result (the return value of the callback) will be
+		 * printed to the console.
+		 */
+		void Interpret(const std::string &command);
 
 		//! Adds the given Error to the console history
 		//void Add(const Exception *error);
 
+		//! Adds the given string to the console without appending a newline
+		void Print(const std::string &string);
+
+		//! Adds the given string to the console under the given heading without appending a newline
+		void Print(const std::string &heading, const std::string &string);
+
 		//! Adds the given message to the console history
 		void PrintLn(const std::string &message);
 
+		//! Adds the given message to the console under the given heading
+		void PrintLn(const std::string &heading, const std::string &message);
+
 		//! Adds the given int to the console history
-		void PrintLn_int(int message);
+		void PrintLn(int message);
 
 		//! Adds the given double to the console history
-		void PrintLn_double(double message);
+		void PrintLn(double message);
 
 		//! Removes all data from the console
 		void Clear();
 
 		//! Returns all the lines that have been added to the console
-		const ConsoleLines& GetHistory() const;
+		std::string GetHistory() const;
 
 		void RegisterScriptElements(ScriptingEngine* manager);
 
 		//! Triggers when new data is added to the console
-		CL_Signal_v1<const std::wstring&> OnNewLine;
+		boost::signals2::signal<void (const std::string&)> OnNewLine;
+
+		//! Triggers whenever a certain number of characters have been written to the console
+		/*!
+		 * Set the trigger count with SetCharacterInterval()
+		 */
+		boost::signals2::signal<void (const std::string&)> OnCharacterInterval;
+
+		//! Fired at the Console's discression
+		boost::signals2::signal<void (const std::string&)> OnNewData;
 
 		//! Triggers when the console is cleared
-		CL_Signal_v0 OnClear;
+		boost::signals2::signal<void ()> OnClear;
 
 	protected:
-		void add_raw(const std::wstring& string);
+		void add_raw(const std::string& string);
+
+		void append_buffer(const std::string &string);
 	protected:
+		std::string m_LastHeading;
+
+		std::string::size_type m_LastNewlineInBuffer;
+
+		std::string::size_type m_LengthToNextSignal;
+		std::string::size_type m_CharInterval;
+
+		std::string::size_type m_BufferLength;
+		std::string m_Buffer;
+
+		CommandCallbackMap m_Commands;
+
+		//size_t m_MaxData;
 		//! Lists all the data which has been added to the console.
-		ConsoleLines m_Data;
-
-		std::wstring m_LastHeading;
-
-		size_t m_MaxData;
+		//ConsoleLines m_Data;
 
 	};
-	
-	//! Static method to safely add a message to the singleton object
-	static void SendToConsole(const std::wstring &message)
+
+	//! Safely sends a message to the Console
+	static void SendToConsole(const std::string &message)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
@@ -150,12 +198,12 @@ namespace FusionEngine
 		// If the console hasn't been created, just send the message to standard output
 		else
 		{
-			std::cout << message.c_str() << std::endl;
+			std::cout << message << std::endl;
 		}
 	}
 
-	//! Sends a sectioned message to the console
-	static void SendToConsole(const std::wstring& heading, const std::wstring &message)
+	//! Sends a sectioned message to the Console
+	static void SendToConsole(const std::string& heading, const std::string& message)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
@@ -165,25 +213,27 @@ namespace FusionEngine
 		// If the console hasn't been created, just send the message to standard output
 		else
 		{
-			std::wcout << heading << ": " << message << std::endl;
+			std::cout << heading << ": " << message << std::endl;
 		}
 	}
 
-	static void SendToConsole(const std::string &message)
+	//! Safely sends a message to the Console (wide-char)
+	static void SendToConsole(const std::wstring &message)
 	{
-		SendToConsole(fe_widen(message));
+		SendToConsole(fe_narrow(message));
 	}
 
-	static void SendToConsole(const std::string& heading, const std::string& message)
+	//! Sends a sectioned message to the Console (wide-char)
+	static void SendToConsole(const std::wstring& heading, const std::wstring &message)
 	{
-		SendToConsole(fe_widen(heading), fe_widen(message));
-	} 
+		SendToConsole(fe_narrow(heading), fe_narrow(message));
+	}
 
-	//! Static method to safely add a message to the singleton object
+	//! Static method to safely add a message to the Console singleton
 	/*!
 	* \sa Console#Add(const std::string, MessageType)
 	*/
-	static void SendToConsole(const std::wstring &message, Console::MessageType type)
+	static void SendToConsole(const std::string &message, Console::MessageType type)
 	{
 		Console* c = Console::getSingletonPtr();
 		if (c != NULL)
@@ -194,13 +244,17 @@ namespace FusionEngine
 		// If the console hasn't been created, just send the message to standard output
 		else
 		{
-			std::cout << message.c_str() << std::endl;
+			std::cout << message << std::endl;
 		}
 	}
 
-	static void SendToConsole(const std::string &message, Console::MessageType type)
+	//! Static method to safely add a message to the Console singleton
+	/*!
+	* \sa Console#Add(const std::string, MessageType)
+	*/
+	static void SendToConsole(const std::wstring &message, Console::MessageType type)
 	{
-		SendToConsole(std::wstring(message.begin(), message.end()), type);
+		SendToConsole(fe_narrow(message), type);
 	}
 
 	//! Static method to safely add a message to the singleton object
@@ -210,7 +264,7 @@ namespace FusionEngine
 		if (c != NULL)
 		{
 			std::string message = ex.ToString();
-			c->Add(std::wstring(message.begin(), message.end()), Console::MTERROR);
+			c->Add(message, Console::MTERROR);
 		}
 
 		// If the console hasn't been created, just send the message to standard output

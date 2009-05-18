@@ -199,6 +199,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionBoostSignals2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionCircularStringBuffer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionClanLibRocketInterface.h"
 				>
 			</File>
@@ -276,6 +284,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionEntityManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEntityTagFlagDictionary.h"
 				>
 			</File>
 			<File
@@ -372,6 +384,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLog.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLogFileConsole.h"
 				>
 			</File>
 			<File
@@ -571,6 +587,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptConsoleCallback.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptedControlLoader.h"
 				>
 			</File>
@@ -672,6 +692,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateSetupShips.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStringFormatting.h"
 				>
 			</File>
 			<File
@@ -801,6 +825,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEnvironment.cpp"
 				>
 			</File>
@@ -858,6 +886,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionLog.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionLogFileConsole.cpp"
 				>
 			</File>
 			<File

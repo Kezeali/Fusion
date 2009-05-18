@@ -196,6 +196,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionLogFileConsole.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionLogger.cpp"
 				>
 			</File>
@@ -255,6 +259,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionLog.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLogFileConsole.h"
 				>
 			</File>
 			<File

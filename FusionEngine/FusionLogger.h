@@ -35,6 +35,8 @@
 
 #include "FusionCommon.h"
 
+#include "FusionBoostSignals2.h"
+
 /// Inherited
 #include "FusionSingleton.h"
 
@@ -183,7 +185,7 @@ namespace FusionEngine
 		void Add(const Exception& error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
-		void onConsoleNewLine(const std::wstring &message);
+		void onConsoleNewLine(const std::string &message);
 
 	protected:
 		//! True if console logging is active
@@ -197,7 +199,7 @@ namespace FusionEngine
 
 		LogList m_Logs;
 
-		CL_Slot m_ConsoleOnNewLineSlot;
+		boost::signals2::connection m_ConsoleNewLine;
 
 	protected:
 		//! Opens a logfile (creates it if it doesn't exist)

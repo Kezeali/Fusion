@@ -54,6 +54,8 @@
 //#include "FusionFileTypeException.h"
 //#include "FusionInvalidArgumentException.h"
 
+#include "FusionStringFormatting.h"
+
 #include "FusionVector2.h"
 
 #include "FusionSlotContainer.h"
@@ -82,8 +84,8 @@
 #define USE_TINYXPATH
 
 #ifdef USE_TINYXPATH
-# define TIXML_USE_TICPP
-# define TIXML_USE_STL
+#define TIXML_USE_TICPP
+#define TIXML_USE_STL
 #include "../tinyxpathpp/xpath_static.h"
 #include "../tinyxpathpp/ticpp.h"
 
@@ -246,7 +248,7 @@ namespace FusionEngine
 	static std::string fe_narrow(const std::wstring &str)
 	{
 		std::ostringstream stm;
-		const std::ctype<char>& ctfacet = std::use_facet< std::ctype<char> >( stm.getloc() );
+		const std::ctype<wchar_t>& ctfacet = std::use_facet< std::ctype<wchar_t> >( stm.getloc() );
 		for( size_t i=0 ; i < str.size() ; ++i )
 			stm << ctfacet.narrow( str[i], 0 );
 		return stm.str();
@@ -284,7 +286,7 @@ namespace FusionEngine
 	static std::vector<std::string> fe_splitstring(const std::string &str, const std::string &delim, bool skip_empty = true)
 	{
 		std::vector<std::string> result;
-		CL_String::size_type end_pos = 0, begin_pos = 0;
+		std::string::size_type end_pos = 0, begin_pos = 0;
 		while (true)
 		{
 			end_pos = str.find(delim, begin_pos);

@@ -48,7 +48,7 @@ namespace FusionEngine
 		m_Filename = filename;
 		if (m_Console != NULL)
 		{
-			std::wstringstream message;
+			std::stringstream message;
 			message << "Writing [" << filename.c_str() << "] entries to the console.";
 			m_Console->Add(message.str());
 		}
@@ -58,7 +58,7 @@ namespace FusionEngine
 	{
 		if (m_Console != NULL)
 		{
-			std::wstringstream message;
+			std::stringstream message;
 			message << "No longer writing [" << m_Filename.c_str() << "] entries to the console.";
 			m_Console->Add(message.str());
 		}
@@ -68,12 +68,12 @@ namespace FusionEngine
 	{
 		if (m_Console != NULL)
 		{
-			std::wstring wentry = fe_widen(entry);
+			std::string noNlEntry = entry;
 			// Remove trailing newline
-			if (wentry[wentry.length()-1] == L'\n')
-				wentry = wentry.substr(0, wentry.length()-1);
+			if (noNlEntry[noNlEntry.length()-1] == '\n')
+				noNlEntry = noNlEntry.substr(0, noNlEntry.length()-1);
 
-			m_Console->Add(fe_widen(m_Filename), wentry);
+			m_Console->Add(m_Filename, noNlEntry);
 		}
 	}
 

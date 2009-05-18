@@ -7,7 +7,17 @@
 
 #include "..\FusionEngine\PhysFS.h"
 
+#include <boost/bind.hpp>
+
 using namespace FusionEngine;
+
+static std::string helloworld(const StringVector &args)
+{
+	std::string command = "";
+	for (StringVector::const_iterator it = args.begin(), end = args.end(); it != end; ++it)
+		command += *it + "|";
+	return "Hello World. Love from <" + command + ">";
+}
 
 class PhysFSTest
 {
@@ -56,65 +66,6 @@ class PhysFSTest
 	//	}
 	//}
 
-	//void testOutput()
-	//{
-	//	//TiXmlDocument doc;
-	//	ticpp::Document doc;
-
-	//	// Decl
-	//	//TiXmlDeclaration* decl = new TiXmlDeclaration( XML_STANDARD, "", "" );  
-	//	ticpp::Declaration decl( XML_STANDARD, "", "" );
-	//	doc.LinkEndChild( &decl ); 
-
-	//	// Root
-	//	//TiXmlElement * root = new TiXmlElement("clientoptions");  
-	//	ticpp::Element root("clientoptions");
-	//	doc.LinkEndChild( &root );
-
-	//	{
-	//		VarMap vars;
-	//		vars["fullscreen"] = "false";
-
-	//		insertVarMapIntoDOM(root, vars);
-	//	}
-
-	//	{
-	//		int plNum = 4;
-	//		VarMap vars[5];
-	//		vars[0]["name"] = "Player";
-	//		vars[0]["hud"] = "true";
-	//		vars[1]["name"] = "Sam";
-	//		vars[1]["hud"] = "false";
-	//		vars[2]["name"] = "Lara";
-	//		vars[2]["hud"] = "true";
-	//		vars[3]["name"] = "Bill";
-	//		vars[3]["hud"] = "true";
-	//		vars[4]["name"] = "Phil";
-	//		vars[4]["hud"] = "false";
-
-	//		for (int i = 0; i <= plNum; ++i)
-	//		{
-	//			//TiXmlElement* player = new TiXmlElement( "playeroptions" );  
-	//			ticpp::Element player("playeroptions");
-	//			root.LinkEndChild( &player ); 
-
-	//			std::string playerAttribute;
-	//			if (i == 0)
-	//				playerAttribute = "default";
-	//			else
-	//				playerAttribute = CL_String::from_int(i);
-	//			player.SetAttribute("player", playerAttribute.c_str());
-
-	//			insertVarMapIntoDOM(player, vars[i]);
-	//		}
-	//	}
-
-	//	// Save to a file
-	//	std::string filename("test.xml");
-
-	//	doc.SaveFile(filename);
-	//}
-
 public:
 	virtual int main(const std::vector<CL_String> &args)
 	{
@@ -133,11 +84,35 @@ public:
 			CL_GraphicContext gc = display.get_gc();
 
 			using namespace FusionEngine;
+
+			// Configure physFS for this app
+			SetupPhysFS::configure("Pom", "Test", "ZIP");
+			SetupPhysFS::add_subdirectory("Data/", "ZIP", true);
+			///////////////////
+			m_PhysFSConfigured = true;
+			///////////////////
+
+			// Create console singleton
 			new Console;
-			//ConsoleStdOutWriter* cout = new ConsoleStdOutWriter();
-			//cout->Activate();
+			// Create console writer
+			ConsoleStdOutWriter cout;
+			cout.Enable();
+			// Create logger singleton
 			Logger* logger = new Logger();
 
+			//
+			// Test log writing
+			logger->OpenLog("console_test", LOG_NORMAL);
+			logger->Add("First Message", "console_test", LOG_CRITICAL);
+			logger->SetLogingToConsole("console_test", true);
+			logger->Add("Second Message", "console_test", LOG_CRITICAL);
+			logger->Add("Third (trivial) Message", "console_test", LOG_TRIVIAL);
+			logger->Add("Fourth Message (yes, third should be missing)", "console_test", LOG_CRITICAL);
+			logger->Add("Fifth Message", "console_test", LOG_NORMAL);
+			SendToConsole(L"Intermission");
+			logger->Add("Sixth Message", "console_test", LOG_CRITICAL);
+
+			//
 			// List version info
 			PHYSFS_Version compiled;
 			PHYSFS_Version linked;
@@ -162,20 +137,7 @@ public:
 				SendToConsole("\t" + std::string((*i)->description));
 			}
 
-			//{
-			//	std::ofstream file("error.log", std::ios::app|std::ios::out);
-			//	file << "test";
-			//}
-
-			// Configure physFS for this app
-			SetupPhysFS::configure("Fusion Project Team", "Test", "ZIP");
-			SetupPhysFS::add_subdirectory("Data/", "ZIP", true);
-
-			///////////////////
-			m_PhysFSConfigured = true;
-			///////////////////
-
-
+			//
 			// Display the current search path
 			SendToConsole("PHYSFS search path:");
 			char **it ;
@@ -186,7 +148,7 @@ public:
 
 			SendToConsole("Testing PHYSFS Find - Searching for '.Body.':");
 			StringVector xmlFiles = Find(".Body.");
-			for (int i = 0; i < xmlFiles.size(); i++)
+			for (unsigned int i = 0; i < xmlFiles.size(); i++)
 			{
 				SendToConsole("\t" + xmlFiles[i]);
 			}
@@ -207,10 +169,6 @@ public:
 			//testOutput();
 
 
-
-			delete logger;
-			delete Console::getSingletonPtr();
-
 			CL_InputDevice keyboard = display.get_ic().get_keyboard();
 
 			CL_InputDevice mouse = display.get_ic().get_mouse();
@@ -223,6 +181,12 @@ public:
 			eventSlotContainer.connect(mouse.sig_axis_move(), this, &PhysFSTest::onInputEvent);
 			eventSlotContainer.connect(mouse.sig_ball_move(), this, &PhysFSTest::onInputEvent);
 			eventSlotContainer.connect(mouse.sig_pointer_move(), this, &PhysFSTest::onInputEvent);
+
+			// Set up the console interpreter
+			Console *con = Console::getSingletonPtr();
+			con->BindCommand("test", boost::bind(&helloworld, _1));
+			eventSlotContainer.connect(keyboard.sig_key_up(), this, &PhysFSTest::onKeyUp);
+			CL_Console::write("> ");
 
 			CL_FontDescription desc;
 			desc.set_typeface_name("verdana");
@@ -245,12 +209,17 @@ public:
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
 
+				gc.draw_text(80, 100, m_ConsoleLine, CL_Colorf::darkgray);
+
 				gc.draw_text(80, 16, m_AxisEventMessage, CL_Colorf::black);
 				gc.draw_text(80, 34, m_BallEventMessage);
 				gc.draw_text(80, 52, m_PointEventMessage, CL_Colorf::black);
 
 				display.flip();
 			}
+
+			delete logger;
+			delete Console::getSingletonPtr();
 		}
 		catch (CL_Exception& e)
 		{
@@ -261,6 +230,28 @@ public:
 
 		// It's so zen
 		return 0;
+	}
+
+	CL_String m_ConsoleLine;
+
+	void onKeyUp(const CL_InputEvent &event, const CL_InputState &state)
+	{
+		if (event.id != VK_RETURN)
+		{
+			m_ConsoleLine += event.str;
+			CL_Console::write(event.str);
+		}
+		else
+		{
+			Console* console = Console::getSingletonPtr();
+			if (console != NULL)
+			{
+				CL_Console::write("\n ");
+				console->Interpret(CL_StringHelp::text_to_utf8(m_ConsoleLine));
+			}
+			CL_Console::write("\n> ");
+			m_ConsoleLine.clear();
+		}
 	}
 
 	CL_String m_AxisEventMessage;
