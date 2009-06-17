@@ -35,190 +35,138 @@
 
 #include "FusionCommon.h"
 
-#include "FusionScriptingEngine.h"
-//#include "FusionCommand.h"
-
-/// Inherited
+// Inherited
 #include "FusionPhysicsCallback.h"
+#include "FusionRefCounted.h"
 
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Input structure for entities
-	 *
-	 * \todo Perhaps this should be implemented entirely at a script level?
-	 *
-	 * \todo Rename this as Command
-	 */
-	class EntityInput
+	typedef std::tr1::shared_ptr<Entity> EntityPtr;
+
+	class TagFlagDictionary
 	{
 	public:
-		//! Adds a variable to the input structure
-		void AddKey(const std::string& name) {}//;
-		//! Check a var
-		bool GetInput(const std::string& name) {}//;
+		void AddTag(EntityPtr entity, const std::string &tag);
+		void RemoveTag(EntityPtr entity, const std:string &tag);
 
-		char* Serialize() {}//;
-		void Deserialize(char* data) {}//;
+	private:
+		struct Entry
+		{
+			std::string Tag;
+			unsigned int Flag;
+			std::tr1::unordered_set<std::string> References;
+		};
+		// Could use a boost::multi_index_container here - i.e. index by
+		//  unique Tag AND Flag - but that's too much of a hassle and I
+		//  doubt it'd be worth it.
+		typedef std::tr1::unordered_map<std::string, Entry> TagFlagSet;
+		TagFlagSet m_Entries;
+
+		unsigned int m_MinFreeFlag;
+
 	};
+
+	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
 
 	/*!
 	 * \brief
 	 * In game object base class
 	 */
-	class Enitity : public SceneNode, public ICollisionHandler, public RefCounted
+	class Entity : public ICollisionHandler, public RefCounted
 	{
 	public:
-		//! A list of ObjectIDs
-		typedef std::vector<ObjectID> ObjectList;
-
-		//! List of properties
-		typedef std::map<std::string, PropertyPointer> PropertyList;
-
-	public:
 		//! Constructor
-		Enitity();
-		//! Constructor. W/O inputs.
-		Enitity(const std::string& name);
+		Entity();
+		//! Constructor. Names the Entity.
+		Entity(const std::string& name);
 		//! Destructor
-		~Enitity();
+		~Entity();
 
 	public:
-		//! Sets Body velocity
-		void SetVelocity(const Vector2 &velocity);
-		//! Sets Body pos
-		void SetPosition(const Vector2 &position);
-		//! Sets Body rv
-		void SetRotationalVelocity(float velocity);
-		//! Sets Body rotation
-		void SetRotation(float rotation);
+		typedef std::set<std::string> TagSet;
 
-		//! Ship state
-		void SetProperties(const PropertyList& props);
-		//! Input state
-		void SetInput(const PropertyList& input);
+		void _setName(const std::string &name);
+		const std::string &GetName() const;
 
-		//! Guess
-		const PropertyList &GetProperties() const;
-		//! Self explainatory
-		const PropertyList &GetInput() const;
+		virtual std::string GetType() const =0;
 
-		//EntityState GetState() const;
-		//void SetState(EntityState state);
-		//! Validates the given state (this will become the sync point)
+		//! Gets position
+		virtual const Vector2 &GetPosition() =0;
+		//! Gets rotation
+		virtual float GetAngle() =0;
+
+		//! Sets the dictionary used by the EntityManager
 		/*!
-		 * Only after ValidateState has been called should irreversable changes be made,
-		 * e.g. terrain destruction
+		 * EntityManager objects use this to pass the current
+		 * dictionary to Entities when they are added to them.
 		 */
-		//void ValidateState(StateID state);
+		void SetTagDictionary(TagFlagDictionaryPtr dictionary);
 
-		//! Adds a simulation state
+		//! Adds a Tag
+		void AddTag(const std::string &tag);
+		//! Removes a Tag
+		void RemoveTag(const std::string &tag);
+		//! Checks whether this Entity is tagged with the given Tag
+		bool CheckTag(const std::string &tag);
+
+
+		//! Sets the tag-flags for this entity
 		/*!
-		 * Sets the state to the stored state (history) corresponding to the given ID, and runs
-		 * the Simulate script for this entity.
+		 * This is intended for internal use.
+		 * Use Entity#AddTag() unless you know you
+		 * should be using this.
 		 */
-		virtual void Simulate();
+		void SetTagFlags(unsigned int flag);
+		//! Activates the given tag-flag for this entity
+		/*!
+		 * This is intended for internal use.
+		 * Use AddTag() unless you know you
+		 * should be using this.
+		 */
+		void AddTagFlag(unsigned int flag);
+		//! Deactivates the given tag-flag for this entity
+		/*!
+		 * This is intended for internal use.
+		 * Use RemoveTag() unless you know you
+		 * should be using this.
+		 */
+		void RemoveTagFlag(unsigned int flag);
+		//! Returns the tag-flags for this entity
+		/*!
+		 * This is intended for internal use.
+		 * Use CheckTag() unless you know you
+		 * should be using this.
+		 */
+		unsigned int GetTagFlags() const;
 
-		PropertyPointer GetProperty(const std::string& name);
+		//! Updates
+		virtual void Update() =0;
+		//! Draws
+		virtual void Draw() =0;
 
-		virtual std::string SerializeState() const;
-		virtual void DeserializeState(const std::string& state);
+		virtual std::string SerializeState() const =0;
+		virtual void DeserializeState(const std::string& state) =0;
 
 		//! Returns a human-readable string
 		virtual std::string ToString() const;
 
-		////! Scene node
-		//void SetSceneNode(FusionNode *input);
-		////! Self explainatory
-		//const FusionNode *GetSceneNode() const;
-		//! Physics body
-		void SetPhysicalBody(FusionPhysicsBody *input);
-		//! Self explainatory
-		const FusionPhysicsBody *GetPhysicalBody() const;
-
-		//! Returns true if the input have changed recently.
-		/*!
-		 * Returns true if the input data stored here has been changed since the last
-		 * call to _inputSynced().
-		 */
-		bool InputHasChanged() const;
-		//! Returns true if the state have changed recently.
-		/*!
-		 * Returns true if the state stored here has been changed since the last
-		 * call to _stateSynced().
-		 */
-		bool StateHasChanged() const;
-
-		//! Makes InputHasChanged return false.
-		/*!
-		 * This should be called after input data has been read from this 'ship'
-		 * (that is to say, this 'player data storeage location') so that no
-		 * unnecessary packets will be sent.
-		 *
-		 * \sa ClientEnvironment#send() | ServerEnvironment#send()
-		 */
-		bool _inputSynced() const;
-		//! Makes StateHasChanged return false.
-		/*!
-		 * This should be called after state data has been read from this 'ship'
-		 * (that is to say, this 'player data storeage location') so that no
-		 * unnecessary packets will be sent.
-		 */
-		bool _stateSynced() const;
-
-		//! Reverts all state data
-		void RevertToInitialState();
-
 		//! Implementation of ICollisionHandler#CanCollideWith()
-		bool CanCollideWith(const FusionPhysicsBody *other);
+		//virtual bool CanCollideWith(PhysicsBodyPtr other);
 
-		//! Implementation of ICollisionHandler#CollisionWith()
-		void CollisionWith(const FusionPhysicsBody *other, const Vector2 &collision_point);
-
+		//! Implementation of ICollisionHandler#BeginContact()
+		virtual void ContactBegin(const Contact& contact);
 
 	protected:
-		// Is this needed? - 2006/09/08: no
-		//ClientEnvironment *m_Environment;
+		std::string m_Name;
 
-		//! Body
-		FusionPhysicsBody *m_Body;
+		TagSet m_Tags;
+		// Markers (flags) for this entity
+		// If any of the true bits correspond to true bits
+		// in the entity manager, this entity isn't drawn
+		// or updated
+		unsigned int m_Flags;
 
-		PropertyList m_Properties;
-
-		EntityList m_Children;
-
-		//! Weapons available to this ship
-		/*!
-		 * This is kept localy on client and server (notice it isn't
-		 * in ShipState) and occasionally sync-ed with MTID_HELDWEAPONS.
-		 *
-		 * \remarks
-		 * For non-powerup gamemodes, this will simply be ResourceManager->LoadedWeapons.
-		 */
-		WeaponList m_HeldWeapons;
-
-		//! Projectiles owned by this ship
-		/*!
-		 * Useful for scripting and debug
-		 */
-		ObjectList m_Projectiles;
-
-		//! Will be set to true if theis entity has been marked for detination (to allow chain detonations)
-		bool m_Detonated;
-
-		//! Input state
-		ShipInput m_Input;
-		//! Current spacial attributes
-		ShipState m_CurrentState;
-		//! Default (initial) spacial attributes
-		ShipState m_InitialState;
-
-		//! True if the input state has been modified
-		bool m_InputChanged;
-		//! True if the ShipState has been modified
-		bool m_StateChanged;
 	};
 
 }

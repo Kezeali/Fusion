@@ -607,6 +607,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptMethod.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptReference.h"
 				>
 			</File>

@@ -110,10 +110,10 @@ namespace FusionEngine
 
 	bool ScriptContext::IsOk() const
 	{
-		return WasSuccessful() && RaisedException();
+		return WasSuccessful() && !RaisedException();
 	}
 
-	float ScriptContext::GetValueFloat() const
+	float ScriptContext::GetReturnValueFloat() const
 	{
 		if (m_Context == NULL)
 			return 0.f;
@@ -121,7 +121,7 @@ namespace FusionEngine
 		return m_Context->GetReturnFloat();
 	}
 
-	double ScriptContext::GetValueDouble() const
+	double ScriptContext::GetReturnValueDouble() const
 	{
 		if (m_Context == NULL)
 			return 0.0;
@@ -129,7 +129,7 @@ namespace FusionEngine
 		return m_Context->GetReturnDouble();
 	}
 
-	void* ScriptContext::GetPointer() const
+	void* ScriptContext::GetReturnPointer() const
 	{
 		if (m_Context == NULL)
 			return NULL;
@@ -367,6 +367,11 @@ namespace FusionEngine
 	asIScriptObject* ScriptObject::GetScriptObject() const
 	{
 		return m_Object;
+	}
+
+	ScriptUtils::Calling::Caller ScriptObject::GetCaller(const std::string &decl) const
+	{
+		return m_Engine->GetCaller(*this, decl);
 	}
 
 	bool ScriptObject::IsValid() const

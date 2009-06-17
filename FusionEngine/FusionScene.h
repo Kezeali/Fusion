@@ -44,9 +44,9 @@ namespace FusionEngine
 		virtual ISceneNode *GetRootNode() const = 0;
 
 		//! Adds the given node to the scene
-		virtual void AddNode(std::string key, ISceneNode *node) = 0;
+		virtual void AddNode(const std::string& name, ISceneNode *node) = 0;
 		//! Removes the given node from the scene
-		virtual void RemoveNode(std::string key) = 0;
+		virtual void RemoveNode(const std::string &name) = 0;
 		//! Destroys a node cleanly
 		virtual void DestroySceneNode(ISceneNode *node, bool destroy_children = true) = 0;
 

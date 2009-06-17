@@ -42,10 +42,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="tinyxpathpp"
-				PreprocessorDefinitions="WIN32;_DEBUG;FSN_ASSERTS_ENABLED;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN32;_DEBUG;FSN_ASSERTS_ENABLED;ANGELSCRIPT_DLL_LIBRARY_IMPORT;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -61,9 +61,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../tinyxpathpp/tinyxpathd.lib CEGUIBase_d.lib OpenGLGUIRenderer_d.lib angelscriptd.lib physfsd.lib chipmunk_d.lib ..\LinearParticle\lib\LinearParticle_d.lib"
+				AdditionalDependencies="../tinyxpathpp/tinyxpathd.lib angelscriptd.lib physfsd.lib box2d_mtdll_d.lib ScriptUtils_d.lib RocketAngelScript_d.lib RocketAngelScriptControls_d.lib EMPCore_d.lib RocketCore_d.lib RocketControls_d.lib RocketDebugger_d.lib"
 				LinkIncremental="2"
-				IgnoreDefaultLibraryNames="libcmt"
+				IgnoreDefaultLibraryNames="libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -134,7 +134,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="CEGUIBase.lib ../tinyxpathpp/tinyxpath.lib OpenGLGUIRenderer.lib angelscript.lib physfs.lib chipmunk.lib"
+				AdditionalDependencies="../tinyxpathpp/tinyxpath.lib angelscript.lib physfs.lib box2d_mtdll.lib ScriptUtils.lib RocketAngelScript.lib RocketAngelScriptControls.lib EMPCore.lib RocketCore.lib RocketControls.lib RocketDebugger.lib"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
@@ -201,6 +201,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionException.cpp"
 				>
 			</File>
@@ -213,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionInputDefinitionLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionInputHandler.cpp"
 				>
 			</File>
@@ -221,7 +229,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionLogFileConsole.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionLogger.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLogPhysFS.cpp"
 				>
 			</File>
 			<File
@@ -237,11 +253,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionPhysicsDebugDraw.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionRefCounted.cpp"
 				>
 			</File>
 			<File
@@ -277,6 +301,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionXInputController.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionXML.cpp"
 				>
 			</File>
@@ -286,6 +314,14 @@
 			</File>
 			<File
 				RelativePath=".\main.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptmath.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptstdstring.cpp"
 				>
 			</File>
 		</Filter>
@@ -307,6 +343,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionBoostSignals2.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionClanLibRocketInterface.h"
 				>
 			</File>
@@ -320,10 +360,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsole.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionConsoleGUI.h"
 				>
 			</File>
 			<File
@@ -351,6 +387,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionInputDefinitionLoader.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionInputHandler.h"
 				>
 			</File>
@@ -359,7 +399,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionLogFileConsole.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionLogger.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionLogPhysFS.h"
 				>
 			</File>
 			<File
@@ -376,6 +424,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsCallback.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysicsDebugDraw.h"
 				>
 			</File>
 			<File
@@ -463,11 +515,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionXInputController.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionXML.h"
 				>
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionXMLLoader.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptmath.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptstdstring.h"
 				>
 			</File>
 		</Filter>

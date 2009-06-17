@@ -31,7 +31,7 @@
 #include "FusionScriptReference.h"
 // Scripting extensions
 #include "FusionScriptVector.h"
-#include "stdstring.h"
+#include "scriptstdstring.h"
 #include "scriptmath.h"
 
 namespace FusionEngine
@@ -94,6 +94,7 @@ namespace FusionEngine
 			timeoutTime = CL_System::get_time() + timeout;
 			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_STDCALL);
 		}
+		cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 		cont->Execute();
 
@@ -101,7 +102,7 @@ namespace FusionEngine
 	}
 
 #ifndef SCRIPT_ARG_USE_TEMPLATE
-	ScriptReturn ScriptingEngine::Execute(ScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
+	ScriptReturn ScriptingEngine::Execute(UCScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
 		asIScriptContext* cont = m_asEngine->CreateContext();
 		ScriptReturn scxt(cont);
@@ -121,7 +122,7 @@ namespace FusionEngine
 		return scxt;
 	}
 
-	ScriptReturn ScriptingEngine::Execute(ScriptObject object, ScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
+	ScriptReturn ScriptingEngine::Execute(ScriptObject object, UCScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
 		asIScriptContext* cont = m_asEngine->CreateContext();
 		ScriptReturn scxt(cont);
@@ -149,6 +150,7 @@ namespace FusionEngine
 	ScriptContext ScriptingEngine::ExecuteString(const std::string &script, const char *module, int timeout)
 	{
 		asIScriptContext* ctx = m_asEngine->CreateContext();
+		ctx->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 		ScriptContext sctx(ctx);
 
 		if (ctx != NULL)
@@ -172,13 +174,13 @@ namespace FusionEngine
 		return m_DefaultTimeout;
 	}
 
-	ScriptMethod ScriptingEngine::GetFunction(const char* module, const std::string& signature)
+	UCScriptMethod ScriptingEngine::GetFunction(const char* module, const std::string& signature)
 	{
 		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
-		return ScriptMethod(module, signature, funcID);
+		return UCScriptMethod(module, signature, funcID);
 	}
 
-	bool ScriptingEngine::GetFunction(ScriptMethod& out, const char* module, const std::string& signature)
+	bool ScriptingEngine::GetFunction(UCScriptMethod& out, const char* module, const std::string& signature)
 	{
 		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
 		if (funcID < 0)
@@ -205,34 +207,128 @@ namespace FusionEngine
 		return ScriptObject(obj);
 	}
 
-	ScriptMethod ScriptingEngine::GetClassMethod(ScriptClass& type, const std::string& signature)
+	UCScriptMethod ScriptingEngine::GetClassMethod(const char* module, const std::string& type_name, const std::string &signature)
+	{
+		int typeId = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
+		if (typeId < 0)
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::GetClassMethod", "No such type: " + type_name);
+		int methodId = m_asEngine->GetObjectTypeById(typeId)->GetMethodIdByDecl(signature.c_str());
+		if (methodId < 0)
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::GetClassMethod", "No such method: " + signature + "\n in type " + type_name);
+
+		//asIScriptFunction *function = m_asEngine->GetFunctionDescriptorById(methodId);
+		return UCScriptMethod(module, signature, typeId);
+	}
+
+	UCScriptMethod ScriptingEngine::GetClassMethod(ScriptClass& type, const std::string& signature)
 	{
 		if (type.IsValid())
 		{
 			int id = m_asEngine->GetObjectTypeById(type.GetTypeId())->GetMethodIdByDecl(signature.c_str());
-			ScriptMethod method(type.GetModule(), signature, id);
+			UCScriptMethod method(type.GetModule(), signature, id);
 			return method;
 		}
 		else
-			return ScriptMethod();
+			return UCScriptMethod();
 	}
 
-	ScriptMethod ScriptingEngine::GetClassMethod(ScriptObject& type, const std::string& signature)
+	//UCScriptMethod ScriptingEngine::GetClassMethod(ScriptObject& type, const std::string& signature)
+	//{
+	//	FSN_ASSERT(false);
+	//	asIObjectType *scriptType = m_asEngine->GetObjectTypeById(type.GetTypeId());
+	//	int id = scriptType->GetMethodIdByDecl(signature.c_str());
+	//	UCScriptMethod method(0, signature, id);
+	//	return method;
+	//}
+
+	ScriptUtils::Calling::Caller ScriptingEngine::GetCaller(const char * module_name, const std::string &signature)
 	{
-		asIObjectType *scriptType = m_asEngine->GetObjectTypeById(type.GetTypeId());
-		int id = scriptType->GetMethodIdByDecl(signature.c_str());
-		ScriptMethod method(0, signature, id);
-		return method;
+		ScriptUtils::Calling::Caller caller(m_asEngine->GetModule(module_name), signature.c_str());
+		ConnectToCaller(caller);
+		return caller;
+	}
+
+	ScriptUtils::Calling::Caller ScriptingEngine::GetCaller(const FusionEngine::ScriptObject &object, const std::string &signature)
+	{
+		ScriptUtils::Calling::Caller caller(object.GetScriptObject(), signature.c_str());
+		ConnectToCaller(caller);
+		return caller;
+	}
+
+	void ScriptingEngine::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
+	{
+		caller.ConnectExceptionCallback( boost::bind(&ScriptingEngine::_exceptionCallback, this, _1) );
+		//caller.ConnectLineCallback( boost::bind(&ScriptingEngine::_lineCallback, this, _1) );
+	}
+
+	static const size_t maxPregenSpaces = 13;
+	static const char * spaces[maxPregenSpaces+1] = {
+		"", " ", "  ", "   ", "    ", "     ", "      ", "       ",
+		"        ", "         ", "          ", "           ", "            ",
+		NULL
+	};
+
+	static void printCallstack(asIScriptEngine *const engine, asIScriptContext *const ctx, std::string &to)
+	{
+		std::stringstream str;
+		for (int i = ctx->GetCallstackSize(); i > 0; i++)
+		{
+			if (i < maxPregenSpaces)
+			{
+				str << spaces[i];
+			}
+			else
+			{
+				str << spaces[maxPregenSpaces-1];
+				for (int k = maxPregenSpaces; k < i ; ++k)
+					str << " ";
+			}
+
+			int fnId = ctx->GetCallstackFunction(i);
+			const asIScriptFunction *fn = engine->GetFunctionDescriptorById(fnId);
+			std::string sig = fn->GetDeclaration(true);
+			int line, column;
+			line = ctx->GetCallstackLineNumber(i, &column);
+
+			str << "+ " << sig << " (" << line << "," << column << ")\n";
+		}
+
+		to += str.str();
+	}
+
+	void ScriptingEngine::_exceptionCallback(asIScriptContext *ctx)
+	{
+		asIScriptEngine *engine = ctx->GetEngine();
+
+		std::string desc =
+			CL_StringHelp::text_to_local8( cl_format("Script Exception: %1\n", ctx->GetExceptionString()) );
+
+		int funcId = ctx->GetExceptionFunction();
+		const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+		desc += CL_StringHelp::text_to_local8(
+			cl_format("  in function: %1 (line %2)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber())
+			);
+		desc += CL_StringHelp::text_to_local8( 
+			cl_format("    in module: %1\n", function->GetModuleName())
+			);
+		desc += CL_StringHelp::text_to_local8(
+			cl_format("   in section: %1\n", function->GetScriptSectionName())
+			);
+
+		desc += "Call Trace:\n";
+		printCallstack(engine, ctx, desc);
+
+		SendToConsole(desc);
 	}
 
 	void ScriptingEngine::_messageCallback(asSMessageInfo* msg)
 	{ 
 		const char *msgType = 0;
-		if( msg->type == 0 ) msgType = "Error  ";
-		if( msg->type == 1 ) msgType = "Warning";
-		if( msg->type == 2 ) msgType = "Info   ";
+		if( msg->type == asMSGTYPE_ERROR ) msgType = "Error  ";
+		if( msg->type == asMSGTYPE_WARNING ) msgType = "Warning";
+		if( msg->type == asMSGTYPE_INFORMATION ) msgType = "Info   ";
 
-		std::wstring formatted(cl_format("ScriptManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
+		std::wstring formatted(cl_format("ScriptingManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
 		SendToConsole(formatted);
 	}
 
@@ -249,6 +345,7 @@ namespace FusionEngine
 		// Register types
 		RegisterScriptMath(m_asEngine);
 		RegisterStdString(m_asEngine);
+		//RegisterScriptStringUtils(m_asEngine);
 		RegisterScriptVector(m_asEngine);
 
 		//RegisterScriptString(m_asEngine);

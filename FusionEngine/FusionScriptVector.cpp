@@ -26,7 +26,6 @@
 */
 
 #include "FusionScriptVector.h"
-#include <angelscript.h>
 
 namespace FusionEngine
 {

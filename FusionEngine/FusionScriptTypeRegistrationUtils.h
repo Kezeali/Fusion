@@ -72,7 +72,7 @@ namespace FusionEngine
 	};
 
 	template <typename T>
-	void RegisterType(const std::string& type_name, asIScriptEngine* engine)
+	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine)
 	{
 		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
@@ -124,9 +124,9 @@ namespace FusionEngine
 
 	}
 
-	//! Registers a REF NOHANDLE type (no constructor)
+	//! Registers a singleton (REF & NOHANDLE) type
 	template <typename T>
-	void RegisterTypeNoHandle(const std::string& type_name, asIScriptEngine* engine)
+	void RegisterSingletonType(const std::string& type_name, asIScriptEngine* engine)
 	{
 		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
 
@@ -134,7 +134,6 @@ namespace FusionEngine
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_REF | asOBJ_NOHANDLE);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
-
 	}
 
 }

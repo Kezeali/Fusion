@@ -212,7 +212,7 @@ public:
 				r = scrEngine->RegisterGlobalFunction("void exit()", asFUNCTION(StaticQuit), asCALL_CDECL); assert( r >= 0 );
 
 
-				RegisterType<Command>("Command", scrEngine);
+				RegisterValueType<Command>("Command", scrEngine);
 
 				r = scrEngine->RegisterObjectProperty("Command", "bool thrust", offsetof(Command, m_Thrust));
 				assert(r >= 0 && "Failed to register object type");

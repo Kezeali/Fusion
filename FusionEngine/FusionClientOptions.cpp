@@ -91,7 +91,7 @@ namespace FusionEngine
 
 		insertVarMapIntoDOM(root, m_Variables);
 
-		for (int i = 0; i <= m_NumLocalPlayers; ++i)
+		for (unsigned int i = 0; i <= m_NumLocalPlayers; ++i)
 		{
 			ticpp::Element* player = new ticpp::Element("playeroptions");
 			root->LinkEndChild( player ); 

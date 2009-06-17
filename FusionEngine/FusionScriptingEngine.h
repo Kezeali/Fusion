@@ -37,7 +37,12 @@
 /// Inherited
 #include "FusionSingleton.h"
 
+// External
+#include <Calling/Caller.h>
+
 /// Fusion
+#include "FusionBoostSignals2.h"
+
 #include "FusionScript.h"
 #include "FusionScriptVector.h"
 #include "FusionScriptReference.h"
@@ -53,7 +58,6 @@ namespace FusionEngine
 {
 
 	static const std::string g_ASConfigConsole = "Console";
-	static const std::string g_ASConfigWeapon = "Weapon";
 
 	//! Aborts the given ctx if the current time is after the given time
 	/*!
@@ -71,10 +75,6 @@ namespace FusionEngine
 	/*!
 	 * \brief
 	 * Provides scripting support, and access to it, for all FusionEngine objects.
-	 *
-	 * \todo Scripted extensions ('mods') will be called 'Plug-ins'. There will be a gui thing called
-	 *  'Plug-in controls' which finds configurable controls in all the loaded plug-ins and allows
-	 *  the user to configure them.
 	 *
 	 * \sa
 	 * Singleton
@@ -114,8 +114,8 @@ namespace FusionEngine
 		ScriptReturn Execute(const char *module, const char *function, unsigned int timeout = 0);
 
 #ifdef SCRIPT_ARG_USE_TEMPLATE
-		//! Executes the given function
-		ScriptReturn Execute(ScriptMethod &function)
+		//! Executes the given global method
+		ScriptReturn Execute(UCScriptMethod &function)
 		{
 			if (!function.IsValid())
 				return ScriptContext(NULL);
@@ -133,13 +133,14 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (function.GetTimeout() > 0 ? function.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
 		}
 
 		//! Executes the given method
-		ScriptReturn Execute(ScriptObject &object, ScriptMethod &method)
+		ScriptReturn Execute(ScriptObject &object, UCScriptMethod &method)
 		{
 			if (!object.IsValid() || !method.IsValid())
 				return ScriptContext(NULL);
@@ -157,6 +158,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptObject());
 			if (r < 0)
@@ -166,9 +168,9 @@ namespace FusionEngine
 			return scxt;
 		}
 
-		//! Executes the given function
+		//! Executes the given global method
 		template<typename T1>
-		ScriptReturn Execute(ScriptMethod& method, T1 p1)
+		ScriptReturn Execute(UCScriptMethod& method, T1 p1)
 		{
 			if (!method.IsValid())
 				return ScriptContext(NULL);
@@ -176,11 +178,19 @@ namespace FusionEngine
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
-			int r = cont->Prepare(function.GetFunctionID());
+			int r = cont->Prepare(method.GetFunctionID());
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
+			try
+			{
+				setArgument(cont, 0, p1);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -188,13 +198,14 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
 		}
-		//! Executes the given function
+		//! Executes the given global method
 		template<typename T1, typename T2>
-		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2)
+		ScriptReturn Execute(UCScriptMethod& method, T1 p1, T2 p2)
 		{
 			if (!method.IsValid())
 				return ScriptContext(NULL);
@@ -202,12 +213,20 @@ namespace FusionEngine
 			asIScriptContext* cont = m_asEngine->CreateContext();
 			ScriptReturn scxt(cont);
 
-			int r = cont->Prepare(function.GetFunctionID());
+			int r = cont->Prepare(method.GetFunctionID());
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -215,13 +234,14 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
 		}
-		//! Executes the given function
+		//! Executes the given global method
 		template<typename T1, typename T2, typename T3>
-		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2, T3 p3)
+		ScriptReturn Execute(UCScriptMethod& method, T1 p1, T2 p2, T3 p3)
 		{
 			if (!method.IsValid())
 				return ScriptContext(NULL);
@@ -233,9 +253,17 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
-			setArgument(cont, 2, p3);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+				setArgument(cont, 2, p3);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -243,13 +271,14 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
 		}
-		//! Executes the given function
+		//! Executes the given global method
 		template<typename T1, typename T2, typename T3, typename T4>
-		ScriptReturn Execute(ScriptMethod& method, T1 p1, T2 p2, T3 p3, T4 p4)
+		ScriptReturn Execute(UCScriptMethod& method, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
 			if (!method.IsValid())
 				return ScriptContext(NULL);
@@ -261,10 +290,18 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
-			setArgument(cont, 2, p3);
-			setArgument(cont, 3, p4);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+				setArgument(cont, 2, p3);
+				setArgument(cont, 3, p4);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -272,6 +309,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -279,7 +317,7 @@ namespace FusionEngine
 
 		//! Executes the given method
 		template<typename T1>
-		ScriptReturn Execute(ScriptObject& object, ScriptMethod& method, T1 p1)
+		ScriptReturn Execute(ScriptObject& object, UCScriptMethod& method, T1 p1)
 		{
 			if (!object.IsValid() || !method.IsValid())
 				return ScriptContext(NULL);
@@ -291,7 +329,15 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
+			try
+			{
+				setArgument(cont, 0, p1);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -299,6 +345,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -309,7 +356,7 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2>
-		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2)
+		ScriptReturn Execute(ScriptObject& object, UCScriptMethod method, T1 p1, T2 p2)
 		{
 			if (!object.IsValid() || !method.IsValid())
 				return ScriptContext(NULL);
@@ -321,8 +368,16 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -330,6 +385,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -340,7 +396,7 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2, typename T3>
-		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2, T3 p3)
+		ScriptReturn Execute(ScriptObject& object, UCScriptMethod method, T1 p1, T2 p2, T3 p3)
 		{
 			if (!object.IsValid() || !method.IsValid())
 				return ScriptContext(NULL);
@@ -352,9 +408,17 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
-			setArgument(cont, 2, p3);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+				setArgument(cont, 2, p3);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -362,6 +426,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -372,7 +437,7 @@ namespace FusionEngine
 		}
 		//! Executes the given method
 		template<typename T1, typename T2, typename T3, typename T4>
-		ScriptReturn Execute(ScriptObject& object, ScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
+		ScriptReturn Execute(ScriptObject& object, UCScriptMethod method, T1 p1, T2 p2, T3 p3, T4 p4)
 		{
 			if (!object.IsValid() || !method.IsValid())
 				return ScriptContext(NULL);
@@ -384,10 +449,18 @@ namespace FusionEngine
 			if (r < 0)
 				return scxt;
 
-			setArgument(cont, 0, p1);
-			setArgument(cont, 1, p2);
-			setArgument(cont, 2, p3);
-			setArgument(cont, 3, p4);
+			try
+			{
+				setArgument(cont, 0, p1);
+				setArgument(cont, 1, p2);
+				setArgument(cont, 2, p3);
+				setArgument(cont, 3, p4);
+			}
+			catch (InvalidArgumentException &ex)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
+			}
 
 			int timeoutTime;
 			if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
@@ -395,6 +468,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
+			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -404,11 +478,11 @@ namespace FusionEngine
 			return scxt;
 		}
 #else
-		//! Executes the given function
-		ScriptReturn Execute(ScriptMethod scref, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
+		//! Executes the given global method
+		ScriptReturn Execute(UCScriptMethod scref, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
 
-		//! Executes the given method
-		ScriptReturn Execute(ScriptObject& obj, ScriptMethod& method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
+		//! Executes the given class method
+		ScriptReturn Execute(ScriptObject& obj, UCScriptMethod& method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4);
 #endif
 		//! Executes the given code string.
 		/*!
@@ -443,17 +517,29 @@ namespace FusionEngine
 		unsigned int GetDefaultTimeout() const;
 
 		//! Returns a method object for the given function
-		ScriptMethod GetFunction(const char* module, const std::string& signature);
+		UCScriptMethod GetFunction(const char* module, const std::string& signature);
 		//! Returns a method object for the given function
-		bool GetFunction(ScriptMethod& out, const char* module, const std::string& signature);
+		bool GetFunction(UCScriptMethod& out, const char* module, const std::string& signature);
 		//! Returns a class object corresponding to the given typename
 		ScriptClass GetClass(const char* module, const std::string& type_name);
 		//! Returns an object of the class corresponding to the given typename
 		ScriptObject CreateObject(const char* module, const std::string& type_name);
-		ScriptMethod GetClassMethod(ScriptClass& type, const std::string& signature);
 
-		ScriptMethod GetClassMethod(ScriptObject& type, const std::string& signature);
+		UCScriptMethod GetClassMethod(const char* module_name, const std::string& type_name, const std::string &signature);
 
+		UCScriptMethod GetClassMethod(ScriptClass& type, const std::string& signature);
+
+		//UCScriptMethod GetClassMethod(ScriptObject& type, const std::string& signature);
+
+		//! Returns a global caller
+		ScriptUtils::Calling::Caller GetCaller(const char* module, const std::string &signature);
+		//! Returns a method caller
+		ScriptUtils::Calling::Caller GetCaller(const ScriptObject &object, const std::string &signature);
+
+		void ConnectToCaller(ScriptUtils::Calling::Caller &caller);
+
+		//! Called when a script exception occors
+		void _exceptionCallback(asIScriptContext *ctx);
 		//! Used internally
 		void _messageCallback(asSMessageInfo *msg);
 
@@ -461,62 +547,152 @@ namespace FusionEngine
 		//! AngelScript Engine
 		asIScriptEngine *m_asEngine;
 
+		//ConnectionContainer m_CallerConnections;
 		//! Active contexts
 		//std::vector<asIScriptContext*> m_Contexts;
 
 		unsigned int m_DefaultTimeout;
 
 	private:
+		//! Throws if the given return value of a SetArgX Fn indicates failure
+		inline void checkSetArgReturn(int r, int arg, const std::string &type = "object")
+		{
+			if (r == asCONTEXT_NOT_PREPARED)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument",
+					"Context not prepared");
+			}
+			else if (r == asINVALID_ARG)
+			{
+				std::string wrongNumOfArgs, rightNumOfArgs;
+				if (arg = 0)
+				{
+					wrongNumOfArgs = "one argument";
+					rightNumOfArgs = "no arguments";
+				}
+				else if (arg = 1)
+				{
+					wrongNumOfArgs = "2 arguments";
+					rightNumOfArgs = "one argument";
+				}
+				else
+				{
+					wrongNumOfArgs = CL_StringHelp::int_to_local8(arg+1) + " arguments";
+					rightNumOfArgs = CL_StringHelp::int_to_local8(arg) + " arguments";
+				}
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument",
+					"Provided " + wrongNumOfArgs + " to method taking " + rightNumOfArgs);
+			}
+			else if (r == asINVALID_TYPE)
+			{
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument", 
+					"The " + type + " passed to argument " + 
+					std::string(CL_StringHelp::int_to_local8(arg)) + " is of incorrect type");
+			}
+		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for value / reference arguments.
+		 */
 		template<class T>
 		void setArgument(asIScriptContext* cxt, int arg, T value)
 		{
-			cxt->SetArgObject(arg, (void*)value);
+			checkSetArgReturn( cxt->SetArgObject(arg, (void*)(&value)), arg );
 		}
 		//! Sets the given argument in the given context
-		template<>
-		void setArgument<void*>(asIScriptContext* cxt, int arg, void* value)
+		/*!
+		 * Specialization for pointer arguments.
+		 */
+		template<class T>
+		void setArgument(asIScriptContext* cxt, int arg, T* value)
 		{
-			cxt->SetArgObject(arg, value);
+			checkSetArgReturn( cxt->SetArgObject(arg, (void*)value), arg, "pointer" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for bool (byte) arguments.
+		 */
 		template<>
 		void setArgument<bool>(asIScriptContext* cxt, int arg, bool value)
 		{
-			cxt->SetArgByte(arg, value);
+			checkSetArgReturn( cxt->SetArgByte(arg, value), arg, "bool" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for char (byte) arguments.
+		 */
+		template<>
+		void setArgument<char>(asIScriptContext* cxt, int arg, char value)
+		{
+			checkSetArgReturn( cxt->SetArgByte(arg, value), arg, "char" );
+		}
+		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for short (i.e. 16-bit - Word) arguments.
+		 */
 		template<>
 		void setArgument<short>(asIScriptContext* cxt, int arg, short value)
 		{
-			cxt->SetArgWord(arg, value);
+			checkSetArgReturn( cxt->SetArgWord(arg, value), arg, "short" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for int (DWord) arguments.
+		 */
 		template<>
 		void setArgument<int>(asIScriptContext* cxt, int arg, int value)
 		{
-			cxt->SetArgDWord(arg, value);
+			checkSetArgReturn( cxt->SetArgDWord(arg, value), arg, "int" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for unsigned int (DWord) arguments.
+		 */
 		template<>
 		void setArgument<unsigned int>(asIScriptContext* cxt, int arg, unsigned int value)
 		{
-			cxt->SetArgDWord(arg, value);
+			checkSetArgReturn( cxt->SetArgDWord(arg, value), arg, "unsigned int" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for long (QWord) arguments.
+		 */
+		template<>
+		void setArgument<long>(asIScriptContext* cxt, int arg, long value)
+		{
+			checkSetArgReturn( cxt->SetArgQWord(arg, value), arg, "long" );
+		}
+		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for unsigned long (QWord) arguments.
+		 */
+		template<>
+		void setArgument<unsigned long>(asIScriptContext* cxt, int arg, unsigned long value)
+		{
+			checkSetArgReturn( cxt->SetArgQWord(arg, value), arg, "unsigned long" );
+		}
+		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for float arguments.
+		 */
 		template<>
 		void setArgument<float>(asIScriptContext* cxt, int arg, float value)
 		{
-			cxt->SetArgFloat(arg, value);
+			checkSetArgReturn( cxt->SetArgFloat(arg, value), arg, "float" );
 		}
 		//! Sets the given argument in the given context
+		/*!
+		 * Specialization for double arguments.
+		 */
 		template<>
 		void setArgument<double>(asIScriptContext* cxt, int arg, double value)
 		{
-			cxt->SetArgDouble(arg, value);
+			checkSetArgReturn( cxt->SetArgDouble(arg, value), arg, "double" );
 		}
+
 		//! Returns the AngelScript module object with the given name or throws if nosuch exists
 		asIScriptModule *getModuleOrThrow(const char *module) const;
+
 		//! Registers global methods and functions which scripts can use.
 		void registerTypes();
 

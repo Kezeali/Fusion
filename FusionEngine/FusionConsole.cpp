@@ -147,7 +147,7 @@ namespace FusionEngine
 
 	void Console::Add(const std::wstring &message)
 	{
-		Add(CL_StringHelp::ucs2_to_utf8(message));
+		Add(CL_StringHelp::ucs2_to_local8(message));
 	}
 
 	void Console::Add(const std::string &message)
@@ -354,7 +354,7 @@ namespace FusionEngine
 		int r;
 		asIScriptEngine* engine = manager->GetEnginePtr();
 
-		RegisterTypeNoHandle<Console>("Console", engine);
+		RegisterSingletonType<Console>("Console", engine);
 
 		r = engine->RegisterObjectMethod("Console",
 			"void print(string &in)",

@@ -27,6 +27,11 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// Add _DLL define
+#ifndef _DLL
+#define HAD_TO_DEF_DLL
+#define _DLL
+#endif
 // ClanLib
 #include <ClanLib/core.h>
 #include <ClanLib/application.h>
@@ -35,5 +40,9 @@
 #include <ClanLib/sound.h>
 #include <ClanLib/vorbis.h>
 #include <ClanLib/regexp.h>
+// Remove _DLL define
+#ifdef HAD_TO_DEF_DLL
+#undef _DLL
+#endif
 
 #endif

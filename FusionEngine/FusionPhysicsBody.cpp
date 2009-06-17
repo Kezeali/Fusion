@@ -83,6 +83,11 @@ namespace FusionEngine
 			m_World->_destroyBody(this);
 			m_BxBody = NULL;
 		}
+
+		for (FixturePtrArray::iterator it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
+		{
+			(*it)->Invalidate();
+		}
 	}
 
 	//void PhysicsBody::Initialize(PhysicsWorld *world)
@@ -102,7 +107,7 @@ namespace FusionEngine
 		{
 			m_BxBody->SetBullet(m_Bullet);
 
-			m_BxBody->SetUserData(m_UserData);
+			m_BxBody->SetUserData(this);
 
 			if (!fe_fzero(m_Mass))
 			{
@@ -110,14 +115,18 @@ namespace FusionEngine
 				massData.mass = m_Mass;
 				massData.center.SetZero();
 				massData.I = 0.0f;
-				m_BxBody->SetMass(&massData);
+				m_BxBody->SetMassData(&massData);
+			}
+			else
+			{
+				m_BxBody->SetMassFromShapes();
 			}
 
-			for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; it++)
+			/*for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; it++)
 			{
 				(*it)->SetBody(m_BxBody);
 				(*it)->Generate();
-			}
+			}*/
 		}
 	}
 
@@ -264,80 +273,106 @@ namespace FusionEngine
 		m_BxBody->ApplyTorque(torque);
 	}
 
+	b2Body* PhysicsBody::GetInternalBody() const
+	{
+		return m_BxBody;
+	}
+
+	FixturePtr PhysicsBody::CreateFixture(const b2FixtureDef *def)
+	{
+		FixturePtr fixture( new Fixture( m_BxBody->CreateFixture(def) ), false ); // false prevents intrusive_ptr from adding another ref
+		m_Fixtures.push_back(fixture);
+		return fixture;
+	}
+
+	FixturePtr PhysicsBody::CreateFixture(const FixtureDefinition definition)
+	{
+		return CreateFixture(definition.get());
+	}
+
+	void PhysicsBody::RemoveFixture(FixturePtr fixture)
+	{
+		if (fixture->GetInner()->GetBody() == m_BxBody)
+		{
+			FixturePtrArray::iterator _where = std::remove(m_Fixtures.begin(), m_Fixtures.end(), fixture);
+			m_Fixtures.erase(_where, m_Fixtures.end());
+		}
+	}
+
 	//void PhysicsBody::ClearForces()
 	//{
 	//}
 
-	void PhysicsBody::AttachShape(ShapePtr shape)
-	{
-		shape->SetBody(m_BxBody);
+	//void PhysicsBody::AttachShape(ShapePtr shape)
+	//{
+	//	shape->SetBody(m_BxBody);
 
-		m_Shapes.push_back(shape);
-	}
+	//	m_Shapes.push_back(shape);
+	//}
 
-	void PhysicsBody::DetachShape(ShapePtr shape)
-	{
-		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-		{
-			ShapePtr itpShape = (*it);
-			if (itpShape->GetShape() == shape->GetShape())
-			{
-				shape->SetBody(NULL);
-				m_Shapes.erase(it);
-			}
-		}
-	}
+	//void PhysicsBody::DetachShape(ShapePtr shape)
+	//{
+	//	for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//	{
+	//		ShapePtr itpShape = (*it);
+	//		if (itpShape->GetShape() == shape->GetShape())
+	//		{
+	//			shape->SetBody(NULL);
+	//			m_Shapes.erase(it);
+	//		}
+	//	}
+	//}
 
-	void PhysicsBody::ClearShapes()
-	{
-		for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-		{
-			ShapePtr shape = (*it);
-			shape->SetBody(NULL);
-		}
-		m_Shapes.clear();
-	}
+	//void PhysicsBody::ClearShapes()
+	//{
+	//	for (ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//	{
+	//		ShapePtr shape = (*it);
+	//		shape->SetBody(NULL);
+	//	}
+	//	m_Shapes.clear();
+	//}
 
-	const PhysicsBody::ShapeList &PhysicsBody::GetShapes()
-	{
-		return m_Shapes;
-	}
+	//const PhysicsBody::ShapeList &PhysicsBody::GetShapes()
+	//{
+	//	return m_Shapes;
+	//}
 
-	ShapePtr PhysicsBody::GetShape(b2Shape *shape)
-	{
-		for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-			if((*it)->GetShape() == shape)
-				return *it;
+	//ShapePtr PhysicsBody::GetShape(b2Shape *shape)
+	//{
+	//	for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//		if((*it)->GetShape() == shape)
+	//			return *it;
 
-		return ShapePtr();
-	}
+	//	return ShapePtr();
+	//}
 
-	ShapePtr PhysicsBody::GetShape(b2Shape *shape) const
-	{
-		for(ShapeList::const_iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-			if((*it)->GetShape() == shape)
-				return *it;
+	//ShapePtr PhysicsBody::GetShape(b2Shape *shape) const
+	//{
+	//	for(ShapeList::const_iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//		if((*it)->GetShape() == shape)
+	//			return *it;
 
-		return ShapePtr();
-	}
+	//	return ShapePtr();
+	//}
 
-	ShapePtr PhysicsBody::GetShape(const std::string &name)
-	{
-		for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-			if((*it)->GetName() == name)
-				return *it;
+	//ShapePtr PhysicsBody::GetShape(const std::string &name)
+	//{
+	//	for(ShapeList::iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//		if((*it)->GetName() == name)
+	//			return *it;
 
-		return ShapePtr();
-	}
+	//	return ShapePtr();
+	//}
 
-	ShapePtr PhysicsBody::GetShape(const std::string &name) const
-	{
-		for(ShapeList::const_iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
-			if((*it)->GetName() == name)
-				return *it;
+	//ShapePtr PhysicsBody::GetShape(const std::string &name) const
+	//{
+	//	for(ShapeList::const_iterator it = m_Shapes.begin(), end = m_Shapes.end(); it != end; ++it)
+	//		if((*it)->GetName() == name)
+	//			return *it;
 
-		return ShapePtr();
-	}
+	//	return ShapePtr();
+	//}
 
 	void PhysicsBody::AddJoint(b2Joint* joint)
 	{
@@ -354,7 +389,7 @@ namespace FusionEngine
 	void PhysicsBody::Clear()
 	{
 		//ClearForces();
-		ClearShapes();
+		//ClearShapes();
 		ClearJoints();
 	}
 
@@ -533,11 +568,8 @@ namespace FusionEngine
 		m_CollisionHandler = handler;
 	}
 
-	bool PhysicsBody::CanCollideWith(PhysicsBody *other)
+	bool PhysicsBody::CanCollideWith(PhysicsBodyPtr other)
 	{
-		if (m_CollisionHandler != 0)
-			return m_CollisionHandler->CanCollideWith(other);
-
 		return true;
 	}
 

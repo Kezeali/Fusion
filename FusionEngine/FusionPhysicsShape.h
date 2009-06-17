@@ -49,6 +49,31 @@ namespace FusionEngine
 	//	virtual void Detach(cpSpace* space) = 0;
 	//};
 
+	class Fixture : public RefCounted
+	{
+		friend class PhysicsBody;
+	public:
+		Fixture();
+		Fixture(b2Fixture *inner);
+
+		virtual ~Fixture();
+
+		b2Fixture *GetInner() const;
+
+	protected:
+		b2Fixture *m_Inner;
+
+		//! Called when Body dies
+		void Invalidate();
+	};
+
+	typedef boost::intrusive_ptr<Fixture> FixturePtr;
+
+	//! Stores a b2FixtureDef pointer
+	typedef std::tr1::shared_ptr<b2FixtureDef> FixtureDefinition;
+
+	static FixtureDefinition DefineCircleFixture(unsigned int radius);
+
 	//! Shape class
 	class Shape
 	{
@@ -113,80 +138,80 @@ namespace FusionEngine
 	//! Shape Smart Ptr type
 	typedef std::tr1::shared_ptr<Shape> ShapePtr;
 
-	//! PolyShape Shape implementations
-	class PolyShape : public Shape 
-	{
-	public:
-		PolyShape();
-		PolyShape(std::vector<Vector2>& verts, const Vector2& offset = Vector2::zero());
-		~PolyShape();
+	////! PolyShape Shape implementations
+	//class PolyShape : public Shape 
+	//{
+	//public:
+	//	PolyShape();
+	//	PolyShape(std::vector<Vector2>& verts, const Vector2& offset = Vector2::zero());
+	//	~PolyShape();
 
-	public:
-		void AddPoint(Vector2 point);
-		void Clear();
+	//public:
+	//	void AddPoint(Vector2 point);
+	//	void Clear();
 
-		virtual void Generate();
+	//	virtual void Generate();
 
-		virtual double GetInitialWidth() const;
-		virtual double GetInitialHeight() const;
-		virtual double GetCurrentWidth() const;
-		virtual double GetCurrentHeight() const;
+	//	virtual double GetInitialWidth() const;
+	//	virtual double GetInitialHeight() const;
+	//	virtual double GetCurrentWidth() const;
+	//	virtual double GetCurrentHeight() const;
 
-		virtual double GetCurrentMinX() const;
-		virtual double GetCurrentMaxX() const;
-		virtual double GetCurrentMinY() const;
-		virtual double GetCurrentMaxY() const;
-		//cpShape* GetShape() const;
-		//float32 GetInertia(float mass) const;
+	//	virtual double GetCurrentMinX() const;
+	//	virtual double GetCurrentMaxX() const;
+	//	virtual double GetCurrentMinY() const;
+	//	virtual double GetCurrentMaxY() const;
+	//	//cpShape* GetShape() const;
+	//	//float32 GetInertia(float mass) const;
 
-	protected:
-		//cpPolyShape* m_Poly;
-		std::vector<Vector2> m_PointList;
-	};
+	//protected:
+	//	//cpPolyShape* m_Poly;
+	//	std::vector<Vector2> m_PointList;
+	//};
 
-	//! A prefab PolyShape with four points
-	class RectangleShape : public PolyShape
-	{
-	public:
-		RectangleShape(double width = 10.0, double height = 10.0);
+	////! A prefab PolyShape with four points
+	//class RectangleShape : public PolyShape
+	//{
+	//public:
+	//	RectangleShape(double width = 10.0, double height = 10.0);
 
-		virtual void Generate();
+	//	virtual void Generate();
 
-	protected:
-		double m_Width;
-		double m_Height;
-	};
+	//protected:
+	//	double m_Width;
+	//	double m_Height;
+	//};
 
-	//! CircleShape Shape implementations
-	class CircleShape : public Shape
-	{
-	public:
-		CircleShape();
-		CircleShape(float radius, const Vector2& offset = Vector2::zero());
-		~CircleShape();
+	////! CircleShape Shape implementations
+	//class CircleShape : public Shape
+	//{
+	//public:
+	//	CircleShape();
+	//	CircleShape(float radius, const Vector2& offset = Vector2::zero());
+	//	~CircleShape();
 
-	public:
-		virtual void Generate();
+	//public:
+	//	virtual void Generate();
 
-		virtual double GetCurrentWidth() const;
-		virtual double GetCurrentHeight() const;
-		virtual double GetInitialWidth() const;
-		virtual double GetInitialHeight() const;
+	//	virtual double GetCurrentWidth() const;
+	//	virtual double GetCurrentHeight() const;
+	//	virtual double GetInitialWidth() const;
+	//	virtual double GetInitialHeight() const;
 
-		virtual double GetCurrentMinX() const;
-		virtual double GetCurrentMaxX() const;
-		virtual double GetCurrentMinY() const;
-		virtual double GetCurrentMaxY() const;
-		//cpShape* GetShape() const;
-		//float32 GetInertia(float mass) const;
+	//	virtual double GetCurrentMinX() const;
+	//	virtual double GetCurrentMaxX() const;
+	//	virtual double GetCurrentMinY() const;
+	//	virtual double GetCurrentMaxY() const;
+	//	//cpShape* GetShape() const;
+	//	//float32 GetInertia(float mass) const;
 
-		//void SetHoop(float centreRad, float outerRad);
+	//	//void SetHoop(float centreRad, float outerRad);
 
-	protected:
-		//cpCircleShape* m_Shape;
-		//float m_Centre;
-		float m_Radius;
-	};
+	//protected:
+	//	//cpCircleShape* m_Shape;
+	//	//float m_Centre;
+	//	float m_Radius;
+	//};
 
 }
 

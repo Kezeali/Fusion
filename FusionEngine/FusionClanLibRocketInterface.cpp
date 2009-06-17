@@ -137,8 +137,10 @@ namespace FusionEngine
 		m_gc.set_texture(0, data->texture->texture);
 
 		CL_PrimitivesArray prim_array(m_gc);
-		prim_array.set_positions(vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-		prim_array.set_tex_coords(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
+		prim_array.set_attributes(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
+		prim_array.set_attributes(1, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
+		//prim_array.set_positions(vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
+		//prim_array.set_tex_coords(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
 
 		m_gc.draw_primitives(cl_triangles, data->num_verticies, prim_array);
 	}

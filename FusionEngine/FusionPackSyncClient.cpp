@@ -40,7 +40,7 @@ void PackSyncClient::Initialise()
 		m_SyncPlugin->ClearUploads();
 
 	m_SyncPlugin->DownloadFromSubdirectory(
-		PackagesPath.c_str(), PackagesPath.c_str(),
+		s_PackagesPath.c_str(), s_PackagesPath.c_str(),
 		true, m_Peer->GetSystemAddressFromIndex(0), m_FileCallback,
 		HIGH_PRIORITY, 0
 		);

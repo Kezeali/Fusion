@@ -106,10 +106,10 @@ namespace FusionEngine
 	public:
 		ContactListener(PhysicsWorld *world);
 
-		virtual void Add(const b2ContactPoint* point);
-		virtual void Persist(const b2ContactPoint* point);
-		virtual void Remove(const b2ContactPoint* point);
-		virtual void Result(const b2ContactResult* point) {}
+		virtual void BeginContact(b2Contact* contact);
+		virtual void EndContact(b2Contact* contact);
+		virtual void PreSolve(b2Contact* contact, const b2Manifold* oldManifold);
+		virtual void PostSolve(const b2Contact* contact, const b2ContactImpulse* impulse);
 
 	protected:
 
@@ -121,14 +121,12 @@ namespace FusionEngine
 	public:
 		ContactFilter(PhysicsWorld *world);
 
-		virtual bool ShouldCollide(b2Shape *shape1, b2Shape *shape2);
-		virtual bool RayCollide(void *userData, b2Shape *shape);
+		virtual bool ShouldCollide(b2Fixture *shape1, b2Fixture *shape2);
+		virtual bool RayCollide(void *userData, b2Fixture *shape);
 
 	protected:
 		PhysicsWorld *m_World;
 	};
-
-	typedef std::tr1::shared_ptr<PhysicsBody> PhysicsBodyPtr;
 
 	/*!
 	 * \brief
@@ -158,7 +156,7 @@ namespace FusionEngine
 		//! Type for a list of bodies
 		typedef std::list<PhysicsBodyPtr> BodyList;
 
-		typedef std::list<b2ContactPoint> ContactList;
+		//typedef std::list<b2ContactPoint> ContactList;
 
 	public:
 		//! Adds the given body to the world and initializes it
@@ -198,11 +196,13 @@ namespace FusionEngine
 		void RunSimulation(float delta_milis);
 
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
-		void OnContactAdd(const b2ContactPoint *contact);
+		void OnBeginContact(b2Contact *contact);
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
-		void OnContactPersist(const b2ContactPoint *contact);
+		void OnEndContact(b2Contact *contact);
+		//! Called via contact listener
+		void OnPreSolve(b2Contact* contact, const b2Manifold* oldManifold);
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
-		void OnContactRemove(const b2ContactPoint *contact);
+		void OnPostSolve(const b2Contact *contact, const b2ContactImpulse *impulse);
 
 		void ClearContacts();
 
@@ -285,9 +285,9 @@ namespace FusionEngine
 		int m_VelocityIterations;
 		int m_PositionIterations;
 
-		ContactList m_NewContacts;
-		ContactList m_ActiveContacts;
-		ContactList m_EndedContacts;
+		//ContactList m_NewContacts;
+		//ContactList m_ActiveContacts;
+		//ContactList m_EndedContacts;
 
 		//! World dimensions
 		float m_Width, m_Height;

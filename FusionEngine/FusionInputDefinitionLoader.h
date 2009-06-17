@@ -95,12 +95,12 @@ namespace FusionEngine
 
 		const InputDefinitionMap &GetInputDefinitions() const;
 
+		bool IsDefined(const std::string &inputName) const;
+
 	protected:
 		InputDefinitionMap m_InputDefinitions;
 
 	protected:
-		void tidy();
-
 		void loadGroup(ticpp::Element &groupElm);
 
 	};

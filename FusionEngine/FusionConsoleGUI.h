@@ -29,10 +29,11 @@
 
 #include "FusionCommon.h"
 
+#include "FusionBoostSignals2.h"
+
+
 /// Inherited
 #include "FusionState.h"
-
-#include <CEGUI/CEGUI.h>
 
 namespace FusionEngine
 {
@@ -82,7 +83,7 @@ namespace FusionEngine
 		bool onEditBoxAccepted(const CEGUI::EventArgs& e);
 		bool onEditBoxKeyUp(const CEGUI::EventArgs &e);
 
-		void onConsoleNewLine(const std::string &data);
+		void onConsoleNewData(const std::string &data);
 		void onConsoleClear();
 
 	protected:
@@ -97,8 +98,8 @@ namespace FusionEngine
 		size_t m_MaxHistory;
 
 		//CL_SlotContainer m_Slots;
-		CL_Slot m_ConsoleOnNewLineSlot;
-		CL_Slot m_ConsoleOnClearSlot;
+		boost::signals2::connection m_Connection_NewData;
+		boost::signals2::connection m_Connection_Clear;
 
 		EventConnectionList m_EventConnections;
 

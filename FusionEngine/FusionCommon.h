@@ -102,6 +102,9 @@
 
 // AngelScript
 //not #define AS_USE_NAMESPACE
+#if defined WIN32 && !defined ANGELSCRIPT_DLL_LIBRARY_IMPORT
+#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
+#endif
 #include <angelscript.h>
 
 
@@ -109,6 +112,8 @@ namespace FusionEngine
 {
 
 	typedef Vector2T<float> Vector2;
+
+	typedef std::vector<Vector2> Vector2Array;
 
 	static const float s_pi = 3.1415926f;
 

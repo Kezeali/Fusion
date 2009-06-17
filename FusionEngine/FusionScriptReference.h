@@ -34,6 +34,10 @@
 
 #include "FusionCommon.h"
 
+#include <Calling/Caller.h>
+
+#include <boost/type_traits.hpp>
+
 namespace FusionEngine
 {
 
@@ -97,11 +101,11 @@ namespace FusionEngine
 		bool RaisedException() const;
 		virtual bool IsOk() const;
 
-		float GetValueFloat() const;
-		double GetValueDouble() const;
-		void* GetPointer() const;
+		float GetReturnValueFloat() const;
+		double GetReturnValueDouble() const;
+		void* GetReturnPointer() const;
 		template<typename T>
-		T* GetValueObject() const
+		T* GetReturnValueObject() const
 		{
 			return (T*)m_Context->GetReturnObject();
 		}
@@ -156,6 +160,8 @@ namespace FusionEngine
 		void parseSignature();
 	};
 
+	typedef ScriptMethod UCScriptMethod;
+
 	//! Stores script object data
 	/*!
 	 * \sa ScriptingEngine
@@ -181,11 +187,15 @@ namespace FusionEngine
 	public:
 		int GetTypeId() const;
 		asIScriptObject* GetScriptObject() const;
+
+		ScriptUtils::Calling::Caller GetCaller(const std::string &method_decl) const;
 		
 		bool IsValid() const;
 
 	protected:
 		asIScriptObject* m_Object;
+
+		ScriptingEngine *m_Engine;
 	};
 
 	//! Stores script type data
@@ -207,7 +217,7 @@ namespace FusionEngine
 		int GetTypeId() const;
 		const char* GetModule() const;
 		const std::string& GetDeclaration() const;
-		ScriptMethod GetMethod(const std::string& signature) const;
+		UCScriptMethod GetMethod(const std::string& signature) const;
 		ScriptObject Instantiate();
 
 		bool IsValid() const;

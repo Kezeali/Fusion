@@ -60,26 +60,27 @@ namespace FusionEngine
 	static float g_PhysStaticMass = 0.f;
 	static int g_PhysBodyCpCollisionType = 1;
 
+	class PhysicsBody;
+	typedef boost::intrusive_ptr<PhysicsBody> PhysicsBodyPtr;
+
 
 	/*!
 	 * \brief
 	 * The basis for movable/colliding objects.
 	 *
-	 * <br>
-	 * Me - perhaps this should be abstract an class. 
-	 *
-	 * \todo Perhaps bodies should have ApplyPosition and ApplyRotation methods, rather
-	 * than giving FusionPhysicsWorld friend access...
-	 *
 	 * \see
 	 * PhysicsWorld.
 	 */
-	class PhysicsBody
+	class PhysicsBody : public RefCounted
 	{
+		friend class PhysicsWorld;
+
 		//typedef boost::ptr_list<Shape> ShapeList;
 		typedef std::list<ShapePtr> ShapeList;
 		//typedef std::list<Shape*> ShapeList;
-		friend class PhysicsWorld;
+
+		typedef std::vector<FixturePtr> FixturePtrArray;
+
 	public:
 		PhysicsBody();
 		//PhysicsBody();
@@ -125,7 +126,7 @@ namespace FusionEngine
 		//! Sets teh isSleeping property of the BodyDef
 		void SetInitialSleepState(bool isSleeping);
 		
-		virtual void RecalculateInertia();
+		//virtual void RecalculateInertia();
 		//! Sets the radius used for torque equations.
 		/*
 		 * There are no torque equations ATM, but may be in the future...
@@ -195,16 +196,28 @@ namespace FusionEngine
 
 		b2Body* GetInternalBody() const;
 
-		void AttachShape(ShapePtr shape);
-		void DetachShape(ShapePtr shape);
-		void ClearShapes();
+		FixturePtrArray m_Fixtures;
 
-		const ShapeList &GetShapes();
+		//! Wrapper that gets the b2FixtureDef* from a FixtureDefinition
+		/*!
+		* \see FixtureDefinition
+		*/
+		FixturePtr CreateFixture(const FixtureDefinition definition);
+		//! Creates (and adds) a fixture from the given definition
+		FixturePtr CreateFixture(const b2FixtureDef *def);
+		//! Removes the given fixture
+		void RemoveFixture(FixturePtr fixture);
 
-		ShapePtr GetShape(b2Shape *internalShape);
-		ShapePtr GetShape(b2Shape *internalShape) const;
-		ShapePtr GetShape(const std::string &name);
-		ShapePtr GetShape(const std::string &name) const;
+		//void AttachShape(ShapePtr shape);
+		//void DetachShape(ShapePtr shape);
+		//void ClearShapes();
+
+		//const ShapeList &GetShapes();
+
+		//ShapePtr GetShape(b2Shape *internalShape);
+		//ShapePtr GetShape(b2Shape *internalShape) const;
+		//ShapePtr GetShape(const std::string &name);
+		//ShapePtr GetShape(const std::string &name) const;
 
 		void AddJoint(b2Joint* joint);
 		void RemoveJoint(b2Joint* joint);
@@ -277,7 +290,7 @@ namespace FusionEngine
 		void SetCollisionHandler(ICollisionHandler *handler);
 
 		//! Returns true if the given body can experiance a collision with this one.
-		bool CanCollideWith(PhysicsBody *other);
+		bool CanCollideWith(PhysicsBodyPtr other);
 		//! Calls the collision response (if this body has one.)
 		void ContactBegin(const Contact &contact);
 		//! Called while a contact persists
@@ -336,7 +349,7 @@ namespace FusionEngine
 		float GetAngularVelocity() const;
 
 		//! ISceneNodeController implementation
-		virtual float GetFacing() const;
+		//virtual float GetFacing() const;
 		//@}
 
 		//! Returns true if this object is active.

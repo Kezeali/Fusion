@@ -247,7 +247,7 @@ public:
 			if (console != NULL)
 			{
 				CL_Console::write("\n ");
-				console->Interpret(CL_StringHelp::text_to_utf8(m_ConsoleLine));
+				console->Interpret(CL_StringHelp::text_to_local8(m_ConsoleLine));
 			}
 			CL_Console::write("\n> ");
 			m_ConsoleLine.clear();

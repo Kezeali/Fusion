@@ -255,51 +255,72 @@ namespace FusionEngine
 		//constrainBodies();
 	}
 
-	void PhysicsWorld::OnContactAdd(const b2ContactPoint *contact)
+	void PhysicsWorld::OnBeginContact(b2Contact *contact)
 	{
-		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
-		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
-		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
-		{
-			PhysicsBodyPtr body1 = it_body1->second;
-			PhysicsBodyPtr body2 = it_body2->second;
+		// Each fixture must be fixed to a body with valid userdata (since this is how we get the
+		//  pointer to the Physics::Body wrapper)
+		if (contact->GetFixtureA()->GetBody()->GetUserData() == NULL || contact->GetFixtureB()->GetBody()->GetUserData() == NULL)
+			return;
 
-			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+		PhysicsBody *body1 = static_cast<PhysicsBody*>( contact->GetFixtureA()->GetBody()->GetUserData() );
+		PhysicsBody *body2 = static_cast<PhysicsBody*>( contact->GetFixtureB()->GetBody()->GetUserData() );
+		//BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
+		//BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		//if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
+		//{
+		//	PhysicsBodyPtr body1 = it_body1->second;
+		//	PhysicsBodyPtr body2 = it_body2->second;
+
+			Contact fsnContact = Contact::CreateContact(contact);
 			body1->ContactBegin(fsnContact);
 			body2->ContactBegin(fsnContact);
-		}
+		//}
 	}
 
-	void PhysicsWorld::OnContactPersist(const b2ContactPoint *contact)
+	void PhysicsWorld::OnEndContact(b2Contact *contact)
 	{
-		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
-		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
-		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
-		{
-			PhysicsBodyPtr body1 = it_body1->second;
-			PhysicsBodyPtr body2 = it_body2->second;
-
-			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
-			body1->ContactPersist(fsnContact);
-			body2->ContactPersist(fsnContact);
-		}
-	}
-
-	void PhysicsWorld::OnContactRemove(const b2ContactPoint *contact)
-	{
-		// Notify both bodies that the contact has been lost
+		// Notify both bodies that the contact has stopped
 		//  (if the respective bodies can be found)
-		BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
-		BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
-		if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
-		{
-			PhysicsBodyPtr body1 = it_body1->second;
-			PhysicsBodyPtr body2 = it_body2->second;
+		//BodyMap::iterator it_body1 = m_Bodies.find(contact->shape1->GetBody());
+		//BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		//if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
+		//{
+		//	PhysicsBodyPtr body1 = it_body1->second;
+		//	PhysicsBodyPtr body2 = it_body2->second;
 
-			Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
-			body1->ContactEnd(fsnContact);
-			body2->ContactEnd(fsnContact);
-		}
+		//	Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+		//	body1->ContactEnd(fsnContact);
+		//	body2->ContactEnd(fsnContact);
+		//}
+
+		if (contact->GetFixtureA()->GetBody()->GetUserData() == NULL || contact->GetFixtureB()->GetBody()->GetUserData() == NULL)
+			return;
+
+		PhysicsBody *body1 = static_cast<PhysicsBody*>( contact->GetFixtureA()->GetBody()->GetUserData() );
+		PhysicsBody *body2 = static_cast<PhysicsBody*>( contact->GetFixtureB()->GetBody()->GetUserData() );
+
+		Contact fsnContact = Contact::CreateContact(contact);
+		body1->ContactEnd(fsnContact);
+		body2->ContactEnd(fsnContact);
+	}
+
+	void PhysicsWorld::OnPreSolve(b2Contact* contact, const b2Manifold* oldManifold)
+	{
+	}
+
+	void PhysicsWorld::OnPostSolve(const b2Contact *contact, const b2ContactImpulse *impulse)
+	{
+		//BodyMap::iterator it_body1 = m_Bodies.find(contact->GetFixtureA()->GetBody());
+		//BodyMap::iterator it_body2 = m_Bodies.find(contact->shape2->GetBody());
+		//if (it_body1 != m_Bodies.end() && it_body2 != m_Bodies.end() && it_body1->second != NULL && it_body2->second != NULL)
+		//{
+		//	PhysicsBodyPtr body1 = it_body1->second;
+		//	PhysicsBodyPtr body2 = it_body2->second;
+
+		//	Contact fsnContact(contact, body1->GetShape(contact->shape1), body2->GetShape(contact->shape2));
+		//	body1->ContactPersist(fsnContact);
+		//	body2->ContactPersist(fsnContact);
+		//}
 	}
 
 	//void PhysicsWorld::UpdateContacts()
@@ -361,12 +382,12 @@ namespace FusionEngine
 	//}
 
 
-	void PhysicsWorld::ClearContacts()
-	{
-		m_NewContacts.clear();
-		m_ActiveContacts.clear();
-		m_EndedContacts.clear();
-	}
+	//void PhysicsWorld::ClearContacts()
+	//{
+	//	m_NewContacts.clear();
+	//	m_ActiveContacts.clear();
+	//	m_EndedContacts.clear();
+	//}
 
 	void PhysicsWorld::SetGCForDebugDraw(CL_GraphicContext gc)
 	{
@@ -485,19 +506,24 @@ namespace FusionEngine
 	{
 	}
 
-	void ContactListener::Add(const b2ContactPoint *point)
+	void ContactListener::BeginContact(b2Contact *contact)
 	{
-		m_World->OnContactAdd(point);
+		m_World->OnBeginContact(contact);
 	}
 
-	void ContactListener::Persist(const b2ContactPoint* point)
+	void ContactListener::EndContact(b2Contact* contact)
 	{
-		m_World->OnContactPersist(point);
+		m_World->OnEndContact(contact);
 	}
 
-	void ContactListener::Remove(const b2ContactPoint* point)
+	void ContactListener::PreSolve(b2Contact *contact, const b2Manifold *oldManifold)
 	{
-		m_World->OnContactRemove(point);
+		m_World->OnPreSolve(contact, oldManifold);
+	}
+
+	void ContactListener::PostSolve(const b2Contact* contact, const b2ContactImpulse *impulse)
+	{
+		m_World->OnPostSolve(contact, impulse);
 	}
 
 	////////
@@ -507,13 +533,13 @@ namespace FusionEngine
 	{
 	}
 
-	bool ContactFilter::ShouldCollide(b2Shape *shape1, b2Shape *shape2)
+	bool ContactFilter::ShouldCollide(b2Fixture *shape1, b2Fixture *shape2)
 	{
 		return true;
 		//m_World->OnShouldCollide(shape1, shape2);
 	}
 
-	bool ContactFilter::RayCollide(void *userData, b2Shape *shape)
+	bool ContactFilter::RayCollide(void *userData, b2Fixture *shape)
 	{
 		return true;
 		//m_World->OnRayCollide(userData, shape);

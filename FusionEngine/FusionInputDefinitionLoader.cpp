@@ -34,13 +34,11 @@ namespace FusionEngine
 
 	InputDefinitionLoader::InputDefinitionLoader(const ticpp::Document &tidoc)
 	{
-		LoadInputs(tidoc);
+		Load(tidoc);
 	}
 
-	void InputDefinitionLoader::LoadInputs(const ticpp::Document &tidoc)
+	void InputDefinitionLoader::Load(const ticpp::Document &tidoc)
 	{
-		tidy();
-
 		try
 		{
 			ticpp::Document doc(tidoc);
@@ -104,6 +102,11 @@ namespace FusionEngine
 	const InputDefinitionLoader::InputDefinitionMap &InputDefinitionLoader::GetInputDefinitions() const
 	{
 		return m_InputDefinitions;
+	}
+
+	bool InputDefinitionLoader::IsDefined(const std::string &inputName) const
+	{
+		return m_InputDefinitions.find(inputName) != m_InputDefinitions.end();
 	}
 
 };

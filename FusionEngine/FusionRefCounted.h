@@ -35,20 +35,15 @@
 #include "FusionCommon.h"
 
 #include "FusionScriptingEngine.h"
+//#include <angelscirpt.h>
+#include <boost/intrusive_ptr.hpp>
 
 namespace FusionEngine
 {
 
-	class RefCounted;
+	//class RefCounted;
 
 	//static RefCounted* RefCountedFactory();
-
-	template <class T>
-	static T* RefCountedFactory()
-	{
-		T* obj = new T();
-		return obj;
-	}
 
 	//template <class T>
 	//class RefCountedHelper
@@ -63,6 +58,8 @@ namespace FusionEngine
 	//}
 
 	//template <class T>
+
+	//! Base class for AngelScript compatible ReferenceCounted type
 	class RefCounted
 	{
 	private:
@@ -70,21 +67,40 @@ namespace FusionEngine
 
 	public:
 		RefCounted()
+			: m_RefCount(1)
 		{
-			m_RefCount = 1;
 		}
-		void addRef()
+		virtual ~RefCounted() {}
+
+		//! Increases reference count
+		virtual void addRef()
 		{
 			++m_RefCount;
 		}
-		void release()
+		//! Decreases reference count
+		virtual void release()
 		{
 			if (--m_RefCount == 0)
-				delete this;
+				OnNoReferences();
+		}
+		//! Override to change delete behaviour
+		virtual void OnNoReferences()
+		{
+			delete this;
 		}
 
+	public:
+		//! Factory utility
 		template <class T>
-		static T& Assign(const T& rhs, T* lhs)
+		static T* Factory()
+		{
+			T* obj = new T();
+			return obj;
+		}
+
+		//! Assign utility
+		template <class T>
+		static T& Assign(T* lhs, const T& rhs)
 		{
 			*lhs = rhs;
 			RefCounted* lhs_rc = dynamic_cast<RefCounted*>(lhs);
@@ -92,18 +108,19 @@ namespace FusionEngine
 			return *lhs;
 		}
 
+		//! Registers this type as a ref-counted type with the given engine
 		template <class T>
-		static void registerType(asIScriptEngine* engine, const std::string& name)
+		static void RegisterType(asIScriptEngine* engine, const std::string& name)
 		{
 			int r;
 			
 			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCountedFactory<T>), asCALL_CDECL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJLAST);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
 		}
 
 		//static RefCounted* RefCountedFactory()
@@ -113,6 +130,10 @@ namespace FusionEngine
 		//}
 
 	};
+
+	void intrusive_ptr_add_ref(RefCounted *ptr);
+
+	void intrusive_ptr_release(RefCounted *ptr);
 
 }
 

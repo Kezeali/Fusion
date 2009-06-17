@@ -50,9 +50,12 @@ namespace FusionEngine
 			return s_DevXInput;
 		else if (device == s_DevXInput_AxisStr)
 			return s_DevXInput_Axis;
+
+		else
+			return s_DevNothing;
 	}
 
-	inline const std::string& DeviceIDToName(unsigned int device)
+	inline const char*const DeviceIDToName(unsigned int device)
 	{
 		if (device == s_DevKeyboard)
 			return s_DevKeyboardStr;
@@ -73,6 +76,9 @@ namespace FusionEngine
 			return s_DevXInputStr;
 		else if (device == s_DevXInput_Axis)
 			return s_DevXInput_AxisStr;
+
+		else
+			return "";
 	}
 
 	InputManager::InputManager()
@@ -227,51 +233,27 @@ namespace FusionEngine
 		//m_InputBindings.clear();
 	}
 
-	class update_state
-	{
-	public:
-		update_state( )
-		{
-		}
-
-		void operator() (const InputManager::InputStateMap::value_type &elem)
-		{
-			elem.second.m_Down = elem.second.m_Active;
-			// So far the input has been active for the entire step, since
-			//  this is the start of the step ;)
-			elem.second.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
-			elem.second.m_ActiveFirst = elem.m_Active;
-		}
-	};
-
 	void InputManager::Update(float split)
 	{
 		//m_PlayerInputStates.assign(m_NumPlayers, InputStateMap());
 
 
-			if (m_SuspendRequests == 0)
-			{
-				m_CurrentStep++;
-
-				for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
-					it != end; ++it)
-				{
-					std::for_each(it->begin(), it->end(), update_state);
-				}
+		if (m_SuspendRequests == 0)
+		{
+			m_CurrentStep++;
 
 #ifdef FSN_USE_XINPUT
-				m_TimeSinceLastPoll += split;
-				if (m_TimeSinceLastPoll >= m_PollingInterval)
+			//m_TimeSinceLastPoll += split;
+			//if (m_TimeSinceLastPoll >= m_PollingInterval)
+			{
+				//m_TimeSinceLastPoll = 0.f;
+				for (XInputControllerList::iterator it = m_XInputControllers.begin(), end = m_XInputControllers.end();
+					it != end; ++it)
 				{
-					m_TimeSinceLastPoll = 0.f;
-					for (XInputControllerList::iterator it = m_XInputControllers.begin(), end = m_XInputControllers.end();
-						it != end; ++it)
-					{
-						it->Poll();
-					}
+					it->Poll();
 				}
-#endif
 			}
+#endif
 		}
 	}
 
@@ -303,25 +285,27 @@ namespace FusionEngine
 		SaveString_PhysFS(doc.Value(), filename);
 	}
 
-	void InputManager::loadControls(const ticpp::Document const* ctrlsDoc)
+	void InputManager::loadControls(const ticpp::Document *const ctrlsDoc)
 	{
+		ticpp::Element* rootElem = ctrlsDoc->FirstChildElement();
+
 		ticpp::Iterator< ticpp::Element > child("binds");
-		for ( child = child.begin( &ctrlsDoc ); child != child.end(); child++ )
+		for ( child = child.begin( rootElem ); child != child.end(); child++ )
 		{
 			loadPlayerBinds(child.Get());
 		}
 	}
 
-	void InputManager::loadPlayerBinds(const ticpp::Element const* bindsElem)
+	void InputManager::loadPlayerBinds(const ticpp::Element *const bindsElem)
 	{
 		// Get the player number for this group
-		std::string player = bindsElem.GetAttribute("player");
+		std::string player = bindsElem->GetAttribute("player");
 		if (!fe_issimplenumeric(player))
 			return;
 		unsigned int playerNum = CL_StringHelp::local8_to_uint(player);
 
 		ticpp::Iterator< ticpp::Element > child("bind");
-		for ( child = child.begin( &bindsElem ); child != child.end(); child++ )
+		for ( child = child.begin( bindsElem ); child != child.end(); child++ )
 		{
 			// command and input are synonyms
 			std::string input = child->GetAttribute("input");
@@ -344,25 +328,33 @@ namespace FusionEngine
 			child->GetAttribute("cubic", &cubic, false);
 
 
-			KeyInfoMap::const_iterator _where = m_KeyInfo.find(keyName);
+			KeyInfoMap::const_iterator _where = findOrAddKeyInfo(keyName);
 			if (_where == m_KeyInfo.end())
+			{
+					// Invalid shortname: log error and skip
+					Logger::getSingleton().Add(
+						"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
+						g_LogException, LOG_TRIVIAL);
+					continue;
+			}
+			const KeyInfo &key = _where->second;
+			
+			unsigned int deviceId = DeviceNameToID(key.m_Device);
+			if (deviceId == s_DevNothing)
 			{
 				// Invalid shortname: log error and skip
 				Logger::getSingleton().Add(
-					"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
+					"Can't bind " + keyName + " to " + input + ": the device '" + key.m_Device + "' doesn't exist.",
 					g_LogException, LOG_TRIVIAL);
 				continue;
 			}
-			KeyInfo &key = m_KeyInfo[keyName];
-			
-			unsigned int deviceId = DeviceNameToID(key.m_Device);
 
 			// Get the controller index
 			unsigned int ctrlNum = 0;
 			if (deviceId == s_DevXInput || deviceId == s_DevXInput_Axis)
 			{
 				ctrlNum = 0; // Default to first controller
-				if (!ctrlNum.empty())
+				if (!contrlName.empty())
 				{
 					if (contrlName == "any")
 						ctrlNum = XUSER_INDEX_ANY;
@@ -379,6 +371,39 @@ namespace FusionEngine
 			inputBinding.Validate();
 			m_KeyBindings[BindingKey(deviceId, ctrlNum, key.m_Code)] = inputBinding;
 		}
+	}
+
+	InputManager::KeyInfoMap::iterator InputManager::findOrAddKeyInfo(const std::string &keyName)
+	{
+		KeyInfoMap::iterator _where = m_KeyInfo.find(keyName);
+		if (_where == m_KeyInfo.end())
+			addLastChanceKeyInfo(keyName, &_where);
+
+		return _where;
+	}
+
+	bool InputManager::addLastChanceKeyInfo(const std::string &keyName, InputManager::KeyInfoMap::iterator *_where)
+	{
+		// Check for inline key-info
+		StringVector keyInfoTokens = fe_splitstring(keyName, ":");
+		if (keyInfoTokens.size() > 1)
+		{
+			const std::string& inline_DevName = keyInfoTokens[0];
+			if (DeviceNameToID(inline_DevName) != s_DevNothing)
+			{
+				const std::string& inline_KeyCode = keyInfoTokens[1];
+				int keyCodeInt = CL_StringHelp::local8_to_int(inline_KeyCode.c_str());
+
+				KeyInfoMap::value_type mapping(keyName, KeyInfo(keyName, inline_DevName, keyCodeInt, keyName));
+				std::pair<KeyInfoMap::iterator, bool> pib = m_KeyInfo.insert( mapping );
+				if (_where != NULL)
+					*_where = pib.first;
+				
+				return true;
+			}
+		}
+		// Didn't find valid key-info
+		return false;
 	}
 
 	typedef std::tr1::unordered_map<int, ticpp::Element*> PlayerElementMap;
@@ -419,7 +444,7 @@ namespace FusionEngine
 			it != end; ++it)
 		{
 			const BindingKey &key = it->first;
-			const InputBinding &binding = it->second;
+			InputBinding &binding = it->second;
 			binding.Validate();
 
 			// Get / create the group element for the player this bind applies to
@@ -451,10 +476,19 @@ namespace FusionEngine
 
 	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &key_shortname, int controller_number)
 	{
+		if (!m_DefinitionLoader->IsDefined(input))
+			FSN_EXCEPT(ExCode::InvalidArgument, "InputManager::MapControl", input + " doesn't exist");
+
 		//std::string playerStr(CL_StringHelp::int_to_local8(player));
-		KeyInfo &key = m_KeyInfo[key_shortname];
-		m_KeyBindings[BindingKey(DeviceNameToID(key.m_Device), controller_number, key.m_Code)] = InputBinding(player, input, key);
-		//m_KeyBindings[shortname] = InputBinding(player, input, key);
+		KeyInfoMap::iterator _where = findOrAddKeyInfo(key_shortname);
+		if (_where != m_KeyInfo.end())
+		{
+			KeyInfo &key = _where->second;
+			m_KeyBindings[BindingKey(DeviceNameToID(key.m_Device), controller_number, key.m_Code)] = InputBinding(player, input, key);
+			//m_KeyBindings[shortname] = InputBinding(player, input, key);
+		}
+		else
+			FSN_EXCEPT(ExCode::InvalidArgument, "InputManager::MapControl", key_shortname + " doesn't exist");
 	}
 
 	//int InputManager::GetDeviceIdByName(const std::string &name) const
@@ -495,28 +529,28 @@ namespace FusionEngine
 
 	bool InputManager::IsButtonDown(unsigned int player, const std::string &input) const
 	{
-		const InputStateMap& inputStateMap = m_PlayerInputStates[player];
-		InputStateMap::const_iterator _where = inputStateMap.find(input);
-		if (_where != inputStateMap.end())
-		{
-			const InputState &state = _where->second;
-			
-			return state.m_Down;
-		}
+		//const InputStateMap& inputStateMap = m_PlayerInputStates[player];
+		//InputStateMap::const_iterator _where = inputStateMap.find(input);
+		//if (_where != inputStateMap.end())
+		//{
+		//	const InputState &state = _where->second;
+		//	
+		//	return state.m_Down;
+		//}
 
 		return false;
 	}
 
 	float InputManager::GetAnalogValue(unsigned int player, const std::string &input) const
 	{
-		const InputStateMap& inputStateMap = m_PlayerInputStates[player];
-		InputStateMap::const_iterator _where = inputStateMap.find(input);
-		if (_where != inputStateMap.end())
-		{
-			const InputState &state = _where->second;
+		//const InputStateMap& inputStateMap = m_PlayerInputStates[player];
+		//InputStateMap::const_iterator _where = inputStateMap.find(input);
+		//if (_where != inputStateMap.end())
+		//{
+		//	const InputState &state = _where->second;
 
-			return state.m_Value;
-		}
+		//	return state.m_Value;
+		//}
 
 		return 0.f;
 	}
@@ -595,7 +629,7 @@ namespace FusionEngine
 
 	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, ev.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -674,7 +708,7 @@ namespace FusionEngine
 		// Check for pointer-x bindings
 		{
 			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 0));
-			if (_where != m_KeyInfo.end())
+			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
 
@@ -693,7 +727,7 @@ namespace FusionEngine
 		// Check for pointer-y bindings
 		{
 			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 1));
-			if (_where != m_KeyInfo.end())
+			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
 
@@ -712,7 +746,7 @@ namespace FusionEngine
 		// Check for delta-x bindings
 		{
 			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 2));
-			if (_where != m_KeyInfo.end())
+			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
 
@@ -738,7 +772,7 @@ namespace FusionEngine
 		// Check for delta-y bindings
 		{
 			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 3));
-			if (_where != m_KeyInfo.end())
+			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
 
@@ -752,7 +786,7 @@ namespace FusionEngine
 				if (!fe_fzero(normalizedValue))
 				{
 					synthedEvent.Type = InputEvent::AnalogNormalized;
-					synthedEvent.m_Value = normalizedValue;
+					synthedEvent.Value = normalizedValue;
 					synthedEvent.Down = false;
 
 					SignalInputChanged.invoke(synthedEvent);
@@ -774,7 +808,7 @@ namespace FusionEngine
 			InputEvent synthedEvent;
 			synthedEvent.Input = _where->second.m_Input;
 
-			synthedEvent.Type == InputEvent::Binary;
+			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
@@ -884,7 +918,7 @@ namespace FusionEngine
 		RawInput rawInput;
 		rawInput.DeviceType = DeviceIDToName(dev_info.Type);
 		rawInput.DeviceIndex = dev_info.Index;
-		rawInput.DeviceName = ev.device.get_name(); //= dev_info.Name;
+		rawInput.DeviceName = CL_StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
 
 		if (ev.type == CL_InputEvent::pointer_moved)
 		{
@@ -938,7 +972,7 @@ namespace FusionEngine
 			rawInput.DeviceType = s_DevXInputStr;
 
 		rawInput.DeviceIndex = ev.controller->GetUserIndex();
-		rawInput.DeviceName = "Xbox 360 Gamepad " << rawInput.DeviceIndex;
+		rawInput.DeviceName = makestring() << "Xbox 360 Gamepad " << rawInput.DeviceIndex;
 
 		if (ev.type == XInputEvent::axis_moved)
 		{

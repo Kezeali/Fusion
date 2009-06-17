@@ -281,7 +281,7 @@ namespace FusionEngine
 			// Wait until there is more to load, or a stop event is received
 			int receivedEvent = CL_Event::wait(m_StopEvent, m_ToLoadEvent, m_ToUnloadEvent);
 			// 0 = stop event, -1 = error (otherwise it is
-			//  a ToLoadEvent, meaning the load loop should restart)
+			//  a ToLoadEvent, meaning the load loop below should resume)
 			if (receivedEvent <= 0)
 				break;
 
@@ -304,7 +304,7 @@ namespace FusionEngine
 					}
 					catch (FileSystemException &ex)
 					{
-						// TODO: call error handler ('m_ErrorHandler' should be in ResourceManager)
+						//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
 						Logger::getSingleton().Add(ex.GetDescription(), "ResourceManager", LOG_NORMAL);
 					}
 				}

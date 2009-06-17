@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -36,8 +36,8 @@
 #include "FusionCommon.h"
 
 // Boost
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+//#include <boost/function.hpp>
+//#include <boost/bind.hpp>
 
 #include "FusionPhysicsShape.h"
 
@@ -47,48 +47,60 @@ namespace FusionEngine
 	//! Collision contact point
 	class Contact
 	{
-	private:
-		Vector2 m_Velocity;
-		Vector2 m_Position;
+	public:
+		Vector2Array m_Points;
 		Vector2 m_Normal;
-		ShapePtr m_Shape1;
-		ShapePtr m_Shape2;
+
+		FixturePtr m_FixtureA;
+		FixturePtr m_FixtureB;
 
 	public:
-		Contact(const b2ContactPoint* contact , const ShapePtr &shape1, const ShapePtr &shape2)
+		Contact()
 		{
-			m_Velocity.x = contact->velocity.x;
-			m_Velocity.y = contact->velocity.y;
-
-			m_Position.x = contact->position.x;
-			m_Position.y = contact->position.y;
-
-			m_Normal.x = contact->normal.x;
-			m_Normal.y = contact->normal.y;
-
-			m_Shape1 = shape1;
-			m_Shape2 = shape2;
 		}
 
-		Contact(const Vector2& v, const Vector2& p, const Vector2& n, const ShapePtr &shape1, const ShapePtr &shape2)
+		Contact(const Vector2Array& p, const Vector2& n, const FixturePtr &shape1, const FixturePtr &shape2)
 		{
-			m_Velocity = v;
-			m_Position = p;
+			m_Points = p;
 			m_Normal = n;
 
-			m_Shape1 = shape1;
-			m_Shape2 = shape2;
+			m_FixtureA = shape1;
+			m_FixtureB = shape2;
+		}
+
+		static Contact CreateContact(b2Contact *contact)
+		{
+			b2Manifold *manifold = contact->GetManifold();
+
+			b2WorldManifold worldManifold;
+			contact->GetWorldManifold(&worldManifold);
+
+			PhysicsBody *bodyA = static_cast<PhysicsBody*>( contact->GetFixtureA()->GetBody()->GetUserData() );
+			PhysicsBody *bodyB = static_cast<PhysicsBody*>( contact->GetFixtureB()->GetBody()->GetUserData() );
+
+			Fixture *fixtureA = static_cast<Fixture*>( contact->GetFixtureA()->GetUserData() );
+			Fixture *fixtureB = static_cast<Fixture*>( contact->GetFixtureB()->GetUserData() );
+
+			Contact fsnContact;
+
+			fsnContact.SetFixtureA( FixturePtr( fixtureA ) );
+			fsnContact.SetFixtureB( FixturePtr( fixtureB ) );
+
+			fsnContact.SetNormal( b2v2(worldManifold.m_normal) );
+
+			fsnContact.m_Points.reserve(manifold->m_pointCount);
+			for (int32 i = 0; i < manifold->m_pointCount; ++i)
+			{
+				fsnContact.m_Points.push_back( b2v2(worldManifold.m_points[i]) );
+			}
+
+			return fsnContact;
 		}
 
 	public:
-		void SetVelocity(const Vector2& v)
+		void SetPoints(const Vector2Array& p)
 		{
-			m_Velocity = v;
-		}
-
-		void SetPosition(const Vector2& p)
-		{
-			m_Position = p;
+			m_Points = p;
 		}
 
 		void SetNormal(const Vector2& n)
@@ -96,24 +108,19 @@ namespace FusionEngine
 			m_Normal = n;
 		}
 
-		void SetShape1(const ShapePtr& s1)
+		void SetFixtureA(const FixturePtr& fixture)
 		{
-			m_Shape1 = s1;
+			m_FixtureA = fixture;
 		}
 
-		void SetShape2(const ShapePtr& s2)
+		void SetFixtureB(const FixturePtr& fixture)
 		{
-			m_Shape2 = s2;
+			m_FixtureB = fixture;
 		}
 
-		const Vector2& GetVelocity() const
+		const Vector2Array& GetPoints() const
 		{
-			return m_Velocity;
-		}
-
-		const Vector2& GetPosition() const
-		{
-			return m_Position;
+			return m_Points;
 		}
 
 		const Vector2& GetNormal() const
@@ -121,14 +128,35 @@ namespace FusionEngine
 			return m_Normal;
 		}
 
-		ShapePtr GetShape1() const
+		FixturePtr GetFixtureA() const
 		{
-			return m_Shape1;
+			return m_FixtureA;
 		}
 
-		ShapePtr GetShape2() const
+		FixturePtr GetFixtureB() const
 		{
-			return m_Shape2;
+			return m_FixtureB;
+		}
+
+
+		void SetShape1(const FixturePtr& s1)
+		{
+			m_FixtureA = s1;
+		}
+
+		void SetShape2(const FixturePtr& s2)
+		{
+			m_FixtureB = s2;
+		}
+
+		FixturePtr GetShape1() const
+		{
+			return m_FixtureA;
+		}
+
+		FixturePtr GetShape2() const
+		{
+			return m_FixtureB;
 		}
 	};
 
@@ -137,7 +165,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Return true if collision checks should be preformed on the passed body.
-		virtual bool CanCollideWith(const PhysicsBody *other) =0;
+		//virtual bool CanCollideWith(PhysicsBodyPtr other) =0;
 		//! Called on collision with the given body.
 		virtual void ContactBegin(const Contact &contact) =0;
 		//! Called while a contact persists

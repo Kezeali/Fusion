@@ -53,41 +53,42 @@
 
 namespace FusionEngine
 {
-	const float g_InputAnalogFuzz = 0.005f;
+	static const float g_InputAnalogFuzz = 0.005f;
 
 	//! \defgroup Config file device identifiers
 	//!@{
-	const char* s_DevKeyboardStr = "keyboard";
-	const char* s_DevGamepadStr = "gamepad";
-	const char* s_DevGamepad_AxisStr = "gamepad-axis";
-	const char* s_DevMouseStr = "mouse";
-	const char* s_DevMouse_PointerStr = "mouse-pointer";
-	const char* s_DevMouse_AxisStr = "mouse-axis";
-	const char* s_DevXInputStr = "xinput";
-	const char* s_DevXInput_AxisStr = "xinput-axis";
+	static const char* s_DevKeyboardStr = "keyboard";
+	static const char* s_DevGamepadStr = "gamepad";
+	static const char* s_DevGamepad_AxisStr = "gamepad-axis";
+	static const char* s_DevMouseStr = "mouse";
+	static const char* s_DevMouse_PointerStr = "mouse-pointer";
+	static const char* s_DevMouse_AxisStr = "mouse-axis";
+	static const char* s_DevXInputStr = "xinput";
+	static const char* s_DevXInput_AxisStr = "xinput-axis";
 	//!@}
 
 	//! \defgroup Internal device identifiers (used by input manager)
 	//!@{ 
-	const unsigned int s_DevKeyboard = 0;
-	const unsigned int s_DevGamepad = 1;
-	const unsigned int s_DevGamepad_Axis = 2;
-	const unsigned int s_DevMouse = 3;
-	const unsigned int s_DevMouse_Pointer = 4;
-	const unsigned int s_DevMouse_Axis = 5;
-	const unsigned int s_DevXInput = 10;
-	const unsigned int s_DevXInput_Axis = 11;
+	static const unsigned int s_DevKeyboard = 0;
+	static const unsigned int s_DevGamepad = 1;
+	static const unsigned int s_DevGamepad_Axis = 2;
+	static const unsigned int s_DevMouse = 3;
+	static const unsigned int s_DevMouse_Pointer = 4;
+	static const unsigned int s_DevMouse_Axis = 5;
+	static const unsigned int s_DevXInput = 10;
+	static const unsigned int s_DevXInput_Axis = 11;
+	static const unsigned int s_DevNothing = 0xFFFF;
 	//!@}
 
 	//! Returns the devices name for the device with the given ID
 	unsigned int DeviceNameToID(const std::string& device);
 	//! Returns the ID for the device with the given name
-	const std::string& DeviceIDToName(unsigned int device);
+	const char*const DeviceIDToName(unsigned int device);
 
 	//! Max devices of one type
-	const unsigned int s_DeviceCountMax = 256;
+	static const unsigned int s_DeviceCountMax = 256;
 	//! For inputs bound to any device
-	const unsigned int s_DeviceIndexAny = s_DeviceCountMax - 1;
+	static const unsigned int s_DeviceIndexAny = s_DeviceCountMax - 1;
 
 	/*!
 	 * \brief
@@ -152,7 +153,7 @@ namespace FusionEngine
 		{
 		}
 
-		InputBinding(int player, const std::string &input, KeyInfo &key)
+		InputBinding(int player, const std::string &input, const KeyInfo &key)
 			: m_Player(player),
 			m_Input(input),
 			m_Key(key),
@@ -162,7 +163,7 @@ namespace FusionEngine
 		{
 		}
 
-		InputBinding(int player, const std::string &input, KeyInfo &key, double threshold, double range, bool cubic)
+		InputBinding(int player, const std::string &input, const KeyInfo &key, double threshold, double range, bool cubic)
 			: m_Player(player),
 			m_Input(input),
 			m_Key(key),
@@ -173,7 +174,7 @@ namespace FusionEngine
 		}
 
 	public:
-		inline void FilterValue(double &value)
+		inline void FilterValue(double &value) const
 		{
 			if (!fe_fzero(m_Threshold))
 			{
@@ -420,10 +421,10 @@ namespace FusionEngine
 		////! Returns the currently pressed global inputs.
 		//GlobalInput GetGlobalInputs() const;
 
-		CL_Signal_v1<InputEvent> SignalInputChanged;
+		CL_Signal_v1<const InputEvent&> SignalInputChanged;
 		//CL_Signal_v1<InputEvent> SignalInputDeactivated;
 		// Input continues to be pressed as a new step begins
-		CL_Signal_v1<InputEvent> SignalInputSustained;
+		CL_Signal_v1<const InputEvent&> SignalInputSustained;
 
 		//CL_Signal_v1<InputEvent> SignalKeyboardPressed;
 		//CL_Signal_v1<InputEvent> SignalKeyboardReleased;
@@ -445,7 +446,7 @@ namespace FusionEngine
 		 * Useful for setting up inputs - the other input signals only fire
 		 * when bound controls (keys, buttons, axis') are activated (pressed, moved).
 		 */
-		CL_Signal_v1<RawInput> SignalRawInput;
+		CL_Signal_v1<const RawInput&> SignalRawInput;
 
 	private:
 //#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
@@ -515,8 +516,26 @@ namespace FusionEngine
 		//! Loads human readable and UI control (key / button, etc) names
 		void loadKeyInfo(const ticpp::Document& defDocument);
 		//! Loads controls
-		void loadControls(const ticpp::Document &ctrlsDoc);
-		void loadPlayerBinds(const ticpp::Element &ctrls_root);
+		void loadControls(const ticpp::Document *const ctrlsDoc);
+		void loadPlayerBinds(const ticpp::Element *const ctrls_root);
+
+		//! Returns an iterator to a KeyInfo object for the given keyName
+		/*!
+		 * If there is no current KeyInfo listed for the given keyName
+		 * and the given keyName string doesn't contain Last-Chance key-info
+		 * data, an iterator to the end of the m_KeyInfo container is
+		 * returned.
+		 */
+		KeyInfoMap::iterator findOrAddKeyInfo(const std::string &keyName);
+		//! Adds key-info data for the given last-chance key string
+		/*!
+		 * \param[in] keyName
+		 * A string containing last-chance key-info
+		 *
+		 * \param[out] _where
+		 * Returns the iterator to the new key-info
+		 */
+		bool addLastChanceKeyInfo(const std::string &keyName, KeyInfoMap::iterator *_where = NULL);
 
 		//! Saves controls
 		void saveControls(ticpp::Document &ctrlsDoc);

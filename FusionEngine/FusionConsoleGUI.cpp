@@ -45,6 +45,8 @@ namespace FusionEngine
 	ConsoleGUI::~ConsoleGUI()
 	{
 		//FusionInput::getSingleton().Activate();
+		m_ConsoleOnNewDataSlot.disconnect();
+		m_ConsoleOnClearSlot.disconnect();
 	}
 
 	/////////////////
@@ -99,10 +101,10 @@ namespace FusionEngine
 
 			// Connect to the newline signal from the console
 			//m_Slots.connect(Console::getSingleton().OnNewLine, this, &ConsoleGUI::onConsoleNewLine);
-			m_ConsoleOnNewLineSlot = 
-				Console::getSingleton().OnNewLine.connect(this, &ConsoleGUI::onConsoleNewLine);
+			m_Connection_NewData = 
+				Console::getSingleton().OnNewData.connect(boost::bind(&ConsoleGUI::onConsoleNewData, this, _1));
 
-			m_ConsoleOnClearSlot =
+			m_Connection_Clear =
 				Console::getSingleton().OnClear.connect(this, &ConsoleGUI::onConsoleClear);
 
 			// Fill the console with the past history

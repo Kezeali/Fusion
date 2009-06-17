@@ -71,6 +71,11 @@ namespace FusionEngine
 		lhs->ApplyForceRelative(Vector2(0.f, force));
 	}
 
+	Fixture * PhysicsBody_CreateFixture(FixtureDefinition definition, PhysicsBody *obj)
+	{
+		return obj->CreateFixture(definition).get();
+	}
+
 
 	static void registerPhysBodyMethods(asIScriptEngine* engine)
 	{
@@ -79,32 +84,78 @@ namespace FusionEngine
 		//r = engine->RegisterObjectMethod("Body", "void set_world(World)", asMETHOD(PhysicsBody, SetWorld), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		//r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asMETHOD(PhysicsBody, SetMass), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_mass(float)", asFUNCTION(PhysBody_SetMass), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void attach_shape(CircleShape@)", asMETHOD(PhysicsBody, AttachShape), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "Fixture@ create_fixture(FixtureDescription)", asFUNCTION(PhysicsBody_CreateFixture), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void set_position(float, float)", asFUNCTION(PhysBody_SetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTIONPR(PhysBody_GetPosition,(void),Vector2), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Body", "void get_position(Vector &out)", asFUNCTION(PhysBody_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "const Vector& get_position()", asMETHOD(PhysicsBody,GetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Body", "void apply_force(Vector &in)", asMETHOD(PhysicsBody, ApplyForce), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "void apply_thrust(float)", asFUNCTION(PhysBody_ApplyForceRelative), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "void apply_torque(float)", asMETHOD(PhysicsBody, ApplyTorque), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody,GetVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Body", "const Vector& get_velocity()", asMETHOD(PhysicsBody, GetVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "void set_angular_velocity(float)", asMETHOD(PhysicsBody, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "float get_angular_velocity()", asMETHOD(PhysicsBody, GetAngularVelocity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Body", "float get_angle()", asMETHOD(PhysicsBody, GetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void ConstructCircleShape(float radius, CircleShape *obj)
+	//void ConstructCircleShape(float radius, CircleShape *obj)
+	//{
+	//	new(&obj) CircleShape(radius, Vector2::zero());
+	//}
+
+	//void ConstructCircleShapeOffset(float radius, float offset_x, float offset_y, CircleShape *obj)
+	//{
+	//	new(&obj) CircleShape(radius, Vector2(offset_x, offset_y));
+	//}
+
+	//CircleShape* CircleShapeFactory(float radius, float offset_x, float offset_y)
+	//{
+	//	return new CircleShape(radius, Vector2(offset_x, offset_y));
+	//}
+
+	void FixtureDefinition_Constructor(FixtureDefinition *ptr)
 	{
-		new(&obj) CircleShape(radius, Vector2::zero());
+		new(&ptr) FixtureDefinition();
 	}
 
-	void ConstructCircleShapeOffset(float radius, float offset_x, float offset_y, CircleShape *obj)
+	void FixtureDefinition_Destructor(FixtureDefinition *obj)
 	{
-		new(&obj) CircleShape(radius, Vector2(offset_x, offset_y));
+		(*obj)->~b2FixtureDef();
 	}
 
-	CircleShape* CircleShapeFactory(float radius, float offset_x, float offset_y)
+	FixtureDefinition* FixtureDefinition_Assign(const FixtureDefinition& copy, FixtureDefinition *obj)
 	{
-		return new CircleShape(radius, Vector2(offset_x, offset_y));
+		*obj = copy;
+		return obj;
+	}
+
+	void FixtureDefinition_SetFriction(float friction, FixtureDefinition *obj)
+	{
+		(*obj)->friction = friction;
+	}
+
+	void FixtureDefinition_SetRestitution(float restitution, FixtureDefinition *obj)
+	{
+		(*obj)->restitution = restitution;
+	}
+
+	void FixtureDefinition_SetDensity(float density, FixtureDefinition *obj)
+	{
+		(*obj)->density = density;
+	}
+
+	float FixtureDefinition_GetFriction(FixtureDefinition *obj)
+	{
+		return (*obj)->friction;
+	}
+
+	float FixtureDefinition_GetRestitution(FixtureDefinition *obj)
+	{
+		return (*obj)->restitution;
+	}
+
+	float FixtureDefinition_GetDensity(FixtureDefinition *obj)
+	{
+		return (*obj)->density;
 	}
 
 	static void registerPhysShapeMethods(asIScriptEngine* engine)
@@ -112,7 +163,22 @@ namespace FusionEngine
 		int r;
 		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float,float,float)", asFUNCTIONPR(ConstructCircleShape, (PhysicsBody*, float, float, float, float), void), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 		//r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_CONSTRUCT, "void f(Body@,float,float)", asFUNCTION(ConstructCircleShape), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("CircleShape", asBEHAVE_FACTORY, "CircleShape@ factory(float,float,float)", asFUNCTION(CircleShapeFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		
+		r = engine->RegisterObjectType("FixtureDefinition", 0, asOBJ_VALUE | asOBJ_APP_CLASS_CDA); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectBehaviour("FixtureDefinition", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(FixtureDefinition_Constructor), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("FixtureDefinition", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(FixtureDefinition_Destructor), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("FixtureDefinition", asBEHAVE_ASSIGNMENT, "FixtureDefinition& f(const FixtureDefinition &)", asFUNCTION(FixtureDefinition_Assign), asCALL_CDECL_OBJLAST);
+
+		r = engine->RegisterObjectMethod("FixtureDefinition", "void SetFriction(float)", asFUNCTION(FixtureDefinition_SetFriction), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("FixtureDefinition", "void SetRestitution(float)", asFUNCTION(FixtureDefinition_SetRestitution), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("FixtureDefinition", "void SetDensity(float)", asFUNCTION(FixtureDefinition_SetDensity), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("FixtureDefinition", "float GetFriction()", asFUNCTION(FixtureDefinition_GetFriction), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("FixtureDefinition", "float GetRestitution()", asFUNCTION(FixtureDefinition_GetRestitution), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("FixtureDefinition", "float GetDensity()", asFUNCTION(FixtureDefinition_GetDensity), asCALL_CDECL_OBJLAST);
+		//r = engine->RegisterObjectProperty("FixtureDefinition", "friction", offsetof(b2FixtureDef, friction)); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectProperty("FixtureDefinition", "restitution", offsetof(b2FixtureDef, restitution)); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectProperty("FixtureDefinition", "density", offsetof(b2FixtureDef, density)); FSN_ASSERT( r >= 0 );
 	}
 
 	void PhysicsWorld_ListBodies(PhysicsWorld* lhs)
@@ -134,7 +200,7 @@ namespace FusionEngine
 	{
 		int r;
 		//r = engine->RegisterObjectMethod("World", "Body create_body()", asFUNCTION(PhysWorld_CreateBody), asCALL_CDECL_OBJLAST);  FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("World", "void attach_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("World", "void add_body(Body@)", asMETHOD(PhysicsWorld,AddBody), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("World", "void list_bodies()", asFUNCTION(PhysicsWorld_ListBodies), asCALL_CDECL_OBJLAST);  FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("World", "void enable_wraparound()", asMETHOD(PhysicsWorld,ActivateWrapAround), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("World", "void disable_wraparound()", asMETHOD(PhysicsWorld,DeactivateWrapAround), asCALL_THISCALL);  FSN_ASSERT( r >= 0 );
@@ -152,9 +218,11 @@ namespace FusionEngine
 		//PhysicsWorld::registerType(engine);
 		//RegisterTypeNoHandle<PhysicsWorld>("World", engine);
 
-		RegisterType<PhysicsBody>("Body", engine);
-		RegisterType<CircleShape>("CircleShape", engine);
-		RegisterTypePOD<PhysicsWorld>("World", engine);
+		RefCounted::RegisterType<PhysicsBody>(engine, "Body");
+
+		//RegisterType<PhysicsBody>("Body", engine);
+		//RegisterValueType<CircleShape>("CircleShape", engine);
+		RegisterSingletonType<PhysicsWorld>("World", engine);
 
 		registerPhysBodyMethods(engine);
 		registerPhysShapeMethods(engine);
