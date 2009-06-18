@@ -86,6 +86,8 @@ namespace FusionEngine
 		m_CurrentStep(0)
 	{
 		m_DefinitionLoader = new InputDefinitionLoader();
+
+		m_Log = Logger::getSingletonPtr()->OpenLog("InputManager");
 	}
 
 	InputManager::InputManager(CL_DisplayWindow window)
@@ -94,6 +96,8 @@ namespace FusionEngine
 		m_DefinitionLoader = new InputDefinitionLoader();
 		m_InputContext = window.get_ic();
 		m_DisplayWindow = window;
+
+		m_Log = Logger::getSingletonPtr()->OpenLog("InputManager");
 	}
 
 	InputManager::~InputManager()
@@ -187,15 +191,33 @@ namespace FusionEngine
 		//int numPlayers = 0;
 		//if (!cliOpts->GetOption("num_local_players", &numPlayers))
 		//	FSN_EXCEPT(ExCode::IO, "InputManager::Initialise", "Options file is missing 'num_local_players'");
-		
-		ticpp::Document inputDoc(OpenXml_PhysFS(L"input/coreinputs.xml"));
-		m_DefinitionLoader->Load(inputDoc);
-		const InputDefinitionLoader::InputDefinitionMap &inputs = m_DefinitionLoader->GetInputDefinitions();
-
-		ticpp::Document keyDoc(OpenXml_PhysFS(L"input/keys.xml"));
-		loadKeyInfo(keyDoc);
-
-		LoadInputMaps(L"controls.xml");
+		try
+		{
+			ticpp::Document inputDoc(OpenXml_PhysFS(L"input/coreinputs.xml"));
+			m_DefinitionLoader->Load(inputDoc);
+			const InputDefinitionLoader::InputDefinitionMap &inputs = m_DefinitionLoader->GetInputDefinitions();
+		}
+		catch (FileSystemException &ex)
+		{
+			m_Log->AddEntry(ex.ToString(), LOG_NORMAL);
+		}
+		try
+		{
+			ticpp::Document keyDoc(OpenXml_PhysFS(L"input/keyinfo.xml"));
+			loadKeyInfo(keyDoc);
+		}
+		catch (FileSystemException &ex)
+		{
+			m_Log->AddEntry(ex.ToString(), LOG_NORMAL);
+		}
+		try
+		{
+			LoadInputMaps(L"controls.xml");
+		}
+		catch (FileSystemException &ex)
+		{
+			m_Log->AddEntry(ex.ToString(), LOG_NORMAL);
+		}
 	}
 
 	void InputManager::loadKeyInfo(const ticpp::Document &doc)
@@ -302,7 +324,7 @@ namespace FusionEngine
 		std::string player = bindsElem->GetAttribute("player");
 		if (!fe_issimplenumeric(player))
 			return;
-		unsigned int playerNum = CL_StringHelp::local8_to_uint(player);
+		unsigned int playerNum = CL_StringHelp::local8_to_uint(player.c_str());
 
 		ticpp::Iterator< ticpp::Element > child("bind");
 		for ( child = child.begin( bindsElem ); child != child.end(); child++ )
@@ -331,11 +353,12 @@ namespace FusionEngine
 			KeyInfoMap::const_iterator _where = findOrAddKeyInfo(keyName);
 			if (_where == m_KeyInfo.end())
 			{
-					// Invalid shortname: log error and skip
-					Logger::getSingleton().Add(
-						"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
-						g_LogException, LOG_TRIVIAL);
-					continue;
+				// Invalid shortname: log error and skip
+				/*Logger::getSingleton().Add(
+				"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
+				g_LogException, LOG_TRIVIAL);*/
+				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.", LOG_TRIVIAL);
+				continue;
 			}
 			const KeyInfo &key = _where->second;
 			
@@ -343,9 +366,10 @@ namespace FusionEngine
 			if (deviceId == s_DevNothing)
 			{
 				// Invalid shortname: log error and skip
-				Logger::getSingleton().Add(
+				/*Logger::getSingleton().Add(
 					"Can't bind " + keyName + " to " + input + ": the device '" + key.m_Device + "' doesn't exist.",
-					g_LogException, LOG_TRIVIAL);
+					g_LogException, LOG_TRIVIAL);*/
+				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": the device '" + key.m_Device + "' doesn't exist.", LOG_TRIVIAL);
 				continue;
 			}
 
@@ -359,7 +383,7 @@ namespace FusionEngine
 					if (contrlName == "any")
 						ctrlNum = XUSER_INDEX_ANY;
 					else
-						ctrlNum = CL_StringHelp::local8_to_uint(contrlName);
+						ctrlNum = CL_StringHelp::local8_to_uint(contrlName.c_str());
 				}
 			}
 			else
@@ -629,7 +653,7 @@ namespace FusionEngine
 
 	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -648,7 +672,7 @@ namespace FusionEngine
 
 	void InputManager::onKeyUp(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -667,7 +691,7 @@ namespace FusionEngine
 
 	void InputManager::onMouseDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -686,7 +710,7 @@ namespace FusionEngine
 
 	void InputManager::onMouseUp(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -707,7 +731,7 @@ namespace FusionEngine
 	{
 		// Check for pointer-x bindings
 		{
-			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 0));
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, s_DeviceIndexAny, 0));
 			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
@@ -726,7 +750,7 @@ namespace FusionEngine
 
 		// Check for pointer-y bindings
 		{
-			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 1));
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, s_DeviceIndexAny, 1));
 			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
@@ -745,7 +769,7 @@ namespace FusionEngine
 
 		// Check for delta-x bindings
 		{
-			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 2));
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, s_DeviceIndexAny, 2));
 			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
@@ -771,7 +795,7 @@ namespace FusionEngine
 
 		// Check for delta-y bindings
 		{
-			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, 0, 3));
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevMouse_Pointer, s_DeviceIndexAny, 3));
 			if (_where != m_KeyBindings.end())
 			{
 				const InputBinding& binding = _where->second;
@@ -802,7 +826,7 @@ namespace FusionEngine
 
 	void InputManager::onGamepadPress(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -821,7 +845,7 @@ namespace FusionEngine
 
 	void InputManager::onGamepadRelease(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
@@ -840,7 +864,7 @@ namespace FusionEngine
 
 	void InputManager::onGamepadAxisMove(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad_Axis, 0, event.id));
+		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevGamepad_Axis, s_DeviceIndexAny, event.id));
 		if (_where != m_KeyBindings.end())
 		{
 			const InputBinding& binding = _where->second;

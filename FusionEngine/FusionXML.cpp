@@ -41,8 +41,8 @@ namespace FusionEngine
 		{
 			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
-			char filedata[2084];
-			in.read(&filedata, in.get_size());
+			char *filedata = new char[in.get_size()];
+			in.read(filedata, in.get_size());
 
 			doc->Parse((const char*)filedata, 0, TIXML_ENCODING_UTF8);
 		}

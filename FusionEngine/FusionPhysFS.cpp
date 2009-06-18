@@ -85,12 +85,22 @@ bool SetupPhysFS::add_subdirectory(const std::string &path,
 	if (dir == NULL)
 		return false;
 
-	std::string full_path = std::string( dir ) + path;
+	bool added = false;
 
+	// Try to add the path relative to app
+	std::string full_path = std::string( PHYSFS_getBaseDir() ) + path;
 	// Add the directory to the end of the search path
-	if (PHYSFS_addToSearchPath(full_path.c_str(), 1) == 0)
-		return false;
+	if (PHYSFS_addToSearchPath(full_path.c_str(), 1) > 0)
+		added = true;
 
+	// Try to add the path from anywhere we can
+	full_path = std::string( dir ) + PHYSFS_getDirSeparator() + path;
+	// Add the directory to the end of the search path
+	if (PHYSFS_addToSearchPath(full_path.c_str(), 1) > 0)
+		added = true;
+
+	if (!added)
+		return false;
 
 	// Ripped from PHYSFS_setSaneConfig (and converted somewhat to c++)
 	if (!archiveExt.empty())

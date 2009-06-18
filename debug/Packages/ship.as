@@ -1,8 +1,8 @@
 class ship
 {
-	Image imgBody;
-	Sound[] engineSounds;
-	SoundSession currentSound;
+	//Image imgBody;
+	//Sound[] engineSounds;
+	//SoundSession currentSound;
 
 	int soundTimer;
 	int nextSound;
@@ -17,7 +17,7 @@ class ship
 
 	void Preload()
 	{
-		XmlDocument entityDoc = OpenXml("myship.xml");
+		/*XmlDocument entityDoc = OpenXml("myship.xml");
 
 		console.println("Loading: " + entityDoc.find("/entity/name/text()"));
 
@@ -45,40 +45,41 @@ class ship
 		{
 			console.println("Couldnt load radius :(");
 			radius = 32.0;
-		}
+		}*/
 
 		// Display the loaded properties
 		console.println("Mass: " + mass);
 		console.println("Engine Force: " + engineForce);
 		console.println("Rotation speed: " + rotVelocity);
-		console.println("Radius: " + radius);
+		//console.println("Radius: " + radius);
 
-		if (!body_file.empty())
-			imgBody = file.GetImage(body_file);
-		else
-			console.println("Preload failed: image tag incomplete");
+		//if (!body_file.empty())
+		//	imgBody = file.GetImage(body_file);
+		//else
+		//	console.println("Preload failed: image tag incomplete");
 
-		if (!sound1_file.empty() && !sound2_file.empty())
-		{
-			engineSounds.resize(2);
-			engineSounds[0] = file.GetSound(sound1_file);
-			engineSounds[1] = file.GetSound(sound2_file);
-		}
-		else
-			console.println("Preload failed: one or more sound tags incomplete");
+		//if (!sound1_file.empty() && !sound2_file.empty())
+		//{
+		//	engineSounds.resize(2);
+		//	engineSounds[0] = file.GetSound(sound1_file);
+		//	engineSounds[1] = file.GetSound(sound2_file);
+		//}
+		//else
+		//	console.println("Preload failed: one or more sound tags incomplete");
 
 		soundTimer = 0;
 		nextSound = 1;
 
 		// Physical properties
 		@physBody = @Body();
-		world.attach_body(physBody);
+		world.add_body(physBody);
 
+		physBody.set_mass(1);
 		physBody.set_position(50, 120);
-		physBody.set_mass(mass);
+		physBody.create_circle_fixture(Vector(0,0), 16);
 
-		CircleShape @shape = @CircleShape(physBody, 0.0f, radius);
-		physBody.attach_shape(shape);
+		//CircleShape @shape = @CircleShape(physBody, 0.0f, radius);
+		//physBody.attach_shape(shape);
 
 		console.println("Press [Primary Fire] to print info");
 	}
@@ -89,38 +90,40 @@ class ship
 		console.println("p: " + p.x + ", " + p.y);
 		console.println("v: " + v.x + ", " + v.y);
 		console.println("r: " + physBody.get_angle());
-		console.println("w: " + physBody.get_rotational_velocity());
+		//console.println("w: " + physBody.get_rotational_velocity());
 	}
 	void Draw()
 	{
-		Vector p; physBody.get_position(p);
-		imgBody.draw(p.x, p.y, physBody.get_angle());
+		//Vector p; physBody.get_position(p);
+		//imgBody.draw(p.x, p.y, physBody.get_angle());
 	}
 	void Simulate(uint dt)
 	{
-		if (input.is_active(player, "thrust"))
-		{
-			physBody.apply_thrust(engineForce);
+		physBody.apply_force(Vector(10,0));
+		physBody.apply_torque(0.6);
+		//if (input.is_active(player, "thrust"))
+		//{
+			//physBody.apply_thrust(engineForce);
 
-			// Cycle through sounds at an interval
-			soundTimer -= dt;
-			if (soundTimer <= 0)
-			{
-				soundTimer = 2000;
-				currentSound.stop();
-				currentSound = engineSounds[nextSound].prepare(true);
-				currentSound.play();
-				nextSound = (nextSound + 1) % engineSounds.length();
-			}
-			// If thrust has been re-activated before soundTimer = 0, this condition will be true
-			else if (!currentSound.is_playing())
-				currentSound.play();
-		}
-		else if (commandThrustChanged)
-		{
-			currentSound.stop();
-		}
+			//// Cycle through sounds at an interval
+			//soundTimer -= dt;
+			//if (soundTimer <= 0)
+			//{
+			//	soundTimer = 2000;
+			//	currentSound.stop();
+			//	currentSound = engineSounds[nextSound].prepare(true);
+			//	currentSound.play();
+			//	nextSound = (nextSound + 1) % engineSounds.length();
+			//}
+			//// If thrust has been re-activated before soundTimer = 0, this condition will be true
+			//else if (!currentSound.is_playing())
+			//	currentSound.play();
+		//}
+		//else if (commandThrustChanged)
+		//{
+		//	//currentSound.stop();
+		//}
 
-		commandThrustChanged = false;
+		//commandThrustChanged = false;
 	}
 };

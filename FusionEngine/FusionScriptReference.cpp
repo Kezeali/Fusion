@@ -371,7 +371,7 @@ namespace FusionEngine
 
 	ScriptUtils::Calling::Caller ScriptObject::GetCaller(const std::string &decl) const
 	{
-		return m_Engine->GetCaller(*this, decl);
+		return ScriptingEngine::getSingleton().GetCaller(*this, decl);
 	}
 
 	bool ScriptObject::IsValid() const

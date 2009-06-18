@@ -78,10 +78,13 @@ namespace FusionEngine
 		//CL_Display::get_current_window()->hide_cursor();
 		using namespace Rocket;
 
+		m_RocketFileSys = new RocketFileSystem();
+		m_RocketRenderer = new RocketRenderer(m_Display.get_gc());
+		m_RocketSystem = new RocketSystem();
 		
-		Rocket::Core::SetRenderInterface(&m_RocketRenderer);
-		Rocket::Core::SetSystemInterface(&m_RocketSystem);
-		Rocket::Core::SetFileInterface(&m_RocketFileSys);
+		Rocket::Core::SetFileInterface(m_RocketFileSys);
+		Rocket::Core::SetRenderInterface(m_RocketRenderer);
+		Rocket::Core::SetSystemInterface(m_RocketSystem);
 		Rocket::Core::Initialise();
 
 		CL_GraphicContext gc = m_Display.get_gc();
@@ -146,8 +149,16 @@ namespace FusionEngine
 
 	void GUI::CleanUp()
 	{
+		m_RocketFileSys->RemoveReference();
+		m_RocketSystem->RemoveReference();
+		m_RocketRenderer->RemoveReference();
 		m_Context->RemoveReference();
 		Rocket::Core::Shutdown();
+
+		m_RocketFileSys = NULL;
+		m_RocketSystem = NULL;
+		m_RocketRenderer = NULL;
+		m_Context = NULL;
 
 		m_Display.show_cursor();
 	}

@@ -122,37 +122,37 @@ namespace FusionEngine
 
 	};
 
-	static unsigned int NumLocalPlayers()
-	{
-		return ClientOptions::current().m_NumLocalPlayers;
-	}
+	//static unsigned int NumLocalPlayers()
+	//{
+	//	return ClientOptions::current().m_NumLocalPlayers;
+	//}
 
-	static bool IsConsoleLogging()
-	{
-		return false;//ClientOptions::current().m_ConsoleLogging;
-	}
+	//static bool IsConsoleLogging()
+	//{
+	//	return false;//ClientOptions::current().m_ConsoleLogging;
+	//}
 
-	static unsigned int Rate()
-	{
-		return 0;//ClientOptions::current().m_Rate;
-	}
+	//static unsigned int Rate()
+	//{
+	//	return 0;//ClientOptions::current().m_Rate;
+	//}
 
-	static unsigned int ClientPort()
-	{
-		return 0;//ClientOptions::current().m_LocalPort;
-	}
+	//static unsigned int ClientPort()
+	//{
+	//	return 0;//ClientOptions::current().m_LocalPort;
+	//}
 
-	static const std::string& PlayerName(unsigned int p)
-	{
-		FSN_ASSERT(p < NumLocalPlayers());
-		return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
-	}
+	//static const std::string& PlayerName(unsigned int p)
+	//{
+	//	FSN_ASSERT(p < NumLocalPlayers());
+	//	return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
+	//}
 
-	static bool PlayerUseHud(unsigned int p)
-	{
-		FSN_ASSERT(p < NumLocalPlayers());
-		return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
-	}
+	//static bool PlayerUseHud(unsigned int p)
+	//{
+	//	FSN_ASSERT(p < NumLocalPlayers());
+	//	return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
+	//}
 
 }
 

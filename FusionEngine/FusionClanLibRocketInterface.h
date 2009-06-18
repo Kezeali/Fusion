@@ -47,12 +47,13 @@ namespace FusionEngine
 	public:
 		virtual float GetElapsedTime();
 		virtual bool LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message);
+
+		virtual void Release();
 	};
 
 	class RocketRenderer : public Rocket::Core::RenderInterface
 	{
 	public:
-		RocketRenderer() {}
 		RocketRenderer(CL_GraphicContext gc);
 
 		typedef std::tr1::unordered_map<CL_String, CL_Texture> TextureMap;
@@ -74,11 +75,14 @@ namespace FusionEngine
 		virtual void SetScissorRegion(int x, int y, int width, int height);
 
 		//! Called by Rocket when a texture is required by the library.
-		virtual bool LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source, const EMP::Core::String& source_path);
+		virtual bool LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source);
 		//! Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
 		virtual bool GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions);
 		//! Called by Rocket when a loaded texture is no longer required.
 		virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
+
+		virtual void Release();
+
 	protected:
 		CL_GraphicContext m_gc;
 
@@ -110,6 +114,8 @@ namespace FusionEngine
 
 		/// Returns the current position of the file pointer.		
 		virtual size_t Tell(Rocket::Core::FileHandle file);
+
+		virtual void Release();
 
 	private:
 		EMP::Core::String m_Root;

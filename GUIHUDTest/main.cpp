@@ -173,7 +173,7 @@ public:
 
 			////////////////////
 			// Scripting Manager
-			m_ScriptManager = new ScriptingEngine;
+			m_ScriptManager = new ScriptingEngine();
 			asIScriptEngine* asEngine = m_ScriptManager->GetEnginePtr();
 
 			registerScriptTypes(m_ScriptManager);
@@ -182,7 +182,7 @@ public:
 			////////////////////
 			// Resource Manager
 			m_ResMan = new ResourceManager();
-			m_ResMan->Configure();
+			//m_ResMan->Configure();
 			//m_ResMan->AddResourceLoader(new XMLLoader());
 			//m_ResMan->AddResourceLoader(new TextLoader());
 
@@ -207,7 +207,7 @@ public:
 			///////////////////////
 			// Register globals and some more types
 			m_World = new PhysicsWorld();
-			m_ScriptManager->RegisterGlobalObject("World@ world", m_World);
+			m_ScriptManager->RegisterGlobalObject("World world", m_World);
 
 			//m_ResMan->RegisterScriptElements(m_ScriptManager);
 			console->RegisterScriptElements(m_ScriptManager);
@@ -233,6 +233,7 @@ public:
 			m_World->SetDeactivationVelocity(0.05f);
 			m_World->SetBitmaskRes(4);
 			m_World->DeactivateWrapAround();
+			m_World->SetGCForDebugDraw(dispWindow.get_gc());
 
 			/////////////////////////
 			// Load inputs (controls)
@@ -257,9 +258,10 @@ public:
 				//throw CL_Error("Oh snap! Couldn't load ship.as!");
 			std::string shipScript = OpenString_PhysFS(L"ship.as");
 			// Compile the code
-			m_ScriptManager->AddCode(shipScript, 0);
+			m_ScriptManager->AddCode(shipScript, 0, "ship.as");
 			if (!m_ScriptManager->BuildModule(0))
 			{
+				delete logger;
 				conWindow.display_close_message();
 				return 1;
 			}
@@ -283,7 +285,7 @@ public:
 			//msm_Draw = m_ScriptManager->GetClassMethod(mso_Ship, "void Draw()");
 			m_CallSimulate = mso_Ship.GetCaller("void Simulate(uint)");
 			//m_CallSetCommand = mso_Ship.GetCaller("void SetCommand(Command)");
-			m_CallDraw = mso_Ship.GetCaller("void Draw(uint)");
+			m_CallDraw = mso_Ship.GetCaller("void Draw()");
 
 			//msm_DebugPrint = m_ScriptManager->GetClassMethod(mso_Ship, "void DebugOutput()");
 			m_CallDebugPrint = mso_Ship.GetCaller("void DebugOutput()");
@@ -295,25 +297,25 @@ public:
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
 
-			m_quit = true;
+			m_quit = false;
 
 			while (!m_quit)
 			{
-				dispWindow.get_gc().clear(CL_Colorf(0.f, 0.f, 0.f));
+				dispWindow.get_gc().clear();
 
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
 
-				CL_System::sleep(2);
+				if (CL_DisplayMessageQueue::has_messages())
+					CL_DisplayMessageQueue::process();
+				//CL_System::sleep(2);
 
 				stateman->Update(split);
 				// Move the ships
 				Update(split);
 
-
 				// Current time
-				unsigned int time = CL_System::get_time();
-
+				//unsigned int time = CL_System::get_time();
 
 				// Draw the terrain
 				//m_TerrainGraphical->draw(
@@ -321,6 +323,7 @@ public:
 				//	);
 
 				//m_ScriptManager->Execute(mso_Ship, msm_Draw);
+				m_CallDraw();
 
 				
 				stateman->Draw();
@@ -344,6 +347,14 @@ public:
 
 
 		return 0;
+	}
+
+	~GUIHUDTest()
+	{
+		//m_CallDebugPrint.release();
+		//m_CallDraw.release();
+		//m_CallSimulate.release();
+		//mso_Ship.GetScriptObject()->Release();
 	}
 
 private:

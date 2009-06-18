@@ -82,11 +82,11 @@ namespace FusionEngine
 
 				std::string isAnalog = child->GetAttribute("analog");
 				//fe_tolower(isAnalog);
-				cd.m_Analog = CL_StringHelp::local8_to_bool(isAnalog);
+				cd.m_Analog = CL_StringHelp::local8_to_bool(isAnalog.c_str());
 
 				std::string isToggle = child->GetAttribute("toggle");
 				//fe_tolower(isToggle);
-				cd.m_Toggle = CL_StringHelp::local8_to_bool(isToggle);
+				cd.m_Toggle = CL_StringHelp::local8_to_bool(isToggle.c_str());
 
 				m_InputDefinitions[cd.m_Name] = cd;
 			}

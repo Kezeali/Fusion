@@ -31,6 +31,7 @@
 #include "FusionClanLibRocketInterface.h"
 
 #include "PhysFS.h"
+#include "FusionPhysFS.h"
 #include "FusionLogger.h"
 #include "FusionConsole.h"
 
@@ -62,6 +63,11 @@ namespace FusionEngine
 		SendToConsole(std::string(message.CString()), mtype);
 
 		return true;
+	}
+
+	void RocketSystem::Release()
+	{
+		delete this;
 	}
 
 	/////////////////
@@ -115,6 +121,7 @@ namespace FusionEngine
 			buffer_data[i].tex_coord.y = vertices[vertex_index].tex_coord.y;
 		}
 
+		//buffer.upload_data(0, buffer_data, num_indices * sizeof(GeometryVertex));
 		buffer.unlock();
 
 		GeometryData* data = new GeometryData;
@@ -133,16 +140,29 @@ namespace FusionEngine
 		GeometryData* data = (GeometryData*)geometry;
 		CL_VertexArrayBuffer vertex_buffer = data->vertex_buffer;
 
+		//vertex_buffer.lock(cl_access_read_only);
+		//GeometryVertex* buffer_data = static_cast<GeometryVertex*>( vertex_buffer.get_data() );
+		//vertex_buffer.unlock();
+
+		m_gc.push_translate(translation.x, translation.y);
+
 		m_gc.set_map_mode(cl_map_2d_upper_left);
-		m_gc.set_texture(0, data->texture->texture);
+		if (data->texture)
+			m_gc.set_texture(0, data->texture->texture);
 
 		CL_PrimitivesArray prim_array(m_gc);
-		prim_array.set_attributes(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-		prim_array.set_attributes(1, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
-		//prim_array.set_positions(vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
-		//prim_array.set_tex_coords(0, vertex_buffer, data->num_verticies, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
+		prim_array.set_attributes(0, vertex_buffer, 2, cl_type_float, &static_cast<GeometryVertex*>(0)->position, sizeof(GeometryVertex));
+		prim_array.set_attribute(1, CL_Colorf::white);
+		prim_array.set_attributes(2, vertex_buffer, 2, cl_type_float, &static_cast<GeometryVertex*>(0)->tex_coord, sizeof(GeometryVertex));
+
+		m_gc.set_program_object(cl_program_single_texture);
 
 		m_gc.draw_primitives(cl_triangles, data->num_verticies, prim_array);
+
+		m_gc.reset_program_object();
+		m_gc.reset_texture(0);
+
+		m_gc.pop_modelview();
 	}
 
 	void RocketRenderer::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
@@ -167,12 +187,13 @@ namespace FusionEngine
 		m_Scissor_right = x + width;
 		m_Scissor_bottom = y + height;
 
-		m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+		//m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 	}
 
-	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source, const EMP::Core::String& source_path)
+	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source)
 	{
-		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String((source_path + source).CString()) );
+		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), CL_String(), physfsDir );
 		if (image.is_null())
 			return false;
 
@@ -211,6 +232,11 @@ namespace FusionEngine
 	void RocketRenderer::ReleaseTexture(Rocket::Core::TextureHandle texture)
 	{
 		delete ((RocketCL_Texture*)texture);
+	}
+
+	void RocketRenderer::Release()
+	{
+		delete this;
 	}
 
 	//////
@@ -280,6 +306,11 @@ namespace FusionEngine
 	size_t RocketFileSystem::Tell(Rocket::Core::FileHandle file)
 	{
 		return PHYSFS_tell((PHYSFS_File*)file);
+	}
+
+	void RocketFileSystem::Release()
+	{
+		delete this;
 	}
 
 }

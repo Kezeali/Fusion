@@ -48,7 +48,8 @@ namespace FusionEngine
 	Logger::Logger()
 		: m_ConsoleLogging(false),
 		m_UseDating(true),
-		m_Ext(g_LogDefaultExt)
+		m_Ext(g_LogDefaultExt),
+		m_DefaultThreshold(LOG_TRIVIAL)
 	{
 	}
 

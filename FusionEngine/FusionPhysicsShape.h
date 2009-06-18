@@ -72,7 +72,7 @@ namespace FusionEngine
 	//! Stores a b2FixtureDef pointer
 	typedef std::tr1::shared_ptr<b2FixtureDef> FixtureDefinition;
 
-	static FixtureDefinition DefineCircleFixture(unsigned int radius);
+	FixtureDefinition DefineCircleFixture(float radius, const Vector2& local_position = Vector2::zero(), float friction = -1.f, float restitution = 0.0f, float density = 0.0f);
 
 	//! Shape class
 	class Shape

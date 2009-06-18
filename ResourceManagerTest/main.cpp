@@ -147,7 +147,7 @@ public:
 					}
 
 					gc.set_texture(0, logoTexture);
-					CL_Draw::texture(gc, CL_Rectf(CL_Point(70, 100), logoTexture.get_size()));
+					CL_Draw::texture(gc, CL_Rectf( 70, 100, 70+logoTexture.get_width(), 100+logoTexture.get_height() ));
 				}
 				else
 					CL_Console::write_line(L"Texture not loaded");

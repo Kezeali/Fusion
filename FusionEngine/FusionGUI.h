@@ -127,9 +127,9 @@ namespace FusionEngine
 
 		CL_DisplayWindow m_Display;
 
-		RocketSystem m_RocketSystem;
-		RocketRenderer m_RocketRenderer;
-		RocketFileSystem m_RocketFileSys;
+		RocketSystem *m_RocketSystem;
+		RocketRenderer *m_RocketRenderer;
+		RocketFileSystem *m_RocketFileSys;
 
 		Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument* m_Document;

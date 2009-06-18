@@ -289,6 +289,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScriptXML.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionState.cpp"
 				>
 			</File>
@@ -484,6 +488,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionScriptVector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptXML.h"
 				>
 			</File>
 			<File

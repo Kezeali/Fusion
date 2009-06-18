@@ -36,6 +36,7 @@
 
 /// Fusion
 #include "FusionInputDefinitionLoader.h"
+#include "FusionLogger.h"
 
 #ifdef _WIN32
 #define FSN_USE_XINPUT
@@ -488,6 +489,7 @@ namespace FusionEngine
 
 		//unsigned int m_CommandBufferLength;
 
+		LogPtr m_Log;
 
 		CL_DisplayWindow m_DisplayWindow;
 		mutable CL_InputContext m_InputContext;

@@ -88,7 +88,7 @@ namespace FusionEngine
 	{
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
 
-		const int segs = 8;
+		const int segs = 16;
 		const float32 coef = 2.0*s_pi / (float32)segs;
 
 		CL_Vec2f *positions = new CL_Vec2f[segs + 1];
@@ -99,10 +99,14 @@ namespace FusionEngine
 			positions[n].y = radius * sin(rads) + center.y;
 		}
 
+		m_gc.set_program_object(cl_program_color_only);
+
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
 		m_gc.draw_primitives(cl_line_strip, segs, vertex_data);
+
+		m_gc.reset_program_object();
 
 		delete[] positions;
 	}
@@ -111,7 +115,7 @@ namespace FusionEngine
 	{
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
 
-		const int segs = 8;
+		const int segs = 16;
 		const float32 coef = 2.0*s_pi / (float32)segs;
 
 		const float32 angle = atanf(axis.y / axis.x);
@@ -123,6 +127,8 @@ namespace FusionEngine
 			positions[n].x = radius * cos(rads) + center.x;
 			positions[n].y = radius * sin(rads) + center.y;
 		}
+
+		m_gc.set_program_object(cl_program_color_only);
 
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
@@ -137,6 +143,8 @@ namespace FusionEngine
 		}
 		vertex_data.set_attributes(0, positions);
 		m_gc.draw_primitives(cl_line_strip, segs, vertex_data);
+
+		m_gc.reset_program_object();
 
 		delete[] positions;
 	}

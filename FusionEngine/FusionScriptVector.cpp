@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -27,7 +27,7 @@
 
 #include "FusionScriptVector.h"
 
-namespace FusionEngine
+namespace FusionEngine { namespace Scripting
 {
 	////////////////
 	// Construction
@@ -133,15 +133,17 @@ namespace FusionEngine
 	// Arithmatic
 	ScriptVector *operator+(const ScriptVector &a, const ScriptVector &b)
 	{
+		ScriptVector *sum = new ScriptVector();
+		v2Add(a.Data, b.Data, sum->Data);
 		// Return a new object as a script handle
-		return new ScriptVector(a.Data + b.Data);
+		return sum;
 	}
 
 	static void AddVectors_Generic(asIScriptGeneric *gen)
 	{
 		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
 		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		ScriptVector *out = *a + *b;
+		ScriptVector *out = *a + *b; //see operator+ above
 		gen->SetReturnAddress(out);
 	}
 
@@ -168,11 +170,11 @@ namespace FusionEngine
 	 * A wrapper for the default ScriptVector constructor, since
 	 * it is not possible to take the address of the constructor directly
 	 */
-	static void ConstructScriptVector(ScriptVector *thisPointer)
-	{
-		// Construct the string in the memory received
-		new(thisPointer) ScriptVector();
-	}
+	//static void ConstructScriptVector(ScriptVector *thisPointer)
+	//{
+	//	// Construct the string in the memory received
+	//	new(thisPointer) ScriptVector();
+	//}
 
 	// This is the string factory that creates new strings for the script based on string literals
 	static ScriptVector *VectorFactory(float x, float y)
@@ -261,11 +263,12 @@ namespace FusionEngine
 
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const string &in)", asFUNCTION(VectorCopyFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)", asFUNCTION(VectorFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
 
 		// Register the object operator overloads
 		// Note: We don't have to register the destructor, since the object uses reference counting
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asFUNCTION(VectorAddRef_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asFUNCTION(VectorRelease_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asFUNCTION(AssignVector_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
@@ -287,4 +290,4 @@ namespace FusionEngine
 			RegisterScriptVector_Native(engine);
 	}
 
-}
+}}

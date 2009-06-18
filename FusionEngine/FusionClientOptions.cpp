@@ -32,6 +32,8 @@
 
 #include "FusionXML.h"
 
+#include <boost/algorithm/string.hpp>
+
 namespace FusionEngine
 {
 
@@ -265,13 +267,13 @@ namespace FusionEngine
 
 	void ClientOptions::loadPlayerOptions(const ticpp::Element *const opts_root)
 	{
-		if (!CL_StringHelp::compare(opts_root->Value(), "playeroptions", true))
+		if (!fe_nocase_strcmp(opts_root->Value().c_str(), "playeroptions"))
 			return;
 
 		// Get the player number for this group (note that 'default' -> zero)
 		std::string player = opts_root->GetAttribute("player");
 		unsigned int playerNum = 0;
-		if (!CL_StringHelp::compare(player, "default", true))
+		if (!fe_nocase_strcmp(player.c_str(), "default"))
 		{
 			if (!fe_issimplenumeric(player))
 				return;

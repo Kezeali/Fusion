@@ -361,7 +361,7 @@ namespace FusionEngine
 			asMETHODPR(Console, Print, (const std::string&), void),
 			asCALL_THISCALL); FSN_ASSERT(r);
 		r = engine->RegisterObjectMethod("Console",
-			"void print(string &heading, string &in)",
+			"void print(string &in, string &in)",
 			asMETHODPR(Console, Print, (const std::string&, const std::string&), void),
 			asCALL_THISCALL); FSN_ASSERT(r);
 		
@@ -370,7 +370,7 @@ namespace FusionEngine
 			asMETHODPR(Console, PrintLn, (const std::string&), void),
 			asCALL_THISCALL); FSN_ASSERT(r);
 		r = engine->RegisterObjectMethod("Console",
-			"void println(string &heading, string &in)",
+			"void println(string &in, string &in)",
 			asMETHODPR(Console, PrintLn, (const std::string&, const std::string&), void),
 			asCALL_THISCALL); FSN_ASSERT(r);
 		r = engine->RegisterObjectMethod("Console",

@@ -96,7 +96,7 @@ namespace FusionEngine
 		void RegisterGlobalObject(const char *decl, void* ptr);
 
 		//! Adds code to the given module
-		bool AddCode(const std::string& script, const char *module);
+		bool AddCode(const std::string& script, const char *module, const char *section_name = "Script String");
 
 		//! Builds the given module
 		bool BuildModule(const char *module);

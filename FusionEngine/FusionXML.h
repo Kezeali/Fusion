@@ -25,14 +25,15 @@
 		Elliot Hayward
 */
 
-#include "FusionCommon.h"
-
 #ifndef Header_FusionEngine_Xml
 #define Header_FusionEngine_Xml
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
+
+#include "FusionCommon.h"
+
 
 namespace FusionEngine
 {

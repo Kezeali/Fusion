@@ -60,11 +60,13 @@ namespace FusionEngine
 		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
 	}
 
-	bool ScriptingEngine::AddCode(const std::string& script, const char *module)
+	//! \todo LoadCode - load code file (and pass the filename as the script section name)
+
+	bool ScriptingEngine::AddCode(const std::string& script, const char *module, const char *section_name)
 	{
 		int r;
 		asIScriptModule* mod = m_asEngine->GetModule(module, asGM_CREATE_IF_NOT_EXISTS);
-		r = mod->AddScriptSection("section", script.c_str(), script.length());
+		r = mod->AddScriptSection(section_name, script.c_str(), script.length());
 		return r >= 0;
 	}
 
@@ -203,7 +205,7 @@ namespace FusionEngine
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		asIScriptObject* obj = (asIScriptObject*)m_asEngine->CreateScriptObject(id);
-		obj->AddRef();
+		//obj->AddRef();
 		return ScriptObject(obj);
 	}
 
@@ -346,7 +348,7 @@ namespace FusionEngine
 		RegisterScriptMath(m_asEngine);
 		RegisterStdString(m_asEngine);
 		//RegisterScriptStringUtils(m_asEngine);
-		RegisterScriptVector(m_asEngine);
+		Scripting::RegisterScriptVector(m_asEngine);
 
 		//RegisterScriptString(m_asEngine);
 

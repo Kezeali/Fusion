@@ -100,7 +100,9 @@ namespace FusionEngine
 		m_DeactivationPeriod(100),
 		m_DeactivationVelocity(0.001f),
 		m_MaxVelocity(100.0f),
-		m_RunningSimulation(false)
+		m_RunningSimulation(false),
+		m_VelocityIterations(10),
+		m_PositionIterations(8)
 	{
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
@@ -392,6 +394,13 @@ namespace FusionEngine
 	void PhysicsWorld::SetGCForDebugDraw(CL_GraphicContext gc)
 	{
 		m_DebugDraw->SetGraphicContext(gc);
+		m_DebugDraw->SetFlags(
+			b2DebugDraw::e_shapeBit |
+			b2DebugDraw::e_jointBit |
+			b2DebugDraw::e_coreShapeBit |
+			b2DebugDraw::e_aabbBit |
+			b2DebugDraw::e_centerOfMassBit |
+			b2DebugDraw::e_pairBit);
 	}
 
 	//void PhysicsWorld::DebugDraw(bool fast)

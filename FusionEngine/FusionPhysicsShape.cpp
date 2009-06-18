@@ -61,7 +61,7 @@ namespace FusionEngine
 	//////////////
 	// Fixture Utilities
 	////////////////
-	static FixtureDefinition DefineCircleFixture(float radius, const Vector2& local_position = Vector2::zero(), float friction = -1.f, float restitution = 0.0f, float density = 0.0f)
+	FixtureDefinition DefineCircleFixture(float radius, const Vector2& local_position, float friction, float restitution, float density)
 	{
 		b2CircleDef *definition = new b2CircleDef;
 

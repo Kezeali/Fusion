@@ -454,6 +454,7 @@ namespace FusionEngine
 	class FileSystemException;
 	class Logger;
 	class Console;
+	class Log;
 	class LoadingState;
 	class ClientLoadingState;
 	class ServerLoadingState;
