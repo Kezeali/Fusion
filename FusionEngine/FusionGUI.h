@@ -43,6 +43,7 @@
 
 #include <Rocket/Core.h>
 
+
 namespace FusionEngine
 {
 
@@ -100,8 +101,21 @@ namespace FusionEngine
 		//!Removes the given window
 		virtual bool RemoveWindow(const std::string &window);
 
+		Rocket::Core::Context* GetContext() const;
+
+		void InitializeDebugger();
+
+		void ShowDebugger();
+
+		void HideDebugger();
+
+		bool DebuggerIsVisible() const;
+
 		//! Sets the period of time the mouse will be shown after it stops moving
 		void SetMouseShowPeriod(unsigned int period);
+		unsigned int GetMouseShowPeriod() const;
+
+		static void Register(ScriptingEngine *engine);
 
 	protected:
 		//! Name of the config file for the skin
@@ -133,6 +147,8 @@ namespace FusionEngine
 
 		Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument* m_Document;
+
+		bool m_DebuggerInitialized;
 
 	public:
 		void initScripting(ScriptingEngine* eng);

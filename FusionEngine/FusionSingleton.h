@@ -74,7 +74,7 @@ namespace FusionEngine
 		}
 
 		//! Destructor
-		~Singleton( void )
+		virtual ~Singleton( void )
 		{
 			FSN_ASSERT( ms_Singleton != NULL );
 			ms_Singleton = 0;
@@ -123,7 +123,7 @@ namespace FusionEngine
 #		endif
 		}
 		//! Destructor
-		~WeakSingleton( void )
+		virtual ~WeakSingleton( void )
 		{
 			if( ms_Singleton == this)
 				ms_Singleton = 0;

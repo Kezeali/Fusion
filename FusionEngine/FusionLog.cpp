@@ -169,11 +169,17 @@ namespace FusionEngine
 				<< "[" << std::setw(2) << std::setfill('0') << pTime->tm_hour
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
 				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec
-				<< "]  " << message << std::endl;
+				<< "]  " << message;
+
+			// Add a new-line at the end if neccessary, otherwise just flush
+			if (message.empty() || message[message.length()-1] != '\n')
+				tempStream << std::endl;
+
+			const std::string entry = tempStream.str();
 
 			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			{
-				it->second->Write(tempStream.str());
+				it->second->Write(entry);
 				it->second->Flush();
 			}
 		}

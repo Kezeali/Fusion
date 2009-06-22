@@ -138,7 +138,7 @@ namespace FusionEngine
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != "clientoptions")
-				FSN_WEXCEPT(ExCode::FileType, L"InputPluginLoader::LoadInputs", filename + L" is not a client options file");
+				FSN_WEXCEPT(ExCode::FileType, L"ClientOptions::LoadFromFile", filename + L" is not a client options file");
 
 			ticpp::Iterator< ticpp::Element > child;
 			for ( child = child.begin( pElem ); child != child.end(); child++ )

@@ -3,6 +3,9 @@
 
 #include "FusionScriptingEngine.h"
 #include "FusionScriptTypeRegistrationUtils.h"
+#include "scriptstring.h"
+
+#include "FusionRefCounted.h"
 
 #include <boost/tokenizer.hpp>
 
@@ -348,6 +351,240 @@ namespace FusionEngine
 		return m_Buffer.substr(m_Buffer.find("\n"));
 	}
 
+	// TODO: stick this stuff in another file
+#ifndef FSN_DONT_USE_SCRIPTING
+	class ScriptedConsoleListenerWrapper : public RefCounted, RefCounted::no_factory_noncopyable
+	{
+	public:
+		ScriptedConsoleListenerWrapper(asIScriptObject *listener, Console *console);
+		~ScriptedConsoleListenerWrapper();
+
+		void Disconnect();
+
+	private:
+		void OnNewLine(const std::string &line);
+		void OnNewData(const std::string &data);
+		void OnClear();
+
+		//ScriptUtils::Calling::Caller m_CallOnNewLine;
+		//ScriptUtils::Calling::Caller m_CallOnNewData;
+		//ScriptUtils::Calling::Caller m_CallOnClear;
+
+		bsig2::connection m_ConsoleOnNewLineConnection;
+		bsig2::connection m_ConsoleOnNewDataConnection;
+		bsig2::connection m_ConsoleOnClearConnection;
+
+		asIScriptObject *m_Listener;
+	};
+
+	ScriptedConsoleListenerWrapper::ScriptedConsoleListenerWrapper(asIScriptObject *listener, Console *console)
+		//: m_CallOnNewLine(listener, "void OnNewLine(const string &in)"),
+		//m_CallOnNewData(listener, "void OnNewData(const string &in)"),
+		//m_CallOnClear(listener, "void OnClear()"),
+		: m_Listener(listener)
+	{
+		//if (m_CallOnNewLine.ok())
+		//	m_ConsoleOnNewLineConnection = console->OnNewLine.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
+
+		//if (m_CallOnNewData.ok())
+		//	m_ConsoleOnNewDataConnection = console->OnNewData.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
+
+		//if (m_CallOnClear.ok())
+		//	m_ConsoleOnClearConnection = console->OnClear.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
+
+		//m_CallOnNewLine.release();
+		//m_CallOnNewData.release();
+		//m_CallOnClear.release();
+
+		ScriptUtils::Calling::Caller callNewLine(m_Listener, "void OnNewLine(const string &in)");
+		ScriptUtils::Calling::Caller callNewData(m_Listener, "void OnNewData(const string &in)");
+		ScriptUtils::Calling::Caller callClear(m_Listener, "void OnClear()");
+
+		if (callNewLine.ok())
+			m_ConsoleOnNewLineConnection = console->OnNewLine.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
+
+		if (callNewData.ok())
+			m_ConsoleOnNewDataConnection = console->OnNewData.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
+
+		if (callClear.ok())
+			m_ConsoleOnClearConnection = console->OnClear.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
+	}
+
+	ScriptedConsoleListenerWrapper::~ScriptedConsoleListenerWrapper()
+	{
+		m_ConsoleOnNewLineConnection.disconnect();
+		m_ConsoleOnNewDataConnection.disconnect();
+		m_ConsoleOnClearConnection.disconnect();
+	}
+
+	void ScriptedConsoleListenerWrapper::Disconnect()
+	{
+		m_ConsoleOnNewLineConnection.disconnect();
+		m_ConsoleOnNewDataConnection.disconnect();
+		m_ConsoleOnClearConnection.disconnect();
+	}
+
+	void ScriptedConsoleListenerWrapper::OnNewLine(const std::string &line)
+	{
+		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewLine(const string &in)");
+		if (f.ok())
+			f(new CScriptString(line));
+	}
+
+	void ScriptedConsoleListenerWrapper::OnNewData(const std::string &data)
+	{
+		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewData(const string &in)");
+		if (f.ok())
+			f(new CScriptString(data));
+	}
+
+	void ScriptedConsoleListenerWrapper::OnClear()
+	{
+		ScriptUtils::Calling::Caller f(m_Listener, "void OnClear()");
+		if (f.ok())
+			f();
+	}
+
+	ScriptedConsoleListenerWrapper* Scr_ConnectConsoleListener(asIScriptObject *listener, Console *obj)
+	{
+		ScriptedConsoleListenerWrapper *wrapper = new ScriptedConsoleListenerWrapper(listener, obj);
+		// WHY IS THERE TWO EXTRA REFERENCES TO THE SCRIPT OBJECT?! (one makes sense - passing it to this fn. creates that, but there are two extra)
+		listener->Release();
+		listener->Release();
+		return wrapper;
+	}
+
+	class ScriptedSlotWrapper : public RefCounted, RefCounted::no_factory_noncopyable
+	{
+	public:
+		bsig2::connection m_Connection;
+
+		ScriptUtils::Calling::Caller m_CallSlot;
+
+		ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl);
+		virtual ~ScriptedSlotWrapper();
+
+		void HoldConnection(boost::signals2::connection &connection);
+
+		void Callback();
+
+		// TODO: Use Boost Preprocessor to generate these params
+		template <typename T0>
+		void Callback(T0 p0)
+		{
+			m_CallSlot(p0);
+		}
+	};
+
+	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl)
+		: m_CallSlot(module, decl.c_str())
+	{
+	}
+
+	ScriptedSlotWrapper::~ScriptedSlotWrapper()
+	{
+		m_Connection.disconnect();
+	}
+
+	void ScriptedSlotWrapper::HoldConnection(bsig2::connection &connection)
+	{
+		m_Connection = connection;
+	}
+
+	void ScriptedSlotWrapper::Callback()
+	{
+		m_CallSlot();
+	}
+
+	ScriptedSlotWrapper* Scr_ConnectNewLineSlot(const std::string &decl, Console *obj)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context != NULL)
+		{
+			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
+
+			bsig2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			slot->HoldConnection(c);
+
+			return slot;
+		}
+
+		return NULL;
+	}
+
+	ScriptedSlotWrapper* Scr_ConnectNewDataSlot(const std::string &decl, Console *obj)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context != NULL)
+		{
+			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
+
+			bsig2::connection c = obj->OnNewData.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			slot->HoldConnection(c);
+
+			return slot;
+		}
+
+		return NULL;
+	}
+
+	ScriptedSlotWrapper* Scr_ConnectClearSlot(const std::string &decl, Console *obj)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context != NULL)
+		{
+			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
+
+			bsig2::connection c = obj->OnClear.connect( boost::bind(&ScriptedSlotWrapper::Callback, slot) );
+			slot->HoldConnection(c);
+
+			return slot;
+		}
+
+		return NULL;
+	}
+
+	void RegisterScriptedConsoleListener(asIScriptEngine *engine)
+	{
+		int r;
+		engine->RegisterInterface("IConsoleListener");
+		//engine->RegisterInterfaceMethod("IConsoleListener", "void OnNewLine(const string&in)");
+		//engine->RegisterInterfaceMethod("IConsoleListener", "void OnNewData(const string&in)");
+		//engine->RegisterInterfaceMethod("IConsoleListener", "void OnClear()");
+
+		RefCounted::RegisterType<ScriptedConsoleListenerWrapper>(engine, "ConsoleConnection");
+		r = engine->RegisterObjectMethod("ConsoleConnection",
+			"void disconnect()",
+			asMETHOD(ScriptedConsoleListenerWrapper, Disconnect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"ConsoleConnection@ connect_listener(IConsoleListener@)",
+			asFUNCTION(Scr_ConnectConsoleListener), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+
+	void RegisterScriptedConsoleCallbacks(asIScriptEngine *engine)
+	{
+		int r;
+
+		RefCounted::RegisterType<ScriptedSlotWrapper>(engine, "CallbackConnection");
+
+		r = engine->RegisterObjectMethod("Console",
+			"CallbackConnection@ connectTo_NewLine(const string &in)",
+			asFUNCTION(Scr_ConnectNewLineSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"CallbackConnection@ connectTo_NewData(const string &in)",
+			asFUNCTION(Scr_ConnectNewLineSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"CallbackConnection@ connectTo_Clear(const string &in)",
+			asFUNCTION(Scr_ConnectClearSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+#endif
+
 	void Console::RegisterScriptElements(ScriptingEngine *manager)
 	{
 #ifndef FSN_DONT_USE_SCRIPTING
@@ -359,16 +596,16 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Console",
 			"void print(string &in)",
 			asMETHODPR(Console, Print, (const std::string&), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Console",
 			"void print(string &in, string &in)",
 			asMETHODPR(Console, Print, (const std::string&, const std::string&), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		
 		r = engine->RegisterObjectMethod("Console",
 			"void println(string &in)",
 			asMETHODPR(Console, PrintLn, (const std::string&), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Console",
 			"void println(string &in, string &in)",
 			asMETHODPR(Console, PrintLn, (const std::string&, const std::string&), void),
@@ -376,20 +613,23 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Console",
 			"void println(int)",
 			asMETHODPR(Console, PrintLn, (int), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod(
 			"Console",
 			"void println(double)",
 			asMETHODPR(Console, PrintLn, (double), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
 			"void interpret(string &in)",
 			asMETHODPR(Console, Interpret, (const std::string&), void),
-			asCALL_THISCALL); FSN_ASSERT(r);
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console", "void clear()", asMETHOD(Console, Clear), asCALL_THISCALL);
-		FSN_ASSERT(r);
+		FSN_ASSERT(r >= 0);
+
+		RegisterScriptedConsoleListener(engine);
+		RegisterScriptedConsoleCallbacks(engine);
 
 		manager->RegisterGlobalObject("Console console", this);
 #endif

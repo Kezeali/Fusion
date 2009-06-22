@@ -37,27 +37,10 @@
 #include "FusionScriptingEngine.h"
 //#include <angelscirpt.h>
 #include <boost/intrusive_ptr.hpp>
+#include <type_traits>
 
 namespace FusionEngine
 {
-
-	//class RefCounted;
-
-	//static RefCounted* RefCountedFactory();
-
-	//template <class T>
-	//class RefCountedHelper
-	//{
-	//public:
-	//	static T& Assign(const T& rhs, T* lhs)
-	//	{
-	//		*lhs = rhs;
-	//		(RefCounted*)lhs->ResetRefCount();
-	//		return *lhs;
-	//	}
-	//}
-
-	//template <class T>
 
 	//! Base class for AngelScript compatible ReferenceCounted type
 	class RefCounted
@@ -107,28 +90,73 @@ namespace FusionEngine
 			lhs_rc->m_RefCount = 1;
 			return *lhs;
 		}
+		
+		//! Normal ref-counted type
+		struct no_flags {};
+		//! Ref-counted type with no constructor
+		struct no_factory {};
+		//! Ref-counted type that can't be copied by value
+		struct noncopyable {};
+		//! \see no_factory | noncopyable
+		struct no_factory_noncopyable : no_factory, noncopyable {};
+
+		////! Exclusion flags define things that wont be registered for this class
+		//enum ExclusionFlags
+		//{
+		//	ex_normal       = 0x00,
+		//	//! If no factory is defined, the class cannot be constructed in scripts.
+		//	ex_no_factory   = 0x01,
+		//	//! Is no assignment operator is defined, the class cannot be copied by value in scripts.
+		//	ex_noncopyable  = 0x02
+		//};
+
+		////! Flag template type
+		//template <int T>
+		//struct ExclusionType
+		//{
+		//	enum { code = T };
+		//};
 
 		//! Registers this type as a ref-counted type with the given engine
-		template <class T>
+		template <class T/*, typename FlagsT = ExclusionType<ex_normal>*/>
 		static void RegisterType(asIScriptEngine* engine, const std::string& name)
 		{
 			int r;
 			
 			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
+			// Register the factory behaviour if the type allows it
+			RegisterFactory_Default<T>(engine, name, std::tr1::is_base_of<no_factory, T>());
+			// Register the assignment operator if the type is copyable
+			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
+		}
+
+	private:
+		template <class T>
+		static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
+		{
+			int r;
+
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
+		}
+
+		template <class T>
+		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
+		{
+			int r;
+
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
 		}
 
-		//static RefCounted* RefCountedFactory()
-		//{
-		//	RefCounted* obj = new RefCounted();
-		//	return obj;
-		//}
-
+		template <class T>
+		static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
+		{}
+		template <class T>
+		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
+		{}
 	};
 
 	void intrusive_ptr_add_ref(RefCounted *ptr);

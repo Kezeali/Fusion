@@ -66,7 +66,7 @@ namespace FusionEngine
 			: m_Blocking(blocking)
 		{}
 		//! Destructor
-		~FusionState()
+		virtual ~FusionState()
 		{}
 
 	public:

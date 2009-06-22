@@ -34,7 +34,9 @@ namespace FusionEngine
 {
 
 	PhysFSLogFile::PhysFSLogFile()
-		: m_Open(false)
+		: m_Open(false),
+		m_MaxLength(s_LogMaxLength),
+		m_ExtraSpace(s_LogExtraSpace)
 	{
 	}
 
@@ -46,8 +48,23 @@ namespace FusionEngine
 	void PhysFSLogFile::Open(const std::string& filename)
 	{
 		m_File = PHYSFS_openAppend(filename.c_str());
+		if (m_File != NULL)
+		{
+			m_StartingLength = PHYSFS_tell(m_File);
+			if (m_StartingLength > m_MaxLength)
+			{
+				PHYSFS_close(m_File);
+				m_File = NULL;
+				m_File = PHYSFS_openWrite(filename.c_str());
+				m_StartingLength = 0;
+			}
+		}
 		m_Open = m_File == NULL ? false : true;
-		//m_FileStream.open(filename, PhysFS::OM_APPEND);
+
+		m_CurrentLength = m_StartingLength;
+		m_SessionLength = 0;
+
+		m_Filename = filename;
 	}
 
 	void PhysFSLogFile::Close()
@@ -62,17 +79,56 @@ namespace FusionEngine
 	void PhysFSLogFile::Write(const std::string& entry)
 	{
 		if (m_Open)
+		{
 			PHYSFS_write( m_File, static_cast<const void*>(entry.c_str()), 1, entry.length() );
-		//if (m_FileStream.is_open())
-		//	m_FileStream << entry;
+			m_CurrentLength += entry.length();
+			m_SessionLength += entry.length();
+		}
 	}
 
 	void PhysFSLogFile::Flush()
 	{
 		if (m_Open)
+		{
 			PHYSFS_flush(m_File);
-		//if (m_FileStream.is_open())
-		//	m_FileStream.flush();
+			if (m_CurrentLength > m_MaxLength)
+			{
+				PHYSFS_close(m_File);
+				PHYSFS_File *reread = PHYSFS_openRead(m_Filename.c_str());
+
+				PHYSFS_sint64 seekPosition = m_StartingLength;
+				PHYSFS_uint64 keptLength = m_SessionLength;
+				if (m_SessionLength > m_MaxLength)
+				{
+					seekPosition = m_StartingLength + m_ExtraSpace;
+					keptLength = m_SessionLength - m_ExtraSpace;
+				}
+
+				PHYSFS_sint64 count = -1;
+				std::string buffer("");
+				if (PHYSFS_seek(reread, seekPosition) != 0)
+				{
+					buffer.resize(keptLength, '\0');
+					count = PHYSFS_read(reread, static_cast<void*>(&buffer[0]), buffer.size(), 1);
+				}
+
+				PHYSFS_close(reread);
+
+				m_File = PHYSFS_openWrite(m_Filename.c_str());
+
+				//if (keptLength < m_SessionLength)
+				//{
+				//	static const char message[] = "***Log exceeded maximum size and was trimmed to this point***\n\0";
+				//	static size_t messageLength = strlen(message);
+				//	PHYSFS_write(m_File, &message, 1, messageLength);
+				//}
+				if (count != -1)
+					PHYSFS_write(m_File, static_cast<const void*>(buffer.c_str()), 1, buffer.length());
+
+				m_StartingLength = 0;
+				m_CurrentLength = m_SessionLength = buffer.size();
+			}
+		}
 	}
 
 }

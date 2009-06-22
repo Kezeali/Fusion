@@ -31,7 +31,7 @@
 #include "FusionScriptReference.h"
 // Scripting extensions
 #include "FusionScriptVector.h"
-#include "scriptstdstring.h"
+#include "scriptstring.h"
 #include "scriptmath.h"
 
 namespace FusionEngine
@@ -46,6 +46,15 @@ namespace FusionEngine
 		{
 			m_asEngine->SetMessageCallback(asMETHOD(ScriptingEngine,_messageCallback), this, asCALL_THISCALL);
 			registerTypes();
+		}
+	}
+
+	ScriptingEngine::~ScriptingEngine()
+	{
+		if (m_asEngine != NULL)
+		{
+			m_asEngine->GarbageCollect();
+			m_asEngine->Release();
 		}
 	}
 
@@ -317,10 +326,24 @@ namespace FusionEngine
 			cl_format("   in section: %1\n", function->GetScriptSectionName())
 			);
 
-		desc += "Call Trace:\n";
-		printCallstack(engine, ctx, desc);
+		//desc += "Call Trace:\n";
+		//printCallstack(engine, ctx, desc);
 
 		SendToConsole(desc);
+	}
+
+	void ScriptingEngine::_lineCallback(asIScriptContext *ctx)
+	{
+		int funcId = ctx->GetCurrentFunction();
+		int column, line = ctx->GetCurrentLineNumber(&column);
+
+		asIScriptFunction *function = ctx->GetEngine()->GetFunctionDescriptorById(funcId);
+
+		std::ostringstream str;
+
+		str << "(" << line << "," << column << ")";
+
+		SendToConsole("Executing: " + std::string(function->GetDeclaration(true)), str.str());
 	}
 
 	void ScriptingEngine::_messageCallback(asSMessageInfo* msg)
@@ -346,8 +369,8 @@ namespace FusionEngine
 	{
 		// Register types
 		RegisterScriptMath(m_asEngine);
-		RegisterStdString(m_asEngine);
-		//RegisterScriptStringUtils(m_asEngine);
+		RegisterScriptString(m_asEngine);
+		RegisterScriptStringUtils(m_asEngine);
 		Scripting::RegisterScriptVector(m_asEngine);
 
 		//RegisterScriptString(m_asEngine);

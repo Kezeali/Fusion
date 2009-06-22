@@ -33,16 +33,47 @@
 
 #include "FusionConsole.h"
 #include "FusionLogger.h"
+#include "FusionScriptingEngine.h"
+
+#include <Rocket/Core.h>
+#include <Rocket/Controls.h>
+#include <Rocket/Debugger.h>
+
+#include <Rocket/AngelScript/Core/ras_Core.h>
+#include <Rocket/AngelScript/Controls/ras_Controls.h>
+
+#include "scriptstring.h"
+
 
 namespace FusionEngine
 {
+
+	struct ScriptStringConverter
+	{
+		typedef CScriptString* string_type;
+
+		string_type operator() (const EMP::Core::String& from) const
+		{
+			string_type obj = new CScriptString(from.CString());
+			return obj;
+		}
+
+		EMP::Core::String operator() (const string_type& from) const
+		{
+			EMP::Core::String to(from->buffer.c_str());
+			from->Release();
+			return to;
+		}
+	};
 
 	GUI::GUI()
 		: FusionState(false), // GUI is non-blockin by default
 		m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
-		m_ShowMouseTimer(1000)
+		m_ShowMouseTimer(1000),
+		m_DebuggerInitialized(false)
 	{
+		initScripting(ScriptingEngine::getSingletonPtr());
 	}
 
 	GUI::GUI(CL_DisplayWindow window)
@@ -50,10 +81,10 @@ namespace FusionEngine
 		m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
-		m_Display(window)
+		m_Display(window),
+		m_DebuggerInitialized(false)
 	{
-		// Just in case, I guess? (re-initialized in GUI::Initialise() after the CEGUI renderer has been set up)
-		//m_GLState = CL_OpenGLState(window->get_gc());
+		initScripting(ScriptingEngine::getSingletonPtr());
 	}
 
 	GUI::~GUI()
@@ -78,6 +109,8 @@ namespace FusionEngine
 		//CL_Display::get_current_window()->hide_cursor();
 		using namespace Rocket;
 
+		m_DebuggerInitialized = false;
+
 		m_RocketFileSys = new RocketFileSystem();
 		m_RocketRenderer = new RocketRenderer(m_Display.get_gc());
 		m_RocketSystem = new RocketSystem();
@@ -86,16 +119,33 @@ namespace FusionEngine
 		Rocket::Core::SetRenderInterface(m_RocketRenderer);
 		Rocket::Core::SetSystemInterface(m_RocketSystem);
 		Rocket::Core::Initialise();
+		Rocket::Controls::Initialise();
+
+		asIScriptEngine *asEngine = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
+		if (asEngine->GetTypeIdByDecl("Context") < 0)
+		{
+			Rocket::AngelScript::RegisterCore(asEngine);
+			Rocket::AngelScript::Controls::RegisterControls(asEngine);
+			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(asEngine, "string", false);
+
+			int r;
+			r = asEngine->RegisterObjectMethod(
+				"GUI", "Context& getContext()",
+				asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		}
+
 
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
 
+		//Rocket::Debugger::Initialise(m_Context);
+		
 		LoadFonts("gui/");
 		
-		m_Document = m_Context->LoadDocument("gui/demo.rml");
-		if (m_Document != NULL)
-			m_Document->Show();
+		//m_Document = m_Context->LoadDocument("gui/demo.rml");
+		//if (m_Document != NULL)
+		//	m_Document->Show();
 
 
 		CL_InputContext ic = m_Display.get_ic();
@@ -107,6 +157,8 @@ namespace FusionEngine
 		// KBD events
 		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUI::onKeyDown);
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUI::onKeyUp);
+
+		m_Display.hide_cursor();
 
 		return true;
 	}
@@ -149,16 +201,20 @@ namespace FusionEngine
 
 	void GUI::CleanUp()
 	{
-		m_RocketFileSys->RemoveReference();
-		m_RocketSystem->RemoveReference();
-		m_RocketRenderer->RemoveReference();
-		m_Context->RemoveReference();
-		Rocket::Core::Shutdown();
+		if (m_Context != NULL)
+		{
+			m_Context->RemoveReference();
+			Rocket::Core::Shutdown();
 
-		m_RocketFileSys = NULL;
-		m_RocketSystem = NULL;
-		m_RocketRenderer = NULL;
-		m_Context = NULL;
+			delete m_RocketFileSys;
+			delete m_RocketSystem;
+			delete m_RocketRenderer;
+
+			m_RocketFileSys = NULL;
+			m_RocketSystem = NULL;
+			m_RocketRenderer = NULL;
+			m_Context = NULL;
+		}
 
 		m_Display.show_cursor();
 	}
@@ -184,11 +240,76 @@ namespace FusionEngine
 		return true;
 	}
 
+	Rocket::Core::Context *GUI::GetContext() const
+	{
+		return m_Context;
+	}
+
+	void GUI::InitializeDebugger()
+	{
+		if (!m_DebuggerInitialized)
+			m_DebuggerInitialized = Rocket::Debugger::Initialise(m_Context);
+	}
+
+	void GUI::ShowDebugger()
+	{
+		Rocket::Debugger::SetVisible(true);
+	}
+
+	void GUI::HideDebugger()
+	{
+		Rocket::Debugger::SetVisible(false);
+	}
+
+	bool GUI::DebuggerIsVisible() const
+	{
+		return Rocket::Debugger::IsVisible();
+	}
+
 	void GUI::SetMouseShowPeriod(unsigned int period)
 	{
 		m_MouseShowPeriod = period;
 	}
 
+	unsigned int GUI::GetMouseShowPeriod() const
+	{
+		return m_MouseShowPeriod;
+	}
+
+	void GUI::Register(ScriptingEngine *engine)
+	{
+		asIScriptEngine *iengine = engine->GetEnginePtr();
+		RegisterSingletonType<GUI>("GUI", iengine);
+
+		int r;
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void setMouseShowPeriod(uint)",
+			asMETHOD(GUI, SetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = iengine->RegisterObjectMethod(
+			"GUI", "uint getMouseShowPeriod() const",
+			asMETHOD(GUI, GetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void enableDebugger()",
+			asMETHOD(GUI, InitializeDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void showDebugger()",
+			asMETHOD(GUI, ShowDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void hideDebugger()",
+			asMETHOD(GUI, HideDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "bool debuggerIsVisible() const",
+			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+	}
+
+	void GUI::initScripting(FusionEngine::ScriptingEngine *eng)
+	{
+		eng->RegisterGlobalObject("GUI gui", this);
+	}
 
 	void GUI::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
 	{
@@ -290,8 +411,8 @@ namespace FusionEngine
 		// Grab characters
 		if (!ev.str.empty())
 		{
-			std::string str(ev.str.begin(), ev.str.end());
-			m_Context->ProcessTextInput( Rocket::Core::String(str.c_str()) );
+			if (ev.id != CL_KEY_BACKSPACE && ev.id != CL_KEY_DELETE)
+				m_Context->ProcessTextInput( Rocket::Core::String( CL_StringHelp::text_to_utf8(ev.str).c_str() ) );
 			//const wchar_t* c_str = ev.str.c_str();
 			// Inject all the characters given
 			//for (int c = 0; c < ev.str.length(); c++)

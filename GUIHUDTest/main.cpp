@@ -1,10 +1,8 @@
 #include "../FusionEngine/Common.h"
 #include "../FusionEngine/FusionCommon.h"
 
-//#include "../FusionEngine/FusionShapeMesh.h"
 #include "../FusionEngine/FusionPhysicsWorld.h"
 #include "../FusionEngine/FusionPhysicsBody.h"
-//#include "../FusionEngine/FusionPhysicsTypes.h"
 #include "../FusionEngine/FusionPhysicsCallback.h"
 
 #include "../FusionEngine/FusionConsole.h"
@@ -15,7 +13,6 @@
 
 #include "../FusionEngine/FusionStateManager.h"
 #include "../FusionEngine/FusionGUI.h"
-//#include "../FusionEngine/FusionConsoleGUI.h"
 
 #include "../FusionEngine/FusionScriptingEngine.h"
 #include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
@@ -30,97 +27,17 @@
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionResourceManager.h"
 
-//#include "../FusionEngine/FusionInputPluginLoader.h"
 #include "../FusionEngine/FusionClientOptions.h"
-
-//#include "../FusionEngine/FusionCommand.h"
 
 #include "../FusionEngine/FusionXml.h"
 
+#include <Rocket/AngelScript/Core/ras_Core.h>
+#include <Rocket/AngelScript/Controls/ras_Controls.h>
+
+#include "../FusionEngine/scriptstring.h"
+
+
 using namespace FusionEngine;
-
-//class OutputUserData : public ICollisionHandler
-//{
-//private:
-//	PhysicsBody* m_MyBody;
-//
-//public:
-//	OutputUserData(PhysicsBody* body)
-//		: m_MyBody(body)
-//	{
-//	}
-//
-//	bool CanCollideWith(const PhysicsBody *other)
-//	{
-//		return (other != m_MyBody);
-//	}
-//
-//	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts)
-//	{
-//		if (other->GetUserData() != NULL)
-//		{
-//			char *data = (char *)(other->GetUserData());
-//			std::cout << "Egads! " << data << " got me!" << std::endl;
-//		}
-//	}
-//
-//};
-//
-//class Projectile
-//{
-//	PhysicsBody* m_Body;
-//
-//public:
-//	Projectile(PhysicsBody* body)
-//		: m_Body(body),
-//		m_Detonated(false)
-//	{}
-//
-//	bool m_Detonated;
-//
-//	const Vector2& GetPosition() const
-//	{
-//		return m_Body->GetPosition();
-//	}
-//
-//	bool IsDetonated() const
-//	{
-//		return m_Detonated;
-//	}
-//
-//	PhysicsBody* GetBody() const
-//	{
-//		return m_Body;
-//	}
-//
-//};
-
-//typedef CL_SharedPtr<Projectile> ProjectilePtr;
-//class GUIOverlayTest;
-//
-//class Explosive : public ICollisionHandler
-//{
-//	GUIOverlayTest* m_Env;
-//	ProjectilePtr m_MyBody;
-//	bool m_HasExploded;
-//	float m_Payload;
-//
-//public:
-//	Explosive(GUIOverlayTest* env, ProjectilePtr body, float payload)
-//		: m_Env(env),
-//		m_MyBody(body),
-//		m_Payload(payload),
-//		m_HasExploded(false)
-//	{
-//	}
-//
-//	bool CanCollideWith(const PhysicsBody *other)
-//	{
-//		return true;
-//	}
-//
-//	void CollisionWith(const PhysicsBody *other, const std::vector<Contact> &contacts);
-//};
 
 
 class GUIHUDTest
@@ -217,13 +134,13 @@ public:
 			//CL_OpenGLState state(dispWindow.get_gc());
 			//state.set_active(); // Makes sure GC is set correctly
 
+			GUI::Register(m_ScriptManager);
 			new GUI(dispWindow);
 			StateManager *stateman = new StateManager();
 			stateman->AddState(GUI::getSingletonPtr());
 
-			//std::tr1::shared_ptr<ConsoleGUI> conGUI = std::tr1::shared_ptr<ConsoleGUI>(new ConsoleGUI());
-			//stateman->AddState(conGUI);
-			//conGUI->Initialise();
+			asEngine->GetModule(0, asGM_ALWAYS_CREATE);
+			Rocket::AngelScript::InitialiseModule(asEngine, 0);
 
 			////////////////
 			// Phys World
@@ -235,27 +152,9 @@ public:
 			m_World->DeactivateWrapAround();
 			m_World->SetGCForDebugDraw(dispWindow.get_gc());
 
-			/////////////////////////
-			// Load inputs (controls)
-			//m_Input->MapControl('W', "Thrust", 0);
-			//m_Input->MapControl('A', "Left", 0);
-			//m_Input->MapControl('D', "Right", 0);
-			//m_Input->MapControl(CL_KEY_SPACE, "PrimaryFire", 0);
-
-			//m_Input->MapControl('B', "Debug", 0);
-
-			//InputPluginLoader ipl;
-			//{
-			//	ResourcePointer<TiXmlDocument> inputDoc = m_ResMan->GetResource<TiXmlDocument>("input/coreinputs.xml");
-			//	ipl.LoadInputs(inputDoc.GetDataPtr());
-			//}
-			//ipl.CreateCommandClass(m_ScriptManager);
 
 			//////////////////
 			// Load some code
-			//ResourcePointer<std::string> shipScript = m_ResMan->GetResource<std::string>("ship.as");
-			//if (!shipScript.IsValid())
-				//throw CL_Error("Oh snap! Couldn't load ship.as!");
 			std::string shipScript = OpenString_PhysFS(L"ship.as");
 			// Compile the code
 			m_ScriptManager->AddCode(shipScript, 0, "ship.as");
@@ -310,9 +209,12 @@ public:
 					CL_DisplayMessageQueue::process();
 				//CL_System::sleep(2);
 
-				stateman->Update(split);
-				// Move the ships
-				Update(split);
+				if (split < 100)
+				{
+					stateman->Update(split);
+					// Move the ships
+					Update(split);
+				}
 
 				// Current time
 				//unsigned int time = CL_System::get_time();
@@ -331,12 +233,23 @@ public:
 				dispWindow.flip();
 			}
 
+			m_CallDebugPrint.release();
+			m_CallDraw.release();
+			m_CallSimulate.release();
+			mso_Ship.Release();
+
+			delete stateman;
+			delete m_Input;
+			delete m_ScriptManager;
+
 		}
 		catch (FusionEngine::Exception& ex)
 		{
 			std::cout << ex.ToString();
 			conWindow.display_close_message();
 		}
+
+		//delete GUI::getSingletonPtr();
 
 		if (logger != 0)
 			delete logger;
@@ -351,10 +264,6 @@ public:
 
 	~GUIHUDTest()
 	{
-		//m_CallDebugPrint.release();
-		//m_CallDraw.release();
-		//m_CallSimulate.release();
-		//mso_Ship.GetScriptObject()->Release();
 	}
 
 private:
@@ -395,7 +304,7 @@ private:
 
 		m_CallSimulate(split);
 
-		m_World->RunSimulation(split);			
+		m_World->RunSimulation((float)split);			
 
 		return true;
 	}

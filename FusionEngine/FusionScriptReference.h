@@ -171,7 +171,7 @@ namespace FusionEngine
 	public:
 		ScriptObject() : m_Object(NULL) {}
 		//! Constructor
-		ScriptObject(asIScriptObject* object);
+		ScriptObject(asIScriptObject* object, bool add_ref = false);
 		//! Copy constructor
 		ScriptObject(const ScriptObject& other);
 		//! Destructor
@@ -192,10 +192,12 @@ namespace FusionEngine
 		
 		bool IsValid() const;
 
+		void Release();
+
 	protected:
 		asIScriptObject* m_Object;
 
-		ScriptingEngine *m_Engine;
+		//ScriptingEngine *m_Engine;
 	};
 
 	//! Stores script type data

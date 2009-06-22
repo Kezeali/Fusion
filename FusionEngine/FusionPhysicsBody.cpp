@@ -159,6 +159,7 @@ namespace FusionEngine
 	void PhysicsBody::SetMass(float mass)
 	{
 		m_Mass = mass;
+		CommitProperties();
 	}
 
 	void PhysicsBody::SetCanSleep(bool canSleep)

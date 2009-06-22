@@ -84,6 +84,7 @@ namespace FusionEngine
 	public:
 		//! Basic constructor.
 		ScriptingEngine();
+		~ScriptingEngine();
 
 	public:
 		//! Returns a pointer to the AS engine.
@@ -540,7 +541,8 @@ namespace FusionEngine
 
 		//! Called when a script exception occors
 		void _exceptionCallback(asIScriptContext *ctx);
-		//! Used internally
+		void _lineCallback(asIScriptContext *ctx);
+		//! Message callback
 		void _messageCallback(asSMessageInfo *msg);
 
 	private:

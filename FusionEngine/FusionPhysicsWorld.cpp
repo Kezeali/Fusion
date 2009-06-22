@@ -110,7 +110,7 @@ namespace FusionEngine
 		b2AABB worldAABB;
 		worldAABB.lowerBound.Set(-10000.0f, -10000.0f);
 		worldAABB.upperBound.Set(10000.0f, 10000.0f);
-		b2Vec2 gravity(0.0f, 30.0f);
+		b2Vec2 gravity(0.0f, 0.0f);
 		bool doSleep = true;
 
 		m_BxWorld = new b2World(worldAABB, gravity, doSleep);
@@ -134,6 +134,7 @@ namespace FusionEngine
 	{
 		b2Body* bxBody = m_BxWorld->CreateBody(body->GetBodyDef());
 		body->_setB2Body(bxBody);
+		body->CommitProperties();
 		m_Bodies[bxBody] = body;
 	}
 
@@ -241,7 +242,7 @@ namespace FusionEngine
 
 		m_RunningSimulation = true; // bodies can't be deleted
 
-		float32 dt = delta_milis * 0.001;
+		float32 dt = delta_milis * 0.001f;
 		if (dt > 0.0f)
 			m_BxWorld->Step(dt, m_VelocityIterations, m_PositionIterations);
 		else

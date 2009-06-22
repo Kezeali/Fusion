@@ -159,10 +159,14 @@ namespace FusionEngine
 			CL_Vec2i(p2.x, p2.y)
 		};
 
+		m_gc.set_program_object(cl_program_color_only);
+
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
 		m_gc.draw_primitives(cl_polygon, 2, vertex_data);
+
+		m_gc.reset_program_object();
 	}
 
 	void DebugDraw::DrawXForm(const b2XForm& /*xf*/)

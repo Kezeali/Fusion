@@ -64,9 +64,9 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		PacketHandler();
+		ListPacketHandler();
 		//! Destructor
-		virtual ~PacketHandler();
+		virtual ~ListPacketHandler();
 
 	public:
 		//! Callback

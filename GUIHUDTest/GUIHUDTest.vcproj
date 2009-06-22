@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="../tinyxpathpp/tinyxpathd.lib angelscriptd.lib physfsd.lib box2d_mtdll_d.lib ScriptUtils_d.lib RocketAngelScript_d.lib RocketAngelScriptControls_d.lib EMPCore_d.lib RocketCore_d.lib RocketControls_d.lib RocketDebugger_d.lib"
 				LinkIncremental="2"
-				IgnoreDefaultLibraryNames="libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -205,6 +205,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionEntitySettings.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionException.cpp"
 				>
 			</File>
@@ -328,6 +332,14 @@
 				RelativePath="..\FusionEngine\scriptstdstring.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptstring.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptstring_utils.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -368,6 +380,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionConsoleStdOutWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEntitySettings.h"
 				>
 			</File>
 			<File

@@ -46,9 +46,13 @@ namespace FusionEngine
 		RocketSystem() {}
 	public:
 		virtual float GetElapsedTime();
+		//virtual int TranslateString(EMP::Core::String& translated, const EMP::Core::String& input);
 		virtual bool LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message);
 
-		virtual void Release();
+		//virtual void Release();
+
+	//protected:
+	//	virtual void OnReferenceDeactivate();
 	};
 
 	class RocketRenderer : public Rocket::Core::RenderInterface
@@ -81,15 +85,22 @@ namespace FusionEngine
 		//! Called by Rocket when a loaded texture is no longer required.
 		virtual void ReleaseTexture(Rocket::Core::TextureHandle texture);
 
-		virtual void Release();
+		//virtual void Release();
+
+	//protected:
+	//	virtual void OnReferenceDeactivate();
 
 	protected:
 		CL_GraphicContext m_gc;
+
+		CL_BlendMode m_BlendMode;
 
 		int m_Scissor_left;
 		int m_Scissor_top;
 		int m_Scissor_right;
 		int m_Scissor_bottom;
+
+		bool m_ClipEnabled;
 		//TextureMap m_Textures;
 		//GeometryMap m_Geometry;;
 	};
@@ -115,7 +126,10 @@ namespace FusionEngine
 		/// Returns the current position of the file pointer.		
 		virtual size_t Tell(Rocket::Core::FileHandle file);
 
-		virtual void Release();
+		//virtual void Release();
+
+	//protected:
+	//	virtual void OnReferenceDeactivate();
 
 	private:
 		EMP::Core::String m_Root;

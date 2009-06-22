@@ -342,15 +342,20 @@ namespace FusionEngine
 	}
 
 	
-	ScriptObject::ScriptObject(asIScriptObject *object)
+	ScriptObject::ScriptObject(asIScriptObject *object, bool add_ref)
 		: m_Object(object)
 	{
+		if (add_ref && m_Object != NULL)
+			m_Object->AddRef();
 	}
 
 	ScriptObject::ScriptObject(const ScriptObject& other)
 	{
+		if (m_Object != NULL)
+			m_Object->Release();
 		m_Object = other.m_Object;
-		m_Object->AddRef();
+		if (m_Object != NULL)
+			m_Object->AddRef();
 	}
 
 	ScriptObject::~ScriptObject()
@@ -377,6 +382,15 @@ namespace FusionEngine
 	bool ScriptObject::IsValid() const
 	{
 		return m_Object != NULL;
+	}
+
+	void ScriptObject::Release()
+	{
+		if (m_Object != NULL)
+		{
+			m_Object->Release();
+			m_Object = NULL;
+		}
 	}
 
 }

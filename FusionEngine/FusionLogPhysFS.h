@@ -42,6 +42,13 @@
 namespace FusionEngine
 {
 
+	static PHYSFS_sint64 s_LogMaxLength = 1048576;
+	static PHYSFS_sint64 s_LogExtraSpace = fe_lround(s_LogMaxLength*0.1);
+
+	//! Log file that writes to a PHYSFS file
+	/*!
+	* \todo Enforce some size limit
+	*/
 	class PhysFSLogFile : public ILogFile
 	{
 	public:
@@ -60,6 +67,13 @@ namespace FusionEngine
 	protected:
 		PHYSFS_File* m_File;
 		bool m_Open;
+
+		PHYSFS_sint64 m_MaxLength;
+		PHYSFS_sint64 m_ExtraSpace;
+		PHYSFS_sint64 m_SessionLength;
+		PHYSFS_sint64 m_CurrentLength; // =StartingLength + SessionLength
+		PHYSFS_sint64 m_StartingLength;
+		std::string m_Filename;
 	};
 
 }
