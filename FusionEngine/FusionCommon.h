@@ -433,36 +433,25 @@ namespace FusionEngine
 	///////////////////////////
 	//! \todo List forward declarations in alphabetical order
 	class ClientOptions;
-	class Network;
-	class NetworkServer;
-	class NetworkClient;
-	class Entity;
-	class Node;
 	class EntityManager;
-	class ProjectileState;
-	class FusionProjectile;
+	class Entity;
+	class Network;
+	class PacketHandler;
+	class PacketHandlerNode;
+	class Node;
 	class PhysicsWorld;
 	class PhysicsBody;
 	class Shape;
-	class FusionState;
-	class FusionStatePackSync;
-	class FusionStateMessage;
-	class StateManager;
-	class Script;
+	class System;
+	class SystemMessage;
+	class SystemsManager;
+	class ScriptedSlotWrapper;
 	class ScriptingEngine;
 	class Exception;
 	class FileSystemException;
 	class Logger;
 	class Console;
 	class Log;
-	class LoadingState;
-	class ClientLoadingState;
-	class ServerLoadingState;
-	class ClientLoadingSyncCallback;
-	class ServerLoadingSyncCallback;
-	class PackSyncClient;
-	class PackSyncServer;
-	class LoadingStage;
 	class ResourceContainer;
 	class ResourceManager;
 	class InputDefinitionLoader;
@@ -479,11 +468,8 @@ namespace FusionEngine
 	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
 	typedef std::vector<std::string> StringVector;
 
-	//! Self managing state pointer
-	/*!
-	 * Use it!
-	 */
-	typedef CL_SharedPtr<FusionState> SharedState;
+	//! System pointer
+	typedef std::tr1::shared_ptr<System> SystemPtr;
 
 	//! Resource tags (aka. names/handles)
 	typedef std::wstring ResourceTag;

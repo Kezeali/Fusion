@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2007 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -23,10 +23,10 @@
 	File Author(s):
 
 		Elliot Hayward
-
 */
-#ifndef Header_FusionEngine_PacketHandler
-#define Header_FusionEngine_PacketHandler
+
+#ifndef Header_FusionEngine_ScriptedControlLoader
+#define Header_FusionEngine_ScriptedControlLoader
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,59 +34,43 @@
 
 #include "FusionCommon.h"
 
-#include "FusionLinkedNode.h"
+#include "FusionScriptedControl.h"
+
+#include "FusionResourceLoader.h"
 
 namespace FusionEngine
 {
 
-	class PacketHandler
-	{
-	public:
-		//! Constructor
-		PacketHandler()
-		{}
-		//! Destructor
-		virtual ~PacketHandler()
-		{}
-
-	public:
-		//! Callback
-		virtual void HandlePacket(IPacket* packet) = 0;
-	};
-
-
-	//! Network packet routing
 	/*!
-	 * Linked list based partial implementation
+	 * \brief
+	 * Loads CONTROL type Resources.
 	 *
-	 * \sa ListPacketDispatcher
+	 * \todo Review this. Seems unnecessary to script inputs. If anything this should be
+	 * low priority
+	 *
+	 * \sa
+	 * ResourceLoader
 	 */
-	class PacketHandlerNode : public LinkedNode
+	class ScriptedControlLoader : public ResourceLoader<ScriptedContorl>
 	{
 	public:
-		//! Constructor
-		PacketHandlerNode()
-			: m_Handler(NULL)
-		{}
-		PacketHandlerNode(PacketHandler *handler)
-			: m_Handler(handler)
-		{}
-		//! Destructor
-		virtual ~PacketHandlerNode()
-		{}
+		//! Basic constructor.
+		ScriptedControlLoader();
 
 	public:
-		//! Passes the packet to all subsequent list members
-		void ListHandlePacket(IPacket* packet)
-		{
-			PacketHandlerNode *next = dynamic_cast<PacketHandlerNode*>( getNext() );
-			if (next != NULL)
-				next->ListHandlePacket(packet);
+		//! Returns the type identifier for resources this loader can deal with
+		const std::string &GetType() const;
 
-			m_Handler->HandlePacket(packet);
-		}
+		//! Returns a resource
+		Resource<ScriptedContorl> LoadResource(ResourceTag tag, const std::string &text);
+		//! Validates the given resource
+		void ReloadResource(Resource<std::string> &resource);
+		//! Invalidates the given resource
+		void UnloadResource(Resource<std::string> &resource);
 
-		PacketHandler *m_Handler;
+	protected:
+		const std::string *m_Resource;
+
 	};
 
 }

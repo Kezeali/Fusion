@@ -152,7 +152,7 @@ namespace FusionEngine
 	public:
 		//! Starts the network
 		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0) = 0;
-		//! Connects to a server
+		//! Connects to a leader
 		virtual bool Connect(const std::string &host, unsigned short port) = 0;
 		//! Disconnects cleanly
 		virtual void Disconnect() = 0;
@@ -186,7 +186,7 @@ namespace FusionEngine
 			NetPriority priority, NetReliability reliability, char channel, 
 			const NetHandle& destination);
 
-		//! Wrapper to deal with RakNet (and it's stupid use of unsigned char*)
+		//! Send taking unsigned char* data
 		bool Send(bool timestamped, char type, unsigned char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle& destination);

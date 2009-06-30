@@ -35,12 +35,16 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
+// Inherited
 #include "FusionState.h"
 #include "FusionSingleton.h"
 
+// Fusion
 #include "FusionClanLibRocketInterface.h"
+#include "FusionScriptModule.h"
+#include "FusionBoostSignals2.h"
 
+// External
 #include <Rocket/Core.h>
 
 
@@ -49,16 +53,9 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Wrapper for CEGUI - for the gameplay portion of fusion.
-	 * This is the only GUI class used ingame - Windows such as Console and
-	 * Options, and the HUD, are loaded into this object.
-	 *
-	 * \todo Intergrate GUI resources into ResourceManager
-	 *
-	 * \remarks
-	 * State is non-blocking
+	 * Manager for libRocket GUI whatsit (tm)
 	 */
-	class GUI : public FusionState, public Singleton<GUI>
+	class GUI : public System, public Singleton<GUI>
 	{
 	public:
 		enum Modifiers
@@ -84,6 +81,8 @@ namespace FusionEngine
 		//! Inits the gui
 		virtual bool Initialise();
 
+		virtual const std::string &GetName() const;
+
 		void LoadFonts(const char* directory);
 
 		//! Updates the inputs
@@ -94,12 +93,6 @@ namespace FusionEngine
 
 		//! Unbinds
 		virtual void CleanUp();
-
-		//! Adds the given window layout (to the root window)
-		virtual bool AddWindow(const std::string &window);
-
-		//!Removes the given window
-		virtual bool RemoveWindow(const std::string &window);
 
 		Rocket::Core::Context* GetContext() const;
 
@@ -115,17 +108,11 @@ namespace FusionEngine
 		void SetMouseShowPeriod(unsigned int period);
 		unsigned int GetMouseShowPeriod() const;
 
-		static void Register(ScriptingEngine *engine);
+		static void Register(ScriptingEngine *manager);
+
+		void SetModule(ScriptingEngine *manager, const char *module_name);
 
 	protected:
-		//! Name of the config file for the skin
-		std::string m_CurrentScheme;
-		//! Name of the config file for the current gui page
-		std::string m_CurrentLayout;
-
-		//! Lists added windows
-		std::vector<std::string> m_CurrentWindows;
-
 		//! Holds slots
 		SlotContainer m_Slots;
 
@@ -136,22 +123,24 @@ namespace FusionEngine
 
 		short m_Modifiers;
 
-		// Resets the gl state
-		//CL_OpenGLState m_GLState;
-
 		CL_DisplayWindow m_Display;
+
+		bool m_Initialised;
 
 		RocketSystem *m_RocketSystem;
 		RocketRenderer *m_RocketRenderer;
 		RocketFileSystem *m_RocketFileSys;
 
 		Rocket::Core::Context* m_Context;
-		Rocket::Core::ElementDocument* m_Document;
 
 		bool m_DebuggerInitialized;
 
+		bsig2::connection m_ModuleConnection;
+
 	public:
 		void initScripting(ScriptingEngine* eng);
+		//! Called when the module set with SetModule is built
+		void onModuleBuild(BuildModuleEvent& event);
 		//! Tells the gui system when a mouse button is pressed
 		virtual void onMouseDown(const CL_InputEvent &ev, const CL_InputState &state);
 		//! Tells the gui system when a mouse button is released
@@ -163,6 +152,8 @@ namespace FusionEngine
 		virtual void onKeyDown(const CL_InputEvent &ev, const CL_InputState &state);
 		//! Tells the gui system when a keyboard key is released
 		virtual void onKeyUp(const CL_InputEvent &ev, const CL_InputState &state);
+
+		void onResize(int x, int y);
 	};
 
 

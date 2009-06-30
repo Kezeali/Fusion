@@ -22,6 +22,7 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
+			ManagedExtensions="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -42,7 +43,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="tinyxpathpp"
-				PreprocessorDefinitions="WIN32;_DEBUG;FSN_ASSERTS_ENABLED;ANGELSCRIPT_DLL_LIBRARY_IMPORT;_WINDOWS;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;FSN_ASSERTS_ENABLED;ANGELSCRIPT_DLL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -66,8 +67,6 @@
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -281,7 +280,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScriptedConsoleCommand.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptedSlots.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionScriptingEngine.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptModule.cpp"
 				>
 			</File>
 			<File
@@ -491,7 +502,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScriptedConsoleCommand.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptedSlots.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionScriptingEngine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptModule.h"
 				>
 			</File>
 			<File

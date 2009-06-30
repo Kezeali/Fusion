@@ -7,7 +7,7 @@ class ConsoleElement : ScriptElement
 		super(appElement);
 
 		dirty = false;
-		current_text = e_String("");
+		current_text = "";
 		length = 0;
 	}
 
@@ -21,23 +21,22 @@ class ConsoleElement : ScriptElement
 
 	void AddText(const string &in text)
 	{
-		string copy = text;
 		dirty = true;
-		if (length < 10240)
+		if (length < 5120)
 		{
-			current_text = current_text + e_String(copy);
+			current_text += text;
 			length += text.length();
 		}
 		else
 		{
-			current_text = e_String(copy);
+			current_text = text;
 			length = 0;
 		}
 	}
 
 	void Clear()
 	{
-		current_text = e_String("");
+		current_text = "";
 		dirty = true;
 	}
 
@@ -59,7 +58,7 @@ class ConsoleGui : IConsoleListener
 {
 	ConsoleElement@ consoleElm;
 
-	ConsoleGui(Element@ element, Document@ document)
+	ConsoleGui(Element@ element)
 	{
 		@consoleElm = cast<ConsoleElement>(unwrap(element));
 		if (consoleElm !is null)
@@ -92,6 +91,21 @@ class ConsoleGui : IConsoleListener
 		if (consoleElm !is null)
 			consoleElm.Clear();
 	}
+}
+
+void OnConsoleEnterClick(Event& ev)
+{
+	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
+	FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("textbox_element")) );
+	string command = input.GetValue();
+	console.interpret(command);
+	input.SetValue(e_String(""));
+}
+
+string CC_test()
+{
+	console.println("test: "/* + args[0]*/);
+	return "hi";
 }
 
 class ship
@@ -193,6 +207,7 @@ class ship
 		console.println("Press [Debug] to print info");
 
 		gui.enableDebugger();
+		scriptManager.disableDebugOutput();
 
 		RegisterElementType(e_String("console"), e_String("ConsoleElement"));
 
@@ -200,13 +215,18 @@ class ship
 		@document = context.LoadDocument(e_String("gui/console.rml"));
 		if (document !is null)
 		{
-			//document.SetId(e_String("console_doc"));
+			document.SetId(e_String("console_doc"));
 
 			document.Show();
 
 			Element@ consoleElement = document.GetElementById(e_String("console_element"));
-			@congui = @ConsoleGui(consoleElement, document);
-			@listenerConnection = console.connect_listener(congui);
+			@congui = @ConsoleGui(consoleElement);
+			@listenerConnection = console.connectListener(congui);
+
+			Element@ enterElement = document.GetElementById(e_String("enter_command"));
+			enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
+
+			console.bindCommand("test", "string CC_test()");
 		}
 		context.LoadMouseCursor(e_String("gui/cursor.rml"));
 	}

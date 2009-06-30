@@ -161,7 +161,7 @@ public:
 };
 
 // Only used by Attribute::Query functions
-enum
+enum TiXmlQueryResult
 {
 	TIXML_SUCCESS,
 	TIXML_NO_ATTRIBUTE,

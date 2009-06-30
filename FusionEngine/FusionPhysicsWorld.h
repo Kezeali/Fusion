@@ -144,6 +144,8 @@ namespace FusionEngine
 	public:
 		//! Constructor.
 		PhysicsWorld();
+		//! Constructor +width/height
+		PhysicsWorld(float width, float height);
 		//! Virtual destructor.
 		virtual ~PhysicsWorld();
 

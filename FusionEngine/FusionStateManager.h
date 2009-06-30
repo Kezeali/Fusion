@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -50,21 +50,21 @@ namespace FusionEngine
 	 * I use shared pointers here in the hopes that it will prevent states from 
 	 * causing memory leaks if they are 'lost' (added incorrectly for example.) and so 
 	 * that they can be removed from the list without being deleted immeadiately.
-	 *
 	 */
-	class StateManager
+	class SystemsManager
 	{
 	public:
 		//! List of states
-		typedef std::vector<SharedState> StateList;
+		//typedef std::vector<SharedState> StateList;
 		//! Queue of states
-		typedef std::deque<SharedState> StateQueue;
+		//typedef std::deque<SharedState> StateQueue;
+		typedef std::vector<System*> SystemArray;
 
 	public:
 		//! Basic constructor
-		StateManager();
+		SystemsManager();
 		//! Destructor
-		~StateManager();
+		~SystemsManager();
 
 	public:
 		//! Removes all other states and adds the state specified.
@@ -72,61 +72,65 @@ namespace FusionEngine
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool SetExclusive(SharedState state);
+		bool SetExclusive(System *state);
 
 		//! Adds the next state in the queue to the execution list
 		/*!
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool RunNextQueueState();
+		//bool RunNextQueueState();
 
 		//! Adds the state specified
 		/*!
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool AddState(FusionState *state);
+		//bool AddState(FusionState *state);
 
 		//! Adds the specified shared ptr. to a state
 		/*!
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool AddState(SharedState state);
+		//bool AddState(SharedState state);
 
 		//! Adds the state specified to the queue
 		/*!
 		 * When all currently running states are complete, this state will run.
 		 */
-		void AddStateToQueue(FusionState *state);
+		//void AddStateToQueue(FusionState *state);
 
 		//! Adds the specified shared ptr. to a state, to the queue
 		/*!
 		 * When all currently running states are complete, this state will run.
 		 */
-		void AddStateToQueue(SharedState state);
+		//void AddStateToQueue(SharedState state);
 
 		//! Removes the state specified
-		void RemoveState(FusionState *state);
+		//void RemoveState(FusionState *state);
 
 		//! Removes the state specified
-		void RemoveState(SharedState state);
+		//void RemoveState(SharedState state);
 
 		//! Removes the state specified from the queue
-		void RemoveStateFromQueue(FusionState *state);
+		//void RemoveStateFromQueue(FusionState *state);
 
 		//! Removes the state specified from the queue
-		void RemoveStateFromQueue(SharedState state);
+		//void RemoveStateFromQueue(SharedState state);
+
+		bool AddSystem(System *system);
+
+		void RemoveSystem(System *system);
 
 		//! Removes all states (including queued)
 		void Clear();
 
 		//! Removes active states
-		void ClearActive();
+		//void ClearActive();
 
 		//! Removes queued states
-		void ClearQueue();
+		//void ClearQueue();
 
 		//! Updates all states
 		bool Update(unsigned int split);
@@ -137,10 +141,32 @@ namespace FusionEngine
 		bool KeepGoing() const;
 
 	protected:
+		void setFlagsAll(int flags);
+
+		void addFlagAll(System::StateFlags flag);
+		void removeFlagAll(System::StateFlags flag);
+
+		void addFlagFor(const StringVector &target, System::StateFlags flag);
+		void removeFlagFor(const StringVector &target, System::StateFlags flag);
+
+		//! Adds the given flag to systems other than those listed
+		/*!
+		* \param[in] excluded_system
+		* The system that sent the message which initiated this call.
+		*
+		* \param[in] excluded_targets
+		* Names of systems which shouldn't be flagged (from message->GetTargets()).
+		*/
+		void addFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
+		void removeFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
+
+	protected:
 		//! List of all running states
-		StateList m_States;
+		//StateList m_States;
 		//! List of all not-running states
-		StateQueue m_Queued;
+		//StateQueue m_Queued;
+
+		SystemArray m_Systems;
 
 		//! Set to false if when FusionState#KeepGoing() returns false.
 		bool m_KeepGoing;

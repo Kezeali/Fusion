@@ -41,15 +41,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				AdditionalIncludeDirectories="tinyxpathpp"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;FSN_ASSERTS_ENABLED;ANGELSCRIPT_DLL_LIBRARY_IMPORT"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="..\FusionEngine\Common.h"
 				PrecompiledHeaderFile="$(IntDir)\$(TargetName).pch"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -427,6 +427,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionNetworkSystem.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionNetworkTypes.h"
 				>
 			</File>
@@ -591,11 +595,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptDebuggerGUI.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptDebugPreprocessor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedConsoleCommand.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptedControlLoader.h"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionScriptedEntity.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedSlots.h"
 				>
 			</File>
 			<File
@@ -608,6 +628,14 @@
 			</File>
 			<File
 				RelativePath=".\FusionScriptMethod.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptModule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptPreprocessor.h"
 				>
 			</File>
 			<File
@@ -1021,11 +1049,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionScriptDebuggerGUI.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedConsoleCommand.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedSlots.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionScriptingEngine.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\FusionScriptingFunctions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptModule.cpp"
 				>
 			</File>
 			<File

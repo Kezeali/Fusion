@@ -68,7 +68,9 @@ namespace FusionEngine
 		Logger *logger = Logger::getSingletonPtr();
 		if (logger != NULL)
 			logger->Add(std::string(message.CString()), "rocket_log", logLevel);
-		SendToConsole(std::string(message.CString()), mtype);
+		SendToConsole(std::string(message.CString(), 0, message.Length()-1), mtype);
+
+		Rocket::Core::SystemInterface::LogMessage(type, message);
 
 		return true;
 	}
@@ -381,8 +383,11 @@ namespace FusionEngine
 	// Seeks to a point in a previously opened file.
 	bool RocketFileSystem::Seek(Rocket::Core::FileHandle file, long offset, int origin)
 	{
-		cl_int64 absolute_pos = 0;
-		cl_int64 curPos = (cl_int64)PHYSFS_tell((PHYSFS_File*)file);
+		PHYSFS_uint64 absolute_pos = 0;
+		// Define vars used within certain cases
+		PHYSFS_sint64 curPos;
+		PHYSFS_sint64 length;
+
 		switch (origin)
 		{
 		case SEEK_SET:
@@ -390,15 +395,26 @@ namespace FusionEngine
 			break;
 
 		case SEEK_CUR:
+			curPos = PHYSFS_tell((PHYSFS_File*)file);
 			if (curPos == -1)
+			{
+				Rocket::Core::Log::Message(EMP::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get the current position");
 				return false;
-			absolute_pos = curPos + offset;
+			}
+			absolute_pos = (PHYSFS_uint64)curPos + offset;
 			break;
 
 		case SEEK_END:
 			if (offset > 0)
 				return false;
-			absolute_pos = PHYSFS_fileLength((PHYSFS_File*)file) + offset;
+			length = PHYSFS_fileLength((PHYSFS_File*)file);
+			if (length == -1)
+			{
+				Rocket::Core::Log::Message(EMP::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get file length");
+				return false;
+			}
+			else
+				absolute_pos = (PHYSFS_uint64)length + offset;
 			break;
 		}
 

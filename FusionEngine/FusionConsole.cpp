@@ -3,9 +3,8 @@
 
 #include "FusionScriptingEngine.h"
 #include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionScriptedSlots.h"
 #include "scriptstring.h"
-
-#include "FusionRefCounted.h"
 
 #include <boost/tokenizer.hpp>
 
@@ -172,13 +171,13 @@ namespace FusionEngine
 		switch (type)
 		{
 		case MTNORMAL:
-			// headedMessage = message;
+			headedMessage = message;
 			break;
 		case MTWARNING:
-			headedMessage += GetWarningMarker() + " Warning:   " + message;
+			headedMessage += GetWarningMarker() + " Warning: " + message;
 			break;
 		case MTERROR:
-			headedMessage += GetExceptionMarker() + " Exception: " + message;
+			headedMessage += GetExceptionMarker() + " Error:   " + message;
 			break;
 		default:
 			headedMessage = message;
@@ -208,7 +207,7 @@ namespace FusionEngine
 		m_Commands[command] = callback;
 	}
 
-	static inline void addToken(StringVector &args, std::string &quote, bool inQuote, const std::string& token)
+	inline void addToken(StringVector &args, std::string &quote, bool inQuote, const std::string& token)
 	{
 		if (inQuote)
 			quote += token;
@@ -216,6 +215,7 @@ namespace FusionEngine
 			args.push_back(token);
 	}
 
+	// TODO: Print help message if the given command isn't known
 	void Console::Interpret(const std::string &untrimmed)
 	{
 		std::string command = fe_trim(untrimmed);
@@ -351,7 +351,6 @@ namespace FusionEngine
 		return m_Buffer.substr(m_Buffer.find("\n"));
 	}
 
-	// TODO: stick this stuff in another file
 #ifndef FSN_DONT_USE_SCRIPTING
 	class ScriptedConsoleListenerWrapper : public RefCounted, RefCounted::no_factory_noncopyable
 	{
@@ -454,48 +453,6 @@ namespace FusionEngine
 		return wrapper;
 	}
 
-	class ScriptedSlotWrapper : public RefCounted, RefCounted::no_factory_noncopyable
-	{
-	public:
-		bsig2::connection m_Connection;
-
-		ScriptUtils::Calling::Caller m_CallSlot;
-
-		ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl);
-		virtual ~ScriptedSlotWrapper();
-
-		void HoldConnection(boost::signals2::connection &connection);
-
-		void Callback();
-
-		// TODO: Use Boost Preprocessor to generate these params
-		template <typename T0>
-		void Callback(T0 p0)
-		{
-			m_CallSlot(p0);
-		}
-	};
-
-	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl)
-		: m_CallSlot(module, decl.c_str())
-	{
-	}
-
-	ScriptedSlotWrapper::~ScriptedSlotWrapper()
-	{
-		m_Connection.disconnect();
-	}
-
-	void ScriptedSlotWrapper::HoldConnection(bsig2::connection &connection)
-	{
-		m_Connection = connection;
-	}
-
-	void ScriptedSlotWrapper::Callback()
-	{
-		m_CallSlot();
-	}
-
 	ScriptedSlotWrapper* Scr_ConnectNewLineSlot(const std::string &decl, Console *obj)
 	{
 		asIScriptContext *context = asGetActiveContext();
@@ -561,15 +518,13 @@ namespace FusionEngine
 			asMETHOD(ScriptedConsoleListenerWrapper, Disconnect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"ConsoleConnection@ connect_listener(IConsoleListener@)",
+			"ConsoleConnection@ connectListener(IConsoleListener@)",
 			asFUNCTION(Scr_ConnectConsoleListener), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 	void RegisterScriptedConsoleCallbacks(asIScriptEngine *engine)
 	{
 		int r;
-
-		RefCounted::RegisterType<ScriptedSlotWrapper>(engine, "CallbackConnection");
 
 		r = engine->RegisterObjectMethod("Console",
 			"CallbackConnection@ connectTo_NewLine(const string &in)",

@@ -36,19 +36,14 @@ namespace FusionEngine
 	 * \brief
 	 * Allows states to request actions from the StateManager.
 	 */
-	class StateMessage
+	class SystemMessage
 	{
 	public:
 		//! Types of messages
 		/*!
 		 * Hopefully the names are self explanatory. :)
-		 *
-		 * \remarks
-		 * Use of REMOVESTATE is preffered over QUIT if you want to quit the game,
-		 * as this ensures other states can finish their processes before the game
-		 * ends. Not that I adhear to that rule :P
 		 */
-		enum StateMessageType {
+		enum MessageType {
 			//! Add a new state
 			ADDSTATE,
 			//! Remove a state
@@ -59,41 +54,82 @@ namespace FusionEngine
 			UNQUEUESTATE,
 			//! Add the next state in the queue to the active states
 			RUNNEXTSTATE,
+
+			//! No message (safe default)
+			NONE,
+
 			//! Quit the state manager
-			QUIT
+			QUIT,
+
+			//! Pauses the target states
+			PAUSE,
+			//! Resumes the target states
+			RESUME,
+			//! Steps the target states if they are paused
+			STEP,
+			//! Steps paused states
+			STEPALL,
+			//! Pauses states other than the origin and target states
+			PAUSEOTHERS,
+			//! Resumes states other than the origin and target states
+			RESUMEOTHERS,
+			//! Hides the target states
+			HIDE,
+			//! Shows the target states
+			SHOW,
+			//! Hides states other than the origin and target states
+			HIDEOTHERS,
+			//! Shows states other than the origin and target states
+			SHOWOTHERS
 		};
 
 	public:
 		//! Basic constructor
-		StateMessage();
-		//! Constructor +type +data
-		StateMessage(StateMessageType type, FusionState *data)
+		SystemMessage()
+			: m_Type(NONE)
+		{}
+		//! Constructor +type
+		SystemMessage(MessageType type)
 			: m_Type(type)
+		{}
+		//! Constructor +type +target
+		SystemMessage(MessageType type, const std::string &target_system, bool include_sender = false)
+			: m_Type(type),
+			m_IncludeSender(include_sender)
 		{
-			m_Data = SharedState(data);
+			m_Targets.push_back(target_system);
+		}
+		//! CTOR +type +targets
+		SystemMessage(MessageType type, const StringVector &systems, bool include_sender = false)
+			: m_Type(type),
+			m_Targets(systems),
+			m_IncludeSender(include_sender)
+		{
 		}
 
 	public:
 		//! Retreives the state type
-		StateMessageType GetType() const
+		MessageType GetType() const
 		{
 			return m_Type;
 		}
-		//! Retreives the custom data
-		SharedState GetData() const
+
+		const StringVector &GetTargets()
 		{
-			return m_Data;
+			return m_Targets;
+		}
+
+		bool IncludeSender() const
+		{
+			return m_IncludeSender;
 		}
 
 	protected:
 		//! Stores the message type
-		StateMessageType m_Type;
+		MessageType m_Type;
 		//! Stores custom message data
-		/*!
-		 * \remarks Me - Since all messages pass states ATM, this is typed as a
-		 * SharedState, rather than a void*.
-		 */
-		SharedState m_Data;
+		StringVector m_Targets;
+		bool m_IncludeSender;
 
 	};
 

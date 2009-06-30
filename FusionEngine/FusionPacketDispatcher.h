@@ -36,6 +36,7 @@
 
 #include "FusionNetwork.h"
 
+
 namespace FusionEngine
 {
 
@@ -63,15 +64,16 @@ namespace FusionEngine
 
 	//! Packet dispatcher
 	/*!
-	 * Default (signal based) implementation
+	 * Default implementation
 	 */
 	class PacketDispatcher
 	{
 	public:
 		//! List of handlers
-		typedef std::list<PacketHandler*> HandlerList;
+		//typedef std::list<PacketHandler*> HandlerList;
 		//! Map of handler lists
-		typedef std::map<char, HandlerList> HandlerListMap;
+		typedef std::tr1::unordered_multimap<char, PacketHandler*> HandlerMultiMap;
+		typedef std::pair<HandlerMultiMap::iterator, HandlerMultiMap::iterator> HandlerRange;
 
 	public:
 		//! Constructor
@@ -82,30 +84,26 @@ namespace FusionEngine
 		~PacketDispatcher();
 
 	public:
-		//! Establishes a packet subscription
-		void EstablishChannel(char channel);
+		void SetNetwork(Network *net);
+		void SetDefaultPacketHandler(PacketHandler* handler);
+
 		//! Establishes a packet subscrption for a specific type
-		/*!
-		 * Allows a subscriber to receive all packets of a specific type
-		 * (reguardless of chanel)
-		 */
-		void Subscribe(char channel, PacketHandler* handler);
+		void Subscribe(char type, PacketHandler* handler);
 
 		//! Removes the given subscription
-		void CloseChannel(char channel);
-		//! Removes the given subscription
-		void Unsubscribe(char channel, PacketHandler* handler);
+		void Unsubscribe(char type, PacketHandler* handler);
 
 		//! Reads packets from the network and dispatches them accordingly
 		void Run();
 
 	protected:
 		Network* m_Network;
-		HandlerListMap m_ChannelHandlers;
+		HandlerMultiMap m_ChannelHandlers;
 		PacketHandler* m_DefaultPacketHandler;
 
 	};
 
+	const unsigned char s_NumChannelTypes = MTID_MAX - ID_USER_PACKET_ENUM;
 
 	//! (List based) Network packet routing
 	/*!
@@ -118,7 +116,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Map of handlers
-		typedef std::map<char, ListPacketHandler*> HandlerMap;
+		typedef std::map<char, PacketHandlerNode*> HandlerMap;
 
 	public:
 		//! Constructor?
@@ -129,18 +127,12 @@ namespace FusionEngine
 		~ListPacketDispatcher();
 
 	public:
+		void SetNetwork(Network *net);
+		void SetDefaultPacketHandler(PacketHandler* handler);
 
-		//! Establishes a packet subscription
-		void SubscribeToChannel(char channel, PacketHandler* handler);
 		//! Establishes a packet subscrption for a specific type
-		/*!
-		 * Allows a subscriber to receive all packets of a specific type
-		 * (reguardless of chanel)
-		 */
 		void Subscribe(char type, PacketHandler* handler);
 
-		//! Removes the given subscription
-		void UnsubscribeFromChannel(char channel, PacketHandler* handler);
 		//! Removes the given subscription
 		void Unsubscribe(char type, PacketHandler* handler);
 
@@ -150,9 +142,9 @@ namespace FusionEngine
 	protected:
 		Network* m_Network;
 		//! Handlers
-		HandlerMap m_ChannelHandlers;
-		// Type handlers
-		HandlerMap m_TypeHandlers;
+		PacketHandlerNode *m_ChannelLists[s_NumChannelTypes];
+		PacketHandler* m_DefaultPacketHandler;
+
 	};
 
 }

@@ -34,6 +34,7 @@
 #include "FusionConsole.h"
 #include "FusionLogger.h"
 #include "FusionScriptingEngine.h"
+#include "FusionScriptModule.h"
 
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
@@ -48,6 +49,8 @@
 namespace FusionEngine
 {
 
+	const std::string s_GuiSystemName = "GUI";
+
 	struct ScriptStringConverter
 	{
 		typedef CScriptString* string_type;
@@ -61,28 +64,28 @@ namespace FusionEngine
 		EMP::Core::String operator() (const string_type& from) const
 		{
 			EMP::Core::String to(from->buffer.c_str());
-			from->Release();
+			//from->Release();
 			return to;
 		}
 	};
 
 	GUI::GUI()
-		: FusionState(false), // GUI is non-blockin by default
-		m_Modifiers(NOMOD),
+		: m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
-		m_DebuggerInitialized(false)
+		m_DebuggerInitialized(false),
+		m_Initialised(false)
 	{
 		initScripting(ScriptingEngine::getSingletonPtr());
 	}
 
 	GUI::GUI(CL_DisplayWindow window)
-		: FusionState(false), /* GUI is non-blockin by default */
-		m_Modifiers(NOMOD),
+		: m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
 		m_Display(window),
-		m_DebuggerInitialized(false)
+		m_DebuggerInitialized(false),
+		m_Initialised(false)
 	{
 		initScripting(ScriptingEngine::getSingletonPtr());
 	}
@@ -92,22 +95,21 @@ namespace FusionEngine
 		CleanUp();
 	}
 
+	const std::string &GUI::GetName() const
+	{
+		return s_GuiSystemName;
+	}
+
 	void GUI::Configure(const std::string& fname)
 	{
-		//ResourcePointer<TiXmlDocument> cfgResource = ResourceManager::getSingleton().GetResource("CEGUIConfig.xml", "XML");
-
-		//if (cfgResource.IsValid())
-		//{
-		//	TiXmlDocument* cfgDoc = cfgResource.GetDataPtr();
-		//	
-		//	TinyXPath::S_xpath_string(cfgDoc->RootElement(), "/ceguiconfig/paths/datafiles");
-		//}
 	}
 
 	bool GUI::Initialise()
 	{
-		//CL_Display::get_current_window()->hide_cursor();
 		using namespace Rocket;
+
+		if (m_Initialised) // Don't allow repeated initialisation
+			return false;
 
 		m_DebuggerInitialized = false;
 
@@ -121,32 +123,11 @@ namespace FusionEngine
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
-		asIScriptEngine *asEngine = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
-		if (asEngine->GetTypeIdByDecl("Context") < 0)
-		{
-			Rocket::AngelScript::RegisterCore(asEngine);
-			Rocket::AngelScript::Controls::RegisterControls(asEngine);
-			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(asEngine, "string", false);
-
-			int r;
-			r = asEngine->RegisterObjectMethod(
-				"GUI", "Context& getContext()",
-				asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		}
-
-
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
-
-		//Rocket::Debugger::Initialise(m_Context);
 		
 		LoadFonts("gui/");
-		
-		//m_Document = m_Context->LoadDocument("gui/demo.rml");
-		//if (m_Document != NULL)
-		//	m_Document->Show();
-
 
 		CL_InputContext ic = m_Display.get_ic();
 
@@ -158,7 +139,11 @@ namespace FusionEngine
 		m_Slots.connect(ic.get_keyboard().sig_key_down(), this, &GUI::onKeyDown);
 		m_Slots.connect(ic.get_keyboard().sig_key_up(), this, &GUI::onKeyUp);
 
+		m_Slots.connect(m_Display.sig_resize(), this, &GUI::onResize);
+
 		m_Display.hide_cursor();
+
+		m_Initialised = true;
 
 		return true;
 	}
@@ -201,7 +186,7 @@ namespace FusionEngine
 
 	void GUI::CleanUp()
 	{
-		if (m_Context != NULL)
+		if (m_Initialised)
 		{
 			m_Context->RemoveReference();
 			Rocket::Core::Shutdown();
@@ -214,30 +199,11 @@ namespace FusionEngine
 			m_RocketSystem = NULL;
 			m_RocketRenderer = NULL;
 			m_Context = NULL;
+
+			m_Initialised = false;
 		}
 
 		m_Display.show_cursor();
-	}
-
-	bool GUI::AddWindow(const std::string& window)
-	{
-		using namespace Rocket;
-
-		//if (WindowManager::getSingleton().isWindowPresent(window))
-		//	return false;
-
-		//System::getSingleton().getGUISheet()->addChildWindow(window);
-		
-		return true;
-	}
-
-	bool GUI::RemoveWindow(const std::string& window)
-	{
-		using namespace Rocket;
-
-		//System::getSingleton().getGUISheet()->removeChildWindow(window);
-
-		return true;
 	}
 
 	Rocket::Core::Context *GUI::GetContext() const
@@ -276,12 +242,64 @@ namespace FusionEngine
 		return m_MouseShowPeriod;
 	}
 
+	EMP::Core::String stringToEString(CScriptString *obj)
+	{
+		return EMP::Core::String(obj->buffer.c_str());
+	}
+
+	CScriptString *CScriptStringFactory_FromEMPString(const EMP::Core::String &copy)
+	{
+		return new CScriptString(copy.CString());
+	}
+
+	CScriptString &CScriptStringAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	{
+		obj->buffer = value.CString();
+		return *obj;
+	}
+
+	CScriptString &CScriptStringAddAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	{
+		obj->buffer += value.CString();
+		return *obj;
+	}
+
 	void GUI::Register(ScriptingEngine *engine)
 	{
 		asIScriptEngine *iengine = engine->GetEnginePtr();
+		int r;
+
+		try
+		{
+			Rocket::AngelScript::RegisterCore(iengine);
+			Rocket::AngelScript::Controls::RegisterControls(iengine);
+			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(iengine, "string", true);
+
+			r = iengine->RegisterObjectBehaviour("string",
+				asBEHAVE_FACTORY,
+				"string@ f(const e_String&in)",
+				asFUNCTION(CScriptStringFactory_FromEMPString),
+				asCALL_CDECL); FSN_ASSERT(r >= 0);
+
+			r = iengine->RegisterObjectBehaviour("string",
+				asBEHAVE_ASSIGNMENT,
+				"string& f(const e_String&in)",
+				asFUNCTION(CScriptStringAssignEMPString),
+				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+			r = iengine->RegisterObjectBehaviour("string",
+				asBEHAVE_ADD_ASSIGN,
+				"string& f(const e_String&in)",
+				asFUNCTION(CScriptStringAddAssignEMPString),
+				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		}
+		catch (Rocket::AngelScript::Exception &)
+		{
+			return;
+		}
+
 		RegisterSingletonType<GUI>("GUI", iengine);
 
-		int r;
 		r = iengine->RegisterObjectMethod(
 			"GUI", "void setMouseShowPeriod(uint)",
 			asMETHOD(GUI, SetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -304,11 +322,29 @@ namespace FusionEngine
 		r = iengine->RegisterObjectMethod(
 			"GUI", "bool debuggerIsVisible() const",
 			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+				"GUI", "Context& getContext()",
+				asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void GUI::initScripting(FusionEngine::ScriptingEngine *eng)
+	void GUI::SetModule(FusionEngine::ScriptingEngine *manager, const char *module_name)
 	{
-		eng->RegisterGlobalObject("GUI gui", this);
+		m_ModuleConnection.disconnect();
+		m_ModuleConnection = manager->SubscribeToModule(module_name, boost::bind(&GUI::onModuleBuild, this, _1) );
+	}
+
+	void GUI::initScripting(FusionEngine::ScriptingEngine *manager)
+	{
+		manager->RegisterGlobalObject("GUI gui", this);
+	}
+
+	void GUI::onModuleBuild(BuildModuleEvent& event)
+	{
+		if (event.type == BuildModuleEvent::PreBuild)
+		{
+			Rocket::AngelScript::InitialiseModule(event.manager->GetEnginePtr(), event.module_name);
+		}
 	}
 
 	void GUI::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
@@ -337,6 +373,12 @@ namespace FusionEngine
 			break;
 		case CL_MOUSE_XBUTTON2:
 			m_Context->ProcessMouseButtonDown(4, modifier);
+			break;
+		case CL_MOUSE_WHEEL_UP:
+			m_Context->ProcessMouseWheel(-1, modifier);
+			break;
+		case CL_MOUSE_WHEEL_DOWN:
+			m_Context->ProcessMouseWheel(1, modifier);
 			break;
 		}
 
@@ -370,10 +412,10 @@ namespace FusionEngine
 			m_Context->ProcessMouseButtonUp(4, modifier);
 			break;
 		case CL_MOUSE_WHEEL_UP:
-			m_Context->ProcessMouseWheel(1, modifier);
+			m_Context->ProcessMouseWheel(0, modifier);
 			break;
 		case CL_MOUSE_WHEEL_DOWN:
-			m_Context->ProcessMouseWheel(-1, modifier);
+			m_Context->ProcessMouseWheel(0, modifier);
 			break;
 		}
 
@@ -435,6 +477,11 @@ namespace FusionEngine
 			modifier |= Rocket::Core::Input::KM_SHIFT;
 
 		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), modifier);
+	}
+
+	void GUI::onResize(int x, int y)
+	{
+		m_Context->SetDimensions(EMP::Core::Vector2i(x, y));
 	}
 
 }

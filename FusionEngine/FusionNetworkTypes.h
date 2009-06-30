@@ -150,8 +150,8 @@ namespace FusionEngine
 		MTID_CHONE,
 		//@}
 
-		//! Channel messages will have IDs greater than this
-		MTID_CHANNEL
+		//! Max type ID
+		MTID_MAX
 	};
 
 }

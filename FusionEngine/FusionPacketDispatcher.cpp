@@ -35,13 +35,29 @@ namespace FusionEngine
 {
 
 	PacketDispatcher::PacketDispatcher()
-		: m_Network(NULL)
+		: m_Network(NULL),
+		m_DefaultPacketHandler(NULL)
 	{
 	}
 
 	PacketDispatcher::PacketDispatcher(Network *net)
-		: m_Network(net)
+		: m_Network(net),
+		m_DefaultPacketHandler(NULL)
 	{
+	}
+
+	PacketDispatcher::~PacketDispatcher()
+	{
+	}
+
+	void PacketDispatcher::SetNetwork(Network *net)
+	{
+		m_Network = net;
+	}
+
+	void PacketDispatcher::SetDefaultPacketHandler(PacketHandler *handler)
+	{
+		m_DefaultPacketHandler = handler;
 	}
 
 	void PacketDispatcher::Run()
@@ -49,76 +65,81 @@ namespace FusionEngine
 		IPacket* packet = m_Network->Receive();
 		while (packet != NULL)
 		{
-			// Find the handler list for this channel
-			HandlerMap::iterator handlerIter = m_ChannelHandlers.find(packet->m_Channel);
-			if (handlerIter != m_ChannelHandlers.end())
-				(*handlerIter).second->ListHandlePacket(packet);
-
-			handlerIter = m_TypeHandlers.find(packet->m_Type);
-			if (handlerIter != m_TypeHandlers.end())
-				(*handlerIter).second->ListHandlePacket(packet);
+			// Find the handlers for this type
+			HandlerRange range = m_ChannelHandlers.equal_range(packet->GetType());
+			if (range.first != m_ChannelHandlers.end())
+			{
+				for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
+					it->second->HandlePacket(packet);
+			}
+			// If there are no handlers subscribed to the given type:
+			else if (m_DefaultPacketHandler != NULL)
+				m_DefaultPacketHandler->HandlePacket(packet);
 
 			packet = m_Network->Receive();
 		}
 	}
 
-	void PacketDispatcher::Subscribe(char channel, PacketHandler *handler)
+	void PacketDispatcher::Subscribe(char type, PacketHandler *handler)
 	{
-		// If this channel type hasn't been defined before we create a new list for it
-		std::pair<HandlerMap::iterator, bool> listHead =
-			m_ChannelHandlers.insert( HandlerMap::value_type(channel, handler) );
-		// Here the list has already been created, so we just add the new handler to the front of the list
-		if (!listHead.second)
-			(*(listHead.first)).second->push_front(handler);
+		m_ChannelHandlers.insert( HandlerMultiMap::value_type(type, handler) );
 	}
 
-	void PacketDispatcher::SubscribeToType(char type, PacketHandler *handler)
+	void PacketDispatcher::Unsubscribe(char type, PacketHandler *handler)
 	{
-		HandlerMap::iterator listHead = m_TypeHandlers.find(type);
-		// If this channel type hasn't been defined before we create a new list for it
-		if (listHead == m_TypeHandlers.end())
-			m_TypeHandlers.insert( HandlerMap::value_type(channel, handler) );
-		// Here the list has already been created, so we just add the new handler to the front of the list
-		else
-			(*listHead).second->push_front(handler);
-	}
-
-	void PacketDispatcher::Unsubscribe(char channel, PacketHandler *handler)
-	{
-		// Make sure the list isn't invalidated by this change
-		HandlerMap::iterator listHead = m_ChannelHandlers.find(channel);
-		if (listHead != m_ChannelHandlers.end())
-			(*listHead).second = (*listHead).second->getNext();
-
-		// Remove the handler from the list
-		handler->remove();
+		HandlerRange range = m_ChannelHandlers.equal_range(type);
+		if (range.first != m_ChannelHandlers.end())
+		{
+			for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
+			{
+				if (it->second == handler)
+				{
+					m_ChannelHandlers.erase(it);
+					break;
+				}
+			}
+		}
 	}
 
 
 
 	ListPacketDispatcher::ListPacketDispatcher()
-		: m_Network(NULL)
+		: m_Network(NULL),
+		m_DefaultPacketHandler(NULL)
 	{
+		memset(&m_ChannelLists[0], NULL, s_NumChannelTypes);
 	}
 
 	ListPacketDispatcher::ListPacketDispatcher(Network *net)
-		: m_Network(net)
+		: m_Network(net),
+		m_DefaultPacketHandler(NULL)
 	{
+		memset(&m_ChannelLists[0], NULL, s_NumChannelTypes);
+	}
+
+	void ListPacketDispatcher::SetNetwork(FusionEngine::Network *net)
+	{
+		m_Network = net;
+	}
+
+	void ListPacketDispatcher::SetDefaultPacketHandler(PacketHandler *handler)
+	{
+		m_DefaultPacketHandler = handler;
 	}
 
 	void ListPacketDispatcher::Run()
 	{
-		Packet* packet = m_Network->Receive();
+		IPacket* packet = m_Network->Receive();
 		while (packet != NULL)
 		{
 			// Find the handler list for this channel
-			HandlerMap::iterator handlerIter = m_ChannelHandlers.find(packet->m_Channel);
-			if (handlerIter != m_ChannelHandlers.end())
-				(*handlerIter).second->ListHandlePacket(packet);
-
-			handlerIter = m_TypeHandlers.find(packet->m_Type);
-			if (handlerIter != m_TypeHandlers.end())
-				(*handlerIter).second->ListHandlePacket(packet);
+			PacketHandlerNode *node = m_ChannelLists[packet->GetType()-ID_USER_PACKET_ENUM];
+			if (node != NULL)
+			{
+				node->ListHandlePacket(packet);
+			}
+			else if (m_DefaultPacketHandler != NULL)
+				m_DefaultPacketHandler->HandlePacket(packet);
 
 			packet = m_Network->Receive();
 		}
@@ -126,34 +147,27 @@ namespace FusionEngine
 
 	void ListPacketDispatcher::Subscribe(char channel, PacketHandler *handler)
 	{
-		// If this channel type hasn't been defined before we create a new list for it
-		std::pair<HandlerMap::iterator, bool> listHead =
-			m_ChannelHandlers.insert( HandlerMap::value_type(channel, handler) );
-		// Here the list has already been created, so we just add the new handler to the front of the list
-		if (!listHead.second)
-			(*(listHead.first)).second->push_front(handler);
-	}
+		PacketHandlerNode *node = m_ChannelLists[channel-ID_USER_PACKET_ENUM];
+		if (node == NULL)
+			node = new PacketHandlerNode(handler);
 
-	void ListPacketDispatcher::SubscribeToType(char type, PacketHandler *handler)
-	{
-		HandlerMap::iterator listHead = m_TypeHandlers.find(type);
-		// If this channel type hasn't been defined before we create a new list for it
-		if (listHead == m_TypeHandlers.end())
-			m_TypeHandlers.insert( HandlerMap::value_type(channel, handler) );
-		// Here the list has already been created, so we just add the new handler to the front of the list
 		else
-			(*listHead).second->push_front(handler);
+			node->push_back(new PacketHandlerNode(handler));
 	}
 
 	void ListPacketDispatcher::Unsubscribe(char channel, PacketHandler *handler)
 	{
-		// Make sure the list isn't invalidated by this change
-		HandlerMap::iterator listHead = m_ChannelHandlers.find(channel);
-		if (listHead != m_ChannelHandlers.end())
-			(*listHead).second = (*listHead).second->getNext();
-
-		// Remove the handler from the list
-		handler->remove();
+		PacketHandlerNode *node = m_ChannelLists[channel-ID_USER_PACKET_ENUM];
+		while (node != NULL)
+		{
+			if (node->m_Handler == handler)
+			{
+				// Remove the node from this list
+				delete node;
+				break;
+			}
+			node = dynamic_cast<PacketHandlerNode*>( node->getNext() );
+		}
 	}
 
 }

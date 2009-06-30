@@ -9,6 +9,8 @@
 #include "../FusionEngine/FusionConsoleStdOutWriter.h"
 #include "../FusionEngine/FusionLogger.h"
 
+#include "../FusionEngine/FusionScriptedConsoleCommand.h"
+
 #include "../FusionEngine/FusionInputHandler.h"
 
 #include "../FusionEngine/FusionStateManager.h"
@@ -31,8 +33,8 @@
 
 #include "../FusionEngine/FusionXml.h"
 
-#include <Rocket/AngelScript/Core/ras_Core.h>
-#include <Rocket/AngelScript/Controls/ras_Controls.h>
+//#include <Rocket/AngelScript/Core/ras_Core.h>
+//#include <Rocket/AngelScript/Controls/ras_Controls.h>
 
 #include "../FusionEngine/scriptstring.h"
 
@@ -129,18 +131,16 @@ public:
 			//m_ResMan->RegisterScriptElements(m_ScriptManager);
 			console->RegisterScriptElements(m_ScriptManager);
 
+			RegisterScriptedConsoleCommand(m_ScriptManager->GetEnginePtr());
+
 			////////////////////////////
 			// GUI state & StateManager
-			//CL_OpenGLState state(dispWindow.get_gc());
-			//state.set_active(); // Makes sure GC is set correctly
-
 			GUI::Register(m_ScriptManager);
-			new GUI(dispWindow);
-			StateManager *stateman = new StateManager();
-			stateman->AddState(GUI::getSingletonPtr());
+			GUI *gui = new GUI(dispWindow);
+			SystemsManager *stateman = new SystemsManager();
+			stateman->AddSystem(GUI::getSingletonPtr());
 
-			asEngine->GetModule(0, asGM_ALWAYS_CREATE);
-			Rocket::AngelScript::InitialiseModule(asEngine, 0);
+			gui->SetModule(m_ScriptManager, "main");
 
 			////////////////
 			// Phys World
@@ -155,10 +155,11 @@ public:
 
 			//////////////////
 			// Load some code
-			std::string shipScript = OpenString_PhysFS(L"ship.as");
+			//std::string shipScript = OpenString_PhysFS(L"ship.as");
 			// Compile the code
-			m_ScriptManager->AddCode(shipScript, 0, "ship.as");
-			if (!m_ScriptManager->BuildModule(0))
+			//m_ScriptManager->AddCode(shipScript, "main", "ship.as");
+			m_ScriptManager->AddFile("ship.as", "main");
+			if (!m_ScriptManager->BuildModule("main"))
 			{
 				delete logger;
 				conWindow.display_close_message();
@@ -167,7 +168,7 @@ public:
 
 			/////////////////////////
 			// Get script references
-			mso_Ship = m_ScriptManager->CreateObject(0, "ship");
+			mso_Ship = m_ScriptManager->CreateObject("main", "ship");
 
 			ScriptUtils::Calling::Caller preload = mso_Ship.GetCaller("void Preload()");
 			preload();

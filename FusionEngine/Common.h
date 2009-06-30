@@ -33,6 +33,7 @@
 #define _DLL
 #endif
 // ClanLib
+#define WIN32_LEAN_AND_MEAN // If this isn't defined the 'interface' keyword causes problems (at least that seems to be what's happening.)
 #include <ClanLib/core.h>
 #include <ClanLib/application.h>
 #include <ClanLib/display.h>

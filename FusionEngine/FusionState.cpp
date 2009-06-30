@@ -29,28 +29,63 @@
 namespace FusionEngine
 {
 
-	StateMessage *FusionState::PopMessage()
+	SystemMessage *System::PopMessage()
 	{
 		if (m_Messages.empty())
 			return 0;
 
-		StateMessage *ret = m_Messages.front();
+		SystemMessage *ret = m_Messages.front();
 		m_Messages.pop_front();
 
 		return ret;
 	}
 
-	void FusionState::_pushMessage(StateMessage *m)
+	void System::PushMessage(SystemMessage *m)
 	{
 		m_Messages.push_back(m);
 	}
 
-	void FusionState::SetBlocking(bool blocking)
+	bool System::IsDependency(const std::string &system_name)
+	{
+		return m_Dependencies.find(system_name) != m_Dependencies.end();
+	}
+
+	void System::AddDependency(const std::string &system_name)
+	{
+		m_Dependencies.insert(system_name);
+	}
+
+	void System::RemoveDependency(const std::string &system_name)
+	{
+		m_Dependencies.erase(system_name);
+	}
+
+	void System::SetFlags(unsigned char flags)
+	{
+		m_StateFlags = flags;
+	}
+
+	void System::AddFlag(System::StateFlags flag)
+	{
+		m_StateFlags |= flag;
+	}
+
+	void System::RemoveFlag(System::StateFlags flag)
+	{
+		m_StateFlags ^= flag;
+	}
+
+	bool System::CheckFlag(System::StateFlags flag)
+	{
+		return (m_StateFlags & flag) == flag;
+	}
+
+	void System::SetBlocking(bool blocking)
 	{
 		m_Blocking = blocking;
 	}
 
-	bool FusionState::IsBlocking() const
+	bool System::IsBlocking() const
 	{
 		return m_Blocking;
 	}

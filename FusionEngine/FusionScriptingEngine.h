@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -34,18 +34,20 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
+// Inherited
 #include "FusionSingleton.h"
 
 // External
 #include <Calling/Caller.h>
 
-/// Fusion
+// Fusion
 #include "FusionBoostSignals2.h"
 
-#include "FusionScript.h"
+#include "FusionScriptModule.h"
+
 #include "FusionScriptVector.h"
 #include "FusionScriptReference.h"
+#include "FusionScriptPreprocessor.h"
 
 #include "FusionScriptTypeRegistrationUtils.h"
 
@@ -72,15 +74,79 @@ namespace FusionEngine
 			ctx->Abort();
 	}
 
+	struct DebugEvent
+	{
+		//! Reason for stopping
+		enum EventType
+		{
+			//! Context is in step-through mode
+			Step,
+			//! Breakpoint was hit
+			Breakpoint,
+			//! Exception was fired
+			Exception
+		};
+
+		EventType type;
+		ScriptingEngine *manager;
+		asIScriptContext *context;
+
+		int refCount;
+
+		void AddRef()
+		{
+			refCount++;
+		}
+
+		void Release()
+		{
+			if (--refCount == 0)
+				delete this;
+		}
+
+		int Resume()
+		{
+			return context->Execute();
+		}
+
+		int Abort()
+		{
+			return context->Abort();
+		}
+
+		int GetLine() const
+		{
+			return context->GetCurrentLineNumber();
+		}
+
+		int GetColumn() const
+		{
+			int column;
+			context->GetCurrentLineNumber(&column);
+			return column;
+		}
+
+		std::string GetExceptionMessage()
+		{
+			return context->GetExceptionString();
+		}
+	};
+
 	/*!
 	 * \brief
-	 * Provides scripting support, and access to it, for all FusionEngine objects.
+	 * Provides access to scripting for all FusionEngine objects.
+	 *
+	 * \todo Rename ScriptingEngine -> ScriptingManager
 	 *
 	 * \sa
 	 * Singleton
 	 */
 	class ScriptingEngine : public Singleton<ScriptingEngine>
 	{
+	public:
+		typedef bsig2::signal<void (DebugEvent&)> DebugSignalType;
+		typedef DebugSignalType::slot_type DebugSlotType;
+
 	public:
 		//! Basic constructor.
 		ScriptingEngine();
@@ -96,11 +162,30 @@ namespace FusionEngine
 		//! Registers a global object (type must already be registered)
 		void RegisterGlobalObject(const char *decl, void* ptr);
 
+		void Preprocess(std::string &script);
+
 		//! Adds code to the given module
 		bool AddCode(const std::string& script, const char *module, const char *section_name = "Script String");
 
+		//! Adds code from a file
+		bool AddFile(const std::string &filename, const char *module);
+
+		//! Returns the code for the given script section
+		/*!
+		* Loads data from file if the script section was loaded from a file
+		*/
+		std::string &GetCode(const char *module, const char *section);
+
+		void SetCode(const char *module, const char *section, std::string &code);
+
+		//! Rebuilds the given module using code modified for debugging
+		void DebugRebuild(const char *module);
+
 		//! Builds the given module
 		bool BuildModule(const char *module);
+
+		//! Subscribes to rebuild events from the given module
+		bsig2::connection SubscribeToModule(const char *module, Module::BuildModuleSlotType slot);
 
 		//! Executes the given funcion in a module.
 		/*!
@@ -530,7 +615,7 @@ namespace FusionEngine
 
 		UCScriptMethod GetClassMethod(ScriptClass& type, const std::string& signature);
 
-		//UCScriptMethod GetClassMethod(ScriptObject& type, const std::string& signature);
+		ModulePtr ScriptingEngine::GetModule(const char *module_name, asEGMFlags when = asGM_CREATE_IF_NOT_EXISTS);
 
 		//! Returns a global caller
 		ScriptUtils::Calling::Caller GetCaller(const char* module, const std::string &signature);
@@ -538,6 +623,45 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller GetCaller(const ScriptObject &object, const std::string &signature);
 
 		void ConnectToCaller(ScriptUtils::Calling::Caller &caller);
+
+		//! Enables the simple, built-in debug output
+		void EnableDebugOutput();
+		//! Disables the simple, built-in debug output
+		void DisableDebugOutput();
+		//! Returns true if debug output is enabled
+		bool DebugOutputIsEnabled();
+
+		bsig2::connection SubscribeToDebugEvents(DebugSlotType slot);
+
+		enum DebugModeFlags {
+			Disabled    = 0x0,
+			StepThrough = 0x1,
+			Breakpoints = 0x2,
+			Exceptions  = 0x4
+		};
+		void SetDebugMode(unsigned char flags);
+
+		//! Options for debug settings
+		struct DebugOptions
+		{
+			//! Default constructor
+			DebugOptions()
+				: storeCodeStrings(false)
+			{}
+			//! Store code passed as strings (in-memory)
+			/*
+			* If this setting is enabled, code added to modules with AddCode is
+			* stored so it can be shown in debugger output.
+			*/
+			bool storeCodeStrings;
+		}
+		m_DebugSettings;
+
+		void SetDebugOptions(const DebugOptions &settings);
+
+		void SetBreakpoint(const char* module, const char* section, int line);
+
+		static void printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, std::string &to);
 
 		//! Called when a script exception occors
 		void _exceptionCallback(asIScriptContext *ctx);
@@ -549,11 +673,69 @@ namespace FusionEngine
 		//! AngelScript Engine
 		asIScriptEngine *m_asEngine;
 
-		//ConnectionContainer m_CallerConnections;
-		//! Active contexts
-		//std::vector<asIScriptContext*> m_Contexts;
+		typedef std::tr1::unordered_map<const char*, ModulePtr> ModuleMap;
+		ModuleMap m_Modules;
+
+		typedef std::tr1::shared_ptr<ScriptPreprocessor> PreprocessorPtr;
+		typedef std::vector<PreprocessorPtr> PreprocessorArray;
+		PreprocessorArray m_Preprocessors;
 
 		unsigned int m_DefaultTimeout;
+
+		bool m_DebugOutput;
+		int m_DebugMode;
+
+		DebugSignalType SigDebug;
+
+		class ScriptSection
+		{
+		public:
+			virtual ~ScriptSection() {}
+			virtual std::string &GetCode() =0;
+		};
+		class StringScriptSection : public ScriptingEngine::ScriptSection
+		{
+		public:
+			StringScriptSection();
+			StringScriptSection(const std::string &code);
+
+			std::string &GetCode();
+
+			std::string m_Code;
+		};
+		class FileScriptSection : public ScriptingEngine::ScriptSection
+		{
+		public:
+			FileScriptSection();
+			FileScriptSection(const std::string &filename);
+
+			std::string &GetCode();
+
+			std::string m_Filename;
+			std::string m_Code;
+		};
+		typedef std::tr1::shared_ptr<ScriptSection> ScriptSectionPtr;
+		typedef std::tr1::unordered_map<std::string, ScriptSectionPtr> ScriptSectionMap;
+
+		ScriptSectionMap m_ScriptSections;
+
+		struct Breakpoint
+		{
+			int line;
+			const char *section_name;
+			const char *module_name;
+		};
+		friend bool operator ==(const Breakpoint &lhs, const Breakpoint &rhs);
+
+		struct hash_Breakpoint : public std::unary_function<Breakpoint, std::size_t>
+		{
+			std::size_t operator() (const Breakpoint &value) const;
+		};
+		typedef std::tr1::unordered_set<Breakpoint, hash_Breakpoint> BreakpointSet;
+
+		BreakpointSet m_Breakpoints;
+
+		int m_SectionSerial;
 
 	private:
 		//! Throws if the given return value of a SetArgX Fn indicates failure
@@ -698,12 +880,11 @@ namespace FusionEngine
 		//! Registers global methods and functions which scripts can use.
 		void registerTypes();
 
-		////! Registers methods useful to weapon scripts
-		//void registerWeaponMethods();
-		////! Registers methods to be used from the console
-		//void registerConsoleMethods();
-
+		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptingEngine *obj);
+		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(const std::string &decl, ScriptingEngine *obj);
 	};
+
+	bool operator ==(const ScriptingEngine::Breakpoint &lhs, const ScriptingEngine::Breakpoint &rhs);
 
 }
 

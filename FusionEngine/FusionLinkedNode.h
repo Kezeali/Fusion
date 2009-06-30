@@ -60,7 +60,7 @@ namespace FusionEngine
 		/*!
 		 * Removes this node from the list
 		 */
-		~LinkedNode( void )
+		virtual ~LinkedNode( void )
 		{
 			this->remove();
 		}
@@ -149,5 +149,7 @@ namespace FusionEngine
 		}
 
 	};
+
+}
 
 #endif

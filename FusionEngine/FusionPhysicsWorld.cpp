@@ -96,7 +96,7 @@ namespace FusionEngine
 	PhysicsWorld::PhysicsWorld()
 		: m_BitmaskRes(1),
 		m_Wrap(false),
-		m_Width(1), m_Height(1),
+		m_Width(2000.f), m_Height(2000.f),
 		m_DeactivationPeriod(100),
 		m_DeactivationVelocity(0.001f),
 		m_MaxVelocity(100.0f),
@@ -107,9 +107,46 @@ namespace FusionEngine
 		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
 		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
 
+		float widthPositive = m_Width * 0.5f;
+		float heightPositive = m_Height * 0.5f;
+
 		b2AABB worldAABB;
-		worldAABB.lowerBound.Set(-10000.0f, -10000.0f);
-		worldAABB.upperBound.Set(10000.0f, 10000.0f);
+		worldAABB.lowerBound.Set(-widthPositive, -heightPositive);
+		worldAABB.upperBound.Set(widthPositive, heightPositive);
+
+		b2Vec2 gravity(0.0f, 0.0f);
+		bool doSleep = true;
+
+		m_BxWorld = new b2World(worldAABB, gravity, doSleep);
+
+		m_ContactListener = new ContactListener(this);
+		m_BxWorld->SetContactListener(m_ContactListener);
+
+		m_DebugDraw = new DebugDraw();
+		m_BxWorld->SetDebugDraw(m_DebugDraw);
+	}
+
+	PhysicsWorld::PhysicsWorld(float width, float height)
+		: m_BitmaskRes(1),
+		m_Wrap(false),
+		m_Width(width), m_Height(height),
+		m_DeactivationPeriod(100),
+		m_DeactivationVelocity(0.001f),
+		m_MaxVelocity(100.0f),
+		m_RunningSimulation(false),
+		m_VelocityIterations(10),
+		m_PositionIterations(8)
+	{
+		m_DeactivationVelocitySquared = m_DeactivationVelocity * m_DeactivationVelocity;
+		m_MaxVelocitySquared = m_MaxVelocity * m_MaxVelocity;
+
+		float widthPositive = m_Width * 0.5f;
+		float heightPositive = m_Height * 0.5f;
+
+		b2AABB worldAABB;
+		worldAABB.lowerBound.Set(-widthPositive, -heightPositive);
+		worldAABB.upperBound.Set(widthPositive, heightPositive);
+
 		b2Vec2 gravity(0.0f, 0.0f);
 		bool doSleep = true;
 

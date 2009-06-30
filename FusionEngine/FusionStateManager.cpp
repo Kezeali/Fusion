@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -31,217 +31,258 @@
 namespace FusionEngine
 {
 
-	StateManager::StateManager()
+	SystemsManager::SystemsManager()
 	{
 	}
 
-	StateManager::~StateManager()
+	SystemsManager::~SystemsManager()
 	{
 		Clear();
 	}
 
-	bool StateManager::SetExclusive(SharedState state)
+	bool SystemsManager::SetExclusive(System *system)
 	{
 		// Try to initialise the new state
-		if (!state->Initialise())
+		if (!system->Initialise())
 			return false;
 
 		// Remove all the current states
-		if (!m_States.empty())
-		{
-			StateList::iterator it;
-			for (it = m_States.begin(); it != m_States.end(); ++it)
-			{
-				(*it)->CleanUp();
-			}
-			m_States.clear();
-		}
+		Clear();
 
 		// Add the new state if it managed to init.
 		//SharedState state_spt(state);
-		m_States.push_back(state);
+		m_Systems.push_back(system);
 
 		return true;
 	}
 
-	bool StateManager::RunNextQueueState()
+	//bool StateManager::RunNextQueueState()
+	//{
+	//	SharedState state = m_Queued.front();
+	//	m_Queued.pop_front();
+	//	return AddState(state);
+	//}
+
+	//bool StateManager::AddState(FusionState *state)
+	//{
+	//	// Make a shared ptr out of the given pointer and add it
+	//	//SharedState state_spt(state);
+	//	return AddState(SharedState(state) );
+	//}
+
+	//bool StateManager::AddState(SharedState state)
+	//{
+	//	// Try to initialise the state
+	//	if (!state->Initialise())
+	//		return false;
+
+	//	// Add the state if it managed to init.
+	//	m_States.push_back(state);
+
+	//	return true;
+	//}
+
+
+	//void StateManager::AddStateToQueue(FusionState *state)
+	//{
+	//	//SharedState spt_state(state);
+	//	m_Queued.push_back( SharedState(state) );
+	//}
+
+	//void StateManager::AddStateToQueue(SharedState state)
+	//{
+	//	m_Queued.push_back(state);
+	//}
+
+
+	//void StateManager::RemoveState(FusionState *state)
+	//{
+	//	bool blocking = false;
+
+	//	StateList::iterator it;
+	//	for (it = m_States.begin(); it != m_States.end(); ++it)
+	//	{
+	//		if (it->get() == state)
+	//		{
+	//			(*it)->CleanUp();
+	//			m_States.erase(it);
+	//		}
+	//		else
+	//			blocking |= (*it)->IsBlocking();
+	//	}
+
+	//	// If none of the states left over are blocking, we can run the next queued state
+	//	if (!blocking)
+	//		RunNextQueueState();
+	//}
+
+	//void StateManager::RemoveState(SharedState state)
+	//{
+	//	bool blocking = false;
+
+	//	StateList::iterator it;
+	//	for (it = m_States.begin(); it != m_States.end(); ++it)
+	//	{
+	//		// Compare pointers
+	//		if ((*it) == state)
+	//		{
+	//			(*it)->CleanUp();
+	//			m_States.erase(it);
+	//		}
+	//		else
+	//			// Check if any of the states NOT removed ARE blocking
+	//			blocking |= (*it)->IsBlocking();
+	//	}
+
+	//	// If none of the states left over are blocking, we can run the next queued state
+	//	if (!blocking)
+	//		RunNextQueueState();
+	//}
+
+
+	//void StateManager::RemoveStateFromQueue(FusionState *state)
+	//{
+	//	StateQueue::iterator it;
+	//	for (it = m_Queued.begin(); it != m_Queued.end(); ++it)
+	//	{
+	//		if (it->get() == state)
+	//		{
+	//			m_Queued.erase(it);
+	//			break;
+	//		}
+	//	}
+	//}
+
+	//void StateManager::RemoveStateFromQueue(SharedState state)
+	//{
+	//	StateQueue::iterator it;
+	//	for (it = m_Queued.begin(); it != m_Queued.end(); ++it)
+	//	{
+	//		if ((*it).get() == state.get())
+	//		{
+	//			m_Queued.erase(it);
+	//			break;
+	//		}
+	//	}
+	//}
+
+	bool SystemsManager::AddSystem(System *system)
 	{
-		SharedState state = m_Queued.front();
-		m_Queued.pop_front();
-		return AddState(state);
+		m_Systems.push_back(system);
+		return system->Initialise();
 	}
 
-	bool StateManager::AddState(FusionState *state)
+	void SystemsManager::RemoveSystem(System *system)
 	{
-		// Make a shared ptr out of the given pointer and add it
-		//SharedState state_spt(state);
-		return AddState(SharedState(state) );
-	}
-
-	bool StateManager::AddState(SharedState state)
-	{
-		// Try to initialise the state
-		if (!state->Initialise())
-			return false;
-
-		// Add the state if it managed to init.
-		m_States.push_back(state);
-
-		return true;
-	}
-
-
-	void StateManager::AddStateToQueue(FusionState *state)
-	{
-		//SharedState spt_state(state);
-		m_Queued.push_back( SharedState(state) );
-	}
-
-	void StateManager::AddStateToQueue(SharedState state)
-	{
-		m_Queued.push_back(state);
-	}
-
-
-	void StateManager::RemoveState(FusionState *state)
-	{
-		bool blocking = false;
-
-		StateList::iterator it;
-		for (it = m_States.begin(); it != m_States.end(); ++it)
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 		{
-			if (it->get() == state)
+			if ((*it) == system)
 			{
-				(*it)->CleanUp();
-				m_States.erase(it);
-			}
-			else
-				blocking |= (*it)->IsBlocking();
-		}
-
-		// If none of the states left over are blocking, we can run the next queued state
-		if (!blocking)
-			RunNextQueueState();
-	}
-
-	void StateManager::RemoveState(SharedState state)
-	{
-		bool blocking = false;
-
-		StateList::iterator it;
-		for (it = m_States.begin(); it != m_States.end(); ++it)
-		{
-			// Compare pointers
-			if ((*it) == state)
-			{
-				(*it)->CleanUp();
-				m_States.erase(it);
-			}
-			else
-				// Check if any of the states NOT removed ARE blocking
-				blocking |= (*it)->IsBlocking();
-		}
-
-		// If none of the states left over are blocking, we can run the next queued state
-		if (!blocking)
-			RunNextQueueState();
-	}
-
-
-	void StateManager::RemoveStateFromQueue(FusionState *state)
-	{
-		StateQueue::iterator it;
-		for (it = m_Queued.begin(); it != m_Queued.end(); ++it)
-		{
-			if (it->get() == state)
-			{
-				m_Queued.erase(it);
+				m_Systems.erase(it);
+				system->CleanUp();
+				delete system;
 				break;
 			}
 		}
 	}
 
-	void StateManager::RemoveStateFromQueue(SharedState state)
+	void SystemsManager::Clear()
 	{
-		StateQueue::iterator it;
-		for (it = m_Queued.begin(); it != m_Queued.end(); ++it)
+		if (!m_Systems.empty())
 		{
-			if ((*it).get() == state.get())
+			for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 			{
-				m_Queued.erase(it);
-				break;
+				System *system = *it;
+				system->CleanUp();
+				delete system;
 			}
+			m_Systems.clear();
 		}
+		//ClearQueue();
+
+		//ClearActive();
 	}
 
+	//void StateManager::ClearActive()
+	//{
+	//	if (!m_States.empty())
+	//	{
+	//		StateList::iterator it;
+	//		for (it = m_States.begin(); it != m_States.end(); ++it)
+	//		{
+	//			(*it)->CleanUp();
+	//		}
+	//		m_States.clear();
+	//	}
+	//}
 
-	void StateManager::Clear()
-	{
-		ClearQueue();
+	//void StateManager::ClearQueue()
+	//{
+	//	m_Queued.clear();
+	//}
 
-		ClearActive();
-	}
-
-	void StateManager::ClearActive()
-	{
-		if (!m_States.empty())
-		{
-			StateList::iterator it;
-			for (it = m_States.begin(); it != m_States.end(); ++it)
-			{
-				(*it)->CleanUp();
-			}
-			m_States.clear();
-		}
-	}
-
-	void StateManager::ClearQueue()
-	{
-		m_Queued.clear();
-	}
-
-	bool StateManager::Update(unsigned int split)
+	bool SystemsManager::Update(unsigned int split)
 	{
 		// If game should have quit, but for some reason update is being called again...
 		if (!m_KeepGoing)
 			return true; // ... breakout!
 
-
-		if (m_States.empty())
-			// All states have encountered errors or completed
-			if (m_Queued.empty())
-				// Nothing in queue - nothing to do
-				return false;
-			else
-				// Run the next queued state
-				RunNextQueueState();
-
-
-		StateList::iterator it;
-		for (it = m_States.begin(); it != m_States.end(); ++it)
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 		{
+			System *system = *it;
+
 			// Check state messages
-			StateMessage *m = (*it)->PopMessage();
-			while (m != 0)
+			SystemMessage *m = system->PopMessage();
+			while (m != NULL)
 			{
 				switch (m->GetType())
 				{
-				case StateMessage::ADDSTATE:
-					AddState(m->GetData());
+				//case SystemMessage::ADDSTATE:
+				//	AddState(m->GetData());
+				//	break;
+				//case SystemMessage::REMOVESTATE:
+				//	RemoveState(m->GetData());
+				//	break;
+				//case SystemMessage::QUEUESTATE:
+				//	AddStateToQueue(m->GetData());
+				//	break;
+				//case SystemMessage::UNQUEUESTATE:
+				//	RemoveStateFromQueue(m->GetData());
+				//	break;
+				//case SystemMessage::RUNNEXTSTATE:
+				//	RunNextQueueState();
+				//	break;
+
+				case SystemMessage::PAUSE:
+					if (m->IncludeSender())
+						system->AddFlag(System::PAUSE);
+					addFlagFor(m->GetTargets(), System::PAUSE);
 					break;
-				case StateMessage::REMOVESTATE:
-					RemoveState(m->GetData());
+				case SystemMessage::RESUME:
+					if (m->IncludeSender())
+						system->RemoveFlag(System::PAUSE);
+					removeFlagFor(m->GetTargets(), System::PAUSE);
 					break;
-				case StateMessage::QUEUESTATE:
-					AddStateToQueue(m->GetData());
+				case SystemMessage::STEP:
+					if (m->IncludeSender())
+						system->AddFlag(System::STEP);
+					addFlagFor(m->GetTargets(), System::STEP);
 					break;
-				case StateMessage::UNQUEUESTATE:
-					RemoveStateFromQueue(m->GetData());
+				case SystemMessage::STEPALL:
+					addFlagAll(System::STEP);
 					break;
-				case StateMessage::RUNNEXTSTATE:
-					RunNextQueueState();
+				case SystemMessage::PAUSEOTHERS:
+					addFlagForOthers(system, m->GetTargets(), System::PAUSE);
 					break;
-				case StateMessage::QUIT:
+				case SystemMessage::RESUMEOTHERS:
+					removeFlagForOthers(system, m->GetTargets(), System::PAUSE);
+					break;
+
+				case SystemMessage::HIDE:
+					removeFlagForOthers(system, m->GetTargets(), System::PAUSE);
+					break;
+
+				case SystemMessage::QUIT:
 					Clear();
 					m_KeepGoing = false;
 					break;
@@ -250,28 +291,128 @@ namespace FusionEngine
 				// Clean up
 				delete m;
 				// Get the next message
-				m = (*it)->PopMessage();
-			} // while (m != 0)
+				m = system->PopMessage();
+			}
 
-			// Try to update the state
-			(*it)->Update(split);
+			// If the system isn't paused or a step message was just received:
+			if (!system->CheckFlag(System::PAUSE) || system->CheckFlag(System::STEP))
+			{
+				system->Update(split);
+				// Clear step flag (in case it has been added, since we have now done the requested 'step')
+				system->RemoveFlag(System::STEP);
+			}
 		}
 
 		return true;
 	}
 
-	void StateManager::Draw()
+	void SystemsManager::Draw()
 	{
-		StateList::iterator it;
-		for (it = m_States.begin(); it != m_States.end(); ++it)
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 		{
-			(*it)->Draw();
+			System *system = *it;
+			if (!system->CheckFlag(System::HIDE))
+				system->Draw();
 		}
 	}
 
-	bool StateManager::KeepGoing() const
+	bool SystemsManager::KeepGoing() const
 	{
 		return m_KeepGoing;
+	}
+
+	void SystemsManager::setFlagsAll(int flags)
+	{
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
+		{
+			(*it)->SetFlags(flags);
+		}
+	}
+
+	void SystemsManager::addFlagAll(System::StateFlags flag)
+	{
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
+		{
+			(*it)->AddFlag(flag);
+		}
+	}
+
+	void SystemsManager::removeFlagAll(System::StateFlags flag)
+	{
+		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
+		{
+			(*it)->RemoveFlag(flag);
+		}
+	}
+
+	void SystemsManager::addFlagFor(const StringVector &targets, System::StateFlags flag)
+	{
+		for (StringVector::const_iterator target_it = targets.begin(), targets_end = targets.end(); target_it != targets_end; ++target_it)
+		{
+			for (SystemArray::iterator system_it = m_Systems.begin(), systems_end = m_Systems.end();
+				system_it != systems_end; ++system_it)
+			{
+				if (*target_it == (*system_it)->GetName())
+					(*system_it)->AddFlag(flag);
+			}
+		}
+	}
+
+	void SystemsManager::removeFlagFor(const StringVector &targets, System::StateFlags flag)
+	{
+		for (StringVector::const_iterator target_it = targets.begin(), targets_end = targets.end(); target_it != targets_end; ++target_it)
+		{
+			for (SystemArray::iterator system_it = m_Systems.begin(), systems_end = m_Systems.end();
+				system_it != systems_end; ++system_it)
+			{
+				if (*target_it == (*system_it)->GetName())
+					(*system_it)->RemoveFlag(flag);
+			}
+		}
+	}
+
+	void SystemsManager::addFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag)
+	{
+		for (SystemArray::iterator system_it = m_Systems.begin(), systems_end = m_Systems.end();
+			system_it != systems_end; ++system_it)
+		{
+			System *system = *system_it;
+			if (system != excluded_system)
+			{
+				// Check for the current systems's name in the exclusions
+				bool excluded = false;
+				for (StringVector::const_iterator exclude_it = excluded_targets.begin(), targets_end = excluded_targets.end();
+					exclude_it != targets_end; ++exclude_it)
+				{
+					if (system->GetName() == *exclude_it)
+						excluded = true;
+				}
+				if (!excluded)
+					system->AddFlag(flag);
+			}
+		}
+	}
+
+	void SystemsManager::removeFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag)
+	{
+		for (SystemArray::iterator system_it = m_Systems.begin(), systems_end = m_Systems.end();
+			system_it != systems_end; ++system_it)
+		{
+			System *system = *system_it;
+			if (system != excluded_system)
+			{
+				// Check for the current systems's name in the exclusions
+				bool excluded = false;
+				for (StringVector::const_iterator exclude_it = excluded_targets.begin(), targets_end = excluded_targets.end();
+					exclude_it != targets_end; ++exclude_it)
+				{
+					if (system->GetName() == *exclude_it)
+						excluded = true;
+				}
+				if (!excluded)
+					system->RemoveFlag(flag);
+			}
+		}
 	}
 
 }

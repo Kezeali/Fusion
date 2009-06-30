@@ -29,16 +29,77 @@
 
 //#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
+#include "FusionXML.h"
+#include "FusionScriptDebugPreprocessor.h"
+
 // Scripting extensions
+#include "FusionScriptedSlots.h"
 #include "FusionScriptVector.h"
 #include "scriptstring.h"
 #include "scriptmath.h"
 
+// External
+#include <boost/functional/hash.hpp>
+
+
 namespace FusionEngine
 {
 
+	////////////
+	// ScriptSection implementations
+	ScriptingEngine::StringScriptSection::StringScriptSection()
+	{}
+
+	ScriptingEngine::StringScriptSection::StringScriptSection(const std::string &code)
+		: m_Code(code)
+	{}
+
+	std::string &ScriptingEngine::StringScriptSection::GetCode()
+	{
+		return m_Code;
+	}
+
+	ScriptingEngine::FileScriptSection::FileScriptSection()
+	{}
+
+	ScriptingEngine::FileScriptSection::FileScriptSection(const std::string &filename)
+		: m_Filename(filename)
+	{}
+
+	std::string &ScriptingEngine::FileScriptSection::GetCode()
+	{
+		if (m_Code.empty())
+		{
+			OpenString_PhysFS(m_Code, fe_widen(m_Filename));
+		}
+		return m_Code;
+	}
+
+	/////////
+	// Breakpoint hasher
+	std::size_t ScriptingEngine::hash_Breakpoint::operator ()(const ScriptingEngine::Breakpoint &value) const 
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, value.section_name);
+		boost::hash_combine(seed, value.line);
+
+		return seed;
+	}
+
+	bool operator ==(const ScriptingEngine::Breakpoint &lhs, const ScriptingEngine::Breakpoint &rhs)
+	{
+		return lhs.line == rhs.line &&
+			std::strcmp(lhs.module_name, rhs.module_name) == 0 &&
+			std::strcmp(lhs.section_name, rhs.section_name) == 0;
+	}
+
+	//////////
+	// ScriptingManager
 	ScriptingEngine::ScriptingEngine()
-		: m_DefaultTimeout(g_ScriptDefaultTimeout)
+		: m_DefaultTimeout(g_ScriptDefaultTimeout),
+		m_DebugOutput(false),
+		m_DebugMode(0),
+		m_SectionSerial(0)
 	{
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -69,23 +130,88 @@ namespace FusionEngine
 		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
 	}
 
-	//! \todo LoadCode - load code file (and pass the filename as the script section name)
+	void ScriptingEngine::Preprocess(std::string &script)
+	{
+		ScriptPreprocessor::MarkedLines lines;
+		// TODO: find lines in the script that have the preprocessor marker in front of them (# or [x] or something...)
+		for (PreprocessorArray::iterator it = m_Preprocessors.begin(), end = m_Preprocessors.end();
+			it != end; ++it)
+		{
+			(*it)->Process(script, lines);
+		}
+	}
 
 	bool ScriptingEngine::AddCode(const std::string& script, const char *module, const char *section_name)
 	{
-		int r;
-		asIScriptModule* mod = m_asEngine->GetModule(module, asGM_CREATE_IF_NOT_EXISTS);
-		r = mod->AddScriptSection(section_name, script.c_str(), script.length());
+		if (!m_Preprocessors.empty())
+		{
+			std::string processedScript = script;
+			Preprocess(processedScript);
+
+			return GetModule(module)->AddCode(section_name, processedScript) >= 0;
+		}
+		else if (m_DebugSettings.storeCodeStrings)
+		{
+			std::pair<ScriptSectionMap::iterator, bool> check =
+				m_ScriptSections.insert( ScriptSectionMap::value_type(section_name, ScriptSectionPtr(new StringScriptSection(script))) );
+			while (!check.second)
+			{
+				std::ostringstream str;
+				str << section_name << m_SectionSerial++;
+				check =
+					m_ScriptSections.insert( ScriptSectionMap::value_type(str.str(), ScriptSectionPtr(new StringScriptSection(script))) );
+			}
+		}
+		// Copying is avoided if there are no preprocessors listed and
+		//  the debug option 'storeCodeStrings' is disabled
+		return GetModule(module)->AddCode(section_name, script) >= 0;
+	}
+
+	bool ScriptingEngine::AddFile(const std::string& filename, const char *module)
+	{
+		int r = -1;
+
+		// Load the script from the file
+		std::string script;
+		OpenString_PhysFS(script, fe_widen(filename));
+		// Preprocess the script
+		Preprocess(script);
+		// Add the script to the module
+		r = GetModule(module)->AddCode(filename, script);
+		// If the script was successfully added to the module, create a new
+		//  ScriptSection for it (these are used for stepping through code
+		//  in the debugger)
+		if (r >= 0)
+			m_ScriptSections[filename] = ScriptSectionPtr(new FileScriptSection(filename));
+
 		return r >= 0;
+	}
+
+	void ScriptingEngine::DebugRebuild(const char *module)
+	{
+		ModulePtr mod = GetModule(module, asGM_ONLY_IF_EXISTS);
+		if (mod == NULL) return;
+		const StringVector& names = mod->GetSectionNames();
+		for (StringVector::const_iterator it = names.begin(), end = names.end(); it != end; ++it)
+		{
+			ScriptSectionMap::iterator _where = m_ScriptSections.find(*it);
+			mod->AddCode(_where->first, _where->second->GetCode());
+		}
 	}
 
 	bool ScriptingEngine::BuildModule(const char* module)
 	{
-		asIScriptModule* mod = m_asEngine->GetModule(module);
+		//asIScriptModule* mod = m_asEngine->GetModule(module);
+		ModulePtr mod = GetModule(module, asGM_ONLY_IF_EXISTS);
 		// If the module doesn't exist, return false. Otherwise 
 		//  return true on success
 		if (mod == NULL) return false;
 		else return mod->Build() >= 0;
+	}
+
+	bsig2::connection ScriptingEngine::SubscribeToModule(const char *module, Module::BuildModuleSlotType slot)
+	{
+		return GetModule(module)->ConnectToBuild(slot);
 	}
 
 	ScriptReturn ScriptingEngine::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
@@ -252,6 +378,25 @@ namespace FusionEngine
 	//	return method;
 	//}
 
+	ModulePtr ScriptingEngine::GetModule(const char *module_name, asEGMFlags when)
+	{
+		ModuleMap::iterator _where = m_Modules.find(module_name);
+		if (_where != m_Modules.end()) // Return the existing wrapper
+		{
+			return _where->second;
+		}
+		else if (when != asGM_ONLY_IF_EXISTS) // Create a new Module wrapper
+		{
+			ModulePtr modulePtr(new Module(m_asEngine->GetModule(module_name, when)));
+			m_Modules[module_name] = modulePtr;
+			return modulePtr;
+		}
+		else
+		{
+			return ModulePtr();
+		}
+	}
+
 	ScriptUtils::Calling::Caller ScriptingEngine::GetCaller(const char * module_name, const std::string &signature)
 	{
 		ScriptUtils::Calling::Caller caller(m_asEngine->GetModule(module_name), signature.c_str());
@@ -266,31 +411,56 @@ namespace FusionEngine
 		return caller;
 	}
 
+	void ScriptingEngine::EnableDebugOutput()
+	{
+		m_DebugOutput = true;
+	}
+
+	void ScriptingEngine::DisableDebugOutput()
+	{
+		m_DebugOutput = false;
+	}
+
+	bool ScriptingEngine::DebugOutputIsEnabled()
+	{
+		return m_DebugOutput;
+	}
+
+	bsig2::connection ScriptingEngine::SubscribeToDebugEvents(ScriptingEngine::DebugSlotType slot)
+	{
+		return SigDebug.connect( slot );
+	}
+
+	void ScriptingEngine::SetDebugMode(unsigned char mode)
+	{
+		m_DebugMode = mode;
+	}
+
 	void ScriptingEngine::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
 	{
 		caller.ConnectExceptionCallback( boost::bind(&ScriptingEngine::_exceptionCallback, this, _1) );
-		//caller.ConnectLineCallback( boost::bind(&ScriptingEngine::_lineCallback, this, _1) );
+		caller.ConnectLineCallback( boost::bind(&ScriptingEngine::_lineCallback, this, _1) );
 	}
 
 	static const size_t maxPregenSpaces = 13;
-	static const char * spaces[maxPregenSpaces+1] = {
+	static const char * spaces[14] = {
 		"", " ", "  ", "   ", "    ", "     ", "      ", "       ",
 		"        ", "         ", "          ", "           ", "            ",
 		NULL
 	};
 
-	static void printCallstack(asIScriptEngine *const engine, asIScriptContext *const ctx, std::string &to)
+	void ScriptingEngine::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, std::string &to)
 	{
 		std::stringstream str;
 		for (int i = ctx->GetCallstackSize(); i > 0; i++)
 		{
-			if (i < maxPregenSpaces)
+			if (i <= maxPregenSpaces)
 			{
 				str << spaces[i];
 			}
 			else
 			{
-				str << spaces[maxPregenSpaces-1];
+				str << spaces[maxPregenSpaces];
 				for (int k = maxPregenSpaces; k < i ; ++k)
 					str << " ";
 			}
@@ -316,34 +486,83 @@ namespace FusionEngine
 
 		int funcId = ctx->GetExceptionFunction();
 		const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+		int column = 0;
 		desc += CL_StringHelp::text_to_local8(
-			cl_format("  in function: %1 (line %2)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber())
+			cl_format("  in function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
 			);
 		desc += CL_StringHelp::text_to_local8( 
-			cl_format("    in module: %1\n", function->GetModuleName())
+			cl_format("  in module:   %1\n", function->GetModuleName())
 			);
 		desc += CL_StringHelp::text_to_local8(
-			cl_format("   in section: %1\n", function->GetScriptSectionName())
+			cl_format("  in section:  %1\n", function->GetScriptSectionName())
 			);
 
-		//desc += "Call Trace:\n";
-		//printCallstack(engine, ctx, desc);
+		desc += "Call Trace (if available):\n";
+		printCallstack(engine, ctx, desc);
 
 		SendToConsole(desc);
+
+		if (m_DebugMode & Exceptions)
+		{
+			DebugEvent ev;
+			ev.type = DebugEvent::Exception;
+			ev.context = ctx;
+			ev.manager = this;
+			SigDebug(ev);
+		}
 	}
+
+	/*std::string ScriptingEngine::GetCurrentScriptSection(ctx)
+	{
+	}*/
 
 	void ScriptingEngine::_lineCallback(asIScriptContext *ctx)
 	{
-		int funcId = ctx->GetCurrentFunction();
-		int column, line = ctx->GetCurrentLineNumber(&column);
+		if (m_DebugMode & StepThrough)
+		{
+			ctx->Suspend();
 
-		asIScriptFunction *function = ctx->GetEngine()->GetFunctionDescriptorById(funcId);
+			DebugEvent ev;
+			ev.type = DebugEvent::Step;
+			ev.context = ctx;
+			ev.manager = this;
+			SigDebug(ev);
+		}
 
-		std::ostringstream str;
+		if (m_DebugMode & Breakpoints)
+		{
+			Breakpoint here;
+			here.module_name = ctx->GetCurrentModule();
 
-		str << "(" << line << "," << column << ")";
+			here.section_name = 
+				ctx->GetEngine()->GetModule(ctx->GetCurrentModule())->GetFunctionDescriptorById(ctx->GetCurrentFunction())->GetScriptSectionName();
 
-		SendToConsole("Executing: " + std::string(function->GetDeclaration(true)), str.str());
+			BreakpointSet::iterator _where = m_Breakpoints.find(here);
+			if (_where != m_Breakpoints.end())
+			{
+				ctx->Suspend();
+
+				DebugEvent ev;
+				ev.type = DebugEvent::Breakpoint;
+				ev.context = ctx;
+				ev.manager = this;
+				SigDebug(ev);
+			}
+		}
+
+		if (m_DebugOutput)
+		{
+			int funcId = ctx->GetCurrentFunction();
+			int column, line = ctx->GetCurrentLineNumber(&column);
+
+			asIScriptFunction *function = ctx->GetEngine()->GetFunctionDescriptorById(funcId);
+
+			std::ostringstream str;
+
+			str << "(" << line << "," << column << ")";
+
+			SendToConsole("Executing: " + std::string(function->GetDeclaration(true)), str.str());
+		}
 	}
 
 	void ScriptingEngine::_messageCallback(asSMessageInfo* msg)
@@ -361,67 +580,86 @@ namespace FusionEngine
 	{
 		asIScriptModule *mod = m_asEngine->GetModule(module, asGM_ONLY_IF_EXISTS);
 		if (mod == NULL)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::getModuleOrThrow", "There is no module with the requested name");
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingManager::getModuleOrThrow", "There is no module with the requested name");
 		return mod;
+	}
+
+	ScriptedSlotWrapper* ScriptingEngine::Scr_ConnectDebugSlot(const std::string &decl, ScriptingEngine *obj)
+	{
+		asIScriptContext *context = asGetActiveContext();
+		if (context != NULL)
+		{
+			// Make sure the callback has the right param
+			if (decl.find("(DebugEvent@)") == std::string::npos)
+			{
+				context->SetException(("Passed callback '"+decl+"' has the wrong signature - should be: 'void somefn(DebugEvent@)'").c_str());
+				return NULL;
+			}
+			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
+
+			bsig2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+			slot->HoldConnection(c);
+
+			return slot;
+		}
+
+		return NULL;
+	}
+
+	ScriptedSlotWrapper* ScriptingEngine::Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptingEngine *obj)
+	{
+		ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(slot_object, "void ProcessEvent(DebugEvent@)");
+
+		bsig2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+		slot->HoldConnection(c);
+
+		return slot;
 	}
 
 	void ScriptingEngine::registerTypes()
 	{
+		int r;
+
 		// Register types
 		RegisterScriptMath(m_asEngine);
 		RegisterScriptString(m_asEngine);
 		RegisterScriptStringUtils(m_asEngine);
 		Scripting::RegisterScriptVector(m_asEngine);
 
-		//RegisterScriptString(m_asEngine);
+		ScriptedSlotWrapper::Register(m_asEngine);
 
-		//m_asEngine->RegisterGlobalProperty("g_Environment", Environment::getSingletonPtr());
+		//RefCounted::RegisterType<DebugEvent>(m_asEngine, "DebugEvent");
 
-		//! \todo Console, etc methods should be registered by the relavant classes. Weapons now fall under Entity, so there are no relavant methods to be registered for Weapons only
+		// Listener interface
+		//r = m_asEngine->RegisterInterface("IDebugListener"); FSN_ASSERT(r >= 0);
+		//r = m_asEngine->RegisterInterfaceMethod("IDebugListener", "void ProcessEvent(DebugEvent@)");
 
-		// Register functions
-		//registerWeaponMethods();
-		//registerConsoleMethods();
+		RegisterSingletonType<ScriptingEngine>("ScriptManager", m_asEngine);
+		r = m_asEngine->RegisterObjectMethod(
+			"ScriptManager", "void enableDebugOutput()",
+			asMETHOD(ScriptingEngine, EnableDebugOutput),
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = m_asEngine->RegisterObjectMethod(
+			"ScriptManager", "void disableDebugOutput()",
+			asMETHOD(ScriptingEngine, DisableDebugOutput),
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = m_asEngine->RegisterObjectMethod(
+			"ScriptManager", "void debugOutputIsEnabled(bool)",
+			asMETHOD(ScriptingEngine, DebugOutputIsEnabled),
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		//r = m_asEngine->RegisterObjectMethod(
+		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(const string&in)",
+		//	asFUNCTION(ScriptingEngine::Scr_ConnectDebugSlot),
+		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		//r = m_asEngine->RegisterObjectMethod(
+		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(IDebugListener@)",
+		//	asFUNCTION(ScriptingEngine::Scr_ConnectDebugSlot),
+		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		RegisterGlobalObject("ScriptManager scriptManager", this);
 	}
-
-	//void ScriptingEngine::RegisterScript(Script *script, const char *module)
-	//{
-	//	int r;
-	//	r = m_asEngine->AddScriptSection(module, 0, script->GetScript().c_str(), script->GetScript().length());
-	//	if (r >= 0)
-	//	{
-	//		script->_setModule(module);
-	//		script->_notifyRegistration();
-	//	}
-	//}
-
-
-	//void ScriptingEngine::registerConsoleMethods()
-	//{
-	//	int r;
-
-	//	r = m_asEngine->BeginConfigGroup(g_ASConfigConsole.c_str()); cl_assert( r >= 0 );
-	//	{
-	//		if( !strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-	//		{
-	//			r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectiles), asCALL_CDECL); cl_assert( r >= 0 );
-
-	//			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectile), asCALL_CDECL); cl_assert( r >= 0 );
-
-	//			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForce), asCALL_CDECL); cl_assert( r >= 0 );
-	//			r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForce), asCALL_CDECL); cl_assert( r >= 0 );
-	//		}
-	//		else
-	//		{
-	//			r = m_asEngine->RegisterGlobalFunction("GetProjectileList(uint16)", asFUNCTION(CON_ListProjectilesG), asCALL_CDECL); cl_assert( r >= 0 );
-
-	//			r = m_asEngine->RegisterGlobalFunction("DetonateProjectile(uint16)", asFUNCTION(SCR_DetonateProjectileG), asCALL_GENERIC); cl_assert( r >= 0 );
-	//			
-	//			r = m_asEngine->RegisterGlobalFunction("ApplyEngineForce(uint16)", asFUNCTION(SCR_ApplyEngineForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-	//			r = m_asEngine->RegisterGlobalFunction("ApplyForce(uint16, Vector)", asFUNCTION(SCR_ApplyForceG), asCALL_GENERIC); cl_assert( r >= 0 );
-	//		}
-	//	}
-	//	r = m_asEngine->EndConfigGroup(); cl_assert( r >= 0 );
-	//}
 
 }

@@ -89,7 +89,7 @@ namespace FusionEngine
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
 
 		const int segs = 16;
-		const float32 coef = 2.0*s_pi / (float32)segs;
+		const float32 coef = 2.0f*s_pi / (float32)segs;
 
 		CL_Vec2f *positions = new CL_Vec2f[segs + 1];
 		for(int n = 0; n <= segs; n++)
@@ -116,7 +116,7 @@ namespace FusionEngine
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
 
 		const int segs = 16;
-		const float32 coef = 2.0*s_pi / (float32)segs;
+		const float32 coef = 2.0f*s_pi / (float32)segs;
 
 		const float32 angle = atanf(axis.y / axis.x);
 

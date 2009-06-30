@@ -76,7 +76,7 @@ namespace FusionEngine
 
 	typedef ScriptArgument Arg;
 
-	//! Stores execution state data
+	//! Stores execution state
 	class ScriptContext
 	{
 		// So I can be lazy (may not be used, but just in case):
@@ -162,7 +162,7 @@ namespace FusionEngine
 
 	typedef ScriptMethod UCScriptMethod;
 
-	//! Stores script object data
+	//! Stores a script object
 	/*!
 	 * \sa ScriptingEngine
 	 */
@@ -200,7 +200,8 @@ namespace FusionEngine
 		//ScriptingEngine *m_Engine;
 	};
 
-	//! Stores script type data
+
+	//! Stores a script class
 	/*!
 	 * \sa ScriptingEngine
 	 */
