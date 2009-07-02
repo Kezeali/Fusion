@@ -581,6 +581,10 @@
 				RelativePath="..\FusionEngine\scriptstdstring.h"
 				>
 			</File>
+			<File
+				RelativePath="..\FusionEngine\scriptstdvector.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

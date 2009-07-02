@@ -37,11 +37,14 @@
 
 #include "FusionBoostSignals2.h"
 
-/// Inherited
+// Inherited
 #include "FusionSingleton.h"
 
-/// Fusion
+// Fusion
 //#include "FusionCircularStringBuffer.h"
+
+// External
+#include <containers/structured_map.hpp>
 
 namespace FusionEngine
 {
@@ -64,15 +67,28 @@ namespace FusionEngine
 	class Console : public Singleton<Console>
 	{
 	public:
-		//! Basic constructor
-		Console();
-
-	public:
 		//! Lines in the console
 		//typedef std::list<std::string> ConsoleLines;
 
 		typedef boost::function<std::string (const StringVector&)> CommandCallback;
-		typedef std::tr1::unordered_map<std::string, CommandCallback> CommandCallbackMap;
+		typedef boost::function<std::string (int, const std::string&)> AutocompleteCallback;
+		struct CommandFunctions
+		{
+			CommandCallback callback;
+			AutocompleteCallback autocomplete;
+		};
+		typedef std::tr1::unordered_map<std::string, CommandFunctions> CommandCallbackMap;
+
+		struct CommandHelp
+		{
+			std::string helpText;
+			// Short descriptions of each argument - these may be printed in the
+			//  command entry area of a console UI to indicate the expected inputs
+			StringVector argumentNames;
+		};
+		// Used for auto-complete (hence useage of map rather than unordered_map)
+		//  and getting / listing help strings
+		typedef containers::structured_map<std::string, CommandHelp> CommandHelpMap;
 
 		//! Message header types
 		enum MessageType {
@@ -80,6 +96,10 @@ namespace FusionEngine
 			MTERROR,
 			MTWARNING
 		};
+
+	public:
+		//! Basic constructor
+		Console();
 
 	public:
 		//! Returns the exception marker
@@ -108,8 +128,33 @@ namespace FusionEngine
 		 */
 		void Add(const std::string& heading, const std::string &message);
 
+		//! This member is bound as a console command.
+		/*
+		* Prints the names of all the bound console commands. If a
+		* specific command is given as an arg, the help string for
+		* that command is printed.
+		*/
+		std::string CC_PrintCommandHelp(const StringVector &args);
+
 		//! Binds the given callback to the given command
 		void BindCommand(const std::string &command, CommandCallback callback);
+		//! Binds the given command with an autocomplete fn.
+		void BindCommand(const std::string &command, CommandCallback callback, AutocompleteCallback autocomplete);
+		//! Binds a command given the passed definition
+		void BindCommand(const std::string &command, const CommandFunctions &functions, const CommandHelp &help);
+
+		//! Sets the help text for the given command
+		void SetCommandHelpText(const std::string &command, const std::string &help_text, const StringVector &arg_names);
+
+		//! Returns commands which begin with the given string
+		void AutocompleteCommand(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results = 0) const;
+
+		//! Finds the command name closest to the given one
+		/*
+		* If the autocomplete results aren't satisfactory, this can
+		* be used to provide command suggestions to the user.
+		*/
+		const std::string &ClosestCommand(const std::string &command) const;
 
 		//! Runs the given command.
 		/*!
@@ -179,6 +224,7 @@ namespace FusionEngine
 		std::string m_Buffer;
 
 		CommandCallbackMap m_Commands;
+		CommandHelpMap m_CommandHelp;
 
 		//size_t m_MaxData;
 		//! Lists all the data which has been added to the console.

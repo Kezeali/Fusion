@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <math.h>
+#include <stdlib.h>
 #include <string.h>
 #include "scriptmath.h"
 
@@ -26,11 +27,19 @@ double fraction(double v)
 }
 #endif
 
+float randf()
+{
+	return rand() * (1.f / RAND_MAX);
+}
+
 void RegisterScriptMath_Native(asIScriptEngine *engine)
 {
 	int r;
 
 #if AS_USE_FLOAT
+	// Random number generators
+	r = engine->RegisterGlobalFunction("void seed_rand(uint)", asFUNCTION(srand), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction("float rand()", asFUNCTION(randf), asCALL_CDECL); assert( r >= 0 );
 	// Trigonometric functions
 	r = engine->RegisterGlobalFunction("float cos(float)", asFUNCTION(cosf), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("float sin(float)", asFUNCTION(sinf), asCALL_CDECL); assert( r >= 0 );

@@ -37,11 +37,11 @@ public:
 	CScriptString &operator+=(const CScriptString &other);
 	friend CScriptString *operator+(const CScriptString &a, const CScriptString &b);
 
-	bool ToBool() const;
-	int ToInt() const;
-	unsigned int ToUInt() const;
-	float ToFloat() const;
-	double ToDouble() const;
+	bool ToBool(bool default_value = false) const;
+	int ToInt(int default_value = 0) const;
+	unsigned int ToUInt(unsigned int default_value = 0) const;
+	float ToFloat(float default_value = 0.0f) const;
+	double ToDouble(double default_value = 0.0) const;
 
 	std::string buffer;
 

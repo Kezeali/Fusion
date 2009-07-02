@@ -417,29 +417,83 @@ static void StringCharAt_Generic(asIScriptGeneric *gen)
 //------------
 // conversion
 //------------
-bool CScriptString::ToBool() const
+template <typename T>
+T ParseValueOrDefault(const std::string &str, const T &default_value)
 {
-	return boost::lexical_cast<bool>(buffer);
+	try
+	{
+		return boost::lexical_cast<T>(str);
+	}
+	catch (boost::bad_lexical_cast&)
+	{
+		return default_value;
+	}
+
+	return default_value;
 }
 
-int CScriptString::ToInt() const
+template <typename T>
+T StringParseValue(CScriptString &str)
 {
-	return boost::lexical_cast<int>(buffer);
+	try
+	{
+		return boost::lexical_cast<T>(str.buffer);
+	}
+	catch (boost::bad_lexical_cast &ex)
+	{
+		asIScriptContext *ctx = asGetActiveContext();
+		if (ctx != NULL)
+		{
+			std::string message =
+				"Failed to parse " + std::string(ex.target_type().name()) + " value from string."
+				" Consider using one of the exception-safe conversion functions,"
+				" e.g. string::parseInt instead of string::toInt."
+				" The string's current value is: " + str.buffer;
+			ctx->SetException(message.c_str());
+		}
+	}
+
+	return T();
 }
 
-unsigned int CScriptString::ToUInt() const
+template <typename T>
+bool StringParseValue_Checked(T& result, CScriptString &str)
 {
-	return boost::lexical_cast<unsigned int>(buffer);
+	try
+	{
+		result = boost::lexical_cast<T>(str.buffer);
+	}
+	catch (boost::bad_lexical_cast &)
+	{
+		return false;
+	}
+
+	return true;
 }
 
-float CScriptString::ToFloat() const
+bool CScriptString::ToBool(bool default_value) const
 {
-	return boost::lexical_cast<float>(buffer);
+	return ParseValueOrDefault<bool>(buffer, default_value);
 }
 
-double CScriptString::ToDouble() const
+int CScriptString::ToInt(int default_value) const
 {
-	return boost::lexical_cast<double>(buffer);
+	return ParseValueOrDefault<int>(buffer, default_value);
+}
+
+unsigned int CScriptString::ToUInt(unsigned int default_value) const
+{
+	return ParseValueOrDefault<unsigned int>(buffer, default_value);
+}
+
+float CScriptString::ToFloat(float default_value) const
+{
+	return ParseValueOrDefault<float>(buffer, default_value);
+}
+
+double CScriptString::ToDouble(double default_value) const
+{
+	return ParseValueOrDefault<double>(buffer, default_value);
 }
 
 //-----------------------
@@ -599,11 +653,23 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 
 	// TODO: Add explicit type conversion via constructor and value cast
 
-	r = engine->RegisterObjectMethod("string", "bool toBool() const", asMETHOD(CScriptString,ToBool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "int toInt() const", asMETHOD(CScriptString,ToInt), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "uint toUInt() const", asMETHOD(CScriptString,ToUInt), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "float toFloat() const", asMETHOD(CScriptString,ToFloat), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "double toDouble() const", asMETHOD(CScriptString,ToDouble), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool toBool() const", asFUNCTION(StringParseValue<bool>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int toInt() const", asFUNCTION(StringParseValue<int>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "uint toUInt() const", asFUNCTION(StringParseValue<unsigned int>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "float toFloat() const", asFUNCTION(StringParseValue<float>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "double toDouble() const", asFUNCTION(StringParseValue<double>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("string", "bool toBool(bool) const", asMETHODPR(CScriptString,ToBool,(bool) const,bool), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int toInt(int) const", asMETHODPR(CScriptString,ToInt,(int) const,int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "uint toUInt(uint) const", asMETHODPR(CScriptString,ToUInt,(unsigned int) const,unsigned int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "float toFloat(float) const", asMETHODPR(CScriptString,ToFloat,(float) const,float), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "double toDouble(double) const", asMETHODPR(CScriptString,ToDouble,(double) const,double), asCALL_THISCALL); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("string", "bool parseBool(bool&out) const", asFUNCTIONPR(StringParseValue_Checked, (bool&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseInt(int&out) const", asFUNCTIONPR(StringParseValue_Checked, (int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseUInt(uint&out) const", asFUNCTIONPR(StringParseValue_Checked, (unsigned int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseFloat(float&out) const", asFUNCTIONPR(StringParseValue_Checked, (float&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseDouble(double&out) const", asFUNCTIONPR(StringParseValue_Checked, (double&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Automatic conversion from values
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ASSIGNMENT, "string &f(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );

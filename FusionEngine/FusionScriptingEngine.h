@@ -661,7 +661,7 @@ namespace FusionEngine
 
 		void SetBreakpoint(const char* module, const char* section, int line);
 
-		static void printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, std::string &to);
+		static void printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, int current_func, std::string &to);
 
 		//! Called when a script exception occors
 		void _exceptionCallback(asIScriptContext *ctx);

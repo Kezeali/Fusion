@@ -98,14 +98,116 @@ void OnConsoleEnterClick(Event& ev)
 	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
 	FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("textbox_element")) );
 	string command = input.GetValue();
+	console.println(command);
 	console.interpret(command);
 	input.SetValue(e_String(""));
 }
 
-string CC_test()
+int correctNumber = 0;
+
+string CC_startGuess(const StringArray &in args)
 {
-	console.println("test: "/* + args[0]*/);
+	console.println("Guess a number between 1 and 100");
+	correctNumber = rand() * 100 + 1;
+	return "";
+}
+
+string CC_takeGuess(const StringArray &in args)
+{
+	if (args.size() >= 2)
+	{
+		int guess;
+		bool validGuess = args[1].parseInt(guess);
+		if (validGuess)
+		{
+			if (guess == correctNumber)
+				return "You Win!";
+			else if (guess < correctNumber)
+				return "Try higher";
+			else if (guess > correctNumber)
+				return "Try lower";
+		}
+	}
+
+	return "Guess a number";
+}
+
+void anotherFunc(Vector value)
+{
+	string hi = "A divide-by-zero exception should occor here";
+	float error = value.length() / value.get_y();
+}
+
+bool anotherFunc(int number, int zero)
+{
+	Vector@ vec = @Vector(number, zero);
+	anotherFunc(vec);
+	console.println("Shouldn't get here");
+	return true;
+}
+
+bool anotherFunc(string arg)
+{
+	return anotherFunc(arg.length(), 0);
+}
+
+string CC_test(const StringArray &in args)
+{
+	console.println("test: ");
+	if (args.size() == 2)
+		args[1].toInt();
+	if (args.size() >= 3)
+		anotherFunc(args[2]);
 	return "hi";
+}
+
+string CC_echo(const StringArray &in args)
+{
+	if (args.size() >= 2)
+		return args[1];
+
+	return "";
+}
+
+string CC_longName(const StringArray &in args)
+{
+	console.println("long name: " + args[0]);
+	return "";
+}
+
+// Binds a command with callback and Help text (H)
+void CCBind_H(const string &in command, const string &in callback, const string &in help_text)
+{
+	console.bindCommand(command, callback);
+	console.setCommandHelpText(command, help_text);
+}
+
+// Binds a command with callback and Argument names (Args)
+void CCBind_Args(const string &in command, const string &in callback, const string &in argument_names)
+{
+	console.bindCommand(command, callback);
+	console.setCommandHelpText(command, "", argument_names);
+}
+
+// Binds a command with callback, Help text and Argument names (HA)
+void CCBind_HA(const string &in command, const string &in callback, const string &in help_text, const string &in argument_names)
+{
+	console.bindCommand(command, callback);
+	console.setCommandHelpText(command, help_text, argument_names);
+}
+
+// Binds a command with callback, Auto-correct callback, Help text and Argument names (AHA)
+void CCBind_AHA(const string &in command, const string &in callback, const string &in autocorrect, const string &in help_text, const string &in argument_names)
+{
+	console.bindCommand(command, callback, autocorrect);
+	console.setCommandHelpText(command, help_text, argument_names);
+}
+
+// Binds a command with callback, Auto-correct callback and Argument names (AA)
+void CCBind_AA(const string &in command, const string &in callback, const string &in autocorrect, const string &in argument_names)
+{
+	console.bindCommand(command, callback, autocorrect);
+	console.setCommandHelpText(command, "", argument_names);
 }
 
 class ship
@@ -225,10 +327,27 @@ class ship
 
 			Element@ enterElement = document.GetElementById(e_String("enter_command"));
 			enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
+			@enterElement = document.GetElementById(e_String("textbox_element"));
+			enterElement.AddEventListener(e_String("submit"), e_String("void OnConsoleEnterClick(Event& ev)"));
 
-			console.bindCommand("test", "string CC_test()");
+			console.bindCommand("test", "string CC_test(const StringArray &in args)");
+			console.bindCommand("my_cool_commandle", "string CC_longName(const StringArray &in args)");
+			console.bindCommand("my_cool_commandlay", "string CC_longName(const StringArray &in args)");
+			console.bindCommand("doolp_compila_fizzle_topla_bick", "string CC_longName(const StringArray &in args)");
+			console.bindCommand("doSomethingPlz", "string CC_longName(const StringArray &in args)");
+
+			CCBind_HA("echo", "CC_echo",
+				"Writes whatever you type after it to the console", "[text] [...]");
+
+			CCBind_H("play", "string CC_startGuess(const StringArray &in args)", "Play a guessing game");
+			CCBind_HA("guess", "string CC_takeGuess(const StringArray &in args)",
+				"Take a guess at the guessing game. Enter the command 'play' first.", "number");
+			//console.bindCommand("play", "string CC_startGuess(const StringArray &in args)");
+			//console.bindCommand("guess", "string CC_takeGuess(const StringArray &in args)");
 		}
 		context.LoadMouseCursor(e_String("gui/cursor.rml"));
+
+		first = true;
 	}
 	void DebugOutput()
 	{
@@ -245,8 +364,14 @@ class ship
 		//imgBody.draw(p.x, p.y, physBody.get_angle());
 	}
 	uint runningtime;
+	bool first;
 	void Simulate(uint dt)
 	{
+		if(first)
+		{
+			seed_rand(dt);
+			first = false;
+		}
 		if (runningtime < 2000)
 		{
 			runningtime+=dt;

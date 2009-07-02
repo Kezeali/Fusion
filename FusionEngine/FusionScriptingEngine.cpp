@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -37,6 +37,7 @@
 #include "FusionScriptVector.h"
 #include "scriptstring.h"
 #include "scriptmath.h"
+#include "scriptstdvector.h"
 
 // External
 #include <boost/functional/hash.hpp>
@@ -442,36 +443,175 @@ namespace FusionEngine
 		caller.ConnectLineCallback( boost::bind(&ScriptingEngine::_lineCallback, this, _1) );
 	}
 
-	static const size_t maxPregenSpaces = 13;
-	static const char * spaces[14] = {
+	bool printVar(std::ostream &strstr, asIScriptContext *ctx, int var_ind, int stack_level)
+	{
+		asIScriptEngine *eng = ctx->GetEngine();
+		void *varPtr = ctx->GetAddressOfVar(var_ind, stack_level);
+		int typeId = ctx->GetVarTypeId(var_ind, stack_level);
+
+		if (typeId == eng->GetTypeIdByDecl("int"))
+		{
+			strstr << *(int*)varPtr;
+		}
+		else if (typeId == eng->GetTypeIdByDecl("uint"))
+		{
+			strstr << *(unsigned int*)varPtr;
+		}
+		else if (typeId == eng->GetTypeIdByDecl("int8"))
+		{
+			strstr << *(char*)varPtr;
+		}
+		else if (typeId == eng->GetTypeIdByDecl("uint8"))
+		{
+			strstr << *(unsigned char*)varPtr;
+		}
+		else if (typeId == eng->GetTypeIdByDecl("string"))
+		{
+			CScriptString *str = (CScriptString*)varPtr;
+			strstr << "\"" << str->buffer << "\"";
+		}
+		else if (typeId == eng->GetTypeIdByDecl("Vector"))
+		{
+			Vector2 *vec = (Vector2*)varPtr;
+			strstr << vec->getX() << "," << vec->getY();
+		}
+		else if (typeId == eng->GetTypeIdByDecl("StringArray"))
+		{
+			const StringVector *vec = (const StringVector*)varPtr;
+			strstr << "[" << vec->size() << "](";
+			bool first = true;
+			std::string::size_type length = 0;
+			for (StringVector::const_iterator it = vec->begin(), end = vec->end(); it != end; ++it)
+			{
+				if (length > 20)
+				{
+					strstr << ",...";
+					break;
+				}
+				if (first)
+				{
+					first = false;
+					strstr << "\"" << *it << "\"";
+				}
+				else
+					strstr << ",\"" << *it << "\"";
+				
+				length += it->length() + 3;
+			}
+			strstr << ")";
+		}
+		// Handle types
+		else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("string@"))
+		{
+			const CScriptString **handle = (const CScriptString**)varPtr;
+			if (handle != NULL)
+			{
+				strstr << "\"" << (*handle)->buffer << "\"";
+			}
+			else
+			{
+				strstr << "NULL";
+			}
+		}
+		else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("Vector@"))
+		{
+			const Vector2 **handle = (const Vector2**)varPtr;
+			if (handle != NULL)
+			{
+				strstr << (*handle)->getX() << "," << (*handle)->getY();
+			}
+			else
+			{
+				strstr << "NULL";
+			}
+		}
+		// No conversion implemented for this type:
+		else
+			return false;
+
+		return true;
+	}
+
+	static const size_t s_maxPregenSpaces = 13;
+	static const char * s_spaces[14] = {
 		"", " ", "  ", "   ", "    ", "     ", "      ", "       ",
 		"        ", "         ", "          ", "           ", "            ",
 		NULL
 	};
 
-	void ScriptingEngine::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, std::string &to)
+	static void insertSpaces(std::ostream &into, size_t length)
+	{
+		if (length <= s_maxPregenSpaces)
+		{
+			into << s_spaces[length];
+		}
+		else
+		{
+			into << s_spaces[s_maxPregenSpaces];
+			for (size_t k = s_maxPregenSpaces; k < length ; ++k)
+				into << " ";
+		}
+	}
+
+	void formatCallstackFunctionHeading(std::ostream &str, const char *sig, int line, int column)
+	{
+		str << "+ " << sig << " called at (" << line << "," << column << ")\n";
+	}
+
+	void ScriptingEngine::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, int current_func, std::string &to)
 	{
 		std::stringstream str;
-		for (int i = ctx->GetCallstackSize(); i > 0; i++)
+
+		// Print the current function
+		asIScriptFunction *func = engine->GetFunctionDescriptorById(current_func);
+		if (func != NULL)
 		{
-			if (i <= maxPregenSpaces)
-			{
-				str << spaces[i];
-			}
+			const char *sig = func->GetDeclaration(true);
+			int indent = ctx->GetCallstackSize();
+			int column, line;
+			if (indent > 0)
+				line = ctx->GetCallstackLineNumber(indent-1, &column);
 			else
+				line = column = 0;
+
+			insertSpaces(str, indent);
+			formatCallstackFunctionHeading(str, sig, line, column);
+
+			int vars = ctx->GetVarCount();
+			for (int i = 0; i < vars; i++)
 			{
-				str << spaces[maxPregenSpaces];
-				for (int k = maxPregenSpaces; k < i ; ++k)
-					str << " ";
+				std::stringstream var_str;
+				if (printVar(var_str, ctx, i, -1))
+				{
+					insertSpaces(str, indent);
+					str << "|  " << ctx->GetVarDeclaration(i) << ": " << var_str.str() << "\n";
+				}
 			}
+		}
 
-			int fnId = ctx->GetCallstackFunction(i);
-			const asIScriptFunction *fn = engine->GetFunctionDescriptorById(fnId);
-			std::string sig = fn->GetDeclaration(true);
-			int line, column;
-			line = ctx->GetCallstackLineNumber(i, &column);
+		// Print the call-stack
+		for (int i = ctx->GetCallstackSize()-1; i >= 0; i--)
+		{
+			const char *sig = engine->GetFunctionDescriptorById( ctx->GetCallstackFunction(i) )->GetDeclaration(true);
+			int column, line;
+			if (i > 0)
+				line = ctx->GetCallstackLineNumber(i-1, &column);
+			else
+				line = column = 0;
 
-			str << "+ " << sig << " (" << line << "," << column << ")\n";
+			insertSpaces(str, i);
+			formatCallstackFunctionHeading(str, sig, line, column);
+			
+			int vars = ctx->GetVarCount(i);
+			for (int var_i = 0; var_i < vars; var_i++)
+			{
+				std::stringstream var_str;
+				if (printVar(var_str, ctx, var_i, i))
+				{
+					insertSpaces(str, i);
+					str << "|  " << ctx->GetVarDeclaration(var_i, i) << ": " << var_str.str() << "\n";
+				}
+			}
 		}
 
 		to += str.str();
@@ -482,23 +622,23 @@ namespace FusionEngine
 		asIScriptEngine *engine = ctx->GetEngine();
 
 		std::string desc =
-			CL_StringHelp::text_to_local8( cl_format("Script Exception: %1\n", ctx->GetExceptionString()) );
+			CL_StringHelp::text_to_local8( cl_format("Script Exception:\n %1\n", ctx->GetExceptionString()) );
 
 		int funcId = ctx->GetExceptionFunction();
 		const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
 		int column = 0;
 		desc += CL_StringHelp::text_to_local8(
-			cl_format("  in function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
+			cl_format(" In function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
 			);
 		desc += CL_StringHelp::text_to_local8( 
-			cl_format("  in module:   %1\n", function->GetModuleName())
+			cl_format(" In module:   %1\n", function->GetModuleName())
 			);
 		desc += CL_StringHelp::text_to_local8(
-			cl_format("  in section:  %1\n", function->GetScriptSectionName())
+			cl_format(" In section:  %1\n", function->GetScriptSectionName())
 			);
 
 		desc += "Call Trace (if available):\n";
-		printCallstack(engine, ctx, desc);
+		printCallstack(engine, ctx, ctx->GetExceptionFunction(), desc);
 
 		SendToConsole(desc);
 
@@ -626,6 +766,8 @@ namespace FusionEngine
 		RegisterScriptString(m_asEngine);
 		RegisterScriptStringUtils(m_asEngine);
 		Scripting::RegisterScriptVector(m_asEngine);
+		
+		RegisterVector<std::string>("StringArray", "string", m_asEngine);
 
 		ScriptedSlotWrapper::Register(m_asEngine);
 
