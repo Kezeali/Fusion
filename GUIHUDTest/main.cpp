@@ -237,7 +237,14 @@ public:
 			m_CallDebugPrint.release();
 			m_CallDraw.release();
 			m_CallSimulate.release();
+			{
+				mso_Ship.GetCaller("void DeleteScriptElements()")();
+			}
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+			gui->GetContext()->GetDocument("console_doc")->Close();
 			mso_Ship.Release();
+
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
 
 			delete stateman;
 			delete m_Input;

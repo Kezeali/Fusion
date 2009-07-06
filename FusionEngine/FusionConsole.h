@@ -147,7 +147,7 @@ namespace FusionEngine
 		void SetCommandHelpText(const std::string &command, const std::string &help_text, const StringVector &arg_names);
 
 		//! Returns commands which begin with the given string
-		void AutocompleteCommand(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results = 0) const;
+		void ListPrefixedCommands(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results = 0);
 
 		//! Finds the command name closest to the given one
 		/*

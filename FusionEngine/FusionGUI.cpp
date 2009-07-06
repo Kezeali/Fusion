@@ -189,6 +189,7 @@ namespace FusionEngine
 		if (m_Initialised)
 		{
 			m_Context->RemoveReference();
+			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
 			Rocket::Core::Shutdown();
 
 			delete m_RocketFileSys;
@@ -293,8 +294,9 @@ namespace FusionEngine
 				asFUNCTION(CScriptStringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}
-		catch (Rocket::AngelScript::Exception &)
+		catch (Rocket::AngelScript::Exception &ex)
 		{
+			SendToConsole("Failed to register Rocket/AngelScript script classes. " + ex.m_Message);
 			return;
 		}
 

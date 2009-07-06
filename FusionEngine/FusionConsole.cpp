@@ -292,17 +292,18 @@ namespace FusionEngine
 		}
 	}
 
-	void Console::AutocompleteCommand(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results) const
+	void Console::ListPrefixedCommands(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results)
 	{
-		typedef std::pair<CommandHelpMap::const_iterator, CommandHelpMap::const_iterator> HelpIterRange;
+		typedef std::pair<CommandHelpMap::iterator, CommandHelpMap::iterator> HelpIterRange;
 		HelpIterRange range = m_CommandHelp.prefix_range(prefix);
 
 		StringVector::size_type count = 0;
 		while (range.first != range.second)
 		{
-			if (++count > max_results)
+			if (max_results != 0 && ++count > max_results)
 				break;
-			possibleCommands.push_back((range.first++)->first);
+			possibleCommands.push_back(range.first->first);
+			++range.first;
 		}
 	}
 
@@ -561,8 +562,6 @@ namespace FusionEngine
 	ScriptedConsoleListenerWrapper* Scr_ConnectConsoleListener(asIScriptObject *listener, Console *obj)
 	{
 		ScriptedConsoleListenerWrapper *wrapper = new ScriptedConsoleListenerWrapper(listener, obj);
-		// WHY IS THERE TWO EXTRA REFERENCES TO THE SCRIPT OBJECT?! (one makes sense - passing it to this fn. creates that, but there are two extra)
-		listener->Release();
 		listener->Release();
 		return wrapper;
 	}
@@ -652,6 +651,11 @@ namespace FusionEngine
 			"CallbackConnection@ connectTo_Clear(const string &in)",
 			asFUNCTION(Scr_ConnectClearSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
+
+	void Console_ListPrefixedCommands(const std::string& prefix, StringVector& possible_commands, Console& con)
+	{
+		con.ListPrefixedCommands(prefix, possible_commands);
+	}
 #endif
 
 	void Console::RegisterScriptElements(ScriptingEngine *manager)
@@ -687,6 +691,16 @@ namespace FusionEngine
 			"Console",
 			"void println(double)",
 			asMETHODPR(Console, PrintLn, (double), void),
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"void listPrefixedCommands(string &in, StringArray &out)",
+			asFUNCTIONPR(Console_ListPrefixedCommands, (const std::string&, StringVector&, Console&), void),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"void listPrefixedCommands(string &in, StringArray &out, uint max_results)",
+			asMETHODPR(Console, ListPrefixedCommands, (const std::string&, StringVector&, StringVector::size_type), void),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",

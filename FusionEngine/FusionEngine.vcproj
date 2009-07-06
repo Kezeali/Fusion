@@ -271,6 +271,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionElementContextMenu.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEntity.h"
 				>
 			</File>

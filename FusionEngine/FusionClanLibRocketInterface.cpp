@@ -68,7 +68,12 @@ namespace FusionEngine
 		Logger *logger = Logger::getSingletonPtr();
 		if (logger != NULL)
 			logger->Add(std::string(message.CString()), "rocket_log", logLevel);
-		SendToConsole(std::string(message.CString(), 0, message.Length()-1), mtype);
+		std::string c;
+		if (message[message.Length()-1] == '\n')
+			c.assign(&message.CString()[0], &message.CString()[message.Length()-1]);
+		else
+			c = message.CString();
+		SendToConsole(c, mtype);
 
 		Rocket::Core::SystemInterface::LogMessage(type, message);
 

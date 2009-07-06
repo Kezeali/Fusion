@@ -342,7 +342,7 @@ namespace FusionEngine
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		asIScriptObject* obj = (asIScriptObject*)m_asEngine->CreateScriptObject(id);
 		//obj->AddRef();
-		return ScriptObject(obj);
+		return ScriptObject(obj, true);
 	}
 
 	UCScriptMethod ScriptingEngine::GetClassMethod(const char* module, const std::string& type_name, const std::string &signature)
