@@ -108,6 +108,16 @@ namespace FusionEngine
 		void SetMouseShowPeriod(unsigned int period);
 		unsigned int GetMouseShowPeriod() const;
 
+		void ShowMouse();
+
+		//! Sends fake mouse position data to this GUI's context
+		void SetMouseCursorPosition(int x, int y, int modifier = 0);
+		//! Helper fn. for angelscript registration
+		/*
+		* \see SetMouseCursorPosition()
+		*/
+		void SetMouseCursorPosition_default(int x, int y);
+
 		static void Register(ScriptingEngine *manager);
 
 		void SetModule(ScriptingEngine *manager, const char *module_name);

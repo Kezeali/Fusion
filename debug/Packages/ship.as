@@ -1,6 +1,7 @@
 class ConsoleElement : ScriptElement
 {
 	bool dirty;
+	bool autoScroll;
 
 	ConsoleElement(Element@ appElement)
 	{
@@ -23,7 +24,11 @@ class ConsoleElement : ScriptElement
 
 	void AddText(const string &in text)
 	{
-		dirty = true;
+		if (text_area.GetCursorIndex() >= current_text.Length()-1)
+		{
+			autoScroll = true;
+		}
+
 		if (length < 5120)
 		{
 			current_text += text;
@@ -34,6 +39,8 @@ class ConsoleElement : ScriptElement
 			current_text = text;
 			length = 0;
 		}
+
+		dirty = true;
 	}
 
 	void Clear()
@@ -48,9 +55,18 @@ class ConsoleElement : ScriptElement
 	{
 		if (dirty)
 		{
-			text_area.SetDisabled(false);
+			//text_area.SetReadOnly(false);
 			text_area.SetValue( current_text );
-			text_area.SetDisabled(true);
+			if (autoScroll)
+			{
+				//text_area.SetCursorIndex(current_text.Length());
+				e_Dictionary parameters;
+				parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
+				parameters.Set(e_String("ctrl_key"), int(1));
+				text_area.DispatchEvent(e_String("keydown"), parameters);
+				autoScroll = false;
+			}
+			//text_area.SetReadOnly(true);
 			dirty = false;
 		}
 	}
@@ -63,10 +79,14 @@ class AutocompleteListener : IContextMenuListener
 {
 	void OnContextMenuClick(const MenuItem&in item)
 	{
-		console.println(item.name);
 		Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
 		FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("command_element")) );
 		input.SetValue( e_String(item.name) );
+		input.Focus();
+
+		e_Dictionary parameters;
+		parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
+		input.DispatchEvent(e_String("keydown"), parameters);
 	}
 }
 
@@ -138,43 +158,87 @@ class ConsoleGui : IConsoleListener
 //	}
 //}
 e_String lastvalue = "";
+bool commandDone = false;
+uint commandLength = 0;
 StringArray possibleCommands;
 void OnConsoleEntryChanged(Event& ev)
 {
 	e_String value("");
 	value = ev.GetParameter(e_String("value"), value);
 
-	if (value != lastvalue)
+	if (!commandDone && value != lastvalue)
 	{
 		lastvalue = value;
-		//Element@ elm = gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("ac_ds"));
-		//{
-		//	e_Dictionary d(e_String("first_row_removed: 0, num_rows_removed: " + possibleCommands.size()));
-		//	elm.DispatchEvent(e_String("rowremove"), d);
-		//}
-		if (autocomplete_menu !is null && !value.Empty())
+		if (!value.Empty())
 		{
-			console.listPrefixedCommands(string(value), possibleCommands);
-			autocomplete_menu.Clear();
-			for (uint i = 0; i < possibleCommands.size(); i++)
-				autocomplete_menu.AddItem(possibleCommands[i]);
-			//autocomplete_menu.SetPosition(ev.GetTargetElement().GetAbsoluteLeft(), ev.GetTargetElement().GetAbsoluteTop());
-			autocomplete_menu.Show();
+			if (value[value.Length()-1] == e_String(" "))
+			{
+				commandDone = true;
+				commandLength = value.Length()-1;
+				autocomplete_menu.Hide();
+				return;
+			}
+
+			if (autocomplete_menu !is null)
+			{
+				console.listPrefixedCommands(string(value), possibleCommands);
+				autocomplete_menu.Clear();
+				for (uint i = 0; i < possibleCommands.size(); i++)
+					autocomplete_menu.AddItem(possibleCommands[i]);
+
+				if (possibleCommands.size() > 0)
+				{
+					Element@ target = ev.GetTargetElement();
+					autocomplete_menu.SetPosition(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight());
+					autocomplete_menu.Show();
+				}
+			}
 		}
-		else if (value.Empty())
+		else // 'value' is empty
+		{
 			autocomplete_menu.Hide();
-		//{
-		//	e_Dictionary d(e_String("first_row_added: 0, num_rows_added: " + possibleCommands.size()));
-		//	elm.DispatchEvent(e_String("rowadd"), d);
-		//	elm.DispatchEvent(e_String("rowupdate"));
-		//}
-		//cast<FormControlDataSelect>(elm).SetDataSouce(e_String("autocomplete.commands"));
+			autocomplete_menu.Clear();
+		}
 	}
-	else
+	else if (value.Length() <= commandLength)
 	{
+		commandDone = false;
+		commandLength = 0;
+		autocomplete_menu.Show();
+	}
+}
+
+void OnConsoleEntryEnter(Event& ev)
+{
+	if (autocomplete_menu.GetCurrentSelection() != -1)
+		autocomplete_menu.ClickSelected();
+	else
 		OnConsoleEnterClick(ev);
-		autocomplete_menu.Hide();
-		autocomplete_menu.Clear();
+	autocomplete_menu.Hide();
+	autocomplete_menu.Clear();
+}
+
+void OnConsoleEntryKeyUp(Event& ev)
+{
+	if (ev.GetType() == e_String("keyup"))
+	{
+		int key_identifier = ev.GetParameter(e_String("key_identifier"), int(0));
+		if (key_identifier == GUIKey::KI_UP)
+		{
+			autocomplete_menu.SelectRelative(-1);
+		}
+		if (key_identifier == GUIKey::KI_DOWN)
+		{
+			autocomplete_menu.SelectRelative(1);
+		}
+	}
+	else if (ev.GetType() == e_String("keydown"))
+	{
+		int key_identifier = ev.GetParameter(e_String("key_identifier"), int(0));
+		if (key_identifier == GUIKey::KI_UP || key_identifier == GUIKey::KI_DOWN)
+		{
+			ev.StopPropagation();
+		}
 	}
 }
 
@@ -225,6 +289,8 @@ class ContextMenu/* : IEventListener*/
 	MenuItem[] m_Items;
 	uint m_ItemCount;
 
+	int m_CurrentSelection;
+
 	Document@ m_MenuDoc;
 	e_String m_Id;
 	e_Vector2i m_Position;
@@ -243,22 +309,16 @@ class ContextMenu/* : IEventListener*/
 
 			m_Items.resize(5);
 			m_ItemCount = 0;
+			m_CurrentSelection = -1; // nothing selected
 		}
 	}
 
 	~ContextMenu()
 	{
-		console.println("ContextMenu deleted");
 		Clear();
 		if (m_MenuDoc !is null) 
 			m_MenuDoc.Close();
 		@m_MenuDoc = null;
-
-		for (uint i = 0; i < m_Items.length(); i++)
-			if (m_Items[i].element is null)
-				console.println("Element deleted successfully");
-			else
-				console.println("MenuItem " + m_Items[i].name + " hasn't been deleted properly!");
 		m_Items.resize(0);
 	}
 
@@ -302,7 +362,7 @@ class ContextMenu/* : IEventListener*/
 		element.SetInnerRML(e_String(name));
 		m_MenuDoc.AppendChild(element);
 
-		element.AddEventListener(e_String("click"), e_String("void OnContextMenuClick(Event@ ev)"));
+		element.AddEventListener(e_String("click"), e_String("void OnContextMenuInput(Event@ ev)"));
 
 		// Add the MenuItem object
 		if (m_ItemCount == m_Items.length())
@@ -317,6 +377,10 @@ class ContextMenu/* : IEventListener*/
 	{
 		m_MenuDoc.RemoveChild(m_Items[index].element);
 		@m_Items[index].element = null;
+
+		if (m_CurrentSelection >= 0 && index == int(m_CurrentSelection))
+			m_CurrentSelection = -1;
+
 		m_ItemCount--;
 		for (uint i = index; i < m_ItemCount; i++)
 		{
@@ -328,14 +392,53 @@ class ContextMenu/* : IEventListener*/
 	{
 		for (uint i = 0; i < m_ItemCount; i++)
 		{
-			if (m_MenuDoc.RemoveChild(m_Items[i].element))
-				console.println("Removed MenuItem element " + m_Items[i].name);
-			else
-				console.println("Failed to remove MenuItem element " + m_Items[i].name);
+			if (!m_MenuDoc.RemoveChild(m_Items[i].element))
+				console.println("Error: Failed to remove MenuItem element " + m_Items[i].name);
 			@m_Items[i].element = null;
 		}
 		//m_Items.resize(0);
 		m_ItemCount = 0;
+		m_CurrentSelection = -1;
+	}
+
+	void Select(int index)
+	{
+		if (index >= 0 && index < m_ItemCount)
+		{
+			m_CurrentSelection = index;
+			// false: don't scroll to top if if not neccessary to get the element into view
+			m_Items[index].element.ScrollIntoView(false);
+			gui.setMouseCursorPosition(m_Items[index].element.GetAbsoluteLeft()+1, m_Items[index].element.GetAbsoluteTop()+1);
+		}
+	}
+
+	void SelectRelative(int distance)
+	{
+		int index = m_CurrentSelection + distance;
+		if (index < 0)
+			index = 0;
+		if (index >= m_ItemCount)
+			index = m_ItemCount-1;
+
+		Select(index);
+	}
+
+	int GetCurrentSelection()
+	{
+		return m_CurrentSelection;
+	}
+
+	void ClickItem(int index)
+	{
+		if (index >= 0 && index < m_ItemCount)
+		{
+			m_Items[index].element.DispatchEvent(e_String("click"));
+		}
+	}
+
+	void ClickSelected()
+	{
+		ClickItem(m_CurrentSelection);
 	}
 
 	void OnAttach(Element@) {}
@@ -354,7 +457,7 @@ class ContextMenu/* : IEventListener*/
 	//}
 }
 
-void OnContextMenuClick(Event@ ev)
+void OnContextMenuInput(Event@ ev)
 {
 	if (ev.GetType() == e_String("click"))
 	{
@@ -363,6 +466,8 @@ void OnContextMenuClick(Event@ ev)
 		uint index = clicked.GetAttribute(e_String("menu_index"), autocomplete_menu.m_ItemCount);
 		if (index < autocomplete_menu.m_ItemCount)
 			autocomplete_menu.m_Listener.OnContextMenuClick(autocomplete_menu.m_Items[index]);
+
+		autocomplete_menu.Hide();
 	}
 }
 

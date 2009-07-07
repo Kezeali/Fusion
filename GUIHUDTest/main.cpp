@@ -208,7 +208,6 @@ public:
 
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
-				//CL_System::sleep(2);
 
 				if (split < 100)
 				{
@@ -217,19 +216,10 @@ public:
 					Update(split);
 				}
 
-				// Current time
-				//unsigned int time = CL_System::get_time();
-
-				// Draw the terrain
-				//m_TerrainGraphical->draw(
-				//	m_TerrainPhysical->GetPosition().x, m_TerrainPhysical->GetPosition().y
-				//	);
-
-				//m_ScriptManager->Execute(mso_Ship, msm_Draw);
 				m_CallDraw();
-
-				
 				stateman->Draw();
+
+				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
 				dispWindow.flip();
 			}

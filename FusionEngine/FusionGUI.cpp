@@ -243,6 +243,21 @@ namespace FusionEngine
 		return m_MouseShowPeriod;
 	}
 
+	void GUI::ShowMouse()
+	{
+		m_ShowMouseTimer = m_MouseShowPeriod;
+		m_Context->ShowMouseCursor(true);
+	}
+
+	void GUI::SetMouseCursorPosition(int x, int y, int modifier)
+	{
+		m_Context->ProcessMouseMove(x, y, modifier);
+	}
+	void GUI::SetMouseCursorPosition_default(int x, int y)
+	{
+		m_Context->ProcessMouseMove(x, y, 0);
+	}
+
 	EMP::Core::String stringToEString(CScriptString *obj)
 	{
 		return EMP::Core::String(obj->buffer.c_str());
@@ -310,6 +325,10 @@ namespace FusionEngine
 			asMETHOD(GUI, GetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
+			"GUI", "void showMouse()",
+			asMETHOD(GUI, ShowMouse), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
 			"GUI", "void enableDebugger()",
 			asMETHOD(GUI, InitializeDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
@@ -326,8 +345,16 @@ namespace FusionEngine
 			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
-				"GUI", "Context& getContext()",
-				asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"GUI", "Context& getContext()",
+			asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void setMouseCursorPosition(int x, int y)",
+			asMETHOD(GUI, SetMouseCursorPosition_default), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void setMouseCursorPosition(int x, int y, int modifiers)",
+			asMETHOD(GUI, SetMouseCursorPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	void GUI::SetModule(FusionEngine::ScriptingEngine *manager, const char *module_name)
@@ -435,7 +462,7 @@ namespace FusionEngine
 
 		m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 
-		if (m_ShowMouseTimer <= 0)
+		if (m_ShowMouseTimer <= 0 && m_MouseShowPeriod > 0)
 		{
 			m_ShowMouseTimer = m_MouseShowPeriod;
 			m_Context->ShowMouseCursor(true);
@@ -453,10 +480,13 @@ namespace FusionEngine
 			modifier |= Rocket::Core::Input::KM_SHIFT;
 
 		// Grab characters
-		if (!ev.str.empty())
+		if (!ev.alt && !ev.ctrl && !ev.str.empty())
 		{
 			if (ev.id != CL_KEY_BACKSPACE && ev.id != CL_KEY_DELETE)
-				m_Context->ProcessTextInput( Rocket::Core::String( CL_StringHelp::text_to_utf8(ev.str).c_str() ) );
+			{
+				Rocket::Core::String text = (EMP::Core::word*)ev.str.c_str();
+				m_Context->ProcessTextInput(text);
+			}
 			//const wchar_t* c_str = ev.str.c_str();
 			// Inject all the characters given
 			//for (int c = 0; c < ev.str.length(); c++)
@@ -468,8 +498,6 @@ namespace FusionEngine
 
 	void GUI::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
 	{
-		//if (key.id == CL_KEY_SHIFT)
-		//	m_Modifiers ^= SHIFT;
 		int modifier = 0;
 		if (ev.alt)
 			modifier |= Rocket::Core::Input::KM_ALT;
