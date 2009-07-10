@@ -2,6 +2,7 @@ class ConsoleElement : ScriptElement
 {
 	bool dirty;
 	bool autoScroll;
+	bool slowScroll;
 
 	ConsoleElement(Element@ appElement)
 	{
@@ -27,6 +28,7 @@ class ConsoleElement : ScriptElement
 		if (text_area.GetCursorIndex() >= current_text.Length()-1)
 		{
 			autoScroll = true;
+			//slowScroll = true;
 		}
 
 		if (length < 5120)
@@ -59,16 +61,22 @@ class ConsoleElement : ScriptElement
 			text_area.SetValue( current_text );
 			if (autoScroll)
 			{
-				//text_area.SetCursorIndex(current_text.Length());
+				//text_area.SetCursorIndex(current_text.Length(), true);
+				// Send ctrl-end key-press event
 				e_Dictionary parameters;
-				parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
 				parameters.Set(e_String("ctrl_key"), int(1));
+				parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
 				text_area.DispatchEvent(e_String("keydown"), parameters);
+				text_area.ShowCursor(false);
 				autoScroll = false;
 			}
 			//text_area.SetReadOnly(true);
 			dirty = false;
 		}
+
+		//if (slowScroll)
+		//{
+		//}
 	}
 }
 
@@ -281,10 +289,42 @@ class MenuItem
 	}
 }
 
+// TODO: just use a dictionary here, rather than this shoddy built-in type
+//  (requires new AS array implementation, err, assuming that supports
+//  dictionary-style arrays... otherwise use a modified version of the
+//  dictionary add-on)
+class EventConnectionList
+{
+	EventConnection@[] connections;
+	uint count;
+	EventConnectionList()
+	{
+		count = 0;
+		connections.resize(1);
+	}
+	void Add(EventConnection@ connection)
+	{
+		@connections[count++] = connection;
+		if (count >= connections.length())
+			connections.resize(count+3);
+	}
+	void Clear()
+	{
+		for (uint i = 0; i < count; i++)
+		{
+			connections[i].RemoveListener();
+			@connections[i] = null;
+		}
+		connections.resize(1);
+		count = 0;
+	}
+}
+
 class ContextMenu/* : IEventListener*/
 {
 	//IEventListener@ clickListener;
 	IContextMenuListener@ m_Listener;
+	EventConnectionList m_EventConnections;
 
 	MenuItem[] m_Items;
 	uint m_ItemCount;
@@ -362,7 +402,8 @@ class ContextMenu/* : IEventListener*/
 		element.SetInnerRML(e_String(name));
 		m_MenuDoc.AppendChild(element);
 
-		element.AddEventListener(e_String("click"), e_String("void OnContextMenuInput(Event@ ev)"));
+		EventConnection@ cnx = element.AddEventListener(e_String("click"), e_String("void OnContextMenuInput(Event@ ev)"));
+		m_EventConnections.Add(cnx);
 
 		// Add the MenuItem object
 		if (m_ItemCount == m_Items.length())
@@ -390,6 +431,7 @@ class ContextMenu/* : IEventListener*/
 
 	void Clear()
 	{
+		m_EventConnections.Clear();
 		for (uint i = 0; i < m_ItemCount; i++)
 		{
 			if (!m_MenuDoc.RemoveChild(m_Items[i].element))
@@ -505,6 +547,7 @@ class AutocompleteDS : IDataSource
 	}
 }
 
+EventConnection@ consoleClickConnection;
 void OnConsoleEnterClick(Event& ev)
 {
 	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
@@ -752,7 +795,7 @@ class ship
 			@listenerConnection = console.connectListener(congui);
 
 			Element@ enterElement = document.GetElementById(e_String("enter_command"));
-			enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
+			@consoleClickConnection = enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
 			//@enterElement = document.GetElementById(e_String("textbox_element"));
 			//enterElement.AddEventListener(e_String("change"), e_String("void OnConsoleEntryChanged(Event& ev)"));
 

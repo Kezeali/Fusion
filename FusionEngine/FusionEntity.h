@@ -47,10 +47,33 @@ namespace FusionEngine
 	class TagFlagDictionary
 	{
 	public:
-		void AddTag(EntityPtr entity, const std::string &tag);
-		void RemoveTag(EntityPtr entity, const std:string &tag);
+		//! Adds the given tag to the given entity
+		/*!
+		* \returns True if a flag was given to the tag
+		*/
+		bool AddTag(const std::string &tag, EntityPtr to_entity, bool add_flag);
+		//! Removes the given tag from the given entity
+		void RemoveTag(const std::string &tag, EntityPtr from_entity);
+
+		//! Defines a flag for the given tag if one is available
+		bool RequestFlagFor(const std::string &tag);
+		//! Defines a flag for the given tag, taking one from another tag if necessary
+		void ForceFlagFor(const std::string &tag);
+
+		//! Returns the flag currently defined for the given tag
+		unsigned int GetFlagFor(const std::string &tag);
 
 	private:
+		//! Updates the free flags state
+		/*!
+		* Removes the current m_MinFreeFlag from the m_FreeFlags mask and
+		* sets m_MinFreeFlag to the next free flag.
+		*/
+		void takeMinFreeFlag();
+
+		//! Called when a flag becomes free
+		void flagFreed(unsigned int flag);
+
 		struct Entry
 		{
 			std::string Tag;
@@ -60,11 +83,11 @@ namespace FusionEngine
 		// Could use a boost::multi_index_container here - i.e. index by
 		//  unique Tag AND Flag - but that's too much of a hassle and I
 		//  doubt it'd be worth it.
-		typedef std::tr1::unordered_map<std::string, Entry> TagFlagSet;
-		TagFlagSet m_Entries;
+		typedef std::tr1::unordered_map<std::string, Entry> TagFlagMap;
+		TagFlagMap m_Entries;
 
 		unsigned int m_MinFreeFlag;
-
+		unsigned int m_FreeFlags;
 	};
 
 	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
@@ -84,7 +107,7 @@ namespace FusionEngine
 		~Entity();
 
 	public:
-		typedef std::set<std::string> TagSet;
+		typedef std::tr1::unordered_set<std::string> TagSet;
 
 		void _setName(const std::string &name);
 		const std::string &GetName() const;
@@ -108,7 +131,10 @@ namespace FusionEngine
 		//! Removes a Tag
 		void RemoveTag(const std::string &tag);
 		//! Checks whether this Entity is tagged with the given Tag
-		bool CheckTag(const std::string &tag);
+		bool CheckTag(const std::string &tag) const;
+
+		//! Returns this entity's tags
+		StringVector GetTags() const;
 
 
 		//! Sets the tag-flags for this entity
@@ -140,6 +166,11 @@ namespace FusionEngine
 		 */
 		unsigned int GetTagFlags() const;
 
+		//! Marks this Entity to be deleted when the current update completes - USELESS BECAUSE NEEDS TO HAPPEN AFTER UPDATE ANYWAY (so just add to list)
+		void MarkToRemove();
+		//! Returns true if this Entity has been marked to delete.
+		bool IsMarkedToRemove() const;
+
 		//! Updates
 		virtual void Update() =0;
 		//! Draws
@@ -160,12 +191,16 @@ namespace FusionEngine
 	protected:
 		std::string m_Name;
 
+		TagFlagDictionaryPtr m_TagFlagDictionary;
+
 		TagSet m_Tags;
 		// Markers (flags) for this entity
 		// If any of the true bits correspond to true bits
 		// in the entity manager, this entity isn't drawn
 		// or updated
 		unsigned int m_Flags;
+
+		bool m_MarkedToRemove;
 
 	};
 

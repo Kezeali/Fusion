@@ -152,7 +152,7 @@ namespace FusionEngine
 		//! See definition of FusionNode::IsInSceneGraph().
 		bool m_InSceneGraph;
 		//! The parent of this node.
-		FusionNodePtr m_Parent;
+		NodePtr m_Parent;
 		//! Children direcly decending this node.
 		ChildNodeList m_Children;
 

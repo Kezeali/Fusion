@@ -33,22 +33,22 @@
 namespace FusionEngine
 {
 
-	class update_state
-	{
-	public:
-		update_state( )
-		{
-		}
+	//class update_state
+	//{
+	//public:
+	//	update_state( )
+	//	{
+	//	}
 
-		void operator() (EntityManager::InputStateMap::value_type &elem)
-		{
-			elem.second.m_Down = elem.second.m_Active;
-			// So far the input has been active for the entire step, since
-			//  this is the start of the step ;)
-			elem.second.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
-			elem.second.m_ActiveFirst = elem.m_Active;
-		}
-	};
+	//	void operator() (EntityManager::InputStateMap::value_type &elem)
+	//	{
+	//		elem.second.m_Down = elem.second.m_Active;
+	//		// So far the input has been active for the entire step, since
+	//		//  this is the start of the step ;)
+	//		elem.second.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
+	//		elem.second.m_ActiveFirst = elem.m_Active;
+	//	}
+	//};
 
 	EntityManager::EntityManager()
 		: m_UpdateBlockedTags(0),
@@ -81,7 +81,10 @@ namespace FusionEngine
 	void EntityManager::RemoveEntity(EntityPtr entity)
 	{
 		if (m_EntitiesLocked)
+		{
+			entity->MarkToRemove(); // Mark this to make sure it isn't updated / drawn before it is removed
 			m_EntitiesToRemove.push_back(entity);
+		}
 		else
 			m_Entities.erase(entity->GetName());
 	}
@@ -109,7 +112,7 @@ namespace FusionEngine
 
 	bool EntityManager::AddTag(EntityPtr entity, const std::string &tag)
 	{
-		entity->AddTagFlag( getTagFlag(tag, true) );
+		entity->AddTag(tag);
 		return true;
 	}
 
@@ -118,7 +121,7 @@ namespace FusionEngine
 		try
 		{
 			EntityPtr entity = GetEntity(entity_name);
-			RemoveTag(entity);
+			RemoveTag(entity, tag);
 		}
 		catch (InvalidArgumentException &ex)
 		{
@@ -129,15 +132,18 @@ namespace FusionEngine
 	{
 		try
 		{
-			entity->RemoveTagFlag( getTagFlag(tag, false) );
+			entity->RemoveTag(tag);
 		}
 		catch (InvalidArgumentException &ex) // The given tag doesn't exist
 		{
 		}
 	}
 
+	bool EntityManager::CheckTag(const std::string &entity_name, 
+
 	void EntityManager::Clear()
 	{
+		m_EntitiesToAdd.clear();
 		m_EntitiesToRemove.clear();
 		m_Entities.clear();
 	}
@@ -151,18 +157,31 @@ namespace FusionEngine
 		{
 			EntityPtr &entity = it->second;
 
+			if (entity->IsMarkedToRemove())
+				continue;
+
 			if (entity->GetTagFlags() & m_ToDeleteFlags)
 				RemoveEntity(entity);
-			if (!(entity->GetTagFlags() & m_UpdateBlockedTags))
+
+			else if (!(entity->GetTagFlags() & m_UpdateBlockedTags))
+			{
 				entity->Update(split);
+			}
 		}
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
 
 		m_EntitiesLocked = false;
 
-		for (EntityList::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end();
-			it != end; ++it)
+		// Actually add entities which were 'added' during the update
+		for (EntityList::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
+		{
+			AddEntity(*it);
+		}
+		m_EntitiesToAdd.clear();
+
+		// Actually remove entities which were marked for removal during update
+		for (EntityList::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end(); it != end; ++it)
 		{
 			m_Entities.erase((*it)->GetName());
 		}
@@ -185,44 +204,51 @@ namespace FusionEngine
 		m_EntitiesLocked = false;
 	}
 
-	unsigned int EntityManager::getTagFlag(const std::string &tag, bool generate)
+	//unsigned int EntityManager::getTagFlag(const std::string &tag, bool generate)
+	//{
+	//	unsigned int minFreeFlag = 1;
+	//	TagFlagList::iterator _where = m_TagDictionary.begin();
+	//	for (end = m_TagDictionary.end(); _where != end; ++_where)
+	//	{
+	//		if (_where->Flag == minFreeFlag)
+	//			minFreeFlag << 1;
+
+	//		if (it->Tag == tag)
+	//			break;
+	//	}
+	//	//TagFlagMap::iterator _where = m_TagDictionary.find(tag);
+	//	if (_where == m_TagDictionary.end())
+	//	{
+	//		if (!generate)
+	//		{
+	//			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::getTagFlag",
+	//				"Requested flag for the previously unused tag '" + tag + "' with new flag generation disabled");
+	//		}
+
+	//		m_TagDictionary.insert( TagDef(tag, minFreeFlag) );
+
+	//		return minFreeFlag;
+	//	}
+	//	else
+	//	{
+	//		return _where->Flag;
+	//	}
+	//}
+
+	std::string EntityManager::generateName()
 	{
-		unsigned int minFreeFlag = 1;
-		TagFlagList::iterator _where = m_TagDictionary.begin();
-		for (end = m_TagDictionary.end(); _where != end; ++_where)
-		{
-			if (_where->Flag == minFreeFlag)
-				minFreeFlag << 1;
-
-			if (it->Tag == tag)
-				break;
-		}
-		//TagFlagMap::iterator _where = m_TagDictionary.find(tag);
-		if (_where == m_TagDictionary.end())
-		{
-			if (!generate)
-			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::getTagFlag",
-					"Requested flag for the previously unused tag '" + tag + "' with new flag generation disabled");
-			}
-
-			m_TagDictionary.insert( TagDef(tag, minFreeFlag) );
-
-			return minFreeFlag;
-		}
-		else
-		{
-			return _where->Flag;
-		}
+		std::stringstream stream;
+		stream << "__unnamed_entity_" << m_NextId++;
+		return stream.str();
 	}
 
-	void EntityManager::updateInput(float step)
-	{
-		for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
-			it != end; ++it)
-		{
-			std::for_each(it->begin(), it->end(), update_state);
-		}
-	}
+	//void EntityManager::updateInput(float step)
+	//{
+	//	for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
+	//		it != end; ++it)
+	//	{
+	//		std::for_each(it->begin(), it->end(), update_state);
+	//	}
+	//}
 
 }
