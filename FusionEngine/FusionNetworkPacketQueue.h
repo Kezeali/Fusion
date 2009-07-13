@@ -34,7 +34,7 @@
 
 #include "FusionCommon.h"
 
-#include <RakNet/NetworkTypes.h>
+#include <RakNet/RakNetTypes.h>
 
 namespace FusionEngine
 {
@@ -87,7 +87,7 @@ namespace FusionEngine
 		 *
 		 * Ensures thread-safety by preventing concurrent data access via _getMessages().
 		 */
-		CL_Mutex *m_Mutex;
+		CL_Mutex m_Mutex;
 	};
 
 }

@@ -48,22 +48,22 @@ namespace FusionEngine
 	 *
 	 * \remarks Threadsafe
 	 */
-	class ClientOptions : public Singleton<ClientOptions>
+	class ClientOptions/* : public Singleton<ClientOptions>*/
 	{
 	public:
 		//! Constructor
-		ClientOptions();
+		ClientOptions(const std::string &type = "clientoptions");
 		//! Constructor +file
-		ClientOptions(const std::wstring &filename);
+		ClientOptions(const std::wstring &filename, const std::string &type = "clientoptions");
 		//! Clears controls
 		~ClientOptions();
 
-	public:
-		//! Wrapper for singleton version
-		static ClientOptions& current()
-		{
-			return getSingleton();
-		}
+	//public:
+	//	//! Wrapper for singleton version
+	//	static ClientOptions& current()
+	//	{
+	//		return getSingleton();
+	//	}
 
 	public:
 		typedef std::tr1::unordered_map<std::string, std::string> VarMap;
@@ -113,6 +113,8 @@ namespace FusionEngine
 
 	protected:
 		mutable CL_Mutex m_Mutex;
+
+		std::string m_Type;
 		//! Last opened options file
 		std::wstring m_LastFile;
 

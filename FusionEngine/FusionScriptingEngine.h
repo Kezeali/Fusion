@@ -156,6 +156,9 @@ namespace FusionEngine
 		//! Returns a pointer to the AS engine.
 		asIScriptEngine *GetEnginePtr() const;
 
+		int GetVectorTypeId() const;
+		int GetStringTypeId() const;
+
 		//! Adds the given script to a module, but doesn't build or execute it.
 		//void RegisterScript(Script *script, const char *module);
 
@@ -184,7 +187,10 @@ namespace FusionEngine
 		//! Builds the given module
 		bool BuildModule(const char *module);
 
-		//! Subscribes to rebuild events from the given module
+		//! Subscribes to rebuild events from module with the given name
+		/*!
+		* Wrapper for Module#ConnectToBuild()
+		*/
 		bsig2::connection SubscribeToModule(const char *module, Module::BuildModuleSlotType slot);
 
 		//! Executes the given funcion in a module.
@@ -672,6 +678,9 @@ namespace FusionEngine
 	private:
 		//! AngelScript Engine
 		asIScriptEngine *m_asEngine;
+
+		int m_VectorTypeId;
+		int m_StringTypeId;
 
 		typedef std::tr1::unordered_map<const char*, ModulePtr> ModuleMap;
 		ModuleMap m_Modules;

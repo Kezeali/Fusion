@@ -76,21 +76,21 @@ namespace FusionEngine { namespace Scripting
 	 * Call this function to register the string type
 	 * using native calling conventions
 	 */
-	void RegisterScriptVector_Native(asIScriptEngine *engine);
+	int RegisterScriptVector_Native(asIScriptEngine *engine);
 
 	//! Register ScriptVector using native call methods
 	/*!
 	 * Use this one instead if native calling conventions
 	 * are not supported on the target platform
 	 */
-	void RegisterScriptVector_Generic(asIScriptEngine *engine);
+	int RegisterScriptVector_Generic(asIScriptEngine *engine);
 
 	//! Automaticaly register ScriptVector (using Native or Generic methods)
 	/*!
 	 * This function will determine the configuration of the engine
 	 * and use one of the two functions below to register the string type
 	 */
-	void RegisterScriptVector(asIScriptEngine *engine);
+	int RegisterScriptVector(asIScriptEngine *engine);
 
 }}
 

@@ -357,10 +357,10 @@ namespace FusionEngine
 			asMETHOD(GUI, SetMouseCursorPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void GUI::SetModule(FusionEngine::ScriptingEngine *manager, const char *module_name)
+	void GUI::SetModule(ModulePtr module)
 	{
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = manager->SubscribeToModule(module_name, boost::bind(&GUI::onModuleBuild, this, _1) );
+		m_ModuleConnection = module->ConnectToBuild( boost::bind(&GUI::onModuleBuild, this, _1) );
 	}
 
 	void GUI::initScripting(FusionEngine::ScriptingEngine *manager)

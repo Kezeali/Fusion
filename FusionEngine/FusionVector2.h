@@ -353,6 +353,24 @@ namespace FusionEngine
 		}
 	};
 
+	//! Stream extraction for Vector2
+	template <typename T>
+	std::istream& operator>> (std::istream &in, Vector2T<T> &target)
+	{
+		in >> target.x;
+		in >> target.y;
+		return in;
+	}
+
+	//! Stream serialization for Vector2
+	template <typename T>
+	std::ostream& operator<< (std::ostream &out, const Vector2T<T> &object)
+	{
+		out << object.x;
+		out << object.y;
+		return out;
+	}
+
 	template <class T>
 	static inline void v2Add(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c)
 	{

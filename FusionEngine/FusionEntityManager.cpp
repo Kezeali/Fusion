@@ -30,6 +30,11 @@
 
 #include "FusionEntityManager.h"
 
+#include "FusionEntityFactory.h"
+
+#include <boost/lexical_cast.hpp>
+
+
 namespace FusionEngine
 {
 
@@ -51,8 +56,8 @@ namespace FusionEngine
 	//};
 
 	EntityManager::EntityManager()
-		: m_UpdateBlockedTags(0),
-		m_DrawBlockedTags(0),
+		: m_UpdateBlockedFlags(0),
+		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false)
 	{
 	}
@@ -61,20 +66,34 @@ namespace FusionEngine
 	{
 	}
 
+	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name)
+	{
+		EntityPtr entity = m_EntityFactory->InstanceEntity(type, name);
+		AddEntity(entity);
+		return entity;
+	}
+
+	EntityFactory *EntityManager::GetFactory() const
+	{
+		return m_EntityFactory;
+	}
+
 	void EntityManager::AddEntity(EntityPtr entity)
 	{
+		entity->SetID(m_NextId++);
+
 		if (m_EntitiesLocked)
 			m_EntitiesToAdd.push_back(entity);
 
 		else
 		{
 			if (entity->GetName() == "default")
-				entity->_setName(generateName());
+				entity->_setName(generateName(entity));
 
-			EntityMap::iterator _where = m_Entities.find(entity->GetName());
+			EntityMap::iterator _where = m_Entities.find(entity->GetID());
 			if (_where != m_Entities.end())
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity named " + entity->GetName() + " already exists");
-			m_Entities[entity->GetName()] = entity;
+				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
+			m_Entities[entity->GetID()] = entity;
 		}
 	}
 
@@ -86,14 +105,37 @@ namespace FusionEngine
 			m_EntitiesToRemove.push_back(entity);
 		}
 		else
-			m_Entities.erase(entity->GetName());
+			m_Entities.erase(entity->GetID());
+	}
+
+	void EntityManager::RemoveEntityNamed(const std::string &name)
+	{
+		RemoveEntity(GetEntity(name));
+	}
+
+	void EntityManager::RemoveEntityById(ObjectID id)
+	{
+		RemoveEntity(GetEntity(id));
+	}
+
+	bool isNamed(EntityManager::EntityMap::value_type &element, const std::string &name)
+	{
+		return element.second->GetName() == name;
 	}
 
 	EntityPtr EntityManager::GetEntity(const std::string &name)
 	{
-		EntityMap::iterator _where = m_Entities.find(name);
+		EntityMap::iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
 		if (_where == m_Entities.end())
 			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity called: ") + name);
+		return _where->second;
+	}
+
+	EntityPtr EntityManager::GetEntity(ObjectID id)
+	{
+		EntityMap::iterator _where = m_Entities.find(id);
+		if (_where == m_Entities.end())
+			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
 		return _where->second;
 	}
 
@@ -139,7 +181,51 @@ namespace FusionEngine
 		}
 	}
 
-	bool EntityManager::CheckTag(const std::string &entity_name, 
+	bool EntityManager::CheckTag(const std::string &entity_name, const std::string &tag)
+	{
+		EntityPtr entity = GetEntity(entity_name);
+		if (entity != NULL)
+			return entity->CheckTag(tag);
+		return false;
+	}
+
+	inline bool EntityManager::IsBlocked(EntityPtr entity, const BlockingChangeMap &tags)
+	{
+		for (BlockingChangeMap::const_iterator it = tags.begin(), end = tags.end(); it != end; ++it)
+		{
+			if (it->second && entity->CheckTag(it->first))
+				return true;
+		}
+		return false;
+	}
+
+	void EntityManager::PauseEntitiesWithTag(const std::string &tag)
+	{
+		m_ChangedUpdateStateTags[tag] = false;
+	}
+
+	void EntityManager::ResumeEntitiesWithTag(const std::string &tag)
+	{
+		m_ChangedUpdateStateTags[tag] = true;
+	}
+
+	void EntityManager::HideEntitiesWithTag(const std::string &tag)
+	{
+		m_ChangedDrawStateTags[tag] = false;
+	}
+
+	void EntityManager::ShowEntitiesWithTag(const std::string &tag)
+	{
+		m_ChangedDrawStateTags[tag] = true;
+	}
+
+	void EntityManager::RemoveEntitiesWithTag(const std::string &tag)
+	{
+		for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		{
+			RemoveEntity(it->second);
+		}
+	}
 
 	void EntityManager::Clear()
 	{
@@ -152,38 +238,62 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
-		for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end();
-			it != end; ++it)
+		if (m_ChangedUpdateStateTags.empty())
 		{
-			EntityPtr &entity = it->second;
-
-			if (entity->IsMarkedToRemove())
-				continue;
-
-			if (entity->GetTagFlags() & m_ToDeleteFlags)
-				RemoveEntity(entity);
-
-			else if (!(entity->GetTagFlags() & m_UpdateBlockedTags))
+			for (EntityArray::iterator it = m_EntitiesToUpdate.begin(), end = m_EntitiesToUpdate.end(); it != end; ++it)
 			{
-				entity->Update(split);
+				EntityPtr &entity = *it;
+
+				if (entity->IsMarkedToRemove())
+					continue;
+
+				if (entity->GetTagFlags() & m_ToDeleteFlags)
+					RemoveEntity(entity);
+
+				else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) || IsBlocked(entity, m_ChangedUpdateStateTags))
+					m_EntitiesToUpdate.erase(it);
+				else
+					entity->Update(split);
+				//updateEntity(entity, split);
 			}
 		}
+		else
+		{
+			for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+			{
+				EntityPtr &entity = it->second;
+
+				if (entity->IsMarkedToRemove())
+					continue;
+
+				if (entity->GetTagFlags() & m_ToDeleteFlags)
+					RemoveEntity(entity);
+
+				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && IsBlocked(entity, m_ChangedUpdateStateTags))
+				{
+					m_EntitiesToUpdate.push_back(entity);
+					entity->Update(split);
+				}
+				//updateEntity(entity, split);
+			}
+			m_ChangedUpdateStateTags.clear();
+		}
+		m_EntitiesLocked = false;
+
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
 
-		m_EntitiesLocked = false;
-
 		// Actually add entities which were 'added' during the update
-		for (EntityList::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
+		for (EntityArray::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
 		{
 			AddEntity(*it);
 		}
 		m_EntitiesToAdd.clear();
 
 		// Actually remove entities which were marked for removal during update
-		for (EntityList::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end(); it != end; ++it)
+		for (EntityArray::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end(); it != end; ++it)
 		{
-			m_Entities.erase((*it)->GetName());
+			m_Entities.erase((*it)->GetID());
 		}
 		m_EntitiesToRemove.clear();
 	}
@@ -192,17 +302,45 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
-		for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end();
-			it != end; ++it)
+		if (m_ChangedUpdateStateTags.empty())
 		{
-			EntityPtr &entity = it->second;
+			for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+			{
+				EntityPtr &entity = *it;
 
-			if (!(entity->GetTagFlags() & m_DrawBlockedTags))
-				entity->Draw();
+				if ((entity->GetTagFlags() & m_DrawBlockedFlags) && IsBlocked(entity, m_ChangedDrawStateTags))
+					m_EntitiesToDraw.erase(it);
+				else
+					entity->Draw();
+			}
+		}
+		else
+		{
 		}
 
 		m_EntitiesLocked = false;
 	}
+
+	std::string EntityManager::generateName(EntityPtr entity)
+	{
+		std::stringstream stream;
+		stream << "__entity_id_" << entity->GetID();
+		return stream.str();
+	}
+
+	//void EntityManager::updateEntity(EntityPtr entity, float split)
+	//{
+	//	if (entity->IsMarkedToRemove())
+	//		continue;
+
+	//	if (entity->GetTagFlags() & m_ToDeleteFlags)
+	//		RemoveEntity(entity);
+
+	//	else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) || IsBlocked(entity, m_ChangedUpdateStateTags))
+	//		m_EntitiesToUpdate.erase(it);
+	//	else
+	//		entity->Update(split);
+	//}
 
 	//unsigned int EntityManager::getTagFlag(const std::string &tag, bool generate)
 	//{
@@ -234,13 +372,6 @@ namespace FusionEngine
 	//		return _where->Flag;
 	//	}
 	//}
-
-	std::string EntityManager::generateName()
-	{
-		std::stringstream stream;
-		stream << "__unnamed_entity_" << m_NextId++;
-		return stream.str();
-	}
 
 	//void EntityManager::updateInput(float step)
 	//{

@@ -115,7 +115,7 @@ namespace FusionEngine
 
 	void NetworkSystem::RequestStepControl()
 	{
-		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, 
+		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, NULL, 0, FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, "");
 	}
 
 }

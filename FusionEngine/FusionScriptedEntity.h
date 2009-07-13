@@ -29,6 +29,10 @@
 
 #include "FusionCommon.h"
 
+#include "FusionEntity.h"
+#include "FusionScriptReference.h"
+
+
 namespace FusionEngine
 {
 
@@ -42,14 +46,44 @@ namespace FusionEngine
 	 */
 	class ScriptedEntity : public Entity
 	{
+	public:
+		ScriptedEntity();
+		ScriptedEntity(ScriptObject script_self, const std::string &name);
+
+		virtual std::string GetType() const;
+
+		virtual const Vector2 &GetPosition();
+		virtual float GetAngle();
+
+		virtual void Update(float split);
+		virtual void Draw();
+
+		virtual std::string SerializeState(bool local) const;
+		virtual void DeserializeState(const std::string& state, bool local);
+
 	protected:
 		// The actual entity logic (for which this C++ class is simply a wrapper)
 		ScriptObject m_ScriptObject;
 
-	public:
-		virtual void SetPosition()
+		//! Stores information useful for serializing & syncing properties
+		struct Property
 		{
-		}
+			// Data loaded from XML
+			std::string name;
+			std::string type;
+			bool localOnly;
+			bool arbitrated;
+
+			// Index of the property in the script-object
+			int scriptPropertyIndex;
+		};
+
+		typedef std::map<std::string, Property> PropertiesMap;
+		//typedef std::set<std::string> PropertiesSet;
+		PropertiesMap m_SyncedProperties;
+
+		Vector2 m_DefaultPosition;
+		float m_DefaultAngle;
 	};
 
 }

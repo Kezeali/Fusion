@@ -69,6 +69,7 @@
 // Boost
 //#include <boost/function.hpp>
 //#include <boost/bind.hpp>
+#include <boost/smart_ptr/intrusive_ptr.hpp>
 
 // XML
 #define USE_TINYXML
@@ -433,6 +434,7 @@ namespace FusionEngine
 	///////////////////////////
 	//! \todo List forward declarations in alphabetical order
 	class ClientOptions;
+	class EntityFactory;
 	class EntityManager;
 	class Entity;
 	class Network;
@@ -447,6 +449,7 @@ namespace FusionEngine
 	class SystemsManager;
 	class ScriptedSlotWrapper;
 	class ScriptingEngine;
+	class Module;
 	class Exception;
 	class FileSystemException;
 	class Logger;
@@ -455,6 +458,7 @@ namespace FusionEngine
 	class ResourceContainer;
 	class ResourceManager;
 	class InputDefinitionLoader;
+	class InputManager;
 
 
 	///////////////
@@ -470,6 +474,10 @@ namespace FusionEngine
 
 	//! System pointer
 	typedef std::tr1::shared_ptr<System> SystemPtr;
+
+	typedef boost::intrusive_ptr<Entity> EntityPtr;
+
+	typedef std::tr1::shared_ptr<Module> ModulePtr;
 
 	//! Resource tags (aka. names/handles)
 	typedef std::wstring ResourceTag;

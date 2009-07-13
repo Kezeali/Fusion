@@ -46,8 +46,9 @@ namespace FusionEngine
 	public:
 		EntityInstancer(const std::string &type);
 
-		Entity *InstanceEntity(const std::string &name) = 0;
+		virtual Entity *InstanceEntity(const std::string &name) = 0;
 
+		void SetType(const std::string &type);
 		const std::string &GetType() const;
 
 	private:
@@ -56,57 +57,6 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<EntityInstancer> EntityInstancerPtr;
 
-	EntityInstancer::EntityInstancer(const std::string &type)
-		: m_Type(type)
-	{}
-
-	const std::string &EntityInstancer::GetType() const
-	{
-		return m_Type;
-	}
-
-	//! Creates root entities
-	class RootEntityInstancer : public EntityInstancer
-	{
-	public:
-		RootEntityInstancer();
-
-		Entity *InstanceEntity(const std::string &name)
-	};
-
-	RootEntityInstancer::RootEntityInstancer()
-		: EntityInstancer("root")
-	{}
-
-	Entity *RootEntityInstancer::InstanceEntity(const std::string &name)
-	{
-	}
-
-	// TODO: this should be in the source file
-	//! Creates instances of a scripted entity type
-	class ScriptedEntityInstancer : public EntityInstancer
-	{
-	public:
-		//! Constructor
-		ScriptedEntityInstancer();
-		//! Constructor
-		ScriptedEntityInstancer(const std::string &type);
-
-	public:
-		Entity *InstanceEntity(const std::string &name);
-	};
-
-	ScriptedEntityInstancer::ScriptedEntityInstancer()
-		: EntityInstancer("generic_scripted_entity")
-	{}
-
-	ScriptedEntityInstancer::ScriptedEntityInstancer(const std::string &type)
-		: EntityInstancer(type)
-	{}
-
-	ScriptedEntityInstancer::InstanceEntity(const std::string &name)
-	{
-	}
 
 	//! Creates entities
 	/*!
@@ -115,6 +65,10 @@ namespace FusionEngine
 	 */
 	class EntityFactory
 	{
+	protected:
+		//! Maps tags to entity definitions
+		typedef std::tr1::unordered_map<std::string, EntityInstancerPtr> EntityInstancerMap;
+
 	public:
 		//! Constructor
 		EntityFactory();
@@ -123,13 +77,13 @@ namespace FusionEngine
 		~EntityFactory();
 
 	public:
-		//!
+		//! Instances Entity
 		/*!
 		* Returns an entity object of the requested type, or NULL. The type will be
 		* added to the Used Type List, so so when ClearUnusedInstancers is called the
 		* relavant instancer will not be removed
 		*/
-		EntityPtr InstanceEntity(const std::string &type);
+		EntityPtr InstanceEntity(const std::string &type, const std::string &name);
 
 		//! Creates an instancer for the the given scripted type
 		void LoadScriptedEntity(const std::string &type);
@@ -148,17 +102,30 @@ namespace FusionEngine
 		* Should be called after a new environment is loaded - this way
 		* loading save games can be done fairly quickly without just keeping
 		* all instancers in memory (of course, instancing types later will
-		* still require loading, but you can't get everything).
+		* still require loading, but this generally shouldn't happen and
+		* anyway you can't win everything).
 		* If an instancer hasn't been used since ResetUsedTypesList was last
 		* called it is considered unused and will be removed by this method.
 		*/
 		void ClearUnusedInstancers();
 
 	protected:
-		//! Maps tags to entity definitions
-		typedef std::tr1::unordered_map<std::string, EntityInstancerPtr> EntityInstancerList;
+		void createScriptedEntityInstancer(TiXmlDocument *document);
 
-		EntityInstancerList m_EntityInstancers;
+		bool getEntityType(TiXmlDocument *document, std::string &type);
+
+		//! Recursively parses the scripted entity files below the given path
+		void parseScriptedEntities(const char *path);
+
+		EntityInstancerMap m_EntityInstancers;
+
+		typedef std::tr1::unordered_set<std::string> StringSet;
+		StringSet m_UsedTypes;
+
+		std::string m_ScriptedEntityPath;
+
+		typedef std::tr1::unordered_map<std::string, std::string> StringMap;
+		StringMap m_ScriptEntityDefinitionFiles;
 
 	};
 

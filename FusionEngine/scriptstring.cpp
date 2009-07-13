@@ -601,12 +601,12 @@ static void StringResize_Generic(asIScriptGeneric *gen)
 }
 
 // This is where we register the string type
-void RegisterScriptString_Native(asIScriptEngine *engine)
+int RegisterScriptString_Native(asIScriptEngine *engine)
 {
-	int r;
+	int r, typeId;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( r >= 0 );
+	typeId = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( typeId >= 0 );
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
@@ -691,14 +691,16 @@ void RegisterScriptString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(uint)", asFUNCTION(AddAssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, uint)", asFUNCTION(AddStringUInt), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(uint, const string &in)", asFUNCTION(AddUIntString), asCALL_CDECL); assert( r >= 0 );
+
+	return typeId;
 }
 
-void RegisterScriptString_Generic(asIScriptEngine *engine)
+int RegisterScriptString_Generic(asIScriptEngine *engine)
 {
-	int r;
+	int r, typeId;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( r >= 0 );
+	typeId = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( typeId >= 0 );
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
@@ -761,14 +763,16 @@ void RegisterScriptString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADD_ASSIGN, "string &f(uint)", asFUNCTION(AddAssignUIntToString_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(const string &in, uint)", asFUNCTION(AddStringUInt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "string@ f(uint, const string &in)", asFUNCTION(AddUIntString_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	return typeId;
 }
 
-void RegisterScriptString(asIScriptEngine *engine)
+int RegisterScriptString(asIScriptEngine *engine)
 {
 	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-		RegisterScriptString_Generic(engine);
+		return RegisterScriptString_Generic(engine);
 	else
-		RegisterScriptString_Native(engine);
+		return RegisterScriptString_Native(engine);
 }
 
 END_AS_NAMESPACE

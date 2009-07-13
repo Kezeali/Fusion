@@ -658,7 +658,18 @@ namespace FusionEngine
 	}
 #endif
 
-	void Console::RegisterScriptElements(ScriptingEngine *manager)
+	void Console::SetModule(ModulePtr module)
+	{
+		m_ModuleConnection.disconnect();
+		m_ModuleConnection = module->ConnectToBuild( boost::bind(&Console::OnModuleBuild, this, _1) );
+	}
+
+	void Console::OnModuleBuild(BuildModuleEvent &ev)
+	{
+		ev.manager->RegisterGlobalObject("Console console", this);
+	}
+
+	void Console::Register(ScriptingEngine *manager)
 	{
 #ifndef FSN_DONT_USE_SCRIPTING
 		int r;
@@ -713,8 +724,6 @@ namespace FusionEngine
 
 		RegisterScriptedConsoleListener(engine);
 		RegisterScriptedConsoleCallbacks(engine);
-
-		manager->RegisterGlobalObject("Console console", this);
 #endif
 	}
 

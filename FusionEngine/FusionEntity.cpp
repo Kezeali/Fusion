@@ -87,7 +87,7 @@ namespace FusionEngine
 		unsigned int checkFlag = m_MinFreeFlag;
 		while (checkFlag != 0)
 		{
-			checkFlag << 1;
+			checkFlag = checkFlag << 1;
 			if (m_FreeFlags & checkFlag)
 			{
 				m_MinFreeFlag = checkFlag;
@@ -135,6 +135,16 @@ namespace FusionEngine
 		return m_Name;
 	}
 
+	void Entity::SetID(ObjectID id)
+	{
+		m_Id = id;
+	}
+
+	ObjectID Entity::GetID() const
+	{
+		return m_Id;
+	}
+
 	void Entity::AddTag(const std::string &tag)
 	{
 		m_Tags.insert(tag);
@@ -143,6 +153,11 @@ namespace FusionEngine
 	void Entity::RemoveTag(const std::string &tag)
 	{
 		m_Tags.erase(tag);
+	}
+
+	void Entity::ClearTags()
+	{
+		m_Tags.clear();
 	}
 
 	bool Entity::CheckTag(const std::string &tag) const
@@ -157,6 +172,16 @@ namespace FusionEngine
 			tagArray.push_back(*it);
 
 		return tagArray;
+	}
+
+	void Entity::_notifyPausedTag(const std::string &tag)
+	{
+		m_PausedTags.insert(tag);
+	}
+
+	void Entity::_notifyHiddenTag(const std::string &tag)
+	{
+		m_HiddenTags.insert(tag);
 	}
 
 	void Entity::SetTagFlags(unsigned int flags)
@@ -174,6 +199,11 @@ namespace FusionEngine
 		m_Flags &= ~flag;
 	}
 
+	unsigned int Entity::GetTagFlags() const
+	{
+		return m_Flags;
+	}
+
 	void Entity::MarkToRemove()
 	{
 		m_MarkedToRemove = true;
@@ -187,10 +217,6 @@ namespace FusionEngine
 	std::string Entity::ToString() const
 	{
 		return GetType() + " - " + m_Name;
-	}
-
-	void Entity::ContactBegin(const Contact &contact)
-	{
 	}
 
 }

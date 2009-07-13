@@ -216,12 +216,12 @@ namespace FusionEngine { namespace Scripting
 
 	////////////////////////////////
 	// AngelScript type registration
-	void RegisterScriptVector_Native(asIScriptEngine *engine)
+	int RegisterScriptVector_Native(asIScriptEngine *engine)
 	{
-		int r;
+		int r, typeId;
 
 		// Register the type
-		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( r >= 0 );
+		typeId = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( typeId >= 0 );
 
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
@@ -252,14 +252,16 @@ namespace FusionEngine { namespace Scripting
 
 		r = engine->RegisterObjectProperty("Vector", "float x", offsetof(Vector2,x)); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectProperty("Vector", "float y", offsetof(Vector2,y)); FSN_ASSERT( r >= 0 );
+
+		return typeId;
 	}
 
-	void RegisterScriptVector_Generic(asIScriptEngine *engine)
+	int RegisterScriptVector_Generic(asIScriptEngine *engine)
 	{
-		int r;
+		int r, typeId;
 
 		// Register the type
-		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( r >= 0 );
+		typeId = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( typeId >= 0 );
 
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
@@ -280,14 +282,16 @@ namespace FusionEngine { namespace Scripting
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asFUNCTION(VectorLength_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
+
+		return typeId;
 	}
 
-	void RegisterScriptVector(asIScriptEngine *engine)
+	int RegisterScriptVector(asIScriptEngine *engine)
 	{
 		if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-			RegisterScriptVector_Generic(engine);
+			return RegisterScriptVector_Generic(engine);
 		else
-			RegisterScriptVector_Native(engine);
+			return RegisterScriptVector_Native(engine);
 	}
 
 }}

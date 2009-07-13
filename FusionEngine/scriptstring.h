@@ -52,15 +52,15 @@ protected:
 
 // This function will determine the configuration of the engine
 // and use one of the two functions below to register the string type
-void RegisterScriptString(asIScriptEngine *engine);
+int RegisterScriptString(asIScriptEngine *engine);
 
 // Call this function to register the string type
 // using native calling conventions
-void RegisterScriptString_Native(asIScriptEngine *engine);
+int RegisterScriptString_Native(asIScriptEngine *engine);
 
 // Use this one instead if native calling conventions
 // are not supported on the target platform
-void RegisterScriptString_Generic(asIScriptEngine *engine);
+int RegisterScriptString_Generic(asIScriptEngine *engine);
 
 // This function will register utility functions for the script string
 void RegisterScriptStringUtils(asIScriptEngine *engine);

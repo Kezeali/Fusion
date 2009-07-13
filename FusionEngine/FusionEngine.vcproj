@@ -447,6 +447,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionOntologicalSystem.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPacketDispatcher.h"
 				>
 			</File>
@@ -857,6 +861,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityFactory.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEntityInputManager.cpp"
 				>
 			</File>
@@ -969,6 +977,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionOntologicalSystem.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPacketDispatcher.cpp"
 				>
 			</File>
@@ -1058,6 +1070,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionScriptedConsoleCommand.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionScriptedEntity.cpp"
 				>
 			</File>
 			<File

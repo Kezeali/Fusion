@@ -305,13 +305,10 @@ namespace FusionEngine
 
 	/*!
 	 * \brief
-	 * Provides an interface to an input buffer optimised for FusionEngine.
+	 * Gets inputs based on bound keys.
 	 *
-	 * \todo
-	 * Another design possibility for Input would be to make it a non-singleton
-	 * and have an instance per player, then have a class (which /is/ a singleton)
-	 * to provide access to each player's Input. Like 
-	 * <code>PlayerInputs::getSingleton().player[1].IsButtonPressed("Left");</code>
+	 * Fires input signals whenever a bound key is pressed. There is also a RawInput
+	 * signal which is useful for making key-binding UIs.
 	 */
 	class InputManager : public FusionEngine::Singleton<InputManager>
 	{

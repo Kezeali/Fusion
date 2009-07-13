@@ -162,6 +162,11 @@ static int platform_stricmp(const char *x, const char *y)
 																	const std::string &archiveExt = "",
 																	bool archivesFirst = true);
 
+		//! Mounts the given path
+		static bool mount(const std::string &path, const std::string &mount_point,
+			const std::string &archiveExt = "",
+			bool archivesFirst = true);
+
 		//! Calls PHYSFS_deinit();
 		static void deinit();
 	};

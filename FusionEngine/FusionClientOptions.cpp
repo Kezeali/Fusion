@@ -37,8 +37,9 @@
 namespace FusionEngine
 {
 
-	ClientOptions::ClientOptions()
-		: m_NumLocalPlayers(0)
+	ClientOptions::ClientOptions(const std::string &type)
+		: m_Type(type),
+		m_NumLocalPlayers(0)
 	{
 		//// Set the global controls to some valid values.
 		//DefaultGlobalControls();
@@ -55,7 +56,7 @@ namespace FusionEngine
 		m_PlayerVariables.resize(g_MaxLocalPlayers);
 	}
 
-	ClientOptions::ClientOptions(const std::wstring &filename)
+	ClientOptions::ClientOptions(const std::wstring &filename, const std::string &type)
 		: m_NumLocalPlayers(0)
 	{
 		//m_PlayerOptions.resize(g_MaxLocalPlayers);
@@ -88,7 +89,7 @@ namespace FusionEngine
 		doc.LinkEndChild( decl ); 
 
 		// Root
-		ticpp::Element* root = new ticpp::Element("clientoptions");
+		ticpp::Element* root = new ticpp::Element(m_Type);
 		doc.LinkEndChild( root );
 
 		insertVarMapIntoDOM(root, m_Variables);
@@ -137,8 +138,8 @@ namespace FusionEngine
 
 			ticpp::Element* pElem = doc.FirstChildElement();
 
-			if (pElem->Value() != "clientoptions")
-				FSN_WEXCEPT(ExCode::FileType, L"ClientOptions::LoadFromFile", filename + L" is not a client options file");
+			if (pElem->Value() != m_Type)
+				FSN_WEXCEPT(ExCode::FileType, L"ClientOptions::LoadFromFile", filename + L" is not a " + fe_widen(m_Type) + L" file");
 
 			ticpp::Iterator< ticpp::Element > child;
 			for ( child = child.begin( pElem ); child != child.end(); child++ )

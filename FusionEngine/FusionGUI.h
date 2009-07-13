@@ -120,7 +120,7 @@ namespace FusionEngine
 
 		static void Register(ScriptingEngine *manager);
 
-		void SetModule(ScriptingEngine *manager, const char *module_name);
+		void SetModule(ModulePtr module);
 
 	protected:
 		//! Holds slots

@@ -4,16 +4,13 @@
 namespace FusionEngine
 {
 
-	PacketQueue::FusionNetworkMessageQueue()
+	PacketQueue::PacketQueue()
 	{
-		m_Mutex = CL_Mutex::create();
 	}
 
-	PacketQueue::~FusionNetworkMessageQueue()
+	PacketQueue::~PacketQueue()
 	{
 		ClearMessages();
-
-		delete m_Mutex;
 	}
 
 	void PacketQueue::Resize(unsigned int channels)
@@ -25,22 +22,21 @@ namespace FusionEngine
 	// Add a message
 	void PacketQueue::PushMessage(Packet *message, char channel)
 	{
-		m_Mutex->enter();
+		m_Mutex.lock();
 
 		m_Channels[channel].push_back(message);
 
-		m_Mutex->notify();
-		m_Mutex->leave();
+		m_Mutex.unlock();
 	}
 
 	////////////////
 	// Get a message
 	Packet *PacketQueue::PopMessage(char channel)
 	{
-		m_Mutex->enter();
+		m_Mutex.lock();
 
 		// Make sure the channel exists first
-		cl_assert(m_Channels.size() > channel);
+		FSN_ASSERT(m_Channels.size() > channel);
 
 		if (m_Channels[channel].empty())
 			return 0;
@@ -49,8 +45,7 @@ namespace FusionEngine
 		m_Channels[channel].pop_front();
 		return m;
 
-		m_Mutex->notify();
-		m_Mutex->leave();
+		m_Mutex.unlock();
 	}
 
 	////////////////

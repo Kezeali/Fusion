@@ -25,6 +25,10 @@ namespace FusionEngine
 	 */
 	class EntityManager
 	{
+	protected:
+		typedef std::set<std::string> BlockedTagSet;
+		typedef std::map<std::string, bool> BlockingChangeMap;
+
 	public:
 		//! Constructor
 		EntityManager();
@@ -34,11 +38,12 @@ namespace FusionEngine
 	public:
 		typedef std::tr1::weak_ptr<Entity> EntityWPtr;
 		//! A list of nodes
-		typedef std::tr1::unordered_map<std::string, EntityPtr> EntityMap;
+		//typedef std::tr1::unordered_map<std::string, EntityPtr> EntityMap;
+		typedef std::map<ObjectID, EntityPtr> EntityMap;
 		typedef std::vector<EntityPtr> EntityArray;
 
-		typedef boost::bimap<std::string, unsigned int> TagFlagMap;
-		typedef TagFlagMap::value_type TagDef;
+		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
+		//typedef TagFlagMap::value_type TagDef;
 
 		//! Gives you access to the root node
 		//virtual EntityPtr GetRootNode() const;
@@ -51,19 +56,28 @@ namespace FusionEngine
 
 		//void AttachToNode(const std::string& node_name, EntityPtr entity);
 
+		//! Creates an entity of the given type and adds it to the manager
+		EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default");
+
+		EntityFactory *GetFactory() const;
+
 		void AddEntity(EntityPtr entity);
 		void RemoveEntity(EntityPtr entity);
 		void RemoveEntityNamed(const std::string &name);
+		void RemoveEntityById(ObjectID id);
 
 		EntityPtr GetEntity(const std::string &name);
+		EntityPtr GetEntity(ObjectID id);
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
-		bool AddTag(EntityPtr, const std::string &tag);
+		bool AddTag(EntityPtr entity, const std::string &tag);
 		void RemoveTag(const std::string &entity_name, const std::string &tag);
-		void RemoveTag(EntityPtr, const std::string &tag);
+		void RemoveTag(EntityPtr entity, const std::string &tag);
 
 		bool CheckTag(const std::string &entity_name, const std::string &tag);
-		StringVector GetTags() const;
+		//StringVector GetTags() const;
+
+		inline bool IsBlocked(EntityPtr entity, const BlockingChangeMap &tags);
 
 		void PauseEntitiesWithTag(const std::string &tag);
 		void ResumeEntitiesWithTag(const std::string &tag);
@@ -86,17 +100,24 @@ namespace FusionEngine
 	protected:
 		//unsigned int getTagFlag(const std::string &tag, bool generate);
 
-		std::string generateName();
+		std::string generateName(EntityPtr entity);
+
+		//void updateEntity(EntityPtr entity, float split);
 
 	protected:
 		InputManager *m_InputManager;
 
-		EntityFactory m_Factory;
+		EntityFactory *m_EntityFactory;
 
 		ObjectID m_NextId;
 
 		//! Used to quickly find entities by name
 		EntityMap m_Entities;
+		// Entities with no paused tags
+		EntityArray m_EntitiesToUpdate;
+		// Entities with no hidden tags
+		EntityArray m_EntitiesToDraw;
+
 		EntityArray m_EntitiesToAdd;
 		EntityArray m_EntitiesToRemove;
 		//! The node to which all other nodes are children
@@ -106,8 +127,14 @@ namespace FusionEngine
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 
 		unsigned int m_ToDeleteFlags;
-		unsigned int m_UpdateBlockedTags;
-		unsigned int m_DrawBlockedTags;
+		unsigned int m_UpdateBlockedFlags;
+		unsigned int m_DrawBlockedFlags;
+
+		BlockingChangeMap m_ChangedUpdateStateTags;
+		BlockedTagSet m_UpdateBlockedTags;
+
+		BlockingChangeMap m_ChangedDrawStateTags;
+		BlockedTagSet m_DrawBlockedTags;
 
 	};
 

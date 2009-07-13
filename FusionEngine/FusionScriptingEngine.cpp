@@ -126,6 +126,16 @@ namespace FusionEngine
 		return m_asEngine;
 	}
 
+	int ScriptingEngine::GetVectorTypeId() const
+	{
+		return m_VectorTypeId;
+	}
+
+	int ScriptingEngine::GetStringTypeId() const
+	{
+		return m_StringTypeId;
+	}
+
 	void ScriptingEngine::RegisterGlobalObject(const char *decl, void* ptr)
 	{
 		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
@@ -763,9 +773,9 @@ namespace FusionEngine
 
 		// Register types
 		RegisterScriptMath(m_asEngine);
-		RegisterScriptString(m_asEngine);
+		m_StringTypeId = RegisterScriptString(m_asEngine);
 		RegisterScriptStringUtils(m_asEngine);
-		Scripting::RegisterScriptVector(m_asEngine);
+		m_VectorTypeId = Scripting::RegisterScriptVector(m_asEngine);
 		
 		RegisterVector<std::string>("StringArray", "string", m_asEngine);
 

@@ -56,8 +56,8 @@ namespace FusionEngine
 			{
 				// look for " " or "="
 				int flag_end;
-				if ( (flag_end = arg.find(" ")) == std::string::npos )
-					flag_end = arg.find("=");
+				if ( (flag_end = argument.find(" ")) == std::string::npos )
+					flag_end = argument.find("=");
 
 				std::string flag = argument.substr(0, flag_end);
 				std::string value = argument.substr(flag_end+1);

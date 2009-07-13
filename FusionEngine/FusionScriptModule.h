@@ -98,8 +98,6 @@ namespace FusionEngine
 		bool m_Built;
 	};
 
-	typedef std::tr1::shared_ptr<Module> ModulePtr;
-
 }
 
 #endif

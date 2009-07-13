@@ -41,13 +41,14 @@
 #include "FusionSingleton.h"
 
 // Fusion
-//#include "FusionCircularStringBuffer.h"
+#include "FusionScriptModule.h"
 
 // External
 #include <containers/structured_map.hpp>
 
 namespace FusionEngine
 {
+	
 	//! Default maximum console buffer length
 	static const size_t s_ConsoleDefaultBufferLength = 3200;
 
@@ -191,7 +192,11 @@ namespace FusionEngine
 		//! Returns all the lines that have been added to the console
 		std::string GetHistory() const;
 
-		void RegisterScriptElements(ScriptingEngine* manager);
+		static void Register(ScriptingEngine* manager);
+
+		void SetModule(ModulePtr module);
+
+		void OnModuleBuild(BuildModuleEvent &ev);
 
 		//! Triggers when new data is added to the console
 		boost::signals2::signal<void (const std::string&)> OnNewLine;
@@ -225,6 +230,8 @@ namespace FusionEngine
 
 		CommandCallbackMap m_Commands;
 		CommandHelpMap m_CommandHelp;
+
+		boost::signals2::connection m_ModuleConnection;
 
 		//size_t m_MaxData;
 		//! Lists all the data which has been added to the console.

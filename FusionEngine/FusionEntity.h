@@ -42,8 +42,6 @@
 namespace FusionEngine
 {
 
-	typedef std::tr1::shared_ptr<Entity> EntityPtr;
-
 	class TagFlagDictionary
 	{
 	public:
@@ -96,7 +94,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public ICollisionHandler, public RefCounted
+	class Entity : public RefCounted, public ICollisionHandler
 	{
 	public:
 		//! Constructor
@@ -104,13 +102,16 @@ namespace FusionEngine
 		//! Constructor. Names the Entity.
 		Entity(const std::string& name);
 		//! Destructor
-		~Entity();
+		virtual ~Entity();
 
 	public:
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
 		void _setName(const std::string &name);
 		const std::string &GetName() const;
+
+		void SetID(ObjectID id);
+		ObjectID GetID() const;
 
 		virtual std::string GetType() const =0;
 
@@ -130,12 +131,16 @@ namespace FusionEngine
 		void AddTag(const std::string &tag);
 		//! Removes a Tag
 		void RemoveTag(const std::string &tag);
+		//! Removes all tags
+		void ClearTags();
 		//! Checks whether this Entity is tagged with the given Tag
 		bool CheckTag(const std::string &tag) const;
 
 		//! Returns this entity's tags
 		StringVector GetTags() const;
 
+		void _notifyPausedTag(const std::string &tag);
+		void _notifyHiddenTag(const std::string &tag);
 
 		//! Sets the tag-flags for this entity
 		/*!
@@ -172,12 +177,27 @@ namespace FusionEngine
 		bool IsMarkedToRemove() const;
 
 		//! Updates
-		virtual void Update() =0;
+		virtual void Update(float split) =0;
 		//! Draws
 		virtual void Draw() =0;
 
-		virtual std::string SerializeState() const =0;
-		virtual void DeserializeState(const std::string& state) =0;
+		//! Save state to buffer
+		/*!
+		* \param[in] local
+		* Whether the state should be serialized in 'local' mode - i.e. for
+		* saving game rather than network-sync.
+		*/
+		virtual std::string SerializeState(bool local) const =0;
+		//! Read state from buffer
+		/*!
+		* \param[in] state
+		* State data to read
+		*
+		* \param[in] local
+		* Whether the given state is supposed to have been serialized in local mode.
+		* see the local param in SerializeState().
+		*/
+		virtual void DeserializeState(const std::string& state, bool local) =0;
 
 		//! Returns a human-readable string
 		virtual std::string ToString() const;
@@ -186,12 +206,20 @@ namespace FusionEngine
 		//virtual bool CanCollideWith(PhysicsBodyPtr other);
 
 		//! Implementation of ICollisionHandler#BeginContact()
-		virtual void ContactBegin(const Contact& contact);
+		virtual void ContactBegin(const Contact& contact) {}
+		//! Implementation of ICollisionHandler#ContactPersist()
+		virtual void ContactPersist(const Contact &contact) {}
+		//! Implementation of ICollisionHandler#ContactEnd()
+		virtual void ContactEnd(const Contact &contact) {}
 
 	protected:
 		std::string m_Name;
+		ObjectID m_Id;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
+
+		TagSet m_PausedTags;
+		TagSet m_HiddenTags;
 
 		TagSet m_Tags;
 		// Markers (flags) for this entity

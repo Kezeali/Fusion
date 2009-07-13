@@ -60,11 +60,8 @@ namespace FusionEngine
 	/// Public:
 	void ResourceManager::Configure()
 	{
-		// A xml file will contain all the ResourceManager config info
-		//  and will be placed in the working directory of the game. This file will list all
-		//  paths to be added to the search path, as well as the config info.
 		SetupPhysFS::configure("Pom", "Fusion", "7z");
-		if (!SetupPhysFS::add_subdirectory("Packages/", "7z", false))
+		if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
 			SendToConsole("Default resource path could not be located");
 
 		m_PhysFSConfigured = true;
@@ -321,6 +318,8 @@ namespace FusionEngine
 			}
 			m_ToUnload.clear();
 		}
+
+		asThreadCleanup();
 	}
 
 	ResourceSpt ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag)

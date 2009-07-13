@@ -140,6 +140,70 @@ bool SetupPhysFS::add_subdirectory(const std::string &path,
 	return true;
 }
 
+bool SetupPhysFS::mount(const std::string &path, const std::string &mount_point, 
+												const std::string &archiveExt,
+												bool archivesFirst)
+{
+	// Get the absoulte path to the given directory (or archive)
+	const char* dir = PHYSFS_getRealDir(path.c_str());
+	if (dir == NULL)
+		return false;
+
+	bool added = false;
+
+	// Try to add the path relative to app
+	std::string full_path = std::string( PHYSFS_getBaseDir() ) + path;
+	// Add the directory to the end of the search path
+	if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
+		added = true;
+
+	// Try to add the path from anywhere we can
+	full_path = std::string( dir ) + PHYSFS_getDirSeparator() + path;
+	// Add the directory to the end of the search path
+	if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
+		added = true;
+
+	if (!added)
+		return false;
+
+	// Ripped from PHYSFS_setSaneConfig (and converted somewhat to c++)
+	if (!archiveExt.empty())
+	{
+		const char *dirsep = PHYSFS_getDirSeparator();
+
+		char **rc = PHYSFS_enumerateFiles(path.c_str());
+		char **i;
+		size_t extlen = archiveExt.length();
+		char *ext;
+		char *arc;
+
+		for (i = rc; *i != NULL; i++)
+		{
+			size_t l = strlen(*i);
+			if ((l > extlen) && ((*i)[l - extlen - 1] == '.'))
+			{
+				ext = (*i) + (l - extlen);
+				if (platform_stricmp(ext, archiveExt.c_str()) == 0)
+				{
+					const char *d = PHYSFS_getRealDir(*i);
+					arc = (char *)malloc(strlen(d) + strlen(dirsep) + l + 1);
+					if (arc != NULL)
+					{
+						sprintf(arc, "%s%s%s", d, dirsep, *i);
+						PHYSFS_mount(arc, mount_point.c_str(), (archivesFirst ? 0 : 1));
+						free(arc);
+					} /* if */
+				} /* if */
+			} /* if */
+		} /* for */
+
+		PHYSFS_freeList(rc);
+	} // if (!archiveExt.empty())
+
+	// If we got here we assume the addition was successful
+	return true;
+}
+
 void SetupPhysFS::deinit()
 {
 	PHYSFS_deinit();
