@@ -39,6 +39,10 @@
 #include "FusionPhysicsCallback.h"
 #include "FusionRefCounted.h"
 
+// Fusion
+#include "FusionSerialisedData.h"
+#include "FusionEntityDeserialiser.h"
+
 namespace FusionEngine
 {
 
@@ -107,12 +111,27 @@ namespace FusionEngine
 	public:
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
+		//! Sets the search-name of this Entity post-hoc
 		void _setName(const std::string &name);
+		//! Gets the search-name of this Entity
 		const std::string &GetName() const;
 
+		//! Sets the sync ID of this Entity.
+		/*!
+		* Set to zero to make this a pseudo-entity, i.e. prevent this entity from sync.ing
+		*/
 		void SetID(ObjectID id);
+		//! Returns the sync. ID of this Entity
 		ObjectID GetID() const;
 
+		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
+		/*!
+		* Pseudo Entities have no Entity-ID, so this returns true when
+		* <code>GetID() == 0</code>.
+		*/
+		bool IsPseudoEntity() const;
+
+		//! Returns the typename of this entity
 		virtual std::string GetType() const =0;
 
 		//! Gets position
@@ -176,6 +195,8 @@ namespace FusionEngine
 		//! Returns true if this Entity has been marked to delete.
 		bool IsMarkedToRemove() const;
 
+		//! Spawns
+		virtual void Spawn() =0;
 		//! Updates
 		virtual void Update(float split) =0;
 		//! Draws
@@ -187,7 +208,7 @@ namespace FusionEngine
 		* Whether the state should be serialized in 'local' mode - i.e. for
 		* saving game rather than network-sync.
 		*/
-		virtual std::string SerializeState(bool local) const =0;
+		virtual void SerialiseState(SerialisedData &state, bool local) const =0;
 		//! Read state from buffer
 		/*!
 		* \param[in] state
@@ -195,9 +216,12 @@ namespace FusionEngine
 		*
 		* \param[in] local
 		* Whether the given state is supposed to have been serialized in local mode.
-		* see the local param in SerializeState().
+		* see the local param in SerialiseState().
+		*
+		* \param[in] entity_deserialiser
+		* Used to deserialise ObjectIDs to EntityPtrs
 		*/
-		virtual void DeserializeState(const std::string& state, bool local) =0;
+		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
 
 		//! Returns a human-readable string
 		virtual std::string ToString() const;
@@ -215,6 +239,7 @@ namespace FusionEngine
 	protected:
 		std::string m_Name;
 		ObjectID m_Id;
+		bool m_PseudoEntity;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

@@ -16,6 +16,24 @@
 namespace FusionEngine
 {
 
+	//class EntityMap
+	//{
+	//public:
+	//	typedef std::map<ObjectID, EntityPtr> IDEntityMap;
+	//	typedef std::tr1::unordered_map<std::string, EntityPtr> NameEntityMap;
+
+	//	const IDEntityMap &by_id() const;
+	//	const NameEntityMap &by_name() const;
+
+	//	bool insert(EntityPtr entity);
+
+	//protected:
+	//	IDEntityMap m_EntitiesByID;
+	//	NameEntityMap m_EntitiesByName;
+	//};
+
+	typedef std::vector<EntityPtr> EntityArray;
+
 	/*!
 	 * \brief
 	 * Updates / draws entity objects.
@@ -29,6 +47,8 @@ namespace FusionEngine
 		typedef std::set<std::string> BlockedTagSet;
 		typedef std::map<std::string, bool> BlockingChangeMap;
 
+		typedef std::set<EntityPtr> EntitySet;
+
 	public:
 		//! Constructor
 		EntityManager();
@@ -38,9 +58,8 @@ namespace FusionEngine
 	public:
 		typedef std::tr1::weak_ptr<Entity> EntityWPtr;
 		//! A list of nodes
-		//typedef std::tr1::unordered_map<std::string, EntityPtr> EntityMap;
-		typedef std::map<ObjectID, EntityPtr> EntityMap;
-		typedef std::vector<EntityPtr> EntityArray;
+		typedef std::tr1::unordered_map<std::string, EntityPtr> NameEntityMap;
+		typedef std::map<ObjectID, EntityPtr> IDEntityMap;
 
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
 		//typedef TagFlagMap::value_type TagDef;
@@ -61,13 +80,19 @@ namespace FusionEngine
 
 		EntityFactory *GetFactory() const;
 
+		IDTranslator MakeIDTranslator() const;
+
 		void AddEntity(EntityPtr entity);
 		void RemoveEntity(EntityPtr entity);
 		void RemoveEntityNamed(const std::string &name);
 		void RemoveEntityById(ObjectID id);
 
-		EntityPtr GetEntity(const std::string &name);
-		EntityPtr GetEntity(ObjectID id);
+		void AddPseudoEntity(EntityPtr pseudo_entity);
+
+		void ReplaceEntity(ObjectID id, EntityPtr entity);
+
+		EntityPtr GetEntity(const std::string &name, bool throwIfNotFound = true);
+		EntityPtr GetEntity(ObjectID id, bool throwIfNotFound = true);
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
@@ -100,6 +125,8 @@ namespace FusionEngine
 	protected:
 		//unsigned int getTagFlag(const std::string &tag, bool generate);
 
+		ObjectID getFreeID();
+
 		std::string generateName(EntityPtr entity);
 
 		//void updateEntity(EntityPtr entity, float split);
@@ -110,15 +137,27 @@ namespace FusionEngine
 		EntityFactory *m_EntityFactory;
 
 		ObjectID m_NextId;
+		typedef std::vector<ObjectID> ObjectIDStack;
+		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
+		ObjectIDStack m_UnusedIds;
 
-		//! Used to quickly find entities by name
-		EntityMap m_Entities;
+		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)
+		NameEntityMap m_EntitiesByName;
+
+		// All non-pseudo-entities
+		IDEntityMap m_Entities;
+		// All pseudo-entities
+		EntitySet m_PseudoEntities;
+
 		// Entities with no paused tags
 		EntityArray m_EntitiesToUpdate;
 		// Entities with no hidden tags
 		EntityArray m_EntitiesToDraw;
 
-		EntityArray m_EntitiesToAdd;
+		// Bool part indicates whether the entity is a Pseudo-Entity
+		typedef std::pair<EntityPtr, bool> EntityToAdd;
+		typedef std::vector<EntityToAdd> EntityToAddArray;
+		EntityToAddArray m_EntitiesToAdd;
 		EntityArray m_EntitiesToRemove;
 		//! The node to which all other nodes are children
 		//EntityPtr m_RootNode;

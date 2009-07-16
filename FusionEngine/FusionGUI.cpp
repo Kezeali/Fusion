@@ -162,7 +162,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool GUI::Update(unsigned int split)
+	void GUI::Update(unsigned int split)
 	{
 		m_Context->Update();
 
@@ -175,8 +175,6 @@ namespace FusionEngine
 		{
 			m_ShowMouseTimer -= split;
 		}
-
-		return true;
 	}
 
 	void GUI::Draw()

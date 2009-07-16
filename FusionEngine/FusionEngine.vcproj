@@ -279,6 +279,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityDeserialiser.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEntityFactory.h"
 				>
 			</File>
@@ -659,6 +663,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionSerialisedData.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionServerOptions.h"
 				>
 			</File>
@@ -858,6 +866,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEntityDeserialiser.cpp"
 				>
 			</File>
 			<File

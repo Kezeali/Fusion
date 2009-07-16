@@ -666,7 +666,8 @@ namespace FusionEngine
 
 	void Console::OnModuleBuild(BuildModuleEvent &ev)
 	{
-		ev.manager->RegisterGlobalObject("Console console", this);
+		if (ev.type == BuildModuleEvent::PreBuild)
+			ev.manager->RegisterGlobalObject("Console console", this);
 	}
 
 	void Console::Register(ScriptingEngine *manager)

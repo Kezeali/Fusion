@@ -86,7 +86,7 @@ namespace FusionEngine
 		virtual void CleanUp() = 0;
 
 		//! Should do whatever the system does while it isn't paused
-		virtual bool Update(unsigned int split) = 0;
+		virtual void Update(unsigned int split) = 0;
 		//! Should draw stuff
 		virtual void Draw() = 0;
 

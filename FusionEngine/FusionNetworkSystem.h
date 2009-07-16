@@ -34,18 +34,34 @@
 
 #include "FusionCommon.h"
 
-#include "FusionSystem.h"
+// Inherited
+#include "FusionState.h"
+#include "FusionPacketHandler.h"
 
-#include "FusionNetwork.h"
+// Fusion
 #include "FusionPacketDispatcher.h"
+#include "FusionLog.h"
+
 
 namespace FusionEngine
 {
+
+	class DebugPacketHandler : public PacketHandler
+	{
+	public:
+		DebugPacketHandler();
+
+		void HandlePacket(IPacket *packet);
+
+	protected:
+		LogPtr m_Log;
+	};
 
 	class NetworkSystem : public System
 	{
 	public:
 		NetworkSystem();
+		NetworkSystem(Network *network);
 		virtual ~NetworkSystem();
 
 		virtual const std::string &GetName() const;
@@ -53,10 +69,13 @@ namespace FusionEngine
 		virtual bool Initialise();
 		virtual void CleanUp();
 
-		virtual bool Update(unsigned int split);
+		virtual void Update(unsigned int split);
 		virtual void Draw();
 
-		virtual Network *GetNetwork() const;
+		void SetNetwork(Network *network);
+		Network *GetNetwork() const;
+
+		void AddPacketHandler(char type, PacketHandler *handler);
 
 		//! Allows a peer to take control of the update rate.
 		/*
@@ -70,53 +89,9 @@ namespace FusionEngine
 	protected:
 		PacketDispatcher *m_PacketDispatcher;
 		Network *m_Network;
+
+		DebugPacketHandler m_DebugPacketHandler;
 	};
-
-	const std::string s_NetSystemName = "Network";
-
-	NetworkSystem::NetworkSystem()
-		: m_PacketDispatcher(NULL),
-		m_Network(NULL)
-	{
-	}
-
-	const std::string &NetworkSystem::GetName() const
-	{
-		return s_NetSystemName;
-	}
-
-	bool NetworkSystem::Initialise()
-	{
-		if (m_PacketDispatcher == NULL)
-		{
-			m_PacketDispatcher = new PacketDispatcher(m_Network);
-		}
-		else
-			m_PacketDispatcher->SetNetwork(m_Network);
-	}
-
-	void NetworkSystem::CleanUp()
-	{
-		if (m_PacketDispatcher != NULL)
-		{
-			delete m_PacketDispatcher;
-		}
-	}
-
-	bool NetworkSystem::Update(unsigned int split)
-	{
-		m_PacketDispatcher->Run();
-	}
-
-	Network *NetworkSystem::GetNetwork() const
-	{
-		return m_Network;
-	}
-
-	void NetworkSystem::RequestStepControl()
-	{
-		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, NULL, 0, FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, "");
-	}
 
 }
 

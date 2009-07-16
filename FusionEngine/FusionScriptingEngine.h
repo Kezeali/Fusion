@@ -682,7 +682,7 @@ namespace FusionEngine
 		int m_VectorTypeId;
 		int m_StringTypeId;
 
-		typedef std::tr1::unordered_map<const char*, ModulePtr> ModuleMap;
+		typedef std::tr1::unordered_map<std::string, ModulePtr> ModuleMap;
 		ModuleMap m_Modules;
 
 		typedef std::tr1::shared_ptr<ScriptPreprocessor> PreprocessorPtr;

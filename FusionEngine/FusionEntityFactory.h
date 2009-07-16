@@ -35,20 +35,28 @@
 
 #include "FusionCommon.h"
 
-/// Inherited
+// Inherited
 #include "FusionSingleton.h"
+
+// Fusion
+#include "FusionScriptModule.h"
 
 namespace FusionEngine
 {
 
+	//! Entity instancer base class
 	class EntityInstancer
 	{
 	public:
+		//! CTOR
 		EntityInstancer(const std::string &type);
 
+		//! Returns an object of the expected type
 		virtual Entity *InstanceEntity(const std::string &name) = 0;
 
+		//! Sets the type of this instancer
 		void SetType(const std::string &type);
+		//! Gets the type of this instancer
 		const std::string &GetType() const;
 
 	private:
@@ -57,6 +65,9 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<EntityInstancer> EntityInstancerPtr;
 
+	class EntityDefinition;
+
+	typedef std::tr1::shared_ptr<EntityDefinition> EntityDefinitionPtr;
 
 	//! Creates entities
 	/*!
@@ -86,10 +97,18 @@ namespace FusionEngine
 		EntityPtr InstanceEntity(const std::string &type, const std::string &name);
 
 		//! Creates an instancer for the the given scripted type
-		void LoadScriptedEntity(const std::string &type);
+		/*!
+		* This should be called on the startup_entity and all entities
+		* referenced by game maps (even maps that may not be loaded - since
+		* all entity code must be loaded into the module before it is built
+		* entity types can't be loaded later)
+		*/
+		bool LoadScriptedType(const std::string &type);
 
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);
+		//! Sets the scripting manager and module used to add script sections
+		void SetScriptingManager(ScriptingEngine *manager, const std::string &module_name);
 
 		//! Clears the Used Types List
 		/*!
@@ -109,13 +128,18 @@ namespace FusionEngine
 		*/
 		void ClearUnusedInstancers();
 
+		//! Adds entity script sections
+		void OnModuleRebuild(BuildModuleEvent &ev);
+
 	protected:
-		void createScriptedEntityInstancer(TiXmlDocument *document);
+		void loadAllDependencies(const std::string &working_directory, ticpp::Document &document);
+
+		void createScriptedEntityInstancer(EntityDefinitionPtr definition);
 
 		bool getEntityType(TiXmlDocument *document, std::string &type);
 
 		//! Recursively parses the scripted entity files below the given path
-		void parseScriptedEntities(const char *path);
+		void parseScriptedEntities(const char *path, unsigned int current_recursion = 0);
 
 		EntityInstancerMap m_EntityInstancers;
 
@@ -125,8 +149,15 @@ namespace FusionEngine
 		std::string m_ScriptedEntityPath;
 
 		typedef std::tr1::unordered_map<std::string, std::string> StringMap;
-		StringMap m_ScriptEntityDefinitionFiles;
+		StringMap m_EntityDefinitionFileNames;
 
+		typedef std::vector<EntityDefinitionPtr> EntityDefinitionArray;
+		EntityDefinitionArray m_LoadedEntityDefinitions;
+
+		ScriptingEngine *m_ScriptingManager;
+		std::string m_ModuleName;
+
+		bsig2::connection m_ModuleConnection;
 	};
 
 }

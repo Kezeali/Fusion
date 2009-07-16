@@ -57,7 +57,8 @@ namespace FusionEngine
 	}
 
 	ClientOptions::ClientOptions(const std::wstring &filename, const std::string &type)
-		: m_NumLocalPlayers(0)
+		: m_Type(type),
+		m_NumLocalPlayers(0)
 	{
 		//m_PlayerOptions.resize(g_MaxLocalPlayers);
 		m_PlayerVariables.resize(g_MaxLocalPlayers);

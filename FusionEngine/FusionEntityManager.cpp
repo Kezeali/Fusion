@@ -60,16 +60,19 @@ namespace FusionEngine
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false)
 	{
+		m_EntityFactory = new EntityFactory();
 	}
 
 	EntityManager::~EntityManager()
 	{
+		delete m_EntityFactory;
 	}
 
 	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name)
 	{
 		EntityPtr entity = m_EntityFactory->InstanceEntity(type, name);
-		AddEntity(entity);
+		if (entity.get() != NULL)
+			AddEntity(entity);
 		return entity;
 	}
 
@@ -78,22 +81,31 @@ namespace FusionEngine
 		return m_EntityFactory;
 	}
 
+	IDTranslator EntityManager::MakeIDTranslator() const
+	{
+		return IDTranslator(m_NextId-1);
+	}
+
 	void EntityManager::AddEntity(EntityPtr entity)
 	{
-		entity->SetID(m_NextId++);
-
 		if (m_EntitiesLocked)
-			m_EntitiesToAdd.push_back(entity);
+			m_EntitiesToAdd.push_back( EntityToAdd(entity, false) );
 
 		else
 		{
+			if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
+				entity->SetID(getFreeID());
+
 			if (entity->GetName() == "default")
 				entity->_setName(generateName(entity));
 
-			EntityMap::iterator _where = m_Entities.find(entity->GetID());
+			IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
 			if (_where != m_Entities.end())
 				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
-			m_Entities[entity->GetID()] = entity;
+			
+			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
+
+			m_EntitiesByName[entity->GetName()] = entity;
 		}
 	}
 
@@ -105,7 +117,17 @@ namespace FusionEngine
 			m_EntitiesToRemove.push_back(entity);
 		}
 		else
-			m_Entities.erase(entity->GetID());
+		{
+			if (!entity->IsPseudoEntity())
+			{
+				if (entity->GetID() < m_NextId-1)
+					m_UnusedIds.push_back(entity->GetID()); // record unused ID
+				m_Entities.erase(entity->GetID());
+			}
+			else
+				m_PseudoEntities.erase(entity);
+			m_EntitiesByName.erase(entity->GetName());
+		}
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)
@@ -118,24 +140,85 @@ namespace FusionEngine
 		RemoveEntity(GetEntity(id));
 	}
 
-	bool isNamed(EntityManager::EntityMap::value_type &element, const std::string &name)
+	void EntityManager::AddPseudoEntity(EntityPtr pseudo_entity)
+	{
+		if (m_EntitiesLocked)
+			m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
+
+		else
+		{
+			if (pseudo_entity->GetName() == "default")
+				pseudo_entity->_setName(generateName(pseudo_entity));
+
+			NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
+			if (_where != m_EntitiesByName.end())
+				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
+			
+			m_PseudoEntities.insert(pseudo_entity);
+			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
+		}
+	}
+
+	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr entity)
+	{
+		if (m_EntitiesLocked)
+			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager::InsertEntity", "EntityManager is currently updating: Can't replace/insert Entities while updating");
+		
+		// Make sure the entity to be inserted has the given ID
+		entity->SetID(id);
+
+		// Generate a name if necessary
+		if (entity->GetName() == "default")
+			entity->_setName(generateName(entity));
+
+		// Try to insert the entity - overwrite if another is present
+		EntityPtr &value = m_Entities[id];
+		if (value.get() != NULL)
+		{
+			// Erase the existing Entity from the name map
+			m_EntitiesByName.erase(value->GetName());
+		}
+		// Replace the map-entry (referenced by 'value') with the new entity
+		value = entity;
+
+		//std::pair<IDEntityMap::iterator, bool> check = m_Entities.insert( IDEntityMap::value_type(entity->GetID(), entity) );
+		//if (!check.second)
+		//{
+		//	// Erase the existing entity from both maps
+		//	m_EntitiesByName.erase(check.first->second->GetName());
+		//	m_Entities.erase(check.first);
+		//	// Insert the new Entity
+		//	m_Entities.insert(check.first, IDEntityMap::value_type( entity->GetID(), entity ));
+		//}
+
+		m_EntitiesByName[entity->GetName()] = entity;
+	}
+
+	bool isNamed(EntityManager::IDEntityMap::value_type &element, const std::string &name)
 	{
 		return element.second->GetName() == name;
 	}
 
-	EntityPtr EntityManager::GetEntity(const std::string &name)
+	EntityPtr EntityManager::GetEntity(const std::string &name, bool throwIfNotFound)
 	{
-		EntityMap::iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
-		if (_where == m_Entities.end())
-			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity called: ") + name);
+		//IDEntityMap::iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
+		NameEntityMap::iterator _where = m_EntitiesByName.find(name);
+		if (_where == m_EntitiesByName.end())
+			if (throwIfNotFound)
+				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity called: ") + name);
+			else
+				return EntityPtr();
 		return _where->second;
 	}
 
-	EntityPtr EntityManager::GetEntity(ObjectID id)
+	EntityPtr EntityManager::GetEntity(ObjectID id, bool throwIfNotFound)
 	{
-		EntityMap::iterator _where = m_Entities.find(id);
+		IDEntityMap::iterator _where = m_Entities.find(id);
 		if (_where == m_Entities.end())
-			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
+			if (throwIfNotFound)
+				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
+			else
+				return EntityPtr();
 		return _where->second;
 	}
 
@@ -146,7 +229,7 @@ namespace FusionEngine
 			EntityPtr entity = GetEntity(entity_name);
 			return AddTag(entity, tag);
 		}
-		catch (InvalidArgumentException &ex)
+		catch (InvalidArgumentException &)
 		{
 			return false;
 		}
@@ -165,7 +248,7 @@ namespace FusionEngine
 			EntityPtr entity = GetEntity(entity_name);
 			RemoveTag(entity, tag);
 		}
-		catch (InvalidArgumentException &ex)
+		catch (InvalidArgumentException &)
 		{
 		}
 	}
@@ -176,7 +259,7 @@ namespace FusionEngine
 		{
 			entity->RemoveTag(tag);
 		}
-		catch (InvalidArgumentException &ex) // The given tag doesn't exist
+		catch (InvalidArgumentException &) // The given tag doesn't exist
 		{
 		}
 	}
@@ -221,7 +304,7 @@ namespace FusionEngine
 
 	void EntityManager::RemoveEntitiesWithTag(const std::string &tag)
 	{
-		for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (IDEntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
 			RemoveEntity(it->second);
 		}
@@ -259,7 +342,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			for (EntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+			for (IDEntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 			{
 				EntityPtr &entity = it->second;
 
@@ -283,19 +366,23 @@ namespace FusionEngine
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
 
-		// Actually add entities which were 'added' during the update
-		for (EntityArray::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
-		{
-			AddEntity(*it);
-		}
-		m_EntitiesToAdd.clear();
-
 		// Actually remove entities which were marked for removal during update
 		for (EntityArray::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end(); it != end; ++it)
 		{
 			m_Entities.erase((*it)->GetID());
+			m_EntitiesByName.erase((*it)->GetName());
 		}
 		m_EntitiesToRemove.clear();
+
+		// Actually add entities which were 'added' during the update
+		for (EntityToAddArray::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
+		{
+			if (it->second)
+				AddPseudoEntity(it->first);
+			else
+				AddEntity(it->first);
+		}
+		m_EntitiesToAdd.clear();
 	}
 
 	void EntityManager::Draw()
@@ -319,6 +406,18 @@ namespace FusionEngine
 		}
 
 		m_EntitiesLocked = false;
+	}
+
+	ObjectID EntityManager::getFreeID()
+	{
+		if (m_UnusedIds.empty())
+			return m_NextId++;
+		else
+		{
+			ObjectID id = m_UnusedIds.back();
+			m_UnusedIds.pop_back();
+			return id;
+		}
 	}
 
 	std::string EntityManager::generateName(EntityPtr entity)

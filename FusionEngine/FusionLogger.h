@@ -57,8 +57,6 @@ namespace FusionEngine
 	//! Default extension for logfiles (excluding the dot).
 	static const std::string g_LogDefaultExt = "log";
 
-	typedef std::tr1::shared_ptr<Log> LogPtr;
-
 
 	//! Provides logfile access to all FusionEngine objects
 	/*!

@@ -25,8 +25,9 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_OntologicalSystem
-#define Header_FusionEngine_OntologicalSystem
+
+#ifndef Header_FusionEngine_EntityDeserialiser
+#define Header_FusionEngine_EntityDeserialiser
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,43 +35,37 @@
 
 #include "FusionCommon.h"
 
-#include "FusionState.h"
-
-#include "FusionScriptModule.h"
-
-
 namespace FusionEngine
 {
 
-	class OntologicalSystem : public System
+	struct IDTranslator
 	{
-	public:
-		OntologicalSystem(InputManager *input_manager);
-		virtual ~OntologicalSystem();
+		IDTranslator()
+			: baseID(0)
+		{}
 
-		virtual const std::string &GetName() const;
+		// From EntityManager startId should be m_NextId-1
+		IDTranslator(ObjectID startId)
+			: baseID(startId)
+		{}
 
-		virtual bool Initialise();
-		virtual void CleanUp();
+		ObjectID operator() (const ObjectID &from) const
+		{
+			return from + baseID;
+		}
 
-		virtual void Update(unsigned int split);
-		virtual void Draw();
+		ObjectID baseID;
+	};
 
-		void SetModule(ModulePtr module);
+	struct EntityDeserialiser
+	{
+		EntityDeserialiser(EntityManager *manager, const IDTranslator &id_translator = IDTranslator());
 
-		void OnModuleRebuild(BuildModuleEvent& ev);
+		EntityPtr GetEntity(ObjectID serialised_id) const;
 
-	protected:
-		EntityManager *m_EntityManager;
-		GameMapLoader *m_MapLoader;
-
-		PhysicsWorld *m_PhysicsWorld;
-
-		InputManager *m_InputManager;
-
-		bsig2::connection m_ModuleConnection;
-
-		std::string m_StartupEntity;
+	private:
+		EntityManager *m_Manager;
+		IDTranslator m_Translator;
 	};
 
 }

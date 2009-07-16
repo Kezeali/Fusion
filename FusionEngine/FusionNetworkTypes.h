@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2006-2007 Fusion Project Team
+ Copyright (c) 2006-2009 Fusion Project Team
 
  This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -68,9 +68,6 @@ namespace FusionEngine
 	 */
 	enum MessageType
 	{
-		//@{
-		//! System channel message types
-
 		//! [client|server] When new players join (clients can have more than one player)
 		/*!
 		 * Server-side Structure:<br>
@@ -107,10 +104,6 @@ namespace FusionEngine
 		MTID_CHANGEMODE,
 		//! [server|client]
 		MTID_CHANGENAME,
-		//@}
-
-		//@{
-		//! File transfer channel message types
 
 		//! [client|server]
 		/*!
@@ -124,10 +117,6 @@ namespace FusionEngine
 		MTID_ENDSYNC,
 		//! [client] If a package fails to verify, the client simply disconnects (thus no VERIFYFAILED is necessary)
 		MTID_VERIFYPACKAGE,
-		//@}
-
-		//@{
-		//! Gameplay channel message types
 
 		//! Gives the client a hint about what it's starting tick should be
 		MTID_JOINSETUP,
@@ -137,10 +126,8 @@ namespace FusionEngine
 		MTID_CORRECTION,
 		//! [server] High priority
 		MTID_IMPORTANTMOVE,
-		//@}
 
-		//@{
-		//! Chat channel message types
+		MTID_REQUESTSTEPCONTROL,
 
 		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHALL,
@@ -148,7 +135,6 @@ namespace FusionEngine
 		MTID_CHTEAM,
 		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHONE,
-		//@}
 
 		//! Max type ID
 		MTID_MAX

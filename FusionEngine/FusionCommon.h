@@ -436,8 +436,10 @@ namespace FusionEngine
 	class ClientOptions;
 	class EntityFactory;
 	class EntityManager;
+	class GameMapLoader;
 	class Entity;
 	class Network;
+	class IPacket;
 	class PacketHandler;
 	class PacketHandlerNode;
 	class Node;
@@ -471,6 +473,9 @@ namespace FusionEngine
 
 	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
 	typedef std::vector<std::string> StringVector;
+
+	//! Log pointer
+	typedef std::tr1::shared_ptr<Log> LogPtr;
 
 	//! System pointer
 	typedef std::tr1::shared_ptr<System> SystemPtr;

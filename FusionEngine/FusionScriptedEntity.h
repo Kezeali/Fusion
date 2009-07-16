@@ -36,6 +36,23 @@
 namespace FusionEngine
 {
 
+	class ResourceParam
+	{
+	public:
+		ResourceParam(const std::string &type);
+		virtual ~ResourceParam();
+
+		const std::string &GetType() const;
+
+	protected:
+		std::string m_ScriptPropertyName;
+		std::string m_Type; // Image, Sound, StreamedSound
+
+		int m_ScriptPropertyIndex;
+	};
+	typedef std::tr1::shared_ptr<ResourceParam> ResourceParamPtr;
+
+
 	/*!
 	 * This class acts as a wrapper for the script objects which define
 	 * the actual logic for in-game objects, while storing and providing
@@ -47,24 +64,6 @@ namespace FusionEngine
 	class ScriptedEntity : public Entity
 	{
 	public:
-		ScriptedEntity();
-		ScriptedEntity(ScriptObject script_self, const std::string &name);
-
-		virtual std::string GetType() const;
-
-		virtual const Vector2 &GetPosition();
-		virtual float GetAngle();
-
-		virtual void Update(float split);
-		virtual void Draw();
-
-		virtual std::string SerializeState(bool local) const;
-		virtual void DeserializeState(const std::string& state, bool local);
-
-	protected:
-		// The actual entity logic (for which this C++ class is simply a wrapper)
-		ScriptObject m_ScriptObject;
-
 		//! Stores information useful for serializing & syncing properties
 		struct Property
 		{
@@ -80,7 +79,40 @@ namespace FusionEngine
 
 		typedef std::map<std::string, Property> PropertiesMap;
 		//typedef std::set<std::string> PropertiesSet;
+
+		typedef std::map<std::string, ResourceParamPtr> ResourcesMap;
+
+	public:
+		ScriptedEntity();
+		ScriptedEntity(ScriptObject script_self, const std::string &name);
+
+		void SetSyncProperties(const PropertiesMap &properties);
+		void SetStreamedResources(const ResourcesMap &resources);
+
+		virtual std::string GetType() const;
+
+		virtual const Vector2 &GetPosition();
+		virtual float GetAngle();
+
+		virtual void Spawn();
+		virtual void Update(float split);
+		virtual void Draw();
+
+		virtual void SerialiseState(SerialisedData &state, bool local) const;
+		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
+
+	protected:
+		// The actual entity logic (for which this C++ class is simply a wrapper)
+		ScriptObject m_ScriptObject;
+
+		// The folder where the the entity definition resides - used when calls to ScriptEntity::MakePathAbsolute are made in the entity script
+		std::string m_Path;
+
 		PropertiesMap m_SyncedProperties;
+		ResourcesMap m_Streamed;
+
+		int m_EntityTypeId;
+		int m_ScriptEntityTypeId;
 
 		Vector2 m_DefaultPosition;
 		float m_DefaultAngle;

@@ -33,11 +33,15 @@
 
 // Fusion
 #include "FusionEntityManager.h"
+#include "FusionEntityFactory.h"
 #include "FusionWorldLoader.h"
 #include "FusionPhysicsWorld.h"
 #include "FusionInputHandler.h"
 #include "FusionScriptingEngine.h"
 #include "FusionClientOptions.h"
+#include "FusionPhysFS.h"
+#include "FusionPhysFSIODeviceProvider.h"
+#include "FusionXml.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -50,7 +54,7 @@ namespace FusionEngine
 	OntologicalSystem::OntologicalSystem(InputManager *input_manager)
 		: m_InputManager(input_manager),
 		m_EntityManager(NULL),
-		m_GameLoader(NULL),
+		m_MapLoader(NULL),
 		m_PhysicsWorld(NULL)
 	{
 	}
@@ -70,9 +74,12 @@ namespace FusionEngine
 		if (m_EntityManager == NULL)
 		{
 			m_EntityManager = new EntityManager();
-			m_GameLoader = new GameAreaLoader(m_EntityManager);
+			m_MapLoader = new GameMapLoader(m_EntityManager);
 
-			m_EntityManager->GetFactory()->SetScriptedEntityPath("Entities");
+			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+
+			m_EntityManager->GetFactory()->SetScriptingManager(manager, "main");
+			m_EntityManager->GetFactory()->SetScriptedEntityPath("Entities/");
 
 			ClientOptions options(L"gameconfig.xml", "gameconfig");
 
@@ -88,31 +95,78 @@ namespace FusionEngine
 			}
 			m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
 
-			std::string startupEntity;
-			options.GetOption("startup_entity", &startupEntity);
+			options.GetOption("startup_entity", &m_StartupEntity);
+		}
 
-			m_EntityManager->InstanceEntity(startupEntity, "startup");
+		m_EntityManager->GetFactory()->LoadScriptedType(m_StartupEntity);
+
+		// Load map entitites
+		std::string maps, line;
+		OpenString_PhysFS(maps, L"maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+		std::string::size_type lineBegin = 0, lineEnd;
+		while (true)
+		{
+			if (lineBegin >= maps.length())
+				break;
+
+			lineEnd = maps.find("\n", lineBegin);
+			if (lineEnd == std::string::npos)
+				break;
+
+			if (lineEnd != lineBegin+1) // ignore empty lines
+			{
+				line = fe_trim( maps.substr(lineBegin, lineEnd-lineBegin) ); // Get the line, trimming out the crap
+				// Open the map file
+				try
+				{
+					CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+					CL_IODevice mapFile = dir.open_file(fe_widen(line), CL_File::open_existing, CL_File::access_read);
+					// Load entity types into the factory (the map loader has an EntityManager pointer
+					//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
+					//  for each entity found in the mapFile)
+					m_MapLoader->LoadEntityTypes(mapFile);
+				}
+				catch (CL_Exception &)
+				{
+					SendToConsole("MapLoader - Reading maps.txt: Couldn't load " + line + ", file doesn't exist or can't be read.");
+				}
+			}
+
+			lineBegin = lineEnd+1;
 		}
 
 		return true;
 	}
 
+	//PHYSFS_File *file = PHYSFS_openRead();
+		//std::string buffer(256);
+		//PHYSFS_sint64 count;
+		//std::string currentLine
+		//do
+		//{
+		//	count = PHYSFS_read(file, (void*)&buffer[0], 1, 256);
+		//	std::string::size_type pos = 0;
+		//	while (pos != std::string::npos)
+		//	{
+		//		pos = buffer.find("\n", pos);
+		//	}
+		//} while (count >= 256)
+
 	void OntologicalSystem::CleanUp()
 	{
 		if (m_EntityManager != NULL)
 		{
-			delete m_GameLoader;
+			delete m_MapLoader;
 			delete m_EntityManager;
 
 			delete m_PhysicsWorld;
 		}
 	}
 
-	bool OntologicalSystem::Update(unsigned int split)
+	void OntologicalSystem::Update(unsigned int split)
 	{
 		m_PhysicsWorld->RunSimulation(split);
 		m_EntityManager->Update(split * 0.001f);
-		return true;
 	}
 
 	void OntologicalSystem::Draw()
@@ -128,7 +182,15 @@ namespace FusionEngine
 
 	void OntologicalSystem::OnModuleRebuild(BuildModuleEvent& ev)
 	{
-		ev.manager->RegisterGlobalObject("World@ world", m_PhysicsWorld);
+		if (ev.type == BuildModuleEvent::PreBuild)
+		{
+			ev.manager->RegisterGlobalObject("World world", m_PhysicsWorld);
+		}
+
+		else if (ev.type == BuildModuleEvent::PostBuild)
+		{
+			m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+		}
 	}
 
 }

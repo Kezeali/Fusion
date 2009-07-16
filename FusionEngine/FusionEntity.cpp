@@ -107,6 +107,7 @@ namespace FusionEngine
 
 	Entity::Entity()
 		: m_Name("default"),
+		m_Id(0),
 		m_Flags(0),
 		m_MarkedToRemove(false)
 	{
@@ -114,6 +115,7 @@ namespace FusionEngine
 
 	Entity::Entity(const std::string &name)
 		: m_Name(name),
+		m_Id(0),
 		m_Flags(0),
 		m_MarkedToRemove(false)
 	{
@@ -143,6 +145,18 @@ namespace FusionEngine
 	ObjectID Entity::GetID() const
 	{
 		return m_Id;
+	}
+
+	//void Entity::SetPseudoEntity(bool pseudo_entity)
+	//{
+	//	if (pseudo_entity)
+	//		m_Id = 0;
+	//	m_PseudoEntity = pseudo_entity;
+	//}
+
+	bool Entity::IsPseudoEntity() const
+	{
+		return m_Id == 0;
 	}
 
 	void Entity::AddTag(const std::string &tag)

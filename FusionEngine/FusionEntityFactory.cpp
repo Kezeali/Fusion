@@ -81,10 +81,6 @@ namespace FusionEngine
 	//	return new RootEntity(name);
 	//}
 
-	class EntityDefinition;
-
-	typedef std::tr1::shared_ptr<EntityDefinition> EntityDefinitionPtr;
-
 	//! Parsed Entity.xml data
 	class EntityDefinition
 	{
@@ -114,9 +110,15 @@ namespace FusionEngine
 		void SetScriptData(Script::ScriptType type, const std::string &data);
 
 		const std::string &GetType() const;
+		const std::string &GetWorkingDirectory() const;
+		Script &GetScript();
+		const Script &GetScript() const;
+		const DependenciesMap &GetEntityDependencies() const;
+		ScriptedEntity::PropertiesMap &GetSyncProperties();
 	protected:
 		void parseElement_Script(ticpp::Element *script_element);
 		void parseElement_Dependencies(ticpp::Element *element);
+		void parseElement_Sync(ticpp::Element *element);
 
 		std::string m_WorkingDirectory;
 
@@ -127,6 +129,8 @@ namespace FusionEngine
 
 		DependenciesMap m_EntityDependencies;
 		DependenciesMap m_ScriptDependencies;
+
+		ScriptedEntity::PropertiesMap m_SyncProperties;
 	};
 
 	void EntityDefinition::Parse(const std::string &current_folder, ticpp::Document &document)
@@ -145,6 +149,9 @@ namespace FusionEngine
 
 			else if (child->Value() == "Dependencies")
 				parseElement_Dependencies(child.Get());
+
+			else if (child->Value() == "Sync")
+				parseElement_Sync(child.Get());
 		}
 	}
 
@@ -160,10 +167,13 @@ namespace FusionEngine
 		std::string script = script_element->GetAttributeOrDefault("file", "");
 		if (!script.empty())
 		{
-			LoadScriptData(type, script);
+			//LoadScriptData(type, script);
+			m_Script.type = type;
+			m_Script.fileName = ResolvePath(script);
 		}
 		else
 		{
+			// Since it's already allocated, used the filename string object to load the inline script text
 			script_element->GetText(&script);
 			SetScriptData(type, script);
 		}
@@ -176,11 +186,34 @@ namespace FusionEngine
 		{
 			if (child->Value() == "Entity")
 			{
+				m_EntityDependencies.push_back(child->GetAttribute("typename"));
 			}
 
 			else if (child->Value() == "UtilityScript")
 			{
+				m_ScriptDependencies.push_back(child->GetAttribute("file"));
 			}
+		}
+	}
+
+	void EntityDefinition::parseElement_Sync(ticpp::Element *sync_element)
+	{
+		std::string attribute;
+		ticpp::Iterator< ticpp::Element > child;
+		for (child = child.begin( sync_element ); child != child.end(); child++)
+		{
+			ScriptedEntity::Property propertyDefinition;
+
+			propertyDefinition.type = child->GetAttribute("type");
+			propertyDefinition.name = child->GetAttribute("name");
+
+			attribute = child->GetAttributeOrDefault("arbitrated", "f");
+			propertyDefinition.arbitrated = CL_StringHelp::local8_to_bool(attribute.c_str());
+
+			attribute = child->GetAttributeOrDefault("local", "f");
+			propertyDefinition.localOnly = CL_StringHelp::local8_to_bool(attribute.c_str());
+
+			m_SyncProperties[propertyDefinition.name] = propertyDefinition;
 		}
 	}
 
@@ -252,6 +285,31 @@ namespace FusionEngine
 		return m_TypeName;
 	}
 
+	const std::string &EntityDefinition::GetWorkingDirectory() const
+	{
+		return m_WorkingDirectory;
+	}
+
+	EntityDefinition::Script &EntityDefinition::GetScript()
+	{
+		return m_Script;
+	}
+
+	const EntityDefinition::Script &EntityDefinition::GetScript() const
+	{
+		return m_Script;
+	}
+
+	const EntityDefinition::DependenciesMap &EntityDefinition::GetEntityDependencies() const
+	{
+		return m_EntityDependencies;
+	}
+
+	ScriptedEntity::PropertiesMap &EntityDefinition::GetSyncProperties()
+	{
+		return m_SyncProperties;
+	}
+
 	//! Creates instances of a scripted entity type
 	class ScriptedEntityInstancer : public EntityInstancer
 	{
@@ -259,7 +317,7 @@ namespace FusionEngine
 		//! Constructor
 		ScriptedEntityInstancer();
 		//! Constructor
-		ScriptedEntityInstancer(const std::string &module, const EntityDefinition &definition);
+		ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition);
 		//! Constructor
 		//ScriptedEntityInstancer(TiXmlDocument &document);
 
@@ -271,16 +329,20 @@ namespace FusionEngine
 	protected:
 		//void parseDoc(TiXmlDocument *document);
 
+		ScriptingEngine *m_ScriptingManager;
 		std::string m_Module;
+		EntityDefinitionPtr m_Definition;
 	};
 
 	ScriptedEntityInstancer::ScriptedEntityInstancer()
 		: EntityInstancer("undefined_scripted_entity")
 	{}
 
-	ScriptedEntityInstancer::ScriptedEntityInstancer(const std::string &module, const EntityDefinition &definition)
-		: EntityInstancer(definition.GetType()),
-		m_Module(module)
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition)
+		: EntityInstancer(definition->GetType()),
+		m_ScriptingManager(manager),
+		m_Module(module),
+		m_Definition(definition)
 	{}
 
 	//ScriptedEntityInstancer::ScriptedEntityInstancer(TiXmlDocument &document)
@@ -293,12 +355,15 @@ namespace FusionEngine
 
 	Entity *ScriptedEntityInstancer::InstanceEntity(const std::string &name)
 	{
-		ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
-		if (manager == NULL)
+		if (m_ScriptingManager == NULL)
 			return NULL;
 
-		ScriptObject object = manager->CreateObject(m_Module.c_str(), GetType());
+		ScriptObject object = m_ScriptingManager->CreateObject(m_Module.c_str(), m_Definition->GetType());
+
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
+		//entity->SetPath(m_Definition->GetWorkingDirectory());
+		entity->SetSyncProperties(m_Definition->GetSyncProperties());
+
 		return entity;
 	}
 
@@ -329,11 +394,40 @@ namespace FusionEngine
 		{
 			return EntityPtr( _where->second->InstanceEntity(name) );
 		}
+		else
+		{
+			// Check for a scripted entity type that hasn't been loaded
+			StringMap::iterator _whereFile = m_EntityDefinitionFileNames.find(type);
+			if (_whereFile != m_EntityDefinitionFileNames.end())
+			{
+				SendToConsole("Entity Factory",
+					"Tried to instance an Entity for which there is a known definition file that hasn't been compiled: "
+					"Please add all required Entities to the <Dependencies> element of your definition file.");
+			}
+		}
 		return EntityPtr();
 	}
 
-	void EntityFactory::LoadScriptedEntity(const std::string &type)
+	std::string fe_getbasepath(const std::string &path)
 	{
+		std::string::size_type pathEnd = path.find_last_of("/");
+		if (pathEnd != std::string::npos)
+			return path.substr(0, pathEnd);
+		else
+			return "/";
+	}
+
+	bool EntityFactory::LoadScriptedType(const std::string &type)
+	{
+		StringMap::iterator _where = m_EntityDefinitionFileNames.find(type);
+		if (_where != m_EntityDefinitionFileNames.end())
+		{
+			ticpp::Document document( OpenXml_PhysFS(fe_widen(_where->second)) );
+			loadAllDependencies(fe_getbasepath(_where->second), document);
+			return true;
+		}
+
+		return false;
 	}
 
 	void EntityFactory::SetScriptedEntityPath(const std::string &path)
@@ -341,6 +435,16 @@ namespace FusionEngine
 		m_ScriptedEntityPath = path;
 
 		parseScriptedEntities(m_ScriptedEntityPath.c_str());
+	}
+
+	void EntityFactory::SetScriptingManager(ScriptingEngine *manager, const std::string &module_name)
+	{
+		m_ScriptingManager = manager;
+		m_ModuleName = module_name;
+
+		m_ModuleConnection.disconnect();
+		m_ModuleConnection = m_ScriptingManager->GetModule(module_name.c_str())->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
+		//m_ModuleConnection = m_ScriptingManager->SubscribeToModule(module_name.c_str(), boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
 	}
 
 	void EntityFactory::ResetUsedTypesList()
@@ -357,14 +461,113 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityFactory::createScriptedEntityInstancer(TiXmlDocument *document)
+	void EntityFactory::OnModuleRebuild(BuildModuleEvent &ev)
 	{
+		if (ev.type == BuildModuleEvent::PreBuild)
+		{
+			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end();
+				it != end; ++it)
+			{
+				EntityDefinitionPtr &def = *it;
+				EntityDefinition::Script &script = def->GetScript();
+				if (script.fileName == "inline")
+					ev.manager->AddCode(script.scriptData, m_ModuleName.c_str(), (def->GetType() + "_inline").c_str());
+				else
+					ev.manager->AddFile(script.fileName, m_ModuleName.c_str());
+			}
+		}
+
+		else if (ev.type == BuildModuleEvent::PostBuild)
+		{
+			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end(); it != end; ++it)
+				createScriptedEntityInstancer(*it);
+		}
+	}
+
+	void EntityFactory::loadAllDependencies(const std::string &working_directory, ticpp::Document &document)
+	{
+		// Load the Entity definition from the given document (this is the root of the dependency tree)
+		EntityDefinitionPtr definition( new EntityDefinition(working_directory, document) );
+		m_LoadedEntityDefinitions.push_back(definition);
+
+		std::deque<std::string> *depsToLoad = new std::deque<std::string>();
+
+		// Push all the dependencies of the root onto the stack
+		const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
+		depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+
+		// Load dependencies until the stack is empty
+		while (!depsToLoad->empty())
+		{
+			// Get the file of the next dependency on the stack
+			StringMap::iterator _where = m_EntityDefinitionFileNames.find(depsToLoad->back());
+			depsToLoad->pop_back();
+			if (_where != m_EntityDefinitionFileNames.end())
+			{
+				// Figure out the working directory for this file (i.e. the path up to the file name)
+				std::string depPath;
+				std::string::size_type pathEnd = _where->second.find_last_of("/");
+				if (pathEnd != std::string::npos)
+					depPath = _where->second.substr(0, pathEnd);
+				else
+					depPath = "/";
+				ticpp::Document depDocument( OpenXml_PhysFS(fe_widen(_where->second)) );
+
+				// Parse the Entity definition document
+				definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
+				m_LoadedEntityDefinitions.push_back(definition);
+
+				// Push the dep.s for this Entity on to the stack
+				const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
+				depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+			}
+		}
+		/*for (EntityDefinition::DependencyMap::const_iterator it = deps.begin(), end = deps.end(); it != end; ++it)
+		{
+			StringMap::iterator _where = m_EntityDefinitionFileNames.find(*it);
+			if (_where != m_EntityDefinitionFileNames.end())
+			{
+				std::string depPath;
+				std::string::size_type pathEnd = _where->second.find_last_of("/");
+				if (pathEnd != std::string::npos)
+					depPath = _where->second.substr(0, pathEnd);
+				else
+					depPath = "/";
+				TiXmlDocument *depDocument = OpenXml_PhysFS(fe_widen(_where->second));
+				
+				loadAllDependencies(depPath, depDocument);
+			}
+		}*/
+	}
+
+	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
+	{
+		// Find the index for each script property listed in the Sync section of the Entity definition file
+		//  Note that it is important that this is done after all the definitions have been loaded and
+		//  the script module has been built
+		ScriptedEntity::PropertiesMap &syncProperties = definition->GetSyncProperties();
+		// Create an instance of the script object
+		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
+		int typeId = engine->GetModule(m_ModuleName.c_str())->GetTypeIdByDecl(definition->GetType().c_str());
+		asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
+		// Iterate through all of the script object's properties
+		for (int i = 0; i < object->GetPropertyCount(); i++)
+		{
+			ScriptedEntity::PropertiesMap::iterator _where = syncProperties.find( object->GetPropertyName(i) );
+			if (_where != syncProperties.end())
+			{
+				_where->second.scriptPropertyIndex = i;
+			}
+		}
+		object->Release();
+
+		m_EntityInstancers[definition->GetType()] = EntityInstancerPtr( new ScriptedEntityInstancer(m_ScriptingManager, m_ModuleName, definition) ); 
 	}
 
 	bool EntityFactory::getEntityType(TiXmlDocument *document, std::string &type)
 	{
 		TiXmlElement *root = document->FirstChildElement();
-		if (root->ValueStr() == "Element")
+		if (root->ValueStr() == "Entity")
 		{
 			const char *typeCstr = root->Attribute("typename");
 			if (typeCstr != NULL)
@@ -377,31 +580,43 @@ namespace FusionEngine
 		return false;
 	}
 
-	void EntityFactory::parseScriptedEntities(const char *path)
+	void EntityFactory::parseScriptedEntities(const char *path, unsigned int current_recursion)
 	{
-		const char *dirsep = PHYSFS_getDirSeparator();
+		// Limit recursion depth to prevent stack issues - 25 folders deep seems like more than enough
+		if (current_recursion > 25)
+			return;
 
 		const char *ext = "XML";
 		const size_t extLength = 3;
 
 		char *fileExt;
 
+		std::string fullPath(path);
+
 		char **files = PHYSFS_enumerateFiles(path);
 		for (char **file = files; *file != NULL; file++)
 		{
 			size_t filenameLength = std::strlen(*file);
 
+			fullPath = path;
+			fullPath += *file;
+			// Recursively search directories
+			if (PHYSFS_isDirectory(fullPath.c_str()))
+			{
+				parseScriptedEntities((fullPath + '/').c_str(), current_recursion+1);
+			}
+
 			// Check that this file has an extension
-			if (filenameLength > extLength && (*file)[filenameLength - extLength - 1] == '.')
+			else if (filenameLength > extLength && (*file)[filenameLength - extLength - 1] == '.')
 			{
 				// Compare the file's extension to the expected extension for Entity definition files
 				fileExt = *file + (filenameLength - extLength);
 				if (fe_nocase_strcmp(fileExt, ext) == 0)
 				{
-					TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(*file));
+					TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(fullPath));
 					std::string type;
 					if (getEntityType(doc, type))
-						m_ScriptEntityDefinitionFiles[type] = std::string(*file);
+						m_EntityDefinitionFileNames[type] = fullPath;
 					delete doc;
 				}
 			}

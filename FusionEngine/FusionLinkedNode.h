@@ -134,7 +134,7 @@ namespace FusionEngine
 		//! Adds a new node to the end of the list
 		void push_back( LinkedNode* node )
 		{
-			if (m_Next = NULL)
+			if (m_Next == NULL)
 				insert(node);
 			else
 				m_Next->push_back(node);
@@ -142,7 +142,7 @@ namespace FusionEngine
 		//! Adds a new node to the begining of the list
 		void push_front( LinkedNode* node )
 		{
-			if (m_Next = NULL)
+			if (m_Next == NULL)
 				insert(node);
 			else
 				m_Next->push_back(node);

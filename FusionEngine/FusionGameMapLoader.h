@@ -25,8 +25,9 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_OntologicalSystem
-#define Header_FusionEngine_OntologicalSystem
+
+#ifndef Header_FusionEngine_GameAreaLoader
+#define Header_FusionEngine_GameAreaLoader
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,43 +35,47 @@
 
 #include "FusionCommon.h"
 
-#include "FusionState.h"
+// Inherited
+#include "FusionSingleton.h"
 
-#include "FusionScriptModule.h"
+// Fusion
+#include "FusionSerialisedData.h"
 
 
 namespace FusionEngine
 {
 
-	class OntologicalSystem : public System
+	class GameMapLoader
 	{
 	public:
-		OntologicalSystem(InputManager *input_manager);
-		virtual ~OntologicalSystem();
+		struct Archetype
+		{
+			std::string entityTypename;
+			StringVector::size_type entityIndex;
 
-		virtual const std::string &GetName() const;
+			SerialisedData packet;
+		};
+		typedef std::vector<Archetype> ArchetypeMap;
 
-		virtual bool Initialise();
-		virtual void CleanUp();
+		enum TypeFlags
+		{
+			NoTypeFlags = 0,
+			ArchetypeFlag = 1 << 0,
+			PseudoEntityFlag = 1 << 1
+		};
+	public:
+		GameMapLoader(EntityManager *manager);
 
-		virtual void Update(unsigned int split);
-		virtual void Draw();
+		void LoadEntityTypes(CL_IODevice device);
 
-		void SetModule(ModulePtr module);
+		void LoadMap(CL_IODevice device);
+		void LoadSavedGame(CL_IODevice device);
 
-		void OnModuleRebuild(BuildModuleEvent& ev);
+		void SaveMap(CL_IODevice device);
+		void SaveGame(CL_IODevice device);
 
-	protected:
-		EntityManager *m_EntityManager;
-		GameMapLoader *m_MapLoader;
-
-		PhysicsWorld *m_PhysicsWorld;
-
-		InputManager *m_InputManager;
-
-		bsig2::connection m_ModuleConnection;
-
-		std::string m_StartupEntity;
+	private:
+		EntityManager *m_Manager;
 	};
 
 }
