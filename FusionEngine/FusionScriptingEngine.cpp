@@ -30,7 +30,7 @@
 //#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
-#include "FusionScriptDebugPreprocessor.h"
+//#include "FusionScriptDebugPreprocessor.h"
 
 // Scripting extensions
 #include "FusionScriptedSlots.h"
@@ -45,6 +45,86 @@
 
 namespace FusionEngine
 {
+
+	typedef std::pair<std::string::const_iterator, std::string::const_iterator> CharRange;
+
+	// '#include' Preprocessor
+	class IncludePreprocessor : public ScriptPreprocessor
+	{
+	public:
+		IncludePreprocessor(ScriptingEngine *manager)
+			: m_Manager(manager)
+		{}
+		virtual void Process(std::string &code, const char *module_name, MarkedLines &lines);
+
+		bool isIncludeLine(const char *code_pos);
+		// First is the beginning of the search area, last is the end of the search area
+		CharRange getIncludeFile(std::string::const_iterator first, std::string::const_iterator last);
+
+		ScriptingEngine *m_Manager; 
+	};
+
+	void IncludePreprocessor::Process(std::string &code, const char *module_name, ScriptPreprocessor::MarkedLines &marked)
+	{
+		std::string::size_type pos = 0;
+		unsigned int line = 0;
+		for (MarkedLines::iterator it = marked.begin(), end = marked.end(); it != end; ++it)
+		{
+			if ( it->type == '#' && isIncludeLine(code.c_str() + it->pos) )
+			{
+				CharRange range = getIncludeFile(code.begin() + it->pos+8, code.end());
+				std::string filename = std::string(range.first, range.second);
+
+				m_Manager->AddFile(filename, module_name);
+
+				code.erase(range.first, range.second); // remove the processed line from the code
+				it = marked.erase(it); // Remove the marker from the markers list
+			}
+		}
+	}
+
+	bool IncludePreprocessor::isIncludeLine(const char *start)
+	{
+		return std::string("#include").compare(0, 8, start, 8) == 0;
+
+		//size_t confirmedChars = 0;
+		//const char *compareString = "#include";
+		//while (true)
+		//{
+		//	if (*first == compareString[confirmedChars])
+		//		confirmedChars++;
+		//	else
+		//		return false;
+
+		//	if (confirmedChars >= 8)
+		//		return true;
+		//}
+
+		//return false;
+	}
+
+	CharRange IncludePreprocessor::getIncludeFile(std::string::const_iterator first, std::string::const_iterator last)
+	{
+		std::string::const_iterator begin = last;
+		std::string::const_iterator end = last;
+
+		unsigned int matched = 0;
+		for (std::string::const_iterator pos = first; pos != last; ++pos)
+		{
+			if ((*pos) == '\"')
+			{
+				if (matched == 0)
+					begin = pos;
+				else
+					end = pos;
+
+				if (++matched == 2)
+					break;
+			}
+		}
+
+		return CharRange(begin, end);
+	}
 
 	////////////
 	// ScriptSection implementations
@@ -109,6 +189,8 @@ namespace FusionEngine
 			m_asEngine->SetMessageCallback(asMETHOD(ScriptingEngine,_messageCallback), this, asCALL_THISCALL);
 			registerTypes();
 		}
+
+		m_Preprocessors.push_back(PreprocessorPtr(new IncludePreprocessor(this)));
 	}
 
 	ScriptingEngine::~ScriptingEngine()
@@ -141,52 +223,76 @@ namespace FusionEngine
 		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
 	}
 
-	void ScriptingEngine::Preprocess(std::string &script)
+	void ScriptingEngine::Preprocess(std::string &script, const char *module_name)
 	{
 		ScriptPreprocessor::MarkedLines lines;
-		// TODO: find lines in the script that have the preprocessor marker in front of them (# or [x] or something...)
+		// Parses the script to find lines with preprocessor markers
+		ScriptPreprocessor::checkForMarkedLines(lines, script);
+
 		for (PreprocessorArray::iterator it = m_Preprocessors.begin(), end = m_Preprocessors.end();
 			it != end; ++it)
 		{
-			(*it)->Process(script, lines);
+			(*it)->Process(script, module_name, lines);
 		}
 	}
 
-	bool ScriptingEngine::AddCode(const std::string& script, const char *module, const char *section_name)
+	bool ScriptingEngine::storeCodeString(const std::string &code, const char *section_name)
+	{
+		std::pair<ScriptSectionMap::iterator, bool> check =
+			m_ScriptSections.insert( ScriptSectionMap::value_type(section_name, ScriptSectionPtr(new StringScriptSection(code))) );
+		while (!check.second)
+		{
+			if (check.first->second->GetCode() == code)
+				return false; // Code already added
+
+			std::ostringstream str;
+			str << section_name << m_SectionSerial++;
+			check =
+				m_ScriptSections.insert( ScriptSectionMap::value_type(str.str(), ScriptSectionPtr(new StringScriptSection(code))) );
+		}
+
+		return true;
+	}
+
+	bool ScriptingEngine::AddCode(const std::string &script, const char *module, const char *section_name)
 	{
 		if (!m_Preprocessors.empty())
 		{
 			std::string processedScript = script;
-			Preprocess(processedScript);
+			Preprocess(processedScript, module);
 
-			return GetModule(module)->AddCode(section_name, processedScript) >= 0;
+			bool success = GetModule(module)->AddCode(section_name, processedScript) >= 0;
+
+			if (!success)
+				return false;
+
+			// try to store the code string
+			if (m_DebugSettings.storeCodeStrings && !storeCodeString(script, section_name))
+				return false;
 		}
-		else if (m_DebugSettings.storeCodeStrings)
-		{
-			std::pair<ScriptSectionMap::iterator, bool> check =
-				m_ScriptSections.insert( ScriptSectionMap::value_type(section_name, ScriptSectionPtr(new StringScriptSection(script))) );
-			while (!check.second)
-			{
-				std::ostringstream str;
-				str << section_name << m_SectionSerial++;
-				check =
-					m_ScriptSections.insert( ScriptSectionMap::value_type(str.str(), ScriptSectionPtr(new StringScriptSection(script))) );
-			}
-		}
+
+		bool success = GetModule(module)->AddCode(section_name, script) >= 0;
+
 		// Copying is avoided if there are no preprocessors listed and
 		//  the debug option 'storeCodeStrings' is disabled
-		return GetModule(module)->AddCode(section_name, script) >= 0;
+		if (m_DebugSettings.storeCodeStrings && !storeCodeString(script, section_name))
+			return false;
+
+		return success;
 	}
 
 	bool ScriptingEngine::AddFile(const std::string& filename, const char *module)
 	{
 		int r = -1;
 
+		if (m_ScriptSections.find(filename) != m_ScriptSections.end())
+			return false; // File already added
+
 		// Load the script from the file
 		std::string script;
 		OpenString_PhysFS(script, fe_widen(filename));
 		// Preprocess the script
-		Preprocess(script);
+		Preprocess(script, module);
 		// Add the script to the module
 		r = GetModule(module)->AddCode(filename, script);
 		// If the script was successfully added to the module, create a new

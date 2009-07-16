@@ -82,6 +82,8 @@ namespace FusionEngine
 
 		IDTranslator MakeIDTranslator() const;
 
+		void CompressIDs();
+
 		void AddEntity(EntityPtr entity);
 		void RemoveEntity(EntityPtr entity);
 		void RemoveEntityNamed(const std::string &name);
@@ -91,8 +93,35 @@ namespace FusionEngine
 
 		void ReplaceEntity(ObjectID id, EntityPtr entity);
 
+		//! Returns the Entity with the given name
+		/*!
+		* \param[in] name
+		* Name of the desired Entity
+		*
+		* \param[in] throwIfNotFound
+		* Throw rather than returning NULL
+		*/
 		EntityPtr GetEntity(const std::string &name, bool throwIfNotFound = true);
+		//! Returns the Entity with the given ID
+		/*!
+		* Obviously can't return Pseudo-Entities, since they have no ID
+		*
+		* \param[in] id
+		* ID of the desired Entity
+		*
+		* \param[in] throwIfNotFound
+		* Throw rather than returning NULL
+		*/
 		EntityPtr GetEntity(ObjectID id, bool throwIfNotFound = true);
+
+		//! Returns Entities
+		/*!
+		* Doesn't return Pseudo-Entities.
+		*/
+		const IDEntityMap &GetEntities() const;
+
+		//! Returns Pseudo-Entities
+		const EntityArray &GetPseudoEntities() const;
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);

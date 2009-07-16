@@ -202,6 +202,11 @@ namespace FusionEngine
 		//! Draws
 		virtual void Draw() =0;
 
+		//! Called after an Entity is streamed in
+		virtual void OnStreamIn() =0;
+		//! Called after an Entity is steamed out
+		virtual void OnStreamOut() =0;
+
 		//! Save state to buffer
 		/*!
 		* \param[in] local

@@ -98,6 +98,9 @@ namespace FusionEngine
 		virtual void Update(float split);
 		virtual void Draw();
 
+		virtual void OnStreamIn();
+		virtual void OnStreamOut();
+
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
 		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 

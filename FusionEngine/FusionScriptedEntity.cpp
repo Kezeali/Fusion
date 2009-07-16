@@ -129,6 +129,24 @@ namespace FusionEngine
 		}
 	}
 
+	void ScriptedEntity::OnStreamIn()
+	{
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamIn()");
+		if (f.ok())
+		{
+			f();
+		}
+	}
+
+	void ScriptedEntity::OnStreamOut()
+	{
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamOut()");
+		if (f.ok())
+		{
+			f();
+		}
+	}
+
 	void ScriptedEntity::SerialiseState(SerialisedData &state, bool local) const
 	{
 		std::ostringstream stateStream(std::ios::binary);

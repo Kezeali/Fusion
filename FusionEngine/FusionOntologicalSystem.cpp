@@ -34,7 +34,7 @@
 // Fusion
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
-#include "FusionWorldLoader.h"
+#include "FusionGameMapLoader.h"
 #include "FusionPhysicsWorld.h"
 #include "FusionInputHandler.h"
 #include "FusionScriptingEngine.h"

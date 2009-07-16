@@ -86,6 +86,26 @@ namespace FusionEngine
 		return IDTranslator(m_NextId-1);
 	}
 
+	void EntityManager::CompressIDs()
+	{
+		if (m_EntitiesLocked)
+			return;
+
+		{
+			IDEntityMap::iterator it = m_Entities.begin();
+			ObjectID nextSequentialId = 1;
+			for (IDEntityMap::iterator end = m_Entities.end(); it != end; ++it)
+			{
+				if (it->first != nextSequentialId)
+					m_Entities[nextSequentialId] = it->second;
+
+				++nextSequentialId;
+			}
+
+			m_Entities.erase(it, m_Entities.end());
+		}
+	}
+
 	void EntityManager::AddEntity(EntityPtr entity)
 	{
 		if (m_EntitiesLocked)
@@ -220,6 +240,16 @@ namespace FusionEngine
 			else
 				return EntityPtr();
 		return _where->second;
+	}
+
+	const IDEntityMap &EntityManager::GetEntities() const
+	{
+		return m_Entities;
+	}
+
+	const EntitySet &EntityManager::GetPseudoEntities() const
+	{
+		return m_PseudoEntities;
 	}
 
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)

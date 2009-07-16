@@ -28,7 +28,7 @@
 
 #include "Common.h"
 
-#include "FusionGameAreaLoader.h"
+#include "FusionGameMapLoader.h"
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
 
@@ -47,10 +47,11 @@ namespace FusionEngine
 		// Read the entity type count
 		cl_int32 numberEntityTypes = device.read_int32();
 		// Tell the entity-factory to load each entity type listed in the map file
+		//CL_String8 entityTypename;
 		for (cl_int32 i = 0; i < numberEntityTypes; i++)
 		{
-			CL_String8 entityTypename = device.read_string_a();
-			factory->LoadScriptedType(entityTypename.c_str());
+			//entityTypename = device.read_string_a();
+			factory->LoadScriptedType(/*entityTypename*/device.read_string_a().c_str());
 		}
 	}
 
@@ -71,7 +72,7 @@ namespace FusionEngine
 
 		// Load Archetypes
 		cl_uint32 numberArchetypes = device.read_uint32();
-		ArchetypeMap archetypeArray(numberArchetypes);
+		ArchetypeArray archetypeArray(numberArchetypes);
 		for (cl_uint32 i = 0; i < numberArchetypes; i++)
 		{
 			cl_uint32 entityTypeIndex = device.read_uint32();
@@ -92,16 +93,16 @@ namespace FusionEngine
 		//typedef std::pair<EntityPtr, cl_uint8> EntityToLoad;
 		//typedef std::vector<EntityToLoad> EntityToLoadArray;
 
-		// Load / instance Entities
+		// Load & instance Entities
 		cl_uint32 numberEntities = device.read_uint32();
 		EntityArray instancedEntities(numberEntities);
 		{
 			std::string entityName; ObjectID entityID;
 			EntityPtr entity;
-			for (cl_uint32 i = 0; i < numberArchetypes; i++)
+			for (cl_uint32 i = 0; i < numberEntities; i++)
 			{
 				cl_uint8 typeFlags = device.read_uint8(); // Flags indicating Pseudo-Entity, Archetype, etc.
-				cl_uint32 typeIndex = device.read_uint32(); // Entity or Archetype index - previous byte indicates which
+				cl_uint32 typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
 
@@ -145,10 +146,11 @@ namespace FusionEngine
 			{
 				EntityPtr &entity = (*it);
 
+				// Call the entity's spawn method
 				entity->Spawn();
 
 				// Load archetype
-				if (device.read_uint8() != 0)
+				if (device.read_uint8() != 0) // Same type-flags as above (see cl_uint8 typeFlags), but we only care about the archetype flag this time
 				{
 					cl_uint32 typeIndex = device.read_uint32();
 					const Archetype &archetype = archetypeArray[typeIndex];
@@ -156,6 +158,7 @@ namespace FusionEngine
 					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
+				// Load specific entity state
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a().c_str();
 
@@ -168,8 +171,95 @@ namespace FusionEngine
 	{
 	}
 
-	void GameMapLoader::SaveMap(CL_IODevice device)
+	void GameMapLoader::CompileMap(CL_IODevice device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::GameMapEntityArray &entities)
 	{
+		// Write used types list
+		// Number of types:
+		device.write_uint32(used_entity_types.size());
+
+		// Used for getting the index at which a given type was listed in the used type list (which is about to be written)
+		typedef std::tr1::unordered_map<std::string, cl_uint32> UsedTypeMap;
+		UsedTypeMap usedTypeIndexes;
+
+		{
+			cl_uint32 type_index = 0;
+			for (StringSet::const_iterator it = used_entity_types.begin(), end = used_entity_types.end(); it != end; ++it)
+			{
+				device.write_string_a(*it);
+				
+				usedTypeIndexes[*it] = type_index++;
+			}
+		}
+
+		// Write archetype list
+		device.write_uint32(archetypes.size());
+
+		UsedTypeMap usedArchetypeIndexes;
+
+		{
+			cl_uint32 type_index = 0;
+			for (ArchetypeMap::const_iterator it = archetypes.begin(), end = archetypes.end(); it != end; ++it)
+			{
+				// Write the type index (refers to the previously written used-type-list)
+				device.write_uint32(usedTypeIndexes[it->second.entityTypename]);
+
+				// Write the state information
+				device.write_uint32(it->second.packet.mask);
+				device.write_string_a(it->second.packet.data);
+
+				usedArchetypeIndexes[*it] = type_index++;
+			}
+		}
+
+		// Write Entities
+		device.write_uint32(entities.size());
+
+		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const EntityPtr &entity = it->entity;
+
+			// Write the type-flags for this entity
+			cl_uint8 typeFlags;
+			if (entity->IsPseudoEntity())
+				typeFlags &= PseudoEntityFlag;
+			if (!it->archetypeId.empty())
+				typeFlags &= ArchetypeFlag;
+
+			device.write_uint8(typeFlags);
+			
+			// Write the type index (refers to used-type-index at the top of the file)
+			device.write_uint32(usedTypeIndexes[entity->GetType()]);
+
+			// Write the Entity name
+			device.write_string_a(entity->GetName());
+			// Write the Entity ID (if it isn't a pseudo-entity)
+			if (!entity->IsPseudoEntity())
+				device.write((void*)&entity->GetID(), sizeof(ObjectID));
+		}
+
+		// Write Entity state data
+		SerialisedData state;
+		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const EntityPtr &entity = it->entity;
+
+			// Write the type-flags for the entity data
+			if (!it->archetypeId.empty())
+			{
+				device.write_uint8(ArchetypeFlag);
+				// Write the index of the archetype used
+				device.write_uint32(usedArchetypeIndexes[it->archetypeId]);
+			}
+			else
+				device.write_uint8(NoTypeFlags);
+
+			// Write the entity state
+			state.mask = it->stateMask;
+			entity->SerialiseState(state, true);
+
+			device.write_uint32(state.mask);
+			device.write_string_a(state.data);
+		}
 	}
 
 	void GameMapLoader::SaveGame(CL_IODevice device)

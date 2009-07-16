@@ -45,6 +45,8 @@
 namespace FusionEngine
 {
 
+	typedef std::set<std::string> StringSet;
+
 	class GameMapLoader
 	{
 	public:
@@ -55,7 +57,18 @@ namespace FusionEngine
 
 			SerialisedData packet;
 		};
-		typedef std::vector<Archetype> ArchetypeMap;
+		typedef std::vector<Archetype> ArchetypeArray;
+
+		typedef std::tr1::unordered_map<std::string, Archetype> ArchetypeMap;
+
+		struct GameMapEntity
+		{
+			EntityPtr entity;
+			std::string archetypeId;
+
+			unsigned int stateMask;
+		};
+		typedef std::vector<GameMapEntity> GameMapEntityArray;
 
 		enum TypeFlags
 		{
@@ -69,10 +82,12 @@ namespace FusionEngine
 		void LoadEntityTypes(CL_IODevice device);
 
 		void LoadMap(CL_IODevice device);
-		void LoadSavedGame(CL_IODevice device);
 
-		void SaveMap(CL_IODevice device);
+		void LoadSavedGame(CL_IODevice device);
 		void SaveGame(CL_IODevice device);
+
+		//! Compiles a binary map file from map-editor data
+		void CompileMap(CL_IODevice device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const GameMapEntityArray &entities);
 
 	private:
 		EntityManager *m_Manager;

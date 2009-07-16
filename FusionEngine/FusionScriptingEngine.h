@@ -165,7 +165,9 @@ namespace FusionEngine
 		//! Registers a global object (type must already be registered)
 		void RegisterGlobalObject(const char *decl, void* ptr);
 
-		void Preprocess(std::string &script);
+		void Preprocess(std::string &script, const char *module_name);
+
+		bool storeCodeString(const std::string &code, const char *section_name);
 
 		//! Adds code to the given module
 		bool AddCode(const std::string& script, const char *module, const char *section_name = "Script String");
