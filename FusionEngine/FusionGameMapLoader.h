@@ -45,8 +45,6 @@
 namespace FusionEngine
 {
 
-	typedef std::set<std::string> StringSet;
-
 	class GameMapLoader
 	{
 	public:

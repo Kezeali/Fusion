@@ -51,8 +51,9 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(InputManager *input_manager)
-		: m_InputManager(input_manager),
+	OntologicalSystem::OntologicalSystem(Renderer *renderer, InputManager *input_manager)
+		: m_Renderer(renderer),
+		m_InputManager(input_manager),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
 		m_PhysicsWorld(NULL)
@@ -73,7 +74,9 @@ namespace FusionEngine
 	{
 		if (m_EntityManager == NULL)
 		{
-			m_EntityManager = new EntityManager();
+			ViewportPtr viewport = m_Renderer->CreateViewport(Renderer::ViewFull);
+
+			m_EntityManager = new EntityManager(m_Renderer, m_InputManager);
 			m_MapLoader = new GameMapLoader(m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();

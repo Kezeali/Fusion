@@ -563,6 +563,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionRenderer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionResource.h"
 				>
 			</File>
@@ -1058,6 +1062,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionRakNetwork.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionRenderer.cpp"
 				>
 			</File>
 			<File

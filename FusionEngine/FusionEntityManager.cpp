@@ -55,8 +55,10 @@ namespace FusionEngine
 	//	}
 	//};
 
-	EntityManager::EntityManager()
-		: m_UpdateBlockedFlags(0),
+	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager)
+		: m_Renderer(renderer),
+		m_InputManager(input_manager),
+		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false)
 	{
@@ -126,6 +128,8 @@ namespace FusionEngine
 			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
 
 			m_EntitiesByName[entity->GetName()] = entity;
+
+			m_Renderer->Add(entity);
 		}
 	}
 
@@ -146,7 +150,10 @@ namespace FusionEngine
 			}
 			else
 				m_PseudoEntities.erase(entity);
+
 			m_EntitiesByName.erase(entity->GetName());
+
+			m_Renderer->Remove(entity);
 		}
 	}
 
@@ -197,6 +204,7 @@ namespace FusionEngine
 		{
 			// Erase the existing Entity from the name map
 			m_EntitiesByName.erase(value->GetName());
+			m_Renderer->Remove(value);
 		}
 		// Replace the map-entry (referenced by 'value') with the new entity
 		value = entity;
@@ -212,6 +220,8 @@ namespace FusionEngine
 		//}
 
 		m_EntitiesByName[entity->GetName()] = entity;
+
+		m_Renderer->Add(entity);
 	}
 
 	bool isNamed(EntityManager::IDEntityMap::value_type &element, const std::string &name)
@@ -242,12 +252,12 @@ namespace FusionEngine
 		return _where->second;
 	}
 
-	const IDEntityMap &EntityManager::GetEntities() const
+	const EntityManager::IDEntityMap &EntityManager::GetEntities() const
 	{
 		return m_Entities;
 	}
 
-	const EntitySet &EntityManager::GetPseudoEntities() const
+	const EntityManager::EntitySet &EntityManager::GetPseudoEntities() const
 	{
 		return m_PseudoEntities;
 	}
@@ -306,7 +316,7 @@ namespace FusionEngine
 	{
 		for (BlockingChangeMap::const_iterator it = tags.begin(), end = tags.end(); it != end; ++it)
 		{
-			if (it->second && entity->CheckTag(it->first))
+			if (!it->second && entity->CheckTag(it->first))
 				return true;
 		}
 		return false;
@@ -336,7 +346,8 @@ namespace FusionEngine
 	{
 		for (IDEntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			RemoveEntity(it->second);
+			if (it->second->CheckTag(tag))
+				RemoveEntity(it->second);
 		}
 	}
 
@@ -344,7 +355,14 @@ namespace FusionEngine
 	{
 		m_EntitiesToAdd.clear();
 		m_EntitiesToRemove.clear();
+		m_EntitiesToUpdate.clear();
+		m_EntitiesToDraw.clear();
+		m_EntitiesByName.clear();
 		m_Entities.clear();
+		m_PseudoEntities.clear();
+
+		m_ChangedUpdateStateTags.clear();
+		m_ChangedDrawStateTags.clear();
 	}
 
 	void EntityManager::Update(float split)
@@ -363,7 +381,7 @@ namespace FusionEngine
 				if (entity->GetTagFlags() & m_ToDeleteFlags)
 					RemoveEntity(entity);
 
-				else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) || IsBlocked(entity, m_ChangedUpdateStateTags))
+				else if ((entity->GetTagFlags() & m_UpdateBlockedFlags))
 					m_EntitiesToUpdate.erase(it);
 				else
 					entity->Update(split);
@@ -372,6 +390,7 @@ namespace FusionEngine
 		}
 		else
 		{
+			m_EntitiesToUpdate.clear();
 			for (IDEntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 			{
 				EntityPtr &entity = it->second;
@@ -382,12 +401,27 @@ namespace FusionEngine
 				if (entity->GetTagFlags() & m_ToDeleteFlags)
 					RemoveEntity(entity);
 
-				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && IsBlocked(entity, m_ChangedUpdateStateTags))
+				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
 				{
 					m_EntitiesToUpdate.push_back(entity);
 					entity->Update(split);
 				}
-				//updateEntity(entity, split);
+			}
+			for (EntitySet::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
+			{
+				EntityPtr &entity = it->second;
+
+				if (entity->IsMarkedToRemove())
+					continue;
+
+				if (entity->GetTagFlags() & m_ToDeleteFlags)
+					RemoveEntity(entity);
+
+				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
+				{
+					m_EntitiesToUpdate.push_back(entity);
+					entity->Update(split);
+				}
 			}
 			m_ChangedUpdateStateTags.clear();
 		}
@@ -401,6 +435,8 @@ namespace FusionEngine
 		{
 			m_Entities.erase((*it)->GetID());
 			m_EntitiesByName.erase((*it)->GetName());
+
+			m_Renderer->Remove(*it);
 		}
 		m_EntitiesToRemove.clear();
 
@@ -419,21 +455,7 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
-		if (m_ChangedUpdateStateTags.empty())
-		{
-			for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
-			{
-				EntityPtr &entity = *it;
-
-				if ((entity->GetTagFlags() & m_DrawBlockedFlags) && IsBlocked(entity, m_ChangedDrawStateTags))
-					m_EntitiesToDraw.erase(it);
-				else
-					entity->Draw();
-			}
-		}
-		else
-		{
-		}
+		m_Renderer->Draw();
 
 		m_EntitiesLocked = false;
 	}

@@ -1,0 +1,234 @@
+#ifndef Header_FusionEngine_Renderer
+#define Header_FusionEngine_Renderer
+
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionCommon.h"
+
+// Fusion
+#include "FusionEntity.h"
+
+
+namespace FusionEngine
+{
+
+	//! Defines a camera rectangle
+	/*!
+	* \todo Interpolated rotation toward movement direction
+	* \todo Interpolated smooth movement
+	*/
+	class Camera : public RefCounted
+	{
+	public:
+		Camera();
+		Camera(float x, float y);
+		Camera(EntityPtr follow);
+		~Camera();
+
+		void SetMass(float mass);
+
+		void SetPosition(float x, float y);
+
+		void SetAngle(float angle);
+
+		//void SetOrientation(const Quaternion &orientation);
+
+		void SetZoom(float scale);
+
+		void SetFollowEntity(EntityPtr follow);
+
+		enum FollowMode
+		{
+			Static,
+			FollowInstant,
+			FollowSmooth,
+			Physical
+		};
+
+		void SetFollowMode(FollowMode mode);
+
+		enum RotateMode
+		{
+			Static,
+			SlerpToMovementDirection,
+			Spline
+		};
+
+		void SetAutoRotate(RotateMode mode);
+
+		void JoinToBody(b2Body *body);
+
+		b2Body *CreateBody(b2World *world);
+		b2Body *GetBody() const;
+
+		void Update(float split);
+
+		const CL_Vec2f &GetPosition() const;
+
+		float GetAngle() const;
+
+		float GetZoom() const;
+
+	protected:
+		void defineBody();
+		void createBody(b2World *world);
+
+		FollowMode m_Mode;
+
+		CL_Vec2f m_Position;
+		float m_Angle;
+		float m_Scale;
+
+		EntityPtr m_FollowEntity;
+
+		b2BodyDef m_BodyDefinition;
+		b2Body *m_Body;
+		b2Joint *m_Joint;
+	};
+
+	typedef boost::intrusive_ptr<Camera> CameraPtr;
+
+	//! A render area
+	/*!
+	* \see Camera | Renderer
+	*/
+	class Viewport : public RefCounted
+	{
+	public:
+		Viewport();
+		Viewport(CL_Rect area);
+		Viewport(CL_Rect area, CameraPtr camera);
+
+		//! Sets the position within the graphics context
+		void SetPosition(int left, int top);
+		//! Sets the size of the render area
+		void SetSize(int width, int height);
+
+		const CL_Rect &GetArea() const;
+		CL_Point GetPosition() const;
+		CL_Size GetSize() const;
+
+		void SetCamera(const CameraPtr &camera);
+		CameraPtr GetCamera() const;
+
+	protected:
+		CL_Rect m_Area;
+		CameraPtr m_Camera;
+	};
+
+	typedef boost::intrusive_ptr<Viewport> ViewportPtr;
+
+	/*!
+	 * \brief
+	 * Renders Entities
+	 *
+	 * \see
+	 * Viewport | EntityManager
+	 */
+	class Renderer
+	{
+	protected:
+		//typedef std::set<std::string> BlockedTagSet;
+
+		typedef std::set<EntityPtr> EntitySet;
+
+	public:
+		//! Constructor
+		Renderer(const CL_GraphicContext &gc);
+		//! Destructor
+		virtual ~Renderer();
+
+		void Add(EntityPtr entity);
+		void Remove(EntityPtr entity);
+
+		void ShowTag(const std::string &tag);
+		void HideTag(const std::string &tag);
+
+		//void AddViewport(ViewportPtr viewport);
+
+		void Draw(ViewportPtr viewport);
+
+	protected:
+		void drawNormally(const CL_Rectf &cull_outside);
+		void updateDrawArray();
+
+		struct ChangingTagCollection
+		{
+			void show(const std::string &tag)
+			{
+				m_HiddenTags.erase(tag);
+				m_ShownTags.insert(tag);
+			}
+
+			void hide(const std::string &tag)
+			{
+				m_ShownTags.erase(tag);
+				m_HiddenTags.insert(tag);
+			}
+
+			void clear()
+			{
+				m_ShownTags.clear();
+				m_HiddenTags.clear();
+			}
+
+			bool somethingWasShown() const
+			{
+				return !m_ShownTags.empty();
+			}
+
+			bool checkShown(const std::string &tag) const
+			{
+				return m_ShownTags.find(tag) == m_ShownTags.end();
+			}
+
+			bool wasShown(const EntityPtr &entity) const
+			{
+				for (StringSet::iterator it = m_ShownTags.begin(), end = m_ShownTags.end(); it != end; ++it)
+				{
+					if (entity->CheckTag(*it))
+						return true;
+				}
+
+				return false;
+			}
+
+			bool checkHidden(const std::string &tag) const
+			{
+				return m_HiddenTags.find(tag) == m_HiddenTags.end();
+			}
+
+			bool wasHidden(const std::string &entity) const
+			{
+				for (StringSet::iterator it = m_HiddenTags.begin(), end = m_HiddenTags.end(); it != end; ++it)
+				{
+					if (entity->CheckTag(*it))
+						return true;
+				}
+
+				return false;
+			}
+
+			std::set<std::string> m_ShownTags;
+			std::set<std::string> m_HiddenTags;
+		} m_ChangedTags;
+
+		StringSet m_ShownTags;
+
+		EntitySet m_Entities;
+
+		bool m_EntityAdded;
+
+		EntityArray m_EntitiesToDraw;
+
+		//ViewportArray m_Viewports;
+
+		CL_GraphicContext m_GC;
+
+	};
+
+}
+
+#endif

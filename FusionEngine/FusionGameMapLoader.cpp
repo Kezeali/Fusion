@@ -207,7 +207,7 @@ namespace FusionEngine
 				device.write_uint32(it->second.packet.mask);
 				device.write_string_a(it->second.packet.data);
 
-				usedArchetypeIndexes[*it] = type_index++;
+				usedArchetypeIndexes[it->first] = type_index++;
 			}
 		}
 
@@ -234,7 +234,7 @@ namespace FusionEngine
 			device.write_string_a(entity->GetName());
 			// Write the Entity ID (if it isn't a pseudo-entity)
 			if (!entity->IsPseudoEntity())
-				device.write((void*)&entity->GetID(), sizeof(ObjectID));
+				device.write((void*)&(entity->GetID()), sizeof(ObjectID));
 		}
 
 		// Write Entity state data

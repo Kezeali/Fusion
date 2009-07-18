@@ -471,8 +471,10 @@ namespace FusionEngine
 	typedef unsigned short ObjectID;
 	//typedef std::string ResourceID;
 
-	//! It's a vector. It's a string. It's a StringVector! (it's used /atleast/ three times...)
+	//! It's a vector. It's a string. It's a StringVector!
 	typedef std::vector<std::string> StringVector;
+
+	typedef std::set<std::string> StringSet;
 
 	//! Log pointer
 	typedef std::tr1::shared_ptr<Log> LogPtr;

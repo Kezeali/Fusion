@@ -66,6 +66,7 @@ namespace FusionEngine
 
 		PhysicsWorld *m_PhysicsWorld;
 
+		Renderer *m_Renderer;
 		InputManager *m_InputManager;
 
 		bsig2::connection m_ModuleConnection;

@@ -218,6 +218,52 @@ namespace FusionEngine
 		return m_Flags;
 	}
 
+	void Entity::SetStreamedOut(bool is_streamed_out)
+	{
+		m_StreamedOut = is_streamed_out;
+	}
+
+	bool Entity::IsStreamedOut() const
+	{
+		return m_StreamedOut;
+	}
+
+	void Entity::SetPaused(bool is_paused)
+	{
+		m_Paused = is_paused;
+	}
+
+	bool Entity::IsPaused() const
+	{
+		return m_Paused;
+	}
+
+	void Entity::SetHidden(bool is_hidden)
+	{
+		m_Hidden = is_hidden;
+	}
+
+	bool Entity::IsHidden() const
+	{
+		return m_Hidden;
+	}
+
+	void Entity::SetWait(unsigned int steps)
+	{
+		m_WaitStepsRemaining = steps;
+	}
+
+	bool Entity::Wait()
+	{
+		if (m_WaitStepsRemaining > 0)
+		{
+			--m_WaitStepsRemaining;
+			return true;
+		}
+		else
+			return false;
+	}
+
 	void Entity::MarkToRemove()
 	{
 		m_MarkedToRemove = true;

@@ -42,6 +42,7 @@
 // Fusion
 #include "FusionSerialisedData.h"
 #include "FusionEntityDeserialiser.h"
+#include "FusionResourcePointer.h"
 
 namespace FusionEngine
 {
@@ -93,6 +94,49 @@ namespace FusionEngine
 	};
 
 	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
+
+	class Renderable : public RefCounted
+	{
+		Vector2 position;
+		float angle;
+
+		ResourcePointer<CL_Sprite> sprite;
+
+		void SetPosition(float x, float y)
+		{
+			position.x = x;
+			position.y = y;
+		}
+
+		void SetPosition(const Vector2 &position)
+		{
+			this->position = position;
+		}
+
+		void SetPosition(const CL_Vec2f &_position)
+		{
+			this->position.x = _position.x;
+			this->position.y = _position.y;
+		}
+
+		const Vector2 &GetPosition() const
+		{
+			return position;
+		}
+
+		void SetAngle(float angle)
+		{
+			this->angle = angle;
+		}
+
+		float GetAngle() const
+		{
+			return angle;
+		}
+	};
+
+	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
+	typedef std::vector<RenderablePtr> RenderableArray;
 
 	/*!
 	 * \brief
@@ -190,7 +234,19 @@ namespace FusionEngine
 		 */
 		unsigned int GetTagFlags() const;
 
-		//! Marks this Entity to be deleted when the current update completes - USELESS BECAUSE NEEDS TO HAPPEN AFTER UPDATE ANYWAY (so just add to list)
+		void SetStreamedOut(bool is_streamed_out);
+		bool IsStreamedOut() const;
+
+		void SetPaused(bool is_paused);
+		bool IsPaused() const;
+
+		void SetHidden(bool is_hidden);
+		bool IsHidden() const;
+
+		void SetWait(unsigned int steps);
+		bool Wait();
+
+		//! Marks this Entity as one that will be deleted when the update completes
 		void MarkToRemove();
 		//! Returns true if this Entity has been marked to delete.
 		bool IsMarkedToRemove() const;
@@ -201,6 +257,16 @@ namespace FusionEngine
 		virtual void Update(float split) =0;
 		//! Draws
 		virtual void Draw() =0;
+
+		//typedef std::vector<ResourcePointer<CL_Sprite>> SpriteArray;
+
+		//virtual const SpriteArray &GetSprites() const;
+
+		//virtual const MeshArray &GetGeometry() const;
+
+		virtual const RenderableArray &GetRenderables() const;
+		virtual void AddRenderable(RenderablePtr renderable);
+		virtual void RemoveRenderable(RenderablePtr renderable);
 
 		//! Called after an Entity is streamed in
 		virtual void OnStreamIn() =0;
@@ -258,7 +324,13 @@ namespace FusionEngine
 		// or updated
 		unsigned int m_Flags;
 
+		bool m_StreamedOut;
+		bool m_Paused;
+		bool m_Hidden;
+		unsigned int m_WaitStepsRemaining;
 		bool m_MarkedToRemove;
+
+		RenderableArray m_Renderables;
 
 	};
 

@@ -1,5 +1,33 @@
-#ifndef Header_FusionEngine_FusionScene
-#define Header_FusionEngine_FusionScene
+/*
+  Copyright (c) 2009 Fusion Project Team
+
+  This software is provided 'as-is', without any express or implied warranty.
+	In noevent will the authors be held liable for any damages arising from the
+	use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+	including commercial applications, and to alter it and redistribute it
+	freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+		claim that you wrote the original software. If you use this software in a
+		product, an acknowledgment in the product documentation would be
+		appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not
+		be misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source distribution.
+
+
+	File Author(s):
+
+		Elliot Hayward
+
+*/
+
+#ifndef Header_FusionEngine_EntityManager
+#define Header_FusionEngine_EntityManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -10,6 +38,7 @@
 // Fusion
 #include "FusionEntity.h"
 #include "FusionInputHandler.h"
+#include "FusionRenderer.h"
 
 #include <boost/bimap.hpp>
 
@@ -38,6 +67,12 @@ namespace FusionEngine
 	 * \brief
 	 * Updates / draws entity objects.
 	 *
+	 * EntityManager uses a tag system rather than a more traditional
+	 * scene-graph (tree based) system for managing hidden / paused
+	 * entities because it is easier to understand & use for the end
+	 * user. Furthermore, an entity tree can easily be implemented
+	 * at a high level by entities themselves.
+	 *
 	 * \see
 	 * Entity
 	 */
@@ -51,7 +86,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager();
+		EntityManager(Renderer *renderer, InputManager *input_manager);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -121,7 +156,7 @@ namespace FusionEngine
 		const IDEntityMap &GetEntities() const;
 
 		//! Returns Pseudo-Entities
-		const EntityArray &GetPseudoEntities() const;
+		const EntitySet &GetPseudoEntities() const;
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
@@ -161,6 +196,7 @@ namespace FusionEngine
 		//void updateEntity(EntityPtr entity, float split);
 
 	protected:
+		Renderer *m_Renderer;
 		InputManager *m_InputManager;
 
 		EntityFactory *m_EntityFactory;
@@ -180,8 +216,10 @@ namespace FusionEngine
 
 		// Entities with no paused tags
 		EntityArray m_EntitiesToUpdate;
+
+		typedef std::map<int, EntityPtr> EntityDepthMap;
 		// Entities with no hidden tags
-		EntityArray m_EntitiesToDraw;
+		EntityDepthMap m_EntitiesToDraw;
 
 		// Bool part indicates whether the entity is a Pseudo-Entity
 		typedef std::pair<EntityPtr, bool> EntityToAdd;
