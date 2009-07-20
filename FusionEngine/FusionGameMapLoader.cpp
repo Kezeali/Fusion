@@ -234,7 +234,8 @@ namespace FusionEngine
 			device.write_string_a(entity->GetName());
 			// Write the Entity ID (if it isn't a pseudo-entity)
 			if (!entity->IsPseudoEntity())
-				device.write((void*)&(entity->GetID()), sizeof(ObjectID));
+				device.write_uint16(entity->GetID());
+				//device.write((void*)&entity->GetID(), sizeof(ObjectID));
 		}
 
 		// Write Entity state data

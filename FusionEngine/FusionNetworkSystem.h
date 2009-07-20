@@ -69,7 +69,7 @@ namespace FusionEngine
 		virtual bool Initialise();
 		virtual void CleanUp();
 
-		virtual void Update(unsigned int split);
+		virtual void Update(float split);
 		virtual void Draw();
 
 		void SetNetwork(Network *network);

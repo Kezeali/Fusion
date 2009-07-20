@@ -57,7 +57,7 @@ namespace FusionEngine
 
 		void CleanUp();
 
-		void Update(unsigned int split);
+		void Update(float split);
 
 		void Draw();
 

@@ -162,7 +162,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GUI::Update(unsigned int split)
+	void GUI::Update(float split)
 	{
 		m_Context->Update();
 

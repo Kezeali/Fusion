@@ -297,7 +297,7 @@ namespace FusionEngine
 	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source)
 	{
 		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), CL_String(), physfsDir );
+		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), physfsDir );
 		if (image.is_null())
 			return false;
 

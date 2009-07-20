@@ -6,7 +6,10 @@ namespace FusionEngine
 {
 
 	Camera::Camera()
-		: m_Body(NULL),
+		: m_Mode(FixedPosition),
+		m_AutoRotate(FixedAngle),
+		m_Angle(0.f),
+		m_Body(NULL),
 		m_Joint(NULL)
 	{
 		defineBody();
@@ -14,6 +17,9 @@ namespace FusionEngine
 
 	Camera::Camera(float x, float y)
 		: m_Position(x, y),
+		m_Mode(FixedPosition),
+		m_AutoRotate(FixedAngle),
+		m_Angle(0.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -22,6 +28,9 @@ namespace FusionEngine
 
 	Camera::Camera(EntityPtr follow)
 		: m_FollowEntity(follow),
+		m_Mode(FollowInstant),
+		m_AutoRotate(FixedAngle),
+		m_Angle(0.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -66,9 +75,9 @@ namespace FusionEngine
 		m_Mode = mode;
 	}
 
-	void Camera::CreateBody(b2World *world)
+	b2Body *Camera::CreateBody(b2World *world)
 	{
-		m_Body = world->CreateBody(&m_BodyDefinition);
+		return m_Body = world->CreateBody(&m_BodyDefinition);
 	}
 
 	void Camera::JoinToBody(b2Body *body)
@@ -85,21 +94,23 @@ namespace FusionEngine
 	{
 		if (m_Mode == FollowInstant)
 		{
-			m_Position = m_Entity->GetPosition();
+			const Vector2 &target = m_FollowEntity->GetPosition();
+			m_Position.x = target.x;
+			m_Position.y = target.y;
 		}
 		else if (m_Mode == FollowSmooth)
 		{
 			// Not implemented
 		}
-	}
-
-	const CL_Vec2f &Camera::GetPosition() const
-	{
 		if (m_Mode == Physical)
 		{
 			m_Position.x = m_Body->GetPosition().x;
 			m_Position.y = m_Body->GetPosition().y;
 		}
+	}
+
+	const CL_Vec2f &Camera::GetPosition() const
+	{
 		return m_Position;
 	}
 
@@ -177,30 +188,112 @@ namespace FusionEngine
 
 	Renderer::Renderer(const CL_GraphicContext &gc)
 		: m_GC(gc),
-		m_EntitiesChanged(false)
+		m_EntityAdded(false)
 	{
 	}
 
-	void Renderer::Add(EntityPtr entity)
+	Renderer::~Renderer()
 	{
-		m_Entities.push_back(entity);
-		m_EntityAdded = true;
 	}
 
-	void Renderer::Remove(EntityPtr entity)
+	ViewportPtr Renderer::CreateViewport(ViewportArea area)
 	{
-		m_Entities.erase(entity);
+		CL_Rect rect;
+		if (area == ViewFull)
+		{
+			rect.bottom = m_GC.get_height();
+			rect.right = m_GC.get_width();
+		}
+		else if (area == ViewVerticalHalf)
+		{
+			rect.bottom = fe_round<int>(m_GC.get_height() * 0.5);
+			rect.right = m_GC.get_width();
+		}
+		else if (area == ViewHorizontalHalf)
+		{
+			rect.bottom = m_GC.get_height();;
+			rect.right = fe_round<int>(m_GC.get_width() * 0.5);
+		}
+		else if (area == ViewQuarter)
+		{
+			rect.bottom = fe_round<int>(m_GC.get_height() * 0.5);
+			rect.right = fe_round<int>(m_GC.get_width() * 0.5);
+		}
+		return ViewportPtr(new Viewport(rect));
+	}
+
+	bool lowerDepth(const EntityPtr &l, const EntityPtr &r)
+	{
+		return l->GetDepth() < r->GetDepth();
+	}
+
+	void Renderer::Add(const EntityPtr &entity)
+	{
+		//m_Entities.insert(entity);
+		//if (!entity->IsHidden())
+		//{
+		//	m_EntitiesToDraw.insert(
+		//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
+		//		entity);
+		//}
+
+		std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
+
+		m_EntitiesToDraw.insert(
+			std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth),
+			entity);
+
+		//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
+		//{
+		//	m_Renderables.insert(
+		//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth() + it->GetDepth()),
+		//		*it);
+		//}
+
+		//m_EntityAdded = true;
+	}
+
+	void Renderer::Remove(const EntityPtr &entity)
+	{
+		//m_Entities.erase(entity);
+		//entity->SetHidden(true);
+
+		std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
+
+		EntityArray::iterator it = std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth);
+		for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
+			if (*it == entity && (*it)->GetDepth() > entity->GetDepth())
+				break;
+
+		m_EntitiesToDraw.erase(it);
+
+		//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
+		//{
+		//	if (it->GetEntity())
+		//		m_Renderables.erase(it);
+		//}
+
 		//m_EntitiesChanged = true;
+	}
+
+	void Renderer::Clear()
+	{
+		//m_Entities.clear();
+		m_EntitiesToDraw.clear();
+		m_ChangedTags.clear();
+		//m_Renderables.clear();
 	}
 
 	void Renderer::ShowTag(const std::string &tag)
 	{
 		m_ChangedTags.show(tag);
+		m_HiddenTags.erase(tag);
 	}
 
 	void Renderer::HideTag(const std::string &tag)
 	{
 		m_ChangedTags.hide(tag);
+		m_HiddenTags.insert(tag);
 	}
 
 	//void Renderer::AddViewport(ViewportPtr viewport)
@@ -208,15 +301,26 @@ namespace FusionEngine
 	//	m_Viewports.push_back(viewport);
 	//}
 
+	void Renderer::Update(float split)
+	{
+		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+		{
+			RenderableArray &renderables = (*it)->GetRenderables();
+			for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
+			{
+				(*r_it)->Update(split);
+			}
+		}
+	}
+
 	void Renderer::Draw(ViewportPtr viewport)
 	{
-
-		if (m_EntitiesAdded || m_ChangedTags.somethingWasShown())
-		{
-			// Entities have been added / shown so the depth list must be rebuilt
-			updateDrawArray();
-			m_EntitiesAdded = false;
-		}
+		//if (m_ChangedTags.somethingWasShown())
+		//{
+		//	// Tags have been shown so Entities with those tags must be added to the depth-sorted draw list
+		//	updateDrawArray();
+		//	m_EntitiesAdded = false;
+		//}
 
 		CameraPtr &camera = viewport->GetCamera();
 
@@ -240,7 +344,12 @@ namespace FusionEngine
 		m_GC.set_modelview(cameraTransform);
 
 		// Draw the entities within the camera area for this viewport
-		CL_Rectf drawArea(camPosition.x, camPosition.y, viewportArea.get_size() * camera->GetZoom());
+		float drawAreaScale = 1.f;
+		if (!fe_fzero(camera->GetZoom()))
+			drawAreaScale = 1.f / camera->GetZoom();
+		CL_Size size = viewportArea.get_size();
+		CL_Rectf drawArea(camPosition.x, camPosition.y, size.width * drawAreaScale, size.height * drawAreaScale);
+
 		drawNormally(drawArea);
 
 		// By this point the draw list will have been updated to reflect the changed tags
@@ -251,26 +360,16 @@ namespace FusionEngine
 		m_GC.pop_cliprect(); // the viewport cliprect
 	}
 
-	void Renderer::updateDrawArray()
-	{
-		for (EntitySet::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
-		{
-			const EntityPtr &entity = *it;
-			for (StringSet::iterator ch = m_ShownTags.begin(), ch_end = m_ShownTags.end(); it != end; ++it)
-				if (entity->CheckTag(*ch))
-					m_EntitiesToDraw.push_back(entity);
-		}
-	}
-
 	void Renderer::drawNormally(const CL_Rectf &draw_area)
 	{
 		int previousDepth = INT_MAX; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
 		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
 		{
+			//RenderablePtr &renderable = *it;
 			EntityPtr &entity = *it;
 
-			if (m_ChangedTags.wasHidden(entity))
-				m_EntitiesToDraw.erase(it);
+			if (entity->IsHiddenByTag())
+				continue;
 
 			if (entity->IsHidden())
 				continue;
@@ -279,21 +378,19 @@ namespace FusionEngine
 
 			const Vector2 &entityPosition = entity->GetPosition();
 
-			m_GC.push_translate(entityPosition.x, entityPosition.y);
+			CL_Mat4f entityTransform = CL_Mat4f::translate(entityPosition.x, entityPosition.y, 0.f);
+			entityTransform.multiply(CL_Mat4f::rotate(CL_Angle(entity->GetAngle(), cl_radians), 0.f, 0.f, 1.f));
 
-			Entity::RenderableArray &entityRenderables = entity->GetRenderables();
-			for (Entity::RenderableArray::iterator it = entityRenderables.begin(), end = entityRenderables.end(); it != end; ++it)
+			m_GC.push_modelview();
+			m_GC.mult_modelview(entityTransform);
+
+			//drawRenderables(entity, draw_area);
+			RenderableArray &entityRenderables = entity->GetRenderables();
+			for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
 			{
-				RenderablePtr renderable = *it;
-				ResourcePointer<CL_Sprite> &spriteResource = renderable->sprite;
-
-				float x = entityPosition.x + renderable->position.x;
-				float y = entityPosition.y + renderable->position.y;
-				CL_Rectf spriteRect(x, y, x + spriteResource->get_width(), y +spriteResource->get_height());
-				if (spriteResource.IsValid() && draw_area.is_overlapped(spriteRect))
-				{
-					spriteResource->draw(m_GC, renderable->GetPosition().x, renderable->GetPosition().y);
-				}
+				RenderablePtr &renderable = *r_it;
+				if ( draw_area.is_overlapped(renderable->GetAABB()) )
+					renderable->Draw(m_GC);
 			}
 
 			m_GC.pop_modelview();
@@ -306,6 +403,72 @@ namespace FusionEngine
 			else
 				previousDepth = entity->GetDepth();
 		}
+	}
+
+	void Renderer::updateDrawArray()
+	{
+		//for (EntitySet::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		//{
+		//	const EntityPtr &entity = *it;
+		//	
+		//	if (m_ChangedTags.wasShown(entity))
+		//	{
+		//		m_EntitiesToDraw.insert(
+		//			std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
+		//			entity);
+		//	}
+		//}
+	}
+
+	void Renderer::drawRenderables(EntityPtr &entity, const CL_Rectf &draw_area)
+	{
+
+		//int previousDepth = INT_MAX; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
+		//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+		//{
+		//	EntityPtr &entity = *it;
+
+		//	if (m_ChangedTags.wasHidden(entity))
+		//	{
+		//		it = m_EntitiesToDraw.erase(it);
+		//		if (it == m_EntitiesToDraw.end())
+		//			break;
+		//	}
+
+		//	if (entity->IsHidden())
+		//		continue;
+		//	if (entity->IsStreamedOut())
+		//		continue;
+
+		//	const Vector2 &entityPosition = entity->GetPosition();
+
+		//	m_GC.push_translate(entityPosition.x, entityPosition.y);
+
+		//	Entity::RenderableArray &entityRenderables = entity->GetRenderables();
+		//	for (Entity::RenderableArray::iterator it = entityRenderables.begin(), end = entityRenderables.end(); it != end; ++it)
+		//	{
+		//		RenderablePtr renderable = *it;
+		//		ResourcePointer<CL_Sprite> &spriteResource = renderable->sprite;
+
+		//		float x = entityPosition.x + renderable->position.x;
+		//		float y = entityPosition.y + renderable->position.y;
+		//		CL_Rectf spriteRect(x, y, x + spriteResource->get_width(), y +spriteResource->get_height());
+		//		if (spriteResource.IsValid() && draw_area.is_overlapped(spriteRect))
+		//		{
+		//			spriteResource->draw(m_GC, renderable->GetPosition().x, renderable->GetPosition().y);
+		//		}
+		//	}
+
+		//	m_GC.pop_modelview();
+
+		//	// Bubble up previous Entity if incorrectly depth-sorted
+		//	if (entity->GetDepth() < previousDepth)
+		//	{
+		//		std::swap(*it, *(it-1));
+		//	}
+		//	else
+		//		previousDepth = entity->GetDepth();
+		//}
 	}
 
 }

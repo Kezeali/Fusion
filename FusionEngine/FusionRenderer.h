@@ -41,7 +41,7 @@ namespace FusionEngine
 
 		enum FollowMode
 		{
-			Static,
+			FixedPosition,
 			FollowInstant,
 			FollowSmooth,
 			Physical
@@ -51,7 +51,7 @@ namespace FusionEngine
 
 		enum RotateMode
 		{
-			Static,
+			FixedAngle,
 			SlerpToMovementDirection,
 			Spline
 		};
@@ -76,6 +76,7 @@ namespace FusionEngine
 		void createBody(b2World *world);
 
 		FollowMode m_Mode;
+		RotateMode m_AutoRotate;
 
 		CL_Vec2f m_Position;
 		float m_Angle;
@@ -140,17 +141,33 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~Renderer();
 
-		void Add(EntityPtr entity);
-		void Remove(EntityPtr entity);
+		enum ViewportArea
+		{
+			ViewFull,
+			ViewVerticalHalf,
+			ViewHorizontalHalf,
+			ViewQuarter
+		};
+		ViewportPtr CreateViewport(ViewportArea area);
+
+		void Add(const EntityPtr &entity);
+		void Remove(const EntityPtr &entity);
+
+		void Clear();
 
 		void ShowTag(const std::string &tag);
 		void HideTag(const std::string &tag);
 
 		//void AddViewport(ViewportPtr viewport);
 
+		void Update(float split);
 		void Draw(ViewportPtr viewport);
 
 	protected:
+		bool updateTags(const EntityPtr &entity) const;
+
+		void drawRenderables(EntityPtr &entity, const CL_Rectf &cull_outside);
+
 		void drawNormally(const CL_Rectf &cull_outside);
 		void updateDrawArray();
 
@@ -186,7 +203,7 @@ namespace FusionEngine
 
 			bool wasShown(const EntityPtr &entity) const
 			{
-				for (StringSet::iterator it = m_ShownTags.begin(), end = m_ShownTags.end(); it != end; ++it)
+				for (StringSet::const_iterator it = m_ShownTags.begin(), end = m_ShownTags.end(); it != end; ++it)
 				{
 					if (entity->CheckTag(*it))
 						return true;
@@ -200,9 +217,9 @@ namespace FusionEngine
 				return m_HiddenTags.find(tag) == m_HiddenTags.end();
 			}
 
-			bool wasHidden(const std::string &entity) const
+			bool wasHidden(const EntityPtr &entity) const
 			{
-				for (StringSet::iterator it = m_HiddenTags.begin(), end = m_HiddenTags.end(); it != end; ++it)
+				for (StringSet::const_iterator it = m_HiddenTags.begin(), end = m_HiddenTags.end(); it != end; ++it)
 				{
 					if (entity->CheckTag(*it))
 						return true;
@@ -211,17 +228,30 @@ namespace FusionEngine
 				return false;
 			}
 
+			const StringSet &shownTags() const
+			{
+				return m_ShownTags;
+			}
+
+			const StringSet &hiddenTags() const
+			{
+				return m_HiddenTags;
+			}
+
 			std::set<std::string> m_ShownTags;
 			std::set<std::string> m_HiddenTags;
 		} m_ChangedTags;
 
-		StringSet m_ShownTags;
+		//StringSet m_ShownTags;
+		StringSet m_HiddenTags;
 
 		EntitySet m_Entities;
 
 		bool m_EntityAdded;
 
 		EntityArray m_EntitiesToDraw;
+
+		RenderableArray m_Renderables;
 
 		//ViewportArray m_Viewports;
 

@@ -61,8 +61,6 @@ namespace FusionEngine
 	//	NameEntityMap m_EntitiesByName;
 	//};
 
-	typedef std::vector<EntityPtr> EntityArray;
-
 	/*!
 	 * \brief
 	 * Updates / draws entity objects.
@@ -192,6 +190,8 @@ namespace FusionEngine
 		ObjectID getFreeID();
 
 		std::string generateName(EntityPtr entity);
+
+		void updateTags(EntityPtr &tag) const;
 
 		//void updateEntity(EntityPtr entity, float split);
 

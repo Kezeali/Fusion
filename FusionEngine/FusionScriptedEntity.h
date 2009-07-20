@@ -52,6 +52,17 @@ namespace FusionEngine
 	};
 	typedef std::tr1::shared_ptr<ResourceParam> ResourceParamPtr;
 
+	class ImageResourceParam : public ResourceParam
+	{
+	public:
+		ImageResourceParam(const ResourcePointer<CL_Sprite> &resource);
+
+		void SetPosition(const Vector2 &position);
+
+	protected:
+		RenderablePtr m_Renderable;
+	};
+
 
 	/*!
 	 * This class acts as a wrapper for the script objects which define

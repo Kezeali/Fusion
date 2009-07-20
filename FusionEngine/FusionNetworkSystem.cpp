@@ -96,7 +96,7 @@ namespace FusionEngine
 		}
 	}
 
-	void NetworkSystem::Update(unsigned int split)
+	void NetworkSystem::Update(float split)
 	{
 		m_PacketDispatcher->Run();
 	}

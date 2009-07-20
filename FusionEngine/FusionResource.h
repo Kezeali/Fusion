@@ -34,6 +34,8 @@
 
 #include "FusionCommon.h"
 
+#include "FusionBoostSignals2.h"
+
 #ifdef _DEBUG
 #include "FusionConsole.h"
 #endif
@@ -101,8 +103,9 @@ namespace FusionEngine
 		bool m_ToLoad;
 
 	public:
-		CL_Signal_v0 OnRemoval;
-		CL_Signal_v0 OnInvalidation;
+		bsig2::signal<void ()> SigDelete;
+		bsig2::signal<void ()> SigLoad;
+		bsig2::signal<void ()> SigUnload;
 
 	public:
 		//! Constructor
@@ -240,8 +243,10 @@ namespace FusionEngine
 		void _setValid(bool valid)
 		{
 			m_Valid = valid;
-			if (!valid)
-				OnInvalidation.invoke();
+			if (valid)
+				SigLoad();
+			else
+				SigUnload();
 		}
 
 		//! Returns true if the resource data is valid
@@ -255,7 +260,10 @@ namespace FusionEngine
 		{
 			// Only lock if this resource is currently loaded
 			if (IsValid())
+			{
 				m_Mutex.lock();
+				return true;
+			}
 			else
 				return false;
 		}

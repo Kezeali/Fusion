@@ -105,11 +105,206 @@ namespace FusionEngine
 		m_FreeFlags |= flag;
 	}
 
+	Renderable::Renderable()
+		: m_Angle(0),
+		m_Colour(255, 255, 255, 255),
+		m_Alpha(1.f),
+		m_Depth(0),
+		m_PreviousWidth(0),
+		m_PreviousHeight(0)
+	{
+	}
+
+	Renderable::Renderable(const FusionEngine::ResourcePointer<CL_Sprite> &resource)
+		: m_Sprite(resource),
+		m_Angle(0),
+		m_Colour(255, 255, 255, 255),
+		m_Alpha(1.f),
+		m_Depth(0),
+		m_PreviousWidth(0),
+		m_PreviousHeight(0)
+	{
+		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
+	}
+
+	Renderable::~Renderable()
+	{
+		m_LoadConnection.disconnect();
+	}
+
+	void Renderable::_notifyAttached(const EntityPtr &entity)
+	{
+		m_Entity = entity;
+	}
+
+	EntityPtr Renderable::GetEntity() const
+	{
+		return m_Entity;
+	}
+
+	void Renderable::SetAlpha(float _alpha)
+	{
+		if (m_Sprite.IsValid())
+			m_Sprite->set_alpha(_alpha);
+		m_Alpha = _alpha;
+	}
+
+	float Renderable::GetAlpha() const
+	{
+		return m_Alpha;
+	}
+
+	void Renderable::SetColour(unsigned int r, unsigned int g, unsigned int b)
+	{
+		m_Colour.set_color(r, g, b);
+
+		if (m_Sprite.IsValid())
+			m_Sprite->set_color(m_Colour);
+	}
+
+	const CL_Color &Renderable::GetColour() const
+	{
+		return m_Colour;
+	}
+
+	void Renderable::SetPosition(float x, float y)
+	{
+		m_Position.x = x;
+		m_Position.y = y;
+	}
+
+	void Renderable::SetPosition(const Vector2 &position)
+	{
+		m_Position = position;
+	}
+
+	void Renderable::SetPosition(const CL_Vec2f &_position)
+	{
+		m_Position.x = _position.x;
+		m_Position.y = _position.y;
+	}
+
+	const Vector2 &Renderable::GetPosition() const
+	{
+		return m_Position;
+	}
+
+	void Renderable::SetAngle(float angle)
+	{
+		if (m_Sprite.IsValid())
+			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+
+		if (!fe_fequal(angle, m_Angle))
+		{
+			CL_Origin origin;
+			int x, y;
+			m_Sprite->get_alignment(origin, x, y);
+
+			m_AABB = m_AABB.get_rot_bounds(origin, (float)x, (float)y, CL_Angle(m_Angle-angle, cl_radians));
+		}
+
+		m_Angle = angle;
+	}
+
+	float Renderable::GetAngle() const
+	{
+		return m_Angle;
+	}
+
+	void Renderable::SetDepth(int depth)
+	{
+		m_Depth = depth;
+	}
+
+	int Renderable::GetDepth() const
+	{
+		return m_Depth;
+	}
+
+	void Renderable::SetEnabled(bool enabled)
+	{
+		m_Enabled = enabled;
+	}
+
+	bool Renderable::IsEnabled() const
+	{
+		return m_Enabled;
+	}
+
+	const CL_Rectf &Renderable::GetAABB() const
+	{
+		return m_AABB;
+	}
+
+	void Renderable::Update(float split)
+	{
+		m_Sprite->update(split);
+
+		// Check whether AABB needs to be upadated (frame width / height has changed)
+		bool bbChanged = false;
+		if (m_Sprite->get_height() != m_PreviousHeight)
+		{
+			bbChanged = true;
+			m_PreviousHeight = m_Sprite->get_height();
+		}
+		if (m_Sprite->get_width() != m_PreviousWidth)
+		{
+			bbChanged = true;
+			m_PreviousWidth = m_Sprite->get_width();
+		}
+
+		if (bbChanged)
+		{
+			CL_Rectf bb;
+			bb.left = m_Position.x;
+			bb.top = m_Position.y;
+			bb.right = m_Position.x + m_Sprite->get_width();
+			bb.bottom = m_Position.y + m_Sprite->get_height();
+
+			CL_Origin origin;
+			int x, y;
+			m_Sprite->get_alignment(origin, x, y);
+
+			m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
+		}
+	}
+
+	void Renderable::SetSpriteResource(const ResourcePointer<CL_Sprite> &resource)
+	{
+		m_LoadConnection.disconnect();
+		m_Sprite = resource;
+		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
+	}
+
+	void Renderable::OnSpriteLoad()
+	{
+		if (m_Sprite.Lock())
+		{
+			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+			m_Sprite->set_alpha(m_Alpha);
+			m_Sprite->set_color(m_Colour);
+
+			m_Sprite.Unlock();
+		}
+	}
+
+	void Renderable::Draw(CL_GraphicContext &gc)
+	{
+		if (m_Enabled && m_Sprite.Lock())
+		{
+			m_Sprite->draw(gc, m_Position.x, m_Position.y);
+			m_Sprite.Unlock();
+		}
+	}
+
 	Entity::Entity()
 		: m_Name("default"),
 		m_Id(0),
 		m_Flags(0),
-		m_MarkedToRemove(false)
+		m_MarkedToRemove(false),
+		m_Paused(false),
+		m_Hidden(false),
+		m_Depth(0)
 	{
 	}
 
@@ -117,7 +312,10 @@ namespace FusionEngine
 		: m_Name(name),
 		m_Id(0),
 		m_Flags(0),
-		m_MarkedToRemove(false)
+		m_MarkedToRemove(false),
+		m_Paused(false),
+		m_Hidden(false),
+		m_Depth(0)
 	{
 	}
 
@@ -190,12 +388,46 @@ namespace FusionEngine
 
 	void Entity::_notifyPausedTag(const std::string &tag)
 	{
-		m_PausedTags.insert(tag);
+		if (CheckTag(tag))
+			m_PausedTags.insert(tag);
+	}
+
+	void Entity::_notifyResumedTag(const std::string &tag)
+	{
+		if (CheckTag(tag))
+			m_PausedTags.erase(tag);
 	}
 
 	void Entity::_notifyHiddenTag(const std::string &tag)
 	{
-		m_HiddenTags.insert(tag);
+		if (CheckTag(tag))
+			m_HiddenTags.insert(tag);
+	}
+
+	void Entity::_notifyShownTag(const std::string &tag)
+	{
+		if (CheckTag(tag))
+			m_HiddenTags.erase(tag);
+	}
+
+	const StringSet &Entity::GetPausedTags() const
+	{
+		return m_PausedTags;
+	}
+
+	const StringSet &Entity::GetHiddenTags() const
+	{
+		return m_HiddenTags;
+	}
+
+	bool Entity::IsPausedByTag() const
+	{
+		return !m_PausedTags.empty();
+	}
+
+	bool Entity::IsHiddenByTag() const
+	{
+		return !m_HiddenTags.empty();
 	}
 
 	void Entity::SetTagFlags(unsigned int flags)
@@ -248,6 +480,16 @@ namespace FusionEngine
 		return m_Hidden;
 	}
 
+	void Entity::SetDepth(int depth)
+	{
+		m_Depth = depth;
+	}
+
+	int Entity::GetDepth() const
+	{
+		return m_Depth;
+	}
+
 	void Entity::SetWait(unsigned int steps)
 	{
 		m_WaitStepsRemaining = steps;
@@ -273,6 +515,38 @@ namespace FusionEngine
 	{
 		return m_MarkedToRemove;
 	}
+
+	RenderableArray &Entity::GetRenderables()
+	{
+		return m_Renderables;
+	}
+
+	void Entity::AddRenderable(RenderablePtr renderable)
+	{
+		m_Renderables.push_back(renderable);
+		renderable->_notifyAttached(this);
+	}
+
+	void Entity::RemoveRenderable(RenderablePtr renderable)
+	{
+		for (RenderableArray::iterator it = m_Renderables.begin(), end = m_Renderables.end(); it != end; ++it)
+		{
+			if (*it == renderable)
+			{
+				m_Renderables.erase(it);
+				renderable->_notifyAttached(EntityPtr());
+				break;
+			}
+		}
+	}
+
+	//virtual void Entity::UpdateRenderables(float split)
+	//{
+	//	for (RenderableArray::iterator it = m_Renderables.begin(), end = m_Renderables.end(); it != end; ++it)
+	//	{
+	//		(*it)->Update(split);
+	//	}
+	//}
 
 	std::string Entity::ToString() const
 	{

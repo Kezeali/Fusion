@@ -47,6 +47,8 @@
 namespace FusionEngine
 {
 
+	typedef std::vector<EntityPtr> EntityArray;
+
 	class TagFlagDictionary
 	{
 	public:
@@ -95,44 +97,67 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
 
-	class Renderable : public RefCounted
+	class Renderable : public RefCounted, RefCounted::noncopyable, boost::noncopyable
 	{
-		Vector2 position;
-		float angle;
+	public:
+		Renderable();
+		Renderable(const ResourcePointer<CL_Sprite> &resource);
+		virtual ~Renderable();
 
-		ResourcePointer<CL_Sprite> sprite;
+		void _notifyAttached(const EntityPtr &entity);
 
-		void SetPosition(float x, float y)
-		{
-			position.x = x;
-			position.y = y;
-		}
+		EntityPtr GetEntity() const;
 
-		void SetPosition(const Vector2 &position)
-		{
-			this->position = position;
-		}
+		void SetAlpha(float _alpha);
+		float GetAlpha() const;
 
-		void SetPosition(const CL_Vec2f &_position)
-		{
-			this->position.x = _position.x;
-			this->position.y = _position.y;
-		}
+		void SetColour(unsigned int r, unsigned int g, unsigned int b);
 
-		const Vector2 &GetPosition() const
-		{
-			return position;
-		}
+		const CL_Color &GetColour() const;
 
-		void SetAngle(float angle)
-		{
-			this->angle = angle;
-		}
+		void SetPosition(float x, float y);
+		void SetPosition(const Vector2 &position);
+		void SetPosition(const CL_Vec2f &_position);
+		const Vector2 &GetPosition() const;
 
-		float GetAngle() const
-		{
-			return angle;
-		}
+		void SetAngle(float angle);
+		float GetAngle() const;
+
+		void SetDepth(int depth);
+		int GetDepth() const;
+
+		void SetEnabled(bool enabled);
+		bool IsEnabled() const;
+
+		const CL_Rectf &GetAABB() const;
+
+		void Update(float split);
+
+		void SetSpriteResource(const ResourcePointer<CL_Sprite> &resource);
+
+		void OnSpriteLoad();
+
+		void Draw(CL_GraphicContext &gc);
+
+	protected:
+		EntityPtr m_Entity;
+
+		bool m_Enabled;
+
+		Vector2 m_Position;
+		float m_Angle;
+		float m_Alpha;
+		CL_Color m_Colour;
+
+		CL_Rectf m_AABB;
+
+		int m_Depth;
+
+		ResourcePointer<CL_Sprite> m_Sprite;
+
+		bsig2::connection m_LoadConnection;
+
+		int m_PreviousWidth, m_PreviousHeight;
 	};
 
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
@@ -203,7 +228,15 @@ namespace FusionEngine
 		StringVector GetTags() const;
 
 		void _notifyPausedTag(const std::string &tag);
+		void _notifyResumedTag(const std::string &tag);
 		void _notifyHiddenTag(const std::string &tag);
+		void _notifyShownTag(const std::string &tag);
+
+		const StringSet &GetPausedTags() const;
+		const StringSet &GetHiddenTags() const;
+
+		bool IsPausedByTag() const;
+		bool IsHiddenByTag() const;
 
 		//! Sets the tag-flags for this entity
 		/*!
@@ -243,6 +276,9 @@ namespace FusionEngine
 		void SetHidden(bool is_hidden);
 		bool IsHidden() const;
 
+		void SetDepth(int depth);
+		int GetDepth() const;
+
 		void SetWait(unsigned int steps);
 		bool Wait();
 
@@ -264,9 +300,11 @@ namespace FusionEngine
 
 		//virtual const MeshArray &GetGeometry() const;
 
-		virtual const RenderableArray &GetRenderables() const;
+		virtual RenderableArray &GetRenderables();
 		virtual void AddRenderable(RenderablePtr renderable);
 		virtual void RemoveRenderable(RenderablePtr renderable);
+
+		//virtual void UpdateRenderables();
 
 		//! Called after an Entity is streamed in
 		virtual void OnStreamIn() =0;
@@ -314,8 +352,8 @@ namespace FusionEngine
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 
-		TagSet m_PausedTags;
-		TagSet m_HiddenTags;
+		StringSet m_PausedTags;
+		StringSet m_HiddenTags;
 
 		TagSet m_Tags;
 		// Markers (flags) for this entity
@@ -329,6 +367,8 @@ namespace FusionEngine
 		bool m_Hidden;
 		unsigned int m_WaitStepsRemaining;
 		bool m_MarkedToRemove;
+
+		int m_Depth;
 
 		RenderableArray m_Renderables;
 

@@ -75,6 +75,7 @@ namespace FusionEngine
 		if (m_EntityManager == NULL)
 		{
 			ViewportPtr viewport = m_Renderer->CreateViewport(Renderer::ViewFull);
+			AddViewport(viewport);
 
 			m_EntityManager = new EntityManager(m_Renderer, m_InputManager);
 			m_MapLoader = new GameMapLoader(m_EntityManager);
@@ -166,15 +167,48 @@ namespace FusionEngine
 		}
 	}
 
-	void OntologicalSystem::Update(unsigned int split)
+	void OntologicalSystem::Update(float split)
 	{
 		m_PhysicsWorld->RunSimulation(split);
 		m_EntityManager->Update(split * 0.001f);
+
+		m_Renderer->Update(split);
 	}
 
 	void OntologicalSystem::Draw()
 	{
+		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
+		{
+			m_Renderer->Draw(*it);
+		}
 		m_EntityManager->Draw();
+	}
+
+	void OntologicalSystem::AddViewport(ViewportPtr viewport)
+	{
+		m_Viewports.push_back(viewport);
+	}
+
+	void OntologicalSystem::RemoveViewport(const ViewportPtr &viewport)
+	{
+		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
+		{
+			if (*it == viewport)
+			{
+				m_Viewports.erase(it);
+				break;
+			}
+		}
+	}
+
+	void OntologicalSystem::RemoveAllViewports()
+	{
+		m_Viewports.clear();
+	}
+
+	OntologicalSystem::ViewportArray &OntologicalSystem::GetViewports()
+	{
+		return m_Viewports;
 	}
 
 	void OntologicalSystem::SetModule(ModulePtr module)
@@ -192,7 +226,10 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+
+			CameraPtr camera(new Camera(entity));
+			m_Viewports.front()->SetCamera(camera);
 		}
 	}
 

@@ -86,7 +86,7 @@ namespace FusionEngine
 		void LoadFonts(const char* directory);
 
 		//! Updates the inputs
-		virtual void Update(unsigned int split);
+		virtual void Update(float split);
 
 		//! Draws the gui
 		virtual void Draw();

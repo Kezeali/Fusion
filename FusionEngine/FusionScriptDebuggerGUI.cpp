@@ -68,7 +68,7 @@ namespace FusionEngine
 		m_Document->Close();
 	}
 
-	void ScriptDebuggerGui::Update(unsigned int split)
+	void ScriptDebuggerGui::Update(float split)
 	{
 	}
 

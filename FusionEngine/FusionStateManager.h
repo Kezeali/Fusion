@@ -133,7 +133,7 @@ namespace FusionEngine
 		//void ClearQueue();
 
 		//! Updates all states
-		bool Update(unsigned int split);
+		bool Update(float split);
 		//! Draws all states
 		void Draw();
 

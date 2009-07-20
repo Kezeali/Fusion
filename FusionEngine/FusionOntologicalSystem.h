@@ -37,6 +37,7 @@
 #include "FusionState.h"
 
 #include "FusionScriptModule.h"
+#include "FusionRenderer.h"
 
 
 namespace FusionEngine
@@ -45,7 +46,10 @@ namespace FusionEngine
 	class OntologicalSystem : public System
 	{
 	public:
-		OntologicalSystem(InputManager *input_manager);
+		typedef std::vector<ViewportPtr> ViewportArray;
+
+	public:
+		OntologicalSystem(Renderer *renderer, InputManager *input_manager);
 		virtual ~OntologicalSystem();
 
 		virtual const std::string &GetName() const;
@@ -53,8 +57,15 @@ namespace FusionEngine
 		virtual bool Initialise();
 		virtual void CleanUp();
 
-		virtual void Update(unsigned int split);
+		virtual void Update(float split);
 		virtual void Draw();
+
+		void AddViewport(ViewportPtr viewport);
+		void RemoveViewport(const ViewportPtr &viewport);
+
+		void RemoveAllViewports();
+
+		ViewportArray &GetViewports();
 
 		void SetModule(ModulePtr module);
 
@@ -65,6 +76,8 @@ namespace FusionEngine
 		GameMapLoader *m_MapLoader;
 
 		PhysicsWorld *m_PhysicsWorld;
+
+		ViewportArray m_Viewports;
 
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;

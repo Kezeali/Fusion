@@ -221,7 +221,7 @@ namespace FusionEngine
 	//	m_Queued.clear();
 	//}
 
-	bool SystemsManager::Update(unsigned int split)
+	bool SystemsManager::Update(float split)
 	{
 		// If game should have quit, but for some reason update is being called again...
 		if (!m_KeepGoing)

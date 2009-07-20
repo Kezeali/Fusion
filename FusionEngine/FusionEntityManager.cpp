@@ -335,11 +335,15 @@ namespace FusionEngine
 	void EntityManager::HideEntitiesWithTag(const std::string &tag)
 	{
 		m_ChangedDrawStateTags[tag] = false;
+
+		m_Renderer->HideTag(tag);
 	}
 
 	void EntityManager::ShowEntitiesWithTag(const std::string &tag)
 	{
 		m_ChangedDrawStateTags[tag] = true;
+
+		m_Renderer->ShowTag(tag);
 	}
 
 	void EntityManager::RemoveEntitiesWithTag(const std::string &tag)
@@ -375,6 +379,8 @@ namespace FusionEngine
 			{
 				EntityPtr &entity = *it;
 
+				updateTags(entity);
+
 				if (entity->IsMarkedToRemove())
 					continue;
 
@@ -395,6 +401,8 @@ namespace FusionEngine
 			{
 				EntityPtr &entity = it->second;
 
+				updateTags(entity);
+
 				if (entity->IsMarkedToRemove())
 					continue;
 
@@ -409,7 +417,9 @@ namespace FusionEngine
 			}
 			for (EntitySet::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 			{
-				EntityPtr &entity = it->second;
+				EntityPtr &entity = *it;
+
+				updateTags(entity);
 
 				if (entity->IsMarkedToRemove())
 					continue;
@@ -453,11 +463,6 @@ namespace FusionEngine
 
 	void EntityManager::Draw()
 	{
-		m_EntitiesLocked = true;
-
-		m_Renderer->Draw();
-
-		m_EntitiesLocked = false;
 	}
 
 	ObjectID EntityManager::getFreeID()
@@ -477,6 +482,25 @@ namespace FusionEngine
 		std::stringstream stream;
 		stream << "__entity_id_" << entity->GetID();
 		return stream.str();
+	}
+
+	void EntityManager::updateTags(EntityPtr &entity) const
+	{
+		for (BlockingChangeMap::const_iterator it = m_ChangedUpdateStateTags.begin(), end = m_ChangedUpdateStateTags.end(); it != end; ++it)
+		{
+			if (it->second)
+				entity->_notifyResumedTag(it->first);
+			else
+				entity->_notifyHiddenTag(it->first);
+		}
+
+		for (BlockingChangeMap::const_iterator it = m_ChangedDrawStateTags.begin(), end = m_ChangedDrawStateTags.end(); it != end; ++it)
+		{
+			if (it->second)
+				entity->_notifyShownTag(it->first);
+			else
+				entity->_notifyHiddenTag(it->first);
+		}
 	}
 
 	//void EntityManager::updateEntity(EntityPtr entity, float split)

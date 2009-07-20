@@ -41,7 +41,7 @@ namespace FusionEngine
 		CL_PixelBuffer sp;
 		try
 		{
-			sp = CL_ImageProviderFactory::load(resource->GetPath(), ext, vdir);
+			sp = CL_ImageProviderFactory::load(resource->GetPath(), vdir, ext);
 		}
 		catch (CL_Exception&)
 		{

@@ -315,6 +315,22 @@ namespace FusionEngine
 #endif
 		}
 
+		bsig2::signal<void ()> &SigDelete() const
+		{
+			return m_ResourceBox->SigDelete;
+		}
+
+		bsig2::signal<void ()> &SigLoad() const
+		{
+			return m_ResourceBox->SigLoad;
+		}
+
+		bsig2::signal<void ()> &SigUnload() const
+		{
+			return m_ResourceBox->SigLoad;
+		}
+
+
 		//! Called when resource manager invokes OnRemoval in ResourceContainer
 		void onResourceRemoval()
 		{

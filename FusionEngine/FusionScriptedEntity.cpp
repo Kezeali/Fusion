@@ -12,20 +12,6 @@
 namespace FusionEngine
 {
 
-	class ImageResourceParam : public ResourceParam
-	{
-	public:
-		ImageResourceParam();
-
-		void SetPosition(const Vector2 &position);
-
-	protected:
-		Vector2 m_DrawPosition;
-		float m_DrawRotation;
-
-		bool m_RelativeToEntity;
-	};
-
 	ResourceParam::ResourceParam(const std::string &type)
 		: m_Type(type)
 	{}
@@ -39,14 +25,15 @@ namespace FusionEngine
 		return m_Type;
 	}
 
-	ImageResourceParam::ImageResourceParam()
-		: ResourceParam("Image"),
-		m_RelativeToEntity(true)
-	{}
+	ImageResourceParam::ImageResourceParam(const ResourcePointer<CL_Sprite> &resource)
+		: ResourceParam("Image")
+	{
+		m_Renderable.reset(new Renderable(resource));
+	}
 
 	void ImageResourceParam::SetPosition(const Vector2 &position)
 	{
-		m_DrawPosition = position;
+		m_Renderable->SetPosition(position);
 	}
 
 	ScriptedEntity::ScriptedEntity()
