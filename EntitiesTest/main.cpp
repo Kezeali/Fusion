@@ -21,6 +21,7 @@
 #include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
+#include "../FusionEngine/FusionEntity.h"
 
 #include "../FusionEngine/FusionClientOptions.h"
 
@@ -75,12 +76,14 @@ public:
 			Console::Register(m_ScriptManager);
 			RegisterScriptedConsoleCommand(m_ScriptManager->GetEnginePtr());
 			GUI::Register(m_ScriptManager);
+			RefCounted::RegisterType<Renderable>(m_ScriptManager->GetEnginePtr(), "Renderable");
 
 		
 			////////////////////
 			// Resource Manager
 			m_ResourceManager = new ResourceManager();
 			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, &gc);
+			m_ResourceManager->StartBackgroundPreloadThread();
 
 			//////////////////////
 			// Load client options

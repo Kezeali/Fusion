@@ -238,34 +238,39 @@ namespace FusionEngine
 
 	void Renderable::Update(float split)
 	{
-		m_Sprite->update(split);
-
-		// Check whether AABB needs to be upadated (frame width / height has changed)
-		bool bbChanged = false;
-		if (m_Sprite->get_height() != m_PreviousHeight)
+		if (m_Sprite.Lock())
 		{
-			bbChanged = true;
-			m_PreviousHeight = m_Sprite->get_height();
-		}
-		if (m_Sprite->get_width() != m_PreviousWidth)
-		{
-			bbChanged = true;
-			m_PreviousWidth = m_Sprite->get_width();
-		}
+			m_Sprite->update(split);
 
-		if (bbChanged)
-		{
-			CL_Rectf bb;
-			bb.left = m_Position.x;
-			bb.top = m_Position.y;
-			bb.right = m_Position.x + m_Sprite->get_width();
-			bb.bottom = m_Position.y + m_Sprite->get_height();
+			// Check whether AABB needs to be upadated (frame width / height has changed)
+			bool bbChanged = false;
+			if (m_Sprite->get_height() != m_PreviousHeight)
+			{
+				bbChanged = true;
+				m_PreviousHeight = m_Sprite->get_height();
+			}
+			if (m_Sprite->get_width() != m_PreviousWidth)
+			{
+				bbChanged = true;
+				m_PreviousWidth = m_Sprite->get_width();
+			}
 
-			CL_Origin origin;
-			int x, y;
-			m_Sprite->get_alignment(origin, x, y);
+			if (bbChanged)
+			{
+				CL_Rectf bb;
+				bb.left = m_Position.x;
+				bb.top = m_Position.y;
+				bb.right = m_Position.x + m_Sprite->get_width();
+				bb.bottom = m_Position.y + m_Sprite->get_height();
 
-			m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
+				CL_Origin origin;
+				int x, y;
+				m_Sprite->get_alignment(origin, x, y);
+
+				m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
+			}
+
+			m_Sprite.Unlock();
 		}
 	}
 
@@ -274,6 +279,11 @@ namespace FusionEngine
 		m_LoadConnection.disconnect();
 		m_Sprite = resource;
 		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
+	}
+
+	ResourcePointer<CL_Sprite> &Renderable::GetSpriteResource()
+	{
+		return m_Sprite;
 	}
 
 	void Renderable::OnSpriteLoad()
@@ -538,6 +548,11 @@ namespace FusionEngine
 				break;
 			}
 		}
+	}
+
+	const StringSet &Entity::GetStreamedResources() const
+	{
+		return m_StreamedResources;
 	}
 
 	//virtual void Entity::UpdateRenderables(float split)

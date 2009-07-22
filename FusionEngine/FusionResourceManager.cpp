@@ -366,8 +366,9 @@ namespace FusionEngine
 
 	ResourceSpt ResourceManager::PreloadResource_Background(const std::string& type, const std::wstring& path, int priority)
 	{
-		ResourceSpt resource = ResourceSpt(new ResourceContainer(type, path, path, NULL));
-		m_Resources[path] = resource;
+		//ResourceSpt resource = ResourceSpt(new ResourceContainer(type, path, path, NULL));
+		//m_Resources[path] = resource;
+		ResourceSpt &resource = GetResourceDefault(path, type);
 
 		m_ToLoadMutex.lock();
 		m_ToLoad.push(ResourceToLoadData(type, path, path, priority));
@@ -393,6 +394,17 @@ namespace FusionEngine
 		m_ToUnloadMutex.unlock();
 
 		m_ToUnloadEvent.set();
+	}
+
+	ResourceSpt &ResourceManager::GetResourceDefault(const ResourceTag &tag, const std::string &type)
+	{
+		ResourceMap::iterator _where = m_Resources.find(tag);
+		if (_where != m_Resources.end())
+			return _where->second;
+		else
+		{ 
+			return m_Resources[tag] = ResourceSpt(new ResourceContainer(type, tag, tag, NULL));
+		}
 	}
 
 	//void ResourceManager::RegisterScriptElements(ScriptingEngine* manager)

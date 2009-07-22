@@ -104,7 +104,9 @@ namespace FusionEngine
 			: m_Type(""),
 			m_Tag(L""),
 			m_Path(L""),
-			m_Data(0),
+			m_Data(NULL),
+			m_QuickLoadData(NULL),
+			m_HasQuickLoadData(false),
 			m_RefCount(0),
 			m_ToLoad(false)
 		{
@@ -117,6 +119,8 @@ namespace FusionEngine
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
+			m_QuickLoadData(NULL),
+			m_HasQuickLoadData(false),
 			m_RefCount(0),
 			m_NextTicket(0),
 			m_ToLoad(false)
@@ -133,6 +137,8 @@ namespace FusionEngine
 			m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
+			m_QuickLoadData(NULL),
+			m_HasQuickLoadData(false),
 			m_RefCount(0),
 			m_NextTicket(0),
 			m_ToLoad(false)
@@ -149,6 +155,8 @@ namespace FusionEngine
 			m_Tag(fe_widen(tag)),
 			m_Path(fe_widen(path)),
 			m_Data(ptr),
+			m_QuickLoadData(NULL),
+			m_HasQuickLoadData(false),
 			m_RefCount(0),
 			m_NextTicket(0),
 			m_ToLoad(false)

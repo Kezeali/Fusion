@@ -207,6 +207,9 @@ namespace FusionEngine
 		//template<typename T>
 		//ResourcePointer<T> GetResource(const ResourceTag& tag);
 
+		//! Gets or creates the given resource
+		ResourceSpt &GetResourceDefault(const ResourceTag &tag, const std::string& type);
+
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag &tag)
 		{
@@ -217,23 +220,24 @@ namespace FusionEngine
 		template<typename T>
 		ResourcePointer<T> GetResource(const std::string &tag, const std::string& type)
 		{
-			ResourceSpt sptRes = m_Resources[fe_widen(tag)];
-			return ResourcePointer<T>(sptRes);
+			ResourceSpt &resource = GetResourceDefault(fe_widen(tag), type);
+			return ResourcePointer<T>(resource);
 		}
 
 		template<typename T>
 		ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
 		{
-			ResourceSpt sptRes = m_Resources[tag];
-			return ResourcePointer<T>(sptRes);
+			ResourceSpt &resource = GetResourceDefault(tag, type);
+			return ResourcePointer<T>(resource);
 		}
 
 		//! Optimised version of GetResource
 		template<typename T>
 		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
 		{
-			ResourceSpt sptRes = m_Resources[tag];
-			out = ResourcePointer<T>(sptRes);
+			ResourceSpt &resource = GetResourceDefault(tag, type);
+			out.SetTarget(resource);
+			//out = ResourcePointer<T>(resource);
 		}
 
 		// How many characters from the beginning before a and b diverge

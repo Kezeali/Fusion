@@ -351,8 +351,6 @@ namespace FusionEngine
 
 	ScriptObject::ScriptObject(const ScriptObject& other)
 	{
-		if (m_Object != NULL)
-			m_Object->Release();
 		m_Object = other.m_Object;
 		if (m_Object != NULL)
 			m_Object->AddRef();
@@ -362,6 +360,18 @@ namespace FusionEngine
 	{
 		if (m_Object != NULL)
 			m_Object->Release();
+	}
+
+	ScriptObject &ScriptObject::operator= (const ScriptObject &other)
+	{
+		if (m_Object != NULL)
+			m_Object->Release();
+
+		m_Object = other.m_Object;
+		if (m_Object != NULL)
+			m_Object->AddRef();
+
+		return *this;
 	}
 
 	int ScriptObject::GetTypeId() const

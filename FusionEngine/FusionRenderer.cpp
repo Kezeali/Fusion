@@ -9,6 +9,7 @@ namespace FusionEngine
 		: m_Mode(FixedPosition),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
+		m_Scale(0.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -20,6 +21,7 @@ namespace FusionEngine
 		m_Mode(FixedPosition),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
+		m_Scale(0.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -31,6 +33,7 @@ namespace FusionEngine
 		m_Mode(FollowInstant),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
+		m_Scale(0.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -362,7 +365,7 @@ namespace FusionEngine
 
 	void Renderer::drawNormally(const CL_Rectf &draw_area)
 	{
-		int previousDepth = INT_MAX; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
+		int previousDepth = INT_MIN; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
 		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
 		{
 			//RenderablePtr &renderable = *it;

@@ -134,6 +134,7 @@ namespace FusionEngine
 		void Update(float split);
 
 		void SetSpriteResource(const ResourcePointer<CL_Sprite> &resource);
+		ResourcePointer<CL_Sprite> &GetSpriteResource();
 
 		void OnSpriteLoad();
 
@@ -306,6 +307,8 @@ namespace FusionEngine
 
 		//virtual void UpdateRenderables();
 
+		const StringSet &GetStreamedResources() const;
+
 		//! Called after an Entity is streamed in
 		virtual void OnStreamIn() =0;
 		//! Called after an Entity is steamed out
@@ -371,6 +374,8 @@ namespace FusionEngine
 		int m_Depth;
 
 		RenderableArray m_Renderables;
+
+		StringSet m_StreamedResources;
 
 	};
 

@@ -228,6 +228,10 @@ namespace FusionEngine
 		{
 			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
 
+			// Force stream-in
+			entity->OnStreamIn();
+			entity->SetStreamedOut(false);
+
 			CameraPtr camera(new Camera(entity));
 			m_Viewports.front()->SetCamera(camera);
 		}

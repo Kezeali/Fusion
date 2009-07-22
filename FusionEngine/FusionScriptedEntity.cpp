@@ -5,6 +5,7 @@
 #include "FusionScriptedEntity.h"
 
 // Fusion
+#include "FusionResourceManager.h"
 
 #include "scriptstring.h"
 
@@ -13,6 +14,7 @@ namespace FusionEngine
 {
 
 	ResourceDescription::ResourceDescription()
+		: m_ScriptPropertyIndex(-1)
 	{}
 
 	ResourceDescription::~ResourceDescription()
@@ -97,10 +99,15 @@ namespace FusionEngine
 		m_SyncedProperties = properties;
 	}
 
-	//void ScriptedEntity::SetStreamedResources(const ScriptedEntity::ResourcesMap &resources)
-	//{
-	//	m_Streamed = resources;
-	//}
+	void ScriptedEntity::SetStreamedResources(const ScriptedEntity::StreamedResourceMap &resources)
+	{
+		m_Streamed = resources;
+	}
+
+	void ScriptedEntity::AddStreamedResource(const std::string &type, const std::wstring &path)
+	{
+		m_Streamed[path] = type;
+	}
 
 	std::string ScriptedEntity::GetType() const
 	{
@@ -162,6 +169,17 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnStreamIn()
 	{
+		//add m_ResourceManager member
+		ResourceManager *res = ResourceManager::getSingletonPtr();
+		if (res != NULL)
+		{
+			// Stream in resources
+			for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
+			{
+				res->PreloadResource_Background(it->second, it->first, 1);
+			}
+		}
+
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamIn()");
 		if (f.ok())
 		{

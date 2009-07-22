@@ -178,7 +178,7 @@ namespace FusionEngine
 		~ScriptObject();
 
 		//! Copy assignment
-		//ScriptObject& operator=(const ScriptObject& rhs)
+		ScriptObject& operator=(const ScriptObject& rhs);
 		//{
 		//	m_Object = rhs.m_Object;
 		//	m_Object->AddRef();

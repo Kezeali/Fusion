@@ -62,7 +62,9 @@ namespace FusionEngine
 
 		int m_ScriptPropertyIndex;
 	};
-	typedef std::tr1::shared_ptr<ResourceDescription> ResourceDescriptionPtr;
+	
+	typedef std::tr1::unordered_map<std::string, ResourceDescription> ResourcesMap;
+
 
 	class SoundSamplePlayer : public RefCounted, RefCounted::no_factory_noncopyable, boost::noncopyable
 	{
@@ -101,19 +103,24 @@ namespace FusionEngine
 
 			// Index of the property in the script-object
 			int scriptPropertyIndex;
+
+			Property() : localOnly(false), arbitrated(false), scriptPropertyIndex(-1)
+			{}
 		};
 
 		typedef std::map<std::string, Property> PropertiesMap;
 		//typedef std::set<std::string> PropertiesSet;
 
 		//typedef std::map<std::string, ResourceDescriptionPtr> ResourcesMap;
+		typedef std::map<std::wstring, std::string> StreamedResourceMap;
 
 	public:
 		ScriptedEntity();
 		ScriptedEntity(ScriptObject script_self, const std::string &name);
 
 		void SetSyncProperties(const PropertiesMap &properties);
-		//void SetStreamedResources(const ResourcesMap &resources);
+		void SetStreamedResources(const StreamedResourceMap &resources);
+		void AddStreamedResource(const std::string &type, const std::wstring &path);
 
 		virtual std::string GetType() const;
 
@@ -138,7 +145,7 @@ namespace FusionEngine
 		std::string m_Path;
 
 		PropertiesMap m_SyncedProperties;
-		//ResourcesMap m_Streamed;
+		StreamedResourceMap m_Streamed;
 
 		int m_EntityTypeId;
 		int m_ScriptEntityTypeId;

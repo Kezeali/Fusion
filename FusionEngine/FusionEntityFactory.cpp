@@ -82,12 +82,11 @@ namespace FusionEngine
 	//	return new RootEntity(name);
 	//}
 
-	typedef std::tr1::unordered_map<std::string, ResourceDescription> ResourcesMap;
-
-	//! Parsed Entity.xml data
+	//! Stores parsed Entity.xml data
 	class EntityDefinition
 	{
 	public:
+		//! Stores script data info
 		struct Script
 		{
 			enum ScriptType { NoLanguage, AngelScript };
@@ -99,24 +98,35 @@ namespace FusionEngine
 			static ScriptType ParseTypeID(const std::string &type_id);
 		};
 
+		//! Stores data from the Dependencies element
 		typedef StringVector DependenciesMap;
 
 	public:
+		//! Basic CTOR
 		EntityDefinition();
+		//! CTOR - calls Parse() on given params
 		EntityDefinition(const std::string &current_folder, ticpp::Document &document);
 
 		void Parse(const std::string &containing_folder, ticpp::Document &document);
 
+		//! Resolves the given path relative to the working directory
 		std::string ResolvePath(const std::string &relative_path);
 
 		void LoadScriptData(Script::ScriptType type, const std::string &filename);
 		void SetScriptData(Script::ScriptType type, const std::string &data);
 
+		//! Returns the type of entity defined by this object
 		const std::string &GetType() const;
+		//! Gets the directory where the XML file was located
 		const std::string &GetWorkingDirectory() const;
+		//! Gets script data
 		Script &GetScript();
+		//! Gets script data (const)
 		const Script &GetScript() const;
+		//! Returns Entity types that were listed in the Dependencies element
 		const DependenciesMap &GetEntityDependencies() const;
+		//! Returns UtilityScript filenames that were listed in the Dependencies element
+		const DependenciesMap &GetScriptDependencies() const;
 		ScriptedEntity::PropertiesMap &GetSyncProperties();
 		ResourcesMap &GetStreamedResources();
 	protected:
@@ -201,7 +211,8 @@ namespace FusionEngine
 
 			else if (child->Value() == "UtilityScript")
 			{
-				m_ScriptDependencies.push_back(child->GetAttribute("file"));
+				std::string filename = child->GetAttribute("file");
+				m_ScriptDependencies.push_back( ResolvePath(filename) );
 			}
 		}
 	}
@@ -239,7 +250,7 @@ namespace FusionEngine
 
 			std::string propertyName = child->GetAttribute("property");
 			resource.SetPropertyName( propertyName );
-			resource.SetResourceName( child->GetAttribute("resource") );
+			resource.SetResourceName( ResolvePath(child->GetAttribute("resource")) );
 
 			m_Resources[propertyName] = resource;
 		}
@@ -333,6 +344,11 @@ namespace FusionEngine
 		return m_EntityDependencies;
 	}
 
+	const EntityDefinition::DependenciesMap &EntityDefinition::GetScriptDependencies() const
+	{
+		return m_ScriptDependencies;
+	}
+
 	ScriptedEntity::PropertiesMap &EntityDefinition::GetSyncProperties()
 	{
 		return m_SyncProperties;
@@ -409,7 +425,14 @@ namespace FusionEngine
 			if (desc.GetType() == "Sprite")
 			{
 				ResourcePointer<CL_Sprite> resource = resMan->GetResource<CL_Sprite>(desc.GetResourceName(), "SPRITE");
-				entity->AddRenderable( RenderablePtr(new Renderable(resource)) );
+
+				RenderablePtr renderable(new Renderable(resource));
+
+				entity->AddRenderable(renderable);
+
+				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				Renderable **renderableProperty = static_cast<Renderable**>( prop );
+				*renderableProperty = renderable.get();
 			}
 			else if (desc.GetType() == "Image")
 			{
@@ -439,6 +462,8 @@ namespace FusionEngine
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
 				new(prop) SoundSamplePlayer(resource, true);
 			}
+
+			entity->AddStreamedResource(desc.GetType(), fe_widen(desc.GetResourceName()));
 		}
 
 		return entity;
@@ -551,6 +576,14 @@ namespace FusionEngine
 					ev.manager->AddCode(script.scriptData, m_ModuleName.c_str(), (def->GetType() + "_inline").c_str());
 				else
 					ev.manager->AddFile(script.fileName, m_ModuleName.c_str());
+
+				const EntityDefinition::DependenciesMap &deps = def->GetScriptDependencies();
+				for (EntityDefinition::DependenciesMap::const_iterator it = deps.begin(), end = deps.end(); it != end; ++it)
+				{
+					bool success = ev.manager->AddFile(*it, m_ModuleName.c_str());
+					if (!success)
+						SendToConsole("Couldn't load script file '" + *it + "', which is a required UtilityScript for " + def->GetType());
+				}
 			}
 		}
 
@@ -626,6 +659,12 @@ namespace FusionEngine
 		// Create an instance of the script object
 		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
 		int typeId = engine->GetModule(m_ModuleName.c_str())->GetTypeIdByDecl(definition->GetType().c_str());
+		if (typeId < 0)
+		{
+			SendToConsole("Couldn't create instancer for '" + definition->GetType() +
+				"' type Entities because the type doesn't exist in the script module (most likely due to a compilation error).");
+			return;
+		}
 		asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
 		// Iterate through all of the script object's properties
 		for (int i = 0; i < object->GetPropertyCount(); i++)
@@ -634,6 +673,22 @@ namespace FusionEngine
 			if (_where != syncProperties.end())
 			{
 				_where->second.scriptPropertyIndex = i;
+			}
+		}
+		// Erase synced-property defs that are missing from the script type
+		{
+			ScriptedEntity::PropertiesMap::iterator it = syncProperties.begin(), end = syncProperties.end();
+			while (it != end)
+			{
+				if (it->second.scriptPropertyIndex < 0)
+				{
+					SendToConsole("Creating instancer for a scripted entity: There is no property called '"
+						+ it->first + "' in " + definition->GetType() +
+						" as indicated in the <Sync> element of the xml definition file - i.e. the definition is incorrect.");
+					syncProperties.erase(it++);
+				}
+				else
+					++it;
 			}
 		}
 
@@ -645,6 +700,22 @@ namespace FusionEngine
 			if (_where != resources.end())
 			{
 				_where->second.SetPropertyIndex(i);
+			}
+		}
+		// Erase resource-property defs that are missing from the script type
+		{
+			ResourcesMap::iterator it = resources.begin(), end = resources.end();
+			while (it != end)
+			{
+				if (it->second.GetPropertyIndex() < 0)
+				{
+					SendToConsole("Creating instancer for a scripted entity: There is no property called '"
+						+ it->second.GetPropertyName() + "' in " + definition->GetType() +
+						" as indicated in the <Streaming> element of the xml definition file - i.e. the definition is incorrect.");
+					resources.erase(it++);
+				}
+				else
+					++it;
 			}
 		}
 		object->Release();
