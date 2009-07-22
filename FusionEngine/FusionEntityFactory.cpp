@@ -32,6 +32,7 @@
 #include "FusionScriptedEntity.h"
 #include "FusionXml.h"
 #include "FusionPhysFS.h"
+#include "FusionResourceManager.h"
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -81,6 +82,8 @@ namespace FusionEngine
 	//	return new RootEntity(name);
 	//}
 
+	typedef std::tr1::unordered_map<std::string, ResourceDescription> ResourcesMap;
+
 	//! Parsed Entity.xml data
 	class EntityDefinition
 	{
@@ -102,7 +105,7 @@ namespace FusionEngine
 		EntityDefinition();
 		EntityDefinition(const std::string &current_folder, ticpp::Document &document);
 
-		void Parse(const std::string &current_folder, ticpp::Document &document);
+		void Parse(const std::string &containing_folder, ticpp::Document &document);
 
 		std::string ResolvePath(const std::string &relative_path);
 
@@ -115,10 +118,12 @@ namespace FusionEngine
 		const Script &GetScript() const;
 		const DependenciesMap &GetEntityDependencies() const;
 		ScriptedEntity::PropertiesMap &GetSyncProperties();
+		ResourcesMap &GetStreamedResources();
 	protected:
-		void parseElement_Script(ticpp::Element *script_element);
+		void parseElement_Script(ticpp::Element *element);
 		void parseElement_Dependencies(ticpp::Element *element);
 		void parseElement_Sync(ticpp::Element *element);
+		void parseElement_Streaming(ticpp::Element *element);
 
 		std::string m_WorkingDirectory;
 
@@ -131,6 +136,8 @@ namespace FusionEngine
 		DependenciesMap m_ScriptDependencies;
 
 		ScriptedEntity::PropertiesMap m_SyncProperties;
+
+		ResourcesMap m_Resources;
 	};
 
 	void EntityDefinition::Parse(const std::string &current_folder, ticpp::Document &document)
@@ -152,6 +159,9 @@ namespace FusionEngine
 
 			else if (child->Value() == "Sync")
 				parseElement_Sync(child.Get());
+
+			else if (child->Value() == "Streaming")
+				parseElement_Streaming(child.Get());
 		}
 	}
 
@@ -214,6 +224,24 @@ namespace FusionEngine
 			propertyDefinition.localOnly = CL_StringHelp::local8_to_bool(attribute.c_str());
 
 			m_SyncProperties[propertyDefinition.name] = propertyDefinition;
+		}
+	}
+
+	void EntityDefinition::parseElement_Streaming(ticpp::Element *element)
+	{
+		std::string attribute;
+		ticpp::Iterator< ticpp::Element > child;
+		for (child = child.begin( element ); child != child.end(); child++)
+		{
+			ResourceDescription resource;
+
+			resource.SetType( child->Value() );
+
+			std::string propertyName = child->GetAttribute("property");
+			resource.SetPropertyName( propertyName );
+			resource.SetResourceName( child->GetAttribute("resource") );
+
+			m_Resources[propertyName] = resource;
 		}
 	}
 
@@ -310,6 +338,11 @@ namespace FusionEngine
 		return m_SyncProperties;
 	}
 
+	ResourcesMap &EntityDefinition::GetStreamedResources()
+	{
+		return m_Resources;
+	}
+
 	//! Creates instances of a scripted entity type
 	class ScriptedEntityInstancer : public EntityInstancer
 	{
@@ -358,11 +391,55 @@ namespace FusionEngine
 		if (m_ScriptingManager == NULL)
 			return NULL;
 
+		ResourceManager *resMan = ResourceManager::getSingletonPtr();
+		if (resMan == NULL)
+			return NULL;
+
 		ScriptObject object = m_ScriptingManager->CreateObject(m_Module.c_str(), m_Definition->GetType());
+		asIScriptObject *scrObj = object.GetScriptObject();
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
 		//entity->SetPath(m_Definition->GetWorkingDirectory());
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
+
+		const ResourcesMap &resources = m_Definition->GetStreamedResources();
+		for (ResourcesMap::const_iterator it = resources.begin(), end = resources.end(); it != end; ++it)
+		{
+			const ResourceDescription &desc = it->second;
+			if (desc.GetType() == "Sprite")
+			{
+				ResourcePointer<CL_Sprite> resource = resMan->GetResource<CL_Sprite>(desc.GetResourceName(), "SPRITE");
+				entity->AddRenderable( RenderablePtr(new Renderable(resource)) );
+			}
+			else if (desc.GetType() == "Image")
+			{
+			}
+			else if (desc.GetType() == "Polygon")
+			{
+			}
+			else if (desc.GetType() == "Sound")
+			{
+				// Check that the property listed in the description is correct
+				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
+					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
+
+				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO");
+
+				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				new(prop) SoundSamplePlayer(resource, false);
+			}
+			else if (desc.GetType() == "SoundStream")
+			{
+				// Check that the property listed in the description is correct
+				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
+					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
+
+				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO:STREAM");
+
+				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				new(prop) SoundSamplePlayer(resource, true);
+			}
+		}
 
 		return entity;
 	}
@@ -557,6 +634,17 @@ namespace FusionEngine
 			if (_where != syncProperties.end())
 			{
 				_where->second.scriptPropertyIndex = i;
+			}
+		}
+
+		// Same as above for Streaming section
+		ResourcesMap &resources = definition->GetStreamedResources();
+		for (int i = 0; i < object->GetPropertyCount(); i++)
+		{
+			ResourcesMap::iterator _where = resources.find( object->GetPropertyName(i) );
+			if (_where != resources.end())
+			{
+				_where->second.SetPropertyIndex(i);
 			}
 		}
 		object->Release();

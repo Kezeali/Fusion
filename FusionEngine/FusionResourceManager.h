@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -170,7 +170,10 @@ namespace FusionEngine
 		void AddResourceLoader(const ResourceLoader& resourceLoader);
 
 		//! Assigns the given ResourceLoader to its relavant resource type
-		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData = NULL);
+		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData);
+
+		//! Assigns the given ResourceLoader to its relavant resource type
+		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData);
 
 		//! Loads / unloads resources in another thread
 		/*!
@@ -208,6 +211,13 @@ namespace FusionEngine
 		ResourcePointer<T> GetResource(const ResourceTag &tag)
 		{
 			ResourceSpt sptRes = m_Resources[tag];
+			return ResourcePointer<T>(sptRes);
+		}
+
+		template<typename T>
+		ResourcePointer<T> GetResource(const std::string &tag, const std::string& type)
+		{
+			ResourceSpt sptRes = m_Resources[fe_widen(tag)];
 			return ResourcePointer<T>(sptRes);
 		}
 
@@ -309,7 +319,7 @@ namespace FusionEngine
 
 	protected:
 		void loadResource(ResourceSpt &resource);
-		void unloadResource(ResourceSpt &resource);
+		void unloadResource(ResourceSpt &resource, bool unload_quickload = false);
 
 		//void registerXMLType(asIScriptEngine* engine);
 		//void registerImageType(asIScriptEngine* engine);

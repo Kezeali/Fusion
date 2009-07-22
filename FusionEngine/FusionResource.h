@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -48,25 +48,6 @@
 namespace FusionEngine
 {
 
-	//class ResourceDeletionListener
-	//{
-	//public:
-	//	void ResourceDeleted()
-	//	{
-	//		m_Valid = false;
-	//	}
-	//	void SetValid(bool valid)
-	//	{
-	//		m_Valid = valid;
-	//	}
-	//	bool ResourceExists()
-	//	{
-	//		return m_Valid;
-	//	}
-	//private:
-	//	bool m_Valid;
-	//}
-
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
 	 * The resource manager maintains a list of Resources, which can hold any
@@ -87,12 +68,22 @@ namespace FusionEngine
 		//! Ticket list
 		typedef std::vector<ResourcePtrTicket> TicketList;
 
+		typedef std::set<ResourceContainer*> DependantSet;
+
 	protected:
 		std::string m_Type;
 		ResourceTag m_Tag;
 		std::wstring m_Path;
-		void* m_Data;
+
+		void *m_Data;
+		// Data that isn't unloaded until the resource is released
+		void *m_QuickLoadData;
+
 		bool m_Valid;
+		bool m_HasQuickLoadData;
+
+		DependantSet m_Dependants;
+
 		int m_RefCount;
 		ResourcePtrTicket m_NextTicket;
 		// Ticket version (replaces RefCount)
@@ -173,7 +164,11 @@ namespace FusionEngine
 #ifdef _DEBUG
 			if (m_Valid || m_Data != NULL)
 			{
-				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion.");
+				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion - Resource Data leaked.");
+			}
+			if (m_HasQuickLoadData || m_QuickLoadData != NULL)
+			{
+				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
 			}
 #endif
 		}
@@ -253,6 +248,47 @@ namespace FusionEngine
 		bool IsValid() const
 		{
 			return m_Valid;
+		}
+
+		//! Sets the data
+		void SetQuickLoadDataPtr(void* ptr)
+		{
+			m_QuickLoadData = ptr;
+		}
+
+		//! Returns the resource ptr
+		void* GetQuickLoadDataPtr()
+		{
+			return m_QuickLoadData;
+		}
+
+		//! Validates / invalidates this resource
+		/*!
+		 * A resource is valid if the pointer is valid. A resource becomes
+		 * invalid when it fails to load or it is cleaned up by garbage
+		 * collection.
+		 * This method is to be used by a ResourceLoader whenever it validates
+		 * / invalidates a resource.
+		 */
+		void _setHasQuickLoadData(bool has_data)
+		{
+			m_HasQuickLoadData = has_data;
+		}
+
+		//! Returns true if the resource data is valid
+		bool HasQuickLoadData() const
+		{
+			return m_HasQuickLoadData;
+		}
+
+		void DependsOn(ResourceContainer *resource)
+		{
+			resource->_addDependant(this);
+		}
+
+		void _addDependant(ResourceContainer *dependant)
+		{
+			m_Dependants.insert(dependant);
 		}
 
 		//! Makes this resource immutable

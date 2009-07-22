@@ -101,6 +101,7 @@ namespace FusionEngine
 	{
 		resource_load load;
 		resource_unload unload;
+		resource_unload unloadQLData;
 		void *userData;
 		std::string type;
 
@@ -123,6 +124,23 @@ namespace FusionEngine
 			: type(_type),
 			load(loadFn),
 			unload(unloadFn),
+			userData(_userData)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_unload unloadQLDataFn)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			unloadQLData(unloadQLDataFn)
+		{
+		}
+
+		ResourceLoader(std::string _type, resource_load loadFn, resource_unload unloadFn, resource_unload unloadQLDataFn, void *_userData)
+			: type(_type),
+			load(loadFn),
+			unload(unloadFn),
+			unloadQLData(unloadQLDataFn),
 			userData(_userData)
 		{
 		}

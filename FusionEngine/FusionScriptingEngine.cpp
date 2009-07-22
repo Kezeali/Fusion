@@ -269,14 +269,16 @@ namespace FusionEngine
 			// try to store the code string
 			if (m_DebugSettings.storeCodeStrings && !storeCodeString(script, section_name))
 				return false;
+
+			return true;
 		}
 
 		bool success = GetModule(module)->AddCode(section_name, script) >= 0;
 
 		// Copying is avoided if there are no preprocessors listed and
 		//  the debug option 'storeCodeStrings' is disabled
-		if (m_DebugSettings.storeCodeStrings && !storeCodeString(script, section_name))
-			return false;
+		if (success && m_DebugSettings.storeCodeStrings)
+			storeCodeString(script, section_name);
 
 		return success;
 	}

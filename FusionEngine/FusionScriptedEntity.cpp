@@ -12,20 +12,53 @@
 namespace FusionEngine
 {
 
-	ResourceParam::ResourceParam(const std::string &type)
-		: m_Type(type)
+	ResourceDescription::ResourceDescription()
 	{}
 
-	ResourceParam::~ResourceParam()
+	ResourceDescription::~ResourceDescription()
+	{}
+	
+	void ResourceDescription::SetType(const std::string &type)
 	{
+		m_Type = type;
 	}
 
-	const std::string &ResourceParam::GetType() const
+	const std::string &ResourceDescription::GetType() const
 	{
 		return m_Type;
 	}
 
-	ImageResourceParam::ImageResourceParam(const ResourcePointer<CL_Sprite> &resource)
+	void ResourceDescription::SetPropertyName(const std::string &name)
+	{
+		m_ScriptPropertyName = name;
+	}
+
+	void ResourceDescription::SetResourceName(const std::string &name)
+	{
+		m_ResourceName = name;
+	}
+
+	void ResourceDescription::SetPropertyIndex(int index)
+	{
+		m_ScriptPropertyIndex = index;
+	}
+
+	const std::string &ResourceDescription::GetPropertyName() const
+	{
+		return m_ScriptPropertyName;
+	}
+
+	const std::string &ResourceDescription::GetResourceName() const
+	{
+		return m_ResourceName;
+	}
+
+	int ResourceDescription::GetPropertyIndex() const
+	{
+		return m_ScriptPropertyIndex;
+	}
+
+	/*ImageResourceParam::ImageResourceParam(const ResourcePointer<CL_Sprite> &resource)
 		: ResourceParam("Image")
 	{
 		m_Renderable.reset(new Renderable(resource));
@@ -34,6 +67,17 @@ namespace FusionEngine
 	void ImageResourceParam::SetPosition(const Vector2 &position)
 	{
 		m_Renderable->SetPosition(position);
+	}*/
+
+	SoundSamplePlayer::SoundSamplePlayer(const FusionEngine::ResourcePointer<CL_SoundBuffer> &resource, bool is_stream)
+		: m_Resource(resource),
+		m_Stream(is_stream)
+	{
+	}
+
+	void SoundSamplePlayer::Play()
+	{
+		m_Resource->play();
 	}
 
 	ScriptedEntity::ScriptedEntity()
@@ -53,10 +97,10 @@ namespace FusionEngine
 		m_SyncedProperties = properties;
 	}
 
-	void ScriptedEntity::SetStreamedResources(const ScriptedEntity::ResourcesMap &resources)
-	{
-		m_Streamed = resources;
-	}
+	//void ScriptedEntity::SetStreamedResources(const ScriptedEntity::ResourcesMap &resources)
+	//{
+	//	m_Streamed = resources;
+	//}
 
 	std::string ScriptedEntity::GetType() const
 	{

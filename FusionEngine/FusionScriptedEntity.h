@@ -36,31 +36,46 @@
 namespace FusionEngine
 {
 
-	class ResourceParam
+	class ResourceDescription
 	{
 	public:
-		ResourceParam(const std::string &type);
-		virtual ~ResourceParam();
+		ResourceDescription();
+		~ResourceDescription();
 
+		void SetType(const std::string &type);
 		const std::string &GetType() const;
+
+		void SetPropertyName(const std::string &name);
+		virtual void SetResourceName(const std::string &name);
+
+		void SetPropertyIndex(int index);
+
+		const std::string &GetPropertyName() const;
+		const std::string &GetResourceName() const;
+
+		int GetPropertyIndex() const;
 
 	protected:
 		std::string m_ScriptPropertyName;
-		std::string m_Type; // Image, Sound, StreamedSound
+		std::string m_Type; // Image, SoundSample, SoundStream
+		std::string m_ResourceName;
 
 		int m_ScriptPropertyIndex;
 	};
-	typedef std::tr1::shared_ptr<ResourceParam> ResourceParamPtr;
+	typedef std::tr1::shared_ptr<ResourceDescription> ResourceDescriptionPtr;
 
-	class ImageResourceParam : public ResourceParam
+	class SoundSamplePlayer : public RefCounted, RefCounted::no_factory_noncopyable, boost::noncopyable
 	{
 	public:
-		ImageResourceParam(const ResourcePointer<CL_Sprite> &resource);
+		SoundSamplePlayer(const ResourcePointer<CL_SoundBuffer> &resource, bool is_stream);
 
-		void SetPosition(const Vector2 &position);
+		void Play();
+		void Pause();
+		void Stop();
 
 	protected:
-		RenderablePtr m_Renderable;
+		ResourcePointer<CL_SoundBuffer> m_Resource;
+		bool m_Stream;
 	};
 
 
@@ -91,14 +106,14 @@ namespace FusionEngine
 		typedef std::map<std::string, Property> PropertiesMap;
 		//typedef std::set<std::string> PropertiesSet;
 
-		typedef std::map<std::string, ResourceParamPtr> ResourcesMap;
+		//typedef std::map<std::string, ResourceDescriptionPtr> ResourcesMap;
 
 	public:
 		ScriptedEntity();
 		ScriptedEntity(ScriptObject script_self, const std::string &name);
 
 		void SetSyncProperties(const PropertiesMap &properties);
-		void SetStreamedResources(const ResourcesMap &resources);
+		//void SetStreamedResources(const ResourcesMap &resources);
 
 		virtual std::string GetType() const;
 
@@ -123,7 +138,7 @@ namespace FusionEngine
 		std::string m_Path;
 
 		PropertiesMap m_SyncedProperties;
-		ResourcesMap m_Streamed;
+		//ResourcesMap m_Streamed;
 
 		int m_EntityTypeId;
 		int m_ScriptEntityTypeId;

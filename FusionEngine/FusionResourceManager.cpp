@@ -152,7 +152,7 @@ namespace FusionEngine
 		CL_MutexSection resourcesLock(&m_ResourcesMutex);
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
-			unloadResource(it->second);
+			unloadResource(it->second, true);
 		}
 		// There may still be ResourcePointers holding shared_ptrs to the
 		//  ResourceContainers held in m_Resources, but they will simply
@@ -270,6 +270,14 @@ namespace FusionEngine
 		m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, userData);
 		m_LoaderMutex.unlock();
 	}
+
+	void ResourceManager::AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData)
+	{
+		m_LoaderMutex.lock();
+		m_ResourceLoaders[type] = ResourceLoader(type, loadFn, unloadFn, qlDataUnloadFn, userData);
+		m_LoaderMutex.unlock();
+	}
+
 
 	void ResourceManager::BackgroundPreload()
 	{
@@ -443,7 +451,7 @@ namespace FusionEngine
 		loader.load(resource.get(), vdir, loader.userData);
 	}
 
-	void ResourceManager::unloadResource(ResourceSpt &resource)
+	void ResourceManager::unloadResource(ResourceSpt &resource, bool quickload)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
@@ -456,6 +464,8 @@ namespace FusionEngine
 			// Run the load function
 			ResourceLoader &loader = _where->second;
 			loader.unload(resource.get(), vdir, loader.userData);
+			if (quickload)
+				loader.unloadQLData(resource.get(), vdir, loader.userData);
 		}
 	}
 
