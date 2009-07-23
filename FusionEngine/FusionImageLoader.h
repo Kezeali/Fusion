@@ -40,16 +40,16 @@ namespace FusionEngine
 {
 
 	//! Texture resource loader callback
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Texture resource unloader callback
-	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 
 	//! Sprite resource loader callback
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Sprite resource unloader callback
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Sprite QLD unloader callback
-	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 
 	class SpriteDefinition
 	{

@@ -22,8 +22,9 @@
 namespace FusionEngine
 {
 
-	ResourceManager::ResourceManager()
-		: m_PhysFSConfigured(false),
+	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
+		: m_GC(gc),
+		m_PhysFSConfigured(false),
 		m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false)
@@ -34,8 +35,9 @@ namespace FusionEngine
 		Configure();
 	}
 
-	ResourceManager::ResourceManager(char *arg0)
-		: m_PhysFSConfigured(false),
+	ResourceManager::ResourceManager(const CL_GraphicContext &gc, char *arg0)
+		: m_GC(gc),
+		m_PhysFSConfigured(false),
 		m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false)
@@ -71,7 +73,7 @@ namespace FusionEngine
 
 	void ResourceManager::StartBackgroundPreloadThread()
 	{
-		m_Worker.start(this, &ResourceManager::BackgroundPreload);
+		m_Worker.start(this, &ResourceManager::BackgroundPreload, m_GC);
 	}
 
 	void ResourceManager::StopBackgroundPreloadThread()
@@ -140,7 +142,7 @@ namespace FusionEngine
 			{
 
 #endif
-				unloadResource(res);
+				unloadResource(res, m_GC);
 			}
 		}
 
@@ -152,7 +154,7 @@ namespace FusionEngine
 		CL_MutexSection resourcesLock(&m_ResourcesMutex);
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
-			unloadResource(it->second, true);
+			unloadResource(it->second, m_GC, true);
 		}
 		// There may still be ResourcePointers holding shared_ptrs to the
 		//  ResourceContainers held in m_Resources, but they will simply
@@ -279,8 +281,10 @@ namespace FusionEngine
 	}
 
 
-	void ResourceManager::BackgroundPreload()
+	void ResourceManager::BackgroundPreload(CL_GraphicContext gc)
 	{
+		CL_SharedGCData::add_ref();
+		CL_GraphicContext loadingGC = gc.create_worker_gc();
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
@@ -305,7 +309,9 @@ namespace FusionEngine
 				{
 					try
 					{
-						TagResource(toLoadData.type, toLoadData.path, toLoadData.tag);
+						//CL_SharedGCData::add_ref();
+						TagResource(toLoadData.type, toLoadData.path, toLoadData.tag, &loadingGC);
+						//CL_SharedGCData::release_ref();
 					}
 					catch (FileSystemException &ex)
 					{
@@ -328,9 +334,10 @@ namespace FusionEngine
 		}
 
 		asThreadCleanup();
+		CL_SharedGCData::release_ref();
 	}
 
-	ResourceSpt ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag)
+	ResourceSpt ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc)
 	{
 		CL_MutexSection resourcesLock(&m_ResourcesMutex);
 
@@ -347,14 +354,11 @@ namespace FusionEngine
 			// Create a new resource container
 			resource = ResourceSpt(new ResourceContainer(type, tag, path, NULL));
 		}
-		//try
-		//{
-		loadResource(resource);
-		//}
-		//catch (FusionEngine::Exception& e)
-		//{
-		//	throw e;
-		//}
+
+		if (gc != NULL)
+			loadResource(resource, *gc);
+		else
+			loadResource(resource, m_GC);
 
 		return m_Resources[tag] = resource;
 	}
@@ -384,7 +388,7 @@ namespace FusionEngine
 		CL_MutexSection resourcesMutexSection(&m_ResourcesMutex);
 		ResourceMap::iterator _where = m_Resources.find(path);
 		if (_where != m_Resources.end())
-			unloadResource(_where->second);
+			unloadResource(_where->second, m_GC);
 	}
 
 	void ResourceManager::UnloadResource_Background(const std::wstring &path)
@@ -446,7 +450,7 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
-	void ResourceManager::loadResource(ResourceSpt &resource)
+	void ResourceManager::loadResource(ResourceSpt &resource, CL_GraphicContext &gc)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
@@ -460,10 +464,10 @@ namespace FusionEngine
 
 		// Run the load function
 		ResourceLoader &loader = _where->second;
-		loader.load(resource.get(), vdir, loader.userData);
+		loader.load(resource.get(), vdir, gc, loader.userData);
 	}
 
-	void ResourceManager::unloadResource(ResourceSpt &resource, bool quickload)
+	void ResourceManager::unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool quickload)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
@@ -475,9 +479,9 @@ namespace FusionEngine
 
 			// Run the load function
 			ResourceLoader &loader = _where->second;
-			loader.unload(resource.get(), vdir, loader.userData);
+			loader.unload(resource.get(), vdir, gc, loader.userData);
 			if (quickload)
-				loader.unloadQLData(resource.get(), vdir, loader.userData);
+				loader.unloadQLData(resource.get(), vdir, gc, loader.userData);
 		}
 	}
 

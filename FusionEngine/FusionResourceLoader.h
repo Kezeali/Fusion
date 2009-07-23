@@ -94,8 +94,8 @@ namespace FusionEngine
 	//typedef ResourceLoader* (*resourceLoader_creator)(CL_VirtualDirectory vdir);
 
 
-	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
-	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, void* userData);
+	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
+	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader
 	{

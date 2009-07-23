@@ -38,6 +38,7 @@
 
 #include "FusionScriptModule.h"
 #include "FusionRenderer.h"
+#include "FusionPhysicsBody.h"
 
 
 namespace FusionEngine
@@ -64,6 +65,9 @@ namespace FusionEngine
 		void RemoveViewport(const ViewportPtr &viewport);
 
 		void RemoveAllViewports();
+
+		void MapBodyToEntity(PhysicsBodyPtr &body, EntityPtr &entity);
+		EntityPtr GetBodyEntity(const PhysicsBodyPtr &body) const;
 
 		ViewportArray &GetViewports();
 

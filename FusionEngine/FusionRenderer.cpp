@@ -7,6 +7,7 @@ namespace FusionEngine
 
 	Camera::Camera()
 		: m_Mode(FixedPosition),
+		m_Origin(origin_center),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
 		m_Scale(0.f),
@@ -18,6 +19,7 @@ namespace FusionEngine
 
 	Camera::Camera(float x, float y)
 		: m_Position(x, y),
+		m_Origin(origin_center),
 		m_Mode(FixedPosition),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
@@ -30,6 +32,7 @@ namespace FusionEngine
 
 	Camera::Camera(EntityPtr follow)
 		: m_FollowEntity(follow),
+		m_Origin(origin_center),
 		m_Mode(FollowInstant),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
@@ -46,6 +49,11 @@ namespace FusionEngine
 		{
 			m_Body->GetWorld()->DestroyBody(m_Body);
 		}
+	}
+
+	void Camera::SetOrigin(CL_Origin origin)
+	{
+		m_Origin = origin;
 	}
 
 	void Camera::SetPosition(float x, float y)
@@ -115,6 +123,11 @@ namespace FusionEngine
 	const CL_Vec2f &Camera::GetPosition() const
 	{
 		return m_Position;
+	}
+
+	CL_Origin Camera::GetOrigin() const
+	{
+		return m_Origin;
 	}
 
 	float Camera::GetAngle() const
@@ -306,14 +319,14 @@ namespace FusionEngine
 
 	void Renderer::Update(float split)
 	{
-		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
-		{
-			RenderableArray &renderables = (*it)->GetRenderables();
-			for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
-			{
-				(*r_it)->Update(split);
-			}
-		}
+		//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+		//{
+		//	RenderableArray &renderables = (*it)->GetRenderables();
+		//	for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
+		//	{
+		//		(*r_it)->Update(split);
+		//	}
+		//}
 	}
 
 	void Renderer::Draw(ViewportPtr viewport)
@@ -330,13 +343,22 @@ namespace FusionEngine
 		const CL_Rect &viewportArea = viewport->GetArea();
 
 		// Set the viewport
-		m_GC.push_cliprect(viewportArea);
+		//m_GC.push_cliprect(viewportArea);
 
 		const CL_Vec2f &camPosition = camera->GetPosition();
+		CL_Origin camOrigin = camera->GetOrigin();
+
+		CL_Vec2f viewportOffset;
+		viewportOffset = camPosition + CL_Vec2f::calc_origin(camOrigin, viewportArea.get_size());
+		//if (camOrigin == origin_center)
+		//{
+		//	viewportOffset.x += viewportArea.get_width() * 0.5;
+		//	viewportOffset.y += viewportArea.get_width() * 0.5;
+		//}
 
 		// Set up rotation, translation & scale matrix
 		CL_Mat4f cameraTransform = CL_Mat4f::multiply(
-			CL_Mat4f::translate(-camPosition.x, -camPosition.y, 0.f),
+			CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f),
 			CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), 0.f, 0.f, 1.f) );
 		// Scale
 		if ( !fe_fzero(camera->GetZoom()) )

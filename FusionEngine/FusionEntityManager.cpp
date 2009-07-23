@@ -369,11 +369,20 @@ namespace FusionEngine
 		m_ChangedDrawStateTags.clear();
 	}
 
+	void updateRenderables(EntityPtr &entity, float split)
+	{
+		RenderableArray &renderables = entity->GetRenderables();
+		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
+		{
+			(*it)->Update(split);
+		}
+	}
+
 	void EntityManager::Update(float split)
 	{
 		m_EntitiesLocked = true;
 
-		if (m_ChangedUpdateStateTags.empty())
+		if (m_ChangedUpdateStateTags.empty() && !m_EntitiesToUpdate.empty())
 		{
 			for (EntityArray::iterator it = m_EntitiesToUpdate.begin(), end = m_EntitiesToUpdate.end(); it != end; ++it)
 			{
@@ -390,7 +399,10 @@ namespace FusionEngine
 				else if ((entity->GetTagFlags() & m_UpdateBlockedFlags))
 					m_EntitiesToUpdate.erase(it);
 				else
+				{
 					entity->Update(split);
+					updateRenderables(entity, split);
+				}
 				//updateEntity(entity, split);
 			}
 		}
@@ -413,6 +425,7 @@ namespace FusionEngine
 				{
 					m_EntitiesToUpdate.push_back(entity);
 					entity->Update(split);
+					updateRenderables(entity, split);
 				}
 			}
 			for (EntitySet::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
@@ -431,6 +444,7 @@ namespace FusionEngine
 				{
 					m_EntitiesToUpdate.push_back(entity);
 					entity->Update(split);
+					updateRenderables(entity, split);
 				}
 			}
 			m_ChangedUpdateStateTags.clear();

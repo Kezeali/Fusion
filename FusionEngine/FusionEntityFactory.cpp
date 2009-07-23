@@ -430,9 +430,9 @@ namespace FusionEngine
 
 				entity->AddRenderable(renderable);
 
-				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
-				Renderable **renderableProperty = static_cast<Renderable**>( prop );
-				*renderableProperty = renderable.get();
+				//void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				//Renderable **renderableProperty = static_cast<Renderable**>( prop );
+				//*renderableProperty = renderable.get();
 			}
 			else if (desc.GetType() == "Image")
 			{

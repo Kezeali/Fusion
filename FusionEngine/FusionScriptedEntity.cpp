@@ -116,11 +116,11 @@ namespace FusionEngine
 
 	const Vector2 &ScriptedEntity::GetPosition()
 	{
-		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("const Vector2 &GetPosition()");
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("const Vector@ GetPosition()");
 		if (f.ok())
 		{
 			void *r = f();
-			if (r == NULL)
+			if (r != NULL)
 				return **static_cast<const Vector2**>( r );
 		}
 
@@ -129,11 +129,11 @@ namespace FusionEngine
 
 	float ScriptedEntity::GetAngle()
 	{
-		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void Update(float)");
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("float GetAngle()");
 		if (f.ok())
 		{
 			void *r = f();
-			if (r == NULL)
+			if (r != NULL)
 				return *static_cast<float*>( r );
 		}
 

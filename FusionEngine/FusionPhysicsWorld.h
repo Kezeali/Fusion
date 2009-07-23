@@ -192,10 +192,10 @@ namespace FusionEngine
 
 		//! Does movement and collision detection.
 		/*!
-		 * \param split Step magnitude (millis since last step.)
+		 * \param split Step magnitude (seconds since last step.)
 		 *
 		 */
-		void RunSimulation(float delta_milis);
+		void RunSimulation(float delta_seconds);
 
 		//! Called automatically by Box2D during RunSimulation (via a contact listener)
 		void OnBeginContact(b2Contact *contact);

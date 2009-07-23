@@ -35,7 +35,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
 		{
@@ -59,7 +59,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
 			delete resource->GetDataPtr();
@@ -68,7 +68,7 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
 		{
@@ -83,20 +83,18 @@ namespace FusionEngine
 				LoadSpriteDefinition(*def, resource->GetPath(), vdir);
 				resource->SetQuickLoadDataPtr(def);
 			}
-			catch (FileSystemException&)
+			catch (FileSystemException& ex)
 			{
 				delete def;
-				FSN_WEXCEPT(ExCode::IO, L"LoadSpriteResource", L"Definition data for '" + resource->GetPath() + L"' could not be loaded");
+				FSN_WEXCEPT(ExCode::IO, L"LoadSpriteResource", L"Definition data for '" + resource->GetPath() + L"' could not be loaded: " + fe_widen(ex.GetDescription()));
 			}
 		}
-
-		CL_GraphicContext *gc = static_cast<CL_GraphicContext*>( userData );
 
 		CL_Sprite *sprite = NULL;
 		try
 		{
 			SpriteDefinition *def = static_cast<SpriteDefinition*>( resource->GetQuickLoadDataPtr() );
-			sprite = def->CreateSprite(*gc, vdir);
+			sprite = def->CreateSprite(gc, vdir);
 		}
 		catch (CL_Exception&)
 		{
@@ -107,7 +105,7 @@ namespace FusionEngine
 		resource->_setValid(sprite != NULL);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
 		{
@@ -125,7 +123,7 @@ namespace FusionEngine
 		resource->_setValid(false);
 	}
 
-	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->HasQuickLoadData())
 			delete resource->GetQuickLoadDataPtr();
@@ -142,7 +140,7 @@ namespace FusionEngine
 
 	SpriteDefinition::SpriteDefinition()
 		: m_Users(0),
-		m_ScaleX(0.f), m_ScaleY(0.f),
+		m_ScaleX(1.f), m_ScaleY(1.f),
 		m_BaseAngle(0.f, cl_radians),
 		m_OffsetOrigin(origin_top_left),
 		m_OffsetX(0), m_OffsetY(0),
@@ -168,6 +166,9 @@ namespace FusionEngine
 
 		// Load id
 		//m_ID = CL_StringHelp::text_to_int(attribute_text);
+
+		loadImageElements(root);
+		loadMoreOptions(root);
 	}
 
 	CL_Sprite *SpriteDefinition::CreateSprite(CL_GraphicContext &gc, CL_VirtualDirectory &dir)
@@ -190,7 +191,9 @@ namespace FusionEngine
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
 				description.add_frame(it->image_data);
 #else
-				description.add_frame(it->filename, dir);
+				CL_Texture texture = CL_SharedGCData::load_texture(gc, it->filename, dir);
+				description.add_frame(texture);
+				//description.add_frame(it->filename, dir);
 #endif
 			}
 			else if (it->type == Image::FrameGridCell)
@@ -339,7 +342,7 @@ namespace FusionEngine
 	void SpriteDefinition::loadImageElements(TiXmlElement *root)
 	{
 		TiXmlElement *element = root->FirstChildElement();
-		while (!element)
+		while (element != NULL)
 		{
 			std::string tag_name = element->ValueStr();
 			if (tag_name == "image" || tag_name == "image-file")
@@ -390,11 +393,11 @@ namespace FusionEngine
 
 					std::string image_name(attribute_text);
 					
-					if (exists(image_name))
+					if (!exists(image_name))
 						continue;
 
 					TiXmlElement *cur_child = element->FirstChildElement();
-					if(element == NULL) 
+					if(cur_child == NULL) 
 					{
 						addImage(image_name);
 					}
@@ -607,9 +610,10 @@ namespace FusionEngine
 					m_Animation.backward = false; // forward
 
 				attribute_text = element->Attribute("on_finish");
-				bool on_finish_Valid = true;
+				bool on_finish_Valid = false;
 				if (attribute_text != NULL)
 				{
+					on_finish_Valid = true;
 					std::string on_finish(attribute_text);
 					if (on_finish == "first_frame")
 						m_Animation.showOnFinish = CL_Sprite::show_first_frame;

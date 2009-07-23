@@ -272,14 +272,14 @@ namespace FusionEngine
 		}
 	}
 
-	void PhysicsWorld::RunSimulation(float delta_milis)
+	void PhysicsWorld::RunSimulation(float delta_seconds)
 	{
 		//for (ForceList::iterator it = m_ForceQueue.begin(), end = m_ForceQueue.end(); it != end; ++it)
 		//	it->ApplyForce();
 
 		m_RunningSimulation = true; // bodies can't be deleted
 
-		float32 dt = delta_milis * 0.001f;
+		float32 dt = delta_seconds;// * 0.001f;
 		if (dt > 0.0f)
 			m_BxWorld->Step(dt, m_VelocityIterations, m_PositionIterations);
 		else

@@ -17,6 +17,7 @@
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionPhysicsWorld.h"
 #include "../FusionEngine/FusionScriptingEngine.h"
+#include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
 // Script Type Registration
 #include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
@@ -81,9 +82,11 @@ public:
 		
 			////////////////////
 			// Resource Manager
-			m_ResourceManager = new ResourceManager();
-			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, &gc);
-			m_ResourceManager->StartBackgroundPreloadThread();
+			m_ResourceManager = new ResourceManager(gc);
+			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
+
+			m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
+			//m_ResourceManager->StartBackgroundPreloadThread();
 
 			//////////////////////
 			// Load client options
@@ -124,9 +127,18 @@ public:
 
 			module->Build();
 
+			ResourcePointer<CL_Sprite> resource = m_ResourceManager->GetResource<CL_Sprite>("Entities/Test/test_sprite.xml", "SPRITE");
+			resource->set_color(CL_Color::white);
+			resource->set_alpha(1.f);
+
+			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			CL_ResourceManager clanResources("Entities/Test/resources.xml", dir);
+			CL_Sprite sprite(gc, "Explosion", &clanResources);
+
 			
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
+			float seconds = 0.f;
 
 			while (systemMgr->KeepGoing())
 			{
@@ -140,11 +152,21 @@ public:
 
 				if (split < 500)
 				{
-					m_Input->Update(split * 0.001f);
-					systemMgr->Update(split);
+					seconds = split * 0.001f;
+					m_Input->Update(seconds);
+					systemMgr->Update(seconds);
 				}
 
 				systemMgr->Draw();
+				//if (resource.Lock())
+				//{
+				//	//resource->update((float)split*0.001f);
+				//	resource->draw(gc, 150.f, 50.f);
+				//	resource.Unlock();
+				//}
+
+				//sprite.update((float)split*0.001f);
+				//sprite.draw(gc, 25.f, 50.f);
 
 				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 

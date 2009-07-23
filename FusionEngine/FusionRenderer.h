@@ -29,6 +29,8 @@ namespace FusionEngine
 
 		void SetMass(float mass);
 
+		void SetOrigin(CL_Origin origin);
+
 		void SetPosition(float x, float y);
 
 		void SetAngle(float angle);
@@ -65,6 +67,8 @@ namespace FusionEngine
 
 		void Update(float split);
 
+		CL_Origin GetOrigin() const;
+
 		const CL_Vec2f &GetPosition() const;
 
 		float GetAngle() const;
@@ -78,6 +82,7 @@ namespace FusionEngine
 		FollowMode m_Mode;
 		RotateMode m_AutoRotate;
 
+		CL_Origin m_Origin;
 		CL_Vec2f m_Position;
 		float m_Angle;
 		float m_Scale;

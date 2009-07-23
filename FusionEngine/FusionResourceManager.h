@@ -117,9 +117,9 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		ResourceManager(char *arg0);
+		ResourceManager(const CL_GraphicContext &gc, char *arg0);
 		//! Constructor - gets equivilant of arg0 from CL_System::get_exe_path()
-		ResourceManager();
+		ResourceManager(const CL_GraphicContext &gc);
 		//! Destructor
 		~ResourceManager();
 
@@ -180,10 +180,10 @@ namespace FusionEngine
 		 * Loads resources listed in the ToLoad list.<br>
 		 * Unloads resources listed in the ToUnload list.
 		 */
-		void BackgroundPreload();
+		void BackgroundPreload(CL_GraphicContext gc);
 
 		//! Loads a resource, gives it a tag
-		ResourceSpt TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag);
+		ResourceSpt TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
 
 		//! Loads a resource
 		/*!
@@ -304,6 +304,8 @@ namespace FusionEngine
 		CL_Event m_ToUnloadEvent;
 		CL_Thread m_Worker;
 
+		CL_GraphicContext m_GC;
+
 		CL_Mutex m_ToLoadMutex;
 		ToLoadQueue m_ToLoad;
 
@@ -322,8 +324,8 @@ namespace FusionEngine
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
-		void loadResource(ResourceSpt &resource);
-		void unloadResource(ResourceSpt &resource, bool unload_quickload = false);
+		void loadResource(ResourceSpt &resource, CL_GraphicContext &gc);
+		void unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool unload_quickload = false);
 
 		//void registerXMLType(asIScriptEngine* engine);
 		//void registerImageType(asIScriptEngine* engine);
