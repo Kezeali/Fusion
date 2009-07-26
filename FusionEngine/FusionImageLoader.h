@@ -95,7 +95,7 @@ namespace FusionEngine
 		SpriteDefinition();
 		~SpriteDefinition();
 
-		void LoadXml(TiXmlDocument *document);
+		void LoadXml(const std::string &working_directory, TiXmlDocument *document);
 
 		CL_Sprite *CreateSprite(CL_GraphicContext &gc, CL_VirtualDirectory &dir);
 
@@ -124,6 +124,8 @@ namespace FusionEngine
 		// Counts sprites based on this definition - when count reaches zero
 		//  all image data is cleared
 		unsigned int m_Users;
+
+		std::string m_WorkingDirectory;
 
 		FilenameSet m_ImageFiles;
 		ImageArray m_Images;

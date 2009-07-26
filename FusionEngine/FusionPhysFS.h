@@ -91,6 +91,9 @@ static int platform_stricmp(const char *x, const char *y)
 		 */
 		static bool init(const char *argv0);
 
+		//! Calls PHYSFS_deinit();
+		static void deinit();
+
 		//! Configures PhysFS.
 		/*!
 		 * <p>
@@ -167,8 +170,8 @@ static int platform_stricmp(const char *x, const char *y)
 			const std::string &archiveExt = "",
 			bool archivesFirst = true);
 
-		//! Calls PHYSFS_deinit();
-		static void deinit();
+		//! Parses the given path relative to the given directory to get an abosulte path
+		static std::string parse_path(const std::string &working_directory, const std::string &path);
 	};
 
 #endif

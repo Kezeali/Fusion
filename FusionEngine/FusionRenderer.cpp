@@ -10,7 +10,7 @@ namespace FusionEngine
 		m_Origin(origin_center),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
-		m_Scale(0.f),
+		m_Scale(1.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -23,7 +23,7 @@ namespace FusionEngine
 		m_Mode(FixedPosition),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
-		m_Scale(0.f),
+		m_Scale(1.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -36,7 +36,7 @@ namespace FusionEngine
 		m_Mode(FollowInstant),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
-		m_Scale(0.f),
+		m_Scale(1.f),
 		m_Body(NULL),
 		m_Joint(NULL)
 	{
@@ -86,6 +86,11 @@ namespace FusionEngine
 		m_Mode = mode;
 	}
 
+	void Camera::SetAutoRotate(RotateMode mode)
+	{
+		m_AutoRotate = mode;
+	}
+
 	b2Body *Camera::CreateBody(b2World *world)
 	{
 		return m_Body = world->CreateBody(&m_BodyDefinition);
@@ -117,6 +122,11 @@ namespace FusionEngine
 		{
 			m_Position.x = m_Body->GetPosition().x;
 			m_Position.y = m_Body->GetPosition().y;
+		}
+
+		if (m_AutoRotate == MatchEntity)
+		{
+			m_Angle = m_FollowEntity->GetAngle();
 		}
 	}
 
@@ -343,13 +353,22 @@ namespace FusionEngine
 		const CL_Rect &viewportArea = viewport->GetArea();
 
 		// Set the viewport
-		//m_GC.push_cliprect(viewportArea);
+		m_GC.push_cliprect(viewportArea);
 
 		const CL_Vec2f &camPosition = camera->GetPosition();
 		CL_Origin camOrigin = camera->GetOrigin();
 
+		//CL_Vec3f look(0.f, 0.f, 1.f), up(0.f, 1.f, 0.f), left(1.f, 0.f, 0.f);
+
+		//CL_Mat4f rollMatrix = CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), look.x, look.y, look.z);
+
+		// Rotate up and left - by the camera angle - around the look vector (i.e. normal 2d rotation)
+		//CL_Angle rotationAngle(camera->GetAngle(), cl_radians);
+		//up.rotate(rotationAngle, look);
+		//left.rotate(rotationAngle, look);
+
 		CL_Vec2f viewportOffset;
-		viewportOffset = camPosition + CL_Vec2f::calc_origin(camOrigin, viewportArea.get_size());
+		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
 		//if (camOrigin == origin_center)
 		//{
 		//	viewportOffset.x += viewportArea.get_width() * 0.5;
@@ -357,23 +376,28 @@ namespace FusionEngine
 		//}
 
 		// Set up rotation, translation & scale matrix
-		CL_Mat4f cameraTransform = CL_Mat4f::multiply(
-			CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f),
-			CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), 0.f, 0.f, 1.f) );
+		//CL_Mat4f cameraTransform = CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f);
+		//CL_Mat4f cameraTransform = CL_Mat4f::multiply(
+		//	CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f),
+		//	CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), 0.f, 0.f, 1.f) );
 		// Scale
-		if ( !fe_fzero(camera->GetZoom()) )
-			cameraTransform.multiply(CL_Mat4f::scale(camera->GetZoom(), camera->GetZoom(), 0.f));
+		//if ( !fe_fequal(camera->GetZoom(), 1.f) )
+			//cameraTransform.multiply(CL_Mat4f::scale(camera->GetZoom(), camera->GetZoom(), 0.f));
 
 		// Apply rotation, translation & scale
 		m_GC.push_modelview();
-		m_GC.set_modelview(cameraTransform);
+		//m_GC.set_modelview(cameraTransform);
+		m_GC.set_translate(-viewportOffset.x, -viewportOffset.y);
+		m_GC.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+		if ( !fe_fequal(camera->GetZoom(), 1.f) )
+			m_GC.mult_scale(camera->GetZoom(), camera->GetZoom());
 
 		// Draw the entities within the camera area for this viewport
-		float drawAreaScale = 1.f;
+		float drawAreaScale = 0.001f;
 		if (!fe_fzero(camera->GetZoom()))
 			drawAreaScale = 1.f / camera->GetZoom();
 		CL_Size size = viewportArea.get_size();
-		CL_Rectf drawArea(camPosition.x, camPosition.y, size.width * drawAreaScale, size.height * drawAreaScale);
+		CL_Rectf drawArea(viewportOffset.x, viewportOffset.y, CL_Sizef(size.width * drawAreaScale, size.height * drawAreaScale));
 
 		drawNormally(drawArea);
 
@@ -387,6 +411,8 @@ namespace FusionEngine
 
 	void Renderer::drawNormally(const CL_Rectf &draw_area)
 	{
+		int notRendered = 0;
+
 		int previousDepth = INT_MIN; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
 		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
 		{
@@ -406,16 +432,23 @@ namespace FusionEngine
 			CL_Mat4f entityTransform = CL_Mat4f::translate(entityPosition.x, entityPosition.y, 0.f);
 			entityTransform.multiply(CL_Mat4f::rotate(CL_Angle(entity->GetAngle(), cl_radians), 0.f, 0.f, 1.f));
 
+			// Draw_area translated by -entityPosition (since renderable AABBs are relative to entity position)
+			CL_Rectf normDrawArea(draw_area.left - entityPosition.x, draw_area.top - entityPosition.y, draw_area.right - entityPosition.x, draw_area.bottom - entityPosition.y);
+
 			m_GC.push_modelview();
-			m_GC.mult_modelview(entityTransform);
+			//m_GC.mult_modelview(entityTransform);
+			m_GC.mult_translate(entityPosition.x, entityPosition.y);
+			m_GC.mult_rotate(CL_Angle(entity->GetAngle(), cl_radians));
 
 			//drawRenderables(entity, draw_area);
 			RenderableArray &entityRenderables = entity->GetRenderables();
 			for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
 			{
 				RenderablePtr &renderable = *r_it;
-				if ( draw_area.is_overlapped(renderable->GetAABB()) )
-					renderable->Draw(m_GC);
+				if ( normDrawArea.is_overlapped(renderable->GetAABB()) )
+					renderable->Draw(m_GC, Vector2()/*entityPosition*/);
+				else
+					++notRendered;
 			}
 
 			m_GC.pop_modelview();

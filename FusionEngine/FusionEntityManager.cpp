@@ -371,10 +371,13 @@ namespace FusionEngine
 
 	void updateRenderables(EntityPtr &entity, float split)
 	{
+		//const Vector2 &position = entity->GetPosition();
+		//float angle = entity->GetAngle();
+
 		RenderableArray &renderables = entity->GetRenderables();
 		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
 		{
-			(*it)->Update(split);
+			(*it)->Update(split/*, position, angle*/);
 		}
 	}
 

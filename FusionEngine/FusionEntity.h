@@ -131,7 +131,7 @@ namespace FusionEngine
 
 		const CL_Rectf &GetAABB() const;
 
-		void Update(float split);
+		void Update(float split/*, const Vector2 &position = Vector2(), float angle = 0.f*/);
 
 		void SetSpriteResource(const ResourcePointer<CL_Sprite> &resource);
 		ResourcePointer<CL_Sprite> &GetSpriteResource();
@@ -139,6 +139,8 @@ namespace FusionEngine
 		void OnSpriteLoad();
 
 		void Draw(CL_GraphicContext &gc);
+		//! Draw the renderable at a position other than that of it's owning Entity
+		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
 
 	protected:
 		EntityPtr m_Entity;
@@ -149,6 +151,11 @@ namespace FusionEngine
 		float m_Angle;
 		float m_Alpha;
 		CL_Color m_Colour;
+
+		bool m_PositionChanged;
+
+		Vector2 m_DerivedPosition;
+		float m_DerivedAngle;
 
 		CL_Rectf m_AABB;
 

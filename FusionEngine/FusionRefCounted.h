@@ -159,6 +159,34 @@ namespace FusionEngine
 		{}
 	};
 
+	template <class _From, class _To>
+	_To * convert_ref(_From * obj)
+	{
+		if (obj == NULL)
+			return NULL;
+
+		_To* ret = dynamic_cast<_To*>(obj);
+		if (ret == NULL)
+		{
+			obj->release();
+		}
+		return ret;
+	}
+
+	//! Registers conversion operators for two ref. counted application objects
+	template <class _Base, class _Derived>
+	void RegisterBaseOf(asIScriptEngine *engine, const std::string &base, const std::string &derived)
+	{
+		int r;
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST,
+			(derived+"@ f("+base+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Base*), _Derived*),
+			asCALL_CDECL);
+
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST,
+			(base+"@ f("+derived+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Derived*), _Base*),
+			asCALL_CDECL);
+	}
+
 	void intrusive_ptr_add_ref(RefCounted *ptr);
 
 	void intrusive_ptr_release(RefCounted *ptr);

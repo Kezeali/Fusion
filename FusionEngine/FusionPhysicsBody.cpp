@@ -9,6 +9,41 @@
 namespace FusionEngine
 {
 
+	Vector2 ToGameUnits(const Vector2 &sim_position)
+	{
+		return Vector2(ToGameUnits(sim_position.x), ToGameUnits(sim_position.y));
+	}
+
+	void ToGameUnits(Vector2 &out, const Vector2 &sim_position)
+	{
+		out.x = ToGameUnits(sim_position.x);
+		out.y = ToGameUnits(sim_position.y);
+	}
+
+	void TransformToGameUnits(Vector2 &sim_position)
+	{
+		sim_position.x = ToGameUnits(sim_position.x);
+		sim_position.y = ToGameUnits(sim_position.y);
+	}
+
+	Vector2 ToSimUnits(const Vector2 &game_position)
+	{
+		return Vector2( ToSimUnits(game_position.x), ToSimUnits(game_position.y) );
+	}
+
+	void ToSimUnits(Vector2 &out, const Vector2 &game_position)
+	{
+		out.x = ToSimUnits(game_position.x);
+		out.y = ToSimUnits(game_position.y);
+	}
+
+	void TransformToSimUnits(Vector2 &game_position)
+	{
+		game_position.x = ToSimUnits(game_position.x);
+		game_position.y = ToSimUnits(game_position.y);
+	}
+
+
 	PhysicsBody::PhysicsBody()
 		: m_World(0),
 		//m_CollisionFlags(C_NONE),
@@ -31,7 +66,8 @@ namespace FusionEngine
 		//m_UsesDist(false),
 		//m_UsesPixel(false),
 		m_CachedVelocity(Vector2::zero()),
-		m_AppliedRelativeForce(0)
+		m_AppliedRelativeForce(0),
+		m_Bullet(false)
 	{
 		m_BxBodyDef = new b2BodyDef();
 		m_BxBodyDef->allowSleep = true;
@@ -634,16 +670,25 @@ namespace FusionEngine
 	//	m_CollisionFlags = flags;
 	//}
 
-	const Vector2 &PhysicsBody::GetPosition()
+	const Vector2 &PhysicsBody::GetSimulationPosition() const
 	{
 		m_CachedPosition = b2v2(m_BxBody->GetPosition());
 		return m_CachedPosition;
 	}
 
+	const Vector2 &PhysicsBody::GetPosition() const
+	{
+		const b2Vec2 &pos = m_BxBody->GetPosition();
+		m_CachedGamePosition.x = ToGameUnits( pos.x );
+		m_CachedGamePosition.y = ToGameUnits( pos.y );
+
+		return m_CachedGamePosition;
+	}
+
 	CL_Point PhysicsBody::GetPositionPoint() const
 	{
 		const b2Vec2& pos = m_BxBody->GetPosition();
-		return CL_Point((int)fe_round(pos.x), (int)fe_round(pos.y));
+		return CL_Point(fe_round<int>(pos.x), fe_round<int>(pos.y));
 	}
 
 	//const Vector2 &PhysicsBody::GetForce()
@@ -753,7 +798,7 @@ namespace FusionEngine
 	//}
 
 
-	void PhysicsBody::_setPosition(const Vector2 &position)
+	void PhysicsBody::_setSimulationPosition(const Vector2 &position)
 	{
 		//m_CachedPosition = position;
 		if(m_BxBody)
@@ -763,6 +808,19 @@ namespace FusionEngine
 		else
 		{
 			m_BxBodyDef->position.Set(position.x, position.y);
+		}
+	}
+
+	void PhysicsBody::_setPosition(const Vector2 &position)
+	{
+		//m_CachedPosition = position;
+		if(m_BxBody)
+		{
+			m_BxBody->SetXForm(b2Vec2(ToSimUnits(position.x), ToSimUnits(position.y)), m_BxBody->GetAngle());
+		}
+		else
+		{
+			m_BxBodyDef->position.Set(ToSimUnits(position.x), ToSimUnits(position.y));
 		}
 	}
 

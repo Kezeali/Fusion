@@ -54,6 +54,7 @@ namespace FusionEngine
 		enum RotateMode
 		{
 			FixedAngle,
+			MatchEntity,
 			SlerpToMovementDirection,
 			Spline
 		};

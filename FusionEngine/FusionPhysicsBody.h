@@ -57,6 +57,20 @@ namespace FusionEngine
 	//	C_BOUNCE = 2
 	//};
 
+	//! Returns the game co-ords transformation of the sim-position
+	Vector2 ToGameUnits(const Vector2 &sim_position);
+	//! Returns the game co-ords transformation of the game-position
+	void ToGameUnits(Vector2 &out, const Vector2 &sim_position);
+	//! Transforms the given sim-position to a game-position
+	void TransformToGameUnits(Vector2 &sim_position);
+
+	//! Returns the given game position as a sim-position
+	Vector2 ToSimUnits(const Vector2 &game_position);
+	//! Returns the given game position as a sim-position
+	void ToSimUnits(Vector2 &out, const Vector2 &game_position);
+	//! Transforms the given game-position to a sim-position
+	void TransformToSimUnits(Vector2 &game_position);
+
 	static float g_PhysStaticMass = 0.f;
 	static int g_PhysBodyCpCollisionType = 1;
 
@@ -321,8 +335,10 @@ namespace FusionEngine
 
 		//! \name State retreival.
 		//@{
-		//! Returns the current position
-		virtual const Vector2 &GetPosition();
+		//! Returns the current position (as used by the simulation)
+		virtual const Vector2 &GetSimulationPosition() const;
+		//! Returns the current position transformed to screen (1 unit = 1pixel) co-ords
+		virtual const Vector2 &GetPosition() const;
 		//! Integer point used as that makes this eaisier to pass to FusionBitmask.
 		CL_Point GetPositionPoint() const;
 
@@ -411,13 +427,13 @@ namespace FusionEngine
 		 */
 		//unsigned int GetDeactivationPeriod() const;
 
-		/*!
-		 * \name State access
-		 *
-		 * For syncronising only, shouldn't be called otherwise.
-		 */
-		//@{
+		//! Sets the position without transforming from game co-ords.
+		void _setSimulationPosition(const Vector2 &position);
+
 		//! Sets the position.
+		/*!
+		* Co-ords passed are assumed to be in game units.
+		*/
 		void _setPosition(const Vector2 &position);
 
 		//! Sets the force.
@@ -443,7 +459,6 @@ namespace FusionEngine
 		virtual void _setAngleDeg(float rotation);
 
 		virtual void _setAngle(float rotation);
-		//@}
 
 		//! [removed] Adds the given body to the collision list
 		void _notifyCollisionWith(PhysicsBody *other) {};
@@ -561,7 +576,9 @@ namespace FusionEngine
 		Vector2 m_CachedVelocity;
 		//std::vector<Vector2> m_DisplacementPath;
 		Vector2 m_Displacement;
-		Vector2 m_CachedPosition;
+
+		mutable Vector2 m_CachedPosition;
+		mutable Vector2 m_CachedGamePosition;
 
 		float m_RotationDeg;
 		float m_Rotation;

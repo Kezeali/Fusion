@@ -30,6 +30,10 @@
 #include "FusionPaths.h"
 
 #include "PhysFS.h"
+#include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 SetupPhysFS::SetupPhysFS()
 {
@@ -50,6 +54,11 @@ SetupPhysFS::~SetupPhysFS()
 bool SetupPhysFS::init(const char *argv0)
 {
 	return (PHYSFS_init(argv0) ? true : false);
+}
+
+void SetupPhysFS::deinit()
+{
+	PHYSFS_deinit();
 }
 
 bool SetupPhysFS::configure(const std::string &organisation,
@@ -204,7 +213,30 @@ bool SetupPhysFS::mount(const std::string &path, const std::string &mount_point,
 	return true;
 }
 
-void SetupPhysFS::deinit()
+std::string SetupPhysFS::parse_path(const std::string &working_directory, const std::string &path)
 {
-	PHYSFS_deinit();
+	if (path[0] == '/')
+	{
+		return path;
+	}
+
+	else
+	{
+		typedef std::vector<std::string> SplitResults;
+
+		SplitResults currentPath;
+		boost::split(currentPath, working_directory, boost::is_any_of("/"));
+
+		SplitResults pathTokens;
+		boost::split(pathTokens, path, boost::is_any_of("/"));
+		for (SplitResults::iterator it = pathTokens.begin(), end = pathTokens.end(); it != end; ++it)
+		{
+			if (*it == "..")
+				currentPath.pop_back();
+			else
+				currentPath.push_back(*it);
+		}
+
+		return boost::join(currentPath, "/");
+	}
 }

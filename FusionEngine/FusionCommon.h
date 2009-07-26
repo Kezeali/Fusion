@@ -125,10 +125,19 @@ namespace FusionEngine
 
 	static const double s_FloatComparisonEpsilon = 0.009;
 
+	static const float s_GameUnitsPerSimUnit = 1000.f;
+	static const float s_SimUnitsPerGameUnit = 1.f/s_GameUnitsPerSimUnit;
+
 
 	////////////////////////
 	// --General functions--
 	////////////////////////
+
+	template <typename T>
+	static T ToGameUnits(T sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
+
+	template <typename T>
+	static T ToSimUnits(T game_coord) { return game_coord * (1.f / s_GameUnitsPerSimUnit); }
 
 	static inline bool fe_fzero(float value) { return fabs(value) <= (float)s_FloatComparisonEpsilon; }
 	static inline bool fe_fzero(double value) { return fabs(value) <= s_FloatComparisonEpsilon; }
@@ -378,8 +387,11 @@ namespace FusionEngine
 //#define fe_itoa(v, &buffer, radix) itoa(v, buffer, radix)
 //#endif
 
-	//! Returns rounded value converted to long int
-	static inline long int fe_lround(double v) { return static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	//! Returns rounded value converted to int64
+	static inline long long fe_lround(double v) { return static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	//! Returns rounded value converted to type R
+	template<typename R, typename T>
+	static inline R fe_round(T v) { return (R)static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
 	//! Returns rounded value
 	template<typename T>
 	static inline T fe_round(T v) { return (T)static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }

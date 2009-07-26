@@ -106,23 +106,27 @@ namespace FusionEngine
 	}
 
 	Renderable::Renderable()
-		: m_Angle(0),
+		: m_Angle(0.f),
+		m_DerivedAngle(0.f),
 		m_Colour(255, 255, 255, 255),
 		m_Alpha(1.f),
 		m_Depth(0),
 		m_PreviousWidth(0),
-		m_PreviousHeight(0)
+		m_PreviousHeight(0),
+		m_PositionChanged(false)
 	{
 	}
 
 	Renderable::Renderable(const FusionEngine::ResourcePointer<CL_Sprite> &resource)
 		: m_Sprite(resource),
-		m_Angle(0),
+		m_Angle(0.f),
+		m_DerivedAngle(0.f),
 		m_Colour(255, 255, 255, 255),
 		m_Alpha(1.f),
 		m_Depth(0),
 		m_PreviousWidth(0),
-		m_PreviousHeight(0)
+		m_PreviousHeight(0),
+		m_PositionChanged(false)
 	{
 		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
 	}
@@ -171,17 +175,23 @@ namespace FusionEngine
 	{
 		m_Position.x = x;
 		m_Position.y = y;
+
+		m_PositionChanged = true;
 	}
 
 	void Renderable::SetPosition(const Vector2 &position)
 	{
 		m_Position = position;
+
+		m_PositionChanged = true;
 	}
 
 	void Renderable::SetPosition(const CL_Vec2f &_position)
 	{
 		m_Position.x = _position.x;
 		m_Position.y = _position.y;
+
+		m_PositionChanged = true;
 	}
 
 	const Vector2 &Renderable::GetPosition() const
@@ -236,14 +246,26 @@ namespace FusionEngine
 		return m_AABB;
 	}
 
-	void Renderable::Update(float split)
+	void Renderable::Update(float split/*, const Vector2 &entity_position, float entity_angle*/)
 	{
 		if (m_Sprite.Lock())
 		{
 			m_Sprite->update(split);
 
-			// Check whether AABB needs to be upadated (frame width / height has changed)
 			bool bbChanged = false;
+
+			//// Set the derived position from the entity position
+			//CL_Vec2f position = CL_Vec2f::rotate(CL_Vec2f(entity_position.x, entity_position.y), 
+			//m_DerivedPosition = entity_position + m_Position;
+			//// Set the derived angle from the entity base-angle
+			//if (!fe_fequal(entity_angle + m_Angle, m_DerivedAngle)) // Check that the entity angle has changed
+			//{
+			//	bbChanged = true;
+			//	m_Sprite->set_angle(CL_Angle(entity_angle + m_Angle, cl_radians));
+			//}
+			//m_DerivedAngle = entity_angle + m_Angle;
+
+			// Check whether AABB needs to be upadated (frame width / height has changed)
 			if (m_Sprite->get_height() != m_PreviousHeight)
 			{
 				bbChanged = true;
@@ -255,7 +277,7 @@ namespace FusionEngine
 				m_PreviousWidth = m_Sprite->get_width();
 			}
 
-			if (bbChanged)
+			if (bbChanged || m_PositionChanged)
 			{
 				CL_Rectf bb;
 				bb.left = m_Position.x;
@@ -268,6 +290,8 @@ namespace FusionEngine
 				m_Sprite->get_alignment(origin, x, y);
 
 				m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
+
+				m_PositionChanged = false;
 			}
 
 			m_Sprite.Unlock();
@@ -290,7 +314,7 @@ namespace FusionEngine
 	{
 		if (m_Sprite.Lock())
 		{
-			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+			m_Sprite->set_angle(CL_Angle(m_Angle/*m_DerivedAngle*/, cl_radians));
 			m_Sprite->set_alpha(m_Alpha);
 			m_Sprite->set_color(m_Colour);
 
@@ -302,7 +326,16 @@ namespace FusionEngine
 	{
 		if (m_Enabled && m_Sprite.Lock())
 		{
-			m_Sprite->draw(gc, m_Position.x, m_Position.y);
+			m_Sprite->draw(gc, m_DerivedPosition.x, m_DerivedPosition.y);
+			m_Sprite.Unlock();
+		}
+	}
+
+	void Renderable::Draw(CL_GraphicContext &gc, const Vector2 &origin)
+	{
+		if (m_Enabled && m_Sprite.Lock())
+		{
+			m_Sprite->draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
 			m_Sprite.Unlock();
 		}
 	}

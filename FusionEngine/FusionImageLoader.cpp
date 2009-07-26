@@ -134,8 +134,13 @@ namespace FusionEngine
 
 	void LoadSpriteDefinition(SpriteDefinition &def, const std::wstring &filepath, CL_VirtualDirectory vdir)
 	{
-		TiXmlDocument *document = OpenXml_PhysFS(filepath);
-		def.LoadXml(document);
+		TiXmlDocument *document = OpenXml(filepath, vdir);
+		CL_String workingDirectory = vdir.get_path() + CL_PathHelp::get_basepath(filepath.c_str(), CL_PathHelp::path_type_virtual);
+
+		if (workingDirectory[workingDirectory.length()-1] == '/')
+			workingDirectory.erase(workingDirectory.length()-1);
+		
+		def.LoadXml(CL_StringHelp::text_to_local8( workingDirectory ).c_str(), document);
 	}
 
 	SpriteDefinition::SpriteDefinition()
@@ -154,8 +159,10 @@ namespace FusionEngine
 		ClearImageData();
 	}
 
-	void SpriteDefinition::LoadXml(TiXmlDocument *document)
+	void SpriteDefinition::LoadXml(const std::string &working_directory, TiXmlDocument *document)
 	{
+		m_WorkingDirectory = working_directory;
+
 		TiXmlElement *root = document->FirstChildElement();
 		if (root == NULL)
 			return;
@@ -279,25 +286,29 @@ namespace FusionEngine
 
 	void SpriteDefinition::addImage(const SpriteDefinition::Image &image)
 	{
-		m_ImageFiles.insert(fe_narrow(image.filename));
+		m_ImageFiles.insert(fe_narrow(image.filename.c_str()));
 		m_Images.push_back(image);
 	}
 
 	void SpriteDefinition::addImage(const std::string &filename)
 	{
+		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
+
 		Image image;
 		image.type = Image::FrameFile;
-		image.filename = filename.c_str();
+		image.filename = expandedPath.c_str();
 
 		m_Images.push_back(image);
-		m_ImageFiles.insert(filename);
+		m_ImageFiles.insert(expandedPath);
 	}
 
 	void SpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, int width, int height, int xarray, int yarray, int array_skipframes, int xspacing, int yspacing)
 	{
+		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
+
 		Image image;
 		image.type = Image::FrameGridCell;
-		image.filename = filename.c_str();
+		image.filename = expandedPath.c_str();
 
 		image.xpos = xpos;
 		image.ypos = ypos;
@@ -314,14 +325,16 @@ namespace FusionEngine
 		image.yspacing = yspacing;
 
 		m_Images.push_back(image);
-		m_ImageFiles.insert(filename);
+		m_ImageFiles.insert(expandedPath);
 	}
 
 	void SpriteDefinition::addImage(const std::string &filename, int xpos, int ypos, float trans_limit, bool free)
 	{
+		std::string expandedPath = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
+
 		Image image;
 		image.type = Image::FrameFile;
-		image.filename = filename.c_str();
+		image.filename = expandedPath.c_str();
 
 		image.xpos = xpos;
 		image.ypos = ypos;
@@ -331,12 +344,13 @@ namespace FusionEngine
 		image.free = free;
 
 		m_Images.push_back(image);
-		m_ImageFiles.insert(filename);
+		m_ImageFiles.insert(expandedPath);
 	}
 
 	bool SpriteDefinition::exists(const std::string &filename)
 	{
-		return PHYSFS_exists(filename.c_str()) != 0;
+		std::string ex = SetupPhysFS::parse_path(m_WorkingDirectory, filename);
+		return PHYSFS_exists(ex.c_str()) != 0;
 	}
 
 	void SpriteDefinition::loadImageElements(TiXmlElement *root)
@@ -379,7 +393,7 @@ namespace FusionEngine
 
 						file_name += frame_text + suffix;
 
-						if (exists(file_name))
+						if (!exists(file_name))
 							break;
 
 						addImage(file_name);
@@ -394,7 +408,10 @@ namespace FusionEngine
 					std::string image_name(attribute_text);
 					
 					if (!exists(image_name))
+					{
+						element = element->NextSiblingElement();
 						continue;
+					}
 
 					TiXmlElement *cur_child = element->FirstChildElement();
 					if(cur_child == NULL) 

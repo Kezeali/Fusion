@@ -172,6 +172,12 @@ namespace FusionEngine
 		m_PhysicsWorld->RunSimulation(split);
 		m_EntityManager->Update(split);
 		m_Renderer->Update(split);
+
+		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
+		{
+			ViewportPtr &viewport = *it;
+			viewport->GetCamera()->Update(split);
+		}
 	}
 
 	void OntologicalSystem::Draw()
@@ -229,12 +235,17 @@ namespace FusionEngine
 
 			if (entity)
 			{
+				entity->Spawn();
 				// Force stream-in
 				entity->OnStreamIn();
 				entity->SetStreamedOut(false);
 
 				CameraPtr camera(new Camera(entity));
 				m_Viewports.front()->SetCamera(camera);
+			}
+			else
+			{
+				m_Viewports.front()->SetCamera( CameraPtr(new Camera()) );
 			}
 		}
 	}

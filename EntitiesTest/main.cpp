@@ -177,11 +177,21 @@ public:
 			delete renderer;
 			delete m_Input;
 			delete m_ScriptManager;
-
 		}
-		catch (FusionEngine::Exception& ex)
+		catch (FusionEngine::Exception &ex)
 		{
 			CL_Console::write_line( CL_String(ex.ToString().c_str()) );
+			conWindow.display_close_message();
+		}
+		catch (CL_Exception &ex)
+		{
+			CL_Console::write_line( ex.message );
+			CL_Console::write_line( L"Stack Trace:" );
+			std::vector<CL_String> stack = ex.get_stack_trace();
+			for (std::vector<CL_String>::iterator it = stack.begin(), end = stack.end(); it != end; ++it)
+			{
+				CL_Console::write_line(*it);
+			}
 			conWindow.display_close_message();
 		}
 
