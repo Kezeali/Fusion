@@ -71,9 +71,17 @@ namespace FusionEngine
 		AddDefaultLoaders();
 	}
 
-	void ResourceManager::StartBackgroundPreloadThread()
+#ifdef _WIN32
+	void ResourceManager::StartBackgroundPreloadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created)
+#else
+	void ResourceManager::StartBackgroundPreloadThread(CL_GraphicContext &sharedGC)
+#endif
 	{
-		m_Worker.start(this, &ResourceManager::BackgroundPreload, m_GC);
+#ifdef _WIN32
+		m_Worker.start(this, &ResourceManager::BackgroundPreload, &sharedGC, worker_gc_created);
+#else
+		m_Worker.start(this, &ResourceManager::BackgroundPreload, &sharedGC);
+#endif
 	}
 
 	void ResourceManager::StopBackgroundPreloadThread()
@@ -280,11 +288,29 @@ namespace FusionEngine
 		m_LoaderMutex.unlock();
 	}
 
-
-	void ResourceManager::BackgroundPreload(CL_GraphicContext gc)
+// Since WGL requires the worker-GC to be created in the worker thread
+//  an event must be passed so the main thread can wait until the worker
+//  GC has been created.
+#ifdef _WIN32
+	void ResourceManager::BackgroundPreload(CL_GraphicContext *gc, CL_Event worker_gc_created)
+#else
+	void ResourceManager::BackgroundPreload(CL_GraphicContext *gc)
+#endif
 	{
 		CL_SharedGCData::add_ref();
-		CL_GraphicContext loadingGC = gc.create_worker_gc();
+		// Using WGL, the second GC must be created in the worker thread (i.e. here)
+		//  otherwise it has already been created, so I just copy it into a local reference
+#ifdef _WIN32
+		CL_GraphicContext loadingGC = gc->create_worker_gc();
+#else
+		CL_GraphicContext loadingGC = *gc;
+#endif
+		// Set the active GC
+		CL_OpenGL::set_active(loadingGC);
+#ifdef _WIN32
+		worker_gc_created.set();
+#endif
+
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
@@ -328,7 +354,7 @@ namespace FusionEngine
 			CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
 			for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
 			{
-				UnloadResource(*it);
+				unloadResource(*it, loadingGC);
 			}
 			m_ToUnload.clear();
 		}
@@ -385,10 +411,7 @@ namespace FusionEngine
 
 	void ResourceManager::UnloadResource(const std::wstring &path)
 	{
-		CL_MutexSection resourcesMutexSection(&m_ResourcesMutex);
-		ResourceMap::iterator _where = m_Resources.find(path);
-		if (_where != m_Resources.end())
-			unloadResource(_where->second, m_GC);
+		unloadResource(path, m_GC);
 	}
 
 	void ResourceManager::UnloadResource_Background(const std::wstring &path)
@@ -450,6 +473,11 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
+	ResourceSpt ResourceManager::loadResource(const std::wstring &path, CL_GraphicContext &gc)
+	{
+		return ResourceSpt();
+	}
+
 	void ResourceManager::loadResource(ResourceSpt &resource, CL_GraphicContext &gc)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
@@ -465,6 +493,14 @@ namespace FusionEngine
 		// Run the load function
 		ResourceLoader &loader = _where->second;
 		loader.load(resource.get(), vdir, gc, loader.userData);
+	}
+
+	void ResourceManager::unloadResource(const std::wstring &path, CL_GraphicContext &gc)
+	{
+		CL_MutexSection resourcesMutexSection(&m_ResourcesMutex);
+		ResourceMap::iterator _where = m_Resources.find(path);
+		if (_where != m_Resources.end())
+			unloadResource(_where->second, m_GC);
 	}
 
 	void ResourceManager::unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool quickload)

@@ -193,12 +193,13 @@ namespace FusionEngine
 					it->image_data = CL_ImageProviderFactory::load(it->filename, dir);
 #endif
 
+			CL_Texture texture = CL_SharedGCData::load_texture(gc, it->filename, dir);
+
 			if (it->type == Image::FrameFile)
 			{
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
 				description.add_frame(it->image_data);
 #else
-				CL_Texture texture = CL_SharedGCData::load_texture(gc, it->filename, dir);
 				description.add_frame(texture);
 				//description.add_frame(it->filename, dir);
 #endif
@@ -213,9 +214,9 @@ namespace FusionEngine
 					it->array_skipframes,
 					it->xspacing, it->yspacing);
 #else
-				CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
+				//CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
 				description.add_gridclipped_frames(
-					buf,
+					texture,
 					it->xpos, it->ypos, it->width, it->height,
 					it->xarray, it->yarray,
 					it->array_skipframes,
@@ -230,11 +231,11 @@ namespace FusionEngine
 				else
 					description.add_alphaclipped_frames(it->image_data, it->xpos, it->ypos, it->trans_limit);
 #else
-				CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
+				//CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
 				if (!it->free)
-					description.add_alphaclipped_frames(buf, it->xpos, it->ypos, it->trans_limit);
+					description.add_alphaclipped_frames(texture, it->xpos, it->ypos, it->trans_limit);
 				else
-					description.add_alphaclipped_frames(buf, it->xpos, it->ypos, it->trans_limit);
+					description.add_alphaclipped_frames(texture, it->xpos, it->ypos, it->trans_limit);
 #endif
 			}
 		}

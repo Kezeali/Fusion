@@ -129,6 +129,8 @@ namespace FusionEngine
 		m_PositionChanged(false)
 	{
 		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
+
+		OnSpriteLoad();
 	}
 
 	Renderable::~Renderable()
@@ -303,6 +305,8 @@ namespace FusionEngine
 		m_LoadConnection.disconnect();
 		m_Sprite = resource;
 		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
+
+		OnSpriteLoad();
 	}
 
 	ResourcePointer<CL_Sprite> &Renderable::GetSpriteResource()

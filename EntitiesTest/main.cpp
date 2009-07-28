@@ -26,6 +26,8 @@
 
 #include "../FusionEngine/FusionClientOptions.h"
 
+//#include <ClanLib/d3d9.h>
+
 
 namespace FusionEngine
 {
@@ -45,6 +47,7 @@ public:
 		CL_SetupCore core_setup;
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
+		//CL_SetupD3D9 d3d_setup;
 		CL_SetupSound sound_setup;
 		CL_SetupVorbis voirbis_setup;
 
@@ -66,6 +69,7 @@ public:
 			logger = new Logger();
 
 			CL_GraphicContext &gc = dispWindow.get_gc();
+			CL_OpenGL::set_active(NULL);
 
 			////////////////////
 			// Scripting Manager
@@ -82,11 +86,26 @@ public:
 		
 			////////////////////
 			// Resource Manager
-			m_ResourceManager = new ResourceManager(gc);
+			m_ResourceManager = new ResourceManager(CL_GraphicContext()/*gc*/);
 			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
 
-			m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
-			//m_ResourceManager->StartBackgroundPreloadThread();
+			//m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
+#ifdef _WIN32
+			// Need to pause this thread until the Background-load
+			//  thread has created its worker GC
+			CL_Event loaderGCCreated;
+			m_ResourceManager->StartBackgroundPreloadThread(gc, loaderGCCreated);
+			// Wait for the event to be set
+			CL_Event::wait(loaderGCCreated);
+#elif defined(__APPLE__)
+			CL_GraphicContext loadingGC = gc.create_worker_gc();
+			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
+#else
+			CL_GraphicContext loadingGC = gc.create_worker_gc();
+			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
+#endif
+
+			CL_OpenGL::set_active(gc);
 
 			//////////////////////
 			// Load client options
@@ -127,15 +146,7 @@ public:
 
 			module->Build();
 
-			ResourcePointer<CL_Sprite> resource = m_ResourceManager->GetResource<CL_Sprite>("Entities/Test/test_sprite.xml", "SPRITE");
-			resource->set_color(CL_Color::white);
-			resource->set_alpha(1.f);
 
-			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-			CL_ResourceManager clanResources("Entities/Test/resources.xml", dir);
-			CL_Sprite sprite(gc, "Explosion", &clanResources);
-
-			
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
 			float seconds = 0.f;
@@ -158,15 +169,6 @@ public:
 				}
 
 				systemMgr->Draw();
-				//if (resource.Lock())
-				//{
-				//	//resource->update((float)split*0.001f);
-				//	resource->draw(gc, 150.f, 50.f);
-				//	resource.Unlock();
-				//}
-
-				//sprite.update((float)split*0.001f);
-				//sprite.draw(gc, 25.f, 50.f);
 
 				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 

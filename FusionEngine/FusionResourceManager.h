@@ -128,9 +128,24 @@ namespace FusionEngine
 		void Configure();
 
 		//! Starts loading resources in the background
-		void StartBackgroundPreloadThread();
+#ifdef _WIN32
+		void StartBackgroundPreloadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created);
+#else
+		void StartBackgroundPreloadThread(CL_GraphicContext &sharedGC);
+#endif
 		//! Stops loading resources in the background
 		void StopBackgroundPreloadThread();
+
+		//! Loads / unloads resources in another thread
+		/*!
+		 * Loads resources listed in the ToLoad list.<br>
+		 * Unloads resources listed in the ToUnload list.
+		 */
+#ifdef _WIN32
+		void BackgroundPreload(CL_GraphicContext *gc, CL_Event worker_gc_created);
+#else
+		void BackgroundPreload(CL_GraphicContext *gc);
+#endif
 
 		////! Checks the filesystem for packages and returns the names of all found
 		//StringVector ListAvailablePackages();
@@ -174,13 +189,6 @@ namespace FusionEngine
 
 		//! Assigns the given ResourceLoader to its relavant resource type
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData);
-
-		//! Loads / unloads resources in another thread
-		/*!
-		 * Loads resources listed in the ToLoad list.<br>
-		 * Unloads resources listed in the ToUnload list.
-		 */
-		void BackgroundPreload(CL_GraphicContext gc);
 
 		//! Loads a resource, gives it a tag
 		ResourceSpt TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
@@ -324,7 +332,10 @@ namespace FusionEngine
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
+		ResourceSpt loadResource(const std::wstring &path, CL_GraphicContext &gc);
 		void loadResource(ResourceSpt &resource, CL_GraphicContext &gc);
+
+		void unloadResource(const std::wstring &path, CL_GraphicContext &gc);
 		void unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool unload_quickload = false);
 
 		//void registerXMLType(asIScriptEngine* engine);
