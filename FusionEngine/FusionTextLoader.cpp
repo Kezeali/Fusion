@@ -61,10 +61,11 @@ namespace FusionEngine
 	void TextLoader::UnloadResource(ResourceContainer* resource)
 	{
 		if (resource->IsValid())
+		{
+			resource->_setValid(false);
 			delete resource->GetDataPtr();
+		}
 		resource->SetDataPtr(NULL);
-
-		resource->_setValid(false);
 	}
 
 	std::string* TextLoader::load(const std::string &path)

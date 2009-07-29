@@ -26,3 +26,19 @@
 */
 
 #include "FusionResource.h"
+
+
+namespace FusionEngine
+{
+
+	void intrusive_ptr_add_ref(ResourceContainer *ptr)
+	{
+		ptr->AddReference();
+	}
+
+	void intrusive_ptr_release(ResourceContainer *ptr)
+	{
+		ptr->RemoveReference();
+	}
+
+}

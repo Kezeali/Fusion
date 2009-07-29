@@ -30,6 +30,7 @@
 
 #include "FusionEntityFactory.h"
 #include "FusionScriptedEntity.h"
+#include "FusionScriptSound.h"
 #include "FusionXml.h"
 #include "FusionPhysFS.h"
 #include "FusionResourceManager.h"
@@ -228,10 +229,10 @@ namespace FusionEngine
 			propertyDefinition.type = child->GetAttribute("type");
 			propertyDefinition.name = child->GetAttribute("name");
 
-			attribute = child->GetAttributeOrDefault("arbitrated", "f");
+			attribute = child->GetAttributeOrDefault("arbitrated", "0");
 			propertyDefinition.arbitrated = CL_StringHelp::local8_to_bool(attribute.c_str());
 
-			attribute = child->GetAttributeOrDefault("local", "f");
+			attribute = child->GetAttributeOrDefault("local", "0");
 			propertyDefinition.localOnly = CL_StringHelp::local8_to_bool(attribute.c_str());
 
 			m_SyncProperties[propertyDefinition.name] = propertyDefinition;
@@ -430,15 +431,24 @@ namespace FusionEngine
 
 				entity->AddRenderable(renderable);
 
-				//void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
-				//Renderable **renderableProperty = static_cast<Renderable**>( prop );
-				//*renderableProperty = renderable.get();
+				if (desc.GetPropertyIndex() >= 0)
+				{
+					void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+					Renderable **renderableProperty = static_cast<Renderable**>( prop );
+					*renderableProperty = renderable.get();
+				}
 			}
 			else if (desc.GetType() == "Image")
 			{
+				if (desc.GetPropertyIndex() >= 0)
+				{
+				}
 			}
 			else if (desc.GetType() == "Polygon")
 			{
+				if (desc.GetPropertyIndex() >= 0)
+				{
+				}
 			}
 			else if (desc.GetType() == "Sound")
 			{
@@ -449,7 +459,8 @@ namespace FusionEngine
 				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO");
 
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
-				new(prop) SoundSamplePlayer(resource, false);
+				SoundSample **soundProp = static_cast<SoundSample**>( prop );
+				*soundProp = new SoundSample(resource, false);
 			}
 			else if (desc.GetType() == "SoundStream")
 			{
@@ -460,7 +471,8 @@ namespace FusionEngine
 				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO:STREAM");
 
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
-				new(prop) SoundSamplePlayer(resource, true);
+				SoundSample **soundProp = static_cast<SoundSample**>( prop );
+				*soundProp = new SoundSample(resource, true);
 			}
 
 			entity->AddStreamedResource(desc.GetType(), fe_widen(desc.GetResourceName()));
@@ -707,7 +719,10 @@ namespace FusionEngine
 			ResourcesMap::iterator it = resources.begin(), end = resources.end();
 			while (it != end)
 			{
-				if (it->second.GetPropertyIndex() < 0)
+				// Script-class properties for Sprite, Image, Polygon types are not necessary
+				//  (these define Renderable objects, which are held by the Entity baseclass)
+				if (it->second.GetPropertyIndex() < 0 &&
+					it->second.GetType() != "Sprite" && it->second.GetType() != "Image" && it->second.GetType() != "Polygon")
 				{
 					SendToConsole("Creating instancer for a scripted entity: There is no property called '"
 						+ it->second.GetPropertyName() + "' in " + definition->GetType() +

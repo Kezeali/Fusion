@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007 Fusion Project Team
+  Copyright (c) 2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -57,7 +57,7 @@ namespace FusionEngine
 
 	protected:
 		std::string m_ScriptPropertyName;
-		std::string m_Type; // Image, SoundSample, SoundStream
+		std::string m_Type; // Image, Sound, SoundStream
 		std::string m_ResourceName;
 
 		int m_ScriptPropertyIndex;
@@ -66,28 +66,9 @@ namespace FusionEngine
 	typedef std::tr1::unordered_map<std::string, ResourceDescription> ResourcesMap;
 
 
-	class SoundSamplePlayer : public RefCounted, RefCounted::no_factory_noncopyable, boost::noncopyable
-	{
-	public:
-		SoundSamplePlayer(const ResourcePointer<CL_SoundBuffer> &resource, bool is_stream);
-
-		void Play();
-		void Pause();
-		void Stop();
-
-	protected:
-		ResourcePointer<CL_SoundBuffer> m_Resource;
-		bool m_Stream;
-	};
-
-
 	/*!
 	 * This class acts as a wrapper for the script objects which define
-	 * the actual logic for in-game objects, while storing and providing
-	 * access to instances of hard-coded classes for said script objects.
-	 *
-	 * Hopefully, this will help script objects to be created and used
-	 * almost as easily as hard-coded objects.
+	 * the actual logic for in-game objects.
 	 */
 	class ScriptedEntity : public Entity
 	{
@@ -138,7 +119,7 @@ namespace FusionEngine
 		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
 	protected:
-		// The actual entity logic (for which this C++ class is simply a wrapper)
+		// The actual entity (for which this C++ class is simply a wrapper)
 		ScriptObject m_ScriptObject;
 
 		// The folder where the the entity definition resides - used when calls to ScriptEntity::MakePathAbsolute are made in the entity script

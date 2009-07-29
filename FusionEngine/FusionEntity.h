@@ -175,7 +175,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public RefCounted, public ICollisionHandler
+	class Entity : public RefCounted, RefCounted::noncopyable, public ICollisionHandler
 	{
 	public:
 		//! Constructor
@@ -200,6 +200,11 @@ namespace FusionEngine
 		void SetID(ObjectID id);
 		//! Returns the sync. ID of this Entity
 		ObjectID GetID() const;
+
+		//! Sets the owner id of this entity
+		void SetOwnerID(ObjectID owner);
+		//! Returns the owner ID of this entity
+		ObjectID GetOwnerID() const;
 
 		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
 		/*!
@@ -355,10 +360,14 @@ namespace FusionEngine
 		//! Implementation of ICollisionHandler#ContactEnd()
 		virtual void ContactEnd(const Contact &contact) {}
 
+		static void Register(asIScriptEngine *engine);
+
 	protected:
 		std::string m_Name;
 		ObjectID m_Id;
 		bool m_PseudoEntity;
+
+		ObjectID m_OwnerID;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

@@ -41,7 +41,7 @@
 
 /// Fusion
 #include "FusionResource.h"
-#include "FusionResourcePointer.h"
+//#include "FusionResourcePointer.h"
 #include "FusionResourceLoader.h"
 
 /// RakNet
@@ -85,7 +85,7 @@ namespace FusionEngine
 		//! ResourceLoader pointer
 		typedef std::tr1::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
-		typedef std::tr1::unordered_map<ResourceTag, ResourceSpt> ResourceMap;
+		typedef std::tr1::unordered_map<ResourceTag, ResourceDataPtr> ResourceMap;
 		//! Maps Resource types to ResourceLoader factory methods
 		typedef std::tr1::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
@@ -93,15 +93,13 @@ namespace FusionEngine
 		{
 			int priority;
 			std::string type;
-			std::wstring tag;
 			std::wstring path;
 
 			ResourceToLoadData() {}
 
-			ResourceToLoadData(const std::string& _type, const std::wstring& _tag, const std::wstring& _path, int _priority)
+			ResourceToLoadData(const std::string& _type, const std::wstring& _path, int _priority)
 				: priority(_priority),
 				type(_type),
-				tag(_tag),
 				path(_path)
 			{
 			}
@@ -129,12 +127,12 @@ namespace FusionEngine
 
 		//! Starts loading resources in the background
 #ifdef _WIN32
-		void StartBackgroundPreloadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created);
+		void StartBackgroundLoadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created);
 #else
-		void StartBackgroundPreloadThread(CL_GraphicContext &sharedGC);
+		void StartBackgroundLoadThread(CL_GraphicContext &sharedGC);
 #endif
 		//! Stops loading resources in the background
-		void StopBackgroundPreloadThread();
+		void StopBackgroundLoadThread();
 
 		//! Loads / unloads resources in another thread
 		/*!
@@ -142,9 +140,9 @@ namespace FusionEngine
 		 * Unloads resources listed in the ToUnload list.
 		 */
 #ifdef _WIN32
-		void BackgroundPreload(CL_GraphicContext *gc, CL_Event worker_gc_created);
+		void BackgroundLoad(CL_GraphicContext *gc, CL_Event worker_gc_created);
 #else
-		void BackgroundPreload(CL_GraphicContext *gc);
+		void BackgroundLoad(CL_GraphicContext *gc);
 #endif
 
 		////! Checks the filesystem for packages and returns the names of all found
@@ -152,7 +150,7 @@ namespace FusionEngine
 		//! Checks the filesystem and returns the filenames of all found
 		StringVector ListFiles();
 
-		//! Unloads resource which aren't currently held by any ResourcePointer objects
+		//! Unloads resource which aren't currently held
 		void DisposeUnusedResources();
 
 		//! Deletes all loaded resources
@@ -190,22 +188,20 @@ namespace FusionEngine
 		//! Assigns the given ResourceLoader to its relavant resource type
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData);
 
-		//! Loads a resource, gives it a tag
-		ResourceSpt TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
+		//! Gives a different tag to the given resource
+		//ResourceSpt &TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
 
-		//! Loads a resource
-		/*!
-		 * \remarks
-		 * Though this does the same as TagResource, it must be named differently so that it can be
-		 * used directly (through a THISCALL) by AScript, which can't deal with overloaded member fn.s
-		 */
-		ResourceSpt PreloadResource(const std::string& type, const std::wstring& path);
+		//! Invokes the ResourceLoadedFn for each loaded resource
+		void HandOutLoadedResources();
+
+		//! Loads / gets a resource
+		void GetResource(const std::string& type, const std::wstring& path, ResourceContainer::LoadedFn callback, int priority = 0);
 
 		//! Loads a resource
 		/*!
 		 * Loads the resource in another thread
 		 */
-		ResourceSpt PreloadResource_Background(const std::string& type, const std::wstring& path, int priority = 0);
+		void LoadResource_Background(const std::string& type, const std::wstring& path, int priority = 0);
 
 		void UnloadResource(const std::wstring &path);
 
@@ -216,88 +212,75 @@ namespace FusionEngine
 		//ResourcePointer<T> GetResource(const ResourceTag& tag);
 
 		//! Gets or creates the given resource
-		ResourceSpt &GetResourceDefault(const ResourceTag &tag, const std::string& type);
+		//ResourceSpt &GetResource(const ResourceTag &tag, const std::string& type);
 
-		template<typename T>
-		ResourcePointer<T> GetResource(const ResourceTag &tag)
-		{
-			ResourceSpt sptRes = m_Resources[tag];
-			return ResourcePointer<T>(sptRes);
-		}
+		//template<typename T>
+		//ResourcePointer<T> GetResource(const ResourceTag &tag)
+		//{
+		//	ResourceSpt sptRes = m_Resources[tag];
+		//	return ResourcePointer<T>(sptRes);
+		//}
 
-		template<typename T>
-		ResourcePointer<T> GetResource(const std::string &tag, const std::string& type)
-		{
-			ResourceSpt &resource = GetResourceDefault(fe_widen(tag), type);
-			return ResourcePointer<T>(resource);
-		}
+		//template<typename T>
+		//ResourcePointer<T> GetResource(const std::string &tag, const std::string& type)
+		//{
+		//	ResourceSpt &resource = GetResourceDefault(fe_widen(tag), type);
+		//	return ResourcePointer<T>(resource);
+		//}
 
-		template<typename T>
-		ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
-		{
-			ResourceSpt &resource = GetResourceDefault(tag, type);
-			return ResourcePointer<T>(resource);
-		}
+		//template<typename T>
+		//ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
+		//{
+		//	ResourceSpt &resource = GetResourceDefault(tag, type);
+		//	return ResourcePointer<T>(resource);
+		//}
 
-		//! Optimised version of GetResource
-		template<typename T>
-		void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
-		{
-			ResourceSpt &resource = GetResourceDefault(tag, type);
-			out.SetTarget(resource);
-			//out = ResourcePointer<T>(resource);
-		}
+		////! Optimised version of GetResource
+		//template<typename T>
+		//void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
+		//{
+		//	ResourceSpt &resource = GetResourceDefault(tag, type);
+		//	out.SetTarget(resource);
+		//	//out = ResourcePointer<T>(resource);
+		//}
 
-		// How many characters from the beginning before a and b diverge
-		std::string::size_type quickCompare(const std::string &a, const std::string &b)
-		{
-			const char* a_cstr = a.c_str();
-			const char* b_cstr = b.c_str();
-			std::string::size_type length = fe_min(a.length(), b.length());
+		//template<typename T>
+		//ResourcePointer<T> OpenOrCreateResource(const ResourceTag &path)
+		//{
+		//	std::string match = FindFirst(path);
+		//	if (match.empty()) // No match
+		//	{
+		//		std::string writePath(PHYSFS_getWriteDir());
+		//		// Whether the given 'path' is an existing, absolute path
+		//		if (PHYSFS_isDirectory(CL_String::get_path(path).c_str()))
+		//		{
+		//			// If the given path is existing and absolute, make sure it is within the PhysFS write folder
+		//			if (quickCompare(path, writePath) >= writePath.length())
+		//			{
+		//				FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
+		//					"Can't create '" + path + "' as it is not within the write path (" + writePath + ")");
+		//			}
+		//		}
+		//		else
+		//		{
+		//			// Convert the relative path to an absolute path within the write folder
+		//			writePath = writePath + path;
 
-			for (std::string::size_type i = 0; i < length; i++)
-			{
-				if (a_cstr[i] != b_cstr[i]) return i;
-			}
-		}
+		//			std::string folder(CL_String::get_path(writePath));
+		//			if (!PHYSFS_isDirectory(folder.c_str()))
+		//				FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
+		//				"Can't create '" + writePath + "' as '" + folder + "' does not exist");
+		//		}
+		//		// Create the file
+		//		std::ofstream resourceFile;
+		//		resourceFile.open(writePath.c_str(), std::ios::out|std::ios::binary);
+		//		resourceFile.close();
 
-		template<typename T>
-		ResourcePointer<T> OpenOrCreateResource(const ResourceTag &path)
-		{
-			std::string match = FindFirst(path);
-			if (match.empty()) // No match
-			{
-				std::string writePath(PHYSFS_getWriteDir());
-				// Whether the given 'path' is an existing, absolute path
-				if (PHYSFS_isDirectory(CL_String::get_path(path).c_str()))
-				{
-					// If the given path is existing and absolute, make sure it is within the PhysFS write folder
-					if (quickCompare(path, writePath) >= writePath.length())
-					{
-						FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
-							"Can't create '" + path + "' as it is not within the write path (" + writePath + ")");
-					}
-				}
-				else
-				{
-					// Convert the relative path to an absolute path within the write folder
-					writePath = writePath + path;
-
-					std::string folder(CL_String::get_path(writePath));
-					if (!PHYSFS_isDirectory(folder.c_str()))
-						FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
-						"Can't create '" + writePath + "' as '" + folder + "' does not exist");
-				}
-				// Create the file
-				std::ofstream resourceFile;
-				resourceFile.open(writePath.c_str(), std::ios::out|std::ios::binary);
-				resourceFile.close();
-
-				match = writePath;
-			}
-			
-			return GetResource<T>(match);
-		}
+		//		match = writePath;
+		//	}
+		//	
+		//	return GetResource<T>(match);
+		//}
 
 		//void RegisterScriptElements(ScriptingEngine* manager);
 
@@ -332,11 +315,13 @@ namespace FusionEngine
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
-		ResourceSpt loadResource(const std::wstring &path, CL_GraphicContext &gc);
-		void loadResource(ResourceSpt &resource, CL_GraphicContext &gc);
+		//! \todo should be called getAndLoadResource
+		ResourceDataPtr& loadResource(const std::string &type, const std::wstring &path, CL_GraphicContext &gc);
+		void loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc);
 
+		//! \todo Should be called getAndUnloadResource
 		void unloadResource(const std::wstring &path, CL_GraphicContext &gc);
-		void unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool unload_quickload = false);
+		void unloadResource(ResourceDataPtr &resource, CL_GraphicContext &gc, bool unload_quickload_data = false);
 
 		//void registerXMLType(asIScriptEngine* engine);
 		//void registerImageType(asIScriptEngine* engine);

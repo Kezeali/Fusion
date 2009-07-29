@@ -353,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionScriptSound.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionScriptVector.cpp"
 				>
 			</File>
@@ -632,6 +636,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionScriptReference.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionScriptSound.h"
 				>
 			</File>
 			<File

@@ -57,10 +57,11 @@ namespace FusionEngine
 	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
+		{
+			resource->_setValid(false);
 			delete resource->GetDataPtr();
+		}
 		resource->SetDataPtr(NULL);
-
-		resource->_setValid(false);
 	}
 
 	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
@@ -88,10 +89,11 @@ namespace FusionEngine
 	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
 		if (resource->IsValid())
+		{
+			resource->_setValid(false);
 			delete resource->GetDataPtr();
+		}
 		resource->SetDataPtr(NULL);
-
-		resource->_setValid(false);
 	}
 
 };

@@ -23,6 +23,7 @@
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
 #include "../FusionEngine/FusionEntity.h"
+#include "../FusionEngine/FusionScriptSound.h"
 
 #include "../FusionEngine/FusionClientOptions.h"
 
@@ -79,9 +80,17 @@ public:
 			RegisterPhysicsTypes(asEngine);
 			//ResourceManager::Register(m_ScriptManager);
 			Console::Register(m_ScriptManager);
-			RegisterScriptedConsoleCommand(m_ScriptManager->GetEnginePtr());
+			RegisterScriptedConsoleCommand(asEngine);
 			GUI::Register(m_ScriptManager);
-			RefCounted::RegisterType<Renderable>(m_ScriptManager->GetEnginePtr(), "Renderable");
+			//Renderable::Register(asEngine);
+			RefCounted::RegisterType<Renderable>(asEngine, "Renderable");
+			SoundOutput::Register(asEngine);
+			SoundSession::Register(asEngine);
+			SoundSample::Register(asEngine);
+
+			/////////////////////////////////////
+			// Script SoundOutput wrapper object
+			std::tr1::shared_ptr<SoundOutput> script_SoundOutput(new SoundOutput(sound_output));
 
 		
 			////////////////////
@@ -101,6 +110,8 @@ public:
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
 			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
 #else
+			// Might have to create a secondary pbuffer here (I read something about
+			//  this giving better performance because of reduced resource locking)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
 			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
 #endif
@@ -144,6 +155,9 @@ public:
 			gui->SetModule(module);
 			m_Ontology->SetModule(module);
 
+			script_SoundOutput->SetModule(module);
+
+			// Build the module (scripts are added automatically by objects which have registered a module connection)
 			module->Build();
 
 

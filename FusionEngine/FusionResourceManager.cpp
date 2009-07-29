@@ -4,8 +4,6 @@
 /// Class
 #include "FusionResourceManager.h"
 
-#include "FusionResourceManagerScriptFunctions.h"
-
 /// Fusion
 #include "FusionConsole.h"
 #include "FusionLogger.h"
@@ -21,6 +19,19 @@
 
 namespace FusionEngine
 {
+
+	// How many characters from the beginning before a and b diverge
+	std::string::size_type quickCompare(const std::string &a, const std::string &b)
+	{
+		const char* a_cstr = a.c_str();
+		const char* b_cstr = b.c_str();
+		std::string::size_type length = fe_min(a.length(), b.length());
+
+		for (std::string::size_type i = 0; i < length; i++)
+		{
+			if (a_cstr[i] != b_cstr[i]) return i;
+		}
+	}
 
 	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
 		: m_GC(gc),
@@ -50,7 +61,7 @@ namespace FusionEngine
 
 	ResourceManager::~ResourceManager()
 	{
-		StopBackgroundPreloadThread();
+		StopBackgroundLoadThread();
 
 		ClearAll();
 
@@ -72,19 +83,19 @@ namespace FusionEngine
 	}
 
 #ifdef _WIN32
-	void ResourceManager::StartBackgroundPreloadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created)
+	void ResourceManager::StartBackgroundLoadThread(CL_GraphicContext &sharedGC, CL_Event &worker_gc_created)
 #else
-	void ResourceManager::StartBackgroundPreloadThread(CL_GraphicContext &sharedGC)
+	void ResourceManager::StartBackgroundLoadThread(CL_GraphicContext &sharedGC)
 #endif
 	{
 #ifdef _WIN32
-		m_Worker.start(this, &ResourceManager::BackgroundPreload, &sharedGC, worker_gc_created);
+		m_Worker.start(this, &ResourceManager::BackgroundLoad, &sharedGC, worker_gc_created);
 #else
-		m_Worker.start(this, &ResourceManager::BackgroundPreload, &sharedGC);
+		m_Worker.start(this, &ResourceManager::BackgroundLoad, &sharedGC);
 #endif
 	}
 
-	void ResourceManager::StopBackgroundPreloadThread()
+	void ResourceManager::StopBackgroundLoadThread()
 	{
 		m_StopEvent.set();
 		m_Worker.join();
@@ -122,39 +133,29 @@ namespace FusionEngine
 
 	void ResourceManager::DisposeUnusedResources()
 	{
-		// not yet implemented
-#ifdef RESMAN_USEGARBAGELIST
-		ResourceGarbageList::iterator it = m_Garbage.begin();
-		for (; it != m_Garbage.end(); ++it)
+		//CL_MutexSection resourcesLock(&m_ResourcesMutex);
+		//for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
+		//{
+		//	ResourceDataPtr& res = (*it).second;
+
+		//	if (res->SingleReference())
+		//	{
+		//		unloadResource(res, m_GC);
+		//	}
+		//}
+
+		// ??? perhaps resources should be added to the ToUnload list here and removed from the resource list
+		//  (so they'll get unloaded in the unload thread)
+		// Or perhaps this method isn't needed at all - NoReferences() could call a ResourceManager function that
+		//  simply adds the resource to the ToUnload queue immeadiatly.
+		CL_MutexSection lock(&m_ToUnloadMutex);
+		for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
 		{
-			Resource res = m_Resources.find(*it);
-			if (res != m_Resources.end())
-				m_Resources.erase(res);
-		}
-		m_Garbage.clear();
-#else
+			ResourceDataPtr &res = *it;
 
-		CL_MutexSection resourcesLock(&m_ResourcesMutex);
-		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
-		{
-			ResourceSpt& res = (*it).second;
-
-#if defined(FSN_RESOURCEPOINTER_USE_WEAKPTR)
-
-			if ( !res->IsReferenced() )
-			{
-
-#else
-
-			if (res.unique())
-			{
-
-#endif
+			if (res->SingleReference())
 				unloadResource(res, m_GC);
-			}
 		}
-
-#endif
 	}
 
 	void ResourceManager::DeleteResources()
@@ -292,14 +293,15 @@ namespace FusionEngine
 //  an event must be passed so the main thread can wait until the worker
 //  GC has been created.
 #ifdef _WIN32
-	void ResourceManager::BackgroundPreload(CL_GraphicContext *gc, CL_Event worker_gc_created)
+	void ResourceManager::BackgroundLoad(CL_GraphicContext *gc, CL_Event worker_gc_created)
 #else
-	void ResourceManager::BackgroundPreload(CL_GraphicContext *gc)
+	void ResourceManager::BackgroundLoad(CL_GraphicContext *gc)
 #endif
 	{
 		CL_SharedGCData::add_ref();
 		// Using WGL, the second GC must be created in the worker thread (i.e. here)
-		//  otherwise it has already been created, so I just copy it into a local reference
+		//  For other opengl implementations the worker GC is created in the main
+		//  thread so a reference to that is taken here
 #ifdef _WIN32
 		CL_GraphicContext loadingGC = gc->create_worker_gc();
 #else
@@ -320,6 +322,8 @@ namespace FusionEngine
 			if (receivedEvent <= 0)
 				break;
 
+			CL_System::sleep(10);
+
 			// Load
 			CL_MutexSection toLoadMutexSection(&m_ToLoadMutex);
 			while (!m_ToLoad.empty())
@@ -330,13 +334,13 @@ namespace FusionEngine
 
 				// Don't bother loading if it has been added to the unload list already
 				CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
-				ToUnloadList::iterator _where = m_ToUnload.find(toLoadData.tag);
+				ToUnloadList::iterator _where = m_ToUnload.find(toLoadData.path);
 				if (_where == m_ToUnload.end())
 				{
 					try
 					{
 						//CL_SharedGCData::add_ref();
-						TagResource(toLoadData.type, toLoadData.path, toLoadData.tag, &loadingGC);
+						loadResource(toLoadData.type, toLoadData.path, loadingGC);
 						//CL_SharedGCData::release_ref();
 					}
 					catch (FileSystemException &ex)
@@ -363,45 +367,70 @@ namespace FusionEngine
 		CL_SharedGCData::release_ref();
 	}
 
-	ResourceSpt ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc)
+	//ResourceSpt& ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc)
+	//{
+	//	CL_MutexSection resourcesLock(&m_ResourcesMutex);
+
+	//	ResourceSpt resource;
+
+	//	// Check whether there is an existing tag pointing to the same resource
+	//	ResourceMap::iterator existing = m_Resources.find(tag);
+	//	if (existing != m_Resources.end() && existing->second->GetPath() == path)
+	//	{
+	//		resource = existing->second; // Tag points to the same resource
+	//	}
+	//	else
+	//	{
+	//		// Create a new resource container
+	//		resource = ResourceSpt(new ResourceContainer(type, path, NULL));
+	//	}
+
+	//	if (gc != NULL)
+	//		loadResource(resource, *gc);
+	//	else
+	//		loadResource(resource, m_GC);
+
+	//	return m_Resources[tag] = resource;
+	//}
+
+	void ResourceManager::HandOutLoadedResources()
 	{
-		CL_MutexSection resourcesLock(&m_ResourcesMutex);
+		CL_MutexSection lock(&m_LoadedResourcesMutex);
+		for (ResourceList::iterator it = m_LoadedResources.begin(), end = m_LoadedResources.end(); it != end; ++it)
+		{
+			ResourceDataPtr &res = it->second;
+			res->SigLoaded(res);
+			res->SigLoaded.disconnect_all_slots();
+		}
+		m_LoadedResources.clear();
+	}
 
-		ResourceSpt resource;
-
-		// Check whether there is an existing tag pointing to the same resource
-		ResourceMap::iterator existing = m_Resources.find(tag);
+	void ResourceManager::GetResource(const std::string& type, const std::wstring& path, ResourceContainer::LoadedFn callback, int priority)
+	{
+		// Check whether the given resource already exists
+		ResourceMap::iterator existing = m_Resources.find(path);
 		if (existing != m_Resources.end() && existing->second->GetPath() == path)
 		{
-			resource = existing->second; // Tag points to the same resource
+			existing->second;
 		}
 		else
 		{
-			// Create a new resource container
-			resource = ResourceSpt(new ResourceContainer(type, tag, path, NULL));
+			m_ToLoadMutex.lock();
+			m_ToLoad.push(ResourceToLoadData(type, path, priority));
+			m_ToLoadMutex.unlock();
+
+			m_ToLoadEvent.set();
 		}
-
-		if (gc != NULL)
-			loadResource(resource, *gc);
-		else
-			loadResource(resource, m_GC);
-
-		return m_Resources[tag] = resource;
 	}
 
-	ResourceSpt ResourceManager::PreloadResource(const std::string& type, const std::wstring& path)
-	{
-		return TagResource(type, path, path);
-	}
-
-	ResourceSpt ResourceManager::PreloadResource_Background(const std::string& type, const std::wstring& path, int priority)
+	void ResourceManager::LoadResource_Background(const std::string& type, const std::wstring& path, int priority)
 	{
 		//ResourceSpt resource = ResourceSpt(new ResourceContainer(type, path, path, NULL));
 		//m_Resources[path] = resource;
-		ResourceSpt &resource = GetResourceDefault(path, type);
+		ResourceDataPtr &resource = GetResourceDefault(path, type);
 
 		m_ToLoadMutex.lock();
-		m_ToLoad.push(ResourceToLoadData(type, path, path, priority));
+		m_ToLoad.push(ResourceToLoadData(type, path, priority));
 		m_ToLoadMutex.unlock();
 		
 		m_ToLoadEvent.set();
@@ -423,62 +452,45 @@ namespace FusionEngine
 		m_ToUnloadEvent.set();
 	}
 
-	ResourceSpt &ResourceManager::GetResourceDefault(const ResourceTag &tag, const std::string &type)
-	{
-		ResourceMap::iterator _where = m_Resources.find(tag);
-		if (_where != m_Resources.end())
-			return _where->second;
-		else
-		{ 
-			return m_Resources[tag] = ResourceSpt(new ResourceContainer(type, tag, tag, NULL));
-		}
-	}
-
-	//void ResourceManager::RegisterScriptElements(ScriptingEngine* manager)
+	//ResourceSpt &ResourceManager::GetResourceDefault(const ResourceTag &tag, const std::string &type)
 	//{
-	//	asIScriptEngine* engine = manager->GetEnginePtr();
-	//	int r;
-	//	r = engine->RegisterObjectType("ResourceManager", sizeof(ResourceManager), asOBJ_REF | asOBJ_NOHANDLE); assert( r >= 0 );
-	//	r = engine->RegisterObjectMethod("ResourceManager", "void Cache(string &in, string &in)", asMETHOD(ResourceManager, PreloadResource), asCALL_THISCALL); assert( r >= 0 );
-
-	//	// TODO: put all this type registration stuff into another header, then implement a 'plugin' type system
-	//	//  where new script types can be passed in a simmilar way to ResourceLoaders
-	//	registerXMLType(engine);
-	//	registerImageType(engine);
-	//	registerSoundType(engine);
-
-	//	r = engine->RegisterObjectMethod("ResourceManager", "Image GetImage(string &in)", asFUNCTION(ResourceManager_GetImage), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	//	r = engine->RegisterObjectMethod("ResourceManager", "Sound GetSound(string &in)", asFUNCTION(ResourceManager_GetSound), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	//	r = engine->RegisterObjectMethod("ResourceManager", "XmlDocument GetXML(string &in)", asFUNCTION(ResourceManager_GetXml), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	//	r = engine->RegisterObjectMethod("ResourceManager", "string GetText(string &in)", asFUNCTION(ResourceManager_GetText), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-
-
-	//	r = engine->RegisterGlobalProperty("ResourceManager resource_manager", this);
-	//	r = engine->RegisterGlobalProperty("ResourceManager file", this);
-	//}
-
-	//template<typename T>
-	//ResourcePointer<T> ResourceManager::GetResource(const ResourceTag &tag)
-	//{
-	//	PreloadResource(GetResourceType(T).c_str(), tag);
-
-	//	Resource& res = (*m_Resources[tag]);
-	//	if (!res.IsValid())
-	//	{
-	//		m_ResourceLoaders[res.GetType()]->ReloadResource(res);
+	//	ResourceMap::iterator _where = m_Resources.find(tag);
+	//	if (_where != m_Resources.end())
+	//		return _where->second;
+	//	else
+	//	{ 
+	//		return m_Resources[tag] = ResourceSpt(new ResourceContainer(type, tag, tag, NULL));
 	//	}
-
-	//	return ResourcePointer<T>(res);
 	//}
 
 	////////////
 	/// Private:
-	ResourceSpt ResourceManager::loadResource(const std::wstring &path, CL_GraphicContext &gc)
+	ResourceDataPtr& ResourceManager::loadResource(const std::string &type, const std::wstring &path, CL_GraphicContext &gc)
 	{
-		return ResourceSpt();
+		CL_MutexSection resourcesLock(&m_ResourcesMutex);
+
+		ResourceSpt resource;
+
+		// Check whether there is an existing tag pointing to the same resource
+		ResourceMap::iterator existing = m_Resources.find(path);
+		if (existing != m_Resources.end() && existing->second->GetPath() == path)
+		{
+			resource = existing->second;
+		}
+		else
+		{
+			// Create a new resource container
+			resource = ResourceSpt(new ResourceContainer(type, path, NULL));
+		}
+
+		loadResource(resource, gc);
+
+		m_Resources[path] = resource;
+
+		return resource;
 	}
 
-	void ResourceManager::loadResource(ResourceSpt &resource, CL_GraphicContext &gc)
+	void ResourceManager::loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
@@ -500,14 +512,14 @@ namespace FusionEngine
 		CL_MutexSection resourcesMutexSection(&m_ResourcesMutex);
 		ResourceMap::iterator _where = m_Resources.find(path);
 		if (_where != m_Resources.end())
-			unloadResource(_where->second, m_GC);
+			unloadResource(_where->second, gc);
 	}
 
-	void ResourceManager::unloadResource(ResourceSpt &resource, CL_GraphicContext &gc, bool quickload)
+	void ResourceManager::unloadResource(ResourceDataPtr &resource, CL_GraphicContext &gc, bool quickload)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
-		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 
+		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where != m_ResourceLoaders.end())
 		{
 			// Initialize a vdir

@@ -347,6 +347,7 @@ namespace FusionEngine
 	Entity::Entity()
 		: m_Name("default"),
 		m_Id(0),
+		m_OwnerID(0),
 		m_Flags(0),
 		m_MarkedToRemove(false),
 		m_Paused(false),
@@ -358,6 +359,7 @@ namespace FusionEngine
 	Entity::Entity(const std::string &name)
 		: m_Name(name),
 		m_Id(0),
+		m_OwnerID(0),
 		m_Flags(0),
 		m_MarkedToRemove(false),
 		m_Paused(false),
@@ -390,6 +392,16 @@ namespace FusionEngine
 	ObjectID Entity::GetID() const
 	{
 		return m_Id;
+	}
+
+	void Entity::SetOwnerID(ObjectID owner)
+	{
+		m_OwnerID = owner;
+	}
+
+	ObjectID Entity::GetOwnerID() const
+	{
+		return m_OwnerID;
 	}
 
 	//void Entity::SetPseudoEntity(bool pseudo_entity)
@@ -603,6 +615,20 @@ namespace FusionEngine
 	std::string Entity::ToString() const
 	{
 		return GetType() + " - " + m_Name;
+	}
+
+	void Entity::Register(asIScriptEngine *engine)
+	{
+		//int r;
+		//RefCounted::RegisterType<EntityInputs>(engine, "EntityInputs");
+		//r = engine->RegisterObjectMethod("EntityInputs"
+		//	"bool isActive(const string &in) const",
+		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
+
+		//RefCounted::RegisterType<Entity>(engine, "Entity");
+		//r = engine->RegisterObjectMethod("Entity"
+		//	"EntityInputs getInputs() const",
+		//	asMETHOD(Entity, GetInputState), asCALL_THISCALL);
 	}
 
 }

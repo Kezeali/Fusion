@@ -71,17 +71,6 @@ namespace FusionEngine
 		m_Renderable->SetPosition(position);
 	}*/
 
-	SoundSamplePlayer::SoundSamplePlayer(const FusionEngine::ResourcePointer<CL_SoundBuffer> &resource, bool is_stream)
-		: m_Resource(resource),
-		m_Stream(is_stream)
-	{
-	}
-
-	void SoundSamplePlayer::Play()
-	{
-		m_Resource->play();
-	}
-
 	ScriptedEntity::ScriptedEntity()
 		: m_DefaultPosition(0.f, 0.f),
 		m_DefaultAngle(0.f)
@@ -189,6 +178,16 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnStreamOut()
 	{
+		ResourceManager *res = ResourceManager::getSingletonPtr();
+		if (res != NULL)
+		{
+			// Stream in resources
+			for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
+			{
+				res->UnloadResource_Background(it->first);
+			}
+		}
+
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamOut()");
 		if (f.ok())
 		{

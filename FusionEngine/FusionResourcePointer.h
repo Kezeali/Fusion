@@ -53,8 +53,6 @@
 namespace FusionEngine
 {
 
-	//! Resource container shared pointer
-	typedef std::tr1::shared_ptr<ResourceContainer> ResourceSpt;
 	//! Resource container weak pointer
 	typedef boost::weak_ptr<ResourceContainer> ResourceWpt;
 
@@ -77,17 +75,7 @@ namespace FusionEngine
 	class ResourcePointer
 	{
 	protected:
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-		ResourceWpt m_ResourceBox;
-		ResourceContainer::ResourcePtrTicket m_Ticket;
-
-		mutable std::string m_Tag;
-
-#else
-
-		ResourceSpt m_ResourceBox;
-#endif
+		ResourceDataPtr m_Resource;
 
 	public:
 		//! Basic Constructor
@@ -96,29 +84,18 @@ namespace FusionEngine
 		 */
 		ResourcePointer()
 		{
-#if defined (FSN_RESOURCEPOINTER_USE_WEAKPTR)
-			m_Ticket = 0;
-#endif
 		}
 
 		//! Constructor
-		ResourcePointer(ResourceSpt resource)
-			: m_ResourceBox(resource)
+		ResourcePointer(ResourceDataPtr &resource)
+			: m_Resource(resource)
 		{
-#if defined (FSN_RESOURCEPOINTER_USE_WEAKPTR)
-
-			m_Ticket = resource->AddRef();
-#endif
 		}
 
 		//! Copy constructor
 		ResourcePointer(const ResourcePointer<T>& other)
-			: m_ResourceBox(other.m_ResourceBox)
+			: m_Resource(other.m_Resource)
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-			if (ResourceSpt r = m_ResourceBox.lock())
-				m_Ticket = r->AddRef();
-#endif
 		}
 
 
@@ -132,211 +109,70 @@ namespace FusionEngine
 //			SendToConsole("ResourcePointer<" + std::string(typeid(T).name()) +"> to " + 
 //				(IsValid() ? "\'" + m_ResourceBox->GetPath() + "\'" : "invalid resource") + " deleted");
 //#endif
-
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				r->DropRef(m_Ticket);
-#endif
 		}
 
 	public:
 
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-		//! Templated assignment operator
-		template<class Y>
-		ResourcePointer & operator=(ResourcePointer<Y> const & r)
-		{
-			m_ResourceBox = r.m_ResourceBox;
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				m_Ticket = r->AddRef();
-			return *this;
-		}
-#endif
-
-
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-		//! Assignment operator for weak_ptr version
-		ResourcePointer<T>& operator=(const ResourcePointer<T>& r)
-		{
-			m_ResourceBox = r.m_ResourceBox;
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				m_Ticket = r->AddRef();
-
-			return *this;
-		}
-
-#endif
-
 		//! Assignment operator
 		ResourcePointer<T>& operator=(const ResourcePointer<T>& r)
 		{
-			m_ResourceBox = r.m_ResourceBox;
+			m_Resource = r.m_Resource;
 
 			return *this;
-		}
-
-		const std::string& GetTag() const
-		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				m_Tag = r->GetTag();
-			return m_Tag;
-
-#else
-			return m_ResourceBox->GetTag();
-
-#endif
-		}
-
-		bool Lock()
-		{
-			return m_ResourceBox && m_ResourceBox->Lock();
-		}
-
-		void Unlock()
-		{
-			m_ResourceBox->Unlock();
 		}
 
 		//! Returns the resource data ptr
 		T* Get()
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				return dynamic_cast<T*>(r->GetDataPtr());
-			else
-				return 0;
-
-#else
-
-			return (T*)m_ResourceBox->GetDataPtr();
-
-#endif
+			return static_cast<T*>( m_Resource->GetDataPtr() );
 		}
 
 		//! Returns the resource data ptr
 		T const* Get() const
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				return dynamic_cast<const T*>(r->GetDataPtr());
-			else
-				return 0;
-
-#else
-
-			return (const T*)m_ResourceBox->GetDataPtr();
-
-#endif
+			return static_cast<const T*>( m_Resource->GetDataPtr() );
 		}
 
 		//! Indirect member access operator.
 		T* operator->()
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				return (T*)r->GetDataPtr();
-			else
-				FSN_EXCEPT(ExCode::ResourceNotLoaded, "ResourcePointer::operator->()", "Resource doesn't exist");
-#else
-
-			// using shared_ptr makes the implementation much simpler on my side :)
-			return (T*)m_ResourceBox->GetDataPtr();
-
-#endif
+			return static_cast<T*>( m_Resource->GetDataPtr() );
 		}
 
 		T const* operator->() const
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-				return (const T*)r->GetDataPtr();
-			else
-				FSN_EXCEPT(ExCode::ResourceNotLoaded, "ResourcePointer::operator->()", "Resource doesn't exist");
-#else
-
-			// using shared_ptr makes the implementation much simpler on my side :)
-			return (const T*)m_ResourceBox->GetDataPtr();
-
-#endif
+			return static_cast<const T*>( m_Resource->GetDataPtr() );
 		}
 
-		void SetTarget(ResourceSpt resource)
+		void SetTarget(ResourceSpt &resource)
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-			Release();
-#endif
-
-			m_ResourceBox = resource;
-
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-			m_Ticket = m_ResourceBox->AddRef();
-#endif
+			m_Resource = resource;
 		}
 
 		void Release()
 		{
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			if (ResourceSpt r = m_ResourceBox.lock())
-			{
-				r->DropRef(m_Ticket);
-			}
-
-#else
-
-			m_ResourceBox.reset();
-
-#endif
+			m_Resource.reset();
 		}
 
 		bool IsValid() const
 		{
 			// Check that this pointer is valid (the resource container exists), before checking that the data is valid
-
-#ifdef FSN_RESOURCEPOINTER_USE_WEAKPTR
-
-			ResourceSpt r = m_ResourceBox.lock();
-			return r ? r->IsValid() : false;
-
-#else
-
-			return m_ResourceBox ? m_ResourceBox->IsValid() : false; 
-#endif
+			return m_Resource ? m_Resource->IsValid() : false; 
 		}
 
 		bsig2::signal<void ()> &SigDelete() const
 		{
-			return m_ResourceBox->SigDelete;
+			return m_Resource->SigDelete;
 		}
 
 		bsig2::signal<void ()> &SigLoad() const
 		{
-			return m_ResourceBox->SigLoad;
+			return m_Resource->SigLoad;
 		}
 
 		bsig2::signal<void ()> &SigUnload() const
 		{
-			return m_ResourceBox->SigLoad;
-		}
-
-
-		//! Called when resource manager invokes OnRemoval in ResourceContainer
-		void onResourceRemoval()
-		{
-#ifndef FSN_RESOURCEPOINTER_USE_WEAKPTR
-			m_ResourceBox.reset();
-#endif
+			return m_Resource->SigUnload;
 		}
 	};
 
@@ -361,67 +197,11 @@ namespace FusionEngine
 			new (in) ResourcePointer<T>(rhs);
 		}
 
-		//static void NumConstruct(int size, ResourcePointer<T>* in)
-		//{
-		//	new (in) ResourcePointer<T>(size);
-		//}
-
 		static ResourcePointer<T>& Assign(const ResourcePointer<T>& rhs, ResourcePointer<T>* lhs)
 		{
 			*lhs = rhs;
 			return *lhs;
 		}
-
-//		static T* Index(int i, ResourcePointer<T>* lhs)
-//		{
-//
-//#ifdef AS_VECTOR_ASSERTBOUNDS
-//			FSN_ASSERT(i >= 0 && i < lhs->size() && "Array index out of bounds.");
-//#endif
-//
-//#ifdef AS_VECTOR_CHECKBOUNDS
-//			if (i < 0 || i >= (signed)lhs->size())
-//			{
-//				asIScriptContext* context = asGetActiveContext();
-//				if( context )
-//					context->SetException("Array Index Out of Bounds.");
-//				return 0;
-//			}
-//#endif
-//
-//			return &(*lhs)[i];
-//		}
-
-		static std::string GetTag(ResourcePointer<T>* lhs)
-		{
-			return lhs->GetTag();
-		}
-
-		static T* GetData(ResourcePointer<T>* lhs)
-		{
-			return (T*)lhs->GetDataPtr();
-		}
-
-		//static void PushBack(const T& in, ResourcePointer<T> *lhs)
-		//{
-		//	lhs->push_back(in);
-		//}
-
-		//static void PopBack(ResourcePointer<T>* lhs)
-		//{
-		//	lhs->pop_back();
-		//}
-
-		/*	static void Erase(int i, std::vector<T>* lhs)
-		{
-		lhs->erase(Index(i,lhs));
-		}
-
-		static void Insert(int i, const T& e, std::vector<T>* lhs)
-		{
-		lhs->insert(Index(i,lhs), e);
-		}
-		*/
 	};
 
 	template <typename T>

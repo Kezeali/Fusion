@@ -36,43 +36,43 @@
 
 #include "FusionBoostSignals2.h"
 
+#include <functional>
+
 #ifdef _DEBUG
 #include "FusionConsole.h"
 #endif
 
-/*!
- * Define FSN_RESOURCE_USE_TICKETS to use ticketed ref-counting
- */
-//#define FSN_RESOURCE_USE_TICKETS
 
 namespace FusionEngine
 {
+
+	void intrusive_ptr_add_ref(ResourceContainer *ptr);
+	void intrusive_ptr_release(ResourceContainer *ptr);
+
+	//! Resource container shared pointer
+	typedef boost::intrusive_ptr<ResourceContainer> ResourceDataPtr;
+
+	class ReleasedResourceList
+	{
+	public:
+		void push_back(ResourceDataPtr &resource);
+	};
 
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
 	 * The resource manager maintains a list of Resources, which can hold any
 	 * datatype which needs to be loaded from the filesystem.
-	 * If a Resource object is deleted, it will delete the data it points to and notify
-	 * all related ResourcePointer objects that they have been invalidated.
-	 *
-	 * \todo
-	 * Fix copy constructor so Resources can be stored in stl containers without wrapping them in shared_ptrs
 	 *
 	 * \sa ResourceManager | ResourcePointer | ResourceLoader
 	 */
 	class ResourceContainer
 	{
 	public:
-		//! Used for ticketing
-		typedef unsigned int ResourcePtrTicket;
-		//! Ticket list
-		typedef std::vector<ResourcePtrTicket> TicketList;
-
-		typedef std::set<ResourceContainer*> DependantSet;
+		typedef std::set<ResourceDataPtr> DependenciesSet;
 
 	protected:
 		std::string m_Type;
-		ResourceTag m_Tag;
+		//ResourceTag m_Tag;
 		std::wstring m_Path;
 
 		void *m_Data;
@@ -82,12 +82,9 @@ namespace FusionEngine
 		bool m_Valid;
 		bool m_HasQuickLoadData;
 
-		DependantSet m_Dependants;
+		DependenciesSet m_Dependencies;
 
-		int m_RefCount;
-		ResourcePtrTicket m_NextTicket;
-		// Ticket version (replaces RefCount)
-		TicketList m_RefTickets;
+		volatile long m_RefCount;
 
 		CL_Mutex m_Mutex;
 
@@ -98,11 +95,19 @@ namespace FusionEngine
 		bsig2::signal<void ()> SigLoad;
 		bsig2::signal<void ()> SigUnload;
 
+		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
+		LoadedSignal SigLoaded;
+
+		typedef LoadedSignal::signature_type LoadedFn;
+
+		typedef std::tr1::function<void (ResourceDataPtr)> ReleasedFn;
+		ReleasedFn NoReferences;
+
 	public:
 		//! Constructor
 		ResourceContainer()
 			: m_Type(""),
-			m_Tag(L""),
+			//m_Tag(L""),
 			m_Path(L""),
 			m_Data(NULL),
 			m_QuickLoadData(NULL),
@@ -114,15 +119,14 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		ResourceContainer(const char* type, const ResourceTag &tag, const std::wstring& path, void* ptr)
+		ResourceContainer(const char* type, const std::wstring& path, void* ptr)
 			: m_Type(type),
-			m_Tag(tag),
+			//m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_NextTicket(0),
 			m_ToLoad(false)
 		{
 			if (ptr != 0)
@@ -132,15 +136,14 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		ResourceContainer(const std::string& type, const ResourceTag &tag, const std::wstring& path, void* ptr)
+		ResourceContainer(const std::string& type, const std::wstring& path, void* ptr)
 			: m_Type(type),
-			m_Tag(tag),
+			//m_Tag(tag),
 			m_Path(path),
 			m_Data(ptr),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_NextTicket(0),
 			m_ToLoad(false)
 		{
 			if (ptr != 0)
@@ -150,15 +153,14 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		ResourceContainer(const std::string& type, const std::string &tag, const std::string& path, void* ptr)
+		ResourceContainer(const std::string& type, const std::string& path, void* ptr)
 			: m_Type(type),
-			m_Tag(fe_widen(tag)),
+			//m_Tag(fe_widen(tag)),
 			m_Path(fe_widen(path)),
 			m_Data(ptr),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_NextTicket(0),
 			m_ToLoad(false)
 		{
 			if (ptr != 0)
@@ -172,11 +174,11 @@ namespace FusionEngine
 #ifdef _DEBUG
 			if (m_Valid || m_Data != NULL)
 			{
-				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion - Resource Data leaked.");
+				SendToConsole(L"Resource '" + m_Path + L"' may not have been properly dellocated before deletion - Resource Data leaked.");
 			}
 			if (m_HasQuickLoadData || m_QuickLoadData != NULL)
 			{
-				SendToConsole(L"Resource '" + m_Tag + L"' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
+				SendToConsole(L"Resource '" + m_Path + L"' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
 			}
 #endif
 		}
@@ -188,10 +190,10 @@ namespace FusionEngine
 			return m_Type;
 		}
 		//! Returns the resource tag which should point to the Rsc
-		const ResourceTag& GetTag() const
-		{
-			return m_Tag;
-		}
+		//const ResourceTag& GetTag() const
+		//{
+		//	return m_Tag;
+		//}
 		//! Returns the path property
 		const std::wstring& GetPath() const
 		{
@@ -246,10 +248,10 @@ namespace FusionEngine
 		void _setValid(bool valid)
 		{
 			m_Valid = valid;
-			if (valid)
-				SigLoad();
-			else
-				SigUnload();
+			//if (valid)
+			//	SigLoad();
+			//else
+			//	SigUnload();
 		}
 
 		//! Returns true if the resource data is valid
@@ -291,32 +293,53 @@ namespace FusionEngine
 
 		void DependsOn(ResourceContainer *resource)
 		{
-			resource->_addDependant(this);
+			m_Dependencies.insert(ResourceDataPtr(resource));
 		}
 
 		void _addDependant(ResourceContainer *dependant)
 		{
-			m_Dependants.insert(dependant);
+			dependant->DependsOn(this);
+		}
+
+		void AddReference()
+		{
+			InterlockedIncrement(&m_RefCount);
+		}
+
+		void RemoveReference()
+		{
+			InterlockedDecrement(&m_RefCount);
+			if (m_RefCount <= 1)
+				NoReferences(this);
+		}
+
+		bool SingleReference()
+		{
+			return m_RefCount == 1;
 		}
 
 		//! Makes this resource immutable
-		bool Lock()
-		{
-			// Only lock if this resource is currently loaded
-			if (IsValid())
-			{
-				m_Mutex.lock();
-				return true;
-			}
-			else
-				return false;
-		}
+		/*!
+		* Returns false if the resource is invalid (not loaded)
+		* and thus cannot be locked.
+		*/
+		//bool Lock()
+		//{
+		//	// Only lock if this resource is currently loaded
+		//	if (IsValid())
+		//	{
+		//		m_Mutex.lock();
+		//		return true;
+		//	}
+		//	else
+		//		return false;
+		//}
 
 		//! Makes this resource mutable
-		void Unlock()
-		{
-			m_Mutex.unlock();
-		}
+		//void Unlock()
+		//{
+		//	m_Mutex.unlock();
+		//}
 
 		//! Increments ref count
 		//void AddRef()
@@ -324,51 +347,51 @@ namespace FusionEngine
 		//	m_RefCount++;
 		//}
 
-		//! Decrements ref count
-		void DropRef()
-		{
-			m_RefCount--;
-		}
-
-		//! Increments ref count
-		ResourcePtrTicket AddRef()
-		{
-#ifdef FSN_RESOURCE_USE_TICKETS
-			m_RefTickets.push_back(m_NextTicket);
-			return m_NextTicket++;
-#else
-			return m_RefCount++;
-#endif
-		}
-
-		//! Decrements ref count
-		void DropRef(ResourcePtrTicket ticket)
-		{
-#ifdef FSN_RESOURCE_USE_TICKETS
-			for (TicketList::iterator it = m_RefTickets.begin(); it != m_RefTickets.end(); ++it)
-			{
-				if (*it == ticket)
-				{
-					m_RefTickets.erase(it);
-					break;
-				}
-			}
-
-#else
-			m_RefCount--;
-#endif
-		}
-
-		//! Returns true if this resource is referenced
-		bool IsReferenced() const
-		{
-#ifdef FSN_RESOURCE_USE_TICKETS
-			return !m_RefTickets.empty();
-
-#else
-			return m_RefCount > 0;
-#endif
-		}
+//		//! Decrements ref count
+//		void DropRef()
+//		{
+//			m_RefCount--;
+//		}
+//
+//		//! Increments ref count
+//		ResourcePtrTicket AddRef()
+//		{
+//#ifdef FSN_RESOURCE_USE_TICKETS
+//			m_RefTickets.push_back(m_NextTicket);
+//			return m_NextTicket++;
+//#else
+//			return m_RefCount++;
+//#endif
+//		}
+//
+//		//! Decrements ref count
+//		void DropRef(ResourcePtrTicket ticket)
+//		{
+//#ifdef FSN_RESOURCE_USE_TICKETS
+//			for (TicketList::iterator it = m_RefTickets.begin(); it != m_RefTickets.end(); ++it)
+//			{
+//				if (*it == ticket)
+//				{
+//					m_RefTickets.erase(it);
+//					break;
+//				}
+//			}
+//
+//#else
+//			m_RefCount--;
+//#endif
+//		}
+//
+//		//! Returns true if this resource is referenced
+//		bool IsReferenced() const
+//		{
+//#ifdef FSN_RESOURCE_USE_TICKETS
+//			return !m_RefTickets.empty();
+//
+//#else
+//			return m_RefCount > 0;
+//#endif
+//		}
 	};
 
 }
