@@ -37,7 +37,7 @@ namespace FusionEngine
 
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			delete resource->GetDataPtr();
 		}
@@ -61,7 +61,7 @@ namespace FusionEngine
 
 	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
 			delete resource->GetDataPtr();
@@ -71,7 +71,7 @@ namespace FusionEngine
 
 	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			delete resource->GetDataPtr();
 		}
@@ -108,7 +108,7 @@ namespace FusionEngine
 
 	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
 

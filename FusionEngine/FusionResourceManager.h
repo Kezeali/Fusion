@@ -89,20 +89,31 @@ namespace FusionEngine
 		//! Maps Resource types to ResourceLoader factory methods
 		typedef std::tr1::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
+		typedef std::vector<ResourceDataPtr> ResourceList;
+		typedef std::set<ResourceDataPtr> ResourceSet;
+
 		struct ResourceToLoadData
 		{
 			int priority;
-			std::string type;
-			std::wstring path;
+			//std::string type;
+			//std::wstring path;
+			//ResourceContainer::LoadedFn callback;
+			ResourceDataPtr resource;
 
 			ResourceToLoadData() {}
 
-			ResourceToLoadData(const std::string& _type, const std::wstring& _path, int _priority)
+			ResourceToLoadData(int _priority, const ResourceDataPtr &_resource)
 				: priority(_priority),
-				type(_type),
-				path(_path)
-			{
-			}
+				resource(_resource)
+			{}
+
+			//ResourceToLoadData(int _priority, const std::string& _type, const std::wstring& _path, ResourceContainer::LoadedFn _callback)
+			//	: priority(_priority),
+			//	type(_type),
+			//	path(_path),
+			//	callback(_callback)
+			//{
+			//}
 
 			bool operator< (const ResourceToLoadData& rhs) const
 			{
@@ -111,7 +122,8 @@ namespace FusionEngine
 		};
 
 		typedef std::priority_queue<ResourceToLoadData> ToLoadQueue;
-		typedef std::tr1::unordered_set<std::wstring> ToUnloadList;
+		typedef std::vector<ResourceDataPtr> ToUnloadList;
+		//typedef std::tr1::unordered_set<ResourceDataPtr> ToUnloadList;
 
 	public:
 		//! Constructor
@@ -192,10 +204,15 @@ namespace FusionEngine
 		//ResourceSpt &TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
 
 		//! Invokes the ResourceLoadedFn for each loaded resource
-		void HandOutLoadedResources();
+		void DeliverLoadedResources();
 
+		void UnloadUnreferencedResources();
+
+		ResourceDataPtr GetResource(const std::string& type, const std::wstring& path, int priority = 0);
 		//! Loads / gets a resource
-		void GetResource(const std::string& type, const std::wstring& path, ResourceContainer::LoadedFn callback, int priority = 0);
+		bsig2::connection GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
+
+		void resourceUnreferenced(ResourceDataPtr);
 
 		//! Loads a resource
 		/*!
@@ -308,7 +325,12 @@ namespace FusionEngine
 		ResourceMap m_Resources;
 
 		// Garbage
-		ResourceMap m_Garbage;
+		//ResourceMap m_Garbage;
+
+		ResourceSet m_Unreferenced;
+
+		CL_Mutex m_ToDeliverMutex;
+		ResourceList m_ToDeliver;
 
 		CL_Mutex m_LoaderMutex;
 		// ResourceLoader factory methods

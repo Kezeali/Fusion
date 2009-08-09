@@ -14,7 +14,8 @@ namespace FusionEngine
 {
 
 	ResourceDescription::ResourceDescription()
-		: m_ScriptPropertyIndex(-1)
+		: m_Priority(0),
+		m_ScriptPropertyIndex(-1)
 	{}
 
 	ResourceDescription::~ResourceDescription()
@@ -40,6 +41,11 @@ namespace FusionEngine
 		m_ResourceName = name;
 	}
 
+	void ResourceDescription::SetPriority(int priority)
+	{
+		m_Priority = priority;
+	}
+
 	void ResourceDescription::SetPropertyIndex(int index)
 	{
 		m_ScriptPropertyIndex = index;
@@ -53,6 +59,11 @@ namespace FusionEngine
 	const std::string &ResourceDescription::GetResourceName() const
 	{
 		return m_ResourceName;
+	}
+
+	int ResourceDescription::GetPriority() const
+	{
+		return m_Priority;
 	}
 
 	int ResourceDescription::GetPropertyIndex() const
@@ -88,15 +99,15 @@ namespace FusionEngine
 		m_SyncedProperties = properties;
 	}
 
-	void ScriptedEntity::SetStreamedResources(const ScriptedEntity::StreamedResourceMap &resources)
-	{
-		m_Streamed = resources;
-	}
+	//void ScriptedEntity::SetStreamedResources(const ScriptedEntity::StreamedResourceMap &resources)
+	//{
+	//	m_Streamed = resources;
+	//}
 
-	void ScriptedEntity::AddStreamedResource(const std::string &type, const std::wstring &path)
-	{
-		m_Streamed[path] = type;
-	}
+	//void ScriptedEntity::AddStreamedResource(const std::string &type, const std::wstring &path)
+	//{
+	//	m_Streamed[path] = type;
+	//}
 
 	std::string ScriptedEntity::GetType() const
 	{
@@ -159,15 +170,15 @@ namespace FusionEngine
 	void ScriptedEntity::OnStreamIn()
 	{
 		//add m_ResourceManager member
-		ResourceManager *res = ResourceManager::getSingletonPtr();
-		if (res != NULL)
-		{
-			// Stream in resources
-			for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
-			{
-				res->PreloadResource_Background(it->second, it->first, 1);
-			}
-		}
+		//ResourceManager *res = ResourceManager::getSingletonPtr();
+		//if (res != NULL)
+		//{
+		//	// Stream in resources
+		//	for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
+		//	{
+		//		res->PreloadResource_Background(it->second, it->first, 1);
+		//	}
+		//}
 
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamIn()");
 		if (f.ok())
@@ -178,15 +189,15 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnStreamOut()
 	{
-		ResourceManager *res = ResourceManager::getSingletonPtr();
-		if (res != NULL)
-		{
-			// Stream in resources
-			for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
-			{
-				res->UnloadResource_Background(it->first);
-			}
-		}
+		//ResourceManager *res = ResourceManager::getSingletonPtr();
+		//if (res != NULL)
+		//{
+		//	// Stream in resources
+		//	for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
+		//	{
+		//		res->UnloadResource_Background(it->first);
+		//	}
+		//}
 
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamOut()");
 		if (f.ok())

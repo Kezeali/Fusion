@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="Entity">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Script">
+					<xs:complexType>
+						<xs:attribute name="type" type="xs:string" use="required" />
+						<xs:attribute name="file" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Dependencies">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element maxOccurs="unbounded" name="Entity">
+								<xs:complexType>
+									<xs:attribute name="typename" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="UtilityScript">
+								<xs:complexType>
+									<xs:attribute name="file" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Sync">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element maxOccurs="unbounded" name="Property">
+								<xs:complexType>
+									<xs:attribute name="type" type="xs:string" use="required" />
+									<xs:attribute name="predictable" type="xs:boolean" use="optional" />
+									<xs:attribute name="arbitrated" type="xs:boolean" use="optional" />
+									<xs:attribute name="name" type="xs:string" use="required" />
+									<xs:attribute name="local" type="xs:boolean" use="optional" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Streaming">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element maxOccurs="unbounded" name="Sprite">
+								<xs:complexType>
+									<xs:attribute name="property" type="xs:string" use="optional" />
+									<xs:attribute name="resource" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="Sound">
+								<xs:complexType>
+									<xs:attribute name="property" type="xs:string" use="required" />
+									<xs:attribute name="resource" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="SoundStream">
+								<xs:complexType>
+									<xs:attribute name="property" type="xs:string" use="required" />
+									<xs:attribute name="resource" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="Image">
+								<xs:complexType>
+									<xs:attribute name="property" type="xs:string" use="optional" />
+									<xs:attribute name="resource" type="xs:string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element maxOccurs="unbounded" name="Polygon">
+								<xs:complexType>
+									<xs:attribute name="resource" type="xs:string" use="required" />
+									<xs:attribute name="property" type="xs:string" use="optional" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="typename" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

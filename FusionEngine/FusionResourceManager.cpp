@@ -31,6 +31,7 @@ namespace FusionEngine
 		{
 			if (a_cstr[i] != b_cstr[i]) return i;
 		}
+		return 0;
 	}
 
 	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
@@ -148,14 +149,14 @@ namespace FusionEngine
 		//  (so they'll get unloaded in the unload thread)
 		// Or perhaps this method isn't needed at all - NoReferences() could call a ResourceManager function that
 		//  simply adds the resource to the ToUnload queue immeadiatly.
-		CL_MutexSection lock(&m_ToUnloadMutex);
-		for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
-		{
-			ResourceDataPtr &res = *it;
+		//CL_MutexSection lock(&m_ToUnloadMutex);
+		//for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+		//{
+		//	ResourceDataPtr &res = *it;
 
-			if (res->SingleReference())
-				unloadResource(res, m_GC);
-		}
+		//	if (res->SingleReference())
+		//		unloadResource(res, m_GC);
+		//}
 	}
 
 	void ResourceManager::DeleteResources()
@@ -331,25 +332,18 @@ namespace FusionEngine
 				ResourceToLoadData toLoadData = m_ToLoad.top();
 
 				toLoadMutexSection.unlock();
-
-				// Don't bother loading if it has been added to the unload list already
-				CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
-				ToUnloadList::iterator _where = m_ToUnload.find(toLoadData.path);
-				if (_where == m_ToUnload.end())
+				try
 				{
-					try
-					{
-						//CL_SharedGCData::add_ref();
-						loadResource(toLoadData.type, toLoadData.path, loadingGC);
-						//CL_SharedGCData::release_ref();
-					}
-					catch (FileSystemException &ex)
-					{
-						//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
-						Logger::getSingleton().Add(ex.GetDescription(), "ResourceManager", LOG_NORMAL);
-					}
+					//CL_SharedGCData::add_ref();
+					loadResource(toLoadData.resource, loadingGC);
+					//resource->SigLoaded.connect( toLoadData.callback );
+					//CL_SharedGCData::release_ref();
 				}
-
+				catch (FileSystemException &ex)
+				{
+					//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
+					Logger::getSingleton().Add(ex.GetDescription(), "ResourceManager", LOG_NORMAL);
+				}
 				toLoadMutexSection.lock();
 				m_ToLoad.pop();
 			}
@@ -393,49 +387,165 @@ namespace FusionEngine
 	//	return m_Resources[tag] = resource;
 	//}
 
-	void ResourceManager::HandOutLoadedResources()
+	void ResourceManager::DeliverLoadedResources()
 	{
-		CL_MutexSection lock(&m_LoadedResourcesMutex);
-		for (ResourceList::iterator it = m_LoadedResources.begin(), end = m_LoadedResources.end(); it != end; ++it)
+		CL_MutexSection lock(&m_ToDeliverMutex);
+		for (ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end(); it != end; ++it)
 		{
-			ResourceDataPtr &res = it->second;
-			res->SigLoaded(res);
-			res->SigLoaded.disconnect_all_slots();
+			ResourceDataPtr &res = *it;
+			if (res->IsLoaded())
+			{
+				res->SigLoaded(res);
+				res->SigLoaded.disconnect_all_slots();
+
+				it = m_ToDeliver.erase(it);
+			}
 		}
-		m_LoadedResources.clear();
+		//m_LoadedResources.clear();
 	}
 
-	void ResourceManager::GetResource(const std::string& type, const std::wstring& path, ResourceContainer::LoadedFn callback, int priority)
+	ResourceDataPtr ResourceManager::GetResource(const std::string& type, const std::wstring& path, int priority)
 	{
+		ResourceDataPtr resource;
+
 		// Check whether the given resource already exists
 		ResourceMap::iterator existing = m_Resources.find(path);
 		if (existing != m_Resources.end() && existing->second->GetPath() == path)
 		{
-			existing->second;
+			resource = existing->second;
+
+			// Remove matching entry from Unreferenced
+			if (resource->Unused())
+				m_Unreferenced.erase(resource);
 		}
 		else
 		{
+			resource = ResourceDataPtr(new ResourceContainer(type, path, NULL));
+			resource->NoReferences = boost::bind(&ResourceManager::resourceUnreferenced, this, _1);
+
+			m_Resources[path] = resource;
+		}
+
+		if (resource->IsQueuedToUnload())
+		{
+			// TODO: Make a method that does the following
+			m_ToUnloadMutex.lock();
+			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+			{
+				if (*it == resource)
+				{
+					m_ToUnload.erase(it);
+					break;
+				}
+			}
+			m_ToUnloadMutex.unlock();
+		}
+
+		if (!resource->IsLoaded() && !resource->IsQueuedToLoad())
+		{
+			m_ToDeliver.push_back(resource);
+
 			m_ToLoadMutex.lock();
-			m_ToLoad.push(ResourceToLoadData(type, path, priority));
+			m_ToLoad.push(ResourceToLoadData(priority, resource));
 			m_ToLoadMutex.unlock();
 
 			m_ToLoadEvent.set();
 		}
+
+		return resource;
+	}
+
+	bsig2::connection ResourceManager::GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
+	{
+		ResourceDataPtr resource;
+
+		// Check whether the given resource already exists
+		ResourceMap::iterator existing = m_Resources.find(path);
+		if (existing != m_Resources.end() && existing->second->GetPath() == path)
+		{
+			resource = existing->second;
+
+			// Remove matching entry from Unreferenced
+			if (resource->Unused())
+				m_Unreferenced.erase(resource);
+		}
+		else
+		{
+			resource = ResourceDataPtr(new ResourceContainer(type, path, NULL));
+			resource->NoReferences = boost::bind(&ResourceManager::resourceUnreferenced, this, _1);
+
+			m_Resources[path] = resource;
+		}
+
+		if (resource->IsQueuedToUnload())
+		{
+			// TODO: Make a method that does the following
+			m_ToUnloadMutex.lock();
+			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+			{
+				if (*it == resource)
+				{
+					m_ToUnload.erase(it);
+					break;
+				}
+			}
+			m_ToUnloadMutex.unlock();
+		}
+
+		bsig2::connection onLoadConnection;
+
+		if (!resource->IsLoaded() && !resource->IsQueuedToLoad())
+		{
+			m_ToDeliver.push_back(resource);
+
+			if (on_load_callback)
+				onLoadConnection = resource->SigLoaded.connect(on_load_callback);
+
+			// A non-locking alternative would be to add these ToLoad jobs
+			//  to another queue only accessed by this thread, then using an
+			//  Update(dt) method (called each engine-step) push those entries
+			//  onto the ToLoad queue whenever the worker has nothing to do
+			//  (as notified by an event, aka barrier) There will have to be
+			//  a limit to how many load jobs can be pushed per interval of
+			//  time so that the Update method doesn't get bogged down.
+			//   Of course, the lock below and its counterpart in the worker
+			//  thread only happen for a moment, so it is most likely not
+			//  a big enough deal to look at a non-locking solution.
+			//  If I were to hazzard a guess, I'd say locking will actually
+			//  yeald better performance.
+			m_ToLoadMutex.lock();
+			m_ToLoad.push(ResourceToLoadData(priority, resource));
+			m_ToLoadMutex.unlock();
+
+			m_ToLoadEvent.set();
+		}
+		else
+		{
+			on_load_callback(resource);
+		}
+
+		return onLoadConnection;
+	}
+
+	void ResourceManager::resourceUnreferenced(ResourceDataPtr resource)
+	{
+		m_Unreferenced.insert(resource.get());
 	}
 
 	void ResourceManager::LoadResource_Background(const std::string& type, const std::wstring& path, int priority)
 	{
 		//ResourceSpt resource = ResourceSpt(new ResourceContainer(type, path, path, NULL));
 		//m_Resources[path] = resource;
-		ResourceDataPtr &resource = GetResourceDefault(path, type);
 
-		m_ToLoadMutex.lock();
-		m_ToLoad.push(ResourceToLoadData(type, path, priority));
-		m_ToLoadMutex.unlock();
-		
-		m_ToLoadEvent.set();
+		//ResourceDataPtr &resource = GetResourceDefault(path, type);
 
-		return resource;
+		//m_ToLoadMutex.lock();
+		//m_ToLoad.push(ResourceToLoadData(type, path, priority));
+		//m_ToLoadMutex.unlock();
+		//
+		//m_ToLoadEvent.set();
+
+		//return resource;
 	}
 
 	void ResourceManager::UnloadResource(const std::wstring &path)
@@ -445,11 +555,11 @@ namespace FusionEngine
 
 	void ResourceManager::UnloadResource_Background(const std::wstring &path)
 	{
-		m_ToUnloadMutex.lock();
-		m_ToUnload.insert(path);
-		m_ToUnloadMutex.unlock();
+		//m_ToUnloadMutex.lock();
+		//m_ToUnload.insert(path);
+		//m_ToUnloadMutex.unlock();
 
-		m_ToUnloadEvent.set();
+		//m_ToUnloadEvent.set();
 	}
 
 	//ResourceSpt &ResourceManager::GetResourceDefault(const ResourceTag &tag, const std::string &type)
@@ -469,7 +579,7 @@ namespace FusionEngine
 	{
 		CL_MutexSection resourcesLock(&m_ResourcesMutex);
 
-		ResourceSpt resource;
+		ResourceDataPtr resource;
 
 		// Check whether there is an existing tag pointing to the same resource
 		ResourceMap::iterator existing = m_Resources.find(path);
@@ -480,14 +590,13 @@ namespace FusionEngine
 		else
 		{
 			// Create a new resource container
-			resource = ResourceSpt(new ResourceContainer(type, path, NULL));
+			resource = ResourceDataPtr(new ResourceContainer(type, path, NULL));
 		}
 
-		loadResource(resource, gc);
+		if (!resource->IsLoaded())
+			loadResource(resource, gc);
 
-		m_Resources[path] = resource;
-
-		return resource;
+		return m_Resources[path] = resource;
 	}
 
 	void ResourceManager::loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc)

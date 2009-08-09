@@ -403,8 +403,14 @@ namespace FusionEngine
 					m_EntitiesToUpdate.erase(it);
 				else
 				{
-					entity->Update(split);
-					updateRenderables(entity, split);
+					if (entity->Wait())
+					{
+						entity->Update(split);
+						updateRenderables(entity, split);
+
+						if (entity->IsStreamedOut())
+							entity->SetWait(2);
+					}
 				}
 				//updateEntity(entity, split);
 			}

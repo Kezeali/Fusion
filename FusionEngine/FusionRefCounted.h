@@ -42,7 +42,16 @@
 namespace FusionEngine
 {
 
-	//! Base class for AngelScript compatible ReferenceCounted type
+	//! Normal ref-counted type
+	struct normal_refcounted {};
+	//! Ref-counted type with no constructor
+	struct no_factory {};
+	//! Ref-counted type that can't be copied by value
+	struct noncopyable : public boost::noncopyable {};
+	//! \see no_factory | noncopyable
+	struct no_factory_noncopyable : no_factory, noncopyable {};
+
+	//! Base class for AngelScript compatible reference counted type
 	class RefCounted
 	{
 	private:
@@ -86,19 +95,10 @@ namespace FusionEngine
 		static T& Assign(T* lhs, const T& rhs)
 		{
 			*lhs = rhs;
-			RefCounted* lhs_rc = dynamic_cast<RefCounted*>(lhs);
+			RefCounted* lhs_rc = static_cast<RefCounted*>(lhs);
 			lhs_rc->m_RefCount = 1;
 			return *lhs;
 		}
-		
-		//! Normal ref-counted type
-		struct no_flags {};
-		//! Ref-counted type with no constructor
-		struct no_factory {};
-		//! Ref-counted type that can't be copied by value
-		struct noncopyable {};
-		//! \see no_factory | noncopyable
-		struct no_factory_noncopyable : no_factory, noncopyable {};
 
 		////! Exclusion flags define things that wont be registered for this class
 		//enum ExclusionFlags

@@ -252,6 +252,8 @@ namespace FusionEngine
 			std::string propertyName = child->GetAttribute("property");
 			resource.SetPropertyName( propertyName );
 			resource.SetResourceName( ResolvePath(child->GetAttribute("resource")) );
+			int priority; child->GetAttributeOrDefault("priority", &priority, 0);
+			resource.SetPriority(priority);
 
 			m_Resources[propertyName] = resource;
 		}
@@ -419,17 +421,20 @@ namespace FusionEngine
 		//entity->SetPath(m_Definition->GetWorkingDirectory());
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
 
+		//StreamedResourceUserPtr resourceUser;
+
 		const ResourcesMap &resources = m_Definition->GetStreamedResources();
 		for (ResourcesMap::const_iterator it = resources.begin(), end = resources.end(); it != end; ++it)
 		{
 			const ResourceDescription &desc = it->second;
 			if (desc.GetType() == "Sprite")
 			{
-				ResourcePointer<CL_Sprite> resource = resMan->GetResource<CL_Sprite>(desc.GetResourceName(), "SPRITE");
-
-				RenderablePtr renderable(new Renderable(resource));
+				RenderablePtr renderable( new Renderable(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority()) );
 
 				entity->AddRenderable(renderable);
+
+				// Add the object to the entity for automatic streaming
+				entity->AddStreamedResource( renderable );
 
 				if (desc.GetPropertyIndex() >= 0)
 				{
@@ -456,11 +461,11 @@ namespace FusionEngine
 				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
 					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
 
-				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO");
-
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resource, false);
+				*soundProp = new SoundSample(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority(), false);
+
+				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
 			else if (desc.GetType() == "SoundStream")
 			{
@@ -468,14 +473,18 @@ namespace FusionEngine
 				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
 					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
 
-				ResourcePointer<CL_SoundBuffer> resource = resMan->GetResource<CL_SoundBuffer>(desc.GetResourceName(), "AUDIO:STREAM");
-
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resource, true);
+				*soundProp = new SoundSample(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority(), true);
+
+				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
 
-			entity->AddStreamedResource(desc.GetType(), fe_widen(desc.GetResourceName()));
+			//if (resourceUser.get() != NULL)
+			//{
+			//	entity->AddStreamedResource(resourceUser);
+			//	resourceUser.reset();
+			//}
 		}
 
 		return entity;

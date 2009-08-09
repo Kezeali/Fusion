@@ -373,6 +373,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionStreamedResourceUser.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp"
 				>
 			</File>
@@ -676,6 +680,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionStateMessage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionStreamedResourceUser.h"
 				>
 			</File>
 			<File

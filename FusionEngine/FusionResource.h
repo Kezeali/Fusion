@@ -79,7 +79,7 @@ namespace FusionEngine
 		// Data that isn't unloaded until the resource is released
 		void *m_QuickLoadData;
 
-		bool m_Valid;
+		bool m_Loaded;
 		bool m_HasQuickLoadData;
 
 		DependenciesSet m_Dependencies;
@@ -89,6 +89,7 @@ namespace FusionEngine
 		CL_Mutex m_Mutex;
 
 		bool m_ToLoad;
+		bool m_ToUnload;
 
 	public:
 		bsig2::signal<void ()> SigDelete;
@@ -98,7 +99,7 @@ namespace FusionEngine
 		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
 		LoadedSignal SigLoaded;
 
-		typedef LoadedSignal::signature_type LoadedFn;
+		typedef std::tr1::function<void (ResourceDataPtr)> LoadedFn;
 
 		typedef std::tr1::function<void (ResourceDataPtr)> ReleasedFn;
 		ReleasedFn NoReferences;
@@ -113,7 +114,8 @@ namespace FusionEngine
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_ToLoad(false)
+			m_ToLoad(false),
+			m_ToUnload(false)
 		{
 			_setValid(false);
 		}
@@ -127,7 +129,8 @@ namespace FusionEngine
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_ToLoad(false)
+			m_ToLoad(false),
+			m_ToUnload(false)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -144,7 +147,8 @@ namespace FusionEngine
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_ToLoad(false)
+			m_ToLoad(false),
+			m_ToUnload(false)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -161,7 +165,8 @@ namespace FusionEngine
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
 			m_RefCount(0),
-			m_ToLoad(false)
+			m_ToLoad(false),
+			m_ToUnload(false)
 		{
 			if (ptr != 0)
 				_setValid(true);
@@ -172,7 +177,7 @@ namespace FusionEngine
 		~ResourceContainer()
 		{
 #ifdef _DEBUG
-			if (m_Valid || m_Data != NULL)
+			if (m_Loaded || m_Data != NULL)
 			{
 				SendToConsole(L"Resource '" + m_Path + L"' may not have been properly dellocated before deletion - Resource Data leaked.");
 			}
@@ -233,7 +238,7 @@ namespace FusionEngine
 		template<typename T>
 		T &GetData() const
 		{
-			FSN_ASSERT(IsValid());
+			FSN_ASSERT(IsLoaded());
 			return *(dynamic_cast<T*>(m_Data));
 		}
 
@@ -247,7 +252,7 @@ namespace FusionEngine
 		 */
 		void _setValid(bool valid)
 		{
-			m_Valid = valid;
+			m_Loaded = valid;
 			//if (valid)
 			//	SigLoad();
 			//else
@@ -255,9 +260,9 @@ namespace FusionEngine
 		}
 
 		//! Returns true if the resource data is valid
-		bool IsValid() const
+		bool IsLoaded() const
 		{
-			return m_Valid;
+			return m_Loaded;
 		}
 
 		//! Sets the data
@@ -301,6 +306,27 @@ namespace FusionEngine
 			dependant->DependsOn(this);
 		}
 
+		void _setQueuedToLoad(bool is_queued)
+		{
+			m_ToLoad = is_queued;
+		}
+
+		bool IsQueuedToLoad() const
+		{
+			return m_ToLoad;
+		}
+
+		void _setQueuedToUnoad(bool is_queued)
+		{
+			m_ToUnload = is_queued;
+		}
+
+		bool IsQueuedToUnload() const
+		{
+			return m_ToUnload;
+		}
+
+
 		void AddReference()
 		{
 			InterlockedIncrement(&m_RefCount);
@@ -308,14 +334,26 @@ namespace FusionEngine
 
 		void RemoveReference()
 		{
-			InterlockedDecrement(&m_RefCount);
-			if (m_RefCount <= 1)
-				NoReferences(this);
+			long refCount = InterlockedDecrement(&m_RefCount);
+			if (refCount == 1)
+			{
+				if (NoReferences) NoReferences(this);
+			}
+#ifdef _DEBUG
+			else if (refCount == 0)
+				SendToConsole(L"Resource ref-count reached zero without being deleted. Resource Name: " + m_Path);
+#endif
 		}
 
-		bool SingleReference()
+		long ReferenceCount() const
 		{
-			return m_RefCount == 1;
+			return m_RefCount;
+		}
+
+		//! Retures true if the given resource is not used (i.e. only referenced by the manager)
+		bool Unused() const
+		{
+			return ReferenceCount() == 1;
 		}
 
 		//! Makes this resource immutable

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sprite name="Explode" >
+<!--TODO: relative path evaluation for 'file' attributes in sprite definitions-->
+	<image file="Gfx/spaceshoot_body_moving1.png" />
+	<image file="Gfx/spaceshoot_body_moving2.png" />
+	<image file="Gfx/spaceshoot_body_moving3.png" />
+	<translation origin="center"/>
+	<rotation origin="center" base_angle="180"/>
+	<animation pingpong="no" speed="100"/>
+</sprite>

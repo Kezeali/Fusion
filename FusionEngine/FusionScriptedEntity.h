@@ -47,11 +47,13 @@ namespace FusionEngine
 
 		void SetPropertyName(const std::string &name);
 		virtual void SetResourceName(const std::string &name);
+		void SetPriority(int priority);
 
 		void SetPropertyIndex(int index);
 
 		const std::string &GetPropertyName() const;
 		const std::string &GetResourceName() const;
+		int GetPriority() const;
 
 		int GetPropertyIndex() const;
 
@@ -59,6 +61,7 @@ namespace FusionEngine
 		std::string m_ScriptPropertyName;
 		std::string m_Type; // Image, Sound, SoundStream
 		std::string m_ResourceName;
+		int m_Priority;
 
 		int m_ScriptPropertyIndex;
 	};
@@ -100,8 +103,8 @@ namespace FusionEngine
 		ScriptedEntity(ScriptObject script_self, const std::string &name);
 
 		void SetSyncProperties(const PropertiesMap &properties);
-		void SetStreamedResources(const StreamedResourceMap &resources);
-		void AddStreamedResource(const std::string &type, const std::wstring &path);
+		//void SetStreamedResources(const StreamedResourceMap &resources);
+		//void AddStreamedResource(const std::string &type, const std::wstring &path);
 
 		virtual std::string GetType() const;
 

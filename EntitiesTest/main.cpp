@@ -103,17 +103,17 @@ public:
 			// Need to pause this thread until the Background-load
 			//  thread has created its worker GC
 			CL_Event loaderGCCreated;
-			m_ResourceManager->StartBackgroundPreloadThread(gc, loaderGCCreated);
+			m_ResourceManager->StartBackgroundLoadThread(gc, loaderGCCreated);
 			// Wait for the event to be set
 			CL_Event::wait(loaderGCCreated);
 #elif defined(__APPLE__)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
+			m_ResourceManager->StartBackgroundLoadThread(loadingGC);
 #else
 			// Might have to create a secondary pbuffer here (I read something about
 			//  this giving better performance because of reduced resource locking)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			m_ResourceManager->StartBackgroundPreloadThread(loadingGC);
+			m_ResourceManager->StartBackgroundLoadThread(loadingGC);
 #endif
 
 			CL_OpenGL::set_active(gc);
@@ -174,6 +174,9 @@ public:
 
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
+
+				m_ResourceManager->DisposeUnusedResources();
+				m_ResourceManager->DeliverLoadedResources();
 
 				if (split < 500)
 				{

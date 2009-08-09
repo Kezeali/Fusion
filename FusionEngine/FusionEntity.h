@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007 Fusion Project Team
+  Copyright (c) 2007-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -38,6 +38,7 @@
 // Inherited
 #include "FusionPhysicsCallback.h"
 #include "FusionRefCounted.h"
+#include "FusionStreamedResourceUser.h"
 
 // Fusion
 #include "FusionSerialisedData.h"
@@ -97,11 +98,12 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
 
-	class Renderable : public RefCounted, RefCounted::noncopyable, boost::noncopyable
+	
+	class Renderable : public StreamedResourceUser
 	{
 	public:
 		Renderable();
-		Renderable(const ResourcePointer<CL_Sprite> &resource);
+		Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority);
 		virtual ~Renderable();
 
 		void _notifyAttached(const EntityPtr &entity);
@@ -133,10 +135,12 @@ namespace FusionEngine
 
 		void Update(float split/*, const Vector2 &position = Vector2(), float angle = 0.f*/);
 
-		void SetSpriteResource(const ResourcePointer<CL_Sprite> &resource);
+		//void SetSpriteResource(ResourceManager *res_man, const std::string &path);
 		ResourcePointer<CL_Sprite> &GetSpriteResource();
 
-		void OnSpriteLoad();
+		void OnResourceLoad(ResourceDataPtr resource);
+		//void OnStreamIn();
+		//void OnStreamOut();
 
 		void Draw(CL_GraphicContext &gc);
 		//! Draw the renderable at a position other than that of it's owning Entity
@@ -163,8 +167,6 @@ namespace FusionEngine
 
 		ResourcePointer<CL_Sprite> m_Sprite;
 
-		bsig2::connection m_LoadConnection;
-
 		int m_PreviousWidth, m_PreviousHeight;
 	};
 
@@ -175,7 +177,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public RefCounted, RefCounted::noncopyable, public ICollisionHandler
+	class Entity : public RefCounted, noncopyable, public ICollisionHandler
 	{
 	public:
 		//! Constructor
@@ -186,6 +188,8 @@ namespace FusionEngine
 		virtual ~Entity();
 
 	public:
+		//! Array of StreamedResourceUser objects
+		typedef std::vector<StreamedResourceUserPtr> StreamedResourceArray;
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
 		//! Sets the search-name of this Entity post-hoc
@@ -280,7 +284,7 @@ namespace FusionEngine
 		 */
 		unsigned int GetTagFlags() const;
 
-		void SetStreamedOut(bool is_streamed_out);
+		void SetStreamedIn(bool is_streamed_in);
 		bool IsStreamedOut() const;
 
 		void SetPaused(bool is_paused);
@@ -319,12 +323,20 @@ namespace FusionEngine
 
 		//virtual void UpdateRenderables();
 
-		const StringSet &GetStreamedResources() const;
+		void SetStreamedResources(const StreamedResourceArray &resources);
+		void AddStreamedResource(const StreamedResourceUserPtr &resource);
+		const StreamedResourceArray &GetStreamedResources() const;
+
+		void StreamIn();
+		void StreamOut();
 
 		//! Called after an Entity is streamed in
 		virtual void OnStreamIn() =0;
 		//! Called after an Entity is steamed out
 		virtual void OnStreamOut() =0;
+
+		bool ButtonIsActive(const std::string &input);
+		float GetAxisPosition(const std::string &input);
 
 		//! Save state to buffer
 		/*!
@@ -391,7 +403,7 @@ namespace FusionEngine
 
 		RenderableArray m_Renderables;
 
-		StringSet m_StreamedResources;
+		StreamedResourceArray m_StreamedResources;
 
 	};
 

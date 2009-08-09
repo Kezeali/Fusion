@@ -287,6 +287,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionEntityInput.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionEntityInputManager.h"
 				>
 			</File>
@@ -747,6 +751,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionStreamedResourceUser.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionStringFormatting.h"
 				>
 			</File>
@@ -878,6 +886,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionEntityFactory.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionEntityInput.cpp"
 				>
 			</File>
 			<File
@@ -1162,6 +1174,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStateManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStreamedResourceUser.cpp"
 				>
 			</File>
 			<File

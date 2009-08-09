@@ -144,7 +144,7 @@ namespace FusionEngine
 			return static_cast<const T*>( m_Resource->GetDataPtr() );
 		}
 
-		void SetTarget(ResourceSpt &resource)
+		void SetTarget(ResourceDataPtr &resource)
 		{
 			m_Resource = resource;
 		}
@@ -154,10 +154,15 @@ namespace FusionEngine
 			m_Resource.reset();
 		}
 
-		bool IsValid() const
+		bool IsLoaded() const
 		{
 			// Check that this pointer is valid (the resource container exists), before checking that the data is valid
-			return m_Resource ? m_Resource->IsValid() : false; 
+			return m_Resource ? m_Resource->IsLoaded() : false; 
+		}
+
+		bool IsNull() const
+		{
+			return m_Resource == false;
 		}
 
 		bsig2::signal<void ()> &SigDelete() const

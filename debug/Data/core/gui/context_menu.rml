@@ -1,0 +1,57 @@
+<rml>
+	<head>
+		<title>Console</title>
+		<link type="text/rcss" href="rkt.rcss"/>
+		<style>
+			body
+			{
+			width: 130px;
+			height: auto;
+			font-family: Delicious;
+			font-weight: normal;
+			font-style: normal;
+			}
+			button,
+			{
+			display: inline-block;
+
+			width: 128px;
+			height: 30px;
+
+			padding-top: 8px;
+
+			color: black;
+			font-size: 18;
+			text-align: center;
+			tab-index: auto;
+
+			background-decorator: image;
+			background-image: invader.png 247px 0px 406px 45px;
+			}
+
+			button:focus,
+			{
+			font-weight: bold;
+
+			shadow-font-effect: shadow;
+			shadow-offset: 1px 1px;
+			shadow-color: white;
+			}
+
+			button:hover,
+			{
+			font-weight: bold;
+
+			shadow-font-effect: shadow;
+			shadow-offset: 1px 1px;
+			shadow-color: blue;
+			}
+
+			button:active,
+			{
+			}
+		</style>
+	</head>
+	<body>
+	</body>
+</rml>

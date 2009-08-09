@@ -1,10 +1,12 @@
 
 #include "FusionCommon.h"
 
-// Fusion
-
 // Class
 #include "FusionEntity.h"
+
+// Fusion
+#include "FusionResourceManager.h"
+
 
 namespace FusionEngine
 {
@@ -117,8 +119,8 @@ namespace FusionEngine
 	{
 	}
 
-	Renderable::Renderable(const FusionEngine::ResourcePointer<CL_Sprite> &resource)
-		: m_Sprite(resource),
+	Renderable::Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority)
+		: StreamedResourceUser(res_man, "SPRITE", sprite_path, priority),
 		m_Angle(0.f),
 		m_DerivedAngle(0.f),
 		m_Colour(255, 255, 255, 255),
@@ -128,14 +130,10 @@ namespace FusionEngine
 		m_PreviousHeight(0),
 		m_PositionChanged(false)
 	{
-		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
-
-		OnSpriteLoad();
 	}
 
 	Renderable::~Renderable()
 	{
-		m_LoadConnection.disconnect();
 	}
 
 	void Renderable::_notifyAttached(const EntityPtr &entity)
@@ -150,7 +148,7 @@ namespace FusionEngine
 
 	void Renderable::SetAlpha(float _alpha)
 	{
-		if (m_Sprite.IsValid())
+		if (m_Sprite.IsLoaded())
 			m_Sprite->set_alpha(_alpha);
 		m_Alpha = _alpha;
 	}
@@ -164,7 +162,7 @@ namespace FusionEngine
 	{
 		m_Colour.set_color(r, g, b);
 
-		if (m_Sprite.IsValid())
+		if (m_Sprite.IsLoaded())
 			m_Sprite->set_color(m_Colour);
 	}
 
@@ -203,7 +201,7 @@ namespace FusionEngine
 
 	void Renderable::SetAngle(float angle)
 	{
-		if (m_Sprite.IsValid())
+		if (m_Sprite.IsLoaded())
 			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
 
 		if (!fe_fequal(angle, m_Angle))
@@ -250,7 +248,7 @@ namespace FusionEngine
 
 	void Renderable::Update(float split/*, const Vector2 &entity_position, float entity_angle*/)
 	{
-		if (m_Sprite.Lock())
+		if (m_Sprite.IsLoaded())
 		{
 			m_Sprite->update(split);
 
@@ -295,52 +293,50 @@ namespace FusionEngine
 
 				m_PositionChanged = false;
 			}
-
-			m_Sprite.Unlock();
 		}
 	}
 
-	void Renderable::SetSpriteResource(const ResourcePointer<CL_Sprite> &resource)
-	{
-		m_LoadConnection.disconnect();
-		m_Sprite = resource;
-		m_LoadConnection = m_Sprite.SigLoad().connect( boost::bind(&Renderable::OnSpriteLoad, this) );
-
-		OnSpriteLoad();
-	}
+	//void Renderable::SetSpriteResource(ResourceManager *res_man, const std::string &path)
+	//{
+	//	SetResource(res_man, path);
+	//}
 
 	ResourcePointer<CL_Sprite> &Renderable::GetSpriteResource()
 	{
 		return m_Sprite;
 	}
 
-	void Renderable::OnSpriteLoad()
+	void Renderable::OnResourceLoad(ResourceDataPtr resource)
 	{
-		if (m_Sprite.Lock())
-		{
-			m_Sprite->set_angle(CL_Angle(m_Angle/*m_DerivedAngle*/, cl_radians));
-			m_Sprite->set_alpha(m_Alpha);
-			m_Sprite->set_color(m_Colour);
-
-			m_Sprite.Unlock();
-		}
+		m_Sprite.SetTarget(resource);
+		m_Sprite->set_angle(CL_Angle(m_Angle/*m_DerivedAngle*/, cl_radians));
+		m_Sprite->set_alpha(m_Alpha);
+		m_Sprite->set_color(m_Colour);
 	}
+
+	//void Renderable::OnStreamIn()
+	//{
+	//	m_ResourceManager->GetResource("SPRITE", m_SpritePath, std::tr1::bind(&Renderable::OnSpriteLoad, this, _1), 1);
+	//}
+
+	//void Renderable::OnStreamOut()
+	//{
+	//	m_Sprite.Release();
+	//}
 
 	void Renderable::Draw(CL_GraphicContext &gc)
 	{
-		if (m_Enabled && m_Sprite.Lock())
+		if (m_Enabled && !m_Sprite.IsLoaded())
 		{
 			m_Sprite->draw(gc, m_DerivedPosition.x, m_DerivedPosition.y);
-			m_Sprite.Unlock();
 		}
 	}
 
 	void Renderable::Draw(CL_GraphicContext &gc, const Vector2 &origin)
 	{
-		if (m_Enabled && m_Sprite.Lock())
+		if (m_Enabled && !m_Sprite.IsLoaded())
 		{
 			m_Sprite->draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
-			m_Sprite.Unlock();
 		}
 	}
 
@@ -509,9 +505,9 @@ namespace FusionEngine
 		return m_Flags;
 	}
 
-	void Entity::SetStreamedOut(bool is_streamed_out)
+	void Entity::SetStreamedIn(bool is_streamed_in)
 	{
-		m_StreamedOut = is_streamed_out;
+		m_StreamedOut = !is_streamed_in;
 	}
 
 	bool Entity::IsStreamedOut() const
@@ -559,10 +555,10 @@ namespace FusionEngine
 		if (m_WaitStepsRemaining > 0)
 		{
 			--m_WaitStepsRemaining;
-			return true;
+			return false;
 		}
 		else
-			return false;
+			return true;
 	}
 
 	void Entity::MarkToRemove()
@@ -599,9 +595,49 @@ namespace FusionEngine
 		}
 	}
 
-	const StringSet &Entity::GetStreamedResources() const
+	void Entity::SetStreamedResources(const StreamedResourceArray &resources)
+	{
+		m_StreamedResources = resources;
+	}
+
+	void Entity::AddStreamedResource(const StreamedResourceUserPtr &resource)
+	{
+		m_StreamedResources.push_back(resource);
+	}
+
+	const Entity::StreamedResourceArray &Entity::GetStreamedResources() const
 	{
 		return m_StreamedResources;
+	}
+
+	void Entity::StreamIn()
+	{
+		SetStreamedIn(true);
+
+		for (StreamedResourceArray::iterator it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
+		{
+			StreamedResourceUserPtr &user = *it;
+			user->StreamIn();
+		}
+	}
+
+	void Entity::StreamOut()
+	{
+		SetStreamedIn(false);
+
+		for (StreamedResourceArray::iterator it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
+		{
+			StreamedResourceUserPtr &user = *it;
+			user->StreamOut();
+		}
+	}
+
+	bool Entity::ButtonIsActive(const std::string &input)
+	{
+	}
+
+	float Entity::GetAxisPosition(const std::string &input)
+	{
 	}
 
 	//virtual void Entity::UpdateRenderables(float split)
@@ -625,10 +661,13 @@ namespace FusionEngine
 		//	"bool isActive(const string &in) const",
 		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
 
-		//RefCounted::RegisterType<Entity>(engine, "Entity");
+		RefCounted::RegisterType<Entity>(engine, "Entity");
 		//r = engine->RegisterObjectMethod("Entity"
 		//	"EntityInputs getInputs() const",
 		//	asMETHOD(Entity, GetInputState), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Entity"
+			"bool buttonIsActive() const",
+			asMETHOD(Entity, ButtonIsActive), asCALL_THISCALL);
 	}
 
 }

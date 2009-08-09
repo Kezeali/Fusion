@@ -34,7 +34,7 @@ namespace FusionEngine
 
 	void LoadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 			delete resource->GetDataPtr();
 
 		//std::string& ext = CL_String::get_extension(resource->GetPath());
@@ -56,7 +56,7 @@ namespace FusionEngine
 
 	void UnloadAudio(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
 			delete resource->GetDataPtr();
@@ -66,7 +66,7 @@ namespace FusionEngine
 
 	void LoadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 			delete resource->GetDataPtr();
 
 		//std::string& ext = CL_String::get_extension(resource->GetPath());
@@ -88,7 +88,7 @@ namespace FusionEngine
 
 	void UnloadAudioStream(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
 			delete resource->GetDataPtr();

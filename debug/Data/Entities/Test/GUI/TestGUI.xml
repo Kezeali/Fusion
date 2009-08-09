@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity typename="TestGUI">
+	<Script type="angelscript">
+		class TestGUI : ScriptEntity
+		{
+			TestGUI()
+			{
+			}
+			
+			bool Spawn()
+			{
+				return true;
+			}
+			
+			void Update(float split)
+			{
+			}
+			
+			void Draw()
+			{
+			}
+		}
+	</Script>
+</Entity>
