@@ -217,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionEntityInput.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEntityManager.cpp"
 				>
 			</File>
@@ -464,6 +468,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionEntityFactory.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEntityInput.h"
 				>
 			</File>
 			<File
