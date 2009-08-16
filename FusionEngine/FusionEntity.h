@@ -41,9 +41,11 @@
 #include "FusionStreamedResourceUser.h"
 
 // Fusion
+#include "FusionPlayerInput.h"
 #include "FusionSerialisedData.h"
 #include "FusionEntityDeserialiser.h"
 #include "FusionResourcePointer.h"
+
 
 namespace FusionEngine
 {
@@ -177,7 +179,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public RefCounted, noncopyable, public ICollisionHandler
+	class Entity : public RefCounted, no_factory_noncopyable, public ICollisionHandler
 	{
 	public:
 		//! Constructor
@@ -209,6 +211,9 @@ namespace FusionEngine
 		void SetOwnerID(ObjectID owner);
 		//! Returns the owner ID of this entity
 		ObjectID GetOwnerID() const;
+
+		void SetAuthority(ObjectID authority);
+		ObjectID GetAuthority() const;
 
 		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
 		/*!
@@ -335,8 +340,8 @@ namespace FusionEngine
 		//! Called after an Entity is steamed out
 		virtual void OnStreamOut() =0;
 
-		bool ButtonIsActive(const std::string &input);
-		float GetAxisPosition(const std::string &input);
+		bool InputIsActive(const std::string &input);
+		float GetInputPosition(const std::string &input);
 
 		//! Save state to buffer
 		/*!
@@ -379,7 +384,17 @@ namespace FusionEngine
 		ObjectID m_Id;
 		bool m_PseudoEntity;
 
+		// The player who owns this entity, 0 for default ownership
+		//  (which falls to the arbitrator, if ownership is needed)
+		//  Most entities have no owner (i.e. this will be set to 0)
+		//  Where there is no owner, the authority (below) is used.
 		ObjectID m_OwnerID;
+		// The player who currently has authority over this entity.
+		//  This is only used when OwnerID is zero - otherwise the
+		//  authority is always the owner.
+		ObjectID m_Authority;
+
+		PlayerInputPtr m_EntityInput;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

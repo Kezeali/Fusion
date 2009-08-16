@@ -35,7 +35,7 @@
 
 #include "FusionCommon.h"
 
-//#include "FusionInput.h"
+#include "FusionInputDefinitionLoader.h"
 #include <RakNetTypes.h>
 
 
@@ -75,7 +75,7 @@ namespace FusionEngine
 	public:
 		PlayerInput();
 
-		PlayerInput(InputDefinitionLoader *inputs);
+		PlayerInput(const InputDefinitionLoader::InputDefinitionArray &inputs);
 
 		void SetActive(const std::string &input, bool active);
 		void SetPosition(const std::string &input, float value);

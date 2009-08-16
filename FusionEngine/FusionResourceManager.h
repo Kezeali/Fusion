@@ -36,16 +36,16 @@
 
 #include <queue>
 
-/// Inherited
+// Inherited
 #include "FusionSingleton.h"
 
-/// Fusion
+// Fusion
 #include "FusionResource.h"
 //#include "FusionResourcePointer.h"
 #include "FusionResourceLoader.h"
 
-/// RakNet
-#include <RakNet/Bitstream.h>
+// RakNet
+#include <Bitstream.h>
 
 namespace FusionEngine
 {

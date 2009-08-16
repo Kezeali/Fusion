@@ -31,29 +31,387 @@
 #include "FusionEntityManager.h"
 
 #include "FusionEntityFactory.h"
+#include "FusionClientOptions.h"
+
+#include "FusionNetworkTypes.h"
 
 #include <boost/lexical_cast.hpp>
+#include <BitStream.h>
 
 
 namespace FusionEngine
 {
 
-	//class update_state
-	//{
-	//public:
-	//	update_state( )
-	//	{
-	//	}
+	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->addPlayer(net_index, local_index, system_address);
+	}
 
-	//	void operator() (EntityManager::InputStateMap::value_type &elem)
-	//	{
-	//		elem.second.m_Down = elem.second.m_Active;
-	//		// So far the input has been active for the entire step, since
-	//		//  this is the start of the step ;)
-	//		elem.second.m_ActiveRatio = elem.m_Active ? 1.f : 0.f;
-	//		elem.second.m_ActiveFirst = elem.m_Active;
-	//	}
-	//};
+	void PlayerRegistry::AddPlayer(ObjectID net_index, NetHandle system_address)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->addPlayer(net_index, g_MaxLocalPlayers, system_address);
+	}
+
+	void PlayerRegistry::RemovePlayer(ObjectID net_index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->removePlayer(net_index);
+	}
+
+	void PlayerRegistry::RemovePlayer(unsigned int local_index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->removePlayer(local_index);
+	}
+
+	void PlayerRegistry::RemovePlayersFrom(NetHandle system_address)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->removePlayersFrom(system_address);
+	}
+
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByNetIndex(ObjectID index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getPlayerByNetIndex(index);
+	}
+
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByLocalIndex(unsigned int index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getPlayerByLocalIndex(index);
+	}
+
+	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::GetPlayersBySystem(NetHandle system_address)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getPlayersBySystem(system_address);
+	}
+
+	PlayerRegistry::PlayerRegistry()
+	{
+		m_NoSuchPlayer.NetIndex = 0;
+		m_NoSuchPlayer.LocalIndex = g_MaxLocalPlayers;
+	}
+
+	void PlayerRegistry::addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
+	{
+		//PlayerInfoPtr playerInfo(new PlayerInfo);
+		PlayerInfo playerInfo;
+		playerInfo.NetIndex = net_index;
+		playerInfo.LocalIndex = local_index;
+		playerInfo.System = system_address;
+
+		m_ByNetIndex[net_index] = playerInfo;
+		m_ByLocalIndex[local_index] = playerInfo;
+	}
+
+	void PlayerRegistry::removePlayer(ObjectID net_index)
+	{
+		PlayersByNetIndexMap::iterator _where = m_ByNetIndex.find(net_index);
+		m_ByLocalIndex.erase(_where->second.LocalIndex);
+		m_ByNetIndex.erase(_where);
+	}
+
+	void PlayerRegistry::removePlayer(unsigned int local_index)
+	{
+		PlayersByLocalIndexMap::iterator _where = m_ByLocalIndex.find(local_index);
+		m_ByNetIndex.erase(_where->second.NetIndex);
+		m_ByLocalIndex.erase(_where);
+	}
+
+	void PlayerRegistry::removePlayersFrom(NetHandle system_address)
+	{
+		for (PlayersByNetIndexMap::iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
+		{
+			PlayerInfo &playerInfo = it->second;
+			if (playerInfo.System == system_address)
+			{
+				if (playerInfo.LocalIndex == g_MaxLocalPlayers)
+					m_ByLocalIndex.erase(playerInfo.LocalIndex);
+				m_ByNetIndex.erase(playerInfo.NetIndex);
+			}
+		}
+	}
+
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetIndex(ObjectID index) const
+	{
+		PlayersByNetIndexMap::const_iterator _where = m_ByNetIndex.find(index);
+		if (_where != m_ByNetIndex.end())
+			return _where->second;
+		else
+			return m_NoSuchPlayer;
+	}
+
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByLocalIndex(unsigned int index) const
+	{
+		PlayersByLocalIndexMap::const_iterator _where = m_ByLocalIndex.find(index);
+		if (_where != m_ByLocalIndex.end())
+			return _where->second;
+		else
+			return m_NoSuchPlayer;
+	}
+
+	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::getPlayersBySystem(NetHandle system_address) const
+	{
+		std::vector<PlayerRegistry::PlayerInfo> players;
+
+		for (PlayersByNetIndexMap::const_iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
+		{
+			if (it->second.System == system_address)
+				players.push_back(it->second);
+		}
+		
+		return players;
+	}
+
+
+	ConsolidatedInput::ConsolidatedInput(InputManager *input_manager)
+		: m_LocalManager(input_manager),
+		m_ChangedCount(0)
+	{
+		m_InputChangedConnection = m_LocalManager->SignalInputChanged.connect( boost::bind(&ConsolidatedInput::onInputChanged, this, _1) );
+	}
+
+	ConsolidatedInput::~ConsolidatedInput()
+	{
+		m_InputChangedConnection.disconnect();
+	}
+
+	void ConsolidatedInput::SetState(ObjectID player, const std::string input, bool active, float position)
+	{
+		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
+		if (_where != m_PlayerInputs.end())
+		{
+			_where->second->SetState(input, active, position);
+		}
+	}
+
+	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(ObjectID player)
+	{
+		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
+		if (_where != m_PlayerInputs.end())
+		{
+			return _where->second;
+		}
+		else
+			return PlayerInputPtr();
+	}
+
+	const ConsolidatedInput::PlayerInputsMap &ConsolidatedInput::GetPlayerInputs() const
+	{
+		return m_PlayerInputs;
+	}
+
+	unsigned short ConsolidatedInput::ChangedCount() const
+	{
+		return m_ChangedCount;
+	}
+
+	void ConsolidatedInput::ChangesRecorded()
+	{
+		m_ChangedCount = 0;
+	}
+
+	ObjectID ConsolidatedInput::LocalToNetPlayer(unsigned int local)
+	{
+		return PlayerRegistry::GetPlayerByLocalIndex(local).NetIndex;
+	}
+
+	void ConsolidatedInput::onInputChanged(const InputEvent &ev)
+	{
+		ObjectID player = LocalToNetPlayer(ev.Player);
+		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
+		if (_where != m_PlayerInputs.end())
+		{
+			PlayerInputPtr &playerInput = _where->second;
+
+			bool changed = playerInput->HasChanged();
+			
+			if (ev.Type == InputEvent::Binary)
+				playerInput->SetActive(ev.Input, ev.Down);
+			else
+				playerInput->SetPosition(ev.Input, ev.Value);
+
+			if (changed != playerInput->HasChanged())
+				++m_ChangedCount;
+		}
+	}
+
+	EntitySynchroniser::EntitySynchroniser(Network *network)
+		: m_InputManager(InputManager::getSingletonPtr()),
+		m_Network(network)
+	{
+	}
+
+	const EntitySynchroniser::InstanceDefinitionArray &EntitySynchroniser::GetReceivedEntities() const
+	{
+		return m_ReceivedEntities;
+	}
+
+	void EntitySynchroniser::BeginPacket()
+	{
+		m_PacketData.Reset();
+
+		m_ImportantMove = false;
+
+		const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
+		for (ConsolidatedInput::PlayerInputsMap::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
+		{
+			ObjectID playerId = it->first;
+			const PlayerInputPtr &playerInput = it->second;
+
+			if (playerInput->HasChanged())
+			{
+				if (!m_ImportantMove)
+				{
+					m_PacketData.Write((MessageID)MTID_IMPORTANTMOVE);
+					m_PacketData.Write(m_PlayerInputs->ChangedCount());
+					m_ImportantMove = true;
+				}
+
+				m_PacketData.Write(playerId);
+
+				playerInput->Serialise(&m_PacketData);
+			}
+		}
+
+		m_PlayerInputs->ChangesRecorded();
+
+		if (!m_ImportantMove)
+		{
+			m_PacketData.Write((MessageID)MTID_ENTITYMOVE);
+		}
+	}
+
+	void EntitySynchroniser::EndPacket()
+	{
+	}
+
+	void EntitySynchroniser::Send(ObjectID player)
+	{
+		const PlayerRegistry::PlayerInfo &info = PlayerRegistry::GetPlayerByNetIndex(player);
+		const NetHandle &address = info.System;
+
+		RakNetHandleImpl* rakAddress = dynamic_cast<RakNetHandleImpl*>(address.get());
+
+		RakNetwork *network = dynamic_cast<RakNetwork*>( m_Network );
+		const RakPeerInterface *peer = network->GetRakNetPeer();
+
+		if (m_ImportantMove)
+		{
+			peer->Send(&m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, rakAddress->Address);
+		}
+		else
+		{
+			peer->Send(&m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYMANAGER, rakAddress->Address);
+		}
+	}
+
+	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser)
+	{
+		ReceivedStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
+		if (_where != m_ReceivedStates.end())
+			entity->DeserialiseState(_where->second, false, entity_deserialiser);
+
+		return true; // Return false to not update this entity
+	}
+
+	bool EntitySynchroniser::SendSync(EntityPtr &entity)
+	{
+		SerialisedData state;
+		entity->SerialiseState(state, false);
+
+		size_t lengthAfterWrite = m_PacketData.GetNumberOfBytesUsed() + state.data.length() + sizeof(unsigned int) * 2;
+		if (lengthAfterWrite > s_MaxEntityPacketSize)
+		{
+			return false;
+		}
+		
+		//m_PacketData.AddBitsAndReallocate(state.data.length() + sizeof(unsigned int) * 2);
+		m_PacketData.Write(state.mask);
+		m_PacketData.Write(state.data.length());
+		m_PacketData.Write(state.data.c_str(), state.data.length());
+
+		//m_PacketData.append((char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+	}
+
+	void EntitySynchroniser::HandlePacket(IPacket *packet)
+	{
+		RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), true);
+
+		switch (packet->GetType())
+		{
+		case MTID_IMPORTANTMOVE:
+			{
+				// Get Input data
+				unsigned short playerCount;
+				bitStream.Read(playerCount);
+				for (unsigned short pi = 0; pi < playerCount; pi++)
+				{
+					ObjectID player;
+					bitStream.Read(player);
+
+					unsigned short count; // number of inputs that changed
+					bitStream.Read(count);
+
+					const InputDefinitionLoader *inputDefinitions = m_InputManager->GetDefinitionLoader();
+
+					for (unsigned short i = 0; i < count; ++i)
+					{
+						bool active;
+						float position;
+
+						unsigned short inputIndex;
+						bitStream.Read(inputIndex);
+
+						bitStream.Read(active);
+						bitStream.Read(position);
+
+						const InputDefinition &definition = inputDefinitions->GetInputDefinition((size_t)inputIndex);
+
+						m_PlayerInputs->SetState(player, definition.Name, active, position);
+					}
+				}
+			}
+		case MTID_ENTITYMOVE:
+			{
+				unsigned short entityCount;
+				bitStream.Read(entityCount);
+				for (unsigned short i = 0; i < entityCount; i++)
+				{
+					ObjectID entityID;
+					bitStream.Read(entityID);
+
+					SerialisedData &state = m_ReceivedStates[entityID];
+
+					bitStream.Read(state.mask);
+					size_t dataLength;
+					bitStream.Read(dataLength);
+					state.data.resize(dataLength);
+					bitStream.Read(&state.data[0], dataLength);
+				}
+			}
+		}
+	}
 
 	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager)
 		: m_Renderer(renderer),
@@ -525,59 +883,5 @@ namespace FusionEngine
 				entity->_notifyHiddenTag(it->first);
 		}
 	}
-
-	//void EntityManager::updateEntity(EntityPtr entity, float split)
-	//{
-	//	if (entity->IsMarkedToRemove())
-	//		continue;
-
-	//	if (entity->GetTagFlags() & m_ToDeleteFlags)
-	//		RemoveEntity(entity);
-
-	//	else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) || IsBlocked(entity, m_ChangedUpdateStateTags))
-	//		m_EntitiesToUpdate.erase(it);
-	//	else
-	//		entity->Update(split);
-	//}
-
-	//unsigned int EntityManager::getTagFlag(const std::string &tag, bool generate)
-	//{
-	//	unsigned int minFreeFlag = 1;
-	//	TagFlagList::iterator _where = m_TagDictionary.begin();
-	//	for (end = m_TagDictionary.end(); _where != end; ++_where)
-	//	{
-	//		if (_where->Flag == minFreeFlag)
-	//			minFreeFlag << 1;
-
-	//		if (it->Tag == tag)
-	//			break;
-	//	}
-	//	//TagFlagMap::iterator _where = m_TagDictionary.find(tag);
-	//	if (_where == m_TagDictionary.end())
-	//	{
-	//		if (!generate)
-	//		{
-	//			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::getTagFlag",
-	//				"Requested flag for the previously unused tag '" + tag + "' with new flag generation disabled");
-	//		}
-
-	//		m_TagDictionary.insert( TagDef(tag, minFreeFlag) );
-
-	//		return minFreeFlag;
-	//	}
-	//	else
-	//	{
-	//		return _where->Flag;
-	//	}
-	//}
-
-	//void EntityManager::updateInput(float step)
-	//{
-	//	for (PlayerInputStateMaps::iterator it = m_PlayerInputStates.begin(), end = m_PlayerInputStates.end();
-	//		it != end; ++it)
-	//	{
-	//		std::for_each(it->begin(), it->end(), update_state);
-	//	}
-	//}
 
 }

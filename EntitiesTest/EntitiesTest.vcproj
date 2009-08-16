@@ -217,10 +217,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionEntityInput.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionEntityManager.cpp"
 				>
 			</File>
@@ -306,6 +302,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPlayerInput.cpp"
 				>
 			</File>
 			<File
@@ -471,10 +471,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionEntityInput.h"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionEntityManager.h"
 				>
 			</File>
@@ -580,6 +576,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPlayerInput.h"
 				>
 			</File>
 			<File

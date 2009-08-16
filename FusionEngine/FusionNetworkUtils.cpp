@@ -1,8 +1,8 @@
 
 #include "FusionNetworkUtils.h"
 
-/// RakNet
-#include <RakNet/PacketEnumerations.h>
+// RakNet
+#include <PacketEnumerations.h>
 
 namespace FusionEngine
 {

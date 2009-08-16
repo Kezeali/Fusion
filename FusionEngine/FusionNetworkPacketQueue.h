@@ -34,7 +34,7 @@
 
 #include "FusionCommon.h"
 
-#include <RakNet/RakNetTypes.h>
+#include <RakNetTypes.h>
 
 namespace FusionEngine
 {

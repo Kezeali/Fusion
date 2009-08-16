@@ -31,12 +31,13 @@
 
 #include <boost/functional/hash.hpp>
 
-/// Inherited
+// Inherited
 #include "FusionSingleton.h"
 
-/// Fusion
+// Fusion
 #include "FusionInputDefinitionLoader.h"
 #include "FusionLogger.h"
+#include "FusionBoostSignals2.h"
 
 #ifdef _WIN32
 #define FSN_USE_XINPUT
@@ -258,6 +259,7 @@ namespace FusionEngine
 		{}
 
 	public:
+		int Player;
 		std::string Input;
 		InputType Type;
 		bool Down;
@@ -342,13 +344,7 @@ namespace FusionEngine
 
 #ifdef FSN_USE_XINPUT
 		typedef std::vector<XInputController> XInputControllerList;
-
-		//typedef std::pair<unsigned int, int> XUserKeycodePair;
-		//typedef std::map<XUserKeycodePair, InputBinding> XInputKeyBindingMap;
 #endif
-
-		//typedef std::vector<Command> CommandList;
-		//typedef std::vector<CommandList> PlayerCommandLists;
 
 	public:
 		void SetDisplayWindow(CL_DisplayWindow window);
@@ -376,6 +372,8 @@ namespace FusionEngine
 
 		void Update(float split);
 
+		const InputDefinitionLoader *GetDefinitionLoader() const;
+
 		//! Sets up inputs
 		void LoadInputMaps(const std::wstring& filename);
 		void SaveInputMaps(const std::wstring& filename);
@@ -396,86 +394,35 @@ namespace FusionEngine
 		 */
 		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname, int controller_number = s_DeviceIndexAny);
 
-		//void MapControl(int keysym, const std::string& name, unsigned int filter = 0);
-		//void MapControl(int keysym, const std::string& name, CL_InputDevice device, unsigned int filter = 0);
-
-		//const Control &GetControl(const std::string& name) const;
 		bool IsButtonDown(unsigned int player, const std::string& input_name) const;
 		float GetAnalogValue(unsigned int player, const std::string& input_name) const;
 
 		const InputStateMap &GetInputStateMapForPlayer(int player) const;
 		const PlayerInputStateMaps &GetInputStateMaps() const;
 
-		//! Probably [depreciated]
-		//Command CreateCommand(unsigned int player);
-		//const Command &GetCommand(unsigned int player, int tick);
-
 		float GetMouseSensitivity() const;
 
-		////! Returns the currently pressed inputs for the given ship.
-		//ShipInput GetShipInputs(ObjectID player) const;
-		////! Returns the currently pressed inputs for all ships.
-		//ShipInputList GetAllShipInputs() const;
-		////! Returns the currently pressed global inputs.
-		//GlobalInput GetGlobalInputs() const;
 
-		CL_Signal_v1<const InputEvent&> SignalInputChanged;
-		//CL_Signal_v1<InputEvent> SignalInputDeactivated;
+		bsig2::signal<void (const InputEvent&)> SignalInputChanged;
 		// Input continues to be pressed as a new step begins
-		CL_Signal_v1<const InputEvent&> SignalInputSustained;
-
-		//CL_Signal_v1<InputEvent> SignalKeyboardPressed;
-		//CL_Signal_v1<InputEvent> SignalKeyboardReleased;
-
-		//CL_Signal_v1<InputEvent> SignalMousePressed;
-		//CL_Signal_v1<InputEvent> SignalMouseReleased;
-		//CL_Signal_v1<InputEvent> SignalMouseMoved;
-
-		//CL_Signal_v1<InputEvent> SignalGamepadPressed;
-		//CL_Signal_v1<InputEvent> SignalGamepadReleased;
-		//CL_Signal_v1<InputEvent> SignalGamepadAxis;
-
-		//CL_Signal_v1<InputEvent> SignalXInputPressed;
-		//CL_Signal_v1<InputEvent> SignalXInputReleased;
-		//CL_Signal_v1<InputEvent> SignalXInputAxis;
+		bsig2::signal<void (const InputEvent&)> SignalInputSustained;
 
 		//! Fires on all input events, passing the raw input data
 		/*!
 		 * Useful for setting up inputs - the other input signals only fire
 		 * when bound controls (keys, buttons, axis') are activated (pressed, moved).
 		 */
-		CL_Signal_v1<const RawInput&> SignalRawInput;
+		bsig2::signal<void (const RawInput&)> SignalRawInput;
 
 	private:
-//#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
-//		NameMap m_KeyInfo;
-//#else
-//		ShortNameMap m_KeyInfo;
-//#endif
-
 #ifdef FSN_USE_XINPUT
 		XInputControllerList m_XInputControllers;
-		//XInputKeyBindingMap m_XInputBindings;
 #endif
 		
 		KeyInfoMap m_KeyInfo;
-
-		//// For IsButtonDown(), etc (direct input gathering)
-		//InputMap m_InputBindings;
-		//// For CreateCommand(), GetCommand() (step-based input gathering)
-		//KeyMap m_KeyBindings;
-
 		KeyBindingMap m_KeyBindings;
 
-		//PlayerInputStateMaps m_PlayerInputStates;
-
 		MousePositionList m_MicePositions;
-
-
-		//! Current input states
-		//CommandList m_CurrentCommands;
-		//! Input state history
-		//PlayerCommandLists m_PlayerCommands;
 
 		InputDefinitionLoader *m_DefinitionLoader;
 
@@ -484,24 +431,12 @@ namespace FusionEngine
 
 		unsigned char m_CurrentStep;
 
-		//unsigned int m_CommandBufferLength;
-
 		LogPtr m_Log;
 
 		CL_DisplayWindow m_DisplayWindow;
 		mutable CL_InputContext m_InputContext;
 		//! Slot container for inputs
 		SlotContainer m_Slots;
-
-		////! Individual input setup
-		//PlayerInputMapList m_PlayerInputMaps;
-		////! Global input setup
-		//GlobalInputMap m_GlobalInputMap;
-
-		////! Individual input state data
-		//ShipInputList m_ShipInputData;
-		////! Global input state data
-		//GlobalInput m_GlobalInputData;
 
 		// Mouse movement multiplier
 		float m_MouseSensitivity;
@@ -510,8 +445,6 @@ namespace FusionEngine
 		int m_DisplayCenterX;
 		int m_DisplayCenterY;
 
-		//! Builds the command buffers for each player
-		//void buildCommandBuffers(const InputPluginLoader::InputTypeList &inputTypes);
 		//! Loads human readable and UI control (key / button, etc) names
 		void loadKeyInfo(const ticpp::Document& defDocument);
 		//! Loads controls
@@ -562,15 +495,6 @@ namespace FusionEngine
 		//! Invokes SignalRawInput when a XInputEvent is received
 		void fireRawInput_XInput(const XInputEvent& ev);
 
-		//! Process simple ClanLib input events
-		//void processInputEvent(unsigned int device, const CL_InputEvent &ev);
-
-		//! Handle keyboard / keybased input. Down
-		//void onKeyDown(const CL_InputEvent &key);
-		//! Handle keyboard / keybased input. Up
-		//void onKeyUp(const CL_InputEvent &key);
-		// Other imput devices not yet implimented.
-		//void OnAxisMove(const CL_InputEvent &e);
 		//! Handle screen resize
 		void onDisplayResize(int w, int h);
 	};

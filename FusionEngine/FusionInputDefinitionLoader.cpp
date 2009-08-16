@@ -58,7 +58,7 @@ namespace FusionEngine
 		{
 			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
 
-			throw FileSystemException("InputDefinitionLoader::LoadInputs", ex.what(), __FILE__, __LINE__);
+			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::LoadInputs", ex.what());
 		}
 	}
 
@@ -74,21 +74,24 @@ namespace FusionEngine
 			//  we recognise both here:
 			if (child->Value() == "input" || child->Value() == "command")
 			{
-				InputDefinition cd;
-				cd.m_Group = groupName;
-				cd.m_Name = child->GetAttribute("name");
-				cd.m_UIName = child->GetAttribute("uiname");
-				cd.m_Description = child->GetAttribute("description");
+				InputDefinitionPtr cd(new InputDefinition);
+				cd->Group = groupName;
+				cd->Name = child->GetAttribute("name");
+				cd->UIName = child->GetAttribute("uiname");
+				cd->Description = child->GetAttribute("description");
 
 				std::string isAnalog = child->GetAttribute("analog");
 				//fe_tolower(isAnalog);
-				cd.m_Analog = CL_StringHelp::local8_to_bool(isAnalog.c_str());
+				cd->Analog = CL_StringHelp::local8_to_bool(isAnalog.c_str());
 
 				std::string isToggle = child->GetAttribute("toggle");
 				//fe_tolower(isToggle);
-				cd.m_Toggle = CL_StringHelp::local8_to_bool(isToggle.c_str());
+				cd->Toggle = CL_StringHelp::local8_to_bool(isToggle.c_str());
 
-				m_InputDefinitions[cd.m_Name] = cd;
+				m_InputDefinitions[cd->Name] = cd;
+
+				cd->Index = m_InputDefinitionsByIndex.size();
+				m_InputDefinitionsByIndex.push_back(cd);
 			}
 		}
 
@@ -99,14 +102,34 @@ namespace FusionEngine
 		m_InputDefinitions.clear();
 	}
 
-	const InputDefinitionLoader::InputDefinitionMap &InputDefinitionLoader::GetInputDefinitions() const
+	const InputDefinitionLoader::InputDefinitionArray &InputDefinitionLoader::GetInputDefinitions() const
 	{
-		return m_InputDefinitions;
+		return m_InputDefinitionsByIndex;
 	}
 
-	bool InputDefinitionLoader::IsDefined(const std::string &inputName) const
+	bool InputDefinitionLoader::IsDefined(const std::string &input_name) const
 	{
-		return m_InputDefinitions.find(inputName) != m_InputDefinitions.end();
+		return m_InputDefinitions.find(input_name) != m_InputDefinitions.end();
+	}
+
+	bool InputDefinitionLoader::IsDefined(size_t input_index) const
+	{
+		return input_index < m_InputDefinitionsByIndex.size();
+	}
+
+	const InputDefinition &InputDefinitionLoader::GetInputDefinition(const std::string &input_name) const
+	{
+		InputDefinitionMap::const_iterator _where = m_InputDefinitions.find(input_name);
+		if (_where == m_InputDefinitions.end())
+			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::GetInputDefinition", "Input named " + input_name + " is not defined");
+		return *_where->second;
+	}
+
+	const InputDefinition &InputDefinitionLoader::GetInputDefinition(size_t input_index) const
+	{
+		if (input_index >= m_InputDefinitionsByIndex.size())
+			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::GetInputDefinition", "Input index given is not defined");
+		return *m_InputDefinitionsByIndex[input_index];
 	}
 
 };

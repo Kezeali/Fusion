@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -195,7 +195,6 @@ namespace FusionEngine
 		{
 			ticpp::Document inputDoc(OpenXml_PhysFS(L"input/coreinputs.xml"));
 			m_DefinitionLoader->Load(inputDoc);
-			const InputDefinitionLoader::InputDefinitionMap &inputs = m_DefinitionLoader->GetInputDefinitions();
 		}
 		catch (FileSystemException &ex)
 		{
@@ -290,6 +289,11 @@ namespace FusionEngine
 		m_SuspendRequests++;
 	}
 
+	const InputDefinitionLoader *InputManager::GetDefinitionLoader() const
+	{
+		return m_DefinitionLoader;
+	}
+
 	void InputManager::LoadInputMaps(const std::wstring &filename)
 	{
 		// Read file
@@ -337,6 +341,13 @@ namespace FusionEngine
 
 			// The key shortname (unique identifier)
 			std::string keyName = child->GetAttribute("key");
+
+			// Check that the given input is defined
+			if (m_DefinitionLoader->IsDefined(input))
+			{
+				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": " + input + " doesn't exist.", LOG_TRIVIAL);
+				continue;
+			}
 
 			// Controller number (for XInput)
 			//! \todo Perhaps non-xinput controlers should be accessable by device name?
@@ -515,42 +526,6 @@ namespace FusionEngine
 			FSN_EXCEPT(ExCode::InvalidArgument, "InputManager::MapControl", key_shortname + " doesn't exist");
 	}
 
-	//int InputManager::GetDeviceIdByName(const std::string &name) const
-	//{
-	//	DeviceNameMap::iterator _where = m_DevNameToId.find(name);
-	//	if (_where != m_DevNameToId.end())
-	//		return _where;
-	//}
-
-	//void InputManager::MapControl(int keysym, const std::string &name, unsigned int filter)
-	//{
-	//	std::string buttonName = "Unknown";
-	//	CL_InputDevice dev = CL_Keyboard::get_device();
-	//	buttonName = dev.get_key_name(keysym);
-
-	//	m_ControlMap[CL_String::from_int(filter) + name] = 
-	//		Control(CL_String::from_int(filter) + name, keysym, buttonName, dev);
-	//}
-
-	//void InputManager::MapControl(int keysym, const std::string &name, CL_InputDevice device, unsigned int filter)
-	//{
-	//	std::string buttonName = "Unknown";
-	//	buttonName = device.get_key_name(keysym);
-
-	//	m_ControlMap[CL_String::from_int(filter) + name] = 
-	//		Control(CL_String::from_int(filter) + name, keysym, buttonName, device);
-	//}
-
-	//const Control& InputManager::GetControl(const std::string &name, unsigned int filter) const
-	//{
-	//	ControlMap::const_iterator it = m_ControlMap.find(CL_String::from_int(filter) + name);
-	//	if (it != m_ControlMap.end())
-	//		return (*it).second;
-
-	//	throw Exception();
-	//	//return m_ControlMap[CL_String::from_int(filter) + name];
-	//}
-
 	bool InputManager::IsButtonDown(unsigned int player, const std::string &input) const
 	{
 		//const InputStateMap& inputStateMap = m_PlayerInputStates[player];
@@ -579,77 +554,10 @@ namespace FusionEngine
 		return 0.f;
 	}
 
-//	Command InputManager::CreateCommand(unsigned int player)
-//	{
-//		if (m_SuspendRequests != 0)
-//			return Command();
-//
-//		//int localPlayers = 0;
-//		//ClientOptions::getSingleton().GetOption("num_local_players", &localPlayers);
-//
-//#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
-//		/////
-//		// Event Input
-//		///////
-//
-//		// Update the requested player's command for this tick to the current command for said player
-//		Command &currentCommand = m_CurrentCommands[player];
-//		m_PlayerCommands[player][tick % m_CommandBufferLength] = currentCommand;
-//
-//#elif FE_INPUT_METHOD == FE_INPUTMETHOD_BUFFERED
-//		/////
-//		// Buffered Input
-//		///////
-//		FE_EXCEPT(ExCode::Base, "InputManager::CreateCommand", "Buffered input is not implemented");
-//
-//#else
-//		/////
-//		// Unbuffered Input
-//		///////
-//
-//		// Grab the command to be updated in the command history
-//		//Command &tickCommand = m_PlayerCommands[player][tick%m_CommandBufferLength];
-//
-//		Command command;
-//		// Update all the bindings in the command
-//		for (KeyMap::iterator it = m_KeyBindings.begin(), end = m_KeyBindings.end(); it != end; ++it)
-//		{
-//			const std::string &keyName = it->first;
-//			// Grab the key binding
-//			InputBinding &binding = it->second;
-//
-//			CL_InputDevice &dev = GetDevice(binding.m_Key.m_Device);
-//
-//			bool nowDown = dev.get_keycode(binding.m_Key.m_Code);
-//			float nowAxis = dev.get_axis(binding.m_Key.m_Code);
-//			//! \todo Axis threshold option
-//			Command::InputStatePtr state = command.GetInputState(binding.m_Input);
-//			state->m_Changed = state->m_Down != nowDown || fe_fequal(state->m_Value, nowAxis, 0.1f);
-//			state->m_Down = nowDown;
-//			state->m_Value = nowAxis;
-//		}
-//
-//		return command;
-//#endif
-//	}
-
-	//const Command &InputManager::GetCommand(unsigned int player)
-	//{
-	//	return m_PlayerCommands[player];
-	//}
-
 	float InputManager::GetMouseSensitivity() const
 	{
 		return m_MouseSensitivity;
 	}
-
-	/*unsigned int InputManager::getIndexOfControllerCalled(const std::string &name)
-	{
-		for (int i = 0; i < m_InputContext.get_keyboard_count(); i++)
-		{
-			m_DeviceIndicies[m_InputContext.get_keyboard(i).get_name()] = i;
-		}
-	}*/
 
 	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
@@ -657,14 +565,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalKeyboardPressed.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -676,14 +584,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = false;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalKeyboardReleased.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -695,14 +603,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalMousePressed.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -714,14 +622,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = false;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalMouseReleased.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -737,14 +645,14 @@ namespace FusionEngine
 				const InputBinding& binding = _where->second;
 
 				InputEvent synthedEvent;
+				synthedEvent.Player = binding.m_Player;
 				synthedEvent.Input = binding.m_Input;
 
 				synthedEvent.Type = InputEvent::AnalogAbsolute;
 				synthedEvent.Value = (double)event.mouse_pos.x;
 				synthedEvent.Down = false;
 
-				SignalInputChanged.invoke(synthedEvent);
-				//SignalMouseMoved.invoke(synthedEvent);
+				SignalInputChanged(synthedEvent);
 			}
 		}
 
@@ -756,14 +664,14 @@ namespace FusionEngine
 				const InputBinding& binding = _where->second;
 
 				InputEvent synthedEvent;
+				synthedEvent.Player = binding.m_Player;
 				synthedEvent.Input = binding.m_Input;
 
 				synthedEvent.Type = InputEvent::AnalogAbsolute;
 				synthedEvent.Value = (double)event.mouse_pos.y;
 				synthedEvent.Down = false;
 
-				SignalInputChanged.invoke(synthedEvent);
-				//SignalMouseMoved.invoke(synthedEvent);
+				SignalInputChanged(synthedEvent);
 			}
 		}
 
@@ -775,6 +683,7 @@ namespace FusionEngine
 				const InputBinding& binding = _where->second;
 
 				InputEvent synthedEvent;
+				synthedEvent.Player = binding.m_Player;
 				synthedEvent.Input = binding.m_Input;
 
 				double normalizedValue = (double)(event.mouse_pos.x - m_MicePositions[0].x);
@@ -788,7 +697,7 @@ namespace FusionEngine
 					synthedEvent.Value = normalizedValue;
 					synthedEvent.Down = false;
 
-					SignalInputChanged.invoke(synthedEvent);
+					SignalInputChanged(synthedEvent);
 				}
 			}
 		}
@@ -801,6 +710,7 @@ namespace FusionEngine
 				const InputBinding& binding = _where->second;
 
 				InputEvent synthedEvent;
+				synthedEvent.Player = binding.m_Player;
 				synthedEvent.Input = binding.m_Input;
 
 				double normalizedValue = (double)(event.mouse_pos.y - m_MicePositions[0].y);
@@ -813,7 +723,7 @@ namespace FusionEngine
 					synthedEvent.Value = normalizedValue;
 					synthedEvent.Down = false;
 
-					SignalInputChanged.invoke(synthedEvent);
+					SignalInputChanged(synthedEvent);
 				}
 			}
 		}
@@ -830,14 +740,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalGamepadPressed.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -849,14 +759,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
-			SignalInputChanged.invoke(synthedEvent);
-			//SignalGamepadPressed.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
 		}
@@ -870,6 +780,7 @@ namespace FusionEngine
 			const InputBinding& binding = _where->second;
 
 			InputEvent synthedEvent;
+			synthedEvent.Player = binding.m_Player;
 			synthedEvent.Input = binding.m_Input;
 
 			synthedEvent.Type = InputEvent::AnalogNormalized;
@@ -878,7 +789,7 @@ namespace FusionEngine
 			// Filter the value (apply deadzone / range / NLT)
 			binding.FilterValue(synthedEvent.Value);
 
-			SignalInputChanged.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 		}
 	}
 
@@ -889,13 +800,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = true;
 
-			SignalInputChanged.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 		}
 	}
 
@@ -906,13 +818,14 @@ namespace FusionEngine
 		if (_where != m_KeyBindings.end())
 		{
 			InputEvent synthedEvent;
+			synthedEvent.Player = _where->second.m_Player;
 			synthedEvent.Input = _where->second.m_Input;
 
 			synthedEvent.Type = InputEvent::Binary;
 			synthedEvent.Value = 0.0;
 			synthedEvent.Down = false;
 
-			SignalInputChanged.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 		}
 	}
 
@@ -925,6 +838,7 @@ namespace FusionEngine
 			const InputBinding& binding = _where->second;
 
 			InputEvent synthedEvent;
+			synthedEvent.Player = binding.m_Player;
 			synthedEvent.Input = binding.m_Input;
 
 			synthedEvent.Type = InputEvent::AnalogNormalized;
@@ -933,7 +847,7 @@ namespace FusionEngine
 			// Filter the value (apply deadzone / range / NLT)
 			binding.FilterValue(synthedEvent.Value);
 
-			SignalInputChanged.invoke(synthedEvent);
+			SignalInputChanged(synthedEvent);
 		}
 	}
 
@@ -1031,111 +945,6 @@ namespace FusionEngine
 			rawInput.Code = ev.id;
 		}
 	}
-
-	//void InputManager::processInputEvent(unsigned int device, const CL_InputEvent &ev)
-	//{
-	//	KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(device, 0, ev.id));
-	//	if (_where != m_KeyBindings.end())
-	//	{
-	//		if (ev.type == CL_InputEvent::pressed)
-	//			SignalInputChanged.invoke(_where->second.m_Key);
-	//		if (ev.type == CL_InputEvent::released)
-	//			SignalInputChanged.invoke(_where->second.m_Key);
-	//	}
-	//}
-
-	//void InputManager::processBinaryInputEvent(const std::string &deviceName, const CL_InputEvent &event, const CL_InputState &state)
-	//{
-	//	KeyBindingMap::iterator _where = m_KeyBindings.find(DeviceKeycodePair(deviceName, event.id));
-	//	if (_where != m_KeyBindings.end())
-	//	{
-	//		const InputBinding &binding = _where->second;
-
-	//		InputState& inputState = m_PlayerInputStates[binding.m_Player][binding.m_Input];
-
-	//		inputState.m_Active = event.type == CL_InputEvent::pressed;
-
-	//		if (event.type == CL_InputEvent::pressed)
-	//		{
-	//			// If a button is pressed at any time during a step,
-	//			//  the given input is considered active for the entire
-	//			//  step. Conversely if, and only if, a button is never pressed
-	//			//  again during a step will it be set to inactive (false)
-	//			inputState.m_Down = true;
-
-	//			// If it was active at the start of this step, since we 
-	//			//  are now receiving a 'pressed' event, it must have become
-	//			//  inactive ('released') at some point in-between. Therefor
-	//			//  this is most likely the 3rd state during this step so
-	//			//  active ratio = 1/3 = 0.34 (rounded up. since the ratio
-	//			//  increases every press and there may have been more
-	//			//  than one press->release flip-flop during this step, even
-	//			//  unlikely as that is). Otherwise the active ratio is
-	//			//  0.5, no matter how many times it has been pressed and
-	//			//  released (given that it is now being pressed.)
-	//			inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.34f : 0.5f;
-	//		}
-	//		if (event.type == CL_InputEvent::released)
-	//		{
-	//			// Converse of the above statement
-	//			inputState.m_ActiveRatio = inputState.m_ActiveFirst ? 0.5f : 0.34f;
-	//		}
-
-	//		// Clamp ActiveRatio
-	//		if (fe_fequal(inputState.m_ActiveRatio, 1.f, 0.05f))
-	//			inputState.m_ActiveRatio = 1.f;
-	//		else if (fe_fequal(inputState.m_ActiveRatio, 0.f, 0.05f))
-	//			inputState.m_ActiveRatio = 0.f;
-
-	//		inputState.m_Value = (inputState.m_Active ? 1.f : 0.f) * inputState.m_ActiveRatio;\
-	//	}
-	//}
-
-//	void InputManager::onKeyDown(const CL_InputEvent &key)
-//	{
-//#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
-//		if (m_SuspendRequests != 0)
-//			return;
-//
-//		// Iterate player input lists to update the current commands
-//		CommandList::iterator it = m_CurrentCommands.begin(), end = m_CurrentCommands.end();
-//		for (; it != end; ++it)
-//		{
-//			//! \todo Reduce this to one map search. Maybe even use hash maps for speed
-//			std::string &shortname = m_KeyInfo[key.id ^ (int)key.device.get_type()].m_Name;
-//			InputBinding &binding = m_KeyBindings[shortname];
-//			std::string &input = binding.m_Input;
-//
-//			InputState &state = it[input];
-//			state.m_Changed = !state.m_Down || abs(state.m_Value - key.axis_pos) > 0.1f;
-//			state.m_Down = true;
-//			state.m_Value = key.axis_pos;
-//		}
-//#endif
-//	}
-//
-//	void InputManager::onKeyUp(const CL_InputEvent &key)
-//	{
-//#if FE_INPUT_METHOD == FE_INPUTMETHOD_EVENTS
-//		if (m_SuspendRequests != 0)
-//			return;
-//
-//		// Iterate player input lists to update the current commands
-//		CommandList::iterator it = m_CurrentCommands.begin(), end = m_CurrentCommands.end();
-//		for (; it != end; ++it)
-//		{
-//			//! \todo Reduce this to one map search. Maybe even use hash maps for speed
-//			std::string &shortname = m_KeyInfo[key.id ^ (int)key.device.get_type()].m_Name;
-//			InputBinding &binding = m_KeyBindings[shortname];
-//			std::string &input = binding.m_Input;
-//
-//			InputState &state = it[input];
-//			state.m_Changed = state.m_Down || abs(state.m_Value - key.axis_pos) > 0.1f;
-//			state.m_Down = false;
-//			state.m_Value = key.axis_pos;
-//		}
-//#endif
-//	}
 
 	void InputManager::onDisplayResize(int w, int h)
 	{

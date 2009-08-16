@@ -48,13 +48,18 @@ namespace FusionEngine
 	class InputDefinition
 	{
 	public:
-		bool m_Analog;
-		bool m_Toggle;
-		std::string m_Group;
-		std::string m_Description;
-		std::string m_UIName;
-		std::string m_Name;
+		bool Analog;
+		bool Toggle;
+		std::string Group;
+		std::string Description;
+		std::string UIName;
+		std::string Name;
+
+		// Index used for network communication, etc
+		size_t Index;
 	};
+
+	typedef std::tr1::shared_ptr<InputDefinition> InputDefinitionPtr;
 
 	/*!
 	 * \brief
@@ -69,7 +74,8 @@ namespace FusionEngine
 	{
 	public:
 		//! InputDefinitions listed by shortname
-		typedef std::tr1::unordered_map<std::string, InputDefinition> InputDefinitionMap;
+		typedef std::tr1::unordered_map<std::string, InputDefinitionPtr> InputDefinitionMap;
+		typedef std::vector<InputDefinitionPtr> InputDefinitionArray;
 
 	public:
 		InputDefinitionLoader() {}
@@ -93,12 +99,18 @@ namespace FusionEngine
 
 		//ScriptObject CreateCommand(ScriptingEngine *eng, const Command& command);
 
-		const InputDefinitionMap &GetInputDefinitions() const;
+		const InputDefinitionArray &GetInputDefinitions() const;
 
-		bool IsDefined(const std::string &inputName) const;
+		bool IsDefined(const std::string &input_name) const;
+
+		bool IsDefined(size_t input_index) const;
+
+		const InputDefinition &GetInputDefinition(const std::string &input_name) const;
+		const InputDefinition &GetInputDefinition(size_t input_index) const;
 
 	protected:
 		InputDefinitionMap m_InputDefinitions;
+		InputDefinitionArray m_InputDefinitionsByIndex;
 
 	protected:
 		void loadGroup(ticpp::Element &groupElm);

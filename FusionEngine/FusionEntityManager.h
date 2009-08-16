@@ -37,13 +37,64 @@
 
 // Fusion
 #include "FusionEntity.h"
+#include "FusionPacketHandler.h"
+#include "FusionPlayerInput.h"
 #include "FusionInputHandler.h"
 #include "FusionRenderer.h"
+
+#include "FusionNetwork.h"
 
 #include <boost/bimap.hpp>
 
 namespace FusionEngine
 {
+
+	class PlayerRegistry : public Singleton<PlayerRegistry>
+	{
+	public:
+		struct PlayerInfo
+		{
+			ObjectID NetIndex;
+			unsigned int LocalIndex;
+			NetHandle System;
+		};
+
+		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
+
+		PlayerRegistry();
+
+		static void AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
+		static void AddPlayer(ObjectID net_index, NetHandle system_address);
+
+		static void RemovePlayer(ObjectID net_index);
+		static void RemovePlayer(unsigned int local_index);
+		static void RemovePlayersFrom(NetHandle system_address);
+
+		static const PlayerInfo &GetPlayerByNetIndex(ObjectID index);
+		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
+
+		static std::vector<PlayerInfo> GetPlayersBySystem(NetHandle system_address);
+	protected:
+		void addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
+
+		void removePlayer(ObjectID net_index);
+		void removePlayer(unsigned int local_index);
+		void removePlayersFrom(NetHandle system_address);
+
+		const PlayerInfo &getPlayerByNetIndex(ObjectID index) const;
+		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;
+		std::vector<PlayerInfo> getPlayersBySystem(NetHandle system_address) const;
+
+		typedef std::tr1::unordered_map<ObjectID, PlayerInfo> PlayersByNetIndexMap;
+		typedef std::tr1::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
+		typedef std::tr1::unordered_multimap<NetHandle, PlayerInfo> PlayersBySystemAddressMap;
+
+		PlayersByNetIndexMap m_ByNetIndex;
+		PlayersByLocalIndexMap m_ByLocalIndex;
+		PlayersBySystemAddressMap m_BySystem;
+
+		PlayerInfo m_NoSuchPlayer;
+	};
 
 	//class EntityMap
 	//{
@@ -60,6 +111,84 @@ namespace FusionEngine
 	//	IDEntityMap m_EntitiesByID;
 	//	NameEntityMap m_EntitiesByName;
 	//};
+
+	//! Updates input states for each player (local and remote)
+	class ConsolidatedInput
+	{
+	public:
+		typedef std::tr1::unordered_map<ObjectID, PlayerInputPtr> PlayerInputsMap;
+
+	public:
+		ConsolidatedInput(InputManager *input_manager);
+		~ConsolidatedInput();
+
+		void SetState(ObjectID player, const std::string input, bool active, float position);
+		PlayerInputPtr GetInputsForPlayer(ObjectID player);
+
+		const PlayerInputsMap &GetPlayerInputs() const;
+
+		unsigned short ChangedCount() const;
+		void ChangesRecorded();
+
+		ObjectID LocalToNetPlayer(unsigned int local);
+
+	protected:
+		InputManager *m_LocalManager;
+
+		void onInputChanged(const InputEvent &event);
+
+		unsigned short m_ChangedCount;
+
+		PlayerInputsMap m_PlayerInputs;
+
+		bsig2::connection m_InputChangedConnection;
+
+	};
+
+	class EntitySynchroniser : public PacketHandler
+	{
+	public:
+		struct InstanceDefinition
+		{
+			std::string Type;
+			std::string Name;
+			ObjectID ID;
+			ObjectID Owner;
+			SerialisedData State;
+		};
+		typedef std::vector<InstanceDefinition> InstanceDefinitionArray;
+
+		EntitySynchroniser(Network *network);
+
+		const InstanceDefinitionArray &GetReceivedEntities() const;
+
+		void BeginPacket();
+		void EndPacket();
+
+		void Send(ObjectID player);
+
+		// Returns true if the entity should be updated
+		bool ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser);
+		// Returns true if the entity state was written to the packet
+		bool SendSync(EntityPtr &entity);
+
+		void HandlePacket(IPacket *packet);
+
+	protected:
+		ConsolidatedInput *m_PlayerInputs;
+		InputManager *m_InputManager;
+
+		Network *m_Network;
+
+		InstanceDefinitionArray m_ReceivedEntities;
+
+		typedef std::tr1::unordered_map<ObjectID, SerialisedData> ReceivedStatesMap;
+		ReceivedStatesMap m_ReceivedStates;
+
+		bool m_ImportantMove;
+		//std::string m_PacketData;
+		RakNet::BitStream m_PacketData;
+	};
 
 	/*!
 	 * \brief

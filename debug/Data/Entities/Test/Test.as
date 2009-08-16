@@ -10,9 +10,13 @@ class ScriptEntity
 		return __appObject;
 	}
 
-	bool ButtonIsActive(const string@ input)
+	bool InputIsActive(const string@ input)
 	{
-		__appObject.buttonIsActive(input);
+		__appObject.inputIsActive(input);
+	}
+	bool GetInputPosition(const string@ input)
+	{
+		__appObject.getInputPosition(input);
 	}
 }
 

@@ -55,7 +55,13 @@ namespace FusionEngine
 
 	typedef unsigned int NetTime;
 
-	typedef std::string NetHandle;
+	class INetHandle
+	{
+	public:
+		virtual ~INetHandle();
+	};
+
+	typedef std::tr1::shared_ptr<INetHandle> NetHandle;
 
 	class IPacket
 	{
@@ -67,13 +73,13 @@ namespace FusionEngine
 		//! Returns the data length
 		virtual unsigned int GetLength() const = 0;
 		//! Returns the Message Identifier for the packet
-		virtual unsigned char GetType() const = 0;
+		virtual char GetType() const = 0;
 		//! Returns true if the packet is timestamped
 		virtual bool IsTimeStamped() const = 0;
 		//! Returns the timestamp value
 		virtual NetTime GetTime() const = 0;
 		//! Returns the UID for the system that sent this message
-		virtual const NetHandle& GetSystemHandle() const = 0;
+		virtual NetHandle GetSystemHandle() const = 0;
 
 	};
 
@@ -84,9 +90,9 @@ namespace FusionEngine
 		NetHandle m_Origin;
 		bool m_TimeStamped;
 		NetTime m_Time;
-		unsigned char m_Type;
-		unsigned char m_Channel;
-		unsigned char* m_Data;
+		char m_Type;
+		char m_Channel;
+		char* m_Data;
 		unsigned int m_Length;
 
 	public:
@@ -97,7 +103,7 @@ namespace FusionEngine
 			m_Length(length),
 			m_Origin(origin)
 		{
-			m_Data = new unsigned char[length];
+			m_Data = new char[length];
 			memcpy(m_Data, data, length);
 		}
 		//! Virtual desturctor
@@ -112,13 +118,13 @@ namespace FusionEngine
 		}
 		virtual const char* GetData() const
 		{
-			return (char*) m_Data;
+			return m_Data;
 		}
 		virtual unsigned int GetLength() const
 		{
 			return m_Length;
 		}
-		virtual unsigned char GetType() const
+		virtual char GetType() const
 		{
 			return m_Type;
 		}
@@ -130,7 +136,7 @@ namespace FusionEngine
 		{
 			return m_Time;
 		}
-		virtual const NetHandle& GetSystemHandle() const
+		virtual NetHandle GetSystemHandle() const
 		{
 			return m_Origin;
 		}
@@ -158,7 +164,7 @@ namespace FusionEngine
 		virtual void Disconnect() = 0;
 
 		//! Sends a packet containing ONLY the given data
-		virtual bool SendRaw(char *data, unsigned int length,
+		virtual bool SendRaw(const char *data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle& destination);
 
@@ -186,12 +192,7 @@ namespace FusionEngine
 			NetPriority priority, NetReliability reliability, char channel, 
 			const NetHandle& destination);
 
-		//! Send taking unsigned char* data
-		bool Send(bool timestamped, char type, unsigned char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination);
-
-		//! Sends data.
+		//! Sends data
 		/*!
 		 * The implementation should format and send the message as
 		 * described by the given parameters, or as close to the
@@ -202,7 +203,12 @@ namespace FusionEngine
 		 */
 		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination) = 0;
+			const NetHandle& destination) =0;
+
+		//! Sends data
+		bool Send(bool timestamped, unsigned char type, unsigned char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel,
+			const NetHandle& destination);
 
 		//! Gets packets from the network.
 		virtual IPacket* Receive() = 0;

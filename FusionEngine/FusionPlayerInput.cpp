@@ -28,7 +28,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionEntityInput.h"
+#include "FusionPlayerInput.h"
 
 #include <BitStream.h>
 
@@ -44,8 +44,13 @@ namespace FusionEngine
 	{
 	}
 
-	PlayerInput::PlayerInput(InputDefinitionLoader *inputs)
+	PlayerInput::PlayerInput(const InputDefinitionLoader::InputDefinitionArray &inputs)
 	{
+		for (InputDefinitionLoader::InputDefinitionArray::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
+		{
+			const InputDefinitionPtr &input = *it;
+			m_Inputs[input->Name];
+		}
 	}
 
 	void PlayerInput::SetActive(const std::string &input, bool active)
@@ -106,7 +111,7 @@ namespace FusionEngine
 
 		for (InputMap::const_iterator it = m_Inputs.begin(), end = m_Inputs.end(); it != end; ++it)
 		{
-			const InputState &state = *it;
+			const InputState &state = it->second;
 
 			stream->Write(state.IsActive());
 			stream->Write(state.GetValue());

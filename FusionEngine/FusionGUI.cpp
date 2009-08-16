@@ -127,7 +127,7 @@ namespace FusionEngine
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
 		
-		LoadFonts("gui/");
+		LoadFonts("core/gui/fonts/");
 
 		CL_InputContext ic = m_Display.get_ic();
 

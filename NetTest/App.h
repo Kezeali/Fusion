@@ -10,8 +10,8 @@
 #include "../FusionEngine/FusionRakStream.h"
 #include "../FusionEngine/FusionHistory.h"
 
-#include <RakNet/BitStream.h>
-#include <RakNet/GetTime.h>
+#include <BitStream.h>
+#include <GetTime.h>
 
 #include "Ship.h"
 #include "AuthorityManager.h"

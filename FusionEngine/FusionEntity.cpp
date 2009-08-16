@@ -400,6 +400,16 @@ namespace FusionEngine
 		return m_OwnerID;
 	}
 
+	void Entity::SetAuthority(ObjectID authority)
+	{
+		m_Authority = authority;
+	}
+
+	ObjectID Entity::GetAuthority() const
+	{
+		return m_Authority;
+	}
+
 	//void Entity::SetPseudoEntity(bool pseudo_entity)
 	//{
 	//	if (pseudo_entity)
@@ -632,12 +642,14 @@ namespace FusionEngine
 		}
 	}
 
-	bool Entity::ButtonIsActive(const std::string &input)
+	bool Entity::InputIsActive(const std::string &input)
 	{
+		return m_EntityInput->IsActive(input);
 	}
 
-	float Entity::GetAxisPosition(const std::string &input)
+	float Entity::GetInputPosition(const std::string &input)
 	{
+		return m_EntityInput->GetPosition(input);
 	}
 
 	//virtual void Entity::UpdateRenderables(float split)
@@ -655,7 +667,7 @@ namespace FusionEngine
 
 	void Entity::Register(asIScriptEngine *engine)
 	{
-		//int r;
+		int r;
 		//RefCounted::RegisterType<EntityInputs>(engine, "EntityInputs");
 		//r = engine->RegisterObjectMethod("EntityInputs"
 		//	"bool isActive(const string &in) const",
@@ -665,9 +677,12 @@ namespace FusionEngine
 		//r = engine->RegisterObjectMethod("Entity"
 		//	"EntityInputs getInputs() const",
 		//	asMETHOD(Entity, GetInputState), asCALL_THISCALL);
-		r = engine->RegisterObjectMethod("Entity"
-			"bool buttonIsActive() const",
-			asMETHOD(Entity, ButtonIsActive), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Entity",
+			"bool inputIsActive(const string &in) const",
+			asMETHOD(Entity, InputIsActive), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Entity",
+			"float getInputPosition(const string &in) const",
+			asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
 	}
 
 }

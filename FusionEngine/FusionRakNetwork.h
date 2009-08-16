@@ -31,9 +31,9 @@
 
 #include "FusionNetwork.h"
 
-#include <RakNet/RakPeerInterface.h>
-#include <RakNet/RakNetTypes.h>
-#include <RakNet/MessageIdentifiers.h>
+#include <RakPeerInterface.h>
+#include <RakNetTypes.h>
+#include <MessageIdentifiers.h>
 
 #include "FusionNetworkTypes.h"
 
@@ -58,25 +58,24 @@ namespace FusionEngine
 	const size_t g_HeaderLengthTimestamp = g_TimestampLength + g_HeaderLength;
 
 	//! RakNet implementation of of NetHandle
-	//class RakNetHandle : public NetHandle
-	//{
-	//	SystemAddress m_SystemAddress;
+	class RakNetHandleImpl : public INetHandle
+	{
+	public:
+		RakNetGUID SystemIdent;
+		SystemAddress Address;
 
-	//public:
-	//	RakNetHandle()
-	//	{
-	//	}
+		RakNetHandleImpl()
+		{
+		}
 
-	//	RakNetHandle(SystemAddress systemAddress)
-	//		: m_SystemAddress(systemAddress)
-	//	{
-	//	}
+		RakNetHandleImpl(const RakNetGUID &guid, const SystemAddress &address)
+			: SystemIdent(guid),
+			Address(address)
+		{
+		}
+	};
 
-	//	const SystemAddress &GetSystemAddress() const
-	//	{
-	//		return m_SystemAddress;
-	//	}
-	//};
+	typedef std::tr1::shared_ptr<RakNetHandleImpl> RakNetHandle;
 
 	//! RakNet packet specialization
 	class RakNetPacket : public IPacket
@@ -87,14 +86,14 @@ namespace FusionEngine
 		NetTime m_Time;
 
 		Packet* m_OriginalPacket;
-		NetHandle m_Handle;
+		RakNetHandle m_Handle;
 
 	public:
 		//! Constructor
 		RakNetPacket(Packet *originalPacket);
 
 		//! Constructor
-		RakNetPacket(NetHandle from, Packet *originalPacket);
+		RakNetPacket(RakNetHandle from, Packet *originalPacket);
 
 		//! Virtual destructor
 		virtual ~RakNetPacket();
@@ -107,13 +106,13 @@ namespace FusionEngine
 		//! Returns the data length
 		virtual unsigned int GetLength() const;
 		//! Returns the packet type
-		virtual unsigned char GetType() const;
+		virtual char GetType() const;
 		//! Returns true if this packet has a timestamp
 		virtual bool IsTimeStamped() const;
 		//! Returns the timestamp
 		virtual NetTime GetTime() const;
 		//! Returns the system handle for the system that sent this packet
-		virtual const NetHandle& GetSystemHandle() const;
+		virtual NetHandle GetSystemHandle() const;
 	};
 
 	/*!
@@ -125,6 +124,7 @@ namespace FusionEngine
 	protected:
 		//! System map
 		typedef std::map<NetHandle, SystemAddress> SystemAddressMap;
+		typedef std::tr1::unordered_set<NetHandle> NetHandleSet;
 
 	public:
 		RakNetwork();
@@ -139,7 +139,7 @@ namespace FusionEngine
 		virtual void Disconnect();
 
 		//! Sends data as-is
-		virtual bool SendRaw(char* data, unsigned int length,
+		virtual bool SendRaw(const char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle& destination);
 		/*!
@@ -155,7 +155,7 @@ namespace FusionEngine
 		 */
 		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination);
+			const NetHandle &destination);
 		//! Receives data
 		virtual IPacket* Receive();
 		//! Puts the given packet back on the receive buffer
@@ -165,7 +165,7 @@ namespace FusionEngine
 
 	public:
 		//! Returns RakNet stats
-		RakNetStatistics* const GetStatistics(const SystemAddress system);
+		RakNetStatistics* const GetStatistics(const SystemAddress &system);
 
 		//! Gets the ping to the given host
 		virtual int GetPing(const NetHandle& handle);
@@ -201,7 +201,7 @@ namespace FusionEngine
 		
 	protected:
 		RakPeerInterface* m_NetInterface;
-		SystemAddressMap m_SystemAddresses;
+		//SystemAddressMap m_SystemAddresses;
 
 		// Network Simulator settings
 		unsigned int m_MinLagMilis;

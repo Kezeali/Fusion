@@ -33,7 +33,7 @@
 #pragma once
 #endif
 
-#include <RakNet/MessageIdentifiers.h>
+#include <MessageIdentifiers.h>
 
 namespace FusionEngine
 {
@@ -55,6 +55,7 @@ namespace FusionEngine
 		CID_FILESYNC,
 		//! NetworkedEntityManager channel
 		CID_ENTITYMANAGER,
+		CID_INPUTUPDATE,
 		//! No channel
 		CID_MAXCID
 		//@}

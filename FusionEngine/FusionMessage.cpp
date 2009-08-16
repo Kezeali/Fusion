@@ -1,13 +1,13 @@
 
 #include "FusionMessage.h"
 
-/// Fusion
+// Fusion
 #include "FusionNetworkUtils.h"
 
-/// RakNet
-#include <RakNet/Bitstream.h>
-#include <RakNet/GetTime.h>
-#include <RakNet/PacketEnumerations.h>
+// RakNet
+#include <Bitstream.h>
+#include <GetTime.h>
+#include <PacketEnumerations.h>
 
 using namespace FusionEngine;
 
