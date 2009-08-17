@@ -116,6 +116,9 @@ namespace FusionEngine
 
 	typedef std::vector<Vector2> Vector2Array;
 
+	//! Max local (split-screen, hotseat, etc.) players per client
+	static const unsigned int g_MaxLocalPlayers = 16;
+
 	static const float s_pi = 3.1415926f;
 
 	//! Ratio of degrees to radians
@@ -447,6 +450,7 @@ namespace FusionEngine
 	//! \todo List forward declarations in alphabetical order
 	class ClientOptions;
 	class EntityFactory;
+	class EntitySynchroniser;
 	class EntityManager;
 	class GameMapLoader;
 	class Entity;

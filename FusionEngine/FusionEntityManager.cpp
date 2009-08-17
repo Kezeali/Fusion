@@ -32,6 +32,7 @@
 
 #include "FusionEntityFactory.h"
 #include "FusionClientOptions.h"
+#include "FusionPlayerRegistry.h"
 
 #include "FusionNetworkTypes.h"
 
@@ -41,148 +42,6 @@
 
 namespace FusionEngine
 {
-
-	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->addPlayer(net_index, local_index, system_address);
-	}
-
-	void PlayerRegistry::AddPlayer(ObjectID net_index, NetHandle system_address)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->addPlayer(net_index, g_MaxLocalPlayers, system_address);
-	}
-
-	void PlayerRegistry::RemovePlayer(ObjectID net_index)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->removePlayer(net_index);
-	}
-
-	void PlayerRegistry::RemovePlayer(unsigned int local_index)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->removePlayer(local_index);
-	}
-
-	void PlayerRegistry::RemovePlayersFrom(NetHandle system_address)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->removePlayersFrom(system_address);
-	}
-
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByNetIndex(ObjectID index)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		return registry->getPlayerByNetIndex(index);
-	}
-
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByLocalIndex(unsigned int index)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		return registry->getPlayerByLocalIndex(index);
-	}
-
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::GetPlayersBySystem(NetHandle system_address)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		return registry->getPlayersBySystem(system_address);
-	}
-
-	PlayerRegistry::PlayerRegistry()
-	{
-		m_NoSuchPlayer.NetIndex = 0;
-		m_NoSuchPlayer.LocalIndex = g_MaxLocalPlayers;
-	}
-
-	void PlayerRegistry::addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
-	{
-		//PlayerInfoPtr playerInfo(new PlayerInfo);
-		PlayerInfo playerInfo;
-		playerInfo.NetIndex = net_index;
-		playerInfo.LocalIndex = local_index;
-		playerInfo.System = system_address;
-
-		m_ByNetIndex[net_index] = playerInfo;
-		m_ByLocalIndex[local_index] = playerInfo;
-	}
-
-	void PlayerRegistry::removePlayer(ObjectID net_index)
-	{
-		PlayersByNetIndexMap::iterator _where = m_ByNetIndex.find(net_index);
-		m_ByLocalIndex.erase(_where->second.LocalIndex);
-		m_ByNetIndex.erase(_where);
-	}
-
-	void PlayerRegistry::removePlayer(unsigned int local_index)
-	{
-		PlayersByLocalIndexMap::iterator _where = m_ByLocalIndex.find(local_index);
-		m_ByNetIndex.erase(_where->second.NetIndex);
-		m_ByLocalIndex.erase(_where);
-	}
-
-	void PlayerRegistry::removePlayersFrom(NetHandle system_address)
-	{
-		for (PlayersByNetIndexMap::iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
-		{
-			PlayerInfo &playerInfo = it->second;
-			if (playerInfo.System == system_address)
-			{
-				if (playerInfo.LocalIndex == g_MaxLocalPlayers)
-					m_ByLocalIndex.erase(playerInfo.LocalIndex);
-				m_ByNetIndex.erase(playerInfo.NetIndex);
-			}
-		}
-	}
-
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetIndex(ObjectID index) const
-	{
-		PlayersByNetIndexMap::const_iterator _where = m_ByNetIndex.find(index);
-		if (_where != m_ByNetIndex.end())
-			return _where->second;
-		else
-			return m_NoSuchPlayer;
-	}
-
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByLocalIndex(unsigned int index) const
-	{
-		PlayersByLocalIndexMap::const_iterator _where = m_ByLocalIndex.find(index);
-		if (_where != m_ByLocalIndex.end())
-			return _where->second;
-		else
-			return m_NoSuchPlayer;
-	}
-
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::getPlayersBySystem(NetHandle system_address) const
-	{
-		std::vector<PlayerRegistry::PlayerInfo> players;
-
-		for (PlayersByNetIndexMap::const_iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
-		{
-			if (it->second.System == system_address)
-				players.push_back(it->second);
-		}
-		
-		return players;
-	}
-
 
 	ConsolidatedInput::ConsolidatedInput(InputManager *input_manager)
 		: m_LocalManager(input_manager),
@@ -256,9 +115,10 @@ namespace FusionEngine
 		}
 	}
 
-	EntitySynchroniser::EntitySynchroniser(Network *network)
-		: m_InputManager(InputManager::getSingletonPtr()),
-		m_Network(network)
+	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, Network *network)
+		: m_InputManager(input_manager),
+		m_Network(network),
+		m_PlayerInputs(new ConsolidatedInput(input_manager))
 	{
 	}
 
@@ -311,18 +171,35 @@ namespace FusionEngine
 		const PlayerRegistry::PlayerInfo &info = PlayerRegistry::GetPlayerByNetIndex(player);
 		const NetHandle &address = info.System;
 
-		RakNetHandleImpl* rakAddress = dynamic_cast<RakNetHandleImpl*>(address.get());
+		//RakNetHandleImpl* rakAddress = dynamic_cast<RakNetHandleImpl*>(address.get());
 
-		RakNetwork *network = dynamic_cast<RakNetwork*>( m_Network );
-		const RakPeerInterface *peer = network->GetRakNetPeer();
+		//RakNetwork *network = dynamic_cast<RakNetwork*>( m_Network );
+		//const RakPeerInterface *peer = network->GetRakNetPeer();
 
 		if (m_ImportantMove)
 		{
-			peer->Send(&m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, rakAddress->Address);
+			m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, address);
 		}
 		else
 		{
-			peer->Send(&m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYMANAGER, rakAddress->Address);
+			m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYMANAGER, address);
+		}
+	}
+
+	void EntitySynchroniser::OnEntityAdded(EntityPtr &entity)
+	{
+		//for (unsigned int i = 0; i < g_MaxLocalPlayers; ++i)
+		//{
+		//	const PlayerRegistry::PlayerInfo &playerInfo = ;
+		//	if (playerInfo.LocalIndex != g_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
+		//}
+
+		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByNetIndex(entity->GetOwnerID());
+		if (playerInfo.LocalIndex != g_MaxLocalPlayers)
+		{
+			PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetIndex);
+			if (playerInput)
+				entity->_setPlayerInput(playerInput);
 		}
 	}
 
@@ -352,6 +229,8 @@ namespace FusionEngine
 		m_PacketData.Write(state.data.c_str(), state.data.length());
 
 		//m_PacketData.append((char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
+
+		return true;
 	}
 
 	void EntitySynchroniser::HandlePacket(IPacket *packet)
@@ -413,9 +292,10 @@ namespace FusionEngine
 		}
 	}
 
-	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager)
+	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser)
 		: m_Renderer(renderer),
 		m_InputManager(input_manager),
+		m_EntitySynchroniser(entity_synchroniser),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false)
@@ -482,12 +362,14 @@ namespace FusionEngine
 			IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
 			if (_where != m_Entities.end())
 				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
-			
+
 			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
 
 			m_EntitiesByName[entity->GetName()] = entity;
 
 			m_Renderer->Add(entity);
+
+			m_EntitiesToUpdate.clear();
 		}
 	}
 
@@ -512,6 +394,8 @@ namespace FusionEngine
 			m_EntitiesByName.erase(entity->GetName());
 
 			m_Renderer->Remove(entity);
+
+			m_EntitiesToUpdate.clear();
 		}
 	}
 
@@ -541,6 +425,8 @@ namespace FusionEngine
 			
 			m_PseudoEntities.insert(pseudo_entity);
 			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
+
+			m_EntitiesToUpdate.clear();
 		}
 	}
 
@@ -743,6 +629,8 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
+		EntityDeserialiser entityDeserialiser(this, MakeIDTranslator());
+
 		if (m_ChangedUpdateStateTags.empty() && !m_EntitiesToUpdate.empty())
 		{
 			for (EntityArray::iterator it = m_EntitiesToUpdate.begin(), end = m_EntitiesToUpdate.end(); it != end; ++it)
@@ -763,7 +651,10 @@ namespace FusionEngine
 				{
 					if (entity->Wait())
 					{
+						m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 						entity->Update(split);
+						m_EntitySynchroniser->SendSync(entity);
+
 						updateRenderables(entity, split);
 
 						if (entity->IsStreamedOut())
@@ -791,7 +682,11 @@ namespace FusionEngine
 				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
 				{
 					m_EntitiesToUpdate.push_back(entity);
+
+					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 					entity->Update(split);
+					m_EntitySynchroniser->SendSync(entity);
+
 					updateRenderables(entity, split);
 				}
 			}
@@ -810,7 +705,11 @@ namespace FusionEngine
 				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
 				{
 					m_EntitiesToUpdate.push_back(entity);
+
+					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 					entity->Update(split);
+					m_EntitySynchroniser->SendSync(entity);
+
 					updateRenderables(entity, split);
 				}
 			}
@@ -826,6 +725,8 @@ namespace FusionEngine
 		{
 			m_Entities.erase((*it)->GetID());
 			m_EntitiesByName.erase((*it)->GetName());
+
+			m_EntitiesToUpdate.clear();
 
 			m_Renderer->Remove(*it);
 		}

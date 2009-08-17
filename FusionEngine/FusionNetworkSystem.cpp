@@ -34,6 +34,7 @@
 // Fusion
 #include "FusionLogger.h"
 #include "FusionNetwork.h"
+#include "FusionPlayerRegistry.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -127,7 +128,7 @@ namespace FusionEngine
 
 	void NetworkSystem::RequestStepControl()
 	{
-		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, (unsigned char*)NULL, 0, FusionEngine::HIGH_PRIORITY, FusionEngine::RELIABLE, 0, "");
+		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, (char*)NULL, 0, HIGH_PRIORITY, RELIABLE, 0, PlayerRegistry::GetArbitratingPlayer().System);
 	}
 
 }

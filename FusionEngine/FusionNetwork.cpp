@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007 Fusion Project Team
+  Copyright (c) 2007-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -40,10 +40,10 @@ namespace FusionEngine
 	{
 	}
 
-	bool Network::SendRaw(char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
-	{
-		return Send(false, 0, data, length, priority, reliability, channel, destination);
-	}
+	//bool Network::SendRaw(char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	//{
+	//	return Send(false, 0, data, length, priority, reliability, channel, destination);
+	//}
 
 	bool Network::SendToChannel(bool timestamped, char type, char subtype, char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
@@ -57,9 +57,9 @@ namespace FusionEngine
 		return success;
 	}
 
-	bool Network::Send(bool timestamped, char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	bool Network::Send(bool timestamped, unsigned char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
 	{
-		return Send(timestamped, type, (char*)data, length, priority, reliability, channel, destination);
+		return Send(timestamped, (char)type, (char*)data, length, priority, reliability, channel, destination);
 	}
 
 	void Network::PushBackPacket(IPacket *packet, bool toHead)

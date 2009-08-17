@@ -39,8 +39,6 @@
 
 namespace FusionEngine
 {
-	//! Max local (split-screen) players per client
-	static const unsigned int g_MaxLocalPlayers = 16;
 
 	/*!
 	 * \brief

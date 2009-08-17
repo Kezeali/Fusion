@@ -543,6 +543,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPlayerRegistry.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionProjectile.h"
 				>
 			</File>
@@ -1062,6 +1066,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicsWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPlayerRegistry.cpp"
 				>
 			</File>
 			<File

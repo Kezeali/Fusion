@@ -49,69 +49,6 @@
 namespace FusionEngine
 {
 
-	class PlayerRegistry : public Singleton<PlayerRegistry>
-	{
-	public:
-		struct PlayerInfo
-		{
-			ObjectID NetIndex;
-			unsigned int LocalIndex;
-			NetHandle System;
-		};
-
-		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
-
-		PlayerRegistry();
-
-		static void AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
-		static void AddPlayer(ObjectID net_index, NetHandle system_address);
-
-		static void RemovePlayer(ObjectID net_index);
-		static void RemovePlayer(unsigned int local_index);
-		static void RemovePlayersFrom(NetHandle system_address);
-
-		static const PlayerInfo &GetPlayerByNetIndex(ObjectID index);
-		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
-
-		static std::vector<PlayerInfo> GetPlayersBySystem(NetHandle system_address);
-	protected:
-		void addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
-
-		void removePlayer(ObjectID net_index);
-		void removePlayer(unsigned int local_index);
-		void removePlayersFrom(NetHandle system_address);
-
-		const PlayerInfo &getPlayerByNetIndex(ObjectID index) const;
-		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;
-		std::vector<PlayerInfo> getPlayersBySystem(NetHandle system_address) const;
-
-		typedef std::tr1::unordered_map<ObjectID, PlayerInfo> PlayersByNetIndexMap;
-		typedef std::tr1::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
-		typedef std::tr1::unordered_multimap<NetHandle, PlayerInfo> PlayersBySystemAddressMap;
-
-		PlayersByNetIndexMap m_ByNetIndex;
-		PlayersByLocalIndexMap m_ByLocalIndex;
-		PlayersBySystemAddressMap m_BySystem;
-
-		PlayerInfo m_NoSuchPlayer;
-	};
-
-	//class EntityMap
-	//{
-	//public:
-	//	typedef std::map<ObjectID, EntityPtr> IDEntityMap;
-	//	typedef std::tr1::unordered_map<std::string, EntityPtr> NameEntityMap;
-
-	//	const IDEntityMap &by_id() const;
-	//	const NameEntityMap &by_name() const;
-
-	//	bool insert(EntityPtr entity);
-
-	//protected:
-	//	IDEntityMap m_EntitiesByID;
-	//	NameEntityMap m_EntitiesByName;
-	//};
-
 	//! Updates input states for each player (local and remote)
 	class ConsolidatedInput
 	{
@@ -145,6 +82,8 @@ namespace FusionEngine
 
 	};
 
+	static const BitSize_t s_MaxEntityPacketSize = 512;
+
 	class EntitySynchroniser : public PacketHandler
 	{
 	public:
@@ -158,7 +97,7 @@ namespace FusionEngine
 		};
 		typedef std::vector<InstanceDefinition> InstanceDefinitionArray;
 
-		EntitySynchroniser(Network *network);
+		EntitySynchroniser(InputManager *input_manager, Network *network);
 
 		const InstanceDefinitionArray &GetReceivedEntities() const;
 
@@ -166,6 +105,8 @@ namespace FusionEngine
 		void EndPacket();
 
 		void Send(ObjectID player);
+
+		void OnEntityAdded(EntityPtr &entity);
 
 		// Returns true if the entity should be updated
 		bool ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser);
@@ -213,7 +154,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(Renderer *renderer, InputManager *input_manager);
+		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -327,6 +268,7 @@ namespace FusionEngine
 	protected:
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
+		EntitySynchroniser *m_EntitySynchroniser;
 
 		EntityFactory *m_EntityFactory;
 

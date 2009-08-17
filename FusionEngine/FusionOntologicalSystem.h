@@ -50,7 +50,7 @@ namespace FusionEngine
 		typedef std::vector<ViewportPtr> ViewportArray;
 
 	public:
-		OntologicalSystem(Renderer *renderer, InputManager *input_manager);
+		OntologicalSystem(Renderer *renderer, InputManager *input_manager, Network *network);
 		virtual ~OntologicalSystem();
 
 		virtual const std::string &GetName() const;
@@ -76,6 +76,7 @@ namespace FusionEngine
 		void OnModuleRebuild(BuildModuleEvent& ev);
 
 	protected:
+		EntitySynchroniser *m_EntitySyncroniser;
 		EntityManager *m_EntityManager;
 		GameMapLoader *m_MapLoader;
 
@@ -85,6 +86,7 @@ namespace FusionEngine
 
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
+		Network *m_Network;
 
 		bsig2::connection m_ModuleConnection;
 

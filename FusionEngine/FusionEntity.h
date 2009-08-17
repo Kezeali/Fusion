@@ -340,6 +340,8 @@ namespace FusionEngine
 		//! Called after an Entity is steamed out
 		virtual void OnStreamOut() =0;
 
+		void _setPlayerInput(const PlayerInputPtr &player_input);
+
 		bool InputIsActive(const std::string &input);
 		float GetInputPosition(const std::string &input);
 
@@ -394,7 +396,7 @@ namespace FusionEngine
 		//  authority is always the owner.
 		ObjectID m_Authority;
 
-		PlayerInputPtr m_EntityInput;
+		PlayerInputPtr m_PlayerInput;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

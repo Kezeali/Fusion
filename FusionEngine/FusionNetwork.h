@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2007 Fusion Project Team
+ Copyright (c) 2007-2009 Fusion Project Team
 
  This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -58,7 +58,8 @@ namespace FusionEngine
 	class INetHandle
 	{
 	public:
-		virtual ~INetHandle();
+		virtual ~INetHandle()
+		{}
 	};
 
 	typedef std::tr1::shared_ptr<INetHandle> NetHandle;
@@ -166,7 +167,7 @@ namespace FusionEngine
 		//! Sends a packet containing ONLY the given data
 		virtual bool SendRaw(const char *data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination);
+			const NetHandle& destination) =0;
 
 		//! Sends a message
 		/*!

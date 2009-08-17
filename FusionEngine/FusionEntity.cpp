@@ -326,7 +326,7 @@ namespace FusionEngine
 
 	void Renderable::Draw(CL_GraphicContext &gc)
 	{
-		if (m_Enabled && !m_Sprite.IsLoaded())
+		if (m_Enabled && m_Sprite.IsLoaded())
 		{
 			m_Sprite->draw(gc, m_DerivedPosition.x, m_DerivedPosition.y);
 		}
@@ -334,7 +334,7 @@ namespace FusionEngine
 
 	void Renderable::Draw(CL_GraphicContext &gc, const Vector2 &origin)
 	{
-		if (m_Enabled && !m_Sprite.IsLoaded())
+		if (m_Enabled && m_Sprite.IsLoaded())
 		{
 			m_Sprite->draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
 		}
@@ -642,14 +642,19 @@ namespace FusionEngine
 		}
 	}
 
+	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)
+	{
+		m_PlayerInput = player_input;
+	}
+
 	bool Entity::InputIsActive(const std::string &input)
 	{
-		return m_EntityInput->IsActive(input);
+		return m_PlayerInput->IsActive(input);
 	}
 
 	float Entity::GetInputPosition(const std::string &input)
 	{
-		return m_EntityInput->GetPosition(input);
+		return m_PlayerInput->GetPosition(input);
 	}
 
 	//virtual void Entity::UpdateRenderables(float split)

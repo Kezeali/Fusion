@@ -6,6 +6,9 @@
 #include "../FusionEngine/FusionConsoleStdOutWriter.h"
 #include "../FusionEngine/FusionLogger.h"
 
+// Network
+#include "../FusionEngine/FusionRakNetwork.h"
+
 // Systems
 #include "../FusionEngine/FusionOntologicalSystem.h"
 #include "../FusionEngine/FusionGUI.h"
@@ -36,6 +39,7 @@ namespace FusionEngine
 class EntityTest
 {
 private:
+	Network *m_Network;
 	InputManager *m_Input;
 	ResourceManager *m_ResourceManager;
 	ScriptingEngine *m_ScriptManager;
@@ -87,6 +91,7 @@ public:
 			SoundOutput::Register(asEngine);
 			SoundSession::Register(asEngine);
 			SoundSample::Register(asEngine);
+			Entity::Register(asEngine);
 
 			/////////////////////////////////////
 			// Script SoundOutput wrapper object
@@ -125,6 +130,10 @@ public:
 			if (co->GetOption_bool("console_logging"))
 				logger->ActivateConsoleLogging();
 
+			//////////////////////
+			// Network Connection
+			m_Network = new RakNetwork();
+
 			/////////////////
 			// Input Manager
 			m_Input = new InputManager(dispWindow);
@@ -145,7 +154,7 @@ public:
 			GUI *gui = new GUI(dispWindow);
 			systemMgr->AddSystem(gui);
 
-			m_Ontology = new OntologicalSystem(renderer, m_Input);
+			m_Ontology = new OntologicalSystem(renderer, m_Input, m_Network);
 			systemMgr->AddSystem(m_Ontology);
 
 			/////////////////////
@@ -196,6 +205,7 @@ public:
 			delete renderer;
 			delete m_Input;
 			delete m_ScriptManager;
+			delete m_Network;
 		}
 		catch (FusionEngine::Exception &ex)
 		{

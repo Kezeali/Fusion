@@ -390,7 +390,8 @@ namespace FusionEngine
 	void ResourceManager::DeliverLoadedResources()
 	{
 		CL_MutexSection lock(&m_ToDeliverMutex);
-		for (ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end(); it != end; ++it)
+		ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end();
+		while (it != end)
 		{
 			ResourceDataPtr &res = *it;
 			if (res->IsLoaded())
@@ -399,7 +400,10 @@ namespace FusionEngine
 				res->SigLoaded.disconnect_all_slots();
 
 				it = m_ToDeliver.erase(it);
+				end = m_ToDeliver.end();
 			}
+			else
+				++it;
 		}
 		//m_LoadedResources.clear();
 	}

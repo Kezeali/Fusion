@@ -309,6 +309,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionPlayerRegistry.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionRakNetwork.cpp"
 				>
 			</File>
@@ -580,6 +584,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPlayerInput.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPlayerRegistry.h"
 				>
 			</File>
 			<File

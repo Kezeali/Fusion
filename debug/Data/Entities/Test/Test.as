@@ -12,11 +12,11 @@ class ScriptEntity
 
 	bool InputIsActive(const string@ input)
 	{
-		__appObject.inputIsActive(input);
+		return __appObject.inputIsActive(input);
 	}
-	bool GetInputPosition(const string@ input)
+	float GetInputPosition(const string@ input)
 	{
-		__appObject.getInputPosition(input);
+		return __appObject.getInputPosition(input);
 	}
 }
 
@@ -111,21 +111,42 @@ class Test : ScriptEntity
 	bool first;
 	void Update(float dt)
 	{
-		if(first)
+		if (first)
 		{
 			seed_rand(dt);
 
 			//physBody.applyForce(Vector(0.003,0));
-			physBody.applyTorque(0.002);
+			//physBody.applyTorque(0.002);
 
-			movesound.play();
+			//movesound.play();
 			bgm.play();
 
 			first = false;
 		}
-		if (runningtime < 0.01)
+
+		bool forward = InputIsActive("thrust");
+		bool left = InputIsActive("left");
+		bool right = InputIsActive("right");
+
+		if (forward && !input_forward)
 		{
+			physBody.applyForce(Vector(0.003,0));
+			movesound.play();
 		}
+
+		if (left && !input_left)
+		{
+			physBody.applyTorque(-0.001);
+		}
+
+		if (right && !input_right)
+		{
+			physBody.applyTorque(0.001);
+		}
+
+		input_forward = forward;
+		input_left = left;
+		input_right = right;
 
 		//if (input.is_active(player, "thrust"))
 		//{
