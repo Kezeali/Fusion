@@ -193,7 +193,8 @@ namespace FusionEngine
 		//	FSN_EXCEPT(ExCode::IO, "InputManager::Initialise", "Options file is missing 'num_local_players'");
 		try
 		{
-			ticpp::Document inputDoc(OpenXml_PhysFS(L"input/coreinputs.xml"));
+			// Load the input-definitions file for the current game
+			ticpp::Document inputDoc(OpenXml_PhysFS(L"inputdefinitions.xml"));
 			m_DefinitionLoader->Load(inputDoc);
 		}
 		catch (FileSystemException &ex)
@@ -202,7 +203,8 @@ namespace FusionEngine
 		}
 		try
 		{
-			ticpp::Document keyDoc(OpenXml_PhysFS(L"input/keyinfo.xml"));
+			// Load the core key-info file
+			ticpp::Document keyDoc(OpenXml_PhysFS(L"core/input/keyinfo.xml"));
 			loadKeyInfo(keyDoc);
 		}
 		catch (FileSystemException &ex)
@@ -211,6 +213,7 @@ namespace FusionEngine
 		}
 		try
 		{
+			// Load the controls file - will probably be in the user's home folder (the virtual file-system (PhysFS) takes care of this)
 			LoadInputMaps(L"controls.xml");
 		}
 		catch (FileSystemException &ex)
@@ -343,7 +346,7 @@ namespace FusionEngine
 			std::string keyName = child->GetAttribute("key");
 
 			// Check that the given input is defined
-			if (m_DefinitionLoader->IsDefined(input))
+			if (!m_DefinitionLoader->IsDefined(input))
 			{
 				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": " + input + " doesn't exist.", LOG_TRIVIAL);
 				continue;

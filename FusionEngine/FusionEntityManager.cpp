@@ -66,13 +66,20 @@ namespace FusionEngine
 
 	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(ObjectID player)
 	{
+		//! \todo TODO: unmuddle this method
+
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
 		{
 			return _where->second;
 		}
 		else
-			return PlayerInputPtr();
+		{
+			if (PlayerRegistry::GetPlayerByNetIndex(player).IsInGame)
+				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
+			else
+				return PlayerInputPtr();
+		}
 	}
 
 	const ConsolidatedInput::PlayerInputsMap &ConsolidatedInput::GetPlayerInputs() const
@@ -298,7 +305,8 @@ namespace FusionEngine
 		m_EntitySynchroniser(entity_synchroniser),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
-		m_EntitiesLocked(false)
+		m_EntitiesLocked(false),
+		m_NextId(1)
 	{
 		m_EntityFactory = new EntityFactory();
 	}
@@ -368,6 +376,7 @@ namespace FusionEngine
 			m_EntitiesByName[entity->GetName()] = entity;
 
 			m_Renderer->Add(entity);
+			m_EntitySynchroniser->OnEntityAdded(entity);
 
 			m_EntitiesToUpdate.clear();
 		}
@@ -466,6 +475,7 @@ namespace FusionEngine
 		m_EntitiesByName[entity->GetName()] = entity;
 
 		m_Renderer->Add(entity);
+		m_EntitySynchroniser->OnEntityAdded(entity);
 	}
 
 	bool isNamed(EntityManager::IDEntityMap::value_type &element, const std::string &name)

@@ -119,6 +119,7 @@ namespace FusionEngine
 	{
 		m_NoSuchPlayer.NetIndex = 0;
 		m_NoSuchPlayer.LocalIndex = g_MaxLocalPlayers;
+		m_NoSuchPlayer.IsInGame = false;
 	}
 
 	void PlayerRegistry::addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)

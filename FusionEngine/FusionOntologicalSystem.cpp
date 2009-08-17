@@ -42,6 +42,7 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionXml.h"
+#include "FusionPlayerRegistry.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -234,10 +235,15 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
+			PlayerRegistry::AddPlayer(0, 0, NetHandle());
+			PlayerRegistry::SetArbitrator(0);
+
 			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
 
 			if (entity)
 			{
+				entity->SetOwnerID(0);
+
 				entity->Spawn();
 				// Force stream-in
 				entity->StreamIn();

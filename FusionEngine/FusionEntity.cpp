@@ -344,11 +344,14 @@ namespace FusionEngine
 		: m_Name("default"),
 		m_Id(0),
 		m_OwnerID(0),
+		m_PseudoEntity(true),
 		m_Flags(0),
 		m_MarkedToRemove(false),
+		m_StreamedOut(false),
 		m_Paused(false),
 		m_Hidden(false),
-		m_Depth(0)
+		m_Depth(0),
+		m_WaitStepsRemaining(0)
 	{
 	}
 
@@ -356,11 +359,14 @@ namespace FusionEngine
 		: m_Name(name),
 		m_Id(0),
 		m_OwnerID(0),
+		m_PseudoEntity(true),
 		m_Flags(0),
 		m_MarkedToRemove(false),
+		m_StreamedOut(false),
 		m_Paused(false),
 		m_Hidden(false),
-		m_Depth(0)
+		m_Depth(0),
+		m_WaitStepsRemaining(0)
 	{
 	}
 

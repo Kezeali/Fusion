@@ -53,6 +53,12 @@ namespace FusionEngine
 			ObjectID NetIndex;
 			unsigned int LocalIndex;
 			NetHandle System;
+			bool IsInGame;
+			PlayerInfo()
+				: NetIndex(0),
+				LocalIndex(g_MaxLocalPlayers),
+				IsInGame(true)
+			{}
 		};
 
 		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;

@@ -9,6 +9,8 @@
 // Network
 #include "../FusionEngine/FusionRakNetwork.h"
 
+#include "../FusionEngine/FusionPlayerRegistry.h"
+
 // Systems
 #include "../FusionEngine/FusionOntologicalSystem.h"
 #include "../FusionEngine/FusionGUI.h"
@@ -44,6 +46,8 @@ private:
 	ResourceManager *m_ResourceManager;
 	ScriptingEngine *m_ScriptManager;
 
+	std::tr1::shared_ptr<PlayerRegistry> m_PlayerRegistry;
+
 	OntologicalSystem *m_Ontology;
 
 public:
@@ -62,6 +66,7 @@ public:
 
 		CL_DisplayWindow dispWindow("Display", 800, 600);
 
+		// TODO: store these in shared_ptrs
 		Logger* logger = 0;
 		ConsoleStdOutWriter* cout = 0;
 		Console* console = 0;
@@ -146,6 +151,10 @@ public:
 			////////////
 			// Renderer
 			Renderer *renderer = new Renderer(gc);
+
+			///////////////////
+			// Player Registry
+			m_PlayerRegistry.reset(new PlayerRegistry());
 
 			///////////
 			// Systems

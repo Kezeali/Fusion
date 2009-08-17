@@ -421,6 +421,12 @@ namespace FusionEngine
 		//entity->SetPath(m_Definition->GetWorkingDirectory());
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
 
+		ScriptUtils::Calling::Caller f = object.GetCaller("void _setAppObject(Entity@ obj)");
+		if (f.ok())
+			f(entity);
+		else
+			return NULL;
+
 		//StreamedResourceUserPtr resourceUser;
 
 		const ResourcesMap &resources = m_Definition->GetStreamedResources();
