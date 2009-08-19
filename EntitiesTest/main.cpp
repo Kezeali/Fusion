@@ -51,7 +51,7 @@ private:
 
 	std::tr1::shared_ptr<PlayerRegistry> m_PlayerRegistry;
 
-	OntologicalSystem *m_Ontology;
+	std::tr1::shared_ptr<OntologicalSystem> m_Ontology;
 
 public:
 	virtual int main(const std::vector<CL_String>& args)
@@ -101,6 +101,7 @@ public:
 			SoundSample::Register(asEngine);
 			Entity::Register(asEngine);
 			EntityManager::Register(asEngine);
+			OntologicalSystem::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 
 			/////////////////////////////////////
@@ -165,14 +166,16 @@ public:
 			// Systems
 			SystemsManager *systemMgr = new SystemsManager();
 
-			NetworkSystem *networkSystem = new NetworkSystem(m_Network);
+			std::tr1::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(m_Network) );
 			systemMgr->AddSystem(networkSystem);
 
-			GUI *gui = new GUI(dispWindow);
-			m_Ontology = new OntologicalSystem(renderer, m_Input, m_Network);
+			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
+			m_Ontology.reset( new OntologicalSystem(renderer, m_Input, networkSystem.get()) );
 
 			systemMgr->AddSystem(m_Ontology);
 			systemMgr->AddSystem(gui);
+
+			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
 			/////////////////////
 			// Attach module to objects that require it

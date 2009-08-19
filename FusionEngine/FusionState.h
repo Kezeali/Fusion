@@ -76,8 +76,7 @@ namespace FusionEngine
 			m_StateFlags(0)
 		{}
 		//! Destructor
-		virtual ~System()
-		{}
+		virtual ~System();
 
 	public:
 		//! Should initialise the system

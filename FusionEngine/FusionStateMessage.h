@@ -90,7 +90,8 @@ namespace FusionEngine
 		{}
 		//! Constructor +type
 		SystemMessage(MessageType type)
-			: m_Type(type)
+			: m_Type(type),
+			m_IncludeSender(true)
 		{}
 		//! Constructor +type +target
 		SystemMessage(MessageType type, const std::string &target_system, bool include_sender = false)

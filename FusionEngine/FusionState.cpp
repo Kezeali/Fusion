@@ -29,10 +29,17 @@
 namespace FusionEngine
 {
 
+	System::~System()
+	{
+		for (MessageList::iterator it = m_Messages.begin(), end = m_Messages.end(); it != end; ++it)
+			delete *it;
+		m_Messages.clear();
+	}
+
 	SystemMessage *System::PopMessage()
 	{
 		if (m_Messages.empty())
-			return 0;
+			return NULL;
 
 		SystemMessage *ret = m_Messages.front();
 		m_Messages.pop_front();

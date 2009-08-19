@@ -34,6 +34,9 @@
 namespace FusionEngine
 {
 
+	//! System shared_ptr
+	typedef std::tr1::shared_ptr<System> SystemPtr;
+
 	/*!
 	 * \brief
 	 * This class manages what can happen and when, while the game is running.
@@ -54,11 +57,7 @@ namespace FusionEngine
 	class SystemsManager
 	{
 	public:
-		//! List of states
-		//typedef std::vector<SharedState> StateList;
-		//! Queue of states
-		//typedef std::deque<SharedState> StateQueue;
-		typedef std::vector<System*> SystemArray;
+		typedef std::vector<SystemPtr> SystemArray;
 
 	public:
 		//! Basic constructor
@@ -72,65 +71,14 @@ namespace FusionEngine
 		 * \retval True if the state initialised successfully
 		 * \retval False otherwise
 		 */
-		bool SetExclusive(System *state);
+		bool SetExclusive(const SystemPtr &state);
 
-		//! Adds the next state in the queue to the execution list
-		/*!
-		 * \retval True if the state initialised successfully
-		 * \retval False otherwise
-		 */
-		//bool RunNextQueueState();
+		bool AddSystem(const SystemPtr &system);
 
-		//! Adds the state specified
-		/*!
-		 * \retval True if the state initialised successfully
-		 * \retval False otherwise
-		 */
-		//bool AddState(FusionState *state);
-
-		//! Adds the specified shared ptr. to a state
-		/*!
-		 * \retval True if the state initialised successfully
-		 * \retval False otherwise
-		 */
-		//bool AddState(SharedState state);
-
-		//! Adds the state specified to the queue
-		/*!
-		 * When all currently running states are complete, this state will run.
-		 */
-		//void AddStateToQueue(FusionState *state);
-
-		//! Adds the specified shared ptr. to a state, to the queue
-		/*!
-		 * When all currently running states are complete, this state will run.
-		 */
-		//void AddStateToQueue(SharedState state);
-
-		//! Removes the state specified
-		//void RemoveState(FusionState *state);
-
-		//! Removes the state specified
-		//void RemoveState(SharedState state);
-
-		//! Removes the state specified from the queue
-		//void RemoveStateFromQueue(FusionState *state);
-
-		//! Removes the state specified from the queue
-		//void RemoveStateFromQueue(SharedState state);
-
-		bool AddSystem(System *system);
-
-		void RemoveSystem(System *system);
+		void RemoveSystem(const SystemPtr &system);
 
 		//! Removes all states (including queued)
 		void Clear();
-
-		//! Removes active states
-		//void ClearActive();
-
-		//! Removes queued states
-		//void ClearQueue();
 
 		//! Updates all states
 		bool Update(float split);
@@ -157,15 +105,10 @@ namespace FusionEngine
 		* \param[in] excluded_targets
 		* Names of systems which shouldn't be flagged (from message->GetTargets()).
 		*/
-		void addFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
-		void removeFlagForOthers(System *excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
+		void addFlagForOthers(const SystemPtr &excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
+		void removeFlagForOthers(const SystemPtr &excluded_system, const StringVector &excluded_targets, System::StateFlags flag);
 
 	protected:
-		//! List of all running states
-		//StateList m_States;
-		//! List of all not-running states
-		//StateQueue m_Queued;
-
 		SystemArray m_Systems;
 
 		//! Set to false if when FusionState#KeepGoing() returns false.

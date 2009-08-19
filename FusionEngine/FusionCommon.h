@@ -128,7 +128,7 @@ namespace FusionEngine
 
 	static const double s_FloatComparisonEpsilon = 0.009;
 
-	static const float s_GameUnitsPerSimUnit = 1000.f;
+	static const float s_GameUnitsPerSimUnit = 100.f;
 	static const float s_SimUnitsPerGameUnit = 1.f/s_GameUnitsPerSimUnit;
 
 
@@ -454,6 +454,7 @@ namespace FusionEngine
 	class EntityManager;
 	class GameMapLoader;
 	class Entity;
+	class NetworkSystem;
 	class Network;
 	class IPacket;
 	class PacketHandler;
