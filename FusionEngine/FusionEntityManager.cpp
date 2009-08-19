@@ -39,6 +39,9 @@
 #include <boost/lexical_cast.hpp>
 #include <BitStream.h>
 
+// For script registration (the script method EntityManager::instance() returns a script object)
+#include "FusionScriptedEntity.h"
+
 
 namespace FusionEngine
 {
@@ -316,11 +319,14 @@ namespace FusionEngine
 		delete m_EntityFactory;
 	}
 
-	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name)
+	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name, ObjectID owner_id)
 	{
 		EntityPtr entity = m_EntityFactory->InstanceEntity(type, name);
-		if (entity.get() != NULL)
+		if (entity)
+		{
+			entity->SetOwnerID(owner_id);
 			AddEntity(entity);
+		}
 		return entity;
 	}
 
@@ -345,7 +351,10 @@ namespace FusionEngine
 			for (IDEntityMap::iterator end = m_Entities.end(); it != end; ++it)
 			{
 				if (it->first != nextSequentialId)
+				{
 					m_Entities[nextSequentialId] = it->second;
+					it->second->SetID(nextSequentialId);
+				}
 
 				++nextSequentialId;
 			}
@@ -377,6 +386,31 @@ namespace FusionEngine
 
 			m_Renderer->Add(entity);
 			m_EntitySynchroniser->OnEntityAdded(entity);
+
+			entity->Spawn();
+
+			m_EntitiesToUpdate.clear();
+		}
+	}
+
+	void EntityManager::AddPseudoEntity(EntityPtr pseudo_entity)
+	{
+		if (m_EntitiesLocked)
+			m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
+
+		else
+		{
+			if (pseudo_entity->GetName() == "default")
+				pseudo_entity->_setName(generateName(pseudo_entity));
+
+			NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
+			if (_where != m_EntitiesByName.end())
+				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
+			
+			m_PseudoEntities.insert(pseudo_entity);
+			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
+
+			pseudo_entity->Spawn();
 
 			m_EntitiesToUpdate.clear();
 		}
@@ -416,27 +450,6 @@ namespace FusionEngine
 	void EntityManager::RemoveEntityById(ObjectID id)
 	{
 		RemoveEntity(GetEntity(id));
-	}
-
-	void EntityManager::AddPseudoEntity(EntityPtr pseudo_entity)
-	{
-		if (m_EntitiesLocked)
-			m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
-
-		else
-		{
-			if (pseudo_entity->GetName() == "default")
-				pseudo_entity->_setName(generateName(pseudo_entity));
-
-			NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
-			if (_where != m_EntitiesByName.end())
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
-			
-			m_PseudoEntities.insert(pseudo_entity);
-			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
-
-			m_EntitiesToUpdate.clear();
-		}
 	}
 
 	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr entity)
@@ -755,6 +768,58 @@ namespace FusionEngine
 
 	void EntityManager::Draw()
 	{
+	}
+
+	void EntityManager::SetModule(ModulePtr module)
+	{
+		m_ModuleConnection.disconnect();
+		m_ModuleConnection = module->ConnectToBuild( boost::bind(&EntityManager::OnModuleRebuild, this, _1) );
+	}
+
+	void EntityManager::OnModuleRebuild(BuildModuleEvent& ev)
+	{
+		if (ev.type == BuildModuleEvent::PreBuild)
+		{
+			ev.manager->RegisterGlobalObject("EntityManager entity_manager", this);
+		}
+	}
+
+	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, EntityManager *obj)
+	{
+		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type).get() );
+	}
+
+	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, ObjectID owner, EntityManager *obj)
+	{
+		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, "default", owner).get() );
+	}
+
+	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, EntityManager *obj)
+	{
+		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, name).get() );
+	}
+
+	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, ObjectID owner, EntityManager *obj)
+	{
+		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, name, owner).get() );
+	}
+
+	void EntityManager::Register(asIScriptEngine *engine)
+	{
+		int r;
+		RegisterSingletonType<EntityManager>("EntityManager", engine);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"IEntity@ instance(const string &in)",
+			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"IEntity@ instance(const string &in)",
+			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"IEntity@ instance(const string &in, const string &in)",
+			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"IEntity@ instance(const string &in)",
+			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
 	}
 
 	ObjectID EntityManager::getFreeID()

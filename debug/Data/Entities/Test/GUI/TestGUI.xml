@@ -3,19 +3,30 @@
 	<Script type="angelscript">
 		class TestGUI : ScriptEntity
 		{
+			Document@ document;
 			TestGUI()
 			{
+				Context@ context = gui.getContext();
+				/*
+				TODO: script preprocessor that looks for filenames of known
+				  files within the current working directory and relative
+				  paths (i.e. ../, ./) and expands them to absolute paths
+				  */
+				@document = context.LoadDocument(e_String("Entities/Test/GUI/test.rml"));
 			}
-			
-			bool Spawn()
+
+			void Spawn()
 			{
-				return true;
+				if (document !is null)
+				{
+					document.Show();
+				}
 			}
-			
+
 			void Update(float split)
 			{
 			}
-			
+
 			void Draw()
 			{
 			}

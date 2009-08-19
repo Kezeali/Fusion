@@ -388,4 +388,18 @@ namespace FusionEngine
 		}
 	}
 
+	asIScriptObject* ScriptedEntity::GetScriptObject(Entity *entity)
+	{
+		ScriptedEntity *wrapper = dynamic_cast<ScriptedEntity*>( entity );
+		if (wrapper != NULL && wrapper->m_ScriptObject.IsValid())
+		{
+			asIScriptObject *script_obj = wrapper->m_ScriptObject.GetScriptObject();
+			script_obj->AddRef();
+			entity->release();
+			return script_obj;
+		}
+		else
+			return NULL;
+	}
+
 }

@@ -79,11 +79,16 @@ namespace FusionEngine
 			ViewportPtr viewport = m_Renderer->CreateViewport(Renderer::ViewFull);
 			AddViewport(viewport);
 
+			PlayerRegistry::AddPlayer(1, 0, NetHandle());
+			PlayerRegistry::SetArbitrator(1);
+
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_Network);
 			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser);
 			m_MapLoader = new GameMapLoader(m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+
+			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 
 			m_EntityManager->GetFactory()->SetScriptingManager(manager, "main");
 			m_EntityManager->GetFactory()->SetScriptedEntityPath("Entities/");
@@ -235,16 +240,11 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			PlayerRegistry::AddPlayer(0, 0, NetHandle());
-			PlayerRegistry::SetArbitrator(0);
-
-			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup", 1);
 
 			if (entity)
 			{
-				entity->SetOwnerID(0);
-
-				entity->Spawn();
+				//entity->Spawn();
 				// Force stream-in
 				entity->StreamIn();
 

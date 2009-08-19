@@ -179,21 +179,36 @@ namespace FusionEngine
 		//void AttachToNode(const std::string& node_name, EntityPtr entity);
 
 		//! Creates an entity of the given type and adds it to the manager
-		EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default");
+		EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default", ObjectID owner_id = 0);
 
+		//! Gets the factory
 		EntityFactory *GetFactory() const;
 
+		//! Makes an IDTranslator for an EntityDeserialiser
 		IDTranslator MakeIDTranslator() const;
 
+		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
 
+		//! Adds a created entity
+		/*!
+		* Spawns the entity after adding it.
+		*/
 		void AddEntity(EntityPtr entity);
-		void RemoveEntity(EntityPtr entity);
-		void RemoveEntityNamed(const std::string &name);
-		void RemoveEntityById(ObjectID id);
-
+		//! Adds a created pseudo-entity
+		/*!
+		* Spawns the entity after adding it.
+		*/
 		void AddPseudoEntity(EntityPtr pseudo_entity);
 
+		//! Removes the given entity
+		void RemoveEntity(EntityPtr entity);
+		//! Removes the entity with the givcen name
+		void RemoveEntityNamed(const std::string &name);
+		//! Removes the entity with the given ID
+		void RemoveEntityById(ObjectID id);
+
+		//! Removes the Entity with the given ID and adds the new Entity
 		void ReplaceEntity(ObjectID id, EntityPtr entity);
 
 		//! Returns the Entity with the given name
@@ -254,6 +269,13 @@ namespace FusionEngine
 		//! Draws nodes.
 		virtual void Draw();
 
+		void SetModule(ModulePtr module);
+
+		void OnModuleRebuild(BuildModuleEvent& ev);
+
+		//! Registers EntityManager script methods
+		static void Register(asIScriptEngine *engine);
+
 	protected:
 		//unsigned int getTagFlag(const std::string &tag, bool generate);
 
@@ -312,6 +334,8 @@ namespace FusionEngine
 
 		BlockingChangeMap m_ChangedDrawStateTags;
 		BlockedTagSet m_DrawBlockedTags;
+
+		bsig2::connection m_ModuleConnection;
 
 	};
 

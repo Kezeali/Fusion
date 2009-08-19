@@ -344,7 +344,7 @@ namespace FusionEngine
 		: m_Name("default"),
 		m_Id(0),
 		m_OwnerID(0),
-		m_PseudoEntity(true),
+		m_Authority(0),
 		m_Flags(0),
 		m_MarkedToRemove(false),
 		m_StreamedOut(false),
@@ -359,7 +359,7 @@ namespace FusionEngine
 		: m_Name(name),
 		m_Id(0),
 		m_OwnerID(0),
-		m_PseudoEntity(true),
+		m_Authority(0),
 		m_Flags(0),
 		m_MarkedToRemove(false),
 		m_StreamedOut(false),
@@ -648,6 +648,10 @@ namespace FusionEngine
 		}
 	}
 
+	void Entity::Instance(const std::string &type, const std::string &name)
+	{
+	}
+
 	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)
 	{
 		m_PlayerInput = player_input;
@@ -661,6 +665,21 @@ namespace FusionEngine
 	float Entity::GetInputPosition(const std::string &input)
 	{
 		return m_PlayerInput->GetPosition(input);
+	}
+
+	void Entity::DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner)
+	{
+		InstancePrepDefinition definition;
+		definition.Type = type;
+		definition.Count = count;
+		definition.CopyOwner = copy_owner;
+
+		m_InstancesToPrepare.push_back(definition);
+	}
+
+	const InstancesToPrepareArray &Entity::GetInstancesToPrepare() const
+	{
+		return m_InstancesToPrepare;
 	}
 
 	//virtual void Entity::UpdateRenderables(float split)
@@ -694,6 +713,11 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"float getInputPosition(const string &in) const",
 			asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
+
+		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
+		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);
+		r = engine->RegisterInterfaceMethod("IEntity", "void Update()"); FSN_ASSERT(r >= 0);
+		r = engine->RegisterInterfaceMethod("IEntity", "void Draw()"); FSN_ASSERT(r >= 0);
 	}
 
 }

@@ -121,6 +121,8 @@ namespace FusionEngine
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
 		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
+		static asIScriptObject* GetScriptObject(Entity *entity);
+
 	protected:
 		// The actual entity (for which this C++ class is simply a wrapper)
 		ScriptObject m_ScriptObject;
@@ -137,6 +139,14 @@ namespace FusionEngine
 		Vector2 m_DefaultPosition;
 		float m_DefaultAngle;
 	};
+
+	static void RegisterEntityUnwrap(asIScriptEngine *engine)
+	{
+		int r;
+		r = engine->RegisterGlobalFunction("IEntity@ unwrap(Entity@)",
+			asFUNCTION(ScriptedEntity::GetScriptObject),
+			asCALL_CDECL);
+	}
 
 }
 

@@ -12,6 +12,7 @@
 #include "../FusionEngine/FusionPlayerRegistry.h"
 
 // Systems
+#include "../FusionEngine/FusionNetworkSystem.h"
 #include "../FusionEngine/FusionOntologicalSystem.h"
 #include "../FusionEngine/FusionGUI.h"
 #include "../FusionEngine/FusionStateManager.h"
@@ -27,7 +28,9 @@
 #include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
+#include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntity.h"
+#include "../FusionEngine/FusionScriptedEntity.h"
 #include "../FusionEngine/FusionScriptSound.h"
 
 #include "../FusionEngine/FusionClientOptions.h"
@@ -97,6 +100,8 @@ public:
 			SoundSession::Register(asEngine);
 			SoundSample::Register(asEngine);
 			Entity::Register(asEngine);
+			EntityManager::Register(asEngine);
+			RegisterEntityUnwrap(asEngine);
 
 			/////////////////////////////////////
 			// Script SoundOutput wrapper object
@@ -160,11 +165,14 @@ public:
 			// Systems
 			SystemsManager *systemMgr = new SystemsManager();
 
-			GUI *gui = new GUI(dispWindow);
-			systemMgr->AddSystem(gui);
+			NetworkSystem *networkSystem = new NetworkSystem(m_Network);
+			systemMgr->AddSystem(networkSystem);
 
+			GUI *gui = new GUI(dispWindow);
 			m_Ontology = new OntologicalSystem(renderer, m_Input, m_Network);
+
 			systemMgr->AddSystem(m_Ontology);
+			systemMgr->AddSystem(gui);
 
 			/////////////////////
 			// Attach module to objects that require it

@@ -175,6 +175,17 @@ namespace FusionEngine
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
 	typedef std::vector<RenderablePtr> RenderableArray;
 
+	struct InstancePrepDefinition
+	{
+		std::string Type;
+		unsigned int Count;
+		// Copy the owner ID from the origin entity 
+		//  (the entity that creates the instance)
+		bool CopyOwner;
+	};
+
+	typedef std::vector<InstancePrepDefinition> InstancesToPrepareArray;
+
 	/*!
 	 * \brief
 	 * In game object base class
@@ -340,10 +351,15 @@ namespace FusionEngine
 		//! Called after an Entity is steamed out
 		virtual void OnStreamOut() =0;
 
+		void Instance(const std::string &type, const std::string &name);
+
 		void _setPlayerInput(const PlayerInputPtr &player_input);
 
 		bool InputIsActive(const std::string &input);
 		float GetInputPosition(const std::string &input);
+
+		void DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner);
+		const InstancesToPrepareArray &GetInstancesToPrepare() const;
 
 		//! Save state to buffer
 		/*!
@@ -384,7 +400,6 @@ namespace FusionEngine
 	protected:
 		std::string m_Name;
 		ObjectID m_Id;
-		bool m_PseudoEntity;
 
 		// The player who owns this entity, 0 for default ownership
 		//  (which falls to the arbitrator, if ownership is needed)
@@ -421,6 +436,8 @@ namespace FusionEngine
 		RenderableArray m_Renderables;
 
 		StreamedResourceArray m_StreamedResources;
+
+		InstancesToPrepareArray m_InstancesToPrepare;
 
 	};
 

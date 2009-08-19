@@ -1,4 +1,4 @@
-class ScriptEntity
+class ScriptEntity : IEntity
 {
 	Entity@ __appObject;
 	void _setAppObject(Entity@ obj)
@@ -10,6 +10,11 @@ class ScriptEntity
 		return __appObject;
 	}
 
+	uint16 GetOwnerID() const
+	{
+		return 0;//return __appObject.getOwnerID();
+	}
+
 	bool InputIsActive(const string@ input)
 	{
 		return __appObject.inputIsActive(input);
@@ -18,6 +23,10 @@ class ScriptEntity
 	{
 		return __appObject.getInputPosition(input);
 	}
+
+	void Spawn() {}
+	void Update() {}
+	void Draw() {}
 }
 
 class Test : ScriptEntity
@@ -32,7 +41,7 @@ class Test : ScriptEntity
 
 	string message;
 
-	TestGUI gui_entity;
+	TestGUI@ gui_entity;
 
 	Renderable@ sprite;
 	SoundSample@ movesound;
@@ -69,6 +78,8 @@ class Test : ScriptEntity
 
 		//CircleShape @shape = @CircleShape(physBody, 0.0f, radius);
 		//physBody.attach_shape(shape);
+
+		@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui") );
 
 		console.println("Press [Debug] to print info");
 
@@ -115,10 +126,6 @@ class Test : ScriptEntity
 		{
 			seed_rand(dt);
 
-			//physBody.applyForce(Vector(0.003,0));
-			//physBody.applyTorque(0.002);
-
-			//movesound.play();
 			bgm.play();
 
 			first = false;
