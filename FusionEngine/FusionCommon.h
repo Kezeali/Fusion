@@ -119,6 +119,8 @@ namespace FusionEngine
 	//! Max local (split-screen, hotseat, etc.) players per client
 	static const unsigned int g_MaxLocalPlayers = 16;
 
+	static const size_t s_EntityDomainCount = 8;
+
 	static const float s_pi = 3.1415926f;
 
 	//! Ratio of degrees to radians
@@ -454,12 +456,14 @@ namespace FusionEngine
 	class EntityManager;
 	class GameMapLoader;
 	class Entity;
+	class Renerer;
+	class Renderable;
+	class Camera;
 	class NetworkSystem;
 	class Network;
 	class IPacket;
 	class PacketHandler;
 	class PacketHandlerNode;
-	class Node;
 	class PhysicsWorld;
 	class PhysicsBody;
 	class Shape;

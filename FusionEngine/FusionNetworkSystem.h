@@ -76,6 +76,7 @@ namespace FusionEngine
 		Network *GetNetwork() const;
 
 		void AddPacketHandler(char type, PacketHandler *handler);
+		void RemovePacketHandler(char type, PacketHandler *handler);
 
 		//! Allows a peer to take control of the update rate.
 		/*

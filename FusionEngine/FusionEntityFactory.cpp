@@ -118,6 +118,8 @@ namespace FusionEngine
 
 		//! Returns the type of entity defined by this object
 		const std::string &GetType() const;
+		//! Returns the default domain value of the entity
+		EntityDomain GetDefaultDomain() const;
 		//! Gets the directory where the XML file was located
 		const std::string &GetWorkingDirectory() const;
 		//! Gets script data
@@ -130,6 +132,8 @@ namespace FusionEngine
 		const DependenciesMap &GetScriptDependencies() const;
 		ScriptedEntity::PropertiesMap &GetSyncProperties();
 		ResourcesMap &GetStreamedResources();
+
+		static EntityDomain ToDomainIndex(const std::string &domain);
 	protected:
 		void parseElement_Script(ticpp::Element *element);
 		void parseElement_Dependencies(ticpp::Element *element);
@@ -141,6 +145,8 @@ namespace FusionEngine
 		std::string m_TypeName;
 		bool m_Abstract;
 
+		EntityDomain m_DefaultDomain;
+
 		Script m_Script;
 
 		DependenciesMap m_EntityDependencies;
@@ -151,6 +157,20 @@ namespace FusionEngine
 		ResourcesMap m_Resources;
 	};
 
+	EntityDomain EntityDefinition::ToDomainIndex(const std::string &domain)
+	{
+		if (domain.empty())
+			return SYSTEM_DOMAIN;
+		else if (domain == "system")
+			return SYSTEM_DOMAIN;
+		else if (domain == "game")
+			return GAME_DOMAIN;
+		else if (domain == "temp")
+			return TEMP_DOMAIN;
+		else
+			return UNRESERVED_DOMAIN;
+	}
+
 	void EntityDefinition::Parse(const std::string &current_folder, ticpp::Document &document)
 	{
 		m_WorkingDirectory = current_folder;
@@ -158,6 +178,9 @@ namespace FusionEngine
 		ticpp::Element *root = document.FirstChildElement();
 
 		m_TypeName = root->GetAttribute("typename");
+
+		std::string domainString = root->GetAttribute("defaultdomain");
+		m_DefaultDomain = ToDomainIndex(domainString);
 
 		ticpp::Iterator< ticpp::Element > child;
 		for (child = child.begin( root ); child != child.end(); child++)
@@ -327,6 +350,11 @@ namespace FusionEngine
 		return m_TypeName;
 	}
 
+	EntityDomain EntityDefinition::GetDefaultDomain() const
+	{
+		return m_DefaultDomain;
+	}
+
 	const std::string &EntityDefinition::GetWorkingDirectory() const
 	{
 		return m_WorkingDirectory;
@@ -418,6 +446,7 @@ namespace FusionEngine
 		asIScriptObject *scrObj = object.GetScriptObject();
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
+		entity->_setDomain(m_Definition->GetDefaultDomain());
 		//entity->SetPath(m_Definition->GetWorkingDirectory());
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
 

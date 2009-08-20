@@ -93,6 +93,10 @@ div#content
 	overflow: hidden auto;
 
 	text-align: center;
+	
+	outline-font-effect: outline;
+	outline-width: 1px;
+	outline-color: black;
 }
 
 

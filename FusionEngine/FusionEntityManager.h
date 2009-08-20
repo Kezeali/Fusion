@@ -42,9 +42,7 @@
 #include "FusionInputHandler.h"
 #include "FusionRenderer.h"
 
-#include "FusionNetwork.h"
-
-#include <boost/bimap.hpp>
+//#include <boost/bimap.hpp>
 
 namespace FusionEngine
 {
@@ -97,7 +95,8 @@ namespace FusionEngine
 		};
 		typedef std::vector<InstanceDefinition> InstanceDefinitionArray;
 
-		EntitySynchroniser(InputManager *input_manager, Network *network);
+		EntitySynchroniser(InputManager *input_manager, NetworkSystem *network_system);
+		~EntitySynchroniser();
 
 		const InstanceDefinitionArray &GetReceivedEntities() const;
 
@@ -120,6 +119,7 @@ namespace FusionEngine
 		InputManager *m_InputManager;
 
 		Network *m_Network;
+		NetworkSystem *m_NetworkSystem;
 
 		InstanceDefinitionArray m_ReceivedEntities;
 
@@ -261,13 +261,25 @@ namespace FusionEngine
 		* \brief
 		* Removes and deletes all nodes in the scene.
 		*/
-		virtual void Clear();
+		void Clear();
 
 		//! Updates nodes
-		virtual void Update(float split);
+		void Update(float split);
 
 		//! Draws nodes.
-		virtual void Draw();
+		void Draw();
+
+		//! Updates the given domain
+		/*!
+		* Updates all Entities in the given domain (reguardless of
+		* whether the domain is currently Active.)
+		*/
+		void Update(EntityDomain domain_index, float split);
+
+		//! Sets the given domain to active/inactive
+		void SetDomainState(EntityDomain domain_index, bool active);
+		//! Returns true if the given domain is active
+		bool DomainIsActive(EntityDomain domain_index) const;
 
 		void SetModule(ModulePtr module);
 
@@ -307,8 +319,10 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
-		// Entities with no paused tags
-		EntityArray m_EntitiesToUpdate;
+		// Entities to be updated - 8 domains
+		EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
+		// Active status of each domain
+		bool m_DomainState[s_EntityDomainCount];
 
 		typedef std::map<int, EntityPtr> EntityDepthMap;
 		// Entities with no hidden tags

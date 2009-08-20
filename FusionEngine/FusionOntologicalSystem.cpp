@@ -52,10 +52,10 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(Renderer *renderer, InputManager *input_manager, Network *network)
+	OntologicalSystem::OntologicalSystem(Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
 		: m_Renderer(renderer),
 		m_InputManager(input_manager),
-		m_Network(network),
+		m_NetworkSystem(network),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
 		m_PhysicsWorld(NULL)
@@ -82,12 +82,13 @@ namespace FusionEngine
 			PlayerRegistry::AddPlayer(1, 0, NetHandle());
 			PlayerRegistry::SetArbitrator(1);
 
-			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_Network);
+			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
 			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser);
 			m_MapLoader = new GameMapLoader(m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
 
+			manager->RegisterGlobalObject("System system", this);
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 
 			m_EntityManager->GetFactory()->SetScriptingManager(manager, "main");
@@ -106,6 +107,8 @@ namespace FusionEngine
 				worldY = boost::lexical_cast<float>(fe_trim(components[1]));
 			}
 			m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
+
+			manager->RegisterGlobalObject("World world", m_PhysicsWorld);
 
 			options.GetOption("startup_entity", &m_StartupEntity);
 		}
@@ -173,6 +176,10 @@ namespace FusionEngine
 			delete m_EntitySyncroniser;
 
 			delete m_PhysicsWorld;
+
+			m_EntityManager = NULL;
+
+			m_PhysicsWorld = NULL;
 		}
 	}
 
@@ -235,7 +242,7 @@ namespace FusionEngine
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
-			ev.manager->RegisterGlobalObject("World world", m_PhysicsWorld);
+			// Anything to do here?
 		}
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
@@ -256,6 +263,18 @@ namespace FusionEngine
 				m_Viewports.front()->SetCamera( CameraPtr(new Camera()) );
 			}
 		}
+	}
+
+	void OntologicalSystem::Quit()
+	{
+		PushMessage(new SystemMessage(SystemMessage::QUIT));
+	}
+
+	void OntologicalSystem::Register(asIScriptEngine *engine)
+	{
+		int r;
+		RegisterSingletonType<OntologicalSystem>("System", engine);
+		r = engine->RegisterObjectMethod("System", "void quit()", asMETHOD(OntologicalSystem, Quit), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 }

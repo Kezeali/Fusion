@@ -331,7 +331,7 @@ namespace FusionEngine
 		std::string player = bindsElem->GetAttribute("player");
 		if (!fe_issimplenumeric(player))
 			return;
-		unsigned int playerNum = CL_StringHelp::local8_to_uint(player.c_str());
+		unsigned int playerNum = CL_StringHelp::local8_to_uint(player.c_str()) - 1;
 
 		ticpp::Iterator< ticpp::Element > child("bind");
 		for ( child = child.begin( bindsElem ); child != child.end(); child++ )

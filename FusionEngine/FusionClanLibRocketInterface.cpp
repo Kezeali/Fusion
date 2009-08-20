@@ -162,7 +162,13 @@ namespace FusionEngine
 			m_gc.set_program_object(cl_program_color_only);
 		}
 
+		//if (m_ClipEnabled)
+		//	m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+
 		m_gc.draw_primitives(cl_triangles, num_indices, prim_array);
+
+		//if (m_ClipEnabled)
+		//	m_gc.pop_cliprect();
 
 		delete[] polygon;
 		delete[] vert_colour;
@@ -228,7 +234,7 @@ namespace FusionEngine
 
 		m_gc.push_modelview();
 
-		m_gc.set_translate(translation.x, translation.y);
+		m_gc.mult_translate(translation.x, translation.y);
 
 		m_gc.set_map_mode(cl_map_2d_upper_left);
 		if (data->texture)
@@ -253,7 +259,13 @@ namespace FusionEngine
 			m_gc.set_program_object(cl_program_color_only);
 		}
 
+		if (m_ClipEnabled)
+			m_gc.push_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+
 		m_gc.draw_primitives(cl_triangles, data->num_verticies, prim_array);
+
+		if (m_ClipEnabled)
+			m_gc.pop_cliprect();
 
 		m_gc.reset_program_object();
 		if (data->texture)
@@ -263,6 +275,7 @@ namespace FusionEngine
 		//m_gc.reset_buffer_control();
 
 		m_gc.pop_modelview();
+
 	}
 
 	void RocketRenderer::ReleaseCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry)
@@ -273,11 +286,10 @@ namespace FusionEngine
 	// Called by Rocket when it wants to enable or disable scissoring to clip content.
 	void RocketRenderer::EnableScissorRegion(bool enable)
 	{
-		if (!enable)
-			//m_gc.set_cliprect(CL_Rect(0, 0, m_gc.get_width(), m_gc.get_height()));
-			m_gc.reset_cliprect();
-		else
-			m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
+		//if (!enable)
+		//	m_gc.reset_cliprect();
+		//else
+		//	m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 
 		m_ClipEnabled = enable;
 	}

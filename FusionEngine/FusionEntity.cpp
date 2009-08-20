@@ -346,6 +346,8 @@ namespace FusionEngine
 		m_OwnerID(0),
 		m_Authority(0),
 		m_Flags(0),
+		m_Domain(0),
+		m_Layer(0),
 		m_MarkedToRemove(false),
 		m_StreamedOut(false),
 		m_Paused(false),
@@ -361,6 +363,8 @@ namespace FusionEngine
 		m_OwnerID(0),
 		m_Authority(0),
 		m_Flags(0),
+		m_Domain(0),
+		m_Layer(0),
 		m_MarkedToRemove(false),
 		m_StreamedOut(false),
 		m_Paused(false),
@@ -519,6 +523,35 @@ namespace FusionEngine
 	unsigned int Entity::GetTagFlags() const
 	{
 		return m_Flags;
+	}
+
+	void Entity::_setDomain(EntityDomain domain_index)
+	{
+		if (domain_index < s_EntityDomainCount)
+			m_Domain = domain_index;
+		else
+		{
+#ifdef _DEBUG
+			FSN_EXCEPT(ExCode::InvalidArgument, "Entity::SetDomain", "Valid domain values are 0-7");
+#endif
+			//Logger::getSingleton().Add("Tried to set entity to invalid domain, valid domains are 0-7.");
+			m_Domain = s_EntityDomainCount-1;
+		}
+	}
+
+	EntityDomain Entity::GetDomain() const
+	{
+		return m_Domain;
+	}
+
+	void Entity::SetLayer(size_t layer)
+	{
+		m_Layer = layer;
+	}
+
+	size_t Entity::GetLayer() const
+	{
+		return m_Layer;
 	}
 
 	void Entity::SetStreamedIn(bool is_streamed_in)

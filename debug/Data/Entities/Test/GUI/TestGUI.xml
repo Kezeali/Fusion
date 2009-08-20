@@ -4,6 +4,8 @@
 		class TestGUI : ScriptEntity
 		{
 			Document@ document;
+			int x;
+			int y;
 			TestGUI()
 			{
 				Context@ context = gui.getContext();
@@ -21,10 +23,15 @@
 				{
 					document.Show();
 				}
+				x = 50;
+				y = 120;
+				document.SetProperty(e_String("left"), e_String(x + "px"));
+				document.SetProperty(e_String("top"), e_String(y + "px"));
 			}
 
 			void Update(float split)
 			{
+				
 			}
 
 			void Draw()

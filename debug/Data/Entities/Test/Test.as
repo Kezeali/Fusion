@@ -70,7 +70,7 @@ class Test : ScriptEntity
 		//def.setRestitution(1);
 		def.setDensity(30);
 		//def.setLocalPosition(Vector(0,0));
-		def.setRadius(30);
+		def.setRadius(25);
 
 		physBody.setPosition(50, 120);
 		physBody.createFixture(@def);
@@ -131,24 +131,27 @@ class Test : ScriptEntity
 			first = false;
 		}
 
+		if (InputIsActive("quit"))
+			system.quit();
+
 		bool forward = InputIsActive("thrust");
 		bool left = InputIsActive("left");
 		bool right = InputIsActive("right");
 
 		if (forward && !input_forward)
 		{
-			physBody.applyForce(Vector(0.003,0));
+			physBody.applyForce(Vector(0,5));
 			movesound.play();
 		}
 
 		if (left && !input_left)
 		{
-			physBody.applyTorque(-0.001);
+			physBody.applyTorque(-0.6);
 		}
 
 		if (right && !input_right)
 		{
-			physBody.applyTorque(0.001);
+			physBody.applyTorque(0.6);
 		}
 
 		input_forward = forward;

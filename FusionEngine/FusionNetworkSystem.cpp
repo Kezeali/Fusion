@@ -94,6 +94,7 @@ namespace FusionEngine
 		if (m_PacketDispatcher != NULL)
 		{
 			delete m_PacketDispatcher;
+			m_PacketDispatcher = NULL;
 		}
 	}
 
@@ -124,6 +125,12 @@ namespace FusionEngine
 	{
 		if (m_PacketDispatcher != NULL)
 			m_PacketDispatcher->Subscribe(type, handler);
+	}
+
+	void NetworkSystem::RemovePacketHandler(char type, PacketHandler *handler)
+	{
+		if (m_PacketDispatcher != NULL)
+			m_PacketDispatcher->Unsubscribe(type, handler);
 	}
 
 	void NetworkSystem::RequestStepControl()

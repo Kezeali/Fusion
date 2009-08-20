@@ -35,6 +35,7 @@
 #include "FusionPlayerRegistry.h"
 
 #include "FusionNetworkTypes.h"
+#include "FusionNetworkSystem.h"
 
 #include <boost/lexical_cast.hpp>
 #include <BitStream.h>
@@ -125,11 +126,20 @@ namespace FusionEngine
 		}
 	}
 
-	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, Network *network)
+	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, NetworkSystem *network_system)
 		: m_InputManager(input_manager),
-		m_Network(network),
+		m_NetworkSystem(network_system),
+		m_Network(network_system->GetNetwork()),
 		m_PlayerInputs(new ConsolidatedInput(input_manager))
 	{
+		m_NetworkSystem->AddPacketHandler(MTID_IMPORTANTMOVE, this);
+		m_NetworkSystem->AddPacketHandler(MTID_ENTITYMOVE, this);
+	}
+
+	EntitySynchroniser::~EntitySynchroniser()
+	{
+		m_NetworkSystem->RemovePacketHandler(MTID_IMPORTANTMOVE, this);
+		m_NetworkSystem->RemovePacketHandler(MTID_ENTITYMOVE, this);
 	}
 
 	const EntitySynchroniser::InstanceDefinitionArray &EntitySynchroniser::GetReceivedEntities() const
@@ -389,7 +399,7 @@ namespace FusionEngine
 
 			entity->Spawn();
 
-			m_EntitiesToUpdate.clear();
+			m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
 		}
 	}
 
@@ -412,15 +422,17 @@ namespace FusionEngine
 
 			pseudo_entity->Spawn();
 
-			m_EntitiesToUpdate.clear();
+			m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
 		}
 	}
 
 	void EntityManager::RemoveEntity(EntityPtr entity)
 	{
+		// Make sure the entity is removed from it's update domain
+		entity->MarkToRemove();
+
 		if (m_EntitiesLocked)
 		{
-			entity->MarkToRemove(); // Mark this to make sure it isn't updated / drawn before it is removed
 			m_EntitiesToRemove.push_back(entity);
 		}
 		else
@@ -437,8 +449,6 @@ namespace FusionEngine
 			m_EntitiesByName.erase(entity->GetName());
 
 			m_Renderer->Remove(entity);
-
-			m_EntitiesToUpdate.clear();
 		}
 	}
 
@@ -455,7 +465,7 @@ namespace FusionEngine
 	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr entity)
 	{
 		if (m_EntitiesLocked)
-			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager::InsertEntity", "EntityManager is currently updating: Can't replace/insert Entities while updating");
+			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager::InsertEntity", "EntityManager is currently updating: Can't replace Entities while updating");
 		
 		// Make sure the entity to be inserted has the given ID
 		entity->SetID(id);
@@ -471,6 +481,8 @@ namespace FusionEngine
 			// Erase the existing Entity from the name map
 			m_EntitiesByName.erase(value->GetName());
 			m_Renderer->Remove(value);
+			// Mark the entity so it will be removed from it's update domain
+			value->MarkToRemove();
 		}
 		// Replace the map-entry (referenced by 'value') with the new entity
 		value = entity;
@@ -626,7 +638,8 @@ namespace FusionEngine
 	{
 		m_EntitiesToAdd.clear();
 		m_EntitiesToRemove.clear();
-		m_EntitiesToUpdate.clear();
+		for (size_t i = 0; i < s_EntityDomainCount; i++) // Clear all domains
+				m_EntitiesToUpdate[i].clear();
 		m_EntitiesToDraw.clear();
 		m_EntitiesByName.clear();
 		m_Entities.clear();
@@ -648,96 +661,61 @@ namespace FusionEngine
 		}
 	}
 
+	void EntityManager::Update(EntityDomain idx, float split)
+	{
+		EntityDeserialiser entityDeserialiser(this);
+
+		EntityArray::iterator it = m_EntitiesToUpdate[idx].begin(),
+			end = m_EntitiesToUpdate[idx].end();
+		while (it != end)
+		{
+			EntityPtr &entity = *it;
+
+			//updateTags(entity);
+
+			// Check for reasons to remove the
+			//  entity from the update domain
+			if (entity->IsMarkedToRemove())
+			{
+				it = m_EntitiesToUpdate[idx].erase(it);
+			}
+			else if (entity->GetTagFlags() & m_ToDeleteFlags)
+			{
+				RemoveEntity(entity);
+				it = m_EntitiesToUpdate[idx].erase(it);
+			}
+
+			// Also make sure the entity isn't blocked by a flag
+			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
+			{
+				if (entity->Wait())
+				{
+					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
+					entity->Update(split);
+					m_EntitySynchroniser->SendSync(entity);
+
+					updateRenderables(entity, split);
+
+					if (entity->IsStreamedOut())
+						entity->SetWait(2);
+				}
+
+				// Next entity
+				++it;
+			}
+		}
+	}
+
 	void EntityManager::Update(float split)
 	{
 		m_EntitiesLocked = true;
 
-		EntityDeserialiser entityDeserialiser(this, MakeIDTranslator());
-
-		if (m_ChangedUpdateStateTags.empty() && !m_EntitiesToUpdate.empty())
+		for (size_t i = 0; i < s_EntityDomainCount; i++)
 		{
-			for (EntityArray::iterator it = m_EntitiesToUpdate.begin(), end = m_EntitiesToUpdate.end(); it != end; ++it)
-			{
-				EntityPtr &entity = *it;
-
-				updateTags(entity);
-
-				if (entity->IsMarkedToRemove())
-					continue;
-
-				if (entity->GetTagFlags() & m_ToDeleteFlags)
-					RemoveEntity(entity);
-
-				else if ((entity->GetTagFlags() & m_UpdateBlockedFlags))
-					m_EntitiesToUpdate.erase(it);
-				else
-				{
-					if (entity->Wait())
-					{
-						m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
-						entity->Update(split);
-						m_EntitySynchroniser->SendSync(entity);
-
-						updateRenderables(entity, split);
-
-						if (entity->IsStreamedOut())
-							entity->SetWait(2);
-					}
-				}
-				//updateEntity(entity, split);
-			}
+			if (m_DomainState[i])
+				Update(i, split);
 		}
-		else
-		{
-			m_EntitiesToUpdate.clear();
-			for (IDEntityMap::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
-			{
-				EntityPtr &entity = it->second;
 
-				updateTags(entity);
-
-				if (entity->IsMarkedToRemove())
-					continue;
-
-				if (entity->GetTagFlags() & m_ToDeleteFlags)
-					RemoveEntity(entity);
-
-				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
-				{
-					m_EntitiesToUpdate.push_back(entity);
-
-					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
-					entity->Update(split);
-					m_EntitySynchroniser->SendSync(entity);
-
-					updateRenderables(entity, split);
-				}
-			}
-			for (EntitySet::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
-			{
-				EntityPtr &entity = *it;
-
-				updateTags(entity);
-
-				if (entity->IsMarkedToRemove())
-					continue;
-
-				if (entity->GetTagFlags() & m_ToDeleteFlags)
-					RemoveEntity(entity);
-
-				else if (!(entity->GetTagFlags() & m_UpdateBlockedFlags) && !IsBlocked(entity, m_ChangedUpdateStateTags))
-				{
-					m_EntitiesToUpdate.push_back(entity);
-
-					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
-					entity->Update(split);
-					m_EntitySynchroniser->SendSync(entity);
-
-					updateRenderables(entity, split);
-				}
-			}
-			m_ChangedUpdateStateTags.clear();
-		}
 		m_EntitiesLocked = false;
 
 		// Clear the ToDeleteFlags
@@ -748,8 +726,6 @@ namespace FusionEngine
 		{
 			m_Entities.erase((*it)->GetID());
 			m_EntitiesByName.erase((*it)->GetName());
-
-			m_EntitiesToUpdate.clear();
 
 			m_Renderer->Remove(*it);
 		}
@@ -768,6 +744,16 @@ namespace FusionEngine
 
 	void EntityManager::Draw()
 	{
+	}
+
+	void EntityManager::SetDomainState(EntityDomain domain_index, bool active)
+	{
+		m_DomainState[domain_index] = active;
+	}
+
+	bool EntityManager::DomainIsActive(EntityDomain domain_index) const
+	{
+		return m_DomainState[domain_index];
 	}
 
 	void EntityManager::SetModule(ModulePtr module)
@@ -807,6 +793,9 @@ namespace FusionEngine
 	void EntityManager::Register(asIScriptEngine *engine)
 	{
 		int r;
+		// TODO: some way to set the domain - either more instance() methods (with domain param.s) or
+		//  a way to instance entities without adding them to the EntityManager (factory access or 
+		//  more instance() methods that work like EntityFactory's instance method)
 		RegisterSingletonType<EntityManager>("EntityManager", engine);
 		r = engine->RegisterObjectMethod("EntityManager",
 			"IEntity@ instance(const string &in)",

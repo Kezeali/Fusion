@@ -50,6 +50,10 @@
 namespace FusionEngine
 {
 
+	typedef unsigned char EntityDomain;
+
+	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, TEMP_DOMAIN, UNRESERVED_DOMAIN };
+
 	typedef std::vector<EntityPtr> EntityArray;
 
 	class TagFlagDictionary
@@ -300,6 +304,12 @@ namespace FusionEngine
 		 */
 		unsigned int GetTagFlags() const;
 
+		void _setDomain(EntityDomain domain_index);
+		EntityDomain GetDomain() const;
+
+		void SetLayer(size_t layer);
+		size_t GetLayer() const;
+
 		void SetStreamedIn(bool is_streamed_in);
 		bool IsStreamedOut() const;
 
@@ -432,6 +442,11 @@ namespace FusionEngine
 		bool m_MarkedToRemove;
 
 		int m_Depth;
+
+		// EntityManager domain (1-8)
+		EntityDomain m_Domain;
+		// Renderer layer
+		size_t m_Layer;
 
 		RenderableArray m_Renderables;
 
