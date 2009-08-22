@@ -461,6 +461,7 @@ namespace FusionEngine
 	class Camera;
 	class NetworkSystem;
 	class Network;
+	class RakNetwork;
 	class IPacket;
 	class PacketHandler;
 	class PacketHandlerNode;

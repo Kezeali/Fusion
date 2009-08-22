@@ -54,7 +54,7 @@ namespace FusionEngine
 	//! Base class for AngelScript compatible reference counted type
 	class RefCounted
 	{
-	private:
+	protected:
 		int m_RefCount;
 
 	public:
@@ -83,12 +83,12 @@ namespace FusionEngine
 
 	public:
 		//! Factory utility
-		template <class T>
-		static T* Factory()
-		{
-			T* obj = new T();
-			return obj;
-		}
+		//template <class T>
+		//static T* Factory()
+		//{
+		//	T* obj = new T();
+		//	return obj;
+		//}
 
 		//! Assign utility
 		template <class T>
@@ -100,25 +100,8 @@ namespace FusionEngine
 			return *lhs;
 		}
 
-		////! Exclusion flags define things that wont be registered for this class
-		//enum ExclusionFlags
-		//{
-		//	ex_normal       = 0x00,
-		//	//! If no factory is defined, the class cannot be constructed in scripts.
-		//	ex_no_factory   = 0x01,
-		//	//! Is no assignment operator is defined, the class cannot be copied by value in scripts.
-		//	ex_noncopyable  = 0x02
-		//};
-
-		////! Flag template type
-		//template <int T>
-		//struct ExclusionType
-		//{
-		//	enum { code = T };
-		//};
-
 		//! Registers this type as a ref-counted type with the given engine
-		template <class T/*, typename FlagsT = ExclusionType<ex_normal>*/>
+		template <class T>
 		static void RegisterType(asIScriptEngine* engine, const std::string& name)
 		{
 			int r;
@@ -128,20 +111,20 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
-			// Register the factory behaviour if the type allows it
-			RegisterFactory_Default<T>(engine, name, std::tr1::is_base_of<no_factory, T>());
+			// Register the default factory behaviour if the type allows it
+			//RegisterFactory_Default<T>(engine, name, std::tr1::is_base_of<no_factory, T>());
 			// Register the assignment operator if the type is copyable
 			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
 		}
 
 	private:
-		template <class T>
-		static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
-		{
-			int r;
+		//template <class T>
+		//static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
+		//{
+		//	int r;
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
-		}
+		//	r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
+		//}
 
 		template <class T>
 		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
@@ -151,12 +134,96 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
 		}
 
-		template <class T>
-		static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
-		{}
+		//template <class T>
+		//static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
+		//{}
 		template <class T>
 		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
 		{}
+	};
+
+	//! Base class for implementing a Garbage Collected, Reference Counted class
+	template <class T>
+	class GarbageCollected : public RefCounted
+	{
+	protected:
+		bool m_GCFlag;
+		static int s_TypeId;
+
+	public:
+		//! Constructor
+		GarbageCollected()
+			: m_GCFlag(false)
+		{
+			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			if (manager != NULL && manager->GetEnginePtr() != NULL)
+				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+		}
+		//! Constructor
+		GarbageCollected(asIScriptEngine *engine)
+			: m_GCFlag(false)
+		{
+			engine->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+		}
+		//! Calls RefCounted#addRef() then sets the GC-flag to false
+		virtual void addRef()
+		{
+			RefCounted::addRef();
+			m_GCFlag = false;
+		}
+		//! Calls RefCounted#release() then sets the GC-flag to false
+		virtual void release()
+		{
+			RefCounted::release();
+			m_GCFlag = false;
+		}
+
+		//! Sets the GC flag
+		void SetGCFlag()
+		{
+			m_GCFlag = true;
+		}
+		//! Returns true if this object has been marked by the GC
+		bool GetGCFlag()
+		{
+			return m_GCFlag;
+		}
+		//! Returns the reference-count
+		int GetRefCount()
+		{
+			return m_RefCount;
+		}
+
+		//! Should call asIScriptEngine::GCEnumCallback() on every GCed object held by this object
+		virtual void EnumReferences(asIScriptEngine *engine) =0;
+		//! Should release every GCed object held by this object
+		virtual void ReleaseAllReferences(asIScriptEngine *engine) =0;
+
+		static void RegisterGCType(asIScriptEngine* engine, const std::string& name)
+		{
+			int r;
+			
+			// Note that we also record the TypeId here
+			s_TypeId = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF | asOBJ_GC); FSN_ASSERT(s_TypeId >= 0);
+
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void f()", asMETHOD(RefCounted, release), asCALL_THISCALL);
+
+			// GC behaviours
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_SETGCFLAG,
+				"void f()", asMETHOD(GarbageCollected, SetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_GETGCFLAG, "bool f()",
+				asMETHOD(GarbageCollected, GetGCFlag), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_GETREFCOUNT, "int f()",
+				asMETHOD(GarbageCollected, GetRefCount), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ENUMREFS, "void f(int&in)",
+				asMETHOD(GarbageCollected, EnumReferences), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASEREFS, "void f(int&in)",
+				asMETHOD(GarbageCollected, ReleaseAllReferences), asCALL_THISCALL);
+
+			// Register the assignment operator if the type is copyable
+			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
+		}
 	};
 
 	template <class _From, class _To>

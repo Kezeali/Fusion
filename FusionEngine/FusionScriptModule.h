@@ -86,6 +86,8 @@ namespace FusionEngine
 
 		const char* GetName() const;
 
+		asIScriptModule *GetASModule() const { return m_Module; }
+
 		//! Returns a list of names of script sections that have been added to this module
 		const StringVector &GetSectionNames() const;
 

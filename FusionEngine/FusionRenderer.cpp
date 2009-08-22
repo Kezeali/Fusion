@@ -2,11 +2,15 @@
 
 #include "FusionRenderer.h"
 
+#include "FusionGUI.h"
+#include "FusionScriptedEntity.h"
+
 namespace FusionEngine
 {
 
-	Camera::Camera()
-		: m_Mode(FixedPosition),
+	Camera::Camera(asIScriptEngine *engine)
+		: GarbageCollected(engine),
+		m_Mode(FixedPosition),
 		m_Origin(origin_center),
 		m_AutoRotate(FixedAngle),
 		m_Angle(0.f),
@@ -17,8 +21,9 @@ namespace FusionEngine
 		defineBody();
 	}
 
-	Camera::Camera(float x, float y)
-		: m_Position(x, y),
+	Camera::Camera(asIScriptEngine *engine, float x, float y)
+		: GarbageCollected(engine),
+		m_Position(x, y),
 		m_Origin(origin_center),
 		m_Mode(FixedPosition),
 		m_AutoRotate(FixedAngle),
@@ -30,8 +35,9 @@ namespace FusionEngine
 		defineBody();
 	}
 
-	Camera::Camera(EntityPtr follow)
-		: m_FollowEntity(follow),
+	Camera::Camera(asIScriptEngine *engine, EntityPtr follow)
+		: GarbageCollected(engine),
+		m_FollowEntity(follow),
 		m_Origin(origin_center),
 		m_Mode(FollowInstant),
 		m_AutoRotate(FixedAngle),
@@ -76,7 +82,13 @@ namespace FusionEngine
 		m_Scale = scale;
 	}
 
-	void Camera::SetFollowEntity(EntityPtr entity)
+	void Camera::SetParallaxCamera(const CameraPtr &main_camera, float distance)
+	{
+		m_MainCamera = main_camera;
+		m_ParallaxDistance = distance;
+	}
+
+	void Camera::SetFollowEntity(const EntityPtr &entity)
 	{
 		m_FollowEntity = entity;
 	}
@@ -108,25 +120,23 @@ namespace FusionEngine
 
 	void Camera::Update(float split)
 	{
-		if (m_Mode == FollowInstant)
+		if (m_FollowEntity)
 		{
-			const Vector2 &target = m_FollowEntity->GetPosition();
-			m_Position.x = target.x;
-			m_Position.y = target.y;
-		}
-		else if (m_Mode == FollowSmooth)
-		{
-			// Not implemented
-		}
-		if (m_Mode == Physical)
-		{
-			m_Position.x = m_Body->GetPosition().x;
-			m_Position.y = m_Body->GetPosition().y;
-		}
+			if (m_Mode == FollowInstant)
+			{
+				const Vector2 &target = m_FollowEntity->GetPosition();
+				m_Position.x = target.x;
+				m_Position.y = target.y;
+			}
+			else if (m_Mode == FollowSmooth)
+			{
+				// Not implemented
+			}
 
-		if (m_AutoRotate == MatchEntity)
-		{
-			m_Angle = m_FollowEntity->GetAngle();
+			if (m_AutoRotate == MatchEntity)
+			{
+				m_Angle = m_FollowEntity->GetAngle();
+			}
 		}
 	}
 
@@ -161,6 +171,114 @@ namespace FusionEngine
 	{
 		if (m_Body == NULL)
 			m_Body = world->CreateBody(&m_BodyDefinition);
+	}
+
+	void Camera::EnumReferences(asIScriptEngine *engine)
+	{
+		engine->GCEnumCallback((void*)m_FollowEntity.get());
+	}
+
+	void Camera::ReleaseAllReferences(asIScriptEngine *engine)
+	{
+		m_FollowEntity.reset();
+	}
+
+	Camera* Camera_Factory()
+	{
+		return new Camera(asGetActiveContext()->GetEngine());
+	}
+
+	Camera* Camera_Factory(float x, float y)
+	{
+		return new Camera(asGetActiveContext()->GetEngine(), x, y);
+	}
+
+	Camera* Camera_Factory(asIScriptObject *follow)
+	{
+		return new Camera(asGetActiveContext()->GetEngine(), ScriptedEntity::GetAppObject(follow));
+	}
+
+	Vector2 Camera_GetPosition(Camera *obj)
+	{
+		return Vector2(obj->GetPosition().x, obj->GetPosition().y);
+	}
+
+	void Camera_SetParallaxCamera(Camera *camera, float distance, Camera *obj)
+	{
+		obj->SetParallaxCamera(CameraPtr(camera), distance);
+	}
+
+	void Camera_SetFollowEntity(asIScriptObject *entity, Camera *obj)
+	{
+		obj->SetFollowEntity(ScriptedEntity::GetAppObject(entity));
+	}
+
+	void Camera::Register(asIScriptEngine *engine)
+	{
+		int r;
+
+		r = engine->RegisterEnum("CamFollowMode");
+		r = engine->RegisterEnumValue("CamFollowMode", "FixedPosition", FixedPosition);
+		r = engine->RegisterEnumValue("CamFollowMode", "FollowInstant", FollowInstant);
+		r = engine->RegisterEnumValue("CamFollowMode", "FollowSmooth", FollowSmooth);
+
+		r = engine->RegisterEnum("PointOrigin");
+		r = engine->RegisterEnumValue("PointOrigin", "top_left", origin_top_left);
+		r = engine->RegisterEnumValue("PointOrigin", "top_center", origin_top_center);
+		r = engine->RegisterEnumValue("PointOrigin", "top_right", origin_top_right);
+		r = engine->RegisterEnumValue("PointOrigin", "center_left", origin_center_left);
+		r = engine->RegisterEnumValue("PointOrigin", "center", origin_center);
+		r = engine->RegisterEnumValue("PointOrigin", "center_right", origin_center_right);
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_left", origin_bottom_left);
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", origin_bottom_center);
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", origin_bottom_right);
+
+		RefCounted::RegisterType<Camera>(engine, "Camera");
+		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_FACTORY,
+			"Camera@ f()",
+			asFUNCTIONPR(Camera_Factory, (void), Camera*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_FACTORY,
+			"Camera@ f(float, float)",
+			asFUNCTIONPR(Camera_Factory, (float, float), Camera*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_FACTORY,
+			"Camera@ f(IEntity@)",
+			asFUNCTIONPR(Camera_Factory, (asIScriptObject*), Camera*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Camera",
+			"void setOrigin(PointOrigin)",
+			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"PointOrigin getOrigin()",
+			asMETHOD(Camera, GetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"void setPosition(int, int)",
+			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"Vector2 getPosition()",
+			asFUNCTION(Camera_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"void setAngle(float)",
+			asMETHOD(Camera, SetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"float getAngle()",
+			asMETHOD(Camera, SetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"void setScale(float)",
+			asMETHOD(Camera, SetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"float getScale()",
+			asMETHOD(Camera, GetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Camera",
+			"void setParallaxCamera(Camera@, float)",
+			asMETHOD(Camera, SetParallaxCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Camera",
+			"void setFollowEntity(IEntity@)",
+			asFUNCTION(Camera_SetFollowEntity), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Camera",
+			"void setFollowMode(CamFollowMode)",
+			asMETHOD(Camera, SetFollowMode), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 
@@ -212,6 +330,47 @@ namespace FusionEngine
 		return m_Camera;
 	}
 
+	Vector2 Viewport::ToScreenCoords(const Vector2 &entity_position)
+	{
+		Vector2 position;
+		position.x = entity_position.x - m_Camera->GetPosition().x + m_Area.left;
+		position.y = entity_position.y - m_Camera->GetPosition().y + m_Area.top;
+		return position;
+	}
+
+	Vector2 Viewport::ToEntityCoords(const Vector2 &screen_position)
+	{
+		Vector2 position;
+		position.x = screen_position.x + m_Camera->GetPosition().x + m_Area.left;
+		position.y = screen_position.y + m_Camera->GetPosition().y + m_Area.top;
+		return position;
+	}
+
+	void Viewport::Register(asIScriptEngine *engine)
+	{
+		int r;
+		RefCounted::RegisterType<Viewport>(engine, "Viewport");
+		r = engine->RegisterObjectMethod("Viewport",
+			"void setPosition(int, int)",
+			asMETHOD(Viewport, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Viewport",
+			"void setSize(int, int)",
+			asMETHOD(Viewport, SetSize), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Viewport",
+			"void setCamera(Camera@)",
+			asMETHOD(Viewport, SetCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Viewport",
+			"Camera& getCamera()",
+			asMETHOD(Viewport, GetCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Viewport",
+			"Vector2 toScreenCoords(const Vector2 &in) const",
+			asMETHOD(Viewport, ToScreenCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Viewport",
+			"Vector2 toEntityCoords(const Vector2 &in) const",
+			asMETHOD(Viewport, ToEntityCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+	}
+
 	Renderer::Renderer(const CL_GraphicContext &gc)
 		: m_GC(gc),
 		m_EntityAdded(false)
@@ -246,6 +405,16 @@ namespace FusionEngine
 			rect.right = fe_round<int>(m_GC.get_width() * 0.5);
 		}
 		return ViewportPtr(new Viewport(rect));
+	}
+
+	int Renderer::GetContextWidth() const
+	{
+		return m_GC.get_width();
+	}
+
+	int Renderer::GetContextHeight() const
+	{
+		return m_GC.get_height();
 	}
 
 	bool lowerDepth(const EntityPtr &l, const EntityPtr &r)
@@ -353,7 +522,7 @@ namespace FusionEngine
 		const CL_Rect &viewportArea = viewport->GetArea();
 
 		// Set the viewport
-		m_GC.push_cliprect(viewportArea);
+		m_GC.set_cliprect(viewportArea);
 
 		const CL_Vec2f &camPosition = camera->GetPosition();
 		CL_Origin camOrigin = camera->GetOrigin();
@@ -401,12 +570,15 @@ namespace FusionEngine
 
 		drawNormally(drawArea);
 
+		m_GC.pop_modelview();
+
+		GUI::getSingleton().Draw();
+
+		m_GC.reset_cliprect(); // the viewport cliprect
+
 		// By this point the draw list will have been updated to reflect the changed tags
 		m_ChangedTags.clear();
 
-		m_GC.pop_modelview();
-
-		m_GC.pop_cliprect(); // the viewport cliprect
 	}
 
 	void Renderer::drawNormally(const CL_Rectf &draw_area)

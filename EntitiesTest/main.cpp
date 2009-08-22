@@ -170,7 +170,7 @@ public:
 			systemMgr->AddSystem(networkSystem);
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
-			m_Ontology.reset( new OntologicalSystem(renderer, m_Input, networkSystem.get()) );
+			m_Ontology.reset( new OntologicalSystem(co, renderer, m_Input, networkSystem.get()) );
 
 			systemMgr->AddSystem(m_Ontology);
 			systemMgr->AddSystem(gui);

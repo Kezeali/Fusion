@@ -14,17 +14,19 @@
 namespace FusionEngine
 {
 
+	typedef boost::intrusive_ptr<Camera> CameraPtr;
+
 	//! Defines a camera rectangle
 	/*!
 	* \todo Interpolated rotation toward movement direction
 	* \todo Interpolated smooth movement
 	*/
-	class Camera : public RefCounted
+	class Camera : public GarbageCollected<Camera>, noncopyable
 	{
 	public:
-		Camera();
-		Camera(float x, float y);
-		Camera(EntityPtr follow);
+		Camera(asIScriptEngine *engine);
+		Camera(asIScriptEngine *engine, float x, float y);
+		Camera(asIScriptEngine *engine, EntityPtr follow);
 		~Camera();
 
 		void SetMass(float mass);
@@ -39,7 +41,9 @@ namespace FusionEngine
 
 		void SetZoom(float scale);
 
-		void SetFollowEntity(EntityPtr follow);
+		void SetParallaxCamera(const CameraPtr &main_camera, float distance);
+
+		void SetFollowEntity(const EntityPtr &follow);
 
 		enum FollowMode
 		{
@@ -76,6 +80,11 @@ namespace FusionEngine
 
 		float GetZoom() const;
 
+		void EnumReferences(asIScriptEngine *engine);
+		void ReleaseAllReferences(asIScriptEngine *engine);
+
+		static void Register(asIScriptEngine *engine);
+
 	protected:
 		void defineBody();
 		void createBody(b2World *world);
@@ -88,14 +97,17 @@ namespace FusionEngine
 		float m_Angle;
 		float m_Scale;
 
+		// Main camera for paralax effect (i.e. the
+		//  camera that this one leads / follows)
+		CameraPtr m_MainCamera;
+		float m_ParallaxDistance;
+
 		EntityPtr m_FollowEntity;
 
 		b2BodyDef m_BodyDefinition;
 		b2Body *m_Body;
 		b2Joint *m_Joint;
 	};
-
-	typedef boost::intrusive_ptr<Camera> CameraPtr;
 
 	//! A render area
 	/*!
@@ -119,6 +131,11 @@ namespace FusionEngine
 
 		void SetCamera(const CameraPtr &camera);
 		CameraPtr GetCamera() const;
+
+		Vector2 ToScreenCoords(const Vector2 &entity_position);
+		Vector2 ToEntityCoords(const Vector2 &screen_position);
+
+		static void Register(asIScriptEngine *engine);
 
 	protected:
 		CL_Rect m_Area;
@@ -155,6 +172,9 @@ namespace FusionEngine
 			ViewQuarter
 		};
 		ViewportPtr CreateViewport(ViewportArea area);
+
+		int GetContextWidth() const;
+		int GetContextHeight() const;
 
 		void Add(const EntityPtr &entity);
 		void Remove(const EntityPtr &entity);
