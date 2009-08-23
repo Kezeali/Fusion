@@ -194,7 +194,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public RefCounted, no_factory_noncopyable, public ICollisionHandler
+	class Entity : public GarbageCollected<Entity>, noncopyable, public ICollisionHandler
 	{
 	public:
 		//! Constructor
@@ -236,6 +236,13 @@ namespace FusionEngine
 		* <code>GetID() == 0</code>.
 		*/
 		bool IsPseudoEntity() const;
+
+		//! Default implementation
+		virtual void EnumReferences(asIScriptEngine *engine)
+		{}
+		//! Default implementation
+		virtual void ReleaseAllReferences(asIScriptEngine *engine)
+		{}
 
 		//! Returns the typename of this entity
 		virtual std::string GetType() const =0;
@@ -405,6 +412,7 @@ namespace FusionEngine
 		//! Implementation of ICollisionHandler#ContactEnd()
 		virtual void ContactEnd(const Contact &contact) {}
 
+		//! Registers the script Entity type
 		static void Register(asIScriptEngine *engine);
 
 	protected:

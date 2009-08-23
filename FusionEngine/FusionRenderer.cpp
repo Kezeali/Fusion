@@ -198,9 +198,9 @@ namespace FusionEngine
 		return new Camera(asGetActiveContext()->GetEngine(), ScriptedEntity::GetAppObject(follow));
 	}
 
-	Vector2 Camera_GetPosition(Camera *obj)
+	Scripting::ScriptVector* Camera_GetPosition(Camera *obj)
 	{
-		return Vector2(obj->GetPosition().x, obj->GetPosition().y);
+		return new Scripting::ScriptVector(obj->GetPosition().x, obj->GetPosition().y);
 	}
 
 	void Camera_SetParallaxCamera(Camera *camera, float distance, Camera *obj)
@@ -233,7 +233,7 @@ namespace FusionEngine
 		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", origin_bottom_center);
 		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", origin_bottom_right);
 
-		RefCounted::RegisterType<Camera>(engine, "Camera");
+		Camera::RegisterGCType(engine, "Camera");
 		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_FACTORY,
 			"Camera@ f()",
 			asFUNCTIONPR(Camera_Factory, (void), Camera*), asCALL_CDECL); FSN_ASSERT(r >= 0);
@@ -248,25 +248,25 @@ namespace FusionEngine
 			"void setOrigin(PointOrigin)",
 			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
-			"PointOrigin getOrigin()",
+			"PointOrigin getOrigin() const",
 			asMETHOD(Camera, GetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"void setPosition(int, int)",
 			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
-			"Vector2 getPosition()",
+			"Vector@ getPosition() const",
 			asFUNCTION(Camera_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"void setAngle(float)",
 			asMETHOD(Camera, SetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
-			"float getAngle()",
+			"float getAngle() const",
 			asMETHOD(Camera, SetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"void setScale(float)",
 			asMETHOD(Camera, SetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
-			"float getScale()",
+			"float getScale() const",
 			asMETHOD(Camera, GetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Camera",
@@ -285,38 +285,38 @@ namespace FusionEngine
 	Viewport::Viewport()
 	{}
 
-	Viewport::Viewport(CL_Rect area)
+	Viewport::Viewport(const CL_Rectf &area)
 		: m_Area(area)
 	{
 	}
 
-	Viewport::Viewport(CL_Rect area, CameraPtr camera)
+	Viewport::Viewport(const CL_Rectf &area, const CameraPtr &camera)
 		: m_Area(area),
 		m_Camera(camera)
 	{
 	}
 
-	void Viewport::SetPosition(int left, int top)
+	void Viewport::SetPosition(float left, float top)
 	{
 		m_Area.left = left;
 		m_Area.top = top;
 	}
 
-	void Viewport::SetSize(int width, int height)
+	void Viewport::SetSize(float width, float height)
 	{
 		m_Area.set_width(width);
 		m_Area.set_height(height);
 	}
 
-	const CL_Rect &Viewport::GetArea() const
+	const CL_Rectf &Viewport::GetArea() const
 	{
 		return m_Area;
 	}
-	CL_Point Viewport::GetPosition() const
+	CL_Pointf Viewport::GetPosition() const
 	{
 		return m_Area.get_top_left();
 	}
-	CL_Size Viewport::GetSize() const
+	CL_Sizef Viewport::GetSize() const
 	{
 		return m_Area.get_size();
 	}
@@ -325,49 +325,79 @@ namespace FusionEngine
 	{
 		m_Camera = camera;
 	}
-	CameraPtr Viewport::GetCamera() const
+	const CameraPtr &Viewport::GetCamera() const
 	{
 		return m_Camera;
 	}
 
-	Vector2 Viewport::ToScreenCoords(const Vector2 &entity_position)
+	Vector2* Viewport::ToScreenCoords(const Vector2 &entity_position) const
 	{
-		Vector2 position;
-		position.x = entity_position.x - m_Camera->GetPosition().x + m_Area.left;
-		position.y = entity_position.y - m_Camera->GetPosition().y + m_Area.top;
+		Vector2 *position = new Vector2();
+		position->x = entity_position.x - m_Camera->GetPosition().x + m_Area.left;
+		position->y = entity_position.y - m_Camera->GetPosition().y + m_Area.top;
 		return position;
 	}
 
-	Vector2 Viewport::ToEntityCoords(const Vector2 &screen_position)
+	Vector2* Viewport::ToEntityCoords(const Vector2 &screen_position) const
 	{
-		Vector2 position;
-		position.x = screen_position.x + m_Camera->GetPosition().x + m_Area.left;
-		position.y = screen_position.y + m_Camera->GetPosition().y + m_Area.top;
+		Vector2 *position = new Vector2();
+		position->x = screen_position.x + m_Camera->GetPosition().x + m_Area.left;
+		position->y = screen_position.y + m_Camera->GetPosition().y + m_Area.top;
 		return position;
+	}
+
+	Viewport* Viewport_Factory()
+	{
+		return new Viewport();
+	}
+
+	Viewport* Viewport_Factory(float left, float top, float right, float bottom)
+	{
+		return new Viewport(CL_Rectf(left, top, right, bottom));
+	}
+
+	Viewport* Viewport_Factory(float left, float top, float right, float bottom, Camera* camera)
+	{
+		return new Viewport(CL_Rectf(left, top, right, bottom), camera);
+	}
+
+	void Viewport_SetCamera(Camera *camera, Viewport *viewport)
+	{
+		viewport->SetCamera(camera);
 	}
 
 	void Viewport::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RefCounted::RegisterType<Viewport>(engine, "Viewport");
+		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
+			"Viewport@ f()",
+			asFUNCTIONPR(Viewport_Factory, (void), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
+			"Viewport@ f(float, float, float, float)",
+			asFUNCTIONPR(Viewport_Factory, (float, float, float, float), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
+			"Viewport@ f(float, float, float, float, Camera@)",
+			asFUNCTIONPR(Viewport_Factory, (float, float, float, float, Camera*), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+
 		r = engine->RegisterObjectMethod("Viewport",
-			"void setPosition(int, int)",
+			"void setPosition(float, float)",
 			asMETHOD(Viewport, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
-			"void setSize(int, int)",
+			"void setSize(float, float)",
 			asMETHOD(Viewport, SetSize), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
 			"void setCamera(Camera@)",
-			asMETHOD(Viewport, SetCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asFUNCTION(Viewport_SetCamera), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
 			"Camera& getCamera()",
 			asMETHOD(Viewport, GetCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Viewport",
-			"Vector2 toScreenCoords(const Vector2 &in) const",
+			"Vector@ toScreenCoords(const Vector &in) const",
 			asMETHOD(Viewport, ToScreenCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
-			"Vector2 toEntityCoords(const Vector2 &in) const",
+			"Vector@ toEntityCoords(const Vector &in) const",
 			asMETHOD(Viewport, ToEntityCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
@@ -381,30 +411,13 @@ namespace FusionEngine
 	{
 	}
 
-	ViewportPtr Renderer::CreateViewport(ViewportArea area)
+	void Renderer::CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport)
 	{
-		CL_Rect rect;
-		if (area == ViewFull)
-		{
-			rect.bottom = m_GC.get_height();
-			rect.right = m_GC.get_width();
-		}
-		else if (area == ViewVerticalHalf)
-		{
-			rect.bottom = fe_round<int>(m_GC.get_height() * 0.5);
-			rect.right = m_GC.get_width();
-		}
-		else if (area == ViewHorizontalHalf)
-		{
-			rect.bottom = m_GC.get_height();;
-			rect.right = fe_round<int>(m_GC.get_width() * 0.5);
-		}
-		else if (area == ViewQuarter)
-		{
-			rect.bottom = fe_round<int>(m_GC.get_height() * 0.5);
-			rect.right = fe_round<int>(m_GC.get_width() * 0.5);
-		}
-		return ViewportPtr(new Viewport(rect));
+		const CL_Rectf &proportions = viewport->GetArea();
+		area.left = (int)floor(proportions.left * m_GC.get_width());
+		area.top = (int)floor(proportions.top * m_GC.get_height());
+		area.right = (int)ceil(proportions.right * m_GC.get_width());
+		area.bottom = (int)ceil(proportions.bottom * m_GC.get_height());
 	}
 
 	int Renderer::GetContextWidth() const
@@ -517,9 +530,10 @@ namespace FusionEngine
 		//	m_EntitiesAdded = false;
 		//}
 
-		CameraPtr &camera = viewport->GetCamera();
+		const CameraPtr &camera = viewport->GetCamera();
 
-		const CL_Rect &viewportArea = viewport->GetArea();
+		CL_Rect viewportArea;
+		CalculateScreenArea(viewportArea, viewport);
 
 		// Set the viewport
 		m_GC.set_cliprect(viewportArea);

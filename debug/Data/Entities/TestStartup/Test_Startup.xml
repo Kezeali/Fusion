@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity typename="TestStartup" defaultdomain="system">
+	<Script type="angelscript" file="test_startup.as"/>
+	<Dependencies>
+		<Entity typename="Test"/>
+	</Dependencies>
+</Entity>

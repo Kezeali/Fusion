@@ -164,34 +164,14 @@ namespace FusionEngine
 		//! Disconnects cleanly
 		virtual void Disconnect() = 0;
 
+		virtual bool IsConnected() const = 0;
+
+		virtual NetHandle GetLocalAddress() const = 0;
+
 		//! Sends a packet containing ONLY the given data
 		virtual bool SendRaw(const char *data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination) =0;
-
-		//! Sends a message
-		/*!
-		 * Special send wrapper which adds an extra type ID to the packet
-		 *
-		 * \param[in] timestamped
-		 * True if a timestamp should be added
-		 *
-		 * \param[in] type
-		 * The extra type ID
-		 *
-		 * \param[in] subtype
-		 * The type ID
-		 *
-		 * \param[in] data
-		 * The data send
-		 *
-		 * \param[in] length
-		 * The length of the data
-		 *
-		 */
-		bool SendToChannel(bool timestamped, char type, char subtype, char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel, 
-			const NetHandle& destination);
+			const NetHandle& destination, bool to_all = false) =0;
 
 		//! Sends data
 		/*!
@@ -204,12 +184,12 @@ namespace FusionEngine
 		 */
 		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination) =0;
+			const NetHandle& destination, bool to_all = false) =0;
 
 		//! Sends data
 		bool Send(bool timestamped, unsigned char type, unsigned char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination);
+			const NetHandle& destination, bool to_all = false);
 
 		//! Gets packets from the network.
 		virtual IPacket* Receive() = 0;

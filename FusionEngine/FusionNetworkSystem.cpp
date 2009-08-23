@@ -33,7 +33,7 @@
 
 // Fusion
 #include "FusionLogger.h"
-#include "FusionNetwork.h"
+#include "FusionRakNetwork.h"
 #include "FusionPlayerRegistry.h"
 
 #include <boost/lexical_cast.hpp>
@@ -119,6 +119,11 @@ namespace FusionEngine
 	Network *NetworkSystem::GetNetwork() const
 	{
 		return m_Network;
+	}
+
+	bool NetworkSystem::IsConnected() const
+	{
+		return m_Network->IsConnected();
 	}
 
 	void NetworkSystem::AddPacketHandler(char type, PacketHandler *handler)

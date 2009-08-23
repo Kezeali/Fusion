@@ -31,9 +31,13 @@
 
 #include "FusionNetwork.h"
 
+// RakNet
 #include <RakPeerInterface.h>
 #include <RakNetTypes.h>
 #include <MessageIdentifiers.h>
+// Plugins
+#include <FullyConnectedMesh2.h>
+#include <ConnectionGraph2.h>
 
 #include "FusionNetworkTypes.h"
 
@@ -130,7 +134,7 @@ namespace FusionEngine
 		RakNetwork();
 		~RakNetwork();
 
-	protected:
+	public:
 		//! Starts the network
 		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0);
 		//! Connects to a server
@@ -138,10 +142,14 @@ namespace FusionEngine
 		//! Disconnects cleanly
 		virtual void Disconnect();
 
+		virtual bool IsConnected() const;
+
+		virtual NetHandle GetLocalAddress() const;
+
 		//! Sends data as-is
 		virtual bool SendRaw(const char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination);
+			const NetHandle& destination, bool to_all = false);
 		/*!
 		 * <p>Formats the packet as follows:</p>
 		 *
@@ -155,7 +163,7 @@ namespace FusionEngine
 		 */
 		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle &destination);
+			const NetHandle &destination, bool to_all = false);
 		//! Receives data
 		virtual IPacket* Receive();
 		//! Puts the given packet back on the receive buffer
@@ -202,6 +210,8 @@ namespace FusionEngine
 	protected:
 		RakPeerInterface* m_NetInterface;
 		//SystemAddressMap m_SystemAddresses;
+		FullyConnectedMesh2 fullyConnectedMeshPlugin;
+		ConnectionGraph2 connectionGraphPlugin;
 
 		// Network Simulator settings
 		unsigned int m_MinLagMilis;

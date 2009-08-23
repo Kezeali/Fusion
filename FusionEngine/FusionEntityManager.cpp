@@ -671,8 +671,6 @@ namespace FusionEngine
 		{
 			EntityPtr &entity = *it;
 
-			//updateTags(entity);
-
 			// Check for reasons to remove the
 			//  entity from the update domain
 			if (entity->IsMarkedToRemove())
@@ -688,6 +686,14 @@ namespace FusionEngine
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
+				// TODO: StreamingManager
+				// i.e. StreamingManager::SetPlayerCamera(net_idx, cam)
+				//  StreamingManager::SetRange(float units)
+				//  StreamingManager::GetActiveArea(net_idx) { return ... }
+				//  StreamingManager::ProcessEntity(entity) - stream the entity in if it is within any the player cameras
+				if (entity->IsStreamedOut())
+					entity->StreamIn();
+
 				if (entity->Wait())
 				{
 					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
@@ -801,13 +807,13 @@ namespace FusionEngine
 			"IEntity@ instance(const string &in)",
 			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in)",
+			"IEntity@ instance(const string &in, uint16)",
 			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectMethod("EntityManager",
 			"IEntity@ instance(const string &in, const string &in)",
 			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in)",
+			"IEntity@ instance(const string &in, const string &in, uint16)",
 			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
 	}
 

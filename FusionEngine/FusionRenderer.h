@@ -117,28 +117,30 @@ namespace FusionEngine
 	{
 	public:
 		Viewport();
-		Viewport(CL_Rect area);
-		Viewport(CL_Rect area, CameraPtr camera);
+		//! Sets the area of the viewport
+		Viewport(const CL_Rectf &area_ratio);
+		//! Sets the area of the viewport, and the camera
+		Viewport(const CL_Rectf &area_ratio, const CameraPtr &camera);
 
 		//! Sets the position within the graphics context
-		void SetPosition(int left, int top);
+		void SetPosition(float left, float top);
 		//! Sets the size of the render area
-		void SetSize(int width, int height);
+		void SetSize(float width, float height);
 
-		const CL_Rect &GetArea() const;
-		CL_Point GetPosition() const;
-		CL_Size GetSize() const;
+		const CL_Rectf &GetArea() const;
+		CL_Pointf GetPosition() const;
+		CL_Sizef GetSize() const;
 
 		void SetCamera(const CameraPtr &camera);
-		CameraPtr GetCamera() const;
+		const CameraPtr &GetCamera() const;
 
-		Vector2 ToScreenCoords(const Vector2 &entity_position);
-		Vector2 ToEntityCoords(const Vector2 &screen_position);
+		Vector2* ToScreenCoords(const Vector2 &entity_position) const;
+		Vector2* ToEntityCoords(const Vector2 &screen_position) const;
 
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		CL_Rect m_Area;
+		CL_Rectf m_Area;
 		CameraPtr m_Camera;
 	};
 
@@ -164,14 +166,14 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~Renderer();
 
-		enum ViewportArea
-		{
-			ViewFull,
-			ViewVerticalHalf,
-			ViewHorizontalHalf,
-			ViewQuarter
-		};
-		ViewportPtr CreateViewport(ViewportArea area);
+		//enum ViewportArea
+		//{
+		//	ViewFull,
+		//	ViewVerticalHalf,
+		//	ViewHorizontalHalf,
+		//	ViewQuarter
+		//};
+		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport);
 
 		int GetContextWidth() const;
 		int GetContextHeight() const;

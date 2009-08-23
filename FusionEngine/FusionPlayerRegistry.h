@@ -59,6 +59,9 @@ namespace FusionEngine
 				LocalIndex(g_MaxLocalPlayers),
 				IsInGame(true)
 			{}
+
+			bool operator==(const PlayerInfo &other) const;
+			bool operator!=(const PlayerInfo &other) const;
 		};
 
 		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
@@ -66,6 +69,7 @@ namespace FusionEngine
 		PlayerRegistry();
 
 		static void AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
+		static void AddPlayer(ObjectID net_index, unsigned int local_index);
 		static void AddPlayer(ObjectID net_index, NetHandle system_address);
 
 		static void RemovePlayer(ObjectID net_index);
@@ -80,6 +84,8 @@ namespace FusionEngine
 		static const void SetArbitrator(ObjectID net_index);
 
 		static const PlayerInfo &GetArbitratingPlayer();
+
+		static bool ArbitratorIsLocal();
 	protected:
 		void addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
 

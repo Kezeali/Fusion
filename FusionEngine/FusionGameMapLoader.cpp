@@ -28,6 +28,9 @@
 
 #include "Common.h"
 
+#include "FusionClientOptions.h"
+#include "FusionPlayerRegistry.h"
+
 #include "FusionGameMapLoader.h"
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
@@ -36,8 +39,9 @@
 namespace FusionEngine
 {
 
-	GameMapLoader::GameMapLoader(EntityManager *manager)
-		: m_Manager(manager)
+	GameMapLoader::GameMapLoader(ClientOptions *options, EntityManager *manager)
+		: m_ClientOptions(options),
+		m_Manager(manager)
 	{
 	}
 
@@ -265,6 +269,32 @@ namespace FusionEngine
 
 	void GameMapLoader::SaveGame(CL_IODevice device)
 	{
+		// Write save info
+		//  Date
+		device.write_uint64(CL_DateTime::get_current_utc_time().to_ticks());
+		//  Players
+		int numLocalPlayers;
+		m_ClientOptions->GetOption("num_local_players", &numLocalPlayers);
+		device.write_uint32((unsigned)numLocalPlayers);
+		//  Write net-indicies so they can be restored - net-indicies
+		//  must be the same from session to session for Entity ownership.
+		for (unsigned int i = 0; i < (unsigned)numLocalPlayers; i++)
+			device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
+
+		// Map filename
+		device.write_string_a(m_MapFilename);
+
+		const EntityManager::IDEntityMap &entities = m_Manager->GetEntities();
+		for (EntityManager::IDEntityMap::const_iterator it = entities.begin(), end = entities.end();
+			it != end; ++it)
+		{
+			const EntityPtr &entity = it->second;
+
+			if (entity->GetDomain() == GAME_DOMAIN)
+			{
+				// Save entity...
+			}
+		}
 	}
 
 }

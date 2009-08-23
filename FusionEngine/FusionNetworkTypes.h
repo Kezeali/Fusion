@@ -94,8 +94,8 @@ namespace FusionEngine
 		/*!
 		 * Structure:<br>
 		 * <ol>
-		 * <li> [ObjectID] The prelim. ID the client gave this ship
-		 * <li> [ObjectID] The 'official' ID gaven to this ship by the server
+		 * <li> [ObjectID] The prelim. ID the client gave this entity
+		 * <li> [ObjectID] The 'official' ID gaven to this entity by the server
 		 * </ol>
 		 */
 		MTID_ADDALLOWED,
@@ -106,13 +106,10 @@ namespace FusionEngine
 		//! [server|client]
 		MTID_CHANGENAME,
 
+		MTID_ADDPLAYER,
+		MTID_REMOVEPLAYER,
+
 		//! [client|server]
-		/*!
-		 * Client-side Structure:<br>
-		 * <ol>
-		 * <li> TODO: stuff?
-		 * </ol>
-		 */
 		MTID_STARTSYNC,
 		//! [client]
 		MTID_ENDSYNC,

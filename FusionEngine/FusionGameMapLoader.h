@@ -75,7 +75,7 @@ namespace FusionEngine
 			PseudoEntityFlag = 1 << 1
 		};
 	public:
-		GameMapLoader(EntityManager *manager);
+		GameMapLoader(ClientOptions *options, EntityManager *manager);
 
 		void LoadEntityTypes(CL_IODevice device);
 
@@ -89,6 +89,11 @@ namespace FusionEngine
 
 	private:
 		EntityManager *m_Manager;
+
+		// The currently loaded map (must be written to the save game file so it can be re-loaded)
+		std::string m_MapFilename;
+
+		ClientOptions *m_ClientOptions;
 	};
 
 }

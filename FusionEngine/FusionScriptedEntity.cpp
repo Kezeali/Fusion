@@ -83,7 +83,8 @@ namespace FusionEngine
 	}*/
 
 	ScriptedEntity::ScriptedEntity()
-		: m_DefaultPosition(0.f, 0.f),
+		: Entity(),
+		m_DefaultPosition(0.f, 0.f),
 		m_DefaultAngle(0.f)
 	{}
 
@@ -108,6 +109,17 @@ namespace FusionEngine
 	//{
 	//	m_Streamed[path] = type;
 	//}
+
+	void ScriptedEntity::EnumReferences(asIScriptEngine *engine)
+	{
+		engine->GCEnumCallback((void*)m_ScriptObject.GetScriptObject());
+	}
+
+	void ScriptedEntity::ReleaseAllReferences(asIScriptEngine *engine)
+	{
+		m_ScriptObject.Release();
+		//engine->ReleaseScriptObject((void*)m_ScriptObject.GetScriptObject(), m_ScriptObject.GetTypeId());
+	}
 
 	std::string ScriptedEntity::GetType() const
 	{
@@ -400,6 +412,19 @@ namespace FusionEngine
 		}
 		else
 			return NULL;
+	}
+
+	ScriptedEntity* ScriptedEntity::GetAppObject(asIScriptObject *script_obj)
+	{
+		ScriptedEntity *appObject = NULL;
+		ScriptUtils::Calling::Caller f(script_obj, "Entity@ _getAppObject()");
+		if (f.ok())
+		{
+			Entity *ptr = *static_cast<Entity**>( f() );
+			appObject = dynamic_cast<ScriptedEntity*>( ptr );
+		}
+
+		return appObject;
 	}
 
 }

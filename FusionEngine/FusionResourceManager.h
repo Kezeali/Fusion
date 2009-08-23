@@ -127,13 +127,18 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		ResourceManager(const CL_GraphicContext &gc, char *arg0);
+		ResourceManager(char *arg0);
 		//! Constructor - gets equivilant of arg0 from CL_System::get_exe_path()
-		ResourceManager(const CL_GraphicContext &gc);
+		ResourceManager();
 		//! Destructor
 		~ResourceManager();
 
 	public:
+		//! Sets the GC
+		void SetGraphicContext(const CL_GraphicContext &gc);
+		//! Gets the GC
+		const CL_GraphicContext &GetGraphicContext() const;
+
 		//! Configures the resource manager
 		void Configure();
 
@@ -212,7 +217,7 @@ namespace FusionEngine
 		//! Loads / gets a resource
 		bsig2::connection GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 
-		void resourceUnreferenced(ResourceDataPtr);
+		void resourceUnreferenced(ResourceContainer *resource);
 
 		//! Loads a resource
 		/*!
@@ -326,6 +331,8 @@ namespace FusionEngine
 
 		// Garbage
 		//ResourceMap m_Garbage;
+
+		bool m_Clearing;
 
 		ResourceSet m_Unreferenced;
 

@@ -34,9 +34,8 @@ namespace FusionEngine
 		return 0;
 	}
 
-	ResourceManager::ResourceManager(const CL_GraphicContext &gc)
-		: m_GC(gc),
-		m_PhysFSConfigured(false),
+	ResourceManager::ResourceManager()
+		: m_PhysFSConfigured(false),
 		m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false)
@@ -47,9 +46,8 @@ namespace FusionEngine
 		Configure();
 	}
 
-	ResourceManager::ResourceManager(const CL_GraphicContext &gc, char *arg0)
-		: m_GC(gc),
-		m_PhysFSConfigured(false),
+	ResourceManager::ResourceManager(char *arg0)
+		: m_PhysFSConfigured(false),
 		m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false)
@@ -72,6 +70,16 @@ namespace FusionEngine
 	// Look, nice formatting :D
 	///////////
 	/// Public:
+	void ResourceManager::SetGraphicContext(const CL_GraphicContext &gc)
+	{
+		m_GC = gc;
+	}
+
+	const CL_GraphicContext &ResourceManager::GetGraphicContext() const
+	{
+		return m_GC;
+	}
+
 	void ResourceManager::Configure()
 	{
 		SetupPhysFS::configure("Pom", "Fusion", "7z");
@@ -161,6 +169,7 @@ namespace FusionEngine
 
 	void ResourceManager::DeleteResources()
 	{
+		m_Clearing = true;
 		CL_MutexSection resourcesLock(&m_ResourcesMutex);
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
@@ -171,6 +180,7 @@ namespace FusionEngine
 		//  be invalidated by the previous step. In any case, the following
 		//  step means all ResourceContainers will be deleated ASAP.
 		m_Resources.clear();
+		m_Clearing = false;
 	}
 
 	void ResourceManager::ClearAll()
@@ -531,9 +541,10 @@ namespace FusionEngine
 		return onLoadConnection;
 	}
 
-	void ResourceManager::resourceUnreferenced(ResourceDataPtr resource)
+	void ResourceManager::resourceUnreferenced(ResourceContainer* resource)
 	{
-		m_Unreferenced.insert(resource.get());
+		if (!m_Clearing)
+			m_Unreferenced.insert(resource);
 	}
 
 	void ResourceManager::LoadResource_Background(const std::string& type, const std::wstring& path, int priority)
@@ -641,7 +652,7 @@ namespace FusionEngine
 			// Run the load function
 			ResourceLoader &loader = _where->second;
 			loader.unload(resource.get(), vdir, gc, loader.userData);
-			if (quickload)
+			if (quickload && resource->HasQuickLoadData())
 				loader.unloadQLData(resource.get(), vdir, gc, loader.userData);
 		}
 	}

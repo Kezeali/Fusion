@@ -37,12 +37,16 @@
 #include "FusionGameMapLoader.h"
 #include "FusionPhysicsWorld.h"
 #include "FusionInputHandler.h"
+#include "FusionNetworkSystem.h"
 #include "FusionScriptingEngine.h"
 #include "FusionClientOptions.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionXml.h"
 #include "FusionPlayerRegistry.h"
+#include "FusionRakNetwork.h"
+
+#include <Calling/Caller.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -52,13 +56,15 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
-		: m_Renderer(renderer),
+	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
+		: m_Options(options),
+		m_Renderer(renderer),
 		m_InputManager(input_manager),
 		m_NetworkSystem(network),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
-		m_PhysicsWorld(NULL)
+		m_PhysicsWorld(NULL),
+		m_NextPlayerIndex(1)
 	{
 	}
 
@@ -76,15 +82,12 @@ namespace FusionEngine
 	{
 		if (m_EntityManager == NULL)
 		{
-			ViewportPtr viewport = m_Renderer->CreateViewport(Renderer::ViewFull);
-			AddViewport(viewport);
-
 			PlayerRegistry::AddPlayer(1, 0, NetHandle());
 			PlayerRegistry::SetArbitrator(1);
 
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
 			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser);
-			m_MapLoader = new GameMapLoader(m_EntityManager);
+			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
 
@@ -94,10 +97,10 @@ namespace FusionEngine
 			m_EntityManager->GetFactory()->SetScriptingManager(manager, "main");
 			m_EntityManager->GetFactory()->SetScriptedEntityPath("Entities/");
 
-			ClientOptions options(L"gameconfig.xml", "gameconfig");
+			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
 
 			std::string worldSizeString;
-			options.GetOption("world_size", &worldSizeString);
+			gameOptions.GetOption("world_size", &worldSizeString);
 			StringVector components = fe_splitstring(worldSizeString, ",");
 
 			float worldX = 1000.f, worldY = 1000.f;
@@ -110,7 +113,7 @@ namespace FusionEngine
 
 			manager->RegisterGlobalObject("World world", m_PhysicsWorld);
 
-			options.GetOption("startup_entity", &m_StartupEntity);
+			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 		}
 
 		m_EntityManager->GetFactory()->LoadScriptedType(m_StartupEntity);
@@ -192,7 +195,9 @@ namespace FusionEngine
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
 			ViewportPtr &viewport = *it;
-			viewport->GetCamera()->Update(split);
+			CameraPtr camera = viewport->GetCamera();
+			if (camera)
+				camera->Update(split);
 		}
 	}
 
@@ -203,6 +208,106 @@ namespace FusionEngine
 			m_Renderer->Draw(*it);
 		}
 		m_EntityManager->Draw();
+	}
+
+	void OntologicalSystem::HandlePacket(IPacket *packet)
+	{
+		Network *network = m_NetworkSystem->GetNetwork();
+		NetHandle originHandle = packet->GetSystemHandle();
+
+		if (packet->GetType() == MTID_ADDPLAYER)
+		{
+			if (PlayerRegistry::ArbitratorIsLocal())
+			{
+				unsigned int playerIndex;
+				{
+					RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
+					bitStream.Read(playerIndex);
+				}
+
+				ObjectID netIndex = getNextPlayerIndex();
+				PlayerRegistry::AddPlayer(netIndex, originHandle);
+
+				RakNetHandle rakHandle = std::tr1::dynamic_pointer_cast<RakNetHandleImpl>(originHandle);
+				{
+					RakNet::BitStream bitStream;
+					bitStream.Write1();
+					bitStream.Write(netIndex);
+					bitStream.Write(playerIndex);
+					network->Send(
+						false,
+						MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+						originHandle);
+				}
+				{
+					SystemAddress systemAddress = rakHandle->Address;
+					RakNetGUID guid = rakHandle->SystemIdent;
+
+					RakNet::BitStream bitStream;
+					bitStream.Write0();
+					bitStream.Write(netIndex);
+					bitStream.Write(systemAddress);
+					bitStream.Write(guid);
+					network->Send(
+						false,
+						MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+						originHandle, true);
+				}
+			}
+			else
+			{
+				RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
+
+				bool localPlayer = bitStream.ReadBit();
+				ObjectID netIndex;
+				bitStream.Read(netIndex);
+
+				if (localPlayer)
+				{
+					unsigned int localIndex;
+					bitStream.Read(localIndex);
+					PlayerRegistry::AddPlayer(netIndex, localIndex);
+
+					onGetNetIndex(localIndex, netIndex);
+				}
+				else
+				{
+					RakNetGUID guid;
+					SystemAddress address;
+					bitStream.Read(address);
+					bitStream.Read(guid);
+
+					RakNetHandle handle(new RakNetHandleImpl(guid, address));
+					PlayerRegistry::AddPlayer(netIndex, handle);
+				}
+			}
+		}
+
+		else if (packet->GetType() == MTID_REMOVEPLAYER)
+		{
+			RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
+
+			ObjectID netIndex;
+			bitStream.Read(netIndex);
+
+			if (PlayerRegistry::ArbitratorIsLocal())
+			{
+				PlayerRegistry::RemovePlayer(netIndex);
+				releasePlayerIndex(netIndex);
+
+				//network->Send(
+				//	false,
+				//	MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+				//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+				//	originHandle, true);
+			}
+			else
+			{
+				PlayerRegistry::RemovePlayer(netIndex);
+			}
+		}
 	}
 
 	void OntologicalSystem::AddViewport(ViewportPtr viewport)
@@ -232,8 +337,10 @@ namespace FusionEngine
 		return m_Viewports;
 	}
 
-	void OntologicalSystem::SetModule(ModulePtr module)
+	void OntologicalSystem::SetModule(const ModulePtr &module)
 	{
+		m_Module = module;
+
 		m_ModuleConnection.disconnect();
 		m_ModuleConnection = module->ConnectToBuild( boost::bind(&OntologicalSystem::OnModuleRebuild, this, _1) );
 	}
@@ -247,20 +354,13 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup", 1);
+			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
 
 			if (entity)
 			{
 				//entity->Spawn();
 				// Force stream-in
 				entity->StreamIn();
-
-				CameraPtr camera(new Camera(entity));
-				m_Viewports.front()->SetCamera(camera);
-			}
-			else
-			{
-				m_Viewports.front()->SetCamera( CameraPtr(new Camera()) );
 			}
 		}
 	}
@@ -270,11 +370,173 @@ namespace FusionEngine
 		PushMessage(new SystemMessage(SystemMessage::QUIT));
 	}
 
+	void OntologicalSystem::Save(const std::string &filename)
+	{
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		CL_IODevice out = vdir.open_file(filename.c_str(), CL_File::create_always, CL_File::access_write);
+
+		m_MapLoader->SaveGame(out);
+	}
+
+	void OntologicalSystem::Pause()
+	{
+		m_EntityManager->SetDomainState(GAME_DOMAIN, false);
+	}
+
+	void OntologicalSystem::Resume()
+	{
+		m_EntityManager->SetDomainState(GAME_DOMAIN, true);
+	}
+
+	unsigned int OntologicalSystem::AddPlayer(const std::string &callback_decl)
+	{
+		int numPlayers;
+		m_Options->GetOption("num_local_players", &numPlayers);
+		if (numPlayers < g_MaxLocalPlayers)
+		{
+			unsigned int playerIndex = (unsigned)numPlayers;
+
+			Network *network = m_NetworkSystem->GetNetwork();
+
+			PlayerRegistry::AddPlayer(0, playerIndex, network->GetLocalAddress());
+
+			int fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
+			if (fnId >= 0 && m_Module->GetASModule()->GetFunctionDescriptorById(fnId)->GetParamTypeId(0) == asTYPEID_UINT16)
+				m_AddPlayerCallbacks[playerIndex] = callback_decl;
+			else
+				SendToConsole("system.addPlayer(): " + callback_decl + " is not a valid AddPlayer callback - signature must be 'void (uint16)'");
+
+			if (PlayerRegistry::ArbitratorIsLocal())
+			{
+				RakNet::BitStream bitStream;
+				ObjectID netIndex = getNextPlayerIndex();
+				bitStream.Write0();
+				bitStream.Write(netIndex);
+
+				network->Send(
+					false,
+					MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+					PlayerRegistry::GetArbitratingPlayer().System);
+
+				onGetNetIndex(playerIndex, netIndex);
+			}
+			else
+			{
+				// Request a Net-Index if this peer isn't the arbitrator
+				RakNet::BitStream bitStream;
+				bitStream.Write(playerIndex);
+
+				network->Send(
+					false,
+					MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+					PlayerRegistry::GetArbitratingPlayer().System);
+			}
+
+			m_Options->SetOption("num_local_players", CL_StringHelp::int_to_local8(++numPlayers).c_str());
+
+			return playerIndex;
+		}
+
+		else return g_MaxLocalPlayers;
+	}
+
+	void OntologicalSystem::RemovePlayer(unsigned int index)
+	{
+		Network *network = m_NetworkSystem->GetNetwork();
+
+		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
+
+		RakNet::BitStream bitStream;
+		bitStream.Write(playerInfo.NetIndex);
+
+		network->Send(
+			false,
+			MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+			NetHandle(new RakNetHandleImpl()), true);
+
+		if (PlayerRegistry::ArbitratorIsLocal())
+			releasePlayerIndex(playerInfo.NetIndex);
+		PlayerRegistry::RemovePlayer(index);
+	}
+
+	int OntologicalSystem::GetScreenWidth() const
+	{
+		return m_Renderer->GetContextWidth();
+	}
+
+	int OntologicalSystem::GetScreenHeight() const
+	{
+		return m_Renderer->GetContextHeight();
+	}
+
+	void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
+	{
+		if (!m_AddPlayerCallbacks[local_idx].empty())
+		{
+			ScriptUtils::Calling::Caller f = m_Module->GetCaller(m_AddPlayerCallbacks[local_idx]);
+			if (f.ok())
+				f(net_idx);
+		}
+	}
+
 	void OntologicalSystem::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RegisterSingletonType<OntologicalSystem>("System", engine);
 		r = engine->RegisterObjectMethod("System", "void quit()", asMETHOD(OntologicalSystem, Quit), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void save(const string &in)",
+			asMETHOD(OntologicalSystem, Save), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"uint addPlayer(const string &in)",
+			asMETHOD(OntologicalSystem, AddPlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void removePlayer(uint)",
+			asMETHOD(OntologicalSystem, RemovePlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"void addViewport(Viewport@)",
+			asMETHOD(OntologicalSystem, AddViewport), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void removeViewport(Viewport@)",
+			asMETHOD(OntologicalSystem, RemoveViewport), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void removeAllViewports()",
+			asMETHOD(OntologicalSystem, RemoveAllViewports), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"int getScreenWidth()",
+			asMETHOD(OntologicalSystem, GetScreenWidth), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"int getScreenHeight()",
+			asMETHOD(OntologicalSystem, GetScreenHeight), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+	}
+
+	ObjectID OntologicalSystem::getNextPlayerIndex()
+	{
+		if (m_FreePlayerIndicies.empty())
+			return m_NextPlayerIndex++;
+		else
+		{
+			ObjectID freePlayerIndex = m_FreePlayerIndicies.front();
+			m_FreePlayerIndicies.pop_front();
+			return freePlayerIndex;
+		}
+	}
+
+	void OntologicalSystem::releasePlayerIndex(ObjectID net_index)
+	{
+		if (m_NextPlayerIndex == 0 || net_index == m_NextPlayerIndex-1)
+		{
+			--m_NextPlayerIndex;
+		}
+		else
+		{
+			m_FreePlayerIndicies.push_back(net_index);
+		}
 	}
 
 }

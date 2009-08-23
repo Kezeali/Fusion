@@ -34,12 +34,30 @@
 namespace FusionEngine
 {
 
+	bool PlayerRegistry::PlayerInfo::operator==(const PlayerInfo &other) const
+	{
+		return NetIndex == other.NetIndex;
+	}
+
+	bool PlayerRegistry::PlayerInfo::operator!=(const PlayerInfo &other) const
+	{
+		return !(*this == other);
+	}
+
 	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
 		registry->addPlayer(net_index, local_index, system_address);
+	}
+
+	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->addPlayer(net_index, local_index, NetHandle());
 	}
 
 	void PlayerRegistry::AddPlayer(ObjectID net_index, NetHandle system_address)
@@ -112,6 +130,14 @@ namespace FusionEngine
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
 		return registry->getPlayerByNetIndex(registry->m_Arbitrator);
+	}
+
+	bool PlayerRegistry::ArbitratorIsLocal()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->m_Arbitrator == registry->getPlayerByLocalIndex(0).NetIndex;
 	}
 
 	PlayerRegistry::PlayerRegistry()

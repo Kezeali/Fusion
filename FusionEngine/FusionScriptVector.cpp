@@ -221,7 +221,8 @@ namespace FusionEngine { namespace Scripting
 		int r, typeId;
 
 		// Register the type
-		typeId = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( typeId >= 0 );
+		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( r >= 0 );
+		typeId = engine->GetTypeIdByDecl("Vector");
 
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );

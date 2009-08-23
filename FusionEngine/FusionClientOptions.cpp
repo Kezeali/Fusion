@@ -214,7 +214,7 @@ namespace FusionEngine
 		if (itVar == m_Variables.end())
 			return false;
 
-		*ret = CL_StringHelp::local8_to_int(itVar->second);
+		*ret = CL_StringHelp::local8_to_int(itVar->second.c_str());
 		return true;
 	}
 

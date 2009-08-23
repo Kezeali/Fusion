@@ -106,6 +106,9 @@ namespace FusionEngine
 		//void SetStreamedResources(const StreamedResourceMap &resources);
 		//void AddStreamedResource(const std::string &type, const std::wstring &path);
 
+		virtual void EnumReferences(asIScriptEngine *engine);
+		virtual void ReleaseAllReferences(asIScriptEngine *engine);
+
 		virtual std::string GetType() const;
 
 		virtual const Vector2 &GetPosition();
@@ -122,6 +125,7 @@ namespace FusionEngine
 		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
 		static asIScriptObject* GetScriptObject(Entity *entity);
+		static ScriptedEntity* GetAppObject(asIScriptObject *script);
 
 	protected:
 		// The actual entity (for which this C++ class is simply a wrapper)

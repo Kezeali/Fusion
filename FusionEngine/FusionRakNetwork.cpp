@@ -28,8 +28,10 @@
 
 #include "FusionRakNetwork.h"
 
+// Core raknet stuff
 #include <RakNetworkFactory.h>
 #include <RakNetStatistics.h>
+// Utilities
 #include <BitStream.h>
 #include <GetTime.h>
 
@@ -144,7 +146,11 @@ namespace FusionEngine
 		SocketDescriptor socDesc(incommingPort, 0);
 		if (m_NetInterface->Startup(maxConnections, 0, &socDesc, 1))
 		{
+			m_NetInterface->AttachPlugin(&connectionGraphPlugin);
+			m_NetInterface->AttachPlugin(&fullyConnectedMeshPlugin);
+
 			m_NetInterface->SetMaximumIncomingConnections(maxIncommingConnections);
+
 			return true;
 		}
 		else
@@ -153,7 +159,7 @@ namespace FusionEngine
 
 	bool RakNetwork::Connect(const std::string& host, unsigned short port)
 	{
-		if (m_NetInterface->Connect(host.c_str(), port, 0, 0, 0))
+		if (m_NetInterface->Connect(host.c_str(), port, 0, 0))
 		{
 			m_NetInterface->SetOccasionalPing(true);
 			return true;
@@ -167,10 +173,24 @@ namespace FusionEngine
 		m_NetInterface->Shutdown(100);
 	}
 
-	bool RakNetwork::Send(bool timestamped, char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination)
+	bool RakNetwork::IsConnected() const
+	{
+		return true;
+	}
+
+	NetHandle RakNetwork::GetLocalAddress() const
+	{
+		RakNetHandle handle(new RakNetHandleImpl(
+			m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS),
+			m_NetInterface->GetInternalID(UNASSIGNED_SYSTEM_ADDRESS))
+			);
+		return handle;
+	}
+
+	bool RakNetwork::Send(bool timestamped, char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
 	{
 		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
-		if (rakDestination != NULL)
+		if (rakDestination == NULL)
 			return false;
 
 		RakNet::BitStream bits;
@@ -182,15 +202,15 @@ namespace FusionEngine
 		bits.Write((MessageID)type);
 		bits.Write(data, length);
 
-		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, rakDestination->Address, false);
+		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, rakDestination->Address, to_all);
 	}
 
-	bool RakNetwork::SendRaw(const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	bool RakNetwork::SendRaw(const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination, bool to_all)
 	{
 		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
-		if (rakDestination != NULL)
+		if (rakDestination == NULL)
 			return false;
-		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, rakDestination->Address, false);
+		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, rakDestination->Address, to_all);
 	}
 
 	IPacket* RakNetwork::Receive()

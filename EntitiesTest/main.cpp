@@ -31,6 +31,7 @@
 #include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntity.h"
 #include "../FusionEngine/FusionScriptedEntity.h"
+#include "../FusionEngine/FusionRenderer.h"
 #include "../FusionEngine/FusionScriptSound.h"
 
 #include "../FusionEngine/FusionClientOptions.h"
@@ -49,9 +50,9 @@ private:
 	ResourceManager *m_ResourceManager;
 	ScriptingEngine *m_ScriptManager;
 
-	std::tr1::shared_ptr<PlayerRegistry> m_PlayerRegistry;
+	/*std::tr1::shared_ptr<PlayerRegistry>*/PlayerRegistry* m_PlayerRegistry;
 
-	std::tr1::shared_ptr<OntologicalSystem> m_Ontology;
+	/*std::tr1::shared_ptr<OntologicalSystem>*/OntologicalSystem* m_Ontology;
 
 public:
 	virtual int main(const std::vector<CL_String>& args)
@@ -101,6 +102,8 @@ public:
 			SoundSample::Register(asEngine);
 			Entity::Register(asEngine);
 			EntityManager::Register(asEngine);
+			Camera::Register(asEngine);
+			Viewport::Register(asEngine);
 			OntologicalSystem::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 
@@ -108,10 +111,10 @@ public:
 			// Script SoundOutput wrapper object
 			std::tr1::shared_ptr<SoundOutput> script_SoundOutput(new SoundOutput(sound_output));
 
-		
+
 			////////////////////
 			// Resource Manager
-			m_ResourceManager = new ResourceManager(CL_GraphicContext()/*gc*/);
+			m_ResourceManager = new ResourceManager();
 			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
 
 			//m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
@@ -133,6 +136,8 @@ public:
 #endif
 
 			CL_OpenGL::set_active(gc);
+
+			m_ResourceManager->SetGraphicContext(gc);
 
 			//////////////////////
 			// Load client options
@@ -160,7 +165,7 @@ public:
 
 			///////////////////
 			// Player Registry
-			m_PlayerRegistry.reset(new PlayerRegistry());
+			std::tr1::shared_ptr<PlayerRegistry> playerRegistry(new PlayerRegistry());
 
 			///////////
 			// Systems
@@ -170,9 +175,9 @@ public:
 			systemMgr->AddSystem(networkSystem);
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
-			m_Ontology.reset( new OntologicalSystem(co, renderer, m_Input, networkSystem.get()) );
+			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer, m_Input, networkSystem.get()) );
 
-			systemMgr->AddSystem(m_Ontology);
+			systemMgr->AddSystem(ontology);
 			systemMgr->AddSystem(gui);
 
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
@@ -182,7 +187,7 @@ public:
 			ModulePtr module = m_ScriptManager->GetModule("main");
 			console->SetModule(module);
 			gui->SetModule(module);
-			m_Ontology->SetModule(module);
+			ontology->SetModule(module);
 
 			script_SoundOutput->SetModule(module);
 
@@ -221,10 +226,13 @@ public:
 				dispWindow.flip();
 			}
 
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+
 			delete systemMgr;
 			delete renderer;
 			delete m_Input;
 			delete m_ScriptManager;
+			delete m_ResourceManager;
 			delete m_Network;
 		}
 		catch (FusionEngine::Exception &ex)
@@ -252,7 +260,6 @@ public:
 			delete cout;
 		if (console != 0)
 			delete console;
-
 
 		return 0;
 	}

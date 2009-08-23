@@ -75,6 +75,10 @@ namespace FusionEngine
 		void SetNetwork(Network *network);
 		Network *GetNetwork() const;
 
+		bool IsConnected() const;
+
+		//const NetHandle &GetLocalAddress() const;
+
 		void AddPacketHandler(char type, PacketHandler *handler);
 		void RemovePacketHandler(char type, PacketHandler *handler);
 

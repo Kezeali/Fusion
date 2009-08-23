@@ -101,7 +101,7 @@ namespace FusionEngine
 
 		typedef std::tr1::function<void (ResourceDataPtr)> LoadedFn;
 
-		typedef std::tr1::function<void (ResourceDataPtr)> ReleasedFn;
+		typedef std::tr1::function<void (ResourceContainer*)> ReleasedFn;
 		ReleasedFn NoReferences;
 
 	public:

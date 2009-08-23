@@ -45,21 +45,21 @@ namespace FusionEngine
 	//	return Send(false, 0, data, length, priority, reliability, channel, destination);
 	//}
 
-	bool Network::SendToChannel(bool timestamped, char type, char subtype, char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
-	{
-		// Add the given subType to the beginning of the data string
-		char* subTypedData = new char[length+1];
-		subTypedData[0] = subtype;
-		memcpy(subTypedData+1, data, length);
+	//bool Network::SendToChannel(bool timestamped, char type, char subtype, char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	//{
+	//	// Add the given subType to the beginning of the data string
+	//	char* subTypedData = new char[length+1];
+	//	subTypedData[0] = subtype;
+	//	memcpy(subTypedData+1, data, length);
 
-		bool success = Send(timestamped, type, subTypedData, length+1, priority, reliability, channel, destination);
-		delete[] subTypedData;
-		return success;
-	}
+	//	bool success = Send(timestamped, type, subTypedData, length+1, priority, reliability, channel, destination);
+	//	delete[] subTypedData;
+	//	return success;
+	//}
 
-	bool Network::Send(bool timestamped, unsigned char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination)
+	bool Network::Send(bool timestamped, unsigned char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination, bool to_all)
 	{
-		return Send(timestamped, (char)type, (char*)data, length, priority, reliability, channel, destination);
+		return Send(timestamped, (char)type, (char*)data, length, priority, reliability, channel, destination, to_all);
 	}
 
 	void Network::PushBackPacket(IPacket *packet, bool toHead)

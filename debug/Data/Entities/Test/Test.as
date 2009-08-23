@@ -1,34 +1,3 @@
-class ScriptEntity : IEntity
-{
-	Entity@ __appObject;
-	void _setAppObject(Entity@ obj)
-	{
-		@__appObject = @obj;
-	}
-	Entity@ _getAppObject()
-	{
-		return __appObject;
-	}
-
-	uint16 GetOwnerID() const
-	{
-		return 0;//return __appObject.getOwnerID();
-	}
-
-	bool InputIsActive(const string@ input)
-	{
-		return __appObject.inputIsActive(input);
-	}
-	float GetInputPosition(const string@ input)
-	{
-		return __appObject.getInputPosition(input);
-	}
-
-	void Spawn() {}
-	void Update() {}
-	void Draw() {}
-}
-
 class Test : ScriptEntity
 {
 	Body @physBody;
@@ -157,30 +126,5 @@ class Test : ScriptEntity
 		input_forward = forward;
 		input_left = left;
 		input_right = right;
-
-		//if (input.is_active(player, "thrust"))
-		//{
-			//physBody.apply_thrust(engineForce);
-
-			//// Cycle through sounds at an interval
-			//soundTimer -= dt;
-			//if (soundTimer <= 0)
-			//{
-			//	soundTimer = 2000;
-			//	currentSound.stop();
-			//	currentSound = engineSounds[nextSound].prepare(true);
-			//	currentSound.play();
-			//	nextSound = (nextSound + 1) % engineSounds.length();
-			//}
-			//// If thrust has been re-activated before soundTimer = 0, this condition will be true
-			//else if (!currentSound.is_playing())
-			//	currentSound.play();
-		//}
-		//else if (commandThrustChanged)
-		//{
-		//	//currentSound.stop();
-		//}
-
-		//commandThrustChanged = false;
 	}
 };

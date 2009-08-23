@@ -349,7 +349,7 @@ namespace FusionEngine
 		m_Domain(0),
 		m_Layer(0),
 		m_MarkedToRemove(false),
-		m_StreamedOut(false),
+		m_StreamedOut(true),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -366,7 +366,7 @@ namespace FusionEngine
 		m_Domain(0),
 		m_Layer(0),
 		m_MarkedToRemove(false),
-		m_StreamedOut(false),
+		m_StreamedOut(true),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -692,12 +692,18 @@ namespace FusionEngine
 
 	bool Entity::InputIsActive(const std::string &input)
 	{
-		return m_PlayerInput->IsActive(input);
+		if (m_PlayerInput)
+			return m_PlayerInput->IsActive(input);
+		else
+			return false;
 	}
 
 	float Entity::GetInputPosition(const std::string &input)
 	{
-		return m_PlayerInput->GetPosition(input);
+		if (m_PlayerInput)
+			return m_PlayerInput->GetPosition(input);
+		else
+			return false;
 	}
 
 	void Entity::DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner)
@@ -736,7 +742,7 @@ namespace FusionEngine
 		//	"bool isActive(const string &in) const",
 		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
 
-		RefCounted::RegisterType<Entity>(engine, "Entity");
+		Entity::RegisterGCType(engine, "Entity");
 		//r = engine->RegisterObjectMethod("Entity"
 		//	"EntityInputs getInputs() const",
 		//	asMETHOD(Entity, GetInputState), asCALL_THISCALL);
