@@ -140,6 +140,14 @@ namespace FusionEngine
 		return registry->m_Arbitrator == registry->getPlayerByLocalIndex(0).NetIndex;
 	}
 
+	bool PlayerRegistry::IsLocal(ObjectID net_index)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getPlayerByNetIndex(net_index).LocalIndex != g_MaxLocalPlayers;
+	}
+
 	PlayerRegistry::PlayerRegistry()
 		: m_Arbitrator(0)
 	{

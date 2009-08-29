@@ -29,7 +29,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionEntity.h"
+#include "FusionPhysicalEntity.h"
 #include "FusionScriptReference.h"
 
 
@@ -73,7 +73,7 @@ namespace FusionEngine
 	 * This class acts as a wrapper for the script objects which define
 	 * the actual logic for in-game objects.
 	 */
-	class ScriptedEntity : public Entity
+	class ScriptedEntity : public PhysicalEntity
 	{
 	public:
 		//! Stores information useful for serializing & syncing properties
@@ -122,7 +122,7 @@ namespace FusionEngine
 		virtual void OnStreamOut();
 
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
-		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
+		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
 		static asIScriptObject* GetScriptObject(Entity *entity);
 		static ScriptedEntity* GetAppObject(asIScriptObject *script);

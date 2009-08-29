@@ -86,6 +86,8 @@ namespace FusionEngine
 		static const PlayerInfo &GetArbitratingPlayer();
 
 		static bool ArbitratorIsLocal();
+
+		static bool IsLocal(ObjectID net_index);
 	protected:
 		void addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
 

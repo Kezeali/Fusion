@@ -88,7 +88,7 @@ namespace FusionEngine
 		return std::string("#include").compare(0, 8, start, 8) == 0;
 
 		//size_t confirmedChars = 0;
-		//const char *compareString = "#include";
+		//static const char *compareString = "#include";
 		//while (true)
 		//{
 		//	if (*first == compareString[confirmedChars])
@@ -96,7 +96,7 @@ namespace FusionEngine
 		//	else
 		//		return false;
 
-		//	if (confirmedChars >= 8)
+		//	if (confirmedChars == 8)
 		//		return true;
 		//}
 

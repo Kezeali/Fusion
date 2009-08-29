@@ -86,7 +86,8 @@ namespace FusionEngine
 			PlayerRegistry::SetArbitrator(1);
 
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
-			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser);
+			m_Streaming = new StreamingManager();
+			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
@@ -176,6 +177,7 @@ namespace FusionEngine
 		{
 			delete m_MapLoader;
 			delete m_EntityManager;
+			delete m_Streaming;
 			delete m_EntitySyncroniser;
 
 			delete m_PhysicsWorld;
@@ -188,8 +190,14 @@ namespace FusionEngine
 
 	void OntologicalSystem::Update(float split)
 	{
+		m_EntitySyncroniser->BeginPacket();
+
 		m_PhysicsWorld->RunSimulation(split);
 		m_EntityManager->Update(split);
+
+		m_EntitySyncroniser->EndPacket();
+		m_EntitySyncroniser->Send();
+
 		m_Renderer->Update(split);
 
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
@@ -199,6 +207,8 @@ namespace FusionEngine
 			if (camera)
 				camera->Update(split);
 		}
+
+		m_Streaming->Update();
 	}
 
 	void OntologicalSystem::Draw()
@@ -388,7 +398,7 @@ namespace FusionEngine
 		m_EntityManager->SetDomainState(GAME_DOMAIN, true);
 	}
 
-	unsigned int OntologicalSystem::AddPlayer(const std::string &callback_decl)
+	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
 		int numPlayers;
 		m_Options->GetOption("num_local_players", &numPlayers);
@@ -491,7 +501,7 @@ namespace FusionEngine
 			"void save(const string &in)",
 			asMETHOD(OntologicalSystem, Save), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
-			"uint addPlayer(const string &in)",
+			"uint addPlayer(IEntity@, const string &in)",
 			asMETHOD(OntologicalSystem, AddPlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
 			"void removePlayer(uint)",

@@ -124,12 +124,15 @@ namespace FusionEngine
 		* \returns
 		* The index of the player added
 		*
+		* \param[in] callback_obj
+		* The script object to call the callback method on.
+		*
 		* \param[in] callback_decl
 		* The declaration of the script function to call when
 		* a Net-Index has been supplied (by the arbitor) for
 		* the given player.
 		*/
-		unsigned int AddPlayer(const std::string &callback_decl);
+		unsigned int AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl);
 		//! Adds a player
 		/*!
 		* Intended to be called from script.
@@ -158,6 +161,7 @@ namespace FusionEngine
 		void releasePlayerIndex(ObjectID net_index);
 
 		EntitySynchroniser *m_EntitySyncroniser;
+		StreamingManager *m_Streaming;
 		EntityManager *m_EntityManager;
 		GameMapLoader *m_MapLoader;
 

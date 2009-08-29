@@ -83,13 +83,13 @@ namespace FusionEngine
 	}*/
 
 	ScriptedEntity::ScriptedEntity()
-		: Entity(),
+		: PhysicalEntity(),
 		m_DefaultPosition(0.f, 0.f),
 		m_DefaultAngle(0.f)
 	{}
 
 	ScriptedEntity::ScriptedEntity(ScriptObject self, const std::string &name)
-		: Entity(name),
+		: PhysicalEntity(name),
 		m_ScriptObject(self),
 		m_DefaultPosition(0.f, 0.f),
 		m_DefaultAngle(0.f)
@@ -288,15 +288,14 @@ namespace FusionEngine
 		state.data = stateStream.str();
 	}
 
-	void ScriptedEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
+	size_t ScriptedEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
 	{
-		std::istringstream stateStream(state.data, std::ios::binary);
+		// Deserialise physics data
+		size_t physicsDataLength = PhysicalEntity::DeserialiseState(state, local, entity_deserialiser);
 
-		// Check that is the expected type of data
-		bool isLocalData;
-		stateStream >> isLocalData;
-		if (isLocalData != local)
-			return;
+		std::istringstream stateStream(state.data, std::ios::binary);
+		// Seek to after the data that has already been deserialised by the base class
+		stateStream.seekg(physicsDataLength);
 
 		unsigned int index = 0;
 		for (PropertiesMap::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
@@ -398,6 +397,8 @@ namespace FusionEngine
 				}
 			}
 		}
+
+		return stateStream.tellg();
 	}
 
 	asIScriptObject* ScriptedEntity::GetScriptObject(Entity *entity)

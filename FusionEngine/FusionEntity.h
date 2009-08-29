@@ -194,7 +194,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public GarbageCollected<Entity>, noncopyable, public ICollisionHandler
+	class Entity : public GarbageCollected<Entity>, noncopyable
 	{
 	public:
 		//! Constructor
@@ -230,6 +230,11 @@ namespace FusionEngine
 		void SetAuthority(ObjectID authority);
 		ObjectID GetAuthority() const;
 
+		unsigned int m_SkippedPackets;
+		void PacketSkipped() { ++m_SkippedPackets; }
+		void AddedToPacket() { m_SkippedPackets = 0; }
+		unsigned int GetSkippedPacketsCount() const { return m_SkippedPackets; }
+
 		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
 		/*!
 		* Pseudo Entities have no Entity-ID, so this returns true when
@@ -249,8 +254,21 @@ namespace FusionEngine
 
 		//! Gets position
 		virtual const Vector2 &GetPosition() =0;
-		//! Gets rotation
+		//! Gets angle (rotation) value
 		virtual float GetAngle() =0;
+		//! Gets linear velocity
+		virtual const Vector2 &GetVelocity() =0;
+		//! Gets angular (rotational) velocity
+		virtual float GetAngularVelocity() =0;
+
+		//! Gets position
+		virtual void SetPosition(const Vector2 &position) =0;
+		//! Gets angle (rotation) value
+		virtual void SetAngle(float angle) =0;
+		//! Gets linear velocity
+		virtual void SetVelocity(const Vector2 &velocity) =0;
+		//! Gets angular (rotational) velocity
+		virtual void SetAngularVelocity(float angular_velocity) =0;
 
 		//! Sets the dictionary used by the EntityManager
 		/*!
@@ -368,8 +386,6 @@ namespace FusionEngine
 		//! Called after an Entity is steamed out
 		virtual void OnStreamOut() =0;
 
-		void Instance(const std::string &type, const std::string &name);
-
 		void _setPlayerInput(const PlayerInputPtr &player_input);
 
 		bool InputIsActive(const std::string &input);
@@ -396,8 +412,12 @@ namespace FusionEngine
 		*
 		* \param[in] entity_deserialiser
 		* Used to deserialise ObjectIDs to EntityPtrs
+		*
+		* \returns
+		* Amount of data deserialised - useful for Entity types derived from
+		* other Entities, so they know where to start reading.
 		*/
-		virtual void DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
+		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
 
 		//! Returns a human-readable string
 		virtual std::string ToString() const;

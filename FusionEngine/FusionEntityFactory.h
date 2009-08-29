@@ -154,6 +154,9 @@ namespace FusionEngine
 		typedef std::vector<EntityDefinitionPtr> EntityDefinitionArray;
 		EntityDefinitionArray m_LoadedEntityDefinitions;
 
+		typedef std::tr1::unordered_map<std::string, EntityDefinitionPtr> ScriptEntityDefinitionMap;
+		ScriptEntityDefinitionMap m_EntityDefinitionsByType;
+
 		ScriptingEngine *m_ScriptingManager;
 		std::string m_ModuleName;
 

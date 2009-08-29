@@ -35,6 +35,8 @@
 #include "FusionPhysFS.h"
 #include "FusionResourceManager.h"
 
+#include <Inheritance/TypeTraits.h>
+
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -58,30 +60,6 @@ namespace FusionEngine
 		return m_Type;
 	}
 
-
-	//class RootEntity : public Entity
-	//{
-	//public:
-	//	RootEntity(const std::string &name);
-	//};
-
-	////! Creates root entities
-	//class RootEntityInstancer : public EntityInstancer
-	//{
-	//public:
-	//	RootEntityInstancer();
-
-	//	Entity *InstanceEntity(const std::string &name);
-	//};
-
-	//RootEntityInstancer::RootEntityInstancer()
-	//	: EntityInstancer("root")
-	//{}
-
-	//Entity *RootEntityInstancer::InstanceEntity(const std::string &name)
-	//{
-	//	return new RootEntity(name);
-	//}
 
 	//! Stores parsed Entity.xml data
 	class EntityDefinition
@@ -133,6 +111,10 @@ namespace FusionEngine
 		ScriptedEntity::PropertiesMap &GetSyncProperties();
 		ResourcesMap &GetStreamedResources();
 
+		//! Sets the base type of this definition
+		void SetBaseType(const EntityDefinitionPtr &base_type_def);
+		const EntityDefinitionPtr &GetBaseType() const;
+
 		static EntityDomain ToDomainIndex(const std::string &domain);
 	protected:
 		void parseElement_Script(ticpp::Element *element);
@@ -144,6 +126,8 @@ namespace FusionEngine
 
 		std::string m_TypeName;
 		bool m_Abstract;
+
+		EntityDefinitionPtr m_BaseType;
 
 		EntityDomain m_DefaultDomain;
 
@@ -390,6 +374,16 @@ namespace FusionEngine
 		return m_Resources;
 	}
 
+	void EntityDefinition::SetBaseType(const EntityDefinitionPtr &base_type_def)
+	{
+		m_BaseType = base_type_def;
+	}
+
+	const EntityDefinitionPtr &EntityDefinition::GetBaseType() const
+	{
+		return m_BaseType;
+	}
+
 	//! Creates instances of a scripted entity type
 	class ScriptedEntityInstancer : public EntityInstancer
 	{
@@ -560,7 +554,8 @@ namespace FusionEngine
 			{
 				SendToConsole("Entity Factory",
 					"Tried to instance an Entity for which there is a known definition file that hasn't been compiled: "
-					"Please add all required Entities to the <Dependencies> element of your definition file.");
+					"Please add all required Entities to the <Dependencies> element of your definition file, and check "
+					" that there are no compile errors.");
 			}
 		}
 		return EntityPtr();
@@ -623,6 +618,9 @@ namespace FusionEngine
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
+			// Add the script-Entity base-class
+			ev.manager->AddFile("core/entity/ScriptEntity.as", m_ModuleName.c_str());
+
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end();
 				it != end; ++it)
 			{
@@ -645,6 +643,7 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
+			//verifyTypes();
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end(); it != end; ++it)
 				createScriptedEntityInstancer(*it);
 		}
@@ -655,6 +654,7 @@ namespace FusionEngine
 		// Load the Entity definition from the given document (this is the root of the dependency tree)
 		EntityDefinitionPtr definition( new EntityDefinition(working_directory, document) );
 		m_LoadedEntityDefinitions.push_back(definition);
+		m_EntityDefinitionsByType[definition->GetType()] = definition;
 
 		std::deque<std::string> *depsToLoad = new std::deque<std::string>();
 
@@ -682,6 +682,7 @@ namespace FusionEngine
 				// Parse the Entity definition document
 				definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
 				m_LoadedEntityDefinitions.push_back(definition);
+				m_EntityDefinitionsByType[definition->GetType()] = definition;
 
 				// Push the dep.s for this Entity on to the stack
 				const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
@@ -706,12 +707,12 @@ namespace FusionEngine
 		}*/
 	}
 
+	//void EntityFactory::verityTypes()
+	//{
+	//}
+
 	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
 	{
-		// Find the index for each script property listed in the Sync section of the Entity definition file
-		//  Note that it is important that this is done after all the definitions have been loaded and
-		//  the script module has been built
-		ScriptedEntity::PropertiesMap &syncProperties = definition->GetSyncProperties();
 		// Create an instance of the script object
 		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
 		int typeId = engine->GetModule(m_ModuleName.c_str())->GetTypeIdByDecl(definition->GetType().c_str());
@@ -722,12 +723,67 @@ namespace FusionEngine
 			return;
 		}
 		asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
+
+		// Verify type
+		asIObjectType *entityInterface = engine->GetObjectTypeById(engine->GetTypeIdByDecl("IEntity"));
+		asIObjectType *objectType = object->GetObjectType();
+		if (!ScriptUtils::Inheritance::base_implements(objectType, entityInterface))
+		{
+			SendToConsole("The Entity type '" + definition->GetType() + "' does not implement IEntity, so no instancer was created.");
+			return;
+		}
+
+		// Dynamically build the definition base-type links
+		{
+			typedef std::vector<EntityDefinitionPtr> BaseDefsT;
+			BaseDefsT baseDefs;
+			{
+				EntityDefinitionPtr currentDefinition = definition;
+				asIObjectType *baseType = objectType->GetBaseType();
+				while (baseType != NULL)
+				{
+					if (currentDefinition->GetBaseType()) // base type has already been set (this means all base types of this one have also been set)
+						break;
+
+					ScriptEntityDefinitionMap::iterator _where = m_EntityDefinitionsByType.find(baseType->GetName());
+					if (_where != m_EntityDefinitionsByType.end())
+					{
+						currentDefinition->SetBaseType(_where->second);
+						currentDefinition = _where->second;
+					}
+					baseType = baseType->GetBaseType();
+				}
+			}
+
+			if (baseDefs.size() > 1)
+			{
+				for (BaseDefsT::iterator it = baseDefs.end()-1, end = baseDefs.begin(), base_it = baseDefs.end();
+					it != end;
+					--it, --base_it)
+				{
+					EntityDefinitionPtr &derrived = *it;
+					const EntityDefinitionPtr &base = *base_it;
+
+					ScriptedEntity::PropertiesMap &baseProps = base->GetSyncProperties();
+					derrived->GetSyncProperties().insert(baseProps.begin(), baseProps.end());
+
+					ResourcesMap &baseResources = base->GetStreamedResources();
+					derrived->GetStreamedResources().insert(baseResources.begin(), baseResources.end());
+				}
+			}
+		}
+
+		// Find the index for each script property listed in the Sync section of the Entity definition file
+		//  Note that it is important that this is done after all the definitions have been loaded and
+		//  the script module has been built
+		ScriptedEntity::PropertiesMap &syncProperties = definition->GetSyncProperties();
 		// Iterate through all of the script object's properties
-		for (int i = 0; i < object->GetPropertyCount(); i++)
+		for (int i = 0; i < object->GetPropertyCount(); ++i)
 		{
 			ScriptedEntity::PropertiesMap::iterator _where = syncProperties.find( object->GetPropertyName(i) );
 			if (_where != syncProperties.end())
 			{
+				FSN_ASSERT(_where->second.scriptPropertyIndex != i); // Just checking whether derrived types have the same indexes as base types...
 				_where->second.scriptPropertyIndex = i;
 			}
 		}
@@ -750,7 +806,7 @@ namespace FusionEngine
 
 		// Same as above for Streaming section
 		ResourcesMap &resources = definition->GetStreamedResources();
-		for (int i = 0; i < object->GetPropertyCount(); i++)
+		for (int i = 0; i < object->GetPropertyCount(); ++i)
 		{
 			ResourcesMap::iterator _where = resources.find( object->GetPropertyName(i) );
 			if (_where != resources.end())

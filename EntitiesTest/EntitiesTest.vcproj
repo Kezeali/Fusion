@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionCamera.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionClanLibRocketInterface.cpp"
 				>
 			</File>
@@ -282,6 +286,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysicalEntity.cpp"
 				>
 			</File>
 			<File
@@ -385,6 +393,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionStreamingManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp"
 				>
 			</File>
@@ -436,6 +448,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionBoostSignals2.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionCamera.h"
 				>
 			</File>
 			<File
@@ -556,6 +572,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysFSIODeviceProvider.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionPhysicalEntity.h"
 				>
 			</File>
 			<File
@@ -700,6 +720,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionStreamedResourceUser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionStreamingManager.h"
 				>
 			</File>
 			<File

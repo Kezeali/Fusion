@@ -203,6 +203,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionCamera.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionCircularStringBuffer.h"
 				>
 			</File>
@@ -759,6 +763,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionStreamingManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionStringFormatting.h"
 				>
 			</File>
@@ -830,6 +838,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionAudioLoader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionCamera.cpp"
 				>
 			</File>
 			<File
@@ -1037,6 +1049,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicalEntity.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsBody.cpp"
 				>
 			</File>
@@ -1186,6 +1202,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionStreamedResourceUser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionStreamingManager.cpp"
 				>
 			</File>
 			<File

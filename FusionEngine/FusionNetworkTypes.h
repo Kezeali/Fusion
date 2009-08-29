@@ -53,8 +53,11 @@ namespace FusionEngine
 		CID_SYSTEM = 1,
 		//! File channel
 		CID_FILESYNC,
-		//! NetworkedEntityManager channel
+		//! EntityManager channel
 		CID_ENTITYMANAGER,
+		//! EntitySynchroniser channel
+		CID_ENTITYSYNC,
+		//! Entity updates that contain input
 		CID_INPUTUPDATE,
 		//! No channel
 		CID_MAXCID
@@ -69,38 +72,11 @@ namespace FusionEngine
 	 */
 	enum MessageType
 	{
-		//! [client|server] When new players join (clients can have more than one player)
-		/*!
-		 * Server-side Structure:<br>
-		 * <ol>
-		 * <li> [ObjectID]     The prelim. ID the client gave this ship
-		 * <li> [bool]         True if the client wants ownership of this entity
-		 * <li> [string]       The class name of this players chosen entity
-		 * <li> [string]       The nickname for this player
-		 * </ol>
-		 *
-		 * <br>
-		 * Client-side Structure:<br>
-		 * <ol>
-		 * <li> [ObjectID]     The ID given to this ship by the server
-		 * <li> [bool]         True if the remote client has ownership of this entity
-		 * <li> [ObjectID]     If the previous item is 'true': the authorityID of the client that owns the entity
-		 * <li> [string]       The class name of this players chosen entity
-		 * <li> [string]       The nickname for this player
-		 * </ol>
-		 */
-		MTID_ADDENTITY = ID_USER_PACKET_ENUM,
-		//! [client] The owned entity request was allowed by the server
-		/*!
-		 * Structure:<br>
-		 * <ol>
-		 * <li> [ObjectID] The prelim. ID the client gave this entity
-		 * <li> [ObjectID] The 'official' ID gaven to this entity by the server
-		 * </ol>
-		 */
+		MTID_INSTANCEENTITY = ID_USER_PACKET_ENUM,
+		MTID_ADDENTITY,
 		MTID_ADDALLOWED,
-		//! [client|server]
 		MTID_REMOVEENTITY,
+
 		//! [client|server] Updates the gamemode class entity name
 		MTID_CHANGEMODE,
 		//! [server|client]

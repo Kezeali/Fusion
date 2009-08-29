@@ -122,6 +122,11 @@ namespace FusionEngine
 		//! Called by world when this body is substantiated
 		//void Initialize(PhysicsWorld *world);
 	public:
+		unsigned int GetSkippedPacketsCount() const;
+
+		ObjectID GetOwnerID() const;
+		ObjectID GetAuthorityID() const;
+
 		//! Insert the set body properties into the Box2D objects
 		void CommitProperties();
 

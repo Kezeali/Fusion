@@ -38,9 +38,11 @@
 // Fusion
 #include "FusionEntity.h"
 #include "FusionPacketHandler.h"
+#include "FusionNetwork.h"
 #include "FusionPlayerInput.h"
 #include "FusionInputHandler.h"
 #include "FusionRenderer.h"
+#include "FusionStreamingManager.h"
 
 //#include <boost/bimap.hpp>
 
@@ -80,17 +82,22 @@ namespace FusionEngine
 
 	};
 
-	static const BitSize_t s_MaxEntityPacketSize = 512;
+	static const unsigned int s_EntitiesPerPacket = 8;
+	static const unsigned int s_BodiesPerPacket = 12;
+
+	static const BitSize_t s_MaxEntityData = 256;
 
 	class EntitySynchroniser : public PacketHandler
 	{
 	public:
 		struct InstanceDefinition
 		{
+			bool Add; // True if the entity should be added to the update domain
 			std::string Type;
 			std::string Name;
 			ObjectID ID;
 			ObjectID Owner;
+			EntityDomain Domain;
 			SerialisedData State;
 		};
 		typedef std::vector<InstanceDefinition> InstanceDefinitionArray;
@@ -103,14 +110,17 @@ namespace FusionEngine
 		void BeginPacket();
 		void EndPacket();
 
-		void Send(ObjectID player);
+		//! Sends to the systems 
+		void Send();
+
+		void OnEntityInstanced(const EntityPtr &entity);
 
 		void OnEntityAdded(EntityPtr &entity);
 
 		// Returns true if the entity should be updated
 		bool ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser);
 		// Returns true if the entity state was written to the packet
-		bool SendSync(EntityPtr &entity);
+		bool AddToPacket(EntityPtr &entity);
 
 		void HandlePacket(IPacket *packet);
 
@@ -121,10 +131,34 @@ namespace FusionEngine
 		Network *m_Network;
 		NetworkSystem *m_NetworkSystem;
 
+		typedef std::tr1::unordered_map<ObjectID, EntityArray> EntityPreparedInstancesMap;
+		EntityPreparedInstancesMap m_EntityPreparedInstances;
+
 		InstanceDefinitionArray m_ReceivedEntities;
 
-		typedef std::tr1::unordered_map<ObjectID, SerialisedData> ReceivedStatesMap;
-		ReceivedStatesMap m_ReceivedStates;
+		typedef std::tr1::unordered_map<ObjectID, SerialisedData> ObjectStatesMap;
+		ObjectStatesMap m_ReceivedStates;
+
+		ObjectStatesMap m_SentStates;
+
+		struct EntityPacketData
+		{
+			ObjectID ID;
+			SerialisedData State;
+		};
+
+		typedef std::map<unsigned int, EntityPacketData, std::greater<unsigned int>> EntityPriorityMap;
+		EntityPriorityMap m_EntityPacketData;
+
+		struct SystemPriority
+		{
+			NetHandle System;
+			float Distance; // Average Entity distance
+			unsigned int SkippedSteps;
+		};
+
+		typedef std::vector<SystemPriority> SystemArray;
+		SystemArray m_PacketDestinations;
 
 		bool m_ImportantMove;
 		//std::string m_PacketData;
@@ -154,7 +188,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser);
+		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -302,7 +336,9 @@ namespace FusionEngine
 	protected:
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
+
 		EntitySynchroniser *m_EntitySynchroniser;
+		StreamingManager *m_Streaming;
 
 		EntityFactory *m_EntityFactory;
 

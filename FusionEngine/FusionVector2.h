@@ -139,7 +139,7 @@ namespace FusionEngine
 		//! Multiplication operator
 		Vector2T<T> operator*(T scalar) const
 		{
-			return Vector2T<T>(s * x, s * y);
+			return Vector2T<T>(scalar * x, scalar * y);
 		}
 		//! Division operator
 		//Vector2T operator/ (float scalar) const;
@@ -372,58 +372,64 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	static inline void v2Add(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c)
+	Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)
 	{
-		c.x = a.x + b.x;
-		c.y = a.y + b.y;
+		return Vector2T<T>(vector.x * scalar, vector.y * scalar);
 	}
 
 	template <class T>
-	static inline void v2Subtract(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
+	static inline void v2Add(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& result)
 	{
-		c.x = a.x - b.x;
-		c.y = a.y - b.y;
+		result.x = a.x + b.x;
+		result.y = a.y + b.y;
 	}
 
 	template <class T>
-	static inline void v2Multiply(const Vector2T<T>& a, float b, Vector2T<T>& c )
+	static inline void v2Subtract(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& result)
 	{
-		c.x = a.x * b;
-		c.y = a.y * b;
+		result.x = a.x - b.x;
+		result.y = a.y - b.y;
 	}
 
 	template <class T>
-	static inline void v2Multiply(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
+	static inline void v2Multiply(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& result)
 	{				  
-		c.x = a.x * b.x;
-		c.y = a.y * b.y;
+		result.x = a.x * b.x;
+		result.y = a.y * b.y;
 	}
 
 	template <class T>
-	static inline void v2Divide(const Vector2T<T>& a, float b, Vector2T<T>& c )
-	{
-		float bInv = 1.0f / b;
-		c.x = a.x * bInv;
-		c.y = a.y * bInv;
+	static inline void v2Multiply(const Vector2T<T>& a, T scalar, Vector2T<T>& result)
+	{				  
+		result.x = a.x * scalar;
+		result.y = a.y * scalar;
 	}
 
 	template <class T>
-	static inline void v2Divide(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& c )
+	static inline void v2Divide(const Vector2T<T>& numerator, T scalar_denominator, Vector2T<T>& result)
 	{
-		c.x = a.x / b.x;
-		c.y = a.y / b.y;
+		double bInv = 1.0f / (double)b;
+		result.x = a.x * bInv;
+		result.y = a.y * bInv;
 	}
 
 	template <class T>
-	static inline bool v2Equal(const Vector2T<T>& v1, const Vector2T<T> &v2)
+	static inline void v2Divide(const Vector2T<T>& numerator, const Vector2T<T>& denominator, Vector2T<T>& result)
 	{
-		return (v1.x == v2.x) && (v1.y == v2.y);
+		result.x = a.x / b.x;
+		result.y = a.y / b.y;
 	}
 
 	template <class T>
-	static inline bool v2NotEqual(const Vector2T<T>& v1, const Vector2T<T> &v2)
+	static inline bool v2Equal(const Vector2T<T>& v1, const Vector2T<T> &v2, float e = 0.001f)
 	{
-		return (v1.x != v2.x) || (v1.y != v2.y);
+		return (v1.x - v2.x) < e && (v1.y - v2.y) < e;
+	}
+
+	template <class T>
+	static inline bool v2NotEqual(const Vector2T<T>& v1, const Vector2T<T> &v2, float e = 0.001f)
+	{
+		return !v2Equal(v1, v2, e);
 	}
 
 	//! Uses complex multiplication to rotate (and scale) v1 by v2.

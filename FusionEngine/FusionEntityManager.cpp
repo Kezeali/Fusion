@@ -70,7 +70,7 @@ namespace FusionEngine
 
 	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(ObjectID player)
 	{
-		//! \todo TODO: unmuddle this method
+		// TODO: unmuddle this method
 
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
@@ -149,8 +149,6 @@ namespace FusionEngine
 
 	void EntitySynchroniser::BeginPacket()
 	{
-		m_PacketData.Reset();
-
 		m_ImportantMove = false;
 
 		const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
@@ -184,26 +182,57 @@ namespace FusionEngine
 
 	void EntitySynchroniser::EndPacket()
 	{
+		//RakNet::BitStream packetData;
+		m_PacketData.Write((unsigned int)m_EntityPacketData.size());
+		// Fill packet (from priority lists)
+		for (EntityPriorityMap::iterator it = m_EntityPacketData.begin(), end = m_EntityPacketData.end(); it != end; ++it)
+		{
+			const EntityPacketData &packetData = it->second;
+
+			m_PacketData.Write(packetData.ID);
+
+			m_PacketData.Write(packetData.State.mask);
+			m_PacketData.Write(packetData.State.data.length());
+			m_PacketData.Write(packetData.State.data.c_str(), packetData.State.data.length());
+
+			// Note the state that was sent (so that the state wont be sent again till it changes)
+			m_SentStates[packetData.ID] = packetData.State;;
+		}
 	}
 
-	void EntitySynchroniser::Send(ObjectID player)
+	void EntitySynchroniser::Send()
 	{
-		const PlayerRegistry::PlayerInfo &info = PlayerRegistry::GetPlayerByNetIndex(player);
-		const NetHandle &address = info.System;
-
-		//RakNetHandleImpl* rakAddress = dynamic_cast<RakNetHandleImpl*>(address.get());
-
-		//RakNetwork *network = dynamic_cast<RakNetwork*>( m_Network );
-		//const RakPeerInterface *peer = network->GetRakNetPeer();
+		// TODO: different packets for each system - only send entities that that system can see
+		// Note that this sends to the destinations selected in the call to EndPacket
+		//for (SystemArray::const_iterator it = m_PacketDestinations.begin(), end = m_PacketDestinations.end(); it != end; ++it)
+		//{
+		//	const NetHandle &address = *it->System;
+		//	if (m_ImportantMove)
+		//	{
+		//		m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, address, false);
+		//	}
+		//	else
+		//	{
+		//		m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC, address, false);
+		//	}
+		//}
 
 		if (m_ImportantMove)
-		{
-			m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, address);
-		}
-		else
-		{
-			m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYMANAGER, address);
-		}
+			{
+				m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, NetHandle(), true);
+			}
+			else
+			{
+				m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC, NetHandle(), true);
+			}
+
+		m_PacketData.Reset();
+	}
+
+	void EntitySynchroniser::OnEntityInstanced(const EntityPtr &entity)
+	{
+		if (PlayerRegistry::ArbitratorIsLocal())
+			m_Network->Send(false, MTID_INSTANCEENTITY, "", 0, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER, NetHandle(), true);
 	}
 
 	void EntitySynchroniser::OnEntityAdded(EntityPtr &entity)
@@ -215,7 +244,7 @@ namespace FusionEngine
 		//}
 
 		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByNetIndex(entity->GetOwnerID());
-		if (playerInfo.LocalIndex != g_MaxLocalPlayers)
+		if (playerInfo.IsInGame)
 		{
 			PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetIndex);
 			if (playerInput)
@@ -225,33 +254,89 @@ namespace FusionEngine
 
 	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser)
 	{
-		ReceivedStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
+		ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
 		if (_where != m_ReceivedStates.end())
 			entity->DeserialiseState(_where->second, false, entity_deserialiser);
 
 		return true; // Return false to not update this entity
 	}
 
-	bool EntitySynchroniser::SendSync(EntityPtr &entity)
+	bool EntitySynchroniser::AddToPacket(EntityPtr &entity)
 	{
-		SerialisedData state;
-		entity->SerialiseState(state, false);
-
-		size_t lengthAfterWrite = m_PacketData.GetNumberOfBytesUsed() + state.data.length() + sizeof(unsigned int) * 2;
-		if (lengthAfterWrite > s_MaxEntityPacketSize)
+		bool arbitor = PlayerRegistry::ArbitratorIsLocal();
+		bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
+		// Only send if: 1) the entity is owned locally, or 2) the entity is under default authroity
+		//  and this system is the arbitor
+		if ((entity->GetOwnerID() == 0 && arbitor) || isOwnedLocally)
 		{
-			return false;
+			// Calculate priority
+			unsigned int priority;
+			if (arbitor)
+				priority = (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
+			else
+				priority = entity->GetSkippedPacketsCount();
+
+			// Obviously the packet might not be skipped, but if it is actually sent
+			//  it's skipped-count gets reset to zero, so the following operation will
+			//  over-ruled
+			entity->PacketSkipped();
+
+			// TODO:
+			// for each system
+			//  if system can see this entity
+			//  continue as below: (already implemented)
+
+			// If the Entity quota hasn't been filled, always insert
+			if (m_EntityPacketData.size() < s_EntitiesPerPacket)
+			{
+				SerialisedData state;
+				entity->SerialiseState(state, false);
+				if (state.data != m_SentStates[entity->GetID()].data)
+				{
+					m_EntityPacketData[priority].ID = entity->GetID();
+					m_EntityPacketData[priority].State = state;
+
+					//m_EntityDataUsed += state.data.length() + sizeof(unsigned int) + sizeof(ObjectID); // TODO: function to calc packet-data-size for SerialisedData
+					return true;
+				}
+			}
+			// If the Entity quota has been filled, insert if the new entity has a higher priority
+			else
+			{
+				FSN_ASSERT(m_EntityPacketData.size() > 1);
+				EntityPriorityMap::iterator back = --m_EntityPacketData.end();
+				if (priority > back->first)
+				{
+					// Check that the Entity has changed since it was last sent
+					SerialisedData state;
+					entity->SerialiseState(state, false);
+					if (state.data != m_SentStates[entity->GetID()].data)
+					{
+						// Remove the entity with the lowest priority
+						m_EntityPacketData.erase(back);
+
+						m_EntityPacketData[priority].ID = entity->GetID();
+						m_EntityPacketData[priority].State = state;
+					}
+
+					return true;
+				}
+			}
 		}
-		
-		//m_PacketData.AddBitsAndReallocate(state.data.length() + sizeof(unsigned int) * 2);
-		m_PacketData.Write(state.mask);
-		m_PacketData.Write(state.data.length());
-		m_PacketData.Write(state.data.c_str(), state.data.length());
 
-		//m_PacketData.append((char*)bitStream.GetData(), bitStream.GetNumberOfBytesUsed());
-
-		return true;
+		return false;
 	}
+
+	//bool EntitySynchroniser::AddToPacket(PhysicsBodyPtr &body)
+	//{
+	//	size_t lengthAfterWrite = m_PacketData.GetNumberOfBytesUsed() + state.data.length() + sizeof(unsigned int) * 2;
+	//	if (lengthAfterWrite > s_MaxEntityPacketSize)
+	//	{
+	//		return false;
+	//	}
+
+	//	return true;
+	//}
 
 	void EntitySynchroniser::HandlePacket(IPacket *packet)
 	{
@@ -312,16 +397,20 @@ namespace FusionEngine
 		}
 	}
 
-	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser)
+	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
 		: m_Renderer(renderer),
 		m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
+		m_Streaming(streaming),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
 		m_NextId(1)
 	{
 		m_EntityFactory = new EntityFactory();
+
+		for (size_t i = 0; i < s_EntityDomainCount; ++i)
+			m_DomainState[i] = true;
 	}
 
 	EntityManager::~EntityManager()
@@ -686,11 +775,8 @@ namespace FusionEngine
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				// TODO: StreamingManager
-				// i.e. StreamingManager::SetPlayerCamera(net_idx, cam)
-				//  StreamingManager::SetRange(float units)
-				//  StreamingManager::GetActiveArea(net_idx) { return ... }
-				//  StreamingManager::ProcessEntity(entity) - stream the entity in if it is within any the player cameras
+				m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
+
 				if (entity->IsStreamedOut())
 					entity->StreamIn();
 
@@ -698,13 +784,15 @@ namespace FusionEngine
 				{
 					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 					entity->Update(split);
-					m_EntitySynchroniser->SendSync(entity);
+					m_EntitySynchroniser->AddToPacket(entity);
 
 					updateRenderables(entity, split);
 
 					if (entity->IsStreamedOut())
 						entity->SetWait(2);
 				}
+				else
+					entity->PacketSkipped();
 
 				// Next entity
 				++it;

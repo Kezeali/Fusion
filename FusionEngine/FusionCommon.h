@@ -454,6 +454,7 @@ namespace FusionEngine
 	class EntityFactory;
 	class EntitySynchroniser;
 	class EntityManager;
+	class StreamingManager;
 	class GameMapLoader;
 	class Entity;
 	class Renerer;

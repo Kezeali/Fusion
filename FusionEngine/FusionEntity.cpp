@@ -681,10 +681,6 @@ namespace FusionEngine
 		}
 	}
 
-	void Entity::Instance(const std::string &type, const std::string &name)
-	{
-	}
-
 	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)
 	{
 		m_PlayerInput = player_input;
@@ -743,15 +739,20 @@ namespace FusionEngine
 		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
 
 		Entity::RegisterGCType(engine, "Entity");
-		//r = engine->RegisterObjectMethod("Entity"
-		//	"EntityInputs getInputs() const",
-		//	asMETHOD(Entity, GetInputState), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Entity",
+			"uint16 getOwnerID() const",
+			asMETHOD(Entity, GetOwnerID), asCALL_THISCALL);
+
 		r = engine->RegisterObjectMethod("Entity",
 			"bool inputIsActive(const string &in) const",
 			asMETHOD(Entity, InputIsActive), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("Entity",
 			"float getInputPosition(const string &in) const",
 			asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Entity",
+			"void defineInstanceToPrepare(const string &in, uint, bool)",
+			asMETHOD(Entity, DefineInstanceToPrepare), asCALL_THISCALL);
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);

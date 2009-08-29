@@ -212,7 +212,7 @@ public:
 				m_ResourceManager->DisposeUnusedResources();
 				m_ResourceManager->DeliverLoadedResources();
 
-				if (split < 500)
+				if (split < 1000)
 				{
 					seconds = split * 0.001f;
 					m_Input->Update(seconds);
