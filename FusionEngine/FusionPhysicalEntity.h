@@ -60,6 +60,8 @@ namespace FusionEngine
 		PhysicalEntity();
 		PhysicalEntity(const std::string &name);
 
+		virtual void ApplyForce(const Vector2 &point, const Vector2 &force);
+
 		//! Gets the position of the physical body
 		virtual const Vector2 &GetPosition();
 		//! Gets angle (rotation) value
@@ -85,7 +87,7 @@ namespace FusionEngine
 		b2Body *GetBody() const;
 		void _setBody(b2Body *body);
 
-		const b2BodyDef &GetBodyDef() const;
+		//const b2BodyDef &GetBodyDef() const;
 
 		//! Save state to buffer
 		virtual void SerialiseState(SerialisedData &state, bool local) const =0;
@@ -93,13 +95,18 @@ namespace FusionEngine
 		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
 
 	protected:
-		b2BodyDef m_BodyDef;
+		//b2BodyDef m_BodyDef;
 		b2Body *m_Body;
 
 		// Vector2 format
 		Vector2 m_Position;
 		Vector2 m_Velocity;
+
+		float m_Angle;
+		float m_AngularVelocity;
 	};
+
+	typedef std::tr1::shared_ptr<PhysicalEntity> PhysicalEntityPtr;
 
 }
 

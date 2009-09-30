@@ -127,6 +127,8 @@ namespace FusionEngine
 		static asIScriptObject* GetScriptObject(Entity *entity);
 		static ScriptedEntity* GetAppObject(asIScriptObject *script);
 
+		static void Register(asIScriptEngine *engine);
+
 	protected:
 		// The actual entity (for which this C++ class is simply a wrapper)
 		ScriptObject m_ScriptObject;

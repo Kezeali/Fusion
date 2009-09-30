@@ -428,4 +428,31 @@ namespace FusionEngine
 		return appObject;
 	}
 
+	
+	Entity* Fixture_GetEntity(b2Fixture &obj)
+	{
+		return (Entity*)obj.GetBody()->GetUserData();
+	}
+
+	void PhysicalEntity_ApplyForce(const Vector2 &force, PhysicalEntity *obj)
+	{
+		b2Body *body = obj->GetBody();
+		body->ApplyForce(body->GetWorldCenter(), b2Vec2(force.x, force.y));
+	}
+
+	void ScriptedEntity::Register(asIScriptEngine* engine)
+	{
+		int r;
+		r = engine->RegisterObjectMethod("Entity",
+			"void applyForce(const Vector &in, const Vector &in)",
+			asMETHODPR(PhysicalEntity, ApplyForce, (const Vector2&, const Vector2&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Entity",
+			"void applyForce(const Vector &in)",
+			asFUNCTIONPR(PhysicalEntity_ApplyForce, (const Vector2&, PhysicalEntity *obj), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		// Fixture method
+		r = engine->RegisterObjectMethod("Fixture", "Entity@ getEntity() const", asFUNCTIONPR(Fixture_GetEntity, (b2Fixture&), Entity*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+
 }

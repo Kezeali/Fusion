@@ -495,6 +495,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FusionPhysicalEntityManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FusionPhysicsBody.h"
 				>
 			</File>
@@ -1050,6 +1054,10 @@
 			</File>
 			<File
 				RelativePath=".\FusionPhysicalEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FusionPhysicalEntityManager.cpp"
 				>
 			</File>
 			<File

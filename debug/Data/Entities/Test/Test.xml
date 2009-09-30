@@ -17,6 +17,12 @@
 		<UtilityScript file="../General/BindCommand.as"/>
 		<UtilityScript file="../General/SimpleCommands.as"/>
 	</Dependencies>
+	<!--Physics stuff-->
+	<Body property="body">
+		<CircleFixture isSensor="true" radius="14"/>
+		<RectFixture origin="center" s="10"/>
+		<RectFixture x="-10" y="-15" w="10" h="15"/>
+	</Body>
 	<!--Networking stuff-->
 	<Sync>
 		<!--Predictable means the client will update this value during prediction, and

@@ -34,7 +34,6 @@
 
 #include "FusionCommon.h"
 
-#include "FusionPhysicsShape.h"
 
 namespace FusionEngine
 {

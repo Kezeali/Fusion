@@ -101,6 +101,7 @@ public:
 			SoundSession::Register(asEngine);
 			SoundSample::Register(asEngine);
 			Entity::Register(asEngine);
+			ScriptedEntity::Register(asEngine); // TODO: perhaps this should be PhysicalEntity::Register? (i.e. redifine the method within that scope)
 			EntityManager::Register(asEngine);
 			Camera::Register(asEngine);
 			Viewport::Register(asEngine);

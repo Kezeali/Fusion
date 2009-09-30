@@ -35,7 +35,7 @@
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
 #include "FusionGameMapLoader.h"
-#include "FusionPhysicsWorld.h"
+#include "FusionPhysicalEntityManager.h"
 #include "FusionInputHandler.h"
 #include "FusionNetworkSystem.h"
 #include "FusionScriptingEngine.h"
@@ -63,7 +63,7 @@ namespace FusionEngine
 		m_NetworkSystem(network),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
-		m_PhysicsWorld(NULL),
+		m_PhysWorld(NULL),
 		m_NextPlayerIndex(1)
 	{
 	}
@@ -87,7 +87,8 @@ namespace FusionEngine
 
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
 			m_Streaming = new StreamingManager();
-			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
+			m_EntityFactory = new EntityFactory();
+			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
@@ -95,8 +96,8 @@ namespace FusionEngine
 			manager->RegisterGlobalObject("System system", this);
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 
-			m_EntityManager->GetFactory()->SetScriptingManager(manager, "main");
-			m_EntityManager->GetFactory()->SetScriptedEntityPath("Entities/");
+			m_EntityFactory->SetScriptingManager(manager, "main");
+			m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
 
@@ -110,14 +111,13 @@ namespace FusionEngine
 				worldX = boost::lexical_cast<float>(fe_trim(components[0]));
 				worldY = boost::lexical_cast<float>(fe_trim(components[1]));
 			}
-			m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
-
-			manager->RegisterGlobalObject("World world", m_PhysicsWorld);
+			//m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
+			m_PhysWorld = new PhysicalWorld(worldX, worldY);
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 		}
 
-		m_EntityManager->GetFactory()->LoadScriptedType(m_StartupEntity);
+		m_EntityFactory->LoadScriptedType(m_StartupEntity);
 
 		// Load map entitites
 		std::string maps, line;
@@ -177,14 +177,15 @@ namespace FusionEngine
 		{
 			delete m_MapLoader;
 			delete m_EntityManager;
+			delete m_EntityFactory;
 			delete m_Streaming;
 			delete m_EntitySyncroniser;
 
-			delete m_PhysicsWorld;
+			delete m_PhysWorld;
 
 			m_EntityManager = NULL;
 
-			m_PhysicsWorld = NULL;
+			m_PhysWorld = NULL;
 		}
 	}
 
@@ -192,7 +193,8 @@ namespace FusionEngine
 	{
 		m_EntitySyncroniser->BeginPacket();
 
-		m_PhysicsWorld->RunSimulation(split);
+		m_PhysWorld->Step(split);
+
 		m_EntityManager->Update(split);
 
 		m_EntitySyncroniser->EndPacket();

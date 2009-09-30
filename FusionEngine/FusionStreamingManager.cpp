@@ -12,6 +12,10 @@ namespace FusionEngine
 	{
 	}
 
+	StreamingManager::~StreamingManager()
+	{
+	}
+
 	void StreamingManager::SetPlayerCamera(ObjectID net_idx, const CameraPtr &cam)
 	{
 		StreamingCamera &stCam = m_Cameras[net_idx];

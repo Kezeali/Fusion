@@ -17,6 +17,14 @@ namespace FusionEngine
 		m_Body(NULL)
 	{}
 
+	void PhysicalEntity::ApplyForce(const Vector2 &point, const Vector2 &force)
+	{
+		if (m_Body != NULL)
+		{
+			m_Body->ApplyForce(b2Vec2(point.x, point.y), b2Vec2(force.y, force.y));
+		}
+	}
+
 	const Vector2 &PhysicalEntity::GetPosition()
 	{
 		if (m_Body != NULL)
@@ -42,7 +50,7 @@ namespace FusionEngine
 		if (m_Body != NULL)
 			return m_Body->GetAngle();
 		else
-			return m_BodyDef.angle;
+			return m_Angle;
 	}
 
 	float PhysicalEntity::GetAngularVelocity()
@@ -50,7 +58,7 @@ namespace FusionEngine
 		if (m_Body != NULL)
 			return m_Body->GetAngularVelocity();
 		else
-			return m_BodyDef.angularVelocity;
+			return m_AngularVelocity;
 	}
 
 	void PhysicalEntity::SetPosition(const Vector2 &position)
@@ -59,7 +67,7 @@ namespace FusionEngine
 			m_Body->SetPosition(b2Vec2(position.x, position.y));
 		else
 		{
-			m_BodyDef.position.Set(position.x, position.y);
+			//m_BodyDef.position.Set(position.x, position.y);
 			m_Position = position;
 		}
 	}
@@ -70,7 +78,7 @@ namespace FusionEngine
 			m_Body->SetLinearVelocity(b2Vec2(velocity.x, velocity.y));
 		else
 		{
-			m_BodyDef.linearVelocity.Set(velocity.x, velocity.y);
+			//m_BodyDef.linearVelocity.Set(velocity.x, velocity.y);
 			m_Velocity = velocity;
 		}
 	}
@@ -80,7 +88,8 @@ namespace FusionEngine
 		if (m_Body != NULL)
 			m_Body->SetAngle(angle);
 		else
-			m_BodyDef.angle = angle;
+			//m_BodyDef.angle = angle;
+			m_Angle = angle;
 	}
 
 	void PhysicalEntity::SetAngularVelocity(float angular_vel)
@@ -88,7 +97,8 @@ namespace FusionEngine
 		if (m_Body != NULL)
 			m_Body->SetAngularVelocity(angular_vel);
 		else
-			m_BodyDef.angularVelocity = angular_vel;
+			//m_BodyDef.angularVelocity = angular_vel;
+			m_AngularVelocity = angular_vel;
 	}
 
 	bool PhysicalEntity::IsPhysicsEnabled() const
@@ -107,10 +117,10 @@ namespace FusionEngine
 	}
 
 
-	const b2BodyDef &PhysicalEntity::GetBodyDef() const
-	{
-		return m_BodyDef;
-	}
+	//const b2BodyDef &PhysicalEntity::GetBodyDef() const
+	//{
+	//	return m_BodyDef;
+	//}
 
 	void PhysicalEntity::SerialiseState(SerialisedData &state, bool local) const
 	{
@@ -120,13 +130,27 @@ namespace FusionEngine
 
 		// TODO: if bodyDef dirty send whole def (plus bool-true here to indicate that this is a full-state packet)
 
-		stateStream << GetPosition();
-		stateStream << GetVelocity();
-		stateStream << GetAngle();
-		stateStream << GetAngularVelocity();
-
 		if (m_Body != NULL)
 		{
+			const b2Vec2 &pos = m_Body->GetPosition();
+			stateStream << pos.x;
+			stateStream << pos.y;
+			const b2Vec2 vel = m_Body->GetLinearVelocity();
+			stateStream << vel.x;
+			stateStream << vel.y;
+			stateStream << m_Body->GetAngle();
+			stateStream << m_Body->GetAngularVelocity();
+		}
+		else
+		{
+			stateStream << m_Position.x;
+			stateStream << m_Position.y;
+
+			stateStream << m_Velocity.x;
+			stateStream << m_Velocity.y;
+
+			stateStream << m_Angle;
+			stateStream << m_AngularVelocity;
 		}
 	}
 

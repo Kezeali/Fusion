@@ -34,6 +34,7 @@
 #include "FusionXml.h"
 #include "FusionPhysFS.h"
 #include "FusionResourceManager.h"
+#include "FusionPhysicalEntityManager.h"
 
 #include <Inheritance/TypeTraits.h>
 
@@ -41,6 +42,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/lexical_cast.hpp>
 
 
 namespace FusionEngine
@@ -108,8 +110,16 @@ namespace FusionEngine
 		const DependenciesMap &GetEntityDependencies() const;
 		//! Returns UtilityScript filenames that were listed in the Dependencies element
 		const DependenciesMap &GetScriptDependencies() const;
+		//! Returns synchronised properties collection
 		ScriptedEntity::PropertiesMap &GetSyncProperties();
+		//! Returns streamed resources collection
 		ResourcesMap &GetStreamedResources();
+
+		//! Returns true if the entity has a body definition
+		bool HasBody() const;
+		const b2BodyDef &GetBodyDef() const;
+		typedef std::vector<FixtureDefinition> FixtureArray;
+		const FixtureArray &GetFixtures() const;
 
 		//! Sets the base type of this definition
 		void SetBaseType(const EntityDefinitionPtr &base_type_def);
@@ -121,6 +131,9 @@ namespace FusionEngine
 		void parseElement_Dependencies(ticpp::Element *element);
 		void parseElement_Sync(ticpp::Element *element);
 		void parseElement_Streaming(ticpp::Element *element);
+		// Physics stuff
+		void parseElement_Body(ticpp::Element *element);
+		void parseElement_Body_Fixtures(ticpp::Element *element);
 
 		std::string m_WorkingDirectory;
 
@@ -139,6 +152,10 @@ namespace FusionEngine
 		ScriptedEntity::PropertiesMap m_SyncProperties;
 
 		ResourcesMap m_Resources;
+
+		bool m_HasBody;
+		b2BodyDef m_BodyDef;
+		FixtureArray m_Fixtures;
 	};
 
 	EntityDomain EntityDefinition::ToDomainIndex(const std::string &domain)
@@ -180,6 +197,9 @@ namespace FusionEngine
 
 			else if (child->Value() == "Streaming")
 				parseElement_Streaming(child.Get());
+
+			else if (child->Value() == "Body")
+				parseElement_Body(child.Get());
 		}
 	}
 
@@ -263,6 +283,131 @@ namespace FusionEngine
 			resource.SetPriority(priority);
 
 			m_Resources[propertyName] = resource;
+		}
+	}
+
+	template <typename T>
+	bool parse_value(ticpp::Element *element, const std::string &attribute, T *target)
+	{
+		std::string val = element->GetAttribute(attribute);
+		if (!val.empty())
+		{
+			*target = boost::lexical_cast<T>(val);
+			return true;
+		}
+		else
+			return false;
+	}
+
+	template <typename T>
+	void parse_vector(const std::string &value, T *x, T *y)
+	{
+		std::string::size_type d = value.find(",");
+		if (d != std::string::npos)
+		{
+			*x = boost::lexical_cast<T>(value.substr(0, d));
+			*y = boost::lexical_cast<T>(value.substr(d+1));
+		}
+	}
+
+	void EntityDefinition::parseElement_Body(ticpp::Element *element)
+	{
+		m_HasBody = true;
+
+		std::string attribute = element->GetAttribute("fixed_rotation");
+		if (!attribute.empty())
+		{
+			m_BodyDef.fixedRotation = true;
+			m_BodyDef.angle = boost::lexical_cast<float32>(attribute);
+		}
+		attribute = element->GetAttribute("is_bullet");
+		m_BodyDef.isBullet = (attribute == "t" || attribute == "1" || attribute == "true");
+
+		ticpp::Iterator< ticpp::Element > child;
+		for (child = child.begin( element ); child != child.end(); child++)
+		{
+			FixtureDefinition fixtureDef;
+
+			if (child->Value() == "CircleFixture")
+			{
+				b2CircleDef *circleDef = new b2CircleDef;
+				attribute = child->GetAttribute("position");
+				if (!attribute.empty())
+					parse_vector(attribute, &circleDef->localPosition.x, &circleDef->localPosition.y);
+
+				child->GetAttribute("x", &circleDef->localPosition.x, false);
+				child->GetAttribute("y", &circleDef->localPosition.y, false);
+
+				child->GetAttribute("radius", &circleDef->radius, false);
+				child->GetAttribute("r", &circleDef->radius, false);
+
+				fixtureDef.reset(circleDef);
+			}
+			else if (child->Value() == "RectFixture")
+			{
+				b2PolygonDef *polyDef = new b2PolygonDef;
+				float hx, hy, angle;
+				b2Vec2 center;
+
+				attribute = child->GetAttribute("size");
+				if (!attribute.empty())
+				{
+					parse_vector(attribute, &hx, &hy);
+				}
+				else
+				{
+					child->GetAttribute("width", &hx, false);
+					child->GetAttribute("height", &hy, false);
+				}
+
+				attribute = child->GetAttribute("center");
+				if (!attribute.empty())
+				{
+					parse_vector(attribute, &center.x, &center.y);
+				}
+				else
+				{
+					child->GetAttribute("x", &center.x, false);
+					child->GetAttribute("y", &center.y, false);
+				}
+
+				child->GetAttribute("angle", &angle, false);
+
+				if (fe_fzero(angle))
+					polyDef->SetAsBox(hx, hy);
+				else
+					polyDef->SetAsBox(hx, hy, center, angle);
+
+				fixtureDef.reset(polyDef);
+			}
+			else if (child->Value() == "PolygonFixture")
+			{
+				FSN_EXCEPT(ExCode::NotImplemented, "EntityDefinition::parseElement_Body", "PolygonFixture type not yet implemented");
+			}
+			else if (child->Value() == "EdgeFixture")
+			{
+				b2EdgeDef *edgeDef = new b2EdgeDef;
+				attribute = child->GetAttribute("first");
+				if (!attribute.empty())
+					parse_vector(attribute, &edgeDef->vertex1.x, &edgeDef->vertex1.y);
+				attribute = child->GetAttribute("second");
+				if (!attribute.empty())
+					parse_vector(attribute, &edgeDef->vertex1.x, &edgeDef->vertex1.y);
+
+				fixtureDef.reset(edgeDef);
+			}
+
+			else
+				continue; // Unknown fixture type, ignore
+
+			child->GetAttribute("fixed_rotation", &fixtureDef->friction, false);
+			child->GetAttribute("restitution", &fixtureDef->restitution, false);
+			child->GetAttribute("density", &fixtureDef->density, false);
+			child->GetAttribute("sensor", &fixtureDef->isSensor, false);
+			// TODO: seperate <Filter> element?
+			child->GetAttribute("group_index", &fixtureDef->filter.groupIndex, false);
+
+			m_Fixtures.push_back(fixtureDef);
 		}
 	}
 
@@ -374,6 +519,21 @@ namespace FusionEngine
 		return m_Resources;
 	}
 
+	bool EntityDefinition::HasBody() const
+	{
+		return m_HasBody;
+	}
+
+	const b2BodyDef &EntityDefinition::GetBodyDef() const
+	{
+		return m_BodyDef;
+	}
+
+	const EntityDefinition::FixtureArray &EntityDefinition::GetFixtures() const
+	{
+		return m_Fixtures;
+	}
+
 	void EntityDefinition::SetBaseType(const EntityDefinitionPtr &base_type_def)
 	{
 		m_BaseType = base_type_def;
@@ -392,6 +552,8 @@ namespace FusionEngine
 		ScriptedEntityInstancer();
 		//! Constructor
 		ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition);
+		//! Constructor for entity defs with phys. bodies
+		ScriptedEntityInstancer(ScriptingEngine *manager, PhysicalWorld *world, const std::string &module, EntityDefinitionPtr definition);
 		//! Constructor
 		//ScriptedEntityInstancer(TiXmlDocument &document);
 
@@ -402,6 +564,8 @@ namespace FusionEngine
 
 	protected:
 		//void parseDoc(TiXmlDocument *document);
+
+		PhysicalWorld *m_PhysicsWorld;
 
 		ScriptingEngine *m_ScriptingManager;
 		std::string m_Module;
@@ -415,6 +579,15 @@ namespace FusionEngine
 	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition)
 		: EntityInstancer(definition->GetType()),
 		m_ScriptingManager(manager),
+		m_PhysicsWorld(NULL),
+		m_Module(module),
+		m_Definition(definition)
+	{}
+
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, PhysicalWorld *world, const std::string &module, EntityDefinitionPtr definition)
+		: EntityInstancer(definition->GetType()),
+		m_ScriptingManager(manager),
+		m_PhysicsWorld(world),
 		m_Module(module),
 		m_Definition(definition)
 	{}
@@ -442,6 +615,7 @@ namespace FusionEngine
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
 		entity->_setDomain(m_Definition->GetDefaultDomain());
 		//entity->SetPath(m_Definition->GetWorkingDirectory());
+
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
 
 		ScriptUtils::Calling::Caller f = object.GetCaller("void _setAppObject(Entity@ obj)");
@@ -450,8 +624,24 @@ namespace FusionEngine
 		else
 			return NULL;
 
-		//StreamedResourceUserPtr resourceUser;
+		// Create phys body
+		if (m_Definition->HasBody())
+		{
+			FSN_ASSERT_MSG(m_PhysicsWorld != NULL, "The physics-world ptr for this ScriptedEntityInstancer is invalid, so physical Entities cannot be created with it.");
+			b2Body *body = m_PhysicsWorld->GetB2World()->CreateBody(&m_Definition->GetBodyDef());
+			entity->_setBody(body);
+			// Add fixtures
+			const EntityDefinition::FixtureArray &fixtures = m_Definition->GetFixtures();
+			for (EntityDefinition::FixtureArray::const_iterator it = fixtures.begin(), end = fixtures.end();
+				it != end; ++it)
+			{
+				const FixtureDefinition &fixtureDef = *it;
+				body->CreateFixture(fixtureDef.get());
+			}
+		}
 
+		// Add resource refs
+		//StreamedResourceUserPtr resourceUser;
 		const ResourcesMap &resources = m_Definition->GetStreamedResources();
 		for (ResourcesMap::const_iterator it = resources.begin(), end = resources.end(); it != end; ++it)
 		{
@@ -575,8 +765,19 @@ namespace FusionEngine
 		StringMap::iterator _where = m_EntityDefinitionFileNames.find(type);
 		if (_where != m_EntityDefinitionFileNames.end())
 		{
-			ticpp::Document document( OpenXml_PhysFS(fe_widen(_where->second)) );
-			loadAllDependencies(fe_getbasepath(_where->second), document);
+			try
+			{
+				ticpp::Document document( OpenXml_PhysFS(fe_widen(_where->second)) );
+				loadAllDependencies(fe_getbasepath(_where->second), document);
+			}
+			catch (ticpp::Exception &ex)
+			{
+				return false;
+			}
+			catch (FileSystemException &ex)
+			{
+				return false;
+			}
 			return true;
 		}
 
@@ -677,10 +878,19 @@ namespace FusionEngine
 					depPath = _where->second.substr(0, pathEnd);
 				else
 					depPath = "/";
-				ticpp::Document depDocument( OpenXml_PhysFS(fe_widen(_where->second)) );
 
-				// Parse the Entity definition document
-				definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
+				try
+				{
+					ticpp::Document depDocument( OpenXml_PhysFS(fe_widen(_where->second)) );
+
+					// Parse the Entity definition document
+					definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
+				}
+				catch (ticpp::Exception &ex)
+				{
+					continue;
+				}
+
 				m_LoadedEntityDefinitions.push_back(definition);
 				m_EntityDefinitionsByType[definition->GetType()] = definition;
 
@@ -835,7 +1045,12 @@ namespace FusionEngine
 		}
 		object->Release();
 
-		m_EntityInstancers[definition->GetType()] = EntityInstancerPtr( new ScriptedEntityInstancer(m_ScriptingManager, m_ModuleName, definition) ); 
+		EntityInstancerPtr instancer;
+		if (definition->HasBody())
+			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, PhysicalWorld::getSingletonPtr(), m_ModuleName, definition) );
+		else
+			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, m_ModuleName, definition) );
+		m_EntityInstancers[definition->GetType()] = instancer; 
 	}
 
 	bool EntityFactory::getEntityType(TiXmlDocument *document, std::string &type)

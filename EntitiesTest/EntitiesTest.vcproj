@@ -293,7 +293,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicalEntityManager.cpp"
 				>
 			</File>
 			<File
@@ -306,10 +306,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.cpp"
 				>
 			</File>
 			<File
@@ -579,7 +575,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsBody.h"
+				RelativePath="..\FusionEngine\FusionPhysicalEntityManager.h"
 				>
 			</File>
 			<File
@@ -596,10 +592,6 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionPhysicsShape.h"
-				>
-			</File>
-			<File
-				RelativePath="..\FusionEngine\FusionPhysicsWorld.h"
 				>
 			</File>
 			<File

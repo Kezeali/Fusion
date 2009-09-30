@@ -730,6 +730,16 @@ namespace FusionEngine
 		return GetType() + " - " + m_Name;
 	}
 
+	void Entity_GetPosition(Vector2 &out, Entity *entity)
+	{
+		out = entity->GetPosition();
+	}
+
+	void Entity_SetPosition(float x, float y, Entity *entity)
+	{
+		entity->SetPosition(Vector2(x, y));
+	}
+
 	void Entity::Register(asIScriptEngine *engine)
 	{
 		int r;
@@ -753,6 +763,34 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"void defineInstanceToPrepare(const string &in, uint, bool)",
 			asMETHOD(Entity, DefineInstanceToPrepare), asCALL_THISCALL);
+
+		// Physical state related methods
+		r = engine->RegisterObjectMethod("Entity",
+			"const Vector& getPosition()",
+			asMETHOD(Entity, GetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void getPosition(Vector &out)",
+			asFUNCTION(Entity_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void setPosition(const Vector &in)",
+			asMETHOD(Entity, SetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void setPosition(float, float)",
+			asFUNCTION(Entity_SetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"const Vector& getVelocity()",
+			asMETHOD(Entity, GetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void setVelocity(const Vector &in)",
+			asMETHOD(Entity, SetVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"float getAngle() const",
+			asMETHOD(Entity, GetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void setAngle(float)",
+			asMETHOD(Entity, SetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);

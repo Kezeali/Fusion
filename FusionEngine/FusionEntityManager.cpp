@@ -397,8 +397,9 @@ namespace FusionEngine
 		}
 	}
 
-	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
-		: m_Renderer(renderer),
+	EntityManager::EntityManager(EntityFactory *factory, Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
+		: m_EntityFactory(factory),
+		m_Renderer(renderer),
 		m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_Streaming(streaming),
@@ -407,15 +408,12 @@ namespace FusionEngine
 		m_EntitiesLocked(false),
 		m_NextId(1)
 	{
-		m_EntityFactory = new EntityFactory();
-
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = true;
 	}
 
 	EntityManager::~EntityManager()
 	{
-		delete m_EntityFactory;
 	}
 
 	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name, ObjectID owner_id)
@@ -486,8 +484,6 @@ namespace FusionEngine
 			m_Renderer->Add(entity);
 			m_EntitySynchroniser->OnEntityAdded(entity);
 
-			entity->Spawn();
-
 			m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
 		}
 	}
@@ -508,8 +504,6 @@ namespace FusionEngine
 			
 			m_PseudoEntities.insert(pseudo_entity);
 			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
-
-			pseudo_entity->Spawn();
 
 			m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
 		}
@@ -866,22 +860,30 @@ namespace FusionEngine
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, EntityManager *obj)
 	{
-		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type).get() );
+		Entity *entity = obj->InstanceEntity(type).get();
+		entity->Spawn();
+		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, ObjectID owner, EntityManager *obj)
 	{
-		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, "default", owner).get() );
+		Entity *entity = obj->InstanceEntity(type, "default", owner).get();
+		entity->Spawn();
+		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, EntityManager *obj)
 	{
-		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, name).get() );
+		Entity *entity = obj->InstanceEntity(type, name).get();
+		entity->Spawn();
+		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, ObjectID owner, EntityManager *obj)
 	{
-		return ScriptedEntity::GetScriptObject( obj->InstanceEntity(type, name, owner).get() );
+		Entity *entity = obj->InstanceEntity(type, name, owner).get();
+		entity->Spawn();
+		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	void EntityManager::Register(asIScriptEngine *engine)

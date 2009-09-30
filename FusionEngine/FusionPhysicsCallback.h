@@ -75,8 +75,8 @@ namespace FusionEngine
 			b2WorldManifold worldManifold;
 			contact->GetWorldManifold(&worldManifold);
 
-			PhysicsBody *bodyA = static_cast<PhysicsBody*>( contact->GetFixtureA()->GetBody()->GetUserData() );
-			PhysicsBody *bodyB = static_cast<PhysicsBody*>( contact->GetFixtureB()->GetBody()->GetUserData() );
+			//PhysicalEntity *entityA = static_cast<PhysicalEntity*>( contact->GetFixtureA()->GetBody()->GetUserData() );
+			//PhysicalEntity *entityB = static_cast<PhysicalEntity*>( contact->GetFixtureB()->GetBody()->GetUserData() );
 
 			Fixture *fixtureA = static_cast<Fixture*>( contact->GetFixtureA()->GetUserData() );
 			Fixture *fixtureB = static_cast<Fixture*>( contact->GetFixtureB()->GetUserData() );

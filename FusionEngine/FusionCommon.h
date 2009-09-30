@@ -457,6 +457,7 @@ namespace FusionEngine
 	class StreamingManager;
 	class GameMapLoader;
 	class Entity;
+	class PhysicalWorld;
 	class Renerer;
 	class Renderable;
 	class Camera;

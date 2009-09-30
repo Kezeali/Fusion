@@ -162,10 +162,12 @@ namespace FusionEngine
 
 		EntitySynchroniser *m_EntitySyncroniser;
 		StreamingManager *m_Streaming;
+		EntityFactory *m_EntityFactory;
 		EntityManager *m_EntityManager;
 		GameMapLoader *m_MapLoader;
 
-		PhysicsWorld *m_PhysicsWorld;
+		//PhysicsWorld *m_PhysicsWorld;
+		PhysicalWorld *m_PhysWorld;
 
 		ViewportArray m_Viewports;
 

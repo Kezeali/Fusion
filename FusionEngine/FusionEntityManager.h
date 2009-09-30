@@ -188,7 +188,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
+		EntityManager(EntityFactory *factory, Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
 		//! Destructor
 		virtual ~EntityManager();
 
