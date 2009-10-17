@@ -421,10 +421,14 @@ namespace FusionEngine
 	}
 
 	EntityDefinition::EntityDefinition()
+		: m_Abstract(false),
+		m_HasBody(false)
 	{
 	}
 
 	EntityDefinition::EntityDefinition(const std::string &current_folder, ticpp::Document &document)
+		: m_Abstract(false),
+		m_HasBody(false)
 	{
 		Parse(current_folder, document);
 	}
@@ -620,7 +624,10 @@ namespace FusionEngine
 
 		ScriptUtils::Calling::Caller f = object.GetCaller("void _setAppObject(Entity@ obj)");
 		if (f.ok())
+		{
+			entity->addRef();
 			f(entity);
+		}
 		else
 			return NULL;
 
@@ -734,7 +741,7 @@ namespace FusionEngine
 		EntityInstancerMap::iterator _where = m_EntityInstancers.find(type);
 		if (_where != m_EntityInstancers.end())
 		{
-			return EntityPtr( _where->second->InstanceEntity(name) );
+			return EntityPtr( _where->second->InstanceEntity(name), false );
 		}
 		else
 		{
@@ -749,6 +756,11 @@ namespace FusionEngine
 			}
 		}
 		return EntityPtr();
+	}
+
+	void EntityFactory::AddInstancer(const std::string &type, const FusionEngine::EntityInstancerPtr &instancer)
+	{
+		m_EntityInstancers[type] = instancer;
 	}
 
 	std::string fe_getbasepath(const std::string &path)
@@ -932,11 +944,11 @@ namespace FusionEngine
 				"' type Entities because the type doesn't exist in the script module (most likely due to a compilation error).");
 			return;
 		}
-		asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
+		//asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
 
 		// Verify type
 		asIObjectType *entityInterface = engine->GetObjectTypeById(engine->GetTypeIdByDecl("IEntity"));
-		asIObjectType *objectType = object->GetObjectType();
+		asIObjectType *objectType = engine->GetObjectTypeById(typeId);
 		if (!ScriptUtils::Inheritance::base_implements(objectType, entityInterface))
 		{
 			SendToConsole("The Entity type '" + definition->GetType() + "' does not implement IEntity, so no instancer was created.");
@@ -988,9 +1000,9 @@ namespace FusionEngine
 		//  the script module has been built
 		ScriptedEntity::PropertiesMap &syncProperties = definition->GetSyncProperties();
 		// Iterate through all of the script object's properties
-		for (int i = 0; i < object->GetPropertyCount(); ++i)
+		for (int i = 0; i < objectType->GetPropertyCount(); ++i)
 		{
-			ScriptedEntity::PropertiesMap::iterator _where = syncProperties.find( object->GetPropertyName(i) );
+			ScriptedEntity::PropertiesMap::iterator _where = syncProperties.find( objectType->GetPropertyName(i) );
 			if (_where != syncProperties.end())
 			{
 				FSN_ASSERT(_where->second.scriptPropertyIndex != i); // Just checking whether derrived types have the same indexes as base types...
@@ -1016,9 +1028,9 @@ namespace FusionEngine
 
 		// Same as above for Streaming section
 		ResourcesMap &resources = definition->GetStreamedResources();
-		for (int i = 0; i < object->GetPropertyCount(); ++i)
+		for (int i = 0; i < objectType->GetPropertyCount(); ++i)
 		{
-			ResourcesMap::iterator _where = resources.find( object->GetPropertyName(i) );
+			ResourcesMap::iterator _where = resources.find( objectType->GetPropertyName(i) );
 			if (_where != resources.end())
 			{
 				_where->second.SetPropertyIndex(i);
@@ -1043,7 +1055,6 @@ namespace FusionEngine
 					++it;
 			}
 		}
-		object->Release();
 
 		EntityInstancerPtr instancer;
 		if (definition->HasBody())

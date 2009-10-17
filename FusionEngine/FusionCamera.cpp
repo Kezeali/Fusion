@@ -211,7 +211,8 @@ namespace FusionEngine
 
 	void Camera_SetFollowEntity(asIScriptObject *entity, Camera *obj)
 	{
-		obj->SetFollowEntity(ScriptedEntity::GetAppObject(entity));
+		obj->SetFollowEntity( EntityPtr(ScriptedEntity::GetAppObject(entity)) );
+		entity->Release();
 	}
 
 	void Camera::Register(asIScriptEngine *engine)

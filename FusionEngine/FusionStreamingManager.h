@@ -144,6 +144,8 @@ namespace FusionEngine
 		//! Calculates the active streaming area for each camera
 		void Update();
 
+		static void Register(asIScriptEngine *engine);
+
 	private:
 		struct StreamingCamera
 		{

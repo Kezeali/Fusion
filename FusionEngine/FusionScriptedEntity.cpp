@@ -95,6 +95,10 @@ namespace FusionEngine
 		m_DefaultAngle(0.f)
 	{}
 
+	ScriptedEntity::~ScriptedEntity()
+	{
+	}
+
 	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesMap &properties)
 	{
 		m_SyncedProperties = properties;
@@ -126,31 +130,31 @@ namespace FusionEngine
 		return m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
 	}
 
-	const Vector2 &ScriptedEntity::GetPosition()
-	{
-		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("const Vector@ GetPosition()");
-		if (f.ok())
-		{
-			void *r = f();
-			if (r != NULL)
-				return **static_cast<const Vector2**>( r );
-		}
+	//const Vector2 &ScriptedEntity::GetPosition()
+	//{
+	//	ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("const Vector@ GetPosition()");
+	//	if (f.ok())
+	//	{
+	//		void *r = f();
+	//		if (r != NULL)
+	//			return **static_cast<const Vector2**>( r );
+	//	}
 
-		return m_DefaultPosition;
-	}
+	//	return m_DefaultPosition;
+	//}
 
-	float ScriptedEntity::GetAngle()
-	{
-		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("float GetAngle()");
-		if (f.ok())
-		{
-			void *r = f();
-			if (r != NULL)
-				return *static_cast<float*>( r );
-		}
+	//float ScriptedEntity::GetAngle()
+	//{
+	//	ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("float GetAngle()");
+	//	if (f.ok())
+	//	{
+	//		void *r = f();
+	//		if (r != NULL)
+	//			return *static_cast<float*>( r );
+	//	}
 
-		return m_DefaultAngle;
-	}
+	//	return m_DefaultAngle;
+	//}
 
 	void ScriptedEntity::Spawn()
 	{
@@ -408,7 +412,7 @@ namespace FusionEngine
 		{
 			asIScriptObject *script_obj = wrapper->m_ScriptObject.GetScriptObject();
 			script_obj->AddRef();
-			entity->release();
+			//entity->release();
 			return script_obj;
 		}
 		else

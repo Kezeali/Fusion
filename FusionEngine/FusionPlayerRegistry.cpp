@@ -137,7 +137,8 @@ namespace FusionEngine
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		return registry->m_Arbitrator == registry->getPlayerByLocalIndex(0).NetIndex;
+		// In local only games (no net players) arbitrator is set to zero
+		return registry->m_Arbitrator == 0 || registry->m_Arbitrator == registry->getPlayerByLocalIndex(0).NetIndex;
 	}
 
 	bool PlayerRegistry::IsLocal(ObjectID net_index)

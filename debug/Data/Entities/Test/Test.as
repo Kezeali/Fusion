@@ -18,23 +18,23 @@ class Test : ScriptEntity
 
 	Test()
 	{
-		BindSimpleCommands();
+		console.println("'Test' entity created");
 		position = Vector(150.0, 50.0);
 		runningtime = 0;
 	}
 	~Test()
 	{
+		console.println("'Test' entity deleted");
 	}
 
 	void Spawn()
 	{
-		//CircleShape @shape = @CircleShape(physBody, 0.0f, radius);
-		//physBody.attach_shape(shape);
+		console.println("'Test' entity Spawned");
 
-		@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui") );
-
-		console.println("Press [Debug] to print info");
-
+		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
+		//gui_entity.Spawn();
+		//@gui_entity = null;
+		
 		first = true;
 	}
 
@@ -62,7 +62,7 @@ class Test : ScriptEntity
 		{
 			seed_rand(dt);
 
-			bgm.play();
+			//bgm.play();
 
 			first = false;
 		}
@@ -95,4 +95,4 @@ class Test : ScriptEntity
 		input_left = left;
 		input_right = right;
 	}
-};
+}

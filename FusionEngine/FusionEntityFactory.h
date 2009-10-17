@@ -96,6 +96,9 @@ namespace FusionEngine
 		*/
 		EntityPtr InstanceEntity(const std::string &type, const std::string &name);
 
+		//! Adds an instancer object for the given type
+		void AddInstancer(const std::string &type, const EntityInstancerPtr &instancer);
+
 		//! Creates an instancer for the the given scripted type
 		/*!
 		* This should be called on the startup_entity and all entities

@@ -89,7 +89,8 @@ namespace FusionEngine
 
 	void Viewport_SetCamera(Camera *camera, Viewport *viewport)
 	{
-		viewport->SetCamera(camera);
+		viewport->SetCamera( CameraPtr(camera) );
+		camera->release();
 	}
 
 	void Viewport::Register(asIScriptEngine *engine)
@@ -195,11 +196,11 @@ namespace FusionEngine
 		std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
 
 		EntityArray::iterator it = std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth);
-		for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
-			if (*it == entity && (*it)->GetDepth() > entity->GetDepth())
-				break;
-
-		m_EntitiesToDraw.erase(it);
+		//for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
+		//	if (*it == entity || (*it)->GetDepth() > entity->GetDepth())
+		//		break;
+		if (it != m_EntitiesToDraw.end() && *it == entity)
+			m_EntitiesToDraw.erase(it);
 
 		//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
 		//{

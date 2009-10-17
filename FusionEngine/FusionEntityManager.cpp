@@ -119,7 +119,7 @@ namespace FusionEngine
 			if (ev.Type == InputEvent::Binary)
 				playerInput->SetActive(ev.Input, ev.Down);
 			else
-				playerInput->SetPosition(ev.Input, ev.Value);
+				playerInput->SetPosition(ev.Input, (float)ev.Value);
 
 			if (changed != playerInput->HasChanged())
 				++m_ChangedCount;
@@ -532,6 +532,8 @@ namespace FusionEngine
 			m_EntitiesByName.erase(entity->GetName());
 
 			m_Renderer->Remove(entity);
+
+			// Note that entity will be removed from the Domain list during the next Update() call
 		}
 	}
 
@@ -759,26 +761,25 @@ namespace FusionEngine
 			if (entity->IsMarkedToRemove())
 			{
 				it = m_EntitiesToUpdate[idx].erase(it);
+				end = m_EntitiesToUpdate[idx].end();
 			}
 			else if (entity->GetTagFlags() & m_ToDeleteFlags)
 			{
 				RemoveEntity(entity);
 				it = m_EntitiesToUpdate[idx].erase(it);
+				end = m_EntitiesToUpdate[idx].end();
 			}
 
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
-
-				if (entity->IsStreamedOut())
-					entity->StreamIn();
+				//m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
 
 				if (entity->Wait())
 				{
-					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
+					//m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 					entity->Update(split);
-					m_EntitySynchroniser->AddToPacket(entity);
+					//m_EntitySynchroniser->AddToPacket(entity);
 
 					updateRenderables(entity, split);
 
@@ -861,29 +862,45 @@ namespace FusionEngine
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, EntityManager *obj)
 	{
 		Entity *entity = obj->InstanceEntity(type).get();
-		entity->Spawn();
+		//entity->Spawn();
 		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, ObjectID owner, EntityManager *obj)
 	{
 		Entity *entity = obj->InstanceEntity(type, "default", owner).get();
-		entity->Spawn();
+		//entity->Spawn();
 		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, EntityManager *obj)
 	{
 		Entity *entity = obj->InstanceEntity(type, name).get();
-		entity->Spawn();
+		//entity->Spawn();
 		return ScriptedEntity::GetScriptObject( entity );
 	}
 
 	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, ObjectID owner, EntityManager *obj)
 	{
 		Entity *entity = obj->InstanceEntity(type, name, owner).get();
-		entity->Spawn();
+		//entity->Spawn();
 		return ScriptedEntity::GetScriptObject( entity );
+	}
+
+	void EntityManager_RemoveEntity(const std::string &name, EntityManager *obj)
+	{
+		obj->RemoveEntityNamed(name);
+	}
+
+	void EntityManager_RemoveEntity(ObjectID id, EntityManager *obj)
+	{
+		obj->RemoveEntityById(id);
+	}
+
+	void EntityManager_RemoveEntity(asIScriptObject *script_entity, EntityManager *obj)
+	{
+		obj->RemoveEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
+		script_entity->Release();
 	}
 
 	void EntityManager::Register(asIScriptEngine *engine)
@@ -905,6 +922,16 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("EntityManager",
 			"IEntity@ instance(const string &in, const string &in, uint16)",
 			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+		
+		r = engine->RegisterObjectMethod("EntityManager",
+			"void remove(const string &in)",
+			asFUNCTIONPR(EntityManager_RemoveEntity, (const std::string &, EntityManager*), void), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"void remove(uint16)",
+			asFUNCTIONPR(EntityManager_RemoveEntity, (ObjectID, EntityManager*), void), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("EntityManager",
+			"void remove(IEntity@)",
+			asFUNCTIONPR(EntityManager_RemoveEntity, (asIScriptObject*, EntityManager*), void), asCALL_CDECL_OBJLAST);
 	}
 
 	ObjectID EntityManager::getFreeID()

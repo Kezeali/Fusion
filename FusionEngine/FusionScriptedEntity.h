@@ -101,6 +101,7 @@ namespace FusionEngine
 	public:
 		ScriptedEntity();
 		ScriptedEntity(ScriptObject script_self, const std::string &name);
+		virtual ~ScriptedEntity();
 
 		void SetSyncProperties(const PropertiesMap &properties);
 		//void SetStreamedResources(const StreamedResourceMap &resources);
@@ -111,8 +112,8 @@ namespace FusionEngine
 
 		virtual std::string GetType() const;
 
-		virtual const Vector2 &GetPosition();
-		virtual float GetAngle();
+		//virtual const Vector2 &GetPosition();
+		//virtual float GetAngle();
 
 		virtual void Spawn();
 		virtual void Update(float split);

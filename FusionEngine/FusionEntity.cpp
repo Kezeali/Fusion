@@ -136,15 +136,15 @@ namespace FusionEngine
 	{
 	}
 
-	void Renderable::_notifyAttached(const EntityPtr &entity)
-	{
-		m_Entity = entity;
-	}
+	//void Renderable::_notifyAttached(const EntityPtr &entity)
+	//{
+	//	m_Entity = entity;
+	//}
 
-	EntityPtr Renderable::GetEntity() const
-	{
-		return m_Entity;
-	}
+	//EntityPtr Renderable::GetEntity() const
+	//{
+	//	return m_Entity;
+	//}
 
 	void Renderable::SetAlpha(float _alpha)
 	{
@@ -628,7 +628,7 @@ namespace FusionEngine
 	void Entity::AddRenderable(RenderablePtr renderable)
 	{
 		m_Renderables.push_back(renderable);
-		renderable->_notifyAttached(this);
+		//renderable->_notifyAttached(this);
 	}
 
 	void Entity::RemoveRenderable(RenderablePtr renderable)
@@ -638,7 +638,7 @@ namespace FusionEngine
 			if (*it == renderable)
 			{
 				m_Renderables.erase(it);
-				renderable->_notifyAttached(EntityPtr());
+				//renderable->_notifyAttached(EntityPtr());
 				break;
 			}
 		}
@@ -748,6 +748,7 @@ namespace FusionEngine
 		//	"bool isActive(const string &in) const",
 		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
 
+		//RefCounted::RegisterType<Entity>(engine, "Entity");
 		Entity::RegisterGCType(engine, "Entity");
 		r = engine->RegisterObjectMethod("Entity",
 			"uint16 getOwnerID() const",

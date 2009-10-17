@@ -36,6 +36,8 @@
 
 #include "../FusionEngine/FusionClientOptions.h"
 
+#include "../FusionEngine/FusionScriptModule.h"
+
 //#include <ClanLib/d3d9.h>
 
 
@@ -105,6 +107,7 @@ public:
 			EntityManager::Register(asEngine);
 			Camera::Register(asEngine);
 			Viewport::Register(asEngine);
+			StreamingManager::Register(asEngine);
 			OntologicalSystem::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 
@@ -179,7 +182,8 @@ public:
 			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer, m_Input, networkSystem.get()) );
 
 			systemMgr->AddSystem(ontology);
-			systemMgr->AddSystem(gui);
+			//systemMgr->AddSystem(gui);
+			gui->Initialise();
 
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
@@ -194,11 +198,17 @@ public:
 
 			// Build the module (scripts are added automatically by objects which have registered a module connection)
 			module->Build();
+			//{
+			//	BuildModuleEvent bme;
+			//	bme.type = BuildModuleEvent::PostBuild;
+			//	ontology->OnModuleRebuild(bme);
+			//}
 
 
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
 			float seconds = 0.f;
+			int fullCleanInterval = 0;
 
 			while (systemMgr->KeepGoing())
 			{
@@ -217,12 +227,18 @@ public:
 				{
 					seconds = split * 0.001f;
 					m_Input->Update(seconds);
+					gui->Update(seconds);
 					systemMgr->Update(seconds);
 				}
 
 				systemMgr->Draw();
 
 				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
+				if ((fullCleanInterval -= split) <= 0)
+				{
+					fullCleanInterval = 1000;
+					m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE);
+				}
 
 				dispWindow.flip();
 			}
@@ -231,6 +247,8 @@ public:
 
 			delete systemMgr;
 			delete renderer;
+			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+			gui->CleanUp();
 			delete m_Input;
 			delete m_ScriptManager;
 			delete m_ResourceManager;

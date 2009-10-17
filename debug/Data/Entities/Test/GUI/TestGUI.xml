@@ -16,6 +16,10 @@
 				  */
 				@document = context.LoadDocument(e_String("Entities/Test/GUI/test.rml"));
 			}
+			~TestGUI()
+			{
+				console.println("'TestGUI' entity deleted");
+			}
 
 			void Spawn()
 			{
@@ -27,6 +31,7 @@
 				y = 120;
 				document.SetProperty(e_String("left"), e_String(x + "px"));
 				document.SetProperty(e_String("top"), e_String(y + "px"));
+				console.println("'TestGUI' entity Spawned");
 			}
 
 			void Update(float split)

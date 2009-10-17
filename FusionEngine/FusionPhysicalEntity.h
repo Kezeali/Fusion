@@ -60,6 +60,8 @@ namespace FusionEngine
 		PhysicalEntity();
 		PhysicalEntity(const std::string &name);
 
+		virtual ~PhysicalEntity();
+
 		virtual void ApplyForce(const Vector2 &point, const Vector2 &force);
 
 		//! Gets the position of the physical body
@@ -90,9 +92,9 @@ namespace FusionEngine
 		//const b2BodyDef &GetBodyDef() const;
 
 		//! Save state to buffer
-		virtual void SerialiseState(SerialisedData &state, bool local) const =0;
+		virtual void SerialiseState(SerialisedData &state, bool local) const;
 		//! Read state from buffer
-		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
+		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
 	protected:
 		//b2BodyDef m_BodyDef;

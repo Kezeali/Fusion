@@ -175,7 +175,20 @@ namespace FusionEngine
 		InputManager *m_InputManager;
 		NetworkSystem *m_NetworkSystem;
 
-		std::string m_AddPlayerCallbacks[g_MaxLocalPlayers];
+		//! Basic script callback data
+		struct CallbackDecl
+		{
+			asIScriptObject *object;
+			std::string method;
+			//! Default constructor
+			CallbackDecl()
+				: object(NULL)
+			{}
+			//! Constructor
+			CallbackDecl(asIScriptObject *obj, std::string method)
+				: object(obj), method(method)
+			{}
+		} m_AddPlayerCallbacks[g_MaxLocalPlayers];
 
 		ObjectID m_NextPlayerIndex;
 		std::deque<ObjectID> m_FreePlayerIndicies;

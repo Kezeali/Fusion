@@ -50,9 +50,75 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "FusionScriptedEntity.h"
+
 
 namespace FusionEngine
 {
+
+	class SimpleEntity : public PhysicalEntity
+	{
+	public:
+		SimpleEntity(const std::string &name)
+			: PhysicalEntity(name)
+		{
+			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			if (manager != NULL && manager->GetEnginePtr() != NULL)
+				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+		}
+
+		virtual ~SimpleEntity()
+		{
+			SendToConsole(GetName() + " was deleted");
+		}
+
+		virtual std::string GetType() const { return "Simple"; }
+
+		virtual void Spawn()
+		{
+			SendToConsole(GetName() + " spawned");
+		}
+		virtual void Update(float split)
+		{
+		}
+		//virtual void Draw()
+		//{}
+
+		virtual void OnStreamIn()
+		{
+			SendToConsole(GetName() + " streamed in");
+		}
+		virtual void OnStreamOut()
+		{
+			SendToConsole(GetName() + " streamed out");
+		}
+
+		//! Save state to buffer
+		virtual void SerialiseState(SerialisedData &state, bool local) const
+		{
+		}
+
+		//! Read state from buffer
+		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
+		{
+			return 0;
+		}
+	};
+
+	class SimpleInstancerTest : public EntityInstancer
+	{
+	public:
+		SimpleInstancerTest()
+			: EntityInstancer("Simple")
+		{
+		}
+
+		//! Returns a Simple object
+		virtual Entity *InstanceEntity(const std::string &name)
+		{
+			return new SimpleEntity(name);
+		}
+	};
 
 	const std::string s_OntologicalSystemName = "Entities";
 
@@ -82,11 +148,8 @@ namespace FusionEngine
 	{
 		if (m_EntityManager == NULL)
 		{
-			PlayerRegistry::AddPlayer(1, 0, NetHandle());
-			PlayerRegistry::SetArbitrator(1);
-
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
-			m_Streaming = new StreamingManager();
+			m_Streaming = new StreamingManager(); m_Streaming->SetRange(2000);
 			m_EntityFactory = new EntityFactory();
 			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
@@ -94,6 +157,7 @@ namespace FusionEngine
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
 
 			manager->RegisterGlobalObject("System system", this);
+			manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 
 			m_EntityFactory->SetScriptingManager(manager, "main");
@@ -118,6 +182,7 @@ namespace FusionEngine
 		}
 
 		m_EntityFactory->LoadScriptedType(m_StartupEntity);
+		m_EntityFactory->AddInstancer("Simple", EntityInstancerPtr(new SimpleInstancerTest()));
 
 		// Load map entitites
 		std::string maps, line;
@@ -173,6 +238,17 @@ namespace FusionEngine
 
 	void OntologicalSystem::CleanUp()
 	{
+		for (size_t i = 0; i < g_MaxLocalPlayers; ++i)
+		{
+			if (m_AddPlayerCallbacks[i].object != NULL)
+			{
+				m_AddPlayerCallbacks[i].object->Release();
+				m_AddPlayerCallbacks[i].object = NULL;
+			}
+		}
+
+		m_Viewports.clear();
+
 		if (m_EntityManager != NULL)
 		{
 			delete m_MapLoader;
@@ -191,26 +267,33 @@ namespace FusionEngine
 
 	void OntologicalSystem::Update(float split)
 	{
-		m_EntitySyncroniser->BeginPacket();
+		//m_EntitySyncroniser->BeginPacket();
 
 		m_PhysWorld->Step(split);
 
 		m_EntityManager->Update(split);
 
-		m_EntitySyncroniser->EndPacket();
-		m_EntitySyncroniser->Send();
+		//m_EntitySyncroniser->EndPacket();
+		//m_EntitySyncroniser->Send();
 
 		m_Renderer->Update(split);
 
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
 			ViewportPtr &viewport = *it;
-			CameraPtr camera = viewport->GetCamera();
+			const CameraPtr &camera = viewport->GetCamera();
 			if (camera)
 				camera->Update(split);
 		}
 
 		m_Streaming->Update();
+
+		static bool rem = true;
+		if (rem)
+		{
+			rem = false;
+			m_EntityManager->RemoveEntityById(1);
+		}
 	}
 
 	void OntologicalSystem::Draw()
@@ -366,11 +449,11 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+			EntityPtr entity = m_EntityManager->InstanceEntity("Simple", "startup");//(m_StartupEntity, "startup");
 
 			if (entity)
 			{
-				//entity->Spawn();
+				entity->Spawn();
 				// Force stream-in
 				entity->StreamIn();
 			}
@@ -410,28 +493,43 @@ namespace FusionEngine
 
 			Network *network = m_NetworkSystem->GetNetwork();
 
-			PlayerRegistry::AddPlayer(0, playerIndex, network->GetLocalAddress());
-
-			int fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
-			if (fnId >= 0 && m_Module->GetASModule()->GetFunctionDescriptorById(fnId)->GetParamTypeId(0) == asTYPEID_UINT16)
-				m_AddPlayerCallbacks[playerIndex] = callback_decl;
+			// Validate & store the callback method
+			int fnId;
+			if (callback_obj != NULL)
+				fnId = callback_obj->GetObjectType()->GetMethodIdByName(callback_decl.c_str());
 			else
-				SendToConsole("system.addPlayer(): " + callback_decl + " is not a valid AddPlayer callback - signature must be 'void (uint16)'");
+				fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
+
+			asIScriptFunction *callback_fn = m_Module->GetASModule()->GetFunctionDescriptorById(fnId);
+			if (callback_fn != NULL && callback_fn->GetParamCount() == 2 && callback_fn->GetParamTypeId(0) == asTYPEID_UINT16 && callback_fn->GetParamTypeId(1) == asTYPEID_UINT16)
+			{
+				//callback_obj->AddRef();
+				// Note that fn->GetDecl...() is used here (rather than callback_decl), because
+				//  this is definately a valid decl, whereas callback_decl may just be a fn. name
+				m_AddPlayerCallbacks[playerIndex] = CallbackDecl(callback_obj, callback_fn->GetDeclaration(false));
+			}
+			else
+				SendToConsole("system.addPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
 
 			if (PlayerRegistry::ArbitratorIsLocal())
 			{
-				RakNet::BitStream bitStream;
 				ObjectID netIndex = getNextPlayerIndex();
+
+				// Add the player
+				PlayerRegistry::AddPlayer(netIndex, playerIndex);
+
+				// Call the script callback
+				onGetNetIndex(playerIndex, netIndex);
+
+				RakNet::BitStream bitStream;
 				bitStream.Write0();
 				bitStream.Write(netIndex);
 
+				// Notify other systems 
 				network->Send(
 					false,
 					MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
-					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-					PlayerRegistry::GetArbitratingPlayer().System);
-
-				onGetNetIndex(playerIndex, netIndex);
+					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
 			}
 			else
 			{
@@ -486,11 +584,26 @@ namespace FusionEngine
 
 	void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
 	{
-		if (!m_AddPlayerCallbacks[local_idx].empty())
+		// Call the script callback, if there is one
+		CallbackDecl &decl = m_AddPlayerCallbacks[local_idx];
+		if (!decl.method.empty())
 		{
-			ScriptUtils::Calling::Caller f = m_Module->GetCaller(m_AddPlayerCallbacks[local_idx]);
+			ScriptUtils::Calling::Caller f;
+			// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
+			if (decl.object == NULL)
+				f = m_Module->GetCaller(decl.method); // Global method
+			else
+			{
+				f = ScriptUtils::Calling::Caller(decl.object, decl.method.c_str()); // Object method
+				decl.object->Release();
+			}
+
+			// Call the callback
 			if (f.ok())
-				f(net_idx);
+				f(local_idx, net_idx);
+
+			decl.object = NULL;
+			decl.method.clear();
 		}
 	}
 

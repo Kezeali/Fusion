@@ -36,23 +36,23 @@ namespace FusionEngine
 		m_Range = game_units;
 	}
 
-	CL_Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
-	{
-		CL_Rectf area;
+	//CL_Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
+	//{
+	//	CL_Rectf area;
 
-		StreamingCameraMap::const_iterator _where = m_Cameras.find(net_idx);
-		if (_where != m_Cameras.end())
-		{
-			const StreamingCamera &stCam = _where->second;
+	//	StreamingCameraMap::const_iterator _where = m_Cameras.find(net_idx);
+	//	if (_where != m_Cameras.end())
+	//	{
+	//		const StreamingCamera &stCam = _where->second;
 
-			area.left = stCam.StreamPoint.x - m_Range;
-			area.top = stCam.StreamPoint.y - m_Range;
-			area.right = stCam.StreamPoint.x + m_Range;
-			area.bottom = stCam.StreamPoint.y + m_Range;
-		}
+	//		area.left = stCam.StreamPoint.x - m_Range;
+	//		area.top = stCam.StreamPoint.y - m_Range;
+	//		area.right = stCam.StreamPoint.x + m_Range;
+	//		area.bottom = stCam.StreamPoint.y + m_Range;
+	//	}
 
-		return area;
-	}
+	//	return area;
+	//}
 
 	void StreamingManager::ProcessEntity(const EntityPtr &entity) const
 	{
@@ -115,6 +115,39 @@ namespace FusionEngine
 
 			cam.LastVelocity = velocity;
 		}
+	}
+
+	void StreamingManager_SetPlayerCamera(ObjectID net_idx, Camera *camera, StreamingManager *obj)
+	{
+		obj->SetPlayerCamera(net_idx, CameraPtr(camera) );
+		camera->release();
+	}
+
+	void StreamingManager_RemovePlayerCamera(ObjectID net_idx, StreamingManager *obj)
+	{
+		obj->RemovePlayerCamera( net_idx );
+	}
+
+	//void StreamingManager_AddCamera(Camera *camera, StreamingManager *obj)
+	//{
+	//	obj->AddCamera( CameraPtr(camera) );
+	//}
+
+	//void StreamingManager_RemoveCamera(Camera *camera, StreamingManager *obj)
+	//{
+	//	obj->RemoveCamera( CameraPtr(camera) );
+	//}
+
+	void StreamingManager::Register(asIScriptEngine *engine)
+	{
+		int r;
+		RegisterSingletonType<StreamingManager>("StreamingManager", engine);
+		r = engine->RegisterObjectMethod("StreamingManager",
+			"void setPlayerCamera(uint16, Camera@)",
+			asFUNCTION(StreamingManager_SetPlayerCamera), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("StreamingManager",
+			"void removePlayerCamera(uint16)",
+			asFUNCTION(StreamingManager_RemovePlayerCamera), asCALL_CDECL_OBJLAST);
 	}
 
 }

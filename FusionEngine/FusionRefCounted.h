@@ -37,6 +37,7 @@
 #include "FusionScriptingEngine.h"
 //#include <angelscirpt.h>
 #include <boost/intrusive_ptr.hpp>
+#include <boost/utility.hpp>
 #include <type_traits>
 
 namespace FusionEngine
@@ -146,9 +147,8 @@ namespace FusionEngine
 	template <class T>
 	class GarbageCollected : public RefCounted
 	{
-		static int s_TypeId;
-
 	protected:
+		static int s_TypeId;
 		bool m_GCFlag;
 
 	public:
@@ -156,15 +156,18 @@ namespace FusionEngine
 		GarbageCollected()
 			: m_GCFlag(false)
 		{
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
-			if (manager != NULL && manager->GetEnginePtr() != NULL)
-				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+			//ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			//if (manager != NULL && manager->GetEnginePtr() != NULL)
+			//	manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
 		}
 		//! Constructor
 		GarbageCollected(asIScriptEngine *engine)
 			: m_GCFlag(false)
 		{
 			engine->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+		}
+		virtual ~GarbageCollected()
+		{
 		}
 		//! Calls RefCounted#addRef() then sets the GC-flag to false
 		virtual void addRef()
@@ -175,8 +178,8 @@ namespace FusionEngine
 		//! Calls RefCounted#release() then sets the GC-flag to false
 		virtual void release()
 		{
-			RefCounted::release();
 			m_GCFlag = false;
+			RefCounted::release();
 		}
 
 		//! Sets the GC flag
@@ -204,12 +207,13 @@ namespace FusionEngine
 		{
 			int r;
 			
-			// Note that we also record the TypeId here
-			r = engine->RegisterObjectType(name.c_str(), sizeof(T), asOBJ_REF | asOBJ_GC); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectType(name.c_str(), 0, asOBJ_REF | asOBJ_GC); FSN_ASSERT(r >= 0);
+
+			// Note that we record the TypeId here
 			s_TypeId = engine->GetTypeIdByDecl(name.c_str());
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void f()", asMETHOD(RefCounted, release), asCALL_THISCALL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(GarbageCollected, addRef), asCALL_THISCALL);
+			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void f()", asMETHOD(GarbageCollected, release), asCALL_THISCALL);
 
 			// GC behaviours
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_SETGCFLAG,

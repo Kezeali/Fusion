@@ -367,7 +367,7 @@ namespace FusionEngine
 			m_ToUnload.clear();
 		}
 
-		asThreadCleanup();
+		//asThreadCleanup();
 		CL_SharedGCData::release_ref();
 	}
 
@@ -408,6 +408,8 @@ namespace FusionEngine
 			{
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
+
+				res->_setQueuedToLoad(false);
 
 				it = m_ToDeliver.erase(it);
 				end = m_ToDeliver.end();
@@ -508,9 +510,14 @@ namespace FusionEngine
 
 		bsig2::connection onLoadConnection;
 
-		if (!resource->IsLoaded() && !resource->IsQueuedToLoad())
+		if (resource->IsLoaded())
+		{
+			on_load_callback(resource);
+		}
+		else if (!resource->IsQueuedToLoad())
 		{
 			m_ToDeliver.push_back(resource);
+			resource->_setQueuedToLoad(true);
 
 			if (on_load_callback)
 				onLoadConnection = resource->SigLoaded.connect(on_load_callback);
@@ -532,10 +539,6 @@ namespace FusionEngine
 			m_ToLoadMutex.unlock();
 
 			m_ToLoadEvent.set();
-		}
-		else
-		{
-			on_load_callback(resource);
 		}
 
 		return onLoadConnection;

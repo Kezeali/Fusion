@@ -112,9 +112,9 @@ namespace FusionEngine
 		Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority);
 		virtual ~Renderable();
 
-		void _notifyAttached(const EntityPtr &entity);
+		//void _notifyAttached(const EntityPtr &entity);
 
-		EntityPtr GetEntity() const;
+		//EntityPtr GetEntity() const;
 
 		void SetAlpha(float _alpha);
 		float GetAlpha() const;
@@ -153,7 +153,7 @@ namespace FusionEngine
 		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
 
 	protected:
-		EntityPtr m_Entity;
+		//EntityPtr m_Entity;
 
 		bool m_Enabled;
 
@@ -194,7 +194,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public GarbageCollected<Entity>, noncopyable
+	class Entity : public /*RefCounted*/GarbageCollected<Entity>, noncopyable
 	{
 	public:
 		//! Constructor
@@ -360,7 +360,7 @@ namespace FusionEngine
 		//! Updates
 		virtual void Update(float split) =0;
 		//! Draws
-		virtual void Draw() =0;
+		virtual void Draw() {}
 
 		//typedef std::vector<ResourcePointer<CL_Sprite>> SpriteArray;
 

@@ -17,6 +17,12 @@ namespace FusionEngine
 		m_Body(NULL)
 	{}
 
+	PhysicalEntity::~PhysicalEntity()
+	{
+		if (m_Body != NULL)
+			m_Body->GetWorld()->DestroyBody(m_Body);
+	}
+
 	void PhysicalEntity::ApplyForce(const Vector2 &point, const Vector2 &force)
 	{
 		if (m_Body != NULL)
@@ -126,7 +132,7 @@ namespace FusionEngine
 	{
 		std::ostringstream stateStream(std::ios::binary);
 
-		stateStream << m_Body != NULL; // Physics enabled
+		stateStream << (m_Body != NULL); // Physics enabled
 
 		// TODO: if bodyDef dirty send whole def (plus bool-true here to indicate that this is a full-state packet)
 
