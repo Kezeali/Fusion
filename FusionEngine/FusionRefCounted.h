@@ -156,9 +156,9 @@ namespace FusionEngine
 		GarbageCollected()
 			: m_GCFlag(false)
 		{
-			//ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
-			//if (manager != NULL && manager->GetEnginePtr() != NULL)
-			//	manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			if (manager != NULL && manager->GetEnginePtr() != NULL)
+				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
 		}
 		//! Constructor
 		GarbageCollected(asIScriptEngine *engine)

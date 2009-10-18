@@ -40,6 +40,25 @@
 namespace FusionEngine
 {
 
+	class BodyDestroyer
+	{
+	public:
+		typedef std::tr1::function<void (b2Body*)> CallbackFn;
+
+		BodyDestroyer();
+		BodyDestroyer(const CallbackFn &fn);
+
+		void Destroy(b2Body *body) const;
+
+		void SetCallback(const CallbackFn &fn);
+		void ClearCallback();
+
+	protected:
+		CallbackFn m_Callback;
+	};
+
+	typedef std::tr1::shared_ptr<BodyDestroyer> BodyDestroyerPtr;
+
 	//! Returns the game co-ords transformation of the sim-position
 	Vector2 ToGameUnits(const Vector2 &sim_position);
 	//! Returns the game co-ords transformation of the game-position
@@ -91,6 +110,14 @@ namespace FusionEngine
 
 		//const b2BodyDef &GetBodyDef() const;
 
+		//! Sets the proxy object that will destroy the b2Body when the PhysicalEntity is destroyed
+		void SetBodyDestroyer(const BodyDestroyerPtr &destroyer);
+
+		//typedef boost::signals2::signal<void (b2Body*)> DestructorSignal;
+
+		//DestructorSignal &GetDestructorSignal();
+		//boost::signals2::connection &ConnectToDestructor(const DestructorSignal::slot_type &slot);
+
 		//! Save state to buffer
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
 		//! Read state from buffer
@@ -99,6 +126,9 @@ namespace FusionEngine
 	protected:
 		//b2BodyDef m_BodyDef;
 		b2Body *m_Body;
+
+		//DestructorSignal m_DestructorSignal;
+		BodyDestroyerPtr m_BodyDestroyer;
 
 		// Vector2 format
 		Vector2 m_Position;

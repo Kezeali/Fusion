@@ -234,11 +234,6 @@ public:
 				systemMgr->Draw();
 
 				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
-				if ((fullCleanInterval -= split) <= 0)
-				{
-					fullCleanInterval = 1000;
-					m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_FULL_CYCLE);
-				}
 
 				dispWindow.flip();
 			}

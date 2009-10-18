@@ -39,24 +39,24 @@ class TestStartup : ScriptEntity
 
 	void Spawn()
 	{
-		//@primaryCamera = @Camera();
-		//@p1Viewport = @Viewport(0, 0, 1, 1);
-		//p1Viewport.setCamera(primaryCamera);
+		@primaryCamera = @Camera();
+		@p1Viewport = @Viewport(0, 0, 1, 1);
+		p1Viewport.setCamera(primaryCamera);
 
-		//system.addViewport(p1Viewport);
+		system.addViewport(p1Viewport);
 
-		//playerIndex = system.addPlayer(this, "OnAddPlayer");
+		playerIndex = system.addPlayer(this, "OnAddPlayer");
 
-		//@p1Viewport = null;
+		@p1Viewport = null;
 	}
 
 	void Update(float)
 	{
-		if (firstUpdate)
-		{
-			firstUpdate = false;
-			entity_manager.remove(this);
-		}
+		//if (firstUpdate)
+		//{
+		//	firstUpdate = false;
+		//	entity_manager.remove(this);
+		//}
 	}
 
 	void Draw()

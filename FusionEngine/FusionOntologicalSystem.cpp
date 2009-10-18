@@ -287,13 +287,6 @@ namespace FusionEngine
 		}
 
 		m_Streaming->Update();
-
-		static bool rem = true;
-		if (rem)
-		{
-			rem = false;
-			m_EntityManager->RemoveEntityById(1);
-		}
 	}
 
 	void OntologicalSystem::Draw()
@@ -449,7 +442,7 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			EntityPtr entity = m_EntityManager->InstanceEntity("Simple", "startup");//(m_StartupEntity, "startup");
+			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
 
 			if (entity)
 			{

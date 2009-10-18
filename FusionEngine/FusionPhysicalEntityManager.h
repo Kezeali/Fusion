@@ -84,7 +84,9 @@ namespace FusionEngine
 
 		void Step(float split);
 
-		//void AddEntity(const PhysicalEntityPtr &entity);
+		void OnEntityDestruction(b2Body *body);
+
+		void PrepareEntity(PhysicalEntity *entity);
 		//void RemoveEntity(const PhysicalEntityPtr &entity);
 
 		//void Clear();
@@ -107,8 +109,11 @@ namespace FusionEngine
 		ContactListener *m_ContactListener;
 		DebugDraw *m_DebugDraw;
 
-		typedef std::tr1::unordered_set<PhysicalEntityPtr> PhysEntSet;
-		PhysEntSet m_Physicals;
+		//typedef std::vector<boost::signals2::connection> ConnectionList;
+
+		//ConnectionList m_Connections;
+
+		BodyDestroyerPtr m_BodyDestroyer;
 
 		void initialise(float width, float height);
 	};

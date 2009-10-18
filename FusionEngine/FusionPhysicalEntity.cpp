@@ -7,6 +7,30 @@
 namespace FusionEngine
 {
 
+	BodyDestroyer::BodyDestroyer()
+	{
+	}
+
+	BodyDestroyer::BodyDestroyer(const BodyDestroyer::CallbackFn &fn)
+		: m_Callback(fn)
+	{}
+
+	void BodyDestroyer::Destroy(b2Body *body) const
+	{
+		if (m_Callback)
+			m_Callback(body);
+	}
+
+	void BodyDestroyer::SetCallback(const BodyDestroyer::CallbackFn &fn)
+	{
+		m_Callback = fn;
+	}
+
+	void BodyDestroyer::ClearCallback()
+	{
+		m_Callback = BodyDestroyer::CallbackFn();
+	}
+
 	PhysicalEntity::PhysicalEntity()
 		: Entity(),
 		m_Body(NULL)
@@ -20,7 +44,7 @@ namespace FusionEngine
 	PhysicalEntity::~PhysicalEntity()
 	{
 		if (m_Body != NULL)
-			m_Body->GetWorld()->DestroyBody(m_Body);
+			m_BodyDestroyer->Destroy(m_Body);
 	}
 
 	void PhysicalEntity::ApplyForce(const Vector2 &point, const Vector2 &force)
@@ -126,6 +150,21 @@ namespace FusionEngine
 	//const b2BodyDef &PhysicalEntity::GetBodyDef() const
 	//{
 	//	return m_BodyDef;
+	//}
+
+	void PhysicalEntity::SetBodyDestroyer(const BodyDestroyerPtr &destroyer)
+	{
+		m_BodyDestroyer = destroyer;
+	}
+
+	//PhysicalEntity::DestructorSignal &PhysicalEntity::GetDestructorSignal()
+	//{
+	//	return m_DestructorSignal;
+	//}
+
+	//boost::signals2::connection &PhysicalEntity::ConnectToDestructor(const PhysicalEntity::DestructorSignal::slot_type &slot)
+	//{
+	//	return m_DestructorSignal.connect(slot);
 	//}
 
 	void PhysicalEntity::SerialiseState(SerialisedData &state, bool local) const

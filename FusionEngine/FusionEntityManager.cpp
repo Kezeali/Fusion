@@ -750,6 +750,8 @@ namespace FusionEngine
 	{
 		EntityDeserialiser entityDeserialiser(this);
 
+		bool entityRemoved = false;
+
 		EntityArray::iterator it = m_EntitiesToUpdate[idx].begin(),
 			end = m_EntitiesToUpdate[idx].end();
 		while (it != end)
@@ -762,6 +764,8 @@ namespace FusionEngine
 			{
 				it = m_EntitiesToUpdate[idx].erase(it);
 				end = m_EntitiesToUpdate[idx].end();
+
+				entityRemoved = true;
 			}
 			else if (entity->GetTagFlags() & m_ToDeleteFlags)
 			{
@@ -773,7 +777,7 @@ namespace FusionEngine
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				//m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
+				m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
 
 				if (entity->Wait())
 				{
@@ -792,6 +796,11 @@ namespace FusionEngine
 				// Next entity
 				++it;
 			}
+		}
+
+		if (entityRemoved) // Do a full GC cycle if entities were removed
+		{
+			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
 		}
 	}
 

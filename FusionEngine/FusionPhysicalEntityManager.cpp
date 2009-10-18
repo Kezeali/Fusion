@@ -21,6 +21,12 @@ namespace FusionEngine
 
 	PhysicalWorld::~PhysicalWorld()
 	{
+		//for (ConnectionList::iterator it = m_Connections.begin(), end = m_Connections.end(); it != end; ++it)
+		//	it->disconnect();
+		//m_Connections.clear();
+
+		m_BodyDestroyer->ClearCallback();
+
 		delete m_DebugDraw;
 		delete m_ContactListener;
 		delete m_World;
@@ -37,6 +43,16 @@ namespace FusionEngine
 			m_World->Step(dt, m_VelocityIterations, m_PositionIterations);
 		else
 			m_World->Step(dt, 0, 0);
+	}
+
+	void PhysicalWorld::OnEntityDestruction(b2Body *body)
+	{
+		m_World->DestroyBody(body);
+	}
+
+	void PhysicalWorld::PrepareEntity(PhysicalEntity *entity)
+	{
+		entity->SetBodyDestroyer(m_BodyDestroyer);
 	}
 
 	//void PhysicalWorld::AddEntity(const PhysicalEntityPtr &entity)
@@ -108,6 +124,8 @@ namespace FusionEngine
 
 		m_DebugDraw = new DebugDraw();
 		m_World->SetDebugDraw(m_DebugDraw);
+
+		m_BodyDestroyer.reset( new BodyDestroyer(boost::bind(&PhysicalWorld::OnEntityDestruction, this, _1)) );
 	}
 
 
