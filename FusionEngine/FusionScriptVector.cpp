@@ -67,18 +67,6 @@ namespace FusionEngine { namespace Scripting
 			delete this;
 	}
 
-	// Generic
-	static void VectorAddRef_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *thisPointer = (ScriptVector*)gen->GetObject();
-		thisPointer->AddRef();
-	}
-
-	static void VectorRelease_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *thisPointer = (ScriptVector*)gen->GetObject();
-		thisPointer->Release();
-	}
 
 	///////////////////
 	// Operations
@@ -91,127 +79,36 @@ namespace FusionEngine { namespace Scripting
 		return *this;
 	}
 
-	static void AssignVector_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *thisPointer = (ScriptVector*)gen->GetObject();
-		*thisPointer = *a;
-		gen->SetReturnAddress(thisPointer);
-	}
-
 	ScriptVector &ScriptVector::operator+=(const ScriptVector &other)
 	{
 		Data += other.Data;
 		return *this;
 	}
 
-	static void AddAssignVector_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *thisPointer = (ScriptVector*)gen->GetObject();
-		*thisPointer += *a;
-		gen->SetReturnAddress(thisPointer);
-	}
-
-	// Comparison
-	static void VectorEqual_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = (*a).Data == (*b).Data;
-		gen->SetReturnDWord(r);
-	}
-
-	static void VectorNotEqual_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		bool r = (*a).Data != (*b).Data;
-		gen->SetReturnDWord(r);
-	}
-
 	// Arithmatic
-	ScriptVector *operator+(const ScriptVector &a, const ScriptVector &b)
+	Vector2 *operator+(const Vector2 &a, const Vector2 &b)
 	{
-		ScriptVector *sum = new ScriptVector();
-		v2Add(a.Data, b.Data, sum->Data);
+		Vector2 *sum = new Vector2();
+		v2Add(a, b, *sum);
 		// Return a new object as a script handle
 		return sum;
 	}
 
-	static void AddVectors_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *a = (ScriptVector*)gen->GetArgAddress(0);
-		ScriptVector *b = (ScriptVector*)gen->GetArgAddress(1);
-		ScriptVector *out = *a + *b; //see operator+ above
-		gen->SetReturnAddress(out);
-	}
-
-	//////////////////////
-	// Properties (wrappers for generic call method)
-	static void VectorLength_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *s = (ScriptVector*)gen->GetObject();
-		float l = s->Data.length();
-		gen->SetReturnFloat(l);
-	}
-
-	static void VectorSquaredLength_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *s = (ScriptVector*)gen->GetObject();
-		float l = s->Data.squared_length();
-		gen->SetReturnFloat(l);
-	}
-
-
 	///////
 	// Mem
-	/*!
-	 * A wrapper for the default ScriptVector constructor, since
-	 * it is not possible to take the address of the constructor directly
-	 */
-	//static void ConstructScriptVector(ScriptVector *thisPointer)
-	//{
-	//	// Construct the string in the memory received
-	//	new(thisPointer) ScriptVector();
-	//}
-
-	// This is the string factory that creates new strings for the script based on string literals
-	static ScriptVector *VectorFactory(float x, float y)
+	static Vector2 *VectorDefaultFactory()
 	{
-		return new ScriptVector(x, y);
+		return new Vector2();
 	}
 
-	static void VectorFactory_Generic(asIScriptGeneric *gen)
+	static Vector2 *VectorInitFactory(float x, float y)
 	{
-		float x = gen->GetArgFloat(0);
-		float y = gen->GetArgFloat(1);
-		ScriptVector *ret = VectorFactory(x, y);
-		gen->SetReturnAddress(ret);
+		return new Vector2(x, y);
 	}
 
-	// This is the default string factory, that is responsible for creating empty string objects, e.g. when a variable is declared
-	static ScriptVector *VectorDefaultFactory()
+	static Vector2 *VectorCopyFactory(const Vector2 &other)
 	{
-		// Allocate and initialize with the default constructor
-		return new ScriptVector();
-	}
-
-	static void VectorDefaultFactory_Generic(asIScriptGeneric *gen)
-	{
-		gen->SetReturnAddress((void*)VectorDefaultFactory());
-	}
-
-	static ScriptVector *VectorCopyFactory(const ScriptVector &other)
-	{
-		// Allocate and initialize with the copy constructor
-		return new ScriptVector(other);
-	}
-
-	static void VectorCopyFactory_Generic(asIScriptGeneric *gen)
-	{
-		ScriptVector *other = (ScriptVector *)gen->GetArgObject(0);
-		gen->SetReturnAddress((void*)VectorCopyFactory(*other));
+		return new Vector2(other);
 	}
 
 	////////////////////////////////
@@ -221,29 +118,29 @@ namespace FusionEngine { namespace Scripting
 		int r, typeId;
 
 		// Register the type
-		r = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectType("Vector", sizeof(Vector2), asOBJ_REF); FSN_ASSERT( r >= 0 );
 		typeId = engine->GetTypeIdByDecl("Vector");
 
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)",     asFUNCTION(VectorFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)",     asFUNCTION(VectorInitFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		
 		// Note: We don't have to register the destructor, since the object uses reference counting
 		//r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 		// Register the object operator overloads
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(ScriptVector,AddRef), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(ScriptVector,Release), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asMETHODPR(ScriptVector, operator =, (const ScriptVector&), ScriptVector&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADD_ASSIGN, "Vector &f(const Vector &in)", asMETHODPR(ScriptVector, operator+=, (const ScriptVector&), ScriptVector&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(Vector2, addRef), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(Vector2, release), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asMETHODPR(Vector2, operator =, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADD_ASSIGN, "Vector &f(const Vector &in)", asMETHODPR(Vector2, operator+=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		// Register the global operator overloads
 		// Note: Vector2's methods can be used directly because the
 		// internal Vector2 is placed at the beginning of the class
 		//r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator==, (const Vector2 &), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		//r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator!=, (const Vector2 &), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTIONPR(operator +, (const ScriptVector &, const ScriptVector &), ScriptVector*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTIONPR(operator +, (const Vector2 &, const Vector2 &), Vector2*), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
@@ -257,42 +154,9 @@ namespace FusionEngine { namespace Scripting
 		return typeId;
 	}
 
-	int RegisterScriptVector_Generic(asIScriptEngine *engine)
-	{
-		int r, typeId;
-
-		// Register the type
-		typeId = engine->RegisterObjectType("Vector", sizeof(ScriptVector), asOBJ_REF); FSN_ASSERT( typeId >= 0 );
-
-		// Register factory methods
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)", asFUNCTION(VectorFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-
-		// Register the object operator overloads
-		// Note: We don't have to register the destructor, since the object uses reference counting
-		//r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asFUNCTION(VectorAddRef_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asFUNCTION(VectorRelease_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ASSIGNMENT, "Vector &f(const Vector &in)", asFUNCTION(AssignVector_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADD_ASSIGN, "Vector &f(const Vector &in)", asFUNCTION(AddAssignVector_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asFUNCTION(VectorEqual_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asFUNCTION(VectorNotEqual_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_ADD,         "Vector@ f(const Vector &in, const Vector &in)", asFUNCTION(AddVectors_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-
-		// Register the object methods
-		r = engine->RegisterObjectMethod("Vector", "float length() const", asFUNCTION(VectorLength_Generic), asCALL_GENERIC); FSN_ASSERT( r >= 0 );
-
-		return typeId;
-	}
-
 	int RegisterScriptVector(asIScriptEngine *engine)
 	{
-		if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
-			return RegisterScriptVector_Generic(engine);
-		else
-			return RegisterScriptVector_Native(engine);
+		return RegisterScriptVector_Native(engine);
 	}
 
 }}

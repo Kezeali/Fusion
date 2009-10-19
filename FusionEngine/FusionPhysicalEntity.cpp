@@ -55,6 +55,14 @@ namespace FusionEngine
 		}
 	}
 
+	void PhysicalEntity::ApplyTorque(float torque)
+	{
+		if (m_Body != NULL)
+		{
+			m_Body->ApplyTorque(torque);
+		}
+	}
+
 	const Vector2 &PhysicalEntity::GetPosition()
 	{
 		if (m_Body != NULL)
@@ -75,7 +83,7 @@ namespace FusionEngine
 		return m_Velocity;
 	}
 
-	float PhysicalEntity::GetAngle()
+	float PhysicalEntity::GetAngle() const
 	{
 		if (m_Body != NULL)
 			return m_Body->GetAngle();
@@ -83,7 +91,7 @@ namespace FusionEngine
 			return m_Angle;
 	}
 
-	float PhysicalEntity::GetAngularVelocity()
+	float PhysicalEntity::GetAngularVelocity() const
 	{
 		if (m_Body != NULL)
 			return m_Body->GetAngularVelocity();

@@ -781,7 +781,7 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("Entity",
 			"const Vector& getVelocity()",
-			asMETHOD(Entity, GetPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+			asMETHOD(Entity, GetVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Entity",
 			"void setVelocity(const Vector &in)",
 			asMETHOD(Entity, SetVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
@@ -792,6 +792,13 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"void setAngle(float)",
 			asMETHOD(Entity, SetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"float getAngularVelocity() const",
+			asMETHOD(Entity, GetAngularVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"void setAngularVelocity(float)",
+			asMETHOD(Entity, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);

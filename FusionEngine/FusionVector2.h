@@ -47,22 +47,26 @@ namespace FusionEngine
 	public:
 		//! Copying constructor.
 		Vector2T(const Vector2T<T> &other)
+			: m_RefCount(1),
+			x(other.x),
+			y(other.y)
 		{
-			x = other.x;
-			y = other.y;
 		}
 		//! Convert from Box2D vector
 		//Vector2T(const b2Vec2 &other);
 		//! Init. constructor
-		Vector2T(T x = 0.0, T y = 0.0)
+		Vector2T(T _x = 0.0, T _y = 0.0)
+			: x(_x),
+			y(_y)
 		{
-			this->x = x;
-			this->y = y;
 		}
 
 	public:
 		//! Coordinates
 		T x, y;
+
+	private:
+		int m_RefCount;
 
 	public:
 		static inline Vector2T<T> zero()
@@ -79,6 +83,19 @@ namespace FusionEngine
 		{
 			return Vector2T<T>(0, 1);
 		}
+
+		/////////////////////
+		// Reference Counting
+		void addRef()
+		{
+			++m_RefCount;
+		}
+		void release()
+		{
+			if (--m_RefCount == 0)
+				delete this;
+		}
+
 		///////////////
 		// Assignement
 		//! Assignment operator

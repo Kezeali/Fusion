@@ -646,6 +646,8 @@ namespace FusionEngine
 				const FixtureDefinition &fixtureDef = *it;
 				body->CreateFixture(fixtureDef.get());
 			}
+			//! TODO: add EntityDefinition property to define wheter mass should be set from shapes (default) or a given value
+			body->SetMassFromShapes();
 		}
 
 		// Add resource refs

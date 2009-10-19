@@ -257,7 +257,7 @@ namespace FusionEngine
 			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"Vector@ getPosition() const",
-			asFUNCTION(Camera_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			asMETHOD(Camera, GetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"void setAngle(float)",
 			asMETHOD(Camera, SetAngle), asCALL_THISCALL); FSN_ASSERT(r >= 0);

@@ -455,6 +455,10 @@ namespace FusionEngine
 			"void applyForce(const Vector &in)",
 			asFUNCTIONPR(PhysicalEntity_ApplyForce, (const Vector2&, PhysicalEntity *obj), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
+		r = engine->RegisterObjectMethod("Entity",
+			"void applyTorque(float)",
+			asMETHODPR(PhysicalEntity, ApplyTorque, (float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		// Fixture method
 		r = engine->RegisterObjectMethod("Fixture", "Entity@ getEntity() const", asFUNCTIONPR(Fixture_GetEntity, (b2Fixture&), Entity*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}

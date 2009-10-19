@@ -255,11 +255,11 @@ namespace FusionEngine
 		//! Gets position
 		virtual const Vector2 &GetPosition() =0;
 		//! Gets angle (rotation) value
-		virtual float GetAngle() =0;
+		virtual float GetAngle() const =0;
 		//! Gets linear velocity
 		virtual const Vector2 &GetVelocity() =0;
 		//! Gets angular (rotational) velocity
-		virtual float GetAngularVelocity() =0;
+		virtual float GetAngularVelocity() const =0;
 
 		//! Gets position
 		virtual void SetPosition(const Vector2 &position) =0;

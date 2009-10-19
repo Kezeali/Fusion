@@ -14,12 +14,9 @@ class Test : ScriptEntity
 	SoundSample@ movesound;
 	SoundSample@ bgm;
 
-	Vector position;
-
 	Test()
 	{
 		console.println("'Test' entity created");
-		position = Vector(150.0, 50.0);
 		runningtime = 0;
 	}
 	~Test()
@@ -46,8 +43,8 @@ class Test : ScriptEntity
 
 	void DebugOutput()
 	{
-		Vector p = GetPosition();
-		Vector v = GetVelocity();
+		const Vector@ p = GetPosition();
+		const Vector@ v = GetVelocity();
 		console.println("p: " + p.x + ", " + p.y);
 		console.println("v: " + v.x + ", " + v.y);
 		console.println("r: " + GetAngle());
@@ -56,6 +53,7 @@ class Test : ScriptEntity
 
 	uint runningtime;
 	bool first;
+	bool didOutput;
 	void Update(float dt)
 	{
 		if (first)
@@ -70,6 +68,13 @@ class Test : ScriptEntity
 		if (InputIsActive("quit"))
 			system.quit();
 
+		if (!didOutput && InputIsActive("debug"))
+		{
+			DebugOutput();
+		}
+		else
+			didOutput = false;
+
 		bool forward = InputIsActive("thrust");
 		bool left = InputIsActive("left");
 		bool right = InputIsActive("right");
@@ -80,16 +85,15 @@ class Test : ScriptEntity
 			movesound.play();
 		}
 
-		// TODO:
-		//if (left && !input_left)
-		//{
-		//	ApplyTorque(-0.6);
-		//}
+		if (left && !input_left)
+		{
+			ApplyTorque(-8);
+		}
 
-		//if (right && !input_right)
-		//{
-		//	ApplyTorque(0.6);
-		//}
+		if (right && !input_right)
+		{
+			ApplyTorque(10);
+		}
 
 		input_forward = forward;
 		input_left = left;

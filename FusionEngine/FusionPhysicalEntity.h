@@ -82,15 +82,16 @@ namespace FusionEngine
 		virtual ~PhysicalEntity();
 
 		virtual void ApplyForce(const Vector2 &point, const Vector2 &force);
+		virtual void ApplyTorque(float torque);
 
 		//! Gets the position of the physical body
 		virtual const Vector2 &GetPosition();
 		//! Gets angle (rotation) value
-		virtual float GetAngle();
+		virtual float GetAngle() const;
 		//! Gets linear velocity
 		virtual const Vector2 &GetVelocity();
 		//! Gets angular (rotational) velocity
-		virtual float GetAngularVelocity();
+		virtual float GetAngularVelocity() const;
 
 		//! Gets position
 		virtual void SetPosition(const Vector2 &position);
@@ -110,7 +111,7 @@ namespace FusionEngine
 
 		//const b2BodyDef &GetBodyDef() const;
 
-		//! Sets the proxy object that will destroy the b2Body when the PhysicalEntity is destroyed
+		//! Sets the slot object that will destroy the b2Body when the PhysicalEntity is destroyed
 		void SetBodyDestroyer(const BodyDestroyerPtr &destroyer);
 
 		//typedef boost::signals2::signal<void (b2Body*)> DestructorSignal;

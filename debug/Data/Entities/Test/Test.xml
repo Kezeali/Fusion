@@ -19,9 +19,9 @@
 	</Dependencies>
 	<!--Physics stuff-->
 	<Body property="body">
-		<CircleFixture isSensor="true" radius="14"/>
-		<RectFixture origin="center" s="10"/>
-		<RectFixture x="-10" y="-15" w="10" h="15"/>
+		<CircleFixture isSensor="true" radius="2" density="1"/>
+		<!--RectFixture origin="center" s="10"/>
+		<RectFixture x="-10" y="-15" w="10" h="15"/-->
 	</Body>
 	<!--Networking stuff-->
 	<Sync>

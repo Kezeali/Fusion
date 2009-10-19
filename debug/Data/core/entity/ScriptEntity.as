@@ -38,6 +38,17 @@ class ScriptEntity : IEntity
 		__appObject.applyForce(force);
 	}
 
+	void ApplyTorque(float torque)
+	{
+		__appObject.applyTorque(torque);
+	}
+
+
+	void SetPosition(const Vector@ position)
+	{
+		__appObject.setPosition(position);
+	}
+
 	const Vector@ GetPosition() const
 	{
 		return __appObject.getPosition();
@@ -51,6 +62,16 @@ class ScriptEntity : IEntity
 	float GetAngle() const
 	{
 		return __appObject.getAngle();
+	}
+
+	void SetAngularVelocity(float ang_vel)
+	{
+		__appObject.setAngularVelocity(ang_vel);
+	}
+
+	float GetAngularVelocity() const
+	{
+		return __appObject.getAngularVelocity();
 	}
 
 }
