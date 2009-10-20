@@ -514,31 +514,34 @@ namespace FusionEngine
 		{
 			on_load_callback(resource);
 		}
-		else if (!resource->IsQueuedToLoad())
+		else
 		{
-			m_ToDeliver.push_back(resource);
-			resource->_setQueuedToLoad(true);
-
 			if (on_load_callback)
 				onLoadConnection = resource->SigLoaded.connect(on_load_callback);
 
-			// A non-locking alternative would be to add these ToLoad jobs
-			//  to another queue only accessed by this thread, then using an
-			//  Update(dt) method (called each engine-step) push those entries
-			//  onto the ToLoad queue whenever the worker has nothing to do
-			//  (as notified by an event, aka barrier) There will have to be
-			//  a limit to how many load jobs can be pushed per interval of
-			//  time so that the Update method doesn't get bogged down.
-			//   Of course, the lock below and its counterpart in the worker
-			//  thread only happen for a moment, so it is most likely not
-			//  a big enough deal to look at a non-locking solution.
-			//  If I were to hazzard a guess, I'd say locking will actually
-			//  yeald better performance.
-			m_ToLoadMutex.lock();
-			m_ToLoad.push(ResourceToLoadData(priority, resource));
-			m_ToLoadMutex.unlock();
+			if (!resource->IsQueuedToLoad())
+			{
+				m_ToDeliver.push_back(resource);
+				resource->_setQueuedToLoad(true);
 
-			m_ToLoadEvent.set();
+				// A non-locking alternative would be to add these ToLoad jobs
+				//  to another queue only accessed by this thread, then using an
+				//  Update(dt) method (called each engine-step) push those entries
+				//  onto the ToLoad queue whenever the worker has nothing to do
+				//  (as notified by an event, aka barrier) There will have to be
+				//  a limit to how many load jobs can be pushed per interval of
+				//  time so that the Update method doesn't get bogged down.
+				//   Of course, the lock below and its counterpart in the worker
+				//  thread only happen for a moment, so it is most likely not
+				//  a big enough deal to look at a non-locking solution.
+				//  If I were to hazzard a guess, I'd say locking will actually
+				//  yeald better performance.
+				m_ToLoadMutex.lock();
+				m_ToLoad.push(ResourceToLoadData(priority, resource));
+				m_ToLoadMutex.unlock();
+
+				m_ToLoadEvent.set();
+			}
 		}
 
 		return onLoadConnection;
