@@ -18,10 +18,10 @@
 		<UtilityScript file="../General/SimpleCommands.as"/>
 	</Dependencies>
 	<!--Physics stuff-->
-	<Body property="body">
-		<CircleFixture isSensor="true" radius="2" density="1"/>
-		<!--RectFixture origin="center" s="10"/>
-		<RectFixture x="-10" y="-15" w="10" h="15"/-->
+	<Body>
+		<!--<CircleFixture isSensor="true" radius="22"/>-->
+		<!--<RectFixture isSensor="true" size="1"/>-->
+		<RectFixture w="25" h="31" density="1"/>
 	</Body>
 	<!--Networking stuff-->
 	<Sync>

@@ -220,7 +220,7 @@ public:
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
 
-				m_ResourceManager->DisposeUnusedResources();
+				m_ResourceManager->UnloadUnreferencedResources();
 				m_ResourceManager->DeliverLoadedResources();
 
 				if (split < 1000)

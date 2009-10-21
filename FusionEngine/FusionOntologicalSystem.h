@@ -79,7 +79,7 @@ namespace FusionEngine
 		//! Adds a viewport
 		void AddViewport(ViewportPtr viewport);
 		//! Removes the given viewport
-		void RemoveViewport(const ViewportPtr &viewport);
+		void RemoveViewport(ViewportPtr viewport);
 
 		//! Removes all viewports
 		void RemoveAllViewports();
@@ -90,8 +90,8 @@ namespace FusionEngine
 		// Might be useful, but I don't think this is how it should work
 		//  Rather, Bodies should have a OwnerID much like entities do
 		//  This is important for the authority manager
-		void MapBodyToEntity(PhysicsBodyPtr &body, EntityPtr &entity);
-		EntityPtr GetBodyEntity(const PhysicsBodyPtr &body) const;
+		//void MapBodyToEntity(PhysicsBodyPtr &body, EntityPtr &entity);
+		//EntityPtr GetBodyEntity(PhysicsBodyPtr body) const;
 
 		//! Sets the script module to use
 		void SetModule(const ModulePtr &module);
@@ -150,6 +150,11 @@ namespace FusionEngine
 		int GetScreenWidth() const;
 		//! Returns Renderer::GetContextWidth()
 		int GetScreenHeight() const;
+
+		//! Enables the physics debug visualization on the given viewport
+		void EnablePhysicsDebugDraw(ViewportPtr viewport);
+		//! Counterpart to OntologicalSystem::EnablePhysicsDebugDraw()
+		void DisablePhysicsDebugDraw();
 
 		void onGetNetIndex(unsigned int local_idx, ObjectID net_idx);
 

@@ -32,6 +32,34 @@ namespace FusionEngine
 		delete m_World;
 	}
 
+	void PhysicalWorld::SetGraphicContext(const CL_GraphicContext &context)
+	{
+		m_DebugDraw->SetGraphicContext(context);
+	}
+
+	void PhysicalWorld::SetDebugDrawViewport(const ViewportPtr &viewport)
+	{
+		m_DebugDraw->SetViewport(viewport);
+	}
+
+	void PhysicalWorld::EnableDebugDraw(bool enable)
+	{
+		if (enable)
+		{
+			m_World->SetDebugDraw(m_DebugDraw);
+
+			m_DebugDraw->SetFlags(
+				b2DebugDraw::e_shapeBit |
+				b2DebugDraw::e_jointBit |
+				b2DebugDraw::e_coreShapeBit |
+				b2DebugDraw::e_aabbBit |
+				b2DebugDraw::e_centerOfMassBit |
+				b2DebugDraw::e_pairBit);
+		}
+		else
+			m_World->SetDebugDraw(NULL);
+	}
+
 	b2World *PhysicalWorld::GetB2World() const
 	{
 		return m_World;
@@ -39,10 +67,12 @@ namespace FusionEngine
 
 	void PhysicalWorld::Step(float dt)
 	{
+		m_DebugDraw->SetupView();
 		if (dt > 0.0f)
 			m_World->Step(dt, m_VelocityIterations, m_PositionIterations);
 		else
 			m_World->Step(dt, 0, 0);
+		m_DebugDraw->ResetView();
 	}
 
 	void PhysicalWorld::OnEntityDestruction(b2Body *body)

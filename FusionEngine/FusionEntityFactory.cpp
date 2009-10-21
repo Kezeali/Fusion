@@ -308,6 +308,10 @@ namespace FusionEngine
 			*x = boost::lexical_cast<T>(value.substr(0, d));
 			*y = boost::lexical_cast<T>(value.substr(d+1));
 		}
+		else
+		{
+			*x = *y = boost::lexical_cast<T>(value);
+		}
 	}
 
 	void EntityDefinition::parseElement_Body(ticpp::Element *element)
@@ -341,12 +345,15 @@ namespace FusionEngine
 				child->GetAttribute("radius", &circleDef->radius, false);
 				child->GetAttribute("r", &circleDef->radius, false);
 
+				circleDef->localPosition *= s_SimUnitsPerGameUnit;
+				circleDef->radius *= s_SimUnitsPerGameUnit;
+
 				fixtureDef.reset(circleDef);
 			}
 			else if (child->Value() == "RectFixture")
 			{
 				b2PolygonDef *polyDef = new b2PolygonDef;
-				float hx, hy, angle;
+				float hx = 0.f, hy, angle = 0.f;
 				b2Vec2 center;
 
 				attribute = child->GetAttribute("size");
@@ -358,6 +365,14 @@ namespace FusionEngine
 				{
 					child->GetAttribute("width", &hx, false);
 					child->GetAttribute("height", &hy, false);
+					child->GetAttribute("w", &hx, false);
+					child->GetAttribute("h", &hy, false);
+				}
+
+				if (hx == 0.f)
+				{
+					delete polyDef;
+					continue;
 				}
 
 				attribute = child->GetAttribute("center");
@@ -373,10 +388,16 @@ namespace FusionEngine
 
 				child->GetAttribute("angle", &angle, false);
 
+				hx *= s_SimUnitsPerGameUnit;
+				hy *= s_SimUnitsPerGameUnit;
+
 				if (fe_fzero(angle))
 					polyDef->SetAsBox(hx, hy);
 				else
+				{
+					center *= s_SimUnitsPerGameUnit;
 					polyDef->SetAsBox(hx, hy, center, angle);
+				}
 
 				fixtureDef.reset(polyDef);
 			}
@@ -392,7 +413,10 @@ namespace FusionEngine
 					parse_vector(attribute, &edgeDef->vertex1.x, &edgeDef->vertex1.y);
 				attribute = child->GetAttribute("second");
 				if (!attribute.empty())
-					parse_vector(attribute, &edgeDef->vertex1.x, &edgeDef->vertex1.y);
+					parse_vector(attribute, &edgeDef->vertex2.x, &edgeDef->vertex2.y);
+
+				edgeDef->vertex1 *= s_SimUnitsPerGameUnit;
+				edgeDef->vertex2 *= s_SimUnitsPerGameUnit;
 
 				fixtureDef.reset(edgeDef);
 			}

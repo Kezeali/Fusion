@@ -777,13 +777,14 @@ namespace FusionEngine
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
+				if (idx != SYSTEM_DOMAIN)
+					m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
 
 				if (entity->Wait())
 				{
-					//m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
+					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
 					entity->Update(split);
-					//m_EntitySynchroniser->AddToPacket(entity);
+					m_EntitySynchroniser->AddToPacket(entity);
 
 					updateRenderables(entity, split);
 

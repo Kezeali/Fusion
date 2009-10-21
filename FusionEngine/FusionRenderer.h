@@ -109,6 +109,9 @@ namespace FusionEngine
 		//};
 		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport);
 
+
+		const CL_GraphicContext &GetGraphicContext() const;
+
 		int GetContextWidth() const;
 		int GetContextHeight() const;
 

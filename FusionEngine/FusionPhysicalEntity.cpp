@@ -51,7 +51,10 @@ namespace FusionEngine
 	{
 		if (m_Body != NULL)
 		{
-			m_Body->ApplyForce(b2Vec2(point.x, point.y), b2Vec2(force.y, force.y));
+			m_Body->ApplyForce(
+				b2Vec2(point.x * s_SimUnitsPerGameUnit, point.y * s_SimUnitsPerGameUnit),
+				b2Vec2(force.y * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit)
+				);
 		}
 	}
 
@@ -67,8 +70,8 @@ namespace FusionEngine
 	{
 		if (m_Body != NULL)
 		{
-			m_Position.x = m_Body->GetPosition().x;
-			m_Position.y = m_Body->GetPosition().y;
+			m_Position.x = m_Body->GetPosition().x * s_GameUnitsPerSimUnit;
+			m_Position.y = m_Body->GetPosition().y * s_GameUnitsPerSimUnit;
 		}
 		return m_Position;
 	}
@@ -77,8 +80,8 @@ namespace FusionEngine
 	{
 		if (m_Body != NULL)
 		{
-			m_Velocity.x = m_Body->GetLinearVelocity().x;
-			m_Velocity.y = m_Body->GetLinearVelocity().y;
+			m_Velocity.x = m_Body->GetLinearVelocity().x * s_GameUnitsPerSimUnit;
+			m_Velocity.y = m_Body->GetLinearVelocity().y * s_GameUnitsPerSimUnit;
 		}
 		return m_Velocity;
 	}
@@ -102,7 +105,7 @@ namespace FusionEngine
 	void PhysicalEntity::SetPosition(const Vector2 &position)
 	{
 		if (m_Body != NULL)
-			m_Body->SetPosition(b2Vec2(position.x, position.y));
+			m_Body->SetPosition(b2Vec2(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit));
 		else
 		{
 			//m_BodyDef.position.Set(position.x, position.y);
@@ -113,7 +116,7 @@ namespace FusionEngine
 	void PhysicalEntity::SetVelocity(const Vector2 &velocity)
 	{
 		if (m_Body != NULL)
-			m_Body->SetLinearVelocity(b2Vec2(velocity.x, velocity.y));
+			m_Body->SetLinearVelocity(b2Vec2(velocity.x * s_SimUnitsPerGameUnit, velocity.y * s_SimUnitsPerGameUnit));
 		else
 		{
 			//m_BodyDef.linearVelocity.Set(velocity.x, velocity.y);

@@ -45,6 +45,11 @@ namespace FusionEngine
 		m_gc = gc;
 	}
 
+	void DebugDraw::SetViewport(const ViewportPtr &viewport)
+	{
+		m_Viewport = viewport;
+	}
+
 	void DebugDraw::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color)
 	{
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
@@ -99,14 +104,10 @@ namespace FusionEngine
 			positions[n].y = radius * sin(rads) + center.y;
 		}
 
-		m_gc.set_program_object(cl_program_color_only);
-
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
 		m_gc.draw_primitives(cl_line_strip, segs, vertex_data);
-
-		m_gc.reset_program_object();
 
 		delete[] positions;
 	}
@@ -128,8 +129,6 @@ namespace FusionEngine
 			positions[n].y = radius * sin(rads) + center.y;
 		}
 
-		m_gc.set_program_object(cl_program_color_only);
-
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
@@ -144,8 +143,6 @@ namespace FusionEngine
 		vertex_data.set_attributes(0, positions);
 		m_gc.draw_primitives(cl_line_strip, segs, vertex_data);
 
-		m_gc.reset_program_object();
-
 		delete[] positions;
 	}
 
@@ -159,14 +156,10 @@ namespace FusionEngine
 			CL_Vec2i(p2.x, p2.y)
 		};
 
-		m_gc.set_program_object(cl_program_color_only);
-
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
 		m_gc.draw_primitives(cl_polygon, 2, vertex_data);
-
-		m_gc.reset_program_object();
 	}
 
 	void DebugDraw::DrawXForm(const b2XForm& /*xf*/)
@@ -189,6 +182,48 @@ namespace FusionEngine
 		CL_Colorf clcolor(color.r, color.g, color.b, 1.0f);
 
 		CL_Draw::box(m_gc, aabb->lowerBound.y, aabb->lowerBound.y, aabb->upperBound.x, aabb->upperBound.y, clcolor);
+	}
+
+	void DebugDraw::SetupView()
+	{
+		if (m_Viewport)
+		{
+			m_gc.set_program_object(cl_program_color_only);
+
+			const CameraPtr &camera = m_Viewport->GetCamera();
+
+			CL_Rect viewportArea;
+			const CL_Rectf &proportions = m_Viewport->GetArea();
+			viewportArea.left = (int)floor(proportions.left * m_gc.get_width());
+			viewportArea.top = (int)floor(proportions.top * m_gc.get_height());
+			viewportArea.right = (int)ceil(proportions.right * m_gc.get_width());
+			viewportArea.bottom = (int)ceil(proportions.bottom * m_gc.get_height());
+
+			m_gc.set_cliprect(viewportArea);
+
+			const CL_Vec2f &camPosition = camera->GetPosition();
+			CL_Origin camOrigin = camera->GetOrigin();
+
+			CL_Vec2f viewportOffset;
+			viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
+
+			m_gc.push_modelview();
+			m_gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+			//m_gc.set_translate(0.f, 0.f);
+			//m_gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+			m_gc.mult_scale(s_GameUnitsPerSimUnit, s_GameUnitsPerSimUnit);
+		}
+	}
+
+	void DebugDraw::ResetView()
+	{
+		if (m_Viewport)
+		{
+			m_gc.pop_modelview();
+			//m_gc.reset_cliprect();
+
+			m_gc.reset_program_object();
+		}
 	}
 
 }

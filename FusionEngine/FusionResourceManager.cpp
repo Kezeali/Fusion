@@ -420,55 +420,13 @@ namespace FusionEngine
 		//m_LoadedResources.clear();
 	}
 
-	ResourceDataPtr ResourceManager::GetResource(const std::string& type, const std::wstring& path, int priority)
+	void ResourceManager::UnloadUnreferencedResources()
 	{
-		ResourceDataPtr resource;
-
-		// Check whether the given resource already exists
-		ResourceMap::iterator existing = m_Resources.find(path);
-		if (existing != m_Resources.end() && existing->second->GetPath() == path)
-		{
-			resource = existing->second;
-
-			// Remove matching entry from Unreferenced
-			if (resource->Unused())
-				m_Unreferenced.erase(resource);
-		}
-		else
-		{
-			resource = ResourceDataPtr(new ResourceContainer(type, path, NULL));
-			resource->NoReferences = boost::bind(&ResourceManager::resourceUnreferenced, this, _1);
-
-			m_Resources[path] = resource;
-		}
-
-		if (resource->IsQueuedToUnload())
-		{
-			// TODO: Make a method that does the following
-			m_ToUnloadMutex.lock();
-			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
-			{
-				if (*it == resource)
-				{
-					m_ToUnload.erase(it);
-					break;
-				}
-			}
-			m_ToUnloadMutex.unlock();
-		}
-
-		if (!resource->IsLoaded() && !resource->IsQueuedToLoad())
-		{
-			m_ToDeliver.push_back(resource);
-
-			m_ToLoadMutex.lock();
-			m_ToLoad.push(ResourceToLoadData(priority, resource));
-			m_ToLoadMutex.unlock();
-
-			m_ToLoadEvent.set();
-		}
-
-		return resource;
+		CL_MutexSection lock(&m_ToUnloadMutex);
+		for (ResourceSet::iterator it = m_Unreferenced.begin(), end = m_Unreferenced.end(); it != end; ++it)
+			m_ToUnload.push_back(*it);
+		m_Unreferenced.clear();
+		m_ToUnloadEvent.set();
 	}
 
 	bsig2::connection ResourceManager::GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)

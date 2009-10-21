@@ -441,7 +441,9 @@ namespace FusionEngine
 	void PhysicalEntity_ApplyForce(const Vector2 &force, PhysicalEntity *obj)
 	{
 		b2Body *body = obj->GetBody();
-		body->ApplyForce(body->GetWorldCenter(), b2Vec2(force.x, force.y));
+		body->ApplyForce(
+			body->GetWorldCenter(),
+			b2Vec2(force.x * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit));
 	}
 
 	void ScriptedEntity::Register(asIScriptEngine* engine)

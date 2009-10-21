@@ -80,6 +80,13 @@ namespace FusionEngine
 
 		~PhysicalWorld();
 
+		//! Sets the GC for the debug draw object to use
+		void SetGraphicContext(const CL_GraphicContext &context);
+		//! Sets the viewport within which the debug info. should be drawn
+		void SetDebugDrawViewport(const ViewportPtr &viewport);
+		//! Adds a debug draw impl. object to the b2World
+		void EnableDebugDraw(bool enable = true);
+
 		b2World *GetB2World() const;
 
 		void Step(float split);

@@ -213,7 +213,6 @@ namespace FusionEngine
 
 		void UnloadUnreferencedResources();
 
-		ResourceDataPtr GetResource(const std::string& type, const std::wstring& path, int priority = 0);
 		//! Loads / gets a resource
 		bsig2::connection GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 

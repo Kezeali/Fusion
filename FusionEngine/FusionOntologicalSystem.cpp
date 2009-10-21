@@ -177,6 +177,7 @@ namespace FusionEngine
 			}
 			//m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
 			m_PhysWorld = new PhysicalWorld(worldX, worldY);
+			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 		}
@@ -403,7 +404,7 @@ namespace FusionEngine
 		m_Viewports.push_back(viewport);
 	}
 
-	void OntologicalSystem::RemoveViewport(const ViewportPtr &viewport)
+	void OntologicalSystem::RemoveViewport(ViewportPtr viewport)
 	{
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
@@ -575,6 +576,17 @@ namespace FusionEngine
 		return m_Renderer->GetContextHeight();
 	}
 
+	void OntologicalSystem::EnablePhysicsDebugDraw(ViewportPtr viewport)
+	{
+		m_PhysWorld->EnableDebugDraw();
+		m_PhysWorld->SetDebugDrawViewport(viewport);
+	}
+
+	void OntologicalSystem::DisablePhysicsDebugDraw()
+	{
+		m_PhysWorld->EnableDebugDraw(false);
+	}
+
 	void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
 	{
 		// Call the script callback, if there is one
@@ -631,6 +643,13 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("System",
 			"int getScreenHeight()",
 			asMETHOD(OntologicalSystem, GetScreenHeight), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"void enablePhysicsDebugDraw(Viewport@)",
+			asMETHOD(OntologicalSystem, EnablePhysicsDebugDraw), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void disablePhysicsDebugDraw()",
+			asMETHOD(OntologicalSystem, DisablePhysicsDebugDraw), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	ObjectID OntologicalSystem::getNextPlayerIndex()

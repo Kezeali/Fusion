@@ -32,7 +32,10 @@
 #endif
 
 #include "FusionCommon.h"
+
 #include <Box2D.h>
+
+#include "FusionRenderer.h"
 
 namespace FusionEngine
 {
@@ -44,6 +47,10 @@ namespace FusionEngine
 		DebugDraw(CL_GraphicContext gc);
 
 		void SetGraphicContext(CL_GraphicContext gc);
+		void SetViewport(const ViewportPtr &viewport);
+
+		void SetupView();
+		void ResetView();
 
 		void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
 
@@ -65,6 +72,7 @@ namespace FusionEngine
 
 	protected:
 		CL_GraphicContext m_gc;
+		ViewportPtr m_Viewport;
 	};
 
 }

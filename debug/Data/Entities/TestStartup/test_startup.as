@@ -6,6 +6,7 @@ class TestStartup : ScriptEntity
 	uint playerIndex;
 
 	Test@ testEntity;
+	Test@ scenery;
 	
 	bool firstUpdate;
 
@@ -47,7 +48,13 @@ class TestStartup : ScriptEntity
 
 		playerIndex = system.addPlayer(this, "OnAddPlayer");
 
+		system.enablePhysicsDebugDraw(p1Viewport);
+
 		@p1Viewport = null;
+
+		@scenery = cast<Test>( entity_manager.instance("Test", "scenery") );
+		scenery.Spawn();
+		scenery.SetPosition(Vector(151, 50));
 	}
 
 	void Update(float)

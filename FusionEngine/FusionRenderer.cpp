@@ -147,6 +147,11 @@ namespace FusionEngine
 		area.bottom = (int)ceil(proportions.bottom * m_GC.get_height());
 	}
 
+	const CL_GraphicContext &Renderer::GetGraphicContext() const
+	{
+		return m_GC;
+	}
+
 	int Renderer::GetContextWidth() const
 	{
 		return m_GC.get_width();

@@ -31,14 +31,14 @@ class Test : ScriptEntity
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();
 		//@gui_entity = null;
+
+		SetPosition(Vector(150, 50));
 		
 		first = true;
 	}
 
 	void Draw()
 	{
-		//Vector p; physBody.get_position(p);
-		//imgBody.draw(p.x, p.y, physBody.get_angle());
 	}
 
 	void DebugOutput()
@@ -68,12 +68,10 @@ class Test : ScriptEntity
 		if (InputIsActive("quit"))
 			system.quit();
 
-		if (!didOutput && InputIsActive("debug"))
-		{
+		bool doOutput = InputIsActive("debug");
+		if (doOutput && !didOutput)
 			DebugOutput();
-		}
-		else
-			didOutput = false;
+		didOutput = doOutput;
 
 		bool forward = InputIsActive("thrust");
 		bool left = InputIsActive("left");
@@ -81,18 +79,20 @@ class Test : ScriptEntity
 
 		if (forward && !input_forward)
 		{
-			ApplyForce(Vector(0,5));
+			ApplyForce(Vector(0,-5));
 			movesound.play();
 		}
 
 		if (left && !input_left)
 		{
-			ApplyTorque(-8);
+			//ApplyTorque(-10);
+			SetAngularVelocity(-0.2);
 		}
 
 		if (right && !input_right)
 		{
-			ApplyTorque(10);
+			//ApplyTorque(10);
+			SetAngularVelocity(0.2);
 		}
 
 		input_forward = forward;

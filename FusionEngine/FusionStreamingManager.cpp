@@ -113,6 +113,7 @@ namespace FusionEngine
 			else
 				cam.Tightness += (s_FastTightness - cam.Tightness) * 0.01f;
 
+			cam.LastPosition.x = camPos.x; cam.LastPosition.y = camPos.y;
 			cam.LastVelocity = velocity;
 		}
 	}
