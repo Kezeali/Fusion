@@ -442,8 +442,22 @@ namespace FusionEngine
 	{
 		b2Body *body = obj->GetBody();
 		body->ApplyForce(
-			body->GetWorldCenter(),
-			b2Vec2(force.x * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit));
+			b2Vec2(force.x * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit),
+			body->GetWorldCenter());
+	}
+
+	Vector2* PhysicalEntity_GetWorldVector(const Vector2 &vector, PhysicalEntity *obj)
+	{
+		b2Body *body = obj->GetBody();
+		b2Vec2 v = body->GetWorldVector(b2Vec2(vector.x, vector.y));
+		return new Vector2(v.x, v.y);
+	}
+
+	Vector2* PhysicalEntity_GetWorldPoint(const Vector2 &point, PhysicalEntity *obj)
+	{
+		b2Body *body = obj->GetBody();
+		b2Vec2 p = body->GetWorldPoint(b2Vec2(point.x, point.y));
+		return new Vector2(p.x, p.y);
 	}
 
 	void ScriptedEntity::Register(asIScriptEngine* engine)
@@ -461,8 +475,15 @@ namespace FusionEngine
 			"void applyTorque(float)",
 			asMETHODPR(PhysicalEntity, ApplyTorque, (float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
+		r = engine->RegisterObjectMethod("Entity",
+			"Vector@ getWorldVector(const Vector &in)",
+			asFUNCTIONPR(PhysicalEntity_GetWorldVector, (const Vector2&, PhysicalEntity *obj), Vector2*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Entity",
+			"Vector@ getWorldPoint(const Vector &in)",
+			asFUNCTIONPR(PhysicalEntity_GetWorldPoint, (const Vector2&, PhysicalEntity *obj), Vector2*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
 		// Fixture method
-		r = engine->RegisterObjectMethod("Fixture", "Entity@ getEntity() const", asFUNCTIONPR(Fixture_GetEntity, (b2Fixture&), Entity*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod("Fixture", "Entity@ getEntity() const", asFUNCTIONPR(Fixture_GetEntity, (b2Fixture&), Entity*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 }

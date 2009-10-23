@@ -28,9 +28,9 @@ class ScriptEntity : IEntity
 	void Update() {}
 	void Draw() {}
 
-	void ApplyForce(const Vector@ point, const Vector@ force)
+	void ApplyForce(const Vector@ force, const Vector@ point)
 	{
-		__appObject.applyForce(point, force);
+		__appObject.applyForce(force, point);
 	}
 
 	void ApplyForce(const Vector@ force)
@@ -44,6 +44,27 @@ class ScriptEntity : IEntity
 	}
 
 
+	Vector@ GetWorldVector(const Vector@ vector)
+	{
+		return __appObject.getWorldVector(vector);
+	}
+
+	Vector@ GetWorldPoint(const Vector@ point)
+	{
+		return __appObject.getWorldPoint(point);
+	}
+
+	Vector@ GetWorldVector(float x, float y)
+	{
+		return __appObject.getWorldVector( Vector(x, y) );
+	}
+
+	Vector@ GetWorldPoint(float x, float y)
+	{
+		return __appObject.getWorldPoint( Vector(x, y) );
+	}
+
+
 	void SetPosition(const Vector@ position)
 	{
 		__appObject.setPosition(position);
@@ -54,9 +75,19 @@ class ScriptEntity : IEntity
 		return __appObject.getPosition();
 	}
 
+	void SetVelocity(const Vector@ velocity)
+	{
+		__appObject.setVelocity(velocity);
+	}
+
 	const Vector@ GetVelocity() const
 	{
 		return __appObject.getVelocity();
+	}
+
+	void SetAngle(float angle)
+	{
+		__appObject.setAngle(angle);
 	}
 
 	float GetAngle() const

@@ -592,7 +592,7 @@ namespace FusionEngine
 		else if (typeId == eng->GetTypeIdByDecl("Vector"))
 		{
 			Vector2 *vec = (Vector2*)varPtr;
-			strstr << vec->getX() << "," << vec->getY();
+			strstr << vec->get_x() << "," << vec->get_y();
 		}
 		else if (typeId == eng->GetTypeIdByDecl("StringArray"))
 		{
@@ -637,7 +637,7 @@ namespace FusionEngine
 			const Vector2 **handle = (const Vector2**)varPtr;
 			if (handle != NULL)
 			{
-				strstr << (*handle)->getX() << "," << (*handle)->getY();
+				strstr << (*handle)->get_x() << "," << (*handle)->get_y();
 			}
 			else
 			{

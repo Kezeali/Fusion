@@ -9,14 +9,7 @@ namespace FusionEngine
 		: m_VelocityIterations(s_PhysicsVelocityIterations),
 		m_PositionIterations(s_PhysicsPositionIterations)
 	{
-		initialise(1000, 1000);
-	}
-
-	PhysicalWorld::PhysicalWorld(float w, float h)
-		: m_VelocityIterations(s_PhysicsVelocityIterations),
-		m_PositionIterations(s_PhysicsPositionIterations)
-	{
-		initialise(w, h);
+		initialise();
 	}
 
 	PhysicalWorld::~PhysicalWorld()
@@ -51,7 +44,6 @@ namespace FusionEngine
 			m_DebugDraw->SetFlags(
 				b2DebugDraw::e_shapeBit |
 				b2DebugDraw::e_jointBit |
-				b2DebugDraw::e_coreShapeBit |
 				b2DebugDraw::e_aabbBit |
 				b2DebugDraw::e_centerOfMassBit |
 				b2DebugDraw::e_pairBit);
@@ -136,18 +128,11 @@ namespace FusionEngine
 	{
 	}
 
-	void PhysicalWorld::initialise(float width, float height)
+	void PhysicalWorld::initialise()
 	{
-		float widthPositive = width * 0.5f;
-		float heightPositive = height * 0.5f;
-
-		b2AABB worldAABB;
-		worldAABB.lowerBound.Set(-widthPositive, -heightPositive);
-		worldAABB.upperBound.Set(widthPositive, heightPositive);
-
 		b2Vec2 gravity(0.0f, 0.0f);
 
-		m_World = new b2World(worldAABB, gravity, true);
+		m_World = new b2World(gravity, true);
 
 		m_ContactListener = new ContactListener();
 		m_World->SetContactListener(m_ContactListener);

@@ -166,6 +166,7 @@ namespace FusionEngine
 		StreamingCameraMap m_Cameras;
 
 		float m_Range;
+		float m_RangeSquared;
 	};
 
 }

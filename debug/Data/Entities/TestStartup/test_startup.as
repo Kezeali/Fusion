@@ -24,6 +24,7 @@ class TestStartup : ScriptEntity
 	{
 		@testEntity = cast<Test>( entity_manager.instance("Test", "test", player) );
 		testEntity.Spawn();
+		testEntity.SetPosition(Vector(200, 50));
 
 		console.println("Before camera setup");
 
@@ -54,7 +55,7 @@ class TestStartup : ScriptEntity
 
 		@scenery = cast<Test>( entity_manager.instance("Test", "scenery") );
 		scenery.Spawn();
-		scenery.SetPosition(Vector(151, 50));
+		scenery.SetPosition(Vector(100, 50));
 	}
 
 	void Update(float)

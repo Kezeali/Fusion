@@ -81,7 +81,7 @@ namespace FusionEngine
 
 		virtual ~PhysicalEntity();
 
-		virtual void ApplyForce(const Vector2 &point, const Vector2 &force);
+		virtual void ApplyForce(const Vector2 &force, const Vector2 &point);
 		virtual void ApplyTorque(float torque);
 
 		//! Gets the position of the physical body

@@ -43,18 +43,8 @@
 namespace FusionEngine
 {
 
-class EntityTest
+class EditorTest
 {
-private:
-	Network *m_Network;
-	InputManager *m_Input;
-	ResourceManager *m_ResourceManager;
-	ScriptingEngine *m_ScriptManager;
-
-	/*std::tr1::shared_ptr<PlayerRegistry>*/PlayerRegistry* m_PlayerRegistry;
-
-	/*std::tr1::shared_ptr<OntologicalSystem>*/OntologicalSystem* m_Ontology;
-
 public:
 	virtual int main(const std::vector<CL_String>& args)
 	{
@@ -72,30 +62,30 @@ public:
 		CL_DisplayWindow dispWindow("Display", 800, 600);
 
 		// TODO: store these in shared_ptrs
-		Logger* logger = 0;
-		ConsoleStdOutWriter* cout = 0;
-		Console* console = 0;
+		boost::scoped_ptr<Logger> logger;
+		boost::scoped_ptr<ConsoleStdOutWriter> coutWriter;
+		boost::scoped_ptr<Console> console;
 
 		try
 		{
-			console = new Console();
-			cout = new ConsoleStdOutWriter();
-			cout->Enable();
-			logger = new Logger();
+			console.reset(new Console());
+			coutWriter.reset(new ConsoleStdOutWriter());
+			coutWriter->Enable();
+			logger.reset(new Logger());
 
 			CL_GraphicContext &gc = dispWindow.get_gc();
 			CL_OpenGL::set_active(NULL);
 
 			////////////////////
 			// Scripting Manager
-			m_ScriptManager = new ScriptingEngine();
-			asIScriptEngine* asEngine = m_ScriptManager->GetEnginePtr();
+			ScriptingEngine *scriptingManager = new ScriptingEngine();
+			asIScriptEngine* asEngine = scriptingManager->GetEnginePtr();
 
 			//RegisterPhysicsTypes(asEngine);
 			//ResourceManager::Register(m_ScriptManager);
-			Console::Register(m_ScriptManager);
+			Console::Register(scriptingManager);
 			RegisterScriptedConsoleCommand(asEngine);
-			GUI::Register(m_ScriptManager);
+			GUI::Register(scriptingManager);
 			//Renderable::Register(asEngine);
 			RefCounted::RegisterType<Renderable>(asEngine, "Renderable");
 			SoundOutput::Register(asEngine);
@@ -117,30 +107,30 @@ public:
 
 			////////////////////
 			// Resource Manager
-			m_ResourceManager = new ResourceManager();
-			m_ResourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
+			boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager());
+			resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
 
 			//m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
 #ifdef _WIN32
 			// Need to pause this thread until the Background-load
 			//  thread has created its worker GC
 			CL_Event loaderGCCreated;
-			m_ResourceManager->StartBackgroundLoadThread(gc, loaderGCCreated);
+			resourceManager->StartBackgroundLoadThread(gc, loaderGCCreated);
 			// Wait for the event to be set
 			CL_Event::wait(loaderGCCreated);
 #elif defined(__APPLE__)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			m_ResourceManager->StartBackgroundLoadThread(loadingGC);
+			resourceManager->StartBackgroundLoadThread(loadingGC);
 #else
 			// Might have to create a secondary pbuffer here (I read something about
 			//  this giving better performance because of reduced resource locking)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			m_ResourceManager->StartBackgroundLoadThread(loadingGC);
+			resourceManager->StartBackgroundLoadThread(loadingGC);
 #endif
 
 			CL_OpenGL::set_active(gc);
 
-			m_ResourceManager->SetGraphicContext(gc);
+			resourceManager->SetGraphicContext(gc);
 
 			//////////////////////
 			// Load client options
@@ -151,20 +141,20 @@ public:
 
 			//////////////////////
 			// Network Connection
-			m_Network = new RakNetwork();
+			boost::scoped_ptr<Network> network(new RakNetwork());
 
 			/////////////////
 			// Input Manager
-			m_Input = new InputManager(dispWindow);
+			boost::scoped_ptr<InputManager> inputMgr(new InputManager(dispWindow));
 
-			if (!m_Input->Test())
+			if (!inputMgr->Test())
 				FSN_EXCEPT(ExCode::IO, "main", "InputManager couldn't be started");
-			m_Input->Initialise();
+			inputMgr->Initialise();
 			SendToConsole("Input manager started successfully");
 
 			////////////
 			// Renderer
-			Renderer *renderer = new Renderer(gc);
+			boost::scoped_ptr<Renderer> renderer(new Renderer(gc));
 
 			///////////////////
 			// Player Registry
@@ -174,11 +164,11 @@ public:
 			// Systems
 			SystemsManager *systemMgr = new SystemsManager();
 
-			std::tr1::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(m_Network) );
+			std::tr1::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(network.get()) );
 			systemMgr->AddSystem(networkSystem);
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
-			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer, m_Input, networkSystem.get()) );
+			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 
 			systemMgr->AddSystem(ontology);
 			//systemMgr->AddSystem(gui);
@@ -188,7 +178,7 @@ public:
 
 			/////////////////////
 			// Attach module to objects that require it
-			ModulePtr module = m_ScriptManager->GetModule("main");
+			ModulePtr module = scriptingManager->GetModule("main");
 			console->SetModule(module);
 			gui->SetModule(module);
 			ontology->SetModule(module);
@@ -219,34 +209,30 @@ public:
 				if (CL_DisplayMessageQueue::has_messages())
 					CL_DisplayMessageQueue::process();
 
-				m_ResourceManager->UnloadUnreferencedResources();
-				m_ResourceManager->DeliverLoadedResources();
+				resourceManager->UnloadUnreferencedResources();
+				resourceManager->DeliverLoadedResources();
 
 				if (split < 1000)
 				{
 					seconds = split * 0.001f;
-					m_Input->Update(seconds);
+					inputMgr->Update(seconds);
 					gui->Update(seconds);
 					systemMgr->Update(seconds);
 				}
 
 				systemMgr->Draw();
 
-				m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
+				scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
 				dispWindow.flip();
 			}
 
-			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+			scriptingManager->GetEnginePtr()->GarbageCollect();
 
 			delete systemMgr;
-			delete renderer;
-			m_ScriptManager->GetEnginePtr()->GarbageCollect();
+			scriptingManager->GetEnginePtr()->GarbageCollect();
 			gui->CleanUp();
-			delete m_Input;
-			delete m_ScriptManager;
-			delete m_ResourceManager;
-			delete m_Network;
+			delete scriptingManager;
 		}
 		catch (FusionEngine::Exception &ex)
 		{
@@ -265,19 +251,10 @@ public:
 			conWindow.display_close_message();
 		}
 
-		//delete GUI::getSingletonPtr();
-
-		if (logger != 0)
-			delete logger;
-		if (cout != 0)
-			delete cout;
-		if (console != 0)
-			delete console;
-
 		return 0;
 	}
 
-	~EntityTest()
+	~EditorTest()
 	{
 	}
 
@@ -290,7 +267,7 @@ class EntryPoint
 public:
 	static int main(const std::vector<CL_String> &args)
 	{
-		FusionEngine::EntityTest app;
+		FusionEngine::EditorTest app;
 		return app.main(args);
 	}
 };

@@ -301,10 +301,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsScriptTypes.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
 				>
 			</File>

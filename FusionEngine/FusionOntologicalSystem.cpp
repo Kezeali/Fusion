@@ -165,18 +165,7 @@ namespace FusionEngine
 
 			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
 
-			std::string worldSizeString;
-			gameOptions.GetOption("world_size", &worldSizeString);
-			StringVector components = fe_splitstring(worldSizeString, ",");
-
-			float worldX = 1000.f, worldY = 1000.f;
-			if (components.size() >= 2)
-			{
-				worldX = boost::lexical_cast<float>(fe_trim(components[0]));
-				worldY = boost::lexical_cast<float>(fe_trim(components[1]));
-			}
-			//m_PhysicsWorld = new PhysicsWorld(worldX, worldY);
-			m_PhysWorld = new PhysicalWorld(worldX, worldY);
+			m_PhysWorld = new PhysicalWorld();
 			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);

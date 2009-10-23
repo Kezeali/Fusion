@@ -327,34 +327,41 @@ namespace FusionEngine
 		attribute = element->GetAttribute("is_bullet");
 		m_BodyDef.isBullet = (attribute == "t" || attribute == "1" || attribute == "true");
 
+		element->GetAttribute("allow_sleep", &m_BodyDef.allowSleep, false);
+
+		element->GetAttribute("linear_damping", &m_BodyDef.linearDamping, false);
+		element->GetAttribute("angular_damping", &m_BodyDef.angularDamping, false);
+
 		ticpp::Iterator< ticpp::Element > child;
 		for (child = child.begin( element ); child != child.end(); child++)
 		{
 			FixtureDefinition fixtureDef;
+			typedef std::tr1::shared_ptr<b2CircleShape> CircleShapePtr;
+			typedef std::tr1::shared_ptr<b2PolygonShape> PolyShapePtr;
 
 			if (child->Value() == "CircleFixture")
 			{
-				b2CircleDef *circleDef = new b2CircleDef;
+				CircleShapePtr circle(new b2CircleShape());
 				attribute = child->GetAttribute("position");
 				if (!attribute.empty())
-					parse_vector(attribute, &circleDef->localPosition.x, &circleDef->localPosition.y);
+					parse_vector(attribute, &circle->m_p.x, &circle->m_p.y);
 
-				child->GetAttribute("x", &circleDef->localPosition.x, false);
-				child->GetAttribute("y", &circleDef->localPosition.y, false);
+				child->GetAttribute("x", &circle->m_p.x, false);
+				child->GetAttribute("y", &circle->m_p.y, false);
 
-				child->GetAttribute("radius", &circleDef->radius, false);
-				child->GetAttribute("r", &circleDef->radius, false);
+				child->GetAttribute("radius", &circle->m_radius, false);
+				child->GetAttribute("r", &circle->m_radius, false);
 
-				circleDef->localPosition *= s_SimUnitsPerGameUnit;
-				circleDef->radius *= s_SimUnitsPerGameUnit;
+				circle->m_p *= s_SimUnitsPerGameUnit;
+				circle->m_radius *= s_SimUnitsPerGameUnit;
 
-				fixtureDef.reset(circleDef);
+				fixtureDef.SetShape(circle);
 			}
 			else if (child->Value() == "RectFixture")
 			{
-				b2PolygonDef *polyDef = new b2PolygonDef;
-				float hx = 0.f, hy, angle = 0.f;
-				b2Vec2 center;
+				PolyShapePtr poly(new b2PolygonShape());
+				float hx = 0.f, hy = 0.f, angle = 0.f;
+				b2Vec2 center(0.f, 0.f);
 
 				attribute = child->GetAttribute("size");
 				if (!attribute.empty())
@@ -363,17 +370,14 @@ namespace FusionEngine
 				}
 				else
 				{
-					child->GetAttribute("width", &hx, false);
-					child->GetAttribute("height", &hy, false);
-					child->GetAttribute("w", &hx, false);
-					child->GetAttribute("h", &hy, false);
+					child->GetAttribute("half_width", &hx, false);
+					child->GetAttribute("half_height", &hy, false);
+					child->GetAttribute("hw", &hx, false);
+					child->GetAttribute("hh", &hy, false);
 				}
 
-				if (hx == 0.f)
-				{
-					delete polyDef;
+				if (hx == 0.f || hy == 0.f)
 					continue;
-				}
 
 				attribute = child->GetAttribute("center");
 				if (!attribute.empty())
@@ -391,15 +395,15 @@ namespace FusionEngine
 				hx *= s_SimUnitsPerGameUnit;
 				hy *= s_SimUnitsPerGameUnit;
 
-				if (fe_fzero(angle))
-					polyDef->SetAsBox(hx, hy);
+				if (fe_fzero(angle) && fe_fzero(center.LengthSquared()))
+					poly->SetAsBox(hx, hy);
 				else
 				{
 					center *= s_SimUnitsPerGameUnit;
-					polyDef->SetAsBox(hx, hy, center, angle);
+					poly->SetAsBox(hx, hy, center, angle);
 				}
 
-				fixtureDef.reset(polyDef);
+				fixtureDef.SetShape(poly);
 			}
 			else if (child->Value() == "PolygonFixture")
 			{
@@ -407,29 +411,32 @@ namespace FusionEngine
 			}
 			else if (child->Value() == "EdgeFixture")
 			{
-				b2EdgeDef *edgeDef = new b2EdgeDef;
+				PolyShapePtr poly(new b2PolygonShape());
+				b2Vec2 vertex1, vertex2;
 				attribute = child->GetAttribute("first");
 				if (!attribute.empty())
-					parse_vector(attribute, &edgeDef->vertex1.x, &edgeDef->vertex1.y);
+					parse_vector(attribute, &vertex1.x, &vertex1.y);
 				attribute = child->GetAttribute("second");
 				if (!attribute.empty())
-					parse_vector(attribute, &edgeDef->vertex2.x, &edgeDef->vertex2.y);
+					parse_vector(attribute, &vertex2.x, &vertex2.y);
 
-				edgeDef->vertex1 *= s_SimUnitsPerGameUnit;
-				edgeDef->vertex2 *= s_SimUnitsPerGameUnit;
+				vertex1 *= s_SimUnitsPerGameUnit;
+				vertex2 *= s_SimUnitsPerGameUnit;
 
-				fixtureDef.reset(edgeDef);
+				poly->SetAsEdge(vertex1, vertex2);
+
+				fixtureDef.SetShape(poly);
 			}
 
 			else
 				continue; // Unknown fixture type, ignore
 
-			child->GetAttribute("fixed_rotation", &fixtureDef->friction, false);
-			child->GetAttribute("restitution", &fixtureDef->restitution, false);
-			child->GetAttribute("density", &fixtureDef->density, false);
-			child->GetAttribute("sensor", &fixtureDef->isSensor, false);
+			child->GetAttribute("friction", &fixtureDef.definition.friction, false);
+			child->GetAttribute("restitution", &fixtureDef.definition.restitution, false);
+			child->GetAttribute("density", &fixtureDef.definition.density, false);
+			child->GetAttribute("sensor", &fixtureDef.definition.isSensor, false);
 			// TODO: seperate <Filter> element?
-			child->GetAttribute("group_index", &fixtureDef->filter.groupIndex, false);
+			child->GetAttribute("group_index", &fixtureDef.definition.filter.groupIndex, false);
 
 			m_Fixtures.push_back(fixtureDef);
 		}
@@ -668,10 +675,8 @@ namespace FusionEngine
 				it != end; ++it)
 			{
 				const FixtureDefinition &fixtureDef = *it;
-				body->CreateFixture(fixtureDef.get());
+				body->CreateFixture(&fixtureDef.definition);
 			}
-			//! TODO: add EntityDefinition property to define wheter mass should be set from shapes (default) or a given value
-			body->SetMassFromShapes();
 		}
 
 		// Add resource refs

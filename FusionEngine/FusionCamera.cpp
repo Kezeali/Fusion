@@ -164,8 +164,6 @@ namespace FusionEngine
 	void Camera::defineBody()
 	{
 		m_BodyDefinition.position.Set(m_Position.x, m_Position.y);
-		m_BodyDefinition.massData.center.SetZero();
-		m_BodyDefinition.massData.mass = 2;
 	}
 
 	void Camera::createBody(b2World *world)

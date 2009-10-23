@@ -64,7 +64,7 @@
 
 
 // Box2d (Physics)
-#include <Box2D.h>
+#include <Box2D/Box2D.h>
 
 // Boost
 //#include <boost/function.hpp>

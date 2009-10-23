@@ -99,63 +99,63 @@ namespace FusionEngine
 		}
 	};
 
-	class ScriptCircleFixtureDef : public ScriptFixtureDef
-	{
-	public:
-		ScriptCircleFixtureDef(b2CircleDef *obj)
-			: ScriptFixtureDef(obj)
-		{}
+	//class ScriptCircleFixtureDef : public ScriptFixtureDef
+	//{
+	//public:
+	//	ScriptCircleFixtureDef(b2CircleDef *obj)
+	//		: ScriptFixtureDef(obj)
+	//	{}
 
-		virtual ~ScriptCircleFixtureDef()
-		{}
+	//	virtual ~ScriptCircleFixtureDef()
+	//	{}
 
-		void SetSimLocalPosition(const Vector2 &position)
-		{
-			static_cast<b2CircleDef*>( fixtureDefinition )->localPosition.Set(position.x, position.y);
-		}
+	//	void SetSimLocalPosition(const Vector2 &position)
+	//	{
+	//		static_cast<b2CircleDef*>( fixtureDefinition )->localPosition.Set(position.x, position.y);
+	//	}
 
-		Vector2* GetSimLocalPosition()
-		{
-			const b2Vec2 &pos = static_cast<b2CircleDef*>( fixtureDefinition )->localPosition;
-			return new Vector2(pos.x, pos.y);
-		}
+	//	Vector2* GetSimLocalPosition()
+	//	{
+	//		const b2Vec2 &pos = static_cast<b2CircleDef*>( fixtureDefinition )->localPosition;
+	//		return new Vector2(pos.x, pos.y);
+	//	}
 
-		void SetLocalPosition(const Vector2 &position)
-		{
-			static_cast<b2CircleDef*>( fixtureDefinition )->localPosition.Set(ToSimUnits(position.x) , ToSimUnits(position.y));
-		}
+	//	void SetLocalPosition(const Vector2 &position)
+	//	{
+	//		static_cast<b2CircleDef*>( fixtureDefinition )->localPosition.Set(ToSimUnits(position.x) , ToSimUnits(position.y));
+	//	}
 
-		Vector2* GetLocalPosition()
-		{
-			const b2Vec2 &pos = static_cast<b2CircleDef*>( fixtureDefinition )->localPosition;
-			return new Vector2(ToGameUnits(pos.x), ToGameUnits(pos.y));
-		}
+	//	Vector2* GetLocalPosition()
+	//	{
+	//		const b2Vec2 &pos = static_cast<b2CircleDef*>( fixtureDefinition )->localPosition;
+	//		return new Vector2(ToGameUnits(pos.x), ToGameUnits(pos.y));
+	//	}
 
-		void SetSimRadius(float radius)
-		{
-			static_cast<b2CircleDef*>( fixtureDefinition )->radius = radius;
-		}
+	//	void SetSimRadius(float radius)
+	//	{
+	//		static_cast<b2CircleDef*>( fixtureDefinition )->radius = radius;
+	//	}
 
-		float GetSimRadius()
-		{
-			return static_cast<b2CircleDef*>( fixtureDefinition )->radius;
-		}
+	//	float GetSimRadius()
+	//	{
+	//		return static_cast<b2CircleDef*>( fixtureDefinition )->radius;
+	//	}
 
-		void SetRadius(float radius)
-		{
-			static_cast<b2CircleDef*>( fixtureDefinition )->radius = ToSimUnits(radius);
-		}
+	//	void SetRadius(float radius)
+	//	{
+	//		static_cast<b2CircleDef*>( fixtureDefinition )->radius = ToSimUnits(radius);
+	//	}
 
-		float GetRadius()
-		{
-			return ToGameUnits( static_cast<b2CircleDef*>( fixtureDefinition )->radius );
-		}
-	};
+	//	float GetRadius()
+	//	{
+	//		return ToGameUnits( static_cast<b2CircleDef*>( fixtureDefinition )->radius );
+	//	}
+	//};
 
-	ScriptCircleFixtureDef * ScriptCircleFixtureDef_Constructor()
-	{
-		return new ScriptCircleFixtureDef(new b2CircleDef());
-	}
+	//ScriptCircleFixtureDef * ScriptCircleFixtureDef_Constructor()
+	//{
+	//	return new ScriptCircleFixtureDef(new b2CircleDef());
+	//}
 
 	//void PhysBodyConstructor(PhysicsBody* obj)
 	//{
@@ -203,7 +203,7 @@ namespace FusionEngine
 
 	b2Fixture *ScriptedEntity_CreateCircleFixture(const Vector2 &offset, float radius, ScriptedEntity *obj)
 	{
-		return obj->GetBody()->CreateFixture( DefineCircleFixture(radius, offset).get() );
+		return obj->GetBody()->CreateFixture( DefineCircleFixture(radius, offset) );
 	}
 
 	void registerPhysBodyMethods(asIScriptEngine* engine)
@@ -222,7 +222,7 @@ namespace FusionEngine
 
 	void FixtureDefinition_Constructor(FixtureDefinition *ptr)
 	{
-		new(&ptr) FixtureDefinition(new b2FixtureDef());
+		new(&ptr) FixtureDefinition();
 	}
 
 	void FixtureDefinition_Destructor(FixtureDefinition *obj)
@@ -334,14 +334,14 @@ namespace FusionEngine
 	void registerCircleFixtureDefMethods(asIScriptEngine* engine, const char *class_name)
 	{
 		int r;
-		r = engine->RegisterObjectMethod(class_name, "void setSimLocalPosition(const Vector &in)", asMETHOD(ScriptCircleFixtureDef,SetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "void setLocalPosition(const Vector &in)", asMETHOD(ScriptCircleFixtureDef,SetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "void setSimRadius(float)", asMETHOD(ScriptCircleFixtureDef,SetSimRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "void setRadius(float)", asMETHOD(ScriptCircleFixtureDef,SetRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "Vector@ getSimLocalPosition()", asMETHOD(ScriptCircleFixtureDef,GetSimLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "Vector@ getLocalPosition()", asMETHOD(ScriptCircleFixtureDef,GetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "float getSimRadius()", asMETHOD(ScriptCircleFixtureDef,GetSimRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod(class_name, "float getRadius()", asMETHOD(ScriptCircleFixtureDef,GetRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "void setSimLocalPosition(const Vector &in)", asMETHOD(ScriptCircleFixtureDef,SetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "void setLocalPosition(const Vector &in)", asMETHOD(ScriptCircleFixtureDef,SetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "void setSimRadius(float)", asMETHOD(ScriptCircleFixtureDef,SetSimRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "void setRadius(float)", asMETHOD(ScriptCircleFixtureDef,SetRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "Vector@ getSimLocalPosition()", asMETHOD(ScriptCircleFixtureDef,GetSimLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "Vector@ getLocalPosition()", asMETHOD(ScriptCircleFixtureDef,GetLocalPosition), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "float getSimRadius()", asMETHOD(ScriptCircleFixtureDef,GetSimRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod(class_name, "float getRadius()", asMETHOD(ScriptCircleFixtureDef,GetRadius), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 	}
 
 	void registerFixtureDef(asIScriptEngine* engine)
@@ -355,15 +355,15 @@ namespace FusionEngine
 
 		registerFixtureDefMethods(engine, "FixtureDef");
 
-		r = engine->RegisterObjectType("CircleFixtureDef", 0, asOBJ_REF); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_ADDREF, "void f()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
-		r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_RELEASE, "void f()", asMETHOD(RefCounted, release), asCALL_THISCALL);
+		//r = engine->RegisterObjectType("CircleFixtureDef", 0, asOBJ_REF); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_ADDREF, "void f()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
+		//r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_RELEASE, "void f()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
-		r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_FACTORY, "CircleFixtureDef@ f()", asFUNCTION(ScriptCircleFixtureDef_Constructor), asCALL_CDECL);
-		r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_ASSIGNMENT, "CircleFixtureDef& op_assign(const CircleFixtureDef &in)", asFUNCTION(RefCounted::Assign<ScriptCircleFixtureDef>), asCALL_CDECL_OBJFIRST);
+		//r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_FACTORY, "CircleFixtureDef@ f()", asFUNCTION(ScriptCircleFixtureDef_Constructor), asCALL_CDECL);
+		//r = engine->RegisterObjectBehaviour("CircleFixtureDef", asBEHAVE_ASSIGNMENT, "CircleFixtureDef& op_assign(const CircleFixtureDef &in)", asFUNCTION(RefCounted::Assign<ScriptCircleFixtureDef>), asCALL_CDECL_OBJFIRST);
 
-		registerFixtureDefMethods(engine, "CircleFixtureDef");
-		registerCircleFixtureDefMethods(engine, "CircleFixtureDef");
+		//registerFixtureDefMethods(engine, "CircleFixtureDef");
+		//registerCircleFixtureDefMethods(engine, "CircleFixtureDef");
 
 		RegisterBaseOf<ScriptFixtureDef, ScriptCircleFixtureDef>(engine, "FixtureDef", "CircleFixtureDef");
 	}

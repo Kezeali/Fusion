@@ -29,7 +29,7 @@
 
 #include "FusionPhysicsDebugDraw.h"
 
-#include <Box2D.h>
+#include <Box2D/Box2D.h>
 
 namespace FusionEngine
 {
@@ -162,7 +162,7 @@ namespace FusionEngine
 		m_gc.draw_primitives(cl_polygon, 2, vertex_data);
 	}
 
-	void DebugDraw::DrawXForm(const b2XForm& /*xf*/)
+	void DebugDraw::DrawXForm(const b2Transform& /*xf*/)
 	{
 		// TODO
 	}

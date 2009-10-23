@@ -34,6 +34,7 @@ namespace FusionEngine
 	void StreamingManager::SetRange(float game_units)
 	{
 		m_Range = game_units;
+		m_RangeSquared = game_units * game_units;
 	}
 
 	//CL_Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
@@ -103,9 +104,15 @@ namespace FusionEngine
 			const CL_Vec2f &camPos = cam.Camera->GetPosition();
 			
 			Vector2 velocity( camPos.x - cam.LastPosition.x, camPos.y - cam.LastPosition.y );
-			Vector2 target( camPos.x + velocity.x, camPos.y + velocity.y );
+			// Only interpolate / anticipate movement if the velocity doesn't indicate a jump in position
+			if (velocity.squared_length() > m_RangeSquared)
+			{
+				Vector2 target( camPos.x + velocity.x, camPos.y + velocity.y );
 
-			cam.StreamPoint = cam.StreamPoint + (target-cam.StreamPoint) * cam.Tightness;
+				cam.StreamPoint = cam.StreamPoint + (target-cam.StreamPoint) * cam.Tightness;
+			}
+			else
+				cam.StreamPoint.set(camPos.x, camPos.y);
 
 			// If the velocity has changed, smooth (over sudden changes in velocity) by adjusting interpolation tightness
 			if (!v2Equal(cam.LastVelocity, velocity, 0.1f))

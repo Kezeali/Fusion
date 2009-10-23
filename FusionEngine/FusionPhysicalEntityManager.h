@@ -76,7 +76,6 @@ namespace FusionEngine
 	{
 	public:
 		PhysicalWorld();
-		PhysicalWorld(float width, float height);
 
 		~PhysicalWorld();
 
@@ -122,7 +121,7 @@ namespace FusionEngine
 
 		BodyDestroyerPtr m_BodyDestroyer;
 
-		void initialise(float width, float height);
+		void initialise();
 	};
 
 }

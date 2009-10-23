@@ -31,8 +31,6 @@ class Test : ScriptEntity
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();
 		//@gui_entity = null;
-
-		SetPosition(Vector(150, 50));
 		
 		first = true;
 	}
@@ -77,23 +75,27 @@ class Test : ScriptEntity
 		bool left = InputIsActive("left");
 		bool right = InputIsActive("right");
 
-		if (forward && !input_forward)
+		if (forward)
 		{
-			ApplyForce(Vector(0,-5));
-			movesound.play();
+			if (!input_forward)
+				movesound.play();
+			//ApplyForce(GetWorldVector(0, -32));
+			SetVelocity(GetWorldVector(0, -80));
 		}
 
-		if (left && !input_left)
+		if (left)
 		{
-			//ApplyTorque(-10);
-			SetAngularVelocity(-0.2);
+			SetAngularVelocity(-1.6);
 		}
+		else if (!left && input_left)
+			ApplyTorque(0.54);
 
-		if (right && !input_right)
+		if (right)
 		{
-			//ApplyTorque(10);
-			SetAngularVelocity(0.2);
+			SetAngularVelocity(1.6);
 		}
+		else if (!right && input_right)
+			ApplyTorque(-0.54);
 
 		input_forward = forward;
 		input_left = left;

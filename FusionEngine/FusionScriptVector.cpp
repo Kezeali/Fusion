@@ -145,8 +145,8 @@ namespace FusionEngine { namespace Scripting
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,getX), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,getY), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectProperty("Vector", "float x", offsetof(Vector2,x)); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectProperty("Vector", "float y", offsetof(Vector2,y)); FSN_ASSERT( r >= 0 );

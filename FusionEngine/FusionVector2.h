@@ -190,8 +190,18 @@ namespace FusionEngine
 		}
 
 	public:
-		inline T getX() const { return x; }
-		inline T getY() const { return y; }
+		//! Returns the value of the x co-ord
+		T get_x() const { return x; }
+		//! Returns the value of the y co-ord
+		T get_y() const { return y; }
+
+		//! Sets the vector
+		void set(T x, T y) { this->x = x; this->y = y; }
+		//! Sets the x co-ord
+		void set_x(T x) { this->x = x; }
+		//! Sets the y co-ord
+		void set_y(T y) { this->y = y; }
+
 		//! The length of the vector
 		/*!
 		 * \returns sqrt(x^2+y^2)

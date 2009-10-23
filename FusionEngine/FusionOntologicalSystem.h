@@ -39,7 +39,6 @@
 
 #include "FusionScriptModule.h"
 #include "FusionRenderer.h"
-#include "FusionPhysicsBody.h"
 
 
 namespace FusionEngine

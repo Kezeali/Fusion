@@ -33,12 +33,16 @@ namespace FusionEngine
 
 	PhysicalEntity::PhysicalEntity()
 		: Entity(),
-		m_Body(NULL)
+		m_Body(NULL),
+		m_Angle(0.0f),
+		m_AngularVelocity(0.0f)
 	{}
 
 	PhysicalEntity::PhysicalEntity(const std::string &name)
 		: Entity(name),
-		m_Body(NULL)
+		m_Body(NULL),
+		m_Angle(0.0f),
+		m_AngularVelocity(0.0f)
 	{}
 
 	PhysicalEntity::~PhysicalEntity()
@@ -47,13 +51,13 @@ namespace FusionEngine
 			m_BodyDestroyer->Destroy(m_Body);
 	}
 
-	void PhysicalEntity::ApplyForce(const Vector2 &point, const Vector2 &force)
+	void PhysicalEntity::ApplyForce(const Vector2 &force, const Vector2 &point)
 	{
 		if (m_Body != NULL)
 		{
 			m_Body->ApplyForce(
-				b2Vec2(point.x * s_SimUnitsPerGameUnit, point.y * s_SimUnitsPerGameUnit),
-				b2Vec2(force.y * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit)
+				b2Vec2(force.y * s_SimUnitsPerGameUnit, force.y * s_SimUnitsPerGameUnit),
+				b2Vec2(point.x * s_SimUnitsPerGameUnit, point.y * s_SimUnitsPerGameUnit)
 				);
 		}
 	}
@@ -105,7 +109,11 @@ namespace FusionEngine
 	void PhysicalEntity::SetPosition(const Vector2 &position)
 	{
 		if (m_Body != NULL)
-			m_Body->SetPosition(b2Vec2(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit));
+		{
+			m_Body->SetTransform(
+				b2Vec2(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit),
+				m_Angle);
+		}
 		else
 		{
 			//m_BodyDef.position.Set(position.x, position.y);
@@ -116,7 +124,10 @@ namespace FusionEngine
 	void PhysicalEntity::SetVelocity(const Vector2 &velocity)
 	{
 		if (m_Body != NULL)
+		{
+			m_Body->WakeUp();
 			m_Body->SetLinearVelocity(b2Vec2(velocity.x * s_SimUnitsPerGameUnit, velocity.y * s_SimUnitsPerGameUnit));
+		}
 		else
 		{
 			//m_BodyDef.linearVelocity.Set(velocity.x, velocity.y);
@@ -127,7 +138,11 @@ namespace FusionEngine
 	void PhysicalEntity::SetAngle(float angle)
 	{
 		if (m_Body != NULL)
-			m_Body->SetAngle(angle);
+		{
+			m_Body->SetTransform(
+				b2Vec2(m_Position.x * s_SimUnitsPerGameUnit, m_Position.y * s_SimUnitsPerGameUnit),
+				angle);
+		}
 		else
 			//m_BodyDef.angle = angle;
 			m_Angle = angle;
@@ -136,7 +151,10 @@ namespace FusionEngine
 	void PhysicalEntity::SetAngularVelocity(float angular_vel)
 	{
 		if (m_Body != NULL)
+		{
+			m_Body->WakeUp();
 			m_Body->SetAngularVelocity(angular_vel);
+		}
 		else
 			//m_BodyDef.angularVelocity = angular_vel;
 			m_AngularVelocity = angular_vel;
