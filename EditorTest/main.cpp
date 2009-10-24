@@ -15,6 +15,7 @@
 #include "../FusionEngine/FusionNetworkSystem.h"
 #include "../FusionEngine/FusionOntologicalSystem.h"
 #include "../FusionEngine/FusionGUI.h"
+#include "../FusionEngine/FusionEditor.h"
 #include "../FusionEngine/FusionStateManager.h"
 
 // Various
@@ -98,6 +99,7 @@ public:
 			Viewport::Register(asEngine);
 			StreamingManager::Register(asEngine);
 			OntologicalSystem::Register(asEngine);
+			Editor::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 
 			/////////////////////////////////////
@@ -168,10 +170,15 @@ public:
 			systemMgr->AddSystem(networkSystem);
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
-			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 
+			boost::scoped_ptr<StreamingManager> streaming( new StreamingManager() ); streaming->SetRange(2000);
+			scriptingManager->RegisterGlobalObject("StreamingManager streamer", streaming.get());
+
+			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), streaming.get(), inputMgr.get(), networkSystem.get()) );
+			
 			systemMgr->AddSystem(ontology);
 			//systemMgr->AddSystem(gui);
+
 			gui->Initialise();
 
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));

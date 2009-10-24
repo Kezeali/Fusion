@@ -18,16 +18,16 @@
 		be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
-
-
+		
+		
 	File Author(s):
 
 		Elliot Hayward
 
 */
 
-#ifndef Header_FusionEngine_Viewport
-#define Header_FusionEngine_Viewport
+#ifndef Header_FusionEngine_Editor
+#define Header_FusionEngine_Editor
 
 #if _MSC_VER > 1000
 #pragma once
@@ -35,49 +35,62 @@
 
 #include "FusionCommon.h"
 
-// Fusion
-#include "FusionCamera.h"
+#include "FusionState.h"
+
+#include "FusionViewport.h"
+#include "FusionInputHandler.h"
 
 
 namespace FusionEngine
 {
 
-	//! A render area
-	/*!
-	* \see Camera | Renderer
-	*/
-	class Viewport : public RefCounted
+	//! Editor system (runs the map editor interface)
+	class Editor : public System
 	{
 	public:
-		Viewport();
-		//! Sets the area of the viewport
-		Viewport(const CL_Rectf &area_ratio);
-		//! Sets the area of the viewport, and the camera
-		Viewport(const CL_Rectf &area_ratio, const CameraPtr &camera);
+		Editor(InputManager *input, Renderer *renderer, StreamingManager *streaming_manager, EntityManager *ent_manager);
+		~Editor();
 
-		//! Sets the position within the graphics context
-		void SetPosition(float left, float top);
-		//! Sets the size of the render area
-		void SetSize(float width, float height);
+	public:
+		const std::string &GetName() const;
 
-		const CL_Rectf &GetArea() const;
-		CL_Pointf GetPosition() const;
-		CL_Sizef GetSize() const;
+		bool Initialise();
 
-		void SetCamera(const CameraPtr &camera);
-		const CameraPtr &GetCamera() const;
+		void CleanUp();
 
-		Vector2* ToScreenCoords(const Vector2 &entity_position) const;
-		Vector2* ToEntityCoords(const Vector2 &screen_position) const;
+		void Update(float split);
+
+		void Draw();
+
+		void Enable(bool enable = true);
+
+		void OnRawInput(const RawInput &ev);
+
+		//void ProcessEvent(Rocket::Core::Event& ev);
+
+		//void OnDebugEvent(DebugEvent& ev);
+
+		void StartEditor();
+		void StopEditor();
 
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		CL_Rectf m_Area;
-		CameraPtr m_Camera;
-	};
+		Renderer *m_Renderer;
+		StreamingManager *m_Streamer;
+		InputManager *m_Input;
+		EntityManager *m_EntityManager;
 
-	typedef boost::intrusive_ptr<Viewport> ViewportPtr;
+		boost::signals2::connection m_RawInputConnection;
+
+		ViewportPtr m_Viewport;
+		CameraPtr m_Camera;
+
+		Vector2 m_CamVelocity;
+
+		bool m_Enabled;
+
+	};
 
 }
 

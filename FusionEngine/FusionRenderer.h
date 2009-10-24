@@ -38,47 +38,11 @@
 // Fusion
 #include "FusionEntity.h"
 #include "FusionCamera.h"
+#include "FusionViewport.h"
 
 
 namespace FusionEngine
 {
-
-	//! A render area
-	/*!
-	* \see Camera | Renderer
-	*/
-	class Viewport : public RefCounted
-	{
-	public:
-		Viewport();
-		//! Sets the area of the viewport
-		Viewport(const CL_Rectf &area_ratio);
-		//! Sets the area of the viewport, and the camera
-		Viewport(const CL_Rectf &area_ratio, const CameraPtr &camera);
-
-		//! Sets the position within the graphics context
-		void SetPosition(float left, float top);
-		//! Sets the size of the render area
-		void SetSize(float width, float height);
-
-		const CL_Rectf &GetArea() const;
-		CL_Pointf GetPosition() const;
-		CL_Sizef GetSize() const;
-
-		void SetCamera(const CameraPtr &camera);
-		const CameraPtr &GetCamera() const;
-
-		Vector2* ToScreenCoords(const Vector2 &entity_position) const;
-		Vector2* ToEntityCoords(const Vector2 &screen_position) const;
-
-		static void Register(asIScriptEngine *engine);
-
-	protected:
-		CL_Rectf m_Area;
-		CameraPtr m_Camera;
-	};
-
-	typedef boost::intrusive_ptr<Viewport> ViewportPtr;
 
 	/*!
 	 * \brief

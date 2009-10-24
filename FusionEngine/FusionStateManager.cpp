@@ -92,7 +92,11 @@ namespace FusionEngine
 	{
 		// If game should have quit, but for some reason update is being called again...
 		if (!m_KeepGoing)
-			return true; // ... breakout!
+			return true; // ... do nothing
+
+		typedef std::list<SystemPtr> SystemList;
+		SystemList systemsToAdd;
+		SystemList systemsToRemove;
 
 		for (SystemArray::iterator it = m_Systems.begin(), end = m_Systems.end(); it != end; ++it)
 		{
@@ -104,12 +108,17 @@ namespace FusionEngine
 			{
 				switch (m->GetType())
 				{
-				//case SystemMessage::ADDSTATE:
-				//	AddState(m->GetData());
-				//	break;
-				//case SystemMessage::REMOVESTATE:
-				//	RemoveState(m->GetData());
-				//	break;
+				case SystemMessage::ADDSYSTEM:
+					systemsToAdd.push_back(m->GetSystem());
+					break;
+				case SystemMessage::REMOVESYSTEM:
+					{
+						if (m->GetSystem())
+							systemsToRemove.push_back(m->GetSystem());
+						else
+							FSN_EXCEPT(ExCode::NotImplemented, "SystemsManager::Update", "Removing systems by name is not implemented");
+					break;
+					}
 
 				case SystemMessage::PAUSE:
 					if (m->IncludeSender())
@@ -186,6 +195,11 @@ namespace FusionEngine
 				system->RemoveFlag(System::STEP);
 			}
 		}
+
+		for (SystemList::iterator it = systemsToAdd.begin(), end = systemsToAdd.end(); it != end; ++it)
+			AddSystem(*it);
+		for (SystemList::iterator it = systemsToRemove.begin(), end = systemsToRemove.end(); it != end; ++it)
+			RemoveSystem(*it);
 
 		return true;
 	}

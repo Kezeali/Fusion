@@ -44,16 +44,10 @@ namespace FusionEngine
 		 * Hopefully the names are self explanatory. :)
 		 */
 		enum MessageType {
-			//! Add a new state
-			ADDSTATE,
-			//! Remove a state
-			REMOVESTATE,
-			//! Add a state to the queue
-			QUEUESTATE,
-			//! Remove a state from the queue
-			UNQUEUESTATE,
-			//! Add the next state in the queue to the active states
-			RUNNEXTSTATE,
+			//! Add a new system
+			ADDSYSTEM,
+			//! Remove a system
+			REMOVESYSTEM,
 
 			//! No message (safe default)
 			NONE,
@@ -108,6 +102,17 @@ namespace FusionEngine
 		{
 		}
 
+		//! Constructor +system
+		SystemMessage(const SystemPtr &system_to_add)
+			: m_Type(SystemMessage::ADDSYSTEM),
+			m_System(system_to_add),
+			m_IncludeSender(false)
+		{}
+
+		virtual ~SystemMessage()
+		{
+		}
+
 	public:
 		//! Retreives the state type
 		MessageType GetType() const
@@ -115,7 +120,7 @@ namespace FusionEngine
 			return m_Type;
 		}
 
-		const StringVector &GetTargets()
+		const StringVector &GetTargets() const
 		{
 			return m_Targets;
 		}
@@ -125,12 +130,20 @@ namespace FusionEngine
 			return m_IncludeSender;
 		}
 
+		const SystemPtr &GetSystem() const
+		{
+			return m_System;
+		}
+
 	protected:
 		//! Stores the message type
 		MessageType m_Type;
 		//! Stores custom message data
 		StringVector m_Targets;
 		bool m_IncludeSender;
+
+		// A System object to be added or removed (note that systems can also be removed by name)
+		SystemPtr m_System;
 
 	};
 

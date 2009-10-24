@@ -902,6 +902,8 @@ namespace FusionEngine
 			rawInput.InputType = RawInput::Nothing;
 			rawInput.Code = ev.id;
 		}
+
+		SignalRawInput(rawInput);
 	}
 
 	void InputManager::fireRawInput_XInput(const XInputEvent &ev)
@@ -947,6 +949,8 @@ namespace FusionEngine
 			rawInput.InputType = RawInput::Nothing;
 			rawInput.Code = ev.id;
 		}
+
+		SignalRawInput(rawInput);
 	}
 
 	void InputManager::onDisplayResize(int w, int h)

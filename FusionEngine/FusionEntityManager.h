@@ -165,6 +165,15 @@ namespace FusionEngine
 		RakNet::BitStream m_PacketData;
 	};
 
+	enum DomainState
+	{
+		DS_INACTIVE = 0x0,
+		DS_STREAMING = 0x1,
+		DS_SYNCH = 0x2,
+		DS_ENTITYUPDATE = 0x4,
+		DS_ALL = DS_STREAMING | DS_SYNCH | DS_ENTITYUPDATE
+	};
+
 	/*!
 	 * \brief
 	 * Updates / draws entity objects.
@@ -311,9 +320,11 @@ namespace FusionEngine
 		void Update(EntityDomain domain_index, float split);
 
 		//! Sets the given domain to active/inactive
-		void SetDomainState(EntityDomain domain_index, bool active);
+		void SetDomainState(EntityDomain domain_index, char active_modes);
 		//! Returns true if the given domain is active
-		bool DomainIsActive(EntityDomain domain_index) const;
+		bool CheckState(EntityDomain domain_index, DomainState mode) const;
+		//! Returns the state of the given domain
+		char GetDomainState(EntityDomain domain_index) const;
 
 		void SetModule(ModulePtr module);
 
@@ -358,7 +369,7 @@ namespace FusionEngine
 		// Entities to be updated - 8 domains
 		EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
 		// Active status of each domain
-		bool m_DomainState[s_EntityDomainCount];
+		char m_DomainState[s_EntityDomainCount];
 
 		typedef std::map<int, EntityPtr> EntityDepthMap;
 		// Entities with no hidden tags

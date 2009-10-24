@@ -409,7 +409,7 @@ namespace FusionEngine
 		m_NextId(1)
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
-			m_DomainState[i] = true;
+			m_DomainState[i] = DS_ALL;
 	}
 
 	EntityManager::~EntityManager()
@@ -777,14 +777,14 @@ namespace FusionEngine
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				if (idx != SYSTEM_DOMAIN)
+				if (idx != SYSTEM_DOMAIN && CheckState(idx, DS_STREAMING))
 					m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
 
 				if (entity->Wait())
 				{
-					m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
-					entity->Update(split);
-					m_EntitySynchroniser->AddToPacket(entity);
+					if (CheckState(idx, DS_SYNCH)) m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
+					if (CheckState(idx, DS_ENTITYUPDATE)) entity->Update(split);
+					if (CheckState(idx, DS_SYNCH)) m_EntitySynchroniser->AddToPacket(entity);
 
 					updateRenderables(entity, split);
 
@@ -845,12 +845,17 @@ namespace FusionEngine
 	{
 	}
 
-	void EntityManager::SetDomainState(EntityDomain domain_index, bool active)
+	void EntityManager::SetDomainState(EntityDomain domain_index, char modes)
 	{
-		m_DomainState[domain_index] = active;
+		m_DomainState[domain_index] = modes;
 	}
 
-	bool EntityManager::DomainIsActive(EntityDomain domain_index) const
+	bool EntityManager::CheckState(EntityDomain domain_index, DomainState mode) const
+	{
+		return (m_DomainState[domain_index] & mode) == mode;
+	}
+
+	char EntityManager::GetDomainState(EntityDomain domain_index) const
 	{
 		return m_DomainState[domain_index];
 	}

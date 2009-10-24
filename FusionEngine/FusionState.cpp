@@ -79,7 +79,7 @@ namespace FusionEngine
 
 	void System::RemoveFlag(System::StateFlags flag)
 	{
-		m_StateFlags ^= flag;
+		m_StateFlags = m_StateFlags & ~((unsigned char)flag);
 	}
 
 	bool System::CheckFlag(System::StateFlags flag)

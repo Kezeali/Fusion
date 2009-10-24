@@ -458,7 +458,9 @@ namespace FusionEngine
 	class GameMapLoader;
 	class Entity;
 	class PhysicalWorld;
-	class Renerer;
+	class OntologicalSystem;
+	class Editor;
+	class Renderer;
 	class Renderable;
 	class Camera;
 	class NetworkSystem;
@@ -467,8 +469,6 @@ namespace FusionEngine
 	class IPacket;
 	class PacketHandler;
 	class PacketHandlerNode;
-	class PhysicsWorld;
-	class PhysicsBody;
 	class Shape;
 	class System;
 	class SystemMessage;

@@ -44,7 +44,7 @@
 namespace FusionEngine
 {
 
-	//! System that manages Entitys
+	//! System that manages Entities
 	class OntologicalSystem : public System, public PacketHandler
 	{
 	public:
@@ -55,7 +55,8 @@ namespace FusionEngine
 		//! Constructor
 		OntologicalSystem(
 			ClientOptions *options,
-			Renderer *renderer, InputManager *input_manager,
+			Renderer *renderer, StreamingManager *streaming_manager,
+			InputManager *input_manager,
 			NetworkSystem *network_system);
 		//! Destructor
 		virtual ~OntologicalSystem();
@@ -85,6 +86,8 @@ namespace FusionEngine
 
 		//! Returns the list of viewports
 		ViewportArray &GetViewports();
+
+		EntityManager * const GetEntityManager();
 
 		// Might be useful, but I don't think this is how it should work
 		//  Rather, Bodies should have a OwnerID much like entities do
@@ -178,6 +181,9 @@ namespace FusionEngine
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
 		NetworkSystem *m_NetworkSystem;
+
+		typedef std::tr1::shared_ptr<Editor> EditorPtr;
+		EditorPtr m_Editor;
 
 		//! Basic script callback data
 		struct CallbackDecl

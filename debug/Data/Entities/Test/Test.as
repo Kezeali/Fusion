@@ -52,6 +52,7 @@ class Test : ScriptEntity
 	uint runningtime;
 	bool first;
 	bool didOutput;
+	bool specialPressed;
 	void Update(float dt)
 	{
 		if (first)
@@ -70,6 +71,11 @@ class Test : ScriptEntity
 		if (doOutput && !didOutput)
 			DebugOutput();
 		didOutput = doOutput;
+
+		bool special = InputIsActive("special");
+		if (special && !specialPressed)
+			editor.startEditor();
+		specialPressed = special;
 
 		bool forward = InputIsActive("thrust");
 		bool left = InputIsActive("left");

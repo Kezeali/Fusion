@@ -45,6 +45,7 @@
 #include "FusionXml.h"
 #include "FusionPlayerRegistry.h"
 #include "FusionRakNetwork.h"
+#include "FusionEditor.h"
 
 #include <Calling/Caller.h>
 
@@ -81,8 +82,6 @@ namespace FusionEngine
 		virtual void Update(float split)
 		{
 		}
-		//virtual void Draw()
-		//{}
 
 		virtual void OnStreamIn()
 		{
@@ -122,9 +121,10 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
+	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, StreamingManager *streaming_manager, InputManager *input_manager, NetworkSystem *network)
 		: m_Options(options),
 		m_Renderer(renderer),
+		m_Streaming(streaming_manager),
 		m_InputManager(input_manager),
 		m_NetworkSystem(network),
 		m_EntityManager(NULL),
@@ -149,16 +149,18 @@ namespace FusionEngine
 		if (m_EntityManager == NULL)
 		{
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
-			m_Streaming = new StreamingManager(); m_Streaming->SetRange(2000);
 			m_EntityFactory = new EntityFactory();
 			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
 
+			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_Streaming, m_EntityManager));
+			this->PushMessage(new SystemMessage(m_Editor));
+
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
 
 			manager->RegisterGlobalObject("System system", this);
-			manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
+			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 
 			m_EntityFactory->SetScriptingManager(manager, "main");
 			m_EntityFactory->SetScriptedEntityPath("Entities/");
@@ -415,6 +417,11 @@ namespace FusionEngine
 		return m_Viewports;
 	}
 
+	EntityManager * const OntologicalSystem::GetEntityManager()
+	{
+		return m_EntityManager;
+	}
+
 	void OntologicalSystem::SetModule(const ModulePtr &module)
 	{
 		m_Module = module;
@@ -458,12 +465,12 @@ namespace FusionEngine
 
 	void OntologicalSystem::Pause()
 	{
-		m_EntityManager->SetDomainState(GAME_DOMAIN, false);
+		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL & ~DS_ENTITYUPDATE);
 	}
 
 	void OntologicalSystem::Resume()
 	{
-		m_EntityManager->SetDomainState(GAME_DOMAIN, true);
+		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 	}
 
 	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
@@ -576,6 +583,7 @@ namespace FusionEngine
 		m_PhysWorld->EnableDebugDraw(false);
 	}
 
+
 	void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
 	{
 		// Call the script callback, if there is one
@@ -609,6 +617,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("System",
 			"void save(const string &in)",
 			asMETHOD(OntologicalSystem, Save), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		r = engine->RegisterObjectMethod("System",
 			"uint addPlayer(IEntity@, const string &in)",
 			asMETHOD(OntologicalSystem, AddPlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
