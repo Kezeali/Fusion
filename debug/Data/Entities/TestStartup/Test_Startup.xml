@@ -3,5 +3,6 @@
 	<Script type="angelscript" file="test_startup.as"/>
 	<Dependencies>
 		<Entity typename="Test"/>
+		<Entity typename="TestScenery"/>
 	</Dependencies>
 </Entity>

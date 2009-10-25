@@ -114,6 +114,8 @@ namespace FusionEngine
 			//this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
 			this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
 
+			m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
+
 			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 			this->PushMessage(new SystemMessage(SystemMessage::HIDE));
 		}
@@ -154,14 +156,14 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::StartEditor()
+	void Editor_StartEditor(Editor *obj)
 	{
-		Enable();
+		obj->Enable();
 	}
 
-	void Editor::StopEditor()
+	void Editor_StopEditor(Editor *obj)
 	{
-		Enable(false);
+		obj->Enable(false);
 	}
 
 	void Editor::Register(asIScriptEngine *engine)
@@ -174,10 +176,10 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void startEditor()",
-			asMETHOD(Editor, StartEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asFUNCTION(Editor_StartEditor), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor",
 			"void stopEditor()",
-			asMETHOD(Editor, StopEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asFUNCTION(Editor_StopEditor), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 }

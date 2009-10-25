@@ -289,6 +289,8 @@ namespace FusionEngine
 				int x, y;
 				m_Sprite->get_alignment(origin, x, y);
 
+				bb.translate(-CL_Vec2f::calc_origin(origin, bb.get_size()));
+
 				m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
 
 				m_PositionChanged = false;
@@ -750,6 +752,10 @@ namespace FusionEngine
 
 		//RefCounted::RegisterType<Entity>(engine, "Entity");
 		Entity::RegisterGCType(engine, "Entity");
+
+		r = engine->RegisterObjectMethod("Entity",
+			"cosnt string &getName() const",
+			asMETHOD(Entity, GetName), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("Entity",
 			"uint16 getOwnerID() const",
 			asMETHOD(Entity, GetOwnerID), asCALL_THISCALL);

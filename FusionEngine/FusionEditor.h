@@ -70,9 +70,6 @@ namespace FusionEngine
 
 		//void OnDebugEvent(DebugEvent& ev);
 
-		void StartEditor();
-		void StopEditor();
-
 		static void Register(asIScriptEngine *engine);
 
 	protected:

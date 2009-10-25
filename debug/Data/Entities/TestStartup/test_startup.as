@@ -53,7 +53,7 @@ class TestStartup : ScriptEntity
 
 		@p1Viewport = null;
 
-		@scenery = cast<Test>( entity_manager.instance("Test", "scenery") );
+		@scenery = cast<Test>( entity_manager.instance("TestScenery", "scenery") );
 		scenery.Spawn();
 		scenery.SetPosition(Vector(100, 50));
 	}

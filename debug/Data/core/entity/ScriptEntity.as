@@ -10,6 +10,11 @@ class ScriptEntity : IEntity
 		return __appObject;
 	}
 
+	string GetName() const
+	{
+		return __appObject.getName();
+	}
+
 	uint16 GetOwnerID() const
 	{
 		return __appObject.getOwnerID();

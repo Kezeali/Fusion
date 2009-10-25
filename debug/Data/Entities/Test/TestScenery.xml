@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity typename="TestScenery" defaultdomain="game">
+	<!--Script sections can also be given as a text element, e.g.
+		<Script type="as">class Test {...}</Script>-->
+	<!--type="angelscript" is equivalent to type="as"-->
+	<Script type="angelscript" file="TestScenery.as"/>
+	<!--These are items that the EntityManager needs to load before this entity-->
+	<Dependencies>
+	</Dependencies>
+	<!--Physics stuff-->
+	<Body>
+		<CircleFixture isSensor="true" radius="22"/>
+	</Body>
+	<Streaming>
+		<Sprite property="sprite" resource="scenery_sprite.xml"/>
+	</Streaming>
+</Entity>
