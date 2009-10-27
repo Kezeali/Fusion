@@ -327,7 +327,8 @@ namespace FusionEngine
 		attribute = element->GetAttribute("is_bullet");
 		m_BodyDef.isBullet = (attribute == "t" || attribute == "1" || attribute == "true");
 
-		element->GetAttribute("allow_sleep", &m_BodyDef.allowSleep, false);
+		attribute = element->GetAttribute("allow_sleep");
+		m_BodyDef.allowSleep = (attribute == "t" || attribute == "1" || attribute == "true");
 
 		element->GetAttribute("linear_damping", &m_BodyDef.linearDamping, false);
 		element->GetAttribute("angular_damping", &m_BodyDef.angularDamping, false);
@@ -434,7 +435,8 @@ namespace FusionEngine
 			child->GetAttribute("friction", &fixtureDef.definition.friction, false);
 			child->GetAttribute("restitution", &fixtureDef.definition.restitution, false);
 			child->GetAttribute("density", &fixtureDef.definition.density, false);
-			child->GetAttribute("sensor", &fixtureDef.definition.isSensor, false);
+			attribute = child->GetAttribute("is_sensor");
+			fixtureDef.definition.isSensor = (attribute == "t" || attribute == "1" || attribute == "true");
 			// TODO: seperate <Filter> element?
 			child->GetAttribute("group_index", &fixtureDef.definition.filter.groupIndex, false);
 

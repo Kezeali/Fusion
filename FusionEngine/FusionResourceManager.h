@@ -44,29 +44,9 @@
 //#include "FusionResourcePointer.h"
 #include "FusionResourceLoader.h"
 
-// RakNet
-#include <Bitstream.h>
 
 namespace FusionEngine
 {
-
-	//class ResourceManagerException : public Exception
-	//{
-	//public:
-	//	ResourceManagerException(const std::string& message)
-	//		: Exception(Exception::INTERNAL_ERROR, message)
-	//	{}
-	//};
-
-	/*!
-	 * \brief
-	 * Returned by GetPackageType().
-	 */
-	//class PackageType
-	//{
-	//public:
-	//	enum Type { Ship, Level, Weapon, FileNotFound, UnknownType };
-	//};
 
 	/*!
 	 * \brief
@@ -79,9 +59,6 @@ namespace FusionEngine
 	class ResourceManager : public Singleton<ResourceManager>
 	{
 	public:
-		// this is now defined in ResourcePointer:
-		//typedef boost::shared_ptr<Resource> ResourceSpt;
-
 		//! ResourceLoader pointer
 		typedef std::tr1::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
@@ -90,14 +67,11 @@ namespace FusionEngine
 		typedef std::tr1::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
 		typedef std::vector<ResourceDataPtr> ResourceList;
-		typedef std::set<ResourceDataPtr> ResourceSet;
+		typedef std::set<ResourceContainer*> UnreferencedResourceSet;
 
 		struct ResourceToLoadData
 		{
 			int priority;
-			//std::string type;
-			//std::wstring path;
-			//ResourceContainer::LoadedFn callback;
 			ResourceDataPtr resource;
 
 			ResourceToLoadData() {}
@@ -106,14 +80,6 @@ namespace FusionEngine
 				: priority(_priority),
 				resource(_resource)
 			{}
-
-			//ResourceToLoadData(int _priority, const std::string& _type, const std::wstring& _path, ResourceContainer::LoadedFn _callback)
-			//	: priority(_priority),
-			//	type(_type),
-			//	path(_path),
-			//	callback(_callback)
-			//{
-			//}
 
 			bool operator< (const ResourceToLoadData& rhs) const
 			{
@@ -128,7 +94,7 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		ResourceManager(char *arg0);
-		//! Constructor - gets equivilant of arg0 from CL_System::get_exe_path()
+		//! Constructor - gets eq. of arg0 from CL_System::get_exe_path()
 		ResourceManager();
 		//! Destructor
 		~ResourceManager();
@@ -162,13 +128,8 @@ namespace FusionEngine
 		void BackgroundLoad(CL_GraphicContext *gc);
 #endif
 
-		////! Checks the filesystem for packages and returns the names of all found
-		//StringVector ListAvailablePackages();
 		//! Checks the filesystem and returns the filenames of all found
 		StringVector ListFiles();
-
-		//! Unloads resource which aren't currently held
-		void DisposeUnusedResources();
 
 		//! Deletes all loaded resources
 		void DeleteResources();
@@ -205,111 +166,22 @@ namespace FusionEngine
 		//! Assigns the given ResourceLoader to its relavant resource type
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData);
 
-		//! Gives a different tag to the given resource
-		//ResourceSpt &TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc = NULL);
-
 		//! Invokes the ResourceLoadedFn for each loaded resource
 		void DeliverLoadedResources();
 
+		//! Adds all resources that are no longer used to the ToUnload queue
 		void UnloadUnreferencedResources();
 
 		//! Loads / gets a resource
 		bsig2::connection GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 
+		//! Internal method (called by resources when they go out of use)
 		void resourceUnreferenced(ResourceContainer *resource);
-
-		//! Loads a resource
-		/*!
-		 * Loads the resource in another thread
-		 */
-		void LoadResource_Background(const std::string& type, const std::wstring& path, int priority = 0);
 
 		void UnloadResource(const std::wstring &path);
 
-		void UnloadResource_Background(const std::wstring &path);
-
-		//! Returns a ResourcePointer to the given Resource (of type T)
-		//template<typename T>
-		//ResourcePointer<T> GetResource(const ResourceTag& tag);
-
-		//! Gets or creates the given resource
-		//ResourceSpt &GetResource(const ResourceTag &tag, const std::string& type);
-
-		//template<typename T>
-		//ResourcePointer<T> GetResource(const ResourceTag &tag)
-		//{
-		//	ResourceSpt sptRes = m_Resources[tag];
-		//	return ResourcePointer<T>(sptRes);
-		//}
-
-		//template<typename T>
-		//ResourcePointer<T> GetResource(const std::string &tag, const std::string& type)
-		//{
-		//	ResourceSpt &resource = GetResourceDefault(fe_widen(tag), type);
-		//	return ResourcePointer<T>(resource);
-		//}
-
-		//template<typename T>
-		//ResourcePointer<T> GetResource(const ResourceTag &tag, const std::string& type)
-		//{
-		//	ResourceSpt &resource = GetResourceDefault(tag, type);
-		//	return ResourcePointer<T>(resource);
-		//}
-
-		////! Optimised version of GetResource
-		//template<typename T>
-		//void GetResource(ResourcePointer<T>& out, const ResourceTag &tag)
-		//{
-		//	ResourceSpt &resource = GetResourceDefault(tag, type);
-		//	out.SetTarget(resource);
-		//	//out = ResourcePointer<T>(resource);
-		//}
-
-		//template<typename T>
-		//ResourcePointer<T> OpenOrCreateResource(const ResourceTag &path)
-		//{
-		//	std::string match = FindFirst(path);
-		//	if (match.empty()) // No match
-		//	{
-		//		std::string writePath(PHYSFS_getWriteDir());
-		//		// Whether the given 'path' is an existing, absolute path
-		//		if (PHYSFS_isDirectory(CL_String::get_path(path).c_str()))
-		//		{
-		//			// If the given path is existing and absolute, make sure it is within the PhysFS write folder
-		//			if (quickCompare(path, writePath) >= writePath.length())
-		//			{
-		//				FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
-		//					"Can't create '" + path + "' as it is not within the write path (" + writePath + ")");
-		//			}
-		//		}
-		//		else
-		//		{
-		//			// Convert the relative path to an absolute path within the write folder
-		//			writePath = writePath + path;
-
-		//			std::string folder(CL_String::get_path(writePath));
-		//			if (!PHYSFS_isDirectory(folder.c_str()))
-		//				FSN_EXCEPT(ExCode::IO, "ResourceManager:OpenOrCreateResource",
-		//				"Can't create '" + writePath + "' as '" + folder + "' does not exist");
-		//		}
-		//		// Create the file
-		//		std::ofstream resourceFile;
-		//		resourceFile.open(writePath.c_str(), std::ios::out|std::ios::binary);
-		//		resourceFile.close();
-
-		//		match = writePath;
-		//	}
-		//	
-		//	return GetResource<T>(match);
-		//}
-
-		//void RegisterScriptElements(ScriptingEngine* manager);
-
 	private:
 		bool m_PhysFSConfigured;
-
-		//! A list of packages which passed verification
-		//StringVector m_VerifiedPackages;
 
 		CL_Event m_StopEvent; // Set to stop the worker thread
 		CL_Event m_ToLoadEvent; // Set when there is more data to load
@@ -324,16 +196,12 @@ namespace FusionEngine
 		CL_Mutex m_ToUnloadMutex;
 		ToUnloadList m_ToUnload;
 
-		CL_Mutex m_ResourcesMutex;
 		// Resources
 		ResourceMap m_Resources;
 
-		// Garbage
-		//ResourceMap m_Garbage;
-
 		bool m_Clearing;
 
-		ResourceSet m_Unreferenced;
+		UnreferencedResourceSet m_Unreferenced;
 
 		CL_Mutex m_ToDeliverMutex;
 		ResourceList m_ToDeliver;
@@ -343,8 +211,6 @@ namespace FusionEngine
 		ResourceLoaderMap m_ResourceLoaders;
 
 	protected:
-		//! \todo should be called getAndLoadResource
-		ResourceDataPtr& loadResource(const std::string &type, const std::wstring &path, CL_GraphicContext &gc);
 		void loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc);
 
 		//! \todo Should be called getAndUnloadResource

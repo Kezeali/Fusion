@@ -321,10 +321,10 @@ namespace FusionEngine
 	//	m_ResourceManager->GetResource("SPRITE", m_SpritePath, std::tr1::bind(&Renderable::OnSpriteLoad, this, _1), 1);
 	//}
 
-	//void Renderable::OnStreamOut()
-	//{
-	//	m_Sprite.Release();
-	//}
+	void Renderable::OnStreamOut()
+	{
+		m_Sprite.Release();
+	}
 
 	void Renderable::Draw(CL_GraphicContext &gc)
 	{

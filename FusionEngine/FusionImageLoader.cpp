@@ -83,6 +83,7 @@ namespace FusionEngine
 			{
 				LoadSpriteDefinition(*def, resource->GetPath(), vdir);
 				resource->SetQuickLoadDataPtr(def);
+				resource->_setHasQuickLoadData(true);
 			}
 			catch (FileSystemException& ex)
 			{

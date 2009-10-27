@@ -9,7 +9,7 @@
 	</Dependencies>
 	<!--Physics stuff-->
 	<Body>
-		<CircleFixture isSensor="true" radius="22"/>
+		<CircleFixture is_sensor="true" radius="22"/>
 	</Body>
 	<Streaming>
 		<Sprite property="sprite" resource="scenery_sprite.xml"/>

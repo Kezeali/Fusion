@@ -44,6 +44,8 @@
 #include "FusionRenderer.h"
 #include "FusionStreamingManager.h"
 
+#include <Bitstream.h>
+
 //#include <boost/bimap.hpp>
 
 namespace FusionEngine

@@ -146,7 +146,7 @@ namespace FusionEngine
 
 		void OnResourceLoad(ResourceDataPtr resource);
 		//void OnStreamIn();
-		//void OnStreamOut();
+		void OnStreamOut();
 
 		void Draw(CL_GraphicContext &gc);
 		//! Draw the renderable at a position other than that of it's owning Entity

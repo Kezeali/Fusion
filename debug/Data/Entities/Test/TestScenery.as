@@ -13,7 +13,7 @@ class TestScenery : ScriptEntity
 
 	void Spawn()
 	{
-		console.println("'TestScenery' (" + GetName() + " entity Spawned");
+		console.println("'TestScenery' (" + GetName() + ") entity Spawned");
 	}
 
 	void Update(float dt)

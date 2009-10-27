@@ -51,6 +51,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <Bitstream.h>
+
 #include "FusionScriptedEntity.h"
 
 
