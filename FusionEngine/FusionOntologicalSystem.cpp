@@ -121,10 +121,9 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, StreamingManager *streaming_manager, InputManager *input_manager, NetworkSystem *network)
+	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
 		: m_Options(options),
 		m_Renderer(renderer),
-		m_Streaming(streaming_manager),
 		m_InputManager(input_manager),
 		m_NetworkSystem(network),
 		m_EntityManager(NULL),
@@ -150,8 +149,11 @@ namespace FusionEngine
 		{
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
 			m_EntityFactory = new EntityFactory();
+			m_Streaming = new StreamingManager();
 			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
+
+			m_Streaming->SetRange(2000);
 
 			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_Streaming, m_EntityManager));
 			this->PushMessage(new SystemMessage(m_Editor));
@@ -159,6 +161,7 @@ namespace FusionEngine
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
 
 			manager->RegisterGlobalObject("System system", this);
+			manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 

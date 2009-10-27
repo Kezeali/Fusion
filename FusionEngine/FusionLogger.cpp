@@ -55,10 +55,10 @@ namespace FusionEngine
 
 	Logger::~Logger()
 	{
-		// Remove all logs
-		m_Logs.clear();
 		// Make sure we are disconnected from the console
 		DisableConsoleLogging();
+		// Remove all logs
+		m_Logs.clear();
 	}
 
 	void Logger::ActivateConsoleLogging()
@@ -67,17 +67,17 @@ namespace FusionEngine
 			Console::getSingleton().OnNewLine.connect(boost::bind(&Logger::onConsoleNewLine, this, _1));
 		m_ConsoleLogging = true;
 
-		Console::getSingletonPtr()->Add("Console Logging enabled");
+		SendToConsole("Console Logging enabled");
 	}
 
 	void Logger::DisableConsoleLogging()
 	{
 		if (m_ConsoleLogging)
 		{
+			SendToConsole("Console Logging disabled");
+
 			m_ConsoleLogging = false;
 			m_ConsoleNewLine.disconnect();
-
-			Console::getSingletonPtr()->Add("Console Logging disabled");
 		}
 	}
 

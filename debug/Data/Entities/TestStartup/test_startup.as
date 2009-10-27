@@ -6,7 +6,7 @@ class TestStartup : ScriptEntity
 	uint playerIndex;
 
 	Test@ testEntity;
-	Test@ scenery;
+	TestScenery@ scenery;
 	
 	bool firstUpdate;
 
@@ -53,7 +53,7 @@ class TestStartup : ScriptEntity
 
 		@p1Viewport = null;
 
-		@scenery = cast<Test>( entity_manager.instance("TestScenery", "scenery") );
+		@scenery = cast<TestScenery>( entity_manager.instance("TestScenery", "scenery") );
 		scenery.Spawn();
 		scenery.SetPosition(Vector(100, 50));
 	}

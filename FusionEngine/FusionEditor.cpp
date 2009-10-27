@@ -77,7 +77,6 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
-		Enable(false);
 	}
 
 	void Editor::Update(float split)
@@ -156,14 +155,14 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor_StartEditor(Editor *obj)
+	void Editor::StartEditor()
 	{
-		obj->Enable();
+		Enable();
 	}
 
-	void Editor_StopEditor(Editor *obj)
+	void Editor::StopEditor()
 	{
-		obj->Enable(false);
+		Enable(false);
 	}
 
 	void Editor::Register(asIScriptEngine *engine)
@@ -176,10 +175,10 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void startEditor()",
-			asFUNCTION(Editor_StartEditor), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			asMETHOD(Editor, StartEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor",
 			"void stopEditor()",
-			asFUNCTION(Editor_StopEditor), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			asMETHOD(Editor, StopEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 }

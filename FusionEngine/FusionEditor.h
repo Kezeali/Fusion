@@ -49,7 +49,7 @@ namespace FusionEngine
 	{
 	public:
 		Editor(InputManager *input, Renderer *renderer, StreamingManager *streaming_manager, EntityManager *ent_manager);
-		~Editor();
+		virtual ~Editor();
 
 	public:
 		const std::string &GetName() const;
@@ -69,6 +69,9 @@ namespace FusionEngine
 		//void ProcessEvent(Rocket::Core::Event& ev);
 
 		//void OnDebugEvent(DebugEvent& ev);
+
+		void StartEditor();
+		void StopEditor();
 
 		static void Register(asIScriptEngine *engine);
 

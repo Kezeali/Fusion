@@ -5,7 +5,6 @@ class TestScenery : ScriptEntity
 	TestScenery()
 	{
 		console.println("'TestScenery' entity created");
-		runningtime = 0;
 	}
 	~TestScenery()
 	{

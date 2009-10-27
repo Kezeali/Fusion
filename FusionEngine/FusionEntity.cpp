@@ -754,7 +754,7 @@ namespace FusionEngine
 		Entity::RegisterGCType(engine, "Entity");
 
 		r = engine->RegisterObjectMethod("Entity",
-			"cosnt string &getName() const",
+			"const string& getName() const",
 			asMETHOD(Entity, GetName), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("Entity",
 			"uint16 getOwnerID() const",

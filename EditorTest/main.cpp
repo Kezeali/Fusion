@@ -62,13 +62,12 @@ public:
 
 		CL_DisplayWindow dispWindow("Display", 800, 600);
 
-		// TODO: store these in shared_ptrs
-		boost::scoped_ptr<Logger> logger;
-		boost::scoped_ptr<ConsoleStdOutWriter> coutWriter;
-		boost::scoped_ptr<Console> console;
-
 		try
 		{
+			boost::scoped_ptr<Logger> logger;
+			boost::scoped_ptr<ConsoleStdOutWriter> coutWriter;
+			boost::scoped_ptr<Console> console;
+
 			console.reset(new Console());
 			coutWriter.reset(new ConsoleStdOutWriter());
 			coutWriter->Enable();
@@ -171,10 +170,7 @@ public:
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
 
-			boost::scoped_ptr<StreamingManager> streaming( new StreamingManager() ); streaming->SetRange(2000);
-			scriptingManager->RegisterGlobalObject("StreamingManager streamer", streaming.get());
-
-			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), streaming.get(), inputMgr.get(), networkSystem.get()) );
+			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 			
 			systemMgr->AddSystem(ontology);
 			//systemMgr->AddSystem(gui);
@@ -240,6 +236,9 @@ public:
 			scriptingManager->GetEnginePtr()->GarbageCollect();
 			gui->CleanUp();
 			delete scriptingManager;
+
+			logger.reset();
+			resourceManager.reset();
 		}
 		catch (FusionEngine::Exception &ex)
 		{

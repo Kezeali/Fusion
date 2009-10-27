@@ -55,7 +55,7 @@ namespace FusionEngine
 		//! Constructor
 		OntologicalSystem(
 			ClientOptions *options,
-			Renderer *renderer, StreamingManager *streaming_manager,
+			Renderer *renderer,
 			InputManager *input_manager,
 			NetworkSystem *network_system);
 		//! Destructor
