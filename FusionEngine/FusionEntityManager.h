@@ -286,6 +286,9 @@ namespace FusionEngine
 		//! Returns Pseudo-Entities
 		const EntitySet &GetPseudoEntities() const;
 
+		//! Returns the EntityArray for the given domain
+		EntityArray &GetDomain(EntityDomain domain_index);
+
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
 		void RemoveTag(const std::string &entity_name, const std::string &tag);
@@ -304,15 +307,18 @@ namespace FusionEngine
 
 		/*!
 		* \brief
-		* Removes and deletes all nodes in the scene.
+		* Removes all entities from the manager.
 		*/
 		void Clear();
+		
+		//! Removes all entities in the given domain
+		void ClearDomain(EntityDomain domain_index);
 
 		//! Updates nodes
 		void Update(float split);
 
 		//! Draws nodes.
-		void Draw();
+		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
 
 		//! Updates the given domain
 		/*!
@@ -340,7 +346,7 @@ namespace FusionEngine
 
 		ObjectID getFreeID();
 
-		std::string generateName(EntityPtr entity);
+		std::string generateName(const EntityPtr &entity);
 
 		void updateTags(EntityPtr &tag) const;
 

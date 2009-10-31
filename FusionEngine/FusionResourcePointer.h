@@ -121,6 +121,12 @@ namespace FusionEngine
 			return *this;
 		}
 
+		//! Comparison
+		bool operator==(const ResourcePointer<T>& other)
+		{
+			return m_Resource == other.m_Resource;
+		}
+
 		//! Returns the resource data ptr
 		T* Get()
 		{

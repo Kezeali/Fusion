@@ -34,6 +34,47 @@
 namespace FusionEngine
 {
 
+	class ClanLibTiXmlFile : public TiXmlFileInterface
+	{
+	public:
+		ClanLibTiXmlFile(CL_IODevice file);
+
+		void Write(const char *data, size_t len);
+		void Print(const char *ste);
+		void PutC(int c);
+
+		bool Ok() const;
+
+	protected:
+		CL_IODevice m_File;
+	};
+
+	ClanLibTiXmlFile::ClanLibTiXmlFile(CL_IODevice file)
+		: m_File(file)
+	{
+	}
+
+	void ClanLibTiXmlFile::Write(const char *data, size_t len)
+	{
+		m_File.write(data, len);
+	}
+
+	void ClanLibTiXmlFile::Print(const char *str)
+	{
+		m_File.write(str, strlen(str));
+	}
+
+	void ClanLibTiXmlFile::PutC(int c)
+	{
+		m_File.write(&c, 1);
+	}
+
+	bool ClanLibTiXmlFile::Ok() const
+	{
+		return m_File.is_null();
+	}
+
+
 	TiXmlDocument* OpenXml(const std::wstring &filename, CL_VirtualDirectory vdir)
 	{
 		TiXmlDocument* doc = new TiXmlDocument();
@@ -99,7 +140,8 @@ namespace FusionEngine
 		{
 			CL_IODevice out = vdir.open_file(filename, CL_File::create_always, CL_File::access_write);
 
-			out.write(doc->ValueStr().c_str(), doc->ValueStr().length());
+			ClanLibTiXmlFile fileIntf(out);
+			doc->SaveFile(&fileIntf);
 		}
 		catch (CL_Exception&)
 		{

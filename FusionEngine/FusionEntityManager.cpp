@@ -481,10 +481,9 @@ namespace FusionEngine
 
 			m_EntitiesByName[entity->GetName()] = entity;
 
-			m_Renderer->Add(entity);
-			m_EntitySynchroniser->OnEntityAdded(entity);
-
 			m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
+
+			m_EntitySynchroniser->OnEntityAdded(entity);
 		}
 	}
 
@@ -506,6 +505,7 @@ namespace FusionEngine
 			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
 
 			m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
+
 		}
 	}
 
@@ -524,14 +524,14 @@ namespace FusionEngine
 			{
 				if (entity->GetID() < m_NextId-1)
 					m_UnusedIds.push_back(entity->GetID()); // record unused ID
+				else
+					--m_NextId;
 				m_Entities.erase(entity->GetID());
 			}
 			else
 				m_PseudoEntities.erase(entity);
 
 			m_EntitiesByName.erase(entity->GetName());
-
-			m_Renderer->Remove(entity);
 
 			// Note that entity will be removed from the Domain list during the next Update() call
 		}
@@ -565,7 +565,6 @@ namespace FusionEngine
 		{
 			// Erase the existing Entity from the name map
 			m_EntitiesByName.erase(value->GetName());
-			m_Renderer->Remove(value);
 			// Mark the entity so it will be removed from it's update domain
 			value->MarkToRemove();
 		}
@@ -584,7 +583,6 @@ namespace FusionEngine
 
 		m_EntitiesByName[entity->GetName()] = entity;
 
-		m_Renderer->Add(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);
 	}
 
@@ -624,6 +622,11 @@ namespace FusionEngine
 	const EntityManager::EntitySet &EntityManager::GetPseudoEntities() const
 	{
 		return m_PseudoEntities;
+	}
+
+	EntityArray &EntityManager::GetDomain(EntityDomain idx)
+	{
+		return m_EntitiesToUpdate[idx];
 	}
 
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)
@@ -699,15 +702,11 @@ namespace FusionEngine
 	void EntityManager::HideEntitiesWithTag(const std::string &tag)
 	{
 		m_ChangedDrawStateTags[tag] = false;
-
-		m_Renderer->HideTag(tag);
 	}
 
 	void EntityManager::ShowEntitiesWithTag(const std::string &tag)
 	{
 		m_ChangedDrawStateTags[tag] = true;
-
-		m_Renderer->ShowTag(tag);
 	}
 
 	void EntityManager::RemoveEntitiesWithTag(const std::string &tag)
@@ -734,7 +733,39 @@ namespace FusionEngine
 		m_ChangedDrawStateTags.clear();
 	}
 
-	void updateRenderables(EntityPtr &entity, float split)
+	void EntityManager::ClearDomain(EntityDomain idx)
+	{
+		EntityArray &domain = m_EntitiesToUpdate[idx];
+		for (EntityArray::iterator it = domain.begin(), end = domain.end(); it != end; ++it)
+		{
+			EntityPtr &entity = *it;
+			// If the manager is currently updating (so entities are locked), use the delayed remove method
+			if (m_EntitiesLocked)
+				RemoveEntity(entity);
+
+			else
+			{
+				entity->MarkToRemove();
+				if (entity->IsPseudoEntity())
+					m_PseudoEntities.erase(entity);
+				else
+				{
+					if (entity->GetID() < m_NextId-1)
+						m_UnusedIds.push_back(entity->GetID()); // record unused ID
+					else
+						--m_NextId;
+					m_Entities.erase(entity->GetID());
+				}
+				m_EntitiesByName.erase(entity->GetName());
+			}
+		}
+		if (!m_EntitiesLocked)
+			domain.clear();
+	}
+
+	typedef std::set<uintptr_t> ptr_set;
+
+	void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
 	{
 		//const Vector2 &position = entity->GetPosition();
 		//float angle = entity->GetAngle();
@@ -742,7 +773,14 @@ namespace FusionEngine
 		RenderableArray &renderables = entity->GetRenderables();
 		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
 		{
-			(*it)->Update(split/*, position, angle*/);
+			RenderablePtr &renderable = *it;
+			if (renderable->GetSpriteResource().IsLoaded())
+			{
+				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
+				if (result.second)
+					renderable->GetSpriteResource()->update(split);
+			}
+			renderable->Update(split/*, position, angle*/);
 		}
 	}
 
@@ -751,6 +789,8 @@ namespace FusionEngine
 		EntityDeserialiser entityDeserialiser(this);
 
 		bool entityRemoved = false;
+
+		ptr_set updatedSprites;
 
 		EntityArray::iterator it = m_EntitiesToUpdate[idx].begin(),
 			end = m_EntitiesToUpdate[idx].end();
@@ -786,7 +826,7 @@ namespace FusionEngine
 					if (CheckState(idx, DS_ENTITYUPDATE)) entity->Update(split);
 					if (CheckState(idx, DS_SYNCH)) m_EntitySynchroniser->AddToPacket(entity);
 
-					updateRenderables(entity, split);
+					updateRenderables(entity, split, updatedSprites);
 
 					if (entity->IsStreamedOut())
 						entity->SetWait(2);
@@ -825,8 +865,6 @@ namespace FusionEngine
 		{
 			m_Entities.erase((*it)->GetID());
 			m_EntitiesByName.erase((*it)->GetName());
-
-			m_Renderer->Remove(*it);
 		}
 		m_EntitiesToRemove.clear();
 
@@ -841,8 +879,9 @@ namespace FusionEngine
 		m_EntitiesToAdd.clear();
 	}
 
-	void EntityManager::Draw()
+	void EntityManager::Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer)
 	{
+		renderer->Draw(m_EntitiesToUpdate[GAME_DOMAIN], viewport, layer);
 	}
 
 	void EntityManager::SetDomainState(EntityDomain domain_index, char modes)
@@ -961,10 +1000,13 @@ namespace FusionEngine
 		}
 	}
 
-	std::string EntityManager::generateName(EntityPtr entity)
+	std::string EntityManager::generateName(const EntityPtr &entity)
 	{
 		std::stringstream stream;
-		stream << "__entity_id_" << entity->GetID();
+		if (entity->IsPseudoEntity())
+			stream << "__entity_pseudo_" << (unsigned int)entity.get();
+		else
+			stream << "__entity_id_" << entity->GetID();
 		return stream.str();
 	}
 

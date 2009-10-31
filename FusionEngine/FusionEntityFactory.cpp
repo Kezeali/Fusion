@@ -42,6 +42,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 
 
@@ -305,12 +306,14 @@ namespace FusionEngine
 		std::string::size_type d = value.find(",");
 		if (d != std::string::npos)
 		{
-			*x = boost::lexical_cast<T>(value.substr(0, d));
-			*y = boost::lexical_cast<T>(value.substr(d+1));
+			std::string xstr = value.substr(0, d), ystr = value.substr(d+1);
+			boost::trim(xstr); boost::trim(ystr);
+			*x = boost::lexical_cast<T>(xstr);
+			*y = boost::lexical_cast<T>(xstr);
 		}
 		else
 		{
-			*x = *y = boost::lexical_cast<T>(value);
+			*x = *y = boost::lexical_cast<T>(boost::trim_copy(value));
 		}
 	}
 

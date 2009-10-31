@@ -150,6 +150,14 @@ namespace FusionEngine
 			{
 				EntityPtr &entity = (*it);
 
+				// Basic Entity properties (position, angle)
+				Vector2 position;
+				position.x = device.read_float();
+				position.y = device.read_float();
+				entity->SetPosition(position);
+
+				entity->SetAngle(device.read_float());
+
 				// Call the entity's spawn method
 				entity->Spawn();
 
@@ -159,6 +167,8 @@ namespace FusionEngine
 					cl_uint32 typeIndex = device.read_uint32();
 					const Archetype &archetype = archetypeArray[typeIndex];
 
+					// Check that the archetype data is for the correct entity type before deserializing
+					FSN_ASSERT(entity->GetType() == archetype.entityTypename);
 					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
@@ -247,6 +257,13 @@ namespace FusionEngine
 		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			const EntityPtr &entity = it->entity;
+
+			// Write basic Entity properties (position, angle)
+			const Vector2 &position = entity->GetPosition();
+			device.write_float(position.x);
+			device.write_float(position.y);
+
+			device.write_float(entity->GetAngle());
 
 			// Write the type-flags for the entity data
 			if (!it->archetypeId.empty())

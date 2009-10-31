@@ -18,13 +18,52 @@ namespace FusionEngine
 	{
 	}
 
-	void Renderer::CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport)
+	void Renderer::CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset)
 	{
 		const CL_Rectf &proportions = viewport->GetArea();
+
 		area.left = (int)floor(proportions.left * m_GC.get_width());
 		area.top = (int)floor(proportions.top * m_GC.get_height());
 		area.right = (int)ceil(proportions.right * m_GC.get_width());
 		area.bottom = (int)ceil(proportions.bottom * m_GC.get_height());
+
+		if (apply_camera_offset)
+		{
+			const CameraPtr &camera = viewport->GetCamera();
+			if (!camera)
+				FSN_EXCEPT(ExCode::InvalidArgument, "Renderer::CalculateScreenArea", "Cannot apply camera offset if the viewport has no camera associated with it");
+
+			// Viewport offset is the top-left of the viewport in the game-world,
+			//  i.e. camera_offset - viewport_size * camera_origin
+			CL_Vec2i viewportOffset =
+				camera->GetPosition() - CL_Vec2f::calc_origin( camera->GetOrigin(), CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+
+			area.translate(viewportOffset);
+		}
+	}
+
+	void Renderer::CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset)
+	{
+		const CL_Rectf &proportions = viewport->GetArea();
+
+		area.left = proportions.left * m_GC.get_width();
+		area.top = proportions.top * m_GC.get_height();
+		area.right = proportions.right * m_GC.get_width();
+		area.bottom = proportions.bottom * m_GC.get_height();
+
+		if (apply_camera_offset)
+		{
+			const CameraPtr &camera = viewport->GetCamera();
+			if (!camera)
+				FSN_EXCEPT(ExCode::InvalidArgument, "Renderer::CalculateScreenArea", "Cannot apply camera offset if the viewport has no camera associated with it");
+
+			// Viewport offset is the top-left of the viewport in the game-world,
+			//  i.e. camera_offset - viewport_size * camera_origin
+			CL_Vec2f viewportOffset =
+				camera->GetPosition() - CL_Vec2f::calc_origin( camera->GetOrigin(), CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+
+			area.translate(viewportOffset);
+		}
 	}
 
 	const CL_GraphicContext &Renderer::GetGraphicContext() const
@@ -47,101 +86,94 @@ namespace FusionEngine
 		return l->GetDepth() < r->GetDepth();
 	}
 
-	void Renderer::Add(const EntityPtr &entity)
-	{
-		//m_Entities.insert(entity);
-		//if (!entity->IsHidden())
-		//{
-		//	m_EntitiesToDraw.insert(
-		//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
-		//		entity);
-		//}
+	//void Renderer::Add(const EntityPtr &entity)
+	//{
+	//	//m_Entities.insert(entity);
+	//	//if (!entity->IsHidden())
+	//	//{
+	//	//	m_EntitiesToDraw.insert(
+	//	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
+	//	//		entity);
+	//	//}
 
-		std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
+	//	std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
 
-		m_EntitiesToDraw.insert(
-			std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth),
-			entity);
+	//	m_EntitiesToDraw.insert(
+	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth),
+	//		entity);
 
-		//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
-		//{
-		//	m_Renderables.insert(
-		//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth() + it->GetDepth()),
-		//		*it);
-		//}
+	//	//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
+	//	//{
+	//	//	m_Renderables.insert(
+	//	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth() + it->GetDepth()),
+	//	//		*it);
+	//	//}
 
-		//m_EntityAdded = true;
-	}
+	//	//m_EntityAdded = true;
+	//}
 
-	void Renderer::Remove(const EntityPtr &entity)
-	{
-		//m_Entities.erase(entity);
-		//entity->SetHidden(true);
+	//void Renderer::Remove(const EntityPtr &entity)
+	//{
+	//	//m_Entities.erase(entity);
+	//	//entity->SetHidden(true);
 
-		std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
+	//	std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
 
-		EntityArray::iterator it = std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth);
-		//for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
-		//	if (*it == entity || (*it)->GetDepth() > entity->GetDepth())
-		//		break;
-		if (it != m_EntitiesToDraw.end() && *it == entity)
-			m_EntitiesToDraw.erase(it);
+	//	EntityArray::iterator it = std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth);
+	//	//for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
+	//	//	if (*it == entity || (*it)->GetDepth() > entity->GetDepth())
+	//	//		break;
+	//	if (it != m_EntitiesToDraw.end() && *it == entity)
+	//		m_EntitiesToDraw.erase(it);
 
-		//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
-		//{
-		//	if (it->GetEntity())
-		//		m_Renderables.erase(it);
-		//}
+	//	//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
+	//	//{
+	//	//	if (it->GetEntity())
+	//	//		m_Renderables.erase(it);
+	//	//}
 
-		//m_EntitiesChanged = true;
-	}
+	//	//m_EntitiesChanged = true;
+	//}
 
-	void Renderer::Clear()
-	{
-		//m_Entities.clear();
-		m_EntitiesToDraw.clear();
-		m_ChangedTags.clear();
-		//m_Renderables.clear();
-	}
+	//void Renderer::Clear()
+	//{
+	//	//m_Entities.clear();
+	//	m_EntitiesToDraw.clear();
+	//	m_ChangedTags.clear();
+	//	//m_Renderables.clear();
+	//}
 
-	void Renderer::ShowTag(const std::string &tag)
-	{
-		m_ChangedTags.show(tag);
-		m_HiddenTags.erase(tag);
-	}
+	//void Renderer::ShowTag(const std::string &tag)
+	//{
+	//	m_ChangedTags.show(tag);
+	//	m_HiddenTags.erase(tag);
+	//}
 
-	void Renderer::HideTag(const std::string &tag)
-	{
-		m_ChangedTags.hide(tag);
-		m_HiddenTags.insert(tag);
-	}
+	//void Renderer::HideTag(const std::string &tag)
+	//{
+	//	m_ChangedTags.hide(tag);
+	//	m_HiddenTags.insert(tag);
+	//}
 
 	//void Renderer::AddViewport(ViewportPtr viewport)
 	//{
 	//	m_Viewports.push_back(viewport);
 	//}
 
-	void Renderer::Update(float split)
-	{
-		//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
-		//{
-		//	RenderableArray &renderables = (*it)->GetRenderables();
-		//	for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
-		//	{
-		//		(*r_it)->Update(split);
-		//	}
-		//}
-	}
+	//void Renderer::Update(float split)
+	//{
+	//	//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+	//	//{
+	//	//	RenderableArray &renderables = (*it)->GetRenderables();
+	//	//	for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
+	//	//	{
+	//	//		(*r_it)->Update(split);
+	//	//	}
+	//	//}
+	//}
 
-	void Renderer::Draw(ViewportPtr viewport)
+	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer)
 	{
-		//if (m_ChangedTags.somethingWasShown())
-		//{
-		//	// Tags have been shown so Entities with those tags must be added to the depth-sorted draw list
-		//	updateDrawArray();
-		//	m_EntitiesAdded = false;
-		//}
-
 		const CameraPtr &camera = viewport->GetCamera();
 
 		CL_Rect viewportArea;
@@ -153,35 +185,11 @@ namespace FusionEngine
 		const CL_Vec2f &camPosition = camera->GetPosition();
 		CL_Origin camOrigin = camera->GetOrigin();
 
-		//CL_Vec3f look(0.f, 0.f, 1.f), up(0.f, 1.f, 0.f), left(1.f, 0.f, 0.f);
-
-		//CL_Mat4f rollMatrix = CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), look.x, look.y, look.z);
-
-		// Rotate up and left - by the camera angle - around the look vector (i.e. normal 2d rotation)
-		//CL_Angle rotationAngle(camera->GetAngle(), cl_radians);
-		//up.rotate(rotationAngle, look);
-		//left.rotate(rotationAngle, look);
-
 		CL_Vec2f viewportOffset;
 		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
-		//if (camOrigin == origin_center)
-		//{
-		//	viewportOffset.x += viewportArea.get_width() * 0.5;
-		//	viewportOffset.y += viewportArea.get_width() * 0.5;
-		//}
-
-		// Set up rotation, translation & scale matrix
-		//CL_Mat4f cameraTransform = CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f);
-		//CL_Mat4f cameraTransform = CL_Mat4f::multiply(
-		//	CL_Mat4f::translate(-viewportOffset.x, -viewportOffset.y, 0.f),
-		//	CL_Mat4f::rotate(CL_Angle(camera->GetAngle(), cl_radians), 0.f, 0.f, 1.f) );
-		// Scale
-		//if ( !fe_fequal(camera->GetZoom(), 1.f) )
-			//cameraTransform.multiply(CL_Mat4f::scale(camera->GetZoom(), camera->GetZoom(), 0.f));
 
 		// Apply rotation, translation & scale
 		m_GC.push_modelview();
-		//m_GC.set_modelview(cameraTransform);
 		m_GC.set_translate(-viewportOffset.x, -viewportOffset.y);
 		m_GC.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
 		if ( !fe_fequal(camera->GetZoom(), 1.f) )
@@ -194,7 +202,7 @@ namespace FusionEngine
 		CL_Size size = viewportArea.get_size();
 		CL_Rectf drawArea(viewportOffset.x, viewportOffset.y, CL_Sizef(size.width * drawAreaScale, size.height * drawAreaScale));
 
-		drawNormally(drawArea);
+		drawNormally(entities, drawArea, layer);
 
 		m_GC.pop_modelview();
 
@@ -207,12 +215,12 @@ namespace FusionEngine
 
 	}
 
-	void Renderer::drawNormally(const CL_Rectf &draw_area)
+	void Renderer::drawNormally(EntityArray &entities, const CL_Rectf &draw_area, size_t layer)
 	{
 		int notRendered = 0;
 
 		int previousDepth = INT_MIN; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
-		for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
+		for (EntityArray::iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			//RenderablePtr &renderable = *it;
 			EntityPtr &entity = *it;
@@ -223,6 +231,9 @@ namespace FusionEngine
 			if (entity->IsHidden())
 				continue;
 			if (entity->IsStreamedOut())
+				continue;
+
+			if (entity->GetLayer() != layer)
 				continue;
 
 			const Vector2 &entityPosition = entity->GetPosition();

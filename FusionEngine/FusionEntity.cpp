@@ -250,8 +250,6 @@ namespace FusionEngine
 	{
 		if (m_Sprite.IsLoaded())
 		{
-			m_Sprite->update(split);
-
 			bool bbChanged = false;
 
 			//// Set the derived position from the entity position

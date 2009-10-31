@@ -108,7 +108,7 @@ namespace FusionEngine
 				std::string buffer("");
 				if (PHYSFS_seek(reread, seekPosition) != 0)
 				{
-					buffer.resize(keptLength, '\0');
+					buffer.resize((size_t)keptLength, '\0');
 					count = PHYSFS_read(reread, static_cast<void*>(&buffer[0]), buffer.size(), 1);
 				}
 

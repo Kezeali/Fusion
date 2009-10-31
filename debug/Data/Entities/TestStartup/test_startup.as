@@ -14,6 +14,8 @@ class TestStartup : ScriptEntity
 	{
 		firstUpdate = true;
 		//BindSimpleCommands();
+
+		gui.getContext().LoadMouseCursor(e_String("core/gui/cursor.rml"));
 	}
 	~TestStartup()
 	{

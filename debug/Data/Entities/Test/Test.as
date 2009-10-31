@@ -74,7 +74,10 @@ class Test : ScriptEntity
 
 		bool special = InputIsActive("special");
 		if (special && !specialPressed)
+		{
 			editor.startEditor();
+			editor.load("test.xml");
+		}
 		specialPressed = special;
 
 		bool forward = InputIsActive("thrust");

@@ -884,7 +884,8 @@ namespace FusionEngine
 			rawInput.InputType = RawInput::Button;
 			rawInput.Code = ev.id;
 			
-			//rawInput.PointerPosition = Vector2T<int>();
+			if (ev.device.get_type() == CL_InputDevice::pointer)
+				rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
 			//rawInput.AxisPosition = 0.0;
 			rawInput.ButtonPressed = true;
 		}
@@ -893,7 +894,17 @@ namespace FusionEngine
 			rawInput.InputType = RawInput::Button;
 			rawInput.Code = ev.id;
 			
-			//rawInput.PointerPosition = Vector2T<int>();
+			if (ev.device.get_type() == CL_InputDevice::pointer)
+				rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
+			//rawInput.AxisPosition = 0.0;
+			rawInput.ButtonPressed = false;
+		}
+		else if (ev.type == CL_InputEvent::doubleclick)
+		{
+			rawInput.InputType = RawInput::Button;
+			rawInput.Code = ev.id;
+			
+			rawInput.PointerPosition = Vector2T<int>(ev.mouse_pos.x, ev.mouse_pos.y);
 			//rawInput.AxisPosition = 0.0;
 			rawInput.ButtonPressed = false;
 		}

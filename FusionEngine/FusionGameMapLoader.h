@@ -53,6 +53,8 @@ namespace FusionEngine
 			std::string entityTypename;
 			StringVector::size_type entityIndex;
 
+			unsigned int dataIndex; // used by the editor when writing data files (may be removed)
+
 			SerialisedData packet;
 		};
 		typedef std::vector<Archetype> ArchetypeArray;
@@ -62,9 +64,12 @@ namespace FusionEngine
 		struct GameMapEntity
 		{
 			EntityPtr entity;
+			bool hasName; // true if the entity has a unique name (other wise it will be called 'default')
 			std::string archetypeId;
 
 			unsigned int stateMask;
+
+			GameMapEntity() : hasName(true), stateMask(0) {}
 		};
 		typedef std::vector<GameMapEntity> GameMapEntityArray;
 

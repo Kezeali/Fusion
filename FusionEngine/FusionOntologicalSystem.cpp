@@ -157,7 +157,7 @@ namespace FusionEngine
 
 			m_Streaming->SetRange(2000);
 
-			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_Streaming, m_EntityManager));
+			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_Streaming, m_EntityManager, m_MapLoader));
 			this->PushMessage(new SystemMessage(m_Editor));
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
@@ -273,8 +273,6 @@ namespace FusionEngine
 		//m_EntitySyncroniser->EndPacket();
 		//m_EntitySyncroniser->Send();
 
-		m_Renderer->Update(split);
-
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
 			ViewportPtr &viewport = *it;
@@ -290,9 +288,9 @@ namespace FusionEngine
 	{
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
-			m_Renderer->Draw(*it);
+			//m_Renderer->Draw(m_EntityManager->GetDomain(GAME_DOMAIN), *it, 0);
+			m_EntityManager->Draw(m_Renderer, *it, 0);
 		}
-		m_EntityManager->Draw();
 	}
 
 	void OntologicalSystem::HandlePacket(IPacket *packet)

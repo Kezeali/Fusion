@@ -71,7 +71,9 @@ namespace FusionEngine
 		//	ViewHorizontalHalf,
 		//	ViewQuarter
 		//};
-		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport);
+		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
+
+		void CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 
 
 		const CL_GraphicContext &GetGraphicContext() const;
@@ -79,25 +81,26 @@ namespace FusionEngine
 		int GetContextWidth() const;
 		int GetContextHeight() const;
 
-		void Add(const EntityPtr &entity);
-		void Remove(const EntityPtr &entity);
+		//void Add(const EntityPtr &entity);
+		//void Remove(const EntityPtr &entity);
 
-		void Clear();
+		//void Clear();
 
-		void ShowTag(const std::string &tag);
-		void HideTag(const std::string &tag);
+		//void ShowTag(const std::string &tag);
+		//void HideTag(const std::string &tag);
 
 		//void AddViewport(ViewportPtr viewport);
 
-		void Update(float split);
-		void Draw(ViewportPtr viewport);
+		//void Update(float split);
+
+		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer = 0);
 
 	protected:
 		bool updateTags(const EntityPtr &entity) const;
 
 		void drawRenderables(EntityPtr &entity, const CL_Rectf &cull_outside);
 
-		void drawNormally(const CL_Rectf &cull_outside);
+		void drawNormally(EntityArray &entities, const CL_Rectf &cull_outside, size_t layer);
 		void updateDrawArray();
 
 		struct ChangingTagCollection

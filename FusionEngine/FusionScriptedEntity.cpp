@@ -295,11 +295,11 @@ namespace FusionEngine
 	size_t ScriptedEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
 	{
 		// Deserialise physics data
-		size_t physicsDataLength = PhysicalEntity::DeserialiseState(state, local, entity_deserialiser);
+		//size_t physicsDataLength = PhysicalEntity::DeserialiseState(state, local, entity_deserialiser);
 
 		std::istringstream stateStream(state.data, std::ios::binary);
 		// Seek to after the data that has already been deserialised by the base class
-		stateStream.seekg(physicsDataLength);
+		//stateStream.seekg(physicsDataLength);
 
 		unsigned int index = 0;
 		for (PropertiesMap::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)

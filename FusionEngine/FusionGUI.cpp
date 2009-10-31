@@ -458,13 +458,13 @@ namespace FusionEngine
 		if (ev.shift)
 			modifier |= Rocket::Core::Input::KM_SHIFT;
 
-		/*m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
+		m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 
 		if (m_ShowMouseTimer <= 0 && m_MouseShowPeriod > 0)
 		{
 			m_ShowMouseTimer = m_MouseShowPeriod;
 			m_Context->ShowMouseCursor(true);
-		}*/
+		}
 	}
 
 	void GUI::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
