@@ -179,6 +179,43 @@ enum TiXmlEncoding
 
 const TiXmlEncoding TIXML_DEFAULT_ENCODING = TIXML_ENCODING_UNKNOWN;
 
+class TiXmlFileInterface
+{
+public:
+	virtual ~TiXmlFileInterface() {}
+	virtual void Write(const char *str, size_t length) = 0;
+	virtual void Print(const char *str) = 0;
+	virtual void PutC(int c) = 0;
+	virtual bool Ok() const = 0;
+
+	void Print(const char *str1, const char *str2) { Print(str1); Print(str2); }
+	void Print(const char *str1, const char *str2, const char *str3) { Print(str1); Print(str2); Print(str3); }
+	void Print(const char *str1, const char *str2, const char *str3, const char *str4) { Print(str1); Print(str2); Print(str3); Print(str4); }
+
+	void NewLine() { Print("\n"); }
+	void Indent(int depth)
+	{
+		for ( int i=0; i<depth; i++ )
+			Write( "    ", 4 );
+	}
+	void BeginElement(const char *name) { Write("<", 1); Print(name); }
+};
+
+class TiXmlCFile : public TiXmlFileInterface
+{
+public:
+	TiXmlCFile(FILE *_file) : file(file) {}
+
+	virtual void Write(const char *str, size_t length);
+	virtual void Print(const char *str);
+	virtual void PutC(int c);
+
+	virtual bool Ok() const { return ferror(file) == 0; }
+
+protected:
+	FILE *file;
+};
+
 /** TiXmlBase is a base class for every class in TinyXml.
 	It does little except to establish that TinyXml classes
 	can be printed and provide some utility functions.
@@ -225,7 +262,7 @@ public:
 
 		(For an unformatted stream, use the << operator.)
 	*/
-	virtual void Print( FILE* cfile, int depth ) const = 0;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const = 0;
 
 	/**	The world does not agree on whether white space should be kept or
 		not. In order to make everyone happy, these global, static functions
@@ -885,10 +922,10 @@ public:
 	virtual const char* Parse( const char* p, TiXmlParsingData* data, TiXmlEncoding encoding );
 
 	// Prints this Attribute to a FILE stream.
-	virtual void Print( FILE* cfile, int depth ) const {
-		Print( cfile, depth, 0 );
+	virtual void Print( TiXmlFileInterface* file, int depth ) const {
+		Print( file, depth, 0 );
 	}
-	void Print( FILE* cfile, int depth, TIXML_STRING* str ) const;
+	void Print( TiXmlFileInterface* file, int depth, TIXML_STRING* str ) const;
 
 	// [internal use]
 	// Set the document pointer so the attribute can report errors.
@@ -1131,7 +1168,7 @@ public:
 	/// Creates a new Element and returns it - the returned element is a copy.
 	virtual TiXmlNode* Clone() const;
 	// Print the Element to a FILE stream.
-	virtual void Print( FILE* cfile, int depth ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const;
 
 	/*	Attribtue parsing starts: next char past '<'
 						 returns: next char past '>'
@@ -1185,7 +1222,7 @@ public:
 	/// Returns a copy of this Comment.
 	virtual TiXmlNode* Clone() const;
 	// Write this Comment to a FILE stream.
-	virtual void Print( FILE* cfile, int depth ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const;
 
 	/*	Attribtue parsing starts: at the ! of the !--
 						 returns: next char past '>'
@@ -1246,7 +1283,7 @@ public:
 	void operator=( const TiXmlText& base )							 	{ base.CopyTo( this ); }
 
 	// Write this text object to a FILE stream.
-	virtual void Print( FILE* cfile, int depth ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const;
 
 	/// Queries whether this represents text using a CDATA section.
 	bool CDATA() const				{ return cdata; }
@@ -1324,9 +1361,9 @@ public:
 	/// Creates a copy of this Declaration and returns it.
 	virtual TiXmlNode* Clone() const;
 	// Print this declaration to a FILE stream.
-	virtual void Print( FILE* cfile, int depth, TIXML_STRING* str ) const;
-	virtual void Print( FILE* cfile, int depth ) const {
-		Print( cfile, depth, 0 );
+	virtual void Print( TiXmlFileInterface* file, int depth, TIXML_STRING* str ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const {
+		Print( file, depth, 0 );
 	}
 
 	virtual const char* Parse( const char* p, TiXmlParsingData* data, TiXmlEncoding encoding );
@@ -1390,9 +1427,9 @@ public:
 	/// Creates a copy of this StylesheetReference and returns it.
 	virtual TiXmlNode* Clone() const;
 	// Print this declaration to a FILE stream.
-	virtual void Print( FILE* cfile, int depth, TIXML_STRING* str ) const;
-	virtual void Print( FILE* cfile, int depth ) const {
-		Print( cfile, depth, 0 );
+	virtual void Print( TiXmlFileInterface* file, int depth, TIXML_STRING* str ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const {
+		Print( file, depth, 0 );
 	}
 
 	virtual const char* Parse( const char* p, TiXmlParsingData* data, TiXmlEncoding encoding );
@@ -1436,7 +1473,7 @@ public:
 	/// Creates a copy of this Unknown and returns it.
 	virtual TiXmlNode* Clone() const;
 	// Print this Unknown to a FILE stream.
-	virtual void Print( FILE* cfile, int depth ) const;
+	virtual void Print( TiXmlFileInterface* file, int depth ) const;
 
 	virtual const char* Parse( const char* p, TiXmlParsingData* data, TiXmlEncoding encoding );
 
@@ -1500,6 +1537,9 @@ public:
 	bool LoadFile( FILE*, TiXmlEncoding encoding = TIXML_DEFAULT_ENCODING );
 	/// Save a file using the given FILE*. Returns true if successful.
 	bool SaveFile( FILE* ) const;
+
+	/// Save a file using the given TiXmlFileInterface object. Returns true if successful.
+	bool SaveFile( TiXmlFileInterface *file ) const;
 
 	#ifdef TIXML_USE_STL
 	bool LoadFile( const std::string& filename, TiXmlEncoding encoding = TIXML_DEFAULT_ENCODING )			///< STL std::string version.
@@ -1602,7 +1642,9 @@ public:
 	//char* PrintToMemory() const;
 
 	/// Print this Document to a FILE stream.
-	virtual void Print( FILE* cfile, int depth = 0 ) const;
+	virtual void Print( FILE* cfile, int depth = 0 ) const { TiXmlCFile file(cfile); Print(&file, depth); }
+	/// Print this Document to a TiXmlFileInterface object.
+	virtual void Print( TiXmlFileInterface* cfile, int depth = 0 ) const;
 	// [internal use]
 	void SetError( int err, const char* errorLocation, TiXmlParsingData* prevData, TiXmlEncoding encoding );
 

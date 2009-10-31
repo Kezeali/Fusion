@@ -47,6 +47,21 @@ FILE* TiXmlFOpen( const char* filename, const char* mode )
 	#endif
 }
 
+void TiXmlCFile::Write(const char* str, size_t length)
+{
+	fwrite(str, 1, length, file);
+}
+
+void TiXmlCFile::Print(const char* str)
+{
+	fprintf(file, str);
+}
+
+void TiXmlCFile::PutC(int c)
+{
+	fputc(c, file);
+}
+
 void TiXmlBase::EncodeString( const TIXML_STRING& str, TIXML_STRING* outString )
 {
 	int i=0;
@@ -767,21 +782,18 @@ void TiXmlElement::SetAttribute( const std::string& name, const std::string& _va
 #endif
 
 
-void TiXmlElement::Print( FILE* cfile, int depth ) const
+void TiXmlElement::Print( TiXmlFileInterface* file, int depth ) const
 {
-	int i;
-	assert( cfile );
-	for ( i=0; i<depth; i++ ) {
-		fprintf( cfile, "    " );
-	}
+	assert( file );
+	file->Indent( depth );
 
-	fprintf( cfile, "<%s", value.c_str() );
+	file->Print( "<", value.c_str() );
 
 	const TiXmlAttribute* attrib;
 	for ( attrib = attributeSet.First(); attrib; attrib = attrib->Next() )
 	{
-		fprintf( cfile, " " );
-		attrib->Print( cfile, depth );
+		file->Write( " ", 1 );
+		attrib->Print( file, depth );
 	}
 
 	// There are 3 different formatting approaches:
@@ -791,31 +803,29 @@ void TiXmlElement::Print( FILE* cfile, int depth ) const
 	TiXmlNode* node;
 	if ( !firstChild )
 	{
-		fprintf( cfile, " />" );
+		file->Write( " />", 3 );
 	}
 	else if ( firstChild == lastChild && firstChild->ToText() )
 	{
-		fprintf( cfile, ">" );
-		firstChild->Print( cfile, depth + 1 );
-		fprintf( cfile, "</%s>", value.c_str() );
+		file->Write( ">", 1 );
+		firstChild->Print( file, depth + 1 );
+		file->Print( "</", value.c_str(), ">" );
 	}
 	else
 	{
-		fprintf( cfile, ">" );
+		file->Write( ">", 1 );
 
 		for ( node = firstChild; node; node=node->NextSibling() )
 		{
 			if ( !node->ToText() )
 			{
-				fprintf( cfile, "\n" );
+				file->NewLine();
 			}
-			node->Print( cfile, depth+1 );
+			node->Print( file, depth+1 );
 		}
-		fprintf( cfile, "\n" );
-		for( i=0; i<depth; ++i ) {
-			fprintf( cfile, "    " );
-		}
-		fprintf( cfile, "</%s>", value.c_str() );
+		file->NewLine();
+		file->Indent( depth );
+		file->Print( "</", value.c_str(), ">" );
 	}
 }
 
@@ -1100,18 +1110,24 @@ bool TiXmlDocument::SaveFile( const char * filename ) const
 
 bool TiXmlDocument::SaveFile( FILE* fp ) const
 {
+	TiXmlCFile file( fp );
+	return SaveFile( &file );
+}
+
+bool TiXmlDocument::SaveFile( TiXmlFileInterface* file ) const
+{
 	if ( useMicrosoftBOM )
 	{
 		const unsigned char TIXML_UTF_LEAD_0 = 0xefU;
 		const unsigned char TIXML_UTF_LEAD_1 = 0xbbU;
 		const unsigned char TIXML_UTF_LEAD_2 = 0xbfU;
 
-		fputc( TIXML_UTF_LEAD_0, fp );
-		fputc( TIXML_UTF_LEAD_1, fp );
-		fputc( TIXML_UTF_LEAD_2, fp );
+		file->PutC( TIXML_UTF_LEAD_0 );
+		file->PutC( TIXML_UTF_LEAD_1 );
+		file->PutC( TIXML_UTF_LEAD_2 );
 	}
-	Print( fp, 0 );
-	return (ferror(fp) == 0);
+	Print( file, 0 );
+	return file->Ok();
 }
 
 
@@ -1145,13 +1161,13 @@ TiXmlNode* TiXmlDocument::Clone() const
 }
 
 
-void TiXmlDocument::Print( FILE* cfile, int depth ) const
+void TiXmlDocument::Print( TiXmlFileInterface* file, int depth ) const
 {
-	assert( cfile );
+	assert( file );
 	for ( const TiXmlNode* node=FirstChild(); node; node=node->NextSibling() )
 	{
-		node->Print( cfile, depth );
-		fprintf( cfile, "\n" );
+		node->Print( file, depth );
+		file->NewLine();
 	}
 }
 
@@ -1210,7 +1226,7 @@ TiXmlAttribute* TiXmlAttribute::Previous()
 }
 */
 
-void TiXmlAttribute::Print( FILE* cfile, int /*depth*/, TIXML_STRING* str ) const
+void TiXmlAttribute::Print( TiXmlFileInterface* file, int /*depth*/, TIXML_STRING* str ) const
 {
 	TIXML_STRING n, v;
 
@@ -1218,16 +1234,16 @@ void TiXmlAttribute::Print( FILE* cfile, int /*depth*/, TIXML_STRING* str ) cons
 	EncodeString( value, &v );
 
 	if (value.find ('\"') == TIXML_STRING::npos) {
-		if ( cfile ) {
-		fprintf (cfile, "%s=\"%s\"", n.c_str(), v.c_str() );
+		if ( file ) {
+			file->Print( n.c_str(), "=\"", v.c_str(), "\"" );
 		}
 		if ( str ) {
 			(*str) += n; (*str) += "=\""; (*str) += v; (*str) += "\"";
 		}
 	}
 	else {
-		if ( cfile ) {
-		fprintf (cfile, "%s='%s'", n.c_str(), v.c_str() );
+		if ( file ) {
+			file->Print( n.c_str(), "='", v.c_str(), "'" );
 		}
 		if ( str ) {
 			(*str) += n; (*str) += "='"; (*str) += v; (*str) += "'";
@@ -1296,14 +1312,11 @@ void TiXmlComment::operator=( const TiXmlComment& base )
 }
 
 
-void TiXmlComment::Print( FILE* cfile, int depth ) const
+void TiXmlComment::Print( TiXmlFileInterface* file, int depth ) const
 {
-	assert( cfile );
-	for ( int i=0; i<depth; i++ )
-	{
-		fprintf( cfile,  "    " );
-	}
-	fprintf( cfile, "<!--%s-->", value.c_str() );
+	assert( file );
+	file->Indent(depth);
+	file->Print( "<!--", value.c_str(), "-->" );
 }
 
 
@@ -1331,23 +1344,20 @@ TiXmlNode* TiXmlComment::Clone() const
 }
 
 
-void TiXmlText::Print( FILE* cfile, int depth ) const
+void TiXmlText::Print( TiXmlFileInterface* file, int depth ) const
 {
-	assert( cfile );
+	assert( file );
 	if ( cdata )
 	{
-		int i;
-		fprintf( cfile, "\n" );
-		for ( i=0; i<depth; i++ ) {
-			fprintf( cfile, "    " );
-		}
-		fprintf( cfile, "<![CDATA[%s]]>\n", value.c_str() );	// unformatted output
+		file->NewLine();
+		file->Indent( depth );
+		file->Print( "<![CDATA[", value.c_str(), "]]>\n" );	// unformatted output
 	}
 	else
 	{
 		TIXML_STRING buffer;
 		EncodeString( value, &buffer );
-		fprintf( cfile, "%s", buffer.c_str() );
+		file->Write( buffer.c_str(), buffer.length() );
 	}
 }
 
@@ -1416,24 +1426,24 @@ void TiXmlDeclaration::operator=( const TiXmlDeclaration& copy )
 }
 
 
-void TiXmlDeclaration::Print( FILE* cfile, int /*depth*/, TIXML_STRING* str ) const
+void TiXmlDeclaration::Print( TiXmlFileInterface* file, int /*depth*/, TIXML_STRING* str ) const
 {
-	if ( cfile ) fprintf( cfile, "<?xml " );
+	if ( file ) file->Print( "<?xml " );
 	if ( str )	 (*str) += "<?xml ";
 
 	if ( !version.empty() ) {
-		if ( cfile ) fprintf (cfile, "version=\"%s\" ", version.c_str ());
+		if ( file ) file->Print("version=\"",  version.c_str(), "\" ");
 		if ( str ) { (*str) += "version=\""; (*str) += version; (*str) += "\" "; }
 	}
 	if ( !encoding.empty() ) {
-		if ( cfile ) fprintf (cfile, "encoding=\"%s\" ", encoding.c_str ());
+		if ( file ) file->Print( "encoding=\"", encoding.c_str(), "\" ");
 		if ( str ) { (*str) += "encoding=\""; (*str) += encoding; (*str) += "\" "; }
 	}
 	if ( !standalone.empty() ) {
-		if ( cfile ) fprintf (cfile, "standalone=\"%s\" ", standalone.c_str ());
+		if ( file ) file->Print( "standalone=\"", standalone.c_str(), "\" ");
 		if ( str ) { (*str) += "standalone=\""; (*str) += standalone; (*str) += "\" "; }
 	}
-	if ( cfile ) fprintf( cfile, "?>" );
+	if ( file ) file->Print( "?>" );
 	if ( str )	 (*str) += "?>";
 }
 
@@ -1499,20 +1509,20 @@ void TiXmlStylesheetReference::operator=( const TiXmlStylesheetReference& copy )
 }
 
 
-void TiXmlStylesheetReference::Print( FILE* cfile, int /*depth*/, TIXML_STRING* str ) const
+void TiXmlStylesheetReference::Print( TiXmlFileInterface* file, int /*depth*/, TIXML_STRING* str ) const
 {
-	if ( cfile ) fprintf( cfile, "<?xml-stylesheet " );
+	if ( file ) file->Print( "<?xml-stylesheet " );
 	if ( str )	 (*str) += "<?xml-stylesheet ";
 
 	if ( !type.empty() ) {
-		if ( cfile ) fprintf (cfile, "type=\"%s\" ", type.c_str ());
+		if ( file ) file->Print( "type=\"", type.c_str(), "\" ");
 		if ( str ) { (*str) += "type=\""; (*str) += type; (*str) += "\" "; }
 	}
 	if ( !href.empty() ) {
-		if ( cfile ) fprintf (cfile, "href=\"%s\" ", href.c_str ());
+		if ( file ) file->Print( "href=\"", href.c_str(), "\" " );
 		if ( str ) { (*str) += "href=\""; (*str) += href; (*str) += "\" "; }
 	}
-	if ( cfile ) fprintf (cfile, "?>");
+	if ( file ) file->Print( "?>" );
 	if ( str )	 (*str) += "?>";
 }
 
@@ -1540,11 +1550,10 @@ TiXmlNode* TiXmlStylesheetReference::Clone() const
 	return clone;
 }
 
-void TiXmlUnknown::Print( FILE* cfile, int depth ) const
+void TiXmlUnknown::Print( TiXmlFileInterface* file, int depth ) const
 {
-	for ( int i=0; i<depth; i++ )
-		fprintf( cfile, "    " );
-	fprintf( cfile, "<%s>", value.c_str() );
+	file->Indent(depth);
+	file->Print( "<", value.c_str(), ">" );
 }
 
 

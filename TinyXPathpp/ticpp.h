@@ -448,7 +448,7 @@ namespace ticpp
 		/**
 		All TinyXml classes can print themselves to a filestream.
 		*/
-		virtual void Print( FILE* file, int depth ) const;
+		virtual void Print( TiXmlFileInterface* file, int depth ) const;
 
 	private:
 

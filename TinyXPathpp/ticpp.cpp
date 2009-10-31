@@ -191,7 +191,7 @@ void Attribute::IteratePrevious( const std::string&, Attribute** previous ) cons
 	*previous = Previous( false );
 }
 
-void Attribute::Print( FILE* file, int depth ) const
+void Attribute::Print( TiXmlFileInterface* file, int depth ) const
 {
 	ValidatePointer();
 	m_tiXmlPointer->Print( file, depth );
