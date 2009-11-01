@@ -41,12 +41,15 @@
 #include "FusionInputHandler.h"
 #include "FusionGameMapLoader.h"
 
+#include <Rocket/Core/EventListener.h>
+#include <Rocket/Core/ElementDocument.h>
+
 
 namespace FusionEngine
 {
 
 	//! Editor system (runs the map editor interface)
-	class Editor : public System
+	class Editor : public System, public Rocket::Core::EventListener
 	{
 	public:
 		Editor(InputManager *input, Renderer *renderer, StreamingManager *streaming_manager, EntityManager *ent_manager, GameMapLoader *map_util);
@@ -67,9 +70,9 @@ namespace FusionEngine
 
 		void OnRawInput(const RawInput &ev);
 
-		void DisplayError(const std::string &title, const std::string &message);
+		void ProcessEvent(Rocket::Core::Event& ev);
 
-		//void ProcessEvent(Rocket::Core::Event& ev);
+		void DisplayError(const std::string &title, const std::string &message);
 
 		void CreateEntity(float x, float y);
 
@@ -99,6 +102,8 @@ namespace FusionEngine
 		CameraPtr m_Camera;
 
 		Vector2 m_CamVelocity;
+
+		Rocket::Core::ElementDocument *m_Document;
 
 		bool m_Enabled;
 

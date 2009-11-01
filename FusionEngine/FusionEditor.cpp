@@ -74,6 +74,9 @@ namespace FusionEngine
 	{
 		Enable(false);
 
+		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
+		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
+
 		m_Viewport.reset(new Viewport());
 		m_Camera.reset( new Camera(ScriptingEngine::getSingleton().GetEnginePtr()) );
 		m_Viewport->SetCamera(m_Camera);
@@ -115,6 +118,8 @@ namespace FusionEngine
 
 			this->PushMessage(new SystemMessage(SystemMessage::RESUME));
 			this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+
+			m_Document->Show();
 		}
 		else
 		{
@@ -175,12 +180,21 @@ namespace FusionEngine
 				if (ev.Code == CL_MOUSE_LEFT)
 				{
 					Vector2 position((float)ev.PointerPosition.x, (float)ev.PointerPosition.y);
-					CL_Rectf area;
-					m_Renderer->CalculateScreenArea(area, m_Viewport, true);
-					CreateEntity(area.left + position.x, area.top + position.y);
+
+					CL_Rectf documentRect(m_Document->GetAbsoluteLeft(), m_Document->GetAbsoluteTop(), CL_Sizef(m_Document->GetClientWidth(), m_Document->GetClientHeight()));
+					if (!documentRect.contains(CL_Vec2f(position.x, position.y)))
+					{
+						CL_Rectf area;
+						m_Renderer->CalculateScreenArea(area, m_Viewport, true);
+						CreateEntity(area.left + position.x, area.top + position.y);
+					}
 				}
 			}
 		}
+	}
+
+	void Editor::ProcessEvent(Rocket::Core::Event& ev)
+	{
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)
