@@ -87,7 +87,7 @@ namespace FusionEngine
 			//  command entry area of a console UI to indicate the expected inputs
 			StringVector argumentNames;
 		};
-		// Used for auto-complete (hence useage of map rather than unordered_map)
+		// Used for auto-complete - using structured_map (ternary tree) rather than unordered_map
 		//  and getting / listing help strings
 		typedef containers::structured_map<std::string, CommandHelp> CommandHelpMap;
 

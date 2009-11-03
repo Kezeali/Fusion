@@ -297,6 +297,8 @@ namespace FusionEngine
 		typedef std::pair<CommandHelpMap::iterator, CommandHelpMap::iterator> HelpIterRange;
 		HelpIterRange range = m_CommandHelp.prefix_range(prefix);
 
+		if (max_results != 0)
+			possibleCommands.reserve(max_results);
 		StringVector::size_type count = 0;
 		while (range.first != range.second)
 		{
@@ -309,13 +311,15 @@ namespace FusionEngine
 
 	const std::string &Console::ClosestCommand(const std::string &command) const
 	{
+		static std::string noResult;
+
 		CommandHelpMap::search_results_list results = m_CommandHelp.create_search_results();
 		m_CommandHelp.levenshtein_search(command, std::back_inserter(results), 3);
 		
 		if (!results.empty())
 			return (*results.begin())->first;
 		else
-			return m_CommandHelp.begin()->first;
+			return noResult;
 	}
 
 	inline void addToken(StringVector &args, std::string &quote, bool inQuote, const std::string& token)
@@ -395,7 +399,9 @@ namespace FusionEngine
 			else
 			{
 				Add(*it + " is not a recognised command.\nEnter 'help' to for a list of recognised commands.");
-				Add("Did you mean " + ClosestCommand(*it) + "?");
+				const std::string &closestCommand = ClosestCommand(*it);
+				if (!closestCommand.empty())
+					Add("Did you mean " + closestCommand + "?");
 			}
 		}
 	}

@@ -36,6 +36,8 @@
 #include "FusionScriptingEngine.h"
 #include "FusionScriptModule.h"
 
+#include "../FusionEngine/FusionElementSelectableDataGrid.h"
+
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
 #include <Rocket/Debugger.h>
@@ -123,6 +125,8 @@ namespace FusionEngine
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
+		ElementSelectableDataGrid::RegisterElement();
+
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
@@ -173,7 +177,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			m_ShowMouseTimer -= split;
+			m_ShowMouseTimer -= (int)split;
 		}
 	}
 

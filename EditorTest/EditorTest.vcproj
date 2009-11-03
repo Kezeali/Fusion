@@ -483,6 +483,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionElementSelectableDataGrid.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEntity.h"
 				>
 			</File>
