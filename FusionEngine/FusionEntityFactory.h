@@ -113,6 +113,9 @@ namespace FusionEngine
 		//! Sets the scripting manager and module used to add script sections
 		void SetScriptingManager(ScriptingEngine *manager, const std::string &module_name);
 
+		//! Returns the names of types with instancers available to the factory
+		void GetTypes(StringVector &types);
+
 		//! Clears the Used Types List
 		/*!
 		* Should be called before a new environment is loaded.

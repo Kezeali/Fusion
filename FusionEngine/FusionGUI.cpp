@@ -71,6 +71,28 @@ namespace FusionEngine
 		}
 	};
 
+	EMP::Core::String stringToEString(CScriptString *obj)
+	{
+		return EMP::Core::String(obj->buffer.c_str());
+	}
+
+	CScriptString *CScriptStringFactory_FromEMPString(const EMP::Core::String &copy)
+	{
+		return new CScriptString(copy.CString());
+	}
+
+	CScriptString &CScriptStringAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	{
+		obj->buffer = value.CString();
+		return *obj;
+	}
+
+	CScriptString &CScriptStringAddAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	{
+		obj->buffer += value.CString();
+		return *obj;
+	}
+
 	GUI::GUI()
 		: m_Modifiers(NOMOD),
 		m_MouseShowPeriod(1000),
@@ -124,6 +146,18 @@ namespace FusionEngine
 		Rocket::Core::SetSystemInterface(m_RocketSystem);
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
+
+		//asIScriptEngine *iengine = ScriptingEngine::getSingleton().GetEnginePtr();
+		//try
+		//{
+		//	Rocket::AngelScript::RegisterCore(iengine);
+		//	Rocket::AngelScript::Controls::RegisterControls(iengine);
+		//}
+		//catch (Rocket::AngelScript::Exception &ex)
+		//{
+		//	SendToConsole("Failed to register Rocket/AngelScript script classes. " + ex.m_Message);
+		//	return false;
+		//}
 
 		ElementSelectableDataGrid::RegisterElement();
 
@@ -258,28 +292,6 @@ namespace FusionEngine
 	void GUI::SetMouseCursorPosition_default(int x, int y)
 	{
 		m_Context->ProcessMouseMove(x, y, 0);
-	}
-
-	EMP::Core::String stringToEString(CScriptString *obj)
-	{
-		return EMP::Core::String(obj->buffer.c_str());
-	}
-
-	CScriptString *CScriptStringFactory_FromEMPString(const EMP::Core::String &copy)
-	{
-		return new CScriptString(copy.CString());
-	}
-
-	CScriptString &CScriptStringAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
-	{
-		obj->buffer = value.CString();
-		return *obj;
-	}
-
-	CScriptString &CScriptStringAddAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
-	{
-		obj->buffer += value.CString();
-		return *obj;
 	}
 
 	void GUI::Register(ScriptingEngine *engine)

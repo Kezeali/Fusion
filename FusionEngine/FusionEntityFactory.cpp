@@ -850,6 +850,14 @@ namespace FusionEngine
 		//m_ModuleConnection = m_ScriptingManager->SubscribeToModule(module_name.c_str(), boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
 	}
 
+	void EntityFactory::GetTypes(StringVector &types)
+	{
+		for (EntityInstancerMap::iterator it = m_EntityInstancers.begin(), end = m_EntityInstancers.end(); it != end; ++it)
+		{
+			types.push_back(it->first);
+		}
+	}
+
 	void EntityFactory::ResetUsedTypesList()
 	{
 		m_UsedTypes.clear();

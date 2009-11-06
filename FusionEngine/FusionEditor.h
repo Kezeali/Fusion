@@ -43,10 +43,29 @@
 
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
+#include <EMP/Core/DataSource.h>
+
+#include <containers/structured_set.hpp>
 
 
 namespace FusionEngine
 {
+
+	class EditorDataSource : public EMP::Core::DataSource
+	{
+	public:
+		EditorDataSource();
+		virtual ~EditorDataSource();
+
+		void UpdateSuggestions(const StringVector &suggestions);
+		const std::string & GetSuggestion(size_t index);
+
+		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
+		int GetNumRows(const EMP::Core::String& table);
+
+	protected:
+		StringVector m_Suggestions;
+	};
 
 	//! Editor system (runs the map editor interface)
 	class Editor : public System, public Rocket::Core::EventListener
@@ -74,7 +93,17 @@ namespace FusionEngine
 
 		void DisplayError(const std::string &title, const std::string &message);
 
-		void CreateEntity(float x, float y);
+		void CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
+
+		//! Returns entities beginning with...
+		void LookUpEntityType(StringVector &results, const std::string &search_term);
+		//! Updates the EditorDataSource with the results of the look up on the given name
+		void LookUpEntityType(const std::string &search_term);
+
+		const std::string &GetSuggestion(size_t index);
+
+		void SetEntityType(const std::string &type);
+		void SetEntityMode(bool pseudo);
 
 		void StartEditor();
 		void StopEditor();
@@ -108,6 +137,14 @@ namespace FusionEngine
 		bool m_Enabled;
 
 		std::string m_CurrentFilename;
+
+		std::string m_CurrentEntityType;
+		bool m_PseudoEntityMode;
+
+		typedef containers::structured_set<std::string> EntityTypeLookupSet;
+		EntityTypeLookupSet m_EntityTypes;
+
+		EditorDataSource *m_EditorDataSource;
 
 		// Map data (entities, etc.)
 		StringSet m_UsedTypes;

@@ -237,6 +237,11 @@ datagrid input.text
 	background-decorator: none;
 }
 
+datagrid datagridrow.selected
+{
+   background: #efbf00;
+}
+
 
 
 select,

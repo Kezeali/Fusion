@@ -57,8 +57,14 @@ namespace FusionEngine
 			AddEventListener("rowadd", this);
 		}
 
+		virtual ~ElementSelectableDataGrid()
+		{
+		}
+
 		virtual void ProcessEvent(Rocket::Core::Event& ev)
 		{
+			Rocket::Controls::ElementDataGrid::ProcessEvent(ev);
+
 			if (ev.GetType() == "rowadd")
 			{
 				int i = ev.GetParameter("first_row_added", 0);

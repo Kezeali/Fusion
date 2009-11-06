@@ -50,6 +50,61 @@
 namespace FusionEngine
 {
 
+	EditorDataSource::EditorDataSource()
+		: EMP::Core::DataSource("editor")
+	{
+	}
+
+	EditorDataSource::~EditorDataSource()
+	{
+	}
+
+	void EditorDataSource::UpdateSuggestions(const StringVector &list)
+	{
+		size_t previousSize = m_Suggestions.size();
+		m_Suggestions = list;
+		// Cause the element to update:
+		if (previousSize > 0 && list.size() > 0)
+			NotifyRowChange("type_suggestions", 0, fe_min(previousSize, list.size()));
+		if (previousSize > list.size())
+			NotifyRowRemove("type_suggestions", list.size(), previousSize-list.size());
+		else if (list.size() > previousSize)
+			NotifyRowAdd("type_suggestions", previousSize, list.size()-previousSize);
+	}
+
+	const std::string & EditorDataSource::GetSuggestion(size_t index)
+	{
+		return m_Suggestions[index];
+	}
+
+	void EditorDataSource::GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns)
+	{
+		if (row_index < 0 || (size_t)row_index >= m_Suggestions.size())
+			return;
+
+		if (table == "type_suggestions")
+		{
+			for (size_t i = 0; i < columns.size(); i++)
+			{
+				if (columns[i] == "name")
+				{
+					row.push_back(m_Suggestions[row_index].c_str());
+				}
+			}
+		}
+
+	}
+
+	int EditorDataSource::GetNumRows(const EMP::Core::String& table)
+	{
+		if (table == "type_suggestions")
+		{
+			return m_Suggestions.size();
+		}
+
+		return 0;
+	}
+
 	Editor::Editor(InputManager *input, Renderer *renderer, StreamingManager *streaming_manager, EntityManager *ent_manager, GameMapLoader *map_util)
 		: m_Input(input),
 		m_Renderer(renderer),
@@ -57,10 +112,12 @@ namespace FusionEngine
 		m_EntityManager(ent_manager),
 		m_MapUtil(map_util)
 	{
+		m_EditorDataSource = new EditorDataSource();
 	}
 
 	Editor::~Editor()
 	{
+		delete m_EditorDataSource;
 	}
 
 	const std::string s_EditorSystemName = "Editor";
@@ -82,6 +139,16 @@ namespace FusionEngine
 		m_Viewport->SetCamera(m_Camera);
 
 		m_RawInputConnection = m_Input->SignalRawInput.connect( boost::bind(&Editor::OnRawInput, this, _1) );
+
+		EntityFactory *factory = m_EntityManager->GetFactory();
+
+		StringVector types;
+		factory->GetTypes(types);
+		m_EntityTypes.insert(types.begin(), types.end());
+		//for (StringVector::iterator it = types.begin(), end = types.end(); it != end; ++it)
+		//{
+		//	m_EntityTypes.insert(*it);
+		//}
 
 		return true;
 	}
@@ -186,7 +253,8 @@ namespace FusionEngine
 					{
 						CL_Rectf area;
 						m_Renderer->CalculateScreenArea(area, m_Viewport, true);
-						CreateEntity(area.left + position.x, area.top + position.y);
+
+						CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
 					}
 				}
 			}
@@ -202,14 +270,66 @@ namespace FusionEngine
 		SendToConsole(title + " error:" + message);
 	}
 
-	void Editor::CreateEntity(float x, float y)
+	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
 	{
 		GameMapLoader::GameMapEntity gmEntity;
-		gmEntity.hasName = false;
-		gmEntity.entity = m_EntityManager->GetFactory()->InstanceEntity("Test", "default");
+		gmEntity.entity = m_EntityManager->GetFactory()->InstanceEntity(type, "default");
+		if (!gmEntity.entity)
+		{
+			SendToConsole("Failed to create entity of type " + type);
+			return;
+		}
+
+		if (!name.empty())
+		{
+			gmEntity.entity->_setName(name);
+			gmEntity.hasName = true;
+		}
+		else
+			gmEntity.hasName = false;
+
 		gmEntity.entity->SetPosition(Vector2(x, y));
-		m_EntityManager->AddPseudoEntity(gmEntity.entity);
+
+		if (pseudo)
+			m_EntityManager->AddPseudoEntity(gmEntity.entity);
+		else
+			m_EntityManager->AddEntity(gmEntity.entity);
+
 		m_Entities.push_back(gmEntity);
+	}
+
+	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)
+	{
+		typedef std::pair<EntityTypeLookupSet::iterator, EntityTypeLookupSet::iterator> IterRange;
+		IterRange range = m_EntityTypes.prefix_range(search_term);
+
+		while (range.first != range.second)
+		{
+			results.push_back(*range.first);
+			++range.first;
+		}
+	}
+
+	void Editor::LookUpEntityType(const std::string &search_term)
+	{
+		StringVector results;
+		LookUpEntityType(results, search_term);
+		m_EditorDataSource->UpdateSuggestions(results);
+	}
+
+	const std::string & Editor::GetSuggestion(size_t index)
+	{
+		return m_EditorDataSource->GetSuggestion(index);
+	}
+
+	void Editor::SetEntityType(const std::string &type)
+	{
+		m_CurrentEntityType = type;
+	}
+
+	void Editor::SetEntityMode(bool pseudo)
+	{
+		m_PseudoEntityMode = pseudo;
 	}
 
 	void Editor::StartEditor()
@@ -297,6 +417,25 @@ namespace FusionEngine
 	{
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void searchTypes(StringArray& out, string &in)",
+			asMETHODPR(Editor, LookUpEntityType, (StringVector&, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void updateSuggestions(const string &in)",
+			asMETHODPR(Editor, LookUpEntityType, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"const string& getSuggestion(uint)",
+			asMETHOD(Editor, GetSuggestion), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void setEntityType(const string &in)",
+			asMETHOD(Editor, SetEntityType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"void setEntityMode(bool)",
+			asMETHOD(Editor, SetEntityMode), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		r = engine->RegisterObjectMethod("Editor",
 			"void enable()",
 			asMETHOD(Editor, Enable), asCALL_THISCALL); FSN_ASSERT(r >= 0);

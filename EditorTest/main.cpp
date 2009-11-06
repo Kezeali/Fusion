@@ -169,24 +169,25 @@ public:
 			systemMgr->AddSystem(networkSystem);
 
 			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
+			// Init GUI
+			gui->Initialise();
+			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
 			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 			
-			systemMgr->AddSystem(ontology);
-			//systemMgr->AddSystem(gui);
-
-			gui->Initialise();
-
-			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
-
 			/////////////////////
 			// Attach module to objects that require it
 			ModulePtr module = scriptingManager->GetModule("main");
 			console->SetModule(module);
 			gui->SetModule(module);
-			ontology->SetModule(module);
+			
 
 			script_SoundOutput->SetModule(module);
+
+			systemMgr->AddSystem(ontology);
+			//systemMgr->AddSystem(gui);
+
+			ontology->SetModule(module);
 
 			// Build the module (scripts are added automatically by objects which have registered a module connection)
 			module->Build();
