@@ -850,11 +850,23 @@ namespace FusionEngine
 		//m_ModuleConnection = m_ScriptingManager->SubscribeToModule(module_name.c_str(), boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
 	}
 
-	void EntityFactory::GetTypes(StringVector &types)
+	void EntityFactory::GetTypes(StringVector &types, bool sort)
 	{
+		types.reserve(m_EntityInstancers.size());
 		for (EntityInstancerMap::iterator it = m_EntityInstancers.begin(), end = m_EntityInstancers.end(); it != end; ++it)
 		{
-			types.push_back(it->first);
+			if (sort && !types.empty())
+			{
+				StringVector::iterator lowerBound = std::lower_bound(types.begin(), types.end(), it->first);
+				types.insert(lowerBound, it->first);
+				/*for (StringVector::iterator s_it = types.begin(), s_end = types.end()-1; s_it != s_end; ++s_it)
+				{
+					if (it->first.compare(*s_it) < 0)
+						types.insert(s_it, it->first);
+				}*/
+			}
+			else
+				types.push_back(it->first);
 		}
 	}
 

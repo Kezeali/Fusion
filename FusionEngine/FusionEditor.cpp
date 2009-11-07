@@ -133,6 +133,7 @@ namespace FusionEngine
 
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
+		m_Document->RemoveReference();
 
 		m_Viewport.reset(new Viewport());
 		m_Camera.reset( new Camera(ScriptingEngine::getSingleton().GetEnginePtr()) );
@@ -143,18 +144,20 @@ namespace FusionEngine
 		EntityFactory *factory = m_EntityManager->GetFactory();
 
 		StringVector types;
-		factory->GetTypes(types);
+		factory->GetTypes(types, true);
 		m_EntityTypes.insert(types.begin(), types.end());
 		//for (StringVector::iterator it = types.begin(), end = types.end(); it != end; ++it)
 		//{
 		//	m_EntityTypes.insert(*it);
 		//}
+		m_EditorDataSource->UpdateSuggestions(types);
 
 		return true;
 	}
 
 	void Editor::CleanUp()
 	{
+		m_Document->Close();
 	}
 
 	void Editor::Update(float split)

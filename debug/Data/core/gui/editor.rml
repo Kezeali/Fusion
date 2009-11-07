@@ -29,12 +29,13 @@
 		<script src="editor.as" />
 	</head>
 	<body template="window">
+		<button onclick="gui.enableDebugger(); gui.showDebugger();">Enable Rocket-GUI Debugger</button>
 		<p>
 			Entity Type:
 			<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChange(event);"/>
-			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%Editor: OnSelected(event);">
+			<!--<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%Editor: OnSelected(event);">
 				<col fields="name" width="75%">Type</col>
-			</datagrid>
+			</datagrid>-->
 		</p>
 		<form onsubmit="string filename = event.GetParameter(e_String('filename'), e_String()); editor.save( filename );">
 			File name:

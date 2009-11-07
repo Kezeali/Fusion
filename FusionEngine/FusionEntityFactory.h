@@ -114,7 +114,7 @@ namespace FusionEngine
 		void SetScriptingManager(ScriptingEngine *manager, const std::string &module_name);
 
 		//! Returns the names of types with instancers available to the factory
-		void GetTypes(StringVector &types);
+		void GetTypes(StringVector &types, bool sort = false);
 
 		//! Clears the Used Types List
 		/*!
