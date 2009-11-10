@@ -35,17 +35,32 @@
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
 
+#include <boost/lexical_cast.hpp>
+
 
 namespace FusionEngine
 {
 
 	GameMapLoader::GameMapLoader(ClientOptions *options, EntityManager *manager)
 		: m_ClientOptions(options),
-		m_Manager(manager)
+		m_Manager(manager),
+		m_NextTypeIndex(0)
 	{
+		m_FactoryConnection = m_Manager->GetFactory()->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
 	}
 
-	void GameMapLoader::LoadEntityTypes(CL_IODevice device)
+	GameMapLoader::~GameMapLoader()
+	{
+		m_FactoryConnection.disconnect();
+	}
+
+	void GameMapLoader::LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory)
+	{
+		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+		LoadEntityTypes(device);
+	}
+
+	void GameMapLoader::LoadEntityTypes(CL_IODevice &device)
 	{
 		EntityFactory *factory = m_Manager->GetFactory();
 		// Read the entity type count
@@ -59,20 +74,28 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadMap(CL_IODevice device)
+	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool pseudo_only)
 	{
+		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+
+		m_Manager->Clear();
+
 		// Read the entity type count
 		cl_uint32 numberEntityTypes = device.read_uint32();
 		// List each entity type
-		StringVector entityTypeArray(numberEntityTypes);
+		//StringVector entityTypeArray(numberEntityTypes);
+		m_TypeIndex.clear();
 		{
 			CL_String8 entityTypename;
-			for (cl_uint32 i = 0; i < numberEntityTypes; i++)
+			for (m_NextTypeIndex = 0; m_NextTypeIndex < numberEntityTypes; ++m_NextTypeIndex)
 			{
 				entityTypename = device.read_string_a();
-				entityTypeArray.push_back(entityTypename.c_str());
+				//entityTypeArray.push_back(entityTypename.c_str());
+				m_TypeIndex.insert( TypeIndex::value_type(entityTypename.c_str(), m_NextTypeIndex) );
 			}
 		}
+
+		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
 		// Load Archetypes
 		cl_uint32 numberArchetypes = device.read_uint32();
@@ -80,7 +103,7 @@ namespace FusionEngine
 		for (cl_uint32 i = 0; i < numberArchetypes; i++)
 		{
 			cl_uint32 entityTypeIndex = device.read_uint32();
-			const std::string &entityTypename = entityTypeArray[entityTypeIndex];
+			const std::string &entityTypename = entityTypeArray.at(entityTypeIndex);
 
 			Archetype &archetype = archetypeArray[i];
 
@@ -91,52 +114,38 @@ namespace FusionEngine
 			archetype.packet.data = device.read_string_a().c_str();
 		}
 
-		EntityFactory *factory = m_Manager->GetFactory();
 		IDTranslator translator = m_Manager->MakeIDTranslator();
 
-		//typedef std::pair<EntityPtr, cl_uint8> EntityToLoad;
-		//typedef std::vector<EntityToLoad> EntityToLoadArray;
+		loadPseudoEntities(device, archetypeArray, translator);
+		loadEntities(device, archetypeArray, translator);
+	}
+
+	void GameMapLoader::loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
+	{
+		EntityFactory *factory = m_Manager->GetFactory();
+
+		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
 		// Load & instance Entities
 		cl_uint32 numberEntities = device.read_uint32();
 		EntityArray instancedEntities(numberEntities);
+
 		{
-			std::string entityName; ObjectID entityID;
+			std::string entityName;
 			EntityPtr entity;
 			for (cl_uint32 i = 0; i < numberEntities; i++)
 			{
-				cl_uint8 typeFlags = device.read_uint8(); // Flags indicating Pseudo-Entity, Archetype, etc.
 				cl_uint32 typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
 
-				bool isPseudoEntity = (typeFlags & PseudoEntityFlag) == PseudoEntityFlag;
-				if (isPseudoEntity)
-					entityID = 0;
-				else
-					device.read((void*)&entityID, sizeof(ObjectID));
-					
-
-				//if (typeFlags & ArchetypeFlag)
-				//{
-				//	const Archetype &archetype = archetypeArray[typeIndex];
-				//	entity = factory->InstanceEntity(archetype.entityTypename, entityName);/*m_Manager->InstanceEntity(archetype.entityTypename, entityName);*/
-				//}
-				//else
 				{
-					const std::string &entityTypename = entityTypeArray[typeIndex];
-					entity = factory->InstanceEntity(entityTypename, entityName);/*m_Manager->InstanceEntity(archetype.entityTypename, entityName);*/
+					const std::string &entityTypename = entityTypeArray.at(typeIndex);
+					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
 
-				if (isPseudoEntity)
-				{
-					m_Manager->AddPseudoEntity(entity);
-				}
-				else
-				{
-					entity->SetID(translator(entityID));
-					m_Manager->AddEntity(entity);
-				}
+
+				m_Manager->AddPseudoEntity(entity);
 
 				instancedEntities.push_back(entity);
 			}
@@ -161,8 +170,9 @@ namespace FusionEngine
 				// Call the entity's spawn method
 				entity->Spawn();
 
+				cl_uint8 typeFlags = device.read_uint8();
 				// Load archetype
-				if (device.read_uint8() != 0) // Same type-flags as above (see cl_uint8 typeFlags), but we only care about the archetype flag this time
+				if (typeFlags & ArchetypeFlag) // Check for archetype flag
 				{
 					cl_uint32 typeIndex = device.read_uint32();
 					const Archetype &archetype = archetypeArray[typeIndex];
@@ -181,11 +191,228 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadSavedGame(CL_IODevice device)
+	void GameMapLoader::loadEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
 	{
+		EntityFactory *factory = m_Manager->GetFactory();
+
+		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
+
+		// Load & instance Entities
+		cl_uint32 numberEntities = device.read_uint32();
+		EntityArray instancedEntities(numberEntities);
+
+		{
+			std::string entityName; ObjectID entityID;
+			EntityPtr entity;
+			for (cl_uint32 i = 0; i < numberEntities; i++)
+			{
+				cl_uint32 typeIndex = device.read_uint32();
+
+				entityName = device.read_string_a().c_str();
+
+				device.read((void*)&entityID, sizeof(ObjectID));
+
+				{
+					const std::string &entityTypename = entityTypeArray.at(typeIndex);
+					entity = factory->InstanceEntity(entityTypename, entityName);
+				}
+
+				entity->SetID(translator(entityID));
+				m_Manager->AddEntity(entity);
+
+				instancedEntities.push_back(entity);
+			}
+		}
+
+		// Spawn then deserialise each instanced entity
+		{
+			EntityDeserialiser entity_deserialiser(m_Manager, translator);
+			SerialisedData state;
+			for (EntityArray::iterator it = instancedEntities.begin(), end = instancedEntities.end(); it != end; ++it)
+			{
+				EntityPtr &entity = (*it);
+
+				// Basic Entity properties (position, angle)
+				Vector2 position;
+				position.x = device.read_float();
+				position.y = device.read_float();
+				entity->SetPosition(position);
+
+				entity->SetAngle(device.read_float());
+
+				// Call the entity's spawn method
+				entity->Spawn();
+
+				cl_uint8 typeFlags = device.read_uint8();
+				// Load archetype
+				if (typeFlags & ArchetypeFlag) // Check for archetype flag
+				{
+					cl_uint32 typeIndex = device.read_uint32();
+					const Archetype &archetype = archetypeArray[typeIndex];
+
+					// Check that the archetype data is for the correct entity type before deserializing
+					FSN_ASSERT(entity->GetType() == archetype.entityTypename);
+					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
+				}
+
+				// Load specific entity state
+				state.mask = device.read_uint32();
+				state.data = device.read_string_a().c_str();
+
+				entity->DeserialiseState(state, true, entity_deserialiser);
+			}
+		}
 	}
 
-	void GameMapLoader::CompileMap(CL_IODevice device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::GameMapEntityArray &entities)
+	void GameMapLoader::LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory)
+	{
+		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+
+		// General info
+		std::string date;
+		date.resize(19);
+		device.read(&date[0], 19);
+
+		// Local players
+		PlayerRegistry::Clear();
+
+		size_t numLocalPlayers = device.read_uint32();
+		m_ClientOptions->SetOption("num_local_players", boost::lexical_cast<std::string>(numLocalPlayers));
+		for (unsigned int i = 0; i < numLocalPlayers; i++)
+		{
+			ObjectID netIndex = device.read_uint16();
+			PlayerRegistry::AddPlayer(netIndex, i);
+		}
+
+		// Map filename
+		std::string mapFilename = device.read_string_a().c_str();
+
+		if (!mapFilename.empty() && mapFilename != m_MapFilename)
+			LoadMap(mapFilename, directory, true);
+		else
+			m_Manager->Clear();
+
+		EntityFactory *factory = m_Manager->GetFactory();
+		IDTranslator translator = m_Manager->MakeIDTranslator();
+
+		// Load & instance Entities (this section is loaded the same way as the equivilant section in the map file)
+		// TODO: share code with map file loading?
+		cl_uint32 numberEntities = device.read_uint32();
+		EntityArray instancedEntities;
+		instancedEntities.reserve(numberEntities);
+		// The TypeIndex bimap maps type-name to index, so the right_map is index to name
+		TypeIndex::right_map &indexToName = m_TypeIndex.right;
+		{
+			std::string entityName; ObjectID entityID;
+			EntityPtr entity;
+			for (cl_uint32 i = 0; i < numberEntities; i++)
+			{
+				cl_uint32 typeIndex = device.read_uint32();
+
+				entityName = device.read_string_a().c_str();
+				device.read((void*)&entityID, sizeof(ObjectID));
+
+				{
+					const std::string &entityTypename = indexToName.at(typeIndex);
+					entity = factory->InstanceEntity(entityTypename, entityName);
+				}
+
+				entity->SetID(translator(entityID));
+				m_Manager->AddEntity(entity);
+
+				instancedEntities.push_back(entity);
+			}
+		}
+
+		// Deserialise each instanced entity (the only difference between this and what is done to load
+		//  a _map_ file is that the Entity's Spawn() method is not called)
+		{
+			EntityDeserialiser entity_deserialiser(m_Manager, translator);
+			SerialisedData state;
+			for (EntityArray::iterator it = instancedEntities.begin(), end = instancedEntities.end(); it != end; ++it)
+			{
+				EntityPtr &entity = (*it);
+
+				// Basic Entity properties (position, angle)
+				Vector2 position;
+				position.x = device.read_float();
+				position.y = device.read_float();
+				entity->SetPosition(position);
+
+				entity->SetAngle(device.read_float());
+
+				// Load entity state
+				state.mask = device.read_uint32();
+				state.data = device.read_string_a().c_str();
+
+				entity->DeserialiseState(state, true, entity_deserialiser);
+			}
+		}
+	}
+
+	void GameMapLoader::SaveGame(const std::string &filename, CL_VirtualDirectory &directory)
+	{
+		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::create_always, CL_File::access_write, 0);
+
+		// Write save info
+		//  Date
+		CL_String date = CL_DateTime::get_current_local_time().to_short_datetime_string();
+		device.write(CL_StringHelp::text_to_utf8(date).c_str(), 19);
+		//  Players
+		int numLocalPlayers;
+		m_ClientOptions->GetOption("num_local_players", &numLocalPlayers);
+		device.write_uint32((unsigned)numLocalPlayers);
+		//  Write net-indicies so they can be restored - net-indicies
+		//  must be the same from session to session for Entity ownership.
+		for (unsigned int i = 0; i < (unsigned)numLocalPlayers; i++)
+			device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
+
+		// Map filename
+		device.write_string_a(m_MapFilename.c_str());
+
+		const EntityManager::IDEntityMap &entities = m_Manager->GetEntities();
+
+		// Write Entities
+		device.write_uint32(entities.size());
+		for (EntityManager::IDEntityMap::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const EntityPtr &entity = it->second;
+			
+			// Write the type index (refers to type-index in the map file)
+			device.write_uint32( m_TypeIndex.left.at(entity->GetType()) );
+
+			// Write the Entity name
+			if (!entity->HasDefaultName())
+				device.write_string_a(entity->GetName().c_str());
+			else
+				device.write_string_a(CL_String8());
+
+			// Write the Entity ID
+			device.write_uint16(entity->GetID());
+		}
+		// Entity data
+		SerialisedData state;
+		for (EntityManager::IDEntityMap::const_iterator it = entities.begin(), end = entities.end();
+			it != end; ++it)
+		{
+			const EntityPtr &entity = it->second;
+
+			// Write basic Entity properties (position, angle)
+			const Vector2 &position = entity->GetPosition();
+			device.write_float(position.x);
+			device.write_float(position.y);
+			device.write_float(entity->GetAngle());
+
+			// Write the entity state
+			entity->SerialiseState(state, false);
+
+			device.write_uint32(state.mask);
+			device.write_string_a(state.data.c_str());
+		}
+	}
+
+
+	void GameMapLoader::CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::GameMapEntityArray &pseudo_entities, const GameMapLoader::GameMapEntityArray &entities)
 	{
 		// Write used types list
 		// Number of types:
@@ -199,7 +426,7 @@ namespace FusionEngine
 			cl_uint32 type_index = 0;
 			for (StringSet::const_iterator it = used_entity_types.begin(), end = used_entity_types.end(); it != end; ++it)
 			{
-				device.write_string_a(*it);
+				device.write_string_a(it->c_str());
 				
 				usedTypeIndexes[*it] = type_index++;
 			}
@@ -225,35 +452,73 @@ namespace FusionEngine
 			}
 		}
 
-		// Write Entities
-		device.write_uint32(entities.size());
-
-		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		// Write Pseudo-Entities
+		device.write_uint32(pseudo_entities.size());
+		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
 			const EntityPtr &entity = it->entity;
-
-			// Write the type-flags for this entity
-			cl_uint8 typeFlags;
-			if (entity->IsPseudoEntity())
-				typeFlags &= PseudoEntityFlag;
-			if (!it->archetypeId.empty())
-				typeFlags &= ArchetypeFlag;
-
-			device.write_uint8(typeFlags);
 			
 			// Write the type index (refers to used-type-index at the top of the file)
 			device.write_uint32(usedTypeIndexes[entity->GetType()]);
 
 			// Write the Entity name
-			device.write_string_a(entity->GetName());
-			// Write the Entity ID (if it isn't a pseudo-entity)
-			if (!entity->IsPseudoEntity())
-				device.write_uint16(entity->GetID());
-				//device.write((void*)&entity->GetID(), sizeof(ObjectID));
+			if (it->hasName)
+				device.write_string_a(entity->GetName());
+			else
+				device.write_string_a(CL_String8());
+		}
+
+		// Write Pseudo-Entity state data
+		SerialisedData state;
+		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const EntityPtr &entity = it->entity;
+
+			// Write basic Entity properties (position, angle)
+			const Vector2 &position = entity->GetPosition();
+			device.write_float(position.x);
+			device.write_float(position.y);
+
+			device.write_float(entity->GetAngle());
+
+			// Write the type-flags for the entity data
+			if (!it->archetypeId.empty())
+			{
+				device.write_uint8(ArchetypeFlag);
+				// Write the index of the archetype used
+				device.write_uint32(usedArchetypeIndexes[it->archetypeId]);
+			}
+			else
+				device.write_uint8(NoTypeFlags);
+
+			// Write the entity state
+			state.mask = it->stateMask;
+			entity->SerialiseState(state, true);
+
+			device.write_uint32(state.mask);
+			device.write_string_a(state.data);
+		}
+
+		// Write Entities
+		device.write_uint32(entities.size());
+		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			const EntityPtr &entity = it->entity;
+			
+			// Write the type index (refers to used-type-index at the top of the file)
+			device.write_uint32(usedTypeIndexes[entity->GetType()]);
+
+			// Write the Entity name
+			if (it->hasName)
+				device.write_string_a(entity->GetName());
+			else
+				device.write_string_a(CL_String8());
+			// Write the Entity ID
+			device.write_uint16(entity->GetID());
+			//device.write((void*)&entity->GetID(), sizeof(ObjectID));
 		}
 
 		// Write Entity state data
-		SerialisedData state;
 		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			const EntityPtr &entity = it->entity;
@@ -284,34 +549,12 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::SaveGame(CL_IODevice device)
+
+	void GameMapLoader::onEntityInstanced(EntityPtr &entity)
 	{
-		// Write save info
-		//  Date
-		device.write_uint64(CL_DateTime::get_current_utc_time().to_ticks());
-		//  Players
-		int numLocalPlayers;
-		m_ClientOptions->GetOption("num_local_players", &numLocalPlayers);
-		device.write_uint32((unsigned)numLocalPlayers);
-		//  Write net-indicies so they can be restored - net-indicies
-		//  must be the same from session to session for Entity ownership.
-		for (unsigned int i = 0; i < (unsigned)numLocalPlayers; i++)
-			device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
-
-		// Map filename
-		device.write_string_a(m_MapFilename);
-
-		const EntityManager::IDEntityMap &entities = m_Manager->GetEntities();
-		for (EntityManager::IDEntityMap::const_iterator it = entities.begin(), end = entities.end();
-			it != end; ++it)
-		{
-			const EntityPtr &entity = it->second;
-
-			if (entity->GetDomain() == GAME_DOMAIN)
-			{
-				// Save entity...
-			}
-		}
+		std::pair<TypeIndex::left_iterator, bool> r = m_TypeIndex.left.insert( TypeIndex::left_value_type(entity->GetType(), m_NextTypeIndex) );
+		if (r.second)
+			++m_NextTypeIndex;
 	}
 
 }

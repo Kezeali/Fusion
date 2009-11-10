@@ -209,10 +209,20 @@ namespace FusionEngine
 		typedef std::vector<StreamedResourceUserPtr> StreamedResourceArray;
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
-		//! Sets the search-name of this Entity post-hoc
+		//! Sets the search-name of this Entity
 		void _setName(const std::string &name);
 		//! Gets the search-name of this Entity
 		const std::string &GetName() const;
+
+		//! Informs this entity that it has been given a default name
+		void _notifyDefaultName(const std::string &name);
+		//! Returns true if the name currently assigned to this Entity is default
+		/*!
+		* If an entity is added to the manager without a search name, it will get a default
+		* search name assigned to it. Such names should not be saved to save-game files,
+		* so this property allows the saved-game creator to make an informed decision.
+		*/
+		bool HasDefaultName() const;
 
 		//! Sets the sync ID of this Entity.
 		/*!
@@ -438,6 +448,7 @@ namespace FusionEngine
 	protected:
 		std::string m_Name;
 		ObjectID m_Id;
+		bool m_HasDefaultName;
 
 		// The player who owns this entity, 0 for default ownership
 		//  (which falls to the arbitrator, if ownership is needed)

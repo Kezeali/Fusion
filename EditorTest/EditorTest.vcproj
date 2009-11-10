@@ -213,6 +213,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionElementSelectableDataGrid.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEntity.cpp"
 				>
 			</File>

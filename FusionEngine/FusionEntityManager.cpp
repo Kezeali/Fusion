@@ -460,7 +460,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::AddEntity(EntityPtr entity)
+	void EntityManager::AddEntity(EntityPtr &entity)
 	{
 		if (m_EntitiesLocked)
 			m_EntitiesToAdd.push_back( EntityToAdd(entity, false) );
@@ -471,7 +471,7 @@ namespace FusionEngine
 				entity->SetID(getFreeID());
 
 			if (entity->GetName() == "default")
-				entity->_setName(generateName(entity));
+				entity->_notifyDefaultName(generateName(entity));
 
 			IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
 			if (_where != m_Entities.end())
@@ -487,7 +487,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::AddPseudoEntity(EntityPtr pseudo_entity)
+	void EntityManager::AddPseudoEntity(EntityPtr &pseudo_entity)
 	{
 		if (m_EntitiesLocked)
 			m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
@@ -495,7 +495,7 @@ namespace FusionEngine
 		else
 		{
 			if (pseudo_entity->GetName() == "default")
-				pseudo_entity->_setName(generateName(pseudo_entity));
+				pseudo_entity->_notifyDefaultName(generateName(pseudo_entity));
 
 			NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
 			if (_where != m_EntitiesByName.end())
@@ -505,11 +505,10 @@ namespace FusionEngine
 			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
 
 			m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
-
 		}
 	}
 
-	void EntityManager::RemoveEntity(EntityPtr entity)
+	void EntityManager::RemoveEntity(const EntityPtr &entity)
 	{
 		// Make sure the entity is removed from it's update domain
 		entity->MarkToRemove();
@@ -547,7 +546,7 @@ namespace FusionEngine
 		RemoveEntity(GetEntity(id));
 	}
 
-	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr entity)
+	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr &entity)
 	{
 		if (m_EntitiesLocked)
 			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager::InsertEntity", "EntityManager is currently updating: Can't replace Entities while updating");
@@ -557,7 +556,7 @@ namespace FusionEngine
 
 		// Generate a name if necessary
 		if (entity->GetName() == "default")
-			entity->_setName(generateName(entity));
+			entity->_notifyDefaultName(generateName(entity));
 
 		// Try to insert the entity - overwrite if another is present
 		EntityPtr &value = m_Entities[id];
@@ -568,22 +567,38 @@ namespace FusionEngine
 			// Mark the entity so it will be removed from it's update domain
 			value->MarkToRemove();
 		}
-		// Replace the map-entry (referenced by 'value') with the new entity
+		// Replace the entry in the ID map (referenced by 'value') with the new entity
 		value = entity;
-
-		//std::pair<IDEntityMap::iterator, bool> check = m_Entities.insert( IDEntityMap::value_type(entity->GetID(), entity) );
-		//if (!check.second)
-		//{
-		//	// Erase the existing entity from both maps
-		//	m_EntitiesByName.erase(check.first->second->GetName());
-		//	m_Entities.erase(check.first);
-		//	// Insert the new Entity
-		//	m_Entities.insert(check.first, IDEntityMap::value_type( entity->GetID(), entity ));
-		//}
-
+		// Add the entity to the other indexes
 		m_EntitiesByName[entity->GetName()] = entity;
+		m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
 
 		m_EntitySynchroniser->OnEntityAdded(entity);
+	}
+
+	void EntityManager::RenameEntity(EntityPtr &entity, const std::string &new_name)
+	{
+		NameEntityMap::iterator _where = m_EntitiesByName.find(entity->GetName());
+		if (_where != m_EntitiesByName.end())
+		{
+			m_EntitiesByName.erase(_where);
+
+			entity->_setName(new_name);
+			m_EntitiesByName.insert( NameEntityMap::value_type(new_name, entity) );
+		}
+	}
+
+	void EntityManager::RenameEntity(const std::string &current_name, const std::string &new_name)
+	{
+		NameEntityMap::iterator _where = m_EntitiesByName.find(current_name);
+		if (_where != m_EntitiesByName.end())
+		{
+			EntityPtr entity = _where->second;
+			m_EntitiesByName.erase(_where);
+
+			entity->_setName(new_name);
+			m_EntitiesByName.insert( NameEntityMap::value_type(new_name, entity) );
+		}
 	}
 
 	bool isNamed(EntityManager::IDEntityMap::value_type &element, const std::string &name)

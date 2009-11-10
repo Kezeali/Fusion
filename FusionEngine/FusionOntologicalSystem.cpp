@@ -40,6 +40,7 @@
 #include "FusionNetworkSystem.h"
 #include "FusionScriptingEngine.h"
 #include "FusionClientOptions.h"
+#include "FusionPaths.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionXml.h"
@@ -167,7 +168,7 @@ namespace FusionEngine
 			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 
-			m_EntityFactory->SetScriptingManager(manager, "main");
+			m_EntityFactory->SetScriptingManager(manager);
 			m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
@@ -176,14 +177,28 @@ namespace FusionEngine
 			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
+			gameOptions.GetOption("startup_map", &m_StartupMap);
 		}
 
-		m_EntityFactory->LoadScriptedType(m_StartupEntity);
+		if (!m_StartupEntity.empty())
+			m_EntityFactory->LoadScriptedType(m_StartupEntity);
 		m_EntityFactory->AddInstancer("Simple", EntityInstancerPtr(new SimpleInstancerTest()));
 
-		// Load map entitites
+		// Load map entities
+		//  Startup map (the map initially loaded)
+		if (!m_StartupMap.empty())
+		{
+			m_StartupMap = "Maps/" + m_StartupMap;
+			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			m_MapLoader->LoadEntityTypes(m_StartupMap, dir);
+		}
+		//  maps.txt
 		std::string maps, line;
-		OpenString_PhysFS(maps, L"maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+		try {
+			OpenString_PhysFS(maps, L"maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+		} catch (FileSystemException &e) {
+			SendToConsole("No maps.txt: Maps not listed in Data/maps.txt may fail to load.");
+		}
 		std::string::size_type lineBegin = 0, lineEnd;
 		while (true)
 		{
@@ -427,6 +442,8 @@ namespace FusionEngine
 
 	void OntologicalSystem::SetModule(const ModulePtr &module)
 	{
+		m_EntityFactory->SetModule(module);
+
 		m_Module = module;
 
 		m_ModuleConnection.disconnect();
@@ -442,13 +459,21 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
-
-			if (entity)
+			if (!m_StartupEntity.empty())
 			{
-				entity->Spawn();
-				// Force stream-in
-				entity->StreamIn();
+				EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+				if (entity)
+				{
+					entity->Spawn();
+					// Force stream-in
+					entity->StreamIn();
+				}
+			}
+
+			if (!m_StartupMap.empty())
+			{
+				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				m_MapLoader->LoadMap(m_StartupMap, dir);
 			}
 		}
 	}
@@ -461,9 +486,13 @@ namespace FusionEngine
 	void OntologicalSystem::Save(const std::string &filename)
 	{
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice out = vdir.open_file(filename.c_str(), CL_File::create_always, CL_File::access_write);
+		m_MapLoader->SaveGame(s_SavePath + filename, vdir);
+	}
 
-		m_MapLoader->SaveGame(out);
+	void OntologicalSystem::Load(const std::string &filename)
+	{
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		m_MapLoader->LoadSavedGame(s_SavePath + filename, vdir);
 	}
 
 	void OntologicalSystem::Pause()
@@ -620,6 +649,9 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("System",
 			"void save(const string &in)",
 			asMETHOD(OntologicalSystem, Save), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void load(const string &in)",
+			asMETHOD(OntologicalSystem, Load), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
 			"uint addPlayer(IEntity@, const string &in)",

@@ -237,12 +237,6 @@ datagrid input.text
 	background-decorator: none;
 }
 
-datagrid datagridrow.selected
-{
-   background: #efbf00;
-}
-
-
 
 select,
 dataselect
@@ -338,6 +332,15 @@ dataselect selectbox option:hover
 	background: #FF5D5D;
 }
 
+datagrid datagridrow.selected
+{
+   background: #EFBF00;
+}
+
+datagrid datagridrow option:hover
+{
+	background: #FF5D5D;
+}
 
 
 input.radio,

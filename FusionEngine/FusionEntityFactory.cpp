@@ -97,6 +97,13 @@ namespace FusionEngine
 		void LoadScriptData(Script::ScriptType type, const std::string &filename);
 		void SetScriptData(Script::ScriptType type, const std::string &data);
 
+		//! Sets the type ID of the class in the script module
+		/*!
+		* This is the result of 'module->GetTypeIdByDecl(GetType())'
+		*/
+		void SetTypeId(int id);
+		int GetTypeId() const;
+
 		//! Returns the type of entity defined by this object
 		const std::string &GetType() const;
 		//! Returns the default domain value of the entity
@@ -139,6 +146,7 @@ namespace FusionEngine
 		std::string m_WorkingDirectory;
 
 		std::string m_TypeName;
+		int m_TypeId;
 		bool m_Abstract;
 
 		EntityDefinitionPtr m_BaseType;
@@ -514,6 +522,16 @@ namespace FusionEngine
 		m_Script.scriptData = data;
 	}
 
+	void EntityDefinition::SetTypeId(int id)
+	{
+		m_TypeId = id;
+	}
+
+	int EntityDefinition::GetTypeId() const
+	{
+		return m_TypeId;
+	}
+
 	const std::string &EntityDefinition::GetType() const
 	{
 		return m_TypeName;
@@ -591,19 +609,14 @@ namespace FusionEngine
 		//! Constructor
 		ScriptedEntityInstancer();
 		//! Constructor
-		ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition);
+		ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition);
 		//! Constructor for entity defs with phys. bodies
-		ScriptedEntityInstancer(ScriptingEngine *manager, PhysicalWorld *world, const std::string &module, EntityDefinitionPtr definition);
-		//! Constructor
-		//ScriptedEntityInstancer(TiXmlDocument &document);
+		ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition, PhysicalWorld *world);
 
 	public:
 		Entity *InstanceEntity(const std::string &name);
 
-		//void Parse();
-
 	protected:
-		//void parseDoc(TiXmlDocument *document);
 
 		PhysicalWorld *m_PhysicsWorld;
 
@@ -616,29 +629,19 @@ namespace FusionEngine
 		: EntityInstancer("undefined_scripted_entity")
 	{}
 
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, const std::string &module, EntityDefinitionPtr definition)
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition)
 		: EntityInstancer(definition->GetType()),
 		m_ScriptingManager(manager),
-		m_PhysicsWorld(NULL),
-		m_Module(module),
-		m_Definition(definition)
+		m_Definition(definition),
+		m_PhysicsWorld(NULL)
 	{}
 
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, PhysicalWorld *world, const std::string &module, EntityDefinitionPtr definition)
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition, PhysicalWorld *world)
 		: EntityInstancer(definition->GetType()),
 		m_ScriptingManager(manager),
-		m_PhysicsWorld(world),
-		m_Module(module),
-		m_Definition(definition)
+		m_Definition(definition),
+		m_PhysicsWorld(world)
 	{}
-
-	//ScriptedEntityInstancer::ScriptedEntityInstancer(TiXmlDocument &document)
-	//	: EntityInstancer("")
-	//{
-	//	TiXmlElement *root = document.FirstChildElement();
-	//	SetType(root->Attribute("typename"));
-	//	parseDoc(document);
-	//}
 
 	Entity *ScriptedEntityInstancer::InstanceEntity(const std::string &name)
 	{
@@ -649,12 +652,14 @@ namespace FusionEngine
 		if (resMan == NULL)
 			return NULL;
 
-		ScriptObject object = m_ScriptingManager->CreateObject(m_Module.c_str(), m_Definition->GetType());
-		asIScriptObject *scrObj = object.GetScriptObject();
+		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
+
+		asIScriptObject *scrObj = static_cast<asIScriptObject*>( engine->CreateScriptObject(m_Definition->GetTypeId()) );
+		ScriptObject object(scrObj, false);
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
 		entity->_setDomain(m_Definition->GetDefaultDomain());
-		//entity->SetPath(m_Definition->GetWorkingDirectory());
+		entity->SetPath(m_Definition->GetWorkingDirectory());
 
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
 
@@ -742,27 +747,10 @@ namespace FusionEngine
 
 				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
-
-			//if (resourceUser.get() != NULL)
-			//{
-			//	entity->AddStreamedResource(resourceUser);
-			//	resourceUser.reset();
-			//}
 		}
 
 		return entity;
 	}
-
-	//void ScriptedEntityInstancer::Parse()
-	//{
-	//	TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(m_Filename));
-	//	parseDoc(doc);
-	//	delete doc;
-	//}
-
-	//void ScriptedEntityInstancer::parseDoc(TiXmlDocument *document)
-	//{
-	//}
 
 
 	EntityFactory::EntityFactory()
@@ -778,7 +766,9 @@ namespace FusionEngine
 		EntityInstancerMap::iterator _where = m_EntityInstancers.find(type);
 		if (_where != m_EntityInstancers.end())
 		{
-			return EntityPtr( _where->second->InstanceEntity(name), false );
+			EntityPtr entity( _where->second->InstanceEntity(name), false );
+			SignalEntityInstanced(entity);
+			return entity;
 		}
 		else
 		{
@@ -840,14 +830,17 @@ namespace FusionEngine
 		parseScriptedEntities(m_ScriptedEntityPath.c_str());
 	}
 
-	void EntityFactory::SetScriptingManager(ScriptingEngine *manager, const std::string &module_name)
+	void EntityFactory::SetScriptingManager(ScriptingEngine *manager)
 	{
 		m_ScriptingManager = manager;
-		m_ModuleName = module_name;
+	}
+
+	void EntityFactory::SetModule(const ModulePtr &module)
+	{
+		m_Module = module;
 
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = m_ScriptingManager->GetModule(module_name.c_str())->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
-		//m_ModuleConnection = m_ScriptingManager->SubscribeToModule(module_name.c_str(), boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
+		m_ModuleConnection = module->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
 	}
 
 	void EntityFactory::GetTypes(StringVector &types, bool sort)
@@ -889,7 +882,7 @@ namespace FusionEngine
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
 			// Add the script-Entity base-class
-			ev.manager->AddFile("core/entity/ScriptEntity.as", m_ModuleName.c_str());
+			ev.manager->AddFile("core/entity/ScriptEntity.as", ev.module_name);
 
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end();
 				it != end; ++it)
@@ -897,14 +890,14 @@ namespace FusionEngine
 				EntityDefinitionPtr &def = *it;
 				EntityDefinition::Script &script = def->GetScript();
 				if (script.fileName == "inline")
-					ev.manager->AddCode(script.scriptData, m_ModuleName.c_str(), (def->GetType() + "_inline").c_str());
+					ev.manager->AddCode(script.scriptData, ev.module_name, (def->GetType() + "_inline").c_str());
 				else
-					ev.manager->AddFile(script.fileName, m_ModuleName.c_str());
+					ev.manager->AddFile(script.fileName, ev.module_name);
 
 				const EntityDefinition::DependenciesMap &deps = def->GetScriptDependencies();
 				for (EntityDefinition::DependenciesMap::const_iterator it = deps.begin(), end = deps.end(); it != end; ++it)
 				{
-					bool success = ev.manager->AddFile(*it, m_ModuleName.c_str());
+					bool success = ev.manager->AddFile(*it, ev.module_name);
 					if (!success)
 						SendToConsole("Couldn't load script file '" + *it + "', which is a required UtilityScript for " + def->GetType());
 				}
@@ -993,15 +986,16 @@ namespace FusionEngine
 	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
 	{
 		// Create an instance of the script object
-		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
-		int typeId = engine->GetModule(m_ModuleName.c_str())->GetTypeIdByDecl(definition->GetType().c_str());
+		int typeId = m_Module->GetASModule()->GetTypeIdByDecl(definition->GetType().c_str());
 		if (typeId < 0)
 		{
-			SendToConsole("Couldn't create instancer for '" + definition->GetType() +
-				"' type Entities because the type doesn't exist in the script module (most likely due to a compilation error).");
+			SendToConsole("Couldn't create an Entity instancer for the type '" + definition->GetType() +
+				"' because it doesn't exist in the script module (most likely due to a compilation error).");
 			return;
 		}
-		//asIScriptObject *object = (asIScriptObject*)engine->CreateScriptObject(typeId);
+		definition->SetTypeId(typeId);
+
+		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
 
 		// Verify type
 		asIObjectType *entityInterface = engine->GetObjectTypeById(engine->GetTypeIdByDecl("IEntity"));
@@ -1115,9 +1109,9 @@ namespace FusionEngine
 
 		EntityInstancerPtr instancer;
 		if (definition->HasBody())
-			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, PhysicalWorld::getSingletonPtr(), m_ModuleName, definition) );
+			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, definition, PhysicalWorld::getSingletonPtr()) );
 		else
-			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, m_ModuleName, definition) );
+			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, definition) );
 		m_EntityInstancers[definition->GetType()] = instancer; 
 	}
 

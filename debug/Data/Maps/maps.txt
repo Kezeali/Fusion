@@ -1,0 +1,2 @@
+earth.fum
+mars.fum

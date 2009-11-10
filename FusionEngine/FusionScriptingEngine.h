@@ -618,6 +618,8 @@ namespace FusionEngine
 		ScriptClass GetClass(const char* module, const std::string& type_name);
 		//! Returns an object of the class corresponding to the given typename
 		ScriptObject CreateObject(const char* module, const std::string& type_name);
+		//! Returns an object of the class corresponding to the given type-id
+		ScriptObject CreateObject(int type_id);
 
 		UCScriptMethod GetClassMethod(const char* module_name, const std::string& type_name, const std::string &signature);
 

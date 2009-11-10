@@ -76,6 +76,8 @@ namespace FusionEngine
 		static void RemovePlayer(unsigned int local_index);
 		static void RemovePlayersFrom(NetHandle system_address);
 
+		static void Clear();
+
 		static const PlayerInfo &GetPlayerByNetIndex(ObjectID index);
 		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
 
@@ -94,6 +96,8 @@ namespace FusionEngine
 		void removePlayer(ObjectID net_index);
 		void removePlayer(unsigned int local_index);
 		void removePlayersFrom(NetHandle system_address);
+
+		void clear();
 
 		const PlayerInfo &getPlayerByNetIndex(ObjectID index) const;
 		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;

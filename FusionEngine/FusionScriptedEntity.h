@@ -103,6 +103,8 @@ namespace FusionEngine
 		ScriptedEntity(ScriptObject script_self, const std::string &name);
 		virtual ~ScriptedEntity();
 
+		void SetPath(const std::string &path);
+
 		void SetSyncProperties(const PropertiesMap &properties);
 		//void SetStreamedResources(const StreamedResourceMap &resources);
 		//void AddStreamedResource(const std::string &type, const std::wstring &path);

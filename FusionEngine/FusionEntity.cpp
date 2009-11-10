@@ -342,6 +342,7 @@ namespace FusionEngine
 
 	Entity::Entity()
 		: m_Name("default"),
+		m_HasDefaultName(true),
 		m_Id(0),
 		m_OwnerID(0),
 		m_Authority(0),
@@ -359,6 +360,7 @@ namespace FusionEngine
 
 	Entity::Entity(const std::string &name)
 		: m_Name(name),
+		m_HasDefaultName(false),
 		m_Id(0),
 		m_OwnerID(0),
 		m_Authority(0),
@@ -383,11 +385,23 @@ namespace FusionEngine
 	void Entity::_setName(const std::string &name)
 	{
 		m_Name = name;
+		m_HasDefaultName = false;
 	}
 
 	const std::string &Entity::GetName() const
 	{
 		return m_Name;
+	}
+
+	void Entity::_notifyDefaultName(const std::string &name)
+	{
+		_setName(name);
+		m_HasDefaultName = true;
+	}
+
+	bool Entity::HasDefaultName() const
+	{
+		return m_HasDefaultName;
 	}
 
 	void Entity::SetID(ObjectID id)

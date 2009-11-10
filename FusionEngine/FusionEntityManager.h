@@ -239,22 +239,27 @@ namespace FusionEngine
 		/*!
 		* Spawns the entity after adding it.
 		*/
-		void AddEntity(EntityPtr entity);
+		void AddEntity(EntityPtr &entity);
 		//! Adds a created pseudo-entity
 		/*!
 		* Spawns the entity after adding it.
 		*/
-		void AddPseudoEntity(EntityPtr pseudo_entity);
+		void AddPseudoEntity(EntityPtr &pseudo_entity);
 
 		//! Removes the given entity
-		void RemoveEntity(EntityPtr entity);
+		void RemoveEntity(const EntityPtr &entity);
 		//! Removes the entity with the givcen name
 		void RemoveEntityNamed(const std::string &name);
 		//! Removes the entity with the given ID
 		void RemoveEntityById(ObjectID id);
 
 		//! Removes the Entity with the given ID and adds the new Entity
-		void ReplaceEntity(ObjectID id, EntityPtr entity);
+		void ReplaceEntity(ObjectID id, EntityPtr &entity);
+
+		//! Finds the Entity which currently has the given name and changes it to the given new name
+		void RenameEntity(const std::string &current_name, const std::string &new_name);
+		//! Changes the given Entity's search name
+		void RenameEntity(EntityPtr &entity, const std::string &new_name);
 
 		//! Returns the Entity with the given name
 		/*!

@@ -110,7 +110,8 @@ namespace FusionEngine
 		m_Renderer(renderer),
 		m_Streamer(streaming_manager),
 		m_EntityManager(ent_manager),
-		m_MapUtil(map_util)
+		m_MapUtil(map_util),
+		m_Document(NULL)
 	{
 		m_EditorDataSource = new EditorDataSource();
 	}
@@ -133,6 +134,8 @@ namespace FusionEngine
 
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
+		if (m_Document == NULL)
+			return false;
 		m_Document->RemoveReference();
 
 		m_Viewport.reset(new Viewport());
@@ -157,7 +160,9 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
-		m_Document->Close();
+		if (m_Document != NULL)
+			m_Document->Close();
+		m_Document = NULL;
 	}
 
 	void Editor::Update(float split)
@@ -202,12 +207,18 @@ namespace FusionEngine
 
 			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 			this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+
+			if (m_Document != NULL)
+				m_Document->Hide();
 		}
 		m_Enabled = enable;
 	}
 
 	void Editor::OnRawInput(const RawInput &ev)
 	{
+		if (!m_Enabled)
+			return;
+
 		if (ev.InputType == RawInput::Pointer)
 		{
 		}
@@ -231,10 +242,6 @@ namespace FusionEngine
 				{
 					m_CamVelocity.y = 10;
 				}
-				if (ev.Code == CL_KEY_S)
-				{
-					Save("test.xml");
-				}
 			}
 			else if (ev.ButtonPressed == false)
 			{
@@ -249,15 +256,18 @@ namespace FusionEngine
 
 				if (ev.Code == CL_MOUSE_LEFT)
 				{
-					Vector2 position((float)ev.PointerPosition.x, (float)ev.PointerPosition.y);
-
-					CL_Rectf documentRect(m_Document->GetAbsoluteLeft(), m_Document->GetAbsoluteTop(), CL_Sizef(m_Document->GetClientWidth(), m_Document->GetClientHeight()));
-					if (!documentRect.contains(CL_Vec2f(position.x, position.y)))
+					if (!m_CurrentEntityType.empty() && m_EntityTypes.find(m_CurrentEntityType) != m_EntityTypes.end())
 					{
-						CL_Rectf area;
-						m_Renderer->CalculateScreenArea(area, m_Viewport, true);
+						Vector2 position((float)ev.PointerPosition.x, (float)ev.PointerPosition.y);
 
-						CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
+						CL_Rectf documentRect(m_Document->GetAbsoluteLeft(), m_Document->GetAbsoluteTop(), CL_Sizef(m_Document->GetClientWidth(), m_Document->GetClientHeight()));
+						if (!documentRect.contains(CL_Vec2f(position.x, position.y)))
+						{
+							CL_Rectf area;
+							m_Renderer->CalculateScreenArea(area, m_Viewport, true);
+
+							CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
+						}
 					}
 				}
 			}
@@ -276,7 +286,7 @@ namespace FusionEngine
 	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
 	{
 		GameMapLoader::GameMapEntity gmEntity;
-		gmEntity.entity = m_EntityManager->GetFactory()->InstanceEntity(type, "default");
+		gmEntity.entity = m_EntityManager->GetFactory()->InstanceEntity(type, name);
 		if (!gmEntity.entity)
 		{
 			SendToConsole("Failed to create entity of type " + type);
@@ -294,11 +304,18 @@ namespace FusionEngine
 		gmEntity.entity->SetPosition(Vector2(x, y));
 
 		if (pseudo)
+		{
 			m_EntityManager->AddPseudoEntity(gmEntity.entity);
+			m_PseudoEntities.push_back(gmEntity);
+		}
 		else
+		{
 			m_EntityManager->AddEntity(gmEntity.entity);
+			m_Entities.push_back(gmEntity);
+		}
 
-		m_Entities.push_back(gmEntity);
+		// Record type usage
+		m_UsedTypes.insert(type);
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)
@@ -371,6 +388,7 @@ namespace FusionEngine
 
 		m_EntityManager->ClearDomain(GAME_DOMAIN);
 		m_Entities.clear();
+		m_PseudoEntities.clear();
 
 		SerialisedDataArray archetypes, entities;
 		loadEntityData(in, archetypes, entities);
@@ -403,6 +421,13 @@ namespace FusionEngine
 			Load(m_CurrentFilename);
 	}
 
+	void Editor::Close()
+	{
+		m_EntityManager->ClearDomain(GAME_DOMAIN);
+		m_Entities.clear();
+		m_PseudoEntities.clear();
+	}
+
 	void Editor::Compile(const std::string &filename)
 	{
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -412,7 +437,7 @@ namespace FusionEngine
 
 		Save();
 		m_EntityManager->ClearDomain(GAME_DOMAIN);
-		m_MapUtil->CompileMap(out, m_UsedTypes, m_Archetypes, m_Entities);
+		GameMapLoader::CompileMap(out, m_UsedTypes, m_Archetypes, m_PseudoEntities, m_Entities);
 		Load();
 	}
 
@@ -465,6 +490,10 @@ namespace FusionEngine
 			asMETHOD(Editor, Load), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
+			"void close()",
+			asMETHOD(Editor, Close), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
 			"void compile(const string &in)",
 			asMETHODPR(Editor, Compile, (const std::string &), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
@@ -497,12 +526,24 @@ namespace FusionEngine
 			file.write_string_a(archetype.packet.data.c_str());
 		}
 
-		file.write_uint32(m_Entities.size());
+		file.write_uint32(m_PseudoEntities.size() + m_Entities.size());
 		SerialisedData state;
+		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
+		{
+			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			//if (gmEntity.archetypeId.empty())
+			{
+				state.mask = gmEntity.stateMask;
+				gmEntity.entity->SerialiseState(state, true);
+
+				file.write_uint32(state.mask);
+				file.write_string_a(state.data.c_str());
+			}
+		}
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
 			const GameMapLoader::GameMapEntity &gmEntity = *it;
-			if (gmEntity.archetypeId.empty())
+			//if (gmEntity.archetypeId.empty())
 			{
 				state.mask = gmEntity.stateMask;
 				gmEntity.entity->SerialiseState(state, true);
@@ -570,19 +611,38 @@ namespace FusionEngine
 
 		TiXmlElement *entities = new TiXmlElement("entities");
 		root->LinkEndChild(entities);
-		for (unsigned int i = 0; i < m_Entities.size(); ++i)
+		unsigned int dataIndex = 0;
+		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = m_Entities[i];
+			const GameMapLoader::GameMapEntity &gmEntity = *it;
 
 			TiXmlElement *entityElm = new TiXmlElement("entity");
-			if (!gmEntity.entity->IsPseudoEntity())
-				entityElm->SetAttribute("id", gmEntity.entity->GetID());
 			if (gmEntity.hasName)
 				entityElm->SetAttribute("name", gmEntity.entity->GetName());
 			entityElm->SetAttribute("type", gmEntity.entity->GetType());
 			if (!gmEntity.archetypeId.empty())
 				entityElm->SetAttribute("archetype", gmEntity.archetypeId);
-			entityElm->SetAttribute("data_index", i);
+			entityElm->SetAttribute("data_index", dataIndex++);
+			entities->LinkEndChild(entityElm);
+
+			TiXmlElement *transform = new TiXmlElement("location");
+			std::ostringstream positionStr; positionStr << gmEntity.entity->GetPosition().x << "," << gmEntity.entity->GetPosition().y;
+			transform->SetAttribute("position", positionStr.str());
+			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity.entity->GetAngle()));
+			entityElm->LinkEndChild(transform);
+		}
+		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		{
+			const GameMapLoader::GameMapEntity &gmEntity = *it;
+
+			TiXmlElement *entityElm = new TiXmlElement("entity");
+			entityElm->SetAttribute("id", gmEntity.entity->GetID());
+			if (gmEntity.hasName)
+				entityElm->SetAttribute("name", gmEntity.entity->GetName());
+			entityElm->SetAttribute("type", gmEntity.entity->GetType());
+			if (!gmEntity.archetypeId.empty())
+				entityElm->SetAttribute("archetype", gmEntity.archetypeId);
+			entityElm->SetAttribute("data_index", dataIndex++);
 			entities->LinkEndChild(entityElm);
 
 			TiXmlElement *transform = new TiXmlElement("location");
@@ -664,7 +724,11 @@ namespace FusionEngine
 				archetype.dataIndex = archetype_data.size();
 
 			if (archetype.dataIndex < archetype_data.size())
+			{
 				archetype.packet = archetype_data[archetype.dataIndex];
+				// Record type usage
+				m_UsedTypes.insert(archetype.entityTypename);
+			}
 			else
 				SendToConsole("Reading map XML: The archetype '" + name + "' has an invalid index attribute");
 
@@ -689,35 +753,39 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::parse_Entities(TiXmlElement *element, unsigned int entity_count, const IDTranslator &translator)
+	void Editor::parse_Entities(TiXmlElement *element, unsigned int entity_data_count, const IDTranslator &translator)
 	{
 		EntityFactory *factory = m_EntityManager->GetFactory();
 
 		TiXmlElement *child = element->FirstChildElement();
 		std::string name, type, idStr;
 		// Resize the entities array to construct enough GameMapEntity objects
-		m_Entities.resize(entity_count);
+		m_Entities.reserve(entity_data_count);
 		while (child != NULL)
 		{
-			unsigned int dataIndex = entity_count;
+			unsigned int dataIndex = entity_data_count;
 			{
 				const char *attribute = child->Attribute("data_index");
 				if (attribute != NULL)
 					dataIndex = boost::lexical_cast<unsigned int>(attribute);
 			}
 
+			name.clear();
+
 			getAttribute(type, child, "type");
 			getAttribute(idStr, child, "id", false);
 			getAttribute(name, child, "name", false);
 
-			if (dataIndex >= entity_count)
+			if (dataIndex >= entity_data_count)
 			{
 				SendToConsole("Reading map XML: The entity '" + type + ":" + (name.empty() ? std::string("default") : name) + "' has an invalid index attribute");
 				child = child->NextSiblingElement();
 				continue;
 			}
 
-			GameMapLoader::GameMapEntity &gmEntity = m_Entities[dataIndex];
+			GameMapLoader::GameMapEntity gmEntity;
+
+			gmEntity.dataIndex = dataIndex;
 
 			if (name.empty())
 			{
@@ -728,6 +796,9 @@ namespace FusionEngine
 			gmEntity.entity = factory->InstanceEntity(type, name);
 			if (gmEntity.entity)
 			{
+				m_UsedTypes.insert(type);
+
+				// Check for archetype
 				getAttribute(gmEntity.archetypeId, child, "archetype", false);
 
 				EntityPtr &entity = gmEntity.entity;
@@ -749,11 +820,17 @@ namespace FusionEngine
 					id = boost::lexical_cast<ObjectID>(idStr);
 
 				if (id == 0)
+				{
 					m_EntityManager->AddPseudoEntity(entity);
+
+					m_PseudoEntities.push_back(gmEntity);
+				}
 				else
 				{
 					entity->SetID(translator(id));
 					m_EntityManager->AddEntity(entity);
+
+					m_Entities.push_back(gmEntity);
 				}
 			}
 
@@ -765,9 +842,9 @@ namespace FusionEngine
 	{
 		EntityDeserialiser entityDeserialiser(m_EntityManager, translator);
 
-		for (unsigned int i = 0; i < m_Entities.size(); ++i)
+		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = m_Entities[i];
+			const GameMapLoader::GameMapEntity &gmEntity = *it;
 			// Initialise with archetype data
 			if (!gmEntity.archetypeId.empty())
 			{
@@ -776,7 +853,7 @@ namespace FusionEngine
 					gmEntity.entity->DeserialiseState(_where->second.packet, true, entityDeserialiser);
 			}
 			// Init. with specific entity data
-			gmEntity.entity->DeserialiseState(entity_data[i], true, entityDeserialiser);
+			gmEntity.entity->DeserialiseState(entity_data[gmEntity.dataIndex], true, entityDeserialiser);
 		}
 	}
 

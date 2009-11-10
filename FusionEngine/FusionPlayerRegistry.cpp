@@ -92,6 +92,14 @@ namespace FusionEngine
 		registry->removePlayersFrom(system_address);
 	}
 
+	void PlayerRegistry::Clear()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		registry->clear();
+	}
+
 	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByNetIndex(ObjectID index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
@@ -195,6 +203,13 @@ namespace FusionEngine
 				m_ByNetIndex.erase(playerInfo.NetIndex);
 			}
 		}
+	}
+
+	void PlayerRegistry::clear()
+	{
+		m_Arbitrator = 0;
+		m_ByLocalIndex.clear();
+		m_ByNetIndex.clear();
 	}
 
 	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetIndex(ObjectID index) const

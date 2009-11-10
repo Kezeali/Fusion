@@ -40,6 +40,7 @@
 
 // Fusion
 #include "FusionScriptModule.h"
+#include "FusionBoostSignals2.h"
 
 namespace FusionEngine
 {
@@ -111,7 +112,9 @@ namespace FusionEngine
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);
 		//! Sets the scripting manager and module used to add script sections
-		void SetScriptingManager(ScriptingEngine *manager, const std::string &module_name);
+		void SetScriptingManager(ScriptingEngine *manager);
+		//! Sets the scripting module used to add script sections
+		void SetModule(const ModulePtr &module);
 
 		//! Returns the names of types with instancers available to the factory
 		void GetTypes(StringVector &types, bool sort = false);
@@ -136,6 +139,9 @@ namespace FusionEngine
 
 		//! Adds entity script sections
 		void OnModuleRebuild(BuildModuleEvent &ev);
+
+		//! Fired whenever an entity is instanced
+		boost::signals2::signal<void (EntityPtr &)> SignalEntityInstanced;
 
 	protected:
 		void loadAllDependencies(const std::string &working_directory, ticpp::Document &document);
@@ -164,7 +170,7 @@ namespace FusionEngine
 		ScriptEntityDefinitionMap m_EntityDefinitionsByType;
 
 		ScriptingEngine *m_ScriptingManager;
-		std::string m_ModuleName;
+		ModulePtr m_Module;
 
 		bsig2::connection m_ModuleConnection;
 	};

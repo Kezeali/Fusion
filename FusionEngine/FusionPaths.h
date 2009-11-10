@@ -1,6 +1,6 @@
 /*!
  * \file FusionPaths.h
- * These should be loaded dynamically, but untill then they're defined here
+ * Perhaps these should be loaded dynamically, but for now they're defined here
  */
 
 namespace FusionEngine
@@ -11,4 +11,8 @@ namespace FusionEngine
 	const std::string s_TempPath = "temp/";
 	//! The relative path to the log folder, including trailing slash.
 	const std::string s_LogfilePath = "Logs/";
+	//! The path to the saves folder
+	const std::string s_SavePath = "Saves/";
+	//! The path to the editor saved-data folder
+	const std::string s_EditorPath = "Editor/";
 }

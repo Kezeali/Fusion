@@ -110,6 +110,11 @@ namespace FusionEngine
 		* Intended to be called from script
 		*/
 		void Save(const std::string &filename);
+		//! Saves the game
+		/*!
+		* Intended to be called from script
+		*/
+		void Load(const std::string &filename);
 		//! Pauses the game
 		void Pause();
 		//! Resumes the game
@@ -209,6 +214,7 @@ namespace FusionEngine
 		bsig2::connection m_ModuleConnection;
 
 		std::string m_StartupEntity;
+		std::string m_StartupMap;
 	};
 
 }

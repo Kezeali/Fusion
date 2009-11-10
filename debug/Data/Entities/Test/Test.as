@@ -52,7 +52,7 @@ class Test : ScriptEntity
 	uint runningtime;
 	bool first;
 	bool didOutput;
-	bool specialPressed;
+	bool specialPressed; bool savePressed; bool loadPressed;
 	void Update(float dt)
 	{
 		if (first)
@@ -72,11 +72,25 @@ class Test : ScriptEntity
 			DebugOutput();
 		didOutput = doOutput;
 
+		bool save = InputIsActive("primary");
+		if (save && !savePressed)
+		{
+			system.save("test.save");
+		}
+		savePressed = save;
+
+		bool load = InputIsActive("secondary");
+		if (load && !loadPressed)
+		{
+			system.load("test.save");
+		}
+		loadPressed = load;
+
 		bool special = InputIsActive("special");
 		if (special && !specialPressed)
 		{
+			system.save("test.save");
 			editor.startEditor();
-			editor.load("test.xml");
 		}
 		specialPressed = special;
 

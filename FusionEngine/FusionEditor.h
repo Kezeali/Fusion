@@ -114,6 +114,8 @@ namespace FusionEngine
 		void Save();
 		void Load();
 
+		void Close();
+
 		void Compile(const std::string &filename);
 
 		static void Register(asIScriptEngine *engine);
@@ -146,9 +148,10 @@ namespace FusionEngine
 
 		EditorDataSource *m_EditorDataSource;
 
-		// Map data (entities, etc.)
+		// Map data (entities, etc.) - passed to map creator ("GameMapLoader")
 		StringSet m_UsedTypes;
 		GameMapLoader::ArchetypeMap m_Archetypes;
+		GameMapLoader::GameMapEntityArray m_PseudoEntities;
 		GameMapLoader::GameMapEntityArray m_Entities;
 
 		//! Spawns all map entities (called when entering play mode)

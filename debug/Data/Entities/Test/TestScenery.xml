@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Entity typename="TestScenery" defaultdomain="game">
+<Entity typename="TestScenery" domain="game">
 	<!--Script sections can also be given as a text element, e.g.
 		<Script type="as">class Test {...}</Script>-->
 	<!--type="angelscript" is equivalent to type="as"-->

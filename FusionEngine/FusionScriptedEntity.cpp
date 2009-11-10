@@ -99,6 +99,11 @@ namespace FusionEngine
 	{
 	}
 
+	void ScriptedEntity::SetPath(const std::string &path)
+	{
+		m_Path = path;
+	}
+
 	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesMap &properties)
 	{
 		m_SyncedProperties = properties;

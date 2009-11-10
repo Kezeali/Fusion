@@ -459,8 +459,13 @@ namespace FusionEngine
 	ScriptObject ScriptingEngine::CreateObject(const char* module, const std::string& type_name)
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
-		asIScriptObject* obj = (asIScriptObject*)m_asEngine->CreateScriptObject(id);
-		//obj->AddRef();
+		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
+		return ScriptObject(obj, false);
+	}
+
+	ScriptObject ScriptingEngine::CreateObject(int id)
+	{
+		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
 		return ScriptObject(obj, false);
 	}
 

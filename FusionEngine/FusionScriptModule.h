@@ -76,6 +76,7 @@ namespace FusionEngine
 
 	public:
 		ScriptObject CreateObject(const std::string& name);
+		ScriptObject CreateObject(int type_id);
 
 		ScriptUtils::Calling::Caller GetCaller(const std::string &decl);
 

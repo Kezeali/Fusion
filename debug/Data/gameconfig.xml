@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <gameconfig>
 	<var name="startup_entity" value="TestStartup"/>
+	<!--<var name="startup_map" value="test.fum"/>-->
 	<var name="world_size" value="2000.0,2000.0"/>
 </gameconfig>

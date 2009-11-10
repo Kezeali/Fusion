@@ -40,6 +40,12 @@
 
 // Fusion
 #include "FusionSerialisedData.h"
+#include "FusionEntityDeserialiser.h"
+#include "FusionBoostSignals2.h"
+
+#include <boost/bimap.hpp>
+#include <boost/bimap/unordered_set_of.hpp>
+#include <boost/bimap/vector_of.hpp>
 
 
 namespace FusionEngine
@@ -69,6 +75,8 @@ namespace FusionEngine
 
 			unsigned int stateMask;
 
+			unsigned int dataIndex; // used by the editor when reading data files (may be removed)
+
 			GameMapEntity() : hasName(true), stateMask(0) {}
 		};
 		typedef std::vector<GameMapEntity> GameMapEntityArray;
@@ -81,16 +89,20 @@ namespace FusionEngine
 		};
 	public:
 		GameMapLoader(ClientOptions *options, EntityManager *manager);
+		~GameMapLoader();
 
-		void LoadEntityTypes(CL_IODevice device);
+		void LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory);
+		void LoadEntityTypes(CL_IODevice &device);
 
-		void LoadMap(CL_IODevice device);
+		void LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool pseudo_only = false);
 
-		void LoadSavedGame(CL_IODevice device);
-		void SaveGame(CL_IODevice device);
+		void LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory);
+		void SaveGame(const std::string &filename, CL_VirtualDirectory &directory);
 
 		//! Compiles a binary map file from map-editor data
-		void CompileMap(CL_IODevice device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const GameMapEntityArray &entities);
+		static void CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const GameMapEntityArray &pseudo_entities, const GameMapEntityArray &entities);
+
+		void onEntityInstanced(EntityPtr &entity);
 
 	private:
 		EntityManager *m_Manager;
@@ -98,7 +110,16 @@ namespace FusionEngine
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)
 		std::string m_MapFilename;
 
+		typedef boost::bimaps::bimap< boost::bimaps::unordered_set_of<std::string>, boost::bimaps::unordered_set_of<unsigned int> > TypeIndex;
+		TypeIndex m_TypeIndex;
+		unsigned int m_NextTypeIndex;
+
+		boost::signals2::connection m_FactoryConnection;
+
 		ClientOptions *m_ClientOptions;
+
+		void loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
+		void loadEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
 	};
 
 }
