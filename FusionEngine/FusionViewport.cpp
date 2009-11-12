@@ -22,6 +22,19 @@ namespace FusionEngine
 	{
 	}
 
+	void Viewport::SetArea(const CL_Rectf &area)
+	{
+		m_Area = area;
+	}
+
+	void Viewport::SetArea(float left, float top, float right, float bottom)
+	{
+		m_Area.left = left;
+		m_Area.right = right;
+		m_Area.top = top;
+		m_Area.bottom = bottom;
+	}
+
 	void Viewport::SetPosition(float left, float top)
 	{
 		m_Area.left = left;
@@ -107,6 +120,9 @@ namespace FusionEngine
 			"Viewport@ f(float, float, float, float, Camera@)",
 			asFUNCTIONPR(Viewport_Factory, (float, float, float, float, Camera*), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
 
+		r = engine->RegisterObjectMethod("Viewport",
+			"void setArea(float, float, float, float)",
+			asMETHOD(Viewport, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
 			"void setPosition(float, float)",
 			asMETHOD(Viewport, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);

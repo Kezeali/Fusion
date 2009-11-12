@@ -78,6 +78,8 @@ namespace FusionEngine
 	{
 		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
 
+		m_MapFilename = filename;
+
 		m_Manager->Clear();
 
 		// Read the entity type count
@@ -114,7 +116,7 @@ namespace FusionEngine
 			archetype.packet.data = device.read_string_a().c_str();
 		}
 
-		IDTranslator translator = m_Manager->MakeIDTranslator();
+		IDTranslator translator;
 
 		loadPseudoEntities(device, archetypeArray, translator);
 		loadEntities(device, archetypeArray, translator);
@@ -128,8 +130,8 @@ namespace FusionEngine
 
 		// Load & instance Entities
 		cl_uint32 numberEntities = device.read_uint32();
-		EntityArray instancedEntities(numberEntities);
-
+		EntityArray instancedEntities;
+		instancedEntities.reserve(numberEntities);
 		{
 			std::string entityName;
 			EntityPtr entity;
@@ -138,12 +140,13 @@ namespace FusionEngine
 				cl_uint32 typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
+				if (entityName.empty())
+					entityName = "default";
 
 				{
 					const std::string &entityTypename = entityTypeArray.at(typeIndex);
 					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
-
 
 				m_Manager->AddPseudoEntity(entity);
 
@@ -199,8 +202,8 @@ namespace FusionEngine
 
 		// Load & instance Entities
 		cl_uint32 numberEntities = device.read_uint32();
-		EntityArray instancedEntities(numberEntities);
-
+		EntityArray instancedEntities;
+		instancedEntities.reserve(numberEntities);
 		{
 			std::string entityName; ObjectID entityID;
 			EntityPtr entity;
@@ -209,6 +212,8 @@ namespace FusionEngine
 				cl_uint32 typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
+				if (entityName.empty())
+					entityName = "default";
 
 				device.read((void*)&entityID, sizeof(ObjectID));
 
@@ -278,7 +283,7 @@ namespace FusionEngine
 
 		size_t numLocalPlayers = device.read_uint32();
 		m_ClientOptions->SetOption("num_local_players", boost::lexical_cast<std::string>(numLocalPlayers));
-		for (unsigned int i = 0; i < numLocalPlayers; i++)
+		for (unsigned int i = 0; i < numLocalPlayers; ++i)
 		{
 			ObjectID netIndex = device.read_uint16();
 			PlayerRegistry::AddPlayer(netIndex, i);
@@ -463,14 +468,14 @@ namespace FusionEngine
 
 			// Write the Entity name
 			if (it->hasName)
-				device.write_string_a(entity->GetName());
+				device.write_string_a(entity->GetName().c_str());
 			else
 				device.write_string_a(CL_String8());
 		}
 
 		// Write Pseudo-Entity state data
 		SerialisedData state;
-		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
 			const EntityPtr &entity = it->entity;
 
@@ -496,7 +501,7 @@ namespace FusionEngine
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
-			device.write_string_a(state.data);
+			device.write_string_a(state.data.c_str());
 		}
 
 		// Write Entities
@@ -510,7 +515,7 @@ namespace FusionEngine
 
 			// Write the Entity name
 			if (it->hasName)
-				device.write_string_a(entity->GetName());
+				device.write_string_a(entity->GetName().c_str());
 			else
 				device.write_string_a(CL_String8());
 			// Write the Entity ID
@@ -545,7 +550,7 @@ namespace FusionEngine
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
-			device.write_string_a(state.data);
+			device.write_string_a(state.data.c_str());
 		}
 	}
 

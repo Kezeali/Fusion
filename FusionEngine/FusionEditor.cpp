@@ -50,6 +50,46 @@
 namespace FusionEngine
 {
 
+	ObjectID IDStack::getFreeID()
+	{
+		if (m_UnusedIds.empty())
+			return m_NextId++;
+		else
+		{
+			ObjectID id = m_UnusedIds.back();
+			m_UnusedIds.pop_back();
+			return id;
+		}
+	}
+
+	void IDStack::freeID(ObjectID id)
+	{
+		if (id < m_NextId-1)
+			m_UnusedIds.push_back(id); // record unused ID
+		else
+			--m_NextId;
+	}
+
+	void IDStack::freeAll()
+	{
+		m_UnusedIds.clear();
+		m_NextId = 1; // Entity IDs start at 1, 0 indicates a pseudo-entity
+	}
+
+	void Editor::EditorEntityDeserialiser::ListEntity(const EntityPtr &entity)
+	{
+		m_EntityMap[entity->GetID()] = entity;
+	}
+
+	EntityPtr Editor::EditorEntityDeserialiser::GetEntity(ObjectID id) const
+	{
+		EntityIdMap::const_iterator _where = m_EntityMap.find(id);
+		if (_where != m_EntityMap.end())
+			return _where->second;
+		else
+			return EntityPtr();
+	}
+
 	EditorDataSource::EditorDataSource()
 		: EMP::Core::DataSource("editor")
 	{
@@ -111,7 +151,8 @@ namespace FusionEngine
 		m_Streamer(streaming_manager),
 		m_EntityManager(ent_manager),
 		m_MapUtil(map_util),
-		m_Document(NULL)
+		m_Document(NULL),
+		m_Enabled(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
 	}
@@ -130,8 +171,6 @@ namespace FusionEngine
 
 	bool Editor::Initialise()
 	{
-		Enable(false);
-
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
 		if (m_Document == NULL)
@@ -155,6 +194,9 @@ namespace FusionEngine
 		//}
 		m_EditorDataSource->UpdateSuggestions(types);
 
+		// Enable may have been called before Initialise, so it is called again here to reflect the expected state
+		Enable(m_Enabled);
+
 		return true;
 	}
 
@@ -177,39 +219,47 @@ namespace FusionEngine
 
 	void Editor::Draw()
 	{
-		m_Renderer->Draw(m_EntityManager->GetDomain(GAME_DOMAIN), m_Viewport, 0);
+		if (m_Enabled)
+		{
+			m_Renderer->Draw(m_PlainEntityArray, m_Viewport, 0);
+		}
 	}
 
 	void Editor::Enable(bool enable)
 	{
-		if (enable)
+		if (m_Camera)
 		{
-			//this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
-			this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
+			if (enable)
+			{
+				this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+				this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
 
-			m_EntityManager->SetDomainState(GAME_DOMAIN, DS_STREAMING);
+				m_EntityManager->Clear();
 
-			m_Streamer->SetPlayerCamera(255, m_Camera);
+				m_Streamer->SetPlayerCamera(255, m_Camera);
 
-			this->PushMessage(new SystemMessage(SystemMessage::RESUME));
-			this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+				this->PushMessage(new SystemMessage(SystemMessage::RESUME));
+				this->PushMessage(new SystemMessage(SystemMessage::SHOW));
 
-			m_Document->Show();
-		}
-		else
-		{
-			//this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
-			this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
+				GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 
-			m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
+				m_Document->Show();
+			}
+			else
+			{
+				this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
+				this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
 
-			m_Streamer->RemovePlayerCamera(255);
+				spawnEntities();
 
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
-			this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+				m_Streamer->RemovePlayerCamera(255);
 
-			if (m_Document != NULL)
-				m_Document->Hide();
+				this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
+				this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+
+				if (m_Document != NULL)
+					m_Document->Hide();
+			}
 		}
 		m_Enabled = enable;
 	}
@@ -303,16 +353,9 @@ namespace FusionEngine
 
 		gmEntity.entity->SetPosition(Vector2(x, y));
 
-		if (pseudo)
-		{
-			m_EntityManager->AddPseudoEntity(gmEntity.entity);
-			m_PseudoEntities.push_back(gmEntity);
-		}
-		else
-		{
-			m_EntityManager->AddEntity(gmEntity.entity);
-			m_Entities.push_back(gmEntity);
-		}
+		if (!pseudo)
+			gmEntity.entity->SetID(m_IdStack.getFreeID());
+		addMapEntity(gmEntity);
 
 		// Record type usage
 		m_UsedTypes.insert(type);
@@ -384,19 +427,19 @@ namespace FusionEngine
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		CL_IODevice in = vdir.open_file(dataFileName, CL_File::open_existing, CL_File::access_read);
 
-		IDTranslator translator = m_EntityManager->MakeIDTranslator();
-
-		m_EntityManager->ClearDomain(GAME_DOMAIN);
 		m_Entities.clear();
 		m_PseudoEntities.clear();
+		m_PlainEntityArray.clear();
 
 		SerialisedDataArray archetypes, entities;
 		loadEntityData(in, archetypes, entities);
 
+		EditorEntityDeserialiser deserialiserImpl;
+
 		TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(filename));
 		try
 		{
-			parseMapXml(doc, archetypes, entities, translator);
+			parseMapXml(doc, archetypes, entities, deserialiserImpl);
 		}
 		catch (FileTypeException &ex)
 		{
@@ -404,7 +447,7 @@ namespace FusionEngine
 		}
 		delete doc;
 
-		initialiseEntities(entities, translator);
+		initialiseEntities(entities, deserialiserImpl);
 
 		m_CurrentFilename = filename;
 	}
@@ -423,9 +466,11 @@ namespace FusionEngine
 
 	void Editor::Close()
 	{
-		m_EntityManager->ClearDomain(GAME_DOMAIN);
+		m_PlainEntityArray.clear();
 		m_Entities.clear();
 		m_PseudoEntities.clear();
+
+		m_IdStack.freeAll();
 	}
 
 	void Editor::Compile(const std::string &filename)
@@ -433,12 +478,8 @@ namespace FusionEngine
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		CL_IODevice out = vdir.open_file(filename.c_str(), CL_File::create_always, CL_File::access_write);
 
-		m_EntityManager->CompressIDs();
-
 		Save();
-		m_EntityManager->ClearDomain(GAME_DOMAIN);
 		GameMapLoader::CompileMap(out, m_UsedTypes, m_Archetypes, m_PseudoEntities, m_Entities);
-		Load();
 	}
 
 	void Editor::Register(asIScriptEngine *engine)
@@ -498,11 +539,25 @@ namespace FusionEngine
 			asMETHODPR(Editor, Compile, (const std::string &), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
+	void Editor::addMapEntity(const GameMapLoader::GameMapEntity &gm_entity)
+	{
+		if (gm_entity.entity->IsPseudoEntity())
+			m_PseudoEntities.push_back(gm_entity);
+		else
+			m_Entities.push_back(gm_entity);
+		m_PlainEntityArray.push_back(gm_entity.entity);
+	}
+
 	void Editor::spawnEntities()
 	{
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
 		{
-			it->entity->Spawn();
+			EntityPtr &entity = *it;
+			if (entity->IsPseudoEntity())
+				m_EntityManager->AddPseudoEntity(entity);
+			else
+				m_EntityManager->AddEntity(entity);
+			entity->Spawn();
 		}
 	}
 
@@ -653,7 +708,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::parseMapXml(TiXmlDocument *document, const Editor::SerialisedDataArray &archetypes, const Editor::SerialisedDataArray &entities, const IDTranslator &translator)
+	void Editor::parseMapXml(TiXmlDocument *document, const Editor::SerialisedDataArray &archetypes, const Editor::SerialisedDataArray &entities, Editor::EditorEntityDeserialiser &deserialiser)
 	{
 		TiXmlElement *root = document->FirstChildElement();
 		if (root->ValueStr() != "editor_data")
@@ -671,7 +726,7 @@ namespace FusionEngine
 			else if (child->ValueStr() == "entities")
 			{
 				if (parsedArchetypes)
-					parse_Entities(child, entities.size(), translator);
+					parse_Entities(child, entities.size(), deserialiser);
 				else
 					FSN_EXCEPT(ExCode::FileType, "Editor::parseMapXml", "Map XML files must have the <archetypes> element before the <entities> element");
 			}
@@ -753,7 +808,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::parse_Entities(TiXmlElement *element, unsigned int entity_data_count, const IDTranslator &translator)
+	void Editor::parse_Entities(TiXmlElement *element, unsigned int entity_data_count, Editor::EditorEntityDeserialiser &deserialiser)
 	{
 		EntityFactory *factory = m_EntityManager->GetFactory();
 
@@ -819,28 +874,19 @@ namespace FusionEngine
 				if (!idStr.empty())
 					id = boost::lexical_cast<ObjectID>(idStr);
 
-				if (id == 0)
-				{
-					m_EntityManager->AddPseudoEntity(entity);
-
-					m_PseudoEntities.push_back(gmEntity);
-				}
-				else
-				{
-					entity->SetID(translator(id));
-					m_EntityManager->AddEntity(entity);
-
-					m_Entities.push_back(gmEntity);
-				}
+				entity->SetID(id);
+				addMapEntity(gmEntity);
+				// This will allow Entities that reference this Entity (by ID) in their SerialisedState data to find it
+				deserialiser.ListEntity(entity);
 			}
 
 			child = child->NextSiblingElement();
 		}
 	}
 
-	void Editor::initialiseEntities(const Editor::SerialisedDataArray &entity_data, const IDTranslator &translator)
+	void Editor::initialiseEntities(const Editor::SerialisedDataArray &entity_data, const EditorEntityDeserialiser &deserialiser_impl)
 	{
-		EntityDeserialiser entityDeserialiser(m_EntityManager, translator);
+		EntityDeserialiser entityDeserialiser(&deserialiser_impl);
 
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{

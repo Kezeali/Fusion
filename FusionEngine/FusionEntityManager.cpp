@@ -406,6 +406,7 @@ namespace FusionEngine
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
+		m_ClearWhenAble(false),
 		m_NextId(1)
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
@@ -735,17 +736,44 @@ namespace FusionEngine
 
 	void EntityManager::Clear()
 	{
-		m_EntitiesToAdd.clear();
-		m_EntitiesToRemove.clear();
-		for (size_t i = 0; i < s_EntityDomainCount; i++) // Clear all domains
-				m_EntitiesToUpdate[i].clear();
-		m_EntitiesToDraw.clear();
-		m_EntitiesByName.clear();
-		m_Entities.clear();
-		m_PseudoEntities.clear();
+		if (m_EntitiesLocked)
+		{
+			for (size_t i = 0; i < s_EntityDomainCount; i++)
+			{
+				for (EntityArray::iterator it = m_EntitiesToUpdate[i].begin(), end = m_EntitiesToUpdate[i].end(); it != end; ++it)
+				{
+					EntityPtr &entity = *it;
+					entity->MarkToRemove();
+				}
+			}
+			m_EntitiesToAdd.clear();
+			m_EntitiesToRemove.clear();
+			m_EntitiesByName.clear();
+			m_Entities.clear();
+			m_PseudoEntities.clear();
+			
+			m_NextId = 1;
+			m_UnusedIds.clear();
 
-		m_ChangedUpdateStateTags.clear();
-		m_ChangedDrawStateTags.clear();
+			m_ChangedUpdateStateTags.clear();
+			m_ChangedDrawStateTags.clear();
+		}
+		else
+		{
+			m_EntitiesToAdd.clear();
+			m_EntitiesToRemove.clear();
+			for (size_t i = 0; i < s_EntityDomainCount; i++) // Clear all domains
+				m_EntitiesToUpdate[i].clear();
+			m_EntitiesByName.clear();
+			m_Entities.clear();
+			m_PseudoEntities.clear();
+
+			m_NextId = 1;
+			m_UnusedIds.clear();
+
+			m_ChangedUpdateStateTags.clear();
+			m_ChangedDrawStateTags.clear();
+		}
 	}
 
 	void EntityManager::ClearDomain(EntityDomain idx)

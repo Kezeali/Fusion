@@ -40,7 +40,7 @@
 		<Property type="string" local="true" name="message" />
 		<!--Note that entity properties are stored by ID, and entity save data
 			 includes the ID from the original session-->
-		<Property type="TestGUI" local="true" name="gui_entity" />
+		<!--<Property type="TestGUI" local="true" name="gui_entity" />-->
 	</Sync>
 	<Streaming>
 		<Sprite property="sprite" resource="test_sprite.xml"/>

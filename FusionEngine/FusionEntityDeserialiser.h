@@ -57,14 +57,24 @@ namespace FusionEngine
 		ObjectID baseID;
 	};
 
-	struct EntityDeserialiser
+	class EntityDeserialiseImpl
 	{
+	public:
+		virtual ~EntityDeserialiseImpl() {}
+		virtual EntityPtr GetEntity(ObjectID id) const = 0;
+	};
+
+	class EntityDeserialiser
+	{
+	public:
 		EntityDeserialiser(EntityManager *manager, const IDTranslator &id_translator = IDTranslator());
+		EntityDeserialiser(const EntityDeserialiseImpl *impl, const IDTranslator &id_translator = IDTranslator());
 
 		EntityPtr GetEntity(ObjectID serialised_id) const;
 
 	private:
 		EntityManager *m_Manager;
+		const EntityDeserialiseImpl *m_Impl;
 		IDTranslator m_Translator;
 	};
 

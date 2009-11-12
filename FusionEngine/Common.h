@@ -26,6 +26,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <array>
 
 // Add _DLL define
 #ifndef _DLL

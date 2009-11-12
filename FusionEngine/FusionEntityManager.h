@@ -367,7 +367,7 @@ namespace FusionEngine
 		EntityFactory *m_EntityFactory;
 
 		ObjectID m_NextId;
-		typedef std::vector<ObjectID> ObjectIDStack;
+		typedef std::deque<ObjectID> ObjectIDStack;
 		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
 		ObjectIDStack m_UnusedIds;
 
@@ -384,18 +384,17 @@ namespace FusionEngine
 		// Active status of each domain
 		char m_DomainState[s_EntityDomainCount];
 
-		typedef std::map<int, EntityPtr> EntityDepthMap;
-		// Entities with no hidden tags
-		EntityDepthMap m_EntitiesToDraw;
-
 		// Bool part indicates whether the entity is a Pseudo-Entity
 		typedef std::pair<EntityPtr, bool> EntityToAdd;
 		typedef std::vector<EntityToAdd> EntityToAddArray;
 		EntityToAddArray m_EntitiesToAdd;
+		// TODO: Remove this (not needed, since MarkToDelete deletes the entity from the
+		//  to-update list, and m_Entities / m_PseudoEntities can be deleted at any time
+		//  since they are not iterated over during update)
 		EntityArray m_EntitiesToRemove;
-		//! The node to which all other nodes are children
-		//EntityPtr m_RootNode;
+
 		bool m_EntitiesLocked;
+		bool m_ClearWhenAble;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

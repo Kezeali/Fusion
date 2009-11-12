@@ -175,6 +175,8 @@ namespace FusionEngine
 
 		m_ByNetIndex[net_index] = playerInfo;
 		m_ByLocalIndex[local_index] = playerInfo;
+
+		SignalPlayerAdded(playerInfo);
 	}
 
 	void PlayerRegistry::removePlayer(ObjectID net_index)

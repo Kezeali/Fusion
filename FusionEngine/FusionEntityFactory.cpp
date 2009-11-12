@@ -189,7 +189,7 @@ namespace FusionEngine
 
 		m_TypeName = root->GetAttribute("typename");
 
-		std::string domainString = root->GetAttribute("defaultdomain");
+		std::string domainString = root->GetAttribute("domain");
 		m_DefaultDomain = ToDomainIndex(domainString);
 
 		ticpp::Iterator< ticpp::Element > child;
@@ -766,7 +766,7 @@ namespace FusionEngine
 		EntityInstancerMap::iterator _where = m_EntityInstancers.find(type);
 		if (_where != m_EntityInstancers.end())
 		{
-			EntityPtr entity( _where->second->InstanceEntity(name), false );
+			EntityPtr entity( _where->second->InstanceEntity(name.empty() ? "default" : name), false );
 			SignalEntityInstanced(entity);
 			return entity;
 		}
@@ -821,6 +821,30 @@ namespace FusionEngine
 		}
 
 		return false;
+	}
+
+	void EntityFactory::LoadAllScriptedTypes()
+	{
+		for (StringMap::const_iterator it = m_EntityDefinitionFileNames.begin(), end = m_EntityDefinitionFileNames.end(); it != end; ++it)
+		{
+			const std::string &filename = it->second;
+			try
+			{
+				ticpp::Document document( OpenXml_PhysFS(fe_widen(filename)) );
+
+				EntityDefinitionPtr definition( new EntityDefinition(fe_getbasepath(filename), document) );
+				m_LoadedEntityDefinitions.push_back(definition);
+				m_EntityDefinitionsByType[definition->GetType()] = definition;
+			}
+			catch (ticpp::Exception &ex)
+			{
+				//m_Log->AddEntry("The Entity definition file '" + filename + "' has invalid XML: " + ex.what());
+			}
+			catch (FileSystemException &ex)
+			{
+				//m_Log->AddEntry("Failed to open Entity definition file '" + filename + "': " + ex.what());
+			}
+		}
 	}
 
 	void EntityFactory::SetScriptedEntityPath(const std::string &path)

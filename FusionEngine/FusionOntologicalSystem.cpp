@@ -188,16 +188,15 @@ namespace FusionEngine
 		//  Startup map (the map initially loaded)
 		if (!m_StartupMap.empty())
 		{
-			m_StartupMap = "Maps/" + m_StartupMap;
 			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-			m_MapLoader->LoadEntityTypes(m_StartupMap, dir);
+			m_MapLoader->LoadEntityTypes("Maps/" + m_StartupMap, dir);
 		}
 		//  maps.txt
 		std::string maps, line;
 		try {
-			OpenString_PhysFS(maps, L"maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+			OpenString_PhysFS(maps, L"Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
 		} catch (FileSystemException &e) {
-			SendToConsole("No maps.txt: Maps not listed in Data/maps.txt may fail to load.");
+			SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
 		}
 		std::string::size_type lineBegin = 0, lineEnd;
 		while (true)
@@ -216,7 +215,7 @@ namespace FusionEngine
 				try
 				{
 					CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-					CL_IODevice mapFile = dir.open_file(fe_widen(line), CL_File::open_existing, CL_File::access_read);
+					CL_IODevice mapFile = dir.open_file(fe_widen("Maps/" + line), CL_File::open_existing, CL_File::access_read);
 					// Load entity types into the factory (the map loader has an EntityManager pointer
 					//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
 					//  for each entity found in the mapFile)
@@ -231,22 +230,13 @@ namespace FusionEngine
 			lineBegin = lineEnd+1;
 		}
 
+		if (m_StartupEntity.empty() && m_StartupMap.empty())
+		{
+			m_EntityManager->GetFactory()->LoadAllScriptedTypes();
+		}
+
 		return true;
 	}
-
-	//PHYSFS_File *file = PHYSFS_openRead();
-		//std::string buffer(256);
-		//PHYSFS_sint64 count;
-		//std::string currentLine
-		//do
-		//{
-		//	count = PHYSFS_read(file, (void*)&buffer[0], 1, 256);
-		//	std::string::size_type pos = 0;
-		//	while (pos != std::string::npos)
-		//	{
-		//		pos = buffer.find("\n", pos);
-		//	}
-		//} while (count >= 256)
 
 	void OntologicalSystem::CleanUp()
 	{
@@ -454,7 +444,6 @@ namespace FusionEngine
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
-			// Anything to do here?
 		}
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
@@ -473,7 +462,12 @@ namespace FusionEngine
 			if (!m_StartupMap.empty())
 			{
 				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				m_MapLoader->LoadMap(m_StartupMap, dir);
+				m_MapLoader->LoadMap("Maps/" + m_StartupMap, dir);
+			}
+
+			if (m_StartupEntity.empty() && m_StartupMap.empty())
+			{
+				m_Editor->Enable();
 			}
 		}
 	}
@@ -505,6 +499,32 @@ namespace FusionEngine
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 	}
 
+	bool OntologicalSystem::createScriptCallback(OntologicalSystem::CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl)
+	{
+		int fnId;
+		if (callback_obj != NULL)
+			fnId = callback_obj->GetObjectType()->GetMethodIdByName(callback_decl.c_str());
+		else
+			fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
+
+		asIScriptFunction *callback_fn = m_Module->GetASModule()->GetFunctionDescriptorById(fnId);
+		if (callback_fn != NULL && callback_fn->GetParamCount() == 2 && callback_fn->GetParamTypeId(0) == asTYPEID_UINT16 && callback_fn->GetParamTypeId(1) == asTYPEID_UINT16)
+		{
+			//callback_obj->AddRef();
+			// Note that fn->GetDecl...() is used here (rather than callback_decl), because
+			//  this is definately a valid decl, whereas callback_decl may just be a fn. name
+			out = CallbackDecl(callback_obj, callback_fn->GetDeclaration(false));
+			return true;
+		}
+		else
+			return false;
+	}
+
+	unsigned int OntologicalSystem::AddPlayer()
+	{
+		return AddPlayer(NULL, std::string());
+	}
+
 	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
 		int numPlayers;
@@ -516,21 +536,7 @@ namespace FusionEngine
 			Network *network = m_NetworkSystem->GetNetwork();
 
 			// Validate & store the callback method
-			int fnId;
-			if (callback_obj != NULL)
-				fnId = callback_obj->GetObjectType()->GetMethodIdByName(callback_decl.c_str());
-			else
-				fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
-
-			asIScriptFunction *callback_fn = m_Module->GetASModule()->GetFunctionDescriptorById(fnId);
-			if (callback_fn != NULL && callback_fn->GetParamCount() == 2 && callback_fn->GetParamTypeId(0) == asTYPEID_UINT16 && callback_fn->GetParamTypeId(1) == asTYPEID_UINT16)
-			{
-				//callback_obj->AddRef();
-				// Note that fn->GetDecl...() is used here (rather than callback_decl), because
-				//  this is definately a valid decl, whereas callback_decl may just be a fn. name
-				m_AddPlayerCallbacks[playerIndex] = CallbackDecl(callback_obj, callback_fn->GetDeclaration(false));
-			}
-			else
+			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
 				SendToConsole("system.addPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
 
 			if (PlayerRegistry::ArbitratorIsLocal())
@@ -594,6 +600,80 @@ namespace FusionEngine
 		PlayerRegistry::RemovePlayer(index);
 	}
 
+	void OntologicalSystem::SetAddPlayerCallback(asIScriptObject *callback_obj, const std::string &callback_decl)
+	{
+		createScriptCallback(m_AddAnyPlayerCallback, callback_obj, callback_decl);
+	}
+
+	void OntologicalSystem::SetAddPlayerCallback(unsigned int player, asIScriptObject *callback_obj, const std::string &callback_decl)
+	{
+		if (player < g_MaxLocalPlayers)
+			createScriptCallback(m_AddPlayerCallbacks[player], callback_obj, callback_decl);
+	}
+
+	void OntologicalSystem::SetSplitScreenArea(const CL_Rectf &area)
+	{
+		if (m_SplitScreenArea != area)
+			fitSplitScreenViewports();
+		m_SplitScreenArea = area;
+	}
+
+	ViewportPtr OntologicalSystem::AddSplitScreenViewport(unsigned int player)
+	{
+		if (m_SplitScreenViewports.size() < s_MaximumSplitScreenViewports)
+		{
+			SplitScreenViewport splitPort(ViewportPtr(new Viewport()), player);
+			m_SplitScreenViewports.push_back(splitPort);
+			fitSplitScreenViewports();
+			return splitPort.first;
+		}
+		else
+			return ViewportPtr();
+	}
+
+	void OntologicalSystem::RemoveSplitScreenViewport(unsigned int player)
+	{
+		for (SplitScreenViewportArray::iterator it = m_SplitScreenViewports.begin(), end = m_SplitScreenViewports.end(); it != end; ++it)
+		{
+			if (it->second == player)
+			{
+				m_SplitScreenViewports.erase(it);
+				break;
+			}
+		}
+		fitSplitScreenViewports();
+	}
+
+	void OntologicalSystem::SetSplitScreenOrder(const PlayerOrderArray &player_order)
+	{
+		SplitScreenViewportArray sortedArray;
+		for (PlayerOrderArray::const_iterator order_it = player_order.begin(), ord_end = player_order.end(); order_it != ord_end; ++order_it)
+		{
+			for (SplitScreenViewportArray::iterator it = m_SplitScreenViewports.begin(), end = m_SplitScreenViewports.end(); it != end; ++it)
+			{
+				if (it->second == *order_it)
+					sortedArray.push_back(*it);
+			}
+		}
+		m_SplitScreenViewports.swap(sortedArray);
+		fitSplitScreenViewports();
+	}
+
+	void OntologicalSystem::SetSplitScreenOrder(asIScriptArray *player_order)
+	{
+		if (player_order->GetElementTypeId() == asTYPEID_UINT32)
+		{
+			// Copy from the script type to the application array type
+			PlayerOrderArray appArray;
+			for (size_t i = 0, end = player_order->GetElementCount(); i < end; ++i)
+			{
+				int *player = static_cast<int*>( player_order->GetElementPointer(i) );
+				appArray[i] = *player;
+			}
+			SetSplitScreenOrder(appArray);
+		}
+	}
+
 	int OntologicalSystem::GetScreenWidth() const
 	{
 		return m_Renderer->GetContextWidth();
@@ -641,6 +721,11 @@ namespace FusionEngine
 		}
 	}
 
+	void OntologicalSystem_SetSplitScreenArea(float x, float y, float w, float h, OntologicalSystem *obj)
+	{
+		obj->SetSplitScreenArea(CL_Rectf(x, y, x+w, y+h));
+	}
+
 	void OntologicalSystem::Register(asIScriptEngine *engine)
 	{
 		int r;
@@ -654,11 +739,32 @@ namespace FusionEngine
 			asMETHOD(OntologicalSystem, Load), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
+			"uint addPlayer()",
+			asMETHODPR(OntologicalSystem, AddPlayer, (void), size_t), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
 			"uint addPlayer(IEntity@, const string &in)",
-			asMETHOD(OntologicalSystem, AddPlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHODPR(OntologicalSystem, AddPlayer, (asIScriptObject*, const std::string&), size_t), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
 			"void removePlayer(uint)",
 			asMETHOD(OntologicalSystem, RemovePlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"void setAddPlayerCallback(IEntity@, const string &in)",
+			asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void setAddPlayerCallback(uint, IEntity@, const string &in)",
+			asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (size_t, asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"void setSplitScreenArea(float, float, float, float)",
+			asFUNCTION(OntologicalSystem_SetSplitScreenArea), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
+			"Viewport@ addSplitScreenViewport(uint)",
+			asMETHOD(OntologicalSystem, AddSplitScreenViewport), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void removeSplitScreenViewport(uint)",
+			asMETHOD(OntologicalSystem, RemoveSplitScreenViewport), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
 			"void addViewport(Viewport@)",
@@ -706,6 +812,122 @@ namespace FusionEngine
 		else
 		{
 			m_FreePlayerIndicies.push_back(net_index);
+		}
+	}
+
+	inline void middle(float &mid, const float &from, const float &to)
+	{
+		mid = from + (to - from) * 0.5f;
+	}
+
+	void OntologicalSystem::fitSplitScreenViewports()
+	{
+		size_t viewports = m_SplitScreenViewports.size();
+
+		if (viewports == 1)
+		{
+			ViewportPtr &viewport = m_SplitScreenViewports[0].first;
+			viewport->SetArea(m_SplitScreenArea);
+		}
+
+		else if (viewports == 2)
+		{
+			ViewportPtr &viewport1 = m_SplitScreenViewports[0].first;
+			ViewportPtr &viewport2 = m_SplitScreenViewports[1].first;
+
+			if (m_SplitType == HorizontalFirst)
+			{
+				float midHoriz;
+				middle(midHoriz, m_SplitScreenArea.left, m_SplitScreenArea.right);
+
+				viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, midHoriz, m_SplitScreenArea.bottom);
+				viewport2->SetArea(midHoriz, m_SplitScreenArea.top, m_SplitScreenArea.right, m_SplitScreenArea.bottom);
+			}
+
+			else // VerticalFirst
+			{
+				float midVert;
+				middle(midVert, m_SplitScreenArea.top, m_SplitScreenArea.bottom);
+
+				viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, m_SplitScreenArea.right, midVert);
+				viewport2->SetArea(m_SplitScreenArea.left, midVert, m_SplitScreenArea.right, m_SplitScreenArea.bottom);
+			}
+		}
+
+		else if (viewports == 3)
+		{
+			ViewportPtr &viewport1 = m_SplitScreenViewports[0].first;
+			ViewportPtr &viewport2 = m_SplitScreenViewports[1].first;
+			ViewportPtr &viewport3 = m_SplitScreenViewports[2].first;
+			if (m_SplitType == HorizontalFirst)
+			{
+				float midHoriz, midVert;
+				middle(midHoriz, m_SplitScreenArea.left, m_SplitScreenArea.right);
+				middle(midVert, m_SplitScreenArea.top, m_SplitScreenArea.bottom);
+
+				//  _ _
+				// | |_|
+				// |_|_|
+				//
+
+				viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, midHoriz, m_SplitScreenArea.bottom);
+				viewport2->SetArea(midHoriz, m_SplitScreenArea.top, m_SplitScreenArea.right, midVert);
+				viewport3->SetArea(midHoriz, midVert, m_SplitScreenArea.right, m_SplitScreenArea.bottom);
+			}
+
+			else if (m_SplitType == VerticalFirst)
+			{
+				float midHoriz, midVert;
+				middle(midHoriz, m_SplitScreenArea.left, m_SplitScreenArea.right);
+				middle(midVert, m_SplitScreenArea.top, m_SplitScreenArea.bottom);
+
+				//  ___
+				// |___|
+				// |_|_|
+				//
+
+				viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, m_SplitScreenArea.right, midVert);
+				viewport2->SetArea(m_SplitScreenArea.left, midVert, midHoriz, m_SplitScreenArea.bottom);
+				viewport3->SetArea(midHoriz, midVert, m_SplitScreenArea.right, m_SplitScreenArea.bottom);
+			}
+
+			else // AlwaysQuaters
+			{
+				float midHoriz, midVert;
+				middle(midHoriz, m_SplitScreenArea.left, m_SplitScreenArea.right);
+				middle(midVert, m_SplitScreenArea.top, m_SplitScreenArea.bottom);
+
+				//  _ _
+				// |_|_|
+				// |_|
+				//
+
+				viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, midHoriz, midVert);
+				viewport2->SetArea(midHoriz, m_SplitScreenArea.top, m_SplitScreenArea.right, midVert);
+				viewport3->SetArea(m_SplitScreenArea.left, midVert, midHoriz, m_SplitScreenArea.bottom);
+			}
+		}
+
+		else if (viewports == 4)
+		{
+			ViewportPtr &viewport1 = m_SplitScreenViewports[0].first;
+			ViewportPtr &viewport2 = m_SplitScreenViewports[1].first;
+			ViewportPtr &viewport3 = m_SplitScreenViewports[2].first;
+			ViewportPtr &viewport4 = m_SplitScreenViewports[3].first;
+
+			float midHoriz, midVert;
+			middle(midHoriz, m_SplitScreenArea.left, m_SplitScreenArea.right);
+			middle(midVert, m_SplitScreenArea.top, m_SplitScreenArea.bottom);
+
+			//  _ _
+			// |_|_|
+			// |_|_|
+			//
+
+			viewport1->SetArea(m_SplitScreenArea.left, m_SplitScreenArea.top, midHoriz, midVert);
+			viewport2->SetArea(midHoriz, m_SplitScreenArea.top, m_SplitScreenArea.right, midVert);
+			viewport3->SetArea(m_SplitScreenArea.left, midVert, midHoriz, m_SplitScreenArea.bottom);
+			viewport4->SetArea(midHoriz, midVert, m_SplitScreenArea.right, m_SplitScreenArea.bottom);
 		}
 	}
 

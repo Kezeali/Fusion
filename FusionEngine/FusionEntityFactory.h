@@ -95,7 +95,7 @@ namespace FusionEngine
 		* added to the Used Type List, so so when ClearUnusedInstancers is called the
 		* relavant instancer will not be removed
 		*/
-		EntityPtr InstanceEntity(const std::string &type, const std::string &name);
+		EntityPtr InstanceEntity(const std::string &type, const std::string &name = std::string());
 
 		//! Adds an instancer object for the given type
 		void AddInstancer(const std::string &type, const EntityInstancerPtr &instancer);
@@ -108,6 +108,12 @@ namespace FusionEngine
 		* entity types can't be loaded later)
 		*/
 		bool LoadScriptedType(const std::string &type);
+
+		//! Loads all the scripted types within the current ScriptedEntityPath
+		/*!
+		* \see ScriptedEntityPath()
+		*/
+		void LoadAllScriptedTypes();
 
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);

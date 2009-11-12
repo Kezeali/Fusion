@@ -39,6 +39,7 @@
 #include "FusionSingleton.h"
 
 #include "FusionNetwork.h"
+#include "FusionBoostSignals2.h"
 
 
 namespace FusionEngine
@@ -67,6 +68,9 @@ namespace FusionEngine
 		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
 
 		PlayerRegistry();
+
+		boost::signals2::signal<void (const PlayerInfo &)> SignalPlayerAdded;
+		boost::signals2::signal<void (const PlayerInfo &)> SignalPlayerRemoved;
 
 		static void AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
 		static void AddPlayer(ObjectID net_index, unsigned int local_index);

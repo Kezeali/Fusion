@@ -35,15 +35,26 @@
 namespace FusionEngine
 {
 
-	EntityDeserialiser::EntityDeserialiser(FusionEngine::EntityManager *manager, const FusionEngine::IDTranslator &id_translator)
+	EntityDeserialiser::EntityDeserialiser(EntityManager *manager, const IDTranslator &id_translator)
 		: m_Manager(manager),
+		m_Impl(NULL),
+		m_Translator(id_translator)
+	{
+	}
+
+	EntityDeserialiser::EntityDeserialiser(const EntityDeserialiseImpl *impl, const IDTranslator &id_translator)
+		: m_Manager(NULL),
+		m_Impl(impl),
 		m_Translator(id_translator)
 	{
 	}
 
 	EntityPtr EntityDeserialiser::GetEntity(ObjectID id) const
 	{
-		return m_Manager->GetEntity(m_Translator(id));
+		if (m_Impl != NULL)
+			return m_Impl->GetEntity(m_Translator(id));
+		else
+			return m_Manager->GetEntity(m_Translator(id));
 	}
 
 }

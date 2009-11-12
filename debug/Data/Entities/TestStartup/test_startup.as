@@ -17,7 +17,8 @@ class TestStartup : ScriptEntity
 		updateNum = 0;
 		//BindSimpleCommands();
 
-		gui.getContext().LoadMouseCursor(e_String("core/gui/cursor.rml"));
+		gui.getContext().SetMouseCursor(e_String("Arrow"));
+		console.println("'TestStartup' entity created");
 	}
 	~TestStartup()
 	{
@@ -28,7 +29,7 @@ class TestStartup : ScriptEntity
 	{
 		@testEntity = cast<Test>( entity_manager.instance("Test", "test", player) );
 		testEntity.Spawn();
-		testEntity.SetPosition(Vector(200, 50));
+		testEntity.SetPosition(GetPosition());
 
 		console.println("Before camera setup");
 
@@ -51,9 +52,6 @@ class TestStartup : ScriptEntity
 
 		system.addViewport(p1Viewport);
 
-		// TODO:!!! system.setAddPlayerCallback(this, "OnAddPlayer");
-		//playerIndex = system.addPlayer(this, "OnAddPlayer");
-
 		system.enablePhysicsDebugDraw(p1Viewport);
 
 		@p1Viewport = null;
@@ -69,10 +67,6 @@ class TestStartup : ScriptEntity
 
 	void Update(float)
 	{
-		if (updateNum > 1)
-			editor.startEditor();
-		else
-			updateNum++;
 		//if (firstUpdate)
 		//{
 		//	firstUpdate = false;

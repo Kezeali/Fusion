@@ -55,6 +55,18 @@ namespace FusionEngine
 		//! Sets the area of the viewport, and the camera
 		Viewport(const CL_Rectf &area_ratio, const CameraPtr &camera);
 
+		//! Sets the area of the viewport (relative to the graphics context)
+		/*!
+		* \see SetArea(float, float, float, float)
+		*/
+		void SetArea(const CL_Rectf &area);
+		//! Sets the area of the viewport (relative to the graphics context)
+		/*!
+		* All parameters should be [0, 1) - these values will be multiplied
+		* by the relavant screen dimension to find the area that the viewport
+		* fills upon rendering.
+		*/
+		void SetArea(float left, float top, float right, float bottom);
 		//! Sets the position within the graphics context
 		void SetPosition(float left, float top);
 		//! Sets the size of the render area

@@ -1,6 +1,7 @@
 <!-- Cursor document, used by the Ogre3D sample. -->
 <rml>
 	<head>
+		<title>Arrow</title>
 		<style>
 			body
 			{

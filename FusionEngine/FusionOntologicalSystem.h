@@ -120,6 +120,18 @@ namespace FusionEngine
 		//! Resumes the game
 		void Resume();
 
+		//! Adds a player (no callback)
+		/*!
+		* Intended to be called from script.
+		* <br>
+		* Note that this is for adding local players only, net
+		* players are added to the PlayerRegistry automatically
+		* when they join the peer-network.
+		*
+		* \returns
+		* The index of the player added
+		*/
+		unsigned int AddPlayer();
 		//! Adds a player
 		/*!
 		* Intended to be called from script.
@@ -153,6 +165,43 @@ namespace FusionEngine
 		*/
 		void RemovePlayer(unsigned int index);
 
+		//! Sets a callback which will be called when any player is added
+		void SetAddPlayerCallback(asIScriptObject *callback_obj, const std::string &callback_decl);
+		//! Sets a callback which will be called when the given player is added
+		void SetAddPlayerCallback(unsigned int player, asIScriptObject *callback_obj, const std::string &callback_decl);
+
+
+		static const size_t s_MaximumSplitScreenViewports = 4;
+		enum SplitType
+		{
+			HorizontalFirst,
+			VerticalFirst,
+			AlwaysQuaters
+		};
+
+		//! Sets the area to be divided up to create split screen viewports
+		void SetSplitScreenArea(const CL_Rectf &area);
+
+		void SetSplitScreenType(SplitType type);
+
+		//! Creates a new split-screen viewport and shrinks existing split-screen viewports to fit
+		/*!
+		* \param[in] player
+		* This is simply an ID to make removing / retrieving this viewport easier
+		*/
+		ViewportPtr AddSplitScreenViewport(unsigned int player);
+		//! Removes the split-screen viewport for the given ID
+		void RemoveSplitScreenViewport(unsigned int player);
+
+		typedef std::tr1::array<int, s_MaximumSplitScreenViewports> PlayerOrderArray;
+		//! Sets the order of splitscreen viewports - this will change the order that they are layed out on screen
+		void SetSplitScreenOrder(const PlayerOrderArray &player_order);
+		//! Sets the order of splitscreen viewports
+		/*!
+		* Script version of SetSplitScreenOrder()
+		*/
+		void SetSplitScreenOrder(asIScriptArray *player_order);
+
 		//! Returns Renderer::GetContextWidth()
 		int GetScreenWidth() const;
 		//! Returns Renderer::GetContextWidth()
@@ -169,9 +218,6 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		ObjectID getNextPlayerIndex();
-		void releasePlayerIndex(ObjectID net_index);
-
 		EntitySynchroniser *m_EntitySyncroniser;
 		StreamingManager *m_Streaming;
 		EntityFactory *m_EntityFactory;
@@ -182,6 +228,11 @@ namespace FusionEngine
 		PhysicalWorld *m_PhysWorld;
 
 		ViewportArray m_Viewports;
+		typedef std::pair<ViewportPtr, unsigned int> SplitScreenViewport;
+		typedef std::vector<SplitScreenViewport> SplitScreenViewportArray;
+		SplitScreenViewportArray m_SplitScreenViewports;
+		CL_Rectf m_SplitScreenArea;
+		SplitType m_SplitType;
 
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
@@ -204,6 +255,7 @@ namespace FusionEngine
 				: object(obj), method(method)
 			{}
 		} m_AddPlayerCallbacks[g_MaxLocalPlayers];
+		CallbackDecl m_AddAnyPlayerCallback;
 
 		ObjectID m_NextPlayerIndex;
 		std::deque<ObjectID> m_FreePlayerIndicies;
@@ -215,6 +267,13 @@ namespace FusionEngine
 
 		std::string m_StartupEntity;
 		std::string m_StartupMap;
+
+		bool createScriptCallback(CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl);
+
+		ObjectID getNextPlayerIndex();
+		void releasePlayerIndex(ObjectID net_index);
+
+		void fitSplitScreenViewports();
 	};
 
 }

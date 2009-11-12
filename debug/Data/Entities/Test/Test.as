@@ -6,27 +6,52 @@ class Test : ScriptEntity
 	bool input_left;
 	bool input_right;
 
-	string message;
+	uint16 localPlayerNumber;
 
-	TestGUI@ gui_entity;
+	//TestGUI@ gui_entity;
 
 	Renderable@ sprite;
 	SoundSample@ movesound;
 	SoundSample@ bgm;
 
+	Camera@ primaryCamera;
+	Viewport@ p1Viewport;
+
 	Test()
 	{
 		console.println("'Test' entity created");
 		runningtime = 0;
+
+		@primaryCamera = @Camera();
+		@p1Viewport = @Viewport(0, 0, 1, 1);
+		p1Viewport.setCamera(primaryCamera);
+
+		system.addViewport(p1Viewport);
+
+		primaryCamera.setFollowEntity(testEntity);
+		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
+
+		streamer.setPlayerCamera(player, primaryCamera);
+
+		@primaryCamera = null;
+		@testEntity = null;
 	}
 	~Test()
 	{
 		console.println("'Test' entity deleted");
 	}
 
+	void OnAddPlayer(uint16 localPlayer, uint16 player)
+	{
+		//!!! note that we dont neccesarily need an equivilant OnRemovePlayer method to destroy player ents
+		//  because entities owned by players are removed automatically when players leave
+	}
+
 	void Spawn()
 	{
 		console.println("'Test' entity Spawned");
+
+		system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
 
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();

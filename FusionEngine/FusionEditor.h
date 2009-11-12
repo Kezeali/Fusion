@@ -51,6 +51,28 @@
 namespace FusionEngine
 {
 
+	//! Supplies ObjectIDs which aren't assigned to any Entity
+	struct IDStack
+	{
+		ObjectID m_NextId;
+		typedef std::deque<ObjectID> ObjectIDStack;
+		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
+		ObjectIDStack m_UnusedIds;
+
+		//! Initialises m_NextId to one (Entity IDs start at 1)
+		IDStack()
+			: m_NextId(1)
+		{}
+
+		//! Returns an ObjectID which is not in use
+		inline ObjectID getFreeID();
+		//! Allows the given ID which was previously returned by getFreeID to be returned again
+		inline void freeID(ObjectID id);
+		//! Resets this object
+		void freeAll();
+	};
+
+	//! Provides lists of Entity types
 	class EditorDataSource : public EMP::Core::DataSource
 	{
 	public:
@@ -77,6 +99,7 @@ namespace FusionEngine
 	public:
 		const std::string &GetName() const;
 
+		//! System Init implementation
 		bool Initialise();
 
 		void CleanUp();
@@ -85,6 +108,11 @@ namespace FusionEngine
 
 		void Draw();
 
+		//! Starts Editor mode
+		/*!
+		* If a game map is loaded, it will be cleared. If Initialise() hasn't been called yet, the
+		* editor will be enabled when Initialise() is called.
+		*/
 		void Enable(bool enable = true);
 
 		void OnRawInput(const RawInput &ev);
@@ -121,6 +149,16 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
+		class EditorEntityDeserialiser : public EntityDeserialiseImpl
+		{
+		public:
+			void ListEntity(const EntityPtr &entity);
+			EntityPtr GetEntity(ObjectID id) const;
+		private:
+			typedef std::tr1::unordered_map<ObjectID, EntityPtr> EntityIdMap;
+			EntityIdMap m_EntityMap;
+		};
+
 		Renderer *m_Renderer;
 		StreamingManager *m_Streamer;
 		InputManager *m_Input;
@@ -148,11 +186,18 @@ namespace FusionEngine
 
 		EditorDataSource *m_EditorDataSource;
 
+		EntityArray m_PlainEntityArray;
+
 		// Map data (entities, etc.) - passed to map creator ("GameMapLoader")
 		StringSet m_UsedTypes;
 		GameMapLoader::ArchetypeMap m_Archetypes;
 		GameMapLoader::GameMapEntityArray m_PseudoEntities;
 		GameMapLoader::GameMapEntityArray m_Entities;
+
+		IDStack m_IdStack;
+
+		//! Lists the given entity in the relevant containers
+		void addMapEntity(const GameMapLoader::GameMapEntity &entity);
 
 		//! Spawns all map entities (called when entering play mode)
 		void spawnEntities();
@@ -167,15 +212,15 @@ namespace FusionEngine
 		//! Creates an XML document for the current map
 		void buildMapXml(TiXmlDocument *document);
 		//! Reads the given Map XML doc.
-		void parseMapXml(TiXmlDocument *document, const SerialisedDataArray &archetypes, const SerialisedDataArray &entities, const IDTranslator &translator);
+		void parseMapXml(TiXmlDocument *document, const SerialisedDataArray &archetypes, const SerialisedDataArray &entities, EditorEntityDeserialiser &translator);
 
 		//! Reads the given <archetypes> element from an XML map doc
 		void parse_Archetypes(TiXmlElement *element, const SerialisedDataArray &archetype_data);
 		//! Reads the given <entities> element from an XML map doc.
-		void parse_Entities(TiXmlElement *element, unsigned int entity_count, const IDTranslator &translator);
+		void parse_Entities(TiXmlElement *element, unsigned int entity_count, EditorEntityDeserialiser &translator);
 
 		// Adds all entities to the EntityManager and deserialises their state data
-		void initialiseEntities(const SerialisedDataArray &entity_data, const IDTranslator &translator);
+		void initialiseEntities(const SerialisedDataArray &entity_data, const EditorEntityDeserialiser &translator);
 
 	};
 
