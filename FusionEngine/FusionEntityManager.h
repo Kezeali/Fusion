@@ -315,6 +315,12 @@ namespace FusionEngine
 		* Removes all entities from the manager.
 		*/
 		void Clear();
+
+		/*!
+		* \brief
+		* Removes non-pseudo ("Real") entities from the manager
+		*/
+		void ClearRealEntities();
 		
 		//! Removes all entities in the given domain
 		void ClearDomain(EntityDomain domain_index);
@@ -347,15 +353,14 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		//unsigned int getTagFlag(const std::string &tag, bool generate);
+		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
+		void clearEntities(bool real_only);
 
 		ObjectID getFreeID();
 
 		std::string generateName(const EntityPtr &entity);
 
 		void updateTags(EntityPtr &tag) const;
-
-		//void updateEntity(EntityPtr entity, float split);
 
 	protected:
 		Renderer *m_Renderer;

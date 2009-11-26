@@ -28,13 +28,12 @@ class Test : ScriptEntity
 
 		system.addViewport(p1Viewport);
 
-		primaryCamera.setFollowEntity(testEntity);
+		//primaryCamera.setFollowEntity(testEntity);
 		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
 
-		streamer.setPlayerCamera(player, primaryCamera);
+		streamer.setPlayerCamera(0, primaryCamera);
 
 		@primaryCamera = null;
-		@testEntity = null;
 	}
 	~Test()
 	{
@@ -51,7 +50,7 @@ class Test : ScriptEntity
 	{
 		console.println("'Test' entity Spawned");
 
-		system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
+		//system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
 
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();

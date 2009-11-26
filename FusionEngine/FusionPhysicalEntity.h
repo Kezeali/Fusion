@@ -102,22 +102,15 @@ namespace FusionEngine
 		//! Gets angular (rotational) velocity
 		virtual void SetAngularVelocity(float angular_vel);
 
-		// TODO: damping, allowSleep, fixedRotation, isBullet, massData
+		// TODO: damping, allowSleep, fixedRotation, isBullet
 
 		bool IsPhysicsEnabled() const;
 
 		b2Body *GetBody() const;
 		void _setBody(b2Body *body);
 
-		//const b2BodyDef &GetBodyDef() const;
-
 		//! Sets the slot object that will destroy the b2Body when the PhysicalEntity is destroyed
 		void SetBodyDestroyer(const BodyDestroyerPtr &destroyer);
-
-		//typedef boost::signals2::signal<void (b2Body*)> DestructorSignal;
-
-		//DestructorSignal &GetDestructorSignal();
-		//boost::signals2::connection &ConnectToDestructor(const DestructorSignal::slot_type &slot);
 
 		//! Save state to buffer
 		virtual void SerialiseState(SerialisedData &state, bool local) const;

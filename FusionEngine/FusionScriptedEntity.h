@@ -30,6 +30,7 @@
 #include "FusionCommon.h"
 
 #include "FusionPhysicalEntity.h"
+
 #include "FusionScriptReference.h"
 
 
@@ -67,7 +68,6 @@ namespace FusionEngine
 	};
 	
 	typedef std::tr1::unordered_map<std::string, ResourceDescription> ResourcesMap;
-
 
 	/*!
 	 * This class acts as a wrapper for the script objects which define
@@ -133,7 +133,7 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		// The actual entity (for which this C++ class is simply a wrapper)
+		// The (scripted) entity implementation
 		ScriptObject m_ScriptObject;
 
 		// The folder where the the entity definition resides - used when calls to ScriptEntity::MakePathAbsolute are made in the entity script

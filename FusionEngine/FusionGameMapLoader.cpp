@@ -295,7 +295,7 @@ namespace FusionEngine
 		if (!mapFilename.empty() && mapFilename != m_MapFilename)
 			LoadMap(mapFilename, directory, true);
 		else
-			m_Manager->Clear();
+			m_Manager->ClearRealEntities();
 
 		EntityFactory *factory = m_Manager->GetFactory();
 		IDTranslator translator = m_Manager->MakeIDTranslator();

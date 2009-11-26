@@ -209,6 +209,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionContextMenu.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEditor.cpp"
 				>
 			</File>
@@ -218,6 +222,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionEntity.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEntityDefinitionData.cpp"
 				>
 			</File>
 			<File
@@ -483,6 +491,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionContextMenu.h"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEditor.h"
 				>
 			</File>
@@ -492,6 +504,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionEntity.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEntityDefinitionData.h"
 				>
 			</File>
 			<File

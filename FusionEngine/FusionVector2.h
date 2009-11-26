@@ -45,21 +45,19 @@ namespace FusionEngine
 	public:
 		typedef T type;
 	public:
-		//! Copying constructor.
-		Vector2T(const Vector2T<T> &other)
-			: m_RefCount(1),
-			x(other.x),
-			y(other.y)
-		{
-		}
-		//! Convert from Box2D vector
-		//Vector2T(const b2Vec2 &other);
 		//! Init. constructor
 		Vector2T(T _x = 0.0, T _y = 0.0)
 			: x(_x),
 			y(_y)
 		{
 		}
+
+		//! Copy constructor (from double)
+		Vector2T(const Vector2T<double> &other);
+		//! Copy constructor (from float)
+		Vector2T(const Vector2T<float> &other);
+		//! Copy constructor (from int)
+		Vector2T(const Vector2T<int> &other);
 
 	public:
 		//! Coordinates
@@ -379,6 +377,133 @@ namespace FusionEngine
 			return Vector2T<T>::distance(point, chosen);
 		}
 	};
+
+	// Vector2T Implementation
+	template<>
+	inline Vector2T<double>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1),
+		x(copy.x),
+		y(copy.y)
+	{}
+
+	template<>
+	inline Vector2T<float>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1),
+		x(copy.x),
+		y(copy.y)
+	{}
+
+	template<>
+	inline Vector2T<int>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1),
+		x(copy.x),
+		y(copy.y)
+	{}
+
+	template<>
+	inline Vector2T<unsigned char>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned char)(std::abs(copy.x) + 0.5f); y = (unsigned char)(std::abs(copy.y) + 0.5f); }
+
+	template<>
+	inline Vector2T<unsigned char>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned char)(std::abs(copy.x) + 0.5); y = (unsigned char)(std::abs(copy.y) + 0.5); }
+
+	template<>
+	inline Vector2T<unsigned char>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned char)std::abs(copy.x); y = (unsigned char)std::abs(copy.y); }
+
+	template<>
+	inline Vector2T<char>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (char)(copy.x + 0.5f); y = (char)(copy.y + 0.5f); }
+
+	template<>
+	inline Vector2T<char>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (char)(copy.x + 0.5); y = (char)(copy.y + 0.5); }
+
+	template<>
+	inline Vector2T<char>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (char)copy.x; y = (char)copy.y; }
+
+	template<>
+	inline Vector2T<unsigned short>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned short)(copy.x + 0.5f); y = (unsigned short)(copy.y + 0.5f); }
+
+	template<>
+	inline Vector2T<unsigned short>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned short)(std::abs(copy.x) + 0.5); y = (unsigned short)(std::abs(copy.y) + 0.5); }
+
+	template<>
+	inline Vector2T<unsigned short>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned short)std::abs(copy.x); y = (unsigned short)std::abs(copy.y); }
+
+	template<>
+	inline Vector2T<short>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (short)(copy.x + 0.5f); y = (short)(copy.y + 0.5f); }
+
+	template<>
+	inline Vector2T<short>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (short)(copy.x + 0.5); y = (short)(copy.y + 0.5); }
+
+	template<>
+	inline Vector2T<short>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (short)copy.x; y = (short)copy.y; }
+
+	template<>
+	inline Vector2T<int>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (int)(copy.x + 0.5f); y = (int)(copy.y + 0.5f); }
+
+	template<>
+	inline Vector2T<int>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (int)(copy.x + 0.5); y = (int)(copy.y + 0.5); }
+
+	template<>
+	inline Vector2T<unsigned int>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned int)(std::abs(copy.x) + 0.5f); y = (unsigned int)(std::abs(copy.y) + 0.5f); }
+
+	template<>
+	inline Vector2T<unsigned int>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned int)(std::abs(copy.x) + 0.5); y = (unsigned int)(std::abs(copy.y) + 0.5); }
+
+	template<>
+	inline Vector2T<unsigned int>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (unsigned int)std::abs(copy.x); y = (unsigned int)std::abs(copy.y); }
+
+	template<>
+	inline Vector2T<float>::Vector2T(const Vector2T<double> &copy)
+		: m_RefCount(1)
+	{ x = (float)copy.x; y = (float)copy.y; }
+
+	template<>
+	inline Vector2T<float>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (float)copy.x; y = (float)copy.y; }
+
+	template<>
+	inline Vector2T<double>::Vector2T(const Vector2T<float> &copy)
+		: m_RefCount(1)
+	{ x = (double)copy.x; y = (double)copy.y; }
+
+	template<>
+	inline Vector2T<double>::Vector2T(const Vector2T<int> &copy)
+		: m_RefCount(1)
+	{ x = (double)copy.x; y = (double)copy.y; }
 
 	//! Stream extraction for Vector2
 	template <typename T>

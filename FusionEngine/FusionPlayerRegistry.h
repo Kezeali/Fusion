@@ -69,8 +69,14 @@ namespace FusionEngine
 
 		PlayerRegistry();
 
-		boost::signals2::signal<void (const PlayerInfo &)> SignalPlayerAdded;
-		boost::signals2::signal<void (const PlayerInfo &)> SignalPlayerRemoved;
+		typedef boost::signals2::signal<void (const PlayerInfo &)> RegistryChangedSigType;
+		RegistryChangedSigType SignalPlayerAdded;
+		RegistryChangedSigType SignalPlayerRemoved;
+		RegistryChangedSigType SignalPlayerRestored;
+
+		static boost::signals2::connection ConnectToPlayerAdded(RegistryChangedSigType::slot_type &callback);
+		static boost::signals2::connection ConnectToPlayerRemoved(RegistryChangedSigType::slot_type &callback);
+		static boost::signals2::connection ConnectToPlayerRestored(RegistryChangedSigType::slot_type &callback);
 
 		static void AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address);
 		static void AddPlayer(ObjectID net_index, unsigned int local_index);

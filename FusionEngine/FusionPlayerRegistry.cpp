@@ -44,6 +44,30 @@ namespace FusionEngine
 		return !(*this == other);
 	}
 
+	boost::signals2::connection PlayerRegistry::ConnectToPlayerAdded(RegistryChangedSigType::slot_type &slot)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+
+		return registry->SignalPlayerAdded.connect(slot);
+	}
+
+	boost::signals2::connection PlayerRegistry::ConnectToPlayerRemoved(RegistryChangedSigType::slot_type &slot)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+
+		return registry->SignalPlayerRemoved.connect(slot);
+	}
+
+	boost::signals2::connection PlayerRegistry::ConnectToPlayerRestored(RegistryChangedSigType::slot_type &slot)
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+
+		return registry->SignalPlayerRestored.connect(slot);
+	}
+
 	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
 	{
 		PlayerRegistry *registry = getSingletonPtr();

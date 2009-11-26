@@ -614,7 +614,7 @@ namespace FusionEngine
 		ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition, PhysicalWorld *world);
 
 	public:
-		Entity *InstanceEntity(const std::string &name);
+		Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name);
 
 	protected:
 
@@ -643,7 +643,7 @@ namespace FusionEngine
 		m_PhysicsWorld(world)
 	{}
 
-	Entity *ScriptedEntityInstancer::InstanceEntity(const std::string &name)
+	Entity *ScriptedEntityInstancer::InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name)
 	{
 		if (m_ScriptingManager == NULL)
 			return NULL;
@@ -687,6 +687,13 @@ namespace FusionEngine
 				const FixtureDefinition &fixtureDef = *it;
 				body->CreateFixture(&fixtureDef.definition);
 			}
+			// ... And supplemental fixtures
+			for (SupplementaryDefinitionData::FixtureList::const_iterator it = sup_data.fixtures.begin(), end = sup_data.fixtures.end();
+				it != end; ++it)
+			{
+				const FixtureDefinition &fixtureDef = *it;
+				body->CreateFixture(&fixtureDef.definition);
+			}
 		}
 
 		// Add resource refs
@@ -695,9 +702,17 @@ namespace FusionEngine
 		for (ResourcesMap::const_iterator it = resources.begin(), end = resources.end(); it != end; ++it)
 		{
 			const ResourceDescription &desc = it->second;
+			std::string resourceName;
+			// Check for an overriding property in the supplemental data
+			SupplementaryDefinitionData::PropertyOverrideMap::const_iterator _where = sup_data.properties.find(desc.GetPropertyName());
+			if (_where != sup_data.properties.end())
+				resourceName = _where->second;
+			else
+				resourceName = desc.GetResourceName();
+
 			if (desc.GetType() == "Sprite")
 			{
-				RenderablePtr renderable( new Renderable(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority()) );
+				RenderablePtr renderable( new Renderable(resMan, fe_widen(resourceName), desc.GetPriority()) );
 
 				entity->AddRenderable(renderable);
 
@@ -731,7 +746,7 @@ namespace FusionEngine
 
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority(), false);
+				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), false);
 
 				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
@@ -743,7 +758,7 @@ namespace FusionEngine
 
 				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, fe_widen(desc.GetResourceName()), desc.GetPriority(), true);
+				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), true);
 
 				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
@@ -761,12 +776,12 @@ namespace FusionEngine
 	{
 	}
 
-	EntityPtr EntityFactory::InstanceEntity(const std::string &type, const std::string &name)
+	EntityPtr EntityFactory::InstanceEntity(const std::string &type, const SupplementaryDefinitionData &sup_data, const std::string &name)
 	{
 		EntityInstancerMap::iterator _where = m_EntityInstancers.find(type);
 		if (_where != m_EntityInstancers.end())
 		{
-			EntityPtr entity( _where->second->InstanceEntity(name.empty() ? "default" : name), false );
+			EntityPtr entity( _where->second->InstanceEntity(sup_data, name.empty() ? "default" : name), false );
 			SignalEntityInstanced(entity);
 			return entity;
 		}
@@ -783,6 +798,11 @@ namespace FusionEngine
 			}
 		}
 		return EntityPtr();
+	}
+
+	EntityPtr EntityFactory::InstanceEntity(const std::string &type, const std::string &name)
+	{
+		return InstanceEntity(type, SupplementaryDefinitionData(), name);
 	}
 
 	void EntityFactory::AddInstancer(const std::string &type, const FusionEngine::EntityInstancerPtr &instancer)

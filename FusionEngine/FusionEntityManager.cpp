@@ -734,7 +734,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::Clear()
+	void EntityManager::clearEntities(bool real_only)
 	{
 		if (m_EntitiesLocked)
 		{
@@ -776,32 +776,39 @@ namespace FusionEngine
 		}
 	}
 
+	void EntityManager::Clear()
+	{
+		clearEntities(false);
+	}
+
+	void EntityManager::ClearRealEntities()
+	{
+		clearEntities(true);
+	}
+
 	void EntityManager::ClearDomain(EntityDomain idx)
 	{
 		EntityArray &domain = m_EntitiesToUpdate[idx];
 		for (EntityArray::iterator it = domain.begin(), end = domain.end(); it != end; ++it)
 		{
 			EntityPtr &entity = *it;
-			// If the manager is currently updating (so entities are locked), use the delayed remove method
-			if (m_EntitiesLocked)
-				RemoveEntity(entity);
 
+			entity->MarkToRemove();
+			if (entity->IsPseudoEntity())
+				m_PseudoEntities.erase(entity);
 			else
 			{
-				entity->MarkToRemove();
-				if (entity->IsPseudoEntity())
-					m_PseudoEntities.erase(entity);
+				if (entity->GetID() < m_NextId-1)
+					m_UnusedIds.push_back(entity->GetID()); // record unused ID
 				else
-				{
-					if (entity->GetID() < m_NextId-1)
-						m_UnusedIds.push_back(entity->GetID()); // record unused ID
-					else
-						--m_NextId;
-					m_Entities.erase(entity->GetID());
-				}
-				m_EntitiesByName.erase(entity->GetName());
+					--m_NextId;
+				m_Entities.erase(entity->GetID());
 			}
+			m_EntitiesByName.erase(entity->GetName());
 		}
+		// If the manager isn't updating, we can immeadiately clear the
+		//  domain (otherwise it will be cleared next time it is updated
+		//  due to the MarkToRemove() call above)
 		if (!m_EntitiesLocked)
 			domain.clear();
 	}

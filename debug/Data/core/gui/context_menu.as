@@ -136,7 +136,7 @@ class ContextMenu : IEventListener
 		@m_Listener = @listener;
 	}
 
-	bool AddItem(const string&in name/*const e_String&in name*/)
+	bool AddItem(const string&in name)
 	{
 		// Add the GUI element to the context menu document
 		Element@ element = @m_MenuDoc.CreateElement(e_String("button"));

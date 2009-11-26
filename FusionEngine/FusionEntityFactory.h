@@ -40,6 +40,7 @@
 
 // Fusion
 #include "FusionScriptModule.h"
+#include "FusionEntityDefinitionData.h"
 #include "FusionBoostSignals2.h"
 
 namespace FusionEngine
@@ -53,7 +54,7 @@ namespace FusionEngine
 		EntityInstancer(const std::string &type);
 
 		//! Returns an object of the expected type
-		virtual Entity *InstanceEntity(const std::string &name) = 0;
+		virtual Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name) = 0;
 
 		//! Sets the type of this instancer
 		void SetType(const std::string &type);
@@ -89,6 +90,14 @@ namespace FusionEngine
 		~EntityFactory();
 
 	public:
+		//! Instances Entity
+		/*!
+		* Returns an entity object of the requested type, or NULL. The type will be
+		* added to the Used Type List, so so when ClearUnusedInstancers is called the
+		* relavant instancer will not be removed
+		*/
+		EntityPtr InstanceEntity(const std::string &type, const SupplementaryDefinitionData &sup_data, const std::string &name = std::string());
+
 		//! Instances Entity
 		/*!
 		* Returns an entity object of the requested type, or NULL. The type will be

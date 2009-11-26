@@ -182,7 +182,6 @@ namespace FusionEngine
 
 		if (!m_StartupEntity.empty())
 			m_EntityFactory->LoadScriptedType(m_StartupEntity);
-		m_EntityFactory->AddInstancer("Simple", EntityInstancerPtr(new SimpleInstancerTest()));
 
 		// Load map entities
 		//  Startup map (the map initially loaded)

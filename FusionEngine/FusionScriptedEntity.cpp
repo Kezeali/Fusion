@@ -71,17 +71,6 @@ namespace FusionEngine
 		return m_ScriptPropertyIndex;
 	}
 
-	/*ImageResourceParam::ImageResourceParam(const ResourcePointer<CL_Sprite> &resource)
-		: ResourceParam("Image")
-	{
-		m_Renderable.reset(new Renderable(resource));
-	}
-
-	void ImageResourceParam::SetPosition(const Vector2 &position)
-	{
-		m_Renderable->SetPosition(position);
-	}*/
-
 	ScriptedEntity::ScriptedEntity()
 		: PhysicalEntity(),
 		m_DefaultPosition(0.f, 0.f),
