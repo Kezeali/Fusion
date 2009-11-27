@@ -210,8 +210,7 @@ public:
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
 
-				if (CL_DisplayMessageQueue::has_messages())
-					CL_DisplayMessageQueue::process();
+				CL_KeepAlive::process();
 
 				resourceManager->UnloadUnreferencedResources();
 				resourceManager->DeliverLoadedResources();

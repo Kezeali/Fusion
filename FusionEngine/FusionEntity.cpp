@@ -252,17 +252,6 @@ namespace FusionEngine
 		{
 			bool bbChanged = false;
 
-			//// Set the derived position from the entity position
-			//CL_Vec2f position = CL_Vec2f::rotate(CL_Vec2f(entity_position.x, entity_position.y), 
-			//m_DerivedPosition = entity_position + m_Position;
-			//// Set the derived angle from the entity base-angle
-			//if (!fe_fequal(entity_angle + m_Angle, m_DerivedAngle)) // Check that the entity angle has changed
-			//{
-			//	bbChanged = true;
-			//	m_Sprite->set_angle(CL_Angle(entity_angle + m_Angle, cl_radians));
-			//}
-			//m_DerivedAngle = entity_angle + m_Angle;
-
 			// Check whether AABB needs to be upadated (frame width / height has changed)
 			if (m_Sprite->get_height() != m_PreviousHeight)
 			{
@@ -295,11 +284,6 @@ namespace FusionEngine
 			}
 		}
 	}
-
-	//void Renderable::SetSpriteResource(ResourceManager *res_man, const std::string &path)
-	//{
-	//	SetResource(res_man, path);
-	//}
 
 	ResourcePointer<CL_Sprite> &Renderable::GetSpriteResource()
 	{

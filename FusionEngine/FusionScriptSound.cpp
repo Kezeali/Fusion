@@ -127,10 +127,10 @@ namespace FusionEngine
 
 	void SoundSample::Stop()
 	{
-		if (m_SoundBuffer.IsLoaded())
-		{
-			m_SoundBuffer->stop();
-		}
+		//if (m_SoundBuffer.IsLoaded())
+		//{
+		//	m_SoundBuffer->stop();
+		//}
 	}
 
 	SoundSession* SoundSample::CreateSession(bool looping)
@@ -145,7 +145,7 @@ namespace FusionEngine
 
 	void SoundSample::OnStreamOut()
 	{
-		m_SoundBuffer->stop();
+		//m_SoundBuffer->stop();
 	}
 
 	void SoundSample::OnResourceLoad(ResourceDataPtr resource)

@@ -40,6 +40,7 @@
 #include "FusionViewport.h"
 #include "FusionInputHandler.h"
 #include "FusionGameMapLoader.h"
+#include "FusionContextMenu.h"
 
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
@@ -120,10 +121,14 @@ namespace FusionEngine
 		void ProcessEvent(Rocket::Core::Event& ev);
 
 		void DisplayError(const std::string &title, const std::string &message);
+		void ShowContextMenu(const Vector2 &position, const EntityArray &entities);
+		void ShowProperties(const EntityPtr &entity);
+		void ShowProperties(const GameMapLoader::GameMapEntity &entity);
 
 		void CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
+		void GetEntitiesAt(EntityArray &out, const Vector2 &position);
 
-		//! Returns entities beginning with...
+		//! Returns entity-tyes beginning with...
 		void LookUpEntityType(StringVector &results, const std::string &search_term);
 		//! Updates the EditorDataSource with the results of the look up on the given name
 		void LookUpEntityType(const std::string &search_term);
@@ -173,6 +178,9 @@ namespace FusionEngine
 		Vector2 m_CamVelocity;
 
 		Rocket::Core::ElementDocument *m_Document;
+
+		ContextMenu *m_RightClickMenu;
+		MenuItem *m_PropertiesMenu;
 
 		bool m_Enabled;
 

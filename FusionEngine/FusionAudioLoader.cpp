@@ -41,7 +41,7 @@ namespace FusionEngine
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(resource->GetPath(), false, "", vdir);
+			sp = CL_SoundProviderFactory::load(resource->GetPath(), false, vdir);
 		}
 		catch (CL_Exception&)
 		{
@@ -73,7 +73,7 @@ namespace FusionEngine
 		CL_SoundProvider* sp;
 		try
 		{
-			sp = CL_SoundProviderFactory::load(resource->GetPath(), true, "", vdir);
+			sp = CL_SoundProviderFactory::load(resource->GetPath(), true, vdir);
 		}
 		catch (CL_Exception&)
 		{

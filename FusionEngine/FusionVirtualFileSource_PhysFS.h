@@ -46,15 +46,6 @@ public:
 
 	~VirtualFileSource_PhysFS();
 
-
-//! \}
-//! \name Attributes
-//! \{
-
-public:
-	CL_String get_path() const;
-
-
 //! \}
 //! \name Operations
 //! \{
@@ -78,6 +69,8 @@ public:
 
 	bool next_file(CL_VirtualDirectoryListingEntry &entry);
 
+	CL_String get_path() const;
+	CL_String get_identifier() const;
 
 //! \}
 //! \name Implementation
@@ -94,5 +87,3 @@ private:
 	unsigned int m_Index;
 //! \}
 };
-
-

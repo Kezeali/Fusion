@@ -34,6 +34,7 @@
 #include "FusionRenderer.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
+#include "FusionPhysicalEntityManager.h"
 #include "FusionScriptingEngine.h"
 #include "FusionGUI.h"
 #include "FusionPhysFS.h"
@@ -171,11 +172,17 @@ namespace FusionEngine
 
 	bool Editor::Initialise()
 	{
+		// Load gui documents
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
 		if (m_Document == NULL)
 			return false;
 		m_Document->RemoveReference();
+
+		// Create context menu
+		m_RightClickMenu = new ContextMenu(m_Document->GetContext());
+		m_PropertiesMenu = new MenuItem("Properties", "properties");
+		m_RightClickMenu->AddChild(m_PropertiesMenu);
 
 		m_Viewport.reset(new Viewport());
 		m_Camera.reset( new Camera(ScriptingEngine::getSingleton().GetEnginePtr()) );
@@ -202,6 +209,8 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
+		delete m_RightClickMenu;
+		m_RightClickMenu = NULL;
 		if (m_Document != NULL)
 			m_Document->Close();
 		m_Document = NULL;
@@ -320,6 +329,18 @@ namespace FusionEngine
 						}
 					}
 				}
+				if (ev.Code == CL_MOUSE_RIGHT)
+				{
+					//EntityArray entitiesUnderMouse;
+					//GetEntitiesAt(entitiesUnderMouse, Vector2(ev.PointerPosition));
+					//ShowContextMenu(Vector2(ev.PointerPosition), entitiesUnderMouse);
+
+					m_PropertiesMenu->ClearChildren();
+					MenuItem *item = new MenuItem("Some Entity", "entity");
+					m_PropertiesMenu->AddChild(item);
+
+					m_RightClickMenu->Show(ev.PointerPosition.x, ev.PointerPosition.y);
+				}
 			}
 		}
 	}
@@ -331,6 +352,21 @@ namespace FusionEngine
 	void Editor::DisplayError(const std::string &title, const std::string &message)
 	{
 		SendToConsole(title + " error:" + message);
+	}
+
+	void Editor::ShowContextMenu(const Vector2 &position, const EntityArray &entities)
+	{
+		for (EntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+		}
+	}
+
+	void Editor::ShowProperties(const EntityPtr &entity)
+	{
+	}
+
+	void Editor::ShowProperties(const GameMapLoader::GameMapEntity &entity)
+	{
 	}
 
 	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
@@ -359,6 +395,53 @@ namespace FusionEngine
 
 		// Record type usage
 		m_UsedTypes.insert(type);
+	}
+
+	class SpatialQueryCallback : public b2QueryCallback
+	{
+	public:
+		SpatialQueryCallback(EntityArray *output_array, const b2Vec2& point)
+		{
+			m_Point = point;
+			m_Entities = output_array;
+		}
+
+		bool ReportFixture(b2Fixture* fixture)
+		{
+			b2Body* body = fixture->GetBody();
+			if (body->IsStatic() == false)
+			{
+				bool inside = fixture->TestPoint(m_Point);
+				if (inside)
+				{
+					Entity *entity = static_cast<Entity*>( fixture->GetBody()->GetUserData() );
+					m_Entities->push_back(entity);
+				}
+			}
+
+			// Continue the query.
+			return true;
+		}
+
+		b2Vec2 m_Point;
+		EntityArray* m_Entities;
+	};
+
+	void Editor::GetEntitiesAt(EntityArray &out, const Vector2 &position)
+	{
+		b2Vec2 p(position.x, position.y);
+
+		// Make a small box.
+		b2AABB aabb;
+		b2Vec2 d;
+		d.Set(0.001f, 0.001f);
+		aabb.lowerBound = p - d;
+		aabb.upperBound = p + d;
+
+		// Query the world for overlapping shapes
+		SpatialQueryCallback callback(&out, p);
+
+		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

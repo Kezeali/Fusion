@@ -54,14 +54,6 @@ VirtualFileSource_PhysFS::~VirtualFileSource_PhysFS()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// VirtualFileSource_PhysFS Attributes:
-
-CL_String VirtualFileSource_PhysFS::get_path() const
-{
-	return m_Path;
-}
-
-/////////////////////////////////////////////////////////////////////////////
 // VirtualFileSource_PhysFS Operations:
 
 CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
@@ -137,5 +129,12 @@ bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
 	return true;
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// VirtualFileSource_PhysFS Implementation:
+CL_String VirtualFileSource_PhysFS::get_path() const
+{
+	return m_Path;
+}
+
+CL_String VirtualFileSource_PhysFS::get_identifier() const
+{
+	return "PhysFS";
+}

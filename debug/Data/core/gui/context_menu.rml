@@ -10,45 +10,53 @@
 			font-family: Delicious;
 			font-weight: normal;
 			font-style: normal;
+
+			background-color: #bbb;
+			border-width: 1px;
+			border-color: #888;
 			}
-			button,
+
+			menuitem,
 			{
 			display: inline-block;
 
 			width: 128px;
 			height: 30px;
 
-			padding-top: 8px;
-
-			color: black;
+			color: white;
 			font-size: 18;
 			text-align: center;
 			tab-index: auto;
 
-			background-decorator: image;
-			background-image: invader.png 247px 0px 406px 45px;
+			background-color: #888;
 			}
 
-			button:focus,
+			menuitem:focus,
 			{
 			font-weight: bold;
 
 			shadow-font-effect: shadow;
 			shadow-offset: 1px 1px;
-			shadow-color: white;
+			shadow-color: black;
 			}
 
-			button:hover,
+			menuitem:hover,
 			{
 			font-weight: bold;
 
 			shadow-font-effect: shadow;
 			shadow-offset: 1px 1px;
 			shadow-color: blue;
+			background-color: #3f2aab;
 			}
 
-			button:active,
+			menuitem:active,
 			{
+			}
+
+			menuitem:submenu
+			{
+			background-color: #3fab2a;
 			}
 		</style>
 	</head>
