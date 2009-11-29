@@ -300,7 +300,7 @@ namespace FusionEngine
 
 		int Code; // VK code (for buttons)
 
-		Vector2T<int> PointerPosition;
+		Vector2i PointerPosition;
 		double AxisPosition;
 		bool ButtonPressed;
 	};

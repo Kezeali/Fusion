@@ -113,6 +113,7 @@ namespace FusionEngine
 {
 
 	typedef Vector2T<float> Vector2;
+	typedef Vector2T<int> Vector2i;
 
 	typedef std::vector<Vector2> Vector2Array;
 

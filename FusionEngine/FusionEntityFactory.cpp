@@ -677,8 +677,12 @@ namespace FusionEngine
 		{
 			FSN_ASSERT_MSG(m_PhysicsWorld != NULL, "The physics-world ptr for this ScriptedEntityInstancer is invalid, so physical Entities cannot be created with it.");
 			b2Body *body = m_PhysicsWorld->GetB2World()->CreateBody(&m_Definition->GetBodyDef());
+			// Point the entity to the body and the body to the entity
 			entity->_setBody(body);
+			body->SetUserData((void*)entity);
+			// Set up the entity to delete the body when it is deleted
 			m_PhysicsWorld->PrepareEntity(entity);
+
 			// Add fixtures
 			const EntityDefinition::FixtureArray &fixtures = m_Definition->GetFixtures();
 			for (EntityDefinition::FixtureArray::const_iterator it = fixtures.begin(), end = fixtures.end();

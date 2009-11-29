@@ -156,9 +156,12 @@ namespace FusionEngine
 			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
 			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
 
+			m_PhysWorld = new PhysicalWorld();
+			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
+
 			m_Streaming->SetRange(2000);
 
-			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_Streaming, m_EntityManager, m_MapLoader));
+			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_EntityFactory, m_PhysWorld, m_Streaming, m_MapLoader));
 			this->PushMessage(new SystemMessage(m_Editor));
 
 			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
@@ -172,9 +175,6 @@ namespace FusionEngine
 			m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
-
-			m_PhysWorld = new PhysicalWorld();
-			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 			gameOptions.GetOption("startup_map", &m_StartupMap);

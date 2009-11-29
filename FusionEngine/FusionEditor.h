@@ -94,7 +94,8 @@ namespace FusionEngine
 	class Editor : public System, public Rocket::Core::EventListener
 	{
 	public:
-		Editor(InputManager *input, Renderer *renderer, StreamingManager *streaming_manager, EntityManager *ent_manager, GameMapLoader *map_util);
+		//! Constructor
+		Editor(InputManager *input, Renderer *renderer, EntityFactory *entity_factory, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util);
 		virtual ~Editor();
 
 	public:
@@ -121,7 +122,7 @@ namespace FusionEngine
 		void ProcessEvent(Rocket::Core::Event& ev);
 
 		void DisplayError(const std::string &title, const std::string &message);
-		void ShowContextMenu(const Vector2 &position, const EntityArray &entities);
+		void ShowContextMenu(const Vector2i &position, const EntityArray &entities);
 		void ShowProperties(const EntityPtr &entity);
 		void ShowProperties(const GameMapLoader::GameMapEntity &entity);
 
@@ -151,6 +152,14 @@ namespace FusionEngine
 
 		void Compile(const std::string &filename);
 
+		//! Adds all Entities in the current map to the given entity manager
+		/*!
+		* \remarks
+		* The manager will be cleared first, so you may want to save the game in
+		* order to not annoy the user
+		*/
+		void SpawnEntities(EntityManager *manager);
+
 		static void Register(asIScriptEngine *engine);
 
 	protected:
@@ -167,7 +176,9 @@ namespace FusionEngine
 		Renderer *m_Renderer;
 		StreamingManager *m_Streamer;
 		InputManager *m_Input;
-		EntityManager *m_EntityManager;
+		PhysicalWorld *m_PhysicalWorld;
+		EntityFactory *m_EntityFactory;
+		//EntityManager *m_EntityManager;
 		GameMapLoader *m_MapUtil;
 
 		boost::signals2::connection m_RawInputConnection;
@@ -181,6 +192,8 @@ namespace FusionEngine
 
 		ContextMenu *m_RightClickMenu;
 		MenuItem *m_PropertiesMenu;
+		typedef std::vector<boost::signals2::connection> MenuItemConnections;
+		MenuItemConnections m_PropertiesMenuConnections;
 
 		bool m_Enabled;
 
@@ -204,11 +217,10 @@ namespace FusionEngine
 
 		IDStack m_IdStack;
 
+		void showProperties(const MenuItemEvent &ev, const EntityPtr &entity);
+
 		//! Lists the given entity in the relevant containers
 		void addMapEntity(const GameMapLoader::GameMapEntity &entity);
-
-		//! Spawns all map entities (called when entering play mode)
-		void spawnEntities();
 
 		//! Serialises and saves the state data of all map entities to the given file
 		void serialiseEntityData(CL_IODevice file);

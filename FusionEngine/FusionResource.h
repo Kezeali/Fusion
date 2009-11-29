@@ -52,12 +52,6 @@ namespace FusionEngine
 	//! Resource container shared pointer
 	typedef boost::intrusive_ptr<ResourceContainer> ResourceDataPtr;
 
-	class ReleasedResourceList
-	{
-	public:
-		void push_back(ResourceDataPtr &resource);
-	};
-
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
 	 * The resource manager maintains a list of Resources, which can hold any

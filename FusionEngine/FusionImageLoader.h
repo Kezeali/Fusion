@@ -135,7 +135,7 @@ namespace FusionEngine
 
 		struct AnimationOptions
 		{
-			float delay;
+			int delay;
 			bool loop;
 			bool pingpong;
 			bool backward;
