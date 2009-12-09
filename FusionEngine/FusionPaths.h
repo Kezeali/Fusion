@@ -8,7 +8,7 @@ namespace FusionEngine
 	//! The relative path to packages, including trailing slash.
 	const std::string s_PackagesPath = "Data/";
 	//! The relative path to temporary data, including trailing slash.
-	const std::string s_TempPath = "temp/";
+	const std::string s_TempPath = "cache/";
 	//! The relative path to the log folder, including trailing slash.
 	const std::string s_LogfilePath = "Logs/";
 	//! The path to the saves folder

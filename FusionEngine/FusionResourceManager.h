@@ -181,8 +181,6 @@ namespace FusionEngine
 		void UnloadResource(const std::wstring &path);
 
 	private:
-		bool m_PhysFSConfigured;
-
 		CL_Event m_StopEvent; // Set to stop the worker thread
 		CL_Event m_ToLoadEvent; // Set when there is more data to load
 		CL_Event m_ToUnloadEvent;

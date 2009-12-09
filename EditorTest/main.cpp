@@ -6,6 +6,11 @@
 #include "../FusionEngine/FusionConsoleStdOutWriter.h"
 #include "../FusionEngine/FusionLogger.h"
 
+// Filesystem
+#include "../FusionEngine/FusionPaths.h"
+#include "../FusionEngine/FusionPhysFS.h"
+#include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
+
 // Network
 #include "../FusionEngine/FusionRakNetwork.h"
 
@@ -23,7 +28,6 @@
 #include "../FusionEngine/FusionResourceManager.h"
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionScriptingEngine.h"
-#include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
 // Script Type Registration
 //#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
@@ -58,6 +62,9 @@ public:
 
 		CL_SoundOutput sound_output(44100);
 
+		SetupPhysFS physfs( fe_narrow(CL_System::get_exe_path()).c_str() );
+		FSN_ASSERT( SetupPhysFS::is_init() );
+
 		CL_ConsoleWindow conWindow("Console", 80, 10);
 
 		CL_DisplayWindow dispWindow("Display", 800, 600);
@@ -75,6 +82,16 @@ public:
 
 			CL_GraphicContext &gc = dispWindow.get_gc();
 			CL_OpenGL::set_active(NULL);
+
+			////////////////////
+			// Configure PhysFS
+			SetupPhysFS::configure("Pom", "Fusion", "7z");
+			if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
+				SendToConsole("Default resource path could not be located");
+			// Clear cache
+#ifdef _DEBUG
+			SetupPhysFS::clear_temp();
+#endif
 
 			////////////////////
 			// Scripting Manager
@@ -104,7 +121,6 @@ public:
 			/////////////////////////////////////
 			// Script SoundOutput wrapper object
 			std::tr1::shared_ptr<SoundOutput> script_SoundOutput(new SoundOutput(sound_output));
-
 
 			////////////////////
 			// Resource Manager

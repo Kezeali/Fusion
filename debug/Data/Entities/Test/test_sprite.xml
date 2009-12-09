@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<sprite name="Explode" >
+<sprite name="Tank" >
 <!--TODO: relative path evaluation for 'file' attributes in sprite definitions-->
 	<image file="Gfx/spaceshoot_body_moving1.png" />
 	<image file="Gfx/spaceshoot_body_moving2.png" />

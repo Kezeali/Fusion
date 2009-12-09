@@ -38,6 +38,22 @@
 namespace FusionEngine
 {
 
+	class ClanLibTiXmlFile : public TiXmlFileInterface
+	{
+	public:
+		ClanLibTiXmlFile(CL_IODevice file);
+
+		void Write(const char *data, size_t len);
+		void Print(const char *ste);
+		void PutC(int c);
+
+		bool Ok() const;
+
+	protected:
+		CL_IODevice m_File;
+		bool m_WriteFailed;
+	};
+
 	/*!
 	 * \brief
 	 * Opens an xml file using the given VirtualDirectory object

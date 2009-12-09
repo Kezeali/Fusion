@@ -25,9 +25,7 @@
 	</Body>
 	<!--Networking stuff-->
 	<Sync>
-		<!--Predictable means the client will update this value during prediction, and
-			it should match the server value-->
-		<!--Arbitrated means that the variable is owned by the server (server
+		<!--Arbitrated means that the variable is owned by the leader (leader
 			value has authority even if the entity is currently under
 			client auth.)-->
 		<Property type="int" predictable="true" arbitrated="true" name="health" />
@@ -44,6 +42,14 @@
 	</Sync>
 	<Streaming>
 		<Sprite property="sprite" resource="test_sprite.xml"/>
+		<Sprite property="editor_sprite" visibility="editor" resource="\inline:xml">
+			<sprite>
+				<image file="Gfx/spaceshoot_body_moving1.png" />
+				<animation speed="0"/>
+				<translation origin="center"/>
+				<rotation origin="center" base_angle="180"/>
+			</sprite>
+		</Sprite>
 		<Sound property="movesound" resource="engine.wav"/>
 		<SoundStream property="bgm" resource="bg_music.ogg"/>
 	</Streaming>

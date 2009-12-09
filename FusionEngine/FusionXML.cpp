@@ -34,44 +34,34 @@
 namespace FusionEngine
 {
 
-	class ClanLibTiXmlFile : public TiXmlFileInterface
-	{
-	public:
-		ClanLibTiXmlFile(CL_IODevice file);
-
-		void Write(const char *data, size_t len);
-		void Print(const char *ste);
-		void PutC(int c);
-
-		bool Ok() const;
-
-	protected:
-		CL_IODevice m_File;
-	};
-
 	ClanLibTiXmlFile::ClanLibTiXmlFile(CL_IODevice file)
-		: m_File(file)
+		: m_File(file),
+		m_WriteFailed(false)
 	{
 	}
 
 	void ClanLibTiXmlFile::Write(const char *data, size_t len)
 	{
-		m_File.write(data, len);
+		m_WriteFailed =
+			m_File.write(data, len) != len;
 	}
 
 	void ClanLibTiXmlFile::Print(const char *str)
 	{
-		m_File.write(str, strlen(str));
+		size_t expected_length = strlen(str);
+		m_WriteFailed =
+			m_File.write(str, expected_length) != expected_length;
 	}
 
 	void ClanLibTiXmlFile::PutC(int c)
 	{
-		m_File.write(&c, 1);
+		m_WriteFailed =
+			m_File.write(&c, 1) != 1;
 	}
 
 	bool ClanLibTiXmlFile::Ok() const
 	{
-		return m_File.is_null();
+		return !m_WriteFailed && !m_File.is_null();
 	}
 
 

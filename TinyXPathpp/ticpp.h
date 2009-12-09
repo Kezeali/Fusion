@@ -1444,6 +1444,14 @@ namespace ticpp
 		void SaveFile( const std::string& filename ) const;
 
 		/**
+		Save a file using the given writer. Throws if it can't save the file.
+
+		@param filename File to save.
+		@throws Exception
+		*/
+		void SaveFile( TiXmlFileInterface* file ) const;
+
+		/**
 		Parse the given xml data.
 
 		@param xml Xml to parse.

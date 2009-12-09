@@ -94,6 +94,9 @@ static int platform_stricmp(const char *x, const char *y)
 		//! Calls PHYSFS_deinit();
 		static void deinit();
 
+		//! Returns true if phys-fs has been initialised
+		static bool is_init();
+
 		//! Configures PhysFS.
 		/*!
 		 * <p>
@@ -134,6 +137,9 @@ static int platform_stricmp(const char *x, const char *y)
 										const std::string &archiveExt,
 										bool includeCdRoms = false,
 										bool archivesFirst = true);
+
+		//! Deletes all files / folders in the tempoary ('temp') folder
+		static void clear_temp();
 
 		//! Adds the given sub-directory to the search path.
 		/*!

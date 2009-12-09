@@ -30,6 +30,9 @@
 #include "FusionPaths.h"
 
 #include "PhysFS.h"
+
+#include <stack>
+
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -53,12 +56,17 @@ SetupPhysFS::~SetupPhysFS()
 
 bool SetupPhysFS::init(const char *argv0)
 {
-	return (PHYSFS_init(argv0) ? true : false);
+	return PHYSFS_init(argv0) == 1;
 }
 
 void SetupPhysFS::deinit()
 {
 	PHYSFS_deinit();
+}
+
+bool SetupPhysFS::is_init()
+{
+	return PHYSFS_isInit() == 1;
 }
 
 bool SetupPhysFS::configure(const std::string &organisation,
@@ -85,6 +93,59 @@ bool SetupPhysFS::configure(const std::string &organisation,
 	}
 	else
 		return false;
+}
+
+struct DirectoryToDelete
+{
+	std::string path;
+	char **file_list;
+	char **current_file;
+};
+
+void SetupPhysFS::clear_temp()
+{
+	DirectoryToDelete current_directory;
+	current_directory.file_list = PHYSFS_enumerateFiles(FusionEngine::s_TempPath.c_str());
+	current_directory.current_file = current_directory.file_list;
+
+	std::stack<DirectoryToDelete> directories;
+
+	while (true)
+	{
+		while (*current_directory.current_file != NULL)
+		{
+			std::string filename =
+				(current_directory.path.empty() ? FusionEngine::s_TempPath : current_directory.path) + *current_directory.current_file;
+			if (PHYSFS_isDirectory(filename.c_str()) == 1)
+			{
+				// Store the current position - will return here when the sub-dir is deleted
+				directories.push(current_directory);
+				// Switch to the directory that was just found
+				current_directory = DirectoryToDelete();
+				current_directory.path = filename + "/";
+				current_directory.file_list = PHYSFS_enumerateFiles(filename.c_str());
+				current_directory.current_file = current_directory.file_list;
+			}
+			else
+			{
+				PHYSFS_delete(filename.c_str());
+				++current_directory.current_file;
+			}
+		}
+
+		// All the files in the current directory have been deleted, so now the directory can be deleted
+		if (!current_directory.path.empty())
+			PHYSFS_delete(current_directory.path.c_str());
+
+		PHYSFS_freeList(current_directory.file_list);
+
+		if (directories.empty())
+			break;
+		// Jump back up to the parent directory
+		current_directory = directories.top();
+		++current_directory.current_file; // Go to the next file
+		directories.pop();
+	}
 }
 
 bool SetupPhysFS::add_subdirectory(const std::string &path,

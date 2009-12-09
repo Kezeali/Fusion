@@ -35,28 +35,20 @@ namespace FusionEngine
 	}
 
 	ResourceManager::ResourceManager()
-		: m_PhysFSConfigured(false),
-		m_StopEvent(false),
+		: m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false),
 		m_Clearing(false)
 	{
-		bool ok = SetupPhysFS::init(fe_narrow(CL_System::get_exe_path()).c_str());
-		FSN_ASSERT(ok);
-
 		Configure();
 	}
 
 	ResourceManager::ResourceManager(char *arg0)
-		: m_PhysFSConfigured(false),
-		m_StopEvent(false),
+		: m_StopEvent(false),
 		m_ToLoadEvent(false),
 		m_ToUnloadEvent(false),
 		m_Clearing(false)
 	{
-		int ok = SetupPhysFS::init(arg0);
-		FSN_ASSERT(ok);
-
 		Configure();
 	}
 
@@ -65,8 +57,6 @@ namespace FusionEngine
 		StopBackgroundLoadThread();
 
 		ClearAll();
-
-		SetupPhysFS::deinit();
 	}
 
 	// Look, nice formatting :D
@@ -84,12 +74,6 @@ namespace FusionEngine
 
 	void ResourceManager::Configure()
 	{
-		SetupPhysFS::configure("Pom", "Fusion", "7z");
-		if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
-			SendToConsole("Default resource path could not be located");
-
-		m_PhysFSConfigured = true;
-
 		AddDefaultLoaders();
 	}
 
@@ -170,7 +154,7 @@ namespace FusionEngine
 
 	std::string ResourceManager::FindFirst(const std::string &path, const std::string &expression, int depth, bool recursive, bool case_sensitive)
 	{
-		if (m_PhysFSConfigured)
+		if (SetupPhysFS::is_init())
 		{
 			// Compile the regular expression
 			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));
@@ -216,7 +200,7 @@ namespace FusionEngine
 	{
 		StringVector list;
 
-		if (m_PhysFSConfigured)
+		if (SetupPhysFS::is_init())
 		{
 			// Compile the regular expression
 			CL_RegExp regexp(expression.c_str(), (case_sensitive ? 0 : CL_RegExp::compile_caseless));

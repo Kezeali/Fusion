@@ -473,7 +473,7 @@ namespace FusionEngine
 	}
 
 #ifndef FSN_DONT_USE_SCRIPTING
-	class ScriptedConsoleListenerWrapper : public RefCounted, no_factory_noncopyable
+	class ScriptedConsoleListenerWrapper : public RefCounted, noncopyable
 	{
 	public:
 		ScriptedConsoleListenerWrapper(asIScriptObject *listener, Console *console);

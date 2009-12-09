@@ -31,6 +31,7 @@
 #include "FusionEntityFactory.h"
 #include "FusionScriptedEntity.h"
 #include "FusionScriptSound.h"
+#include "FusionPaths.h"
 #include "FusionXml.h"
 #include "FusionPhysFS.h"
 #include "FusionResourceManager.h"
@@ -189,6 +190,9 @@ namespace FusionEngine
 
 		m_TypeName = root->GetAttribute("typename");
 
+		// Create a sub-directory for this class in the 'temp' folder
+		PHYSFS_mkdir((s_TempPath + m_TypeName).c_str());
+
 		std::string domainString = root->GetAttribute("domain");
 		m_DefaultDomain = ToDomainIndex(domainString);
 
@@ -275,6 +279,47 @@ namespace FusionEngine
 		}
 	}
 
+	std::string getXmlRootTagForResourceType(ticpp::Element *inline_resource_element)
+	{
+		if (inline_resource_element->Value() == "Sprite")
+			return "sprite";
+		else if (inline_resource_element->Value() == "Polygon")
+			return "polygon";
+		else if (inline_resource_element->Value() == "Image")
+			return "sprite";
+		else
+			return fe_newlower( inline_resource_element->Value() );
+	}
+
+	void createInlineResourceFile_Xml(std::string &file_name, ticpp::Element *resource_element, const std::string &entity_typename)
+	{
+		if (resource_element->NoChildren())
+			return; // Throw?
+
+		file_name = s_TempPath + entity_typename + '/' + resource_element->GetAttribute("property") + ".xml";
+
+		ticpp::Document document;
+		ticpp::Declaration *decl = new ticpp::Declaration(XML_STANDARD, "", "");
+		document.LinkEndChild(decl);
+
+		// Check whether the given inline-resource-XML includes a root element (indicated by there only being one child)
+		if (*resource_element->FirstChild() != *resource_element->LastChild())
+		{
+			ticpp::Element *root = new ticpp::Element( getXmlRootTagForResourceType(resource_element) );
+			document.LinkEndChild(root);
+			root->InsertEndChild(*resource_element);
+		}
+		else
+			document.InsertEndChild(*resource_element->FirstChild());
+
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+		CL_IODevice ioDevice = vdir.open_file(fe_widen(file_name), CL_File::create_new, CL_File::access_write);
+		if (ioDevice.is_null())
+			return; // Throw?
+		ClanLibTiXmlFile xmlFile(ioDevice);
+		document.SaveFile(&xmlFile);
+	}
+
 	void EntityDefinition::parseElement_Streaming(ticpp::Element *element)
 	{
 		std::string attribute;
@@ -287,7 +332,18 @@ namespace FusionEngine
 
 			std::string propertyName = child->GetAttribute("property");
 			resource.SetPropertyName( propertyName );
-			resource.SetResourceName( ResolvePath(child->GetAttribute("resource")) );
+			std::string resourceFileName = child->GetAttribute("resource");
+			// Read inline-resource
+			if (resourceFileName.compare(0, 8, "\\inline:") == 0)
+			{
+				if (resourceFileName.compare(8, 3, "xml") == 0)
+					createInlineResourceFile_Xml(resourceFileName, child.Get(), m_TypeName);
+
+				resource.SetResourceName(resourceFileName);
+			}
+			// Read normal resource (file name)
+			else
+				resource.SetResourceName( ResolvePath(resourceFileName) );
 			int priority; child->GetAttributeOrDefault("priority", &priority, 0);
 			resource.SetPriority(priority);
 
@@ -689,14 +745,14 @@ namespace FusionEngine
 				it != end; ++it)
 			{
 				const FixtureDefinition &fixtureDef = *it;
-				body->CreateFixture(&fixtureDef.definition);
+				entity->CreateFixture(&fixtureDef.definition);
 			}
 			// ... And supplemental fixtures
 			for (SupplementaryDefinitionData::FixtureList::const_iterator it = sup_data.fixtures.begin(), end = sup_data.fixtures.end();
 				it != end; ++it)
 			{
 				const FixtureDefinition &fixtureDef = *it;
-				body->CreateFixture(&fixtureDef.definition);
+				entity->CreateFixture(&fixtureDef.definition);
 			}
 		}
 

@@ -842,6 +842,15 @@ void Document::SaveFile( const std::string& filename ) const
 	}
 }
 
+void Document::SaveFile( TiXmlFileInterface* file ) const
+{
+	if ( !m_tiXmlPointer->SaveFile( file ) )
+	{
+		TICPPTHROW( "Couldn't save " << m_tiXmlPointer->Value() );
+	}
+}
+
+
 void Document::Parse( const std::string& xml, bool throwIfParseError, TiXmlEncoding encoding )
 {
 	m_tiXmlPointer->Parse( xml.c_str(), 0, encoding );
