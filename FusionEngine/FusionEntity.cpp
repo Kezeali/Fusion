@@ -136,15 +136,25 @@ namespace FusionEngine
 	{
 	}
 
-	//void Renderable::_notifyAttached(const EntityPtr &entity)
-	//{
-	//	m_Entity = entity;
-	//}
+	void Renderable::SetTags(const TagStringSet &tags)
+	{
+		m_Tags = tags;
+	}
 
-	//EntityPtr Renderable::GetEntity() const
-	//{
-	//	return m_Entity;
-	//}
+	void Renderable::AddTag(const std::string &tag)
+	{
+		m_Tags.insert(tag);
+	}
+
+	void Renderable::RemoveTag(const std::string &tag)
+	{
+		m_Tags.erase(tag);
+	}
+
+	bool Renderable::HasTag(const std::string &tag) const
+	{
+		return m_Tags.find(tag) != m_Tags.end();
+	}
 
 	void Renderable::SetAlpha(float _alpha)
 	{
@@ -161,6 +171,14 @@ namespace FusionEngine
 	void Renderable::SetColour(unsigned int r, unsigned int g, unsigned int b)
 	{
 		m_Colour.set_color(r, g, b);
+
+		if (m_Sprite.IsLoaded())
+			m_Sprite->set_color(m_Colour);
+	}
+
+	void Renderable::SetColour(const CL_Color &colour)
+	{
+		m_Colour = colour;
 
 		if (m_Sprite.IsLoaded())
 			m_Sprite->set_color(m_Colour);
@@ -246,7 +264,7 @@ namespace FusionEngine
 		return m_AABB;
 	}
 
-	void Renderable::Update(float split/*, const Vector2 &entity_position, float entity_angle*/)
+	void Renderable::UpdateAABB()
 	{
 		if (m_Sprite.IsLoaded())
 		{
@@ -262,6 +280,11 @@ namespace FusionEngine
 			{
 				bbChanged = true;
 				m_PreviousWidth = m_Sprite->get_width();
+			}
+			if (fe_fequal(m_Sprite->get_angle().to_radians(), m_PreviousAngle.to_radians(), 0.001f))
+			{
+				bbChanged = true;
+				m_PreviousAngle = m_Sprite->get_angle();
 			}
 
 			if (bbChanged || m_PositionChanged)
@@ -322,6 +345,122 @@ namespace FusionEngine
 		{
 			m_Sprite->draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
 		}
+	}
+
+	void Renderable::StartAnimation()
+	{
+		if (m_Sprite.IsLoaded())
+		{
+			m_Sprite->restart();
+		}
+	}
+
+	void Renderable::StopAnimaion()
+	{
+		if (m_Sprite.IsLoaded())
+		{
+			m_Sprite->finish();
+		}
+	}
+
+	void Renderable::PauseAnimation()
+	{
+		m_Paused = true;
+	}
+
+	bool Renderable::IsPaused() const
+	{
+		return m_Paused;
+	}
+
+	unsigned int Renderable_GetRed(Renderable *obj)
+	{
+		return obj->GetColour().get_red();
+	}
+	unsigned int Renderable_GetGreen(Renderable *obj)
+	{
+		return obj->GetColour().get_green();
+	}
+	unsigned int Renderable_GetBlue(Renderable *obj)
+	{
+		return obj->GetColour().get_blue();
+	}
+
+	void Renderable::Register(asIScriptEngine *engine)
+	{
+		int r;
+
+		RefCounted::RegisterType<Renderable>(engine, "Renderable");
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"bool hasTag(const string &in) const",
+			asMETHOD(Renderable, HasTag), asCALL_THISCALL);
+
+		// Alpha
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setAlpha(float)",
+			asMETHOD(Renderable, SetAlpha), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"float getAlpha() const",
+			asMETHOD(Renderable, GetAlpha), asCALL_THISCALL);
+		// RGB
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setColour(uint, uint, uint)",
+			asMETHODPR(Renderable, SetColour, (unsigned int, unsigned int, unsigned int), void), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"uint getRed()",
+			asFUNCTION(Renderable_GetRed), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("Renderable",
+			"uint getGreen()",
+			asFUNCTION(Renderable_GetGreen), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectMethod("Renderable",
+			"uint getBlue()",
+			asFUNCTION(Renderable_GetBlue), asCALL_CDECL_OBJLAST);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setPosition(float, float)",
+			asMETHODPR(Renderable, SetPosition, (float, float), void), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setPosition(const Vector &in)",
+			asMETHODPR(Renderable, SetPosition, (const Vector2&), void), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"const Vector &getPosition() const",
+			asMETHOD(Renderable, GetPosition), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setAngle(float)",
+			asMETHOD(Renderable, SetAngle), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"float getAngle() const",
+			asMETHOD(Renderable, SetAngle), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setDepth(int)",
+			asMETHOD(Renderable, SetDepth), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"int getDepth() const",
+			asMETHOD(Renderable, GetDepth), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"void setEnabled(bool)",
+			asMETHOD(Renderable, SetEnabled), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"bool isEnabled() const",
+			asMETHOD(Renderable, IsEnabled), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"void startAnim(bool)",
+			asMETHOD(Renderable, StartAnimation), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"bool stopAnim() const",
+			asMETHOD(Renderable, StopAnimaion), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"bool pauseAnim() const",
+			asMETHOD(Renderable, PauseAnimation), asCALL_THISCALL);
+		r = engine->RegisterObjectMethod("Renderable",
+			"bool isPaused() const",
+			asMETHOD(Renderable, IsPaused), asCALL_THISCALL);
 	}
 
 	Entity::Entity()

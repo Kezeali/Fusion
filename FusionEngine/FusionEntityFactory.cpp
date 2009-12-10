@@ -344,6 +344,9 @@ namespace FusionEngine
 			// Read normal resource (file name)
 			else
 				resource.SetResourceName( ResolvePath(resourceFileName) );
+			// Tags
+			resource.SetTags(child->GetAttribute("tags"));
+			// Priority - defaults to zero
 			int priority; child->GetAttributeOrDefault("priority", &priority, 0);
 			resource.SetPriority(priority);
 
@@ -773,6 +776,7 @@ namespace FusionEngine
 			if (desc.GetType() == "Sprite")
 			{
 				RenderablePtr renderable( new Renderable(resMan, fe_widen(resourceName), desc.GetPriority()) );
+				renderable->SetTags(desc.GetTags());
 
 				entity->AddRenderable(renderable);
 

@@ -103,8 +103,7 @@ public:
 			Console::Register(scriptingManager);
 			RegisterScriptedConsoleCommand(asEngine);
 			GUI::Register(scriptingManager);
-			//Renderable::Register(asEngine);
-			RefCounted::RegisterType<Renderable>(asEngine, "Renderable");
+			Renderable::Register(asEngine);
 			SoundOutput::Register(asEngine);
 			SoundSession::Register(asEngine);
 			SoundSample::Register(asEngine);

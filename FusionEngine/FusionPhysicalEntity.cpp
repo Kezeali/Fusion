@@ -175,11 +175,34 @@ namespace FusionEngine
 		m_Body = body;
 	}
 
+	b2Fixture *PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
+	{
+		b2Fixture *fixture = m_Body->CreateFixture(fixture_definition);
+		if (user_data)
+		{
+			m_FixtureUserData.push_back(user_data);
+			fixture->SetUserData((void*)user_data.get());
+		}
+		return fixture;
+	}
 
-	//const b2BodyDef &PhysicalEntity::GetBodyDef() const
-	//{
-	//	return m_BodyDef;
-	//}
+	void PhysicalEntity::DestroyFixture(b2Fixture *fixture)
+	{
+		// Remove the reference to the user-data ptr
+		if (fixture->GetUserData())
+		{
+			for (FixtureUserDataArray::iterator it = m_FixtureUserData.begin(), end = m_FixtureUserData.end(); it != end; ++it)
+			{
+				if (it->get() == fixture->GetUserData())
+				{
+					m_FixtureUserData.erase(it);
+					break;
+				}
+			}
+		}
+		m_Body->DestroyFixture(fixture);
+	}
+
 
 	void PhysicalEntity::SetBodyDestroyer(const BodyDestroyerPtr &destroyer)
 	{

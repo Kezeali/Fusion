@@ -50,7 +50,7 @@ namespace FusionEngine
 {
 
 	//! Wrapper for boost#signals2#connection AND scripted slot caller
-	class ScriptedSlotWrapper : public RefCounted, no_factory_noncopyable
+	class ScriptedSlotWrapper : public RefCounted, noncopyable
 	{
 	public:
 		bsig2::connection m_Connection;

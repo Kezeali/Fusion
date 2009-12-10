@@ -99,6 +99,11 @@ namespace FusionEngine
 		virtual ~Editor();
 
 	public:
+		// TODO: use these typedefs
+		typedef GameMapLoader::GameMapEntity MapEntity;
+		typedef GameMapLoader::GameMapEntityPtr MapEntityPtr;
+		typedef GameMapLoader::GameMapEntityArray MapEntityArray;
+
 		const std::string &GetName() const;
 
 		//! System Init implementation
@@ -122,12 +127,12 @@ namespace FusionEngine
 		void ProcessEvent(Rocket::Core::Event& ev);
 
 		void DisplayError(const std::string &title, const std::string &message);
-		void ShowContextMenu(const Vector2i &position, const EntityArray &entities);
+		void ShowContextMenu(const Vector2i &position, const MapEntityArray &entities);
 		void ShowProperties(const EntityPtr &entity);
-		void ShowProperties(const GameMapLoader::GameMapEntity &entity);
+		void ShowProperties(const MapEntityPtr &entity);
 
 		void CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
-		void GetEntitiesAt(EntityArray &out, const Vector2 &position);
+		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
 
 		//! Returns entity-tyes beginning with...
 		void LookUpEntityType(StringVector &results, const std::string &search_term);
@@ -217,10 +222,10 @@ namespace FusionEngine
 
 		IDStack m_IdStack;
 
-		void showProperties(const MenuItemEvent &ev, const EntityPtr &entity);
+		void showProperties(const MenuItemEvent &ev, const MapEntityPtr &entity);
 
 		//! Lists the given entity in the relevant containers
-		void addMapEntity(const GameMapLoader::GameMapEntity &entity);
+		void addMapEntity(const GameMapLoader::GameMapEntityPtr &entity);
 
 		//! Serialises and saves the state data of all map entities to the given file
 		void serialiseEntityData(CL_IODevice file);
@@ -239,8 +244,10 @@ namespace FusionEngine
 		//! Reads the given <entities> element from an XML map doc.
 		void parse_Entities(TiXmlElement *element, unsigned int entity_count, EditorEntityDeserialiser &translator);
 
-		// Adds all entities to the EntityManager and deserialises their state data
+		// Deserialises state data
 		void initialiseEntities(const SerialisedDataArray &entity_data, const EditorEntityDeserialiser &translator);
+		// To reduce code repitition
+		inline void initialiseEntities(const GameMapLoader::GameMapEntityArray::iterator &first, const GameMapLoader::GameMapEntityArray::iterator &last, const Editor::SerialisedDataArray &data, const Editor::EditorEntityDeserialiser &deserialiser_impl);
 
 	};
 

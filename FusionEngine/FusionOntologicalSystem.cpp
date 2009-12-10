@@ -260,6 +260,9 @@ namespace FusionEngine
 
 			delete m_PhysWorld;
 
+			this->PushMessage(new SystemMessage(m_Editor, false)); // Remove the editor system
+			m_Editor.reset();
+
 			m_EntityManager = NULL;
 
 			m_PhysWorld = NULL;

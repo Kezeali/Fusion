@@ -43,6 +43,8 @@
 #include "FusionEntityDeserialiser.h"
 #include "FusionBoostSignals2.h"
 
+#include "FusionRefCounted.h"
+
 #include <boost/bimap.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 #include <boost/bimap/vector_of.hpp>
@@ -67,7 +69,7 @@ namespace FusionEngine
 
 		typedef std::tr1::unordered_map<std::string, Archetype> ArchetypeMap;
 
-		struct GameMapEntity
+		struct GameMapEntity : public RefCounted
 		{
 			EntityPtr entity;
 			bool hasName; // true if the entity has a unique name (other wise it will be called 'default')
@@ -77,9 +79,10 @@ namespace FusionEngine
 
 			unsigned int dataIndex; // used by the editor when reading data files (may be removed)
 
-			GameMapEntity() : hasName(true), stateMask(0) {}
+			GameMapEntity() : RefCounted(0), hasName(true), stateMask(0) {}
 		};
-		typedef std::vector<GameMapEntity> GameMapEntityArray;
+		typedef boost::intrusive_ptr<GameMapEntity> GameMapEntityPtr;
+		typedef std::vector<GameMapEntityPtr> GameMapEntityArray;
 
 		enum TypeFlags
 		{

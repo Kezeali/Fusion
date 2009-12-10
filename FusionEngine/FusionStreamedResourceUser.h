@@ -36,7 +36,7 @@
 namespace FusionEngine
 {
 
-	class StreamedResourceUser : public RefCounted, no_factory_noncopyable
+	class StreamedResourceUser : public RefCounted, noncopyable
 	{
 	public:
 		StreamedResourceUser();

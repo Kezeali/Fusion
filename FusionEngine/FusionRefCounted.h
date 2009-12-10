@@ -35,7 +35,6 @@
 #include "FusionCommon.h"
 
 #include "FusionScriptingEngine.h"
-//#include <angelscirpt.h>
 #include <boost/intrusive_ptr.hpp>
 #include <boost/utility.hpp>
 #include <type_traits>
@@ -45,24 +44,22 @@ namespace FusionEngine
 
 	//! Normal ref-counted type
 	struct normal_refcounted {};
-	//! Ref-counted type with no constructor
-	struct no_factory {};
-	//! Ref-counted type that can't be copied by value
+	//! Type that can't be copied by value
 	struct noncopyable : public boost::noncopyable {};
-	//! \see no_factory | noncopyable
-	struct no_factory_noncopyable : no_factory, noncopyable {};
 
 	//! Base class for AngelScript compatible reference counted type
 	class RefCounted
 	{
 	protected:
-		int m_RefCount;
+		volatile int m_RefCount;
 
 	public:
 		RefCounted()
 			: m_RefCount(1)
-		{
-		}
+		{}
+		RefCounted(int initial_reference_count)
+			: m_RefCount(initial_reference_count)
+		{}
 		virtual ~RefCounted() {}
 
 		//! Increases reference count
@@ -83,14 +80,6 @@ namespace FusionEngine
 		}
 
 	public:
-		//! Factory utility
-		//template <class T>
-		//static T* Factory()
-		//{
-		//	T* obj = new T();
-		//	return obj;
-		//}
-
 		//! Assign utility
 		template <class T>
 		static T& Assign(T* lhs, const T& rhs)
@@ -112,21 +101,11 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void addref()", asMETHOD(RefCounted, addRef), asCALL_THISCALL);
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
-			// Register the default factory behaviour if the type allows it
-			//RegisterFactory_Default<T>(engine, name, std::tr1::is_base_of<no_factory, T>());
 			// Register the assignment operator if the type is copyable
 			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
 		}
 
 	protected:
-		//template <class T>
-		//static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
-		//{
-		//	int r;
-
-		//	r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_FACTORY, (name + "@ factory()").c_str(), asFUNCTION(RefCounted::Factory<T>), asCALL_CDECL);
-		//}
-
 		template <class T>
 		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
 		{
@@ -135,9 +114,6 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
 		}
 
-		//template <class T>
-		//static void RegisterFactory_Default(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
-		//{}
 		template <class T>
 		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
 		{}

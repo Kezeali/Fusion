@@ -104,7 +104,9 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
 
+	typedef std::tr1::unordered_set<std::string> TagStringSet;
 	
+	//! A thing that can be drawn by the renderer
 	class Renderable : public StreamedResourceUser
 	{
 	public:
@@ -112,15 +114,17 @@ namespace FusionEngine
 		Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority);
 		virtual ~Renderable();
 
-		//void _notifyAttached(const EntityPtr &entity);
-
-		//EntityPtr GetEntity() const;
+		void SetTags(const TagStringSet &tags);
+		void AddTag(const std::string &tag);
+		void RemoveTag(const std::string &tag);
+		bool HasTag(const std::string &tag) const;
 
 		void SetAlpha(float _alpha);
 		float GetAlpha() const;
 
 		void SetColour(unsigned int r, unsigned int g, unsigned int b);
 
+		void SetColour(const CL_Color & colour);
 		const CL_Color &GetColour() const;
 
 		void SetPosition(float x, float y);
@@ -139,7 +143,7 @@ namespace FusionEngine
 
 		const CL_Rectf &GetAABB() const;
 
-		void Update(float split/*, const Vector2 &position = Vector2(), float angle = 0.f*/);
+		void UpdateAABB();
 
 		//void SetSpriteResource(ResourceManager *res_man, const std::string &path);
 		ResourcePointer<CL_Sprite> &GetSpriteResource();
@@ -152,10 +156,17 @@ namespace FusionEngine
 		//! Draw the renderable at a position other than that of it's owning Entity
 		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
 
-	protected:
-		//EntityPtr m_Entity;
+		void StartAnimation();
+		void StopAnimaion();
+		void PauseAnimation();
 
+		bool IsPaused() const;
+
+		static void Register(asIScriptEngine *engine);
+
+	protected:
 		bool m_Enabled;
+		bool m_Paused;
 
 		Vector2 m_Position;
 		float m_Angle;
@@ -174,6 +185,9 @@ namespace FusionEngine
 		ResourcePointer<CL_Sprite> m_Sprite;
 
 		int m_PreviousWidth, m_PreviousHeight;
+		CL_Angle m_PreviousAngle;
+
+		TagStringSet m_Tags;
 	};
 
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;

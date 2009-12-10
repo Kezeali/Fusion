@@ -51,6 +51,48 @@
 namespace FusionEngine
 {
 
+	struct EditorMapEntity : public GameMapLoader::GameMapEntity
+	{
+		b2Fixture *fixture;
+
+		EditorMapEntity()
+			: fixture(NULL)
+		{
+		}
+
+		void CreateEditorFixture();
+	};
+
+	typedef boost::intrusive_ptr<EditorMapEntity>  EditorMapEntityPtr;
+
+	struct MapEntityFixtureUserData : public IFixtureUserData
+	{
+		GameMapLoader::GameMapEntity *map_entity;
+
+		MapEntityFixtureUserData(GameMapLoader::GameMapEntity *_map_entity)
+			: map_entity(_map_entity)
+		{
+		}
+	};
+
+	void EditorMapEntity::CreateEditorFixture()
+	{
+		if (fixture != NULL)
+			return;
+
+		PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( this->entity.get() );
+		if (physicalEntity && physicalEntity->IsPhysicsEnabled())
+		{
+			b2FixtureDef iconFixtureDef;
+			b2PolygonShape *shape = new b2PolygonShape();
+			shape->SetAsBox(32.f*s_SimUnitsPerGameUnit, 32.f*s_SimUnitsPerGameUnit);
+			iconFixtureDef.shape = shape;
+
+			FixtureUserDataPtr user_data(new MapEntityFixtureUserData(this));
+			fixture = physicalEntity->CreateFixture(&iconFixtureDef, user_data);
+		}
+	}
+
 	ObjectID IDStack::getFreeID()
 	{
 		if (m_UnusedIds.empty())
@@ -227,9 +269,9 @@ namespace FusionEngine
 			{
 				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
 				if (result.second)
-					renderable->GetSpriteResource()->update(split * 1000);
+					renderable->GetSpriteResource()->update((int)(split * 1000));
 			}
-			renderable->Update(split);
+			renderable->UpdateAABB();
 		}
 	}
 
@@ -373,7 +415,7 @@ namespace FusionEngine
 					Vector2 worldPosition(ev.PointerPosition);
 					worldPosition.x += area.left; worldPosition.y += area.top;
 
-					EntityArray entitiesUnderMouse;
+					GameMapLoader::GameMapEntityArray entitiesUnderMouse;
 					GetEntitiesAt(entitiesUnderMouse, worldPosition);
 					ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
 				}
@@ -390,7 +432,7 @@ namespace FusionEngine
 		SendToConsole(title + " error:" + message);
 	}
 
-	void Editor::ShowContextMenu(const Vector2i &position, const EntityArray &entities)
+	void Editor::ShowContextMenu(const Vector2i &position, const GameMapLoader::GameMapEntityArray &entities)
 	{
 		for (MenuItemConnections::iterator it = m_PropertiesMenuConnections.begin(), end = m_PropertiesMenuConnections.end(); it != end; ++it)
 		{
@@ -399,12 +441,13 @@ namespace FusionEngine
 		m_PropertiesMenuConnections.clear();
 		m_PropertiesMenu->RemoveAllChildren();
 
-		for (EntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			const EntityPtr &entity = *it;
-			MenuItem *item = new MenuItem(entity->GetType() + ": " + entity->GetName(), entity->GetName());
+			const MapEntityPtr &mapEntity = *it;
+			const EntityPtr &entity = mapEntity->entity;
+			MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
 			m_PropertiesMenu->AddChild(item);
-			boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, entity) );
+			boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity) );
 			m_PropertiesMenuConnections.push_back(signalConnection);
 			item->release();
 		}
@@ -412,7 +455,7 @@ namespace FusionEngine
 		m_RightClickMenu->Show(position.x, position.y);
 	}
 
-	void Editor::showProperties(const MenuItemEvent &ev, const EntityPtr &entity)
+	void Editor::showProperties(const MenuItemEvent &ev, const MapEntityPtr &entity)
 	{
 		ShowProperties(entity);
 		m_RightClickMenu->Hide();
@@ -422,8 +465,8 @@ namespace FusionEngine
 	{
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
-			if (gmEntity.entity == entity)
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			if (gmEntity->entity == entity)
 			{
 				ShowProperties(gmEntity);
 				return;
@@ -431,8 +474,8 @@ namespace FusionEngine
 		}
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
-			if (gmEntity.entity == entity)
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			if (gmEntity->entity == entity)
 			{
 				ShowProperties(gmEntity);
 				return;
@@ -440,42 +483,47 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::ShowProperties(const GameMapLoader::GameMapEntity &entity)
+	void Editor::ShowProperties(const GameMapLoader::GameMapEntityPtr &entity)
 	{
+		MapEntityArray blah;
+		blah.push_back(entity);
+		ShowContextMenu(entity->entity->GetPosition(), blah);
 	}
 
 	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
 	{
-		GameMapLoader::GameMapEntity gmEntity;
-		gmEntity.entity = m_EntityFactory->InstanceEntity(type, name);
-		if (!gmEntity.entity)
+		EditorMapEntityPtr gmEntity(new EditorMapEntity());
+		gmEntity->entity = m_EntityFactory->InstanceEntity(type, name);
+		if (!gmEntity->entity)
 		{
 			SendToConsole("Failed to create entity of type " + type);
 			return;
 		}
 
+		gmEntity->CreateEditorFixture();
+
 		if (!name.empty())
 		{
-			gmEntity.entity->_setName(name);
-			gmEntity.hasName = true;
+			gmEntity->entity->_setName(name);
+			gmEntity->hasName = true;
 		}
 		else
-			gmEntity.hasName = false;
+			gmEntity->hasName = false;
 
-		gmEntity.entity->SetPosition(Vector2(x, y));
+		gmEntity->entity->SetPosition(Vector2(x, y));
 
 		if (!pseudo)
-			gmEntity.entity->SetID(m_IdStack.getFreeID());
+			gmEntity->entity->SetID(m_IdStack.getFreeID());
 		addMapEntity(gmEntity);
 
 		// Record type usage
 		m_UsedTypes.insert(type);
 	}
 
-	class SpatialQueryCallback : public b2QueryCallback
+	class MapEntityQuery : public b2QueryCallback
 	{
 	public:
-		SpatialQueryCallback(EntityArray *output_array, const b2Vec2& point)
+		MapEntityQuery(GameMapLoader::GameMapEntityArray *output_array, const b2Vec2& point)
 		{
 			m_Point = point;
 			m_Entities = output_array;
@@ -488,9 +536,12 @@ namespace FusionEngine
 				bool inside = fixture->TestPoint(m_Point);
 				if (inside)
 				{
-					Entity *entity = static_cast<Entity*>( fixture->GetBody()->GetUserData() );
-					if (entity != NULL)
-						m_Entities->push_back(entity);
+					IFixtureUserData *userData = static_cast<IFixtureUserData*>( fixture->GetUserData() );
+					MapEntityFixtureUserData *mapUserData = dynamic_cast<MapEntityFixtureUserData*>(userData);
+					if (mapUserData != NULL)
+					{
+						m_Entities->push_back(mapUserData->map_entity);
+					}
 				}
 			}
 
@@ -499,10 +550,10 @@ namespace FusionEngine
 		}
 
 		b2Vec2 m_Point;
-		EntityArray* m_Entities;
+		GameMapLoader::GameMapEntityArray* m_Entities;
 	};
 
-	void Editor::GetEntitiesAt(EntityArray &out, const Vector2 &position)
+	void Editor::GetEntitiesAt(GameMapLoader::GameMapEntityArray &out, const Vector2 &position)
 	{
 		b2Vec2 p(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit);
 
@@ -514,7 +565,7 @@ namespace FusionEngine
 		aabb.upperBound = p + d;
 
 		// Query the world for overlapping shapes
-		SpatialQueryCallback callback(&out, p);
+		MapEntityQuery callback(&out, p);
 
 		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
 	}
@@ -712,13 +763,13 @@ namespace FusionEngine
 			asMETHODPR(Editor, Compile, (const std::string &), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void Editor::addMapEntity(const GameMapLoader::GameMapEntity &gm_entity)
+	void Editor::addMapEntity(const GameMapLoader::GameMapEntityPtr &gm_entity)
 	{
-		if (gm_entity.entity->IsPseudoEntity())
+		if (gm_entity->entity->IsPseudoEntity())
 			m_PseudoEntities.push_back(gm_entity);
 		else
 			m_Entities.push_back(gm_entity);
-		m_PlainEntityArray.push_back(gm_entity.entity);
+		m_PlainEntityArray.push_back(gm_entity->entity);
 	}
 
 	void Editor::serialiseEntityData(CL_IODevice file)
@@ -745,11 +796,11 @@ namespace FusionEngine
 		SerialisedData state;
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
 			//if (gmEntity.archetypeId.empty())
 			{
-				state.mask = gmEntity.stateMask;
-				gmEntity.entity->SerialiseState(state, true);
+				state.mask = gmEntity->stateMask;
+				gmEntity->entity->SerialiseState(state, true);
 
 				file.write_uint32(state.mask);
 				file.write_string_a(state.data.c_str());
@@ -757,11 +808,11 @@ namespace FusionEngine
 		}
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
 			//if (gmEntity.archetypeId.empty())
 			{
-				state.mask = gmEntity.stateMask;
-				gmEntity.entity->SerialiseState(state, true);
+				state.mask = gmEntity->stateMask;
+				gmEntity->entity->SerialiseState(state, true);
 
 				file.write_uint32(state.mask);
 				file.write_string_a(state.data.c_str());
@@ -829,41 +880,41 @@ namespace FusionEngine
 		unsigned int dataIndex = 0;
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
 
 			TiXmlElement *entityElm = new TiXmlElement("entity");
-			if (gmEntity.hasName)
-				entityElm->SetAttribute("name", gmEntity.entity->GetName());
-			entityElm->SetAttribute("type", gmEntity.entity->GetType());
-			if (!gmEntity.archetypeId.empty())
-				entityElm->SetAttribute("archetype", gmEntity.archetypeId);
+			if (gmEntity->hasName)
+				entityElm->SetAttribute("name", gmEntity->entity->GetName());
+			entityElm->SetAttribute("type", gmEntity->entity->GetType());
+			if (!gmEntity->archetypeId.empty())
+				entityElm->SetAttribute("archetype", gmEntity->archetypeId);
 			entityElm->SetAttribute("data_index", dataIndex++);
 			entities->LinkEndChild(entityElm);
 
 			TiXmlElement *transform = new TiXmlElement("location");
-			std::ostringstream positionStr; positionStr << gmEntity.entity->GetPosition().x << "," << gmEntity.entity->GetPosition().y;
+			std::ostringstream positionStr; positionStr << gmEntity->entity->GetPosition().x << "," << gmEntity->entity->GetPosition().y;
 			transform->SetAttribute("position", positionStr.str());
-			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity.entity->GetAngle()));
+			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity->entity->GetAngle()));
 			entityElm->LinkEndChild(transform);
 		}
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
 
 			TiXmlElement *entityElm = new TiXmlElement("entity");
-			entityElm->SetAttribute("id", gmEntity.entity->GetID());
-			if (gmEntity.hasName)
-				entityElm->SetAttribute("name", gmEntity.entity->GetName());
-			entityElm->SetAttribute("type", gmEntity.entity->GetType());
-			if (!gmEntity.archetypeId.empty())
-				entityElm->SetAttribute("archetype", gmEntity.archetypeId);
+			entityElm->SetAttribute("id", gmEntity->entity->GetID());
+			if (gmEntity->hasName)
+				entityElm->SetAttribute("name", gmEntity->entity->GetName());
+			entityElm->SetAttribute("type", gmEntity->entity->GetType());
+			if (!gmEntity->archetypeId.empty())
+				entityElm->SetAttribute("archetype", gmEntity->archetypeId);
 			entityElm->SetAttribute("data_index", dataIndex++);
 			entities->LinkEndChild(entityElm);
 
 			TiXmlElement *transform = new TiXmlElement("location");
-			std::ostringstream positionStr; positionStr << gmEntity.entity->GetPosition().x << "," << gmEntity.entity->GetPosition().y;
+			std::ostringstream positionStr; positionStr << gmEntity->entity->GetPosition().x << "," << gmEntity->entity->GetPosition().y;
 			transform->SetAttribute("position", positionStr.str());
-			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity.entity->GetAngle()));
+			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity->entity->GetAngle()));
 			entityElm->LinkEndChild(transform);
 		}
 	}
@@ -998,25 +1049,28 @@ namespace FusionEngine
 				continue;
 			}
 
-			GameMapLoader::GameMapEntity gmEntity;
+			EditorMapEntityPtr gmEntity(new EditorMapEntity());
 
-			gmEntity.dataIndex = dataIndex;
+			gmEntity->dataIndex = dataIndex;
 
 			if (name.empty())
 			{
 				name = "default";
-				gmEntity.hasName = false;
+				gmEntity->hasName = false;
 			}
 
-			gmEntity.entity = factory->InstanceEntity(type, name);
-			if (gmEntity.entity)
+			gmEntity->entity = factory->InstanceEntity(type, name);
+			if (gmEntity->entity)
 			{
 				m_UsedTypes.insert(type);
 
 				// Check for archetype
-				getAttribute(gmEntity.archetypeId, child, "archetype", false);
+				getAttribute(gmEntity->archetypeId, child, "archetype", false);
 
-				EntityPtr &entity = gmEntity.entity;
+				// Create the fixture that allows the user to click on the entity
+				gmEntity->CreateEditorFixture();
+
+				EntityPtr &entity = gmEntity->entity;
 
 				TiXmlElement *location = child->FirstChildElement();
 				if (location->ValueStr() == "location")
@@ -1044,23 +1098,32 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::initialiseEntities(const Editor::SerialisedDataArray &entity_data, const EditorEntityDeserialiser &deserialiser_impl)
+	inline void Editor::initialiseEntities(
+		const GameMapLoader::GameMapEntityArray::iterator &first, const GameMapLoader::GameMapEntityArray::iterator &last,
+		const Editor::SerialisedDataArray &entity_data,
+		const Editor::EditorEntityDeserialiser &deserialiser_impl)
 	{
 		EntityDeserialiser entityDeserialiser(&deserialiser_impl);
 
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (GameMapLoader::GameMapEntityArray::iterator it = first; it != last; ++it)
 		{
-			const GameMapLoader::GameMapEntity &gmEntity = *it;
+			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
 			// Initialise with archetype data
-			if (!gmEntity.archetypeId.empty())
+			if (!gmEntity->archetypeId.empty())
 			{
-				GameMapLoader::ArchetypeMap::iterator _where = m_Archetypes.find(gmEntity.archetypeId);
-				if (_where != m_Archetypes.end() && _where->second.entityTypename == gmEntity.entity->GetType())
-					gmEntity.entity->DeserialiseState(_where->second.packet, true, entityDeserialiser);
+				GameMapLoader::ArchetypeMap::const_iterator _where = m_Archetypes.find(gmEntity->archetypeId);
+				if (_where != m_Archetypes.end() && _where->second.entityTypename == gmEntity->entity->GetType())
+					gmEntity->entity->DeserialiseState(_where->second.packet, true, entityDeserialiser);
 			}
 			// Init. with specific entity data
-			gmEntity.entity->DeserialiseState(entity_data[gmEntity.dataIndex], true, entityDeserialiser);
+			gmEntity->entity->DeserialiseState(entity_data[gmEntity->dataIndex], true, entityDeserialiser);
 		}
+	}
+
+	void Editor::initialiseEntities(const Editor::SerialisedDataArray &entity_data, const EditorEntityDeserialiser &deserialiser_impl)
+	{
+		initialiseEntities(m_PseudoEntities.begin(), m_PseudoEntities.end(), entity_data, deserialiser_impl);
+		initialiseEntities(m_Entities.begin(), m_Entities.end(), entity_data, deserialiser_impl);
 	}
 
 }

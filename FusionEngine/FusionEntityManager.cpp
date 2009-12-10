@@ -814,23 +814,19 @@ namespace FusionEngine
 	}
 
 	typedef std::set<uintptr_t> ptr_set;
-
 	void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
 	{
-		//const Vector2 &position = entity->GetPosition();
-		//float angle = entity->GetAngle();
-
 		RenderableArray &renderables = entity->GetRenderables();
 		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
 		{
 			RenderablePtr &renderable = *it;
-			if (renderable->GetSpriteResource().IsLoaded())
+			if (!renderable->IsPaused() && renderable->GetSpriteResource().IsLoaded())
 			{
 				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
 				if (result.second)
 					renderable->GetSpriteResource()->update(split * 1000.0);
 			}
-			renderable->Update(split/*, position, angle*/);
+			renderable->UpdateAABB();
 		}
 	}
 

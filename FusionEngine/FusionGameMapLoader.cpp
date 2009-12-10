@@ -461,13 +461,14 @@ namespace FusionEngine
 		device.write_uint32(pseudo_entities.size());
 		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
-			const EntityPtr &entity = it->entity;
+			const GameMapEntityPtr &mapEntity = *it;
+			const EntityPtr &entity = mapEntity->entity;
 			
 			// Write the type index (refers to used-type-index at the top of the file)
 			device.write_uint32(usedTypeIndexes[entity->GetType()]);
 
 			// Write the Entity name
-			if (it->hasName)
+			if (mapEntity->hasName)
 				device.write_string_a(entity->GetName().c_str());
 			else
 				device.write_string_a(CL_String8());
@@ -477,7 +478,8 @@ namespace FusionEngine
 		SerialisedData state;
 		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
-			const EntityPtr &entity = it->entity;
+			const GameMapEntityPtr &mapEntity = *it;
+			const EntityPtr &entity = mapEntity->entity;
 
 			// Write basic Entity properties (position, angle)
 			const Vector2 &position = entity->GetPosition();
@@ -487,17 +489,17 @@ namespace FusionEngine
 			device.write_float(entity->GetAngle());
 
 			// Write the type-flags for the entity data
-			if (!it->archetypeId.empty())
+			if (!mapEntity->archetypeId.empty())
 			{
 				device.write_uint8(ArchetypeFlag);
 				// Write the index of the archetype used
-				device.write_uint32(usedArchetypeIndexes[it->archetypeId]);
+				device.write_uint32(usedArchetypeIndexes[mapEntity->archetypeId]);
 			}
 			else
 				device.write_uint8(NoTypeFlags);
 
 			// Write the entity state
-			state.mask = it->stateMask;
+			state.mask = mapEntity->stateMask;
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
@@ -508,13 +510,14 @@ namespace FusionEngine
 		device.write_uint32(entities.size());
 		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			const EntityPtr &entity = it->entity;
+			const GameMapEntityPtr &mapEntity = *it;
+			const EntityPtr &entity = mapEntity->entity;
 			
 			// Write the type index (refers to used-type-index at the top of the file)
 			device.write_uint32(usedTypeIndexes[entity->GetType()]);
 
 			// Write the Entity name
-			if (it->hasName)
+			if (mapEntity->hasName)
 				device.write_string_a(entity->GetName().c_str());
 			else
 				device.write_string_a(CL_String8());
@@ -526,7 +529,8 @@ namespace FusionEngine
 		// Write Entity state data
 		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			const EntityPtr &entity = it->entity;
+			const GameMapEntityPtr &mapEntity = *it;
+			const EntityPtr &entity = mapEntity->entity;
 
 			// Write basic Entity properties (position, angle)
 			const Vector2 &position = entity->GetPosition();
@@ -536,17 +540,17 @@ namespace FusionEngine
 			device.write_float(entity->GetAngle());
 
 			// Write the type-flags for the entity data
-			if (!it->archetypeId.empty())
+			if (!mapEntity->archetypeId.empty())
 			{
 				device.write_uint8(ArchetypeFlag);
 				// Write the index of the archetype used
-				device.write_uint32(usedArchetypeIndexes[it->archetypeId]);
+				device.write_uint32(usedArchetypeIndexes[mapEntity->archetypeId]);
 			}
 			else
 				device.write_uint8(NoTypeFlags);
 
 			// Write the entity state
-			state.mask = it->stateMask;
+			state.mask = mapEntity->stateMask;
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);

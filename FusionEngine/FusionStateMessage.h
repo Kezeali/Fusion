@@ -103,9 +103,9 @@ namespace FusionEngine
 		}
 
 		//! Constructor +system
-		SystemMessage(const SystemPtr &system_to_add)
-			: m_Type(SystemMessage::ADDSYSTEM),
-			m_System(system_to_add),
+		SystemMessage(const SystemPtr &system, bool add_system = true)
+			: m_Type(add_system ? SystemMessage::ADDSYSTEM : SystemMessage::REMOVESYSTEM),
+			m_System(system),
 			m_IncludeSender(false)
 		{}
 

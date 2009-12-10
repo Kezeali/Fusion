@@ -49,12 +49,15 @@ namespace FusionEngine
 		void SetPropertyName(const std::string &name);
 		virtual void SetResourceName(const std::string &name);
 		void SetPriority(int priority);
+		void SetTags(const std::string &tags);
 
 		void SetPropertyIndex(int index);
 
 		const std::string &GetPropertyName() const;
 		const std::string &GetResourceName() const;
 		int GetPriority() const;
+		const TagStringSet &GetTags() const;
+		bool HasTag(const std::string &tag) const;
 
 		int GetPropertyIndex() const;
 
@@ -63,6 +66,7 @@ namespace FusionEngine
 		std::string m_Type; // Image, Sound, SoundStream
 		std::string m_ResourceName;
 		int m_Priority;
+		TagStringSet m_Tags;
 
 		int m_ScriptPropertyIndex;
 	};

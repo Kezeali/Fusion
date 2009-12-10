@@ -46,6 +46,47 @@ namespace FusionEngine
 		m_Priority = priority;
 	}
 
+	void ResourceDescription::SetTags(const std::string &tags)
+	{
+		typedef std::string::size_type str_size_t;
+
+		if (tags.empty())
+			return;
+
+		str_size_t
+			tokenBegin = 0,
+			tokenEnd = tags.find(','),
+			contentEnd = 0,
+			contentLength = 0;
+		std::string token;
+
+		// Not finding a delimiter indicates that there is only one tag
+		if (tokenEnd == std::string::npos)
+		{
+			m_Tags.insert(tags);
+			return;
+		}
+
+		while (tokenEnd != std::string::npos)
+		{
+			// trim whitespace
+			tokenBegin = tags.find_first_not_of(" \t", tokenBegin);
+			for (contentEnd = tokenEnd-1; contentEnd > tokenBegin; --contentEnd)
+				if (tags[contentEnd] != ' ' && tags[contentEnd] != '\t') break;
+			contentLength = contentEnd+1 - tokenBegin;
+
+			if (contentLength > 0)
+			{
+				token.assign(tags, tokenBegin, contentLength);
+				
+				m_Tags.insert(token);
+			}
+
+			tokenBegin = tokenEnd + 1;
+			tokenEnd = tags.find(',', tokenBegin);
+		}
+	}
+
 	void ResourceDescription::SetPropertyIndex(int index)
 	{
 		m_ScriptPropertyIndex = index;
@@ -64,6 +105,16 @@ namespace FusionEngine
 	int ResourceDescription::GetPriority() const
 	{
 		return m_Priority;
+	}
+
+	const TagStringSet &ResourceDescription::GetTags() const
+	{
+		return m_Tags;
+	}
+
+	bool ResourceDescription::HasTag(const std::string &tag) const
+	{
+		return m_Tags.find(tag) != m_Tags.end();
 	}
 
 	int ResourceDescription::GetPropertyIndex() const

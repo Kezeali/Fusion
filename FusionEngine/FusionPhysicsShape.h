@@ -83,7 +83,7 @@ namespace FusionEngine
 		}
 	};
 
-	typedef boost::intrusive_ptr<FixtureDefinition> FixtureDefinitionPtr;
+	//typedef boost::intrusive_ptr<FixtureDefinition> FixtureDefinitionPtr;
 
 	FixtureDefinition DefineCircleFixture(float radius, const Vector2& local_position = Vector2::zero(), float friction = -1.f, float restitution = 0.0f, float density = 0.0f);
 

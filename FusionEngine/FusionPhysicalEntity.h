@@ -59,6 +59,13 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<BodyDestroyer> BodyDestroyerPtr;
 
+	struct IFixtureUserData
+	{
+		virtual ~IFixtureUserData() {}
+	};
+
+	typedef std::tr1::shared_ptr<IFixtureUserData> FixtureUserDataPtr;
+
 	//! Returns the game co-ords transformation of the sim-position
 	Vector2 ToGameUnits(const Vector2 &sim_position);
 	//! Returns the game co-ords transformation of the game-position
@@ -109,6 +116,9 @@ namespace FusionEngine
 		b2Body *GetBody() const;
 		void _setBody(b2Body *body);
 
+		b2Fixture *CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data = FixtureUserDataPtr());
+		void DestroyFixture(b2Fixture *fixture);
+
 		//! Sets the slot object that will destroy the b2Body when the PhysicalEntity is destroyed
 		void SetBodyDestroyer(const BodyDestroyerPtr &destroyer);
 
@@ -118,8 +128,10 @@ namespace FusionEngine
 		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
 	protected:
-		//b2BodyDef m_BodyDef;
 		b2Body *m_Body;
+
+		typedef std::vector<FixtureUserDataPtr> FixtureUserDataArray;
+		FixtureUserDataArray m_FixtureUserData;
 
 		//DestructorSignal m_DestructorSignal;
 		BodyDestroyerPtr m_BodyDestroyer;
@@ -132,7 +144,7 @@ namespace FusionEngine
 		float m_AngularVelocity;
 	};
 
-	typedef std::tr1::shared_ptr<PhysicalEntity> PhysicalEntityPtr;
+	//typedef std::tr1::shared_ptr<PhysicalEntity> PhysicalEntityPtr;
 
 }
 

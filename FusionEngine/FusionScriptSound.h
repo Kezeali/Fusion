@@ -41,7 +41,7 @@ namespace FusionEngine
 {
 
 	//! CL_SoundOutput wrapper
-	class SoundOutput : public RefCounted, no_factory_noncopyable
+	class SoundOutput : public RefCounted, noncopyable
 	{
 	public:
 		SoundOutput(CL_SoundOutput &output);
@@ -63,7 +63,7 @@ namespace FusionEngine
 	};
 
 	//! Ref-counted wrapper for CL_SoundBuffer_Session
-	class SoundSession : public RefCounted, no_factory_noncopyable
+	class SoundSession : public RefCounted, noncopyable
 	{
 	public:
 		SoundSession(CL_SoundBuffer_Session &session);
