@@ -175,32 +175,35 @@ namespace FusionEngine
 		m_Body = body;
 	}
 
-	b2Fixture *PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
+	const FixturePtr &PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
 	{
-		b2Fixture *fixture = m_Body->CreateFixture(fixture_definition);
+		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
+		FixturePtr fixture(new Fixture(inner));
+		m_Fixtures.push_back(fixture);
+
 		if (user_data)
-		{
-			m_FixtureUserData.push_back(user_data);
-			fixture->SetUserData((void*)user_data.get());
-		}
+			fixture->SetUserData(user_data);
+
 		return fixture;
 	}
 
-	void PhysicalEntity::DestroyFixture(b2Fixture *fixture)
+	void PhysicalEntity::DestroyFixture(b2Fixture *inner)
 	{
-		// Remove the reference to the user-data ptr
-		if (fixture->GetUserData())
+		DestroyFixture( Fixture::GetWrapper(inner) );
+	}
+
+	void PhysicalEntity::DestroyFixture(const FixturePtr &fixture)
+	{
+		for (FixtureArray::iterator it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
 		{
-			for (FixtureUserDataArray::iterator it = m_FixtureUserData.begin(), end = m_FixtureUserData.end(); it != end; ++it)
+			if (*it == fixture)
 			{
-				if (it->get() == fixture->GetUserData())
-				{
-					m_FixtureUserData.erase(it);
-					break;
-				}
+				m_Fixtures.erase(it);
+				break;
 			}
 		}
-		m_Body->DestroyFixture(fixture);
+		m_Body->DestroyFixture(fixture->GetInner());
+		fixture->Invalidate();
 	}
 
 

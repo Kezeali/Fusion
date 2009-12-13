@@ -59,13 +59,6 @@ namespace FusionEngine
 
 	typedef std::tr1::shared_ptr<BodyDestroyer> BodyDestroyerPtr;
 
-	struct IFixtureUserData
-	{
-		virtual ~IFixtureUserData() {}
-	};
-
-	typedef std::tr1::shared_ptr<IFixtureUserData> FixtureUserDataPtr;
-
 	//! Returns the game co-ords transformation of the sim-position
 	Vector2 ToGameUnits(const Vector2 &sim_position);
 	//! Returns the game co-ords transformation of the game-position
@@ -80,15 +73,21 @@ namespace FusionEngine
 	//! Transforms the given game-position to a sim-position
 	void TransformToSimUnits(Vector2 &game_position);
 
+	//! Physically simulated Entity
 	class PhysicalEntity : public Entity
 	{
 	public:
+		//! CTOR
 		PhysicalEntity();
+		//! CTOR
 		PhysicalEntity(const std::string &name);
 
+		//! DTOR
 		virtual ~PhysicalEntity();
 
+		//! Applies force
 		virtual void ApplyForce(const Vector2 &force, const Vector2 &point);
+		//! Applies force
 		virtual void ApplyTorque(float torque);
 
 		//! Gets the position of the physical body
@@ -111,13 +110,32 @@ namespace FusionEngine
 
 		// TODO: damping, allowSleep, fixedRotation, isBullet
 
+		//! Returns true if this entity has a b2Body object
 		bool IsPhysicsEnabled() const;
 
+		//! Returns the held simulation object (if it is enabled)
 		b2Body *GetBody() const;
+		//! Sets the sim. obj.
 		void _setBody(b2Body *body);
 
-		b2Fixture *CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data = FixtureUserDataPtr());
-		void DestroyFixture(b2Fixture *fixture);
+		//! Creates a fixture
+		/*!
+		* The FixturePtr (wrapper) will be added to the fixture list held by
+		* this entity
+		*/
+		const FixturePtr &CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data = FixtureUserDataPtr());
+		//! Destroys the given fixture
+		/*!
+		* The wrapper for the given fixture will also be removed from the list
+		* held by this object
+		*/
+		void DestroyFixture(b2Fixture *inner);
+		//! Destroys the given fixture
+		/*!
+		* The given wrapper will be removed, and it the inner b2Fixture will be
+		* destroyed
+		*/
+		void DestroyFixture(const FixturePtr &wrapper);
 
 		//! Sets the slot object that will destroy the b2Body when the PhysicalEntity is destroyed
 		void SetBodyDestroyer(const BodyDestroyerPtr &destroyer);
@@ -130,8 +148,8 @@ namespace FusionEngine
 	protected:
 		b2Body *m_Body;
 
-		typedef std::vector<FixtureUserDataPtr> FixtureUserDataArray;
-		FixtureUserDataArray m_FixtureUserData;
+		typedef std::vector<FixturePtr> FixtureArray;
+		FixtureArray m_Fixtures;
 
 		//DestructorSignal m_DestructorSignal;
 		BodyDestroyerPtr m_BodyDestroyer;
@@ -143,8 +161,6 @@ namespace FusionEngine
 		float m_Angle;
 		float m_AngularVelocity;
 	};
-
-	//typedef std::tr1::shared_ptr<PhysicalEntity> PhysicalEntityPtr;
 
 }
 

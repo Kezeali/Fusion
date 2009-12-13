@@ -53,9 +53,28 @@ namespace FusionEngine
 		return m_Inner;
 	}
 
+	void Fixture::SetUserData(const FixtureUserDataPtr &user_data)
+	{
+		m_UserData = user_data;
+	}
+
+	const FixtureUserDataPtr &Fixture::GetUserData() const
+	{
+		return m_UserData;
+	}
+
 	void Fixture::Invalidate()
 	{
 		m_Inner = NULL;
+	}
+
+	FixturePtr Fixture::GetWrapper(b2Fixture *fixture)
+	{
+		Fixture *data = static_cast<Fixture*>( fixture->GetUserData() );
+		if (data != NULL)
+			return FixturePtr( data );
+		else
+			return FixturePtr();
 	}
 
 	//////////////

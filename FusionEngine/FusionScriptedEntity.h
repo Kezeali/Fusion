@@ -49,7 +49,7 @@ namespace FusionEngine
 		void SetPropertyName(const std::string &name);
 		virtual void SetResourceName(const std::string &name);
 		void SetPriority(int priority);
-		void SetTags(const std::string &tags);
+		void ParseTags(const std::string &tags);
 
 		void SetPropertyIndex(int index);
 

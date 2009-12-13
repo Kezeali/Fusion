@@ -83,8 +83,15 @@ namespace FusionEngine
 
 			Contact fsnContact;
 
-			fsnContact.SetFixtureA( FixturePtr( fixtureA ) );
-			fsnContact.SetFixtureB( FixturePtr( fixtureB ) );
+			FixturePtr fa;
+			FixturePtr fb;
+			if (fixtureA != NULL)
+				fa.reset(fixtureA);
+			if (fixtureB != NULL)
+				fa.reset(fixtureB);
+				
+			fsnContact.SetFixtureA( fa );
+			fsnContact.SetFixtureB( fb );
 
 			fsnContact.SetNormal( b2v2(worldManifold.m_normal) );
 

@@ -46,7 +46,7 @@ namespace FusionEngine
 		m_Priority = priority;
 	}
 
-	void ResourceDescription::SetTags(const std::string &tags)
+	void ResourceDescription::ParseTags(const std::string &tags)
 	{
 		typedef std::string::size_type str_size_t;
 

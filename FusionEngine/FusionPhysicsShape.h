@@ -41,25 +41,39 @@
 namespace FusionEngine
 {
 
+	struct IFixtureUserData
+	{
+		virtual ~IFixtureUserData() {}
+	};
+
+	typedef std::tr1::shared_ptr<IFixtureUserData> FixtureUserDataPtr;
+
+	class Fixture;
+	typedef boost::intrusive_ptr<Fixture> FixturePtr;
+
 	class Fixture : public RefCounted
 	{
-		friend class PhysicsBody;
 	public:
 		Fixture();
-		Fixture(b2Fixture *inner);
+		explicit Fixture(b2Fixture *inner);
 
 		virtual ~Fixture();
 
 		b2Fixture *GetInner() const;
 
-	protected:
-		b2Fixture *m_Inner;
+		void SetUserData(const FixtureUserDataPtr &user_data);
+		const FixtureUserDataPtr &GetUserData() const;
 
 		//! Called when Body dies
 		void Invalidate();
-	};
 
-	typedef boost::intrusive_ptr<Fixture> FixturePtr;
+		static FixturePtr GetWrapper(b2Fixture *fixture);
+
+	protected:
+		b2Fixture *m_Inner;
+
+		FixtureUserDataPtr m_UserData;
+	};
 
 	class FixtureDefinition// : public RefCounted
 	{
@@ -82,10 +96,6 @@ namespace FusionEngine
 			definition.shape = shape.get();
 		}
 	};
-
-	//typedef boost::intrusive_ptr<FixtureDefinition> FixtureDefinitionPtr;
-
-	FixtureDefinition DefineCircleFixture(float radius, const Vector2& local_position = Vector2::zero(), float friction = -1.f, float restitution = 0.0f, float density = 0.0f);
 
 }
 

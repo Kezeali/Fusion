@@ -53,7 +53,7 @@ namespace FusionEngine
 
 	struct EditorMapEntity : public GameMapLoader::GameMapEntity
 	{
-		b2Fixture *fixture;
+		FixturePtr fixture;
 
 		EditorMapEntity()
 			: fixture(NULL)
@@ -77,7 +77,7 @@ namespace FusionEngine
 
 	void EditorMapEntity::CreateEditorFixture()
 	{
-		if (fixture != NULL)
+		if (!fixture)
 			return;
 
 		PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( this->entity.get() );
@@ -485,9 +485,7 @@ namespace FusionEngine
 
 	void Editor::ShowProperties(const GameMapLoader::GameMapEntityPtr &entity)
 	{
-		MapEntityArray blah;
-		blah.push_back(entity);
-		ShowContextMenu(entity->entity->GetPosition(), blah);
+		SendToConsole(entity->entity->GetName() + " was selected.");
 	}
 
 	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
