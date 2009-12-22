@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2009 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -61,6 +61,9 @@ namespace FusionEngine
 
 		b2Fixture *GetInner() const;
 
+		void SetTag(const std::string &tag);
+		const std::string &GetTag() const;
+
 		void SetUserData(const FixtureUserDataPtr &user_data);
 		const FixtureUserDataPtr &GetUserData() const;
 
@@ -72,6 +75,7 @@ namespace FusionEngine
 	protected:
 		b2Fixture *m_Inner;
 
+		std::string m_Tag;
 		FixtureUserDataPtr m_UserData;
 	};
 

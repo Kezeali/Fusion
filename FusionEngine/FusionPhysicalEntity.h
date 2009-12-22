@@ -124,6 +124,12 @@ namespace FusionEngine
 		* this entity
 		*/
 		const FixturePtr &CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data = FixtureUserDataPtr());
+		//! Creates a fixture
+		/*!
+		* The FixturePtr (wrapper) will be added to the fixture list held by
+		* this entity
+		*/
+		const FixturePtr &CreateFixture(const b2FixtureDef *fixture_definition, const std::string &tag, const FixtureUserDataPtr &user_data = FixtureUserDataPtr());
 		//! Destroys the given fixture
 		/*!
 		* The wrapper for the given fixture will also be removed from the list

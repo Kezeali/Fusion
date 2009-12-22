@@ -89,7 +89,7 @@ namespace FusionEngine
 			iconFixtureDef.shape = shape;
 
 			FixtureUserDataPtr user_data(new MapEntityFixtureUserData(this));
-			fixture = physicalEntity->CreateFixture(&iconFixtureDef, user_data);
+			fixture = physicalEntity->CreateFixture(&iconFixtureDef, "editor", user_data);
 		}
 	}
 
@@ -195,7 +195,8 @@ namespace FusionEngine
 		m_PhysicalWorld(world),
 		m_Streamer(streaming_manager),
 		m_MapUtil(map_util),
-		m_Document(NULL),
+		m_MainDocument(NULL),
+		m_PropertiesDocument(NULL),
 		m_Enabled(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
@@ -217,13 +218,16 @@ namespace FusionEngine
 	{
 		// Load gui documents
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
-		m_Document = guiCtx->LoadDocument("core/gui/editor.rml");
-		if (m_Document == NULL)
+		m_MainDocument = guiCtx->LoadDocument("core/gui/editor.rml");
+		if (m_MainDocument == NULL)
 			return false;
-		m_Document->RemoveReference();
+		m_MainDocument->RemoveReference();
+
+		m_PropertiesDocument = guiCtx->LoadDocument("core/gui/properties_dialog.rml");
+		m_PropertiesDocument->RemoveReference();
 
 		// Create context menu
-		m_RightClickMenu = new ContextMenu(m_Document->GetContext(), m_Input);
+		m_RightClickMenu = new ContextMenu(m_MainDocument->GetContext(), m_Input);
 		m_PropertiesMenu = new MenuItem("Properties", "properties");
 		m_RightClickMenu->AddChild(m_PropertiesMenu);
 
@@ -252,9 +256,13 @@ namespace FusionEngine
 	{
 		delete m_RightClickMenu;
 		m_RightClickMenu = NULL;
-		if (m_Document != NULL)
-			m_Document->Close();
-		m_Document = NULL;
+		if (m_MainDocument != NULL)
+			m_MainDocument->Close();
+		m_MainDocument = NULL;
+
+		if (m_PropertiesDocument != NULL)
+			m_PropertiesDocument->Close();
+		m_PropertiesDocument = NULL;
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
@@ -325,7 +333,7 @@ namespace FusionEngine
 
 				GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 
-				m_Document->Show();
+				m_MainDocument->Show();
 			}
 			else
 			{
@@ -337,8 +345,8 @@ namespace FusionEngine
 				this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 				this->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
-				if (m_Document != NULL)
-					m_Document->Hide();
+				if (m_MainDocument != NULL)
+					m_MainDocument->Hide();
 			}
 		}
 		m_Enabled = enable;
@@ -349,7 +357,7 @@ namespace FusionEngine
 		if (!m_Enabled)
 			return;
 
-		Rocket::Core::Context *context = m_Document->GetContext();
+		Rocket::Core::Context *context = m_MainDocument->GetContext();
 		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
 		{
 			if (context->GetDocument(i)->IsPseudoClassSet("hover"))
@@ -397,7 +405,7 @@ namespace FusionEngine
 					{
 						Vector2 position(ev.PointerPosition);
 
-						CL_Rectf documentRect(m_Document->GetAbsoluteLeft(), m_Document->GetAbsoluteTop(), CL_Sizef(m_Document->GetClientWidth(), m_Document->GetClientHeight()));
+						CL_Rectf documentRect(m_MainDocument->GetAbsoluteLeft(), m_MainDocument->GetAbsoluteTop(), CL_Sizef(m_MainDocument->GetClientWidth(), m_MainDocument->GetClientHeight()));
 						if (!documentRect.contains(CL_Vec2f(position.x, position.y)))
 						{
 							CL_Rectf area;
@@ -485,7 +493,7 @@ namespace FusionEngine
 
 	void Editor::ShowProperties(const GameMapLoader::GameMapEntityPtr &entity)
 	{
-		SendToConsole(entity->entity->GetName() + " was selected.");
+		m_PropertiesDocument->Show();
 	}
 
 	void Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)

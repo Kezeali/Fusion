@@ -29,7 +29,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionPhysicsShape.h"
+#include "FusionPhysicsFixture.h"
 
 
 namespace FusionEngine

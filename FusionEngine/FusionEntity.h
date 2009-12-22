@@ -46,6 +46,8 @@
 #include "FusionEntityDeserialiser.h"
 #include "FusionResourcePointer.h"
 
+#include <boost/any.hpp>
+
 
 namespace FusionEngine
 {
@@ -193,6 +195,16 @@ namespace FusionEngine
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
 	typedef std::vector<RenderablePtr> RenderableArray;
 
+	class EditableProperty
+	{
+	public:
+		virtual ~EditableProperty() {}
+
+		virtual std::string GetName() const =0;
+
+		virtual boost::any GetValue() const =0;
+	};
+
 	struct InstancePrepDefinition
 	{
 		std::string Type;
@@ -294,6 +306,27 @@ namespace FusionEngine
 		//! Gets angular (rotational) velocity
 		virtual void SetAngularVelocity(float angular_velocity) =0;
 
+		//! Returns renderables
+		virtual RenderableArray &GetRenderables();
+		//! Adds a renderable
+		virtual void AddRenderable(RenderablePtr renderable);
+		//! Removes renderables
+		virtual void RemoveRenderable(RenderablePtr renderable);
+
+		//! Sets resources that should be loaded when the Entity is streamed in
+		void SetStreamedResources(const StreamedResourceArray &resources);
+		//! Adds a resource that should be loaded when the Entity is streamed in
+		void AddStreamedResource(const StreamedResourceUserPtr &resource);
+		//! Returns streamed resources
+		const StreamedResourceArray &GetStreamedResources() const;
+
+		//! Returns the number of editable properties
+		virtual unsigned int GetPropertiesCount() const =0;
+		virtual std::string GetPropertyName(unsigned int index) const =0;
+		//! Returns the editable property with the given index
+		virtual boost::any GetPropertyValue(unsigned int index) const =0;
+		virtual void SetPropertyValue(unsigned int index, const boost::any &value) =0;
+
 		//! Sets the dictionary used by the EntityManager
 		/*!
 		 * EntityManager objects use this to pass the current
@@ -386,21 +419,7 @@ namespace FusionEngine
 		//! Draws
 		virtual void Draw() {}
 
-		//typedef std::vector<ResourcePointer<CL_Sprite>> SpriteArray;
-
-		//virtual const SpriteArray &GetSprites() const;
-
-		//virtual const MeshArray &GetGeometry() const;
-
-		virtual RenderableArray &GetRenderables();
-		virtual void AddRenderable(RenderablePtr renderable);
-		virtual void RemoveRenderable(RenderablePtr renderable);
-
 		//virtual void UpdateRenderables();
-
-		void SetStreamedResources(const StreamedResourceArray &resources);
-		void AddStreamedResource(const StreamedResourceUserPtr &resource);
-		const StreamedResourceArray &GetStreamedResources() const;
 
 		void StreamIn();
 		void StreamOut();
@@ -502,7 +521,6 @@ namespace FusionEngine
 		size_t m_Layer;
 
 		RenderableArray m_Renderables;
-
 		StreamedResourceArray m_StreamedResources;
 
 		InstancesToPrepareArray m_InstancesToPrepare;

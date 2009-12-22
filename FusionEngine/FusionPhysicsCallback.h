@@ -39,7 +39,7 @@
 //#include <boost/function.hpp>
 //#include <boost/bind.hpp>
 
-#include "FusionPhysicsShape.h"
+#include "FusionPhysicsFixture.h"
 
 namespace FusionEngine
 {

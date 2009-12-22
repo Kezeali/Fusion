@@ -37,6 +37,8 @@
 namespace FusionEngine
 {
 
+	static const type_info &ToCppType(int as_type_id, ScriptingEngine *engine = NULL);
+
 	class ResourceDescription
 	{
 	public:
@@ -96,8 +98,21 @@ namespace FusionEngine
 			{}
 		};
 
-		typedef std::map<std::string, Property> PropertiesMap;
-		//typedef std::set<std::string> PropertiesSet;
+		typedef std::vector<Property> PropertiesArray;
+
+		class EditableProp : EditableProperty
+		{
+			EditableProp(const Property &prop, const ScriptObject &obj)
+			{
+				m_Name = prop.name;
+				m_ScriptPropertyIndex = prop.scriptPropertyIndex;
+				m_ScriptObject = obj;
+			}
+		protected:
+			std::string m_Name;
+			int m_ScriptPropertyIndex;
+			ScriptObject m_ScriptObject;
+		};
 
 		//typedef std::map<std::string, ResourceDescriptionPtr> ResourcesMap;
 		typedef std::map<std::wstring, std::string> StreamedResourceMap;
@@ -109,9 +124,16 @@ namespace FusionEngine
 
 		void SetPath(const std::string &path);
 
-		void SetSyncProperties(const PropertiesMap &properties);
+		void SetSyncProperties(const PropertiesArray &properties);
 		//void SetStreamedResources(const StreamedResourceMap &resources);
 		//void AddStreamedResource(const std::string &type, const std::wstring &path);
+
+		virtual unsigned int GetPropertiesCount() const;
+		virtual std::string GetPropertyName(unsigned int index) const;
+		virtual boost::any GetPropertyValue(unsigned int index) const;
+		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
+
+		void getScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const;
 
 		virtual void EnumReferences(asIScriptEngine *engine);
 		virtual void ReleaseAllReferences(asIScriptEngine *engine);
@@ -143,7 +165,7 @@ namespace FusionEngine
 		// The folder where the the entity definition resides - used when calls to ScriptEntity::MakePathAbsolute are made in the entity script
 		std::string m_Path;
 
-		PropertiesMap m_SyncedProperties;
+		PropertiesArray m_SyncedProperties;
 		StreamedResourceMap m_Streamed;
 
 		int m_EntityTypeId;

@@ -187,6 +187,19 @@ namespace FusionEngine
 		return fixture;
 	}
 
+	const FixturePtr &PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const std::string &tag, const FixtureUserDataPtr &user_data)
+	{
+		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
+		FixturePtr fixture(new Fixture(inner));
+		m_Fixtures.push_back(fixture);
+
+		fixture->SetTag(tag);
+		if (user_data)
+			fixture->SetUserData(user_data);
+
+		return fixture;
+	}
+
 	void PhysicalEntity::DestroyFixture(b2Fixture *inner)
 	{
 		DestroyFixture( Fixture::GetWrapper(inner) );

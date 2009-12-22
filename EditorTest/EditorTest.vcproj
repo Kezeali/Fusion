@@ -317,7 +317,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsShape.cpp"
+				RelativePath="..\FusionEngine\FusionPhysicsFixture.cpp"
 				>
 			</File>
 			<File
@@ -619,11 +619,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsScriptTypes.h"
+				RelativePath="..\FusionEngine\FusionPhysicsFixture.h"
 				>
 			</File>
 			<File
-				RelativePath="..\FusionEngine\FusionPhysicsShape.h"
+				RelativePath="..\FusionEngine\FusionPhysicsScriptTypes.h"
 				>
 			</File>
 			<File

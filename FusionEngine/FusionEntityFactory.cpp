@@ -84,6 +84,8 @@ namespace FusionEngine
 		//! Stores data from the Dependencies element
 		typedef StringVector DependenciesMap;
 
+		typedef std::tr1::unordered_map<std::string, ScriptedEntity::Property> PropertiesMap;
+
 	public:
 		//! Basic CTOR
 		EntityDefinition();
@@ -119,10 +121,20 @@ namespace FusionEngine
 		const DependenciesMap &GetEntityDependencies() const;
 		//! Returns UtilityScript filenames that were listed in the Dependencies element
 		const DependenciesMap &GetScriptDependencies() const;
-		//! Returns synchronised properties collection
-		ScriptedEntity::PropertiesMap &GetSyncProperties();
-		//! Returns streamed resources collection
+		//! Returns streamed-resources collection
 		ResourcesMap &GetStreamedResources();
+		//! Properties array that is passed to Entities created
+		ScriptedEntity::PropertiesArray &GetSyncProperties();
+
+		//! Returns synchronised-properties collection
+		/*!
+		* Used while building the definition (merging parent properties, listing
+		* property indexes) - GetSyncProperties returns the completed list.
+		*
+		* \see GetStreamedResources()
+		* 
+		*/
+		PropertiesMap &GetSyncPropertiesMap();
 
 		//! Returns true if the entity has a body definition
 		bool HasBody() const;
@@ -159,7 +171,8 @@ namespace FusionEngine
 		DependenciesMap m_EntityDependencies;
 		DependenciesMap m_ScriptDependencies;
 
-		ScriptedEntity::PropertiesMap m_SyncProperties;
+		PropertiesMap m_SyncPropertiesMap;
+		ScriptedEntity::PropertiesArray m_SyncProperties;
 
 		ResourcesMap m_Resources;
 
@@ -275,7 +288,7 @@ namespace FusionEngine
 			attribute = child->GetAttributeOrDefault("local", "0");
 			propertyDefinition.localOnly = CL_StringHelp::local8_to_bool(attribute.c_str());
 
-			m_SyncProperties[propertyDefinition.name] = propertyDefinition;
+			m_SyncPropertiesMap[propertyDefinition.name] = propertyDefinition;
 		}
 	}
 
@@ -626,14 +639,19 @@ namespace FusionEngine
 		return m_ScriptDependencies;
 	}
 
-	ScriptedEntity::PropertiesMap &EntityDefinition::GetSyncProperties()
+	ResourcesMap &EntityDefinition::GetStreamedResources()
+	{
+		return m_Resources;
+	}
+
+	ScriptedEntity::PropertiesArray &EntityDefinition::GetSyncProperties()
 	{
 		return m_SyncProperties;
 	}
 
-	ResourcesMap &EntityDefinition::GetStreamedResources()
+	EntityDefinition::PropertiesMap &EntityDefinition::GetSyncPropertiesMap()
 	{
-		return m_Resources;
+		return m_SyncPropertiesMap;
 	}
 
 	bool EntityDefinition::HasBody() const
@@ -1145,8 +1163,8 @@ namespace FusionEngine
 					EntityDefinitionPtr &derrived = *it;
 					const EntityDefinitionPtr &base = *base_it;
 
-					ScriptedEntity::PropertiesMap &baseProps = base->GetSyncProperties();
-					derrived->GetSyncProperties().insert(baseProps.begin(), baseProps.end());
+					EntityDefinition::PropertiesMap &baseProps = base->GetSyncPropertiesMap();
+					derrived->GetSyncPropertiesMap().insert(baseProps.begin(), baseProps.end());
 
 					ResourcesMap &baseResources = base->GetStreamedResources();
 					derrived->GetStreamedResources().insert(baseResources.begin(), baseResources.end());
@@ -1157,20 +1175,26 @@ namespace FusionEngine
 		// Find the index for each script property listed in the Sync section of the Entity definition file
 		//  Note that it is important that this is done after all the definitions have been loaded and
 		//  the script module has been built
-		ScriptedEntity::PropertiesMap &syncProperties = definition->GetSyncProperties();
+		EntityDefinition::PropertiesMap &syncPropertiesByName = definition->GetSyncPropertiesMap();
+		ScriptedEntity::PropertiesArray &syncProperties = definition->GetSyncProperties();
 		// Iterate through all of the script object's properties
 		for (int i = 0; i < objectType->GetPropertyCount(); ++i)
 		{
-			ScriptedEntity::PropertiesMap::iterator _where = syncProperties.find( objectType->GetPropertyName(i) );
-			if (_where != syncProperties.end())
+			EntityDefinition::PropertiesMap::iterator _where = syncPropertiesByName.find( objectType->GetPropertyName(i) );
+			if (_where != syncPropertiesByName.end())
 			{
-				FSN_ASSERT(_where->second.scriptPropertyIndex != i); // Just checking whether derrived types have the same indexes as base types...
-				_where->second.scriptPropertyIndex = i;
+				ScriptedEntity::Property &prop = _where->second;
+
+				FSN_ASSERT(prop.scriptPropertyIndex != i); // Just checking whether derrived types have the same indexes as base types...
+				prop.scriptPropertyIndex = i;
+
+				// Add the property def to the array (which will be passed to ScriptedEntities when they are created)
+				syncProperties.push_back(prop);
 			}
 		}
 		// Erase synced-property defs that are missing from the script type
 		{
-			ScriptedEntity::PropertiesMap::iterator it = syncProperties.begin(), end = syncProperties.end();
+			EntityDefinition::PropertiesMap::iterator it = syncProperties.begin(), end = syncProperties.end();
 			while (it != end)
 			{
 				if (it->second.scriptPropertyIndex < 0)

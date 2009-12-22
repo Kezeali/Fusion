@@ -25,7 +25,7 @@
 		Elliot Hayward
 */
 
-#include "FusionPhysicsShape.h"
+#include "FusionPhysicsFixture.h"
 
 
 namespace FusionEngine
@@ -51,6 +51,16 @@ namespace FusionEngine
 	b2Fixture *Fixture::GetInner() const
 	{
 		return m_Inner;
+	}
+
+	void Fixture::SetTag(const std::string &tag)
+	{
+		m_Tag = tag;
+	}
+
+	const std::string &Fixture::GetTag() const
+	{
+		return m_Tag;
 	}
 
 	void Fixture::SetUserData(const FixtureUserDataPtr &user_data)

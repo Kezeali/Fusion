@@ -193,7 +193,9 @@ namespace FusionEngine
 
 		Vector2 m_CamVelocity;
 
-		Rocket::Core::ElementDocument *m_Document;
+		Rocket::Core::ElementDocument *m_MainDocument;
+		Rocket::Core::ElementDocument *m_PropertiesDocument;
+		//Rocket::Core::ElementDocument *m_EntityListDocument;
 
 		ContextMenu *m_RightClickMenu;
 		MenuItem *m_PropertiesMenu;

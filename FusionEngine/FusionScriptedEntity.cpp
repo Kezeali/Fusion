@@ -13,6 +13,141 @@
 namespace FusionEngine
 {
 
+	const type_info &ToCppType(int type_id, ScriptingEngine *engine)
+	{
+		if (engine == NULL)
+			engine = ScriptingEngine::getSingletonPtr();
+
+		if (type_id == asTYPEID_BOOL)
+			return typeid(bool);
+		// Integer types
+		else if (type_id == asTYPEID_INT8)
+			return typeid(int8_t);
+		else if (type_id == asTYPEID_INT16)
+			return typeid(int16_t);
+		else if (type_id == asTYPEID_INT32)
+			return typeid(int32_t);
+		else if (type_id == asTYPEID_INT64)
+			return typeid(int64_t);
+		// ... unsigned
+		else if (type_id == asTYPEID_UINT8)
+			return typeid(uint8_t);
+		else if (type_id == asTYPEID_UINT16)
+			return typeid(uint16_t);
+		else if (type_id == asTYPEID_UINT32)
+			return typeid(uint32_t);
+		else if (type_id == asTYPEID_UINT64)
+			return typeid(uint64_t);
+		// Floating point types
+		else if (type_id == asTYPEID_FLOAT)
+			return typeid(float);
+		else if (type_id == asTYPEID_DOUBLE)
+			return typeid(double);
+
+		// Pointers / handles
+		else if (type_id & asTYPEID_APPOBJECT)
+		{
+			if (engine == NULL)
+				FSN_EXCEPT(ExCode::InvalidArgument, "CppType", "Can't get application-defined type without a valid ScriptingManager");
+
+			return typeid(ScriptedEntity*);
+		}
+	}
+
+	// REVISE--Type should be the actual type of the variable held by the script
+	//  engine - i.e. the type that the void* should be casted to.
+	template <typename T>
+	void getPropValueOfType(boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	{
+		cpp_obj = *(T*)obj->GetPropertyPointer(property_index);
+	}
+	template <typename T>
+	void setPropValueOfType(const boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	{
+		*(T*)obj->GetPropertyPointer(property_index) = boost::any_cast<T>( cpp_obj );
+	}
+
+	void ScriptedEntity::getScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const
+	{
+		asIScriptObject *obj = m_ScriptObject.GetScriptObject();
+		int type_id = obj->GetPropertyTypeId(property_index);
+
+		if (type_id == asTYPEID_BOOL)
+			if (get) getPropValueOfType<bool>(cpp_obj, obj, property_index);
+			else setPropValueOfType<bool>(cpp_obj, obj, property_index);
+		// Integer types
+		else if (type_id == asTYPEID_INT8)
+			if (get) getPropValueOfType<int8_t>(cpp_obj, obj, property_index);
+			else setPropValueOfType<bool>(cpp_obj, obj, property_index);
+		else if (type_id == asTYPEID_INT16)
+			if (get) getPropValueOfType<int16_t>(cpp_obj, obj, property_index);
+			else setPropValueOfType<int16_t>(cpp_obj, obj, property_index);
+		else if (type_id == asTYPEID_INT32)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		else if (type_id == asTYPEID_INT64)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		// ... unsigned
+		else if (type_id == asTYPEID_UINT8)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		else if (type_id == asTYPEID_UINT16)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		else if (type_id == asTYPEID_UINT32)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		else if (type_id == asTYPEID_UINT64)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		// Floating point types
+		else if (type_id == asTYPEID_FLOAT)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+		else if (type_id == asTYPEID_DOUBLE)
+			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+
+		// Pointers / handles
+		else if (type_id & asTYPEID_APPOBJECT)
+		{
+			ScriptingEngine *engine = NULL; // TODO: engine param?
+			if (engine == NULL)
+				engine = ScriptingEngine::getSingletonPtr();
+			if (engine == NULL)
+				FSN_EXCEPT(ExCode::InvalidArgument, "GetPropertyValue", "Can't get application-defined type without a valid ScriptingManager");
+
+			if (type_id == m_ScriptEntityTypeId)
+				cpp_obj = *(ScriptedEntity**)obj->GetPropertyPointer(property_index);
+			else if (type_id == engine->GetStringTypeId())
+				cpp_obj = *(CScriptString**)obj->GetPropertyPointer(property_index);
+			else if (type_id == engine->GetVectorTypeId())
+				cpp_obj = *(Vector2**)obj->GetPropertyPointer(property_index);
+		}
+	}
+
+	// Returns 1 for exact type, 2 for implicitly convertable, 0 for types that require explicit conversion / non-convertable
+	char IsEquivilantType(const boost::any &cpp_obj, int type_id)
+	{
+		if (cpp_obj.type() == ToCppType(type_id))
+			return 1;
+
+		// Integer types
+		else if (type_id >= asTYPEID_INT8 && type_id <= asTYPEID_INT64 &&
+			(cpp_obj.type() == typeid(int8_t) ||
+			cpp_obj.type() == typeid(int16_t) ||
+			cpp_obj.type() == typeid(int32_t) ||
+			cpp_obj.type() == typeid(int64_t)))
+			return 2;
+		// Unsigned Integer types
+		else if (type_id >= asTYPEID_UINT8 && type_id <= asTYPEID_UINT64 &&
+			(cpp_obj.type() == typeid(uint8_t) ||
+			cpp_obj.type() == typeid(uint16_t) ||
+			cpp_obj.type() == typeid(uint32_t) ||
+			cpp_obj.type() == typeid(uint64_t)))
+			return 2;
+		// Float types
+		else if (type_id == asTYPEID_FLOAT || type_id == asTYPEID_DOUBLE &&
+			(cpp_obj.type() == typeid(float) ||
+			cpp_obj.type() == typeid(double)))
+			return 2;
+
+		return 0;
+	}
+
 	ResourceDescription::ResourceDescription()
 		: m_Priority(0),
 		m_ScriptPropertyIndex(-1)
@@ -144,7 +279,7 @@ namespace FusionEngine
 		m_Path = path;
 	}
 
-	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesMap &properties)
+	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesArray &properties)
 	{
 		m_SyncedProperties = properties;
 	}
@@ -158,6 +293,29 @@ namespace FusionEngine
 	//{
 	//	m_Streamed[path] = type;
 	//}
+
+	unsigned int ScriptedEntity::GetPropertiesCount() const
+	{
+		return m_SyncedProperties.size();
+	}
+
+	std::string ScriptedEntity::GetPropertyName(unsigned int index) const
+	{
+		return m_ScriptObject.GetScriptObject()->GetPropertyName(index);
+	}
+
+	boost::any ScriptedEntity::GetPropertyValue(unsigned int index) const
+	{
+		boost::any value;
+		getScriptPropValue(value, index);
+		return value;
+	}
+
+	void ScriptedEntity::SetPropertyValue(unsigned int index, const boost::any &value)
+	{
+		void *ptr = m_ScriptObject.GetScriptObject()->GetPropertyPointer(index);
+		
+	}
 
 	void ScriptedEntity::EnumReferences(asIScriptEngine *engine)
 	{
@@ -275,16 +433,16 @@ namespace FusionEngine
 		stateStream << local;
 
 		unsigned int index = 0;
-		for (PropertiesMap::const_iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
+		for (PropertiesArray::const_iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
 		{
-			const Property &propertyDesc = it->second;
+			const Property &propertyDesc = *it;
 			if (!local && propertyDesc.localOnly)
 				continue; // this property is only serialised to disc
 
 			if (!state.IsIncluded(index++))
 				continue; // This component has been excluded from the state by the caller
 
-			const std::string &propName = it->first;
+			const std::string &propName = propertyDesc.name;
 			// Make sure the prop index is valid
 			if (propertyDesc.scriptPropertyIndex >= m_ScriptObject.GetScriptObject()->GetPropertyCount())
 				continue;
@@ -347,16 +505,16 @@ namespace FusionEngine
 		//stateStream.seekg(physicsDataLength);
 
 		unsigned int index = 0;
-		for (PropertiesMap::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
+		for (PropertiesArray::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
 		{
-			const Property &propertyDesc = it->second;
+			const Property &propertyDesc = *it;
 			if (!local && propertyDesc.localOnly)
 				continue; // This property is only serialised to disc (local-mode), and local is disabled
 
 			if (!state.IsIncluded(index++))
 				continue; // This component was excluded during serialisation
 
-			const std::string &propName = it->first;
+			const std::string &propName = propertyDesc.name;
 			// Make sure the prop index is valid
 			if (propertyDesc.scriptPropertyIndex >= m_ScriptObject.GetScriptObject()->GetPropertyCount())
 				continue;
