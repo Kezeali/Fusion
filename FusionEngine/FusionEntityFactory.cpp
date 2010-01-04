@@ -1194,13 +1194,13 @@ namespace FusionEngine
 		}
 		// Erase synced-property defs that are missing from the script type
 		{
-			EntityDefinition::PropertiesMap::iterator it = syncProperties.begin(), end = syncProperties.end();
+			ScriptedEntity::PropertiesArray::iterator it = syncProperties.begin(), end = syncProperties.end();
 			while (it != end)
 			{
-				if (it->second.scriptPropertyIndex < 0)
+				if (it->scriptPropertyIndex < 0)
 				{
 					SendToConsole("Creating instancer for a scripted entity: There is no property called '"
-						+ it->first + "' in " + definition->GetType() +
+						+ it->name + "' in " + definition->GetType() +
 						" as indicated in the <Sync> element of the xml definition file - i.e. the definition is incorrect.");
 					syncProperties.erase(it++);
 				}

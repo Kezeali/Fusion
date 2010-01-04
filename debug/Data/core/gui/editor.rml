@@ -27,8 +27,8 @@
 		<button onclick="gui.enableDebugger(); gui.showDebugger();">Show GUI Debugger</button>
 		<p>
 			Create Entity:
-			<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChanged(event);">Type</input>
-			<input type="checkbox" id="pseudo_ent" checked onclick="%Editor: OnClickPseudoCheckbox(event);">Pseudo-Entity</input>
+			Type:<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChanged(event);"></input>
+			Pseudo-Entity:<input type="checkbox" id="pseudo_ent" checked onclick="%Editor: OnClickPseudoCheckbox(event);"></input>
 			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%Editor: OnSelected(event);">
 				<col fields="name" width="75%">Types</col>
 			</datagrid>

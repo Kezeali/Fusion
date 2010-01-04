@@ -321,11 +321,25 @@ namespace FusionEngine
 		const StreamedResourceArray &GetStreamedResources() const;
 
 		//! Returns the number of editable properties
-		virtual unsigned int GetPropertiesCount() const =0;
-		virtual std::string GetPropertyName(unsigned int index) const =0;
+		virtual unsigned int GetPropertiesCount() const { return 0; }
+		virtual std::string GetPropertyName(unsigned int index) const { return ""; }
 		//! Returns the editable property with the given index
-		virtual boost::any GetPropertyValue(unsigned int index) const =0;
-		virtual void SetPropertyValue(unsigned int index, const boost::any &value) =0;
+		virtual boost::any GetPropertyValue(unsigned int index) const { return boost::any(); }
+		virtual void SetPropertyValue(unsigned int index, const boost::any &value) {}
+		template <typename T>
+		T GetPropertyValue(unsigned int index) const
+		{
+			boost::any value = GetPropertyValue(index);
+			try
+			{
+				return boost::any_cast<T>( value );
+			}
+			catch (const boost::bad_any_cast &)
+			{
+				throw FSN_EXCEPT(ExCode::InvalidArgument, "Entity::GetPropertyValue<" + typeid(T).name() + ">",
+					"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
+			}
+		}
 
 		//! Sets the dictionary used by the EntityManager
 		/*!

@@ -77,11 +77,11 @@ namespace FusionEngine
 
 	void EditorMapEntity::CreateEditorFixture()
 	{
-		if (!fixture)
+		if (fixture)
 			return;
 
 		PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( this->entity.get() );
-		if (physicalEntity && physicalEntity->IsPhysicsEnabled())
+		if (physicalEntity != NULL && physicalEntity->IsPhysicsEnabled())
 		{
 			b2FixtureDef iconFixtureDef;
 			b2PolygonShape *shape = new b2PolygonShape();
@@ -542,11 +542,11 @@ namespace FusionEngine
 				bool inside = fixture->TestPoint(m_Point);
 				if (inside)
 				{
-					IFixtureUserData *userData = static_cast<IFixtureUserData*>( fixture->GetUserData() );
-					MapEntityFixtureUserData *mapUserData = dynamic_cast<MapEntityFixtureUserData*>(userData);
-					if (mapUserData != NULL)
+					Fixture *wrapper = static_cast<Fixture*>( fixture->GetUserData() );
+					MapEntityFixtureUserData* userData = dynamic_cast<MapEntityFixtureUserData*>(wrapper->GetUserData().get());
+					if (userData != NULL)
 					{
-						m_Entities->push_back(mapUserData->map_entity);
+						m_Entities->push_back(userData->map_entity);
 					}
 				}
 			}

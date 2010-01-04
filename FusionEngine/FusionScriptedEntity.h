@@ -133,7 +133,7 @@ namespace FusionEngine
 		virtual boost::any GetPropertyValue(unsigned int index) const;
 		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 
-		void getScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const;
+		void accessScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const;
 
 		virtual void EnumReferences(asIScriptEngine *engine);
 		virtual void ReleaseAllReferences(asIScriptEngine *engine);

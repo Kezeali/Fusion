@@ -108,7 +108,7 @@ namespace FusionEngine
 			if (attr == "selectable")
 				// The attribute can validly have no value, in which case it defaults to
 				//  true
-				m_Selectable = GetAttribute<EMP::Core::String>("selectable", "") != "false";
+				m_Selectable = HasAttribute("selectable") && GetAttribute<EMP::Core::String>("selectable", "") != "false";
 		}
 	}
 

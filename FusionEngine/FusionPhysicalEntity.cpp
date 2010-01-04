@@ -175,7 +175,7 @@ namespace FusionEngine
 		m_Body = body;
 	}
 
-	const FixturePtr &PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
+	FixturePtr PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
 	{
 		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
 		FixturePtr fixture(new Fixture(inner));
@@ -187,7 +187,7 @@ namespace FusionEngine
 		return fixture;
 	}
 
-	const FixturePtr &PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const std::string &tag, const FixtureUserDataPtr &user_data)
+	FixturePtr PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const std::string &tag, const FixtureUserDataPtr &user_data)
 	{
 		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
 		FixturePtr fixture(new Fixture(inner));

@@ -67,7 +67,7 @@ namespace FusionEngine
 		*(T*)obj->GetPropertyPointer(property_index) = boost::any_cast<T>( cpp_obj );
 	}
 
-	void ScriptedEntity::getScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const
+	void ScriptedEntity::accessScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const
 	{
 		asIScriptObject *obj = m_ScriptObject.GetScriptObject();
 		int type_id = obj->GetPropertyTypeId(property_index);
@@ -307,7 +307,7 @@ namespace FusionEngine
 	boost::any ScriptedEntity::GetPropertyValue(unsigned int index) const
 	{
 		boost::any value;
-		getScriptPropValue(value, index);
+		accessScriptPropValue(value, index, true);
 		return value;
 	}
 
