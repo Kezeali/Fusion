@@ -41,6 +41,7 @@
 #include "FusionInputHandler.h"
 #include "FusionGameMapLoader.h"
 #include "FusionContextMenu.h"
+#include "FusionEditorUndo.h"
 
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
@@ -90,6 +91,15 @@ namespace FusionEngine
 		StringVector m_Suggestions;
 	};
 
+	class PropertyEditorDialog
+	{
+	public:
+		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &entity);
+
+		//! Called when, for example, an action is undone
+		void Refresh();
+	};
+
 	//! Editor system (runs the map editor interface)
 	class Editor : public System, public Rocket::Core::EventListener
 	{
@@ -133,6 +143,9 @@ namespace FusionEngine
 
 		void CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
+
+		void AddEntity(const GameMapLoader::GameMapEntityPtr &entity);
+		void RemoveEntity(const GameMapLoader::GameMapEntityPtr &entity);
 
 		//! Returns entity-tyes beginning with...
 		void LookUpEntityType(StringVector &results, const std::string &search_term);
@@ -192,6 +205,9 @@ namespace FusionEngine
 		CameraPtr m_Camera;
 
 		Vector2 m_CamVelocity;
+
+		UndoableActionQueue m_UndoableActions;
+		Rocket::Core::Element *m_UndoMenu;
 
 		Rocket::Core::ElementDocument *m_MainDocument;
 		Rocket::Core::ElementDocument *m_PropertiesDocument;

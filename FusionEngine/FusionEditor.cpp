@@ -133,6 +133,7 @@ namespace FusionEngine
 			return EntityPtr();
 	}
 
+	// Editor DataSource
 	EditorDataSource::EditorDataSource()
 		: EMP::Core::DataSource("editor")
 	{
@@ -187,6 +188,85 @@ namespace FusionEngine
 
 		return 0;
 	}
+
+	// Undoable action impl.s
+	class PropertyEditorAction;
+	typedef std::tr1::shared_ptr<PropertyEditorAction> PropertyEditorActionPtr;
+	class PropertyEditorAction : IUndoableAction
+	{
+	public:
+		typedef std::pair<int, boost::any> ChangedProperty;
+		typedef std::vector<ChangedProperty> ChangedPropertyArray;
+
+		//PropertyEditorAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedPropertyArray &from_values, const ChangedPropertyArray &to_values);
+		PropertyEditorAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedProperty &from, const ChangedProperty &to);
+	protected:
+		void undoAction();
+		void redoAction();
+
+		GameMapLoader::GameMapEntityPtr m_EditorEntity;
+		//ChangedPropertyArray m_OldValues;
+		//ChangedPropertyArray m_NewValues;
+		ChangedProperty m_OldValue;
+		ChangedProperty m_NewValue;
+	};
+
+	void PropertyEditorAction::undoAction()
+	{
+		//for (ChangedPropertyArray::const_iterator it = m_OldValues.begin(), end = m_OldValues.end(); it != end; ++it)
+		//{
+		//	const ChangedProperty &prop = *it;
+		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
+		//}
+
+		m_EditorEntity->entity->SetPropertyValue(m_OldValue.first, m_OldValue.second);
+	}
+
+	void PropertyEditorAction::redoAction()
+	{
+		//for (ChangedPropertyArray::const_iterator it = m_NewValues.begin(), end = m_NewValues.end(); it != end; ++it)
+		//{
+		//	const ChangedProperty &prop = *it;
+		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
+		//}
+
+		m_EditorEntity->entity->SetPropertyValue(m_NewValue.first, m_NewValue.second);
+	}
+
+
+	class AddRemoveEntityAction : IUndoableAction
+	{
+	public:
+		typedef std::pair<unsigned int, boost::any> ChangedProperty;
+		typedef std::vector<ChangedProperty> ChangedPropertyArray;
+
+		AddRemoveEntityAction(const Editor *editor, const GameMapLoader::GameMapEntityPtr &entity, bool added = true);
+	protected:
+		void undoAction();
+		void redoAction();
+
+		bool m_Added;
+		GameMapLoader::GameMapEntityPtr m_EditorEntity;
+
+		Editor *m_Editor;
+	};
+
+	void AddRemoveEntityAction::undoAction()
+	{
+		if (m_Added)
+			m_Editor->RemoveEntity(m_EditorEntity);
+		else
+			m_Editor->AddEntity(m_EditorEntity);
+	}
+
+	void AddRemoveEntityAction::redoAction()
+	{
+		if (m_Added)
+			m_Editor->AddEntity(m_EditorEntity);
+		else
+			m_Editor->RemoveEntity(m_EditorEntity);
+	}
+
 
 	Editor::Editor(InputManager *input, Renderer *renderer, EntityFactory *entity_factory, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util)
 		: m_Input(input),
@@ -574,6 +654,36 @@ namespace FusionEngine
 		MapEntityQuery callback(&out, p);
 
 		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
+	}
+
+	void Editor::AddEntity(const Editor::MapEntityPtr &map_entity)
+	{
+		addMapEntity(map_entity);
+	}
+
+	void removeFrom(Editor::MapEntityArray &container, const Editor::MapEntityPtr &map_entity)
+	{
+		for (Editor::MapEntityArray::iterator it = container.begin(), end = container.end(); it != end; ++it)
+			if (*it == map_entity)
+			{
+				container.erase(it);
+				break;
+			}
+	}
+
+	void Editor::RemoveEntity(const Editor::MapEntityPtr &map_entity)
+	{
+		if (map_entity->entity->IsPseudoEntity())
+			removeFrom(m_PseudoEntities, map_entity);
+		else
+			removeFrom(m_Entities, map_entity);
+
+		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
+			if (*it == map_entity->entity)
+			{
+				m_PlainEntityArray.erase(it);
+				break;
+			}
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

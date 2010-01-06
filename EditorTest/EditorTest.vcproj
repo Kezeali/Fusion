@@ -217,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionEditorUndo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionElementSelectableDataGrid.cpp"
 				>
 			</File>
@@ -496,6 +500,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionEditor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEditorUndo.h"
 				>
 			</File>
 			<File
