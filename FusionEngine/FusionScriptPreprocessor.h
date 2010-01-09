@@ -71,7 +71,7 @@ namespace FusionEngine
 		* lines that it removes during processing (since they will be of no use to subsequent
 		* processors.
 		*/
-		virtual void Process(std::string &code, const char *module_name, MarkedLines &lines) =0;
+		virtual void Process(std::string &code, const char *module_name, const std::string &filename, MarkedLines &lines) =0;
 
 		static void checkForMarkedLines(MarkedLines &lines, const std::string &code)
 		{

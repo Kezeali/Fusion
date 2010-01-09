@@ -31,12 +31,12 @@
 	<body template="window">
 		<div>
 			Position:
-			X: <input type="text" name="x" maxlength="5" size="6" />
-			Y: <input type="text" name="y" maxlength="5" size="6" />
+			X: <input type="text" id="x" maxlength="5" size="6" />
+			Y: <input type="text" id="y" maxlength="5" size="6" />
 		</div>
 		<div>
-			Name: <input type="text" name="name" maxlength="128" />
-			Type: <input type="text" name="type" disabled />
+			Name: <input type="text" id="name" maxlength="128" />
+			Type: <input type="text" id="type" readonly />
 		</div>
 		<datagrid selectable source="editor.type_suggestions" id="properties" onrowselected="%Properties: OnPropSelected(event);">
 			<col fields="name" width="75%">Property</col>

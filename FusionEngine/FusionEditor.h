@@ -41,11 +41,13 @@
 #include "FusionInputHandler.h"
 #include "FusionGameMapLoader.h"
 #include "FusionContextMenu.h"
+#include "FusionElementSelectableDataGrid.h"
 #include "FusionEditorUndo.h"
 
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
 #include <EMP/Core/DataSource.h>
+#include <Rocket/Controls/ElementFormControlSelect.h>
 
 #include <containers/structured_set.hpp>
 
@@ -81,24 +83,44 @@ namespace FusionEngine
 		EditorDataSource();
 		virtual ~EditorDataSource();
 
+		void SetEntityArray(const EntityArray &entities);
 		void UpdateSuggestions(const StringVector &suggestions);
-		const std::string & GetSuggestion(size_t index);
+		const std::string &GetSuggestion(size_t index);
 
 		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
 		int GetNumRows(const EMP::Core::String& table);
 
 	protected:
 		StringVector m_Suggestions;
+		const EntityArray *m_Entities;
 	};
 
-	class PropertyEditorDialog
+	class PropertyEditorDialog : public Rocket::Core::EventListener
 	{
 	public:
-		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &entity);
+		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionQueue *undo);
 
 		//! Called when, for example, an action is undone
 		void Refresh();
+
+		//! Displays the dialog
+		void Show();
+
+		void ProcessEvent(Rocket::Core::Event &ev);
+
+	protected:
+		Rocket::Core::ElementDocument *m_Document;
+		Rocket::Controls::ElementFormControlInput *m_InputX;
+		Rocket::Controls::ElementFormControlInput *m_InputY;
+		Rocket::Controls::ElementFormControlInput *m_InputName;
+		Rocket::Controls::ElementFormControlInput *m_InputType;
+		ElementSelectableDataGrid *m_GridProperties;
+
+		GameMapLoader::GameMapEntityPtr m_MapEntity;
+		UndoableActionQueue *m_Undo;
 	};
+
+	typedef std::tr1::shared_ptr<PropertyEditorDialog> PropertyEditorDialogPtr;
 
 	//! Editor system (runs the map editor interface)
 	class Editor : public System, public Rocket::Core::EventListener
@@ -141,7 +163,7 @@ namespace FusionEngine
 		void ShowProperties(const EntityPtr &entity);
 		void ShowProperties(const MapEntityPtr &entity);
 
-		void CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
+		MapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
 
 		void AddEntity(const GameMapLoader::GameMapEntityPtr &entity);
@@ -156,6 +178,8 @@ namespace FusionEngine
 
 		void SetEntityType(const std::string &type);
 		void SetEntityMode(bool pseudo);
+
+		void SetUndoMenuElement(Rocket::Controls::ElementFormControlSelect *element);
 
 		void StartEditor();
 		void StopEditor();
@@ -207,10 +231,16 @@ namespace FusionEngine
 		Vector2 m_CamVelocity;
 
 		UndoableActionQueue m_UndoableActions;
-		Rocket::Core::Element *m_UndoMenu;
+		// TODO: create a custom element to do this (so it can be placed anywhere)
+		//  - the custom element would register a listener with the Editor so that
+		//  multiple instances of the element could be updated whenever a new
+		//  undo-action is added.
+		Rocket::Controls::ElementFormControlSelect *m_UndoMenu;
+
+		typedef std::vector<PropertyEditorDialogPtr> PropertyDialogArray;
+		PropertyDialogArray m_PropertyDialogs;
 
 		Rocket::Core::ElementDocument *m_MainDocument;
-		Rocket::Core::ElementDocument *m_PropertiesDocument;
 		//Rocket::Core::ElementDocument *m_EntityListDocument;
 
 		ContextMenu *m_RightClickMenu;
@@ -239,6 +269,9 @@ namespace FusionEngine
 		GameMapLoader::GameMapEntityArray m_Entities;
 
 		IDStack m_IdStack;
+
+		void addUndoAction(const UndoableActionPtr &action);
+		void repopulateUndoMenu();
 
 		void showProperties(const MenuItemEvent &ev, const MapEntityPtr &entity);
 

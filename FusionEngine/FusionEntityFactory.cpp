@@ -892,15 +892,6 @@ namespace FusionEngine
 		m_EntityInstancers[type] = instancer;
 	}
 
-	std::string fe_getbasepath(const std::string &path)
-	{
-		std::string::size_type pathEnd = path.find_last_of("/");
-		if (pathEnd != std::string::npos)
-			return path.substr(0, pathEnd);
-		else
-			return "/";
-	}
-
 	bool EntityFactory::LoadScriptedType(const std::string &type)
 	{
 		StringMap::iterator _where = m_EntityDefinitionFileNames.find(type);
@@ -1203,6 +1194,7 @@ namespace FusionEngine
 						+ it->name + "' in " + definition->GetType() +
 						" as indicated in the <Sync> element of the xml definition file - i.e. the definition is incorrect.");
 					syncProperties.erase(it++);
+					end = syncProperties.end();
 				}
 				else
 					++it;
@@ -1233,6 +1225,7 @@ namespace FusionEngine
 						+ it->second.GetPropertyName() + "' in " + definition->GetType() +
 						" as indicated in the <Streaming> element of the xml definition file - i.e. the definition is incorrect.");
 					resources.erase(it++);
+					end = resources.end();
 				}
 				else
 					++it;

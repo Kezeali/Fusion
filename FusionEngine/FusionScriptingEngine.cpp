@@ -41,6 +41,11 @@
 
 // External
 #include <boost/functional/hash.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 
 namespace FusionEngine
@@ -55,52 +60,49 @@ namespace FusionEngine
 		IncludePreprocessor(ScriptingEngine *manager)
 			: m_Manager(manager)
 		{}
-		virtual void Process(std::string &code, const char *module_name, MarkedLines &lines);
+		virtual void Process(std::string &code, const char *module_name, const std::string &filename, MarkedLines &lines);
 
 		bool isIncludeLine(const char *code_pos);
 		// First is the beginning of the search area, last is the end of the search area
 		CharRange getIncludeFile(std::string::const_iterator first, std::string::const_iterator last);
 
-		ScriptingEngine *m_Manager; 
+		std::string resolvePath(const std::string &working_directory, const CharRange &path);
+
+		ScriptingEngine *m_Manager;
 	};
 
-	void IncludePreprocessor::Process(std::string &code, const char *module_name, ScriptPreprocessor::MarkedLines &marked)
+	void IncludePreprocessor::Process(std::string &code, const char *module_name, const std::string &filename, ScriptPreprocessor::MarkedLines &marked)
 	{
+		if (marked.empty())
+			return;
+
+		std::string workingDirectory = fe_getbasepath(filename);
+
 		std::string::size_type pos = 0;
 		unsigned int line = 0;
-		for (MarkedLines::iterator it = marked.begin(), end = marked.end(); it != end; ++it)
+		MarkedLines::const_iterator it = marked.begin(), end = marked.end();
+		while (it != end)
 		{
 			if ( it->type == '#' && isIncludeLine(code.c_str() + it->pos) )
 			{
 				CharRange range = getIncludeFile(code.begin() + it->pos+8, code.end());
-				std::string filename = std::string(range.first, range.second);
+				std::string fullPath = resolvePath(workingDirectory, range);
 
-				m_Manager->AddFile(filename, module_name);
+				m_Manager->AddFile(fullPath, module_name);
 
-				code.erase(range.first, range.second); // remove the processed line from the code
+				std::string::size_type lineEnd = code.find('\n', it->pos);
+				code.erase(it->pos, lineEnd - it->pos); // remove the processed line from the code
 				it = marked.erase(it); // Remove the marker from the markers list
+				end = marked.end();
 			}
+			else
+				++it;
 		}
 	}
 
 	bool IncludePreprocessor::isIncludeLine(const char *start)
 	{
 		return std::string("#include").compare(0, 8, start, 8) == 0;
-
-		//size_t confirmedChars = 0;
-		//static const char *compareString = "#include";
-		//while (true)
-		//{
-		//	if (*first == compareString[confirmedChars])
-		//		confirmedChars++;
-		//	else
-		//		return false;
-
-		//	if (confirmedChars == 8)
-		//		return true;
-		//}
-
-		//return false;
 	}
 
 	CharRange IncludePreprocessor::getIncludeFile(std::string::const_iterator first, std::string::const_iterator last)
@@ -114,7 +116,7 @@ namespace FusionEngine
 			if ((*pos) == '\"')
 			{
 				if (matched == 0)
-					begin = pos;
+					begin = pos+1;
 				else
 					end = pos;
 
@@ -124,6 +126,32 @@ namespace FusionEngine
 		}
 
 		return CharRange(begin, end);
+	}
+
+	std::string IncludePreprocessor::resolvePath(const std::string &working_directory, const CharRange &path)
+	{
+		if (*path.first == '/')
+			return std::string(path.first, path.second);
+
+		else
+		{
+			typedef std::vector<boost::iterator_range<std::string::iterator>> SplitResult;
+
+			StringVector currentPath;
+			boost::split(currentPath, working_directory, boost::is_any_of("/"));
+
+			StringVector pathTokens;
+			boost::split(pathTokens, path, boost::is_any_of("/"));
+			for (StringVector::iterator it = pathTokens.begin(), end = pathTokens.end(); it != end; ++it)
+			{
+				if (*it == "..")
+					currentPath.pop_back();
+				else
+					currentPath.push_back(*it);
+			}
+
+			return boost::join(currentPath, "/");
+		}
 	}
 
 	////////////
@@ -226,6 +254,11 @@ namespace FusionEngine
 
 	void ScriptingEngine::Preprocess(std::string &script, const char *module_name)
 	{
+		Preprocess(script, module_name, std::string());
+	}
+
+	void ScriptingEngine::Preprocess(std::string &script, const char *module_name, const std::string &filename)
+	{
 		ScriptPreprocessor::MarkedLines lines;
 		// Parses the script to find lines with preprocessor markers
 		ScriptPreprocessor::checkForMarkedLines(lines, script);
@@ -233,7 +266,7 @@ namespace FusionEngine
 		for (PreprocessorArray::iterator it = m_Preprocessors.begin(), end = m_Preprocessors.end();
 			it != end; ++it)
 		{
-			(*it)->Process(script, module_name, lines);
+			(*it)->Process(script, module_name, filename, lines);
 		}
 	}
 
@@ -295,7 +328,7 @@ namespace FusionEngine
 		std::string script;
 		OpenString_PhysFS(script, fe_widen(filename));
 		// Preprocess the script
-		Preprocess(script, module);
+		Preprocess(script, module, filename);
 		// Add the script to the module
 		r = GetModule(module)->AddCode(filename, script);
 		// If the script was successfully added to the module, create a new

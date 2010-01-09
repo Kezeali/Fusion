@@ -174,7 +174,7 @@ bool SetupPhysFS::add_subdirectory(const std::string &path,
 	if (!added)
 		return false;
 
-	// Ripped from PHYSFS_setSaneConfig (and converted somewhat to c++)
+	// Ripped from PHYSFS_setSaneConfig (and somewhat c++ized)
 	if (!archiveExt.empty())
 	{
 		const char *dirsep = PHYSFS_getDirSeparator();
@@ -238,42 +238,50 @@ bool SetupPhysFS::mount(const std::string &path, const std::string &mount_point,
 	if (!added)
 		return false;
 
-	// Ripped from PHYSFS_setSaneConfig (and converted somewhat to c++)
+	// Ripped from PHYSFS_setSaneConfig (and somewhat c++ized)
 	if (!archiveExt.empty())
+		added = mount_archives(path, mount_point, archiveExt, archivesFirst);
+
+	return added;
+}
+
+bool SetupPhysFS::mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool archives_first)
+{
+	const char *dirsep = PHYSFS_getDirSeparator();
+
+	char **rc = PHYSFS_enumerateFiles(path.c_str());
+	char **i;
+	size_t extlen = archive_ext.length();
+	char *ext;
+	char *arc;
+
+	bool ok = true;
+
+	for (i = rc; *i != NULL; i++)
 	{
-		const char *dirsep = PHYSFS_getDirSeparator();
-
-		char **rc = PHYSFS_enumerateFiles(path.c_str());
-		char **i;
-		size_t extlen = archiveExt.length();
-		char *ext;
-		char *arc;
-
-		for (i = rc; *i != NULL; i++)
+		size_t l = strlen(*i);
+		if ((l > extlen) && ((*i)[l - extlen - 1] == '.'))
 		{
-			size_t l = strlen(*i);
-			if ((l > extlen) && ((*i)[l - extlen - 1] == '.'))
+			ext = (*i) + (l - extlen);
+			if (platform_stricmp(ext, archive_ext.c_str()) == 0)
 			{
-				ext = (*i) + (l - extlen);
-				if (platform_stricmp(ext, archiveExt.c_str()) == 0)
+				const char *d = PHYSFS_getRealDir(*i);
+				arc = (char *)malloc(strlen(d) + strlen(dirsep) + l + 1);
+				if (arc != NULL)
 				{
-					const char *d = PHYSFS_getRealDir(*i);
-					arc = (char *)malloc(strlen(d) + strlen(dirsep) + l + 1);
-					if (arc != NULL)
-					{
-						sprintf(arc, "%s%s%s", d, dirsep, *i);
-						PHYSFS_mount(arc, mount_point.c_str(), (archivesFirst ? 0 : 1));
-						free(arc);
-					} /* if */
-				} /* if */
-			} /* if */
-		} /* for */
+					sprintf(arc, "%s%s%s", d, dirsep, *i);
+					ok = PHYSFS_mount(arc, mount_point.c_str(), (archives_first ? 0 : 1)) != 0;
+					free(arc);
+					if (!ok)
+						break;
+				}
+			}
+		}
+	}
 
-		PHYSFS_freeList(rc);
-	} // if (!archiveExt.empty())
+	PHYSFS_freeList(rc);
 
-	// If we got here we assume the addition was successful
-	return true;
+	return ok;
 }
 
 std::string SetupPhysFS::parse_path(const std::string &working_directory, const std::string &path)

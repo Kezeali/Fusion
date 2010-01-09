@@ -324,6 +324,16 @@ namespace FusionEngine
 		return result;
 	}
 
+	//! Returns the path part of the given filename-path - i.e. "/core/file.txt" returns "/core"
+	static std::string fe_getbasepath(const std::string &path)
+	{
+		std::string::size_type pathEnd = path.find_last_of("/");
+		if (pathEnd != std::string::npos)
+			return path.substr(0, pathEnd);
+		else
+			return "/";
+	}
+
 	//! toupper()-like function for C++ strings
 	/*!
 	 * Transformation is done directly to the passed object

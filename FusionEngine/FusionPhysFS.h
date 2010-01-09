@@ -173,8 +173,11 @@ static int platform_stricmp(const char *x, const char *y)
 
 		//! Mounts the given path
 		static bool mount(const std::string &path, const std::string &mount_point,
-			const std::string &archiveExt = "",
-			bool archivesFirst = true);
+			const std::string &archive_ext = "",
+			bool archives_first = true);
+
+		//! Mounts all archives found below the given path
+		static bool mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool first = false);
 
 		//! Parses the given path relative to the given directory to get an abosulte path
 		static std::string parse_path(const std::string &working_directory, const std::string &path);

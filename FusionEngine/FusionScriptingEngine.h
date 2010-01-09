@@ -166,6 +166,7 @@ namespace FusionEngine
 		void RegisterGlobalObject(const char *decl, void* ptr);
 
 		void Preprocess(std::string &script, const char *module_name);
+		void Preprocess(std::string &script, const char *module_name, const std::string &filename);
 
 		bool storeCodeString(const std::string &code, const char *section_name);
 

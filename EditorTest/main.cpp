@@ -193,10 +193,12 @@ public:
 			/////////////////////
 			// Attach module to objects that require it
 			ModulePtr module = scriptingManager->GetModule("main");
+			// Add the core code to the module
+			scriptingManager->AddFile("core/extension.as", "main");
+
 			console->SetModule(module);
 			gui->SetModule(module);
 			
-
 			script_SoundOutput->SetModule(module);
 
 			systemMgr->AddSystem(ontology);
