@@ -194,7 +194,7 @@ public:
 			// Attach module to objects that require it
 			ModulePtr module = scriptingManager->GetModule("main");
 			// Add the core code to the module
-			scriptingManager->AddFile("core/extension.as", "main");
+			scriptingManager->AddFile("core/extend.as", "main");
 
 			console->SetModule(module);
 			gui->SetModule(module);

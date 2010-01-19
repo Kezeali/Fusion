@@ -3,7 +3,7 @@
 	<link type="text/rcss" href="rkt.rcss"/>
 	<link type="text/rcss" href="invader.rcss"/>
 </head>
-<body class="window" onload="Document @doc = event.GetCurrentElement().GetOwnerDocument(); doc.GetElementById(e_String('title')).SetInnerRML(doc.GetTitle());">
+<body class="window" onload="OnWindowLoad(event);">
 	<div id="title_bar">
 		<handle move_target="#document">
 			<div id="icon"></div>

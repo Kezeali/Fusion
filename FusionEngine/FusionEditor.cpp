@@ -193,7 +193,7 @@ namespace FusionEngine
 		return 0;
 	}
 
-	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionQueue *undo)
+	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
 		: m_MapEntity(mapent),
 		m_Undo(undo)
 	{
@@ -208,9 +208,16 @@ namespace FusionEngine
 		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") );
 		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") );
 
+		m_Document->AddEventListener("change", this);
+
 		m_Document->RemoveReference();
 
 		Refresh();
+	}
+
+	PropertyEditorDialog::~PropertyEditorDialog()
+	{
+		m_Document->RemoveEventListener("change", this);
 	}
 
 	inline EMP::Core::String to_emp(const std::string &str)
@@ -220,6 +227,7 @@ namespace FusionEngine
 
 	void PropertyEditorDialog::Refresh()
 	{
+		try
 		{
 			Vector2 position = m_MapEntity->entity->GetPosition();
 			std::string value = boost::lexical_cast<std::string>(position.x);
@@ -228,12 +236,14 @@ namespace FusionEngine
 			value = boost::lexical_cast<std::string>(position.y);
 			m_InputY->SetValue( to_emp(value) );
 		}
+		catch (const boost::bad_lexical_cast &)
+		{
+		}
 
 		if (m_MapEntity->hasName)
 			m_InputName->SetValue( to_emp(m_MapEntity->entity->GetName()) );
 
 		m_InputType->SetValue( to_emp(m_MapEntity->entity->GetType()) );
-		EMP::Core::String typeval = m_InputType->GetValue();
 	}
 
 	void PropertyEditorDialog::Show()
@@ -247,31 +257,47 @@ namespace FusionEngine
 		{
 			if (ev.GetTargetElement() == m_InputX || ev.GetTargetElement() == m_InputY)
 			{
-				Vector2 position;
-				m_MapEntity->entity->SetPosition(position);
+				try
+				{
+					Vector2 position;
+					position.x = boost::lexical_cast<float>( m_InputX->GetValue().CString() );
+					position.y = boost::lexical_cast<float>( m_InputY->GetValue().CString() );
+					m_MapEntity->entity->SetPosition(position);
+				}
+				catch (const boost::bad_lexical_cast &)
+				{
+				}
 			}
 
-			if (ev.GetTargetElement() == m_InputName)
+			else if (ev.GetTargetElement() == m_InputName)
 			{
-			}
-
-			if (ev.GetTargetElement() == m_InputType)
-			{
+				const EMP::Core::String &value = m_InputName->GetValue();
+				if (!value.Empty())
+				{
+					m_MapEntity->hasName = true;
+					m_MapEntity->entity->_setName(value.CString());
+				}
+				else
+				{
+					m_MapEntity->hasName = false;
+					m_MapEntity->entity->_setName("default");
+				}
 			}
 		}
 	}
 
 	// Undoable action impl.s
-	class PropertyEditorAction;
-	typedef std::tr1::shared_ptr<PropertyEditorAction> PropertyEditorActionPtr;
-	class PropertyEditorAction : IUndoableAction
+	class ChangePropertyAction : public UndoableAction
 	{
 	public:
 		typedef std::pair<int, boost::any> ChangedProperty;
 		typedef std::vector<ChangedProperty> ChangedPropertyArray;
 
-		//PropertyEditorAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedPropertyArray &from_values, const ChangedPropertyArray &to_values);
-		PropertyEditorAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedProperty &from, const ChangedProperty &to);
+		//ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedPropertyArray &from_values, const ChangedPropertyArray &to_values);
+		ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, int property_index, const boost::any &from, const boost::any &to);
+
+		const std::string &GetTitle() const;
+
 	protected:
 		void undoAction();
 		void redoAction();
@@ -279,11 +305,28 @@ namespace FusionEngine
 		GameMapLoader::GameMapEntityPtr m_EditorEntity;
 		//ChangedPropertyArray m_OldValues;
 		//ChangedPropertyArray m_NewValues;
-		ChangedProperty m_OldValue;
-		ChangedProperty m_NewValue;
+		int m_PropertyIndex;
+		boost::any m_OldValue;
+		boost::any m_NewValue;
+
+		std::string m_Title;
 	};
 
-	void PropertyEditorAction::undoAction()
+	ChangePropertyAction::ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, int property_index, const boost::any &from, const boost::any &to)
+		: m_EditorEntity(changed_entity),
+		m_PropertyIndex(property_index),
+		m_OldValue(from),
+		m_NewValue(to)
+	{
+		m_Title = "Change [" + changed_entity->entity->GetType() + "] " + changed_entity->entity->GetName() + "." + changed_entity->entity->GetPropertyName(m_PropertyIndex);
+	}
+
+	const std::string &ChangePropertyAction::GetTitle() const
+	{
+		return m_Title;
+	}
+
+	void ChangePropertyAction::undoAction()
 	{
 		//for (ChangedPropertyArray::const_iterator it = m_OldValues.begin(), end = m_OldValues.end(); it != end; ++it)
 		//{
@@ -291,10 +334,10 @@ namespace FusionEngine
 		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
 		//}
 
-		m_EditorEntity->entity->SetPropertyValue(m_OldValue.first, m_OldValue.second);
+		m_EditorEntity->entity->SetPropertyValue(m_PropertyIndex, m_OldValue);
 	}
 
-	void PropertyEditorAction::redoAction()
+	void ChangePropertyAction::redoAction()
 	{
 		//for (ChangedPropertyArray::const_iterator it = m_NewValues.begin(), end = m_NewValues.end(); it != end; ++it)
 		//{
@@ -302,17 +345,19 @@ namespace FusionEngine
 		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
 		//}
 
-		m_EditorEntity->entity->SetPropertyValue(m_NewValue.first, m_NewValue.second);
+		m_EditorEntity->entity->SetPropertyValue(m_PropertyIndex, m_NewValue);
 	}
 
 
-	class AddRemoveEntityAction : public IUndoableAction
+	class AddRemoveEntityAction : public UndoableAction
 	{
 	public:
 		typedef std::pair<unsigned int, boost::any> ChangedProperty;
 		typedef std::vector<ChangedProperty> ChangedPropertyArray;
 
 		AddRemoveEntityAction(Editor *editor, const GameMapLoader::GameMapEntityPtr &entity, bool added = true);
+
+		const std::string &GetTitle() const;
 	protected:
 		void undoAction();
 		void redoAction();
@@ -321,14 +366,23 @@ namespace FusionEngine
 		GameMapLoader::GameMapEntityPtr m_EditorEntity;
 
 		Editor *m_Editor;
+		std::string m_Title;
 	};
 	typedef std::tr1::shared_ptr<AddRemoveEntityAction> AddRemoveEntityActionPtr;
 
-	AddRemoveEntityAction::AddRemoveEntityAction(Editor *editor, const GameMapLoader::GameMapEntityPtr &entity, bool added)
+	AddRemoveEntityAction::AddRemoveEntityAction(Editor *editor, const GameMapLoader::GameMapEntityPtr &map_entity, bool added)
 		: m_Editor(editor),
-		m_EditorEntity(entity),
+		m_EditorEntity(map_entity),
 		m_Added(added)
 	{
+		m_Title = std::string(added ? "Add " : "Remove ") + "[" + map_entity->entity->GetType() + "] ";
+		if (map_entity->hasName)
+			m_Title += map_entity->entity->GetName();
+	}
+
+	const std::string &AddRemoveEntityAction::GetTitle() const
+	{
+		return m_Title;
 	}
 
 	void AddRemoveEntityAction::undoAction()
@@ -356,7 +410,6 @@ namespace FusionEngine
 		m_Streamer(streaming_manager),
 		m_MapUtil(map_util),
 		m_MainDocument(NULL),
-		m_UndoMenu(NULL),
 		m_Enabled(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
@@ -417,10 +470,11 @@ namespace FusionEngine
 			m_MainDocument->Close();
 		m_MainDocument = NULL;
 
-		if (m_UndoMenu != NULL)
-			m_UndoMenu->RemoveReference();
-		m_UndoMenu = NULL;
-		m_UndoableActions.Clear();
+		//if (m_UndoMenu != NULL)
+		//	m_UndoMenu->RemoveReference();
+		//m_UndoMenu = NULL;
+		m_UndoManager.Clear();
+		m_UndoManager.DetachAllListeners();
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
@@ -628,7 +682,7 @@ namespace FusionEngine
 
 	void Editor::addUndoAction(const UndoableActionPtr &action)
 	{
-		m_UndoableActions.PushBack(action);
+		m_UndoManager.Add(action);
 		repopulateUndoMenu();
 	}
 
@@ -666,7 +720,7 @@ namespace FusionEngine
 
 	void Editor::ShowProperties(const GameMapLoader::GameMapEntityPtr &entity)
 	{
-		PropertyEditorDialogPtr dialog(new PropertyEditorDialog(entity, &m_UndoableActions));
+		PropertyEditorDialogPtr dialog(new PropertyEditorDialog(entity, &m_UndoManager));
 		dialog->Show();
 		m_PropertyDialogs.push_back(dialog);
 	}
@@ -817,9 +871,14 @@ namespace FusionEngine
 		m_PseudoEntityMode = pseudo;
 	}
 
-	void Editor::SetUndoMenuElement(Rocket::Controls::ElementFormControlSelect *element)
+	void Editor::AttachUndoMenu(ElementUndoMenu *element)
 	{
-		m_UndoMenu = element;
+		m_UndoManager.AttachListener(element, true);
+	}
+
+	void Editor::AttachRedoMenu(ElementUndoMenu *element)
+	{
+		m_UndoManager.AttachListener(element, false);
 	}
 
 	void Editor::StartEditor()
@@ -948,8 +1007,8 @@ namespace FusionEngine
 			asMETHOD(Editor, SetEntityMode), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
-			"void setUndoMenuElement(FormControlSelect@)",
-			asMETHOD(Editor, SetUndoMenuElement), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"void attachUndoMenu(ElementUndoMenu@)",
+			asMETHOD(Editor, AttachUndoMenu), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void enable()",

@@ -23,8 +23,9 @@
 		</style>
 		<script src="editor.as" />
 	</head>
-	<body template="window">
+	<body template="window" onload="%Editor: OnEditorWindowLoad(event);">
 		<button onclick="gui.enableDebugger(); gui.showDebugger();">Show GUI Debugger</button>
+		<undomenu reversed class="undo" id="undo_menu"/><undomenu class="redo" id="redo_menu"/>
 		<p>
 			Create Entity:
 			Type:<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChanged(event);"></input>

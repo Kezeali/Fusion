@@ -31,8 +31,8 @@
 	<body template="window">
 		<div>
 			Position:
-			X: <input type="text" id="x" maxlength="5" size="6" />
-			Y: <input type="text" id="y" maxlength="5" size="6" />
+			X: <input type="text" id="x" maxlength="15" size="10" />
+			Y: <input type="text" id="y" maxlength="15" size="10" />
 		</div>
 		<div>
 			Name: <input type="text" id="name" maxlength="128" />

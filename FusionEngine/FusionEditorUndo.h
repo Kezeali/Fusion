@@ -33,85 +33,66 @@
 #endif
 
 #include "FusionCommon.h"
+#include <boost/circular_buffer.hpp>
+
+#include "FusionEditorUndoAction.h"
+#include "FusionEditorUndoListener.h"
 
 
 namespace FusionEngine
 {
 
-	class IUndoableAction;
-	typedef std::tr1::shared_ptr<IUndoableAction> UndoableActionPtr;
-
-	class UndoableActionQueue;
-
-	//! Item in the undo list
-	/*!
-	* Implemented as a simple linked list, altho each item in the undo menu holds
-	* a pointer to an action so the list only needs to be traversed when actually
-	* undoing / redoing actions.
-	*/
-	class IUndoableAction
-	{
-		friend class UndoableActionQueue;
-	public:
-		//! Calls the implementation's undoAction() on this and all subsequent items in the list
-		void Undo();
-		//! Calls the implementation's redoAction() on this and all subsequent items in the list
-		/*!
-		* Obvously this can only be called if Undo() has been called on this or a previous action
-		*/
-		void Redo();
-
-		bool IsUndone() const;
-
-		// Linked list stuff:
-		//! Removes this and all following items from the list
-		void Remove();
-
-	protected:
-		//! Implentation should undo the action that this object represents
-		/*!
-		* The implementation can assume that the current state is
-		* the same as it was just after this object was created
-		* (the IUndoableAction#Undo() method should ensure this.)
-		*/
-		virtual void undoAction() =0;
-		//! Implentation should undo the action that this object represents
-		/*!
-		* The implementation can assume that the current state is
-		* the same as it was just before this object was created
-		*/
-		virtual void redoAction() =0;
-
-		// Didn't use pseudo-hungarian notation for these (m_...) because I think it reads better for linked list vars
-		//  In fact, phung (as I call it among friends) doesn't read very well anywhere, I just like knowing when
-		//  vars are local / member on sight and this is how I've gotten used to doing it - i.e.
-		//  camelCase, with first char lowercase, for local; underscore_spaces for function parameters; and m_PToTheH for 
-		//  member vars.
-		//  Thank you for your time.
-		// Yours,
-		// Elliot Hayward
-		std::tr1::weak_ptr<IUndoableAction> previous;
-		UndoableActionPtr next;
-		// Set to true when Undo() is called on this object
-		bool m_Undone;
-	};
-
-	//! A simple container - list of undoable actions
-	class UndoableActionQueue
+	//! Add, undo, redo actions
+	class UndoableActionManager
 	{
 	public:
-		void SetMaxLength(unsigned int length);
-		void PushBack(const UndoableActionPtr &action);
+		//! Changes the capacity of the container
+		void SetMaxActions(unsigned int capacity);
+		//! Adds a new action
+		/*!
+		* All actions subsequent to the most recent action that hasn't been undone
+		* (m_CurrentAction) will be dropped.
+		*/
+		void Add(const UndoableActionPtr &action);
+		//! Removes the action at the given index
+		void Remove(unsigned int action);
+		//! Removes all actions in the container (clears the undo list).
 		void Clear();
 
+		//! Calls the undo method of the action at the given index
+		void Undo(unsigned int action);
+		//! Calls Undo(m_CurrentActions) to undo the most recent action
+		void Undo();
+		//! Calls the redo method of the action at the given index
+		void Redo(unsigned int action);
+		//! Calls Redo(m_CurrentAction+1) to redo the last undone action
+		void Redo();
+
+		//! Attaches an Undo (or redo) listener (e.g. an undo menu GUI element.)
+		void AttachListener(UndoListener *listener, bool undo = true);
+		//! Detach
+		void DetachListener(UndoListener *listener, bool undo = true);
+
+		void DetachAllListeners();
+
 	protected:
-		void eraseUndoneActions();
+		typedef boost::circular_buffer<UndoableActionPtr> UndoableActionBuffer;
 
-		unsigned int m_MaxLength;
-		unsigned int m_Length;
+		UndoableActionBuffer m_Actions;
+		// The current action is the most recent action that hasn't been undone
+		UndoableActionBuffer::size_type m_CurrentAction;
 
-		UndoableActionPtr m_OldestAction;
-		UndoableActionPtr m_NewestAction;
+		typedef std::list<UndoListener*> UndoListenerList;
+		UndoListenerList m_UndoListeners;
+		UndoListenerList m_RedoListeners;
+
+		//! Adds the given action to the given list of listeners
+		void invokeActionAdd(const UndoListenerList &list, const UndoableActionPtr &action);
+		//! Removes the indicated indexes from the given list
+		/*!
+		* If the given list is m_RedoListeners, the 'first' value will be adjusted accordingly (based on m_CurrentAction)
+		*/
+		void invokeActionRemove(const FusionEngine::UndoableActionManager::UndoListenerList &list, unsigned int first, UndoListener::Direction direction = UndoListener::FORWARD);
 	};
 
 }

@@ -42,6 +42,7 @@
 #include "FusionGameMapLoader.h"
 #include "FusionContextMenu.h"
 #include "FusionElementSelectableDataGrid.h"
+#include "FusionElementUndoMenu.h"
 #include "FusionEditorUndo.h"
 
 #include <Rocket/Core/EventListener.h>
@@ -98,7 +99,8 @@ namespace FusionEngine
 	class PropertyEditorDialog : public Rocket::Core::EventListener
 	{
 	public:
-		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionQueue *undo);
+		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionManager *undo);
+		~PropertyEditorDialog();
 
 		//! Called when, for example, an action is undone
 		void Refresh();
@@ -117,7 +119,7 @@ namespace FusionEngine
 		ElementSelectableDataGrid *m_GridProperties;
 
 		GameMapLoader::GameMapEntityPtr m_MapEntity;
-		UndoableActionQueue *m_Undo;
+		UndoableActionManager *m_Undo;
 	};
 
 	typedef std::tr1::shared_ptr<PropertyEditorDialog> PropertyEditorDialogPtr;
@@ -179,7 +181,8 @@ namespace FusionEngine
 		void SetEntityType(const std::string &type);
 		void SetEntityMode(bool pseudo);
 
-		void SetUndoMenuElement(Rocket::Controls::ElementFormControlSelect *element);
+		void AttachUndoMenu(ElementUndoMenu *element);
+		void AttachRedoMenu(ElementUndoMenu *element);
 
 		void StartEditor();
 		void StopEditor();
@@ -230,12 +233,8 @@ namespace FusionEngine
 
 		Vector2 m_CamVelocity;
 
-		UndoableActionQueue m_UndoableActions;
-		// TODO: create a custom element to do this (so it can be placed anywhere)
-		//  - the custom element would register a listener with the Editor so that
-		//  multiple instances of the element could be updated whenever a new
-		//  undo-action is added.
-		Rocket::Controls::ElementFormControlSelect *m_UndoMenu;
+		UndoableActionManager m_UndoManager;
+		//ElementUndoMenu *m_UndoMenu;
 
 		typedef std::vector<PropertyEditorDialogPtr> PropertyDialogArray;
 		PropertyDialogArray m_PropertyDialogs;

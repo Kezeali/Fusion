@@ -1,48 +1,16 @@
-//class EditorDataSource : IDataSource
-//{
-//	EditorDataSource()
-//	{
-//	}
-//	~EditorDataSource()
-//	{
-//	}
-//
-//	StringArray _suggestions;
-//
-//	void UpdateSuggestions(const string &in search)
-//	{
-//		editor.searchTypes(_suggestions, search);
-//	}
-//
-//	void GetRow(StringList&out row, const e_String&in table, int row_index, const StringList&in columns)
-//	{
-//		if (row_index >= _suggestions.size())
-//			return;
-//
-//		if (table == e_String("type_suggestions"))
-//		{
-//			for (uint i = 0; i < columns.size(); i++)
-//			{
-//				if (columns[i] == e_String("name"))
-//				{
-//					row.push_back(e_String(_suggestions[row_index]));
-//				}
-//			}
-//		}
-//	}
-//
-//	int GetNumRows(const e_String&in table)
-//	{
-//		if (table == e_String("type_suggestions"))
-//		{
-//			return _suggestions.size();
-//		}
-//
-//		return 0;
-//	}
-//}
+void OnEditorWindowLoad(Event@ event)
+{
+	Document @doc = event.GetCurrentElement().GetOwnerDocument();
+	doc.GetElementById(e_String("title")).SetInnerRML(doc.GetTitle());
 
-//EditorDataSource@ ed = EditorDataSource();
+	ElementUndoMenu @undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	if (undoMenu !is null)
+		editor.attachUndoMenu(undoMenu);
+
+	@undoMenu = doc.GetElementById(e_String("redo_menu"));
+	if (undoMenu !is null)
+		editor.attachUndoMenu(undoMenu);
+}
 
 void OnEntityTypeChanged(Event@ event)
 {
