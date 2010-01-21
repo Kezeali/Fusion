@@ -46,6 +46,12 @@ namespace FusionEngine
 	class UndoableActionManager
 	{
 	public:
+		//! Constructor
+		/*!
+		* \param[in] capacity Sets the maximum number of undoable actions to store
+		*/
+		UndoableActionManager(unsigned int capacity);
+
 		//! Changes the capacity of the container
 		void SetMaxActions(unsigned int capacity);
 		//! Adds a new action
@@ -60,18 +66,26 @@ namespace FusionEngine
 		void Clear();
 
 		//! Calls the undo method of the action at the given index
+		/*!
+		* Action 0 is the oldest action still on the buffer, higher action indexes are more recent.
+		*/
 		void Undo(unsigned int action);
 		//! Calls Undo(m_CurrentActions) to undo the most recent action
 		void Undo();
 		//! Calls the redo method of the action at the given index
+		/*!
+		* Action 0 is the action most recently added to the list, and is the oldest action in the list.
+		* In other words, the redoable actions are still indexed by their actual age as actions, not by their
+		* age as undone actions.
+		*/
 		void Redo(unsigned int action);
 		//! Calls Redo(m_CurrentAction+1) to redo the last undone action
 		void Redo();
 
 		//! Attaches an Undo (or redo) listener (e.g. an undo menu GUI element.)
-		void AttachListener(UndoListener *listener, bool undo = true);
+		void AttachListener(UndoListener *listener, bool undo);
 		//! Detach
-		void DetachListener(UndoListener *listener, bool undo = true);
+		void DetachListener(UndoListener *listener, bool undo);
 
 		void DetachAllListeners();
 
@@ -80,7 +94,7 @@ namespace FusionEngine
 
 		UndoableActionBuffer m_Actions;
 		// The current action is the most recent action that hasn't been undone
-		UndoableActionBuffer::size_type m_CurrentAction;
+		/*UndoableActionBuffer::size_type*/int m_CurrentAction;
 
 		typedef std::list<UndoListener*> UndoListenerList;
 		UndoListenerList m_UndoListeners;
@@ -92,7 +106,11 @@ namespace FusionEngine
 		/*!
 		* If the given list is m_RedoListeners, the 'first' value will be adjusted accordingly (based on m_CurrentAction)
 		*/
-		void invokeActionRemove(const FusionEngine::UndoableActionManager::UndoListenerList &list, unsigned int first, UndoListener::Direction direction = UndoListener::FORWARD);
+		void invokeActionRemove(const UndoListenerList &list, unsigned int first, UndoListener::Direction direction = UndoListener::FORWARD);
+		void invokeActionRemoveRawIndex(const UndoListenerList &list, unsigned int first, UndoListener::Direction direction = UndoListener::FORWARD);
+
+		//! Clears the given list
+		void invokeActionRemoveAll(const UndoListenerList &list);
 	};
 
 }

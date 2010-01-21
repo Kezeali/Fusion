@@ -1,15 +1,26 @@
-void OnEditorWindowLoad(Event@ event)
+ElementUndoMenu @editor_undoMenu = null;
+ElementUndoMenu @editor_redoMenu = null;
+
+void OnUndo(Event@ event)
 {
-	Document @doc = event.GetCurrentElement().GetOwnerDocument();
-	doc.GetElementById(e_String("title")).SetInnerRML(doc.GetTitle());
+	if (editor_undoMenu is null)
+	{
+		Document @doc = event.GetCurrentElement().GetOwnerDocument();
+		@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	}
 
-	ElementUndoMenu @undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
-	if (undoMenu !is null)
-		editor.attachUndoMenu(undoMenu);
+	editor.undo(editor_undoMenu.GetSelection());
+}
 
-	@undoMenu = doc.GetElementById(e_String("redo_menu"));
-	if (undoMenu !is null)
-		editor.attachUndoMenu(undoMenu);
+void OnRedo(Event@ event)
+{
+	if (editor_redoMenu is null)
+	{
+		Document @doc = event.GetCurrentElement().GetOwnerDocument();
+		@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
+	}
+
+	editor.redo(editor_redoMenu.GetSelection());
 }
 
 void OnEntityTypeChanged(Event@ event)
@@ -33,7 +44,7 @@ void OnSelected(Event@ event)
 
 	string type = editor.getSuggestion(index);
 
-	FormControlInput@ element = cast<FormControlInput>( module_document.GetElementById(e_String("entity_type")) );
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( module_document.GetElementById(e_String("entity_type")) );
 	if (element !is null)
 	{
 		element.SetValue(e_String(type));

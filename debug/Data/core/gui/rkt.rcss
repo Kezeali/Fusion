@@ -17,6 +17,11 @@ h1
 	display: block;
 }
 
+h2
+{
+	display: block;
+}
+
 em
 {
 	font-style: italic;

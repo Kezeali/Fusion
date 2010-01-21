@@ -23,24 +23,28 @@
 		</style>
 		<script src="editor.as" />
 	</head>
-	<body template="window" onload="%Editor: OnEditorWindowLoad(event);">
+	<body template="window" onload="OnEditorWindowLoad(event);">
 		<button onclick="gui.enableDebugger(); gui.showDebugger();">Show GUI Debugger</button>
-		<undomenu reversed class="undo" id="undo_menu"/><undomenu class="redo" id="redo_menu"/>
+		<br/>
+		<undomenu reversed class="undo" id="undo_menu" onchange="%Editor: OnUndo(event);"/>
+		<undomenu class="redo" id="redo_menu" onchange="%Editor: OnRedo(event);"/>
 		<p>
-			Create Entity:
+			<h2>Create Entity:</h2>
 			Type:<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChanged(event);"></input>
 			Pseudo-Entity:<input type="checkbox" id="pseudo_ent" checked onclick="%Editor: OnClickPseudoCheckbox(event);"></input>
 			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%Editor: OnSelected(event);">
 				<col fields="name" width="75%">Types</col>
 			</datagrid>
 		</p>
-		<form onsubmit="%Editor: SubmitSaveOrLoad(event);">
-			File name:
-			<input type="text" name="filename" />
-			<input type="submit" value="load">Load</input>
-			<input type="submit" value="save">Save</input>
-			<input type="submit" value="comple">Compile</input>
-		</form>
+		<p>
+			<form onsubmit="%Editor: SubmitSaveOrLoad(event);">
+				File name:
+				<input type="text" name="filename" />
+				<input type="submit" value="load">Load</input>
+				<input type="submit" value="save">Save</input>
+				<input type="submit" value="comple">Compile</input>
+			</form>
+		</p>
 		<button onclick="system.quit();">Quit</button>
 	</body>
 </rml>

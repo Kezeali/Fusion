@@ -60,25 +60,44 @@ namespace FusionEngine
 				Remove(i);
 	}
 
-	void ElementUndoMenu::OnActionAdd(const UndoableActionPtr &action)
+	void ElementUndoMenu::OnActionAdd(const UndoableActionPtr &action, bool to_end)
 	{
-		Add(action->GetTitle().c_str(), action->GetTitle().c_str());
+		if (to_end)
+			Add(action->GetTitle().c_str(), action->GetTitle().c_str());
+		else
+			Add(action->GetTitle().c_str(), action->GetTitle().c_str(), 0);
 	}
 
 	void ElementUndoMenu::OnActionRemove(unsigned int first, UndoListener::Direction direction)
 	{
+		if (GetNumOptions() == 0)
+			return;
+
 		if (direction == UndoListener::NONE)
 			Remove(first);
 		else if (direction == UndoListener::FORWARD)
 		{
+			if (first == 0)
+			{
+				RemoveAll();
+				return;
+			}
 			// Remove from the given index to the end of the list
 			for (unsigned int i = GetNumOptions()-1; i >= first; --i)
 				Remove(i);
 		}
 		else // REVERSE
+		{
 			// Remove from the given index to the beginning of the list
-			for (unsigned int i = first; i >= 0; --i)
+			for (unsigned int i = first; i > 0; i--)
 				Remove(i);
+			Remove(0);
+		}
+	}
+
+	void ElementUndoMenu::ProcessEvent(Rocket::Core::Event& ev)
+	{
+		Rocket::Controls::ElementFormControlSelect::ProcessEvent(ev);
 	}
 
 	void ElementUndoMenu::RegisterElement()
@@ -91,7 +110,6 @@ namespace FusionEngine
 	void registerElementFormControlSelectMembers(asIScriptEngine *engine)
 	{
 		int r;
-		// The original Add() method from the official lib.
 		r = engine->RegisterObjectMethod("ElementUndoMenu", "int Add(const e_String &in, const e_String &in, int, bool)",
 			asMETHODPR(Rocket::Controls::ElementFormControlSelect, Add, (const EMP::Core::String&, const EMP::Core::String&, int, bool), int), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("ElementUndoMenu", "void Remove(int)",
@@ -109,10 +127,9 @@ namespace FusionEngine
 
 	void ElementUndoMenu::Register(asIScriptEngine *engine)
 	{
-		int r;
 		using namespace Rocket::AngelScript::_registration_utils;
-		registerElementMembers<Rocket::Core::Element>(engine, "ElementUndoMenu");
 		registerType::referenceCountable<ElementUndoMenu>(engine, "ElementUndoMenu");
+		registerElementMembers<Rocket::Core::Element>(engine, "ElementUndoMenu");
 
 		{
 			using namespace ScriptUtils::Inheritance;

@@ -34,6 +34,13 @@
 namespace FusionEngine
 {
 
+	UndoableActionManager::UndoableActionManager(unsigned int cap)
+		: m_CurrentAction(-1)
+	{
+		FSN_ASSERT(cap > 0);
+		m_Actions.set_capacity(cap);
+	}
+
 	void UndoableActionManager::SetMaxActions(unsigned int capacity)
 	{
 		FSN_ASSERT(capacity > 0);
@@ -43,29 +50,17 @@ namespace FusionEngine
 			m_CurrentAction -= m_Actions.capacity() - capacity;
 
 		m_Actions.rset_capacity(capacity);
-
-		// inform listeners
-		//for (UndoListenerList::const_iterator it = m_UndoListeners.begin(), end = m_UndoListeners.end(); it != end; ++it)
-		//{
-		//	const UndoListener *listener = *it;
-		//	listener->OnSetMaxActions(capacity);
-		//}
-		//for (UndoListenerList::const_iterator it = m_RedoListeners.begin(), end = m_RedoListeners.end(); it != end; ++it)
-		//{
-		//	const UndoListener *listener = *it;
-		//	listener->OnSetMaxActions(capacity);
-		//}
 	}
 
 	void UndoableActionManager::Add(const UndoableActionPtr &action)
 	{
 		// Erase undone actions (m_CurrentAction is the most recent action that hasn't been undone)
-		if (m_CurrentAction != m_Actions.size()-1)
+		if (!m_Actions.empty() && m_CurrentAction < m_Actions.size()-1)
 		{
-			m_Actions.erase(m_Actions.begin()+m_CurrentAction+1);
+			m_Actions.erase(m_Actions.begin()+m_CurrentAction+1, m_Actions.end());
 		}
 		// Remove all redo items
-		invokeActionRemove(m_RedoListeners, 0);
+		invokeActionRemoveAll(m_RedoListeners);
 
 		// Remove the oldest undo action from the menu if it will be dropped out of the buffer
 		if (m_Actions.size() == m_Actions.capacity())
@@ -85,37 +80,40 @@ namespace FusionEngine
 		if (!m_Actions[action]->IsUndone())
 		{
 			invokeActionRemove(m_UndoListeners, action);
-			invokeActionRemove(m_RedoListeners, 0);
+			invokeActionRemoveAll(m_RedoListeners);
 		}
 		else
 			invokeActionRemove(m_RedoListeners, action);
 
 		m_Actions.erase(m_Actions.begin()+action, m_Actions.end());
 
-		if (action > 0)
+		//if (action > 0)
 			m_CurrentAction = action-1;
-		else
-			m_CurrentAction = 0;
+		//else
+		//	m_CurrentAction = 0;
 	}
 
 	void UndoableActionManager::Clear()
 	{
-		invokeActionRemove(m_UndoListeners, 0);
-		invokeActionRemove(m_RedoListeners, 0);
+		invokeActionRemoveAll(m_UndoListeners);
+		invokeActionRemoveAll(m_RedoListeners);
 
 		m_Actions.clear();
-		m_CurrentAction = 0;
+		m_CurrentAction = -1;
 	}
 
-	void UndoableActionManager::Undo(unsigned int action)
+	void UndoableActionManager::Undo(unsigned int action_index)
 	{
-		FSN_ASSERT_MSG(action < m_Actions.size(), "Given index does not exist");
+		FSN_ASSERT_MSG(action_index < m_Actions.size(), "Given index does not exist");
+
+		if (m_CurrentAction < 0)
+			return; // nothing to undo
 
 		// The given action onward are no longer in the undo list
-		invokeActionRemove(m_UndoListeners, action);
+		invokeActionRemove(m_UndoListeners, action_index);
 
-		// Call undo, and add the actions to the redo list
-		for (UndoableActionBuffer::size_type i = m_Actions.size()-1; i >= action; --i)
+		// Call undo on each action taken since the given one, and add the actions to the redo list
+		for (UndoableActionBuffer::size_type i = m_CurrentAction+1; i-- > action_index;)
 		{
 			UndoableActionPtr &action = m_Actions[i];
 			action->Undo();
@@ -123,12 +121,14 @@ namespace FusionEngine
 		}
 
 		// Update the current action index
-		m_CurrentAction = (action > 0 ? (action-1) : 0);
+		//m_CurrentAction = (action_index > 0 ? (action_index-1) : 0);
+		m_CurrentAction = action_index-1;
 	}
 
 	void UndoableActionManager::Undo()
 	{
-		FSN_ASSERT_MSG(!m_Actions.empty(), "Given index does not exist");
+		if (m_Actions.empty() || m_CurrentAction < 0)
+			return;
 		// Remove the current action from the undo list
 		invokeActionRemove(m_UndoListeners, m_CurrentAction);
 
@@ -138,46 +138,47 @@ namespace FusionEngine
 		invokeActionAdd(m_RedoListeners, action);
 
 		// Update the current action index
-		if (m_CurrentAction != 0)
+		//if (m_CurrentAction != 0)
 			--m_CurrentAction;
-		else
-			m_CurrentAction = 0;
+		//else
+		//	m_CurrentAction = 0;
 	}
 
-	void UndoableActionManager::Redo(unsigned int action)
+	void UndoableActionManager::Redo(unsigned int redo_index)
 	{
-		FSN_ASSERT_MSG(action < m_Actions.size(), "Given index does not exist");
+		// Translate the redo-index to the actual index within the unified buffer
+		unsigned int action_index = redo_index + m_CurrentAction+1;
 
-		if (action <= m_CurrentAction)
-			return; // the action hasn't been undone
+		FSN_ASSERT_MSG(action_index < m_Actions.size(), "Given index does not exist");
 
 		// The given action and earlier are no longer in the redo list
-		invokeActionRemove(m_RedoListeners, action, UndoListener::REVERSE);
+		invokeActionRemoveRawIndex(m_RedoListeners, redo_index, UndoListener::REVERSE);
 
-		// Call redo, and add the actions to the redo list
-		for (UndoableActionBuffer::size_type i = m_Actions.size()-1; i >= action; --i)
+		// Call redo on each undone action leading up to the given one, and add the actions to the redo list
+		for (UndoableActionBuffer::size_type i = m_CurrentAction+1; i <= action_index; ++i)
 		{
 			UndoableActionPtr &action = m_Actions[i];
-			action->Undo();
-			invokeActionAdd(m_RedoListeners, action);
+			action->Redo();
+			invokeActionAdd(m_UndoListeners, action);
 		}
 
 		// Update the current action index
-		m_CurrentAction = (action < m_Actions.size()-1 ? (action+1) : m_Actions.size()-1);
+		m_CurrentAction = action_index;
 	}
 
 	void UndoableActionManager::Redo()
 	{
-		FSN_ASSERT_MSG(m_Actions.empty(), "Given index does not exist");
+		if (m_Actions.empty())
+			return;
 
 		if (m_CurrentAction == m_Actions.size()-1)
-			return; // the action hasn't been undone
+			return; // there are no undone actions
 
 		// The given action and earlier are no longer in the redo list
-		invokeActionRemove(m_RedoListeners, m_CurrentAction, UndoListener::REVERSE);
+		invokeActionRemove(m_RedoListeners, m_CurrentAction+1, UndoListener::REVERSE);
 
-		UndoableActionPtr &action = m_Actions[m_CurrentAction];
-		action->Undo();
+		UndoableActionPtr &action = m_Actions[m_CurrentAction+1];
+		action->Redo();
 		invokeActionAdd(m_RedoListeners, action);
 
 		// Update the current action index
@@ -190,8 +191,6 @@ namespace FusionEngine
 			m_UndoListeners.push_back(listener);
 		else
 			m_RedoListeners.push_back(listener);
-
-		//listener->OnSetMaxActions(m_Actions.capacity())
 	}
 
 	void UndoableActionManager::DetachListener(FusionEngine::UndoListener *listener, bool undo)
@@ -237,27 +236,41 @@ namespace FusionEngine
 		m_RedoListeners.clear();
 	}
 
-	void UndoableActionManager::invokeActionAdd(const FusionEngine::UndoableActionManager::UndoListenerList &list, const UndoableActionPtr &action)
+	void UndoableActionManager::invokeActionAdd(const UndoableActionManager::UndoListenerList &list, const UndoableActionPtr &action)
 	{
 		for (UndoListenerList::const_iterator it = list.begin(), end = list.end(); it != end; ++it)
 		{
 			UndoListener *listener = *it;
-			listener->OnActionAdd(action);
+			listener->OnActionAdd(action, list == m_UndoListeners); // Tells undo-listeners to add to the back, redo-listeners to add to the front
 		}
 	}
 
-	void UndoableActionManager::invokeActionRemove(const FusionEngine::UndoableActionManager::UndoListenerList &list, unsigned int first, UndoListener::Direction direction)
+	void UndoableActionManager::invokeActionRemove(const UndoableActionManager::UndoListenerList &list, unsigned int first, UndoListener::Direction direction)
 	{
 		if (list == m_RedoListeners)
 		{
-			FSN_ASSERT(first > m_CurrentAction);
+			if (first <= m_CurrentAction)
+				return;
 			first -= m_CurrentAction+1;
 		}
+		invokeActionRemoveRawIndex(list, first, direction);
+	}
 
+	void UndoableActionManager::invokeActionRemoveRawIndex(const UndoableActionManager::UndoListenerList &list, unsigned int first, UndoListener::Direction direction)
+	{
 		for (UndoListenerList::const_iterator it = list.begin(), end = list.end(); it != end; ++it)
 		{
 			UndoListener *listener = *it;
 			listener->OnActionRemove(first, direction);
+		}
+	}
+
+	void UndoableActionManager::invokeActionRemoveAll(const UndoableActionManager::UndoListenerList &list)
+	{
+		for (UndoListenerList::const_iterator it = list.begin(), end = list.end(); it != end; ++it)
+		{
+			UndoListener *listener = *it;
+			listener->OnActionRemove(0, UndoListener::FORWARD);
 		}
 	}
 

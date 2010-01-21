@@ -28,6 +28,7 @@
 #include "../FusionEngine/FusionResourceManager.h"
 #include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionScriptingEngine.h"
+
 // Script Type Registration
 //#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
@@ -37,6 +38,7 @@
 #include "../FusionEngine/FusionScriptedEntity.h"
 #include "../FusionEngine/FusionRenderer.h"
 #include "../FusionEngine/FusionScriptSound.h"
+#include "../FusionEngine/FusionElementUndoMenu.h"
 
 #include "../FusionEngine/FusionClientOptions.h"
 
@@ -114,6 +116,7 @@ public:
 			Viewport::Register(asEngine);
 			StreamingManager::Register(asEngine);
 			OntologicalSystem::Register(asEngine);
+			ElementUndoMenu::Register(asEngine);
 			Editor::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 
@@ -187,6 +190,7 @@ public:
 			// Init GUI
 			gui->Initialise();
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
+			ElementUndoMenu::RegisterElement();
 
 			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 			

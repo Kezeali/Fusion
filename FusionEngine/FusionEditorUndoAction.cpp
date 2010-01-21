@@ -34,6 +34,10 @@
 namespace FusionEngine
 {
 
+	UndoableAction::UndoableAction()
+		: m_Undone(false)
+	{}
+
 	void UndoableAction::Undo()
 	{
 		if (IsUndone())

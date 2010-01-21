@@ -121,6 +121,19 @@ h1
 	shadow-color: black;
 }
 
+h2
+{
+	margin-top: 0.3em;
+	margin-bottom: 0.1em;
+
+	text-align: left;
+	font-weight: bold;
+
+	shadow-font-effect: shadow;
+	shadow-offset: 1px 1px;
+	shadow-color: black;
+}
+
 
 
 input,
@@ -192,7 +205,8 @@ input.text
 
 input.text,
 select,
-dataselect
+dataselect,
+undomenu
 {
 	color: black;
 	font-size: 13;
@@ -245,6 +259,50 @@ dataselect
 	height: 37px;
 }
 
+undomenu
+{
+	width: 38px;
+	height: 32px;
+	
+	padding: 12px 0px 0px 10px;
+	
+	background-decorator: tiled-horizontal;
+	background-left-image: invader.png 162px 192px 176px 223px;
+	background-center-image: invader.png stretch 176px 192px 177px 223px;
+}
+
+undomenu selectvalue
+{
+	width: 16px;
+	margin-right: 10px;
+	
+	height: 16px;
+	
+	background-decorator: image;
+	background-image: undo_16x16.png;
+	background-position: 0px 20px;
+}
+
+undomenu.redo selectvalue
+{
+	width: 16;
+	margin-right: 10px;
+	
+	height: 16px;
+	
+	background-decorator: image;
+	background-image: redo_16x16.png;
+}
+
+undomenu selectarrow
+{
+	width: 10px;
+	height: 18px;
+	
+	icon-decorator: image;
+	icon-image: invader.png 307px 192px 337px 229px;
+}
+
 select selectvalue,
 dataselect selectvalue
 {
@@ -275,7 +333,8 @@ dataselect selectarrow
 }
 
 select selectarrow:hover,
-dataselect selectarrow:hover
+dataselect selectarrow:hover,
+undomenu selectarrow:hover
 {
 	icon-image-t: 230px 267px;
 }
@@ -283,13 +342,16 @@ dataselect selectarrow:hover
 select selectarrow:active,
 select selectarrow:checked,
 dataselect selectarrow:active,
-dataselect selectarrow:checked
+dataselect selectarrow:checked,
+undomenu selectarrow:active,
+undomenu selectarrow:checked
 {
 	icon-image-t: 268px 305px;
 }
 
 select selectbox,
-dataselect selectbox
+dataselect selectbox,
+undomenu selectbox
 {
 	margin-left: 1px;
 	margin-top: -7px;
@@ -299,6 +361,7 @@ dataselect selectbox
 
 select selectbox,
 dataselect selectbox,
+undomenu selectbox,
 datagrid datagridbody
 {
 	background-decorator: tiled-box;
@@ -313,7 +376,8 @@ datagrid datagridbody
 }
 
 select selectbox option,
-dataselect selectbox option
+dataselect selectbox option,
+undomenu selectbox option
 {
 	width: auto;
 	padding-left: 3px;
@@ -321,13 +385,15 @@ dataselect selectbox option
 
 select selectbox option:nth-child(even),
 dataselect selectbox option:nth-child(even),
+undomenu selectbox option:nth-child(even),
 datagrid datagridrow:nth-child(even)
 {
 	background: #FFFFFFA0;
 }
 
 select selectbox option:hover,
-dataselect selectbox option:hover
+dataselect selectbox option:hover,
+undomenu selectbox option:hover
 {
 	background: #FF5D5D;
 }

@@ -49,7 +49,7 @@ namespace FusionEngine
 			REVERSE // Delete the given index and lower
 		};
 		//virtual void OnSetMaxActions(unsigned int max) =0;
-		virtual void OnActionAdd(const UndoableActionPtr &action) =0;
+		virtual void OnActionAdd(const UndoableActionPtr &action, bool to_end) =0;
 		virtual void OnActionRemove(unsigned int first, Direction direction) =0;
 	};
 

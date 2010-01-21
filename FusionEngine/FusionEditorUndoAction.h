@@ -53,6 +53,8 @@ namespace FusionEngine
 	{
 		friend class UndoableActionManager;
 	public:
+		UndoableAction();
+
 		virtual const std::string &GetTitle() const = 0;
 
 		//! Calls the implementation's undoAction() and marks this action as undone

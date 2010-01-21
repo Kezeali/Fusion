@@ -166,11 +166,13 @@ namespace FusionEngine
 		void ShowProperties(const MapEntityPtr &entity);
 
 		MapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
+
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
 
 		void AddEntity(const GameMapLoader::GameMapEntityPtr &entity);
 		void RemoveEntity(const GameMapLoader::GameMapEntityPtr &entity);
 
+		// The following methods are primarily for scripting use
 		//! Returns entity-tyes beginning with...
 		void LookUpEntityType(StringVector &results, const std::string &search_term);
 		//! Updates the EditorDataSource with the results of the look up on the given name
@@ -183,6 +185,11 @@ namespace FusionEngine
 
 		void AttachUndoMenu(ElementUndoMenu *element);
 		void AttachRedoMenu(ElementUndoMenu *element);
+
+		void Undo();
+		void Redo();
+		void Undo(unsigned int index);
+		void Redo(unsigned int index);
 
 		void StartEditor();
 		void StopEditor();

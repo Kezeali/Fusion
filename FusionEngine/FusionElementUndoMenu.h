@@ -50,7 +50,7 @@ namespace FusionEngine
 		virtual ~ElementUndoMenu();
 
 		void OnSetMaxActions(unsigned int max);
-		void OnActionAdd(const UndoableActionPtr &action);
+		void OnActionAdd(const UndoableActionPtr &action, bool to_end);
 		void OnActionRemove(unsigned int first, UndoListener::Direction direction);
 
 		//! So rad it adds in reverse
@@ -63,7 +63,7 @@ namespace FusionEngine
 	protected:
 		unsigned int m_MaxActions;
 
-		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList& changed_attributes);
+		//virtual void OnAttributeChange(const Rocket::Core::AttributeNameList& changed_attributes);
 
 		virtual void ProcessEvent(Rocket::Core::Event& ev);
 

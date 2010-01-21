@@ -410,6 +410,7 @@ namespace FusionEngine
 		m_Streamer(streaming_manager),
 		m_MapUtil(map_util),
 		m_MainDocument(NULL),
+		m_UndoManager(256),
 		m_Enabled(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
@@ -881,6 +882,26 @@ namespace FusionEngine
 		m_UndoManager.AttachListener(element, false);
 	}
 
+	void Editor::Undo()
+	{
+		m_UndoManager.Undo();
+	}
+
+	void Editor::Redo()
+	{
+		m_UndoManager.Redo();
+	}
+
+	void Editor::Undo(unsigned int index)
+	{
+		m_UndoManager.Undo(index);
+	}
+
+	void Editor::Redo(unsigned int index)
+	{
+		m_UndoManager.Redo(index);
+	}
+
 	void Editor::StartEditor()
 	{
 		Enable();
@@ -1009,6 +1030,22 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Editor",
 			"void attachUndoMenu(ElementUndoMenu@)",
 			asMETHOD(Editor, AttachUndoMenu), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"void attachRedoMenu(ElementUndoMenu@)",
+			asMETHOD(Editor, AttachRedoMenu), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void undo()",
+			asMETHODPR(Editor, Undo, (void), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"void redo()",
+			asMETHODPR(Editor, Redo, (void), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"void undo(uint)",
+			asMETHODPR(Editor, Undo, (unsigned int), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Editor",
+			"void redo(uint)",
+			asMETHODPR(Editor, Redo, (unsigned int), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void enable()",

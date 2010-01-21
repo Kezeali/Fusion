@@ -36,7 +36,7 @@
 #include "FusionScriptingEngine.h"
 #include "FusionScriptModule.h"
 
-#include "../FusionEngine/FusionElementSelectableDataGrid.h"
+#include "FusionElementSelectableDataGrid.h"
 
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
