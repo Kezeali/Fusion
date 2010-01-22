@@ -44,7 +44,8 @@ namespace FusionEngine
 {
 
 	ElementUndoMenu::ElementUndoMenu(const EMP::Core::String &tag)
-		: Rocket::Controls::ElementFormControlSelect(tag)
+		: Rocket::Controls::ElementFormControlSelect(tag),
+		m_NextId(0)
 	{
 	}
 
@@ -52,20 +53,22 @@ namespace FusionEngine
 	{
 	}
 
-	void ElementUndoMenu::OnSetMaxActions(unsigned int max)
-	{
-		m_MaxActions = max;
-		// Remove items from the end to shrink to max
-		for (unsigned int i = GetNumOptions()-1; i >= max; --i)
-				Remove(i);
-	}
+	//void ElementUndoMenu::OnSetMaxActions(unsigned int max)
+	//{
+	//	m_MaxActions = max;
+	//	// Remove items from the end to shrink to max
+	//	for (unsigned int i = GetNumOptions()-1; i >= max; --i)
+	//			Remove(i);
+	//}
 
 	void ElementUndoMenu::OnActionAdd(const UndoableActionPtr &action, bool to_end)
 	{
+		EMP::Core::String rml( ("<span>"+action->GetTitle()+"</span>").c_str() );
+		EMP::Core::String value( boost::lexical_cast<std::string>(++m_NextId).c_str() );
 		if (to_end)
-			Add(action->GetTitle().c_str(), action->GetTitle().c_str());
+			Add(rml, value);
 		else
-			Add(action->GetTitle().c_str(), action->GetTitle().c_str(), 0);
+			Add(rml, value, 0);
 	}
 
 	void ElementUndoMenu::OnActionRemove(unsigned int first, UndoListener::Direction direction)

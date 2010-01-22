@@ -143,7 +143,7 @@ namespace FusionEngine
 			return;
 
 		Rocket::Controls::ElementDataGridRow *row = dynamic_cast<Rocket::Controls::ElementDataGridRow*>( ev.GetCurrentElement() );
-		if (!row)
+		if (row == NULL)
 			return;
 
 		int depth = GetRowDepth(row);
@@ -152,8 +152,6 @@ namespace FusionEngine
 
 		int prevSelection = GetSelectedRow();
 		int newSelection = row->GetTableRelativeIndex();
-		if (newSelection == prevSelection)
-			return;
 
 		SetSelectedRow(newSelection);
 
@@ -166,10 +164,13 @@ namespace FusionEngine
 
 	void ElementSelectableDataGrid::OnDoubleClick(Rocket::Core::Event &ev)
 	{
-		Rocket::Controls::ElementDataGridRow *row = dynamic_cast<Rocket::Controls::ElementDataGridRow*>( ev.GetTargetElement() );
-		EMP::Core::Dictionary parameters;
-		parameters.Set("row_index", row->GetTableRelativeIndex());
-		DispatchEvent("rowdblclick", parameters);
+		Rocket::Controls::ElementDataGridRow *row = dynamic_cast<Rocket::Controls::ElementDataGridRow*>( ev.GetCurrentElement() );
+		if (row != NULL)
+		{
+			EMP::Core::Dictionary parameters;
+			parameters.Set("row_index", row->GetTableRelativeIndex());
+			DispatchEvent("rowdblclick", parameters);
+		}
 	}
 
 

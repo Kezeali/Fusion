@@ -30,8 +30,9 @@
 		<undomenu class="redo" id="redo_menu" onchange="%Editor: OnRedo(event);"/>
 		<p>
 			<h2>Create Entity:</h2>
+			<input type="checkbox" id="pseudo_ent" checked="" onclick="%Editor: OnClickPseudoCheckbox(event);"></input> Pseudo-Entity
+			<br/>
 			Type:<input type="text" id="entity_type" name="typen" onchange="%Editor: OnEntityTypeChanged(event);"></input>
-			Pseudo-Entity:<input type="checkbox" id="pseudo_ent" checked onclick="%Editor: OnClickPseudoCheckbox(event);"></input>
 			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%Editor: OnSelected(event);">
 				<col fields="name" width="75%">Types</col>
 			</datagrid>

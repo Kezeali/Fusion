@@ -56,8 +56,17 @@ namespace FusionEngine
 		FixturePtr fixture;
 
 		EditorMapEntity()
-			: fixture(NULL)
 		{
+		}
+
+		virtual ~EditorMapEntity()
+		{
+			if (fixture)
+			{
+				PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( entity.get() );
+				if (physicalEntity != NULL && physicalEntity->IsPhysicsEnabled())
+					physicalEntity->DestroyFixture(fixture);
+			}
 		}
 
 		void CreateEditorFixture();
@@ -91,32 +100,6 @@ namespace FusionEngine
 			FixtureUserDataPtr user_data(new MapEntityFixtureUserData(this));
 			fixture = physicalEntity->CreateFixture(&iconFixtureDef, "editor", user_data);
 		}
-	}
-
-	ObjectID IDStack::getFreeID()
-	{
-		if (m_UnusedIds.empty())
-			return m_NextId++;
-		else
-		{
-			ObjectID id = m_UnusedIds.back();
-			m_UnusedIds.pop_back();
-			return id;
-		}
-	}
-
-	void IDStack::freeID(ObjectID id)
-	{
-		if (id < m_NextId-1)
-			m_UnusedIds.push_back(id); // record unused ID
-		else
-			--m_NextId;
-	}
-
-	void IDStack::freeAll()
-	{
-		m_UnusedIds.clear();
-		m_NextId = 1; // Entity IDs start at 1, 0 indicates a pseudo-entity
 	}
 
 	void Editor::EditorEntityDeserialiser::ListEntity(const EntityPtr &entity)
@@ -349,6 +332,10 @@ namespace FusionEngine
 	}
 
 
+	//! An action
+	/*!
+	* \todo Make sure the entity is re-created with the correct ID (so redo actions that restore entity-pointer properties are valid)
+	*/
 	class AddRemoveEntityAction : public UndoableAction
 	{
 	public:
@@ -359,14 +346,27 @@ namespace FusionEngine
 
 		const std::string &GetTitle() const;
 	protected:
+		bool m_Added;
+		GameMapLoader::GameMapEntityPtr m_EditorEntity;
+		Editor *m_Editor;
+
+		// Used to recreate the entity
+		struct
+		{
+			bool pseudo;
+			ObjectID id;
+			std::string type;
+			std::string name;
+			Vector2 position;
+		} m_Parameters;
+
+		std::string m_Title;
+		
 		void undoAction();
 		void redoAction();
 
-		bool m_Added;
-		GameMapLoader::GameMapEntityPtr m_EditorEntity;
-
-		Editor *m_Editor;
-		std::string m_Title;
+		void create();
+		void destroy();
 	};
 	typedef std::tr1::shared_ptr<AddRemoveEntityAction> AddRemoveEntityActionPtr;
 
@@ -378,6 +378,17 @@ namespace FusionEngine
 		m_Title = std::string(added ? "Add " : "Remove ") + "[" + map_entity->entity->GetType() + "] ";
 		if (map_entity->hasName)
 			m_Title += map_entity->entity->GetName();
+
+		// Store the entity info
+		m_Parameters.pseudo = map_entity->entity->IsPseudoEntity();
+		if (!m_Parameters.pseudo)
+			m_Parameters.id = map_entity->entity->GetID();
+		m_Parameters.type = map_entity->entity->GetType();
+		m_Parameters.name = map_entity->entity->GetName();
+		m_Parameters.position = map_entity->entity->GetPosition();
+
+		if (!m_Added)
+			m_EditorEntity.reset();
 	}
 
 	const std::string &AddRemoveEntityAction::GetTitle() const
@@ -385,20 +396,32 @@ namespace FusionEngine
 		return m_Title;
 	}
 
+	void AddRemoveEntityAction::create()
+	{
+		m_EditorEntity = m_Editor->CreateEntity(m_Parameters.type, m_Parameters.name, m_Parameters.pseudo, m_Parameters.position.x, m_Parameters.position.y);
+	}
+
+	void AddRemoveEntityAction::destroy()
+	{
+		m_Editor->RemoveEntity(m_EditorEntity);
+		m_EditorEntity.reset();
+		ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+	}
+
 	void AddRemoveEntityAction::undoAction()
 	{
 		if (m_Added)
-			m_Editor->RemoveEntity(m_EditorEntity);
+			destroy();
 		else
-			m_Editor->AddEntity(m_EditorEntity);
+			create();
 	}
 
 	void AddRemoveEntityAction::redoAction()
 	{
 		if (m_Added)
-			m_Editor->AddEntity(m_EditorEntity);
+			create();
 		else
-			m_Editor->RemoveEntity(m_EditorEntity);
+			destroy();
 	}
 
 
@@ -418,6 +441,7 @@ namespace FusionEngine
 
 	Editor::~Editor()
 	{
+		CleanUp();
 		delete m_EditorDataSource;
 	}
 
@@ -444,6 +468,7 @@ namespace FusionEngine
 
 		m_Viewport.reset(new Viewport());
 		m_Camera.reset( new Camera(ScriptingEngine::getSingleton().GetEnginePtr()) );
+		m_Camera->release();
 		m_Viewport->SetCamera(m_Camera);
 
 		m_RawInputConnection = m_Input->SignalRawInput.connect( boost::bind(&Editor::OnRawInput, this, _1) );
@@ -831,11 +856,15 @@ namespace FusionEngine
 			removeFrom(m_Entities, map_entity);
 
 		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
+		{
 			if (*it == map_entity->entity)
 			{
 				m_PlainEntityArray.erase(it);
 				break;
 			}
+		}
+
+		ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

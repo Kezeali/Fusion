@@ -31,6 +31,11 @@ namespace FusionEngine
 		m_Callback = BodyDestroyer::CallbackFn();
 	}
 
+	bool BodyDestroyer::IsConnected() const
+	{
+		return m_Callback;
+	}
+
 	PhysicalEntity::PhysicalEntity()
 		: Entity(),
 		m_Body(NULL),
@@ -178,7 +183,7 @@ namespace FusionEngine
 	FixturePtr PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const FixtureUserDataPtr &user_data)
 	{
 		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
-		FixturePtr fixture(new Fixture(inner));
+		FixturePtr fixture(new Fixture(inner), false);
 		m_Fixtures.push_back(fixture);
 
 		if (user_data)
@@ -190,7 +195,7 @@ namespace FusionEngine
 	FixturePtr PhysicalEntity::CreateFixture(const b2FixtureDef *fixture_definition, const std::string &tag, const FixtureUserDataPtr &user_data)
 	{
 		b2Fixture *inner = m_Body->CreateFixture(fixture_definition);
-		FixturePtr fixture(new Fixture(inner));
+		FixturePtr fixture(new Fixture(inner), false);
 		m_Fixtures.push_back(fixture);
 
 		fixture->SetTag(tag);
@@ -207,6 +212,11 @@ namespace FusionEngine
 
 	void PhysicalEntity::DestroyFixture(const FixturePtr &fixture)
 	{
+		// If the bodydestroyer is disconnected the PhysWorld has been deleted and destroying the fixture is redundant
+		if (m_BodyDestroyer->IsConnected())
+			m_Body->DestroyFixture(fixture->GetInner());
+		fixture->Invalidate();
+
 		for (FixtureArray::iterator it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
 		{
 			if (*it == fixture)
@@ -215,8 +225,6 @@ namespace FusionEngine
 				break;
 			}
 		}
-		m_Body->DestroyFixture(fixture->GetInner());
-		fixture->Invalidate();
 	}
 
 

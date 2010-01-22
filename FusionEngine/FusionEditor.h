@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -37,6 +37,7 @@
 
 #include "FusionState.h"
 
+#include "FusionIDStack.h"
 #include "FusionViewport.h"
 #include "FusionInputHandler.h"
 #include "FusionGameMapLoader.h"
@@ -55,27 +56,6 @@
 
 namespace FusionEngine
 {
-
-	//! Supplies ObjectIDs which aren't assigned to any Entity
-	struct IDStack
-	{
-		ObjectID m_NextId;
-		typedef std::deque<ObjectID> ObjectIDStack;
-		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
-		ObjectIDStack m_UnusedIds;
-
-		//! Initialises m_NextId to one (Entity IDs start at 1)
-		IDStack()
-			: m_NextId(1)
-		{}
-
-		//! Returns an ObjectID which is not in use
-		inline ObjectID getFreeID();
-		//! Allows the given ID which was previously returned by getFreeID to be returned again
-		inline void freeID(ObjectID id);
-		//! Resets this object
-		void freeAll();
-	};
 
 	//! Provides lists of Entity types
 	class EditorDataSource : public EMP::Core::DataSource

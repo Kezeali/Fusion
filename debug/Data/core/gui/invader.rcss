@@ -283,6 +283,11 @@ undomenu selectvalue
 	background-position: 0px 20px;
 }
 
+undomenu selectvalue span
+{
+	visibility: hidden;
+}
+
 undomenu.redo selectvalue
 {
 	width: 16;
@@ -489,13 +494,13 @@ input.checkbox:checked:active
 datagrid datagridheader
 {
 	width: auto;
-	height: 25px;
+	height: 24px;
 	padding: 5px 10px 0px 10px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 127px 192px 143px 223px;
-	background-center-image: invader.png stretch 143px 192px 145px 223px;
-	background-right-image: invader.png 145px 192px 160px 223px;
+	background-left-image: invader.png 129px 193px 143px 223px;
+	background-center-image: invader.png stretch 143px 193px 145px 223px;
+	background-right-image: invader.png 145px 193px 160px 223px;
 }
 
 datagrid datagridbody

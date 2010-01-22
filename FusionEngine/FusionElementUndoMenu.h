@@ -35,8 +35,9 @@
 #include "FusionCommon.h"
 
 #include "FusionEditorUndoListener.h"
-
 #include <Rocket/Controls/ElementFormControlSelect.h>
+
+#include "FusionIDStack.h"
 
 
 namespace FusionEngine
@@ -49,7 +50,7 @@ namespace FusionEngine
 		ElementUndoMenu(const EMP::Core::String &tag);
 		virtual ~ElementUndoMenu();
 
-		void OnSetMaxActions(unsigned int max);
+		//void OnSetMaxActions(unsigned int max);
 		void OnActionAdd(const UndoableActionPtr &action, bool to_end);
 		void OnActionRemove(unsigned int first, UndoListener::Direction direction);
 
@@ -61,7 +62,9 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		unsigned int m_MaxActions;
+		//unsigned int m_MaxActions;
+
+		unsigned short m_NextId;
 
 		//virtual void OnAttributeChange(const Rocket::Core::AttributeNameList& changed_attributes);
 

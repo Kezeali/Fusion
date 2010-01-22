@@ -194,7 +194,7 @@ namespace FusionEngine
 		std::string maps, line;
 		try {
 			OpenString_PhysFS(maps, L"Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
-		} catch (FileSystemException &e) {
+		} catch (FileSystemException&) {
 			SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
 		}
 		std::string::size_type lineBegin = 0, lineEnd;
@@ -252,6 +252,12 @@ namespace FusionEngine
 
 		if (m_EntityManager != NULL)
 		{
+			this->PushMessage(new SystemMessage(m_Editor, false)); // Remove the editor system
+			m_Editor->CleanUp(); // Can't wait for the system manager to clean up the Editor because
+			//  physworld is deleted below and the destructor method of any remaining EditorMapEntity objects
+			//  will fail
+			m_Editor.reset();
+
 			delete m_MapLoader;
 			delete m_EntityManager;
 			delete m_EntityFactory;
@@ -259,9 +265,6 @@ namespace FusionEngine
 			delete m_EntitySyncroniser;
 
 			delete m_PhysWorld;
-
-			this->PushMessage(new SystemMessage(m_Editor, false)); // Remove the editor system
-			m_Editor.reset();
 
 			m_EntityManager = NULL;
 

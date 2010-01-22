@@ -69,8 +69,9 @@ namespace FusionEngine
 
 		typedef std::tr1::unordered_map<std::string, Archetype> ArchetypeMap;
 
-		struct GameMapEntity : public RefCounted
+		class GameMapEntity : public RefCounted
 		{
+		public:
 			EntityPtr entity;
 			bool hasName; // true if the entity has a unique name (other wise it will be called 'default')
 			std::string archetypeId;
@@ -80,6 +81,7 @@ namespace FusionEngine
 			unsigned int dataIndex; // used by the editor when reading data files (may be removed)
 
 			GameMapEntity() : RefCounted(0), hasName(true), stateMask(0) {}
+			virtual ~GameMapEntity() {}
 		};
 		typedef boost::intrusive_ptr<GameMapEntity> GameMapEntityPtr;
 		typedef std::vector<GameMapEntityPtr> GameMapEntityArray;

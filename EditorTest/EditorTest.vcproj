@@ -269,6 +269,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionIDStack.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionImageLoader.cpp"
 				>
 			</File>
@@ -572,6 +576,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionHashable.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionIDStack.h"
 				>
 			</File>
 			<File

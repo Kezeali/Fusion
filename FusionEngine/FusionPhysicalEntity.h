@@ -53,6 +53,8 @@ namespace FusionEngine
 		void SetCallback(const CallbackFn &fn);
 		void ClearCallback();
 
+		bool IsConnected() const;
+
 	protected:
 		CallbackFn m_Callback;
 	};
