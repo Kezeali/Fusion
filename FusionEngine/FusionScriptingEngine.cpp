@@ -197,9 +197,9 @@ namespace FusionEngine
 
 	bool operator ==(const ScriptingEngine::Breakpoint &lhs, const ScriptingEngine::Breakpoint &rhs)
 	{
-		return lhs.line == rhs.line &&
-			std::strcmp(lhs.module_name, rhs.module_name) == 0 &&
-			std::strcmp(lhs.section_name, rhs.section_name) == 0;
+		return lhs.line == rhs.line && 
+			lhs.module_name == rhs.module_name &&
+			lhs.section_name == rhs.section_name;
 	}
 
 	//////////
@@ -437,14 +437,26 @@ namespace FusionEngine
 	}
 #endif
 
-	ScriptContext ScriptingEngine::ExecuteString(const std::string &script, const char *module, int timeout)
+	ScriptContext ScriptingEngine::ExecuteString(const std::string &script, const char *module_name, int timeout)
 	{
 		asIScriptContext* ctx = m_asEngine->CreateContext();
-		ctx->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
 		ScriptContext sctx(ctx);
 
 		if (ctx != NULL)
-			m_asEngine->ExecuteString(module, script.c_str(), &ctx);
+		{
+			ctx->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+
+			asIScriptModule *module = m_asEngine->GetModule(module_name, asGM_CREATE_IF_NOT_EXISTS);
+			std::string fnScript = "void ExecuteString() {\n";
+			fnScript += script;
+			fnScript += "\n;}";
+			asIScriptFunction *fn;
+			int r = module->CompileFunction("ExecuteString", fnScript.c_str(), -1, 0, &fn); if (r < 0) return sctx;
+			r = ctx->Prepare(fn->GetId()); if (r < 0) return sctx;
+			ctx->Execute();
+
+			fn->Release();
+		}
 
 		return sctx;
 	}
@@ -592,6 +604,20 @@ namespace FusionEngine
 	void ScriptingEngine::SetDebugMode(unsigned char mode)
 	{
 		m_DebugMode = mode;
+	}
+
+	void ScriptingEngine::SetDebugOptions(const ScriptingEngine::DebugOptions &settings)
+	{
+		m_DebugSettings = settings;
+	}
+
+	void ScriptingEngine::SetBreakpoint(const char *module, const char *section, int line)
+	{
+		Breakpoint bp;
+		bp.module_name = module;
+		bp.section_name = section;
+		bp.line = line;
+		m_Breakpoints.insert(bp);
 	}
 
 	void ScriptingEngine::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
@@ -829,10 +855,10 @@ namespace FusionEngine
 		if (m_DebugMode & Breakpoints)
 		{
 			Breakpoint here;
-			here.module_name = ctx->GetCurrentModule();
 
-			here.section_name = 
-				ctx->GetEngine()->GetModule(ctx->GetCurrentModule())->GetFunctionDescriptorById(ctx->GetCurrentFunction())->GetScriptSectionName();
+			asIScriptFunction *fn = ctx->GetEngine()->GetFunctionDescriptorById(ctx->GetCurrentFunction());
+			here.module_name = fn->GetModuleName();
+			here.section_name = fn->GetScriptSectionName();
 
 			BreakpointSet::iterator _where = m_Breakpoints.find(here);
 			if (_where != m_Breakpoints.end())
@@ -892,7 +918,7 @@ namespace FusionEngine
 				context->SetException(("Passed callback '"+decl+"' has the wrong signature - should be: 'void somefn(DebugEvent@)'").c_str());
 				return NULL;
 			}
-			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
 			bsig2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );

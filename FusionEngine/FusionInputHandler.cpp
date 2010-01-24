@@ -124,7 +124,7 @@ namespace FusionEngine
 	{
 		m_SuspendRequests = 0;
 
-		for (unsigned int i = 0; i < m_InputContext.get_keyboard_count(); i++)
+		for (unsigned int i = 0; i < (unsigned int)m_InputContext.get_keyboard_count(); i++)
 		{
 			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_down(), this, &InputManager::onKeyDown);
 			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_up(), this, &InputManager::onKeyUp);
@@ -136,7 +136,7 @@ namespace FusionEngine
 			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_down(), this, &InputManager::fireRawInput, ud);
 			m_Slots.connect(m_InputContext.get_keyboard(i).sig_key_up(), this, &InputManager::fireRawInput, ud);
 		}
-		for (unsigned int i = 0; i < m_InputContext.get_mouse_count(); i++)
+		for (unsigned int i = 0; i < (unsigned int)m_InputContext.get_mouse_count(); i++)
 		{
 			//m_Slots.connect(m_InputContext.get_mouse(i).sig_axis_move(), this, &InputManager::onMouseAxisMove);
 			//m_Slots.connect(m_InputContext.get_mouse(i).sig_ball_move(), this, &InputManager::onMouseBallMove);
@@ -153,7 +153,7 @@ namespace FusionEngine
 			ud.Type = s_DevMouse_Pointer;
 			m_Slots.connect(m_InputContext.get_mouse(i).sig_pointer_move(), this, &InputManager::fireRawInput, ud);
 		}
-		for (unsigned int i = 0; i < m_InputContext.get_joystick_count(); i++)
+		for (unsigned int i = 0; i < (unsigned int)m_InputContext.get_joystick_count(); i++)
 		{
 			m_Slots.connect(m_InputContext.get_joystick(i).sig_axis_move(), this, &InputManager::onGamepadAxisMove);
 			m_Slots.connect(m_InputContext.get_joystick(i).sig_key_down(), this, &InputManager::onGamepadPress);

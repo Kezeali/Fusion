@@ -188,7 +188,7 @@ namespace FusionEngine
 	bool ClientOptions::SetPlayerOption(int player, const std::string &name, const std::string &value)
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		if (player >= m_NumLocalPlayers)
+		if (player >= (signed)m_NumLocalPlayers)
 			return false;
 		m_PlayerVariables[player][name] = value;
 		return true;
@@ -243,7 +243,7 @@ namespace FusionEngine
 	bool ClientOptions::GetPlayerOption(int player, const std::string &name, std::string *value) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		if (player >= m_NumLocalPlayers)
+		if (player >= (signed)m_NumLocalPlayers)
 			return false;
 
 		const VarMap &playerVars = m_PlayerVariables[player];

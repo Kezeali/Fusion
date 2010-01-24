@@ -52,6 +52,7 @@ namespace FusionEngine
 
 			return typeid(ScriptedEntity*);
 		}
+		FSN_EXCEPT(ExCode::InvalidArgument, "ToCppType", "Unknown Angelscript type");
 	}
 
 	// REVISE--Type should be the actual type of the variable held by the script
@@ -59,12 +60,12 @@ namespace FusionEngine
 	template <typename T>
 	void getPropValueOfType(boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
 	{
-		cpp_obj = *(T*)obj->GetPropertyPointer(property_index);
+		cpp_obj = *(T*)obj->GetAddressOfProperty(property_index);
 	}
 	template <typename T>
 	void setPropValueOfType(const boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
 	{
-		*(T*)obj->GetPropertyPointer(property_index) = boost::any_cast<T>( cpp_obj );
+		*(T*)obj->GetAddressOfProperty(property_index) = boost::any_cast<T>( cpp_obj );
 	}
 
 	void ScriptedEntity::accessScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const
@@ -83,23 +84,23 @@ namespace FusionEngine
 			if (get) getPropValueOfType<int16_t>(cpp_obj, obj, property_index);
 			else setPropValueOfType<int16_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_INT32)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		else if (type_id == asTYPEID_INT64)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		// ... unsigned
 		else if (type_id == asTYPEID_UINT8)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		else if (type_id == asTYPEID_UINT16)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		else if (type_id == asTYPEID_UINT32)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		else if (type_id == asTYPEID_UINT64)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		// Floating point types
 		else if (type_id == asTYPEID_FLOAT)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 		else if (type_id == asTYPEID_DOUBLE)
-			cpp_obj = *(bool*)obj->GetPropertyPointer(property_index);
+			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
 
 		// Pointers / handles
 		else if (type_id & asTYPEID_APPOBJECT)
@@ -111,11 +112,11 @@ namespace FusionEngine
 				FSN_EXCEPT(ExCode::InvalidArgument, "GetPropertyValue", "Can't get application-defined type without a valid ScriptingManager");
 
 			if (type_id == m_ScriptEntityTypeId)
-				cpp_obj = *(ScriptedEntity**)obj->GetPropertyPointer(property_index);
+				cpp_obj = *(ScriptedEntity**)obj->GetAddressOfProperty(property_index);
 			else if (type_id == engine->GetStringTypeId())
-				cpp_obj = *(CScriptString**)obj->GetPropertyPointer(property_index);
+				cpp_obj = *(CScriptString**)obj->GetAddressOfProperty(property_index);
 			else if (type_id == engine->GetVectorTypeId())
-				cpp_obj = *(Vector2**)obj->GetPropertyPointer(property_index);
+				cpp_obj = *(Vector2**)obj->GetAddressOfProperty(property_index);
 		}
 	}
 
@@ -313,7 +314,7 @@ namespace FusionEngine
 
 	void ScriptedEntity::SetPropertyValue(unsigned int index, const boost::any &value)
 	{
-		void *ptr = m_ScriptObject.GetScriptObject()->GetPropertyPointer(index);
+		void *ptr = m_ScriptObject.GetScriptObject()->GetAddressOfProperty(index);
 		
 	}
 
@@ -448,7 +449,7 @@ namespace FusionEngine
 				continue;
 
 			int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId( propertyDesc.scriptPropertyIndex );
-			void *prop = m_ScriptObject.GetScriptObject()->GetPropertyPointer( propertyDesc.scriptPropertyIndex );
+			void *prop = m_ScriptObject.GetScriptObject()->GetAddressOfProperty( propertyDesc.scriptPropertyIndex );
 
 			// Check for primative types
 			bool isPrimative = true;
@@ -520,7 +521,7 @@ namespace FusionEngine
 				continue;
 
 			int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId( propertyDesc.scriptPropertyIndex );
-			void *prop = m_ScriptObject.GetScriptObject()->GetPropertyPointer( propertyDesc.scriptPropertyIndex );
+			void *prop = m_ScriptObject.GetScriptObject()->GetAddressOfProperty( propertyDesc.scriptPropertyIndex );
 
 			// Check to see if the property if a primative type
 			bool isPrimative = true;

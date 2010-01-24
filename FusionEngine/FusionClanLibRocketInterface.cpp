@@ -394,7 +394,7 @@ namespace FusionEngine
 	// Reads data from a previously opened file.
 	size_t RocketFileSystem::Read(void* buffer, size_t size, Rocket::Core::FileHandle file)
 	{
-		return PHYSFS_read((PHYSFS_File*)file, buffer, 1, size);
+		return (size_t)PHYSFS_read((PHYSFS_File*)file, buffer, 1, size);
 	}
 
 	// Seeks to a point in a previously opened file.
@@ -441,7 +441,7 @@ namespace FusionEngine
 	// Returns the current position of the file pointer.
 	size_t RocketFileSystem::Tell(Rocket::Core::FileHandle file)
 	{
-		return PHYSFS_tell((PHYSFS_File*)file);
+		return (size_t)PHYSFS_tell((PHYSFS_File*)file);
 	}
 
 	//void RocketFileSystem::Release()

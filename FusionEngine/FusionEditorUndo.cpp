@@ -55,7 +55,7 @@ namespace FusionEngine
 	void UndoableActionManager::Add(const UndoableActionPtr &action)
 	{
 		// Erase undone actions (m_CurrentAction is the most recent action that hasn't been undone)
-		if (!m_Actions.empty() && m_CurrentAction < m_Actions.size()-1)
+		if (!m_Actions.empty() && m_CurrentAction < (signed)m_Actions.size()-1)
 		{
 			m_Actions.erase(m_Actions.begin()+m_CurrentAction+1, m_Actions.end());
 		}
@@ -249,7 +249,7 @@ namespace FusionEngine
 	{
 		if (list == m_RedoListeners)
 		{
-			if (first <= m_CurrentAction)
+			if ((signed)first <= m_CurrentAction)
 				return;
 			first -= m_CurrentAction+1;
 		}

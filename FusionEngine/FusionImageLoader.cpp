@@ -607,9 +607,9 @@ namespace FusionEngine
 			{
 				attribute_text = element->Attribute("speed");
 				if (attribute_text != NULL)
-					m_Animation.delay = CL_StringHelp::text_to_float(CL_String(attribute_text));
+					m_Animation.delay = CL_StringHelp::text_to_int(CL_String(attribute_text));
 				else
-					m_Animation.delay = 60.f;
+					m_Animation.delay = 60;
 
 				attribute_text = element->Attribute("loop");
 				if (attribute_text != NULL)
@@ -704,9 +704,9 @@ namespace FusionEngine
 					frame.number = CL_StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->Attribute("speed");
-				frame.delay = 60.f;
+				frame.delay = 60;
 				if (attribute_text != NULL)
-					frame.delay = CL_StringHelp::local8_to_float(attribute_text);
+					frame.delay = CL_StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->Attribute("x");
 				frame.offset.x = 0;

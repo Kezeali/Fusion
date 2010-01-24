@@ -111,7 +111,7 @@ namespace FusionEngine
 		{
 			int r;
 
-			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ASSIGNMENT, (name + "& op_assign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
+			r = engine->RegisterObjectMethod(name.c_str(), (name + "& opAssign(const " + name + " &in)").c_str(), asFUNCTION(RefCounted::Assign<T>), asCALL_CDECL_OBJFIRST);
 		}
 
 		template <class T>

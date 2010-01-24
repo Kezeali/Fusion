@@ -145,7 +145,7 @@ namespace FusionEngine
 		struct SpriteFrame
 		{
 			int number;
-			float delay;
+			int delay;
 			CL_Point offset;
 		};
 

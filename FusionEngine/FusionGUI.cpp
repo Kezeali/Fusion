@@ -312,15 +312,13 @@ namespace FusionEngine
 				asFUNCTION(CScriptStringFactory_FromEMPString),
 				asCALL_CDECL); FSN_ASSERT(r >= 0);
 
-			r = iengine->RegisterObjectBehaviour("string",
-				asBEHAVE_ASSIGNMENT,
-				"string& f(const e_String&in)",
+			r = iengine->RegisterObjectMethod("string",
+				"string& opAssign(const e_String&in)",
 				asFUNCTION(CScriptStringAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = iengine->RegisterObjectBehaviour("string",
-				asBEHAVE_ADD_ASSIGN,
-				"string& f(const e_String&in)",
+			r = iengine->RegisterObjectMethod("string",
+				"string& opAddAssign(const e_String&in)",
 				asFUNCTION(CScriptStringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}

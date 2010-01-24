@@ -152,8 +152,8 @@ namespace FusionEngine
 
 		CL_Vec2i positions[] =
 		{
-			CL_Vec2i(p1.x, p1.y),
-			CL_Vec2i(p2.x, p2.y)
+			CL_Vec2i((int)p1.x, (int)p1.y),
+			CL_Vec2i((int)p2.x, (int)p2.y)
 		};
 
 		CL_PrimitivesArray vertex_data(m_gc);

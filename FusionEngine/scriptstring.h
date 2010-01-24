@@ -27,7 +27,7 @@ class CScriptString
 public:
 	CScriptString();
 	CScriptString(const CScriptString &other);
-	CScriptString(const char *s);
+	CScriptString(const char *s, unsigned int length);
 	CScriptString(const std::string &s);
 
 	void AddRef();
@@ -57,10 +57,6 @@ int RegisterScriptString(asIScriptEngine *engine);
 // Call this function to register the string type
 // using native calling conventions
 int RegisterScriptString_Native(asIScriptEngine *engine);
-
-// Use this one instead if native calling conventions
-// are not supported on the target platform
-int RegisterScriptString_Generic(asIScriptEngine *engine);
 
 // This function will register utility functions for the script string
 void RegisterScriptStringUtils(asIScriptEngine *engine);

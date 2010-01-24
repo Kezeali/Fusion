@@ -453,6 +453,25 @@ namespace FusionEngine
 		return Vector2(other.x, other.y);
 	}
 
+	static inline const char* ctxGetModuleName(asIScriptContext *context)
+	{
+		FSN_ASSERT(context->GetState() == asEXECUTION_ACTIVE ||
+			context->GetState() == asEXECUTION_EXCEPTION ||
+			context->GetState() == asEXECUTION_SUSPENDED);
+
+		return context->GetEngine()->GetFunctionDescriptorById(context->GetCurrentFunction())->GetModuleName();
+	}
+
+	static inline asIScriptModule* ctxGetModule(asIScriptContext *context, asEGMFlags flag = asGM_ONLY_IF_EXISTS)
+	{
+		FSN_ASSERT(context->GetState() == asEXECUTION_ACTIVE ||
+			context->GetState() == asEXECUTION_EXCEPTION ||
+			context->GetState() == asEXECUTION_SUSPENDED);
+
+		return context->GetEngine()->GetModule(ctxGetModuleName(context), flag);
+	}
+
+
 	///////////////////////////
 	// --Forward declarations--
 	///////////////////////////

@@ -577,7 +577,7 @@ namespace FusionEngine
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
 		{
-			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
 			bsig2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
@@ -594,7 +594,7 @@ namespace FusionEngine
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
 		{
-			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
 			bsig2::connection c = obj->OnNewData.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
@@ -611,7 +611,7 @@ namespace FusionEngine
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
 		{
-			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
+			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
 			bsig2::connection c = obj->OnClear.connect( boost::bind(&ScriptedSlotWrapper::Callback, slot) );

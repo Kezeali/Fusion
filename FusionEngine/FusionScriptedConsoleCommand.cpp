@@ -33,7 +33,7 @@
 #include "FusionConsole.h"
 #include "FusionScriptingEngine.h"
 
-#include <Calling/Caller.h>
+#include <ScriptUtils/Calling/Caller.h>
 #include <boost/bind.hpp>
 //#include <boost/algorithm/string/classification.hpp>
 //#include <boost/algorithm/string/split.hpp>
@@ -161,14 +161,7 @@ namespace FusionEngine
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
 		{
-			asIScriptModule *module = context->GetEngine()->GetModule( context->GetCurrentModule() );
-
-			//if (!is_compatible(callback, "string (const StringVector&in)"))
-			//{
-			//	// Maybe add an entry to the logger?
-			//	//context->SetException("The callback function declaration passed is not compatible with the command callback signature.");
-			//	return;
-			//}
+			asIScriptModule *module = ctxGetModule(context);
 
 			// Expand the given string to a full command-callback decl. if it is just a name
 			std::string callbackFullDecl;

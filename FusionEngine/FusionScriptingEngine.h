@@ -38,7 +38,7 @@
 #include "FusionSingleton.h"
 
 // External
-#include <Calling/Caller.h>
+#include <ScriptUtils/Calling/Caller.h>
 
 // Fusion
 #include "FusionBoostSignals2.h"
@@ -736,8 +736,8 @@ namespace FusionEngine
 		struct Breakpoint
 		{
 			int line;
-			const char *section_name;
-			const char *module_name;
+			std::string section_name;
+			std::string module_name;
 		};
 		friend bool operator ==(const Breakpoint &lhs, const Breakpoint &rhs);
 

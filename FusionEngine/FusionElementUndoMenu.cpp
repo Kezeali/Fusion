@@ -30,7 +30,7 @@
 
 #include "FusionElementUndoMenu.h"
 
-#include <Inheritance/RegisterConversion.h>
+#include <ScriptUtils/Inheritance/RegisterConversion.h>
 
 #include <Rocket/Core/Factory.h>
 #include <Rocket/Core/ElementInstancerGeneric.h>

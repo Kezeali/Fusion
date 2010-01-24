@@ -177,11 +177,11 @@ namespace FusionEngine
 		// Validate the selected ID
 		if (id < 1)
 			id = 0;
-		else if (id >= m_Children.size())
+		else if (id >= (signed)m_Children.size())
 			id = m_Children.size()-1;
 		m_SelectedItem = id;
 
-		for (int i = 0; i < m_Children.size(); ++i)
+		for (int i = 0, size = (signed)m_Children.size(); i < size; ++i)
 		{
 			m_Children[i]->m_Element->SetPseudoClass("selected", i == id);
 		}

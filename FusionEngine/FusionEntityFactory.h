@@ -168,6 +168,8 @@ namespace FusionEngine
 		//! Recursively parses the scripted entity files below the given path
 		void parseScriptedEntities(const char *path, unsigned int current_recursion = 0);
 
+		LogPtr m_Log;
+
 		EntityInstancerMap m_EntityInstancers;
 
 		typedef std::tr1::unordered_set<std::string> StringSet;

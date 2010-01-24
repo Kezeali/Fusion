@@ -824,7 +824,7 @@ namespace FusionEngine
 			{
 				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
 				if (result.second)
-					renderable->GetSpriteResource()->update(split * 1000.0);
+					renderable->GetSpriteResource()->update((int)(split * 1000.f));
 			}
 			renderable->UpdateAABB();
 		}

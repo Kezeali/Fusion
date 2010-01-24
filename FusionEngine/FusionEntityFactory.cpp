@@ -28,6 +28,8 @@
 
 #include "Common.h"
 
+#include "FusionLog.h"
+#include "FusionLogger.h"
 #include "FusionEntityFactory.h"
 #include "FusionScriptedEntity.h"
 #include "FusionScriptSound.h"
@@ -37,7 +39,7 @@
 #include "FusionResourceManager.h"
 #include "FusionPhysicalEntityManager.h"
 
-#include <Inheritance/TypeTraits.h>
+#include <ScriptUtils/Inheritance/TypeTraits.h>
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -803,7 +805,7 @@ namespace FusionEngine
 
 				if (desc.GetPropertyIndex() >= 0)
 				{
-					void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+					void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
 					Renderable **renderableProperty = static_cast<Renderable**>( prop );
 					*renderableProperty = renderable.get();
 				}
@@ -826,7 +828,7 @@ namespace FusionEngine
 				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
 					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
 
-				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
 				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), false);
 
@@ -838,7 +840,7 @@ namespace FusionEngine
 				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
 					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
 
-				void *prop = scrObj->GetPropertyPointer(desc.GetPropertyIndex());
+				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
 				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), true);
 
@@ -852,6 +854,7 @@ namespace FusionEngine
 
 	EntityFactory::EntityFactory()
 	{
+		m_Log = Logger::getSingleton().GetLog("entity_factory");
 	}
 
 	EntityFactory::~EntityFactory()
@@ -902,11 +905,11 @@ namespace FusionEngine
 				ticpp::Document document( OpenXml_PhysFS(fe_widen(_where->second)) );
 				loadAllDependencies(fe_getbasepath(_where->second), document);
 			}
-			catch (ticpp::Exception &ex)
+			catch (ticpp::Exception &)
 			{
 				return false;
 			}
-			catch (FileSystemException &ex)
+			catch (FileSystemException &)
 			{
 				return false;
 			}
@@ -931,11 +934,11 @@ namespace FusionEngine
 			}
 			catch (ticpp::Exception &ex)
 			{
-				//m_Log->AddEntry("The Entity definition file '" + filename + "' has invalid XML: " + ex.what());
+				m_Log->AddEntry("The Entity definition file '" + filename + "' has invalid XML: " + ex.what(), LOG_NORMAL);
 			}
 			catch (FileSystemException &ex)
 			{
-				//m_Log->AddEntry("Failed to open Entity definition file '" + filename + "': " + ex.what());
+				m_Log->AddEntry("Failed to open Entity definition file '" + filename + "': " + ex.ToString(), LOG_NORMAL);
 			}
 		}
 	}
@@ -1065,7 +1068,7 @@ namespace FusionEngine
 					// Parse the Entity definition document
 					definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
 				}
-				catch (ticpp::Exception &ex)
+				catch (ticpp::Exception &)
 				{
 					continue;
 				}
