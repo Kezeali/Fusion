@@ -321,11 +321,6 @@ namespace FusionEngine
 		m_Sprite->set_color(m_Colour);
 	}
 
-	//void Renderable::OnStreamIn()
-	//{
-	//	m_ResourceManager->GetResource("SPRITE", m_SpritePath, std::tr1::bind(&Renderable::OnSpriteLoad, this, _1), 1);
-	//}
-
 	void Renderable::OnStreamOut()
 	{
 		m_Sprite.Release();
@@ -557,13 +552,6 @@ namespace FusionEngine
 		return m_Authority;
 	}
 
-	//void Entity::SetPseudoEntity(bool pseudo_entity)
-	//{
-	//	if (pseudo_entity)
-	//		m_Id = 0;
-	//	m_PseudoEntity = pseudo_entity;
-	//}
-
 	bool Entity::IsPseudoEntity() const
 	{
 		return m_Id == 0;
@@ -765,7 +753,6 @@ namespace FusionEngine
 	void Entity::AddRenderable(RenderablePtr renderable)
 	{
 		m_Renderables.push_back(renderable);
-		//renderable->_notifyAttached(this);
 	}
 
 	void Entity::RemoveRenderable(RenderablePtr renderable)
@@ -775,7 +762,6 @@ namespace FusionEngine
 			if (*it == renderable)
 			{
 				m_Renderables.erase(it);
-				//renderable->_notifyAttached(EntityPtr());
 				break;
 			}
 		}
@@ -1005,12 +991,6 @@ namespace FusionEngine
 	void Entity::Register(asIScriptEngine *engine)
 	{
 		int r;
-		//RefCounted::RegisterType<EntityInputs>(engine, "EntityInputs");
-		//r = engine->RegisterObjectMethod("EntityInputs"
-		//	"bool isActive(const string &in) const",
-		//	asMETHOD(EntityInputs, IsActive), asCALL_THISCALL);
-
-		//RefCounted::RegisterType<Entity>(engine, "Entity");
 		Entity::RegisterGCType(engine, "Entity");
 
 		r = engine->RegisterObjectMethod("Entity",

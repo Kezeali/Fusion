@@ -321,16 +321,6 @@ namespace FusionEngine
 		m_SyncedProperties = properties;
 	}
 
-	//void ScriptedEntity::SetStreamedResources(const ScriptedEntity::StreamedResourceMap &resources)
-	//{
-	//	m_Streamed = resources;
-	//}
-
-	//void ScriptedEntity::AddStreamedResource(const std::string &type, const std::wstring &path)
-	//{
-	//	m_Streamed[path] = type;
-	//}
-
 	unsigned int ScriptedEntity::GetPropertyCount() const
 	{
 		return m_SyncedProperties.size();
@@ -418,30 +408,6 @@ namespace FusionEngine
 		return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);
 	}
 
-	//EntityPtr ScriptedEntity::GetPropertyEntity(unsigned int index) const
-	//{
-	//	int propIndex = m_SyncedProperties[index].scriptPropertyIndex;
-
-	//	asIScriptObject *obj = m_ScriptObject.GetScriptObject();
-	//	int typeId = obj->GetPropertyTypeId(propIndex);
-	//	if ((typeId & s_EntityTypeId) == s_EntityTypeId)
-	//	{
-	//		return EntityPtr( *static_cast<Entity**>(obj->GetAddressOfProperty(propIndex)) );
-	//	}
-	//	//else
-	//	//{
-	//	//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
-	//	//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
-	//	//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
-	//	//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType)
-	//	//	{
-	//	//		asIScriptObject *value = *static_cast<asIScriptObject**>( obj->GetAddressOfProperty(index) );
-	//	//		return EntityPtr( GetAppObject(value), false);
-	//	//	}
-	//	//}
-	//	return EntityPtr();
-	//}
-
 	void ScriptedEntity::EnumReferences(asIScriptEngine *engine)
 	{
 		engine->GCEnumCallback((void*)m_ScriptObject.GetScriptObject());
@@ -457,32 +423,6 @@ namespace FusionEngine
 	{
 		return m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
 	}
-
-	//const Vector2 &ScriptedEntity::GetPosition()
-	//{
-	//	ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("const Vector@ GetPosition()");
-	//	if (f.ok())
-	//	{
-	//		void *r = f();
-	//		if (r != NULL)
-	//			return **static_cast<const Vector2**>( r );
-	//	}
-
-	//	return m_DefaultPosition;
-	//}
-
-	//float ScriptedEntity::GetAngle()
-	//{
-	//	ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("float GetAngle()");
-	//	if (f.ok())
-	//	{
-	//		void *r = f();
-	//		if (r != NULL)
-	//			return *static_cast<float*>( r );
-	//	}
-
-	//	return m_DefaultAngle;
-	//}
 
 	void ScriptedEntity::Spawn()
 	{
@@ -513,17 +453,6 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnStreamIn()
 	{
-		//add m_ResourceManager member
-		//ResourceManager *res = ResourceManager::getSingletonPtr();
-		//if (res != NULL)
-		//{
-		//	// Stream in resources
-		//	for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
-		//	{
-		//		res->PreloadResource_Background(it->second, it->first, 1);
-		//	}
-		//}
-
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamIn()");
 		if (f.ok())
 		{
@@ -533,16 +462,6 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnStreamOut()
 	{
-		//ResourceManager *res = ResourceManager::getSingletonPtr();
-		//if (res != NULL)
-		//{
-		//	// Stream in resources
-		//	for (StreamedResourceMap::iterator it = m_Streamed.begin(), end = m_Streamed.end(); it != end; ++it)
-		//	{
-		//		res->UnloadResource_Background(it->first);
-		//	}
-		//}
-
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamOut()");
 		if (f.ok())
 		{
@@ -620,18 +539,6 @@ namespace FusionEngine
 					Entity *value = *static_cast<Entity**>(prop);
 					stateStream << value->GetID();
 				}
-				//else
-				//{
-				//	// Check for scripted entity derrived types
-				//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
-				//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
-				//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
-				//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType))
-				//	{
-				//		ScriptedEntity *value = GetAppObject( *static_cast<asIScriptObject**>(prop) );
-				//		stateStream << value->GetID();
-				//	}
-				//}
 			}
 		}
 
@@ -640,12 +547,7 @@ namespace FusionEngine
 
 	size_t ScriptedEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
 	{
-		// Deserialise physics data
-		//size_t physicsDataLength = PhysicalEntity::DeserialiseState(state, local, entity_deserialiser);
-
 		std::istringstream stateStream(state.data, std::ios::binary);
-		// Seek to after the data that has already been deserialised by the base class
-		//stateStream.seekg(physicsDataLength);
 
 		unsigned int index = 0;
 		for (PropertiesArray::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
@@ -735,23 +637,6 @@ namespace FusionEngine
 					if (entity.get() != NULL)
 						*((Entity**)prop) = entity.get();
 				}
-				//else
-				//{
-				//	// Check for scripted entity derrived types
-				//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
-				//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
-				//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
-				//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType)
-				//	{
-				//		ObjectID value;
-				//		stateStream >> value;
-
-				//		EntityPtr entity = entity_deserialiser.GetEntity(value);
-				//		ScriptedEntity *scriptedEntity = dynamic_cast<ScriptedEntity*>( entity.get() );
-				//		if (scriptedEntity != NULL)
-				//			*((asIScriptObject**)prop) = scriptedEntity->m_ScriptObject.GetScriptObject();
-				//	}
-				//}
 			}
 		}
 
