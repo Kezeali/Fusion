@@ -80,18 +80,114 @@ namespace FusionEngine
 		UndoableActionManager *m_Undo;
 	};
 
-	void Editor::EditorEntityDeserialiser::ListEntity(const EntityPtr &entity)
+	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
+		: m_MapEntity(mapent),
+		m_Undo(undo)
 	{
-		m_EntityMap[entity->GetID()] = entity;
+		using namespace Rocket::Controls;
+
+		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
+		m_Document = guiCtx->LoadDocument("core/gui/properties_dialog.rml");
+
+		// Grab the elements from the doc.
+		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") );
+		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") );
+		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") );
+		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") );
+		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") );
+
+		m_Document->AddEventListener("change", this);
+
+		m_Document->RemoveReference();
+
+		// Set up the properties listbox
+		EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
+		//m_GridProperties->AddColumn(
+		m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
+		m_GridProperties->AddEventListener("rowselected", this);
+		m_GridProperties->AddEventListener("rowdblclick", this);
+
+		Refresh();
 	}
 
-	EntityPtr Editor::EditorEntityDeserialiser::GetEntity(ObjectID id) const
+	PropertyEditorDialog::~PropertyEditorDialog()
 	{
-		EntityIdMap::const_iterator _where = m_EntityMap.find(id);
-		if (_where != m_EntityMap.end())
-			return _where->second;
-		else
-			return EntityPtr();
+		m_Document->RemoveEventListener("change", this);
+		m_GridProperties->RemoveEventListener("rowselected", this);
+		m_GridProperties->RemoveEventListener("rowdblclick", this);
+	}
+
+	inline EMP::Core::String to_emp(const std::string &str)
+	{
+		return EMP::Core::String(str.data(), str.data() + str.length());
+	}
+
+	void PropertyEditorDialog::Refresh()
+	{
+		try
+		{
+			Vector2 position = m_MapEntity->entity->GetPosition();
+			std::string value = boost::lexical_cast<std::string>(position.x);
+			m_InputX->SetValue( to_emp(value) );
+
+			value = boost::lexical_cast<std::string>(position.y);
+			m_InputY->SetValue( to_emp(value) );
+		}
+		catch (const boost::bad_lexical_cast &)
+		{
+		}
+
+		if (m_MapEntity->hasName)
+			m_InputName->SetValue( to_emp(m_MapEntity->entity->GetName()) );
+
+		m_InputType->SetValue( to_emp(m_MapEntity->entity->GetType()) );
+	}
+
+	void PropertyEditorDialog::Show()
+	{
+		m_Document->Show();
+	}
+
+	void PropertyEditorDialog::ProcessEvent(Rocket::Core::Event &ev)
+	{
+		if (ev == "change")
+		{
+			if (ev.GetTargetElement() == m_InputX || ev.GetTargetElement() == m_InputY)
+			{
+				try
+				{
+					Vector2 position;
+					position.x = boost::lexical_cast<float>( m_InputX->GetValue().CString() );
+					position.y = boost::lexical_cast<float>( m_InputY->GetValue().CString() );
+					m_MapEntity->entity->SetPosition(position);
+				}
+				catch (const boost::bad_lexical_cast &)
+				{
+				}
+			}
+
+			else if (ev.GetTargetElement() == m_InputName)
+			{
+				const EMP::Core::String &value = m_InputName->GetValue();
+				if (!value.Empty())
+				{
+					m_MapEntity->hasName = true;
+					m_MapEntity->entity->_setName(value.CString());
+				}
+				else
+				{
+					m_MapEntity->hasName = false;
+					m_MapEntity->entity->_setName("default");
+				}
+			}
+		}
+		else if (ev == "rowselected")
+		{
+		}
+		else if (ev == "rowdblclick")
+		{
+			int selectedIndex = ev.GetParameter("row_index", (int)-1);
+		}
 	}
 
 	// Editor DataSource
@@ -147,106 +243,6 @@ namespace FusionEngine
 		}
 
 		return 0;
-	}
-
-	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
-		: m_MapEntity(mapent),
-		m_Undo(undo)
-	{
-		using namespace Rocket::Controls;
-
-		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
-		m_Document = guiCtx->LoadDocument("core/gui/properties_dialog.rml");
-
-		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") );
-		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") );
-		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") );
-		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") );
-		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") );
-
-		m_Document->AddEventListener("change", this);
-
-		m_Document->RemoveReference();
-
-		m_GridProperties->SetDataSource(m_DataSourceName.c_str());
-
-		Refresh();
-	}
-
-	PropertyEditorDialog::~PropertyEditorDialog()
-	{
-		m_Document->RemoveEventListener("change", this);
-	}
-
-	inline EMP::Core::String to_emp(const std::string &str)
-	{
-		return EMP::Core::String(str.data(), str.data() + str.length());
-	}
-
-	void PropertyEditorDialog::Refresh()
-	{
-		try
-		{
-			Vector2 position = m_MapEntity->entity->GetPosition();
-			std::string value = boost::lexical_cast<std::string>(position.x);
-			m_InputX->SetValue( to_emp(value) );
-
-			value = boost::lexical_cast<std::string>(position.y);
-			m_InputY->SetValue( to_emp(value) );
-		}
-		catch (const boost::bad_lexical_cast &)
-		{
-		}
-
-		if (m_MapEntity->hasName)
-			m_InputName->SetValue( to_emp(m_MapEntity->entity->GetName()) );
-
-		m_InputType->SetValue( to_emp(m_MapEntity->entity->GetType()) );
-
-		
-		for (unsigned int i = 0, count = m_MapEntity->entity->GetPropertyCount(); i < count; ++i)
-		{
-		}
-	}
-
-	void PropertyEditorDialog::Show()
-	{
-		m_Document->Show();
-	}
-
-	void PropertyEditorDialog::ProcessEvent(Rocket::Core::Event &ev)
-	{
-		if (ev == "change")
-		{
-			if (ev.GetTargetElement() == m_InputX || ev.GetTargetElement() == m_InputY)
-			{
-				try
-				{
-					Vector2 position;
-					position.x = boost::lexical_cast<float>( m_InputX->GetValue().CString() );
-					position.y = boost::lexical_cast<float>( m_InputY->GetValue().CString() );
-					m_MapEntity->entity->SetPosition(position);
-				}
-				catch (const boost::bad_lexical_cast &)
-				{
-				}
-			}
-
-			else if (ev.GetTargetElement() == m_InputName)
-			{
-				const EMP::Core::String &value = m_InputName->GetValue();
-				if (!value.Empty())
-				{
-					m_MapEntity->hasName = true;
-					m_MapEntity->entity->_setName(value.CString());
-				}
-				else
-				{
-					m_MapEntity->hasName = false;
-					m_MapEntity->entity->_setName("default");
-				}
-			}
-		}
 	}
 
 	// Undoable action impl.s
@@ -404,6 +400,20 @@ namespace FusionEngine
 			destroy();
 	}
 
+
+	void Editor::EditorEntityDeserialiser::ListEntity(const EntityPtr &entity)
+	{
+		m_EntityMap[entity->GetID()] = entity;
+	}
+
+	EntityPtr Editor::EditorEntityDeserialiser::GetEntity(ObjectID id) const
+	{
+		EntityIdMap::const_iterator _where = m_EntityMap.find(id);
+		if (_where != m_EntityMap.end())
+			return _where->second;
+		else
+			return EntityPtr();
+	}
 
 	Editor::Editor(InputManager *input, Renderer *renderer, EntityFactory *entity_factory, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util)
 		: m_Input(input),

@@ -50,11 +50,7 @@ namespace FusionEngine
 	public:
 		FixturePtr fixture;
 
-		EditorMapEntity()
-			: EMP::Core::DataSource()
-		{
-		}
-
+		EditorMapEntity();
 		virtual ~EditorMapEntity();
 
 		void CreateEditorFixture();

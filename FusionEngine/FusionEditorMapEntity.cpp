@@ -40,6 +40,11 @@
 namespace FusionEngine
 {
 
+	EditorMapEntity::EditorMapEntity()
+		: EMP::Core::DataSource()
+	{
+	}
+
 	EditorMapEntity::~EditorMapEntity()
 	{
 		if (fixture)

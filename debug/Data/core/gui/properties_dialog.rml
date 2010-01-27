@@ -24,7 +24,7 @@
 		<script>
 			void OnPropSelected(Event@ event)
 			{
-				console.println("selected");
+				console.println("selected: " + event.GetParameter("row_index", -1));
 			}
 		</script>
 	</head>
@@ -38,8 +38,8 @@
 			Name: <input type="text" id="name" maxlength="128" />
 			Type: <input type="text" id="type" readonly />
 		</div>
-		<datagrid selectable source="editor.type_suggestions" id="properties" onrowselected="%Properties: OnPropSelected(event);">
-			<col fields="name" width="75%">Property</col>
+		<datagrid selectable id="properties" onrowselected="%this: OnPropSelected(event)">
+			<col fields="name" width="25%">Property</col>
 			<col fields="value">Value</col>
 		</datagrid>
 	</body>
