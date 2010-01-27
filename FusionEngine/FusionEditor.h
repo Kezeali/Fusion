@@ -64,7 +64,6 @@ namespace FusionEngine
 		EditorDataSource();
 		virtual ~EditorDataSource();
 
-		void SetEntityArray(const EntityArray &entities);
 		void UpdateSuggestions(const StringVector &suggestions);
 		const std::string &GetSuggestion(size_t index);
 
@@ -76,32 +75,7 @@ namespace FusionEngine
 		const EntityArray *m_Entities;
 	};
 
-	class PropertyEditorDialog : public Rocket::Core::EventListener
-	{
-	public:
-		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionManager *undo);
-		~PropertyEditorDialog();
-
-		//! Called when, for example, an action is undone
-		void Refresh();
-
-		//! Displays the dialog
-		void Show();
-
-		void ProcessEvent(Rocket::Core::Event &ev);
-
-	protected:
-		Rocket::Core::ElementDocument *m_Document;
-		Rocket::Controls::ElementFormControlInput *m_InputX;
-		Rocket::Controls::ElementFormControlInput *m_InputY;
-		Rocket::Controls::ElementFormControlInput *m_InputName;
-		Rocket::Controls::ElementFormControlInput *m_InputType;
-		ElementSelectableDataGrid *m_GridProperties;
-
-		GameMapLoader::GameMapEntityPtr m_MapEntity;
-		UndoableActionManager *m_Undo;
-	};
-
+	class PropertyEditorDialog;
 	typedef std::tr1::shared_ptr<PropertyEditorDialog> PropertyEditorDialogPtr;
 
 	//! Editor system (runs the map editor interface)

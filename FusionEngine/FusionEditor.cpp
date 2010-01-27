@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -40,6 +40,7 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionXml.h"
+#include "FusionEditorMapEntity.h"
 
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
@@ -51,56 +52,33 @@
 namespace FusionEngine
 {
 
-	struct EditorMapEntity : public GameMapLoader::GameMapEntity
+	class PropertyEditorDialog : public Rocket::Core::EventListener
 	{
-		FixturePtr fixture;
+	public:
+		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionManager *undo);
+		~PropertyEditorDialog();
 
-		EditorMapEntity()
-		{
-		}
+		//! Called when, for example, an action is undone
+		void Refresh();
 
-		virtual ~EditorMapEntity()
-		{
-			if (fixture)
-			{
-				PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( entity.get() );
-				if (physicalEntity != NULL && physicalEntity->IsPhysicsEnabled())
-					physicalEntity->DestroyFixture(fixture);
-			}
-		}
+		//! Displays the dialog
+		void Show();
 
-		void CreateEditorFixture();
+		void ProcessEvent(Rocket::Core::Event &ev);
+
+	protected:
+		Rocket::Core::ElementDocument *m_Document;
+		Rocket::Controls::ElementFormControlInput *m_InputX;
+		Rocket::Controls::ElementFormControlInput *m_InputY;
+		Rocket::Controls::ElementFormControlInput *m_InputName;
+		Rocket::Controls::ElementFormControlInput *m_InputType;
+		ElementSelectableDataGrid *m_GridProperties;
+
+		std::string m_DataSourceName;
+
+		GameMapLoader::GameMapEntityPtr m_MapEntity;
+		UndoableActionManager *m_Undo;
 	};
-
-	typedef boost::intrusive_ptr<EditorMapEntity>  EditorMapEntityPtr;
-
-	struct MapEntityFixtureUserData : public IFixtureUserData
-	{
-		GameMapLoader::GameMapEntity *map_entity;
-
-		MapEntityFixtureUserData(GameMapLoader::GameMapEntity *_map_entity)
-			: map_entity(_map_entity)
-		{
-		}
-	};
-
-	void EditorMapEntity::CreateEditorFixture()
-	{
-		if (fixture)
-			return;
-
-		PhysicalEntity *physicalEntity = dynamic_cast<PhysicalEntity*>( this->entity.get() );
-		if (physicalEntity != NULL && physicalEntity->IsPhysicsEnabled())
-		{
-			b2FixtureDef iconFixtureDef;
-			b2PolygonShape *shape = new b2PolygonShape();
-			shape->SetAsBox(32.f*s_SimUnitsPerGameUnit, 32.f*s_SimUnitsPerGameUnit);
-			iconFixtureDef.shape = shape;
-
-			FixtureUserDataPtr user_data(new MapEntityFixtureUserData(this));
-			fixture = physicalEntity->CreateFixture(&iconFixtureDef, "editor", user_data);
-		}
-	}
 
 	void Editor::EditorEntityDeserialiser::ListEntity(const EntityPtr &entity)
 	{
@@ -124,11 +102,6 @@ namespace FusionEngine
 
 	EditorDataSource::~EditorDataSource()
 	{
-	}
-
-	void EditorDataSource::SetEntityArray(const EntityArray &entities)
-	{
-		m_Entities = &entities;
 	}
 
 	void EditorDataSource::UpdateSuggestions(const StringVector &list)
@@ -195,6 +168,8 @@ namespace FusionEngine
 
 		m_Document->RemoveReference();
 
+		m_GridProperties->SetDataSource(m_DataSourceName.c_str());
+
 		Refresh();
 	}
 
@@ -227,6 +202,11 @@ namespace FusionEngine
 			m_InputName->SetValue( to_emp(m_MapEntity->entity->GetName()) );
 
 		m_InputType->SetValue( to_emp(m_MapEntity->entity->GetType()) );
+
+		
+		for (unsigned int i = 0, count = m_MapEntity->entity->GetPropertyCount(); i < count; ++i)
+		{
+		}
 	}
 
 	void PropertyEditorDialog::Show()

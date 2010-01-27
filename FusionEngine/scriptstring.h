@@ -29,6 +29,7 @@ public:
 	CScriptString(const CScriptString &other);
 	CScriptString(const char *s, unsigned int length);
 	CScriptString(const std::string &s);
+	~CScriptString();
 
 	void AddRef();
 	void Release();
@@ -46,7 +47,6 @@ public:
 	std::string buffer;
 
 protected:
-	~CScriptString();
 	int refCount;
 };
 

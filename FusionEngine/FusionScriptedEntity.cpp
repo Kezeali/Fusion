@@ -9,9 +9,14 @@
 
 #include "scriptstring.h"
 
+#include <ScriptUtils/Inheritance/TypeTraits.h>
+
 
 namespace FusionEngine
 {
+
+	int ScriptedEntity::s_EntityTypeId = -1;
+	int ScriptedEntity::s_ScriptEntityTypeId = -1;
 
 	const type_info &ToCppType(int type_id, ScriptingEngine *engine)
 	{
@@ -55,52 +60,68 @@ namespace FusionEngine
 		FSN_EXCEPT(ExCode::InvalidArgument, "ToCppType", "Unknown Angelscript type");
 	}
 
-	// REVISE--Type should be the actual type of the variable held by the script
-	//  engine - i.e. the type that the void* should be casted to.
+	// Get
 	template <typename T>
-	void getPropValueOfType(boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	void accessPropValueOfType(boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
 	{
 		cpp_obj = *(T*)obj->GetAddressOfProperty(property_index);
 	}
+	//Set
 	template <typename T>
-	void setPropValueOfType(const boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	void accessPropValueOfType(const boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
 	{
 		*(T*)obj->GetAddressOfProperty(property_index) = boost::any_cast<T>( cpp_obj );
 	}
 
-	void ScriptedEntity::accessScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const
+	// Get (ScirptedEntity specialization)
+	template <>
+	void accessPropValueOfType<ScriptedEntity*>(boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
 	{
-		asIScriptObject *obj = m_ScriptObject.GetScriptObject();
+		asIScriptObject *value = *static_cast<asIScriptObject**>( obj->GetAddressOfProperty(property_index) );
+		cpp_obj = ScriptedEntity::GetAppObject(value);
+	}
+	// Set (ScriptedEntity specialization)
+	template <>
+	void accessPropValueOfType<ScriptedEntity*>(const boost::any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	{
+		ScriptedEntity *value = boost::any_cast<ScriptedEntity*>( cpp_obj );
+		*(asIScriptObject**)obj->GetAddressOfProperty(property_index) = ScriptedEntity::GetScriptObject(value);
+	}
+
+	// Decides the correct type, then calls either of the overloaded methods above on that type
+	template <typename boost_any>
+	void accessScriptPropValue(boost_any &cpp_obj, asIScriptObject *obj, asUINT property_index)
+	{
+		// Make sure the type is correct
+		BOOST_MPL_ASSERT(( std::tr1::is_convertible< std::tr1::remove_const<boost_any>, boost::any > ));
+
 		int type_id = obj->GetPropertyTypeId(property_index);
 
 		if (type_id == asTYPEID_BOOL)
-			if (get) getPropValueOfType<bool>(cpp_obj, obj, property_index);
-			else setPropValueOfType<bool>(cpp_obj, obj, property_index);
+			accessPropValueOfType<bool>(cpp_obj, obj, property_index);
 		// Integer types
 		else if (type_id == asTYPEID_INT8)
-			if (get) getPropValueOfType<int8_t>(cpp_obj, obj, property_index);
-			else setPropValueOfType<bool>(cpp_obj, obj, property_index);
+			accessPropValueOfType<int8_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_INT16)
-			if (get) getPropValueOfType<int16_t>(cpp_obj, obj, property_index);
-			else setPropValueOfType<int16_t>(cpp_obj, obj, property_index);
+			accessPropValueOfType<int16_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_INT32)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<int32_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_INT64)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<int64_t>(cpp_obj, obj, property_index);
 		// ... unsigned
 		else if (type_id == asTYPEID_UINT8)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<uint8_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_UINT16)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<uint16_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_UINT32)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<uint32_t>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_UINT64)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<uint64_t>(cpp_obj, obj, property_index);
 		// Floating point types
 		else if (type_id == asTYPEID_FLOAT)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<float>(cpp_obj, obj, property_index);
 		else if (type_id == asTYPEID_DOUBLE)
-			cpp_obj = *(bool*)obj->GetAddressOfProperty(property_index);
+			accessPropValueOfType<double>(cpp_obj, obj, property_index);
 
 		// Pointers / handles
 		else if (type_id & asTYPEID_APPOBJECT)
@@ -108,15 +129,30 @@ namespace FusionEngine
 			ScriptingEngine *engine = NULL; // TODO: engine param?
 			if (engine == NULL)
 				engine = ScriptingEngine::getSingletonPtr();
-			if (engine == NULL)
-				FSN_EXCEPT(ExCode::InvalidArgument, "GetPropertyValue", "Can't get application-defined type without a valid ScriptingManager");
+			FSN_ASSERT(engine == NULL);
 
-			if (type_id == m_ScriptEntityTypeId)
-				cpp_obj = *(ScriptedEntity**)obj->GetAddressOfProperty(property_index);
-			else if (type_id == engine->GetStringTypeId())
-				cpp_obj = *(CScriptString**)obj->GetAddressOfProperty(property_index);
-			else if (type_id == engine->GetVectorTypeId())
-				cpp_obj = *(Vector2**)obj->GetAddressOfProperty(property_index);
+			if (type_id & ScriptedEntity::s_ScriptEntityTypeId)
+			{
+				accessPropValueOfType<ScriptedEntity*>(cpp_obj, obj, property_index);
+			}
+			else if (type_id & ScriptedEntity::s_EntityTypeId)
+			{
+				accessPropValueOfType<Entity*>(cpp_obj, obj, property_index);
+			}
+			else if (type_id & engine->GetStringTypeId())
+			{
+				if (type_id & asTYPEID_OBJHANDLE)
+					accessPropValueOfType<CScriptString*>(cpp_obj, obj, property_index);
+				else
+					accessPropValueOfType<CScriptString>(cpp_obj, obj, property_index);
+			}
+			else if (type_id & engine->GetVectorTypeId())
+			{
+				if (type_id & asTYPEID_OBJHANDLE)
+					accessPropValueOfType<Vector2*>(cpp_obj, obj, property_index);
+				else
+					accessPropValueOfType<Vector2>(cpp_obj, obj, property_index);
+			}
 		}
 	}
 
@@ -295,28 +331,116 @@ namespace FusionEngine
 	//	m_Streamed[path] = type;
 	//}
 
-	unsigned int ScriptedEntity::GetPropertiesCount() const
+	unsigned int ScriptedEntity::GetPropertyCount() const
 	{
 		return m_SyncedProperties.size();
 	}
 
 	std::string ScriptedEntity::GetPropertyName(unsigned int index) const
 	{
-		return m_ScriptObject.GetScriptObject()->GetPropertyName(index);
+		int propIndex = getScriptPropIndex(index);
+		return m_ScriptObject.GetScriptObject()->GetPropertyName(propIndex);
 	}
 
 	boost::any ScriptedEntity::GetPropertyValue(unsigned int index) const
 	{
 		boost::any value;
-		accessScriptPropValue(value, index, true);
+		int propIndex = getScriptPropIndex(index);
+		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
 		return value;
 	}
 
 	void ScriptedEntity::SetPropertyValue(unsigned int index, const boost::any &value)
 	{
-		void *ptr = m_ScriptObject.GetScriptObject()->GetAddressOfProperty(index);
-		
+		int propIndex = getScriptPropIndex(index);
+		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
 	}
+
+	int ScriptedEntity::GetPropertyType(unsigned int index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+
+		int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
+		// basic types
+		switch (typeId)
+		{
+		case asTYPEID_BOOL:
+			return pt_bool;
+		case asTYPEID_INT8:
+			return pt_int8;
+		case asTYPEID_INT16:
+			return pt_int16;
+		case asTYPEID_INT32:
+			return pt_int32;
+		case asTYPEID_INT64:
+			return pt_int64;
+		case asTYPEID_UINT8:
+			return pt_uint8;
+		case asTYPEID_UINT16:
+			return pt_uint16;
+		case asTYPEID_UINT32:
+			return pt_uint32;
+		case asTYPEID_UINT64:
+			return pt_uint64;
+		case asTYPEID_FLOAT:
+			return pt_float;
+		case asTYPEID_DOUBLE:
+			return pt_double;
+		}
+		
+		if (typeId & asTYPEID_APPOBJECT)
+		{
+			ScriptingEngine *man = ScriptingEngine::getSingletonPtr();
+			if (typeId & s_EntityTypeId)
+				return pt_entity;
+			else
+			{
+				int propertyType = pt_none;
+
+				if (typeId & man->GetStringTypeId())
+					propertyType = pt_string;
+				else if (typeId & man->GetVectorTypeId())
+					propertyType = pt_vector;
+
+				if (typeId & asTYPEID_OBJHANDLE)
+					propertyType |= pt_pointer_flag;
+
+				return propertyType;
+			}
+		}
+
+		return pt_none;
+	}
+
+	void* ScriptedEntity::GetAddressOfProperty(unsigned int index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+		return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);
+	}
+
+	//EntityPtr ScriptedEntity::GetPropertyEntity(unsigned int index) const
+	//{
+	//	int propIndex = m_SyncedProperties[index].scriptPropertyIndex;
+
+	//	asIScriptObject *obj = m_ScriptObject.GetScriptObject();
+	//	int typeId = obj->GetPropertyTypeId(propIndex);
+	//	if ((typeId & s_EntityTypeId) == s_EntityTypeId)
+	//	{
+	//		return EntityPtr( *static_cast<Entity**>(obj->GetAddressOfProperty(propIndex)) );
+	//	}
+	//	//else
+	//	//{
+	//	//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
+	//	//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
+	//	//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
+	//	//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType)
+	//	//	{
+	//	//		asIScriptObject *value = *static_cast<asIScriptObject**>( obj->GetAddressOfProperty(index) );
+	//	//		return EntityPtr( GetAppObject(value), false);
+	//	//	}
+	//	//}
+	//	return EntityPtr();
+	//}
 
 	void ScriptedEntity::EnumReferences(asIScriptEngine *engine)
 	{
@@ -476,11 +600,11 @@ namespace FusionEngine
 			}
 			if (!isPrimative) // Check for non-primative types:
 			{
-				if (typeId == ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
 				{
 					stateStream << *static_cast<Vector2*>( prop );
 				}
-				if (typeId == ScriptingEngine::getSingletonPtr()->GetStringTypeId())
+				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
 				{
 					CScriptString *value = static_cast<CScriptString*>( prop );
 					std::string::size_type length = value->buffer.length();
@@ -490,6 +614,24 @@ namespace FusionEngine
 					// Write the value
 					stateStream.write(value->buffer.c_str(), length);
 				}
+				// Entity
+				else if (typeId & s_EntityTypeId)
+				{
+					Entity *value = *static_cast<Entity**>(prop);
+					stateStream << value->GetID();
+				}
+				//else
+				//{
+				//	// Check for scripted entity derrived types
+				//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
+				//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
+				//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
+				//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType))
+				//	{
+				//		ScriptedEntity *value = GetAppObject( *static_cast<asIScriptObject**>(prop) );
+				//		stateStream << value->GetID();
+				//	}
+				//}
 			}
 		}
 
@@ -566,13 +708,13 @@ namespace FusionEngine
 			// If the property isn't primative, check for other known types
 			if (!isPrimative)
 			{
-				if (typeId == ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
 				{
 					Vector2 value;
 					stateStream >> value;
 					new(prop) Vector2(value);
 				}
-				else if (typeId == ScriptingEngine::getSingletonPtr()->GetStringTypeId())
+				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
 				{
 					std::string value;
 					std::string::size_type length;
@@ -584,7 +726,7 @@ namespace FusionEngine
 
 					new(prop) CScriptString(value);
 				}
-				else if (typeId == m_EntityTypeId)
+				else if (typeId & s_EntityTypeId)
 				{
 					ObjectID value;
 					stateStream >> value;
@@ -593,16 +735,23 @@ namespace FusionEngine
 					if (entity.get() != NULL)
 						*((Entity**)prop) = entity.get();
 				}
-				else if (typeId == m_ScriptEntityTypeId)
-				{
-					ObjectID value;
-					stateStream >> value;
+				//else
+				//{
+				//	// Check for scripted entity derrived types
+				//	asIScriptEngine *se = ScriptingEngine::getSingletonPtr()->GetEnginePtr();
+				//	asIObjectType *scriptedEntityBasetype = se->GetObjectTypeById(s_ScriptEntityTypeId);
+				//	asIObjectType *thisType = se->GetObjectTypeById(typeId);
+				//	if (ScriptUtils::Inheritance::is_base_of(scriptedEntityBasetype, thisType)
+				//	{
+				//		ObjectID value;
+				//		stateStream >> value;
 
-					EntityPtr entity = entity_deserialiser.GetEntity(value);
-					ScriptedEntity *scriptedEntity = dynamic_cast<ScriptedEntity*>( entity.get() );
-					if (scriptedEntity != NULL)
-						*((asIScriptObject**)prop) = scriptedEntity->m_ScriptObject.GetScriptObject();
-				}
+				//		EntityPtr entity = entity_deserialiser.GetEntity(value);
+				//		ScriptedEntity *scriptedEntity = dynamic_cast<ScriptedEntity*>( entity.get() );
+				//		if (scriptedEntity != NULL)
+				//			*((asIScriptObject**)prop) = scriptedEntity->m_ScriptObject.GetScriptObject();
+				//	}
+				//}
 			}
 		}
 
@@ -666,6 +815,8 @@ namespace FusionEngine
 
 	void ScriptedEntity::Register(asIScriptEngine* engine)
 	{
+		s_EntityTypeId = engine->GetTypeIdByDecl("Entity");
+
 		int r;
 		r = engine->RegisterObjectMethod("Entity",
 			"void applyForce(const Vector &in, const Vector &in)",
@@ -688,6 +839,17 @@ namespace FusionEngine
 
 		// Fixture method
 		//r = engine->RegisterObjectMethod("Fixture", "Entity@ getEntity() const", asFUNCTIONPR(Fixture_GetEntity, (b2Fixture&), Entity*), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+
+	void ScriptedEntity::SetScriptEntityTypeId(int id)
+	{
+		s_ScriptEntityTypeId = id;
+	}
+
+	inline int ScriptedEntity::getScriptPropIndex(unsigned int entity_prop_index) const
+	{
+		FSN_ASSERT(entity_prop_index < m_SyncedProperties.size());
+		return m_SyncedProperties[entity_prop_index].scriptPropertyIndex;
 	}
 
 }

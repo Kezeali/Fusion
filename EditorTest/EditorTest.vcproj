@@ -217,6 +217,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\FusionEngine\FusionEditorMapEntity.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\FusionEngine\FusionEditorUndo.cpp"
 				>
 			</File>
@@ -516,6 +520,10 @@
 			</File>
 			<File
 				RelativePath="..\FusionEngine\FusionEditor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\FusionEngine\FusionEditorMapEntity.h"
 				>
 			</File>
 			<File

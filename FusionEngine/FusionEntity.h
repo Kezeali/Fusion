@@ -195,15 +195,6 @@ namespace FusionEngine
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
 	typedef std::vector<RenderablePtr> RenderableArray;
 
-	class EditableProperty
-	{
-	public:
-		virtual ~EditableProperty() {}
-
-		virtual std::string GetName() const =0;
-
-		virtual boost::any GetValue() const =0;
-	};
 
 	struct InstancePrepDefinition
 	{
@@ -320,12 +311,41 @@ namespace FusionEngine
 		//! Returns streamed resources
 		const StreamedResourceArray &GetStreamedResources() const;
 
+		//! Valid types for property vars.
+		enum PropertyType
+		{
+			pt_none = 0,
+			pt_bool = 1,
+			pt_int8 = 2,
+			pt_int16 = 3,
+			pt_int32 = 4,
+			pt_int64 = 5,
+			pt_uint8 = 6,
+			pt_uint16 = 7,
+			pt_uint32 = 8,
+			pt_uint64 = 9,
+			pt_float = 10,
+			pt_double = 11,
+			// Entity is always a pointer and thus pointer flag is unneccesary
+			pt_entity = 12,
+			// These types can be pointers (with pointer flag)
+			pt_string = 16,
+			pt_vector = 32,
+			pt_reserved1 = 64,
+			pt_reserved2 = 128,
+			pt_pointer_flag = 256
+		};
+
 		//! Returns the number of editable properties
-		virtual unsigned int GetPropertiesCount() const { return 0; }
+		virtual unsigned int GetPropertyCount() const { return 0; }
+
+		//! Returns the name of the given property
 		virtual std::string GetPropertyName(unsigned int index) const { return ""; }
-		//! Returns the editable property with the given index
-		virtual boost::any GetPropertyValue(unsigned int index) const { return boost::any(); }
-		virtual void SetPropertyValue(unsigned int index, const boost::any &value) {}
+		//! Returns the property with the given index
+		virtual boost::any GetPropertyValue(unsigned int index) const;
+		//! Sets the given property
+		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
+		//! Template typed GetPropertyValue
 		template <typename T>
 		T GetPropertyValue(unsigned int index) const
 		{
@@ -340,6 +360,15 @@ namespace FusionEngine
 					"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
 			}
 		}
+		//! Returns the given property as an EntityPtr
+		virtual EntityPtr GetPropertyEntity(unsigned int index) const;
+		//! Sets the given entity property
+		virtual void SetPropertyEntity(unsigned int index, const EntityPtr &entity);
+
+		//! Returns the type of the given property
+		virtual int GetPropertyType(unsigned int index) const =0;
+		//! Returns the address of the given property's data
+		virtual void* GetAddressOfProperty(unsigned int index) const =0;
 
 		//! Sets the dictionary used by the EntityManager
 		/*!

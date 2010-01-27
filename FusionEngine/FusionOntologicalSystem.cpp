@@ -86,6 +86,16 @@ namespace FusionEngine
 		{
 		}
 
+		virtual int GetPropertyType(unsigned int index) const
+		{
+			return pt_none;
+		}
+
+		virtual void* GetAddressOfProperty(unsigned int index) const
+		{
+			return NULL;
+		}
+
 		virtual void OnStreamIn()
 		{
 			SendToConsole(GetName() + " streamed in");

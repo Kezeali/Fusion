@@ -1027,6 +1027,7 @@ namespace FusionEngine
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
 			//verifyTypes();
+			ScriptedEntity::SetScriptEntityTypeId(ev.manager->GetEnginePtr()->GetTypeIdByDecl("ScriptEntity"));
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end(); it != end; ++it)
 				createScriptedEntityInstancer(*it);
 		}
@@ -1102,6 +1103,28 @@ namespace FusionEngine
 	//void EntityFactory::verityTypes()
 	//{
 	//}
+	bool isSyncableType(int type_id, ScriptingEngine *script_manager)
+	{
+		if (type_id == asTYPEID_BOOL ||
+			type_id == asTYPEID_INT8 ||
+			type_id == asTYPEID_INT16 ||
+			type_id == asTYPEID_INT32 ||
+			type_id == asTYPEID_INT64 ||
+			type_id == asTYPEID_UINT8 ||
+			type_id == asTYPEID_UINT16 ||
+			type_id == asTYPEID_UINT32 ||
+			type_id == asTYPEID_UINT64 ||
+			type_id == asTYPEID_FLOAT ||
+			type_id == asTYPEID_DOUBLE ||
+			(type_id & ScriptedEntity::s_EntityTypeId) == ScriptedEntity::s_EntityTypeId ||
+			(type_id & script_manager->GetStringTypeId()) == script_manager->GetStringTypeId() ||
+			(type_id & script_manager->GetVectorTypeId()) == script_manager->GetVectorTypeId())
+		{
+			return true;
+		}
+		else
+			return false;
+	}
 
 	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
 	{
@@ -1179,11 +1202,21 @@ namespace FusionEngine
 			{
 				ScriptedEntity::Property &prop = _where->second;
 
-				FSN_ASSERT(prop.scriptPropertyIndex != i); // Just checking whether derrived types have the same indexes as base types...
-				prop.scriptPropertyIndex = i;
-
-				// Add the property def to the array (which will be passed to ScriptedEntities when they are created)
-				syncProperties.push_back(prop);
+				int typeId = objectType->GetPropertyTypeId(i);
+				if (isSyncableType(typeId, m_ScriptingManager))
+				{
+					prop.scriptPropertyIndex = i;
+					// Add the property def to the array (which will be passed to ScriptedEntities when they are created)
+					syncProperties.push_back(prop);
+				}
+				else
+				{
+					prop.scriptPropertyIndex = -1;
+					std::string type = engine->GetObjectTypeById(typeId)->GetName();
+					SendToConsole("Creating instancer for a scripted entity: The property '"
+						+ prop.name + "' in " + definition->GetType() +
+						" given in a <sync> element is of type " + type + " - objects of that type cannot be synchronized.");
+				}
 			}
 		}
 		// Erase synced-property defs that are missing from the script type

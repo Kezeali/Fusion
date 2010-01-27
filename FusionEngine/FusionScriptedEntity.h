@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -100,20 +100,6 @@ namespace FusionEngine
 
 		typedef std::vector<Property> PropertiesArray;
 
-		class EditableProp : EditableProperty
-		{
-			EditableProp(const Property &prop, const ScriptObject &obj)
-			{
-				m_Name = prop.name;
-				m_ScriptPropertyIndex = prop.scriptPropertyIndex;
-				m_ScriptObject = obj;
-			}
-		protected:
-			std::string m_Name;
-			int m_ScriptPropertyIndex;
-			ScriptObject m_ScriptObject;
-		};
-
 		//typedef std::map<std::string, ResourceDescriptionPtr> ResourcesMap;
 		typedef std::map<std::wstring, std::string> StreamedResourceMap;
 
@@ -128,12 +114,16 @@ namespace FusionEngine
 		//void SetStreamedResources(const StreamedResourceMap &resources);
 		//void AddStreamedResource(const std::string &type, const std::wstring &path);
 
-		virtual unsigned int GetPropertiesCount() const;
+		virtual unsigned int GetPropertyCount() const;
 		virtual std::string GetPropertyName(unsigned int index) const;
 		virtual boost::any GetPropertyValue(unsigned int index) const;
 		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 
-		void accessScriptPropValue(boost::any &cpp_obj, asUINT property_index, bool get) const;
+		//virtual EntityPtr GetPropertyEntity(unsigned int index) const;
+		//virtual void SetPropertyEntity(unsigned int index, const EntityPtr &value);
+
+		virtual int GetPropertyType(unsigned int index) const;
+		virtual void* GetAddressOfProperty(unsigned int index) const;
 
 		virtual void EnumReferences(asIScriptEngine *engine);
 		virtual void ReleaseAllReferences(asIScriptEngine *engine);
@@ -147,17 +137,28 @@ namespace FusionEngine
 		virtual void Update(float split);
 		virtual void Draw();
 
+		//! Called on stream in
 		virtual void OnStreamIn();
+		//! Called on stream out
 		virtual void OnStreamOut();
 
+		//! Writes property data
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
+		//! Reads property data
 		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser);
 
+		//! Returns the wrapped script object
 		static asIScriptObject* GetScriptObject(Entity *entity);
+		//! Returns the wrapper for the given ScriptEntity-typed script object
 		static ScriptedEntity* GetAppObject(asIScriptObject *script);
 
+		//! Registers the Entity type
 		static void Register(asIScriptEngine *engine);
+		//! EntityFactory calls this when the main module is rebuilt
+		static void SetScriptEntityTypeId(int id);
 
+		static int s_EntityTypeId;
+		static int s_ScriptEntityTypeId;
 	protected:
 		// The (scripted) entity implementation
 		ScriptObject m_ScriptObject;
@@ -167,12 +168,12 @@ namespace FusionEngine
 
 		PropertiesArray m_SyncedProperties;
 		StreamedResourceMap m_Streamed;
-
-		int m_EntityTypeId;
-		int m_ScriptEntityTypeId;
-
+		
 		Vector2 m_DefaultPosition;
 		float m_DefaultAngle;
+
+		//! Safely gets the script object property index of the given entity property index
+		inline int getScriptPropIndex(unsigned int entity_prop_index) const;
 	};
 
 	static void RegisterEntityUnwrap(asIScriptEngine *engine)

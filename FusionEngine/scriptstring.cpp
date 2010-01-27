@@ -606,7 +606,7 @@ int RegisterScriptString_Native(asIScriptEngine *engine)
 	int r, typeId;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", 0, asOBJ_REF); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( r >= 0 );
 	typeId = engine->GetTypeIdByDecl("string");
 
 	// Register the object operator overloads

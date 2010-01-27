@@ -796,6 +796,131 @@ namespace FusionEngine
 		return m_StreamedResources;
 	}
 
+	template <typename T>
+	void getPropValueOfType(boost::any &value, void *prop_addr, asUINT property_index)
+	{
+		value = *(T*)prop_addr;
+	}
+	template <typename T>
+	void setPropValueOfType(const boost::any &value, void *prop_addr, asUINT property_index)
+	{
+		*(T*)prop_addr = boost::any_cast<T>(value);
+	}
+
+	boost::any Entity::GetPropertyValue(unsigned int index) const
+	{
+		boost::any value;
+
+		int type_id = GetPropertyType(index);
+
+		if (type_id == pt_bool)
+			getPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
+		// Integer types
+		else if (type_id == pt_int8)
+			getPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int16)
+			getPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int32)
+			getPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int64)
+			getPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
+		// ... unsigned
+		else if (type_id == pt_uint8)
+			getPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint16)
+			getPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint32)
+			getPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint64)
+			getPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
+		// Floating point types
+		else if (type_id == pt_float)
+			getPropValueOfType<float>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_double)
+			getPropValueOfType<double>(value, GetAddressOfProperty(index), index);
+
+		// Class types
+		else if (type_id == pt_entity)
+			getPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
+		else if (type_id & pt_string)
+		{
+			if (type_id & pt_pointer_flag)
+				getPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
+			else
+				getPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
+		}
+		else if (type_id & pt_vector)
+		{
+			if (type_id & pt_pointer_flag)
+				getPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
+			else
+				getPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
+		}
+
+		return value;
+	}
+
+	void Entity::SetPropertyValue(unsigned int index, const boost::any &value)
+	{
+		int type_id = GetPropertyType(index);
+
+		if (type_id == pt_bool)
+			setPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
+		// Integer types
+		else if (type_id == pt_int8)
+			setPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int16)
+			setPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int32)
+			setPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_int64)
+			setPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
+		// ... unsigned
+		else if (type_id == pt_uint8)
+			setPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint16)
+			setPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint32)
+			setPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_uint64)
+			setPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
+		// Floating point types
+		else if (type_id == pt_float)
+			setPropValueOfType<float>(value, GetAddressOfProperty(index), index);
+		else if (type_id == pt_double)
+			setPropValueOfType<double>(value, GetAddressOfProperty(index), index);
+
+		// Class types
+		else if (type_id == pt_entity)
+			setPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
+		else if (type_id & pt_string)
+		{
+			if (type_id & pt_pointer_flag)
+				setPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
+			else
+				setPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
+		}
+		else if (type_id & pt_vector)
+		{
+			if (type_id & pt_pointer_flag)
+				setPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
+			else
+				setPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
+		}
+	}
+
+	EntityPtr Entity::GetPropertyEntity(unsigned int index) const
+	{
+		Entity **entity = static_cast<Entity**>( GetAddressOfProperty(index) );
+		return EntityPtr(*entity);
+	}
+
+	void Entity::SetPropertyEntity(unsigned int index, const EntityPtr &entity)
+	{
+		Entity **value = static_cast<Entity**>( GetAddressOfProperty(index) );
+		*value = entity.get();
+	}
+
 	void Entity::StreamIn()
 	{
 		SetStreamedIn(true);

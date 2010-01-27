@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -435,7 +435,7 @@ namespace FusionEngine
 	}
 	//! Sets a to no less than lb, and no greater than ub
 	template <class T>
-	static inline void fe_clamp(T &a, const T &lb, const T &ub) 
+	inline void fe_clamp(T &a, const T &lb, const T &ub) 
 	{
 		if (a < lb) 
 		{
@@ -445,6 +445,12 @@ namespace FusionEngine
 		{
 			a = ub;
 		}
+	}
+
+	//! Checks for the given flag in the given bit-set
+	inline bool fe_checkflag(int bits, int flag)
+	{
+		return (bits & flag) != 0;
 	}
 
 	//! Converts Box2D Vector2 to FE Vector2
