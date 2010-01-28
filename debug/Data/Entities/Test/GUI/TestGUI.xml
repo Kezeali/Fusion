@@ -3,7 +3,7 @@
 	<Script type="angelscript">
 		class TestGUI : ScriptEntity
 		{
-			Document@ document;
+			ElementDocument@ document;
 			int x;
 			int y;
 			TestGUI()
