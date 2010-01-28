@@ -486,6 +486,8 @@ namespace FusionEngine
 			m_MainDocument->Close();
 		m_MainDocument = NULL;
 
+		m_PropertyDialogs.clear();
+
 		//if (m_UndoMenu != NULL)
 		//	m_UndoMenu->RemoveReference();
 		//m_UndoMenu = NULL;

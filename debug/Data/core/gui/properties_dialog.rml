@@ -24,7 +24,7 @@
 		<script>
 			void OnPropSelected(Event@ event)
 			{
-				console.println("selected: " + event.GetParameter("row_index", -1));
+				console.println("selected: " + event.GetParameter(e_String("row_index"), -1));
 			}
 		</script>
 	</head>

@@ -58,15 +58,6 @@ namespace FusionEngine
 	class GUI : public System, public Singleton<GUI>
 	{
 	public:
-		enum Modifiers
-		{
-			NOMOD = 0,
-			SHIFT = 1,
-			CTRL = 2,
-			ALT = 4
-		};
-
-	public:
 		//! Basic constructor.
 		GUI();
 		//! Constructor.
@@ -131,7 +122,10 @@ namespace FusionEngine
 		//! When this reaches zero, the mouse will be hidden
 		int m_ShowMouseTimer;
 
-		short m_Modifiers;
+		static const float s_ClickPausePeriod;
+		// Stop mouse-move events from being processed while this is > 0 - this var is set to
+		//  a milisecond count after a click event is processed (to make double-clicking easier)
+		float m_ClickPause;
 
 		CL_DisplayWindow m_Display;
 

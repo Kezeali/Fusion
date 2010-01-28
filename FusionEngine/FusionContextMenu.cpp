@@ -86,6 +86,11 @@ namespace FusionEngine
 			int x = (int)std::ceil(m_Element->GetAbsoluteLeft() + m_Element->GetClientWidth() - 4);
 			int y = (int)std::ceil(m_Element->GetAbsoluteTop());
 
+			const EMP::Core::Vector2i &dimensions = m_Context->GetDimensions();
+			if (x + m_Document->GetOffsetWidth() > dimensions.x)
+				x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
+			if (y + m_Document->GetOffsetHeight() > dimensions.y)
+				y -= (int)(y + m_Document->GetOffsetHeight() - dimensions.y);
 			
 			m_Document->SetProperty("left", Rocket::Core::Property(x, Rocket::Core::Property::PX));
 			m_Document->SetProperty("top",  Rocket::Core::Property(y, Rocket::Core::Property::PX));
@@ -354,8 +359,17 @@ namespace FusionEngine
 		m_Document->Show();
 	}
 
-	void ContextMenu::Show(int x, int y)
+	void ContextMenu::Show(int x, int y, bool fit_within_context)
 	{
+		if (fit_within_context)
+		{
+			const EMP::Core::Vector2i &dimensions = m_Context->GetDimensions();
+			if (x + m_Document->GetOffsetWidth() > dimensions.x)
+				x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
+			if (y + m_Document->GetOffsetHeight() > dimensions.y)
+				y -= y + m_Document->GetOffsetHeight() - dimensions.y;
+		}
+
 		m_Document->SetProperty("left", Rocket::Core::Property(x, Rocket::Core::Property::PX));
 		m_Document->SetProperty("top", Rocket::Core::Property(y, Rocket::Core::Property::PX));
 		m_Document->Show();

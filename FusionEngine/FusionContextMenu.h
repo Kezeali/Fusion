@@ -129,7 +129,7 @@ namespace FusionEngine
 		void SetPosition(int x, int y);
 
 		virtual void Show();
-		void Show(int x, int y);
+		void Show(int x, int y, bool fit_within_context = true);
 
 		void OnRawInput(const RawInput &data);
 		virtual void ProcessEvent(Rocket::Core::Event& ev);

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -52,6 +52,7 @@ namespace FusionEngine
 {
 
 	const std::string s_GuiSystemName = "GUI";
+	const float GUI::s_ClickPausePeriod = 10*0.001f;
 
 	struct ScriptStringConverter
 	{
@@ -94,9 +95,9 @@ namespace FusionEngine
 	}
 
 	GUI::GUI()
-		: m_Modifiers(NOMOD),
-		m_MouseShowPeriod(1000),
+		: m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
+		m_ClickPause(0),
 		m_DebuggerInitialized(false),
 		m_Initialised(false)
 	{
@@ -104,9 +105,9 @@ namespace FusionEngine
 	}
 
 	GUI::GUI(CL_DisplayWindow window)
-		: m_Modifiers(NOMOD),
-		m_MouseShowPeriod(1000),
+		: m_MouseShowPeriod(1000),
 		m_ShowMouseTimer(1000),
+		m_ClickPause(0),
 		m_Display(window),
 		m_DebuggerInitialized(false),
 		m_Initialised(false)
@@ -163,7 +164,7 @@ namespace FusionEngine
 
 		CL_GraphicContext gc = m_Display.get_gc();
 
-		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_width()));
+		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_height()));
 		
 		LoadFonts("core/gui/fonts/");
 		m_Context->LoadMouseCursor("core/gui/cursor.rml");
@@ -204,6 +205,9 @@ namespace FusionEngine
 	void GUI::Update(float split)
 	{
 		m_Context->Update();
+
+		if (m_ClickPause > 0)
+			m_ClickPause -= split;
 
 		// Hide the cursor if the timeout has been reached
 		if ( m_ShowMouseTimer <= 0 )
@@ -389,7 +393,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GUI::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
+	inline int getRktModifierFlags(const CL_InputEvent &ev)
 	{
 		int modifier = 0;
 		if (ev.alt)
@@ -398,7 +402,14 @@ namespace FusionEngine
 			modifier |= Rocket::Core::Input::KM_CTRL;
 		if (ev.shift)
 			modifier |= Rocket::Core::Input::KM_SHIFT;
+		return modifier;
+	}
 
+	void GUI::onMouseDown(const CL_InputEvent &ev, const CL_InputState &state)
+	{
+		m_ClickPause = s_ClickPausePeriod;
+
+		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
 		case CL_MOUSE_LEFT:
@@ -423,19 +434,13 @@ namespace FusionEngine
 			m_Context->ProcessMouseWheel(1, modifier);
 			break;
 		}
-
 	}
 
 	void GUI::onMouseUp(const CL_InputEvent &ev, const CL_InputState &state)
 	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
+		m_ClickPause = s_ClickPausePeriod;
 
+		int modifier = getRktModifierFlags(ev);
 		switch(ev.id)
 		{
 		case CL_MOUSE_LEFT:
@@ -460,20 +465,12 @@ namespace FusionEngine
 			m_Context->ProcessMouseWheel(0, modifier);
 			break;
 		}
-
 	}
 
 	void GUI::onMouseMove(const CL_InputEvent &ev, const CL_InputState &state)
 	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
-
-		m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
+		if (m_ClickPause <= 0)
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, getRktModifierFlags(ev));
 
 		if (m_ShowMouseTimer <= 0 && m_MouseShowPeriod > 0)
 		{
@@ -484,14 +481,6 @@ namespace FusionEngine
 
 	void GUI::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
 	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
-
 		// Grab characters
 		if (!ev.alt && !ev.ctrl && !ev.str.empty())
 		{
@@ -506,20 +495,12 @@ namespace FusionEngine
 			//	m_Context->ProcessTextInput( EMP::Core::word(c_str[c]) );
 		}
 
-		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), modifier);
+		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
 	}
 
 	void GUI::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
 	{
-		int modifier = 0;
-		if (ev.alt)
-			modifier |= Rocket::Core::Input::KM_ALT;
-		if (ev.ctrl)
-			modifier |= Rocket::Core::Input::KM_CTRL;
-		if (ev.shift)
-			modifier |= Rocket::Core::Input::KM_SHIFT;
-
-		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), modifier);
+		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
 	}
 
 	void GUI::onResize(int x, int y)

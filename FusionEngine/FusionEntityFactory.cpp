@@ -1027,7 +1027,8 @@ namespace FusionEngine
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
 			//verifyTypes();
-			ScriptedEntity::SetScriptEntityTypeId(ev.manager->GetEnginePtr()->GetTypeIdByDecl("ScriptEntity"));
+			asIScriptModule *mod = ev.manager->GetEnginePtr()->GetModule(ev.module_name);
+			ScriptedEntity::SetScriptEntityTypeId(mod->GetTypeIdByDecl("ScriptEntity"));
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end(); it != end; ++it)
 				createScriptedEntityInstancer(*it);
 		}

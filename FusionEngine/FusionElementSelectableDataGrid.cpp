@@ -44,7 +44,7 @@ namespace FusionEngine
 	{
 		m_Selectable = false;
 		m_MinSelectableDepth = 0;
-		AddEventListener("rowadd", this);
+		//AddEventListener("rowadd", this);
 	}
 
 	ElementSelectableDataGrid::~ElementSelectableDataGrid()
