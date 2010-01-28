@@ -5,7 +5,7 @@ void OnUndo(Event@ event)
 {
 	if (editor_undoMenu is null)
 	{
-		Document @doc = event.GetCurrentElement().GetOwnerDocument();
+		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 		@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
 	}
 
@@ -16,7 +16,7 @@ void OnRedo(Event@ event)
 {
 	if (editor_redoMenu is null)
 	{
-		Document @doc = event.GetCurrentElement().GetOwnerDocument();
+		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
 		@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
 	}
 
@@ -44,7 +44,8 @@ void OnSelected(Event@ event)
 
 	string type = editor.getSuggestion(index);
 
-	ElementFormControlInput@ element = cast<ElementFormControlInput>( module_document.GetElementById(e_String("entity_type")) );
+	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(e_String("entity_type")) );
 	if (element !is null)
 	{
 		element.SetValue(e_String(type));

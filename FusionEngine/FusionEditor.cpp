@@ -64,6 +64,10 @@ namespace FusionEngine
 		//! Displays the dialog
 		void Show();
 
+		//! Returns the GUI element maintained by this object
+		Rocket::Core::ElementDocument * const GetDocument();
+
+		//! Processes GUI events
 		void ProcessEvent(Rocket::Core::Event &ev);
 
 	protected:
@@ -80,21 +84,35 @@ namespace FusionEngine
 		UndoableActionManager *m_Undo;
 	};
 
+	void verify(Rocket::Core::Element *element, const std::string &name)
+	{
+		if (element == NULL)
+			FSN_EXCEPT(ExCode::NotImplemented, "PropertyEditorDialog", "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
+	}
+
 	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
 		: m_MapEntity(mapent),
-		m_Undo(undo)
+		m_Undo(undo),
+		m_Document(NULL),
+		m_InputX(NULL),
+		m_InputY(NULL),
+		m_InputName(NULL),
+		m_InputType(NULL),
+		m_GridProperties(NULL)
 	{
 		using namespace Rocket::Controls;
 
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_Document = guiCtx->LoadDocument("core/gui/properties_dialog.rml");
+		if (m_Document == NULL)
+			return;
 
 		// Grab the elements from the doc.
-		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") );
-		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") );
-		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") );
-		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") );
-		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") );
+		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") ); verify(m_InputX, "x");
+		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") ); verify(m_InputY, "y");
+		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") ); verify(m_InputName, "name");
+		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") ); verify(m_InputType, "type");
+		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") ); verify(m_GridProperties, "properties");
 
 		m_Document->AddEventListener("change", this);
 
@@ -102,19 +120,31 @@ namespace FusionEngine
 
 		// Set up the properties listbox
 		EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
-		//m_GridProperties->AddColumn(
-		m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
-		m_GridProperties->AddEventListener("rowselected", this);
-		m_GridProperties->AddEventListener("rowdblclick", this);
+		if (editorEntityPtr)
+		{
+			editorEntityPtr->release(); // Bleh (the dynamic cast above adds a superfluous ref for some stupid bullishit why-do-you-make-my-life-so-difficult reason)
+			m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
+			m_GridProperties->AddEventListener("rowselected", this);
+			m_GridProperties->AddEventListener("rowdblclick", this);
+		}
+		else
+			SendToConsole("Can't display editable properties in an Entity property window that was just opened: not an Editor-Entity");
 
 		Refresh();
 	}
 
 	PropertyEditorDialog::~PropertyEditorDialog()
 	{
-		m_Document->RemoveEventListener("change", this);
-		m_GridProperties->RemoveEventListener("rowselected", this);
-		m_GridProperties->RemoveEventListener("rowdblclick", this);
+		if (m_Document != NULL)
+		{
+			m_Document->RemoveEventListener("change", this);
+			m_Document->Close();
+
+			m_GridProperties->RemoveEventListener("rowselected", this);
+			m_GridProperties->RemoveEventListener("rowdblclick", this);
+		}
+
+		m_MapEntity.reset();
 	}
 
 	inline EMP::Core::String to_emp(const std::string &str)
@@ -146,6 +176,11 @@ namespace FusionEngine
 	void PropertyEditorDialog::Show()
 	{
 		m_Document->Show();
+	}
+
+	Rocket::Core::ElementDocument * const PropertyEditorDialog::GetDocument()
+	{
+		return m_Document;
 	}
 
 	void PropertyEditorDialog::ProcessEvent(Rocket::Core::Event &ev)
@@ -671,6 +706,18 @@ namespace FusionEngine
 
 	void Editor::ProcessEvent(Rocket::Core::Event& ev)
 	{
+		if (ev == "close") // A property dialog is being closed
+		{
+			for (PropertyDialogArray::iterator it = m_PropertyDialogs.begin(), end = m_PropertyDialogs.end(); it != end; ++it)
+			{
+				PropertyEditorDialogPtr &dialog = *it;
+				if (dialog->GetDocument() == ev.GetTargetElement())
+				{
+					m_PropertyDialogs.erase(it);
+					break;
+				}
+			} 
+		}
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)
@@ -743,6 +790,7 @@ namespace FusionEngine
 	{
 		PropertyEditorDialogPtr dialog(new PropertyEditorDialog(entity, &m_UndoManager));
 		dialog->Show();
+		dialog->GetDocument()->AddEventListener("close", this);
 		m_PropertyDialogs.push_back(dialog);
 	}
 

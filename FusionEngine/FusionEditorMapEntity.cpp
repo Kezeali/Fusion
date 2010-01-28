@@ -67,6 +67,7 @@ namespace FusionEngine
 			b2PolygonShape *shape = new b2PolygonShape();
 			shape->SetAsBox(32.f*s_SimUnitsPerGameUnit, 32.f*s_SimUnitsPerGameUnit);
 			iconFixtureDef.shape = shape;
+			iconFixtureDef.isSensor = true;
 
 			FixtureUserDataPtr user_data(new MapEntityFixtureUserData(this));
 			fixture = physicalEntity->CreateFixture(&iconFixtureDef, "editor", user_data);
