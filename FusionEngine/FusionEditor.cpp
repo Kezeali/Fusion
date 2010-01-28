@@ -488,11 +488,14 @@ namespace FusionEngine
 
 		m_PropertyDialogs.clear();
 
-		//if (m_UndoMenu != NULL)
-		//	m_UndoMenu->RemoveReference();
-		//m_UndoMenu = NULL;
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
+
+		m_PlainEntityArray.clear();
+		m_UsedTypes.clear();
+		m_Archetypes.clear();
+		m_PseudoEntities.clear();
+		m_Entities.clear();
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
