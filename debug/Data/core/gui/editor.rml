@@ -20,23 +20,58 @@
 			{
 			text-align: left;
 			}
+
+			button.tool
+			{
+			width: 24px;
+			height: 24px;
+
+			padding-top: 1px;
+			vertical-align: -14px;
+			}
+
+			button.tool div#icon
+			{
+			width: 16px;
+			height: 16px;
+			margin: 4px;
+			icon-decorator: image;
+			icon-z-index: 1;
+			}
+
+			button.tool#place_entity div#icon
+			{
+			icon-image: shape_square_add.png;
+			}
+			button.tool#delete_entity div#icon
+			{
+			icon-image: shape_square_delete.png;
+			}
+			button.tool#move_entity div#icon
+			{
+			icon-image: shape_handles.png;
+			}
 		</style>
 		<script src="editor.as" />
 	</head>
 	<body template="window" onload="OnEditorWindowLoad(event);">
-		<button onclick="gui.enableDebugger(); gui.showDebugger();">Show GUI Debugger</button>
-		<br/>
 		<undomenu reversed class="undo" id="undo_menu" onchange="%this: OnUndo(event);"/>
 		<undomenu class="redo" id="redo_menu" onchange="%this: OnRedo(event);"/>
 		<p>
+			<h1>Tools:</h1>
+			<button class="tool" id="place_entity" onclick="editor.setActiveTool(EditorTool::place_entity)"><div id="icon"/></button>
+			<button class="tool" id="move_entity" onclick="editor.setActiveTool(EditorTool::move_entity)"><div id="icon"/></button>
+			<button class="tool" id="delete_entity" onclick="editor.setActiveTool(delete_entity)"><div id="icon"/></button>
+		</p>
+		<div id="create_entity">
 			<h2>Create Entity:</h2>
-			<input type="checkbox" id="pseudo_ent" checked="" onclick="%this: OnClickPseudoCheckbox(event);"></input> Pseudo-Entity
+			<input type="checkbox" id="pseudo_ent" checked="" onclick="%this: OnClickPseudoCheckbox(event);"/> Pseudo-Entity
 			<br/>
-			Type:<input type="text" id="entity_type" name="typen" onchange="%this: OnEntityTypeChanged(event);"></input>
+			Type:<input type="text" id="entity_type" name="typen" onchange="%this: OnEntityTypeChanged(event);"/>
 			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%this: OnSelected(event);">
 				<col fields="name" width="75%">Types</col>
 			</datagrid>
-		</p>
+		</div>
 		<p>
 			<form onsubmit="%this: SubmitSaveOrLoad(event);">
 				File name:

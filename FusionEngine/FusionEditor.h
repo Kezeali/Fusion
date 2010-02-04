@@ -134,6 +134,14 @@ namespace FusionEngine
 
 		const std::string &GetSuggestion(size_t index);
 
+		enum EditorTool
+		{
+			tool_place,
+			tool_delete,
+			tool_move
+		};
+		void SetActiveTool(EditorTool tool);
+
 		void SetEntityType(const std::string &type);
 		void SetEntityMode(bool pseudo);
 
@@ -210,6 +218,8 @@ namespace FusionEngine
 
 		bool m_Enabled;
 
+		EditorTool m_ActiveTool;
+
 		std::string m_CurrentFilename;
 
 		std::string m_CurrentEntityType;
@@ -230,10 +240,13 @@ namespace FusionEngine
 
 		IDStack m_IdStack;
 
+		inline void onLeftClick(const RawInput &ev);
+
 		void addUndoAction(const UndoableActionPtr &action);
 		void repopulateUndoMenu();
 
-		void showProperties(const MenuItemEvent &ev, const MapEntityPtr &entity);
+		//! Called when a Properties menu-item is clicked
+		void showProperties(const MenuItemEvent &ev, MapEntity *entity);
 
 		//! Lists the given entity in the relevant containers
 		void addMapEntity(const GameMapLoader::GameMapEntityPtr &entity);

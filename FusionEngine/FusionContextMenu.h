@@ -75,13 +75,20 @@ namespace FusionEngine
 
 		void RemoveAllChildren();
 
-		void GetChild(int index);
+		MenuItem *GetChild(int index);
 
 		void SelectChild(int index);
 		void SelectChildRelative(int distance);
 
 		int GetSelectedIndex() const;
 		MenuItem *GetSelectedItem();
+
+		//! Returns true if this object represents a menu-item that opens a sub-menu
+		bool IsSubmenu() const;
+		//! Returns true if this is the top-level menu of the context menu
+		bool IsTopMenu() const;
+		//! Returns true if this is either an item that opens a sub-menu OR the top-level menu
+		bool IsMenu() const;
 
 		virtual void ProcessEvent(Rocket::Core::Event& ev);
 
@@ -101,7 +108,7 @@ namespace FusionEngine
 		Rocket::Core::Element *m_Element;
 
 		MenuItem *m_Parent;
-		typedef EMP::Core::STL::vector<MenuItem*> MenuItemArray;
+		typedef std::vector<MenuItem*> MenuItemArray;
 		MenuItemArray m_Children;
 
 		int m_SelectedItem;

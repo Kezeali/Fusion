@@ -116,13 +116,11 @@ namespace FusionEngine
 
 		m_Document->AddEventListener("change", this);
 
-		m_Document->RemoveReference();
-
 		// Set up the properties listbox
 		EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
 		if (editorEntityPtr)
 		{
-			editorEntityPtr->release(); // Bleh (the dynamic cast above adds a superfluous ref for some stupid bullishit why-do-you-make-my-life-so-difficult reason)
+			//editorEntityPtr->release(); // Bleh (the dynamic cast above adds a superfluous ref for some stupid bullishit why-do-you-make-my-life-so-difficult reason)
 			m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
 			m_GridProperties->AddEventListener("rowselected", this);
 			m_GridProperties->AddEventListener("rowdblclick", this);
@@ -142,6 +140,8 @@ namespace FusionEngine
 
 			m_GridProperties->RemoveEventListener("rowselected", this);
 			m_GridProperties->RemoveEventListener("rowdblclick", this);
+
+			m_Document->RemoveReference();
 		}
 
 		m_MapEntity.reset();
@@ -459,7 +459,8 @@ namespace FusionEngine
 		m_MapUtil(map_util),
 		m_MainDocument(NULL),
 		m_UndoManager(256),
-		m_Enabled(false)
+		m_Enabled(false),
+		m_ActiveTool(tool_move)
 	{
 		m_EditorDataSource = new EditorDataSource();
 	}
@@ -515,8 +516,22 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
-		delete m_RightClickMenu;
-		m_RightClickMenu = NULL;
+		for (MenuItemConnections::iterator it = m_PropertiesMenuConnections.begin(), end = m_PropertiesMenuConnections.end(); it != end; ++it)
+			it->disconnect();
+		m_PropertiesMenuConnections.clear();
+
+		if (m_PropertiesMenu != NULL)
+		{
+			m_PropertiesMenu->release();
+			m_PropertiesMenu = NULL;
+		}
+
+		if (m_RightClickMenu != NULL)
+		{
+			m_RightClickMenu->release();
+			m_RightClickMenu = NULL;
+		}
+
 		if (m_MainDocument != NULL)
 			m_MainDocument->Close();
 		m_MainDocument = NULL;
@@ -555,7 +570,8 @@ namespace FusionEngine
 	{
 		if (m_Enabled)
 		{
-			m_PhysicalWorld->Step(split);
+			//m_PhysicalWorld->Step(split);
+			// TODO: seperate PhysicalWorld::Draw from PhysicalWorld::Step (so debug-draw can be called any time - e.g. Editor::Draw)
 
 			const CL_Vec2f &currentPos = m_Camera->GetPosition();
 			m_Camera->SetPosition(currentPos.x + m_CamVelocity.x, currentPos.y + m_CamVelocity.y);
@@ -625,6 +641,7 @@ namespace FusionEngine
 		if (!m_Enabled)
 			return;
 
+		// Ignore input if the cursor is over a GUI element
 		Rocket::Core::Context *context = m_MainDocument->GetContext();
 		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
 		{
@@ -634,73 +651,109 @@ namespace FusionEngine
 
 		if (ev.InputType == RawInput::Pointer)
 		{
+			// Implement drag action
 		}
 		else if (ev.InputType == RawInput::Button)
 		{
 			if (ev.ButtonPressed == true)
 			{
-				if (ev.Code == CL_KEY_LEFT)
+				switch (ev.Code)
 				{
+				case CL_KEY_LEFT:
 					m_CamVelocity.x = -10;
-				}
-				if (ev.Code == CL_KEY_RIGHT)
-				{
+					break;
+				case CL_KEY_RIGHT:
 					m_CamVelocity.x = 10;
-				}
-				if (ev.Code == CL_KEY_UP)
-				{
+					break;
+				case CL_KEY_UP:
 					m_CamVelocity.y = -10;
-				}
-				if (ev.Code == CL_KEY_DOWN)
-				{
+					break;
+				case CL_KEY_DOWN:
 					m_CamVelocity.y = 10;
+					break;
 				}
 			}
-			else if (ev.ButtonPressed == false)
+			else if (ev.ButtonPressed == false) // Button released
 			{
-				if (ev.Code == CL_KEY_LEFT || ev.Code == CL_KEY_RIGHT)
+				switch (ev.Code)
 				{
+				case CL_KEY_LEFT:
+				case CL_KEY_RIGHT:
 					m_CamVelocity.x = 0;
-				}
-				if (ev.Code == CL_KEY_UP || ev.Code == CL_KEY_DOWN)
-				{
+					break;
+				case CL_KEY_UP:
+				case CL_KEY_DOWN:
 					m_CamVelocity.y = 0;
-				}
+					break;
 
-				if (ev.Code == CL_MOUSE_LEFT)
-				{
-					if (!m_CurrentEntityType.empty() && m_EntityTypes.find(m_CurrentEntityType) != m_EntityTypes.end())
+				case CL_MOUSE_LEFT:
+					onLeftClick(ev);
+					break;
+				case CL_MOUSE_RIGHT:
 					{
-						Vector2 position(ev.PointerPosition);
+						// Figure out where the pointer is within the world
+						CL_Rectf area;
+						m_Renderer->CalculateScreenArea(area, m_Viewport, true);
+						Vector2 worldPosition(ev.PointerPosition);
+						worldPosition.x += area.left; worldPosition.y += area.top;
 
-						CL_Rectf documentRect(m_MainDocument->GetAbsoluteLeft(), m_MainDocument->GetAbsoluteTop(), CL_Sizef(m_MainDocument->GetClientWidth(), m_MainDocument->GetClientHeight()));
-						if (!documentRect.contains(CL_Vec2f(position.x, position.y)))
-						{
-							CL_Rectf area;
-							m_Renderer->CalculateScreenArea(area, m_Viewport, true);
-
-							MapEntityPtr mapEntity = CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
-							if (mapEntity)
-							{
-								UndoableActionPtr action(new AddRemoveEntityAction(this, mapEntity, true));
-								addUndoAction(action);
-							}
-						}
+						GameMapLoader::GameMapEntityArray entitiesUnderMouse;
+						GetEntitiesAt(entitiesUnderMouse, worldPosition);
+						ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
 					}
+					break;
 				}
-				if (ev.Code == CL_MOUSE_RIGHT)
-				{
-					// Figure out where the pointer is within the world
-					CL_Rectf area;
-					m_Renderer->CalculateScreenArea(area, m_Viewport, true);
-					Vector2 worldPosition(ev.PointerPosition);
-					worldPosition.x += area.left; worldPosition.y += area.top;
+			} // Button released
+		}
+	}
 
-					GameMapLoader::GameMapEntityArray entitiesUnderMouse;
-					GetEntitiesAt(entitiesUnderMouse, worldPosition);
-					ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
+	inline void Editor::onLeftClick(const RawInput &ev)
+	{
+		switch (m_ActiveTool)
+		{
+		case tool_place:
+			if (!m_CurrentEntityType.empty() && m_EntityTypes.find(m_CurrentEntityType) != m_EntityTypes.end())
+			{
+				Vector2 position(ev.PointerPosition);
+
+				CL_Rectf area;
+				m_Renderer->CalculateScreenArea(area, m_Viewport, true);
+
+				MapEntityPtr mapEntity = CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
+				if (mapEntity)
+				{
+					UndoableActionPtr action(new AddRemoveEntityAction(this, mapEntity, true));
+					addUndoAction(action);
 				}
 			}
+			break;
+		case tool_delete:
+			break;
+		case tool_move:
+			//GameMapLoader::GameMapEntityArray entitiesUnderMouse;
+			//GetEntitiesAt(entitiesUnderMouse, worldPosition);
+			//if (altPressed)
+			//	m_SelectedEntity = entitiesUnderMouse[0];
+			//else
+			//{
+			//	for (MenuItemConnections::iterator it = m_EntitySelectionMenuConnections.begin(), end = m_EntitySelectionMenuConnections.end(); it != end; ++it)
+			//	{
+			//		it->disconnect();
+			//	}
+			//	m_EntitySelectionMenu.clear();
+			//	m_EntitySelectionMenu->RemoveAllChildren();
+			//	for (MapEntityArray::const_iterator it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
+			//	{
+			//		const MapEntityPtr &mapEntity = *it;
+			//		const EntityPtr &entity = mapEntity->entity;
+			//		MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
+			//		m_EntitySelectionMenu->AddChild(item);
+			//		boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::onSelectMenuClicked, this, _1, mapEntity) );
+			//		m_EntitySelectionMenuConnections.push_back(signalConnection);
+			//		item->release();
+			//	}
+			//}
+			break;
 		}
 	}
 
@@ -740,7 +793,7 @@ namespace FusionEngine
 			const EntityPtr &entity = mapEntity->entity;
 			MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
 			m_PropertiesMenu->AddChild(item);
-			boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity) );
+			boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity.get()) );
 			m_PropertiesMenuConnections.push_back(signalConnection);
 			item->release();
 		}
@@ -758,7 +811,7 @@ namespace FusionEngine
 	{
 	}
 
-	void Editor::showProperties(const MenuItemEvent &ev, const MapEntityPtr &entity)
+	void Editor::showProperties(const MenuItemEvent &ev, MapEntity* entity)
 	{
 		ShowProperties(entity);
 		m_RightClickMenu->Hide();
@@ -786,7 +839,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Editor::ShowProperties(const GameMapLoader::GameMapEntityPtr &entity)
+	void Editor::ShowProperties(const MapEntityPtr &entity)
 	{
 		PropertyEditorDialogPtr dialog(new PropertyEditorDialog(entity, &m_UndoManager));
 		dialog->Show();
@@ -932,6 +985,11 @@ namespace FusionEngine
 	const std::string & Editor::GetSuggestion(size_t index)
 	{
 		return m_EditorDataSource->GetSuggestion(index);
+	}
+
+	void Editor::SetActiveTool(EditorTool tool)
+	{
+		m_ActiveTool = tool;
 	}
 
 	void Editor::SetEntityType(const std::string &type)
@@ -1081,6 +1139,15 @@ namespace FusionEngine
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
 
+		r = engine->RegisterEnum("EditorTool"); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "place_entity", tool_place); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "delete_entity", tool_delete); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "move_entity", tool_move); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void setActiveTool(EditorTool)",
+			asMETHOD(Editor, SetActiveTool), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		r = engine->RegisterObjectMethod("Editor",
 			"void searchTypes(StringArray& out, string &in)",
 			asMETHODPR(Editor, LookUpEntityType, (StringVector&, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -1096,7 +1163,7 @@ namespace FusionEngine
 			"void setEntityType(const string &in)",
 			asMETHOD(Editor, SetEntityType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor",
-			"void setEntityMode(bool)",
+			"void setPlacePseudoEntities(bool)",
 			asMETHOD(Editor, SetEntityMode), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",

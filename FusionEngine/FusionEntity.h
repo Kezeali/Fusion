@@ -512,7 +512,7 @@ namespace FusionEngine
 		//virtual bool CanCollideWith(PhysicsBodyPtr other);
 
 		//! Implementation of ICollisionHandler#BeginContact()
-		virtual void ContactBegin(const Contact& contact) {}
+		virtual void ContactBegin(const Contact &contact) {}
 		//! Implementation of ICollisionHandler#ContactPersist()
 		virtual void ContactPersist(const Contact &contact) {}
 		//! Implementation of ICollisionHandler#ContactEnd()

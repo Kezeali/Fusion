@@ -32,8 +32,8 @@ void OnEntityTypeChanged(Event@ event)
 
 void OnClickPseudoCheckbox(Event@ event)
 {
-	bool mode = event.GetParameter(e_String('checked'), false);
-	editor.setEntityMode(mode);
+	bool pseudo = event.GetParameter(e_String('checked'), false);
+	editor.setPlacePseudoEntities(pseudo);
 }
 
 void OnSelected(Event@ event)

@@ -66,7 +66,13 @@ namespace FusionEngine
 		RemoveAllChildren();
 
 		if (m_Document != NULL)
+		{
 			m_Document->Close();
+			m_Document->RemoveReference();
+			if (m_Element != NULL) // If this is a submenu
+				m_Document->RemoveEventListener("mouseout", this); // Remove the mouse-out listener (used for auto-close)
+		}
+
 		if (m_Element != NULL)
 		{
 			// Remove the event listeners, in case the reference removed below isn't the last
@@ -169,12 +175,21 @@ namespace FusionEngine
 
 		m_Children.clear();
 
-		if (m_Element != NULL) // This element no longer has a sub-menu
+		if (m_Element != NULL)
 		{
+			// This element no longer has a sub-menu
 			m_Element->SetPseudoClass("submenu", false);
 			m_Element->RemoveEventListener("mouseover", this);
 			m_Element->RemoveEventListener("mouseout", this);
 		}
+	}
+
+	MenuItem *MenuItem::GetChild(int index)
+	{
+		if (index >= 0 && (unsigned)index < m_Children.size())
+			return m_Children[(unsigned)index];
+		else
+			return NULL;
 	}
 
 	void MenuItem::SelectChild(int id)
@@ -195,6 +210,21 @@ namespace FusionEngine
 	void MenuItem::SelectChildRelative(int distance)
 	{
 		SelectChild(m_SelectedItem + distance);
+	}
+
+	bool MenuItem::IsSubmenu() const
+	{
+		return m_Document != NULL && m_Element != NULL;
+	}
+
+	bool MenuItem::IsTopMenu() const
+	{
+		return m_Document != NULL && m_Element == NULL;
+	}
+
+	bool MenuItem::IsMenu() const
+	{
+		return m_Document != NULL;
 	}
 
 	void MenuItem::ProcessEvent(Rocket::Core::Event& ev)
@@ -367,7 +397,7 @@ namespace FusionEngine
 			if (x + m_Document->GetOffsetWidth() > dimensions.x)
 				x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
 			if (y + m_Document->GetOffsetHeight() > dimensions.y)
-				y -= y + m_Document->GetOffsetHeight() - dimensions.y;
+				y -= (int)std::ceil(y + m_Document->GetOffsetHeight() - dimensions.y);
 		}
 
 		m_Document->SetProperty("left", Rocket::Core::Property(x, Rocket::Core::Property::PX));

@@ -429,9 +429,11 @@ namespace FusionEngine
 			break;
 		case CL_MOUSE_WHEEL_UP:
 			m_Context->ProcessMouseWheel(-1, modifier);
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
 		case CL_MOUSE_WHEEL_DOWN:
 			m_Context->ProcessMouseWheel(1, modifier);
+			m_Context->ProcessMouseMove(ev.mouse_pos.x, ev.mouse_pos.y, modifier);
 			break;
 		}
 	}

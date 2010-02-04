@@ -88,7 +88,7 @@ namespace FusionEngine
 			if (fixtureA != NULL)
 				fa.reset(fixtureA);
 			if (fixtureB != NULL)
-				fa.reset(fixtureB);
+				fb.reset(fixtureB);
 				
 			fsnContact.SetFixtureA( fa );
 			fsnContact.SetFixtureB( fb );
