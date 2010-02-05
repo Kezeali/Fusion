@@ -40,6 +40,14 @@ namespace FusionEngine
 
 	///////////////
 	// RocketSystem
+	RocketSystem::RocketSystem()
+	{
+		m_RocketLog = Logger::getSingleton().GetLog("rocket_log");
+#ifdef _DEBUG
+		Logger::getSingleton().SetLogingToConsole("rocket_log", true);
+#endif
+	}
+
 	float RocketSystem::GetElapsedTime()
 	{
 		return (float)CL_System::get_time() / 1000.f;
@@ -54,26 +62,13 @@ namespace FusionEngine
 	bool RocketSystem::LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message)
 	{
 		LogSeverity logLevel = LOG_NORMAL;
-		Console::MessageType mtype = Console::MTWARNING;
 		if (type == EMP::Core::Log::LT_ERROR || type == EMP::Core::Log::LT_ASSERT)
-		{
 			logLevel = LOG_CRITICAL;
-			mtype = Console::MTERROR;
-		}
 		else if (type == EMP::Core::Log::LT_INFO)
-		{
 			logLevel = LOG_TRIVIAL;
-			mtype = Console::MTNORMAL;
-		}
 		Logger *logger = Logger::getSingletonPtr();
 		if (logger != NULL)
-			logger->Add(std::string(message.CString()), "rocket_log", logLevel);
-		std::string c;
-		if (message[message.Length()-1] == '\n')
-			c.assign(&message.CString()[0], &message.CString()[message.Length()-1]);
-		else
-			c = message.CString();
-		SendToConsole(c, mtype);
+			m_RocketLog->AddEntry(std::string(message.CString(), (std::string::size_type)message.Length()), logLevel);
 
 		Rocket::Core::SystemInterface::LogMessage(type, message);
 

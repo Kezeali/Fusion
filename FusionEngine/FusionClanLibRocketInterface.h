@@ -43,16 +43,14 @@ namespace FusionEngine
 	class RocketSystem : public Rocket::Core::SystemInterface
 	{
 	public:
-		RocketSystem() {}
+		RocketSystem();
 	public:
 		virtual float GetElapsedTime();
 		//virtual int TranslateString(EMP::Core::String& translated, const EMP::Core::String& input);
 		virtual bool LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message);
 
-		//virtual void Release();
-
-	//protected:
-	//	virtual void OnReferenceDeactivate();
+	protected:
+		LogPtr m_RocketLog;
 	};
 
 	class RocketRenderer : public Rocket::Core::RenderInterface

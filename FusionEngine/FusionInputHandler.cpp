@@ -87,7 +87,7 @@ namespace FusionEngine
 	{
 		m_DefinitionLoader = new InputDefinitionLoader();
 
-		m_Log = Logger::getSingletonPtr()->OpenLog("InputManager");
+		m_Log = Logger::getSingletonPtr()->OpenLog(g_LogGeneral);
 	}
 
 	InputManager::InputManager(CL_DisplayWindow window)
@@ -97,7 +97,7 @@ namespace FusionEngine
 		m_InputContext = window.get_ic();
 		m_DisplayWindow = window;
 
-		m_Log = Logger::getSingletonPtr()->OpenLog("InputManager");
+		m_Log = Logger::getSingletonPtr()->OpenLog(g_LogGeneral);
 	}
 
 	InputManager::~InputManager()
@@ -368,9 +368,6 @@ namespace FusionEngine
 			if (_where == m_KeyInfo.end())
 			{
 				// Invalid shortname: log error and skip
-				/*Logger::getSingleton().Add(
-				"Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.",
-				g_LogException, LOG_TRIVIAL);*/
 				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": " + keyName + " doesn't exist.", LOG_TRIVIAL);
 				continue;
 			}
@@ -380,9 +377,6 @@ namespace FusionEngine
 			if (deviceId == s_DevNothing)
 			{
 				// Invalid shortname: log error and skip
-				/*Logger::getSingleton().Add(
-					"Can't bind " + keyName + " to " + input + ": the device '" + key.m_Device + "' doesn't exist.",
-					g_LogException, LOG_TRIVIAL);*/
 				m_Log->AddEntry("Can't bind " + keyName + " to " + input + ": the device '" + key.m_Device + "' doesn't exist.", LOG_TRIVIAL);
 				continue;
 			}

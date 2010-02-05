@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -47,12 +47,8 @@ namespace FusionEngine
 
 	//! Data entered into the console
 	const std::string g_LogConsole = "console";
-	//! Errors not specific to client or server
-	const std::string g_LogException = "error";
-	//! Errors in client
-	const std::string g_LogExceptionClient = g_LogException + "_client";
-	//! Errors in server
-	const std::string g_LogExceptionServer = g_LogException + "_server";
+	//! The main log file
+	const std::string g_LogGeneral = "general";
 
 	//! Default extension for logfiles (excluding the dot).
 	static const std::string g_LogDefaultExt = "log";
@@ -174,13 +170,13 @@ namespace FusionEngine
 		 * otherwise specified, to create the log-file name. If the resulting
 		 * filename does not exist, it will be created.
 		 */
-		void Add(const std::string &message, const std::string &tag = g_LogException, LogSeverity severity = LOG_NORMAL);
+		void Add(const std::string &message, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_NORMAL);
 
 		//! [depreciated] Adds the given error to the given log
 		/*!
 		 * Formats the given error to a string, then calls the normal Add()
 		 */
-		void Add(const Exception& error, const std::string &tag = g_LogException, LogSeverity severity = LOG_CRITICAL);
+		void Add(const Exception& error, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
 		void onConsoleNewLine(const std::string &message);
