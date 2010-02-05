@@ -42,9 +42,10 @@ namespace FusionEngine
 	// RocketSystem
 	RocketSystem::RocketSystem()
 	{
-		m_RocketLog = Logger::getSingleton().GetLog("rocket_log");
+		m_RocketLog = Logger::getSingleton().OpenLog("rocket");
 #ifdef _DEBUG
-		Logger::getSingleton().SetLogingToConsole("rocket_log", true);
+		m_RocketLog->SetThreshold(LOG_TRIVIAL);
+		Logger::getSingleton().SetLogingToConsole("rocket", true);
 #endif
 	}
 
@@ -52,12 +53,6 @@ namespace FusionEngine
 	{
 		return (float)CL_System::get_time() / 1000.f;
 	}
-
-	//int RocketSystem::TranslateString(EMP::Core::String& translated, const EMP::Core::String& input)
-	//{
-	//	translated = input;
-	//	return 0;
-	//}
 
 	bool RocketSystem::LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message)
 	{
