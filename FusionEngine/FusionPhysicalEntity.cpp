@@ -119,11 +119,8 @@ namespace FusionEngine
 				b2Vec2(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit),
 				m_Angle);
 		}
-		else
-		{
-			//m_BodyDef.position.Set(position.x, position.y);
-			m_Position = position;
-		}
+
+		m_Position = position;
 	}
 
 	void PhysicalEntity::SetVelocity(const Vector2 &velocity)
@@ -133,11 +130,8 @@ namespace FusionEngine
 			m_Body->WakeUp();
 			m_Body->SetLinearVelocity(b2Vec2(velocity.x * s_SimUnitsPerGameUnit, velocity.y * s_SimUnitsPerGameUnit));
 		}
-		else
-		{
-			//m_BodyDef.linearVelocity.Set(velocity.x, velocity.y);
-			m_Velocity = velocity;
-		}
+		
+		m_Velocity = velocity;
 	}
 
 	void PhysicalEntity::SetAngle(float angle)
@@ -148,9 +142,8 @@ namespace FusionEngine
 				b2Vec2(m_Position.x * s_SimUnitsPerGameUnit, m_Position.y * s_SimUnitsPerGameUnit),
 				angle);
 		}
-		else
-			//m_BodyDef.angle = angle;
-			m_Angle = angle;
+
+		m_Angle = angle;
 	}
 
 	void PhysicalEntity::SetAngularVelocity(float angular_vel)
@@ -160,9 +153,8 @@ namespace FusionEngine
 			m_Body->WakeUp();
 			m_Body->SetAngularVelocity(angular_vel);
 		}
-		else
-			//m_BodyDef.angularVelocity = angular_vel;
-			m_AngularVelocity = angular_vel;
+
+		m_AngularVelocity = angular_vel;
 	}
 
 	bool PhysicalEntity::IsPhysicsEnabled() const

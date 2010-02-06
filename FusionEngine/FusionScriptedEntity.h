@@ -181,7 +181,7 @@ namespace FusionEngine
 		int r;
 		r = engine->RegisterGlobalFunction("IEntity@ unwrap(Entity@)",
 			asFUNCTION(ScriptedEntity::GetScriptObject),
-			asCALL_CDECL);
+			asCALL_CDECL); FSN_ASSERT(r >= 0);
 	}
 
 }

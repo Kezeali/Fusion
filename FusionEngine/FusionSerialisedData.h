@@ -44,12 +44,12 @@ namespace FusionEngine
 			: mask(0xFFFFFFFF) // Set all bits to 1 - i.e. assume all components are present
 		{}
 
-		void Excluded(unsigned int component_index)
+		void Exclude(unsigned int component_index)
 		{
 			// Remove the component bit from the mask
 			mask &= ~(1 << component_index);
 		}
-		void Included(unsigned int component_index)
+		void Include(unsigned int component_index)
 		{
 			// Add the component bit to the mask
 			mask &= (1 << component_index);

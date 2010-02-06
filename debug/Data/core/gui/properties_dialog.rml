@@ -42,10 +42,14 @@
 			Name: <input type="text" id="name" maxlength="128" />
 			Type: <input type="text" id="type" readonly />
 		</div>
-		<datagrid selectable id="properties" onrowselected="%this: OnPropSelected(event)">
+		<!--The application sets the datasource for this datagrid gets set to the
+		 properties datasource for the Entity this editor window is for-->
+		<datagrid id="properties">
 			<col fields="name" width="25%">Property</col>
-			<col fields="value">Value</col>
+			<!--The application assigns a formatter to this column that creates a form
+			 element suitable to edit the property type given by the second field-->
+			<!--<col fields="value,type,index">Value</col>-->
 		</datagrid>
-		<button onclick="%this: Close(event)">ok</button>
+		<button onclick="%this: Close(event)">close</button>
 	</body>
 </rml>

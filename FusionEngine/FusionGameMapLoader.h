@@ -80,7 +80,7 @@ namespace FusionEngine
 
 			unsigned int dataIndex; // used by the editor when reading data files (may be removed)
 
-			GameMapEntity() : RefCounted(0), hasName(true), stateMask(0) {}
+			GameMapEntity() : RefCounted(0), hasName(true), stateMask(0xFFFFFFFF) {}
 			virtual ~GameMapEntity() {}
 		};
 		typedef boost::intrusive_ptr<GameMapEntity> GameMapEntityPtr;

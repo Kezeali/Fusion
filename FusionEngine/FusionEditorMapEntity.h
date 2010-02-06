@@ -37,8 +37,11 @@
 
 #include "FusionGameMapLoader.h"
 #include <EMP/Core/DataSource.h>
+#include <Rocket/Controls/DataFormatter.h>
 
 #include "FusionPhysicsFixture.h"
+
+#include <boost/lexical_cast.hpp>
 
 
 namespace FusionEngine
@@ -50,12 +53,30 @@ namespace FusionEngine
 	public:
 		FixturePtr fixture;
 
+		//! Ctor
 		EditorMapEntity();
+		//! Dtor
 		virtual ~EditorMapEntity();
 
+		//! Creates a clickable physics fixture
 		void CreateEditorFixture();
 
+		void RefreshProperty(unsigned int index)
+		{
+			NotifyRowChange("properties", index, 1);
+		}
+
+		template <typename T>
+		void SetPropertyValue(unsigned int index, T value)
+		{
+			T *prop = static_cast<T*>(entity->GetAddressOfProperty(index));
+			*prop = value;
+			NotifyRowChange("properties", index, 1);
+		}
+
+		//! DataSource impl.
 		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
+		//! DataSource impl.
 		int GetNumRows(const EMP::Core::String& table);
 	};
 	//! EditorMapEntity ptr

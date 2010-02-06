@@ -140,7 +140,7 @@ namespace FusionEngine
 		switch (property_type)
 		{
 		case Entity::pt_bool:
-			to_string( out, static_cast<bool*>(value) );
+			out = *static_cast<bool*>(value) ? "true" : "false";
 			break;
 
 		// Integer types
@@ -226,6 +226,17 @@ namespace FusionEngine
 				if (columns[i] == "name")
 				{
 					row.push_back(entity->GetPropertyName(row_index).c_str());
+				}
+				else if (columns[i] == "type")
+				{
+					if (entity->GetPropertyType(row_index) == Entity::pt_bool)
+						row.push_back( "bool" );
+					else
+						row.push_back( "unknown" );
+				}
+				else if (columns[i] == "index")
+				{
+					row.push_back( boost::lexical_cast<std::string>(row_index).c_str() );
 				}
 				else if (columns[i] == "value")
 				{

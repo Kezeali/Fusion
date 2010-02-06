@@ -17,3 +17,7 @@ void OnEditorWindowLoad(Event@ event)
 	if (undoMenu !is null)
 		editor.attachRedoMenu(undoMenu);
 }
+
+void validate_input(Event@ event, int8 min, int8 max)
+{
+}

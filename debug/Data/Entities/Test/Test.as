@@ -22,6 +22,10 @@ class Test : ScriptEntity
 		console.println("'Test' entity created");
 		runningtime = 0;
 
+		health = 100;
+		input_forward = true;
+		input_left = false;
+
 		@primaryCamera = @Camera();
 		@p1Viewport = @Viewport(0, 0, 1, 1);
 		p1Viewport.setCamera(primaryCamera);
@@ -132,17 +136,17 @@ class Test : ScriptEntity
 
 		if (left)
 		{
-			SetAngularVelocity(-1.6);
+			SetAngularVelocity(-1.6f);
 		}
 		else if (!left && input_left)
-			ApplyTorque(0.54);
+			ApplyTorque(0.54f);
 
 		if (right)
 		{
-			SetAngularVelocity(1.6);
+			SetAngularVelocity(1.6f);
 		}
 		else if (!right && input_right)
-			ApplyTorque(-0.54);
+			ApplyTorque(-0.54f);
 
 		input_forward = forward;
 		input_left = left;

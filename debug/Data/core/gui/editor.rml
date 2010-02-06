@@ -65,7 +65,7 @@
 		</p>
 		<div id="create_entity">
 			<h2>Create Entity:</h2>
-			<input type="checkbox" id="pseudo_ent" checked="" onclick="%this: OnClickPseudoCheckbox(event);"/> Pseudo-Entity
+			<input type="checkbox" id="pseudo_ent" checked onchange="%this: OnClickPseudoCheckbox(event);" value="true"/> Pseudo-Entity
 			<br/>
 			Type:<input type="text" id="entity_type" name="typen" onchange="%this: OnEntityTypeChanged(event);"/>
 			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%this: OnSelected(event);">

@@ -70,7 +70,7 @@ namespace FusionEngine
 		for (cl_int32 i = 0; i < numberEntityTypes; i++)
 		{
 			//entityTypename = device.read_string_a();
-			factory->LoadScriptedType(/*entityTypename*/device.read_string_a().c_str());
+			factory->LoadScriptedType(/*entityTypename*/device.read_string_a());
 		}
 	}
 
@@ -113,7 +113,7 @@ namespace FusionEngine
 			archetype.entityTypename = entityTypename;
 
 			archetype.packet.mask = device.read_uint32();
-			archetype.packet.data = device.read_string_a().c_str();
+			archetype.packet.data = device.read_string_a();
 		}
 
 		IDTranslator translator;
@@ -187,7 +187,7 @@ namespace FusionEngine
 
 				// Load specific entity state
 				state.mask = device.read_uint32();
-				state.data = device.read_string_a().c_str();
+				state.data = device.read_string_a();
 
 				entity->DeserialiseState(state, true, entity_deserialiser);
 			}
@@ -262,7 +262,7 @@ namespace FusionEngine
 
 				// Load specific entity state
 				state.mask = device.read_uint32();
-				state.data = device.read_string_a().c_str();
+				state.data = device.read_string_a();
 
 				entity->DeserialiseState(state, true, entity_deserialiser);
 			}
@@ -290,7 +290,7 @@ namespace FusionEngine
 		}
 
 		// Map filename
-		std::string mapFilename = device.read_string_a().c_str();
+		std::string mapFilename = device.read_string_a();
 
 		if (!mapFilename.empty() && mapFilename != m_MapFilename)
 			LoadMap(mapFilename, directory, true);
@@ -314,7 +314,7 @@ namespace FusionEngine
 			{
 				cl_uint32 typeIndex = device.read_uint32();
 
-				entityName = device.read_string_a().c_str();
+				entityName = device.read_string_a();
 				device.read((void*)&entityID, sizeof(ObjectID));
 
 				{
@@ -348,7 +348,7 @@ namespace FusionEngine
 
 				// Load entity state
 				state.mask = device.read_uint32();
-				state.data = device.read_string_a().c_str();
+				state.data = device.read_string_a();
 
 				entity->DeserialiseState(state, true, entity_deserialiser);
 			}
@@ -373,7 +373,7 @@ namespace FusionEngine
 			device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
 
 		// Map filename
-		device.write_string_a(m_MapFilename.c_str());
+		device.write_string_a(m_MapFilename);
 
 		const EntityManager::IDEntityMap &entities = m_Manager->GetEntities();
 
@@ -388,7 +388,7 @@ namespace FusionEngine
 
 			// Write the Entity name
 			if (!entity->HasDefaultName())
-				device.write_string_a(entity->GetName().c_str());
+				device.write_string_a(entity->GetName());
 			else
 				device.write_string_a(CL_String8());
 
@@ -412,7 +412,7 @@ namespace FusionEngine
 			entity->SerialiseState(state, false);
 
 			device.write_uint32(state.mask);
-			device.write_string_a(state.data.c_str());
+			device.write_string_a(state.data);
 		}
 	}
 
@@ -431,7 +431,7 @@ namespace FusionEngine
 			cl_uint32 type_index = 0;
 			for (StringSet::const_iterator it = used_entity_types.begin(), end = used_entity_types.end(); it != end; ++it)
 			{
-				device.write_string_a(it->c_str());
+				device.write_string_a(*it);
 				
 				usedTypeIndexes[*it] = type_index++;
 			}
@@ -469,7 +469,7 @@ namespace FusionEngine
 
 			// Write the Entity name
 			if (mapEntity->hasName)
-				device.write_string_a(entity->GetName().c_str());
+				device.write_string_a(entity->GetName());
 			else
 				device.write_string_a(CL_String8());
 		}
@@ -503,7 +503,7 @@ namespace FusionEngine
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
-			device.write_string_a(state.data.c_str());
+			device.write_string_a(state.data);
 		}
 
 		// Write Entities
@@ -518,7 +518,7 @@ namespace FusionEngine
 
 			// Write the Entity name
 			if (mapEntity->hasName)
-				device.write_string_a(entity->GetName().c_str());
+				device.write_string_a(entity->GetName());
 			else
 				device.write_string_a(CL_String8());
 			// Write the Entity ID
@@ -554,7 +554,7 @@ namespace FusionEngine
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
-			device.write_string_a(state.data.c_str());
+			device.write_string_a(state.data);
 		}
 	}
 

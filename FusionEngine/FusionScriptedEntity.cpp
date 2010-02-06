@@ -471,10 +471,14 @@ namespace FusionEngine
 
 	void ScriptedEntity::SerialiseState(SerialisedData &state, bool local) const
 	{
-		std::ostringstream stateStream(std::ios::binary);
+		CL_IODevice_Memory dev;
+		//std::ostringstream stateStream(std::ios::binary);
 
 		// Notify the deserialiser that this created in local/non-local mode
-		stateStream << local;
+		//stateStream << local;
+		dev.write_uint8(local ? 1 : 0);
+
+		dev.write_uint32(state.mask);
 
 		unsigned int index = 0;
 		for (PropertiesArray::const_iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
@@ -499,19 +503,24 @@ namespace FusionEngine
 			switch (typeId)
 			{
 			case asTYPEID_BOOL:
-				stateStream << *static_cast<bool*>( prop );
+				//stateStream << *static_cast<bool*>( prop );
+				dev.write_uint8( *static_cast<bool*>(prop) ? 1 : 0 );
 				break;
 			case asTYPEID_INT32:
-				stateStream << *static_cast<int*>( prop );
+				//stateStream << *static_cast<int*>( prop );
+				dev.write_int32( *static_cast<int*>(prop) );
 				break;
 			case asTYPEID_UINT32:
-				stateStream << *static_cast<unsigned int*>( prop );
+				//stateStream << *static_cast<unsigned int*>( prop );
+				dev.write_uint32( *static_cast<unsigned int*>(prop) );
 				break;
 			case asTYPEID_FLOAT:
-				stateStream << *static_cast<float*>( prop );
+				//stateStream << *static_cast<float*>( prop );
+				dev.write_float( *static_cast<float*>(prop) );
 				break;
 			case asTYPEID_DOUBLE:
-				stateStream << *static_cast<double*>( prop );
+				//stateStream << *static_cast<double*>( prop );
+				dev.write( static_cast<double*>(prop), sizeof(double) );
 				break;
 			default:
 				isPrimative = false;
@@ -521,33 +530,62 @@ namespace FusionEngine
 			{
 				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
 				{
-					stateStream << *static_cast<Vector2*>( prop );
+					//stateStream << *static_cast<Vector2*>( prop );
+					Vector2 *value = static_cast<Vector2*>( prop );
+					dev.write_float(value->x);
+					dev.write_float(value->y);
 				}
 				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
 				{
 					CScriptString *value = static_cast<CScriptString*>( prop );
 					std::string::size_type length = value->buffer.length();
 
-					// Write the length
-					stateStream << length;
-					// Write the value
-					stateStream.write(value->buffer.c_str(), length);
+					//// Write the length
+					//stateStream << length;
+					//// Write the value
+					//stateStream.write(value->buffer.c_str(), length);
+
+					dev.write_int32(length); // Write the length
+					dev.write(value->buffer.c_str(), length); // Write the value
 				}
 				// Entity
 				else if (typeId & s_EntityTypeId)
 				{
 					Entity *value = *static_cast<Entity**>(prop);
-					stateStream << value->GetID();
+					//stateStream << value->GetID();
+					ObjectID id = value->GetID();
+					dev.write((void*)&id, sizeof(ObjectID));
 				}
 			}
 		}
 
-		state.data = stateStream.str();
+		//state.data = stateStream.str();
+		const CL_DataBuffer &data = dev.get_data();
+		state.data.assign(data.get_data(), (std::string::size_type)data.get_size());
 	}
+
+	inline bool isExcluded(unsigned int mask, unsigned int index)
+	{
+		// Check the mask for the component bit
+		return (mask & (1 << index)) == 0;
+	}
+
+#define SKIP_EXCLUDED if (isExcluded(mask, index++)) continue
 
 	size_t ScriptedEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
 	{
-		std::istringstream stateStream(state.data, std::ios::binary);
+		//std::istringstream stateStream(state.data, std::ios::binary);
+		CL_DataBuffer buffer(state.data.data(), state.data.size());
+		CL_IODevice_Memory dev(buffer);
+
+		bool fileLocal = dev.read_uint8() == 1;
+		if (local != fileLocal)
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptedEntity::DeserialiseState", "The given state was saved in a different local mode to the one requested");
+
+		uint32 fileMask = dev.read_uint32();
+		uint32 mask = state.mask & fileMask;
+		//if ((state.mask & fileMask) != state.mask)
+		//	FSN_EXCEPT(ExCode::InvalidArgument, "ScriptedEntity::DeserialiseState", "The given state does not contain all the requested properties");
 
 		unsigned int index = 0;
 		for (PropertiesArray::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
@@ -555,9 +593,6 @@ namespace FusionEngine
 			const Property &propertyDesc = *it;
 			if (!local && propertyDesc.localOnly)
 				continue; // This property is only serialised to disc (local-mode), and local is disabled
-
-			if (!state.IsIncluded(index++))
-				continue; // This component was excluded during serialisation
 
 			const std::string &propName = propertyDesc.name;
 			// Make sure the prop index is valid
@@ -567,42 +602,51 @@ namespace FusionEngine
 			int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId( propertyDesc.scriptPropertyIndex );
 			void *prop = m_ScriptObject.GetScriptObject()->GetAddressOfProperty( propertyDesc.scriptPropertyIndex );
 
-			// Check to see if the property if a primative type
+			// Check to see if the property is a primative type
 			bool isPrimative = true;
 			switch (typeId)
 			{
 			case asTYPEID_BOOL:
 				{
 					bool value;
-					stateStream >> value;
+					//stateStream >> value;
+					value = dev.read_uint8() == 1;
+					SKIP_EXCLUDED;
 					new(prop) bool(value);
 				}
 				break;
 			case asTYPEID_INT32:
 				{
 					int value;
-					stateStream >> value;
+					//stateStream >> value;
+					value = dev.read_int32();
 					new(prop) int(value);
 				}
 				break;
 			case asTYPEID_UINT32:
 				{
 					unsigned int value;
-					stateStream >> value;
+					//stateStream >> value;
+					value = dev.read_uint32();
+					SKIP_EXCLUDED;
 					new(prop) unsigned int(value);
 				}
 				break;
 			case asTYPEID_FLOAT:
 				{
 					float value;
-					stateStream >> value;
+					//stateStream >> value;
+					value = dev.read_float();
+					SKIP_EXCLUDED;
 					new(prop) float(value);
 				}
 				break;
 			case asTYPEID_DOUBLE:
 				{
 					double value;
-					stateStream >> value;
+					//stateStream >> value;
+					dev.read(&value, sizeof(double));
+					SKIP_EXCLUDED;
 					new(prop) double(value);
 				}
 				break;
@@ -613,7 +657,10 @@ namespace FusionEngine
 				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
 				{
 					Vector2 value;
-					stateStream >> value;
+					//stateStream >> value;
+					value.x = dev.read_float();
+					value.y = dev.read_float();
+					SKIP_EXCLUDED;
 					new(prop) Vector2(value);
 				}
 				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
@@ -621,17 +668,23 @@ namespace FusionEngine
 					std::string value;
 					std::string::size_type length;
 					// Read the length
-					stateStream >> length;
+					//stateStream >> length;
+					length = dev.read_uint32();
 					value.resize(length);
 					// Read the value
-					stateStream.read(&value[0], length);
+					//stateStream.read(&value[0], length);
+					dev.read(&value[0], length);
 
+					SKIP_EXCLUDED;
 					new(prop) CScriptString(value);
 				}
 				else if (typeId & s_EntityTypeId)
 				{
 					ObjectID value;
-					stateStream >> value;
+					//stateStream >> value;
+					dev.read(&value, sizeof(ObjectID));
+
+					SKIP_EXCLUDED;
 
 					EntityPtr entity = entity_deserialiser.GetEntity(value);
 					if (entity.get() != NULL)
@@ -640,7 +693,8 @@ namespace FusionEngine
 			}
 		}
 
-		return stateStream.tellg();
+		//return stateStream.tellg();
+		return dev.get_position();
 	}
 
 	asIScriptObject* ScriptedEntity::GetScriptObject(Entity *entity)

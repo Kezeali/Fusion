@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -46,7 +46,6 @@ namespace FusionEngine
 		RocketSystem();
 	public:
 		virtual float GetElapsedTime();
-		//virtual int TranslateString(EMP::Core::String& translated, const EMP::Core::String& input);
 		virtual bool LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message);
 
 	protected:

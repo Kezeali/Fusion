@@ -75,8 +75,8 @@ namespace FusionEngine
 		const EntityArray *m_Entities;
 	};
 
-	class PropertyEditorDialog;
-	typedef std::tr1::shared_ptr<PropertyEditorDialog> PropertyEditorDialogPtr;
+	class EntityEditorDialog;
+	typedef std::tr1::shared_ptr<EntityEditorDialog> EntityEditorDialogPtr;
 
 	//! Editor system (runs the map editor interface)
 	class Editor : public System, public Rocket::Core::EventListener
@@ -202,11 +202,13 @@ namespace FusionEngine
 
 		Vector2 m_CamVelocity;
 
+		bool m_ReceivedMouseDown;
+
 		UndoableActionManager m_UndoManager;
 		//ElementUndoMenu *m_UndoMenu;
 
-		typedef std::vector<PropertyEditorDialogPtr> PropertyDialogArray;
-		PropertyDialogArray m_PropertyDialogs;
+		typedef std::vector<EntityEditorDialogPtr> EntityEditorDialogArray;
+		EntityEditorDialogArray m_EntityDialogs;
 
 		Rocket::Core::ElementDocument *m_MainDocument;
 		//Rocket::Core::ElementDocument *m_EntityListDocument;

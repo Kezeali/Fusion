@@ -87,7 +87,7 @@ public:
 
 			////////////////////
 			// Configure PhysFS
-			SetupPhysFS::configure("Pom", "Fusion", "7z");
+			SetupPhysFS::configure("lastflare", "Fusion", "7z");
 			if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
 				SendToConsole("Default resource path could not be located");
 			// Clear cache

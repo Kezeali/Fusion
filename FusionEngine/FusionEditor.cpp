@@ -41,6 +41,7 @@
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionXml.h"
 #include "FusionEditorMapEntity.h"
+#include "FusionEditorEntityDialog.h"
 
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
@@ -51,179 +52,6 @@
 
 namespace FusionEngine
 {
-
-	class PropertyEditorDialog : public Rocket::Core::EventListener
-	{
-	public:
-		PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &map_entity, UndoableActionManager *undo);
-		~PropertyEditorDialog();
-
-		//! Called when, for example, an action is undone
-		void Refresh();
-
-		//! Displays the dialog
-		void Show();
-
-		//! Returns the GUI element maintained by this object
-		Rocket::Core::ElementDocument * const GetDocument();
-
-		//! Processes GUI events
-		void ProcessEvent(Rocket::Core::Event &ev);
-
-	protected:
-		Rocket::Core::ElementDocument *m_Document;
-		Rocket::Controls::ElementFormControlInput *m_InputX;
-		Rocket::Controls::ElementFormControlInput *m_InputY;
-		Rocket::Controls::ElementFormControlInput *m_InputName;
-		Rocket::Controls::ElementFormControlInput *m_InputType;
-		ElementSelectableDataGrid *m_GridProperties;
-
-		std::string m_DataSourceName;
-
-		GameMapLoader::GameMapEntityPtr m_MapEntity;
-		UndoableActionManager *m_Undo;
-	};
-
-	void verify(Rocket::Core::Element *element, const std::string &name)
-	{
-		if (element == NULL)
-			FSN_EXCEPT(ExCode::NotImplemented, "PropertyEditorDialog", "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
-	}
-
-	PropertyEditorDialog::PropertyEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
-		: m_MapEntity(mapent),
-		m_Undo(undo),
-		m_Document(NULL),
-		m_InputX(NULL),
-		m_InputY(NULL),
-		m_InputName(NULL),
-		m_InputType(NULL),
-		m_GridProperties(NULL)
-	{
-		using namespace Rocket::Controls;
-
-		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
-		m_Document = guiCtx->LoadDocument("core/gui/properties_dialog.rml");
-		if (m_Document == NULL)
-			return;
-
-		// Grab the elements from the doc.
-		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") ); verify(m_InputX, "x");
-		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") ); verify(m_InputY, "y");
-		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") ); verify(m_InputName, "name");
-		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") ); verify(m_InputType, "type");
-		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") ); verify(m_GridProperties, "properties");
-
-		m_Document->AddEventListener("change", this);
-
-		// Set up the properties listbox
-		EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
-		if (editorEntityPtr)
-		{
-			//editorEntityPtr->release(); // Bleh (the dynamic cast above adds a superfluous ref for some stupid bullishit why-do-you-make-my-life-so-difficult reason)
-			m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
-			m_GridProperties->AddEventListener("rowselected", this);
-			m_GridProperties->AddEventListener("rowdblclick", this);
-		}
-		else
-			SendToConsole("Can't display editable properties in an Entity property window that was just opened: not an Editor-Entity");
-
-		Refresh();
-	}
-
-	PropertyEditorDialog::~PropertyEditorDialog()
-	{
-		if (m_Document != NULL)
-		{
-			m_Document->RemoveEventListener("change", this);
-			m_Document->Close();
-
-			m_GridProperties->RemoveEventListener("rowselected", this);
-			m_GridProperties->RemoveEventListener("rowdblclick", this);
-
-			m_Document->RemoveReference();
-		}
-
-		m_MapEntity.reset();
-	}
-
-	inline EMP::Core::String to_emp(const std::string &str)
-	{
-		return EMP::Core::String(str.data(), str.data() + str.length());
-	}
-
-	void PropertyEditorDialog::Refresh()
-	{
-		try
-		{
-			Vector2 position = m_MapEntity->entity->GetPosition();
-			std::string value = boost::lexical_cast<std::string>(position.x);
-			m_InputX->SetValue( to_emp(value) );
-
-			value = boost::lexical_cast<std::string>(position.y);
-			m_InputY->SetValue( to_emp(value) );
-		}
-		catch (const boost::bad_lexical_cast &)
-		{
-		}
-
-		if (m_MapEntity->hasName)
-			m_InputName->SetValue( to_emp(m_MapEntity->entity->GetName()) );
-
-		m_InputType->SetValue( to_emp(m_MapEntity->entity->GetType()) );
-	}
-
-	void PropertyEditorDialog::Show()
-	{
-		m_Document->Show();
-	}
-
-	Rocket::Core::ElementDocument * const PropertyEditorDialog::GetDocument()
-	{
-		return m_Document;
-	}
-
-	void PropertyEditorDialog::ProcessEvent(Rocket::Core::Event &ev)
-	{
-		if (ev == "change")
-		{
-			if (ev.GetTargetElement() == m_InputX || ev.GetTargetElement() == m_InputY)
-			{
-				try
-				{
-					Vector2 position;
-					position.x = boost::lexical_cast<float>( m_InputX->GetValue().CString() );
-					position.y = boost::lexical_cast<float>( m_InputY->GetValue().CString() );
-					m_MapEntity->entity->SetPosition(position);
-				}
-				catch (const boost::bad_lexical_cast &)
-				{
-				}
-			}
-
-			else if (ev.GetTargetElement() == m_InputName)
-			{
-				const EMP::Core::String &value = m_InputName->GetValue();
-				if (!value.Empty())
-				{
-					m_MapEntity->hasName = true;
-					m_MapEntity->entity->_setName(value.CString());
-				}
-				else
-				{
-					m_MapEntity->hasName = false;
-					m_MapEntity->entity->_setName("default");
-				}
-			}
-		}
-		else if (ev == "rowselected")
-		{
-		}
-		else if (ev == "rowdblclick")
-		{
-			int selectedIndex = ev.GetParameter("row_index", (int)-1);
-		}
-	}
 
 	// Editor DataSource
 	EditorDataSource::EditorDataSource()
@@ -460,7 +288,8 @@ namespace FusionEngine
 		m_MainDocument(NULL),
 		m_UndoManager(256),
 		m_Enabled(false),
-		m_ActiveTool(tool_move)
+		m_ActiveTool(tool_move),
+		m_ReceivedMouseDown(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
 	}
@@ -536,7 +365,7 @@ namespace FusionEngine
 			m_MainDocument->Close();
 		m_MainDocument = NULL;
 
-		m_PropertyDialogs.clear();
+		m_EntityDialogs.clear();
 
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
@@ -671,6 +500,9 @@ namespace FusionEngine
 				case CL_KEY_DOWN:
 					m_CamVelocity.y = 10;
 					break;
+				case CL_MOUSE_LEFT:
+					m_ReceivedMouseDown = true;
+					break;
 				}
 			}
 			else if (ev.ButtonPressed == false) // Button released
@@ -687,7 +519,14 @@ namespace FusionEngine
 					break;
 
 				case CL_MOUSE_LEFT:
-					onLeftClick(ev);
+					// Only run left click command if the mouse was PRESSED outside a GUI
+					//  window, as well as released outside one (getting here indicates that
+					//  the mouse was at least /released/ outside a GUI window):
+					if (m_ReceivedMouseDown)
+					{
+						onLeftClick(ev);
+						m_ReceivedMouseDown = false;
+					}
 					break;
 				case CL_MOUSE_RIGHT:
 					{
@@ -761,12 +600,12 @@ namespace FusionEngine
 	{
 		if (ev == "close") // A property dialog is being closed
 		{
-			for (PropertyDialogArray::iterator it = m_PropertyDialogs.begin(), end = m_PropertyDialogs.end(); it != end; ++it)
+			for (EntityEditorDialogArray::iterator it = m_EntityDialogs.begin(), end = m_EntityDialogs.end(); it != end; ++it)
 			{
-				PropertyEditorDialogPtr &dialog = *it;
+				EntityEditorDialogPtr &dialog = *it;
 				if (dialog->GetDocument() == ev.GetTargetElement())
 				{
-					m_PropertyDialogs.erase(it);
+					m_EntityDialogs.erase(it);
 					break;
 				}
 			} 
@@ -841,10 +680,10 @@ namespace FusionEngine
 
 	void Editor::ShowProperties(const MapEntityPtr &entity)
 	{
-		PropertyEditorDialogPtr dialog(new PropertyEditorDialog(entity, &m_UndoManager));
+		EntityEditorDialogPtr dialog(new EntityEditorDialog(entity, &m_UndoManager));
 		dialog->Show();
 		dialog->GetDocument()->AddEventListener("close", this);
-		m_PropertyDialogs.push_back(dialog);
+		m_EntityDialogs.push_back(dialog);
 	}
 
 	Editor::MapEntityPtr Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
@@ -1046,13 +885,13 @@ namespace FusionEngine
 	{
 		CL_String dataFileName = CL_PathHelp::get_basename(fe_widen(filename)) + ".entdata";
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice out = vdir.open_file(dataFileName, CL_File::create_always, CL_File::access_write);
+		CL_IODevice out = vdir.open_file(L"Editor/" + dataFileName, CL_File::create_always, CL_File::access_write);
 
 		serialiseEntityData(out);
 
 		TiXmlDocument *doc = new TiXmlDocument();
 		buildMapXml(doc);
-		SaveXml_PhysFS(doc, fe_widen(filename));
+		SaveXml_PhysFS(doc, fe_widen("Editor/" + filename));
 		delete doc;
 
 		m_CurrentFilename = filename;
@@ -1062,7 +901,7 @@ namespace FusionEngine
 	{
 		CL_String dataFileName = CL_PathHelp::get_basename(fe_widen(filename)) + ".entdata";
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice in = vdir.open_file(dataFileName, CL_File::open_existing, CL_File::access_read);
+		CL_IODevice in = vdir.open_file(L"Editor/" + dataFileName, CL_File::open_existing, CL_File::access_read);
 
 		m_Entities.clear();
 		m_PseudoEntities.clear();
@@ -1073,7 +912,7 @@ namespace FusionEngine
 
 		EditorEntityDeserialiser deserialiserImpl;
 
-		TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(filename));
+		TiXmlDocument *doc = OpenXml_PhysFS(fe_widen("Editor/" + filename));
 		try
 		{
 			parseMapXml(doc, archetypes, entities, deserialiserImpl);
@@ -1254,26 +1093,20 @@ namespace FusionEngine
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
 			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
-			//if (gmEntity.archetypeId.empty())
-			{
-				state.mask = gmEntity->stateMask;
-				gmEntity->entity->SerialiseState(state, true);
+			state.mask = gmEntity->stateMask ;
+			gmEntity->entity->SerialiseState(state, true);
 
-				file.write_uint32(state.mask);
-				file.write_string_a(state.data.c_str());
-			}
+			file.write_uint32(state.mask);
+			file.write_string_a(state.data);
 		}
 		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
 			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
-			//if (gmEntity.archetypeId.empty())
-			{
-				state.mask = gmEntity->stateMask;
-				gmEntity->entity->SerialiseState(state, true);
+			state.mask = gmEntity->stateMask;
+			gmEntity->entity->SerialiseState(state, true);
 
-				file.write_uint32(state.mask);
-				file.write_string_a(state.data.c_str());
-			}
+			file.write_uint32(state.mask);
+			file.write_string_a(state.data);
 		}
 	}
 
@@ -1286,7 +1119,8 @@ namespace FusionEngine
 		for (unsigned int i = 0; i < numArchetypes; ++i)
 		{
 			state.mask = file.read_int32();
-			state.data = file.read_string_a().c_str();
+			CL_String8 stateString = file.read_string_a();
+			state.data.assign(stateString.data(), stateString.length());
 			archetypes.push_back(state);
 		}
 
@@ -1295,7 +1129,8 @@ namespace FusionEngine
 		for (unsigned int i = 0; i < numEntityStates; ++i)
 		{
 			state.mask = file.read_int32();
-			state.data = file.read_string_a().c_str();
+			CL_String8 stateString = file.read_string_a();
+			state.data.assign(stateString.data(), stateString.length());
 			entities.push_back(state);
 		}
 	}

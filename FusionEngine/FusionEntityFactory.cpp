@@ -997,6 +997,14 @@ namespace FusionEngine
 		}
 	}
 
+	bool register_unwrap_type(ScriptingEngine *manager, const std::string &module_name, const std::string &type)
+	{
+		std::string script =
+			type + "@ unwrap_" + type + "(Entity@ entity) {\n" +
+			" return cast<" + type + ">(unwrap(entity));\n}";
+		return manager->AddCode(script, module_name.c_str(), (type + "_unwrap_type").c_str());
+	}
+
 	void EntityFactory::OnModuleRebuild(BuildModuleEvent &ev)
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
@@ -1013,6 +1021,8 @@ namespace FusionEngine
 					ev.manager->AddCode(script.scriptData, ev.module_name, (def->GetType() + "_inline").c_str());
 				else
 					ev.manager->AddFile(script.fileName, ev.module_name);
+
+				register_unwrap_type(ev.manager, ev.module_name, def->GetType());
 
 				const EntityDefinition::DependenciesMap &deps = def->GetScriptDependencies();
 				for (EntityDefinition::DependenciesMap::const_iterator it = deps.begin(), end = deps.end(); it != end; ++it)
