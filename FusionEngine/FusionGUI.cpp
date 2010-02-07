@@ -54,6 +54,39 @@ namespace FusionEngine
 	const std::string s_GuiSystemName = "GUI";
 	const float GUI::s_ClickPausePeriod = 10*0.001f;
 
+	//! Adds an expand button element when a row has sub-rows to display
+	class ExpandButtonFormatter : public Rocket::Controls::DataFormatter
+	{
+	public:
+		ExpandButtonFormatter();
+
+		//! DataFormatter impl.
+		void FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data);
+	};
+
+	ExpandButtonFormatter::ExpandButtonFormatter()
+		: Rocket::Controls::DataFormatter("expand_button")
+	{}
+
+	void ExpandButtonFormatter::FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data)
+	{
+		// Data format:
+		// raw_data[0] is the number of children that this row has, a button is created if this is more than zero.
+
+		int num_children = 0;
+		EMP::Core::TypeConverter<EMP::Core::String, int>::Convert(raw_data[0], num_children);
+
+		if (num_children > 0)
+		{
+			formatted_data = "<datagridexpand />";
+		}
+		else
+		{
+			formatted_data = "";
+		}
+	}
+
+
 	struct ScriptStringConverter
 	{
 		typedef CScriptString* string_type;
@@ -148,19 +181,8 @@ namespace FusionEngine
 		Rocket::Core::Initialise();
 		Rocket::Controls::Initialise();
 
-		//asIScriptEngine *iengine = ScriptingEngine::getSingleton().GetEnginePtr();
-		//try
-		//{
-		//	Rocket::AngelScript::RegisterCore(iengine);
-		//	Rocket::AngelScript::Controls::RegisterControls(iengine);
-		//}
-		//catch (Rocket::AngelScript::Exception &ex)
-		//{
-		//	SendToConsole("Failed to register Rocket/AngelScript script classes. " + ex.m_Message);
-		//	return false;
-		//}
-
 		ElementSelectableDataGrid::RegisterElement();
+		m_DataFormatters.push_back(std::tr1::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
 
 		CL_GraphicContext gc = m_Display.get_gc();
 
@@ -202,6 +224,31 @@ namespace FusionEngine
 		}
 	}
 
+	void GUI::CleanUp()
+	{
+		if (m_Initialised)
+		{
+			m_DataFormatters.clear();
+
+			m_Context->RemoveReference();
+			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+			Rocket::Core::Shutdown();
+
+			delete m_RocketFileSys;
+			delete m_RocketSystem;
+			delete m_RocketRenderer;
+
+			m_RocketFileSys = NULL;
+			m_RocketSystem = NULL;
+			m_RocketRenderer = NULL;
+			m_Context = NULL;
+
+			m_Initialised = false;
+		}
+
+		m_Display.show_cursor();
+	}
+
 	void GUI::Update(float split)
 	{
 		m_Context->Update();
@@ -223,29 +270,6 @@ namespace FusionEngine
 	void GUI::Draw()
 	{
 		m_Context->Render();
-	}
-
-	void GUI::CleanUp()
-	{
-		if (m_Initialised)
-		{
-			m_Context->RemoveReference();
-			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
-			Rocket::Core::Shutdown();
-
-			delete m_RocketFileSys;
-			delete m_RocketSystem;
-			delete m_RocketRenderer;
-
-			m_RocketFileSys = NULL;
-			m_RocketSystem = NULL;
-			m_RocketRenderer = NULL;
-			m_Context = NULL;
-
-			m_Initialised = false;
-		}
-
-		m_Display.show_cursor();
 	}
 
 	Rocket::Core::Context *GUI::GetContext() const
@@ -491,10 +515,6 @@ namespace FusionEngine
 				Rocket::Core::String text = (EMP::Core::word*)ev.str.c_str();
 				m_Context->ProcessTextInput(text);
 			}
-			//const wchar_t* c_str = ev.str.c_str();
-			// Inject all the characters given
-			//for (int c = 0; c < ev.str.length(); c++)
-			//	m_Context->ProcessTextInput( EMP::Core::word(c_str[c]) );
 		}
 
 		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));

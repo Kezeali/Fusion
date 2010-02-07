@@ -181,10 +181,9 @@ namespace FusionEngine
 			{
 			case 0:	return x;
 			case 1: return y;
+			default:
+				return x;
 			}
-
-			static float dummy = 0.0f;
-			return dummy;
 		}
 
 	public:

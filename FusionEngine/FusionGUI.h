@@ -47,6 +47,12 @@
 // External
 #include <Rocket/Core.h>
 
+namespace Rocket {
+	namespace Controls {
+		class DataFormatter;
+	}
+}
+
 
 namespace FusionEngine
 {
@@ -134,6 +140,8 @@ namespace FusionEngine
 		RocketSystem *m_RocketSystem;
 		RocketRenderer *m_RocketRenderer;
 		RocketFileSystem *m_RocketFileSys;
+
+		std::list<std::tr1::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 
 		Rocket::Core::Context* m_Context;
 

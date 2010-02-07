@@ -326,14 +326,17 @@ namespace FusionEngine
 			pt_uint64 = 9,
 			pt_float = 10,
 			pt_double = 11,
-			// Entity is always a pointer and thus pointer flag is unneccesary
-			pt_entity = 12,
 			// These types can be pointers (with pointer flag)
-			pt_string = 16,
-			pt_vector = 32,
-			pt_reserved1 = 64,
-			pt_reserved2 = 128,
-			pt_pointer_flag = 256
+			pt_string = 13,
+			pt_vector = 14,
+			pt_colour = 15,
+			// Type flags (define extra characteristics)
+			pt_reserved_flag1 = 32,
+			pt_reserved_flag2 = 64,
+			pt_array_flag = 128, // Any of the above types can be stored in an array, access using GetAddressOfProperty(index, arrayIndex)
+			pt_pointer_flag = 256,
+			// Entity is always a pointer so there is no seperate pointer-flag version of this type ID
+			pt_entity = 12 | pt_pointer_flag,
 		};
 
 		//! Returns the number of editable properties
@@ -365,10 +368,17 @@ namespace FusionEngine
 		//! Sets the given entity property
 		virtual void SetPropertyEntity(unsigned int index, const EntityPtr &entity);
 
+		//! Returns the size of the given property if it is an array
+		virtual unsigned int GetPropertyArraySize(unsigned int index) const =0;
 		//! Returns the type of the given property
 		virtual int GetPropertyType(unsigned int index) const =0;
 		//! Returns the address of the given property's data
-		virtual void* GetAddressOfProperty(unsigned int index) const =0;
+		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const =0;
+		//! Returns the address of the given property's data (default for non-array types)
+		void* GetAddressOfProperty(unsigned int index) const
+		{
+			return GetAddressOfProperty(index, 0);
+		}
 
 		//! Sets the dictionary used by the EntityManager
 		/*!

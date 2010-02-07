@@ -36,7 +36,7 @@ CScriptString::CScriptString(const CScriptString &s)
 
 CScriptString::~CScriptString()
 {
-	assert( refCount == 0 );
+	//assert( refCount == 0 );
 }
 
 //--------------------

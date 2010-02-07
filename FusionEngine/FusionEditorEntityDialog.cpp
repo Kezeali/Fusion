@@ -36,6 +36,7 @@
 #include "FusionGUI.h"
 #include "FusionElementSelectableDataGrid.h"
 #include "FusionEditorUndo.h"
+#include "scriptstring.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -62,7 +63,7 @@ namespace FusionEngine
 		GameMapLoader::GameMapEntityPtr m_MapEntity;
 
 		template <typename T>
-		void formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, const EMP::Core::String &id = EMP::Core::String());
+		void formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, size_t array_index, const EMP::Core::String &str_index, const EMP::Core::String &str_array_index);
 	};
 
 	EditablePropertyFormatter::EditablePropertyFormatter(const GameMapLoader::GameMapEntityPtr &map_entity)
@@ -75,79 +76,204 @@ namespace FusionEngine
 		out.Assign(str.data(), str.length());
 	}
 
+	inline EMP::Core::String formatId(const EMP::Core::String &index, const EMP::Core::String &array_index)
+	{
+		return index + "." + array_index;
+	}
+
 	template <typename T>
-	void EditablePropertyFormatter::formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, const EMP::Core::String &id)
+	void EditablePropertyFormatter::formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, size_t array_index, const EMP::Core::String &index_str, const EMP::Core::String &array_index_str)
 	{
 		EntityPtr &entity = m_MapEntity->entity;
 
-		//if (id.Empty())
-		//	toEmp(id, boost::lexical_cast<std::string>(index));
+		//if (index_str.Empty())
+		//	toEmp(index_str, boost::lexical_cast<std::string>(index));
 
 		EMP::Core::String name(entity->GetPropertyName(index).c_str());
 
-		T value = *static_cast<T*>(entity->GetAddressOfProperty(index));
+		T value = *static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
 		//T minValue = std::numeric_limits<T>::min(), maxValue = std::numeric_limits<T>::max();
 
 		EMP::Core::String strValue;
-		toEmp(strValue, boost::lexical_cast<std::string>(value));
+		//toEmp(strValue, boost::lexical_cast<std::string>(value));
+		EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
 
 		//EMP::Core::String strMin;
 		//toEmp(strMin, boost::lexical_cast<std::string>(minValue));
 		//EMP::Core::String strMax;
 		//toEmp(strMax, boost::lexical_cast<std::string>(maxValue));
 
+		if (array_index_str != "top")
+		{
+			formatted_data =
+				"<input id=\"" + formatId(index_str, array_index_str) +
+				"\" index=\"" + index_str + "\" array_index=\"" + array_index_str +
+				"\" type=\"text\" name=\"" + name +
+				"\" value=\"" + strValue + "\" />";
+		}
+		else
+			formatted_data = strValue;
+	}
+
+	template <typename T>
+	void formatPrimative(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	{
+		T value = *static_cast<T*>(prop);
+
+		EMP::Core::String strValue;
+		EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
+
 		formatted_data =
-			"<input id=\"" + id + "\" type=\"text\" name=\"" + name +
+			"<input id=\"" + formatId(index, array_index) + "\" index=\"" + index + "\" array_index=\"" + array_index +
+			"\" type=\"text\" name=\"" + name +
 			"\" value=\"" + strValue + "\" />";
+	}
+
+	void formatStringElement(EMP::Core::String &formatted_data, const CScriptString *str, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	{
+		EMP::Core::String value; toEmp(value, str->buffer);
+		formatted_data =
+			"<input id=\"" + formatId(index, array_index) + "\" index=\"" + index + "\" array_index=\"" + array_index +
+			"\" type=\"text\" name=\"" + name + "\" value=\"" + value + "\" />";
+	}
+
+	//template <typename T>
+	//formatProperty(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &id, const EMP::Core::String &name)
+	//{
+	//}
+
+	//template <>
+	//formatProperty<bool>(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &id, const EMP::Core::String &name)
+	//{
+	//	bool checked = *static_cast<bool*>(prop);
+	//	formatted_data =
+	//		"<input id=\"" + id + "\" type=\"checkbox\" name=\"" + name + "\" value=\"true\" " + 
+	//		EMP::Core::String(checked ? "checked" : "") +
+	//		"/>";
+	//}
+
+	void formatVectorElement(EMP::Core::String &formatted_data, const Vector2 *prop, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	{
+		EMP::Core::String x, y;
+		EMP::Core::TypeConverter<Vector2::type, EMP::Core::String>::Convert(prop->x, x);
+		EMP::Core::TypeConverter<Vector2::type, EMP::Core::String>::Convert(prop->y, y);
+
+		formatted_data = x + ", " + y;
 	}
 
 	void EditablePropertyFormatter::FormatData(EMP::Core::String &formatted_data, const EMP::Core::StringList &raw_data)
 	{
+		if (raw_data.size() < 2)
+			return;
+
 		EntityPtr &entity = m_MapEntity->entity;
 
-		size_t index = boost::lexical_cast<size_t>(raw_data[0].CString());
+		EMP::Core::String id = raw_data[0];
 
-		const EMP::Core::String &id = raw_data[0];
+		const EMP::Core::String &indexStr = raw_data[0];
+		const EMP::Core::String &arrayIndexStr = raw_data[1];
+
+		bool container = true; // True if this line is expandable
+		size_t index, array_index = 0;
+		EMP::Core::TypeConverter<EMP::Core::String, size_t>::Convert(raw_data[0], index);
+		if (raw_data[1] != "top")
+		{
+			if (EMP::Core::TypeConverter<EMP::Core::String, size_t>::Convert(raw_data[1], array_index))
+			{
+				container = false;
+				id += "." + raw_data[1];
+			}
+		}
 
 		EMP::Core::String name; toEmp(name, entity->GetPropertyName(index));
 
-		switch (entity->GetPropertyType(index))
+		int type = entity->GetPropertyType(index) & ~Entity::pt_array_flag;
+		if (type & Entity::pt_pointer_flag)
 		{
-		case Entity::pt_bool:
+			switch (type)
 			{
-				bool checked = *static_cast<bool*>(entity->GetAddressOfProperty(index));
-				formatted_data =
-					"<input id=\"" + id + "\" type=\"checkbox\" name=\"" + name + "\" value=\"true\" " + 
-					EMP::Core::String(checked ? "checked" : "") +
-					"/>";
+			case Entity::pt_string:
+				formatStringElement(formatted_data,
+					*static_cast<CScriptString**>(entity->GetAddressOfProperty(index, array_index)),
+					indexStr, arrayIndexStr, name);
+				break;
+			case Entity::pt_vector:
+				{
+					Vector2 *vec = *static_cast<Vector2**>(entity->GetAddressOfProperty(index));
+					if (container) // The main row for this vector (displays data, non-editable
+						formatVectorElement(formatted_data, vec, indexStr, arrayIndexStr, name);
+					else // This is an expanded row (for one of the vector components)
+						formatPrimative<Vector2::type>(formatted_data, &((*vec)[array_index]), indexStr, arrayIndexStr, name);
+				}
+				break;
 			}
-			break;
+		}
+		else
+		{
+			switch (type)
+			{
+			case Entity::pt_bool:
+				{
+					bool checked = *static_cast<bool*>(entity->GetAddressOfProperty(index, array_index));
+					formatted_data =
+						"<input id=\"" + id + "\" index=\"" + indexStr + "\" array_index=\"" + arrayIndexStr + "\" type=\"checkbox\" name=\"" + name + "\" value=\"true\" " + 
+						EMP::Core::String(checked ? "checked" : "") +
+						"/>";
+				}
+				break;
 
-		case Entity::pt_int8:
-			formatPrimativeElement<int8_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_int16:
-			formatPrimativeElement<int16_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_int32:
-			formatPrimativeElement<int32_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_int64:
-			formatPrimativeElement<int64_t>(formatted_data, index, id);
-			break;
+			case Entity::pt_int8:
+				formatPrimativeElement<int8_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_int16:
+				formatPrimativeElement<int16_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_int32:
+				formatPrimativeElement<int32_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_int64:
+				formatPrimativeElement<int64_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
 
 			case Entity::pt_uint8:
-			formatPrimativeElement<uint8_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_uint16:
-			formatPrimativeElement<uint16_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_uint32:
-			formatPrimativeElement<uint32_t>(formatted_data, index, id);
-			break;
-		case Entity::pt_uint64:
-			formatPrimativeElement<uint64_t>(formatted_data, index, id);
-			break;
+				formatPrimativeElement<uint8_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_uint16:
+				formatPrimativeElement<uint16_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_uint32:
+				formatPrimativeElement<uint32_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_uint64:
+				formatPrimativeElement<uint64_t>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+
+			case Entity::pt_float:
+				formatPrimativeElement<float>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+			case Entity::pt_double:
+				formatPrimativeElement<double>(formatted_data, index, array_index, indexStr, arrayIndexStr);
+				break;
+
+			case Entity::pt_string:
+					formatStringElement(formatted_data, static_cast<CScriptString*>(entity->GetAddressOfProperty(index)), indexStr, arrayIndexStr, name);
+				break;
+
+			case Entity::pt_vector:
+				{
+					Vector2 *vec = static_cast<Vector2*>(entity->GetAddressOfProperty(index));
+					if (container) // The main row for this vector (displays data, non-editable
+						formatVectorElement(formatted_data, vec, indexStr, arrayIndexStr, name);
+					else // This is an expanded row (for one of the vector components)
+						formatPrimative<Vector2::type>(formatted_data, &((*vec)[array_index]), indexStr, arrayIndexStr, name);
+				}
+				break;
+
+
+			default:
+				formatted_data = "<span class=\"error\">Can't display this property (unknown type)</span>";
+				break;
+			}
 		}
 	}
 
@@ -189,7 +315,7 @@ namespace FusionEngine
 		EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
 		if (editorEntityPtr)
 		{
-			m_GridProperties->AddColumn("index", m_PropertiesFormatter->GetDataFormatterName(), 0.f, "Value");
+			m_GridProperties->AddColumn("index,array_index", m_PropertiesFormatter->GetDataFormatterName(), 0.f, "Value");
 			m_GridProperties->SetDataSource(editorEntityPtr->GetDataSourceName() + ".properties");
 			//m_GridProperties->AddEventListener("rowselected", this);
 			//m_GridProperties->AddEventListener("rowdblclick", this);
@@ -257,23 +383,20 @@ namespace FusionEngine
 
 	// Used for primative types (except bool)
 	template <typename T>
-	void setPropertyPrimative(const EditorMapEntityPtr &map_entity, unsigned int index, Rocket::Core::Event &ev)
+	void setPropertyPrimative(const EditorMapEntityPtr &map_entity, unsigned int index, unsigned int array_index, Rocket::Core::Event &ev)
 	{
-		if (ev.GetParameter<int>("key_identifier", Rocket::Core::Input::KI_UNKNOWN) == Rocket::Core::Input::KI_RETURN)
+		EMP::Core::String value = ev.GetTargetElement()->GetAttribute("value", EMP::Core::String());
+		try
 		{
-			EMP::Core::String value = ev.GetTargetElement()->GetAttribute("value", EMP::Core::String());
-			try
-			{
-				T numericalValue = boost::lexical_cast<T>(value.CString());
-				map_entity->SetPropertyValue(index, numericalValue);
-			}
-			catch (boost::bad_lexical_cast &ex)
-			{
-				std::string valStr(value.CString());
-				SendToConsole("Failed to set property '" + map_entity->entity->GetPropertyName(index) + "' to " + valStr);
-				SendToConsole(ex.what());
-				map_entity->RefreshProperty(index);
-			}
+			T numericalValue = boost::lexical_cast<T>(value.CString());
+			map_entity->SetPropertyValue(index, array_index, numericalValue);
+		}
+		catch (boost::bad_lexical_cast &ex)
+		{
+			std::string valStr(value.CString());
+			SendToConsole("Failed to set property '" + map_entity->entity->GetPropertyName(index) + "' to " + valStr);
+			SendToConsole(ex.what());
+			map_entity->RefreshProperty(index);
 		}
 	}
 
@@ -315,58 +438,99 @@ namespace FusionEngine
 				EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
 				if (!editorEntityPtr)
 					return;
-				
-				size_t index = boost::lexical_cast<size_t>( ev.GetTargetElement()->GetId().CString() );
+
+				Rocket::Core::Element *elm = ev.GetTargetElement();
+				unsigned int index = elm->GetAttribute<unsigned int>("index", 0);
+				unsigned int array_index = elm->GetAttribute<unsigned int>("array_index", 0);
 				
 				if (m_MapEntity->entity->GetPropertyType(index) == Entity::pt_bool)
-					editorEntityPtr->SetPropertyValue<bool>(index, ev.GetParameter("value", false));
+					editorEntityPtr->SetPropertyValue<bool>(index, array_index, ev.GetParameter("value", false));
 			}
 		}
 		else if (ev == "keyup")
 		{
 			if (ev.GetTargetElement()->GetAttribute("type", EMP::Core::String()) == "text")
 			{
-				EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
-				if (!editorEntityPtr)
-					return;
-
-				Rocket::Core::Element *elm = ev.GetTargetElement();
-				unsigned int index = boost::lexical_cast<unsigned int>( elm->GetId().CString() );
-
-				switch (m_MapEntity->entity->GetPropertyType(index))
+				if (ev.GetParameter<int>("key_identifier", Rocket::Core::Input::KI_UNKNOWN) == Rocket::Core::Input::KI_RETURN)
 				{
-				case Entity::pt_int8:
-					setPropertyPrimative<int8_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_int16:
-					setPropertyPrimative<int16_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_int32:
-					setPropertyPrimative<int32_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_int64:
-					setPropertyPrimative<int64_t>(editorEntityPtr, index, ev);
-					break;
+					EditorMapEntityPtr editorEntityPtr = boost::dynamic_pointer_cast<EditorMapEntity>(m_MapEntity);
+					if (!editorEntityPtr)
+						return;
 
-				case Entity::pt_uint8:
-					setPropertyPrimative<uint8_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_uint16:
-					setPropertyPrimative<uint16_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_uint32:
-					setPropertyPrimative<uint32_t>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_uint64:
-					setPropertyPrimative<uint64_t>(editorEntityPtr, index, ev);
-					break;
+					Rocket::Core::Element *elm = ev.GetTargetElement();
+					unsigned int index = elm->GetAttribute<unsigned int>("index", 0);
+					unsigned int array_index = elm->GetAttribute<unsigned int>("array_index", 0);
 
-				case Entity::pt_float:
-					setPropertyPrimative<float>(editorEntityPtr, index, ev);
-					break;
-				case Entity::pt_double:
-					setPropertyPrimative<double>(editorEntityPtr, index, ev);
-					break;
+					EMP::Core::String value = elm->GetAttribute("value", EMP::Core::String());
+
+					int type = m_MapEntity->entity->GetPropertyType(index) & ~Entity::pt_array_flag;
+					switch (type)
+					{
+					case Entity::pt_int8:
+						setPropertyPrimative<int8_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_int16:
+						setPropertyPrimative<int16_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_int32:
+						setPropertyPrimative<int32_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_int64:
+						setPropertyPrimative<int64_t>(editorEntityPtr, index, array_index, ev);
+						break;
+
+					case Entity::pt_uint8:
+						setPropertyPrimative<uint8_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_uint16:
+						setPropertyPrimative<uint16_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_uint32:
+						setPropertyPrimative<uint32_t>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_uint64:
+						setPropertyPrimative<uint64_t>(editorEntityPtr, index, array_index, ev);
+						break;
+
+					case Entity::pt_float:
+						setPropertyPrimative<float>(editorEntityPtr, index, array_index, ev);
+						break;
+					case Entity::pt_double:
+						setPropertyPrimative<double>(editorEntityPtr, index, array_index, ev);
+						break;
+
+					case Entity::pt_string:
+						{
+							CScriptString propValue(value.CString(), value.Length());
+							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
+						}
+						break;
+					case Entity::pt_string | Entity::pt_pointer_flag:
+						{
+							CScriptString *propValue = new CScriptString(value.CString(), value.Length());
+							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
+						}
+						break;
+
+					case Entity::pt_vector:
+						{
+							float numericVal;
+							EMP::Core::TypeConverter<EMP::Core::String, float>::Convert(value, numericVal);
+							Vector2 *vec = static_cast<Vector2*>(m_MapEntity->entity->GetAddressOfProperty(index, 0));
+							(*vec)[array_index] = numericVal;
+							editorEntityPtr->RefreshProperty(index);
+						}
+						break;
+					case Entity::pt_vector | Entity::pt_pointer_flag:
+						{
+							float numericVal;
+							EMP::Core::TypeConverter<EMP::Core::String, float>::Convert(value, numericVal);
+							Vector2 *vec = *static_cast<Vector2**>(m_MapEntity->entity->GetAddressOfProperty(index, 0));
+							(*vec)[array_index] = numericVal;
+							editorEntityPtr->RefreshProperty(index);
+						}
+						break;
+					}
 				}
 			}
 		}

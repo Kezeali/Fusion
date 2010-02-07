@@ -45,6 +45,7 @@
 		<!--The application sets the datasource for this datagrid gets set to the
 		 properties datasource for the Entity this editor window is for-->
 		<datagrid id="properties">
+			<col fields="#num_children" formatter="expand_button" width="10%" />
 			<col fields="name" width="25%">Property</col>
 			<!--The application assigns a formatter to this column that creates a form
 			 element suitable to edit the property type given by the second field-->

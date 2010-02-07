@@ -28,14 +28,17 @@
 		<!--Arbitrated means that the variable is owned by the leader (leader
 			value has authority even if the entity is currently under
 			client auth.)-->
-		<Property type="int" predictable="true" arbitrated="true" name="health" />
-		<Property type="bool" predictable="true" name="input_forward" />
-		<Property type="bool" predictable="true" name="input_left" />
-		<Property type="bool" predictable="true" name="input_right" />
+		<Property arbitrated="true" name="health" />
+		<Property name="input_forward" />
+		<Property name="input_left" />
+		<Property name="input_right" />
+		<Property name="test_int8" />
+		<Property name="target" />
+		<Property name="array" />
 		<!--Local properties are only synced to disk (i.e. load/save), not the network-->
 		<!--Local generally shouldn't be used, because the networking model is designed
 			around full syncronization (although not fully reliable syncronization)-->
-		<Property type="string" local="true" name="message" />
+		<Property local="true" name="message" />
 		<!--Note that entity properties are stored by ID, and entity save data
 			 includes the ID from the original session-->
 		<!--<Property type="TestGUI" local="true" name="gui_entity" />-->

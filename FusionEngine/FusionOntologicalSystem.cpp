@@ -91,7 +91,12 @@ namespace FusionEngine
 			return pt_none;
 		}
 
-		virtual void* GetAddressOfProperty(unsigned int index) const
+		virtual unsigned int GetPropertyArraySize(unsigned int index) const
+		{
+			return 0;
+		}
+
+		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const
 		{
 			return NULL;
 		}

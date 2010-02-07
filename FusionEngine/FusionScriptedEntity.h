@@ -122,8 +122,10 @@ namespace FusionEngine
 		//virtual EntityPtr GetPropertyEntity(unsigned int index) const;
 		//virtual void SetPropertyEntity(unsigned int index, const EntityPtr &value);
 
+		//! Returns the size of the given property if it is an array
+		virtual unsigned int GetPropertyArraySize(unsigned int index) const;
 		virtual int GetPropertyType(unsigned int index) const;
-		virtual void* GetAddressOfProperty(unsigned int index) const;
+		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const;
 
 		virtual void EnumReferences(asIScriptEngine *engine);
 		virtual void ReleaseAllReferences(asIScriptEngine *engine);

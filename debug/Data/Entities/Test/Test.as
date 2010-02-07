@@ -8,6 +8,14 @@ class Test : ScriptEntity
 
 	uint16 localPlayerNumber;
 
+	string message;
+
+	uint8 test_int8;
+
+	Vector target;
+
+	int[] array;
+
 	//TestGUI@ gui_entity;
 
 	Renderable@ sprite;
@@ -25,6 +33,16 @@ class Test : ScriptEntity
 		health = 100;
 		input_forward = true;
 		input_left = false;
+
+		test_int8 = 254;
+
+		message = "hi";
+
+		array.resize(3);
+		array[0] = 1;
+		array[1] = 2;
+		array[2] = 3;
+
 
 		@primaryCamera = @Camera();
 		@p1Viewport = @Viewport(0, 0, 1, 1);

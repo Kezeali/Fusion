@@ -67,9 +67,9 @@ namespace FusionEngine
 		}
 
 		template <typename T>
-		void SetPropertyValue(unsigned int index, T value)
+		void SetPropertyValue(unsigned int index, unsigned int array_index, T value)
 		{
-			T *prop = static_cast<T*>(entity->GetAddressOfProperty(index));
+			T *prop = static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
 			*prop = value;
 			NotifyRowChange("properties", index, 1);
 		}
@@ -78,6 +78,26 @@ namespace FusionEngine
 		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
 		//! DataSource impl.
 		int GetNumRows(const EMP::Core::String& table);
+
+	private:
+		struct VectorTypeInfo
+		{
+			VectorTypeInfo(size_t _size, const char **_names)
+				: size(_size),
+				names(_names)
+			{
+			}
+			~VectorTypeInfo()
+			{
+				//for (size_t i = 0; i < size; ++i)
+				//	free(names[i]);
+			}
+			size_t size;
+			const char** names;
+		};
+		typedef std::map<int, VectorTypeInfo> VectorTypeInfoMap;
+		VectorTypeInfoMap m_VectorTypes;
+
 	};
 	//! EditorMapEntity ptr
 	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;

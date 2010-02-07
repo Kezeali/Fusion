@@ -36,13 +36,23 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <EMP/Core/TypeConverter.h>
+
 
 namespace FusionEngine
 {
 
+	static int s_MaxPrimativeTypeId = Entity::pt_double;
+	static const char* vectorComponentNames[] = {"x", "y"};
+	static const char* colourComponentNames[] = {"r", "g", "b", "a"};
+
 	EditorMapEntity::EditorMapEntity()
 		: EMP::Core::DataSource()
 	{
+		VectorTypeInfoMap::value_type vectorTypeInfo( Entity::pt_vector, VectorTypeInfo(2, (const char**)&vectorComponentNames) );
+		VectorTypeInfoMap::value_type colourTypeInfo( Entity::pt_colour, VectorTypeInfo(4, (const char**)&colourComponentNames) );
+		m_VectorTypes.insert(vectorTypeInfo);
+		m_VectorTypes.insert(colourTypeInfo);
 	}
 
 	EditorMapEntity::~EditorMapEntity()
@@ -216,34 +226,92 @@ namespace FusionEngine
 
 	void EditorMapEntity::GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns)
 	{
-		if (row_index < 0 || (size_t)row_index >= entity->GetPropertyCount())
+		if (row_index < 0)
 			return;
 
 		if (table == "properties")
 		{
+			if ((size_t)row_index >= entity->GetPropertyCount())
+				return;
+
 			for (size_t i = 0; i < columns.size(); i++)
 			{
 				if (columns[i] == "name")
 				{
 					row.push_back(entity->GetPropertyName(row_index).c_str());
 				}
-				else if (columns[i] == "type")
-				{
-					if (entity->GetPropertyType(row_index) == Entity::pt_bool)
-						row.push_back( "bool" );
-					else
-						row.push_back( "unknown" );
-				}
 				else if (columns[i] == "index")
 				{
 					row.push_back( boost::lexical_cast<std::string>(row_index).c_str() );
 				}
-				else if (columns[i] == "value")
+				else if (columns[i] == "array_index")
 				{
-					std::string valueStr; to_string(valueStr, entity->GetPropertyType(row_index), entity->GetAddressOfProperty(row_index));
-					EMP::Core::String eValueStr;
-					eValueStr.Assign(valueStr.c_str(), valueStr.length());
-					row.push_back( eValueStr );
+					row.push_back("top");
+				}
+				else if (columns[i] == EMP::Core::DataSource::CHILD_SOURCE)
+				{
+					int type = entity->GetPropertyType(row_index);
+					if (type & Entity::pt_array_flag ||
+						(type & Entity::pt_vector) == Entity::pt_vector ||
+						(type & Entity::pt_colour) == Entity::pt_colour)
+					{
+						EMP::Core::String strIndex;
+						EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, strIndex);
+						row.push_back(GetDataSourceName()+"."+strIndex);
+					}
+				}
+			}
+		}
+		else
+		{
+			unsigned int index;
+			if (!EMP::Core::TypeConverter<EMP::Core::String, unsigned int>::Convert(table, index)) return;
+			int type = entity->GetPropertyType(index);
+
+			for (size_t i = 0; i < columns.size(); i++)
+			{
+				if (columns[i] == "name")
+				{
+					if (type & Entity::pt_array_flag)
+					{
+						EMP::Core::String name;
+						if (EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, name))
+							row.push_back(name);
+					}
+					// Non array types with multiple components (vector, colour)
+					else if (type > s_MaxPrimativeTypeId)
+					{
+						VectorTypeInfoMap::const_iterator _where = m_VectorTypes.find(type & ~Entity::pt_pointer_flag);
+						if (_where != m_VectorTypes.end())
+						{
+							const VectorTypeInfo &info = _where->second;
+							if ((size_t)row_index < info.size)
+								row.push_back( info.names[(size_t)row_index] );
+						}
+					}
+				}
+				else if (columns[i] == "index")
+				{
+					row.push_back(table);
+				}
+				else if (columns[i] == "array_index")
+				{
+					//if (type & Entity::pt_array_flag)
+					//{
+						EMP::Core::String name;
+						if (EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, name))
+							row.push_back(name);
+					//}
+					//else if (type > s_MaxPrimativeTypeId)
+					//{
+					//	VectorTypeInfoMap::const_iterator _where = m_VectorTypes.find(type);
+					//	if (_where != m_VectorTypes.end())
+					//	{
+					//		const VectorTypeInfo &info = _where->second;
+					//		if ((size_t)row_index < info.size)
+					//			row.push_back(info.names[(size_t)row_index]);
+					//	}
+					//}
 				}
 			}
 		}
@@ -254,6 +322,26 @@ namespace FusionEngine
 		if (table == "properties")
 		{
 			return entity->GetPropertyCount();
+		}
+		else
+		{
+			unsigned int index;
+			EMP::Core::TypeConverter<EMP::Core::String, unsigned int>::Convert(table, index);
+			int type = entity->GetPropertyType(index);
+
+			if (type & Entity::pt_array_flag)
+			{
+				return entity->GetPropertyArraySize(index);
+			}
+			else if (type > s_MaxPrimativeTypeId)
+			{
+				VectorTypeInfoMap::const_iterator _where = m_VectorTypes.find(type);
+				if (_where != m_VectorTypes.end())
+				{
+					const VectorTypeInfo &info = _where->second;
+					return info.size;
+				}
+			}
 		}
 
 		return 0;

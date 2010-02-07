@@ -346,66 +346,100 @@ namespace FusionEngine
 		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
 	}
 
+	unsigned int ScriptedEntity::GetPropertyArraySize(unsigned int index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+		if (m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex) & asTYPEID_SCRIPTARRAY)
+		{
+			asIScriptArray *array = static_cast<asIScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return array->GetElementCount();
+		}
+		else
+			return 0;
+	}
+
 	int ScriptedEntity::GetPropertyType(unsigned int index) const
 	{
 		int propIndex = getScriptPropIndex(index);
 
 		int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
-		// basic types
+
+		int propType = pt_none;
+
+		// Add the array flag
+		if (typeId & asTYPEID_SCRIPTARRAY)
+		{
+			propType |= pt_array_flag;
+			typeId = ScriptingEngine::getSingleton().GetEnginePtr()->GetObjectTypeById(typeId)->GetSubTypeId();
+		}
+
+		// Basic types
 		switch (typeId)
 		{
 		case asTYPEID_BOOL:
-			return pt_bool;
+			propType |= pt_bool; break;
 		case asTYPEID_INT8:
-			return pt_int8;
+			propType |= pt_int8; break;
 		case asTYPEID_INT16:
-			return pt_int16;
+			propType |= pt_int16; break;
 		case asTYPEID_INT32:
-			return pt_int32;
+			propType |= pt_int32; break;
 		case asTYPEID_INT64:
-			return pt_int64;
+			propType |= pt_int64; break;
 		case asTYPEID_UINT8:
-			return pt_uint8;
+			propType |= pt_uint8; break;
 		case asTYPEID_UINT16:
-			return pt_uint16;
+			propType |= pt_uint16; break;
 		case asTYPEID_UINT32:
-			return pt_uint32;
+			propType |= pt_uint32; break;
 		case asTYPEID_UINT64:
-			return pt_uint64;
+			propType |= pt_uint64; break;
 		case asTYPEID_FLOAT:
-			return pt_float;
+			propType |= pt_float; break;
 		case asTYPEID_DOUBLE:
-			return pt_double;
+			propType |= pt_double; break;
 		}
-		
-		if (typeId & asTYPEID_APPOBJECT)
+		// If a basic type was detected, return the property type
+		if (propType != pt_none && propType != pt_array_flag)
+			return propType;
+		// Otherwise, check for a application type
+		else if (typeId & asTYPEID_APPOBJECT)
 		{
 			ScriptingEngine *man = ScriptingEngine::getSingletonPtr();
-			if (typeId & s_EntityTypeId)
-				return pt_entity;
+			// Check for entity type (this is seperated from the following types because it is always a pointer type)
+			if ((typeId & ~asTYPEID_OBJHANDLE) == s_EntityTypeId)
+				propType |= pt_entity;
+
 			else
 			{
-				int propertyType = pt_none;
+				if ((typeId & ~asTYPEID_OBJHANDLE) == man->GetStringTypeId())
+					propType |= pt_string;
+				else if ((typeId & ~asTYPEID_OBJHANDLE) == man->GetVectorTypeId())
+					propType |= pt_vector;
 
-				if (typeId & man->GetStringTypeId())
-					propertyType = pt_string;
-				else if (typeId & man->GetVectorTypeId())
-					propertyType = pt_vector;
-
+				// Add the pointer flag
 				if (typeId & asTYPEID_OBJHANDLE)
-					propertyType |= pt_pointer_flag;
-
-				return propertyType;
+					propType |= pt_pointer_flag;
 			}
+
+			return propType;
 		}
 
+		// notice that propType isn't returned here as it could be a loose pt_array_flag
+		//  (for an array of an unsupported type) and returning that would be useless
 		return pt_none;
 	}
 
-	void* ScriptedEntity::GetAddressOfProperty(unsigned int index) const
+	void* ScriptedEntity::GetAddressOfProperty(unsigned int index, unsigned int array_index) const
 	{
 		int propIndex = getScriptPropIndex(index);
-		return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);
+		if (m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex) & asTYPEID_SCRIPTARRAY)
+		{
+			asIScriptArray *array = static_cast<asIScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return array->GetElementPointer(array_index);
+		}
+		else
+			return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);
 	}
 
 	void ScriptedEntity::EnumReferences(asIScriptEngine *engine)

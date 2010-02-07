@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -1111,30 +1111,41 @@ namespace FusionEngine
 		}*/
 	}
 
-	//void EntityFactory::verityTypes()
-	//{
-	//}
 	bool isSyncableType(int type_id, ScriptingEngine *script_manager)
 	{
-		if (type_id == asTYPEID_BOOL ||
-			type_id == asTYPEID_INT8 ||
-			type_id == asTYPEID_INT16 ||
-			type_id == asTYPEID_INT32 ||
-			type_id == asTYPEID_INT64 ||
-			type_id == asTYPEID_UINT8 ||
-			type_id == asTYPEID_UINT16 ||
-			type_id == asTYPEID_UINT32 ||
-			type_id == asTYPEID_UINT64 ||
-			type_id == asTYPEID_FLOAT ||
-			type_id == asTYPEID_DOUBLE ||
-			(type_id & ScriptedEntity::s_EntityTypeId) == ScriptedEntity::s_EntityTypeId ||
-			(type_id & script_manager->GetStringTypeId()) == script_manager->GetStringTypeId() ||
-			(type_id & script_manager->GetVectorTypeId()) == script_manager->GetVectorTypeId())
+		int valueTypeId = type_id & ~asTYPEID_OBJHANDLE;
+
+		// Check for array types (an array type is supported as long as the sub type is)
+		if ((type_id & asTYPEID_MASK_OBJECT) == asTYPEID_SCRIPTARRAY)
 		{
-			return true;
+			asIObjectType *objectType = script_manager->GetEnginePtr()->GetObjectTypeById(type_id);
+			valueTypeId = objectType->GetSubTypeId() & ~asTYPEID_OBJHANDLE;
 		}
-		else
-			return false;
+
+		switch (valueTypeId)
+		{
+		case asTYPEID_BOOL:
+		case asTYPEID_INT8:
+		case asTYPEID_INT16:
+		case asTYPEID_INT32:
+		case asTYPEID_INT64:
+		case asTYPEID_UINT8:
+		case asTYPEID_UINT16:
+		case asTYPEID_UINT32:
+		case asTYPEID_UINT64:
+		case asTYPEID_FLOAT:
+		case asTYPEID_DOUBLE:
+			return true;
+
+		default:
+			// Non-constant type IDs (for app. registered types)
+			if (valueTypeId == ScriptedEntity::s_EntityTypeId ||
+				valueTypeId == script_manager->GetStringTypeId() ||
+				valueTypeId == script_manager->GetVectorTypeId())
+				return true;
+			else
+				return false;
+		}
 	}
 
 	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
