@@ -45,6 +45,7 @@
 // Remove _DLL define
 #ifdef HAD_TO_DEF_DLL
 #undef _DLL
+#undef HAD_TO_DEF_DLL
 #endif
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -854,6 +854,11 @@ namespace FusionEngine
 		rawInput.DeviceType = DeviceIDToName(dev_info.Type);
 		rawInput.DeviceIndex = dev_info.Index;
 		rawInput.DeviceName = CL_StringHelp::text_to_local8(ev.device.get_name()); //= dev_info.Name;
+
+		rawInput.Shift = ev.shift;
+		rawInput.Control = ev.ctrl;
+		rawInput.Alt = ev.alt;
+		// TODO: capslock, numlock, scrolllock
 
 		if (ev.type == CL_InputEvent::pointer_moved)
 		{

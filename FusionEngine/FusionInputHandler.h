@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -287,6 +287,8 @@ namespace FusionEngine
 	public:
 		RawInput()
 			: DeviceIndex(0), Code(0),
+			Shift(false), Control(false), Alt(false),
+			CapsLock(false), NumLock(false), ScrollLock(false),
 			InputType(Nothing),
 			AxisPosition(0.0), ButtonPressed(false)
 		{
@@ -299,6 +301,13 @@ namespace FusionEngine
 		EventType InputType;
 
 		int Code; // VK code (for buttons)
+		// Key modifiers (for lazy people who don't want to keep track of these events themselves :P)
+		bool Shift;
+		bool Control;
+		bool Alt;
+		bool CapsLock;
+		bool NumLock;
+		bool ScrollLock;
 
 		Vector2i PointerPosition;
 		double AxisPosition;
