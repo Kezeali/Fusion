@@ -1,4 +1,6 @@
 
+#include "Common.h"
+
 #include "FusionConsole.h"
 
 #include "FusionScriptingEngine.h"
@@ -7,6 +9,7 @@
 #include "scriptstring.h"
 
 #include <boost/tokenizer.hpp>
+#include <boost/bind.hpp>
 
 namespace FusionEngine
 {
@@ -472,6 +475,8 @@ namespace FusionEngine
 		return m_Buffer.substr(m_Buffer.find("\n"));
 	}
 
+//#define FSN_DONT_USE_SCRIPTING
+
 #ifndef FSN_DONT_USE_SCRIPTING
 	class ScriptedConsoleListenerWrapper : public RefCounted, noncopyable
 	{
@@ -580,7 +585,7 @@ namespace FusionEngine
 			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
-			bsig2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			boost::signals2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
 			slot->HoldConnection(c);
 
 			return slot;

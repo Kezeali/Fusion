@@ -237,58 +237,59 @@ namespace FusionEngine
 
 	void PhysicalEntity::SerialiseState(SerialisedData &state, bool local) const
 	{
-		std::ostringstream stateStream(std::ios::binary);
+		//std::ostringstream stateStream(std::ios::binary);
 
-		stateStream << (m_Body != NULL); // Physics enabled
+		//stateStream << (m_Body != NULL); // Physics enabled
 
-		// TODO: if bodyDef dirty send whole def (plus bool-true here to indicate that this is a full-state packet)
+		//// TODO: if bodyDef dirty send whole def (plus bool-true here to indicate that this is a full-state packet)
 
-		if (m_Body != NULL)
-		{
-			const b2Vec2 &pos = m_Body->GetPosition();
-			stateStream << pos.x;
-			stateStream << pos.y;
-			const b2Vec2 vel = m_Body->GetLinearVelocity();
-			stateStream << vel.x;
-			stateStream << vel.y;
-			stateStream << m_Body->GetAngle();
-			stateStream << m_Body->GetAngularVelocity();
-		}
-		else
-		{
-			stateStream << m_Position.x;
-			stateStream << m_Position.y;
+		//if (m_Body != NULL)
+		//{
+		//	const b2Vec2 &pos = m_Body->GetPosition();
+		//	stateStream << pos.x;
+		//	stateStream << pos.y;
+		//	const b2Vec2 vel = m_Body->GetLinearVelocity();
+		//	stateStream << vel.x;
+		//	stateStream << vel.y;
+		//	stateStream << m_Body->GetAngle();
+		//	stateStream << m_Body->GetAngularVelocity();
+		//}
+		//else
+		//{
+		//	stateStream << m_Position.x;
+		//	stateStream << m_Position.y;
 
-			stateStream << m_Velocity.x;
-			stateStream << m_Velocity.y;
+		//	stateStream << m_Velocity.x;
+		//	stateStream << m_Velocity.y;
 
-			stateStream << m_Angle;
-			stateStream << m_AngularVelocity;
-		}
+		//	stateStream << m_Angle;
+		//	stateStream << m_AngularVelocity;
+		//}
 	}
 
 	size_t PhysicalEntity::DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
 	{
-		std::istringstream stateStream(state.data, std::ios::binary);
+		return 0;
+		//std::istringstream stateStream(state.data, std::ios::binary);
 
-		bool physicsEnabled;
-		stateStream >> physicsEnabled; // True if the entity has been added to the physics world on the owning peer
+		//bool physicsEnabled;
+		//stateStream >> physicsEnabled; // True if the entity has been added to the physics world on the owning peer
 
-		float x, y;
-		stateStream >> x;
-		stateStream >> y;
-		SetPosition(Vector2(x, y));
-		
-		stateStream >> x;
-		stateStream >> y;
-		SetVelocity(Vector2(x, y));
+		//float x, y;
+		//stateStream >> x;
+		//stateStream >> y;
+		//SetPosition(Vector2(x, y));
+		//
+		//stateStream >> x;
+		//stateStream >> y;
+		//SetVelocity(Vector2(x, y));
 
-		stateStream >> x; SetAngle(x);
-		stateStream >> x; SetAngularVelocity(x);
+		//stateStream >> x; SetAngle(x);
+		//stateStream >> x; SetAngularVelocity(x);
 
-		// TODO: deserialise joints using entity_deserialiser?
+		//// TODO: deserialise joints using entity_deserialiser?
 
-		return stateStream.tellg();
+		//return stateStream.tellg();
 	}
 
 }

@@ -35,7 +35,9 @@
 
 #include "FusionCommon.h"
 
-#include "FusionBoostSignals2.h"
+//#include "FusionBoostSignals2.h"
+#include <boost/signals2/signal.hpp>
+//#include <boost/bind.hpp>
 
 // Inherited
 #include "FusionSingleton.h"

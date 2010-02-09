@@ -534,30 +534,6 @@ namespace FusionEngine
 				}
 			}
 		}
-		else if (ev == "rowselected")
-		{
-		}
-		else if (ev == "rowdblclick")
-		{
-			int selectedIndex = ev.GetParameter("row_index", (int)-1);
-		}
-
-		//else if (ev == "rowadd")
-		//{
-		//	int i = ev.GetParameter("first_row_added", 0);
-		//	int end = i + ev.GetParameter("num_rows_added", 0);
-		//	for (; i < end; ++i)
-		//	{
-		//		Rocket::Controls::ElementDataGridRow *row = m_GridProperties->GetRow(i);
-		//		Rocket::Controls::ElementDataGridCell *cell = dynamic_cast<Rocket::Controls::ElementDataGridCell*>(row->GetChild(1));
-		//		if (cell != NULL)
-		//		{
-		//			Rocket::Core::Element *inputElement = cell->GetChild(0);
-		//			if (inputElement != NULL)
-		//				inputElement->AddEventListener("change", this);
-		//		}
-		//	}
-		//}
 	}
 
 }

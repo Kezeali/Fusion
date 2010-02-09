@@ -50,13 +50,13 @@
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 
-#include "FusionStringFormatting.h"
-
 #include "FusionVector2.h"
 
 #include "FusionSlotContainer.h"
 
 #include "FusionHashable.h"
+
+#include "FusionStringFormatting.h"
 
 
 // Box2d (Physics)

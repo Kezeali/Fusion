@@ -40,7 +40,8 @@
 // Fusion
 #include "FusionRefCounted.h"
 
-#include "FusionBoostSignals2.h"
+//#include "FusionBoostSignals2.h"
+#include <boost/signals2/signal.hpp>
 
 #include "FusionScriptReference.h"
 #include "FusionScriptTypeRegistrationUtils.h"
@@ -75,11 +76,17 @@ namespace FusionEngine
 			m_CallSlot(p0);
 		}
 
-		template <typename T0>
-		void Callback(T0& p0)
-		{
-			m_CallSlot(&p0);
-		}
+		//template <typename T0>
+		//void Callback(T0& p0)
+		//{
+		//	m_CallSlot(&p0);
+		//}
+
+		//template <typename T0>
+		//void Callback(const T0& p0)
+		//{
+		//	m_CallSlot(&p0);
+		//}
 
 		static void Register(asIScriptEngine *engine);
 	};

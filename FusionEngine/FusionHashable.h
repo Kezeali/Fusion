@@ -38,8 +38,8 @@ namespace FusionEngine
 {
 	//! Asoc. container key class incl. integer and string key
 	/*!
-	 * Structure compatible with std#tr1#hash for use as a key in
-	 * tr1#unordered_map, etc.
+	 * Structure compatible with std#hash for use as a key in
+	 * unordered_map, etc.
 	 */
 	struct PlayerKey
 	{
@@ -116,8 +116,8 @@ namespace FusionEngine
 	}
 }
 
-namespace std { namespace tr1
-{
+namespace std {
+	//namespace tr1 {
 	template <>
 	struct hash<FusionEngine::PlayerKey> : public unary_function<FusionEngine::PlayerKey, size_t>
 	{
@@ -144,6 +144,7 @@ namespace std { namespace tr1
 			return seed;
 		}
 	};
-}}
+//}
+}
 
 #endif

@@ -29,7 +29,7 @@
 
 #include "FusionPaths.h"
 
-#include "PhysFS.h"
+//#include "PhysFS.h"
 
 #include <stack>
 

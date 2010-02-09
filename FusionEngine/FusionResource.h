@@ -36,7 +36,7 @@
 
 #include "FusionBoostSignals2.h"
 
-#include <functional>
+//#include <functional>
 
 #ifdef _DEBUG
 #include "FusionConsole.h"
