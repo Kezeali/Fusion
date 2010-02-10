@@ -4,15 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorTest", "EditorTest\EditorTest.vcxproj", "{4C1A90F6-5237-4B76-BE98-830B95915879}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 2
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://relto:8080/tfs/DefaultCollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = EditorTest\\EditorTest.vcxproj
-		SccProjectName1 = EditorTest
-		SccLocalPath1 = EditorTest
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
