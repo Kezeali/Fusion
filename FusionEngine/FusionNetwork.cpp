@@ -57,11 +57,6 @@ namespace FusionEngine
 	//	return success;
 	//}
 
-	bool Network::Send(bool timestamped, unsigned char type, unsigned char *data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination, bool to_all)
-	{
-		return Send(timestamped, (char)type, (char*)data, length, priority, reliability, channel, destination, to_all);
-	}
-
 	void Network::PushBackPacket(IPacket *packet, bool toHead)
 	{
 		//! \todo Implement a default Network#PushBackPacket() (other than just deleting the packet!)

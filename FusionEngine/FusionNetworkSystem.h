@@ -40,7 +40,6 @@
 
 // Fusion
 #include "FusionPacketDispatcher.h"
-#include "FusionLog.h"
 
 
 namespace FusionEngine
@@ -61,7 +60,7 @@ namespace FusionEngine
 	{
 	public:
 		NetworkSystem();
-		NetworkSystem(Network *network);
+		NetworkSystem(RakNetwork *network);
 		virtual ~NetworkSystem();
 
 		virtual const std::string &GetName() const;
@@ -72,15 +71,15 @@ namespace FusionEngine
 		virtual void Update(float split);
 		virtual void Draw();
 
-		void SetNetwork(Network *network);
-		Network *GetNetwork() const;
+		void SetNetwork(RakNetwork *network);
+		RakNetwork *GetNetwork() const;
 
 		bool IsConnected() const;
 
 		//const NetHandle &GetLocalAddress() const;
 
-		void AddPacketHandler(char type, PacketHandler *handler);
-		void RemovePacketHandler(char type, PacketHandler *handler);
+		void AddPacketHandler(unsigned char type, PacketHandler *handler);
+		void RemovePacketHandler(unsigned char type, PacketHandler *handler);
 
 		//! Allows a peer to take control of the update rate.
 		/*
@@ -93,7 +92,7 @@ namespace FusionEngine
 
 	protected:
 		PacketDispatcher *m_PacketDispatcher;
-		Network *m_Network;
+		RakNetwork *m_Network;
 
 		DebugPacketHandler m_DebugPacketHandler;
 	};

@@ -36,6 +36,7 @@
 
 #include "FusionNetworkTypes.h"
 #include "FusionNetworkSystem.h"
+#include "FusionRakNetwork.h"
 
 #include <boost/lexical_cast.hpp>
 #include <BitStream.h>

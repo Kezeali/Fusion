@@ -44,7 +44,7 @@ namespace FusionEngine
 
 	DebugPacketHandler::DebugPacketHandler()
 	{
-		m_Log = Logger::getSingletonPtr()->GetLog("Network");
+		m_Log = Logger::getSingleton().OpenLog("Network");
 	}
 
 	void DebugPacketHandler::HandlePacket(IPacket *packet)
@@ -60,7 +60,7 @@ namespace FusionEngine
 	{
 	}
 
-	NetworkSystem::NetworkSystem(Network *network)
+	NetworkSystem::NetworkSystem(RakNetwork *network)
 		: m_PacketDispatcher(NULL),
 		m_Network(network)
 	{
@@ -107,7 +107,7 @@ namespace FusionEngine
 	{
 	}
 
-	void NetworkSystem::SetNetwork(Network *network)
+	void NetworkSystem::SetNetwork(RakNetwork *network)
 	{
 		m_Network = network;
 		if (m_PacketDispatcher != NULL)
@@ -116,7 +116,7 @@ namespace FusionEngine
 		}
 	}
 
-	Network *NetworkSystem::GetNetwork() const
+	RakNetwork *NetworkSystem::GetNetwork() const
 	{
 		return m_Network;
 	}
@@ -126,13 +126,13 @@ namespace FusionEngine
 		return m_Network->IsConnected();
 	}
 
-	void NetworkSystem::AddPacketHandler(char type, PacketHandler *handler)
+	void NetworkSystem::AddPacketHandler(unsigned char type, PacketHandler *handler)
 	{
 		if (m_PacketDispatcher != NULL)
 			m_PacketDispatcher->Subscribe(type, handler);
 	}
 
-	void NetworkSystem::RemovePacketHandler(char type, PacketHandler *handler)
+	void NetworkSystem::RemovePacketHandler(unsigned char type, PacketHandler *handler)
 	{
 		if (m_PacketDispatcher != NULL)
 			m_PacketDispatcher->Unsubscribe(type, handler);

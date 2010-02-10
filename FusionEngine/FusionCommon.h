@@ -78,18 +78,14 @@
 #include <xqilla/xqilla-simple.hpp>
 
 #elif defined(USE_TINYXML)
-#define USE_TINYXPATH
+//#define USE_TINYXPATH
 
 #ifdef USE_TINYXPATH
-#define TIXML_USE_STL
-#define TIXML_USE_TICPP
-#include "../tinyxpathpp/xpath_static.h"
-#include "../tinyxpathpp/ticpp.h"
+#include "../tinyxml/xpath_static.h"
+#include "../tinyxml/ticpp.h"
 
 #else
-#define TIXML_USE_STL
-#define TIXML_USE_TICPP
-#include "../tinyxpathpp/ticpp.h"
+#include "../tinyxml/ticpp.h"
 #endif
 #endif
 

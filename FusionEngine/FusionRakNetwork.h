@@ -110,7 +110,7 @@ namespace FusionEngine
 		//! Returns the data length
 		virtual unsigned int GetLength() const;
 		//! Returns the packet type
-		virtual char GetType() const;
+		virtual unsigned char GetType() const;
 		//! Returns true if this packet has a timestamp
 		virtual bool IsTimeStamped() const;
 		//! Returns the timestamp
@@ -155,13 +155,17 @@ namespace FusionEngine
 		 *
 		 * <b>Packet Format
 		 * <ol>
-		 *  <li> [bool]      Time stamp marker (indicates the packet is timestamped)
-		 *  <li> [uint]      Time stamp (if the time stamp marker was included)
-		 *  <li> [char]      Type ID
-		 *  <li> [...]       Data
+		 *  <li> [bool]          Time stamp marker (indicates the packet is timestamped)
+		 *  <li> [unsigned int]  Time stamp (if the time stamp marker was included)
+		 *  <li> [unsigned char] Type ID
+		 *  <li> [...]           The given data
 		 * </ol>
 		 */
-		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
+		virtual bool Send(bool timestamped, unsigned char type, char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel,
+			const NetHandle &destination, bool to_all = false);
+		//! RakNet specific send method
+		bool Send(bool timestamped, unsigned char type, RakNet::BitStream *data,
 			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle &destination, bool to_all = false);
 		//! Receives data
@@ -197,14 +201,14 @@ namespace FusionEngine
 		 * \param allowBps
 		 * Maximum bits per second before packet loss
 		 */
-		virtual void SetDebugPacketLoss(double allowBps);
+		virtual void SetDebugPacketLoss(float allowBps);
 
 		//! Returns the current fake lag setting
 		virtual unsigned int GetDebugLagMin() const;
 		//! Returns the current fake lag variance setting
 		virtual unsigned int GetDebugLagVariance() const;
 		//! Returns the current fake packet loss setting
-		virtual double GetDebugAllowBps() const;
+		virtual float GetDebugAllowBps() const;
 
 		
 	protected:
@@ -216,7 +220,7 @@ namespace FusionEngine
 		// Network Simulator settings
 		unsigned int m_MinLagMilis;
 		unsigned int m_LagVariance;
-		double m_AllowBps;
+		float m_AllowBps;
 
 	protected:
 		//! Returns a RakNet enum for the given FusionEngine enum

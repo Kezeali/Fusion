@@ -160,7 +160,7 @@ public:
 
 			//////////////////////
 			// Network Connection
-			boost::scoped_ptr<Network> network(new RakNetwork());
+			boost::scoped_ptr<RakNetwork> network(new RakNetwork());
 
 			/////////////////
 			// Input Manager

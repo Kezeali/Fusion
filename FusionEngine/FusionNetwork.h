@@ -74,7 +74,7 @@ namespace FusionEngine
 		//! Returns the data length
 		virtual unsigned int GetLength() const = 0;
 		//! Returns the Message Identifier for the packet
-		virtual char GetType() const = 0;
+		virtual unsigned char GetType() const = 0;
 		//! Returns true if the packet is timestamped
 		virtual bool IsTimeStamped() const = 0;
 		//! Returns the timestamp value
@@ -91,13 +91,13 @@ namespace FusionEngine
 		NetHandle m_Origin;
 		bool m_TimeStamped;
 		NetTime m_Time;
-		char m_Type;
+		unsigned char m_Type;
 		char m_Channel;
 		char* m_Data;
 		unsigned int m_Length;
 
 	public:
-		NetPacket(NetHandle origin, bool timestamped, NetTime time, char type, const char* data, unsigned int length)
+		NetPacket(NetHandle origin, bool timestamped, NetTime time, unsigned char type, const char* data, unsigned int length)
 			: m_TimeStamped(timestamped),
 			m_Time(time),
 			m_Type(type),
@@ -125,7 +125,7 @@ namespace FusionEngine
 		{
 			return m_Length;
 		}
-		virtual char GetType() const
+		virtual unsigned char GetType() const
 		{
 			return m_Type;
 		}
@@ -182,14 +182,9 @@ namespace FusionEngine
 		 * \returns
 		 * True if the data was sent
 		 */
-		virtual bool Send(bool timestamped, char type, char* data, unsigned int length,
+		virtual bool Send(bool timestamped, unsigned char type, char* data, unsigned int length,
 			NetPriority priority, NetReliability reliability, char channel,
 			const NetHandle& destination, bool to_all = false) =0;
-
-		//! Sends data
-		bool Send(bool timestamped, unsigned char type, unsigned char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination, bool to_all = false);
 
 		//! Gets packets from the network.
 		virtual IPacket* Receive() = 0;
@@ -223,14 +218,14 @@ namespace FusionEngine
 		 * \param allowBps
 		 * Maximum bits per second before packet loss
 		 */
-		virtual void SetDebugPacketLoss(double allowBps) {}
+		virtual void SetDebugPacketLoss(float allowBps) {}
 
 		//! Returns the current fake lag setting
 		virtual unsigned int GetDebugLagMin() const { return 0; }
 		//! Returns the current fake lag variance setting
 		virtual unsigned int GetDebugLagVariance() const { return 0; }
 		//! Returns the current fake packet loss setting
-		virtual double GetDebugAllowBps() const { return 0.0; }
+		virtual float GetDebugAllowBps() const { return 0.0f; }
 
 	protected:
 		float m_SmoothedPing;

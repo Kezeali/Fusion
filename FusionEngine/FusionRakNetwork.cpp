@@ -50,13 +50,13 @@ namespace FusionEngine
 		m_Time = 0;
 		if (internalPacket->data[0] == ID_TIMESTAMP)
 		{
-			char idTimestamp;
+			unsigned char idTimestamp;
 			bits.Read(idTimestamp);
 			bits.Read(m_Time);
 			m_TimeStamped = true;
 		}
 		// Type
-		char type;
+		unsigned char type;
 		bits.Read(type);
 	}
 
@@ -70,13 +70,13 @@ namespace FusionEngine
 		m_Time = 0;
 		if (internalPacket->data[0] == ID_TIMESTAMP)
 		{
-			char idTimestamp;
+			unsigned char idTimestamp;
 			bits.Read(idTimestamp);
 			bits.Read(m_Time);
 			m_TimeStamped = true;
 		}
 		// Type
-		char type;
+		unsigned char type;
 		bits.Read(type);
 	}
 
@@ -107,7 +107,7 @@ namespace FusionEngine
 		return m_OriginalPacket->bitSize / 8 - (IsTimeStamped() ? g_HeaderLengthTimestamp : g_HeaderLength);
 	}
 
-	char RakNetPacket::GetType() const
+	unsigned char RakNetPacket::GetType() const
 	{
 		return m_OriginalPacket->data[IsTimeStamped() ? g_TimestampLength : 0];
 	}
@@ -187,7 +187,7 @@ namespace FusionEngine
 		return handle;
 	}
 
-	bool RakNetwork::Send(bool timestamped, char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
+	bool RakNetwork::Send(bool timestamped, unsigned char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
 	{
 		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
 
@@ -199,6 +199,22 @@ namespace FusionEngine
 		}
 		bits.Write((MessageID)type);
 		bits.Write(data, length);
+
+		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, (rakDestination != NULL) ? rakDestination->Address : UNASSIGNED_SYSTEM_ADDRESS, to_all);
+	}
+
+	bool RakNetwork::Send(bool timestamped, unsigned char type, RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
+	{
+		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
+
+		RakNet::BitStream bits;
+		if (timestamped)
+		{
+			bits.Write((MessageID)ID_TIMESTAMP);
+			bits.Write(RakNet::GetTime());
+		}
+		bits.Write((MessageID)type);
+		bits.Write(data);
 
 		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, (rakDestination != NULL) ? rakDestination->Address : UNASSIGNED_SYSTEM_ADDRESS, to_all);
 	}
@@ -276,7 +292,7 @@ namespace FusionEngine
 		m_NetInterface->ApplyNetworkSimulator(m_AllowBps, (unsigned short)minLagMilis, (unsigned short)variance);
 	}
 
-	void RakNetwork::SetDebugPacketLoss(double allowBps)
+	void RakNetwork::SetDebugPacketLoss(float allowBps)
 	{
 		m_AllowBps = allowBps;
 		m_NetInterface->ApplyNetworkSimulator(allowBps, (unsigned short)m_MinLagMilis, (unsigned short)m_LagVariance);
@@ -292,7 +308,7 @@ namespace FusionEngine
 		return m_LagVariance;
 	}
 
-	double RakNetwork::GetDebugAllowBps() const
+	float RakNetwork::GetDebugAllowBps() const
 	{
 		return m_AllowBps;
 	}

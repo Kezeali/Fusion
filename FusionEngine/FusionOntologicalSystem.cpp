@@ -320,7 +320,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::HandlePacket(IPacket *packet)
 	{
-		Network *network = m_NetworkSystem->GetNetwork();
+		RakNetwork *network = m_NetworkSystem->GetNetwork();
 		NetHandle originHandle = packet->GetSystemHandle();
 
 		if (packet->GetType() == MTID_ADDPLAYER)
@@ -344,7 +344,7 @@ namespace FusionEngine
 					bitStream.Write(playerIndex);
 					network->Send(
 						false,
-						MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+						MTID_ADDPLAYER, &bitStream,
 						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
 						originHandle);
 				}
@@ -359,7 +359,7 @@ namespace FusionEngine
 					bitStream.Write(guid);
 					network->Send(
 						false,
-						MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+						MTID_ADDPLAYER, &bitStream,
 						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
 						originHandle, true);
 				}
@@ -553,7 +553,7 @@ namespace FusionEngine
 		{
 			unsigned int playerIndex = (unsigned)numPlayers;
 
-			Network *network = m_NetworkSystem->GetNetwork();
+			RakNetwork *network = m_NetworkSystem->GetNetwork();
 
 			// Validate & store the callback method
 			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
@@ -576,7 +576,7 @@ namespace FusionEngine
 				// Notify other systems 
 				network->Send(
 					false,
-					MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+					MTID_ADDPLAYER, &bitStream,
 					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
 			}
 			else
@@ -587,7 +587,7 @@ namespace FusionEngine
 
 				network->Send(
 					false,
-					MTID_ADDPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+					MTID_ADDPLAYER, &bitStream,
 					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
 					PlayerRegistry::GetArbitratingPlayer().System);
 			}
@@ -602,7 +602,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)
 	{
-		Network *network = m_NetworkSystem->GetNetwork();
+		RakNetwork *network = m_NetworkSystem->GetNetwork();
 
 		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
 
@@ -611,7 +611,7 @@ namespace FusionEngine
 
 		network->Send(
 			false,
-			MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+			MTID_REMOVEPLAYER, &bitStream,
 			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
 			NetHandle(new RakNetHandleImpl()), true);
 

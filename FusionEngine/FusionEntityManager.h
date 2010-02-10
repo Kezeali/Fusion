@@ -130,7 +130,7 @@ namespace FusionEngine
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;
 
-		Network *m_Network;
+		RakNetwork *m_Network;
 		NetworkSystem *m_NetworkSystem;
 
 		typedef std::tr1::unordered_map<ObjectID, EntityArray> EntityPreparedInstancesMap;
