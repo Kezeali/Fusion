@@ -179,7 +179,7 @@ namespace FusionEngine
 	{
 		if (m_Code.empty())
 		{
-			OpenString_PhysFS(m_Code, fe_widen(m_Filename));
+			OpenString_PhysFS(m_Code, m_Filename);
 		}
 		return m_Code;
 	}
@@ -326,7 +326,7 @@ namespace FusionEngine
 
 		// Load the script from the file
 		std::string script;
-		OpenString_PhysFS(script, fe_widen(filename));
+		OpenString_PhysFS(script, filename);
 		// Preprocess the script
 		Preprocess(script, module, filename);
 		// Add the script to the module
@@ -895,7 +895,7 @@ namespace FusionEngine
 		if( msg->type == asMSGTYPE_WARNING ) msgType = "Warning";
 		if( msg->type == asMSGTYPE_INFORMATION ) msgType = "Info   ";
 
-		std::wstring formatted(cl_format("ScriptingManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
+		std::string formatted(cl_format("ScriptingManager - %1 (%2, %3) : %4 : %5", msg->section, msg->row, msg->col, msgType, msg->message));
 		SendToConsole(formatted);
 	}
 

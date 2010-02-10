@@ -63,7 +63,7 @@ namespace FusionEngine
 	//	virtual const std::string &GetType() const = 0;
 
 	//	//! Loads the resource reffered to by the given text
-	//	virtual ResourceContainer* LoadResource(const std::wstring& tag, const std::wstring &path) = 0;
+	//	virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path) = 0;
 
 	//	//! Reloads the given resource
 	//	virtual void ReloadResource(ResourceContainer * resource) = 0;

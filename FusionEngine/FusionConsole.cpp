@@ -150,7 +150,7 @@ namespace FusionEngine
 		}
 	}
 
-	inline std::string nHyphens(std::wstring::size_type n)
+	inline std::string nHyphens(std::string::size_type n)
 	{
 		// Could do this with a table, but I don't care that much
 		std::string string;

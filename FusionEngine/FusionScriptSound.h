@@ -85,7 +85,7 @@ namespace FusionEngine
 	class SoundSample : public StreamedResourceUser
 	{
 	public:
-		SoundSample(ResourceManager *res_man, const std::wstring &path, int priority, bool is_stream);
+		SoundSample(ResourceManager *res_man, const std::string &path, int priority, bool is_stream);
 
 		//! Plays the sample - returns a SoundSession
 		SoundSession* Play();

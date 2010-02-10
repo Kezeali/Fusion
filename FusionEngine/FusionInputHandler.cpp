@@ -194,7 +194,7 @@ namespace FusionEngine
 		try
 		{
 			// Load the input-definitions file for the current game
-			ticpp::Document inputDoc(OpenXml_PhysFS(L"inputdefinitions.xml"));
+			ticpp::Document inputDoc(OpenXml_PhysFS("inputdefinitions.xml"));
 			m_DefinitionLoader->Load(inputDoc);
 		}
 		catch (FileSystemException &ex)
@@ -204,7 +204,7 @@ namespace FusionEngine
 		try
 		{
 			// Load the core key-info file
-			ticpp::Document keyDoc(OpenXml_PhysFS(L"core/input/keyinfo.xml"));
+			ticpp::Document keyDoc(OpenXml_PhysFS("core/input/keyinfo.xml"));
 			loadKeyInfo(keyDoc);
 		}
 		catch (FileSystemException &ex)
@@ -214,7 +214,7 @@ namespace FusionEngine
 		try
 		{
 			// Load the controls file - will probably be in the user's home folder (the virtual file-system (PhysFS) takes care of this)
-			LoadInputMaps(L"controls.xml");
+			LoadInputMaps("controls.xml");
 		}
 		catch (FileSystemException &ex)
 		{
@@ -297,7 +297,7 @@ namespace FusionEngine
 		return m_DefinitionLoader;
 	}
 
-	void InputManager::LoadInputMaps(const std::wstring &filename)
+	void InputManager::LoadInputMaps(const std::string &filename)
 	{
 		// Read file
 		ticpp::Document doc(OpenXml_PhysFS(filename));
@@ -305,7 +305,7 @@ namespace FusionEngine
 		loadControls(&doc);
 	}
 
-	void InputManager::SaveInputMaps(const std::wstring& filename)
+	void InputManager::SaveInputMaps(const std::string& filename)
 	{
 		ticpp::Document doc;
 		

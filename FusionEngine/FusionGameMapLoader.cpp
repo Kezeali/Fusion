@@ -56,7 +56,7 @@ namespace FusionEngine
 
 	void GameMapLoader::LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory)
 	{
-		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 		LoadEntityTypes(device);
 	}
 
@@ -76,7 +76,7 @@ namespace FusionEngine
 
 	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool pseudo_only)
 	{
-		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 		m_MapFilename = filename;
 
@@ -271,7 +271,7 @@ namespace FusionEngine
 
 	void GameMapLoader::LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory)
 	{
-		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::open_existing, CL_File::access_read);
+		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 		// General info
 		std::string date;
@@ -357,7 +357,7 @@ namespace FusionEngine
 
 	void GameMapLoader::SaveGame(const std::string &filename, CL_VirtualDirectory &directory)
 	{
-		CL_IODevice device = directory.open_file(fe_widen(filename), CL_File::create_always, CL_File::access_write, 0);
+		CL_IODevice device = directory.open_file(filename, CL_File::create_always, CL_File::access_write, 0);
 
 		// Write save info
 		//  Date

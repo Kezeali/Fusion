@@ -47,11 +47,11 @@ namespace FusionEngine
 	{
 		if (!m_Active)
 			return;
-		//std::wstring e_marker = Console::getSingleton().GetExceptionMarker();
-		//std::wstring w_marker = Console::getSingleton().GetWarningMarker();
+		//std::string e_marker = Console::getSingleton().GetExceptionMarker();
+		//std::string w_marker = Console::getSingleton().GetWarningMarker();
 
-		std::wstring wmessage = cl_text("-- ") + CL_StringHelp::local8_to_text(message.c_str());
-		CL_Console::write_line( wmessage.c_str() );
+		std::string linemessage = cl_text("-- ") + CL_StringHelp::local8_to_text(message.c_str());
+		CL_Console::write_line( linemessage.c_str() );
 		//std::cout << "--  " << message << std::endl;
 	}
 

@@ -64,7 +64,7 @@ public:
 
 		CL_SoundOutput sound_output(44100);
 
-		SetupPhysFS physfs( fe_narrow(CL_System::get_exe_path()).c_str() );
+		SetupPhysFS physfs( CL_System::get_exe_path().c_str() );
 		FSN_ASSERT( SetupPhysFS::is_init() );
 
 		CL_ConsoleWindow conWindow("Console", 80, 10);
@@ -129,7 +129,7 @@ public:
 			boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager());
 			resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
 
-			//m_ResourceManager->PreloadResource("SPRITE", L"Entities/Test/test_sprite.xml");
+			//m_ResourceManager->PreloadResource("SPRITE", "Entities/Test/test_sprite.xml");
 #ifdef _WIN32
 			// Need to pause this thread until the Background-load
 			//  thread has created its worker GC
@@ -153,7 +153,7 @@ public:
 
 			//////////////////////
 			// Load client options
-			ClientOptions* co = new ClientOptions(L"clientoptions.xml");
+			ClientOptions* co = new ClientOptions("clientoptions.xml", "clientoptions");
 
 			if (co->GetOption_bool("console_logging"))
 				logger->ActivateConsoleLogging();
@@ -197,7 +197,7 @@ public:
 			/////////////////////
 			// Attach module to objects that require it
 			ModulePtr module = scriptingManager->GetModule("main");
-			// Add the core code to the module
+			// Add the core extension file - this file is used to define basic script functions and classes for general use
 			scriptingManager->AddFile("core/extend.as", "main");
 
 			console->SetModule(module);
@@ -269,7 +269,7 @@ public:
 		catch (CL_Exception &ex)
 		{
 			CL_Console::write_line( ex.message );
-			CL_Console::write_line( L"Stack Trace:" );
+			CL_Console::write_line( "Stack Trace:" );
 			std::vector<CL_String> stack = ex.get_stack_trace();
 			for (std::vector<CL_String>::iterator it = stack.begin(), end = stack.end(); it != end; ++it)
 			{

@@ -328,7 +328,7 @@ namespace FusionEngine
 			document.InsertEndChild(*resource_element->FirstChild());
 
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice ioDevice = vdir.open_file(fe_widen(file_name), CL_File::create_new, CL_File::access_write);
+		CL_IODevice ioDevice = vdir.open_file(file_name, CL_File::create_new, CL_File::access_write);
 		if (ioDevice.is_null())
 			return; // Throw?
 		ClanLibTiXmlFile xmlFile(ioDevice);
@@ -586,7 +586,7 @@ namespace FusionEngine
 		m_Script.type = type;
 		m_Script.fileName = absolutePath;
 
-		OpenString_PhysFS(m_Script.scriptData, fe_widen(absolutePath));
+		OpenString_PhysFS(m_Script.scriptData, absolutePath);
 	}
 
 	void EntityDefinition::SetScriptData(FusionEngine::EntityDefinition::Script::ScriptType type, const std::string &data)
@@ -795,7 +795,7 @@ namespace FusionEngine
 
 			if (desc.GetType() == "Sprite")
 			{
-				RenderablePtr renderable( new Renderable(resMan, fe_widen(resourceName), desc.GetPriority()) );
+				RenderablePtr renderable( new Renderable(resMan, resourceName, desc.GetPriority()) );
 				renderable->SetTags(desc.GetTags());
 
 				entity->AddRenderable(renderable);
@@ -830,7 +830,7 @@ namespace FusionEngine
 
 				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), false);
+				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), false);
 
 				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
@@ -842,7 +842,7 @@ namespace FusionEngine
 
 				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, fe_widen(resourceName), desc.GetPriority(), true);
+				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), true);
 
 				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
 			}
@@ -902,7 +902,7 @@ namespace FusionEngine
 		{
 			try
 			{
-				ticpp::Document document( OpenXml_PhysFS(fe_widen(_where->second)) );
+				ticpp::Document document( OpenXml_PhysFS(_where->second) );
 				loadAllDependencies(fe_getbasepath(_where->second), document);
 			}
 			catch (ticpp::Exception &)
@@ -926,7 +926,7 @@ namespace FusionEngine
 			const std::string &filename = it->second;
 			try
 			{
-				ticpp::Document document( OpenXml_PhysFS(fe_widen(filename)) );
+				ticpp::Document document( OpenXml_PhysFS(filename) );
 
 				EntityDefinitionPtr definition( new EntityDefinition(fe_getbasepath(filename), document) );
 				m_LoadedEntityDefinitions.push_back(definition);
@@ -1075,7 +1075,7 @@ namespace FusionEngine
 
 				try
 				{
-					ticpp::Document depDocument( OpenXml_PhysFS(fe_widen(_where->second)) );
+					ticpp::Document depDocument( OpenXml_PhysFS(_where->second) );
 
 					// Parse the Entity definition document
 					definition = EntityDefinitionPtr( new EntityDefinition(depPath, depDocument) );
@@ -1104,7 +1104,7 @@ namespace FusionEngine
 					depPath = _where->second.substr(0, pathEnd);
 				else
 					depPath = "/";
-				TiXmlDocument *depDocument = OpenXml_PhysFS(fe_widen(_where->second));
+				TiXmlDocument *depDocument = OpenXml_PhysFS(_where->second);
 				
 				loadAllDependencies(depPath, depDocument);
 			}
@@ -1347,7 +1347,7 @@ namespace FusionEngine
 				fileExt = *file + (filenameLength - extLength);
 				if (fe_nocase_strcmp(fileExt, ext) == 0)
 				{
-					TiXmlDocument *doc = OpenXml_PhysFS(fe_widen(fullPath));
+					TiXmlDocument *doc = OpenXml_PhysFS(fullPath);
 					std::string type;
 					if (getEntityType(doc, type))
 						m_EntityDefinitionFileNames[type] = fullPath;

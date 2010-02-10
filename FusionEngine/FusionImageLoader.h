@@ -166,7 +166,7 @@ namespace FusionEngine
 		int m_RotationPointY;
 	};
 
-	void LoadSpriteDefinition(SpriteDefinition &def, const std::wstring &filepath, CL_VirtualDirectory vdir);
+	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir);
 
 }
 

@@ -50,7 +50,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"LoadImageResource", L"'" + resource->GetPath() + L"' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "LoadImageResource", "'" + resource->GetPath() + "' could not be loaded");
 		}
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
@@ -88,7 +88,7 @@ namespace FusionEngine
 			catch (FileSystemException& ex)
 			{
 				delete def;
-				FSN_WEXCEPT(ExCode::IO, L"LoadSpriteResource", L"Definition data for '" + resource->GetPath() + L"' could not be loaded: " + fe_widen(ex.GetDescription()));
+				FSN_EXCEPT(ExCode::IO, "LoadSpriteResource", "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
 			}
 		}
 
@@ -100,7 +100,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"LoadSpriteResource", L"'" + resource->GetPath() + L"' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "LoadSpriteResource", "'" + resource->GetPath() + "' could not be loaded");
 		}
 
 		resource->SetDataPtr(sprite);
@@ -134,7 +134,7 @@ namespace FusionEngine
 		resource->_setHasQuickLoadData(false);
 	}
 
-	void LoadSpriteDefinition(SpriteDefinition &def, const std::wstring &filepath, CL_VirtualDirectory vdir)
+	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir)
 	{
 		TiXmlDocument *document = OpenXml(filepath, vdir);
 		CL_String workingDirectory = vdir.get_path() + CL_PathHelp::get_basepath(filepath.c_str(), CL_PathHelp::path_type_virtual);
@@ -289,7 +289,7 @@ namespace FusionEngine
 
 	void SpriteDefinition::addImage(const SpriteDefinition::Image &image)
 	{
-		m_ImageFiles.insert(fe_narrow(image.filename.c_str()));
+		m_ImageFiles.insert(image.filename);
 		m_Images.push_back(image);
 	}
 

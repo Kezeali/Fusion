@@ -189,7 +189,7 @@ namespace FusionEngine
 			m_EntityFactory->SetScriptingManager(manager);
 			m_EntityFactory->SetScriptedEntityPath("Entities/");
 
-			ClientOptions gameOptions(L"gameconfig.xml", "gameconfig");
+			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 			gameOptions.GetOption("startup_map", &m_StartupMap);
@@ -208,7 +208,7 @@ namespace FusionEngine
 		//  maps.txt
 		std::string maps, line;
 		try {
-			OpenString_PhysFS(maps, L"Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+			OpenString_PhysFS(maps, "Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
 		} catch (FileSystemException&) {
 			SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
 		}
@@ -229,7 +229,7 @@ namespace FusionEngine
 				try
 				{
 					CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-					CL_IODevice mapFile = dir.open_file(fe_widen("Maps/" + line), CL_File::open_existing, CL_File::access_read);
+					CL_IODevice mapFile = dir.open_file("Maps/" + line, CL_File::open_existing, CL_File::access_read);
 					// Load entity types into the factory (the map loader has an EntityManager pointer
 					//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
 					//  for each entity found in the mapFile)

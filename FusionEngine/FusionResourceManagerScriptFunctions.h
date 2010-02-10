@@ -40,25 +40,25 @@
 namespace FusionEngine
 {
 	//! Returns a CL_Surface resource pointer
-	static ResourcePointer<CL_Texture> ResourceManager_GetImage(std::wstring& path, ResourceManager* lhs)
+	static ResourcePointer<CL_Texture> ResourceManager_GetImage(std::string& path, ResourceManager* lhs)
 	{
 		return lhs->GetResource<CL_Texture>(path);
 	}
 
 	//! Returns a CL_SoundBuffer resource pointer
-	static ResourcePointer<CL_SoundBuffer> ResourceManager_GetSound(std::wstring& path, ResourceManager* lhs)
+	static ResourcePointer<CL_SoundBuffer> ResourceManager_GetSound(std::string& path, ResourceManager* lhs)
 	{
 		return lhs->GetResource<CL_SoundBuffer>(path, "AUDIO");
 	}
 
 	//! Returns a XmlDocument resource pointer
-	static ResourcePointer<TiXmlDocument> ResourceManager_GetXml(std::wstring& path, ResourceManager* lhs)
+	static ResourcePointer<TiXmlDocument> ResourceManager_GetXml(std::string& path, ResourceManager* lhs)
 	{
 		return lhs->GetResource<TiXmlDocument>(path, "XML");
 	}
 
 	//! Returns a std::string resource pointer
-	static std::string ResourceManager_GetText(std::wstring& path, ResourceManager* lhs)
+	static std::string ResourceManager_GetText(std::string& path, ResourceManager* lhs)
 	{
 		ResourcePointer<std::string> resource = ResourceManager::getSingleton().GetResource<std::string>(path, "TEXT");
 		if (resource.IsValid())

@@ -36,7 +36,7 @@ namespace FusionEngine
 	{
 	}
 
-	StreamedResourceUser::StreamedResourceUser(ResourceManager *res_man, const std::string &type, const std::wstring &path, int priority)
+	StreamedResourceUser::StreamedResourceUser(ResourceManager *res_man, const std::string &type, const std::string &path, int priority)
 		: m_ResourceManager(res_man),
 		m_ResourceType(type),
 		m_ResourcePath(path),
@@ -44,7 +44,7 @@ namespace FusionEngine
 	{
 	}
 
-	void StreamedResourceUser::SetResource(ResourceManager *res_man, const std::wstring &path)
+	void StreamedResourceUser::SetResource(ResourceManager *res_man, const std::string &path)
 	{
 		m_ResourceManager = res_man;
 		m_ResourcePath = path;

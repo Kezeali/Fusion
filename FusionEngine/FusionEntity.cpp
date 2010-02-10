@@ -119,7 +119,7 @@ namespace FusionEngine
 	{
 	}
 
-	Renderable::Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority)
+	Renderable::Renderable(ResourceManager *res_man, const std::string &sprite_path, int priority)
 		: StreamedResourceUser(res_man, "SPRITE", sprite_path, priority),
 		m_Angle(0.f),
 		m_DerivedAngle(0.f),

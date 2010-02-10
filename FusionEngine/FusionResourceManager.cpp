@@ -330,7 +330,7 @@ namespace FusionEngine
 		CL_SharedGCData::release_ref();
 	}
 
-	//ResourceSpt& ResourceManager::TagResource(const std::string& type, const std::wstring& path, const ResourceTag& tag, CL_GraphicContext *gc)
+	//ResourceSpt& ResourceManager::TagResource(const std::string& type, const std::string& path, const ResourceTag& tag, CL_GraphicContext *gc)
 	//{
 	//	CL_MutexSection resourcesLock(&m_ResourcesMutex);
 
@@ -388,7 +388,7 @@ namespace FusionEngine
 		m_ToUnloadEvent.set();
 	}
 
-	bsig2::connection ResourceManager::GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
+	bsig2::connection ResourceManager::GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
 	{
 		ResourceDataPtr resource;
 
@@ -476,7 +476,7 @@ namespace FusionEngine
 		}
 	}
 
-	void ResourceManager::UnloadResource(const std::wstring &path)
+	void ResourceManager::UnloadResource(const std::string &path)
 	{
 		unloadResource(path, m_GC);
 	}
@@ -500,7 +500,7 @@ namespace FusionEngine
 		loader.load(resource.get(), vdir, gc, loader.userData);
 	}
 
-	void ResourceManager::unloadResource(const std::wstring &path, CL_GraphicContext &gc)
+	void ResourceManager::unloadResource(const std::string &path, CL_GraphicContext &gc)
 	{
 		ResourceMap::iterator _where = m_Resources.find(path);
 		if (_where != m_Resources.end())

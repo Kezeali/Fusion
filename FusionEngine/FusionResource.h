@@ -67,7 +67,7 @@ namespace FusionEngine
 	protected:
 		std::string m_Type;
 		//ResourceTag m_Tag;
-		std::wstring m_Path;
+		std::string m_Path;
 
 		void *m_Data;
 		// Data that isn't unloaded until the resource is released
@@ -86,24 +86,24 @@ namespace FusionEngine
 		bool m_ToUnload;
 
 	public:
-		bsig2::signal<void ()> SigDelete;
-		bsig2::signal<void ()> SigLoad;
-		bsig2::signal<void ()> SigUnload;
+		boost::signals2::signal<void ()> SigDelete;
+		boost::signals2::signal<void ()> SigLoad;
+		boost::signals2::signal<void ()> SigUnload;
 
 		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
 		LoadedSignal SigLoaded;
 
-		typedef std::tr1::function<void (ResourceDataPtr)> LoadedFn;
+		typedef std::function<void (ResourceDataPtr)> LoadedFn;
 
-		typedef std::tr1::function<void (ResourceContainer*)> ReleasedFn;
+		typedef std::function<void (ResourceContainer*)> ReleasedFn;
 		ReleasedFn NoReferences;
 
 	public:
 		//! Constructor
 		ResourceContainer()
 			: m_Type(""),
-			//m_Tag(L""),
-			m_Path(L""),
+			//m_Tag(""),
+			m_Path(""),
 			m_Data(NULL),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
@@ -115,7 +115,7 @@ namespace FusionEngine
 		}
 
 		//! Constructor
-		ResourceContainer(const char* type, const std::wstring& path, void* ptr)
+		ResourceContainer(const char* type, const std::string& path, void* ptr)
 			: m_Type(type),
 			//m_Tag(tag),
 			m_Path(path),
@@ -132,11 +132,10 @@ namespace FusionEngine
 				_setValid(false);
 		}
 
-		//! Constructor
+		//! Constructor (unicode)
 		ResourceContainer(const std::string& type, const std::wstring& path, void* ptr)
 			: m_Type(type),
-			//m_Tag(tag),
-			m_Path(path),
+			m_Path(fe_narrow(path)),
 			m_Data(ptr),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
@@ -153,8 +152,7 @@ namespace FusionEngine
 		//! Constructor
 		ResourceContainer(const std::string& type, const std::string& path, void* ptr)
 			: m_Type(type),
-			//m_Tag(fe_widen(tag)),
-			m_Path(fe_widen(path)),
+			m_Path(path),
 			m_Data(ptr),
 			m_QuickLoadData(NULL),
 			m_HasQuickLoadData(false),
@@ -173,11 +171,11 @@ namespace FusionEngine
 #ifdef _DEBUG
 			if (m_Loaded || m_Data != NULL)
 			{
-				SendToConsole(L"Resource '" + m_Path + L"' may not have been properly dellocated before deletion - Resource Data leaked.");
+				SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - Resource Data leaked.");
 			}
 			if (m_HasQuickLoadData || m_QuickLoadData != NULL)
 			{
-				SendToConsole(L"Resource '" + m_Path + L"' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
+				SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
 			}
 #endif
 		}
@@ -194,7 +192,7 @@ namespace FusionEngine
 		//	return m_Tag;
 		//}
 		//! Returns the path property
-		const std::wstring& GetPath() const
+		const std::string& GetPath() const
 		{
 			return m_Path;
 		}
@@ -204,7 +202,7 @@ namespace FusionEngine
 		 * Allows StringLoader to save memory by making the Data property point directly
 		 * to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
 		 */
-		std::wstring *_getTextPtr()
+		std::string *_getTextPtr()
 		{
 			return &m_Path;
 		}
@@ -335,7 +333,7 @@ namespace FusionEngine
 			}
 #ifdef _DEBUG
 			else if (refCount == 0)
-				SendToConsole(L"Resource ref-count reached zero without being deleted. Resource Name: " + m_Path);
+				SendToConsole("Resource ref-count reached zero without being deleted. Resource Name: " + m_Path);
 #endif
 		}
 

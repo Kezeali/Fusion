@@ -109,7 +109,7 @@ namespace FusionEngine
 
 	///////////////
 	// SoundSample
-	SoundSample::SoundSample(ResourceManager *res_man, const std::wstring &path, int priority, bool is_stream)
+	SoundSample::SoundSample(ResourceManager *res_man, const std::string &path, int priority, bool is_stream)
 		: StreamedResourceUser(res_man, is_stream ? "AUDIO" : "AUDIO:STREAM", path, priority),
 		m_Stream(is_stream)
 	{

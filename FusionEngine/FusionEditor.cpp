@@ -883,15 +883,15 @@ namespace FusionEngine
 
 	void Editor::Save(const std::string &filename)
 	{
-		CL_String dataFileName = CL_PathHelp::get_basename(fe_widen(filename)) + ".entdata";
+		CL_String dataFileName = CL_PathHelp::get_basename(filename) + ".entdata";
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice out = vdir.open_file(L"Editor/" + dataFileName, CL_File::create_always, CL_File::access_write);
+		CL_IODevice out = vdir.open_file("Editor/" + dataFileName, CL_File::create_always, CL_File::access_write);
 
 		serialiseEntityData(out);
 
 		TiXmlDocument *doc = new TiXmlDocument();
 		buildMapXml(doc);
-		SaveXml_PhysFS(doc, fe_widen("Editor/" + filename));
+		SaveXml_PhysFS(doc, "Editor/" + filename);
 		delete doc;
 
 		m_CurrentFilename = filename;
@@ -899,9 +899,9 @@ namespace FusionEngine
 
 	void Editor::Load(const std::string &filename)
 	{
-		CL_String dataFileName = CL_PathHelp::get_basename(fe_widen(filename)) + ".entdata";
+		CL_String dataFileName = CL_PathHelp::get_basename(filename) + ".entdata";
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_IODevice in = vdir.open_file(L"Editor/" + dataFileName, CL_File::open_existing, CL_File::access_read);
+		CL_IODevice in = vdir.open_file("Editor/" + dataFileName, CL_File::open_existing, CL_File::access_read);
 
 		m_Entities.clear();
 		m_PseudoEntities.clear();
@@ -912,7 +912,7 @@ namespace FusionEngine
 
 		EditorEntityDeserialiser deserialiserImpl;
 
-		TiXmlDocument *doc = OpenXml_PhysFS(fe_widen("Editor/" + filename));
+		TiXmlDocument *doc = OpenXml_PhysFS("Editor/" + filename);
 		try
 		{
 			parseMapXml(doc, archetypes, entities, deserialiserImpl);

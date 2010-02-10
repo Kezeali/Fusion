@@ -40,9 +40,9 @@ namespace FusionEngine
 	{
 	public:
 		StreamedResourceUser();
-		StreamedResourceUser(ResourceManager *res_man, const std::string &type, const std::wstring &path, int base_priority = 0);
+		StreamedResourceUser(ResourceManager *res_man, const std::string &type, const std::string &path, int base_priority = 0);
 
-		void SetResource(ResourceManager *res_man, const std::wstring &path);
+		void SetResource(ResourceManager *res_man, const std::string &path);
 		const ResourceDataPtr &GetResource() const;
 
 		void StreamIn(int priority = 0);
@@ -55,7 +55,7 @@ namespace FusionEngine
 	private:
 		ResourceManager* m_ResourceManager;
 		std::string m_ResourceType;
-		std::wstring m_ResourcePath;
+		std::string m_ResourcePath;
 		bsig2::connection m_LoadConnection;
 
 		ResourceDataPtr m_Resource;

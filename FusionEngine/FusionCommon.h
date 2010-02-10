@@ -81,19 +81,15 @@
 #define USE_TINYXPATH
 
 #ifdef USE_TINYXPATH
-#define TIXML_USE_TICPP
 #define TIXML_USE_STL
+#define TIXML_USE_TICPP
 #include "../tinyxpathpp/xpath_static.h"
 #include "../tinyxpathpp/ticpp.h"
 
 #else
-//#ifndef TIXML_USE_STL
-//# define TIXML_USE_STL
-//#endif
-#ifndef TIXML_USE_TICPP
-# define TIXML_USE_TICPP
-#endif
-#include "../tinyxml/tinyxml.h"
+#define TIXML_USE_STL
+#define TIXML_USE_TICPP
+#include "../tinyxpathpp/ticpp.h"
 #endif
 #endif
 
@@ -543,7 +539,7 @@ namespace FusionEngine
 	typedef std::tr1::shared_ptr<Module> ModulePtr;
 
 	//! Resource tags (aka. names/handles)
-	typedef std::wstring ResourceTag;
+	typedef std::string ResourceTag;
 
 	//! ID for script functions
 	typedef std::string ScriptFuncSig;

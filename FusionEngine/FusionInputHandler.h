@@ -384,8 +384,8 @@ namespace FusionEngine
 		const InputDefinitionLoader *GetDefinitionLoader() const;
 
 		//! Sets up inputs
-		void LoadInputMaps(const std::wstring& filename);
-		void SaveInputMaps(const std::wstring& filename);
+		void LoadInputMaps(const std::string& filename);
+		void SaveInputMaps(const std::string& filename);
 
 		//! Binds a key to the given input for the given player
 		/*!

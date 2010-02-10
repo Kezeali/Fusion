@@ -173,12 +173,12 @@ namespace FusionEngine
 		void UnloadUnreferencedResources();
 
 		//! Loads / gets a resource
-		bsig2::connection GetResource(const std::string& type, const std::wstring& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
+		bsig2::connection GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 
 		//! Internal method (called by resources when they go out of use)
 		void resourceUnreferenced(ResourceContainer *resource);
 
-		void UnloadResource(const std::wstring &path);
+		void UnloadResource(const std::string &path);
 
 	private:
 		CL_Event m_StopEvent; // Set to stop the worker thread
@@ -212,7 +212,7 @@ namespace FusionEngine
 		void loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc);
 
 		//! \todo Should be called getAndUnloadResource
-		void unloadResource(const std::wstring &path, CL_GraphicContext &gc);
+		void unloadResource(const std::string &path, CL_GraphicContext &gc);
 		void unloadResource(ResourceDataPtr &resource, CL_GraphicContext &gc, bool unload_quickload_data = false);
 
 		//void registerXMLType(asIScriptEngine* engine);

@@ -56,7 +56,7 @@ namespace FusionEngine
 		m_PlayerVariables.resize(g_MaxLocalPlayers);
 	}
 
-	ClientOptions::ClientOptions(const std::wstring &filename, const std::string &type)
+	ClientOptions::ClientOptions(const std::string &filename, const std::string &type)
 		: m_Type(type),
 		m_NumLocalPlayers(0)
 	{
@@ -79,7 +79,7 @@ namespace FusionEngine
 			return SaveToFile(m_LastFile);
 	}
 
-	bool ClientOptions::SaveToFile(const std::wstring &filename)
+	bool ClientOptions::SaveToFile(const std::string &filename)
 	{
 		m_Mutex.lock();
 
@@ -119,7 +119,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			//FSN_WEXCEPT(ExCode::IO, L"ClientOptions::SaveToFile", L"'" + filename + L"' could not be saved");
+			//FSN_EXCEPT(ExCode::IO, "ClientOptions::SaveToFile", "'" + filename + "' could not be saved");
 			return false;
 		}
 
@@ -129,7 +129,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ClientOptions::LoadFromFile(const std::wstring &filename)
+	bool ClientOptions::LoadFromFile(const std::string &filename)
 	{
 		CL_MutexSection mutexSection(&m_Mutex);
 		try
@@ -140,7 +140,7 @@ namespace FusionEngine
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != m_Type)
-				FSN_WEXCEPT(ExCode::FileType, L"ClientOptions::LoadFromFile", filename + L" is not a " + fe_widen(m_Type) + L" file");
+				FSN_EXCEPT(ExCode::FileType, "ClientOptions::LoadFromFile", filename + " is not a " + m_Type + " file");
 
 			ticpp::Iterator< ticpp::Element > child;
 			for ( child = child.begin( pElem ); child != child.end(); child++ )

@@ -101,7 +101,7 @@ namespace FusionEngine
 		typedef std::vector<Property> PropertiesArray;
 
 		//typedef std::map<std::string, ResourceDescriptionPtr> ResourcesMap;
-		typedef std::map<std::wstring, std::string> StreamedResourceMap;
+		typedef std::map<std::string, std::string> StreamedResourceMap;
 
 	public:
 		ScriptedEntity();
@@ -112,7 +112,7 @@ namespace FusionEngine
 
 		void SetSyncProperties(const PropertiesArray &properties);
 		//void SetStreamedResources(const StreamedResourceMap &resources);
-		//void AddStreamedResource(const std::string &type, const std::wstring &path);
+		//void AddStreamedResource(const std::string &type, const std::string &path);
 
 		virtual unsigned int GetPropertyCount() const;
 		virtual std::string GetPropertyName(unsigned int index) const;

@@ -56,14 +56,13 @@ VirtualFileSource_PhysFS::~VirtualFileSource_PhysFS()
 /////////////////////////////////////////////////////////////////////////////
 // VirtualFileSource_PhysFS Operations:
 
-CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
+CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &filename,
 	CL_File::OpenMode mode,
 	unsigned int access,
 	unsigned int share,
 	unsigned int flags)
 {
 	PHYSFS_File *file = NULL;
-	std::string filename(narrow(wfilename));
 	
 	if (access & CL_File::access_write)
 	{
@@ -76,7 +75,7 @@ CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &wfilename,
 		file = PHYSFS_openRead(filename.c_str());
 
 	if (file == NULL)
-		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1' with the requested access", wfilename));
+		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1' with the requested access", filename));
 
 	return CL_IODevice(new PhysFSIODeviceProvider(file));
 }
@@ -106,7 +105,7 @@ bool VirtualFileSource_PhysFS::next_file(CL_VirtualDirectoryListingEntry &entry)
 	if( m_Index > m_FileList.size() - 1 )
 		return false;
 
-	std::string cfilename(narrow(m_FileList[m_Index]));
+	std::string cfilename(m_FileList[m_Index]);
 
 	bool isDirectory = PHYSFS_isDirectory(cfilename.c_str()) != 0;
 	bool isWritable = false;

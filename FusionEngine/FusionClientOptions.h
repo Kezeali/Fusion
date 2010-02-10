@@ -52,7 +52,7 @@ namespace FusionEngine
 		//! Constructor
 		ClientOptions(const std::string &type = "clientoptions");
 		//! Constructor +file
-		ClientOptions(const std::wstring &filename, const std::string &type = "clientoptions");
+		ClientOptions(const std::string &filename, const std::string &type);
 		//! Clears controls
 		~ClientOptions();
 
@@ -92,9 +92,9 @@ namespace FusionEngine
 		//! Saves to the most recently loaded file.
 		bool Save();
 		//! Saves the current options to a file
-		bool SaveToFile(const std::wstring &filename);
+		bool SaveToFile(const std::string &filename);
 		//! Loads a set of options from a file
-		bool LoadFromFile(const std::wstring &filename);
+		bool LoadFromFile(const std::string &filename);
 
 
 		bool SetOption(const std::string& name, const std::string& value);
@@ -114,7 +114,7 @@ namespace FusionEngine
 
 		std::string m_Type;
 		//! Last opened options file
-		std::wstring m_LastFile;
+		std::string m_LastFile;
 
 		void insertVarMapIntoDOM(ticpp::Element* parent, const VarMap &vars);
 		void loadPlayerOptions(const ticpp::Element *const opts_root);

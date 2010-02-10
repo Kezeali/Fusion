@@ -113,7 +113,7 @@ namespace FusionEngine
 	{
 	public:
 		Renderable();
-		Renderable(ResourceManager *res_man, const std::wstring &sprite_path, int priority);
+		Renderable(ResourceManager *res_man, const std::string &sprite_path, int priority);
 		virtual ~Renderable();
 
 		void SetTags(const TagStringSet &tags);

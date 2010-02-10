@@ -65,7 +65,7 @@ namespace FusionEngine
 	}
 
 
-	TiXmlDocument* OpenXml(const std::wstring &filename, CL_VirtualDirectory vdir)
+	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		TiXmlDocument* doc = new TiXmlDocument();
 		try
@@ -80,13 +80,13 @@ namespace FusionEngine
 		catch (CL_Exception&)
 		{
 			delete doc;
-			FSN_WEXCEPT(ExCode::IO, L"OpenXml", L"'" + filename + L"' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "OpenXml", "'" + filename + "' could not be opened");
 		}
 
 		return doc;
 	}
 
-	std::string &OpenString(std::string &content, const std::wstring &filename, CL_VirtualDirectory vdir)
+	std::string &OpenString(std::string &content, const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		;
 		try
@@ -99,13 +99,13 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"OpenString", L"'" + filename + L"' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "OpenString", "'" + filename + "' could not be opened");
 		}
 
 		return content;
 	}
 
-	std::string OpenString(const std::wstring &filename, CL_VirtualDirectory vdir)
+	std::string OpenString(const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		std::string content;
 		try
@@ -118,13 +118,13 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"OpenString", L"'" + filename + L"' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "OpenString", "'" + filename + "' could not be opened");
 		}
 
 		return content;
 	}
 
-	void SaveXml(TiXmlDocument* doc, const std::wstring &filename, CL_VirtualDirectory vdir)
+	void SaveXml(TiXmlDocument* doc, const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		try
 		{
@@ -135,11 +135,11 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"SaveXml", L"'" + filename + L"' could not be saved");
+			FSN_EXCEPT(ExCode::IO, "SaveXml", "'" + filename + "' could not be saved");
 		}
 	}
 
-	void SaveString(const std::string &content, const std::wstring &filename, CL_VirtualDirectory vdir)
+	void SaveString(const std::string &content, const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		try
 		{
@@ -149,11 +149,11 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_WEXCEPT(ExCode::IO, L"SaveString", L"'" + filename + L"' could not be saved");
+			FSN_EXCEPT(ExCode::IO, "SaveString", "'" + filename + "' could not be saved");
 		}
 	}
 
-	TiXmlDocument* OpenXml_PhysFS(const std::wstring &filename)
+	TiXmlDocument* OpenXml_PhysFS(const std::string &filename)
 	{
 		// Make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -161,7 +161,7 @@ namespace FusionEngine
 		return OpenXml(filename, vdir);
 	}
 
-	std::string OpenString_PhysFS(const std::wstring &filename)
+	std::string OpenString_PhysFS(const std::string &filename)
 	{
 		// Make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -169,7 +169,7 @@ namespace FusionEngine
 		return OpenString(filename, vdir);
 	}
 
-	std::string &OpenString_PhysFS(std::string& content, const std::wstring &filename)
+	std::string &OpenString_PhysFS(std::string& content, const std::string &filename)
 	{
 		// Make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -177,7 +177,7 @@ namespace FusionEngine
 		return OpenString(content, filename, vdir);
 	}
 
-	void SaveXml_PhysFS(TiXmlDocument* doc, const std::wstring &filename)
+	void SaveXml_PhysFS(TiXmlDocument* doc, const std::string &filename)
 	{
 		// make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
@@ -185,7 +185,7 @@ namespace FusionEngine
 		SaveXml(doc, filename, vdir);
 	}
 
-	void SaveString_PhysFS(const std::string &content, const std::wstring &filename)
+	void SaveString_PhysFS(const std::string &content, const std::string &filename)
 	{
 		// make a vdir
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
