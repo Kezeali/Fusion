@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controls>
+	<binds player="1">
+		<bind key="w" command="thrust"/>
+		<bind key="a" command="left"/>
+		<bind key="d" command="right"/>
+		<bind key="lshift" command="primary"/>
+		<bind key="lctrl" command="secondary"/>
+		<bind key="z" command="special"/>
+		<bind key="esc" command="quit"/>
+		<bind key="t" command="debug"/>
+	</binds>
+	<binds player="2">
+		<bind key="xbox_a" controller_number="1" command="thrust"/>
+		<!--etc-->
+	</binds>
+	<binds player="3">
+		<bind key="xbox_a" controller_number="2" command="thrust"/>
+		<!--etc-->
+	</binds>
+</controls>

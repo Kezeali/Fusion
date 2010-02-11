@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<clientoptions>
+	<!--var elements are stored in a map-->
+	<var name="console_logging" value="true"/>
+	<var name="num_local_players" value="0"/>
+	<var name="rate" value="100"/>
+	<var name="localport" value="20096"/>
+	<playeroptions player="default">
+		<!--Anything here overrides the hard-coded default options-->
+	</playeroptions>
+	<playeroptions player="1">
+		<!--Each palyer has their own var-map-->
+		<var name="showhud" value="true"/>
+		<var name="name" value="Player 1"/>
+	</playeroptions>
+</clientoptions>
