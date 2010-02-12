@@ -528,7 +528,7 @@ namespace FusionEngine
 	typedef std::tr1::shared_ptr<Log> LogPtr;
 
 	//! System pointer
-	typedef std::tr1::shared_ptr<System> SystemPtr;
+	typedef std::shared_ptr<System> SystemPtr;
 
 	typedef boost::intrusive_ptr<Entity> EntityPtr;
 

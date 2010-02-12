@@ -183,16 +183,16 @@ public:
 			// Systems
 			SystemsManager *systemMgr = new SystemsManager();
 
-			std::tr1::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(network.get()) );
+			std::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(network.get()) );
 			systemMgr->AddSystem(networkSystem);
 
-			std::tr1::shared_ptr<GUI> gui( new GUI(dispWindow) );
+			std::shared_ptr<GUI> gui( new GUI(dispWindow) );
 			// Init GUI
 			gui->Initialise();
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 			ElementUndoMenu::RegisterElement();
 
-			std::tr1::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
+			std::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
 			
 			/////////////////////
 			// Attach module to objects that require it
