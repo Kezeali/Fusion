@@ -1,9 +1,13 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClanLibKeyInfoLister", "ClanLibKeyInfoLister\ClanLibKeyInfoLister.vcproj", "{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}"
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClanLibKeyInfoLister", "ClanLibKeyInfoLister\ClanLibKeyInfoLister.vcxproj", "{FE8AB04C-8C90-4CA2-8CB3-F1DA2116B10B}"
 EndProject
 Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32

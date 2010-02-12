@@ -127,8 +127,7 @@ static bool operator< (BindingKey const& l, BindingKey const& r)
 	return false;
 }
 
-namespace std { namespace tr1
-{
+namespace std {
 	template <>
 	struct hash<BindingKey> : public unary_function<BindingKey, size_t>
 	{
@@ -142,7 +141,7 @@ namespace std { namespace tr1
 			return seed;
 		}
 	};
-}}
+}
 
 
 class KeyInfoGenerator
@@ -528,10 +527,9 @@ public:
 			// Fire XInput events
 			gen.poll();
 
-			if (CL_DisplayMessageQueue::has_messages())
-				CL_DisplayMessageQueue::process();
+			CL_KeepAlive::process();
 
-			CL_System::sleep(10);
+			CL_System::sleep(2);
 		}
 
 		gen.save();
