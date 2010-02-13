@@ -31,7 +31,7 @@
 #include "FusionScriptedConsoleCommand.h"
 
 #include "FusionConsole.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 
 #include <ScriptUtils/Calling/Caller.h>
 #include <boost/bind.hpp>
@@ -50,7 +50,7 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller commandCaller(module, decl.c_str());
 		if (commandCaller.ok())
 		{
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL)
 				manager->ConnectToCaller(commandCaller);
 
@@ -68,7 +68,7 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller autocompleteCaller(module, decl.c_str());
 		if (autocompleteCaller.ok())
 		{
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL)
 				manager->ConnectToCaller(autocompleteCaller);
 

@@ -37,7 +37,7 @@
 
 #include "FusionState.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
@@ -49,7 +49,7 @@ namespace FusionEngine
 	class ScriptDebuggerGui : public System, public Rocket::Core::EventListener
 	{
 	public:
-		ScriptDebuggerGui(ScriptingEngine *manager);
+		ScriptDebuggerGui(ScriptManager *manager);
 		~ScriptDebuggerGui();
 
 	public:
@@ -79,7 +79,7 @@ namespace FusionEngine
 		asIScriptContext *GetContext() const;
 
 	protected:
-		ScriptingEngine *m_Manager;
+		ScriptManager *m_Manager;
 
 		Rocket::Core::ElementDocument *m_Document;
 

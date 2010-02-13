@@ -3,7 +3,7 @@
 
 #include "FusionConsole.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionScriptedSlots.h"
 #include "scriptstring.h"
@@ -681,7 +681,7 @@ namespace FusionEngine
 			ev.manager->RegisterGlobalObject("Console console", this);
 	}
 
-	void Console::Register(ScriptingEngine *manager)
+	void Console::Register(ScriptManager *manager)
 	{
 #ifndef FSN_DONT_USE_SCRIPTING
 		int r;

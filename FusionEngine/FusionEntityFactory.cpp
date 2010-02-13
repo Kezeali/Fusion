@@ -688,9 +688,9 @@ namespace FusionEngine
 		//! Constructor
 		ScriptedEntityInstancer();
 		//! Constructor
-		ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition);
+		ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition);
 		//! Constructor for entity defs with phys. bodies
-		ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition, PhysicalWorld *world);
+		ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition, PhysicalWorld *world);
 
 	public:
 		Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name);
@@ -699,7 +699,7 @@ namespace FusionEngine
 
 		PhysicalWorld *m_PhysicsWorld;
 
-		ScriptingEngine *m_ScriptingManager;
+		ScriptManager *m_ScriptingManager;
 		std::string m_Module;
 		EntityDefinitionPtr m_Definition;
 	};
@@ -708,14 +708,14 @@ namespace FusionEngine
 		: EntityInstancer("undefined_scripted_entity")
 	{}
 
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition)
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition)
 		: EntityInstancer(definition->GetType()),
 		m_ScriptingManager(manager),
 		m_Definition(definition),
 		m_PhysicsWorld(NULL)
 	{}
 
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptingEngine *manager, EntityDefinitionPtr definition, PhysicalWorld *world)
+	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition, PhysicalWorld *world)
 		: EntityInstancer(definition->GetType()),
 		m_ScriptingManager(manager),
 		m_Definition(definition),
@@ -950,7 +950,7 @@ namespace FusionEngine
 		parseScriptedEntities(m_ScriptedEntityPath.c_str());
 	}
 
-	void EntityFactory::SetScriptingManager(ScriptingEngine *manager)
+	void EntityFactory::SetScriptingManager(ScriptManager *manager)
 	{
 		m_ScriptingManager = manager;
 	}
@@ -997,7 +997,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool register_unwrap_type(ScriptingEngine *manager, const std::string &module_name, const std::string &type)
+	bool register_unwrap_type(ScriptManager *manager, const std::string &module_name, const std::string &type)
 	{
 		std::string script =
 			type + "@ unwrap_" + type + "(Entity@ entity) {\n" +
@@ -1111,7 +1111,7 @@ namespace FusionEngine
 		}*/
 	}
 
-	bool isSyncableType(int type_id, ScriptingEngine *script_manager)
+	bool isSyncableType(int type_id, ScriptManager *script_manager)
 	{
 		int valueTypeId = type_id & ~asTYPEID_OBJHANDLE;
 

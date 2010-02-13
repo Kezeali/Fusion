@@ -127,7 +127,7 @@ namespace FusionEngine
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);
 		//! Sets the scripting manager and module used to add script sections
-		void SetScriptingManager(ScriptingEngine *manager);
+		void SetScriptingManager(ScriptManager *manager);
 		//! Sets the scripting module used to add script sections
 		void SetModule(const ModulePtr &module);
 
@@ -186,7 +186,7 @@ namespace FusionEngine
 		typedef std::tr1::unordered_map<std::string, EntityDefinitionPtr> ScriptEntityDefinitionMap;
 		ScriptEntityDefinitionMap m_EntityDefinitionsByType;
 
-		ScriptingEngine *m_ScriptingManager;
+		ScriptManager *m_ScriptingManager;
 		ModulePtr m_Module;
 
 		bsig2::connection m_ModuleConnection;

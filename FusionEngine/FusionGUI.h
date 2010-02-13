@@ -115,7 +115,7 @@ namespace FusionEngine
 		*/
 		void SetMouseCursorPosition_default(int x, int y);
 
-		static void Register(ScriptingEngine *manager);
+		static void Register(ScriptManager *manager);
 
 		void SetModule(ModulePtr module);
 
@@ -150,7 +150,7 @@ namespace FusionEngine
 		bsig2::connection m_ModuleConnection;
 
 	public:
-		void initScripting(ScriptingEngine* eng);
+		void initScripting(ScriptManager* eng);
 		//! Called when the module set with SetModule is built
 		void onModuleBuild(BuildModuleEvent& event);
 		//! Tells the gui system when a mouse button is pressed

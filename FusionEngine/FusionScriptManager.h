@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ScriptingEngine
-#define Header_FusionEngine_ScriptingEngine
+#ifndef Header_FusionEngine_ScriptManager
+#define Header_FusionEngine_ScriptManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -88,7 +88,7 @@ namespace FusionEngine
 		};
 
 		EventType type;
-		ScriptingEngine *manager;
+		ScriptManager *manager;
 		asIScriptContext *context;
 
 		int refCount;
@@ -136,12 +136,12 @@ namespace FusionEngine
 	 * \brief
 	 * Provides access to scripting for all FusionEngine objects.
 	 *
-	 * \todo Rename ScriptingEngine -> ScriptingManager
+	 * \todo Rename ScriptManager -> ScriptingManager
 	 *
 	 * \sa
 	 * Singleton
 	 */
-	class ScriptingEngine : public Singleton<ScriptingEngine>
+	class ScriptManager : public Singleton<ScriptManager>
 	{
 	public:
 		typedef bsig2::signal<void (DebugEvent&)> DebugSignalType;
@@ -149,8 +149,8 @@ namespace FusionEngine
 
 	public:
 		//! Basic constructor.
-		ScriptingEngine();
-		~ScriptingEngine();
+		ScriptManager();
+		~ScriptManager();
 
 	public:
 		//! Returns a pointer to the AS engine.
@@ -228,7 +228,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (function.GetTimeout() > 0 ? function.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -253,7 +253,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptObject());
 			if (r < 0)
@@ -283,7 +283,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -293,7 +293,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -319,7 +319,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -329,7 +329,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -356,7 +356,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -366,7 +366,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -394,7 +394,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -404,7 +404,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			cont->Execute();
 			return scxt;
@@ -430,7 +430,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -440,7 +440,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -470,7 +470,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -480,7 +480,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -511,7 +511,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -521,7 +521,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -553,7 +553,7 @@ namespace FusionEngine
 			}
 			catch (InvalidArgumentException &ex)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::Execute",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::Execute",
 					"Exception while setting arguments for " + method.GetSignature() + ":\n\t" + ex.ToString());
 			}
 
@@ -563,7 +563,7 @@ namespace FusionEngine
 				timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
 				cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
 			}
-			cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			r = cont->SetObject(object.GetScriptStruct());
 			if (r < 0)
@@ -626,7 +626,7 @@ namespace FusionEngine
 
 		UCScriptMethod GetClassMethod(ScriptClass& type, const std::string& signature);
 
-		ModulePtr ScriptingEngine::GetModule(const char *module_name, asEGMFlags when = asGM_CREATE_IF_NOT_EXISTS);
+		ModulePtr ScriptManager::GetModule(const char *module_name, asEGMFlags when = asGM_CREATE_IF_NOT_EXISTS);
 
 		//! Returns a global caller
 		ScriptUtils::Calling::Caller GetCaller(const char* module, const std::string &signature);
@@ -707,7 +707,7 @@ namespace FusionEngine
 			virtual ~ScriptSection() {}
 			virtual std::string &GetCode() =0;
 		};
-		class StringScriptSection : public ScriptingEngine::ScriptSection
+		class StringScriptSection : public ScriptManager::ScriptSection
 		{
 		public:
 			StringScriptSection();
@@ -717,7 +717,7 @@ namespace FusionEngine
 
 			std::string m_Code;
 		};
-		class FileScriptSection : public ScriptingEngine::ScriptSection
+		class FileScriptSection : public ScriptManager::ScriptSection
 		{
 		public:
 			FileScriptSection();
@@ -757,7 +757,7 @@ namespace FusionEngine
 		{
 			if (r == asCONTEXT_NOT_PREPARED)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::setArgument",
 					"Context not prepared");
 			}
 			else if (r == asINVALID_ARG)
@@ -778,12 +778,12 @@ namespace FusionEngine
 					wrongNumOfArgs = CL_StringHelp::int_to_local8(arg+1) + " arguments";
 					rightNumOfArgs = CL_StringHelp::int_to_local8(arg) + " arguments";
 				}
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument",
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::setArgument",
 					"Provided " + wrongNumOfArgs + " to method taking " + rightNumOfArgs);
 			}
 			else if (r == asINVALID_TYPE)
 			{
-				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::setArgument", 
+				FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::setArgument", 
 					"The " + type + " passed to argument " + 
 					std::string(CL_StringHelp::int_to_local8(arg)) + " is of incorrect type");
 			}
@@ -894,11 +894,11 @@ namespace FusionEngine
 		//! Registers global methods and functions which scripts can use.
 		void registerTypes();
 
-		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptingEngine *obj);
-		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(const std::string &decl, ScriptingEngine *obj);
+		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptManager *obj);
+		static ScriptedSlotWrapper* Scr_ConnectDebugSlot(const std::string &decl, ScriptManager *obj);
 	};
 
-	bool operator ==(const ScriptingEngine::Breakpoint &lhs, const ScriptingEngine::Breakpoint &rhs);
+	bool operator ==(const ScriptManager::Breakpoint &lhs, const ScriptManager::Breakpoint &rhs);
 
 }
 

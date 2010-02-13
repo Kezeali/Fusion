@@ -449,7 +449,7 @@ namespace FusionEngine
 	class ResourceContainer;
 	class ResourceManager;
 	class ScriptedSlotWrapper;
-	class ScriptingEngine;
+	class ScriptManager;
 	class Shape;
 	class StreamingManager;
 	class System;

@@ -14,7 +14,7 @@
 #include "FusionImageLoader.h"
 #include "FusionAudioLoader.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 
 namespace FusionEngine

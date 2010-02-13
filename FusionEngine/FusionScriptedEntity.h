@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	static const type_info &ToCppType(int as_type_id, ScriptingEngine *engine = NULL);
+	static const type_info &ToCppType(int as_type_id, ScriptManager *engine = NULL);
 
 	class ResourceDescription
 	{

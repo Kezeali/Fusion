@@ -95,9 +95,9 @@ namespace FusionEngine
 		 * The Command class generated will contain properties corresponding
 		 * to each command node in the previously parsed XML documents
 		 */
-		//void CreateCommandClass(ScriptingEngine *eng);
+		//void CreateCommandClass(ScriptManager *eng);
 
-		//ScriptObject CreateCommand(ScriptingEngine *eng, const Command& command);
+		//ScriptObject CreateCommand(ScriptManager *eng, const Command& command);
 
 		const InputDefinitionArray &GetInputDefinitions() const;
 

@@ -25,7 +25,7 @@
 		Elliot Hayward
 */
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 
 //#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
@@ -57,7 +57,7 @@ namespace FusionEngine
 	class IncludePreprocessor : public ScriptPreprocessor
 	{
 	public:
-		IncludePreprocessor(ScriptingEngine *manager)
+		IncludePreprocessor(ScriptManager *manager)
 			: m_Manager(manager)
 		{}
 		virtual void Process(std::string &code, const char *module_name, const std::string &filename, MarkedLines &lines);
@@ -68,7 +68,7 @@ namespace FusionEngine
 
 		std::string resolvePath(const std::string &working_directory, const CharRange &path);
 
-		ScriptingEngine *m_Manager;
+		ScriptManager *m_Manager;
 	};
 
 	void IncludePreprocessor::Process(std::string &code, const char *module_name, const std::string &filename, ScriptPreprocessor::MarkedLines &marked)
@@ -156,26 +156,26 @@ namespace FusionEngine
 
 	////////////
 	// ScriptSection implementations
-	ScriptingEngine::StringScriptSection::StringScriptSection()
+	ScriptManager::StringScriptSection::StringScriptSection()
 	{}
 
-	ScriptingEngine::StringScriptSection::StringScriptSection(const std::string &code)
+	ScriptManager::StringScriptSection::StringScriptSection(const std::string &code)
 		: m_Code(code)
 	{}
 
-	std::string &ScriptingEngine::StringScriptSection::GetCode()
+	std::string &ScriptManager::StringScriptSection::GetCode()
 	{
 		return m_Code;
 	}
 
-	ScriptingEngine::FileScriptSection::FileScriptSection()
+	ScriptManager::FileScriptSection::FileScriptSection()
 	{}
 
-	ScriptingEngine::FileScriptSection::FileScriptSection(const std::string &filename)
+	ScriptManager::FileScriptSection::FileScriptSection(const std::string &filename)
 		: m_Filename(filename)
 	{}
 
-	std::string &ScriptingEngine::FileScriptSection::GetCode()
+	std::string &ScriptManager::FileScriptSection::GetCode()
 	{
 		if (m_Code.empty())
 		{
@@ -186,7 +186,7 @@ namespace FusionEngine
 
 	/////////
 	// Breakpoint hasher
-	std::size_t ScriptingEngine::hash_Breakpoint::operator ()(const ScriptingEngine::Breakpoint &value) const 
+	std::size_t ScriptManager::hash_Breakpoint::operator ()(const ScriptManager::Breakpoint &value) const 
 	{
 		std::size_t seed = 0;
 		boost::hash_combine(seed, value.section_name);
@@ -195,7 +195,7 @@ namespace FusionEngine
 		return seed;
 	}
 
-	bool operator ==(const ScriptingEngine::Breakpoint &lhs, const ScriptingEngine::Breakpoint &rhs)
+	bool operator ==(const ScriptManager::Breakpoint &lhs, const ScriptManager::Breakpoint &rhs)
 	{
 		return lhs.line == rhs.line && 
 			lhs.module_name == rhs.module_name &&
@@ -204,7 +204,7 @@ namespace FusionEngine
 
 	//////////
 	// ScriptingManager
-	ScriptingEngine::ScriptingEngine()
+	ScriptManager::ScriptManager()
 		: m_DefaultTimeout(g_ScriptDefaultTimeout),
 		m_DebugOutput(false),
 		m_DebugMode(0),
@@ -214,14 +214,14 @@ namespace FusionEngine
 
 		if (m_asEngine != NULL)
 		{
-			m_asEngine->SetMessageCallback(asMETHOD(ScriptingEngine,_messageCallback), this, asCALL_THISCALL);
+			m_asEngine->SetMessageCallback(asMETHOD(ScriptManager,_messageCallback), this, asCALL_THISCALL);
 			registerTypes();
 		}
 
 		m_Preprocessors.push_back(PreprocessorPtr(new IncludePreprocessor(this)));
 	}
 
-	ScriptingEngine::~ScriptingEngine()
+	ScriptManager::~ScriptManager()
 	{
 		if (m_asEngine != NULL)
 		{
@@ -232,32 +232,32 @@ namespace FusionEngine
 	}
 
 
-	asIScriptEngine *ScriptingEngine::GetEnginePtr() const
+	asIScriptEngine *ScriptManager::GetEnginePtr() const
 	{
 		return m_asEngine;
 	}
 
-	int ScriptingEngine::GetVectorTypeId() const
+	int ScriptManager::GetVectorTypeId() const
 	{
 		return m_VectorTypeId;
 	}
 
-	int ScriptingEngine::GetStringTypeId() const
+	int ScriptManager::GetStringTypeId() const
 	{
 		return m_StringTypeId;
 	}
 
-	void ScriptingEngine::RegisterGlobalObject(const char *decl, void* ptr)
+	void ScriptManager::RegisterGlobalObject(const char *decl, void* ptr)
 	{
 		int r = m_asEngine->RegisterGlobalProperty(decl, ptr); FSN_ASSERT( r >= 0 );
 	}
 
-	void ScriptingEngine::Preprocess(std::string &script, const char *module_name)
+	void ScriptManager::Preprocess(std::string &script, const char *module_name)
 	{
 		Preprocess(script, module_name, std::string());
 	}
 
-	void ScriptingEngine::Preprocess(std::string &script, const char *module_name, const std::string &filename)
+	void ScriptManager::Preprocess(std::string &script, const char *module_name, const std::string &filename)
 	{
 		ScriptPreprocessor::MarkedLines lines;
 		// Parses the script to find lines with preprocessor markers
@@ -270,7 +270,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool ScriptingEngine::storeCodeString(const std::string &code, const char *section_name)
+	bool ScriptManager::storeCodeString(const std::string &code, const char *section_name)
 	{
 		std::pair<ScriptSectionMap::iterator, bool> check =
 			m_ScriptSections.insert( ScriptSectionMap::value_type(section_name, ScriptSectionPtr(new StringScriptSection(code))) );
@@ -288,7 +288,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ScriptingEngine::AddCode(const std::string &script, const char *module, const char *section_name)
+	bool ScriptManager::AddCode(const std::string &script, const char *module, const char *section_name)
 	{
 		if (!m_Preprocessors.empty())
 		{
@@ -317,7 +317,7 @@ namespace FusionEngine
 		return success;
 	}
 
-	bool ScriptingEngine::AddFile(const std::string& filename, const char *module)
+	bool ScriptManager::AddFile(const std::string& filename, const char *module)
 	{
 		int r = -1;
 
@@ -340,7 +340,7 @@ namespace FusionEngine
 		return r >= 0;
 	}
 
-	void ScriptingEngine::DebugRebuild(const char *module)
+	void ScriptManager::DebugRebuild(const char *module)
 	{
 		ModulePtr mod = GetModule(module, asGM_ONLY_IF_EXISTS);
 		if (mod == NULL) return;
@@ -352,7 +352,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool ScriptingEngine::BuildModule(const char* module)
+	bool ScriptManager::BuildModule(const char* module)
 	{
 		//asIScriptModule* mod = m_asEngine->GetModule(module);
 		ModulePtr mod = GetModule(module, asGM_ONLY_IF_EXISTS);
@@ -362,12 +362,12 @@ namespace FusionEngine
 		else return mod->Build() >= 0;
 	}
 
-	bsig2::connection ScriptingEngine::SubscribeToModule(const char *module, Module::BuildModuleSlotType slot)
+	bsig2::connection ScriptManager::SubscribeToModule(const char *module, Module::BuildModuleSlotType slot)
 	{
 		return GetModule(module)->ConnectToBuild(slot);
 	}
 
-	ScriptReturn ScriptingEngine::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
+	ScriptReturn ScriptManager::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
 	{
 		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(function);
 
@@ -384,7 +384,7 @@ namespace FusionEngine
 			timeoutTime = CL_System::get_time() + timeout;
 			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_STDCALL);
 		}
-		cont->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+		cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 		cont->Execute();
 
@@ -392,7 +392,7 @@ namespace FusionEngine
 	}
 
 #ifndef SCRIPT_ARG_USE_TEMPLATE
-	ScriptReturn ScriptingEngine::Execute(UCScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
+	ScriptReturn ScriptManager::Execute(UCScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
 		asIScriptContext* cont = m_asEngine->CreateContext();
 		ScriptReturn scxt(cont);
@@ -412,7 +412,7 @@ namespace FusionEngine
 		return scxt;
 	}
 
-	ScriptReturn ScriptingEngine::Execute(ScriptObject object, UCScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
+	ScriptReturn ScriptManager::Execute(ScriptObject object, UCScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
 	{
 		asIScriptContext* cont = m_asEngine->CreateContext();
 		ScriptReturn scxt(cont);
@@ -437,14 +437,14 @@ namespace FusionEngine
 	}
 #endif
 
-	ScriptContext ScriptingEngine::ExecuteString(const std::string &script, const char *module_name, int timeout)
+	ScriptContext ScriptManager::ExecuteString(const std::string &script, const char *module_name, int timeout)
 	{
 		asIScriptContext* ctx = m_asEngine->CreateContext();
 		ScriptContext sctx(ctx);
 
 		if (ctx != NULL)
 		{
-			ctx->SetExceptionCallback(asMETHOD(ScriptingEngine, _exceptionCallback), this, asCALL_THISCALL);
+			ctx->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
 
 			asIScriptModule *module = m_asEngine->GetModule(module_name, asGM_CREATE_IF_NOT_EXISTS);
 			std::string fnScript = "void ExecuteString() {\n";
@@ -461,28 +461,28 @@ namespace FusionEngine
 		return sctx;
 	}
 
-	void ScriptingEngine::ReExecute(ScriptContext& context)
+	void ScriptManager::ReExecute(ScriptContext& context)
 	{
 		context.Execute();
 	}
 
-	void ScriptingEngine::SetDefaultTimeout(unsigned int timeout)
+	void ScriptManager::SetDefaultTimeout(unsigned int timeout)
 	{
 		m_DefaultTimeout = timeout;
 	}
 
-	unsigned int ScriptingEngine::GetDefaultTimeout() const
+	unsigned int ScriptManager::GetDefaultTimeout() const
 	{
 		return m_DefaultTimeout;
 	}
 
-	UCScriptMethod ScriptingEngine::GetFunction(const char* module, const std::string& signature)
+	UCScriptMethod ScriptManager::GetFunction(const char* module, const std::string& signature)
 	{
 		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
 		return UCScriptMethod(module, signature, funcID);
 	}
 
-	bool ScriptingEngine::GetFunction(UCScriptMethod& out, const char* module, const std::string& signature)
+	bool ScriptManager::GetFunction(UCScriptMethod& out, const char* module, const std::string& signature)
 	{
 		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
 		if (funcID < 0)
@@ -495,39 +495,39 @@ namespace FusionEngine
 		return true;
 	}
 
-	ScriptClass ScriptingEngine::GetClass(const char* module, const std::string& type_name)
+	ScriptClass ScriptManager::GetClass(const char* module, const std::string& type_name)
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		return ScriptClass(this, module, type_name, id);
 	}
 
-	ScriptObject ScriptingEngine::CreateObject(const char* module, const std::string& type_name)
+	ScriptObject ScriptManager::CreateObject(const char* module, const std::string& type_name)
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
 		return ScriptObject(obj, false);
 	}
 
-	ScriptObject ScriptingEngine::CreateObject(int id)
+	ScriptObject ScriptManager::CreateObject(int id)
 	{
 		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
 		return ScriptObject(obj, false);
 	}
 
-	UCScriptMethod ScriptingEngine::GetClassMethod(const char* module, const std::string& type_name, const std::string &signature)
+	UCScriptMethod ScriptManager::GetClassMethod(const char* module, const std::string& type_name, const std::string &signature)
 	{
 		int typeId = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
 		if (typeId < 0)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::GetClassMethod", "No such type: " + type_name);
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::GetClassMethod", "No such type: " + type_name);
 		int methodId = m_asEngine->GetObjectTypeById(typeId)->GetMethodIdByDecl(signature.c_str());
 		if (methodId < 0)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingEngine::GetClassMethod", "No such method: " + signature + "\n in type " + type_name);
+			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::GetClassMethod", "No such method: " + signature + "\n in type " + type_name);
 
 		//asIScriptFunction *function = m_asEngine->GetFunctionDescriptorById(methodId);
 		return UCScriptMethod(module, signature, typeId);
 	}
 
-	UCScriptMethod ScriptingEngine::GetClassMethod(ScriptClass& type, const std::string& signature)
+	UCScriptMethod ScriptManager::GetClassMethod(ScriptClass& type, const std::string& signature)
 	{
 		if (type.IsValid())
 		{
@@ -539,7 +539,7 @@ namespace FusionEngine
 			return UCScriptMethod();
 	}
 
-	//UCScriptMethod ScriptingEngine::GetClassMethod(ScriptObject& type, const std::string& signature)
+	//UCScriptMethod ScriptManager::GetClassMethod(ScriptObject& type, const std::string& signature)
 	//{
 	//	FSN_ASSERT(false);
 	//	asIObjectType *scriptType = m_asEngine->GetObjectTypeById(type.GetTypeId());
@@ -548,7 +548,7 @@ namespace FusionEngine
 	//	return method;
 	//}
 
-	ModulePtr ScriptingEngine::GetModule(const char *module_name, asEGMFlags when)
+	ModulePtr ScriptManager::GetModule(const char *module_name, asEGMFlags when)
 	{
 		ModuleMap::iterator _where = m_Modules.find(module_name);
 		if (_where != m_Modules.end()) // Return the existing wrapper
@@ -567,51 +567,51 @@ namespace FusionEngine
 		}
 	}
 
-	ScriptUtils::Calling::Caller ScriptingEngine::GetCaller(const char * module_name, const std::string &signature)
+	ScriptUtils::Calling::Caller ScriptManager::GetCaller(const char * module_name, const std::string &signature)
 	{
 		ScriptUtils::Calling::Caller caller(m_asEngine->GetModule(module_name), signature.c_str());
 		ConnectToCaller(caller);
 		return caller;
 	}
 
-	ScriptUtils::Calling::Caller ScriptingEngine::GetCaller(const FusionEngine::ScriptObject &object, const std::string &signature)
+	ScriptUtils::Calling::Caller ScriptManager::GetCaller(const FusionEngine::ScriptObject &object, const std::string &signature)
 	{
 		ScriptUtils::Calling::Caller caller(object.GetScriptObject(), signature.c_str());
 		ConnectToCaller(caller);
 		return caller;
 	}
 
-	void ScriptingEngine::EnableDebugOutput()
+	void ScriptManager::EnableDebugOutput()
 	{
 		m_DebugOutput = true;
 	}
 
-	void ScriptingEngine::DisableDebugOutput()
+	void ScriptManager::DisableDebugOutput()
 	{
 		m_DebugOutput = false;
 	}
 
-	bool ScriptingEngine::DebugOutputIsEnabled()
+	bool ScriptManager::DebugOutputIsEnabled()
 	{
 		return m_DebugOutput;
 	}
 
-	bsig2::connection ScriptingEngine::SubscribeToDebugEvents(ScriptingEngine::DebugSlotType slot)
+	bsig2::connection ScriptManager::SubscribeToDebugEvents(ScriptManager::DebugSlotType slot)
 	{
 		return SigDebug.connect( slot );
 	}
 
-	void ScriptingEngine::SetDebugMode(unsigned char mode)
+	void ScriptManager::SetDebugMode(unsigned char mode)
 	{
 		m_DebugMode = mode;
 	}
 
-	void ScriptingEngine::SetDebugOptions(const ScriptingEngine::DebugOptions &settings)
+	void ScriptManager::SetDebugOptions(const ScriptManager::DebugOptions &settings)
 	{
 		m_DebugSettings = settings;
 	}
 
-	void ScriptingEngine::SetBreakpoint(const char *module, const char *section, int line)
+	void ScriptManager::SetBreakpoint(const char *module, const char *section, int line)
 	{
 		Breakpoint bp;
 		bp.module_name = module;
@@ -620,10 +620,10 @@ namespace FusionEngine
 		m_Breakpoints.insert(bp);
 	}
 
-	void ScriptingEngine::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
+	void ScriptManager::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
 	{
-		caller.ConnectExceptionCallback( boost::bind(&ScriptingEngine::_exceptionCallback, this, _1) );
-		caller.ConnectLineCallback( boost::bind(&ScriptingEngine::_lineCallback, this, _1) );
+		caller.ConnectExceptionCallback( boost::bind(&ScriptManager::_exceptionCallback, this, _1) );
+		caller.ConnectLineCallback( boost::bind(&ScriptManager::_lineCallback, this, _1) );
 	}
 
 	bool printVar(std::ostream &strstr, asIScriptContext *ctx, int var_ind, int stack_level)
@@ -741,7 +741,7 @@ namespace FusionEngine
 		str << "+ " << sig << " called at (" << line << "," << column << ")\n";
 	}
 
-	void ScriptingEngine::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, int current_func, std::string &to)
+	void ScriptManager::printCallstack(asIScriptEngine *const engine, asIScriptContext *ctx, int current_func, std::string &to)
 	{
 		std::stringstream str;
 
@@ -800,7 +800,7 @@ namespace FusionEngine
 		to += str.str();
 	}
 
-	void ScriptingEngine::_exceptionCallback(asIScriptContext *ctx)
+	void ScriptManager::_exceptionCallback(asIScriptContext *ctx)
 	{
 		asIScriptEngine *engine = ctx->GetEngine();
 
@@ -835,11 +835,11 @@ namespace FusionEngine
 		}
 	}
 
-	/*std::string ScriptingEngine::GetCurrentScriptSection(ctx)
+	/*std::string ScriptManager::GetCurrentScriptSection(ctx)
 	{
 	}*/
 
-	void ScriptingEngine::_lineCallback(asIScriptContext *ctx)
+	void ScriptManager::_lineCallback(asIScriptContext *ctx)
 	{
 		if (m_DebugMode & StepThrough)
 		{
@@ -888,7 +888,7 @@ namespace FusionEngine
 		}
 	}
 
-	void ScriptingEngine::_messageCallback(asSMessageInfo* msg)
+	void ScriptManager::_messageCallback(asSMessageInfo* msg)
 	{ 
 		const char *msgType = 0;
 		if( msg->type == asMSGTYPE_ERROR ) msgType = "Error  ";
@@ -899,7 +899,7 @@ namespace FusionEngine
 		SendToConsole(formatted);
 	}
 
-	asIScriptModule *ScriptingEngine::getModuleOrThrow(const char *module) const
+	asIScriptModule *ScriptManager::getModuleOrThrow(const char *module) const
 	{
 		asIScriptModule *mod = m_asEngine->GetModule(module, asGM_ONLY_IF_EXISTS);
 		if (mod == NULL)
@@ -907,7 +907,7 @@ namespace FusionEngine
 		return mod;
 	}
 
-	ScriptedSlotWrapper* ScriptingEngine::Scr_ConnectDebugSlot(const std::string &decl, ScriptingEngine *obj)
+	ScriptedSlotWrapper* ScriptManager::Scr_ConnectDebugSlot(const std::string &decl, ScriptManager *obj)
 	{
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
@@ -930,7 +930,7 @@ namespace FusionEngine
 		return NULL;
 	}
 
-	ScriptedSlotWrapper* ScriptingEngine::Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptingEngine *obj)
+	ScriptedSlotWrapper* ScriptManager::Scr_ConnectDebugSlot(asIScriptObject *slot_object, ScriptManager *obj)
 	{
 		ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(slot_object, "void ProcessEvent(DebugEvent@)");
 
@@ -940,7 +940,7 @@ namespace FusionEngine
 		return slot;
 	}
 
-	void ScriptingEngine::registerTypes()
+	void ScriptManager::registerTypes()
 	{
 		int r;
 
@@ -960,28 +960,28 @@ namespace FusionEngine
 		//r = m_asEngine->RegisterInterface("IDebugListener"); FSN_ASSERT(r >= 0);
 		//r = m_asEngine->RegisterInterfaceMethod("IDebugListener", "void ProcessEvent(DebugEvent@)");
 
-		RegisterSingletonType<ScriptingEngine>("ScriptManager", m_asEngine);
+		RegisterSingletonType<ScriptManager>("ScriptManager", m_asEngine);
 		r = m_asEngine->RegisterObjectMethod(
 			"ScriptManager", "void enableDebugOutput()",
-			asMETHOD(ScriptingEngine, EnableDebugOutput),
+			asMETHOD(ScriptManager, EnableDebugOutput),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = m_asEngine->RegisterObjectMethod(
 			"ScriptManager", "void disableDebugOutput()",
-			asMETHOD(ScriptingEngine, DisableDebugOutput),
+			asMETHOD(ScriptManager, DisableDebugOutput),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = m_asEngine->RegisterObjectMethod(
 			"ScriptManager", "void debugOutputIsEnabled(bool)",
-			asMETHOD(ScriptingEngine, DebugOutputIsEnabled),
+			asMETHOD(ScriptManager, DebugOutputIsEnabled),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		//r = m_asEngine->RegisterObjectMethod(
 		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(const string&in)",
-		//	asFUNCTION(ScriptingEngine::Scr_ConnectDebugSlot),
+		//	asFUNCTION(ScriptManager::Scr_ConnectDebugSlot),
 		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		//r = m_asEngine->RegisterObjectMethod(
 		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(IDebugListener@)",
-		//	asFUNCTION(ScriptingEngine::Scr_ConnectDebugSlot),
+		//	asFUNCTION(ScriptManager::Scr_ConnectDebugSlot),
 		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		RegisterGlobalObject("ScriptManager scriptManager", this);

@@ -31,7 +31,7 @@
 #include "FusionEditorMapEntity.h"
 
 #include "FusionPhysicalEntity.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "scriptstring.h"
 
 #include <boost/lexical_cast.hpp>

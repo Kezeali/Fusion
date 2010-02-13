@@ -38,7 +38,7 @@
 #include "FusionPhysicalEntityManager.h"
 #include "FusionInputHandler.h"
 #include "FusionNetworkSystem.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionClientOptions.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
@@ -66,7 +66,7 @@ namespace FusionEngine
 		SimpleEntity(const std::string &name)
 			: PhysicalEntity(name)
 		{
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL && manager->GetEnginePtr() != NULL)
 				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
 		}
@@ -179,7 +179,7 @@ namespace FusionEngine
 			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_EntityFactory, m_PhysWorld, m_Streaming, m_MapLoader));
 			this->PushMessage(new SystemMessage(m_Editor));
 
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
 
 			manager->RegisterGlobalObject("System system", this);
 			manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);

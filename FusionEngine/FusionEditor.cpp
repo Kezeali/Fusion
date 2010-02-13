@@ -35,7 +35,7 @@
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionPhysicalEntityManager.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionGUI.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
@@ -244,7 +244,7 @@ namespace FusionEngine
 	{
 		m_Editor->RemoveEntity(m_EditorEntity);
 		m_EditorEntity.reset();
-		ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
 
 	void AddRemoveEntityAction::undoAction()
@@ -322,7 +322,7 @@ namespace FusionEngine
 		m_RightClickMenu->AddChild(m_PropertiesMenu);
 
 		m_Viewport.reset(new Viewport());
-		m_Camera.reset( new Camera(ScriptingEngine::getSingleton().GetEnginePtr()) );
+		m_Camera.reset( new Camera(ScriptManager::getSingleton().GetEnginePtr()) );
 		m_Camera->release();
 		m_Viewport->SetCamera(m_Camera);
 
@@ -799,7 +799,7 @@ namespace FusionEngine
 			}
 		}
 
-		ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

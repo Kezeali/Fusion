@@ -194,7 +194,7 @@ namespace FusionEngine
 		//! Returns all the lines that have been added to the console
 		std::string GetHistory() const;
 
-		static void Register(ScriptingEngine* manager);
+		static void Register(ScriptManager* manager);
 
 		void SetModule(ModulePtr module);
 

@@ -27,7 +27,7 @@
 
 #include "FusionScriptReference.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 
 namespace FusionEngine
 {
@@ -138,7 +138,7 @@ namespace FusionEngine
 	}
 
 
-	ScriptMethod::ScriptMethod(ScriptingEngine* manager, const char* module, const std::string& signature)
+	ScriptMethod::ScriptMethod(ScriptManager* manager, const char* module, const std::string& signature)
 		: m_Module(module),
 		m_Signature(signature),
 		m_Timeout(0),
@@ -276,7 +276,7 @@ namespace FusionEngine
 
 
 
-	ScriptClass::ScriptClass(ScriptingEngine* manager, const char *module, const std::string& declaration)
+	ScriptClass::ScriptClass(ScriptManager* manager, const char *module, const std::string& declaration)
 		: m_Decl(declaration),
 		//m_ScriptManager(manager),
 		m_Module(module)
@@ -285,7 +285,7 @@ namespace FusionEngine
 		m_Type = manager->GetEnginePtr()->GetObjectTypeById(m_TypeID);
 	}
 
-	ScriptClass::ScriptClass(ScriptingEngine* manager, const char *module, const std::string& declaration, int type_id)
+	ScriptClass::ScriptClass(ScriptManager* manager, const char *module, const std::string& declaration, int type_id)
 		: m_Decl(declaration),
 		m_Module(module),
 		//m_ScriptManager(manager),
@@ -386,7 +386,7 @@ namespace FusionEngine
 
 	ScriptUtils::Calling::Caller ScriptObject::GetCaller(const std::string &decl) const
 	{
-		return ScriptingEngine::getSingleton().GetCaller(*this, decl);
+		return ScriptManager::getSingleton().GetCaller(*this, decl);
 	}
 
 	bool ScriptObject::IsValid() const

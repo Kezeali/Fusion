@@ -34,7 +34,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include <boost/intrusive_ptr.hpp>
 #include <boost/utility.hpp>
 #include <type_traits>
@@ -132,7 +132,7 @@ namespace FusionEngine
 		GarbageCollected()
 			: m_GCFlag(false)
 		{
-			ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL && manager->GetEnginePtr() != NULL)
 				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
 		}

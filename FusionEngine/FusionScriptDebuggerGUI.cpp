@@ -31,7 +31,7 @@
 #include "FusionScriptDebuggerGUI.h"
 
 #include "FusionBoostSignals2.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionGUI.h"
 
 #include <Rocket/Core.h>
@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	ScriptDebuggerGui::ScriptDebuggerGui(FusionEngine::ScriptingEngine *manager)
+	ScriptDebuggerGui::ScriptDebuggerGui(FusionEngine::ScriptManager *manager)
 		: m_Manager(manager)
 	{
 	}

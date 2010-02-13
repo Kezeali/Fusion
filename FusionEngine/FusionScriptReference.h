@@ -43,7 +43,7 @@ namespace FusionEngine
 
 	static const unsigned int g_ScriptDefaultTimeout = 1000;
 
-	//! Used by non-template versions of ScriptingEngine#Execute
+	//! Used by non-template versions of ScriptManager#Execute
 	class ScriptArgument
 	{
 	public:
@@ -80,7 +80,7 @@ namespace FusionEngine
 	class ScriptContext
 	{
 		// So I can be lazy (may not be used, but just in case):
-		friend class ScriptingEngine;
+		friend class ScriptManager;
 	public:
 		//! Constructor
 		ScriptContext(asIScriptContext* ctx);
@@ -120,7 +120,7 @@ namespace FusionEngine
 
 	//! Stores data needed to execute a script function
 	/*!
-	 * \sa ScriptingEngine
+	 * \sa ScriptManager
 	 */
 	class ScriptMethod
 	{
@@ -129,7 +129,7 @@ namespace FusionEngine
 	public:
 		ScriptMethod() : m_FunctionID(-1), m_Timeout(0), m_Module(0) {}
 		//! Constructor
-		ScriptMethod(ScriptingEngine* manager, const char* module, const std::string& signature);
+		ScriptMethod(ScriptManager* manager, const char* module, const std::string& signature);
 		//! Constructor
 		ScriptMethod(const char* module, const std::string& signature, int funcID, unsigned int timeout = g_ScriptDefaultTimeout);
 
@@ -164,7 +164,7 @@ namespace FusionEngine
 
 	//! Stores a script object
 	/*!
-	 * \sa ScriptingEngine
+	 * \sa ScriptManager
 	 */
 	class ScriptObject
 	{
@@ -197,21 +197,21 @@ namespace FusionEngine
 	protected:
 		asIScriptObject* m_Object;
 
-		//ScriptingEngine *m_Engine;
+		//ScriptManager *m_Engine;
 	};
 
 
 	//! Stores a script class
 	/*!
-	 * \sa ScriptingEngine
+	 * \sa ScriptManager
 	 */
 	class ScriptClass
 	{
 	public:
 		//! Constructor
-		ScriptClass(ScriptingEngine* manager, const char* module, const std::string& declaration);
+		ScriptClass(ScriptManager* manager, const char* module, const std::string& declaration);
 		//! Constructor
-		ScriptClass(ScriptingEngine* manager, const char* module, const std::string& declaration, int type_id);
+		ScriptClass(ScriptManager* manager, const char* module, const std::string& declaration, int type_id);
 		//! Constructor
 		ScriptClass(const char *module, asIObjectType* as_type, int type_id);
 
@@ -231,7 +231,7 @@ namespace FusionEngine
 		int m_TypeID;
 		asIObjectType *m_Type;
 
-		//ScriptingEngine* m_ScriptManager;
+		//ScriptManager* m_ScriptManager;
 	};
 
 }

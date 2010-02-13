@@ -27,7 +27,7 @@
 
 #include "FusionScriptModule.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 
 
 namespace FusionEngine
@@ -61,7 +61,7 @@ namespace FusionEngine
 
 	ScriptUtils::Calling::Caller Module::GetCaller(const std::string &decl)
 	{
-		ScriptingEngine *manager = ScriptingEngine::getSingletonPtr();
+		ScriptManager *manager = ScriptManager::getSingletonPtr();
 		ScriptUtils::Calling::Caller caller(m_Module, decl.c_str());
 		manager->ConnectToCaller(caller); // For debugging / exception handling
 		return caller;
@@ -87,7 +87,7 @@ namespace FusionEngine
 	{
 		BuildModuleEvent buildEvent;
 		buildEvent.type = BuildModuleEvent::PreBuild;
-		buildEvent.manager = ScriptingEngine::getSingletonPtr();
+		buildEvent.manager = ScriptManager::getSingletonPtr();
 		buildEvent.module_name = m_Module->GetName();
 		SigBuildModule(buildEvent);
 

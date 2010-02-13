@@ -35,7 +35,7 @@
 
 #include "FusionCommon.h"
 
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionConsole.h"
 
 #include "scriptstring.h"
@@ -48,7 +48,7 @@ namespace FusionEngine
 	//! Console CC (Command Callback) which calls a script method
 	static std::string CC_ScriptFn(const StringVector &args, ScriptMethod script_fn)
 	{
-		ScriptingEngine *se = ScriptingEngine::getSingletonPtr();
+		ScriptManager *se = ScriptManager::getSingletonPtr();
 		if (se != NULL)
 		{
 			ScriptReturn ctx = se->Execute(script_fn, args);
@@ -66,7 +66,7 @@ namespace FusionEngine
 		const std::string &command, const std::string &as_function_decl,
 		Console* console)
 	{
-		ScriptingEngine *se = ScriptingEngine::getSingletonPtr();
+		ScriptManager *se = ScriptManager::getSingletonPtr();
 		if (se != NULL)
 		{
 			ScriptMethod method = se->GetFunction(0, as_function_decl);
@@ -76,7 +76,7 @@ namespace FusionEngine
 	}
 
 	//! Registers bind_command()
-	static void RegisterBindScriptFn(ScriptingEngine *eng)
+	static void RegisterBindScriptFn(ScriptManager *eng)
 	{
 		FSN_ASSERT(eng != NULL);
 		asIScriptEngine *asEngine = eng->GetEnginePtr();

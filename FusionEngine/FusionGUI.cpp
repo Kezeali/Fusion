@@ -33,7 +33,7 @@
 
 #include "FusionConsole.h"
 #include "FusionLogger.h"
-#include "FusionScriptingEngine.h"
+#include "FusionScriptManager.h"
 #include "FusionScriptModule.h"
 
 #include "FusionElementSelectableDataGrid.h"
@@ -134,7 +134,7 @@ namespace FusionEngine
 		m_DebuggerInitialized(false),
 		m_Initialised(false)
 	{
-		initScripting(ScriptingEngine::getSingletonPtr());
+		initScripting(ScriptManager::getSingletonPtr());
 	}
 
 	GUI::GUI(CL_DisplayWindow window)
@@ -145,7 +145,7 @@ namespace FusionEngine
 		m_DebuggerInitialized(false),
 		m_Initialised(false)
 	{
-		initScripting(ScriptingEngine::getSingletonPtr());
+		initScripting(ScriptManager::getSingletonPtr());
 	}
 
 	GUI::~GUI()
@@ -231,7 +231,7 @@ namespace FusionEngine
 			m_DataFormatters.clear();
 
 			m_Context->RemoveReference();
-			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			Rocket::Core::Shutdown();
 
 			delete m_RocketFileSys;
@@ -323,7 +323,7 @@ namespace FusionEngine
 		m_Context->ProcessMouseMove(x, y, 0);
 	}
 
-	void GUI::Register(ScriptingEngine *engine)
+	void GUI::Register(ScriptManager *engine)
 	{
 		asIScriptEngine *iengine = engine->GetEnginePtr();
 		int r;
@@ -404,7 +404,7 @@ namespace FusionEngine
 		m_ModuleConnection = module->ConnectToBuild( boost::bind(&GUI::onModuleBuild, this, _1) );
 	}
 
-	void GUI::initScripting(FusionEngine::ScriptingEngine *manager)
+	void GUI::initScripting(FusionEngine::ScriptManager *manager)
 	{
 		manager->RegisterGlobalObject("GUI gui", this);
 	}

@@ -18,10 +18,10 @@ namespace FusionEngine
 	int ScriptedEntity::s_EntityTypeId = -1;
 	int ScriptedEntity::s_ScriptEntityTypeId = -1;
 
-	const type_info &ToCppType(int type_id, ScriptingEngine *engine)
+	const type_info &ToCppType(int type_id, ScriptManager *engine)
 	{
 		if (engine == NULL)
-			engine = ScriptingEngine::getSingletonPtr();
+			engine = ScriptManager::getSingletonPtr();
 
 		if (type_id == asTYPEID_BOOL)
 			return typeid(bool);
@@ -126,9 +126,9 @@ namespace FusionEngine
 		// Pointers / handles
 		else if (type_id & asTYPEID_APPOBJECT)
 		{
-			ScriptingEngine *engine = NULL; // TODO: engine param?
+			ScriptManager *engine = NULL; // TODO: engine param?
 			if (engine == NULL)
-				engine = ScriptingEngine::getSingletonPtr();
+				engine = ScriptManager::getSingletonPtr();
 			FSN_ASSERT(engine == NULL);
 
 			if (type_id & ScriptedEntity::s_ScriptEntityTypeId)
@@ -370,7 +370,7 @@ namespace FusionEngine
 		if (typeId & asTYPEID_SCRIPTARRAY)
 		{
 			propType |= pt_array_flag;
-			typeId = ScriptingEngine::getSingleton().GetEnginePtr()->GetObjectTypeById(typeId)->GetSubTypeId();
+			typeId = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(typeId)->GetSubTypeId();
 		}
 
 		// Basic types
@@ -405,7 +405,7 @@ namespace FusionEngine
 		// Otherwise, check for a application type
 		else if (typeId & asTYPEID_APPOBJECT)
 		{
-			ScriptingEngine *man = ScriptingEngine::getSingletonPtr();
+			ScriptManager *man = ScriptManager::getSingletonPtr();
 			// Check for entity type (this is seperated from the following types because it is always a pointer type)
 			if ((typeId & ~asTYPEID_OBJHANDLE) == s_EntityTypeId)
 				propType |= pt_entity;
@@ -562,14 +562,14 @@ namespace FusionEngine
 			}
 			if (!isPrimative) // Check for non-primative types:
 			{
-				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptManager::getSingletonPtr()->GetVectorTypeId())
 				{
 					//stateStream << *static_cast<Vector2*>( prop );
 					Vector2 *value = static_cast<Vector2*>( prop );
 					dev.write_float(value->x);
 					dev.write_float(value->y);
 				}
-				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
+				else if (typeId & ScriptManager::getSingletonPtr()->GetStringTypeId())
 				{
 					CScriptString *value = static_cast<CScriptString*>( prop );
 					std::string::size_type length = value->buffer.length();
@@ -688,7 +688,7 @@ namespace FusionEngine
 			// If the property isn't primative, check for other known types
 			if (!isPrimative)
 			{
-				if (typeId & ScriptingEngine::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptManager::getSingletonPtr()->GetVectorTypeId())
 				{
 					Vector2 value;
 					//stateStream >> value;
@@ -697,7 +697,7 @@ namespace FusionEngine
 					SKIP_EXCLUDED;
 					new(prop) Vector2(value);
 				}
-				else if (typeId & ScriptingEngine::getSingletonPtr()->GetStringTypeId())
+				else if (typeId & ScriptManager::getSingletonPtr()->GetStringTypeId())
 				{
 					std::string value;
 					std::string::size_type length;

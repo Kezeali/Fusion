@@ -55,7 +55,7 @@ namespace FusionEngine
 		};
 
 		EventType type;
-		ScriptingEngine *manager;
+		ScriptManager *manager;
 		const char* module_name;
 	};
 

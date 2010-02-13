@@ -888,7 +888,7 @@ namespace FusionEngine
 
 		if (entityRemoved) // Do a full GC cycle if entities were removed
 		{
-			ScriptingEngine::getSingleton().GetEnginePtr()->GarbageCollect();
+			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 		}
 	}
 
