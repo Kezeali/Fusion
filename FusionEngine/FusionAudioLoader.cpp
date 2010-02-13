@@ -25,6 +25,8 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionAudioLoader.h"
 
 #include <ClanLib/Sound/SoundProviders/soundprovider_factory.h>

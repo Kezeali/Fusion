@@ -27,7 +27,7 @@
 #include "../FusionEngine/FusionInputHandler.h"
 #include "../FusionEngine/FusionResourceManager.h"
 #include "../FusionEngine/FusionImageLoader.h"
-#include "../FusionEngine/FusionScriptingEngine.h"
+#include "../FusionEngine/FusionScriptingManager.h"
 
 // Script Type Registration
 //#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
@@ -97,7 +97,7 @@ public:
 
 			////////////////////
 			// Scripting Manager
-			ScriptingEngine *scriptingManager = new ScriptingEngine();
+			ScriptingManager *scriptingManager = new ScriptingManager();
 			asIScriptEngine* asEngine = scriptingManager->GetEnginePtr();
 
 			//RegisterPhysicsTypes(asEngine);
@@ -226,8 +226,6 @@ public:
 
 			while (systemMgr->KeepGoing())
 			{
-				dispWindow.get_gc().clear();
-
 				split = CL_System::get_time() - lastframe;
 				lastframe = CL_System::get_time();
 

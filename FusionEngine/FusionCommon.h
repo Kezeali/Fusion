@@ -42,60 +42,8 @@
 #pragma once
 #endif
 
-
-#include "Common.h"
-
-// Errors/Exceptions
 #include "FusionAssert.h"
-#include "FusionException.h"
-#include "FusionExceptionFactory.h"
-
 #include "FusionVector2.h"
-
-#include "FusionSlotContainer.h"
-
-#include "FusionHashable.h"
-
-#include "FusionStringFormatting.h"
-
-
-// Box2d (Physics)
-#include <Box2D/Box2D.h>
-
-// Boost
-//#include <boost/function.hpp>
-//#include <boost/bind.hpp>
-#include <boost/smart_ptr/intrusive_ptr.hpp>
-
-// XML
-#define USE_TINYXML
-
-//! XML version to write to the xml declaration of new files
-#define XML_STANDARD "1.0"
-
-#ifdef USE_XERCES
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xqilla/xqilla-simple.hpp>
-
-#elif defined(USE_TINYXML)
-//#define USE_TINYXPATH
-
-#ifdef USE_TINYXPATH
-#include "../tinyxml/xpath_static.h"
-#include "../tinyxml/ticpp.h"
-
-#else
-#include "../tinyxml/ticpp.h"
-#endif
-#endif
-
-// AngelScript
-//not #define AS_USE_NAMESPACE
-#if defined WIN32 && !defined ANGELSCRIPT_DLL_LIBRARY_IMPORT
-#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
-#endif
-#include <angelscript.h>
-
 
 namespace FusionEngine
 {
@@ -126,7 +74,6 @@ namespace FusionEngine
 	////////////////////////
 	// --General functions--
 	////////////////////////
-
 	template <typename T>
 	static T ToGameUnits(T sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
 
@@ -473,51 +420,48 @@ namespace FusionEngine
 	///////////////////////////
 	// --Forward declarations--
 	///////////////////////////
-	//! \todo List forward declarations in alphabetical order
+	class Camera;
 	class ClientOptions;
+	class Console;
+	class Editor;
+	class Entity;
 	class EntityFactory;
 	class EntitySynchroniser;
 	class EntityManager;
-	class StreamingManager;
+	class Exception;
+	class FileSystemException;
 	class GameMapLoader;
-	class Entity;
-	class PhysicalWorld;
-	class OntologicalSystem;
-	class Editor;
-	class Renderer;
-	class Renderable;
-	class Camera;
+	class InputDefinitionLoader;
+	class InputManager;
+	class Log;
+	class Logger;
+	class Module;
 	class NetworkSystem;
 	class Network;
-	class RakNetwork;
+	class OntologicalSystem;
 	class IPacket;
 	class PacketHandler;
 	class PacketHandlerNode;
+	class PhysicalWorld;
+	class RakNetwork;
+	class Renderable;
+	class Renderer;
+	class ResourceContainer;
+	class ResourceManager;
+	class ScriptedSlotWrapper;
+	class ScriptingEngine;
 	class Shape;
+	class StreamingManager;
 	class System;
 	class SystemMessage;
 	class SystemsManager;
-	class ScriptedSlotWrapper;
-	class ScriptingEngine;
-	class Module;
-	class Exception;
-	class FileSystemException;
-	class Logger;
-	class Console;
-	class Log;
-	class ResourceContainer;
-	class ResourceManager;
-	class InputDefinitionLoader;
-	class InputManager;
 
 
 	///////////////
 	// --Typedefs--
 	///////////////
-
 	//! Unique identifier type for game objects
 	typedef unsigned short ObjectID;
-	//typedef std::string ResourceID;
 
 	//! It's a vector. It's a string. It's a StringVector!
 	typedef std::vector<std::string> StringVector;
@@ -525,20 +469,15 @@ namespace FusionEngine
 	typedef std::set<std::string> StringSet;
 
 	//! Log pointer
-	typedef std::tr1::shared_ptr<Log> LogPtr;
+	typedef std::shared_ptr<Log> LogPtr;
 
 	//! System pointer
 	typedef std::shared_ptr<System> SystemPtr;
 
 	typedef boost::intrusive_ptr<Entity> EntityPtr;
 
-	typedef std::tr1::shared_ptr<Module> ModulePtr;
+	typedef std::shared_ptr<Module> ModulePtr;
 
-	//! Resource tags (aka. names/handles)
-	typedef std::string ResourceTag;
-
-	//! ID for script functions
-	typedef std::string ScriptFuncSig;
 }
 
 #endif
