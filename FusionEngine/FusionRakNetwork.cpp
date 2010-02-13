@@ -26,6 +26,8 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionRakNetwork.h"
 
 // Core raknet stuff

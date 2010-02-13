@@ -26,6 +26,8 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionStateManager.h"
 
 namespace FusionEngine

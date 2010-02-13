@@ -26,6 +26,8 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionException.h"
 
 namespace FusionEngine

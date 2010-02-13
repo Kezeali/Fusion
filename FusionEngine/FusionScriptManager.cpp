@@ -25,9 +25,10 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionScriptManager.h"
 
-//#include "FusionScriptingFunctions.h"
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
 //#include "FusionScriptDebugPreprocessor.h"
@@ -39,7 +40,6 @@
 #include "scriptmath.h"
 #include "scriptstdvector.h"
 
-// External
 #include <boost/functional/hash.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>

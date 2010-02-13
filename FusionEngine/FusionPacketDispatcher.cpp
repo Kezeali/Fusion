@@ -26,6 +26,8 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionPacketDispatcher.h"
 
 #include "FusionNetwork.h"

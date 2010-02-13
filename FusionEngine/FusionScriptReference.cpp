@@ -25,6 +25,8 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionScriptReference.h"
 
 #include "FusionScriptManager.h"

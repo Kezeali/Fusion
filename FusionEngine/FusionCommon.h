@@ -45,19 +45,84 @@
 #include "FusionAssert.h"
 #include "FusionVector2.h"
 
+#include <angelscript.h>
+
+#include <string>
+#include <set>
+
 namespace FusionEngine
 {
+
+	///////////////////////////
+	// --Forward declarations--
+	///////////////////////////
+	class Camera;
+	class ClientOptions;
+	class Console;
+	class Editor;
+	class Entity;
+	class EntityFactory;
+	class EntitySynchroniser;
+	class EntityManager;
+	class Exception;
+	class FileSystemException;
+	class GameMapLoader;
+	class InputDefinitionLoader;
+	class InputManager;
+	class Log;
+	class Logger;
+	class Module;
+	class NetworkSystem;
+	class Network;
+	class OntologicalSystem;
+	class IPacket;
+	class PacketHandler;
+	class PacketHandlerNode;
+	class PhysicalWorld;
+	class RakNetwork;
+	class Renderable;
+	class Renderer;
+	class ResourceContainer;
+	class ResourceManager;
+	class ScriptedSlotWrapper;
+	class ScriptManager;
+	class Shape;
+	class StreamingManager;
+	class System;
+	class SystemMessage;
+	class SystemsManager;
+
+
+	///////////////
+	// --Typedefs--
+	///////////////
+	//! Unique identifier type for game objects
+	typedef unsigned short ObjectID;
+
+	//! It's a vector. It's a string. It's a StringVector!
+	typedef std::vector<std::string> StringVector;
+
+	typedef std::set<std::string> StringSet;
+
+	//! Log pointer
+	typedef std::shared_ptr<Log> LogPtr;
+
+	//! System pointer
+	typedef std::shared_ptr<System> SystemPtr;
+
+	typedef boost::intrusive_ptr<Entity> EntityPtr;
+
+	typedef std::shared_ptr<Module> ModulePtr;
 
 	typedef Vector2T<float> Vector2;
 	typedef Vector2T<int> Vector2i;
 
 	typedef std::vector<Vector2> Vector2Array;
 
-	//! Max local (split-screen, hotseat, etc.) players per client
-	static const unsigned int g_MaxLocalPlayers = 16;
 
-	static const size_t s_EntityDomainCount = 8;
-
+	////////////////
+	// --Constants (used by common functions below)
+	////////////////
 	static const float s_pi = 3.1415926f;
 
 	//! Ratio of degrees to radians
@@ -67,9 +132,20 @@ namespace FusionEngine
 
 	static const double s_FloatComparisonEpsilon = 0.009;
 
+	//! Scale for converting physics units to rendering units
 	static const float s_GameUnitsPerSimUnit = 100.0f;
+	//! For converting between game units and physics units
+	/*
+	* \see s_GameUnitsPerSimUnit
+	*/
 	static const float s_SimUnitsPerGameUnit = 1.0f/s_GameUnitsPerSimUnit;
 
+	//! Max local (split-screen, hotseat, etc.) players per client
+	/*
+	* This is primarily used to define the size of constant size arrays but 
+	* is also used for checking player numbers given by config files, etc.
+	*/
+	static const unsigned int s_MaxLocalPlayers = 16;
 
 	////////////////////////
 	// --General functions--
@@ -78,7 +154,7 @@ namespace FusionEngine
 	static T ToGameUnits(T sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
 
 	template <typename T>
-	static T ToSimUnits(T game_coord) { return game_coord * (1.f / s_GameUnitsPerSimUnit); }
+	static T ToSimUnits(T game_coord) { return game_coord * s_SimUnitsPerGameUnit; }
 
 	static inline bool fe_fzero(float value) { return fabs(value) <= (float)s_FloatComparisonEpsilon; }
 	static inline bool fe_fzero(double value) { return fabs(value) <= s_FloatComparisonEpsilon; }
@@ -103,9 +179,9 @@ namespace FusionEngine
 	static inline double fe_radtodeg(double rad) { return rad * s_RadToDeg; }
 
 	/*!
-	 * /brief
-	 * Determines whether a string contains only alphabet characters
-	 */
+	* /brief
+	* Determines whether a string contains only alphabet characters
+	*/
 	static bool fe_isalpha(const std::string &str)
 	{
 		for (std::string::const_iterator it = str.begin(), end = str.end(); it != end; ++it)
@@ -117,12 +193,12 @@ namespace FusionEngine
 	}
 
 	/*!
-	 * /brief
-	 * Determines whether a string contains only numeric characters (digits 1-9)
-	 *
-	 * /remarks
-	 * This will not work for floating point or negative numbers, as they contain punctuation.
-	 */
+	* /brief
+	* Determines whether a string contains only numeric characters (digits 1-9)
+	*
+	* /remarks
+	* This will not work for floating point or negative numbers, as they contain punctuation.
+	*/
 	static bool fe_issimplenumeric(const std::string &str)
 	{
 		if (str.empty())
@@ -137,9 +213,9 @@ namespace FusionEngine
 	}
 
 	/*!
-	 * /brief
-	 * Determines whether a string is a number
-	 */
+	* /brief
+	* Determines whether a string is a number
+	*/
 	static bool fe_isnumeric(const std::string &str)
 	{
 		// Empty string is not considered numeric
@@ -275,8 +351,8 @@ namespace FusionEngine
 
 	//! toupper()-like function for C++ strings
 	/*!
-	 * Transformation is done directly to the passed object
-	 */
+	* Transformation is done directly to the passed object
+	*/
 	static void fe_toupper(std::string &str)
 	{
 		std::transform(str.begin(), str.end(), str.begin(), toupper);
@@ -284,8 +360,8 @@ namespace FusionEngine
 
 	//! toupper()-like function for C++ strings
 	/*!
-	 * Transformation is done directly to the passed object
-	 */
+	* Transformation is done directly to the passed object
+	*/
 	static void fe_tolower(std::string &str)
 	{
 		std::transform(str.begin(), str.end(), str.begin(), tolower);
@@ -293,12 +369,12 @@ namespace FusionEngine
 
 	//! toupper() function for C strings
 	/*!
-	 * \param[out] upper
-	 * A pointer to the allocated memory in which the upper-case string will written
-	 *
-	 * \param[in] str
-	 * The null-terminated string to make uppercase
-	 */
+	* \param[out] upper
+	* A pointer to the allocated memory in which the upper-case string will written
+	*
+	* \param[in] str
+	* The null-terminated string to make uppercase
+	*/
 	static void fe_toupper(char *upper, const char *str)
 	{
 		for (unsigned int i = 0; i < strlen(str); i++)
@@ -332,11 +408,11 @@ namespace FusionEngine
 	//{
 	//	_itoa_s(v, buffer, radix);
 	//}
-//#ifdef _WIN32
-//#define fe_itoa(v, &buffer, radix) _itoa_s(v, buffer, radix)
-//#else
-//#define fe_itoa(v, &buffer, radix) itoa(v, buffer, radix)
-//#endif
+	//#ifdef _WIN32
+	//#define fe_itoa(v, &buffer, radix) _itoa_s(v, buffer, radix)
+	//#else
+	//#define fe_itoa(v, &buffer, radix) itoa(v, buffer, radix)
+	//#endif
 
 	//! Returns rounded value converted to int64
 	static inline long long fe_lround(double v) { return static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
@@ -415,68 +491,6 @@ namespace FusionEngine
 
 		return context->GetEngine()->GetModule(ctxGetModuleName(context), flag);
 	}
-
-
-	///////////////////////////
-	// --Forward declarations--
-	///////////////////////////
-	class Camera;
-	class ClientOptions;
-	class Console;
-	class Editor;
-	class Entity;
-	class EntityFactory;
-	class EntitySynchroniser;
-	class EntityManager;
-	class Exception;
-	class FileSystemException;
-	class GameMapLoader;
-	class InputDefinitionLoader;
-	class InputManager;
-	class Log;
-	class Logger;
-	class Module;
-	class NetworkSystem;
-	class Network;
-	class OntologicalSystem;
-	class IPacket;
-	class PacketHandler;
-	class PacketHandlerNode;
-	class PhysicalWorld;
-	class RakNetwork;
-	class Renderable;
-	class Renderer;
-	class ResourceContainer;
-	class ResourceManager;
-	class ScriptedSlotWrapper;
-	class ScriptManager;
-	class Shape;
-	class StreamingManager;
-	class System;
-	class SystemMessage;
-	class SystemsManager;
-
-
-	///////////////
-	// --Typedefs--
-	///////////////
-	//! Unique identifier type for game objects
-	typedef unsigned short ObjectID;
-
-	//! It's a vector. It's a string. It's a StringVector!
-	typedef std::vector<std::string> StringVector;
-
-	typedef std::set<std::string> StringSet;
-
-	//! Log pointer
-	typedef std::shared_ptr<Log> LogPtr;
-
-	//! System pointer
-	typedef std::shared_ptr<System> SystemPtr;
-
-	typedef boost::intrusive_ptr<Entity> EntityPtr;
-
-	typedef std::shared_ptr<Module> ModulePtr;
 
 }
 

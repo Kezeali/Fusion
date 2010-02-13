@@ -194,7 +194,7 @@ namespace FusionEngine
 		else if (domain == "temp")
 			return TEMP_DOMAIN;
 		else
-			return UNRESERVED_DOMAIN;
+			return USER_DOMAIN;
 	}
 
 	void EntityDefinition::Parse(const std::string &current_folder, ticpp::Document &document)

@@ -1,11 +1,6 @@
+#include "Common.h"
 
-#include "FusionCommon.h"
-
-// Class
 #include "FusionScriptSound.h"
-
-// Fusion
-
 
 
 namespace FusionEngine

@@ -25,6 +25,8 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionLogPhysFS.h"
 
 //#include "PhysFS++.h"

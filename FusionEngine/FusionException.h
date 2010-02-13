@@ -27,7 +27,7 @@
 #pragma once
 #endif
 
-#include "Common.h"
+#include <string>
 
 namespace FusionEngine
 {

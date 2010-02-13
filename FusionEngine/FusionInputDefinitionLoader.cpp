@@ -25,7 +25,7 @@
 		Elliot Hayward
 */
 
-#include "FusionCommon.h"
+#include "Common.h"
 
 #include "FusionInputDefinitionLoader.h"
 

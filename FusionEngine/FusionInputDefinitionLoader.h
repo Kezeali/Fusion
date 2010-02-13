@@ -35,8 +35,9 @@
 #include "FusionCommon.h"
 
 #include "FusionResourceManager.h"
-#include "FusionScriptReference.h"
-//#include "FusionCommand.h"
+
+#include <memory>
+#include <string>
 
 namespace FusionEngine
 {
@@ -59,7 +60,7 @@ namespace FusionEngine
 		size_t Index;
 	};
 
-	typedef std::tr1::shared_ptr<InputDefinition> InputDefinitionPtr;
+	typedef std::shared_ptr<InputDefinition> InputDefinitionPtr;
 
 	/*!
 	 * \brief
@@ -84,20 +85,8 @@ namespace FusionEngine
 		//! Loads an input def. file
 		void Load(const ticpp::Document &doc);
 
-		//! Unloads an input plugin
-		//void DropInputs(const std::string &name);
-
 		//! Unloads everything
 		void Clear();
-
-		//! Generates and compiles a Command class
-		/*!
-		 * The Command class generated will contain properties corresponding
-		 * to each command node in the previously parsed XML documents
-		 */
-		//void CreateCommandClass(ScriptManager *eng);
-
-		//ScriptObject CreateCommand(ScriptManager *eng, const Command& command);
 
 		const InputDefinitionArray &GetInputDefinitions() const;
 

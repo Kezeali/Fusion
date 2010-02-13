@@ -254,7 +254,7 @@ namespace FusionEngine
 			CallbackDecl(asIScriptObject *obj, std::string method)
 				: object(obj), method(method)
 			{}
-		} m_AddPlayerCallbacks[g_MaxLocalPlayers];
+		} m_AddPlayerCallbacks[s_MaxLocalPlayers];
 		CallbackDecl m_AddAnyPlayerCallback;
 
 		ObjectID m_NextPlayerIndex;

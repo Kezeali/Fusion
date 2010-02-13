@@ -32,7 +32,25 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionStdHeaders.h"
+
+#define USE_TINYXML
+//! XML version to write to the xml declaration of new files
+#define XML_STANDARD "1.0"
+
+#ifdef USE_XERCES
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xqilla/xqilla-simple.hpp>
+
+#elif defined(USE_TINYXML)
+//#define USE_TINYXPATH
+#ifdef USE_TINYXPATH
+#include "../tinyxml/xpath_static.h"
+#include "../tinyxml/ticpp.h"
+#else
+#include "../tinyxml/ticpp.h"
+#endif
+#endif
 
 
 namespace FusionEngine

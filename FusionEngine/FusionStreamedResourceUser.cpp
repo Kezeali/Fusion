@@ -20,7 +20,7 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "FusionCommon.h"
+#include "Common.h"
 
 #include "FusionStreamedResourceUser.h"
 

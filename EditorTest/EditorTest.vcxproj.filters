@@ -191,9 +191,6 @@
     <ClCompile Include="..\FusionEngine\FusionScriptVector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionScriptXML.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -216,9 +213,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionXML.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FusionEngine\PhysFS++.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\FusionEngine\scriptmath.cpp">
@@ -478,9 +472,6 @@
     <ClInclude Include="..\FusionEngine\FusionScriptVector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionScriptXML.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionSerialisedData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -523,9 +514,6 @@
     <ClInclude Include="..\FusionEngine\FusionXML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\PhysFS++.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\physfs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -551,6 +539,9 @@
       <Filter>tinyxml</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionScriptManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionStdHeaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

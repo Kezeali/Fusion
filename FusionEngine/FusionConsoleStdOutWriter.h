@@ -37,6 +37,8 @@
 
 #include "FusionConsole.h"
 
+#include <boost/signals2.hpp>
+
 namespace FusionEngine
 {
 

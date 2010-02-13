@@ -35,11 +35,11 @@
 
 #include "FusionCommon.h"
 
-// Inherited
 #include "FusionSingleton.h"
 
 #include "FusionNetwork.h"
-#include "FusionBoostSignals2.h"
+
+#include <boost/signals2.hpp>
 
 
 namespace FusionEngine
@@ -57,7 +57,7 @@ namespace FusionEngine
 			bool IsInGame;
 			PlayerInfo()
 				: NetIndex(0),
-				LocalIndex(g_MaxLocalPlayers),
+				LocalIndex(s_MaxLocalPlayers),
 				IsInGame(true)
 			{}
 

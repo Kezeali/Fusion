@@ -25,13 +25,13 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionLog.h"
 
-/// Fusion
 #include "FusionException.h"
 
 #include <time.h>
-#include <boost/foreach.hpp>
 
 namespace FusionEngine
 {

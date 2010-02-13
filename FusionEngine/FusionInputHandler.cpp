@@ -20,11 +20,13 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
+#include "Common.h"
+
 #include "FusionInputHandler.h"
 
-//#include "FusionInputPluginLoader.h"
 #include "FusionLogger.h"
 #include "FusionXML.h"
+
 
 namespace FusionEngine
 {

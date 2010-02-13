@@ -35,17 +35,13 @@
 
 #include "FusionCommon.h"
 
-//#include "FusionBoostSignals2.h"
-#include <boost/signals2/signal.hpp>
-//#include <boost/bind.hpp>
-
 // Inherited
 #include "FusionSingleton.h"
 
-// Fusion
 #include "FusionScriptModule.h"
 
-// External
+#include <boost/signals2/signal.hpp>
+#include <boost/function.hpp>
 #include <containers/structured_map.hpp>
 
 namespace FusionEngine
@@ -80,7 +76,7 @@ namespace FusionEngine
 			CommandCallback callback;
 			AutocompleteCallback autocomplete;
 		};
-		typedef std::tr1::unordered_map<std::string, CommandFunctions> CommandCallbackMap;
+		typedef std::unordered_map<std::string, CommandFunctions> CommandCallbackMap;
 
 		struct CommandHelp
 		{

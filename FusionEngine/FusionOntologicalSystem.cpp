@@ -254,7 +254,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::CleanUp()
 	{
-		for (size_t i = 0; i < g_MaxLocalPlayers; ++i)
+		for (size_t i = 0; i < s_MaxLocalPlayers; ++i)
 		{
 			if (m_AddPlayerCallbacks[i].object != NULL)
 			{
@@ -549,7 +549,7 @@ namespace FusionEngine
 	{
 		int numPlayers;
 		m_Options->GetOption("num_local_players", &numPlayers);
-		if (numPlayers < g_MaxLocalPlayers)
+		if (numPlayers < s_MaxLocalPlayers)
 		{
 			unsigned int playerIndex = (unsigned)numPlayers;
 
@@ -597,7 +597,7 @@ namespace FusionEngine
 			return playerIndex;
 		}
 
-		else return g_MaxLocalPlayers;
+		else return s_MaxLocalPlayers;
 	}
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)
@@ -627,7 +627,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::SetAddPlayerCallback(unsigned int player, asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
-		if (player < g_MaxLocalPlayers)
+		if (player < s_MaxLocalPlayers)
 			createScriptCallback(m_AddPlayerCallbacks[player], callback_obj, callback_decl);
 	}
 

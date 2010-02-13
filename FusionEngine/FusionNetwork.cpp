@@ -25,6 +25,9 @@
 		Elliot Hayward
 
 */
+
+#include "Common.h"
+
 #include "FusionNetwork.h"
 
 namespace FusionEngine

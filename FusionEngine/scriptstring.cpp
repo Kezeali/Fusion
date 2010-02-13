@@ -1,10 +1,11 @@
-#include <assert.h>
+#include "Common.h"
+
+#include "FusionAssert.h"
+
 #include <string.h> // strstr
 #include <boost/lexical_cast.hpp>
 #include "scriptstring.h"
 using namespace std;
-
-BEGIN_AS_NAMESPACE
 
 //--------------
 // constructors
@@ -36,7 +37,7 @@ CScriptString::CScriptString(const CScriptString &s)
 
 CScriptString::~CScriptString()
 {
-	//assert( refCount == 0 );
+	//FSN_ASSERT( refCount == 0 );
 }
 
 //--------------------
@@ -606,85 +607,85 @@ int RegisterScriptString_Native(asIScriptEngine *engine)
 	int r, typeId;
 
 	// Register the type
-	r = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); assert( r >= 0 );
+	r = engine->RegisterObjectType("string", sizeof(CScriptString), asOBJ_REF); FSN_ASSERT( r >= 0 );
 	typeId = engine->GetTypeIdByDecl("string");
 
 	// Register the object operator overloads
 	// Note: We don't have to register the destructor, since the object uses reference counting
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f()",                 asFUNCTION(StringDefaultFactory), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f(const string &in)", asFUNCTION(StringCopyFactory), asCALL_CDECL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(CScriptString,AddRef), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(CScriptString,Release), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(CScriptString, operator =, (const CScriptString&), CScriptString&), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(const string &in)", asMETHODPR(CScriptString, operator+=, (const CScriptString&), CScriptString&), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f()",                 asFUNCTION(StringDefaultFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_FACTORY,    "string @f(const string &in)", asFUNCTION(StringCopyFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(CScriptString,AddRef), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(CScriptString,Release), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(CScriptString, operator =, (const CScriptString&), CScriptString&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(const string &in)", asMETHODPR(CScriptString, operator+=, (const CScriptString&), CScriptString&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asFUNCTIONPR(operator==, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in)", asMETHODPR(std::string, compare, (const std::string&) const, int), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in)", asFUNCTIONPR(operator +, (const CScriptString &, const CScriptString &), CScriptString*), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in)", asFUNCTIONPR(operator==, (const string &, const string &), bool), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in)", asMETHODPR(std::string, compare, (const std::string&) const, int), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in)", asFUNCTIONPR(operator +, (const CScriptString &, const CScriptString &), CScriptString*), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
 	// Register the index operator, both as a mutator and as an inspector
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "uint8 &f(uint)", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "const uint8 &f(uint) const", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "uint8 &f(uint)", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_INDEX, "const uint8 &f(uint) const", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 	// Register the factory to return a handle to a new string
 	// Note: We must register the string factory after the basic behaviours,
 	// otherwise the library will not allow the use of object handles for this type
-	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); assert( r >= 0 );
+	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 
 	// Register the object methods
 	if( sizeof(size_t) == 4 )
 	{
-		r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 	}
 	else
 	{
-		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); assert( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); assert( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 	}
 
 	// TODO: Add factory  string(const string &in str, int repeatCount)
 
 	// TODO: Add explicit type conversion via constructor and value cast
 
-	r = engine->RegisterObjectMethod("string", "bool toBool() const", asFUNCTION(StringParseValue<bool>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "int toInt() const", asFUNCTION(StringParseValue<int>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "uint toUInt() const", asFUNCTION(StringParseValue<unsigned int>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "float toFloat() const", asFUNCTION(StringParseValue<float>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "double toDouble() const", asFUNCTION(StringParseValue<double>), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool toBool() const", asFUNCTION(StringParseValue<bool>), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int toInt() const", asFUNCTION(StringParseValue<int>), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "uint toUInt() const", asFUNCTION(StringParseValue<unsigned int>), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "float toFloat() const", asFUNCTION(StringParseValue<float>), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "double toDouble() const", asFUNCTION(StringParseValue<double>), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "bool toBool(bool) const", asMETHODPR(CScriptString,ToBool,(bool) const,bool), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "int toInt(int) const", asMETHODPR(CScriptString,ToInt,(int) const,int), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "uint toUInt(uint) const", asMETHODPR(CScriptString,ToUInt,(unsigned int) const,unsigned int), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "float toFloat(float) const", asMETHODPR(CScriptString,ToFloat,(float) const,float), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "double toDouble(double) const", asMETHODPR(CScriptString,ToDouble,(double) const,double), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool toBool(bool) const", asMETHODPR(CScriptString,ToBool,(bool) const,bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "int toInt(int) const", asMETHODPR(CScriptString,ToInt,(int) const,int), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "uint toUInt(uint) const", asMETHODPR(CScriptString,ToUInt,(unsigned int) const,unsigned int), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "float toFloat(float) const", asMETHODPR(CScriptString,ToFloat,(float) const,float), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "double toDouble(double) const", asMETHODPR(CScriptString,ToDouble,(double) const,double), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "bool parseBool(bool&out) const", asFUNCTIONPR(StringParseValue_Checked, (bool&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "bool parseInt(int&out) const", asFUNCTIONPR(StringParseValue_Checked, (int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "bool parseUInt(uint&out) const", asFUNCTIONPR(StringParseValue_Checked, (unsigned int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "bool parseFloat(float&out) const", asFUNCTIONPR(StringParseValue_Checked, (float&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "bool parseDouble(double&out) const", asFUNCTIONPR(StringParseValue_Checked, (double&, CScriptString&), bool), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseBool(bool&out) const", asFUNCTIONPR(StringParseValue_Checked, (bool&, CScriptString&), bool), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseInt(int&out) const", asFUNCTIONPR(StringParseValue_Checked, (int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseUInt(uint&out) const", asFUNCTIONPR(StringParseValue_Checked, (unsigned int&, CScriptString&), bool), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseFloat(float&out) const", asFUNCTIONPR(StringParseValue_Checked, (float&, CScriptString&), bool), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool parseDouble(double&out) const", asFUNCTIONPR(StringParseValue_Checked, (double&, CScriptString&), bool), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 	// Automatic conversion from values
-	r = engine->RegisterObjectMethod("string", "string &opAssign(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)", asFUNCTION(AddAssignDoubleToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd(double)", asFUNCTION(AddStringDouble), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(double)", asFUNCTION(AddDoubleString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(double)", asFUNCTION(AssignDoubleToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)", asFUNCTION(AddAssignDoubleToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd(double)", asFUNCTION(AddStringDouble), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(double)", asFUNCTION(AddDoubleString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(float)", asFUNCTION(AssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)", asFUNCTION(AddAssignFloatToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd(float)", asFUNCTION(AddStringFloat), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(float)", asFUNCTION(AddFloatString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(float)", asFUNCTION(AssignFloatToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)", asFUNCTION(AddAssignFloatToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd(float)", asFUNCTION(AddStringFloat), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(float)", asFUNCTION(AddFloatString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(int)", asFUNCTION(AssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int)", asFUNCTION(AddAssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in, int)", asFUNCTION(AddStringInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(int, const string &in)", asFUNCTION(AddIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(int)", asFUNCTION(AssignIntToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int)", asFUNCTION(AddAssignIntToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd(const string &in, int)", asFUNCTION(AddStringInt), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(int, const string &in)", asFUNCTION(AddIntString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(uint)", asFUNCTION(AssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint)", asFUNCTION(AddAssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd(uint)", asFUNCTION(AddStringUInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(uint)", asFUNCTION(AddUIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(uint)", asFUNCTION(AssignUIntToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint)", asFUNCTION(AddAssignUIntToString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd(uint)", asFUNCTION(AddStringUInt), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string@ opAdd_r(uint)", asFUNCTION(AddUIntString), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 	return typeId;
 }
@@ -695,7 +696,4 @@ int RegisterScriptString(asIScriptEngine *engine)
 		return RegisterScriptString_Native(engine);
 	return -1;
 }
-
-END_AS_NAMESPACE
-
 

@@ -60,11 +60,11 @@ namespace FusionEngine
 	{
 	public:
 		//! ResourceLoader pointer
-		typedef std::tr1::shared_ptr<ResourceLoader> ResourceLoaderSpt;
+		typedef std::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
-		typedef std::tr1::unordered_map<ResourceTag, ResourceDataPtr> ResourceMap;
+		typedef std::unordered_map<std::string, ResourceDataPtr> ResourceMap;
 		//! Maps Resource types to ResourceLoader factory methods
-		typedef std::tr1::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
+		typedef std::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
 		typedef std::vector<ResourceDataPtr> ResourceList;
 		typedef std::set<ResourceContainer*> UnreferencedResourceSet;

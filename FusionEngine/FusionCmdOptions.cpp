@@ -26,6 +26,8 @@
 
 */
 
+#include "Common.h"
+
 #include "FusionCmdOptions.h"
 
 namespace FusionEngine

@@ -27,7 +27,7 @@
 #include "../FusionEngine/FusionInputHandler.h"
 #include "../FusionEngine/FusionResourceManager.h"
 #include "../FusionEngine/FusionImageLoader.h"
-#include "../FusionEngine/FusionScriptingManager.h"
+#include "../FusionEngine/FusionScriptManager.h"
 
 // Script Type Registration
 //#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
@@ -96,8 +96,8 @@ public:
 #endif
 
 			////////////////////
-			// Scripting Manager
-			ScriptingManager *scriptingManager = new ScriptingManager();
+			// Script Manager
+			ScriptManager *scriptingManager = new ScriptManager();
 			asIScriptEngine* asEngine = scriptingManager->GetEnginePtr();
 
 			//RegisterPhysicsTypes(asEngine);

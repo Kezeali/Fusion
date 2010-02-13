@@ -238,10 +238,10 @@ namespace FusionEngine
 
 	void EntitySynchroniser::OnEntityAdded(EntityPtr &entity)
 	{
-		//for (unsigned int i = 0; i < g_MaxLocalPlayers; ++i)
+		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
 		//{
 		//	const PlayerRegistry::PlayerInfo &playerInfo = ;
-		//	if (playerInfo.LocalIndex != g_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
+		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
 		//}
 
 		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByNetIndex(entity->GetOwnerID());

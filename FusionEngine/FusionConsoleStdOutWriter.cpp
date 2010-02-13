@@ -1,4 +1,6 @@
 
+#include "Common.h"
+
 #include "FusionConsoleStdOutWriter.h"
 
 #include <boost/bind.hpp>

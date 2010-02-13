@@ -34,7 +34,10 @@
 
 #include "FusionScriptReference.h"
 #include "FusionResourcePointer.h"
-#include "FusionBoostSignals2.h"
+
+#include <boost/signals2/connection.hpp>
+
+#include <string>
 
 
 namespace FusionEngine
@@ -59,7 +62,7 @@ namespace FusionEngine
 	protected:
 		CL_SoundOutput m_SoundOutput;
 
-		bsig2::connection m_ModuleConnection;
+		boost::signals2::connection m_ModuleConnection;
 	};
 
 	//! Ref-counted wrapper for CL_SoundBuffer_Session

@@ -57,16 +57,16 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <StringPooling>
       </StringPooling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>Common.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -163,7 +163,6 @@
     <ClCompile Include="..\FusionEngine\FusionScriptReference.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptSound.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptVector.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionScriptXML.cpp" />
     <ClCompile Include="..\FusionEngine\FusionState.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStateManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
@@ -172,13 +171,24 @@
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
-    <ClCompile Include="..\tinyxml\ticpp.cpp" />
-    <ClCompile Include="..\tinyxml\tinystr.cpp" />
-    <ClCompile Include="..\tinyxml\tinyxml.cpp" />
-    <ClCompile Include="..\tinyxml\tinyxmlerror.cpp" />
-    <ClCompile Include="..\tinyxml\tinyxmlparser.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="..\FusionEngine\PhysFS++.cpp" />
+    <ClCompile Include="..\tinyxml\ticpp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinystr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxml.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxmlerror.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxmlparser.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/Common.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
@@ -260,13 +270,13 @@
     <ClInclude Include="..\FusionEngine\FusionScriptSound.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptTypeRegistrationUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptVector.h" />
-    <ClInclude Include="..\FusionEngine\FusionScriptXML.h" />
     <ClInclude Include="..\FusionEngine\FusionSerialisedData.h" />
     <ClInclude Include="..\FusionEngine\FusionSingleton.h" />
     <ClInclude Include="..\FusionEngine\FusionSlotContainer.h" />
     <ClInclude Include="..\FusionEngine\FusionState.h" />
     <ClInclude Include="..\FusionEngine\FusionStateManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStateMessage.h" />
+    <ClInclude Include="..\FusionEngine\FusionStdHeaders.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamedResourceUser.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
@@ -275,7 +285,6 @@
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
-    <ClInclude Include="..\FusionEngine\PhysFS++.h" />
     <ClInclude Include="..\FusionEngine\physfs.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
     <ClInclude Include="..\FusionEngine\scriptstdvector.h" />

@@ -1,12 +1,10 @@
 
-#include "FusionCommon.h"
+#include "Common.h"
 
-// Class
 #include "FusionScriptedEntity.h"
 
-// Fusion
+#include "FusionCommon.h"
 #include "FusionResourceManager.h"
-
 #include "scriptstring.h"
 
 #include <ScriptUtils/Inheritance/TypeTraits.h>

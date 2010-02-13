@@ -25,6 +25,8 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionScriptVector.h"
 
 namespace FusionEngine { namespace Scripting

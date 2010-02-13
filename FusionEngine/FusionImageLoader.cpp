@@ -25,11 +25,12 @@
 		Elliot Hayward
 */
 
+#include "Common.h"
+
 #include "FusionImageLoader.h"
 
 #include "FusionXml.h"
 #include "FusionPhysFS.h"
-//#include "FusionResourceManager.h"
 
 
 namespace FusionEngine

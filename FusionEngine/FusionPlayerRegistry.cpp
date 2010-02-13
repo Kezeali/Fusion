@@ -26,7 +26,7 @@
 
 */
 
-#include "FusionCommon.h"
+#include "Common.h"
 
 #include "FusionPlayerRegistry.h"
 
@@ -89,7 +89,7 @@ namespace FusionEngine
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->addPlayer(net_index, g_MaxLocalPlayers, system_address);
+		registry->addPlayer(net_index, s_MaxLocalPlayers, system_address);
 	}
 
 	void PlayerRegistry::RemovePlayer(ObjectID net_index)
@@ -178,14 +178,14 @@ namespace FusionEngine
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		return registry->getPlayerByNetIndex(net_index).LocalIndex != g_MaxLocalPlayers;
+		return registry->getPlayerByNetIndex(net_index).LocalIndex != s_MaxLocalPlayers;
 	}
 
 	PlayerRegistry::PlayerRegistry()
 		: m_Arbitrator(0)
 	{
 		m_NoSuchPlayer.NetIndex = 0;
-		m_NoSuchPlayer.LocalIndex = g_MaxLocalPlayers;
+		m_NoSuchPlayer.LocalIndex = s_MaxLocalPlayers;
 		m_NoSuchPlayer.IsInGame = false;
 	}
 
@@ -224,7 +224,7 @@ namespace FusionEngine
 			PlayerInfo &playerInfo = it->second;
 			if (playerInfo.System == system_address)
 			{
-				if (playerInfo.LocalIndex == g_MaxLocalPlayers)
+				if (playerInfo.LocalIndex == s_MaxLocalPlayers)
 					m_ByLocalIndex.erase(playerInfo.LocalIndex);
 				m_ByNetIndex.erase(playerInfo.NetIndex);
 			}

@@ -44,24 +44,24 @@ namespace FusionEngine
 		//// Set the global controls to some valid values.
 		//DefaultGlobalControls();
 
-		//PlayerInputs.resize(g_MaxLocalPlayers);
+		//PlayerInputs.resize(s_MaxLocalPlayers);
 		//// Do the same for all the players
-		//for (ObjectID i=0; i<g_MaxLocalPlayers; i++)
+		//for (ObjectID i=0; i<s_MaxLocalPlayers; i++)
 		//{
 		//	DefaultPlayerControls(i);
 		//}
 
 		// Make sure there's enough room for all the player options objects
-		//m_PlayerOptions.resize(g_MaxLocalPlayers);
-		m_PlayerVariables.resize(g_MaxLocalPlayers);
+		//m_PlayerOptions.resize(s_MaxLocalPlayers);
+		m_PlayerVariables.resize(s_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename, const std::string &type)
 		: m_Type(type),
 		m_NumLocalPlayers(0)
 	{
-		//m_PlayerOptions.resize(g_MaxLocalPlayers);
-		m_PlayerVariables.resize(g_MaxLocalPlayers);
+		//m_PlayerOptions.resize(s_MaxLocalPlayers);
+		m_PlayerVariables.resize(s_MaxLocalPlayers);
 
 		if (!LoadFromFile(filename))
 			SaveToFile(filename);

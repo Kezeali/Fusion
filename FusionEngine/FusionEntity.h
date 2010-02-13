@@ -33,14 +33,12 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
-
 // Inherited
 #include "FusionPhysicsCallback.h"
 #include "FusionRefCounted.h"
 #include "FusionStreamedResourceUser.h"
 
-// Fusion
+#include "FusionCommon.h"
 #include "FusionPlayerInput.h"
 #include "FusionSerialisedData.h"
 #include "FusionEntityDeserialiser.h"
@@ -52,9 +50,12 @@
 namespace FusionEngine
 {
 
+	//! Number of 'domains' (containers) which can be used to store entities
+	static const size_t s_EntityDomainCount = 8;
+
 	typedef unsigned char EntityDomain;
 
-	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, TEMP_DOMAIN, UNRESERVED_DOMAIN };
+	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, TEMP_DOMAIN, USER_DOMAIN };
 
 	typedef std::vector<EntityPtr> EntityArray;
 
