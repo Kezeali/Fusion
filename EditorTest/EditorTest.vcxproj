@@ -158,7 +158,7 @@
     <ClCompile Include="..\FusionEngine\FusionScriptedConsoleCommand.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptedEntity.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptedSlots.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionScriptingManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptModule.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptReference.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptSound.cpp" />
@@ -253,7 +253,7 @@
     <ClInclude Include="..\FusionEngine\FusionScriptedConsoleCommand.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptedEntity.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptedSlots.h" />
-    <ClInclude Include="..\FusionEngine\FusionScriptingManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptManager.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptModule.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptPreprocessor.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptReference.h" />

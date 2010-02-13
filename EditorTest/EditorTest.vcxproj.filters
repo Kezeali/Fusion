@@ -248,7 +248,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionScriptingManager.cpp">
+    <ClCompile Include="..\FusionEngine\FusionScriptManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -550,7 +550,7 @@
     <ClInclude Include="..\tinyxml\tinyxml.h">
       <Filter>tinyxml</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionScriptingManager.h">
+    <ClInclude Include="..\FusionEngine\FusionScriptManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
