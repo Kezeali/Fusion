@@ -33,15 +33,15 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-// Inherited
+#include <boost/signals2.hpp>
+
 #include "FusionSingleton.h"
 
-// Fusion
 #include "FusionScriptModule.h"
 #include "FusionEntityDefinitionData.h"
-#include "FusionBoostSignals2.h"
+#include "FusionXML.h"
 
 namespace FusionEngine
 {

@@ -30,25 +30,25 @@
 
 #include "FusionEditor.h"
 
-#include "FusionBoostSignals2.h"
-#include "FusionRenderer.h"
-#include "FusionEntityFactory.h"
-#include "FusionEntityManager.h"
-#include "FusionPhysicalEntityManager.h"
-#include "FusionScriptManager.h"
-#include "FusionGUI.h"
-#include "FusionPhysFS.h"
-#include "FusionPhysFSIODeviceProvider.h"
-#include "FusionXml.h"
-#include "FusionEditorMapEntity.h"
-#include "FusionEditorEntityDialog.h"
-
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/signals2.hpp>
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/trim.hpp>
-
+#include "FusionEditorEntityDialog.h"
+#include "FusionEditorMapEntity.h"
+#include "FusionEntityFactory.h"
+#include "FusionEntityManager.h"
+#include "FusionExceptionFactory.h"
+#include "FusionGUI.h"
+#include "FusionPhysFS.h"
+#include "FusionPhysFSIODeviceProvider.h"
+#include "FusionPhysicalEntityManager.h"
+#include "FusionRenderer.h"
+#include "FusionScriptManager.h"
+#include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionXml.h"
 
 namespace FusionEngine
 {

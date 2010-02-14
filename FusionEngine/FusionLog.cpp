@@ -29,9 +29,11 @@
 
 #include "FusionLog.h"
 
+#include <iomanip>
+#include <time.h>
+
 #include "FusionException.h"
 
-#include <time.h>
 
 namespace FusionEngine
 {

@@ -33,20 +33,23 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
-
 #include "FusionSingleton.h"
+
+#include "FusionPrerequisites.h"
+#include "FusionXML.h"
+
+#include <ClanLib/Core/System/mutex.h>
 
 namespace FusionEngine
 {
 
 	/*!
 	 * \brief
-	 * Encapsulates client-side options.
+	 * Loads / saves options files.
 	 *
 	 * \remarks Threadsafe
 	 */
-	class ClientOptions/* : public Singleton<ClientOptions>*/
+	class ClientOptions
 	{
 	public:
 		//! Constructor
@@ -56,39 +59,17 @@ namespace FusionEngine
 		//! Clears controls
 		~ClientOptions();
 
-	//public:
-	//	//! Wrapper for singleton version
-	//	static ClientOptions& current()
-	//	{
-	//		return getSingleton();
-	//	}
-
 	public:
-		typedef std::tr1::unordered_map<std::string, std::string> VarMap;
-
-		//typedef std::tr1::unordered_map<std::string, XmlInputBinding> ControlsList;
-		//! Input mappings list.
-		//typedef std::vector<XmlInputBinding> ControlsList;
+		typedef std::unordered_map<std::string, std::string> VarMap;
 
 		// Each player has their own var map
-		typedef std::vector<VarMap> PlayerVarMapList;
+		typedef std::vector<VarMap> PlayerVarMapArray;
 
 	public:
-		//! Number of local players
-		unsigned int m_NumLocalPlayers;
-
 		VarMap m_Variables;
-		PlayerVarMapList m_PlayerVariables;
-
-		//ControlsList m_Controls;
+		PlayerVarMapArray m_PlayerVariables;
 
 	public:
-		////! Set the controls for defaults
-		////! \todo Load default player controls from file (very low priority)
-		//void DefaultPlayerControls(ObjectID player);
-		////! Sets all the controls to the defaults
-		//void DefaultGlobalControls();
-
 		//! Saves to the most recently loaded file.
 		bool Save();
 		//! Saves the current options to a file
@@ -100,14 +81,14 @@ namespace FusionEngine
 		bool SetOption(const std::string& name, const std::string& value);
 		void SetMultipleOptions(const std::tr1::unordered_map<std::string, std::string>& pairs);
 
-		bool SetPlayerOption(int player, const std::string& name, const std::string& value);
+		bool SetPlayerOption(unsigned int player, const std::string& name, const std::string& value);
 
 		bool GetOption(const std::string &name, std::string *val) const;
 		bool GetOption(const std::string &name, int *ret) const;
 		std::string GetOption_str(const std::string &name) const;
 		bool GetOption_bool(const std::string &name) const;
 
-		bool GetPlayerOption(int player, const std::string& name, std::string *val) const;
+		bool GetPlayerOption(unsigned int player, const std::string& name, std::string *val) const;
 
 	protected:
 		mutable CL_Mutex m_Mutex;
@@ -121,38 +102,6 @@ namespace FusionEngine
 		//void loadKeys(const ticpp::Element &keysroot);
 
 	};
-
-	//static unsigned int NumLocalPlayers()
-	//{
-	//	return ClientOptions::current().m_NumLocalPlayers;
-	//}
-
-	//static bool IsConsoleLogging()
-	//{
-	//	return false;//ClientOptions::current().m_ConsoleLogging;
-	//}
-
-	//static unsigned int Rate()
-	//{
-	//	return 0;//ClientOptions::current().m_Rate;
-	//}
-
-	//static unsigned int ClientPort()
-	//{
-	//	return 0;//ClientOptions::current().m_LocalPort;
-	//}
-
-	//static const std::string& PlayerName(unsigned int p)
-	//{
-	//	FSN_ASSERT(p < NumLocalPlayers());
-	//	return "";//ClientOptions::current().m_PlayerOptions[p].m_Name;
-	//}
-
-	//static bool PlayerUseHud(unsigned int p)
-	//{
-	//	FSN_ASSERT(p < NumLocalPlayers());
-	//	return false;//ClientOptions::current().m_PlayerOptions[p].m_HUD;
-	//}
 
 }
 

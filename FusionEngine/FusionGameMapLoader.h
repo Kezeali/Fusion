@@ -33,22 +33,18 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
-
-// Inherited
-#include "FusionSingleton.h"
-
-// Fusion
-#include "FusionSerialisedData.h"
-#include "FusionEntityDeserialiser.h"
-#include "FusionBoostSignals2.h"
-
-#include "FusionRefCounted.h"
+#include "FusionPrerequisites.h"
 
 #include <boost/bimap.hpp>
 #include <boost/bimap/unordered_set_of.hpp>
 #include <boost/bimap/vector_of.hpp>
+#include <boost/signals2.hpp>
+#include <ClanLib/Core/IOData/iodevice.h>
+#include <ClanLib/Core/IOData/virtual_directory.h>
 
+#include "FusionEntityDeserialiser.h"
+#include "FusionSerialisedData.h"
+#include "FusionRefCounted.h"
 
 namespace FusionEngine
 {

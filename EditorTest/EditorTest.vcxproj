@@ -70,7 +70,7 @@
       <PrecompiledHeaderFile>Common.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;ScriptUtils_d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;RakNetDLLDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;RakNetDLLDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -163,6 +163,7 @@
     <ClCompile Include="..\FusionEngine\FusionScriptReference.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptSound.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptVector.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionSpriteDefinition.cpp" />
     <ClCompile Include="..\FusionEngine\FusionState.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStateManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="..\FusionEngine\FusionPhysicsScriptTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerInput.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerRegistry.h" />
+    <ClInclude Include="..\FusionEngine\FusionPrerequisites.h" />
     <ClInclude Include="..\FusionEngine\FusionRakNetwork.h" />
     <ClInclude Include="..\FusionEngine\FusionRefCounted.h" />
     <ClInclude Include="..\FusionEngine\FusionRenderer.h" />
@@ -273,6 +275,7 @@
     <ClInclude Include="..\FusionEngine\FusionSerialisedData.h" />
     <ClInclude Include="..\FusionEngine\FusionSingleton.h" />
     <ClInclude Include="..\FusionEngine\FusionSlotContainer.h" />
+    <ClInclude Include="..\FusionEngine\FusionSpriteDefinition.h" />
     <ClInclude Include="..\FusionEngine\FusionState.h" />
     <ClInclude Include="..\FusionEngine\FusionStateManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStateMessage.h" />

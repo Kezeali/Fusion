@@ -34,9 +34,12 @@
 
 #include "FusionCommon.h"
 
-#include "FusionBoostSignals2.h"
+#include <boost/signals2/signal.hpp>
+#ifndef _WIN32
+#include <boost/thread/mutex.hpp>
+#endif
 
-//#include <functional>
+#include <functional>
 
 #ifdef _DEBUG
 #include "FusionConsole.h"
@@ -54,16 +57,13 @@ namespace FusionEngine
 
 	//! Maintains a pointer and manages access to data for a single resource.
 	/*!
-	 * The resource manager maintains a list of Resources, which can hold any
-	 * datatype which needs to be loaded from the filesystem.
-	 *
-	 * \sa ResourceManager | ResourcePointer | ResourceLoader
-	 */
+	* The resource manager maintains a list of Resources, which can hold any
+	* datatype which needs to be loaded from the filesystem.
+	*
+	* \sa ResourceManager | ResourcePointer | ResourceLoader
+	*/
 	class ResourceContainer
 	{
-	public:
-		typedef std::set<ResourceDataPtr> DependenciesSet;
-
 	protected:
 		std::string m_Type;
 		//ResourceTag m_Tag;
@@ -76,11 +76,11 @@ namespace FusionEngine
 		bool m_Loaded;
 		bool m_HasQuickLoadData;
 
-		DependenciesSet m_Dependencies;
-
 		volatile long m_RefCount;
 
-		CL_Mutex m_Mutex;
+#ifndef _WIN32
+		boost::mutex m_Mutex;
+#endif
 
 		bool m_ToLoad;
 		bool m_ToUnload;
@@ -100,328 +100,92 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		ResourceContainer()
-			: m_Type(""),
-			//m_Tag(""),
-			m_Path(""),
-			m_Data(NULL),
-			m_QuickLoadData(NULL),
-			m_HasQuickLoadData(false),
-			m_RefCount(0),
-			m_ToLoad(false),
-			m_ToUnload(false)
-		{
-			_setValid(false);
-		}
-
+		ResourceContainer();
 		//! Constructor
-		ResourceContainer(const char* type, const std::string& path, void* ptr)
-			: m_Type(type),
-			//m_Tag(tag),
-			m_Path(path),
-			m_Data(ptr),
-			m_QuickLoadData(NULL),
-			m_HasQuickLoadData(false),
-			m_RefCount(0),
-			m_ToLoad(false),
-			m_ToUnload(false)
-		{
-			if (ptr != 0)
-				_setValid(true);
-			else
-				_setValid(false);
-		}
-
+		ResourceContainer(const char* type, const std::string& path, void* ptr);
 		//! Constructor (unicode)
-		ResourceContainer(const std::string& type, const std::wstring& path, void* ptr)
-			: m_Type(type),
-			m_Path(fe_narrow(path)),
-			m_Data(ptr),
-			m_QuickLoadData(NULL),
-			m_HasQuickLoadData(false),
-			m_RefCount(0),
-			m_ToLoad(false),
-			m_ToUnload(false)
-		{
-			if (ptr != 0)
-				_setValid(true);
-			else
-				_setValid(false);
-		}
-
+		ResourceContainer(const std::string& type, const std::wstring& path, void* ptr);
 		//! Constructor
-		ResourceContainer(const std::string& type, const std::string& path, void* ptr)
-			: m_Type(type),
-			m_Path(path),
-			m_Data(ptr),
-			m_QuickLoadData(NULL),
-			m_HasQuickLoadData(false),
-			m_RefCount(0),
-			m_ToLoad(false),
-			m_ToUnload(false)
-		{
-			if (ptr != 0)
-				_setValid(true);
-			else
-				_setValid(false);
-		}
+		ResourceContainer(const std::string& type, const std::string& path, void* ptr);
 
-		~ResourceContainer()
-		{
-#ifdef _DEBUG
-			if (m_Loaded || m_Data != NULL)
-			{
-				SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - Resource Data leaked.");
-			}
-			if (m_HasQuickLoadData || m_QuickLoadData != NULL)
-			{
-				SendToConsole("Resource '" + m_Path + "' may not have been properly dellocated before deletion - QuickLoad Data leaked.");
-			}
-#endif
-		}
+		//! Dtor
+		~ResourceContainer();
 
 	public:
 		//! Returns the type name (of resource loader to be used for this resource)
-		const std::string& GetType() const
-		{
-			return m_Type;
-		}
-		//! Returns the resource tag which should point to the Rsc
-		//const ResourceTag& GetTag() const
-		//{
-		//	return m_Tag;
-		//}
+		const std::string& GetType() const;
 		//! Returns the path property
-		const std::string& GetPath() const
-		{
-			return m_Path;
-		}
+		const std::string& GetPath() const;
 
 		//! Specifically for StringLoader
 		/*!
-		 * Allows StringLoader to save memory by making the Data property point directly
-		 * to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
-		 */
-		std::string *_getTextPtr()
-		{
-			return &m_Path;
-		}
+		* Allows StringLoader to save memory by making the Data property point directly
+		* to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
+		*/
+		std::string *_getTextPtr();
 
 		//! Sets the data
-		void SetDataPtr(void* ptr)
-		{
-			m_Data = ptr;
-		}
-
-		////! Returns the resource ptr (cast)
-		//template<typename T>
-		//T* GetDataPtr()
-		//{
-		//	return dynamic_cast<T*>(m_Data);
-		//}
-
+		void SetDataPtr(void* ptr);
 		//! Returns the resource ptr
-		void* GetDataPtr()
-		{
-			return m_Data;
-		}
-
-		//! Returns the resource object
-		template<typename T>
-		T &GetData() const
-		{
-			FSN_ASSERT(IsLoaded());
-			return *(dynamic_cast<T*>(m_Data));
-		}
+		void* GetDataPtr();
 
 		//! Validates / invalidates this resource
 		/*!
-		 * A resource is valid if the pointer is valid. A resource becomes
-		 * invalid when it fails to load or it is cleaned up by garbage
-		 * collection.
-		 * This method is to be used by a ResourceLoader whenever it validates
-		 * / invalidates a resource.
-		 */
-		void _setValid(bool valid)
-		{
-			m_Loaded = valid;
-			//if (valid)
-			//	SigLoad();
-			//else
-			//	SigUnload();
-		}
+		* A resource is valid if the pointer is valid. A resource becomes
+		* invalid when it fails to load or it is cleaned up by garbage
+		* collection.
+		* This method is to be used by a ResourceLoader whenever it validates
+		* / invalidates a resource.
+		*/
+		void _setValid(bool valid);
 
 		//! Returns true if the resource data is valid
-		bool IsLoaded() const
-		{
-			return m_Loaded;
-		}
+		bool IsLoaded() const;
 
 		//! Sets the data
-		void SetQuickLoadDataPtr(void* ptr)
-		{
-			m_QuickLoadData = ptr;
-		}
-
+		void SetQuickLoadDataPtr(void* ptr);
 		//! Returns the resource ptr
-		void* GetQuickLoadDataPtr()
-		{
-			return m_QuickLoadData;
-		}
+		void* GetQuickLoadDataPtr();
 
 		//! Validates / invalidates this resource
 		/*!
-		 * A resource is valid if the pointer is valid. A resource becomes
-		 * invalid when it fails to load or it is cleaned up by garbage
-		 * collection.
-		 * This method is to be used by a ResourceLoader whenever it validates
-		 * / invalidates a resource.
-		 */
-		void _setHasQuickLoadData(bool has_data)
-		{
-			m_HasQuickLoadData = has_data;
-		}
-
+		* A resource is valid if the pointer is valid. A resource becomes
+		* invalid when it fails to load or it is cleaned up by garbage
+		* collection.
+		* This method is to be used by a ResourceLoader whenever it validates
+		* / invalidates a resource.
+		*/
+		void _setHasQuickLoadData(bool has_data);
 		//! Returns true if the resource data is valid
-		bool HasQuickLoadData() const
-		{
-			return m_HasQuickLoadData;
-		}
+		bool HasQuickLoadData() const;
 
-		void DependsOn(ResourceContainer *resource)
-		{
-			m_Dependencies.insert(ResourceDataPtr(resource));
-		}
+		//! Notifies the resource of its queue status
+		void _setQueuedToLoad(bool is_queued);
+		//! Returns true if the resource is currently queued to load
+		bool IsQueuedToLoad() const;
 
-		void _addDependant(ResourceContainer *dependant)
-		{
-			dependant->DependsOn(this);
-		}
+		//! Notifies the resource of its queue status
+		void _setQueuedToUnoad(bool is_queued);
+		//! Returns true if this resource is currently queued to load
+		bool IsQueuedToUnload() const;
 
-		void _setQueuedToLoad(bool is_queued)
-		{
-			m_ToLoad = is_queued;
-		}
+		//! Adds a reference
+		void AddReference();
+		//! Removes a ref.
+		/*!
+		* If the ref count reaches 1 (i.e. the ResourceManager's reference)
+		* the NoReferences callback is called, which should be set to a
+		* method which notifies the ResourceManager so it can unload the
+		* resource (in it's own time, of course)
+		*/
+		void RemoveReference();
 
-		bool IsQueuedToLoad() const
-		{
-			return m_ToLoad;
-		}
-
-		void _setQueuedToUnoad(bool is_queued)
-		{
-			m_ToUnload = is_queued;
-		}
-
-		bool IsQueuedToUnload() const
-		{
-			return m_ToUnload;
-		}
-
-
-		void AddReference()
-		{
-			InterlockedIncrement(&m_RefCount);
-		}
-
-		void RemoveReference()
-		{
-			long refCount = InterlockedDecrement(&m_RefCount);
-			if (refCount == 1)
-			{
-				if (NoReferences) NoReferences(this);
-			}
-#ifdef _DEBUG
-			else if (refCount == 0)
-				SendToConsole("Resource ref-count reached zero without being deleted. Resource Name: " + m_Path);
-#endif
-		}
-
-		long ReferenceCount() const
-		{
-			return m_RefCount;
-		}
+		//! Returns the current number of references (including the ResourceManager's reference)
+		long ReferenceCount() const;
 
 		//! Retures true if the given resource is not used (i.e. only referenced by the manager)
-		bool Unused() const
-		{
-			return ReferenceCount() == 1;
-		}
+		bool Unused() const;
 
-		//! Makes this resource immutable
-		/*!
-		* Returns false if the resource is invalid (not loaded)
-		* and thus cannot be locked.
-		*/
-		//bool Lock()
-		//{
-		//	// Only lock if this resource is currently loaded
-		//	if (IsValid())
-		//	{
-		//		m_Mutex.lock();
-		//		return true;
-		//	}
-		//	else
-		//		return false;
-		//}
-
-		//! Makes this resource mutable
-		//void Unlock()
-		//{
-		//	m_Mutex.unlock();
-		//}
-
-		//! Increments ref count
-		//void AddRef()
-		//{
-		//	m_RefCount++;
-		//}
-
-//		//! Decrements ref count
-//		void DropRef()
-//		{
-//			m_RefCount--;
-//		}
-//
-//		//! Increments ref count
-//		ResourcePtrTicket AddRef()
-//		{
-//#ifdef FSN_RESOURCE_USE_TICKETS
-//			m_RefTickets.push_back(m_NextTicket);
-//			return m_NextTicket++;
-//#else
-//			return m_RefCount++;
-//#endif
-//		}
-//
-//		//! Decrements ref count
-//		void DropRef(ResourcePtrTicket ticket)
-//		{
-//#ifdef FSN_RESOURCE_USE_TICKETS
-//			for (TicketList::iterator it = m_RefTickets.begin(); it != m_RefTickets.end(); ++it)
-//			{
-//				if (*it == ticket)
-//				{
-//					m_RefTickets.erase(it);
-//					break;
-//				}
-//			}
-//
-//#else
-//			m_RefCount--;
-//#endif
-//		}
-//
-//		//! Returns true if this resource is referenced
-//		bool IsReferenced() const
-//		{
-//#ifdef FSN_RESOURCE_USE_TICKETS
-//			return !m_RefTickets.empty();
-//
-//#else
-//			return m_RefCount > 0;
-//#endif
-//		}
 	};
 
 }

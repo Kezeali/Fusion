@@ -32,69 +32,19 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionResource.h"
 
-
+#include <ClanLib/Display/Render/graphic_context.h>
+#include <ClanLib/Core/IOData/virtual_directory.h>
 
 namespace FusionEngine
 {
 
-	/*!
-	 * \brief
-	 * Interface for resource loaders used by ResourceManager
-	 *
-	 * \sa
-	 * ImageLoader | Resource | ResourceManager
-	 */
-	//class ResourceLoader
-	//{
-	//protected:
-	//	CL_VirtualDirectory m_Directory;
-	//public:
-	//	//! Constructor - resource manager must pass a VirtualDirectory object for the filesystem in use
-	//	ResourceLoader(CL_VirtualDirectory vdir)
-	//		: m_Directory(vdir)
-	//	{
-	//	}
-
-	//	//! Returns the type identifier for resources this loader can deal with
-	//	virtual const std::string &GetType() const = 0;
-
-	//	//! Loads the resource reffered to by the given text
-	//	virtual ResourceContainer* LoadResource(const std::string& tag, const std::string &path) = 0;
-
-	//	//! Reloads the given resource
-	//	virtual void ReloadResource(ResourceContainer * resource) = 0;
-
-	//	//! Cleans up resource data
-	//	virtual void UnloadResource(ResourceContainer * resource) = 0;
-
-	//};
-
-	//! Factory method template
-	/*!
-	 * Factory method template for ResourceLoader factory methods,
-	 * which are used by ResourceManager to create ResourceLoader
-	 * objects at runtime
-	 */
-	//template<class T>
-	//static ResourceLoader* ResourceLoader_Factory(CL_VirtualDirectory vdir)
-	//{
-	//	return new T(vdir);
-	//}
-
-	/*! Type for factory function pointer
-	 *
-	 * Factory function pointers are stored in ResourceManager
-	 * at runtime, indexed by the Type string for the
-	 * resource loader they will create.
-	 */
-	//typedef ResourceLoader* (*resourceLoader_creator)(CL_VirtualDirectory vdir);
-
-
+	//! Pointer to function for loading resources
 	typedef void (*resource_load)(ResourceContainer* res, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
+	//! Pointer to function for unloading resources
 	typedef void (*resource_unload)(ResourceContainer* res, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader

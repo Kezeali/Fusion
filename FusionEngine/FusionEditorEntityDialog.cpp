@@ -30,22 +30,21 @@
 
 #include "FusionEditorEntityDialog.h"
 
-#include "FusionBoostSignals2.h"
-#include "FusionEditorMapEntity.h"
-#include "FusionEntity.h"
-#include "FusionGUI.h"
-#include "FusionElementSelectableDataGrid.h"
-#include "FusionEditorUndo.h"
-#include "scriptstring.h"
-
 #include <boost/lexical_cast.hpp>
-
+#include <boost/signals2.hpp>
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Controls/ElementFormControlInput.h>
 #include <Rocket/Controls/ElementDataGrid.h>
 #include <Rocket/Controls/ElementDataGridRow.h>
 #include <Rocket/Controls/ElementDataGridCell.h>
 
+#include "FusionGUI.h"
+#include "FusionEditorMapEntity.h"
+#include "FusionEntity.h"
+#include "FusionExceptionFactory.h"
+#include "FusionElementSelectableDataGrid.h"
+#include "FusionEditorUndo.h"
+#include "scriptstring.h"
 
 namespace FusionEngine
 {

@@ -37,7 +37,6 @@
 
 #include "FusionRefCounted.h"
 
-
 namespace FusionEngine
 {
 

@@ -35,63 +35,33 @@
  */
 
 
-#ifndef Header_FusionEngine_Common
-#define Header_FusionEngine_Common
+#ifndef Header_FusionCommon
+#define Header_FusionCommon
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
+
+#include "FusionPrerequisites.h"
 
 #include "FusionAssert.h"
 #include "FusionVector2.h"
 
 #include <angelscript.h>
 
-#include <string>
+#include <Box2D\Box2D.h>
+
+#include <algorithm>
 #include <set>
+#include <string>
+#include <sstream>
+
+#include <vector>
+
+#include <boost/intrusive_ptr.hpp>
 
 namespace FusionEngine
 {
-
-	///////////////////////////
-	// --Forward declarations--
-	///////////////////////////
-	class Camera;
-	class ClientOptions;
-	class Console;
-	class Editor;
-	class Entity;
-	class EntityFactory;
-	class EntitySynchroniser;
-	class EntityManager;
-	class Exception;
-	class FileSystemException;
-	class GameMapLoader;
-	class InputDefinitionLoader;
-	class InputManager;
-	class Log;
-	class Logger;
-	class Module;
-	class NetworkSystem;
-	class Network;
-	class OntologicalSystem;
-	class IPacket;
-	class PacketHandler;
-	class PacketHandlerNode;
-	class PhysicalWorld;
-	class RakNetwork;
-	class Renderable;
-	class Renderer;
-	class ResourceContainer;
-	class ResourceManager;
-	class ScriptedSlotWrapper;
-	class ScriptManager;
-	class Shape;
-	class StreamingManager;
-	class System;
-	class SystemMessage;
-	class SystemsManager;
-
 
 	///////////////
 	// --Typedefs--
@@ -101,18 +71,15 @@ namespace FusionEngine
 
 	//! It's a vector. It's a string. It's a StringVector!
 	typedef std::vector<std::string> StringVector;
-
 	typedef std::set<std::string> StringSet;
 
+	typedef boost::intrusive_ptr<Entity> EntityPtr;
 	//! Log pointer
 	typedef std::shared_ptr<Log> LogPtr;
-
+	typedef std::shared_ptr<Module> ModulePtr;
 	//! System pointer
 	typedef std::shared_ptr<System> SystemPtr;
-
-	typedef boost::intrusive_ptr<Entity> EntityPtr;
-
-	typedef std::shared_ptr<Module> ModulePtr;
+	
 
 	typedef Vector2T<float> Vector2;
 	typedef Vector2T<int> Vector2i;
@@ -140,21 +107,12 @@ namespace FusionEngine
 	*/
 	static const float s_SimUnitsPerGameUnit = 1.0f/s_GameUnitsPerSimUnit;
 
-	//! Max local (split-screen, hotseat, etc.) players per client
-	/*
-	* This is primarily used to define the size of constant size arrays but 
-	* is also used for checking player numbers given by config files, etc.
-	*/
-	static const unsigned int s_MaxLocalPlayers = 16;
-
 	////////////////////////
 	// --General functions--
 	////////////////////////
-	template <typename T>
-	static T ToGameUnits(T sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
+	static float ToGameUnits(float sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
 
-	template <typename T>
-	static T ToSimUnits(T game_coord) { return game_coord * s_SimUnitsPerGameUnit; }
+	static float ToSimUnits(float game_coord) { return game_coord * s_SimUnitsPerGameUnit; }
 
 	static inline bool fe_fzero(float value) { return fabs(value) <= (float)s_FloatComparisonEpsilon; }
 	static inline bool fe_fzero(double value) { return fabs(value) <= s_FloatComparisonEpsilon; }
@@ -322,7 +280,7 @@ namespace FusionEngine
 		while (true)
 		{
 			end_pos = str.find(delim, begin_pos);
-			if (end_pos == CL_String::npos)
+			if (end_pos == std::string::npos)
 			{
 				if (begin_pos != str.length())
 					result.push_back(str.substr(begin_pos));

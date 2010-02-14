@@ -11,6 +11,8 @@
 #include <boost/tokenizer.hpp>
 #include <boost/bind.hpp>
 
+#include <ClanLib/Core/Text/string_help.h>
+
 namespace FusionEngine
 {
 	Console::Console()

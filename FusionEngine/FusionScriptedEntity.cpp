@@ -3,12 +3,12 @@
 
 #include "FusionScriptedEntity.h"
 
-#include "FusionCommon.h"
-#include "FusionResourceManager.h"
-#include "scriptstring.h"
-
 #include <ScriptUtils/Inheritance/TypeTraits.h>
 
+#include "FusionCommon.h"
+#include "FusionExceptionFactory.h"
+#include "FusionResourceManager.h"
+#include "scriptstring.h"
 
 namespace FusionEngine
 {

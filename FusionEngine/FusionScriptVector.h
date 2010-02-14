@@ -33,6 +33,7 @@
 #endif
 
 #include "FusionCommon.h"
+#include <angelscript.h>
 
 namespace FusionEngine { namespace Scripting
 {
@@ -62,7 +63,7 @@ namespace FusionEngine { namespace Scripting
 		//! Add-assign
 		ScriptVector &operator+=(const ScriptVector &other);
 
-		//! Actual vector
+		//! Actual Vector
 		Vector2 Data;
 
 	protected:

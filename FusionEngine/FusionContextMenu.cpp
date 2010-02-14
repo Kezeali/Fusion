@@ -31,7 +31,7 @@
 #include "FusionContextMenu.h"
 
 //#include <boost/lexical_cast.hpp>
-
+#include <ClanLib/Display/Window/keys.h>
 
 namespace FusionEngine
 {

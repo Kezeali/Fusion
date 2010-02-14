@@ -27,11 +27,13 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionRefCounted.h"
-#include "FusionBoostSignals2.h"
 
+#include <boost/signals2/connection.hpp>
+
+#include "FusionResource.h"
 
 namespace FusionEngine
 {

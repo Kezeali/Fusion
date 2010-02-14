@@ -28,31 +28,28 @@
 
 #include "Common.h"
 
-// Class
 #include "FusionOntologicalSystem.h"
 
-// Fusion
+#include <boost/lexical_cast.hpp>
+#include <Bitstream.h>
+#include <ScriptUtils/Calling/Caller.h>
+
+#include "FusionClientOptions.h"
+#include "FusionEditor.h"
 #include "FusionEntityManager.h"
 #include "FusionEntityFactory.h"
 #include "FusionGameMapLoader.h"
-#include "FusionPhysicalEntityManager.h"
 #include "FusionInputHandler.h"
 #include "FusionNetworkSystem.h"
-#include "FusionScriptManager.h"
-#include "FusionClientOptions.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
-#include "FusionXml.h"
+#include "FusionPhysicalEntityManager.h"
 #include "FusionPlayerRegistry.h"
+#include "FusionScriptManager.h"
 #include "FusionRakNetwork.h"
-#include "FusionEditor.h"
-
-#include <ScriptUtils/Calling/Caller.h>
-
-#include <boost/lexical_cast.hpp>
-
-#include <Bitstream.h>
+#include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionXml.h"
 
 #include "FusionScriptedEntity.h"
 
@@ -547,57 +544,53 @@ namespace FusionEngine
 
 	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
-		int numPlayers;
-		m_Options->GetOption("num_local_players", &numPlayers);
-		if (numPlayers < s_MaxLocalPlayers)
-		{
-			unsigned int playerIndex = (unsigned)numPlayers;
-
-			RakNetwork *network = m_NetworkSystem->GetNetwork();
-
-			// Validate & store the callback method
-			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
-				SendToConsole("system.addPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
-
-			if (PlayerRegistry::ArbitratorIsLocal())
-			{
-				ObjectID netIndex = getNextPlayerIndex();
-
-				// Add the player
-				PlayerRegistry::AddPlayer(netIndex, playerIndex);
-
-				// Call the script callback
-				onGetNetIndex(playerIndex, netIndex);
-
-				RakNet::BitStream bitStream;
-				bitStream.Write0();
-				bitStream.Write(netIndex);
-
-				// Notify other systems 
-				network->Send(
-					false,
-					MTID_ADDPLAYER, &bitStream,
-					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
-			}
-			else
-			{
-				// Request a Net-Index if this peer isn't the arbitrator
-				RakNet::BitStream bitStream;
-				bitStream.Write(playerIndex);
-
-				network->Send(
-					false,
-					MTID_ADDPLAYER, &bitStream,
-					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-					PlayerRegistry::GetArbitratingPlayer().System);
-			}
-
-			m_Options->SetOption("num_local_players", CL_StringHelp::int_to_local8(++numPlayers).c_str());
-
-			return playerIndex;
-		}
-
-		else return s_MaxLocalPlayers;
+		return 0;
+//		unsigned int playerIndex = m_PlayerManager.GetLocalPlayerCount();
+//
+//		// Validate & store the callback method
+//			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
+//				SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
+//
+//			m_PlayerManager.RequestLocalPlayer();
+//
+//			return playerIndex;
+//
+//			// Put this in PlayerManager
+//RakNetwork *network = m_NetworkSystem->GetNetwork();
+//			if (PlayerRegistry::ArbitratorIsLocal())
+//			{
+//				ObjectID netIndex = getNextPlayerIndex();
+//
+//				// For PlayerManager, rather than calling this here, add it to a queue and
+//				//  call it using DispatchPlayerRequests. Perhaps
+//				// Add the player
+//				PlayerRegistry::AddPlayer(netIndex, playerIndex);
+//
+//				// Call the script callback
+//				onGetNetIndex(playerIndex, netIndex);
+//
+//				RakNet::BitStream bitStream;
+//				bitStream.Write0();
+//				bitStream.Write(netIndex);
+//
+//				// Notify other systems 
+//				network->Send(
+//					false,
+//					MTID_ADDPLAYER, &bitStream,
+//					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
+//			}
+//			else
+//			{
+//				// Request a Net-Index if this peer isn't the arbitrator
+//				RakNet::BitStream bitStream;
+//				bitStream.Write(playerIndex);
+//
+//				network->Send(
+//					false,
+//					MTID_ADDPLAYER, &bitStream,
+//					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+//					PlayerRegistry::GetArbitratingPlayer().System);
+//			}
 	}
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)

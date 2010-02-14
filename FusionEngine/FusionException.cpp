@@ -30,6 +30,8 @@
 
 #include "FusionException.h"
 
+#include "FusionStringFormatting.h"
+
 namespace FusionEngine
 {
 
@@ -38,52 +40,35 @@ namespace FusionEngine
 	{
 	}
 
-	Exception::Exception(Exception::ExceptionType type, const std::string &message, bool critical)
-		: m_Type(type),
-		m_Message(message),
-		m_Critical(critical),
+	Exception::Exception(const std::string &message)
+		: m_Message(message),
 		m_Line(-1)
 	{
 	}
 
-	Exception::Exception(const std::string& name, const std::string &origin)
-		: m_Origin(origin),
-		m_Line(-1),
-		m_Name(name)
-	{
-	}
-
-	Exception::Exception(const std::string& name, const std::string& origin, const std::string &message)
+	Exception::Exception(const std::string& message, const std::string &origin)
 		: m_Origin(origin),
 		m_Message(message),
-		m_Line(-1),
-		m_Name(name)
+		m_Line(-1)
 	{
 	}
 
-	Exception::Exception(const std::string& name, const std::string& origin, const std::string &message, const char* file, long line)
+	Exception::Exception(const std::string& message, const std::string &origin, const char* file, long line)
 		: m_Origin(origin),
 		m_Message(message),
 		m_File(file),
-		m_Line(line),
-		m_Name(name)
+		m_Line(line)
 	{
 	}
 
-	Exception::ExceptionType Exception::GetType() const
+	Exception::~Exception()
 	{
-		return m_Type;
 	}
 
 	const std::string& Exception::GetName() const
 	{
-		static std::string strName("FusionEngine::" + m_Name);
+		static const std::string strName(typeid(this).name());
 		return strName;
-	}
-
-	void Exception::SetOrigin(const std::string &origin)
-	{
-		m_Origin = origin;
 	}
 
 	const std::string& Exception::GetOrigin() const
@@ -91,32 +76,30 @@ namespace FusionEngine
 		return m_Origin;
 	}
 
-	std::string Exception::GetDescription() const
+	const std::string& Exception::GetDescription() const
 	{
 		return m_Message;
 	}
 
-	bool Exception::IsCritical() const
-	{
-		return m_Critical;
-	}
-
 	std::string Exception::ToString() const
 	{
-		//! \todo Use StringStream here
+		std::string str = GetName();
+		
+		if (!GetOrigin().empty())
+			str += " in " + GetOrigin();
 
-		std::string str = GetName() + " in " + GetOrigin();
-		CL_TempString wLine = CL_StringHelp::int_to_text((int)m_Line);
-		std::string line(wLine.begin(), wLine.end());
+		if (!m_File.empty() && m_Line >= 0)
+			str += makestring() << "(" << m_File << ":" << m_Line << ")";
 
-		if (m_Line >= 0)
-			str += "(" + m_File + ":" + line + ")";
-
-		std::string description = GetDescription();
-		if (!description.empty())
-			str += ": " + description;
+		if (!GetDescription().empty())
+			str += ": " + GetDescription();
 
 		return str;
+	}
+
+	const char *Exception::what() const
+	{
+		return GetDescription().c_str();
 	}
 
 }

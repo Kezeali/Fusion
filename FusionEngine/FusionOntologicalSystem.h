@@ -32,14 +32,14 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionState.h"
 #include "FusionPacketHandler.h"
 
-#include "FusionScriptModule.h"
+#include "FusionPlayerRegistry.h"
 #include "FusionRenderer.h"
-
+#include "FusionScriptModule.h"
 
 namespace FusionEngine
 {

@@ -29,17 +29,6 @@
 
 #include "FusionScriptManager.h"
 
-#include "FusionScriptReference.h"
-#include "FusionXML.h"
-//#include "FusionScriptDebugPreprocessor.h"
-
-// Scripting extensions
-#include "FusionScriptedSlots.h"
-#include "FusionScriptVector.h"
-#include "scriptstring.h"
-#include "scriptmath.h"
-#include "scriptstdvector.h"
-
 #include <boost/functional/hash.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -47,6 +36,19 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <ClanLib/core.h>
+
+#include "FusionExceptionFactory.h"
+//#include "FusionScriptDebugPreprocessor.h"
+#include "FusionScriptReference.h"
+#include "FusionXML.h"
+
+// Scripting extensions
+#include "FusionScriptedSlots.h"
+#include "FusionScriptVector.h"
+#include "scriptstring.h"
+#include "scriptmath.h"
+#include "scriptstdvector.h"
 
 namespace FusionEngine
 {
@@ -200,6 +202,19 @@ namespace FusionEngine
 		return lhs.line == rhs.line && 
 			lhs.module_name == rhs.module_name &&
 			lhs.section_name == rhs.section_name;
+	}
+
+	//! Aborts the given ctx if the current time is after the given time
+	/*!
+	 * \remarks
+	 * This has to be static so we can (easily) have a different timeoutTime for
+	 * concurrently running scripts.
+	 */
+	static void TimeoutCallback(asIScriptContext *ctx, unsigned int* timeoutTime)
+	{
+		// If the time out is reached, abort the script
+		if( *timeoutTime < CL_System::get_time() )
+			ctx->Abort();
 	}
 
 	//////////
@@ -367,76 +382,6 @@ namespace FusionEngine
 		return GetModule(module)->ConnectToBuild(slot);
 	}
 
-	ScriptReturn ScriptManager::Execute(const char* module, const char* function, unsigned int timeout /* = 0 */)
-	{
-		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(function);
-
-		asIScriptContext* cont = m_asEngine->CreateContext();
-		ScriptReturn scxt(cont);
-
-		int r = cont->Prepare(funcID);
-		if (r < 0)
-			return scxt;
-
-		int timeoutTime;
-		if (timeout > 0)
-		{
-			timeoutTime = CL_System::get_time() + timeout;
-			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_STDCALL);
-		}
-		cont->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
-
-		cont->Execute();
-
-		return scxt;
-	}
-
-#ifndef SCRIPT_ARG_USE_TEMPLATE
-	ScriptReturn ScriptManager::Execute(UCScriptMethod function, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
-	{
-		asIScriptContext* cont = m_asEngine->CreateContext();
-		ScriptReturn scxt(cont);
-
-		int r = cont->Prepare(function.GetFunctionID());
-		if (r < 0)
-			return scxt;
-
-		int timeoutTime;
-		if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
-		{
-			timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
-			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
-		}
-
-		cont->Execute();
-		return scxt;
-	}
-
-	ScriptReturn ScriptManager::Execute(ScriptObject object, UCScriptMethod method, ScriptArgument p1, ScriptArgument p2, ScriptArgument p3, ScriptArgument p4)
-	{
-		asIScriptContext* cont = m_asEngine->CreateContext();
-		ScriptReturn scxt(cont);
-
-		int r = cont->Prepare(method.GetFunctionID());
-		if (r < 0)
-			return scxt;
-
-		int timeoutTime;
-		if (method.GetTimeout() > 0 || m_DefaultTimeout > 0)
-		{
-			timeoutTime = CL_System::get_time() + (method.GetTimeout() > 0 ? method.GetTimeout() : m_DefaultTimeout);
-			cont->SetLineCallback(asFUNCTION(TimeoutCallback), &timeoutTime, asCALL_CDECL);
-		}
-
-		r = cont->SetObject(object.GetScriptStruct());
-		if (r < 0)
-			return scxt;
-
-		cont->Execute();
-		return scxt;
-	}
-#endif
-
 	ScriptContext ScriptManager::ExecuteString(const std::string &script, const char *module_name, int timeout)
 	{
 		asIScriptContext* ctx = m_asEngine->CreateContext();
@@ -476,25 +421,6 @@ namespace FusionEngine
 		return m_DefaultTimeout;
 	}
 
-	UCScriptMethod ScriptManager::GetFunction(const char* module, const std::string& signature)
-	{
-		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
-		return UCScriptMethod(module, signature, funcID);
-	}
-
-	bool ScriptManager::GetFunction(UCScriptMethod& out, const char* module, const std::string& signature)
-	{
-		int funcID = getModuleOrThrow(module)->GetFunctionIdByDecl(signature.c_str());
-		if (funcID < 0)
-			return false;
-
-		out.SetModule(module);
-		out.SetSignature(signature);
-		out.SetFunctionID(funcID);
-
-		return true;
-	}
-
 	ScriptClass ScriptManager::GetClass(const char* module, const std::string& type_name)
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
@@ -513,40 +439,6 @@ namespace FusionEngine
 		asIScriptObject* obj = static_cast<asIScriptObject*>( m_asEngine->CreateScriptObject(id) );
 		return ScriptObject(obj, false);
 	}
-
-	UCScriptMethod ScriptManager::GetClassMethod(const char* module, const std::string& type_name, const std::string &signature)
-	{
-		int typeId = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
-		if (typeId < 0)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::GetClassMethod", "No such type: " + type_name);
-		int methodId = m_asEngine->GetObjectTypeById(typeId)->GetMethodIdByDecl(signature.c_str());
-		if (methodId < 0)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptManager::GetClassMethod", "No such method: " + signature + "\n in type " + type_name);
-
-		//asIScriptFunction *function = m_asEngine->GetFunctionDescriptorById(methodId);
-		return UCScriptMethod(module, signature, typeId);
-	}
-
-	UCScriptMethod ScriptManager::GetClassMethod(ScriptClass& type, const std::string& signature)
-	{
-		if (type.IsValid())
-		{
-			int id = m_asEngine->GetObjectTypeById(type.GetTypeId())->GetMethodIdByDecl(signature.c_str());
-			UCScriptMethod method(type.GetModule(), signature, id);
-			return method;
-		}
-		else
-			return UCScriptMethod();
-	}
-
-	//UCScriptMethod ScriptManager::GetClassMethod(ScriptObject& type, const std::string& signature)
-	//{
-	//	FSN_ASSERT(false);
-	//	asIObjectType *scriptType = m_asEngine->GetObjectTypeById(type.GetTypeId());
-	//	int id = scriptType->GetMethodIdByDecl(signature.c_str());
-	//	UCScriptMethod method(0, signature, id);
-	//	return method;
-	//}
 
 	ModulePtr ScriptManager::GetModule(const char *module_name, asEGMFlags when)
 	{

@@ -35,6 +35,8 @@
 #include <Rocket/Core/Factory.h>
 #include <Rocket/Core/ElementInstancerGeneric.h>
 
+#include "FusionExceptionFactory.h"
+
 
 namespace FusionEngine
 {

@@ -29,6 +29,8 @@
 
 #include "FusionInputDefinitionLoader.h"
 
+#include "FusionExceptionFactory.h"
+
 namespace FusionEngine
 {
 

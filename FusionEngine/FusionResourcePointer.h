@@ -56,18 +56,11 @@ namespace FusionEngine
 	//! Resource container weak pointer
 	typedef boost::weak_ptr<ResourceContainer> ResourceWpt;
 
-	//! The ResourcePointer system is a simple garbage collection system.
+	//! Makes accessing resource data easier.
 	/*!
-	 * The ResourceManager manages a collection owning pointers
-	 * (Resource objects) and, via reference counting, is notified when
-	 * a resource has no external references (ResourceToken) remaining.
-	 * If a resource has no related external references, the memory
-	 * related to it will be freed next time the ResourceManager does
-	 * garbage collection
-	 * (e.g. between levels, /after/ loading the next level's data
-	 * (to minimise unnecessary re-loading))
-	 *
-	 * \todo Make this copyable (fix copy-constructor / assignment op.)
+	 * The basic resource class accesses loaded data via a void*.
+	 * To access data by it's actual type a Resource can be
+	 * held by an instance of the ResourcePointer class.
 	 *
 	 * \sa ResourceManager | ResourceContainer
 	 */
@@ -80,7 +73,7 @@ namespace FusionEngine
 	public:
 		//! Basic Constructor
 		/*!
-		 * Creates an invalid resource pointer
+		 * Creates a null resource pointer
 		 */
 		ResourcePointer()
 		{
@@ -168,7 +161,7 @@ namespace FusionEngine
 
 		bool IsNull() const
 		{
-			return m_Resource == false;
+			return !(m_Resource);
 		}
 
 		bsig2::signal<void ()> &SigDelete() const

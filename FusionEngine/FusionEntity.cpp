@@ -1,10 +1,9 @@
 
 #include "Common.h"
 
-// Class
 #include "FusionEntity.h"
 
-// Fusion
+#include "FusionExceptionFactory.h"
 #include "FusionResourceManager.h"
 
 

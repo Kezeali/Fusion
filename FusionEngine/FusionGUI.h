@@ -33,19 +33,17 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-// Inherited
+#include <Rocket/Core.h>
+#include <boost/signals2.hpp>
+
 #include "FusionState.h"
 #include "FusionSingleton.h"
 
-// Fusion
 #include "FusionClanLibRocketInterface.h"
 #include "FusionScriptModule.h"
-#include "FusionBoostSignals2.h"
-
-// External
-#include <Rocket/Core.h>
+#include "FusionSlotContainer.h"
 
 namespace Rocket {
 	namespace Controls {

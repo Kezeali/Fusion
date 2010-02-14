@@ -32,8 +32,7 @@ Elliot Hayward
 #pragma once
 #endif
 
-#include "Common.h"
-
+#include <cmath>
 
 namespace FusionEngine
 {
@@ -503,24 +502,6 @@ namespace FusionEngine
 	inline Vector2T<double>::Vector2T(const Vector2T<int> &copy)
 		: m_RefCount(1)
 	{ x = (double)copy.x; y = (double)copy.y; }
-
-	//! Stream extraction for Vector2
-	template <typename T>
-	std::istream& operator>> (std::istream &in, Vector2T<T> &target)
-	{
-		in >> target.x;
-		in >> target.y;
-		return in;
-	}
-
-	//! Stream serialization for Vector2
-	template <typename T>
-	std::ostream& operator<< (std::ostream &out, const Vector2T<T> &object)
-	{
-		out << object.x;
-		out << object.y;
-		return out;
-	}
 
 	template <class T>
 	Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)

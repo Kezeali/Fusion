@@ -30,6 +30,8 @@
 
 #include "FusionStateManager.h"
 
+#include "FusionExceptionFactory.h"
+
 namespace FusionEngine
 {
 

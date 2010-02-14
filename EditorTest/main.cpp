@@ -1,5 +1,5 @@
 #include "../FusionEngine/Common.h"
-#include "../FusionEngine/FusionCommon.h"
+#include "../FusionEngine/FusionPrerequisites.h"
 
 // Logging
 #include "../FusionEngine/FusionConsole.h"
@@ -11,9 +11,13 @@
 #include "../FusionEngine/FusionPhysFS.h"
 #include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
 
+// Resource Loading
+#include "../FusionEngine/FusionResourceManager.h"
+#include "../FusionEngine/FusionAudioLoader.h"
+#include "../FusionEngine/FusionImageLoader.h"
+
 // Network
 #include "../FusionEngine/FusionRakNetwork.h"
-
 #include "../FusionEngine/FusionPlayerRegistry.h"
 
 // Systems
@@ -25,27 +29,26 @@
 
 // Various
 #include "../FusionEngine/FusionInputHandler.h"
-#include "../FusionEngine/FusionResourceManager.h"
-#include "../FusionEngine/FusionImageLoader.h"
 #include "../FusionEngine/FusionScriptManager.h"
 
-// Script Type Registration
-//#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
-#include "../FusionEngine/FusionPhysicsScriptTypes.h"
-#include "../FusionEngine/FusionScriptedConsoleCommand.h"
-#include "../FusionEngine/FusionEntityManager.h"
-#include "../FusionEngine/FusionEntity.h"
-#include "../FusionEngine/FusionScriptedEntity.h"
-#include "../FusionEngine/FusionRenderer.h"
-#include "../FusionEngine/FusionScriptSound.h"
-#include "../FusionEngine/FusionElementUndoMenu.h"
-
 #include "../FusionEngine/FusionClientOptions.h"
-
+#include "../FusionEngine/FusionElementUndoMenu.h"
+#include "../FusionEngine/FusionEntity.h"
+#include "../FusionEngine/FusionEntityManager.h"
+#include "../FusionEngine/FusionExceptionFactory.h"
+#include "../FusionEngine/FusionPhysicsScriptTypes.h"
+#include "../FusionEngine/FusionRenderer.h"
+#include "../FusionEngine/FusionScriptedConsoleCommand.h"
+#include "../FusionEngine/FusionScriptedEntity.h"
 #include "../FusionEngine/FusionScriptModule.h"
+#include "../FusionEngine/FusionScriptSound.h"
 
-//#include <ClanLib/d3d9.h>
-
+#include <ClanLib/application.h>
+#include <ClanLib/core.h>
+#include <ClanLib/display.h>
+#include <ClanLib/gl.h>
+#include <ClanLib/sound.h>
+#include <ClanLib/vorbis.h>
 
 namespace FusionEngine
 {
@@ -126,30 +129,25 @@ public:
 
 			////////////////////
 			// Resource Manager
-			boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager());
+			boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager(gc));
+			resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResouce, NULL);
+			resourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
+			resourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
 			resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
-
-			//m_ResourceManager->PreloadResource("SPRITE", "Entities/Test/test_sprite.xml");
+			
 #ifdef _WIN32
-			// Need to pause this thread until the Background-load
-			//  thread has created its worker GC
-			CL_Event loaderGCCreated;
-			resourceManager->StartBackgroundLoadThread(gc, loaderGCCreated);
-			// Wait for the event to be set
-			CL_Event::wait(loaderGCCreated);
+			resourceManager->StartLoaderThread(gc);
 #elif defined(__APPLE__)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			resourceManager->StartBackgroundLoadThread(loadingGC);
+			resourceManager->StartLoaderThread(loadingGC);
 #else
 			// Might have to create a secondary pbuffer here (I read something about
 			//  this giving better performance because of reduced resource locking)
 			CL_GraphicContext loadingGC = gc.create_worker_gc();
-			resourceManager->StartBackgroundLoadThread(loadingGC);
+			resourceManager->StartLoaderThread(loadingGC);
 #endif
-
+			// Make sure the GC is properly configured
 			CL_OpenGL::set_active(gc);
-
-			resourceManager->SetGraphicContext(gc);
 
 			//////////////////////
 			// Load client options

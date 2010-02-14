@@ -29,15 +29,16 @@
 
 #include "FusionLogger.h"
 
-/// Fusion
-#include "FusionException.h"
+#include <iomanip>
+#include <time.h>
+#include <ClanLib/core.h>
+
 #include "FusionConsole.h"
+#include "FusionException.h"
 #include "FusionPaths.h"
 // Log targets (ILogFile implementations)
 #include "FusionLogPhysFS.h"
 #include "FusionLogFileConsole.h"
-
-#include <time.h>
 
 #if _MSC_VER > 1000
 # pragma warning(push)

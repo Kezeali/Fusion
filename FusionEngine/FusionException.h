@@ -27,128 +27,77 @@
 #pragma once
 #endif
 
+#include <exception>
 #include <string>
 
 namespace FusionEngine
 {
 
 	//! Fusion exception class.
-	class Exception
+	class Exception : public std::exception
 	{
-	public:
-		//! [depreciated] Types of Exceptions
-		/*!
-		 * Do not use these!
-		 */
-		enum ExceptionType
-		{
-			//! Trivial
-			TRIVIAL = 0,
-			//! A generic exception
-			INTERNAL_ERROR,
-			//! Disconnected for some (unusual) reason
-			NETWORK,
-			//! You can't connect to this server
-			BANNED,
-			//! A package couldn't be sync'ed
-			PACKSYNC,
-			//! A package is damaged
-			PACKVERIFY,
-			//! A file couldn't be found
-			FILE_NOT_FOUND,
-			//! Logger error (obviously these shouldn't be logged!)
-			LOGFILE_ERROR,
-			//! Generic error within a loading stage or the loader itself
-			LOADING,
-			//! The method being called is not implemented
-			NOT_IMPLEMENTED
-		};
-
 	public:
 		//! Basic constructor
 		Exception();
-		//! \deprecated Constructor +type +message
-		Exception(ExceptionType type, const std::string &message, bool critical);
 
-		//! Constructor +origin
-		Exception(const std::string& name, const std::string &origin);
-		//! Constructor +origin +message
-		Exception(const std::string& name, const std::string &origin, const std::string &message);
-		//! Constructor +origin +message +file +line
-		Exception(const std::string& name, const std::string &origin, const std::string &message, const char* file, long line);
+		//! Constructor +message
+		Exception(const std::string &message);
+		//! Constructor +message +origin
+		Exception(const std::string &message, const std::string &function);
+		//! Constructor +message +origin +file +line
+		Exception(const std::string &message, const std::string &function, const char* file, long line);
+
+		virtual ~Exception();
 
 	public:
-		//! \deprecated Retrieves the type
-		ExceptionType GetType() const;
 		//! Retrieves the exception class name
-		virtual const std::string &GetName() const;
-		//! Sets the Origin property
-		virtual void SetOrigin(const std::string& origin);
+		virtual const std::string& GetName() const;
 		//! Retrieves the origin
-		virtual const std::string& GetOrigin() const;
+		const std::string& GetOrigin() const;
 		//! Retrieves the human readable message.
-		/*!
-		 * \remarks
-		 * Me - I can't call this GetMessage because of a windows macro 
-		 * which redefines that as GetMessageW! :\
-		 */
-		virtual std::string GetDescription() const;
-
-		//! \deprecated Returns true if the error type of this Exception object is severe
-		bool IsCritical() const;
+		const std::string& GetDescription() const;
 
 		//! Returns a string representing the exception object
 		/*!
 		 * A string in the following format will be returned: <br>
-		 * "<Name> in <Origin>: <Description/Message>"
+		 * "<Name> in <Origin>(file : line): <Description>"
 		 */
-		virtual std::string ToString() const;
+		std::string ToString() const;
+
+		//! Implementation of std::exception. Returns the string from GetDescription()
+		const char *what() const;
 
 	protected:
 		std::string m_File;
 		long m_Line;
-		std::string m_Name;
 		std::string m_Origin;
-		//! Stores the message (usually used as the Description property)
 		std::string m_Message;
-
-		// [depreciated]
-		ExceptionType m_Type;
-		bool m_Critical;
 
 	};
 
-		//! File system exception class
+	//! Filesystem exception class
 	class FileSystemException : public Exception
 	{
 	public:
 		//! Constructor
-		FileSystemException(const std::string& name, const std::string& origin, const std::string& message, const char* file, long line)
-			: Exception("FileSystemException:" + name, origin, message, file, line)
-		{
-		}
-		//! Constructor (full)
-		FileSystemException(const std::string& origin, const std::string& message, const char* file, long line)
-			: Exception("FileSystemException", origin, message, file, line)
-		{
-		}
-
+		FileSystemException(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
 	};
-	//! FileNotFoundException class (self explainatory, I would hope ;) )
+	//! FileNotFoundException class
 	class FileNotFoundException : public FileSystemException
 	{
 	public:
 		//! Constructor
-		FileNotFoundException(const std::string& origin, const std::string& description, const char* file, long line)
-			: FileSystemException("FileNotFoundException", origin, description, file, line) {}
+		FileNotFoundException(const std::string& description, const std::string& origin, const char* file, long line)
+			: FileSystemException(description, origin, file, line) {}
 	};
-	//! FileNotFoundException class (self explainatory, I would hope ;) )
+	//! FileTypeException class
 	class FileTypeException : public FileSystemException
 	{
 	public:
 		//! Constructor
-		FileTypeException(const std::string& origin, const std::string& description, const char* file, long line)
-			: FileSystemException("FileNotFoundException", origin, description, file, line) {}
+		FileTypeException(const std::string& description, const std::string& origin, const char* file, long line)
+			: FileSystemException(description, origin, file, line) {}
 	};
 	//! NotImplemented exception
 	/*!
@@ -157,15 +106,15 @@ namespace FusionEngine
 	class NotImplementedException : public Exception 
 	{
 	public:
-		NotImplementedException(const std::string& origin, const std::string& description, const char* file, long line)
-			: Exception("NotImplenetedException", description, origin, file, line) {}
+		NotImplementedException(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
 	};
 	//! InvalidArgument exception
 	class InvalidArgumentException : public Exception
 	{
 	public:
-		InvalidArgumentException(const std::string& origin, const std::string& description, const char* file, long line)
-			: Exception("InvalidArgumentException", description, origin, file, line) {}
+		InvalidArgumentException(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
 	};
 
 }

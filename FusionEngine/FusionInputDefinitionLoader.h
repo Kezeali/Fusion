@@ -39,6 +39,8 @@
 #include <memory>
 #include <string>
 
+#include "FusionXML.h"
+
 namespace FusionEngine
 {
 

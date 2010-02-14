@@ -33,13 +33,13 @@
 # pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-#include "FusionBoostSignals2.h"
+#include <boost/signals2.hpp>
 
-/// Inherited
 #include "FusionSingleton.h"
 
+#include "FusionException.h"
 #include "FusionLog.h"
 
 namespace FusionEngine
@@ -54,15 +54,17 @@ namespace FusionEngine
 	static const std::string g_LogDefaultExt = "log";
 
 
-	//! Provides logfile access to all FusionEngine objects
+	//! Provides logfile access
 	/*!
-	 * Manages logfiles.
-	 *
-	 * \todo Allow mapping of log tags to other tags - i.e. if someone
-	 *  calls Logger::Add("Arrrrg", "mylogfile"); and you previously called
-	 *  Logger::MapTag("mylogfile", "betterlogfilename"); then "Arrrrg" would
-	 *  be added to the file "betterlogfilename-<date>.<logext>"
-	 */
+	* Manages logfiles.
+	*
+	* \todo Make Logger threadsafe
+	*
+	* \todo Allow mapping of log tags to other tags - i.e. if someone
+	*  calls Logger::Add("Arrrrg", "mylogfile"); and you previously called
+	*  Logger::MapTag("mylogfile", "betterlogfilename"); then "Arrrrg" would
+	*  be added to the file "betterlogfilename-<date>.<logext>"
+	*/
 	class Logger : public Singleton<Logger>
 	{
 	public:
@@ -79,13 +81,13 @@ namespace FusionEngine
 	public:
 		//! Console logging prints all console messages to a log.
 		/*!
-		 * This writes all messages added to the console to a log, as
-		 * opposed to SetLogingToConsole() which makes a log push
-		 * all messages written to it onto the console.
-		 *
-		 * This will connect to the Console#OnNewLine signal to
-		 * capture messages.
-		 */
+		* This writes all messages added to the console to a log, as
+		* opposed to SetLogingToConsole() which makes a log push
+		* all messages written to it onto the console.
+		*
+		* This will connect to the Console#OnNewLine signal to
+		* capture messages.
+		*/
 		void ActivateConsoleLogging();
 		//! Disconnects from the console
 		void DisableConsoleLogging();
@@ -123,59 +125,53 @@ namespace FusionEngine
 
 		//! Opens or creates the logfile corresponding to the given tag
 		/*!
-		 * Opens/creates the specified file and adds the opening line (date, etc.). If
-		 * the file already exists, the opening line will be appended to the end.
-		 *
-		 * \param[in] tag
-		 * Tag to open
-		 */
+		* Opens/creates the specified file and adds the opening line (date, etc.). If
+		* the file already exists, the opening line will be appended to the end.
+		*
+		* \param[in] tag
+		* Tag to open
+		*/
 		LogPtr OpenLog(const std::string& tag, LogSeverity threshold);
 
 		//! Gets the log corresponding to the given tag.
 		/*!
-		 * \todo Perhaps this should throw an INVALID_PARAMETERS exception
-		 *  if the tag isn't found.
-		 *
-		 * \param[in] tag
-		 * Tag to find
-		 *
-		 * \returns Log*
-		 * If the tag exists
-		 */
+		* \todo Perhaps this should throw an INVALID_PARAMETERS exception
+		*  if the tag isn't found.
+		*
+		* \param[in] tag
+		* Tag to find
+		*
+		* \returns Log*
+		* If the tag exists
+		*/
 		LogPtr GetLog(const std::string& tag);
-
-		//! Prints the footer to the given log
-		//void EndLog(Log *log);
-
-		//! Finds the given log and calls Log#EndLog(Log*)
-		//void EndLog(const std::string& tag);
 
 		//! Removes a log from the list
 		/*!
-		 * \param log
-		 * The log to close
-		 */
+		* \param log
+		* The log to close
+		*/
 		void RemoveLog(const std::string& tag);
 
 		//! Removes a log from the list
 		/*!
-		 * \param log
-		 * The log to close
-		 */
+		* \param log
+		* The log to close
+		*/
 		void RemoveLog(LogPtr log);
 
 		//! Adds the given message to the given log
 		/*!
-		 * The given tag will be appended with a date and .log extension, unless
-		 * otherwise specified, to create the log-file name. If the resulting
-		 * filename does not exist, it will be created.
-		 */
+		* The given tag will be appended with a date and .log extension, unless
+		* otherwise specified, to create the log-file name. If the resulting
+		* filename does not exist, it will be created.
+		*/
 		void Add(const std::string &message, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_NORMAL);
 
 		//! [depreciated] Adds the given error to the given log
 		/*!
-		 * Formats the given error to a string, then calls the normal Add()
-		 */
+		* Formats the given error to a string, then calls the normal Add()
+		*/
 		void Add(const Exception& error, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_CRITICAL);
 
 		//! Called by the OnNewLine signal from the console
@@ -198,22 +194,22 @@ namespace FusionEngine
 	protected:
 		//! Opens a logfile (creates it if it doesn't exist)
 		/*!
-		 * Always returns a FusionEngine#Log. Throws an exception otherwise.
-		 *
-		 * \param tag
-		 * The tag to look for and create a file for if necessary
-		 *
-		 * \param threshold
-		 * The threshold setting for the log
-		 */
+		* Always returns a FusionEngine#Log. Throws an exception otherwise.
+		*
+		* \param tag
+		* The tag to look for and create a file for if necessary
+		*
+		* \param threshold
+		* The threshold setting for the log
+		*/
 		LogPtr openLog(const std::string& tag);
 
 
 		//! Makes a filename for the given tag
 		/*!
-		 * If dating is active, the filename format will be: <br>
-		 * <code> [tag]-[year][month][day].[m_Ext] </code>
-		 */
+		* If dating is active, the filename format will be: <br>
+		* <code> [tag]-[year][month][day].[m_Ext] </code>
+		*/
 		std::string filename(const std::string& tag) const;
 
 	};

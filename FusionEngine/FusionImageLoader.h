@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionResourceLoader.h"
 
@@ -50,123 +50,6 @@ namespace FusionEngine
 	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
 	//! Sprite QLD unloader callback
 	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData);
-
-	class SpriteDefinition
-	{
-	public:
-		typedef std::tr1::unordered_set<std::string> FilenameSet;
-
-		struct Image
-		{
-			enum FrameType
-			{
-				FrameFile,
-				FrameGridCell,
-				FrameAlphaCell
-			} type;
-
-			CL_String filename;
-			//CL_Rect cell;
-
-			int xpos, ypos, width, height;
-
-			int xarray, yarray;
-			int array_skipframes;
-			int xspacing, yspacing;
-
-			float trans_limit;
-
-			bool free;
-
-			CL_PixelBuffer image_data;
-
-			Image()
-				: xpos(0), ypos(0),
-				width(0), height(0),
-				xarray(1), yarray(1), array_skipframes(0),
-				xspacing(0), yspacing(0),
-				trans_limit(0.f),
-				free(false)
-			{}
-		};
-
-		typedef std::vector<Image> ImageArray;
-	public:
-		SpriteDefinition();
-		~SpriteDefinition();
-
-		void LoadXml(const std::string &working_directory, TiXmlDocument *document);
-
-		CL_Sprite *CreateSprite(CL_GraphicContext &gc, CL_VirtualDirectory &dir);
-
-		void SpriteReleased();
-
-		void ClearImageData();
-
-	protected:
-		//! Add image definition
-		void addImage(const Image &image_definition);
-
-		//! Adds an image file
-		void addImage(const std::string &filename);
-
-		//! Adds a grid-clipped image
-		void addImage(const std::string &filename, int xpos, int ypos, int width, int height, int xarray, int yarray, int array_skipframes, int xspacing, int yspacing);
-		//! Adds an alpha-clipped image
-		void addImage(const std::string &filename, int xpos, int ypos, float trans_limit, bool free = false);
-
-		//! Returns true if the file exists
-		bool exists(const std::string &filename);
-
-		void loadImageElements(TiXmlElement *root);
-		void loadMoreOptions(TiXmlElement *root);
-
-		// Counts sprites based on this definition - when count reaches zero
-		//  all image data is cleared
-		unsigned int m_Users;
-
-		std::string m_WorkingDirectory;
-
-		FilenameSet m_ImageFiles;
-		ImageArray m_Images;
-
-		// Initial Sprite settings
-		CL_Colorf m_Colour;
-
-		struct AnimationOptions
-		{
-			int delay;
-			bool loop;
-			bool pingpong;
-			bool backward;
-			CL_Sprite::ShowOnFinish showOnFinish;
-		} m_Animation;
-
-		struct SpriteFrame
-		{
-			int number;
-			int delay;
-			CL_Point offset;
-		};
-
-		typedef std::vector<SpriteFrame> SpriteFrameArray;
-
-		SpriteFrameArray m_Frames;
-
-		float m_ScaleX, m_ScaleY;
-
-		CL_Angle m_BaseAngle;
-
-		CL_Origin m_OffsetOrigin;
-		int m_OffsetX;
-		int m_OffsetY;
-
-		CL_Origin m_RotationOrigin;
-		int m_RotationPointX;
-		int m_RotationPointY;
-	};
-
-	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir);
 
 }
 

@@ -128,12 +128,12 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterSingletonType(const std::string& type_name, asIScriptEngine* engine)
 	{
-		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT_MSG(engine, "Passed NULL engine pointer to registerVector");
 
 		int error_code = 0;
 
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_REF | asOBJ_NOHANDLE);
-		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
+		FSN_ASSERT_MSG(error_code >= 0, "Failed to register object type");
 	}
 
 }

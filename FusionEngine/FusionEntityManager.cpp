@@ -30,17 +30,17 @@
 
 #include "FusionEntityManager.h"
 
-#include "FusionEntityFactory.h"
-#include "FusionClientOptions.h"
-#include "FusionPlayerRegistry.h"
-
-#include "FusionNetworkTypes.h"
-#include "FusionNetworkSystem.h"
-#include "FusionRakNetwork.h"
-
 #include <boost/lexical_cast.hpp>
 #include <BitStream.h>
 
+#include "FusionClientOptions.h"
+#include "FusionEntityFactory.h"
+#include "FusionExceptionFactory.h"
+#include "FusionNetworkSystem.h"
+#include "FusionNetworkTypes.h"
+#include "FusionPlayerRegistry.h"
+#include "FusionRakNetwork.h"
+#include "FusionScriptTypeRegistrationUtils.h"
 // For script registration (the script method EntityManager::instance() returns a script object)
 #include "FusionScriptedEntity.h"
 

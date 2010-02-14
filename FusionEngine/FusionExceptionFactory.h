@@ -73,29 +73,6 @@ namespace FusionEngine
 		enum { code = T };
 	};
 
-	//! [WIP] String manipulation functions
-	/*!
-	 * Does stuff with strings - Reduces dependance on the ClanLib API
-	 * by wrapping CL_String; Adds additional functionality.
-	 *
-	 * \todo StringStream
-	 */
-	namespace StrUtil
-	{
-		//! Formats a string
-		template <typename T1>
-		static std::string Format(const std::string& format, const T1 &p1)
-		{
-			return CL_String::format<T1>(format, p1);
-		}
-		//! Formats a string
-		template <typename T1, typename T2>
-		static std::string Format(const std::string& format, const T1& p1, const T2& p2)
-		{
-			return CL_String::format<T1, T2>(format, p1, p2);
-		}
-	}
-
 	//! Creates exceptions
 	class ExceptionFactory
 	{

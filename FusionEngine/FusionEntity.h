@@ -33,18 +33,22 @@
 #pragma once
 #endif
 
-// Inherited
-#include "FusionPhysicsCallback.h"
+#include "FusionPrerequisites.h"
+
 #include "FusionRefCounted.h"
 #include "FusionStreamedResourceUser.h"
 
 #include "FusionCommon.h"
-#include "FusionPlayerInput.h"
-#include "FusionSerialisedData.h"
 #include "FusionEntityDeserialiser.h"
+#include "FusionPhysicsCallback.h"
+#include "FusionPlayerInput.h"
 #include "FusionResourcePointer.h"
+#include "FusionSerialisedData.h"
+#include "FusionVector2.h"
 
 #include <boost/any.hpp>
+
+#include <ClanLib/Display/2D/sprite.h>
 
 
 namespace FusionEngine

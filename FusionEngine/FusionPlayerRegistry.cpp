@@ -198,7 +198,8 @@ namespace FusionEngine
 		playerInfo.System = system_address;
 
 		m_ByNetIndex[net_index] = playerInfo;
-		m_ByLocalIndex[local_index] = playerInfo;
+		if (local_index < s_MaxLocalPlayers)
+			m_ByLocalIndex[local_index] = playerInfo;
 
 		SignalPlayerAdded(playerInfo);
 	}
@@ -236,6 +237,16 @@ namespace FusionEngine
 		m_Arbitrator = 0;
 		m_ByLocalIndex.clear();
 		m_ByNetIndex.clear();
+	}
+
+	unsigned int PlayerRegistry::getPlayerCount() const
+	{
+		return m_ByNetIndex.size();
+	}
+
+	unsigned int PlayerRegistry::getLocalPlayerCount() const
+	{
+		return m_ByLocalIndex.size();
 	}
 
 	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetIndex(ObjectID index) const

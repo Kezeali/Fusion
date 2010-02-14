@@ -32,10 +32,13 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
+
+#include <functional>
+#include <Box2D/Box2D.h>
 
 #include "FusionEntity.h"
-
+#include "FusionPhysicsFixture.h"
 
 namespace FusionEngine
 {

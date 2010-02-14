@@ -30,6 +30,8 @@
 
 #include "FusionClanLibRocketInterface.h"
 
+#include <Rocket/Core.h>
+
 #include "PhysFS.h"
 #include "FusionPhysFS.h"
 #include "FusionLogger.h"
@@ -98,7 +100,7 @@ namespace FusionEngine
 	};
 
 
-	RocketRenderer::RocketRenderer(CL_GraphicContext gc)
+	RocketRenderer::RocketRenderer(const CL_GraphicContext &gc)
 		: m_gc(gc),
 		m_ClipEnabled(false)
 	{

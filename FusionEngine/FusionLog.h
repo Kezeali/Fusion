@@ -73,6 +73,7 @@ namespace FusionEngine
 
 	//! Represents a Log
 	/*!
+	* \todo Make Log threadsafe
 	 * \sa FusionEngine#Logger
 	 */
 	class Log

@@ -30,6 +30,7 @@
 #include "FusionPhysicsDebugDraw.h"
 
 #include <Box2D/Box2D.h>
+#include <ClanLib/display.h>
 
 namespace FusionEngine
 {

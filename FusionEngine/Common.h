@@ -1,5 +1,5 @@
-#ifndef Header_FusionCommon
-#define Header_FusionCommon
+#ifndef Header_FusionStableHeaders
+#define Header_FusionStableHeaders
 
 #if _MSC_VER > 1000
 #pragma once
@@ -9,7 +9,7 @@
 
 #include <angelscript.h>
 
-#include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <Box2D/Box2D.h>

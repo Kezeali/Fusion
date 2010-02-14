@@ -27,22 +27,22 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include <boost/functional/hash.hpp>
+#include <ClanLib/display.h>
 
-// Inherited
 #include "FusionSingleton.h"
 
-// Fusion
+#include "FusionHashable.h"
 #include "FusionInputDefinitionLoader.h"
 #include "FusionLogger.h"
-#include "FusionBoostSignals2.h"
+#include "FusionSlotContainer.h"
+#include "FusionXML.h"
 
 #ifdef _WIN32
 #define FSN_USE_XINPUT
 #endif
-
 // XInput (windows only)
 #ifdef FSN_USE_XINPUT
 #include "FusionXInputController.h"
@@ -327,7 +327,7 @@ namespace FusionEngine
 		//! Basic constructor.
 		InputManager();
 		//! Constructor.
-		InputManager(CL_DisplayWindow window);
+		InputManager(const CL_DisplayWindow &window);
 		//! Deconstructor
 		~InputManager();
 

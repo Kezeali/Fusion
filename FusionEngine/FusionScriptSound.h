@@ -29,15 +29,17 @@
 
 #include "FusionCommon.h"
 
+#include <boost/signals2/connection.hpp>
+#include <string>
+#include <ClanLib/sound.h>
+
 #include "FusionRefCounted.h"
 #include "FusionStreamedResourceUser.h"
 
-#include "FusionScriptReference.h"
 #include "FusionResourcePointer.h"
+#include "FusionScriptReference.h"
 
-#include <boost/signals2/connection.hpp>
 
-#include <string>
 
 
 namespace FusionEngine

@@ -40,7 +40,7 @@
 #	pragma warning (disable : 4312)
 #endif
 
-#include "Common.h"
+#include "FusionAssert.h"
 
 namespace FusionEngine
 {
@@ -76,7 +76,7 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~Singleton( void )
 		{
-			FSN_ASSERT( ms_Singleton != NULL );
+			FSN_ASSERT( ms_Singleton != nullptr );
 			ms_Singleton = 0;
 		}
 

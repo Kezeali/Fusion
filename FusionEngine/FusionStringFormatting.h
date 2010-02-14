@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "Common.h"
+#include <sstream>
 
 //! Stupid string-stream based formatting macro
 /*!
@@ -59,9 +59,11 @@ namespace FusionEngine
 	class basic_makestring
 	{
 	public:
+		//! Operator overloads conversion to std::string
 		std::basic_stringstream<Elem> stream;
 		operator std::basic_string<Elem>() const { return stream.str(); }
 
+		//! Stream input operator
 		template<class T>
 		basic_makestring<Elem>& operator<<(T const& other) { stream << other; return *this; }
 	};

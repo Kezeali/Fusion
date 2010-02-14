@@ -28,18 +28,7 @@
 
 #include "Common.h"
 
-#include "FusionLog.h"
-#include "FusionLogger.h"
 #include "FusionEntityFactory.h"
-#include "FusionScriptedEntity.h"
-#include "FusionScriptSound.h"
-#include "FusionPaths.h"
-#include "FusionXml.h"
-#include "FusionPhysFS.h"
-#include "FusionResourceManager.h"
-#include "FusionPhysicalEntityManager.h"
-
-#include <ScriptUtils/Inheritance/TypeTraits.h>
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -48,6 +37,18 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <ScriptUtils/Inheritance/TypeTraits.h>
+
+#include "FusionExceptionFactory.h"
+#include "FusionLog.h"
+#include "FusionLogger.h"
+#include "FusionPaths.h"
+#include "FusionPhysFS.h"
+#include "FusionPhysicalEntityManager.h"
+#include "FusionResourceManager.h"
+#include "FusionScriptedEntity.h"
+#include "FusionScriptSound.h"
+#include "FusionXml.h"
 
 namespace FusionEngine
 {

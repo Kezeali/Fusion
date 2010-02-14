@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_Xml
-#define Header_FusionEngine_Xml
+#ifndef Header_FusionXml
+#define Header_FusionXml
 
 #if _MSC_VER > 1000
 #pragma once
@@ -51,6 +51,9 @@
 #include "../tinyxml/ticpp.h"
 #endif
 #endif
+
+#include <ClanLib/Core/IOData/iodevice.h>
+#include <ClanLib/Core/IOData/virtual_directory.h>
 
 
 namespace FusionEngine

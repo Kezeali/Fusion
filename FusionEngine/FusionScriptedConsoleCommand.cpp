@@ -30,10 +30,6 @@
 
 #include "FusionScriptedConsoleCommand.h"
 
-#include "FusionConsole.h"
-#include "FusionScriptManager.h"
-
-#include <ScriptUtils/Calling/Caller.h>
 #include <boost/bind.hpp>
 //#include <boost/algorithm/string/classification.hpp>
 //#include <boost/algorithm/string/split.hpp>
@@ -41,6 +37,12 @@
 //#include <boost/range/iterator_range.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <ClanLib/regexp.h>
+
+#include <ScriptUtils/Calling/Caller.h>
+
+#include "FusionConsole.h"
+#include "FusionScriptManager.h"
 
 namespace FusionEngine
 {

@@ -224,9 +224,9 @@ namespace FusionEngine
 		return new Camera(asGetActiveContext()->GetEngine(), ScriptedEntity::GetAppObject(follow));
 	}
 
-	Scripting::ScriptVector* Camera_GetPosition(Camera *obj)
+	Vector2* Camera_GetPosition(Camera *obj)
 	{
-		return new Scripting::ScriptVector(obj->GetPosition().x, obj->GetPosition().y);
+		return new Vector2(obj->GetPosition().x, obj->GetPosition().y);
 	}
 
 	void Camera_SetParallaxCamera(Camera *camera, float distance, Camera *obj)

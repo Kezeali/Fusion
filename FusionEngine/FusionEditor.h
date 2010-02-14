@@ -26,33 +26,33 @@
 
 */
 
-#ifndef Header_FusionEngine_Editor
-#define Header_FusionEngine_Editor
+#ifndef Header_FusionEditor
+#define Header_FusionEditor
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-#include "FusionState.h"
-
-#include "FusionIDStack.h"
-#include "FusionViewport.h"
-#include "FusionInputHandler.h"
-#include "FusionGameMapLoader.h"
-#include "FusionContextMenu.h"
-#include "FusionElementSelectableDataGrid.h"
-#include "FusionElementUndoMenu.h"
-#include "FusionEditorUndo.h"
-
+#include <EMP/Core/DataSource.h>
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
-#include <EMP/Core/DataSource.h>
 #include <Rocket/Controls/ElementFormControlSelect.h>
 
 #include <containers/structured_set.hpp>
 
+#include "FusionState.h"
+
+#include "FusionContextMenu.h"
+#include "FusionEditorUndo.h"
+#include "FusionElementSelectableDataGrid.h"
+#include "FusionElementUndoMenu.h"
+#include "FusionGameMapLoader.h"
+#include "FusionIDStack.h"
+#include "FusionInputHandler.h"
+#include "FusionViewport.h"
+#include "FusionXML.h"
 
 namespace FusionEngine
 {

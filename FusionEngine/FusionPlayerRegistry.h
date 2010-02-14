@@ -38,6 +38,7 @@
 #include "FusionSingleton.h"
 
 #include "FusionNetwork.h"
+#include "FusionStdHeaders.h"
 
 #include <boost/signals2.hpp>
 
@@ -45,7 +46,19 @@
 namespace FusionEngine
 {
 
+	//! Max local (split-screen, hotseat, etc.) players per client
+	/*
+	* This is primarily used to define the size of constant size arrays but 
+	* is also used for checking player numbers given by config files, etc.
+	*/
+	const unsigned int s_MaxLocalPlayers = 16;
+
 	//! Singleton registry of player IDs and network addresses
+	/*!
+	* Only stores player info, maintainence is done primarily by
+	* PlayerManager, which registers new players as they join the network
+	* and allows the local peer to request new players.
+	*/
 	class PlayerRegistry : public Singleton<PlayerRegistry>
 	{
 	public:
@@ -88,6 +101,11 @@ namespace FusionEngine
 
 		static void Clear();
 
+		//! Returns the number of players in the game (including remote players)
+		static unsigned int GetPlayerCount();
+		//! Returns the number of players on the local peer
+		static unsigned int GetLocalPlayerCount();
+
 		static const PlayerInfo &GetPlayerByNetIndex(ObjectID index);
 		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
 
@@ -108,6 +126,9 @@ namespace FusionEngine
 		void removePlayersFrom(NetHandle system_address);
 
 		void clear();
+
+		unsigned int getPlayerCount() const;
+		unsigned int getLocalPlayerCount() const;
 
 		const PlayerInfo &getPlayerByNetIndex(ObjectID index) const;
 		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;

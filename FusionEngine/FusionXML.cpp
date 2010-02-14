@@ -29,6 +29,7 @@
 
 #include "FusionXML.h"
 
+#include "FusionExceptionFactory.h"
 #include "FusionPhysFS.h"
 
 namespace FusionEngine

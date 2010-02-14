@@ -20,14 +20,18 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_XInputController
-#define Header_FusionEngine_XInputController
+#ifndef Header_FusionXInputController
+#define Header_FusionXInputController
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
+
+// ClanLib/core.h includes windows.h which is a prerequisite of xinput.h
+//  thus, since core.h has to be included anyway, it is included before xinput.h
+#include <ClanLib/core.h>
 
 #include <xinput.h>
 

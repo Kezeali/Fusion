@@ -29,6 +29,9 @@
 
 #include "FusionAudioLoader.h"
 
+#include "FusionExceptionFactory.h"
+
+#include <ClanLib/sound.h>
 #include <ClanLib/Sound/SoundProviders/soundprovider_factory.h>
 
 namespace FusionEngine

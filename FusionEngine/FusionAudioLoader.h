@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include "FusionResourceLoader.h"
 

@@ -2,6 +2,8 @@
 
 #include "FusionStreamingManager.h"
 
+#include "FusionScriptTypeRegistrationUtils.h"
+
 namespace FusionEngine
 {
 

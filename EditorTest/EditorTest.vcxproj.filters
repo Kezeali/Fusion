@@ -245,6 +245,9 @@
     <ClCompile Include="..\FusionEngine\FusionScriptManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionSpriteDefinition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\Common.h">
@@ -542,6 +545,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionStdHeaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionPrerequisites.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionSpriteDefinition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

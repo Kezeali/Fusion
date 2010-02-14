@@ -33,12 +33,13 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 // Inherited
 #include "FusionSingleton.h"
 
 #include "FusionScriptModule.h"
+#include "FusionException.h"
 
 #include <boost/signals2/signal.hpp>
 #include <boost/function.hpp>
@@ -49,13 +50,6 @@ namespace FusionEngine
 	
 	//! Default maximum console buffer length
 	static const size_t s_ConsoleDefaultBufferLength = 3200;
-
-	//! Not Used
-	struct ConsoleLine
-	{
-		std::string message;
-		CL_Color colour;
-	};
 
 	//! Provides console data access to all FusionEngine objects
 	/*!

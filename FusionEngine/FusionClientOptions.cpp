@@ -30,7 +30,10 @@
 
 #include "FusionClientOptions.h"
 
-#include "FusionXML.h"
+#include "FusionCommon.h"
+#include "FusionExceptionFactory.h"
+
+#include <ClanLib/core.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -38,30 +41,15 @@ namespace FusionEngine
 {
 
 	ClientOptions::ClientOptions(const std::string &type)
-		: m_Type(type),
-		m_NumLocalPlayers(0)
+		: m_Type(type)
 	{
-		//// Set the global controls to some valid values.
-		//DefaultGlobalControls();
-
-		//PlayerInputs.resize(s_MaxLocalPlayers);
-		//// Do the same for all the players
-		//for (ObjectID i=0; i<s_MaxLocalPlayers; i++)
-		//{
-		//	DefaultPlayerControls(i);
-		//}
-
-		// Make sure there's enough room for all the player options objects
-		//m_PlayerOptions.resize(s_MaxLocalPlayers);
-		m_PlayerVariables.resize(s_MaxLocalPlayers);
+		//m_PlayerVariables.resize(s_MaxLocalPlayers);
 	}
 
 	ClientOptions::ClientOptions(const std::string &filename, const std::string &type)
-		: m_Type(type),
-		m_NumLocalPlayers(0)
+		: m_Type(type)
 	{
-		//m_PlayerOptions.resize(s_MaxLocalPlayers);
-		m_PlayerVariables.resize(s_MaxLocalPlayers);
+		//m_PlayerVariables.resize(s_MaxLocalPlayers);
 
 		if (!LoadFromFile(filename))
 			SaveToFile(filename);
@@ -95,7 +83,7 @@ namespace FusionEngine
 
 		insertVarMapIntoDOM(root, m_Variables);
 
-		for (unsigned int i = 0; i <= m_NumLocalPlayers; ++i)
+		for (unsigned int i = 0; i <= m_PlayerVariables.size(); ++i)
 		{
 			ticpp::Element* player = new ticpp::Element("playeroptions");
 			root->LinkEndChild( player ); 
@@ -185,10 +173,10 @@ namespace FusionEngine
 		m_Mutex.unlock();
 	}
 
-	bool ClientOptions::SetPlayerOption(int player, const std::string &name, const std::string &value)
+	bool ClientOptions::SetPlayerOption(unsigned int player, const std::string &name, const std::string &value)
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		if (player >= (signed)m_NumLocalPlayers)
+		if (player >= m_PlayerVariables.size())
 			return false;
 		m_PlayerVariables[player][name] = value;
 		return true;
@@ -240,10 +228,10 @@ namespace FusionEngine
 		return (value == "1" || value == "t" || value == "true");
 	}
 
-	bool ClientOptions::GetPlayerOption(int player, const std::string &name, std::string *value) const
+	bool ClientOptions::GetPlayerOption(unsigned int player, const std::string &name, std::string *value) const
 	{
 		CL_MutexSection mutex_lock(&m_Mutex);
-		if (player >= (signed)m_NumLocalPlayers)
+		if (player >= m_PlayerVariables.size())
 			return false;
 
 		const VarMap &playerVars = m_PlayerVariables[player];
@@ -283,10 +271,10 @@ namespace FusionEngine
 			playerNum = CL_StringHelp::local8_to_int(player);
 		}
 
-		if (playerNum > m_NumLocalPlayers || playerNum > m_PlayerVariables.size())
-			return;
+		if (playerNum >= m_PlayerVariables.size())
+			m_PlayerVariables.resize(playerNum + 1);
 
-		VarMap playerVars = m_PlayerVariables[playerNum];
+		VarMap &playerVars = m_PlayerVariables[playerNum];
 
 		ticpp::Iterator< ticpp::Element > child;
 		for ( child = child.begin( opts_root ); child != child.end(); child++ )

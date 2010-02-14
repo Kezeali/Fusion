@@ -33,9 +33,14 @@
 #pragma once
 #endif
 
+#include "FusionPrerequisites.h"
 #include "FusionCommon.h"
 
-#include <Rocket/Core.h>
+#include <Rocket/Core/FileInterface.h>
+#include <Rocket/Core/SystemInterface.h>
+#include <Rocket/Core/RenderInterface.h>
+
+#include <ClanLib/display.h>
 
 namespace FusionEngine
 {
@@ -55,7 +60,7 @@ namespace FusionEngine
 	class RocketRenderer : public Rocket::Core::RenderInterface
 	{
 	public:
-		RocketRenderer(CL_GraphicContext gc);
+		RocketRenderer(const CL_GraphicContext &gc);
 
 		typedef std::tr1::unordered_map<CL_String, CL_Texture> TextureMap;
 		typedef std::list<CL_VertexArrayBuffer> GeometryMap;

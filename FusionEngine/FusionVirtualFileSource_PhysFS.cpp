@@ -29,7 +29,10 @@
 #include "Common.h"
 
 #include "FusionVirtualFileSource_PhysFS.h"
-#include <ClanLib/Core/IOData/iodevice.h>
+
+#include <sstream>
+
+#include <ClanLib/core.h>
 #include <ClanLib/Core/IOData/virtual_directory_listing_entry.h>
 
 static std::string narrow(const std::wstring &str)

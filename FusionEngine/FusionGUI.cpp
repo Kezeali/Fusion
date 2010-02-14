@@ -27,17 +27,8 @@
 */
 
 #include "Common.h"
-#include "FusionCommon.h"
 
 #include "FusionGUI.h"
-
-#include "FusionConsole.h"
-#include "FusionLogger.h"
-#include "FusionScriptManager.h"
-#include "FusionScriptModule.h"
-
-#include "FusionElementSelectableDataGrid.h"
-
 #include <Rocket/Core.h>
 #include <Rocket/Controls.h>
 #include <Rocket/Debugger.h>
@@ -45,8 +36,15 @@
 #include <Rocket/AngelScript/Core/ras_Core.h>
 #include <Rocket/AngelScript/Controls/ras_Controls.h>
 
+#include "FusionConsole.h"
+#include "FusionLogger.h"
+#include "FusionScriptManager.h"
+#include "FusionScriptModule.h"
+
+#include "FusionScriptTypeRegistrationUtils.h"
 #include "scriptstring.h"
 
+#include "FusionElementSelectableDataGrid.h"
 
 namespace FusionEngine
 {

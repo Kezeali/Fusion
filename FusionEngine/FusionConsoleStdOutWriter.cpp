@@ -4,6 +4,7 @@
 #include "FusionConsoleStdOutWriter.h"
 
 #include <boost/bind.hpp>
+#include <ClanLib/core.h>
 
 namespace FusionEngine
 {

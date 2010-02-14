@@ -24,9 +24,10 @@
 
 #include "FusionInputHandler.h"
 
+#include "FusionExceptionFactory.h"
 #include "FusionLogger.h"
+#include "FusionStringFormatting.h"
 #include "FusionXML.h"
-
 
 namespace FusionEngine
 {
@@ -92,7 +93,7 @@ namespace FusionEngine
 		m_Log = Logger::getSingletonPtr()->OpenLog(g_LogGeneral);
 	}
 
-	InputManager::InputManager(CL_DisplayWindow window)
+	InputManager::InputManager(const CL_DisplayWindow &window)
 		: m_SuspendRequests(0)
 	{
 		m_DefinitionLoader = new InputDefinitionLoader();
