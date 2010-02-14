@@ -1,4 +1,4 @@
-#include "../FusionEngine/Common.h"
+#include "../FusionEngine/FusionStableHeaders.h"
 #include "../FusionEngine/FusionPrerequisites.h"
 
 // Logging

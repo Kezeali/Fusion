@@ -26,7 +26,7 @@
 
 */
 
-#include "Common.h"
+#include "FusionStableHeaders.h"
 
 #include "FusionEntityDeserialiser.h"
 #include "FusionEntityManager.h"

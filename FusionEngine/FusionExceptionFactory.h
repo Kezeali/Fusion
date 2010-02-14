@@ -27,7 +27,7 @@
 #pragma once
 #endif
 
-#include "Common.h"
+#include "FusionStableHeaders.h"
 
 #include "FusionException.h"
 

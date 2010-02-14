@@ -67,7 +67,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>Common.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;RakNetDLLDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -100,9 +100,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\FusionEngine\Common.cpp">
+    <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Common.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAudioLoader.cpp" />
@@ -188,14 +188,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="main.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/Common.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\FusionEngine\Common.h" />
+    <ClInclude Include="..\FusionEngine\FusionStableHeaders.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionBoostSignals2.h" />

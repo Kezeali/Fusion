@@ -25,7 +25,7 @@
 		Elliot Hayward
 */
 
-#include "Common.h"
+#include "FusionStableHeaders.h"
 
 #include "FusionPhysFSIODeviceProvider.h"
 #include "ClanLib/Core/IOData/file.h"

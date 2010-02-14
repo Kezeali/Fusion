@@ -14,9 +14,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\FusionEngine\Common.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -248,11 +245,11 @@
     <ClCompile Include="..\FusionEngine\FusionSpriteDefinition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\FusionEngine\Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -551,6 +548,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionSpriteDefinition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionStableHeaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
