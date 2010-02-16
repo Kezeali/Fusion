@@ -246,10 +246,10 @@ namespace FusionEngine
 		{
 			if (ev.GetType() == "click")
 			{
-				MenuItemEvent ev;
-				ev.title = m_Title;
-				ev.value = NULL;
-				SignalClicked(ev);
+				MenuItemEvent item_ev;
+				item_ev.title = m_Title;
+				item_ev.value = NULL;
+				SignalClicked(item_ev);
 			}
 		}
 	}
