@@ -1,42 +1,40 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
 
 #include "FusionPlayerRegistry.h"
 
-
 namespace FusionEngine
 {
 
 	bool PlayerRegistry::PlayerInfo::operator==(const PlayerInfo &other) const
 	{
-		return NetIndex == other.NetIndex;
+		return NetID == other.NetID;
 	}
 
 	bool PlayerRegistry::PlayerInfo::operator!=(const PlayerInfo &other) const
@@ -60,47 +58,39 @@ namespace FusionEngine
 		return registry->SignalPlayerRemoved.connect(slot);
 	}
 
-	boost::signals2::connection PlayerRegistry::ConnectToPlayerRestored(RegistryChangedSigType::slot_type &slot)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+	//boost::signals2::connection PlayerRegistry::ConnectToPlayerRestored(RegistryChangedSigType::slot_type &slot)
+	//{
+	//	PlayerRegistry *registry = getSingletonPtr();
+	//	FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 
-		return registry->SignalPlayerRestored.connect(slot);
-	}
+	//	return registry->SignalPlayerRestored.connect(slot);
+	//}
 
-	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->addPlayer(net_index, local_index, system_address);
-	}
-
-	void PlayerRegistry::AddPlayer(ObjectID net_index, unsigned int local_index)
+	void PlayerRegistry::AddLocalPlayer(ObjectID id, unsigned int local_index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->addPlayer(net_index, local_index, NetHandle());
+		registry->addPlayer(id, local_index, registry->m_LocalGUID);
 	}
 
-	void PlayerRegistry::AddPlayer(ObjectID net_index, NetHandle system_address)
+	void PlayerRegistry::AddRemotePlayer(ObjectID id, RakNetGUID guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->addPlayer(net_index, s_MaxLocalPlayers, system_address);
+		registry->addPlayer(id, s_MaxLocalPlayers, guid);
 	}
 
-	void PlayerRegistry::RemovePlayer(ObjectID net_index)
+	void PlayerRegistry::RemovePlayer(ObjectID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->removePlayer(net_index);
+		registry->removePlayer(id);
 	}
 
-	void PlayerRegistry::RemovePlayer(unsigned int local_index)
+	void PlayerRegistry::RemoveLocalPlayer(unsigned int local_index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -108,12 +98,12 @@ namespace FusionEngine
 		registry->removePlayer(local_index);
 	}
 
-	void PlayerRegistry::RemovePlayersFrom(NetHandle system_address)
+	void PlayerRegistry::RemovePlayersFrom(RakNetGUID guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->removePlayersFrom(system_address);
+		registry->removePlayersFrom(guid);
 	}
 
 	void PlayerRegistry::Clear()
@@ -124,12 +114,12 @@ namespace FusionEngine
 		registry->clear();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByNetIndex(ObjectID index)
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayer(ObjectID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		return registry->getPlayerByNetIndex(index);
+		return registry->getPlayerByNetID(id);
 	}
 
 	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByLocalIndex(unsigned int index)
@@ -140,37 +130,12 @@ namespace FusionEngine
 		return registry->getPlayerByLocalIndex(index);
 	}
 
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::GetPlayersBySystem(NetHandle system_address)
+	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::GetPlayersBySystem(RakNetGUID guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		return registry->getPlayersBySystem(system_address);
-	}
-
-	const void PlayerRegistry::SetArbitrator(ObjectID net_index)
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		registry->setArbitrator(net_index);
-	}
-
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetArbitratingPlayer()
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		return registry->getPlayerByNetIndex(registry->m_Arbitrator);
-	}
-
-	bool PlayerRegistry::ArbitratorIsLocal()
-	{
-		PlayerRegistry *registry = getSingletonPtr();
-		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
-		
-		// In local only games (no net players) arbitrator is set to zero
-		return registry->m_Arbitrator == 0 || registry->m_Arbitrator == registry->getPlayerByLocalIndex(0).NetIndex;
+		return registry->getPlayersBySystem(guid);
 	}
 
 	bool PlayerRegistry::IsLocal(ObjectID net_index)
@@ -178,26 +143,25 @@ namespace FusionEngine
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		return registry->getPlayerByNetIndex(net_index).LocalIndex != s_MaxLocalPlayers;
+		return registry->getPlayerByNetID(net_index).LocalIndex < s_MaxLocalPlayers;
 	}
 
-	PlayerRegistry::PlayerRegistry()
-		: m_Arbitrator(0)
+	PlayerRegistry::PlayerRegistry(RakNetGUID local_guid)
+		: m_LocalGUID(local_guid)
 	{
-		m_NoSuchPlayer.NetIndex = 0;
+		m_NoSuchPlayer.NetID = 0;
 		m_NoSuchPlayer.LocalIndex = s_MaxLocalPlayers;
-		m_NoSuchPlayer.IsInGame = false;
 	}
 
-	void PlayerRegistry::addPlayer(ObjectID net_index, unsigned int local_index, NetHandle system_address)
+	void PlayerRegistry::addPlayer(ObjectID net_id, unsigned int local_index, RakNetGUID guid)
 	{
 		//PlayerInfoPtr playerInfo(new PlayerInfo);
 		PlayerInfo playerInfo;
-		playerInfo.NetIndex = net_index;
+		playerInfo.NetID = net_id;
 		playerInfo.LocalIndex = local_index;
-		playerInfo.System = system_address;
+		playerInfo.GUID = guid;
 
-		m_ByNetIndex[net_index] = playerInfo;
+		m_ByNetID[net_id] = playerInfo;
 		if (local_index < s_MaxLocalPlayers)
 			m_ByLocalIndex[local_index] = playerInfo;
 
@@ -206,42 +170,41 @@ namespace FusionEngine
 
 	void PlayerRegistry::removePlayer(ObjectID net_index)
 	{
-		PlayersByNetIndexMap::iterator _where = m_ByNetIndex.find(net_index);
+		PlayersByNetIndexMap::iterator _where = m_ByNetID.find(net_index);
 		m_ByLocalIndex.erase(_where->second.LocalIndex);
-		m_ByNetIndex.erase(_where);
+		m_ByNetID.erase(_where);
 	}
 
-	void PlayerRegistry::removePlayer(unsigned int local_index)
+	void PlayerRegistry::removeLocalPlayer(unsigned int local_index)
 	{
 		PlayersByLocalIndexMap::iterator _where = m_ByLocalIndex.find(local_index);
-		m_ByNetIndex.erase(_where->second.NetIndex);
+		m_ByNetID.erase(_where->second.NetID);
 		m_ByLocalIndex.erase(_where);
 	}
 
-	void PlayerRegistry::removePlayersFrom(NetHandle system_address)
+	void PlayerRegistry::removePlayersFrom(RakNetGUID guid)
 	{
-		for (PlayersByNetIndexMap::iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
+		for (PlayersByNetIndexMap::iterator it = m_ByNetID.begin(), end = m_ByNetID.end(); it != end; ++it)
 		{
 			PlayerInfo &playerInfo = it->second;
-			if (playerInfo.System == system_address)
+			if (playerInfo.GUID == guid)
 			{
-				if (playerInfo.LocalIndex == s_MaxLocalPlayers)
+				if (playerInfo.LocalIndex < s_MaxLocalPlayers)
 					m_ByLocalIndex.erase(playerInfo.LocalIndex);
-				m_ByNetIndex.erase(playerInfo.NetIndex);
+				m_ByNetID.erase(playerInfo.NetID);
 			}
 		}
 	}
 
 	void PlayerRegistry::clear()
 	{
-		m_Arbitrator = 0;
 		m_ByLocalIndex.clear();
-		m_ByNetIndex.clear();
+		m_ByNetID.clear();
 	}
 
 	unsigned int PlayerRegistry::getPlayerCount() const
 	{
-		return m_ByNetIndex.size();
+		return m_ByNetID.size();
 	}
 
 	unsigned int PlayerRegistry::getLocalPlayerCount() const
@@ -249,10 +212,10 @@ namespace FusionEngine
 		return m_ByLocalIndex.size();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetIndex(ObjectID index) const
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetID(ObjectID index) const
 	{
-		PlayersByNetIndexMap::const_iterator _where = m_ByNetIndex.find(index);
-		if (_where != m_ByNetIndex.end())
+		PlayersByNetIndexMap::const_iterator _where = m_ByNetID.find(index);
+		if (_where != m_ByNetID.end())
 			return _where->second;
 		else
 			return m_NoSuchPlayer;
@@ -267,31 +230,17 @@ namespace FusionEngine
 			return m_NoSuchPlayer;
 	}
 
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::getPlayersBySystem(NetHandle system_address) const
+	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::getPlayersBySystem(RakNetGUID guid) const
 	{
 		std::vector<PlayerRegistry::PlayerInfo> players;
 
-		for (PlayersByNetIndexMap::const_iterator it = m_ByNetIndex.begin(), end = m_ByNetIndex.end(); it != end; ++it)
+		for (PlayersByNetIndexMap::const_iterator it = m_ByNetID.begin(), end = m_ByNetID.end(); it != end; ++it)
 		{
-			if (it->second.System == system_address)
+			if (it->second.GUID == guid)
 				players.push_back(it->second);
 		}
 		
 		return players;
 	}
-
-	void PlayerRegistry::setArbitrator(ObjectID net_index)
-	{
-		m_Arbitrator = net_index;
-	}
-
-	//const PlayerRegistry::PlayerInfo &PlayerRegistry::getArbitratingPlayer() const
-	//{
-	//	PlayersByNetIndexMap::const_iterator _where = m_ByNetIndex.find(m_Arbitrator);
-	//	if (_where != m_ByNetIndex.end())
-	//		return _where->second;
-	//	else
-	//		return m_NoSuchPlayer;
-	//}
 
 }

@@ -36,10 +36,12 @@ namespace FusionEngine
 	class Log;
 	class Logger;
 	class Module;
-	class NetworkSystem;
 	class Network;
+	class NetworkManager;
+	class NetworkSystem;
 	class OntologicalSystem;
 	class IPacket;
+	class PacketDispatcher;
 	class PacketHandler;
 	class PacketHandlerNode;
 	class PhysicalWorld;

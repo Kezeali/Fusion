@@ -70,7 +70,7 @@ namespace FusionEngine
 		//! Returns the packet data (after the header) as a string
 		virtual std::string GetDataString() = 0;
 		//! Returns the packet data after the header
-		virtual const char* GetData() const = 0;
+		virtual unsigned char* GetData() = 0;
 		//! Returns the data length
 		virtual unsigned int GetLength() const = 0;
 		//! Returns the Message Identifier for the packet
@@ -93,7 +93,7 @@ namespace FusionEngine
 		NetTime m_Time;
 		unsigned char m_Type;
 		char m_Channel;
-		char* m_Data;
+		unsigned char* m_Data;
 		unsigned int m_Length;
 
 	public:
@@ -104,7 +104,7 @@ namespace FusionEngine
 			m_Length(length),
 			m_Origin(origin)
 		{
-			m_Data = new char[length];
+			m_Data = new unsigned char[length];
 			memcpy(m_Data, data, length);
 		}
 		//! Virtual desturctor
@@ -117,7 +117,7 @@ namespace FusionEngine
 		{
 			return std::string(m_Data, m_Data + m_Length);
 		}
-		virtual const char* GetData() const
+		virtual unsigned char* GetData()
 		{
 			return m_Data;
 		}

@@ -30,21 +30,16 @@
 
 #include "FusionPacketDispatcher.h"
 
-#include "FusionNetwork.h"
+#include <RakNetTypes.h>
+
+#include "FusionRakNetwork.h"
 #include "FusionPacketHandler.h"
 
 namespace FusionEngine
 {
 
 	PacketDispatcher::PacketDispatcher()
-		: m_Network(NULL),
-		m_DefaultPacketHandler(NULL)
-	{
-	}
-
-	PacketDispatcher::PacketDispatcher(Network *net)
-		: m_Network(net),
-		m_DefaultPacketHandler(NULL)
+		: m_DefaultPacketHandler(NULL)
 	{
 	}
 
@@ -52,51 +47,54 @@ namespace FusionEngine
 	{
 	}
 
-	void PacketDispatcher::SetNetwork(Network *net)
-	{
-		m_Network = net;
-	}
-
 	void PacketDispatcher::SetDefaultPacketHandler(PacketHandler *handler)
 	{
 		m_DefaultPacketHandler = handler;
 	}
 
-	void PacketDispatcher::Run()
+	typedef EasyPacket* Ezy;
+
+	void PacketDispatcher::Dispatch(RakNetwork *network)
 	{
-		IPacket* packet = m_Network->Receive();
-		while (packet != NULL)
+		Packet* packet = network->Receive();
+		while (packet != nullptr)
 		{
 			// Find the handlers for this type
-			HandlerRange range = m_ChannelHandlers.equal_range(packet->GetType());
-			if (range.first != m_ChannelHandlers.end())
+			auto range = m_TypeHandlers.equal_range(Ezy(packet)->GetType());
+			if (range.first != m_TypeHandlers.end())
 			{
-				for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
-					it->second->HandlePacket(packet);
+				std::for_each(range.first, range.second, [&](HandlerMultiMap::value_type &it)
+				{
+					PacketHandler *handler = it.second;
+					handler->HandlePacket(packet);
+				});
+				//for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
+				//	it->second->HandlePacket(packet);
 			}
 			// If there are no handlers subscribed to the given type:
-			else if (m_DefaultPacketHandler != NULL)
+			else if (m_DefaultPacketHandler != nullptr)
 				m_DefaultPacketHandler->HandlePacket(packet);
 
-			packet = m_Network->Receive();
+			network->DeallocatePacket((Packet*)packet);
+			packet = network->Receive();
 		}
 	}
 
-	void PacketDispatcher::Subscribe(char type, PacketHandler *handler)
+	void PacketDispatcher::Subscribe(unsigned char type, PacketHandler *handler)
 	{
-		m_ChannelHandlers.insert( HandlerMultiMap::value_type(type, handler) );
+		m_TypeHandlers.insert( HandlerMultiMap::value_type(type, handler) );
 	}
 
-	void PacketDispatcher::Unsubscribe(char type, PacketHandler *handler)
+	void PacketDispatcher::Unsubscribe(unsigned char type, PacketHandler *handler)
 	{
-		HandlerRange range = m_ChannelHandlers.equal_range(type);
-		if (range.first != m_ChannelHandlers.end())
+		HandlerRange range = m_TypeHandlers.equal_range(type);
+		if (range.first != m_TypeHandlers.end())
 		{
 			for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
 			{
 				if (it->second == handler)
 				{
-					m_ChannelHandlers.erase(it);
+					m_TypeHandlers.erase(it);
 					break;
 				}
 			}
@@ -106,22 +104,9 @@ namespace FusionEngine
 
 
 	ListPacketDispatcher::ListPacketDispatcher()
-		: m_Network(NULL),
-		m_DefaultPacketHandler(NULL)
+		: m_DefaultPacketHandler(NULL)
 	{
-		memset(&m_ChannelLists[0], NULL, s_NumChannelTypes);
-	}
-
-	ListPacketDispatcher::ListPacketDispatcher(Network *net)
-		: m_Network(net),
-		m_DefaultPacketHandler(NULL)
-	{
-		memset(&m_ChannelLists[0], NULL, s_NumChannelTypes);
-	}
-
-	void ListPacketDispatcher::SetNetwork(FusionEngine::Network *net)
-	{
-		m_Network = net;
+		memset(&m_TypeLists[0], NULL, s_NumPacketTypes);
 	}
 
 	void ListPacketDispatcher::SetDefaultPacketHandler(PacketHandler *handler)
@@ -129,13 +114,13 @@ namespace FusionEngine
 		m_DefaultPacketHandler = handler;
 	}
 
-	void ListPacketDispatcher::Run()
+	void ListPacketDispatcher::Dispatch(RakNetwork *network)
 	{
-		IPacket* packet = m_Network->Receive();
+		Packet* packet = network->Receive();
 		while (packet != NULL)
 		{
 			// Find the handler list for this channel
-			PacketHandlerNode *node = m_ChannelLists[packet->GetType()-ID_USER_PACKET_ENUM];
+			PacketHandlerNode *node = m_TypeLists[Ezy(packet)->GetType()-ID_USER_PACKET_ENUM];
 			if (node != NULL)
 			{
 				node->ListHandlePacket(packet);
@@ -143,13 +128,13 @@ namespace FusionEngine
 			else if (m_DefaultPacketHandler != NULL)
 				m_DefaultPacketHandler->HandlePacket(packet);
 
-			packet = m_Network->Receive();
+			packet = network->Receive();
 		}
 	}
 
-	void ListPacketDispatcher::Subscribe(char channel, PacketHandler *handler)
+	void ListPacketDispatcher::Subscribe(unsigned char channel, PacketHandler *handler)
 	{
-		PacketHandlerNode *node = m_ChannelLists[channel-ID_USER_PACKET_ENUM];
+		PacketHandlerNode *node = m_TypeLists[channel-ID_USER_PACKET_ENUM];
 		if (node == NULL)
 			node = new PacketHandlerNode(handler);
 
@@ -157,9 +142,9 @@ namespace FusionEngine
 			node->push_back(new PacketHandlerNode(handler));
 	}
 
-	void ListPacketDispatcher::Unsubscribe(char channel, PacketHandler *handler)
+	void ListPacketDispatcher::Unsubscribe(unsigned char channel, PacketHandler *handler)
 	{
-		PacketHandlerNode *node = m_ChannelLists[channel-ID_USER_PACKET_ENUM];
+		PacketHandlerNode *node = m_TypeLists[channel-ID_USER_PACKET_ENUM];
 		while (node != NULL)
 		{
 			if (node->m_Handler == handler)

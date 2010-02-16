@@ -37,105 +37,25 @@
 #include <BitStream.h>
 #include <GetTime.h>
 
+#include "FusionAssert.h"
+
 namespace FusionEngine
 {
+	
+	typedef PacketPriority rakPriority;
+	typedef PacketReliability rakReliability;
 
-	///////////////
-	// RakNetPacket
-	RakNetPacket::RakNetPacket(Packet* internalPacket)
-		: m_OriginalPacket(internalPacket),
-		m_Handle(new RakNetHandleImpl(internalPacket->guid, internalPacket->systemAddress))
-	{
-		RakNet::BitStream bits(internalPacket->data, internalPacket->bitSize / 8, false);
-		// Timestamp
-		m_TimeStamped = false;
-		m_Time = 0;
-		if (internalPacket->data[0] == ID_TIMESTAMP)
-		{
-			unsigned char idTimestamp;
-			bits.Read(idTimestamp);
-			bits.Read(m_Time);
-			m_TimeStamped = true;
-		}
-		// Type
-		unsigned char type;
-		bits.Read(type);
-	}
-
-	RakNetPacket::RakNetPacket(RakNetHandle from, Packet* internalPacket)
-		: m_Handle(from),
-		m_OriginalPacket(internalPacket)
-	{
-		RakNet::BitStream bits(internalPacket->data, internalPacket->bitSize / 8, false);
-		// Timestamp
-		m_TimeStamped = false;
-		m_Time = 0;
-		if (internalPacket->data[0] == ID_TIMESTAMP)
-		{
-			unsigned char idTimestamp;
-			bits.Read(idTimestamp);
-			bits.Read(m_Time);
-			m_TimeStamped = true;
-		}
-		// Type
-		unsigned char type;
-		bits.Read(type);
-	}
-
-	RakNetPacket::~RakNetPacket()
-	{
-		assert(m_OriginalPacket == 0);
-	}
-
-	std::string RakNetPacket::GetDataString()
-	{
-		unsigned int header = (IsTimeStamped() ? g_HeaderLengthTimestamp : g_HeaderLength);
-		unsigned int length = m_OriginalPacket->bitSize / 8;
-		char* dataBegin;
-		char* dataEnd;
-
-		dataBegin = (char*)(m_OriginalPacket->data + header);
-		dataEnd = (char*)(m_OriginalPacket->data + length);
-		return std::string(dataBegin, dataEnd);
-	}
-
-	const char* RakNetPacket::GetData() const
-	{
-		return (char*)(m_OriginalPacket->data + (IsTimeStamped() ? g_HeaderLengthTimestamp : g_HeaderLength));
-	}
-
-	unsigned int RakNetPacket::GetLength() const
-	{
-		return m_OriginalPacket->bitSize / 8 - (IsTimeStamped() ? g_HeaderLengthTimestamp : g_HeaderLength);
-	}
-
-	unsigned char RakNetPacket::GetType() const
-	{
-		return m_OriginalPacket->data[IsTimeStamped() ? g_TimestampLength : 0];
-	}
-
-	bool RakNetPacket::IsTimeStamped() const
-	{
-		return m_TimeStamped;
-	}
-
-	NetTime RakNetPacket::GetTime() const
-	{
-		return m_Time;
-	}
-
-	NetHandle RakNetPacket::GetSystemHandle() const
-	{
-		return m_Handle;
-	}
-
-	/////////////
-	// RakNetwork
 	RakNetwork::RakNetwork()
 		: m_MinLagMilis(0), m_LagVariance(0),
 		m_AllowBps(0.0)
 	{
 		m_NetInterface = RakNetworkFactory::GetRakPeerInterface();
+
+		m_FullyConnectedMeshPlugin.SetConnectOnNewRemoteConnection(true, "");
+		m_FullyConnectedMeshPlugin.SetAutoparticipateConnections(true);
+
+		m_NetInterface->AttachPlugin(&m_ConnectionGraphPlugin);
+		m_NetInterface->AttachPlugin(&m_FullyConnectedMeshPlugin);
 	}
 
 	RakNetwork::~RakNetwork()
@@ -148,11 +68,7 @@ namespace FusionEngine
 		SocketDescriptor socDesc(incommingPort, 0);
 		if (m_NetInterface->Startup(maxConnections, 0, &socDesc, 1))
 		{
-			m_NetInterface->AttachPlugin(&connectionGraphPlugin);
-			m_NetInterface->AttachPlugin(&fullyConnectedMeshPlugin);
-
 			m_NetInterface->SetMaximumIncomingConnections(maxIncommingConnections);
-
 			return true;
 		}
 		else
@@ -177,21 +93,50 @@ namespace FusionEngine
 
 	bool RakNetwork::IsConnected() const
 	{
-		return true;
+		return m_FullyConnectedMeshPlugin.GetParticipantCount() > 0;
 	}
 
-	NetHandle RakNetwork::GetLocalAddress() const
+	const RakNetGUID &RakNetwork::GetLocalGUID() const
 	{
-		RakNetHandle handle(new RakNetHandleImpl(
-			m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS),
-			m_NetInterface->GetInternalID(UNASSIGNED_SYSTEM_ADDRESS))
-			);
-		return handle;
+		return m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS);
 	}
 
-	bool RakNetwork::Send(bool timestamped, unsigned char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
+	RakNetGUID RakNetwork::GetHost() const
 	{
-		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
+		return m_FullyConnectedMeshPlugin.GetConnectedHost();
+	}
+
+	bool RakNetwork::SendAsIs(const NetDestination& destination, const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
+	{
+		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+	}
+
+	bool RakNetwork::SendAsIs(const NetDestination& destination, const RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
+	{
+		return m_NetInterface->Send(data, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+	}
+
+	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
+	{
+		RakNet::BitStream bits;
+		if (timestamped)
+		{
+			bits.Write((MessageID)ID_TIMESTAMP);
+			bits.Write(RakNet::GetTime());
+		}
+		bits.Write((MessageID)type);
+		if (data != nullptr && length != 0)
+			bits.Write(data, length);
+
+		if (destination.GUID != RakNetGUID())
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+		else
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast);
+	}
+
+	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
+	{
+		FSN_ASSERT(type >= ID_USER_PACKET_ENUM);
 
 		RakNet::BitStream bits;
 		if (timestamped)
@@ -200,91 +145,74 @@ namespace FusionEngine
 			bits.Write(RakNet::GetTime());
 		}
 		bits.Write((MessageID)type);
-		bits.Write(data, length);
+		if (data != nullptr)
+			bits.Write(data);
 
-		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, (rakDestination != NULL) ? rakDestination->Address : UNASSIGNED_SYSTEM_ADDRESS, to_all);
+		if (destination.GUID != RakNetGUID())
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+		else
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast);
 	}
 
-	bool RakNetwork::Send(bool timestamped, unsigned char type, RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel, const NetHandle &destination, bool to_all)
+	Packet *RakNetwork::Receive()
 	{
-		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
+		return m_NetInterface->Receive();
+	}
 
-		RakNet::BitStream bits;
-		if (timestamped)
+	AutoPacketPtr RakNetwork::ReceiveAutoPacket()
+	{
+		Packet *packet = m_NetInterface->Receive();
+		if (packet == nullptr)
+			return AutoPacketPtr();
+
+		using namespace std::tr1::placeholders;
+
+		return AutoPacketPtr( new AutoPacket(packet, std::bind(&RakNetwork::DeallocatePacket, this, _1)) );
+	}
+
+	void RakNetwork::PushBackPacket(const AutoPacketPtr &auto_packet, bool head)
+	{
+		if (auto_packet)
 		{
-			bits.Write((MessageID)ID_TIMESTAMP);
-			bits.Write(RakNet::GetTime());
+			m_NetInterface->PushBackPacket(auto_packet->OriginalPacket, head);
+			auto_packet->OriginalPacket = nullptr;
 		}
-		bits.Write((MessageID)type);
-		bits.Write(data);
-
-		return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, (rakDestination != NULL) ? rakDestination->Address : UNASSIGNED_SYSTEM_ADDRESS, to_all);
 	}
 
-	bool RakNetwork::SendRaw(const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel, const NetHandle& destination, bool to_all)
+	void RakNetwork::PushBackPacket(Packet *packet, bool head)
 	{
-		RakNetHandleImpl* rakDestination = dynamic_cast<RakNetHandleImpl*>(destination.get());
-
-		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, (rakDestination != NULL) ? rakDestination->Address : UNASSIGNED_SYSTEM_ADDRESS, to_all);
+		m_NetInterface->PushBackPacket(packet, head);
 	}
 
-	IPacket* RakNetwork::Receive()
+	void RakNetwork::DeallocatePacket(Packet *packet)
 	{
-		Packet* rakPacket = m_NetInterface->Receive();
-		if (rakPacket == 0)
-			return 0;
-
-		//NetHandle handle(rakPacket->systemAddress);
-		//m_SystemAddresses.insert( SystemAddressMap::value_type(handle, rakPacket->systemAddress) );
-
-		return new RakNetPacket(rakPacket);
+		m_NetInterface->DeallocatePacket(packet);
 	}
 
-	void RakNetwork::PushBackPacket(IPacket *packet, bool toHead)
+	RakNetStatistics *const RakNetwork::GetStatistics(const RakNetGUID &guid)
 	{
-		RakNetPacket* nativePacket = dynamic_cast<RakNetPacket*>(packet);
-		if (nativePacket != 0)
-			m_NetInterface->PushBackPacket(nativePacket->m_OriginalPacket, toHead);
-	}
-
-	void RakNetwork::DeallocatePacket(IPacket *packet)
-	{
-		RakNetPacket* nativePacket = dynamic_cast<RakNetPacket*>(packet);
-		if (nativePacket != 0)
-			m_NetInterface->DeallocatePacket(nativePacket->m_OriginalPacket);
-
-		nativePacket->m_OriginalPacket = 0;
-
-		delete nativePacket;
-	}
-
-	RakNetStatistics *const RakNetwork::GetStatistics(const SystemAddress &system)
-	{
+		SystemAddress system = m_NetInterface->GetSystemAddressFromGuid(guid);
 		return m_NetInterface->GetStatistics(system);
 	}
 
-	int RakNetwork::GetPing(const NetHandle& handle)
+	int RakNetwork::GetPing(const RakNetGUID &guid)
 	{
-		RakNetHandleImpl *rakHandle = dynamic_cast<RakNetHandleImpl*>(handle.get());
-		return m_NetInterface->GetAveragePing(rakHandle->Address);
+		return m_NetInterface->GetAveragePing(guid);
 	}
 
-	int RakNetwork::GetLastPing(const NetHandle& handle)
+	int RakNetwork::GetLastPing(const RakNetGUID &guid)
 	{
-		RakNetHandleImpl *rakHandle = dynamic_cast<RakNetHandleImpl*>(handle.get());
-		return m_NetInterface->GetLastPing(rakHandle->Address);
+		return m_NetInterface->GetLastPing(guid);
 	}
 
-	int RakNetwork::GetAveragePing(const NetHandle& handle)
+	int RakNetwork::GetAveragePing(const RakNetGUID &guid)
 	{
-		RakNetHandleImpl *rakHandle = dynamic_cast<RakNetHandleImpl*>(handle.get());
-		return m_NetInterface->GetAveragePing(rakHandle->Address);
+		return m_NetInterface->GetAveragePing(guid);
 	}
 
-	int RakNetwork::GetLowestPing(const NetHandle& handle)
+	int RakNetwork::GetLowestPing(const RakNetGUID &guid)
 	{
-		RakNetHandleImpl *rakHandle = dynamic_cast<RakNetHandleImpl*>(handle.get());
-		return m_NetInterface->GetLowestPing(rakHandle->Address);
+		return m_NetInterface->GetLowestPing(guid);
 	}
 
 	void RakNetwork::SetDebugLag(unsigned int minLagMilis, unsigned int variance)
@@ -313,17 +241,6 @@ namespace FusionEngine
 	float RakNetwork::GetDebugAllowBps() const
 	{
 		return m_AllowBps;
-	}
-
-
-	inline PacketPriority RakNetwork::rakPriority(NetPriority priority)
-	{
-		return (PacketPriority)priority;
-	}
-
-	inline PacketReliability RakNetwork::rakReliability(NetReliability reliability)
-	{
-		return (PacketReliability)reliability;
 	}
 
 }

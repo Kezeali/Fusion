@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -25,42 +25,20 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_PacketDispatcher
-#define Header_FusionEngine_PacketDispatcher
+
+#ifndef Header_FusionPacketDispatcher
+#define Header_FusionPacketDispatcher
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-#include "FusionNetwork.h"
-
+#include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
-
-	//class IPacketDispatcher
-	//{
-	//public:
-	//	//! Establishes a packet subscription
-	//	virtual void SubscribeToChannel(char channel, PacketHandler* handler) = 0;
-	//	//! Establishes a packet subscrption for a specific type
-	//	/*!
-	//	 * Allows a subscriber to receive all packets of a specific type
-	//	 * (reguardless of chanel)
-	//	 */
-	//	virtual void Subscribe(char type, PacketHandler* handler) = 0;
-
-	//	//! Removes the given subscription
-	//	virtual void UnsubscribeFromChannel(char channel, PacketHandler* handler) = 0;
-	//	//! Removes the given subscription
-	//	virtual void Unsubscribe(char type, PacketHandler* handler) = 0;
-
-	//	//! Reads packets from the network and dispatches them accordingly
-	//	virtual void Run() = 0;
-
-	//};
 
 	//! Packet dispatcher
 	/*!
@@ -72,38 +50,34 @@ namespace FusionEngine
 		//! List of handlers
 		//typedef std::list<PacketHandler*> HandlerList;
 		//! Map of handler lists
-		typedef std::tr1::unordered_multimap<char, PacketHandler*> HandlerMultiMap;
+		typedef std::tr1::unordered_multimap<unsigned char, PacketHandler*> HandlerMultiMap;
 		typedef std::pair<HandlerMultiMap::iterator, HandlerMultiMap::iterator> HandlerRange;
 
 	public:
 		//! Constructor
 		PacketDispatcher();
-		//! Constructor
-		PacketDispatcher(Network* net);
 		//! Destructor
 		~PacketDispatcher();
 
 	public:
-		void SetNetwork(Network *net);
 		void SetDefaultPacketHandler(PacketHandler* handler);
 
 		//! Establishes a packet subscrption for a specific type
-		void Subscribe(char type, PacketHandler* handler);
+		void Subscribe(unsigned char type, PacketHandler* handler);
 
 		//! Removes the given subscription
-		void Unsubscribe(char type, PacketHandler* handler);
+		void Unsubscribe(unsigned char type, PacketHandler* handler);
 
 		//! Reads packets from the network and dispatches them accordingly
-		void Run();
+		void Dispatch(RakNetwork *net);
 
 	protected:
-		Network* m_Network;
-		HandlerMultiMap m_ChannelHandlers;
+		HandlerMultiMap m_TypeHandlers;
 		PacketHandler* m_DefaultPacketHandler;
 
 	};
 
-	const unsigned char s_NumChannelTypes = MTID_MAX - ID_USER_PACKET_ENUM;
+	const unsigned char s_NumPacketTypes = MTID_MAX - ID_USER_PACKET_ENUM;
 
 	//! (List based) Network packet routing
 	/*!
@@ -116,33 +90,28 @@ namespace FusionEngine
 	{
 	public:
 		//! Map of handlers
-		typedef std::map<char, PacketHandlerNode*> HandlerMap;
+		typedef std::map<unsigned char, PacketHandlerNode*> HandlerMap;
 
 	public:
 		//! Constructor?
 		ListPacketDispatcher();
-		//! Constructor
-		ListPacketDispatcher(Network* net);
 		//! Destructor
 		~ListPacketDispatcher();
 
 	public:
-		void SetNetwork(Network *net);
 		void SetDefaultPacketHandler(PacketHandler* handler);
 
 		//! Establishes a packet subscrption for a specific type
-		void Subscribe(char type, PacketHandler* handler);
+		void Subscribe(unsigned char type, PacketHandler* handler);
 
 		//! Removes the given subscription
-		void Unsubscribe(char type, PacketHandler* handler);
+		void Unsubscribe(unsigned char type, PacketHandler* handler);
 
 		//! Reads packets from the network and dispatches them accordingly
-		void Run();
+		void Dispatch(RakNetwork *network);
 
 	protected:
-		Network* m_Network;
-		//! Handlers
-		PacketHandlerNode *m_ChannelLists[s_NumChannelTypes];
+		PacketHandlerNode *m_TypeLists[s_NumPacketTypes];
 		PacketHandler* m_DefaultPacketHandler;
 
 	};

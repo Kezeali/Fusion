@@ -28,16 +28,15 @@
 
 #include "FusionStableHeaders.h"
 
-// Class
 #include "FusionNetworkSystem.h"
-
-// Fusion
-#include "FusionLogger.h"
-#include "FusionRakNetwork.h"
-#include "FusionPlayerRegistry.h"
 
 #include <boost/lexical_cast.hpp>
 
+#include "FusionLogger.h"
+#include "FusionNetworkManager.h"
+#include "FusionRakNetwork.h"
+#include "FusionPacketDispatcher.h"
+#include "FusionPlayerRegistry.h"
 
 namespace FusionEngine
 {
@@ -55,14 +54,8 @@ namespace FusionEngine
 	const std::string s_NetSystemName = "Network";
 
 	NetworkSystem::NetworkSystem()
-		: m_PacketDispatcher(NULL),
-		m_Network(NULL)
-	{
-	}
-
-	NetworkSystem::NetworkSystem(RakNetwork *network)
-		: m_PacketDispatcher(NULL),
-		m_Network(network)
+		: m_PacketDispatcher(nullptr),
+		m_Network(nullptr)
 	{
 	}
 
@@ -78,69 +71,50 @@ namespace FusionEngine
 
 	bool NetworkSystem::Initialise()
 	{
-		if (m_PacketDispatcher == NULL)
+		if (m_Network == nullptr)
+			m_Network = new RakNetwork();
+
+		if (m_PacketDispatcher == nullptr)
 		{
-			m_PacketDispatcher = new PacketDispatcher(m_Network);
+			m_PacketDispatcher = new PacketDispatcher();
 			m_PacketDispatcher->SetDefaultPacketHandler(&m_DebugPacketHandler);
 		}
-		else
-			m_PacketDispatcher->SetNetwork(m_Network);
+
+		if (m_NetworkManager == nullptr)
+			m_NetworkManager = new NetworkManager(m_Network, m_PacketDispatcher);
 
 		return true;
 	}
 
+	template <class T>
+	void checkedDelete(T *ptr)
+	{
+		if (ptr != nullptr)
+		{
+			delete ptr;
+			ptr = nullptr;
+		}
+	}
+
 	void NetworkSystem::CleanUp()
 	{
-		if (m_PacketDispatcher != NULL)
-		{
-			delete m_PacketDispatcher;
-			m_PacketDispatcher = NULL;
-		}
+		checkedDelete(m_NetworkManager);
+		checkedDelete(m_PacketDispatcher);
+		checkedDelete(m_Network);
 	}
 
 	void NetworkSystem::Update(float split)
 	{
-		m_PacketDispatcher->Run();
+		m_NetworkManager->DispatchPackets();
 	}
 
 	void NetworkSystem::Draw()
 	{
 	}
 
-	void NetworkSystem::SetNetwork(RakNetwork *network)
-	{
-		m_Network = network;
-		if (m_PacketDispatcher != NULL)
-		{
-			m_PacketDispatcher->SetNetwork(network);
-		}
-	}
-
-	RakNetwork *NetworkSystem::GetNetwork() const
-	{
-		return m_Network;
-	}
-
 	bool NetworkSystem::IsConnected() const
 	{
 		return m_Network->IsConnected();
-	}
-
-	void NetworkSystem::AddPacketHandler(unsigned char type, PacketHandler *handler)
-	{
-		if (m_PacketDispatcher != NULL)
-			m_PacketDispatcher->Subscribe(type, handler);
-	}
-
-	void NetworkSystem::RemovePacketHandler(unsigned char type, PacketHandler *handler)
-	{
-		if (m_PacketDispatcher != NULL)
-			m_PacketDispatcher->Unsubscribe(type, handler);
-	}
-
-	void NetworkSystem::RequestStepControl()
-	{
-		m_Network->Send(false, MTID_REQUESTSTEPCONTROL, (char*)NULL, 0, HIGH_PRIORITY, RELIABLE, 0, PlayerRegistry::GetArbitratingPlayer().System);
 	}
 
 }

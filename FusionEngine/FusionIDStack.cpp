@@ -30,34 +30,7 @@
 
 #include "FusionIDStack.h"
 
-
 namespace FusionEngine
 {
-
-	ObjectID IDStack::getFreeID()
-	{
-		if (m_UnusedIds.empty())
-			return m_NextId++;
-		else
-		{
-			ObjectID id = m_UnusedIds.back();
-			m_UnusedIds.pop_back();
-			return id;
-		}
-	}
-
-	void IDStack::freeID(ObjectID id)
-	{
-		if (id < m_NextId-1)
-			m_UnusedIds.push_back(id); // record unused ID
-		else
-			--m_NextId;
-	}
-
-	void IDStack::freeAll()
-	{
-		m_UnusedIds.clear();
-		m_NextId = 1; // Entity IDs start at 1, 0 indicates a pseudo-entity
-	}
 
 }

@@ -27,9 +27,7 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
-
-#include "FusionNetwork.h"
+#include "FusionPrerequisites.h"
 
 // RakNet
 #include <RakPeerInterface.h>
@@ -39,153 +37,154 @@
 #include <FullyConnectedMesh2.h>
 #include <ConnectionGraph2.h>
 
+#include "FusionEasyPacket.h"
 #include "FusionNetworkTypes.h"
 
 namespace FusionEngine
 {
 
-	//! The length of a header without a timestamp
-	/*!
-	 * Consists of: <br>
-	 * <code>[MTID_x]</code>
-	 */
-	const size_t g_HeaderLength = sizeof(unsigned char);
-
-	//! Timestamp length
-	const size_t g_TimestampLength = sizeof(unsigned char) + sizeof(RakNetTime);
-
-	//! The length of a header with a timestamp
-	/*!
-	 * Consists of: <br>
-	 * <code>[ID_TIMESTAMP]+[RakNetTime]+[MTID_x]</code>
-	 */
-	const size_t g_HeaderLengthTimestamp = g_TimestampLength + g_HeaderLength;
-
-	//! RakNet implementation of of NetHandle
-	class RakNetHandleImpl : public INetHandle
+	//! Fusion Packet priority enumeration
+	enum NetPriority
 	{
-	public:
-		RakNetGUID SystemIdent;
-		SystemAddress Address;
-
-		RakNetHandleImpl()
-		{
-		}
-
-		RakNetHandleImpl(const RakNetGUID &guid, const SystemAddress &address)
-			: SystemIdent(guid),
-			Address(address)
-		{
-		}
+		HIGH_PRIORITY = ::HIGH_PRIORITY,
+		MEDIUM_PRIORITY = ::MEDIUM_PRIORITY,
+		LOW_PRIORITY = ::LOW_PRIORITY
 	};
 
-	typedef std::tr1::shared_ptr<RakNetHandleImpl> RakNetHandle;
+	//! Fusion Packet reliability enumeration
+	enum NetReliability
+	{
+		UNRELIABLE = ::UNRELIABLE,
+		UNRELIABLE_SEQUENCED = ::UNRELIABLE_SEQUENCED,
+		RELIABLE = ::RELIABLE,
+		RELIABLE_ORDERED = ::RELIABLE_ORDERED,
+		RELIABLE_SEQUENCED = ::RELIABLE_SEQUENCED
+	};
 
-	//! RakNet packet specialization
-	class RakNetPacket : public IPacket
+	//inline PacketPriority rakPriority(NetPriority priority)
+	//{
+	//	return (PacketPriority)priority;
+	//}
+	//inline PacketReliability rakReliability(NetReliability reliability)
+	//{
+	//	return (PacketReliability)reliability;
+	//}
+
+	//! Somewhere to send a packet
+	class NetDestination
 	{
 	public:
-		// Cache members
-		bool m_TimeStamped;
-		NetTime m_Time;
+		// Leaving GUID default will instruct the Send method to set it to localhost (UNASSIGNED_SYSTEM_ADDRESS)
+		RakNetGUID GUID;
+		bool Broadcast;
 
-		Packet* m_OriginalPacket;
-		RakNetHandle m_Handle;
+		//! Default ctor
+		NetDestination()
+			: Broadcast(false)
+		{}
+		//! Destination with data initialisation
+		NetDestination(const RakNetGUID &guid, bool broadcast)
+			: GUID(guid),
+			Broadcast(broadcast)
+		{}
 
-	public:
-		//! Constructor
-		RakNetPacket(Packet *originalPacket);
-
-		//! Constructor
-		RakNetPacket(RakNetHandle from, Packet *originalPacket);
-
-		//! Virtual destructor
-		virtual ~RakNetPacket();
-
-	public:
-		//! Returns the packet data (after the header) as a string
-		virtual std::string GetDataString();
-		//! Returns the packet data after the header
-		virtual const char* GetData() const;
-		//! Returns the data length
-		virtual unsigned int GetLength() const;
-		//! Returns the packet type
-		virtual unsigned char GetType() const;
-		//! Returns true if this packet has a timestamp
-		virtual bool IsTimeStamped() const;
-		//! Returns the timestamp
-		virtual NetTime GetTime() const;
-		//! Returns the system handle for the system that sent this packet
-		virtual NetHandle GetSystemHandle() const;
+		//! Copy constructor
+		NetDestination(const NetDestination &copy)
+			: GUID(copy.GUID),
+			Broadcast(copy.Broadcast)
+		{}
+		//! Move constructor
+		NetDestination(NetDestination&& rvalue)
+			: GUID(std::move(rvalue.GUID)),
+			Broadcast(std::move(rvalue.Broadcast))
+		{}
 	};
 
 	/*!
 	 * \brief
-	 * RakNet based implementation of FusionEngine#Network
+	 * RakNet based network interface
 	 */
-	class RakNetwork : public Network
+	class RakNetwork
 	{
-	protected:
-		//! System map
-		typedef std::map<NetHandle, SystemAddress> SystemAddressMap;
-		typedef std::tr1::unordered_set<NetHandle> NetHandleSet;
-
 	public:
 		RakNetwork();
 		~RakNetwork();
 
-	public:
 		//! Starts the network
-		virtual bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0);
+		bool Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections = 0);
 		//! Connects to a server
-		virtual bool Connect(const std::string &host, unsigned short port);
+		bool Connect(const std::string &host, unsigned short port);
 		//! Disconnects cleanly
-		virtual void Disconnect();
+		void Disconnect();
 
-		virtual bool IsConnected() const;
+		bool IsConnected() const;
 
-		virtual NetHandle GetLocalAddress() const;
+		//! Returnst he GUID of this machine
+		const RakNetGUID &GetLocalGUID() const;
 
-		//! Sends data as-is
-		virtual bool SendRaw(const char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle& destination, bool to_all = false);
+		//! Gets the host GUID from the FullyConnectedMesh plugin
+		RakNetGUID GetHost() const;
+
+		//! Sends data as-is (without adding a header)
 		/*!
-		 * <p>Formats the packet as follows:</p>
-		 *
+		* Make sure you include an ID as the first byte, or RakNet may eat the message! :S
+		*/
+		bool SendAsIs(const NetDestination &dest,
+			const char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel);
+
+		//! Sends a RakNet#BitStream as-is (without adding a header)
+		/*!
+		* Make sure you include an ID as the first byte, or RakNet may eat the message! :O
+		*/
+		bool SendAsIs(const NetDestination &dest,
+			const RakNet::BitStream *bitStream,
+			NetPriority priority, NetReliability reliability, char channel);
+
+		//! Prepends the given data with a header and sends it
+		/*!
 		 * <b>Packet Format
 		 * <ol>
 		 *  <li> [bool]          Time stamp marker (indicates the packet is timestamped)
-		 *  <li> [unsigned int]  Time stamp (if the time stamp marker was included)
+		 *  <li> [unsigned int]  Time stamp (if the time stamp marker was 'true')
 		 *  <li> [unsigned char] Type ID
 		 *  <li> [...]           The given data
 		 * </ol>
 		 */
-		virtual bool Send(bool timestamped, unsigned char type, char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle &destination, bool to_all = false);
-		//! RakNet specific send method
-		bool Send(bool timestamped, unsigned char type, RakNet::BitStream *data,
-			NetPriority priority, NetReliability reliability, char channel,
-			const NetHandle &destination, bool to_all = false);
-		//! Receives data
-		virtual IPacket* Receive();
-		//! Puts the given packet back on the receive buffer
-		virtual void PushBackPacket(IPacket* packet, bool toHead = false);
-		//! Deletes a packet
-		virtual void DeallocatePacket(IPacket* packet);
+		virtual bool Send(const NetDestination &destination,
+			bool timestamped, unsigned char type, char* data, unsigned int length,
+			NetPriority priority, NetReliability reliability, char channel);
 
-	public:
+		//! Prepends the given RakNet#BitStream with a header and sends it
+		bool Send(const NetDestination &destination,
+			bool timestamped, unsigned char type, RakNet::BitStream *data,
+			NetPriority priority, NetReliability reliability, char channel);
+		
+		//! Receives data
+		Packet *Receive();
+
+		//! Receives data, returning an AutoPacket
+		AutoPacketPtr ReceiveAutoPacket();
+
+		//! Puts the given packet back on the receive buffer
+		void PushBackPacket(Packet *packet, bool to_head = false);
+
+		//! Puts the given packet back on the receive buffer
+		void PushBackPacket(const AutoPacketPtr &auto_packet, bool to_head = false);
+
+		//! Deletes a packet
+		void DeallocatePacket(Packet* packet);
+
 		//! Returns RakNet stats
-		RakNetStatistics* const GetStatistics(const SystemAddress &system);
+		RakNetStatistics *const GetStatistics(const RakNetGUID &guid);
 
 		//! Gets the ping to the given host
-		virtual int GetPing(const NetHandle& handle);
-		virtual int GetLastPing(const NetHandle& handle);
-		virtual int GetAveragePing(const NetHandle& handle);
-		virtual int GetLowestPing(const NetHandle& handle);
+		int GetPing(const RakNetGUID& guid);
+		int GetLastPing(const RakNetGUID& guid);
+		int GetAveragePing(const RakNetGUID& guid);
+		int GetLowestPing(const RakNetGUID& guid);
 
-		inline const RakPeerInterface* GetRakNetPeer() const { return m_NetInterface; }
+		const RakPeerInterface* GetPeerInterface() const { return m_NetInterface; }
 
 		//! Uses RakPeerInterface#ApplyNetworkSimulator to introduce fake lag
 		/*!
@@ -195,38 +194,31 @@ namespace FusionEngine
 		 * \param variance
 		 * Extra lag time (milisecods) which may be randomly applied
 		 */
-		virtual void SetDebugLag(unsigned int minLagMilis, unsigned int variance);
+		void SetDebugLag(unsigned int minLagMilis, unsigned int variance);
 		//! Uses RakPeerInterface#ApplyNetworkSimulator to introduce fake packet loss
 		/*!
 		 * \param allowBps
 		 * Maximum bits per second before packet loss
 		 */
-		virtual void SetDebugPacketLoss(float allowBps);
+		void SetDebugPacketLoss(float allowBps);
 
 		//! Returns the current fake lag setting
-		virtual unsigned int GetDebugLagMin() const;
+		unsigned int GetDebugLagMin() const;
 		//! Returns the current fake lag variance setting
-		virtual unsigned int GetDebugLagVariance() const;
+		unsigned int GetDebugLagVariance() const;
 		//! Returns the current fake packet loss setting
-		virtual float GetDebugAllowBps() const;
+		float GetDebugAllowBps() const;
 
 		
 	protected:
 		RakPeerInterface* m_NetInterface;
-		//SystemAddressMap m_SystemAddresses;
-		FullyConnectedMesh2 fullyConnectedMeshPlugin;
-		ConnectionGraph2 connectionGraphPlugin;
+		FullyConnectedMesh2 m_FullyConnectedMeshPlugin;
+		ConnectionGraph2 m_ConnectionGraphPlugin;
 
 		// Network Simulator settings
 		unsigned int m_MinLagMilis;
 		unsigned int m_LagVariance;
 		float m_AllowBps;
-
-	protected:
-		//! Returns a RakNet enum for the given FusionEngine enum
-		inline PacketPriority rakPriority(NetPriority priority);
-		//! Returns a RakNet enum for the given FusionEngine enum
-		inline PacketReliability rakReliability(NetReliability reliability);
 	};
 
 }

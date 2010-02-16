@@ -39,26 +39,133 @@
 namespace FusionEngine
 {
 
-	//! Supplies ObjectIDs which aren't assigned
-	struct IDStack
+	template <typename T, class CollectionType = std::deque<T>>
+	class IDCollection
 	{
-		ObjectID m_NextId;
-		typedef std::deque<ObjectID> ObjectIDStack;
-		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
-		ObjectIDStack m_UnusedIds;
+	public:
+		typedef T IDType;
 
+		//! Initialises m_NextId to zero
+		IDCollection()
+			: m_FirstId(0),
+			m_NextId(0)
+		{}
+		//! Initialises m_NextId to the given value
+		IDCollection(T first_id)
+			: m_FirstId(first_id),
+			m_NextId(first_id)
+		{}
+		//! Virtual destructor
+		virtual ~IDCollection()
+		{}
+
+		//! Returns an ID which is not in use
+		virtual T getFreeID() = 0;
+		//! Allows the given ID which was previously returned by getFreeID to be returned again
+		virtual void freeID(T id) = 0;
+
+		//! Resets this object
+		void freeAll()
+		{
+			m_UnusedIds.clear();
+			m_NextId = m_FirstId;
+		}
+
+	protected:
+		T m_FirstId;
+		// The next ID to use when m_UnusedIDs is empty
+		T m_NextId;
+		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
+		CollectionType m_UnusedIds;
+	};
+
+	//! Supplies IDs which aren't assigned, starting with the lowest ID available
+	template <typename T>
+	class IDSet : public IDCollection<T, std::set<T>>
+	{
+	protected:
+		typedef std::set<T> IDCollectionType;
+
+	public:
+		//! Returns an ID which is not in use
+		virtual T getFreeID()
+		{
+			if (m_UnusedIds.empty())
+				return m_NextId++;
+			else
+			{
+				IDCollectionType::iterator lowest = m_UnusedIds.begin();
+				m_UnusedIds.erase(lowest);
+				return *lowest;
+			}
+		}
+		//! Allows the given ID which was previously returned by getFreeID to be returned again
+		virtual void freeID(T id)
+		{
+			if (id == m_NextId-1)
+				m_NextId = id;
+			else if (id < m_NextId-1)
+				m_UnusedIds.insert(id); // record unused ID
+		}
+		//! Removes the given ID from the set
+		/*!
+		* \return Returns true if the id was unused, false otherwise
+		*/
+		virtual bool takeID(T id)
+		{
+			if (id == m_NextId)
+			{
+				++m_NextId;
+				return true;
+			}
+			else
+			{
+				IDCollectionType::iterator _where = m_UnusedIds.find(id);
+				if (_where != m_UnusedIds.end())
+				{
+					m_UnusedIds.erase(_where);
+					return true;
+				}
+				else
+					return false;
+			}
+		}
+	};
+
+	//! Supplies IDs which aren't assigned, starting with recently unassigned IDs
+	template <typename T>
+	class IDStack : public IDCollection<T>
+	{
+	public:
 		//! Initialises m_NextId to one (Entity IDs start at 1)
 		IDStack()
-			: m_NextId(1)
+			: IDCollection(1)
 		{}
 
 		//! Returns an ObjectID which is not in use
-		ObjectID getFreeID();
+		virtual T getFreeID()
+		{
+			if (m_UnusedIds.empty())
+				return m_NextId++;
+			else
+			{
+				ObjectID id = m_UnusedIds.back();
+				m_UnusedIds.pop_back();
+				return id;
+			}
+		}
 		//! Allows the given ID which was previously returned by getFreeID to be returned again
-		void freeID(ObjectID id);
-		//! Resets this object
-		void freeAll();
+		virtual void freeID(T id)
+		{
+			if (id == m_NextId-1)
+				m_NextId = id;
+			else if (id < m_NextId-1)
+				m_UnusedIds.push_back(id); // record unused ID
+		}
 	};
+
+	//! Supplies ObjectIDs which aren't assigned
+	typedef IDStack<ObjectID> ObjectIDStack;
 
 }
 

@@ -32,19 +32,15 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
-// Inherited
-#include "FusionState.h"
 #include "FusionPacketHandler.h"
-
-// Fusion
-#include "FusionPacketDispatcher.h"
-
+#include "FusionState.h"
 
 namespace FusionEngine
 {
 
+	//! Prints any packets it receives to a log
 	class DebugPacketHandler : public PacketHandler
 	{
 	public:
@@ -56,11 +52,11 @@ namespace FusionEngine
 		LogPtr m_Log;
 	};
 
+	//! Runs the network automation stuff
 	class NetworkSystem : public System
 	{
 	public:
 		NetworkSystem();
-		NetworkSystem(RakNetwork *network);
 		virtual ~NetworkSystem();
 
 		virtual const std::string &GetName() const;
@@ -71,28 +67,13 @@ namespace FusionEngine
 		virtual void Update(float split);
 		virtual void Draw();
 
-		void SetNetwork(RakNetwork *network);
-		RakNetwork *GetNetwork() const;
-
 		bool IsConnected() const;
-
-		//const NetHandle &GetLocalAddress() const;
-
-		void AddPacketHandler(unsigned char type, PacketHandler *handler);
-		void RemovePacketHandler(unsigned char type, PacketHandler *handler);
-
-		//! Allows a peer to take control of the update rate.
-		/*
-		* This allows step-through debugging without the game going out of sync.<br>
-		* If multiple clients request step control, the server waits for all
-		* clients to reach the current step before sending out the continue message
-		* at each step.
-		*/
-		virtual void RequestStepControl();
 
 	protected:
 		PacketDispatcher *m_PacketDispatcher;
 		RakNetwork *m_Network;
+
+		NetworkManager *m_NetworkManager;
 
 		DebugPacketHandler m_DebugPacketHandler;
 	};
