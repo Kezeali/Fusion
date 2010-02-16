@@ -267,11 +267,13 @@ namespace FusionEngine
 		void AddedToPacket() { m_SkippedPackets = 0; }
 		unsigned int GetSkippedPacketsCount() const { return m_SkippedPackets; }
 
-		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
+		//! Returns true if this Entity is a synchronised entity
 		/*!
-		* Pseudo Entities have no Entity-ID, so this returns true when
-		* <code>GetID() == 0</code>.
+		* Synchronised entities have a unique entity-ID, so this returns
+		* true when GetID() > 0
 		*/
+		bool IsSyncedEntity() const;
+		//! Returns true if this Entity is a pseudo-entity - an entity which doesn't sync.
 		bool IsPseudoEntity() const;
 
 		//! Default implementation

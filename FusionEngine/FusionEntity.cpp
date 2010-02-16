@@ -551,9 +551,14 @@ namespace FusionEngine
 		return m_Authority;
 	}
 
+	bool Entity::IsSyncedEntity() const
+	{
+		return m_Id > 0;
+	}
+
 	bool Entity::IsPseudoEntity() const
 	{
-		return m_Id == 0;
+		return !IsSyncedEntity();
 	}
 
 	void Entity::AddTag(const std::string &tag)
