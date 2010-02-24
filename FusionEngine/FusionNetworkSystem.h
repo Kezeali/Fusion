@@ -46,7 +46,7 @@ namespace FusionEngine
 	public:
 		DebugPacketHandler();
 
-		void HandlePacket(IPacket *packet);
+		void HandlePacket(Packet *packet);
 
 	protected:
 		LogPtr m_Log;

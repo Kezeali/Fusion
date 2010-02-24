@@ -52,6 +52,7 @@
 #include <Box2D\Box2D.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <set>
 #include <string>
 #include <sstream>
@@ -67,7 +68,9 @@ namespace FusionEngine
 	// --Typedefs--
 	///////////////
 	//! Unique identifier type for game objects
-	typedef unsigned short ObjectID;
+	typedef uint32_t ObjectID;
+	//! Unique identifier type for players
+	typedef uint8_t PlayerID;
 
 	//! It's a vector. It's a string. It's a StringVector!
 	typedef std::vector<std::string> StringVector;

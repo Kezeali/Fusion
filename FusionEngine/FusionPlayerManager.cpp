@@ -31,13 +31,16 @@
 
 #include <BitStream.h>
 
+#include "FusionNetDestinationHelpers.h"
+#include "FusionNetworkManager.h"
 #include "FusionPlayerRegistry.h"
 
 namespace FusionEngine
 {
 
 	PlayerManager::PlayerManager()
-		: m_LocalPlayerCount(0)
+		: m_LocalPlayerCount(0),
+		m_NextNetId(1)
 	{
 	}
 
@@ -59,92 +62,79 @@ namespace FusionEngine
 			return false;
 	}
 
-	void PlayerManager::HandlePacket(IPacket *packet)
+	void PlayerManager::HandlePacket(Packet *packet)
 	{
-		RakNet::BitStream bitStream(packet->GetData(), packet->GetLength(), true);
+		RakNet::BitStream receivedData(packet->data, packet->length, false);
 
 		RakNetwork *network = m_Network;
-		NetHandle originHandle = packet->GetSystemHandle();
+		RakNetGUID remotePeerGUID = packet->guid;
 
-		if (packet->GetType() == MTID_ADDPLAYER)
+		unsigned char type;
+		receivedData.Read(type);
+		if (type == MTID_ADDPLAYER)
 		{
-			if (PlayerRegistry::ArbitratorIsLocal())
+			if (NetworkManager::ArbitratorIsLocal())
 			{
-				unsigned int playerIndex;
-				{
-					RakNet::BitStream bitStream(packet->GetData(), packet->GetLength(), false);
-					bitStream.Read(playerIndex);
-				}
+				// So we can tell the remote peer what requested player we are adding:
+				unsigned int remotePlayerIndex;
+				receivedData.Read(remotePlayerIndex);
 
-				ObjectID netIndex = m_UnusedNetIds.getFreeID();
-				PlayerRegistry::AddPlayer(netIndex, originHandle);
+				ObjectID netId = m_NextNetId++;
+				PlayerRegistry::AddRemotePlayer(netId, remotePeerGUID);
 
-				RakNetHandle rakHandle = std::tr1::dynamic_pointer_cast<RakNetHandleImpl>(originHandle);
 				{
-					RakNet::BitStream bitStream;
-					bitStream.Write1();
-					bitStream.Write(netIndex);
-					bitStream.Write(playerIndex);
+					RakNet::BitStream response;
+					response.Write1(); // Tell the peer that the player being added is on their system
+					response.Write(netId);
+					response.Write(remotePlayerIndex);
 					network->Send(
-						false,
-						MTID_ADDPLAYER, &bitStream,
-						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-						originHandle);
+						NetDestination(remotePeerGUID, false),
+						!Timestamped,
+						MTID_ADDPLAYER, &response,
+						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
 				}
 				{
-					SystemAddress systemAddress = rakHandle->Address;
-					RakNetGUID guid = rakHandle->SystemIdent;
-
-					RakNet::BitStream bitStream;
-					bitStream.Write0();
-					bitStream.Write(netIndex);
-					bitStream.Write(systemAddress);
-					bitStream.Write(guid);
+					RakNet::BitStream newPlayerNotification;
+					newPlayerNotification.Write0(); // Tell the peer that the player being added is on another system
+					newPlayerNotification.Write(netId);
+					newPlayerNotification.Write(remotePeerGUID);
 					network->Send(
-						false,
-						MTID_ADDPLAYER, &bitStream,
-						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-						originHandle, true);
+						NetDestination(remotePeerGUID, true), // Broadcast
+						!Timestamped,
+						MTID_ADDPLAYER, &newPlayerNotification,
+						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
 				}
 			}
 			else
 			{
-				RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
-
-				bool localPlayer = bitStream.ReadBit();
-				ObjectID netIndex;
-				bitStream.Read(netIndex);
+				bool localPlayer = receivedData.ReadBit();
+				// The net ID the arbiter has assigned to the new player:
+				ObjectID netId;
+				receivedData.Read(netId);
 
 				if (localPlayer)
 				{
 					unsigned int localIndex;
-					bitStream.Read(localIndex);
-					PlayerRegistry::AddPlayer(netIndex, localIndex);
+					receivedData.Read(localIndex);
+					PlayerRegistry::AddLocalPlayer(netId, localIndex);
 				}
 				else
 				{
 					RakNetGUID guid;
-					SystemAddress address;
-					bitStream.Read(address);
-					bitStream.Read(guid);
-
-					RakNetHandle handle(new RakNetHandleImpl(guid, address));
-					PlayerRegistry::AddPlayer(netIndex, handle);
+					receivedData.Read(guid);
+					PlayerRegistry::AddRemotePlayer(netId, guid);
 				}
 			}
 		}
 
-		else if (packet->GetType() == MTID_REMOVEPLAYER)
+		else if (type == MTID_REMOVEPLAYER)
 		{
-			RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
+			ObjectID netId;
+			receivedData.Read(netId);
 
-			ObjectID netIndex;
-			bitStream.Read(netIndex);
-
-			if (PlayerRegistry::ArbitratorIsLocal())
+			if (NetworkManager::ArbitratorIsLocal())
 			{
-				PlayerRegistry::RemovePlayer(netIndex);
-				releasePlayerIndex(netIndex);
+				PlayerRegistry::RemovePlayer(netId);
 
 				//network->Send(
 				//	false,
@@ -154,7 +144,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				PlayerRegistry::RemovePlayer(netIndex);
+				PlayerRegistry::RemovePlayer(netId);
 			}
 		}
 	}
@@ -162,7 +152,7 @@ namespace FusionEngine
 	void PlayerManager::requestNewPlayer(unsigned int player_index)
 	{
 		RakNetwork *network = m_Network;
-		if (PlayerRegistry::ArbitratorIsLocal())
+		if (NetworkManager::ArbitratorIsLocal())
 		{
 			createNewPlayer(player_index);
 		}
@@ -173,29 +163,30 @@ namespace FusionEngine
 			bitStream.Write(player_index);
 
 			network->Send(
+				To::Arbiter(),
 				false,
 				MTID_ADDPLAYER, &bitStream,
-				MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-				PlayerRegistry::GetArbitratingPlayer().System);
+				MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
 		}
 	}
 
 	void PlayerManager::createNewPlayer(unsigned int player_index)
 	{
-		ObjectID netId = m_UnusedNetIds.getFreeID();
-
+		ObjectID netId = m_NextNetId++;
 		// Add the player
-		PlayerRegistry::AddPlayer(netId, player_index);
+		PlayerRegistry::AddLocalPlayer(netId, player_index);
 
 		RakNet::BitStream bitStream;
 		bitStream.Write0();
 		bitStream.Write(netId);
+		bitStream.Write(m_Network->GetLocalGUID());
 
 		// Notify other systems 
 		m_Network->Send(
+			To::Populace(),
 			false,
 			MTID_ADDPLAYER, &bitStream,
-			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
+			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
 	}
 
 }

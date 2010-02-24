@@ -57,7 +57,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -104,6 +104,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPlayerManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
@@ -143,7 +144,6 @@
     <ClCompile Include="..\FusionEngine\FusionLogFileConsole.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogger.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogPhysFS.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionNetwork.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionOntologicalSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPacketDispatcher.cpp" />
@@ -202,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
+    <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
@@ -244,7 +245,6 @@
     <ClInclude Include="..\FusionEngine\FusionLogFileConsole.h" />
     <ClInclude Include="..\FusionEngine\FusionLogger.h" />
     <ClInclude Include="..\FusionEngine\FusionLogPhysFS.h" />
-    <ClInclude Include="..\FusionEngine\FusionNetwork.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionOntologicalSystem.h" />

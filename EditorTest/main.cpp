@@ -156,10 +156,6 @@ public:
 			if (co->GetOption_bool("console_logging"))
 				logger->ActivateConsoleLogging();
 
-			//////////////////////
-			// Network Connection
-			boost::scoped_ptr<RakNetwork> network(new RakNetwork());
-
 			/////////////////
 			// Input Manager
 			boost::scoped_ptr<InputManager> inputMgr(new InputManager(dispWindow));
@@ -181,7 +177,7 @@ public:
 			// Systems
 			SystemsManager *systemMgr = new SystemsManager();
 
-			std::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem(network.get()) );
+			std::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem() );
 			systemMgr->AddSystem(networkSystem);
 
 			std::shared_ptr<GUI> gui( new GUI(dispWindow) );
@@ -190,7 +186,7 @@ public:
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 			ElementUndoMenu::RegisterElement();
 
-			std::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get(), networkSystem.get()) );
+			std::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get()) );
 			
 			/////////////////////
 			// Attach module to objects that require it

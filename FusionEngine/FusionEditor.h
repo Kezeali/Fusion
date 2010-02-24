@@ -240,7 +240,7 @@ namespace FusionEngine
 		GameMapLoader::GameMapEntityArray m_PseudoEntities;
 		GameMapLoader::GameMapEntityArray m_Entities;
 
-		IDStack m_IdStack;
+		ObjectIDStack m_IdStack;
 
 		inline void onLeftClick(const RawInput &ev);
 

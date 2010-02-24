@@ -255,12 +255,12 @@ namespace FusionEngine
 		ObjectID GetID() const;
 
 		//! Sets the owner id of this entity
-		void SetOwnerID(ObjectID owner);
+		void SetOwnerID(PlayerID owner);
 		//! Returns the owner ID of this entity
-		ObjectID GetOwnerID() const;
+		PlayerID GetOwnerID() const;
 
-		void SetAuthority(ObjectID authority);
-		ObjectID GetAuthority() const;
+		void SetAuthority(PlayerID authority);
+		PlayerID GetAuthority() const;
 
 		unsigned int m_SkippedPackets;
 		void PacketSkipped() { ++m_SkippedPackets; }
@@ -525,6 +525,8 @@ namespace FusionEngine
 		//! Returns a human-readable string
 		virtual std::string ToString() const;
 
+		virtual void OnRequestInstanceFulfilled(const EntityPtr &entity) {}
+
 		//! Implementation of ICollisionHandler#CanCollideWith()
 		//virtual bool CanCollideWith(PhysicsBodyPtr other);
 
@@ -547,11 +549,11 @@ namespace FusionEngine
 		//  (which falls to the arbitrator, if ownership is needed)
 		//  Most entities have no owner (i.e. this will be set to 0)
 		//  Where there is no owner, the authority (below) is used.
-		ObjectID m_OwnerID;
+		PlayerID m_OwnerID;
 		// The player who currently has authority over this entity.
 		//  This is only used when OwnerID is zero - otherwise the
 		//  authority is always the owner.
-		ObjectID m_Authority;
+		PlayerID m_Authority;
 
 		PlayerInputPtr m_PlayerInput;
 

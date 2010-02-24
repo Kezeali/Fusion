@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -36,7 +35,7 @@
 #include "FusionClientOptions.h"
 #include "FusionEntityFactory.h"
 #include "FusionExceptionFactory.h"
-#include "FusionNetworkSystem.h"
+#include "FusionNetDestinationHelpers.h"
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
 #include "FusionRakNetwork.h"
@@ -60,7 +59,7 @@ namespace FusionEngine
 		m_InputChangedConnection.disconnect();
 	}
 
-	void ConsolidatedInput::SetState(ObjectID player, const std::string input, bool active, float position)
+	void ConsolidatedInput::SetState(PlayerID player, const std::string input, bool active, float position)
 	{
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
@@ -69,7 +68,7 @@ namespace FusionEngine
 		}
 	}
 
-	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(ObjectID player)
+	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(PlayerID player)
 	{
 		// TODO: unmuddle this method
 
@@ -80,7 +79,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			if (PlayerRegistry::GetPlayerByNetIndex(player).IsInGame)
+			if (PlayerRegistry::GetPlayer(player).NetID != 0)
 				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
 			else
 				return PlayerInputPtr();
@@ -102,14 +101,14 @@ namespace FusionEngine
 		m_ChangedCount = 0;
 	}
 
-	ObjectID ConsolidatedInput::LocalToNetPlayer(unsigned int local)
+	PlayerID ConsolidatedInput::LocalToNetPlayer(unsigned int local)
 	{
-		return PlayerRegistry::GetPlayerByLocalIndex(local).NetIndex;
+		return PlayerRegistry::GetPlayerByLocalIndex(local).NetID;
 	}
 
 	void ConsolidatedInput::onInputChanged(const InputEvent &ev)
 	{
-		ObjectID player = LocalToNetPlayer(ev.Player);
+		PlayerID player = LocalToNetPlayer(ev.Player);
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
 		{
@@ -127,23 +126,23 @@ namespace FusionEngine
 		}
 	}
 
-	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, NetworkSystem *network_system)
+	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager)
 		: m_InputManager(input_manager),
-		m_NetworkSystem(network_system),
-		m_Network(network_system->GetNetwork()),
 		m_PlayerInputs(new ConsolidatedInput(input_manager))
 	{
-		m_NetworkSystem->AddPacketHandler(MTID_IMPORTANTMOVE, this);
-		m_NetworkSystem->AddPacketHandler(MTID_ENTITYMOVE, this);
+		NetworkManager::getSingleton().Subscribe(MTID_IMPORTANTMOVE, this);
+		NetworkManager::getSingleton().Subscribe(MTID_ENTITYMOVE, this);
 	}
 
 	EntitySynchroniser::~EntitySynchroniser()
 	{
-		m_NetworkSystem->RemovePacketHandler(MTID_IMPORTANTMOVE, this);
-		m_NetworkSystem->RemovePacketHandler(MTID_ENTITYMOVE, this);
+		m_EntityInstancedCnx.disconnect();
+
+		NetworkManager::getSingleton().Unsubscribe(MTID_IMPORTANTMOVE, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_ENTITYMOVE, this);
 	}
 
-	const EntitySynchroniser::InstanceDefinitionArray &EntitySynchroniser::GetReceivedEntities() const
+	const EntityArray &EntitySynchroniser::GetReceivedEntities() const
 	{
 		return m_ReceivedEntities;
 	}
@@ -192,7 +191,7 @@ namespace FusionEngine
 
 			m_PacketData.Write(packetData.ID);
 
-			m_PacketData.Write(packetData.State.mask);
+			//m_PacketData.Write(packetData.State.mask);
 			m_PacketData.Write(packetData.State.data.length());
 			m_PacketData.Write(packetData.State.data.c_str(), packetData.State.data.length());
 
@@ -220,20 +219,14 @@ namespace FusionEngine
 
 		if (m_ImportantMove)
 			{
-				m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, NetHandle(), true);
+				m_Network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE);
 			}
 			else
 			{
-				m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC, NetHandle(), true);
+				m_Network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
 			}
 
 		m_PacketData.Reset();
-	}
-
-	void EntitySynchroniser::OnEntityInstanced(const EntityPtr &entity)
-	{
-		if (PlayerRegistry::ArbitratorIsLocal())
-			m_Network->Send(false, MTID_INSTANCEENTITY, "", 0, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER, NetHandle(), true);
 	}
 
 	void EntitySynchroniser::OnEntityAdded(EntityPtr &entity)
@@ -244,13 +237,10 @@ namespace FusionEngine
 		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
 		//}
 
-		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByNetIndex(entity->GetOwnerID());
-		if (playerInfo.IsInGame)
-		{
-			PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetIndex);
-			if (playerInput)
-				entity->_setPlayerInput(playerInput);
-		}
+		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
+		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
+		if (playerInput)
+			entity->_setPlayerInput(playerInput);
 	}
 
 	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser)
@@ -264,7 +254,7 @@ namespace FusionEngine
 
 	bool EntitySynchroniser::AddToPacket(EntityPtr &entity)
 	{
-		bool arbitor = PlayerRegistry::ArbitratorIsLocal();
+		bool arbitor = NetworkManager::ArbitratorIsLocal();
 		bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		// Only send if: 1) the entity is owned locally, or 2) the entity is under default authroity
 		//  and this system is the arbitor
@@ -279,25 +269,22 @@ namespace FusionEngine
 
 			// Obviously the packet might not be skipped, but if it is actually sent
 			//  it's skipped-count gets reset to zero, so the following operation will
-			//  over-ruled
+			//  be over-ruled
 			entity->PacketSkipped();
 
-			// TODO:
-			// for each system
-			//  if system can see this entity
-			//  continue as below: (already implemented)
-
 			// If the Entity quota hasn't been filled, always insert
-			if (m_EntityPacketData.size() < s_EntitiesPerPacket)
+			if (m_EntityDataUsed < s_MaxEntityData)
 			{
 				SerialisedData state;
 				entity->SerialiseState(state, false);
-				if (state.data != m_SentStates[entity->GetID()].data)
+				size_t stateSize = state.data.length() + sizeof(unsigned int) + sizeof(ObjectID);
+				if (m_EntityDataUsed + stateSize &&
+					state.data != m_SentStates[entity->GetID()].data)
 				{
 					m_EntityPacketData[priority].ID = entity->GetID();
 					m_EntityPacketData[priority].State = state;
 
-					//m_EntityDataUsed += state.data.length() + sizeof(unsigned int) + sizeof(ObjectID); // TODO: function to calc packet-data-size for SerialisedData
+					m_EntityDataUsed += stateSize;
 					return true;
 				}
 			}
@@ -328,22 +315,15 @@ namespace FusionEngine
 		return false;
 	}
 
-	//bool EntitySynchroniser::AddToPacket(PhysicsBodyPtr &body)
-	//{
-	//	size_t lengthAfterWrite = m_PacketData.GetNumberOfBytesUsed() + state.data.length() + sizeof(unsigned int) * 2;
-	//	if (lengthAfterWrite > s_MaxEntityPacketSize)
-	//	{
-	//		return false;
-	//	}
-
-	//	return true;
-	//}
-
-	void EntitySynchroniser::HandlePacket(IPacket *packet)
+	void EntitySynchroniser::HandlePacket(Packet *packet)
 	{
-		RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), true);
+		RakNet::BitStream bitStream(packet->data, packet->length, true);
 
-		switch (packet->GetType())
+		typedef EasyPacket* Ezy;
+
+		unsigned char type;
+		bitStream.Read(type);
+		switch (type)
 		{
 		case MTID_IMPORTANTMOVE:
 			{
@@ -352,7 +332,7 @@ namespace FusionEngine
 				bitStream.Read(playerCount);
 				for (unsigned short pi = 0; pi < playerCount; pi++)
 				{
-					ObjectID player;
+					PlayerID player;
 					bitStream.Read(player);
 
 					unsigned short count; // number of inputs that changed
@@ -388,7 +368,7 @@ namespace FusionEngine
 
 					SerialisedData &state = m_ReceivedStates[entityID];
 
-					bitStream.Read(state.mask);
+					//bitStream.Read(state.mask);
 					size_t dataLength;
 					bitStream.Read(dataLength);
 					state.data.resize(dataLength);
@@ -398,17 +378,15 @@ namespace FusionEngine
 		}
 	}
 
-	EntityManager::EntityManager(EntityFactory *factory, Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
-		: m_EntityFactory(factory),
-		m_Renderer(renderer),
+	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
+		: m_Renderer(renderer),
 		m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_Streaming(streaming),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
-		m_ClearWhenAble(false),
-		m_NextId(1)
+		m_ClearWhenAble(false)
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
@@ -416,27 +394,6 @@ namespace FusionEngine
 
 	EntityManager::~EntityManager()
 	{
-	}
-
-	EntityPtr EntityManager::InstanceEntity(const std::string &type, const std::string &name, ObjectID owner_id)
-	{
-		EntityPtr entity = m_EntityFactory->InstanceEntity(type, name);
-		if (entity)
-		{
-			entity->SetOwnerID(owner_id);
-			AddEntity(entity);
-		}
-		return entity;
-	}
-
-	EntityFactory *EntityManager::GetFactory() const
-	{
-		return m_EntityFactory;
-	}
-
-	IDTranslator EntityManager::MakeIDTranslator() const
-	{
-		return IDTranslator(m_NextId-1);
 	}
 
 	void EntityManager::CompressIDs()
@@ -458,6 +415,9 @@ namespace FusionEngine
 				++nextSequentialId;
 			}
 
+			// Reset the ID collection
+			m_UnusedIds.takeAll(nextSequentialId);
+
 			m_Entities.erase(it, m_Entities.end());
 		}
 	}
@@ -469,8 +429,8 @@ namespace FusionEngine
 
 		else
 		{
-			if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
-				entity->SetID(getFreeID());
+			//if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
+			//	entity->SetID(m_UnusedIds.getFreeID());
 
 			if (entity->GetName() == "default")
 				entity->_notifyDefaultName(generateName(entity));
@@ -479,7 +439,10 @@ namespace FusionEngine
 			if (_where != m_Entities.end())
 				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
 
-			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
+			if (entity->GetID() != 0)
+				m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
+			else
+				m_PseudoEntities.insert(entity);
 
 			m_EntitiesByName[entity->GetName()] = entity;
 
@@ -523,10 +486,7 @@ namespace FusionEngine
 		{
 			if (!entity->IsPseudoEntity())
 			{
-				if (entity->GetID() < m_NextId-1)
-					m_UnusedIds.push_back(entity->GetID()); // record unused ID
-				else
-					--m_NextId;
+				m_UnusedIds.freeID(entity->GetID());
 				m_Entities.erase(entity->GetID());
 			}
 			else
@@ -753,8 +713,7 @@ namespace FusionEngine
 			m_Entities.clear();
 			m_PseudoEntities.clear();
 			
-			m_NextId = 1;
-			m_UnusedIds.clear();
+			m_UnusedIds.freeAll();
 
 			m_ChangedUpdateStateTags.clear();
 			m_ChangedDrawStateTags.clear();
@@ -769,8 +728,7 @@ namespace FusionEngine
 			m_Entities.clear();
 			m_PseudoEntities.clear();
 
-			m_NextId = 1;
-			m_UnusedIds.clear();
+			m_UnusedIds.freeAll();
 
 			m_ChangedUpdateStateTags.clear();
 			m_ChangedDrawStateTags.clear();
@@ -782,7 +740,7 @@ namespace FusionEngine
 		clearEntities(false);
 	}
 
-	void EntityManager::ClearRealEntities()
+	void EntityManager::ClearSyncedEntities()
 	{
 		clearEntities(true);
 	}
@@ -799,10 +757,7 @@ namespace FusionEngine
 				m_PseudoEntities.erase(entity);
 			else
 			{
-				if (entity->GetID() < m_NextId-1)
-					m_UnusedIds.push_back(entity->GetID()); // record unused ID
-				else
-					--m_NextId;
+				m_UnusedIds.freeID(entity->GetID());
 				m_Entities.erase(entity->GetID());
 			}
 			m_EntitiesByName.erase(entity->GetName());
@@ -960,32 +915,10 @@ namespace FusionEngine
 		}
 	}
 
-	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, EntityManager *obj)
+	void EntityManager_AddEntity(asIScriptObject *script_entity, EntityManager *obj)
 	{
-		Entity *entity = obj->InstanceEntity(type).get();
-		//entity->Spawn();
-		return ScriptedEntity::GetScriptObject( entity );
-	}
-
-	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, ObjectID owner, EntityManager *obj)
-	{
-		Entity *entity = obj->InstanceEntity(type, "default", owner).get();
-		//entity->Spawn();
-		return ScriptedEntity::GetScriptObject( entity );
-	}
-
-	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, EntityManager *obj)
-	{
-		Entity *entity = obj->InstanceEntity(type, name).get();
-		//entity->Spawn();
-		return ScriptedEntity::GetScriptObject( entity );
-	}
-
-	asIScriptObject* EntityManager_InstanceEntity(const std::string &type, const std::string &name, ObjectID owner, EntityManager *obj)
-	{
-		Entity *entity = obj->InstanceEntity(type, name, owner).get();
-		//entity->Spawn();
-		return ScriptedEntity::GetScriptObject( entity );
+		obj->AddEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
+		script_entity->Release();
 	}
 
 	void EntityManager_RemoveEntity(const std::string &name, EntityManager *obj)
@@ -1011,18 +944,13 @@ namespace FusionEngine
 		//  a way to instance entities without adding them to the EntityManager (factory access or 
 		//  more instance() methods that work like EntityFactory's instance method)
 		RegisterSingletonType<EntityManager>("EntityManager", engine);
+
 		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in)",
-			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+			"void add(IEntity@)",
+			asFUNCTIONPR(EntityManager_AddEntity, (asIScriptObject*, EntityManager*), void), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in, uint16)",
-			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
-		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in, const string &in)",
-			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
-		r = engine->RegisterObjectMethod("EntityManager",
-			"IEntity@ instance(const string &in, const string &in, uint16)",
-			asFUNCTIONPR(EntityManager_InstanceEntity, (const std::string &, const std::string &, ObjectID, EntityManager*), asIScriptObject*), asCALL_CDECL_OBJLAST);
+			"void add(Entity@)",
+			asMETHOD(EntityManager, AddEntity), asCALL_THISCALL);
 		
 		r = engine->RegisterObjectMethod("EntityManager",
 			"void remove(const string &in)",
@@ -1033,18 +961,10 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("EntityManager",
 			"void remove(IEntity@)",
 			asFUNCTIONPR(EntityManager_RemoveEntity, (asIScriptObject*, EntityManager*), void), asCALL_CDECL_OBJLAST);
-	}
 
-	ObjectID EntityManager::getFreeID()
-	{
-		if (m_UnusedIds.empty())
-			return m_NextId++;
-		else
-		{
-			ObjectID id = m_UnusedIds.back();
-			m_UnusedIds.pop_back();
-			return id;
-		}
+		r = engine->RegisterObjectMethod("EntityManager",
+			"void remove(Entity@)",
+			asMETHODPR(EntityManager, RemoveEntity, (const EntityPtr&), void), asCALL_THISCALL);
 	}
 
 	std::string EntityManager::generateName(const EntityPtr &entity)

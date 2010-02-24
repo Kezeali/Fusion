@@ -62,7 +62,7 @@ namespace FusionEngine
 	public:
 		struct PlayerInfo
 		{
-			ObjectID NetID;
+			PlayerID NetID;
 			unsigned int LocalIndex;
 			RakNetGUID GUID;
 			PlayerInfo()
@@ -88,12 +88,12 @@ namespace FusionEngine
 		//static boost::signals2::connection ConnectToPlayerRestored(RegistryChangedSigType::slot_type &callback);
 
 		//! Adds a new local player entry to the registry
-		static void AddLocalPlayer(ObjectID net_id, unsigned int local_index);
+		static void AddLocalPlayer(PlayerID net_id, unsigned int local_index);
 		//! Adds a new remote player entry to the registry
-		static void AddRemotePlayer(ObjectID net_id, RakNetGUID guid);
+		static void AddRemotePlayer(PlayerID net_id, RakNetGUID guid);
 
 		//! Removes the player with the given net ID - could be a local player, could be remote
-		static void RemovePlayer(ObjectID id);
+		static void RemovePlayer(PlayerID id);
 		//! Removes the local player with the given index
 		static void RemoveLocalPlayer(unsigned int local_index);
 		//! Removes all players who are from the system indicated by the given GUID
@@ -106,14 +106,14 @@ namespace FusionEngine
 		//! Returns the number of players on the local peer
 		static unsigned int GetLocalPlayerCount();
 
-		static const PlayerInfo &GetPlayer(ObjectID id);
+		static const PlayerInfo &GetPlayer(PlayerID id);
 		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
 
 		static std::vector<PlayerInfo> GetPlayersBySystem(RakNetGUID system_address);
 
-		static bool IsLocal(ObjectID net_index);
+		static bool IsLocal(PlayerID net_index);
 	protected:
-		typedef std::tr1::unordered_map<ObjectID, PlayerInfo> PlayersByNetIndexMap;
+		typedef std::tr1::unordered_map<PlayerID, PlayerInfo> PlayersByNetIndexMap;
 		typedef std::tr1::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
 		//typedef std::tr1::unordered_multimap<RakNetGUID, PlayerInfo> PlayersBySystemAddressMap;
 
@@ -125,9 +125,9 @@ namespace FusionEngine
 
 		PlayerInfo m_NoSuchPlayer;
 
-		void addPlayer(ObjectID net_id, unsigned int local_index, RakNetGUID guid);
+		void addPlayer(PlayerID net_id, unsigned int local_index, RakNetGUID guid);
 
-		void removePlayer(ObjectID id);
+		void removePlayer(PlayerID id);
 		void removeLocalPlayer(unsigned int local_index);
 		void removePlayersFrom(RakNetGUID guid);
 
@@ -136,7 +136,7 @@ namespace FusionEngine
 		unsigned int getPlayerCount() const;
 		unsigned int getLocalPlayerCount() const;
 
-		const PlayerInfo &getPlayerByNetID(ObjectID id) const;
+		const PlayerInfo &getPlayerByNetID(PlayerID id) const;
 		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;
 		std::vector<PlayerInfo> getPlayersBySystem(RakNetGUID guid) const;
 

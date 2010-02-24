@@ -43,13 +43,14 @@
 #include <ClanLib/Core/IOData/virtual_directory.h>
 
 #include "FusionEntityDeserialiser.h"
-#include "FusionSerialisedData.h"
+#include "FusionPacketHandler.h"
 #include "FusionRefCounted.h"
+#include "FusionSerialisedData.h"
 
 namespace FusionEngine
 {
 
-	class GameMapLoader
+	class GameMapLoader : public PacketHandler
 	{
 	public:
 		struct Archetype
@@ -92,17 +93,31 @@ namespace FusionEngine
 		GameMapLoader(ClientOptions *options, EntityManager *manager);
 		~GameMapLoader();
 
+		void HandlePacket(Packet *packet);
+
+		//! Load entity types from the given map - call before compiling the script module
 		void LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory);
 		void LoadEntityTypes(CL_IODevice &device);
 
-		void LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool pseudo_only = false);
+		//! Loads the given map file
+		/*!
+		* \param[in] filename
+		* The file to load
+		* \param[in] directory
+		* The filesystem to load the file from
+		* \param[in] include_synced_ents
+		* Load synced Entities (entities with an ID, that are synced over the network/saved.)
+		* Set to true if starting a new game; if joining a game or loading a save, set to false
+		* so synced entities can be loaded from the existing ontology.
+		*/
+		void LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool include_synced_ents = true);
 
 		void LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory);
 		void SaveGame(const std::string &filename, CL_VirtualDirectory &directory);
 
 		//! Compiles a binary map file from map-editor data
 		static void CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const GameMapEntityArray &pseudo_entities, const GameMapEntityArray &entities);
-
+		
 		void onEntityInstanced(EntityPtr &entity);
 
 	private:

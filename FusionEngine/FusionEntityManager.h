@@ -1,50 +1,49 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_EntityManager
-#define Header_FusionEngine_EntityManager
+#ifndef Header_FusionEntityManager
+#define Header_FusionEntityManager
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include "FusionCommon.h"
-
-// Fusion
-#include "FusionEntity.h"
-#include "FusionPacketHandler.h"
-#include "FusionNetwork.h"
-#include "FusionPlayerInput.h"
-#include "FusionInputHandler.h"
-#include "FusionRenderer.h"
-#include "FusionStreamingManager.h"
+#include "FusionPrerequisites.h"
 
 #include <Bitstream.h>
+#include <RakNetTypes.h>
+
+#include "FusionEntity.h"
+#include "FusionIDStack.h"
+#include "FusionInputHandler.h"
+#include "FusionPacketHandler.h"
+#include "FusionPlayerInput.h"
+#include "FusionRenderer.h"
+#include "FusionStreamingManager.h"
 
 //#include <boost/bimap.hpp>
 
@@ -55,21 +54,21 @@ namespace FusionEngine
 	class ConsolidatedInput
 	{
 	public:
-		typedef std::tr1::unordered_map<ObjectID, PlayerInputPtr> PlayerInputsMap;
+		typedef std::tr1::unordered_map<PlayerID, PlayerInputPtr> PlayerInputsMap;
 
 	public:
 		ConsolidatedInput(InputManager *input_manager);
 		~ConsolidatedInput();
 
-		void SetState(ObjectID player, const std::string input, bool active, float position);
-		PlayerInputPtr GetInputsForPlayer(ObjectID player);
+		void SetState(PlayerID player, const std::string input, bool active, float position);
+		PlayerInputPtr GetInputsForPlayer(PlayerID player);
 
 		const PlayerInputsMap &GetPlayerInputs() const;
 
 		unsigned short ChangedCount() const;
 		void ChangesRecorded();
 
-		ObjectID LocalToNetPlayer(unsigned int local);
+		PlayerID LocalToNetPlayer(unsigned int local);
 
 	protected:
 		InputManager *m_LocalManager;
@@ -92,30 +91,16 @@ namespace FusionEngine
 	class EntitySynchroniser : public PacketHandler
 	{
 	public:
-		struct InstanceDefinition
-		{
-			bool Add; // True if the entity should be added to the update domain
-			std::string Type;
-			std::string Name;
-			ObjectID ID;
-			ObjectID Owner;
-			EntityDomain Domain;
-			SerialisedData State;
-		};
-		typedef std::vector<InstanceDefinition> InstanceDefinitionArray;
-
-		EntitySynchroniser(InputManager *input_manager, NetworkSystem *network_system);
+		EntitySynchroniser(InputManager *input_manager);
 		~EntitySynchroniser();
 
-		const InstanceDefinitionArray &GetReceivedEntities() const;
+		const EntityArray &GetReceivedEntities() const;
 
 		void BeginPacket();
 		void EndPacket();
 
-		//! Sends to the systems 
+		//! Sends data
 		void Send();
-
-		void OnEntityInstanced(const EntityPtr &entity);
 
 		void OnEntityAdded(EntityPtr &entity);
 
@@ -124,19 +109,19 @@ namespace FusionEngine
 		// Returns true if the entity state was written to the packet
 		bool AddToPacket(EntityPtr &entity);
 
-		void HandlePacket(IPacket *packet);
+		void HandlePacket(Packet *packet);
 
 	protected:
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;
 
 		RakNetwork *m_Network;
-		NetworkSystem *m_NetworkSystem;
 
-		typedef std::tr1::unordered_map<ObjectID, EntityArray> EntityPreparedInstancesMap;
-		EntityPreparedInstancesMap m_EntityPreparedInstances;
+		//typedef std::tr1::unordered_map<ObjectID, EntityArray> EntityPreparedInstancesMap;
+		//EntityPreparedInstancesMap m_EntityPreparedInstances;
+		boost::signals2::connection m_EntityInstancedCnx;
 
-		InstanceDefinitionArray m_ReceivedEntities;
+		EntityArray m_ReceivedEntities;
 
 		typedef std::tr1::unordered_map<ObjectID, SerialisedData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
@@ -152,9 +137,11 @@ namespace FusionEngine
 		typedef std::map<unsigned int, EntityPacketData, std::greater<unsigned int>> EntityPriorityMap;
 		EntityPriorityMap m_EntityPacketData;
 
+		size_t m_EntityDataUsed;
+
 		struct SystemPriority
 		{
-			NetHandle System;
+			RakNetGUID System;
 			float Distance; // Average Entity distance
 			unsigned int SkippedSteps;
 		};
@@ -199,7 +186,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(EntityFactory *factory, Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
+		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -212,25 +199,11 @@ namespace FusionEngine
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
 		//typedef TagFlagMap::value_type TagDef;
 
-		//! Gives you access to the root node
-		//virtual EntityPtr GetRootNode() const;
-
-		//! Creates a new node with the given name
-		//virtual EntityPtr CreatNode(const std::string& name);
-		//virtual void AddNode(EntityPtr node);
-		//virtual void RemoveNode(EntityPtr node);
-		//virtual void RemoveNode(const std::string& name);
-
-		//void AttachToNode(const std::string& node_name, EntityPtr entity);
-
 		//! Creates an entity of the given type and adds it to the manager
-		EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default", ObjectID owner_id = 0);
+		//EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default", ObjectID owner_id = 0);
 
 		//! Gets the factory
-		EntityFactory *GetFactory() const;
-
-		//! Makes an IDTranslator for an EntityDeserialiser
-		IDTranslator MakeIDTranslator() const;
+		//EntityFactory *GetFactory() const;
 
 		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
@@ -318,17 +291,17 @@ namespace FusionEngine
 
 		/*!
 		* \brief
-		* Removes non-pseudo ("Real") entities from the manager
+		* Removes synchronised (non-pseudo) entities from the manager
 		*/
-		void ClearRealEntities();
+		void ClearSyncedEntities();
 		
 		//! Removes all entities in the given domain
 		void ClearDomain(EntityDomain domain_index);
 
-		//! Updates nodes
+		//! Updates entities
 		void Update(float split);
 
-		//! Draws nodes.
+		//! Draws entities
 		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
 
 		//! Updates the given domain
@@ -356,8 +329,6 @@ namespace FusionEngine
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
 		void clearEntities(bool real_only);
 
-		ObjectID getFreeID();
-
 		std::string generateName(const EntityPtr &entity);
 
 		void updateTags(EntityPtr &tag) const;
@@ -371,9 +342,6 @@ namespace FusionEngine
 
 		EntityFactory *m_EntityFactory;
 
-		ObjectID m_NextId;
-		typedef std::deque<ObjectID> ObjectIDStack;
-		// Lists IDs between 0 and m_NextId that have been freed by Entity removal
 		ObjectIDStack m_UnusedIds;
 
 		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)

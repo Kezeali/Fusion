@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2010 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -67,6 +67,31 @@ namespace FusionEngine
 		return getSingleton().m_ArbitratorElector.GetArbitratorGUID();
 	}
 
+	bool NetworkManager::ArbitratorIsLocal()
+	{
+		return getSingleton().m_Network->GetLocalGUID() == GetArbitratorGUID();
+	}
+
+	uint8_t NetworkManager::GetLocalPeerIndex()
+	{
+		return getSingleton().m_Network->GetLocalPeerIndex();
+	}
+
+	RakNetwork * const NetworkManager::GetNetwork()
+	{
+		return getSingleton().m_Network;
+	}
+
+	void NetworkManager::Subscribe(unsigned char type, PacketHandler *handler)
+	{
+		return m_Dispatcher->Subscribe(type, handler);
+	}
+
+	void NetworkManager::Unsubscribe(unsigned char type, PacketHandler *handler)
+	{
+		return m_Dispatcher->Unsubscribe(type, handler);
+	}
+
 	void NetworkManager::DispatchPackets()
 	{
 		FSN_ASSERT(m_Network != nullptr);
@@ -77,7 +102,7 @@ namespace FusionEngine
 
 	void NetworkManager::RequestStepControl()
 	{
-		m_Network->Send(Dear::Arbiter(), false, MTID_REQUESTSTEPCONTROL, nullptr, HIGH_PRIORITY, RELIABLE, 0);
+		m_Network->Send(To::Arbiter(), !Timestamped, MTID_REQUESTSTEPCONTROL, nullptr, HIGH_PRIORITY, RELIABLE, 0);
 	}
 
 }

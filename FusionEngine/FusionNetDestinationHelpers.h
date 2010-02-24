@@ -33,6 +33,7 @@
 #endif
 
 #include "FusionPrerequisites.h"
+#include "FusionCommon.h"
 
 #include "FusionNetworkManager.h"
 #include "FusionPlayerRegistry.h"
@@ -46,7 +47,7 @@ namespace FusionEngine
 	{
 
 		//! Dearest Player, please create a new entity with the following qualities...
-		NetDestination Player(ObjectID id)
+		NetDestination Player(PlayerID id)
 		{
 			NetDestination destination;
 
@@ -56,7 +57,7 @@ namespace FusionEngine
 			return destination;
 		}
 
-		//! Dearest Arbitrator, could you find it in your eternal wisdom to allow me to add a new player?
+		//! Dearest Arbitrator, can you use your eternal wisdom to grant me a new player?
 		NetDestination Arbiter()
 		{
 			NetDestination destination;
@@ -71,6 +72,18 @@ namespace FusionEngine
 		{
 			NetDestination destination;
 
+			destination.Broadcast = true;
+
+			return destination;
+		}
+
+		//! Hey, don't tell player_id I told you this, but...
+		NetDestination OtherThan(PlayerID excluded_id)
+		{
+			NetDestination destination;
+
+			const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(excluded_id);
+			destination.GUID = playerInfo.GUID;
 			destination.Broadcast = true;
 
 			return destination;

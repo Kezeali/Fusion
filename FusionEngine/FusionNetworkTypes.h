@@ -77,37 +77,25 @@ namespace FusionEngine
 		MTID_ADDALLOWED,
 		MTID_REMOVEENTITY,
 
-		//! [client|server] Updates the gamemode class entity name
-		MTID_CHANGEMODE,
-		//! [server|client]
-		MTID_CHANGENAME,
-
 		MTID_ADDPLAYER,
 		MTID_REMOVEPLAYER,
+		MTID_CHANGENAME,
 
-		//! [client|server]
+		MTID_LOADMAP,
+
 		MTID_STARTSYNC,
-		//! [client]
 		MTID_ENDSYNC,
-		//! [client] If a package fails to verify, the client simply disconnects (thus no VERIFYFAILED is necessary)
-		MTID_VERIFYPACKAGE,
+		MTID_VERIFY,
 
-		//! Gives the client a hint about what it's starting tick should be
 		MTID_JOINSETUP,
-		//! [client|server] Low priority
 		MTID_ENTITYMOVE,
-		//! [client] High Priority
 		MTID_CORRECTION,
-		//! [server] High priority
 		MTID_IMPORTANTMOVE,
 
 		MTID_REQUESTSTEPCONTROL,
 
-		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHALL,
-		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHTEAM,
-		//! [client|server] On client, this is just used to choose the heading in the chatlog
 		MTID_CHONE,
 
 		//! Max type ID

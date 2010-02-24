@@ -70,6 +70,21 @@ namespace FusionEngine
 		//! Convinience function - calls the relevant method on the NetworkManager singleton
 		static const RakNetGUID &GetArbitratorGUID();
 
+		//! Convinience function - returns true if GetLocalGUID() == GetArbitratorGUID()
+		static bool ArbitratorIsLocal();
+
+		//! Returns the peer index of this machine (from 0-254)
+		/*!
+		* Lower index indicates earlier connection.
+		*/
+		static uint8_t GetLocalPeerIndex();
+
+		//! Returns the current network object
+		static RakNetwork * const GetNetwork();
+
+		void Subscribe(unsigned char type, PacketHandler *handler);
+		void Unsubscribe(unsigned char type, PacketHandler *handler);
+
 		//! Dispatches new packets
 		void DispatchPackets();
 

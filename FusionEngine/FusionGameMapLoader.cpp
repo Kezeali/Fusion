@@ -28,15 +28,18 @@
 
 #include "FusionStableHeaders.h"
 
-#include "FusionClientOptions.h"
-#include "FusionPlayerRegistry.h"
-
 #include "FusionGameMapLoader.h"
-#include "FusionEntityManager.h"
-#include "FusionEntityFactory.h"
 
+#include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
+#include <RakNetTypes.h>
 
+#include "FusionClientOptions.h"
+#include "FusionEntityFactory.h"
+#include "FusionEntityManager.h"
+#include "FusionNetworkManager.h"
+#include "FusionNetworkTypes.h"
+#include "FusionPlayerRegistry.h"
 
 namespace FusionEngine
 {
@@ -47,11 +50,50 @@ namespace FusionEngine
 		m_NextTypeIndex(0)
 	{
 		m_FactoryConnection = m_Manager->GetFactory()->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
+
+		NetworkManager::getSingleton().Subscribe(MTID_LOADMAP, this);
 	}
 
 	GameMapLoader::~GameMapLoader()
 	{
+		NetworkManager::getSingleton().Unsubscribe(MTID_LOADMAP, this);
 		m_FactoryConnection.disconnect();
+	}
+
+	void GameMapLoader::HandlePacket(Packet *packet)
+	{
+		RakNet::BitStream bitStream(packet->data, packet->length, false);
+		{
+			unsigned char packetType;
+			bitStream.Read(packetType);
+		}
+
+		std::string::size_type filename_length;
+		bitStream.Read(filename_length);
+		std::string filename; filename.resize(filename_length);
+		bitStream.Read(&filename[0], filename_length);
+
+		uint32_t expectedChecksum;
+		bitStream.Read(expectedChecksum);
+
+		CL_VirtualDirectory directory;
+		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
+
+		boost::crc_32_type crc;
+		int count = 0;
+		do
+		{
+			char buffer[2048];
+			count = device.read(buffer, 2048);
+			crc.process_bytes(buffer, 2048);
+		} while (count == 2048);
+
+		if (crc.checksum() == expectedChecksum)
+		{
+			LoadMap(filename, directory, false);
+		}
+		else
+			SendToConsole("Host map is different to local map.");
 	}
 
 	void GameMapLoader::LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory)
@@ -74,7 +116,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool pseudo_only)
+	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool include_synced)
 	{
 		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
@@ -119,7 +161,8 @@ namespace FusionEngine
 		IDTranslator translator;
 
 		loadPseudoEntities(device, archetypeArray, translator);
-		loadEntities(device, archetypeArray, translator);
+		if (include_synced)
+			loadEntities(device, archetypeArray, translator);
 	}
 
 	void GameMapLoader::loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
@@ -278,16 +321,16 @@ namespace FusionEngine
 		date.resize(19);
 		device.read(&date[0], 19);
 
-		// Local players
-		PlayerRegistry::Clear();
+		//// Local players
+		//PlayerRegistry::Clear();
 
-		size_t numLocalPlayers = device.read_uint32();
-		m_ClientOptions->SetOption("num_local_players", boost::lexical_cast<std::string>(numLocalPlayers));
-		for (unsigned int i = 0; i < numLocalPlayers; ++i)
-		{
-			ObjectID netIndex = device.read_uint16();
-			PlayerRegistry::AddPlayer(netIndex, i);
-		}
+		//size_t numLocalPlayers = device.read_uint32();
+		//m_ClientOptions->SetOption("num_local_players", boost::lexical_cast<std::string>(numLocalPlayers));
+		//for (unsigned int i = 0; i < numLocalPlayers; ++i)
+		//{
+		//	ObjectID netId = device.read_uint16();
+		//	PlayerRegistry::AddLocalPlayer(netId, i);
+		//}
 
 		// Map filename
 		std::string mapFilename = device.read_string_a();
@@ -295,10 +338,9 @@ namespace FusionEngine
 		if (!mapFilename.empty() && mapFilename != m_MapFilename)
 			LoadMap(mapFilename, directory, true);
 		else
-			m_Manager->ClearRealEntities();
+			m_Manager->ClearSyncedEntities();
 
 		EntityFactory *factory = m_Manager->GetFactory();
-		IDTranslator translator = m_Manager->MakeIDTranslator();
 
 		// Load & instance Entities (this section is loaded the same way as the equivilant section in the map file)
 		// TODO: share code with map file loading?
@@ -322,7 +364,7 @@ namespace FusionEngine
 					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
 
-				entity->SetID(translator(entityID));
+				entity->SetID(entityID);
 				m_Manager->AddEntity(entity);
 
 				instancedEntities.push_back(entity);
@@ -332,7 +374,7 @@ namespace FusionEngine
 		// Deserialise each instanced entity (the only difference between this and what is done to load
 		//  a _map_ file is that the Entity's Spawn() method is not called)
 		{
-			EntityDeserialiser entity_deserialiser(m_Manager, translator);
+			EntityDeserialiser entity_deserialiser(m_Manager);
 			SerialisedData state;
 			for (EntityArray::iterator it = instancedEntities.begin(), end = instancedEntities.end(); it != end; ++it)
 			{
@@ -363,14 +405,14 @@ namespace FusionEngine
 		//  Date
 		CL_String date = CL_DateTime::get_current_local_time().to_short_datetime_string();
 		device.write(CL_StringHelp::text_to_utf8(date).c_str(), 19);
-		//  Players
-		int numLocalPlayers;
-		m_ClientOptions->GetOption("num_local_players", &numLocalPlayers);
-		device.write_uint32((unsigned)numLocalPlayers);
-		//  Write net-indicies so they can be restored - net-indicies
-		//  must be the same from session to session for Entity ownership.
-		for (unsigned int i = 0; i < (unsigned)numLocalPlayers; i++)
-			device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
+		////  Players
+		//int numLocalPlayers;
+		//m_ClientOptions->GetOption("num_local_players", &numLocalPlayers);
+		//device.write_uint32((unsigned)numLocalPlayers);
+		////  Write net-indicies so they can be restored - net-indicies
+		////  must be the same from session to session for Entity ownership.
+		//for (unsigned int i = 0; i < (unsigned)numLocalPlayers; i++)
+		//	device.write_uint16(PlayerRegistry::GetPlayerByLocalIndex(i).NetIndex);
 
 		// Map filename
 		device.write_string_a(m_MapFilename);

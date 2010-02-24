@@ -45,6 +45,58 @@ namespace FusionEngine
 	typedef PacketPriority rakPriority;
 	typedef PacketReliability rakReliability;
 
+	PeerIndexPlugin::PeerIndexPlugin()
+		: m_PeerIndex(0)
+	{}
+
+	uint8_t PeerIndexPlugin::GetPeerIndex() const
+	{
+		return m_PeerIndex;
+	}
+
+	PluginReceiveResult PeerIndexPlugin::OnReceive(Packet *packet)
+	{
+		// When the ID_REMOTE_NEW_INCOMING_CONNECTION packet is being sent to a new connection
+		// it contains a list of systems to connect to, rather than a single system - this can
+		//  be used to generate a set of peers that connected before this peer. 
+		if (packet->data[0] == ID_REMOTE_NEW_INCOMING_CONNECTION)
+		{
+			RakNet::BitStream received(packet->data, packet->length, false);
+			received.IgnoreBytes(sizeof(MessageID));
+			unsigned int count;
+			received.Read(count);
+			if (count > 1)
+			{
+				// Count is the number of peers currently connected, thus count == this peer's starting rank
+				m_PeerIndex = count;
+				// I don't know how many bytes SystemAddress takes in a packet (since it is passed
+				//  using one of the template specializations when writing to a BitStream), so
+				//  IgnoreBytes can't be safely used here
+				SystemAddress this_is_ignored;
+				RakNetGUID guid;
+				for (unsigned int i = 0; i < count; ++i)
+				{
+					received.Read(this_is_ignored);
+					received.Read(guid);
+					m_SeniorPairs.insert(guid);
+				}
+			}
+		}
+
+		return RR_CONTINUE_PROCESSING;
+	}
+
+	void PeerIndexPlugin::OnClosedConnection(SystemAddress systemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason lostConnectionReason)
+	{
+		auto _where = m_SeniorPairs.find(rakNetGUID);
+		if (_where != m_SeniorPairs.end())
+		{
+			// A peer that connected before this one has left, so this peer gets to move up the ranks
+			--m_PeerIndex;
+			m_SeniorPairs.erase(_where);
+		}
+	}
+
 	RakNetwork::RakNetwork()
 		: m_MinLagMilis(0), m_LagVariance(0),
 		m_AllowBps(0.0)
@@ -56,6 +108,9 @@ namespace FusionEngine
 
 		m_NetInterface->AttachPlugin(&m_ConnectionGraphPlugin);
 		m_NetInterface->AttachPlugin(&m_FullyConnectedMeshPlugin);
+		m_NetInterface->AttachPlugin(&m_PeerIndexPlugin);
+
+		m_NetInterface->SetMaximumIncomingConnections(s_MaxPeers);
 	}
 
 	RakNetwork::~RakNetwork()
@@ -63,14 +118,11 @@ namespace FusionEngine
 		RakNetworkFactory::DestroyRakPeerInterface(m_NetInterface);
 	}
 
-	bool RakNetwork::Startup(unsigned short maxConnections, unsigned short incommingPort, unsigned short maxIncommingConnections)
+	bool RakNetwork::Startup(unsigned short incommingPort)
 	{
 		SocketDescriptor socDesc(incommingPort, 0);
-		if (m_NetInterface->Startup(maxConnections, 0, &socDesc, 1))
-		{
-			m_NetInterface->SetMaximumIncomingConnections(maxIncommingConnections);
+		if (m_NetInterface->Startup(s_MaxPeers, 10, &socDesc, 1))
 			return true;
-		}
 		else
 			return false;
 	}
@@ -99,6 +151,11 @@ namespace FusionEngine
 	const RakNetGUID &RakNetwork::GetLocalGUID() const
 	{
 		return m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS);
+	}
+
+	uint8_t RakNetwork::GetLocalPeerIndex() const
+	{
+		return m_NetInterface->m_PeerIndexPlugin.GetPeerIndex();
 	}
 
 	RakNetGUID RakNetwork::GetHost() const

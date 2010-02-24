@@ -130,13 +130,13 @@ namespace FusionEngine
 		//! Destructor
 		~StreamingManager();
 
-		void SetPlayerCamera(ObjectID net_idx, const CameraPtr &cam);
-		void RemovePlayerCamera(ObjectID net_idx);
+		void SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam);
+		void RemovePlayerCamera(PlayerID net_idx);
 		
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
 
-		CL_Rectf CalculateActiveArea(ObjectID net_idx) const;
+		CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
 		//! Streams the entity in if it is within range
 		void ProcessEntity(const EntityPtr &entity) const;
@@ -162,7 +162,7 @@ namespace FusionEngine
 		//! Returns true if the entity is within the streaming area of the camera
 		bool processEntity(const StreamingCamera &cam, const EntityPtr &entity) const;
 
-		typedef std::map<ObjectID, StreamingCamera> StreamingCameraMap;
+		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
 		StreamingCameraMap m_Cameras;
 
 		float m_Range;

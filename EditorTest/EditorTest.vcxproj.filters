@@ -113,9 +113,6 @@
     <ClCompile Include="..\FusionEngine\FusionLogPhysFS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionNetwork.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionNetworkSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -257,6 +254,9 @@
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
@@ -371,9 +371,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionLogPhysFS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionNetwork.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionNetworkSystem.h">
@@ -572,6 +569,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

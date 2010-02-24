@@ -46,7 +46,7 @@ namespace FusionEngine
 		m_Log = Logger::getSingleton().OpenLog("Network");
 	}
 
-	void DebugPacketHandler::HandlePacket(IPacket *packet)
+	void DebugPacketHandler::HandlePacket(Packet *packet)
 	{
 		m_Log->AddEntry("Unhandled packet arrived: " + boost::lexical_cast<std::string>(packet->GetType()), LOG_TRIVIAL);
 	}

@@ -531,22 +531,22 @@ namespace FusionEngine
 		return m_Id;
 	}
 
-	void Entity::SetOwnerID(ObjectID owner)
+	void Entity::SetOwnerID(PlayerID owner)
 	{
 		m_OwnerID = owner;
 	}
 
-	ObjectID Entity::GetOwnerID() const
+	PlayerID Entity::GetOwnerID() const
 	{
 		return m_OwnerID;
 	}
 
-	void Entity::SetAuthority(ObjectID authority)
+	void Entity::SetAuthority(PlayerID authority)
 	{
 		m_Authority = authority;
 	}
 
-	ObjectID Entity::GetAuthority() const
+	PlayerID Entity::GetAuthority() const
 	{
 		return m_Authority;
 	}
@@ -1011,10 +1011,6 @@ namespace FusionEngine
 			"float getInputPosition(const string &in) const",
 			asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
 
-		r = engine->RegisterObjectMethod("Entity",
-			"void defineInstanceToPrepare(const string &in, uint, bool)",
-			asMETHOD(Entity, DefineInstanceToPrepare), asCALL_THISCALL);
-
 		// Physical state related methods
 		r = engine->RegisterObjectMethod("Entity",
 			"const Vector& getPosition()",
@@ -1052,8 +1048,8 @@ namespace FusionEngine
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);
-		r = engine->RegisterInterfaceMethod("IEntity", "void Update()"); FSN_ASSERT(r >= 0);
-		r = engine->RegisterInterfaceMethod("IEntity", "void Draw()"); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterInterfaceMethod("IEntity", "void Update()"); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterInterfaceMethod("IEntity", "void Draw()"); FSN_ASSERT(r >= 0);
 	}
 
 }

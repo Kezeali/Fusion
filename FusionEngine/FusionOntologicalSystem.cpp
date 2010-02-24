@@ -143,8 +143,7 @@ namespace FusionEngine
 		m_NetworkSystem(network),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
-		m_PhysWorld(NULL),
-		m_NextPlayerIndex(1)
+		m_PhysWorld(NULL)
 	{
 	}
 
@@ -162,7 +161,7 @@ namespace FusionEngine
 	{
 		if (m_EntityManager == NULL)
 		{
-			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager, m_NetworkSystem);
+			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager);
 			m_EntityFactory = new EntityFactory();
 			m_Streaming = new StreamingManager();
 			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
@@ -171,25 +170,31 @@ namespace FusionEngine
 			m_PhysWorld = new PhysicalWorld();
 			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
 
-			m_Streaming->SetRange(2000);
-
-			m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_EntityFactory, m_PhysWorld, m_Streaming, m_MapLoader));
-			this->PushMessage(new SystemMessage(m_Editor));
-
-			ScriptManager *manager = ScriptManager::getSingletonPtr();
-
-			manager->RegisterGlobalObject("System system", this);
-			manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
-			manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
-			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
-
-			m_EntityFactory->SetScriptingManager(manager);
-			m_EntityFactory->SetScriptedEntityPath("Entities/");
-
 			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
 
 			gameOptions.GetOption("startup_entity", &m_StartupEntity);
 			gameOptions.GetOption("startup_map", &m_StartupMap);
+
+			m_Streaming->SetRange(2000);
+
+			ScriptManager *manager = ScriptManager::getSingletonPtr();
+
+			manager->RegisterGlobalObject("const System system", this);
+			manager->RegisterGlobalObject("const StreamingManager streamer", m_Streaming);
+			manager->RegisterGlobalObject("const EntityManager entity_manager", m_EntityManager);
+			
+			if (gameOptions.GetOption_str("Editor") == "allowed")
+			{
+				m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_EntityFactory, m_PhysWorld, m_Streaming, m_MapLoader));
+				this->PushMessage(new SystemMessage(m_Editor));
+				
+				manager->RegisterGlobalObject("const Editor editor", m_Editor.get());
+			}
+			
+			m_EntityFactory->SetScriptingManager(manager);
+			m_EntityFactory->SetScriptedEntityPath("Entities/");
+
+			//m_OnPlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
 		}
 
 		if (!m_StartupEntity.empty())
@@ -262,13 +267,18 @@ namespace FusionEngine
 
 		m_Viewports.clear();
 
-		if (m_EntityManager != NULL)
+		if (m_Editor)
 		{
 			this->PushMessage(new SystemMessage(m_Editor, false)); // Remove the editor system
 			m_Editor->CleanUp(); // Can't wait for the system manager to clean up the Editor because
 			//  physworld is deleted below and the destructor method of any remaining EditorMapEntity objects
 			//  will fail
 			m_Editor.reset();
+		}
+
+		if (m_EntityManager != NULL)
+		{
+			
 
 			delete m_MapLoader;
 			delete m_EntityManager;
@@ -315,104 +325,17 @@ namespace FusionEngine
 		}
 	}
 
-	void OntologicalSystem::HandlePacket(IPacket *packet)
+	void OntologicalSystem::HandlePacket(Packet *packet)
 	{
-		RakNetwork *network = m_NetworkSystem->GetNetwork();
-		NetHandle originHandle = packet->GetSystemHandle();
+		//RakNet::BitStream bitStream(packet->data, packet->length, false);
+		//unsigned char packetType;
+		//bitStream.Read(packetType);
 
-		if (packet->GetType() == MTID_ADDPLAYER)
-		{
-			if (PlayerRegistry::ArbitratorIsLocal())
-			{
-				unsigned int playerIndex;
-				{
-					RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
-					bitStream.Read(playerIndex);
-				}
-
-				ObjectID netIndex = getNextPlayerIndex();
-				PlayerRegistry::AddPlayer(netIndex, originHandle);
-
-				RakNetHandle rakHandle = std::tr1::dynamic_pointer_cast<RakNetHandleImpl>(originHandle);
-				{
-					RakNet::BitStream bitStream;
-					bitStream.Write1();
-					bitStream.Write(netIndex);
-					bitStream.Write(playerIndex);
-					network->Send(
-						false,
-						MTID_ADDPLAYER, &bitStream,
-						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-						originHandle);
-				}
-				{
-					SystemAddress systemAddress = rakHandle->Address;
-					RakNetGUID guid = rakHandle->SystemIdent;
-
-					RakNet::BitStream bitStream;
-					bitStream.Write0();
-					bitStream.Write(netIndex);
-					bitStream.Write(systemAddress);
-					bitStream.Write(guid);
-					network->Send(
-						false,
-						MTID_ADDPLAYER, &bitStream,
-						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-						originHandle, true);
-				}
-			}
-			else
-			{
-				RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
-
-				bool localPlayer = bitStream.ReadBit();
-				ObjectID netIndex;
-				bitStream.Read(netIndex);
-
-				if (localPlayer)
-				{
-					unsigned int localIndex;
-					bitStream.Read(localIndex);
-					PlayerRegistry::AddPlayer(netIndex, localIndex);
-
-					onGetNetIndex(localIndex, netIndex);
-				}
-				else
-				{
-					RakNetGUID guid;
-					SystemAddress address;
-					bitStream.Read(address);
-					bitStream.Read(guid);
-
-					RakNetHandle handle(new RakNetHandleImpl(guid, address));
-					PlayerRegistry::AddPlayer(netIndex, handle);
-				}
-			}
-		}
-
-		else if (packet->GetType() == MTID_REMOVEPLAYER)
-		{
-			RakNet::BitStream bitStream((unsigned char*)packet->GetData(), packet->GetLength(), false);
-
-			ObjectID netIndex;
-			bitStream.Read(netIndex);
-
-			if (PlayerRegistry::ArbitratorIsLocal())
-			{
-				PlayerRegistry::RemovePlayer(netIndex);
-				releasePlayerIndex(netIndex);
-
-				//network->Send(
-				//	false,
-				//	MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
-				//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-				//	originHandle, true);
-			}
-			else
-			{
-				PlayerRegistry::RemovePlayer(netIndex);
-			}
-		}
+		//switch (packetType)
+		//{
+		//case MTID_LOADMAP:
+		//	processMapPacket(&bitStream);
+		//}
 	}
 
 	void OntologicalSystem::AddViewport(ViewportPtr viewport)
@@ -544,53 +467,15 @@ namespace FusionEngine
 
 	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
-		return 0;
-//		unsigned int playerIndex = m_PlayerManager.GetLocalPlayerCount();
-//
-//		// Validate & store the callback method
-//			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
-//				SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
-//
-//			m_PlayerManager.RequestLocalPlayer();
-//
-//			return playerIndex;
-//
-//			// Put this in PlayerManager
-//RakNetwork *network = m_NetworkSystem->GetNetwork();
-//			if (PlayerRegistry::ArbitratorIsLocal())
-//			{
-//				ObjectID netIndex = getNextPlayerIndex();
-//
-//				// For PlayerManager, rather than calling this here, add it to a queue and
-//				//  call it using DispatchPlayerRequests. Perhaps
-//				// Add the player
-//				PlayerRegistry::AddPlayer(netIndex, playerIndex);
-//
-//				// Call the script callback
-//				onGetNetIndex(playerIndex, netIndex);
-//
-//				RakNet::BitStream bitStream;
-//				bitStream.Write0();
-//				bitStream.Write(netIndex);
-//
-//				// Notify other systems 
-//				network->Send(
-//					false,
-//					MTID_ADDPLAYER, &bitStream,
-//					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM, NetHandle(), true);
-//			}
-//			else
-//			{
-//				// Request a Net-Index if this peer isn't the arbitrator
-//				RakNet::BitStream bitStream;
-//				bitStream.Write(playerIndex);
-//
-//				network->Send(
-//					false,
-//					MTID_ADDPLAYER, &bitStream,
-//					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-//					PlayerRegistry::GetArbitratingPlayer().System);
-//			}
+		unsigned int playerIndex = m_PlayerManager.GetLocalPlayerCount();
+
+		// Validate & store the callback method
+			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
+				SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
+
+			m_PlayerManager.RequestNewPlayer();
+
+			return playerIndex;
 	}
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)

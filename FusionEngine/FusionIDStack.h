@@ -35,6 +35,7 @@
 
 #include "FusionCommon.h"
 
+#include <limits>
 
 namespace FusionEngine
 {
@@ -69,6 +70,12 @@ namespace FusionEngine
 		{
 			m_UnusedIds.clear();
 			m_NextId = m_FirstId;
+		}
+		//! Takes all the Ids up to the given one, so the next call to getFreeID() will return the given ID
+		void takeAll(T next_id)
+		{
+			m_UnusedIds.clear();
+			m_NextId = next_id;
 		}
 
 	protected:
@@ -139,12 +146,36 @@ namespace FusionEngine
 	public:
 		//! Initialises m_NextId to one (Entity IDs start at 1)
 		IDStack()
-			: IDCollection(1)
+			: IDCollection(1),
+			m_MaxId(std::numeric_limits<T>::max())
 		{}
+		//! Inits like the default constructor, but also sets the max ID available
+		IDStack(T max)
+			: IDCollection(1),
+			m_MaxId(max)
+		{}
+
+		void setMaxID(T max)
+		{
+			FSN_ASSERT(m_NextId == m_FirstId);
+			FSN_ASSERT(m_UnusedIds.empty());
+			m_MaxId = max;
+		}
+
+		T peekNextID() const
+		{
+			if (m_UnusedIds.empty())
+				return m_NextId+1;
+			else
+				return m_UnusedIds.back();
+		}
 
 		//! Returns an ObjectID which is not in use
 		virtual T getFreeID()
 		{
+			if (m_NextId > m_MaxId)
+				FSN_EXCEPT(ExCode::InvalidArgument, "IDStack::getFreeID", "No more IDs are available");
+
 			if (m_UnusedIds.empty())
 				return m_NextId++;
 			else
@@ -162,6 +193,9 @@ namespace FusionEngine
 			else if (id < m_NextId-1)
 				m_UnusedIds.push_back(id); // record unused ID
 		}
+
+	protected:
+		T m_MaxId;
 	};
 
 	//! Supplies ObjectIDs which aren't assigned

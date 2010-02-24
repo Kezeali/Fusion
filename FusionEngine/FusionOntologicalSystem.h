@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -34,9 +34,12 @@
 
 #include "FusionPrerequisites.h"
 
+#include <boost/signals2/connection.hpp>
+
 #include "FusionState.h"
 #include "FusionPacketHandler.h"
 
+#include "FusionPlayerManager.h"
 #include "FusionPlayerRegistry.h"
 #include "FusionRenderer.h"
 #include "FusionScriptModule.h"
@@ -61,7 +64,7 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~OntologicalSystem();
 
-		//! Returns the name of the system ("Entities"
+		//! Returns the name of the system ("Entities")
 		virtual const std::string &GetName() const;
 
 		//! Initialises the system (creates EntityManager, MapLoader, etc.)
@@ -74,7 +77,7 @@ namespace FusionEngine
 		//! Runs the renderer, mainly
 		virtual void Draw();
 
-		void HandlePacket(IPacket *packet);
+		void HandlePacket(Packet *packet);
 
 		//! Adds a viewport
 		void AddViewport(ViewportPtr viewport);
@@ -212,7 +215,7 @@ namespace FusionEngine
 		//! Counterpart to OntologicalSystem::EnablePhysicsDebugDraw()
 		void DisablePhysicsDebugDraw();
 
-		void onGetNetIndex(unsigned int local_idx, ObjectID net_idx);
+		void onGetNetIndex(unsigned int local_idx, PlayerID net_idx);
 
 		//! Registers script types relating to the System
 		static void Register(asIScriptEngine *engine);
@@ -257,21 +260,20 @@ namespace FusionEngine
 		} m_AddPlayerCallbacks[s_MaxLocalPlayers];
 		CallbackDecl m_AddAnyPlayerCallback;
 
-		ObjectID m_NextPlayerIndex;
-		std::deque<ObjectID> m_FreePlayerIndicies;
+		PlayerManager *m_PlayerManager;
 
 		ClientOptions *m_Options;
 
 		ModulePtr m_Module;
-		bsig2::connection m_ModuleConnection;
+		boost::signals2::connection m_ModuleConnection;
 
 		std::string m_StartupEntity;
 		std::string m_StartupMap;
 
 		bool createScriptCallback(CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl);
 
-		ObjectID getNextPlayerIndex();
-		void releasePlayerIndex(ObjectID net_index);
+		PlayerID getNextPlayerIndex();
+		void releasePlayerIndex(PlayerID net_index);
 
 		void fitSplitScreenViewports();
 	};
