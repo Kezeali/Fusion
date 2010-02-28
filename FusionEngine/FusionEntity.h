@@ -452,8 +452,10 @@ namespace FusionEngine
 		void SetLayer(size_t layer);
 		size_t GetLayer() const;
 
-		void SetStreamedIn(bool is_streamed_in);
-		bool IsStreamedOut() const;
+		bool IsStreamedIn() const;
+
+		void SetStreamingCellIndex(unsigned int index);
+		unsigned int GetStreamingCellIndex() const;
 
 		void SetPaused(bool is_paused);
 		bool IsPaused() const;
@@ -467,10 +469,14 @@ namespace FusionEngine
 		void SetWait(unsigned int steps);
 		bool Wait();
 
-		//! Marks this Entity as one that will be deleted when the update completes
+		//! Marks this Entity as one that will be deleted during the next update (effectively constant time)
 		void MarkToRemove();
 		//! Returns true if this Entity has been marked to delete.
 		bool IsMarkedToRemove() const;
+
+		//! Used to remove the entity from the active entity list in effectively constant time
+		void MarkToDeactivate();
+		bool IsMarkedToDeactivate() const;
 
 		//! Spawns
 		virtual void Spawn() =0;
@@ -569,11 +575,14 @@ namespace FusionEngine
 		// or updated
 		unsigned int m_Flags;
 
-		bool m_StreamedOut;
+		unsigned int m_CellIndex;
+
+		bool m_StreamedIn;
 		bool m_Paused;
 		bool m_Hidden;
 		unsigned int m_WaitStepsRemaining;
 		bool m_MarkedToRemove;
+		bool m_MarkedToDeactivate;
 
 		int m_Depth;
 
@@ -587,6 +596,7 @@ namespace FusionEngine
 
 		InstancesToPrepareArray m_InstancesToPrepare;
 
+		inline void SetStreamedIn(bool is_streamed_in);
 	};
 
 }

@@ -71,11 +71,12 @@
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;RakNetDLLDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
       <IgnoreSpecificDefaultLibraries>LIBCMTD</IgnoreSpecificDefaultLibraries>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -203,6 +204,7 @@
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
     <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
+    <ClInclude Include="..\FusionEngine\FusionMaths.h" />
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />

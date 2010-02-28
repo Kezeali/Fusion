@@ -64,35 +64,19 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~Renderer();
 
-		//enum ViewportArea
-		//{
-		//	ViewFull,
-		//	ViewVerticalHalf,
-		//	ViewHorizontalHalf,
-		//	ViewQuarter
-		//};
 		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
-
 		void CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
-
 
 		const CL_GraphicContext &GetGraphicContext() const;
 
 		int GetContextWidth() const;
 		int GetContextHeight() const;
 
-		//void Add(const EntityPtr &entity);
-		//void Remove(const EntityPtr &entity);
-
-		//void Clear();
-
-		//void ShowTag(const std::string &tag);
-		//void HideTag(const std::string &tag);
-
-		//void AddViewport(ViewportPtr viewport);
-
-		//void Update(float split);
-
+		//! Draws the given entities
+		/*!
+		* Each call to draw on a given list of entities runs one iteration of
+		* bubble sort to (eventually) sort the list by each entity's depth property.
+		*/
 		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer = 0);
 
 	protected:

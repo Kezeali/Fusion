@@ -77,6 +77,11 @@ namespace FusionEngine
 		return getSingleton().m_Network->GetLocalPeerIndex();
 	}
 
+	bool NetworkManager::IsSenior(const RakNetGUID &peer)
+	{
+		return getSingleton().m_Network->IsSenior(peer);
+	}
+
 	RakNetwork * const NetworkManager::GetNetwork()
 	{
 		return getSingleton().m_Network;

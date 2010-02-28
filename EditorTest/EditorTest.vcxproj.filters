@@ -574,5 +574,8 @@
     <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionMaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

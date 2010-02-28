@@ -50,6 +50,26 @@ namespace FusionEngine
 		//m_EntityInstancedCnx = factory->SignalEntityInstanced.connect(boost::bind(&InstanceSynchroniser::OnEntityInstanced, this, _1));
 	}
 
+	InstanceSynchroniser::~InstanceSynchroniser()
+	{
+	}
+
+	void InstanceSynchroniser::TakeID(ObjectID id)
+	{
+		if ((id & 0x8000) == 0x8000) // if the first bit is set (this is a local-authority ID)
+		{
+			uint8_t peerIndex = (id & 0x7800) >> (sizeof(ObjectID) * 8 - 5);
+			if (peerIndex < s_MaxPeers)
+			{
+				m_LocalIdGenerators[peerIndex].takeID(id & 0x07FF);
+			}
+		}
+		else
+		{
+			m_WorldIdGenerator.takeID(id);
+		}
+	}
+
 	ObjectID InstanceSynchroniser::generateLocalId()
 	{
 		ObjectID id = 0;
@@ -58,9 +78,11 @@ namespace FusionEngine
 
 		if (peerIndex < s_MaxPeers)
 		{
-			// Generate the part of the id that makes it unique to this peer
-			// Shift the peer index to the left of the id - it takes up the higher bits
+			// Generate the part of the id that makes it unique to this peer:
+			// Shift the peer index to the left of the id - it takes up the higher
+			//  bits after the first bit
 			id = ObjectID(peerIndex) << (sizeof(ObjectID) * 8 - 5);
+			id |= 0x8000; // set the first bit to 1
 			id &= 0xF800;
 			// id will now be 1----00000000000, where ---- is the peer index
 		}

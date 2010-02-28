@@ -90,7 +90,7 @@ namespace FusionEngine
 			PseudoEntityFlag = 1 << 1
 		};
 	public:
-		GameMapLoader(ClientOptions *options, EntityManager *manager);
+		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager);
 		~GameMapLoader();
 
 		void HandlePacket(Packet *packet);
@@ -121,6 +121,7 @@ namespace FusionEngine
 		void onEntityInstanced(EntityPtr &entity);
 
 	private:
+		EntityFactory *m_Factory;
 		EntityManager *m_Manager;
 
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)

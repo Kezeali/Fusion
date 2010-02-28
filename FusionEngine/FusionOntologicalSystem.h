@@ -59,8 +59,7 @@ namespace FusionEngine
 		OntologicalSystem(
 			ClientOptions *options,
 			Renderer *renderer,
-			InputManager *input_manager,
-			NetworkSystem *network_system);
+			InputManager *input_manager);
 		//! Destructor
 		virtual ~OntologicalSystem();
 

@@ -382,7 +382,7 @@ namespace FusionEngine
 		: m_Renderer(renderer),
 		m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
-		m_Streaming(streaming),
+		m_StreamingManager(streaming),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
@@ -398,104 +398,83 @@ namespace FusionEngine
 
 	void EntityManager::CompressIDs()
 	{
-		if (m_EntitiesLocked)
-			return;
-
+		IDEntityMap::iterator it = m_Entities.begin();
+		ObjectID nextSequentialId = 1;
+		for (IDEntityMap::iterator end = m_Entities.end(); it != end; ++it)
 		{
-			IDEntityMap::iterator it = m_Entities.begin();
-			ObjectID nextSequentialId = 1;
-			for (IDEntityMap::iterator end = m_Entities.end(); it != end; ++it)
+			if (it->first != nextSequentialId)
 			{
-				if (it->first != nextSequentialId)
-				{
-					m_Entities[nextSequentialId] = it->second;
-					it->second->SetID(nextSequentialId);
-				}
-
-				++nextSequentialId;
+				m_Entities[nextSequentialId] = it->second;
+				it->second->SetID(nextSequentialId);
 			}
 
-			// Reset the ID collection
-			m_UnusedIds.takeAll(nextSequentialId);
-
-			m_Entities.erase(it, m_Entities.end());
+			++nextSequentialId;
 		}
+
+		// Reset the ID collection
+		m_UnusedIds.takeAll(nextSequentialId);
+
+		m_Entities.erase(it, m_Entities.end());
 	}
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
-		if (m_EntitiesLocked)
-			m_EntitiesToAdd.push_back( EntityToAdd(entity, false) );
+		//if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
+		//	entity->SetID(m_UnusedIds.getFreeID());
 
+		if (entity->GetName() == "default")
+			entity->_notifyDefaultName(generateName(entity));
+
+		IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
+		if (_where != m_Entities.end())
+			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
+
+		if (entity->GetID() != 0)
+			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
 		else
-		{
-			//if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
-			//	entity->SetID(m_UnusedIds.getFreeID());
+			m_PseudoEntities.insert(entity);
 
-			if (entity->GetName() == "default")
-				entity->_notifyDefaultName(generateName(entity));
-
-			IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
-			if (_where != m_Entities.end())
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
-
-			if (entity->GetID() != 0)
-				m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
-			else
-				m_PseudoEntities.insert(entity);
-
+		if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
 			m_EntitiesByName[entity->GetName()] = entity;
 
-			m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
-
-			m_EntitySynchroniser->OnEntityAdded(entity);
-		}
+		m_StreamingManager->AddEntity(entity);
+		m_EntitySynchroniser->OnEntityAdded(entity);
 	}
 
-	void EntityManager::AddPseudoEntity(EntityPtr &pseudo_entity)
-	{
-		if (m_EntitiesLocked)
-			m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
+	//void EntityManager::AddPseudoEntity(EntityPtr &pseudo_entity)
+	//{
+	//	if (m_EntitiesLocked)
+	//		m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
 
-		else
-		{
-			if (pseudo_entity->GetName() == "default")
-				pseudo_entity->_notifyDefaultName(generateName(pseudo_entity));
+	//	else
+	//	{
+	//		if (pseudo_entity->GetName() == "default")
+	//			pseudo_entity->_notifyDefaultName(generateName(pseudo_entity));
 
-			NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
-			if (_where != m_EntitiesByName.end())
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
-			
-			m_PseudoEntities.insert(pseudo_entity);
-			m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
+	//		NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
+	//		if (_where != m_EntitiesByName.end())
+	//			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
+	//		
+	//		m_PseudoEntities.insert(pseudo_entity);
+	//		m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
 
-			m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
-		}
-	}
+	//		m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
+	//	}
+	//}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
 	{
-		// Make sure the entity is removed from it's update domain
+		// Mark the entity so it will be removed from the active list, and other secondary containers
 		entity->MarkToRemove();
 
-		if (m_EntitiesLocked)
-		{
-			m_EntitiesToRemove.push_back(entity);
-		}
+		if (!entity->IsPseudoEntity())
+			m_Entities.erase(entity->GetID());
 		else
-		{
-			if (!entity->IsPseudoEntity())
-			{
-				m_UnusedIds.freeID(entity->GetID());
-				m_Entities.erase(entity->GetID());
-			}
-			else
-				m_PseudoEntities.erase(entity);
+			m_PseudoEntities.erase(entity);
 
-			m_EntitiesByName.erase(entity->GetName());
+		m_EntitiesByName.erase(entity->GetName());
 
-			// Note that entity will be removed from the Domain list during the next Update() call
-		}
+		m_StreamingManager->RemoveEntity(entity);
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)
@@ -533,7 +512,6 @@ namespace FusionEngine
 		value = entity;
 		// Add the entity to the other indexes
 		m_EntitiesByName[entity->GetName()] = entity;
-		m_EntitiesToUpdate[entity->GetDomain()].push_back(entity);
 
 		m_EntitySynchroniser->OnEntityAdded(entity);
 	}
@@ -601,10 +579,10 @@ namespace FusionEngine
 		return m_PseudoEntities;
 	}
 
-	EntityArray &EntityManager::GetDomain(EntityDomain idx)
-	{
-		return m_EntitiesToUpdate[idx];
-	}
+	//EntityArray &EntityManager::GetDomain(EntityDomain idx)
+	//{
+	//	return m_EntitiesToUpdate[idx];
+	//}
 
 	bool EntityManager::AddTag(const std::string &entity_name, const std::string &tag)
 	{
@@ -698,33 +676,11 @@ namespace FusionEngine
 	void EntityManager::clearEntities(bool real_only)
 	{
 		if (m_EntitiesLocked)
-		{
-			for (size_t i = 0; i < s_EntityDomainCount; i++)
-			{
-				for (EntityArray::iterator it = m_EntitiesToUpdate[i].begin(), end = m_EntitiesToUpdate[i].end(); it != end; ++it)
-				{
-					EntityPtr &entity = *it;
-					entity->MarkToRemove();
-				}
-			}
-			m_EntitiesToAdd.clear();
-			m_EntitiesToRemove.clear();
-			m_EntitiesByName.clear();
-			m_Entities.clear();
-			m_PseudoEntities.clear();
-			
-			m_UnusedIds.freeAll();
-
-			m_ChangedUpdateStateTags.clear();
-			m_ChangedDrawStateTags.clear();
-		}
+			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });
 		else
-		{
-			m_EntitiesToAdd.clear();
-			m_EntitiesToRemove.clear();
-			for (size_t i = 0; i < s_EntityDomainCount; i++) // Clear all domains
-				m_EntitiesToUpdate[i].clear();
-			m_EntitiesByName.clear();
+			m_ActiveEntities.clear();
+
+		m_EntitiesByName.clear();
 			m_Entities.clear();
 			m_PseudoEntities.clear();
 
@@ -732,7 +688,6 @@ namespace FusionEngine
 
 			m_ChangedUpdateStateTags.clear();
 			m_ChangedDrawStateTags.clear();
-		}
 	}
 
 	void EntityManager::Clear()
@@ -786,7 +741,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::Update(EntityDomain idx, float split)
+	void EntityManager::Update(EntityArray &entity_list, float split)
 	{
 		EntityDeserialiser entityDeserialiser(this);
 
@@ -794,47 +749,47 @@ namespace FusionEngine
 
 		ptr_set updatedSprites;
 
-		EntityArray::iterator it = m_EntitiesToUpdate[idx].begin(),
-			end = m_EntitiesToUpdate[idx].end();
+		EntityArray::iterator it = entity_list.begin(),
+			end = entity_list.end();
 		while (it != end)
 		{
 			EntityPtr &entity = *it;
 
 			// Check for reasons to remove the
 			//  entity from the update domain
-			if (entity->IsMarkedToRemove())
+			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
-				it = m_EntitiesToUpdate[idx].erase(it);
-				end = m_EntitiesToUpdate[idx].end();
-
-				entityRemoved = true;
+				if (entity->IsMarkedToRemove())
+					entityRemoved = true;
+				it = entity_list.erase(it);
+				end = entity_list.end();
 			}
 			else if (entity->GetTagFlags() & m_ToDeleteFlags)
 			{
+				entityRemoved = true;
 				RemoveEntity(entity);
-				it = m_EntitiesToUpdate[idx].erase(it);
-				end = m_EntitiesToUpdate[idx].end();
+				it = entity_list.erase(it);
+				end = entity_list.end();
 			}
 
 			// Also make sure the entity isn't blocked by a flag
 			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 			{
-				if (idx != SYSTEM_DOMAIN && CheckState(idx, DS_STREAMING))
-					m_Streaming->ProcessEntity(entity); // stream the entity in if it is within range of any cameras
+				EntityDomain domainIndex = entity->GetDomain();
 
 				if (entity->Wait())
 				{
-					if (CheckState(idx, DS_SYNCH)) m_EntitySynchroniser->ReceiveSync(entity, entityDeserialiser);
-					if (CheckState(idx, DS_ENTITYUPDATE)) entity->Update(split);
-					if (CheckState(idx, DS_SYNCH)) m_EntitySynchroniser->AddToPacket(entity);
+					if (CheckState(domainIndex, DS_ENTITYUPDATE))
+						entity->Update(split);
+					if (CheckState(domainIndex, DS_SYNCH))
+						m_EntitySynchroniser->AddToPacket(entity);
 
 					updateRenderables(entity, split, updatedSprites);
 
-					if (entity->IsStreamedOut())
+					if (!entity->IsStreamedIn())
 						entity->SetWait(2);
 				}
-				else
-					entity->PacketSkipped();
+				entity->PacketSkipped();
 
 				// Next entity
 				++it;
@@ -851,39 +806,22 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
-		for (size_t i = 0; i < s_EntityDomainCount; i++)
-		{
-			if (m_DomainState[i])
-				Update(i, split);
-		}
+		Update(m_ActiveEntities, split);
 
 		m_EntitiesLocked = false;
 
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
 
-		// Actually remove entities which were marked for removal during update
-		for (EntityArray::iterator it = m_EntitiesToRemove.begin(), end = m_EntitiesToRemove.end(); it != end; ++it)
-		{
-			m_Entities.erase((*it)->GetID());
-			m_EntitiesByName.erase((*it)->GetName());
-		}
-		m_EntitiesToRemove.clear();
-
 		// Actually add entities which were 'added' during the update
 		for (EntityToAddArray::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
-		{
-			if (it->second)
-				AddPseudoEntity(it->first);
-			else
 				AddEntity(it->first);
-		}
 		m_EntitiesToAdd.clear();
 	}
 
 	void EntityManager::Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer)
 	{
-		renderer->Draw(m_EntitiesToUpdate[GAME_DOMAIN], viewport, layer);
+		renderer->Draw(m_ActiveEntities, viewport, layer);
 	}
 
 	void EntityManager::SetDomainState(EntityDomain domain_index, char modes)

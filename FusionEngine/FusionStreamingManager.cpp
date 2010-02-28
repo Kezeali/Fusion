@@ -2,6 +2,7 @@
 
 #include "FusionStreamingManager.h"
 
+#include "FusionMaths.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 
 namespace FusionEngine
@@ -10,25 +11,40 @@ namespace FusionEngine
 	const float StreamingManager::s_SmoothTightness = 0.1f;
 	const float StreamingManager::s_FastTightness = 0.3f;
 
+	const float s_DefaultActivationRange = 1500.f;
+	const float s_DefaultCellSize = 200.f;
+	const float s_DefaultWorldSize = 200000.f;
+
 	StreamingManager::StreamingManager()
 	{
+		m_Bounds.x = s_DefaultWorldSize / 2.f;
+		m_Bounds.y = s_DefaultWorldSize / 2.f;
+
+		m_Range = s_DefaultActivationRange;
+		m_RangeSquared = m_Range * m_Range;
+
+		m_CellSize = s_DefaultCellSize;
+		m_InverseCellSize = 1.f / m_CellSize;
+
+		m_XCellCount = (int)(m_Bounds.x * m_InverseCellSize) + 1;
+		m_YCellCount = (int)(m_Bounds.y * m_InverseCellSize) + 1;
 	}
 
 	StreamingManager::~StreamingManager()
 	{
 	}
 
-	void StreamingManager::SetPlayerCamera(ObjectID net_idx, const CameraPtr &cam)
+	void StreamingManager::SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam)
 	{
 		StreamingCamera &stCam = m_Cameras[net_idx];
 
 		stCam.Camera = cam;
 		stCam.LastPosition.x = cam->GetPosition().x; stCam.LastPosition.y = cam->GetPosition().y;
-		stCam.StreamPoint = stCam.LastPosition;
+		stCam.StreamPosition = stCam.LastPosition;
 		stCam.Tightness = s_SmoothTightness;
 	}
 
-	void StreamingManager::RemovePlayerCamera(ObjectID net_idx)
+	void StreamingManager::RemovePlayerCamera(PlayerID net_idx)
 	{
 		m_Cameras.erase(net_idx);
 	}
@@ -48,83 +64,337 @@ namespace FusionEngine
 	//	{
 	//		const StreamingCamera &stCam = _where->second;
 
-	//		area.left = stCam.StreamPoint.x - m_Range;
-	//		area.top = stCam.StreamPoint.y - m_Range;
-	//		area.right = stCam.StreamPoint.x + m_Range;
-	//		area.bottom = stCam.StreamPoint.y + m_Range;
+	//		area.left = stCam.StreamPosition.x - m_Range;
+	//		area.top = stCam.StreamPosition.y - m_Range;
+	//		area.right = stCam.StreamPosition.x + m_Range;
+	//		area.bottom = stCam.StreamPosition.y + m_Range;
 	//	}
 
 	//	return area;
 	//}
 
-	void StreamingManager::ProcessEntity(const EntityPtr &entity) const
+	Cell *StreamingManager::CellAtPosition(float x, float y)
 	{
-		for (StreamingCameraMap::const_iterator it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
+#ifdef INFINITE_STREAMING
+		Maths::ClampThis(x, -m_Bounds.x, m_Bounds.x);
+		Maths::ClampThis(y, -m_Bounds.y, m_Bounds.y);
+#endif
+		FSN_ASSERT( x >= -m_Bounds.x );
+		FSN_ASSERT( x <= +m_Bounds.x );
+		FSN_ASSERT( y >= -m_Bounds.y );
+		FSN_ASSERT( y <= +m_Bounds.y );
+		unsigned int ix = Maths::Clamp<unsigned int>( (unsigned int)( (x + m_Bounds.x) * m_InverseCellSize ), 0, m_XCellCount - 1 );
+		unsigned int iy = Maths::Clamp<unsigned int>( (unsigned int)( (y + m_Bounds.y) * m_InverseCellSize ), 0, m_YCellCount - 1 );
+		FSN_ASSERT( iy*m_XCellCount+ix < sizeof(m_Cells) );
+		return &m_Cells[iy*m_XCellCount+ix];
+	}
+	
+	Cell *StreamingManager::CellAtPosition(const Vector2 &position)
+	{
+		return CellAtPosition(position.x, position.y);
+	}
+
+	void StreamingManager::AddEntity(const EntityPtr &entity)
+	{
+		Cell *cell = CellAtPosition(entity->GetPosition());
+		CellEntry &entry = cell->objects[entity];
+		entry.x = entity->GetPosition().x; entry.y = entity->GetPosition().y;
+		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
+
+		OnMoved(entity);
+	}
+
+	void StreamingManager::RemoveEntity(const EntityPtr &entity)
+	{
+		FSN_ASSERT(entity->GetStreamingCellIndex() < sizeof(m_Cells));
+		Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
+		cell->objects.erase(entity);
+	}
+
+	void StreamingManager::OnMoved(const EntityPtr &entity)
+	{
+		FSN_ASSERT(entity);
+
+		// clamp the new position within bounds
+		Vector2 newPos = entity->GetPosition();
+		float new_x = fe_clamped(newPos.x, -m_Bounds.x, +m_Bounds.x);
+		float new_y = fe_clamped(newPos.y, -m_Bounds.y, +m_Bounds.y);
+
+		// gather all of the data we need about this object
+		Cell *currentCell = nullptr;
+		CellEntry *cellEntry = nullptr;
+		std::map<EntityPtr, CellEntry>::iterator _where;
+
+		if (entity->GetStreamingCellIndex() < sizeof(m_Cells))
 		{
-			if (processEntity(it->second, entity))
-				return;
+			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
+			_where = currentCell->objects.find(entity);
+			FSN_ASSERT( _where != currentCell->objects.end() );
+			cellEntry = &_where->second;
+		}
+#ifdef STREAMING_AUTOADD
+		else // add the entity to the grid automatically
+		{
+			currentCell = CellAtPosition(entity->GetPosition());
+			Cell::CellEntryMap::value_type entryPair(entity, CellEntry());
+			_where = currentCell->objects.insert(entryPair).first;
+			cellEntry = &_where->second;
+
+			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
+		}
+#endif
+
+		FSN_ASSERT( cellEntry != nullptr );
+
+		bool warp = std::abs(cellEntry->x - new_x) > 50.0f;
+
+		// move the object, updating the current cell if necessary
+		Cell *newCell = CellAtPosition(new_x, new_y);
+		FSN_ASSERT( newCell );
+		if ( currentCell == newCell )
+		{
+			// common case: same cell
+			cellEntry->x = new_x;
+			cellEntry->y = new_y;
+		}
+		else
+		{
+			// add to new cell
+			CellEntry &newEntry = newCell->objects[entity];
+			newEntry = *cellEntry; // Copy the current cell data
+			cellEntry = &newEntry; // Change the pointer (since it is used again below)
+
+			// remove from current cell
+			if (currentCell != nullptr)
+				currentCell->objects.erase(_where);
+
+			currentCell = newCell;
+			//m_EntityToCellIndex[entity] = (size_t)(currentCell - m_Cells);
+
+			cellEntry->x = new_x;
+			cellEntry->y = new_y;
+
+			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
 		}
 
-		// The entity wansn't within the streaming area of
-		//  any camera - stream out if not already
-		if (!entity->IsStreamedOut())
+		// see if the object needs to be activated or deactivate
+		const Vector2 &entityPosition = entity->GetPosition();
+		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
 		{
-			entity->StreamOut();
+			const StreamingCamera &cam = it->second;
+			if ((entityPosition - cam.StreamPosition).squared_length() > m_RangeSquared)
+			{
+				if (!cellEntry->active)
+					ActivateEntity(entity, *cellEntry, *currentCell);
+				else if (!cellEntry->pendingDeactivation)
+					QueueEntityForDeactivation(*cellEntry, warp);
+			}
+			else
+				cellEntry->pendingDeactivation = false;
 		}
 	}
 
-	//bool rect_contains_point(float l, float t, float r, float b, float x, float y)
+	bool StreamingManager::activateWithinRange(const StreamingManager::StreamingCamera &cam, const EntityPtr &entity, CellEntry &entry)
+	{
+		//const Vector2 &entityPosition = entity->GetPosition();
+		//if ((entityPosition - cam.StreamPosition).squared_length() < m_RangeSquared)
+		//{
+		//	if (!entry.active)
+		//	{
+		//		ActivateEntity(entity, entry, cell);
+		//		//entry.active = true;
+		//		//m_ActiveEntities.insert(entity);
+		//	}
+		//	else
+		//	{
+		//		entry.pendingDeactivation = false;						
+		//	}
+		//}
+		//else if (entry.active)
+		//{
+		//	if (!entry.pendingDeactivation)
+		//		QueueEntityForDeactivation(entry);
+		//}
+		return false;
+	}
+
+	void StreamingManager::ActivateEntity(const EntityPtr &entity, CellEntry &cell_entry, Cell &cell)
+	{
+		FSN_ASSERT( !cell_entry.active );
+
+		entity->SetStreamingCellIndex((size_t)(&cell - m_Cells));
+		//activeObject.cellObjectIndex = cell.GetCellObjectIndex( cellObject );
+		cell_entry.pendingDeactivation = false;
+		cell_entry.active = true;
+
+		GenerateActivationEvent( entity );
+	}
+
+	void StreamingManager::DeactivateEntity(const EntityPtr &entity)
+	{
+		Cell & cell = m_Cells[entity->GetStreamingCellIndex()];
+		auto _where = cell.objects.find(entity);
+		if (_where == cell.objects.end()) return;
+		CellEntry &cellEntry = _where->second;
+		FSN_ASSERT( cellEntry.active );
+		cellEntry.active = false;
+
+		GenerateDeactivationEvent( entity );
+	}
+
+	void StreamingManager::QueueEntityForDeactivation(CellEntry &entry, bool warp)
+	{
+		FSN_ASSERT( !entry.pendingDeactivation );
+		entry.pendingDeactivation = true;
+		entry.pendingDeactivationTime = warp ? 0.0f : m_DeactivationTime;
+	}
+
+	void StreamingManager::GenerateActivationEvent(const EntityPtr &entity)
+	{
+		ActivationEvent ev;
+		ev.type = ActivationEvent::Activate;
+		ev.entity = entity;
+		SignalActivationEvent(ev);
+	}
+
+	void StreamingManager::GenerateDeactivationEvent(const EntityPtr &entity)
+	{
+		ActivationEvent ev;
+		ev.type = ActivationEvent::Deactivate;
+		ev.entity = entity;
+		SignalActivationEvent(ev);
+	}
+
+	//const std::set<EntityPtr> &StreamingManager::GetActiveEntities() const
 	//{
-	//	return x > l && x < r && y > t && y < b;
+	//	return m_ActiveEntities;
 	//}
 
-	bool StreamingManager::processEntity(const StreamingManager::StreamingCamera &cam, const EntityPtr &entity) const
+	bool StreamingManager::updateStreamingCamera(StreamingManager::StreamingCamera &cam)
 	{
-		const Vector2 &entityPos = entity->GetPosition();
-		CL_Rectf camArea(
-			cam.StreamPoint.x - m_Range,
-			cam.StreamPoint.y - m_Range,
-			cam.StreamPoint.x + m_Range,
-			cam.StreamPoint.y + m_Range);
+		const CL_Vec2f &camPos = cam.Camera->GetPosition();
 
-		if (entityPos.x > camArea.left && entityPos.x < camArea.right && entityPos.y > camArea.top && entityPos.y < camArea.bottom)
+		bool pointChanged = false;
+
+		Vector2 velocity( camPos.x - cam.LastPosition.x, camPos.y - cam.LastPosition.y );
+		// Only interpolate / anticipate movement if the velocity doesn't indicate a jump in position
+		if (velocity.squared_length() > 0.01f && velocity.squared_length() < m_RangeSquared)
 		{
-			if (entity->IsStreamedOut())
-				entity->StreamIn();
-			return true;
+			Vector2 target( camPos.x + velocity.x, camPos.y + velocity.y );
+
+			cam.StreamPosition = cam.StreamPosition + (target-cam.StreamPosition) * cam.Tightness;
+			pointChanged = true;
+		}
+		else
+		{
+			if (!fe_fequal(cam.StreamPosition.x, camPos.x) || !fe_fequal(cam.StreamPosition.x, camPos.y))
+				pointChanged = true;
+			cam.StreamPosition.set(camPos.x, camPos.y);
 		}
 
-		return false;
+		// If the velocity has changed, smooth (over sudden changes in velocity) by adjusting interpolation tightness
+		if (!v2Equal(cam.LastVelocity, velocity, 0.1f))
+			cam.Tightness = s_SmoothTightness;
+		else
+			cam.Tightness += (s_FastTightness - cam.Tightness) * 0.01f;
+
+		cam.LastPosition.x = camPos.x; cam.LastPosition.y = camPos.y;
+		cam.LastVelocity = velocity;
+
+		return pointChanged;
 	}
 
 	void StreamingManager::Update()
 	{
+		// Each vector element represents a range of cells to update - overlapping active-areas
+		//  are merged, so this may be < m_Cameras.size()
+		//std::vector<CL_Rect> indexRanges;
+		//indexRanges.reserve(m_Cameras.size());
+
 		for (StreamingCameraMap::iterator it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
 		{
 			StreamingCamera &cam = it->second;
 
-			const CL_Vec2f &camPos = cam.Camera->GetPosition();
-			
-			Vector2 velocity( camPos.x - cam.LastPosition.x, camPos.y - cam.LastPosition.y );
-			// Only interpolate / anticipate movement if the velocity doesn't indicate a jump in position
-			if (velocity.squared_length() > m_RangeSquared)
+			Vector2 oldPosition = cam.StreamPosition;
+			updateStreamingCamera(cam);
+			const Vector2 &newPosition = cam.StreamPosition;
+
+			if (!v2Equal(oldPosition, newPosition))
 			{
-				Vector2 target( camPos.x + velocity.x, camPos.y + velocity.y );
+				// Find the minimum & maximum cell indicies that have to be checked
+				CL_Rect range;
+				range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
+				range.right = (int)std::floor((std::max(oldPosition.x, newPosition.x) + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
 
-				cam.StreamPoint = cam.StreamPoint + (target-cam.StreamPoint) * cam.Tightness;
+				range.top = (int)std::floor((std::min(oldPosition.y, newPosition.y) - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
+				range.bottom = (int)std::floor((std::min(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+
+				fe_clamp(range.left, 0, (int)m_XCellCount - 1);
+				fe_clamp(range.right, 0, (int)m_XCellCount - 1);
+				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+
+				unsigned int i = 0;
+				unsigned int stride = m_XCellCount - ( range.right - range.left + 1 );
+				for (unsigned int iy = (unsigned int)range.top; iy <= (unsigned int)range.bottom; ++iy)
+				{
+					FSN_ASSERT( iy >= 0 );
+					FSN_ASSERT( iy < m_YCellCount );
+					for (unsigned int ix = (unsigned int)range.left; ix <= (unsigned int)range.right; ++ix)
+					{
+						FSN_ASSERT( ix >= 0 );
+						FSN_ASSERT( ix < m_XCellCount );
+						FSN_ASSERT( i == iy * m_XCellCount + ix );
+						Cell &cell = m_Cells[i++];
+						for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+						{
+							const EntityPtr &entity = cell_it->first; 
+							CellEntry &cellEntry = cell_it->second;
+							const Vector2 &entityPosition = entity->GetPosition();
+
+							if ((entityPosition - cam.StreamPosition).squared_length() <= m_RangeSquared)
+							{
+								if (!cellEntry.active)
+								{
+									ActivateEntity(entity, cellEntry, cell);
+									//entry.active = true;
+									//m_ActiveEntities.insert(entity);
+								}
+								else
+								{
+									cellEntry.pendingDeactivation = false;						
+								}
+							}
+							else if (cellEntry.active)
+							{
+								if (!cellEntry.pendingDeactivation)
+									QueueEntityForDeactivation(cellEntry);
+							}
+						}
+					}
+					i += stride;
+				}
+
+				//bool merged = false;
+				//for (auto it = indexRanges.begin(), end = indexRanges.end(); it != end; ++it)
+				//{
+				//	CL_Rect &existingRange = *it;
+				//	if (existingRange.is_overlapped(range))
+				//	{
+				//		existingRange.bounding_rect(range); // Expand the existing rect to encoumpass the new one
+				//		merged = true;
+				//	}
+				//}
+				//if (!merged)
+				//	indexRanges.push_back(range);
 			}
-			else
-				cam.StreamPoint.set(camPos.x, camPos.y);
-
-			// If the velocity has changed, smooth (over sudden changes in velocity) by adjusting interpolation tightness
-			if (!v2Equal(cam.LastVelocity, velocity, 0.1f))
-				cam.Tightness = s_SmoothTightness;
-			else
-				cam.Tightness += (s_FastTightness - cam.Tightness) * 0.01f;
-
-			cam.LastPosition.x = camPos.x; cam.LastPosition.y = camPos.y;
-			cam.LastVelocity = velocity;
 		}
+
+		//for (auto it = indexRanges.begin(), end = indexRanges.end(); it != end; ++it)
+		//{
+		//	const CL_Rect &range = *it;
+		//	
+		//}
 	}
 
 	void StreamingManager_SetPlayerCamera(ObjectID net_idx, Camera *camera, StreamingManager *obj)

@@ -35,9 +35,10 @@
 
 #include "FusionCommon.h"
 
+#include <boost/signals2.hpp>
+
 #include "FusionEntity.h"
 #include "FusionCamera.h"
-
 
 namespace FusionEngine
 {
@@ -112,6 +113,39 @@ namespace FusionEngine
 		T Target;
 	};
 
+#define INFINITE_STREAMING
+
+	struct CellEntry
+	{
+		bool active;
+		bool pendingDeactivation;
+		float pendingDeactivationTime;
+
+		float x, y;
+
+		CellEntry()
+			: active(false),
+			pendingDeactivation(false),
+			pendingDeactivationTime(0.0f),
+			x(0.0f),
+			y(0.0f)
+		{}
+	};
+	//typedef EntityPtr CellEntry;
+	class Cell
+	{
+	public:
+		typedef std::map<EntityPtr, CellEntry> CellEntryMap;
+		CellEntryMap objects;
+	};
+
+	struct ActivationEvent
+	{
+		enum Type { Activate, Deactivate };
+		Type type;
+		EntityPtr entity;
+	};
+
 	/*!
 	 * \brief
 	 * Streams in objects within camera range.
@@ -136,10 +170,27 @@ namespace FusionEngine
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
 
-		CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
+		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
-		//! Streams the entity in if it is within range
-		void ProcessEntity(const EntityPtr &entity) const;
+		Cell *CellAtPosition(const Vector2 &position);
+		Cell *CellAtPosition(float x, float y);
+
+		void AddEntity(const EntityPtr &entity);
+		void RemoveEntity(const EntityPtr &entity);
+		//! Updates the given entity's grid position, and streams in/out
+		void OnMoved(const EntityPtr &entity);
+
+		void ActivateEntity(const EntityPtr &entity, CellEntry &entry, Cell &cell);
+		void DeactivateEntity(const EntityPtr &entity);
+
+		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
+
+		void GenerateActivationEvent(const EntityPtr &entity);
+		void GenerateDeactivationEvent(const EntityPtr &entity);
+
+		boost::signals2::signal<void (ActivationEvent)> SignalActivationEvent;
+
+		//const std::set<EntityPtr> &GetActiveEntities() const;
 
 		//! Calculates the active streaming area for each camera
 		void Update();
@@ -150,23 +201,39 @@ namespace FusionEngine
 		struct StreamingCamera
 		{
 			CameraPtr Camera;
-			Vector2 LastPosition;
 			// The current middle of the streaming area for the camera
 			//  - Moves ahead based on the camera velocity
-			Vector2 StreamPoint;
+			Vector2 StreamPosition;
 
+			Vector2 LastPosition;
 			Vector2 LastVelocity;
 			float Tightness;
 		};
 
-		//! Returns true if the entity is within the streaming area of the camera
-		bool processEntity(const StreamingCamera &cam, const EntityPtr &entity) const;
-
 		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
 		StreamingCameraMap m_Cameras;
 
+		float m_DeactivationTime;
+
 		float m_Range;
 		float m_RangeSquared;
+
+		float m_CellSize;
+		float m_InverseCellSize;
+
+		unsigned int m_XCellCount;
+		unsigned int m_YCellCount;
+
+		Vector2 m_Bounds;
+
+		Cell *m_Cells;
+
+		//std::set<EntityPtr> m_ActiveEntities;
+
+		//! Returns true if the entity is within the streaming area of the camera
+		bool activateWithinRange(const StreamingCamera &cam, const EntityPtr &entity, CellEntry &cell_entry);
+
+		bool updateStreamingCamera(StreamingCamera &cam);
 	};
 
 }

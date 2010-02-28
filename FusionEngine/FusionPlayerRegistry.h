@@ -76,7 +76,7 @@ namespace FusionEngine
 
 		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
 
-		PlayerRegistry(RakNetGUID local_guid);
+		PlayerRegistry();
 
 		typedef boost::signals2::signal<void (const PlayerInfo &)> RegistryChangedSigType;
 		RegistryChangedSigType SignalPlayerAdded;
@@ -121,7 +121,7 @@ namespace FusionEngine
 		PlayersByLocalIndexMap m_ByLocalIndex;
 		//PlayersBySystemAddressMap m_BySystem;
 
-		RakNetGUID m_LocalGUID;
+		//RakNetGUID m_LocalGUID;
 
 		PlayerInfo m_NoSuchPlayer;
 

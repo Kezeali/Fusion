@@ -44,12 +44,13 @@
 namespace FusionEngine
 {
 
-	GameMapLoader::GameMapLoader(ClientOptions *options, EntityManager *manager)
+	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager)
 		: m_ClientOptions(options),
+		m_Factory(factory),
 		m_Manager(manager),
 		m_NextTypeIndex(0)
 	{
-		m_FactoryConnection = m_Manager->GetFactory()->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
+		m_FactoryConnection = factory->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
 
 		NetworkManager::getSingleton().Subscribe(MTID_LOADMAP, this);
 	}
@@ -104,7 +105,7 @@ namespace FusionEngine
 
 	void GameMapLoader::LoadEntityTypes(CL_IODevice &device)
 	{
-		EntityFactory *factory = m_Manager->GetFactory();
+		EntityFactory *factory = m_Factory;
 		// Read the entity type count
 		cl_int32 numberEntityTypes = device.read_int32();
 		// Tell the entity-factory to load each entity type listed in the map file
@@ -167,7 +168,7 @@ namespace FusionEngine
 
 	void GameMapLoader::loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
 	{
-		EntityFactory *factory = m_Manager->GetFactory();
+		EntityFactory *factory = m_Factory;
 
 		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
@@ -239,7 +240,7 @@ namespace FusionEngine
 
 	void GameMapLoader::loadEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
 	{
-		EntityFactory *factory = m_Manager->GetFactory();
+		EntityFactory *factory = m_Factory;
 
 		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
@@ -340,7 +341,7 @@ namespace FusionEngine
 		else
 			m_Manager->ClearSyncedEntities();
 
-		EntityFactory *factory = m_Manager->GetFactory();
+		EntityFactory *factory = m_Factory;
 
 		// Load & instance Entities (this section is loaded the same way as the equivilant section in the map file)
 		// TODO: share code with map file loading?

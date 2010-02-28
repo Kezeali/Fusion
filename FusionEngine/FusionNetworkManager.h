@@ -79,6 +79,9 @@ namespace FusionEngine
 		*/
 		static uint8_t GetLocalPeerIndex();
 
+		//! Returns true if the given peer has seniority over the local peer
+		static bool IsSenior(const RakNetGUID &peer); 
+
 		//! Returns the current network object
 		static RakNetwork * const GetNetwork();
 

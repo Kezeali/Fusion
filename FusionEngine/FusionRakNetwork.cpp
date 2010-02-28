@@ -54,6 +54,11 @@ namespace FusionEngine
 		return m_PeerIndex;
 	}
 
+	bool PeerIndexPlugin::IsSenior(const RakNetGUID &guid) const
+	{
+		return m_SeniorPairs.find(guid) != m_SeniorPairs.end();
+	}
+
 	PluginReceiveResult PeerIndexPlugin::OnReceive(Packet *packet)
 	{
 		// When the ID_REMOTE_NEW_INCOMING_CONNECTION packet is being sent to a new connection
@@ -155,7 +160,12 @@ namespace FusionEngine
 
 	uint8_t RakNetwork::GetLocalPeerIndex() const
 	{
-		return m_NetInterface->m_PeerIndexPlugin.GetPeerIndex();
+		return m_PeerIndexPlugin.GetPeerIndex();
+	}
+
+	bool RakNetwork::IsSenior(const RakNetGUID &guid) const
+	{
+		return m_PeerIndexPlugin.IsSenior(guid);
 	}
 
 	RakNetGUID RakNetwork::GetHost() const

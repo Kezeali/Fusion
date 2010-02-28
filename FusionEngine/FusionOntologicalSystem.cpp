@@ -136,11 +136,11 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager, NetworkSystem *network)
+	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager)
 		: m_Options(options),
 		m_Renderer(renderer),
 		m_InputManager(input_manager),
-		m_NetworkSystem(network),
+		//m_NetworkSystem(network),
 		m_EntityManager(NULL),
 		m_MapLoader(NULL),
 		m_PhysWorld(NULL)
@@ -164,8 +164,8 @@ namespace FusionEngine
 			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager);
 			m_EntityFactory = new EntityFactory();
 			m_Streaming = new StreamingManager();
-			m_EntityManager = new EntityManager(m_EntityFactory, m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
-			m_MapLoader = new GameMapLoader(m_Options, m_EntityManager);
+			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
+			m_MapLoader = new GameMapLoader(m_Options, m_EntityFactory, m_EntityManager);
 
 			m_PhysWorld = new PhysicalWorld();
 			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
@@ -248,7 +248,7 @@ namespace FusionEngine
 
 		if (m_StartupEntity.empty() && m_StartupMap.empty())
 		{
-			m_EntityManager->GetFactory()->LoadAllScriptedTypes();
+			m_EntityFactory->LoadAllScriptedTypes();
 		}
 
 		return true;
@@ -390,9 +390,10 @@ namespace FusionEngine
 		{
 			if (!m_StartupEntity.empty())
 			{
-				EntityPtr entity = m_EntityManager->InstanceEntity(m_StartupEntity, "startup");
+				EntityPtr entity = m_EntityFactory->InstanceEntity(m_StartupEntity, "startup");
 				if (entity)
 				{
+					m_EntityManager->AddEntity(entity);
 					entity->Spawn();
 					// Force stream-in
 					entity->StreamIn();
@@ -467,35 +468,37 @@ namespace FusionEngine
 
 	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
 	{
-		unsigned int playerIndex = m_PlayerManager.GetLocalPlayerCount();
+		unsigned int playerIndex = m_PlayerManager->GetLocalPlayerCount();
 
 		// Validate & store the callback method
-			if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
-				SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
+		if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
+			SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
 
-			m_PlayerManager.RequestNewPlayer();
+		m_PlayerManager->RequestNewPlayer();
 
-			return playerIndex;
+		return playerIndex;
 	}
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)
 	{
-		RakNetwork *network = m_NetworkSystem->GetNetwork();
+		//m_PlayerManager->DropPlayer(index);
 
-		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
 
-		RakNet::BitStream bitStream;
-		bitStream.Write(playerInfo.NetIndex);
+		//RakNetwork *network = NetworkManager::GetNetwork();
 
-		network->Send(
-			false,
-			MTID_REMOVEPLAYER, &bitStream,
-			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-			NetHandle(new RakNetHandleImpl()), true);
+		//const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
 
-		if (PlayerRegistry::ArbitratorIsLocal())
-			releasePlayerIndex(playerInfo.NetIndex);
-		PlayerRegistry::RemovePlayer(index);
+		//RakNet::BitStream bitStream;
+		//bitStream.Write(playerInfo.NetID);
+
+		//network->Send(
+		//	false,
+		//	MTID_REMOVEPLAYER, &bitStream,
+		//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+
+		//if (PlayerRegistry::ArbitratorIsLocal())
+		//	releasePlayerIndex(playerInfo.NetIndex);
+		//PlayerRegistry::RemovePlayer(index);
 	}
 
 	void OntologicalSystem::SetAddPlayerCallback(asIScriptObject *callback_obj, const std::string &callback_decl)
@@ -594,30 +597,30 @@ namespace FusionEngine
 	}
 
 
-	void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
-	{
-		// Call the script callback, if there is one
-		CallbackDecl &decl = m_AddPlayerCallbacks[local_idx];
-		if (!decl.method.empty())
-		{
-			ScriptUtils::Calling::Caller f;
-			// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
-			if (decl.object == NULL)
-				f = m_Module->GetCaller(decl.method); // Global method
-			else
-			{
-				f = ScriptUtils::Calling::Caller(decl.object, decl.method.c_str()); // Object method
-				decl.object->Release();
-			}
+	//void OntologicalSystem::onGetNetIndex(unsigned int local_idx, ObjectID net_idx)
+	//{
+	//	// Call the script callback, if there is one
+	//	CallbackDecl &decl = m_AddPlayerCallbacks[local_idx];
+	//	if (!decl.method.empty())
+	//	{
+	//		ScriptUtils::Calling::Caller f;
+	//		// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
+	//		if (decl.object == NULL)
+	//			f = m_Module->GetCaller(decl.method); // Global method
+	//		else
+	//		{
+	//			f = ScriptUtils::Calling::Caller(decl.object, decl.method.c_str()); // Object method
+	//			decl.object->Release();
+	//		}
 
-			// Call the callback
-			if (f.ok())
-				f(local_idx, net_idx);
+	//		// Call the callback
+	//		if (f.ok())
+	//			f(local_idx, net_idx);
 
-			decl.object = NULL;
-			decl.method.clear();
-		}
-	}
+	//		decl.object = NULL;
+	//		decl.method.clear();
+	//	}
+	//}
 
 	void OntologicalSystem_SetSplitScreenArea(float x, float y, float w, float h, OntologicalSystem *obj)
 	{
@@ -689,29 +692,29 @@ namespace FusionEngine
 			asMETHOD(OntologicalSystem, DisablePhysicsDebugDraw), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	ObjectID OntologicalSystem::getNextPlayerIndex()
-	{
-		if (m_FreePlayerIndicies.empty())
-			return m_NextPlayerIndex++;
-		else
-		{
-			ObjectID freePlayerIndex = m_FreePlayerIndicies.front();
-			m_FreePlayerIndicies.pop_front();
-			return freePlayerIndex;
-		}
-	}
+	//ObjectID OntologicalSystem::getNextPlayerIndex()
+	//{
+	//	if (m_FreePlayerIndicies.empty())
+	//		return m_NextPlayerIndex++;
+	//	else
+	//	{
+	//		ObjectID freePlayerIndex = m_FreePlayerIndicies.front();
+	//		m_FreePlayerIndicies.pop_front();
+	//		return freePlayerIndex;
+	//	}
+	//}
 
-	void OntologicalSystem::releasePlayerIndex(ObjectID net_index)
-	{
-		if (m_NextPlayerIndex == 0 || net_index == m_NextPlayerIndex-1)
-		{
-			--m_NextPlayerIndex;
-		}
-		else
-		{
-			m_FreePlayerIndicies.push_back(net_index);
-		}
-	}
+	//void OntologicalSystem::releasePlayerIndex(ObjectID net_index)
+	//{
+	//	if (m_NextPlayerIndex == 0 || net_index == m_NextPlayerIndex-1)
+	//	{
+	//		--m_NextPlayerIndex;
+	//	}
+	//	else
+	//	{
+	//		m_FreePlayerIndicies.push_back(net_index);
+	//	}
+	//}
 
 	inline void middle(float &mid, const float &from, const float &to)
 	{

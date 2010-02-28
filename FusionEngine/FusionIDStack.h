@@ -87,6 +87,10 @@ namespace FusionEngine
 	};
 
 	//! Supplies IDs which aren't assigned, starting with the lowest ID available
+	/*!
+	* O(log n) (when the ID is in the set, rather than the next id).
+	* Constant time when the id is the next id.
+	*/
 	template <typename T>
 	class IDSet : public IDCollection<T, std::set<T>>
 	{
@@ -94,6 +98,14 @@ namespace FusionEngine
 		typedef std::set<T> IDCollectionType;
 
 	public:
+		//! Returns the next ID that will be returned by getFreeID
+		T peekNextID() const
+		{
+			if (m_UnusedIds.empty())
+				return m_NextId+1;
+			else
+				return *m_UnusedIds.begin();
+		}
 		//! Returns an ID which is not in use
 		virtual T getFreeID()
 		{
@@ -140,6 +152,9 @@ namespace FusionEngine
 	};
 
 	//! Supplies IDs which aren't assigned, starting with recently unassigned IDs
+	/*!
+	* O(1) for all operations (unless compiled for debug, then checks for duplicate calls to freeID())
+	*/
 	template <typename T>
 	class IDStack : public IDCollection<T>
 	{
@@ -191,7 +206,13 @@ namespace FusionEngine
 			if (id == m_NextId-1)
 				m_NextId = id;
 			else if (id < m_NextId-1)
+			{
+#ifdef _DEBUG
+				if (std::find(m_UnusedIds.begin(), m_UnusedIds.end(), id) != m_UnusedIds.end())
+					FSN_EXCEPT(ExCode::InvalidArgument, "IDStack::freeID", "Duplicate call to freeID, the given ID is already free");
+#endif
 				m_UnusedIds.push_back(id); // record unused ID
+			}
 		}
 
 	protected:

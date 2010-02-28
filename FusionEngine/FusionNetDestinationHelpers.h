@@ -47,7 +47,7 @@ namespace FusionEngine
 	{
 
 		//! Dearest Player, please create a new entity with the following qualities...
-		NetDestination Player(PlayerID id)
+		static NetDestination Player(PlayerID id)
 		{
 			NetDestination destination;
 
@@ -58,7 +58,7 @@ namespace FusionEngine
 		}
 
 		//! Dearest Arbitrator, can you use your eternal wisdom to grant me a new player?
-		NetDestination Arbiter()
+		static NetDestination Arbiter()
 		{
 			NetDestination destination;
 
@@ -68,7 +68,7 @@ namespace FusionEngine
 		}
 
 		//! My fellow RakPeerInterfaces: it is time to address the state of our ontology...
-		NetDestination Populace()
+		static NetDestination Populace()
 		{
 			NetDestination destination;
 
@@ -78,7 +78,7 @@ namespace FusionEngine
 		}
 
 		//! Hey, don't tell player_id I told you this, but...
-		NetDestination OtherThan(PlayerID excluded_id)
+		static NetDestination OtherThan(PlayerID excluded_id)
 		{
 			NetDestination destination;
 

@@ -66,15 +66,15 @@ namespace FusionEngine
 	//	return registry->SignalPlayerRestored.connect(slot);
 	//}
 
-	void PlayerRegistry::AddLocalPlayer(ObjectID id, unsigned int local_index)
+	void PlayerRegistry::AddLocalPlayer(PlayerID id, unsigned int local_index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
-		registry->addPlayer(id, local_index, registry->m_LocalGUID);
+		registry->addPlayer(id, local_index, UNASSIGNED_RAKNET_GUID);
 	}
 
-	void PlayerRegistry::AddRemotePlayer(ObjectID id, RakNetGUID guid)
+	void PlayerRegistry::AddRemotePlayer(PlayerID id, RakNetGUID guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -82,7 +82,7 @@ namespace FusionEngine
 		registry->addPlayer(id, s_MaxLocalPlayers, guid);
 	}
 
-	void PlayerRegistry::RemovePlayer(ObjectID id)
+	void PlayerRegistry::RemovePlayer(PlayerID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -114,7 +114,7 @@ namespace FusionEngine
 		registry->clear();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayer(ObjectID id)
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayer(PlayerID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -138,7 +138,7 @@ namespace FusionEngine
 		return registry->getPlayersBySystem(guid);
 	}
 
-	bool PlayerRegistry::IsLocal(ObjectID net_index)
+	bool PlayerRegistry::IsLocal(PlayerID net_index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -146,14 +146,13 @@ namespace FusionEngine
 		return registry->getPlayerByNetID(net_index).LocalIndex < s_MaxLocalPlayers;
 	}
 
-	PlayerRegistry::PlayerRegistry(RakNetGUID local_guid)
-		: m_LocalGUID(local_guid)
+	PlayerRegistry::PlayerRegistry()
 	{
 		m_NoSuchPlayer.NetID = 0;
 		m_NoSuchPlayer.LocalIndex = s_MaxLocalPlayers;
 	}
 
-	void PlayerRegistry::addPlayer(ObjectID net_id, unsigned int local_index, RakNetGUID guid)
+	void PlayerRegistry::addPlayer(PlayerID net_id, unsigned int local_index, RakNetGUID guid)
 	{
 		//PlayerInfoPtr playerInfo(new PlayerInfo);
 		PlayerInfo playerInfo;
@@ -168,7 +167,7 @@ namespace FusionEngine
 		SignalPlayerAdded(playerInfo);
 	}
 
-	void PlayerRegistry::removePlayer(ObjectID net_index)
+	void PlayerRegistry::removePlayer(PlayerID net_index)
 	{
 		PlayersByNetIndexMap::iterator _where = m_ByNetID.find(net_index);
 		m_ByLocalIndex.erase(_where->second.LocalIndex);
@@ -212,7 +211,7 @@ namespace FusionEngine
 		return m_ByLocalIndex.size();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetID(ObjectID index) const
+	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetID(PlayerID index) const
 	{
 		PlayersByNetIndexMap::const_iterator _where = m_ByNetID.find(index);
 		if (_where != m_ByNetID.end())

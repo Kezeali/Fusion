@@ -48,7 +48,8 @@ namespace FusionEngine
 
 	void DebugPacketHandler::HandlePacket(Packet *packet)
 	{
-		m_Log->AddEntry("Unhandled packet arrived: " + boost::lexical_cast<std::string>(packet->GetType()), LOG_TRIVIAL);
+		if (packet->length > 0)
+			m_Log->AddEntry("Unhandled packet arrived: " + boost::lexical_cast<std::string>(packet->data[0]), LOG_TRIVIAL);
 	}
 
 	const std::string s_NetSystemName = "Network";

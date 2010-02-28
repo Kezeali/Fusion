@@ -217,7 +217,7 @@ namespace FusionEngine
 		/*!
 		* Spawns the entity after adding it.
 		*/
-		void AddPseudoEntity(EntityPtr &pseudo_entity);
+		//void AddPseudoEntity(EntityPtr &pseudo_entity);
 
 		//! Removes the given entity
 		void RemoveEntity(const EntityPtr &entity);
@@ -265,7 +265,7 @@ namespace FusionEngine
 		const EntitySet &GetPseudoEntities() const;
 
 		//! Returns the EntityArray for the given domain
-		EntityArray &GetDomain(EntityDomain domain_index);
+		//EntityArray &GetDomain(EntityDomain domain_index);
 
 		bool AddTag(const std::string &entity_name, const std::string &tag);
 		bool AddTag(EntityPtr entity, const std::string &tag);
@@ -304,12 +304,8 @@ namespace FusionEngine
 		//! Draws entities
 		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
 
-		//! Updates the given domain
-		/*!
-		* Updates all Entities in the given domain (reguardless of
-		* whether the domain is currently Active.)
-		*/
-		void Update(EntityDomain domain_index, float split);
+		//! Updates the given list of entities
+		void Update(EntityArray &set, float split);
 
 		//! Sets the given domain to active/inactive
 		void SetDomainState(EntityDomain domain_index, char active_modes);
@@ -338,7 +334,7 @@ namespace FusionEngine
 		InputManager *m_InputManager;
 
 		EntitySynchroniser *m_EntitySynchroniser;
-		StreamingManager *m_Streaming;
+		StreamingManager *m_StreamingManager;
 
 		EntityFactory *m_EntityFactory;
 
@@ -352,19 +348,14 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
+		EntityArray m_ActiveEntities;
+
 		// Entities to be updated - 8 domains
-		EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
+		//EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
 		// Active status of each domain
 		char m_DomainState[s_EntityDomainCount];
 
-		// Bool part indicates whether the entity is a Pseudo-Entity
-		typedef std::pair<EntityPtr, bool> EntityToAdd;
-		typedef std::vector<EntityToAdd> EntityToAddArray;
-		EntityToAddArray m_EntitiesToAdd;
-		// TODO: Remove this (not needed, since MarkToDelete deletes the entity from the
-		//  to-update list, and m_Entities / m_PseudoEntities can be deleted at any time
-		//  since they are not iterated over during update)
-		EntityArray m_EntitiesToRemove;
+		EntityArray m_EntitiesToAdd;
 
 		bool m_EntitiesLocked;
 		bool m_ClearWhenAble;

@@ -87,92 +87,6 @@ namespace FusionEngine
 		return l->GetDepth() < r->GetDepth();
 	}
 
-	//void Renderer::Add(const EntityPtr &entity)
-	//{
-	//	//m_Entities.insert(entity);
-	//	//if (!entity->IsHidden())
-	//	//{
-	//	//	m_EntitiesToDraw.insert(
-	//	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
-	//	//		entity);
-	//	//}
-
-	//	std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
-
-	//	m_EntitiesToDraw.insert(
-	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth),
-	//		entity);
-
-	//	//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
-	//	//{
-	//	//	m_Renderables.insert(
-	//	//		std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth() + it->GetDepth()),
-	//	//		*it);
-	//	//}
-
-	//	//m_EntityAdded = true;
-	//}
-
-	//void Renderer::Remove(const EntityPtr &entity)
-	//{
-	//	//m_Entities.erase(entity);
-	//	//entity->SetHidden(true);
-
-	//	std::sort(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), lowerDepth);
-
-	//	EntityArray::iterator it = std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity, lowerDepth);
-	//	//for (EntityArray::iterator end = m_EntitiesToDraw.end(); it != end; ++it)
-	//	//	if (*it == entity || (*it)->GetDepth() > entity->GetDepth())
-	//	//		break;
-	//	if (it != m_EntitiesToDraw.end() && *it == entity)
-	//		m_EntitiesToDraw.erase(it);
-
-	//	//for (RenderableArray::iterator it = entity->GetRenderables().begin(), end = entity->GetRenderables().end(); it != end; ++it)
-	//	//{
-	//	//	if (it->GetEntity())
-	//	//		m_Renderables.erase(it);
-	//	//}
-
-	//	//m_EntitiesChanged = true;
-	//}
-
-	//void Renderer::Clear()
-	//{
-	//	//m_Entities.clear();
-	//	m_EntitiesToDraw.clear();
-	//	m_ChangedTags.clear();
-	//	//m_Renderables.clear();
-	//}
-
-	//void Renderer::ShowTag(const std::string &tag)
-	//{
-	//	m_ChangedTags.show(tag);
-	//	m_HiddenTags.erase(tag);
-	//}
-
-	//void Renderer::HideTag(const std::string &tag)
-	//{
-	//	m_ChangedTags.hide(tag);
-	//	m_HiddenTags.insert(tag);
-	//}
-
-	//void Renderer::AddViewport(ViewportPtr viewport)
-	//{
-	//	m_Viewports.push_back(viewport);
-	//}
-
-	//void Renderer::Update(float split)
-	//{
-	//	//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
-	//	//{
-	//	//	RenderableArray &renderables = (*it)->GetRenderables();
-	//	//	for (RenderableArray::iterator r_it = renderables.begin(), r_end = renderables.end(); r_it != r_end; ++r_it)
-	//	//	{
-	//	//		(*r_it)->Update(split);
-	//	//	}
-	//	//}
-	//}
-
 	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer)
 	{
 		const CameraPtr &camera = viewport->GetCamera();
@@ -231,7 +145,7 @@ namespace FusionEngine
 
 			if (entity->IsHidden())
 				continue;
-			if (entity->IsStreamedOut())
+			if (entity->IsStreamedIn())
 				continue;
 
 			if (entity->GetLayer() != layer)
@@ -252,6 +166,7 @@ namespace FusionEngine
 
 			//drawRenderables(entity, draw_area);
 			RenderableArray &entityRenderables = entity->GetRenderables();
+			int previousRenderableDepth = 0;
 			for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
 			{
 				RenderablePtr &renderable = *r_it;
@@ -259,15 +174,18 @@ namespace FusionEngine
 					renderable->Draw(m_GC, Vector2()/*entityPosition*/);
 				else
 					++notRendered;
+				// Bubble-sort by depth
+				if (renderable->GetDepth() < previousRenderableDepth)
+					std::swap(*r_it, *(r_it-1));
+				else
+					previousRenderableDepth = renderable->GetDepth();
 			}
 
 			m_GC.pop_modelview();
 
 			// Bubble up previous Entity if incorrectly depth-sorted
 			if (entity->GetDepth() < previousDepth)
-			{
 				std::swap(*it, *(it-1));
-			}
 			else
 				previousDepth = entity->GetDepth();
 		}

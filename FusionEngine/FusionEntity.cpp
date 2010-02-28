@@ -467,7 +467,9 @@ namespace FusionEngine
 		m_Domain(0),
 		m_Layer(0),
 		m_MarkedToRemove(false),
-		m_StreamedOut(true),
+		m_MarkedToDeactivate(false),
+		m_StreamedIn(true),
+		m_CellIndex(0xFFFFFFFF),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -485,7 +487,8 @@ namespace FusionEngine
 		m_Domain(0),
 		m_Layer(0),
 		m_MarkedToRemove(false),
-		m_StreamedOut(true),
+		m_MarkedToDeactivate(false),
+		m_StreamedIn(true),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -683,14 +686,24 @@ namespace FusionEngine
 		return m_Layer;
 	}
 
-	void Entity::SetStreamedIn(bool is_streamed_in)
+	inline void Entity::SetStreamedIn(bool is_streamed_in)
 	{
-		m_StreamedOut = !is_streamed_in;
+		m_StreamedIn = is_streamed_in;
 	}
 
-	bool Entity::IsStreamedOut() const
+	bool Entity::IsStreamedIn() const
 	{
-		return m_StreamedOut;
+		return m_StreamedIn;
+	}
+
+	void Entity::SetStreamingCellIndex(unsigned int index)
+	{
+		m_CellIndex = index;
+	}
+
+	unsigned int Entity::GetStreamingCellIndex() const
+	{
+		return m_CellIndex;
 	}
 
 	void Entity::SetPaused(bool is_paused)
@@ -747,6 +760,16 @@ namespace FusionEngine
 	bool Entity::IsMarkedToRemove() const
 	{
 		return m_MarkedToRemove;
+	}
+
+	void Entity::MarkToDeactivate()
+	{
+		m_MarkedToDeactivate = true;
+	}
+
+	bool Entity::IsMarkedToDeactivate() const
+	{
+		return m_MarkedToDeactivate;
 	}
 
 	RenderableArray &Entity::GetRenderables()

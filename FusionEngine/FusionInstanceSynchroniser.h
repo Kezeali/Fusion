@@ -49,10 +49,12 @@ namespace FusionEngine
 		InstanceSynchroniser(EntityFactory *factory, EntityManager *manager);
 		~InstanceSynchroniser();
 
-		//! The next id after the last id used in the loaded map or save-game
-		void SetMapBaseID(ObjectID id);
-		//! The next id after the last id used by the given peer
-		void SetPeerBaseID(ObjectID id);
+		//! Removes the given ID from the available pool
+		/*!
+		* This should be called when loading maps/saved games for each loaded ID
+		* and when receiving new instances from other peers.
+		*/
+		void TakeID(ObjectID id);
 
 		//! Tries to create a new entity (only succeeds if this peer has authority to do so)
 		/*!
@@ -95,8 +97,8 @@ namespace FusionEngine
 
 		RakNetwork *m_Network;
 
-		ObjectIDStack m_LocalIdGenerators[s_MaxPeers];
-		ObjectIDStack m_WorldIdGenerator;
+		IDSet<ObjectID> m_LocalIdGenerators[s_MaxPeers];
+		IDSet<ObjectID> m_WorldIdGenerator;
 
 		//boost::signals2::connection m_EntityInstancedCnx;
 
