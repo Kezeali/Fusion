@@ -21,14 +21,15 @@
 				text-align: left;
 			}
 		</style>
+		<script src="console.as" />
 	</head>
-	<body template="window">
+	<body template="window" onload="OnConsoleOpened(event);" onclose="OnConsoleClosed(event);">
 		<button id="show_guidebugger" onclick="gui.showDebugger();">GUI Debugger</button>
 		Console:
 		<console id="console_element">
 			<textarea id="text_element" name="console_data" cols="30" rows="10" maxlength="1200" readonly="true" value="Empty Console" onchange="OnTextAreaChange(event);"/>
 			<input id="command_element" type="text" name="command_input" enter_event="true" onchange="OnConsoleEntryChanged(event);" onenter="OnConsoleEntryEnter(event);" onkeyup="OnConsoleEntryKeyUp(event);" onkeydown="OnConsoleEntryKeyUp(event);"/>
-			<button id="enter_command">Enter</button>
+			<button id="enter_command" onclick="OnConsoleEnterClick(event);">Enter</button>
 			<button id="clear_console" onclick="console.clear();">Clear</button>
 		</console>
 	</body>

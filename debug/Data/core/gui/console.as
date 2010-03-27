@@ -1,5 +1,3 @@
-#include "context_menu.as"
-
 class ConsoleElement : ScriptElement
 {
 	bool dirty;
@@ -100,15 +98,16 @@ class AutocompleteListener : IContextMenuListener
 	}
 }
 
-class ConsoleGui : IConsoleListener
+// TODO: merge this with ConsoleElement (perhaps make ConsoleElement create an instance and hold it as a member, if they have to be seperate for some reason)
+class ConsoleRouter : IConsoleListener
 {
 	//ConsoleElement@ consoleElm;
 	AutocompleteListener autocompleteListener;
 
-	ConsoleGui(/*Element@ element*/)
+	ConsoleRouter(Element@ element)
 	{
-		ConsoleElement@ consoleElm = cast<ConsoleElement>( unwrap(gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("console_element"))) );
-		//@consoleElm = cast<ConsoleElement>(unwrap(element));
+		//ConsoleElement@ consoleElm = cast<ConsoleElement>( unwrap(gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("console_element"))) );
+		@consoleElm = cast<ConsoleElement>(unwrap(element));
 		if (consoleElm !is null)
 		{
 			Element@ text_element = consoleElm.GetElementById(e_String("text_element"));
@@ -124,7 +123,7 @@ class ConsoleGui : IConsoleListener
 			console.println("Couldn't find console element"); 
 	}
 
-	~ConsoleGui()
+	~ConsoleRouter()
 	{
 		console.println("ConsoleGUI Deleted");
 		//consoleElm._SetAppObject(null);
@@ -278,20 +277,29 @@ void InitialiseConsole()
 	RegisterElementType(e_String("console"), e_String("ConsoleElement"));
 }
 
-void CreateConsole()
+void OnConsoleOpened(Event @ev)
 {
-	Context@ context = gui.getContext();
-	@document = context.LoadDocument(e_String("core/gui/console.rml"));
-	if (document !is null)
-	{
-		document.SetId(e_String("console_doc"));
-
-		document.Show();
-
-		//Element@ consoleElement = document.GetElementById(e_String("console_element"));
-		@congui = ConsoleGui(/*consoleElement*/);
-		@listenerConnection = console.connectListener(congui);
-
-		Element@ enterElement = document.GetElementById(e_String("enter_command"));
-		@consoleClickConnection = enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
 }
+
+void OnConsoleClosed(Event @ev)
+{
+}
+
+//void CreateConsole()
+//{
+//	Context@ context = gui.getContext();
+//	@document = context.LoadDocument(e_String("core/gui/console.rml"));
+//	if (document !is null)
+//	{
+//		document.SetId(e_String("console_doc"));
+//
+//		document.Show();
+//
+//		//Element@ consoleElement = document.GetElementById(e_String("console_element"));
+//		@congui = ConsoleRouter(/*consoleElement*/);
+//		@listenerConnection = console.connectListener(congui);
+//
+//		Element@ enterElement = document.GetElementById(e_String("enter_command"));
+//		@consoleClickConnection = enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
+//	}
+//}
