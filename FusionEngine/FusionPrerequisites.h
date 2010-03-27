@@ -33,6 +33,7 @@ namespace FusionEngine
 	class GameMapLoader;
 	class InputDefinitionLoader;
 	class InputManager;
+	class InstancingSynchroniser;
 	class Log;
 	class Logger;
 	class Module;

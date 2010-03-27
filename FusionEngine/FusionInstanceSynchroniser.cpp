@@ -43,18 +43,25 @@
 namespace FusionEngine
 {
 	
-	InstanceSynchroniser::InstanceSynchroniser(EntityFactory *factory, EntityManager *manager)
+	InstancingSynchroniser::InstancingSynchroniser(EntityFactory *factory, EntityManager *manager)
 		: m_Factory(factory),
 		m_EntityManager(manager)
 	{
-		//m_EntityInstancedCnx = factory->SignalEntityInstanced.connect(boost::bind(&InstanceSynchroniser::OnEntityInstanced, this, _1));
+		//m_EntityInstancedCnx = factory->SignalEntityInstanced.connect(boost::bind(&InstancingSynchroniser::OnEntityInstanced, this, _1));
 	}
 
-	InstanceSynchroniser::~InstanceSynchroniser()
+	InstancingSynchroniser::~InstancingSynchroniser()
 	{
 	}
 
-	void InstanceSynchroniser::TakeID(ObjectID id)
+	void InstancingSynchroniser::Reset(ObjectID next)
+	{
+		for (int i = 0; i < s_MaxPeers; ++i)
+			m_LocalIdGenerators[i].freeAll();
+		m_WorldIdGenerator.takeAll(next);
+	}
+
+	void InstancingSynchroniser::TakeID(ObjectID id)
 	{
 		if ((id & 0x8000) == 0x8000) // if the first bit is set (this is a local-authority ID)
 		{
@@ -70,7 +77,7 @@ namespace FusionEngine
 		}
 	}
 
-	ObjectID InstanceSynchroniser::generateLocalId()
+	ObjectID InstancingSynchroniser::generateLocalId()
 	{
 		ObjectID id = 0;
 
@@ -101,7 +108,7 @@ namespace FusionEngine
 		return id;
 	}
 
-	void InstanceSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const std::string &name, PlayerID owner_id)
+	void InstancingSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
 		RakNet::BitStream newEntityData;
 		newEntityData.Write(requester_id);
@@ -124,10 +131,10 @@ namespace FusionEngine
 
 	}
 
-	void InstanceSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID owner_id)
+	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
 		if (requester)
-			FSN_EXCEPT(ExCode::InvalidArgument, "InstanceSynchroniser::RequestInstance", "You must pass a valid requester instance");
+			FSN_EXCEPT(ExCode::InvalidArgument, "InstancingSynchroniser::RequestInstance", "You must pass a valid requester instance");
 
 		bool localAuthority = PlayerRegistry::IsLocal(requester->GetOwnerID());
 		uint8_t peerIndex = m_Network->GetLocalPeerIndex(); // Used to generate an ID if this entity is being created under local authority
@@ -169,12 +176,12 @@ namespace FusionEngine
 		}
 	}
 
-	void InstanceSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
+	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
 	{
 		RequestInstance(requester, syncable, type, "", owner);
 	}
 
-	void InstanceSynchroniser::HandlePacket(Packet *packet)
+	void InstancingSynchroniser::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream newEntityData(packet->data, packet->length, false);
 

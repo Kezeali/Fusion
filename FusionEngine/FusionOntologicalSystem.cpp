@@ -136,14 +136,13 @@ namespace FusionEngine
 
 	const std::string s_OntologicalSystemName = "Entities";
 
-	OntologicalSystem::OntologicalSystem(ClientOptions *options, Renderer *renderer, InputManager *input_manager)
-		: m_Options(options),
-		m_Renderer(renderer),
-		m_InputManager(input_manager),
-		//m_NetworkSystem(network),
-		m_EntityManager(NULL),
-		m_MapLoader(NULL),
-		m_PhysWorld(NULL)
+	OntologicalSystem::OntologicalSystem(Renderer *renderer, InstancingSynchroniser *instance_sync, PhysicalWorld *phys, StreamingManager *streaming_manager, GameMapLoader *map_loader, EntityManager *entity_manager)
+		: m_Renderer(renderer),
+		m_InstancingSync(instance_sync),
+		m_PhysWorld(phys),
+		m_Streaming(streaming_manager),
+		m_MapLoader(map_loader),
+		m_EntityManager(entity_manager)
 	{
 	}
 
@@ -159,46 +158,14 @@ namespace FusionEngine
 
 	bool OntologicalSystem::Initialise()
 	{
-		if (m_EntityManager == NULL)
-		{
-			m_EntitySyncroniser = new EntitySynchroniser(m_InputManager);
-			m_EntityFactory = new EntityFactory();
-			m_Streaming = new StreamingManager();
-			m_EntityManager = new EntityManager(m_Renderer, m_InputManager, m_EntitySyncroniser, m_Streaming);
-			m_MapLoader = new GameMapLoader(m_Options, m_EntityFactory, m_EntityManager);
+		ScriptManager *manager = ScriptManager::getSingletonPtr();
+		manager->RegisterGlobalObject("const System system", this);
 
-			m_PhysWorld = new PhysicalWorld();
-			m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());
+		//m_OnPlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
 
-			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
+		ClientOptions gameOptions("gameconfig.xml", "gameconfig");
 
-			gameOptions.GetOption("startup_entity", &m_StartupEntity);
-			gameOptions.GetOption("startup_map", &m_StartupMap);
-
-			m_Streaming->SetRange(2000);
-
-			ScriptManager *manager = ScriptManager::getSingletonPtr();
-
-			manager->RegisterGlobalObject("const System system", this);
-			manager->RegisterGlobalObject("const StreamingManager streamer", m_Streaming);
-			manager->RegisterGlobalObject("const EntityManager entity_manager", m_EntityManager);
-			
-			if (gameOptions.GetOption_str("Editor") == "allowed")
-			{
-				m_Editor.reset(new Editor(m_InputManager, m_Renderer, m_EntityFactory, m_PhysWorld, m_Streaming, m_MapLoader));
-				this->PushMessage(new SystemMessage(m_Editor));
-				
-				manager->RegisterGlobalObject("const Editor editor", m_Editor.get());
-			}
-			
-			m_EntityFactory->SetScriptingManager(manager);
-			m_EntityFactory->SetScriptedEntityPath("Entities/");
-
-			//m_OnPlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
-		}
-
-		if (!m_StartupEntity.empty())
-			m_EntityFactory->LoadScriptedType(m_StartupEntity);
+		gameOptions.GetOption("startup_map", &m_StartupMap);
 
 		// Load map entities
 		//  Startup map (the map initially loaded)
@@ -246,11 +213,6 @@ namespace FusionEngine
 			lineBegin = lineEnd+1;
 		}
 
-		if (m_StartupEntity.empty() && m_StartupMap.empty())
-		{
-			m_EntityFactory->LoadAllScriptedTypes();
-		}
-
 		return true;
 	}
 
@@ -266,32 +228,6 @@ namespace FusionEngine
 		}
 
 		m_Viewports.clear();
-
-		if (m_Editor)
-		{
-			this->PushMessage(new SystemMessage(m_Editor, false)); // Remove the editor system
-			m_Editor->CleanUp(); // Can't wait for the system manager to clean up the Editor because
-			//  physworld is deleted below and the destructor method of any remaining EditorMapEntity objects
-			//  will fail
-			m_Editor.reset();
-		}
-
-		if (m_EntityManager != NULL)
-		{
-			
-
-			delete m_MapLoader;
-			delete m_EntityManager;
-			delete m_EntityFactory;
-			delete m_Streaming;
-			delete m_EntitySyncroniser;
-
-			delete m_PhysWorld;
-
-			m_EntityManager = NULL;
-
-			m_PhysWorld = NULL;
-		}
 	}
 
 	void OntologicalSystem::Update(float split)
@@ -372,8 +308,6 @@ namespace FusionEngine
 
 	void OntologicalSystem::SetModule(const ModulePtr &module)
 	{
-		m_EntityFactory->SetModule(module);
-
 		m_Module = module;
 
 		m_ModuleConnection.disconnect();
@@ -388,27 +322,10 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			if (!m_StartupEntity.empty())
-			{
-				EntityPtr entity = m_EntityFactory->InstanceEntity(m_StartupEntity, "startup");
-				if (entity)
-				{
-					m_EntityManager->AddEntity(entity);
-					entity->Spawn();
-					// Force stream-in
-					entity->StreamIn();
-				}
-			}
-
 			if (!m_StartupMap.empty())
 			{
 				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 				m_MapLoader->LoadMap("Maps/" + m_StartupMap, dir);
-			}
-
-			if (m_StartupEntity.empty() && m_StartupMap.empty())
-			{
-				m_Editor->Enable();
 			}
 		}
 	}

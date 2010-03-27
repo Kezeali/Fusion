@@ -70,6 +70,7 @@ namespace FusionEngine
 		{
 		public:
 			EntityPtr entity;
+			bool synced;
 			bool hasName; // true if the entity has a unique name (other wise it will be called 'default')
 			std::string archetypeId;
 

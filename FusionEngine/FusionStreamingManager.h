@@ -178,7 +178,7 @@ namespace FusionEngine
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);
 		//! Updates the given entity's grid position, and streams in/out
-		void OnMoved(const EntityPtr &entity);
+		void OnUpdated(const EntityPtr &entity);
 
 		void ActivateEntity(const EntityPtr &entity, CellEntry &entry, Cell &cell);
 		void DeactivateEntity(const EntityPtr &entity);
@@ -188,7 +188,7 @@ namespace FusionEngine
 		void GenerateActivationEvent(const EntityPtr &entity);
 		void GenerateDeactivationEvent(const EntityPtr &entity);
 
-		boost::signals2::signal<void (ActivationEvent)> SignalActivationEvent;
+		boost::signals2::signal<void (const ActivationEvent&)> SignalActivationEvent;
 
 		//const std::set<EntityPtr> &GetActiveEntities() const;
 

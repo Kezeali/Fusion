@@ -55,6 +55,15 @@ namespace Rocket {
 namespace FusionEngine
 {
 
+	//! Secondary context class
+	class SecondContext
+	{
+	public:
+			void Update(float time);
+			void Draw();
+			void SetDimensions(const Vector2 &size);
+	};
+
 	/*!
 	 * \brief
 	 * Manager for libRocket GUI whatsit (tm)

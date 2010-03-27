@@ -35,6 +35,7 @@
 #include "FusionCommon.h"
 
 #include "FusionScriptManager.h"
+#include <angelscript.h>
 #include <boost/intrusive_ptr.hpp>
 #include <boost/utility.hpp>
 #include <type_traits>
@@ -102,7 +103,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_RELEASE, "void release()", asMETHOD(RefCounted, release), asCALL_THISCALL);
 
 			// Register the assignment operator if the type is copyable
-			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
+			RegisterAssignment<T>(engine, name, std::is_base_of<noncopyable, T>());
 		}
 
 	protected:
@@ -217,10 +218,8 @@ namespace FusionEngine
 			return NULL;
 
 		_To* ret = dynamic_cast<_To*>(obj);
-		if (ret == NULL)
-		{
-			obj->release();
-		}
+		if (ret != NULL)
+			ret->addRef();
 		return ret;
 	}
 
@@ -229,13 +228,13 @@ namespace FusionEngine
 	void RegisterBaseOf(asIScriptEngine *engine, const std::string &base, const std::string &derived)
 	{
 		int r;
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_REF_CAST,
-			(derived+"@ f("+base+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Base*), _Derived*),
-			asCALL_CDECL);
+		r = engine->RegisterObjectBehaviour(base.c_str(), asBEHAVE_REF_CAST,
+			(derived+"@ f()").c_str(), asFUNCTION((convert_ref<_Base, _Derived>)),
+			asCALL_CDECL_OBJLAST);
 
-		r = engine->RegisterGlobalBehaviour(asBEHAVE_IMPLICIT_REF_CAST,
-			(base+"@ f("+derived+"@)").c_str(), asFUNCTIONPR(convert_ref, (_Derived*), _Base*),
-			asCALL_CDECL);
+		r = engine->RegisterObjectBehaviour(derived.c_str(), asBEHAVE_IMPLICIT_REF_CAST,
+			(base+"@ f()").c_str(), asFUNCTION((convert_ref<_Derived, _Base>)),
+			asCALL_CDECL_OBJLAST);
 	}
 
 	void intrusive_ptr_add_ref(RefCounted *ptr);

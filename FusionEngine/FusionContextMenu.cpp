@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-		
-		
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -32,6 +31,7 @@
 
 //#include <boost/lexical_cast.hpp>
 #include <ClanLib/Display/Window/keys.h>
+//#include <ScriptUtils/Inheritance/RegisterConversion.h>
 
 namespace FusionEngine
 {
@@ -42,10 +42,10 @@ namespace FusionEngine
 	}
 
 	MenuItem::MenuItem()
-		: m_Element(NULL),
+		: m_Element(nullptr),
 		m_Index(-1),
-		m_Document(NULL),
-		m_Context(NULL)
+		m_Document(nullptr),
+		m_Context(nullptr)
 	{
 		init();
 	}
@@ -53,10 +53,10 @@ namespace FusionEngine
 	MenuItem::MenuItem(const std::string &title, const std::string &value)
 		: m_Title(title),
 		m_Value(value),
-		m_Element(NULL),
+		m_Element(nullptr),
 		m_Index(-1),
-		m_Document(NULL),
-		m_Context(NULL)
+		m_Document(nullptr),
+		m_Context(nullptr)
 	{
 		init();
 	}
@@ -65,15 +65,15 @@ namespace FusionEngine
 	{
 		RemoveAllChildren();
 
-		if (m_Document != NULL)
+		if (m_Document != nullptr)
 		{
 			m_Document->Close();
 			m_Document->RemoveReference();
-			if (m_Element != NULL) // If this is a submenu
+			if (m_Element != nullptr) // If this is a submenu
 				m_Document->RemoveEventListener("mouseout", this); // Remove the mouse-out listener (used for auto-close)
 		}
 
-		if (m_Element != NULL)
+		if (m_Element != nullptr)
 		{
 			// Remove the event listeners, in case the reference removed below isn't the last
 			m_Element->RemoveEventListener("click", this);
@@ -87,7 +87,7 @@ namespace FusionEngine
 
 	void MenuItem::Show()
 	{
-		if (m_Document != NULL)
+		if (m_Document != nullptr)
 		{
 			int x = (int)std::ceil(m_Element->GetAbsoluteLeft() + m_Element->GetClientWidth() - 4);
 			int y = (int)std::ceil(m_Element->GetAbsoluteTop());
@@ -106,7 +106,7 @@ namespace FusionEngine
 
 	void MenuItem::Hide()
 	{
-		if (m_Document != NULL)
+		if (m_Document != nullptr)
 		{
 			m_Document->Hide();
 
@@ -121,7 +121,7 @@ namespace FusionEngine
 	int MenuItem::AddChild(MenuItem *item)
 	{
 		// Sub Menu:
-		if (m_Element != NULL)
+		if (m_Element != nullptr)
 		{
 			initSubmenu();
 
@@ -131,7 +131,7 @@ namespace FusionEngine
 			item->addedToMenu(this, childElement);
 		}
 		// Root menu:
-		else if (m_Document != NULL)
+		else if (m_Document != nullptr)
 		{
 			Rocket::Core::Element *childElement = m_Document->CreateElement("menuitem");
 			m_Document->AppendChild(childElement);
@@ -156,7 +156,7 @@ namespace FusionEngine
 		child->release();
 		m_Children.erase(m_Children.begin() + index);
 
-		if (m_Children.empty() && m_Element != NULL) // Remove sub-menu stuff if this item has no more child-items
+		if (m_Children.empty() && m_Element != nullptr) // Remove sub-menu stuff if this item has no more child-items
 		{
 			m_Element->SetPseudoClass("submenu", false);
 			m_Element->RemoveEventListener("mouseover", this);
@@ -175,7 +175,7 @@ namespace FusionEngine
 
 		m_Children.clear();
 
-		if (m_Element != NULL)
+		if (m_Element != nullptr)
 		{
 			// This element no longer has a sub-menu
 			m_Element->SetPseudoClass("submenu", false);
@@ -189,7 +189,7 @@ namespace FusionEngine
 		if (index >= 0 && (unsigned)index < m_Children.size())
 			return m_Children[(unsigned)index];
 		else
-			return NULL;
+			return nullptr;
 	}
 
 	void MenuItem::SelectChild(int id)
@@ -214,22 +214,22 @@ namespace FusionEngine
 
 	bool MenuItem::IsSubmenu() const
 	{
-		return m_Document != NULL && m_Element != NULL;
+		return m_Document != nullptr && m_Element != nullptr;
 	}
 
 	bool MenuItem::IsTopMenu() const
 	{
-		return m_Document != NULL && m_Element == NULL;
+		return m_Document != nullptr && m_Element == nullptr;
 	}
 
 	bool MenuItem::IsMenu() const
 	{
-		return m_Document != NULL;
+		return m_Document != nullptr;
 	}
 
 	void MenuItem::ProcessEvent(Rocket::Core::Event& ev)
 	{
-		if (m_Document != NULL)
+		if (m_Document != nullptr)
 		{
 			if (ev.GetType() == "mouseover" || ev.GetType() == "click")
 			{
@@ -248,7 +248,7 @@ namespace FusionEngine
 			{
 				MenuItemEvent item_ev;
 				item_ev.title = m_Title;
-				item_ev.value = NULL;
+				item_ev.value = nullptr;
 				SignalClicked(item_ev);
 			}
 		}
@@ -256,7 +256,7 @@ namespace FusionEngine
 
 	void MenuItem::EnumReferences(asIScriptEngine *engine)
 	{
-		if (m_Parent != NULL)
+		if (m_Parent != nullptr)
 			engine->GCEnumCallback((void*)m_Parent);
 
 		for (MenuItemArray::iterator it = m_Children.begin(), end = m_Children.end(); it != end; ++it)
@@ -267,7 +267,7 @@ namespace FusionEngine
 
 	void MenuItem::ReleaseAllReferences(asIScriptEngine *engine)
 	{
-		if (m_Parent != NULL)
+		if (m_Parent != nullptr)
 			m_Parent->release();
 
 		for (MenuItemArray::iterator it = m_Children.begin(), end = m_Children.end(); it != end; ++it)
@@ -285,10 +285,10 @@ namespace FusionEngine
 
 	bool MenuItem::isPseudoClassSetOnAnyChild(const EMP::Core::String &pseudo_class)
 	{
-		if (m_Element != NULL && m_Element->IsPseudoClassSet(pseudo_class))
+		if (m_Element != nullptr && m_Element->IsPseudoClassSet(pseudo_class))
 			return true;
 
-		if (m_Document != NULL)
+		if (m_Document != nullptr)
 		{
 			if (m_Document->IsPseudoClassSet(pseudo_class))
 				return true;
@@ -306,7 +306,7 @@ namespace FusionEngine
 
 	void MenuItem::initSubmenu()
 	{
-		if (m_Document == NULL)
+		if (m_Document == nullptr)
 		{
 			m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
 			m_Document->AddEventListener("mouseout", this);
@@ -336,7 +336,7 @@ namespace FusionEngine
 		m_Element->AddEventListener("click", this);
 
 		// Do a late initialisation of this menu-item's children, if necessary
-		if (m_Document == NULL && !m_Children.empty())
+		if (m_Document == nullptr && !m_Children.empty())
 		{
 			initSubmenu();
 
@@ -358,7 +358,7 @@ namespace FusionEngine
 		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
 
 		InputManager *manager = InputManager::getSingletonPtr();
-		if (manager != NULL)
+		if (manager != nullptr)
 		{
 			m_RawInputConnection = manager->SignalRawInput.connect( boost::bind(&ContextMenu::OnRawInput, this, _1) );
 		}
@@ -423,8 +423,63 @@ namespace FusionEngine
 		}
 	}
 
+	MenuItem *MenuItem_Factory(const std::string &title, const std::string &value)
+	{
+		return new MenuItem(title, value);
+	}
+
+	void MenuItem::Register(asIScriptEngine *engine)
+	{
+		MenuItem::RegisterType<MenuItem>(engine, "MenuItem");
+		engine->RegisterObjectBehaviour("MenuItem", asBEHAVE_FACTORY, "MenuItem@ f(const string &in, const string &in)", asFUNCTION(MenuItem_Factory), asCALL_CDECL);
+
+		// This is a virtual method that is overloaded by ContextMenu, so it isn't registered in the RegisterMethods method (it is registered in ContextMenu::Register)
+		engine->RegisterObjectMethod("MenuItem", "void Show()", asMETHODPR(MenuItem, Show, (void), void), asCALL_THISCALL);
+		RegisterMethods(engine, "MenuItem");
+	}
+
+	MenuItem *MenuItem_GetChild(int index, MenuItem *obj)
+	{
+		MenuItem *child = obj->GetChild(index);
+		if (child != nullptr)
+			child->addRef();
+		return child;
+	}
+
+	void MenuItem::RegisterMethods(asIScriptEngine *engine, const std::string &type)
+	{
+		engine->RegisterObjectMethod(type.c_str(), "void Hide()", asMETHODPR(MenuItem, Hide, (void), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "int AddChild(MenuItem@)", asMETHODPR(MenuItem, AddChild, (MenuItem*), int), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void RemoveChild(MenuItem@)", asMETHODPR(MenuItem, RemoveChild, (MenuItem*), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void RemoveChild(int)", asMETHODPR(MenuItem, RemoveChild, (int), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void RemoveAllChildren()", asMETHOD(MenuItem, RemoveAllChildren), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ GetChild(int)", asFUNCTION(MenuItem_GetChild), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod(type.c_str(), "void SelectChild(int)", asMETHOD(MenuItem, SelectChild), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void SelectChildRelative(int)", asMETHOD(MenuItem, SelectChildRelative), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "int GetSelectedIndex() const", asMETHOD(MenuItem, GetSelectedIndex), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ GetSelectedItem()", asMETHOD(MenuItem, GetSelectedItem), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool IsSubmenu() const", asMETHOD(MenuItem, IsSubmenu), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool IsTopMenu() const", asMETHOD(MenuItem, IsTopMenu), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool IsMenu() const", asMETHOD(MenuItem, IsMenu), asCALL_THISCALL);
+	}
+
+	ContextMenu *ContextMenu_Factory(Rocket::Core::Context *context, bool auto_hide)
+	{
+		return new ContextMenu(context, auto_hide);
+	}
+
 	void ContextMenu::Register(asIScriptEngine *engine)
 	{
+		ContextMenu::RegisterType<ContextMenu>(engine, "ContextMenu");
+
+		// Register MenuItem inheritance
+		RegisterBaseOf<MenuItem, ContextMenu>(engine, "MenuItem", "ContextMenu");
+		MenuItem::RegisterMethods(engine, "ContextMenu");
+
+		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f(const string &in, const string &in)", asFUNCTION(ContextMenu_Factory), asCALL_CDECL);
+		
+		engine->RegisterObjectMethod("ContextMenu", "void Show()", asMETHODPR(ContextMenu, Show, (void), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("ContextMenu", "void Show(int, int, bool)", asMETHODPR(ContextMenu, Show, (int, int, bool), void), asCALL_THISCALL);
 	}
 
 }

@@ -43,11 +43,14 @@ namespace FusionEngine
 {
 
 	//! Synchronises the creation of new instances
-	class InstanceSynchroniser : public PacketHandler
+	class InstancingSynchroniser : public PacketHandler
 	{
 	public:
-		InstanceSynchroniser(EntityFactory *factory, EntityManager *manager);
-		~InstanceSynchroniser();
+		InstancingSynchroniser(EntityFactory *factory, EntityManager *manager);
+		~InstancingSynchroniser();
+
+		//! Resets the used ID lists, setting the min world id to the one given.
+		void Reset(ObjectID min_unused = 0);
 
 		//! Removes the given ID from the available pool
 		/*!

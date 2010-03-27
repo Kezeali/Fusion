@@ -42,8 +42,8 @@
 #include "FusionInputHandler.h"
 #include "FusionPacketHandler.h"
 #include "FusionPlayerInput.h"
-#include "FusionRenderer.h"
 #include "FusionStreamingManager.h"
+#include "FusionViewport.h"
 
 //#include <boost/bimap.hpp>
 
@@ -186,7 +186,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
+		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -199,25 +199,16 @@ namespace FusionEngine
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
 		//typedef TagFlagMap::value_type TagDef;
 
-		//! Creates an entity of the given type and adds it to the manager
-		//EntityPtr InstanceEntity(const std::string &type, const std::string &name = "default", ObjectID owner_id = 0);
-
-		//! Gets the factory
-		//EntityFactory *GetFactory() const;
-
 		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
 
+		//! Set to true to give entities named "default" a unique name when they are passed to AddEntity
+		void EnableDefaultNameGeneration(bool enabled);
+		//! Returns the value set by EnableDefaultNameGeneration
+		bool IsGeneratingDefaultNames() const;
+
 		//! Adds a created entity
-		/*!
-		* Spawns the entity after adding it.
-		*/
 		void AddEntity(EntityPtr &entity);
-		//! Adds a created pseudo-entity
-		/*!
-		* Spawns the entity after adding it.
-		*/
-		//void AddPseudoEntity(EntityPtr &pseudo_entity);
 
 		//! Removes the given entity
 		void RemoveEntity(const EntityPtr &entity);
@@ -304,9 +295,6 @@ namespace FusionEngine
 		//! Draws entities
 		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
 
-		//! Updates the given list of entities
-		void Update(EntityArray &set, float split);
-
 		//! Sets the given domain to active/inactive
 		void SetDomainState(EntityDomain domain_index, char active_modes);
 		//! Returns true if the given domain is active
@@ -321,16 +309,24 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
+		void OnActivationEvent(const ActivationEvent& ev);
+
 	protected:
+		//! Updates the entities that have been added to the active-entities list
+		void updateEntities(EntityArray &entities, float split);
+
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
 		void clearEntities(bool real_only);
 
+		void insertActiveEntity(const EntityPtr &entity);
+
+		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
 
 		void updateTags(EntityPtr &tag) const;
 
-	protected:
-		Renderer *m_Renderer;
+		bool m_GenerateDefaultNames;
+
 		InputManager *m_InputManager;
 
 		EntitySynchroniser *m_EntitySynchroniser;
@@ -348,14 +344,13 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
+		EntityArray m_EntitiesToActivate;
 		EntityArray m_ActiveEntities;
 
 		// Entities to be updated - 8 domains
 		//EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
 		// Active status of each domain
 		char m_DomainState[s_EntityDomainCount];
-
-		EntityArray m_EntitiesToAdd;
 
 		bool m_EntitiesLocked;
 		bool m_ClearWhenAble;

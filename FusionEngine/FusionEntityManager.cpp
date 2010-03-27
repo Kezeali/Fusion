@@ -39,6 +39,7 @@
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
 #include "FusionRakNetwork.h"
+#include "FusionRenderer.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 // For script registration (the script method EntityManager::instance() returns a script object)
 #include "FusionScriptedEntity.h"
@@ -378,9 +379,8 @@ namespace FusionEngine
 		}
 	}
 
-	EntityManager::EntityManager(Renderer *renderer, InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
-		: m_Renderer(renderer),
-		m_InputManager(input_manager),
+	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
+		: m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_StreamingManager(streaming),
 		m_UpdateBlockedFlags(0),
@@ -390,6 +390,8 @@ namespace FusionEngine
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
+
+		m_StreamingManager->SignalActivationEvent.connect(boost::bind(&EntityManager::OnActivationEvent, this, _1));
 	}
 
 	EntityManager::~EntityManager()
@@ -412,9 +414,19 @@ namespace FusionEngine
 		}
 
 		// Reset the ID collection
-		m_UnusedIds.takeAll(nextSequentialId);
+		//m_UnusedIds.takeAll(nextSequentialId);
 
 		m_Entities.erase(it, m_Entities.end());
+	}
+
+	void EntityManager::EnableDefaultNameGeneration(bool enable)
+	{
+		m_GenerateDefaultNames = true;
+	}
+
+	bool EntityManager::IsGeneratingDefaultNames() const
+	{
+		return m_GenerateDefaultNames;
 	}
 
 	void EntityManager::AddEntity(EntityPtr &entity)
@@ -681,13 +693,13 @@ namespace FusionEngine
 			m_ActiveEntities.clear();
 
 		m_EntitiesByName.clear();
-			m_Entities.clear();
-			m_PseudoEntities.clear();
+		m_Entities.clear();
+		m_PseudoEntities.clear();
 
-			m_UnusedIds.freeAll();
+		//m_UnusedIds.freeAll();
 
-			m_ChangedUpdateStateTags.clear();
-			m_ChangedDrawStateTags.clear();
+		m_ChangedUpdateStateTags.clear();
+		m_ChangedDrawStateTags.clear();
 	}
 
 	void EntityManager::Clear()
@@ -702,26 +714,26 @@ namespace FusionEngine
 
 	void EntityManager::ClearDomain(EntityDomain idx)
 	{
-		EntityArray &domain = m_EntitiesToUpdate[idx];
-		for (EntityArray::iterator it = domain.begin(), end = domain.end(); it != end; ++it)
-		{
-			EntityPtr &entity = *it;
+		//EntityArray &domain = m_EntitiesToUpdate[idx];
+		//for (EntityArray::iterator it = domain.begin(), end = domain.end(); it != end; ++it)
+		//{
+		//	EntityPtr &entity = *it;
 
-			entity->MarkToRemove();
-			if (entity->IsPseudoEntity())
-				m_PseudoEntities.erase(entity);
-			else
-			{
-				m_UnusedIds.freeID(entity->GetID());
-				m_Entities.erase(entity->GetID());
-			}
-			m_EntitiesByName.erase(entity->GetName());
-		}
-		// If the manager isn't updating, we can immeadiately clear the
-		//  domain (otherwise it will be cleared next time it is updated
-		//  due to the MarkToRemove() call above)
-		if (!m_EntitiesLocked)
-			domain.clear();
+		//	entity->MarkToRemove();
+		//	if (entity->IsPseudoEntity())
+		//		m_PseudoEntities.erase(entity);
+		//	else
+		//	{
+		//		m_UnusedIds.freeID(entity->GetID());
+		//		m_Entities.erase(entity->GetID());
+		//	}
+		//	m_EntitiesByName.erase(entity->GetName());
+		//}
+		//// If the manager isn't updating, we can immeadiately clear the
+		////  domain (otherwise it will be cleared next time it is updated
+		////  due to the MarkToRemove() call above)
+		//if (!m_EntitiesLocked)
+		//	domain.clear();
 	}
 
 	typedef std::set<uintptr_t> ptr_set;
@@ -741,16 +753,14 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::Update(EntityArray &entity_list, float split)
+	void EntityManager::updateEntities(EntityArray &entityList, float split)
 	{
-		EntityDeserialiser entityDeserialiser(this);
-
 		bool entityRemoved = false;
 
 		ptr_set updatedSprites;
 
-		EntityArray::iterator it = entity_list.begin(),
-			end = entity_list.end();
+		EntityArray::iterator it = entityList.begin(),
+			end = entityList.end();
 		while (it != end)
 		{
 			EntityPtr &entity = *it;
@@ -761,15 +771,15 @@ namespace FusionEngine
 			{
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
-				it = entity_list.erase(it);
-				end = entity_list.end();
+				it = entityList.erase(it);
+				end = entityList.end();
 			}
-			else if (entity->GetTagFlags() & m_ToDeleteFlags)
+			else if ((entity->GetTagFlags() & m_ToDeleteFlags) == m_ToDeleteFlags)
 			{
 				entityRemoved = true;
 				RemoveEntity(entity);
-				it = entity_list.erase(it);
-				end = entity_list.end();
+				it = entityList.erase(it);
+				end = entityList.end();
 			}
 
 			// Also make sure the entity isn't blocked by a flag
@@ -777,24 +787,23 @@ namespace FusionEngine
 			{
 				EntityDomain domainIndex = entity->GetDomain();
 
-				if (entity->Wait())
+				if (CheckState(domainIndex, DS_ENTITYUPDATE))
 				{
-					if (CheckState(domainIndex, DS_ENTITYUPDATE))
-						entity->Update(split);
-					if (CheckState(domainIndex, DS_SYNCH))
-						m_EntitySynchroniser->AddToPacket(entity);
-
-					updateRenderables(entity, split, updatedSprites);
-
-					if (!entity->IsStreamedIn())
-						entity->SetWait(2);
+					entity->Update(split);
+					m_StreamingManager->OnUpdated(entity);
 				}
+
+				updateRenderables(entity, split, updatedSprites);
+
 				entity->PacketSkipped();
 
 				// Next entity
 				++it;
 			}
 		}
+
+		// Clear the ToDeleteFlags
+		m_ToDeleteFlags = 0;
 
 		if (entityRemoved) // Do a full GC cycle if entities were removed
 		{
@@ -806,17 +815,33 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
-		Update(m_ActiveEntities, split);
+		updateEntities(m_ActiveEntities, split);
 
 		m_EntitiesLocked = false;
 
-		// Clear the ToDeleteFlags
-		m_ToDeleteFlags = 0;
-
 		// Actually add entities which were 'added' during the update
-		for (EntityToAddArray::iterator it = m_EntitiesToAdd.begin(), end = m_EntitiesToAdd.end(); it != end; ++it)
-				AddEntity(it->first);
-		m_EntitiesToAdd.clear();
+		for (EntityArray::iterator it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)
+			insertActiveEntity(*it);
+		m_EntitiesToActivate.clear();
+	}
+
+	void EntityManager::insertActiveEntity(const EntityPtr &entity)
+	{
+		m_ActiveEntities.push_back(entity);
+	}
+
+	void EntityManager::OnActivationEvent(const ActivationEvent &ev)
+	{
+		if (ev.type == ActivationEvent::Activate)
+		{
+			if (m_EntitiesLocked)
+				// The entity will be added to the active list at the end of this update step (see EntityManager::Update(float))
+				m_EntitiesToActivate.push_back(ev.entity);
+			else
+				insertActiveEntity(ev.entity);
+		}
+		else
+			ev.entity->MarkToDeactivate();
 	}
 
 	void EntityManager::Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer)

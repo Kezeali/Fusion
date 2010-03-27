@@ -42,6 +42,7 @@
 #include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
 #include "FusionGUI.h"
+#include "FusionInstanceSynchroniser.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionPhysicalEntityManager.h"
@@ -192,7 +193,7 @@ namespace FusionEngine
 		// Used to recreate the entity
 		struct
 		{
-			bool pseudo;
+			bool synced;
 			ObjectID id;
 			std::string type;
 			std::string name;
@@ -219,9 +220,7 @@ namespace FusionEngine
 			m_Title += map_entity->entity->GetName();
 
 		// Store the entity info
-		m_Parameters.pseudo = map_entity->entity->IsPseudoEntity();
-		if (!m_Parameters.pseudo)
-			m_Parameters.id = map_entity->entity->GetID();
+		m_Parameters.synced = map_entity->synced;
 		m_Parameters.type = map_entity->entity->GetType();
 		m_Parameters.name = map_entity->entity->GetName();
 		m_Parameters.position = map_entity->entity->GetPosition();
@@ -237,7 +236,7 @@ namespace FusionEngine
 
 	void AddRemoveEntityAction::create()
 	{
-		m_EditorEntity = m_Editor->CreateEntity(m_Parameters.type, m_Parameters.name, m_Parameters.pseudo, m_Parameters.position.x, m_Parameters.position.y);
+		m_EditorEntity = m_Editor->CreateEntity(m_Parameters.type, m_Parameters.name, m_Parameters.synced, m_Parameters.position.x, m_Parameters.position.y);
 	}
 
 	void AddRemoveEntityAction::destroy()
@@ -278,13 +277,14 @@ namespace FusionEngine
 			return EntityPtr();
 	}
 
-	Editor::Editor(InputManager *input, Renderer *renderer, EntityFactory *entity_factory, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util)
+	Editor::Editor(InputManager *input, EntityFactory *entity_factory, Renderer *renderer, InstancingSynchroniser *instancing, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util, EntityManager *entity_manager)
 		: m_Input(input),
 		m_Renderer(renderer),
 		m_EntityFactory(entity_factory),
 		m_PhysicalWorld(world),
 		m_Streamer(streaming_manager),
 		m_MapUtil(map_util),
+		m_EntityManager(entity_manager),
 		m_MainDocument(NULL),
 		m_UndoManager(256),
 		m_Enabled(false),
@@ -409,11 +409,9 @@ namespace FusionEngine
 			m_Streamer->Update();
 
 			ptr_set updatedSprites;
-			// TODO: StreamingManager::Process(start_iterator, end_iterator)
 			for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
 			{
 				EntityPtr &entity = *it;
-				m_Streamer->ProcessEntity(entity);
 				updateRenderables(entity, split, updatedSprites);
 			}
 		}
@@ -430,37 +428,37 @@ namespace FusionEngine
 	void Editor::Enable(bool enable)
 	{
 		if (m_Camera)
+			return;
+
+		if (enable)
 		{
-			if (enable)
-			{
-				this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
-				this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
+			this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+			this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
 
-				m_Streamer->SetPlayerCamera(255, m_Camera);
+			m_Streamer->SetPlayerCamera(255, m_Camera);
 
-				m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
-				m_PhysicalWorld->EnableDebugDraw();
+			m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
+			m_PhysicalWorld->EnableDebugDraw();
 
-				this->PushMessage(new SystemMessage(SystemMessage::RESUME));
-				this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+			this->PushMessage(new SystemMessage(SystemMessage::RESUME));
+			this->PushMessage(new SystemMessage(SystemMessage::SHOW));
 
-				GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
+			GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 
-				m_MainDocument->Show();
-			}
-			else
-			{
-				this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
-				this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
+			m_MainDocument->Show();
+		}
+		else
+		{
+			this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
+			this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
 
-				m_Streamer->RemovePlayerCamera(255);
+			m_Streamer->RemovePlayerCamera(255);
 
-				this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
-				this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
+			this->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
-				if (m_MainDocument != NULL)
-					m_MainDocument->Hide();
-			}
+			if (m_MainDocument != NULL)
+				m_MainDocument->Hide();
 		}
 		m_Enabled = enable;
 	}
@@ -686,7 +684,7 @@ namespace FusionEngine
 		m_EntityDialogs.push_back(dialog);
 	}
 
-	Editor::MapEntityPtr Editor::CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y)
+	Editor::MapEntityPtr Editor::CreateEntity(const std::string &type, const std::string &name, bool synced, float x, float y)
 	{
 		EditorMapEntityPtr gmEntity(new EditorMapEntity());
 		gmEntity->entity = m_EntityFactory->InstanceEntity(type, name);
@@ -706,10 +704,10 @@ namespace FusionEngine
 		else
 			gmEntity->hasName = false;
 
+		gmEntity->synced = synced;
+
 		gmEntity->entity->SetPosition(Vector2(x, y));
 
-		if (!pseudo)
-			gmEntity->entity->SetID(m_IdStack.getFreeID());
 		addMapEntity(gmEntity);
 
 		// Record type usage
@@ -962,15 +960,16 @@ namespace FusionEngine
 	{
 		manager->Clear();
 		
-		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
+		ObjectID nextId = 1;
+		for (MapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			EntityPtr &entity = *it;
-			if (entity->IsPseudoEntity())
-				manager->AddPseudoEntity(entity);
-			else
-				manager->AddEntity(entity);
-			entity->Spawn();
+			MapEntityPtr &mapEntity = *it;
+			if (mapEntity->synced)
+				mapEntity->entity->SetID(nextId++);
+			manager->AddEntity(mapEntity->entity);
+			mapEntity->entity->Spawn();
 		}
+		m_InstanceSynchroniser->Reset(nextId);
 	}
 
 	void Editor::Register(asIScriptEngine *engine)

@@ -257,6 +257,9 @@
     <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
@@ -575,6 +578,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionMaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionFirstCause.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

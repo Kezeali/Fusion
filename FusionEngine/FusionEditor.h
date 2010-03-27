@@ -83,7 +83,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Editor(InputManager *input, Renderer *renderer, EntityFactory *entity_factory, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util);
+		Editor(InputManager *input, EntityFactory *entity_factory, Renderer *renderer, InstancingSynchroniser *instancing, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util, EntityManager *entity_manager);
 		virtual ~Editor();
 
 	public:
@@ -192,7 +192,8 @@ namespace FusionEngine
 		InputManager *m_Input;
 		PhysicalWorld *m_PhysicalWorld;
 		EntityFactory *m_EntityFactory;
-		//EntityManager *m_EntityManager;
+		InstancingSynchroniser *m_InstanceSynchroniser;
+		EntityManager *m_EntityManager;
 		GameMapLoader *m_MapUtil;
 
 		boost::signals2::connection m_RawInputConnection;

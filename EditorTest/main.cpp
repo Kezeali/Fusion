@@ -21,10 +21,11 @@
 #include "../FusionEngine/FusionPlayerRegistry.h"
 
 // Systems
+#include "../FusionEngine/FusionEditor.h"
+#include "../FusionEngine/FusionGUI.h"
+#include "../FusionEngine/FusionFirstCause.h"
 #include "../FusionEngine/FusionNetworkSystem.h"
 #include "../FusionEngine/FusionOntologicalSystem.h"
-#include "../FusionEngine/FusionGUI.h"
-#include "../FusionEngine/FusionEditor.h"
 #include "../FusionEngine/FusionStateManager.h"
 
 // Various
@@ -171,7 +172,7 @@ public:
 
 			///////////////////
 			// Player Registry
-			std::tr1::shared_ptr<PlayerRegistry> playerRegistry(new PlayerRegistry());
+			std::shared_ptr<PlayerRegistry> playerRegistry(new PlayerRegistry());
 
 			///////////
 			// Systems
@@ -185,8 +186,6 @@ public:
 			gui->Initialise();
 			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
 			ElementUndoMenu::RegisterElement();
-
-			std::shared_ptr<OntologicalSystem> ontology( new OntologicalSystem(co, renderer.get(), inputMgr.get()) );
 			
 			/////////////////////
 			// Attach module to objects that require it
@@ -194,23 +193,17 @@ public:
 			// Add the core extension file - this file is used to define basic script functions and classes for general use
 			scriptingManager->AddFile("core/extend.as", "main");
 
+			// Create some non-specific intelegent force that certainly has no particular theological bias:
+			boost::scoped_ptr<FirstCause> ourLordAndSaviour( new FirstCause(co, renderer.get(), inputMgr.get()) ); // let's get political!
+			ourLordAndSaviour->BeginExistence(systemMgr, module);
+
 			console->SetModule(module);
 			gui->SetModule(module);
 			
 			script_SoundOutput->SetModule(module);
 
-			systemMgr->AddSystem(ontology);
-			//systemMgr->AddSystem(gui);
-
-			ontology->SetModule(module);
-
-			// Build the module (scripts are added automatically by objects which have registered a module connection)
+			// Build the module (scripts will be added automatically by objects which have registered a module connection)
 			module->Build();
-			//{
-			//	BuildModuleEvent bme;
-			//	bme.type = BuildModuleEvent::PostBuild;
-			//	ontology->OnModuleRebuild(bme);
-			//}
 
 
 			unsigned int lastframe = CL_System::get_time();

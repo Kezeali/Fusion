@@ -56,19 +56,16 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		OntologicalSystem(
-			ClientOptions *options,
-			Renderer *renderer,
-			InputManager *input_manager);
+		OntologicalSystem(Renderer *renderer, InstancingSynchroniser *instance_sync, PhysicalWorld *phys, StreamingManager *streaming_manager, GameMapLoader *map_loader, EntityManager *entity_manager);
 		//! Destructor
 		virtual ~OntologicalSystem();
 
 		//! Returns the name of the system ("Entities")
 		virtual const std::string &GetName() const;
 
-		//! Initialises the system (creates EntityManager, MapLoader, etc.)
+		//! Initialises the system
 		virtual bool Initialise();
-		//! Cleans up the system when it is unused (deletes EntityManager object, etc.)
+		//! Cleans up the system when it is unused
 		virtual void CleanUp();
 
 		//! Updates the entity managers
@@ -220,13 +217,11 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		EntitySynchroniser *m_EntitySyncroniser;
+		InstancingSynchroniser *m_InstancingSync;
 		StreamingManager *m_Streaming;
-		EntityFactory *m_EntityFactory;
 		EntityManager *m_EntityManager;
 		GameMapLoader *m_MapLoader;
 
-		//PhysicsWorld *m_PhysicsWorld;
 		PhysicalWorld *m_PhysWorld;
 
 		ViewportArray m_Viewports;
@@ -238,10 +233,6 @@ namespace FusionEngine
 
 		Renderer *m_Renderer;
 		InputManager *m_InputManager;
-		NetworkSystem *m_NetworkSystem;
-
-		typedef std::tr1::shared_ptr<Editor> EditorPtr;
-		EditorPtr m_Editor;
 
 		//! Basic script callback data
 		struct CallbackDecl

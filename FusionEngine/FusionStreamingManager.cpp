@@ -101,7 +101,7 @@ namespace FusionEngine
 		entry.x = entity->GetPosition().x; entry.y = entity->GetPosition().y;
 		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
 
-		OnMoved(entity);
+		OnUpdated(entity);
 	}
 
 	void StreamingManager::RemoveEntity(const EntityPtr &entity)
@@ -111,7 +111,7 @@ namespace FusionEngine
 		cell->objects.erase(entity);
 	}
 
-	void StreamingManager::OnMoved(const EntityPtr &entity)
+	void StreamingManager::OnUpdated(const EntityPtr &entity)
 	{
 		FSN_ASSERT(entity);
 

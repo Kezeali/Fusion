@@ -192,7 +192,7 @@ namespace FusionEngine
 					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
 
-				m_Manager->AddPseudoEntity(entity);
+				m_Manager->AddEntity(entity);
 
 				instancedEntities.push_back(entity);
 			}
