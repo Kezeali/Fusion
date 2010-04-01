@@ -468,6 +468,9 @@ namespace FusionEngine
 		{
 			m_Buffer.clear();
 
+			m_LastNewlineInBuffer = 0;
+			m_LengthToNextSignal = m_CharInterval;
+
 			// Signal
 			OnClear();
 		}

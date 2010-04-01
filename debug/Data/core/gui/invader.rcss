@@ -177,7 +177,7 @@ input.submit:focus
     
     shadow-font-effect: shadow;
     shadow-offset: 1px 1px;
-    shadow-color: black;
+    shadow-color: white;
 }
 
 button:hover,
