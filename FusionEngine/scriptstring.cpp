@@ -601,6 +601,11 @@ static void StringResize_Generic(asIScriptGeneric *gen)
 	s->resize(v);
 }
 
+std::string &string_erasefrom(std::string::size_type offset, std::string *obj)
+{
+	return obj->erase(offset);
+}
+
 // This is where we register the string type
 int RegisterScriptString_Native(asIScriptEngine *engine)
 {
@@ -633,16 +638,12 @@ int RegisterScriptString_Native(asIScriptEngine *engine)
 	r = engine->RegisterStringFactory("string@", asFUNCTION(StringFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 
 	// Register the object methods
-	if( sizeof(size_t) == 4 )
-	{
-		r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-	}
-	else
-	{
-		r = engine->RegisterObjectMethod("string", "uint64 length() const", asMETHOD(string,size), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("string", "void resize(uint64)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-	}
+	r = engine->RegisterObjectMethod("string", "uint length() const", asMETHOD(string,size), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "bool empty() const", asMETHOD(string,empty), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void resize(uint)", asMETHODPR(string,resize,(size_t),void), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void erase(uint)", asFUNCTION(string_erasefrom), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void erase(uint, uint)", asMETHODPR(string, erase, (string::size_type, string::size_type),string&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void clear()", asMETHOD(string, clear), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 	// TODO: Add factory  string(const string &in str, int repeatCount)
 

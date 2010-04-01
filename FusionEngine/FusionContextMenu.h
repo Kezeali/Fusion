@@ -55,33 +55,58 @@ namespace FusionEngine
 	struct MenuItemEvent
 	{
 		std::string title;
-		void *value;
+		std::string value;
 	};
 
-	class MenuItem : public Rocket::Core::EventListener, public RefCounted, public noncopyable
+	//! MenuItem class
+	/*!
+	* \see ContextMenu
+	*/
+	// NOTE that RefCounted needs to be first here, or an exception occors
+	//  when this and instance of class is created in a script
+	class MenuItem : public RefCounted, public noncopyable, public Rocket::Core::EventListener
 	{
 	public:
+		//! Ctor
 		MenuItem();
+		//! Ctor
 		MenuItem(const std::string &title, const std::string &value);
+		//! Dtor
 		virtual ~MenuItem();
 
+		//! Shows the submenu attached to this item
 		virtual void Show();
+		//! Hides the submenu attached to this item
 		void Hide();
 
+		//! Adds a child element to this item's sub-menu
 		int AddChild(MenuItem *item);
 
+		//! Removes the given menu item from this item's sub-menu
 		void RemoveChild(MenuItem *item);
+		//! Removes the submenu item at the given index
 		void RemoveChild(int index);
 
+		//! Removes all menu item's from this item's attached submenu
 		void RemoveAllChildren();
 
-		MenuItem *GetChild(int index);
+		//! Returns the menu-item from this item's sub-menu
+		MenuItem *GetChild(int index) const;
 
+		int GetNumChildren() const;
+		bool Empty() const;
+
+		//! Selects the given sub-menu item
 		void SelectChild(int index);
+		//! Moves the selection
 		void SelectChildRelative(int distance);
 
+		//! Returns the selected index
 		int GetSelectedIndex() const;
+		//! Returns the selected menu item
 		MenuItem *GetSelectedItem();
+
+		void Click();
 
 		//! Returns true if this object represents a menu-item that opens a sub-menu
 		bool IsSubmenu() const;
@@ -99,7 +124,9 @@ namespace FusionEngine
 
 		boost::signals2::signal<void (const MenuItemEvent&)> SignalClicked;
 		
+		//! Registers the script interface to this class (used internally - call ContextMenu#Register() instead)
 		static void Register(asIScriptEngine *engine);
+		//! Registers non-virtual methods of this class (used internally)
 		static void RegisterMethods(asIScriptEngine *engine, const std::string &type);
 
 	protected:
@@ -126,24 +153,35 @@ namespace FusionEngine
 		void init();
 		void initSubmenu();
 		void addedToMenu(MenuItem *parent, Rocket::Core::Element *element);
+
+		void onChildClicked(MenuItem *clicked_child, const MenuItemEvent &ev);
 	};
 
 	//! Spawns a context-menu GUI document
 	class ContextMenu : public MenuItem
 	{
 	public:
+		//! Ctor
 		ContextMenu(Rocket::Core::Context *context,  bool auto_hide = false);
+		//! Ctor
 		ContextMenu(Rocket::Core::Context *context, InputManager *input, bool auto_hide = true);
+		//! Dtor
 		virtual ~ContextMenu();
 
+		//! Sets the position of the ContextMenu
 		void SetPosition(int x, int y);
 
+		//! Shows the context menu
 		virtual void Show();
+		//! Sets the position of the context menu and shows it
 		void Show(int x, int y, bool fit_within_context = true);
 
+		//! Gets raw input, for additional functionality
 		void OnRawInput(const RawInput &data);
+		//! Processes messages from Rocket
 		virtual void ProcessEvent(Rocket::Core::Event& ev);
 
+		//! Registers the script interface to this class and the MenuItem class
 		static void Register(asIScriptEngine *engine);
 
 	protected:

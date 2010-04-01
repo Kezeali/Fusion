@@ -29,9 +29,12 @@
 
 #include "FusionContextMenu.h"
 
+#include "FusionGUI.h"
 //#include <boost/lexical_cast.hpp>
 #include <ClanLib/Display/Window/keys.h>
 //#include <ScriptUtils/Inheritance/RegisterConversion.h>
+#include "FusionScriptedSlots.h"
+#include "scriptstring.h"
 
 namespace FusionEngine
 {
@@ -45,7 +48,9 @@ namespace FusionEngine
 		: m_Element(nullptr),
 		m_Index(-1),
 		m_Document(nullptr),
-		m_Context(nullptr)
+		m_Context(nullptr),
+		m_Parent(nullptr),
+		m_SelectedItem(-1)
 	{
 		init();
 	}
@@ -56,7 +61,9 @@ namespace FusionEngine
 		m_Element(nullptr),
 		m_Index(-1),
 		m_Document(nullptr),
-		m_Context(nullptr)
+		m_Context(nullptr),
+		m_Parent(nullptr),
+		m_SelectedItem(-1)
 	{
 		init();
 	}
@@ -146,8 +153,37 @@ namespace FusionEngine
 		return m_Children.size() - 1;
 	}
 
+	void MenuItem::RemoveChild(MenuItem *item)
+	{
+		MenuItem *child = nullptr;
+		// Find the item in question
+		for (auto it = m_Children.begin(), end = m_Children.end(); it != end; ++it)
+		{
+			if (*it == item)
+			{
+				m_Children.erase(it);
+				break;
+			}
+		}
+		// Remove the GUI element that represents the item from the document
+		m_Document->RemoveChild(item->m_Element);
+		// Erase the item
+		item->release();
+
+		if (m_Children.empty() && m_Element != nullptr) // Remove sub-menu stuff if this item has no more child-items
+		{
+			m_Element->SetPseudoClass("submenu", false);
+			m_Element->RemoveEventListener("mouseover", this);
+			m_Element->RemoveEventListener("mouseout", this);
+		}
+	}
+
 	void MenuItem::RemoveChild(int index)
 	{
+		// Set the selection to 'none' if the removed item was selected
+		if (index == m_SelectedItem)
+			m_SelectedItem = -1;
+
 		// Find the item in question
 		MenuItem *child = m_Children[index];
 		// Remove the GUI element that represents the item from the document
@@ -166,6 +202,8 @@ namespace FusionEngine
 
 	void MenuItem::RemoveAllChildren()
 	{
+		m_SelectedItem = -1;
+
 		for (MenuItemArray::iterator it = m_Children.begin(), end = m_Children.end(); it != end; ++it)
 		{
 			MenuItem *child = *it;
@@ -184,7 +222,7 @@ namespace FusionEngine
 		}
 	}
 
-	MenuItem *MenuItem::GetChild(int index)
+	MenuItem *MenuItem::GetChild(int index) const
 	{
 		if (index >= 0 && (unsigned)index < m_Children.size())
 			return m_Children[(unsigned)index];
@@ -192,13 +230,23 @@ namespace FusionEngine
 			return nullptr;
 	}
 
+	int MenuItem::GetNumChildren() const
+	{
+		return m_Children.size();
+	}
+
+	bool MenuItem::Empty() const
+	{
+		return m_Children.empty();
+	}
+
 	void MenuItem::SelectChild(int id)
 	{
-		// Validate the selected ID
-		if (id < 1)
-			id = 0;
+		// Select none if an out-of-range ID is given
+		if (id < 0)
+			id = -1;
 		else if (id >= (signed)m_Children.size())
-			id = m_Children.size()-1;
+			id = -1;
 		m_SelectedItem = id;
 
 		for (int i = 0, size = (signed)m_Children.size(); i < size; ++i)
@@ -209,7 +257,28 @@ namespace FusionEngine
 
 	void MenuItem::SelectChildRelative(int distance)
 	{
-		SelectChild(m_SelectedItem + distance);
+		int id = m_SelectedItem + distance;
+		// Wrap around
+		if (id < 0)
+			id = m_Children.size()-1;
+		else if (id >= (signed)m_Children.size())
+			id = 0;
+		SelectChild(id);
+	}
+
+	int MenuItem::GetSelectedIndex() const
+	{
+		return m_SelectedItem;
+	}
+
+	MenuItem *MenuItem::GetSelectedItem()
+	{
+		return GetChild(m_SelectedItem);
+	}
+
+	void MenuItem::Click()
+	{
+		m_Element->Click();
 	}
 
 	bool MenuItem::IsSubmenu() const
@@ -248,8 +317,9 @@ namespace FusionEngine
 			{
 				MenuItemEvent item_ev;
 				item_ev.title = m_Title;
-				item_ev.value = nullptr;
+				item_ev.value = m_Value;
 				SignalClicked(item_ev);
+				m_Parent->onChildClicked(this, item_ev);
 			}
 		}
 	}
@@ -351,6 +421,11 @@ namespace FusionEngine
 		}
 	}
 
+	void MenuItem::onChildClicked(MenuItem *clicked_child, const MenuItemEvent &ev)
+	{
+		SignalClicked(ev);
+	}
+
 	ContextMenu::ContextMenu(Rocket::Core::Context *context, bool auto_hide)
 		: m_AutoHide(auto_hide)
 	{
@@ -386,7 +461,7 @@ namespace FusionEngine
 
 	void ContextMenu::Show()
 	{
-		m_Document->Show();
+		m_Document->Show(Rocket::Core::ElementDocument::NONE);
 	}
 
 	void ContextMenu::Show(int x, int y, bool fit_within_context)
@@ -402,7 +477,11 @@ namespace FusionEngine
 
 		m_Document->SetProperty("left", Rocket::Core::Property(x, Rocket::Core::Property::PX));
 		m_Document->SetProperty("top", Rocket::Core::Property(y, Rocket::Core::Property::PX));
-		m_Document->Show();
+		//Rocket::Core::Element *focus = m_Context->GetFocusElement();
+		m_Document->Show(Rocket::Core::ElementDocument::NONE);
+		//focus->Focus();
+		m_Document->PullToFront();
+		//m_Document->Blur();
 	}
 
 	void ContextMenu::OnRawInput(const RawInput &input)
@@ -423,18 +502,51 @@ namespace FusionEngine
 		}
 	}
 
+	CScriptString *MenuItemEvent_get_title(MenuItemEvent *obj)
+	{
+		return new CScriptString(obj->title);
+	}
+
+	CScriptString *MenuItemEvent_get_value(MenuItemEvent *obj)
+	{
+		return new CScriptString(obj->value);
+	}
+
 	MenuItem *MenuItem_Factory(const std::string &title, const std::string &value)
 	{
 		return new MenuItem(title, value);
+	}
+
+	MenuItem *MenuItem_FactoryNoValue(const std::string &title)
+	{
+		return new MenuItem(title, title);
+	}
+
+	ScriptedSlotWrapper *MenuItem_ConnectToClick(const std::string &decl, MenuItem *obj)
+	{
+		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
+		if (slot != nullptr)
+		{
+			boost::signals2::connection c = obj->SignalClicked.connect( boost::bind(&ScriptedSlotWrapper::Callback<const MenuItemEvent &>, slot, _1) );
+			slot->HoldConnection(c);
+		}
+		return slot;
 	}
 
 	void MenuItem::Register(asIScriptEngine *engine)
 	{
 		MenuItem::RegisterType<MenuItem>(engine, "MenuItem");
 		engine->RegisterObjectBehaviour("MenuItem", asBEHAVE_FACTORY, "MenuItem@ f(const string &in, const string &in)", asFUNCTION(MenuItem_Factory), asCALL_CDECL);
+		engine->RegisterObjectBehaviour("MenuItem", asBEHAVE_FACTORY, "MenuItem@ f(const string &in)", asFUNCTION(MenuItem_FactoryNoValue), asCALL_CDECL);
+
+		engine->RegisterObjectType("MenuItemEvent", sizeof(MenuItemEvent), asOBJ_VALUE | asOBJ_POD);
+		engine->RegisterObjectMethod("MenuItemEvent", "const string& get_title() const", asFUNCTION(MenuItemEvent_get_title), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("MenuItemEvent", "const string& get_value() const", asFUNCTION(MenuItemEvent_get_value), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectMethod("MenuItem", "void click()", asMETHOD(MenuItem, Click), asCALL_THISCALL);
 
 		// This is a virtual method that is overloaded by ContextMenu, so it isn't registered in the RegisterMethods method (it is registered in ContextMenu::Register)
-		engine->RegisterObjectMethod("MenuItem", "void Show()", asMETHODPR(MenuItem, Show, (void), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("MenuItem", "void show()", asMETHODPR(MenuItem, Show, (void), void), asCALL_THISCALL);
 		RegisterMethods(engine, "MenuItem");
 	}
 
@@ -448,19 +560,34 @@ namespace FusionEngine
 
 	void MenuItem::RegisterMethods(asIScriptEngine *engine, const std::string &type)
 	{
-		engine->RegisterObjectMethod(type.c_str(), "void Hide()", asMETHODPR(MenuItem, Hide, (void), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "int AddChild(MenuItem@)", asMETHODPR(MenuItem, AddChild, (MenuItem*), int), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "void RemoveChild(MenuItem@)", asMETHODPR(MenuItem, RemoveChild, (MenuItem*), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "void RemoveChild(int)", asMETHODPR(MenuItem, RemoveChild, (int), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "void RemoveAllChildren()", asMETHOD(MenuItem, RemoveAllChildren), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ GetChild(int)", asFUNCTION(MenuItem_GetChild), asCALL_CDECL_OBJLAST);
-		engine->RegisterObjectMethod(type.c_str(), "void SelectChild(int)", asMETHOD(MenuItem, SelectChild), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "void SelectChildRelative(int)", asMETHOD(MenuItem, SelectChildRelative), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "int GetSelectedIndex() const", asMETHOD(MenuItem, GetSelectedIndex), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ GetSelectedItem()", asMETHOD(MenuItem, GetSelectedItem), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "bool IsSubmenu() const", asMETHOD(MenuItem, IsSubmenu), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "bool IsTopMenu() const", asMETHOD(MenuItem, IsTopMenu), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "bool IsMenu() const", asMETHOD(MenuItem, IsMenu), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void hide()", asMETHODPR(MenuItem, Hide, (void), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "int addChild(MenuItem@)", asMETHODPR(MenuItem, AddChild, (MenuItem*), int), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void removeChild(MenuItem@)", asMETHODPR(MenuItem, RemoveChild, (MenuItem*), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void removeChild(int)", asMETHODPR(MenuItem, RemoveChild, (int), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void removeAllChildren()", asMETHOD(MenuItem, RemoveAllChildren), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ getChild(int) const", asFUNCTION(MenuItem_GetChild), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod(type.c_str(), "int getNumChildren() const", asMETHOD(MenuItem, GetNumChildren), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool empty() const", asMETHOD(MenuItem, Empty), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void select(int)", asMETHOD(MenuItem, SelectChild), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "void selectRelative(int)", asMETHOD(MenuItem, SelectChildRelative), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "int getSelectedIndex() const", asMETHOD(MenuItem, GetSelectedIndex), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ getSelectedItem()", asMETHOD(MenuItem, GetSelectedItem), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool isSubmenu() const", asMETHOD(MenuItem, IsSubmenu), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool isTopMenu() const", asMETHOD(MenuItem, IsTopMenu), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "bool isMenu() const", asMETHOD(MenuItem, IsMenu), asCALL_THISCALL);
+
+		engine->RegisterObjectMethod(type.c_str(), "SignalConnection@ connectToClick(const string &in)", asFUNCTION(MenuItem_ConnectToClick), asCALL_CDECL_OBJLAST);
+	}
+
+	ContextMenu *ContextMenu_FactoryDefault()
+	{
+		return new ContextMenu(GUI::getSingleton().GetContext(), true);
+	}
+
+	void ContextMenu_FactoryGeneric(asIScriptGeneric *gen)
+	{
+		ContextMenu *contextMenu = new ContextMenu(GUI::getSingleton().GetContext(), true);
+		gen->SetReturnAddress((void*)contextMenu);
 	}
 
 	ContextMenu *ContextMenu_Factory(Rocket::Core::Context *context, bool auto_hide)
@@ -468,18 +595,27 @@ namespace FusionEngine
 		return new ContextMenu(context, auto_hide);
 	}
 
+	void ContextMenu_ShowWithinCtx(int x, int y, ContextMenu *obj)
+	{
+		obj->Show(x, y);
+	}
+
 	void ContextMenu::Register(asIScriptEngine *engine)
 	{
+		MenuItem::Register(engine);
+
 		ContextMenu::RegisterType<ContextMenu>(engine, "ContextMenu");
+
+		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f()", asFUNCTION(ContextMenu_FactoryGeneric), asCALL_GENERIC);
+		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f(Context@, bool)", asFUNCTION(ContextMenu_Factory), asCALL_CDECL);
+		
+		engine->RegisterObjectMethod("ContextMenu", "void show()", asMETHODPR(ContextMenu, Show, (void), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("ContextMenu", "void show(int, int, bool)", asMETHODPR(ContextMenu, Show, (int, int, bool), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod("ContextMenu", "void show(int, int)", asFUNCTION(ContextMenu_ShowWithinCtx), asCALL_CDECL_OBJLAST);
 
 		// Register MenuItem inheritance
 		RegisterBaseOf<MenuItem, ContextMenu>(engine, "MenuItem", "ContextMenu");
 		MenuItem::RegisterMethods(engine, "ContextMenu");
-
-		engine->RegisterObjectBehaviour("ContextMenu", asBEHAVE_FACTORY, "ContextMenu@ f(const string &in, const string &in)", asFUNCTION(ContextMenu_Factory), asCALL_CDECL);
-		
-		engine->RegisterObjectMethod("ContextMenu", "void Show()", asMETHODPR(ContextMenu, Show, (void), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod("ContextMenu", "void Show(int, int, bool)", asMETHODPR(ContextMenu, Show, (int, int, bool), void), asCALL_THISCALL);
 	}
 
 }

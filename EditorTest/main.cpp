@@ -109,6 +109,7 @@ public:
 			Console::Register(scriptingManager);
 			RegisterScriptedConsoleCommand(asEngine);
 			GUI::Register(scriptingManager);
+			ContextMenu::Register(asEngine);
 			Renderable::Register(asEngine);
 			SoundOutput::Register(asEngine);
 			SoundSession::Register(asEngine);
@@ -193,6 +194,8 @@ public:
 			// Add the core extension file - this file is used to define basic script functions and classes for general use
 			scriptingManager->AddFile("core/extend.as", "main");
 
+			scriptingManager->AddFile("core/gui/console.as", "main");
+
 			// Create some non-specific intelegent force that certainly has no particular theological bias:
 			boost::scoped_ptr<FirstCause> ourLordAndSaviour( new FirstCause(co, renderer.get(), inputMgr.get()) ); // let's get political!
 			ourLordAndSaviour->BeginExistence(systemMgr, module);
@@ -205,6 +208,10 @@ public:
 			// Build the module (scripts will be added automatically by objects which have registered a module connection)
 			module->Build();
 
+			// Create the Console window (the window where console commands can be entered)
+			module->GetCaller("void InitialiseConsole()")();
+			Rocket::Core::ElementDocument *conDoc = gui->GetContext()->LoadDocument("core/gui/console.rml");
+			conDoc->Show();
 
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;
@@ -234,7 +241,12 @@ public:
 				scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
 				dispWindow.flip();
+#ifdef _DEBUG
+				dispWindow.get_gc().clear();
+#endif
 			}
+
+			conDoc->RemoveReference();
 
 			scriptingManager->GetEnginePtr()->GarbageCollect();
 

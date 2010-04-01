@@ -33,14 +33,36 @@
 namespace FusionEngine
 {
 
+	ScriptedSlotWrapper* ScriptedSlotWrapper::CreateWrapperFor(asIScriptContext *context, const std::string &decl)
+	{
+		ScriptedSlotWrapper *slot = nullptr;
+
+		if (context != nullptr)
+		{
+			asIScriptObject *object = ctxGetObject(context);
+			if (object != nullptr)
+				slot = new ScriptedSlotWrapper(object, decl);
+			else
+			{
+				asIScriptModule *module = ctxGetModule(context);
+				slot = new ScriptedSlotWrapper(module, decl);
+			}
+		}
+
+		return slot;
+	}
+
 	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptModule *module, const std::string &decl)
-		: m_CallSlot(module, decl.c_str())
+		: m_CallSlot(module, decl.c_str()),
+		m_TargetObject(nullptr)
 	{
 	}
 
 	ScriptedSlotWrapper::ScriptedSlotWrapper(asIScriptObject *object, const std::string &decl)
-		: m_CallSlot(object, decl.c_str())
+		: m_TargetObject(object),
+		m_CallSlot(object, decl.c_str())
 	{
+		m_TargetObject->AddRef();
 	}
 
 	ScriptedSlotWrapper::~ScriptedSlotWrapper()
@@ -60,12 +82,29 @@ namespace FusionEngine
 
 	void ScriptedSlotWrapper::Callback()
 	{
-		m_CallSlot();
+		if (m_CallSlot.ok())
+			m_CallSlot();
+	}
+
+	void ScriptedSlotWrapper::EnumReferences(asIScriptEngine *engine)
+	{
+		if (m_TargetObject != nullptr)
+			engine->GCEnumCallback((void*)m_TargetObject);
+	}
+
+	void ScriptedSlotWrapper::ReleaseAllReferences(asIScriptEngine *engine)
+	{
+		if (m_TargetObject != nullptr)
+		{
+			m_CallSlot.release();
+			m_TargetObject->Release();
+			m_TargetObject = nullptr;
+		}
 	}
 
 	void ScriptedSlotWrapper::Register(asIScriptEngine *engine)
 	{
-		RefCounted::RegisterType<ScriptedSlotWrapper>(engine, "CallbackConnection");
+		ScriptedSlotWrapper::RegisterGCType(engine, "SignalConnection");
 	}
 
 }

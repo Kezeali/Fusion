@@ -453,6 +453,17 @@ namespace FusionEngine
 		return context->GetEngine()->GetModule(ctxGetModuleName(context), flag);
 	}
 
+	static inline asIScriptObject* ctxGetObject(asIScriptContext *context)
+	{
+		FSN_ASSERT(context->GetState() == asEXECUTION_ACTIVE ||
+			context->GetState() == asEXECUTION_EXCEPTION ||
+			context->GetState() == asEXECUTION_SUSPENDED);
+
+		FSN_ASSERT((context->GetThisTypeId() & asTYPEID_APPOBJECT) == 0);
+
+		return static_cast<asIScriptObject*>(context->GetThisPointer());
+	}
+
 }
 
 #endif

@@ -35,7 +35,6 @@
 
 #include "FusionCommon.h"
 
-
 namespace FusionEngine
 {
 

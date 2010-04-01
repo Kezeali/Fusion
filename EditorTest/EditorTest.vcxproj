@@ -210,6 +210,7 @@
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptCircularBuffer.h" />
     <ClInclude Include="..\FusionEngine\FusionStableHeaders.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />

@@ -403,10 +403,11 @@ namespace FusionEngine
 			}
 			else
 			{
-				Add(*it + " is not a recognised command.\nEnter 'help' to for a list of recognised commands.");
+				Add("'" + *it + "' is not a recognised command.");
 				const std::string &closestCommand = ClosestCommand(*it);
 				if (!closestCommand.empty())
-					Add("Did you mean " + closestCommand + "?");
+					Add(" * The closest known command is '" + closestCommand + "'");
+				Add("Enter 'help' to for a list of recognised commands.");
 			}
 		}
 	}
@@ -505,24 +506,8 @@ namespace FusionEngine
 	};
 
 	ScriptedConsoleListenerWrapper::ScriptedConsoleListenerWrapper(asIScriptObject *listener, Console *console)
-		//: m_CallOnNewLine(listener, "void OnNewLine(const string &in)"),
-		//m_CallOnNewData(listener, "void OnNewData(const string &in)"),
-		//m_CallOnClear(listener, "void OnClear()"),
 		: m_Listener(listener)
 	{
-		//if (m_CallOnNewLine.ok())
-		//	m_ConsoleOnNewLineConnection = console->OnNewLine.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
-
-		//if (m_CallOnNewData.ok())
-		//	m_ConsoleOnNewDataConnection = console->OnNewData.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
-
-		//if (m_CallOnClear.ok())
-		//	m_ConsoleOnClearConnection = console->OnClear.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
-
-		//m_CallOnNewLine.release();
-		//m_CallOnNewData.release();
-		//m_CallOnClear.release();
-
 		ScriptUtils::Calling::Caller callNewLine(m_Listener, "void OnNewLine(const string &in)");
 		ScriptUtils::Calling::Caller callNewData(m_Listener, "void OnNewData(const string &in)");
 		ScriptUtils::Calling::Caller callClear(m_Listener, "void OnClear()");
@@ -579,55 +564,38 @@ namespace FusionEngine
 		return wrapper;
 	}
 
+
 	ScriptedSlotWrapper* Scr_ConnectNewLineSlot(const std::string &decl, Console *obj)
 	{
-		asIScriptContext *context = asGetActiveContext();
-		if (context != NULL)
+		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
+		if (slot != nullptr)
 		{
-			asIScriptModule *module = ctxGetModule(context);
-			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
-
 			boost::signals2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
 			slot->HoldConnection(c);
-
-			return slot;
 		}
-
-		return NULL;
+		return slot;
 	}
 
 	ScriptedSlotWrapper* Scr_ConnectNewDataSlot(const std::string &decl, Console *obj)
 	{
-		asIScriptContext *context = asGetActiveContext();
-		if (context != NULL)
+		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
+		if (slot != nullptr)
 		{
-			asIScriptModule *module = ctxGetModule(context);
-			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
-
-			bsig2::connection c = obj->OnNewData.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			boost::signals2::connection c = obj->OnNewData.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
 			slot->HoldConnection(c);
-
-			return slot;
 		}
-
-		return NULL;
+		return slot;
 	}
 
 	ScriptedSlotWrapper* Scr_ConnectClearSlot(const std::string &decl, Console *obj)
 	{
-		asIScriptContext *context = asGetActiveContext();
-		if (context != NULL)
+		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
+		if (slot != nullptr)
 		{
-			asIScriptModule *module = ctxGetModule(context);
-			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
-
-			bsig2::connection c = obj->OnClear.connect( boost::bind(&ScriptedSlotWrapper::Callback, slot) );
+			boost::signals2::connection c = obj->OnClear.connect( boost::bind(&ScriptedSlotWrapper::Callback, slot) );
 			slot->HoldConnection(c);
-
-			return slot;
 		}
-
-		return NULL;
+		return slot;
 	}
 
 	void RegisterScriptedConsoleListener(asIScriptEngine *engine)
@@ -653,15 +621,15 @@ namespace FusionEngine
 		int r;
 
 		r = engine->RegisterObjectMethod("Console",
-			"CallbackConnection@ connectTo_NewLine(const string &in)",
+			"SignalConnection@ connectToNewLine(const string &in)",
 			asFUNCTION(Scr_ConnectNewLineSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"CallbackConnection@ connectTo_NewData(const string &in)",
-			asFUNCTION(Scr_ConnectNewLineSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			"SignalConnection@ connectToNewData(const string &in)",
+			asFUNCTION(Scr_ConnectNewDataSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"CallbackConnection@ connectTo_Clear(const string &in)",
+			"SignalConnection@ connectToClear(const string &in)",
 			asFUNCTION(Scr_ConnectClearSlot), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 

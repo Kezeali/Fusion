@@ -867,12 +867,12 @@ namespace FusionEngine
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		//r = m_asEngine->RegisterObjectMethod(
-		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(const string&in)",
+		//	"ScriptManager", "SignalConnection@ connectToDebugger(const string&in)",
 		//	asFUNCTION(ScriptManager::Scr_ConnectDebugSlot),
 		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		//r = m_asEngine->RegisterObjectMethod(
-		//	"ScriptManager", "CallbackConnection@ connectTo_Debugger(IDebugListener@)",
+		//	"ScriptManager", "SignalConnection@ connectToDebugger(IDebugListener@)",
 		//	asFUNCTION(ScriptManager::Scr_ConnectDebugSlot),
 		//	asCALL_THISCALL); FSN_ASSERT(r >= 0);
 

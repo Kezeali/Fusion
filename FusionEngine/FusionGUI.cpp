@@ -510,17 +510,21 @@ namespace FusionEngine
 		{
 			if (ev.id != CL_KEY_BACKSPACE && ev.id != CL_KEY_DELETE)
 			{
-				Rocket::Core::String text = (EMP::Core::word*)ev.str.c_str();
+				Rocket::Core::String text = ev.str.c_str();
 				m_Context->ProcessTextInput(text);
 			}
 		}
 
 		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
+
+		//SendToConsole("Key Down");
 	}
 
 	void GUI::onKeyUp(const CL_InputEvent &ev, const CL_InputState &state)
 	{
 		m_Context->ProcessKeyUp(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
+
+		//SendToConsole("Key Up");
 	}
 
 	void GUI::onResize(int x, int y)

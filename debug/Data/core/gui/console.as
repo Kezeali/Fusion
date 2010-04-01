@@ -1,8 +1,28 @@
+ContextMenu@ autocomplete_menu;
+SignalConnection@ autocompleteCon;
+
+class ConsoleLine
+{
+	uint first;
+	uint last;
+};
+
 class ConsoleElement : ScriptElement
 {
 	bool dirty;
 	bool autoScroll;
 	bool slowScroll;
+
+	ElementFormControlTextArea@ text_area;
+	//ConsoleConnection@ consoleConnection;
+	SignalConnection@ onDataConnection;
+	SignalConnection@ onClearConnection;
+
+	string@ text_block;
+
+	uint[] lines;
+	uint line_front;
+	uint line_back;
 
 	ConsoleElement(Element@ appElement)
 	{
@@ -11,13 +31,33 @@ class ConsoleElement : ScriptElement
 		dirty = false;
 		current_text = "";
 		length = 0;
+
+		@text_block = string();
+
+		lines.resize(32);
+		line_front = 0;
+		line_back = 0;
+
+		console.println("Connecting to console signals");
+		//@consoleConnection = console.connectListener(this);
+		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
+		@onClearConnection = console.connectToClear("void OnClear()");
 	}
 
 	~ConsoleElement()
 	{
 		console.println("ConsoleElement Deleted");
-		@listenerConnection = null;
 		@__inner = null;
+
+		console.println("onDataConnection = null"); 
+		@onDataConnection = null;
+		console.println("onCloseConnection = null"); 
+		@onClearConnection = null;
+
+		console.println("autocomplete_menu.removeAllChildren()"); 
+		autocomplete_menu.removeAllChildren();
+
+		@autocomplete_menu = null;
 	}
 
 	uint length;
@@ -25,6 +65,16 @@ class ConsoleElement : ScriptElement
 
 	void AddText(const string &in text)
 	{
+		if (text_area is null)
+		{
+			//console.println("Storing reference to console text_element");
+			Element@ text_element = GetElementById(e_String("text_element"));
+			if (text_element !is null)
+				@text_area = cast<ElementFormControlTextArea>(text_element);
+			if (text_area is null)
+				return;
+		}
+
 		if (text_area.GetCursorIndex() >= current_text.Length()-1)
 		{
 			autoScroll = true;
@@ -45,20 +95,76 @@ class ConsoleElement : ScriptElement
 		dirty = true;
 	}
 
+	uint getNextLine()
+	{
+		return 0;
+	}
+
+	uint diff(uint a, uint b)
+	{
+		if (a < b)
+			return b-a;
+		else
+			return a-b;
+	}
+
+	void AddLine(const string &in text)
+	{
+		if (text_area.GetCursorIndex() >= text_block.length()-1)
+		{
+			autoScroll = true;
+			//slowScroll = true;
+		}
+
+		//if (!text_block.empty())
+		//	text_block += '\n';
+		text_block += text;
+		text_block += '\n';
+
+		// Remove old lines
+		lines[line_front] = text.length();
+
+		if (++line_front > lines.length())
+			line_front = 0;
+
+		if ((line_front - line_back) > lines.length())
+		{
+			text_block.erase(0, lines[line_back]);
+
+			if (++line_back > lines.length())
+				line_back = 0;
+		}
+
+		dirty = true;
+	}
+
 	void Clear()
 	{
+		text_block.clear();
 		current_text = "";
 		dirty = true;
 	}
 
-	FormControlTextArea@ text_area;
+	void OnLayout()
+	{
+		if (text_area is null)
+		{
+			Element@ text_element = GetElementById(e_String("text_element"));
+			if (text_element !is null)
+				@text_area = cast<ElementFormControlTextArea>(text_element);
+			if (text_area is null)
+			{
+				console.println("Couldn't find text_element.");
+			}
+		}
+	}
 
 	void OnRender()
 	{
-		if (dirty)
+		if (dirty && text_area !is null)
 		{
 			//text_area.SetReadOnly(false);
-			text_area.SetValue( current_text );
+			text_area.SetValue( e_String(text_block) );
 			if (autoScroll)
 			{
 				//text_area.SetCursorIndex(current_text.Length(), true);
@@ -78,18 +184,26 @@ class ConsoleElement : ScriptElement
 		//{
 		//}
 	}
-}
 
-ConsoleConnection@ listenerConnection;
-ContextMenu@ autocomplete_menu;
-
-class AutocompleteListener : IContextMenuListener
-{
-	void OnContextMenuClick(const MenuItem&in item)
+	void OnNewLine(const string &in data)
 	{
-		Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
-		FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("command_element")) );
-		input.SetValue( e_String(item.name) );
+		AddLine(data);
+	}
+
+	void OnNewData(const string &in data)
+	{
+		AddText(data);
+	}
+
+	void OnClear()
+	{
+		Clear();
+	}
+
+	void OnAutocompleteClick(const MenuItemEvent &in ev)
+	{
+		ElementFormControlInput@ input = cast<ElementFormControlInput>( GetElementById(e_String("command_element")) );
+		input.SetValue( e_String(ev.title) );
 		input.Focus();
 
 		e_Dictionary parameters;
@@ -98,74 +212,7 @@ class AutocompleteListener : IContextMenuListener
 	}
 }
 
-// TODO: merge this with ConsoleElement (perhaps make ConsoleElement create an instance and hold it as a member, if they have to be seperate for some reason)
-class ConsoleRouter : IConsoleListener
-{
-	//ConsoleElement@ consoleElm;
-	AutocompleteListener autocompleteListener;
-
-	ConsoleRouter(Element@ element)
-	{
-		//ConsoleElement@ consoleElm = cast<ConsoleElement>( unwrap(gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("console_element"))) );
-		@consoleElm = cast<ConsoleElement>(unwrap(element));
-		if (consoleElm !is null)
-		{
-			Element@ text_element = consoleElm.GetElementById(e_String("text_element"));
-			@consoleElm.text_area = cast<FormControlTextArea>(text_element);
-			if (consoleElm.text_area is null)
-				console.println("Couldn't find textarea element");
-
-			Element@ entry_element = consoleElm.GetElementById(e_String("command_element"));
-			@autocomplete_menu = @ContextMenu( e_String("autocomplete_menu"), e_Vector2i(entry_element.GetAbsoluteLeft(), entry_element.GetAbsoluteTop()) );
-			autocomplete_menu.SetListener(@autocompleteListener);
-		}
-		else
-			console.println("Couldn't find console element"); 
-	}
-
-	~ConsoleRouter()
-	{
-		console.println("ConsoleGUI Deleted");
-		//consoleElm._SetAppObject(null);
-		//@consoleElm = null;
-
-		if (listenerConnection !is null)
-			listenerConnection.disconnect();
-
-		console.println("autocomplete_menu SetListener(null)"); 
-		autocomplete_menu.SetListener(null);
-		console.println("autocomplete_menu Clear()"); 
-		autocomplete_menu.Clear();
-		console.println("autocomplete_menu Close()"); 
-		autocomplete_menu.m_MenuDoc.Close();
-		console.println("autocomplete_menu MenuDoc(null)"); 
-		@autocomplete_menu.m_MenuDoc = null;
-
-		@autocomplete_menu = null;
-	}
-
-	void OnNewData(const string&in data)
-	{
-		ConsoleElement@ consoleElm = cast<ConsoleElement>( unwrap(gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("console_element"))) );
-		if (consoleElm !is null)
-			consoleElm.AddText(data);
-	}
-
-	void OnClear()
-	{
-		ConsoleElement@ consoleElm = cast<ConsoleElement>( unwrap(gui.getContext().GetDocument(e_String("console_doc")).GetElementById(e_String("console_element"))) );
-		if (consoleElm !is null)
-			consoleElm.Clear();
-	}
-}
-
-//class ConsoleAutocomplete
-//{
-//	void OnEntryType(Event &ev)
-//	{
-//		console.listPrefixedCommands(ev.GetParameter_char("data"));
-//	}
-//}
+bool acConnection = false;
 e_String lastvalue = "";
 bool commandDone = false;
 uint commandLength = 0;
@@ -184,46 +231,51 @@ void OnConsoleEntryChanged(Event& ev)
 			{
 				commandDone = true;
 				commandLength = value.Length()-1;
-				autocomplete_menu.Hide();
+				autocomplete_menu.hide();
 				return;
 			}
 
 			if (autocomplete_menu !is null)
 			{
+				if (!acConnection)
+				{
+					@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
+					acConnection = true;
+				}
 				console.listPrefixedCommands(string(value), possibleCommands);
-				autocomplete_menu.Clear();
+				autocomplete_menu.removeAllChildren();
 				for (uint i = 0; i < possibleCommands.size(); i++)
-					autocomplete_menu.AddItem(possibleCommands[i]);
+				{
+					MenuItem @newItem = @MenuItem(possibleCommands[i], possibleCommands[i]);
+					autocomplete_menu.addChild(newItem);
+				}
 
 				if (possibleCommands.size() > 0)
 				{
 					Element@ target = ev.GetTargetElement();
-					autocomplete_menu.SetPosition(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight());
-					autocomplete_menu.Show();
+					autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight());
 				}
 			}
 		}
 		else // 'value' is empty
 		{
-			autocomplete_menu.Hide();
-			autocomplete_menu.Clear();
+			autocomplete_menu.hide();
+			autocomplete_menu.removeAllChildren();
 		}
 	}
 	else if (value.Length() <= commandLength)
 	{
 		commandDone = false;
 		commandLength = 0;
-		autocomplete_menu.Show();
+		autocomplete_menu.show();
 	}
 }
 
 EventConnection@ consoleClickConnection;
-void OnConsoleEnterButtonClick(Event& ev)
+void OnConsoleEnterClick(Event& ev)
 {
-	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
-	if (doc is null)
-		return;
-	FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("command_element")) );
+	Element@ consoleElem = ev.GetTargetElement().GetParentNode();
+	ElementFormControlInput@ input = cast<ElementFormControlInput>( consoleElem.GetElementById(e_String("command_element")) );
 
 	string command = input.GetValue();
 	console.println(command);
@@ -233,12 +285,12 @@ void OnConsoleEnterButtonClick(Event& ev)
 
 void OnConsoleEntryEnter(Event& ev)
 {
-	if (autocomplete_menu.GetCurrentSelection() != -1)
-		autocomplete_menu.ClickSelected();
+	if (autocomplete_menu.getSelectedIndex() != -1)
+		autocomplete_menu.getSelectedItem().click();
 	else
 		OnConsoleEnterClick(ev);
-	autocomplete_menu.Hide();
-	autocomplete_menu.Clear();
+	autocomplete_menu.hide();
+	autocomplete_menu.removeAllChildren();
 }
 
 void OnConsoleEntryKeyUp(Event& ev)
@@ -248,11 +300,11 @@ void OnConsoleEntryKeyUp(Event& ev)
 		int key_identifier = ev.GetParameter(e_String("key_identifier"), int(0));
 		if (key_identifier == GUIKey::KI_UP)
 		{
-			autocomplete_menu.SelectRelative(-1);
+			autocomplete_menu.selectRelative(-1);
 		}
 		if (key_identifier == GUIKey::KI_DOWN)
 		{
-			autocomplete_menu.SelectRelative(1);
+			autocomplete_menu.selectRelative(1);
 		}
 	}
 	else if (ev.GetType() == e_String("keydown"))
@@ -265,23 +317,25 @@ void OnConsoleEntryKeyUp(Event& ev)
 	}
 }
 
-void OnAutocompleteChanged(Event& ev)
-{
-	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
-	FormControlInput@ input = cast<FormControlInput>( doc.GetElementById(e_String("command_element")) );
-	input.SetValue( ev.GetParameter(e_String("value"), input.GetValue()) );
-}
+//void OnAutocompleteChanged(Event& ev)
+//{
+//	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
+//	ElementFormControlInput@ input = cast<ElementFormControlInput>( doc.GetElementById(e_String("command_element")) );
+//	input.SetValue( ev.GetParameter(e_String("value"), input.GetValue()) );
+//}
 
 void InitialiseConsole()
 {
 	RegisterElementType(e_String("console"), e_String("ConsoleElement"));
 }
 
-void OnConsoleOpened(Event @ev)
+void OnConsoleOpened()
 {
+	//console.println("Creating autocomplete_menu (context menu)");
+	@autocomplete_menu = @ContextMenu(gui.getContext(), false);
 }
 
-void OnConsoleClosed(Event @ev)
+void OnConsoleClosed()
 {
 }
 

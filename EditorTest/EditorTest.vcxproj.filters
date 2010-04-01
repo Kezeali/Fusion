@@ -583,5 +583,8 @@
     <ClInclude Include="..\FusionEngine\FusionFirstCause.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionScriptCircularBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

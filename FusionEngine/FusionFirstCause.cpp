@@ -55,7 +55,7 @@ namespace FusionEngine
 		m_PhysWorld(nullptr),
 		m_InEditor(false)
 	{
-		if (m_Options->GetOption_str("Editor") == "allowed")
+		if (m_Options->GetOption_str("editor") == "allowed")
 		{
 			Console::CommandHelp help;
 			help.helpText = "Switches to the given engine mode.\nEnter switchto <name of mode>\nMode names: 'game', 'editor'\nSee Also: togglemode";
@@ -106,24 +106,29 @@ namespace FusionEngine
 
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
 
-		manager->RegisterGlobalObject("const StreamingManager streamer", m_Streaming);
-		manager->RegisterGlobalObject("const EntityManager entity_manager", m_EntityManager);
+		manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
+		manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 		
 		m_EntityFactory->SetScriptingManager(manager);
 		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		m_Ontology.reset(new OntologicalSystem(m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
-		if (m_Options->GetOption_str("Editor") == "allowed")
+		if (m_Options->GetOption_str("editor") == "allowed")
 		{
 			m_Editor.reset(new Editor(m_InputManager, m_EntityFactory, m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
-			manager->RegisterGlobalObject("const Editor editor", m_Editor.get());
+			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 			// Load all entity types so they can be used in the editor
 			m_EntityFactory->LoadAllScriptedTypes();
+
+			m_Ontology->PushMessage(new SystemMessage(SystemMessage::HIDE));
+			m_Ontology->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 		}
 
 		system_manager->AddSystem(m_Ontology);
-		if (m_Options->GetOption_str("Editor") == "allowed")
+		if (m_Options->GetOption_str("editor") == "allowed")
 			system_manager->AddSystem(m_Editor);
+
+		m_Editor->Enable();
 
 		m_Ontology->SetModule(module);
 	}

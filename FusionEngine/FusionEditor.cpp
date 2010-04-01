@@ -338,7 +338,7 @@ namespace FusionEngine
 		m_EditorDataSource->UpdateSuggestions(types);
 
 		// Enable may have been called before Initialise, so it is called again here to reflect the expected state
-		Enable(m_Enabled);
+		//Enable(m_Enabled);
 
 		return true;
 	}
@@ -427,13 +427,13 @@ namespace FusionEngine
 
 	void Editor::Enable(bool enable)
 	{
-		if (m_Camera)
+		if (!m_Camera)
 			return;
 
 		if (enable)
 		{
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
-			this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
+			//this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+			//this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
 
 			m_Streamer->SetPlayerCamera(255, m_Camera);
 
@@ -449,8 +449,8 @@ namespace FusionEngine
 		}
 		else
 		{
-			this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
-			this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
+			//this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
+			//this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
 
 			m_Streamer->RemovePlayerCamera(255);
 
