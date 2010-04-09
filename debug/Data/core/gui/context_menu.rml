@@ -50,6 +50,16 @@
 			background-color: #3f2aab;
 			}
 
+			menuitem:selected,
+			{
+			font-weight: bold;
+
+			shadow-font-effect: shadow;
+			shadow-offset: 1px 1px;
+			shadow-color: blue;
+			background-color: #3fadab;
+			}
+
 			menuitem:active,
 			{
 			}

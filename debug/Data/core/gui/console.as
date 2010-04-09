@@ -42,6 +42,11 @@ class ConsoleElement : ScriptElement
 		//@consoleConnection = console.connectListener(this);
 		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
 		@onClearConnection = console.connectToClear("void OnClear()");
+
+		//console.println("Creating autocomplete_menu (context menu)");
+		@autocomplete_menu = @ContextMenu(gui.getContext(), false);
+		//console.println("Connecting to Click.");
+		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
 	}
 
 	~ConsoleElement()
@@ -95,17 +100,12 @@ class ConsoleElement : ScriptElement
 		dirty = true;
 	}
 
-	uint getNextLine()
+	uint diff(uint front, uint back, uint buffer_length)
 	{
-		return 0;
-	}
-
-	uint diff(uint a, uint b)
-	{
-		if (a < b)
-			return b-a;
+		if (front >= 0)
+			return front - back;
 		else
-			return a-b;
+			return front + (buffer_length-back);
 	}
 
 	void AddLine(const string &in text)
@@ -124,22 +124,22 @@ class ConsoleElement : ScriptElement
 		// Remove old lines
 		lines[line_front] = text.length();
 
+		if (diff(line_front, line_back, lines.length()) >= lines.length())
+			text_block.erase(0, lines[line_back]);
+
 		if (++line_front > lines.length())
 			line_front = 0;
 
-		if ((line_front - line_back) > lines.length())
-		{
-			text_block.erase(0, lines[line_back]);
-
-			if (++line_back > lines.length())
-				line_back = 0;
-		}
+		if (++line_back > lines.length())
+			line_back = 0;
 
 		dirty = true;
 	}
 
 	void Clear()
 	{
+		line_front = 0;
+		line_back = 0;
 		text_block.clear();
 		current_text = "";
 		dirty = true;
@@ -199,7 +199,7 @@ class ConsoleElement : ScriptElement
 	{
 		Clear();
 	}
-
+	
 	void OnAutocompleteClick(const MenuItemEvent &in ev)
 	{
 		ElementFormControlInput@ input = cast<ElementFormControlInput>( GetElementById(e_String("command_element")) );
@@ -210,6 +210,7 @@ class ConsoleElement : ScriptElement
 		parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
 		input.DispatchEvent(e_String("keydown"), parameters);
 	}
+
 }
 
 bool acConnection = false;
@@ -237,11 +238,6 @@ void OnConsoleEntryChanged(Event& ev)
 
 			if (autocomplete_menu !is null)
 			{
-				if (!acConnection)
-				{
-					@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
-					acConnection = true;
-				}
 				console.listPrefixedCommands(string(value), possibleCommands);
 				autocomplete_menu.removeAllChildren();
 				for (uint i = 0; i < possibleCommands.size(); i++)
@@ -331,8 +327,6 @@ void InitialiseConsole()
 
 void OnConsoleOpened()
 {
-	//console.println("Creating autocomplete_menu (context menu)");
-	@autocomplete_menu = @ContextMenu(gui.getContext(), false);
 }
 
 void OnConsoleClosed()
