@@ -290,13 +290,17 @@ dataselect
 
 undomenu
 {
-	width: 32px;
-	height: 36px;
+	width: 24px;
+	height: 24px;
 	
-	padding: 8px 0px 0px 4px;
+	padding: 6px 0px 0px 4px;
+
+	margin-right: 16px;
 	
-	background-decorator: image;
-	background-image: fusion.png 247px 0px 406px 45px;
+	background-decorator: tiled-horizontal;
+	background-left-image: fusion.png 251px 5px 256px 38px;
+	background-center-image: fusion.png stretch 256px 5px 394px 38px;
+	background-right-image: fusion.png 394px 5px 399px 38px;
 }
 
 undomenu selectvalue
@@ -329,11 +333,14 @@ undomenu.redo selectvalue
 
 undomenu selectarrow
 {
-	width: 16px;
+	position: relative;
+	top: -8px;
+	right: -18px;
+	width: 18px;
 	height: 30px;
 	
 	icon-decorator: image;
-	icon-image: fusion.png 308px 199px 331px 221px;
+	icon-image: fusion.png 307px 192px 337px 229px;
 }
 
 select selectvalue,

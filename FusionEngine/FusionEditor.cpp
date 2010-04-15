@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2009-2010 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-		
-		
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -397,32 +396,57 @@ namespace FusionEngine
 
 	void Editor::Update(float split)
 	{
-		if (m_Enabled)
+		//m_PhysicalWorld->Step(split);
+		// TODO: seperate PhysicalWorld::Draw from PhysicalWorld::Step (so debug-draw can be called any time - e.g. Editor::Draw)
+
+		const CL_Vec2f &currentPos = m_Camera->GetPosition();
+		m_Camera->SetPosition(currentPos.x + m_CamVelocity.x, currentPos.y + m_CamVelocity.y);
+		m_Camera->Update(split);
+
+		m_Streamer->Update();
+
+		ptr_set updatedSprites;
+		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
 		{
-			//m_PhysicalWorld->Step(split);
-			// TODO: seperate PhysicalWorld::Draw from PhysicalWorld::Step (so debug-draw can be called any time - e.g. Editor::Draw)
-
-			const CL_Vec2f &currentPos = m_Camera->GetPosition();
-			m_Camera->SetPosition(currentPos.x + m_CamVelocity.x, currentPos.y + m_CamVelocity.y);
-			m_Camera->Update(split);
-
-			m_Streamer->Update();
-
-			ptr_set updatedSprites;
-			for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
-			{
-				EntityPtr &entity = *it;
-				updateRenderables(entity, split, updatedSprites);
-			}
+			EntityPtr &entity = *it;
+			updateRenderables(entity, split, updatedSprites);
 		}
 	}
 
 	void Editor::Draw()
 	{
-		if (m_Enabled)
-		{
-			m_Renderer->Draw(m_PlainEntityArray, m_Viewport, 0);
-		}
+		m_Renderer->Draw(m_PlainEntityArray, m_Viewport, 0);
+	}
+
+	void Editor::Start()
+	{
+		m_Streamer->SetPlayerCamera(255, m_Camera);
+
+		m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
+		m_PhysicalWorld->EnableDebugDraw();
+
+		this->PushMessage(new SystemMessage(SystemMessage::RESUME));
+		this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+
+		GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
+
+		m_MainDocument->Show();
+
+		// Allows input to be caputred by OnRawInput
+		m_Enabled = true;
+	}
+
+	void Editor::Stop()
+	{
+		m_Streamer->RemovePlayerCamera(255);
+
+		this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
+		this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+
+		if (m_MainDocument != NULL)
+			m_MainDocument->Hide();
+
+		m_Enabled = false;
 	}
 
 	void Editor::Enable(bool enable)
@@ -432,9 +456,6 @@ namespace FusionEngine
 
 		if (enable)
 		{
-			//this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
-			//this->PushMessage(new SystemMessage(SystemMessage::HIDE, "Entities"));
-
 			m_Streamer->SetPlayerCamera(255, m_Camera);
 
 			m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
@@ -449,9 +470,6 @@ namespace FusionEngine
 		}
 		else
 		{
-			//this->PushMessage(new SystemMessage(SystemMessage::RESUME, "Entities"));
-			//this->PushMessage(new SystemMessage(SystemMessage::SHOW, "Entities"));
-
 			m_Streamer->RemovePlayerCamera(255);
 
 			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
@@ -507,6 +525,12 @@ namespace FusionEngine
 			{
 				switch (ev.Code)
 				{
+				case 192: // `~ key
+					{
+						Rocket::Core::ElementDocument *consoleWindow = GUI::getSingleton().GetConsoleWindow();
+						if (GUI::getSingleton().GetContext()->GetFocusElement() != consoleWindow)
+							consoleWindow->Show();
+					}
 				case CL_KEY_LEFT:
 				case CL_KEY_RIGHT:
 					m_CamVelocity.x = 0;
@@ -869,16 +893,6 @@ namespace FusionEngine
 		m_UndoManager.Redo(index);
 	}
 
-	void Editor::StartEditor()
-	{
-		Enable();
-	}
-
-	void Editor::StopEditor()
-	{
-		Enable(false);
-	}
-
 	void Editor::Save(const std::string &filename)
 	{
 		CL_String dataFileName = CL_PathHelp::get_basename(filename) + ".entdata";
@@ -1030,10 +1044,10 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void startEditor()",
-			asMETHOD(Editor, StartEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHOD(Editor, Start), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Editor",
 			"void stopEditor()",
-			asMETHOD(Editor, StopEditor), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHOD(Editor, Stop), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void save(const string &in)",

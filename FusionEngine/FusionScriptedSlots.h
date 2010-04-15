@@ -87,10 +87,10 @@ namespace FusionEngine
 					m_CallSlot(&p0);
 				else
 					m_CallSlot(p0);
-				//m_CallSlot.refresh();
 			}
 		}
 
+		//! You can use this version as the callback function when you know the passed param will be a ref
 		template <typename T0>
 		void CallbackRef(const T0& p0)
 		{
@@ -98,12 +98,11 @@ namespace FusionEngine
 				m_CallSlot(&p0);
 		}
 
-		//template <typename T0>
-		//void Callback(const T0& p0)
-		//{
-		//	m_CallSlot(&p0);
-		//}
-
+		//! Creates a slot for the named script method
+		/*!
+		* This will use the given script context to work out wheter the given
+		* signature refers to an object method or a module method (function).
+		*/
 		static ScriptedSlotWrapper* CreateWrapperFor(asIScriptContext *context, const std::string &decl);
 
 		virtual void EnumReferences(asIScriptEngine *engine);

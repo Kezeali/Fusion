@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-		
-		
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2006-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_GUI
@@ -99,6 +98,8 @@ namespace FusionEngine
 		virtual void CleanUp();
 
 		Rocket::Core::Context* GetContext() const;
+		//! Returns the console window document
+		Rocket::Core::ElementDocument *GetConsoleWindow() const;
 
 		void InitializeDebugger();
 
@@ -151,6 +152,7 @@ namespace FusionEngine
 		std::list<std::tr1::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 
 		Rocket::Core::Context* m_Context;
+		Rocket::Core::ElementDocument *m_ConsoleDocument;
 
 		bool m_DebuggerInitialized;
 
@@ -188,13 +190,6 @@ namespace FusionEngine
 		case CL_KEY_PAUSE:        return Core::Input::KI_PAUSE;
 		case CL_KEY_ESCAPE:       return Core::Input::KI_ESCAPE;
 		case CL_KEY_SPACE:        return Core::Input::KI_SPACE;
-		//case CL_KEY_COMMA:        return Core::Input::KI_OEM_COMMA;
-#ifdef CL_KEY_MINUS
-		case CL_KEY_MINUS:        return Key::Minus;
-#endif
-#ifdef CL_KEY_PERIOD
-		case CL_KEY_PERIOD:       return Key::Period;
-#endif
 		case CL_KEY_0:            return Core::Input::KI_0;
 		case CL_KEY_1:            return Core::Input::KI_1;
 		case CL_KEY_2:            return Core::Input::KI_2;
@@ -247,7 +242,6 @@ namespace FusionEngine
 		case CL_KEY_MULTIPLY:     return Core::Input::KI_MULTIPLY;
 		case CL_KEY_SUBTRACT:     return Core::Input::KI_SUBTRACT;
 		case CL_KEY_ADD:          return Core::Input::KI_ADD;
-		//case CL_KEY_ENTER:        return Core::Input::KI_NUMPADENTER;
 		case CL_KEY_UP:           return Core::Input::KI_UP;
 		case CL_KEY_DOWN:         return Core::Input::KI_DOWN;
 		case CL_KEY_RIGHT:        return Core::Input::KI_RIGHT;
@@ -284,9 +278,7 @@ namespace FusionEngine
 		case CL_KEY_LCONTROL:     return Core::Input::KI_LCONTROL;
 		case CL_KEY_LWIN:         return Core::Input::KI_LWIN;
 		case CL_KEY_RWIN:         return Core::Input::KI_RWIN;
-		//case CL_KEY_SYSREQ:       return Core::Input::KI_SysRq;
 		case CL_KEY_MENU:         return Core::Input::KI_LMENU;
-		//case CL_KEY_POWER:        return Core::Input::KI_Power;
 
 		default:                  return Core::Input::KI_UNKNOWN;
 		}

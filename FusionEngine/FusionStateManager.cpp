@@ -46,10 +46,6 @@ namespace FusionEngine
 
 	bool SystemsManager::SetExclusive(const SystemPtr &system)
 	{
-		// Try to initialise the new state
-		if (!system->Initialise())
-			return false;
-
 		// Remove all the current states
 		Clear();
 
@@ -62,8 +58,9 @@ namespace FusionEngine
 
 	bool SystemsManager::AddSystem(const SystemPtr &system)
 	{
+		system->Initialise();
 		m_Systems.push_back(system);
-		return system->Initialise();
+		return true;
 	}
 
 	void SystemsManager::RemoveSystem(const SystemPtr &system)
@@ -194,6 +191,11 @@ namespace FusionEngine
 			// If the system isn't paused or a step message was just received:
 			if (!system->CheckFlag(System::PAUSE) || system->CheckFlag(System::STEP))
 			{
+				//if (!system->IsInitialised())
+				//{
+				//	if (system->Initialise())
+				//		system->AddFlag(System::INITIALISED);
+				//}
 				system->Update(split);
 				// Clear step flag (in case it has been added, since we have now done the requested 'step')
 				system->RemoveFlag(System::STEP);

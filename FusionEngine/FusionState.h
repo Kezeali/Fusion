@@ -59,9 +59,10 @@ namespace FusionEngine
 
 		enum StateFlags
 		{
-			PAUSE = 0x1,
-			STEP  = 0x2,
-			HIDE  = 0x4
+			INITIALISED = 0x1,
+			PAUSE = 0x2,
+			STEP  = 0x4,
+			HIDE  = 0x8
 		};
 
 	public:
@@ -104,12 +105,14 @@ namespace FusionEngine
 		//! Removes a dependency
 		void RemoveDependency(const std::string &system_name);
 
+		bool IsInitialised() const;
+
 		void SetFlags(unsigned char flags);
 
 		void AddFlag(StateFlags flag);
 		void RemoveFlag(StateFlags flag);
 
-		bool CheckFlag(StateFlags flag);
+		bool CheckFlag(StateFlags flag) const;
 
 		//! Sets the blocking mode for this state
 		void SetBlocking(bool blocking);

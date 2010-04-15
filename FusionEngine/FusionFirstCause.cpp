@@ -55,7 +55,9 @@ namespace FusionEngine
 		m_PhysWorld(nullptr),
 		m_InEditor(false)
 	{
-		if (m_Options->GetOption_str("editor") == "allowed")
+		m_EditorEnabled = m_Options->GetOption_str("editor") == "enabled";
+
+		if (m_EditorEnabled)
 		{
 			Console::CommandHelp help;
 			help.helpText = "Switches to the given engine mode.\nEnter switchto <name of mode>\nMode names: 'game', 'editor'\nSee Also: togglemode";
@@ -90,7 +92,7 @@ namespace FusionEngine
 		checkedDelete(m_PhysWorld);
 	}
 
-	void FirstCause::BeginExistence(SystemsManager *system_manager, ModulePtr module)
+	void FirstCause::Initialise(ModulePtr module)
 	{
 		m_EntityFactory = new EntityFactory();
 		m_EntitySync = new EntitySynchroniser(m_InputManager);
@@ -113,48 +115,53 @@ namespace FusionEngine
 		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		m_Ontology.reset(new OntologicalSystem(m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
-		if (m_Options->GetOption_str("editor") == "allowed")
+		if (m_EditorEnabled)
 		{
 			m_Editor.reset(new Editor(m_InputManager, m_EntityFactory, m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
 			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 			// Load all entity types so they can be used in the editor
 			m_EntityFactory->LoadAllScriptedTypes();
-
-			m_Ontology->PushMessage(new SystemMessage(SystemMessage::HIDE));
-			m_Ontology->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 		}
 
-		system_manager->AddSystem(m_Ontology);
-		if (m_Options->GetOption_str("editor") == "allowed")
-			system_manager->AddSystem(m_Editor);
-
-		m_Editor->Enable();
-
 		m_Ontology->SetModule(module);
+	}
+
+	void FirstCause::BeginExistence(SystemsManager *system_manager)
+	{
+
+		system_manager->AddSystem(m_Ontology);
+		if (m_EditorEnabled)
+		{
+			system_manager->AddSystem(m_Editor);
+			m_Ontology->Stop();
+			m_Editor->Start();
+		}
+		else
+			m_Ontology->Start();
 	}
 
 	void FirstCause::SwitchToEditor()
 	{
 		m_InEditor = true;
-		//m_Ontology->Clear();
-		//m_Ontology->Hide();
-		//m_Editor->Show();
+		m_Ontology->Clear();
+		m_Ontology->Stop();
+		m_Editor->Start();
 	}
 
 	void FirstCause::SwitchToGame()
 	{
 		m_InEditor = false;
-		//m_Editor->Hide();
-		//m_Ontology->Show();
+		m_Editor->Stop();
+		m_Ontology->Start();
 	}
 
-	//void FirstCause::SwitchToTest()
+	//void FirstCause::Test()
 	//{
 	//	if (m_InEditor)
 	//	{
 	//		//m_Editor->SpawnEntities(m_EntityManager);
-	//		//m_Editor->Hide();
-	//		//m_Ontology->Show();
+	//		//m_Editor->Deactivate();
+	//		//m_Ontology->Activate();
 	//	}
 	//}
 

@@ -53,15 +53,18 @@ namespace FusionEngine
 		*/
 		virtual ~FirstCause();
 
-		//! Lets there be light (sorry about this. at least /I/ find it entertaining)
+		//! Lets there be light (Sorry about this. At least /I/ find it entertaining)
 		/*!
 		* Creates OntologicalSystem and Editor and adds them to the system manager
 		*/
-		void BeginExistence(SystemsManager *system_manager, ModulePtr module);
+		void Initialise(ModulePtr module);
 
-		//!
+		//! Starts the Ontology or Editor (depending on what was indicated by the options)
+		void BeginExistence(SystemsManager *system_manager);
+
+		//! Activates the editor
 		void SwitchToEditor();
-		//!
+		//! Activates play mode
 		void SwitchToGame();
 
 		std::string ToggleMode(const StringVector &args);
@@ -88,6 +91,9 @@ namespace FusionEngine
 		typedef std::shared_ptr<OntologicalSystem> OntologicalSystemPtr;
 		OntologicalSystemPtr m_Ontology;
 
+		bool m_EditorEnabled;
+
+		// ToggleMode checks this var
 		bool m_InEditor;
 	};
 

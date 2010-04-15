@@ -69,6 +69,11 @@ namespace FusionEngine
 		m_Dependencies.erase(system_name);
 	}
 
+	bool System::IsInitialised() const
+	{
+		return CheckFlag(INITIALISED);
+	}
+
 	void System::SetFlags(unsigned char flags)
 	{
 		m_StateFlags = flags;
@@ -84,7 +89,7 @@ namespace FusionEngine
 		m_StateFlags = m_StateFlags & ~((unsigned char)flag);
 	}
 
-	bool System::CheckFlag(System::StateFlags flag)
+	bool System::CheckFlag(System::StateFlags flag) const
 	{
 		return (m_StateFlags & flag) == flag;
 	}

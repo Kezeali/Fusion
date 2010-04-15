@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2006-2010 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-		
-		
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2006-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -130,7 +129,8 @@ namespace FusionEngine
 		m_ShowMouseTimer(1000),
 		m_ClickPause(0),
 		m_DebuggerInitialized(false),
-		m_Initialised(false)
+		m_Initialised(false),
+		m_ConsoleDocument(nullptr)
 	{
 		initScripting(ScriptManager::getSingletonPtr());
 	}
@@ -141,7 +141,8 @@ namespace FusionEngine
 		m_ClickPause(0),
 		m_Display(window),
 		m_DebuggerInitialized(false),
-		m_Initialised(false)
+		m_Initialised(false),
+		m_ConsoleDocument(nullptr)
 	{
 		initScripting(ScriptManager::getSingletonPtr());
 	}
@@ -228,6 +229,12 @@ namespace FusionEngine
 		{
 			m_DataFormatters.clear();
 
+			if (m_ConsoleDocument != nullptr)
+			{
+				m_ConsoleDocument->RemoveReference();
+				m_ConsoleDocument = nullptr;
+			}
+
 			m_Context->RemoveReference();
 			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			Rocket::Core::Shutdown();
@@ -273,6 +280,11 @@ namespace FusionEngine
 	Rocket::Core::Context *GUI::GetContext() const
 	{
 		return m_Context;
+	}
+
+	Rocket::Core::ElementDocument *GUI::GetConsoleWindow() const
+	{
+		return m_ConsoleDocument;
 	}
 
 	void GUI::InitializeDebugger()
@@ -412,6 +424,15 @@ namespace FusionEngine
 		if (event.type == BuildModuleEvent::PreBuild)
 		{
 			Rocket::AngelScript::InitialiseModule(event.manager->GetEnginePtr(), event.module_name);
+
+			event.manager->AddFile("core/gui/console.as", "main");
+		}
+		else if (event.type == BuildModuleEvent::PostBuild)
+		{
+			ModulePtr module = event.manager->GetModule(event.module_name);
+			// Create the Console window (a window where console commands can be entered)
+			module->GetCaller("void InitialiseConsole()")(); // register the element type
+			m_ConsoleDocument = GetContext()->LoadDocument("core/gui/console.rml");
 		}
 	}
 
@@ -503,16 +524,18 @@ namespace FusionEngine
 		}
 	}
 
+	inline bool isNonDisplayKey(int id)
+	{
+		return id != CL_KEY_BACKSPACE && id != CL_KEY_ESCAPE && id != CL_KEY_DELETE;
+	}
+
 	void GUI::onKeyDown(const CL_InputEvent &ev, const CL_InputState &state)
 	{
 		// Grab characters
-		if (!ev.alt && !ev.ctrl && !ev.str.empty())
+		if (!ev.alt && !ev.ctrl && !ev.str.empty() && isNonDisplayKey(ev.id))
 		{
-			if (ev.id != CL_KEY_BACKSPACE && ev.id != CL_KEY_DELETE)
-			{
-				Rocket::Core::String text = ev.str.c_str();
-				m_Context->ProcessTextInput(text);
-			}
+			Rocket::Core::String text = ev.str.c_str();
+			m_Context->ProcessTextInput(text);
 		}
 
 		m_Context->ProcessKeyDown(CLKeyToRocketKeyIdent(ev.id), getRktModifierFlags(ev));
