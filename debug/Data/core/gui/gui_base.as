@@ -18,6 +18,8 @@ void OnEditorWindowLoad(Event@ event)
 		editor.attachRedoMenu(undoMenu);
 }
 
-void validate_input(Event@ event, int8 min, int8 max)
+void HideThisWindow(Event@ ev)
 {
+	ElementDocument @doc = ev.GetCurrentElement().GetOwnerDocument();
+	doc.Hide();
 }

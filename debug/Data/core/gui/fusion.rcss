@@ -9,7 +9,7 @@ body
 
 body.window
 {
-	padding-top: 32px;
+	padding-top: 26px;
 	padding-bottom: 20px;
 	
 	min-width: 250px;
@@ -43,47 +43,45 @@ div#title_bar div#icon
 
 div#title
 {
-	font-size: 22;
+	font-size: 20;
 	font-weight: bold;
 
 	width: auto;
-	height: 32px;
+	height: 22px;
 
 	outline-font-effect: outline;
 	outline-width: 1px;
 	outline-color: black;
 
-	padding: 5px 10px 0px 10px;
+	padding: 4px 10px 0px 10px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 252px 4px 390px 32px;
-	background-center-image: invader.png stretch 390px 4px 392px 32px;
-	background-right-image: invader.png 392px 4px 401px 32px;
+	background-left-image: fusion.png 151px 0px 160px 22px;
+	background-center-image: fusion.png stretch 160px 0px 170px 22px;
+	background-right-image: fusion.png 170px 0px 177px 22px;
 }
 
 
 div#close_button
 {
 	position: absolute;
-	top: 6px;
-	right: 4px;
+	top: 4px;
+	right: 8px;
 
-	width: 28px;
-	height: 28px;
+	width: 32px;
+	height: 20px;
 	icon-decorator: image;
-	icon-image: invader.png 407px 30px 437px 60px;
+	icon-image: fusion.png 204px 5px 236px 25px;
 }
 
 div#close_button:hover
 {
-	icon-image-s: 437px 467px;
-	icon-image-t: 30px 60px;
+	icon-image-t: 26px 46px;
 }
 
 div#close_button:active
 {
-	icon-image-s: 467px 497px;
-	icon-image-t: 30px 60px;
+	icon-image-t: 47px 67px;
 }
 
 
@@ -93,14 +91,15 @@ div#window
 	padding: 10px 15px;
 
 	background-decorator: tiled-box;
-	background-top-left-image: invader.png 0px 0px 133px 140px;
-	background-top-right-image: invader.png 136px 0px 146px 140px;
-	background-top-image: invader.png stretch 134px 0px 135px 140px;
-	background-bottom-left-image: invader.png 0px 140px 11px 151px;
-	background-bottom-right-image: invader.png 136px 140px 146px 151px;
-	background-bottom-image: invader.png stretch 11px 140px 12px 151px;
-	background-left-image: invader.png stretch 0px 139px 10px 140px;
-	background-center-image: invader.png stretch 11px 139px 12px 140px;
+	background-top-left-image: fusion.png 0px 31px 133px 140px;
+	background-top-right-image: fusion.png 136px 31px 146px 140px;
+	background-top-image: fusion.png stretch 134px 31px 135px 140px;
+	background-bottom-left-image: fusion.png 0px 140px 11px 151px;
+	background-bottom-right-image: fusion.png 136px 140px 146px 151px;
+	background-bottom-image: fusion.png stretch 11px 140px 12px 151px;
+	background-left-image: fusion.png stretch 0px 139px 10px 140px;
+	background-center-image: fusion.png stretch 11px 139px 12px 140px;
+	background-right-image: fusion.png 136px 141px 146px 142px;
 }
 
 div#content
@@ -117,6 +116,14 @@ div#content
 	shadow-font-effect: shadow;
 	shadow-offset: 1px 1px;
 	shadow-color: grey;
+}
+
+div#size_target
+{
+	width: 12px;
+	height: 12px;
+	icon-decorator: image;
+	icon-image: fusion.png 56px 198px 68px 210px;
 }
 
 
@@ -186,7 +193,7 @@ input.submit
 	tab-index: auto;
 
 	background-decorator: image;
-	background-image: invader.png 247px 0px 406px 45px;
+	background-image: fusion.png 247px 0px 406px 45px;
 	background-z-index: 0;
 }
 
@@ -216,12 +223,13 @@ input.submit:active
 
 input.text
 {
-	height: 31px;
-	padding: 10px 10px 0px;
+	height: 28px;
+	padding: 4px 8px 0px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 162px 192px 176px 223px;
-	background-center-image: invader.png stretch 176px 192px 177px 223px;
+	background-left-image: fusion.png 164px 199px 176px 223px;
+	background-center-image: fusion.png stretch 176px 199px 186px 223px;
+	background-right-image: fusion.png 302px 199px 307px 223px;
 }
 
 input.text,
@@ -243,17 +251,17 @@ textarea
 	padding: 10px 15px;
 
 	color: black;
-	font-size: 15;
+	font-size: 14;
 	
 	background-decorator: tiled-box;
-	background-top-left-image: invader.png 281px 275px 292px 284px;
-	background-top-right-image: invader.png 294px 275px 305px 284px;
-	background-top-image: invader.png stretch 292px 275px 293px 284px;
-	background-bottom-left-image: invader.png 281px 285px 292px 296px;
-	background-bottom-right-image: invader.png 294px 285px 305px 296px;
-	background-bottom-image: invader.png stretch 292px 285px 293px 296px;
-	background-left-image: invader.png stretch 281px 283px 292px 284px;
-	background-center-image: invader.png stretch 292px 283px 293px 284px;
+	background-top-left-image: fusion.png 281px 275px 292px 284px;
+	background-top-right-image: fusion.png 294px 275px 305px 284px;
+	background-top-image: fusion.png stretch 292px 275px 293px 284px;
+	background-bottom-left-image: fusion.png 281px 285px 292px 296px;
+	background-bottom-right-image: fusion.png 294px 285px 305px 296px;
+	background-bottom-image: fusion.png stretch 292px 285px 293px 296px;
+	background-left-image: fusion.png stretch 281px 283px 292px 284px;
+	background-center-image: fusion.png stretch 292px 283px 293px 284px;
 }
 
 datagrid input.text
@@ -282,20 +290,19 @@ dataselect
 
 undomenu
 {
-	width: 38px;
-	height: 32px;
+	width: 32px;
+	height: 36px;
 	
-	padding: 12px 0px 0px 10px;
+	padding: 8px 0px 0px 4px;
 	
-	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 162px 192px 176px 223px;
-	background-center-image: invader.png stretch 176px 192px 177px 223px;
+	background-decorator: image;
+	background-image: fusion.png 247px 0px 406px 45px;
 }
 
 undomenu selectvalue
 {
 	width: 16px;
-	margin-right: 10px;
+	margin-right: 18px;
 	
 	height: 16px;
 	
@@ -312,7 +319,7 @@ undomenu selectvalue span
 undomenu.redo selectvalue
 {
 	width: 16;
-	margin-right: 10px;
+	margin-right: 18px;
 	
 	height: 16px;
 	
@@ -322,11 +329,11 @@ undomenu.redo selectvalue
 
 undomenu selectarrow
 {
-	width: 10px;
-	height: 18px;
+	width: 16px;
+	height: 30px;
 	
 	icon-decorator: image;
-	icon-image: invader.png 307px 192px 337px 229px;
+	icon-image: fusion.png 308px 199px 331px 221px;
 }
 
 select selectvalue,
@@ -339,7 +346,7 @@ dataselect selectvalue
 	padding: 9px 10px 0px 10px;
 
 	background-decorator: image;
-	background-image: invader.png 162px 192px 307px 229px;
+	background-image: fusion.png 162px 192px 307px 229px;
 }
 
 select selectvalue:hover,
@@ -355,7 +362,7 @@ dataselect selectarrow
 	height: 37px;
 	
 	icon-decorator: image;
-	icon-image: invader.png 307px 192px 337px 229px;
+	icon-image: fusion.png 307px 192px 337px 229px;
 }
 
 select selectarrow:hover,
@@ -391,14 +398,14 @@ undomenu selectbox,
 datagrid datagridbody
 {
 	background-decorator: tiled-box;
-	background-top-left-image: invader.png 281px 275px 292px 284px;
-	background-top-right-image: invader.png 294px 275px 305px 284px;
-	background-top-image: invader.png stretch 292px 275px 293px 284px;
-	background-bottom-left-image: invader.png 281px 285px 292px 296px;
-	background-bottom-right-image: invader.png 294px 285px 305px 296px;
-	background-bottom-image: invader.png stretch 292px 285px 293px 296px;
-	background-left-image: invader.png stretch 281px 283px 292px 284px;
-	background-center-image: invader.png stretch 292px 283px 293px 284px;
+	background-top-left-image: fusion.png 281px 275px 292px 284px;
+	background-top-right-image: fusion.png 294px 275px 305px 284px;
+	background-top-image: fusion.png stretch 292px 275px 293px 284px;
+	background-bottom-left-image: fusion.png 281px 285px 292px 296px;
+	background-bottom-right-image: fusion.png 294px 285px 305px 296px;
+	background-bottom-image: fusion.png stretch 292px 285px 293px 296px;
+	background-left-image: fusion.png stretch 281px 283px 292px 284px;
+	background-center-image: fusion.png stretch 292px 283px 293px 284px;
 }
 
 select selectbox option,
@@ -447,7 +454,7 @@ input.checkbox
 input.radio
 {
 	icon-decorator: image;
-	icon-image: invader.png 407px 0px 437px 30px;
+	icon-image: fusion.png 407px 0px 437px 30px;
 }
 
 input.radio:hover
@@ -480,7 +487,7 @@ input.radio:checked:active
 input.checkbox
 {
 	icon-decorator: image;
-	icon-image: invader.png 407px 60px 437px 90px;
+	icon-image: fusion.png 407px 60px 437px 90px;
 }
 
 input.checkbox:hover
@@ -519,9 +526,9 @@ datagrid datagridheader
 	padding: 5px 10px 0px 10px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 129px 193px 143px 223px;
-	background-center-image: invader.png stretch 143px 193px 145px 223px;
-	background-right-image: invader.png 145px 193px 160px 223px;
+	background-left-image: fusion.png 128px 193px 143px 222px;
+	background-center-image: fusion.png stretch 143px 193px 145px 222px;
+	background-right-image: fusion.png 145px 193px 161px 222px;
 }
 
 datagrid datagridbody
@@ -544,7 +551,7 @@ datagridexpand
 	width: 17px;
 	
 	icon-decorator: image;
-	icon-image: invader.png 3px 232px 20px 249px;
+	icon-image: fusion.png 3px 232px 20px 249px;
 }
 
 datagridexpand:hover
@@ -566,18 +573,18 @@ datagridexpand.collapsed
 
 scrollbarvertical
 {
-	margin-top: -5px;
-	margin-bottom: -6px;
-	margin-right: -11px;
+	margin-top: -10px;
+	margin-bottom: -1px;
+	margin-right: -6px;
 	width: 27px;
 }
 
 scrollbarvertical slidertrack
 {
 	background-decorator: tiled-vertical;
-	background-top-image: invader.png 70px 199px 97px 201px;
-	background-center-image: invader.png stretch 70px 201px 97px 202px;
-	background-bottom-image: invader.png 70px 203px 97px 204px;
+	background-top-image: fusion.png 70px 199px 97px 201px;
+	background-center-image: fusion.png stretch 70px 201px 97px 202px;
+	background-bottom-image: fusion.png 70px 203px 97px 204px;
 }
 
 scrollbarvertical sliderbar
@@ -587,9 +594,9 @@ scrollbarvertical sliderbar
 	min-height: 46px;
 
 	background-decorator: tiled-vertical;
-	background-top-image: invader.png 56px 152px 79px 175px;
-	background-center-image: invader.png stretch 56px 175px 79px 175px;
-	background-bottom-image: invader.png 56px 176px 79px 198px;
+	background-top-image: fusion.png 56px 152px 79px 175px;
+	background-center-image: fusion.png stretch 56px 175px 79px 175px;
+	background-bottom-image: fusion.png 56px 176px 79px 198px;
 }
 
 scrollbarvertical sliderbar:hover
@@ -612,7 +619,7 @@ scrollbarvertical sliderarrowdec
 	height: 24px;
 	
 	icon-decorator: image;
-	icon-image: invader.png 0px 152px 27px 176px;
+	icon-image: fusion.png 0px 152px 27px 176px;
 }
 
 scrollbarvertical sliderarrowdec:hover,
@@ -633,7 +640,7 @@ scrollbarvertical sliderarrowinc
 	height: 24px;
 	
 	icon-decorator: image;
-	icon-image: invader.png 28px 152px 55px 176px;
+	icon-image: fusion.png 28px 152px 55px 176px;
 }
 
 
@@ -656,8 +663,8 @@ input.range slidertrack
 	height: 31px;
 	
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 162px 192px 176px 223px;
-	background-center-image: invader.png stretch 176px 192px 177px 223px;
+	background-left-image: fusion.png 162px 192px 176px 223px;
+	background-center-image: fusion.png stretch 176px 192px 177px 223px;
 }
 
 input.range sliderbar
@@ -668,7 +675,7 @@ input.range sliderbar
 	height: 31px;
 
 	icon-decorator: image;
-	icon-image: invader.png 127px 192px 160px 223px;
+	icon-image: fusion.png 127px 192px 160px 223px;
 }
 
 
@@ -698,8 +705,8 @@ tabset tab
 	text-align: center;
 	
 	background-decorator: tiled-horizontal;
-	background-left-image: invader.png 162px 192px 176px 223px;
-	background-center-image: invader.png stretch 176px 192px 177px 223px;
+	background-left-image: fusion.png 162px 192px 176px 223px;
+	background-center-image: fusion.png stretch 176px 192px 177px 223px;
 }
 
 tabset tab:selected
@@ -722,14 +729,14 @@ tabset panels
 	padding: 10px 15px;
 
 	background-decorator: tiled-box;
-	background-top-left-image: invader.png 0px 0px 133px 140px;
-	background-top-right-image: invader.png 136px 0px 146px 140px;
-	background-top-image: invader.png stretch 134px 0px 135px 140px;
-	background-bottom-left-image: invader.png 0px 140px 11px 151px;
-	background-bottom-right-image: invader.png 136px 140px 146px 151px;
-	background-bottom-image: invader.png stretch 11px 140px 12px 151px;
-	background-left-image: invader.png stretch 0px 139px 10px 140px;
-	background-center-image: invader.png stretch 11px 139px 12px 140px;
+	background-top-left-image: fusion.png 0px 0px 133px 140px;
+	background-top-right-image: fusion.png 136px 0px 146px 140px;
+	background-top-image: fusion.png stretch 134px 0px 135px 140px;
+	background-bottom-left-image: fusion.png 0px 140px 11px 151px;
+	background-bottom-right-image: fusion.png 136px 140px 146px 151px;
+	background-bottom-image: fusion.png stretch 11px 140px 12px 151px;
+	background-left-image: fusion.png stretch 0px 139px 10px 140px;
+	background-center-image: fusion.png stretch 11px 139px 12px 140px;
 }
 
 /* Fix each panel to take up exactly the panelled space. */

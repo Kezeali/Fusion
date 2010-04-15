@@ -1,7 +1,7 @@
 <rml>
 	<head>
 		<title>Editor</title>
-		<link type="text/template" href="window.rml" />
+		<link type="text/template" href="fusion_window.rml" />
 		<style>
 			body
 			{
@@ -14,6 +14,11 @@
 			div#title_bar div#icon
 			{
 			display: none;
+			}
+
+			div#close_button
+			{
+			display:none;
 			}
 
 			div#content

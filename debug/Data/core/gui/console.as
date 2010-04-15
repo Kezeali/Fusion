@@ -1,3 +1,8 @@
+void InitialiseConsole()
+{
+	RegisterElementType(e_String("console"), e_String("ConsoleElement"));
+}
+
 ContextMenu@ autocomplete_menu;
 SignalConnection@ autocompleteCon;
 
@@ -249,7 +254,7 @@ void OnConsoleEntryChanged(Event& ev)
 				if (possibleCommands.size() > 0)
 				{
 					Element@ target = ev.GetTargetElement();
-					autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight());
+					autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight() + 4);
 				}
 			}
 		}
@@ -270,6 +275,9 @@ void OnConsoleEntryChanged(Event& ev)
 EventConnection@ consoleClickConnection;
 void OnConsoleEnterClick(Event& ev)
 {
+	autocomplete_menu.hide();
+	autocomplete_menu.removeAllChildren();
+
 	Element@ consoleElem = ev.GetTargetElement().GetParentNode();
 	ElementFormControlInput@ input = cast<ElementFormControlInput>( consoleElem.GetElementById(e_String("command_element")) );
 
@@ -313,41 +321,20 @@ void OnConsoleEntryKeyUp(Event& ev)
 	}
 }
 
-//void OnAutocompleteChanged(Event& ev)
-//{
-//	Document@ doc = gui.getContext().GetDocument(e_String("console_doc"));
-//	ElementFormControlInput@ input = cast<ElementFormControlInput>( doc.GetElementById(e_String("command_element")) );
-//	input.SetValue( ev.GetParameter(e_String("value"), input.GetValue()) );
-//}
-
-void InitialiseConsole()
+void OnConsoleOpened(Event &ev)
 {
-	RegisterElementType(e_String("console"), e_String("ConsoleElement"));
-}
-
-void OnConsoleOpened()
-{
+	OnWindowLoad(ev);
 }
 
 void OnConsoleClosed()
 {
 }
 
-//void CreateConsole()
-//{
-//	Context@ context = gui.getContext();
-//	@document = context.LoadDocument(e_String("core/gui/console.rml"));
-//	if (document !is null)
-//	{
-//		document.SetId(e_String("console_doc"));
-//
-//		document.Show();
-//
-//		//Element@ consoleElement = document.GetElementById(e_String("console_element"));
-//		@congui = ConsoleRouter(/*consoleElement*/);
-//		@listenerConnection = console.connectListener(congui);
-//
-//		Element@ enterElement = document.GetElementById(e_String("enter_command"));
-//		@consoleClickConnection = enterElement.AddEventListener(e_String("click"), e_String("void OnConsoleEnterClick(Event& ev)"));
-//	}
-//}
+void OnConsoleShow(Event &ev)
+{
+	Element@ input = ev.GetCurrentElement().GetElementById(e_String("command_element"));
+	input.Focus();
+
+	gui.enableDebugger();
+	gui.showDebugger();
+}
