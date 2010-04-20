@@ -27,7 +27,7 @@ class TestStartup : ScriptEntity
 
 	void OnAddPlayer(uint16 localPlayer, uint16 player)
 	{
-		@testEntity = cast<Test>( entity_manager.instance("Test", "test", player) );
+		//@testEntity = cast<Test>( entity_manager.instance("Test", "test", player) );
 		testEntity.Spawn();
 		testEntity.SetPosition(GetPosition());
 
@@ -50,9 +50,9 @@ class TestStartup : ScriptEntity
 		@p1Viewport = @Viewport(0, 0, 1, 1);
 		p1Viewport.setCamera(primaryCamera);
 
-		system.addViewport(p1Viewport);
+		//system.addViewport(p1Viewport);
 
-		system.enablePhysicsDebugDraw(p1Viewport);
+		//system.enablePhysicsDebugDraw(p1Viewport);
 
 		@p1Viewport = null;
 

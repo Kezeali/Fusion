@@ -49,7 +49,7 @@
 	</head>
 	<body template="window" onload="OnConsoleOpened(event);" onclose="OnConsoleClosed();" onshow="OnConsoleShow(event);">
 		<console id="console_element">
-			<textarea id="text_element" name="console_data" cols="50" rows="25" maxlength="1200" readonly="true" onchange="OnTextAreaChange(event);"/>
+			<textarea id="text_element" name="console_data" cols="46" rows="27" maxlength="1200" readonly="true" onchange="OnTextAreaChange(event);"/>
 			<input id="command_element" type="text" name="command_input" enter_event="true" onchange="OnConsoleEntryChanged(event);" onenter="OnConsoleEntryEnter(event);" onkeyup="OnConsoleEntryKeyUp(event);" onkeydown="OnConsoleEntryKeyUp(event);"/>
 			<button id="enter_command" onclick="OnConsoleEnterClick(event);">Enter</button>
 			<button id="clear_console" onclick="console.clear();">Clr</button>

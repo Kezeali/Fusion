@@ -112,6 +112,7 @@ namespace FusionEngine
 		manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 		
 		m_EntityFactory->SetScriptingManager(manager);
+		m_EntityFactory->SetModule(module);
 		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		m_Ontology.reset(new OntologicalSystem(m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
@@ -119,6 +120,8 @@ namespace FusionEngine
 		{
 			m_Editor.reset(new Editor(m_InputManager, m_EntityFactory, m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
 			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
+
+			m_Editor->SetEntityModule(module);
 			// Load all entity types so they can be used in the editor
 			m_EntityFactory->LoadAllScriptedTypes();
 		}

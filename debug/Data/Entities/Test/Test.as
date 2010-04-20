@@ -48,7 +48,7 @@ class Test : ScriptEntity
 		@p1Viewport = @Viewport(0, 0, 1, 1);
 		p1Viewport.setCamera(primaryCamera);
 
-		system.addViewport(p1Viewport);
+		//system.addViewport(p1Viewport);
 
 		//primaryCamera.setFollowEntity(testEntity);
 		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
@@ -110,8 +110,8 @@ class Test : ScriptEntity
 			first = false;
 		}
 
-		if (InputIsActive("quit"))
-			system.quit();
+		//if (InputIsActive("quit"))
+		//	system.quit();
 
 		bool doOutput = InputIsActive("debug");
 		if (doOutput && !didOutput)
@@ -121,21 +121,21 @@ class Test : ScriptEntity
 		bool save = InputIsActive("primary");
 		if (save && !savePressed)
 		{
-			system.save("test.save");
+			//system.save("test.save");
 		}
 		savePressed = save;
 
 		bool load = InputIsActive("secondary");
 		if (load && !loadPressed)
 		{
-			system.load("test.save");
+			//system.load("test.save");
 		}
 		loadPressed = load;
 
 		bool special = InputIsActive("special");
 		if (special && !specialPressed)
 		{
-			system.save("test.save");
+			//system.save("test.save");
 			editor.startEditor();
 		}
 		specialPressed = special;

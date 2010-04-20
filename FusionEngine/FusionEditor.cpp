@@ -327,18 +327,6 @@ namespace FusionEngine
 
 		m_RawInputConnection = m_Input->SignalRawInput.connect( boost::bind(&Editor::OnRawInput, this, _1) );
 
-		StringVector types;
-		m_EntityFactory->GetTypes(types, true);
-		m_EntityTypes.insert(types.begin(), types.end());
-		//for (StringVector::iterator it = types.begin(), end = types.end(); it != end; ++it)
-		//{
-		//	m_EntityTypes.insert(*it);
-		//}
-		m_EditorDataSource->UpdateSuggestions(types);
-
-		// Enable may have been called before Initialise, so it is called again here to reflect the expected state
-		//Enable(m_Enabled);
-
 		return true;
 	}
 
@@ -443,10 +431,31 @@ namespace FusionEngine
 		this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 		this->PushMessage(new SystemMessage(SystemMessage::HIDE));
 
-		if (m_MainDocument != NULL)
+		if (m_MainDocument != nullptr)
 			m_MainDocument->Hide();
 
 		m_Enabled = false;
+	}
+
+	void Editor::SetEntityModule(const ModulePtr &module)
+	{
+		m_EntityBuildConnection = module->ConnectToBuild( boost::bind(&Editor::OnBuildEntities, this, _1) );
+	}
+
+	void Editor::OnBuildEntities(BuildModuleEvent &ev)
+	{
+		if (ev.type == BuildModuleEvent::PostBuild)
+		{
+			StringVector types;
+			m_EntityFactory->GetTypes(types, true);
+			m_EntityTypes.insert(types.begin(), types.end());
+			//for (StringVector::iterator it = types.begin(), end = types.end(); it != end; ++it)
+			//{
+			//	m_EntityTypes.insert(*it);
+			// something
+			//}
+			m_EditorDataSource->UpdateSuggestions(types);
+		}
 	}
 
 	void Editor::Enable(bool enable)

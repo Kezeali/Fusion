@@ -248,7 +248,7 @@ textarea
 	width: auto;
 	height: auto;
 	margin: 4px;
-	padding: 10px 15px;
+	padding: 5px 10px;
 
 	color: black;
 	font-size: 14;
@@ -261,7 +261,21 @@ textarea
 	background-bottom-right-image: fusion.png 294px 285px 305px 296px;
 	background-bottom-image: fusion.png stretch 292px 285px 293px 296px;
 	background-left-image: fusion.png stretch 281px 283px 292px 284px;
+	background-right-image: fusion.png 294px 283px 305px 284px;
 	background-center-image: fusion.png stretch 292px 283px 293px 284px;
+}
+
+textarea scrollbarvertical
+{
+	margin-top: 2px;
+	margin-bottom: 4px;
+	margin-right: 5px;
+	width: 27px;
+
+	background-decorator: tiled-vertical;
+	background-top-image: fusion.png 70px 199px 97px 201px;
+	background-center-image: fusion.png stretch 70px 201px 97px 202px;
+	background-bottom-image: fusion.png 70px 203px 97px 204px;
 }
 
 datagrid input.text
@@ -296,11 +310,6 @@ undomenu
 	padding: 6px 0px 0px 4px;
 
 	margin-right: 16px;
-	
-	background-decorator: tiled-horizontal;
-	background-left-image: fusion.png 251px 5px 256px 38px;
-	background-center-image: fusion.png stretch 256px 5px 394px 38px;
-	background-right-image: fusion.png 394px 5px 399px 38px;
 }
 
 undomenu selectvalue
@@ -340,7 +349,18 @@ undomenu selectarrow
 	height: 30px;
 	
 	icon-decorator: image;
-	icon-image: fusion.png 307px 192px 337px 229px;
+	icon-image: fusion.png 307px 193px 337px 228px;
+}
+
+undomenu selectarrow:hover
+{
+	icon-image-t: 231px 266px;
+}
+
+undomenu selectarrow:active,
+undomenu selectarrow:checked
+{
+	icon-image-t: 269px 304px;
 }
 
 select selectvalue,
@@ -373,8 +393,7 @@ dataselect selectarrow
 }
 
 select selectarrow:hover,
-dataselect selectarrow:hover,
-undomenu selectarrow:hover
+dataselect selectarrow:hover
 {
 	icon-image-t: 230px 267px;
 }
@@ -382,9 +401,7 @@ undomenu selectarrow:hover
 select selectarrow:active,
 select selectarrow:checked,
 dataselect selectarrow:active,
-dataselect selectarrow:checked,
-undomenu selectarrow:active,
-undomenu selectarrow:checked
+dataselect selectarrow:checked
 {
 	icon-image-t: 268px 305px;
 }
@@ -584,6 +601,11 @@ scrollbarvertical
 	margin-bottom: -1px;
 	margin-right: -6px;
 	width: 27px;
+
+	background-decorator: tiled-vertical;
+	background-top-image: fusion.png 70px 199px 97px 201px;
+	background-center-image: fusion.png stretch 70px 201px 97px 202px;
+	background-bottom-image: fusion.png 70px 203px 97px 204px;
 }
 
 scrollbarvertical slidertrack

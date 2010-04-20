@@ -334,45 +334,49 @@ namespace FusionEngine
 				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
 				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
 
-				unsigned int i = 0;
-				unsigned int stride = m_XCellCount - ( range.right - range.left + 1 );
-				for (unsigned int iy = (unsigned int)range.top; iy <= (unsigned int)range.bottom; ++iy)
 				{
-					FSN_ASSERT( iy >= 0 );
-					FSN_ASSERT( iy < m_YCellCount );
-					for (unsigned int ix = (unsigned int)range.left; ix <= (unsigned int)range.right; ++ix)
+					unsigned int iy = (unsigned int)range.top;
+					unsigned int ix = (unsigned int)range.left;
+					unsigned int i = iy * m_XCellCount + ix;
+					unsigned int stride = m_XCellCount - ( range.right - range.left + 1 );
+					for (; iy <= (unsigned int)range.bottom; ++iy)
 					{
-						FSN_ASSERT( ix >= 0 );
-						FSN_ASSERT( ix < m_XCellCount );
-						FSN_ASSERT( i == iy * m_XCellCount + ix );
-						Cell &cell = m_Cells[i++];
-						for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+						FSN_ASSERT( iy >= 0 );
+						FSN_ASSERT( iy < m_YCellCount );
+						for (; ix <= (unsigned int)range.right; ++ix)
 						{
-							const EntityPtr &entity = cell_it->first; 
-							CellEntry &cellEntry = cell_it->second;
-							const Vector2 &entityPosition = entity->GetPosition();
+							FSN_ASSERT( ix >= 0 );
+							FSN_ASSERT( ix < m_XCellCount );
+							FSN_ASSERT( i == iy * m_XCellCount + ix );
+							Cell &cell = m_Cells[i++];
+							for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+							{
+								const EntityPtr &entity = cell_it->first; 
+								CellEntry &cellEntry = cell_it->second;
+								const Vector2 &entityPosition = entity->GetPosition();
 
-							if ((entityPosition - cam.StreamPosition).squared_length() <= m_RangeSquared)
-							{
-								if (!cellEntry.active)
+								if ((entityPosition - cam.StreamPosition).squared_length() <= m_RangeSquared)
 								{
-									ActivateEntity(entity, cellEntry, cell);
-									//entry.active = true;
-									//m_ActiveEntities.insert(entity);
+									if (!cellEntry.active)
+									{
+										ActivateEntity(entity, cellEntry, cell);
+										//entry.active = true;
+										//m_ActiveEntities.insert(entity);
+									}
+									else
+									{
+										cellEntry.pendingDeactivation = false;						
+									}
 								}
-								else
+								else if (cellEntry.active)
 								{
-									cellEntry.pendingDeactivation = false;						
+									if (!cellEntry.pendingDeactivation)
+										QueueEntityForDeactivation(cellEntry);
 								}
-							}
-							else if (cellEntry.active)
-							{
-								if (!cellEntry.pendingDeactivation)
-									QueueEntityForDeactivation(cellEntry);
 							}
 						}
+						i += stride;
 					}
-					i += stride;
 				}
 
 				//bool merged = false;

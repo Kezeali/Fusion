@@ -50,6 +50,7 @@
 #include "FusionGameMapLoader.h"
 #include "FusionIDStack.h"
 #include "FusionInputHandler.h"
+#include "FusionScriptModule.h"
 #include "FusionViewport.h"
 #include "FusionXML.h"
 
@@ -102,8 +103,15 @@ namespace FusionEngine
 
 		void Draw();
 
+		//! Starts the editor (doesn't stop the ontology, so you should do that first)
 		void Start();
+		//! Stops the editor
 		void Stop();
+
+		//! Sets the module that entity scripts are added to
+		void SetEntityModule(const ModulePtr &module);
+		//! Called when the entity module is rebuilt
+		void OnBuildEntities(BuildModuleEvent &ev);
 
 		//! Starts Editor mode
 		/*!
@@ -199,6 +207,7 @@ namespace FusionEngine
 		GameMapLoader *m_MapUtil;
 
 		boost::signals2::connection m_RawInputConnection;
+		boost::signals2::connection m_EntityBuildConnection;
 
 		ViewportPtr m_Viewport;
 		CameraPtr m_Camera;
