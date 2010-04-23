@@ -771,10 +771,11 @@ namespace FusionEngine
 			{
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
+				entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
 				it = entityList.erase(it);
 				end = entityList.end();
 			}
-			else if ((entity->GetTagFlags() & m_ToDeleteFlags) == m_ToDeleteFlags)
+			else if (entity->GetTagFlags() & m_ToDeleteFlags)
 			{
 				entityRemoved = true;
 				RemoveEntity(entity);
@@ -790,12 +791,13 @@ namespace FusionEngine
 				if (CheckState(domainIndex, DS_ENTITYUPDATE))
 				{
 					entity->Update(split);
-					m_StreamingManager->OnUpdated(entity);
+					updateRenderables(entity, split, updatedSprites);
 				}
+				if (CheckState(domainIndex, DS_STREAMING))
+					m_StreamingManager->OnUpdated(entity, split);
 
-				updateRenderables(entity, split, updatedSprites);
-
-				entity->PacketSkipped();
+				if (CheckState(domainIndex, DS_SYNCH))
+					entity->PacketSkipped();
 
 				// Next entity
 				++it;
@@ -825,8 +827,23 @@ namespace FusionEngine
 		m_EntitiesToActivate.clear();
 	}
 
+	//void EntityManager::Update(float split)
+	//{
+	//	m_EntitiesLocked = true;
+
+	//	updateEntities(m_ActiveEntities, split);
+
+	//	m_EntitiesLocked = false;
+
+	//	// Actually add entities which were 'added' during the update
+	//	for (EntityArray::iterator it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)
+	//		insertActiveEntity(*it);
+	//	m_EntitiesToActivate.clear();
+	//}
+
 	void EntityManager::insertActiveEntity(const EntityPtr &entity)
 	{
+		entity->StreamIn();
 		m_ActiveEntities.push_back(entity);
 	}
 

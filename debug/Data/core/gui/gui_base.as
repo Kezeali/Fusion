@@ -23,3 +23,8 @@ void HideThisWindow(Event@ ev)
 	ElementDocument @doc = ev.GetCurrentElement().GetOwnerDocument();
 	doc.Hide();
 }
+
+void CloseThisWindow(Event@ ev)
+{
+	ev.GetCurrentElement().GetOwnerDocument().DispatchEvent(e_String("close"));
+}

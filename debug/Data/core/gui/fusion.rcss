@@ -62,8 +62,10 @@ div#title
 }
 
 
-div#close_button
+div.close_button
 {
+	display: none;
+
 	position: absolute;
 	top: 4px;
 	right: 8px;
@@ -74,12 +76,12 @@ div#close_button
 	icon-image: fusion.png 204px 5px 236px 25px;
 }
 
-div#close_button:hover
+div.close_button:hover
 {
 	icon-image-t: 26px 46px;
 }
 
-div#close_button:active
+div.close_button:active
 {
 	icon-image-t: 47px 67px;
 }
@@ -575,7 +577,7 @@ datagridexpand
 	width: 17px;
 	
 	icon-decorator: image;
-	icon-image: fusion.png 3px 232px 20px 249px;
+	icon-image: fusion.png 3px 250px 20px 267px;
 }
 
 datagridexpand:hover
@@ -590,7 +592,7 @@ datagridexpand:active
 
 datagridexpand.collapsed
 {
-	icon-image-t: 250px 267px;
+	icon-image-t: 232px 249px;
 }
 
 

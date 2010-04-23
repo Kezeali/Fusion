@@ -182,7 +182,7 @@ namespace FusionEngine
 		* The manager will be cleared first, so you may want to save the game in
 		* order to not annoy the user
 		*/
-		void SpawnEntities(EntityManager *manager);
+		void SpawnEntities();
 
 		static void Register(asIScriptEngine *engine);
 

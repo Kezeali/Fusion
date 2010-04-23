@@ -71,6 +71,8 @@ namespace FusionEngine
 
 		std::string SwitchTo(const StringVector &args);
 
+		std::string SetStreamingRange(const StringVector &args);
+
 	protected:
 		ClientOptions *m_Options;
 		Renderer *m_Renderer;

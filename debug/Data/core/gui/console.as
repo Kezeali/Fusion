@@ -256,6 +256,8 @@ void OnConsoleEntryChanged(Event& ev)
 					Element@ target = ev.GetTargetElement();
 					autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight() + 4);
 				}
+				else
+					autocomplete_menu.hide();
 			}
 		}
 		else // 'value' is empty

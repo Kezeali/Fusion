@@ -357,11 +357,13 @@ namespace FusionEngine
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
 
-		m_PlainEntityArray.clear();
+		//m_PlainEntityArray.clear();
 		m_UsedTypes.clear();
 		m_Archetypes.clear();
 		m_PseudoEntities.clear();
 		m_Entities.clear();
+
+		m_EntityManager->Clear();
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
@@ -393,17 +395,19 @@ namespace FusionEngine
 
 		m_Streamer->Update();
 
-		ptr_set updatedSprites;
-		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
-		{
-			EntityPtr &entity = *it;
-			updateRenderables(entity, split, updatedSprites);
-		}
+		m_EntityManager->Update(split);
+
+		//ptr_set updatedSprites;
+		//for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
+		//{
+		//	EntityPtr &entity = *it;
+		//	updateRenderables(entity, split, updatedSprites);
+		//}
 	}
 
 	void Editor::Draw()
 	{
-		m_Renderer->Draw(m_PlainEntityArray, m_Viewport, 0);
+		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
 	}
 
 	void Editor::Start()
@@ -412,6 +416,9 @@ namespace FusionEngine
 
 		m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
 		m_PhysicalWorld->EnableDebugDraw();
+
+		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_STREAMING | DS_SYNCH);
+		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_STREAMING | DS_SYNCH);
 
 		this->PushMessage(new SystemMessage(SystemMessage::RESUME));
 		this->PushMessage(new SystemMessage(SystemMessage::SHOW));
@@ -427,6 +434,9 @@ namespace FusionEngine
 	void Editor::Stop()
 	{
 		m_Streamer->RemovePlayerCamera(255);
+
+		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_ALL);
+		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 
 		this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
 		this->PushMessage(new SystemMessage(SystemMessage::HIDE));
@@ -821,14 +831,15 @@ namespace FusionEngine
 		else
 			removeFrom(m_Entities, map_entity);
 
-		for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
-		{
-			if (*it == map_entity->entity)
-			{
-				m_PlainEntityArray.erase(it);
-				break;
-			}
-		}
+		m_EntityManager->RemoveEntity(map_entity->entity);
+		//for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
+		//{
+		//	if (*it == map_entity->entity)
+		//	{
+		//		m_PlainEntityArray.erase(it);
+		//		break;
+		//	}
+		//}
 
 		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
@@ -926,7 +937,8 @@ namespace FusionEngine
 
 		m_Entities.clear();
 		m_PseudoEntities.clear();
-		m_PlainEntityArray.clear();
+		//m_PlainEntityArray.clear();
+		m_EntityManager->Clear();
 
 		SerialisedDataArray archetypes, entities;
 		loadEntityData(in, archetypes, entities);
@@ -963,9 +975,10 @@ namespace FusionEngine
 
 	void Editor::Close()
 	{
-		m_PlainEntityArray.clear();
 		m_Entities.clear();
 		m_PseudoEntities.clear();
+		//m_PlainEntityArray.clear();
+		m_EntityManager->Clear();
 
 		m_IdStack.freeAll();
 	}
@@ -979,17 +992,14 @@ namespace FusionEngine
 		GameMapLoader::CompileMap(out, m_UsedTypes, m_Archetypes, m_PseudoEntities, m_Entities);
 	}
 
-	void Editor::SpawnEntities(EntityManager *manager)
-	{
-		manager->Clear();
-		
+	void Editor::SpawnEntities()
+	{		
 		ObjectID nextId = 1;
 		for (MapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
 			MapEntityPtr &mapEntity = *it;
 			if (mapEntity->synced)
 				mapEntity->entity->SetID(nextId++);
-			manager->AddEntity(mapEntity->entity);
 			mapEntity->entity->Spawn();
 		}
 		m_InstanceSynchroniser->Reset(nextId);
@@ -1081,13 +1091,15 @@ namespace FusionEngine
 			asMETHODPR(Editor, Compile, (const std::string &), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void Editor::addMapEntity(const GameMapLoader::GameMapEntityPtr &gm_entity)
+	void Editor::addMapEntity(const GameMapLoader::GameMapEntityPtr &map_entity)
 	{
-		if (gm_entity->entity->IsPseudoEntity())
-			m_PseudoEntities.push_back(gm_entity);
+		if (map_entity->entity->IsPseudoEntity())
+			m_PseudoEntities.push_back(map_entity);
 		else
-			m_Entities.push_back(gm_entity);
-		m_PlainEntityArray.push_back(gm_entity->entity);
+			m_Entities.push_back(map_entity);
+		//m_PlainEntityArray.push_back(map_entity->entity);
+		//m_Streamer->AddEntity(map_entity->entity);
+		m_EntityManager->AddEntity(map_entity->entity);
 	}
 
 	void Editor::serialiseEntityData(CL_IODevice file)

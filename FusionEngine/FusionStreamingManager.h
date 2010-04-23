@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_StreamingManager
@@ -169,6 +168,7 @@ namespace FusionEngine
 		
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
+		float GetRange() const;
 
 		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
@@ -178,10 +178,11 @@ namespace FusionEngine
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);
 		//! Updates the given entity's grid position, and streams in/out
-		void OnUpdated(const EntityPtr &entity);
+		void OnUpdated(const EntityPtr &entity, float split);
 
 		void ActivateEntity(const EntityPtr &entity, CellEntry &entry, Cell &cell);
 		void DeactivateEntity(const EntityPtr &entity);
+		void DeactivateEntity(const EntityPtr &entity, CellEntry &entry);
 
 		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
 
@@ -228,10 +229,8 @@ namespace FusionEngine
 
 		Cell *m_Cells;
 
-		//std::set<EntityPtr> m_ActiveEntities;
 
-		//! Returns true if the entity is within the streaming area of the camera
-		bool activateWithinRange(const StreamingCamera &cam, const EntityPtr &entity, CellEntry &cell_entry);
+		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 
 		bool updateStreamingCamera(StreamingCamera &cam);
 	};

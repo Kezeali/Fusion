@@ -16,11 +16,6 @@
 			display: none;
 			}
 
-			div#close_button
-			{
-			display:none;
-			}
-
 			div#content
 			{
 			text-align: left;

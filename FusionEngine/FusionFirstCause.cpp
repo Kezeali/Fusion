@@ -72,6 +72,8 @@ namespace FusionEngine
 			fncs.callback = boost::bind(&FirstCause::ToggleMode, this, _1);
 			Console::getSingleton().BindCommand("togglemode", fncs, help);
 		}
+
+		Console::getSingleton().BindCommand("streamingrange", boost::bind(&FirstCause::SetStreamingRange, this, _1));
 	}
 
 	template <class T>
@@ -173,14 +175,14 @@ namespace FusionEngine
 		if (args.size() < 2)
 			return "This command requires a parameter ('editor' or 'game').";
 
-		if (args[0] == "editor")
+		if (args[1] == "editor")
 			SwitchToEditor();
-		else if (args[0] == "game")
+		else if (args[1] == "game")
 			SwitchToGame();
 		else
 			return "This command requires 'editor' or 'game' as the first parameter.";
 
-		return "Switched to " + args[0] + ".";
+		return "Switched to " + args[1] + ".";
 	}
 
 	std::string FirstCause::ToggleMode(const StringVector &args)
@@ -195,6 +197,15 @@ namespace FusionEngine
 			SwitchToEditor();
 			return "Switched to editor";
 		}
+	}
+	
+	std::string FirstCause::SetStreamingRange(const StringVector &args)
+	{
+		if (args.size() < 2)
+			return boost::lexical_cast<std::string>( m_Streaming->GetRange() );
+
+		m_Streaming->SetRange( boost::lexical_cast<float>(args[1]) );
+		return "";
 	}
 
 }

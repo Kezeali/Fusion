@@ -553,9 +553,15 @@ namespace FusionEngine
 	}
 
 	template <class T>
+	static inline T diff(const T& a, const T& b)
+	{
+		return (a > b) ? (a - b) : (b - a);
+	}
+
+	template <class T>
 	static inline bool v2Equal(const Vector2T<T>& v1, const Vector2T<T> &v2, float e = 0.001f)
 	{
-		return (v1.x - v2.x) < e && (v1.y - v2.y) < e;
+		return diff(v1.x, v2.x) < e && diff(v1.y, v2.y) < e;
 	}
 
 	template <class T>

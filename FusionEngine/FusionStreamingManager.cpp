@@ -1,3 +1,29 @@
+/*
+*  Copyright (c) 2009-2010 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
+*/
 #include "FusionStableHeaders.h"
 
 #include "FusionStreamingManager.h"
@@ -15,7 +41,10 @@ namespace FusionEngine
 	const float s_DefaultCellSize = 200.f;
 	const float s_DefaultWorldSize = 200000.f;
 
+	const float s_DefaultDeactivationTime = 0.1f;
+
 	StreamingManager::StreamingManager()
+		: m_DeactivationTime(s_DefaultDeactivationTime)
 	{
 		m_Bounds.x = s_DefaultWorldSize / 2.f;
 		m_Bounds.y = s_DefaultWorldSize / 2.f;
@@ -26,12 +55,15 @@ namespace FusionEngine
 		m_CellSize = s_DefaultCellSize;
 		m_InverseCellSize = 1.f / m_CellSize;
 
-		m_XCellCount = (int)(m_Bounds.x * m_InverseCellSize) + 1;
-		m_YCellCount = (int)(m_Bounds.y * m_InverseCellSize) + 1;
+		m_XCellCount = (int)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+		m_YCellCount = (int)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+
+		m_Cells = new Cell[m_XCellCount * m_YCellCount];
 	}
 
 	StreamingManager::~StreamingManager()
 	{
+		delete[] m_Cells;
 	}
 
 	void StreamingManager::SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam)
@@ -53,6 +85,11 @@ namespace FusionEngine
 	{
 		m_Range = game_units;
 		m_RangeSquared = game_units * game_units;
+	}
+
+	float StreamingManager::GetRange() const
+	{
+		return m_Range;
 	}
 
 	//CL_Rectf StreamingManager::CalculateActiveArea(ObjectID net_idx) const
@@ -85,7 +122,7 @@ namespace FusionEngine
 		FSN_ASSERT( y <= +m_Bounds.y );
 		unsigned int ix = Maths::Clamp<unsigned int>( (unsigned int)( (x + m_Bounds.x) * m_InverseCellSize ), 0, m_XCellCount - 1 );
 		unsigned int iy = Maths::Clamp<unsigned int>( (unsigned int)( (y + m_Bounds.y) * m_InverseCellSize ), 0, m_YCellCount - 1 );
-		FSN_ASSERT( iy*m_XCellCount+ix < sizeof(m_Cells) );
+		FSN_ASSERT( iy*m_XCellCount+ix < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/ );
 		return &m_Cells[iy*m_XCellCount+ix];
 	}
 	
@@ -101,17 +138,18 @@ namespace FusionEngine
 		entry.x = entity->GetPosition().x; entry.y = entity->GetPosition().y;
 		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
 
-		OnUpdated(entity);
+		activateInView(cell, &entry, entity, true);
+		//OnUpdated(entity, 0.0f);
 	}
 
 	void StreamingManager::RemoveEntity(const EntityPtr &entity)
 	{
-		FSN_ASSERT(entity->GetStreamingCellIndex() < sizeof(m_Cells));
+		FSN_ASSERT(entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/);
 		Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
 		cell->objects.erase(entity);
 	}
 
-	void StreamingManager::OnUpdated(const EntityPtr &entity)
+	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
 	{
 		FSN_ASSERT(entity);
 
@@ -125,7 +163,7 @@ namespace FusionEngine
 		CellEntry *cellEntry = nullptr;
 		std::map<EntityPtr, CellEntry>::iterator _where;
 
-		if (entity->GetStreamingCellIndex() < sizeof(m_Cells))
+		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/)
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
 			_where = currentCell->objects.find(entity);
@@ -146,7 +184,8 @@ namespace FusionEngine
 
 		FSN_ASSERT( cellEntry != nullptr );
 
-		bool warp = std::abs(cellEntry->x - new_x) > 50.0f;
+		bool move = !fe_fequal(cellEntry->x, new_x) || !fe_fequal(cellEntry->y, new_y);
+		bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
 
 		// move the object, updating the current cell if necessary
 		Cell *newCell = CellAtPosition(new_x, new_y);
@@ -177,45 +216,36 @@ namespace FusionEngine
 			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
 		}
 
-		// see if the object needs to be activated or deactivate
+		// see if the object needs to be activated or deactivated
+		if (move)
+			activateInView(currentCell, cellEntry, entity, warp);
+
+		if (cellEntry->pendingDeactivation)
+		{
+			cellEntry->pendingDeactivationTime -= split;
+			if (cellEntry->pendingDeactivationTime <= 0.0f)
+				DeactivateEntity(entity, *cellEntry);
+		}
+	}
+
+	void StreamingManager::activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp)
+	{
 		const Vector2 &entityPosition = entity->GetPosition();
 		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
 		{
 			const StreamingCamera &cam = it->second;
-			if ((entityPosition - cam.StreamPosition).squared_length() > m_RangeSquared)
+			if ((entityPosition - cam.StreamPosition).squared_length() < m_RangeSquared)
 			{
-				if (!cellEntry->active)
-					ActivateEntity(entity, *cellEntry, *currentCell);
-				else if (!cellEntry->pendingDeactivation)
-					QueueEntityForDeactivation(*cellEntry, warp);
+				if (!cell_entry->active)
+					ActivateEntity(entity, *cell_entry, *cell);
+				cell_entry->pendingDeactivation = false;
 			}
-			else
-				cellEntry->pendingDeactivation = false;
+			else if (cell_entry->active)
+			{
+				if (!cell_entry->pendingDeactivation)
+					QueueEntityForDeactivation(*cell_entry, warp);
+			}
 		}
-	}
-
-	bool StreamingManager::activateWithinRange(const StreamingManager::StreamingCamera &cam, const EntityPtr &entity, CellEntry &entry)
-	{
-		//const Vector2 &entityPosition = entity->GetPosition();
-		//if ((entityPosition - cam.StreamPosition).squared_length() < m_RangeSquared)
-		//{
-		//	if (!entry.active)
-		//	{
-		//		ActivateEntity(entity, entry, cell);
-		//		//entry.active = true;
-		//		//m_ActiveEntities.insert(entity);
-		//	}
-		//	else
-		//	{
-		//		entry.pendingDeactivation = false;						
-		//	}
-		//}
-		//else if (entry.active)
-		//{
-		//	if (!entry.pendingDeactivation)
-		//		QueueEntityForDeactivation(entry);
-		//}
-		return false;
 	}
 
 	void StreamingManager::ActivateEntity(const EntityPtr &entity, CellEntry &cell_entry, Cell &cell)
@@ -239,7 +269,15 @@ namespace FusionEngine
 		FSN_ASSERT( cellEntry.active );
 		cellEntry.active = false;
 
-		GenerateDeactivationEvent( entity );
+		GenerateDeactivationEvent(entity);
+	}
+
+	void StreamingManager::DeactivateEntity(const EntityPtr &entity, CellEntry &cell_entry)
+	{
+		FSN_ASSERT( cell_entry.active );
+		cell_entry.active = false;
+
+		GenerateDeactivationEvent(entity);
 	}
 
 	void StreamingManager::QueueEntityForDeactivation(CellEntry &entry, bool warp)
@@ -332,7 +370,7 @@ namespace FusionEngine
 				fe_clamp(range.left, 0, (int)m_XCellCount - 1);
 				fe_clamp(range.right, 0, (int)m_XCellCount - 1);
 				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
-				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+				fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
 
 				{
 					unsigned int iy = (unsigned int)range.top;
@@ -343,7 +381,7 @@ namespace FusionEngine
 					{
 						FSN_ASSERT( iy >= 0 );
 						FSN_ASSERT( iy < m_YCellCount );
-						for (; ix <= (unsigned int)range.right; ++ix)
+						for (ix = (unsigned int)range.left; ix <= (unsigned int)range.right; ++ix)
 						{
 							FSN_ASSERT( ix >= 0 );
 							FSN_ASSERT( ix < m_XCellCount );

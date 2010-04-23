@@ -1,7 +1,7 @@
 <rml>
 	<head>
 		<title>Properties</title>
-		<link type="text/template" href="window.rml" />
+		<link type="text/template" href="fusion_window.rml" />
 		<style>
 			body
 			{
@@ -16,6 +16,11 @@
 			display: none;
 			}
 
+			div#close_button
+			{
+			display: inline;
+			}
+
 			div#content
 			{
 			text-align: left;
@@ -25,10 +30,6 @@
 			void OnPropSelected(Event@ event)
 			{
 				console.println("selected: " + event.GetParameter(e_String("row_index"), -1));
-			}
-			void Close(Event@ event)
-			{
-				event.GetCurrentElement().GetOwnerDocument().DispatchEvent(e_String("close"));
 			}
 		</script>
 	</head>
@@ -51,6 +52,5 @@
 			 element suitable to edit the property type given by the second field-->
 			<!--<col fields="value,type,index">Value</col>-->
 		</datagrid>
-		<button onclick="%this: Close(event)">close</button>
 	</body>
 </rml>

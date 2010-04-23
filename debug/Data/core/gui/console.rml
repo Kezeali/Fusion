@@ -11,6 +11,10 @@
 			margin: auto;
 			}
 
+			div#hide_button
+			{
+			display: inline;
+			}
 
 			div#content
 			{

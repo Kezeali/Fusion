@@ -489,6 +489,7 @@ namespace FusionEngine
 		m_MarkedToRemove(false),
 		m_MarkedToDeactivate(false),
 		m_StreamedIn(true),
+		m_CellIndex(0xFFFFFFFF),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -765,6 +766,11 @@ namespace FusionEngine
 	void Entity::MarkToDeactivate()
 	{
 		m_MarkedToDeactivate = true;
+	}
+
+	void Entity::RemoveDeactivateMark()
+	{
+		m_MarkedToDeactivate = false;
 	}
 
 	bool Entity::IsMarkedToDeactivate() const

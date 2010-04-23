@@ -145,7 +145,7 @@ namespace FusionEngine
 
 			if (entity->IsHidden())
 				continue;
-			if (entity->IsStreamedIn())
+			if (!entity->IsStreamedIn())
 				continue;
 
 			if (entity->GetLayer() != layer)
@@ -156,7 +156,7 @@ namespace FusionEngine
 			CL_Mat4f entityTransform = CL_Mat4f::translate(entityPosition.x, entityPosition.y, 0.f);
 			entityTransform.multiply(CL_Mat4f::rotate(CL_Angle(entity->GetAngle(), cl_radians), 0.f, 0.f, 1.f));
 
-			// Draw_area translated by -entityPosition (since renderable AABBs are relative to entity position)
+			// Draw_area translated by -entityPosition (since Renderable positions are relative to entity position)
 			CL_Rectf normDrawArea(draw_area.left - entityPosition.x, draw_area.top - entityPosition.y, draw_area.right - entityPosition.x, draw_area.bottom - entityPosition.y);
 
 			m_GC.push_modelview();

@@ -470,7 +470,10 @@ namespace FusionEngine
 		{
 			const EMP::Core::Vector2i &dimensions = m_Context->GetDimensions();
 			if (x + m_Document->GetOffsetWidth() > dimensions.x)
-				x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
+				if (m_Element != nullptr)
+					x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
+				else
+					x = dimensions.x - (int)std::ceil(m_Document->GetClientWidth());
 			if (y + m_Document->GetOffsetHeight() > dimensions.y)
 				y -= (int)std::ceil(y + m_Document->GetOffsetHeight() - dimensions.y);
 		}

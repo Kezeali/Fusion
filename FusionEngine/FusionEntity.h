@@ -476,6 +476,7 @@ namespace FusionEngine
 
 		//! Used to remove the entity from the active entity list in effectively constant time
 		void MarkToDeactivate();
+		void RemoveDeactivateMark();
 		bool IsMarkedToDeactivate() const;
 
 		//! Spawns
