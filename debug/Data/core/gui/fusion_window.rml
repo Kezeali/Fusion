@@ -16,7 +16,7 @@
 		<div id="content">
 		</div>
 	</div>
-	<handle size_target="#document" style="position: absolute; width: 16px; height: 16px; bottom: 0px; right: 0px;">
+	<handle size_target="#document" style="position: absolute; width: 16px; height: 16px; bottom: 22px; right: 22px;">
 		<div id="size_target"></div>
 	</handle>
 </body>
