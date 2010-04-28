@@ -8,15 +8,15 @@
 		<handle move_target="#document">
 			<div id="icon"></div>
 			<div id="title">Title</div>
+		</handle>
 			<div class="close_button" id="close_button" onclick="CloseThisWindow(event)"></div>
 			<div class="close_button" id="hide_button" onclick="HideThisWindow(event)"></div>
-		</handle>
 	</div>
 	<div id="window">
 		<div id="content">
 		</div>
 	</div>
-	<handle size_target="#document" style="position: absolute; width: 16px; height: 16px; bottom: 22px; right: 22px;">
+	<handle size_target="#document" style="position: absolute; width: 16px; height: 16px; bottom: 0px; right: 0px;">
 		<div id="size_target"></div>
 	</handle>
 </body>

@@ -9,8 +9,8 @@ body
 
 body.window
 {
-	padding-top: 40px;
-	padding-bottom: 20px;
+	padding-top: 26px;
+	padding-bottom: 0px;
 	
 	min-width: 250px;
 	max-width: 1000px;
@@ -29,14 +29,14 @@ div#title_bar
 	left: 0px;
 
 	width: auto;
-	height: 40px;
+	height: 26px;
 	
 	text-align: left;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: fusion.png 172px 75px 195px 115px;
-	background-center-image: fusion.png stretch 196px 75px 198px 115px;
-	background-right-image: fusion.png 199px 75px 221px 115px;
+	background-left-image: fusion.png 186px 89px 195px 115px;
+	background-center-image: fusion.png stretch 196px 89px 198px 115px;
+	background-right-image: fusion.png 199px 89px 208px 115px;
 }
 
 body.window:focus div#title_bar
@@ -48,14 +48,14 @@ body.window:focus div#title_bar
 	left: 0px;
 
 	width: auto;
-	height: 40px;
+	height: 26px;
 
 	text-align: left;
 
 	background-decorator: tiled-horizontal;
-	background-left-image-t: 138px 178px;
-	background-center-image-t: 138px 178px;
-	background-right-image-t: 138px 178px;
+	background-left-image-t: 152px 178px;
+	background-center-image-t: 152px 178px;
+	background-right-image-t: 152px 178px;
 }
 
 div#title_bar div#icon
@@ -74,13 +74,13 @@ div#title_bar div#title
 	font-weight: bold;
 
 	width: auto;
-	height: 40px;
+	height: 26px;
 
 	outline-font-effect: outline;
 	outline-width: 1px;
 	outline-color: black;
 
-	margin: 15px 10px 0px 26px;
+	margin: 1px 10px 3px 24px;
 }
 
 
@@ -88,9 +88,11 @@ div.close_button
 {
 	display: none;
 
+	z-index: 2;
+
 	position: absolute;
-	top: 16px;
-	right: 17px;
+	top: 2px;
+	right: 4px;
 
 	width: 32px;
 	height: 20px;
@@ -112,35 +114,35 @@ div.close_button:active
 div#window
 {
 	width: auto;
-	padding: 2px 25px 20px;
+	padding: 1px 6px 10px 7px;
 
 	background-decorator: tiled-box;
-	background-top-left-image: fusion.png 0px 25px 22px 140px;
-	background-top-image: fusion.png stretch 79px 25px 80px 140px;
-	background-top-right-image: fusion.png 146px 25px 168px 140px;
+	background-top-left-image: fusion.png 0px 10px 10px 20px;
+	background-top-image: fusion.png stretch 11px 10px 12px 20px;
+	background-top-right-image: fusion.png 152px 10px 162px 20px;
 
-	background-left-image: fusion.png stretch 0px 141px 22px 142px;
-	background-center-image: fusion.png stretch 79px 141px 80px 142px;
-	background-right-image: fusion.png 146px 141px 168px 142px;
+	background-left-image: fusion.png stretch 0px 80px 10px 81px;
+	background-center-image: fusion.png stretch 11px 80px 12px 81px;
+	background-right-image: fusion.png stretch 152px 80px 162px 81px;
 
-	background-bottom-left-image: fusion.png 0px 151px 22px 173px;
-	background-bottom-image: fusion.png stretch 79px 151px 80px 173px;
-	background-bottom-right-image: fusion.png 146px 151px 168px 173px;
+	background-bottom-left-image: fusion.png 0px 152px 10px 162px;
+	background-bottom-image: fusion.png stretch 80px 152px 81px 162px;
+	background-bottom-right-image: fusion.png 152px 152px 162px 162px;
 }
 
 body.window:focus div#window
 {
-	background-top-left-image-t: 199px 314px;
-	background-top-image-t: 199px 314px;
-	background-top-right-image-t: 199px 314px;
+	background-top-left-image-t: 172px 182px;
+	background-top-image-t: 172px 182px;
+	background-top-right-image-t: 172px 182px;
 
-	background-left-image-t: 256px 257px;
-	background-center-image-t: 256px 257px;
-	background-right-image-t: 256px 257px;
+	background-left-image-t: 242px 243px;
+	background-center-image-t: 242px 243px;
+	background-right-image-t: 242px 243px;
 
-	background-bottom-left-image-t: 324px 346px;
-	background-bottom-image-t: 324px 346px;
-	background-bottom-right-image-t: 324px 346px;
+	background-bottom-left-image-t: 313px 323px;
+	background-bottom-image-t: 313px 323px;
+	background-bottom-right-image-t: 313px 323px;
 }
 
 div#content
@@ -161,10 +163,10 @@ div#content
 
 div#size_target
 {
-	width: 12px;
-	height: 12px;
+	width: 16px;
+	height: 16px;
 	icon-decorator: image;
-	icon-image: fusion.png 56px 402px 68px 414px;
+	icon-image: fusion.png 58px 403px 76px 421px;
 }
 
 
@@ -313,7 +315,7 @@ textarea scrollbarvertical
 	margin-top: 2px;
 	margin-bottom: 4px;
 	margin-right: 5px;
-	width: 27px;
+	width: 20px;
 
 	background-decorator: tiled-vertical;
 	background-top-image: fusion.png 70px 199px 97px 201px;
@@ -640,78 +642,79 @@ datagridexpand.collapsed
 
 scrollbarvertical
 {
-	margin-top: -2px;
+	/*margin-top: -2px;
 	margin-bottom: 16px;
-	margin-right: -6px;
+	margin-right: -6px;*/
+	scrollbar-margin: 22px;
 	width: 24px;
 }
 
 scrollbarvertical slidertrack
 {
 	background-decorator: tiled-vertical;
-	background-top-image: fusion.png 81px 403px 101px 405px;
-	background-center-image: fusion.png stretch 81px 405px 101px 406px;
-	background-bottom-image: fusion.png 81px 407px 101px 408px;
+	background-top-image: fusion.png 79px 403px 103px 405px;
+	background-center-image: fusion.png stretch 79px 405px 103px 406px;
+	background-bottom-image: fusion.png 79px 407px 103px 408px;
 }
 
 scrollbarvertical sliderbar
 {
-	margin-left: 1px;
-	width: 23px;
+	/*margin-left: 1px;*/
+	width: 24px;
 	min-height: 46px;
 
 	background-decorator: tiled-vertical;
-	background-top-image: fusion.png 56px 355px 79px 360px;
-	background-center-image: fusion.png stretch 56px 361px 79px 362px;
-	background-bottom-image: fusion.png 56px 395px 79px 402px;
+	background-top-image: fusion.png 55px 355px 79px 360px;
+	background-center-image: fusion.png stretch 55px 361px 79px 362px;
+	background-bottom-image: fusion.png 55px 395px 79px 402px;
 }
 
 scrollbarvertical sliderbar:hover
 {
-	background-top-image-s: 80px 103px;
-	background-center-image-s: 80px 103px;
-	background-bottom-image-s: 80px 103px;
+	background-top-image-s: 79px 103px;
+	background-center-image-s: 79px 103px;
+	background-bottom-image-s: 79px 103px;
 }
 
 scrollbarvertical sliderbar:active
 {
-	background-top-image-s: 104px 127px;
-	background-center-image-s: 104px 127px;
-	background-bottom-image-s: 104px 127px;
+	background-top-image-s: 103px 127px;
+	background-center-image-s: 103px 127px;
+	background-bottom-image-s: 103px 127px;
 }
 
 scrollbarvertical sliderarrowdec
 {
-	width: 23px;
+	width: 24px;
 	height: 24px;
 
-	margin-bottom: -1px;
+	/*margin-bottom: -1px;*/
 	
 	icon-decorator: image;
-	icon-image: fusion.png 3px 356px 25px 378px;
+	icon-image: fusion.png 2px 355px 26px 379px;
 }
 
 scrollbarvertical sliderarrowdec:hover,
 scrollbarvertical sliderarrowinc:hover
 {
-	icon-image-t: 381px 403px;
+	icon-image-t: 380px 404px;
 }
 
 scrollbarvertical sliderarrowdec:active,
 scrollbarvertical sliderarrowinc:active
 {
-	icon-image-t: 407px 429px;
+	icon-image-t: 406px 430px;
 }
 
 scrollbarvertical sliderarrowinc
 {
-	width: 23px;
+	width: 24px;
 	height: 24px;
 
-	margin-top: -1px;
+	/*margin-top: -1px;*/
 	
 	icon-decorator: image;
-	icon-image: fusion.png 30px 356px 54px 378px;
+	icon-image: fusion.png 30px 355px 54px 379px;
 }
 
 
