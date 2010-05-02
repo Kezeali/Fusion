@@ -9,7 +9,7 @@ body
 
 body.window
 {
-	padding-top: 26px;
+	padding-top: 20px;
 	padding-bottom: 0px;
 	
 	min-width: 250px;
@@ -29,14 +29,14 @@ div#title_bar
 	left: 0px;
 
 	width: auto;
-	height: 26px;
+	height: 20px;
 	
 	text-align: left;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: fusion.png 186px 89px 195px 115px;
-	background-center-image: fusion.png stretch 196px 89px 198px 115px;
-	background-right-image: fusion.png 199px 89px 208px 115px;
+	background-left-image: fusion.png 0px 120px 1px 140px;
+	background-center-image: fusion.png repeat-truncate 2px 120px 18px 140px;
+	background-right-image: fusion.png 161px 120px 162px 140px;
 }
 
 body.window:focus div#title_bar
@@ -48,14 +48,14 @@ body.window:focus div#title_bar
 	left: 0px;
 
 	width: auto;
-	height: 26px;
+	height: 20px;
 
 	text-align: left;
 
 	background-decorator: tiled-horizontal;
-	background-left-image-t: 152px 178px;
-	background-center-image-t: 152px 178px;
-	background-right-image-t: 152px 178px;
+	background-left-image-t: 157px 177px;
+	background-center-image-t: 157px 177px;
+	background-right-image-t: 157px 177px;
 }
 
 div#title_bar div#icon
@@ -117,32 +117,32 @@ div#window
 	padding: 1px 6px 10px 7px;
 
 	background-decorator: tiled-box;
-	background-top-left-image: fusion.png 0px 10px 10px 20px;
-	background-top-image: fusion.png stretch 11px 10px 12px 20px;
-	background-top-right-image: fusion.png 152px 10px 162px 20px;
+	background-top-left-image: fusion.png 0px 140px 1px 152px;
+	background-top-image: fusion.png repeat-truncate 2px 140px 18px 152px;
+	background-top-right-image: fusion.png 161px 140px 162px 152px;
 
-	background-left-image: fusion.png stretch 0px 80px 10px 81px;
-	background-center-image: fusion.png stretch 11px 80px 12px 81px;
-	background-right-image: fusion.png stretch 152px 80px 162px 81px;
+	background-left-image: fusion.png stretch 0px 153px 1px 154px;
+	background-center-image: fusion.png stretch 2px 153px 18px 154px;
+	background-right-image: fusion.png stretch 161px 153px 162px 154px;
 
-	background-bottom-left-image: fusion.png 0px 152px 10px 162px;
-	background-bottom-image: fusion.png stretch 80px 152px 81px 162px;
-	background-bottom-right-image: fusion.png 152px 152px 162px 162px;
+	background-bottom-left-image: fusion.png 0px 155px 1px 156px;
+	background-bottom-image: fusion.png stretch 2px 155px 18px 156px;
+	background-bottom-right-image: fusion.png 161px 155px 162px 156px;
 }
 
 body.window:focus div#window
 {
-	background-top-left-image-t: 172px 182px;
-	background-top-image-t: 172px 182px;
-	background-top-right-image-t: 172px 182px;
+	background-top-left-image-t: 177px 190px;
+	background-top-image-t: 177px 190px;
+	background-top-right-image-t: 177px 190px;
 
-	background-left-image-t: 242px 243px;
-	background-center-image-t: 242px 243px;
-	background-right-image-t: 242px 243px;
+	background-left-image-t: 191px 192px;
+	background-center-image-t: 191px 192px;
+	background-right-image-t: 191px 192px;
 
-	background-bottom-left-image-t: 313px 323px;
-	background-bottom-image-t: 313px 323px;
-	background-bottom-right-image-t: 313px 323px;
+	background-bottom-left-image-t: 192px 193px;
+	background-bottom-image-t: 192px 193px;
+	background-bottom-right-image-t: 192px 193px;
 }
 
 div#content
@@ -226,7 +226,7 @@ input.submit
 	display: inline-block;
 
 	width: 159px;
-	height: 37px;
+	height: 32px;
 
 	padding-top: 8px;
 	vertical-align: -10px;
@@ -236,7 +236,7 @@ input.submit
 	tab-index: auto;
 
 	background-decorator: image;
-	background-image: fusion.png 247px 0px 406px 45px;
+	background-image: fusion.png 252px 6px 399px 38px;
 	background-z-index: 0;
 }
 
@@ -253,13 +253,13 @@ input.submit:focus
 button:hover,
 input.submit:hover
 {
-	background-image-t: 45px 90px;
+	background-image-t: 50px 82px;
 }
 
 button:active,
 input.submit:active
 {
-	background-image-t: 90px 135px;
+	background-image-t: 96px 128px;
 }
 
 
