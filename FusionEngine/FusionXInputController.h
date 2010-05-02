@@ -33,7 +33,7 @@
 //  thus, since core.h has to be included anyway, it is included before xinput.h
 #include <ClanLib/core.h>
 
-#include <xinput.h>
+#include <XInput.h>
 
 #pragma comment(lib, "XInput.lib")
 
