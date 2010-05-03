@@ -132,13 +132,13 @@ div#window
 
 body.window:focus div#window
 {
-	background-top-left-image-t: 177px 190px;
-	background-top-image-t: 177px 190px;
-	background-top-right-image-t: 177px 190px;
+	background-top-left-image-t: 176px 190px;
+	background-top-image-t: 176px 190px;
+	background-top-right-image-t: 176px 190px;
 
-	background-left-image-t: 191px 192px;
-	background-center-image-t: 191px 192px;
-	background-right-image-t: 191px 192px;
+	background-left-image-t: 190px 191px;
+	background-center-image-t: 190px 191px;
+	background-right-image-t: 190px 191px;
 
 	background-bottom-left-image-t: 192px 193px;
 	background-bottom-image-t: 192px 193px;
