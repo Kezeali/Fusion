@@ -4,7 +4,7 @@ body
 	font-weight: normal;
 	font-style: normal;
 	font-size: 15;
-	color: white;
+	color: black;
 }
 
 body.window
@@ -74,7 +74,9 @@ div#title_bar div#title
 	font-weight: bold;
 
 	width: auto;
-	height: 26px;
+	height: 20px;
+
+	color: white;
 
 	outline-font-effect: outline;
 	outline-width: 1px;
@@ -114,7 +116,7 @@ div.close_button:active
 div#window
 {
 	width: auto;
-	padding: 1px 6px 10px 7px;
+	padding: 0px 3px 0px 2px;
 
 	background-decorator: tiled-box;
 	background-top-left-image: fusion.png 0px 140px 1px 152px;
@@ -147,7 +149,9 @@ body.window:focus div#window
 
 div#content
 {
-	z-index: 2;
+	z-index: 0;
+
+	padding: 3px 0px 2px;
 
 	width: auto;
 	height: 100%;
@@ -158,11 +162,12 @@ div#content
 
 	shadow-font-effect: shadow;
 	shadow-offset: 1px 1px;
-	shadow-color: grey;
+	shadow-color: white;
 }
 
 div#size_target
 {
+	
 	width: 16px;
 	height: 16px;
 	icon-decorator: image;
@@ -193,7 +198,7 @@ h1
 
 h2
 {
-	margin-top: 0.3em;
+	/*margin-top: 0.3em;*/
 	margin-bottom: 0.1em;
 
 	text-align: left;
@@ -266,13 +271,14 @@ input.submit:active
 
 input.text
 {
-	height: 20px;
-	padding: 2px 3px 0px;
+	height: 22px;
+	top: 4px;
+	padding: 3px 3px 0px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: fusion.png 191px 213px 195px 230px;
-	background-center-image: fusion.png stretch 195px 213px 215px 230px;
-	background-right-image: fusion.png 322px 213px 326px 230px;
+	background-left-image: fusion.png 189px 209px 192px 231px;
+	background-center-image: fusion.png stretch 192px 209px 193px 231px;
+	background-right-image: fusion.png 322px 209px 327px 231px;
 }
 
 input.text,
@@ -325,7 +331,7 @@ textarea scrollbarvertical
 
 datagrid input.text
 {
-	width: 100%;
+	width: auto;
 	height: auto;
 	margin: 0px;
 	padding: 0px 2px 0px;
@@ -391,21 +397,21 @@ undomenu selectarrow
 	top: -8px;
 	right: -18px;
 	width: 18px;
-	height: 30px;
+	height: 22px;
 	
 	icon-decorator: image;
-	icon-image: fusion.png 307px 193px 337px 228px;
+	icon-image: fusion.png 329px 209px 351px 231px;
 }
 
 undomenu selectarrow:hover
 {
-	icon-image-t: 231px 266px;
+	icon-image-t: 247px 269px;
 }
 
 undomenu selectarrow:active,
 undomenu selectarrow:checked
 {
-	icon-image-t: 269px 304px;
+	icon-image-t: 285px 307px;
 }
 
 select selectvalue,
@@ -467,14 +473,16 @@ undomenu selectbox,
 datagrid datagridbody
 {
 	background-decorator: tiled-box;
-	background-top-left-image: fusion.png 281px 275px 292px 284px;
-	background-top-right-image: fusion.png 294px 275px 305px 284px;
-	background-top-image: fusion.png stretch 292px 275px 293px 284px;
-	background-bottom-left-image: fusion.png 281px 285px 292px 296px;
-	background-bottom-right-image: fusion.png 294px 285px 305px 296px;
-	background-bottom-image: fusion.png stretch 292px 285px 293px 296px;
-	background-left-image: fusion.png stretch 281px 283px 292px 284px;
-	background-center-image: fusion.png stretch 292px 283px 293px 284px;
+	background-top-left-image: fusion.png 306px 287px 308px 289px;
+	background-top-image: fusion.png stretch 308px 287px 309px 289px;
+	background-top-right-image: fusion.png 322px 287px 320px 289px;
+
+	background-bottom-left-image: fusion.png 306px 300px 308px 302px;
+	background-bottom-image: fusion.png stretch 308px 300px 309px 302px;
+	background-bottom-right-image: fusion.png 322px 300px 320px 302px;
+
+	background-left-image: fusion.png stretch 306px 294px 308px 295px;
+	background-center-image: fusion.png stretch 314px 294px 315px 295px;
 }
 
 select selectbox option,
@@ -490,7 +498,7 @@ dataselect selectbox option:nth-child(even),
 undomenu selectbox option:nth-child(even),
 datagrid datagridrow:nth-child(even)
 {
-	background: #FFFFFFA0;
+	background: #C0F5FFA0;
 }
 
 select selectbox option:hover,
@@ -502,12 +510,13 @@ undomenu selectbox option:hover
 
 datagrid datagridrow.selected
 {
-   background: #EFBF00;
+   background: #5C86B9F9;
+	 color: white;
 }
 
-datagrid datagridrow option:hover
+datagrid datagridrow:hover
 {
-	background: #FF5D5D;
+	background: #5C86B9A0;
 }
 
 
@@ -591,22 +600,22 @@ input.checkbox:checked:active
 datagrid datagridheader
 {
 	width: auto;
-	height: 24px;
+	height: 22px;
 	padding: 5px 10px 0px 10px;
 
 	background-decorator: tiled-horizontal;
-	background-left-image: fusion.png 186px 284px 194px 308px;
-	background-center-image: fusion.png stretch 195px 284px 196px 308px;
-	background-right-image: fusion.png 200px 284px 208px 308px;
+	background-left-image: fusion.png 187px 286px 194px 308px;
+	background-center-image: fusion.png stretch 195px 286px 196px 308px;
+	background-right-image: fusion.png 200px 286px 207px 308px;
 }
 
 datagrid datagridbody
 {
 	color: black;
 
-	margin-left: 4px;
-	margin-right: 3px;
-	padding: 0px 4px 4px 4px;
+	margin-left: 0px;
+	margin-right: 0px;
+	padding: 2px 4px 4px 4px;
 }
 
 
