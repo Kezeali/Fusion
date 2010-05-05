@@ -278,8 +278,9 @@ namespace FusionEngine
 
 	Editor::Editor(InputManager *input, EntityFactory *entity_factory, Renderer *renderer, InstancingSynchroniser *instancing, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util, EntityManager *entity_manager)
 		: m_Input(input),
-		m_Renderer(renderer),
 		m_EntityFactory(entity_factory),
+		m_Renderer(renderer),
+		m_InstanceSynchroniser(instancing),
 		m_PhysicalWorld(world),
 		m_Streamer(streaming_manager),
 		m_MapUtil(map_util),
@@ -288,6 +289,8 @@ namespace FusionEngine
 		m_UndoManager(256),
 		m_Enabled(false),
 		m_ActiveTool(tool_move),
+		m_ShiftSelect(false),
+		m_Dragging(false),
 		m_ReceivedMouseDown(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
@@ -319,6 +322,8 @@ namespace FusionEngine
 		m_RightClickMenu = new ContextMenu(m_MainDocument->GetContext(), m_Input);
 		m_PropertiesMenu = new MenuItem("Properties", "properties");
 		m_RightClickMenu->AddChild(m_PropertiesMenu);
+		m_EntitySelectionMenu = new MenuItem("Select", "select");
+		m_RightClickMenu->AddChild(m_EntitySelectionMenu);
 
 		m_Viewport.reset(new Viewport());
 		m_Camera.reset( new Camera(ScriptManager::getSingleton().GetEnginePtr()) );
@@ -332,30 +337,35 @@ namespace FusionEngine
 
 	void Editor::CleanUp()
 	{
-		for (MenuItemConnections::iterator it = m_PropertiesMenuConnections.begin(), end = m_PropertiesMenuConnections.end(); it != end; ++it)
-			it->disconnect();
-		m_PropertiesMenuConnections.clear();
-
-		if (m_PropertiesMenu != NULL)
+		// Release context menu
+		if (m_PropertiesMenu != nullptr)
 		{
 			m_PropertiesMenu->release();
-			m_PropertiesMenu = NULL;
+			m_PropertiesMenu = nullptr;
 		}
-
-		if (m_RightClickMenu != NULL)
+		if (m_EntitySelectionMenu != nullptr)
+		{
+			m_EntitySelectionMenu->release();
+			m_EntitySelectionMenu = nullptr;
+		}
+		if (m_RightClickMenu != nullptr)
 		{
 			m_RightClickMenu->release();
-			m_RightClickMenu = NULL;
+			m_RightClickMenu = nullptr;
 		}
+		m_PropertiesMenuConnections.clear();
+		m_SelectionMenuConnections.clear();
 
-		if (m_MainDocument != NULL)
+		if (m_MainDocument != nullptr)
 			m_MainDocument->Close();
-		m_MainDocument = NULL;
+		m_MainDocument = nullptr;
 
 		m_EntityDialogs.clear();
 
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
+
+		m_SelectedEntities.clear();
 
 		//m_PlainEntityArray.clear();
 		m_UsedTypes.clear();
@@ -408,6 +418,81 @@ namespace FusionEngine
 	void Editor::Draw()
 	{
 		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
+
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+
+		CL_Rect viewport;
+		m_Renderer->CalculateScreenArea(viewport, m_Viewport);
+
+		// Set the viewport
+		//gc.set_cliprect(viewport);
+
+		const CameraPtr &camera = m_Viewport->GetCamera();
+
+		const CL_Vec2f &camPosition = camera->GetPosition();
+		CL_Origin camOrigin = camera->GetOrigin();
+
+		CL_Vec2f viewportOffset;
+		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewport.get_width(), (float)viewport.get_height()));
+
+		gc.push_modelview();
+		gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+
+		gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+		if ( !fe_fequal(camera->GetZoom(), 1.f) )
+			gc.mult_scale(camera->GetZoom(), camera->GetZoom());
+
+		CL_Rectf screen;
+		m_Renderer->CalculateScreenArea(screen, m_Viewport, true);
+		for (EntitySet::const_iterator it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
+		{
+			const MapEntityPtr &selected = *it;
+			
+			const Vector2 &position = selected->entity->GetPosition();
+
+			gc.push_modelview();
+			gc.mult_translate(position.x, position.y);
+			gc.mult_rotate(CL_Angle(selected->entity->GetAngle(), cl_radians));
+
+			CL_Pointf center(position.x, position.y);
+			if (screen.contains(CL_Vec2f(center)))
+			{
+				//CL_Rectf selectionBox(-16.0f, -16.0f, CL_Sizef(32.0f, 32.0f));
+				//CL_Draw::box(gc, selectionBox, CL_Colorf(0.3f, 0.4f, 0.8f, 0.8f));
+
+				CL_Draw::circle(gc, CL_Pointf(0.0f, 0.0f), 4, CL_Colorf(0.3f, 0.4f, 0.8f, 0.8f));
+
+				CL_Colorf colour(0.3f, 0.4f, 0.8f, 0.8f);
+
+				CL_Vec2f cross[9] =
+				{
+					CL_Vec2f(-16, -16),
+					CL_Vec2f(16, 16),
+					CL_Vec2f(-16, 16),
+					CL_Vec2f(16, -16),
+				};
+				CL_Vec2f box[9] =
+				{
+					CL_Vec2f(-16, -16),
+					CL_Vec2f(16, -16),
+					CL_Vec2f(16, 16),
+					CL_Vec2f(-16, 16),
+				};
+
+				CL_PrimitivesArray prim_array(gc);
+				prim_array.set_attributes(0, cross);
+				prim_array.set_attribute(1, colour);
+				gc.set_program_object(cl_program_color_only);
+				gc.draw_primitives(cl_lines, 4, prim_array);
+				prim_array.set_attributes(0, box);
+				gc.draw_primitives(cl_line_loop, 4, prim_array);
+				gc.reset_program_object();
+			}
+
+			gc.pop_modelview();
+		}
+		gc.pop_modelview();
+		//gc.reset_cliprect();
 	}
 
 	void Editor::Start()
@@ -505,6 +590,24 @@ namespace FusionEngine
 		if (!m_Enabled)
 			return;
 
+		if (ev.InputType == RawInput::Pointer)
+		{
+			if (m_Dragging)
+			{
+				Vector2 offset = ev.PointerPosition - m_DragFrom;
+				m_DragFrom = ev.PointerPosition;
+				std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(),
+					[&](const MapEntityPtr &map_entity){ map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset); }
+				);
+			}
+			return;
+		}
+		else if (ev.Code == CL_KEY_SHIFT)
+		{
+			m_ShiftSelect = ev.ButtonPressed;
+			return;
+		}
+
 		// Ignore input if the cursor is over a GUI element
 		Rocket::Core::Context *context = m_MainDocument->GetContext();
 		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
@@ -513,11 +616,7 @@ namespace FusionEngine
 				return;
 		}
 
-		if (ev.InputType == RawInput::Pointer)
-		{
-			// Implement drag action
-		}
-		else if (ev.InputType == RawInput::Button)
+		if (ev.InputType == RawInput::Button)
 		{
 			if (ev.ButtonPressed == true)
 			{
@@ -537,6 +636,11 @@ namespace FusionEngine
 					break;
 				case CL_MOUSE_LEFT:
 					m_ReceivedMouseDown = true;
+					if (m_ActiveTool == tool_move)
+					{
+						m_Dragging = true;
+						m_DragFrom = ev.PointerPosition;
+					}
 					break;
 				}
 			}
@@ -568,23 +672,25 @@ namespace FusionEngine
 						onLeftClick(ev);
 						m_ReceivedMouseDown = false;
 					}
+					m_Dragging = false;
 					break;
 				case CL_MOUSE_RIGHT:
-					{
-						// Figure out where the pointer is within the world
-						CL_Rectf area;
-						m_Renderer->CalculateScreenArea(area, m_Viewport, true);
-						Vector2 worldPosition(ev.PointerPosition);
-						worldPosition.x += area.left; worldPosition.y += area.top;
-
-						GameMapLoader::GameMapEntityArray entitiesUnderMouse;
-						GetEntitiesAt(entitiesUnderMouse, worldPosition);
-						ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
-					}
+					onRightClick(ev);
+					break;
+				case CL_MOUSE_MIDDLE:
+					// Show Radial Menu (the editor icons for each entity under the mouse displayed in a circle around the cursor)
 					break;
 				}
 			} // Button released
 		}
+	}
+
+	void translatePointerToWorld(Vector2 *pointerPos, Renderer *renderer, const ViewportPtr &view)
+	{
+		// Figure out where the pointer is within the world
+			CL_Rectf area;
+			renderer->CalculateScreenArea(area, view, true);
+			pointerPos->x += area.left; pointerPos->y += area.top;
 	}
 
 	inline void Editor::onLeftClick(const RawInput &ev)
@@ -610,29 +716,26 @@ namespace FusionEngine
 		case tool_delete:
 			break;
 		case tool_move:
-			//GameMapLoader::GameMapEntityArray entitiesUnderMouse;
-			//GetEntitiesAt(entitiesUnderMouse, worldPosition);
-			//if (altPressed)
-			//	m_SelectedEntity = entitiesUnderMouse[0];
-			//else
-			//{
-			//	for (MenuItemConnections::iterator it = m_EntitySelectionMenuConnections.begin(), end = m_EntitySelectionMenuConnections.end(); it != end; ++it)
-			//	{
-			//		it->disconnect();
-			//	}
-			//	m_EntitySelectionMenu.clear();
-			//	m_EntitySelectionMenu->RemoveAllChildren();
-			//	for (MapEntityArray::const_iterator it = entitiesUnderMouse.begin(), end = entitiesUnderMouse.end(); it != end; ++it)
-			//	{
-			//		const MapEntityPtr &mapEntity = *it;
-			//		const EntityPtr &entity = mapEntity->entity;
-			//		MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
-			//		m_EntitySelectionMenu->AddChild(item);
-			//		boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::onSelectMenuClicked, this, _1, mapEntity) );
-			//		m_EntitySelectionMenuConnections.push_back(signalConnection);
-			//		item->release();
-			//	}
-			//}
+			break;
+		}
+	}
+
+	inline void Editor::onRightClick(const RawInput &ev)
+	{
+		switch (m_ActiveTool)
+		{
+		case tool_place:
+		case tool_delete:
+		case tool_move:
+			{
+			// Find Entities under the cursor
+			Vector2 worldPosition(ev.PointerPosition);
+			translatePointerToWorld(&worldPosition, m_Renderer, m_Viewport);
+
+			GameMapLoader::GameMapEntityArray entitiesUnderMouse;
+			GetEntitiesAt(entitiesUnderMouse, worldPosition);
+			ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
+			}
 			break;
 		}
 	}
@@ -658,23 +761,41 @@ namespace FusionEngine
 		SendToConsole(title + " error:" + message);
 	}
 
-	void Editor::ShowContextMenu(const Vector2i &position, const GameMapLoader::GameMapEntityArray &entities)
+	void Editor::clearCtxMenu(MenuItem *menu, Editor::MenuItemConnections &connections)
 	{
-		for (MenuItemConnections::iterator it = m_PropertiesMenuConnections.begin(), end = m_PropertiesMenuConnections.end(); it != end; ++it)
+		for (MenuItemConnections::iterator it = connections.begin(), end = connections.end(); it != end; ++it)
 		{
 			it->disconnect();
 		}
-		m_PropertiesMenuConnections.clear();
-		m_PropertiesMenu->RemoveAllChildren();
+		connections.clear();
+		menu->RemoveAllChildren();
+	}
+
+	void Editor::ShowContextMenu(const Vector2i &position, const GameMapLoader::GameMapEntityArray &entities)
+	{
+		clearCtxMenu(m_PropertiesMenu, m_PropertiesMenuConnections);
+		clearCtxMenu(m_EntitySelectionMenu, m_SelectionMenuConnections);
 
 		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			const MapEntityPtr &mapEntity = *it;
 			const EntityPtr &entity = mapEntity->entity;
+			// Add an item for this entity to the Properties sub-menu
 			MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
 			m_PropertiesMenu->AddChild(item);
-			boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity.get()) );
-			m_PropertiesMenuConnections.push_back(signalConnection);
+			{
+				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity.get()) );
+				m_PropertiesMenuConnections.push_back(signalConnection);
+			}
+			item->release();
+
+			// Add an item for this entity to the Select sub-menu
+			item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
+			m_EntitySelectionMenu->AddChild(item);
+			{
+				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::selectEntity, this, _1, mapEntity.get()));
+				m_SelectionMenuConnections.push_back(signalConnection);
+			}
 			item->release();
 		}
 
@@ -694,6 +815,14 @@ namespace FusionEngine
 	void Editor::showProperties(const MenuItemEvent &ev, MapEntity* entity)
 	{
 		ShowProperties(entity);
+		m_RightClickMenu->Hide();
+	}
+
+	void Editor::selectEntity(const MenuItemEvent &ev, MapEntity* entity)
+	{
+		if (!m_ShiftSelect)
+			m_SelectedEntities.clear();
+		m_SelectedEntities.insert(MapEntityPtr(entity));
 		m_RightClickMenu->Hide();
 	}
 
@@ -735,6 +864,13 @@ namespace FusionEngine
 		{
 			SendToConsole("Failed to create entity of type " + type);
 			return gmEntity;
+		}
+
+		if (synced)
+		{
+			ObjectID id = m_IdStack.getFreeID();
+			gmEntity->entity->SetID(id);
+			m_InstanceSynchroniser->TakeID(id);
 		}
 
 		gmEntity->CreateEditorFixture();
@@ -831,15 +967,9 @@ namespace FusionEngine
 		else
 			removeFrom(m_Entities, map_entity);
 
+		m_SelectedEntities.erase(map_entity);
+
 		m_EntityManager->RemoveEntity(map_entity->entity);
-		//for (EntityArray::iterator it = m_PlainEntityArray.begin(), end = m_PlainEntityArray.end(); it != end; ++it)
-		//{
-		//	if (*it == map_entity->entity)
-		//	{
-		//		m_PlainEntityArray.erase(it);
-		//		break;
-		//	}
-		//}
 
 		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
@@ -866,6 +996,11 @@ namespace FusionEngine
 	const std::string & Editor::GetSuggestion(size_t index)
 	{
 		return m_EditorDataSource->GetSuggestion(index);
+	}
+
+	void Editor::SetDisplayActualSprites(bool enable)
+	{
+		SendToConsole("Editor::SetDisplayActualSprites() is not yet implemented. You should get on that.");
 	}
 
 	void Editor::SetActiveTool(EditorTool tool)
@@ -1029,6 +1164,10 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Editor",
 			"const string& getSuggestion(uint)",
 			asMETHOD(Editor, GetSuggestion), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void setDisplayActualSprites(bool)",
+			asMETHOD(Editor, SetDisplayActualSprites), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void setEntityType(const string &in)",

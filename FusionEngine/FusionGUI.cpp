@@ -274,6 +274,7 @@ namespace FusionEngine
 
 	void GUI::Draw()
 	{
+		m_Context->Render();
 		//for (int i = 0; i < m_Context->GetNumDocuments(); ++i)
 		//{
 		//	Rocket::Core::ElementDocument *doc = m_Context->GetDocument(i);
@@ -286,9 +287,8 @@ namespace FusionEngine
 		//		outline.expand(16.0f);
 		//	else
 		//		outline.expand(8.0f);
-		//	CL_Draw::box(m_Display.get_gc(), outline, CL_Colorf(0.0f, 0.0f, 0.0f, 0.75f));
+		//	CL_Draw::fill(m_Display.get_gc(), outline, CL_Colorf(0.0f, 0.0f, 0.0f, 0.75f));
 		//}
-		m_Context->Render();
 	}
 
 	Rocket::Core::Context *GUI::GetContext() const

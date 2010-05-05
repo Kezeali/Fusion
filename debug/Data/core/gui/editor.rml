@@ -21,6 +21,12 @@
 			text-align: left;
 			}
 
+			div#create_entity
+			{
+			border-width: 1px;
+			border-color: #0808A0;
+			}
+
 			button.tool
 			{
 			width: 24px;
@@ -63,6 +69,7 @@
 			<button class="tool" id="move_entity" onclick="editor.setActiveTool(EditorTool::move_entity)"><div id="icon"/></button>
 			<button class="tool" id="delete_entity" onclick="editor.setActiveTool(delete_entity)"><div id="icon"/></button>
 		</p>
+		<input type="checkbox" id="actual_size" checked onchange="%this: OnClickActualGFXCheckbox(event);" value="true"/>Display In-Game Sprites
 		<div id="create_entity">
 			<h2>Create Entity:</h2>
 			<input type="checkbox" id="pseudo_ent" checked onchange="%this: OnClickPseudoCheckbox(event);" value="true"/> Pseudo-Entity

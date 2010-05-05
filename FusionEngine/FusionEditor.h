@@ -144,6 +144,8 @@ namespace FusionEngine
 
 		const std::string &GetSuggestion(size_t index);
 
+		void SetDisplayActualSprites(bool enable);
+
 		enum EditorTool
 		{
 			tool_place,
@@ -215,6 +217,7 @@ namespace FusionEngine
 		Vector2 m_CamVelocity;
 
 		bool m_ReceivedMouseDown;
+		bool m_ShiftSelect;
 
 		UndoableActionManager m_UndoManager;
 		//ElementUndoMenu *m_UndoMenu;
@@ -226,13 +229,19 @@ namespace FusionEngine
 		//Rocket::Core::ElementDocument *m_EntityListDocument;
 
 		ContextMenu *m_RightClickMenu;
+
 		MenuItem *m_PropertiesMenu;
+		MenuItem *m_EntitySelectionMenu;
+
 		typedef std::vector<boost::signals2::connection> MenuItemConnections;
 		MenuItemConnections m_PropertiesMenuConnections;
+		MenuItemConnections m_SelectionMenuConnections;
 
 		bool m_Enabled;
 
 		EditorTool m_ActiveTool;
+		bool m_Dragging;
+		Vector2 m_DragFrom;
 
 		std::string m_CurrentFilename;
 
@@ -246,7 +255,10 @@ namespace FusionEngine
 
 		EntityArray m_PlainEntityArray;
 
-		// Map data (entities, etc.) - passed to map creator ("GameMapLoader")
+		typedef std::set<MapEntityPtr> EntitySet;
+		EntitySet m_SelectedEntities;
+
+		// Map data (entities, etc.) - passed to map builder (GameMapLoader)
 		StringSet m_UsedTypes;
 		GameMapLoader::ArchetypeMap m_Archetypes;
 		GameMapLoader::GameMapEntityArray m_PseudoEntities;
@@ -255,12 +267,18 @@ namespace FusionEngine
 		ObjectIDStack m_IdStack;
 
 		inline void onLeftClick(const RawInput &ev);
+		inline void onRightClick(const RawInput &ev);
 
 		void addUndoAction(const UndoableActionPtr &action);
 		void repopulateUndoMenu();
 
+		void clearCtxMenu(MenuItem *menu, Editor::MenuItemConnections &connections);
+
 		//! Called when a Properties menu-item is clicked
 		void showProperties(const MenuItemEvent &ev, MapEntity *entity);
+
+		//! Called when a Select menu-item is clicked
+		void selectEntity(const MenuItemEvent &ev, MapEntity *entity);
 
 		//! Lists the given entity in the relevant containers
 		void addMapEntity(const GameMapLoader::GameMapEntityPtr &entity);

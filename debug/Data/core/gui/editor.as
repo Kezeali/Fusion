@@ -23,6 +23,12 @@ void OnRedo(Event@ event)
 	editor.redo(editor_redoMenu.GetSelection());
 }
 
+void OnClickActualGFXCheckbox(Event@ event)
+{
+	bool enabled = event.GetParameter(e_String("value"), false);
+	editor.setDisplayActualSprites(enabled);
+}
+
 void OnEntityTypeChanged(Event@ event)
 {
 	string type = event.GetParameter(e_String('value'), e_String());
