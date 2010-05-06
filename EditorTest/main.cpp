@@ -195,8 +195,8 @@ public:
 			scriptingManager->AddFile("core/extend.as", "main");
 
 			// Create some non-specific intelegent force that certainly has no particular theological bias:
-			boost::scoped_ptr<FirstCause> ourLordAndSaviour( new FirstCause(co, renderer.get(), inputMgr.get()) ); // Yeah yeah, rea-al clever
-			ourLordAndSaviour->Initialise(module);
+			boost::scoped_ptr<FirstCause> god( new FirstCause(co, renderer.get(), inputMgr.get()) );
+			god->Initialise(module);
 
 			console->SetModule(module);
 			gui->SetModule(module);
@@ -207,7 +207,7 @@ public:
 			module->Build();
 
 			// Start ontology / editor
-			ourLordAndSaviour->BeginExistence(systemMgr);
+			god->BeginExistence(systemMgr);
 
 			unsigned int lastframe = CL_System::get_time();
 			unsigned int split = 0;

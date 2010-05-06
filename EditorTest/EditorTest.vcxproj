@@ -159,6 +159,7 @@
     <ClCompile Include="..\FusionEngine\FusionPlayerRegistry.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRakNetwork.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRefCounted.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRenderable.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionResource.cpp" />
     <ClCompile Include="..\FusionEngine\FusionResourceManager.cpp" />
@@ -210,6 +211,7 @@
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionRenderable.h" />
     <ClInclude Include="..\FusionEngine\FusionStableHeaders.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />

@@ -332,6 +332,45 @@ namespace FusionEngine
 
 		m_RawInputConnection = m_Input->SignalRawInput.connect( boost::bind(&Editor::OnRawInput, this, _1) );
 
+		// Draw the selection overlay texture
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		CL_Texture offtex(gc, 32, 32);
+
+		CL_FrameBuffer offscreen(gc);
+		offscreen.attach_color_buffer(0, offtex);
+		gc.set_frame_buffer(offscreen);
+		gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
+
+		CL_Colorf colour(0.3f, 0.4f, 0.8f, 0.8f);
+
+		CL_Vec2f cross[4] =
+		{
+			CL_Vec2f(0, 0),
+			CL_Vec2f(32, 32),
+			CL_Vec2f(0, 32),
+			CL_Vec2f(32, 0),
+		};
+		CL_Vec2f box[4] =
+		{
+			CL_Vec2f(0, 0),
+			CL_Vec2f(31, 0),
+			CL_Vec2f(31, 31),
+			CL_Vec2f(0, 31),
+		};
+
+		CL_PrimitivesArray prim_array(gc);
+		prim_array.set_attributes(0, cross);
+		prim_array.set_attribute(1, colour);
+		gc.set_program_object(cl_program_color_only);
+		gc.draw_primitives(cl_lines, 4, prim_array);
+		prim_array.set_attributes(0, box);
+		gc.draw_primitives(cl_line_loop, 4, prim_array);
+		gc.reset_program_object();
+
+		gc.reset_frame_buffer();
+
+		m_SelectionOverlay = CL_Image(gc, offtex, CL_Rect(0, 0, 32, 32));
+
 		return true;
 	}
 
@@ -419,79 +458,53 @@ namespace FusionEngine
 	{
 		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
 
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		//if (m_SelectedEntities.empty())
+		//	return;
 
-		CL_Rect viewport;
-		m_Renderer->CalculateScreenArea(viewport, m_Viewport);
+		//CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 
-		// Set the viewport
-		//gc.set_cliprect(viewport);
+		//CL_Rect viewport;
+		//m_Renderer->CalculateScreenArea(viewport, m_Viewport);
 
-		const CameraPtr &camera = m_Viewport->GetCamera();
+		//// Set the viewport
+		////gc.set_cliprect(viewport);
 
-		const CL_Vec2f &camPosition = camera->GetPosition();
-		CL_Origin camOrigin = camera->GetOrigin();
+		//const CameraPtr &camera = m_Viewport->GetCamera();
 
-		CL_Vec2f viewportOffset;
-		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewport.get_width(), (float)viewport.get_height()));
+		//const CL_Vec2f &camPosition = camera->GetPosition();
+		//CL_Origin camOrigin = camera->GetOrigin();
 
-		gc.push_modelview();
-		gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+		//CL_Vec2f viewportOffset;
+		//viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewport.get_width(), (float)viewport.get_height()));
 
-		gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
-		if ( !fe_fequal(camera->GetZoom(), 1.f) )
-			gc.mult_scale(camera->GetZoom(), camera->GetZoom());
+		//gc.push_modelview();
+		//gc.set_translate(-viewportOffset.x, -viewportOffset.y);
 
-		CL_Rectf screen;
-		m_Renderer->CalculateScreenArea(screen, m_Viewport, true);
-		for (EntitySet::const_iterator it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
-		{
-			const MapEntityPtr &selected = *it;
-			
-			const Vector2 &position = selected->entity->GetPosition();
+		//gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+		//if ( !fe_fequal(camera->GetZoom(), 1.f) )
+		//	gc.mult_scale(camera->GetZoom(), camera->GetZoom());
 
-			gc.push_modelview();
-			gc.mult_translate(position.x, position.y);
-			gc.mult_rotate(CL_Angle(selected->entity->GetAngle(), cl_radians));
+		//CL_Rectf screen;
+		//m_Renderer->CalculateScreenArea(screen, m_Viewport, true);
+		//for (EntitySet::const_iterator it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
+		//{
+		//	const MapEntityPtr &selected = *it;
+		//	
+		//	const Vector2 &position = selected->entity->GetPosition();
 
-			CL_Pointf center(position.x, position.y);
-			if (screen.contains(CL_Vec2f(center)))
-			{
-				//CL_Rectf selectionBox(-16.0f, -16.0f, CL_Sizef(32.0f, 32.0f));
-				//CL_Draw::box(gc, selectionBox, CL_Colorf(0.3f, 0.4f, 0.8f, 0.8f));
+		//	gc.push_modelview();
+		//	gc.mult_translate(position.x, position.y);
+		//	gc.mult_rotate(CL_Angle(selected->entity->GetAngle(), cl_radians));
 
-				CL_Draw::circle(gc, CL_Pointf(0.0f, 0.0f), 4, CL_Colorf(0.3f, 0.4f, 0.8f, 0.8f));
+		//	CL_Pointf center(position.x, position.y);
+		//	if (screen.contains(CL_Vec2f(center)))
+		//	{
+		//		m_SelectionOverlay.draw(gc, 0, 0);
+		//	}
 
-				CL_Colorf colour(0.3f, 0.4f, 0.8f, 0.8f);
-
-				CL_Vec2f cross[9] =
-				{
-					CL_Vec2f(-16, -16),
-					CL_Vec2f(16, 16),
-					CL_Vec2f(-16, 16),
-					CL_Vec2f(16, -16),
-				};
-				CL_Vec2f box[9] =
-				{
-					CL_Vec2f(-16, -16),
-					CL_Vec2f(16, -16),
-					CL_Vec2f(16, 16),
-					CL_Vec2f(-16, 16),
-				};
-
-				CL_PrimitivesArray prim_array(gc);
-				prim_array.set_attributes(0, cross);
-				prim_array.set_attribute(1, colour);
-				gc.set_program_object(cl_program_color_only);
-				gc.draw_primitives(cl_lines, 4, prim_array);
-				prim_array.set_attributes(0, box);
-				gc.draw_primitives(cl_line_loop, 4, prim_array);
-				gc.reset_program_object();
-			}
-
-			gc.pop_modelview();
-		}
-		gc.pop_modelview();
+		//	gc.pop_modelview();
+		//}
+		//gc.pop_modelview();
 		//gc.reset_cliprect();
 	}
 

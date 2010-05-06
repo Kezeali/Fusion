@@ -243,6 +243,8 @@ namespace FusionEngine
 		bool m_Dragging;
 		Vector2 m_DragFrom;
 
+		CL_Image m_SelectionOverlay;
+
 		std::string m_CurrentFilename;
 
 		std::string m_CurrentEntityType;
