@@ -160,9 +160,9 @@ div#content
 
 	text-align: center;
 
-	shadow-font-effect: shadow;
-	shadow-offset: 1px 1px;
-	shadow-color: white;
+	/*content-font-effect: shadow;
+	content-offset: 1px 1px;
+	content-color: white;*/
 }
 
 div#size_target
@@ -191,9 +191,9 @@ h1
 	font-size: 16;
 	font-weight: bold;
 
-	shadow-font-effect: shadow;
-	shadow-offset: 1px 1px;
-	shadow-color: black;
+	header-font-effect: outline;
+	header-width: 1px;
+	header-color: white;
 }
 
 h2
@@ -204,9 +204,9 @@ h2
 	text-align: left;
 	font-weight: bold;
 
-	shadow-font-effect: shadow;
-	shadow-offset: 1px 1px;
-	shadow-color: black;
+	/*header2-font-effect: shadow;
+	header2-offset: 1px 1px;
+	header2-color: black;*/
 }
 
 
@@ -240,6 +240,10 @@ input.submit
 	text-align: center;
 	tab-index: auto;
 
+	embed-font-effect: shadow;
+	embed-offset: 0px 1px;
+	embed-color: white;
+
 	background-decorator: image;
 	background-image: fusion.png 252px 6px 399px 38px;
 	background-z-index: 0;
@@ -248,11 +252,9 @@ input.submit
 button:focus,
 input.submit:focus
 {
-    font-weight: bold;
-    
-    shadow-font-effect: shadow;
-    shadow-offset: 1px 1px;
-    shadow-color: white;
+	font-weight: bold;
+	/*embed-offset: 0px 2px;*/
+	color: #011B2F;*
 }
 
 button:hover,
@@ -265,6 +267,13 @@ button:active,
 input.submit:active
 {
 	background-image-t: 96px 128px;
+
+	color: white;
+
+	embed-font-effect: none;
+	shadow-font-effect: shadow;
+	shadow-offset: 0px 1px;
+	shadow-color: black;
 }
 
 
@@ -510,8 +519,8 @@ undomenu selectbox option:hover
 
 datagrid datagridrow.selected
 {
-   background: #5C86B9F9;
-	 color: white;
+	background: #5C86B9F9;
+	color: white;
 }
 
 datagrid datagridrow:hover
