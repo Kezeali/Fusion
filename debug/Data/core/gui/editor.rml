@@ -60,7 +60,7 @@
 		</style>
 		<script src="editor.as" />
 	</head>
-	<body template="window" onload="OnEditorWindowLoad(event);">
+	<body template="window" onload="%this: OnEditorWindowLoad(event);">
 		<undomenu reversed class="undo" id="undo_menu" onchange="%this: OnUndo(event);"/>
 		<undomenu class="redo" id="redo_menu" onchange="%this: OnRedo(event);"/>
 		<p>

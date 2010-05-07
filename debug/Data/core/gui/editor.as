@@ -1,13 +1,28 @@
 ElementUndoMenu @editor_undoMenu = null;
 ElementUndoMenu @editor_redoMenu = null;
 
+void OnEditorWindowLoad(Event@ event)
+{
+	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	doc.GetElementById(e_String("title")).SetInnerRML(doc.GetTitle());
+
+	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	if (editor_undoMenu !is null)
+		editor.attachUndoMenu(editor_undoMenu);
+
+	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
+	if (editor_redoMenu !is null)
+		editor.attachRedoMenu(editor_redoMenu);
+}
+
 void OnUndo(Event@ event)
 {
 	if (editor_undoMenu is null)
-	{
-		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-		@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
-	}
+		return;
+	//{
+	//	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	//	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	//}
 
 	editor.undo(editor_undoMenu.GetSelection());
 }
@@ -15,10 +30,11 @@ void OnUndo(Event@ event)
 void OnRedo(Event@ event)
 {
 	if (editor_redoMenu is null)
-	{
-		ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-		@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
-	}
+		return;
+	//{
+	//	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
+	//	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
+	//}
 
 	editor.redo(editor_redoMenu.GetSelection());
 }
