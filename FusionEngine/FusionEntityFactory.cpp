@@ -796,13 +796,13 @@ namespace FusionEngine
 
 			if (desc.GetType() == "Sprite")
 			{
-				RenderablePtr renderable( new Renderable(resMan, resourceName, desc.GetPriority()) );
+				RenderableSpritePtr renderable( new RenderableSprite(resMan, resourceName, desc.GetPriority()) );
 				renderable->SetTags(desc.GetTags());
 
 				entity->AddRenderable(renderable);
 
 				// Add the object to the entity for automatic streaming
-				entity->AddStreamedResource( renderable );
+				entity->AddStreamedResource( renderable.get() );
 
 				if (desc.GetPropertyIndex() >= 0)
 				{
@@ -833,7 +833,7 @@ namespace FusionEngine
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
 				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), false);
 
-				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
+				entity->AddStreamedResource( *soundProp );
 			}
 			else if (desc.GetType() == "SoundStream")
 			{
@@ -845,7 +845,7 @@ namespace FusionEngine
 				SoundSample **soundProp = static_cast<SoundSample**>( prop );
 				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), true);
 
-				entity->AddStreamedResource( StreamedResourceUserPtr(*soundProp) );
+				entity->AddStreamedResource( *soundProp );
 			}
 		}
 

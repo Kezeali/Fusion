@@ -62,7 +62,6 @@ public:
 		CL_SetupCore core_setup;
 		CL_SetupDisplay disp_setup;
 		CL_SetupGL gl_setup;
-		//CL_SetupD3D9 d3d_setup;
 		CL_SetupSound sound_setup;
 		CL_SetupVorbis voirbis_setup;
 

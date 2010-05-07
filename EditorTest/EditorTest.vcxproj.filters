@@ -526,9 +526,6 @@
     <ClInclude Include="..\FusionEngine\FusionXML.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\physfs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\scriptmath.h">
       <Filter>Header Files</Filter>
     </ClInclude>

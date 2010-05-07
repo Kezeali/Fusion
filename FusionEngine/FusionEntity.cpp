@@ -149,7 +149,8 @@ namespace FusionEngine
 
 	Entity::~Entity()
 	{
-		// Nothing to do here
+		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(),
+			[](StreamedResourceUser *user){ user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn(); });
 	}
 
 	void Entity::_setName(const std::string &name)
@@ -449,20 +450,27 @@ namespace FusionEngine
 		}
 	}
 
-	void Entity::SetStreamedResources(const StreamedResourceArray &resources)
+	void Entity::AddStreamedResource(StreamedResourceUser * const user)
 	{
-		m_StreamedResources = resources;
+		m_StreamedResources.push_back(user);
+		user->DestructionNotification = std::bind(&Entity::RemoveStreamedResource, this, std::placeholders::_1);
 	}
 
-	void Entity::AddStreamedResource(const StreamedResourceUserPtr &resource)
+	void Entity::RemoveStreamedResource(StreamedResourceUser * const user)
 	{
-		m_StreamedResources.push_back(resource);
+		user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn();
+		std::remove(m_StreamedResources.begin(), m_StreamedResources.end(), user);
 	}
 
-	const Entity::StreamedResourceArray &Entity::GetStreamedResources() const
-	{
-		return m_StreamedResources;
-	}
+	//void Entity::SetStreamedResources(const StreamedResourceArray &resources)
+	//{
+	//	m_StreamedResources = resources;
+	//}
+
+	//const Entity::StreamedResourceArray &Entity::GetStreamedResources() const
+	//{
+	//	return m_StreamedResources;
+	//}
 
 	template <typename T>
 	void getPropValueOfType(boost::any &value, void *prop_addr, asUINT property_index)
@@ -593,22 +601,14 @@ namespace FusionEngine
 	{
 		SetStreamedIn(true);
 
-		for (StreamedResourceArray::iterator it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
-		{
-			StreamedResourceUserPtr &user = *it;
-			user->StreamIn();
-		}
+		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamIn(); });
 	}
 
 	void Entity::StreamOut()
 	{
 		SetStreamedIn(false);
 
-		for (StreamedResourceArray::iterator it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
-		{
-			StreamedResourceUserPtr &user = *it;
-			user->StreamOut();
-		}
+		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamOut(); });
 	}
 
 	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)

@@ -135,7 +135,7 @@ namespace FusionEngine
 
 	public:
 		//! Array of StreamedResourceUser objects
-		typedef std::vector<StreamedResourceUserPtr> StreamedResourceArray;
+		typedef std::vector<StreamedResourceUser*> StreamedResourceArray;
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
 		//! Sets the search-name of this Entity
@@ -218,12 +218,14 @@ namespace FusionEngine
 		//! Removes renderables
 		virtual void RemoveRenderable(RenderablePtr renderable);
 
+		//! Adds an object that uses a resource that should be loaded when the Entity is streamed in
+		void AddStreamedResource(StreamedResourceUser * const user);
+		//! Removes the given SRU
+		void RemoveStreamedResource(StreamedResourceUser * const user);
 		//! Sets resources that should be loaded when the Entity is streamed in
-		void SetStreamedResources(const StreamedResourceArray &resources);
-		//! Adds a resource that should be loaded when the Entity is streamed in
-		void AddStreamedResource(const StreamedResourceUserPtr &resource);
+		//void SetStreamedResources(const StreamedResourceArray &resources);
 		//! Returns streamed resources
-		const StreamedResourceArray &GetStreamedResources() const;
+		//const StreamedResourceArray &GetStreamedResources() const;
 
 		//! Valid types for property vars.
 		enum PropertyType

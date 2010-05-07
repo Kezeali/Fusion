@@ -44,16 +44,27 @@ namespace FusionEngine
 	{
 	}
 
+	StreamedResourceUser::~StreamedResourceUser()
+	{
+		if (DestructionNotification)
+			DestructionNotification(this);
+	}
+
+	bool StreamedResourceUser::IsBound() const
+	{
+		return bool(DestructionNotification);
+	}
+
 	void StreamedResourceUser::SetResource(ResourceManager *res_man, const std::string &path)
 	{
 		m_ResourceManager = res_man;
 		m_ResourcePath = path;
 	}
 
-	const ResourceDataPtr& StreamedResourceUser::GetResource() const
-	{
-		return m_Resource;
-	}
+	//const ResourceDataPtr& StreamedResourceUser::GetResource() const
+	//{
+	//	return m_Resource;
+	//}
 
 	void StreamedResourceUser::StreamIn(int priority)
 	{
@@ -67,7 +78,7 @@ namespace FusionEngine
 		OnStreamOut();
 
 		m_LoadConnection.disconnect();
-		m_Resource.reset();
+		//m_Resource.reset();
 	}
 
 }

@@ -66,6 +66,37 @@ namespace FusionEngine
 	}
 
 
+	PhysFSTiXmlFile::PhysFSTiXmlFile(PHYSFS_File *file)
+		: m_File(file),
+		m_WriteFailed(false)
+	{
+	}
+
+	void PhysFSTiXmlFile::Write(const char *data, size_t len)
+	{
+		m_WriteFailed =
+			PHYSFS_write(m_File, data, 1, len) != len;
+	}
+
+	void PhysFSTiXmlFile::Print(const char *str)
+	{
+		size_t expected_length = strlen(str);
+		m_WriteFailed =
+			PHYSFS_write(m_File, str, 1, expected_length) != expected_length;
+	}
+
+	void PhysFSTiXmlFile::PutC(int c)
+	{
+		m_WriteFailed =
+			PHYSFS_write(m_File, &c, 1, 1) != 1;
+	}
+
+	bool PhysFSTiXmlFile::Ok() const
+	{
+		return !m_WriteFailed && m_File != nullptr;
+	}
+
+
 	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
 	{
 		TiXmlDocument* doc = new TiXmlDocument();
@@ -89,7 +120,6 @@ namespace FusionEngine
 
 	std::string &OpenString(std::string &content, const std::string &filename, CL_VirtualDirectory vdir)
 	{
-		;
 		try
 		{
 			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);

@@ -87,7 +87,7 @@ namespace FusionEngine
 	};
 
 	//! Wrapper for CL_SoundBuffer resource
-	class SoundSample : public StreamedResourceUser
+	class SoundSample : public StreamedResourceUser, public RefCounted, noncopyable
 	{
 	public:
 		SoundSample(ResourceManager *res_man, const std::string &path, int priority, bool is_stream);

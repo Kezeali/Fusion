@@ -32,10 +32,11 @@
 
 #include "FusionCommon.h"
 #include "FusionExceptionFactory.h"
-
-#include <ClanLib/core.h>
+#include "FusionPhysFS.h"
 
 #include <boost/algorithm/string.hpp>
+#include <ClanLib/core.h>
+
 
 namespace FusionEngine
 {
@@ -117,13 +118,39 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ClientOptions::LoadFromFile(const std::string &filename)
+	bool ClientOptions::LoadFromFile(const std::string &filename, bool default_if_missing)
 	{
 		CL_MutexSection mutexSection(&m_Mutex);
 		try
 		{
 			// Load the document
-			ticpp::Document doc(OpenXml_PhysFS(filename));
+			ticpp::Document doc;
+			if (PHYSFS_exists(filename.c_str()))
+				doc = ticpp::Document(OpenXml_PhysFS(filename));
+			else
+			{				
+				// Open the default config file
+				PHYSFS_File *defaultFile = PHYSFS_openRead(("default-" + filename).c_str());
+				if (defaultFile == nullptr)
+					return false; // failed to open
+				PHYSFS_File *userFile = PHYSFS_openWrite(filename.c_str());
+
+				PHYSFS_sint32 totalLength = (PHYSFS_sint32)PHYSFS_fileLength(defaultFile);
+				char *buffer = new char[totalLength];
+				PHYSFS_sint64 readLength = 0;
+				readLength = PHYSFS_read(defaultFile, buffer, totalLength, 1);
+				if (readLength != 1)
+					return false; // failed to read the default file
+				// Write the copy of the file
+				PHYSFS_write(userFile, buffer, totalLength, 1);
+				PHYSFS_close(userFile);
+				PHYSFS_close(defaultFile);
+
+				// Parse the xml
+				TiXmlDocument *inner = new TiXmlDocument();
+				inner->Parse(buffer);
+				doc = ticpp::Document(inner);
+			}
 
 			ticpp::Element* pElem = doc.FirstChildElement();
 
@@ -148,8 +175,6 @@ namespace FusionEngine
 		}
 		catch (ticpp::Exception &ex)
 		{
-			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
-
 			FSN_EXCEPT(ExCode::IO, "ClientOptions::LoadFromFile", ex.what());
 		}
 

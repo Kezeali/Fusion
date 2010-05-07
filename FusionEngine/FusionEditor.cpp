@@ -416,22 +416,22 @@ namespace FusionEngine
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
-	typedef std::tr1::unordered_set<uintptr_t> ptr_set;
-	void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
-	{
-		RenderableArray &renderables = entity->GetRenderables();
-		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
-		{
-			RenderablePtr &renderable = *it;
-			if (renderable->GetSpriteResource().IsLoaded())
-			{
-				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
-				if (result.second)
-					renderable->GetSpriteResource()->update((int)(split * 1000));
-			}
-			renderable->UpdateAABB();
-		}
-	}
+	//typedef std::tr1::unordered_set<uintptr_t> ptr_set;
+	//void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
+	//{
+	//	RenderableArray &renderables = entity->GetRenderables();
+	//	for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
+	//	{
+	//		RenderablePtr &renderable = *it;
+	//		if (renderable->GetSpriteResource().IsLoaded())
+	//		{
+	//			std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
+	//			if (result.second)
+	//				renderable->GetSpriteResource()->update((int)(split * 1000));
+	//		}
+	//		renderable->UpdateAABB();
+	//	}
+	//}
 
 	void Editor::Update(float split)
 	{

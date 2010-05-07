@@ -736,20 +736,25 @@ namespace FusionEngine
 		//	domain.clear();
 	}
 
+	// Hack to animate sprites:
 	typedef std::set<uintptr_t> ptr_set;
 	void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
 	{
 		RenderableArray &renderables = entity->GetRenderables();
 		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
 		{
-			RenderablePtr &renderable = *it;
-			if (!renderable->IsPaused() && renderable->GetSpriteResource().IsLoaded())
+			RenderablePtr &abstractRenderable = *it;
+			RenderableSprite *renderable = dynamic_cast<RenderableSprite*>(abstractRenderable.get());
+			if (renderable != nullptr)
 			{
-				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
-				if (result.second)
-					renderable->GetSpriteResource()->update((int)(split * 1000.f));
+				if (!renderable->IsPaused() && renderable->GetSpriteResource().IsLoaded())
+				{
+					std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
+					if (result.second)
+						renderable->GetSpriteResource()->update((int)(split * 1000.f));
+				}
+				renderable->UpdateAABB();
 			}
-			renderable->UpdateAABB();
 		}
 	}
 

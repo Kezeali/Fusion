@@ -304,7 +304,6 @@
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
-    <ClInclude Include="..\FusionEngine\physfs.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
     <ClInclude Include="..\FusionEngine\scriptstdvector.h" />
     <ClInclude Include="..\FusionEngine\scriptstring.h" />

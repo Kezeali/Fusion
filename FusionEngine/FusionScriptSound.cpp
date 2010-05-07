@@ -151,7 +151,7 @@ namespace FusionEngine
 	void SoundSample::Register(asIScriptEngine *engine)
 	{
 		int r;
-		RefCounted::RegisterType<SoundSample>(engine, "SoundSample");
+		SoundSample::RegisterType<SoundSample>(engine, "SoundSample");
 		r = engine->RegisterObjectMethod("SoundSample",
 			"void play()",
 			asMETHOD(SoundSample,Play), asCALL_THISCALL);

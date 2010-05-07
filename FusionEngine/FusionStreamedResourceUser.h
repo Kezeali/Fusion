@@ -38,20 +38,44 @@
 namespace FusionEngine
 {
 
-	class StreamedResourceUser : public RefCounted, noncopyable
+	//! Base class that helps automate resource loading when an Entity is streamed in
+	class StreamedResourceUser
 	{
 	public:
+		//! CTOR
 		StreamedResourceUser();
+		//! CTOR, sets the resource to load initially
 		StreamedResourceUser(ResourceManager *res_man, const std::string &type, const std::string &path, int base_priority = 0);
+		//! DTOR
+		virtual ~StreamedResourceUser();
 
+		typedef std::function<void (StreamedResourceUser* const)> DestructionNotificationFn;
+		DestructionNotificationFn DestructionNotification;
+
+		//! Returns true if the renderable is bound to an entity
+		bool IsBound() const;
+
+		//! Sets the resource to load when streamed in
 		void SetResource(ResourceManager *res_man, const std::string &path);
-		const ResourceDataPtr &GetResource() const;
 
+		//! Loads the resource
 		void StreamIn(int priority = 0);
+		//! Informs the resource user that it has been streamed out
 		void StreamOut();
 
+		//! Called when the ResourceManager finishes loading the resource
 		virtual void OnResourceLoad(ResourceDataPtr resource) =0;
+		//! Called when StreamIn is called
+		/*!
+		* This is called after the resource has been requested, but most likely
+		* before it has finished loading.
+		*/
 		virtual void OnStreamIn() {};
+		//! Called when the SRU is streamed out
+		/*!
+		* You should release any references to the resource pointer you received from OnResourceLoad
+		* in the implementation of this method. Otherwise the resource will never be unloaded
+		*/
 		virtual void OnStreamOut() {};
 
 	private:
@@ -60,12 +84,24 @@ namespace FusionEngine
 		std::string m_ResourcePath;
 		bsig2::connection m_LoadConnection;
 
-		ResourceDataPtr m_Resource;
+		//ResourceDataPtr m_Resource;
 
 		int m_Priority;
 	};
 
-	typedef boost::intrusive_ptr<StreamedResourceUser> StreamedResourceUserPtr;
+	//class StreamedResource
+	//{
+	//public:
+	//	//! Loads the resource
+	//	void StreamIn(int priority = 0);
+	//	//! Informs the resource user that it has been streamed out
+	//	void StreamOut();
+
+	//private:
+	//	StreamedResourceUser *m_User;
+	//};
+
+	//typedef std::shared_ptr<StreamedResource> StreamedResourceUserPtr;
 
 }
 

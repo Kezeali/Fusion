@@ -31,7 +31,7 @@
 #include "ClanLib/Core/IOData/file.h"
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_ZipIODevice_FileEntry construction:
+// construction:
 
 PhysFSIODeviceProvider::PhysFSIODeviceProvider(PHYSFS_File* handle)
 : m_Handle(handle)
@@ -45,7 +45,7 @@ PhysFSIODeviceProvider::~PhysFSIODeviceProvider()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_ZipIODevice_FileEntry attributes:
+// attributes:
 
 int PhysFSIODeviceProvider::get_size() const
 {
@@ -58,7 +58,7 @@ int PhysFSIODeviceProvider::get_position() const
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CL_ZipIODevice_FileEntry operations:
+// operations:
 
 int PhysFSIODeviceProvider::send(const void *data, int len, bool send_all)
 {
@@ -125,9 +125,6 @@ CL_IODeviceProvider *PhysFSIODeviceProvider::duplicate()
 	return new_provider;
 }
 
-
-/////////////////////////////////////////////////////////////////////////////
-// CL_ZipIODevice_FileEntry implementation:
 
 void PhysFSIODeviceProvider::init()
 {

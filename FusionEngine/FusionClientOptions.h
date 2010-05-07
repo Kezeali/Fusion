@@ -75,7 +75,14 @@ namespace FusionEngine
 		//! Saves the current options to a file
 		bool SaveToFile(const std::string &filename);
 		//! Loads a set of options from a file
-		bool LoadFromFile(const std::string &filename);
+		/*!
+		* \param filename
+		* The config file to open.
+		*
+		* \param default_if_missing
+		* Looks for the default config for the given file under '/default-[filename]'.
+		*/
+		bool LoadFromFile(const std::string &filename, bool default_if_missing = true);
 
 
 		bool SetOption(const std::string& name, const std::string& value);

@@ -55,6 +55,8 @@
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <ClanLib/Core/IOData/virtual_directory.h>
 
+#include <physfs.h>
+
 
 namespace FusionEngine
 {
@@ -72,6 +74,22 @@ namespace FusionEngine
 
 	protected:
 		CL_IODevice m_File;
+		bool m_WriteFailed;
+	};
+
+	class PhysFSTiXmlFile : public TiXmlFileInterface
+	{
+	public:
+		PhysFSTiXmlFile(PHYSFS_File *file);
+
+		void Write(const char *data, size_t len);
+		void Print(const char *ste);
+		void PutC(int c);
+
+		bool Ok() const;
+
+	protected:
+		PHYSFS_File *m_File;
 		bool m_WriteFailed;
 	};
 

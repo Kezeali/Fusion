@@ -48,38 +48,40 @@ namespace FusionEngine
 	typedef std::tr1::unordered_set<std::string> TagStringSet;
 
 	//! A thing that can be drawn by the renderer
-	class Renderable
-	{
-		void OnStreamOut();
-	};
-
-	class RenderableSprite : public Renderable, public StreamedResourceUser
+	class Renderable : public RefCounted, noncopyable
 	{
 	public:
 		Renderable();
-		Renderable(ResourceManager *res_man, const std::string &sprite_path, int priority);
-		virtual ~Renderable();
+		virtual ~Renderable() {};
+
+		virtual void Draw(CL_GraphicContext &gc, const Vector2 &origin) = 0;
+
+		virtual const CL_Rectf &GetAABB() const;
+		virtual void UpdateAABB() {};
+
+		virtual void SetAlpha(float _alpha);
+		virtual float GetAlpha() const;
+		virtual void SetColour(unsigned int r, unsigned int g, unsigned int b);
+		virtual void SetColour(const CL_Color & colour);
+		virtual const CL_Color &GetColour() const;
+
+		virtual void SetPosition(float x, float y);
+		virtual void SetPosition(const Vector2 &position);
+		virtual void SetPosition(const CL_Vec2f &_position);
+		virtual const Vector2 &GetPosition() const;
+
+		virtual void SetAngle(float angle);
+		virtual float GetAngle() const;
+
+		virtual void StartAnimation() {};
+		virtual void StopAnimaion() {};
+		virtual void PauseAnimation() {};
+		virtual bool IsPaused() const { return false; };
 
 		void SetTags(const TagStringSet &tags);
 		void AddTag(const std::string &tag);
 		void RemoveTag(const std::string &tag);
 		bool HasTag(const std::string &tag) const;
-
-		void SetAlpha(float _alpha);
-		float GetAlpha() const;
-
-		void SetColour(unsigned int r, unsigned int g, unsigned int b);
-
-		void SetColour(const CL_Color & colour);
-		const CL_Color &GetColour() const;
-
-		void SetPosition(float x, float y);
-		void SetPosition(const Vector2 &position);
-		void SetPosition(const CL_Vec2f &_position);
-		const Vector2 &GetPosition() const;
-
-		void SetAngle(float angle);
-		float GetAngle() const;
 
 		void SetDepth(int depth);
 		int GetDepth() const;
@@ -87,9 +89,27 @@ namespace FusionEngine
 		void SetEnabled(bool enabled);
 		bool IsEnabled() const;
 
-		const CL_Rectf &GetAABB() const;
+		static void Register(asIScriptEngine *engine);
 
-		void UpdateAABB();
+	protected:
+		bool m_Enabled;
+		int m_Depth;
+		TagStringSet m_Tags;
+
+		Vector2 m_Position;
+		float m_Angle;
+		float m_Alpha;
+		CL_Color m_Colour;
+
+		CL_Rectf m_AABB;
+	};
+
+	class RenderableSprite : public Renderable, public StreamedResourceUser
+	{
+	public:
+		RenderableSprite();
+		RenderableSprite(ResourceManager *res_man, const std::string &sprite_path, int priority);
+		virtual ~RenderableSprite();
 
 		//void SetSpriteResource(ResourceManager *res_man, const std::string &path);
 		ResourcePointer<CL_Sprite> &GetSpriteResource();
@@ -99,44 +119,84 @@ namespace FusionEngine
 		void OnStreamOut();
 
 		void Draw(CL_GraphicContext &gc);
-		//! Draw the renderable at a position other than that of it's owning Entity
 		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
 
-		void StartAnimation();
-		void StopAnimaion();
-		void PauseAnimation();
+		virtual void UpdateAABB();
 
-		bool IsPaused() const;
+		virtual void SetAlpha(float _alpha);
+		virtual float GetAlpha() const;
 
-		static void Register(asIScriptEngine *engine);
+		virtual void SetColour(unsigned int r, unsigned int g, unsigned int b);
+		virtual void SetColour(const CL_Color & colour);
+		virtual const CL_Color &GetColour() const;
+
+		virtual void SetPosition(float x, float y);
+		virtual void SetPosition(const Vector2 &position);
+		virtual void SetPosition(const CL_Vec2f &_position);
+		virtual const Vector2 &GetPosition() const;
+
+		virtual void SetAngle(float angle);
+		virtual float GetAngle() const;
+
+		virtual void StartAnimation();
+		virtual void StopAnimaion();
+		virtual void PauseAnimation();
+		virtual bool IsPaused() const;
 
 	protected:
-		bool m_Enabled;
 		bool m_Paused;
-
-		Vector2 m_Position;
-		float m_Angle;
-		float m_Alpha;
-		CL_Color m_Colour;
 
 		bool m_PositionChanged;
 
 		Vector2 m_DerivedPosition;
 		float m_DerivedAngle;
 
-		CL_Rectf m_AABB;
-
-		int m_Depth;
-
 		ResourcePointer<CL_Sprite> m_Sprite;
 
 		int m_PreviousWidth, m_PreviousHeight;
 		CL_Angle m_PreviousAngle;
+	};
 
-		TagStringSet m_Tags;
+	class RenderableImage : public Renderable
+	{
+	public:
+		RenderableImage();
+		RenderableImage(const CL_Image &image);
+		virtual ~RenderableImage();
+
+		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
+
+		virtual void UpdateAABB();
+
+		virtual void SetAlpha(float _alpha);
+		virtual float GetAlpha() const;
+
+		virtual void SetColour(unsigned int r, unsigned int g, unsigned int b);
+		virtual void SetColour(const CL_Color & colour);
+		virtual const CL_Color &GetColour() const;
+
+		virtual void SetPosition(float x, float y);
+		virtual void SetPosition(const Vector2 &position);
+		virtual void SetPosition(const CL_Vec2f &_position);
+		virtual const Vector2 &GetPosition() const;
+
+		virtual void SetAngle(float angle);
+		virtual float GetAngle() const;
+
+	protected:
+		bool m_PositionChanged;
+
+		Vector2 m_DerivedPosition;
+		float m_DerivedAngle;
+
+		CL_Image m_Image;
+
+		int m_PreviousWidth, m_PreviousHeight;
+		CL_Angle m_PreviousAngle;
 	};
 
 	typedef boost::intrusive_ptr<Renderable> RenderablePtr;
+	typedef boost::intrusive_ptr<RenderableSprite> RenderableSpritePtr;
 	typedef std::vector<RenderablePtr> RenderableArray;
 
 }
