@@ -17,7 +17,8 @@
 	<image file="Gfx/explosion_15.png" />
 	<image file="Gfx/explosion_16.png" />
 	<image file="Gfx/explosion_17.png" />
+	<color alpha="0.7"/>
 	<translation origin="center"/>
 	<rotation origin="center" base_angle="0"/>
-	<animation loop="yes" speed="100"></animation>
+	<animation loop="yes" speed="100"/>
 </sprite>
