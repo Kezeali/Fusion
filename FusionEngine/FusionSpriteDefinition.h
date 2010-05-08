@@ -121,7 +121,9 @@ namespace FusionEngine
 		ImageArray m_Images;
 
 		// Initial Sprite settings
-		CL_Colorf m_Colour;
+		CL_Colorf m_Colour; // colour overlay
+
+		float m_Alpha; // image opacity
 
 		struct AnimationOptions
 		{

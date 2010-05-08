@@ -450,16 +450,31 @@ namespace FusionEngine
 		}
 	}
 
+	void Entity::RemoveRenderablesWithTag(const std::string &tag)
+	{
+		auto newEnd = std::remove_if(m_Renderables.begin(), m_Renderables.end(),
+			[&](RenderablePtr &renderable)->bool
+		{
+			return renderable->HasTag(tag);
+		});
+		m_Renderables.erase(newEnd, m_Renderables.end());
+	}
+
 	void Entity::AddStreamedResource(StreamedResourceUser * const user)
 	{
 		m_StreamedResources.push_back(user);
-		user->DestructionNotification = std::bind(&Entity::RemoveStreamedResource, this, std::placeholders::_1);
+		user->DestructionNotification = [this](StreamedResourceUser * const user){ this->RemoveStreamedResource(user); };
 	}
 
 	void Entity::RemoveStreamedResource(StreamedResourceUser * const user)
 	{
 		user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn();
-		std::remove(m_StreamedResources.begin(), m_StreamedResources.end(), user);
+		for (auto it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
+			if (*it == user)
+			{
+				m_StreamedResources.erase(it);
+				break;
+			}
 	}
 
 	//void Entity::SetStreamedResources(const StreamedResourceArray &resources)

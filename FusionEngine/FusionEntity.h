@@ -215,8 +215,10 @@ namespace FusionEngine
 		virtual RenderableArray &GetRenderables();
 		//! Adds a renderable
 		virtual void AddRenderable(RenderablePtr renderable);
-		//! Removes renderables
+		//! Removes the given renderable object from the Entity
 		virtual void RemoveRenderable(RenderablePtr renderable);
+		//! Removes renderables with the given tag
+		virtual void RemoveRenderablesWithTag(const std::string &tag);
 
 		//! Adds an object that uses a resource that should be loaded when the Entity is streamed in
 		void AddStreamedResource(StreamedResourceUser * const user);

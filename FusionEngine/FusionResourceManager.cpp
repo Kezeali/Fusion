@@ -150,7 +150,6 @@ namespace FusionEngine
 
 	void ResourceManager::DeliverLoadedResources()
 	{
-		CL_MutexSection lock(&m_ToDeliverMutex);
 		ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end();
 		while (it != end)
 		{

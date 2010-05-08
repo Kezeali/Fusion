@@ -125,6 +125,11 @@ namespace FusionEngine
 		}
 	}
 
+	bool MenuItem::IsOpen() const
+	{
+		return m_Document->IsVisible();
+	}
+
 	int MenuItem::AddChild(MenuItem *item)
 	{
 		// Sub Menu:
@@ -300,10 +305,24 @@ namespace FusionEngine
 	{
 		if (m_Document != nullptr)
 		{
-			if (ev.GetType() == "mouseover" || ev.GetType() == "click")
+			if (ev.GetType() == "click")
 			{
 				m_HideTimer.stop();
 				Show();
+				std::for_each(m_Parent->m_Children.begin(), m_Parent->m_Children.end(),
+					[this](MenuItem *child)
+				{
+					if (child != this) child->Hide();
+				});
+			}
+			else if (ev.GetType() == "mouseover")
+			{
+				m_HideTimer.stop();
+				// This can only auto-open (on mouseover) if no other items in the same menu are open,
+				//  hence:
+				if (!std::any_of(m_Parent->m_Children.begin(), m_Parent->m_Children.end(),
+					[](MenuItem *child)->bool { return child->IsOpen(); }))
+					Show();
 			}
 			else if (ev.GetType() == "mouseout")
 			{
@@ -351,6 +370,16 @@ namespace FusionEngine
 	{
 		if (!isPseudoClassSetOnAnyChild("hover"))
 			Hide();
+
+		for (auto it = m_Parent->m_Children.begin(), end = m_Parent->m_Children.end(); it != end; ++it)
+		{
+			MenuItem *child = *it;
+			if (child->m_Element->IsPseudoClassSet("hover"))
+			{
+				child->Show();
+				break;
+			}
+		}
 	}
 
 	bool MenuItem::isPseudoClassSetOnAnyChild(const EMP::Core::String &pseudo_class)

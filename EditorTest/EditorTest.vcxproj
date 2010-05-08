@@ -274,7 +274,6 @@
     <ClInclude Include="..\FusionEngine\FusionResource.h" />
     <ClInclude Include="..\FusionEngine\FusionResourceLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionResourceManager.h" />
-    <ClInclude Include="..\FusionEngine\FusionResourceManagerScriptFunctions.h" />
     <ClInclude Include="..\FusionEngine\FusionResourcePointer.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptConsoleCallback.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptDebuggerGUI.h" />

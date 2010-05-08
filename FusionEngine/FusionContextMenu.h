@@ -60,10 +60,13 @@ namespace FusionEngine
 
 	//! MenuItem class
 	/*!
+	* \todo TODO: Rename MenuItem#Show() -> Open() and MenuItem#Hide() -> Close()
+	* \todo A a hide-timeout property (currently it is a static value)
+	*
 	* \see ContextMenu
 	*/
 	// NOTE that RefCounted needs to be first here, or an exception occors
-	//  when this and instance of class is created in a script
+	//  whenever an instance of this class is created in a script
 	class MenuItem : public RefCounted, public noncopyable, public Rocket::Core::EventListener
 	{
 	public:
@@ -74,10 +77,12 @@ namespace FusionEngine
 		//! Dtor
 		virtual ~MenuItem();
 
-		//! Shows the submenu attached to this item
+		//! Opens the submenu attached to this item
 		virtual void Show();
-		//! Hides the submenu attached to this item
+		//! Closes the submenu attached to this item
 		void Hide();
+		//! Returns true if this item's submenu is open
+		bool IsOpen() const;
 
 		//! Adds a child element to this item's sub-menu
 		int AddChild(MenuItem *item);

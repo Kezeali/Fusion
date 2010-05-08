@@ -160,7 +160,7 @@ namespace FusionEngine
 		CL_PrimitivesArray vertex_data(m_gc);
 		vertex_data.set_attributes(0, positions);
 		vertex_data.set_attribute(1, clcolor);
-		m_gc.draw_primitives(cl_polygon, 2, vertex_data);
+		m_gc.draw_primitives(cl_lines, 2, vertex_data);
 	}
 
 	void DebugDraw::DrawXForm(const b2Transform& /*xf*/)

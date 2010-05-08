@@ -404,7 +404,7 @@ namespace FusionEngine
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
 
-		m_SelectedEntities.clear();
+		DeselectAll();
 
 		//m_PlainEntityArray.clear();
 		m_UsedTypes.clear();
@@ -797,7 +797,7 @@ namespace FusionEngine
 			MenuItem *item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
 			m_PropertiesMenu->AddChild(item);
 			{
-				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::showProperties, this, _1, mapEntity.get()) );
+				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::ctxShowProperties, this, _1, mapEntity.get()) );
 				m_PropertiesMenuConnections.push_back(signalConnection);
 			}
 			item->release();
@@ -806,7 +806,7 @@ namespace FusionEngine
 			item = new MenuItem(std::string(mapEntity->hasName ? entity->GetName() : "") + "(" + entity->GetType() + ")", entity->GetName());
 			m_EntitySelectionMenu->AddChild(item);
 			{
-				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::selectEntity, this, _1, mapEntity.get()));
+				boost::signals2::connection signalConnection = item->SignalClicked.connect( boost::bind(&Editor::ctxSelectEntity, this, _1, mapEntity.get()));
 				m_SelectionMenuConnections.push_back(signalConnection);
 			}
 			item->release();
@@ -825,34 +825,35 @@ namespace FusionEngine
 	{
 	}
 
-	void Editor::showProperties(const MenuItemEvent &ev, MapEntity* entity)
+	void Editor::ctxShowProperties(const MenuItemEvent &ev, MapEntity* map_entity)
 	{
-		ShowProperties(entity);
+		ShowProperties(map_entity);
 		m_RightClickMenu->Hide();
 	}
 
-	void Editor::selectEntity(const MenuItemEvent &ev, MapEntity* entity)
+	void Editor::ctxSelectEntity(const MenuItemEvent &ev, MapEntity* map_entity)
 	{
 		if (!m_ShiftSelect)
-			m_SelectedEntities.clear();
-		m_SelectedEntities.insert(MapEntityPtr(entity));
+			DeselectAll();
+		SelectEntity(map_entity);
+
 		m_RightClickMenu->Hide();
 	}
 
 	void Editor::ShowProperties(const EntityPtr &entity)
 	{
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
+		for (auto it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const MapEntityPtr &gmEntity = *it;
 			if (gmEntity->entity == entity)
 			{
 				ShowProperties(gmEntity);
 				return;
 			}
 		}
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const MapEntityPtr &gmEntity = *it;
 			if (gmEntity->entity == entity)
 			{
 				ShowProperties(gmEntity);
@@ -980,11 +981,33 @@ namespace FusionEngine
 		else
 			removeFrom(m_Entities, map_entity);
 
-		m_SelectedEntities.erase(map_entity);
+		DeselectEntity(map_entity);
 
 		m_EntityManager->RemoveEntity(map_entity->entity);
 
 		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
+	}
+
+	void Editor::SelectEntity(const Editor::MapEntityPtr &map_entity)
+	{
+		m_SelectedEntities.insert(MapEntityPtr(map_entity));
+
+		RenderableImage *selectionOverlay = new RenderableImage(m_SelectionOverlay);
+		selectionOverlay->AddTag("selection_overlay");
+		selectionOverlay->SetOrigin(origin_center);
+		map_entity->entity->AddRenderable(selectionOverlay);
+	}
+
+	void Editor::DeselectEntity(const Editor::MapEntityPtr &map_entity)
+	{
+		m_SelectedEntities.erase(map_entity);
+		map_entity->entity->RemoveRenderablesWithTag("selection_overlay");
+	}
+
+	void Editor::DeselectAll()
+	{
+		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](MapEntityPtr selected){ selected->entity->RemoveRenderablesWithTag("selection_overlay"); });
+		m_SelectedEntities.clear();
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

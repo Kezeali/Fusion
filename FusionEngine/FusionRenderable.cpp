@@ -73,26 +73,36 @@ namespace FusionEngine
 		return m_Colour;
 	}
 
-	void Renderable::SetPosition(float x, float y)
+	void Renderable::SetOrigin(CL_Origin origin)
 	{
-		m_Position.x = x;
-		m_Position.y = y;
+		m_Origin = origin;
 	}
 
-	void Renderable::SetPosition(const Vector2 &position)
+	CL_Origin Renderable::GetOrigin() const
 	{
-		m_Position = position;
+		return m_Origin;
 	}
 
-	void Renderable::SetPosition(const CL_Vec2f &_position)
+	void Renderable::SetOffset(float x, float y)
 	{
-		m_Position.x = _position.x;
-		m_Position.y = _position.y;
+		m_Offset.x = x;
+		m_Offset.y = y;
 	}
 
-	const Vector2 &Renderable::GetPosition() const
+	void Renderable::SetOffset(const Vector2 &position)
 	{
-		return m_Position;
+		m_Offset = position;
+	}
+
+	void Renderable::SetOffset(const CL_Vec2f &_position)
+	{
+		m_Offset.x = _position.x;
+		m_Offset.y = _position.y;
+	}
+
+	const Vector2 &Renderable::GetOffset() const
+	{
+		return m_Offset;
 	}
 
 	void Renderable::SetAngle(float angle)
@@ -190,15 +200,23 @@ namespace FusionEngine
 			asFUNCTION(Renderable_GetBlue), asCALL_CDECL_OBJLAST);
 
 		r = engine->RegisterObjectMethod("Renderable",
+			"void setOrigin(PointOrigin)",
+			asMETHOD(Renderable, SetOrigin), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
+			"PointOrigin getOrigin() const",
+			asMETHOD(Renderable, GetOrigin), asCALL_THISCALL);
+
+		r = engine->RegisterObjectMethod("Renderable",
 			"void setPosition(float, float)",
-			asMETHODPR(Renderable, SetPosition, (float, float), void), asCALL_THISCALL);
+			asMETHODPR(Renderable, SetOffset, (float, float), void), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("Renderable",
 			"void setPosition(const Vector &in)",
-			asMETHODPR(Renderable, SetPosition, (const Vector2&), void), asCALL_THISCALL);
+			asMETHODPR(Renderable, SetOffset, (const Vector2&), void), asCALL_THISCALL);
 
 		r = engine->RegisterObjectMethod("Renderable",
 			"const Vector &getPosition() const",
-			asMETHOD(Renderable, GetPosition), asCALL_THISCALL);
+			asMETHOD(Renderable, GetOffset), asCALL_THISCALL);
 
 		r = engine->RegisterObjectMethod("Renderable",
 			"void setAngle(float)",
@@ -237,19 +255,27 @@ namespace FusionEngine
 
 
 	RenderableSprite::RenderableSprite()
-		: m_DerivedAngle(0.f),
-		m_PreviousWidth(0),
+		: m_PreviousWidth(0),
 		m_PreviousHeight(0),
-		m_PositionChanged(false)
+		m_PositionChanged(false),
+		m_ModifiedAlpha(false),
+		m_ModifiedAngle(false),
+		m_ModifiedColour(false),
+		m_ModifiedOffset(false),
+		m_ModifiedOrigin(false)
 	{
 	}
 
 	RenderableSprite::RenderableSprite(ResourceManager *res_man, const std::string &sprite_path, int priority)
 		: StreamedResourceUser(res_man, "SPRITE", sprite_path, priority),
-		m_DerivedAngle(0.f),
 		m_PreviousWidth(0),
 		m_PreviousHeight(0),
-		m_PositionChanged(false)
+		m_PositionChanged(false),
+		m_ModifiedAlpha(false),
+		m_ModifiedAngle(false),
+		m_ModifiedColour(false),
+		m_ModifiedOffset(false),
+		m_ModifiedOrigin(false)
 	{
 	}
 
@@ -283,18 +309,18 @@ namespace FusionEngine
 			if (bbChanged || m_PositionChanged)
 			{
 				CL_Rectf bb;
-				bb.left = m_Position.x;
-				bb.top = m_Position.y;
-				bb.right = m_Position.x + m_Sprite->get_width();
-				bb.bottom = m_Position.y + m_Sprite->get_height();
+				bb.left = m_Offset.x;
+				bb.top = m_Offset.y;
+				bb.right = m_Offset.x + m_Sprite->get_width();
+				bb.bottom = m_Offset.y + m_Sprite->get_height();
 
 				CL_Origin origin;
 				int x, y;
 				m_Sprite->get_alignment(origin, x, y);
-
 				bb.translate(-CL_Vec2f::calc_origin(origin, bb.get_size()));
 
-				m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, m_Sprite->get_angle());
+				m_Sprite->get_rotation_hotspot(origin, x, y);
+				m_AABB = bb.get_rot_bounds(origin, m_Offset.x + x, m_Offset.y + y, m_Sprite->get_angle());
 
 				m_PositionChanged = false;
 			}
@@ -306,6 +332,7 @@ namespace FusionEngine
 		if (m_Sprite.IsLoaded())
 			m_Sprite->set_alpha(_alpha);
 		m_Alpha = _alpha;
+		m_ModifiedAlpha = true;
 	}
 
 	float RenderableSprite::GetAlpha() const
@@ -316,6 +343,7 @@ namespace FusionEngine
 	void RenderableSprite::SetColour(unsigned int r, unsigned int g, unsigned int b)
 	{
 		m_Colour.set_color(r, g, b);
+		m_ModifiedColour = true;
 
 		if (m_Sprite.IsLoaded())
 			m_Sprite->set_color(m_Colour);
@@ -324,6 +352,7 @@ namespace FusionEngine
 	void RenderableSprite::SetColour(const CL_Color &colour)
 	{
 		m_Colour = colour;
+		m_ModifiedColour = true;
 
 		if (m_Sprite.IsLoaded())
 			m_Sprite->set_color(m_Colour);
@@ -334,51 +363,66 @@ namespace FusionEngine
 		return m_Colour;
 	}
 
-	void RenderableSprite::SetPosition(float x, float y)
+	void RenderableSprite::SetOrigin(CL_Origin origin)
 	{
-		m_Position.x = x;
-		m_Position.y = y;
+		if (m_Sprite.IsLoaded())
+		{
+			m_Sprite->set_alignment(origin);
+			m_Sprite->set_rotation_hotspot(origin);
+		}
 
+		m_ModifiedOrigin = true;
+		m_Origin = origin;
+	}
+
+	CL_Origin RenderableSprite::GetOrigin() const
+	{
+		return m_Origin;
+	}
+
+	void RenderableSprite::SetOffset(float x, float y)
+	{
+		m_Offset.x = x;
+		m_Offset.y = y;
+		m_ModifiedOffset = true;
+
+		// Make sure the AABB is updated
 		m_PositionChanged = true;
 	}
 
-	void RenderableSprite::SetPosition(const Vector2 &position)
+	void RenderableSprite::SetOffset(const Vector2 &position)
 	{
-		m_Position = position;
-
-		m_PositionChanged = true;
+		SetOffset(position.x, position.y);
 	}
 
-	void RenderableSprite::SetPosition(const CL_Vec2f &_position)
+	void RenderableSprite::SetOffset(const CL_Vec2f &position)
 	{
-		m_Position.x = _position.x;
-		m_Position.y = _position.y;
-
-		m_PositionChanged = true;
+		SetOffset(position.x, position.y);
 	}
 
-	const Vector2 &RenderableSprite::GetPosition() const
+	const Vector2 &RenderableSprite::GetOffset() const
 	{
-		return m_Position;
+		return m_Offset;
 	}
 
 	void RenderableSprite::SetAngle(float angle)
 	{
 		if (m_Sprite.IsLoaded())
 		{
-			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+			m_Sprite->set_angle(CL_Angle(angle, cl_radians));
 
 			if (!fe_fequal(angle, m_Angle))
 			{
 				CL_Origin origin;
 				int x, y;
-				m_Sprite->get_alignment(origin, x, y);
+				m_Sprite->get_rotation_hotspot(origin, x, y);
 
-				m_AABB = m_AABB.get_rot_bounds(origin, (float)x, (float)y, CL_Angle(m_Angle-angle, cl_radians));
+				m_AABB = m_AABB.get_rot_bounds(origin, m_Offset.x + x, m_Offset.y + y, CL_Angle(angle, cl_radians));
 			}
 		}
 
 		m_Angle = angle;
+		m_ModifiedAngle = true;
 	}
 
 	float RenderableSprite::GetAngle() const
@@ -394,9 +438,34 @@ namespace FusionEngine
 	void RenderableSprite::OnResourceLoad(ResourceDataPtr resource)
 	{
 		m_Sprite.SetTarget(resource);
-		m_Sprite->set_angle(CL_Angle(m_Angle/*m_DerivedAngle*/, cl_radians));
-		m_Sprite->set_alpha(m_Alpha);
-		m_Sprite->set_color(m_Colour);
+		if (m_ModifiedAlpha)
+			m_Sprite->set_alpha(m_Alpha);
+		else
+			m_Alpha = m_Sprite->get_alpha();
+		if (m_ModifiedColour)
+			m_Sprite->set_color(m_Colour);
+		else
+			m_Colour = m_Sprite->get_color();
+
+		if (m_ModifiedAngle)
+			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+		else
+			m_Angle = m_Sprite->get_angle().to_radians();
+
+		CL_Origin alignment_origin, rotation_point;
+		int ax, ay, rx, ry;
+		m_Sprite->get_alignment(alignment_origin, ax, ay);
+		m_Sprite->get_rotation_hotspot(rotation_point, rx, ry);
+		// Set the origin
+		if (m_ModifiedOrigin)
+		{
+			m_Sprite->set_alignment(m_Origin, ax, ay);
+			m_Sprite->set_rotation_hotspot(m_Origin, rx, ry);
+		}
+		else
+			m_Origin = alignment_origin;
+
+		UpdateAABB();
 	}
 
 	void RenderableSprite::OnStreamOut()
@@ -408,7 +477,7 @@ namespace FusionEngine
 	{
 		if (m_Enabled && m_Sprite.IsLoaded())
 		{
-			m_Sprite->draw(gc, m_DerivedPosition.x, m_DerivedPosition.y);
+			m_Sprite->draw(gc, m_Offset.x, m_Offset.y);
 		}
 	}
 
@@ -416,7 +485,7 @@ namespace FusionEngine
 	{
 		if (m_Enabled && m_Sprite.IsLoaded())
 		{
-			m_Sprite->draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
+			m_Sprite->draw(gc, m_Offset.x + origin.x, m_Offset.y + origin.y);
 		}
 	}
 
@@ -463,7 +532,7 @@ namespace FusionEngine
 	{
 		gc.push_modelview();
 		gc.mult_rotate(CL_Angle(m_Angle, cl_radians));
-		m_Image.draw(gc, m_Position.x + origin.x, m_Position.y + origin.y);
+		m_Image.draw(gc, m_Offset.x + origin.x, m_Offset.y + origin.y);
 		gc.pop_modelview();
 	}
 
@@ -491,10 +560,10 @@ namespace FusionEngine
 		if (bbChanged || m_PositionChanged)
 		{
 			CL_Rectf bb;
-			bb.left = m_Position.x;
-			bb.top = m_Position.y;
-			bb.right = m_Position.x + m_Image.get_width();
-			bb.bottom = m_Position.y + m_Image.get_height();
+			bb.left = m_Offset.x;
+			bb.top = m_Offset.y;
+			bb.right = m_Offset.x + m_Image.get_width();
+			bb.bottom = m_Offset.y + m_Image.get_height();
 
 			CL_Origin origin;
 			int x, y;
@@ -502,7 +571,7 @@ namespace FusionEngine
 
 			bb.translate(-CL_Vec2f::calc_origin(origin, bb.get_size()));
 
-			m_AABB = bb.get_rot_bounds(origin, (float)x, (float)y, CL_Angle(m_Angle, cl_radians));
+			m_AABB = bb.get_rot_bounds(origin, m_Offset.x, m_Offset.y, CL_Angle(m_Angle, cl_radians));
 
 			m_PositionChanged = false;
 		}
@@ -521,7 +590,7 @@ namespace FusionEngine
 
 	void RenderableImage::SetColour(unsigned int r, unsigned int g, unsigned int b)
 	{
-		m_Colour.set_color(r, g, b);
+		//m_Colour.set_color(r, g, b);
 
 		m_Image.set_color(m_Colour);
 	}
@@ -538,32 +607,45 @@ namespace FusionEngine
 		return m_Colour;
 	}
 
-	void RenderableImage::SetPosition(float x, float y)
+	void RenderableImage::SetOrigin(CL_Origin origin)
 	{
-		m_Position.x = x;
-		m_Position.y = y;
+		//m_Origin = origin;
+		m_Image.set_alignment(origin);
+	}
+
+	CL_Origin RenderableImage::GetOrigin() const
+	{
+		CL_Origin origin; int x, y;
+		m_Image.get_alignment(origin, x, y);
+		return origin;
+	}
+
+	void RenderableImage::SetOffset(float x, float y)
+	{
+		m_Offset.x = x;
+		m_Offset.y = y;
 
 		m_PositionChanged = true;
 	}
 
-	void RenderableImage::SetPosition(const Vector2 &position)
+	void RenderableImage::SetOffset(const Vector2 &position)
 	{
-		m_Position = position;
+		m_Offset = position;
 
 		m_PositionChanged = true;
 	}
 
-	void RenderableImage::SetPosition(const CL_Vec2f &_position)
+	void RenderableImage::SetOffset(const CL_Vec2f &_position)
 	{
-		m_Position.x = _position.x;
-		m_Position.y = _position.y;
+		m_Offset.x = _position.x;
+		m_Offset.y = _position.y;
 
 		m_PositionChanged = true;
 	}
 
-	const Vector2 &RenderableImage::GetPosition() const
+	const Vector2 &RenderableImage::GetOffset() const
 	{
-		return m_Position;
+		return m_Offset;
 	}
 
 	void RenderableImage::SetAngle(float angle)

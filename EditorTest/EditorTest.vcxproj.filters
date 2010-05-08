@@ -445,9 +445,6 @@
     <ClInclude Include="..\FusionEngine\FusionResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionResourceManagerScriptFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionResourcePointer.h">
       <Filter>Header Files</Filter>
     </ClInclude>

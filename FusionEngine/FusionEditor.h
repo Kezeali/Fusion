@@ -133,8 +133,12 @@ namespace FusionEngine
 
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
 
-		void AddEntity(const GameMapLoader::GameMapEntityPtr &entity);
-		void RemoveEntity(const GameMapLoader::GameMapEntityPtr &entity);
+		void AddEntity(const MapEntityPtr &map_entity);
+		void RemoveEntity(const MapEntityPtr &map_entity);
+
+		void SelectEntity(const MapEntityPtr &map_entity);
+		void DeselectEntity(const MapEntityPtr &map_entity);
+		void DeselectAll();
 
 		// The following methods are primarily for scripting use
 		//! Returns entity-tyes beginning with...
@@ -277,10 +281,10 @@ namespace FusionEngine
 		void clearCtxMenu(MenuItem *menu, Editor::MenuItemConnections &connections);
 
 		//! Called when a Properties menu-item is clicked
-		void showProperties(const MenuItemEvent &ev, MapEntity *entity);
+		void ctxShowProperties(const MenuItemEvent &ev, MapEntity *entity);
 
 		//! Called when a Select menu-item is clicked
-		void selectEntity(const MenuItemEvent &ev, MapEntity *entity);
+		void ctxSelectEntity(const MenuItemEvent &ev, MapEntity *entity);
 
 		//! Lists the given entity in the relevant containers
 		void addMapEntity(const GameMapLoader::GameMapEntityPtr &entity);

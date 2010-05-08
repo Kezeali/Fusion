@@ -140,7 +140,7 @@ namespace FusionEngine
 
 	void SoundSample::OnStreamOut()
 	{
-		//m_SoundBuffer->stop();
+		m_SoundBuffer.Release();
 	}
 
 	void SoundSample::OnResourceLoad(ResourceDataPtr resource)

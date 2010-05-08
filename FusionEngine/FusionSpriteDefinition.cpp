@@ -54,7 +54,9 @@ namespace FusionEngine
 		m_OffsetOrigin(origin_top_left),
 		m_OffsetX(0), m_OffsetY(0),
 		m_RotationOrigin(origin_center),
-		m_RotationPointX(0), m_RotationPointY(0)
+		m_RotationPointX(0), m_RotationPointY(0),
+		m_Colour(CL_Color::white),
+		m_Alpha(1.0f)
 	{
 	}
 
@@ -68,7 +70,7 @@ namespace FusionEngine
 		m_WorkingDirectory = working_directory;
 
 		TiXmlElement *root = document->FirstChildElement();
-		if (root == NULL)
+		if (root == nullptr)
 			return;
 		//FSN_EXCEPT(ExCode::FileType, "SpriteDefinition::LoadXml", "Document has no elements.");
 
@@ -85,8 +87,8 @@ namespace FusionEngine
 	CL_Sprite *SpriteDefinition::CreateSprite(CL_GraphicContext &gc, CL_VirtualDirectory &dir)
 	{
 		//ResourceManager *man = ResourceManager::getSingletonPtr();
-		//if (man == NULL)
-		//	return NULL;
+		//if (man == nullptr)
+		//	return nullptr;
 
 		CL_SpriteDescription description;
 		for (ImageArray::iterator it = m_Images.begin(), end = m_Images.end(); it != end; ++it)
@@ -261,26 +263,26 @@ namespace FusionEngine
 	void SpriteDefinition::loadImageElements(TiXmlElement *root)
 	{
 		TiXmlElement *element = root->FirstChildElement();
-		while (element != NULL)
+		while (element != nullptr)
 		{
 			std::string tag_name = element->ValueStr();
 			if (tag_name == "image" || tag_name == "image-file")
 			{
-				if (element->Attribute("filesequence") != NULL)
+				if (element->Attribute("filesequence") != nullptr)
 				{
 					int start_index = 0;
 					const char *attribute_text = element->Attribute("start_index");
-					if (attribute_text != NULL)
+					if (attribute_text != nullptr)
 						start_index = CL_StringHelp::local8_to_int(attribute_text);
 
 					int skip_index = 1;
 					attribute_text = element->Attribute("skip_index");
-					if (attribute_text != NULL)
+					if (attribute_text != nullptr)
 						skip_index = CL_StringHelp::text_to_int(attribute_text);
 
 					int leading_zeroes = 0;
 					attribute_text = element->Attribute("leading_zeroes");
-					if (attribute_text != NULL)
+					if (attribute_text != nullptr)
 						leading_zeroes =  CL_StringHelp::text_to_int(attribute_text);
 
 					std::string prefix = element->Attribute("filesequence");
@@ -307,7 +309,7 @@ namespace FusionEngine
 				else
 				{
 					const char *attribute_text = element->Attribute("file");
-					if (attribute_text == NULL)
+					if (attribute_text == nullptr)
 						continue;
 
 					std::string image_name(attribute_text);
@@ -319,7 +321,7 @@ namespace FusionEngine
 					}
 
 					TiXmlElement *cur_child = element->FirstChildElement();
-					if(cur_child == NULL) 
+					if(cur_child == nullptr) 
 					{
 						addImage(image_name);
 					}
@@ -346,7 +348,7 @@ namespace FusionEngine
 									height = CL_StringHelp::text_to_int(image_size[1]);
 
 								attribute_text = cur_child->Attribute("pos");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									std::vector<CL_TempString> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
 									if (image_pos.size() > 0)
@@ -356,7 +358,7 @@ namespace FusionEngine
 								}
 
 								attribute_text = cur_child->Attribute("array");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									std::vector<CL_TempString> image_array = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
 									if (image_array.size() == 2)
@@ -373,13 +375,13 @@ namespace FusionEngine
 								}
 
 								attribute_text = cur_child->Attribute("array_skipframes");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									array_skipframes = CL_StringHelp::text_to_int( CL_String(attribute_text) );
 								}
 
 								attribute_text = cur_child->Attribute("spacing");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									std::vector<CL_TempString> image_spacing = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
 									xspacing = CL_StringHelp::text_to_int(image_spacing[0]);
@@ -395,7 +397,7 @@ namespace FusionEngine
 								float trans_limit = 0.05f;
 
 								const char *attribute_text = cur_child->Attribute("pos");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									std::vector<CL_TempString> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
 									xpos = CL_StringHelp::text_to_int(image_pos[0]);
@@ -403,12 +405,12 @@ namespace FusionEngine
 								}
 
 								attribute_text = cur_child->Attribute("trans_limit");
-								if (attribute_text != NULL)
+								if (attribute_text != nullptr)
 								{
 									trans_limit = CL_StringHelp::text_to_float(CL_String(attribute_text));
 								}
 
-								if (cur_child->Attribute("free") != NULL)
+								if (cur_child->Attribute("free") != nullptr)
 								{
 									addImage(
 										image_name,
@@ -427,7 +429,7 @@ namespace FusionEngine
 							}
 
 							cur_child = cur_child->NextSiblingElement();
-						} while(cur_child != NULL);
+						} while(cur_child != nullptr);
 					}
 				}
 			}
@@ -441,7 +443,7 @@ namespace FusionEngine
 
 	CL_Origin readOrigin(const char *attribute_text, CL_Origin default_)
 	{
-		if (attribute_text != NULL)
+		if (attribute_text != nullptr)
 		{
 			std::string originAttribute = std::string(attribute_text);
 			if(originAttribute == "center")
@@ -471,69 +473,65 @@ namespace FusionEngine
 	{
 		// Load play options	
 		TiXmlElement *element = root->FirstChildElement();
-		while (element != NULL)
+		while (element != nullptr)
 		{
 			std::string tag_name = element->ValueStr();
 
 			const char *attribute_text;
 
-			// <color red="float" green="float" blue="float" alpha="float" />
+			// <color name="string" red="float" green="float" blue="float" alpha="float" />
 			if (tag_name == "color")
 			{
+				attribute_text = element->Attribute("name");
+				if (attribute_text != nullptr)
+					m_Colour = CL_Colorf( CL_Color::find_color(attribute_text) );
+
 				attribute_text = element->Attribute("red");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Colour.r = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
-				else
-					m_Colour.r = 1.f;
 
 				attribute_text = element->Attribute("green");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Colour.g = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
-				else
-					m_Colour.g = 1.f;
 
 				attribute_text = element->Attribute("blue");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Colour.b = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
-				else
-					m_Colour.b = 0.f;
 				
 				attribute_text = element->Attribute("alpha");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Colour.a = (float)CL_StringHelp::text_to_float(CL_String(attribute_text));
-				else
-					m_Colour.a = 1.f;
 			}
 			// <animation speed="integer" loop="[yes,no]" pingpong="[yes,no]" direction="[backward,forward]" on_finish="[blank,last_frame,first_frame]"/>
 			else if (tag_name == "animation")
 			{
 				attribute_text = element->Attribute("speed");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Animation.delay = CL_StringHelp::text_to_int(CL_String(attribute_text));
 				else
 					m_Animation.delay = 60;
 
 				attribute_text = element->Attribute("loop");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Animation.loop = CL_StringHelp::local8_to_bool(attribute_text);
 				else
 					m_Animation.loop = true;
 
 				attribute_text = element->Attribute("pingpong");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Animation.pingpong = CL_StringHelp::local8_to_bool(attribute_text);
 				else
 					m_Animation.pingpong = false;
 
 				attribute_text = element->Attribute("direction");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_Animation.backward = std::string(attribute_text) == "backward";
 				else
 					m_Animation.backward = false; // forward
 
 				attribute_text = element->Attribute("on_finish");
 				bool on_finish_Valid = false;
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 				{
 					on_finish_Valid = true;
 					std::string on_finish(attribute_text);
@@ -551,11 +549,11 @@ namespace FusionEngine
 			else if (tag_name == "scale")
 			{
 				attribute_text = element->Attribute("x");
-				if (attribute_text != NULL) m_ScaleX = CL_StringHelp::local8_to_float(attribute_text);
+				if (attribute_text != nullptr) m_ScaleX = CL_StringHelp::local8_to_float(attribute_text);
 				else m_ScaleX = 1.f;
 
 				attribute_text = element->Attribute("y");
-				if (attribute_text != NULL) m_ScaleY = CL_StringHelp::local8_to_float(attribute_text);
+				if (attribute_text != nullptr) m_ScaleY = CL_StringHelp::local8_to_float(attribute_text);
 				else m_ScaleY = 1.f;
 			}
 			// <translation origin="string" x="integer" y="integer" />
@@ -565,12 +563,12 @@ namespace FusionEngine
 				m_OffsetOrigin = readOrigin(attribute_text, origin_top_left);
 
 				attribute_text = element->Attribute("x");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_OffsetX = CL_StringHelp::local8_to_int(attribute_text);
 				else m_OffsetX = 0;
 
 				attribute_text = element->Attribute("y");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_OffsetY = CL_StringHelp::local8_to_int(attribute_text);
 				else m_OffsetY = 0;
 
@@ -579,19 +577,19 @@ namespace FusionEngine
 			else if (tag_name == "rotation")
 			{
 				const char *attribute_text = element->Attribute("base_angle");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_BaseAngle = CL_Angle(CL_StringHelp::local8_to_float(attribute_text), cl_degrees);
 				
 				attribute_text = element->Attribute("origin");
 				m_RotationOrigin = readOrigin(attribute_text, origin_center);
 
 				attribute_text = element->Attribute("x");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_OffsetX = CL_StringHelp::local8_to_int(attribute_text);
 				else m_OffsetX = 0;
 
 				attribute_text = element->Attribute("y");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					m_RotationPointX = CL_StringHelp::local8_to_int(attribute_text);
 				else m_RotationPointY = 0;
 			}
@@ -602,22 +600,22 @@ namespace FusionEngine
 				frame.number = 0;
 
 				const char *attribute_text = element->Attribute("number");
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					frame.number = CL_StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->Attribute("speed");
 				frame.delay = 60;
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					frame.delay = CL_StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->Attribute("x");
 				frame.offset.x = 0;
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					frame.offset.x = CL_StringHelp::local8_to_int(attribute_text);
 
 				attribute_text = element->Attribute("y");
 				frame.offset.y = 0;
-				if (attribute_text != NULL)
+				if (attribute_text != nullptr)
 					frame.offset.y = CL_StringHelp::local8_to_int(attribute_text);
 
 				m_Frames.push_back(frame);

@@ -158,6 +158,18 @@ namespace FusionEngine { namespace Scripting
 
 	int RegisterScriptVector(asIScriptEngine *engine)
 	{
+		int r;
+		r = engine->RegisterEnum("PointOrigin");
+		r = engine->RegisterEnumValue("PointOrigin", "top_left", origin_top_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "top_center", origin_top_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "top_right", origin_top_right); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center_left", origin_center_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center", origin_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "center_right", origin_center_right); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_left", origin_bottom_left); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", origin_bottom_center); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", origin_bottom_right); FSN_ASSERT( r >= 0 );
+
 		return RegisterScriptVector_Native(engine);
 	}
 

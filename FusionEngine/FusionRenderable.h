@@ -51,44 +51,95 @@ namespace FusionEngine
 	class Renderable : public RefCounted, noncopyable
 	{
 	public:
+		//! CTOR
 		Renderable();
+		//! Virtual DTOR
 		virtual ~Renderable() {};
 
+		//! Implementation must draw something to the given GC
 		virtual void Draw(CL_GraphicContext &gc, const Vector2 &origin) = 0;
 
+		//! Returns the AABB
 		virtual const CL_Rectf &GetAABB() const;
+		//! Updates the AABB
 		virtual void UpdateAABB() {};
 
+		//! Sets the opacity of the renderable
+		/*!
+		* May be equivilant to setting a transparent colour. In that case it is a
+		* convinience function.
+		*/
 		virtual void SetAlpha(float _alpha);
+		//! Gets the opacity of the renderable
 		virtual float GetAlpha() const;
 		virtual void SetColour(unsigned int r, unsigned int g, unsigned int b);
 		virtual void SetColour(const CL_Color & colour);
 		virtual const CL_Color &GetColour() const;
 
-		virtual void SetPosition(float x, float y);
-		virtual void SetPosition(const Vector2 &position);
-		virtual void SetPosition(const CL_Vec2f &_position);
-		virtual const Vector2 &GetPosition() const;
+		//! Sets the point that should be considered 0,0 on the object
+		virtual void SetOrigin(CL_Origin origin);
+		//! Gets the origin alignment
+		virtual CL_Origin GetOrigin() const;
 
+		//! Sets the offset from the Entity
+		/*!
+		* This will be the position relative to the Entity that
+		* the Origin point of this renderable will be positioned
+		* at for rendering.
+		*
+		* \see SetOrigin()
+		*/
+		virtual void SetOffset(float x, float y);
+		//! Sets the offset
+		virtual void SetOffset(const Vector2 &position);
+		//! Sets the offset
+		virtual void SetOffset(const CL_Vec2f &_position);
+		//! Returns the offset from the Entity
+		virtual const Vector2 &GetOffset() const;
+
+		//! Sets the angle to render at
 		virtual void SetAngle(float angle);
+		//! Gets the angle
 		virtual float GetAngle() const;
 
+		//! Should start any animation
 		virtual void StartAnimation() {};
+		//! Should stop any animation
 		virtual void StopAnimaion() {};
+		//! Should pause any animation, maintaining the state for restarting
 		virtual void PauseAnimation() {};
+		//! Returns true if the animation is paused
 		virtual bool IsPaused() const { return false; };
 
+		//! Sets the tags that this renderable has
 		void SetTags(const TagStringSet &tags);
+		//! Adds a tag to this renderable
+		/*!
+		* Tags can be used to identify a renderable's purpose.
+		*/
 		void AddTag(const std::string &tag);
+		//! Removes the given tag
 		void RemoveTag(const std::string &tag);
+		//! Returns true if the given tag is attached to this renderable
 		bool HasTag(const std::string &tag) const;
 
+		//! Sets the relative depth of this renderable
+		/*!
+		* Depth is relative to other renderables attached to the same Entity.
+		*/
 		void SetDepth(int depth);
+		//! Gets the relative depth of this renderable
 		int GetDepth() const;
 
+		//! Enables this renderable
+		/*!
+		* Renderables that aren't enabled wont be rendered.
+		*/
 		void SetEnabled(bool enabled);
+		//! Returns true if this renderable is enabled
 		bool IsEnabled() const;
 
+		//! Registers the script interface
 		static void Register(asIScriptEngine *engine);
 
 	protected:
@@ -96,7 +147,8 @@ namespace FusionEngine
 		int m_Depth;
 		TagStringSet m_Tags;
 
-		Vector2 m_Position;
+		CL_Origin m_Origin;
+		Vector2 m_Offset;
 		float m_Angle;
 		float m_Alpha;
 		CL_Color m_Colour;
@@ -104,6 +156,14 @@ namespace FusionEngine
 		CL_Rectf m_AABB;
 	};
 
+	//! Renderable Sprite resource
+	/*!
+	* This also implements StreamedResourceUser, so it the sprite can be automatically loaded
+	* when needed.
+	*
+	* \todo Support seperate translation and rotation origins (at the moment, if SetOrigin is called it sets both).
+	* Also, there is no support for setting the specific co-ords of the origin, only the alignment (center, left, etc.)
+	*/
 	class RenderableSprite : public Renderable, public StreamedResourceUser
 	{
 	public:
@@ -130,10 +190,13 @@ namespace FusionEngine
 		virtual void SetColour(const CL_Color & colour);
 		virtual const CL_Color &GetColour() const;
 
-		virtual void SetPosition(float x, float y);
-		virtual void SetPosition(const Vector2 &position);
-		virtual void SetPosition(const CL_Vec2f &_position);
-		virtual const Vector2 &GetPosition() const;
+		virtual void SetOrigin(CL_Origin origin);
+		virtual CL_Origin GetOrigin() const;
+
+		virtual void SetOffset(float x, float y);
+		virtual void SetOffset(const Vector2 &position);
+		virtual void SetOffset(const CL_Vec2f &_position);
+		virtual const Vector2 &GetOffset() const;
 
 		virtual void SetAngle(float angle);
 		virtual float GetAngle() const;
@@ -146,10 +209,19 @@ namespace FusionEngine
 	protected:
 		bool m_Paused;
 
+		// Indicates that the AABB needs to be updated
 		bool m_PositionChanged;
 
-		Vector2 m_DerivedPosition;
-		float m_DerivedAngle;
+		//Vector2 m_DerivedPosition;
+		//float m_DerivedAngle;
+
+		// These are used to indicate that the properties have been changed
+		//  from the defaults in the sprite definition
+		bool m_ModifiedAlpha;
+		bool m_ModifiedColour;
+		bool m_ModifiedOrigin;
+		bool m_ModifiedOffset;
+		bool m_ModifiedAngle;
 
 		ResourcePointer<CL_Sprite> m_Sprite;
 
@@ -157,6 +229,7 @@ namespace FusionEngine
 		CL_Angle m_PreviousAngle;
 	};
 
+	//! Renders a CL_Image object
 	class RenderableImage : public Renderable
 	{
 	public:
@@ -175,10 +248,13 @@ namespace FusionEngine
 		virtual void SetColour(const CL_Color & colour);
 		virtual const CL_Color &GetColour() const;
 
-		virtual void SetPosition(float x, float y);
-		virtual void SetPosition(const Vector2 &position);
-		virtual void SetPosition(const CL_Vec2f &_position);
-		virtual const Vector2 &GetPosition() const;
+		virtual void SetOrigin(CL_Origin origin);
+		virtual CL_Origin GetOrigin() const;
+
+		virtual void SetOffset(float x, float y);
+		virtual void SetOffset(const Vector2 &position);
+		virtual void SetOffset(const CL_Vec2f &_position);
+		virtual const Vector2 &GetOffset() const;
 
 		virtual void SetAngle(float angle);
 		virtual float GetAngle() const;

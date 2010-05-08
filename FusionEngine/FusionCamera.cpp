@@ -249,17 +249,6 @@ namespace FusionEngine
 		r = engine->RegisterEnumValue("CamFollowMode", "FollowInstant", FollowInstant);
 		r = engine->RegisterEnumValue("CamFollowMode", "FollowSmooth", FollowSmooth);
 
-		r = engine->RegisterEnum("PointOrigin");
-		r = engine->RegisterEnumValue("PointOrigin", "top_left", origin_top_left);
-		r = engine->RegisterEnumValue("PointOrigin", "top_center", origin_top_center);
-		r = engine->RegisterEnumValue("PointOrigin", "top_right", origin_top_right);
-		r = engine->RegisterEnumValue("PointOrigin", "center_left", origin_center_left);
-		r = engine->RegisterEnumValue("PointOrigin", "center", origin_center);
-		r = engine->RegisterEnumValue("PointOrigin", "center_right", origin_center_right);
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_left", origin_bottom_left);
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_center", origin_bottom_center);
-		r = engine->RegisterEnumValue("PointOrigin", "bottom_right", origin_bottom_right);
-
 		Camera::RegisterGCType(engine, "Camera");
 		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_FACTORY,
 			"Camera@ f()",
