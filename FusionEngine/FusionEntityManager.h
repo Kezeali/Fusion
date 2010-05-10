@@ -176,7 +176,7 @@ namespace FusionEngine
 	 * \see
 	 * Entity
 	 */
-	class EntityManager
+	class EntityManager : public IEntityRepo
 	{
 	protected:
 		typedef std::set<std::string> BlockedTagSet;
@@ -233,10 +233,10 @@ namespace FusionEngine
 		* \param[in] throwIfNotFound
 		* Throw rather than returning NULL
 		*/
-		EntityPtr GetEntity(const std::string &name, bool throwIfNotFound = true);
+		EntityPtr GetEntity(const std::string &name, bool throwIfNotFound = false) const;
 		//! Returns the Entity with the given ID
 		/*!
-		* Obviously can't return Pseudo-Entities, since they have no ID
+		* Obviously can't return pseudo-Entities, since they have no ID
 		*
 		* \param[in] id
 		* ID of the desired Entity
@@ -244,7 +244,9 @@ namespace FusionEngine
 		* \param[in] throwIfNotFound
 		* Throw rather than returning NULL
 		*/
-		EntityPtr GetEntity(ObjectID id, bool throwIfNotFound = true);
+		EntityPtr GetEntity(ObjectID id, bool throwIfNotFound) const;
+		//! Implementation of IEntityRepo
+		EntityPtr GetEntity(ObjectID id) const { return GetEntity(id, false); }
 
 		//! Returns Entities
 		/*!

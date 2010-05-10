@@ -65,6 +65,21 @@ namespace FusionEngine
 		}
 	}
 
+	void EditorMapEntity::ArchiveEntity()
+	{
+		m_SavedState.seek(0);
+		GameMapLoader::SaveEntity(this->entity, m_SavedState);
+		this->fixture.reset();
+		this->entity.reset();
+	}
+
+	void EditorMapEntity::RestoreEntity(EntityFactory *factory, const IEntityRepo *manager)
+	{
+		m_SavedState.seek(0);
+		this->entity = GameMapLoader::LoadEntity(factory, manager, m_SavedState);
+		CreateEditorFixture();
+	}
+
 	void EditorMapEntity::CreateEditorFixture()
 	{
 		if (fixture)

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -35,26 +35,15 @@
 namespace FusionEngine
 {
 
-	EntityDeserialiser::EntityDeserialiser(EntityManager *manager, const IDTranslator &id_translator)
-		: m_Manager(manager),
-		m_Impl(NULL),
-		m_Translator(id_translator)
-	{
-	}
-
-	EntityDeserialiser::EntityDeserialiser(const EntityDeserialiseImpl *impl, const IDTranslator &id_translator)
-		: m_Manager(NULL),
-		m_Impl(impl),
+	EntityDeserialiser::EntityDeserialiser(const IEntityRepo *manager, const IDTranslator &id_translator)
+		: m_Impl(manager),
 		m_Translator(id_translator)
 	{
 	}
 
 	EntityPtr EntityDeserialiser::GetEntity(ObjectID id) const
 	{
-		if (m_Impl != NULL)
-			return m_Impl->GetEntity(m_Translator(id));
-		else
-			return m_Manager->GetEntity(m_Translator(id));
+		return m_Impl->GetEntity(m_Translator(id));
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -57,24 +57,22 @@ namespace FusionEngine
 		ObjectID baseID;
 	};
 
-	class EntityDeserialiseImpl
+	class IEntityRepo
 	{
 	public:
-		virtual ~EntityDeserialiseImpl() {}
+		virtual ~IEntityRepo() {}
 		virtual EntityPtr GetEntity(ObjectID id) const = 0;
 	};
 
 	class EntityDeserialiser
 	{
 	public:
-		EntityDeserialiser(EntityManager *manager, const IDTranslator &id_translator = IDTranslator());
-		EntityDeserialiser(const EntityDeserialiseImpl *impl, const IDTranslator &id_translator = IDTranslator());
+		EntityDeserialiser(const IEntityRepo *manager, const IDTranslator &id_translator = IDTranslator());
 
 		EntityPtr GetEntity(ObjectID serialised_id) const;
 
 	private:
-		EntityManager *m_Manager;
-		const EntityDeserialiseImpl *m_Impl;
+		const IEntityRepo *m_Impl;
 		IDTranslator m_Translator;
 	};
 

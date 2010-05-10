@@ -13,6 +13,8 @@
 
 #include "FusionStdHeaders.h"
 
+#include <boost/intrusive_ptr.hpp>
+
 namespace FusionEngine
 {
 
@@ -23,6 +25,7 @@ namespace FusionEngine
 	class ClientOptions;
 	class Console;
 	class Editor;
+	class EditorMapEntity;
 	class Entity;
 	class EntityFactory;
 	class EntitySynchroniser;
@@ -59,6 +62,9 @@ namespace FusionEngine
 	class System;
 	class SystemMessage;
 	class SystemsManager;
+
+	//! EditorMapEntity ptr
+	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;
 
 }
 

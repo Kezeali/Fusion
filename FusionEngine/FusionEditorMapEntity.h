@@ -47,8 +47,8 @@
 namespace FusionEngine
 {
 
-	//! EditorMapEntity adds additional data to GameMapLoader#GameMapEntity which is useful for the Editor
-	class EditorMapEntity : public GameMapLoader::GameMapEntity, public EMP::Core::DataSource
+	//! EditorMapEntity adds additional data to GameMapLoader#MapEntity which is useful for the Editor
+	class EditorMapEntity : public GameMapLoader::MapEntity, public EMP::Core::DataSource
 	{
 	public:
 		FixturePtr fixture;
@@ -57,6 +57,17 @@ namespace FusionEngine
 		EditorMapEntity();
 		//! Dtor
 		virtual ~EditorMapEntity();
+
+		//! Saves and deletes the Entity held by this object
+		/*!
+		* \see RestoreEntity()
+		*/
+		void ArchiveEntity();
+		//! Restores the currently saved state
+		/*!
+		* \see ArchiveEntity()
+		*/
+		void RestoreEntity(EntityFactory *factory, const IEntityRepo *manager);
 
 		//! Creates a clickable physics fixture
 		void CreateEditorFixture();
@@ -98,16 +109,16 @@ namespace FusionEngine
 		typedef std::map<int, VectorTypeInfo> VectorTypeInfoMap;
 		VectorTypeInfoMap m_VectorTypes;
 
+		// Used to resore deleted Entities
+		CL_IODevice_Memory m_SavedState;
 	};
-	//! EditorMapEntity ptr
-	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;
 
 	//! Allows a physics fixture to hold a pointer to an EditorMapEntity
 	struct MapEntityFixtureUserData : public IFixtureUserData
 	{
-		GameMapLoader::GameMapEntity *map_entity;
+		GameMapLoader::MapEntity *map_entity;
 
-		MapEntityFixtureUserData(GameMapLoader::GameMapEntity *_map_entity)
+		MapEntityFixtureUserData(GameMapLoader::MapEntity *_map_entity)
 			: map_entity(_map_entity)
 		{
 		}

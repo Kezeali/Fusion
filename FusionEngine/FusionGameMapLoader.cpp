@@ -229,7 +229,7 @@ namespace FusionEngine
 					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
-				// Load specific entity state
+				// Load custom properties
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a();
 
@@ -304,7 +304,7 @@ namespace FusionEngine
 					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
-				// Load specific entity state
+				// Load custom properties
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a();
 
@@ -348,7 +348,7 @@ namespace FusionEngine
 		cl_uint32 numberEntities = device.read_uint32();
 		EntityArray instancedEntities;
 		instancedEntities.reserve(numberEntities);
-		// The TypeIndex bimap maps type-name to index, so the right_map is index to name
+		// The TypeIndex bimap maps typename to index, so the right_map is index to name
 		TypeIndex::right_map &indexToName = m_TypeIndex.right;
 		{
 			std::string entityName; ObjectID entityID;
@@ -374,27 +374,25 @@ namespace FusionEngine
 
 		// Deserialise each instanced entity (the only difference between this and what is done to load
 		//  a _map_ file is that the Entity's Spawn() method is not called)
+		EntityDeserialiser entity_deserialiser(m_Manager);
+		SerialisedData state;
+		for (EntityArray::iterator it = instancedEntities.begin(), end = instancedEntities.end(); it != end; ++it)
 		{
-			EntityDeserialiser entity_deserialiser(m_Manager);
-			SerialisedData state;
-			for (EntityArray::iterator it = instancedEntities.begin(), end = instancedEntities.end(); it != end; ++it)
-			{
-				EntityPtr &entity = (*it);
+			EntityPtr &entity = (*it);
 
-				// Basic Entity properties (position, angle)
-				Vector2 position;
-				position.x = device.read_float();
-				position.y = device.read_float();
-				entity->SetPosition(position);
+			// Basic Entity properties (position, angle)
+			Vector2 position;
+			position.x = device.read_float();
+			position.y = device.read_float();
+			entity->SetPosition(position);
 
-				entity->SetAngle(device.read_float());
+			entity->SetAngle(device.read_float());
 
-				// Load entity state
-				state.mask = device.read_uint32();
-				state.data = device.read_string_a();
+			// Load custom properties
+			state.mask = device.read_uint32();
+			state.data = device.read_string_a();
 
-				entity->DeserialiseState(state, true, entity_deserialiser);
-			}
+			entity->DeserialiseState(state, true, entity_deserialiser);
 		}
 	}
 
@@ -426,7 +424,7 @@ namespace FusionEngine
 		{
 			const EntityPtr &entity = it->second;
 			
-			// Write the type index (refers to type-index in the map file)
+			// Write the type index (refers to type-index in the compiled map file)
 			device.write_uint32( m_TypeIndex.left.at(entity->GetType()) );
 
 			// Write the Entity name
@@ -451,8 +449,8 @@ namespace FusionEngine
 			device.write_float(position.y);
 			device.write_float(entity->GetAngle());
 
-			// Write the entity state
-			entity->SerialiseState(state, false);
+			// Write custom properties
+			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
 			device.write_string_a(state.data);
@@ -460,7 +458,7 @@ namespace FusionEngine
 	}
 
 
-	void GameMapLoader::CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::GameMapEntityArray &pseudo_entities, const GameMapLoader::GameMapEntityArray &entities)
+	void GameMapLoader::CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::MapEntityArray &pseudo_entities, const GameMapLoader::MapEntityArray &entities)
 	{
 		// Write used types list
 		// Number of types:
@@ -502,9 +500,9 @@ namespace FusionEngine
 
 		// Write Pseudo-Entities
 		device.write_uint32(pseudo_entities.size());
-		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
+		for (MapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
-			const GameMapEntityPtr &mapEntity = *it;
+			const MapEntityPtr &mapEntity = *it;
 			const EntityPtr &entity = mapEntity->entity;
 			
 			// Write the type index (refers to used-type-index at the top of the file)
@@ -519,9 +517,9 @@ namespace FusionEngine
 
 		// Write Pseudo-Entity state data
 		SerialisedData state;
-		for (GameMapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
+		for (MapEntityArray::const_iterator it = pseudo_entities.begin(), end = pseudo_entities.end(); it != end; ++it)
 		{
-			const GameMapEntityPtr &mapEntity = *it;
+			const MapEntityPtr &mapEntity = *it;
 			const EntityPtr &entity = mapEntity->entity;
 
 			// Write basic Entity properties (position, angle)
@@ -541,7 +539,7 @@ namespace FusionEngine
 			else
 				device.write_uint8(NoTypeFlags);
 
-			// Write the entity state
+			// Write custom properties
 			state.mask = mapEntity->stateMask;
 			entity->SerialiseState(state, true);
 
@@ -551,9 +549,9 @@ namespace FusionEngine
 
 		// Write Entities
 		device.write_uint32(entities.size());
-		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			const GameMapEntityPtr &mapEntity = *it;
+			const MapEntityPtr &mapEntity = *it;
 			const EntityPtr &entity = mapEntity->entity;
 			
 			// Write the type index (refers to used-type-index at the top of the file)
@@ -570,9 +568,9 @@ namespace FusionEngine
 		}
 
 		// Write Entity state data
-		for (GameMapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
+		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			const GameMapEntityPtr &mapEntity = *it;
+			const MapEntityPtr &mapEntity = *it;
 			const EntityPtr &entity = mapEntity->entity;
 
 			// Write basic Entity properties (position, angle)
@@ -592,13 +590,80 @@ namespace FusionEngine
 			else
 				device.write_uint8(NoTypeFlags);
 
-			// Write the entity state
+			// Write the custom properties
 			state.mask = mapEntity->stateMask;
 			entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
 			device.write_string_a(state.data);
 		}
+	}
+
+	void GameMapLoader::SaveEntity(const EntityPtr &entity, CL_IODevice &device)
+	{
+		// Type
+		device.write_string_a(entity->GetType());
+
+		// Entity name
+		if (!entity->HasDefaultName())
+			device.write_string_a(entity->GetName());
+		else
+			device.write_string_a(CL_String8());
+
+		// Entity ID
+		ObjectID id = entity->GetID();
+		device.write(&id, sizeof(ObjectID));
+		
+		// Write basic Entity properties (position, angle)
+		const Vector2 &position = entity->GetPosition();
+		device.write_float(position.x);
+		device.write_float(position.y);
+		device.write_float(entity->GetAngle());
+
+		// Custom properties
+		SerialisedData state;
+		entity->SerialiseState(state, true);
+		device.write_uint32(state.mask);
+		device.write_string_a(state.data);
+	}
+
+	EntityPtr GameMapLoader::LoadEntity(EntityFactory *factory, const IEntityRepo *manager, CL_IODevice &device)
+	{
+		EntityPtr entity;
+		try
+		{
+			// Load the entity type, name and id
+			std::string entityTypename = device.read_string_a();
+			std::string entityName = device.read_string_a();
+			ObjectID entityID;
+			device.read((void*)&entityID, sizeof(ObjectID));
+			// Create the instance
+			entity = factory->InstanceEntity(entityTypename, entityName);
+			entity->SetID(entityID);
+
+			// Basic Entity properties (position, angle)
+			Vector2 position;
+			position.x = device.read_float();
+			position.y = device.read_float();
+			entity->SetPosition(position);
+
+			entity->SetAngle(device.read_float());
+
+			// The custom properties
+			EntityDeserialiser entity_deserialiser(manager);
+			SerialisedData state;
+			state.mask = device.read_uint32();
+			state.data = device.read_string_a();
+
+			entity->DeserialiseState(state, true, entity_deserialiser);
+		}
+		catch (CL_Exception &io_exception)
+		{
+			Logger::getSingleton().Add(io_exception.what());
+			// Failed to read: reset the shared-pointer before returning to prevent returning an invalid Entity
+			entity.reset();
+		}
+		return entity;
 	}
 
 

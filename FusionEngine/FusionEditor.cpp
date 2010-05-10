@@ -108,69 +108,6 @@ namespace FusionEngine
 		return 0;
 	}
 
-	// Undoable action impl.s
-	class ChangePropertyAction : public UndoableAction
-	{
-	public:
-		typedef std::pair<int, boost::any> ChangedProperty;
-		typedef std::vector<ChangedProperty> ChangedPropertyArray;
-
-		//ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, const ChangedPropertyArray &from_values, const ChangedPropertyArray &to_values);
-		ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, int property_index, const boost::any &from, const boost::any &to);
-
-		const std::string &GetTitle() const;
-
-	protected:
-		void undoAction();
-		void redoAction();
-
-		GameMapLoader::GameMapEntityPtr m_EditorEntity;
-		//ChangedPropertyArray m_OldValues;
-		//ChangedPropertyArray m_NewValues;
-		int m_PropertyIndex;
-		boost::any m_OldValue;
-		boost::any m_NewValue;
-
-		std::string m_Title;
-	};
-
-	ChangePropertyAction::ChangePropertyAction(const GameMapLoader::GameMapEntityPtr &changed_entity, int property_index, const boost::any &from, const boost::any &to)
-		: m_EditorEntity(changed_entity),
-		m_PropertyIndex(property_index),
-		m_OldValue(from),
-		m_NewValue(to)
-	{
-		m_Title = "Change [" + changed_entity->entity->GetType() + "] " + changed_entity->entity->GetName() + "." + changed_entity->entity->GetPropertyName(m_PropertyIndex);
-	}
-
-	const std::string &ChangePropertyAction::GetTitle() const
-	{
-		return m_Title;
-	}
-
-	void ChangePropertyAction::undoAction()
-	{
-		//for (ChangedPropertyArray::const_iterator it = m_OldValues.begin(), end = m_OldValues.end(); it != end; ++it)
-		//{
-		//	const ChangedProperty &prop = *it;
-		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
-		//}
-
-		m_EditorEntity->entity->SetPropertyValue(m_PropertyIndex, m_OldValue);
-	}
-
-	void ChangePropertyAction::redoAction()
-	{
-		//for (ChangedPropertyArray::const_iterator it = m_NewValues.begin(), end = m_NewValues.end(); it != end; ++it)
-		//{
-		//	const ChangedProperty &prop = *it;
-		//	m_EditorEntity->entity->SetPropertyValue(prop.first, prop.second);
-		//}
-
-		m_EditorEntity->entity->SetPropertyValue(m_PropertyIndex, m_NewValue);
-	}
-
-
 	//! An action
 	/*!
 	* \todo Make sure the entity is re-created with the correct ID (so redo actions that restore entity-pointer properties are valid)
@@ -181,13 +118,16 @@ namespace FusionEngine
 		typedef std::pair<unsigned int, boost::any> ChangedProperty;
 		typedef std::vector<ChangedProperty> ChangedPropertyArray;
 
-		AddRemoveEntityAction(Editor *editor, const GameMapLoader::GameMapEntityPtr &entity, bool added = true);
+		AddRemoveEntityAction(Editor *editor, EntityFactory *factory, EntityManager *manager, const EditorMapEntityPtr &map_entity, bool added = true);
 
 		const std::string &GetTitle() const;
 	protected:
 		bool m_Added;
-		GameMapLoader::GameMapEntityPtr m_EditorEntity;
+		EditorMapEntityPtr m_EditorEntity;
 		Editor *m_Editor;
+
+		EntityFactory *m_Factory;
+		EntityManager *m_Manager;
 
 		// Used to recreate the entity
 		struct
@@ -209,8 +149,10 @@ namespace FusionEngine
 	};
 	typedef std::tr1::shared_ptr<AddRemoveEntityAction> AddRemoveEntityActionPtr;
 
-	AddRemoveEntityAction::AddRemoveEntityAction(Editor *editor, const GameMapLoader::GameMapEntityPtr &map_entity, bool added)
+	AddRemoveEntityAction::AddRemoveEntityAction(Editor *editor, EntityFactory *factory, EntityManager *manager, const EditorMapEntityPtr &map_entity, bool added)
 		: m_Editor(editor),
+		m_Factory(factory),
+		m_Manager(manager),
 		m_EditorEntity(map_entity),
 		m_Added(added)
 	{
@@ -224,8 +166,8 @@ namespace FusionEngine
 		m_Parameters.name = map_entity->entity->GetName();
 		m_Parameters.position = map_entity->entity->GetPosition();
 
-		if (!m_Added)
-			m_EditorEntity.reset();
+		//if (!m_Added)
+		//	m_EditorEntity.reset();
 	}
 
 	const std::string &AddRemoveEntityAction::GetTitle() const
@@ -235,13 +177,25 @@ namespace FusionEngine
 
 	void AddRemoveEntityAction::create()
 	{
-		m_EditorEntity = m_Editor->CreateEntity(m_Parameters.type, m_Parameters.name, m_Parameters.synced, m_Parameters.position.x, m_Parameters.position.y);
+		//m_EditorEntity = m_Editor->CreateEntity(m_Parameters.type, m_Parameters.name, m_Parameters.synced, m_Parameters.position.x, m_Parameters.position.y);
+
+		m_EditorEntity->RestoreEntity(m_Factory, m_Manager);
+		m_Editor->AddEntity(m_EditorEntity);
 	}
 
 	void AddRemoveEntityAction::destroy()
 	{
+		m_Parameters.synced = m_EditorEntity->synced;
+		m_Parameters.type = m_EditorEntity->entity->GetType();
+		m_Parameters.name = m_EditorEntity->entity->GetName();
+		m_Parameters.position = m_EditorEntity->entity->GetPosition();
+
+		//m_Editor->RemoveEntity(m_EditorEntity);
+		//m_EditorEntity.reset();
+
+		// Save the entity's state and remove it from the Editor
 		m_Editor->RemoveEntity(m_EditorEntity);
-		m_EditorEntity.reset();
+		m_EditorEntity->ArchiveEntity();
 		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
 
@@ -309,6 +263,94 @@ namespace FusionEngine
 		return s_EditorSystemName;
 	}
 
+	void generateCircleLineLoop(CL_Vec2f *verts, int num_verts, float radius, const CL_Vec2f &middle = CL_Vec2f())
+	{
+		int i;
+		//float x, y;
+		float theta;
+		float wedgeAngle;	// Size of angle between two points on the circle (single wedge)
+		//int points = num_verts-1;
+
+		// Precompute wedge angle
+		wedgeAngle = (float)((2*s_pi) / num_verts);
+
+		// Set up vertices for a circle
+		for(i = 0; i < num_verts; i++)
+		{
+			// Calculate theta for this vertex
+			theta = i * wedgeAngle;
+
+			// Compute X and Y locations
+			verts[i].x = (float)(middle.x + radius * cos(theta));
+			verts[i].y = (float)(middle.y - radius * sin(theta));
+		}
+
+	}
+
+	void Editor::generateSelectionOverlay()
+	{
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		CL_Texture offtex(gc, 33, 33);
+
+		CL_FrameBuffer offscreen(gc);
+		offscreen.attach_color_buffer(0, offtex);
+		gc.set_frame_buffer(offscreen);
+
+		// The main selection box
+		gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
+		// attributes
+		CL_Colorf colour(0.8f, 0.4f, 0.3f, 0.8f);
+		CL_Vec2f cross[4] =
+		{
+			CL_Vec2f(0, 0),
+			CL_Vec2f(32, 32),
+			CL_Vec2f(0, 32),
+			CL_Vec2f(32, 0),
+		};
+		CL_Vec2f box[4] =
+		{
+			CL_Vec2f(0, 0),
+			CL_Vec2f(32, 0),
+			CL_Vec2f(32, 32),
+			CL_Vec2f(0, 32),
+		};
+		// draw it
+		{
+			CL_PrimitivesArray prim_array(gc);
+			prim_array.set_attributes(0, cross);
+			prim_array.set_attribute(1, colour);
+			gc.set_program_object(cl_program_color_only);
+			gc.draw_primitives(cl_lines, 4, prim_array);
+			prim_array.set_attributes(0, box);
+			gc.draw_primitives(cl_line_loop, 4, prim_array);
+			gc.reset_program_object();
+		}
+
+		m_SelectionOverlay = CL_Image(gc, offtex, CL_Rect(0, 0, 33, 33));
+
+		offscreen.detach_color_buffer(0, offtex);
+		offtex = CL_Texture(gc, 11, 11);
+		offscreen.attach_color_buffer(0, offtex);
+		// Rotation indicator
+		gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
+		// attributes
+		CL_Vec2f circle[24];
+		generateCircleLineLoop(circle, 24, 5, CL_Vec2f(5.f, 5.f)); 
+		// draw it
+		{
+			CL_PrimitivesArray prim_array(gc);
+			prim_array.set_attributes(0, circle);
+			prim_array.set_attribute(1, colour);
+			gc.set_program_object(cl_program_color_only);
+			gc.draw_primitives(cl_line_loop, 24, prim_array);
+			gc.reset_program_object();
+		}
+
+		m_SelectionOverlay_Rotate = CL_Image(gc, offtex, CL_Rect(0, 0, 11, 11));
+
+		gc.reset_frame_buffer();
+	}
+
 	bool Editor::Initialise()
 	{
 		// Load gui documents
@@ -332,44 +374,7 @@ namespace FusionEngine
 
 		m_RawInputConnection = m_Input->SignalRawInput.connect( boost::bind(&Editor::OnRawInput, this, _1) );
 
-		// Draw the selection overlay texture
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		CL_Texture offtex(gc, 32, 32);
-
-		CL_FrameBuffer offscreen(gc);
-		offscreen.attach_color_buffer(0, offtex);
-		gc.set_frame_buffer(offscreen);
-		gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
-
-		CL_Colorf colour(0.3f, 0.4f, 0.8f, 0.8f);
-
-		CL_Vec2f cross[4] =
-		{
-			CL_Vec2f(0, 0),
-			CL_Vec2f(32, 32),
-			CL_Vec2f(0, 32),
-			CL_Vec2f(32, 0),
-		};
-		CL_Vec2f box[4] =
-		{
-			CL_Vec2f(0, 0),
-			CL_Vec2f(31, 0),
-			CL_Vec2f(31, 31),
-			CL_Vec2f(0, 31),
-		};
-
-		CL_PrimitivesArray prim_array(gc);
-		prim_array.set_attributes(0, cross);
-		prim_array.set_attribute(1, colour);
-		gc.set_program_object(cl_program_color_only);
-		gc.draw_primitives(cl_lines, 4, prim_array);
-		prim_array.set_attributes(0, box);
-		gc.draw_primitives(cl_line_loop, 4, prim_array);
-		gc.reset_program_object();
-
-		gc.reset_frame_buffer();
-
-		m_SelectionOverlay = CL_Image(gc, offtex, CL_Rect(0, 0, 32, 32));
+		generateSelectionOverlay();
 
 		return true;
 	}
@@ -457,55 +462,6 @@ namespace FusionEngine
 	void Editor::Draw()
 	{
 		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
-
-		//if (m_SelectedEntities.empty())
-		//	return;
-
-		//CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-
-		//CL_Rect viewport;
-		//m_Renderer->CalculateScreenArea(viewport, m_Viewport);
-
-		//// Set the viewport
-		////gc.set_cliprect(viewport);
-
-		//const CameraPtr &camera = m_Viewport->GetCamera();
-
-		//const CL_Vec2f &camPosition = camera->GetPosition();
-		//CL_Origin camOrigin = camera->GetOrigin();
-
-		//CL_Vec2f viewportOffset;
-		//viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewport.get_width(), (float)viewport.get_height()));
-
-		//gc.push_modelview();
-		//gc.set_translate(-viewportOffset.x, -viewportOffset.y);
-
-		//gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
-		//if ( !fe_fequal(camera->GetZoom(), 1.f) )
-		//	gc.mult_scale(camera->GetZoom(), camera->GetZoom());
-
-		//CL_Rectf screen;
-		//m_Renderer->CalculateScreenArea(screen, m_Viewport, true);
-		//for (EntitySet::const_iterator it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
-		//{
-		//	const MapEntityPtr &selected = *it;
-		//	
-		//	const Vector2 &position = selected->entity->GetPosition();
-
-		//	gc.push_modelview();
-		//	gc.mult_translate(position.x, position.y);
-		//	gc.mult_rotate(CL_Angle(selected->entity->GetAngle(), cl_radians));
-
-		//	CL_Pointf center(position.x, position.y);
-		//	if (screen.contains(CL_Vec2f(center)))
-		//	{
-		//		m_SelectionOverlay.draw(gc, 0, 0);
-		//	}
-
-		//	gc.pop_modelview();
-		//}
-		//gc.pop_modelview();
-		//gc.reset_cliprect();
 	}
 
 	void Editor::Start()
@@ -718,10 +674,10 @@ namespace FusionEngine
 				CL_Rectf area;
 				m_Renderer->CalculateScreenArea(area, m_Viewport, true);
 
-				MapEntityPtr mapEntity = CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
+				EditorMapEntityPtr mapEntity = CreateEntity(m_CurrentEntityType, "", m_PseudoEntityMode, area.left + position.x, area.top + position.y);
 				if (mapEntity)
 				{
-					UndoableActionPtr action(new AddRemoveEntityAction(this, mapEntity, true));
+					UndoableActionPtr action(new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, mapEntity, true));
 					addUndoAction(action);
 				}
 			}
@@ -745,7 +701,7 @@ namespace FusionEngine
 			Vector2 worldPosition(ev.PointerPosition);
 			translatePointerToWorld(&worldPosition, m_Renderer, m_Viewport);
 
-			GameMapLoader::GameMapEntityArray entitiesUnderMouse;
+			GameMapLoader::MapEntityArray entitiesUnderMouse;
 			GetEntitiesAt(entitiesUnderMouse, worldPosition);
 			ShowContextMenu(ev.PointerPosition, entitiesUnderMouse);
 			}
@@ -784,7 +740,7 @@ namespace FusionEngine
 		menu->RemoveAllChildren();
 	}
 
-	void Editor::ShowContextMenu(const Vector2i &position, const GameMapLoader::GameMapEntityArray &entities)
+	void Editor::ShowContextMenu(const Vector2i &position, const GameMapLoader::MapEntityArray &entities)
 	{
 		clearCtxMenu(m_PropertiesMenu, m_PropertiesMenuConnections);
 		clearCtxMenu(m_EntitySelectionMenu, m_SelectionMenuConnections);
@@ -870,7 +826,7 @@ namespace FusionEngine
 		m_EntityDialogs.push_back(dialog);
 	}
 
-	Editor::MapEntityPtr Editor::CreateEntity(const std::string &type, const std::string &name, bool synced, float x, float y)
+	EditorMapEntityPtr Editor::CreateEntity(const std::string &type, const std::string &name, bool synced, float x, float y)
 	{
 		EditorMapEntityPtr gmEntity(new EditorMapEntity());
 		gmEntity->entity = m_EntityFactory->InstanceEntity(type, name);
@@ -912,7 +868,7 @@ namespace FusionEngine
 	class MapEntityQuery : public b2QueryCallback
 	{
 	public:
-		MapEntityQuery(GameMapLoader::GameMapEntityArray *output_array, const b2Vec2& point)
+		MapEntityQuery(GameMapLoader::MapEntityArray *output_array, const b2Vec2& point)
 		{
 			m_Point = point;
 			m_Entities = output_array;
@@ -939,10 +895,10 @@ namespace FusionEngine
 		}
 
 		b2Vec2 m_Point;
-		GameMapLoader::GameMapEntityArray* m_Entities;
+		GameMapLoader::MapEntityArray* m_Entities;
 	};
 
-	void Editor::GetEntitiesAt(GameMapLoader::GameMapEntityArray &out, const Vector2 &position)
+	void Editor::GetEntitiesAt(GameMapLoader::MapEntityArray &out, const Vector2 &position)
 	{
 		b2Vec2 p(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit);
 
@@ -993,7 +949,14 @@ namespace FusionEngine
 		m_SelectedEntities.insert(MapEntityPtr(map_entity));
 
 		RenderableImage *selectionOverlay = new RenderableImage(m_SelectionOverlay);
-		selectionOverlay->AddTag("selection_overlay");
+		selectionOverlay->AddTag("select_overlay");
+		selectionOverlay->AddTag("select_overlay_box");
+		selectionOverlay->SetOrigin(origin_center);
+		map_entity->entity->AddRenderable(selectionOverlay);
+
+		selectionOverlay = new RenderableImage(m_SelectionOverlay_Rotate);
+		selectionOverlay->AddTag("select_overlay");
+		selectionOverlay->AddTag("select_overlay_rotate");
 		selectionOverlay->SetOrigin(origin_center);
 		map_entity->entity->AddRenderable(selectionOverlay);
 	}
@@ -1001,12 +964,12 @@ namespace FusionEngine
 	void Editor::DeselectEntity(const Editor::MapEntityPtr &map_entity)
 	{
 		m_SelectedEntities.erase(map_entity);
-		map_entity->entity->RemoveRenderablesWithTag("selection_overlay");
+		map_entity->entity->RemoveRenderablesWithTag("select_overlay");
 	}
 
 	void Editor::DeselectAll()
 	{
-		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](MapEntityPtr selected){ selected->entity->RemoveRenderablesWithTag("selection_overlay"); });
+		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](MapEntityPtr selected){ selected->entity->RemoveRenderablesWithTag("select_overlay"); });
 		m_SelectedEntities.clear();
 	}
 
@@ -1266,7 +1229,7 @@ namespace FusionEngine
 			asMETHODPR(Editor, Compile, (const std::string &), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
-	void Editor::addMapEntity(const GameMapLoader::GameMapEntityPtr &map_entity)
+	void Editor::addMapEntity(const GameMapLoader::MapEntityPtr &map_entity)
 	{
 		if (map_entity->entity->IsPseudoEntity())
 			m_PseudoEntities.push_back(map_entity);
@@ -1299,18 +1262,18 @@ namespace FusionEngine
 
 		file.write_uint32(m_PseudoEntities.size() + m_Entities.size());
 		SerialisedData state;
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
+		for (GameMapLoader::MapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const GameMapLoader::MapEntityPtr &gmEntity = *it;
 			state.mask = gmEntity->stateMask ;
 			gmEntity->entity->SerialiseState(state, true);
 
 			file.write_uint32(state.mask);
 			file.write_string_a(state.data);
 		}
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (GameMapLoader::MapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const GameMapLoader::MapEntityPtr &gmEntity = *it;
 			state.mask = gmEntity->stateMask;
 			gmEntity->entity->SerialiseState(state, true);
 
@@ -1379,9 +1342,9 @@ namespace FusionEngine
 		TiXmlElement *entities = new TiXmlElement("entities");
 		root->LinkEndChild(entities);
 		unsigned int dataIndex = 0;
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
+		for (GameMapLoader::MapEntityArray::iterator it = m_PseudoEntities.begin(), end = m_PseudoEntities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const GameMapLoader::MapEntityPtr &gmEntity = *it;
 
 			TiXmlElement *entityElm = new TiXmlElement("entity");
 			if (gmEntity->hasName)
@@ -1398,9 +1361,9 @@ namespace FusionEngine
 			transform->SetAttribute("angle", boost::lexical_cast<std::string>(gmEntity->entity->GetAngle()));
 			entityElm->LinkEndChild(transform);
 		}
-		for (GameMapLoader::GameMapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		for (GameMapLoader::MapEntityArray::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const GameMapLoader::MapEntityPtr &gmEntity = *it;
 
 			TiXmlElement *entityElm = new TiXmlElement("entity");
 			entityElm->SetAttribute("id", gmEntity->entity->GetID());
@@ -1526,7 +1489,7 @@ namespace FusionEngine
 
 		TiXmlElement *child = element->FirstChildElement();
 		std::string name, type, idStr;
-		// Resize the entities array to construct enough GameMapEntity objects
+		// Resize the entities array to construct enough MapEntity objects
 		m_Entities.reserve(entity_data_count);
 		while (child != NULL)
 		{
@@ -1600,15 +1563,15 @@ namespace FusionEngine
 	}
 
 	inline void Editor::initialiseEntities(
-		const GameMapLoader::GameMapEntityArray::iterator &first, const GameMapLoader::GameMapEntityArray::iterator &last,
+		const GameMapLoader::MapEntityArray::iterator &first, const GameMapLoader::MapEntityArray::iterator &last,
 		const Editor::SerialisedDataArray &entity_data,
 		const Editor::EditorEntityDeserialiser &deserialiser_impl)
 	{
 		EntityDeserialiser entityDeserialiser(&deserialiser_impl);
 
-		for (GameMapLoader::GameMapEntityArray::iterator it = first; it != last; ++it)
+		for (GameMapLoader::MapEntityArray::iterator it = first; it != last; ++it)
 		{
-			const GameMapLoader::GameMapEntityPtr &gmEntity = *it;
+			const GameMapLoader::MapEntityPtr &gmEntity = *it;
 			// Initialise with archetype data
 			if (!gmEntity->archetypeId.empty())
 			{

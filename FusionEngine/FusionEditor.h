@@ -84,14 +84,15 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		Editor(InputManager *input, EntityFactory *entity_factory, Renderer *renderer, InstancingSynchroniser *instancing, PhysicalWorld *world, StreamingManager *streaming_manager, GameMapLoader *map_util, EntityManager *entity_manager);
+		//! DTOR
 		virtual ~Editor();
 
 	public:
-		// TODO: use these typedefs
-		typedef GameMapLoader::GameMapEntity MapEntity;
-		typedef GameMapLoader::GameMapEntityPtr MapEntityPtr;
-		typedef GameMapLoader::GameMapEntityArray MapEntityArray;
+		typedef GameMapLoader::MapEntity MapEntity;
+		typedef GameMapLoader::MapEntityPtr MapEntityPtr;
+		typedef GameMapLoader::MapEntityArray MapEntityArray;
 
+		//! Returns the name of this system ("editor")
 		const std::string &GetName() const;
 
 		//! System Init implementation
@@ -129,11 +130,14 @@ namespace FusionEngine
 		void ShowProperties(const EntityPtr &entity);
 		void ShowProperties(const MapEntityPtr &entity);
 
-		MapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
+		//! Creates a new map-entity
+		EditorMapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
 
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
 
+		//! Adds the given map-Entity to the Editor
 		void AddEntity(const MapEntityPtr &map_entity);
+		//! Removes the given map-Entity from the Editor
 		void RemoveEntity(const MapEntityPtr &map_entity);
 
 		void SelectEntity(const MapEntityPtr &map_entity);
@@ -193,7 +197,7 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
-		class EditorEntityDeserialiser : public EntityDeserialiseImpl
+		class EditorEntityDeserialiser : public IEntityRepo
 		{
 		public:
 			void ListEntity(const EntityPtr &entity);
@@ -248,6 +252,8 @@ namespace FusionEngine
 		Vector2 m_DragFrom;
 
 		CL_Image m_SelectionOverlay;
+		CL_Image m_SelectionOverlay_Rotate;
+		CL_Image m_SelectionOverlay_Resize;
 
 		std::string m_CurrentFilename;
 
@@ -267,13 +273,15 @@ namespace FusionEngine
 		// Map data (entities, etc.) - passed to map builder (GameMapLoader)
 		StringSet m_UsedTypes;
 		GameMapLoader::ArchetypeMap m_Archetypes;
-		GameMapLoader::GameMapEntityArray m_PseudoEntities;
-		GameMapLoader::GameMapEntityArray m_Entities;
+		GameMapLoader::MapEntityArray m_PseudoEntities;
+		GameMapLoader::MapEntityArray m_Entities;
 
 		ObjectIDStack m_IdStack;
 
 		inline void onLeftClick(const RawInput &ev);
 		inline void onRightClick(const RawInput &ev);
+
+		void generateSelectionOverlay();
 
 		void addUndoAction(const UndoableActionPtr &action);
 		void repopulateUndoMenu();
@@ -287,7 +295,7 @@ namespace FusionEngine
 		void ctxSelectEntity(const MenuItemEvent &ev, MapEntity *entity);
 
 		//! Lists the given entity in the relevant containers
-		void addMapEntity(const GameMapLoader::GameMapEntityPtr &entity);
+		void addMapEntity(const GameMapLoader::MapEntityPtr &entity);
 
 		//! Serialises and saves the state data of all map entities to the given file
 		void serialiseEntityData(CL_IODevice file);
@@ -309,7 +317,7 @@ namespace FusionEngine
 		// Deserialises state data
 		void initialiseEntities(const SerialisedDataArray &entity_data, const EditorEntityDeserialiser &translator);
 		// To reduce code repitition
-		inline void initialiseEntities(const GameMapLoader::GameMapEntityArray::iterator &first, const GameMapLoader::GameMapEntityArray::iterator &last, const Editor::SerialisedDataArray &data, const Editor::EditorEntityDeserialiser &deserialiser_impl);
+		inline void initialiseEntities(const GameMapLoader::MapEntityArray::iterator &first, const GameMapLoader::MapEntityArray::iterator &last, const Editor::SerialisedDataArray &data, const Editor::EditorEntityDeserialiser &deserialiser_impl);
 
 	};
 

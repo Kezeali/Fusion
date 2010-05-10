@@ -49,7 +49,13 @@
 
 namespace FusionEngine
 {
-
+	
+	//! Loads maps and games.
+	/*!
+	* AND NOTHING ELSE! THAT'S WHAT THE FULLSTOP MEANS - FULL, STOP! OK!
+	*
+	* \todo Fix writing / reading ObjectIDs, since the size has changed (now 32bit)
+	*/
 	class GameMapLoader : public PacketHandler
 	{
 	public:
@@ -66,7 +72,7 @@ namespace FusionEngine
 
 		typedef std::tr1::unordered_map<std::string, Archetype> ArchetypeMap;
 
-		class GameMapEntity : public RefCounted
+		class MapEntity : public RefCounted
 		{
 		public:
 			EntityPtr entity;
@@ -78,11 +84,11 @@ namespace FusionEngine
 
 			unsigned int dataIndex; // used by the editor when reading data files (may be removed)
 
-			GameMapEntity() : RefCounted(0), hasName(true), stateMask(0xFFFFFFFF) {}
-			virtual ~GameMapEntity() {}
+			MapEntity() : RefCounted(0), hasName(true), stateMask(0xFFFFFFFF) {}
+			virtual ~MapEntity() {}
 		};
-		typedef boost::intrusive_ptr<GameMapEntity> GameMapEntityPtr;
-		typedef std::vector<GameMapEntityPtr> GameMapEntityArray;
+		typedef boost::intrusive_ptr<MapEntity> MapEntityPtr;
+		typedef std::vector<MapEntityPtr> MapEntityArray;
 
 		enum TypeFlags
 		{
@@ -117,8 +123,36 @@ namespace FusionEngine
 		void SaveGame(const std::string &filename, CL_VirtualDirectory &directory);
 
 		//! Compiles a binary map file from map-editor data
-		static void CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const GameMapEntityArray &pseudo_entities, const GameMapEntityArray &entities);
+		static void CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const ArchetypeMap &archetypes, const MapEntityArray &pseudo_entities, const MapEntityArray &entities);
 		
+		//! Saves a single Entity to a data device
+		/*!
+		* \param[in] entity
+		* The entity to save. After such a straightforwd comment, here's where I'd put
+		* a witty or subversive aside; that is, if I didn't I think too highly of you
+		* to demeen the (albeit tenuous) relationship we have as comment-writer and
+		* comment-reader. Err, oh dear, look at what I just did.
+		*
+		* \param[in] device
+		* The target device to write entity data to.
+		*/
+		static void SaveEntity(const EntityPtr &entity, CL_IODevice &device);
+		//! Loads a single Entity from a data device
+		/*!
+		* The complementary function to SaveEntity.
+		*
+		* \param[in] factory
+		* Factory to use to spawn the entity.
+		* \param[in] manager
+		* Manager with respect to which any Entity-pointer custom properties will be deserialised.
+		* \param[in] device
+		* The IO-device to load the entity data from.
+		*
+		* \return
+		* The entity, if successful. nullptr otherwise
+		*/
+		static EntityPtr LoadEntity(EntityFactory *factory, const IEntityRepo *manager, CL_IODevice &device);
+
 		void onEntityInstanced(EntityPtr &entity);
 
 	private:

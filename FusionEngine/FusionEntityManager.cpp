@@ -558,10 +558,10 @@ namespace FusionEngine
 		return element.second->GetName() == name;
 	}
 
-	EntityPtr EntityManager::GetEntity(const std::string &name, bool throwIfNotFound)
+	EntityPtr EntityManager::GetEntity(const std::string &name, bool throwIfNotFound) const
 	{
-		//IDEntityMap::iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
-		NameEntityMap::iterator _where = m_EntitiesByName.find(name);
+		//IDEntityMap::const_iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
+		NameEntityMap::const_iterator _where = m_EntitiesByName.find(name);
 		if (_where == m_EntitiesByName.end())
 			if (throwIfNotFound)
 				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity called: ") + name);
@@ -570,9 +570,9 @@ namespace FusionEngine
 		return _where->second;
 	}
 
-	EntityPtr EntityManager::GetEntity(ObjectID id, bool throwIfNotFound)
+	EntityPtr EntityManager::GetEntity(ObjectID id, bool throwIfNotFound) const
 	{
-		IDEntityMap::iterator _where = m_Entities.find(id);
+		IDEntityMap::const_iterator _where = m_Entities.find(id);
 		if (_where == m_Entities.end())
 			if (throwIfNotFound)
 				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));

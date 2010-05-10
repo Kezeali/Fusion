@@ -49,23 +49,116 @@
 namespace FusionEngine
 {
 
+	//! Undoable action for changes to entity properties
+	template <class T>
+	class ChangePropertyAction : public UndoableAction
+	{
+	public:
+		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to);
+
+		const std::string &GetTitle() const;
+
+	protected:
+		void undoAction();
+		void redoAction();
+
+		EditorMapEntityPtr m_EditorEntity;
+		int m_PropertyIndex, m_PropertyArrayIndex;
+		T m_OldValue;
+		T m_NewValue;
+
+		std::string m_Title;
+	};
+
+	template <class T>
+	ChangePropertyAction<T>::ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to)
+		: m_EditorEntity(changed_entity),
+		m_PropertyIndex(property_index),
+		m_PropertyArrayIndex(array_index),
+		m_OldValue(from),
+		m_NewValue(to)
+	{
+		m_Title = "Change [" + changed_entity->entity->GetType() + "] " + changed_entity->entity->GetName() + "." + changed_entity->entity->GetPropertyName(m_PropertyIndex);
+	}
+
+	template <class T>
+	const std::string &ChangePropertyAction<T>::GetTitle() const
+	{
+		return m_Title;
+	}
+
+	template <class T>
+	void ChangePropertyAction<T>::undoAction()
+	{
+		m_EditorEntity->SetPropertyValue(m_PropertyIndex, m_PropertyArrayIndex, m_OldValue);
+	}
+
+	template <class T>
+	void ChangePropertyAction<T>::redoAction()
+	{
+		m_EditorEntity->SetPropertyValue(m_PropertyIndex, m_PropertyArrayIndex, m_NewValue);
+	}
+
+	// TODO: restore pointer properties by modifying the object, not the pointer itself (because otherwise you have to deal with ref-counts)
+	template <class T>
+	class ChangePropertyAction<T*> : public UndoableAction
+	{
+		public:
+		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to);
+
+		const std::string &GetTitle() const;
+
+	protected:
+		void undoAction();
+		void redoAction();
+
+		EditorMapEntityPtr m_EditorEntity;
+		int m_PropertyIndex, m_PropertyArrayIndex;
+		T m_OldValue;
+		T m_NewValue;
+
+		std::string m_Title;
+	};
+
+	// TODO: undo changes to entity-pointer properties
+	template <>
+	class ChangePropertyAction<EntityPtr> : public UndoableAction
+	{
+		public:
+		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const EntityPtr &from, const EntityPtr &to);
+
+		const std::string &GetTitle() const;
+
+	protected:
+		void undoAction();
+		void redoAction();
+
+		EditorMapEntityPtr m_EditorEntity;
+		int m_PropertyIndex, m_PropertyArrayIndex;
+		EntityPtr m_OldValue;
+		EntityPtr m_NewValue;
+
+		std::string m_Title;
+	};
+
+
 	//! Creates a form element for each property in the Properties data-grid
 	class EditablePropertyFormatter : public Rocket::Controls::DataFormatter
 	{
 	public:
-		EditablePropertyFormatter(const GameMapLoader::GameMapEntityPtr &map_entity);
+		EditablePropertyFormatter(const GameMapLoader::MapEntityPtr &map_entity);
 
 		//! DataFormatter impl.
 		void FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data);
 
 	protected:
-		GameMapLoader::GameMapEntityPtr m_MapEntity;
+		GameMapLoader::MapEntityPtr m_MapEntity;
 
 		template <typename T>
 		void formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, size_t array_index, const EMP::Core::String &str_index, const EMP::Core::String &str_array_index);
 	};
 
-	EditablePropertyFormatter::EditablePropertyFormatter(const GameMapLoader::GameMapEntityPtr &map_entity)
+	EditablePropertyFormatter::EditablePropertyFormatter(const GameMapLoader::MapEntityPtr &map_entity)
 		: m_MapEntity(map_entity)
 	{
 	}
@@ -85,25 +178,20 @@ namespace FusionEngine
 	{
 		EntityPtr &entity = m_MapEntity->entity;
 
-		//if (index_str.Empty())
-		//	toEmp(index_str, boost::lexical_cast<std::string>(index));
-
 		EMP::Core::String name(entity->GetPropertyName(index).c_str());
-
-		T value = *static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
+		
 		//T minValue = std::numeric_limits<T>::min(), maxValue = std::numeric_limits<T>::max();
-
-		EMP::Core::String strValue;
-		//toEmp(strValue, boost::lexical_cast<std::string>(value));
-		EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
-
 		//EMP::Core::String strMin;
 		//toEmp(strMin, boost::lexical_cast<std::string>(minValue));
 		//EMP::Core::String strMax;
 		//toEmp(strMax, boost::lexical_cast<std::string>(maxValue));
 
-		if (array_index_str != "top")
+		if (!entity->PropertyIsArray(index) || array_index_str != "top")
 		{
+			T value = *static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
+			EMP::Core::String strValue;
+			EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
+
 			formatted_data =
 				"<input id=\"" + formatId(index_str, array_index_str) +
 				"\" index=\"" + index_str + "\" array_index=\"" + array_index_str +
@@ -111,7 +199,21 @@ namespace FusionEngine
 				"\" value=\"" + strValue + "\" />";
 		}
 		else
+		{
+			array_index = 0; // Just to make sure
+			EMP::Core::String strValue;
+			// The first array value
+			T *value = static_cast<T*>(entity->GetAddressOfProperty(index, array_index++));
+			EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(*value, strValue);
 			formatted_data = strValue;
+			// The rest of the values, comma seperated
+			for (unsigned int array_size = entity->GetPropertyArraySize(index); array_index < array_size; ++array_index)
+			{
+				value = static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
+				EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(*value, strValue);
+				formatted_data += ", " + strValue;
+			}
+		}
 	}
 
 	template <typename T>
@@ -282,7 +384,7 @@ namespace FusionEngine
 			FSN_EXCEPT(ExCode::NotImplemented, "EntityEditorDialog", "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
 	}
 
-	EntityEditorDialog::EntityEditorDialog(const GameMapLoader::GameMapEntityPtr &mapent, UndoableActionManager *undo)
+	EntityEditorDialog::EntityEditorDialog(const GameMapLoader::MapEntityPtr &mapent, UndoableActionManager *undo)
 		: m_MapEntity(mapent),
 		m_Undo(undo),
 		m_Document(NULL),
@@ -322,7 +424,7 @@ namespace FusionEngine
 			m_GridProperties->AddEventListener("keyup", this);
 		}
 		else
-			SendToConsole("Can't display editable properties in an Entity property window that was just opened: not an Editor-Entity");
+			SendToConsole("Opened properties editor and object that is not an Editor Entity - properties will not be displayed");
 
 		Refresh();
 	}
@@ -380,15 +482,26 @@ namespace FusionEngine
 		return m_Document;
 	}
 
+	template <typename T>
+	void getProperty(T &value, const EditorMapEntityPtr &map_entity, unsigned int index, unsigned int array_index)
+	{
+		value = *static_cast<T*>( map_entity->entity->GetAddressOfProperty(index, array_index) );
+	}
+
 	// Used for primative types (except bool)
 	template <typename T>
-	void setPropertyPrimative(const EditorMapEntityPtr &map_entity, unsigned int index, unsigned int array_index, Rocket::Core::Event &ev)
+	void setPropertyPrimative(UndoableActionManager *undo, const EditorMapEntityPtr &map_entity, unsigned int index, unsigned int array_index, Rocket::Core::Event &ev)
 	{
 		EMP::Core::String value = ev.GetTargetElement()->GetAttribute("value", EMP::Core::String());
 		try
 		{
 			T numericalValue = boost::lexical_cast<T>(value.CString());
+			T oldValue = *static_cast<T*>( map_entity->entity->GetAddressOfProperty(index, array_index) );
+
 			map_entity->SetPropertyValue(index, array_index, numericalValue);
+
+			UndoableActionPtr action(new ChangePropertyAction<T>(map_entity, index, array_index, oldValue, numericalValue));
+			undo->Add(action);
 		}
 		catch (boost::bad_lexical_cast &ex)
 		{
@@ -466,48 +579,58 @@ namespace FusionEngine
 					switch (type)
 					{
 					case Entity::pt_int8:
-						setPropertyPrimative<int8_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<int8_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_int16:
-						setPropertyPrimative<int16_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<int16_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_int32:
-						setPropertyPrimative<int32_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<int32_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_int64:
-						setPropertyPrimative<int64_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<int64_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 
 					case Entity::pt_uint8:
-						setPropertyPrimative<uint8_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<uint8_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_uint16:
-						setPropertyPrimative<uint16_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<uint16_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_uint32:
-						setPropertyPrimative<uint32_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<uint32_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_uint64:
-						setPropertyPrimative<uint64_t>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<uint64_t>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 
 					case Entity::pt_float:
-						setPropertyPrimative<float>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<float>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 					case Entity::pt_double:
-						setPropertyPrimative<double>(editorEntityPtr, index, array_index, ev);
+						setPropertyPrimative<double>(m_Undo, editorEntityPtr, index, array_index, ev);
 						break;
 
 					case Entity::pt_string:
 						{
 							CScriptString propValue(value.CString(), value.Length());
+							CScriptString oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
+
 							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
+
+							UndoableActionPtr action(new ChangePropertyAction<CScriptString>(editorEntityPtr, index, array_index, oldValue, propValue));
+							m_Undo->Add(action);
 						}
 						break;
 					case Entity::pt_string | Entity::pt_pointer_flag:
 						{
 							CScriptString *propValue = new CScriptString(value.CString(), value.Length());
+							CScriptString oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
+
 							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
+
+							UndoableActionPtr action(new ChangePropertyAction<CScriptString*>(editorEntityPtr, index, array_index, oldValue, *propValue));
+							m_Undo->Add(action);
 						}
 						break;
 
@@ -516,8 +639,14 @@ namespace FusionEngine
 							float numericVal;
 							EMP::Core::TypeConverter<EMP::Core::String, float>::Convert(value, numericVal);
 							Vector2 *vec = static_cast<Vector2*>(m_MapEntity->entity->GetAddressOfProperty(index, 0));
+
+							Vector2 oldValue = *vec;
 							(*vec)[array_index] = numericVal;
+
 							editorEntityPtr->RefreshProperty(index);
+
+							UndoableActionPtr action(new ChangePropertyAction<Vector2>(editorEntityPtr, index, array_index, oldValue, *vec));
+							m_Undo->Add(action);
 						}
 						break;
 					case Entity::pt_vector | Entity::pt_pointer_flag:
