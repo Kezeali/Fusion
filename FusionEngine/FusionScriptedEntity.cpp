@@ -344,6 +344,18 @@ namespace FusionEngine
 		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
 	}
 
+	EntityPtr ScriptedEntity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
+	{
+		asIScriptObject *scriptEntity = *static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
+		return EntityPtr(ScriptedEntity::GetAppObject(scriptEntity));
+	}
+
+	void ScriptedEntity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &value)
+	{
+		asIScriptObject **scriptEntity = static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
+		(*scriptEntity) = ScriptedEntity::GetScriptObject(value.get());
+	}
+
 	unsigned int ScriptedEntity::GetPropertyArraySize(unsigned int index) const
 	{
 		int propIndex = getScriptPropIndex(index);

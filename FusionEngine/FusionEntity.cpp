@@ -600,15 +600,15 @@ namespace FusionEngine
 		}
 	}
 
-	EntityPtr Entity::GetPropertyEntity(unsigned int index) const
+	EntityPtr Entity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
 	{
-		Entity **entity = static_cast<Entity**>( GetAddressOfProperty(index) );
+		Entity **entity = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
 		return EntityPtr(*entity);
 	}
 
-	void Entity::SetPropertyEntity(unsigned int index, const EntityPtr &entity)
+	void Entity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity)
 	{
-		Entity **value = static_cast<Entity**>( GetAddressOfProperty(index) );
+		Entity **value = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
 		*value = entity.get();
 	}
 

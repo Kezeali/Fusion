@@ -282,9 +282,9 @@ namespace FusionEngine
 			}
 		}
 		//! Returns the given property as an EntityPtr
-		virtual EntityPtr GetPropertyEntity(unsigned int index) const;
+		virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
 		//! Sets the given entity property
-		virtual void SetPropertyEntity(unsigned int index, const EntityPtr &entity);
+		virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity);
 
 		//! Returns the size of the given property if it is an array, 0 otherwise
 		/*!

@@ -119,8 +119,8 @@ namespace FusionEngine
 		virtual boost::any GetPropertyValue(unsigned int index) const;
 		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 
-		//virtual EntityPtr GetPropertyEntity(unsigned int index) const;
-		//virtual void SetPropertyEntity(unsigned int index, const EntityPtr &value);
+		virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
+		virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &value);
 
 		//! Returns the size of the given property if it is an array
 		virtual unsigned int GetPropertyArraySize(unsigned int index) const;

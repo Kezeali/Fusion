@@ -48,7 +48,6 @@
 
 namespace FusionEngine
 {
-
 	//! Undoable action for changes to entity properties
 	template <class T>
 	class ChangePropertyAction : public UndoableAction
@@ -56,18 +55,18 @@ namespace FusionEngine
 	public:
 		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to);
 
-		const std::string &GetTitle() const;
+		const std::string &GetTitle() const { return m_Title; }
 
 	protected:
 		void undoAction();
 		void redoAction();
 
+		std::string m_Title;
+
 		EditorMapEntityPtr m_EditorEntity;
 		int m_PropertyIndex, m_PropertyArrayIndex;
 		T m_OldValue;
 		T m_NewValue;
-
-		std::string m_Title;
 	};
 
 	template <class T>
@@ -82,12 +81,6 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	const std::string &ChangePropertyAction<T>::GetTitle() const
-	{
-		return m_Title;
-	}
-
-	template <class T>
 	void ChangePropertyAction<T>::undoAction()
 	{
 		m_EditorEntity->SetPropertyValue(m_PropertyIndex, m_PropertyArrayIndex, m_OldValue);
@@ -99,14 +92,14 @@ namespace FusionEngine
 		m_EditorEntity->SetPropertyValue(m_PropertyIndex, m_PropertyArrayIndex, m_NewValue);
 	}
 
-	// TODO: restore pointer properties by modifying the object, not the pointer itself (because otherwise you have to deal with ref-counts)
+	//! Doesn't change where the pointer points to, but what it points to
 	template <class T>
 	class ChangePropertyAction<T*> : public UndoableAction
 	{
 		public:
 		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to);
 
-		const std::string &GetTitle() const;
+		const std::string &GetTitle() const { return m_Title; }
 
 	protected:
 		void undoAction();
@@ -120,18 +113,47 @@ namespace FusionEngine
 		std::string m_Title;
 	};
 
-	// TODO: undo changes to entity-pointer properties
+	template <class T>
+	ChangePropertyAction<T*>::ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const T &from, const T &to)
+	{
+		m_Title = "Change [" + changed_entity->entity->GetType() + "] " + changed_entity->entity->GetName() + "." + changed_entity->entity->GetPropertyName(m_PropertyIndex);
+	}
+
+	template <class T>
+	void ChangePropertyAction<T*>::undoAction()
+	{
+		T* ptrToProperty = *static_cast<T**>( m_EditorEntity->entity->GetAddressOfProperty(m_PropertyIndex, m_PropertyArrayIndex) );
+		(*ptrToProperty) = m_OldValue;
+	}
+
+	template <class T>
+	void ChangePropertyAction<T*>::redoAction()
+	{
+		T* ptrToProperty = *static_cast<T**>( m_EditorEntity->entity->GetAddressOfProperty(m_PropertyIndex, m_PropertyArrayIndex) );
+		(*ptrToProperty) = m_NewValue;
+	}
+
+	//! Undoes changes to properties that store entity pointers
 	template <>
 	class ChangePropertyAction<EntityPtr> : public UndoableAction
 	{
-		public:
-		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const EntityPtr &from, const EntityPtr &to);
+	public:
+		ChangePropertyAction(const EditorMapEntityPtr &changed_entity, int property_index, int array_index, const EntityPtr &from, const EntityPtr &to)
+		{
+			m_Title = "Change [" + changed_entity->entity->GetType() + "] " + changed_entity->entity->GetName() + "." + changed_entity->entity->GetPropertyName(m_PropertyIndex);
+		}
 
-		const std::string &GetTitle() const;
+		const std::string &GetTitle() const { return m_Title; }
 
 	protected:
-		void undoAction();
-		void redoAction();
+		void undoAction()
+		{
+			m_EditorEntity->entity->SetPropertyEntity(m_PropertyIndex, m_PropertyArrayIndex, m_OldValue);
+		}
+		void redoAction()
+		{
+			m_EditorEntity->entity->SetPropertyEntity(m_PropertyIndex, m_PropertyArrayIndex, m_NewValue);
+		}
 
 		EditorMapEntityPtr m_EditorEntity;
 		int m_PropertyIndex, m_PropertyArrayIndex;

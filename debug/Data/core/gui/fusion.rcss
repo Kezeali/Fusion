@@ -254,7 +254,7 @@ input.submit:focus
 {
 	font-weight: bold;
 	/*embed-offset: 0px 2px;*/
-	color: #011B2F;*
+	color: #011B2F;
 }
 
 button:hover,
