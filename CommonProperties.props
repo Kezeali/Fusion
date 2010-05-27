@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet-3.73\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet-3.73\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
