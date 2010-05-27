@@ -1,2 +1,2 @@
-You'll need Doxygen and dot (you can get dot from the graphvis project.)
-Use Doxyfile as the config. for Doxygen.
+You'll need Doxygen and 'dot' (you can get dot from the graphvis project).
+Use Doxyfile as the configuration file for Doxygen.
