@@ -134,6 +134,7 @@ namespace FusionEngine
 		EditorMapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
 
 		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
+		void GetEntitiesOverlapping(MapEntityArray &out, const CL_Rectf &rectangle, bool convert_to_world_coords = false);
 
 		//! Adds the given map-Entity to the Editor
 		void AddEntity(const MapEntityPtr &map_entity);
@@ -226,6 +227,7 @@ namespace FusionEngine
 
 		bool m_ReceivedMouseDown;
 		bool m_ShiftSelect;
+		bool m_DragSelect;
 
 		UndoableActionManager m_UndoManager;
 		//ElementUndoMenu *m_UndoMenu;
@@ -250,6 +252,7 @@ namespace FusionEngine
 		EditorTool m_ActiveTool;
 		bool m_Dragging;
 		Vector2 m_DragFrom;
+		CL_Rectf m_SelectionRectangle;
 
 		CL_Image m_SelectionOverlay;
 		CL_Image m_SelectionOverlay_Rotate;
@@ -278,8 +281,8 @@ namespace FusionEngine
 
 		ObjectIDStack m_IdStack;
 
-		inline void onLeftClick(const RawInput &ev);
-		inline void onRightClick(const RawInput &ev);
+		inline void processLeftClick(const RawInput &ev);
+		inline void processRightClick(const RawInput &ev);
 
 		void generateSelectionOverlay();
 

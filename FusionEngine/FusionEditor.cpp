@@ -29,6 +29,8 @@
 
 #include "FusionEditor.h"
 
+#include <functional>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/signals2.hpp>
@@ -42,6 +44,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionGUI.h"
 #include "FusionInstanceSynchroniser.h"
+#include "FusionMultiUndoableAction.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionPhysicalEntityManager.h"
@@ -462,6 +465,13 @@ namespace FusionEngine
 	void Editor::Draw()
 	{
 		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
+		if (m_DragSelect)
+		{
+			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+			//m_Viewport->SetupGC(gc);
+			CL_Draw::box(gc, m_SelectionRectangle, CL_Colorf::white);
+			//m_Viewport->ResetGC(gc);
+		}
 	}
 
 	void Editor::Start()
@@ -563,11 +573,30 @@ namespace FusionEngine
 		{
 			if (m_Dragging)
 			{
-				Vector2 offset = ev.PointerPosition - m_DragFrom;
-				m_DragFrom = ev.PointerPosition;
-				std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(),
-					[&](const MapEntityPtr &map_entity){ map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset); }
-				);
+				// Translate entities when appropriate them
+				if (!m_ShiftSelect && !m_DragSelect && m_ActiveTool == tool_move && !m_SelectedEntities.empty())
+				{
+					Vector2 offset = ev.PointerPosition - m_DragFrom;
+					m_DragFrom = ev.PointerPosition;
+					std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [&](const MapEntityPtr &map_entity)
+					{
+						map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset);
+					});
+				}
+				// if no Entities are selected, do drag-selection
+				else
+				{
+					m_DragSelect = true;
+
+					m_SelectionRectangle.right = (float)ev.PointerPosition.x;
+					m_SelectionRectangle.bottom = (float)ev.PointerPosition.y;
+
+					GameMapLoader::MapEntityArray entitiesUnderMouse;
+					GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, true);
+					if (!m_ShiftSelect)
+						DeselectAll();
+					std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [this](const MapEntityPtr& map_entity){ SelectEntity(map_entity); });
+				}
 			}
 			return;
 		}
@@ -605,10 +634,12 @@ namespace FusionEngine
 					break;
 				case CL_MOUSE_LEFT:
 					m_ReceivedMouseDown = true;
-					if (m_ActiveTool == tool_move)
+					//if (m_ActiveTool == tool_move)
 					{
 						m_Dragging = true;
 						m_DragFrom = ev.PointerPosition;
+						m_SelectionRectangle.right = m_SelectionRectangle.left = (float)ev.PointerPosition.x;
+						m_SelectionRectangle.bottom = m_SelectionRectangle.top = (float)ev.PointerPosition.y;
 					}
 					break;
 				}
@@ -633,18 +664,19 @@ namespace FusionEngine
 					break;
 
 				case CL_MOUSE_LEFT:
-					// Only run left click command if the mouse was PRESSED outside a GUI
+					// Only run the tool's left click command if the mouse was PRESSED outside a GUI
 					//  window, as well as released outside one (getting here indicates that
 					//  the mouse was at least /released/ outside a GUI window):
 					if (m_ReceivedMouseDown)
 					{
-						onLeftClick(ev);
+						processLeftClick(ev);
 						m_ReceivedMouseDown = false;
 					}
 					m_Dragging = false;
+					m_DragSelect = false;
 					break;
 				case CL_MOUSE_RIGHT:
-					onRightClick(ev);
+					processRightClick(ev);
 					break;
 				case CL_MOUSE_MIDDLE:
 					// Show Radial Menu (the editor icons for each entity under the mouse displayed in a circle around the cursor)
@@ -662,7 +694,7 @@ namespace FusionEngine
 			pointerPos->x += area.left; pointerPos->y += area.top;
 	}
 
-	inline void Editor::onLeftClick(const RawInput &ev)
+	inline void Editor::processLeftClick(const RawInput &ev)
 	{
 		switch (m_ActiveTool)
 		{
@@ -689,7 +721,7 @@ namespace FusionEngine
 		}
 	}
 
-	inline void Editor::onRightClick(const RawInput &ev)
+	inline void Editor::processRightClick(const RawInput &ev)
 	{
 		switch (m_ActiveTool)
 		{
@@ -865,10 +897,11 @@ namespace FusionEngine
 		return gmEntity;
 	}
 
-	class MapEntityQuery : public b2QueryCallback
+	//! The old point query
+	class MapEntityPointQuery : public b2QueryCallback
 	{
 	public:
-		MapEntityQuery(GameMapLoader::MapEntityArray *output_array, const b2Vec2& point)
+		MapEntityPointQuery(GameMapLoader::MapEntityArray *output_array, const b2Vec2& point)
 		{
 			m_Point = point;
 			m_Entities = output_array;
@@ -898,6 +931,37 @@ namespace FusionEngine
 		GameMapLoader::MapEntityArray* m_Entities;
 	};
 
+	//! Implements b2QueryCallback, returning all entities within an AABB that satisfy the passed function
+	class MapEntityQuery : public b2QueryCallback
+	{
+	public:
+		MapEntityQuery(GameMapLoader::MapEntityArray *output_array, std::function<bool (b2Fixture*, bool&)> test_fn)
+			: m_Test(test_fn),
+			m_Entities(output_array)
+		{
+		}
+
+		bool ReportFixture(b2Fixture* fixture)
+		{
+			b2Body* body = fixture->GetBody();
+			bool continue_query = true;
+			if (!m_Test || m_Test(fixture, continue_query))
+			{
+				Fixture *wrapper = static_cast<Fixture*>( fixture->GetUserData() );
+				MapEntityFixtureUserData* userData = dynamic_cast<MapEntityFixtureUserData*>(wrapper->GetUserData().get());
+				if (userData != NULL)
+				{
+					m_Entities->push_back(userData->map_entity);
+				}
+			}
+			// Continue if the test func. said to
+			return continue_query;
+		}
+
+		std::function<bool (b2Fixture*, bool&)> m_Test;
+		GameMapLoader::MapEntityArray* m_Entities;
+	};
+
 	void Editor::GetEntitiesAt(GameMapLoader::MapEntityArray &out, const Vector2 &position)
 	{
 		b2Vec2 p(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit);
@@ -909,8 +973,29 @@ namespace FusionEngine
 		aabb.lowerBound = p - d;
 		aabb.upperBound = p + d;
 
+		// Query the world for overlapping shapes, the lambda makes sure they actually hit the point
+		MapEntityQuery callback(&out, [p](b2Fixture* fixture, bool&)->bool { return fixture->TestPoint(p); });
+
+		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
+	}
+
+	void Editor::GetEntitiesOverlapping(GameMapLoader::MapEntityArray &out, const CL_Rectf &rectangle, bool convert_coords)
+	{
+		// Figure out where the rectangle is in the world
+		Vector2 top_left(std::min(rectangle.left, rectangle.right), std::min(rectangle.top, rectangle.bottom));
+		Vector2 bottom_right(std::max(rectangle.left, rectangle.right), std::max(rectangle.top, rectangle.bottom));
+		if (convert_coords)
+		{
+			translatePointerToWorld(&top_left, m_Renderer, m_Viewport);
+			translatePointerToWorld(&bottom_right, m_Renderer, m_Viewport);
+		}
+		// Make an AABB for the given rect
+		b2AABB aabb;
+		aabb.lowerBound.Set(top_left.x * s_SimUnitsPerGameUnit, top_left.y * s_SimUnitsPerGameUnit);
+		aabb.upperBound.Set(bottom_right.x * s_SimUnitsPerGameUnit, bottom_right.y * s_SimUnitsPerGameUnit);
+
 		// Query the world for overlapping shapes
-		MapEntityQuery callback(&out, p);
+		MapEntityQuery callback(&out, [](b2Fixture*, bool&)->bool { return true; });
 
 		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
 	}
