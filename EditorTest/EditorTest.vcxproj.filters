@@ -263,10 +263,10 @@
     <ClCompile Include="..\FusionEngine\FusionRenderable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionMultiUndoableAction.cpp">
+    <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp">
+    <ClCompile Include="..\FusionEngine\FusionEditorMultiAction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -592,7 +592,7 @@
     <ClInclude Include="..\FusionEngine\FusionEditorMoveAction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionMultiUndoableAction.h">
+    <ClInclude Include="..\FusionEngine\FusionEditorMultiAction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
