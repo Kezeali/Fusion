@@ -107,6 +107,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionMultiUndoableAction.cpp" />
@@ -208,6 +209,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
+    <ClInclude Include="..\FusionEngine\FusionEditorMoveAction.h" />
     <ClInclude Include="..\FusionEngine\FusionFirstCause.h" />
     <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionMaths.h" />

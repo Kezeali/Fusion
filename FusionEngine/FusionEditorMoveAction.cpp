@@ -27,40 +27,45 @@
 
 #include "FusionStableHeaders.h"
 
-#include "FusionEditorMultiAction.h"
+#include "FusionEditorMoveAction.h"
+
+#include "FusionEditorMapEntity.h"
+#include "FusionEntity.h"
 
 namespace FusionEngine
 {
 
-	MultiAction::MultiAction()
+	MoveAction::MoveAction(EditorMapEntityPtr map_entity, const Vector2& offset)
+		: m_MapEntity(map_entity),
+		m_Offset(offset)
 	{
+		setTitle();
 	}
 
-	void MultiAction::AddAction(const UndoableActionPtr& action)
+	MoveAction::MoveAction(EditorMapEntityPtr map_entity, const Vector2& from, const Vector2& to)
+		: m_MapEntity(map_entity),
+		m_Offset(to - from)
 	{
-		m_Actions.push_back(action);
-
-		// Add this action to the title count
-		const std::string& title = action->GetTitle();
-		if (!title.empty())
-			++m_ActionTitles[title];
-		// Update the title (a summary of how many actions of each type are in this container)
-		std::stringstream titleStream;
-		for (auto it = m_ActionTitles.begin(), end = m_ActionTitles.end(); it != end; ++it)
-		{
-			titleStream << it->first << " (" << it->second << ") ";
-		}
-		m_Title = titleStream.str();
+		setTitle();
 	}
 
-	void MultiAction::undoAction()
+	void MoveAction::setTitle()
 	{
-		std::for_each(m_Actions.rbegin(), m_Actions.rend(), [](UndoableActionPtr& action) { action->Undo(); });
+		// Make a human-readable representation of the Vector2
+		std::stringstream vector_string;
+		vector_string << "(" << m_Offset.x << ", " << m_Offset.y << ")";
+
+		m_Title = "Move " + std::string(m_MapEntity->hasName ? m_MapEntity->entity->GetName() : "an Entity") + " by " + vector_string.str();
 	}
 
-	void MultiAction::redoAction()
+	void MoveAction::undoAction()
 	{
-		std::for_each(m_Actions.begin(), m_Actions.end(), [](UndoableActionPtr& action) { action->Redo(); });
+		m_MapEntity->entity->SetPosition( m_MapEntity->entity->GetPosition() - m_Offset );
+	}
+
+	void MoveAction::redoAction()
+	{
+		m_MapEntity->entity->SetPosition( m_MapEntity->entity->GetPosition() + m_Offset );
 	}
 
 }

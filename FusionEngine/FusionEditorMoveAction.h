@@ -25,42 +25,45 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#ifndef Header_FusionEditorMoveAction
+#define Header_FusionEditorMoveAction
 
-#include "FusionEditorMultiAction.h"
+#if _MSC_VER > 1000
+#pragma once
+#endif
+
+#include "FusionPrerequisites.h"
+#include "FusionEditorUndoAction.h"
 
 namespace FusionEngine
 {
 
-	MultiAction::MultiAction()
+	//! An action that is actually a collection of actions
+	/*!
+	* \remarks
+	* As actions are added (using AddAction()) the title is regerated to
+	* indicate what these actions are.
+	*/
+	class MoveAction : public UndoableAction
 	{
-	}
+	public:
+		MoveAction(EditorMapEntityPtr map_entity, const Vector2& from, const Vector2& to);
+		MoveAction(EditorMapEntityPtr map_entity, const Vector2& offset);
 
-	void MultiAction::AddAction(const UndoableActionPtr& action)
-	{
-		m_Actions.push_back(action);
+		const std::string &GetTitle() const { return m_Title; }
 
-		// Add this action to the title count
-		const std::string& title = action->GetTitle();
-		if (!title.empty())
-			++m_ActionTitles[title];
-		// Update the title (a summary of how many actions of each type are in this container)
-		std::stringstream titleStream;
-		for (auto it = m_ActionTitles.begin(), end = m_ActionTitles.end(); it != end; ++it)
-		{
-			titleStream << it->first << " (" << it->second << ") ";
-		}
-		m_Title = titleStream.str();
-	}
+	protected:
+		void undoAction();
+		void redoAction();
 
-	void MultiAction::undoAction()
-	{
-		std::for_each(m_Actions.rbegin(), m_Actions.rend(), [](UndoableActionPtr& action) { action->Undo(); });
-	}
+		void setTitle();
 
-	void MultiAction::redoAction()
-	{
-		std::for_each(m_Actions.begin(), m_Actions.end(), [](UndoableActionPtr& action) { action->Redo(); });
-	}
+		std::string m_Title;
+
+		EditorMapEntityPtr m_MapEntity;
+		Vector2 m_Offset;
+	};
 
 }
+
+#endif

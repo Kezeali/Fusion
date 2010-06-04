@@ -39,12 +39,13 @@
 
 #include "FusionEditorEntityDialog.h"
 #include "FusionEditorMapEntity.h"
+#include "FusionEditorMoveAction.h"
+#include "FusionEditorMultiAction.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
 #include "FusionGUI.h"
 #include "FusionInstanceSynchroniser.h"
-#include "FusionMultiUndoableAction.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionPhysicalEntityManager.h"
@@ -669,7 +670,17 @@ namespace FusionEngine
 					//  the mouse was at least /released/ outside a GUI window):
 					if (m_ReceivedMouseDown)
 					{
-						processLeftClick(ev);
+						if (m_Dragging)
+						{
+							if (!m_DragSelect)
+							{
+								MultiAction* multi_drag = new MultiAction();
+								multi_drag->AddAction( new EntityC
+									m_UndoManager.Add(multi_drag);
+							}
+						}
+						else
+							processLeftClick(ev);
 						m_ReceivedMouseDown = false;
 					}
 					m_Dragging = false;
