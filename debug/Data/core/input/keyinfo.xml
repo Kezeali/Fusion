@@ -110,8 +110,8 @@
     <key shortname="mousemiddle" device="mouse" id="2" name="Middle Button" />
     <key shortname="mwheelup" device="mouse" id="3" name="Scroll-Wheel Up" />
     <key shortname="mwheeldown" device="mouse" id="4" name="Scroll-Wheel Down" />
-	<key shortname="mousepointer_x" device="mouse-position" id="0" name="Pointer X Position" />
-	<key shortname="mousepointer_y" device="mouse-position" id="1" name="Pointer Y Position" />
+    <key shortname="mousepointer_x" device="mouse-position" id="0" name="Pointer X Position" />
+    <key shortname="mousepointer_y" device="mouse-position" id="1" name="Pointer Y Position" />
     <key shortname="xbox_a" device="xinput" id="22528" name="A Button" />
     <key shortname="xbox_b" device="xinput" id="22529" name="B Button" />
     <key shortname="xbox_x" device="xinput" id="22530" name="X Button" />
