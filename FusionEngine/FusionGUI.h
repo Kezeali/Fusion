@@ -156,7 +156,7 @@ namespace FusionEngine
 
 		bool m_DebuggerInitialized;
 
-		bsig2::connection m_ModuleConnection;
+		boost::signals2::connection m_ModuleConnection;
 
 	public:
 		void initScripting(ScriptManager* eng);

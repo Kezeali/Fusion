@@ -412,16 +412,16 @@ namespace FusionEngine
 		float GetMouseSensitivity() const;
 
 
-		bsig2::signal<void (const InputEvent&)> SignalInputChanged;
+		boost::signals2::signal<void (const InputEvent&)> SignalInputChanged;
 		// Input continues to be pressed as a new step begins
-		bsig2::signal<void (const InputEvent&)> SignalInputSustained;
+		boost::signals2::signal<void (const InputEvent&)> SignalInputSustained;
 
 		//! Fires on all input events, passing the raw input data
 		/*!
 		 * Useful for setting up inputs - the other input signals only fire
 		 * when bound controls (keys, buttons, axis') are activated (pressed, moved).
 		 */
-		bsig2::signal<void (const RawInput&)> SignalRawInput;
+		boost::signals2::signal<void (const RawInput&)> SignalRawInput;
 
 	private:
 #ifdef FSN_USE_XINPUT

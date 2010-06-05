@@ -82,7 +82,7 @@ namespace FusionEngine
 		ResourceManager* m_ResourceManager;
 		std::string m_ResourceType;
 		std::string m_ResourcePath;
-		bsig2::connection m_LoadConnection;
+		boost::signals2::connection m_LoadConnection;
 
 		//ResourceDataPtr m_Resource;
 

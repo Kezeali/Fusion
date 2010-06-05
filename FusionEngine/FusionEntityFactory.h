@@ -189,7 +189,7 @@ namespace FusionEngine
 		ScriptManager *m_ScriptingManager;
 		ModulePtr m_Module;
 
-		bsig2::connection m_ModuleConnection;
+		boost::signals2::connection m_ModuleConnection;
 	};
 
 }

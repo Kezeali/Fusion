@@ -93,6 +93,7 @@ public:
 			SetupPhysFS::configure("lastflare", "Fusion", "7z");
 			if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
 				SendToConsole("Default resource path could not be located");
+			SetupPhysFS::mount_archives(s_PackagesPath, "", "zip", false);
 			// Clear cache
 #ifdef _DEBUG
 			SetupPhysFS::clear_temp();
@@ -193,7 +194,7 @@ public:
 			// Add the core extension file - this file is used to define basic script functions and classes for general use
 			scriptingManager->AddFile("core/extend.as", "main");
 
-			// Create some non-specific intelegent force that certainly has no particular theological bias:
+			// Create some non-specific intelligent force that certainly has no particular theological bias:
 			boost::scoped_ptr<FirstCause> god( new FirstCause(co, renderer.get(), inputMgr.get()) );
 			god->Initialise(module);
 

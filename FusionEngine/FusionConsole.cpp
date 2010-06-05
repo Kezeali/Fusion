@@ -501,9 +501,9 @@ namespace FusionEngine
 		//ScriptUtils::Calling::Caller m_CallOnNewData;
 		//ScriptUtils::Calling::Caller m_CallOnClear;
 
-		bsig2::connection m_ConsoleOnNewLineConnection;
-		bsig2::connection m_ConsoleOnNewDataConnection;
-		bsig2::connection m_ConsoleOnClearConnection;
+		boost::signals2::connection m_ConsoleOnNewLineConnection;
+		boost::signals2::connection m_ConsoleOnNewDataConnection;
+		boost::signals2::connection m_ConsoleOnClearConnection;
 
 		asIScriptObject *m_Listener;
 	};

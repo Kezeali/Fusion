@@ -855,7 +855,7 @@ namespace FusionEngine
 
 	EntityFactory::EntityFactory()
 	{
-		m_Log = Logger::getSingleton().GetLog("entity_factory");
+		m_Log = Logger::getSingleton().OpenLog("entity_factory");
 	}
 
 	EntityFactory::~EntityFactory()

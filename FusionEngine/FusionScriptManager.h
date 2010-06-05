@@ -123,7 +123,7 @@ namespace FusionEngine
 	class ScriptManager : public Singleton<ScriptManager>
 	{
 	public:
-		typedef bsig2::signal<void (DebugEvent&)> DebugSignalType;
+		typedef boost::signals2::signal<void (DebugEvent&)> DebugSignalType;
 		typedef DebugSignalType::slot_type DebugSlotType;
 
 	public:
@@ -173,7 +173,7 @@ namespace FusionEngine
 		/*!
 		* Wrapper for Module#ConnectToBuild()
 		*/
-		bsig2::connection SubscribeToModule(const char *module, Module::BuildModuleSlotType slot);
+		boost::signals2::connection SubscribeToModule(const char *module, Module::BuildModuleSlotType slot);
 
 		//! Executes the given code string.
 		/*!
@@ -230,7 +230,7 @@ namespace FusionEngine
 		//! Returns true if debug output is enabled
 		bool DebugOutputIsEnabled();
 
-		bsig2::connection SubscribeToDebugEvents(DebugSlotType slot);
+		boost::signals2::connection SubscribeToDebugEvents(DebugSlotType slot);
 
 		enum DebugModeFlags {
 			Disabled    = 0x0,

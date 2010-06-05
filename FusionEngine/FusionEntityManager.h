@@ -79,7 +79,7 @@ namespace FusionEngine
 
 		PlayerInputsMap m_PlayerInputs;
 
-		bsig2::connection m_InputChangedConnection;
+		boost::signals2::connection m_InputChangedConnection;
 
 	};
 
@@ -369,7 +369,7 @@ namespace FusionEngine
 		BlockingChangeMap m_ChangedDrawStateTags;
 		BlockedTagSet m_DrawBlockedTags;
 
-		bsig2::connection m_ModuleConnection;
+		boost::signals2::connection m_ModuleConnection;
 
 	};
 

@@ -63,7 +63,7 @@ namespace FusionEngine
 	class Module
 	{
 	public:
-		typedef bsig2::signal<void (BuildModuleEvent&)> BuildModuleSignalType;
+		typedef boost::signals2::signal<void (BuildModuleEvent&)> BuildModuleSignalType;
 		typedef BuildModuleSignalType::slot_type BuildModuleSlotType;
 
 		//typedef std::tr1::shared_ptr<BuildModuleSignalType> BuildModuleSignalTypePtr;
@@ -80,7 +80,7 @@ namespace FusionEngine
 
 		ScriptUtils::Calling::Caller GetCaller(const std::string &decl);
 
-		bsig2::connection ConnectToBuild(BuildModuleSlotType slot);
+		boost::signals2::connection ConnectToBuild(BuildModuleSlotType slot);
 
 		int AddCode(const std::string &section_name, const std::string &script);
 		int Build();

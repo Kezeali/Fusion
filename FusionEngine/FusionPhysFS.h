@@ -136,7 +136,7 @@ static int platform_stricmp(const char *x, const char *y)
 										const std::string &appName,
 										const std::string &archiveExt,
 										bool includeCdRoms = false,
-										bool archivesFirst = true);
+										bool archivesFirst = false);
 
 		//! Deletes all files / folders in the tempoary ('temp') folder
 		static void clear_temp();
@@ -169,12 +169,12 @@ static int platform_stricmp(const char *x, const char *y)
 		 */
 		static bool add_subdirectory(const std::string &path,
 																	const std::string &archiveExt = "",
-																	bool archivesFirst = true);
+																	bool archivesFirst = false);
 
 		//! Mounts the given path
 		static bool mount(const std::string &path, const std::string &mount_point,
 			const std::string &archive_ext = "",
-			bool archives_first = true);
+			bool archives_first = false);
 
 		//! Mounts all archives found below the given path
 		static bool mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool first = false);

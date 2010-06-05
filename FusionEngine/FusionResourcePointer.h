@@ -164,17 +164,17 @@ namespace FusionEngine
 			return !(m_Resource);
 		}
 
-		bsig2::signal<void ()> &SigDelete() const
+		boost::signals2::signal<void ()> &SigDelete() const
 		{
 			return m_Resource->SigDelete;
 		}
 
-		bsig2::signal<void ()> &SigLoad() const
+		boost::signals2::signal<void ()> &SigLoad() const
 		{
 			return m_Resource->SigLoad;
 		}
 
-		bsig2::signal<void ()> &SigUnload() const
+		boost::signals2::signal<void ()> &SigUnload() const
 		{
 			return m_Resource->SigUnload;
 		}

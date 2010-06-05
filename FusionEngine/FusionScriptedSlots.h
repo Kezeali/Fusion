@@ -54,7 +54,7 @@ namespace FusionEngine
 	class ScriptedSlotWrapper : public GarbageCollected<ScriptedSlotWrapper>, noncopyable
 	{
 	public:
-		bsig2::connection m_Connection;
+		boost::signals2::connection m_Connection;
 		ScriptUtils::Calling::Caller m_CallSlot;
 
 		// this will be set to an object if the callback is an object method, otherwise this will be nullptr

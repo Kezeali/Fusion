@@ -113,7 +113,7 @@ namespace FusionEngine
 		ResourcePointer<CL_SoundBuffer> m_SoundBuffer;
 		bool m_Stream;
 
-		//bsig2::connection m_ResourceUnloadConnection;
+		//boost::signals2::connection m_ResourceUnloadConnection;
 	};
 
 }

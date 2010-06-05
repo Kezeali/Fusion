@@ -377,7 +377,7 @@ namespace FusionEngine
 		else return mod->Build() >= 0;
 	}
 
-	bsig2::connection ScriptManager::SubscribeToModule(const char *module, Module::BuildModuleSlotType slot)
+	boost::signals2::connection ScriptManager::SubscribeToModule(const char *module, Module::BuildModuleSlotType slot)
 	{
 		return GetModule(module)->ConnectToBuild(slot);
 	}
@@ -488,7 +488,7 @@ namespace FusionEngine
 		return m_DebugOutput;
 	}
 
-	bsig2::connection ScriptManager::SubscribeToDebugEvents(ScriptManager::DebugSlotType slot)
+	boost::signals2::connection ScriptManager::SubscribeToDebugEvents(ScriptManager::DebugSlotType slot)
 	{
 		return SigDebug.connect( slot );
 	}
@@ -813,7 +813,7 @@ namespace FusionEngine
 			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
-			bsig2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+			boost::signals2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
 			slot->HoldConnection(c);
 
 			return slot;
@@ -826,7 +826,7 @@ namespace FusionEngine
 	{
 		ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(slot_object, "void ProcessEvent(DebugEvent@)");
 
-		bsig2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+		boost::signals2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
 		slot->HoldConnection(c);
 
 		return slot;

@@ -179,7 +179,7 @@ namespace FusionEngine
 		m_ToUnloadEvent.set();
 	}
 
-	bsig2::connection ResourceManager::GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
+	boost::signals2::connection ResourceManager::GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority)
 	{
 		ResourceDataPtr resource;
 
@@ -219,7 +219,7 @@ namespace FusionEngine
 			m_ToUnloadMutex.unlock();
 		}
 
-		bsig2::connection onLoadConnection;
+		boost::signals2::connection onLoadConnection;
 
 		if (resource->IsLoaded())
 		{

@@ -75,7 +75,7 @@ namespace FusionEngine
 		m_Connection.disconnect();
 	}
 
-	void ScriptedSlotWrapper::HoldConnection(bsig2::connection &connection)
+	void ScriptedSlotWrapper::HoldConnection(boost::signals2::connection &connection)
 	{
 		m_Connection = connection;
 	}

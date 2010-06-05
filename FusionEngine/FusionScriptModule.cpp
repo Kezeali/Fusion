@@ -69,7 +69,7 @@ namespace FusionEngine
 		return caller;
 	}
 
-	bsig2::connection Module::ConnectToBuild(BuildModuleSlotType slot)
+	boost::signals2::connection Module::ConnectToBuild(BuildModuleSlotType slot)
 	{
 		return SigBuildModule.connect(slot);
 	}

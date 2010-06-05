@@ -108,7 +108,7 @@ namespace FusionEngine
 		void UnloadUnreferencedResources();
 
 		//! Loads / gets a resource
-		bsig2::connection GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
+		boost::signals2::connection GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 
 		//! Unloads the given resource
 		/*!
