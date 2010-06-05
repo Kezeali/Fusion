@@ -330,6 +330,7 @@ void OnConsoleOpened(Event &ev)
 
 void OnConsoleClosed()
 {
+	gui.hideDebugger();
 }
 
 void OnConsoleShow(Event &ev)
@@ -339,4 +340,9 @@ void OnConsoleShow(Event &ev)
 
 	gui.enableDebugger();
 	gui.showDebugger();
+}
+
+void OnConsoleHide()
+{
+	gui.hideDebugger();
 }
