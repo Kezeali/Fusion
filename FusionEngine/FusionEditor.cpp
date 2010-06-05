@@ -572,20 +572,11 @@ namespace FusionEngine
 
 		if (ev.InputType == RawInput::Pointer)
 		{
-			if (m_Dragging)
+			if (m_ReceivedMouseDown)
 			{
-				// Translate entities when appropriate them
-				if (!m_ShiftSelect && !m_DragSelect && m_ActiveTool == tool_move && !m_SelectedEntities.empty())
-				{
-					Vector2 offset = ev.PointerPosition - m_DragFrom;
-					m_DragFrom = ev.PointerPosition;
-					std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [&](const MapEntityPtr &map_entity)
-					{
-						map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset);
-					});
-				}
-				// if no Entities are selected, do drag-selection
-				else
+				m_Dragging = true;
+				// Decide whether the user intends to create a new selection box, or drag selected entities
+				if (m_ActiveTool == tool_move && m_ShiftSelect || m_DragSelect || m_SelectedEntities.empty())
 				{
 					m_DragSelect = true;
 
@@ -598,6 +589,21 @@ namespace FusionEngine
 						DeselectAll();
 					std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [this](const MapEntityPtr& map_entity){ SelectEntity(map_entity); });
 				}
+				else
+				{
+					Vector2 offset = ev.PointerPosition - m_DragFrom;
+					for (auto it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
+					{
+						const MapEntityPtr &map_entity = *it;
+						// Set the offset of the overlays
+						RenderableArray& renderables = map_entity->entity->GetRenderables();
+						std::for_each(renderables.begin(), renderables.end(), [&offset](const RenderablePtr& renderable)
+						{
+							if (renderable->HasTag("select_overlay") || renderable->HasTag("editor_icon"))
+								renderable->SetOffset(offset);
+						});
+					}
+				}
 			}
 			return;
 		}
@@ -606,8 +612,25 @@ namespace FusionEngine
 			m_ShiftSelect = ev.ButtonPressed;
 			return;
 		}
+		// Button released. Note that this is the global handler (for input received when
+		//  the cursor is in-world AND over the GUI), in-world-only input is handled below.
+		else if (ev.ButtonPressed == false)
+		{
+			switch (ev.Code)
+			{
+			case CL_KEY_Z:
+				if (ev.Control)
+					m_UndoManager.Undo();
+				break;
+			case CL_KEY_Y:
+				if (ev.Control)
+					m_UndoManager.Redo();
+				break;
+			}
+		}
 
-		// Ignore input if the cursor is over a GUI element
+		// This will exit the fn if the cursor is over a GUI element, so the input handling below
+		//  is for in-world interactions only
 		Rocket::Core::Context *context = m_MainDocument->GetContext();
 		for (int i = 0, num = context->GetNumDocuments(); i < num; ++i)
 		{
@@ -637,7 +660,6 @@ namespace FusionEngine
 					m_ReceivedMouseDown = true;
 					//if (m_ActiveTool == tool_move)
 					{
-						m_Dragging = true;
 						m_DragFrom = ev.PointerPosition;
 						m_SelectionRectangle.right = m_SelectionRectangle.left = (float)ev.PointerPosition.x;
 						m_SelectionRectangle.bottom = m_SelectionRectangle.top = (float)ev.PointerPosition.y;
@@ -674,9 +696,48 @@ namespace FusionEngine
 						{
 							if (!m_DragSelect)
 							{
-								MultiAction* multi_drag = new MultiAction();
-								multi_drag->AddAction( new EntityC
-									m_UndoManager.Add(multi_drag);
+								// How much the pointer has moved since the mouse-button was pressed
+								Vector2 offset = ev.PointerPosition - m_DragFrom;
+
+								// This function will perform the actual drag action
+								auto fn_move = [&offset](const MapEntityPtr& map_entity)
+								{
+									map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset);
+
+									// Set the offset of the overlays
+									RenderableArray& renderables = map_entity->entity->GetRenderables();
+									std::for_each(renderables.begin(), renderables.end(), [](const RenderablePtr& renderable)
+									{
+										if (renderable->HasTag("select_overlay") || renderable->HasTag("editor_icon"))
+											renderable->SetOffset(Vector2::zero());
+									});
+								};
+
+								// Create an undo-action for this drag action
+								if (m_SelectedEntities.size() > 1)
+								{
+									MultiAction* multi_drag = new MultiAction();
+									for (auto it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
+									{
+										const EditorMapEntityPtr& editor_entity = boost::dynamic_pointer_cast<EditorMapEntity>(*it);
+										if (editor_entity)
+										{
+											UndoableActionPtr move_action( new MoveAction(editor_entity, offset) );
+											multi_drag->AddAction(move_action);
+										}
+										// Actually move the entity
+										fn_move(*it);
+									}
+									m_UndoManager.Add( UndoableActionPtr(multi_drag) );
+								}
+								else if (m_SelectedEntities.size() == 1)
+								{
+									const EditorMapEntityPtr& editor_entity = boost::dynamic_pointer_cast<EditorMapEntity>(*m_SelectedEntities.begin());
+									if (editor_entity)
+										m_UndoManager.Add( UndoableActionPtr(new MoveAction(editor_entity, offset)) );
+									// Actually move the entity
+									fn_move(*m_SelectedEntities.begin());
+								}
 							}
 						}
 						else

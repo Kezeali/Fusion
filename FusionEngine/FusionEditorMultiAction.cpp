@@ -42,8 +42,9 @@ namespace FusionEngine
 
 		// Add this action to the title count
 		const std::string& title = action->GetTitle();
-		if (!title.empty())
-			++m_ActionTitles[title];
+		std::string verb = title.substr(0, title.find(' ')); // The verb describing the action is usually the first word of the title
+		if (!verb.empty())
+			++m_ActionTitles[verb];
 		// Update the title (a summary of how many actions of each type are in this container)
 		std::stringstream titleStream;
 		for (auto it = m_ActionTitles.begin(), end = m_ActionTitles.end(); it != end; ++it)
