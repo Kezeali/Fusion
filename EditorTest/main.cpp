@@ -214,6 +214,9 @@ public:
 			float seconds = 0.f;
 			int fullCleanInterval = 0;
 
+			CL_Font statsFont(gc, "Arial", 18);
+			asUINT currentSize, totalDestroyed, totalDetected;
+
 			while (systemMgr->KeepGoing())
 			{
 				split = CL_System::get_time() - lastframe;
@@ -236,10 +239,21 @@ public:
 
 				scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
+//#ifdef _DEBUG
+				{
+					scriptingManager->GetEnginePtr()->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
+					std::stringstream stats;
+					stats << "Script object count: " << currentSize << "\n";
+					stats << "    GC has destroyed " << totalDestroyed << " objects total\n";
+					stats << "    GC last detected " << totalDetected << " garbage objects";
+					statsFont.draw_text(gc, CL_Pointf(20, 25), stats.str());
+				}
+//#endif
+
 				dispWindow.flip();
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				dispWindow.get_gc().clear();
-#endif
+//#endif
 			}
 
 			scriptingManager->GetEnginePtr()->GarbageCollect();

@@ -78,6 +78,7 @@ namespace FusionEngine
 		m_SavedState.seek(0);
 		this->entity = GameMapLoader::LoadEntity(factory, manager, m_SavedState);
 		CreateEditorFixture();
+		m_SavedState = CL_IODevice_Memory();
 	}
 
 	void EditorMapEntity::CreateEditorFixture()

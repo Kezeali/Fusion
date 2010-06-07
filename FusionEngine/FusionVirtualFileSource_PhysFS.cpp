@@ -78,7 +78,10 @@ CL_IODevice VirtualFileSource_PhysFS::open_file(const CL_String &filename,
 		file = PHYSFS_openRead(filename.c_str());
 
 	if (file == NULL)
+	{
+		const char* lastError = PHYSFS_getLastError();
 		throw CL_Exception(cl_format("VirtualFileSource_PhysFS: Couldn't open the file '%1' with the requested access", filename));
+	}
 
 	return CL_IODevice(new PhysFSIODeviceProvider(file));
 }

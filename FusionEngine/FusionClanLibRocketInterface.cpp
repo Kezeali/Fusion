@@ -226,9 +226,11 @@ namespace FusionEngine
 
 		m_gc.push_modelview();
 
-		m_gc.mult_translate(translation.x, translation.y);
+		//m_gc.set_map_mode(cl_map_2d_upper_left);
 
-		m_gc.set_map_mode(cl_map_2d_upper_left);
+		m_gc.mult_translate(translation.x, translation.y);
+		//m_gc.set_translate(translation.x, translation.y);
+
 		if (data->texture)
 			m_gc.set_texture(0, data->texture->texture);
 
@@ -301,45 +303,116 @@ namespace FusionEngine
 	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source)
 	{
 		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), physfsDir );
-		if (image.is_null())
+		try
+		{
+			CL_PixelBuffer image = CL_ImageProviderFactory::load( CL_String(source.CString()), physfsDir );
+			if (image.is_null())
+				return false;
+
+			CL_Texture texture(m_gc, cl_texture_2d);
+			texture.set_image(image);
+			texture.set_min_filter(cl_filter_linear);
+			texture.set_mag_filter(cl_filter_linear);
+
+			if (texture.is_null())
+				return false;
+
+			texture_dimensions.x = texture.get_width();
+			texture_dimensions.y = texture.get_height();
+
+			texture_handle = new RocketCL_Texture(texture);
+			return true;
+		}
+		catch (CL_Exception& ex)
+		{
+			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ("CLRocketRenderer couldn't load a texture from \"" + source + "\"").CString());
+			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ex.what());
 			return false;
+		}
+	}
 
-		CL_Texture texture(m_gc, cl_texture_2d);
-		texture.set_image(image);
-		texture.set_min_filter(cl_filter_linear);
-		texture.set_mag_filter(cl_filter_linear);
+	void swizzle(unsigned char* out, const unsigned char* in, unsigned int width, unsigned int height) 
+	{ 
+		unsigned int i,j; 
+		unsigned int rowblocks = (width / 16); 
 
+		for (j = 0; j < height; ++j) 
+		{ 
+			for (i = 0; i < width; ++i) 
+			{ 
+				unsigned int blockx = i / 16; 
+				unsigned int blocky = j / 8; 
 
-		if (texture.is_null())
-			return false;
+				unsigned int x = (i - blockx*16); 
+				unsigned int y = (j - blocky*8); 
+				unsigned int block_index = blockx + ((blocky) * rowblocks); 
+				unsigned int block_address = block_index * 16 * 8; 
 
-		texture_dimensions.x = texture.get_width();
-		texture_dimensions.y = texture.get_height();
+				out[block_address + x + y * 16] = in[i+j*width]; 
+			} 
+		} 
+	}
 
-		texture_handle = new RocketCL_Texture(texture);
-		return true;
+	void *aligned_alloc(int size)
+	{
+		void *ptr;
+#ifdef _MSC_VER
+		ptr = _aligned_malloc(size, 16);
+		if (!ptr)
+			throw CL_Exception(cl_text("Out of memory"));
+
+#else
+		if (posix_memalign( (void **) &ptr, 16, size))
+		{
+			throw CL_Exception(cl_text("Panic! posix_memalign failed"));
+		}
+#endif
+		return ptr;
+	}
+
+	void aligned_free(void *ptr)
+	{
+		if (ptr)
+		{
+#ifdef _MSC_VER
+			_aligned_free(ptr);
+#else
+			free(ptr);
+#endif
+		}
 	}
 
 	// Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
 	bool RocketRenderer::GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions)
 	{
-		//static int texture_id = 1;
+		try
+		{
+			int pitch = source_dimensions.x * 4;
+			//void* rgbaData = aligned_alloc((size_t)(source_dimensions.x * source_dimensions.y * 4));
+			//swizzle((unsigned char*)rgbaData, source, source_dimensions.x * sizeof(char), source_dimensions.y);
+			CL_PixelBuffer image(source_dimensions.x, source_dimensions.y, cl_abgr8, (const void*)source);
+			CL_PixelBuffer rgbaImage = image.to_format(cl_rgba8);
 
-		int pitch = source_dimensions.x * sizeof(unsigned int);
-		CL_PixelBuffer image(source_dimensions.x, source_dimensions.y, pitch, CL_PixelFormat::abgr8888, (void*)source);
+			//aligned_free(rgbaData);
 
-		CL_Texture texture(m_gc, cl_texture_2d);
-		texture.set_image(image);
-		texture.set_min_filter(cl_filter_linear);
-		texture.set_mag_filter(cl_filter_linear);
-		texture.set_depth_mode(cl_depthmode_alpha);
+			CL_Texture texture(m_gc, cl_texture_2d);
+			texture.set_image(rgbaImage);
+			texture.set_min_filter(cl_filter_linear);
+			texture.set_mag_filter(cl_filter_linear);
+			//texture.set_depth_mode(cl_depthmode_alpha);
 
-		if (texture.is_null())
+			if (texture.is_null())
+				return false;
+
+			texture_handle = new RocketCL_Texture(texture);
+			return true;
+		}
+		catch (CL_Exception& ex)
+		{
+			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, "CLRocketRenderer failed to generate a texture");
+			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ex.what());
 			return false;
-
-		texture_handle = new RocketCL_Texture(texture);
-		return true;
+		}
 	}
 
 	// Called by Rocket when a loaded texture is no longer required.
