@@ -155,6 +155,8 @@ namespace FusionEngine
 
 		void onEntityInstanced(EntityPtr &entity);
 
+		static void Register(asIScriptEngine *engine);
+
 	private:
 		EntityFactory *m_Factory;
 		EntityManager *m_Manager;

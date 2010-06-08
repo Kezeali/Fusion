@@ -45,18 +45,22 @@
 			icon-z-index: 1;
 			}
 
-			button.tool#place_entity div#icon
+			button.tool#place_tool div#icon
 			{
 			icon-image: shape_square_add.png;
 			}
-			button.tool#delete_entity div#icon
+			button.tool#delete_tool div#icon
 			{
 			icon-image: shape_square_delete.png;
 			}
-			button.tool#move_entity div#icon
+			button.tool#move_tool div#icon
 			{
 			icon-image: shape_handles.png;
-			}
+      }
+      button.tool#script_tool div#icon
+      {
+      icon-image: script.png;
+      }
 		</style>
 		<script src="editor.as" />
 	</head>
@@ -65,9 +69,10 @@
 		<undomenu class="redo" id="redo_menu" onchange="%this: OnRedo(event);"/>
 		<p>
 			<h1>Tools:</h1>
-			<button class="tool" id="place_entity" onclick="editor.setActiveTool(EditorTool::place_entity)"><div id="icon"/></button>
-			<button class="tool" id="move_entity" onclick="editor.setActiveTool(EditorTool::move_entity)"><div id="icon"/></button>
-			<button class="tool" id="delete_entity" onclick="editor.setActiveTool(delete_entity)"><div id="icon"/></button>
+			<button class="tool" id="place_tool" onclick="editor.setActiveTool(EditorTool::place)"><div id="icon"/></button>
+			<button class="tool" id="move_tool" onclick="editor.setActiveTool(EditorTool::move)"><div id="icon"/></button>
+			<button class="tool" id="delete_tool" onclick="editor.setActiveTool(EditorTool::delete)"><div id="icon"/></button>
+      <button class="tool" id="script_tool" onclick="editor.setActiveTool(EditorTool::run_script)"><div id="icon"/></button>
 		</p>
 		<input type="checkbox" id="actual_size" checked onchange="%this: OnClickActualGFXCheckbox(event);" value="true"/>Display In-Game Sprites
 		<div id="create_entity">

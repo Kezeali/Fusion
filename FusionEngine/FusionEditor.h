@@ -141,6 +141,9 @@ namespace FusionEngine
 		//! Removes the given map-Entity from the Editor
 		void RemoveEntity(const MapEntityPtr &map_entity);
 
+		//! Looks for a MapEntity that points to the given Entity instance
+		MapEntityPtr FindEntity(const EntityPtr& entity);
+
 		void SelectEntity(const MapEntityPtr &map_entity);
 		void DeselectEntity(const MapEntityPtr &map_entity);
 		void DeselectAll();
@@ -254,9 +257,9 @@ namespace FusionEngine
 		Vector2 m_DragFrom;
 		CL_Rectf m_SelectionRectangle;
 
-		CL_Image m_SelectionOverlay;
-		CL_Image m_SelectionOverlay_Rotate;
-		CL_Image m_SelectionOverlay_Resize;
+		CL_Sprite m_SelectionOverlay;
+		CL_Sprite m_SelectionOverlay_Rotate;
+		CL_Sprite m_SelectionOverlay_Resize;
 
 		std::string m_CurrentFilename;
 

@@ -229,13 +229,57 @@ namespace FusionEngine
 		CL_Angle m_PreviousAngle;
 	};
 
-	//! Renders a CL_Image object
-	class RenderableImage : public Renderable
+	//! Renders a CL_Sprite object
+	/*!
+	* This class is for special cases where a sprite that isn't loaded as a Resource needs to be attached
+	* to an Entity. For example, the selection overlays in the Editor.
+	* \see RenderableSprite
+	*/
+	class RenderableGeneratedSprite : public Renderable
 	{
 	public:
-		RenderableImage();
-		RenderableImage(const CL_Image &image);
-		virtual ~RenderableImage();
+		RenderableGeneratedSprite();
+		RenderableGeneratedSprite(const CL_Sprite &sprite);
+		virtual ~RenderableGeneratedSprite();
+
+		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
+
+		virtual void UpdateAABB();
+
+		virtual void SetAlpha(float _alpha);
+		virtual float GetAlpha() const;
+
+		virtual void SetColour(unsigned int r, unsigned int g, unsigned int b);
+		virtual void SetColour(const CL_Color & colour);
+		virtual const CL_Color &GetColour() const;
+
+		virtual void SetOrigin(CL_Origin origin);
+		virtual CL_Origin GetOrigin() const;
+
+		virtual void SetOffset(float x, float y);
+		virtual void SetOffset(const Vector2 &position);
+		virtual void SetOffset(const CL_Vec2f &_position);
+		virtual const Vector2 &GetOffset() const;
+
+		virtual void SetAngle(float angle);
+		virtual float GetAngle() const;
+
+	protected:
+		bool m_PositionChanged;
+
+		CL_Sprite m_Sprite;
+
+		int m_PreviousWidth, m_PreviousHeight;
+		CL_Angle m_PreviousAngle;
+	};
+
+	//! Renders a CL_Image object
+	class RenderableGeneratedImage : public Renderable
+	{
+	public:
+		RenderableGeneratedImage();
+		RenderableGeneratedImage(const CL_Image &image);
+		virtual ~RenderableGeneratedImage();
 
 		void Draw(CL_GraphicContext &gc, const Vector2 &origin);
 

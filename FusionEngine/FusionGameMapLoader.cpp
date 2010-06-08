@@ -674,4 +674,26 @@ namespace FusionEngine
 			++m_NextTypeIndex;
 	}
 
+
+	Entity* MapEntity_getEntity(const GameMapLoader::MapEntity* obj)
+	{
+		if (obj->entity)
+		{
+			obj->entity->addRef();
+			return obj->entity.get();
+		}
+		else
+			return nullptr;
+	}
+
+	void GameMapLoader::Register(asIScriptEngine *engine)
+	{
+		int r;
+		MapEntity::RegisterType<MapEntity>(engine, "MapEntity");
+
+		r = engine->RegisterObjectProperty("MapEntity", "bool hasName", offsetof(MapEntity, hasName)); FSN_ASSERT(r >= 0);
+		engine->RegisterObjectProperty("MapEntity", "bool synced", offsetof(MapEntity, synced));
+		r = engine->RegisterObjectMethod("MapEntity", "Entity@ get_entity() const", asFUNCTION(MapEntity_getEntity), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+
 }

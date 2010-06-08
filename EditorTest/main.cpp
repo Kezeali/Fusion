@@ -122,6 +122,7 @@ public:
 			StreamingManager::Register(asEngine);
 			OntologicalSystem::Register(asEngine);
 			ElementUndoMenu::Register(asEngine);
+			GameMapLoader::Register(asEngine);
 			Editor::Register(asEngine);
 			RegisterEntityUnwrap(asEngine);
 

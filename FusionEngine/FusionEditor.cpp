@@ -50,6 +50,7 @@
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionPhysicalEntityManager.h"
 #include "FusionRenderer.h"
+#include "FusionScriptedEntity.h"
 #include "FusionScriptManager.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionXml.h"
@@ -297,7 +298,7 @@ namespace FusionEngine
 	void Editor::generateSelectionOverlay()
 	{
 		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		CL_Texture offtex(gc, 33, 33);
+		CL_Texture offtex(gc, 32, 32);
 
 		CL_FrameBuffer offscreen(gc);
 		offscreen.attach_color_buffer(0, offtex);
@@ -309,17 +310,17 @@ namespace FusionEngine
 		CL_Colorf colour(0.8f, 0.4f, 0.3f, 0.8f);
 		CL_Vec2f cross[4] =
 		{
-			CL_Vec2f(0, 0),
+			CL_Vec2f(1, 1),
 			CL_Vec2f(32, 32),
-			CL_Vec2f(0, 32),
-			CL_Vec2f(32, 0),
+			CL_Vec2f(1, 32),
+			CL_Vec2f(32, 1),
 		};
 		CL_Vec2f box[4] =
 		{
-			CL_Vec2f(0, 0),
-			CL_Vec2f(32, 0),
+			CL_Vec2f(1, 1),
+			CL_Vec2f(32, 1),
 			CL_Vec2f(32, 32),
-			CL_Vec2f(0, 32),
+			CL_Vec2f(1, 32),
 		};
 		// draw it
 		{
@@ -333,10 +334,14 @@ namespace FusionEngine
 			gc.reset_program_object();
 		}
 
-		m_SelectionOverlay = CL_Image(gc, offtex, CL_Rect(0, 0, 33, 33));
+		{
+			CL_SpriteDescription spriteDesc;
+			spriteDesc.add_frame(offtex);
+			m_SelectionOverlay = CL_Sprite(gc, spriteDesc);
+		}
 
 		offscreen.detach_color_buffer(0, offtex);
-		offtex = CL_Texture(gc, 11, 11);
+		offtex = CL_Texture(gc, 10, 10);
 		offscreen.attach_color_buffer(0, offtex);
 		// Rotation indicator
 		gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
@@ -353,7 +358,11 @@ namespace FusionEngine
 			gc.reset_program_object();
 		}
 
-		m_SelectionOverlay_Rotate = CL_Image(gc, offtex, CL_Rect(0, 0, 11, 11));
+		{
+			CL_SpriteDescription spriteDesc;
+			spriteDesc.add_frame(offtex);
+			m_SelectionOverlay_Rotate = CL_Sprite(gc, spriteDesc);
+		}
 
 		gc.reset_frame_buffer();
 	}
@@ -1104,17 +1113,36 @@ namespace FusionEngine
 		ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 	}
 
+	Editor::MapEntityPtr Editor::FindEntity(const EntityPtr& entity)
+	{
+		MapEntityArray* collection = nullptr;
+		// Choose the collection that this entity will be part of (if it is present)
+		if (entity->IsSyncedEntity())
+			collection = &m_Entities;
+		else
+			collection = &m_PseudoEntities;
+		// Find the MapEntity in the collection that points to the given entity
+		auto _where = std::find_if(m_Entities.begin(), m_Entities.end(), [&entity](const MapEntityPtr& map_entity)->bool {
+			return (map_entity->entity ? map_entity->entity == entity : false);
+		});
+		// If one was found, return it
+		if (_where != m_Entities.end())
+			return *_where;
+		else
+			return MapEntityPtr();
+	}
+
 	void Editor::SelectEntity(const Editor::MapEntityPtr &map_entity)
 	{
 		m_SelectedEntities.insert(MapEntityPtr(map_entity));
 
-		RenderableImage *selectionOverlay = new RenderableImage(m_SelectionOverlay);
+		RenderableGeneratedSprite *selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay);
 		selectionOverlay->AddTag("select_overlay");
 		selectionOverlay->AddTag("select_overlay_box");
 		selectionOverlay->SetOrigin(origin_center);
 		map_entity->entity->AddRenderable(selectionOverlay);
 
-		selectionOverlay = new RenderableImage(m_SelectionOverlay_Rotate);
+		selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay_Rotate);
 		selectionOverlay->AddTag("select_overlay");
 		selectionOverlay->AddTag("select_overlay_rotate");
 		selectionOverlay->SetOrigin(origin_center);
@@ -1299,19 +1327,35 @@ namespace FusionEngine
 		m_InstanceSynchroniser->Reset(nextId);
 	}
 
+	void Editor_SelectEntity(asIScriptObject* entity, Editor* obj)
+	{
+		Editor::MapEntityPtr mapEntity = obj->FindEntity(ScriptedEntity::GetAppObject(entity));
+		if (mapEntity)
+			obj->SelectEntity(mapEntity);
+	}
+
 	void Editor::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
 
 		r = engine->RegisterEnum("EditorTool"); FSN_ASSERT(r >= 0);
-		r = engine->RegisterEnumValue("EditorTool", "place_entity", tool_place); FSN_ASSERT(r >= 0);
-		r = engine->RegisterEnumValue("EditorTool", "delete_entity", tool_delete); FSN_ASSERT(r >= 0);
-		r = engine->RegisterEnumValue("EditorTool", "move_entity", tool_move); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "place", tool_place); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "delete", tool_delete); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "move", tool_move); FSN_ASSERT(r >= 0);
+		r = engine->RegisterEnumValue("EditorTool", "run_script", tool_move); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void setActiveTool(EditorTool)",
 			asMETHOD(Editor, SetActiveTool), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void selectEntity(IEntity@)",
+			asFUNCTION(Editor_SelectEntity), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void selectEntity(MapEntity@)",
+			asMETHOD(Editor, SelectEntity), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Editor",
 			"void searchTypes(StringArray& out, string &in)",

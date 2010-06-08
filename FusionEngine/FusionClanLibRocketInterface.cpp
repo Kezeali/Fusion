@@ -331,75 +331,17 @@ namespace FusionEngine
 		}
 	}
 
-	void swizzle(unsigned char* out, const unsigned char* in, unsigned int width, unsigned int height) 
-	{ 
-		unsigned int i,j; 
-		unsigned int rowblocks = (width / 16); 
-
-		for (j = 0; j < height; ++j) 
-		{ 
-			for (i = 0; i < width; ++i) 
-			{ 
-				unsigned int blockx = i / 16; 
-				unsigned int blocky = j / 8; 
-
-				unsigned int x = (i - blockx*16); 
-				unsigned int y = (j - blocky*8); 
-				unsigned int block_index = blockx + ((blocky) * rowblocks); 
-				unsigned int block_address = block_index * 16 * 8; 
-
-				out[block_address + x + y * 16] = in[i+j*width]; 
-			} 
-		} 
-	}
-
-	void *aligned_alloc(int size)
-	{
-		void *ptr;
-#ifdef _MSC_VER
-		ptr = _aligned_malloc(size, 16);
-		if (!ptr)
-			throw CL_Exception(cl_text("Out of memory"));
-
-#else
-		if (posix_memalign( (void **) &ptr, 16, size))
-		{
-			throw CL_Exception(cl_text("Panic! posix_memalign failed"));
-		}
-#endif
-		return ptr;
-	}
-
-	void aligned_free(void *ptr)
-	{
-		if (ptr)
-		{
-#ifdef _MSC_VER
-			_aligned_free(ptr);
-#else
-			free(ptr);
-#endif
-		}
-	}
-
 	// Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
 	bool RocketRenderer::GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions)
 	{
 		try
 		{
-			int pitch = source_dimensions.x * 4;
-			//void* rgbaData = aligned_alloc((size_t)(source_dimensions.x * source_dimensions.y * 4));
-			//swizzle((unsigned char*)rgbaData, source, source_dimensions.x * sizeof(char), source_dimensions.y);
-			CL_PixelBuffer image(source_dimensions.x, source_dimensions.y, cl_abgr8, (const void*)source);
-			CL_PixelBuffer rgbaImage = image.to_format(cl_rgba8);
-
-			//aligned_free(rgbaData);
+			CL_PixelBuffer rgbaImage = CL_PixelBuffer(source_dimensions.x, source_dimensions.y, cl_abgr8, (const void*)source).to_format(cl_rgba8);
 
 			CL_Texture texture(m_gc, cl_texture_2d);
 			texture.set_image(rgbaImage);
 			texture.set_min_filter(cl_filter_linear);
 			texture.set_mag_filter(cl_filter_linear);
-			//texture.set_depth_mode(cl_depthmode_alpha);
 
 			if (texture.is_null())
 				return false;
