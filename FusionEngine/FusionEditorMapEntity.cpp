@@ -47,7 +47,8 @@ namespace FusionEngine
 	static const char* colourComponentNames[] = {"r", "g", "b", "a"};
 
 	EditorMapEntity::EditorMapEntity()
-		: EMP::Core::DataSource()
+		: EMP::Core::DataSource(),
+		selected(false)
 	{
 		VectorTypeInfoMap::value_type vectorTypeInfo( Entity::pt_vector, VectorTypeInfo(2, (const char**)&vectorComponentNames) );
 		VectorTypeInfoMap::value_type colourTypeInfo( Entity::pt_colour, VectorTypeInfo(4, (const char**)&colourComponentNames) );
@@ -133,13 +134,13 @@ namespace FusionEngine
 			Entity *ent = boost::any_cast<Entity*>(value);
 			return "[" + ent->GetType() + "] " + ent->GetName();
 		}
-		else if (value.type() == typeid(CScriptString*))
+		else if (value.type() == typeid(std::string*))
 		{
-			return boost::any_cast<CScriptString*>(value)->buffer;
+			return *boost::any_cast<std::string*>(value);
 		}
-		else if (value.type() == typeid(CScriptString))
+		else if (value.type() == typeid(std::string))
 		{
-			return boost::any_cast<CScriptString>(value).buffer;
+			return boost::any_cast<std::string>(value);
 		}
 		else if (value.type() == typeid(Vector2*))
 		{

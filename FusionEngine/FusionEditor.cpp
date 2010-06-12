@@ -586,10 +586,14 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
+				float moveSize = (ev.PointerPosition - m_LastDragMove).length();
+
 				m_Dragging = true;
 				// Decide whether the user intends to create a new selection box, or drag selected entities
-				if (m_ActiveTool == tool_move && m_ShiftSelect || m_DragSelect || m_SelectedEntities.empty())
+				if ((m_ActiveTool == tool_move && m_ShiftSelect)
+					|| ((m_DragSelect || m_SelectedEntities.empty()) && (m_ActiveTool == tool_move || ev.Control || moveSize > 5.0f)))
 				{
+					m_LastDragMove = ev.PointerPosition;
 					m_DragSelect = true;
 
 					m_SelectionRectangle.right = (float)ev.PointerPosition.x;
@@ -601,18 +605,16 @@ namespace FusionEngine
 						DeselectAll();
 					std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [this](const MapEntityPtr& map_entity){ SelectEntity(map_entity); });
 				}
-				else
+				else if (ev.Control || moveSize > 5.0f)
 				{
+					m_LastDragMove = ev.PointerPosition;
 					Vector2 offset = ev.PointerPosition - m_DragFrom;
 					for (auto it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
 					{
-						const MapEntityPtr &map_entity = *it;
+						EditorMapEntity* editorEntity = dynamic_cast<EditorMapEntity*>(it->get());
 						// Set the offset of the overlays
-						RenderableArray& renderables = map_entity->entity->GetRenderables();
-						std::for_each(renderables.begin(), renderables.end(), [&offset](const RenderablePtr& renderable)
-						{
-							if (renderable->HasTag("select_overlay") || renderable->HasTag("editor_icon"))
-								renderable->SetOffset(offset);
+						std::for_each(editorEntity->selectionRenderables.begin(), editorEntity->selectionRenderables.end(), [&offset](const RenderablePtr& renderable) {
+							renderable->SetOffset(offset);
 						});
 					}
 				}
@@ -704,7 +706,10 @@ namespace FusionEngine
 					//  the mouse was at least /released/ outside a GUI window):
 					if (m_ReceivedMouseDown)
 					{
-						if (m_Dragging)
+						// This conditional makes sure the move is only counted as a
+						//  drag operation if it was probably intended to be - if the
+						//  move tool isn't selected, small movements are probably unintentional
+						if (m_Dragging && (m_ActiveTool == tool_move || (ev.PointerPosition - m_DragFrom).squared_length() > 1.0f))
 						{
 							if (!m_DragSelect)
 							{
@@ -714,14 +719,11 @@ namespace FusionEngine
 								// This function will perform the actual drag action
 								auto fn_move = [&offset](const MapEntityPtr& map_entity)
 								{
-									map_entity->entity->SetPosition(map_entity->entity->GetPosition() + offset);
-
+									EditorMapEntity* editorEntity = dynamic_cast<EditorMapEntity*>(map_entity.get());
+									editorEntity->entity->SetPosition(editorEntity->entity->GetPosition() + offset);
 									// Set the offset of the overlays
-									RenderableArray& renderables = map_entity->entity->GetRenderables();
-									std::for_each(renderables.begin(), renderables.end(), [](const RenderablePtr& renderable)
-									{
-										if (renderable->HasTag("select_overlay") || renderable->HasTag("editor_icon"))
-											renderable->SetOffset(Vector2::zero());
+									std::for_each(editorEntity->selectionRenderables.begin(), editorEntity->selectionRenderables.end(), [](const RenderablePtr& renderable) {
+										renderable->SetOffset(Vector2::zero());
 									});
 								};
 
@@ -753,7 +755,9 @@ namespace FusionEngine
 							}
 						}
 						else
+						{
 							processLeftClick(ev);
+						}
 						m_ReceivedMouseDown = false;
 					}
 					m_Dragging = false;
@@ -770,12 +774,17 @@ namespace FusionEngine
 		}
 	}
 
-	void translatePointerToWorld(Vector2 *pointerPos, Renderer *renderer, const ViewportPtr &view)
+	void translatePointerToWorld(Vector2::type* x, Vector2::type* y, Renderer* renderer, const ViewportPtr& view)
 	{
 		// Figure out where the pointer is within the world
-			CL_Rectf area;
-			renderer->CalculateScreenArea(area, view, true);
-			pointerPos->x += area.left; pointerPos->y += area.top;
+		CL_Rectf area;
+		renderer->CalculateScreenArea(area, view, true);
+		*x += area.left; *y += area.top;
+	}
+
+	void translatePointerToWorld(Vector2* pointerPos, Renderer* renderer, const ViewportPtr& view)
+	{
+		translatePointerToWorld(&pointerPos->x, &pointerPos->y, renderer, view);
 	}
 
 	inline void Editor::processLeftClick(const RawInput &ev)
@@ -801,6 +810,20 @@ namespace FusionEngine
 		case tool_delete:
 			break;
 		case tool_move:
+			// Toggle selection
+			if (m_ActiveTool == tool_move && m_ShiftSelect)
+			{
+				MapEntityArray underMouse;
+				GetEntitiesAt(underMouse, ev.PointerPosition, true);
+				for (auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+				{
+					EditorMapEntity* editorEntity = dynamic_cast<EditorMapEntity*>(it->get());
+					if (editorEntity->selected)
+						DeselectEntity(editorEntity);
+					else
+						SelectEntity(editorEntity);
+				}
+			}
 			break;
 		}
 	}
@@ -860,6 +883,11 @@ namespace FusionEngine
 	{
 		clearCtxMenu(m_PropertiesMenu, m_PropertiesMenuConnections);
 		clearCtxMenu(m_EntitySelectionMenu, m_SelectionMenuConnections);
+
+		MenuItem* item = new MenuItem("Deselect All", "deselect");
+		m_SelectionMenuConnections.push_back(
+			item->SignalClicked.connect( [this](const MenuItemEvent& ev) { DeselectAll(); m_RightClickMenu->Hide(); } ) );
+		m_EntitySelectionMenu->AddChild(item);
 
 		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
@@ -1046,9 +1074,12 @@ namespace FusionEngine
 		GameMapLoader::MapEntityArray* m_Entities;
 	};
 
-	void Editor::GetEntitiesAt(GameMapLoader::MapEntityArray &out, const Vector2 &position)
+	void Editor::GetEntitiesAt(GameMapLoader::MapEntityArray &out, const Vector2 &position, bool screen_to_world)
 	{
-		b2Vec2 p(position.x * s_SimUnitsPerGameUnit, position.y * s_SimUnitsPerGameUnit);
+		b2Vec2 p(position.x, position.y);
+		if (screen_to_world)
+			translatePointerToWorld(&p.x, &p.y, m_Renderer, m_Viewport);
+		p *= s_SimUnitsPerGameUnit;
 
 		// Make a small box.
 		b2AABB aabb;
@@ -1134,30 +1165,47 @@ namespace FusionEngine
 
 	void Editor::SelectEntity(const Editor::MapEntityPtr &map_entity)
 	{
-		m_SelectedEntities.insert(MapEntityPtr(map_entity));
-
+		EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>( map_entity );
+		// Mark the entity as selected
+		auto result = m_SelectedEntities.insert(editorEntity);
+		if (!result.second) // Don't reselect
+			return;
+		editorEntity->selected = true;
+		// Add the GUI representation of the selection
 		RenderableGeneratedSprite *selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay);
 		selectionOverlay->AddTag("select_overlay");
 		selectionOverlay->AddTag("select_overlay_box");
 		selectionOverlay->SetOrigin(origin_center);
-		map_entity->entity->AddRenderable(selectionOverlay);
+		editorEntity->entity->AddRenderable(selectionOverlay); // Add the renderable to the entity
+		// List the renderable in the editor entity (so it can be efficiently accessed - without searching every renderable)
+		editorEntity->selectionRenderables.push_back(selectionOverlay);
 
 		selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay_Rotate);
 		selectionOverlay->AddTag("select_overlay");
 		selectionOverlay->AddTag("select_overlay_rotate");
 		selectionOverlay->SetOrigin(origin_center);
-		map_entity->entity->AddRenderable(selectionOverlay);
+		editorEntity->entity->AddRenderable(selectionOverlay);
+		editorEntity->selectionRenderables.push_back(selectionOverlay);
 	}
 
 	void Editor::DeselectEntity(const Editor::MapEntityPtr &map_entity)
 	{
-		m_SelectedEntities.erase(map_entity);
-		map_entity->entity->RemoveRenderablesWithTag("select_overlay");
+		EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>( map_entity );
+		auto _where = m_SelectedEntities.find(editorEntity);
+		if (_where != m_SelectedEntities.end())
+		{
+			editorEntity->selected = false;
+			editorEntity->entity->RemoveRenderablesWithTag("select_overlay");
+			editorEntity->selectionRenderables.clear();
+			m_SelectedEntities.erase(_where);
+		}
 	}
 
 	void Editor::DeselectAll()
 	{
-		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](MapEntityPtr selected){ selected->entity->RemoveRenderablesWithTag("select_overlay"); });
+		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](const EditorMapEntityPtr &selectedEntity) {
+			selectedEntity->entity->RemoveRenderablesWithTag("select_overlay");
+			selectedEntity->selected = false; });
 		m_SelectedEntities.clear();
 	}
 

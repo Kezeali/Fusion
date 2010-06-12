@@ -443,6 +443,31 @@ namespace FusionEngine
 	void* ScriptedEntity::GetAddressOfProperty(unsigned int index, unsigned int array_index) const
 	{
 		int propIndex = getScriptPropIndex(index);
+		int scriptType = m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
+		void* address = GetAddressOfPropertyRaw(index, array_index);
+		// Special case for string-type props
+		if ((scriptType & asTYPEID_MASK_OBJECT) == ScriptManager::getSingleton().GetStringTypeId())
+		{
+			CScriptString* obj = nullptr;
+			if (scriptType & asTYPEID_OBJHANDLE)
+				obj = *static_cast<CScriptString**>(address);
+			else
+				obj = static_cast<CScriptString*>(address);
+			return &obj->buffer;
+		}
+		else
+			return address;
+	}
+
+	int ScriptedEntity::GetPropertyScriptType(unsigned int index, unsigned int array_index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+		return m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
+	}
+
+	void* ScriptedEntity::GetAddressOfPropertyRaw(unsigned int index, unsigned int array_index) const
+	{
+		int propIndex = getScriptPropIndex(index);
 		if (m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex) & asTYPEID_SCRIPTARRAY)
 		{
 			asIScriptArray *array = static_cast<asIScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );

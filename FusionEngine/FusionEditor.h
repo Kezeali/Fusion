@@ -133,7 +133,7 @@ namespace FusionEngine
 		//! Creates a new map-entity
 		EditorMapEntityPtr CreateEntity(const std::string &type, const std::string &name, bool pseudo, float x, float y);
 
-		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position);
+		void GetEntitiesAt(MapEntityArray &out, const Vector2 &position, bool convert_to_world_coords = false);
 		void GetEntitiesOverlapping(MapEntityArray &out, const CL_Rectf &rectangle, bool convert_to_world_coords = false);
 
 		//! Adds the given map-Entity to the Editor
@@ -256,6 +256,10 @@ namespace FusionEngine
 		bool m_Dragging;
 		Vector2 m_DragFrom;
 		CL_Rectf m_SelectionRectangle;
+		// In order to optimise dragging by only moving the selection boxes when the
+		//  offset has changed significantly, this is set to the current drag offset
+		//  every time the selection boxes are moved
+		Vector2 m_LastDragMove;
 
 		CL_Sprite m_SelectionOverlay;
 		CL_Sprite m_SelectionOverlay_Rotate;
@@ -273,7 +277,7 @@ namespace FusionEngine
 
 		EntityArray m_PlainEntityArray;
 
-		typedef std::set<MapEntityPtr> EntitySet;
+		typedef std::set<EditorMapEntityPtr> EntitySet;
 		EntitySet m_SelectedEntities;
 
 		// Map data (entities, etc.) - passed to map builder (GameMapLoader)

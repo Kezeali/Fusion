@@ -204,11 +204,7 @@ namespace FusionEngine
 		 */
 		float length() const
 		{
-#ifdef WIN32
-			return sqrt(x*x + y*y);
-#else
-			return std::sqrt(x*x + y*y);
-#endif
+			return (float)std::sqrt((float)(x*x + y*y));
 		}
 		//! The squared length of the vector
 		/*!
@@ -216,17 +212,17 @@ namespace FusionEngine
 		 */
 		float squared_length() const
 		{
-			return (x*x + y*y);
+			return (float)(x*x + y*y);
 		}
 		//! Returns the dot product
 		float dot(const Vector2T<T>& other) const
 		{
-			return x*other.x + y*other.y;  
+			return (float)(x*other.x + y*other.y);  
 		}
 		//! Returns the cross product
 		float cross(const Vector2T<T>& other) const
 		{
-			return ( x*other.y - y*other.x );
+			return (float)(x*other.y - y*other.x);
 		}
 		//! Projects this vector onto the given one
 		Vector2T<T> project(const Vector2T<T>& other) const

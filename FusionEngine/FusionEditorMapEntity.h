@@ -40,6 +40,7 @@
 #include <Rocket/Controls/DataFormatter.h>
 
 #include "FusionPhysicsFixture.h"
+#include "FusionRenderable.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -52,6 +53,11 @@ namespace FusionEngine
 	{
 	public:
 		FixturePtr fixture;
+
+		bool selected;
+		std::vector<RenderablePtr> selectionRenderables;
+		std::vector<RenderablePtr> editorIcons;
+
 
 		//! Ctor
 		EditorMapEntity();

@@ -251,9 +251,9 @@ namespace FusionEngine
 			"\" value=\"" + strValue + "\" />";
 	}
 
-	void formatStringElement(EMP::Core::String &formatted_data, const CScriptString *str, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	void formatStringElement(EMP::Core::String &formatted_data, const std::string* const str, const EMP::Core::String& index, const EMP::Core::String &array_index, const EMP::Core::String &name)
 	{
-		EMP::Core::String value; toEmp(value, str->buffer);
+		EMP::Core::String value; toEmp(value, *str);
 		formatted_data =
 			"<input id=\"" + formatId(index, array_index) + "\" index=\"" + index + "\" array_index=\"" + array_index +
 			"\" type=\"text\" name=\"" + name + "\" value=\"" + value + "\" />";
@@ -316,7 +316,7 @@ namespace FusionEngine
 			{
 			case Entity::pt_string:
 				formatStringElement(formatted_data,
-					*static_cast<CScriptString**>(entity->GetAddressOfProperty(index, array_index)),
+					*static_cast<std::string**>(entity->GetAddressOfProperty(index, array_index)),
 					indexStr, arrayIndexStr, name);
 				break;
 			case Entity::pt_vector:
@@ -378,7 +378,7 @@ namespace FusionEngine
 				break;
 
 			case Entity::pt_string:
-					formatStringElement(formatted_data, static_cast<CScriptString*>(entity->GetAddressOfProperty(index)), indexStr, arrayIndexStr, name);
+				formatStringElement(formatted_data, static_cast<std::string*>(entity->GetAddressOfProperty(index)), indexStr, arrayIndexStr, name);
 				break;
 
 			case Entity::pt_vector:
@@ -634,23 +634,23 @@ namespace FusionEngine
 
 					case Entity::pt_string:
 						{
-							CScriptString propValue(value.CString(), value.Length());
-							CScriptString oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
+							std::string propValue(value.CString(), value.Length());
+							std::string oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
 
 							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
 
-							UndoableActionPtr action(new ChangePropertyAction<CScriptString>(editorEntityPtr, index, array_index, oldValue, propValue));
+							UndoableActionPtr action(new ChangePropertyAction<std::string>(editorEntityPtr, index, array_index, oldValue, propValue));
 							m_Undo->Add(action);
 						}
 						break;
 					case Entity::pt_string | Entity::pt_pointer_flag:
 						{
-							CScriptString *propValue = new CScriptString(value.CString(), value.Length());
-							CScriptString oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
+							std::string *propValue = new std::string(value.CString(), value.Length());
+							std::string* oldValue; getProperty(oldValue, editorEntityPtr, index, array_index);
 
 							editorEntityPtr->SetPropertyValue(index, array_index, propValue);
 
-							UndoableActionPtr action(new ChangePropertyAction<CScriptString*>(editorEntityPtr, index, array_index, oldValue, *propValue));
+							UndoableActionPtr action(new ChangePropertyAction<std::string*>(editorEntityPtr, index, array_index, *oldValue, *propValue));
 							m_Undo->Add(action);
 						}
 						break;

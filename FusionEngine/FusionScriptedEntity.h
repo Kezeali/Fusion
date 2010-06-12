@@ -127,6 +127,9 @@ namespace FusionEngine
 		virtual int GetPropertyType(unsigned int index) const;
 		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const;
 
+		int GetPropertyScriptType(unsigned int index, unsigned int array_index) const;
+		void* GetAddressOfPropertyRaw(unsigned int index, unsigned int array_index) const;
+
 		virtual void EnumReferences(asIScriptEngine *engine);
 		virtual void ReleaseAllReferences(asIScriptEngine *engine);
 
