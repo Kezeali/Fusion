@@ -41,6 +41,7 @@
 #endif
 
 #include "FusionAssert.h"
+#include <type_traits>
 
 namespace FusionEngine
 {
@@ -57,24 +58,14 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		Singleton( void )
+		Singleton()
 		{
 			FSN_ASSERT( !ms_Singleton );
-
-#		if defined( _MSC_VER ) && _MSC_VER < 1200
-			// Old MSVC
-			int offset = (int)(T*)1 - (int)(Singleton <T>*)(T*)1;
-			ms_Singleton = (T*)((int)this + offset);
-			
-#		else
-			// Other
 			ms_Singleton = static_cast< T* >( this );
-
-#		endif
 		}
 
 		//! Destructor
-		virtual ~Singleton( void )
+		virtual ~Singleton()
 		{
 			FSN_ASSERT( ms_Singleton != nullptr );
 			ms_Singleton = 0;
@@ -82,20 +73,20 @@ namespace FusionEngine
 
 	public:
 		//! Returns the static instance of singleton
-		static T& getSingleton( void )
+		static T& getSingleton()
 		{
 			FSN_ASSERT( ms_Singleton != NULL );
-			return ( *ms_Singleton );
+			return *ms_Singleton;
 		}
 		//! Returns a pointer to the static instance of singleton
-		static T* getSingletonPtr( void )
+		static T* getSingletonPtr()
 		{
-			return ( ms_Singleton );
+			return ms_Singleton;
 		}
 
 	};
-	// Make sure ms_Singleton is initialized (prevents link error)
-	template <typename T> T* Singleton <T>::ms_Singleton = 0;
+	// Make sure ms_Singleton is initialized
+	template <typename T> T* Singleton <T>::ms_Singleton = nullptr;
 
 
  /*!
@@ -105,50 +96,42 @@ namespace FusionEngine
 	* Weak singletons can have more than one instance, and only
 	* the first one is stored as the singleton.
 	*/
-	template<typename T> class WeakSingleton
+	template<typename T>
+	class WeakSingleton
 	{
 	public:
 		//! Constructor
-		WeakSingleton( void )
+		WeakSingleton()
 		{
-
-			// MSVC
-#		if defined( _MSC_VER ) && _MSC_VER < 1200	 
-			int offset = (int)(T*)1 - (int)(WeakSingleton <T>*)(T*)1;
-			ms_Singleton = (T*)((int)this + offset);
-
-			// Other
-#		else
-			ms_Singleton = static_cast< T* >( this );
-#		endif
+			if (ms_Singleton == nullptr)
+				ms_Singleton = static_cast< T* >( this );
 		}
 		//! Destructor
-		virtual ~WeakSingleton( void )
+		virtual ~WeakSingleton()
 		{
-			if( ms_Singleton == this)
-				ms_Singleton = 0;
+			if (ms_Singleton == this)
+				ms_Singleton = nullptr;
 		}
 
 	public:
 		//! Returns the static instance of singleton
-		static T& getSingleton( void )
+		static T& getSingleton()
 		{
-			FSN_ASSERT( ms_Singleton );
-			return ( *ms_Singleton );
+			FSN_ASSERT(ms_Singleton);
+			return *ms_Singleton;
 		}
 		//! Returns a pointer to the static instance of singleton
-		static T* getSingletonPtr( void )
+		static T* getSingletonPtr()
 		{
-			return ( ms_Singleton );
+			return ms_Singleton;
 		}
 
 	private:
 		//! The instance
 		static T *ms_Singleton;
-
 	};
 
-	template <typename T> T* WeakSingleton <T>::ms_Singleton = 0;
+	template <typename T> T* WeakSingleton<T>::ms_Singleton = nullptr;
 
 }
 

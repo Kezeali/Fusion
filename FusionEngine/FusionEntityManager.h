@@ -296,6 +296,8 @@ namespace FusionEngine
 
 		//! Draws entities
 		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
+		//! Returns active entities
+		EntityArray& GetActiveEntities();
 
 		//! Sets the given domain to active/inactive
 		void SetDomainState(EntityDomain domain_index, char active_modes);

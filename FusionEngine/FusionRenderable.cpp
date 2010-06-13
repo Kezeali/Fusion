@@ -29,6 +29,7 @@
 
 #include "FusionRenderable.h"
 
+#include "FusionFlagRegistry.h"
 #include "FusionResourceManager.h"
 
 namespace FusionEngine
@@ -36,6 +37,7 @@ namespace FusionEngine
 
 	Renderable::Renderable()
 		: m_Enabled(true),
+		m_FlagsCache(1),
 		m_Depth(0),
 		m_Angle(0.f),
 		m_Colour(255, 255, 255, 255),
@@ -123,16 +125,31 @@ namespace FusionEngine
 	void Renderable::AddTag(const std::string &tag)
 	{
 		m_Tags.insert(tag);
+		m_FlagsCache |= StaticFlagRegistry::ToFlag(tag);
 	}
 
 	void Renderable::RemoveTag(const std::string &tag)
 	{
 		m_Tags.erase(tag);
+		m_FlagsCache ^= StaticFlagRegistry::ToFlag(tag);
 	}
 
 	bool Renderable::HasTag(const std::string &tag) const
 	{
 		return m_Tags.find(tag) != m_Tags.end();
+	}
+
+	uint32_t Renderable::RefreshFlags()
+	{
+		m_FlagsCache = 1;
+		for (auto it = m_Tags.begin(), end = m_Tags.end(); it != end; ++it)
+			m_FlagsCache |= StaticFlagRegistry::ToFlag(*it);
+		return m_FlagsCache;
+	}
+
+	uint32_t Renderable::GetFlags() const
+	{
+		return m_FlagsCache;
 	}
 
 	void Renderable::SetDepth(int depth)

@@ -67,7 +67,7 @@ namespace FusionEngine
 		}
 	}
 
-	const CL_GraphicContext &Renderer::GetGraphicContext() const
+	const CL_GraphicContext& Renderer::GetGraphicContext() const
 	{
 		return m_GC;
 	}
@@ -82,12 +82,7 @@ namespace FusionEngine
 		return m_GC.get_height();
 	}
 
-	bool lowerDepth(const EntityPtr &l, const EntityPtr &r)
-	{
-		return l->GetDepth() < r->GetDepth();
-	}
-
-	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer)
+	CL_GraphicContext& Renderer::SetupDraw(CL_GraphicContext& gc, const ViewportPtr& viewport, CL_Rectf* draw_area)
 	{
 		const CameraPtr &camera = viewport->GetCamera();
 
@@ -104,20 +99,64 @@ namespace FusionEngine
 		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));
 
 		// Apply rotation, translation & scale
-		m_GC.push_modelview();
-		m_GC.set_translate(-viewportOffset.x, -viewportOffset.y);
-		m_GC.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
+		gc.push_modelview();
+		gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+		gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
 		if ( !fe_fequal(camera->GetZoom(), 1.f) )
-			m_GC.mult_scale(camera->GetZoom(), camera->GetZoom());
+			gc.mult_scale(camera->GetZoom(), camera->GetZoom());
 
-		// Draw the entities within the camera area for this viewport
-		float drawAreaScale = 0.001f;
-		if (!fe_fzero(camera->GetZoom()))
-			drawAreaScale = 1.f / camera->GetZoom();
-		CL_Size size = viewportArea.get_size();
-		CL_Rectf drawArea(viewportOffset.x, viewportOffset.y, CL_Sizef(size.width * drawAreaScale, size.height * drawAreaScale));
+		if (draw_area != nullptr)
+		{
+			// Get & scale the draw area
+			float drawAreaScale = 0.001f;
+			if (!fe_fzero(camera->GetZoom()))
+				drawAreaScale = 1.f / camera->GetZoom();
+			CL_Size size = viewportArea.get_size();
+			draw_area->left = viewportOffset.x;
+			draw_area->top = viewportOffset.y;
+			draw_area->set_size(CL_Sizef(size.width * drawAreaScale, size.height * drawAreaScale));
+		}
 
-		drawNormally(entities, drawArea, layer);
+		return gc;
+	}
+
+	void Renderer::PostDraw(CL_GraphicContext& gc)
+	{
+		gc.pop_modelview();
+		gc.reset_cliprect(); // the viewport cliprect
+	}
+
+	CL_GraphicContext& Renderer::SetupDraw(const ViewportPtr& viewport, CL_Rectf* draw_area)
+	{
+		return SetupDraw(m_GC, viewport, draw_area);
+	}
+
+	void Renderer::PostDraw()
+	{
+		PostDraw(m_GC);
+	}
+
+	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer)
+	{
+		drawImpl(entities, viewport, layer, std::string(), 0xFFFFFFFF);
+	}
+
+	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag)
+	{
+		drawImpl(entities, viewport, layer, renderable_tag, 0xFFFFFFFF);
+	}
+
+	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, uint32_t filter_flags)
+	{
+		drawImpl(entities, viewport, layer, std::string(), filter_flags);
+	}
+
+	void Renderer::drawImpl(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag, uint32_t filter_flags)
+	{
+		CL_Rectf drawArea;
+		SetupDraw(m_GC, viewport, &drawArea);
+
+		actuallyDraw(entities, drawArea, layer, renderable_tag, filter_flags);
 
 		m_GC.pop_modelview();
 
@@ -126,11 +165,10 @@ namespace FusionEngine
 		m_GC.reset_cliprect(); // the viewport cliprect
 
 		// By this point the draw list will have been updated to reflect the changed tags
-		m_ChangedTags.clear();
-
+		//m_ChangedTags.clear();
 	}
 
-	void Renderer::drawNormally(EntityArray &entities, const CL_Rectf &draw_area, size_t layer)
+	void Renderer::actuallyDraw(EntityArray &entities, const CL_Rectf &draw_area, size_t layer, const std::string& renderable_tag, uint32_t filter_flags)
 	{
 		int notRendered = 0;
 
@@ -142,13 +180,15 @@ namespace FusionEngine
 
 			if (entity->IsHiddenByTag())
 				continue;
-
 			if (entity->IsHidden())
 				continue;
 			if (!entity->IsStreamedIn())
 				continue;
 
 			if (entity->GetLayer() != layer)
+				continue;
+
+			if (entity->GetRenderables().empty())
 				continue;
 
 			const Vector2 &entityPosition = entity->GetPosition();
@@ -170,7 +210,8 @@ namespace FusionEngine
 			for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
 			{
 				RenderablePtr &renderable = *r_it;
-				if ( normDrawArea.is_overlapped(renderable->GetAABB()) )
+				if ( ((renderable->GetFlags() & filter_flags) != 0 || (!renderable_tag.empty() && renderable->HasTag(renderable_tag)))
+					&& normDrawArea.is_overlapped(renderable->GetAABB()) )
 					renderable->Draw(m_GC, Vector2()/*entityPosition*/);
 				else
 					++notRendered;

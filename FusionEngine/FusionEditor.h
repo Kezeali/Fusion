@@ -148,6 +148,9 @@ namespace FusionEngine
 		void DeselectEntity(const MapEntityPtr &map_entity);
 		void DeselectAll();
 
+		void selectEntity(const EditorMapEntityPtr &map_entity);
+		void deselectEntity(const EditorMapEntityPtr &map_entity);
+
 		// The following methods are primarily for scripting use
 		//! Returns entity-tyes beginning with...
 		void LookUpEntityType(StringVector &results, const std::string &search_term);
@@ -230,6 +233,7 @@ namespace FusionEngine
 
 		bool m_ReceivedMouseDown;
 		bool m_ShiftSelect;
+		bool m_AltSelect;
 		bool m_DragSelect;
 
 		UndoableActionManager m_UndoManager;
@@ -279,6 +283,7 @@ namespace FusionEngine
 
 		typedef std::set<EditorMapEntityPtr> EntitySet;
 		EntitySet m_SelectedEntities;
+		std::unordered_set<EditorMapEntity*> m_EntitiesWithinSelectionRectangle;
 
 		// Map data (entities, etc.) - passed to map builder (GameMapLoader)
 		StringSet m_UsedTypes;
@@ -303,6 +308,22 @@ namespace FusionEngine
 
 		//! Called when a Select menu-item is clicked
 		void ctxSelectEntity(const MenuItemEvent &ev, MapEntity *entity);
+
+		//! Updates the selection rectangle
+		/*!
+		* \param[in]
+		* The position of the pointer, either on the screen or within the
+		* game world (see next parameter)
+		* \param[in] translate_to_world
+		* If an on-screen position is given for the pointer, this should
+		* be set to true so that the position can be translated to an
+		* in-world point.
+		*/
+		void updateSelectionRectangle(const Vector2& pointer_position, bool translate_to_world);
+		//! Moves the bottom right corner of the selection rectangle
+		void updateSelectionRectangleByOffset(const Vector2& offset);
+
+		//void markForSelection(const EditorMapEntity& map_entity, bool mark);
 
 		//! Lists the given entity in the relevant containers
 		void addMapEntity(const GameMapLoader::MapEntityPtr &entity);

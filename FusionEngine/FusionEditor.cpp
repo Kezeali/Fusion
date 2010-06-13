@@ -53,10 +53,24 @@
 #include "FusionScriptedEntity.h"
 #include "FusionScriptManager.h"
 #include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionFlagRegistry.h"
 #include "FusionXml.h"
 
 namespace FusionEngine
 {
+
+	static void translateScreenToWorld(Vector2::type* x, Vector2::type* y, Renderer* renderer, const ViewportPtr& view)
+	{
+		// Figure out where the pointer is within the world
+		CL_Rectf area;
+		renderer->CalculateScreenArea(area, view, true);
+		*x += area.left; *y += area.top;
+	}
+
+	static void translateScreenToWorld(Vector2* pointerPos, Renderer* renderer, const ViewportPtr& view)
+	{
+		translateScreenToWorld(&pointerPos->x, &pointerPos->y, renderer, view);
+	}
 
 	// Editor DataSource
 	EditorDataSource::EditorDataSource()
@@ -252,15 +266,48 @@ namespace FusionEngine
 		m_Enabled(false),
 		m_ActiveTool(tool_move),
 		m_ShiftSelect(false),
+		m_AltSelect(false),
 		m_Dragging(false),
 		m_ReceivedMouseDown(false)
 	{
 		m_EditorDataSource = new EditorDataSource();
+		StaticFlagRegistry::RegisterTag("select_overlay");
+
+		Console::getSingleton().BindCommand("edcount", [this](const StringVector& params)->std::string
+		{
+			std::stringstream countStr;
+			size_t total = 0;
+			auto count_fn = [&](size_t size, const std::string& name) {
+				total += size;
+				countStr << size << " " + name;
+			};
+			for (auto it = params.begin(), end = params.end(); it != end; ++it)
+			{
+				if (*it == "sync")
+					count_fn(m_Entities.size(), "synchronised");
+				else if (*it == "pseudo")
+					count_fn(m_PseudoEntities.size(), "pseudo");
+				else if (*it == "active")
+					count_fn(m_EntityManager->GetActiveEntities().size(), "active");
+				else
+					continue;
+				if (it +1 != end) // this isn't the last param
+					countStr << ", ";
+				else if (params.size() > 2) // this is the last param, and there was more than one
+					countStr << " comprising ";
+			}
+			if (params.size() == 1)
+				total = m_Entities.size() + m_PseudoEntities.size();
+			countStr << total << " entities overall";
+			return countStr.str();
+		});
 	}
 
 	Editor::~Editor()
 	{
+		Console::getSingleton().UnbindCommand("edcount");
 		CleanUp();
+		StaticFlagRegistry::UnregisterTag("select_overlay");
 		delete m_EditorDataSource;
 	}
 
@@ -456,11 +503,19 @@ namespace FusionEngine
 
 	void Editor::Update(float split)
 	{
-		//m_PhysicalWorld->Step(split);
-		// TODO: seperate PhysicalWorld::Draw from PhysicalWorld::Step (so debug-draw can be called any time - e.g. Editor::Draw)
+		bool camMoving = !v2Equal(m_CamVelocity, Vector2::zero());
+		if (camMoving)
+		{
+			const CL_Vec2f &currentPos = m_Camera->GetPosition();
+			m_Camera->SetPosition(currentPos.x + m_CamVelocity.x, currentPos.y + m_CamVelocity.y);
 
-		const CL_Vec2f &currentPos = m_Camera->GetPosition();
-		m_Camera->SetPosition(currentPos.x + m_CamVelocity.x, currentPos.y + m_CamVelocity.y);
+			if (m_DragSelect)
+			{
+				// Update the selection rectangle based on the camera movement
+				//m_SelectionRectangle.right += m_CamVelocity.x; m_SelectionRectangle.bottom += m_CamVelocity.y;
+				updateSelectionRectangleByOffset(m_CamVelocity);
+			}
+		}
 		m_Camera->Update(split);
 
 		m_Streamer->Update();
@@ -477,13 +532,18 @@ namespace FusionEngine
 
 	void Editor::Draw()
 	{
-		m_EntityManager->Draw(m_Renderer, m_Viewport, 0);
+		// TODO: seperate PhysicalWorld::Draw from PhysicalWorld::Step (so debug-draw can be called any time - e.g. Editor::Draw)
+		//m_PhysicalWorld->Draw();
+
+		m_Renderer->Draw(m_EntityManager->GetActiveEntities(), m_Viewport, 0, ~StaticFlagRegistry::ToFlag("select_overlay"));
+		if (!m_SelectedEntities.empty())
+			m_Renderer->Draw(m_EntityManager->GetActiveEntities(), m_Viewport, 0, StaticFlagRegistry::ToFlag("select_overlay"));
 		if (m_DragSelect)
 		{
-			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-			//m_Viewport->SetupGC(gc);
+			//CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+			CL_GraphicContext gc = m_Renderer->SetupDraw(m_Viewport);
 			CL_Draw::box(gc, m_SelectionRectangle, CL_Colorf::white);
-			//m_Viewport->ResetGC(gc);
+			m_Renderer->PostDraw();
 		}
 	}
 
@@ -586,29 +646,21 @@ namespace FusionEngine
 		{
 			if (m_ReceivedMouseDown)
 			{
-				float moveSize = (ev.PointerPosition - m_LastDragMove).length();
+				float stepSize = (ev.PointerPosition - m_LastDragMove).length();
+				float moveSize = (ev.PointerPosition - m_DragFrom).length();
 
 				m_Dragging = true;
 				// Decide whether the user intends to create a new selection box, or drag selected entities
-				if ((m_ActiveTool == tool_move && m_ShiftSelect)
-					|| ((m_DragSelect || m_SelectedEntities.empty()) && (m_ActiveTool == tool_move || ev.Control || moveSize > 5.0f)))
+				if ((m_ActiveTool == tool_move && (m_ShiftSelect || ev.Alt))
+					|| m_DragSelect
+					|| m_SelectedEntities.empty() && (m_ActiveTool == tool_move || ev.Control))
 				{
-					m_LastDragMove = ev.PointerPosition;
 					m_DragSelect = true;
-
-					m_SelectionRectangle.right = (float)ev.PointerPosition.x;
-					m_SelectionRectangle.bottom = (float)ev.PointerPosition.y;
-
-					GameMapLoader::MapEntityArray entitiesUnderMouse;
-					GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, true);
-					if (!m_ShiftSelect)
-						DeselectAll();
-					std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [this](const MapEntityPtr& map_entity){ SelectEntity(map_entity); });
+					updateSelectionRectangle(ev.PointerPosition, true);
 				}
-				else if (ev.Control || moveSize > 5.0f)
+				else if (ev.Control || stepSize >= 5.0f)
 				{
-					m_LastDragMove = ev.PointerPosition;
-					Vector2 offset = ev.PointerPosition - m_DragFrom;
+					Vector2 offset = ev.PointerPosition; translateScreenToWorld(&offset, m_Renderer, m_Viewport); offset -= m_DragFrom;
 					for (auto it = m_SelectedEntities.begin(), end = m_SelectedEntities.end(); it != end; ++it)
 					{
 						EditorMapEntity* editorEntity = dynamic_cast<EditorMapEntity*>(it->get());
@@ -618,12 +670,20 @@ namespace FusionEngine
 						});
 					}
 				}
+				else
+					return; // this is to skip the next line if no drag operation was performed for this input
+				m_LastDragMove = ev.PointerPosition;
 			}
 			return;
 		}
 		else if (ev.Code == CL_KEY_SHIFT)
 		{
 			m_ShiftSelect = ev.ButtonPressed;
+			return;
+		}
+		else if (ev.Code == CL_KEY_MENU)
+		{
+			m_AltSelect = ev.ButtonPressed;
 			return;
 		}
 		// Button released. Note that this is the global handler (for input received when
@@ -675,8 +735,9 @@ namespace FusionEngine
 					//if (m_ActiveTool == tool_move)
 					{
 						m_DragFrom = ev.PointerPosition;
-						m_SelectionRectangle.right = m_SelectionRectangle.left = (float)ev.PointerPosition.x;
-						m_SelectionRectangle.bottom = m_SelectionRectangle.top = (float)ev.PointerPosition.y;
+						translateScreenToWorld(&m_DragFrom, m_Renderer, m_Viewport);
+						m_SelectionRectangle.right = m_SelectionRectangle.left = m_DragFrom.x;
+						m_SelectionRectangle.bottom = m_SelectionRectangle.top = m_DragFrom.y;
 					}
 					break;
 				}
@@ -709,12 +770,14 @@ namespace FusionEngine
 						// This conditional makes sure the move is only counted as a
 						//  drag operation if it was probably intended to be - if the
 						//  move tool isn't selected, small movements are probably unintentional
-						if (m_Dragging && (m_ActiveTool == tool_move || (ev.PointerPosition - m_DragFrom).squared_length() > 1.0f))
+						if (m_Dragging
+							&& !m_SelectedEntities.empty()
+							&& (m_ActiveTool == tool_move || (ev.PointerPosition - m_DragFrom).squared_length() > 1.0f))
 						{
 							if (!m_DragSelect)
 							{
 								// How much the pointer has moved since the mouse-button was pressed
-								Vector2 offset = ev.PointerPosition - m_DragFrom;
+								Vector2 offset = ev.PointerPosition; translateScreenToWorld(&offset, m_Renderer, m_Viewport); offset -= m_DragFrom;
 
 								// This function will perform the actual drag action
 								auto fn_move = [&offset](const MapEntityPtr& map_entity)
@@ -774,19 +837,6 @@ namespace FusionEngine
 		}
 	}
 
-	void translatePointerToWorld(Vector2::type* x, Vector2::type* y, Renderer* renderer, const ViewportPtr& view)
-	{
-		// Figure out where the pointer is within the world
-		CL_Rectf area;
-		renderer->CalculateScreenArea(area, view, true);
-		*x += area.left; *y += area.top;
-	}
-
-	void translatePointerToWorld(Vector2* pointerPos, Renderer* renderer, const ViewportPtr& view)
-	{
-		translatePointerToWorld(&pointerPos->x, &pointerPos->y, renderer, view);
-	}
-
 	inline void Editor::processLeftClick(const RawInput &ev)
 	{
 		switch (m_ActiveTool)
@@ -838,7 +888,7 @@ namespace FusionEngine
 			{
 			// Find Entities under the cursor
 			Vector2 worldPosition(ev.PointerPosition);
-			translatePointerToWorld(&worldPosition, m_Renderer, m_Viewport);
+			translateScreenToWorld(&worldPosition, m_Renderer, m_Viewport);
 
 			GameMapLoader::MapEntityArray entitiesUnderMouse;
 			GetEntitiesAt(entitiesUnderMouse, worldPosition);
@@ -846,6 +896,75 @@ namespace FusionEngine
 			}
 			break;
 		}
+	}
+
+	void Editor::updateSelectionRectangle(const Vector2& pointer_position, bool translate_position)
+	{
+		float oldWidth = std::abs(m_SelectionRectangle.get_width());
+		float oldHeight = std::abs(m_SelectionRectangle.get_height());
+
+		m_SelectionRectangle.right = pointer_position.x;
+		m_SelectionRectangle.bottom = pointer_position.y;
+		if (translate_position)
+			translateScreenToWorld(&m_SelectionRectangle.right, &m_SelectionRectangle.bottom, m_Renderer, m_Viewport);
+
+		EntitySet entitiesUnselected;
+		if (!m_ShiftSelect && (std::abs(m_SelectionRectangle.get_width()) < oldWidth || std::abs(m_SelectionRectangle.get_height()) < oldHeight))
+			entitiesUnselected.insert(m_SelectedEntities.begin(),  m_SelectedEntities.end());
+
+		// Select entities found within the updated selection rectangle
+		GameMapLoader::MapEntityArray entitiesUnderMouse;
+		GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, false);
+		std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [&, this](const MapEntityPtr& map_entity) {
+			EditorMapEntityPtr editor_entity = boost::dynamic_pointer_cast<EditorMapEntity>(map_entity);
+			if (!m_ShiftSelect)
+				entitiesUnselected.erase(editor_entity);
+			if (!m_AltSelect)
+				selectEntity(editor_entity);
+			else
+				deselectEntity(editor_entity);
+		});
+		// Deselect all the entities not found in the updated rectangle
+		std::for_each(entitiesUnselected.begin(), entitiesUnselected.end(), [&, this](const EditorMapEntityPtr& editor_entity) {
+			if (!m_AltSelect)
+				deselectEntity(editor_entity);
+			else
+				selectEntity(editor_entity);
+		} );
+	}
+
+	// TODO: remove duplicate code between this and the above (sorry, to tired to do it as I type this)
+	void Editor::updateSelectionRectangleByOffset(const Vector2& offset)
+	{
+		float oldWidth = std::abs(m_SelectionRectangle.get_width());
+		float oldHeight = std::abs(m_SelectionRectangle.get_height());
+
+		m_SelectionRectangle.right += offset.x;
+		m_SelectionRectangle.bottom += offset.y;
+
+		EntitySet entitiesUnselected;
+		if (!m_ShiftSelect && (std::abs(m_SelectionRectangle.get_width()) < oldWidth || std::abs(m_SelectionRectangle.get_height()) < oldHeight))
+			entitiesUnselected.insert(m_SelectedEntities.begin(),  m_SelectedEntities.end());
+
+		// Select entities found within the updated selection rectangle
+		GameMapLoader::MapEntityArray entitiesUnderMouse;
+		GetEntitiesOverlapping(entitiesUnderMouse, m_SelectionRectangle, false);
+		std::for_each(entitiesUnderMouse.begin(), entitiesUnderMouse.end(), [&, this](const MapEntityPtr& map_entity) {
+			EditorMapEntityPtr editor_entity = boost::dynamic_pointer_cast<EditorMapEntity>(map_entity);
+			if (!m_ShiftSelect)
+				entitiesUnselected.erase(editor_entity);
+			if (!m_AltSelect)
+				selectEntity(editor_entity);
+			else
+				deselectEntity(editor_entity);
+		});
+		// Deselect all the entities not found in the updated rectangle
+		std::for_each(entitiesUnselected.begin(), entitiesUnselected.end(), [&, this](const EditorMapEntityPtr& editor_entity) {
+			if (!m_AltSelect)
+				deselectEntity(editor_entity);
+			else
+				selectEntity(editor_entity);
+		} );
 	}
 
 	void Editor::ProcessEvent(Rocket::Core::Event& ev)
@@ -888,6 +1007,7 @@ namespace FusionEngine
 		m_SelectionMenuConnections.push_back(
 			item->SignalClicked.connect( [this](const MenuItemEvent& ev) { DeselectAll(); m_RightClickMenu->Hide(); } ) );
 		m_EntitySelectionMenu->AddChild(item);
+		item->release();
 
 		for (MapEntityArray::const_iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
@@ -1071,14 +1191,14 @@ namespace FusionEngine
 		}
 
 		std::function<bool (b2Fixture*, bool&)> m_Test;
-		GameMapLoader::MapEntityArray* m_Entities;
+		Editor::MapEntityArray* m_Entities;
 	};
 
-	void Editor::GetEntitiesAt(GameMapLoader::MapEntityArray &out, const Vector2 &position, bool screen_to_world)
+	void Editor::GetEntitiesAt(Editor::MapEntityArray &out, const Vector2 &position, bool screen_to_world)
 	{
 		b2Vec2 p(position.x, position.y);
 		if (screen_to_world)
-			translatePointerToWorld(&p.x, &p.y, m_Renderer, m_Viewport);
+			translateScreenToWorld(&p.x, &p.y, m_Renderer, m_Viewport);
 		p *= s_SimUnitsPerGameUnit;
 
 		// Make a small box.
@@ -1094,15 +1214,15 @@ namespace FusionEngine
 		PhysicalWorld::getSingleton().GetB2World()->QueryAABB(&callback, aabb);
 	}
 
-	void Editor::GetEntitiesOverlapping(GameMapLoader::MapEntityArray &out, const CL_Rectf &rectangle, bool convert_coords)
+	void Editor::GetEntitiesOverlapping(Editor::MapEntityArray &out, const CL_Rectf &rectangle, bool screen_to_world)
 	{
 		// Figure out where the rectangle is in the world
 		Vector2 top_left(std::min(rectangle.left, rectangle.right), std::min(rectangle.top, rectangle.bottom));
 		Vector2 bottom_right(std::max(rectangle.left, rectangle.right), std::max(rectangle.top, rectangle.bottom));
-		if (convert_coords)
+		if (screen_to_world)
 		{
-			translatePointerToWorld(&top_left, m_Renderer, m_Viewport);
-			translatePointerToWorld(&bottom_right, m_Renderer, m_Viewport);
+			translateScreenToWorld(&top_left, m_Renderer, m_Viewport);
+			translateScreenToWorld(&bottom_right, m_Renderer, m_Viewport);
 		}
 		// Make an AABB for the given rect
 		b2AABB aabb;
@@ -1166,47 +1286,61 @@ namespace FusionEngine
 	void Editor::SelectEntity(const Editor::MapEntityPtr &map_entity)
 	{
 		EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>( map_entity );
-		// Mark the entity as selected
-		auto result = m_SelectedEntities.insert(editorEntity);
-		if (!result.second) // Don't reselect
-			return;
-		editorEntity->selected = true;
-		// Add the GUI representation of the selection
-		RenderableGeneratedSprite *selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay);
-		selectionOverlay->AddTag("select_overlay");
-		selectionOverlay->AddTag("select_overlay_box");
-		selectionOverlay->SetOrigin(origin_center);
-		editorEntity->entity->AddRenderable(selectionOverlay); // Add the renderable to the entity
-		// List the renderable in the editor entity (so it can be efficiently accessed - without searching every renderable)
-		editorEntity->selectionRenderables.push_back(selectionOverlay);
-
-		selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay_Rotate);
-		selectionOverlay->AddTag("select_overlay");
-		selectionOverlay->AddTag("select_overlay_rotate");
-		selectionOverlay->SetOrigin(origin_center);
-		editorEntity->entity->AddRenderable(selectionOverlay);
-		editorEntity->selectionRenderables.push_back(selectionOverlay);
+		if (!editorEntity->selected)
+			selectEntity(editorEntity);
 	}
 
 	void Editor::DeselectEntity(const Editor::MapEntityPtr &map_entity)
 	{
 		EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>( map_entity );
-		auto _where = m_SelectedEntities.find(editorEntity);
-		if (_where != m_SelectedEntities.end())
-		{
-			editorEntity->selected = false;
-			editorEntity->entity->RemoveRenderablesWithTag("select_overlay");
-			editorEntity->selectionRenderables.clear();
-			m_SelectedEntities.erase(_where);
-		}
+		if (editorEntity->selected)
+			deselectEntity(editorEntity);
+	}
+
+	static void removeSelectionData(const EditorMapEntityPtr &editorEntity)
+	{
+		editorEntity->entity->RemoveRenderablesWithTag("select_overlay");
+		editorEntity->selected = false;
+		editorEntity->selectionRenderables.clear();
 	}
 
 	void Editor::DeselectAll()
 	{
-		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), [](const EditorMapEntityPtr &selectedEntity) {
-			selectedEntity->entity->RemoveRenderablesWithTag("select_overlay");
-			selectedEntity->selected = false; });
+		std::for_each(m_SelectedEntities.begin(), m_SelectedEntities.end(), &removeSelectionData);
 		m_SelectedEntities.clear();
+	}
+
+	void Editor::selectEntity(const EditorMapEntityPtr &editor_entity)
+	{
+		// Mark the entity as selected
+		auto result = m_SelectedEntities.insert(editor_entity);
+		if (!result.second) return; // Don't reselect
+		editor_entity->selected = true;
+		// Add the GUI representation of the selection
+		RenderableGeneratedSprite *selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay);
+		selectionOverlay->AddTag("select_overlay");
+		selectionOverlay->AddTag("select_overlay_box");
+		selectionOverlay->SetOrigin(origin_center);
+		editor_entity->entity->AddRenderable(selectionOverlay); // Add the renderable to the entity
+		// List the renderable in the editor entity (so it can be efficiently accessed - without searching every renderable)
+		editor_entity->selectionRenderables.push_back(selectionOverlay);
+
+		selectionOverlay = new RenderableGeneratedSprite(m_SelectionOverlay_Rotate);
+		selectionOverlay->AddTag("select_overlay");
+		selectionOverlay->AddTag("select_overlay_rotate");
+		selectionOverlay->SetOrigin(origin_center);
+		editor_entity->entity->AddRenderable(selectionOverlay);
+		editor_entity->selectionRenderables.push_back(selectionOverlay);
+	}
+
+	void Editor::deselectEntity(const EditorMapEntityPtr &editor_entity)
+	{
+		auto _where = m_SelectedEntities.find(editor_entity);
+		if (_where != m_SelectedEntities.end())
+		{
+			removeSelectionData(editor_entity);
+			m_SelectedEntities.erase(_where);
+		}
 	}
 
 	void Editor::LookUpEntityType(StringVector &results, const std::string &search_term)

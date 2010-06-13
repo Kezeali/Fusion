@@ -33,6 +33,7 @@
 #include "FusionEditor.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
+#include "FusionFlagRegistry.h"
 #include "FusionGameMapLoader.h"
 #include "FusionInstanceSynchroniser.h"
 #include "FusionOntologicalSystem.h"
@@ -96,6 +97,9 @@ namespace FusionEngine
 
 	void FirstCause::Initialise(ModulePtr module)
 	{
+		// The static flag registry is used by renderables for quick filtering
+		new StaticFlagRegistry();
+
 		m_EntityFactory = new EntityFactory();
 		m_EntitySync = new EntitySynchroniser(m_InputManager);
 		m_Streaming = new StreamingManager();

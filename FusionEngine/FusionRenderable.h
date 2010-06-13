@@ -123,6 +123,9 @@ namespace FusionEngine
 		//! Returns true if the given tag is attached to this renderable
 		bool HasTag(const std::string &tag) const;
 
+		uint32_t RefreshFlags();
+		uint32_t GetFlags() const;
+
 		//! Sets the relative depth of this renderable
 		/*!
 		* Depth is relative to other renderables attached to the same Entity.
@@ -146,6 +149,7 @@ namespace FusionEngine
 		bool m_Enabled;
 		int m_Depth;
 		TagStringSet m_Tags;
+		uint32_t m_FlagsCache;
 
 		CL_Origin m_Origin;
 		Vector2 m_Offset;

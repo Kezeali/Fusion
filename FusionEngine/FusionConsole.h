@@ -136,6 +136,9 @@ namespace FusionEngine
 		//! Binds a command given the passed definition
 		void BindCommand(const std::string &command, const CommandFunctions &functions, const CommandHelp &help);
 
+		//! Removes binding identified by the given command
+		void UnbindCommand(const std::string &command);
+
 		//! Sets the help text for the given command
 		void SetCommandHelpText(const std::string &command, const std::string &help_text, const StringVector &arg_names);
 

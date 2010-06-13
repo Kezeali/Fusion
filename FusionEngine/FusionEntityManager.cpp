@@ -871,6 +871,11 @@ namespace FusionEngine
 		renderer->Draw(m_ActiveEntities, viewport, layer);
 	}
 
+	EntityArray& EntityManager::GetActiveEntities()
+	{
+		return m_ActiveEntities;
+	}
+
 	void EntityManager::SetDomainState(EntityDomain domain_index, char modes)
 	{
 		m_DomainState[domain_index] = modes;

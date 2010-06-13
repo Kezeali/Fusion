@@ -33,6 +33,7 @@ Elliot Hayward
 #endif
 
 #include <cmath>
+#include <type_traits>
 
 namespace FusionEngine
 {
@@ -42,21 +43,29 @@ namespace FusionEngine
 	class Vector2T
 	{
 	public:
+		static_assert(std::is_arithmetic<T>::value, "T is an invalid component type for a coordinate vector");
 		typedef T type;
 	public:
 		//! Init. constructor
-		Vector2T(T _x = 0.0, T _y = 0.0)
+		Vector2T(T _x = 0, T _y = 0)
 			: x(_x),
 			y(_y)
 		{
 		}
 
+		//! Move constructor
+		Vector2T(Vector2T<T>&& other)
+			: x(std::move(other.x)),
+			y(std::move(other.y))
+		{
+		}
+
 		//! Copy constructor (from double)
-		Vector2T(const Vector2T<double> &other);
+		Vector2T(const Vector2T<double>& other);
 		//! Copy constructor (from float)
-		Vector2T(const Vector2T<float> &other);
+		Vector2T(const Vector2T<float>& other);
 		//! Copy constructor (from int)
-		Vector2T(const Vector2T<int> &other);
+		Vector2T(const Vector2T<int>& other);
 
 	public:
 		//! Coordinates
@@ -96,14 +105,21 @@ namespace FusionEngine
 		///////////////
 		// Assignement
 		//! Assignment operator
-		Vector2T<T> &operator=(const Vector2T<T> &other)
+		Vector2T<T>& operator=(const Vector2T<T>& other)
 		{ 
 			x = other.x;
 			y = other.y;
 			return *this;
 		}
+		//! Move assignment
+		Vector2T<T>& operator=(Vector2T<T>&& other)
+		{ 
+			x = std::move(other.x);
+			y = std::move(other.y);
+			return *this;
+		}
 		//! Addition assignment operator
-		Vector2T<T> &operator+=(const Vector2T<T> &other)
+		Vector2T<T>& operator+=(const Vector2T<T>& other)
 		{
 			x += other.x;
 			y += other.y;
@@ -111,14 +127,14 @@ namespace FusionEngine
 		}
 
 		//! Subtraction assignment operator
-		Vector2T<T> &operator-=(const Vector2T<T> &other)
+		Vector2T<T>& operator-=(const Vector2T<T>& other)
 		{
 			x -= other.x;
 			y -= other.y;
 			return *this;
 		}
 		//! Multiplication assignment operator
-		Vector2T<T> &operator*=(T scalar)
+		Vector2T<T>& operator*=(T scalar)
 		{
 			x *= scalar;
 			y *= scalar;

@@ -286,6 +286,12 @@ namespace FusionEngine
 		m_CommandHelp[command] = help;
 	}
 
+	void Console::UnbindCommand(const std::string &command)
+	{
+		m_Commands.erase(command);
+		m_CommandHelp.erase(command);
+	}
+
 	void Console::SetCommandHelpText(const std::string &command, const std::string &help_text, const FusionEngine::StringVector &arg_names)
 	{
 		CommandHelpMap::iterator _where = m_CommandHelp.find(command);

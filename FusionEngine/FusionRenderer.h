@@ -67,24 +67,74 @@ namespace FusionEngine
 		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 		void CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 
-		const CL_GraphicContext &GetGraphicContext() const;
+		//! Returns the GC object used by this renderer
+		const CL_GraphicContext& GetGraphicContext() const;
 
 		int GetContextWidth() const;
 		int GetContextHeight() const;
+
+		//! Sets up the given GC to render within the given viewport
+		CL_GraphicContext& SetupDraw(CL_GraphicContext& gc, const ViewportPtr& viewport, CL_Rectf* draw_area = nullptr);
+		//! Resets the given GC to as it was before SetupDraw was called, assuming SetupDraw has been called
+		void PostDraw(CL_GraphicContext& gc);
+
+		//! Sets up the GC to render within the given viewport
+		CL_GraphicContext& SetupDraw(const ViewportPtr& viewport, CL_Rectf* draw_area = nullptr);
+		//! Resets the GC to as it was before SetupDraw was called, assuming SetupDraw has been called
+		void PostDraw();
 
 		//! Draws the given entities
 		/*!
 		* Each call to draw on a given list of entities runs one iteration of
 		* bubble sort to (eventually) sort the list by each entity's depth property.
+		* \param[in] entities
+		* The collection of entities to draw
+		*
+		* \param[in] viewport
+		* The viewport in which to draw the entities
+		*
+		* \param[in] layer
+		* The filter-layer of entities to draw (other entitites will be excluded)
 		*/
-		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer = 0);
+		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer);
+		//! Draws the given entities
+		/*!
+		* \param[in] entities
+		* The collection of entities to draw
+		*
+		* \param[in] viewport
+		* The viewport in which to draw the entities
+		*
+		* \param[in] layer
+		* The filter-layer of entities to draw (other entitites will be excluded)
+		*
+		* \param[in] renderable_tag
+		* Only renderables with this tag will be drawn
+		*/
+		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag);
+		//! Draws the given entities
+		/*!
+		* \param[in] entities
+		* The collection of entities to draw
+		*
+		* \param[in] viewport
+		* The viewport in which to draw the entities
+		*
+		* \param[in] layer
+		* The filter-layer of entities to draw (other entitites will be excluded)
+		*
+		* \param[in] filter_flags
+		* Only renderables with at least one of these flags will be drawn
+		*/
+		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, uint32_t filter_flags);
 
 	protected:
 		bool updateTags(const EntityPtr &entity) const;
 
 		void drawRenderables(EntityPtr &entity, const CL_Rectf &cull_outside);
 
-		void drawNormally(EntityArray &entities, const CL_Rectf &cull_outside, size_t layer);
+		void drawImpl(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
+		void actuallyDraw(EntityArray &entities, const CL_Rectf &cull_outside, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
 		void updateDrawArray();
 
 		struct ChangingTagCollection
