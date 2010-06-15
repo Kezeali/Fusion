@@ -1,75 +1,72 @@
 <rml>
-	<head>
-		<title>Console</title>
-		<link type="text/rcss" href="rkt.rcss"/>
-		<style>
-			body
-			{
-			width: 130px;
-			height: auto;
-			font-family: Delicious;
-			font-weight: normal;
-			font-style: normal;
+  <head>
+    <title>Console</title>
+    <link type="text/rcss" href="rkt.rcss"/>
+    <style>
+      body
+      {
+      width: 130px;
+      height: auto;
+      font-family: Delicious;
+      font-weight: normal;
+      font-style: normal;
 
-			background-color: #bbb;
-			border-width: 1px;
-			border-color: #888;
-			}
+      background-color: #bbb;
+      border-width: 1px;
+      border-color: #888;
+      }
 
-			menuitem,
-			{
-			display: inline-block;
+      menuitem,
+      {
+      display: inline-block;
 
-			width: 128px;
-			height: 30px;
+      width: 128px;
+      height: 30px;
 
-			color: white;
-			font-size: 18;
-			text-align: center;
-			tab-index: auto;
+      color: white;
+      font-size: 18;
+      text-align: center;
+      tab-index: auto;
 
-			background-color: #888;
-			}
+      background-color: #aaa;
+      }
 
-			menuitem:focus,
-			{
-			font-weight: bold;
+      menuitem:submenu
+      {
+      background-color: #3fab2a;
+      }
 
-			shadow-font-effect: shadow;
-			shadow-offset: 1px 1px;
-			shadow-color: black;
-			}
+      menuitem:focus,
+      {
+      font-weight: bold;
 
-			menuitem:hover,
-			{
-			font-weight: bold;
+      shadow-font-effect: shadow;
+      shadow-offset: 1px 1px;
+      shadow-color: black;
+      }
 
-			shadow-font-effect: shadow;
-			shadow-offset: 1px 1px;
-			shadow-color: blue;
-			background-color: #3f2aab;
-			}
+      menuitem:hover,
+      {
+      font-weight: bold;
 
-			menuitem:selected,
-			{
-			font-weight: bold;
+      background-color: #3f2aab;
+      }
 
-			shadow-font-effect: shadow;
-			shadow-offset: 1px 1px;
-			shadow-color: blue;
-			background-color: #3fadab;
-			}
+      menuitem:selected,
+      {
+      font-weight: bold;
 
-			menuitem:active,
-			{
-			}
+      shadow-font-effect: shadow;
+      shadow-offset: 1px 1px;
+      shadow-color: blue;
+      background-color: #3fadab;
+      }
 
-			menuitem:submenu
-			{
-			background-color: #3fab2a;
-			}
-		</style>
-	</head>
-	<body>
-	</body>
+      menuitem:active,
+      {
+      }
+    </style>
+  </head>
+  <body>
+  </body>
 </rml>
