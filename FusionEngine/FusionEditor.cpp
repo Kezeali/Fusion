@@ -858,7 +858,53 @@ namespace FusionEngine
 			}
 			break;
 		case tool_delete:
-			break;
+			{
+				MapEntityArray underMouse;
+				GetEntitiesAt(underMouse, ev.PointerPosition, true);
+				if (ev.Shift)
+				{
+					MultiAction* multi_delete = new MultiAction();
+					for (auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+					{
+						EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(*it);
+						if (editorEntity)
+						{
+							UndoableActionPtr deleteAction( new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, editorEntity, false) );
+							multi_delete->AddAction( deleteAction );
+							RemoveEntity(editorEntity);
+							editorEntity->ArchiveEntity();
+						}
+					}
+					m_UndoManager.Add( UndoableActionPtr(multi_delete) );
+				}
+				else
+				{
+					DisplayError("Not Implemented", "Deleting entities is not implemented");
+					// X
+					//ShowMessage("Delete Entities", "Are you sure you want to delete the following entities: ", underMouse);
+
+					// A
+					//MessageBox* message = new MessageBox(...);
+					//m_MessageBoard.Post(message)
+					//m_MessageBoard.Connections.push_back(message->AcceptClicked.connect(...));
+					//message->Show();
+
+					// B
+					//MessageBox message("Delete Entities", "Are you sure you want to delete the following entities: ", underMouse);
+					// SetAcceptBehaviour creates a SingleUseEventListener which, upon receiving the expected
+					//  event, excecutes it's helf function-object and deletes itself. Also deletes itself if
+					//  OnDetach is received.
+					//message.SetAcceptBehaviour([this, underMouse](const std::string& id)
+					//{
+					//	for ( auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+					//	{
+					//		RemoveEntity(*it);
+					//	}
+					//});
+					//message.Show();
+					break;
+				}
+			}
 		case tool_move:
 			// Toggle selection
 			if (m_ActiveTool == tool_move && m_ShiftSelect)
@@ -981,11 +1027,32 @@ namespace FusionEngine
 				}
 			} 
 		}
+		else if (ev == "accept_clicked")
+			GUI::getSingleton().GetContext()->GetDocument("error_message")->Close();
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)
 	{
-		SendToConsole(title + " error:" + message);
+		SendToConsole(title + ": " + message);
+
+		using namespace Rocket::Core;
+
+		EMP::Core::String empTitle(title.data(), title.data() + title.length());
+		EMP::Core::String empMessage(message.data(), message.data() + message.length());
+
+		ElementDocument* document = GUI::getSingleton().GetContext()->LoadDocument("core/gui/message_box.rml");
+		document->SetId("error_message");
+		document->SetTitle(empTitle);
+
+		Element* message_label = document->GetElementById("message_label");
+		message_label->SetInnerRML(empMessage);
+
+		document->SetPseudoClass("error_message", true);
+
+		document->AddEventListener("accept_clicked", this);
+
+		document->Show( ElementDocument::MODAL );
+		document->RemoveReference();
 	}
 
 	void Editor::clearCtxMenu(MenuItem *menu, Editor::MenuItemConnections &connections)

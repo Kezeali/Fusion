@@ -240,21 +240,21 @@ public:
 
 				scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
 				{
 					scriptingManager->GetEnginePtr()->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
 					std::stringstream stats;
 					stats << "Script object count: " << currentSize << "\n";
 					stats << "    GC has destroyed " << totalDestroyed << " objects total\n";
-					stats << "    GC last detected " << totalDetected << " garbage objects";
+					stats << "    GC has detected  " << totalDetected << " garbage objects in total";
 					statsFont.draw_text(gc, CL_Pointf(20, 25), stats.str());
 				}
-//#endif
+#endif
 
 				dispWindow.flip();
-//#ifdef _DEBUG
+#ifdef _DEBUG
 				dispWindow.get_gc().clear();
-//#endif
+#endif
 			}
 
 			scriptingManager->GetEnginePtr()->GarbageCollect();

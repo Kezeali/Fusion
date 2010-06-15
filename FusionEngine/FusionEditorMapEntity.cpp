@@ -68,6 +68,8 @@ namespace FusionEngine
 
 	void EditorMapEntity::ArchiveEntity()
 	{
+		if (!this->entity)
+			FSN_EXCEPT(ExCode::InvalidArgument, "EditorMapEntity::ArchiveEntity", "No entity to archive");
 		m_SavedState.seek(0);
 		GameMapLoader::SaveEntity(this->entity, m_SavedState);
 		this->fixture.reset();
@@ -76,6 +78,8 @@ namespace FusionEngine
 
 	void EditorMapEntity::RestoreEntity(EntityFactory *factory, const IEntityRepo *manager)
 	{
+		if (m_SavedState.get_size() < 0)
+			FSN_EXCEPT(ExCode::InvalidArgument, "EditorMapEntity::RestoreEntity", "Can't restore without archiving first - call ArchiveEntity before RestoreEntity.");
 		m_SavedState.seek(0);
 		this->entity = GameMapLoader::LoadEntity(factory, manager, m_SavedState);
 		CreateEditorFixture();

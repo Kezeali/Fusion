@@ -125,6 +125,7 @@ namespace FusionEngine
 
 		void ProcessEvent(Rocket::Core::Event& ev);
 
+		void ShowMessage(const std::string& title, const std::string& message, const MapEntityArray& entities);
 		void DisplayError(const std::string &title, const std::string &message);
 		void ShowContextMenu(const Vector2i &position, const MapEntityArray &entities);
 		void ShowProperties(const EntityPtr &entity);
