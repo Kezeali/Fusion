@@ -52,7 +52,7 @@ namespace FusionEngine
 	//	typedef InvalidArgumentException InvalidArgument;
 	//}
 
-	//! Exception codes
+	//! Exception codes [do not use these]
 	struct ExCode
 	{
 		enum ExceptionCodes
@@ -71,6 +71,29 @@ namespace FusionEngine
 	struct ExceptionClass
 	{
 		enum { code = T };
+
+		typedef Exception type;
+	};
+
+	template <>
+	struct ExceptionClass<ExCode::IO> {
+		enum { code = ExCode::IO }; typedef FileSystemException type;
+	};
+	template <>
+	struct ExceptionClass<ExCode::FileNotFound> {
+		enum { code = ExCode::FileNotFound }; typedef FileNotFoundException type;
+	};
+	template <>
+	struct ExceptionClass<ExCode::FileType> {
+		enum { code = ExCode::FileType }; typedef FileTypeException type;
+	};
+	template <>
+	struct ExceptionClass<ExCode::NotImplemented> {
+		enum { code = ExCode::NotImplemented }; typedef NotImplementedException type;
+	};
+	template <>
+	struct ExceptionClass<ExCode::InvalidArgument> {
+		enum { code = ExCode::InvalidArgument }; typedef InvalidArgumentException type;
 	};
 
 	//! Creates exceptions
@@ -78,12 +101,36 @@ namespace FusionEngine
 	{
 	public:
 
+		template <class ExType>
+		static ExType Create(const std::string& origin, const std::string& message, const char* file, long line)
+		{
+			static_assert (std::is_base_of<Exception, ExType>::value);
+			return ExType(origin, message, file, line);
+		}
+
+		template <int ExID>
+		static typename ExceptionClass<ExID>::type Create(const std::string& origin, const std::string& message, const char* file, long line)
+		{
+#ifdef _DEBUG
+			std::string relativeFile;
+			std::string basePath = CL_PathHelp::get_basepath( CL_PathHelp::normalize( __FILE__ ) );
+			relativeFile = CL_PathHelp::make_relative(basePath, file);
+#endif
+			return Create(ExceptionClass<ExID>(), origin, message,
+#ifdef _DEBUG
+				relativeFile.c_str(),
+#else
+				CL_PathHelp::get_filename(file).c_str(),
+#endif
+				line);
+		}
+
 		//! Creates a FileSystemException
 		static FileSystemException Create(
-			ExceptionClass<ExCode::IO> type, 
+			FusionEngine::ExceptionClass<ExCode::IO> type,
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			return FileSystemException(origin, message, file, line);
+			return FileSystemException(message, origin, file, line);
 		}
 
 		//! Creates a FileTypeExcepton
@@ -91,7 +138,7 @@ namespace FusionEngine
 			ExceptionClass<ExCode::FileType> type, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			return FileTypeException(origin, message, file, line);
+			return FileTypeException(message, origin, file, line);
 		}
 
 		//! Creates a FileNotFoundException
@@ -99,7 +146,7 @@ namespace FusionEngine
 			ExceptionClass<ExCode::FileNotFound> type, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			return FileNotFoundException(origin, message, file, line);
+			return FileNotFoundException(message, origin, file, line);
 		}
 
 		//! Creates a ResourceNotLoadedException
@@ -107,7 +154,7 @@ namespace FusionEngine
 			ExceptionClass<ExCode::NotImplemented> type, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			return NotImplementedException(origin, message, file, line);
+			return NotImplementedException(message, origin, file, line);
 		}
 
 		//! Creates a InvalidArgumentException
@@ -115,19 +162,18 @@ namespace FusionEngine
 			ExceptionClass<ExCode::InvalidArgument> type,
 			const std::string &origin, const std::string &message, const char *file, long line)
 		{
-			return InvalidArgumentException(origin, message, file, line);
+			return InvalidArgumentException(message, origin, file, line);
 		}
 	};
 
 #ifndef FSN_EXCEPT
-#define FSN_EXCEPT(num, src, desc) throw FusionEngine::ExceptionFactory::Create( \
-	FusionEngine::ExceptionClass<num>(), src, desc, __FILE__, __LINE__ )
+#define FSN_EXCEPT(type, src, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+	src, desc, __FILE__, __LINE__ )
 #endif
 	// Unicode version
 #ifndef FSN_WEXCEPT
-#define FSN_WEXCEPT(num, src, desc) throw FusionEngine::ExceptionFactory::Create( \
-	FusionEngine::ExceptionClass<num>(), fe_narrow(src), \
-	fe_narrow(desc), __FILE__, __LINE__ )
+#define FSN_WEXCEPT(type, src, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+	fe_narrow(src), fe_narrow(desc), __FILE__, __LINE__ )
 #endif
 
 

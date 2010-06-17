@@ -67,7 +67,7 @@ namespace FusionEngine
 
 	const std::string& Exception::GetName() const
 	{
-		static const std::string strName(typeid(this).name());
+		static const std::string strName(typeid(*this).name());
 		return strName;
 	}
 
