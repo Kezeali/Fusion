@@ -44,8 +44,10 @@ std::vector<char> PhysFSHelp::copy_file(const std::string& from, const std::stri
 {
 	PHYSFS_File *fromFile = PHYSFS_openRead(from.c_str());
 	if (fromFile == nullptr)
-		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to open " + from + " for copying (probably doesn't exist)."); // failed to open
+		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to open " + from + " for copying (probably doesn't exist).");
 	PHYSFS_File *toFile = PHYSFS_openWrite(to.c_str());
+	if (toFile == nullptr)
+		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to create / overwrite target file " + to + ".");
 
 	PHYSFS_sint32 totalLength = (PHYSFS_sint32)PHYSFS_fileLength(fromFile);
 	std::vector<char> buffer(totalLength);
