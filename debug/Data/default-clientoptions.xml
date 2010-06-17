@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<clientoptions>
+<settings>
 	<!--var elements are stored in a map-->
 	<var name="console_logging" value="true"/>
 	<var name="num_local_players" value="0"/>
@@ -13,4 +13,4 @@
 		<var name="showhud" value="true"/>
 		<var name="name" value="Player 1"/>
 	</playeroptions>
-</clientoptions>
+</settings>
