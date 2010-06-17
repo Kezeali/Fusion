@@ -152,9 +152,9 @@ public:
 			// Make sure the GC is properly configured
 			CL_OpenGL::set_active(gc);
 
-			//////////////////////
-			// Load client options
-			ClientOptions* co = new ClientOptions("clientoptions.xml", "clientoptions");
+			/////////////////////////
+			// Load optional settings
+			ClientOptions* co = new ClientOptions("settings.xml", "settings");
 
 			if (co->GetOption_bool("console_logging"))
 				logger->ActivateConsoleLogging();

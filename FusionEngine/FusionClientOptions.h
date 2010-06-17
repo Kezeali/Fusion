@@ -53,7 +53,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		ClientOptions(const std::string &type = "clientoptions");
+		ClientOptions(const std::string &type = "settings");
 		//! Constructor +file
 		ClientOptions(const std::string &filename, const std::string &type);
 		//! Clears controls
