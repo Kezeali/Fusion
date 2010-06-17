@@ -25,6 +25,7 @@
 #include "FusionInputHandler.h"
 
 #include "FusionExceptionFactory.h"
+#include "FusionPhysFS.h"
 #include "FusionLogger.h"
 #include "FusionStringFormatting.h"
 #include "FusionXML.h"
@@ -199,23 +200,9 @@ namespace FusionEngine
 			// Load the input-definitions file for the current game
 			ticpp::Document inputDoc(OpenXml_PhysFS("inputdefinitions.xml"));
 			m_DefinitionLoader->Load(inputDoc);
-		}
-		catch (FileSystemException &ex)
-		{
-			m_Log->AddEntry(ex.ToString(), LOG_NORMAL);
-		}
-		try
-		{
 			// Load the core key-info file
 			ticpp::Document keyDoc(OpenXml_PhysFS("core/input/keyinfo.xml"));
 			loadKeyInfo(keyDoc);
-		}
-		catch (FileSystemException &ex)
-		{
-			m_Log->AddEntry(ex.ToString(), LOG_NORMAL);
-		}
-		try
-		{
 			// Load the controls file - will probably be in the user's home folder (the virtual file-system (PhysFS) takes care of this)
 			LoadInputMaps("controls.xml");
 		}
@@ -302,9 +289,18 @@ namespace FusionEngine
 
 	void InputManager::LoadInputMaps(const std::string &filename)
 	{
-		// Read file
-		ticpp::Document doc(OpenXml_PhysFS(filename));
-
+		TiXmlDocument* inner = nullptr;
+		// Create the file if it doesn't exist
+		if (PHYSFS_exists(filename.c_str()) == 0)
+		{
+			std::vector<char> buffer = PhysFSHelp::copy_file("default-" + filename, filename);
+			inner = new TiXmlDocument();
+			inner->Parse(buffer.data());
+		}
+		else
+			inner = OpenXml_PhysFS(filename);
+		// Read the file
+		ticpp::Document doc(inner);
 		loadControls(&doc);
 	}
 

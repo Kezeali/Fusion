@@ -104,7 +104,7 @@ namespace FusionEngine
 		template <class ExType>
 		static ExType Create(const std::string& origin, const std::string& message, const char* file, long line)
 		{
-			static_assert (std::is_base_of<Exception, ExType>::value);
+			static_assert(std::is_base_of<Exception, ExType>::value, "Requires Exception-derrived type");
 			return ExType(origin, message, file, line);
 		}
 

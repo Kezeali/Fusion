@@ -40,6 +40,27 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+std::vector<char> PhysFSHelp::copy_file(const std::string& from, const std::string& to)
+{
+	PHYSFS_File *fromFile = PHYSFS_openRead(from.c_str());
+	if (fromFile == nullptr)
+		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to open " + from + " for copying (probably doesn't exist)."); // failed to open
+	PHYSFS_File *toFile = PHYSFS_openWrite(to.c_str());
+
+	PHYSFS_sint32 totalLength = (PHYSFS_sint32)PHYSFS_fileLength(fromFile);
+	std::vector<char> buffer(totalLength);
+	PHYSFS_sint64 readLength = 0;
+	readLength = PHYSFS_read(fromFile, buffer.data(), totalLength, 1);
+	if (readLength != 1)
+		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to read " + from + " for copying."); // failed to read the default file
+	// Write the copy of the file
+	PHYSFS_write(toFile, buffer.data(), totalLength, 1);
+	PHYSFS_close(toFile);
+	PHYSFS_close(fromFile);
+
+	return buffer;
+}
+
 SetupPhysFS::SetupPhysFS()
 {
 	CL_String8 path = CL_StringHelp::text_to_local8(CL_System::get_exe_path());
