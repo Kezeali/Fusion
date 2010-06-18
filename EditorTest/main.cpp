@@ -164,7 +164,7 @@ public:
 			boost::scoped_ptr<InputManager> inputMgr(new InputManager(dispWindow));
 
 			if (!inputMgr->Test())
-				FSN_EXCEPT(ExCode::IO, "main", "InputManager couldn't be started");
+				FSN_EXCEPT(ExCode::IO, "main", "InputManager couldn't find a keyboard device.");
 			inputMgr->Initialise();
 			SendToConsole("Input manager started successfully");
 
