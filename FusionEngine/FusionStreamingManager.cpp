@@ -20,8 +20,7 @@
 *    3. This notice may not be removed or altered from any source distribution.
 *
 *
-*  File Author(s):
-*
+*  File Author:
 *    Elliot Hayward
 */
 #include "FusionStableHeaders.h"
@@ -38,7 +37,7 @@ namespace FusionEngine
 	const float StreamingManager::s_FastTightness = 0.3f;
 
 	const float s_DefaultActivationRange = 1500.f;
-	const float s_DefaultCellSize = 200.f;
+	const float s_DefaultCellSize = 500.f;
 	const float s_DefaultWorldSize = 200000.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
@@ -55,8 +54,8 @@ namespace FusionEngine
 		m_CellSize = s_DefaultCellSize;
 		m_InverseCellSize = 1.f / m_CellSize;
 
-		m_XCellCount = (int)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
-		m_YCellCount = (int)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+		m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+		m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
 		m_Cells = new Cell[m_XCellCount * m_YCellCount];
 	}
@@ -65,6 +64,55 @@ namespace FusionEngine
 	{
 		delete[] m_Cells;
 	}
+
+#ifndef STREAMING_USEMAP
+	//! Finds and removes entry for the given Entity from the given cell
+	static inline void removeEntityFromCell(Cell* cell, const Entity* const entity)
+	{
+		auto newEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+			return pair.first == entity;
+		});
+		cell->objects.erase(newEnd.base());
+	}
+
+	//! Finds and removes the given entity from the given cell, starting the search from the end of the list
+	static inline void rRemoveEntityFromCell(Cell* cell, const Entity* const entity)
+	{
+		auto newEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+			return pair.first == entity;
+		});
+		cell->objects.erase(newEnd.base());
+	}
+
+	//! Finds the entry for the given Entity in the given cell
+	static inline Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const Entity* const entity)
+	{
+		return std::find_if(cell->objects.begin(), cell->objects.end(), [entity](const Cell::EntityEntryPair& pair)->bool {
+			return pair.first == entity;
+		});
+	}
+
+	//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
+	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const Entity* const entity)
+	{
+		return std::find_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+			return pair.first == entity;
+		}).base();
+	}
+
+	//! Creates an entry for the given Entity in the given cell
+	static inline CellEntry& createEntry(Cell* cell, Entity* const entity, const CellEntry& copy_entry)
+	{
+		cell->objects.emplace_back( std::make_pair(entity, copy_entry) );
+		return cell->objects.back().second;
+	}
+
+	//! Creates an entry for the given Entity in the given cell
+	static inline CellEntry& createEntry(Cell* cell, Entity* const entity)
+	{
+		return createEntry(cell, entity, CellEntry());
+	}
+#endif
 
 	void StreamingManager::SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam)
 	{
@@ -134,7 +182,11 @@ namespace FusionEngine
 	void StreamingManager::AddEntity(const EntityPtr &entity)
 	{
 		Cell *cell = CellAtPosition(entity->GetPosition());
-		CellEntry &entry = cell->objects[entity];
+#ifdef STREAMING_USEMAP
+		CellEntry &entry = cell->objects[entity.get()];
+#else
+		CellEntry &entry = createEntry(cell, entity.get());
+#endif
 		entry.x = entity->GetPosition().x; entry.y = entity->GetPosition().y;
 		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
 
@@ -146,12 +198,17 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/);
 		Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
-		cell->objects.erase(entity);
+#ifdef STREAMING_USEMAP
+		cell->objects.erase(entity.get());
+#else
+		removeEntityFromCell(cell, entity.get());
+#endif
 	}
 
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
 	{
 		FSN_ASSERT(entity);
+		Entity* entityKey = entity.get();
 
 		// clamp the new position within bounds
 		Vector2 newPos = entity->GetPosition();
@@ -161,12 +218,16 @@ namespace FusionEngine
 		// gather all of the data we need about this object
 		Cell *currentCell = nullptr;
 		CellEntry *cellEntry = nullptr;
-		std::map<EntityPtr, CellEntry>::iterator _where;
+		Cell::CellEntryMap::iterator _where;
 
 		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/)
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
-			_where = currentCell->objects.find(entity);
+#ifdef STREAMING_USEMAP
+			_where = currentCell->objects.find(entityKey);
+#else
+			_where = rFindEntityInCell(currentCell, entityKey);
+#endif
 			FSN_ASSERT( _where != currentCell->objects.end() );
 			cellEntry = &_where->second;
 		}
@@ -198,14 +259,23 @@ namespace FusionEngine
 		}
 		else
 		{
-			// add to new cell
-			CellEntry &newEntry = newCell->objects[entity];
+			// add the entity to its new cell
+#ifdef STREAMING_USEMAP
+			CellEntry &newEntry = newCell->objects[entityKey];
 			newEntry = *cellEntry; // Copy the current cell data
+#else
+			newCell->objects.emplace_back( std::make_pair(entityKey, *cellEntry) );
+			CellEntry &newEntry = newCell->objects.back().second;
+#endif
 			cellEntry = &newEntry; // Change the pointer (since it is used again below)
 
 			// remove from current cell
 			if (currentCell != nullptr)
+#ifdef STREAMING_USEMAP
 				currentCell->objects.erase(_where);
+#else
+				rRemoveEntityFromCell(currentCell, entityKey);
+#endif
 
 			currentCell = newCell;
 			//m_EntityToCellIndex[entity] = (size_t)(currentCell - m_Cells);
@@ -248,7 +318,7 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::ActivateEntity(const EntityPtr &entity, CellEntry &cell_entry, Cell &cell)
+	void StreamingManager::ActivateEntity(const EntityPtr& entity, CellEntry& cell_entry, Cell& cell)
 	{
 		FSN_ASSERT( !cell_entry.active );
 
@@ -262,8 +332,12 @@ namespace FusionEngine
 
 	void StreamingManager::DeactivateEntity(const EntityPtr &entity)
 	{
-		Cell & cell = m_Cells[entity->GetStreamingCellIndex()];
-		auto _where = cell.objects.find(entity);
+		Cell& cell = m_Cells[entity->GetStreamingCellIndex()];
+#ifdef STREAMING_USEMAP
+		auto _where = cell.objects.find(entity.get());
+#else
+		auto _where = findEntityInCell(&cell, entity.get());
+#endif
 		if (_where == cell.objects.end()) return;
 		CellEntry &cellEntry = _where->second;
 		FSN_ASSERT( cellEntry.active );

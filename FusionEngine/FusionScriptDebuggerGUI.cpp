@@ -106,19 +106,19 @@ namespace FusionEngine
 	{
 		if (ev.type == DebugEvent::Breakpoint && BreakpointsAllowed())
 		{
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+			this->PushMessage(SystemMessage(SystemMessage::PAUSE, "Entities"));
 
 			SetContext(ev.context);
 		}
 		else if (ev.type == DebugEvent::Step && StepthroughEnabled())
 		{
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+			this->PushMessage(SystemMessage(SystemMessage::PAUSE, "Entities"));
 
 			SetContext(ev.context);
 		}
 		else if (ev.type == DebugEvent::Exception && BreakpointsAllowed())
 		{
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE, "Entities"));
+			this->PushMessage(SystemMessage(SystemMessage::PAUSE, "Entities"));
 
 			SetContext(ev.context);
 		}
@@ -156,7 +156,7 @@ namespace FusionEngine
 
 	void ScriptDebuggerGui::TakeStep()
 	{
-		this->PushMessage(new SystemMessage(SystemMessage::STEP, "Entities"));
+		this->PushMessage(SystemMessage(SystemMessage::STEP, "Entities"));
 		Resume();
 	}
 

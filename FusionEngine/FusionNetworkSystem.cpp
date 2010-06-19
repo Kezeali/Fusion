@@ -89,7 +89,7 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	void checkedDelete(T *ptr)
+	void checkedDelete(T*& ptr)
 	{
 		if (ptr != nullptr)
 		{

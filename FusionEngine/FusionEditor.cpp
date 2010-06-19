@@ -480,7 +480,9 @@ namespace FusionEngine
 		m_PseudoEntities.clear();
 		m_Entities.clear();
 
-		m_EntityManager->Clear();
+		if (m_EntityManager != nullptr)
+			m_EntityManager->Clear();
+		m_EntityManager = nullptr;
 	}
 
 	// TODO: put this in FusionEntity.h, or make Renerer update renderables instead
@@ -557,8 +559,8 @@ namespace FusionEngine
 		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_STREAMING | DS_SYNCH);
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_STREAMING | DS_SYNCH);
 
-		this->PushMessage(new SystemMessage(SystemMessage::RESUME));
-		this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+		this->PushMessage(SystemMessage::RESUME);
+		this->PushMessage(SystemMessage::SHOW);
 
 		GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 
@@ -575,8 +577,8 @@ namespace FusionEngine
 		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_ALL);
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 
-		this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
-		this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+		this->PushMessage(SystemMessage::PAUSE);
+		this->PushMessage(SystemMessage::HIDE);
 
 		if (m_MainDocument != nullptr)
 			m_MainDocument->Hide();
@@ -617,8 +619,8 @@ namespace FusionEngine
 			m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
 			m_PhysicalWorld->EnableDebugDraw();
 
-			this->PushMessage(new SystemMessage(SystemMessage::RESUME));
-			this->PushMessage(new SystemMessage(SystemMessage::SHOW));
+			this->PushMessage(SystemMessage::RESUME);
+			this->PushMessage(SystemMessage::SHOW);
 
 			GUI::getSingleton().GetContext()->SetMouseCursor("Arrow");
 
@@ -628,8 +630,8 @@ namespace FusionEngine
 		{
 			m_Streamer->RemovePlayerCamera(255);
 
-			this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
-			this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+			this->PushMessage(SystemMessage::PAUSE);
+			this->PushMessage(SystemMessage::HIDE);
 
 			if (m_MainDocument != NULL)
 				m_MainDocument->Hide();
@@ -863,19 +865,33 @@ namespace FusionEngine
 				GetEntitiesAt(underMouse, ev.PointerPosition, true);
 				if (ev.Shift)
 				{
-					MultiAction* multi_delete = new MultiAction();
-					for (auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+					if (underMouse.size() == 1)
 					{
-						EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(*it);
+						EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(underMouse.back());
 						if (editorEntity)
 						{
 							UndoableActionPtr deleteAction( new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, editorEntity, false) );
-							multi_delete->AddAction( deleteAction );
 							RemoveEntity(editorEntity);
 							editorEntity->ArchiveEntity();
+							m_UndoManager.Add( deleteAction );
 						}
 					}
-					m_UndoManager.Add( UndoableActionPtr(multi_delete) );
+					else if (!underMouse.empty())
+					{
+						MultiAction* multi_delete = new MultiAction();
+						for (auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+						{
+							EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(*it);
+							if (editorEntity)
+							{
+								UndoableActionPtr deleteAction( new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, editorEntity, false) );
+								multi_delete->AddAction( deleteAction );
+								RemoveEntity(editorEntity);
+								editorEntity->ArchiveEntity();
+							}
+						}
+						m_UndoManager.Add( UndoableActionPtr(multi_delete) );
+					}
 				}
 				else
 				{
@@ -902,12 +918,13 @@ namespace FusionEngine
 					//	}
 					//});
 					//message.Show();
-					break;
 				}
+				m_UndoManager.Clear();
+				break;
 			}
 		case tool_move:
 			// Toggle selection
-			if (m_ActiveTool == tool_move && m_ShiftSelect)
+			if (m_ShiftSelect)
 			{
 				MapEntityArray underMouse;
 				GetEntitiesAt(underMouse, ev.PointerPosition, true);
@@ -1583,10 +1600,19 @@ namespace FusionEngine
 			obj->SelectEntity(mapEntity);
 	}
 
+	void Editor_quit(Editor* obj)
+	{
+		obj->PushMessage(SystemMessage::QUIT);
+	}
+
 	void Editor::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RegisterSingletonType<Editor>("Editor", engine);
+
+		r = engine->RegisterObjectMethod("Editor",
+			"void quit()",
+			asFUNCTION(Editor_quit), asCALL_CDECL_OBJLAST);
 
 		r = engine->RegisterEnum("EditorTool"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterEnumValue("EditorTool", "place", tool_place); FSN_ASSERT(r >= 0);

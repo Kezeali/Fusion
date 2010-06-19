@@ -186,7 +186,7 @@ public:
 			std::shared_ptr<GUI> gui( new GUI(dispWindow) );
 			// Init GUI
 			gui->Initialise();
-			gui->PushMessage(new SystemMessage(SystemMessage::HIDE));
+			gui->PushMessage(SystemMessage::HIDE);
 			ElementUndoMenu::RegisterElement();
 			
 			/////////////////////
@@ -259,6 +259,7 @@ public:
 
 			scriptingManager->GetEnginePtr()->GarbageCollect();
 
+			god.reset();
 			delete systemMgr;
 			scriptingManager->GetEnginePtr()->GarbageCollect();
 			gui->CleanUp();

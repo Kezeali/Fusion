@@ -20,13 +20,16 @@
 *    3. This notice may not be removed or altered from any source distribution.
 *
 *
-*  File Author(s):
+*  Many improvements to this streaming implementation were
+*   inspired by Fiedler's Cubes (including some borrowed algorithms)
+*  http://www.gafferongames.com/fiedlers-cubes
 *
+*  File Author:
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_StreamingManager
-#define Header_FusionEngine_StreamingManager
+#ifndef Header_FusionStreamingManager
+#define Header_FusionStreamingManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -113,6 +116,7 @@ namespace FusionEngine
 	};
 
 #define INFINITE_STREAMING
+//#define STREAMING_USEMAP
 
 	struct CellEntry
 	{
@@ -134,8 +138,14 @@ namespace FusionEngine
 	class Cell
 	{
 	public:
-		typedef std::map<EntityPtr, CellEntry> CellEntryMap;
+#ifdef STREAMING_USEMAP
+		typedef std::map<Entity*, CellEntry> CellEntryMap;
 		CellEntryMap objects;
+#else
+		typedef std::pair<Entity*, CellEntry> EntityEntryPair;
+		typedef std::vector<EntityEntryPair> CellEntryMap;
+		CellEntryMap objects;
+#endif
 	};
 
 	struct ActivationEvent

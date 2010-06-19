@@ -78,7 +78,7 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	inline void checkedDelete(T *obj)
+	inline void checkedDelete(T*& obj)
 	{
 		if (obj != nullptr)
 			delete obj;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -104,65 +104,67 @@ namespace FusionEngine
 			SystemPtr &system = *it;
 
 			// Check state messages
-			SystemMessage *m = system->PopMessage();
-			while (m != NULL)
+			SystemMessage m;
+			while (system->HasMessages())
 			{
-				switch (m->GetType())
+				// Get the next message
+				m = system->PopMessage();
+				switch (m.GetType())
 				{
 				case SystemMessage::ADDSYSTEM:
-					systemsToAdd.push_back(m->GetSystem());
+					systemsToAdd.push_back(m.GetSystem());
 					break;
 				case SystemMessage::REMOVESYSTEM:
 					{
-						if (m->GetSystem())
-							systemsToRemove.push_back(m->GetSystem());
+						if (m.GetSystem())
+							systemsToRemove.push_back(m.GetSystem());
 						else
 							FSN_EXCEPT(ExCode::NotImplemented, "SystemsManager::Update", "Removing systems by name is not implemented");
 					break;
 					}
 
 				case SystemMessage::PAUSE:
-					if (m->IncludeSender())
+					if (m.IncludeSender())
 						system->AddFlag(System::PAUSE);
-					addFlagFor(m->GetTargets(), System::PAUSE);
+					addFlagFor(m.GetTargets(), System::PAUSE);
 					break;
 				case SystemMessage::RESUME:
-					if (m->IncludeSender())
+					if (m.IncludeSender())
 						system->RemoveFlag(System::PAUSE);
-					removeFlagFor(m->GetTargets(), System::PAUSE);
+					removeFlagFor(m.GetTargets(), System::PAUSE);
 					break;
 				case SystemMessage::STEP:
-					if (m->IncludeSender())
+					if (m.IncludeSender())
 						system->AddFlag(System::STEP);
-					addFlagFor(m->GetTargets(), System::STEP);
+					addFlagFor(m.GetTargets(), System::STEP);
 					break;
 				case SystemMessage::STEPALL:
 					addFlagAll(System::STEP);
 					break;
 				case SystemMessage::PAUSEOTHERS:
-					addFlagForOthers(system, m->GetTargets(), System::PAUSE);
+					addFlagForOthers(system, m.GetTargets(), System::PAUSE);
 					break;
 				case SystemMessage::RESUMEOTHERS:
-					removeFlagForOthers(system, m->GetTargets(), System::PAUSE);
+					removeFlagForOthers(system, m.GetTargets(), System::PAUSE);
 					break;
 
 				case SystemMessage::HIDE:
-					if (m->IncludeSender())
+					if (m.IncludeSender())
 						system->AddFlag(System::HIDE);
-					addFlagFor(m->GetTargets(), System::HIDE);
+					addFlagFor(m.GetTargets(), System::HIDE);
 					break;
 
 				case SystemMessage::SHOW:
-					if (m->IncludeSender())
+					if (m.IncludeSender())
 						system->RemoveFlag(System::HIDE);
-					removeFlagFor(m->GetTargets(), System::HIDE);
+					removeFlagFor(m.GetTargets(), System::HIDE);
 					break;
 
 				case SystemMessage::HIDEOTHERS:
-					addFlagForOthers(system, m->GetTargets(), System::HIDE);
+					addFlagForOthers(system, m.GetTargets(), System::HIDE);
 					break;
 				case SystemMessage::SHOWOTHERS:
-					removeFlagForOthers(system, m->GetTargets(), System::HIDE);
+					removeFlagForOthers(system, m.GetTargets(), System::HIDE);
 					break;
 
 
@@ -171,14 +173,8 @@ namespace FusionEngine
 					break;
 				}
 
-				// Clean up
-				delete m;
-
 				if (!m_KeepGoing)
 					break; // Stop checking messages if quit message has been received
-
-				// Get the next message
-				m = system->PopMessage();
 			}
 
 			// Received a quit message

@@ -281,14 +281,14 @@ namespace FusionEngine
 
 	void OntologicalSystem::Start()
 	{
-		this->PushMessage(new SystemMessage(SystemMessage::SHOW));
-		this->PushMessage(new SystemMessage(SystemMessage::RESUME));
+		this->PushMessage(SystemMessage(SystemMessage::SHOW));
+		this->PushMessage(SystemMessage(SystemMessage::RESUME));
 	}
 
 	void OntologicalSystem::Stop()
 	{
-		this->PushMessage(new SystemMessage(SystemMessage::PAUSE));
-		this->PushMessage(new SystemMessage(SystemMessage::HIDE));
+		this->PushMessage(SystemMessage(SystemMessage::PAUSE));
+		this->PushMessage(SystemMessage(SystemMessage::HIDE));
 	}
 
 	void OntologicalSystem::AddViewport(ViewportPtr viewport)
@@ -349,7 +349,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::Quit()
 	{
-		PushMessage(new SystemMessage(SystemMessage::QUIT));
+		PushMessage(SystemMessage(SystemMessage::QUIT));
 	}
 
 	void OntologicalSystem::Save(const std::string &filename)

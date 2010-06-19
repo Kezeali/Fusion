@@ -93,6 +93,6 @@
 				<input type="submit" value="comple">Compile</input>
 			</form>
 		</p>
-		<button onclick="system.quit();">Quit</button>
+		<button onclick="editor.quit();">Quit</button>
 	</body>
 </rml>

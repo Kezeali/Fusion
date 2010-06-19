@@ -227,7 +227,7 @@ namespace FusionEngine
 		}
 #ifdef _DEBUG
 		else if (refCount == 0)
-			SendToConsole("Resource ref-count reached zero without being deleted. Resource Name: " + m_Path);
+			SendToConsole("Resource ref-count reached zero without being deleted. Path: " + m_Path);
 #endif
 	}
 

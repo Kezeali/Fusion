@@ -57,7 +57,9 @@ namespace FusionEngine
 
 	GameMapLoader::~GameMapLoader()
 	{
-		NetworkManager::getSingleton().Unsubscribe(MTID_LOADMAP, this);
+		NetworkManager* netMan = NetworkManager::getSingletonPtr();
+		if (netMan != nullptr)
+			netMan->Unsubscribe(MTID_LOADMAP, this);
 		m_FactoryConnection.disconnect();
 	}
 

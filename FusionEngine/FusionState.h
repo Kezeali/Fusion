@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_FusionState
-#define Header_FusionEngine_FusionState
+#ifndef Header_FusionState
+#define Header_FusionState
 
 #if _MSC_VER > 1000
 #pragma once
@@ -54,9 +54,6 @@ namespace FusionEngine
 	class System
 	{
 	public:
-		//! Messages
-		typedef std::deque<SystemMessage*> MessageList;
-
 		enum StateFlags
 		{
 			INITIALISED = 0x1,
@@ -93,10 +90,12 @@ namespace FusionEngine
 		//! Should return the name of the system
 		virtual const std::string &GetName() const = 0;
 
-		//! Pulls the message from the front of the queue
-		SystemMessage *PopMessage();
+		//! Returns true if this system has messages in its queue
+		bool HasMessages() const;
+		//! Removes the message from the front of the queue
+		SystemMessage PopMessage();
 		//! Adds a message to the back of the queue.
-		void PushMessage(SystemMessage *m);
+		void PushMessage(SystemMessage m);
 
 		//! Returns true if this system currently depends on the system with the given name
 		bool IsDependency(const std::string &system_name);
@@ -121,7 +120,9 @@ namespace FusionEngine
 		bool IsBlocking() const;
 
 	private:
-		//! Messages to the state manager
+		//! Messages
+		typedef std::deque<SystemMessage> MessageList;
+		//! Messages to be delivered to the state manager
 		MessageList m_Messages;
 
 		unsigned char m_StateFlags;

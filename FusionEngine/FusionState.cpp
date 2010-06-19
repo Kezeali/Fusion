@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006 Fusion Project Team
+  Copyright (c) 2006-2010 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -33,23 +33,25 @@ namespace FusionEngine
 
 	System::~System()
 	{
-		for (MessageList::iterator it = m_Messages.begin(), end = m_Messages.end(); it != end; ++it)
-			delete *it;
-		m_Messages.clear();
 	}
 
-	SystemMessage *System::PopMessage()
+	bool System::HasMessages() const
+	{
+		return !m_Messages.empty();
+	}
+
+	SystemMessage System::PopMessage()
 	{
 		if (m_Messages.empty())
-			return NULL;
+			return SystemMessage();
 
-		SystemMessage *ret = m_Messages.front();
+		SystemMessage ret = m_Messages.front();
 		m_Messages.pop_front();
 
 		return ret;
 	}
 
-	void System::PushMessage(SystemMessage *m)
+	void System::PushMessage(SystemMessage m)
 	{
 		m_Messages.push_back(m);
 	}
