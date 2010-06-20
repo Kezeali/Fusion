@@ -214,14 +214,6 @@ namespace FusionEngine
 		//! Sets the y co-ord
 		void set_y(T y) { this->y = y; }
 
-		//! The length of the vector
-		/*!
-		 * \returns sqrt(x^2+y^2)
-		 */
-		float length() const
-		{
-			return (float)std::sqrt((float)(x*x + y*y));
-		}
 		//! The squared length of the vector
 		/*!
 		 * \returns x^2+y^2
@@ -229,6 +221,14 @@ namespace FusionEngine
 		float squared_length() const
 		{
 			return (float)(x*x + y*y);
+		}
+		//! The length of the vector
+		/*!
+		 * \returns sqrt(x^2+y^2)
+		 */
+		float length() const
+		{
+			return (float)std::sqrt((float)(x*x + y*y));
 		}
 		//! Returns the dot product
 		float dot(const Vector2T<T>& other) const
