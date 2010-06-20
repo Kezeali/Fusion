@@ -233,6 +233,7 @@ namespace FusionEngine
 			{
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
+				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
 			m_Context->RemoveReference();
@@ -347,6 +348,13 @@ namespace FusionEngine
 		m_Context->ProcessMouseMove(x, y, 0);
 	}
 
+	Rocket::Core::Context* GUI_GetContextRef(GUI* obj)
+	{
+		Rocket::Core::Context* context = obj->GetContext();
+		context->AddReference();
+		return context;
+	}
+
 	void GUI::Register(ScriptManager *engine)
 	{
 		asIScriptEngine *iengine = engine->GetEnginePtr();
@@ -410,8 +418,8 @@ namespace FusionEngine
 			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
-			"GUI", "Context& getContext()",
-			asMETHOD(GUI, GetContext), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"GUI", "Context@ getContext() const",
+			asFUNCTION(GUI_GetContextRef), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
 			"GUI", "void setMouseCursorPosition(int x, int y)",

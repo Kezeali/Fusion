@@ -457,6 +457,7 @@ namespace FusionEngine
 	ContextMenu::ContextMenu(Rocket::Core::Context *context, bool auto_hide)
 		: m_AutoHide(auto_hide)
 	{
+		//context->AddReference();
 		m_Context = context;
 		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
 
@@ -470,6 +471,7 @@ namespace FusionEngine
 	ContextMenu::ContextMenu(Rocket::Core::Context *context, InputManager *input, bool auto_hide)
 		: m_AutoHide(auto_hide)
 	{
+		//context->AddReference();
 		m_Context = context;
 		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
 
@@ -478,6 +480,8 @@ namespace FusionEngine
 
 	ContextMenu::~ContextMenu()
 	{
+		//if (m_Context != nullptr)
+		//	m_Context->RemoveReference();
 		m_RawInputConnection.disconnect();
 	}
 
@@ -623,7 +627,15 @@ namespace FusionEngine
 
 	ContextMenu *ContextMenu_Factory(Rocket::Core::Context *context, bool auto_hide)
 	{
-		return new ContextMenu(context, auto_hide);
+		// This method is fully commented for later reference (about AngelScript's behaviour wrt. passing references)
+
+		// Construct the context menu
+		ContextMenu* contextMenu = new ContextMenu(context, auto_hide);
+		// Passing a handle to a method increases the ref. count automatically,
+		//  so it is the method's responsibility to free it:
+		context->RemoveReference();
+		// Now that everything is tidy, return the pointer to the constructed obj.
+		return contextMenu;
 	}
 
 	void ContextMenu_ShowWithinCtx(int x, int y, ContextMenu *obj)

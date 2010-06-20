@@ -186,7 +186,7 @@ namespace FusionEngine
 			
 			r = engine->RegisterObjectType(name.c_str(), 0, asOBJ_REF | asOBJ_GC); FSN_ASSERT(r >= 0);
 
-			// Note that we record the TypeId here
+			// Note that the TypeId is recorded here
 			s_TypeId = engine->GetTypeIdByDecl(name.c_str());
 
 			r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_ADDREF, "void f()", asMETHOD(GarbageCollected, addRef), asCALL_THISCALL);

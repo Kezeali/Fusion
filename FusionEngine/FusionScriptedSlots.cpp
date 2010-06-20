@@ -90,6 +90,8 @@ namespace FusionEngine
 	{
 		if (m_TargetObject != nullptr)
 			engine->GCEnumCallback((void*)m_TargetObject);
+		//if (m_CallSlot.ok())
+		//	engine->GCEnumCallback((void*)m_TargetObject);
 	}
 
 	void ScriptedSlotWrapper::ReleaseAllReferences(asIScriptEngine *engine)
