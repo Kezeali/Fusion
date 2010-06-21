@@ -104,11 +104,10 @@ namespace FusionEngine
 			SystemPtr &system = *it;
 
 			// Check state messages
-			SystemMessage m;
 			while (system->HasMessages())
 			{
 				// Get the next message
-				m = system->PopMessage();
+				const SystemMessage&& m = system->PopMessage();
 				switch (m.GetType())
 				{
 				case SystemMessage::ADDSYSTEM:
