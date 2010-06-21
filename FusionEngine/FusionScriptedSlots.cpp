@@ -62,7 +62,7 @@ namespace FusionEngine
 		: m_TargetObject(object),
 		m_CallSlot(object, decl.c_str())
 	{
-		m_TargetObject->AddRef();
+		//m_TargetObject->AddRef();
 	}
 
 	ScriptedSlotWrapper::~ScriptedSlotWrapper()
@@ -99,7 +99,7 @@ namespace FusionEngine
 		if (m_TargetObject != nullptr)
 		{
 			m_CallSlot.release();
-			m_TargetObject->Release();
+			//m_TargetObject->Release();
 			m_TargetObject = nullptr;
 		}
 	}

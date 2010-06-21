@@ -45,13 +45,13 @@ class ConsoleElement : ScriptElement
 
 		console.println("Connecting to console signals");
 		//@consoleConnection = console.connectListener(this);
-		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
-		@onClearConnection = console.connectToClear("void OnClear()");
+		//@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
+		//@onClearConnection = console.connectToClear("void OnClear()");
 
 		//console.println("Creating autocomplete_menu (context menu)");
 		@autocomplete_menu = @ContextMenu(gui.getContext(), false);
 		//console.println("Connecting to Click.");
-		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
+		//@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
 	}
 
 	~ConsoleElement()
