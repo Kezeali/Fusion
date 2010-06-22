@@ -232,9 +232,12 @@ namespace FusionEngine
 			if (m_ConsoleDocument != nullptr)
 			{
 				m_ConsoleDocument->Close();
-				m_Context->UnloadDocument(m_ConsoleDocument);
+				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
+				m_Context->Update();
+				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
+				m_Context->Update();
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 

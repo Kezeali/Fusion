@@ -78,10 +78,10 @@ namespace FusionEngine
 	//! Finds and removes the given entity from the given cell, starting the search from the end of the list
 	static inline void rRemoveEntityFromCell(Cell* cell, const Entity* const entity)
 	{
-		auto newEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+		auto rNewEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
-		cell->objects.erase(newEnd.base());
+		cell->objects.erase((++rNewEnd).base());
 	}
 
 	//! Finds the entry for the given Entity in the given cell
@@ -95,9 +95,10 @@ namespace FusionEngine
 	//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
 	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const Entity* const entity)
 	{
-		return std::find_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&entity](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
-		}).base();
+		});
+		return (++rWhere).base();
 	}
 
 	//! Creates an entry for the given Entity in the given cell
