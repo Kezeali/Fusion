@@ -235,9 +235,7 @@ namespace FusionEngine
 				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
-				m_Context->Update();
-				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
-				m_Context->Update();
+				m_Context->Update(); // Make sure this gets freed right now
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
