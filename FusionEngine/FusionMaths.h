@@ -39,6 +39,26 @@ namespace FusionEngine
 	namespace Maths
 	{
 
+		// This doesn't really belong in here, will put it in it's own file later
+		template <typename T>
+		struct size_components
+		{
+			size_components( T both_components ) : width(both_components), height(both_components) {}
+			size_components( T _width, T _height ) : width(_width), height(_height) {}
+			size_components( const size_components& to_copy ) : width( to_copy.width ), height( to_copy.height ) {}
+			size_components( size_components&& to_move ) : width( std::move(to_move.width) ), height( std::move(to_move.height) ) {}
+			size_components& operator= ( const size_components& to_assign ) { width = to_assign.width; height = to_assign.height; return *this; }
+			size_components& operator= ( size_components&& to_move ) { width = std::move(to_move.width); height = std::move(to_move.height); return *this; }
+			size_components& operator= ( T size ) { width = size; height = size; return *this; }
+			bool operator== ( const size_components& other ) const { return (other.width == this->width && other.height == this->height); }
+			bool operator!= ( const size_components& other ) const { return (other.width != this->width || other.height != this->height); }
+			bool operator== ( T both_equal ) const { return (both_equal == this->width && both_equal == this->height); }
+			bool operator!= ( T either_not_equal ) const { return (either_not_equal != this->width || either_not_equal != this->height); }
+			bool either_is( T equal_to ) const { return (equal_to == this->width || equal_to == this->height); }
+
+			T width, height;
+		};
+
 		template <typename T>
 		inline T Clamp(T value, T lower_bound, T upper_bound)
 		{
