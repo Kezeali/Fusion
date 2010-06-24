@@ -4,7 +4,6 @@ void InitialiseConsole()
 }
 
 ContextMenu@ autocomplete_menu;
-SignalConnection@ autocompleteCon;
 
 class ConsoleLine
 {
@@ -22,6 +21,7 @@ class ConsoleElement : ScriptElement
 	//ConsoleConnection@ consoleConnection;
 	SignalConnection@ onDataConnection;
 	SignalConnection@ onClearConnection;
+	SignalConnection@ autocompleteCon;
 
 	string@ text_block;
 
