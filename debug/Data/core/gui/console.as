@@ -46,12 +46,12 @@ class ConsoleElement : ScriptElement
 		console.println("Connecting to console signals");
 		//@consoleConnection = console.connectListener(this);
 		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
-		//@onClearConnection = console.connectToClear("void OnClear()");
+		@onClearConnection = console.connectToClear("void OnClear()");
 
 		//console.println("Creating autocomplete_menu (context menu)");
 		@autocomplete_menu = @ContextMenu(gui.getContext(), false);
 		//console.println("Connecting to Click.");
-		//@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)"); // This still doesn't get garbage collected
+		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)"); // This still doesn't get garbage collected
 	}
 
 	~ConsoleElement()
@@ -66,6 +66,9 @@ class ConsoleElement : ScriptElement
 
 		console.println("autocomplete_menu.removeAllChildren()"); 
 		autocomplete_menu.removeAllChildren();
+
+		console.println("autocompleteCon = null"); 
+		@autocompleteCon = null;
 
 		@autocomplete_menu = null;
 	}
