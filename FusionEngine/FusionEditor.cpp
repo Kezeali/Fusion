@@ -273,7 +273,7 @@ namespace FusionEngine
 		m_EditorDataSource = new EditorDataSource();
 		StaticFlagRegistry::RegisterTag("select_overlay");
 
-		Console::getSingleton().BindCommand("edcount", [this](const StringVector& params)->std::string
+		auto edcount = [this](const StringVector& params)->std::string
 		{
 			std::stringstream countStr;
 			size_t total = 0;
@@ -300,7 +300,27 @@ namespace FusionEngine
 				total = m_Entities.size() + m_PseudoEntities.size();
 			countStr << total << " entities overall";
 			return countStr.str();
-		});
+		};
+
+		auto autocomplete = [](int arg, const std::string& argv)->std::string
+		{
+			if (argv.empty())
+				return argv;
+			
+			if (argv[0] == 's')
+				return "sync";
+			else if (argv[0] == 'p')
+				return "pseudo";
+			else if (argv[0] == 'a')
+				return "active";
+			else
+				return std::string();
+		};
+
+		Console::getSingleton().BindCommand("edcount", edcount, autocomplete);
+		StringVector args; args.emplace_back("[sync]"); args.emplace_back("[pseudo]"); args.emplace_back("[active]");
+		Console::getSingleton().SetCommandHelpText("edcount",
+			"Returns the number of entities in the editor. The paramers are all optional and can be given in any order.", args);
 	}
 
 	Editor::~Editor()

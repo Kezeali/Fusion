@@ -18,16 +18,15 @@ class ConsoleElement : ScriptElement
 	bool slowScroll;
 
 	ElementFormControlTextArea@ text_area;
-	//ConsoleConnection@ consoleConnection;
 	SignalConnection@ onDataConnection;
 	SignalConnection@ onClearConnection;
 	SignalConnection@ autocompleteCon;
 
 	string@ text_block;
 
-	uint[] lines;
-	uint line_front;
-	uint line_back;
+	string[] lines;
+	uint lines_end;
+	uint size;
 
 	ConsoleElement(Element@ appElement)
 	{
@@ -39,11 +38,10 @@ class ConsoleElement : ScriptElement
 
 		@text_block = string();
 
-		lines.resize(32);
-		line_front = 0;
-		line_back = 0;
+		lines.resize(128);
+		lines_end = 0;
+		size = 0;
 
-		console.println("Connecting to console signals");
 		//@consoleConnection = console.connectListener(this);
 		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
 		@onClearConnection = console.connectToClear("void OnClear()");
@@ -56,20 +54,13 @@ class ConsoleElement : ScriptElement
 
 	~ConsoleElement()
 	{
-		console.println("ConsoleElement Deleted");
 		@__inner = null;
 
-		console.println("onDataConnection = null"); 
 		@onDataConnection = null;
-		console.println("onCloseConnection = null"); 
 		@onClearConnection = null;
 
-		console.println("autocomplete_menu.removeAllChildren()"); 
 		autocomplete_menu.removeAllChildren();
-
-		console.println("autocompleteCon = null"); 
 		@autocompleteCon = null;
-
 		@autocomplete_menu = null;
 	}
 
@@ -110,7 +101,7 @@ class ConsoleElement : ScriptElement
 
 	uint diff(uint front, uint back, uint buffer_length)
 	{
-		if (front >= 0)
+		if (front >= back)
 			return front - back;
 		else
 			return front + (buffer_length-back);
@@ -124,32 +115,24 @@ class ConsoleElement : ScriptElement
 			//slowScroll = true;
 		}
 
-		//if (!text_block.empty())
-		//	text_block += '\n';
-		text_block += text;
-		text_block += '\n';
+		// Add the line
+		lines[lines_end] = text;
 
-		// Remove old lines
-		lines[line_front] = text.length();
+		if (++lines_end == lines.length())
+			lines_end = 0;
 
-		if (diff(line_front, line_back, lines.length()) >= lines.length())
-			text_block.erase(0, lines[line_back]);
-
-		if (++line_front > lines.length())
-			line_front = 0;
-
-		if (++line_back > lines.length())
-			line_back = 0;
+		if (size < lines.length())
+			++size;
 
 		dirty = true;
 	}
 
 	void Clear()
 	{
-		line_front = 0;
-		line_back = 0;
-		text_block.clear();
-		current_text = "";
+		lines_end = 0;
+		size = 0;
+		//text_block.clear();
+		//current_text = "";
 		dirty = true;
 	}
 
@@ -171,8 +154,19 @@ class ConsoleElement : ScriptElement
 	{
 		if (dirty && text_area !is null)
 		{
-			//text_area.SetReadOnly(false);
-			text_area.SetValue( e_String(text_block) );
+			string@ linesText = @string();
+			{
+				uint i = (size < lines.length() ? 0 : lines_end);
+				for (uint done = 0; done < size; ++done)
+				{
+					linesText += lines[i++];
+					linesText += '\n';
+
+					if (i == lines.length())
+						i = 0;
+				}
+			}
+			text_area.SetValue( e_String(linesText) );
 			if (autoScroll)
 			{
 				//text_area.SetCursorIndex(current_text.Length(), true);
@@ -184,7 +178,6 @@ class ConsoleElement : ScriptElement
 				text_area.ShowCursor(false);
 				autoScroll = false;
 			}
-			//text_area.SetReadOnly(true);
 			dirty = false;
 		}
 
@@ -287,7 +280,7 @@ void OnConsoleEnterClick(Event& ev)
 	ElementFormControlInput@ input = cast<ElementFormControlInput>( consoleElem.GetElementById(e_String("command_element")) );
 
 	string command = input.GetValue();
-	console.println(command);
+	console.println("> " + command);
 	console.interpret(command);
 	input.SetValue(e_String(""));
 }

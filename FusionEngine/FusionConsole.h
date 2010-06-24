@@ -152,6 +152,11 @@ namespace FusionEngine
 		*/
 		const std::string &ClosestCommand(const std::string &command) const;
 
+		//! Returns possible completions for the last token in the given command (nothing if there is only the command argument itself)
+		void ListPossibleCompletions(const std::string& command, StringVector &possibleCompletions) const;
+		//! Replaces the last token in the given command with the given value
+		std::string Autocomplete(const std::string& command, const std::string& completion) const;
+
 		//! Runs the given command.
 		/*!
 		 * The callback indexed by the given command name will be called

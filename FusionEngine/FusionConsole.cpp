@@ -27,7 +27,7 @@ namespace FusionEngine
 		helpFns.callback = boost::bind(&Console::CC_PrintCommandHelp, this, _1);
 
 		CommandHelp helpHelp;
-		helpHelp.helpText = "Shows a list of recognised commands.\nEnter 'help <command>' to see help for a specific command. For example, what you just did.";
+		helpHelp.helpText = "Shows a list of recognised commands. Enter 'help <command>' to see help for a specific command - Oh, you just did that.";
 		helpHelp.argumentNames.push_back("[command_name]");
 
 		BindCommand("help", helpFns, helpHelp);
@@ -331,6 +331,16 @@ namespace FusionEngine
 			return (*results.begin())->first;
 		else
 			return noResult;
+	}
+
+	void Console::ListPossibleCompletions(const std::string& command, StringVector &possibleCompletions) const
+	{
+		// TODO: take the command parsing code out of Interpret and use it to find the last arg
+	}
+
+	std::string Console::Autocomplete(const std::string& command, const std::string& completion) const
+	{
+		return "";
 	}
 
 	inline void addToken(StringVector &args, std::string &quote, bool inQuote, const std::string& token)

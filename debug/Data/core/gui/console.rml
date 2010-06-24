@@ -5,8 +5,8 @@
 		<style>
 			body
 			{
-			width: 490px;
-			height: 500px;
+			width: 480px;
+			height: 540px;
 
 			margin: auto;
 			}
@@ -23,7 +23,7 @@
 
 			textarea#text_element
 			{
-			font-weight: normal;
+			font-weight: bold;
 			font-style: normal;
 			font-size: 13;
 
@@ -32,7 +32,7 @@
 
 			input.text#command_element
 			{
-			width: auto;
+			width: 300px;
 			}
 			button
 			{
@@ -53,7 +53,7 @@
 	</head>
   <body template="window" onload="OnConsoleOpened(event);" onclose="OnConsoleClosed();" onshow="OnConsoleShow(event);" onhide="OnConsoleHide();">
     <console id="console_element">
-      <textarea id="text_element" name="console_data" cols="45" rows="27" maxlength="1200" readonly="true" onchange="OnTextAreaChange(event);"/>
+      <textarea id="text_element" name="console_data" cols="46" rows="26" maxlength="1200" readonly="true" onchange="OnTextAreaChange(event);"/>
       <input id="command_element" type="text" name="command_input" enter_event="true" onchange="OnConsoleEntryChanged(event);" onenter="OnConsoleEntryEnter(event);" onkeyup="OnConsoleEntryKeyUp(event);" onkeydown="OnConsoleEntryKeyUp(event);"/>
       <button id="enter_command" onclick="OnConsoleEnterClick(event);">Enter</button>
       <button id="clear_console" onclick="console.clear();">Clr</button>
