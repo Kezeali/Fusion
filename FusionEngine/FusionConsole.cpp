@@ -25,6 +25,18 @@ namespace FusionEngine
 
 		CommandFunctions helpFns;
 		helpFns.callback = boost::bind(&Console::CC_PrintCommandHelp, this, _1);
+		helpFns.autocomplete = [this](int argn, const std::string& argv)->StringVector
+		{
+			StringVector possibleCommands;
+			if (argn == 1)
+			{
+				auto range = m_CommandHelp.prefix_range(argv);
+				for (; range.first != range.second; ++range.first)
+					possibleCommands.push_back(range.first->first);
+			}
+			
+			return possibleCommands;
+		};
 
 		CommandHelp helpHelp;
 		helpHelp.helpText = "Shows a list of recognised commands. Enter 'help <command>' to see help for a specific command - Oh, you just did that.";
