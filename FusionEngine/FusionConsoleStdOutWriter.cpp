@@ -13,16 +13,20 @@ namespace FusionEngine
 		: m_Active(false)
 	{
 		// Use the singleton
-		m_ConsoleOnNewLineSlot =
-			Console::getSingleton().OnNewLine.connect(boost::bind(&ConsoleStdOutWriter::onConsoleNewline, this, _1));
+		m_ConsoleOnNewLineSlot = Console::getSingleton().OnNewData.connect([this](const std::string& data) {
+			if (m_Active)
+				CL_Console::write( data.c_str() );
+		});
 	}
 
 	ConsoleStdOutWriter::ConsoleStdOutWriter(Console* console)
 		: m_Active(false)
 	{
 		// Use the given Console
-		m_ConsoleOnNewLineSlot =
-			console->OnNewLine.connect(boost::bind(&ConsoleStdOutWriter::onConsoleNewline, this, _1));
+		m_ConsoleOnNewLineSlot = console->OnNewData.connect([this](const std::string& data) {
+			if (m_Active)
+				CL_Console::write( data.c_str() );
+		});
 	}
 
 	ConsoleStdOutWriter::~ConsoleStdOutWriter()

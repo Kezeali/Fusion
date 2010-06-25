@@ -65,7 +65,7 @@ namespace FusionEngine
 		return std::string("");
 	}
 
-	std::string ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, int arg_num, const std::string &incomplete_val)
+	StringVector ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, int arg_num, const std::string &incomplete_val)
 	{
 		ScriptUtils::Calling::Caller autocompleteCaller(module, decl.c_str());
 		if (autocompleteCaller.ok())
@@ -77,10 +77,10 @@ namespace FusionEngine
 			void *ret = autocompleteCaller(arg_num, incomplete_val);
 
 			if (ret != NULL)
-				return *static_cast<std::string*>( ret );
+				return *static_cast<StringVector*>( ret );
 		}
 
-		return incomplete_val;
+		return StringVector();
 	}
 
 	// Appends the components of the given parameter to the expression

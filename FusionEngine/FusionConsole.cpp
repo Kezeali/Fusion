@@ -333,13 +333,41 @@ namespace FusionEngine
 			return noResult;
 	}
 
-	void Console::ListPossibleCompletions(const std::string& command, StringVector &possibleCompletions) const
+	StringVector Console::ListPossibleCompletions(const std::string& command) const
 	{
-		// TODO: take the command parsing code out of Interpret and use it to find the last arg
+		try
+		{
+			auto parsed = Tokenise(command);
+			if (parsed.second.size() > 1 && parsed.first.autocomplete) // the second clause checks that the autocomplete function is bound
+			{
+				return parsed.first.autocomplete(parsed.second.size() - 1, parsed.second.back());
+			}
+		}
+		catch (InvalidArgumentException&)
+		{}
+
+		return StringVector();
 	}
 
 	std::string Console::Autocomplete(const std::string& command, const std::string& completion) const
 	{
+		try
+		{
+			StringVector args = Tokenise(command).second;
+			if (args.size() > 1)
+			{
+				args.pop_back();
+				args.push_back(completion);
+				std::string completedCommand = args.front();
+				std::for_each(args.begin() + 1, args.end(), [&completedCommand](const std::string& arg) { completedCommand += " " + arg; });
+				return completedCommand;
+			}
+			else
+				return command;
+		}
+		catch (InvalidArgumentException&)
+		{}
+
 		return "";
 	}
 
@@ -351,11 +379,11 @@ namespace FusionEngine
 			args.push_back(token);
 	}
 
-	void Console::Interpret(const std::string &untrimmed)
+	std::pair<Console::CommandFunctions, StringVector> Console::Tokenise(const std::string& untrimmed_command) const
 	{
-		std::string command = fe_trim(untrimmed);
+		std::string command = fe_trim(untrimmed_command);
 		if (command.empty())
-			return;
+			FSN_EXCEPT(InvalidArgumentException, __FUNCTION__, "");
 
 		// TODO: write tokenizer fn. that works like char_separator but processes escape sequences
 		typedef boost::char_separator<char> tokFnType;
@@ -369,7 +397,7 @@ namespace FusionEngine
 		if (it != tok.end())
 		{
 			// Check that the first token is a valid command identifier
-			CommandCallbackMap::iterator _where = m_Commands.find(*it);
+			auto _where = m_Commands.find(*it);
 			if (_where != m_Commands.end())
 			{
 				// Tokenize the arguments
@@ -414,17 +442,37 @@ namespace FusionEngine
 					else if (*it != " " && *it != ",")
 						args.push_back(*it);
 				}
-				// Execute the callback and Add it's return value to the console
-				Add( _where->second.callback(args) );
+				return std::make_pair(_where->second, args);
 			}
 			else
 			{
-				Add("'" + *it + "' is not a recognised command.");
-				const std::string &closestCommand = ClosestCommand(*it);
-				if (!closestCommand.empty())
-					Add(" * The closest known command is '" + closestCommand + "'");
-				Add("Enter 'help' to for a list of recognised commands.");
+				FSN_EXCEPT(UnknownCommandException, __FUNCTION__, *it);
 			}
+		}
+
+		FSN_EXCEPT(InvalidArgumentException, __FUNCTION__, "Failed to parse the given command");
+	}
+
+	void Console::Interpret(const std::string &untrimmed)
+	{
+		try
+		{
+			// Tokenise returns a pair containing a reference to a CommandFunctions object and a vector containing the parsed tokens
+			auto parsed = Tokenise(untrimmed);
+			if (!parsed.second.empty() && parsed.first.callback)
+				// Execute the callback and Add it's return value to the console
+				Add( parsed.first.callback(parsed.second) );
+		}
+		catch (UnknownCommandException& ex)
+		{
+			Add("'" + ex.command + "' is not a recognised command.");
+			const std::string &closestCommand = ClosestCommand(ex.command);
+			if (!closestCommand.empty())
+				Add(" * The closest known command is '" + closestCommand + "'");
+			Add("Enter 'help' to for a list of recognised commands.");
+		}
+		catch (InvalidArgumentException&)
+		{
 		}
 	}
 
@@ -670,6 +718,16 @@ namespace FusionEngine
 			ev.manager->RegisterGlobalObject("Console console", this);
 	}
 
+	void Console_ListPossibleCompletions(const std::string& command, StringVector& out, Console* obj)
+	{
+		out = obj->ListPossibleCompletions(command);
+	}
+
+	CScriptString* Console_Autocomplete(const std::string& command, const std::string& completion, Console* obj)
+	{
+		return new CScriptString( obj->Autocomplete(command, completion) );
+	}
+
 	void Console::Register(ScriptManager *manager)
 	{
 #ifndef FSN_DONT_USE_SCRIPTING
@@ -706,17 +764,27 @@ namespace FusionEngine
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"void listPrefixedCommands(string &in, StringArray &out)",
+			"void listPrefixedCommands(const string &in, StringArray &out)",
 			asFUNCTIONPR(Console_ListPrefixedCommands, (const std::string&, StringVector&, Console&), void),
 			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"void listPrefixedCommands(string &in, StringArray &out, uint max_results)",
+			"void listPrefixedCommands(const string &in, StringArray &out, uint max_results)",
 			asMETHODPR(Console, ListPrefixedCommands, (const std::string&, StringVector&, StringVector::size_type), void),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"void interpret(string &in)",
+			"void listPossibleCompletions(const string &in, StringArray &out) const",
+			asFUNCTION(Console_ListPossibleCompletions),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"string@ autocomplete(const string &in, const string &in) const",
+			asFUNCTION(Console_Autocomplete),
+			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Console",
+			"void interpret(const string &in)",
 			asMETHODPR(Console, Interpret, (const std::string&), void),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 

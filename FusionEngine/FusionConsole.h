@@ -51,6 +51,26 @@ namespace FusionEngine
 	//! Default maximum console buffer length
 	static const size_t s_ConsoleDefaultBufferLength = 3200;
 
+
+	//! Thrown by Console#Tokenise()
+	class UnknownCommandException : public InvalidArgumentException
+	{
+	public:
+		//! CTOR
+		/*!
+		* The descripton param is used to pass the name of the command
+		*/
+		UnknownCommandException(const std::string& description, const std::string& origin, const char* file, long line)
+			: InvalidArgumentException(description, origin, file, line),
+			command(description)
+		{
+		}
+		//! DTOR
+		virtual ~UnknownCommandException() {}
+		//! The command that couldn't be found
+		std::string command;
+	};
+
 	//! Provides console data access to all FusionEngine objects
 	/*!
 	 * This class does not actually do anything with the data it contains,
@@ -64,7 +84,7 @@ namespace FusionEngine
 		//typedef std::list<std::string> ConsoleLines;
 
 		typedef boost::function<std::string (const StringVector&)> CommandCallback;
-		typedef boost::function<std::string (int, const std::string&)> AutocompleteCallback;
+		typedef boost::function<StringVector (int, const std::string&)> AutocompleteCallback;
 		struct CommandFunctions
 		{
 			CommandCallback callback;
@@ -153,9 +173,12 @@ namespace FusionEngine
 		const std::string &ClosestCommand(const std::string &command) const;
 
 		//! Returns possible completions for the last token in the given command (nothing if there is only the command argument itself)
-		void ListPossibleCompletions(const std::string& command, StringVector &possibleCompletions) const;
+		StringVector ListPossibleCompletions(const std::string& command) const;
 		//! Replaces the last token in the given command with the given value
 		std::string Autocomplete(const std::string& command, const std::string& completion) const;
+
+		//! Returns the tokens that make up the given command
+		std::pair<CommandFunctions, StringVector> Tokenise(const std::string& command) const;
 
 		//! Runs the given command.
 		/*!

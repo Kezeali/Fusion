@@ -302,19 +302,19 @@ namespace FusionEngine
 			return countStr.str();
 		};
 
-		auto autocomplete = [](int arg, const std::string& argv)->std::string
+		auto autocomplete = [](int arg, const std::string& argv)->StringVector
 		{
-			if (argv.empty())
-				return argv;
-			
-			if (argv[0] == 's')
-				return "sync";
-			else if (argv[0] == 'p')
-				return "pseudo";
-			else if (argv[0] == 'a')
-				return "active";
-			else
-				return std::string();
+			StringVector completions;
+			if (!argv.empty())
+			{
+				if (argv[0] == 's')
+					completions.emplace_back("sync");
+				else if (argv[0] == 'p')
+					completions.emplace_back("pseudo");
+				else if (argv[0] == 'a')
+					completions.emplace_back("active");
+			}
+			return completions;
 		};
 
 		Console::getSingleton().BindCommand("edcount", edcount, autocomplete);

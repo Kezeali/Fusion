@@ -4,6 +4,8 @@ void InitialiseConsole()
 }
 
 ContextMenu@ autocomplete_menu;
+bool firstArg = true;
+uint firstArgLength = 0;
 
 class ConsoleLine
 {
@@ -206,7 +208,13 @@ class ConsoleElement : ScriptElement
 	void OnAutocompleteClick(const MenuItemEvent &in ev)
 	{
 		ElementFormControlInput@ input = cast<ElementFormControlInput>( GetElementById(e_String("command_element")) );
-		input.SetValue( e_String(ev.title) );
+		if (firstArg)
+			input.SetValue( e_String(ev.title) );
+		else
+		{
+			e_String completed = console.autocomplete(string(input.GetValue()), ev.title);
+			input.SetValue(completed);
+		}
 		input.Focus();
 
 		e_Dictionary parameters;
@@ -218,57 +226,64 @@ class ConsoleElement : ScriptElement
 
 bool acConnection = false;
 e_String lastvalue = "";
-bool commandDone = false;
-uint commandLength = 0;
-StringArray possibleCommands;
+StringArray possibleCompletions;
 void OnConsoleEntryChanged(Event& ev)
 {
+	if (autocomplete_menu is null)
+		return;
+
 	e_String value("");
 	value = ev.GetParameter(e_String("value"), value);
 
-	if (!commandDone && value != lastvalue)
+	if (value != lastvalue)
 	{
 		lastvalue = value;
 		if (!value.Empty())
 		{
 			if (value[value.Length()-1] == e_String(" "))
 			{
-				commandDone = true;
-				commandLength = value.Length()-1;
+				if (firstArg)
+				{
+					firstArg = false;
+					firstArgLength = value.Length()-1;
+				}
 				autocomplete_menu.hide();
 				return;
 			}
+			else
+				autocomplete_menu.show();
 
-			if (autocomplete_menu !is null)
+			if (firstArg)
+				console.listPrefixedCommands(string(value), possibleCompletions);
+			else
+				console.listPossibleCompletions(string(value), possibleCompletions);
+
+			autocomplete_menu.removeAllChildren();
+			for (uint i = 0; i < possibleCompletions.size(); i++)
 			{
-				console.listPrefixedCommands(string(value), possibleCommands);
-				autocomplete_menu.removeAllChildren();
-				for (uint i = 0; i < possibleCommands.size(); i++)
-				{
-					MenuItem @newItem = @MenuItem(possibleCommands[i], possibleCommands[i]);
-					autocomplete_menu.addChild(newItem);
-				}
-
-				if (possibleCommands.size() > 0)
-				{
-					Element@ target = ev.GetTargetElement();
-					autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight() + 4);
-				}
-				else
-					autocomplete_menu.hide();
+				MenuItem @newItem = @MenuItem(possibleCompletions[i], possibleCompletions[i]);
+				autocomplete_menu.addChild(newItem);
 			}
+			if (possibleCompletions.size() > 0)
+			{
+				Element@ target = ev.GetTargetElement();
+				autocomplete_menu.show(target.GetAbsoluteLeft(), target.GetAbsoluteTop() + target.GetClientHeight() + 4);
+			}
+			else
+				autocomplete_menu.hide();
 		}
 		else // 'value' is empty
 		{
 			autocomplete_menu.hide();
 			autocomplete_menu.removeAllChildren();
 		}
-	}
-	else if (value.Length() <= commandLength)
-	{
-		commandDone = false;
-		commandLength = 0;
-		autocomplete_menu.show();
+
+		// If first arg has been partially or completely deleted
+		if (value.Length() <= firstArgLength)
+		{
+			firstArg = true;
+			firstArgLength = 0;
+		}
 	}
 }
 
