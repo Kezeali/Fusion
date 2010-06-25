@@ -244,9 +244,9 @@ public:
 				{
 					scriptingManager->GetEnginePtr()->GetGCStatistics(&currentSize, &totalDestroyed, &totalDetected);
 					std::stringstream stats;
-					stats << "Script object count: " << currentSize << "\n";
-					stats << "    GC has destroyed " << totalDestroyed << " objects total\n";
-					stats << "    GC has detected  " << totalDetected << " garbage objects in total";
+					stats << "Tracked object count: " << currentSize << "\n";
+					stats << "     GC has destroyed " << totalDestroyed << " objects total\n";
+					stats << "     GC has detected  " << totalDetected << " garbage objects in total";
 					statsFont.draw_text(gc, CL_Pointf(20, 25), stats.str());
 				}
 #endif

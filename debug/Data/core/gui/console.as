@@ -62,6 +62,8 @@ class ConsoleElement : ScriptElement
 		autocomplete_menu.removeAllChildren();
 		@autocompleteCon = null;
 		@autocomplete_menu = null;
+
+		console.println("deleted Console element");
 	}
 
 	uint length;
@@ -288,11 +290,13 @@ void OnConsoleEnterClick(Event& ev)
 void OnConsoleEntryEnter(Event& ev)
 {
 	if (autocomplete_menu.getSelectedIndex() != -1)
+	{
 		autocomplete_menu.getSelectedItem().click();
+		autocomplete_menu.hide();
+		autocomplete_menu.removeAllChildren();
+	}
 	else
 		OnConsoleEnterClick(ev);
-	autocomplete_menu.hide();
-	autocomplete_menu.removeAllChildren();
 }
 
 void OnConsoleEntryKeyUp(Event& ev)

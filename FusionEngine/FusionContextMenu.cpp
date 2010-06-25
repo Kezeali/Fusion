@@ -74,10 +74,10 @@ namespace FusionEngine
 
 		if (m_Document != nullptr)
 		{
-			m_Document->Close();
-			m_Document->RemoveReference();
 			if (m_Element != nullptr) // If this is a submenu
 				m_Document->RemoveEventListener("mouseout", this); // Remove the mouse-out listener (used for auto-close)
+			m_Document->Close();
+			m_Document->RemoveReference();
 		}
 
 		if (m_Element != nullptr)
@@ -585,6 +585,13 @@ namespace FusionEngine
 		RegisterMethods(engine, "MenuItem");
 	}
 
+	int MenuItem_AddChild(MenuItem* item, MenuItem *obj)
+	{
+		int index = obj->AddChild(item);
+		item->release();
+		return index;
+	}
+
 	MenuItem *MenuItem_GetChild(int index, MenuItem *obj)
 	{
 		MenuItem *child = obj->GetChild(index);
@@ -593,10 +600,18 @@ namespace FusionEngine
 		return child;
 	}
 
+	MenuItem *MenuItem_GetSelectedItem(MenuItem *obj)
+	{
+		MenuItem *child = obj->GetSelectedItem();
+		if (child != nullptr)
+			child->addRef();
+		return child;
+	}
+
 	void MenuItem::RegisterMethods(asIScriptEngine *engine, const std::string &type)
 	{
 		engine->RegisterObjectMethod(type.c_str(), "void hide()", asMETHODPR(MenuItem, Hide, (void), void), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "int addChild(MenuItem@)", asMETHODPR(MenuItem, AddChild, (MenuItem*), int), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "int addChild(MenuItem@)", asFUNCTION(MenuItem_AddChild), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectMethod(type.c_str(), "void removeChild(MenuItem@)", asMETHODPR(MenuItem, RemoveChild, (MenuItem*), void), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "void removeChild(int)", asMETHODPR(MenuItem, RemoveChild, (int), void), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "void removeAllChildren()", asMETHOD(MenuItem, RemoveAllChildren), asCALL_THISCALL);
@@ -606,7 +621,7 @@ namespace FusionEngine
 		engine->RegisterObjectMethod(type.c_str(), "void select(int)", asMETHOD(MenuItem, SelectChild), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "void selectRelative(int)", asMETHOD(MenuItem, SelectChildRelative), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "int getSelectedIndex() const", asMETHOD(MenuItem, GetSelectedIndex), asCALL_THISCALL);
-		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ getSelectedItem()", asMETHOD(MenuItem, GetSelectedItem), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), "MenuItem@ getSelectedItem()", asFUNCTION(MenuItem_GetSelectedItem), asCALL_CDECL_OBJLAST);
 		engine->RegisterObjectMethod(type.c_str(), "bool isSubmenu() const", asMETHOD(MenuItem, IsSubmenu), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "bool isTopMenu() const", asMETHOD(MenuItem, IsTopMenu), asCALL_THISCALL);
 		engine->RegisterObjectMethod(type.c_str(), "bool isMenu() const", asMETHOD(MenuItem, IsMenu), asCALL_THISCALL);
