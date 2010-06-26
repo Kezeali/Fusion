@@ -69,10 +69,10 @@ namespace FusionEngine
 	//! Finds and removes entry for the given Entity from the given cell
 	static inline void removeEntityFromCell(Cell* cell, const Entity* const entity)
 	{
-		auto newEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
+		auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [entity](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
-		cell->objects.erase(newEnd.base());
+		cell->objects.erase(newEnd);
 	}
 
 	//! Finds and removes the given entity from the given cell, starting the search from the end of the list

@@ -24,34 +24,29 @@ class ConsoleElement : ScriptElement
 	SignalConnection@ onClearConnection;
 	SignalConnection@ autocompleteCon;
 
-	string@ text_block;
-
 	string[] lines;
 	uint lines_end;
 	uint size;
+
+	uint num_chars;
 
 	ConsoleElement(Element@ appElement)
 	{
 		super(appElement);
 
 		dirty = false;
-		current_text = "";
-		length = 0;
-
-		@text_block = string();
 
 		lines.resize(128);
 		lines_end = 0;
 		size = 0;
 
-		//@consoleConnection = console.connectListener(this);
-		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");//console.connectToNewData("void OnNewData(const string &in)");
+		num_chars = 0;
+
+		@onDataConnection = console.connectToNewLine("void OnNewLine(const string &in)");
 		@onClearConnection = console.connectToClear("void OnClear()");
 
-		//console.println("Creating autocomplete_menu (context menu)");
 		@autocomplete_menu = @ContextMenu(gui.getContext(), false);
-		//console.println("Connecting to Click.");
-		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)"); // This still doesn't get garbage collected
+		@autocompleteCon = autocomplete_menu.connectToClick("void OnAutocompleteClick(const MenuItemEvent &in)");
 	}
 
 	~ConsoleElement()
@@ -68,41 +63,6 @@ class ConsoleElement : ScriptElement
 		console.println("deleted Console element");
 	}
 
-	uint length;
-	e_String current_text;
-
-	void AddText(const string &in text)
-	{
-		if (text_area is null)
-		{
-			//console.println("Storing reference to console text_element");
-			Element@ text_element = GetElementById(e_String("text_element"));
-			if (text_element !is null)
-				@text_area = cast<ElementFormControlTextArea>(text_element);
-			if (text_area is null)
-				return;
-		}
-
-		if (text_area.GetCursorIndex() >= current_text.Length()-1)
-		{
-			autoScroll = true;
-			//slowScroll = true;
-		}
-
-		if (length < 5120)
-		{
-			current_text += text;
-			length += text.length();
-		}
-		else
-		{
-			current_text = text;
-			length = 0;
-		}
-
-		dirty = true;
-	}
-
 	uint diff(uint front, uint back, uint buffer_length)
 	{
 		if (front >= back)
@@ -113,11 +73,12 @@ class ConsoleElement : ScriptElement
 
 	void AddLine(const string &in text)
 	{
-		if (text_area.GetCursorIndex() >= text_block.length()-1)
+		if (text_area.GetCursorIndex() >= num_chars)
 		{
 			autoScroll = true;
 			//slowScroll = true;
 		}
+		num_chars += text.length();
 
 		// Add the line
 		lines[lines_end] = text;
@@ -135,8 +96,7 @@ class ConsoleElement : ScriptElement
 	{
 		lines_end = 0;
 		size = 0;
-		//text_block.clear();
-		//current_text = "";
+		num_chars = 0;
 		dirty = true;
 	}
 
@@ -179,7 +139,7 @@ class ConsoleElement : ScriptElement
 				parameters.Set(e_String("ctrl_key"), int(1));
 				parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
 				text_area.DispatchEvent(e_String("keydown"), parameters);
-				text_area.ShowCursor(false);
+				text_area.ShowCursor(false, true); // scroll to cursor
 				autoScroll = false;
 			}
 			dirty = false;
@@ -193,11 +153,6 @@ class ConsoleElement : ScriptElement
 	void OnNewLine(const string &in data)
 	{
 		AddLine(data);
-	}
-
-	void OnNewData(const string &in data)
-	{
-		AddText(data);
 	}
 
 	void OnClear()
