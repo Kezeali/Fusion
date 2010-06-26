@@ -15,6 +15,10 @@
 
 #include <boost/intrusive_ptr.hpp>
 
+#ifdef MessageBox
+#undef MessageBox
+#endif
+
 namespace FusionEngine
 {
 
@@ -39,6 +43,7 @@ namespace FusionEngine
 	class InstancingSynchroniser;
 	class Log;
 	class Logger;
+	class MessageBox;
 	class Module;
 	class Network;
 	class NetworkManager;

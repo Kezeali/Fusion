@@ -114,6 +114,7 @@
     <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFlagRegistry.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionMessageBox.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPlayerManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
@@ -226,6 +227,7 @@
     <ClInclude Include="..\FusionEngine\FusionFlagRegistry.h" />
     <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionMaths.h" />
+    <ClInclude Include="..\FusionEngine\FusionMessageBox.h" />
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
