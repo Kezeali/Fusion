@@ -72,10 +72,15 @@ namespace FusionEngine
 
 		virtual void ProcessEvent(Rocket::Core::Event& ev);
 
-		//! Should call asIScriptEngine::GCEnumCallback() on every GCed object held by this object
 		virtual void EnumReferences(asIScriptEngine *engine) {};
-		//! Should release every GCed object held by this object
 		virtual void ReleaseAllReferences(asIScriptEngine *engine) {};
+
+		void SetType(const std::string& type);
+
+		void SetTitle(const std::string& title);
+		void SetElement(const std::string& id, const std::string& message);
+
+		void Show(bool modal = true);
 
 		Rocket::Core::ElementDocument* const GetDocument() const;
 
@@ -84,6 +89,7 @@ namespace FusionEngine
 
 	protected:
 		std::string m_Filename;
+		std::string m_Type;
 		Rocket::Core::ElementDocument* m_Document;
 		
 		std::unordered_map<EMP::Core::String, std::shared_ptr<EventSignal>> m_EventSignals;
@@ -92,22 +98,39 @@ namespace FusionEngine
 	};
 
 	//! Simplifies message-box (or "dialog box") creation
-	class MessageBoxManager
+	class MessageBoxMaker : public Singleton<MessageBoxMaker>
 	{
 	public:
-		//! Constructor
-		MessageBoxManager();
-		//! DTOR
-		virtual ~MessageBoxManager();
+		typedef std::map<std::string, std::string> ParamMap;
+		typedef std::function<MessageBox* (Rocket::Core::Context*, const ParamMap& params)> MessageBoxFactoryFn;
 
-		void Create(const std::string& document_filename);
+		static void AddFactory(const std::string& name, const MessageBoxFactoryFn& function)
+		{
+			getSingleton().addFactory(name, function);
+		}
 
-		typedef std::function<void (Rocket::Core::Event&)> EventFunction;
+		static void RemoveFactory(const std::string& name)
+		{
+			getSingleton().removeFactory(name);
+		}
 
-		void ConnectToEvent(MessageBox& message_box, const EMP::Core::String& type, EventFunction function);
+		static MessageBox* Create(const std::string& type, const std::string& params)
+		{
+			return getSingleton().create(type, params);
+		}
+
+		static std::string GetParam(const ParamMap& params, const std::string& param_name);
+
+		MessageBoxMaker(Rocket::Core::Context* context);
+		~MessageBoxMaker();
+
+		void addFactory(const std::string& name, const MessageBoxFactoryFn& function);
+		void removeFactory(const std::string& name);
+		MessageBox* create(const std::string& type, const std::string& params);
 
 	protected:
-		std::list<boost::signals2::connection> m_EventConnections;
+		std::unordered_map<std::string, MessageBoxFactoryFn> m_Factories;
+		Rocket::Core::Context* m_Context;
 	};
 
 }

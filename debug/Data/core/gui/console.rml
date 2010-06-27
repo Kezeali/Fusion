@@ -32,7 +32,7 @@
 
 			input.text#command_element
 			{
-			width: 300px;
+			width: 310px;
 			}
 			button
 			{

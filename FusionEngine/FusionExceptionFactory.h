@@ -182,6 +182,15 @@ namespace FusionEngine
 	fe_narrow(src), fe_narrow(desc), __FILE__, __LINE__ )
 #endif
 
+#ifndef __FUNCTION__
+#define __FUNCTION__ "(couldn't get function name)"
+#endif
+
+#ifndef FSN_EXCEPTF
+#define FSN_EXCEPTF(type, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+	__FUNCTION__, desc, __FILE__, __LINE__ )
+#endif
+
 
 }
 

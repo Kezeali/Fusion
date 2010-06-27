@@ -37,6 +37,7 @@
 
 #include "FusionConsole.h"
 #include "FusionLogger.h"
+#include "FusionMessageBox.h"
 #include "FusionScriptManager.h"
 #include "FusionScriptModule.h"
 
@@ -186,9 +187,11 @@ namespace FusionEngine
 		CL_GraphicContext gc = m_Display.get_gc();
 
 		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_height()));
-		
+
 		LoadFonts("core/gui/fonts/");
 		m_Context->LoadMouseCursor("core/gui/cursor.rml");
+
+		new MessageBoxMaker(m_Context);
 
 		CL_InputContext ic = m_Display.get_ic();
 

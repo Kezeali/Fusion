@@ -458,11 +458,11 @@ namespace FusionEngine
 			}
 			else
 			{
-				FSN_EXCEPT(UnknownCommandException, __FUNCTION__, *it);
+				FSN_EXCEPTF(UnknownCommandException, *it);
 			}
 		}
 
-		FSN_EXCEPT(InvalidArgumentException, __FUNCTION__, "Failed to parse the given command");
+		FSN_EXCEPTF(InvalidArgumentException, "Failed to parse the given command");
 	}
 
 	void Console::Interpret(const std::string &untrimmed)

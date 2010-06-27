@@ -46,6 +46,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionGUI.h"
 #include "FusionInstanceSynchroniser.h"
+#include "FusionMessageBox.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
 #include "FusionPhysicalEntityManager.h"
@@ -321,6 +322,52 @@ namespace FusionEngine
 		StringVector args; args.emplace_back("[sync]"); args.emplace_back("[pseudo]"); args.emplace_back("[active]");
 		Console::getSingleton().SetCommandHelpText("edcount",
 			"Returns the number of entities in the editor. The paramers are all optional and can be given in any order.", args);
+
+		Console::getSingleton().BindCommand("undo", [this](const StringVector& params)->std::string
+		{
+			if (params.size() > 1)
+			{
+				if (params[1] == "clear")
+				{
+					m_UndoManager.Clear();
+					return "Actions cleared";
+				}
+				else
+				{
+					std::stringstream str;
+					str.str(params[1]);
+					int i = -1;
+					str >> i;
+					if (i >= 0)
+					{
+						m_UndoManager.Undo(i);
+						return "Undoing " + params[1] + "...";
+					}
+				}
+
+				return "Unknown parameter";
+			}
+
+			m_UndoManager.Undo();
+			return "Undoing...";
+		});
+
+		MessageBoxMaker::AddFactory("error",
+			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
+		{
+			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
+
+			messageBox->SetType("error_message");
+			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
+			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
+
+			MessageBox* messageBoxRawPtr = messageBox.get();
+			messageBox->GetEventSignal("accept_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
+				messageBoxRawPtr->release();
+			});
+
+			return messageBox.get();
+		});
 	}
 
 	Editor::~Editor()
@@ -1064,32 +1111,14 @@ namespace FusionEngine
 				}
 			} 
 		}
-		else if (ev == "accept_clicked")
-			GUI::getSingleton().GetContext()->GetDocument("error_message")->Close();
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)
 	{
 		SendToConsole(title + ": " + message);
 
-		using namespace Rocket::Core;
-
-		EMP::Core::String empTitle(title.data(), title.data() + title.length());
-		EMP::Core::String empMessage(message.data(), message.data() + message.length());
-
-		ElementDocument* document = GUI::getSingleton().GetContext()->LoadDocument("core/gui/message_box.rml");
-		document->SetId("error_message");
-		document->SetTitle(empTitle);
-
-		Element* message_label = document->GetElementById("message_label");
-		message_label->SetInnerRML(empMessage);
-
-		document->SetPseudoClass("error_message", true);
-
-		document->AddEventListener("accept_clicked", this);
-
-		document->Show( ElementDocument::MODAL );
-		document->RemoveReference();
+		MessageBox* messageBox = MessageBoxMaker::Create("error", "title:" + title + ", message:" + message);
+		messageBox->Show();
 	}
 
 	void Editor::clearCtxMenu(MenuItem *menu, Editor::MenuItemConnections &connections)

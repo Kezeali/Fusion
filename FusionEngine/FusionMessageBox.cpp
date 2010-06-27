@@ -81,6 +81,29 @@ namespace FusionEngine
 		}
 	}
 
+	void MessageBox::SetType(const std::string& type)
+	{
+		m_Type = type;
+		m_Document->SetId(toEmp(type));
+		m_Document->SetPseudoClass(toEmp(type), true);
+	}
+
+	void MessageBox::SetTitle(const std::string& title)
+	{
+		m_Document->SetTitle(toEmp(title));
+	}
+
+	void MessageBox::SetElement(const std::string& id, const std::string& message)
+	{
+		Rocket::Core::Element* message_label = m_Document->GetElementById(toEmp(id));
+		message_label->SetInnerRML(toEmp(message));
+	}
+
+	void MessageBox::Show(bool modal)
+	{
+		m_Document->Show(modal ? (Rocket::Core::ElementDocument::MODAL | Rocket::Core::ElementDocument::FOCUS) : Rocket::Core::ElementDocument::FOCUS);
+	}
+
 	Rocket::Core::ElementDocument* const MessageBox::GetDocument() const
 	{
 		return m_Document;
@@ -92,18 +115,82 @@ namespace FusionEngine
 		return *(m_EventSignals[type] = std::shared_ptr<MessageBox::EventSignal>( new EventSignal ));
 	}
 
-	MessageBoxManager::MessageBoxManager()
+	std::string MessageBoxMaker::GetParam(const ParamMap& params, const std::string& param_name)
 	{
+		auto _where = params.find(param_name);
+		if (_where != params.end())
+			return _where->second;
+		else
+			return std::string();
 	}
 
-	MessageBoxManager::~MessageBoxManager()
+	MessageBoxMaker::MessageBoxMaker(Rocket::Core::Context* context)
+		: m_Context(context)
 	{
-		std::for_each(m_EventConnections.begin(), m_EventConnections.end(), [](boost::signals2::connection& connection) { connection.disconnect(); });
+		m_Context->AddReference();
 	}
 
-	void MessageBoxManager::ConnectToEvent(MessageBox& message_box, const EMP::Core::String& type, EventFunction function)
+	MessageBoxMaker::~MessageBoxMaker()
 	{
-		m_EventConnections.emplace_back( message_box.GetEventSignal(type).connect(function) );
+		m_Context->RemoveReference();
 	}
+
+	void MessageBoxMaker::addFactory(const std::string& name, const MessageBoxFactoryFn& function)
+	{
+		m_Factories[name] = function;
+	}
+
+	void MessageBoxMaker::removeFactory(const std::string& name)
+	{
+		m_Factories.erase(name);
+	}
+
+	template <typename T>
+	void fe_pairize(const std::string& entries, T& obj)
+	{
+		std::string::size_type token_pos = 0, token_end = 0;
+		while (true)
+		{
+			token_end = entries.find(":", token_pos);
+			if (token_end == std::string::npos)
+				break;
+
+			std::string key = fe_trim(
+				entries.substr(token_pos, token_end - token_pos)
+				);
+
+			token_pos = token_end + 1;
+			token_end = entries.find(",", token_pos);
+
+			if (!key.empty())
+			{
+				std::string value = entries.substr(token_pos, token_end != std::string::npos ? token_end - token_pos : token_end);
+				value = fe_trim(value);
+
+				obj[key] = value;
+			}
+
+			if (token_end == std::string::npos)
+				break; // Reached the end of the string
+
+			// Next token pos
+			token_pos = token_end + 1;
+		}
+	}
+
+	MessageBox* MessageBoxMaker::create(const std::string& type, const std::string& params)
+	{
+		auto _where = m_Factories.find(type);
+		if (_where != m_Factories.end())
+		{
+			ParamMap pairizedParams;
+			fe_pairize(params, pairizedParams);
+
+			return _where->second(m_Context, pairizedParams);
+		}
+		else
+			return nullptr;
+	}
+
 
 }
