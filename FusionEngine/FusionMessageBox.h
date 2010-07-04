@@ -78,7 +78,7 @@ namespace FusionEngine
 		void SetType(const std::string& type);
 
 		void SetTitle(const std::string& title);
-		void SetElement(const std::string& id, const std::string& message);
+		void SetElement(const std::string& id, const std::string& text);
 
 		void Show(bool modal = true);
 

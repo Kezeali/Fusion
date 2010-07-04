@@ -31,6 +31,7 @@
 
 #include <Rocket/Core/Context.h>
 #include <Rocket/Core/ElementDocument.h>
+#include "FusionCommon.h"
 #include "FusionGUI.h"
 
 namespace FusionEngine
@@ -93,10 +94,10 @@ namespace FusionEngine
 		m_Document->SetTitle(toEmp(title));
 	}
 
-	void MessageBox::SetElement(const std::string& id, const std::string& message)
+	void MessageBox::SetElement(const std::string& id, const std::string& text)
 	{
 		Rocket::Core::Element* message_label = m_Document->GetElementById(toEmp(id));
-		message_label->SetInnerRML(toEmp(message));
+		message_label->SetInnerRML(toEmp(text));
 	}
 
 	void MessageBox::Show(bool modal)
@@ -143,39 +144,6 @@ namespace FusionEngine
 	void MessageBoxMaker::removeFactory(const std::string& name)
 	{
 		m_Factories.erase(name);
-	}
-
-	template <typename T>
-	void fe_pairize(const std::string& entries, T& obj)
-	{
-		std::string::size_type token_pos = 0, token_end = 0;
-		while (true)
-		{
-			token_end = entries.find(":", token_pos);
-			if (token_end == std::string::npos)
-				break;
-
-			std::string key = fe_trim(
-				entries.substr(token_pos, token_end - token_pos)
-				);
-
-			token_pos = token_end + 1;
-			token_end = entries.find(",", token_pos);
-
-			if (!key.empty())
-			{
-				std::string value = entries.substr(token_pos, token_end != std::string::npos ? token_end - token_pos : token_end);
-				value = fe_trim(value);
-
-				obj[key] = value;
-			}
-
-			if (token_end == std::string::npos)
-				break; // Reached the end of the string
-
-			// Next token pos
-			token_pos = token_end + 1;
-		}
 	}
 
 	MessageBox* MessageBoxMaker::create(const std::string& type, const std::string& params)

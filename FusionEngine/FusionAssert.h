@@ -1,6 +1,5 @@
 /*
-* Based on POW2_ASSERT by Charles Nicholson at Power of Two Games (now
-* defunct, see:
+* Based on POW2_ASSERT by Charles Nicholson at Power of Two Games (see:
 *  http://cnicholson.net/2009/02/stupid-c-tricks-adventures-in-assert/)
 */
 

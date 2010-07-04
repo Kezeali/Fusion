@@ -95,13 +95,13 @@ namespace FusionEngine
 		//! Returns the name of this system ("editor")
 		const std::string &GetName() const;
 
-		//! System Init implementation
+		//! Initialise
 		bool Initialise();
-
+		//! Clean up
 		void CleanUp();
-
+		//! Update
 		void Update(float split);
-
+		//! Draw
 		void Draw();
 
 		//! Starts the editor (doesn't stop the ontology, so you should do that first)
@@ -125,7 +125,9 @@ namespace FusionEngine
 
 		void ProcessEvent(Rocket::Core::Event& ev);
 
-		void ShowMessage(const std::string& title, const std::string& message, const MapEntityArray& entities);
+		//! Shows a message box containing the given entities
+		void ShowMessage(const std::string& title, const std::string& message, const MapEntityArray& entities, std::function<void (const MapEntityPtr&)> accept_callback);
+		//! Opens a message box with an error message
 		void DisplayError(const std::string &title, const std::string &message);
 		void ShowContextMenu(const Vector2i &position, const MapEntityArray &entities);
 		void ShowProperties(const EntityPtr &entity);

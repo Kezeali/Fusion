@@ -368,6 +368,24 @@ namespace FusionEngine
 
 			return messageBox.get();
 		});
+
+		MessageBoxMaker::AddFactory("entity_list",
+			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
+		{
+			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
+
+			messageBox->SetType("entity_list_message");
+			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
+			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
+			messageBox->SetElement("entity_list", MessageBoxMaker::GetParam(params, "entity_list"));
+
+			MessageBox* messageBoxRawPtr = messageBox.get();
+			messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
+				messageBoxRawPtr->release();
+			});
+
+			return messageBox.get();
+		});
 	}
 
 	Editor::~Editor()
@@ -1111,6 +1129,19 @@ namespace FusionEngine
 				}
 			} 
 		}
+	}
+
+	void Editor::ShowMessage(const std::string &title, const std::string &message, const MapEntityArray& entities, std::function<void (const MapEntityPtr&)> accept_callback)
+	{
+		std::stringstream entityElements;
+		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			entityElements << "<button style=\"ent-decorator: editor_entity; ent-dataindex: ";
+			entityElements << (*it).get();
+			entityElements << "></button>" << std::endl;
+		}
+		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + ", entity_list: " + entityElements.str());
+		messageBox->Show();
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)

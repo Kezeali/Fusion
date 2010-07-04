@@ -300,6 +300,51 @@ namespace FusionEngine
 		return result;
 	}
 
+	//! Converts a string representing key value pairs to a map. See full description.
+	/*!
+	* The string format is "key: value, key: value", whitespace optional. <br>
+	* Note that whitespace adjacent to delimeters be trimmed from output,
+	* e.g. "Player Name: Jo Jo,  Skill Level: 21" would be equivilent to "Player Name:Jo Jo,Skill Level:21". <br>
+	* On a related note, the string in the above example would be functionally
+	* equivilent to the c++ expression:
+	* <code>
+	*  out_map["Player Name"] = "Jo Jo";
+	*  out_map["Skill Level"] = "21";
+	* </code>
+	*/
+	template <typename T>
+	void fe_pairize(const std::string& entries, T& out_map)
+	{
+		std::string::size_type token_pos = 0, token_end = 0;
+		while (true)
+		{
+			token_end = entries.find(":", token_pos);
+			if (token_end == std::string::npos)
+				break;
+
+			std::string key = fe_trim(
+				entries.substr(token_pos, token_end - token_pos)
+				);
+
+			token_pos = token_end + 1;
+			token_end = entries.find(",", token_pos);
+
+			if (!key.empty())
+			{
+				std::string value = entries.substr(token_pos, token_end != std::string::npos ? token_end - token_pos : token_end);
+				value = fe_trim(value);
+
+				out_map[key] = value;
+			}
+
+			if (token_end == std::string::npos)
+				break; // Reached the end of the string
+
+			// Next token pos
+			token_pos = token_end + 1;
+		}
+	}
+
 	//! Returns the path part of the given filename-path - i.e. "/core/file.txt" returns "/core"
 	static std::string fe_getbasepath(const std::string &path)
 	{
