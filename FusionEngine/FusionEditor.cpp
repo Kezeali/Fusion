@@ -1136,8 +1136,8 @@ namespace FusionEngine
 		std::stringstream entityElements;
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			entityElements << "<button style=\"ent-decorator: editor_entity; ent-dataindex: ";
-			entityElements << (*it).get();
+			entityElements << "<button style=\"ent-decorator: entity; ent-name: ";
+			entityElements << (*it)->entity->GetName();
 			entityElements << "></button>" << std::endl;
 		}
 		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + ", entity_list: " + entityElements.str());
