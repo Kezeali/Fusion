@@ -111,6 +111,7 @@
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMultiAction.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityDecorator.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFlagRegistry.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
@@ -223,6 +224,7 @@
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
     <ClInclude Include="..\FusionEngine\FusionEditorMoveAction.h" />
     <ClInclude Include="..\FusionEngine\FusionEditorMultiAction.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityDecorator.h" />
     <ClInclude Include="..\FusionEngine\FusionFirstCause.h" />
     <ClInclude Include="..\FusionEngine\FusionFlagRegistry.h" />
     <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
