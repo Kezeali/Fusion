@@ -220,6 +220,9 @@ namespace FusionEngine
 		//! Removes renderables with the given tag
 		virtual void RemoveRenderablesWithTag(const std::string &tag);
 
+		//! Returns the cumulative AABB of this Entity's renderables
+		CL_Rectf CalculateOnScreenAABB() const;
+
 		//! Adds an object that uses a resource that should be loaded when the Entity is streamed in
 		void AddStreamedResource(StreamedResourceUser * const user);
 		//! Removes the given SRU

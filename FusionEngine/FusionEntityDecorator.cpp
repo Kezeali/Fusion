@@ -29,15 +29,61 @@
 
 #include "FusionEntityDecorator.h"
 
+#include <Rocket/Core/Element.h>
+#include <Rocket/Core/Geometry.h>
+#include <Rocket/Core/GeometryUtilities.h>
+#include <Rocket/Core.h>
+
+#include "FusionRenderer.h"
+
 namespace FusionEngine
 {
 
-	EntityDecorator::EntityDecorator()
+	EntityDecorator::EntityDecorator(const EntityPtr& entity, Renderer* renderer)
+		: m_Entity(entity),
+		m_Renderer(renderer)
 	{
 	}
 
 	Rocket::Core::DecoratorDataHandle EntityDecorator::GenerateElementData(Rocket::Core::Element* element)
 	{
+		//CL_Rectf&& bounding_box = m_Entity->CalculateOnScreenAABB();
+
+		//CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		//CL_Texture offtex(gc, bounding_box.get_width(), bounding_box.get_height());
+
+		//CL_FrameBuffer offscreen(gc);
+		//offscreen.attach_color_buffer(0, offtex);
+		//gc.set_frame_buffer(offscreen);
+
+		//// The main selection box
+		//gc.clear(CL_Colorf(0.0f, 0.0f, 0.0f, 0.0f));
+
+		//m_Renderer->DrawEntity(m_Entity);
+
+		//CL_Sprite texture;
+		//{
+		//	CL_SpriteDescription spriteDesc;
+		//	spriteDesc.add_frame(offtex);
+		//	texture = CL_Sprite(gc, spriteDesc);
+		//}
+
+		//gc.reset_frame_buffer();
+
+		//m_Geometry = new Rocket::Core::Geometry();
+
+		//Rocket::Core::Vertex verticies[4];
+		//int indicies[4];
+		//Rocket::Core::GeometryUtilities::GenerateQuad(verticies, indicies,
+		//	EMP::Core::Vector2f(),
+		//	EMP::Core::Vector2f( bounding_box.get_width(), bounding_box.get_height() ),
+		//	EMP::Core::Colourb(255, 255, 255, 255),
+		//	EMP::Core::Vector2f(0, 0), EMP::Core::Vector2f(bounding_box.get_width(), bounding_box.get_height())
+		//	);
+
+		//m_Geometry->GetVertices().assign(&verticies[0], &verticies[3]);
+		//m_Geometry->GetIndices().assign(&indicies[0], &indicies[3]);
+
 		return nullptr;
 	}
 
@@ -47,6 +93,8 @@ namespace FusionEngine
 
 	void EntityDecorator::RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data)
 	{
+		//m_Geometry->Render(element->GetAbsoluteOffset(Rocket::Core::Box::PADDING));
+		m_Renderer->DrawEntity(m_Entity);
 	}
 
 }

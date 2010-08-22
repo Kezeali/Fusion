@@ -151,6 +151,19 @@ namespace FusionEngine
 		drawImpl(entities, viewport, layer, std::string(), filter_flags);
 	}
 
+	CL_Rectf Renderer::DrawEntity(const EntityPtr& entity)
+	{
+		drawEntity(entity, [&](const RenderablePtr& renderable)->bool { return true; });
+	}
+
+	CL_Rectf Renderer::DrawEntity(const EntityPtr& entity, const std::string& renderable_tag, uint32_t filter_flags)
+	{
+		drawEntity(entity, [&](const RenderablePtr& renderable)->bool
+		{
+			return (renderable->GetFlags() & filter_flags) != 0 || (!renderable_tag.empty() && renderable->HasTag(renderable_tag));
+		});
+	}
+
 	void Renderer::drawImpl(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag, uint32_t filter_flags)
 	{
 		CL_Rectf drawArea;
@@ -170,8 +183,6 @@ namespace FusionEngine
 
 	void Renderer::actuallyDraw(EntityArray &entities, const CL_Rectf &draw_area, size_t layer, const std::string& renderable_tag, uint32_t filter_flags)
 	{
-		int notRendered = 0;
-
 		int previousDepth = INT_MIN; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
 		for (EntityArray::iterator it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
@@ -196,31 +207,16 @@ namespace FusionEngine
 			CL_Mat4f entityTransform = CL_Mat4f::translate(entityPosition.x, entityPosition.y, 0.f);
 			entityTransform.multiply(CL_Mat4f::rotate(CL_Angle(entity->GetAngle(), cl_radians), 0.f, 0.f, 1.f));
 
-			// Draw_area translated by -entityPosition (since Renderable positions are relative to entity position)
-			CL_Rectf normDrawArea(draw_area.left - entityPosition.x, draw_area.top - entityPosition.y, draw_area.right - entityPosition.x, draw_area.bottom - entityPosition.y);
+			// draw_area translated by -entityPosition (since Renderable positions are relative to entity position)
+			CL_Rectf relativeDrawRect(draw_area.left - entityPosition.x, draw_area.top - entityPosition.y, draw_area.right - entityPosition.x, draw_area.bottom - entityPosition.y);
 
 			m_GC.push_modelview();
 			//m_GC.mult_modelview(entityTransform);
 			m_GC.mult_translate(entityPosition.x, entityPosition.y);
 			m_GC.mult_rotate(CL_Angle(entity->GetAngle(), cl_radians));
 
-			//drawRenderables(entity, draw_area);
-			RenderableArray &entityRenderables = entity->GetRenderables();
-			int previousRenderableDepth = 0;
-			for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
-			{
-				RenderablePtr &renderable = *r_it;
-				if ( ((renderable->GetFlags() & filter_flags) != 0 || (!renderable_tag.empty() && renderable->HasTag(renderable_tag)))
-					&& normDrawArea.is_overlapped(renderable->GetAABB()) )
-					renderable->Draw(m_GC, Vector2()/*entityPosition*/);
-				else
-					++notRendered;
-				// Bubble-sort by depth
-				if (renderable->GetDepth() < previousRenderableDepth)
-					std::swap(*r_it, *(r_it-1));
-				else
-					previousRenderableDepth = renderable->GetDepth();
-			}
+			// Draw the entities renderables
+			drawEntity(entity, relativeDrawRect, renderable_tag, filter_flags);
 
 			m_GC.pop_modelview();
 
@@ -232,70 +228,31 @@ namespace FusionEngine
 		}
 	}
 
-	void Renderer::updateDrawArray()
+	inline void Renderer::drawEntity(const EntityPtr& entity, const CL_Rectf& draw_area, const std::string& renderable_tag, uint32_t filter_flags)
 	{
-		//for (EntitySet::iterator it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
-		//{
-		//	const EntityPtr &entity = *it;
-		//	
-		//	if (m_ChangedTags.wasShown(entity))
-		//	{
-		//		m_EntitiesToDraw.insert(
-		//			std::lower_bound(m_EntitiesToDraw.begin(), m_EntitiesToDraw.end(), entity->GetDepth()),
-		//			entity);
-		//	}
-		//}
+		drawEntity(entity, [&](const RenderablePtr& renderable)->bool
+		{
+			return ((renderable->GetFlags() & filter_flags) != 0 || (!renderable_tag.empty() && renderable->HasTag(renderable_tag)))
+				&& draw_area.is_overlapped(renderable->GetAABB());
+		});
 	}
 
-	void Renderer::drawRenderables(EntityPtr &entity, const CL_Rectf &draw_area)
+	inline void Renderer::drawEntity(const EntityPtr& entity, std::function<bool (const RenderablePtr&)> filter_fn)
 	{
+		RenderableArray &entityRenderables = entity->GetRenderables();
+		int previousRenderableDepth = 0;
+		for (RenderableArray::iterator r_it = entityRenderables.begin(), r_end = entityRenderables.end(); r_it != r_end; ++r_it)
+		{
+			RenderablePtr &renderable = *r_it;
+			if (filter_fn(renderable))
+				renderable->Draw(m_GC, Vector2()/*entityPosition*/);
 
-		//int previousDepth = INT_MAX; // Setting to max skips the first comparison, which would be invalid (since it-1 would be illegal)
-		//for (EntityArray::iterator it = m_EntitiesToDraw.begin(), end = m_EntitiesToDraw.end(); it != end; ++it)
-		//{
-		//	EntityPtr &entity = *it;
-
-		//	if (m_ChangedTags.wasHidden(entity))
-		//	{
-		//		it = m_EntitiesToDraw.erase(it);
-		//		if (it == m_EntitiesToDraw.end())
-		//			break;
-		//	}
-
-		//	if (entity->IsHidden())
-		//		continue;
-		//	if (entity->IsStreamedOut())
-		//		continue;
-
-		//	const Vector2 &entityPosition = entity->GetPosition();
-
-		//	m_GC.push_translate(entityPosition.x, entityPosition.y);
-
-		//	Entity::RenderableArray &entityRenderables = entity->GetRenderables();
-		//	for (Entity::RenderableArray::iterator it = entityRenderables.begin(), end = entityRenderables.end(); it != end; ++it)
-		//	{
-		//		RenderablePtr renderable = *it;
-		//		ResourcePointer<CL_Sprite> &spriteResource = renderable->sprite;
-
-		//		float x = entityPosition.x + renderable->position.x;
-		//		float y = entityPosition.y + renderable->position.y;
-		//		CL_Rectf spriteRect(x, y, x + spriteResource->get_width(), y +spriteResource->get_height());
-		//		if (spriteResource.IsValid() && draw_area.is_overlapped(spriteRect))
-		//		{
-		//			spriteResource->draw(m_GC, renderable->GetPosition().x, renderable->GetPosition().y);
-		//		}
-		//	}
-
-		//	m_GC.pop_modelview();
-
-		//	// Bubble up previous Entity if incorrectly depth-sorted
-		//	if (entity->GetDepth() < previousDepth)
-		//	{
-		//		std::swap(*it, *(it-1));
-		//	}
-		//	else
-		//		previousDepth = entity->GetDepth();
-		//}
+			// Bubble-sort by depth
+			if (renderable->GetDepth() < previousRenderableDepth)
+				std::swap(*r_it, *(r_it-1));
+			else
+				previousRenderableDepth = renderable->GetDepth();
+		}
 	}
 
 }

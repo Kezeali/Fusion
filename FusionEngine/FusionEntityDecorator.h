@@ -32,9 +32,13 @@
 #pragma once
 #endif
 
-#include "FusionCommon.h"
+#include "FusionPrerequisites.h"
 
 #include <Rocket/Core/Decorator.h>
+
+namespace Rocket { namespace Core {
+		class Geometry;
+} }
 
 namespace FusionEngine
 {
@@ -42,7 +46,7 @@ namespace FusionEngine
 	class EntityDecorator : public Rocket::Core::Decorator
 	{
 	public:
-		EntityDecorator();
+		EntityDecorator(const EntityPtr& entity, Renderer* renderer);
 		
 		//! Called on a decorator to generate any required per-element data for a newly decorated element.
 		virtual Rocket::Core::DecoratorDataHandle GenerateElementData(Rocket::Core::Element* element);
@@ -52,7 +56,17 @@ namespace FusionEngine
 
 		//! Called to render the decorator on an element.
 		virtual void RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data);
-	}
+
+	protected:
+		Renderer* m_Renderer;
+		EntityPtr m_Entity;
+
+		//Rocket::Core::Geometry* m_Geometry;
+	};
+
+	class EntityDecoratorInstancer
+	{
+	};
 
 }
 

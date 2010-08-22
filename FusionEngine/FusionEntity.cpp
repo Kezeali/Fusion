@@ -460,6 +460,19 @@ namespace FusionEngine
 		m_Renderables.erase(newEnd, m_Renderables.end());
 	}
 
+	CL_Rectf Entity::CalculateOnScreenAABB() const
+	{
+		CL_Rectf bounding_box;
+		if (!m_Renderables.empty())
+		{
+			auto it = m_Renderables.cbegin(), end = m_Renderables.cend();
+			bounding_box = (*it)->GetAABB();
+			for (++it; it != end; ++it)
+				bounding_box.bounding_rect((*it)->GetAABB());
+		}
+		return bounding_box;
+	}
+
 	void Entity::AddStreamedResource(StreamedResourceUser * const user)
 	{
 		m_StreamedResources.push_back(user);

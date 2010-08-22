@@ -128,14 +128,20 @@ namespace FusionEngine
 		*/
 		void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, uint32_t filter_flags);
 
-	protected:
-		bool updateTags(const EntityPtr &entity) const;
+		//! Draws the given entity
+		void DrawEntity(const EntityPtr& entity);
 
-		void drawRenderables(EntityPtr &entity, const CL_Rectf &cull_outside);
+		//! Draws the given entity
+		void DrawEntity(const EntityPtr& entity, const std::string& renderable_tag, uint32_t filter_flags);
+
+	protected:
+		//! Draws the given entity using the standard filter fn.
+		inline void drawEntity(const EntityPtr& entity, const CL_Rectf& draw_rect, const std::string& renderable_tag, uint32_t filter_flags);
+		//! Draws the given entity using a custom filter fn.
+		inline void drawEntity(const EntityPtr& entity, std::function<bool (const RenderablePtr&)> filter_fn);
 
 		void drawImpl(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
 		void actuallyDraw(EntityArray &entities, const CL_Rectf &cull_outside, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
-		void updateDrawArray();
 
 		struct ChangingTagCollection
 		{
