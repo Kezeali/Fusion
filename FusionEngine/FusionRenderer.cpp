@@ -151,12 +151,12 @@ namespace FusionEngine
 		drawImpl(entities, viewport, layer, std::string(), filter_flags);
 	}
 
-	CL_Rectf Renderer::DrawEntity(const EntityPtr& entity)
+	void Renderer::DrawEntity(const EntityPtr& entity)
 	{
 		drawEntity(entity, [&](const RenderablePtr& renderable)->bool { return true; });
 	}
 
-	CL_Rectf Renderer::DrawEntity(const EntityPtr& entity, const std::string& renderable_tag, uint32_t filter_flags)
+	void Renderer::DrawEntity(const EntityPtr& entity, const std::string& renderable_tag, uint32_t filter_flags)
 	{
 		drawEntity(entity, [&](const RenderablePtr& renderable)->bool
 		{

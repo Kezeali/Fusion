@@ -41,6 +41,7 @@
 #include "FusionEditorMapEntity.h"
 #include "FusionEditorMoveAction.h"
 #include "FusionEditorMultiAction.h"
+#include "FusionEntityDecoratorInstancer.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
@@ -501,6 +502,9 @@ namespace FusionEngine
 
 	bool Editor::Initialise()
 	{
+		Rocket::Core::DecoratorInstancer* instancer = new EntityDecoratorInstancer(m_EntityManager, m_Renderer);
+		Rocket::Core::Factory::RegisterDecoratorInstancer("entity-decorator", instancer);
+		instancer->RemoveReference();
 		// Load gui documents
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_MainDocument = guiCtx->LoadDocument("core/gui/editor.rml");
@@ -980,9 +984,40 @@ namespace FusionEngine
 				}
 				else
 				{
-					DisplayError("Not Implemented", "Deleting entities is not implemented");
+					//DisplayError("Not Implemented", "Deleting entities is not implemented");
 					// X
-					//ShowMessage("Delete Entities", "Are you sure you want to delete the following entities: ", underMouse);
+					ShowMessage("Delete Entities", "Are you sure you want to delete the following entities: ", underMouse,
+						[this, underMouse](const MapEntityPtr& clicked)
+					{
+						if (underMouse.size() == 1)
+						{
+							EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(underMouse.back());
+							if (editorEntity)
+							{
+								UndoableActionPtr deleteAction( new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, editorEntity, false) );
+								RemoveEntity(editorEntity);
+								editorEntity->ArchiveEntity();
+								m_UndoManager.Add( deleteAction );
+							}
+						}
+						else if (!underMouse.empty())
+						{
+							MultiAction* multi_delete = new MultiAction();
+							for (auto it = underMouse.begin(), end = underMouse.end(); it != end; ++it)
+							{
+								EditorMapEntityPtr editorEntity = boost::dynamic_pointer_cast<EditorMapEntity>(*it);
+								if (editorEntity)
+								{
+									UndoableActionPtr deleteAction( new AddRemoveEntityAction(this, m_EntityFactory, m_EntityManager, editorEntity, false) );
+									multi_delete->AddAction( deleteAction );
+									RemoveEntity(editorEntity);
+									editorEntity->ArchiveEntity();
+								}
+							}
+							m_UndoManager.Add( UndoableActionPtr(multi_delete) );
+						}
+					}
+					);
 
 					// A
 					//MessageBox* message = new MessageBox(...);
@@ -1136,11 +1171,15 @@ namespace FusionEngine
 		std::stringstream entityElements;
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			entityElements << "<button style=\"ent-decorator: entity; ent-name: ";
-			entityElements << (*it)->entity->GetName();
-			entityElements << "></button>" << std::endl;
+			entityElements << "<span style=\"ent-decorator: entity-decorator; ent-name: ";
+			entityElements << (*it)->entity->GetName() << ";";
+			entityElements << "\"></span>" << std::endl;
 		}
 		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + ", entity_list: " + entityElements.str());
+		messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
+		{
+			accept_callback( GameMapLoader::MapEntityPtr() );
+		} );
 		messageBox->Show();
 	}
 

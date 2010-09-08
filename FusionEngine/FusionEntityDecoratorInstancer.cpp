@@ -10,16 +10,21 @@ namespace FusionEngine
 {
 
 	EntityDecoratorInstancer::EntityDecoratorInstancer(EntityManager* source, Renderer* renderer)
-		: m_EntityManager(source),
+		: Rocket::Core::DecoratorInstancer(),
+		m_EntityManager(source),
 		m_Renderer(renderer)
 	{
+		RegisterProperty("name", "none").AddParser("string");
 	}
 
 	Rocket::Core::Decorator* EntityDecoratorInstancer::InstanceDecorator(const EMP::Core::String& name, const Rocket::Core::PropertyDictionary& properties)
 	{
-		EMP::Core::String entity_name = properties.GetProperty("file")->Get<EMP::Core::String>();
+		EMP::Core::String entity_name = properties.GetProperty("name")->Get<EMP::Core::String>();
 		EntityPtr entity = m_EntityManager->GetEntity(std::string(entity_name.CString()));
-		return new EntityDecorator(entity, m_Renderer);
+		if (entity)
+			return new EntityDecorator(entity, m_Renderer);
+		else
+			return nullptr;
 	}
 
 	void EntityDecoratorInstancer::ReleaseDecorator(Rocket::Core::Decorator* decorator)
