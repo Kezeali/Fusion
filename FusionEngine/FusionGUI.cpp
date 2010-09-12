@@ -374,17 +374,17 @@ namespace FusionEngine
 
 			r = iengine->RegisterObjectBehaviour("string",
 				asBEHAVE_FACTORY,
-				"string@ f(const e_String&in)",
+				"string@ f(const rString&in)",
 				asFUNCTION(CScriptStringFactory_FromEMPString),
 				asCALL_CDECL); FSN_ASSERT(r >= 0);
 
 			r = iengine->RegisterObjectMethod("string",
-				"string& opAssign(const e_String&in)",
+				"string& opAssign(const rString&in)",
 				asFUNCTION(CScriptStringAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = iengine->RegisterObjectMethod("string",
-				"string& opAddAssign(const e_String&in)",
+				"string& opAddAssign(const rString&in)",
 				asFUNCTION(CScriptStringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}

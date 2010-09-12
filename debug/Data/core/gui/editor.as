@@ -4,13 +4,13 @@ ElementUndoMenu @editor_redoMenu = null;
 void OnEditorWindowLoad(Event@ event)
 {
 	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-	doc.GetElementById(e_String("title")).SetInnerRML(doc.GetTitle());
+	doc.GetElementById(rString("title")).SetInnerRML(doc.GetTitle());
 
-	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(rString("undo_menu")) );
 	if (editor_undoMenu !is null)
 		editor.attachUndoMenu(editor_undoMenu);
 
-	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
+	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(rString("redo_menu")) );
 	if (editor_redoMenu !is null)
 		editor.attachRedoMenu(editor_redoMenu);
 }
@@ -21,7 +21,7 @@ void OnUndo(Event@ event)
 		return;
 	//{
 	//	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-	//	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("undo_menu")) );
+	//	@editor_undoMenu = cast<ElementUndoMenu>( doc.GetElementById(rString("undo_menu")) );
 	//}
 
 	editor.undo(editor_undoMenu.GetSelection());
@@ -33,7 +33,7 @@ void OnRedo(Event@ event)
 		return;
 	//{
 	//	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-	//	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(e_String("redo_menu")) );
+	//	@editor_redoMenu = cast<ElementUndoMenu>( doc.GetElementById(rString("redo_menu")) );
 	//}
 
 	editor.redo(editor_redoMenu.GetSelection());
@@ -41,44 +41,44 @@ void OnRedo(Event@ event)
 
 void OnClickActualGFXCheckbox(Event@ event)
 {
-	bool enabled = event.GetParameter(e_String("value"), false);
+	bool enabled = event.GetParameter(rString("value"), false);
 	editor.setDisplayActualSprites(enabled);
 }
 
 void OnEntityTypeChanged(Event@ event)
 {
-	string type = event.GetParameter(e_String('value'), e_String());
+	string type = event.GetParameter(rString('value'), rString());
 	editor.updateSuggestions(type);
 	editor.setEntityType(type);
 }
 
 void OnClickPseudoCheckbox(Event@ event)
 {
-	bool pseudo = event.GetParameter(e_String("value"), false);
+	bool pseudo = event.GetParameter(rString("value"), false);
 	editor.setPlacePseudoEntities(pseudo);
 }
 
 void OnSelected(Event@ event)
 {
-	int index = event.GetParameter(e_String("row_index"), -1);
+	int index = event.GetParameter(rString("row_index"), -1);
 	if (index == -1)
 		return;
 
 	string type = editor.getSuggestion(index);
 
 	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(e_String("entity_type")) );
+	ElementFormControlInput@ element = cast<ElementFormControlInput>( doc.GetElementById(rString("entity_type")) );
 	if (element !is null)
 	{
-		element.SetValue(e_String(type));
+		element.SetValue(rString(type));
 		editor.setEntityType(type);
 	}
 }
 
 void SubmitSaveOrLoad(Event@ event)
 {
-	string filename = event.GetParameter(e_String('filename'), e_String());
-	string type = event.GetParameter(e_String('submit'), e_String());
+	string filename = event.GetParameter(rString('filename'), rString());
+	string type = event.GetParameter(rString('submit'), rString());
 	if (type == "load")
 		editor.load( filename );
 	else if (type == "save")

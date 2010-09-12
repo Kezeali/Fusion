@@ -1,6 +1,6 @@
 void InitialiseConsole()
 {
-	RegisterElementType(e_String("console"), e_String("ConsoleElement"));
+	RegisterElementType(rString("console"), rString("ConsoleElement"));
 }
 
 ContextMenu@ autocomplete_menu;
@@ -104,7 +104,7 @@ class ConsoleElement : ScriptElement
 	{
 		if (text_area is null)
 		{
-			Element@ text_element = GetElementById(e_String("text_element"));
+			Element@ text_element = GetElementById(rString("text_element"));
 			if (text_element !is null)
 				@text_area = cast<ElementFormControlTextArea>(text_element);
 			if (text_area is null)
@@ -130,15 +130,15 @@ class ConsoleElement : ScriptElement
 						i = 0;
 				}
 			}
-			text_area.SetValue( e_String(linesText) );
+			text_area.SetValue( rString(linesText) );
 			if (autoScroll)
 			{
 				//text_area.SetCursorIndex(current_text.Length(), true);
 				// Send ctrl-end key-press event
 				e_Dictionary parameters;
-				parameters.Set(e_String("ctrl_key"), int(1));
-				parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
-				text_area.DispatchEvent(e_String("keydown"), parameters);
+				parameters.Set(rString("ctrl_key"), int(1));
+				parameters.Set(rString("key_identifier"), int(GUIKey::KI_END));
+				text_area.DispatchEvent(rString("keydown"), parameters);
 				text_area.ShowCursor(false, true); // scroll to cursor
 				autoScroll = false;
 			}
@@ -162,40 +162,40 @@ class ConsoleElement : ScriptElement
 	
 	void OnAutocompleteClick(const MenuItemEvent &in ev)
 	{
-		ElementFormControlInput@ input = cast<ElementFormControlInput>( GetElementById(e_String("command_element")) );
+		ElementFormControlInput@ input = cast<ElementFormControlInput>( GetElementById(rString("command_element")) );
 		if (firstArg)
-			input.SetValue( e_String(ev.title) );
+			input.SetValue( rString(ev.title) );
 		else
 		{
-			e_String completed = console.autocomplete(string(input.GetValue()), ev.title);
+			rString completed = console.autocomplete(string(input.GetValue()), ev.title);
 			input.SetValue(completed);
 		}
 		input.Focus();
 
 		e_Dictionary parameters;
-		parameters.Set(e_String("key_identifier"), int(GUIKey::KI_END));
-		input.DispatchEvent(e_String("keydown"), parameters);
+		parameters.Set(rString("key_identifier"), int(GUIKey::KI_END));
+		input.DispatchEvent(rString("keydown"), parameters);
 	}
 
 }
 
 bool acConnection = false;
-e_String lastvalue = "";
+rString lastvalue = "";
 StringArray possibleCompletions;
 void OnConsoleEntryChanged(Event& ev)
 {
 	if (autocomplete_menu is null)
 		return;
 
-	e_String value("");
-	value = ev.GetParameter(e_String("value"), value);
+	rString value("");
+	value = ev.GetParameter(rString("value"), value);
 
 	if (value != lastvalue)
 	{
 		lastvalue = value;
 		if (!value.Empty())
 		{
-			if (value[value.Length()-1] == e_String(" "))
+			if (value[value.Length()-1] == rString(" "))
 			{
 				if (firstArg)
 				{
@@ -249,12 +249,12 @@ void OnConsoleEnterClick(Event& ev)
 	autocomplete_menu.removeAllChildren();
 
 	Element@ consoleElem = ev.GetTargetElement().GetParentNode();
-	ElementFormControlInput@ input = cast<ElementFormControlInput>( consoleElem.GetElementById(e_String("command_element")) );
+	ElementFormControlInput@ input = cast<ElementFormControlInput>( consoleElem.GetElementById(rString("command_element")) );
 
 	string command = input.GetValue();
 	console.println("> " + command);
 	console.interpret(command);
-	input.SetValue(e_String(""));
+	input.SetValue(rString(""));
 }
 
 void OnConsoleEntryEnter(Event& ev)
@@ -271,9 +271,9 @@ void OnConsoleEntryEnter(Event& ev)
 
 void OnConsoleEntryKeyUp(Event& ev)
 {
-	if (ev.GetType() == e_String("keyup"))
+	if (ev.GetType() == rString("keyup"))
 	{
-		int key_identifier = ev.GetParameter(e_String("key_identifier"), int(0));
+		int key_identifier = ev.GetParameter(rString("key_identifier"), int(0));
 		if (key_identifier == GUIKey::KI_UP)
 		{
 			autocomplete_menu.selectRelative(-1);
@@ -283,9 +283,9 @@ void OnConsoleEntryKeyUp(Event& ev)
 			autocomplete_menu.selectRelative(1);
 		}
 	}
-	else if (ev.GetType() == e_String("keydown"))
+	else if (ev.GetType() == rString("keydown"))
 	{
-		int key_identifier = ev.GetParameter(e_String("key_identifier"), int(0));
+		int key_identifier = ev.GetParameter(rString("key_identifier"), int(0));
 		if (key_identifier == GUIKey::KI_UP || key_identifier == GUIKey::KI_DOWN)
 		{
 			ev.StopPropagation();
@@ -305,7 +305,7 @@ void OnConsoleClosed()
 
 void OnConsoleShow(Event &ev)
 {
-	Element@ input = ev.GetCurrentElement().GetElementById(e_String("command_element"));
+	Element@ input = ev.GetCurrentElement().GetElementById(rString("command_element"));
 	input.Focus();
 
 	gui.enableDebugger();

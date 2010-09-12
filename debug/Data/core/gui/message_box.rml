@@ -28,8 +28,8 @@
     <span id="entity_list"></span>
     <e></e>
     <div>
-      <button id="accept" onclick="event.GetCurrentElement().DispatchEvent(e_String('accept_clicked'));">Ok</button>
-      <button id="cancel" onclick="event.GetCurrentElement().DispatchEvent(e_String('cancel_clicked'));">Cancel</button>
+      <button id="accept" onclick="event.GetCurrentElement().DispatchEvent(rString('accept_clicked'));">Ok</button>
+      <button id="cancel" onclick="event.GetCurrentElement().DispatchEvent(rString('cancel_clicked'));">Cancel</button>
     </div>
 	</body>
 </rml>

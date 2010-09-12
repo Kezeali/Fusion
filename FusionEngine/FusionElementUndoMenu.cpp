@@ -113,7 +113,7 @@ namespace FusionEngine
 	void registerElementFormControlSelectMembers(asIScriptEngine *engine)
 	{
 		int r;
-		r = engine->RegisterObjectMethod("ElementUndoMenu", "int Add(const e_String &in, const e_String &in, int, bool)",
+		r = engine->RegisterObjectMethod("ElementUndoMenu", "int Add(const rString &in, const rString &in, int, bool)",
 			asMETHODPR(Rocket::Controls::ElementFormControlSelect, Add, (const Rocket::Core::String&, const Rocket::Core::String&, int, bool), int), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("ElementUndoMenu", "void Remove(int)",
 			asMETHOD(Rocket::Controls::ElementFormControlSelect, Remove), asCALL_THISCALL);

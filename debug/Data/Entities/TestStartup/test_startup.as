@@ -17,7 +17,7 @@ class TestStartup : ScriptEntity
 		updateNum = 0;
 		//BindSimpleCommands();
 
-		gui.getContext().SetMouseCursor(e_String("Arrow"));
+		gui.getContext().SetMouseCursor(rString("Arrow"));
 		console.println("'TestStartup' entity created");
 	}
 	~TestStartup()

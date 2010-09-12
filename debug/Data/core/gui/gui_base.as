@@ -1,7 +1,7 @@
 void OnWindowLoad(Event@ event)
 {
 	ElementDocument @doc = event.GetCurrentElement().GetOwnerDocument();
-	doc.GetElementById(e_String("title")).SetInnerRML(doc.GetTitle());
+	doc.GetElementById(rString("title")).SetInnerRML(doc.GetTitle());
 }
 
 void HideThisWindow(Event@ ev)
@@ -12,5 +12,5 @@ void HideThisWindow(Event@ ev)
 
 void CloseThisWindow(Event@ ev)
 {
-	ev.GetCurrentElement().GetOwnerDocument().DispatchEvent(e_String("close"));
+	ev.GetCurrentElement().GetOwnerDocument().DispatchEvent(rString("close"));
 }

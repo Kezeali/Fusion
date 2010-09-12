@@ -14,7 +14,7 @@
 				  files within the current working directory and relative
 				  paths (i.e. ../, ./) and expands them to absolute paths
 				  */
-				@document = context.LoadDocument(e_String("Entities/Test/GUI/test.rml"));
+				@document = context.LoadDocument(rString("Entities/Test/GUI/test.rml"));
 			}
 			~TestGUI()
 			{
@@ -29,8 +29,8 @@
 				}
 				x = 50;
 				y = 120;
-				document.SetProperty(e_String("left"), e_String(x + "px"));
-				document.SetProperty(e_String("top"), e_String(y + "px"));
+				document.SetProperty(rString("left"), rString(x + "px"));
+				document.SetProperty(rString("top"), rString(y + "px"));
 				console.println("'TestGUI' entity Spawned");
 			}
 

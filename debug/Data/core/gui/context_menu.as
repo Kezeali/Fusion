@@ -77,20 +77,20 @@ class ContextMenu : IEventListener
 	int m_CurrentSelection;
 
 	Document@ m_MenuDoc;
-	e_String m_Id;
+	rString m_Id;
 	e_Vector2i m_Position;
 
-	ContextMenu(const e_String&in id, const e_Vector2i&in position)
+	ContextMenu(const rString&in id, const e_Vector2i&in position)
 	{
 		m_Id = id;
 		m_Position = position;
 
-		@m_MenuDoc = gui.getContext().LoadDocument(e_String("core/gui/context_menu.rml"));
+		@m_MenuDoc = gui.getContext().LoadDocument(rString("core/gui/context_menu.rml"));
 		if (m_MenuDoc !is null)
 		{
 			m_MenuDoc.SetId(id);
-			m_MenuDoc.SetProperty(e_String("left"), e_String(position.x + "px"));
-			m_MenuDoc.SetProperty(e_String("top"), e_String(position.y + "px"));
+			m_MenuDoc.SetProperty(rString("left"), rString(position.x + "px"));
+			m_MenuDoc.SetProperty(rString("top"), rString(position.y + "px"));
 
 			m_Items.resize(5);
 			m_ItemCount = 0;
@@ -127,8 +127,8 @@ class ContextMenu : IEventListener
 	{
 		m_Position.x = x;
 		m_Position.y = y;
-		m_MenuDoc.SetProperty(e_String("left"), e_String(x + "px"));
-		m_MenuDoc.SetProperty(e_String("top"), e_String(y + "px"));
+		m_MenuDoc.SetProperty(rString("left"), rString(x + "px"));
+		m_MenuDoc.SetProperty(rString("top"), rString(y + "px"));
 	}
 
 	void SetListener(IContextMenuListener@ listener)
@@ -139,15 +139,15 @@ class ContextMenu : IEventListener
 	bool AddItem(const string&in name)
 	{
 		// Add the GUI element to the context menu document
-		Element@ element = @m_MenuDoc.CreateElement(e_String("button"));
-		element.SetProperty(e_String("display"), e_String("block"));
-		element.SetProperty(e_String("clip"), e_String("auto"));
-		element.SetAttribute(e_String("menu_index"), m_ItemCount);
-		element.SetId(e_String("contextmenuitem-"+name+m_ItemCount));
-		element.SetInnerRML(e_String(name));
+		Element@ element = @m_MenuDoc.CreateElement(rString("button"));
+		element.SetProperty(rString("display"), rString("block"));
+		element.SetProperty(rString("clip"), rString("auto"));
+		element.SetAttribute(rString("menu_index"), m_ItemCount);
+		element.SetId(rString("contextmenuitem-"+name+m_ItemCount));
+		element.SetInnerRML(rString(name));
 		m_MenuDoc.AppendChild(element);
 
-		EventConnection@ cnx = element.AddEventListener(e_String("click"), this);
+		EventConnection@ cnx = element.AddEventListener(rString("click"), this);
 		m_EventConnections.Add(cnx);
 
 		// Add the MenuItem object
@@ -219,7 +219,7 @@ class ContextMenu : IEventListener
 	{
 		if (index >= 0 && index < m_ItemCount)
 		{
-			m_Items[index].element.DispatchEvent(e_String("click"));
+			m_Items[index].element.DispatchEvent(rString("click"));
 		}
 	}
 
@@ -233,10 +233,10 @@ class ContextMenu : IEventListener
 
 	void ProcessEvent(Event@ ev)
 	{
-		if (ev.GetType() == e_String("click"))
+		if (ev.GetType() == rString("click"))
 		{
 			Element@ clicked = ev.GetTargetElement();
-			uint index = clicked.GetAttribute(e_String("menu_index"), m_ItemCount);
+			uint index = clicked.GetAttribute(rString("menu_index"), m_ItemCount);
 			if (index < m_ItemCount)
 				m_Listener.OnContextMenuClick(m_Items[index]);
 
