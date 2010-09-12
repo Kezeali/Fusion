@@ -76,7 +76,7 @@ namespace FusionEngine
 
 	// Editor DataSource
 	EditorDataSource::EditorDataSource()
-		: EMP::Core::DataSource("editor")
+		: Rocket::Controls::DataSource("editor")
 	{
 	}
 
@@ -102,7 +102,7 @@ namespace FusionEngine
 		return m_Suggestions[index];
 	}
 
-	void EditorDataSource::GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns)
+	void EditorDataSource::GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns)
 	{
 		if (row_index < 0 || (size_t)row_index >= m_Suggestions.size())
 			return;
@@ -119,7 +119,7 @@ namespace FusionEngine
 		}
 	}
 
-	int EditorDataSource::GetNumRows(const EMP::Core::String& table)
+	int EditorDataSource::GetNumRows(const Rocket::Core::String& table)
 	{
 		if (table == "type_suggestions")
 		{
@@ -503,7 +503,7 @@ namespace FusionEngine
 	bool Editor::Initialise()
 	{
 		Rocket::Core::DecoratorInstancer* instancer = new EntityDecoratorInstancer(m_EntityManager, m_Renderer);
-		Rocket::Core::Factory::RegisterDecoratorInstancer("entity-decorator", instancer);
+		Rocket::Core::Factory::RegisterDecoratorInstancer("entity", instancer);
 		instancer->RemoveReference();
 		// Load gui documents
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();

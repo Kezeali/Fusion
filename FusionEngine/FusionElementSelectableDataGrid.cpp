@@ -31,7 +31,7 @@
 #include "FusionElementSelectableDataGrid.h"
 
 #include <Rocket/Controls/ElementDataGridRow.h>
-#include <EMP/Core/Dictionary.h>
+#include <Rocket/Core/Dictionary.h>
 #include <Rocket/Core/Factory.h>
 #include <Rocket/Core/ElementInstancerGeneric.h>
 
@@ -41,7 +41,7 @@
 namespace FusionEngine
 {
 
-	ElementSelectableDataGrid::ElementSelectableDataGrid(const EMP::Core::String &tag)
+	ElementSelectableDataGrid::ElementSelectableDataGrid(const Rocket::Core::String &tag)
 		: Rocket::Controls::ElementDataGrid(tag)
 	{
 		m_Selectable = false;
@@ -106,11 +106,11 @@ namespace FusionEngine
 		Rocket::Controls::ElementDataGrid::OnAttributeChange(changed_attributes);
 		for (Rocket::Core::AttributeNameList::const_iterator it = changed_attributes.begin(), end = changed_attributes.end(); it != end; ++it)
 		{
-			const EMP::Core::String &attr = *it;
+			const Rocket::Core::String &attr = *it;
 			if (attr == "selectable")
 				// The attribute can validly have no value, in which case it defaults to
 				//  true
-				m_Selectable = HasAttribute("selectable") && GetAttribute<EMP::Core::String>("selectable", "") != "false";
+				m_Selectable = HasAttribute("selectable") && GetAttribute<Rocket::Core::String>("selectable", "") != "false";
 		}
 	}
 
@@ -157,7 +157,7 @@ namespace FusionEngine
 
 		SetSelectedRow(newSelection);
 
-		EMP::Core::Dictionary parameters;
+		Rocket::Core::Dictionary parameters;
 		parameters.Set("row_index", newSelection);
 		if (prevSelection != -1)
 			parameters.Set("prev_row_index", prevSelection);
@@ -169,7 +169,7 @@ namespace FusionEngine
 		Rocket::Controls::ElementDataGridRow *row = dynamic_cast<Rocket::Controls::ElementDataGridRow*>( ev.GetCurrentElement() );
 		if (row != NULL)
 		{
-			EMP::Core::Dictionary parameters;
+			Rocket::Core::Dictionary parameters;
 			parameters.Set("row_index", row->GetTableRelativeIndex());
 			DispatchEvent("rowdblclick", parameters);
 		}

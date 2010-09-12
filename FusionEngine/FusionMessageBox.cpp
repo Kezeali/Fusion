@@ -37,9 +37,9 @@
 namespace FusionEngine
 {
 
-	static inline EMP::Core::String toEmp(const std::string& str)
+	static inline Rocket::Core::String toEmp(const std::string& str)
 	{
-		return EMP::Core::String(str.data(), str.data() + str.length());
+		return Rocket::Core::String(str.data(), str.data() + str.length());
 	}
 
 	MessageBox::MessageBox(const std::string& document_filename)
@@ -110,7 +110,7 @@ namespace FusionEngine
 		return m_Document;
 	}
 
-	MessageBox::EventSignal& MessageBox::GetEventSignal(const EMP::Core::String& type)
+	MessageBox::EventSignal& MessageBox::GetEventSignal(const Rocket::Core::String& type)
 	{
 		m_Document->AddEventListener(type, this);
 		return *(m_EventSignals[type] = std::shared_ptr<MessageBox::EventSignal>( new EventSignal ));

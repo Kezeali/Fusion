@@ -48,9 +48,10 @@ namespace Rocket {
 
 namespace std {
 	template <>
-	struct hash<EMP::Core::String> : public unary_function<EMP::Core::String, size_t>
+	class hash<Rocket::Core::String> : public unary_function<Rocket::Core::String, size_t>
 	{
-		size_t operator()(const EMP::Core::String& key) const
+	public:
+		size_t operator()(const Rocket::Core::String& key) const
 		{
 			std::hash<std::string> hash_fn;
 			std::string keyStr(&key[0], &key[key.Length()-1]);
@@ -85,14 +86,14 @@ namespace FusionEngine
 		Rocket::Core::ElementDocument* const GetDocument() const;
 
 		typedef boost::signals2::signal<void (Rocket::Core::Event&)> EventSignal;
-		EventSignal& GetEventSignal(const EMP::Core::String& type);
+		EventSignal& GetEventSignal(const Rocket::Core::String& type);
 
 	protected:
 		std::string m_Filename;
 		std::string m_Type;
 		Rocket::Core::ElementDocument* m_Document;
 		
-		std::unordered_map<EMP::Core::String, std::shared_ptr<EventSignal>> m_EventSignals;
+		std::unordered_map<Rocket::Core::String, std::shared_ptr<EventSignal>> m_EventSignals;
 
 		void loadDocument(Rocket::Core::Context* context, const std::string& document_filename);
 	};

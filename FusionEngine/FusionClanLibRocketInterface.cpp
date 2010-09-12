@@ -56,12 +56,12 @@ namespace FusionEngine
 		return (float)CL_System::get_time() / 1000.f;
 	}
 
-	bool RocketSystem::LogMessage(EMP::Core::Log::Type type, const EMP::Core::String& message)
+	bool RocketSystem::LogMessage(Rocket::Core::Log::Type type, const Rocket::Core::String& message)
 	{
 		LogSeverity logLevel = LOG_NORMAL;
-		if (type == EMP::Core::Log::LT_ERROR || type == EMP::Core::Log::LT_ASSERT)
+		if (type == Rocket::Core::Log::LT_ERROR || type == Rocket::Core::Log::LT_ASSERT)
 			logLevel = LOG_CRITICAL;
-		else if (type == EMP::Core::Log::LT_INFO)
+		else if (type == Rocket::Core::Log::LT_INFO)
 			logLevel = LOG_TRIVIAL;
 		Logger *logger = Logger::getSingletonPtr();
 		if (logger != NULL)
@@ -106,7 +106,7 @@ namespace FusionEngine
 	{
 	}
 
-	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const EMP::Core::Vector2f& translation)
+	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
 		CL_Vec2f *polygon = new CL_Vec2f[num_indices];
 		CL_Vec4f *vert_colour = new CL_Vec4f[num_indices];
@@ -216,7 +216,7 @@ namespace FusionEngine
 		return (Core::CompiledGeometryHandle*)data;
 	}
 
-	void RocketRenderer::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const EMP::Core::Vector2f& translation)
+	void RocketRenderer::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f& translation)
 	{
 		using namespace Rocket;
 
@@ -300,7 +300,7 @@ namespace FusionEngine
 		//m_gc.set_cliprect(CL_Rect(m_Scissor_left, m_Scissor_top, m_Scissor_right, m_Scissor_bottom));
 	}
 
-	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, EMP::Core::Vector2i& texture_dimensions, const EMP::Core::String& source)
+	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, Rocket::Core::Vector2i& texture_dimensions, const Rocket::Core::String& source)
 	{
 		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		try
@@ -325,14 +325,14 @@ namespace FusionEngine
 		}
 		catch (CL_Exception& ex)
 		{
-			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ("CLRocketRenderer couldn't load a texture from \"" + source + "\"").CString());
-			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ex.what());
+			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ("CLRocketRenderer couldn't load a texture from \"" + source + "\"").CString());
+			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ex.what());
 			return false;
 		}
 	}
 
 	// Called by Rocket when a texture is required to be built from an internally-generated sequence of pixels.
-	bool RocketRenderer::GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const EMP::Core::byte* source, const EMP::Core::Vector2i& source_dimensions)
+	bool RocketRenderer::GenerateTexture(Rocket::Core::TextureHandle& texture_handle, const Rocket::Core::byte* source, const Rocket::Core::Vector2i& source_dimensions)
 	{
 		try
 		{
@@ -351,8 +351,8 @@ namespace FusionEngine
 		}
 		catch (CL_Exception& ex)
 		{
-			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, "CLRocketRenderer failed to generate a texture");
-			Rocket::Core::Log::Message(EMP::Core::Log::LT_ERROR, ex.what());
+			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, "CLRocketRenderer failed to generate a texture");
+			Rocket::Core::Log::Message(Rocket::Core::Log::LT_ERROR, ex.what());
 			return false;
 		}
 	}
@@ -379,7 +379,7 @@ namespace FusionEngine
 	}
 
 	// Opens a file.
-	Rocket::Core::FileHandle RocketFileSystem::Open(const EMP::Core::String& path)
+	Rocket::Core::FileHandle RocketFileSystem::Open(const Rocket::Core::String& path)
 	{
 		// Attempt to open the file using the search path (PhysFS expects this.)
 		PHYSFS_File* fileHandle = PHYSFS_openRead(path.CString());
@@ -422,7 +422,7 @@ namespace FusionEngine
 			curPos = PHYSFS_tell((PHYSFS_File*)file);
 			if (curPos == -1)
 			{
-				Rocket::Core::Log::Message(EMP::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get the current position");
+				Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get the current position");
 				return false;
 			}
 			absolute_pos = (PHYSFS_uint64)curPos + offset;
@@ -434,7 +434,7 @@ namespace FusionEngine
 			length = PHYSFS_fileLength((PHYSFS_File*)file);
 			if (length == -1)
 			{
-				Rocket::Core::Log::Message(EMP::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get file length");
+				Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get file length");
 				return false;
 			}
 			else

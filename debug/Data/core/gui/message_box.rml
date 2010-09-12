@@ -15,11 +15,18 @@
       {
       display: none;
       }
+
+      e
+      {
+      ent-decorator: entity;
+      ent-name: test_deco_ent;
+      }
     </style>
 	</head>
 	<body template="window" onshow="OnWindowLoad(event)">
     <span id="message_label"/>
-    <span id="entity_list"/>
+    <span id="entity_list"></span>
+    <e></e>
     <div>
       <button id="accept" onclick="event.GetCurrentElement().DispatchEvent(e_String('accept_clicked'));">Ok</button>
       <button id="cancel" onclick="event.GetCurrentElement().DispatchEvent(e_String('cancel_clicked'));">Cancel</button>

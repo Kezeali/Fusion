@@ -43,7 +43,7 @@
 namespace FusionEngine
 {
 
-	ElementUndoMenu::ElementUndoMenu(const EMP::Core::String &tag)
+	ElementUndoMenu::ElementUndoMenu(const Rocket::Core::String &tag)
 		: Rocket::Controls::ElementFormControlSelect(tag),
 		m_NextId(0)
 	{
@@ -63,8 +63,8 @@ namespace FusionEngine
 
 	void ElementUndoMenu::OnActionAdd(const UndoableActionPtr &action, bool to_end)
 	{
-		EMP::Core::String rml( ("<span>"+action->GetTitle()+"</span>").c_str() );
-		EMP::Core::String value( boost::lexical_cast<std::string>(++m_NextId).c_str() );
+		Rocket::Core::String rml( ("<span>"+action->GetTitle()+"</span>").c_str() );
+		Rocket::Core::String value( boost::lexical_cast<std::string>(++m_NextId).c_str() );
 		if (to_end)
 			Add(rml, value);
 		else
@@ -114,7 +114,7 @@ namespace FusionEngine
 	{
 		int r;
 		r = engine->RegisterObjectMethod("ElementUndoMenu", "int Add(const e_String &in, const e_String &in, int, bool)",
-			asMETHODPR(Rocket::Controls::ElementFormControlSelect, Add, (const EMP::Core::String&, const EMP::Core::String&, int, bool), int), asCALL_THISCALL);
+			asMETHODPR(Rocket::Controls::ElementFormControlSelect, Add, (const Rocket::Core::String&, const Rocket::Core::String&, int, bool), int), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("ElementUndoMenu", "void Remove(int)",
 			asMETHOD(Rocket::Controls::ElementFormControlSelect, Remove), asCALL_THISCALL);
 

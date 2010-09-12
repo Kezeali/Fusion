@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include <EMP/Core/DataSource.h>
+#include <Rocket/Controls/DataSource.h>
 #include <Rocket/Core/EventListener.h>
 #include <Rocket/Core/ElementDocument.h>
 #include <Rocket/Controls/ElementFormControlSelect.h>
@@ -58,7 +58,7 @@ namespace FusionEngine
 {
 
 	//! Provides lists of Entity types
-	class EditorDataSource : public EMP::Core::DataSource
+	class EditorDataSource : public Rocket::Controls::DataSource
 	{
 	public:
 		EditorDataSource();
@@ -67,8 +67,8 @@ namespace FusionEngine
 		void UpdateSuggestions(const StringVector &suggestions);
 		const std::string &GetSuggestion(size_t index);
 
-		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
-		int GetNumRows(const EMP::Core::String& table);
+		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
+		int GetNumRows(const Rocket::Core::String& table);
 
 	protected:
 		StringVector m_Suggestions;

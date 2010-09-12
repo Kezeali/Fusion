@@ -99,7 +99,7 @@ namespace FusionEngine
 			int x = (int)std::ceil(m_Element->GetAbsoluteLeft() + m_Element->GetClientWidth() - 4);
 			int y = (int)std::ceil(m_Element->GetAbsoluteTop());
 
-			const EMP::Core::Vector2i &dimensions = m_Context->GetDimensions();
+			const Rocket::Core::Vector2i &dimensions = m_Context->GetDimensions();
 			if (x + m_Document->GetOffsetWidth() > dimensions.x)
 				x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);
 			if (y + m_Document->GetOffsetHeight() > dimensions.y)
@@ -381,7 +381,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool MenuItem::isPseudoClassSetOnAnyChild(const EMP::Core::String &pseudo_class)
+	bool MenuItem::isPseudoClassSetOnAnyChild(const Rocket::Core::String &pseudo_class)
 	{
 		if (m_Element != nullptr && m_Element->IsPseudoClassSet(pseudo_class))
 			return true;
@@ -428,7 +428,7 @@ namespace FusionEngine
 		m_Element->SetProperty("display", "block");
 		m_Element->SetProperty("clip", "auto");
 		m_Element->SetAttribute("menu_index", m_Index);
-		m_Element->SetId("contextmenuitem-" + EMP::Core::String(m_Value.c_str(), m_Value.c_str()+m_Value.length()));
+		m_Element->SetId("contextmenuitem-" + Rocket::Core::String(m_Value.c_str(), m_Value.c_str()+m_Value.length()));
 		m_Element->SetInnerRML(m_Title.c_str());
 
 		m_Element->AddEventListener("click", this);
@@ -500,7 +500,7 @@ namespace FusionEngine
 	{
 		if (fit_within_context)
 		{
-			const EMP::Core::Vector2i &dimensions = m_Context->GetDimensions();
+			const Rocket::Core::Vector2i &dimensions = m_Context->GetDimensions();
 			if (x + m_Document->GetOffsetWidth() > dimensions.x)
 				if (m_Element != nullptr)
 					x = (int)std::ceil(m_Element->GetAbsoluteLeft() - m_Document->GetClientWidth() + 5);

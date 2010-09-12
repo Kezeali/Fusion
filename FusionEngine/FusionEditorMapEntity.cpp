@@ -36,7 +36,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <EMP/Core/TypeConverter.h>
+#include <Rocket/Core/TypeConverter.h>
 
 
 namespace FusionEngine
@@ -47,7 +47,7 @@ namespace FusionEngine
 	static const char* colourComponentNames[] = {"r", "g", "b", "a"};
 
 	EditorMapEntity::EditorMapEntity()
-		: EMP::Core::DataSource(),
+		: Rocket::Controls::DataSource(),
 		selected(false)
 	{
 		VectorTypeInfoMap::value_type vectorTypeInfo( Entity::pt_vector, VectorTypeInfo(2, (const char**)&vectorComponentNames) );
@@ -245,7 +245,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EditorMapEntity::GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns)
+	void EditorMapEntity::GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns)
 	{
 		if (row_index < 0)
 			return;
@@ -269,15 +269,15 @@ namespace FusionEngine
 				{
 					row.push_back("top");
 				}
-				else if (columns[i] == EMP::Core::DataSource::CHILD_SOURCE)
+				else if (columns[i] == Rocket::Controls::DataSource::CHILD_SOURCE)
 				{
 					int type = entity->GetPropertyType(row_index);
 					if (type & Entity::pt_array_flag ||
 						(type & Entity::pt_vector) == Entity::pt_vector ||
 						(type & Entity::pt_colour) == Entity::pt_colour)
 					{
-						EMP::Core::String strIndex;
-						EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, strIndex);
+						Rocket::Core::String strIndex;
+						Rocket::Core::TypeConverter<unsigned int, Rocket::Core::String>::Convert(row_index, strIndex);
 						row.push_back(GetDataSourceName()+"."+strIndex);
 					}
 				}
@@ -286,7 +286,7 @@ namespace FusionEngine
 		else
 		{
 			unsigned int index;
-			if (!EMP::Core::TypeConverter<EMP::Core::String, unsigned int>::Convert(table, index)) return;
+			if (!Rocket::Core::TypeConverter<Rocket::Core::String, unsigned int>::Convert(table, index)) return;
 			int type = entity->GetPropertyType(index);
 
 			for (size_t i = 0; i < columns.size(); i++)
@@ -295,8 +295,8 @@ namespace FusionEngine
 				{
 					if (type & Entity::pt_array_flag)
 					{
-						EMP::Core::String name;
-						if (EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, name))
+						Rocket::Core::String name;
+						if (Rocket::Core::TypeConverter<unsigned int, Rocket::Core::String>::Convert(row_index, name))
 							row.push_back(name);
 					}
 					// Non array types with multiple components (vector, colour)
@@ -319,8 +319,8 @@ namespace FusionEngine
 				{
 					//if (type & Entity::pt_array_flag)
 					//{
-						EMP::Core::String name;
-						if (EMP::Core::TypeConverter<unsigned int, EMP::Core::String>::Convert(row_index, name))
+						Rocket::Core::String name;
+						if (Rocket::Core::TypeConverter<unsigned int, Rocket::Core::String>::Convert(row_index, name))
 							row.push_back(name);
 					//}
 					//else if (type > s_MaxPrimativeTypeId)
@@ -338,7 +338,7 @@ namespace FusionEngine
 		}
 	}
 
-	int EditorMapEntity::GetNumRows(const EMP::Core::String& table)
+	int EditorMapEntity::GetNumRows(const Rocket::Core::String& table)
 	{
 		if (table == "properties")
 		{
@@ -347,7 +347,7 @@ namespace FusionEngine
 		else
 		{
 			unsigned int index;
-			EMP::Core::TypeConverter<EMP::Core::String, unsigned int>::Convert(table, index);
+			Rocket::Core::TypeConverter<Rocket::Core::String, unsigned int>::Convert(table, index);
 			int type = entity->GetPropertyType(index);
 
 			if (type & Entity::pt_array_flag)

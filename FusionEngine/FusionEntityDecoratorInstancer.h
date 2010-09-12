@@ -45,7 +45,7 @@ namespace FusionEngine
 		EntityDecoratorInstancer(EntityManager* source, Renderer* renderer);
 
 		//! Instances a decorator given the property tag and attributes from the RCSS file.
-		virtual Rocket::Core::Decorator* InstanceDecorator(const EMP::Core::String& name, const Rocket::Core::PropertyDictionary& properties);
+		virtual Rocket::Core::Decorator* InstanceDecorator(const Rocket::Core::String& name, const Rocket::Core::PropertyDictionary& properties);
 		//! Releases the given decorator.
 		virtual void ReleaseDecorator(Rocket::Core::Decorator* decorator);
 

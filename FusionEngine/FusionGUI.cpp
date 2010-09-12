@@ -59,20 +59,20 @@ namespace FusionEngine
 		ExpandButtonFormatter();
 
 		//! DataFormatter impl.
-		void FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data);
+		void FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data);
 	};
 
 	ExpandButtonFormatter::ExpandButtonFormatter()
 		: Rocket::Controls::DataFormatter("expand_button")
 	{}
 
-	void ExpandButtonFormatter::FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data)
+	void ExpandButtonFormatter::FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data)
 	{
 		// Data format:
 		// raw_data[0] is the number of children that this row has, a button is created if this is more than zero.
 
 		int num_children = 0;
-		EMP::Core::TypeConverter<EMP::Core::String, int>::Convert(raw_data[0], num_children);
+		Rocket::Core::TypeConverter<Rocket::Core::String, int>::Convert(raw_data[0], num_children);
 
 		if (num_children > 0)
 		{
@@ -89,37 +89,37 @@ namespace FusionEngine
 	{
 		typedef CScriptString* string_type;
 
-		string_type operator() (const EMP::Core::String& from) const
+		string_type operator() (const Rocket::Core::String& from) const
 		{
 			string_type obj = new CScriptString(from.CString());
 			return obj;
 		}
 
-		EMP::Core::String operator() (const string_type& from) const
+		Rocket::Core::String operator() (const string_type& from) const
 		{
-			EMP::Core::String to(from->buffer.c_str());
+			Rocket::Core::String to(from->buffer.c_str());
 			//from->Release();
 			return to;
 		}
 	};
 
-	EMP::Core::String stringToEString(CScriptString *obj)
+	Rocket::Core::String stringToEString(CScriptString *obj)
 	{
-		return EMP::Core::String(obj->buffer.c_str());
+		return Rocket::Core::String(obj->buffer.c_str());
 	}
 
-	CScriptString *CScriptStringFactory_FromEMPString(const EMP::Core::String &copy)
+	CScriptString *CScriptStringFactory_FromEMPString(const Rocket::Core::String &copy)
 	{
 		return new CScriptString(copy.CString());
 	}
 
-	CScriptString &CScriptStringAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	CScriptString &CScriptStringAssignEMPString(const Rocket::Core::String &value, CScriptString *obj)
 	{
 		obj->buffer = value.CString();
 		return *obj;
 	}
 
-	CScriptString &CScriptStringAddAssignEMPString(const EMP::Core::String &value, CScriptString *obj)
+	CScriptString &CScriptStringAddAssignEMPString(const Rocket::Core::String &value, CScriptString *obj)
 	{
 		obj->buffer += value.CString();
 		return *obj;
@@ -186,7 +186,7 @@ namespace FusionEngine
 
 		CL_GraphicContext gc = m_Display.get_gc();
 
-		m_Context = Rocket::Core::CreateContext("default", EMP::Core::Vector2i(gc.get_width(), gc.get_height()));
+		m_Context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(gc.get_width(), gc.get_height()));
 
 		LoadFonts("core/gui/fonts/");
 		m_Context->LoadMouseCursor("core/gui/cursor.rml");
@@ -214,15 +214,15 @@ namespace FusionEngine
 
 	void GUI::LoadFonts(const char* directory)
 	{
-		EMP::Core::String font_names[4];
+		Rocket::Core::String font_names[4];
 		font_names[0] = "Delicious-Roman.otf";
 		font_names[1] = "Delicious-Italic.otf";
 		font_names[2] = "Delicious-Bold.otf";
 		font_names[3] = "Delicious-BoldItalic.otf";
 
-		for (int i = 0; i < sizeof(font_names) / sizeof(EMP::Core::String); i++)
+		for (int i = 0; i < sizeof(font_names) / sizeof(Rocket::Core::String); i++)
 		{
-			Rocket::Core::FontDatabase::LoadFontFace(EMP::Core::String(directory) + font_names[i]);
+			Rocket::Core::FontDatabase::LoadFontFace(Rocket::Core::String(directory) + font_names[i]);
 		}
 	}
 
@@ -580,7 +580,7 @@ namespace FusionEngine
 
 	void GUI::onResize(int x, int y)
 	{
-		m_Context->SetDimensions(EMP::Core::Vector2i(x, y));
+		m_Context->SetDimensions(Rocket::Core::Vector2i(x, y));
 	}
 
 }

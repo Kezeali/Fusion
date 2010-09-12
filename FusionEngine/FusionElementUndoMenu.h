@@ -47,7 +47,7 @@ namespace FusionEngine
 	class ElementUndoMenu : public Rocket::Controls::ElementFormControlSelect, public UndoListener
 	{
 	public:
-		ElementUndoMenu(const EMP::Core::String &tag);
+		ElementUndoMenu(const Rocket::Core::String &tag);
 		virtual ~ElementUndoMenu();
 
 		//void OnSetMaxActions(unsigned int max);
@@ -55,7 +55,7 @@ namespace FusionEngine
 		void OnActionRemove(unsigned int first, UndoListener::Direction direction);
 
 		//! So rad it adds in reverse
-		//int RAdd(const EMP::Core::String &rml, const EMP::Core::String &value, int before = -1);
+		//int RAdd(const Rocket::Core::String &rml, const Rocket::Core::String &value, int before = -1);
 		//void RRemove(int index);
 
 		static void RegisterElement();

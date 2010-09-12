@@ -36,7 +36,7 @@
 #include "FusionCommon.h"
 
 #include "FusionGameMapLoader.h"
-#include <EMP/Core/DataSource.h>
+#include <Rocket/Controls/DataSource.h>
 #include <Rocket/Controls/DataFormatter.h>
 
 #include "FusionPhysicsFixture.h"
@@ -49,7 +49,7 @@ namespace FusionEngine
 {
 
 	//! EditorMapEntity adds additional data to GameMapLoader#MapEntity which is useful for the Editor
-	class EditorMapEntity : public GameMapLoader::MapEntity, public EMP::Core::DataSource
+	class EditorMapEntity : public GameMapLoader::MapEntity, public Rocket::Controls::DataSource
 	{
 	public:
 		FixturePtr fixture;
@@ -92,9 +92,9 @@ namespace FusionEngine
 		}
 
 		//! DataSource impl.
-		void GetRow(EMP::Core::StringList& row, const EMP::Core::String& table, int row_index, const EMP::Core::StringList& columns);
+		void GetRow(Rocket::Core::StringList& row, const Rocket::Core::String& table, int row_index, const Rocket::Core::StringList& columns);
 		//! DataSource impl.
-		int GetNumRows(const EMP::Core::String& table);
+		int GetNumRows(const Rocket::Core::String& table);
 
 	private:
 		struct VectorTypeInfo

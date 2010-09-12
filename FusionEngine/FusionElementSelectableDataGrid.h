@@ -45,7 +45,7 @@ namespace FusionEngine
 	class ElementSelectableDataGrid : public Rocket::Controls::ElementDataGrid, public Rocket::Core::EventListener
 	{
 	public:
-		ElementSelectableDataGrid(const EMP::Core::String &tag);
+		ElementSelectableDataGrid(const Rocket::Core::String &tag);
 		virtual ~ElementSelectableDataGrid();
 
 		int GetSelectedRow();

@@ -153,7 +153,7 @@ namespace FusionEngine
 		Rocket::Core::ElementDocument *m_Document;
 		Rocket::Core::Context *m_Context;
 
-		bool isPseudoClassSetOnAnyChild(const EMP::Core::String &pseudo_class);
+		bool isPseudoClassSetOnAnyChild(const Rocket::Core::String &pseudo_class);
 
 		void init();
 		void initSubmenu();

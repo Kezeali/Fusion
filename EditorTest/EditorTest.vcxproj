@@ -74,7 +74,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;EMPCore_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscriptd.lib;physfs.lib;box2d_mtdll_d.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>

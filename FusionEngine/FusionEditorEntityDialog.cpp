@@ -170,13 +170,13 @@ namespace FusionEngine
 		EditablePropertyFormatter(const GameMapLoader::MapEntityPtr &map_entity);
 
 		//! DataFormatter impl.
-		void FormatData(EMP::Core::String& formatted_data, const EMP::Core::StringList& raw_data);
+		void FormatData(Rocket::Core::String& formatted_data, const Rocket::Core::StringList& raw_data);
 
 	protected:
 		GameMapLoader::MapEntityPtr m_MapEntity;
 
 		template <typename T>
-		void formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, size_t array_index, const EMP::Core::String &str_index, const EMP::Core::String &str_array_index);
+		void formatPrimativeElement(Rocket::Core::String &formatted_data, size_t index, size_t array_index, const Rocket::Core::String &str_index, const Rocket::Core::String &str_array_index);
 	};
 
 	EditablePropertyFormatter::EditablePropertyFormatter(const GameMapLoader::MapEntityPtr &map_entity)
@@ -184,34 +184,34 @@ namespace FusionEngine
 	{
 	}
 
-	inline void toEmp(EMP::Core::String &out, const std::string &str)
+	inline void toEmp(Rocket::Core::String &out, const std::string &str)
 	{
 		out.Assign(str.data(), str.length());
 	}
 
-	inline EMP::Core::String formatId(const EMP::Core::String &index, const EMP::Core::String &array_index)
+	inline Rocket::Core::String formatId(const Rocket::Core::String &index, const Rocket::Core::String &array_index)
 	{
 		return index + "." + array_index;
 	}
 
 	template <typename T>
-	void EditablePropertyFormatter::formatPrimativeElement(EMP::Core::String &formatted_data, size_t index, size_t array_index, const EMP::Core::String &index_str, const EMP::Core::String &array_index_str)
+	void EditablePropertyFormatter::formatPrimativeElement(Rocket::Core::String &formatted_data, size_t index, size_t array_index, const Rocket::Core::String &index_str, const Rocket::Core::String &array_index_str)
 	{
 		EntityPtr &entity = m_MapEntity->entity;
 
-		EMP::Core::String name(entity->GetPropertyName(index).c_str());
+		Rocket::Core::String name(entity->GetPropertyName(index).c_str());
 		
 		//T minValue = std::numeric_limits<T>::min(), maxValue = std::numeric_limits<T>::max();
-		//EMP::Core::String strMin;
+		//Rocket::Core::String strMin;
 		//toEmp(strMin, boost::lexical_cast<std::string>(minValue));
-		//EMP::Core::String strMax;
+		//Rocket::Core::String strMax;
 		//toEmp(strMax, boost::lexical_cast<std::string>(maxValue));
 
 		if (!entity->PropertyIsArray(index) || array_index_str != "top")
 		{
 			T value = *static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
-			EMP::Core::String strValue;
-			EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
+			Rocket::Core::String strValue;
+			Rocket::Core::TypeConverter<T, Rocket::Core::String>::Convert(value, strValue);
 
 			formatted_data =
 				"<input id=\"" + formatId(index_str, array_index_str) +
@@ -222,28 +222,28 @@ namespace FusionEngine
 		else
 		{
 			array_index = 0; // Just to make sure
-			EMP::Core::String strValue;
+			Rocket::Core::String strValue;
 			// The first array value
 			T *value = static_cast<T*>(entity->GetAddressOfProperty(index, array_index++));
-			EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(*value, strValue);
+			Rocket::Core::TypeConverter<T, Rocket::Core::String>::Convert(*value, strValue);
 			formatted_data = strValue;
 			// The rest of the values, comma seperated
 			for (unsigned int array_size = entity->GetPropertyArraySize(index); array_index < array_size; ++array_index)
 			{
 				value = static_cast<T*>(entity->GetAddressOfProperty(index, array_index));
-				EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(*value, strValue);
+				Rocket::Core::TypeConverter<T, Rocket::Core::String>::Convert(*value, strValue);
 				formatted_data += ", " + strValue;
 			}
 		}
 	}
 
 	template <typename T>
-	void formatPrimative(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	void formatPrimative(Rocket::Core::String &formatted_data, void *prop, const Rocket::Core::String &index, const Rocket::Core::String &array_index, const Rocket::Core::String &name)
 	{
 		T value = *static_cast<T*>(prop);
 
-		EMP::Core::String strValue;
-		EMP::Core::TypeConverter<T, EMP::Core::String>::Convert(value, strValue);
+		Rocket::Core::String strValue;
+		Rocket::Core::TypeConverter<T, Rocket::Core::String>::Convert(value, strValue);
 
 		formatted_data =
 			"<input id=\"" + formatId(index, array_index) + "\" index=\"" + index + "\" array_index=\"" + array_index +
@@ -251,63 +251,63 @@ namespace FusionEngine
 			"\" value=\"" + strValue + "\" />";
 	}
 
-	void formatStringElement(EMP::Core::String &formatted_data, const std::string* const str, const EMP::Core::String& index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	void formatStringElement(Rocket::Core::String &formatted_data, const std::string* const str, const Rocket::Core::String& index, const Rocket::Core::String &array_index, const Rocket::Core::String &name)
 	{
-		EMP::Core::String value; toEmp(value, *str);
+		Rocket::Core::String value; toEmp(value, *str);
 		formatted_data =
 			"<input id=\"" + formatId(index, array_index) + "\" index=\"" + index + "\" array_index=\"" + array_index +
 			"\" type=\"text\" name=\"" + name + "\" value=\"" + value + "\" />";
 	}
 
 	//template <typename T>
-	//formatProperty(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &id, const EMP::Core::String &name)
+	//formatProperty(Rocket::Core::String &formatted_data, void *prop, const Rocket::Core::String &id, const Rocket::Core::String &name)
 	//{
 	//}
 
 	//template <>
-	//formatProperty<bool>(EMP::Core::String &formatted_data, void *prop, const EMP::Core::String &id, const EMP::Core::String &name)
+	//formatProperty<bool>(Rocket::Core::String &formatted_data, void *prop, const Rocket::Core::String &id, const Rocket::Core::String &name)
 	//{
 	//	bool checked = *static_cast<bool*>(prop);
 	//	formatted_data =
 	//		"<input id=\"" + id + "\" type=\"checkbox\" name=\"" + name + "\" value=\"true\" " + 
-	//		EMP::Core::String(checked ? "checked" : "") +
+	//		Rocket::Core::String(checked ? "checked" : "") +
 	//		"/>";
 	//}
 
-	void formatVectorElement(EMP::Core::String &formatted_data, const Vector2 *prop, const EMP::Core::String &index, const EMP::Core::String &array_index, const EMP::Core::String &name)
+	void formatVectorElement(Rocket::Core::String &formatted_data, const Vector2 *prop, const Rocket::Core::String &index, const Rocket::Core::String &array_index, const Rocket::Core::String &name)
 	{
-		EMP::Core::String x, y;
-		EMP::Core::TypeConverter<Vector2::type, EMP::Core::String>::Convert(prop->x, x);
-		EMP::Core::TypeConverter<Vector2::type, EMP::Core::String>::Convert(prop->y, y);
+		Rocket::Core::String x, y;
+		Rocket::Core::TypeConverter<Vector2::type, Rocket::Core::String>::Convert(prop->x, x);
+		Rocket::Core::TypeConverter<Vector2::type, Rocket::Core::String>::Convert(prop->y, y);
 
 		formatted_data = x + ", " + y;
 	}
 
-	void EditablePropertyFormatter::FormatData(EMP::Core::String &formatted_data, const EMP::Core::StringList &raw_data)
+	void EditablePropertyFormatter::FormatData(Rocket::Core::String &formatted_data, const Rocket::Core::StringList &raw_data)
 	{
 		if (raw_data.size() < 2)
 			return;
 
 		EntityPtr &entity = m_MapEntity->entity;
 
-		EMP::Core::String id = raw_data[0];
+		Rocket::Core::String id = raw_data[0];
 
-		const EMP::Core::String &indexStr = raw_data[0];
-		const EMP::Core::String &arrayIndexStr = raw_data[1];
+		const Rocket::Core::String &indexStr = raw_data[0];
+		const Rocket::Core::String &arrayIndexStr = raw_data[1];
 
 		bool container = true; // True if this line is expandable
 		size_t index, array_index = 0;
-		EMP::Core::TypeConverter<EMP::Core::String, size_t>::Convert(raw_data[0], index);
+		Rocket::Core::TypeConverter<Rocket::Core::String, size_t>::Convert(raw_data[0], index);
 		if (raw_data[1] != "top")
 		{
-			if (EMP::Core::TypeConverter<EMP::Core::String, size_t>::Convert(raw_data[1], array_index))
+			if (Rocket::Core::TypeConverter<Rocket::Core::String, size_t>::Convert(raw_data[1], array_index))
 			{
 				container = false;
 				id += "." + raw_data[1];
 			}
 		}
 
-		EMP::Core::String name; toEmp(name, entity->GetPropertyName(index));
+		Rocket::Core::String name; toEmp(name, entity->GetPropertyName(index));
 
 		int type = entity->GetPropertyType(index) & ~Entity::pt_array_flag;
 		if (type & Entity::pt_pointer_flag)
@@ -339,7 +339,7 @@ namespace FusionEngine
 					bool checked = *static_cast<bool*>(entity->GetAddressOfProperty(index, array_index));
 					formatted_data =
 						"<input id=\"" + id + "\" index=\"" + indexStr + "\" array_index=\"" + arrayIndexStr + "\" type=\"checkbox\" name=\"" + name + "\" value=\"true\" " + 
-						EMP::Core::String(checked ? "checked" : "") +
+						Rocket::Core::String(checked ? "checked" : "") +
 						"/>";
 				}
 				break;
@@ -467,9 +467,9 @@ namespace FusionEngine
 		m_MapEntity.reset();
 	}
 
-	inline EMP::Core::String to_emp(const std::string &str)
+	inline Rocket::Core::String to_emp(const std::string &str)
 	{
-		return EMP::Core::String(str.data(), str.data() + str.length());
+		return Rocket::Core::String(str.data(), str.data() + str.length());
 	}
 
 	void EntityEditorDialog::Refresh()
@@ -513,7 +513,7 @@ namespace FusionEngine
 	template <typename T>
 	void setPropertyPrimative(UndoableActionManager *undo, const EditorMapEntityPtr &map_entity, unsigned int index, unsigned int array_index, Rocket::Core::Event &ev)
 	{
-		EMP::Core::String value = ev.GetTargetElement()->GetAttribute("value", EMP::Core::String());
+		Rocket::Core::String value = ev.GetTargetElement()->GetAttribute("value", Rocket::Core::String());
 		try
 		{
 			T numericalValue = boost::lexical_cast<T>(value.CString());
@@ -553,7 +553,7 @@ namespace FusionEngine
 
 			else if (ev.GetTargetElement() == m_InputName)
 			{
-				const EMP::Core::String &value = m_InputName->GetValue();
+				const Rocket::Core::String &value = m_InputName->GetValue();
 				if (!value.Empty())
 				{
 					m_MapEntity->hasName = true;
@@ -582,7 +582,7 @@ namespace FusionEngine
 		}
 		else if (ev == "keyup")
 		{
-			if (ev.GetTargetElement()->GetAttribute("type", EMP::Core::String()) == "text")
+			if (ev.GetTargetElement()->GetAttribute("type", Rocket::Core::String()) == "text")
 			{
 				if (ev.GetParameter<int>("key_identifier", Rocket::Core::Input::KI_UNKNOWN) == Rocket::Core::Input::KI_RETURN)
 				{
@@ -594,7 +594,7 @@ namespace FusionEngine
 					unsigned int index = elm->GetAttribute<unsigned int>("index", 0);
 					unsigned int array_index = elm->GetAttribute<unsigned int>("array_index", 0);
 
-					EMP::Core::String value = elm->GetAttribute("value", EMP::Core::String());
+					Rocket::Core::String value = elm->GetAttribute("value", Rocket::Core::String());
 
 					int type = m_MapEntity->entity->GetPropertyType(index) & ~Entity::pt_array_flag;
 					switch (type)
@@ -658,7 +658,7 @@ namespace FusionEngine
 					case Entity::pt_vector:
 						{
 							float numericVal;
-							EMP::Core::TypeConverter<EMP::Core::String, float>::Convert(value, numericVal);
+							Rocket::Core::TypeConverter<Rocket::Core::String, float>::Convert(value, numericVal);
 							Vector2 *vec = static_cast<Vector2*>(m_MapEntity->entity->GetAddressOfProperty(index, 0));
 
 							Vector2 oldValue = *vec;
@@ -673,7 +673,7 @@ namespace FusionEngine
 					case Entity::pt_vector | Entity::pt_pointer_flag:
 						{
 							float numericVal;
-							EMP::Core::TypeConverter<EMP::Core::String, float>::Convert(value, numericVal);
+							Rocket::Core::TypeConverter<Rocket::Core::String, float>::Convert(value, numericVal);
 							Vector2 *vec = *static_cast<Vector2**>(m_MapEntity->entity->GetAddressOfProperty(index, 0));
 							(*vec)[array_index] = numericVal;
 							editorEntityPtr->RefreshProperty(index);
