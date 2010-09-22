@@ -71,10 +71,10 @@ namespace FusionEngine
 		// Data format:
 		// raw_data[0] is the number of children that this row has, a button is created if this is more than zero.
 
-		int num_children = 0;
-		Rocket::Core::TypeConverter<Rocket::Core::String, int>::Convert(raw_data[0], num_children);
+		//int num_children = 0;
+		//Rocket::Core::TypeConverter<Rocket::Core::String, int>::Convert(raw_data[0], num_children);
 
-		if (num_children > 0)
+		if (raw_data[0] != "0")
 		{
 			formatted_data = "<datagridexpand />";
 		}
