@@ -80,9 +80,9 @@
 			<input type="checkbox" id="pseudo_ent" checked onchange="%this: OnClickPseudoCheckbox(event);" value="true"/> Pseudo-Entity
 			<br/>
 			Type:<input type="text" id="entity_type" name="typen" onchange="%this: OnEntityTypeChanged(event);"/>
-			<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%this: OnSelected(event);">
+			<!--<datagrid selectable="true" source="editor.type_suggestions" id="entity_type_suggestions" onrowselected="%this: OnSelected(event);">
 				<col fields="name" width="100%">Types</col>
-			</datagrid>
+			</datagrid>-->
 		</div>
 		<p>
 			<form onsubmit="%this: SubmitSaveOrLoad(event);">

@@ -250,10 +250,10 @@ namespace FusionEngine
 			delete m_RocketSystem;
 			delete m_RocketRenderer;
 
-			m_RocketFileSys = NULL;
-			m_RocketSystem = NULL;
-			m_RocketRenderer = NULL;
-			m_Context = NULL;
+			m_RocketFileSys = nullptr;
+			m_RocketSystem = nullptr;
+			m_RocketRenderer = nullptr;
+			m_Context = nullptr;
 
 			m_Initialised = false;
 		}
