@@ -135,7 +135,7 @@ namespace FusionEngine
 
 		m_gc.set_map_mode(cl_map_2d_upper_left);
 		if (texture != NULL)
-			m_gc.set_texture(0, static_cast<RocketCL_Texture*>(texture)->texture);
+			m_gc.set_texture(0, reinterpret_cast<RocketCL_Texture*>(texture)->texture);
 
 		CL_PrimitivesArray prim_array(m_gc);
 		if (texture != NULL)
@@ -302,6 +302,8 @@ namespace FusionEngine
 
 	bool RocketRenderer::LoadTexture(Rocket::Core::TextureHandle& texture_handle, Rocket::Core::Vector2i& texture_dimensions, const Rocket::Core::String& source)
 	{
+		using namespace Rocket::Core;
+
 		CL_VirtualDirectory physfsDir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		try
 		{
@@ -320,7 +322,7 @@ namespace FusionEngine
 			texture_dimensions.x = texture.get_width();
 			texture_dimensions.y = texture.get_height();
 
-			texture_handle = new RocketCL_Texture(texture);
+			texture_handle = reinterpret_cast<TextureHandle>(new RocketCL_Texture(texture));
 			return true;
 		}
 		catch (CL_Exception& ex)
@@ -346,7 +348,7 @@ namespace FusionEngine
 			if (texture.is_null())
 				return false;
 
-			texture_handle = new RocketCL_Texture(texture);
+			texture_handle = reinterpret_cast<Rocket::Core::TextureHandle>(new RocketCL_Texture(texture));
 			return true;
 		}
 		catch (CL_Exception& ex)

@@ -536,7 +536,7 @@ namespace FusionEngine
 			m_EntitiesByName.erase(_where);
 
 			entity->_setName(new_name);
-			m_EntitiesByName.insert( NameEntityMap::value_type(new_name, entity) );
+			m_EntitiesByName.insert( make_pair(new_name, entity) );
 		}
 	}
 
@@ -549,7 +549,7 @@ namespace FusionEngine
 			m_EntitiesByName.erase(_where);
 
 			entity->_setName(new_name);
-			m_EntitiesByName.insert( NameEntityMap::value_type(new_name, entity) );
+			m_EntitiesByName.insert( make_pair(new_name, entity) );
 		}
 	}
 

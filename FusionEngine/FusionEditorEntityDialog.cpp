@@ -32,6 +32,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/signals2.hpp>
 #include <Rocket/Core/ElementDocument.h>
+#include <Rocket/Controls/ElementForm.h>
 #include <Rocket/Controls/ElementFormControlInput.h>
 #include <Rocket/Controls/ElementDataGrid.h>
 #include <Rocket/Controls/ElementDataGridRow.h>
@@ -40,6 +41,7 @@
 #include "FusionGUI.h"
 #include "FusionEditorMapEntity.h"
 #include "FusionEntity.h"
+#include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
 #include "FusionElementSelectableDataGrid.h"
 #include "FusionEditorUndo.h"
@@ -405,8 +407,9 @@ namespace FusionEngine
 			FSN_EXCEPT(ExCode::NotImplemented, "EntityEditorDialog", "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
 	}
 
-	EntityEditorDialog::EntityEditorDialog(const GameMapLoader::MapEntityPtr &mapent, UndoableActionManager *undo)
+	EntityEditorDialog::EntityEditorDialog(const GameMapLoader::MapEntityPtr &mapent, EntityManager *const entity_manager, UndoableActionManager *undo)
 		: m_MapEntity(mapent),
+		m_EntityManager(entity_manager),
 		m_Undo(undo),
 		m_Document(NULL),
 		m_InputX(NULL),
@@ -423,13 +426,19 @@ namespace FusionEngine
 			return;
 
 		// Grab the elements from the doc.
+		ElementForm *name_form = dynamic_cast<ElementForm*>( m_Document->GetElementById("name_form") ); verify(name_form, "name_form");
+
 		m_InputX = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("x") ); verify(m_InputX, "x");
 		m_InputY = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("y") ); verify(m_InputY, "y");
-		m_InputName = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("name") ); verify(m_InputName, "name");
+		m_InputName = dynamic_cast<ElementFormControlInput*>( name_form->GetElementById("name") ); verify(m_InputName, "name");
 		m_InputType = dynamic_cast<ElementFormControlInput*>( m_Document->GetElementById("type") ); verify(m_InputType, "type");
 		m_GridProperties = dynamic_cast<ElementSelectableDataGrid*>( m_Document->GetElementById("properties") ); verify(m_GridProperties, "properties");
 
+		m_InputCommitName = dynamic_cast<ElementFormControlInput*>( name_form->GetElementById("commit_name") ); verify(m_InputCommitName, "commit_name");
+
 		m_Document->AddEventListener("change", this);
+
+		m_Document->AddEventListener("submit", this);
 
 		m_PropertiesFormatter.reset(new EditablePropertyFormatter(m_MapEntity));
 
@@ -454,6 +463,7 @@ namespace FusionEngine
 	{
 		if (m_Document != NULL)
 		{
+			m_Document->RemoveEventListener("submit", this);
 			m_Document->RemoveEventListener("change", this);
 			m_Document->Close();
 
@@ -554,16 +564,16 @@ namespace FusionEngine
 			else if (ev.GetTargetElement() == m_InputName)
 			{
 				const Rocket::Core::String &value = m_InputName->GetValue();
-				if (!value.Empty())
-				{
-					m_MapEntity->hasName = true;
-					m_MapEntity->entity->_setName(value.CString());
-				}
-				else
-				{
-					m_MapEntity->hasName = false;
-					m_MapEntity->entity->_setName("default");
-				}
+				//if (!value.Empty())
+				//{
+				//	m_MapEntity->hasName = true;
+				//	m_MapEntity->entity->_setName(value.CString());
+				//}
+				//else
+				//{
+				//	m_MapEntity->hasName = false;
+				//	m_MapEntity->entity->_setName("default");
+				//}
 			}
 
 			else if (ev.GetTargetElement()->GetParentNode()->GetTagName() == "datagridcell")
@@ -578,6 +588,22 @@ namespace FusionEngine
 				
 				if (m_MapEntity->entity->GetPropertyType(index) == Entity::pt_bool)
 					editorEntityPtr->SetPropertyValue<bool>(index, array_index, ev.GetParameter("value", false));
+			}
+		}
+		else if (ev == "submit")
+		{
+			Rocket::Core::String value = ev.GetParameter("name_value", Rocket::Core::String());
+			if (!value.Empty())
+			{
+				m_MapEntity->hasName = true;
+				//m_MapEntity->entity->_setName(value.CString());
+				m_EntityManager->RenameEntity(m_MapEntity->entity, value.CString());
+			}
+			else
+			{
+				m_MapEntity->hasName = false;
+				//m_MapEntity->entity->_setName("default");
+				m_EntityManager->RenameEntity(m_MapEntity->entity, "default");
 			}
 		}
 		else if (ev == "keyup")

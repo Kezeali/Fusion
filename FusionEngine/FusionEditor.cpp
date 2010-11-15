@@ -35,6 +35,8 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/signals2.hpp>
 #include <Rocket/Core.h>
+#include <Rocket/Core/StreamMemory.h>
+#include <Rocket/Core/StyleSheet.h>
 #include <Rocket/Controls.h>
 
 #include "FusionEditorEntityDialog.h"
@@ -370,15 +372,46 @@ namespace FusionEngine
 			return messageBox.get();
 		});
 
+		// TODO: re-implement this NOT using MessageBoxMaker, and thus allowing a more sane way of passing the entity list
+		//  (perhaps just implement it in Editor::ShowMessage?)
 		MessageBoxMaker::AddFactory("entity_list",
 			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
 		{
 			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
 
+			std::stringstream entityCSS;
+			std::stringstream entityElements;
+			std::string title, message;
+			for (auto it = params.begin(), end = params.end(); it != end; ++it)
+			{
+				if (it->first == "title")
+					title = it->second;
+				else if (it->first == "message")
+					message = it->second;
+				else
+				{
+					entityCSS << "ent." << it->first << std::endl;
+					entityCSS << "{ ent-decorator: entity; ent-name: " << it->first << "; }" << std::endl;
+					entityElements << "<ent class=\"" << it->first << "\"></ent>" << std::endl;
+				}
+			}
+
+			Rocket::Core::StreamMemory css;
+			css.Write(entityElements.str().c_str());
+
+			Rocket::Core::StyleSheet *styleSheet = new Rocket::Core::StyleSheet();
+			styleSheet->LoadStyleSheet(&css);
+
+			Rocket::Core::StyleSheet *mergedStyle = messageBox->GetDocument()->GetStyleSheet()->CombineStyleSheet(styleSheet);
+			messageBox->GetDocument()->SetStyleSheet(mergedStyle);
+
 			messageBox->SetType("entity_list_message");
 			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
 			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
-			messageBox->SetElement("entity_list", MessageBoxMaker::GetParam(params, "entity_list"));
+			messageBox->SetElement("entity_list", entityElements.str());
+
+			Rocket::Core::String inner_rml_test;
+			messageBox->GetDocument()->GetInnerRML(inner_rml_test);
 
 			MessageBox* messageBoxRawPtr = messageBox.get();
 			messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
@@ -1168,14 +1201,12 @@ namespace FusionEngine
 
 	void Editor::ShowMessage(const std::string &title, const std::string &message, const MapEntityArray& entities, std::function<void (const MapEntityPtr&)> accept_callback)
 	{
-		std::stringstream entityElements;
+		std::stringstream entityList;
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			entityElements << "<span style=\"ent-decorator: entity-decorator; ent-name: ";
-			entityElements << (*it)->entity->GetName() << ";";
-			entityElements << "\"></span>" << std::endl;
+			entityList << "," << (*it)->entity->GetName() << ":nothing";
 		}
-		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + ", entity_list: " + entityElements.str());
+		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + entityList.str());
 		messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
 		{
 			accept_callback( GameMapLoader::MapEntityPtr() );
@@ -1287,7 +1318,7 @@ namespace FusionEngine
 
 	void Editor::ShowProperties(const MapEntityPtr &entity)
 	{
-		EntityEditorDialogPtr dialog(new EntityEditorDialog(entity, &m_UndoManager));
+		EntityEditorDialogPtr dialog(new EntityEditorDialog(entity, m_EntityManager, &m_UndoManager));
 		dialog->Show();
 		dialog->GetDocument()->AddEventListener("close", this);
 		m_EntityDialogs.push_back(dialog);

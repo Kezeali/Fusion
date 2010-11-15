@@ -66,7 +66,7 @@ namespace FusionEngine
 	class EntityEditorDialog : public Rocket::Core::EventListener
 	{
 	public:
-		EntityEditorDialog(const GameMapLoader::MapEntityPtr &map_entity, UndoableActionManager *undo);
+		EntityEditorDialog(const GameMapLoader::MapEntityPtr &map_entity, EntityManager *const entity_manager, UndoableActionManager *undo);
 		~EntityEditorDialog();
 
 		//! Called when, for example, an action is undone
@@ -86,12 +86,14 @@ namespace FusionEngine
 		Rocket::Controls::ElementFormControlInput *m_InputX;
 		Rocket::Controls::ElementFormControlInput *m_InputY;
 		Rocket::Controls::ElementFormControlInput *m_InputName;
+		Rocket::Controls::ElementFormControlInput *m_InputCommitName; // Button used to confirm name changes
 		Rocket::Controls::ElementFormControlInput *m_InputType;
 		ElementSelectableDataGrid *m_GridProperties;
 
 		EMP::Core::DataSource *m_PropertiesDataSource;
 		std::tr1::shared_ptr<Rocket::Controls::DataFormatter> m_PropertiesFormatter;
 
+		EntityManager* m_EntityManager; // Used when renaming
 		GameMapLoader::MapEntityPtr m_MapEntity;
 		UndoableActionManager *m_Undo;
 	};

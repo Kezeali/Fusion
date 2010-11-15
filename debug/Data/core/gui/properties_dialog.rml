@@ -24,12 +24,6 @@
 			text-align: left;
 			}
 		</style>
-		<script>
-			void OnPropSelected(Event@ event)
-			{
-				console.println("selected: " + event.GetParameter(e_String("row_index"), -1));
-			}
-		</script>
 	</head>
 	<body template="window">
 		<div>
@@ -38,7 +32,10 @@
 			Y: <input type="text" id="y" maxlength="15" size="10" />
 		</div>
 		<div>
-			Name: <input type="text" id="name" maxlength="128" />
+      <form id="name_form">
+        Name: <input type="text" name="name_value" id="name" maxlength="128" />
+        <input type="submit" name="commit" id="commit_name">Commit</input>
+      </form>
 			Type: <input type="text" id="type" readonly />
 		</div>
 		<!--The application sets the datasource for this datagrid gets set to the
