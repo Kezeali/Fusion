@@ -87,9 +87,7 @@ namespace FusionEngine
 
 	protected:
 		Renderer* m_Renderer;
-		EntityManager* m_EntityManager;
-
-		EntityPtr m_Entity;
+		const EntityManager* m_EntityManager;
 
 		//Rocket::Core::Geometry* m_Geometry;
 	};

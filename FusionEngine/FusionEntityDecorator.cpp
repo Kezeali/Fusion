@@ -34,6 +34,8 @@
 #include <Rocket/Core/GeometryUtilities.h>
 #include <Rocket/Core.h>
 
+#include "FusionEntity.h"
+#include "FusionEntityManager.h"
 #include "FusionRenderer.h"
 
 namespace FusionEngine
@@ -112,24 +114,38 @@ namespace FusionEngine
 
 	Rocket::Core::DecoratorDataHandle DynamicEntityDecorator::GenerateElementData(Rocket::Core::Element* element)
 	{
+		std::string entityName = std::string(element->GetAttribute("entity_name", Rocket::Core::String()).CString());
+
+		EntityPtr entity = m_EntityManager->GetEntity(entityName);
+		if( entity )
+		{
+			entity->addRef();
+			return (Rocket::Core::DecoratorDataHandle)entity.get();
+		}
+
 		return nullptr;
 	}
 
 	void DynamicEntityDecorator::ReleaseElementData(Rocket::Core::DecoratorDataHandle element_data)
 	{
+		if (element_data != nullptr)
+			static_cast<Entity*>(element_data)->release();
 	}
 
 	void DynamicEntityDecorator::RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data)
 	{
-		//m_Geometry->Render(element->GetAbsoluteOffset(Rocket::Core::Box::PADDING));
-		Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-		gc.push_modelview();
-		gc.set_translate( offset.x, offset.y );
+		Entity* entity = static_cast<Entity*>(element_data);
+		if (entity != nullptr)
+		{
+			Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
+			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+			gc.push_modelview();
+			gc.set_translate(offset.x, offset.y);
 
-		m_Renderer->DrawEntity(m_Entity);
+			m_Renderer->DrawEntity(entity);
 
-		gc.pop_modelview();
+			gc.pop_modelview();
+		}
 	}
 
 }
