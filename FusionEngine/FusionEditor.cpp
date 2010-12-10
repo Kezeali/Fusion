@@ -371,55 +371,6 @@ namespace FusionEngine
 
 			return messageBox.get();
 		});
-
-		// TODO: re-implement this NOT using MessageBoxMaker, and thus allowing a more sane way of passing the entity list
-		//  (perhaps just implement it in Editor::ShowMessage?)
-		MessageBoxMaker::AddFactory("entity_list",
-			[](Rocket::Core::Context* context, const MessageBoxMaker::ParamMap& params)->MessageBox*
-		{
-			boost::intrusive_ptr<MessageBox> messageBox(new MessageBox(context, "core/gui/message_box.rml"));
-
-			std::stringstream entityCSS;
-			std::stringstream entityElements;
-			std::string title, message;
-			for (auto it = params.begin(), end = params.end(); it != end; ++it)
-			{
-				if (it->first == "title")
-					title = it->second;
-				else if (it->first == "message")
-					message = it->second;
-				else
-				{
-					entityCSS << "ent." << it->first << std::endl;
-					entityCSS << "{ ent-decorator: entity; ent-name: " << it->first << "; }" << std::endl;
-					entityElements << "<ent class=\"" << it->first << "\"></ent>" << std::endl;
-				}
-			}
-
-			Rocket::Core::StreamMemory css;
-			css.Write(entityElements.str().c_str());
-
-			Rocket::Core::StyleSheet *styleSheet = new Rocket::Core::StyleSheet();
-			styleSheet->LoadStyleSheet(&css);
-
-			Rocket::Core::StyleSheet *mergedStyle = messageBox->GetDocument()->GetStyleSheet()->CombineStyleSheet(styleSheet);
-			messageBox->GetDocument()->SetStyleSheet(mergedStyle);
-
-			messageBox->SetType("entity_list_message");
-			messageBox->SetTitle(MessageBoxMaker::GetParam(params, "title"));
-			messageBox->SetElement("message_label", MessageBoxMaker::GetParam(params, "message"));
-			messageBox->SetElement("entity_list", entityElements.str());
-
-			Rocket::Core::String inner_rml_test;
-			messageBox->GetDocument()->GetInnerRML(inner_rml_test);
-
-			MessageBox* messageBoxRawPtr = messageBox.get();
-			messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
-				messageBoxRawPtr->release();
-			});
-
-			return messageBox.get();
-		});
 	}
 
 	Editor::~Editor()
@@ -1201,17 +1152,57 @@ namespace FusionEngine
 
 	void Editor::ShowMessage(const std::string &title, const std::string &message, const MapEntityArray& entities, std::function<void (const MapEntityPtr&)> accept_callback)
 	{
-		std::stringstream entityList;
+		//std::stringstream entityList;
+		//for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+		//{
+		//	entityList << "," << (*it)->entity->GetName() << ":nothing";
+		//}
+		//MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + entityList.str());
+		//messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
+		//{
+		//	accept_callback( GameMapLoader::MapEntityPtr() );
+		//} );
+		//messageBox->Show();
+
+		boost::intrusive_ptr<MessageBox> messageBox(new MessageBox("core/gui/message_box.rml"));
+
+		std::stringstream entityCSS;
+		std::stringstream entityElements;
+		//std::string title, message;
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
-			entityList << "," << (*it)->entity->GetName() << ":nothing";
+			const MapEntityPtr& entity = *it;
+			entityCSS << "ent." << entity->entity->GetName() << std::endl;
+			entityCSS << "{ ent-decorator: entity; ent-name: " << entity->entity->GetName() << "; }" << std::endl;
+			entityElements << "<ent class=\"" << entity->entity->GetName() << "\"></ent>" << std::endl;
 		}
-		MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + entityList.str());
+
+		Rocket::Core::StreamMemory css;
+		css.Write(entityElements.str().c_str());
+
+		Rocket::Core::StyleSheet *styleSheet = new Rocket::Core::StyleSheet();
+		styleSheet->LoadStyleSheet(&css);
+
+		Rocket::Core::StyleSheet *mergedStyle = messageBox->GetDocument()->GetStyleSheet()->CombineStyleSheet(styleSheet);
+		messageBox->GetDocument()->SetStyleSheet(mergedStyle);
+
+		messageBox->SetType("entity_list_message");
+		messageBox->SetTitle(title);
+		messageBox->SetElement("message_label", message);
+		messageBox->SetElement("entity_list", entityElements.str());
+
+		Rocket::Core::String inner_rml_test;
+		messageBox->GetDocument()->GetInnerRML(inner_rml_test);
+
 		messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
 		{
 			accept_callback( GameMapLoader::MapEntityPtr() );
 		} );
-		messageBox->Show();
+
+		MessageBox* messageBoxRawPtr = messageBox.get();
+		messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
+			messageBoxRawPtr->release();
+		});
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)

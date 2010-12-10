@@ -104,4 +104,32 @@ namespace FusionEngine
 		gc.pop_modelview();
 	}
 
+	DynamicEntityDecorator::DynamicEntityDecorator(const EntityManager* const manager, Renderer* renderer)
+		: m_EntityManager(manager),
+		m_Renderer(renderer)
+	{
+	}
+
+	Rocket::Core::DecoratorDataHandle DynamicEntityDecorator::GenerateElementData(Rocket::Core::Element* element)
+	{
+		return nullptr;
+	}
+
+	void DynamicEntityDecorator::ReleaseElementData(Rocket::Core::DecoratorDataHandle element_data)
+	{
+	}
+
+	void DynamicEntityDecorator::RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data)
+	{
+		//m_Geometry->Render(element->GetAbsoluteOffset(Rocket::Core::Box::PADDING));
+		Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+		gc.push_modelview();
+		gc.set_translate( offset.x, offset.y );
+
+		m_Renderer->DrawEntity(m_Entity);
+
+		gc.pop_modelview();
+	}
+
 }
