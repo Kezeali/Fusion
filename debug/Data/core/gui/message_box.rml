@@ -18,16 +18,17 @@
 
       ent
       {
-      ent-decorator: entity;
+      ent-decorator: dynent;
+      display:block;
+      width: 64px;
+      height: 64px;
       }
     </style>
 	</head>
 	<body template="window" onshow="OnWindowLoad(event)">
     <span id="message_label"/>
-    <span id="entity_list"></span>
-    <span id="list_test">
-      <ent style="ent-name: test_ent;"></ent>
-    </span>
+    <br/>
+    <div id="entity_list"></div>
     <div>
       <button id="accept" onclick="event.GetCurrentElement().DispatchEvent(rString('accept_clicked'));">Ok</button>
       <button id="cancel" onclick="event.GetCurrentElement().DispatchEvent(rString('cancel_clicked'));">Cancel</button>

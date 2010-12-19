@@ -489,6 +489,9 @@ namespace FusionEngine
 		Rocket::Core::DecoratorInstancer* instancer = new EntityDecoratorInstancer(m_EntityManager, m_Renderer);
 		Rocket::Core::Factory::RegisterDecoratorInstancer("entity", instancer);
 		instancer->RemoveReference();
+		instancer = new DynamicEntityDecoratorInstancer(m_EntityManager, m_Renderer);
+		Rocket::Core::Factory::RegisterDecoratorInstancer("dynent", instancer);
+		instancer->RemoveReference();
 		// Load gui documents
 		Rocket::Core::Context *guiCtx = GUI::getSingleton().GetContext();
 		m_MainDocument = guiCtx->LoadDocument("core/gui/editor.rml");
@@ -1152,39 +1155,15 @@ namespace FusionEngine
 
 	void Editor::ShowMessage(const std::string &title, const std::string &message, const MapEntityArray& entities, std::function<void (const MapEntityPtr&)> accept_callback)
 	{
-		//std::stringstream entityList;
-		//for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
-		//{
-		//	entityList << "," << (*it)->entity->GetName() << ":nothing";
-		//}
-		//MessageBox* messageBox = MessageBoxMaker::Create("entity_list", "title:" + title + ", message:" + message + entityList.str());
-		//messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
-		//{
-		//	accept_callback( GameMapLoader::MapEntityPtr() );
-		//} );
-		//messageBox->Show();
-
 		boost::intrusive_ptr<MessageBox> messageBox(new MessageBox("core/gui/message_box.rml"));
 
 		std::stringstream entityCSS;
 		std::stringstream entityElements;
-		//std::string title, message;
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			const MapEntityPtr& entity = *it;
-			entityCSS << "ent." << entity->entity->GetName() << std::endl;
-			entityCSS << "{ ent-decorator: entity; ent-name: " << entity->entity->GetName() << "; }" << std::endl;
-			entityElements << "<ent class=\"" << entity->entity->GetName() << "\"></ent>" << std::endl;
+			entityElements << "<ent entity_name=\"" << entity->entity->GetName() << "\"></ent>" << std::endl;
 		}
-
-		Rocket::Core::StreamMemory css;
-		css.Write(entityElements.str().c_str());
-
-		Rocket::Core::StyleSheet *styleSheet = new Rocket::Core::StyleSheet();
-		styleSheet->LoadStyleSheet(&css);
-
-		Rocket::Core::StyleSheet *mergedStyle = messageBox->GetDocument()->GetStyleSheet()->CombineStyleSheet(styleSheet);
-		messageBox->GetDocument()->SetStyleSheet(mergedStyle);
 
 		messageBox->SetType("entity_list_message");
 		messageBox->SetTitle(title);
@@ -1203,6 +1182,8 @@ namespace FusionEngine
 		messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
 			messageBoxRawPtr->release();
 		});
+
+		messageBox->Show();
 	}
 
 	void Editor::DisplayError(const std::string &title, const std::string &message)

@@ -36,4 +36,25 @@ namespace FusionEngine
 	{
 	}
 
+	DynamicEntityDecoratorInstancer::DynamicEntityDecoratorInstancer(EntityManager* source, Renderer* renderer)
+		: Rocket::Core::DecoratorInstancer(),
+		m_EntityManager(source),
+		m_Renderer(renderer)
+	{
+	}
+
+	Rocket::Core::Decorator* DynamicEntityDecoratorInstancer::InstanceDecorator(const Rocket::Core::String& name, const Rocket::Core::PropertyDictionary& properties)
+	{
+		return new DynamicEntityDecorator(m_EntityManager, m_Renderer);
+	}
+
+	void DynamicEntityDecoratorInstancer::ReleaseDecorator(Rocket::Core::Decorator* decorator)
+	{
+		delete decorator;
+	}
+
+	void DynamicEntityDecoratorInstancer::Release()
+	{
+	}
+
 }

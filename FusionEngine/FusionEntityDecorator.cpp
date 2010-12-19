@@ -137,10 +137,11 @@ namespace FusionEngine
 		Entity* entity = static_cast<Entity*>(element_data);
 		if (entity != nullptr)
 		{
+			CL_Rectf&& aabb = entity->CalculateOnScreenAABB();
 			Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
 			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 			gc.push_modelview();
-			gc.set_translate(offset.x, offset.y);
+			gc.set_translate(offset.x + aabb.get_width() * 0.5f, offset.y + aabb.get_height() * 0.5f);
 
 			m_Renderer->DrawEntity(entity);
 
