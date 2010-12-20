@@ -109,7 +109,7 @@ namespace FusionEngine
 #ifdef _DEBUG
 				file,
 #else
-				CL_PathHelp::get_filename(file).c_str()
+				CL_PathHelp::get_filename(file).c_str(),
 #endif
 				line);
 		}

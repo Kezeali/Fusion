@@ -213,7 +213,7 @@ namespace FusionEngine
 		data->texture = (RocketCL_Texture*)texture;
 
 		//m_Geometry.push_back(buffer);
-		return (Core::CompiledGeometryHandle*)data;
+		return reinterpret_cast<Core::CompiledGeometryHandle>(data);
 	}
 
 	void RocketRenderer::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHandle geometry, const Rocket::Core::Vector2f& translation)

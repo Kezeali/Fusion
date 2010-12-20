@@ -103,7 +103,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
-      <AdditionalDependencies>angelscript.lib;physfs.lib;box2d_mtdll.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;EMPCore.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscript.lib;physfs.lib;box2d_mtdll.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>

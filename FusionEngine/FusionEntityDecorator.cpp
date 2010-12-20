@@ -86,7 +86,7 @@ namespace FusionEngine
 		//m_Geometry->GetVertices().assign(&verticies[0], &verticies[3]);
 		//m_Geometry->GetIndices().assign(&indicies[0], &indicies[3]);
 
-		return nullptr;
+		return 0;
 	}
 
 	void EntityDecorator::ReleaseElementData(Rocket::Core::DecoratorDataHandle element_data)
@@ -117,24 +117,24 @@ namespace FusionEngine
 		std::string entityName = std::string(element->GetAttribute("entity_name", Rocket::Core::String()).CString());
 
 		EntityPtr entity = m_EntityManager->GetEntity(entityName);
-		if( entity )
+		if (entity)
 		{
 			entity->addRef();
 			return (Rocket::Core::DecoratorDataHandle)entity.get();
 		}
 
-		return nullptr;
+		return 0;
 	}
 
 	void DynamicEntityDecorator::ReleaseElementData(Rocket::Core::DecoratorDataHandle element_data)
 	{
-		if (element_data != nullptr)
-			static_cast<Entity*>(element_data)->release();
+		if (element_data)
+			reinterpret_cast<Entity*>(element_data)->release();
 	}
 
 	void DynamicEntityDecorator::RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data)
 	{
-		Entity* entity = static_cast<Entity*>(element_data);
+		Entity* entity = reinterpret_cast<Entity*>(element_data);
 		if (entity != nullptr)
 		{
 			CL_Rectf&& aabb = entity->CalculateOnScreenAABB();

@@ -1162,7 +1162,8 @@ namespace FusionEngine
 		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 		{
 			const MapEntityPtr& entity = *it;
-			entityElements << "<ent entity_name=\"" << entity->entity->GetName() << "\"></ent>" << std::endl;
+			if( entity->entity )
+				entityElements << "<ent entity_name=\"" << entity->entity->GetName() << "\"></ent>" << std::endl;
 		}
 
 		messageBox->SetType("entity_list_message");
@@ -1173,12 +1174,13 @@ namespace FusionEngine
 		Rocket::Core::String inner_rml_test;
 		messageBox->GetDocument()->GetInnerRML(inner_rml_test);
 
-		messageBox->GetEventSignal("accept_clicked").connect( [accept_callback](Rocket::Core::Event& ev)
+		MessageBox* messageBoxRawPtr = messageBox.get();
+		messageBox->GetEventSignal("accept_clicked").connect( [messageBoxRawPtr,accept_callback](Rocket::Core::Event& ev)
 		{
+			messageBoxRawPtr->release();
 			accept_callback( GameMapLoader::MapEntityPtr() );
 		} );
 
-		MessageBox* messageBoxRawPtr = messageBox.get();
 		messageBox->GetEventSignal("cancel_clicked").connect([messageBoxRawPtr](Rocket::Core::Event& ev) {
 			messageBoxRawPtr->release();
 		});
