@@ -242,6 +242,8 @@ namespace FusionEngine
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
+			delete MessageBoxMaker::getSingletonPtr();
+
 			m_Context->RemoveReference();
 			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			Rocket::Core::Shutdown();
