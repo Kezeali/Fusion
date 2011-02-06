@@ -205,7 +205,13 @@ public:
 			script_SoundOutput->SetModule(module);
 
 			// Build the module (scripts will be added automatically by objects which have registered a module connection)
-			module->Build();
+			int r = module->Build();
+			if( r < 0 )
+			{
+				AddLogEntry(g_LogGeneral, "Failed to build scripts.", LOG_CRITICAL);
+				logger.reset(); // Destroy the logger to destroy the console logfile before the console (TODO: automate this in console destructor with a callback)
+				FSN_EXCEPT(FusionEngine::Exception, "startup", "Failed to build scripts.");
+			}
 
 			// Start ontology / editor
 			god->BeginExistence(systemMgr);
@@ -216,7 +222,9 @@ public:
 			int fullCleanInterval = 0;
 
 			CL_Font statsFont(gc, "Arial", 18);
+#ifdef _DEBUG
 			asUINT currentSize, totalDestroyed, totalDetected;
+#endif
 
 			while (systemMgr->KeepGoing())
 			{
@@ -270,11 +278,15 @@ public:
 		}
 		catch (FusionEngine::Exception &ex)
 		{
+#ifdef _DEBUG
 			CL_Console::write_line( CL_String(ex.ToString().c_str()) );
 			conWindow.display_close_message();
+#endif
+			//TODO: Show a OS native GUI messagebox in Release builds
 		}
 		catch (CL_Exception &ex)
 		{
+#ifdef _DEBUG
 			CL_Console::write_line( ex.message );
 			CL_Console::write_line( "Stack Trace:" );
 			std::vector<CL_String> stack = ex.get_stack_trace();
@@ -283,6 +295,8 @@ public:
 				CL_Console::write_line(*it);
 			}
 			conWindow.display_close_message();
+#endif
+			//TODO: Show a OS native GUI messagebox in Release builds
 		}
 
 		return 0;

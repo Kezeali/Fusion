@@ -95,11 +95,14 @@ namespace FusionEngine
 
 		int r = m_Module->Build();
 
-		//BuildModuleEvent postbuild;
-		buildEvent.type = BuildModuleEvent::PostBuild;
-		SigBuildModule(buildEvent);
+		if( r >= 0 )
+		{
+			//BuildModuleEvent postbuild;
+			buildEvent.type = BuildModuleEvent::PostBuild;
+			SigBuildModule(buildEvent);
 
-		m_Built = true;
+			m_Built = true;
+		}
 
 		return r;
 	}

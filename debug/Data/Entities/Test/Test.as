@@ -14,7 +14,8 @@ class Test : ScriptEntity
 
 	Vector target;
 
-	int[] array;
+	int[] default_array;
+	array<string> template_array;
 
 	//TestGUI@ gui_entity;
 
@@ -38,10 +39,13 @@ class Test : ScriptEntity
 
 		message = "hi";
 
-		array.resize(3);
-		array[0] = 1;
-		array[1] = 2;
-		array[2] = 3;
+		default_array.resize(3);
+		default_array[0] = 1;
+		default_array[1] = 2;
+		default_array[2] = 3;
+
+		template_array.resize(1);
+		template_array[0] = "zero";
 
 
 		@primaryCamera = @Camera();

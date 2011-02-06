@@ -28,8 +28,8 @@
 
 /*! @mainpage Fusion
  *
- * Fusion is a multiplayer focused game engine which can be scripted
- * with AngleScript.
+ * Fusion is a game engine which can be scripted with
+ * AngleScript. It has many features and is full of wonder.
  *
  * The project website is at http://steelfusion.sourceforge.net/
  */
@@ -486,7 +486,7 @@ namespace FusionEngine
 			context->GetState() == asEXECUTION_EXCEPTION ||
 			context->GetState() == asEXECUTION_SUSPENDED);
 
-		return context->GetEngine()->GetFunctionDescriptorById(context->GetCurrentFunction())->GetModuleName();
+		return context->GetFunction()->GetModuleName();
 	}
 
 	static inline asIScriptModule* ctxGetModule(asIScriptContext *context, asEGMFlags flag = asGM_ONLY_IF_EXISTS)

@@ -193,6 +193,7 @@
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptarray.cpp" />
     <ClCompile Include="..\tinyxml\ticpp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -327,6 +328,7 @@
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
+    <ClInclude Include="..\FusionEngine\scriptarray.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
     <ClInclude Include="..\FusionEngine\scriptstdvector.h" />
     <ClInclude Include="..\FusionEngine\scriptstring.h" />

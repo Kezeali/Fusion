@@ -52,6 +52,8 @@
 
 #include "FusionScriptedEntity.h"
 
+#include "scriptarray.h"
+
 
 namespace FusionEngine
 {
@@ -494,15 +496,15 @@ namespace FusionEngine
 		fitSplitScreenViewports();
 	}
 
-	void OntologicalSystem::SetSplitScreenOrder(asIScriptArray *player_order)
+	void OntologicalSystem::SetSplitScreenOrder(CScriptArray* player_order)
 	{
 		if (player_order->GetElementTypeId() == asTYPEID_UINT32)
 		{
 			// Copy from the script type to the application array type
 			PlayerOrderArray appArray;
-			for (size_t i = 0, end = player_order->GetElementCount(); i < end; ++i)
+			for (size_t i = 0, end = player_order->GetSize(); i < end; ++i)
 			{
-				int *player = static_cast<int*>( player_order->GetElementPointer(i) );
+				int *player = static_cast<int*>( player_order->At(i) );
 				appArray[i] = *player;
 			}
 			SetSplitScreenOrder(appArray);

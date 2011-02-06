@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2007-2010 Fusion Project Team
+*  Copyright (c) 2007-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -291,7 +291,7 @@ namespace FusionEngine
 
 		//! Returns the size of the given property if it is an array, 0 otherwise
 		/*!
-		* \see Entity#IsArrayProperty()
+		* \see Entity#PropertyIsArray()
 		*/
 		virtual unsigned int GetPropertyArraySize(unsigned int index) const =0;
 		//! Returns true if the given property is an array

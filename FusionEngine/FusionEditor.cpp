@@ -1305,7 +1305,7 @@ namespace FusionEngine
 		if (!gmEntity->entity)
 		{
 			SendToConsole("Failed to create entity of type " + type);
-			return gmEntity;
+			return EditorMapEntityPtr();
 		}
 
 		if (synced)

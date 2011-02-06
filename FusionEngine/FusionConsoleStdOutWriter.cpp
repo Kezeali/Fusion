@@ -57,7 +57,7 @@ namespace FusionEngine
 		//std::string e_marker = Console::getSingleton().GetExceptionMarker();
 		//std::string w_marker = Console::getSingleton().GetWarningMarker();
 
-		std::string linemessage = cl_text("-- ") + CL_StringHelp::local8_to_text(message.c_str());
+		std::string linemessage = "-- " + CL_StringHelp::local8_to_text(message.c_str());
 		CL_Console::write_line( linemessage.c_str() );
 		//std::cout << "--  " << message << std::endl;
 	}

@@ -281,6 +281,9 @@
     <ClCompile Include="..\FusionEngine\FusionEntityDecoratorInstancer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\scriptarray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
@@ -617,6 +620,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionEntityDecoratorInstancer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\scriptarray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

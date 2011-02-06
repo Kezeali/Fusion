@@ -128,9 +128,6 @@ namespace FusionEngine { namespace Scripting
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)",     asFUNCTION(VectorInitFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		
-		// Note: We don't have to register the destructor, since the object uses reference counting
-		//r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,  "void f()",                    asFUNCTION(ConstructScriptVector), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-
 		// Register the object operator overloads
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(Vector2, addRef), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(Vector2, release), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
@@ -138,20 +135,14 @@ namespace FusionEngine { namespace Scripting
 		r = engine->RegisterObjectMethod("Vector", "Vector &opAddAssign(const Vector &in)", asMETHODPR(Vector2, operator+=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(opAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
-		// Register the global operator overloads
-		// Note: Vector2's methods can be used directly because the
-		// internal Vector2 is placed at the beginning of the class
-		//r = engine->RegisterGlobalBehaviour(asBEHAVE_EQUAL,       "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator==, (const Vector2 &), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		//r = engine->RegisterGlobalBehaviour(asBEHAVE_NOTEQUAL,    "bool f(const Vector &in, const Vector &in)",    asMETHODPR(Vector2, operator!=, (const Vector2 &), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectProperty("Vector", "float x", offsetof(Vector2,x)); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectProperty("Vector", "float y", offsetof(Vector2,y)); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "void set_x(float)", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "void set_y(float)", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		return typeId;
 	}

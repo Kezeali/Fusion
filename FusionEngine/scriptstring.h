@@ -29,10 +29,9 @@ public:
 	CScriptString(const CScriptString &other);
 	CScriptString(const char *s, unsigned int length);
 	CScriptString(const std::string &s);
-	~CScriptString();
 
-	void AddRef();
-	void Release();
+	void AddRef() const;
+	void Release() const;
 
 	CScriptString &operator=(const CScriptString &other);
 	CScriptString &operator+=(const CScriptString &other);
@@ -47,7 +46,8 @@ public:
 	std::string buffer;
 
 protected:
-	int refCount;
+	~CScriptString();
+	mutable int refCount;
 };
 
 // This function will determine the configuration of the engine

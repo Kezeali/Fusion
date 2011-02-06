@@ -44,6 +44,8 @@
 #include "FusionRenderer.h"
 #include "FusionScriptModule.h"
 
+class CScriptArray;
+
 namespace FusionEngine
 {
 
@@ -203,7 +205,7 @@ namespace FusionEngine
 		/*!
 		* Script version of SetSplitScreenOrder()
 		*/
-		void SetSplitScreenOrder(asIScriptArray *player_order);
+		void SetSplitScreenOrder(CScriptArray* player_order);
 
 		//! Returns Renderer::GetContextWidth()
 		int GetScreenWidth() const;

@@ -34,7 +34,8 @@
 		<Property name="input_right" />
 		<Property name="test_int8" />
 		<Property name="target" />
-		<Property name="array" />
+		<Property name="default_array" />
+    <Property name="template_array" />
 		<!--Local properties are only synced to disk (i.e. load/save), not the network-->
 		<!--Local generally shouldn't be used, because the networking model is designed
 			around full syncronization (although not fully reliable syncronization)-->

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -95,13 +95,13 @@ namespace FusionEngine
 
 		int GetLine() const
 		{
-			return context->GetCurrentLineNumber();
+			return context->GetLineNumber();
 		}
 
 		int GetColumn() const
 		{
 			int column;
-			context->GetCurrentLineNumber(&column);
+			context->GetLineNumber(0U, &column);
 			return column;
 		}
 
@@ -135,8 +135,14 @@ namespace FusionEngine
 		//! Returns a pointer to the AS engine.
 		asIScriptEngine *GetEnginePtr() const;
 
-		int GetVectorTypeId() const;
+		//! Returns the TypeId of the CScriptArray binding
+		int GetArrayTypeId() const;
+		//! Returns the TypeId of the ScriptVector (a Vector2D<float> wrapper) binding
+		int GetVector2DTypeId() const;
+		//! Returns the TypeId of the CScriptString binding
 		int GetStringTypeId() const;
+
+		bool IsScriptArray(int typeId);
 
 		//! Adds the given script to a module, but doesn't build or execute it.
 		//void RegisterScript(Script *script, const char *module);
@@ -144,7 +150,9 @@ namespace FusionEngine
 		//! Registers a global object (type must already be registered)
 		void RegisterGlobalObject(const char *decl, void* ptr);
 
+		//! Runs preprocessors on the given script
 		void Preprocess(std::string &script, const char *module_name);
+		//! Runs preprocessors on the given script
 		void Preprocess(std::string &script, const char *module_name, const std::string &filename);
 
 		bool storeCodeString(const std::string &code, const char *section_name);
@@ -272,6 +280,7 @@ namespace FusionEngine
 		//! AngelScript Engine
 		asIScriptEngine *m_asEngine;
 
+		int m_ArrayTypeId;
 		int m_VectorTypeId;
 		int m_StringTypeId;
 

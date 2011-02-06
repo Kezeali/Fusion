@@ -73,20 +73,25 @@ namespace FusionEngine
 
 	//! Represents a Log
 	/*!
+	* Call Logger#OpenLog() to create a new Log object (Log's constructor is protected.)
+	*
 	* \todo Make Log threadsafe
-	 * \sa FusionEngine#Logger
-	 */
+	* \sa FusionEngine#Logger
+	*/
 	class Log
 	{
+		friend class Logger;
 	public:
 		typedef std::tr1::shared_ptr<ILogFile> LogFilePtr;
 		typedef std::map<std::string, LogFilePtr> LogFileList;
 
-	public:
+	protected:
 		//! Constructor +tag +filename +safe
 		Log(const std::string& tag, const std::string& filename);
 		//! Constructor +tag +filename +safe +verbosity
 		Log(const std::string& tag, const std::string& filename, LogSeverity threshold);
+
+	public:
 		//! Destructor
 		~Log();
 

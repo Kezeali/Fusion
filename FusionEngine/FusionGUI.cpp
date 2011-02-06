@@ -238,7 +238,7 @@ namespace FusionEngine
 				//m_Context->UnloadDocument(m_ConsoleDocument);
 				m_ConsoleDocument->RemoveReference();
 				m_ConsoleDocument = nullptr;
-				m_Context->Update(); // Make sure this gets freed right now
+				m_Context->Update(); // Make sure the console ui gets freed right now (before script GC is forced below)
 				ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
 			}
 
@@ -460,9 +460,16 @@ namespace FusionEngine
 		else if (event.type == BuildModuleEvent::PostBuild)
 		{
 			ModulePtr module = event.manager->GetModule(event.module_name);
-			// Create the Console window (a window where console commands can be entered)
-			module->GetCaller("void InitialiseConsole()")(); // register the element type
-			m_ConsoleDocument = GetContext()->LoadDocument("core/gui/console.rml");
+			try
+			{
+				// Create the Console window (a window where console commands can be entered)
+				module->GetCaller("void InitialiseConsole()")(); // register the element type
+				m_ConsoleDocument = GetContext()->LoadDocument("core/gui/console.rml");
+			}
+			catch (ScriptUtils::Exception &ex)
+			{
+				AddLogEntry(g_LogGeneral, "Failed to initialise the console window: " + ex.m_Message, LOG_NORMAL);
+			}
 		}
 	}
 

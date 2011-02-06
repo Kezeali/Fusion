@@ -87,6 +87,7 @@ namespace FusionEngine
 
 	FirstCause::~FirstCause()
 	{
+		m_Editor.reset(); // Destroy the Editor before the EntityManager
 		checkedDelete(m_EntityFactory);
 		checkedDelete(m_InstancingSync);
 		checkedDelete(m_Streaming);

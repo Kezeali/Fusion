@@ -8,6 +8,7 @@
 #include "FusionCommon.h"
 #include "FusionExceptionFactory.h"
 #include "FusionResourceManager.h"
+#include "scriptarray.h"
 #include "scriptstring.h"
 
 namespace FusionEngine
@@ -144,7 +145,7 @@ namespace FusionEngine
 				else
 					accessPropValueOfType<CScriptString>(cpp_obj, obj, property_index);
 			}
-			else if (type_id & engine->GetVectorTypeId())
+			else if (type_id & engine->GetVector2DTypeId())
 			{
 				if (type_id & asTYPEID_OBJHANDLE)
 					accessPropValueOfType<Vector2*>(cpp_obj, obj, property_index);
@@ -314,77 +315,42 @@ namespace FusionEngine
 		m_Path = path;
 	}
 
-	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesArray &properties)
+	int ScriptedEntity::ScriptTypeIdToPropertyType(int script_type_id)
 	{
-		m_SyncedProperties = properties;
-	}
-
-	unsigned int ScriptedEntity::GetPropertyCount() const
-	{
-		return m_SyncedProperties.size();
-	}
-
-	std::string ScriptedEntity::GetPropertyName(unsigned int index) const
-	{
-		int propIndex = getScriptPropIndex(index);
-		return m_ScriptObject.GetScriptObject()->GetPropertyName(propIndex);
-	}
-
-	boost::any ScriptedEntity::GetPropertyValue(unsigned int index) const
-	{
-		boost::any value;
-		int propIndex = getScriptPropIndex(index);
-		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
-		return value;
-	}
-
-	void ScriptedEntity::SetPropertyValue(unsigned int index, const boost::any &value)
-	{
-		int propIndex = getScriptPropIndex(index);
-		accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
-	}
-
-	EntityPtr ScriptedEntity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
-	{
-		asIScriptObject *scriptEntity = *static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
-		return EntityPtr(ScriptedEntity::GetAppObject(scriptEntity));
-	}
-
-	void ScriptedEntity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &value)
-	{
-		asIScriptObject **scriptEntity = static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
-		(*scriptEntity) = ScriptedEntity::GetScriptObject(value.get());
-	}
-
-	unsigned int ScriptedEntity::GetPropertyArraySize(unsigned int index) const
-	{
-		int propIndex = getScriptPropIndex(index);
-		if (m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex) & asTYPEID_SCRIPTARRAY)
-		{
-			asIScriptArray *array = static_cast<asIScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
-			return array->GetElementCount();
-		}
-		else
-			return 0;
-	}
-
-	int ScriptedEntity::GetPropertyType(unsigned int index) const
-	{
-		int propIndex = getScriptPropIndex(index);
-
-		int typeId = m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
-
 		int propType = pt_none;
 
-		// Add the array flag
-		if (typeId & asTYPEID_SCRIPTARRAY)
+		// Add the array flag for array types
+		if (script_type_id & asTYPEID_TEMPLATE)
 		{
-			propType |= pt_array_flag;
-			typeId = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(typeId)->GetSubTypeId();
+			asIObjectType *arrayType =  ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(script_type_id);
+
+			std::string name = ScriptManager::getSingleton().GetEnginePtr()->GetTypeDeclaration(arrayType->GetSubTypeId());
+			name += "& opIndex(uint)";
+			bool hasIndexOp = false;
+			for (int i = 0, count = arrayType->GetMethodCount(); i < count; ++i)
+			{
+				asIScriptFunction* method = arrayType->GetMethodDescriptorByIndex(i);
+				if (name.compare(method->GetDeclaration(false)) == 0)
+				{
+					hasIndexOp = true;
+					break;
+				}
+			}
+
+			// TODO: figure out (ask on the official forum?) why the following doesn't work
+			//if (arrayType->GetMethodIdByDecl(name.c_str()) < 0)
+
+			if (hasIndexOp)
+			{
+				propType |= pt_array_flag;
+				script_type_id = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(script_type_id)->GetSubTypeId();
+			}
+			else
+				return pt_none; // might as well short-curcuit here, since this template type can't be treated as an array
 		}
 
 		// Basic types
-		switch (typeId)
+		switch (script_type_id)
 		{
 		case asTYPEID_BOOL:
 			propType |= pt_bool; break;
@@ -413,31 +379,92 @@ namespace FusionEngine
 		if (propType != pt_none && propType != pt_array_flag)
 			return propType;
 		// Otherwise, check for a application type
-		else if (typeId & asTYPEID_APPOBJECT)
+		else if (script_type_id & asTYPEID_APPOBJECT)
 		{
 			ScriptManager *man = ScriptManager::getSingletonPtr();
 			// Check for entity type (this is seperated from the following types because it is always a pointer type)
-			if ((typeId & ~asTYPEID_OBJHANDLE) == s_EntityTypeId)
+			if ((script_type_id & ~asTYPEID_OBJHANDLE) == s_EntityTypeId)
 				propType |= pt_entity;
 
 			else
 			{
-				if ((typeId & ~asTYPEID_OBJHANDLE) == man->GetStringTypeId())
+				if ((script_type_id & ~asTYPEID_OBJHANDLE) == man->GetStringTypeId())
 					propType |= pt_string;
-				else if ((typeId & ~asTYPEID_OBJHANDLE) == man->GetVectorTypeId())
+				else if ((script_type_id & ~asTYPEID_OBJHANDLE) == man->GetVector2DTypeId())
 					propType |= pt_vector;
 
 				// Add the pointer flag
-				if (typeId & asTYPEID_OBJHANDLE)
+				if (script_type_id & asTYPEID_OBJHANDLE)
 					propType |= pt_pointer_flag;
 			}
 
 			return propType;
 		}
 
-		// notice that propType isn't returned here as it could be a loose pt_array_flag
+		// notice that propType isn't returned here as it could be the pt_array_flag
 		//  (for an array of an unsupported type) and returning that would be useless
 		return pt_none;
+	}
+
+	void ScriptedEntity::SetSyncProperties(const ScriptedEntity::PropertiesArray &properties)
+	{
+		m_SyncedProperties = properties;
+	}
+
+	unsigned int ScriptedEntity::GetPropertyCount() const
+	{
+		return m_SyncedProperties.size();
+	}
+
+	std::string ScriptedEntity::GetPropertyName(unsigned int index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+		return m_ScriptObject.GetScriptObject()->GetPropertyName(propIndex);
+	}
+
+	//boost::any ScriptedEntity::GetPropertyValue(unsigned int index) const
+	//{
+	//	boost::any value;
+	//	int propIndex = getScriptPropIndex(index);
+	//	accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
+	//	return value;
+	//}
+
+	//void ScriptedEntity::SetPropertyValue(unsigned int index, const boost::any &value)
+	//{
+	//	int propIndex = getScriptPropIndex(index);
+	//	accessScriptPropValue(value, m_ScriptObject.GetScriptObject(), propIndex);
+	//}
+
+	EntityPtr ScriptedEntity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
+	{
+		asIScriptObject *scriptEntity = *static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
+		return EntityPtr(ScriptedEntity::GetAppObject(scriptEntity));
+	}
+
+	void ScriptedEntity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &value)
+	{
+		asIScriptObject **scriptEntity = static_cast<asIScriptObject**>( GetAddressOfProperty(index, array_index) );
+		(*scriptEntity) = ScriptedEntity::GetScriptObject(value.get());
+	}
+
+	unsigned int ScriptedEntity::GetPropertyArraySize(unsigned int index) const
+	{
+		int propIndex = getScriptPropIndex(index);
+		if (m_SyncedProperties[index].typeFlags & pt_array_flag)
+		{
+			CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return array->GetSize();
+		}
+		else
+			return 0;
+	}
+
+	int ScriptedEntity::GetPropertyType(unsigned int index) const
+	{
+		if (index >= m_SyncedProperties.size())
+			FSN_EXCEPT(InvalidArgumentException, "ScriptedEntity::GetPropertyType", "Tried to access a property with an invalid index");
+		return m_SyncedProperties[index].typeFlags;
 	}
 
 	void* ScriptedEntity::GetAddressOfProperty(unsigned int index, unsigned int array_index) const
@@ -468,10 +495,14 @@ namespace FusionEngine
 	void* ScriptedEntity::GetAddressOfPropertyRaw(unsigned int index, unsigned int array_index) const
 	{
 		int propIndex = getScriptPropIndex(index);
-		if (m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex) & asTYPEID_SCRIPTARRAY)
+		const int arrayTypeId = ScriptManager::getSingleton().GetArrayTypeId();
+		if (m_SyncedProperties[index].typeFlags & pt_array_flag)
 		{
-			asIScriptArray *array = static_cast<asIScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
-			return array->GetElementPointer(array_index);
+			asIScriptObject* array = static_cast<asIScriptObject*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return nullptr;
+			static_assert( std::false_type, "todo" );
+			//CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			//return array->At(array_index);
 		}
 		else
 			return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);
@@ -597,7 +628,7 @@ namespace FusionEngine
 			}
 			if (!isPrimative) // Check for non-primative types:
 			{
-				if (typeId & ScriptManager::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptManager::getSingletonPtr()->GetVector2DTypeId())
 				{
 					//stateStream << *static_cast<Vector2*>( prop );
 					Vector2 *value = static_cast<Vector2*>( prop );
@@ -723,7 +754,7 @@ namespace FusionEngine
 			// If the property isn't primative, check for other known types
 			if (!isPrimative)
 			{
-				if (typeId & ScriptManager::getSingletonPtr()->GetVectorTypeId())
+				if (typeId & ScriptManager::getSingletonPtr()->GetVector2DTypeId())
 				{
 					Vector2 value;
 					//stateStream >> value;
@@ -856,7 +887,8 @@ namespace FusionEngine
 
 	inline int ScriptedEntity::getScriptPropIndex(unsigned int entity_prop_index) const
 	{
-		FSN_ASSERT(entity_prop_index < m_SyncedProperties.size());
+		if (entity_prop_index >= m_SyncedProperties.size())
+			FSN_EXCEPT(InvalidArgumentException, "ScriptedEntity", "Tried to access a property with an invalid index");
 		return m_SyncedProperties[entity_prop_index].scriptPropertyIndex;
 	}
 

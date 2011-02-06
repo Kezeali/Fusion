@@ -341,7 +341,7 @@ namespace FusionEngine
 								int height = 0;
 
 								const char *attribute_text = cur_child->Attribute("size");
-								std::vector<CL_TempString> image_size = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
+								std::vector<CL_String> image_size = CL_StringHelp::split_text(CL_String(attribute_text), ",");
 								if (image_size.size() > 0)
 									width = CL_StringHelp::text_to_int(image_size[0]);
 								if (image_size.size() > 1)
@@ -350,7 +350,7 @@ namespace FusionEngine
 								attribute_text = cur_child->Attribute("pos");
 								if (attribute_text != nullptr)
 								{
-									std::vector<CL_TempString> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
+									std::vector<CL_String> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), ",");
 									if (image_pos.size() > 0)
 										xpos = CL_StringHelp::text_to_int(image_pos[0]);
 									if (image_pos.size() > 1)
@@ -360,7 +360,7 @@ namespace FusionEngine
 								attribute_text = cur_child->Attribute("array");
 								if (attribute_text != nullptr)
 								{
-									std::vector<CL_TempString> image_array = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
+									std::vector<CL_String> image_array = CL_StringHelp::split_text(CL_String(attribute_text), ",");
 									if (image_array.size() == 2)
 									{
 										xarray = CL_StringHelp::text_to_int(image_array[0]);
@@ -368,7 +368,7 @@ namespace FusionEngine
 									}
 									else
 									{
-										FSN_EXCEPT(ExCode::FileType,
+										FSN_EXCEPT(FileTypeException,
 											"SpriteDescription::LoadXml",
 											"Sprite using image '" + image_name + "' has incorrect array attribute, must be \"X,Y\"!");
 									}
@@ -383,7 +383,7 @@ namespace FusionEngine
 								attribute_text = cur_child->Attribute("spacing");
 								if (attribute_text != nullptr)
 								{
-									std::vector<CL_TempString> image_spacing = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
+									std::vector<CL_String> image_spacing = CL_StringHelp::split_text(CL_String(attribute_text), ",");
 									xspacing = CL_StringHelp::text_to_int(image_spacing[0]);
 									yspacing = CL_StringHelp::text_to_int(image_spacing[1]);
 								}
@@ -399,7 +399,7 @@ namespace FusionEngine
 								const char *attribute_text = cur_child->Attribute("pos");
 								if (attribute_text != nullptr)
 								{
-									std::vector<CL_TempString> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), cl_text(","));
+									std::vector<CL_String> image_pos = CL_StringHelp::split_text(CL_String(attribute_text), ",");
 									xpos = CL_StringHelp::text_to_int(image_pos[0]);
 									ypos = CL_StringHelp::text_to_int(image_pos[1]);
 								}
@@ -438,7 +438,7 @@ namespace FusionEngine
 		}
 
 		if (m_Images.empty()) 
-			FSN_EXCEPT(ExCode::FileType, "SpriteDefinition::LoadXml", "Sprite resource contained no frames!");
+			FSN_EXCEPT(FileTypeException, "SpriteDefinition::LoadXml", "Sprite resource contained no frames!");
 	}
 
 	CL_Origin readOrigin(const char *attribute_text, CL_Origin default_)
@@ -643,7 +643,7 @@ namespace FusionEngine
 					break;
 
 				if(xstart + width > texture.get_width() || ystart + height > texture.get_height())
-					throw CL_Exception(cl_text("add_gridclipped_frames: Outside texture bounds"));
+					throw CL_Exception("add_gridclipped_frames: Outside texture bounds");
 
 				impl->frames.push_back(CL_SpriteDescriptionFrame(texture, CL_Rect(xstart, ystart, xstart + width, ystart + height)));
 				xstart += width + xspace;

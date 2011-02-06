@@ -64,7 +64,7 @@ int PhysFSIODeviceProvider::send(const void *data, int len, bool send_all)
 {
 	PHYSFS_sint64 lenRet = PHYSFS_write(m_Handle, data, sizeof(char), len);
 	if (lenRet == -1)
-		throw CL_Exception(cl_text("PhysFS: Failed to write to file"));
+		throw CL_Exception("PhysFS: Failed to write to file");
 
 	return (int)lenRet;
 }
@@ -76,7 +76,7 @@ int PhysFSIODeviceProvider::receive(void *buffer, int size, bool receive_all)
 
 	PHYSFS_sint64 lenRet = PHYSFS_read(m_Handle, buffer, 1, size);
 	if (lenRet == -1)
-		throw CL_Exception(cl_text("PhysFS: Failed to read file"));
+		throw CL_Exception("PhysFS: Failed to read file");
 
 	return (int)lenRet;
 }
@@ -88,7 +88,7 @@ int PhysFSIODeviceProvider::peek(void *data, int len)
 	int seekRet = PHYSFS_seek(m_Handle, startPos);
 
 	if (lengthRead == -1 || seekRet == -1)
-		throw CL_Exception(cl_text("PhysFS: Failed to read file or return to original position during peek operation"));
+		throw CL_Exception("PhysFS: Failed to read file or return to original position during peek operation");
 
 	return (int)lengthRead;
 }
@@ -133,5 +133,5 @@ void PhysFSIODeviceProvider::init()
 void PhysFSIODeviceProvider::deinit()
 {
 	if (PHYSFS_close(m_Handle) == 0)
-		throw CL_Exception(cl_text("File failed to close"));
+		throw CL_Exception("File failed to close");
 }

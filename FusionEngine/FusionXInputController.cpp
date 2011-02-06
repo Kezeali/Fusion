@@ -229,40 +229,40 @@ namespace FusionEngine
 		switch (id)
 		{
 		case VK_PAD_A:
-			return cl_text("A Button");
+			return "A Button";
 		case VK_PAD_B:
-			return cl_text("B Button");
+			return "B Button";
 		case VK_PAD_X:
-			return cl_text("X Button");
+			return "X Button";
 		case VK_PAD_Y:
-			return cl_text("Y Button");
+			return "Y Button";
 
 		case VK_PAD_RSHOULDER:
-			return cl_text("Right Sholder");
+			return "Right Sholder";
 		case VK_PAD_LSHOULDER:
-			return cl_text("Left Sholder");
+			return "Left Sholder";
 		case VK_PAD_LTRIGGER:
-			return cl_text("Left Trigger");
+			return "Left Trigger";
 		case VK_PAD_RTRIGGER:
-			return cl_text("Right Trigger");
+			return "Right Trigger";
 
 		case VK_PAD_DPAD_UP:
-			return cl_text("DPAD Up");
+			return "DPAD Up";
 		case VK_PAD_DPAD_DOWN:
-			return cl_text("DPAD Down");
+			return "DPAD Down";
 		case VK_PAD_DPAD_LEFT:
-			return cl_text("DPAD Left");
+			return "DPAD Left";
 		case VK_PAD_DPAD_RIGHT:
-			return cl_text("DPAD Right");
+			return "DPAD Right";
 
 		case VK_PAD_START:
-			return cl_text("Start");
+			return "Start";
 		case VK_PAD_BACK:
-			return cl_text("Back");
+			return "Back";
 		case VK_PAD_LTHUMB_PRESS:
-			return cl_text("Left Thumb Press");
+			return "Left Thumb Press";
 		case VK_PAD_RTHUMB_PRESS:
-			return cl_text("Right Thumb Press");
+			return "Right Thumb Press";
 
 		default:
 			return cl_format("Unknown XInput Key %1", id);

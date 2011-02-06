@@ -8,7 +8,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet-3.73\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet-3.73\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet-3.73\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

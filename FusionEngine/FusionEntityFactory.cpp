@@ -726,16 +726,19 @@ namespace FusionEngine
 	Entity *ScriptedEntityInstancer::InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name)
 	{
 		if (m_ScriptingManager == NULL)
-			return NULL;
+			return nullptr;
 
 		ResourceManager *resMan = ResourceManager::getSingletonPtr();
 		if (resMan == NULL)
-			return NULL;
+			return nullptr;
 
 		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
 
 		asIScriptObject *scrObj = static_cast<asIScriptObject*>( engine->CreateScriptObject(m_Definition->GetTypeId()) );
 		ScriptObject object(scrObj, false);
+		// Make sure the entity was successfully instanciated
+		if (!object.IsValid())
+			return nullptr;
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
 		entity->_setDomain(m_Definition->GetDefaultDomain());
@@ -750,7 +753,7 @@ namespace FusionEngine
 			f(entity);
 		}
 		else
-			return NULL;
+			return nullptr;
 
 		// Create phys body
 		if (m_Definition->HasBody())
@@ -868,7 +871,8 @@ namespace FusionEngine
 		if (_where != m_EntityInstancers.end())
 		{
 			EntityPtr entity( _where->second->InstanceEntity(sup_data, name.empty() ? "default" : name), false );
-			SignalEntityInstanced(entity);
+			if (entity)
+				SignalEntityInstanced(entity);
 			return entity;
 		}
 		else
@@ -1117,14 +1121,56 @@ namespace FusionEngine
 		int valueTypeId = type_id & ~asTYPEID_OBJHANDLE;
 
 		// Check for array types (an array type is supported as long as the sub type is)
-		if ((type_id & asTYPEID_MASK_OBJECT) == asTYPEID_SCRIPTARRAY)
+		if (type_id & asTYPEID_TEMPLATE)
 		{
-			asIObjectType *objectType = script_manager->GetEnginePtr()->GetObjectTypeById(type_id);
-			valueTypeId = objectType->GetSubTypeId() & ~asTYPEID_OBJHANDLE;
+			asIObjectType *arrayType = script_manager->GetEnginePtr()->GetObjectTypeById(type_id);
+
+			std::string name = script_manager->GetEnginePtr()->GetTypeDeclaration(arrayType->GetSubTypeId());
+			name += "& opIndex(uint)";
+			bool hasIndexOp = false;
+			for (int i = 0, count = arrayType->GetMethodCount(); i < count; ++i)
+			{
+				asIScriptFunction* method = arrayType->GetMethodDescriptorByIndex(i);
+				if (name.compare(method->GetDeclaration(false)) == 0)
+				{
+					hasIndexOp = true;
+					break;
+				}
+			}
+
+			if (!hasIndexOp)
+				return false;
+			valueTypeId = arrayType->GetSubTypeId() & ~asTYPEID_OBJHANDLE;
+
+			//if (arrayType->GetMethodIdByDecl(name.c_str()) < 0)
+			//	return false;
+			//if (strcmp(arrayType->GetName(), defaultArrayType->GetName()) == 0)
+
+			//switch (valueTypeId)
+			//{
+			//	// Primatives
+			//case asTYPEID_BOOL:
+			//	name = "bool";
+			//case asTYPEID_INT8:
+			//	name = "int8";
+			//case asTYPEID_INT16:
+			//case asTYPEID_INT32:
+			//case asTYPEID_INT64:
+			//case asTYPEID_UINT8:
+			//case asTYPEID_UINT16:
+			//case asTYPEID_UINT32:
+			//case asTYPEID_UINT64:
+			//case asTYPEID_FLOAT:
+			//case asTYPEID_DOUBLE:
+
+			//default:
+			//	asIObjectType *subType = script_manager->GetEnginePtr()->GetObjectTypeById(arrayType->GetSubTypeId());
+			//};
 		}
 
 		switch (valueTypeId)
 		{
+			// Primatives
 		case asTYPEID_BOOL:
 		case asTYPEID_INT8:
 		case asTYPEID_INT16:
@@ -1142,7 +1188,7 @@ namespace FusionEngine
 			// Non-constant type IDs (for app. registered types)
 			if (valueTypeId == ScriptedEntity::s_EntityTypeId ||
 				valueTypeId == script_manager->GetStringTypeId() ||
-				valueTypeId == script_manager->GetVectorTypeId())
+				valueTypeId == script_manager->GetVector2DTypeId())
 				return true;
 			else
 				return false;
@@ -1220,14 +1266,18 @@ namespace FusionEngine
 		// Iterate through all of the script object's properties
 		for (int i = 0; i < objectType->GetPropertyCount(); ++i)
 		{
-			EntityDefinition::PropertiesMap::iterator _where = syncPropertiesByName.find( objectType->GetPropertyName(i) );
+			const char* name;
+			int typeId;
+			objectType->GetProperty(i, &name, &typeId);
+			EntityDefinition::PropertiesMap::iterator _where = syncPropertiesByName.find(name);
 			if (_where != syncPropertiesByName.end())
 			{
 				ScriptedEntity::Property &prop = _where->second;
 
-				int typeId = objectType->GetPropertyTypeId(i);
-				if (isSyncableType(typeId, m_ScriptingManager))
+				int propertyType = ScriptedEntity::ScriptTypeIdToPropertyType(typeId);
+				if (propertyType != 0)
 				{
+					prop.typeFlags = propertyType;
 					prop.scriptPropertyIndex = i;
 					// Add the property def to the array (which will be passed to ScriptedEntities when they are created)
 					syncProperties.push_back(prop);
@@ -1235,7 +1285,7 @@ namespace FusionEngine
 				else
 				{
 					prop.scriptPropertyIndex = -1;
-					std::string type = engine->GetObjectTypeById(typeId)->GetName();
+					std::string type = engine->GetTypeDeclaration(typeId);
 					SendToConsole("Creating instancer for a scripted entity: The property '"
 						+ prop.name + "' in " + definition->GetType() +
 						" given in a <sync> element is of type " + type + " - objects of that type cannot be synchronized.");
@@ -1264,7 +1314,9 @@ namespace FusionEngine
 		ResourcesMap &resources = definition->GetStreamedResources();
 		for (int i = 0; i < objectType->GetPropertyCount(); ++i)
 		{
-			ResourcesMap::iterator _where = resources.find( objectType->GetPropertyName(i) );
+			const char* name;
+			objectType->GetProperty(i, &name);
+			ResourcesMap::iterator _where = resources.find(name);
 			if (_where != resources.end())
 			{
 				_where->second.SetPropertyIndex(i);

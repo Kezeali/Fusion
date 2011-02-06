@@ -58,12 +58,12 @@ namespace FusionEngine
 	/*!
 	* Manages logfiles.
 	*
-	* \todo Make Logger threadsafe
+	* \remarks
+	* Many of the methods in the class are basically for convinience, since
+	* Log objects can be interacted with directly. OpenLog is (if I recall correctly)
+	* the only Logger method you *need* to use.
 	*
-	* \todo Allow mapping of log tags to other tags - i.e. if someone
-	*  calls Logger::Add("Arrrrg", "mylogfile"); and you previously called
-	*  Logger::MapTag("mylogfile", "betterlogfilename"); then "Arrrrg" would
-	*  be added to the file "betterlogfilename-<date>.<logext>"
+	* \todo Make Logger threadsafe
 	*/
 	class Logger : public Singleton<Logger>
 	{
@@ -213,6 +213,13 @@ namespace FusionEngine
 		std::string filename(const std::string& tag) const;
 
 	};
+
+	static void AddLogEntry(const std::string& log, const std::string& entry, LogSeverity severity = LOG_NORMAL)
+	{
+		Logger* logger = Logger::getSingletonPtr();
+		if(logger != nullptr)
+			logger->Add(entry, log, severity);
+	}
 
 }
 

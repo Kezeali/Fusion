@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
+  Copyright (c) 2006-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -46,9 +46,10 @@
 // Scripting extensions
 #include "FusionScriptedSlots.h"
 #include "FusionScriptVector.h"
+#include "scriptarray.h"
 #include "scriptstring.h"
-#include "scriptmath.h"
 #include "scriptstdvector.h"
+#include "scriptmath.h"
 
 namespace FusionEngine
 {
@@ -223,7 +224,10 @@ namespace FusionEngine
 		: m_DefaultTimeout(g_ScriptDefaultTimeout),
 		m_DebugOutput(false),
 		m_DebugMode(0),
-		m_SectionSerial(0)
+		m_SectionSerial(0),
+		m_ArrayTypeId(0),
+		m_StringTypeId(0),
+		m_VectorTypeId(0)
 	{
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
@@ -252,7 +256,12 @@ namespace FusionEngine
 		return m_asEngine;
 	}
 
-	int ScriptManager::GetVectorTypeId() const
+	int ScriptManager::GetArrayTypeId() const
+	{
+		return m_ArrayTypeId;
+	}
+
+	int ScriptManager::GetVector2DTypeId() const
 	{
 		return m_VectorTypeId;
 	}
@@ -260,6 +269,17 @@ namespace FusionEngine
 	int ScriptManager::GetStringTypeId() const
 	{
 		return m_StringTypeId;
+	}
+
+	bool ScriptManager::IsScriptArray(int typeId)
+	{
+		if (typeId & asTYPEID_TEMPLATE)
+		{
+			asIObjectType *defaultArrayType = m_asEngine->GetObjectTypeById(m_ArrayTypeId);
+			asIObjectType *arrayType = m_asEngine->GetObjectTypeById(typeId);
+			return strcmp(arrayType->GetName(), defaultArrayType->GetName()) == 0;
+		}
+		return false;
 	}
 
 	void ScriptManager::RegisterGlobalObject(const char *decl, void* ptr)
@@ -645,7 +665,7 @@ namespace FusionEngine
 			int indent = ctx->GetCallstackSize();
 			int column, line;
 			if (indent > 0)
-				line = ctx->GetCallstackLineNumber(indent-1, &column);
+				line = ctx->GetLineNumber(indent-1, &column);
 			else
 				line = column = 0;
 
@@ -667,10 +687,10 @@ namespace FusionEngine
 		// Print the call-stack
 		for (int i = ctx->GetCallstackSize()-1; i >= 0; i--)
 		{
-			const char *sig = engine->GetFunctionDescriptorById( ctx->GetCallstackFunction(i) )->GetDeclaration(true);
+			const char *sig = ctx->GetFunction(i)->GetDeclaration(true);
 			int column, line;
 			if (i > 0)
-				line = ctx->GetCallstackLineNumber(i-1, &column);
+				line = ctx->GetLineNumber(i-1, &column);
 			else
 				line = column = 0;
 
@@ -748,7 +768,7 @@ namespace FusionEngine
 		{
 			Breakpoint here;
 
-			asIScriptFunction *fn = ctx->GetEngine()->GetFunctionDescriptorById(ctx->GetCurrentFunction());
+			asIScriptFunction *fn = ctx->GetFunction();
 			here.module_name = fn->GetModuleName();
 			here.section_name = fn->GetScriptSectionName();
 
@@ -767,8 +787,8 @@ namespace FusionEngine
 
 		if (m_DebugOutput)
 		{
-			int funcId = ctx->GetCurrentFunction();
-			int column, line = ctx->GetCurrentLineNumber(&column);
+			int funcId = ctx->GetFunction()->GetId();
+			int column, line = ctx->GetLineNumber(0U, &column);
 
 			asIScriptFunction *function = ctx->GetEngine()->GetFunctionDescriptorById(funcId);
 
@@ -838,6 +858,8 @@ namespace FusionEngine
 
 		// Register types
 		RegisterScriptMath(m_asEngine);
+		RegisterScriptArray(m_asEngine, true);
+		m_ArrayTypeId = m_asEngine->GetDefaultArrayTypeId();
 		m_StringTypeId = RegisterScriptString(m_asEngine);
 		RegisterScriptStringUtils(m_asEngine);
 		m_VectorTypeId = Scripting::RegisterScriptVector(m_asEngine);

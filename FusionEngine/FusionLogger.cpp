@@ -52,7 +52,9 @@ namespace FusionEngine
 		: m_ConsoleLogging(false),
 		m_UseDating(true),
 		m_Ext(g_LogDefaultExt),
-		m_DefaultThreshold(LOG_TRIVIAL)
+		m_DefaultThreshold(LOG_TRIVIAL),
+		m_DefaultTarget_File(true),
+		m_DefaultTarget_Console(false)
 	{
 	}
 
@@ -161,6 +163,12 @@ namespace FusionEngine
 			return _where->second->HasLogFileType("physfs");
 		else
 			return false;
+	}
+
+	void Logger::SetDefaultTargets(bool file, bool console)
+	{
+		m_DefaultTarget_File = file;
+		m_DefaultTarget_Console = console;
 	}
 
 	void Logger::SetExt(const std::string &ext)

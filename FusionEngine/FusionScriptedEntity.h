@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009-2010 Fusion Project Team
+  Copyright (c) 2009-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -87,12 +87,16 @@ namespace FusionEngine
 		{
 			// Data loaded from XML
 			std::string name;
-			std::string type;
+			std::string type; // no longer used
 			bool localOnly;
 			bool arbitrated;
 
+			// Cached type info
+			int typeFlags;
+
 			// Index of the property in the script-object
 			int scriptPropertyIndex;
+			int opIndexMethodId; // TODO: this
 
 			Property() : localOnly(false), arbitrated(false), scriptPropertyIndex(-1)
 			{}
@@ -110,14 +114,16 @@ namespace FusionEngine
 
 		void SetPath(const std::string &path);
 
+		static int ScriptTypeIdToPropertyType(int script_type_id);
+
 		void SetSyncProperties(const PropertiesArray &properties);
 		//void SetStreamedResources(const StreamedResourceMap &resources);
 		//void AddStreamedResource(const std::string &type, const std::string &path);
 
 		virtual unsigned int GetPropertyCount() const;
 		virtual std::string GetPropertyName(unsigned int index) const;
-		virtual boost::any GetPropertyValue(unsigned int index) const;
-		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
+		//virtual boost::any GetPropertyValue(unsigned int index) const;
+		//virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 
 		virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
 		virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &value);
