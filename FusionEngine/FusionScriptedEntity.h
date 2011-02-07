@@ -96,9 +96,8 @@ namespace FusionEngine
 
 			// Index of the property in the script-object
 			int scriptPropertyIndex;
-			int opIndexMethodId; // TODO: this
 
-			Property() : localOnly(false), arbitrated(false), scriptPropertyIndex(-1)
+			Property() : localOnly(false), arbitrated(false), scriptPropertyIndex(-1), typeFlags(0)
 			{}
 		};
 

@@ -320,6 +320,11 @@ namespace FusionEngine
 		int propType = pt_none;
 
 		// Add the array flag for array types
+		if (ScriptManager::getSingleton().IsScriptArray(script_type_id))
+		{
+				propType |= pt_array_flag;
+				script_type_id = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(script_type_id)->GetSubTypeId();
+		}
 		if (script_type_id & asTYPEID_TEMPLATE)
 		{
 			asIObjectType *arrayType =  ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(script_type_id);
@@ -342,6 +347,9 @@ namespace FusionEngine
 
 			if (hasIndexOp)
 			{
+				FSN_ASSERT_FAIL("Sorry, generic array types aren't supported yet.");
+				return pt_none; // Sync for this type hasn't been implemented yet (I'm not sure it's worth it, frankly)
+
 				propType |= pt_array_flag;
 				script_type_id = ScriptManager::getSingleton().GetEnginePtr()->GetObjectTypeById(script_type_id)->GetSubTypeId();
 			}
@@ -450,9 +458,9 @@ namespace FusionEngine
 
 	unsigned int ScriptedEntity::GetPropertyArraySize(unsigned int index) const
 	{
-		int propIndex = getScriptPropIndex(index);
 		if (m_SyncedProperties[index].typeFlags & pt_array_flag)
 		{
+			int propIndex = getScriptPropIndex(index);
 			CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
 			return array->GetSize();
 		}
@@ -469,8 +477,7 @@ namespace FusionEngine
 
 	void* ScriptedEntity::GetAddressOfProperty(unsigned int index, unsigned int array_index) const
 	{
-		int propIndex = getScriptPropIndex(index);
-		int scriptType = m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
+		int scriptType = GetPropertyScriptType(index, array_index);
 		void* address = GetAddressOfPropertyRaw(index, array_index);
 		// Special case for string-type props
 		if ((scriptType & asTYPEID_MASK_OBJECT) == ScriptManager::getSingleton().GetStringTypeId())
@@ -489,7 +496,13 @@ namespace FusionEngine
 	int ScriptedEntity::GetPropertyScriptType(unsigned int index, unsigned int array_index) const
 	{
 		int propIndex = getScriptPropIndex(index);
-		return m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
+		if (m_SyncedProperties[index].typeFlags & pt_array_flag)
+		{
+			CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return array->GetElementTypeId();
+		}
+		else
+			return m_ScriptObject.GetScriptObject()->GetPropertyTypeId(propIndex);
 	}
 
 	void* ScriptedEntity::GetAddressOfPropertyRaw(unsigned int index, unsigned int array_index) const
@@ -498,11 +511,8 @@ namespace FusionEngine
 		const int arrayTypeId = ScriptManager::getSingleton().GetArrayTypeId();
 		if (m_SyncedProperties[index].typeFlags & pt_array_flag)
 		{
-			asIScriptObject* array = static_cast<asIScriptObject*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
-			return nullptr;
-			static_assert( std::false_type, "todo" );
-			//CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
-			//return array->At(array_index);
+			CScriptArray *array = static_cast<CScriptArray*>( m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex) );
+			return array->At(array_index);
 		}
 		else
 			return m_ScriptObject.GetScriptObject()->GetAddressOfProperty(propIndex);

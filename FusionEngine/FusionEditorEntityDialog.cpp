@@ -380,7 +380,7 @@ namespace FusionEngine
 				break;
 
 			case Entity::pt_string:
-				formatStringElement(formatted_data, static_cast<std::string*>(entity->GetAddressOfProperty(index)), indexStr, arrayIndexStr, name);
+				formatStringElement(formatted_data, static_cast<std::string*>(entity->GetAddressOfProperty(index, array_index)), indexStr, arrayIndexStr, name);
 				break;
 
 			case Entity::pt_vector:

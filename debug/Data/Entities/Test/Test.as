@@ -44,8 +44,9 @@ class Test : ScriptEntity
 		default_array[1] = 2;
 		default_array[2] = 3;
 
-		template_array.resize(1);
+		template_array.resize(2);
 		template_array[0] = "zero";
+		template_array[1] = "one";
 
 
 		@primaryCamera = @Camera();

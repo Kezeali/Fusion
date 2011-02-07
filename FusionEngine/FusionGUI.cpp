@@ -257,10 +257,10 @@ namespace FusionEngine
 			m_RocketRenderer = nullptr;
 			m_Context = nullptr;
 
+			m_Display.show_cursor();
+
 			m_Initialised = false;
 		}
-
-		m_Display.show_cursor();
 	}
 
 	void GUI::Update(float split)
