@@ -23,9 +23,6 @@
     <ClCompile Include="..\FusionEngine\FusionCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionClanLibRocketInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -284,6 +281,9 @@
     <ClCompile Include="..\FusionEngine\scriptarray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionRocketInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
@@ -296,9 +296,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionClanLibRocketInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionClientOptions.h">
@@ -623,6 +620,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\scriptarray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionRocketInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

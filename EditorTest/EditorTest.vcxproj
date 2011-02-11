@@ -128,7 +128,6 @@
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAudioLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCamera.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionClanLibRocketInterface.cpp" />
     <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCmdOptions.cpp" />
     <ClCompile Include="..\FusionEngine\FusionConsole.cpp" />
@@ -175,6 +174,7 @@
     <ClCompile Include="..\FusionEngine\FusionRenderer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionResource.cpp" />
     <ClCompile Include="..\FusionEngine\FusionResourceManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRocketInterface.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptDebuggerGUI.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptedConsoleCommand.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptedEntity.cpp" />
@@ -237,12 +237,12 @@
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
     <ClInclude Include="..\FusionEngine\FusionRenderable.h" />
+    <ClInclude Include="..\FusionEngine\FusionRocketInterface.h" />
     <ClInclude Include="..\FusionEngine\FusionStableHeaders.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionBoostSignals2.h" />
     <ClInclude Include="..\FusionEngine\FusionCamera.h" />
-    <ClInclude Include="..\FusionEngine\FusionClanLibRocketInterface.h" />
     <ClInclude Include="..\FusionEngine\FusionClientOptions.h" />
     <ClInclude Include="..\FusionEngine\FusionCmdOptions.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
