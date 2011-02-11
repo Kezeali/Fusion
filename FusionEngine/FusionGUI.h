@@ -40,7 +40,7 @@
 #include "FusionState.h"
 #include "FusionSingleton.h"
 
-#include "FusionClanLibRocketInterface.h"
+#include "FusionRocketInterface.h"
 #include "FusionScriptModule.h"
 #include "FusionSlotContainer.h"
 

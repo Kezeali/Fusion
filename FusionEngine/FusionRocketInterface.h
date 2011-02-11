@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009-2010 Fusion Project Team
+  Copyright (c) 2009-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_RocketInterface
-#define Header_FusionEngine_RocketInterface
+#ifndef Header_FusionRocketInterface
+#define Header_FusionRocketInterface
 
 #if _MSC_VER > 1000
 #pragma once

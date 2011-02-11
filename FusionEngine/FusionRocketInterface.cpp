@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -28,7 +28,7 @@
 
 #include "FusionStableHeaders.h"
 
-#include "FusionClanLibRocketInterface.h"
+#include "FusionRocketInterface.h"
 
 #include <Rocket/Core.h>
 
