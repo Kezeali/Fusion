@@ -545,10 +545,14 @@ namespace FusionEngine
 
 		m_EntityDialogs.clear();
 
+		GUI::getSingleton().GetContext()->Update(); // Delete any unreferenced UI elements
+
 		m_UndoManager.Clear();
 		m_UndoManager.DetachAllListeners();
 
 		DeselectAll();
+
+		GUI::getSingleton().GetContext()->Update(); // Delete any unreferenced UI elements
 
 		//m_PlainEntityArray.clear();
 		m_UsedTypes.clear();
