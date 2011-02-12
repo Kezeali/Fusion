@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -145,6 +145,8 @@ namespace FusionEngine
 		m_MapLoader(map_loader),
 		m_EntityManager(entity_manager)
 	{
+		ScriptManager *manager = ScriptManager::getSingletonPtr();
+		manager->RegisterGlobalObject("System system", this);
 	}
 
 	OntologicalSystem::~OntologicalSystem()
@@ -159,61 +161,6 @@ namespace FusionEngine
 
 	bool OntologicalSystem::Initialise()
 	{
-		ScriptManager *manager = ScriptManager::getSingletonPtr();
-		manager->RegisterGlobalObject("const System system", this);
-
-		//m_OnPlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
-
-		ClientOptions gameOptions("gameconfig.xml", "gameconfig");
-
-		gameOptions.GetOption("startup_map", &m_StartupMap);
-
-		// Load map entities
-		//  Startup map (the map initially loaded)
-		if (!m_StartupMap.empty())
-		{
-			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-			m_MapLoader->LoadEntityTypes("Maps/" + m_StartupMap, dir);
-		}
-		//  maps.txt
-		std::string maps, line;
-		try {
-			OpenString_PhysFS(maps, "Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
-		} catch (FileSystemException&) {
-			SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
-		}
-		std::string::size_type lineBegin = 0, lineEnd;
-		while (true)
-		{
-			if (lineBegin >= maps.length())
-				break;
-
-			lineEnd = maps.find("\n", lineBegin);
-			if (lineEnd == std::string::npos)
-				break;
-
-			if (lineEnd != lineBegin+1) // ignore empty lines
-			{
-				line = fe_trim( maps.substr(lineBegin, lineEnd-lineBegin) ); // Get the line, trimming out the crap
-				// Open the map file
-				try
-				{
-					CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-					CL_IODevice mapFile = dir.open_file("Maps/" + line, CL_File::open_existing, CL_File::access_read);
-					// Load entity types into the factory (the map loader has an EntityManager pointer
-					//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
-					//  for each entity found in the mapFile)
-					m_MapLoader->LoadEntityTypes(mapFile);
-				}
-				catch (CL_Exception &)
-				{
-					SendToConsole("MapLoader - Reading maps.txt: Couldn't load " + line + ", file doesn't exist or can't be read.");
-				}
-			}
-
-			lineBegin = lineEnd+1;
-		}
-
 		return true;
 	}
 
@@ -329,14 +276,65 @@ namespace FusionEngine
 	{
 		m_Module = module;
 
-		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&OntologicalSystem::OnModuleRebuild, this, _1) );
+		//m_ModuleConnection.disconnect();
+		//m_ModuleConnection = module->ConnectToBuild( boost::bind(&OntologicalSystem::OnModuleRebuild, this, _1) );
 	}
 
 	void OntologicalSystem::OnModuleRebuild(BuildModuleEvent& ev)
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
+			//m_PlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
+
+			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
+
+			gameOptions.GetOption("startup_map", &m_StartupMap);
+
+			// Load map entities
+			//  Startup map (the map initially loaded)
+			if (!m_StartupMap.empty())
+			{
+				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				m_MapLoader->LoadEntityTypes("Maps/" + m_StartupMap, dir);
+			}
+			//  maps.txt
+			//std::string maps, line;
+			//try {
+			//	OpenString_PhysFS(maps, "Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
+			//} catch (FileSystemException&) {
+			//	SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
+			//}
+			//std::string::size_type lineBegin = 0, lineEnd;
+			//while (true)
+			//{
+			//	if (lineBegin >= maps.length())
+			//		break;
+
+			//	lineEnd = maps.find("\n", lineBegin);
+			//	if (lineEnd == std::string::npos)
+			//		break;
+
+			//	if (lineEnd != lineBegin+1) // ignore empty lines
+			//	{
+			//		line = fe_trim( maps.substr(lineBegin, lineEnd-lineBegin) ); // Get the line, trimming out the crap
+			//		// Open the map file
+			//		try
+			//		{
+			//			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			//			CL_IODevice mapFile = dir.open_file("Maps/" + line, CL_File::open_existing, CL_File::access_read);
+			//			// Load entity types into the factory (the map loader has an EntityManager pointer
+			//			//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
+			//			//  for each entity found in the mapFile)
+			//			m_MapLoader->LoadEntityTypes(mapFile);
+			//		}
+			//		catch (CL_Exception &)
+			//		{
+			//			SendToConsole("MapLoader - Reading maps.txt: Couldn't load " + line + ", file doesn't exist or can't be read.");
+			//		}
+			//	}
+
+			//	lineBegin = lineEnd+1;
+			//}
 		}
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
@@ -397,6 +395,35 @@ namespace FusionEngine
 			return false;
 	}
 
+	void OntologicalSystem::onPlayerAdded(const PlayerRegistry::PlayerInfo& player_info)
+	{
+		auto call_callback = [this](CallbackDecl &callback_decl, const PlayerRegistry::PlayerInfo& player_info)
+		{
+			if (!callback_decl.method.empty())
+			{
+				ScriptUtils::Calling::Caller f;
+				// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
+				if (callback_decl.object == NULL)
+					f = m_Module->GetCaller(callback_decl.method); // Global method
+				else
+				{
+					f = ScriptUtils::Calling::Caller(callback_decl.object, callback_decl.method.c_str()); // Object method
+					callback_decl.object->Release();
+				}
+
+				// Call the callback
+				if (f.ok())
+					f(player_info.LocalIndex, player_info.NetID);
+
+				callback_decl.object = NULL;
+				callback_decl.method.clear();
+			}
+		};
+
+		call_callback(m_AddPlayerCallbacks[player_info.LocalIndex], player_info);
+		call_callback(m_AddAnyPlayerCallback, player_info);
+	}
+
 	unsigned int OntologicalSystem::AddPlayer()
 	{
 		return AddPlayer(NULL, std::string());
@@ -407,7 +434,7 @@ namespace FusionEngine
 		unsigned int playerIndex = m_PlayerManager->GetLocalPlayerCount();
 
 		// Validate & store the callback method
-		if (!callback_decl.empty() && createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
+		if (!callback_decl.empty() && !createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
 			SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
 
 		m_PlayerManager->RequestNewPlayer();

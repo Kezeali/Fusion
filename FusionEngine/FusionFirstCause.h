@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2010 Fusion Project Team
+*  Copyright (c) 2010-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -34,6 +34,10 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionScriptModule.h"
+
+#include <boost/signals2/connection.hpp>
+
 namespace FusionEngine
 {
 
@@ -58,6 +62,9 @@ namespace FusionEngine
 		* Creates OntologicalSystem and Editor and adds them to the system manager
 		*/
 		void Initialise(ModulePtr module);
+
+		//! Called when the initialised module is built
+		void OnBuildModule(BuildModuleEvent& ev);
 
 		//! Starts the Ontology or Editor (depending on what was indicated by the options)
 		void BeginExistence(SystemsManager *system_manager);
@@ -92,6 +99,8 @@ namespace FusionEngine
 
 		typedef std::shared_ptr<OntologicalSystem> OntologicalSystemPtr;
 		OntologicalSystemPtr m_Ontology;
+
+		boost::signals2::connection m_ModuleConnection;
 
 		bool m_EditorEnabled;
 

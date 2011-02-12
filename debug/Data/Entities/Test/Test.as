@@ -53,9 +53,9 @@ class Test : ScriptEntity
 		@p1Viewport = @Viewport(0, 0, 1, 1);
 		p1Viewport.setCamera(primaryCamera);
 
-		//system.addViewport(p1Viewport);
+		system.addViewport(p1Viewport);
 
-		//primaryCamera.setFollowEntity(testEntity);
+		primaryCamera.setFollowEntity(this);
 		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
 
 		streamer.setPlayerCamera(0, primaryCamera);
@@ -71,13 +71,17 @@ class Test : ScriptEntity
 	{
 		//!!! note that we dont neccesarily need an equivilant OnRemovePlayer method to destroy player ents
 		//  because entities owned by players are removed automatically when players leave
+
+		// TODO: Make a PlayerGenerator entity (a system entity, to be placed in maps) that creates a player entity
+		//  (an entity owned by a player) instance of an entity, they type name of which is set as a String property
+		//  (of this new PlayerGenerator type)
 	}
 
 	void Spawn()
 	{
 		console.println("'Test' entity Spawned");
 
-		//system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
+		system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
 
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();
@@ -141,7 +145,7 @@ class Test : ScriptEntity
 		if (special && !specialPressed)
 		{
 			//system.save("test.save");
-			editor.startEditor();
+			//editor.startEditor();
 		}
 		specialPressed = special;
 

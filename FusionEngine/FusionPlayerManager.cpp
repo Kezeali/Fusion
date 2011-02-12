@@ -79,7 +79,7 @@ namespace FusionEngine
 				unsigned int remotePlayerIndex;
 				receivedData.Read(remotePlayerIndex);
 
-				ObjectID netId = m_NextNetId++;
+				PlayerID netId = m_NextNetId++;
 				PlayerRegistry::AddRemotePlayer(netId, remotePeerGUID);
 
 				{
@@ -109,7 +109,7 @@ namespace FusionEngine
 			{
 				bool localPlayer = receivedData.ReadBit();
 				// The net ID the arbiter has assigned to the new player:
-				ObjectID netId;
+				PlayerID netId;
 				receivedData.Read(netId);
 
 				if (localPlayer)
@@ -129,7 +129,7 @@ namespace FusionEngine
 
 		else if (type == MTID_REMOVEPLAYER)
 		{
-			ObjectID netId;
+			PlayerID netId;
 			receivedData.Read(netId);
 
 			if (NetworkManager::ArbitratorIsLocal())
@@ -172,7 +172,7 @@ namespace FusionEngine
 
 	void PlayerManager::createNewPlayer(unsigned int player_index)
 	{
-		ObjectID netId = m_NextNetId++;
+		PlayerID netId = m_NextNetId++;
 		// Add the player
 		PlayerRegistry::AddLocalPlayer(netId, player_index);
 

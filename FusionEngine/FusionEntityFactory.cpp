@@ -964,8 +964,8 @@ namespace FusionEngine
 	{
 		m_Module = module;
 
-		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
+		//m_ModuleConnection.disconnect();
+		//m_ModuleConnection = module->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
 	}
 
 	void EntityFactory::GetTypes(StringVector &types, bool sort)

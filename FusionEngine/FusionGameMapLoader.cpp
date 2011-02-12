@@ -268,10 +268,13 @@ namespace FusionEngine
 					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
 
-				entity->SetID(translator(entityID));
-				m_Manager->AddEntity(entity);
+				if (entity)
+				{
+					entity->SetID(translator(entityID));
+					m_Manager->AddEntity(entity);
 
-				instancedEntities.push_back(entity);
+					instancedEntities.push_back(entity);
+				}
 			}
 		}
 
@@ -565,8 +568,9 @@ namespace FusionEngine
 			else
 				device.write_string_a(CL_String8());
 			// Write the Entity ID
-			device.write_uint16(entity->GetID());
-			//device.write((void*)&entity->GetID(), sizeof(ObjectID));
+			//device.write_uint16(entity->GetID());
+			ObjectID id = entity->GetID();
+			device.write(&id, sizeof(ObjectID));
 		}
 
 		// Write Entity state data

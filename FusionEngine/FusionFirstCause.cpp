@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2010 Fusion Project Team
+*  Copyright (c) 2010-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -115,12 +115,11 @@ namespace FusionEngine
 
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
 
+		m_EntityFactory->SetScriptingManager(manager);
+		m_EntityFactory->SetScriptedEntityPath("Entities/");
+
 		manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
 		manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
-		
-		m_EntityFactory->SetScriptingManager(manager);
-		m_EntityFactory->SetModule(module);
-		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		m_Ontology.reset(new OntologicalSystem(m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
 		if (m_EditorEnabled)
@@ -128,17 +127,43 @@ namespace FusionEngine
 			m_Editor.reset(new Editor(m_InputManager, m_EntityFactory, m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));
 			manager->RegisterGlobalObject("Editor editor", m_Editor.get());
 
-			m_Editor->SetEntityModule(module);
+			//m_Editor->SetEntityModule(module);
 			// Load all entity types so they can be used in the editor
 			m_EntityFactory->LoadAllScriptedTypes();
 		}
 
 		m_Ontology->SetModule(module);
+
+		m_EntityFactory->SetModule(module);
+
+		// The build event is manually passed to individual components to enforce correct ordering
+		//  (entity factory needs to load type definitions after the editor / ontology have
+		//  notified it of their required entities, but it needs to actually construct the type
+		//  instancers before they editor / ontology try to use them)
+		m_ModuleConnection.disconnect();
+		m_ModuleConnection = module->ConnectToBuild( boost::bind(&FirstCause::OnBuildModule, this, _1) );
+	}
+
+	void FirstCause::OnBuildModule(BuildModuleEvent& ev)
+	{
+		if (ev.type == BuildModuleEvent::PreBuild)
+		{
+			if (m_EditorEnabled && m_Editor)
+				m_Editor->OnBuildEntities(ev);
+			m_Ontology->OnModuleRebuild(ev);
+			m_EntityFactory->OnModuleRebuild(ev);
+		}
+		else if (ev.type == BuildModuleEvent::PostBuild)
+		{
+			m_EntityFactory->OnModuleRebuild(ev);
+			if (m_EditorEnabled && m_Editor)
+				m_Editor->OnBuildEntities(ev);
+			m_Ontology->OnModuleRebuild(ev);
+		}
 	}
 
 	void FirstCause::BeginExistence(SystemsManager *system_manager)
 	{
-
 		system_manager->AddSystem(m_Ontology);
 		if (m_EditorEnabled)
 		{

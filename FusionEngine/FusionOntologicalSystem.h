@@ -217,7 +217,8 @@ namespace FusionEngine
 		//! Counterpart to OntologicalSystem::EnablePhysicsDebugDraw()
 		void DisablePhysicsDebugDraw();
 
-		void onGetNetIndex(unsigned int local_idx, PlayerID net_idx);
+		//void onGetNetIndex(unsigned int local_idx, PlayerID net_idx);
+		void onPlayerAdded(const PlayerRegistry::PlayerInfo& player_info);
 
 		//! Registers script types relating to the System
 		static void Register(asIScriptEngine *engine);
@@ -257,6 +258,8 @@ namespace FusionEngine
 		CallbackDecl m_AddAnyPlayerCallback;
 
 		PlayerManager *m_PlayerManager;
+
+		boost::signals2::connection m_PlayerAddedConnection;
 
 		ClientOptions *m_Options;
 
