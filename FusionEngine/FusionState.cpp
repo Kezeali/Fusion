@@ -78,17 +78,37 @@ namespace FusionEngine
 
 	void System::SetFlags(unsigned char flags)
 	{
+		const unsigned char changedFlags = m_StateFlags ^ flags;
+
 		m_StateFlags = flags;
+
+		if (changedFlags & System::PAUSE)
+		{
+			if (flags & System::PAUSE)
+				Paused();
+			else
+				Resumed();
+		}
 	}
 
 	void System::AddFlag(System::StateFlags flag)
 	{
+		const bool paused = flag == System::PAUSE && (m_StateFlags & System::PAUSE) != System::PAUSE;
+
 		m_StateFlags |= flag;
+
+		if (paused)
+			Paused(); // called after the flag has been set, so if the state calls CheckFlag() it will be valid
 	}
 
 	void System::RemoveFlag(System::StateFlags flag)
 	{
+		const bool resumed = flag == System::PAUSE && (m_StateFlags & System::PAUSE) == System::PAUSE;
+
 		m_StateFlags = m_StateFlags & ~((unsigned char)flag);
+
+		if (resumed)
+			Resumed(); // called after the flag has been set, so if the state calls CheckFlag() it will be valid
 	}
 
 	bool System::CheckFlag(System::StateFlags flag) const

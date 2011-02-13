@@ -82,6 +82,11 @@ namespace FusionEngine
 		//! Should free all resources used by the system
 		virtual void CleanUp() = 0;
 
+		//! Called when the PAUSED flag is added
+		virtual void Paused() {}
+		//! Called whent he PAUSED flag is removed
+		virtual void Resumed() {}
+
 		//! Should do whatever the system does while it isn't paused
 		virtual void Update(float split) = 0;
 		//! Should draw stuff

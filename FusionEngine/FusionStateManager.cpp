@@ -118,7 +118,10 @@ namespace FusionEngine
 						if (m.GetSystem())
 							systemsToRemove.push_back(m.GetSystem());
 						else
-							FSN_EXCEPT(ExCode::NotImplemented, "SystemsManager::Update", "Removing systems by name is not implemented");
+						{
+							// If a system ptr. wasn't passed, assume the caller is trying to remove a system by name
+							FSN_ASSERT_FAIL("Removing systems by name is not implemented - you must pass a system pointer with any REMOVESYSTEM messages");
+						}
 					break;
 					}
 

@@ -44,13 +44,21 @@
 namespace FusionEngine
 {
 
+	//! Synchronises player IDs across the network
 	class PlayerManager : public PacketHandler
 	{
 	public:
 		PlayerManager();
 
+		//! Sends a new player request to the arbitor
 		unsigned int RequestNewPlayer();
+		//! Sends a new player request to the arbitor
 		bool RequestNewPlayer(unsigned int index);
+
+		//! Drops the given player from the game
+		void RemovePlayer(unsigned int index);
+		//! Drops the given player from the game and destroys its session
+		void RemovePlayerPermanently(unsigned int index);
 
 		unsigned int GetLocalPlayerCount() const { return m_LocalPlayerCount; }
 
@@ -63,8 +71,8 @@ namespace FusionEngine
 
 		// Used by 'unsigned int RequestNewPlayer()' to get a free index
 		IDSet<unsigned int> m_UnusedLocalIndicies;
-		//IDSet<PlayerID> m_UnusedNetIds;
-		PlayerID m_NextNetId;
+		IDSet<PlayerID> m_UnusedNetIds;
+		//PlayerID m_NextNetId;
 
 		RakNetwork *m_Network;
 

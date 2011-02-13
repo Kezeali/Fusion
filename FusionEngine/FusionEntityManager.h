@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -315,6 +315,9 @@ namespace FusionEngine
 
 		void OnActivationEvent(const ActivationEvent& ev);
 
+		// Will notify entities that the given player was added next time Update is called 
+		void OnPlayerAdded(unsigned int local_index, PlayerID net_id);
+
 	protected:
 		//! Updates the entities that have been added to the active-entities list
 		void updateEntities(EntityArray &entities, float split);
@@ -358,6 +361,8 @@ namespace FusionEngine
 
 		bool m_EntitiesLocked;
 		bool m_ClearWhenAble;
+
+		std::deque<std::pair<unsigned int, PlayerID>> m_PlayerAddedEvents;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

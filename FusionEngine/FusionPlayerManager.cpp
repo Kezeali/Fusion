@@ -62,6 +62,25 @@ namespace FusionEngine
 			return false;
 	}
 
+	void PlayerManager::RemovePlayer(unsigned int index)
+	{
+		RakNet::BitStream newPlayerNotification;
+		newPlayerNotification.Write0(); // Tell the peer that the player being added is on another system
+		newPlayerNotification.Write(netId);
+		newPlayerNotification.Write(remotePeerGUID);
+
+		network->Send(
+			NetDestination(remotePeerGUID, true), // Broadcast
+			!Timestamped,
+			MTID_ADDPLAYER, &newPlayerNotification,
+			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+		//network->Send(
+		//	false,
+		//	MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
+		//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
+		//	originHandle, true);
+	}
+
 	void PlayerManager::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream receivedData(packet->data, packet->length, false);
@@ -132,20 +151,7 @@ namespace FusionEngine
 			PlayerID netId;
 			receivedData.Read(netId);
 
-			if (NetworkManager::ArbitratorIsLocal())
-			{
-				PlayerRegistry::RemovePlayer(netId);
-
-				//network->Send(
-				//	false,
-				//	MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
-				//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-				//	originHandle, true);
-			}
-			else
-			{
-				PlayerRegistry::RemovePlayer(netId);
-			}
+			PlayerRegistry::RemovePlayer(netId);
 		}
 	}
 

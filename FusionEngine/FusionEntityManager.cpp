@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -777,6 +777,7 @@ namespace FusionEngine
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
 				entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
+				entity->StreamOut();
 				it = entityList.erase(it);
 				end = entityList.end();
 			}
@@ -832,20 +833,6 @@ namespace FusionEngine
 		m_EntitiesToActivate.clear();
 	}
 
-	//void EntityManager::Update(float split)
-	//{
-	//	m_EntitiesLocked = true;
-
-	//	updateEntities(m_ActiveEntities, split);
-
-	//	m_EntitiesLocked = false;
-
-	//	// Actually add entities which were 'added' during the update
-	//	for (EntityArray::iterator it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)
-	//		insertActiveEntity(*it);
-	//	m_EntitiesToActivate.clear();
-	//}
-
 	void EntityManager::insertActiveEntity(const EntityPtr &entity)
 	{
 		entity->StreamIn();
@@ -864,6 +851,11 @@ namespace FusionEngine
 		}
 		else
 			ev.entity->MarkToDeactivate();
+	}
+
+	void EntityManager::OnPlayerAdded(unsigned int local_index, PlayerID net_id)
+	{
+		m_PlayerAddedEvents.emplace_back(std::make_pair(local_index, net_id));
 	}
 
 	void EntityManager::Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer)

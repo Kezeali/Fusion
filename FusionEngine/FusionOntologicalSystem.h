@@ -146,18 +146,13 @@ namespace FusionEngine
 		* when they join the peer-network.
 		*
 		* \returns
-		* The index of the player added
+		* True if the the given index was valid (below max and an empty slot)
 		*
-		* \param[in] callback_obj
-		* The script object to call the callback method on.
-		*
-		* \param[in] callback_decl
-		* The declaration of the script function to call when
-		* a Net-Index has been supplied (by the arbitor) for
-		* the given player.
+		* \param[in] local_index
+		* The index of the player to be added
 		*/
-		unsigned int AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl);
-		//! Adds a player
+		bool AddPlayer(unsigned int local_index);
+		//! Removes a player
 		/*!
 		* Intended to be called from script.
 		* Note that Entities owned by the given player will NOT be
@@ -165,15 +160,10 @@ namespace FusionEngine
 		* desireable) - the Entity that calls this method should
 		* remove owned entities as desired.
 		*
-		* \param[in] index
+		* \param[in] local_index
 		* The local-index of the player to remove.
 		*/
-		void RemovePlayer(unsigned int index);
-
-		//! Sets a callback which will be called when any player is added
-		void SetAddPlayerCallback(asIScriptObject *callback_obj, const std::string &callback_decl);
-		//! Sets a callback which will be called when the given player is added
-		void SetAddPlayerCallback(unsigned int player, asIScriptObject *callback_obj, const std::string &callback_decl);
+		void RemovePlayer(unsigned int local_index);
 
 
 		static const size_t s_MaximumSplitScreenViewports = 4;
@@ -242,20 +232,20 @@ namespace FusionEngine
 		InputManager *m_InputManager;
 
 		//! Basic script callback data
-		struct CallbackDecl
-		{
-			asIScriptObject *object;
-			std::string method;
-			//! Default constructor
-			CallbackDecl()
-				: object(NULL)
-			{}
-			//! Constructor
-			CallbackDecl(asIScriptObject *obj, std::string method)
-				: object(obj), method(method)
-			{}
-		} m_AddPlayerCallbacks[s_MaxLocalPlayers];
-		CallbackDecl m_AddAnyPlayerCallback;
+		//struct CallbackDecl
+		//{
+		//	asIScriptObject *object;
+		//	std::string method;
+		//	//! Default constructor
+		//	CallbackDecl()
+		//		: object(NULL)
+		//	{}
+		//	//! Constructor
+		//	CallbackDecl(asIScriptObject *obj, std::string method)
+		//		: object(obj), method(method)
+		//	{}
+		//} m_AddPlayerCallbacks[s_MaxLocalPlayers];
+		//CallbackDecl m_AddAnyPlayerCallback;
 
 		PlayerManager *m_PlayerManager;
 
@@ -269,7 +259,7 @@ namespace FusionEngine
 		std::string m_StartupEntity;
 		std::string m_StartupMap;
 
-		bool createScriptCallback(CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl);
+		//bool createScriptCallback(CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl);
 
 		PlayerID getNextPlayerIndex();
 		void releasePlayerIndex(PlayerID net_index);

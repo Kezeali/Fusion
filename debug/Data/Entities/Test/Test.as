@@ -67,7 +67,7 @@ class Test : ScriptEntity
 		console.println("'Test' entity deleted");
 	}
 
-	void OnAddPlayer(uint16 localPlayer, uint16 player)
+	void OnAddPlayer(uint localPlayer, uint8 player)
 	{
 		//!!! note that we dont neccesarily need an equivilant OnRemovePlayer method to destroy player ents
 		//  because entities owned by players are removed automatically when players leave
@@ -81,7 +81,7 @@ class Test : ScriptEntity
 	{
 		console.println("'Test' entity Spawned");
 
-		system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
+		//system.setAddPlayerCallback(this, "OnAddPlayer", localPlayerNumber);
 
 		//@gui_entity = cast<TestGUI>( entity_manager.instance("TestGUI", "test_gui", GetOwnerID()) );
 		//gui_entity.Spawn();

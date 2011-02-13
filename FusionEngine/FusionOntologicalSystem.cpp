@@ -166,14 +166,14 @@ namespace FusionEngine
 
 	void OntologicalSystem::CleanUp()
 	{
-		for (size_t i = 0; i < s_MaxLocalPlayers; ++i)
-		{
-			if (m_AddPlayerCallbacks[i].object != NULL)
-			{
-				m_AddPlayerCallbacks[i].object->Release();
-				m_AddPlayerCallbacks[i].object = NULL;
-			}
-		}
+		//for (size_t i = 0; i < s_MaxLocalPlayers; ++i)
+		//{
+		//	if (m_AddPlayerCallbacks[i].object != NULL)
+		//	{
+		//		m_AddPlayerCallbacks[i].object->Release();
+		//		m_AddPlayerCallbacks[i].object = NULL;
+		//	}
+		//}
 
 		m_Viewports.clear();
 	}
@@ -204,7 +204,6 @@ namespace FusionEngine
 	{
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
-			//m_Renderer->Draw(m_EntityManager->GetDomain(GAME_DOMAIN), *it, 0);
 			m_EntityManager->Draw(m_Renderer, *it, 0);
 		}
 	}
@@ -232,6 +231,9 @@ namespace FusionEngine
 	{
 		this->PushMessage(SystemMessage(SystemMessage::SHOW));
 		this->PushMessage(SystemMessage(SystemMessage::RESUME));
+
+		m_EntityManager->SetDomainState(SYSTEM_DOMAIN, DS_ENTITYUPDATE | DS_SYNCH);
+		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 	}
 
 	void OntologicalSystem::Stop()
@@ -374,78 +376,70 @@ namespace FusionEngine
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 	}
 
-	bool OntologicalSystem::createScriptCallback(OntologicalSystem::CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl)
-	{
-		int fnId;
-		if (callback_obj != NULL)
-			fnId = callback_obj->GetObjectType()->GetMethodIdByName(callback_decl.c_str());
-		else
-			fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
+	//bool OntologicalSystem::createScriptCallback(OntologicalSystem::CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl)
+	//{
+	//	int fnId;
+	//	if (callback_obj != NULL)
+	//		fnId = callback_obj->GetObjectType()->GetMethodIdByName(callback_decl.c_str());
+	//	else
+	//		fnId = m_Module->GetASModule()->GetFunctionIdByDecl(callback_decl.c_str());
 
-		asIScriptFunction *callback_fn = m_Module->GetASModule()->GetFunctionDescriptorById(fnId);
-		if (callback_fn != NULL && callback_fn->GetParamCount() == 2 && callback_fn->GetParamTypeId(0) == asTYPEID_UINT16 && callback_fn->GetParamTypeId(1) == asTYPEID_UINT16)
-		{
-			//callback_obj->AddRef();
-			// Note that fn->GetDecl...() is used here (rather than callback_decl), because
-			//  this is definately a valid decl, whereas callback_decl may just be a fn. name
-			out = CallbackDecl(callback_obj, callback_fn->GetDeclaration(false));
-			return true;
-		}
-		else
-			return false;
-	}
+	//	asIScriptFunction *callback_fn = m_Module->GetASModule()->GetFunctionDescriptorById(fnId);
+	//	if (callback_fn != NULL && callback_fn->GetParamCount() == 2 && callback_fn->GetParamTypeId(0) == asTYPEID_UINT16 && callback_fn->GetParamTypeId(1) == asTYPEID_UINT16)
+	//	{
+	//		//callback_obj->AddRef();
+	//		// Note that fn->GetDecl...() is used here (rather than callback_decl), because
+	//		//  this is definately a valid decl, whereas callback_decl may just be a fn. name
+	//		out = CallbackDecl(callback_obj, callback_fn->GetDeclaration(false));
+	//		return true;
+	//	}
+	//	else
+	//		return false;
+	//}
 
 	void OntologicalSystem::onPlayerAdded(const PlayerRegistry::PlayerInfo& player_info)
 	{
-		auto call_callback = [this](CallbackDecl &callback_decl, const PlayerRegistry::PlayerInfo& player_info)
-		{
-			if (!callback_decl.method.empty())
-			{
-				ScriptUtils::Calling::Caller f;
-				// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
-				if (callback_decl.object == NULL)
-					f = m_Module->GetCaller(callback_decl.method); // Global method
-				else
-				{
-					f = ScriptUtils::Calling::Caller(callback_decl.object, callback_decl.method.c_str()); // Object method
-					callback_decl.object->Release();
-				}
+		m_EntityManager->OnPlayerAdded(player_info.LocalIndex, player_info.NetID);
+		//auto call_callback = [this](CallbackDecl &callback_decl, const PlayerRegistry::PlayerInfo& player_info)
+		//{
+		//	if (!callback_decl.method.empty())
+		//	{
+		//		ScriptUtils::Calling::Caller f;
+		//		// If the object is null, it is implied that the callback is to a global method (or there's bug, but whatever...)
+		//		if (callback_decl.object == NULL)
+		//			f = m_Module->GetCaller(callback_decl.method); // Global method
+		//		else
+		//		{
+		//			f = ScriptUtils::Calling::Caller(callback_decl.object, callback_decl.method.c_str()); // Object method
+		//			callback_decl.object->Release();
+		//		}
 
-				// Call the callback
-				if (f.ok())
-					f(player_info.LocalIndex, player_info.NetID);
+		//		// Call the callback
+		//		if (f.ok())
+		//			f(player_info.LocalIndex, player_info.NetID);
 
-				callback_decl.object = NULL;
-				callback_decl.method.clear();
-			}
-		};
+		//		callback_decl.object = NULL;
+		//		callback_decl.method.clear();
+		//	}
+		//};
 
-		call_callback(m_AddPlayerCallbacks[player_info.LocalIndex], player_info);
-		call_callback(m_AddAnyPlayerCallback, player_info);
+		//call_callback(m_AddPlayerCallbacks[player_info.LocalIndex], player_info);
+		//call_callback(m_AddAnyPlayerCallback, player_info);
 	}
 
 	unsigned int OntologicalSystem::AddPlayer()
 	{
-		return AddPlayer(NULL, std::string());
+		return m_PlayerManager->RequestNewPlayer();
 	}
 
-	unsigned int OntologicalSystem::AddPlayer(asIScriptObject *callback_obj, const std::string &callback_decl)
+	bool OntologicalSystem::AddPlayer(unsigned int index)
 	{
-		unsigned int playerIndex = m_PlayerManager->GetLocalPlayerCount();
-
-		// Validate & store the callback method
-		if (!callback_decl.empty() && !createScriptCallback(m_AddPlayerCallbacks[playerIndex], callback_obj, callback_decl))
-			SendToConsole("system.requestNewPlayer(): " + callback_decl + " is not a valid Add-Player callback - signature must be 'void (uint16, uint16)'");
-
-		m_PlayerManager->RequestNewPlayer();
-
-		return playerIndex;
+		return m_PlayerManager->RequestNewPlayer(index);
 	}
 
 	void OntologicalSystem::RemovePlayer(unsigned int index)
 	{
-		//m_PlayerManager->DropPlayer(index);
-
+		m_PlayerManager->RemovePlayer(index);
 
 		//RakNetwork *network = NetworkManager::GetNetwork();
 
@@ -462,17 +456,6 @@ namespace FusionEngine
 		//if (PlayerRegistry::ArbitratorIsLocal())
 		//	releasePlayerIndex(playerInfo.NetIndex);
 		//PlayerRegistry::RemovePlayer(index);
-	}
-
-	void OntologicalSystem::SetAddPlayerCallback(asIScriptObject *callback_obj, const std::string &callback_decl)
-	{
-		createScriptCallback(m_AddAnyPlayerCallback, callback_obj, callback_decl);
-	}
-
-	void OntologicalSystem::SetAddPlayerCallback(unsigned int player, asIScriptObject *callback_obj, const std::string &callback_decl)
-	{
-		if (player < s_MaxLocalPlayers)
-			createScriptCallback(m_AddPlayerCallbacks[player], callback_obj, callback_decl);
 	}
 
 	void OntologicalSystem::SetSplitScreenArea(const CL_Rectf &area)

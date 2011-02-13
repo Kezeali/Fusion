@@ -636,7 +636,7 @@ namespace FusionEngine
 		m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
 		m_PhysicalWorld->EnableDebugDraw();
 
-		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_STREAMING | DS_SYNCH);
+		m_EntityManager->SetDomainState(SYSTEM_DOMAIN, DS_STREAMING | DS_SYNCH);
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_STREAMING | DS_SYNCH);
 
 		this->PushMessage(SystemMessage::RESUME);
@@ -653,9 +653,6 @@ namespace FusionEngine
 	void Editor::Stop()
 	{
 		m_Streamer->RemovePlayerCamera(255);
-
-		//m_EntityManager->SetDomainState(ALL_DOMAINS, DS_ALL);
-		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
 
 		this->PushMessage(SystemMessage::PAUSE);
 		this->PushMessage(SystemMessage::HIDE);

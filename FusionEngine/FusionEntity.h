@@ -51,7 +51,7 @@
 namespace FusionEngine
 {
 
-	//! Number of 'domains' (containers) which can be used to store entities
+	//! Number of 'domains' - used to group entities
 	static const size_t s_EntityDomainCount = 8;
 
 	typedef unsigned char EntityDomain;
@@ -397,6 +397,9 @@ namespace FusionEngine
 		void MarkToDeactivate();
 		void RemoveDeactivateMark();
 		bool IsMarkedToDeactivate() const;
+
+		//! Called when a new local player is added
+		virtual void OnPlayerAdded(unsigned int local_index, PlayerID net_id) {};
 
 		//! Spawns
 		virtual void Spawn() =0;

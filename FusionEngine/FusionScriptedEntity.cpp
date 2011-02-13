@@ -156,7 +156,7 @@ namespace FusionEngine
 	}
 
 	// Returns 1 for exact type, 2 for implicitly convertable, 0 for types that require explicit conversion / non-convertable
-	char IsEquivilantType(const boost::any &cpp_obj, int type_id)
+	int IsEquivilantType(const boost::any &cpp_obj, int type_id)
 	{
 		if (cpp_obj.type() == ToCppType(type_id))
 			return 1;
@@ -532,6 +532,15 @@ namespace FusionEngine
 	std::string ScriptedEntity::GetType() const
 	{
 		return m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
+	}
+
+	void ScriptedEntity::OnPlayerAdded(unsigned int local_index, PlayerID net_index)
+	{
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnPlayerAdded(uint,uint8)");
+		if (f.ok())
+		{
+			f();
+		}
 	}
 
 	void ScriptedEntity::Spawn()
