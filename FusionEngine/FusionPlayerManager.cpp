@@ -64,21 +64,15 @@ namespace FusionEngine
 
 	void PlayerManager::RemovePlayer(unsigned int index)
 	{
-		RakNet::BitStream newPlayerNotification;
-		newPlayerNotification.Write0(); // Tell the peer that the player being added is on another system
-		newPlayerNotification.Write(netId);
-		newPlayerNotification.Write(remotePeerGUID);
+		RakNet::BitStream removePlayerNotification;
+		PlayerID netId = PlayerRegistry::GetPlayerByLocalIndex(index).NetID;
+		removePlayerNotification.Write(netId);
 
-		network->Send(
-			NetDestination(remotePeerGUID, true), // Broadcast
+		m_Network->Send(
+			To::Populace(), // Broadcast
 			!Timestamped,
-			MTID_ADDPLAYER, &newPlayerNotification,
+			MTID_REMOVEPLAYER, &removePlayerNotification,
 			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
-		//network->Send(
-		//	false,
-		//	MTID_REMOVEPLAYER, bitStream.GetData(), bitStream.GetNumberOfBytesUsed(),
-		//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM,
-		//	originHandle, true);
 	}
 
 	void PlayerManager::HandlePacket(Packet *packet)
@@ -98,7 +92,7 @@ namespace FusionEngine
 				unsigned int remotePlayerIndex;
 				receivedData.Read(remotePlayerIndex);
 
-				PlayerID netId = m_NextNetId++;
+				PlayerID netId = m_UnusedNetIds.getFreeID();
 				PlayerRegistry::AddRemotePlayer(netId, remotePeerGUID);
 
 				{
