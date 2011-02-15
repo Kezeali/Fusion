@@ -235,6 +235,7 @@
     <ClInclude Include="..\FusionEngine\FusionMessageBox.h" />
     <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionPlayerInfo.h" />
     <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
     <ClInclude Include="..\FusionEngine\FusionRenderable.h" />
     <ClInclude Include="..\FusionEngine\FusionRocketInterface.h" />

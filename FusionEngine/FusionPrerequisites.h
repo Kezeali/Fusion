@@ -1,8 +1,8 @@
 
-/*! @file FusionPrerequisites.h
- * I didn't know what to call the file that defines forward decl.s, so I just copied
- * the name for a simmilar file in Ogre3D even though it seems like a misnomer
- */
+/*
+* I didn't know what to call the file that has forward declarations so I just copied
+* the name of a similar file in Ogre3D, even though it seems like a misnomer
+*/
 
 #ifndef Header_FusionPrerequisites
 #define Header_FusionPrerequisites

@@ -151,6 +151,9 @@ namespace FusionEngine
 		* called it is considered unused and will be removed by this method.
 		*/
 		void ClearUnusedInstancers();
+		
+		//! Gets the EntityDomain that the given name maps to
+		static EntityDomain ToDomainIndex(const std::string &domain);
 
 		//! Adds entity script sections
 		void OnModuleRebuild(BuildModuleEvent &ev);

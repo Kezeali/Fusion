@@ -234,11 +234,11 @@ namespace FusionEngine
 	{
 		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
 		//{
-		//	const PlayerRegistry::PlayerInfo &playerInfo = ;
+		//	const PlayerInfo &playerInfo = ;
 		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
 		//}
 
-		const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
+		const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
 		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
 		if (playerInput)
 			entity->_setPlayerInput(playerInput);

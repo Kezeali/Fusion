@@ -149,7 +149,6 @@ namespace FusionEngine
 		void SetBaseType(const EntityDefinitionPtr &base_type_def);
 		const EntityDefinitionPtr &GetBaseType() const;
 
-		static EntityDomain ToDomainIndex(const std::string &domain);
 	protected:
 		void parseElement_Script(ticpp::Element *element);
 		void parseElement_Dependencies(ticpp::Element *element);
@@ -167,7 +166,7 @@ namespace FusionEngine
 
 		EntityDefinitionPtr m_BaseType;
 
-		EntityDomain m_DefaultDomain;
+		std::string m_DefaultDomain;
 
 		Script m_Script;
 
@@ -184,20 +183,6 @@ namespace FusionEngine
 		FixtureArray m_Fixtures;
 	};
 
-	EntityDomain EntityDefinition::ToDomainIndex(const std::string &domain)
-	{
-		if (domain.empty())
-			return SYSTEM_DOMAIN;
-		else if (domain == "system")
-			return SYSTEM_DOMAIN;
-		else if (domain == "game")
-			return GAME_DOMAIN;
-		else if (domain == "temp")
-			return TEMP_DOMAIN;
-		else
-			return USER_DOMAIN;
-	}
-
 	void EntityDefinition::Parse(const std::string &current_folder, ticpp::Document &document)
 	{
 		m_WorkingDirectory = current_folder;
@@ -209,8 +194,7 @@ namespace FusionEngine
 		// Create a sub-directory for this class in the 'temp' folder
 		PHYSFS_mkdir((s_TempPath + m_TypeName).c_str());
 
-		std::string domainString = root->GetAttribute("domain");
-		m_DefaultDomain = ToDomainIndex(domainString);
+		m_DefaultDomain = root->GetAttribute("domain");
 
 		ticpp::Iterator< ticpp::Element > child;
 		for (child = child.begin( root ); child != child.end(); child++)
@@ -612,7 +596,7 @@ namespace FusionEngine
 		return m_TypeName;
 	}
 
-	EntityDomain EntityDefinition::GetDefaultDomain() const
+	std::string EntityDefinition::GetDefaultDomain() const
 	{
 		return m_DefaultDomain;
 	}
@@ -741,7 +725,7 @@ namespace FusionEngine
 			return nullptr;
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
-		entity->_setDomain(m_Definition->GetDefaultDomain());
+		entity->_setDomain(ToDomainIndex(m_Definition->GetDefaultDomain()));
 		entity->SetPath(m_Definition->GetWorkingDirectory());
 
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
@@ -999,6 +983,26 @@ namespace FusionEngine
 		{
 			if (m_UsedTypes.find(it->first) == m_UsedTypes.end())
 				it = m_EntityInstancers.erase(it);
+		}
+	}
+
+	EntityDomain EntityFactory::ToDomainIndex(const std::string &domain)
+	{
+		if (domain.empty())
+			return SYSTEM_DOMAIN;
+		else if (domain == "system")
+			return SYSTEM_DOMAIN;
+		else if (domain == "game")
+			return GAME_DOMAIN;
+		else if (domain == "system_local")
+			return SYSTEM_LOCAL_DOMAIN;
+		else
+		{
+			auto _where = m_UserDomains.find(domain);
+			if (_where != m_UserDomains.end())
+				return _where->second;
+			else
+				return s_EntityDomainCount;
 		}
 	}
 

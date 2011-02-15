@@ -315,7 +315,7 @@ namespace FusionEngine
 		else
 		{
 #ifdef _DEBUG
-			FSN_EXCEPT(ExCode::InvalidArgument, "Entity::SetDomain", "Valid domain values are 0-7");
+			FSN_EXCEPT(ExCode::InvalidArgument, "Entity::SetDomain", "Valid domain values are 0-" + boost::lexical_cast<std::string>(domain_index));
 #endif
 			//Logger::getSingleton().Add("Tried to set entity to invalid domain, valid domains are 0-7.");
 			m_Domain = s_EntityDomainCount-1;

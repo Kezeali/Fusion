@@ -51,7 +51,7 @@ namespace FusionEngine
 		{
 			NetDestination destination;
 
-			const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(id);
+			const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(id);
 			destination.GUID = playerInfo.GUID;
 
 			return destination;
@@ -82,7 +82,7 @@ namespace FusionEngine
 		{
 			NetDestination destination;
 
-			const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(excluded_id);
+			const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(excluded_id);
 			destination.GUID = playerInfo.GUID;
 			destination.Broadcast = true;
 

@@ -36,7 +36,7 @@
 
 #include "FusionSingleton.h"
 
-#include "FusionStdHeaders.h"
+#include "FusionPlayerInfo.h"
 
 #include <RakNetTypes.h>
 #include <boost/signals2.hpp>
@@ -60,20 +60,6 @@ namespace FusionEngine
 	class PlayerRegistry : public Singleton<PlayerRegistry>
 	{
 	public:
-		struct PlayerInfo
-		{
-			PlayerID NetID;
-			unsigned int LocalIndex;
-			RakNetGUID GUID;
-			PlayerInfo()
-				: NetID(0),
-				LocalIndex(s_MaxLocalPlayers)
-			{}
-
-			bool operator==(const PlayerInfo &other) const;
-			bool operator!=(const PlayerInfo &other) const;
-		};
-
 		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
 
 		PlayerRegistry();

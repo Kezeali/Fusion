@@ -397,10 +397,10 @@ namespace FusionEngine
 	//		return false;
 	//}
 
-	void OntologicalSystem::onPlayerAdded(const PlayerRegistry::PlayerInfo& player_info)
+	void OntologicalSystem::onPlayerAdded(const PlayerInfo& player_info)
 	{
 		m_EntityManager->OnPlayerAdded(player_info.LocalIndex, player_info.NetID);
-		//auto call_callback = [this](CallbackDecl &callback_decl, const PlayerRegistry::PlayerInfo& player_info)
+		//auto call_callback = [this](CallbackDecl &callback_decl, const PlayerInfo& player_info)
 		//{
 		//	if (!callback_decl.method.empty())
 		//	{
@@ -427,6 +427,10 @@ namespace FusionEngine
 		//call_callback(m_AddAnyPlayerCallback, player_info);
 	}
 
+	char OntologicalSystem::AddNamedDomain(const std::string& name)
+	{
+	}
+
 	unsigned int OntologicalSystem::AddPlayer()
 	{
 		return m_PlayerManager->RequestNewPlayer();
@@ -443,7 +447,7 @@ namespace FusionEngine
 
 		//RakNetwork *network = NetworkManager::GetNetwork();
 
-		//const PlayerRegistry::PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
+		//const PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
 
 		//RakNet::BitStream bitStream;
 		//bitStream.Write(playerInfo.NetID);
@@ -586,21 +590,25 @@ namespace FusionEngine
 			asMETHOD(OntologicalSystem, Load), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
+			"int8 addDomain(const string &in)",
+			asMETHOD(OntologicalSystem, AddNamedDomain), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("System",
 			"uint addPlayer()",
 			asMETHODPR(OntologicalSystem, AddPlayer, (void), size_t), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
-			"uint addPlayer(IEntity@, const string &in)",
-			asMETHODPR(OntologicalSystem, AddPlayer, (asIScriptObject*, const std::string&), size_t), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"bool addPlayer(uint)",
+			asMETHODPR(OntologicalSystem, AddPlayer, (unsigned int), bool), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
 			"void removePlayer(uint)",
 			asMETHOD(OntologicalSystem, RemovePlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = engine->RegisterObjectMethod("System",
-			"void setAddPlayerCallback(IEntity@, const string &in)",
-			asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("System",
-			"void setAddPlayerCallback(uint, IEntity@, const string &in)",
-			asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (size_t, asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod("System",
+		//	"void setAddPlayerCallback(IEntity@, const string &in)",
+		//	asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterObjectMethod("System",
+		//	"void setAddPlayerCallback(uint, IEntity@, const string &in)",
+		//	asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (size_t, asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
 			"void setSplitScreenArea(float, float, float, float)",

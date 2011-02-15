@@ -56,7 +56,7 @@ namespace FusionEngine
 
 	typedef unsigned char EntityDomain;
 
-	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, TEMP_DOMAIN, USER_DOMAIN };
+	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, SYSTEM_LOCAL_DOMAIN, USER_DOMAIN };
 
 	typedef std::vector<EntityPtr> EntityArray;
 

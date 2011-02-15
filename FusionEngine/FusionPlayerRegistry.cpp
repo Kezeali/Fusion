@@ -32,12 +32,12 @@
 namespace FusionEngine
 {
 
-	bool PlayerRegistry::PlayerInfo::operator==(const PlayerInfo &other) const
+	bool PlayerInfo::operator==(const PlayerInfo &other) const
 	{
 		return NetID == other.NetID;
 	}
 
-	bool PlayerRegistry::PlayerInfo::operator!=(const PlayerInfo &other) const
+	bool PlayerInfo::operator!=(const PlayerInfo &other) const
 	{
 		return !(*this == other);
 	}
@@ -114,7 +114,7 @@ namespace FusionEngine
 		registry->clear();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayer(PlayerID id)
+	const PlayerInfo &PlayerRegistry::GetPlayer(PlayerID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -122,7 +122,7 @@ namespace FusionEngine
 		return registry->getPlayerByNetID(id);
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::GetPlayerByLocalIndex(unsigned int index)
+	const PlayerInfo &PlayerRegistry::GetPlayerByLocalIndex(unsigned int index)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -130,7 +130,7 @@ namespace FusionEngine
 		return registry->getPlayerByLocalIndex(index);
 	}
 
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::GetPlayersBySystem(RakNetGUID guid)
+	std::vector<PlayerInfo> PlayerRegistry::GetPlayersBySystem(RakNetGUID guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -211,7 +211,7 @@ namespace FusionEngine
 		return m_ByLocalIndex.size();
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByNetID(PlayerID index) const
+	const PlayerInfo &PlayerRegistry::getPlayerByNetID(PlayerID index) const
 	{
 		PlayersByNetIndexMap::const_iterator _where = m_ByNetID.find(index);
 		if (_where != m_ByNetID.end())
@@ -220,7 +220,7 @@ namespace FusionEngine
 			return m_NoSuchPlayer;
 	}
 
-	const PlayerRegistry::PlayerInfo &PlayerRegistry::getPlayerByLocalIndex(unsigned int index) const
+	const PlayerInfo &PlayerRegistry::getPlayerByLocalIndex(unsigned int index) const
 	{
 		PlayersByLocalIndexMap::const_iterator _where = m_ByLocalIndex.find(index);
 		if (_where != m_ByLocalIndex.end())
@@ -229,9 +229,9 @@ namespace FusionEngine
 			return m_NoSuchPlayer;
 	}
 
-	std::vector<PlayerRegistry::PlayerInfo> PlayerRegistry::getPlayersBySystem(RakNetGUID guid) const
+	std::vector<PlayerInfo> PlayerRegistry::getPlayersBySystem(RakNetGUID guid) const
 	{
-		std::vector<PlayerRegistry::PlayerInfo> players;
+		std::vector<PlayerInfo> players;
 
 		for (PlayersByNetIndexMap::const_iterator it = m_ByNetID.begin(), end = m_ByNetID.end(); it != end; ++it)
 		{

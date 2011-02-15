@@ -125,6 +125,9 @@ namespace FusionEngine
 		//! Resumes the game
 		void Resume();
 
+		//! Adds a named custom entity domain
+		char AddNamedDomain(const std::string& name);
+
 		//! Adds a player (no callback)
 		/*!
 		* Intended to be called from script.
@@ -208,7 +211,7 @@ namespace FusionEngine
 		void DisablePhysicsDebugDraw();
 
 		//void onGetNetIndex(unsigned int local_idx, PlayerID net_idx);
-		void onPlayerAdded(const PlayerRegistry::PlayerInfo& player_info);
+		void onPlayerAdded(const PlayerInfo& player_info);
 
 		//! Registers script types relating to the System
 		static void Register(asIScriptEngine *engine);
