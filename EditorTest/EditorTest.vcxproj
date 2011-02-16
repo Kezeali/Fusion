@@ -324,6 +324,7 @@
     <ClInclude Include="..\FusionEngine\FusionStreamedResourceUser.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
+    <ClInclude Include="..\FusionEngine\FusionTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionVector2.h" />
     <ClInclude Include="..\FusionEngine\FusionViewport.h" />
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />

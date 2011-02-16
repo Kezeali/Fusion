@@ -31,6 +31,7 @@
 
 #include "FusionExceptionFactory.h"
 
+#include <ClanLib/Core/System/exception.h>
 #include <ClanLib/sound.h>
 #include <ClanLib/Sound/SoundProviders/soundprovider_factory.h>
 

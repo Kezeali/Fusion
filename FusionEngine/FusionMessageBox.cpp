@@ -27,8 +27,11 @@
 
 #include "FusionStableHeaders.h"
 
+#include "FusionPrerequisites.h"
+
 #include "FusionMessageBox.h"
 
+#include <boost/lexical_cast.hpp>
 #include <Rocket/Core/Context.h>
 #include <Rocket/Core/ElementDocument.h>
 #include "FusionCommon.h"

@@ -72,7 +72,7 @@ namespace FusionEngine
 		// Used by 'unsigned int RequestNewPlayer()' to get a free index
 		IDSet<unsigned int> m_UnusedLocalIndicies;
 		IDSet<PlayerID> m_UnusedNetIds;
-		//PlayerID m_NextNetId;
+		PlayerID m_NextNetId;
 
 		RakNetwork *m_Network;
 

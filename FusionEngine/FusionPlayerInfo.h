@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -38,20 +38,6 @@
 
 namespace FusionEngine
 {
-
-	struct PlayerInfo
-	{
-		PlayerID NetID;
-		unsigned int LocalIndex;
-		RakNetGUID GUID;
-		PlayerInfo()
-			: NetID(0),
-			LocalIndex(s_MaxLocalPlayers)
-		{}
-
-		bool operator==(const PlayerInfo &other) const;
-		bool operator!=(const PlayerInfo &other) const;
-	};
 
 }
 

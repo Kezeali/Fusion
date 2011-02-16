@@ -628,5 +628,8 @@
     <ClInclude Include="..\FusionEngine\FusionPlayerInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

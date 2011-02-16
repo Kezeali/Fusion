@@ -50,11 +50,8 @@
 
 namespace FusionEngine
 {
-
 	//! Number of 'domains' - used to group entities
 	static const size_t s_EntityDomainCount = 8;
-
-	typedef unsigned char EntityDomain;
 
 	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, SYSTEM_LOCAL_DOMAIN, USER_DOMAIN };
 

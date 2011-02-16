@@ -36,7 +36,7 @@
 
 #include "FusionSingleton.h"
 
-#include "FusionPlayerInfo.h"
+#include "FusionTypes.h"
 
 #include <RakNetTypes.h>
 #include <boost/signals2.hpp>
@@ -50,6 +50,20 @@ namespace FusionEngine
 	* is also used for checking player numbers given by config files, etc.
 	*/
 	const unsigned int s_MaxLocalPlayers = 16;
+
+	struct PlayerInfo
+	{
+		PlayerID NetID;
+		unsigned int LocalIndex;
+		RakNetGUID GUID;
+		PlayerInfo()
+			: NetID(0),
+			LocalIndex(s_MaxLocalPlayers)
+		{}
+
+		bool operator==(const PlayerInfo &other) const;
+		bool operator!=(const PlayerInfo &other) const;
+	};
 
 	//! Singleton registry of player IDs and network addresses
 	/*!

@@ -40,6 +40,8 @@
 #include "FusionPhysicalEntityManager.h"
 #include "FusionStateManager.h"
 
+#include <boost/lexical_cast.hpp>
+
 namespace FusionEngine
 {
 

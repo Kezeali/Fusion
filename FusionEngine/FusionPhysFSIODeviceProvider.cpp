@@ -28,7 +28,8 @@
 #include "FusionStableHeaders.h"
 
 #include "FusionPhysFSIODeviceProvider.h"
-#include "ClanLib/Core/IOData/file.h"
+#include <ClanLib/Core/IOData/file.h>
+#include <ClanLib/Core/System/exception.h>
 
 /////////////////////////////////////////////////////////////////////////////
 // construction:

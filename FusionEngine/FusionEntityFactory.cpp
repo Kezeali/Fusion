@@ -113,7 +113,7 @@ namespace FusionEngine
 		//! Returns the type of entity defined by this object
 		const std::string &GetType() const;
 		//! Returns the default domain value of the entity
-		EntityDomain GetDefaultDomain() const;
+		std::string GetDefaultDomain() const;
 		//! Gets the directory where the XML file was located
 		const std::string &GetWorkingDirectory() const;
 		//! Gets script data
@@ -680,6 +680,9 @@ namespace FusionEngine
 	public:
 		Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name);
 
+		//! Gets the EntityDomain that the given name maps to
+		EntityDomain ToDomainIndex(const std::string &domain);
+
 	protected:
 
 		PhysicalWorld *m_PhysicsWorld;
@@ -687,6 +690,8 @@ namespace FusionEngine
 		ScriptManager *m_ScriptingManager;
 		std::string m_Module;
 		EntityDefinitionPtr m_Definition;
+
+		std::unordered_map<std::string, EntityDomain> m_UserDomains;
 	};
 
 	ScriptedEntityInstancer::ScriptedEntityInstancer()
@@ -839,6 +844,26 @@ namespace FusionEngine
 		return entity;
 	}
 
+	EntityDomain ScriptedEntityInstancer::ToDomainIndex(const std::string &domain)
+	{
+		if (domain.empty())
+			return SYSTEM_DOMAIN;
+		else if (domain == "system")
+			return SYSTEM_DOMAIN;
+		else if (domain == "game")
+			return GAME_DOMAIN;
+		else if (domain == "system_local")
+			return SYSTEM_LOCAL_DOMAIN;
+		else
+		{
+			auto _where = m_UserDomains.find(domain);
+			if (_where != m_UserDomains.end())
+				return _where->second;
+			else
+				return s_EntityDomainCount;
+		}
+	}
+
 
 	EntityFactory::EntityFactory()
 	{
@@ -983,26 +1008,6 @@ namespace FusionEngine
 		{
 			if (m_UsedTypes.find(it->first) == m_UsedTypes.end())
 				it = m_EntityInstancers.erase(it);
-		}
-	}
-
-	EntityDomain EntityFactory::ToDomainIndex(const std::string &domain)
-	{
-		if (domain.empty())
-			return SYSTEM_DOMAIN;
-		else if (domain == "system")
-			return SYSTEM_DOMAIN;
-		else if (domain == "game")
-			return GAME_DOMAIN;
-		else if (domain == "system_local")
-			return SYSTEM_LOCAL_DOMAIN;
-		else
-		{
-			auto _where = m_UserDomains.find(domain);
-			if (_where != m_UserDomains.end())
-				return _where->second;
-			else
-				return s_EntityDomainCount;
 		}
 	}
 

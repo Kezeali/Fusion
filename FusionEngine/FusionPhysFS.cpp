@@ -30,6 +30,7 @@
 #include "FusionPhysFS.h"
 
 #include "FusionPaths.h"
+#include "FusionExceptionFactory.h"
 
 //#include "PhysFS.h"
 

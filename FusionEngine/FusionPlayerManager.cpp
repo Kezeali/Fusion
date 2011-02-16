@@ -92,7 +92,7 @@ namespace FusionEngine
 				unsigned int remotePlayerIndex;
 				receivedData.Read(remotePlayerIndex);
 
-				PlayerID netId = m_UnusedNetIds.getFreeID();
+				PlayerID netId = m_NextNetId++;//m_UnusedNetIds.getFreeID();
 				PlayerRegistry::AddRemotePlayer(netId, remotePeerGUID);
 
 				{

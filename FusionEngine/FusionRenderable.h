@@ -39,6 +39,7 @@
 #include "FusionResourcePointer.h"
 #include "FusionVector2.h"
 
+#include <ClanLib/Display/2D/image.h>
 #include <ClanLib/Display/2D/sprite.h>
 
 

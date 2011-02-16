@@ -429,6 +429,7 @@ namespace FusionEngine
 
 	char OntologicalSystem::AddNamedDomain(const std::string& name)
 	{
+		return 0;
 	}
 
 	unsigned int OntologicalSystem::AddPlayer()

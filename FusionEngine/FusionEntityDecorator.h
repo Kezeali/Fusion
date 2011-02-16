@@ -34,6 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionTypes.h"
+
 #include <Rocket/Core/Decorator.h>
 
 namespace Rocket { namespace Core {

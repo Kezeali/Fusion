@@ -6,6 +6,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionResourceManager.h"
 
+#include <boost/lexical_cast.hpp>
 
 namespace FusionEngine
 {

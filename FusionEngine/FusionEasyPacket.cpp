@@ -29,6 +29,8 @@
 
 #include "FusionEasyPacket.h"
 
+#include "FusionAssert.h"
+
 #include <MessageIdentifiers.h>
 
 namespace FusionEngine
