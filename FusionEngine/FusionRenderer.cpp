@@ -32,7 +32,7 @@ namespace FusionEngine
 		{
 			const CameraPtr &camera = viewport->GetCamera();
 			if (!camera)
-				FSN_EXCEPT(ExCode::InvalidArgument, "Renderer::CalculateScreenArea", "Cannot apply camera offset if the viewport has no camera associated with it");
+				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
 
 			// Viewport offset is the top-left of the viewport in the game-world,
 			//  i.e. camera_offset - viewport_size * camera_origin
@@ -56,7 +56,7 @@ namespace FusionEngine
 		{
 			const CameraPtr &camera = viewport->GetCamera();
 			if (!camera)
-				FSN_EXCEPT(ExCode::InvalidArgument, "Renderer::CalculateScreenArea", "Cannot apply camera offset if the viewport has no camera associated with it");
+				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
 
 			// Viewport offset is the top-left of the viewport in the game-world,
 			//  i.e. camera_offset - viewport_size * camera_origin

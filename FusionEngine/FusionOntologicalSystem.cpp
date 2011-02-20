@@ -147,11 +147,19 @@ namespace FusionEngine
 	{
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
 		manager->RegisterGlobalObject("System system", this);
+
+		m_PlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
+		m_PlayerManager = new PlayerManager();
 	}
 
 	OntologicalSystem::~OntologicalSystem()
 	{
 		CleanUp();
+
+		m_PlayerAddedConnection.disconnect();
+		if (m_PlayerManager)
+			delete m_PlayerManager;
+		m_PlayerManager = nullptr;
 	}
 
 	const std::string &OntologicalSystem::GetName() const
@@ -286,8 +294,6 @@ namespace FusionEngine
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
-			//m_PlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
-
 			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
 
 			gameOptions.GetOption("startup_map", &m_StartupMap);

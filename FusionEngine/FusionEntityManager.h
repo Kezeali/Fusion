@@ -362,7 +362,7 @@ namespace FusionEngine
 		bool m_EntitiesLocked;
 		bool m_ClearWhenAble;
 
-		std::deque<std::pair<unsigned int, PlayerID>> m_PlayerAddedEvents;
+		std::list<std::pair<unsigned int, PlayerID>> m_PlayerAddedEvents;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
 

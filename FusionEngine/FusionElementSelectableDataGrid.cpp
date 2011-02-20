@@ -67,9 +67,9 @@ namespace FusionEngine
 	void ElementSelectableDataGrid::SetSelectedRow(int newSelection)
 	{
 		if (newSelection >= 0 && !m_Selectable)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ElementSelectableDataGrid::SetSelectedRow", "The datagrid is not selectable");
+			FSN_EXCEPT(ExCode::InvalidArgument, "The datagrid is not selectable");
 		if (newSelection >= GetNumRows())
-			FSN_EXCEPT(ExCode::InvalidArgument, "ElementSelectableDataGrid::SetSelectedRow", "Index out of range");
+			FSN_EXCEPT(ExCode::InvalidArgument, "Index out of range");
 
 		for (int i = 0; i < GetNumRows(); ++i)
 		{

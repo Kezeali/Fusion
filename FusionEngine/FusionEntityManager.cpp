@@ -439,7 +439,7 @@ namespace FusionEngine
 
 		IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
 		if (_where != m_Entities.end())
-			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
+			FSN_EXCEPT(ExCode::InvalidArgument, "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
 
 		if (entity->GetID() != 0)
 			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
@@ -452,27 +452,6 @@ namespace FusionEngine
 		m_StreamingManager->AddEntity(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);
 	}
-
-	//void EntityManager::AddPseudoEntity(EntityPtr &pseudo_entity)
-	//{
-	//	if (m_EntitiesLocked)
-	//		m_EntitiesToAdd.push_back( EntityToAdd(pseudo_entity, true) );
-
-	//	else
-	//	{
-	//		if (pseudo_entity->GetName() == "default")
-	//			pseudo_entity->_notifyDefaultName(generateName(pseudo_entity));
-
-	//		NameEntityMap::iterator _where = m_EntitiesByName.find(pseudo_entity->GetName());
-	//		if (_where != m_EntitiesByName.end())
-	//			FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::AddEntity", "An entity with the name " + pseudo_entity->GetName() + " already exists");
-	//		
-	//		m_PseudoEntities.insert(pseudo_entity);
-	//		m_EntitiesByName.insert(_where, NameEntityMap::value_type(pseudo_entity->GetName(), pseudo_entity) );
-
-	//		m_EntitiesToUpdate[pseudo_entity->GetDomain()].push_back(pseudo_entity);
-	//	}
-	//}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
 	{
@@ -502,7 +481,7 @@ namespace FusionEngine
 	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr &entity)
 	{
 		if (m_EntitiesLocked)
-			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager::InsertEntity", "EntityManager is currently updating: Can't replace Entities while updating");
+			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager is currently updating: Can't replace Entities while updating");
 		
 		// Make sure the entity to be inserted has the given ID
 		entity->SetID(id);
@@ -564,7 +543,7 @@ namespace FusionEngine
 		NameEntityMap::const_iterator _where = m_EntitiesByName.find(name);
 		if (_where == m_EntitiesByName.end())
 			if (throwIfNotFound)
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity called: ") + name);
+				FSN_EXCEPT(ExCode::InvalidArgument, std::string("There is no entity called: ") + name);
 			else
 				return EntityPtr();
 		return _where->second;
@@ -575,7 +554,7 @@ namespace FusionEngine
 		IDEntityMap::const_iterator _where = m_Entities.find(id);
 		if (_where == m_Entities.end())
 			if (throwIfNotFound)
-				FSN_EXCEPT(ExCode::InvalidArgument, "EntityManager::GetEntity", std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
+				FSN_EXCEPT(ExCode::InvalidArgument, std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
 			else
 				return EntityPtr();
 		return _where->second;
@@ -764,6 +743,9 @@ namespace FusionEngine
 
 		ptr_set updatedSprites;
 
+		auto playerAddedEvents = m_PlayerAddedEvents;
+		m_PlayerAddedEvents.clear();
+
 		EntityArray::iterator it = entityList.begin(),
 			end = entityList.end();
 		while (it != end)
@@ -771,7 +753,7 @@ namespace FusionEngine
 			EntityPtr &entity = *it;
 
 			// Check for reasons to remove the
-			//  entity from the update domain
+			//  entity from the active array
 			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
 				if (entity->IsMarkedToRemove())
@@ -788,22 +770,26 @@ namespace FusionEngine
 				it = entityList.erase(it);
 				end = entityList.end();
 			}
-
-			// Also make sure the entity isn't blocked by a flag
-			else if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
+			else
 			{
-				EntityDomain domainIndex = entity->GetDomain();
-
-				if (CheckState(domainIndex, DS_ENTITYUPDATE))
+				// Also make sure the entity isn't blocked by a flag
+				if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
 				{
-					entity->Update(split);
-					updateRenderables(entity, split, updatedSprites);
-				}
-				if (CheckState(domainIndex, DS_STREAMING))
-					m_StreamingManager->OnUpdated(entity, split);
+					EntityDomain domainIndex = entity->GetDomain();
 
-				if (CheckState(domainIndex, DS_SYNCH))
-					entity->PacketSkipped();
+					if (CheckState(domainIndex, DS_ENTITYUPDATE))
+					{
+						for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
+							entity->OnPlayerAdded(ev_it->first, ev_it->second);
+						entity->Update(split);
+						updateRenderables(entity, split, updatedSprites);
+					}
+					if (CheckState(domainIndex, DS_STREAMING))
+						m_StreamingManager->OnUpdated(entity, split);
+
+					if (CheckState(domainIndex, DS_SYNCH))
+						entity->PacketSkipped();
+				}
 
 				// Next entity
 				++it;
@@ -922,9 +908,6 @@ namespace FusionEngine
 	void EntityManager::Register(asIScriptEngine *engine)
 	{
 		int r;
-		// TODO: some way to set the domain - either more instance() methods (with domain param.s) or
-		//  a way to instance entities without adding them to the EntityManager (factory access or 
-		//  more instance() methods that work like EntityFactory's instance method)
 		RegisterSingletonType<EntityManager>("EntityManager", engine);
 
 		r = engine->RegisterObjectMethod("EntityManager",

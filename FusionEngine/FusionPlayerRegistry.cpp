@@ -42,7 +42,7 @@ namespace FusionEngine
 		return !(*this == other);
 	}
 
-	boost::signals2::connection PlayerRegistry::ConnectToPlayerAdded(RegistryChangedSigType::slot_type &slot)
+	boost::signals2::connection PlayerRegistry::ConnectToPlayerAdded(RegistryChangedSigType::slot_type slot)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -50,7 +50,7 @@ namespace FusionEngine
 		return registry->SignalPlayerAdded.connect(slot);
 	}
 
-	boost::signals2::connection PlayerRegistry::ConnectToPlayerRemoved(RegistryChangedSigType::slot_type &slot)
+	boost::signals2::connection PlayerRegistry::ConnectToPlayerRemoved(RegistryChangedSigType::slot_type slot)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -144,6 +144,38 @@ namespace FusionEngine
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
 		
 		return registry->getPlayerByNetID(net_index).LocalIndex < s_MaxLocalPlayers;
+	}
+
+	PlayerRegistry::const_player_iterator PlayerRegistry::PlayersBegin()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return const_player_iterator(registry->m_ByNetID.begin());
+	}
+
+	PlayerRegistry::const_player_iterator PlayerRegistry::PlayersEnd()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return const_player_iterator(registry->m_ByNetID.end());
+	}
+
+	PlayerRegistry::const_local_player_iterator PlayerRegistry::LocalPlayersBegin()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return const_local_player_iterator(registry->m_ByLocalIndex.begin());
+	}
+
+	PlayerRegistry::const_local_player_iterator PlayerRegistry::LocalPlayersEnd()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return const_local_player_iterator(registry->m_ByLocalIndex.end());
 	}
 
 	PlayerRegistry::PlayerRegistry()

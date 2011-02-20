@@ -102,4 +102,25 @@ Assert::FailBehavior Assert::ReportFailure(const char* condition,
 	return GetAssertHandlerInstance()(condition, message, file, line);
 }
 
+Assert::FailBehavior Assert::ReportFailure(const char* condition, 
+										   const char* file, 
+										   const int line, 
+										   const std::string& msg, ...)
+{
+	const char* message = NULL;
+	if (!msg.empty())
+	{
+		char messageBuffer[1024];
+		{
+			va_list args;
+			va_start(args, msg);
+			vsnprintf(messageBuffer, 1024, msg.c_str(), args);
+			va_end(args);
+		}
+
+		message = messageBuffer;
+	}
+	return ReportFailure(condition, file, line, message);
+}
+
 }

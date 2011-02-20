@@ -42,7 +42,16 @@ namespace FusionEngine
 		: m_LocalPlayerCount(0),
 		m_NextNetId(1)
 	{
+		m_Network = NetworkManager::GetNetwork();
+		FSN_ASSERT(m_Network != nullptr);
 	}
+
+	//PlayerManager::PlayerManager(RakNetwork* network)
+	//	: m_Network(network),
+	//	m_LocalPlayerCount(0),
+	//	m_NextNetId(1)
+	//{
+	//}
 
 	unsigned int PlayerManager::RequestNewPlayer()
 	{

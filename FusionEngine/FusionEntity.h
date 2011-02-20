@@ -277,7 +277,7 @@ namespace FusionEngine
 			}
 			catch (const boost::bad_any_cast &)
 			{
-				throw FSN_EXCEPT(ExCode::InvalidArgument, "Entity::GetPropertyValue<" + typeid(T).name() + ">",
+				throw FSN_EXCEPT_CS(ExCode::InvalidArgument, "Entity::GetPropertyValue<" + typeid(T).name() + ">",
 					"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
 			}
 		}
@@ -362,7 +362,9 @@ namespace FusionEngine
 		 */
 		unsigned int GetTagFlags() const;
 
-		void _setDomain(EntityDomain domain_index);
+		//! Sets the update domain for this entity
+		void SetDomain(EntityDomain domain_index);
+		//! Gets the update domain for this entity
 		EntityDomain GetDomain() const;
 
 		void SetLayer(size_t layer);

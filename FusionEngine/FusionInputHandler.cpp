@@ -194,7 +194,7 @@ namespace FusionEngine
 
 		//int numPlayers = 0;
 		//if (!cliOpts->GetOption("num_local_players", &numPlayers))
-		//	FSN_EXCEPT(ExCode::IO, "InputManager::Initialise", "Options file is missing 'num_local_players'");
+		//	FSN_EXCEPT(ExCode::IO, "Options file is missing 'num_local_players'");
 		try
 		{
 			// Load the input-definitions file for the current game
@@ -508,7 +508,7 @@ namespace FusionEngine
 	void InputManager::MapControl(unsigned int player, const std::string &input, const std::string &key_shortname, int controller_number)
 	{
 		if (!m_DefinitionLoader->IsDefined(input))
-			FSN_EXCEPT(ExCode::InvalidArgument, "InputManager::MapControl", input + " doesn't exist");
+			FSN_EXCEPT(ExCode::InvalidArgument, input + " doesn't exist");
 
 		//std::string playerStr(CL_StringHelp::int_to_local8(player));
 		KeyInfoMap::iterator _where = findOrAddKeyInfo(key_shortname);
@@ -519,7 +519,7 @@ namespace FusionEngine
 			//m_KeyBindings[shortname] = InputBinding(player, input, key);
 		}
 		else
-			FSN_EXCEPT(ExCode::InvalidArgument, "InputManager::MapControl", key_shortname + " doesn't exist");
+			FSN_EXCEPT(ExCode::InvalidArgument, key_shortname + " doesn't exist");
 	}
 
 	bool InputManager::IsButtonDown(unsigned int player, const std::string &input) const

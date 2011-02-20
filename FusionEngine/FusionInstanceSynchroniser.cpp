@@ -134,7 +134,7 @@ namespace FusionEngine
 	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
 		if (requester)
-			FSN_EXCEPT(ExCode::InvalidArgument, "InstancingSynchroniser::RequestInstance", "You must pass a valid requester instance");
+			FSN_EXCEPT(ExCode::InvalidArgument, "You must pass a valid requester instance");
 
 		bool localAuthority = PlayerRegistry::IsLocal(requester->GetOwnerID());
 		uint8_t peerIndex = m_Network->GetLocalPeerIndex(); // Used to generate an ID if this entity is being created under local authority

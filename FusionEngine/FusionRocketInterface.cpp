@@ -386,12 +386,6 @@ namespace FusionEngine
 		// Attempt to open the file using the search path (PhysFS expects this.)
 		PHYSFS_File* fileHandle = PHYSFS_openRead(path.CString());
 		return (Rocket::Core::FileHandle)fileHandle;
-
-		// Attempt to open the file relative to the application's root
-		//  (might work if using the search path above failed, but this
-		//  isn't normal useage for PhysFS.)
-		//fileHandle = PHYSFS_openRead((root + path).CString());
-		//return (Rocket::Core::FileHandle)fileHandle;
 	}
 
 	// Closes a previously opened file.
@@ -410,37 +404,38 @@ namespace FusionEngine
 	bool RocketFileSystem::Seek(Rocket::Core::FileHandle file, long offset, int origin)
 	{
 		PHYSFS_uint64 absolute_pos = 0;
-		// Define vars used within certain cases
-		PHYSFS_sint64 curPos;
-		PHYSFS_sint64 length;
 
 		switch (origin)
 		{
 		case SEEK_SET:
-			absolute_pos = offset;
+			absolute_pos = (PHYSFS_uint64)offset;
 			break;
 
 		case SEEK_CUR:
-			curPos = PHYSFS_tell((PHYSFS_File*)file);
-			if (curPos == -1)
 			{
-				Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get the current position");
-				return false;
+				PHYSFS_sint64 curPos = PHYSFS_tell((PHYSFS_File*)file);
+				if (curPos == -1)
+				{
+					Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get the current position");
+					return false;
+				}
+				absolute_pos = (PHYSFS_uint64)curPos + offset;
 			}
-			absolute_pos = (PHYSFS_uint64)curPos + offset;
 			break;
 
 		case SEEK_END:
-			if (offset > 0)
-				return false;
-			length = PHYSFS_fileLength((PHYSFS_File*)file);
-			if (length == -1)
 			{
-				Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get file length");
-				return false;
+				if (offset > 0)
+					return false;
+				PHYSFS_sint64 length = PHYSFS_fileLength((PHYSFS_File*)file);
+				if (length == -1)
+				{
+					Rocket::Core::Log::Message(Rocket::Core::Log::LT_WARNING, "RocketFileSystem couldn't Seek: couldn't get file length");
+					return false;
+				}
+				else
+					absolute_pos = (PHYSFS_uint64)length + offset;
 			}
-			else
-				absolute_pos = (PHYSFS_uint64)length + offset;
 			break;
 		}
 

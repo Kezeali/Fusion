@@ -186,6 +186,8 @@ namespace FusionEngine
 		PropertiesArray m_SyncedProperties;
 		StreamedResourceMap m_Streamed;
 		
+		std::unordered_set<std::pair<unsigned int, PlayerID>> m_KnownPlayers;
+		
 		Vector2 m_DefaultPosition;
 		float m_DefaultAngle;
 

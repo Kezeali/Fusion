@@ -399,7 +399,7 @@ namespace FusionEngine
 		ResourceLoaderMap::iterator _where = m_ResourceLoaders.find(resource->GetType());
 		if (_where == m_ResourceLoaders.end())
 		{
-			FSN_EXCEPT(ExCode::FileType, "ResourceManager::PreloadResource", "Attempted to load unknown resource type '" + resource->GetType() + "'");
+			FSN_EXCEPT(ExCode::FileType, "Attempted to load unknown resource type '" + resource->GetType() + "'");
 		}
 
 		// Initialize a vdir

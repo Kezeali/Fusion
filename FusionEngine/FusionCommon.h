@@ -48,6 +48,7 @@
 #include "FusionVector2.h"
 
 #include "FusionTypes.h"
+#include "FusionHashable.h"
 
 #include <angelscript.h>
 

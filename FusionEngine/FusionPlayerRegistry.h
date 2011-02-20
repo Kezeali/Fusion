@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_PlayerRegistry
-#define Header_FusionEngine_PlayerRegistry
+#ifndef Header_FusionPlayerRegistry
+#define Header_FusionPlayerRegistry
 
 #if _MSC_VER > 1000
 #pragma once
@@ -40,6 +40,7 @@
 
 #include <RakNetTypes.h>
 #include <boost/signals2.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 
 namespace FusionEngine
 {
@@ -65,6 +66,12 @@ namespace FusionEngine
 		bool operator!=(const PlayerInfo &other) const;
 	};
 
+	template <typename MapType>
+	struct GetValue : public std::unary_function<typename MapType::value_type, typename MapType::mapped_type>
+	{
+		const result_type& operator() (const argument_type& p) const { return p.second; }
+	};
+
 	//! Singleton registry of player IDs and network addresses
 	/*!
 	* Only stores player info, maintainence is done primarily by
@@ -74,8 +81,6 @@ namespace FusionEngine
 	class PlayerRegistry : public Singleton<PlayerRegistry>
 	{
 	public:
-		typedef std::tr1::shared_ptr<PlayerInfo> PlayerInfoPtr;
-
 		PlayerRegistry();
 
 		typedef boost::signals2::signal<void (const PlayerInfo &)> RegistryChangedSigType;
@@ -83,8 +88,8 @@ namespace FusionEngine
 		RegistryChangedSigType SignalPlayerRemoved;
 		//RegistryChangedSigType SignalPlayerRestored;
 
-		static boost::signals2::connection ConnectToPlayerAdded(RegistryChangedSigType::slot_type &callback);
-		static boost::signals2::connection ConnectToPlayerRemoved(RegistryChangedSigType::slot_type &callback);
+		static boost::signals2::connection ConnectToPlayerAdded(RegistryChangedSigType::slot_type callback);
+		static boost::signals2::connection ConnectToPlayerRemoved(RegistryChangedSigType::slot_type callback);
 		//static boost::signals2::connection ConnectToPlayerRestored(RegistryChangedSigType::slot_type &callback);
 
 		//! Adds a new local player entry to the registry
@@ -112,14 +117,25 @@ namespace FusionEngine
 		static std::vector<PlayerInfo> GetPlayersBySystem(RakNetGUID system_address);
 
 		static bool IsLocal(PlayerID net_index);
-	protected:
+
+	private:
 		typedef std::tr1::unordered_map<PlayerID, PlayerInfo> PlayersByNetIndexMap;
 		typedef std::tr1::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
-		//typedef std::tr1::unordered_multimap<RakNetGUID, PlayerInfo> PlayersBySystemAddressMap;
 
+	public:
+		typedef GetValue<PlayersByNetIndexMap> ByNetIndexTransformFn;
+		typedef boost::transform_iterator<ByNetIndexTransformFn, PlayersByNetIndexMap::const_iterator> const_player_iterator;
+		typedef boost::transform_iterator<GetValue<PlayersByLocalIndexMap>, PlayersByLocalIndexMap::const_iterator> const_local_player_iterator;
+
+		static const_player_iterator PlayersBegin();
+		static const_player_iterator PlayersEnd();
+
+		static const_local_player_iterator LocalPlayersBegin();
+		static const_local_player_iterator LocalPlayersEnd();
+
+	protected:
 		PlayersByNetIndexMap m_ByNetID;
 		PlayersByLocalIndexMap m_ByLocalIndex;
-		//PlayersBySystemAddressMap m_BySystem;
 
 		//RakNetGUID m_LocalGUID;
 

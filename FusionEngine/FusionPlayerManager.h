@@ -49,6 +49,8 @@ namespace FusionEngine
 	{
 	public:
 		PlayerManager();
+		// TODO: Use this CTOR instead?
+		//PlayerManager(RakNetwork* network);
 
 		//! Sends a new player request to the arbitor
 		unsigned int RequestNewPlayer();

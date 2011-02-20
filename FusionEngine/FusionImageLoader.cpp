@@ -52,7 +52,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "LoadImageResource", "'" + resource->GetPath() + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
 		}
 
 		CL_PixelBuffer *data = new CL_PixelBuffer(sp);
@@ -90,7 +90,7 @@ namespace FusionEngine
 			catch (FileSystemException& ex)
 			{
 				delete def;
-				FSN_EXCEPT(ExCode::IO, "LoadSpriteResource", "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
+				FSN_EXCEPT(ExCode::IO, "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
 			}
 		}
 
@@ -102,7 +102,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "LoadSpriteResource", "'" + resource->GetPath() + "' could not be loaded");
+			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
 		}
 
 		resource->SetDataPtr(sprite);

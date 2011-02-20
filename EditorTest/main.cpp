@@ -36,6 +36,7 @@
 #include "../FusionEngine/FusionElementUndoMenu.h"
 #include "../FusionEngine/FusionEntity.h"
 #include "../FusionEngine/FusionEntityManager.h"
+#include "../FusionEngine/FusionEntityFactory.h"
 #include "../FusionEngine/FusionExceptionFactory.h"
 #include "../FusionEngine/FusionPhysicsScriptTypes.h"
 #include "../FusionEngine/FusionRenderer.h"
@@ -150,6 +151,7 @@ public:
 				SoundSample::Register(asEngine);
 				Entity::Register(asEngine);
 				ScriptedEntity::Register(asEngine); // TODO: perhaps this should be PhysicalEntity::Register? (i.e. redifine the method within that scope)
+				EntityFactory::Register(asEngine);
 				EntityManager::Register(asEngine);
 				Camera::Register(asEngine);
 				Viewport::Register(asEngine);
@@ -198,7 +200,7 @@ public:
 				boost::scoped_ptr<InputManager> inputMgr(new InputManager(dispWindow));
 
 				if (!inputMgr->Test())
-					FSN_EXCEPT(ExCode::IO, "main", "InputManager couldn't find a keyboard device.");
+					FSN_EXCEPT_CS(ExCode::IO, "startup", "InputManager couldn't find a keyboard device.");
 				inputMgr->Initialise();
 				SendToConsole("Input manager started successfully");
 
@@ -244,7 +246,7 @@ public:
 				{
 					AddLogEntry(g_LogGeneral, "Failed to build scripts.", LOG_CRITICAL);
 					logger.reset(); // Destroy the logger to destroy the console logfile before the console (TODO: automate this in console destructor with a callback)
-					FSN_EXCEPT(FusionEngine::Exception, "startup", "Failed to build scripts.");
+					FSN_EXCEPT_CS(FusionEngine::Exception, "startup", "Failed to build scripts.");
 				}
 
 				// Start ontology / editor

@@ -42,6 +42,9 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "FusionPhysFSIOStream.h"
+#include <yaml-cpp/yaml.h>
+
 namespace FusionEngine
 {
 
@@ -121,6 +124,7 @@ namespace FusionEngine
 		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
+		manager->RegisterGlobalObject("EntityFactory entity_factory", m_EntityFactory);
 		manager->RegisterGlobalObject("EntityManager entity_manager", m_EntityManager);
 
 		m_Ontology.reset(new OntologicalSystem(m_Renderer, m_InstancingSync, m_PhysWorld, m_Streaming, m_MapLoader, m_EntityManager));

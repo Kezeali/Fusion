@@ -404,7 +404,7 @@ namespace FusionEngine
 	void verify(Rocket::Core::Element *element, const std::string &name)
 	{
 		if (element == NULL)
-			FSN_EXCEPT(ExCode::NotImplemented, "EntityEditorDialog", "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
+			FSN_EXCEPT(ExCode::NotImplemented, "The properties_dialog.rml document requires an element with the id: '" + name + "' to function.");
 	}
 
 	EntityEditorDialog::EntityEditorDialog(const GameMapLoader::MapEntityPtr &mapent, EntityManager *const entity_manager, UndoableActionManager *undo)

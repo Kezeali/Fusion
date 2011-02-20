@@ -123,6 +123,9 @@ namespace FusionEngine
 		*/
 		void LoadAllScriptedTypes();
 
+		//! Unloads all scripted entity descriptions
+		void UnloadAllScriptedTypes();
+
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);
 		//! Sets the scripting manager and module used to add script sections
@@ -156,6 +159,8 @@ namespace FusionEngine
 
 		//! Fired whenever an entity is instanced
 		boost::signals2::signal<void (EntityPtr &)> SignalEntityInstanced;
+
+		static void Register(asIScriptEngine *engine);
 
 	protected:
 		void loadAllDependencies(const std::string &working_directory, ticpp::Document &document);

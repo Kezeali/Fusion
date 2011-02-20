@@ -1,3 +1,29 @@
+/*
+*  Copyright (c) 2007-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
+*/
 
 #include "FusionStableHeaders.h"
 
@@ -69,7 +95,7 @@ namespace FusionEngine
 
 	void TagFlagDictionary::ForceFlagFor(const std::string &tag)
 	{
-		FSN_EXCEPT(ExCode::NotImplemented, "TagFlagDictionary::ForceFlagFor", "ForceFlagFor() is not implemented.");
+		FSN_EXCEPT(ExCode::NotImplemented, "ForceFlagFor() is not implemented.");
 	}
 
 	unsigned int TagFlagDictionary::GetFlagFor(const std::string &tag)
@@ -309,16 +335,13 @@ namespace FusionEngine
 		return m_Flags;
 	}
 
-	void Entity::_setDomain(EntityDomain domain_index)
+	void Entity::SetDomain(EntityDomain domain_index)
 	{
 		if (domain_index < s_EntityDomainCount)
 			m_Domain = domain_index;
 		else
 		{
-#ifdef _DEBUG
-			FSN_EXCEPT(ExCode::InvalidArgument, "Entity::SetDomain", "Valid domain values are 0-" + boost::lexical_cast<std::string>(domain_index));
-#endif
-			//Logger::getSingleton().Add("Tried to set entity to invalid domain, valid domains are 0-7.");
+			FSN_EXCEPT(InvalidArgumentException, "Tried to create an Entity in domain " + boost::lexical_cast<std::string>(domain_index) + ": valid domain values are 0-" + boost::lexical_cast<std::string>(s_EntityDomainCount-1));
 			m_Domain = s_EntityDomainCount-1;
 		}
 	}
@@ -706,10 +729,29 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("Entity",
 			"const string& getName() const",
-			asMETHOD(Entity, GetName), asCALL_THISCALL);
+			asMETHOD(Entity, GetName), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
 		r = engine->RegisterObjectMethod("Entity",
-			"uint16 getOwnerID() const",
-			asMETHOD(Entity, GetOwnerID), asCALL_THISCALL);
+			"uint16 getID() const",
+			asMETHOD(Entity, GetID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"void setDomain(uint8)",
+			asMETHOD(Entity, SetDomain), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"uint8 getDomain() const",
+			asMETHOD(Entity, GetDomain), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"void setOwnerID(uint8)",
+			asMETHOD(Entity, SetOwnerID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"uint8 getOwnerID() const",
+			asMETHOD(Entity, GetOwnerID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"bool isSynced() const",
+			asMETHOD(Entity, IsSyncedEntity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Entity",
 			"bool inputIsActive(const string &in) const",

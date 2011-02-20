@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2009-2010 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2009-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -48,6 +47,7 @@
 #include "FusionResourceManager.h"
 #include "FusionScriptedEntity.h"
 #include "FusionScriptSound.h"
+#include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionXml.h"
 
 namespace FusionEngine
@@ -478,7 +478,7 @@ namespace FusionEngine
 			}
 			else if (child->Value() == "PolygonFixture")
 			{
-				FSN_EXCEPT(ExCode::NotImplemented, "EntityDefinition::parseElement_Body", "PolygonFixture type not yet implemented");
+				FSN_EXCEPT(ExCode::NotImplemented, "PolygonFixture type not yet implemented");
 			}
 			else if (child->Value() == "EdgeFixture")
 			{
@@ -730,7 +730,8 @@ namespace FusionEngine
 			return nullptr;
 
 		ScriptedEntity *entity = new ScriptedEntity(object, name);
-		entity->_setDomain(ToDomainIndex(m_Definition->GetDefaultDomain()));
+		if (!m_Definition->GetDefaultDomain().empty())
+			entity->SetDomain(ToDomainIndex(m_Definition->GetDefaultDomain()));
 		entity->SetPath(m_Definition->GetWorkingDirectory());
 
 		entity->SetSyncProperties(m_Definition->GetSyncProperties());
@@ -935,6 +936,9 @@ namespace FusionEngine
 
 	void EntityFactory::LoadAllScriptedTypes()
 	{
+		m_LoadedEntityDefinitions.clear();
+		m_EntityDefinitionsByType.clear();
+
 		for (StringMap::const_iterator it = m_EntityDefinitionFileNames.begin(), end = m_EntityDefinitionFileNames.end(); it != end; ++it)
 		{
 			const std::string &filename = it->second;
@@ -955,6 +959,12 @@ namespace FusionEngine
 				m_Log->AddEntry("Failed to open Entity definition file '" + filename + "': " + ex.ToString(), LOG_NORMAL);
 			}
 		}
+	}
+
+	void EntityFactory::UnloadAllScriptedTypes()
+	{
+		m_LoadedEntityDefinitions.clear();
+		m_EntityDefinitionsByType.clear();
 	}
 
 	void EntityFactory::SetScriptedEntityPath(const std::string &path)
@@ -1058,12 +1068,37 @@ namespace FusionEngine
 		}
 	}
 
+	//asIScriptObject* EntityFactory_InstanceEntity(const std::string& type, EntityFactory *obj)
+	//{
+	//	obj->InstanceEntity( type );
+	//}
+
+	void EntityFactory::Register(asIScriptEngine *engine)
+	{
+		int r;
+		RegisterSingletonType<EntityFactory>("EntityFactory", engine);
+
+		r = engine->RegisterObjectMethod("EntityFactory",
+			"Entity@ instance(const string &in, const string &in)",
+			asMETHODPR(EntityFactory, InstanceEntity, (const std::string& type, const std::string& name), EntityPtr), asCALL_THISCALL);
+	}
+
 	void EntityFactory::loadAllDependencies(const std::string &working_directory, ticpp::Document &document)
 	{
 		// Load the Entity definition from the given document (this is the root of the dependency tree)
 		EntityDefinitionPtr definition( new EntityDefinition(working_directory, document) );
-		m_LoadedEntityDefinitions.push_back(definition);
-		m_EntityDefinitionsByType[definition->GetType()] = definition;
+		// TODO: figure out the best way to handle duplicate entries
+		if (m_EntityDefinitionsByType.insert( std::make_pair(definition->GetType(), definition) ).second)
+			m_LoadedEntityDefinitions.push_back(definition);
+		else
+			return;
+		//{
+		//	// Remove duplicate
+		//	m_LoadedEntityDefinitions.erase( std::find_if(m_LoadedEntityDefinitions.begin(), m_LoadedEntityDefinitions.end(), [&](const EntityDefinitionPtr& def)->bool
+		//	{
+		//		return def->GetType() == definition->GetType();
+		//	} ) );
+		//}
 
 		std::deque<std::string> *depsToLoad = new std::deque<std::string>();
 
@@ -1099,12 +1134,14 @@ namespace FusionEngine
 					continue;
 				}
 
-				m_LoadedEntityDefinitions.push_back(definition);
-				m_EntityDefinitionsByType[definition->GetType()] = definition;
+				if (m_EntityDefinitionsByType.insert( std::make_pair(definition->GetType(), definition) ).second) // prevent duplicate loaded defs.
+				{
+					m_LoadedEntityDefinitions.push_back(definition);
 
-				// Push the dep.s for this Entity on to the stack
-				const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
-				depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+					// Push the dep.s for this Entity on to the stack
+					const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
+					depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+				}
 			}
 		}
 		/*for (EntityDefinition::DependencyMap::const_iterator it = deps.begin(), end = deps.end(); it != end; ++it)

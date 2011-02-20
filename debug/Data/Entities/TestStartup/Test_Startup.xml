@@ -2,7 +2,12 @@
 <Entity typename="TestStartup" domain="system">
 	<Script type="angelscript" file="test_startup.as"/>
 	<Dependencies>
-		<Entity typename="Test"/>
-		<Entity typename="TestScenery"/>
+		<!--<Entity typename="Test"/>-->
+		<!--<Entity typename="TestScenery"/>-->
 	</Dependencies>
+  <Body linear_damping="0.3" angular_damping="2.0">
+    <!--<CircleFixture isSensor="true" radius="22"/>-->
+    <!--<RectFixture isSensor="true" size="1"/>-->
+    <RectFixture hw="25" hh="31" density="1"/>
+  </Body>
 </Entity>

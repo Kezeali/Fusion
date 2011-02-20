@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <gameconfig>
 	<!--<var name="startup_entity" value="TestStartup"/>-->
-	<var name="startup_map" value="Test.fum"/>
+	<var name="startup_map" value="TestPlayer.fum"/>
 </gameconfig>

@@ -132,9 +132,6 @@ namespace FusionEngine
 
 	//protected:
 	//	virtual void OnReferenceDeactivate();
-
-	private:
-		Rocket::Core::String m_Root;
 	};
 
 }

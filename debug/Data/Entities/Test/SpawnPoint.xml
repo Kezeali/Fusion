@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Entity typename="SpawnPoint">
+	<Script type="angelscript" file="SpawnPoint.as"/>
+  <Dependencies>
+    <Entity typename="Test"/>
+  </Dependencies>
+	<Sync>
+		<Property name="playerToSpawn" />
+	</Sync>
+  <Body linear_damping="0.3" angular_damping="2.0">
+  </Body>
+</Entity>

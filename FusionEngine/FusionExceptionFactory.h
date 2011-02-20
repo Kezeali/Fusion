@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2007 Fusion Project Team
+*  Copyright (c) 2007-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -34,25 +34,7 @@
 namespace FusionEngine
 {
 
-	//! Namespace containing exception types
-	// This is probably a better alternative to the ExCode enum
-	//  (since it would work with a single generic throw method -
-	//  no need for a factory.) The factory is just allows you to
-	//  use error codes to generate exceptions, which is for 
-	//  compatibility with legacy code - which ironically doesn't
-	//  exist in my case (I didn't fully realize this when I was
-	//  following the article this is based on.)
-	//namespace ExCode
-	//{
-	//	typedef Exception Base;
-	//	typedef FileSystemException IO;
-	//	typedef FileNotFoundException FileNotFound;
-	//	typedef FileTypeException FileType;
-	//	typedef NotImplementedException NotImplemented;
-	//	typedef InvalidArgumentException InvalidArgument;
-	//}
-
-	//! Exception codes [do not use these]
+	//! Exception codes [legacy, do not use these]
 	struct ExCode
 	{
 		enum ExceptionCodes
@@ -75,6 +57,7 @@ namespace FusionEngine
 		typedef Exception type;
 	};
 
+	//! Template trickery
 	template <>
 	struct ExceptionClass<ExCode::IO> {
 		enum { code = ExCode::IO }; typedef FileSystemException type;
@@ -100,7 +83,7 @@ namespace FusionEngine
 	class ExceptionFactory
 	{
 	public:
-
+		//! Instanciates an exception of the given class
 		template <class ExType>
 		static ExType Create(const std::string& origin, const std::string& message, const char* file, long line)
 		{
@@ -114,6 +97,7 @@ namespace FusionEngine
 				line);
 		}
 
+		//! Tricky template magic for backwards compatibillity with ExCode
 		template <int ExID>
 		static typename ExceptionClass<ExID>::type Create(const std::string& origin, const std::string& message, const char* file, long line)
 		{
@@ -172,25 +156,26 @@ namespace FusionEngine
 		}
 	};
 
-#ifndef FSN_EXCEPT
-#define FSN_EXCEPT(type, src, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
-	src, desc, __FILE__, __LINE__ )
-#endif
-	// Unicode version
-#ifndef FSN_WEXCEPT
-#define FSN_WEXCEPT(type, src, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
-	fe_narrow(src), fe_narrow(desc), __FILE__, __LINE__ )
-#endif
-
 #ifndef __FUNCTION__
 #define __FUNCTION__ "(couldn't get function name)"
 #endif
 
-#ifndef FSN_EXCEPTF
-#define FSN_EXCEPTF(type, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+#ifndef FSN_EXCEPT
+#define FSN_EXCEPT(type, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
 	__FUNCTION__, desc, __FILE__, __LINE__ )
 #endif
+	
+	// Unicode version
+#ifndef FSN_WEXCEPT
+#define FSN_WEXCEPT(type, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+	fe_narrow(__FUNCTION__), fe_narrow(desc), __FILE__, __LINE__ )
+#endif
 
+	// Custom Source version
+#ifndef FSN_EXCEPT_CS
+#define FSN_EXCEPT_CS(type, src, desc) throw FusionEngine::ExceptionFactory::Create<type>( \
+	src, desc, __FILE__, __LINE__ )
+#endif
 
 }
 

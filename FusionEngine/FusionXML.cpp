@@ -112,7 +112,7 @@ namespace FusionEngine
 		catch (CL_Exception&)
 		{
 			delete doc;
-			FSN_EXCEPT(ExCode::IO, "OpenXml", "'" + filename + "' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
 
 		return doc;
@@ -130,7 +130,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "OpenString", "'" + filename + "' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
 
 		return content;
@@ -149,7 +149,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "OpenString", "'" + filename + "' could not be opened");
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
 
 		return content;
@@ -166,7 +166,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "SaveXml", "'" + filename + "' could not be saved");
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 		}
 	}
 
@@ -180,7 +180,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			FSN_EXCEPT(ExCode::IO, "SaveString", "'" + filename + "' could not be saved");
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 		}
 	}
 

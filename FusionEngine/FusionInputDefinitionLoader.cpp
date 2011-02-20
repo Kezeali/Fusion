@@ -60,7 +60,7 @@ namespace FusionEngine
 		{
 			//SendToConsole("Failed to load input plugin: " + std::string(ex.what()));
 
-			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::LoadInputs", ex.what());
+			FSN_EXCEPT(ExCode::IO, ex.what());
 		}
 	}
 
@@ -123,14 +123,14 @@ namespace FusionEngine
 	{
 		InputDefinitionMap::const_iterator _where = m_InputDefinitions.find(input_name);
 		if (_where == m_InputDefinitions.end())
-			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::GetInputDefinition", "Input named " + input_name + " is not defined");
+			FSN_EXCEPT(ExCode::IO, "Input named " + input_name + " is not defined");
 		return *_where->second;
 	}
 
 	const InputDefinition &InputDefinitionLoader::GetInputDefinition(size_t input_index) const
 	{
 		if (input_index >= m_InputDefinitionsByIndex.size())
-			FSN_EXCEPT(ExCode::IO, "InputDefinitionLoader::GetInputDefinition", "Input index given is not defined");
+			FSN_EXCEPT(ExCode::IO, "Input index given is not defined");
 		return *m_InputDefinitionsByIndex[input_index];
 	}
 

@@ -75,7 +75,7 @@ namespace FusionEngine
 		//FSN_EXCEPT(ExCode::FileType, "SpriteDefinition::LoadXml", "Document has no elements.");
 
 		if (root->ValueStr() != "sprite")
-			FSN_EXCEPT(ExCode::FileType, "SpriteDefinition::LoadXml", "Tried to load non-sprite document");
+			FSN_EXCEPT(ExCode::FileType, "Tried to load non-sprite document");
 
 		// Load id
 		//m_ID = CL_StringHelp::text_to_int(attribute_text);
@@ -369,7 +369,6 @@ namespace FusionEngine
 									else
 									{
 										FSN_EXCEPT(FileTypeException,
-											"SpriteDescription::LoadXml",
 											"Sprite using image '" + image_name + "' has incorrect array attribute, must be \"X,Y\"!");
 									}
 								}
@@ -438,7 +437,7 @@ namespace FusionEngine
 		}
 
 		if (m_Images.empty()) 
-			FSN_EXCEPT(FileTypeException, "SpriteDefinition::LoadXml", "Sprite resource contained no frames!");
+			FSN_EXCEPT(FileTypeException, "Sprite resource contained no frames!");
 	}
 
 	CL_Origin readOrigin(const char *attribute_text, CL_Origin default_)

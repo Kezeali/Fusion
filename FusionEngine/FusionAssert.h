@@ -53,6 +53,11 @@ namespace FusionEngine { namespace Assert
 							   const char* file, 
 							   int line, 
 							   const char* msg, ...);
+	
+	FailBehavior ReportFailure(const char* condition, 
+							   const char* file, 
+							   int line, 
+							   const std::string& msg, ...);
 }}
 
 #define FSN_HALT() __debugbreak()

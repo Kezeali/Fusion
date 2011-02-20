@@ -7,6 +7,7 @@
 
 #include "FusionCommon.h"
 #include "FusionExceptionFactory.h"
+#include "FusionPlayerRegistry.h"
 #include "FusionResourceManager.h"
 #include "scriptarray.h"
 #include "scriptstring.h"
@@ -52,11 +53,11 @@ namespace FusionEngine
 		else if (type_id & asTYPEID_APPOBJECT)
 		{
 			if (engine == NULL)
-				FSN_EXCEPT(ExCode::InvalidArgument, "CppType", "Can't get application-defined type without a valid ScriptingManager");
+				FSN_EXCEPT(ExCode::InvalidArgument, "Can't get application-defined type without a valid ScriptingManager");
 
 			return typeid(ScriptedEntity*);
 		}
-		FSN_EXCEPT(ExCode::InvalidArgument, "ToCppType", "Unknown Angelscript type");
+		FSN_EXCEPT(ExCode::InvalidArgument, "Unknown Angelscript type");
 	}
 
 	// Get
@@ -471,7 +472,7 @@ namespace FusionEngine
 	int ScriptedEntity::GetPropertyType(unsigned int index) const
 	{
 		if (index >= m_SyncedProperties.size())
-			FSN_EXCEPT(InvalidArgumentException, "ScriptedEntity::GetPropertyType", "Tried to access a property with an invalid index");
+			FSN_EXCEPT(InvalidArgumentException, "Tried to access a property with an invalid index");
 		return m_SyncedProperties[index].typeFlags;
 	}
 
@@ -536,6 +537,7 @@ namespace FusionEngine
 
 	void ScriptedEntity::OnPlayerAdded(unsigned int local_index, PlayerID net_index)
 	{
+		m_KnownPlayers.emplace(std::make_pair(local_index, net_index));
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnPlayerAdded(uint,uint8)");
 		if (f.ok())
 		{
@@ -576,6 +578,13 @@ namespace FusionEngine
 		if (f.ok())
 		{
 			f();
+		}
+
+		for (auto it = PlayerRegistry::PlayersBegin(), end = PlayerRegistry::PlayersEnd(); it != end; ++it)
+		{
+			const PlayerInfo& player = *it;
+			if (m_KnownPlayers.emplace(std::make_pair(player.LocalIndex, player.NetID)).second)
+				OnPlayerAdded(player.LocalIndex, player.NetID);
 		}
 	}
 
@@ -699,12 +708,12 @@ namespace FusionEngine
 
 		bool fileLocal = dev.read_uint8() == 1;
 		if (local != fileLocal)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptedEntity::DeserialiseState", "The given state was saved in a different local mode to the one requested");
+			FSN_EXCEPT(ExCode::InvalidArgument, "The given state was saved in a different local mode to the one requested");
 
 		uint32 fileMask = dev.read_uint32();
 		uint32 mask = state.mask & fileMask;
 		//if ((state.mask & fileMask) != state.mask)
-		//	FSN_EXCEPT(ExCode::InvalidArgument, "ScriptedEntity::DeserialiseState", "The given state does not contain all the requested properties");
+		//	FSN_EXCEPT(ExCode::InvalidArgument, "The given state does not contain all the requested properties");
 
 		unsigned int index = 0;
 		for (PropertiesArray::iterator it = m_SyncedProperties.begin(), end = m_SyncedProperties.end(); it != end; ++it)
@@ -907,7 +916,7 @@ namespace FusionEngine
 	inline int ScriptedEntity::getScriptPropIndex(unsigned int entity_prop_index) const
 	{
 		if (entity_prop_index >= m_SyncedProperties.size())
-			FSN_EXCEPT(InvalidArgumentException, "ScriptedEntity", "Tried to access a property with an invalid index");
+			FSN_EXCEPT(InvalidArgumentException, "Tried to access a property with an invalid index");
 		return m_SyncedProperties[entity_prop_index].scriptPropertyIndex;
 	}
 

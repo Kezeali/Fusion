@@ -45,17 +45,17 @@ std::vector<char> PhysFSHelp::copy_file(const std::string& from, const std::stri
 {
 	PHYSFS_File *fromFile = PHYSFS_openRead(from.c_str());
 	if (fromFile == nullptr)
-		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to open " + from + " for copying (probably doesn't exist).");
+		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to open " + from + " for copying (probably doesn't exist).");
 	PHYSFS_File *toFile = PHYSFS_openWrite(to.c_str());
 	if (toFile == nullptr)
-		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to create / overwrite target file " + to + ".");
+		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to create / overwrite target file " + to + ".");
 
 	PHYSFS_sint32 totalLength = (PHYSFS_sint32)PHYSFS_fileLength(fromFile);
 	std::vector<char> buffer(totalLength);
 	PHYSFS_sint64 readLength = 0;
 	readLength = PHYSFS_read(fromFile, buffer.data(), totalLength, 1);
 	if (readLength != 1)
-		FSN_EXCEPT(FusionEngine::FileSystemException, "PhysFSHelp::copy_file", "Failed to read " + from + " for copying."); // failed to read the default file
+		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying."); // failed to read the default file
 	// Write the copy of the file
 	PHYSFS_write(toFile, buffer.data(), totalLength, 1);
 	PHYSFS_close(toFile);

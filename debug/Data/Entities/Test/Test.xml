@@ -6,8 +6,8 @@
 	<Script type="angelscript" file="Test.as"/>
 	<!--These are items that the EntityManager needs to load before this entity-->
 	<Dependencies>
-		<Entity typename="TestGUI"/>
-		<Entity typename="Test2"/>
+		<!--<Entity typename="TestGUI"/>-->
+		<!--<Entity typename="Test2"/>-->
 		<!--A script/script-section not associated with any entity in particular-->
 		<!--This and all other 'file' attributes should be resolved relative to the
 			directory that the Entity XML file resides in, or absolute if the first char

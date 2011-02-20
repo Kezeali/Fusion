@@ -36,6 +36,10 @@
 namespace FusionEngine
 {
 
+	ElectionPacketHandler::ElectionPacketHandler()
+	{
+	}
+
 	const RakNetGUID &ElectionPacketHandler::GetArbitratorGUID() const
 	{
 		return m_ArbitratorGUID;
@@ -54,6 +58,7 @@ namespace FusionEngine
 		: m_Network(network),
 		m_Dispatcher(dispatcher)
 	{
+		m_ArbitratorElector.m_ArbitratorGUID = network->GetLocalGUID();
 		m_Dispatcher->Subscribe(ID_FCM2_NEW_HOST, &m_ArbitratorElector);
 	}
 

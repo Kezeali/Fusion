@@ -151,7 +151,7 @@ namespace FusionEngine
 		* \return
 		* The entity, if successful. nullptr otherwise
 		*/
-		static EntityPtr LoadEntity(EntityFactory *factory, const IEntityRepo *manager, CL_IODevice &device);
+		static EntityPtr LoadEntity(CL_IODevice &device, EntityFactory *factory, const IEntityRepo *manager);
 
 		void onEntityInstanced(EntityPtr &entity);
 

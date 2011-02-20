@@ -108,7 +108,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
-			//FSN_EXCEPT(ExCode::IO, "ClientOptions::SaveToFile", "'" + filename + "' could not be saved");
+			//FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be saved");
 			return false;
 		}
 
@@ -148,7 +148,7 @@ namespace FusionEngine
 			ticpp::Element* pElem = doc.FirstChildElement();
 
 			if (pElem->Value() != m_Type)
-				FSN_EXCEPT(ExCode::FileType, "ClientOptions::LoadFromFile", filename + " is not a " + m_Type + " file");
+				FSN_EXCEPT(FileTypeException, filename + " is not a " + m_Type + " file");
 
 			ticpp::Iterator< ticpp::Element > child;
 			for ( child = child.begin( pElem ); child != child.end(); child++ )
@@ -168,7 +168,7 @@ namespace FusionEngine
 		}
 		catch (ticpp::Exception &ex)
 		{
-			FSN_EXCEPT(ExCode::IO, "ClientOptions::LoadFromFile", ex.what());
+			FSN_EXCEPT(FileSystemException, ex.what());
 		}
 
 		m_LastFile = filename;

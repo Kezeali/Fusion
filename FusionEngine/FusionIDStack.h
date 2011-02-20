@@ -39,6 +39,20 @@
 namespace FusionEngine
 {
 
+	class IdCollectionException : public Exception
+	{
+	public:
+		IdCollectionException(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
+	};
+
+	class NoMoreIdsException : public IdCollectionException
+	{
+	public:
+		NoMoreIdsException(const std::string& description, const std::string& origin, const char* file, long line)
+			: IdCollectionException(description, origin, file, line) {}
+	};
+
 	template <typename T, class CollectionType = std::deque<T>>
 	class IDCollection
 	{
@@ -188,7 +202,7 @@ namespace FusionEngine
 		virtual T getFreeID()
 		{
 			if (m_NextId > m_MaxId)
-				FSN_EXCEPT(ExCode::InvalidArgument, "IDStack::getFreeID", "No more IDs are available");
+				FSN_EXCEPT(NoMoreIdsException, "No more IDs are available");
 
 			if (m_UnusedIds.empty())
 				return m_NextId++;
@@ -206,10 +220,8 @@ namespace FusionEngine
 				m_NextId = id;
 			else if (id < m_NextId-1)
 			{
-#ifdef _DEBUG
-				if (std::find(m_UnusedIds.begin(), m_UnusedIds.end(), id) != m_UnusedIds.end())
-					FSN_EXCEPT(ExCode::InvalidArgument, "IDStack::freeID", "Duplicate call to freeID, the given ID is already free");
-#endif
+				FSN_ASSERT_MSG(std::find(m_UnusedIds.begin(), m_UnusedIds.end(), id) != m_UnusedIds.end(),
+					"Redundant call to freeID: the given ID is already free");
 				m_UnusedIds.push_back(id); // record unused ID
 			}
 		}

@@ -395,7 +395,7 @@ namespace FusionEngine
 	{
 		std::string command = fe_trim(untrimmed_command);
 		if (command.empty())
-			FSN_EXCEPT(InvalidArgumentException, __FUNCTION__, "");
+			FSN_EXCEPT(InvalidArgumentException, "Huh?");
 
 		// TODO: write tokenizer fn. that works like char_separator but processes escape sequences
 		typedef boost::char_separator<char> tokFnType;
@@ -458,11 +458,11 @@ namespace FusionEngine
 			}
 			else
 			{
-				FSN_EXCEPTF(UnknownCommandException, *it);
+				FSN_EXCEPT(UnknownCommandException, *it);
 			}
 		}
 
-		FSN_EXCEPTF(InvalidArgumentException, "Failed to parse the given command");
+		FSN_EXCEPT(InvalidArgumentException, "Failed to parse the given command");
 	}
 
 	void Console::Interpret(const std::string &untrimmed)

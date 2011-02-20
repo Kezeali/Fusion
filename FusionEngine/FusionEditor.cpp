@@ -1991,7 +1991,7 @@ namespace FusionEngine
 	{
 		TiXmlElement *root = document->FirstChildElement();
 		if (root->ValueStr() != "editor_data")
-			FSN_EXCEPT(ExCode::FileType, "Editor::parseMapXml", "The given file is not a map file");
+			FSN_EXCEPT(ExCode::FileType, "The given file is not a map file");
 
 		TiXmlElement *child = root->FirstChildElement();
 		bool parsedArchetypes = false;
@@ -2007,7 +2007,7 @@ namespace FusionEngine
 				if (parsedArchetypes)
 					parse_Entities(child, entities.size(), deserialiser);
 				else
-					FSN_EXCEPT(ExCode::FileType, "Editor::parseMapXml", "Map XML files must have the <archetypes> element before the <entities> element");
+					FSN_EXCEPT(ExCode::FileType, "Map XML files must have the <archetypes> element before the <entities> element");
 			}
 
 			child = child->NextSiblingElement();
@@ -2027,7 +2027,7 @@ namespace FusionEngine
 			char name0 = std::tolower(name[0], std::locale());
 			std::string indefinateArticle = (name0 == 'a' || name0 == 'e' || name0 == 'i' || name0 == 'o' || name0 == 'u') ? "a" : "an";
 			std::string message = "<" + element->ValueStr() + "> elements must have " + indefinateArticle + " '" + name + "' attribute";
-			FSN_EXCEPT(ExCode::FileType, "FusionEngine::getAttribute", message);
+			FSN_EXCEPT(ExCode::FileType, message);
 		}
 		else
 			return false;

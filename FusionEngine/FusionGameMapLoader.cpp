@@ -633,7 +633,7 @@ namespace FusionEngine
 		device.write_string_a(state.data);
 	}
 
-	EntityPtr GameMapLoader::LoadEntity(EntityFactory *factory, const IEntityRepo *manager, CL_IODevice &device)
+	EntityPtr GameMapLoader::LoadEntity(CL_IODevice &device, EntityFactory *factory, const IEntityRepo *manager)
 	{
 		EntityPtr entity;
 		try

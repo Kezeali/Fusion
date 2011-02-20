@@ -45,6 +45,8 @@ namespace FusionEngine
 	class ElectionPacketHandler : public PacketHandler
 	{
 	public:
+		ElectionPacketHandler();
+
 		//! Returns the GUID of the current arbiter
 		const RakNetGUID &GetArbitratorGUID() const;
 
@@ -53,7 +55,7 @@ namespace FusionEngine
 		//! impl. PacketHandler
 		void HandlePacket(Packet *packet);
 
-	protected:
+	//protected:
 		RakNetGUID m_ArbitratorGUID;
 	};
 

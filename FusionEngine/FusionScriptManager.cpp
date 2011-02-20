@@ -815,7 +815,7 @@ namespace FusionEngine
 	{
 		asIScriptModule *mod = m_asEngine->GetModule(module, asGM_ONLY_IF_EXISTS);
 		if (mod == NULL)
-			FSN_EXCEPT(ExCode::InvalidArgument, "ScriptingManager::getModuleOrThrow", "There is no module with the requested name");
+			FSN_EXCEPT(ExCode::InvalidArgument, "There is no module with the requested name");
 		return mod;
 	}
 
