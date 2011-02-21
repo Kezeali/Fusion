@@ -610,12 +610,12 @@ namespace FusionEngine
 			"void removePlayer(uint)",
 			asMETHOD(OntologicalSystem, RemovePlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		//r = engine->RegisterObjectMethod("System",
-		//	"void setAddPlayerCallback(IEntity@, const string &in)",
-		//	asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		//r = engine->RegisterObjectMethod("System",
-		//	"void setAddPlayerCallback(uint, IEntity@, const string &in)",
-		//	asMETHODPR(OntologicalSystem, SetAddPlayerCallback, (size_t, asIScriptObject*, const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void requestInstance(Entity@)", //TODO: <-
+			asMETHODPR(OntologicalSystem, RequestInstance, (EntityPtr& requestee), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void requestInstance(IEntity@)", //TODO: <-
+			asFUNCTION(OntologicalSystem_RequestInstance), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
 			"void setSplitScreenArea(float, float, float, float)",

@@ -400,8 +400,13 @@ namespace FusionEngine
 		//! Called when a new local player is added
 		virtual void OnPlayerAdded(unsigned int local_index, PlayerID net_id) {};
 
-		//! Spawns
-		virtual void Spawn() =0;
+		bool IsSpawned() const;
+
+		//! Calls OnSpawn, sets the spawned flag to true
+		void Spawn();
+
+		//! Called upon spawning
+		virtual void OnSpawn() =0;
 		//! Updates
 		virtual void Update(float split) =0;
 		//! Draws
@@ -409,7 +414,9 @@ namespace FusionEngine
 
 		//virtual void UpdateRenderables();
 
+		//! Streams in resources
 		void StreamIn();
+		//! Streams out resources
 		void StreamOut();
 
 		//! Called after an Entity is streamed in
@@ -424,6 +431,11 @@ namespace FusionEngine
 
 		void DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner);
 		const InstancesToPrepareArray &GetInstancesToPrepare() const;
+
+		//! Writes entity ownership info
+		void SerialiseIdentity(CL_IODevice& device);
+		//! Writes basic properties
+		void SerialiseBasicProperties(CL_IODevice& device);
 
 		//! Save state to buffer
 		/*!
@@ -499,6 +511,7 @@ namespace FusionEngine
 
 		unsigned int m_CellIndex;
 
+		bool m_Spawned;
 		bool m_StreamedIn;
 		bool m_Paused;
 		bool m_Hidden;

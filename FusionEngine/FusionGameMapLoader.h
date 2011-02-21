@@ -172,6 +172,8 @@ namespace FusionEngine
 
 		ClientOptions *m_ClientOptions;
 
+		void deserialiseBasicProperties(EntityPtr &entity, CL_IODevice &device);
+
 		void loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
 		void loadEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
 	};

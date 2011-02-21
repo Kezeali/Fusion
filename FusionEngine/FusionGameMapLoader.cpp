@@ -168,6 +168,18 @@ namespace FusionEngine
 			loadEntities(device, archetypeArray, translator);
 	}
 
+	void GameMapLoader::deserialiseBasicProperties(EntityPtr& entity, CL_IODevice &device)
+	{
+		// Basic Entity properties (owner, position, angle)
+		//device.read((void*)&m_OwnerID, sizeof(PlayerID));
+		Vector2 position;
+		position.x = device.read_float();
+		position.y = device.read_float();
+		entity->SetPosition(position);
+
+		entity->SetAngle(device.read_float());
+	}
+
 	void GameMapLoader::loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
 	{
 		EntityFactory *factory = m_Factory;
@@ -208,16 +220,7 @@ namespace FusionEngine
 			{
 				EntityPtr &entity = (*it);
 
-				// Basic Entity properties (position, angle)
-				Vector2 position;
-				position.x = device.read_float();
-				position.y = device.read_float();
-				entity->SetPosition(position);
-
-				entity->SetAngle(device.read_float());
-
-				// Call the entity's spawn method
-				entity->Spawn();
+				deserialiseBasicProperties(entity, device);
 
 				cl_uint8 typeFlags = device.read_uint8();
 				// Load archetype
@@ -231,7 +234,7 @@ namespace FusionEngine
 					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
-				// Load custom properties
+				// Load type-specific properties
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a();
 
@@ -293,9 +296,6 @@ namespace FusionEngine
 				entity->SetPosition(position);
 
 				entity->SetAngle(device.read_float());
-
-				// Call the entity's spawn method
-				entity->Spawn();
 
 				cl_uint8 typeFlags = device.read_uint8();
 				// Load archetype

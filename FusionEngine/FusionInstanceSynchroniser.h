@@ -66,14 +66,14 @@ namespace FusionEngine
 		* be called on this entity when the new entity is created.
 		* Also used to validate the call - GetOwnerID() must be a valid 
 		* player ID unless this peer is the arbitrator.
-		* \param[in] syncable
-		* True if the new Entity should be synchronisable (not pseudo-)
+		* \param[in] synced
+		* True if the new Entity should be synchronised (not pseudo-)
 		* \param[in] type
 		* The type of the Entity to create.
 		* \param[in] instance_owner
 		* The player who will own the new instance. 0 for none
 		*/
-		void RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID instance_owner = 0);
+		void RequestInstance(EntityPtr &requester, bool synced, const std::string &type, const std::string &name, PlayerID instance_owner = 0);
 
 		//! Tries to create a new entity (only succeeds if this peer has authority to do so)
 		/*!
@@ -82,14 +82,14 @@ namespace FusionEngine
 		* be called on this entity when the new entity is created.
 		* Also used to validate the call - GetOwnerID() must be a valid 
 		* player ID unless this peer is the arbitrator.
-		* \param[in] syncable
-		* True if the new Entity should be synchronisable (not pseudo-)
+		* \param[in] synced
+		* True if the new Entity should be synchronised (not pseudo-)
 		* \param[in] type
 		* The type of the Entity to create.
 		* \param[in] instance_owner
 		* The player who will own the new instance. 0 for none
 		*/
-		void RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID instance_owner = 0);
+		void RequestInstance(EntityPtr &requester, bool synced, const std::string &type, PlayerID instance_owner = 0);
 
 		//! Pick up entity creation packets
 		void HandlePacket(Packet *packet);

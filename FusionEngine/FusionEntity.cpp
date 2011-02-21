@@ -146,6 +146,7 @@ namespace FusionEngine
 		m_MarkedToDeactivate(false),
 		m_StreamedIn(true),
 		m_CellIndex(0xFFFFFFFF),
+		m_Spawned(false),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -649,11 +650,25 @@ namespace FusionEngine
 		*value = entity.get();
 	}
 
+	bool Entity::IsSpawned() const
+	{
+		return m_Spawned;
+	}
+
+	void Entity::Spawn()
+	{
+		m_Spawned = true;
+
+		OnSpawn();
+	}
+
 	void Entity::StreamIn()
 	{
 		SetStreamedIn(true);
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamIn(); });
+
+		OnStreamIn();
 	}
 
 	void Entity::StreamOut()
@@ -661,6 +676,8 @@ namespace FusionEngine
 		SetStreamedIn(false);
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamOut(); });
+
+		OnStreamOut();
 	}
 
 	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)
@@ -706,6 +723,11 @@ namespace FusionEngine
 	//		(*it)->Update(split);
 	//	}
 	//}
+
+	void Entity::SerialiseIdentity(CL_IODevice& device)
+	{
+		device.write(&m_OwnerID, sizeof(PlayerID));
+	}
 
 	std::string Entity::ToString() const
 	{
