@@ -405,7 +405,7 @@ namespace FusionEngine
 		//! Calls OnSpawn, sets the spawned flag to true
 		void Spawn();
 
-		//! Called upon spawning
+		//! Called after the Entity is spawned
 		virtual void OnSpawn() =0;
 		//! Updates
 		virtual void Update(float split) =0;

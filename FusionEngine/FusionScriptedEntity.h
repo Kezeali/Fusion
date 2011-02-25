@@ -150,8 +150,12 @@ namespace FusionEngine
 
 		virtual void OnPlayerAdded(unsigned int local_index, PlayerID net_id);
 
-		virtual void Spawn();
+		//! Calls the scipted OnSpawn method
+		virtual void OnSpawn();
+
+		//! Calls the scripted Update method
 		virtual void Update(float split);
+		//! Calls the scripted Draw method
 		virtual void Draw();
 
 		//! Called on stream in

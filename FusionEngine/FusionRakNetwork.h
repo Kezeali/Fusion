@@ -143,7 +143,7 @@ namespace FusionEngine
 		void OnClosedConnection(SystemAddress systemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason lostConnectionReason);
 
 		uint8_t m_PeerIndex;
-		std::set<RakNetGUID> m_SeniorPairs;
+		std::set<RakNetGUID> m_SeniorPeers;
 	};
 
 	const unsigned short s_MaxPeers = 16;

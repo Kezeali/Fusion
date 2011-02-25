@@ -159,6 +159,11 @@ namespace FusionEngine
 			RefCounted::release();
 		}
 
+		static int GetScriptTypeId()
+		{
+			return s_TypeId;
+		}
+
 		//! Sets the GC flag
 		void SetGCFlag()
 		{

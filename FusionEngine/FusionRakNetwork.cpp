@@ -56,7 +56,7 @@ namespace FusionEngine
 
 	bool PeerIndexPlugin::IsSenior(const RakNetGUID &guid) const
 	{
-		return m_SeniorPairs.find(guid) != m_SeniorPairs.end();
+		return m_SeniorPeers.find(guid) != m_SeniorPeers.end();
 	}
 
 	PluginReceiveResult PeerIndexPlugin::OnReceive(Packet *packet)
@@ -83,7 +83,7 @@ namespace FusionEngine
 				{
 					received.Read(this_is_ignored);
 					received.Read(guid);
-					m_SeniorPairs.insert(guid);
+					m_SeniorPeers.insert(guid);
 				}
 			}
 		}
@@ -93,12 +93,12 @@ namespace FusionEngine
 
 	void PeerIndexPlugin::OnClosedConnection(SystemAddress systemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason lostConnectionReason)
 	{
-		auto _where = m_SeniorPairs.find(rakNetGUID);
-		if (_where != m_SeniorPairs.end())
+		auto _where = m_SeniorPeers.find(rakNetGUID);
+		if (_where != m_SeniorPeers.end())
 		{
 			// A peer that connected before this one has left, so this peer gets to move up the ranks
 			--m_PeerIndex;
-			m_SeniorPairs.erase(_where);
+			m_SeniorPeers.erase(_where);
 		}
 	}
 

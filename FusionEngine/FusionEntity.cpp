@@ -818,7 +818,7 @@ namespace FusionEngine
 			asMETHOD(Entity, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
-		r = engine->RegisterInterfaceMethod("IEntity", "void Spawn()"); FSN_ASSERT(r >= 0);
+		r = engine->RegisterInterfaceMethod("IEntity", "void OnSpawn()"); FSN_ASSERT(r >= 0);
 		//r = engine->RegisterInterfaceMethod("IEntity", "void Update()"); FSN_ASSERT(r >= 0);
 		//r = engine->RegisterInterfaceMethod("IEntity", "void Draw()"); FSN_ASSERT(r >= 0);
 	}

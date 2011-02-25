@@ -545,9 +545,9 @@ namespace FusionEngine
 		}
 	}
 
-	void ScriptedEntity::Spawn()
+	void ScriptedEntity::OnSpawn()
 	{
-		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void Spawn()");
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnSpawn()");
 		if (f.ok())
 		{
 			f();

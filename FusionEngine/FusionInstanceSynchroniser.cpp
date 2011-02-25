@@ -103,7 +103,7 @@ namespace FusionEngine
 		if ((m_LocalIdGenerators[peerIndex].peekNextID() & 0xF800) == 0)
 			id |= m_LocalIdGenerators[peerIndex].getFreeID();
 		else
-			Logger::getSingleton().Add("Can't fulfil requests to instance any more Entities: out of IDs");
+			Logger::getSingleton().Add("Can't fulfil requests to instanciate any more Entities: out of IDs");
 
 		return id;
 	}

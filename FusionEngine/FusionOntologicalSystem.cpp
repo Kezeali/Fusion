@@ -39,6 +39,7 @@
 #include "FusionEntityFactory.h"
 #include "FusionGameMapLoader.h"
 #include "FusionInputHandler.h"
+#include "FusionInstanceSynchroniser.h"
 #include "FusionNetworkSystem.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
@@ -76,7 +77,7 @@ namespace FusionEngine
 
 		virtual std::string GetType() const { return "Simple"; }
 
-		virtual void Spawn()
+		virtual void OnSpawn()
 		{
 			SendToConsole(GetName() + " spawned");
 		}
@@ -139,7 +140,7 @@ namespace FusionEngine
 
 	OntologicalSystem::OntologicalSystem(Renderer *renderer, InstancingSynchroniser *instance_sync, PhysicalWorld *phys, StreamingManager *streaming_manager, GameMapLoader *map_loader, EntityManager *entity_manager)
 		: m_Renderer(renderer),
-		m_InstancingSync(instance_sync),
+		m_InstancingSynchroniser(instance_sync),
 		m_PhysWorld(phys),
 		m_Streaming(streaming_manager),
 		m_MapLoader(map_loader),
@@ -451,22 +452,21 @@ namespace FusionEngine
 	void OntologicalSystem::RemovePlayer(unsigned int index)
 	{
 		m_PlayerManager->RemovePlayer(index);
+	}
 
-		//RakNetwork *network = NetworkManager::GetNetwork();
-
-		//const PlayerInfo &playerInfo = PlayerRegistry::GetPlayerByLocalIndex(index);
-
-		//RakNet::BitStream bitStream;
-		//bitStream.Write(playerInfo.NetID);
-
-		//network->Send(
-		//	false,
-		//	MTID_REMOVEPLAYER, &bitStream,
-		//	MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
-
-		//if (PlayerRegistry::ArbitratorIsLocal())
-		//	releasePlayerIndex(playerInfo.NetIndex);
-		//PlayerRegistry::RemovePlayer(index);
+	void OntologicalSystem::RequestInstance(bool synced, const std::string& type, const std::string& name, PlayerID owner)
+	{
+		EntityPtr requester;
+		asIScriptContext* ctx = asGetActiveContext();
+		if (ctx != nullptr)
+		{
+			FSN_ASSERT(Entity::GetScriptTypeId() == ScriptedEntity::s_EntityTypeId); // just testing
+			if ((ctx->GetThisTypeId() & asTYPEID_MASK_OBJECT) == Entity::GetScriptTypeId() )
+				requester.reset(static_cast<Entity*>( ctx->GetThisPointer() ));
+			else if ((ctx->GetThisTypeId() & asTYPEID_MASK_OBJECT) == ScriptedEntity::s_ScriptEntityTypeId)
+				requester = ScriptedEntity::GetAppObject(static_cast<asIScriptObject*>( ctx->GetThisPointer() ));
+		}
+		m_InstancingSynchroniser->RequestInstance(requester, synced, type, name, owner);
 	}
 
 	void OntologicalSystem::SetSplitScreenArea(const CL_Rectf &area)
