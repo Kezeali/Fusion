@@ -9,17 +9,15 @@ class SpawnPoint : ScriptEntity
 	{
 	}
 
-	void OnAddPlayer(uint local_player, uint8 net_id)
+	void OnPlayerAdded(uint local_player, uint8 net_id)
 	{
 		if (local_player == playerToSpawn)
 		{
-			Entity@ playerEntity = entity_factory.instance("Test", "test_player");
-			playerEntity.setOwnerID(net_id);
-			entity_manager.add(playerEntity); // TODO: make EntityManager::update call Spawn the first time an entity is updated (or something)
+			system.requestInstance(true, "Test", "test_player", net_id);
 		}
 	}
 
-	void Spawn()
+	void OnSpawn()
 	{
 	}
 

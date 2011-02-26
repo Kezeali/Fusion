@@ -431,9 +431,6 @@ namespace FusionEngine
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
-		//if (entity->GetID() == 0) // Get a free ID if one hasn't been prescribed
-		//	entity->SetID(m_UnusedIds.getFreeID());
-
 		if (entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
 
@@ -442,7 +439,7 @@ namespace FusionEngine
 			FSN_EXCEPT(ExCode::InvalidArgument, "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
 
 		if (entity->GetID() != 0)
-			m_Entities.insert(_where, std::pair<ObjectID, EntityPtr>( entity->GetID(), entity ));
+			m_Entities.insert(_where, std::make_pair( entity->GetID(), entity ));
 		else
 			m_PseudoEntities.insert(entity);
 
@@ -451,6 +448,9 @@ namespace FusionEngine
 
 		m_StreamingManager->AddEntity(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);
+
+		if (!CheckState(entity->GetDomain(), DS_STREAMING))
+			insertActiveEntity(entity);
 	}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
@@ -779,6 +779,8 @@ namespace FusionEngine
 
 					if (CheckState(domainIndex, DS_ENTITYUPDATE))
 					{
+						if (!entity->IsSpawned())
+							entity->Spawn();
 						for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
 							entity->OnPlayerAdded(ev_it->first, ev_it->second);
 						entity->Update(split);

@@ -10,11 +10,11 @@ class TestStartup : ScriptEntity
 	{
 	}
 
-	void OnAddPlayer(uint localPlayer, uint8 player)
+	void OnPlayerAdded(uint localPlayer, uint8 player)
 	{
 	}
 
-	void Spawn()
+	void OnSpawn()
 	{
 		system.addPlayer();
 	}

@@ -37,6 +37,7 @@
 #include "FusionClientOptions.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
+#include "FusionInstanceSynchroniser.h"
 #include "FusionNetworkManager.h"
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
@@ -93,7 +94,7 @@ namespace FusionEngine
 
 		if (crc.checksum() == expectedChecksum)
 		{
-			LoadMap(filename, directory, false);
+			LoadMap(filename, directory, nullptr);
 		}
 		else
 			SendToConsole("Host map is different to local map.");
@@ -119,7 +120,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool include_synced)
+	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
 	{
 		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
@@ -164,8 +165,8 @@ namespace FusionEngine
 		IDTranslator translator;
 
 		loadPseudoEntities(device, archetypeArray, translator);
-		if (include_synced)
-			loadEntities(device, archetypeArray, translator);
+		if (synchroniser != nullptr)
+			loadEntities(device, archetypeArray, translator, synchroniser);
 	}
 
 	void GameMapLoader::deserialiseBasicProperties(EntityPtr& entity, CL_IODevice &device)
@@ -243,7 +244,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::loadEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator)
+	void GameMapLoader::loadEntities(CL_IODevice &device, const ArchetypeArray &archetypeArray, const IDTranslator &translator, InstancingSynchroniser* synchroniser)
 	{
 		EntityFactory *factory = m_Factory;
 
@@ -273,8 +274,9 @@ namespace FusionEngine
 
 				if (entity)
 				{
-					entity->SetID(translator(entityID));
-					m_Manager->AddEntity(entity);
+					entityID = translator(entityID);
+					synchroniser->TakeID(entityID); // remove the ID from the available pool (so entities created after the map is loaded wont take this ID)
+					entity->SetID(entityID);
 
 					instancedEntities.push_back(entity);
 				}
@@ -297,6 +299,8 @@ namespace FusionEngine
 
 				entity->SetAngle(device.read_float());
 
+				m_Manager->AddEntity(entity);
+
 				cl_uint8 typeFlags = device.read_uint8();
 				// Load archetype
 				if (typeFlags & ArchetypeFlag) // Check for archetype flag
@@ -318,7 +322,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory)
+	void GameMapLoader::LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
 	{
 		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
@@ -342,7 +346,7 @@ namespace FusionEngine
 		std::string mapFilename = device.read_string_a();
 
 		if (!mapFilename.empty() && mapFilename != m_MapFilename)
-			LoadMap(mapFilename, directory, true);
+			LoadMap(mapFilename, directory, synchroniser);
 		else
 			m_Manager->ClearSyncedEntities();
 
@@ -370,10 +374,13 @@ namespace FusionEngine
 					entity = factory->InstanceEntity(entityTypename, entityName);
 				}
 
-				entity->SetID(entityID);
-				m_Manager->AddEntity(entity);
+				if (entity)
+				{
+					synchroniser->TakeID(entityID); // remove the ID from the available pool (so entities created after the map is loaded wont take this ID)
+					entity->SetID(entityID);
 
-				instancedEntities.push_back(entity);
+					instancedEntities.push_back(entity);
+				}
 			}
 		}
 
@@ -392,6 +399,8 @@ namespace FusionEngine
 			entity->SetPosition(position);
 
 			entity->SetAngle(device.read_float());
+
+			m_Manager->AddEntity(entity);
 
 			// Load custom properties
 			state.mask = device.read_uint32();
@@ -465,6 +474,8 @@ namespace FusionEngine
 
 	void GameMapLoader::CompileMap(CL_IODevice &device, const StringSet &used_entity_types, const GameMapLoader::ArchetypeMap &archetypes, const GameMapLoader::MapEntityArray &pseudo_entities, const GameMapLoader::MapEntityArray &entities)
 	{
+		//device.set_system_mode();
+
 		// Write used types list
 		// Number of types:
 		device.write_uint32(used_entity_types.size());

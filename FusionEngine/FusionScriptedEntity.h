@@ -163,6 +163,8 @@ namespace FusionEngine
 		//! Called on stream out
 		virtual void OnStreamOut();
 
+		virtual void OnInstanceRequestFulfilled(const EntityPtr& instance);
+
 		//! Writes property data
 		virtual void SerialiseState(SerialisedData &state, bool local) const;
 		//! Reads property data

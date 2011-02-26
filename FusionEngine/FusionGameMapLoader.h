@@ -52,7 +52,7 @@ namespace FusionEngine
 	
 	//! Loads maps and games.
 	/*!
-	* AND NOTHING ELSE! THAT'S WHAT THE FULLSTOP MEANS - FULL, STOP! OK!
+	* AND NOTHING ELSE! THAT'S WHAT THE FULLSTOP MEANS - FULL-STOP! OK!
 	*
 	* \todo Fix writing / reading ObjectIDs, since the size has changed (now 32bit)
 	*/
@@ -112,14 +112,14 @@ namespace FusionEngine
 		* The file to load
 		* \param[in] directory
 		* The filesystem to load the file from
-		* \param[in] include_synced_ents
+		* \param[in] synchroniser
 		* Load synced Entities (entities with an ID, that are synced over the network/saved.)
-		* Set to true if starting a new game; if joining a game or loading a save, set to false
+		* Set if starting a new game; if joining a game or loading a save, set to null
 		* so synced entities can be loaded from the existing ontology.
 		*/
-		void LoadMap(const std::string &filename, CL_VirtualDirectory &directory, bool include_synced_ents = true);
+		void LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser = nullptr);
 
-		void LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory);
+		void LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser);
 		void SaveGame(const std::string &filename, CL_VirtualDirectory &directory);
 
 		//! Compiles a binary map file from map-editor data
@@ -175,7 +175,7 @@ namespace FusionEngine
 		void deserialiseBasicProperties(EntityPtr &entity, CL_IODevice &device);
 
 		void loadPseudoEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
-		void loadEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator);
+		void loadEntities(CL_IODevice &device, const ArchetypeArray &archetypes, const IDTranslator &translator, InstancingSynchroniser* synchroniser);
 	};
 
 }

@@ -37,7 +37,7 @@
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
 #include "FusionPacketHandler.h"
-#include "FusionRakNetwork.h"
+#include "FusionPlayerRegistry.h"
 
 namespace FusionEngine
 {
@@ -58,6 +58,8 @@ namespace FusionEngine
 		* and when receiving new instances from other peers.
 		*/
 		void TakeID(ObjectID id);
+		//! Puts the given ID back in the pool
+		void FreeID(ObjectID id);
 
 		//! Tries to create a new entity (only succeeds if this peer has authority to do so)
 		/*!
@@ -91,6 +93,9 @@ namespace FusionEngine
 		*/
 		void RequestInstance(EntityPtr &requester, bool synced, const std::string &type, PlayerID instance_owner = 0);
 
+		//! Returns the given Entity's ID to the pool
+		void RemoveInstance(EntityPtr& entity);
+
 		//! Pick up entity creation packets
 		void HandlePacket(Packet *packet);
 
@@ -100,8 +105,8 @@ namespace FusionEngine
 
 		RakNetwork *m_Network;
 
-		IDSet<ObjectID> m_LocalIdGenerators[s_MaxPeers];
-		IDSet<ObjectID> m_WorldIdGenerator;
+		ObjectIDSet m_LocalIdGenerators[s_MaxLocalPlayers];
+		ObjectIDSet m_WorldIdGenerator;
 
 		//boost::signals2::connection m_EntityInstancedCnx;
 

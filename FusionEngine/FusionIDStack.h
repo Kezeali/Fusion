@@ -111,6 +111,17 @@ namespace FusionEngine
 		typedef std::set<T> IDCollectionType;
 
 	public:
+		//! Default
+		IDSet()
+			: IDCollection()
+		{}
+		//! Initialises m_NextId to the given value
+		IDSet(T first_id)
+			: IDCollection(first_id)
+		{}
+		//! Virtual destructor
+		virtual ~IDSet()
+		{}
 		//! Returns the next ID that will be returned by getFreeID
 		T peekNextID() const
 		{
@@ -141,7 +152,7 @@ namespace FusionEngine
 		}
 		//! Removes the given ID from the set
 		/*!
-		* \return Returns true if the id was unused, false otherwise
+		* \return Returns true if the ID was unused (so it could be taken), false otherwise
 		*/
 		virtual bool takeID(T id)
 		{
@@ -150,7 +161,7 @@ namespace FusionEngine
 				++m_NextId;
 				return true;
 			}
-			else
+			else if (id < m_NextId)
 			{
 				IDCollectionType::iterator _where = m_UnusedIds.find(id);
 				if (_where != m_UnusedIds.end())
@@ -160,6 +171,13 @@ namespace FusionEngine
 				}
 				else
 					return false;
+			}
+			else // the id being taken is after the current index: jump forward to it
+			{
+				for (T unusedId = m_NextId; unusedId < id; ++unusedId)
+					m_UnusedIds.insert(unusedId);
+				m_NextId = id + 1;
+				return true;
 			}
 		}
 	};
@@ -172,15 +190,23 @@ namespace FusionEngine
 	class IDStack : public IDCollection<T>
 	{
 	public:
-		//! Initialises m_NextId to one (Entity IDs start at 1)
+		//! Default CTOR
 		IDStack()
-			: IDCollection(1),
+			: IDCollection(),
 			m_MaxId(std::numeric_limits<T>::max())
 		{}
-		//! Inits like the default constructor, but also sets the max ID available
-		IDStack(T max)
-			: IDCollection(1),
+		//! Sets the first id
+		IDStack(T first)
+			: IDCollection(first),
+			m_MaxId(std::numeric_limits<T>::max())
+		{}
+		//! Inits like the single param constructor, but also sets the max ID available
+		IDStack(T first, T max)
+			: IDCollection(first),
 			m_MaxId(max)
+		{}
+		//! Virtual destructor
+		virtual ~IDStack()
 		{}
 
 		void setMaxID(T max)
@@ -217,7 +243,7 @@ namespace FusionEngine
 		virtual void freeID(T id)
 		{
 			if (id == m_NextId-1)
-				m_NextId = id;
+				--m_NextId;
 			else if (id < m_NextId-1)
 			{
 				FSN_ASSERT_MSG(std::find(m_UnusedIds.begin(), m_UnusedIds.end(), id) != m_UnusedIds.end(),
@@ -230,8 +256,34 @@ namespace FusionEngine
 		T m_MaxId;
 	};
 
+	//! Template specialization of the default IDSet ctor, to make ObjectID generators start at 1
+	//template <>
+	//IDSet<ObjectID>::IDSet()
+	//	: IDCollection(1)
+	//{}
 	//! Supplies ObjectIDs which aren't assigned
-	typedef IDStack<ObjectID> ObjectIDStack;
+	class ObjectIDSet : public IDSet<ObjectID>
+	{
+	public:
+		//! Initialises the first ID to 1 (Entity IDs start at 1)
+		ObjectIDSet()
+			: IDSet(1)
+		{}
+	};
+
+	//! Supplies ObjectIDs which aren't assigned
+	class ObjectIDStack : public IDStack<ObjectID>
+	{
+	public:
+		//! Initialises the first ID to 1 (Entity IDs start at 1)
+		ObjectIDStack()
+			: IDStack(1)
+		{}
+		//! Sets the max ID
+		ObjectIDStack(ObjectID max)
+			: IDStack(1, max)
+		{}
+	};
 
 }
 

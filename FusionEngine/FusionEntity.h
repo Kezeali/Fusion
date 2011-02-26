@@ -370,6 +370,7 @@ namespace FusionEngine
 		void SetLayer(size_t layer);
 		size_t GetLayer() const;
 
+		//! Returns true if this Entity has been streamed in
 		bool IsStreamedIn() const;
 
 		void SetStreamingCellIndex(unsigned int index);
@@ -384,7 +385,9 @@ namespace FusionEngine
 		void SetDepth(int depth);
 		int GetDepth() const;
 
+		//! Stops the Entity from being updated for a number of steps
 		void SetWait(unsigned int steps);
+		//! Returns true when the waiting period is over if called once per step
 		bool Wait();
 
 		//! Marks this Entity as one that will be deleted during the next update (effectively constant time)
@@ -394,13 +397,18 @@ namespace FusionEngine
 
 		//! Used to remove the entity from the active entity list in effectively constant time
 		void MarkToDeactivate();
+		//! Undoes MarkToDeactivate()
 		void RemoveDeactivateMark();
+		//! Returns true if the Entity is marked to deactivate
 		bool IsMarkedToDeactivate() const;
 
 		//! Called when a new local player is added
 		virtual void OnPlayerAdded(unsigned int local_index, PlayerID net_id) {};
 
+		//! Returns true if the Entity has been spawned
 		bool IsSpawned() const;
+		//! Makes IsSpawned() return true, without calling OnSpawn()
+		void SetSpawned(bool spawned);
 
 		//! Calls OnSpawn, sets the spawned flag to true
 		void Spawn();
@@ -465,7 +473,7 @@ namespace FusionEngine
 		//! Returns a human-readable string
 		virtual std::string ToString() const;
 
-		virtual void OnRequestInstanceFulfilled(const EntityPtr &entity) {}
+		virtual void OnInstanceRequestFulfilled(const EntityPtr &entity) {}
 
 		//! Implementation of ICollisionHandler#CanCollideWith()
 		//virtual bool CanCollideWith(PhysicsBodyPtr other);

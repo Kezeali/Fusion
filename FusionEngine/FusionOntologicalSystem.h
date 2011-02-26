@@ -169,7 +169,7 @@ namespace FusionEngine
 		void RemovePlayer(unsigned int local_index);
 
 		//! Tries to get a new instance of the given Entity
-		void RequestInstance(bool synced, const std::string& type, const std::string& name, PlayerID owner);
+		void RequestInstance(EntityPtr entity, bool synced, const std::string& type, const std::string& name, PlayerID owner);
 
 		static const size_t s_MaximumSplitScreenViewports = 4;
 		enum SplitType

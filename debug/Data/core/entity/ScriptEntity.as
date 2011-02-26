@@ -29,7 +29,7 @@ class ScriptEntity : IEntity
 		return __appObject.getInputPosition(input);
 	}
 
-	void Spawn() {}
+	void OnSpawn() {}
 	void Update() {}
 	void Draw() {}
 

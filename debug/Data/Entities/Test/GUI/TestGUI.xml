@@ -21,7 +21,7 @@
 				console.println("'TestGUI' entity deleted");
 			}
 
-			void Spawn()
+			void OnSpawn()
 			{
 				if (document !is null)
 				{

@@ -67,7 +67,7 @@ class Test : ScriptEntity
 		console.println("'Test' entity deleted");
 	}
 
-	void OnAddPlayer(uint localPlayer, uint8 player)
+	void OnPlayerAdded(uint localPlayer, uint8 player)
 	{
 		//!!! note that we dont neccesarily need an equivilant OnRemovePlayer method to destroy player ents
 		//  because entities owned by players are removed automatically when players leave
@@ -77,7 +77,7 @@ class Test : ScriptEntity
 		//  (of this new PlayerGenerator type)
 	}
 
-	void Spawn()
+	void OnSpawn()
 	{
 		console.println("'Test' entity Spawned");
 

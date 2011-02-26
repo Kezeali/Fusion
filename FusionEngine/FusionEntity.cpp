@@ -167,6 +167,7 @@ namespace FusionEngine
 		m_MarkedToDeactivate(false),
 		m_StreamedIn(true),
 		m_CellIndex(0xFFFFFFFF),
+		m_Spawned(false),
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
@@ -653,6 +654,11 @@ namespace FusionEngine
 	bool Entity::IsSpawned() const
 	{
 		return m_Spawned;
+	}
+
+	void Entity::SetSpawned(bool spawned)
+	{
+		m_Spawned = spawned;
 	}
 
 	void Entity::Spawn()

@@ -848,7 +848,7 @@ namespace FusionEngine
 	EntityDomain ScriptedEntityInstancer::ToDomainIndex(const std::string &domain)
 	{
 		if (domain.empty())
-			return SYSTEM_DOMAIN;
+			return GAME_DOMAIN;
 		else if (domain == "system")
 			return SYSTEM_DOMAIN;
 		else if (domain == "game")

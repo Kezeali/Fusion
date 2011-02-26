@@ -47,7 +47,7 @@ namespace FusionEngine
 		: m_Factory(factory),
 		m_EntityManager(manager)
 	{
-		//m_EntityInstancedCnx = factory->SignalEntityInstanced.connect(boost::bind(&InstancingSynchroniser::OnEntityInstanced, this, _1));
+		m_Network = NetworkManager::getSingleton().GetNetwork(); // TODO: make this a param of the ctor
 	}
 
 	InstancingSynchroniser::~InstancingSynchroniser()
@@ -69,6 +69,22 @@ namespace FusionEngine
 			if (peerIndex < s_MaxPeers)
 			{
 				m_LocalIdGenerators[peerIndex].takeID(id & 0x07FF);
+			}
+		}
+		else
+		{
+			m_WorldIdGenerator.takeID(id);
+		}
+	}
+
+	void InstancingSynchroniser::FreeID(ObjectID id)
+	{
+		if ((id & 0x8000) == 0x8000) // if the first bit is set (this is a local-authority ID)
+		{
+			uint8_t peerIndex = (id & 0x7800) >> (sizeof(ObjectID) * 8 - 5);
+			if (peerIndex < s_MaxPeers)
+			{
+				m_LocalIdGenerators[peerIndex].freeID(id & 0x07FF);
 			}
 		}
 		else
@@ -103,7 +119,7 @@ namespace FusionEngine
 		if ((m_LocalIdGenerators[peerIndex].peekNextID() & 0xF800) == 0)
 			id |= m_LocalIdGenerators[peerIndex].getFreeID();
 		else
-			Logger::getSingleton().Add("Can't fulfil requests to instanciate any more Entities: out of IDs");
+			AddLogEntry(g_LogGeneral, "Out of IDs: can't fulfil requests to instanciate Entities anymore");
 
 		return id;
 	}
@@ -133,7 +149,7 @@ namespace FusionEngine
 
 	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
-		if (requester)
+		if (!requester)
 			FSN_EXCEPT(ExCode::InvalidArgument, "You must pass a valid requester instance");
 
 		bool localAuthority = PlayerRegistry::IsLocal(requester->GetOwnerID());
@@ -155,9 +171,7 @@ namespace FusionEngine
 						id = m_WorldIdGenerator.getFreeID();
 					else
 					{
-						Logger::getSingleton().Add("Can't fulfil requests to instance any more Entities: out of IDs");
-						// If the arbiter has run out of IDs, we have no recourse
-						//if (NetworkManager::ArbitratorIsLocal())
+						AddLogEntry(g_LogGeneral, "Out of IDs: can't fulfil requests to instanciate Entities anymore");
 						return;
 					}
 				}
@@ -171,14 +185,35 @@ namespace FusionEngine
 
 			m_EntityManager->AddEntity(entity);
 
+			// TODO: set this entity to a property, rather than calling this callback
 			if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
-				requester->OnRequestInstanceFulfilled(entity);
+				requester->OnInstanceRequestFulfilled(entity);
 		}
 	}
 
 	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
 	{
 		RequestInstance(requester, syncable, type, "", owner);
+	}
+
+	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
+	{
+		// TODO: figure out logic of who should be able to instance / delete entities (WRT owner ID)
+		if (entity->GetID() != 0 && (PlayerRegistry::IsLocal(entity->GetOwnerID()) || NetworkManager::ArbitratorIsLocal()))
+		{
+			FreeID(entity->GetID());
+
+			// TODO: receive this on the remote clients
+			RakNet::BitStream removeEntityNotification;
+			removeEntityNotification.Write(entity->GetID());
+
+			m_Network->Send(
+				To::Populace(), // Broadcast
+				!Timestamped,
+				MTID_REMOVEENTITY, &removeEntityNotification,
+				MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+		}
+		m_EntityManager->RemoveEntity(entity);
 	}
 
 	void InstancingSynchroniser::HandlePacket(Packet *packet)
@@ -199,7 +234,7 @@ namespace FusionEngine
 		newEntityData.Read(id);
 		newEntityData.Read(ownerId);
 
-		// Entity name (an alternative ID represented as a human-readable string)
+		// Entity name
 		std::string name;
 		if (newEntityData.ReadBit())
 		{
@@ -213,6 +248,7 @@ namespace FusionEngine
 		{
 			//if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
 			//	id = m_WorldIdGenerator.getFreeID();
+
 			// I've decided that peers should just use their own IDs; using up the
 			//  world/arbiter id's when a peer runs out seems foolish
 			return;
@@ -229,7 +265,7 @@ namespace FusionEngine
 
 		EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
 		if (requester)
-			requester->OnRequestInstanceFulfilled(entity);
+			requester->OnInstanceRequestFulfilled(entity);
 	}
 
 }

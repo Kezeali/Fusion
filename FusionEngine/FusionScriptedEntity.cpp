@@ -541,7 +541,7 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnPlayerAdded(uint,uint8)");
 		if (f.ok())
 		{
-			f();
+			f(local_index, net_index);
 		}
 	}
 
@@ -597,9 +597,20 @@ namespace FusionEngine
 		}
 	}
 
+	void ScriptedEntity::OnInstanceRequestFulfilled(const EntityPtr& instance)
+	{
+		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnInstanceRequestFulfilled(Entity@)");
+		if (f.ok())
+		{
+			EntityPtr passable = instance;
+			f(passable.get());
+		}
+	}
+
 	void ScriptedEntity::SerialiseState(SerialisedData &state, bool local) const
 	{
 		CL_IODevice_Memory dev;
+		//dev.set_system_mode();
 		//std::ostringstream stateStream(std::ios::binary);
 
 		// Notify the deserialiser that this created in local/non-local mode
@@ -705,6 +716,7 @@ namespace FusionEngine
 		//std::istringstream stateStream(state.data, std::ios::binary);
 		CL_DataBuffer buffer(state.data.data(), state.data.size());
 		CL_IODevice_Memory dev(buffer);
+		//dev.set_system_mode();
 
 		bool fileLocal = dev.read_uint8() == 1;
 		if (local != fileLocal)

@@ -32,6 +32,7 @@
 #include <boost/lexical_cast.hpp>
 #include <Bitstream.h>
 #include <ScriptUtils/Calling/Caller.h>
+#include <ScriptUtils/Inheritance/TypeTraits.h>
 
 #include "FusionClientOptions.h"
 #include "FusionEditor.h"
@@ -243,6 +244,12 @@ namespace FusionEngine
 
 		m_EntityManager->SetDomainState(SYSTEM_DOMAIN, DS_ENTITYUPDATE | DS_SYNCH);
 		m_EntityManager->SetDomainState(GAME_DOMAIN, DS_ALL);
+
+		if (!m_StartupMap.empty())
+		{
+			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			m_MapLoader->LoadMap("Maps/" + m_StartupMap, dir, m_InstancingSynchroniser);
+		}
 	}
 
 	void OntologicalSystem::Stop()
@@ -348,11 +355,7 @@ namespace FusionEngine
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
-			if (!m_StartupMap.empty())
-			{
-				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				m_MapLoader->LoadMap("Maps/" + m_StartupMap, dir);
-			}
+			
 		}
 	}
 
@@ -370,7 +373,7 @@ namespace FusionEngine
 	void OntologicalSystem::Load(const std::string &filename)
 	{
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-		m_MapLoader->LoadSavedGame(s_SavePath + filename, vdir);
+		m_MapLoader->LoadSavedGame(s_SavePath + filename, vdir, m_InstancingSynchroniser);
 	}
 
 	void OntologicalSystem::Pause()
@@ -454,18 +457,8 @@ namespace FusionEngine
 		m_PlayerManager->RemovePlayer(index);
 	}
 
-	void OntologicalSystem::RequestInstance(bool synced, const std::string& type, const std::string& name, PlayerID owner)
+	void OntologicalSystem::RequestInstance(EntityPtr requester, bool synced, const std::string& type, const std::string& name, PlayerID owner)
 	{
-		EntityPtr requester;
-		asIScriptContext* ctx = asGetActiveContext();
-		if (ctx != nullptr)
-		{
-			FSN_ASSERT(Entity::GetScriptTypeId() == ScriptedEntity::s_EntityTypeId); // just testing
-			if ((ctx->GetThisTypeId() & asTYPEID_MASK_OBJECT) == Entity::GetScriptTypeId() )
-				requester.reset(static_cast<Entity*>( ctx->GetThisPointer() ));
-			else if ((ctx->GetThisTypeId() & asTYPEID_MASK_OBJECT) == ScriptedEntity::s_ScriptEntityTypeId)
-				requester = ScriptedEntity::GetAppObject(static_cast<asIScriptObject*>( ctx->GetThisPointer() ));
-		}
 		m_InstancingSynchroniser->RequestInstance(requester, synced, type, name, owner);
 	}
 
@@ -579,6 +572,35 @@ namespace FusionEngine
 	//	}
 	//}
 
+	void OntologicalSystem_RequestInstance(bool synced, const std::string& type, const std::string& name, PlayerID owner, OntologicalSystem *obj)
+	{
+		EntityPtr requester;
+		asIScriptContext* ctx = asGetActiveContext();
+		if (ctx != nullptr)
+		{
+			asIObjectType* entityBaseType = ctx->GetEngine()->GetObjectTypeById(ScriptedEntity::s_ScriptEntityTypeId);;
+			asIScriptObject* thisObj = static_cast<asIScriptObject*>( ctx->GetThisPointer() );
+			if (ScriptUtils::Inheritance::is_base_of(entityBaseType, thisObj->GetObjectType()))
+				requester = ScriptedEntity::GetAppObject(thisObj);
+		}
+		obj->RequestInstance(requester, synced, type, name, owner);
+	}
+
+	void OntologicalSystem_RequestInstance(bool synced, const std::string& type, PlayerID owner, OntologicalSystem *obj)
+	{
+		OntologicalSystem_RequestInstance(synced, type, std::string(), owner, obj);
+	}
+
+	void OntologicalSystem_RequestInstance(bool synced, const std::string& type, const std::string& name, OntologicalSystem *obj)
+	{
+		OntologicalSystem_RequestInstance(synced, type, name, 0, obj);
+	}
+
+	void OntologicalSystem_RequestInstance(bool synced, const std::string& type, OntologicalSystem *obj)
+	{
+		OntologicalSystem_RequestInstance(synced, type, std::string(), 0, obj);
+	}
+
 	void OntologicalSystem_SetSplitScreenArea(float x, float y, float w, float h, OntologicalSystem *obj)
 	{
 		obj->SetSplitScreenArea(CL_Rectf(x, y, x+w, y+h));
@@ -611,11 +633,20 @@ namespace FusionEngine
 			asMETHOD(OntologicalSystem, RemovePlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
-			"void requestInstance(Entity@)", //TODO: <-
-			asMETHODPR(OntologicalSystem, RequestInstance, (EntityPtr& requestee), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			"void requestInstance(Entity@, bool, const string &in, const string &in, uint8)",
+			asMETHODPR(OntologicalSystem, RequestInstance, (EntityPtr, bool, const std::string&, const std::string&, PlayerID), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
-			"void requestInstance(IEntity@)", //TODO: <-
-			asFUNCTION(OntologicalSystem_RequestInstance), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			"void requestInstance(bool, const string &in, const string &in, uint8)",
+			asFUNCTIONPR(OntologicalSystem_RequestInstance, (bool, const std::string&, const std::string&, PlayerID, OntologicalSystem*), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void requestInstance(bool, const string &in, uint8)",
+			asFUNCTIONPR(OntologicalSystem_RequestInstance, (bool, const std::string&, PlayerID, OntologicalSystem*), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void requestInstance(bool, const string &in, const string &in)",
+			asFUNCTIONPR(OntologicalSystem_RequestInstance, (bool, const std::string&, const std::string&, OntologicalSystem*), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("System",
+			"void requestInstance(bool, const string &in)",
+			asFUNCTIONPR(OntologicalSystem_RequestInstance, (bool, const std::string&, OntologicalSystem*), void), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("System",
 			"void setSplitScreenArea(float, float, float, float)",
