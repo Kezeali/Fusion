@@ -37,7 +37,7 @@
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
 #include "FusionPacketHandler.h"
-#include "FusionPlayerRegistry.h"
+#include "FusionRakNetwork.h"
 
 namespace FusionEngine
 {
@@ -105,7 +105,7 @@ namespace FusionEngine
 
 		RakNetwork *m_Network;
 
-		ObjectIDSet m_LocalIdGenerators[s_MaxLocalPlayers];
+		ObjectIDSet m_LocalIdGenerators[s_MaxPeers];
 		ObjectIDSet m_WorldIdGenerator;
 
 		//boost::signals2::connection m_EntityInstancedCnx;

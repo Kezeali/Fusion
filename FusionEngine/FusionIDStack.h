@@ -138,8 +138,9 @@ namespace FusionEngine
 			else
 			{
 				IDCollectionType::iterator lowest = m_UnusedIds.begin();
+				ObjectID id = *lowest;
 				m_UnusedIds.erase(lowest);
-				return *lowest;
+				return id;
 			}
 		}
 		//! Allows the given ID which was previously returned by getFreeID to be returned again

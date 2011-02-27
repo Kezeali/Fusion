@@ -462,6 +462,11 @@ namespace FusionEngine
 		m_InstancingSynchroniser->RequestInstance(requester, synced, type, name, owner);
 	}
 
+	void OntologicalSystem::RemoveInstance(EntityPtr entity)
+	{
+		m_InstancingSynchroniser->RemoveInstance(entity);
+	}
+
 	void OntologicalSystem::SetSplitScreenArea(const CL_Rectf &area)
 	{
 		if (m_SplitScreenArea != area)

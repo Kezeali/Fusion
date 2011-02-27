@@ -89,7 +89,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			m_WorldIdGenerator.takeID(id);
+			m_WorldIdGenerator.freeID(id);
 		}
 	}
 
@@ -199,73 +199,90 @@ namespace FusionEngine
 	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
 	{
 		// TODO: figure out logic of who should be able to instance / delete entities (WRT owner ID)
-		if (entity->GetID() != 0 && (PlayerRegistry::IsLocal(entity->GetOwnerID()) || NetworkManager::ArbitratorIsLocal()))
+		if (entity->IsSyncedEntity())
 		{
-			FreeID(entity->GetID());
+			if (PlayerRegistry::IsLocal(entity->GetOwnerID()) || NetworkManager::ArbitratorIsLocal())
+			{
+				FreeID(entity->GetID());
 
-			// TODO: receive this on the remote clients
-			RakNet::BitStream removeEntityNotification;
-			removeEntityNotification.Write(entity->GetID());
+				RakNet::BitStream removeEntityNotification;
+				removeEntityNotification.Write(entity->GetID());
 
-			m_Network->Send(
-				To::Populace(), // Broadcast
-				!Timestamped,
-				MTID_REMOVEENTITY, &removeEntityNotification,
-				MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+				m_Network->Send(
+					To::Populace(), // Broadcast
+					!Timestamped,
+					MTID_REMOVEENTITY, &removeEntityNotification,
+					MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+
+				m_EntityManager->RemoveEntity(entity);
+			}
 		}
-		m_EntityManager->RemoveEntity(entity);
+		else
+			m_EntityManager->RemoveEntity(entity);
 	}
 
 	void InstancingSynchroniser::HandlePacket(Packet *packet)
 	{
-		RakNet::BitStream newEntityData(packet->data, packet->length, false);
+		RakNet::BitStream receivedData(packet->data, packet->length, false);
 
-		ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
-		newEntityData.Read(requesterId);
-
-		// Read the entity type-name
-		std::string::size_type length;
-		std::string entityType;
-		newEntityData.Read(length);
-		entityType.resize(length);
-		newEntityData.Read(&entityType[0]);
-
-		ObjectID id, ownerId;
-		newEntityData.Read(id);
-		newEntityData.Read(ownerId);
-
-		// Entity name
-		std::string name;
-		if (newEntityData.ReadBit())
+		unsigned char type;
+		receivedData.Read(type);
+		if (type == MTID_INSTANCEENTITY)
 		{
-			newEntityData.Read(length);
-			name.resize(length);
-			newEntityData.Read(&name[0]);
-		}
+			ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
+			receivedData.Read(requesterId);
 
-		// id == 0 indicates that a peer is requesting an id for this entity
-		if (id == 0)
+			// Read the entity type-name
+			std::string::size_type length;
+			std::string entityType;
+			receivedData.Read(length);
+			entityType.resize(length);
+			receivedData.Read(&entityType[0]);
+
+			ObjectID id, ownerId;
+			receivedData.Read(id);
+			receivedData.Read(ownerId);
+
+			// Entity name
+			std::string name;
+			if (receivedData.ReadBit())
+			{
+				receivedData.Read(length);
+				name.resize(length);
+				receivedData.Read(&name[0]);
+			}
+
+			// id == 0 indicates that a peer is requesting an id for this entity
+			if (id == 0)
+			{
+				//if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
+				//	id = m_WorldIdGenerator.getFreeID();
+
+				// I've decided that peers should just use their own IDs; using up the
+				//  world/arbiter id's when a peer runs out seems foolish
+				return;
+			}
+
+			EntityPtr entity = m_Factory->InstanceEntity(entityType);
+
+			entity->SetID(id);
+			entity->SetOwnerID(ownerId);
+			if (!name.empty())
+				entity->_setName(name);
+
+			m_EntityManager->AddEntity(entity);
+
+			EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
+			if (requester)
+				requester->OnInstanceRequestFulfilled(entity);
+		}
+		else if (type == MTID_REMOVEENTITY)
 		{
-			//if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
-			//	id = m_WorldIdGenerator.getFreeID();
+			ObjectID removedId;
+			receivedData.Read(removedId);
 
-			// I've decided that peers should just use their own IDs; using up the
-			//  world/arbiter id's when a peer runs out seems foolish
-			return;
+			m_EntityManager->RemoveEntityById(removedId);
 		}
-
-		EntityPtr entity = m_Factory->InstanceEntity(entityType);
-
-		entity->SetID(id);
-		entity->SetOwnerID(ownerId);
-		if (!name.empty())
-			entity->_setName(name);
-
-		m_EntityManager->AddEntity(entity);
-
-		EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
-		if (requester)
-			requester->OnInstanceRequestFulfilled(entity);
 	}
 
 }

@@ -171,6 +171,9 @@ namespace FusionEngine
 		//! Tries to get a new instance of the given Entity
 		void RequestInstance(EntityPtr entity, bool synced, const std::string& type, const std::string& name, PlayerID owner);
 
+		//! Removes the given Entity
+		void RemoveInstance(EntityPtr entity);
+
 		static const size_t s_MaximumSplitScreenViewports = 4;
 		enum SplitType
 		{
