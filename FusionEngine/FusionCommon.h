@@ -166,9 +166,9 @@ namespace FusionEngine
 			return false;
 
 		// 0 - start: accept '-' to 1; digit to 1; '.' to 2; else to 3
-		// 1 - success: accept digit to ; '.' to 2; else to 3
+		// 1 - success: accept digit to 1; '.' to 2; else to 3
 		// 2 - success: accept digit to 2; else to 3
-		// 3 - accept anything to 3
+		// 3 - failure: return false
 		int state = 0;
 		for (std::string::const_iterator it = str.begin(), end = str.end(); it != end; ++it)
 		{
