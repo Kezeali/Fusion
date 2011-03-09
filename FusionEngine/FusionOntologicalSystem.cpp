@@ -629,7 +629,7 @@ namespace FusionEngine
 
 		r = engine->RegisterObjectMethod("System",
 			"uint addPlayer()",
-			asMETHODPR(OntologicalSystem, AddPlayer, (void), size_t), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHODPR(OntologicalSystem, AddPlayer, (void), unsigned int), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("System",
 			"bool addPlayer(uint)",
 			asMETHODPR(OntologicalSystem, AddPlayer, (unsigned int), bool), asCALL_THISCALL); FSN_ASSERT(r >= 0);
