@@ -363,6 +363,13 @@ namespace FusionEngine
 		return context;
 	}
 
+	void GUI_ShowConsole(GUI* obj)
+	{
+		Rocket::Core::ElementDocument *consoleWindow = obj->GetConsoleWindow();
+		if (consoleWindow != nullptr && consoleWindow->GetContext()->GetFocusElement() != consoleWindow)
+			consoleWindow->Show();
+	}
+
 	void GUI::Register(ScriptManager *engine)
 	{
 		asIScriptEngine *iengine = engine->GetEnginePtr();
@@ -428,6 +435,10 @@ namespace FusionEngine
 		r = iengine->RegisterObjectMethod(
 			"GUI", "Context@ getContext() const",
 			asFUNCTION(GUI_GetContextRef), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void showConsole()",
+			asFUNCTION(GUI_ShowConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
 			"GUI", "void setMouseCursorPosition(int x, int y)",

@@ -129,6 +129,7 @@ class Test : ScriptEntity
 		{
 			//system.save("test.save");
 			//editor.startEditor();
+			gui.showConsole();
 		}
 		specialPressed = special;
 
@@ -148,15 +149,15 @@ class Test : ScriptEntity
 		{
 			SetAngularVelocity(-1.6f);
 		}
-		else if (!left && input_left)
-			ApplyTorque(0.54f);
+		//else if (!left && input_left)
+		//	ApplyTorque(0.54f);
 
 		if (right)
 		{
 			SetAngularVelocity(1.6f);
 		}
-		else if (!right && input_right)
-			ApplyTorque(-0.54f);
+		//else if (!right && input_right)
+		//	ApplyTorque(-0.54f);
 
 		input_forward = forward;
 		input_left = left;

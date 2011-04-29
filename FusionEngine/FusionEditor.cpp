@@ -828,7 +828,7 @@ namespace FusionEngine
 				case 192: // `~ key
 					{
 						Rocket::Core::ElementDocument *consoleWindow = GUI::getSingleton().GetConsoleWindow();
-						if (GUI::getSingleton().GetContext()->GetFocusElement() != consoleWindow)
+						if (consoleWindow->GetContext()->GetFocusElement() != consoleWindow)
 							consoleWindow->Show();
 					}
 				case CL_KEY_LEFT:
