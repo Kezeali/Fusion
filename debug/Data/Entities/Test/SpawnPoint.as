@@ -2,6 +2,9 @@ class SpawnPoint : ScriptEntity
 {
 	uint playerToSpawn;
 
+	Camera@ primaryCamera;
+	Viewport@ p1Viewport;
+
 	SpawnPoint()
 	{
 	}
@@ -15,6 +18,22 @@ class SpawnPoint : ScriptEntity
 		{
 			system.requestInstance(true, "Test", "test_player", net_id);
 		}
+	}
+
+	void OnInstanceRequestFulfilled(Entity@ player)
+	{
+		@primaryCamera = @Camera();
+		@p1Viewport = @Viewport(0, 0, 1, 1);
+		p1Viewport.setCamera(primaryCamera);
+
+		system.addViewport(p1Viewport);
+
+		primaryCamera.setFollowEntity(unwrap_Test(player));
+		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
+
+		streamer.setPlayerCamera(playerToSpawn, primaryCamera);
+
+		@primaryCamera = null;
 	}
 
 	void OnSpawn()

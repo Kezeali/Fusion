@@ -23,9 +23,6 @@ class Test : ScriptEntity
 	SoundSample@ movesound;
 	SoundSample@ bgm;
 
-	Camera@ primaryCamera;
-	Viewport@ p1Viewport;
-
 	Test()
 	{
 		console.println("'Test' entity created");
@@ -47,20 +44,6 @@ class Test : ScriptEntity
 		template_array.resize(2);
 		template_array[0] = "zero";
 		template_array[1] = "one";
-
-		// TODO: set the camera somewhere else (cam.setFollowEntity wont be able to find the app object for this ent. until after this CTOR is finished)
-		@primaryCamera = @Camera();
-		@p1Viewport = @Viewport(0, 0, 1, 1);
-		p1Viewport.setCamera(primaryCamera);
-
-		system.addViewport(p1Viewport);
-
-		primaryCamera.setFollowEntity(this);
-		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
-
-		streamer.setPlayerCamera(0, primaryCamera);
-
-		@primaryCamera = null;
 	}
 	~Test()
 	{

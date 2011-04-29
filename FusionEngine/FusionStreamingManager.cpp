@@ -119,6 +119,7 @@ namespace FusionEngine
 	{
 		StreamingCamera &stCam = m_Cameras[net_idx];
 
+		stCam.FirstUpdate = true;
 		stCam.Camera = cam;
 		stCam.LastPosition.x = cam->GetPosition().x; stCam.LastPosition.y = cam->GetPosition().y;
 		stCam.StreamPosition = stCam.LastPosition;
@@ -417,7 +418,7 @@ namespace FusionEngine
 		return pointChanged;
 	}
 
-	void StreamingManager::Update()
+	void StreamingManager::Update(const bool refresh)
 	{
 		// Each vector element represents a range of cells to update - overlapping active-areas
 		//  are merged, so this may be < m_Cameras.size()
@@ -432,8 +433,9 @@ namespace FusionEngine
 			updateStreamingCamera(cam);
 			const Vector2 &newPosition = cam.StreamPosition;
 
-			if (!v2Equal(oldPosition, newPosition))
+			if (refresh || cam.FirstUpdate || !v2Equal(oldPosition, newPosition))
 			{
+				cam.FirstUpdate = false;
 				// Find the minimum & maximum cell indicies that have to be checked
 				CL_Rect range;
 				range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;

@@ -204,7 +204,7 @@ namespace FusionEngine
 		//const std::set<EntityPtr> &GetActiveEntities() const;
 
 		//! Calculates the active streaming area for each camera
-		void Update();
+		void Update(const bool refresh = false);
 
 		static void Register(asIScriptEngine *engine);
 
@@ -219,6 +219,8 @@ namespace FusionEngine
 			Vector2 LastPosition;
 			Vector2 LastVelocity;
 			float Tightness;
+
+			bool FirstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
 		};
 
 		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
