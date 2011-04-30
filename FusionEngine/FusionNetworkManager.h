@@ -42,6 +42,8 @@
 namespace FusionEngine
 {
 
+	static const unsigned int s_NetCompressedStringTrunc = 256;
+
 	class ElectionPacketHandler : public PacketHandler
 	{
 	public:

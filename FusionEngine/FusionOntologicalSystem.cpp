@@ -42,6 +42,7 @@
 #include "FusionInputHandler.h"
 #include "FusionInstanceSynchroniser.h"
 #include "FusionNetworkSystem.h"
+#include "FusionNetworkManager.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIODeviceProvider.h"
@@ -256,6 +257,7 @@ namespace FusionEngine
 	{
 		this->PushMessage(SystemMessage(SystemMessage::PAUSE));
 		this->PushMessage(SystemMessage(SystemMessage::HIDE));
+		NetworkManager::getSingleton().GetNetwork()->Disconnect();
 	}
 
 	void OntologicalSystem::AddViewport(ViewportPtr viewport)
@@ -304,7 +306,26 @@ namespace FusionEngine
 		{
 			ClientOptions gameOptions("gameconfig.xml", "gameconfig");
 
+			//unsigned short port = boost::lexical_cast<unsigned short>(gameOptions.GetOption_str("port"));
+			//if (!NetworkManager::getSingleton().GetNetwork()->Startup(port))
+			//	AddLogEntry("Network", "Failed to start network", LOG_CRITICAL);
+
 			gameOptions.GetOption("startup_map", &m_StartupMap);
+
+			gameOptions.GetOption("host", &m_Host);
+			if (!m_Host.empty())
+			{
+				if (!NetworkManager::getSingleton().GetNetwork()->Startup(22888))
+					AddLogEntry("Network", "Failed to start network", LOG_CRITICAL);
+
+				NetworkManager::getSingleton().GetNetwork()->Connect(m_Host, 23505);
+				m_StartupMap.clear();
+			}
+			else
+			{
+				if (!NetworkManager::getSingleton().GetNetwork()->Startup(23505))
+					AddLogEntry("Network", "Failed to start network", LOG_CRITICAL);
+			}
 
 			// Load map entities
 			//  Startup map (the map initially loaded)

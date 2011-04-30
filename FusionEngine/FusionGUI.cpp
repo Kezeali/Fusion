@@ -370,6 +370,13 @@ namespace FusionEngine
 			consoleWindow->Show();
 	}
 
+	void GUI_HideConsole(GUI* obj)
+	{
+		Rocket::Core::ElementDocument *consoleWindow = obj->GetConsoleWindow();
+		if (consoleWindow != nullptr)
+			consoleWindow->Hide();
+	}
+
 	void GUI::Register(ScriptManager *engine)
 	{
 		asIScriptEngine *iengine = engine->GetEnginePtr();
@@ -439,6 +446,10 @@ namespace FusionEngine
 		r = iengine->RegisterObjectMethod(
 			"GUI", "void showConsole()",
 			asFUNCTION(GUI_ShowConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = iengine->RegisterObjectMethod(
+			"GUI", "void hideConsole()",
+			asFUNCTION(GUI_HideConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = iengine->RegisterObjectMethod(
 			"GUI", "void setMouseCursorPosition(int x, int y)",

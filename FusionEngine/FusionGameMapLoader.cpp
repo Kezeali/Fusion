@@ -37,6 +37,7 @@
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionInstanceSynchroniser.h"
+#include "FusionNetDestinationHelpers.h"
 #include "FusionNetworkManager.h"
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
@@ -48,55 +49,73 @@ namespace FusionEngine
 		: m_ClientOptions(options),
 		m_Factory(factory),
 		m_Manager(manager),
-		m_NextTypeIndex(0)
+		m_NextTypeIndex(0),
+		m_MapChecksum(0)
 	{
 		m_FactoryConnection = factory->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
 
 		NetworkManager::getSingleton().Subscribe(MTID_LOADMAP, this);
+		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
 	}
 
 	GameMapLoader::~GameMapLoader()
 	{
 		NetworkManager* netMan = NetworkManager::getSingletonPtr();
 		if (netMan != nullptr)
+		{
 			netMan->Unsubscribe(MTID_LOADMAP, this);
+			netMan->Unsubscribe(ID_NEW_INCOMING_CONNECTION, this);
+		}
 		m_FactoryConnection.disconnect();
 	}
 
 	void GameMapLoader::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream bitStream(packet->data, packet->length, false);
+		unsigned char packetType;
+		bitStream.Read(packetType);
+
+		if (packetType == ID_NEW_INCOMING_CONNECTION && NetworkManager::getSingleton().ArbitratorIsLocal())
 		{
-			unsigned char packetType;
-			bitStream.Read(packetType);
+			// Tell the new peer what the current map is
+			RakNet::BitStream bitStream;
+			bitStream.Write(m_MapFilename.size());
+			bitStream.Write(m_MapFilename.data(), m_MapFilename.size());
+			bitStream.Write(m_MapChecksum);
+
+			NetworkManager::getSingleton().GetNetwork()->Send(
+				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER );
 		}
-
-		std::string::size_type filename_length;
-		bitStream.Read(filename_length);
-		std::string filename; filename.resize(filename_length);
-		bitStream.Read(&filename[0], filename_length);
-
-		uint32_t expectedChecksum;
-		bitStream.Read(expectedChecksum);
-
-		CL_VirtualDirectory directory;
-		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
-
-		boost::crc_32_type crc;
-		int count = 0;
-		do
+		else if (packetType == MTID_LOADMAP)
 		{
-			char buffer[2048];
-			count = device.read(buffer, 2048);
-			crc.process_bytes(buffer, 2048);
-		} while (count == 2048);
+			std::string::size_type filename_length;
+			bitStream.Read(filename_length);
+			std::string filename; filename.resize(filename_length);
+			bitStream.Read(&filename[0], filename_length);
 
-		if (crc.checksum() == expectedChecksum)
-		{
-			LoadMap(filename, directory, nullptr);
+			uint32_t expectedChecksum;
+			bitStream.Read(expectedChecksum);
+
+			CL_VirtualDirectory directory;
+			CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
+
+			boost::crc_32_type crc;
+			int count = 0;
+			do
+			{
+				char buffer[2048];
+				count = device.read(buffer, 2048);
+				crc.process_bytes(buffer, 2048);
+			} while (count == 2048);
+
+			if (crc.checksum() == expectedChecksum)
+			{
+				m_MapChecksum = crc.checksum();
+				LoadMap(filename, directory, nullptr);
+			}
+			else
+				SendToConsole("Host map is different to local map.");
 		}
-		else
-			SendToConsole("Host map is different to local map.");
 	}
 
 	void GameMapLoader::LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory)
@@ -124,6 +143,32 @@ namespace FusionEngine
 		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 		m_MapFilename = filename;
+
+		// Calculate checksum if this is the host (indicated by having a synchroniser)
+		if (synchroniser != nullptr)
+		{
+			boost::crc_32_type crc;
+			int count = 0;
+			do
+			{
+				char buffer[2048];
+				count = device.read(buffer, 2048);
+				crc.process_bytes(buffer, 2048);
+			} while (count == 2048);
+
+			m_MapChecksum = crc.checksum();
+
+			device.seek(0, CL_IODevice::seek_set);
+
+			// Send map change notification to peers
+			RakNet::BitStream bitStream;
+			bitStream.Write(m_MapFilename.size());
+			bitStream.Write(m_MapFilename.data(), m_MapFilename.size());
+			bitStream.Write(m_MapChecksum);
+
+			NetworkManager::getSingleton().GetNetwork()->Send(
+				Dear::Populace(), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER );
+		}
 
 		m_Manager->Clear();
 

@@ -68,20 +68,17 @@ namespace FusionEngine
 	* }
 	* </code>
 	*/
-	class EasyPacket
+	struct EasyPacket
 	{
-	public:
-		Packet* OriginalPacket;
+		struct Packet OriginalPacket;
 
-	public:
 		//! Constructor
-		EasyPacket();
+		//EasyPacket() {}
 		//! Constructor
-		EasyPacket(Packet *raknet_packet);
+		//EasyPacket(Packet *raknet_packet);
 
-		EasyPacket &operator =(Packet *raknet_packet);
+		//EasyPacket &operator =(Packet *raknet_packet);
 
-	public:
 		//! Returns the packet data after the header
 		unsigned char* GetData();
 		//! Returns the data length
@@ -99,7 +96,7 @@ namespace FusionEngine
 	};
 
 	//! Packet that automatically deallocates itself when going out of scope
-	class AutoPacket : public EasyPacket
+	class AutoPacket// : public EasyPacket
 	{
 	public:
 		typedef std::function<void (Packet*)> DeallocatePacketFunction;
@@ -112,6 +109,8 @@ namespace FusionEngine
 
 		//! Destructor
 		~AutoPacket();
+
+		Packet* m_RakNetPacket;
 
 	private:
 		DeallocatePacketFunction m_DeallocatePacket;

@@ -2,4 +2,7 @@
 <gameconfig>
 	<!--<var name="startup_entity" value="TestStartup"/>-->
 	<var name="startup_map" value="TestPlayer.fum"/>
+  <var name="host" value="localhost"/>
+  <!--<var name="port" value="23505"/>
+  <var name="port" value="22888"/>-->
 </gameconfig>

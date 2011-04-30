@@ -37,59 +37,60 @@ namespace FusionEngine
 {
 
 	AutoPacket::AutoPacket(Packet* raknet_packet, const AutoPacket::DeallocatePacketFunction &on_destruct)
-		: EasyPacket(raknet_packet),
+		: //EasyPacket(raknet_packet),
 		m_DeallocatePacket(on_destruct)
 	{
+		m_RakNetPacket = raknet_packet;
 	}
 
 	AutoPacket::~AutoPacket()
 	{
-		m_DeallocatePacket(OriginalPacket);
+		m_DeallocatePacket(m_RakNetPacket);
 	}
 
-	EasyPacket::EasyPacket(Packet* raknet_packet)
-		: OriginalPacket(raknet_packet)
-	{
-	}
+	//EasyPacket::EasyPacket(Packet* raknet_packet)
+	//	: OriginalPacket(raknet_packet)
+	//{
+	//}
 
-	EasyPacket& EasyPacket::operator =(Packet *packet)
-	{
-		OriginalPacket = packet;
-		return *this;
-	}
+	//EasyPacket& EasyPacket::operator =(Packet *packet)
+	//{
+	//	OriginalPacket = packet;
+	//	return *this;
+	//}
 
 	unsigned char* EasyPacket::GetData()
 	{
-		return OriginalPacket->data + (IsTimeStamped() ? s_TimestampedHeaderLength : s_BasicHeaderLength);
+		return OriginalPacket.data + (IsTimeStamped() ? s_TimestampedHeaderLength : s_BasicHeaderLength);
 	}
 
 	unsigned int EasyPacket::GetDataLength() const
 	{
-		return (OriginalPacket->bitSize / 8) - (IsTimeStamped() ? s_TimestampedHeaderLength : s_BasicHeaderLength);
+		return (OriginalPacket.bitSize / 8) - (IsTimeStamped() ? s_TimestampedHeaderLength : s_BasicHeaderLength);
 	}
 
 	unsigned char EasyPacket::GetType() const
 	{
-		return OriginalPacket->data[IsTimeStamped() ? s_TimestampedHeaderLength : s_TimestampLength];
+		return OriginalPacket.data[IsTimeStamped() ? s_TimestampedHeaderLength : s_TimestampLength];
 	}
 
 	bool EasyPacket::IsTimeStamped() const
 	{
-		return OriginalPacket->data[0] == ID_TIMESTAMP;
+		return OriginalPacket.data[0] == ID_TIMESTAMP;
 	}
 
 	RakNetTime EasyPacket::GetTime() const
 	{
 		FSN_ASSERT(IsTimeStamped());
 		if (IsTimeStamped())
-			return RakNetTime(*(OriginalPacket->data+1));
+			return RakNetTime(*(OriginalPacket.data+1));
 		else
 			return (RakNetTime)0;
 	}
 
 	const RakNetGUID &EasyPacket::GetGUID() const
 	{
-		return OriginalPacket->guid;
+		return OriginalPacket.guid;
 	}
 
 }

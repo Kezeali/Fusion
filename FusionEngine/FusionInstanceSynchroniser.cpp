@@ -31,6 +31,7 @@
 
 #include <BitStream.h>
 #include <RakNetTypes.h>
+#include <StringTable.h>
 
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
@@ -128,8 +129,7 @@ namespace FusionEngine
 	{
 		RakNet::BitStream newEntityData;
 		newEntityData.Write(requester_id);
-		newEntityData.Write(type.length());
-		newEntityData.Write(type.c_str());
+		RakNet::StringTable::Instance()->EncodeString(type.c_str(), s_NetCompressedStringTrunc, &newEntityData);
 		newEntityData.Write(id);
 		newEntityData.Write(owner_id);
 		if (name.empty())
@@ -138,7 +138,7 @@ namespace FusionEngine
 		{
 			newEntityData.Write1();
 			newEntityData.Write(name.length());
-			newEntityData.Write(name.c_str());
+			newEntityData.Write(name.c_str(), name.length());
 		}
 		if (id != 0)
 			m_Network->Send(To::Populace(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
@@ -232,12 +232,15 @@ namespace FusionEngine
 			ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
 			receivedData.Read(requesterId);
 
-			// Read the entity type-name
 			std::string::size_type length;
-			std::string entityType;
-			receivedData.Read(length);
-			entityType.resize(length);
-			receivedData.Read(&entityType[0]);
+
+			// Read the entity type-name
+			char stored_string[s_NetCompressedStringTrunc];
+			RakNet::StringTable::Instance()->DecodeString(stored_string, s_NetCompressedStringTrunc, &receivedData);
+			std::string entityType(stored_string);
+			//receivedData.Read(length);
+			//entityType.resize(length);
+			//receivedData.Read(&entityType[0], length);
 
 			ObjectID id, ownerId;
 			receivedData.Read(id);
@@ -249,7 +252,7 @@ namespace FusionEngine
 			{
 				receivedData.Read(length);
 				name.resize(length);
-				receivedData.Read(&name[0]);
+				receivedData.Read(&name[0], length);
 			}
 
 			// id == 0 indicates that a peer is requesting an id for this entity

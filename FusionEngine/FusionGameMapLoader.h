@@ -163,6 +163,7 @@ namespace FusionEngine
 
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)
 		std::string m_MapFilename;
+		uint32_t m_MapChecksum;
 
 		typedef boost::bimaps::bimap< boost::bimaps::unordered_set_of<std::string>, boost::bimaps::unordered_set_of<unsigned int> > TypeIndex;
 		TypeIndex m_TypeIndex;

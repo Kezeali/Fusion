@@ -266,6 +266,7 @@ namespace FusionEngine
 
 		std::string m_StartupEntity;
 		std::string m_StartupMap;
+		std::string m_Host;
 
 		//bool createScriptCallback(CallbackDecl &out, asIScriptObject *callback_obj, const std::string &callback_decl);
 

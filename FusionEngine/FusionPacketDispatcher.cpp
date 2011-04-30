@@ -60,7 +60,12 @@ namespace FusionEngine
 		while (packet != nullptr)
 		{
 			// Find the handlers for this type
-			auto range = m_TypeHandlers.equal_range(Ezy(packet)->GetType());
+			unsigned char type;
+			if( packet->data[0] == ID_TIMESTAMP )
+				type = packet->data[s_TimestampedHeaderLength];
+			else
+				type = packet->data[0];
+			auto range = m_TypeHandlers.equal_range(type/*((Ezy)packet)->GetType()*/);
 			if (range.first != m_TypeHandlers.end())
 			{
 				std::for_each(range.first, range.second, [&](HandlerMultiMap::value_type &it)
