@@ -105,6 +105,8 @@ namespace FusionEngine
 		//! Called when the module is built (slot function)
 		void OnModuleRebuild(BuildModuleEvent& ev);
 
+		void Connect(const std::string& host, const unsigned short port);
+
 		//! Quits the game
 		/*!
 		* Intended to be called from script

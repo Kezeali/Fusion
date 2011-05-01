@@ -92,7 +92,7 @@ namespace FusionEngine
 	protected:
 		InputMap m_Inputs;
 
-		bool m_Changed;
+		mutable bool m_Changed;
 
 		void setActive(InputState &state, bool active);
 		void setPosition(InputState &state, float position);

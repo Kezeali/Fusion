@@ -184,20 +184,23 @@ namespace FusionEngine
 	void EntitySynchroniser::EndPacket()
 	{
 		//RakNet::BitStream packetData;
-		m_PacketData.Write((unsigned int)m_EntityPacketData.size());
+		m_PacketData.Write((unsigned int)m_EntityPriorityQueue.size());
 		// Fill packet (from priority lists)
-		for (EntityPriorityMap::iterator it = m_EntityPacketData.begin(), end = m_EntityPacketData.end(); it != end; ++it)
+		for (EntityPriorityMap::iterator it = m_EntityPriorityQueue.begin(), end = m_EntityPriorityQueue.end(); it != end; ++it)
 		{
-			const EntityPacketData &packetData = it->second;
+			const auto& entity = it->second;
 
-			m_PacketData.Write(packetData.ID);
+			m_PacketData.Write(entity->GetID());
+
+			SerialisedData state;
+			entity->SerialiseState(state, false);
 
 			//m_PacketData.Write(packetData.State.mask);
-			m_PacketData.Write(packetData.State.data.length());
-			m_PacketData.Write(packetData.State.data.c_str(), packetData.State.data.length());
+			m_PacketData.Write(state.data.length());
+			m_PacketData.Write(state.data.c_str(), state.data.length());
 
 			// Note the state that was sent (so that the state wont be sent again till it changes)
-			m_SentStates[packetData.ID] = packetData.State;;
+			m_SentStates[entity->GetID()] = state;
 		}
 	}
 
@@ -210,22 +213,24 @@ namespace FusionEngine
 		//	const NetHandle &address = *it->System;
 		//	if (m_ImportantMove)
 		//	{
-		//		m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, address, false);
+		//		network->SendAsIs((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE, address, false);
 		//	}
 		//	else
 		//	{
-		//		m_Network->SendRaw((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC, address, false);
+		//		network->SendAsIs((const char*)m_PacketData.GetData(), m_PacketData.GetNumberOfBytesUsed(), MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC, address, false);
 		//	}
 		//}
 
+		RakNetwork* network = NetworkManager::getSingleton().GetNetwork();
+
 		if (m_ImportantMove)
-			{
-				m_Network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE);
-			}
-			else
-			{
-				m_Network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
-			}
+		{
+			network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE);
+		}
+		else
+		{
+			network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
+		}
 
 		m_PacketData.Reset();
 	}
@@ -282,8 +287,7 @@ namespace FusionEngine
 				if (m_EntityDataUsed + stateSize &&
 					state.data != m_SentStates[entity->GetID()].data)
 				{
-					m_EntityPacketData[priority].ID = entity->GetID();
-					m_EntityPacketData[priority].State = state;
+					m_EntityPriorityQueue[priority] = entity;
 
 					m_EntityDataUsed += stateSize;
 					return true;
@@ -292,8 +296,8 @@ namespace FusionEngine
 			// If the Entity quota has been filled, insert if the new entity has a higher priority
 			else
 			{
-				FSN_ASSERT(m_EntityPacketData.size() > 1);
-				EntityPriorityMap::iterator back = --m_EntityPacketData.end();
+				FSN_ASSERT(m_EntityPriorityQueue.size() > 1);
+				EntityPriorityMap::iterator back = --m_EntityPriorityQueue.end();
 				if (priority > back->first)
 				{
 					// Check that the Entity has changed since it was last sent
@@ -302,10 +306,9 @@ namespace FusionEngine
 					if (state.data != m_SentStates[entity->GetID()].data)
 					{
 						// Remove the entity with the lowest priority
-						m_EntityPacketData.erase(back);
+						m_EntityPriorityQueue.erase(back);
 
-						m_EntityPacketData[priority].ID = entity->GetID();
-						m_EntityPacketData[priority].State = state;
+						m_EntityPriorityQueue[priority] = entity;
 					}
 
 					return true;
@@ -319,8 +322,6 @@ namespace FusionEngine
 	void EntitySynchroniser::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream bitStream(packet->data, packet->length, true);
-
-		typedef EasyPacket* Ezy;
 
 		unsigned char type;
 		bitStream.Read(type);
@@ -358,6 +359,7 @@ namespace FusionEngine
 					}
 				}
 			}
+			break;
 		case MTID_ENTITYMOVE:
 			{
 				unsigned short entityCount;
@@ -376,6 +378,7 @@ namespace FusionEngine
 					bitStream.Read(&state.data[0], dataLength);
 				}
 			}
+			break;
 		}
 	}
 
@@ -811,7 +814,12 @@ namespace FusionEngine
 	{
 		m_EntitiesLocked = true;
 
+		m_EntitySynchroniser->BeginPacket();
+
 		updateEntities(m_ActiveEntities, split);
+
+		m_EntitySynchroniser->EndPacket();
+		m_EntitySynchroniser->Send();
 
 		m_EntitiesLocked = false;
 

@@ -45,10 +45,11 @@
 namespace FusionEngine
 {
 
-	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager)
+	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource)
 		: m_ClientOptions(options),
 		m_Factory(factory),
 		m_Manager(manager),
+		m_FileSource(filesource),
 		m_NextTypeIndex(0),
 		m_MapChecksum(0)
 	{
@@ -75,7 +76,7 @@ namespace FusionEngine
 		unsigned char packetType;
 		bitStream.Read(packetType);
 
-		if (packetType == ID_NEW_INCOMING_CONNECTION && NetworkManager::getSingleton().ArbitratorIsLocal())
+		if (packetType == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
 		{
 			// Tell the new peer what the current map is
 			RakNet::BitStream bitStream;
@@ -84,7 +85,7 @@ namespace FusionEngine
 			bitStream.Write(m_MapChecksum);
 
 			NetworkManager::getSingleton().GetNetwork()->Send(
-				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER );
+				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 		}
 		else if (packetType == MTID_LOADMAP)
 		{
@@ -96,7 +97,7 @@ namespace FusionEngine
 			uint32_t expectedChecksum;
 			bitStream.Read(expectedChecksum);
 
-			CL_VirtualDirectory directory;
+			CL_VirtualDirectory directory(CL_VirtualFileSystem(m_FileSource), "");
 			CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 			boost::crc_32_type crc;
@@ -167,7 +168,7 @@ namespace FusionEngine
 			bitStream.Write(m_MapChecksum);
 
 			NetworkManager::getSingleton().GetNetwork()->Send(
-				Dear::Populace(), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER );
+				Dear::Populace(), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 		}
 
 		m_Manager->Clear();

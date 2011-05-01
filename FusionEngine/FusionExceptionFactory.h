@@ -97,7 +97,7 @@ namespace FusionEngine
 				line);
 		}
 
-		//! Tricky template magic for backwards compatibillity with ExCode
+		//! Tricky template tomfoolery for backwards compatibillity with ExCode
 		template <int ExID>
 		static typename ExceptionClass<ExID>::type Create(const std::string& origin, const std::string& message, const char* file, long line)
 		{

@@ -33,6 +33,7 @@
 #include "FusionEditor.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionFlagRegistry.h"
 #include "FusionGameMapLoader.h"
 #include "FusionInstanceSynchroniser.h"
@@ -106,12 +107,14 @@ namespace FusionEngine
 		// The static flag registry is used by renderables for quick filtering
 		new StaticFlagRegistry();
 
+		m_FileSource.reset( new VirtualFileSource_PhysFS() );
+
 		m_EntityFactory = new EntityFactory();
 		m_EntitySync = new EntitySynchroniser(m_InputManager);
 		m_Streaming = new StreamingManager();
 		m_EntityManager = new EntityManager(m_InputManager, m_EntitySync, m_Streaming);
 		m_InstancingSync = new InstancingSynchroniser(m_EntityFactory, m_EntityManager);
-		m_MapLoader = new GameMapLoader(m_Options, m_EntityFactory, m_EntityManager);
+		m_MapLoader = new GameMapLoader(m_Options, m_EntityFactory, m_EntityManager, m_FileSource.get());
 
 		m_PhysWorld = new PhysicalWorld();
 		m_PhysWorld->SetGraphicContext(m_Renderer->GetGraphicContext());

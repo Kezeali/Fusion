@@ -134,8 +134,8 @@ namespace FusionEngine
 			SerialisedData State;
 		};
 
-		typedef std::map<unsigned int, EntityPacketData, std::greater<unsigned int>> EntityPriorityMap;
-		EntityPriorityMap m_EntityPacketData;
+		typedef std::map<unsigned int, EntityPtr, std::greater<unsigned int>> EntityPriorityMap;
+		EntityPriorityMap m_EntityPriorityQueue;
 
 		size_t m_EntityDataUsed;
 

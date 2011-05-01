@@ -97,7 +97,7 @@ namespace FusionEngine
 			PseudoEntityFlag = 1 << 1
 		};
 	public:
-		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager);
+		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource);
 		~GameMapLoader();
 
 		void HandlePacket(Packet *packet);
@@ -160,6 +160,8 @@ namespace FusionEngine
 	private:
 		EntityFactory *m_Factory;
 		EntityManager *m_Manager;
+
+		CL_VirtualFileSource* m_FileSource;
 
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)
 		std::string m_MapFilename;

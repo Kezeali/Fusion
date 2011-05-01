@@ -85,6 +85,12 @@
       <IgnoreSpecificDefaultLibraries>LIBCMTD</IgnoreSpecificDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
+    <PostBuildEvent>
+      <Command>call $(OutDir)setup_multiplayer_debug.cmd</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Setup multiplayer debug...</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

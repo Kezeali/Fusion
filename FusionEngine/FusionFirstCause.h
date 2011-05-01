@@ -38,6 +38,8 @@
 
 #include <boost/signals2/connection.hpp>
 
+class VirtualFileSource_PhysFS;
+
 namespace FusionEngine
 {
 
@@ -91,6 +93,8 @@ namespace FusionEngine
 		EntityManager *m_EntityManager;
 		InstancingSynchroniser *m_InstancingSync;
 		GameMapLoader *m_MapLoader;
+
+		std::unique_ptr< VirtualFileSource_PhysFS > m_FileSource;
 
 		PhysicalWorld *m_PhysWorld;
 

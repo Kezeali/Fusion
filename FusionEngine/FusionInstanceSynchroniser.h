@@ -42,6 +42,15 @@
 namespace FusionEngine
 {
 
+	//! Thrown when an entity can't be synchronised
+	class InstanceSyncException : public Exception
+	{
+	public:
+		//! Constructor
+		InstanceSyncException(const std::string& description, const std::string& origin, const char* file, long line)
+			: Exception(description, origin, file, line) {}
+	};
+
 	//! Synchronises the creation of new instances
 	class InstancingSynchroniser : public PacketHandler
 	{

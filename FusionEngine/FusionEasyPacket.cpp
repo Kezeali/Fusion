@@ -71,7 +71,7 @@ namespace FusionEngine
 
 	unsigned char EasyPacket::GetType() const
 	{
-		return OriginalPacket.data[IsTimeStamped() ? s_TimestampedHeaderLength : s_TimestampLength];
+		return OriginalPacket.data[IsTimeStamped() ? s_TimestampedHeaderLength : 0];
 	}
 
 	bool EasyPacket::IsTimeStamped() const

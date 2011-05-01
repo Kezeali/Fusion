@@ -41,10 +41,12 @@ namespace FusionEngine
 {
 
 	PlayerInput::PlayerInput()
+		: m_Changed(false)
 	{
 	}
 
 	PlayerInput::PlayerInput(const InputDefinitionLoader::InputDefinitionArray &inputs)
+		: m_Changed(false)
 	{
 		for (InputDefinitionLoader::InputDefinitionArray::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
 		{
@@ -116,15 +118,21 @@ namespace FusionEngine
 			stream->Write(state.IsActive());
 			stream->Write(state.GetValue());
 		}
+
+		m_Changed = false;
 	}
 
 	void PlayerInput::setActive(PlayerInput::InputState &state, bool active)
 	{
+		if (state.m_Active != active)
+			m_Changed = true;
 		state.m_Active = active;
 	}
 
 	void PlayerInput::setPosition(PlayerInput::InputState &state, float position)
 	{
+		if (!fe_fequal(state.m_Value, position, 0.0001f))
+			m_Changed = true;
 		state.m_Value = position;
 	}
 

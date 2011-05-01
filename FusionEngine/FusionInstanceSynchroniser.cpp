@@ -49,10 +49,17 @@ namespace FusionEngine
 		m_EntityManager(manager)
 	{
 		m_Network = NetworkManager::getSingleton().GetNetwork(); // TODO: make this a param of the ctor
+
+		NetworkManager::getSingleton().Subscribe(MTID_INSTANCEENTITY, this);
+		NetworkManager::getSingleton().Subscribe(MTID_REMOVEENTITY, this);
+		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
 	}
 
 	InstancingSynchroniser::~InstancingSynchroniser()
 	{
+		NetworkManager::getSingleton().Unsubscribe(MTID_INSTANCEENTITY, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_REMOVEENTITY, this);
+		NetworkManager::getSingleton().Unsubscribe(ID_NEW_INCOMING_CONNECTION, this);
 	}
 
 	void InstancingSynchroniser::Reset(ObjectID next)
@@ -242,8 +249,9 @@ namespace FusionEngine
 			//entityType.resize(length);
 			//receivedData.Read(&entityType[0], length);
 
-			ObjectID id, ownerId;
+			ObjectID id;
 			receivedData.Read(id);
+			PlayerID ownerId;
 			receivedData.Read(ownerId);
 
 			// Entity name
@@ -267,6 +275,8 @@ namespace FusionEngine
 			}
 
 			EntityPtr entity = m_Factory->InstanceEntity(entityType);
+			if (!entity)
+				FSN_EXCEPT(InstanceSyncException, "Unknown Entity type " + entityType);
 
 			entity->SetID(id);
 			entity->SetOwnerID(ownerId);
@@ -285,6 +295,14 @@ namespace FusionEngine
 			receivedData.Read(removedId);
 
 			m_EntityManager->RemoveEntityById(removedId);
+		}
+		else if (type == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
+		{
+			const auto& entities = m_EntityManager->GetEntities();
+			for( auto it = entities.begin(), end = entities.end(); it != end; ++it )
+			{
+				sendInstancingMessage(0, it->second->GetID(), it->second->GetType(), it->second->GetName(), it->second->GetOwnerID());
+			}
 		}
 	}
 

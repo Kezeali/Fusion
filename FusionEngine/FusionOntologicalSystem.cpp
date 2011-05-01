@@ -191,14 +191,14 @@ namespace FusionEngine
 
 	void OntologicalSystem::Update(float split)
 	{
-		//m_EntitySyncroniser->BeginPacket();
+		//m_EntitySynchroniser->BeginPacket();
 
 		m_PhysWorld->Step(split);
 
 		m_EntityManager->Update(split);
 
-		//m_EntitySyncroniser->EndPacket();
-		//m_EntitySyncroniser->Send();
+		//m_EntitySynchroniser->EndPacket();
+		//m_EntitySynchroniser->Send();
 
 		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
 		{
@@ -221,15 +221,20 @@ namespace FusionEngine
 
 	void OntologicalSystem::HandlePacket(Packet *packet)
 	{
-		//RakNet::BitStream bitStream(packet->data, packet->length, false);
-		//unsigned char packetType;
-		//bitStream.Read(packetType);
+		RakNet::BitStream bitStream(packet->data, packet->length, false);
+		unsigned char packetType;
+		bitStream.Read(packetType);
 
-		//switch (packetType)
-		//{
-		//case MTID_LOADMAP:
-		//	processMapPacket(&bitStream);
-		//}
+		switch (packetType)
+		{
+		case ID_NEW_INCOMING_CONNECTION:
+			if (m_Host.empty() || NetworkManager::ArbitratorIsLocal())
+			{
+			}
+			break;
+		case MTID_JOINSETUP:
+			break;
+		}
 	}
 
 	void OntologicalSystem::Clear()
@@ -251,12 +256,15 @@ namespace FusionEngine
 			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 			m_MapLoader->LoadMap("Maps/" + m_StartupMap, dir, m_InstancingSynchroniser);
 		}
+
+		NetworkManager::getSingleton().Subscribe(MTID_JOINSETUP, this);
 	}
 
 	void OntologicalSystem::Stop()
 	{
 		this->PushMessage(SystemMessage(SystemMessage::PAUSE));
 		this->PushMessage(SystemMessage(SystemMessage::HIDE));
+		NetworkManager::getSingleton().Unsubscribe(MTID_JOINSETUP, this);
 		NetworkManager::getSingleton().GetNetwork()->Disconnect();
 	}
 
@@ -312,6 +320,14 @@ namespace FusionEngine
 
 			gameOptions.GetOption("startup_map", &m_StartupMap);
 
+			// Load map entities
+			//  Startup map (the map initially loaded)
+			if (!m_StartupMap.empty())
+			{
+				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				m_MapLoader->LoadEntityTypes("Maps/" + m_StartupMap, dir);
+			}
+
 			gameOptions.GetOption("host", &m_Host);
 			if (!m_Host.empty())
 			{
@@ -326,58 +342,20 @@ namespace FusionEngine
 				if (!NetworkManager::getSingleton().GetNetwork()->Startup(23505))
 					AddLogEntry("Network", "Failed to start network", LOG_CRITICAL);
 			}
-
-			// Load map entities
-			//  Startup map (the map initially loaded)
-			if (!m_StartupMap.empty())
-			{
-				CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				m_MapLoader->LoadEntityTypes("Maps/" + m_StartupMap, dir);
-			}
-			//  maps.txt
-			//std::string maps, line;
-			//try {
-			//	OpenString_PhysFS(maps, "Maps/maps.txt"); // maps.txt contains a list of map files used by the game, seperated by newlines
-			//} catch (FileSystemException&) {
-			//	SendToConsole("Couldn't open maps.txt: If maps are not listed in Data/Maps/maps.txt they may fail to load.");
-			//}
-			//std::string::size_type lineBegin = 0, lineEnd;
-			//while (true)
-			//{
-			//	if (lineBegin >= maps.length())
-			//		break;
-
-			//	lineEnd = maps.find("\n", lineBegin);
-			//	if (lineEnd == std::string::npos)
-			//		break;
-
-			//	if (lineEnd != lineBegin+1) // ignore empty lines
-			//	{
-			//		line = fe_trim( maps.substr(lineBegin, lineEnd-lineBegin) ); // Get the line, trimming out the crap
-			//		// Open the map file
-			//		try
-			//		{
-			//			CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-			//			CL_IODevice mapFile = dir.open_file("Maps/" + line, CL_File::open_existing, CL_File::access_read);
-			//			// Load entity types into the factory (the map loader has an EntityManager pointer
-			//			//  from which it can get an EntityFactory pointer, on which it calls LoadScriptedType()
-			//			//  for each entity found in the mapFile)
-			//			m_MapLoader->LoadEntityTypes(mapFile);
-			//		}
-			//		catch (CL_Exception &)
-			//		{
-			//			SendToConsole("MapLoader - Reading maps.txt: Couldn't load " + line + ", file doesn't exist or can't be read.");
-			//		}
-			//	}
-
-			//	lineBegin = lineEnd+1;
-			//}
 		}
 
 		else if (ev.type == BuildModuleEvent::PostBuild)
 		{
 			
 		}
+	}
+
+	void OntologicalSystem::Connect(const std::string& host, const unsigned short port)
+	{
+		// It's ok to connect immediately even if this is called by an Entity because the
+		//  map wont be reloaded until the next step (ie. when received packets are processed)
+		//  at the earliest
+		NetworkManager::getSingleton().GetNetwork()->Connect(host, port);
 	}
 
 	void OntologicalSystem::Quit()
