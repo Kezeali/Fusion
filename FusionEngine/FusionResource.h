@@ -121,8 +121,12 @@ namespace FusionEngine
 		/*!
 		* Allows StringLoader to save memory by making the Data property point directly
 		* to the Path property (yes, this is very dumb... but I can't think of a better way o_o)
+		*  - note (2011): this comment was written in around 2007, and is kept mostly for my amusement :p
 		*/
 		std::string *_getTextPtr();
+
+		//! Adds a dependency
+		void AddDependency(const std::string& type, const std::string& path);
 
 		//! Sets the data
 		void SetDataPtr(void* ptr);

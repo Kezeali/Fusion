@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2007-2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
+*  Copyright (c) 2007-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
@@ -52,6 +52,7 @@ namespace FusionEngine
 		}
 		catch (CL_Exception&)
 		{
+			resource->_setValid(false);
 			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
 		}
 
@@ -61,7 +62,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
+	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
@@ -71,45 +72,47 @@ namespace FusionEngine
 		resource->SetDataPtr(NULL);
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
 			delete resource->GetDataPtr();
 		}
 
-		if (!resource->HasQuickLoadData())
-		{
-			SpriteDefinition *def = new SpriteDefinition();
-			try
-			{
-				LoadSpriteDefinition(*def, resource->GetPath(), vdir);
-				resource->SetQuickLoadDataPtr(def);
-				resource->_setHasQuickLoadData(true);
-			}
-			catch (FileSystemException& ex)
-			{
-				delete def;
-				FSN_EXCEPT(ExCode::IO, "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
-			}
-		}
+		//if (!resource->HasQuickLoadData())
+		//{
+		//	SpriteDefinition *def = new SpriteDefinition();
+		//	try
+		//	{
+		//		LoadSpriteDefinition(*def, resource->GetPath(), vdir);
+		//		resource->SetQuickLoadDataPtr(def);
+		//		resource->_setHasQuickLoadData(true);
+		//	}
+		//	catch (FileSystemException& ex)
+		//	{
+		//		delete def;
+		//		FSN_EXCEPT(ExCode::IO, "Definition data for '" + resource->GetPath() + "' could not be loaded: " + ex.GetDescription());
+		//	}
+		//}
 
-		CL_Sprite *sprite = NULL;
+		SpriteDefinition* def = new SpriteDefinition();
 		try
 		{
-			SpriteDefinition *def = static_cast<SpriteDefinition*>( resource->GetQuickLoadDataPtr() );
-			sprite = def->CreateSprite(gc, vdir);
+			LoadSpriteDefinition(*def, resource->GetPath(), vdir);
 		}
 		catch (CL_Exception&)
 		{
+			delete def;
+			resource->SetDataPtr(nullptr);
+			resource->_setValid(false);
 			FSN_EXCEPT(ExCode::IO, "'" + resource->GetPath() + "' could not be loaded");
 		}
-
-		resource->SetDataPtr(sprite);
-		resource->_setValid(sprite != NULL);
+		
+		resource->SetDataPtr(def);
+		resource->_setValid(true);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
@@ -117,17 +120,17 @@ namespace FusionEngine
 
 			delete resource->GetDataPtr();
 
-			if (resource->HasQuickLoadData())
-			{
-				SpriteDefinition *def = static_cast<SpriteDefinition*>( resource->GetQuickLoadDataPtr() );
-				def->SpriteReleased();
-			}
+			//if (resource->HasQuickLoadData())
+			//{
+			//	SpriteDefinition *def = static_cast<SpriteDefinition*>( resource->GetQuickLoadDataPtr() );
+			//	def->SpriteReleased();
+			//}
 		}
 
 		resource->SetDataPtr(NULL);
 	}
 
-	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, CL_GraphicContext &gc, void* userData)
+	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->HasQuickLoadData())
 			delete resource->GetQuickLoadDataPtr();

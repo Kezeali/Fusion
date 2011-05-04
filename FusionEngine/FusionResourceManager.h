@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2006-2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
+*  Copyright (c) 2006-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #ifndef Header_FusionEngine_ResourceManager
@@ -70,19 +70,19 @@ namespace FusionEngine
 		//! Destructor
 		~ResourceManager();
 
+		const CL_GraphicContext& GetGC() const;
+
 		//! Assigns the given ResourceLoader to its relavant resource type
 		void AddResourceLoader(const ResourceLoader& resourceLoader);
 		//! Creates a new resource loader using the given callbacks
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData);
-		//! Creates a new resource loader using the given callbacks
-		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, resource_unload qlDataUnloadFn, void* userData);
 
 		//! Starts loading resources in the background
 		/*!
-		* \param[in] shared_gc
-		* The GC to pass to the worker thread. What this should be is platform dependant.
+		* \param[in] render_gc
+		* The GC into which textures should be loaded
 		*/
-		void StartLoaderThread(CL_GraphicContext &shared_gc);
+		void StartLoaderThread(CL_GraphicContext &render_gc);
 		//! Stops loading resources in the background
 		void StopLoaderThread();
 
@@ -92,22 +92,15 @@ namespace FusionEngine
 		* Loads resources listed in the ToLoad list,
 		* unloads resources listed in the ToUnload list.
 		*/
-		void Load(CL_GraphicContext *gc
-#ifdef _WIN32
-			// Since WGL requires the worker-GC to be created in the worker thread
-			//  an event must be passed here so the main thread can wait until the worker
-			//  GC has been created.
-			, CL_Event worker_gc_created
-#endif
-			);
+		void Load();
 
-		//! Invokes the ResourceLoadedFn for each loaded resource
+		//! Invokes the ResourceLoadedFn (callback) for each loaded resource
 		void DeliverLoadedResources();
 
-		//! Adds all resources that are no longer used to the ToUnload queue
+		//! Adds all resources that are no longer used (refcount is zero) to the ToUnload queue
 		void UnloadUnreferencedResources();
 
-		//! Loads / gets a resource
+		//! Loads / gets a resource (asynchronous)
 		boost::signals2::connection GetResource(const std::string& type, const std::string& path, const ResourceContainer::LoadedFn &on_load_callback, int priority = 0);
 
 		//! Unloads the given resource
@@ -115,14 +108,14 @@ namespace FusionEngine
 		* \param[in] path
 		* Ident. of the resource to unload
 		* \param[in] gc
-		* GraphicContext for the current thread
+		* GraphicContext for the render thread
 		*/
 		void UnloadResource(const std::string &path, CL_GraphicContext &gc);
 
 		//! Unloads and deletes all resources
 		/*!
 		* \param[in] gc
-		* GraphicContext for the current thread
+		* GraphicContext for the render thread
 		*/
 		void DeleteAllResources(CL_GraphicContext &gc);
 
@@ -206,10 +199,10 @@ namespace FusionEngine
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 
-		void loadResource(ResourceDataPtr &resource, CL_GraphicContext &gc);
+		void loadResource(ResourceDataPtr &resource);
 
-		void getAndUnloadResource(const std::string &path, CL_GraphicContext &gc);
-		void unloadResource(ResourceDataPtr &resource, CL_GraphicContext &gc, bool unload_quickload_data = false);
+		void getAndUnloadResource(const std::string &path);
+		void unloadResource(ResourceDataPtr &resource, bool unload_quickload_data = false);
 	};
 
 }

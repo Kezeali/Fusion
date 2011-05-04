@@ -729,11 +729,11 @@ namespace FusionEngine
 			RenderableSprite *renderable = dynamic_cast<RenderableSprite*>(abstractRenderable.get());
 			if (renderable != nullptr)
 			{
-				if (!renderable->IsPaused() && renderable->GetSpriteResource().IsLoaded())
+				if (!renderable->IsPaused() && renderable->GetSprite()->is_null())
 				{
-					std::pair<ptr_set::iterator, bool> result = updated_sprites.insert((uintptr_t)renderable->GetSpriteResource().Get());
+					std::pair<ptr_set::iterator, bool> result = updated_sprites.insert( reinterpret_cast<uintptr_t>(renderable) );
 					if (result.second)
-						renderable->GetSpriteResource()->update((int)(split * 1000.f));
+						renderable->GetSprite()->update((int)(split * 1000.f));
 				}
 				renderable->UpdateAABB();
 			}

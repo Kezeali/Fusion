@@ -37,6 +37,7 @@
 #include "FusionStreamedResourceUser.h"
 
 #include "FusionResourcePointer.h"
+#include "FusionSpriteDefinition.h"
 #include "FusionVector2.h"
 
 #include <ClanLib/Display/2D/image.h>
@@ -57,7 +58,7 @@ namespace FusionEngine
 		//! Virtual DTOR
 		virtual ~Renderable() {};
 
-		//! Implementation must draw something to the given GC
+		//! Implementation should draw something to the given GC
 		virtual void Draw(CL_GraphicContext &gc, const Vector2 &origin) = 0;
 
 		//! Returns the AABB
@@ -172,12 +173,13 @@ namespace FusionEngine
 	class RenderableSprite : public Renderable, public StreamedResourceUser
 	{
 	public:
-		RenderableSprite();
+		RenderableSprite(CL_GraphicContext& gc);
 		RenderableSprite(ResourceManager *res_man, const std::string &sprite_path, int priority);
 		virtual ~RenderableSprite();
 
 		//void SetSpriteResource(ResourceManager *res_man, const std::string &path);
-		ResourcePointer<CL_Sprite> &GetSpriteResource();
+		ResourcePointer<SpriteDefinition> &GetSpriteDefinition();
+		CL_Sprite* GetSprite();
 
 		void OnResourceLoad(ResourceDataPtr resource);
 		//void OnStreamIn();
@@ -228,7 +230,10 @@ namespace FusionEngine
 		bool m_ModifiedOffset;
 		bool m_ModifiedAngle;
 
-		ResourcePointer<CL_Sprite> m_Sprite;
+		CL_GraphicContext m_GC;
+
+		ResourcePointer<SpriteDefinition> m_SpriteDefinition;
+		CL_Sprite m_Sprite;
 
 		int m_PreviousWidth, m_PreviousHeight;
 		CL_Angle m_PreviousAngle;

@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2007-2009 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
+*  Copyright (c) 2010-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -65,64 +65,53 @@ namespace FusionEngine
 		ClearImageData();
 	}
 
-	void SpriteDefinition::LoadXml(const std::string &working_directory, TiXmlDocument *document)
+	void SpriteDefinition::LoadXml(const std::string &working_directory, TiXmlDocument *document, CL_VirtualDirectory &dir)
 	{
 		m_WorkingDirectory = working_directory;
 
 		TiXmlElement *root = document->FirstChildElement();
 		if (root == nullptr)
-			return;
-		//FSN_EXCEPT(ExCode::FileType, "SpriteDefinition::LoadXml", "Document has no elements.");
+			FSN_EXCEPT(FileTypeException, "Not a valid XML sprite definition.");
 
 		if (root->ValueStr() != "sprite")
-			FSN_EXCEPT(ExCode::FileType, "Tried to load non-sprite document");
+			FSN_EXCEPT(FileTypeException, "Not a sprite definition.");
 
 		// Load id
 		//m_ID = CL_StringHelp::text_to_int(attribute_text);
 
 		loadImageElements(root);
 		loadMoreOptions(root);
-	}
 
-	CL_Sprite *SpriteDefinition::CreateSprite(CL_GraphicContext &gc, CL_VirtualDirectory &dir)
-	{
-		//ResourceManager *man = ResourceManager::getSingletonPtr();
-		//if (man == nullptr)
-		//	return nullptr;
-
-		CL_SpriteDescription description;
 		for (ImageArray::iterator it = m_Images.begin(), end = m_Images.end(); it != end; ++it)
 		{
 			// Load image data if necessary
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
 			if (it->image_data.is_null())
-					it->image_data = CL_ImageProviderFactory::load(it->filename, dir);
+				it->image_data = CL_ImageProviderFactory::load(it->filename, dir);
+#else
+			CL_PixelBuffer image_data = CL_ImageProviderFactory::load(it->filename, dir);
 #endif
-
-			CL_Texture texture = CL_SharedGCData::load_texture(gc, it->filename, dir);
 
 			if (it->type == Image::FrameFile)
 			{
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
-				description.add_frame(it->image_data);
+				m_Description.add_frame(it->image_data);
 #else
-				description.add_frame(texture);
-				//description.add_frame(it->filename, dir);
+				m_Description.add_frame(image_data);
 #endif
 			}
 			else if (it->type == Image::FrameGridCell)
 			{
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
-				description.add_gridclipped_frames(
+				m_Description.add_gridclipped_frames(
 					it->image_data,
 					it->xpos, it->ypos, it->width, it->height,
 					it->xarray, it->yarray,
 					it->array_skipframes,
 					it->xspacing, it->yspacing);
 #else
-				//CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
-				description.add_gridclipped_frames(
-					texture,
+				m_Description.add_gridclipped_frames(
+					image_data,
 					it->xpos, it->ypos, it->width, it->height,
 					it->xarray, it->yarray,
 					it->array_skipframes,
@@ -132,38 +121,40 @@ namespace FusionEngine
 			else if (it->type == Image::FrameAlphaCell)
 			{
 #ifdef FSN_SPRITEDEF_STOREIMAGEDATA
-				if (!it->free)
-					description.add_alphaclipped_frames(it->image_data, it->xpos, it->ypos, it->trans_limit);
+				if (it->free)
+					m_Description.add_alphaclipped_frames_free(it->image_data, it->xpos, it->ypos, it->trans_limit);
 				else
-					description.add_alphaclipped_frames(it->image_data, it->xpos, it->ypos, it->trans_limit);
+					m_Description.add_alphaclipped_frames(it->image_data, it->xpos, it->ypos, it->trans_limit);
 #else
-				//CL_PixelBuffer buf = CL_ImageProviderFactory::load(it->filename, dir);
-				if (!it->free)
-					description.add_alphaclipped_frames(texture, it->xpos, it->ypos, it->trans_limit);
+				if (it->free)
+					m_Description.add_alphaclipped_frames_free(image_data, it->xpos, it->ypos, it->trans_limit);
 				else
-					description.add_alphaclipped_frames(texture, it->xpos, it->ypos, it->trans_limit);
+					m_Description.add_alphaclipped_frames(image_data, it->xpos, it->ypos, it->trans_limit);
 #endif
 			}
 		}
+	}
 
-		CL_Sprite *sprite = new CL_Sprite(gc, description);
+	CL_Sprite SpriteDefinition::CreateSprite(CL_GraphicContext &gc)
+	{
+		CL_Sprite sprite(gc, m_Description);
 
-		sprite->set_alignment(m_OffsetOrigin, m_OffsetX, m_OffsetY);
-		sprite->set_rotation_hotspot(m_RotationOrigin, m_RotationPointX, m_RotationPointY);
-		sprite->set_base_angle(m_BaseAngle);
-		sprite->set_color(m_Colour);
-		sprite->set_scale(m_ScaleX, m_ScaleY);
+		sprite.set_alignment(m_OffsetOrigin, m_OffsetX, m_OffsetY);
+		sprite.set_rotation_hotspot(m_RotationOrigin, m_RotationPointX, m_RotationPointY);
+		sprite.set_base_angle(m_BaseAngle);
+		sprite.set_color(m_Colour);
+		sprite.set_scale(m_ScaleX, m_ScaleY);
 		// Animation
-		sprite->set_delay(m_Animation.delay);
-		sprite->set_play_loop(m_Animation.loop);
-		sprite->set_play_pingpong(m_Animation.pingpong);
-		sprite->set_play_backward(m_Animation.backward);
-		sprite->set_show_on_finish(m_Animation.showOnFinish);
+		sprite.set_delay(m_Animation.delay);
+		sprite.set_play_loop(m_Animation.loop);
+		sprite.set_play_pingpong(m_Animation.pingpong);
+		sprite.set_play_backward(m_Animation.backward);
+		sprite.set_show_on_finish(m_Animation.showOnFinish);
 		// Frame delay / offset
 		for (SpriteFrameArray::const_iterator it = m_Frames.begin(), end = m_Frames.end(); it != end; ++it)
 		{
-			sprite->set_frame_delay(it->number, it->delay);
-			sprite->set_frame_offset(it->number, it->offset);
+			sprite.set_frame_delay(it->number, it->delay);
+			sprite.set_frame_offset(it->number, it->offset);
 		}
 
 		// Increment usage counter

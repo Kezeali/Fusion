@@ -271,7 +271,7 @@ namespace FusionEngine
 	}
 
 
-	RenderableSprite::RenderableSprite()
+	RenderableSprite::RenderableSprite(CL_GraphicContext& gc)
 		: m_PreviousWidth(0),
 		m_PreviousHeight(0),
 		m_PositionChanged(false),
@@ -279,7 +279,8 @@ namespace FusionEngine
 		m_ModifiedAngle(false),
 		m_ModifiedColour(false),
 		m_ModifiedOffset(false),
-		m_ModifiedOrigin(false)
+		m_ModifiedOrigin(false),
+		m_GC(gc)
 	{
 	}
 
@@ -292,7 +293,8 @@ namespace FusionEngine
 		m_ModifiedAngle(false),
 		m_ModifiedColour(false),
 		m_ModifiedOffset(false),
-		m_ModifiedOrigin(false)
+		m_ModifiedOrigin(false),
+		m_GC(res_man->GetGC())
 	{
 	}
 
@@ -302,25 +304,25 @@ namespace FusionEngine
 
 	void RenderableSprite::UpdateAABB()
 	{
-		if (m_Sprite.IsLoaded())
+		if (!m_Sprite.is_null())
 		{
 			bool bbChanged = false;
 
 			// Check whether AABB needs to be upadated (frame width / height has changed)
-			if (m_Sprite->get_height() != m_PreviousHeight)
+			if (m_Sprite.get_height() != m_PreviousHeight)
 			{
 				bbChanged = true;
-				m_PreviousHeight = m_Sprite->get_height();
+				m_PreviousHeight = m_Sprite.get_height();
 			}
-			if (m_Sprite->get_width() != m_PreviousWidth)
+			if (m_Sprite.get_width() != m_PreviousWidth)
 			{
 				bbChanged = true;
-				m_PreviousWidth = m_Sprite->get_width();
+				m_PreviousWidth = m_Sprite.get_width();
 			}
-			if (fe_fequal(m_Sprite->get_angle().to_radians(), m_PreviousAngle.to_radians(), 0.001f))
+			if (fe_fequal(m_Sprite.get_angle().to_radians(), m_PreviousAngle.to_radians(), 0.001f))
 			{
 				bbChanged = true;
-				m_PreviousAngle = m_Sprite->get_angle();
+				m_PreviousAngle = m_Sprite.get_angle();
 			}
 
 			if (bbChanged || m_PositionChanged)
@@ -328,16 +330,16 @@ namespace FusionEngine
 				CL_Rectf bb;
 				bb.left = m_Offset.x;
 				bb.top = m_Offset.y;
-				bb.right = m_Offset.x + m_Sprite->get_width();
-				bb.bottom = m_Offset.y + m_Sprite->get_height();
+				bb.right = m_Offset.x + m_Sprite.get_width();
+				bb.bottom = m_Offset.y + m_Sprite.get_height();
 
 				CL_Origin origin;
 				int x, y;
-				m_Sprite->get_alignment(origin, x, y);
+				m_Sprite.get_alignment(origin, x, y);
 				bb.translate(-CL_Vec2f::calc_origin(origin, bb.get_size()));
 
-				m_Sprite->get_rotation_hotspot(origin, x, y);
-				m_AABB = bb.get_rot_bounds(origin, m_Offset.x + x, m_Offset.y + y, m_Sprite->get_angle());
+				m_Sprite.get_rotation_hotspot(origin, x, y);
+				m_AABB = bb.get_rot_bounds(origin, m_Offset.x + x, m_Offset.y + y, m_Sprite.get_angle());
 
 				m_PositionChanged = false;
 			}
@@ -346,8 +348,8 @@ namespace FusionEngine
 
 	void RenderableSprite::SetAlpha(float _alpha)
 	{
-		if (m_Sprite.IsLoaded())
-			m_Sprite->set_alpha(_alpha);
+		if (!m_Sprite.is_null())
+			m_Sprite.set_alpha(_alpha);
 		m_Alpha = _alpha;
 		m_ModifiedAlpha = true;
 	}
@@ -362,8 +364,8 @@ namespace FusionEngine
 		m_Colour.set_color(r, g, b);
 		m_ModifiedColour = true;
 
-		if (m_Sprite.IsLoaded())
-			m_Sprite->set_color(m_Colour);
+		if (!m_Sprite.is_null())
+			m_Sprite.set_color(m_Colour);
 	}
 
 	void RenderableSprite::SetColour(const CL_Color &colour)
@@ -371,8 +373,8 @@ namespace FusionEngine
 		m_Colour = colour;
 		m_ModifiedColour = true;
 
-		if (m_Sprite.IsLoaded())
-			m_Sprite->set_color(m_Colour);
+		if (m_Sprite.is_null())
+			m_Sprite.set_color(m_Colour);
 	}
 
 	const CL_Color &RenderableSprite::GetColour() const
@@ -382,10 +384,10 @@ namespace FusionEngine
 
 	void RenderableSprite::SetOrigin(CL_Origin origin)
 	{
-		if (m_Sprite.IsLoaded())
+		if (!m_Sprite.is_null())
 		{
-			m_Sprite->set_alignment(origin);
-			m_Sprite->set_rotation_hotspot(origin);
+			m_Sprite.set_alignment(origin);
+			m_Sprite.set_rotation_hotspot(origin);
 		}
 
 		m_ModifiedOrigin = true;
@@ -424,15 +426,15 @@ namespace FusionEngine
 
 	void RenderableSprite::SetAngle(float angle)
 	{
-		if (m_Sprite.IsLoaded())
+		if (!m_Sprite.is_null())
 		{
-			m_Sprite->set_angle(CL_Angle(angle, cl_radians));
+			m_Sprite.set_angle(CL_Angle(angle, cl_radians));
 
 			if (!fe_fequal(angle, m_Angle))
 			{
 				CL_Origin origin;
 				int x, y;
-				m_Sprite->get_rotation_hotspot(origin, x, y);
+				m_Sprite.get_rotation_hotspot(origin, x, y);
 
 				m_AABB = m_AABB.get_rot_bounds(origin, m_Offset.x + x, m_Offset.y + y, CL_Angle(angle, cl_radians));
 			}
@@ -447,37 +449,43 @@ namespace FusionEngine
 		return m_Angle;
 	}
 
-	ResourcePointer<CL_Sprite> &RenderableSprite::GetSpriteResource()
+	ResourcePointer<SpriteDefinition> &RenderableSprite::GetSpriteDefinition()
 	{
-		return m_Sprite;
+		return m_SpriteDefinition;
+	}
+
+	CL_Sprite* RenderableSprite::GetSprite()
+	{
+		return &m_Sprite;
 	}
 
 	void RenderableSprite::OnResourceLoad(ResourceDataPtr resource)
 	{
-		m_Sprite.SetTarget(resource);
+		m_SpriteDefinition.SetTarget(resource);
+		m_Sprite = m_SpriteDefinition->CreateSprite(m_GC);
 		if (m_ModifiedAlpha)
-			m_Sprite->set_alpha(m_Alpha);
+			m_Sprite.set_alpha(m_Alpha);
 		else
-			m_Alpha = m_Sprite->get_alpha();
+			m_Alpha = m_Sprite.get_alpha();
 		if (m_ModifiedColour)
-			m_Sprite->set_color(m_Colour);
+			m_Sprite.set_color(m_Colour);
 		else
-			m_Colour = m_Sprite->get_color();
+			m_Colour = m_Sprite.get_color();
 
 		if (m_ModifiedAngle)
-			m_Sprite->set_angle(CL_Angle(m_Angle, cl_radians));
+			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
 		else
-			m_Angle = m_Sprite->get_angle().to_radians();
+			m_Angle = m_Sprite.get_angle().to_radians();
 
 		CL_Origin alignment_origin, rotation_point;
 		int ax, ay, rx, ry;
-		m_Sprite->get_alignment(alignment_origin, ax, ay);
-		m_Sprite->get_rotation_hotspot(rotation_point, rx, ry);
+		m_Sprite.get_alignment(alignment_origin, ax, ay);
+		m_Sprite.get_rotation_hotspot(rotation_point, rx, ry);
 		// Set the origin
 		if (m_ModifiedOrigin)
 		{
-			m_Sprite->set_alignment(m_Origin, ax, ay);
-			m_Sprite->set_rotation_hotspot(m_Origin, rx, ry);
+			m_Sprite.set_alignment(m_Origin, ax, ay);
+			m_Sprite.set_rotation_hotspot(m_Origin, rx, ry);
 		}
 		else
 			m_Origin = alignment_origin;
@@ -487,38 +495,39 @@ namespace FusionEngine
 
 	void RenderableSprite::OnStreamOut()
 	{
-		m_Sprite.Release();
+		m_SpriteDefinition.Release();
+		m_Sprite = CL_Sprite();
 	}
 
 	void RenderableSprite::Draw(CL_GraphicContext &gc)
 	{
-		if (m_Enabled && m_Sprite.IsLoaded())
+		if (m_Enabled && !m_Sprite.is_null())
 		{
-			m_Sprite->draw(gc, m_Offset.x, m_Offset.y);
+			m_Sprite.draw(gc, m_Offset.x, m_Offset.y);
 		}
 	}
 
 	void RenderableSprite::Draw(CL_GraphicContext &gc, const Vector2 &origin)
 	{
-		if (m_Enabled && m_Sprite.IsLoaded())
+		if (m_Enabled && !m_Sprite.is_null())
 		{
-			m_Sprite->draw(gc, m_Offset.x + origin.x, m_Offset.y + origin.y);
+			m_Sprite.draw(gc, m_Offset.x + origin.x, m_Offset.y + origin.y);
 		}
 	}
 
 	void RenderableSprite::StartAnimation()
 	{
-		if (m_Sprite.IsLoaded())
+		if (!m_Sprite.is_null())
 		{
-			m_Sprite->restart();
+			m_Sprite.restart();
 		}
 	}
 
 	void RenderableSprite::StopAnimaion()
 	{
-		if (m_Sprite.IsLoaded())
+		if (!m_Sprite.is_null())
 		{
-			m_Sprite->finish();
+			m_Sprite.finish();
 		}
 	}
 
