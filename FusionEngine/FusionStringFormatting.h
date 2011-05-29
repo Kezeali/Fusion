@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_StringFormatting
-#define Header_FusionEngine_StringFormatting
+#ifndef H_FusionEngine_StringFormatting
+#define H_FusionEngine_StringFormatting
 
 #if _MSC_VER > 1000
 #pragma once

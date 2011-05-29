@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionRocketInterface
-#define Header_FusionRocketInterface
+#ifndef H_FusionRocketInterface
+#define H_FusionRocketInterface
 
 #if _MSC_VER > 1000
 #pragma once

@@ -33,8 +33,43 @@
 #include "FusionPacketDispatcher.h"
 #include "FusionRakNetwork.h"
 
+#include <BitStream.h>
+
 namespace FusionEngine
 {
+
+	void PeerIDManager::HandlePacket(Packet *packet)
+	{
+		RakNet::BitStream bs(packet->data, packet->length, false);
+		MessageID mtid;
+		bs.Read(mtid);
+
+		switch (mtid)
+		{
+		case ID_NEW_INCOMING_CONNECTION:
+			{
+				RakNet::BitStream outgoing;
+				// the host will always have an up-to-date id pool, since it is always the oldest peer (it will have
+				//  received an MTID_SET_PEER_ID for each peer currently connected, if it didn't allocate them itself)
+				uint8_t id = m_UnusedIDs.getFreeID(); 
+				outgoing.Write(packet->guid);
+				outgoing.Write(id);
+				m_Network->Send(To::Populace(), false, MTID_SET_PEER_ID, &outgoing, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+			}
+			break;
+		case MTID_SET_PEER_ID:
+			{
+				RakNetGUID guid;
+				bs.Read(guid);
+				uint8_t id;
+				bs.Read(id);
+				m_UnusedIDs.takeID(id);
+				if (guid == m_Network->GetLocalGUID())
+					m_PeerID = id;
+			}
+			break;
+		}
+	}
 
 	ElectionPacketHandler::ElectionPacketHandler()
 	{
@@ -48,23 +83,28 @@ namespace FusionEngine
 	void ElectionPacketHandler::HandlePacket(Packet *packet)
 	{
 		EasyPacket *easyPacket = (EasyPacket*)packet;
-		if (easyPacket->GetType() == ID_FCM2_NEW_HOST)
-		{
-			m_ArbitratorGUID = easyPacket->GetGUID();
-		}
+		FSN_ASSERT(easyPacket->GetType() == ID_FCM2_NEW_HOST);
+		m_ArbitratorGUID = easyPacket->GetGUID();
 	}
 
 	NetworkManager::NetworkManager(RakNetwork *network, PacketDispatcher *dispatcher)
 		: m_Network(network),
-		m_Dispatcher(dispatcher)
+		m_Dispatcher(dispatcher),
+		m_PeerIDManager(m_Network)
 	{
 		m_ArbitratorElector.m_ArbitratorGUID = network->GetLocalGUID();
 		m_Dispatcher->Subscribe(ID_FCM2_NEW_HOST, &m_ArbitratorElector);
+
+		m_Dispatcher->Subscribe(ID_NEW_INCOMING_CONNECTION, &m_PeerIDManager);
+		m_Dispatcher->Subscribe(MTID_SET_PEER_ID, &m_PeerIDManager);
 	}
 
 	NetworkManager::~NetworkManager()
 	{
 		m_Dispatcher->Unsubscribe(ID_FCM2_NEW_HOST, &m_ArbitratorElector);
+
+		m_Dispatcher->Unsubscribe(ID_NEW_INCOMING_CONNECTION, &m_PeerIDManager);
+		m_Dispatcher->Unsubscribe(MTID_SET_PEER_ID, &m_PeerIDManager);
 	}
 
 	const RakNetGUID &NetworkManager::GetArbitratorGUID()
@@ -77,14 +117,19 @@ namespace FusionEngine
 		return getSingleton().m_Network->GetLocalGUID() == GetArbitratorGUID();
 	}
 
-	uint8_t NetworkManager::GetLocalPeerIndex()
+	uint8_t NetworkManager::GetPeerSeniorityIndex()
 	{
-		return getSingleton().m_Network->GetLocalPeerIndex();
+		return getSingleton().m_Network->GetPeerIndex();
 	}
 
 	bool NetworkManager::IsSenior(const RakNetGUID &peer)
 	{
 		return getSingleton().m_Network->IsSenior(peer);
+	}
+
+	uint8_t NetworkManager::GetPeerID()
+	{
+		return getSingleton().m_PeerIDManager.m_PeerID;
 	}
 
 	RakNetwork * const NetworkManager::GetNetwork()

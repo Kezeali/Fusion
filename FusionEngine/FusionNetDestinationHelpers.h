@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionNetDestinations
-#define Header_FusionNetDestinations
+#ifndef H_FusionNetDestinations
+#define H_FusionNetDestinations
 
 #if _MSC_VER > 1000
 #pragma once

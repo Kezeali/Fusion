@@ -839,6 +839,10 @@ namespace FusionEngine
 	{
 		if (ev.type == ActivationEvent::Activate)
 		{
+			// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
+			//  so that mark must be removed
+			ev.entity->RemoveDeactivateMark();
+
 			if (m_EntitiesLocked)
 				// The entity will be added to the active list at the end of this update step (see EntityManager::Update(float))
 				m_EntitiesToActivate.push_back(ev.entity);

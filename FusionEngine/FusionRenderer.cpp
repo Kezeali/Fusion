@@ -37,7 +37,7 @@ namespace FusionEngine
 			// Viewport offset is the top-left of the viewport in the game-world,
 			//  i.e. camera_offset - viewport_size * camera_origin
 			CL_Vec2i viewportOffset =
-				camera->GetPosition() - CL_Vec2f::calc_origin( camera->GetOrigin(), CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, CL_Sizef((float)area.get_width(), (float)area.get_height()) );
 
 			area.translate(viewportOffset);
 		}
@@ -61,7 +61,7 @@ namespace FusionEngine
 			// Viewport offset is the top-left of the viewport in the game-world,
 			//  i.e. camera_offset - viewport_size * camera_origin
 			CL_Vec2f viewportOffset =
-				camera->GetPosition() - CL_Vec2f::calc_origin( camera->GetOrigin(), CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, CL_Sizef((float)area.get_width(), (float)area.get_height()) );
 
 			area.translate(viewportOffset);
 		}
@@ -93,7 +93,7 @@ namespace FusionEngine
 		m_GC.set_cliprect(viewportArea);
 
 		const CL_Vec2f &camPosition = camera->GetPosition();
-		CL_Origin camOrigin = camera->GetOrigin();
+		const CL_Origin camOrigin = origin_center;
 
 		CL_Vec2f viewportOffset;
 		viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));

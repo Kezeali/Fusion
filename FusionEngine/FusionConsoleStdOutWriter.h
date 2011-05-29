@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ConsoleStdOutWriter
-#define Header_FusionEngine_ConsoleStdOutWriter
+#ifndef H_FusionEngine_ConsoleStdOutWriter
+#define H_FusionEngine_ConsoleStdOutWriter
 
 #if _MSC_VER > 1000
 #pragma once

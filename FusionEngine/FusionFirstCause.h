@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionFirstCause
-#define Header_FusionFirstCause
+#ifndef H_FusionFirstCause
+#define H_FusionFirstCause
 
 #if _MSC_VER > 1000
 #pragma once

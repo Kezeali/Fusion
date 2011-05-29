@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -23,6 +23,7 @@
 *  File Author:
 *    Elliot Hayward
 */
+
 #include "FusionStableHeaders.h"
 
 #include "FusionStreamingManager.h"
@@ -115,20 +116,27 @@ namespace FusionEngine
 	}
 #endif
 
-	void StreamingManager::SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam)
+	void StreamingManager::AddCamera(const CameraPtr &cam)
 	{
-		StreamingCamera &stCam = m_Cameras[net_idx];
+		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam)))
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
+		}
 
-		stCam.FirstUpdate = true;
-		stCam.Camera = cam;
-		stCam.LastPosition.x = cam->GetPosition().x; stCam.LastPosition.y = cam->GetPosition().y;
-		stCam.StreamPosition = stCam.LastPosition;
-		stCam.Tightness = s_SmoothTightness;
+		m_Cameras.push_back(StreamingCamera());
+		auto& streamingCam = m_Cameras.back();
+
+		streamingCam.firstUpdate = true;
+		streamingCam.camera = cam;
+		streamingCam.lastPosition = Vector2(cam->GetPosition().x, cam->GetPosition().y);
+		streamingCam.streamPosition = streamingCam.lastPosition;
+		streamingCam.tightness = s_SmoothTightness;
 	}
 
-	void StreamingManager::RemovePlayerCamera(PlayerID net_idx)
+	void StreamingManager::RemoveCamera(const CameraPtr &cam)
 	{
-		m_Cameras.erase(net_idx);
+		auto new_end = std::remove_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam));
+		m_Cameras.erase(new_end, m_Cameras.end());
 	}
 
 	void StreamingManager::SetRange(float game_units)
@@ -151,10 +159,10 @@ namespace FusionEngine
 	//	{
 	//		const StreamingCamera &stCam = _where->second;
 
-	//		area.left = stCam.StreamPosition.x - m_Range;
-	//		area.top = stCam.StreamPosition.y - m_Range;
-	//		area.right = stCam.StreamPosition.x + m_Range;
-	//		area.bottom = stCam.StreamPosition.y + m_Range;
+	//		area.left = stCam.streamPosition.x - m_Range;
+	//		area.top = stCam.streamPosition.y - m_Range;
+	//		area.right = stCam.streamPosition.x + m_Range;
+	//		area.bottom = stCam.streamPosition.y + m_Range;
 	//	}
 
 	//	return area;
@@ -305,8 +313,8 @@ namespace FusionEngine
 		const Vector2 &entityPosition = entity->GetPosition();
 		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
 		{
-			const StreamingCamera &cam = it->second;
-			if ((entityPosition - cam.StreamPosition).squared_length() < m_RangeSquared)
+			const StreamingCamera &cam = *it;
+			if ((entityPosition - cam.streamPosition).squared_length() < m_RangeSquared)
 			{
 				if (!cell_entry->active)
 					ActivateEntity(entity, *cell_entry, *cell);
@@ -384,36 +392,38 @@ namespace FusionEngine
 	//	return m_ActiveEntities;
 	//}
 
-	bool StreamingManager::updateStreamingCamera(StreamingManager::StreamingCamera &cam)
+	bool StreamingManager::updateStreamingCamera(StreamingManager::StreamingCamera &cam, CameraPtr camera)
 	{
-		const CL_Vec2f &camPos = cam.Camera->GetPosition();
+		FSN_ASSERT(camera);
+
+		const CL_Vec2f &camPos = camera->GetPosition();
 
 		bool pointChanged = false;
 
-		Vector2 velocity( camPos.x - cam.LastPosition.x, camPos.y - cam.LastPosition.y );
+		Vector2 velocity(camPos.x - cam.lastPosition.x, camPos.y - cam.lastPosition.y);
 		// Only interpolate / anticipate movement if the velocity doesn't indicate a jump in position
 		if (velocity.squared_length() > 0.01f && velocity.squared_length() < m_RangeSquared)
 		{
-			Vector2 target( camPos.x + velocity.x, camPos.y + velocity.y );
+			Vector2 target(camPos.x + velocity.x, camPos.y + velocity.y);
 
-			cam.StreamPosition = cam.StreamPosition + (target-cam.StreamPosition) * cam.Tightness;
+			cam.streamPosition = cam.streamPosition + (target - cam.streamPosition) * cam.tightness;
 			pointChanged = true;
 		}
 		else
 		{
-			if (!fe_fequal(cam.StreamPosition.x, camPos.x) || !fe_fequal(cam.StreamPosition.x, camPos.y))
+			if (!fe_fequal(cam.streamPosition.x, camPos.x) || !fe_fequal(cam.streamPosition.x, camPos.y))
 				pointChanged = true;
-			cam.StreamPosition.set(camPos.x, camPos.y);
+			cam.streamPosition.set(camPos.x, camPos.y);
 		}
 
 		// If the velocity has changed, smooth (over sudden changes in velocity) by adjusting interpolation tightness
-		if (!v2Equal(cam.LastVelocity, velocity, 0.1f))
-			cam.Tightness = s_SmoothTightness;
+		if (!v2Equal(cam.lastVelocity, velocity, 0.1f))
+			cam.tightness = s_SmoothTightness;
 		else
-			cam.Tightness += (s_FastTightness - cam.Tightness) * 0.01f;
+			cam.tightness += (s_FastTightness - cam.tightness) * 0.01f;
 
-		cam.LastPosition.x = camPos.x; cam.LastPosition.y = camPos.y;
-		cam.LastVelocity = velocity;
+		cam.lastPosition.x = camPos.x; cam.lastPosition.y = camPos.y;
+		cam.lastVelocity = velocity;
 
 		return pointChanged;
 	}
@@ -424,18 +434,26 @@ namespace FusionEngine
 		//  are merged, so this may be < m_Cameras.size()
 		//std::vector<CL_Rect> indexRanges;
 		//indexRanges.reserve(m_Cameras.size());
-
-		for (StreamingCameraMap::iterator it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
+		auto it = m_Cameras.begin();
+		while (it != m_Cameras.end())
 		{
-			StreamingCamera &cam = it->second;
+			StreamingCamera &cam = *it;
 
-			Vector2 oldPosition = cam.StreamPosition;
-			updateStreamingCamera(cam);
-			const Vector2 &newPosition = cam.StreamPosition;
-
-			if (refresh || cam.FirstUpdate || !v2Equal(oldPosition, newPosition))
+			CameraPtr camera = cam.camera.lock();
+			if (!camera)
 			{
-				cam.FirstUpdate = false;
+				it = m_Cameras.erase(it); // Remove expired cameras
+				continue;
+			}
+			++it;
+
+			Vector2 oldPosition = cam.streamPosition;
+			updateStreamingCamera(cam, std::move(camera));
+			const Vector2 &newPosition = cam.streamPosition;
+
+			if (refresh || cam.firstUpdate || !v2Equal(oldPosition, newPosition))
+			{
+				cam.firstUpdate = false;
 				// Find the minimum & maximum cell indicies that have to be checked
 				CL_Rect range;
 				range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
@@ -470,7 +488,7 @@ namespace FusionEngine
 								CellEntry &cellEntry = cell_it->second;
 								const Vector2 &entityPosition = entity->GetPosition();
 
-								if ((entityPosition - cam.StreamPosition).squared_length() <= m_RangeSquared)
+								if ((entityPosition - cam.streamPosition).squared_length() <= m_RangeSquared)
 								{
 									if (!cellEntry.active)
 									{
@@ -516,37 +534,26 @@ namespace FusionEngine
 		//}
 	}
 
-	void StreamingManager_SetPlayerCamera(ObjectID net_idx, Camera *camera, StreamingManager *obj)
+	void StreamingManager_AddCamera(CameraPtr camera, StreamingManager *obj)
 	{
-		obj->SetPlayerCamera(net_idx, CameraPtr(camera) );
-		camera->release();
+		obj->AddCamera(camera);
 	}
 
-	void StreamingManager_RemovePlayerCamera(ObjectID net_idx, StreamingManager *obj)
+	void StreamingManager_RemoveCamera(CameraPtr camera, StreamingManager *obj)
 	{
-		obj->RemovePlayerCamera( net_idx );
+		obj->RemoveCamera(camera);
 	}
-
-	//void StreamingManager_AddCamera(Camera *camera, StreamingManager *obj)
-	//{
-	//	obj->AddCamera( CameraPtr(camera) );
-	//}
-
-	//void StreamingManager_RemoveCamera(Camera *camera, StreamingManager *obj)
-	//{
-	//	obj->RemoveCamera( CameraPtr(camera) );
-	//}
 
 	void StreamingManager::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RegisterSingletonType<StreamingManager>("StreamingManager", engine);
 		r = engine->RegisterObjectMethod("StreamingManager",
-			"void setPlayerCamera(uint16, Camera@)",
-			asFUNCTION(StreamingManager_SetPlayerCamera), asCALL_CDECL_OBJLAST);
+			"void addCamera(Camera)",
+			asFUNCTION(StreamingManager_AddCamera), asCALL_CDECL_OBJLAST);
 		r = engine->RegisterObjectMethod("StreamingManager",
-			"void removePlayerCamera(uint16)",
-			asFUNCTION(StreamingManager_RemovePlayerCamera), asCALL_CDECL_OBJLAST);
+			"void removeCamera(Camera)",
+			asFUNCTION(StreamingManager_RemoveCamera), asCALL_CDECL_OBJLAST);
 	}
 
 }

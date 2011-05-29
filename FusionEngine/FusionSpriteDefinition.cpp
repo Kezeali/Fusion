@@ -44,7 +44,7 @@ namespace FusionEngine
 		if (workingDirectory[workingDirectory.length()-1] == '/')
 			workingDirectory.erase(workingDirectory.length()-1);
 		
-		def.LoadXml(CL_StringHelp::text_to_local8( workingDirectory ), document);
+		def.LoadXml(CL_StringHelp::text_to_local8( workingDirectory ), document, vdir);
 	}
 
 	SpriteDefinition::SpriteDefinition()

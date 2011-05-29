@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_LogFileConsole
-#define Header_FusionEngine_LogFileConsole
+#ifndef H_FusionEngine_LogFileConsole
+#define H_FusionEngine_LogFileConsole
 
 #if _MSC_VER > 1000
 #pragma once

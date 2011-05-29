@@ -33,8 +33,8 @@
  * boost#signals2 (bsig2 = boost#signals2).
  */
 
-#ifndef Header_FusionEngine_BoostSignals2
-#define Header_FusionEngine_BoostSignals2
+#ifndef H_FusionEngine_BoostSignals2
+#define H_FusionEngine_BoostSignals2
 
 #if _MSC_VER > 1000
 # pragma once

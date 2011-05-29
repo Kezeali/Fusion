@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionNetworkManager
-#define Header_FusionNetworkManager
+#ifndef H_FusionNetworkManager
+#define H_FusionNetworkManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -35,9 +35,11 @@
 #include "FusionPrerequisites.h"
 
 #include <RakNetTypes.h>
+#include <boost/signals2.hpp>
 
 #include "FusionPacketHandler.h"
 #include "FusionSingleton.h"
+#include "FusionIDStack.h"
 
 namespace FusionEngine
 {
@@ -57,8 +59,23 @@ namespace FusionEngine
 		//! impl. PacketHandler
 		void HandlePacket(Packet *packet);
 
-	//protected:
 		RakNetGUID m_ArbitratorGUID;
+	};
+
+	class PeerIDManager : public PacketHandler
+	{
+	public:
+		PeerIDManager(RakNetwork *network)
+			: m_PeerID(0),
+			m_Network(network)
+		{}
+		uint8_t m_PeerID;
+
+	private:
+		void HandlePacket(Packet *packet);
+
+		RakNetwork* m_Network;
+		IDSet<uint8_t> m_UnusedIDs;
 	};
 
 	//! Singleton class - manages automatic network stuff
@@ -77,14 +94,17 @@ namespace FusionEngine
 		//! Convinience function - returns true if GetLocalGUID() == GetArbitratorGUID()
 		static bool ArbitratorIsLocal();
 
-		//! Returns the peer index of this machine (from 0-254)
+		//! Returns the peer index of this machine (from 0 - s_MaxPeers)
 		/*!
 		* Lower index indicates earlier connection.
 		*/
-		static uint8_t GetLocalPeerIndex();
+		static uint8_t GetPeerSeniorityIndex();
 
 		//! Returns true if the given peer has seniority over the local peer
 		static bool IsSenior(const RakNetGUID &peer); 
+
+		//! Returns the unique peer-id of this peer
+		static uint8_t GetPeerID();
 
 		//! Returns the current network object
 		static RakNetwork * const GetNetwork();
@@ -109,6 +129,7 @@ namespace FusionEngine
 		PacketDispatcher *m_Dispatcher;
 
 		ElectionPacketHandler m_ArbitratorElector;
+		PeerIDManager m_PeerIDManager;
 	};
 
 }

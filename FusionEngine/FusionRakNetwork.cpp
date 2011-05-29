@@ -38,6 +38,8 @@
 
 #include "FusionAssert.h"
 
+#include <tbb/spin_mutex.h>
+
 namespace FusionEngine
 {
 	
@@ -45,8 +47,9 @@ namespace FusionEngine
 	typedef PacketReliability rakReliability;
 
 	PeerIndexPlugin::PeerIndexPlugin()
-		: m_PeerIndex(0)
-	{}
+	{
+		m_PeerIndex = 0;
+	}
 
 	uint8_t PeerIndexPlugin::GetPeerIndex() const
 	{
@@ -55,6 +58,7 @@ namespace FusionEngine
 
 	bool PeerIndexPlugin::IsSenior(const RakNetGUID &guid) const
 	{
+		Mutex_t::scoped_lock lock(m_PeersMutex);
 		return m_SeniorPeers.find(guid) != m_SeniorPeers.end();
 	}
 
@@ -69,15 +73,17 @@ namespace FusionEngine
 			received.IgnoreBytes(sizeof(MessageID));
 			unsigned int count;
 			received.Read(count);
-			if (count > 1)
+			if (count > 0)
 			{
 				// Count is the number of peers currently connected, thus count == this peer's starting rank
 				m_PeerIndex = count;
+
 				// I don't know how many bytes SystemAddress takes in a packet (since it is passed
 				//  using one of the template specializations when writing to a BitStream), so
 				//  IgnoreBytes can't be safely used here
 				SystemAddress this_is_ignored;
 				RakNetGUID guid;
+				Mutex_t::scoped_lock lock(m_PeersMutex);
 				for (unsigned int i = 0; i < count; ++i)
 				{
 					received.Read(this_is_ignored);
@@ -90,8 +96,9 @@ namespace FusionEngine
 		return RR_CONTINUE_PROCESSING;
 	}
 
-	void PeerIndexPlugin::OnClosedConnection(SystemAddress systemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason lostConnectionReason)
+	void PeerIndexPlugin::OnClosedConnection(SystemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason)
 	{
+		Mutex_t::scoped_lock lock(m_PeersMutex);
 		auto _where = m_SeniorPeers.find(rakNetGUID);
 		if (_where != m_SeniorPeers.end())
 		{
@@ -157,7 +164,7 @@ namespace FusionEngine
 		return m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS);
 	}
 
-	uint8_t RakNetwork::GetLocalPeerIndex() const
+	uint8_t RakNetwork::GetPeerIndex() const
 	{
 		return m_PeerIndexPlugin.GetPeerIndex();
 	}

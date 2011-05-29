@@ -1,5 +1,5 @@
-#ifndef Header_FusionStdHeaders
-#define Header_FusionStdHeaders
+#ifndef H_FusionStdHeaders
+#define H_FusionStdHeaders
 
 #if _MSC_VER > 1000
 #pragma once

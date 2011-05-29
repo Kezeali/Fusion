@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionPlayerInfo
-#define Header_FusionPlayerInfo
+#ifndef H_FusionPlayerInfo
+#define H_FusionPlayerInfo
 
 #if _MSC_VER > 1000
 #pragma once

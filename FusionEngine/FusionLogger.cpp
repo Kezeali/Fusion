@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2007 Fusion Project Team
+  Copyright (c) 2006-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -40,11 +40,6 @@
 #include "FusionLogPhysFS.h"
 #include "FusionLogFileConsole.h"
 
-#if _MSC_VER > 1000
-# pragma warning(push)
-# pragma warning(disable:4996) // unsafe (depreciated) function warnings
-#endif
-
 namespace FusionEngine
 {
 
@@ -60,6 +55,7 @@ namespace FusionEngine
 
 	Logger::~Logger()
 	{
+		CL_MutexSection lock(&m_LogsMutex);
 		// Make sure we are disconnected from the console
 		DisableConsoleLogging();
 		// Remove all logs
@@ -234,21 +230,20 @@ namespace FusionEngine
 
 	void Logger::RemoveLog(const std::string& tag)
 	{
+		CL_MutexSection lock(&m_LogsMutex);
 		m_Logs.erase(tag);
 	}
 
 
 	void Logger::RemoveLog(LogPtr log)
 	{
-		LogList::iterator it = m_Logs.find(log->GetTag());
-		if (it != m_Logs.end())
-		{
-			m_Logs.erase(it);
-		}
+		CL_MutexSection lock(&m_LogsMutex);
+		m_Logs.erase(log->GetTag());
 	}
 
 	LogPtr Logger::GetLog(const std::string& tag)
 	{
+		CL_MutexSection lock(&m_LogsMutex);
 		LogList::iterator it = m_Logs.find(tag);
 		if (it != m_Logs.end())
 			return it->second;
@@ -282,9 +277,10 @@ namespace FusionEngine
 			Add(message, g_LogConsole);
 	}
 
-
 	LogPtr Logger::openLog(const std::string& tag)
 	{
+		CL_MutexSection lock(&m_LogsMutex);
+
 		LogList::iterator it = m_Logs.find(tag);
 		if (it != m_Logs.end())
 			return it->second;

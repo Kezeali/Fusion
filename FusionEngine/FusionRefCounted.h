@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_RefCounted
-#define Header_FusionEngine_RefCounted
+#ifndef H_FusionEngine_RefCounted
+#define H_FusionEngine_RefCounted
 
 #if _MSC_VER > 1000
 #	pragma once

@@ -52,7 +52,7 @@ namespace FusionEngine
 		m_LoaderMutex.unlock();
 	}
 
-	void ResourceManager::StartLoaderThread(CL_GraphicContext &sharedGC)
+	void ResourceManager::StartLoaderThread()
 	{
 		m_Worker.start(this, &ResourceManager::Load);
 	}
@@ -63,8 +63,97 @@ namespace FusionEngine
 		m_Worker.join();
 	}
 
+	void ResourceManager::loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit)
+	{
+		if (depth_limit == 0)
+		{
+			FSN_EXCEPT(FileSystemException, "Dependency tree for '" + resource->GetPath() + "' is too deep: it's probably circular");
+		}
+
+		// TODO: prevent loaders from being added after the Load thread has been started (make this mutex unnecessary)
+		//CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+
+		auto _where = m_ResourceLoaders.find(resource->GetType());
+		if (_where == m_ResourceLoaders.end())
+		{
+			FSN_EXCEPT(FileTypeException, "Attempted to load unknown resource type '" + resource->GetType() + "'");
+		}
+		ResourceLoader& loader = _where->second;
+
+		if (loader.list_prereq != nullptr)
+		{
+			DepsList prereqs;
+			loader.list_prereq(resource.get(), prereqs, loader.userData);
+
+			for (auto it = prereqs.begin(), end = prereqs.end(); it != end; ++it)
+			{
+				ResourceDataPtr dep;
+				obtainResource(dep, it->first, it->second);
+				loadResourceAndDeps(dep, depth_limit - 1);
+
+				resource->AttachDependency(dep);
+			}
+		}
+
+		// Initialize a vdir
+		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+		// Run the load function
+		loader.load(resource.get(), vdir, loader.userData);
+	}
+
+	//void ResourceManager::loadResourceAndDepsIterative()
+	//{
+	//	ResourceDataPtr toLoadRes;
+	//	dependencies.push_back(toLoadData.resource);
+
+	//	CL_MutexSection loaderMutexSection(&m_LoaderMutex);
+
+	//	unsigned int depth = 0;
+	//	while (!dependencies.empty());
+	//	{
+	//		toLoadRes = dependencies.back();
+	//		dependencies.pop_back();
+
+	//		auto _where = m_ResourceLoaders.find(toLoadRes->GetType());
+	//		if (_where == m_ResourceLoaders.end())
+	//		{
+	//			FSN_EXCEPT(FileTypeException, "Attempted to load unknown resource type '" + toLoadRes->GetType() + "'");
+	//		}
+	//		ResourceLoader& loader = _where->second;
+
+	//		if (loader.list_prereq != nullptr)
+	//		{
+	//			if (++depth > 6)
+	//			{
+	//				FSN_EXCEPT(FileSystemException, "Dependency tree for '" + toLoadRes->GetPath() + "' is too deep, it's probably circular");
+	//			}
+	//			DepsList prereqs;
+	//			loader.list_prereq(toLoadRes.get(), prereqs, loader.userData);
+
+	//			for (auto it = prereqs.begin(), end = prereqs.end(); it != end; ++it)
+	//			{
+	//				ResourceDataPtr dep;
+	//				obtainResource(dep, it->first, it->second);
+	//				dependencies.push_back(dep.get());
+
+	//				toLoadRes->AttachDependency(dep);
+	//			}
+	//		}
+	//	}
+
+	//	// Initialize a vdir
+	//	CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+
+	//	// Run the load function
+	//	ResourceLoader &loader = _where->second;
+	//	loader.load(resource.get(), vdir, loader.userData);
+	//}
+
 	void ResourceManager::Load()
 	{
+		auto logfile = Logger::getSingleton().OpenLog("ResourceManager");
+
 		while (true)
 		{
 			// Wait until there is more to load, or a stop event is received
@@ -74,42 +163,43 @@ namespace FusionEngine
 			if (receivedEvent <= 0)
 				break;
 
-			CL_System::sleep(20);
-
 			// Load
-			CL_MutexSection toLoadMutexSection(&m_ToLoadMutex);
-			while (!m_ToLoad.empty())
 			{
-				ResourceToLoadData toLoadData = m_ToLoad.top();
+				CL_MutexSection toLoadMutexSection(&m_ToLoadMutex);
+				while (!m_ToLoad.empty())
+				{
+					ResourceToLoadData toLoadData = m_ToLoad.top();
+					m_ToLoad.pop();
 
-				toLoadMutexSection.unlock();
-				try
-				{
-					//CL_SharedGCData::add_ref();
-					loadResource(toLoadData.resource);
-					//resource->SigLoaded.connect( toLoadData.callback );
-					//CL_SharedGCData::release_ref();
+					toLoadMutexSection.unlock();
+					try
+					{
+						// Dependency tree can be no deeper than 6 (just an artificial way to detect circular
+						//  trees, since having an actual resource with that much abstraction is unlikely)
+						loadResourceAndDeps(toLoadData.resource, 6);
+					}
+					catch (FileSystemException &ex)
+					{
+						//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
+						logfile->AddEntry(ex.GetDescription(), LOG_NORMAL);
+					}
+					toLoadMutexSection.lock();
 				}
-				catch (FileSystemException &ex)
-				{
-					//! \todo Call error handler ('m_ErrorHandler' should be in ResourceManager)
-					Logger::getSingleton().Add(ex.GetDescription(), "ResourceManager", LOG_NORMAL);
-				}
-				toLoadMutexSection.lock();
-				m_ToLoad.pop();
 			}
 
 			// Unload
-			CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
-			for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
 			{
-				unloadResource(*it);
+				CL_MutexSection toUnloadMutexSection(&m_ToUnloadMutex);
+				for (ToUnloadList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+				{
+					unloadResource(*it);
+					(*it)->_setQueuedToUnload(false);
+				}
+				m_ToUnload.clear();
 			}
-			m_ToUnload.clear();
 		}
 
 		//asThreadCleanup();
-		CL_SharedGCData::release_ref();
 	}
 
 	void ResourceManager::DeliverLoadedResources()
@@ -123,8 +213,12 @@ namespace FusionEngine
 				if (res->RequiresGC())
 				{
 					CL_MutexSection lock(&m_LoaderMutex);
-					const auto& _where = m_ResourceLoaders.find(res->GetType());
-					_where->second.gcload(res, m_GC);
+					auto _where = m_ResourceLoaders.find(res->GetType());
+					if (_where != m_ResourceLoaders.end())
+					{
+						ResourceLoader& loader = _where->second;
+						loader.gcload(res.get(), m_GC, loader.userData);
+					}
 				}
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
@@ -142,9 +236,14 @@ namespace FusionEngine
 
 	void ResourceManager::UnloadUnreferencedResources()
 	{
-		CL_MutexSection lock(&m_ToUnloadMutex);
-		for (UnreferencedResourceSet::iterator it = m_Unreferenced.begin(), end = m_Unreferenced.end(); it != end; ++it)
-			m_ToUnload.push_back(*it);
+		{
+			CL_MutexSection lock(&m_ToUnloadMutex);
+			for (UnreferencedResourceSet::iterator it = m_Unreferenced.begin(), end = m_Unreferenced.end(); it != end; ++it)
+			{
+				m_ToUnload.push_back(*it);
+				(*it)->_setQueuedToUnload(true);
+			}
+		}
 		m_Unreferenced.clear();
 		m_ToUnloadEvent.set();
 	}
@@ -153,47 +252,15 @@ namespace FusionEngine
 	{
 		ResourceDataPtr resource;
 
-		// Check whether the given resource already exists
-		ResourceMap::iterator existing = m_Resources.find(path);
-		if (existing != m_Resources.end() && existing->second->GetPath() == path)
-		{
-			resource = existing->second;
-
-			// Remove matching entry from Unreferenced
-			if (resource->Unused())
-			{
-				m_Unreferenced.erase(resource.get());
-				resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
-			}
-		}
-		else
-		{
-			resource = ResourceDataPtr(new ResourceContainer(type, path, nullptr));
-			resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
-
-			m_Resources[path] = resource;
-		}
-
-		if (resource->IsQueuedToUnload())
-		{
-			// Stop the resource form unloading
-			m_ToUnloadMutex.lock();
-			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
-			{
-				if (*it == resource)
-				{
-					m_ToUnload.erase(it);
-					break;
-				}
-			}
-			m_ToUnloadMutex.unlock();
-		}
+		// Get or create the resource in the map
+		obtainResource(resource, type, path);
 
 		boost::signals2::connection onLoadConnection;
 
 		if (resource->IsLoaded())
 		{
-			on_load_callback(resource);
+			if (on_load_callback)
+				on_load_callback(resource);
 		}
 		else
 		{
@@ -363,6 +430,46 @@ namespace FusionEngine
 
 	////////////
 	/// Private:
+	void ResourceManager::obtainResource(ResourceDataPtr &resource, const std::string& type, const std::string& path)
+	{
+		// Check whether the given resource already exists
+		ResourceMap::iterator existingEntry = m_Resources.find(path);
+		if (existingEntry != m_Resources.end() && existingEntry->second->GetPath() == path)
+		{
+			const bool wasUnused = existingEntry->second->Unused();
+			resource = existingEntry->second;
+
+			// Remove matching entry from Unreferenced
+			if (wasUnused)
+			{
+				m_Unreferenced.erase(resource.get());
+				resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
+			}
+		}
+		else
+		{
+			resource = ResourceDataPtr(new ResourceContainer(type, path, nullptr));
+			resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
+
+			m_Resources[path] = resource;
+		}
+
+		if (resource->IsQueuedToUnload())
+		{
+			// Stop the resource form unloading
+			CL_MutexSection lock(&m_ToUnloadMutex);
+			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+			{
+				if (*it == resource)
+				{
+					(*it)->_setQueuedToUnload(false);
+					m_ToUnload.erase(it);
+					break;
+				}
+			}
+		}
+	}
+
 	void ResourceManager::loadResource(ResourceDataPtr &resource)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
@@ -400,8 +507,6 @@ namespace FusionEngine
 			// Run the load function
 			ResourceLoader &loader = _where->second;
 			loader.unload(resource.get(), vdir, loader.userData);
-			if (quickload && resource->HasQuickLoadData())
-				loader.unloadQLData(resource.get(), vdir, loader.userData);
 		}
 	}
 

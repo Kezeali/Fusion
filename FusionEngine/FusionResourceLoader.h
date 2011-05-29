@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ResourceLoader
-#define Header_FusionEngine_ResourceLoader
+#ifndef H_FusionEngine_ResourceLoader
+#define H_FusionEngine_ResourceLoader
 
 #if _MSC_VER > 1000
 #pragma once
@@ -49,19 +49,29 @@ namespace FusionEngine
 	//! Fn. pointer for loading stuff into a GC (textures)
 	typedef void (*resource_gcload)(ResourceContainer* res, CL_GraphicContext& gc, void* userData);
 
+	typedef std::vector< std::pair< std::string, std::string > > DepsList;
+	//! Fn. pointer - should return a list of resources that this resource needs access to
+	/*!
+	* \return True if loading of this resource can complete before dependencies are loaded
+	*/
+	typedef bool (*resource_list_prerequisites)(ResourceContainer* res, DepsList& dependencies, void* userData);
+
 	//! Struct containing resource loader callbacks
 	struct ResourceLoader
 	{
 		resource_load load;
 		resource_unload unload;
 		resource_gcload gcload;
+		resource_list_prerequisites list_prereq;
 		void *userData;
 		std::string type;
 
 		ResourceLoader()
-			: load(NULL),
-			unload(NULL),
-			userData(NULL)
+			: load(nullptr),
+			unload(nullptr),
+			gcload(nullptr),
+			list_prereq(nullptr),
+			userData(nullptr)
 		{
 		}
 
@@ -70,6 +80,7 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(nullptr),
+			list_prereq(nullptr),
 			userData(nullptr)
 		{
 		}
@@ -79,6 +90,7 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(nullptr),
+			list_prereq(nullptr),
 			userData(_userData)
 		{
 		}
@@ -88,6 +100,7 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(gcLoadFn),
+			list_prereq(nullptr),
 			userData(nullptr)
 		{
 		}
@@ -97,6 +110,7 @@ namespace FusionEngine
 			load(loadFn),
 			unload(unloadFn),
 			gcload(gcLoadFn),
+			list_prereq(nullptr),
 			userData(_userData)
 		{
 		}

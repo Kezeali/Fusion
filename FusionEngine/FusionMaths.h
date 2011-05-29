@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionMaths
-#define Header_FusionMaths
+#ifndef H_FusionMaths
+#define H_FusionMaths
 
 #if _MSC_VER > 1000
 #pragma once

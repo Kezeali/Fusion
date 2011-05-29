@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_LinkedNode
-#define Header_FusionEngine_LinkedNode
+#ifndef H_FusionEngine_LinkedNode
+#define H_FusionEngine_LinkedNode
 
 #if _MSC_VER > 1000
 #	pragma once

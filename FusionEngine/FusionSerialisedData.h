@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_Serialised
-#define Header_FusionEngine_Serialised
+#ifndef H_FusionEngine_Serialised
+#define H_FusionEngine_Serialised
 
 #if _MSC_VER > 1000
 #pragma once

@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEntityManager
-#define Header_FusionEntityManager
+#ifndef H_FusionEntityManager
+#define H_FusionEntityManager
 
 #if _MSC_VER > 1000
 #pragma once

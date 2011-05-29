@@ -25,13 +25,8 @@
 *    Elliot Hayward
 */
 
-/*
-* I didn't know what to call this file so I just copied the name of a
-* similar file in Ogre3D, even though it seems like a misnomer
-*/
-
-#ifndef Header_FusionPrerequisites
-#define Header_FusionPrerequisites
+#ifndef H_FusionPrerequisites
+#define H_FusionPrerequisites
 
 #if _MSC_VER > 1000
 #pragma once
@@ -51,6 +46,7 @@ namespace FusionEngine
 	///////////////////////////
 	class Camera;
 	class ClientOptions;
+	class Component;
 	class Console;
 	class Editor;
 	class EditorMapEntity;

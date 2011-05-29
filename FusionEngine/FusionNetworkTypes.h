@@ -26,8 +26,8 @@
  * that is stupidly complicated and limiting.
  */
 
-#ifndef Header_FusionEngine_MessageIdentifiers
-#define Header_FusionEngine_MessageIdentifiers
+#ifndef H_FusionEngine_MessageIdentifiers
+#define H_FusionEngine_MessageIdentifiers
 
 #if _MSC_VER > 1000
 #pragma once
@@ -72,7 +72,9 @@ namespace FusionEngine
 	 */
 	enum MessageType
 	{
-		MTID_INSTANCEENTITY = ID_USER_PACKET_ENUM,
+		MTID_SET_PEER_ID = ID_USER_PACKET_ENUM,
+
+		MTID_INSTANCEENTITY,
 		MTID_ADDENTITY,
 		MTID_ADDALLOWED,
 		MTID_REMOVEENTITY,

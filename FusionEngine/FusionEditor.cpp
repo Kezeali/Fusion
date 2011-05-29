@@ -631,7 +631,7 @@ namespace FusionEngine
 
 	void Editor::Start()
 	{
-		m_Streamer->SetPlayerCamera(255, m_Camera);
+		m_Streamer->AddCamera(m_Camera);
 
 		m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
 		m_PhysicalWorld->EnableDebugDraw();
@@ -652,7 +652,7 @@ namespace FusionEngine
 
 	void Editor::Stop()
 	{
-		m_Streamer->RemovePlayerCamera(255);
+		m_Streamer->RemoveCamera(m_Camera);
 
 		this->PushMessage(SystemMessage::PAUSE);
 		this->PushMessage(SystemMessage::HIDE);
@@ -691,7 +691,7 @@ namespace FusionEngine
 
 		if (enable)
 		{
-			m_Streamer->SetPlayerCamera(255, m_Camera);
+			m_Streamer->AddCamera(m_Camera);
 
 			m_PhysicalWorld->SetDebugDrawViewport(m_Viewport);
 			m_PhysicalWorld->EnableDebugDraw();
@@ -705,7 +705,7 @@ namespace FusionEngine
 		}
 		else
 		{
-			m_Streamer->RemovePlayerCamera(255);
+			m_Streamer->RemoveCamera(m_Camera);
 
 			this->PushMessage(SystemMessage::PAUSE);
 			this->PushMessage(SystemMessage::HIDE);

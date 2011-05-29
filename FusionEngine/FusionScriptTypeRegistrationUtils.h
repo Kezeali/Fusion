@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_TypeRegistrationUtils
-#define Header_FusionEngine_TypeRegistrationUtils
+#ifndef H_FusionScriptTypeRegistrationUtils
+#define H_FusionScriptTypeRegistrationUtils
 
 #if _MSC_VER > 1000
 #	pragma once
@@ -43,72 +43,100 @@
 
 namespace FusionEngine
 {
-
-	template <typename T>
-	class TypeRegisterHelper
+	namespace Scripting
 	{
-	public:
-		static void Construct(T* in)
+		namespace Registation
 		{
-			new (in) T();
+
+			template <typename T>
+			class ValueTypeHelper
+			{
+			public:
+				static void Construct(T* ptr)
+				{
+					new (ptr) T();
+				}
+
+				static void Destruct(T* obj)
+				{
+					obj->~T();
+				}
+			};
+
+			template <typename T>
+			class CopyableValueTypeHelper : public ValueTypeHelper<T>
+			{
+			public:
+				static void CopyConstruct(const T& other, T* ptr)
+				{
+					new (ptr) T(other);
+				}
+
+				static T& Assign(const T& other, T* _this)
+				{
+					*_this = other;
+					return *_this;
+				}
+			};
+
 		}
 
-		static void Destruct(T* in)
-		{
-			in->~T();
-		}
-
-		static void CopyConstruct(const T& rhs, T* in)
-		{
-			new (in) T(rhs);
-		}
-
-		static T& Assign(const T& rhs, T* lhs)
-		{
-			*lhs = rhs;
-			return *lhs;
-		}
-
-	};
+	}
 
 	template <typename T>
 	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine)
 	{
-		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
+		FSN_ASSERT(engine && "Need a valid engine pointer");
 
-		int error_code = 0;
+		using namespace Scripting::Registation;
 
-		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDA);
+		typedef CopyableValueTypeHelper<T> helper_type;
+
+		int error_code;
+
+		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
 			asBEHAVE_CONSTRUCT, 
 			"void f()", 
-			asFUNCTION(TypeRegisterHelper<T>::Construct), 
+			asFUNCTION(helper_type::Construct), 
 			asCALL_CDECL_OBJLAST);
 		FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_DESTRUCT,
 			"void f()",
-			asFUNCTION(TypeRegisterHelper<T>::Destruct),
+			asFUNCTION(helper_type::Destruct),
 			asCALL_CDECL_OBJLAST);
 		FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
 
 		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 			asBEHAVE_CONSTRUCT,
 			(std::string("void f(")+type_name+"&in)").c_str(),
-			asFUNCTION(TypeRegisterHelper<T>::CopyConstruct),
+			asFUNCTION(helper_type::CopyConstruct),
 			asCALL_CDECL_OBJLAST);
 		FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
 
-		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
-			asBEHAVE_ASSIGNMENT,
+		error_code = engine->RegisterObjectMethod(type_name.c_str(),
 			(type_name+"& f(const "+type_name+"&in)").c_str(),
-			asFUNCTION(TypeRegisterHelper<T>::Assign),
+			asFUNCTION(helper_type::Assign),
 			asCALL_CDECL_OBJLAST);
 		FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
+	}
+	
+	template <typename T>
+	void RegisterSharedPtrType(const std::string& name, asIScriptEngine *engine)
+	{
+		using namespace Scripting::Registation;
+		typedef ValueTypeHelper<std::shared_ptr<T>> helper_type;
 
+		int r;
+		r = engine->RegisterObjectType(name.c_str(), sizeof(std::shared_ptr<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(helper_type::Construct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod(name.c_str(), name + "& opAssign(const " + name + " &in other)",
+			asMETHODPR(std::shared_ptr<T>, operator=, const std::shared_ptr<T> &, std::shared_ptr<T> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	//! Registers a POD type (no constructor)
@@ -119,9 +147,8 @@ namespace FusionEngine
 
 		int error_code = 0;
 
-		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE);
+		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_POD);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
-
 	}
 
 	//! Registers a singleton (REF & NOHANDLE) type

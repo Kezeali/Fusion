@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ResourcePointer
-#define Header_FusionEngine_ResourcePointer
+#ifndef H_FusionEngine_ResourcePointer
+#define H_FusionEngine_ResourcePointer
 
 #if _MSC_VER > 1000
 #	pragma once

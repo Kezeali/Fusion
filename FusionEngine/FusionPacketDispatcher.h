@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionPacketDispatcher
-#define Header_FusionPacketDispatcher
+#ifndef H_FusionPacketDispatcher
+#define H_FusionPacketDispatcher
 
 #if _MSC_VER > 1000
 #pragma once

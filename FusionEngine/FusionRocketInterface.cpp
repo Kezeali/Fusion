@@ -47,7 +47,6 @@ namespace FusionEngine
 		m_RocketLog = Logger::getSingleton().OpenLog("rocket");
 #ifdef _DEBUG
 		m_RocketLog->SetThreshold(LOG_TRIVIAL);
-		Logger::getSingleton().SetLogingToConsole("rocket", true);
 #endif
 	}
 

@@ -30,8 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef Header_FusionEngine_Assert
-#define Header_FusionEngine_Assert
+#ifndef H_FusionEngine_Assert
+#define H_FusionEngine_Assert
 
 namespace FusionEngine { namespace Assert
 {

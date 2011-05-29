@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionStateMessage
-#define Header_FusionStateMessage
+#ifndef H_FusionStateMessage
+#define H_FusionStateMessage
 
 #if _MSC_VER > 1000
 #pragma once

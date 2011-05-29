@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionHashable
-#define Header_FusionHashable
+#ifndef H_FusionHashable
+#define H_FusionHashable
 
 #if _MSC_VER > 1000
 #pragma once

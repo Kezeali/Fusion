@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ScriptVector
-#define Header_FusionEngine_ScriptVector
+#ifndef H_FusionEngine_ScriptVector
+#define H_FusionEngine_ScriptVector
 
 #if _MSC_VER > 1000
 #pragma once

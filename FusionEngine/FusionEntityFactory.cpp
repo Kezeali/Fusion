@@ -53,20 +53,46 @@
 namespace FusionEngine
 {
 
-	EntityInstancer::EntityInstancer(const std::string &type)
-		: m_Type(type)
-	{}
-
-	void EntityInstancer::SetType(const std::string &type)
+	class XMLPrefab : public Prefab
 	{
-		m_Type = type;
-	}
+	public:
+		XMLPrefab(ticpp::Document& document)
+		{
+			ticpp::Element *root = document.FirstChildElement();
 
-	const std::string &EntityInstancer::GetType() const
-	{
-		return m_Type;
-	}
+			m_Type = root->GetAttribute("typename");
 
+			// Create a sub-directory for this class in the 'temp' folder
+			PHYSFS_mkdir((s_TempPath + m_Type).c_str());
+
+			m_DefaultDomain = root->GetAttribute("domain");
+
+			// Read each component
+			ticpp::Iterator< ticpp::Element > comp_it;
+			for (comp_it = comp_it.begin(root); comp_it != comp_it.end(); comp_it++)
+			{
+				std::string componentType = comp_it->Value();
+
+				if (componentType.empty())
+					continue;
+
+				ComponentStaticProps props;
+
+				// Read the static properties for the current component
+				ticpp::Iterator< ticpp::Element > prop_it;
+				for (prop_it = prop_it.begin(comp_it->FirstChild()); prop_it != prop_it.end(); prop_it++)
+				{
+					std::string prop_name = prop_it->Value();
+					std::string value = prop_it->GetText(false); // value may be empty - this is ok
+
+					if (!prop_name.empty())
+						props[prop_name] = value;
+				}
+
+				m_Composition.push_back(std::make_pair(std::move(componentType), std::move(props)));
+			}
+		}
+	};
 
 	//! Stores parsed Entity.xml data
 	class EntityDefinition
@@ -291,33 +317,36 @@ namespace FusionEngine
 			return fe_newlower( inline_resource_element->Value() );
 	}
 
-	void createInlineResourceFile_Xml(std::string &file_name, ticpp::Element *resource_element, const std::string &entity_typename)
+	void createInlineResourceFile(std::string &file_name, ticpp::Element *resource_element, const std::string &entity_typename)
 	{
 		if (resource_element->NoChildren())
 			return; // Throw?
 
-		file_name = s_TempPath + entity_typename + '/' + resource_element->GetAttribute("property") + ".xml";
+		file_name = s_TempPath + entity_typename + '/' + resource_element->GetAttribute("property");
 
-		ticpp::Document document;
-		ticpp::Declaration *decl = new ticpp::Declaration(XML_STANDARD, "", "");
-		document.LinkEndChild(decl);
+		ticpp::Node *resource_data = resource_element->FirstChild();
 
-		// Check whether the given inline-resource-XML includes a root element (indicated by there only being one child)
-		if (*resource_element->FirstChild() != *resource_element->LastChild())
-		{
-			ticpp::Element *root = new ticpp::Element( getXmlRootTagForResourceType(resource_element) );
-			document.LinkEndChild(root);
-			root->InsertEndChild(*resource_element);
-		}
-		else
-			document.InsertEndChild(*resource_element->FirstChild());
+		//ticpp::Document document;
+		//ticpp::Declaration *decl = new ticpp::Declaration(XML_STANDARD, "", "");
+		//document.LinkEndChild(decl);
+
+		//// Check whether the given inline-resource-XML includes a root element (indicated by there only being one child)
+		//if (*resource_element->FirstChild() != *resource_element->LastChild())
+		//{
+		//	ticpp::Element *root = new ticpp::Element( getXmlRootTagForResourceType(resource_element) );
+		//	document.LinkEndChild(root);
+		//	root->InsertEndChild(*resource_element);
+		//}
+		//else
+		//	document.InsertEndChild(*resource_element->FirstChild());
 
 		CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 		CL_IODevice ioDevice = vdir.open_file(file_name, CL_File::create_new, CL_File::access_write);
 		if (ioDevice.is_null())
 			return; // Throw?
 		ClanLibTiXmlFile xmlFile(ioDevice);
-		document.SaveFile(&xmlFile);
+		//document.SaveFile(&xmlFile);
+		resource_data->Print(&xmlFile, 0);
 	}
 
 	void EntityDefinition::parseElement_Streaming(ticpp::Element *element)
@@ -334,10 +363,9 @@ namespace FusionEngine
 			resource.SetPropertyName( propertyName );
 			std::string resourceFileName = child->GetAttribute("resource");
 			// Read inline-resource
-			if (resourceFileName.compare(0, 8, "\\inline:") == 0)
+			if (resourceFileName == "\\inline")
 			{
-				if (resourceFileName.compare(8, 3, "xml") == 0)
-					createInlineResourceFile_Xml(resourceFileName, child.Get(), m_TypeName);
+				createInlineResourceFile(resourceFileName, child.Get(), m_TypeName);
 
 				resource.SetResourceName(resourceFileName);
 			}
@@ -934,7 +962,7 @@ namespace FusionEngine
 		return false;
 	}
 
-	void EntityFactory::LoadAllScriptedTypes()
+	void EntityFactory::LoadAllPrefabTypes()
 	{
 		m_LoadedEntityDefinitions.clear();
 		m_EntityDefinitionsByType.clear();

@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ClientOptions
-#define Header_FusionEngine_ClientOptions
+#ifndef H_FusionEngine_ClientOptions
+#define H_FusionEngine_ClientOptions
 
 #if _MSC_VER > 1000
 #pragma once

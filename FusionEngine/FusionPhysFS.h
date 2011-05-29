@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionPhysFS
-#define Header_FusionPhysFS
+#ifndef H_FusionPhysFS
+#define H_FusionPhysFS
 
 #if _MSC_VER > 1000
 #pragma once

@@ -34,8 +34,8 @@
  */
 
 
-#ifndef Header_FusionCommon
-#define Header_FusionCommon
+#ifndef H_FusionCommon
+#define H_FusionCommon
 
 #if _MSC_VER > 1000
 #pragma once

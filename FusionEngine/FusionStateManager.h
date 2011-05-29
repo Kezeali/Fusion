@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionStateManager
-#define Header_FusionStateManager
+#ifndef H_FusionStateManager
+#define H_FusionStateManager
 
 #if _MSC_VER > 1000
 #pragma once

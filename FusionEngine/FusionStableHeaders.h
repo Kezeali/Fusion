@@ -1,5 +1,5 @@
-#ifndef Header_FusionStableHeaders
-#define Header_FusionStableHeaders
+#ifndef H_FusionStableHeaders
+#define H_FusionStableHeaders
 
 #if _MSC_VER > 1000
 #pragma once
@@ -24,6 +24,10 @@
 #ifdef GetObject
 #undef GetObject
 #endif
+
+#include <tbb/concurrent_queue.h>
+#include <tbb/scalable_allocator.h>
+#include <tbb/task.h>
 
 #include "FusionAssert.h"
 #include "FusionCommon.h"

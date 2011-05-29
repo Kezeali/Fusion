@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ImageLoader
-#define Header_FusionEngine_ImageLoader
+#ifndef H_FusionEngine_ImageLoader
+#define H_FusionEngine_ImageLoader
 
 #if _MSC_VER > 1000
 #pragma once
@@ -49,7 +49,7 @@ namespace FusionEngine
 	//! Texture resource unloader
 	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data);
 	//! Loads a texture resource into GFX RAM
-	void GCLoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data);
+	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, void* user_data);
 
 	//! Sprite resource loader callback
 	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);

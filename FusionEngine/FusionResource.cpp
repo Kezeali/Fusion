@@ -86,7 +86,8 @@ namespace FusionEngine
 		m_HasQuickLoadData(false),
 		m_RefCount(0),
 		m_ToLoad(false),
-		m_ToUnload(false)
+		m_ToUnload(false),
+		m_RequiresGC(false)
 	{
 		if (ptr != 0)
 			_setValid(true);
@@ -102,7 +103,8 @@ namespace FusionEngine
 		m_HasQuickLoadData(false),
 		m_RefCount(0),
 		m_ToLoad(false),
-		m_ToUnload(false)
+		m_ToUnload(false),
+		m_RequiresGC(false)
 	{
 		if (ptr != 0)
 			_setValid(true);
@@ -139,6 +141,26 @@ namespace FusionEngine
 		return &m_Path;
 	}
 
+	void ResourceContainer::AttachDependency(ResourceDataPtr& dep)
+	{
+		m_Dependencies.push_back(dep);
+	}
+
+	const std::vector<ResourceDataPtr>& ResourceContainer::GetDependencies() const
+	{
+		return m_Dependencies;
+	}
+
+	void ResourceContainer::_setRequiresGC(const bool value)
+	{
+		m_RequiresGC = value;
+	}
+
+	bool ResourceContainer::RequiresGC() const
+	{
+		return m_RequiresGC;
+	}
+
 	void ResourceContainer::SetDataPtr(void* ptr)
 	{
 		m_Data = ptr;
@@ -152,10 +174,6 @@ namespace FusionEngine
 	void ResourceContainer::_setValid(bool valid)
 	{
 		m_Loaded = valid;
-		//if (valid)
-		//	SigLoad();
-		//else
-		//	SigUnload();
 	}
 
 	bool ResourceContainer::IsLoaded() const
@@ -193,7 +211,7 @@ namespace FusionEngine
 		return m_ToLoad;
 	}
 
-	void ResourceContainer::_setQueuedToUnoad(bool is_queued)
+	void ResourceContainer::_setQueuedToUnload(bool is_queued)
 	{
 		m_ToUnload = is_queued;
 	}

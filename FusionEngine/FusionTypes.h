@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionTypes
-#define Header_FusionTypes
+#ifndef H_FusionTypes
+#define H_FusionTypes
 
 #if _MSC_VER > 1000
 #pragma once
@@ -51,7 +51,7 @@ namespace FusionEngine
 	typedef std::vector<std::string> StringVector;
 	typedef std::set<std::string> StringSet;
 
-	typedef boost::intrusive_ptr<Entity> EntityPtr;
+	typedef boost::shared_ptr<Entity> EntityPtr;
 
 	//! EditorMapEntity ptr
 	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;

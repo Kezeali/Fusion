@@ -25,8 +25,8 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_NetworkSystem
-#define Header_FusionEngine_NetworkSystem
+#ifndef H_FusionEngine_NetworkSystem
+#define H_FusionEngine_NetworkSystem
 
 #if _MSC_VER > 1000
 #pragma once

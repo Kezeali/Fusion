@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_PhysicsCallback
-#define Header_FusionEngine_PhysicsCallback
+#ifndef H_FusionEngine_PhysicsCallback
+#define H_FusionEngine_PhysicsCallback
 
 #if _MSC_VER > 1000
 #pragma once

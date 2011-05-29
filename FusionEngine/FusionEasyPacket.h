@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEasyPacket
-#define Header_FusionEasyPacket
+#ifndef H_FusionEasyPacket
+#define H_FusionEasyPacket
 
 #if _MSC_VER > 1000
 #pragma once

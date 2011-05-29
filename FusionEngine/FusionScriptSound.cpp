@@ -28,18 +28,9 @@ namespace FusionEngine
 		m_SoundOutput.stop_all();
 	}
 
-	void SoundOutput::SetModule(ModulePtr &module)
+	void SoundOutput::RegisterSingleton(asIScriptEngine *engine)
 	{
-		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&SoundOutput::OnModuleBuild, this, _1) );
-	}
-
-	void SoundOutput::OnModuleBuild(BuildModuleEvent& ev)
-	{
-		if (ev.type == BuildModuleEvent::PreBuild)
-		{
-			ev.manager->RegisterGlobalObject("SoundOutput sound", this);
-		}
+		int r = engine->RegisterGlobalProperty("SoundOutput sound", this); FSN_ASSERT( r >= 0 );
 	}
 
 	void SoundOutput::Register(asIScriptEngine *engine)

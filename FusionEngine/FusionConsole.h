@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_Console
-#define Header_FusionEngine_Console
+#ifndef H_FusionEngine_Console
+#define H_FusionEngine_Console
 
 #if _MSC_VER > 1000
 #pragma once
@@ -43,6 +43,8 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/function.hpp>
 #include <containers/structured_map.hpp>
+
+#include <tbb/atomic.h>
 
 namespace FusionEngine
 {
@@ -240,12 +242,15 @@ namespace FusionEngine
 
 		void append_buffer(const std::string &string);
 	protected:
+		CL_Mutex m_HeadingCrapMutex;
 		std::string m_LastHeading;
 
 		std::string::size_type m_LastNewlineInBuffer;
 
 		std::string::size_type m_LengthToNextSignal;
 		std::string::size_type m_CharInterval;
+
+		CL_Mutex m_BufferMutex;
 
 		std::string::size_type m_BufferLength;
 		std::string m_Buffer;

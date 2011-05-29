@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_InputPluginLoader
-#define Header_FusionEngine_InputPluginLoader
+#ifndef H_FusionEngine_InputPluginLoader
+#define H_FusionEngine_InputPluginLoader
 
 #if _MSC_VER > 1000
 #pragma once

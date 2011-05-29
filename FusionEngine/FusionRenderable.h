@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionRenderable
-#define Header_FusionRenderable
+#ifndef H_FusionRenderable
+#define H_FusionRenderable
 
 #if _MSC_VER > 1000
 #pragma once
@@ -35,6 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionStreamedResourceUser.h"
+#include "FusionEntityComponent.h"
 
 #include "FusionResourcePointer.h"
 #include "FusionSpriteDefinition.h"
@@ -50,7 +51,7 @@ namespace FusionEngine
 	typedef std::tr1::unordered_set<std::string> TagStringSet;
 
 	//! A thing that can be drawn by the renderer
-	class Renderable : public RefCounted, noncopyable
+	class Renderable : public RefCounted
 	{
 	public:
 		//! CTOR

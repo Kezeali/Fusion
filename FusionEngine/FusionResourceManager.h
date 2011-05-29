@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ResourceManager
-#define Header_FusionEngine_ResourceManager
+#ifndef H_FusionEngine_ResourceManager
+#define H_FusionEngine_ResourceManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -78,11 +78,7 @@ namespace FusionEngine
 		void AddResourceLoader(const std::string& type, resource_load loadFn, resource_unload unloadFn, void* userData);
 
 		//! Starts loading resources in the background
-		/*!
-		* \param[in] render_gc
-		* The GC into which textures should be loaded
-		*/
-		void StartLoaderThread(CL_GraphicContext &render_gc);
+		void StartLoaderThread();
 		//! Stops loading resources in the background
 		void StopLoaderThread();
 
@@ -199,7 +195,14 @@ namespace FusionEngine
 		// ResourceLoader factory methods
 		ResourceLoaderMap m_ResourceLoaders;
 
+		//! Gets / makes a ResourceContainer in the resource map (m_Resources), without loading it
+		void obtainResource(ResourceDataPtr& out, const std::string& type, const std::string& path);
+		// TODO: use this, since intrusive_ptr supports move assignment (rvalue)
+		//ResourceDataPtr obtainResource(const std::string& type, const std::string& path);
+
 		void loadResource(ResourceDataPtr &resource);
+
+		void loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit);
 
 		void getAndUnloadResource(const std::string &path);
 		void unloadResource(ResourceDataPtr &resource, bool unload_quickload_data = false);

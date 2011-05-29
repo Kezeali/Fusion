@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_PhysicsShape
-#define Header_FusionEngine_PhysicsShape 
+#ifndef H_FusionEngine_PhysicsShape
+#define H_FusionEngine_PhysicsShape 
 
 #if _MSC_VER > 1000
 #pragma once

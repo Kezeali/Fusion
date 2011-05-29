@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ScriptConsoleCallback
-#define Header_FusionEngine_ScriptConsoleCallback
+#ifndef H_FusionEngine_ScriptConsoleCallback
+#define H_FusionEngine_ScriptConsoleCallback
 
 #if _MSC_VER > 1000
 # pragma once

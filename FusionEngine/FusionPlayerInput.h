@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_EntityInput
-#define Header_FusionEngine_EntityInput
+#ifndef H_FusionEngine_EntityInput
+#define H_FusionEngine_EntityInput
 
 #if _MSC_VER > 1000
 #pragma once

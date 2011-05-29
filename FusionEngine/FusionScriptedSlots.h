@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_ScriptedSlot
-#define Header_FusionEngine_ScriptedSlot
+#ifndef H_FusionEngine_ScriptedSlot
+#define H_FusionEngine_ScriptedSlot
 
 #if _MSC_VER > 1000
 #pragma once

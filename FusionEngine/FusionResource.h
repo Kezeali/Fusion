@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_Resource
-#define Header_FusionEngine_Resource
+#ifndef H_FusionEngine_Resource
+#define H_FusionEngine_Resource
 
 #if _MSC_VER > 1000
 #	pragma once
@@ -66,12 +66,13 @@ namespace FusionEngine
 	{
 	protected:
 		std::string m_Type;
-		//ResourceTag m_Tag;
 		std::string m_Path;
 
 		void *m_Data;
 		// Data that isn't unloaded until the resource is released
 		void *m_QuickLoadData;
+
+		bool m_RequiresGC;
 
 		bool m_Loaded;
 		bool m_HasQuickLoadData;
@@ -85,11 +86,9 @@ namespace FusionEngine
 		bool m_ToLoad;
 		bool m_ToUnload;
 
-	public:
-		boost::signals2::signal<void ()> SigDelete;
-		boost::signals2::signal<void ()> SigLoad;
-		boost::signals2::signal<void ()> SigUnload;
+		std::vector<ResourceDataPtr> m_Dependencies;
 
+	public:
 		typedef boost::signals2::signal<void (ResourceDataPtr)> LoadedSignal;
 		LoadedSignal SigLoaded;
 
@@ -125,8 +124,13 @@ namespace FusionEngine
 		*/
 		std::string *_getTextPtr();
 
-		//! Adds a dependency
-		void AddDependency(const std::string& type, const std::string& path);
+		//! Makes this resource hold a reference to another resource that it depends on (e.g. sprites hold textures)
+		void AttachDependency(ResourceDataPtr& dep);
+		const std::vector<ResourceDataPtr>& GetDependencies() const;
+
+		//! Used by a resource loader when it requires access to the GC in order to finish loading the resource
+		void _setRequiresGC(const bool value);
+		bool RequiresGC() const;
 
 		//! Sets the data
 		void SetDataPtr(void* ptr);
@@ -169,7 +173,7 @@ namespace FusionEngine
 		bool IsQueuedToLoad() const;
 
 		//! Notifies the resource of its queue status
-		void _setQueuedToUnoad(bool is_queued);
+		void _setQueuedToUnload(bool is_queued);
 		//! Returns true if this resource is currently queued to load
 		bool IsQueuedToUnload() const;
 

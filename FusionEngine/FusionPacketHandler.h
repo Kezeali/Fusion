@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_PacketHandler
-#define Header_FusionEngine_PacketHandler
+#ifndef H_FusionEngine_PacketHandler
+#define H_FusionEngine_PacketHandler
 
 #if _MSC_VER > 1000
 #pragma once

@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_InputManager
-#define Header_FusionEngine_InputManager
+#ifndef H_FusionEngine_InputManager
+#define H_FusionEngine_InputManager
 
 #if _MSC_VER > 1000
 #pragma once

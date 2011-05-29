@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_OntologicalSystem
-#define Header_FusionEngine_OntologicalSystem
+#ifndef H_FusionEngine_OntologicalSystem
+#define H_FusionEngine_OntologicalSystem
 
 #if _MSC_VER > 1000
 #pragma once

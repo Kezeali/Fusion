@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionSpriteDefinition
-#define Header_FusionSpriteDefinition
+#ifndef H_FusionSpriteDefinition
+#define H_FusionSpriteDefinition
 
 #if _MSC_VER > 1000
 #pragma once

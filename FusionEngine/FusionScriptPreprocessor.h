@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ScriptPreprocessor
-#define Header_FusionEngine_ScriptPreprocessor
+#ifndef H_FusionEngine_ScriptPreprocessor
+#define H_FusionEngine_ScriptPreprocessor
 
 #if _MSC_VER > 1000
 #pragma once

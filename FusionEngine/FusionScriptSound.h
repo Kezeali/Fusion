@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_ScriptSound
-#define Header_FusionEngine_ScriptSound
+#ifndef H_FusionEngine_ScriptSound
+#define H_FusionEngine_ScriptSound
 
 #if _MSC_VER > 1000
 #pragma once
@@ -39,9 +39,6 @@
 #include "FusionResourcePointer.h"
 #include "FusionScriptReference.h"
 
-
-
-
 namespace FusionEngine
 {
 
@@ -56,15 +53,12 @@ namespace FusionEngine
 
 		void StopAll();
 
-		void SetModule(ModulePtr &module);
-		void OnModuleBuild(BuildModuleEvent& ev);
+		void RegisterSingleton(asIScriptEngine *engine);
 
 		static void Register(asIScriptEngine *engine);
 
 	protected:
 		CL_SoundOutput m_SoundOutput;
-
-		boost::signals2::connection m_ModuleConnection;
 	};
 
 	//! Ref-counted wrapper for CL_SoundBuffer_Session

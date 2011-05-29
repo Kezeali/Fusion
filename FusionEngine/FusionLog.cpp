@@ -34,7 +34,6 @@
 
 #include "FusionException.h"
 
-
 namespace FusionEngine
 {
 
@@ -50,16 +49,17 @@ namespace FusionEngine
 		addFooterToAll();
 	}
 
-	void Log::addHeaderToAll()
-	{
-		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
-		{
-			addHeader(it->second);
-		}
-	}
+	//void Log::addHeaderToAll()
+	//{
+	//	for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+	//	{
+	//		addHeader(it->second);
+	//	}
+	//}
 
 	void Log::addFooterToAll()
 	{
+		CL_MutexSection lock(&m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			addFooter(it->second);
@@ -109,50 +109,50 @@ namespace FusionEngine
 
 	void Log::AttachLogFile(LogFilePtr log_file)
 	{
-		m_LogFiles[log_file->GetType()] = log_file;
 		// Open the file
 		log_file->Open(m_Filename);
 		addHeader(log_file);
+
+		{
+			CL_MutexSection lock(&m_LogFilesMutex);
+			m_LogFiles[log_file->GetType()] = log_file;
+		}
 	}
 
 	void Log::DetachLogFile(LogFilePtr log_file)
 	{
-		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
-		{
-			if (it->second == log_file)
-			{
-				addFooter(it->second);
-				// Close the file
-				it->second->Close();
-				m_LogFiles.erase(it);
-				break;
-			}
-		}
+		DetachLogFile(log_file->GetType());
 	}
 
 	void Log::DetachLogFile(const std::string& type)
 	{
+		CL_MutexSection lock(&m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		if (_where != m_LogFiles.end())
 		{
-			addFooter(_where->second);
-			// Close the file
-			_where->second->Close();
+			auto logFile = _where->second;
+
 			m_LogFiles.erase(_where);
+
+			addFooter(logFile);
+
+			logFile->Close();
 		}
 	}
 
 	bool Log::HasLogFileType(const std::string &type)
 	{
+		CL_MutexSection lock(&m_LogFilesMutex);
 		LogFileList::iterator _where = m_LogFiles.find(type);
 		return _where != m_LogFiles.end();
 	}
 
 	void Log::AddVerbatim(const std::string& text)
 	{
+		CL_MutexSection lock(&m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
-			it->second->Write(text + "\n");
+			it->second->Write(text);
 			it->second->Flush();
 		}
 	}
@@ -179,6 +179,7 @@ namespace FusionEngine
 
 			const std::string entry = tempStream.str();
 
+			CL_MutexSection lock(&m_LogFilesMutex);
 			for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			{
 				it->second->Write(entry);
@@ -189,6 +190,7 @@ namespace FusionEngine
 
 	void Log::Flush()
 	{
+		CL_MutexSection lock(&m_LogFilesMutex);
 		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 			it->second->Flush();
 	}

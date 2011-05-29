@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEntity
-#define Header_FusionEntity
+#ifndef H_FusionEntity
+#define H_FusionEntity
 
 #if _MSC_VER > 1000
 #pragma once
@@ -37,16 +37,19 @@
 #include "FusionRefCounted.h"
 
 #include "FusionCommon.h"
+#include "FusionEntityComponent.h"
+#include "FusionComponentCommandQueue.h"
 #include "FusionEntityDeserialiser.h"
 #include "FusionPhysicsCallback.h"
 #include "FusionPlayerInput.h"
 #include "FusionRenderable.h"
 #include "FusionResourcePointer.h"
 #include "FusionSerialisedData.h"
+#include "FusionTagFlagDictionary.h"
 #include "FusionVector2.h"
 
-#include <boost/any.hpp>
-
+#include <boost/mpl/for_each.hpp>
+#include <boost/preprocessor.hpp>
 
 namespace FusionEngine
 {
@@ -57,70 +60,13 @@ namespace FusionEngine
 
 	typedef std::vector<EntityPtr> EntityArray;
 
-	class TagFlagDictionary
-	{
-	public:
-		//! Adds the given tag to the given entity
-		/*!
-		* \returns True if a flag was given to the tag
-		*/
-		bool AddTag(const std::string &tag, EntityPtr to_entity, bool add_flag);
-		//! Removes the given tag from the given entity
-		void RemoveTag(const std::string &tag, EntityPtr from_entity);
-
-		//! Defines a flag for the given tag if one is available
-		bool RequestFlagFor(const std::string &tag);
-		//! Defines a flag for the given tag, taking one from another tag if necessary
-		void ForceFlagFor(const std::string &tag);
-
-		//! Returns the flag currently defined for the given tag
-		unsigned int GetFlagFor(const std::string &tag);
-
-	private:
-		//! Updates the free flags state
-		/*!
-		* Removes the current m_MinFreeFlag from the m_FreeFlags mask and
-		* sets m_MinFreeFlag to the next free flag.
-		*/
-		void takeMinFreeFlag();
-
-		//! Called when a flag becomes free
-		void flagFreed(unsigned int flag);
-
-		struct Entry
-		{
-			std::string Tag;
-			unsigned int Flag;
-			std::tr1::unordered_set<std::string> References;
-		};
-		// Could use a boost::multi_index_container here - i.e. index by
-		//  unique Tag AND Flag - but that's too much of a hassle and I
-		//  doubt it'd be worth it.
-		typedef std::tr1::unordered_map<std::string, Entry> TagFlagMap;
-		TagFlagMap m_Entries;
-
-		unsigned int m_MinFreeFlag;
-		unsigned int m_FreeFlags;
-	};
-
-	typedef std::tr1::shared_ptr<TagFlagDictionary> TagFlagDictionaryPtr;
-
-	struct InstancePrepDefinition
-	{
-		std::string Type;
-		unsigned int Count;
-		// Copy the owner ID from the origin entity 
-		//  (the entity that creates the instance)
-		bool CopyOwner;
-	};
-
-	typedef std::vector<InstancePrepDefinition> InstancesToPrepareArray;
+	// TODO: there could be a ComponentEntity that implements Entity (the version below)...
 
 	/*!
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public /*RefCounted*/GarbageCollected<Entity>, noncopyable
+	class Entity : public GarbageCollected<Entity>, noncopyable
 	{
 	public:
 		//! Constructor
@@ -194,19 +140,65 @@ namespace FusionEngine
 		virtual const Vector2 &GetPosition() =0;
 		//! Gets angle (rotation) value
 		virtual float GetAngle() const =0;
-		//! Gets linear velocity
-		virtual const Vector2 &GetVelocity() =0;
-		//! Gets angular (rotational) velocity
-		virtual float GetAngularVelocity() const =0;
 
 		//! Gets position
 		virtual void SetPosition(const Vector2 &position) =0;
 		//! Gets angle (rotation) value
 		virtual void SetAngle(float angle) =0;
-		//! Gets linear velocity
-		virtual void SetVelocity(const Vector2 &velocity) =0;
-		//! Gets angular (rotational) velocity
-		virtual void SetAngularVelocity(float angular_velocity) =0;
+
+		// The interface type passed here determines the interface that other components must use to access the added component
+		template <class Com>
+		void AddComponent(std::shared_ptr<Com>& component)
+		{
+			boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component));
+		}
+
+	private:
+		typedef std::map<std::string, std::vector<std::pair<std::shared_ptr<Component>, std::unique_ptr<ICallQueue>>>> ComInterfaceMap;
+		ComInterfaceMap m_ComponentInterfaces;
+
+		template <class C>
+		struct addComInterface
+		{
+			addComInterface(ComInterfaceMap& _map, std::shared_ptr<C>& component)
+				: map(_map),
+				com(component)
+			{}
+
+			template <class I>
+			void operator() (I)
+			{
+				map[I::GetTypeName()].push_back(std::make_pair(com, std::unique_ptr<ICallQueue>(new CallQueue<I>(com)));
+			}
+
+			ComInterfaceMap& map;
+			std::shared_ptr<C>& com;
+		};
+
+	public:
+
+		template <class Interface>
+		void InvokeOnComponent(std::function<void (std::shared_ptr<Interface>)> function)
+		{
+			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
+			if (_where != m_ComponentInterfaces.end())
+			{
+				CallQueue<Interface> *actualQueue = dynamic_cast<CallQueue<Interface>*>(_where->second);
+				if (actualQueue) actualQueue->Enqueue(function);
+			}
+		}
+
+		template <class Interface>
+		std::shared_ptr<Interface> GetComponent()
+		{
+			static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
+
+			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
+			if (_where != m_ComponentInterfaces.end())
+			{
+				return _where->first;
+			}
+		}
 
 		//! Returns renderables
 		virtual RenderableArray &GetRenderables();
@@ -263,21 +255,21 @@ namespace FusionEngine
 		//! Returns the name of the given property
 		virtual std::string GetPropertyName(unsigned int index) const { return ""; }
 		//! Returns the property with the given index
-		virtual boost::any GetPropertyValue(unsigned int index) const;
+		virtual const boost::any& GetPropertyValue(unsigned int index) const;
 		//! Sets the given property
 		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 		//! Template typed GetPropertyValue
 		template <typename T>
 		T GetPropertyValue(unsigned int index) const
 		{
-			boost::any value = GetPropertyValue(index);
+			const boost::any& value = GetPropertyValue(index);
 			try
 			{
 				return boost::any_cast<T>( value );
 			}
 			catch (const boost::bad_any_cast &)
 			{
-				throw FSN_EXCEPT_CS(ExCode::InvalidArgument, "Entity::GetPropertyValue<" + typeid(T).name() + ">",
+				throw FSN_EXCEPT(ExCode::InvalidArgument,
 					"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
 			}
 		}
@@ -437,9 +429,6 @@ namespace FusionEngine
 		bool InputIsActive(const std::string &input);
 		float GetInputPosition(const std::string &input);
 
-		void DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner);
-		const InstancesToPrepareArray &GetInstancesToPrepare() const;
-
 		//! Writes entity ownership info
 		void SerialiseIdentity(CL_IODevice& device);
 		//! Writes basic properties
@@ -536,8 +525,6 @@ namespace FusionEngine
 
 		RenderableArray m_Renderables;
 		StreamedResourceArray m_StreamedResources;
-
-		InstancesToPrepareArray m_InstancesToPrepare;
 
 		inline void SetStreamedIn(bool is_streamed_in);
 	};

@@ -37,102 +37,6 @@
 namespace FusionEngine
 {
 
-	bool TagFlagDictionary::AddTag(const std::string &tag, EntityPtr entity, bool add_flag)
-	{
-		TagFlagMap::iterator _where = m_Entries.find(tag);
-		if (_where == m_Entries.end())
-		{
-			_where->second.Tag = tag;
-
-			if (add_flag)
-			{
-				_where->second.Flag = m_MinFreeFlag; // If there are no flags left this will be zero, so Flag will be set correctly even in that case
-
-				if (m_MinFreeFlag != 0)
-					takeMinFreeFlag(); // Update m_MinFreeFlag and the FreeFlags mask
-			}
-		}
-
-		_where->second.References.insert(entity->GetName());
-		// If there is a flag for the given tag add it to the given entity
-		if (add_flag && _where->second.Flag != 0)
-			entity->AddTagFlag(_where->second.Flag);
-
-		return add_flag && m_MinFreeFlag != 0; // Report whether a flag was given
-	}
-
-	void TagFlagDictionary::RemoveTag(const std::string &tag, EntityPtr entity)
-	{
-		TagFlagMap::iterator _where = m_Entries.find(tag);
-		if (_where != m_Entries.end())
-		{
-			Entry &entry = _where->second;
-			entry.References.erase(entity->GetName());
-			entity->RemoveTagFlag(_where->second.Flag);
-
-			// If there are no more entities using this flag
-			if (entry.References.empty())
-			{
-				flagFreed(entry.Flag);
-				m_Entries.erase(_where);
-			}
-		}
-	}
-
-	bool TagFlagDictionary::RequestFlagFor(const std::string &tag)
-	{
-		if (m_MinFreeFlag == 0)
-			return false;
-
-		TagFlagMap::iterator _where = m_Entries.find(tag);
-		if (_where != m_Entries.end())
-		{
-			_where->second.Flag = m_MinFreeFlag;
-		}
-
-		return true;
-	}
-
-	void TagFlagDictionary::ForceFlagFor(const std::string &tag)
-	{
-		FSN_EXCEPT(ExCode::NotImplemented, "ForceFlagFor() is not implemented.");
-	}
-
-	unsigned int TagFlagDictionary::GetFlagFor(const std::string &tag)
-	{
-		TagFlagMap::iterator _where = m_Entries.find(tag);
-		if (_where != m_Entries.end())
-			return _where->second.Flag;
-		else
-			return 0; // No such tag
-	}
-
-	void TagFlagDictionary::takeMinFreeFlag()
-	{
-		m_FreeFlags &= ~m_MinFreeFlag; // remove the chosen flag from the FreeFlags mask
-
-		// Set m_MinFreeFlag to the next free flag
-		unsigned int checkFlag = m_MinFreeFlag;
-		while (checkFlag != 0)
-		{
-			checkFlag = checkFlag << 1;
-			if (m_FreeFlags & checkFlag)
-			{
-				m_MinFreeFlag = checkFlag;
-				return;
-			}
-		}
-
-		// No more free flags
-		m_MinFreeFlag = 0;
-	}
-
-	void TagFlagDictionary::flagFreed(unsigned int flag)
-	{
-		if (flag < m_MinFreeFlag) m_MinFreeFlag = flag;
-		m_FreeFlags |= flag;
-	}
-
 	Entity::Entity()
 		: m_Name("default"),
 		m_HasDefaultName(true),
@@ -537,7 +441,7 @@ namespace FusionEngine
 		*(T*)prop_addr = boost::any_cast<T>(value);
 	}
 
-	boost::any Entity::GetPropertyValue(unsigned int index) const
+	const boost::any& Entity::GetPropertyValue(unsigned int index) const
 	{
 		boost::any value;
 
@@ -707,21 +611,6 @@ namespace FusionEngine
 			return false;
 	}
 
-	void Entity::DefineInstanceToPrepare(const std::string &type, unsigned int count, bool copy_owner)
-	{
-		InstancePrepDefinition definition;
-		definition.Type = type;
-		definition.Count = count;
-		definition.CopyOwner = copy_owner;
-
-		m_InstancesToPrepare.push_back(definition);
-	}
-
-	const InstancesToPrepareArray &Entity::GetInstancesToPrepare() const
-	{
-		return m_InstancesToPrepare;
-	}
-
 	//virtual void Entity::UpdateRenderables(float split)
 	//{
 	//	for (RenderableArray::iterator it = m_Renderables.begin(), end = m_Renderables.end(); it != end; ++it)
@@ -803,25 +692,11 @@ namespace FusionEngine
 			asFUNCTION(Entity_SetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Entity",
-			"const Vector& getVelocity()",
-			asMETHOD(Entity, GetVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Entity",
-			"void setVelocity(const Vector &in)",
-			asMETHOD(Entity, SetVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-
-		r = engine->RegisterObjectMethod("Entity",
 			"float getAngle() const",
 			asMETHOD(Entity, GetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Entity",
 			"void setAngle(float)",
 			asMETHOD(Entity, SetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-
-		r = engine->RegisterObjectMethod("Entity",
-			"float getAngularVelocity() const",
-			asMETHOD(Entity, GetAngularVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Entity",
-			"void setAngularVelocity(float)",
-			asMETHOD(Entity, SetAngularVelocity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
 		r = engine->RegisterInterfaceMethod("IEntity", "void OnSpawn()"); FSN_ASSERT(r >= 0);

@@ -20,8 +20,8 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_StreamedResourceUser
-#define Header_FusionEngine_StreamedResourceUser
+#ifndef H_FusionEngine_StreamedResourceUser
+#define H_FusionEngine_StreamedResourceUser
 
 #if _MSC_VER > 1000
 #pragma once

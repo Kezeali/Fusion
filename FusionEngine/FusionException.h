@@ -20,8 +20,8 @@
 *    3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_Exception
-#define Header_FusionEngine_Exception
+#ifndef H_FusionException
+#define H_FusionException
 
 #if _MSC_VER > 1000
 #pragma once

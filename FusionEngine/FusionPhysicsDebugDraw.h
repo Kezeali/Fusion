@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_Physics_DebugDraw
-#define Header_FusionEngine_Physics_DebugDraw
+#ifndef H_FusionEngine_Physics_DebugDraw
+#define H_FusionEngine_Physics_DebugDraw
 #if _MSC_VER > 1000
 #pragma once
 #endif

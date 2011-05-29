@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2010 Fusion Project Team
+*  Copyright (c) 2009-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -21,15 +21,15 @@
 *
 *
 *  Many improvements to this streaming implementation were
-*   inspired by Fiedler's Cubes (including some borrowed algorithms)
+*   inspired by Fiedler's Cubes (including some algorithms)
 *  http://www.gafferongames.com/fiedlers-cubes
 *
 *  File Author:
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionStreamingManager
-#define Header_FusionStreamingManager
+#ifndef H_FusionStreamingManager
+#define H_FusionStreamingManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -173,8 +173,8 @@ namespace FusionEngine
 		//! Destructor
 		~StreamingManager();
 
-		void SetPlayerCamera(PlayerID net_idx, const CameraPtr &cam);
-		void RemovePlayerCamera(PlayerID net_idx);
+		void AddCamera(const CameraPtr &cam);
+		void RemoveCamera(const CameraPtr &cam);
 		
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
@@ -211,20 +211,37 @@ namespace FusionEngine
 	private:
 		struct StreamingCamera
 		{
-			CameraPtr Camera;
+			StreamingCamera() : tightness(0.0f), firstUpdate(true)
+			{}
+
+			std::weak_ptr<Camera> camera;
+
 			// The current middle of the streaming area for the camera
 			//  - Moves ahead based on the camera velocity
-			Vector2 StreamPosition;
+			Vector2 streamPosition;
 
-			Vector2 LastPosition;
-			Vector2 LastVelocity;
-			float Tightness;
+			Vector2 lastPosition;
+			Vector2 lastVelocity;
+			float tightness;
 
-			bool FirstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
+			bool firstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
+
+			struct IsObserver
+			{
+				explicit IsObserver(const CameraPtr &cam) : observedCamera(cam)
+				{}
+
+				bool operator() (const StreamingCamera& streamingCamera)
+				{
+					return streamingCamera.camera.lock() == observedCamera;
+				}
+
+				const CameraPtr& observedCamera;
+			};
 		};
 
 		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
-		StreamingCameraMap m_Cameras;
+		std::vector< StreamingCamera > m_Cameras;
 
 		float m_DeactivationTime;
 
@@ -244,7 +261,7 @@ namespace FusionEngine
 
 		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 
-		bool updateStreamingCamera(StreamingCamera &cam);
+		bool updateStreamingCamera(StreamingCamera &cam, CameraPtr camera);
 	};
 
 }

@@ -41,7 +41,7 @@ namespace FusionEngine
 	{
 		if (resource->IsLoaded())
 		{
-			delete resource->GetDataPtr();
+			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 
 		CL_String ext = CL_PathHelp::get_extension(resource->GetPath());
@@ -67,16 +67,49 @@ namespace FusionEngine
 		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
-			delete resource->GetDataPtr();
+			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
-		resource->SetDataPtr(NULL);
+		resource->SetDataPtr(nullptr);
+	}
+
+	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	{
+		LoadImageResource(resource, vdir, user_data);
+		resource->_setRequiresGC(true);
+	}
+
+	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
+	{
+		if (resource->IsLoaded())
+		{
+			resource->_setValid(false);
+			if (resource->RequiresGC())
+				delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			else
+				delete static_cast<CL_Texture*>(resource->GetDataPtr());
+		}
+		resource->SetDataPtr(nullptr);
+	}
+
+	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, void* user_data)
+	{
+		if (resource->RequiresGC())
+		{
+			CL_PixelBuffer* pre_gc_data = static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			CL_Texture* data = new CL_Texture();
+			data->set_image(*pre_gc_data);
+			delete pre_gc_data;
+			resource->SetDataPtr(data);
+			resource->_setRequiresGC(false);
+			resource->_setValid(true);
+		}
 	}
 
 	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{
-			delete resource->GetDataPtr();
+			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
 		}
 
 		//if (!resource->HasQuickLoadData())
@@ -118,7 +151,7 @@ namespace FusionEngine
 		{
 			resource->_setValid(false);
 
-			delete resource->GetDataPtr();
+			delete static_cast<SpriteDefinition*>(resource->GetDataPtr());
 
 			//if (resource->HasQuickLoadData())
 			//{
@@ -127,16 +160,7 @@ namespace FusionEngine
 			//}
 		}
 
-		resource->SetDataPtr(NULL);
-	}
-
-	void UnloadSpriteQuickLoadData(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
-	{
-		if (resource->HasQuickLoadData())
-			delete resource->GetQuickLoadDataPtr();
-
-		resource->SetQuickLoadDataPtr(NULL);
-		resource->_setHasQuickLoadData(false);
+		resource->SetDataPtr(nullptr);
 	}
 	
 };

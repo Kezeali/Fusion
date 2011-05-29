@@ -25,8 +25,8 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_CmdOptions
-#define Header_FusionEngine_CmdOptions
+#ifndef H_FusionEngine_CmdOptions
+#define H_FusionEngine_CmdOptions
 
 #if _MSC_VER > 1000
 #pragma once

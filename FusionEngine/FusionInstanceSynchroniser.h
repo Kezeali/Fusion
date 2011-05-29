@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEntityInstancer
-#define Header_FusionEntityInstancer
+#ifndef H_FusionEntityInstancer
+#define H_FusionEntityInstancer
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,6 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
+#include <array>
 #include "FusionEntity.h"
 #include "FusionIDStack.h"
 #include "FusionPacketHandler.h"
@@ -114,7 +115,7 @@ namespace FusionEngine
 
 		RakNetwork *m_Network;
 
-		ObjectIDSet m_LocalIdGenerators[s_MaxPeers];
+		std::array<ObjectIDSet, s_MaxPeers> m_LocalIdGenerators;
 		ObjectIDSet m_WorldIdGenerator;
 
 		//boost::signals2::connection m_EntityInstancedCnx;

@@ -25,8 +25,8 @@
 		Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_PhysFSLogFile
-#define Header_FusionEngine_PhysFSLogFile
+#ifndef H_FusionEngine_PhysFSLogFile
+#define H_FusionEngine_PhysFSLogFile
 
 #if _MSC_VER > 1000
 #pragma once

@@ -20,8 +20,8 @@
  3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef Header_FusionEngine_RakNetwork
-#define Header_FusionEngine_RakNetwork
+#ifndef H_FusionEngine_RakNetwork
+#define H_FusionEngine_RakNetwork
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,6 +36,8 @@
 // Plugins
 #include <FullyConnectedMesh2.h>
 #include <ConnectionGraph2.h>
+
+#include <tbb/atomic.h>
 
 #include "FusionEasyPacket.h"
 #include "FusionNetworkTypes.h"
@@ -142,7 +144,9 @@ namespace FusionEngine
 		*/
 		void OnClosedConnection(SystemAddress systemAddress, RakNetGUID rakNetGUID, PI2_LostConnectionReason lostConnectionReason);
 
-		uint8_t m_PeerIndex;
+		tbb::atomic<uint8_t> m_PeerIndex;
+		typedef tbb::spin_mutex Mutex_t;
+		mutable Mutex_t m_PeersMutex;
 		std::set<RakNetGUID> m_SeniorPeers;
 	};
 
@@ -173,9 +177,9 @@ namespace FusionEngine
 		//! 0 to (peerlimit-1) inicates when this peer connected
 		/*!
 		* Returns an unsigned integer from 0 to (peerlimit-1) indicating when this peer connected
-		* with reguard to other peers currently connected.
+		* in relation to other peers currently connected (lower index means older peer).
 		*/
-		uint8_t GetLocalPeerIndex() const;
+		uint8_t GetPeerIndex() const;
 
 		//! Returns true if the given peer has seniority over this one
 		bool IsSenior(const RakNetGUID &peer) const;

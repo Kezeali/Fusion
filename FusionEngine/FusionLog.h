@@ -25,8 +25,8 @@
 		Elliot Hayward
 
 */
-#ifndef Header_FusionEngine_Log
-#define Header_FusionEngine_Log
+#ifndef H_FusionEngine_Log
+#define H_FusionEngine_Log
 
 #if _MSC_VER > 1000
 #pragma once
@@ -71,31 +71,30 @@ namespace FusionEngine
 		virtual void Flush() =0;
 	};
 
+	class LogTask;
+
 	//! Represents a Log
 	/*!
 	* Call Logger#OpenLog() to create a new Log object (Log's constructor is protected.)
 	*
-	* \todo Make Log threadsafe
 	* \sa FusionEngine#Logger
 	*/
 	class Log
 	{
 		friend class Logger;
+		friend class LogTask;
 	public:
 		typedef std::tr1::shared_ptr<ILogFile> LogFilePtr;
 		typedef std::map<std::string, LogFilePtr> LogFileList;
 
-	protected:
+	private:
 		//! Constructor +tag +filename +safe
 		Log(const std::string& tag, const std::string& filename);
-		//! Constructor +tag +filename +safe +verbosity
-		Log(const std::string& tag, const std::string& filename, LogSeverity threshold);
 
 	public:
 		//! Destructor
 		~Log();
 
-	public:
 		//! Returns the tag given to this log
 		inline const std::string& GetTag() const { return m_Tag; }
 		const std::string &GetFilename() const { return m_Filename; }
@@ -130,18 +129,18 @@ namespace FusionEngine
 		//! Force file write
 		void Flush();
 
-	protected:
+	private:
 		void addHeader(LogFilePtr log_file);
 		void addFooter(LogFilePtr log_file);
 
-		void addHeaderToAll();
+		//void addHeaderToAll();
 		void addFooterToAll();
 
-	protected:
 		std::string m_Tag;
 		std::string m_Filename;
 		LogSeverity m_Threshold;
 
+		CL_Mutex m_LogFilesMutex;
 		LogFileList m_LogFiles;
 		
 	};

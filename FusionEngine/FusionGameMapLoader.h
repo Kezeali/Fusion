@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_GameAreaLoader
-#define Header_FusionEngine_GameAreaLoader
+#ifndef H_FusionEngine_GameAreaLoader
+#define H_FusionEngine_GameAreaLoader
 
 #if _MSC_VER > 1000
 #pragma once

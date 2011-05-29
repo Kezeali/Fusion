@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_EntityFactory
-#define Header_FusionEngine_EntityFactory
+#ifndef H_FusionEntityFactory
+#define H_FusionEntityFactory
 
 #if _MSC_VER > 1000
 #pragma once
@@ -38,33 +38,38 @@
 
 #include "FusionSingleton.h"
 
-#include "FusionScriptModule.h"
-#include "FusionEntityDefinitionData.h"
+#include "FusionComponentSystem.h"
+#include "FusionTypes.h"
 #include "FusionXML.h"
 
 namespace FusionEngine
 {
 
-	//! Entity instancer base class
-	class EntityInstancer
+	//! Prefab base class
+	class Prefab
 	{
 	public:
-		//! CTOR
-		EntityInstancer(const std::string &type);
+		Prefab() {}
 
-		//! Returns an object of the expected type
-		virtual Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name) = 0;
+		//! CTOR
+		Prefab(const std::string &type)
+			: m_Type(type)
+		{}
+
+		typedef std::vector<std::pair<std::string, ComponentStaticProps>> Composition;
+		const Composition& GetComposition() const { return m_Composition; }
 
 		//! Sets the type of this instancer
-		void SetType(const std::string &type);
+		void SetTypeName(const std::string &type) { m_Type = type; }
 		//! Gets the type of this instancer
-		const std::string &GetType() const;
+		const std::string &GetTypeName() const { return m_Type; }
 
-	private:
 		std::string m_Type;
+		std::string m_DefaultDomain;
+		Composition m_Composition;
 	};
 
-	typedef std::tr1::shared_ptr<EntityInstancer> EntityInstancerPtr;
+	typedef std::tr1::shared_ptr<Prefab> PrefabPtr;
 
 	class EntityDefinition;
 
@@ -79,7 +84,7 @@ namespace FusionEngine
 	{
 	protected:
 		//! Maps tags to entity definitions
-		typedef std::tr1::unordered_map<std::string, EntityInstancerPtr> EntityInstancerMap;
+		typedef std::tr1::unordered_map<std::string, PrefabPtr> PrefabMap;
 
 	public:
 		//! Constructor
@@ -91,47 +96,31 @@ namespace FusionEngine
 	public:
 		//! Instances Entity
 		/*!
-		* Returns an entity object of the requested type, or NULL. The type will be
-		* added to the Used Type List, so so when ClearUnusedInstancers is called the
-		* relavant instancer will not be removed
+		* Returns an entity object of the requested type, or NULL.
 		*/
-		EntityPtr InstanceEntity(const std::string &type, const SupplementaryDefinitionData &sup_data, const std::string &name = std::string());
+		EntityPtr InstanceEntity(const std::string &prefab_type);
 
-		//! Instances Entity
-		/*!
-		* Returns an entity object of the requested type, or NULL. The type will be
-		* added to the Used Type List, so so when ClearUnusedInstancers is called the
-		* relavant instancer will not be removed
-		*/
-		EntityPtr InstanceEntity(const std::string &type, const std::string &name = std::string());
+		//! Instantiates an Entity composed of the given components
+		EntityPtr InstanceEntity(const std::vector<std::string>& composition);
 
 		//! Adds an instancer object for the given type
 		void AddInstancer(const std::string &type, const EntityInstancerPtr &instancer);
 
 		//! Creates an instancer for the the given scripted type
-		/*!
-		* This should be called on the startup_entity and all entities
-		* referenced by game maps (even maps that may not be loaded - since
-		* all entity code must be loaded into the module before it is built
-		* entity types can't be loaded later)
-		*/
-		bool LoadScriptedType(const std::string &type);
+		bool LoadPrefabType(const std::string &type);
 
 		//! Loads all the scripted types within the current ScriptedEntityPath
-		/*!
-		* \see ScriptedEntityPath()
-		*/
-		void LoadAllScriptedTypes();
+		void LoadAllPrefabTypes();
 
 		//! Unloads all scripted entity descriptions
 		void UnloadAllScriptedTypes();
 
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);
-		//! Sets the scripting manager and module used to add script sections
-		void SetScriptingManager(ScriptManager *manager);
-		//! Sets the scripting module used to add script sections
-		void SetModule(const ModulePtr &module);
+		////! Sets the scripting manager and module used to add script sections
+		//void SetScriptingManager(ScriptManager *manager);
+		////! Sets the scripting module used to add script sections
+		//void SetModule(const ModulePtr &module);
 
 		//! Returns the names of types with instancers available to the factory
 		void GetTypes(StringVector &types, bool sort = false);

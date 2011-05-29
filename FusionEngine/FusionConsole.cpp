@@ -90,13 +90,16 @@ namespace FusionEngine
 		// Fire new data signal
 		OnNewData(message);
 
+		CL_MutexSection lock(&m_BufferMutex);
+
 		// Fire newline signal(s)
 		if (!OnNewLine.empty())
 		{
 			if (m_LastNewlineInBuffer > m_BufferLength)
 				m_LastNewlineInBuffer = 0;
 			std::string::size_type newlinePos = m_LastNewlineInBuffer, startOfLastNewLine;
-			while (true)
+
+			for (;;)
 			{
 				if (m_LastNewlineInBuffer == 0)
 					startOfLastNewLine = 0;
@@ -107,8 +110,13 @@ namespace FusionEngine
 				{
 					m_LastNewlineInBuffer = newlinePos;
 					if (!(startOfLastNewLine == 0 && newlinePos == 1))
+					{
+						auto newLine = m_Buffer.substr(startOfLastNewLine, newlinePos-startOfLastNewLine);
+						lock.unlock();
 						// Signal
-						OnNewLine( m_Buffer.substr(startOfLastNewLine, newlinePos-startOfLastNewLine) );
+						OnNewLine(newLine);
+						lock.lock();
+					}
 				}
 				else
 					break;
@@ -121,10 +129,13 @@ namespace FusionEngine
 			m_LengthToNextSignal = m_CharInterval;
 			if (!OnCharacterInterval.empty())
 			{
+				std::string range;
 				if (m_Buffer.length() > m_CharInterval)
-					OnCharacterInterval( m_Buffer.substr(m_Buffer.length() - m_CharInterval) );
+					range = m_Buffer.substr(m_Buffer.length() - m_CharInterval);
 				else
-					OnCharacterInterval(m_Buffer);
+					range = m_Buffer;
+				lock.unlock();
+				OnCharacterInterval(range);
 			}
 		}
 		else
@@ -133,6 +144,7 @@ namespace FusionEngine
 
 	void Console::append_buffer(const std::string &string)
 	{
+		CL_MutexSection lock(&m_BufferMutex);
 		if (string.length() >= m_BufferLength)
 		{
 			// The last character in the string should end up as the last
@@ -180,12 +192,16 @@ namespace FusionEngine
 
 	void Console::Add(const std::string &message)
 	{
-		// Close the grouped entries section
-		if (!m_LastHeading.empty())
 		{
-			m_LastHeading = "";
-			// Add a closing line
-			add_raw("}\n");
+			CL_MutexSection lock(&m_HeadingCrapMutex);
+			// Close the grouped entries section
+			if (!m_LastHeading.empty())
+			{
+				m_LastHeading = "";
+				lock.unlock();
+				// Add a closing line
+				add_raw("}\n");
+			}
 		}
 
 		add_raw(message + '\n');
@@ -215,8 +231,10 @@ namespace FusionEngine
 
 	void Console::Add(const std::string& heading, const std::string& message)
 	{
+		CL_MutexSection lock(&m_HeadingCrapMutex);
 		if (heading != m_LastHeading)
 		{
+			lock.unlock();
 			// Add new heading (will also close the current heading if there is one)
 			Add("[" + heading + "]:");
 			add_raw("{\n");
@@ -225,6 +243,7 @@ namespace FusionEngine
 		// Add the message
 		add_raw(' ' + message + '\n');
 
+		lock.lock();
 		m_LastHeading = heading;
 	}
 
@@ -491,10 +510,12 @@ namespace FusionEngine
 	// TODO: void add(const std::string &string, bool append_newline)
 	void Console::Print(const std::string &string)
 	{
+		CL_MutexSection lock(&m_HeadingCrapMutex);
 		// Close the grouped entries section
 		if (!m_LastHeading.empty())
 		{
 			m_LastHeading = "";
+			lock.unlock();
 			// Add a closing line
 			add_raw("}\n");
 		}
@@ -505,8 +526,10 @@ namespace FusionEngine
 	// TODO: void add(const std::string &heading, const std::string &string, bool append_newline)
 	void Console::Print(const std::string &heading, const std::string &string)
 	{
+		CL_MutexSection lock(&m_HeadingCrapMutex);
 		if (heading != m_LastHeading)
 		{
+			lock.unlock();
 			// Add new heading (will also close the current heading if there is one)
 			Add("[" + heading + "]:");
 			add_raw("{\n");
@@ -515,6 +538,7 @@ namespace FusionEngine
 		// Add the message
 		add_raw(' ' + string);
 
+		lock.lock();
 		m_LastHeading = heading;
 	}
 
@@ -540,6 +564,7 @@ namespace FusionEngine
 
 	void Console::Clear()
 	{
+		CL_MutexSection lock(&m_BufferMutex);
 		if (!m_Buffer.empty())
 		{
 			m_Buffer.clear();
@@ -547,6 +572,7 @@ namespace FusionEngine
 			m_LastNewlineInBuffer = 0;
 			m_LengthToNextSignal = m_CharInterval;
 
+			lock.unlock();
 			// Signal
 			OnClear();
 		}

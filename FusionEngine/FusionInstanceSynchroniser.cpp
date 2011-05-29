@@ -32,6 +32,7 @@
 #include <BitStream.h>
 #include <RakNetTypes.h>
 #include <StringTable.h>
+#include <climits>
 
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
@@ -69,14 +70,18 @@ namespace FusionEngine
 		m_WorldIdGenerator.takeAll(next);
 	}
 
+	static const ObjectID localFlag = 0x1 << (sizeof(ObjectID) * 8 - 1); // - 1 because the flag is 1 bit
+	static const ObjectID peerIndexMask = 0x78 << (sizeof(ObjectID) * 8 - 8); // - 8 because the mask overlaps 2 bytes
+	static const ObjectID localIdMask = ~(localFlag | peerIndexMask);
+
 	void InstancingSynchroniser::TakeID(ObjectID id)
 	{
-		if ((id & 0x8000) == 0x8000) // if the first bit is set (this is a local-authority ID)
+		if ((id & localFlag) == localFlag) // if the first bit is set (this is a local-authority ID)
 		{
-			uint8_t peerIndex = (id & 0x7800) >> (sizeof(ObjectID) * 8 - 5);
+			uint8_t peerIndex = (id & peerIndexMask) >> (sizeof(ObjectID) * 8 - 5);
 			if (peerIndex < s_MaxPeers)
 			{
-				m_LocalIdGenerators[peerIndex].takeID(id & 0x07FF);
+				m_LocalIdGenerators[peerIndex].takeID(id & localIdMask);
 			}
 		}
 		else
@@ -87,12 +92,12 @@ namespace FusionEngine
 
 	void InstancingSynchroniser::FreeID(ObjectID id)
 	{
-		if ((id & 0x8000) == 0x8000) // if the first bit is set (this is a local-authority ID)
+		if ((id & localFlag) == localFlag) // if the first bit is set this is a local-authority ID
 		{
-			uint8_t peerIndex = (id & 0x7800) >> (sizeof(ObjectID) * 8 - 5);
+			uint8_t peerIndex = (id & peerIndexMask) >> (sizeof(ObjectID) * 8 - 5);
 			if (peerIndex < s_MaxPeers)
 			{
-				m_LocalIdGenerators[peerIndex].freeID(id & 0x07FF);
+				m_LocalIdGenerators[peerIndex].freeID(id & localIdMask);
 			}
 		}
 		else
@@ -103,29 +108,25 @@ namespace FusionEngine
 
 	ObjectID InstancingSynchroniser::generateLocalId()
 	{
+		static_assert(CHAR_BIT == 8, "Why are your bytes weird? :(");
+
 		ObjectID id = 0;
 
-		uint8_t peerIndex = NetworkManager::GetLocalPeerIndex();
+		uint8_t peerId = NetworkManager::GetPeerID();
 
-		if (peerIndex < s_MaxPeers)
+		if (peerId < s_MaxPeers)
 		{
 			// Generate the part of the id that makes it unique to this peer:
 			// Shift the peer index to the left of the id - it takes up the higher
 			//  bits after the first bit
-			id = ObjectID(peerIndex) << (sizeof(ObjectID) * 8 - 5);
-			id |= 0x8000; // set the first bit to 1
-			id &= 0xF800;
+			id = ObjectID(peerId) << (sizeof(ObjectID) * 8 - 5); // assumes peerIndex fits into 4 bits (s_MaxPeers is 16) TODO: remove this assumption?
+			id |= localFlag; // set the left-most bit to 1
 			// id will now be 1----00000000000, where ---- is the peer index
 		}
-		// If the current peer index is >= s_MaxPeers a peer has recently
-		//  left and the peer indicies are being re-assigned - all entity
-		//  creation must be delegated to the arbiter during this period
-		//  (leaving the object id 0 will indicate to the arbiter that
-		//  this is the case when it receives the message.)
 
 		// Check that the next ID wont overwrite the peer index
-		if ((m_LocalIdGenerators[peerIndex].peekNextID() & 0xF800) == 0)
-			id |= m_LocalIdGenerators[peerIndex].getFreeID();
+		if ((m_LocalIdGenerators[peerId].peekNextID() & peerIndexMask) == 0)
+			id |= m_LocalIdGenerators[peerId].getFreeID();
 		else
 			AddLogEntry(g_LogGeneral, "Out of IDs: can't fulfil requests to instanciate Entities anymore");
 
@@ -160,7 +161,6 @@ namespace FusionEngine
 			FSN_EXCEPT(ExCode::InvalidArgument, "You must pass a valid requester instance");
 
 		bool localAuthority = PlayerRegistry::IsLocal(requester->GetOwnerID());
-		uint8_t peerIndex = m_Network->GetLocalPeerIndex(); // Used to generate an ID if this entity is being created under local authority
 
 		// Syncable entities can only be instanced by a call from either an owned entity or the arbiter
 		//  pseudo-entities (!syncable) are local-only so peers can spawn them willy-nilly
@@ -174,7 +174,7 @@ namespace FusionEngine
 					id = generateLocalId();
 				else
 				{
-					if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
+					if ((m_WorldIdGenerator.peekNextID() & localFlag) == 0) // make sure the next ID won't clobber the local flag
 						id = m_WorldIdGenerator.getFreeID();
 					else
 					{
@@ -253,6 +253,8 @@ namespace FusionEngine
 			receivedData.Read(id);
 			PlayerID ownerId;
 			receivedData.Read(ownerId);
+
+			TakeID(id);
 
 			// Entity name
 			std::string name;

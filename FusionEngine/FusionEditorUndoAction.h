@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2010 Fusion Project Team
+*  Copyright (c) 2010-2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionEngine_UndoAction
-#define Header_FusionEngine_UndoAction
+#ifndef H_FusionEditorUndoAction
+#define H_FusionEditorUndoAction
 
 #if _MSC_VER > 1000
 #pragma once

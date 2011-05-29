@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionPhysFSIOStream
-#define Header_FusionPhysFSIOStream
+#ifndef H_FusionPhysFSIOStream
+#define H_FusionPhysFSIOStream
 
 #if _MSC_VER > 1000
 #pragma once

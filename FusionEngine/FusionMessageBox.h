@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef Header_FusionMessageBoxManager
-#define Header_FusionMessageBoxManager
+#ifndef H_FusionMessageBoxManager
+#define H_FusionMessageBoxManager
 
 #if _MSC_VER > 1000
 #pragma once

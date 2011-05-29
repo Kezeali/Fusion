@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006-2010 Fusion Project Team
+  Copyright (c) 2006-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_Logger
-#define Header_FusionEngine_Logger
+#ifndef H_FusionEngine_Logger
+#define H_FusionEngine_Logger
 
 #if _MSC_VER > 1000
 # pragma once
@@ -187,6 +187,8 @@ namespace FusionEngine
 		bool m_DefaultTarget_File;
 		bool m_DefaultTarget_Console;
 
+		CL_Mutex m_LogsMutex;
+
 		LogList m_Logs;
 
 		boost::signals2::connection m_ConsoleNewLine;
@@ -219,6 +221,11 @@ namespace FusionEngine
 		Logger* logger = Logger::getSingletonPtr();
 		if(logger != nullptr)
 			logger->Add(entry, log, severity);
+	}
+
+	static void AddLogEntry(const std::string& entry, LogSeverity severity = LOG_NORMAL)
+	{
+		AddLogEntry(g_LogGeneral, entry, severity);
 	}
 
 }

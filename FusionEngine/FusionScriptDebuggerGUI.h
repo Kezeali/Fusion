@@ -26,8 +26,8 @@
 
 */
 
-#ifndef Header_FusionEngine_ScriptDebuggerGUI
-#define Header_FusionEngine_ScriptDebuggerGUI
+#ifndef H_FusionEngine_ScriptDebuggerGUI
+#define H_FusionEngine_ScriptDebuggerGUI
 
 #if _MSC_VER > 1000
 #pragma once
