@@ -7,6 +7,7 @@ class SpawnPoint : ScriptEntity
 
 	SpawnPoint()
 	{
+		playerToSpawn = 0;
 	}
 	~SpawnPoint()
 	{
@@ -31,7 +32,7 @@ class SpawnPoint : ScriptEntity
 		primaryCamera.setFollowEntity(unwrap_Test(player));
 		primaryCamera.setFollowMode(CamFollowMode::FollowInstant);
 
-		streamer.setPlayerCamera(playerToSpawn, primaryCamera);
+		streamer.addCamera(primaryCamera);
 
 		@primaryCamera = null;
 	}

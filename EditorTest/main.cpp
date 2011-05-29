@@ -76,9 +76,9 @@ public:
 		CL_DisplayWindow dispWindow("Display", 1024, 768);
 
 		{
-			boost::scoped_ptr<Logger> logger;
-			boost::scoped_ptr<ConsoleStdOutWriter> coutWriter;
-			boost::scoped_ptr<Console> console;
+			std::unique_ptr<Logger> logger;
+			std::unique_ptr<ConsoleStdOutWriter> coutWriter;
+			std::unique_ptr<Console> console;
 
 			try
 			{
@@ -164,7 +164,7 @@ public:
 
 				/////////////////////////////////////
 				// Script SoundOutput wrapper object
-				std::tr1::shared_ptr<SoundOutput> script_SoundOutput(new SoundOutput(sound_output));
+				std::shared_ptr<SoundOutput> script_SoundOutput = std::make_shared<SoundOutput>(sound_output);
 
 				////////////////////
 				// Resource Manager
@@ -172,19 +172,10 @@ public:
 				resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResouce, NULL);
 				resourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
 				resourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
-				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, &UnloadSpriteQuickLoadData, NULL);
+				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
 
-#ifdef _WIN32
-				resourceManager->StartLoaderThread(gc);
-#elif defined(__APPLE__)
-				CL_GraphicContext loadingGC = gc.create_worker_gc();
-				resourceManager->StartLoaderThread(loadingGC);
-#else
-				// Might have to create a secondary pbuffer here (I read something about
-				//  this giving better performance because of reduced resource locking)
-				CL_GraphicContext loadingGC = gc.create_worker_gc();
-				resourceManager->StartLoaderThread(loadingGC);
-#endif
+				resourceManager->StartLoaderThread();
+
 				// Make sure the GC is properly configured
 				CL_OpenGL::set_active(gc);
 
@@ -197,7 +188,7 @@ public:
 
 				/////////////////
 				// Input Manager
-				boost::scoped_ptr<InputManager> inputMgr(new InputManager(dispWindow));
+				const std::unique_ptr<InputManager> inputMgr(new InputManager(dispWindow));
 
 				if (!inputMgr->Test())
 					FSN_EXCEPT_CS(ExCode::IO, "startup", "InputManager couldn't find a keyboard device.");
@@ -206,20 +197,20 @@ public:
 
 				////////////
 				// Renderer
-				boost::scoped_ptr<Renderer> renderer(new Renderer(gc));
+				const std::unique_ptr<Renderer> renderer(new Renderer(gc));
 
 				///////////////////
 				// Player Registry
-				std::shared_ptr<PlayerRegistry> playerRegistry(new PlayerRegistry());
+				std::shared_ptr<PlayerRegistry> playerRegistry = std::make_shared<PlayerRegistry>();
 
 				///////////
 				// Systems
 				SystemsManager *systemMgr = new SystemsManager();
 
-				std::shared_ptr<NetworkSystem> networkSystem( new NetworkSystem() );
+				std::shared_ptr<NetworkSystem> networkSystem = std::make_shared<NetworkSystem>();
 				systemMgr->AddSystem(networkSystem);
 
-				std::shared_ptr<GUI> gui( new GUI(dispWindow) );
+				std::shared_ptr<GUI> gui = std::make_shared<GUI>(dispWindow);
 				// Init GUI
 				gui->Initialise();
 				gui->PushMessage(SystemMessage::HIDE);
@@ -232,13 +223,13 @@ public:
 				scriptingManager->AddFile("core/extend.as", "main");
 
 				// Create some non-specific intelligent force that certainly has no particular theological bias:
-				boost::scoped_ptr<FirstCause> god( new FirstCause(co, renderer.get(), inputMgr.get()) );
+				std::unique_ptr<FirstCause> god( new FirstCause(co, renderer.get(), inputMgr.get()) );
 				god->Initialise(module);
 
 				console->SetModule(module);
 				gui->SetModule(module);
 
-				script_SoundOutput->SetModule(module);
+				script_SoundOutput->RegisterSingleton(scriptingManager->GetEnginePtr());
 
 				// Build the module (scripts will be added automatically by objects which have registered a module connection)
 				int r = module->Build();

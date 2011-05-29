@@ -7,6 +7,4 @@
 	<Sync>
 		<Property name="playerToSpawn" />
 	</Sync>
-  <Body linear_damping="0.3" angular_damping="2.0">
-  </Body>
 </Entity>

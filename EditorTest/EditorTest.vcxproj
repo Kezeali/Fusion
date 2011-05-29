@@ -63,7 +63,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -95,7 +95,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;ANGELSCRIPT_DLL_LIBRARY_IMPORT;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -118,9 +118,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMultiAction.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityComponent.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</PreprocessToFile>
+      <PreprocessSuppressLineNumbers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</PreprocessSuppressLineNumbers>
+    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionEntityDecorator.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntityDecoratorInstancer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp" />
@@ -195,11 +201,13 @@
     <ClCompile Include="..\FusionEngine\FusionScriptReference.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptSound.cpp" />
     <ClCompile Include="..\FusionEngine\FusionScriptVector.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionSharedPropertyCollection.cpp" />
     <ClCompile Include="..\FusionEngine\FusionSpriteDefinition.cpp" />
     <ClCompile Include="..\FusionEngine\FusionState.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStateManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamingManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionTagFlagDictionary.cpp" />
     <ClCompile Include="..\FusionEngine\FusionViewport.cpp" />
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
@@ -234,9 +242,18 @@
     <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionComponentCommandQueue.h" />
+    <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicalComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionSharedPropertyCollection.h" />
+    <ClInclude Include="..\FusionEngine\FusionSharedPropertyTypes.h" />
+    <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
     <ClInclude Include="..\FusionEngine\FusionEditorMoveAction.h" />
     <ClInclude Include="..\FusionEngine\FusionEditorMultiAction.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionEntityDecorator.h" />
     <ClInclude Include="..\FusionEngine\FusionEntityDecoratorInstancer.h" />
     <ClInclude Include="..\FusionEngine\FusionFirstCause.h" />
@@ -336,6 +353,7 @@
     <ClInclude Include="..\FusionEngine\FusionStreamedResourceUser.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
+    <ClInclude Include="..\FusionEngine\FusionTagFlagDictionary.h" />
     <ClInclude Include="..\FusionEngine\FusionTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionVector2.h" />
     <ClInclude Include="..\FusionEngine\FusionViewport.h" />

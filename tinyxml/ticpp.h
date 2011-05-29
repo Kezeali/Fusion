@@ -1005,6 +1005,11 @@ namespace ticpp
  			return out;
  		}
 
+		void Print( TiXmlFileInterface* file, int depth )
+		{
+			GetTiXmlPointer()->Print( file, depth );
+		}
+
 	protected:
 		/**
 		@internal
