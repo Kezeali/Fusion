@@ -39,17 +39,52 @@
 namespace FusionEngine
 {
 
+	class ISystemWorld;
+
+	class ISystemTask
+	{
+	public:
+		ISystemTask(ISystemWorld* world)
+			: m_SystemWorld(world)
+		{}
+		virtual ~ISystemTask() {}
+
+		ISystemWorld* GetSystemWorld() const { return m_SystemWorld; }
+
+		virtual void Update(const float delta) = 0;
+
+		virtual bool IsPrimaryThreadOnly() const = 0;
+
+	protected:
+		ISystemWorld *m_SystemWorld;
+	};
+
+	class ISystemWorld
+	{
+	public:
+		virtual ~ISystemWorld() {}
+
+		virtual std::vector<std::string> GetTypes() const = 0;
+		virtual const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle) = 0;
+
+		virtual void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data) = 0;
+
+		virtual void OnActivation(const std::shared_ptr<IComponent>& component) = 0;
+	};
+
 	typedef std::map<std::string, std::string> ComponentStaticProps;
+	enum SystemType { Other, Physics, Rendering };
 
 	class IComponentSystem
 	{
 	public:
 		virtual ~IComponentSystem() {}
 
-		virtual std::vector<std::string> GetTypes() const = 0;
-		virtual const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const ComponentStaticProps& def_props) = 0;
+		virtual SystemType GetType() const = 0;
 
-		virtual void OnActivation(const std::shared_ptr<IComponent>& component);
+		virtual std::string GetName() const = 0;
+
+		virtual ISystemWorld* CreateWorld() = 0;
 	};
 
 }

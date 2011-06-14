@@ -38,7 +38,7 @@
 
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
-#include "FusionComponentCommandQueue.h"
+#include "FusionCommandQueue.h"
 #include "FusionEntityDeserialiser.h"
 #include "FusionPhysicsCallback.h"
 #include "FusionPlayerInput.h"
@@ -168,7 +168,7 @@ namespace FusionEngine
 			template <class I>
 			void operator() (I)
 			{
-				map[I::GetTypeName()].push_back(std::make_pair(com, std::unique_ptr<ICallQueue>(new CallQueue<I>(com)));
+				map[I::GetTypeName()].push_back( std::make_pair(com, std::unique_ptr<ICallQueue>(new CallQueue<I>(com))) );
 			}
 
 			ComInterfaceMap& map;

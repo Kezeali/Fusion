@@ -25,45 +25,10 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionTypes
-#define H_FusionTypes
+#include "FusionStableHeaders.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
-
-#include <cstdint>
-#include <set>
-#include <string>
-#include <vector>
-
-#include <boost/intrusive_ptr.hpp>
+#include "FusionCLRenderSystem.h"
 
 namespace FusionEngine
 {
-
-	
-	//! Unique identifier type for game objects
-	typedef uint32_t ObjectID;
-	//! Unique identifier type for players
-	typedef uint8_t PlayerID;
-
-	typedef std::vector<std::string> StringVector;
-	typedef std::set<std::string> StringSet;
-
-	typedef std::shared_ptr<Entity> EntityPtr;
-
-	//! EditorMapEntity ptr
-	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;
-
-	//! Log pointer
-	typedef std::shared_ptr<Log> LogPtr;
-	typedef std::shared_ptr<Module> ModulePtr;
-	//! System pointer
-	typedef std::shared_ptr<System> SystemPtr;
-
-	typedef unsigned char EntityDomain;
-
 }
-
-#endif

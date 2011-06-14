@@ -27,7 +27,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -63,7 +63,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
@@ -78,7 +78,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>angelscriptd.lib;physfs.lib;yaml-cpp.lib;box2d_mtdll_d.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscriptd.lib;physfs.lib;yaml-cpp.lib;Box2Dd.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -95,7 +95,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -113,20 +113,19 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
-      <AdditionalDependencies>angelscript.lib;physfs.lib;box2d_mtdll.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>angelscript.lib;physfs.lib;Box2d.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMoveAction.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEditorMultiAction.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionEntityComponent.cpp">
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</PreprocessToFile>
-      <PreprocessSuppressLineNumbers Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</PreprocessSuppressLineNumbers>
-    </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionEntityComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntityDecorator.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntityDecoratorInstancer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFirstCause.cpp" />
@@ -244,9 +243,13 @@
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
-    <ClInclude Include="..\FusionEngine\FusionComponentCommandQueue.h" />
+    <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysicalComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionRender2DComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionSerialisationHelper.h" />
     <ClInclude Include="..\FusionEngine\FusionSharedPropertyCollection.h" />
     <ClInclude Include="..\FusionEngine\FusionSharedPropertyTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
@@ -354,6 +357,7 @@
     <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
     <ClInclude Include="..\FusionEngine\FusionTagFlagDictionary.h" />
+    <ClInclude Include="..\FusionEngine\FusionThreadSafeProperty.h" />
     <ClInclude Include="..\FusionEngine\FusionTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionVector2.h" />
     <ClInclude Include="..\FusionEngine\FusionViewport.h" />

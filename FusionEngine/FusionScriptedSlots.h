@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2009 Fusion Project Team
+  Copyright (c) 2009-2011 Fusion Project Team
 
   This software is provided 'as-is', without any express or implied warranty.
 	In noevent will the authors be held liable for any damages arising from the
@@ -76,7 +76,7 @@ namespace FusionEngine
 		//! Executes the bound function (or 'callback') with no parameters
 		void Callback();
 
-		// TODO: Use C++0x to generate these params
+		// TODO: Use varadic template to generate these params
 		//! Executes the bound function, with the given parameters
 		template <typename T0>
 		void Callback(T0 p0)

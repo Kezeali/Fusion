@@ -302,6 +302,12 @@
     <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
@@ -673,13 +679,28 @@
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionComponentCommandQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionCommandQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionSerialisationHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionThreadSafeProperty.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionRender2DComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

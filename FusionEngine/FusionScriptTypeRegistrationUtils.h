@@ -84,7 +84,7 @@ namespace FusionEngine
 	}
 
 	template <typename T>
-	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine)
+	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine, asDWORD type_flags)
 	{
 		FSN_ASSERT(engine && "Need a valid engine pointer");
 
@@ -94,35 +94,47 @@ namespace FusionEngine
 
 		int error_code;
 
-		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK);
+		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | type_flags);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
-		error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
-			asBEHAVE_CONSTRUCT, 
-			"void f()", 
-			asFUNCTION(helper_type::Construct), 
-			asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
+		if (type_flags & asOBJ_APP_CLASS_CONSTRUCTOR)
+		{
+			error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
+				asBEHAVE_CONSTRUCT, 
+				"void f()", 
+				asFUNCTION(helper_type::Construct), 
+				asCALL_CDECL_OBJLAST);
+			FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
+		}
 
-		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
-			asBEHAVE_DESTRUCT,
-			"void f()",
-			asFUNCTION(helper_type::Destruct),
-			asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
+		if (type_flags & asOBJ_APP_CLASS_DESTRUCTOR)
+		{
+			error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
+				asBEHAVE_DESTRUCT,
+				"void f()",
+				asFUNCTION(helper_type::Destruct),
+				asCALL_CDECL_OBJLAST);
+			FSN_ASSERT(error_code >= 0 && "Failed to register destructor");
+		}
 
-		error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
-			asBEHAVE_CONSTRUCT,
-			(std::string("void f(")+type_name+"&in)").c_str(),
-			asFUNCTION(helper_type::CopyConstruct),
-			asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
+		if (type_flags & asOBJ_APP_CLASS_COPY_CONSTRUCTOR)
+		{
+			error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
+				asBEHAVE_CONSTRUCT,
+				(std::string("void f(")+type_name+"&in)").c_str(),
+				asFUNCTION(helper_type::CopyConstruct),
+				asCALL_CDECL_OBJLAST);
+			FSN_ASSERT(error_code >= 0 && "Failed to register copy constructor");
+		}
 
-		error_code = engine->RegisterObjectMethod(type_name.c_str(),
-			(type_name+"& f(const "+type_name+"&in)").c_str(),
-			asFUNCTION(helper_type::Assign),
-			asCALL_CDECL_OBJLAST);
-		FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
+		if (type_flags & asOBJ_APP_CLASS_ASSIGNMENT)
+		{
+			error_code = engine->RegisterObjectMethod(type_name.c_str(),
+				(type_name+"& f(const "+type_name+"&in)").c_str(),
+				asFUNCTION(helper_type::Assign),
+				asCALL_CDECL_OBJLAST);
+			FSN_ASSERT(error_code >= 0 && "Failed to register assignment operator");
+		}
 	}
 	
 	template <typename T>

@@ -70,7 +70,7 @@ namespace FusionEngine
 	*/
 	struct EasyPacket
 	{
-		struct Packet OriginalPacket;
+		struct RakNet::Packet OriginalPacket;
 
 		//! Constructor
 		//EasyPacket() {}
@@ -89,10 +89,10 @@ namespace FusionEngine
 
 		//! Returns true if this packet has a timestamp
 		bool IsTimeStamped() const;
-		RakNetTime GetTime() const;
+		RakNet::Time GetTime() const;
 
 		//! Returns the system handle for the system that sent this packet
-		const RakNetGUID &GetGUID() const;
+		const RakNet::RakNetGUID &GetGUID() const;
 	};
 
 	//! Packet that automatically deallocates itself when going out of scope
@@ -105,12 +105,12 @@ namespace FusionEngine
 		//! Constructor
 		AutoPacket();
 		//! Constructor
-		AutoPacket(Packet *raknet_packet, const DeallocatePacketFunction &on_destruction);
+		AutoPacket(RakNet::Packet *raknet_packet, const DeallocatePacketFunction &on_destruction);
 
 		//! Destructor
 		~AutoPacket();
 
-		Packet* m_RakNetPacket;
+		RakNet::Packet* m_RakNetPacket;
 
 	private:
 		DeallocatePacketFunction m_DeallocatePacket;

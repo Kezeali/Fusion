@@ -29,15 +29,55 @@
 
 #include "FusionBox2DSystem.h"
 
+#include "FusionBox2DComponent.h"
+
 namespace FusionEngine
 {
 
-	std::vector<std::string> Box2DSystem::GetTypes() const
+	ISystemWorld* Box2DSystem::CreateWorld()
 	{
+		return new Box2DWorld();
 	}
 
-	const std::shared_ptr<IComponent> &Box2DSystem::InstantiateComponent(const std::string& type, const ComponentDefinition& def_props)
+	Box2DWorld::Box2DWorld()
 	{
+		b2Vec2 gravity(0.0f, 0.0f);
+		m_World = new b2World(gravity, true);
+	}
+
+	std::vector<std::string> Box2DWorld::GetTypes() const
+	{
+		static const std::string types[] = { "B2Body", "B2Fixture" };
+		return std::vector<std::string>(types, types + sizeof(types));
+	}
+
+	static bool att_is_true(const std::string& att)
+	{
+		return att == "t" || att == "1" || att == "true";
+	}
+
+	const std::shared_ptr<IComponent> &Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+	{
+		if (type == "B2Body")
+		{
+			b2BodyDef def;
+			def.position.Set(pos.x, pos.y);
+			def.angle = angle;
+
+			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
+		}
+	}
+
+	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
+	{
+		if (type == "B2Body")
+		{
+			Box2DBody::MergeDelta(result, current_data, new_data);
+		}
+		else if (type == "B2Fixture")
+		{
+			Box2DFixture::MergeDelta(result, current_data, new_data);
+		}
 	}
 
 }

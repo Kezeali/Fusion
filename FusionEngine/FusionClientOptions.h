@@ -86,7 +86,7 @@ namespace FusionEngine
 
 
 		bool SetOption(const std::string& name, const std::string& value);
-		void SetMultipleOptions(const std::tr1::unordered_map<std::string, std::string>& pairs);
+		void SetMultipleOptions(const std::unordered_map<std::string, std::string>& pairs);
 
 		bool SetPlayerOption(unsigned int player, const std::string& name, const std::string& value);
 

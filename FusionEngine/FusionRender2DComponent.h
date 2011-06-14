@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionBox2DSystem
-#define H_FusionBox2DSystem
+#ifndef H_FusionBox2DComponent
+#define H_FusionBox2DComponent
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,49 +34,50 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionComponentSystem.h"
+#include "FusionCommon.h"
 #include "FusionEntityComponent.h"
-
-class b2World;
+#include "FusionThreadSafeProperty.h"
 
 namespace FusionEngine
 {
 
-	class Box2DWorld;
-
-	class Box2DSystem : public IComponentSystem
-	{
+	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		Box2DSystem();
-		virtual ~Box2DSystem()
-		{}
+		ThreadSafeProperty<Vector2> Position; // Usually bound to ITransform::Position
+		ThreadSafeProperty<Vector2> Offset;
+
+		void SynchroniseInterface()
+		{
+			if (Position.Synchronise()) // writeonly
+				SetPosition(Position.Get());
+			if (Offset.Synchronise()) // writeonly
+				SetOffset(Offset.Get());
+		}
 
 	private:
-		SystemType GetType() const { return SystemType::Physics; }
+		virtual void SetPosition(const Vector2& value) = 0;
 
-		std::string GetName() const { return "Box2DSystem"; }
-
-		ISystemWorld* CreateWorld();
-
+		virtual void SetOffset(const Vector2& value) = 0;
 	};
 
-	class Box2DWorld : public ISystemWorld
+	class ISprite : public IRenderCom
 	{
 	public:
-		Box2DWorld();
-		virtual ~Box2DWorld()
+		static std::string GetTypeName() { return "ISprite"; }
+		virtual ~ISprite()
 		{}
 
+		ThreadSafeProperty<std::string> FilePath; // Usually bound to ITransform::Position
+
+
+		void SynchroniseInterface()
+		{
+			if (FilePath.Synchronise()) // writeonly
+				SetFilePath(FilePath.Get());
+		}
+
 	private:
-		std::vector<std::string> GetTypes() const;
-
-		const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
-
-		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
-
-		void OnActivation(const std::shared_ptr<IComponent>& component);
-
-		b2World* m_World;
+		virtual void SetFilePath(const std::string& value) = 0;
 	};
 
 }

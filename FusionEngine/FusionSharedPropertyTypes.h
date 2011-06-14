@@ -25,44 +25,41 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionTypes
-#define H_FusionTypes
+#ifndef H_FusionSharedPropertyTypes
+#define H_FusionSharedPropertyTypes
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include <cstdint>
-#include <set>
-#include <string>
-#include <vector>
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/index_of.hpp>
+#include <boost/preprocessor/seq.hpp>
+#include <boost/variant.hpp>
+#include <ClanLib/Display/2D/color.h>
+#include "FusionVector2.h"
 
-#include <boost/intrusive_ptr.hpp>
+#define PROPERTY_TYPES_SEQ \
+	(bool)\
+	(int8_t)(int16_t)(int32_t)(int64_t)\
+	(uint8_t)(uint16_t)(uint32_t)(uint64_t)\
+	(float)(double)\
+	(std::string)(FusionEngine::Vector2)(CL_Colorf)
 
 namespace FusionEngine
 {
 
-	
-	//! Unique identifier type for game objects
-	typedef uint32_t ObjectID;
-	//! Unique identifier type for players
-	typedef uint8_t PlayerID;
+	typedef boost::mpl::vector<BOOST_PP_SEQ_ENUM(PROPERTY_TYPES_SEQ)> PropertyTypes;
+	typedef boost::make_variant_over<PropertyTypes>::type PropertyVariant;
 
-	typedef std::vector<std::string> StringVector;
-	typedef std::set<std::string> StringSet;
-
-	typedef std::shared_ptr<Entity> EntityPtr;
-
-	//! EditorMapEntity ptr
-	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;
-
-	//! Log pointer
-	typedef std::shared_ptr<Log> LogPtr;
-	typedef std::shared_ptr<Module> ModulePtr;
-	//! System pointer
-	typedef std::shared_ptr<System> SystemPtr;
-
-	typedef unsigned char EntityDomain;
+	namespace Properties
+	{
+		template <typename T>
+		static int GetTypeIndex()
+		{
+			return boost::mpl::index_of<PropertyTypes, T>::type();
+		}
+	}
 
 }
 

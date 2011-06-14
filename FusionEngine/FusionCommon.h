@@ -121,6 +121,13 @@ namespace FusionEngine
 	//! Converts rad deg (double)
 	static inline double fe_radtodeg(double rad) { return rad * s_RadToDeg; }
 
+	//! Returns true if the bit is set
+	template <unsigned int i>
+	inline bool checkbit(uint16_t mask)
+	{
+		return !!(mask & (0x1 << i));
+	}
+
 	/*!
 	* /brief
 	* Determines whether a string contains only alphabet characters

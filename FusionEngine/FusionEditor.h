@@ -213,7 +213,7 @@ namespace FusionEngine
 			void ListEntity(const EntityPtr &entity);
 			EntityPtr GetEntity(ObjectID id) const;
 		private:
-			typedef std::tr1::unordered_map<ObjectID, EntityPtr> EntityIdMap;
+			typedef std::unordered_map<ObjectID, EntityPtr> EntityIdMap;
 			EntityIdMap m_EntityMap;
 		};
 

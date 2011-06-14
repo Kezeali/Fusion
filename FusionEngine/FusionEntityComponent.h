@@ -37,9 +37,10 @@
 #include <vector>
 #include <functional>
 
+#include <BitStream.h>
+
 #include <boost/mpl/vector.hpp>
 #include <boost/preprocessor.hpp>
-#include <boost/signals2/signal.hpp>
 
 #include <tbb/enumerable_thread_specific.h>
 
@@ -61,7 +62,8 @@
 	class interface_name\
 	{\
 	public:\
-	static std::string GetTypeName() { return #interface_name; }
+	static std::string GetTypeName() { return #interface_name; }\
+	virtual ~interface_name() {}
 
 namespace FusionEngine
 {
@@ -71,35 +73,41 @@ namespace FusionEngine
 	{
 	public:
 		//! this could also be called "LastValue"
-		T Get() const
+		const T& Read() const
 		{
 			return m_ReadBuffer;
 		}
 
 		//! This could be called "SetNextValue"
-		void Set(const T& value)
+		void Write(const T& value)
 		{
 			m_WriteBuffers.local() = value;
 		}
 
 		//! This could be called "NextValue"
-		T& Set()
+		T& GetWriteBuf()
 		{
 			return m_WriteBuffers.local();
 		}
 
-		bool GetWrittenValue(T& out)
+		//! Copys a written value into the out param then clears the buffer
+		bool ClearWrittenValue(T& out)
 		{
 			// Essentially this just picks a value at random (whatever happens to be the 'first' value)
 			//  In a single threaded application, multiple calls to a 'Set' method in a single simulation
 			//  step would result in the same beahviour (whatever value happend to be set last would be used)
 			if (m_WriteBuffers.size() > 0)
 			{
-				out = *m_WriteBuffers.begin();
+				m_ReadBuffer = out = *m_WriteBuffers.begin();
 				m_WriteBuffers.clear();
 				return true;
 			}
 			return false;
+		}
+
+		void SetReadValue(const T& value)
+		{
+			m_ReadBuffer = value;
 		}
 
 	protected:
@@ -109,7 +117,7 @@ namespace FusionEngine
 
 	//! A thread-save interface to a class property
 	template <typename T>
-	class ThreadSafeProperty : public ValueBuffer<T>
+	class ValueBufferProperty : public ValueBuffer<T>
 	{
 	public:
 		void Synchronise()
@@ -132,7 +140,7 @@ namespace FusionEngine
 			m_ReadBuffer = get_internal();
 		}
 
-		void Initialise(const std::function<T () const>& getter)
+		void Initialise(const std::function<void (T&)>& getter)
 		{
 			Initialise(getter, std::function<void (const T&)>());
 		}
@@ -151,6 +159,65 @@ namespace FusionEngine
 		std::vector<std::string> m_PublishedMethods;
 	};
 
+	struct Serialiser
+	{
+		Serialiser(bool _force_all, RakNet::BitStream& _stream)
+			: force_all(_force_all),
+			stream(_stream)
+		{}
+		bool force_all;
+		RakNet::BitStream& stream;
+
+		template <typename T>
+		inline bool writeChange(T& old_value, const T& new_value)
+		{
+			if (force_all || new_value != old_value)
+			{
+				stream.Write1();
+				stream.Write(new_value);
+				old_value = new_value;
+				return true;
+			}
+			else
+			{
+				stream.Write0();
+				return false;
+			}
+		}
+
+		template <>
+		inline bool writeChange(bool& old_value, const bool& new_value)
+		{
+			stream.Write(new_value);
+			if (force_all || new_value != old_value)
+			{
+				old_value = new_value;
+				return true;
+			}
+			else
+				return false;
+		}
+
+		template <typename T>
+		inline bool readChange(T& new_value)
+		{
+			if (force_all || stream.ReadBit())
+			{
+				stream.Read(new_value);
+				return true;
+			}
+			else
+				return false;
+		}
+
+		template <>
+		inline bool readChange(bool& new_value)
+		{
+			stream.Read(new_value);
+			return true;
+		}
+	};
+
 	class IComponent
 	{
 	public:
@@ -158,6 +225,11 @@ namespace FusionEngine
 		virtual ~IComponent() {}
 
 		virtual void SynchroniseParallelEdits() = 0;
+
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
 
 		virtual std::string GetType() const = 0;
 

@@ -25,44 +25,50 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionTypes
-#define H_FusionTypes
+#ifndef H_FusionCLRenderSystem
+#define H_FusionCLRenderSystem
 
 #if _MSC_VER > 1000
 #pragma once
 #endif
 
-#include <cstdint>
-#include <set>
-#include <string>
-#include <vector>
+#include "FusionPrerequisites.h"
 
-#include <boost/intrusive_ptr.hpp>
+#include "FusionCommon.h"
+
+#include "FusionComponentSystem.h"
 
 namespace FusionEngine
 {
 
-	
-	//! Unique identifier type for game objects
-	typedef uint32_t ObjectID;
-	//! Unique identifier type for players
-	typedef uint8_t PlayerID;
+	class CLRenderSystem : public IComponentSystem
+	{
+	public:
+		SystemType GetType() const { return SystemType::Rendering; }
 
-	typedef std::vector<std::string> StringVector;
-	typedef std::set<std::string> StringSet;
+		std::string GetName() const { return "Box2DSystem"; }
 
-	typedef std::shared_ptr<Entity> EntityPtr;
+		ISystemWorld* CreateWorld();
+	};
 
-	//! EditorMapEntity ptr
-	typedef boost::intrusive_ptr<EditorMapEntity> EditorMapEntityPtr;
+	class CLRenderWorld : public ISystemWorld
+	{
+	public:
+		CLRenderWorld();
+		virtual ~CLRenderWorld()
+		{}
 
-	//! Log pointer
-	typedef std::shared_ptr<Log> LogPtr;
-	typedef std::shared_ptr<Module> ModulePtr;
-	//! System pointer
-	typedef std::shared_ptr<System> SystemPtr;
+	private:
+		std::vector<std::string> GetTypes() const;
 
-	typedef unsigned char EntityDomain;
+		const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
+
+		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
+
+		void OnActivation(const std::shared_ptr<IComponent>& component);
+
+		Renderer* m_Renderer;
+	}
 
 }
 

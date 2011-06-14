@@ -30,7 +30,6 @@
 #include "FusionRakNetwork.h"
 
 // Core raknet stuff
-#include <RakNetworkFactory.h>
 #include <RakNetStatistics.h>
 // Utilities
 #include <BitStream.h>
@@ -39,6 +38,8 @@
 #include "FusionAssert.h"
 
 #include <tbb/spin_mutex.h>
+
+using namespace RakNet;
 
 namespace FusionEngine
 {
@@ -56,7 +57,7 @@ namespace FusionEngine
 		return m_PeerIndex;
 	}
 
-	bool PeerIndexPlugin::IsSenior(const RakNetGUID &guid) const
+	bool PeerIndexPlugin::IsSenior(const RakNet::RakNetGUID &guid) const
 	{
 		Mutex_t::scoped_lock lock(m_PeersMutex);
 		return m_SeniorPeers.find(guid) != m_SeniorPeers.end();
@@ -112,7 +113,7 @@ namespace FusionEngine
 		: m_MinLagMilis(0), m_LagVariance(0),
 		m_AllowBps(0.0)
 	{
-		m_NetInterface = RakNetworkFactory::GetRakPeerInterface();
+		m_NetInterface = RakPeerInterface::GetInstance();
 
 		m_FullyConnectedMeshPlugin.SetConnectOnNewRemoteConnection(true, "");
 		m_FullyConnectedMeshPlugin.SetAutoparticipateConnections(true);
@@ -126,13 +127,13 @@ namespace FusionEngine
 
 	RakNetwork::~RakNetwork()
 	{
-		RakNetworkFactory::DestroyRakPeerInterface(m_NetInterface);
+		RakPeerInterface::DestroyInstance(m_NetInterface);
 	}
 
 	bool RakNetwork::Startup(unsigned short incommingPort)
 	{
 		SocketDescriptor socDesc(incommingPort, 0);
-		if (m_NetInterface->Startup(s_MaxPeers, 10, &socDesc, 1))
+		if (m_NetInterface->Startup(s_MaxPeers, &socDesc, 1))
 			return true;
 		else
 			return false;
@@ -238,7 +239,7 @@ namespace FusionEngine
 		if (packet == nullptr)
 			return AutoPacketPtr();
 
-		using namespace std::tr1::placeholders;
+		using namespace std::placeholders;
 
 		return AutoPacketPtr( new AutoPacket(packet, std::bind(&RakNetwork::DeallocatePacket, this, _1)) );
 	}
