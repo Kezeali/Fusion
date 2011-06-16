@@ -34,78 +34,79 @@ namespace FusionEngine
 
 	void Box2DBody::SynchTransform()
 	{
-		Vector2 position;
-		bool positionWritten = m_Position.ClearWrittenValue(position);
+		//Vector2 position;
+		//bool positionWritten = m_Position.ClearWrittenValue(position);
 
-		if (m_AngleWritten && positionWritten)
-		{
-			m_Body->SetTransform(ToSim(position), m_Angle);
-		}
-		else if (positionWritten)
-		{
-			m_Body->SetTransform(ToSim(position), m_Body->GetAngle());
-			m_Angle = m_Body->GetAngle();
-		}
-		else if (m_AngleWritten)
-		{
-			m_Body->SetTransform(m_Body->GetPosition(), m_Angle);
-			m_Position.SetReadValue(ToRender(m_Body->GetPosition()));
-		}
-		
-		m_AngleWritten = false;
+		//if (m_AngleWritten && positionWritten)
+		//{
+		//	m_Body->SetTransform(ToSim(position), m_Angle);
+		//}
+		//else if (positionWritten)
+		//{
+		//	m_Body->SetTransform(ToSim(position), m_Body->GetAngle());
+		//	m_Angle = m_Body->GetAngle();
+		//}
+		//else if (m_AngleWritten)
+		//{
+		//	m_Body->SetTransform(m_Body->GetPosition(), m_Angle);
+		//	m_Position.SetReadValue(ToRender(m_Body->GetPosition()));
+		//}
+		//
+		//m_AngleWritten = false;
 	}
 
 	void Box2DBody::SynchroniseParallelEdits()
 	{
-		SynchTransform();
+		IPhysicalProperties::SynchroniseInterface();
+		//SynchTransform();
 
-		Vector2 velocity;
-		if (m_Velocity.ClearWrittenValue(velocity))
-			m_Body->SetLinearVelocity(velocity);
-		else
-			m_Velocity.SetReadValue(ToRender(m_Body->GetLinearVelocity()));
+		//Vector2 velocity;
+		//if (m_Velocity.ClearWrittenValue(velocity))
+		//	m_Body->SetLinearVelocity(velocity);
+		//else
+		//	m_Velocity.SetReadValue(ToRender(m_Body->GetLinearVelocity()));
 
-		if (m_AngularVelocityWritten)
-		{
-			m_Body->SetAngularVelocity(m_AngularVelocity);
-			m_AngularVelocityWritten = false;
-		}
-		else
-			m_AngularVelocity = m_Body->GetAngularVelocity();
+		//if (m_AngularVelocityWritten)
+		//{
+		//	m_Body->SetAngularVelocity(m_AngularVelocity);
+		//	m_AngularVelocityWritten = false;
+		//}
+		//else
+		//	m_AngularVelocity = m_Body->GetAngularVelocity();
 
-		if (m_LinearDampingWritten)
-		{
-			m_Body->SetLinearDamping(ToSim(m_LinearDamping));
-			m_LinearDampingWritten = false;
-		}
+		//if (m_LinearDampingWritten)
+		//{
+		//	m_Body->SetLinearDamping(ToSim(m_LinearDamping));
+		//	m_LinearDampingWritten = false;
+		//}
 
-		if (m_AngularDampingWritten)
-		{
-			m_Body->SetAngularDamping(m_AngularDamping);
-			m_AngularDampingWritten = false;
-		}
+		//if (m_AngularDampingWritten)
+		//{
+		//	m_Body->SetAngularDamping(m_AngularDamping);
+		//	m_AngularDampingWritten = false;
+		//}
 
-		if (m_GravityScaleWritten)
-		{
-			m_Body->SetGravityScale(m_GravityScale);
-			m_GravityScaleWritten = false;
-		}
+		//if (m_GravityScaleWritten)
+		//{
+		//	m_Body->SetGravityScale(m_GravityScale);
+		//	m_GravityScaleWritten = false;
+		//}
 
-		// Copy flags that have been set on the threadsafe wrapper
-		if (m_Active != m_Body->IsActive())
-			m_Body->SetActive(m_Active);
+		//// Copy flags that have been set on the threadsafe wrapper
+		//if (m_Active != m_Body->IsActive())
+		//	m_Body->SetActive(m_Active);
 
-		if (m_SleepingAllowed != m_Body->IsSleepingAllowed())
-			m_Body->SetSleepingAllowed(m_SleepingAllowed);
+		//if (m_SleepingAllowed != m_Body->IsSleepingAllowed())
+		//	m_Body->SetSleepingAllowed(m_SleepingAllowed);
 
-		if (m_Bullet != m_Body->IsBullet())
-			m_Body->SetBullet(m_Bullet);
+		//if (m_Bullet != m_Body->IsBullet())
+		//	m_Body->SetBullet(m_Bullet);
 
-		if (m_FixedRotation != m_Body->IsFixedRotation())
-			m_Body->SetFixedRotation(m_FixedRotation);
+		//if (m_FixedRotation != m_Body->IsFixedRotation())
+		//	m_Body->SetFixedRotation(m_FixedRotation);
 
-		// Copy the value of IsAwake
-		m_Awake = m_Body->IsAwake();
+		//// Copy the value of IsAwake
+		//m_Awake = m_Body->IsAwake();
 	}
 
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
@@ -157,7 +158,8 @@ namespace FusionEngine
 		}
 		else
 		{
-			stream.Write0();
+			if (!force_all)
+				stream.Write0();
 			return false;
 		}
 	}
@@ -200,11 +202,11 @@ namespace FusionEngine
 		T value;
 		if (readChange(false, new_data, value))
 		{
-			stream.Write(value);
+			result.Write(value);
 			current_data.IgnoreBytes(sizeof(T));
 		}
 		else if (readChange(true, current_data, value))
-			stream.Write(value);
+			result.Write(value);
 	}
 
 	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)

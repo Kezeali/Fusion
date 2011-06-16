@@ -196,7 +196,7 @@ namespace FusionEngine
 			// With NullWriter this first conditional is optimised away (in MSVC, at least)
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
-				m_ChangedSinceSerialised = m_Changed = true;
+				m_Changed = true;
 				return true;
 			}
 			else if (m_Changed)
@@ -210,7 +210,7 @@ namespace FusionEngine
 		{
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
-				m_ChangedSinceSerialised = m_Changed = true;
+				m_Changed = true;
 				return true;
 			}
 			else
@@ -258,17 +258,7 @@ namespace FusionEngine
 		//! Mark changed
 		void MarkChanged()
 		{
-			m_ChangedSinceSerialised = m_Changed = true;
-		}
-
-		bool HasChangedSinceSerialised()
-		{
-			return m_ChangedSinceSerialised;
-		}
-
-		void MarkSerialised()
-		{
-			m_ChangedSinceSerialised = false;
+			m_Changed = true;
 		}
 
 		const T& Get() const { return m_Value; }
@@ -309,7 +299,6 @@ namespace FusionEngine
 		boost::signals2::connection m_Connection; // Properties can bind directly to other properties
 
 		bool m_Changed;
-		bool m_ChangedSinceSerialised;
 		T m_Value;
 
 		Writer m_Writer;

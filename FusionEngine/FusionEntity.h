@@ -150,29 +150,52 @@ namespace FusionEngine
 		template <class Com>
 		void AddComponent(std::shared_ptr<Com>& component)
 		{
-			boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component));
+			static_assert(std::is_base_of<IComponent, Com>::value, "Com must be derrived from IComponent");
+
+			ComponentInfo entry;
+			entry.component = component;
+
+			boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component, entry.interfaces));
+
+			for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+			{
+				it->component->OnSiblingAdded(entry.interfaces, entry.component);
+				component->OnSiblingAdded(it->interfaces, it->component);
+			}
+			
+			m_Components.push_back(std::move(entry));
 		}
 
 	private:
-		typedef std::map<std::string, std::vector<std::pair<std::shared_ptr<Component>, std::unique_ptr<ICallQueue>>>> ComInterfaceMap;
+		struct ComponentInfo
+		{
+			std::set<std::string> interfaces;
+			std::shared_ptr<IComponent> component;
+		};
+		std::vector<ComponentInfo> m_Components;
+
+		typedef std::map<std::string, std::vector<std::pair<std::shared_ptr<IComponent>, std::unique_ptr<ICallQueue>>>> ComInterfaceMap;
 		ComInterfaceMap m_ComponentInterfaces;
 
 		template <class C>
 		struct addComInterface
 		{
-			addComInterface(ComInterfaceMap& _map, std::shared_ptr<C>& component)
+			addComInterface(ComInterfaceMap& map_, std::shared_ptr<C>& component, std::set<std::string>& interface_names_)
 				: map(_map),
-				com(component)
+				com(component),
+				interface_names(interface_names_)
 			{}
 
 			template <class I>
 			void operator() (I)
 			{
+				interface_names.insert(I::GetTypeName());
 				map[I::GetTypeName()].push_back( std::make_pair(com, std::unique_ptr<ICallQueue>(new CallQueue<I>(com))) );
 			}
 
 			ComInterfaceMap& map;
 			std::shared_ptr<C>& com;
+			std::set<std::string>& interface_names;
 		};
 
 	public:

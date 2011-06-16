@@ -51,12 +51,7 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + sizeof(types));
 	}
 
-	static bool att_is_true(const std::string& att)
-	{
-		return att == "t" || att == "1" || att == "true";
-	}
-
-	const std::shared_ptr<IComponent> &Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 	{
 		if (type == "B2Body")
 		{
@@ -65,6 +60,34 @@ namespace FusionEngine
 			def.angle = angle;
 
 			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
+			return com;
+		}
+	}
+
+	void Box2DWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	{
+		auto b2Component = std::dynamic_pointer_cast<Box2DBody>(component);
+		if (b2Component)
+		{
+			m_ActiveBodies.push_back(b2Component);
+			b2Component->SetActive(true);
+		}
+	}
+
+	void Box2DWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	{
+		auto b2Component = std::dynamic_pointer_cast<Box2DBody>(component);
+		if (b2Component)
+		{
+			// Deactivate the body in the simulation
+			b2Component->SetActive(false);
+			// Find and remove the deactivated body (from the Active Bodies list)
+			auto _where = std::find(m_ActiveBodies.begin(), m_ActiveBodies.end(), b2Component);
+			if (_where != m_ActiveBodies.end())
+			{
+				_where->swap(m_ActiveBodies.back());
+				m_ActiveBodies.pop_back();
+			}
 		}
 	}
 

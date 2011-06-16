@@ -43,21 +43,21 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		ThreadSafeProperty<Vector2> Position; // Usually bound to ITransform::Position
 		ThreadSafeProperty<Vector2> Offset;
+		ThreadSafeProperty<int> LocalDepth;
 
 		void SynchroniseInterface()
 		{
-			if (Position.Synchronise()) // writeonly
-				SetPosition(Position.Get());
 			if (Offset.Synchronise()) // writeonly
 				SetOffset(Offset.Get());
+			if (LocalDepth.Synchronise())
+				SetLocalDepth(LocalDepth.Get());
 		}
 
 	private:
-		virtual void SetPosition(const Vector2& value) = 0;
-
 		virtual void SetOffset(const Vector2& value) = 0;
+		
+		virtual void SetLocalDepth(int value) = 0;
 	};
 
 	class ISprite : public IRenderCom
@@ -67,7 +67,7 @@ namespace FusionEngine
 		virtual ~ISprite()
 		{}
 
-		ThreadSafeProperty<std::string> FilePath; // Usually bound to ITransform::Position
+		ThreadSafeProperty<std::string> FilePath;
 
 
 		void SynchroniseInterface()

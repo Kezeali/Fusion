@@ -31,6 +31,8 @@
 
 #include "FusionResourceManager.h"
 
+#include "FusionPhysicalComponent.h"
+
 #include <functional>
 
 namespace FusionEngine
@@ -39,6 +41,11 @@ namespace FusionEngine
 	CLSprite::CLSprite()
 		: m_Reload(true)
 	{
+	}
+
+	CLSprite::~CLSprite()
+	{
+		m_ResourceLoadConnection.disconnect();
 	}
 
 	void CLSprite::Update(const float elapsed)
@@ -52,9 +59,21 @@ namespace FusionEngine
 
 		m_LastPosition = m_Position;
 		m_Position = m_NewPosition;
+
+		// TODO: interpolate (probably in a separate method., taking a 'm' param)
+		m_InterpPosition = m_Position;
+
 		if (m_SpriteResource.IsLoaded())
 		{
 			m_SpriteResource->update(int(elapsed * 1000));
+		}
+	}
+
+	void CLSprite::Draw(CL_GraphicContext& gc)
+	{
+		if (m_SpriteResource.IsLoaded())
+		{
+			m_SpriteResource->draw(gc, m_InterpPosition.x, m_InterpPosition.y);
 		}
 	}
 
@@ -63,9 +82,40 @@ namespace FusionEngine
 		m_SpriteResource.SetTarget(data);
 	}
 
+	void CLSprite::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& component)
+	{
+		if (interfaces.find(ITransform::GetTypeName()) != interfaces.end())
+		{
+			auto transform = dynamic_cast<ITransform*>(component.get());
+			transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
+			transform->Depth.Connect([this](int depth) { m_LocalDepth = depth; });
+		}
+	}
+
 	void CLSprite::SynchroniseParallelEdits()
 	{
 		ISprite::SynchroniseInterface();
+	}
+
+	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
+	{
+		//return m_SerialisationHelper.writeChanges(force_all, stream, std::tie(m_Offset, m_FilePath, m_Reload));
+		return m_SerialisationHelper.writeChanges(force_all, stream, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
+	}
+
+	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
+	{
+		std::bitset<4> changed;
+		if (!all)
+		{
+			m_SerialisationHelper.readChanges(stream, changed, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
+			if (changed[PropsOrder::FilePath]) // file path changed
+				m_Reload = true;
+		}
+		else
+		{
+			m_SerialisationHelper.readAll(stream, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
+		}
 	}
 
 	void CLSprite::SetPosition(const Vector2& value)
@@ -76,12 +126,21 @@ namespace FusionEngine
 	void CLSprite::SetOffset(const Vector2& value)
 	{
 		m_Offset = value;
+		m_SerialisationHelper.markChanged(0);
+	}
+
+	void CLSprite::SetLocalDepth(int value)
+	{
+		m_LocalDepth = value;
+		m_SerialisationHelper.markChanged(1);
 	}
 
 	void CLSprite::SetFilePath(const std::string& value)
 	{
 		m_FilePath = value;
 		m_Reload = true;
+		m_SerialisationHelper.markChanged(2);
+		m_SerialisationHelper.markChanged(3);
 	}
 
 }

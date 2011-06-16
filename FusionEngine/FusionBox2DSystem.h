@@ -42,6 +42,8 @@ class b2World;
 namespace FusionEngine
 {
 
+	class Box2DBody;
+
 	class Box2DWorld;
 
 	class Box2DSystem : public IComponentSystem
@@ -70,11 +72,14 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
+		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
 		void OnActivation(const std::shared_ptr<IComponent>& component);
+		void OnDeactivation(const std::shared_ptr<IComponent>& component);
+
+		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
 
 		b2World* m_World;
 	};

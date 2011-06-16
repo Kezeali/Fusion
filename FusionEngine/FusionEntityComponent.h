@@ -224,15 +224,16 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~IComponent() {}
 
+		virtual std::string GetType() const = 0;
+
+		virtual void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
+
 		virtual void SynchroniseParallelEdits() = 0;
 
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
-
-		virtual std::string GetType() const = 0;
-
 	};
 
 }

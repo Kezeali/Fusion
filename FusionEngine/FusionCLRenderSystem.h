@@ -38,8 +38,13 @@
 
 #include "FusionComponentSystem.h"
 
+#include <ClanLib/display.h>
+
 namespace FusionEngine
 {
+	// forward decl.
+	class IDrawable;
+
 
 	class CLRenderSystem : public IComponentSystem
 	{
@@ -48,27 +53,33 @@ namespace FusionEngine
 
 		std::string GetName() const { return "Box2DSystem"; }
 
+		CLRenderSystem(const CL_GraphicContext& gc);
+
 		ISystemWorld* CreateWorld();
+
+	private:
+		CL_GraphicContext m_GraphicContext;
 	};
 
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
-		CLRenderWorld();
-		virtual ~CLRenderWorld()
-		{}
+		CLRenderWorld(const CL_GraphicContext& gc);
+		virtual ~CLRenderWorld();
 
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
+		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 
+		std::vector<std::shared_ptr<IDrawable>> m_Drawables;
+
 		Renderer* m_Renderer;
-	}
+	};
 
 }
 

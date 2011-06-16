@@ -65,11 +65,13 @@ namespace FusionEngine
 		virtual ~ISystemWorld() {}
 
 		virtual std::vector<std::string> GetTypes() const = 0;
-		virtual const std::shared_ptr<IComponent> &InstantiateComponent(const std::string& type, const Vector2& pos, float angle) = 0;
+		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle) = 0;
 
 		virtual void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data) = 0;
 
 		virtual void OnActivation(const std::shared_ptr<IComponent>& component) = 0;
+		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
+		virtual void OnDeactivation(const std::shared_ptr<IComponent>& component) = 0;
 	};
 
 	typedef std::map<std::string, std::string> ComponentStaticProps;

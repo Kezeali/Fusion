@@ -38,15 +38,35 @@
 
 #include "FusionRender2DComponent.h"
 #include "FusionResourcePointer.h"
+#include "FusionSerialisationHelper.h"
 
 #include <boost/signals/connection.hpp>
+
+#include <ClanLib/display.h>
 
 namespace FusionEngine
 {
 
-	class CLSprite : public IComponent, public ISprite
+	class IDrawable : public IComponent
+	{
+	public:
+		virtual ~IDrawable() {}
+
+		virtual void Draw(CL_GraphicContext& gc) = 0;
+
+		virtual int GetEntityDepth() const = 0;
+		virtual int GetLocalDepth() const = 0;
+	};
+
+	class CLSprite : public IDrawable, public ISprite
 	{
 		friend class CLRenderSystem;
+	public:
+		typedef boost::mpl::vector<ISprite>::type Interfaces;
+
+		struct PropsOrder { enum Names { Offset = 0, LocalDepth, FilePath, Reload }; };
+		typedef SerialisationHelper<Vector2, int, std::string, bool> DeltaSerialiser_t;
+
 	private:
 		float ToRender(float sim_coord)
 		{
@@ -59,26 +79,42 @@ namespace FusionEngine
 		}
 
 		CLSprite();
+		~CLSprite();
 
 		void Update(const float elapsed);
 
 		void OnResourceLoaded(ResourceDataPtr data);
+		
+		void SetPosition(const Vector2& value);
+		
+		// IDrawable
+		void Draw(CL_GraphicContext& gc);
+
+		int GetEntityDepth() const { return m_EntityDepth; }
+		int GetLocalDepth() const { return m_LocalDepth; }
+
+		int m_EntityDepth;
+		int m_LocalDepth;
 
 		// IComponent
+		std::string GetType() const { return "CLSprite"; }
+
+		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& component);
+
 		void SynchroniseParallelEdits();
 
-		bool SerialiseContinuous(RakNet::BitStream& stream);
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		void DeserialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
-		void SetPosition(const Vector2& value);
-		void SetOffset(const Vector2& value);
+		// ISprite
+		void SetOffset(const Vector2& offset);
+		void SetLocalDepth(int value);
 		void SetFilePath(const std::string& value);
 
 		boost::signals2::scoped_connection m_ResourceLoadConnection;
 		ResourcePointer<CL_Sprite> m_SpriteResource;
 
+		boost::signals2::connection m_PositionChangeConnection;
 		Vector2 m_NewPosition; // Set by SetPosition
 
 		Vector2 m_Position; // NewPosition is copied here when Update is called
@@ -89,6 +125,8 @@ namespace FusionEngine
 
 		std::string m_FilePath;
 		bool m_Reload;
+
+		DeltaSerialiser_t m_SerialisationHelper;
 	};
 
 }

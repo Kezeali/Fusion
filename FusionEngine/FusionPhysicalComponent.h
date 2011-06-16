@@ -53,21 +53,26 @@ namespace FusionEngine
 	public:
 		ThreadSafeProperty<Vector2> Position;
 		ThreadSafeProperty<float> Angle;
+		ThreadSafeProperty<unsigned int> Depth;
 
 		void SynchroniseInterface()
 		{
 			FSN_SYNCH_PROP(Position);
 			FSN_SYNCH_PROP(Angle);
+			FSN_SYNCH_PROP(Depth);
 		}
 		
 		static bool IsThreadSafe() { return true; }
 
 	public:
-		virtual const Vector2& GetPosition() const = 0;
+		virtual Vector2 GetPosition() const = 0;
 		virtual void SetPosition(const Vector2& pos) = 0;
 
 		virtual float GetAngle() const = 0;
 		virtual void SetAngle(float angle) = 0;
+
+		virtual unsigned int GetDepth() const = 0;
+		virtual void SetDepth(unsigned int angle) = 0;
 	};
 
 	//! Threadsafe physical body interface
@@ -123,7 +128,7 @@ namespace FusionEngine
 		//! Gets the inertia
 		virtual float GetInertia() const = 0;
 
-		virtual const Vector2& GetVelocity() const = 0;
+		virtual Vector2 GetVelocity() const = 0;
 		virtual void SetVelocity(const Vector2& vel) = 0;
 
 		virtual float GetAngularVelocity() const = 0;

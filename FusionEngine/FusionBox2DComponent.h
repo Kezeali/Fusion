@@ -39,6 +39,7 @@
 
 #include "FusionCommon.h"
 
+#include <boost/mpl/for_each.hpp>
 #include <Box2D/Box2D.h>
 #include <tbb/atomic.h>
 
@@ -81,76 +82,55 @@ namespace FusionEngine
 		void SynchTransform();
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
+		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
 		// Threadsafe interface
-		float m_Mass;
-		float GetMass() const { return m_Mass; }
+		float GetMass() const { return m_Body->GetMass(); }
 
-		float m_Inertia;
-		float GetInertia() const { return m_Inertia; }
+		float GetInertia() const { return m_Body->GetInertia(); }
 
-		ValueBuffer<Vector2> m_Position;
-		const Vector2& GetPosition() const { return m_Position.Read(); }
-		void SetPosition(const Vector2& position) { m_Position.Write(position); }
+		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
+		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
 
-		tbb::atomic<float> m_Angle;
-		tbb::atomic<bool> m_AngleWritten;
-		float GetAngle() const { return m_Angle; }
-		void SetAngle(float angle) { m_Angle = angle; m_AngleWritten = true; }
+		float GetAngle() const { return m_Body->GetAngle(); }
+		void SetAngle(float angle) { m_Body->SetTransform(m_Body->GetPosition(), angle); }
 
-		ValueBuffer<Vector2> m_Velocity;
-		const Vector2& GetVelocity() const { return m_Velocity.Read(); }
-		void SetVelocity(const Vector2& vel) { m_Velocity.Write(vel); }
+		Vector2 GetVelocity() const { return b2v2(m_Body->GetLinearVelocity()); }
+		void SetVelocity(const Vector2& vel) { m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)); }
 
-		tbb::atomic<float> m_AngularVelocity;
-		tbb::atomic<bool> m_AngularVelocityWritten;
-		float GetAngularVelocity() const { return m_AngularVelocity; }
-		void SetAngularVelocity(float vel) { m_AngularVelocity = vel; m_AngularVelocityWritten = true; }
+		float GetAngularVelocity() const { return m_Body->GetAngularVelocity(); }
+		void SetAngularVelocity(float vel) { m_Body->SetAngularVelocity(vel); }
 
-#define FSN_ATOMIC_FLOAT_PROP(name) \
-	float Get##name() const { return m_##name; }\
-	void Set##name(float vel) { m_##name = vel; m_##name##Written = true; }\
-	float m_Serialised##name##Value;\
-	tbb::atomic<float> m_##name;\
-	tbb::atomic<bool> m_##name##Written;
+#define BODY_PROP(name) \
+	float Get ## name() const { return m_Body->Get ## name(); }\
+	void Set ## name(float val) { m_Body->Set ## name(val); }
 
 		//! Get linear damping
-		FSN_ATOMIC_FLOAT_PROP(LinearDamping);
+		BODY_PROP(LinearDamping);
 
 		//! Get the angular damping of the body.
-		FSN_ATOMIC_FLOAT_PROP(AngularDamping);
+		BODY_PROP(AngularDamping);
 
 		//! Get the gravity scale of the body.
-		FSN_ATOMIC_FLOAT_PROP(GravityScale);
+		BODY_PROP(GravityScale);
 
-#undef FSN_ATOMIC_FLOAT_PROP
+#undef BODY_PROP
 
-		bool m_SerialisedActiveValue;
-		tbb::atomic<bool> m_Active;
-		bool IsActive() const { return m_Body->IsActive(); } // nothing else writes this value, so this is safe
-		void SetActive(bool value) { m_Active = value; }
+		bool IsActive() const { return m_Body->IsActive(); }
+		void SetActive(bool value) { m_Body->SetActive(value); }
 
-		bool m_SerialisedSleepingAllowedValue;
-		tbb::atomic<bool> m_SleepingAllowed;
-		bool IsSleepingAllowed() const { return m_SleepingAllowed; }
-		void SetSleepingAllowed(bool value) { m_SleepingAllowed = value; }
+		bool IsSleepingAllowed() const { return m_Body->IsSleepingAllowed(); }
+		void SetSleepingAllowed(bool value) { m_Body->SetSleepingAllowed(value); }
 
-		bool m_SerialisedAwakeValue;
-		bool m_Awake;
-		bool IsAwake() const { return m_Awake; }
+		bool IsAwake() const { return m_Body->IsAwake(); }
 
-		bool m_SerialisedBulletValue;
-		tbb::atomic<bool> m_Bullet;
-		bool IsBullet() const { return m_Bullet; }
-		void SetBullet(bool value) { m_Bullet = value; }
+		bool IsBullet() const { return m_Body->IsBullet(); }
+		void SetBullet(bool value) { m_Body->SetBullet(value); }
 
-		bool m_SerialisedFixedRotationValue;
-		tbb::atomic<bool> m_FixedRotation;
-		bool IsFixedRotation() const { return m_FixedRotation; }
-		void SetFixedRotation(bool value) { m_FixedRotation = value; }
+		bool IsFixedRotation() const { return m_Body->IsFixedRotation(); }
+		void SetFixedRotation(bool value) { m_Body->SetFixedRotation(value); }
 
 		// Non-threadsafe interface
 		void ApplyForce(const Vector2& force, const Vector2& point)
@@ -197,6 +177,8 @@ namespace FusionEngine
 		static void MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
 	private:
+		Box2DFixture(b2Fixture* fixture);
+
 		// IComponent
 		std::string GetType() const { return "Box2DFixture"; }
 
@@ -209,32 +191,28 @@ namespace FusionEngine
 
 		// IFixtureProperties
 
-		AtomicFlagTypeProp<bool> m_SensorProp;
 		//! Is this fixture a sensor (non-solid)?
 		bool IsSensor() const { return m_Fixture->IsSensor(); }
 		//! Set if this fixture is a sensor.
-		void SetSensor(bool sensor) { m_SensorProp.Set(sensor); }
+		void SetSensor(bool sensor) { m_Fixture->SetSensor(sensor); }
 
-		AtomicFlagTypeProp<float> m_DensityProp;
 		//! Get the density of this fixture.
 		float GetDensity() const { return m_Fixture->GetDensity(); }
 		//! Set the density of this fixture. This will _not_ automatically adjust the mass
 		//! of the body. You must call b2Body::ResetMassData to update the body's mass.
-		void SetDensity(float density) { m_DensityProp.Set(density); }
+		void SetDensity(float density) { m_Fixture->SetDensity(density); }
 		
-		AtomicFlagTypeProp<float> m_FrictionProp;
 		//! Get the coefficient of friction.
 		float GetFriction() const { return m_Fixture->GetFriction();}
 		//! Set the coefficient of friction. This will _not_ change the friction of
 		//! existing contacts.
-		void SetFriction(float friction) { m_FrictionProp.Set(friction); }
+		void SetFriction(float friction) { m_Fixture->SetFriction(friction); }
 
-		AtomicFlagTypeProp<float> m_RestitutionProp;
 		//! Get the coefficient of restitution.
 		float GetRestitution() const { m_Fixture->GetRestitution(); }
 		//! Set the coefficient of restitution. This will _not_ change the restitution of
 		//! existing contacts.
-		void SetRestitution(float restitution) { m_RestitutionProp.Set(restitution); }
+		void SetRestitution(float restitution) { m_Fixture->SetRestitution(restitution); }
 
 		//! Get the fixture's AABB. This AABB may be enlarge and/or stale.
 		//! If you need a more accurate AABB, compute it using the shape and
