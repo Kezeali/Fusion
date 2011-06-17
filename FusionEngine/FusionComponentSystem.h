@@ -72,6 +72,8 @@ namespace FusionEngine
 		virtual void OnActivation(const std::shared_ptr<IComponent>& component) = 0;
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
 		virtual void OnDeactivation(const std::shared_ptr<IComponent>& component) = 0;
+
+		virtual ISystemTask* GetTask() = 0;
 	};
 
 	typedef std::map<std::string, std::string> ComponentStaticProps;

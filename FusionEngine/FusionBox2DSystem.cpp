@@ -43,6 +43,14 @@ namespace FusionEngine
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity, true);
+
+		m_B2DTask = new Box2DTask(this, m_World);
+	}
+
+	Box2DWorld::~Box2DWorld()
+	{
+		delete m_B2DTask;
+		delete m_World;
 	}
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
@@ -91,6 +99,11 @@ namespace FusionEngine
 		}
 	}
 
+	ISystemTask* Box2DWorld::GetTask()
+	{
+		return m_B2DTask;
+	}
+
 	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 	{
 		if (type == "B2Body")
@@ -101,6 +114,27 @@ namespace FusionEngine
 		{
 			Box2DFixture::MergeDelta(result, current_data, new_data);
 		}
+	}
+
+	Box2DTask::Box2DTask(Box2DWorld* sysworld, b2World* const world)
+		: ISystemTask(sysworld),
+		m_B2DSysWorld(sysworld),
+		m_World(world)
+	{
+	}
+
+	Box2DTask::~Box2DTask()
+	{
+	}
+
+	void Box2DTask::Update(const float delta)
+	{
+		m_World->Step(delta, 10, 10);
+		//auto activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		//for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
+		//{
+		//	auto body = *it;
+		//}
 	}
 
 }

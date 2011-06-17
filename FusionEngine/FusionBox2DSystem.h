@@ -43,8 +43,10 @@ namespace FusionEngine
 {
 
 	class Box2DBody;
+	class Box2DFixture;
 
 	class Box2DWorld;
+	class Box2DTask;
 
 	class Box2DSystem : public IComponentSystem
 	{
@@ -64,10 +66,10 @@ namespace FusionEngine
 
 	class Box2DWorld : public ISystemWorld
 	{
+		friend class Box2DTask;
 	public:
 		Box2DWorld();
-		virtual ~Box2DWorld()
-		{}
+		~Box2DWorld();
 
 	private:
 		std::vector<std::string> GetTypes() const;
@@ -79,9 +81,30 @@ namespace FusionEngine
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 		void OnDeactivation(const std::shared_ptr<IComponent>& component);
 
+		ISystemTask* GetTask();
+
 		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
 
 		b2World* m_World;
+		Box2DTask* m_B2DTask;
+	};
+
+	class Box2DTask : public ISystemTask
+	{
+	public:
+		Box2DTask(Box2DWorld* sysworld, b2World* const world);
+		~Box2DTask();
+
+		void Update(const float delta);
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return false;
+		}
+
+	protected:
+		Box2DWorld *m_B2DSysWorld;
+		b2World* const m_World;
 	};
 
 }
