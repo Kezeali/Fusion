@@ -37,6 +37,7 @@
 #include "FusionCommon.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionViewport.h"
 
 #include <ClanLib/display.h>
 
@@ -44,7 +45,7 @@ namespace FusionEngine
 {
 	// forward decl.
 	class IDrawable;
-
+	class CLRenderTask;
 
 	class CLRenderSystem : public IComponentSystem
 	{
@@ -67,18 +68,49 @@ namespace FusionEngine
 		CLRenderWorld(const CL_GraphicContext& gc);
 		virtual ~CLRenderWorld();
 
+		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
+		void AddViewport(const ViewportPtr& viewport);
+		void RemoveViewport(const ViewportPtr& viewport);
+
+		const std::vector<std::shared_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
+		std::vector<std::shared_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
+
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
-
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
+		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 		void OnActivation(const std::shared_ptr<IComponent>& component);
+		void OnDeactivation(const std::shared_ptr<IComponent>& component);
+
+		ISystemTask* GetTask();
+
+		CLRenderTask* m_RenderTask;
 
 		std::vector<std::shared_ptr<IDrawable>> m_Drawables;
 
+		std::vector<ViewportPtr> m_Viewports;
+
 		Renderer* m_Renderer;
+	};
+
+	class CLRenderTask : public ISystemTask
+	{
+	public:
+		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
+		~CLRenderTask();
+
+		void Update(const float delta);
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return true;
+		}
+
+	private:
+		CLRenderWorld* m_RenderWorld;
+		Renderer* const m_Renderer;
 	};
 
 }

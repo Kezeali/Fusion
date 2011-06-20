@@ -32,6 +32,8 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 
+#include <tbb/parallel_sort.h>
+
 namespace FusionEngine
 {
 	CLRenderSystem::CLRenderSystem(const CL_GraphicContext& gc)
@@ -47,6 +49,7 @@ namespace FusionEngine
 	CLRenderWorld::CLRenderWorld(const CL_GraphicContext& gc)
 	{
 		m_Renderer = new Renderer(gc);
+		m_RenderTask = new CLRenderTask(this, m_Renderer);
 	}
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const
@@ -80,11 +83,94 @@ namespace FusionEngine
 		}
 	}
 
+	void CLRenderWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	{
+		auto drawable = std::dynamic_pointer_cast<IDrawable>(component);
+		if (drawable)
+		{
+			auto _where = std::find(m_Drawables.begin(), m_Drawables.end(), drawable);
+			if (_where != m_Drawables.end())
+			{
+				_where->swap(m_Drawables.back());
+				m_Drawables.pop_back();
+			}
+		}
+	}
+
 	void CLRenderWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 	{
 		if (type == "CLSprite")
 		{
 			CLSprite::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
+		}
+	}
+
+	ISystemTask* CLRenderWorld::GetTask()
+	{
+		return m_RenderTask;
+	}
+
+	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
+		: ISystemTask(sysworld),
+		m_RenderWorld(sysworld),
+		m_Renderer(renderer)
+	{
+	}
+
+	CLRenderTask::~CLRenderTask()
+	{
+	}
+
+	void CLRenderTask::Update(const float delta)
+	{
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+
+		auto& drawables = m_RenderWorld->GetDrawables();
+
+		bool needsLocalSort = false;
+		auto depthSort = [&needsLocalSort](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
+		{
+			//if (first->GetParent() == second->GetParent())
+			//	needsLocalSort = true;
+			if (first->GetEntityDepth() <= second->GetEntityDepth())
+				return true;
+			else
+				return false;
+		};
+		tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
+
+		auto localSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
+		{
+			if (false)//first->GetParent() != second->GetParent()
+				return true;
+			else if (first->GetLocalDepth() <= second->GetLocalDepth())
+				return true;
+			else
+				return false;
+		};
+		if (needsLocalSort)
+		{
+			std::stable_sort(drawables.begin(), drawables.end(), localSort);
+		}
+
+		for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
+		{
+			auto sprite = dynamic_cast<CLSprite*>(dit->get());
+			if (sprite)
+			sprite->Update(delta);
+		}
+
+		for (auto it = m_RenderWorld->GetViewports().begin(), end = m_RenderWorld->GetViewports().end(); it != end; ++it)
+		{
+			CL_Rectf drawArea;
+			m_Renderer->SetupDraw(*it, &drawArea);
+			
+			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
+			{
+				auto& drawable = *dit;
+				//if (drawArea.contains(drawable->GetBB()))
+				drawable->Draw(gc);
+			}
 		}
 	}
 

@@ -60,7 +60,8 @@ namespace FusionEngine
 
 	class CLSprite : public IDrawable, public ISprite
 	{
-		friend class CLRenderSystem;
+		friend class CLRenderWorld;
+		friend class CLRenderTask;
 	public:
 		typedef boost::mpl::vector<ISprite>::type Interfaces;
 
