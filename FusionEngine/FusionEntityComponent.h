@@ -224,6 +224,9 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~IComponent() {}
 
+		void SetParent(Entity* parent) { m_Parent = parent; }
+		Entity* GetParent() const { return m_Parent; }
+
 		virtual std::string GetType() const = 0;
 
 		virtual void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
@@ -234,6 +237,9 @@ namespace FusionEngine
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
+
+	private:
+		Entity* m_Parent;
 	};
 
 }

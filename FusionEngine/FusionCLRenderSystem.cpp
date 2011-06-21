@@ -127,31 +127,24 @@ namespace FusionEngine
 
 		auto& drawables = m_RenderWorld->GetDrawables();
 
-		bool needsLocalSort = false;
-		auto depthSort = [&needsLocalSort](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
+		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
 		{
-			//if (first->GetParent() == second->GetParent())
-			//	needsLocalSort = true;
-			if (first->GetEntityDepth() <= second->GetEntityDepth())
+			if (first->GetParent() == second->GetParent())
+			{
+				if (first->GetLocalDepth() < second->GetLocalDepth())
+					return true;
+			}
+			else if (first->GetEntityDepth() == second->GetEntityDepth())
+			{
+				if (first->GetParent() < second->GetParent())
+					return true;
+			}
+			else if (first->GetEntityDepth() < second->GetEntityDepth())
 				return true;
-			else
-				return false;
+
+			return false;
 		};
 		tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
-
-		auto localSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
-		{
-			if (false)//first->GetParent() != second->GetParent()
-				return true;
-			else if (first->GetLocalDepth() <= second->GetLocalDepth())
-				return true;
-			else
-				return false;
-		};
-		if (needsLocalSort)
-		{
-			std::stable_sort(drawables.begin(), drawables.end(), localSort);
-		}
 
 		for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
 		{
