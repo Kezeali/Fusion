@@ -57,7 +57,7 @@ namespace FusionEngine
 
 	void Box2DBody::SynchroniseParallelEdits()
 	{
-		IPhysicalProperties::SynchroniseInterface();
+		IRigidBody::SynchroniseInterface();
 		//SynchTransform();
 
 		//Vector2 velocity;

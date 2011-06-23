@@ -76,12 +76,12 @@ namespace FusionEngine
 	};
 
 	//! Threadsafe physical body interface
-	class IPhysicalProperties : public ITransform
+	class IRigidBody : public ITransform
 	{
 	public:
 		static std::string GetTypeName() { return "IPhysicalProperties"; }
 
-		virtual ~IPhysicalProperties()
+		virtual ~IRigidBody()
 		{}
 
 		ThreadSafeProperty<float, NullWriter<float>> Mass;
@@ -119,6 +119,21 @@ namespace FusionEngine
 			FSN_SYNCH_PROP_BOOL(FixedRotation);
 		}
 
+		// Prevent simultanious access to implementation methods
+		CL_Mutex m_InternalMutex;
+
+		void ApplyForce(const Vector2& force, const Vector2& point)
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyForceImpl(force, point); }
+		void ApplyForce(const Vector2& force)
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyForceImpl(force, GetCenterOfMass()); };
+		void ApplyTorque(float torque)
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyTorque(torque); }
+
+		void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point)
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyLinearImpulse(impulse, point); }
+		void ApplyAngularImpulse(float force)
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyAngularImpulse(force); }
+
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
 
@@ -127,6 +142,8 @@ namespace FusionEngine
 		virtual float GetMass() const = 0;
 		//! Gets the inertia
 		virtual float GetInertia() const = 0;
+
+		virtual Vector2 GetCenterOfMass() const = 0;
 
 		virtual Vector2 GetVelocity() const = 0;
 		virtual void SetVelocity(const Vector2& vel) = 0;
@@ -162,6 +179,13 @@ namespace FusionEngine
 
 		virtual bool IsFixedRotation() const = 0;
 		virtual void SetFixedRotation(bool value) = 0;
+
+		virtual void ApplyForceImpl(const Vector2& force, const Vector2& point) = 0;
+		//virtual void ApplyForceImpl(const Vector2& force) = 0;
+		virtual void ApplyTorqueImpl(float torque) = 0;
+
+		virtual void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point) = 0;
+		virtual void ApplyAngularImpulseImpl(float force) = 0;
 	};
 
 	//! Non-threadsafe physical body interface

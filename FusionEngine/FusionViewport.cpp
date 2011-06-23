@@ -69,22 +69,6 @@ namespace FusionEngine
 		return m_Camera;
 	}
 
-	Vector2* Viewport::ToScreenCoords(const Vector2 &entity_position) const
-	{
-		Vector2 *position = new Vector2();
-		position->x = entity_position.x - m_Camera->GetPosition().x + m_Area.left;
-		position->y = entity_position.y - m_Camera->GetPosition().y + m_Area.top;
-		return position;
-	}
-
-	Vector2* Viewport::ToEntityCoords(const Vector2 &screen_position) const
-	{
-		Vector2 *position = new Vector2();
-		position->x = screen_position.x + m_Camera->GetPosition().x + m_Area.left;
-		position->y = screen_position.y + m_Camera->GetPosition().y + m_Area.top;
-		return position;
-	}
-
 	Viewport* Viewport_Factory()
 	{
 		return new Viewport();
@@ -130,18 +114,11 @@ namespace FusionEngine
 			"void setSize(float, float)",
 			asMETHOD(Viewport, SetSize), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
-			"void setCamera(Camera@)",
+			"void setCamera(Camera)",
 			asFUNCTION(Viewport_SetCamera), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Viewport",
-			"Camera& getCamera()",
+			"Camera getCamera()",
 			asMETHOD(Viewport, GetCamera), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-
-		r = engine->RegisterObjectMethod("Viewport",
-			"Vector@ toScreenCoords(const Vector &in) const",
-			asMETHOD(Viewport, ToScreenCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("Viewport",
-			"Vector@ toEntityCoords(const Vector &in) const",
-			asMETHOD(Viewport, ToEntityCoords), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 }

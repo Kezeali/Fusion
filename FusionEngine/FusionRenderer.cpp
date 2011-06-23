@@ -100,7 +100,7 @@ namespace FusionEngine
 
 		// Apply rotation, translation & scale
 		gc.push_modelview();
-		gc.set_translate(-viewportOffset.x, -viewportOffset.y);
+		//gc.set_translate(-viewportOffset.x, -viewportOffset.y);
 		gc.mult_rotate(CL_Angle(-camera->GetAngle(), cl_radians));
 		if ( !fe_fequal(camera->GetZoom(), 1.f) )
 			gc.mult_scale(camera->GetZoom(), camera->GetZoom());

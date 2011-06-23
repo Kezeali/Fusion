@@ -47,15 +47,24 @@
 namespace FusionEngine
 {
 
+	class SpriteAnimation;
+	class SpriteDefinition2;
+
 	class IDrawable : public IComponent
 	{
 	public:
 		virtual ~IDrawable() {}
 
-		virtual void Draw(CL_GraphicContext& gc) = 0;
+		virtual void Update(const float delta) {}
+		virtual void Draw(CL_GraphicContext& gc, const Vector2& offset) = 0;
 
 		virtual int GetEntityDepth() const = 0;
 		virtual int GetLocalDepth() const = 0;
+
+		virtual Vector2 GetPosition() const = 0;
+
+		virtual bool HasBB() const { return false; }
+		virtual CL_Rectf GetBB() { return CL_Rectf(); }
 	};
 
 	class CLSprite : public IDrawable, public ISprite
@@ -65,8 +74,8 @@ namespace FusionEngine
 	public:
 		typedef boost::mpl::vector<ISprite>::type Interfaces;
 
-		struct PropsOrder { enum Names { Offset = 0, LocalDepth, FilePath, Reload }; };
-		typedef SerialisationHelper<Vector2, int, std::string, bool> DeltaSerialiser_t;
+		struct PropsOrder { enum Names { Offset = 0, LocalDepth, ImagePath, ReloadImage, AnimationPath, ReloadAnimation }; };
+		typedef SerialisationHelper<Vector2, int, std::string, bool, std::string, bool> DeltaSerialiser_t;
 
 	private:
 		float ToRender(float sim_coord)
@@ -81,21 +90,29 @@ namespace FusionEngine
 
 		CLSprite();
 		~CLSprite();
-
-		void Update(const float elapsed);
-
-		void OnResourceLoaded(ResourceDataPtr data);
 		
 		void SetPosition(const Vector2& value);
+		Vector2 GetPosition() const;
 		
 		// IDrawable
-		void Draw(CL_GraphicContext& gc);
+		void Draw(CL_GraphicContext& gc, const Vector2& offset);
+		void Update(const float elapsed);
 
 		int GetEntityDepth() const { return m_EntityDepth; }
 		int GetLocalDepth() const { return m_LocalDepth; }
 
 		int m_EntityDepth;
 		int m_LocalDepth;
+
+		bool HasBB() const { return true; }
+		CL_Rectf GetBB()
+		{
+			CL_Rectf bb;
+
+			CL_Origin origin;
+			int x, y;
+			m_Sprite.get_alignment(origin, x, y);
+		}
 
 		// IComponent
 		std::string GetType() const { return "CLSprite"; }
@@ -112,8 +129,15 @@ namespace FusionEngine
 		void SetLocalDepth(int value);
 		void SetFilePath(const std::string& value);
 
-		boost::signals2::scoped_connection m_ResourceLoadConnection;
-		ResourcePointer<CL_Sprite> m_SpriteResource;
+		boost::signals2::scoped_connection m_ImageLoadConnection;
+		ResourcePointer<CL_Texture> m_ImageResource;
+
+		boost::signals2::scoped_connection m_AnimationLoadConnection;
+		ResourcePointer<SpriteAnimation> m_AnimationResource;
+
+		void redefineSprite();
+		std::unique_ptr<SpriteDefinition2> m_SpriteDef;
+		CL_Sprite m_Sprite;
 
 		boost::signals2::connection m_PositionChangeConnection;
 		Vector2 m_NewPosition; // Set by SetPosition
@@ -124,8 +148,13 @@ namespace FusionEngine
 
 		Vector2 m_Offset;
 
-		std::string m_FilePath;
-		bool m_Reload;
+		std::string m_ImagePath;
+		bool m_ReloadImage;
+
+		std::string m_AnimationPath;
+		bool m_ReloadAnimation;
+
+		bool m_RecreateSprite;
 
 		DeltaSerialiser_t m_SerialisationHelper;
 	};

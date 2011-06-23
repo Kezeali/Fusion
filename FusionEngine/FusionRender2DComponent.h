@@ -67,17 +67,63 @@ namespace FusionEngine
 		virtual ~ISprite()
 		{}
 
-		ThreadSafeProperty<std::string> FilePath;
+		ThreadSafeProperty<std::string> ImagePath;
+		ThreadSafeProperty<std::string> AnimationPath;
 
+		ThreadSafeProperty<CL_Origin> AlignmentOrigin;
+		ThreadSafeProperty<Vector2i> AlignmentOffset;
+		ThreadSafeProperty<CL_Origin> RotationOrigin;
+		ThreadSafeProperty<Vector2i> RotationOffset;
+		ThreadSafeProperty<CL_Colorf> Colour;
+		ThreadSafeProperty<Vector2> Scale;
+		ThreadSafeProperty<float> BaseAngle;
+
+		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
 
 		void SynchroniseInterface()
 		{
-			if (FilePath.Synchronise()) // writeonly
-				SetFilePath(FilePath.Get());
+			if (ImagePath.Synchronise())
+				SetImagePath(ImagePath.Get());
+			if (AnimationPath.Synchronise())
+				SetAnimationPath(AnimationPath.Get());
+
+			FSN_SYNCH_PROP(AlignmentOrigin);
+			FSN_SYNCH_PROP(AlignmentOffset);
+			FSN_SYNCH_PROP(RotationOrigin);
+			FSN_SYNCH_PROP(RotationOffset);
+			FSN_SYNCH_PROP(Colour);
+			FSN_SYNCH_PROP(Scale);
+			FSN_SYNCH_PROP(BaseAngle);
+
+			AnimationFinished.Synchronise(IsAnimationFinished());
 		}
 
 	private:
-		virtual void SetFilePath(const std::string& value) = 0;
+		virtual void SetImagePath(const std::string& value) = 0;
+		virtual void SetAnimationPath(const std::string& value) = 0;
+
+		virtual void SetAlignmentOrigin(CL_Origin origin) = 0;
+		virtual CL_Origin GetAlignmentOrigin() const = 0;
+
+		virtual void SetAlignmentOffset(const Vector2i& offset) = 0;
+		virtual Vector2i GetAlignmentOffset() const = 0;
+
+		virtual void SetRotationOrigin(CL_Origin origin) = 0;
+		virtual CL_Origin GetRotationOrigin() const = 0;
+
+		virtual void SetRotationOffset(const Vector2i& offset) = 0;
+		virtual Vector2i GetRotationOffset() const = 0;
+
+		virtual void SetColour(const CL_Colorf& val) = 0;
+		virtual CL_Colorf GetColour() const = 0;
+
+		virtual void SetScale(const Vector2& val) = 0;
+		virtual Vector2 GetScale() const = 0;
+
+		virtual void SetBaseAngle(float val) = 0;
+		virtual float GetBaseAngle() const = 0;
+
+		virtual bool IsAnimationFinished() const = 0;
 	};
 
 }

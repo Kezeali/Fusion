@@ -180,6 +180,28 @@ namespace FusionEngine
 		}
 	};
 
+	//! Callback helper
+	template <typename T>
+	class ResourcePointerSetter
+	{
+		ResourcePointerSetter(ResourcePointer<T>& ptr)
+			: pointer(ptr)
+		{}
+
+		void operator() (ResourceDataPtr data)
+		{
+			pointer.SetTarget(data);
+		}
+
+		ResourcePointer<T>& pointer;
+	};
+
+	//! Makes a callback helper
+	template <typename T>
+	static ResourcePointerSetter<T> make_load_callback(ResourcePointer<T>& ptr)
+	{
+		return ResourcePointerSetter<T>(ptr);
+	}
 
 
 	template <typename T>

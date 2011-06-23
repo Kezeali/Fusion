@@ -73,6 +73,11 @@ namespace FusionEngine
 		int GetContextHeight() const;
 
 		//! Sets up the given GC to render within the given viewport
+		/*!
+		* \param gc The CL_GraphicContext to set up
+		* \param viewport The viewport which will be rendered
+		* \param draw_area The area of the game world that should be drawn (in 3D this would be a frustum)
+		*/
 		CL_GraphicContext& SetupDraw(CL_GraphicContext& gc, const ViewportPtr& viewport, CL_Rectf* draw_area = nullptr);
 		//! Resets the given GC to as it was before SetupDraw was called, assuming SetupDraw has been called
 		void PostDraw(CL_GraphicContext& gc);

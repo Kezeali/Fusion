@@ -59,11 +59,11 @@ namespace FusionEngine
 		T m_SerialisedValue;
 	};
 
-	class Box2DBody : public IComponent, public IPhysicalProperties, public IPhysicalMethods
+	class Box2DBody : public IComponent, public IRigidBody
 	{
 		friend class Box2DWorld;
 	public:
-		typedef boost::mpl::vector<ITransform, IPhysicalProperties, IPhysicalMethods>::type Interfaces;
+		typedef boost::mpl::vector<ITransform, IRigidBody>::type Interfaces;
 
 		static void MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
@@ -86,10 +86,14 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
-		// Threadsafe interface
+		// RigidBody interface
 		float GetMass() const { return m_Body->GetMass(); }
 
 		float GetInertia() const { return m_Body->GetInertia(); }
+
+		Vector2 GetCenterOfMass() const { return b2v2(m_Body->GetWorldCenter()); }
+
+		Vector2 GetLocalCenterOfMass() const { return b2v2(m_Body->GetLocalCenter()); }
 
 		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
 		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
@@ -132,20 +136,24 @@ namespace FusionEngine
 		bool IsFixedRotation() const { return m_Body->IsFixedRotation(); }
 		void SetFixedRotation(bool value) { m_Body->SetFixedRotation(value); }
 
-		// Non-threadsafe interface
-		void ApplyForce(const Vector2& force, const Vector2& point)
+		void ApplyForceImpl(const Vector2& force, const Vector2& point)
 		{
 			m_Body->ApplyForce(b2Vec2(force.x, force.y), b2Vec2(point.x, point.y));
 		}
 
-		void ApplyForce(const Vector2& force)
-		{
-			m_Body->ApplyForce(b2Vec2(force.x, force.y), m_Body->GetWorldCenter());
-		}
-
-		void ApplyTorque(float force)
+		void ApplyTorqueImpl(float force)
 		{
 			m_Body->ApplyTorque(force);
+		}
+
+		void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point)
+		{
+			m_Body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(point.x, point.y));
+		}
+
+		void ApplyAngularImpulseImpl(float impulse)
+		{
+			m_Body->ApplyAngularImpulse(impulse);
 		}
 	};
 

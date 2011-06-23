@@ -32,6 +32,7 @@
 #include "FusionResourceManager.h"
 
 #include "FusionPhysicalComponent.h"
+#include "FusionSpriteDefinition.h"
 
 #include <functional>
 
@@ -45,16 +46,53 @@ namespace FusionEngine
 
 	CLSprite::~CLSprite()
 	{
-		m_ResourceLoadConnection.disconnect();
+		m_ImageLoadConnection.disconnect();
+		m_AnimationLoadConnection.disconnect();
+	}
+
+	void CLSprite::redefineSprite()
+	{
+		if (m_ImageResource.IsLoaded() && m_AnimationResource.IsLoaded())
+		{
+			m_SpriteDef.reset(new SpriteDefinition(m_ImageResource, m_AnimationResource));
+			m_RecreateSprite = true;
+		}
 	}
 
 	void CLSprite::Update(const float elapsed)
 	{
-		if (m_Reload && !m_FilePath.empty())
+		auto onImageLoaded = [this](ResourceDataPtr& data)
 		{
-			using namespace std::placeholders;
-			m_ResourceLoadConnection.disconnect();
-			m_ResourceLoadConnection = ResourceManager::getSingleton().GetResource("SPRITE", m_FilePath, std::bind(&CLSprite::OnResourceLoaded, this, _1));
+			m_ImageResource.SetTarget(data);
+			if (m_AnimationResource.IsLoaded())
+			{
+				redefineSprite();
+			}
+		};
+
+		auto onAnimationLoaded = [this](ResourceDataPtr& data)
+		{
+			m_AnimationResource.SetTarget(data);
+			if (m_ImageResource.IsLoaded())
+			{
+				m_SpriteDef.reset(new SpriteDefinition(/*m_ImageResource, m_AnimationResource*/));
+				m_RecreateSprite = true;
+			}
+		};
+
+		using namespace std::placeholders;
+		if (m_ReloadImage && !m_ImagePath.empty())
+		{
+			m_ImageLoadConnection.disconnect();
+			m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("IMAGE", m_ImagePath, onImageLoaded);
+			m_ReloadImage = false;
+		}
+
+		if (m_ReloadAnimation && !m_AnimationPath.empty())
+		{
+			m_AnimationLoadConnection.disconnect();
+			m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, onAnimationLoaded);
+			m_ReloadAnimation = false;
 		}
 
 		m_LastPosition = m_Position;
@@ -63,23 +101,27 @@ namespace FusionEngine
 		// TODO: interpolate (probably in a separate method., taking a 'm' param)
 		m_InterpPosition = m_Position;
 
-		if (m_SpriteResource.IsLoaded())
+		if (!m_Sprite.is_null() && !m_Sprite.is_finished())
 		{
-			m_SpriteResource->update(int(elapsed * 1000));
+			m_Sprite.update(int(elapsed * 1000));
+
+			if (m_Sprite.is_finished())
+				AnimationFinished.MarkChanged();
 		}
 	}
 
-	void CLSprite::Draw(CL_GraphicContext& gc)
+	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
 	{
-		if (m_SpriteResource.IsLoaded())
+		if (m_RecreateSprite)
 		{
-			m_SpriteResource->draw(gc, m_InterpPosition.x, m_InterpPosition.y);
+			m_Sprite = m_SpriteDef->CreateSprite(gc);
+			m_RecreateSprite = false;
 		}
-	}
-
-	void CLSprite::OnResourceLoaded(ResourceDataPtr data)
-	{
-		m_SpriteResource.SetTarget(data);
+		if (!m_Sprite.is_null())
+		{
+			Vector2 draw_pos = m_InterpPosition - camera_pos;
+			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
+		}
 	}
 
 	void CLSprite::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& component)
@@ -88,7 +130,7 @@ namespace FusionEngine
 		{
 			auto transform = dynamic_cast<ITransform*>(component.get());
 			transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
-			transform->Depth.Connect([this](int depth) { m_LocalDepth = depth; });
+			transform->Depth.Connect([this](int depth) { m_EntityDepth = depth; });
 		}
 	}
 
@@ -100,27 +142,34 @@ namespace FusionEngine
 	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
 		//return m_SerialisationHelper.writeChanges(force_all, stream, std::tie(m_Offset, m_FilePath, m_Reload));
-		return m_SerialisationHelper.writeChanges(force_all, stream, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
+		return m_SerialisationHelper.writeChanges(force_all, stream, m_Offset, m_LocalDepth, m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation);
 	}
 
 	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 	{
-		std::bitset<4> changed;
+		std::bitset<6> changed;
 		if (!all)
 		{
-			m_SerialisationHelper.readChanges(stream, changed, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
-			if (changed[PropsOrder::FilePath]) // file path changed
-				m_Reload = true;
+			m_SerialisationHelper.readChanges(stream, changed, m_Offset, m_LocalDepth, m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation);
+			if (changed[PropsOrder::ImagePath]) // file path changed
+				m_ReloadImage = true;
+			if (changed[PropsOrder::AnimationPath])
+				m_ReloadAnimation = true;
 		}
 		else
 		{
-			m_SerialisationHelper.readAll(stream, m_Offset, m_LocalDepth, m_FilePath, m_Reload);
+			//m_SerialisationHelper.readAll(stream, m_Offset, m_LocalDepth, m_ImagePath, m_ReloadImage);
 		}
 	}
 
 	void CLSprite::SetPosition(const Vector2& value)
 	{
 		m_NewPosition = value;
+	}
+
+	Vector2 CLSprite::GetPosition() const
+	{
+		return m_InterpPosition;
 	}
 
 	void CLSprite::SetOffset(const Vector2& value)

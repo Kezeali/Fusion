@@ -35,12 +35,53 @@
 #include "FusionPrerequisites.h"
 
 #include <ClanLib/display.h>
+#include "FusionResourcePointer.h"
 #include "FusionXML.h"
 
 namespace FusionEngine
 {
+
+	//! Sprite animation definition
+	class SpriteAnimation
+	{
+	public:
+		SpriteAnimation();
+		SpriteAnimation(TiXmlDocument* doc);
+
+		void Load(TiXmlDocument* doc);
+	private:
+		struct Frame
+		{
+			CL_Rect cell;
+
+			int xpos, ypos, width, height;
+
+			Frame()
+			{}
+
+			Frame(int x, int y, int width, int height)
+			{}
+		};
+
+		std::vector<CL_Rect> m_Frames;
+	};
 	
-	//! Used to load a sprite file
+	//! Sprite factory
+	/*!
+	* Used to create CL_Sprite objects from given texture and animation resources
+	*/
+	class SpriteDefinition2
+	{
+	public:
+		SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
+
+		CL_Sprite CreateSprite(CL_GraphicContext &gc);
+
+		ResourcePointer<CL_Texture> m_Texture;
+		ResourcePointer<SpriteAnimation> m_Animation;
+	};
+
+	//! Used when loading sprite files
 	class SpriteDefinition
 	{
 	public:

@@ -33,6 +33,7 @@
 #include "FusionRenderer.h"
 
 #include <tbb/parallel_sort.h>
+#include <tbb/parallel_for.h>
 
 namespace FusionEngine
 {
@@ -127,6 +128,7 @@ namespace FusionEngine
 
 		auto& drawables = m_RenderWorld->GetDrawables();
 
+		{
 		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
 		{
 			if (first->GetParent() == second->GetParent())
@@ -145,24 +147,32 @@ namespace FusionEngine
 			return false;
 		};
 		tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
-
-		for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
-		{
-			auto sprite = dynamic_cast<CLSprite*>(dit->get());
-			if (sprite)
-			sprite->Update(delta);
 		}
+
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [drawables, delta](const tbb::blocked_range<size_t>& r)
+		{
+			for (auto it = r.begin(), end = r.end(); it != end; ++it)
+			{
+				drawables[it]->Update(delta);
+			}
+		});
+		
 
 		for (auto it = m_RenderWorld->GetViewports().begin(), end = m_RenderWorld->GetViewports().end(); it != end; ++it)
 		{
+			const auto& camera = (*it)->GetCamera();
+
 			CL_Rectf drawArea;
 			m_Renderer->SetupDraw(*it, &drawArea);
 			
 			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
 			{
 				auto& drawable = *dit;
-				//if (drawArea.contains(drawable->GetBB()))
-				drawable->Draw(gc);
+				if (!drawable->HasBB() || drawArea.is_overlapped(drawable->GetBB()))
+				{
+					Vector2 camera_pos(camera->GetPosition().x, camera->GetPosition().y);
+					drawable->Draw(gc, camera_pos);
+				}
 			}
 		}
 	}
