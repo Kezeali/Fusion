@@ -211,42 +211,38 @@ namespace FusionEngine
 
 	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
-		//uint16_t occasionalChangeFlags;
-
-		bool changeWritten = false;
-
-		changeWritten |= writeChange(force_all, stream, m_SerialisedActiveValue, IsActive());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedActiveValue, IsSleepingAllowed());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedAwakeValue, IsAwake());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedBulletValue, IsBullet());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedFixedRotationValue, IsFixedRotation());
-
-		changeWritten |= writeChange(force_all, stream, m_SerialisedLinearDampingValue, GetLinearDamping());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedAngularDampingValue, GetAngularDamping());
-		changeWritten |= writeChange(force_all, stream, m_SerialisedGravityScaleValue, GetGravityScale());
-
-		return changeWritten;
+		return m_DeltaSerialisationHelper.writeChanges(force_all, stream,
+			IsActive(), IsSleepingAllowed(), IsAwake(), IsBullet(), IsFixedRotation(),
+			GetLinearDamping(), GetAngularDamping(), GetGravityScale());
 	}
 
 	void Box2DBody::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 	{
-		if (readChange(all, stream, m_SerialisedActiveValue))
-			m_Body->SetActive(m_SerialisedActiveValue);
-		if (readChange(all, stream, m_SerialisedSleepingAllowedValue))
-			m_Body->SetSleepingAllowed(m_SerialisedSleepingAllowedValue);
-		if (readChange(all, stream, m_SerialisedAwakeValue))
-			m_Body->SetAwake(m_SerialisedAwakeValue);
-		if (readChange(all, stream, m_SerialisedBulletValue))
-			m_Body->SetBullet(m_SerialisedBulletValue);
-		if (readChange(all, stream, m_SerialisedFixedRotationValue))
-			m_Body->SetFixedRotation(m_SerialisedFixedRotationValue);
+		std::bitset<DeltaSerialiser_t::NumParams> changes;
+		bool active, sleepingAllowed, awake, bullet, fixedrotation;
+		float linearDamping, angularDamping, gravityScale;
+		m_DeltaSerialisationHelper.readChanges(stream, all, changes,
+			active, sleepingAllowed, awake, bullet,
+			fixedrotation, linearDamping, angularDamping,
+			gravityScale);
 
-		if (readChange(all, stream, m_SerialisedLinearDampingValue))
-			m_Body->SetLinearDamping(m_SerialisedLinearDampingValue);
-		if (readChange(all, stream, m_SerialisedAngularDampingValue))
-			m_Body->SetAngularDamping(m_SerialisedAngularDampingValue);
-		if (readChange(all, stream, m_SerialisedGravityScaleValue))
-			m_Body->SetGravityScale(m_SerialisedGravityScaleValue);
+		if (changes[PropsIdx::Active])
+			m_Body->SetActive(active);
+		if (changes[PropsIdx::SleepingAllowed])
+			m_Body->SetSleepingAllowed(sleepingAllowed);
+		if (changes[PropsIdx::Awake])
+			m_Body->SetAwake(awake);
+		if (changes[PropsIdx::Bullet])
+			m_Body->SetBullet(bullet);
+		if (changes[PropsIdx::FixedRotation])
+			m_Body->SetFixedRotation(fixedrotation);
+
+		if (changes[PropsIdx::LinearDamping])
+			m_Body->SetLinearDamping(linearDamping);
+		if (changes[PropsIdx::AngularDamping])
+			m_Body->SetAngularDamping(angularDamping);
+		if (changes[PropsIdx::GravityScale])
+			m_Body->SetGravityScale(gravityScale);
 	}
 
 	void Box2DBody::MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
@@ -262,28 +258,14 @@ namespace FusionEngine
 		copyChange<float>(result, current_data, new_data); // GravityScale
 	}
 
+	Box2DFixture::Box2DFixture(b2Fixture* fixture)
+		: m_Fixture(fixture)
+	{
+	}
+
 	void Box2DFixture::SynchroniseParallelEdits()
 	{
-		if (m_SensorProp.written != m_Fixture->IsSensor())
-			m_Fixture->SetSensor(m_SensorProp.written);
-
-		if (m_DensityProp.changed)
-		{
-			m_Fixture->SetDensity(m_DensityProp.written);
-			m_DensityProp.changed = false;
-		}
-
-		if (m_FrictionProp.changed)
-		{
-			m_Fixture->SetFriction(m_FrictionProp.written);
-			m_FrictionProp.changed = false;
-		}
-
-		if (m_RestitutionProp.changed)
-		{
-			m_Fixture->SetRestitution(m_RestitutionProp.written);
-			m_RestitutionProp.changed = false;
-		}
+		IPhysFixture::SynchroniseInterface();
 	}
 
 	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)
@@ -297,21 +279,27 @@ namespace FusionEngine
 
 	bool Box2DFixture::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
-		bool changeWritten = false;
-		changeWritten = writeChange(force_all, stream, m_SensorProp.serialised, m_Fixture->IsSensor());
-		changeWritten = writeChange(force_all, stream, m_DensityProp.serialised, m_Fixture->GetDensity());
-		changeWritten = writeChange(force_all, stream, m_FrictionProp.serialised, m_Fixture->GetFriction());
-		changeWritten = writeChange(force_all, stream, m_RestitutionProp.serialised, m_Fixture->GetRestitution());
-
-		return changeWritten;
+		return m_DeltaSerialisationHelper.writeChanges(force_all, stream , IsSensor(), GetDensity(), GetFriction(), GetRestitution());
 	}
 
 	void Box2DFixture::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 	{
-		if (readChange(all, stream, m_SensorProp.serialised))
-			m_Fixture->SetSensor(m_SensorProp.serialised);
-		if (readChange(all, stream, m_DensityProp.serialised))
-			m_Fixture->SetDensity(m_DensityProp.serialised);
+		std::bitset<DeltaSerialiser_t::NumParams> changes;
+		bool sensor;
+		float density, friction, restitution;
+		m_DeltaSerialisationHelper.readChanges(stream, all, changes, sensor, density, friction, restitution);
+
+		// This commented-out line works and is pretty cool, but I think it could be improved
+		//m_DeltaSerialisationHelper.readChanges(stream, all, changes, m_Fixture, &b2Fixture::SetSensor, &b2Fixture::SetDensity, &b2Fixture::SetFriction, &b2Fixture::SetRestitution);
+
+		if (changes[PropsIdx::Sensor])
+			m_Fixture->SetSensor(sensor);
+		if (changes[PropsIdx::Density])
+			m_Fixture->SetDensity(density);
+		if (changes[PropsIdx::Friction])
+			m_Fixture->SetFriction(friction);
+		if (changes[PropsIdx::Restitution])
+			m_Fixture->SetRestitution(restitution);
 	}
 
 }

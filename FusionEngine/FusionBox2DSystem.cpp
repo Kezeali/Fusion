@@ -70,6 +70,7 @@ namespace FusionEngine
 			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
 			return com;
 		}
+		return std::shared_ptr<IComponent>();
 	}
 
 	void Box2DWorld::OnActivation(const std::shared_ptr<IComponent>& component)
@@ -108,11 +109,11 @@ namespace FusionEngine
 	{
 		if (type == "B2Body")
 		{
-			Box2DBody::MergeDelta(result, current_data, new_data);
+			Box2DBody::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
 		}
 		else if (type == "B2Fixture")
 		{
-			Box2DFixture::MergeDelta(result, current_data, new_data);
+			Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
 		}
 	}
 
@@ -130,11 +131,20 @@ namespace FusionEngine
 	void Box2DTask::Update(const float delta)
 	{
 		m_World->Step(delta, 10, 10);
-		//auto activeBodies = m_B2DSysWorld->m_ActiveBodies;
-		//for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
-		//{
-		//	auto body = *it;
-		//}
+		auto activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
+		{
+			auto body = *it;
+			if (body->IsAwake() != body->Awake.Get())
+			{
+				body->Awake.MarkChanged();
+				body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
+			}
+			body->Position.MarkChanged();
+			body->Angle.MarkChanged();
+			body->Velocity.MarkChanged();
+			body->AngularVelocity.MarkChanged();
+		}
 	}
 
 }

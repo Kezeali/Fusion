@@ -39,6 +39,8 @@
 
 #include "FusionCommon.h"
 
+#include "FusionSerialisationHelper.h"
+
 #include <boost/mpl/for_each.hpp>
 #include <Box2D/Box2D.h>
 #include <tbb/atomic.h>
@@ -62,18 +64,37 @@ namespace FusionEngine
 	class Box2DBody : public IComponent, public IRigidBody
 	{
 		friend class Box2DWorld;
+		friend class Box2DTask;
 	public:
 		typedef boost::mpl::vector<ITransform, IRigidBody>::type Interfaces;
 
 		static void MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
-	private:
+		struct PropsIdx { enum Names {
+			Active, SleepingAllowed, Awake, Bullet, FixedRotation,
+			LinearDamping, AngularDamping,
+			GravityScale,
+			NumProps
+		}; };
+		typedef SerialisationHelper<
+			bool, bool, bool, bool, bool, // active, SleepingAllowed, IsAwake, IsBullet, IsFixedRotation
+			float, float, // Linear, angular Damping
+			float> // GravityScale
+			DeltaSerialiser_t;
+		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
+
 		Box2DBody(b2Body* body)
 			: m_Body(body)
 		{
 		}
 
+		virtual ~Box2DBody()
+		{}
+
+	private:
 		b2Body* m_Body;
+
+		int m_Depth;
 
 		// IComponent
 		std::string GetType() const { return "Box2DBody"; }
@@ -86,7 +107,18 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
+		DeltaSerialiser_t m_DeltaSerialisationHelper;
+
 		// RigidBody interface
+		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
+		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
+
+		float GetAngle() const { return m_Body->GetAngle(); }
+		void SetAngle(float angle) { m_Body->SetTransform(m_Body->GetPosition(), angle); }
+
+		int GetDepth() const { return m_Depth; }
+		void SetDepth(int depth) { m_Depth = depth; }
+
 		float GetMass() const { return m_Body->GetMass(); }
 
 		float GetInertia() const { return m_Body->GetInertia(); }
@@ -94,12 +126,6 @@ namespace FusionEngine
 		Vector2 GetCenterOfMass() const { return b2v2(m_Body->GetWorldCenter()); }
 
 		Vector2 GetLocalCenterOfMass() const { return b2v2(m_Body->GetLocalCenter()); }
-
-		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
-		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
-
-		float GetAngle() const { return m_Body->GetAngle(); }
-		void SetAngle(float angle) { m_Body->SetTransform(m_Body->GetPosition(), angle); }
 
 		Vector2 GetVelocity() const { return b2v2(m_Body->GetLinearVelocity()); }
 		void SetVelocity(const Vector2& vel) { m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)); }
@@ -109,7 +135,7 @@ namespace FusionEngine
 
 #define BODY_PROP(name) \
 	float Get ## name() const { return m_Body->Get ## name(); }\
-	void Set ## name(float val) { m_Body->Set ## name(val); }
+	void Set ## name(float val) { m_Body->Set ## name(val); m_DeltaSerialisationHelper.markChanged(PropsIdx:: name ); }
 
 		//! Get linear damping
 		BODY_PROP(LinearDamping);
@@ -123,18 +149,34 @@ namespace FusionEngine
 #undef BODY_PROP
 
 		bool IsActive() const { return m_Body->IsActive(); }
-		void SetActive(bool value) { m_Body->SetActive(value); }
+		void SetActive(bool value)
+		{
+			m_Body->SetActive(value);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Active);
+		}
 
 		bool IsSleepingAllowed() const { return m_Body->IsSleepingAllowed(); }
-		void SetSleepingAllowed(bool value) { m_Body->SetSleepingAllowed(value); }
+		void SetSleepingAllowed(bool value)
+		{
+			m_Body->SetSleepingAllowed(value);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::SleepingAllowed);
+		}
 
 		bool IsAwake() const { return m_Body->IsAwake(); }
 
 		bool IsBullet() const { return m_Body->IsBullet(); }
-		void SetBullet(bool value) { m_Body->SetBullet(value); }
+		void SetBullet(bool value)
+		{
+			m_Body->SetBullet(value);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Bullet);
+		}
 
 		bool IsFixedRotation() const { return m_Body->IsFixedRotation(); }
-		void SetFixedRotation(bool value) { m_Body->SetFixedRotation(value); }
+		void SetFixedRotation(bool value)
+		{
+			m_Body->SetFixedRotation(value);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::FixedRotation);
+		}
 
 		void ApplyForceImpl(const Vector2& force, const Vector2& point)
 		{
@@ -176,17 +218,26 @@ namespace FusionEngine
 		void Set(const float& v) { written = v; changed = true; }
 	};
 
-	class Box2DFixture : public IComponent, public IFixtureProperties
+	class Box2DFixture : public IComponent, public IPhysFixture
 	{
 		friend class Box2DWorld;
 	public:
-		typedef boost::mpl::vector<IFixtureProperties>::type Interfaces;
+		typedef boost::mpl::vector<IPhysFixture>::type Interfaces;
 
-		static void MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
+		struct PropsIdx { enum Names {
+			Sensor,
+			Density, Friction, Restitution,
+			NumProps
+		}; };
+		typedef SerialisationHelper<
+			bool, // Sensor
+			float, float, float> // Density, Friction, Restitution
+			DeltaSerialiser_t;
+		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
-	private:
 		Box2DFixture(b2Fixture* fixture);
 
+	private:
 		// IComponent
 		std::string GetType() const { return "Box2DFixture"; }
 
@@ -197,30 +248,48 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
+		DeltaSerialiser_t m_DeltaSerialisationHelper;
+
 		// IFixtureProperties
 
 		//! Is this fixture a sensor (non-solid)?
 		bool IsSensor() const { return m_Fixture->IsSensor(); }
 		//! Set if this fixture is a sensor.
-		void SetSensor(bool sensor) { m_Fixture->SetSensor(sensor); }
+		void SetSensor(bool sensor)
+		{
+			m_Fixture->SetSensor(sensor);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Sensor);
+		}
 
 		//! Get the density of this fixture.
 		float GetDensity() const { return m_Fixture->GetDensity(); }
 		//! Set the density of this fixture. This will _not_ automatically adjust the mass
 		//! of the body. You must call b2Body::ResetMassData to update the body's mass.
-		void SetDensity(float density) { m_Fixture->SetDensity(density); }
+		void SetDensity(float density)
+		{
+			m_Fixture->SetDensity(density);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Density);
+		}
 		
 		//! Get the coefficient of friction.
 		float GetFriction() const { return m_Fixture->GetFriction();}
 		//! Set the coefficient of friction. This will _not_ change the friction of
 		//! existing contacts.
-		void SetFriction(float friction) { m_Fixture->SetFriction(friction); }
+		void SetFriction(float friction)
+		{
+			m_Fixture->SetFriction(friction);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Friction);
+		}
 
 		//! Get the coefficient of restitution.
-		float GetRestitution() const { m_Fixture->GetRestitution(); }
+		float GetRestitution() const { return m_Fixture->GetRestitution(); }
 		//! Set the coefficient of restitution. This will _not_ change the restitution of
 		//! existing contacts.
-		void SetRestitution(float restitution) { m_Fixture->SetRestitution(restitution); }
+		void SetRestitution(float restitution)
+		{
+			m_Fixture->SetRestitution(restitution);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::Restitution);
+		}
 
 		//! Get the fixture's AABB. This AABB may be enlarge and/or stale.
 		//! If you need a more accurate AABB, compute it using the shape and

@@ -45,7 +45,7 @@ namespace FusionEngine
 	/*!
 	* \see Camera | Renderer
 	*/
-	class Viewport : public RefCounted
+	class Viewport
 	{
 	public:
 		Viewport();
@@ -78,9 +78,6 @@ namespace FusionEngine
 		void SetCamera(const CameraPtr &camera);
 		const CameraPtr &GetCamera() const;
 
-		Vector2* ToScreenCoords(const Vector2 &entity_position) const;
-		Vector2* ToEntityCoords(const Vector2 &screen_position) const;
-
 		static void Register(asIScriptEngine *engine);
 
 	protected:
@@ -88,7 +85,7 @@ namespace FusionEngine
 		CameraPtr m_Camera;
 	};
 
-	typedef boost::intrusive_ptr<Viewport> ViewportPtr;
+	typedef std::shared_ptr<Viewport> ViewportPtr;
 
 }
 

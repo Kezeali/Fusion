@@ -63,8 +63,8 @@ namespace FusionEngine
 
 		virtual Vector2 GetPosition() const = 0;
 
-		virtual bool HasBB() const { return false; }
-		virtual CL_Rectf GetBB() { return CL_Rectf(); }
+		virtual bool HasAABB() const { return false; }
+		virtual CL_Rectf GetAABB() { return CL_Rectf(); }
 	};
 
 	class CLSprite : public IDrawable, public ISprite
@@ -74,8 +74,27 @@ namespace FusionEngine
 	public:
 		typedef boost::mpl::vector<ISprite>::type Interfaces;
 
-		struct PropsOrder { enum Names { Offset = 0, LocalDepth, ImagePath, ReloadImage, AnimationPath, ReloadAnimation }; };
-		typedef SerialisationHelper<Vector2, int, std::string, bool, std::string, bool> DeltaSerialiser_t;
+		struct PropsIdx { enum Names {
+			Offset = 0, LocalDepth,
+			ImagePath, ReloadImage, AnimationPath, ReloadAnimation,
+			AlignmentOrigin, AlignmentOffset, RotationOrigin, RotationOffset,
+			Colour,
+			Alpha,
+			Scale, BaseAngle,
+			NumProps
+		}; };
+		typedef SerialisationHelper<
+			Vector2, int, // offset, depth
+			std::string, bool, std::string, bool, // image path, animation path
+			CL_Origin, Vector2i, CL_Origin, Vector2i, // Alignment, rotation hotspot
+			CL_Colorf, // colour
+			float, // alpha
+			Vector2, float> // scale, base-angle
+			DeltaSerialiser_t;
+		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
+
+		CLSprite();
+		virtual ~CLSprite();
 
 	private:
 		float ToRender(float sim_coord)
@@ -87,12 +106,11 @@ namespace FusionEngine
 		{
 			return Vector2(ToRender(sim_coord.x), ToRender(sim_coord.y));
 		}
-
-		CLSprite();
-		~CLSprite();
 		
 		void SetPosition(const Vector2& value);
 		Vector2 GetPosition() const;
+
+		void SetAngle(float angle);
 		
 		// IDrawable
 		void Draw(CL_GraphicContext& gc, const Vector2& offset);
@@ -104,15 +122,13 @@ namespace FusionEngine
 		int m_EntityDepth;
 		int m_LocalDepth;
 
-		bool HasBB() const { return true; }
-		CL_Rectf GetBB()
+		bool HasAABB() const { return true; }
+		CL_Rectf GetAABB()
 		{
-			CL_Rectf bb;
-
-			CL_Origin origin;
-			int x, y;
-			m_Sprite.get_alignment(origin, x, y);
+			return m_AABB;
 		}
+
+		CL_Rectf m_AABB;
 
 		// IComponent
 		std::string GetType() const { return "CLSprite"; }
@@ -127,7 +143,37 @@ namespace FusionEngine
 		// ISprite
 		void SetOffset(const Vector2& offset);
 		void SetLocalDepth(int value);
-		void SetFilePath(const std::string& value);
+		
+		void SetImagePath(const std::string& value);
+		std::string GetImagePath() const;
+		void SetAnimationPath(const std::string& value);
+		std::string GetAnimationPath() const;
+
+		void SetAlignmentOrigin(CL_Origin origin);
+		CL_Origin GetAlignmentOrigin() const;
+
+		void SetAlignmentOffset(const Vector2i& offset);
+		Vector2i GetAlignmentOffset() const;
+
+		void SetRotationOrigin(CL_Origin origin);
+		CL_Origin GetRotationOrigin() const;
+
+		void SetRotationOffset(const Vector2i& offset);
+		Vector2i GetRotationOffset() const;
+
+		void SetColour(const CL_Colorf& val);
+		CL_Colorf GetColour() const;
+		
+		void SetAlpha(float val);
+		float GetAlpha() const;
+
+		void SetScale(const Vector2& val);
+		Vector2 GetScale() const;
+
+		void SetBaseAngle(float val);
+		float GetBaseAngle() const;
+
+		bool IsAnimationFinished() const;
 
 		boost::signals2::scoped_connection m_ImageLoadConnection;
 		ResourcePointer<CL_Texture> m_ImageResource;

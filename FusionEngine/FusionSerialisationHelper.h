@@ -36,11 +36,78 @@
 #include <bitset>
 #include <tuple>
 
+//#include <StringCompressor.h>
+
 namespace FusionEngine
 {
 
 	namespace SerialisationUtils
 	{
+		// Write templates
+		template <typename T>
+		static inline void write(RakNet::BitStream& stream, const T& new_value)
+		{
+			//static_assert(std::is_fundamental<T>::value, "BitStream probably wont be able to write this type");
+			stream.Write(new_value);
+		}
+
+		template <typename U>
+		static inline void write(RakNet::BitStream& stream, const Vector2T<U>& new_value)
+		{
+			stream.Write(new_value.x);
+			stream.Write(new_value.y);
+		}
+
+		template <>
+		static inline void write(RakNet::BitStream& stream, const std::string& new_value)
+		{
+			stream.Write(new_value.length());
+			stream.Write(new_value.c_str());
+		}
+
+		template <>
+		static inline void write(RakNet::BitStream& stream, const CL_Colorf& new_value)
+		{
+			stream.Write(new_value.a);
+			stream.Write(new_value.r);
+			stream.Write(new_value.g);
+			stream.Write(new_value.b);
+		}
+
+		// Read templates
+		template <typename T>
+		static inline void read(RakNet::BitStream& stream, T& out_value)
+		{
+			//static_assert(std::is_fundamental<T>::value, "BitStream probably wont be able to read this type");
+			stream.Read(out_value);
+		}
+
+		template <typename U>
+		static inline void read(RakNet::BitStream& stream, Vector2T<U>& out_value)
+		{
+			stream.Read(out_value.x);
+			stream.Read(out_value.y);
+		}
+
+		template <>
+		static inline void read(RakNet::BitStream& stream, std::string& out_value)
+		{
+			size_t length;
+			stream.Read(length);
+			out_value.resize(length);
+			stream.Read(&out_value[0]);
+		}
+
+		template <>
+		static inline void read(RakNet::BitStream& stream, const CL_Colorf& new_value)
+		{
+			stream.Read(new_value.a);
+			stream.Read(new_value.r);
+			stream.Read(new_value.g);
+			stream.Read(new_value.b);
+		}
+
+		// Writes a bool and, if it changed, the value
 		template <typename T>
 		static inline void writeChange(bool all, RakNet::BitStream& stream, bool changed, const T& new_value)
 		{
@@ -48,7 +115,7 @@ namespace FusionEngine
 			{
 				if (!all)
 					stream.Write1();
-				stream.Write(new_value);
+				write(stream, new_value);
 			}
 			else if (!all)
 			{
@@ -67,7 +134,7 @@ namespace FusionEngine
 		{
 			if (all || stream.ReadBit())
 			{
-				stream.Read(new_value);
+				read(stream, new_value);
 				return true;
 			}
 			else
@@ -82,16 +149,19 @@ namespace FusionEngine
 		}
 
 		template <typename T>
-		static void copyChange(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
+		static void copyChange(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta_data)
 		{
 			T value;
-			if (readChange(false, new_data, value))
+			if (readChange(false, delta_data, value))
 			{
-				result.Write(value);
+				write(result, value);
 				current_data.IgnoreBytes(sizeof(T));
 			}
-			else if (readChange(true, current_data, value))
-				result.Write(value);
+			else
+			{
+				read(current_data, value);
+				write(result, value);
+			}
 		}
 	};
 
@@ -104,7 +174,10 @@ namespace FusionEngine
 //#define FSN_DSER_REP_FORCE(z, n, text) SerialisationUtils::readChange<BOOST_PP_CAT(T,n)>(true, stream, get<n>(new_values));
 
 #define FSN_SER_REP(z, n, text) dataWritten |= force_all || m_Changed.at(n); SerialisationUtils::writeChange(force_all, stream, m_Changed.at(n), v ## n);
-#define FSN_DSER_REP(z, n, text) changes.set(n, SerialisationUtils::readChange(false, stream, v ## n) );
+#define FSN_DSER_REP(z, n, text) changes.set(n, SerialisationUtils::readChange(force_all, stream, v ## n) );
+#define FSN_DSER_CALLBACKS_REP(z, n, text) { T ## n value; if (SerialisationUtils::readChange(force_all, stream, value)) { changes.set(n); (obj->* f ## n)(value); } }
+
+#define FSN_DSER_REP_CHANGE(z, n, text) changes.set(n, SerialisationUtils::readChange(false, stream, v ## n) );
 #define FSN_DSER_REP_FORCE(z, n, text) SerialisationUtils::readChange(true, stream, v ## n);
 
 #define FSN_CPYSER_REP(z, n, text) SerialisationUtils::copyChange< T ## n >(result, current_data, new_data);
@@ -112,22 +185,30 @@ namespace FusionEngine
 // Allows enumeration of T0&, ... TN& type params
 #define REF_PARAM(z, n, data) T ## n &
 
-#define VAL_PROP(z, n, data) T ## n data ## n
+#define DATA_TYPE(z, n, data) typedef typename T##n type_##n;
 
 #define FSN_PP_PRINT(z, n, data) data
 
+#ifndef MAX_SerialisationHelper_PROPS
+#define MAX_SerialisationHelper_PROPS 18
+#endif
+
 namespace FusionEngine
 {
-	template <BOOST_PP_ENUM_BINARY_PARAMS(15, typename T, = sh_none BOOST_PP_INTERCEPT)>
+	template <BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, typename T, = sh_none BOOST_PP_INTERCEPT)>
 	struct SerialisationHelper
 	{
-		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, typename T)> data_type;
+		typedef std::tuple<BOOST_PP_ENUM_PARAMS(8, T)> data_type;
 		//typedef std::tuple<BOOST_PP_ENUM(n, REF_PARAM, ~)> reference_type;
 
 		//BOOST_PP_REPEAT(n, VAL_PROP, m_V)
 		//data_type m_SerialisedValues;
 
-		std::bitset<15> m_Changed;
+		//BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, DATA_TYPE, ~)
+
+		static const size_t NumParams = MAX_SerialisationHelper_PROPS;
+
+		std::bitset<MAX_SerialisationHelper_PROPS> m_Changed;
 
 		SerialisationHelper()
 		{}
@@ -142,50 +223,49 @@ namespace FusionEngine
 			m_Changed.set(i);
 		}
 
-		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(15, const T, &v))//const data_type& new_values)
+		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, const T, &v))//const data_type& new_values)
 		{
 			bool dataWritten = false;
-			BOOST_PP_REPEAT(15, FSN_SER_REP, ~)
+			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_SER_REP, ~)
 			m_Changed.reset();
 			return dataWritten;
 		}
 
-		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(15, T, &v))//data_type& new_values)
+		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))//data_type& new_values)
 		{
-			BOOST_PP_REPEAT(15, FSN_DSER_REP_FORCE, ~)
+			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_DSER_REP_FORCE, ~)
 		}
 
-		void readChanges(RakNet::BitStream& stream, std::bitset<15>& changes, BOOST_PP_ENUM_BINARY_PARAMS(15, T, &v))//data_type& new_values)
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<MAX_SerialisationHelper_PROPS>& changes, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))//data_type& new_values)
 		{
-			BOOST_PP_REPEAT(15, FSN_DSER_REP, ~)
+			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_DSER_REP, ~)
 		}
 
 		static void copyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 		{
-			BOOST_PP_REPEAT(15, FSN_CPYSER_REP, ~)
+			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_CPYSER_REP, ~)
 		}
 	};
 }
 
-#define BOOST_PP_ITERATION_LIMITS (2, 14)
+#define BOOST_PP_ITERATION_LIMITS (2, MAX_SerialisationHelper_PROPS - 1)
 #define BOOST_PP_FILENAME_1 "FusionSerialisationHelper.h"
 #include BOOST_PP_ITERATE()
 
 #undef FSN_SER_REP
 #undef FSN_DSER_REP
+#undef FSN_DSER_REP_CHANGE
 #undef FSN_DSER_REP_FORCE
 #undef FSN_CPYSER_REP
 
 #undef REF_PARAM
-#undef VAL_PROP
+#undef DATA_TYPE
 #undef FSN_PP_PRINT
 
 #endif // H_FusionSerialisationHelper
 
 #else
 #define n BOOST_PP_ITERATION()
-
-#define COMMA_COND() n
 
 namespace FusionEngine
 {
@@ -194,14 +274,12 @@ namespace FusionEngine
 	struct SerialisationHelper<
 		BOOST_PP_ENUM_PARAMS(n,T)
 		BOOST_PP_COMMA_IF(n)
-		BOOST_PP_ENUM(BOOST_PP_SUB(15,n), FSN_PP_PRINT, sh_none)
+		BOOST_PP_ENUM(BOOST_PP_SUB(MAX_SerialisationHelper_PROPS,n), FSN_PP_PRINT, sh_none)
 	>
 	{
-		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, typename T)> data_type;
-		//typedef std::tuple<BOOST_PP_ENUM(n, REF_PARAM, ~)> reference_type;
+		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, T)> data_type;
 
-		//BOOST_PP_REPEAT(n, VAL_PROP, m_V)
-		//data_type m_SerialisedValues;
+		static const size_t NumParams = n;
 
 		std::bitset<n> m_Changed;
 
@@ -231,10 +309,21 @@ namespace FusionEngine
 			BOOST_PP_REPEAT(n, FSN_DSER_REP_FORCE, ~)
 		}
 
-		void readChanges(RakNet::BitStream& stream, std::bitset<n>& changes, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))//data_type& new_values)
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))//data_type& new_values)
 		{
 			BOOST_PP_REPEAT(n, FSN_DSER_REP, ~)
 		}
+
+#define PARAM_CALLBACK_FN(z, n, data) void BOOST_PP_LPAREN() BOOST_PP_CAT(C::*f, n) BOOST_PP_RPAREN() BOOST_PP_LPAREN() BOOST_PP_CAT(T, n) BOOST_PP_RPAREN()
+
+		template <class C>
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, C* obj, BOOST_PP_ENUM(n, PARAM_CALLBACK_FN, _))
+		{
+			FSN_ASSERT(obj);
+			BOOST_PP_REPEAT(n, FSN_DSER_CALLBACKS_REP, ~)
+		}
+
+#undef PARAM_CALLBACK_FN
 
 		static void copyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 		{

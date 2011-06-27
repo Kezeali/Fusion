@@ -53,7 +53,7 @@ namespace FusionEngine
 	public:
 		ThreadSafeProperty<Vector2> Position;
 		ThreadSafeProperty<float> Angle;
-		ThreadSafeProperty<unsigned int> Depth;
+		ThreadSafeProperty<int> Depth;
 
 		void SynchroniseInterface()
 		{
@@ -71,8 +71,8 @@ namespace FusionEngine
 		virtual float GetAngle() const = 0;
 		virtual void SetAngle(float angle) = 0;
 
-		virtual unsigned int GetDepth() const = 0;
-		virtual void SetDepth(unsigned int angle) = 0;
+		virtual int GetDepth() const = 0;
+		virtual void SetDepth(int depth) = 0;
 	};
 
 	//! Threadsafe physical body interface
@@ -203,7 +203,7 @@ namespace FusionEngine
 	};
 
 	//! Physical fixture interface
-	FSN_BEGIN_COIFACE(IFixtureProperties)
+	FSN_BEGIN_COIFACE(IPhysFixture)
 	public:
 		ThreadSafeProperty<bool> Sensor;
 		ThreadSafeProperty<float> Density;

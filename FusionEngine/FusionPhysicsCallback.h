@@ -93,13 +93,14 @@ namespace FusionEngine
 			fsnContact.SetFixtureA( fa );
 			fsnContact.SetFixtureB( fb );
 
-			fsnContact.SetNormal( b2v2(worldManifold.m_normal) );
+			fsnContact.SetNormal( b2v2(worldManifold.normal) );
 
-			fsnContact.m_Points.reserve(manifold->m_pointCount);
-			for (int32 i = 0; i < manifold->m_pointCount; ++i)
-			{
-				fsnContact.m_Points.push_back( b2v2(worldManifold.m_points[i]) );
-			}
+			// TODO: A line was obviously wrong here, so this is commented out, pending fixup
+			//fsnContact.m_Points.reserve(manifold->pointCount);
+			//for (int32 i = 0; i < manifold->pointCount; ++i)
+			//{
+			//	fsnContact.m_Points.push_back( b2v2(worldManifold.points[i]) ); // * this line
+			//}
 
 			return fsnContact;
 		}

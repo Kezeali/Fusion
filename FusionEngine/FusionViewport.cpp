@@ -3,6 +3,7 @@
 // Class
 #include "FusionViewport.h"
 
+#include "FusionScriptTypeRegistrationUtils.h"
 
 namespace FusionEngine
 {
@@ -74,35 +75,31 @@ namespace FusionEngine
 		return new Viewport();
 	}
 
-	Viewport* Viewport_Factory(float left, float top, float right, float bottom)
+	void Viewport_ctor(float left, float top, float right, float bottom, void* mem)
 	{
-		return new Viewport(CL_Rectf(left, top, right, bottom));
+		new (mem) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom)));
 	}
 
-	Viewport* Viewport_Factory(float left, float top, float right, float bottom, Camera* camera)
+	void Viewport_ctor(float left, float top, float right, float bottom, CameraPtr camera, void* mem)
 	{
-		return new Viewport(CL_Rectf(left, top, right, bottom), camera);
+		new (mem) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom), camera));
 	}
 
-	void Viewport_SetCamera(Camera *camera, Viewport *viewport)
+	void Viewport_SetCamera(CameraPtr camera, Viewport *viewport)
 	{
-		viewport->SetCamera( CameraPtr(camera) );
-		camera->release();
+		viewport->SetCamera( camera );
 	}
 
 	void Viewport::Register(asIScriptEngine *engine)
 	{
 		int r;
-		RefCounted::RegisterType<Viewport>(engine, "Viewport");
+		RegisterSharedPtrType<Viewport>("Viewport", engine);
+		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_CONSTRUCT,
+			"Viewport f(float, float, float, float)",
+			asFUNCTION(Viewport_ctor1), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
-			"Viewport@ f()",
-			asFUNCTIONPR(Viewport_Factory, (void), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
-			"Viewport@ f(float, float, float, float)",
-			asFUNCTIONPR(Viewport_Factory, (float, float, float, float), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectBehaviour("Viewport", asBEHAVE_FACTORY,
-			"Viewport@ f(float, float, float, float, Camera@)",
-			asFUNCTIONPR(Viewport_Factory, (float, float, float, float, Camera*), Viewport*), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			"Viewport f(float, float, float, float, Camera)",
+			asFUNCTION(Viewport_ctor2), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Viewport",
 			"void setArea(float, float, float, float)",

@@ -77,9 +77,6 @@ namespace FusionEngine
 			if (drawable)
 			{
 				m_Drawables.push_back(drawable);
-				// In task update: tbb::parallel_sort(drawables, depth cmp)
-				//  I suspect most of the time there will be so few things to draw that TBB will just
-				//  let the sort run serialy, and it will take negligable time (on modern hardware). Away with ye, bubble sort!
 			}
 		}
 	}
@@ -128,7 +125,6 @@ namespace FusionEngine
 
 		auto& drawables = m_RenderWorld->GetDrawables();
 
-		{
 		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
 		{
 			if (first->GetParent() == second->GetParent())
@@ -147,16 +143,29 @@ namespace FusionEngine
 			return false;
 		};
 		tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
+
+		//tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [drawables, delta](const tbb::blocked_range<size_t>& r)
+		//{
+		//	for (auto it = r.begin(), end = r.end(); it != end; ++it)
+		//	{
+		//		drawables[it]->Update(delta);
+		//	}
+		//});
+		
+		
+		for (auto it = drawables.begin(); it != drawables.end(); ++it)
+		{
+			auto& drawable = *it;
+			drawable->Update(delta);
+			// Bubblesort
+			//if (it != drawables.begin())
+			//{
+			//	auto& previous = *(it - 1);
+			//	if (depthSort(previous, drawable))
+			//		previous.swap(drawable);
+			//}
 		}
 
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [drawables, delta](const tbb::blocked_range<size_t>& r)
-		{
-			for (auto it = r.begin(), end = r.end(); it != end; ++it)
-			{
-				drawables[it]->Update(delta);
-			}
-		});
-		
 
 		for (auto it = m_RenderWorld->GetViewports().begin(), end = m_RenderWorld->GetViewports().end(); it != end; ++it)
 		{
@@ -168,7 +177,7 @@ namespace FusionEngine
 			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
 			{
 				auto& drawable = *dit;
-				if (!drawable->HasBB() || drawArea.is_overlapped(drawable->GetBB()))
+				if (!drawable->HasAABB() || drawArea.is_overlapped(drawable->GetAABB()))
 				{
 					Vector2 camera_pos(camera->GetPosition().x, camera->GetPosition().y);
 					drawable->Draw(gc, camera_pos);

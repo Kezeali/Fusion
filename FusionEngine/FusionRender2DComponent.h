@@ -75,6 +75,7 @@ namespace FusionEngine
 		ThreadSafeProperty<CL_Origin> RotationOrigin;
 		ThreadSafeProperty<Vector2i> RotationOffset;
 		ThreadSafeProperty<CL_Colorf> Colour;
+		ThreadSafeProperty<float> Alpha;
 		ThreadSafeProperty<Vector2> Scale;
 		ThreadSafeProperty<float> BaseAngle;
 
@@ -82,9 +83,11 @@ namespace FusionEngine
 
 		void SynchroniseInterface()
 		{
-			if (ImagePath.Synchronise())
+			IRenderCom::SynchroniseInterface();
+
+			if (ImagePath.Synchronise(GetImagePath()))
 				SetImagePath(ImagePath.Get());
-			if (AnimationPath.Synchronise())
+			if (AnimationPath.Synchronise(GetAnimationPath()))
 				SetAnimationPath(AnimationPath.Get());
 
 			FSN_SYNCH_PROP(AlignmentOrigin);
@@ -92,6 +95,7 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(RotationOrigin);
 			FSN_SYNCH_PROP(RotationOffset);
 			FSN_SYNCH_PROP(Colour);
+			FSN_SYNCH_PROP(Alpha);
 			FSN_SYNCH_PROP(Scale);
 			FSN_SYNCH_PROP(BaseAngle);
 
@@ -100,7 +104,9 @@ namespace FusionEngine
 
 	private:
 		virtual void SetImagePath(const std::string& value) = 0;
+		virtual std::string GetImagePath() const = 0;
 		virtual void SetAnimationPath(const std::string& value) = 0;
+		virtual std::string GetAnimationPath() const = 0;
 
 		virtual void SetAlignmentOrigin(CL_Origin origin) = 0;
 		virtual CL_Origin GetAlignmentOrigin() const = 0;
@@ -116,6 +122,9 @@ namespace FusionEngine
 
 		virtual void SetColour(const CL_Colorf& val) = 0;
 		virtual CL_Colorf GetColour() const = 0;
+
+		virtual void SetAlpha(float val) = 0;
+		virtual float GetAlpha() const = 0;
 
 		virtual void SetScale(const Vector2& val) = 0;
 		virtual Vector2 GetScale() const = 0;

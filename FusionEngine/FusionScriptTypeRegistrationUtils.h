@@ -148,7 +148,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(helper_type::Construct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod(name.c_str(), name + "& opAssign(const " + name + " &in other)",
-			asMETHODPR(std::shared_ptr<T>, operator=, const std::shared_ptr<T> &, std::shared_ptr<T> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHODPR(std::shared_ptr<T>, operator=, (const std::shared_ptr<T> &), std::shared_ptr<T> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 
 	//! Registers a POD type (no constructor)

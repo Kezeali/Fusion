@@ -298,6 +298,7 @@ namespace FusionEngine
 		boost::signals2::signal<void (const T&)> m_Signal;
 		boost::signals2::connection m_Connection; // Properties can bind directly to other properties
 
+	public:
 		bool m_Changed;
 		T m_Value;
 
