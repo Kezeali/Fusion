@@ -59,7 +59,7 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + sizeof(types));
 	}
 
-	std::shared_ptr<IComponent> CLRenderWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+	std::shared_ptr<IComponent> CLRenderWorld::InstantiateComponent(const std::string& type)
 	{
 		std::shared_ptr<IComponent> com;
 		if (type == "CLSprite")

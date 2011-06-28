@@ -32,27 +32,18 @@
 namespace FusionEngine
 {
 
-	void Box2DBody::SynchTransform()
+	Box2DBody::Box2DBody(b2Body* body)
+		: m_Body(body)
 	{
-		//Vector2 position;
-		//bool positionWritten = m_Position.ClearWrittenValue(position);
+	}
 
-		//if (m_AngleWritten && positionWritten)
-		//{
-		//	m_Body->SetTransform(ToSim(position), m_Angle);
-		//}
-		//else if (positionWritten)
-		//{
-		//	m_Body->SetTransform(ToSim(position), m_Body->GetAngle());
-		//	m_Angle = m_Body->GetAngle();
-		//}
-		//else if (m_AngleWritten)
-		//{
-		//	m_Body->SetTransform(m_Body->GetPosition(), m_Angle);
-		//	m_Position.SetReadValue(ToRender(m_Body->GetPosition()));
-		//}
-		//
-		//m_AngleWritten = false;
+	Box2DBody::~Box2DBody()
+	{
+		Destruction();
+	}
+
+	void Box2DBody::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	{
 	}
 
 	void Box2DBody::SynchroniseParallelEdits()
@@ -145,70 +136,6 @@ namespace FusionEngine
 		SetAngularVelocity(angularVelocity);
 	}
 
-	template <typename T>
-	static inline bool writeChange(bool force_all, RakNet::BitStream& stream, T& old_value, const T& new_value)
-	{
-		if (force_all || new_value != old_value)
-		{
-			if (!force_all)
-				stream.Write1();
-			stream.Write(new_value);
-			old_value = new_value;
-			return true;
-		}
-		else
-		{
-			if (!force_all)
-				stream.Write0();
-			return false;
-		}
-	}
-	
-	template <>
-	static inline bool writeChange(bool force_all, RakNet::BitStream& stream, bool& old_value, const bool& new_value)
-	{
-		stream.Write(new_value);
-		if (force_all || new_value != old_value)
-		{
-			old_value = new_value;
-			return true;
-		}
-		else
-			return false;
-	}
-
-	template <typename T>
-	static inline bool readChange(bool all, RakNet::BitStream& stream, T& new_value)
-	{
-		if (all || stream.ReadBit())
-		{
-			stream.Read(new_value);
-			return true;
-		}
-		else
-			return false;
-	}
-
-	template <>
-	static inline bool readChange(bool all, RakNet::BitStream& stream, bool& new_value)
-	{
-		stream.Read(new_value);
-		return true;
-	}
-
-	template <typename T>
-	static void copyChange(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
-	{
-		T value;
-		if (readChange(false, new_data, value))
-		{
-			result.Write(value);
-			current_data.IgnoreBytes(sizeof(T));
-		}
-		else if (readChange(true, current_data, value))
-			result.Write(value);
-	}
-
 	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
 		return m_DeltaSerialisationHelper.writeChanges(force_all, stream,
@@ -245,22 +172,67 @@ namespace FusionEngine
 			m_Body->SetGravityScale(gravityScale);
 	}
 
-	void Box2DBody::MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
+	Box2DFixture::Box2DFixture()
+		: m_Fixture(nullptr)
 	{
-		copyChange<bool>(result, current_data, new_data); // Active
-		copyChange<bool>(result, current_data, new_data); // Sleeping allowed
-		copyChange<bool>(result, current_data, new_data); // Awake
-		copyChange<bool>(result, current_data, new_data); // Bullet
-		copyChange<bool>(result, current_data, new_data); // FixedRotation
+	}
 
-		copyChange<float>(result, current_data, new_data); // LinearDamping
-		copyChange<float>(result, current_data, new_data); // AngularDamping
-		copyChange<float>(result, current_data, new_data); // GravityScale
+	Box2DFixture::Box2DFixture(RakNet::BitStream& stream)
+		: m_Fixture(nullptr)
+	{
+		DeserialiseOccasional(stream, true);
+	}
+
+	Box2DFixture::Box2DFixture(const b2FixtureDef& def)
+		: m_Def(def),
+		m_Fixture(nullptr)
+	{
 	}
 
 	Box2DFixture::Box2DFixture(b2Fixture* fixture)
 		: m_Fixture(fixture)
 	{
+	}
+
+	Box2DFixture::~Box2DFixture()
+	{
+		if (m_Fixture)
+			m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+	}
+
+	void Box2DFixture::OnBodyDestroyed()
+	{
+		m_Fixture = nullptr;
+	}
+
+	void Box2DFixture::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	{
+		auto body = dynamic_cast<Box2DBody*>(com.get());
+		if (body)
+		{
+			if (m_Fixture)
+			{
+				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+				m_Fixture = nullptr;
+				m_BodyDestructionConnection.disconnect();
+			}
+			m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
+			m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));
+		}
+	}
+
+	void Box2DFixture::OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	{
+		if (m_Fixture)
+		{
+			auto body = dynamic_cast<Box2DBody*>(com.get());
+			if (body)
+			{
+				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+				m_Fixture = nullptr;
+				m_BodyDestructionConnection.disconnect();
+			}
+		}
 	}
 
 	void Box2DFixture::SynchroniseParallelEdits()
@@ -285,21 +257,78 @@ namespace FusionEngine
 	void Box2DFixture::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 	{
 		std::bitset<DeltaSerialiser_t::NumParams> changes;
-		bool sensor;
-		float density, friction, restitution;
-		m_DeltaSerialisationHelper.readChanges(stream, all, changes, sensor, density, friction, restitution);
+		m_DeltaSerialisationHelper.readChanges(stream, all, changes, m_Def.isSensor, m_Def.density, m_Def.friction, m_Def.restitution);
 
-		// This commented-out line works and is pretty cool, but I think it could be improved
-		//m_DeltaSerialisationHelper.readChanges(stream, all, changes, m_Fixture, &b2Fixture::SetSensor, &b2Fixture::SetDensity, &b2Fixture::SetFriction, &b2Fixture::SetRestitution);
+		if (m_Fixture)
+		{
+			// This commented-out line works and is pretty cool, but I think it could be improved
+			//m_DeltaSerialisationHelper.readChanges(stream, all, changes, m_Fixture, &b2Fixture::SetSensor, &b2Fixture::SetDensity, &b2Fixture::SetFriction, &b2Fixture::SetRestitution);
 
-		if (changes[PropsIdx::Sensor])
+			if (changes[PropsIdx::Sensor])
+				m_Fixture->SetSensor(m_Def.isSensor);
+			if (changes[PropsIdx::Density])
+				m_Fixture->SetDensity(m_Def.density);
+			if (changes[PropsIdx::Friction])
+				m_Fixture->SetFriction(m_Def.friction);
+			if (changes[PropsIdx::Restitution])
+				m_Fixture->SetRestitution(m_Def.restitution);
+		}
+	}
+
+	bool Box2DFixture::IsSensor() const
+	{
+		return m_Fixture ? m_Fixture->IsSensor() : m_Def.isSensor;
+	}
+
+	void Box2DFixture::SetSensor(bool sensor)
+	{
+		if (m_Fixture)
 			m_Fixture->SetSensor(sensor);
-		if (changes[PropsIdx::Density])
+		else
+			m_Def.isSensor = sensor;
+		m_DeltaSerialisationHelper.markChanged(PropsIdx::Sensor);
+	}
+
+	float Box2DFixture::GetDensity() const
+	{
+		return m_Fixture ? m_Fixture->GetDensity() : m_Def.density;
+	}
+
+	void Box2DFixture::SetDensity(float density)
+	{
+		if (m_Fixture)
 			m_Fixture->SetDensity(density);
-		if (changes[PropsIdx::Friction])
+		else
+			m_Def.density = density;
+		m_DeltaSerialisationHelper.markChanged(PropsIdx::Density);
+	}
+
+	float Box2DFixture::GetFriction() const
+	{
+		return m_Fixture ? m_Fixture->GetFriction() : m_Def.friction;
+	}
+
+	void Box2DFixture::SetFriction(float friction)
+	{
+		if (m_Fixture)
 			m_Fixture->SetFriction(friction);
-		if (changes[PropsIdx::Restitution])
+		else
+			m_Def.friction = friction;
+		m_DeltaSerialisationHelper.markChanged(PropsIdx::Friction);
+	}
+
+	float Box2DFixture::GetRestitution() const
+	{
+		return m_Fixture ? m_Fixture->GetRestitution() : m_Def.restitution;
+	}
+
+	void Box2DFixture::SetRestitution(float restitution)
+	{
+		if (m_Fixture)
 			m_Fixture->SetRestitution(restitution);
+		else
+			m_Def.restitution = restitution;
+		m_DeltaSerialisationHelper.markChanged(PropsIdx::Restitution);
 	}
 
 }

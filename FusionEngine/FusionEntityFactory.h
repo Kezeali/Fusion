@@ -45,6 +45,8 @@
 namespace FusionEngine
 {
 
+	typedef std::shared_ptr<ISystemWorld> ComponentInstancerPtr;
+
 	//! Prefab base class
 	class Prefab
 	{
@@ -94,6 +96,9 @@ namespace FusionEngine
 		~EntityFactory();
 
 	public:
+		//! Instanciates a component of the given type
+		std::shared_ptr<IComponent> InstanceComponent(const std::string& type);
+
 		//! Instances Entity
 		/*!
 		* Returns an entity object of the requested type, or NULL.
@@ -101,10 +106,10 @@ namespace FusionEngine
 		EntityPtr InstanceEntity(const std::string &prefab_type);
 
 		//! Instantiates an Entity composed of the given components
-		EntityPtr InstanceEntity(const std::vector<std::string>& composition);
+		EntityPtr InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle);
 
 		//! Adds an instancer object for the given type
-		void AddInstancer(const std::string &type, const EntityInstancerPtr &instancer);
+		void AddInstancer(const std::string &type, const ComponentInstancerPtr &instancer);
 
 		//! Creates an instancer for the the given scripted type
 		bool LoadPrefabType(const std::string &type);
@@ -163,7 +168,7 @@ namespace FusionEngine
 
 		LogPtr m_Log;
 
-		EntityInstancerMap m_EntityInstancers;
+		std::map<std::string, ComponentInstancerPtr> m_ComponentInstancers;
 
 		typedef std::tr1::unordered_set<std::string> StringSet;
 		StringSet m_UsedTypes;

@@ -34,7 +34,10 @@
 
 #include "FusionPrerequisites.h"
 
-struct Packet;
+namespace RakNet
+{
+	struct Packet;
+}
 
 #include "FusionLinkedNode.h"
 
@@ -52,7 +55,7 @@ namespace FusionEngine
 		{}
 
 		//! Callback
-		virtual void HandlePacket(Packet* packet) = 0;
+		virtual void HandlePacket(RakNet::Packet* packet) = 0;
 	};
 
 
@@ -78,7 +81,7 @@ namespace FusionEngine
 
 	public:
 		//! Passes the packet to all subsequent list members
-		void ListHandlePacket(Packet* packet)
+		void ListHandlePacket(RakNet::Packet* packet)
 		{
 			PacketHandlerNode *next = dynamic_cast<PacketHandlerNode*>( getNext() );
 			if (next != NULL)

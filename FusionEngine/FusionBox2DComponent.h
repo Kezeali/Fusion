@@ -68,8 +68,6 @@ namespace FusionEngine
 	public:
 		typedef boost::mpl::vector<ITransform, IRigidBody>::type Interfaces;
 
-		static void MergeDelta(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
-
 		struct PropsIdx { enum Names {
 			Active, SleepingAllowed, Awake, Bullet, FixedRotation,
 			LinearDamping, AngularDamping,
@@ -83,13 +81,12 @@ namespace FusionEngine
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
-		Box2DBody(b2Body* body)
-			: m_Body(body)
-		{
-		}
+		Box2DBody(b2Body* body);
+		virtual ~Box2DBody();
 
-		virtual ~Box2DBody()
-		{}
+		boost::signals2::signal<void (void)> Destruction;
+
+		b2Body* Getb2Body() const { return m_Body; }
 
 	private:
 		b2Body* m_Body;
@@ -99,8 +96,9 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "Box2DBody"; }
 
+		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
+
 		void SynchroniseParallelEdits();
-		void SynchTransform();
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
@@ -199,25 +197,6 @@ namespace FusionEngine
 		}
 	};
 
-	template <typename T>
-	struct AtomicFlagTypeProp
-	{
-		T serialised;
-		tbb::atomic<T> written;
-
-		void Set(const T& v) { written = v; }
-	};
-
-	template <>
-	struct AtomicFlagTypeProp<float>
-	{
-		float serialised;
-		tbb::atomic<float> written;
-		tbb::atomic<bool> changed;
-
-		void Set(const float& v) { written = v; changed = true; }
-	};
-
 	class Box2DFixture : public IComponent, public IPhysFixture
 	{
 		friend class Box2DWorld;
@@ -235,11 +214,20 @@ namespace FusionEngine
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
+		Box2DFixture();
+		Box2DFixture(RakNet::BitStream& stream);
+		Box2DFixture(const b2FixtureDef& def);
 		Box2DFixture(b2Fixture* fixture);
+		virtual ~Box2DFixture();
+
+		void OnBodyDestroyed();
 
 	private:
 		// IComponent
 		std::string GetType() const { return "Box2DFixture"; }
+
+		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
+		void OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
 
@@ -250,53 +238,40 @@ namespace FusionEngine
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
-		// IFixtureProperties
+		// IPhysFixture
 
 		//! Is this fixture a sensor (non-solid)?
-		bool IsSensor() const { return m_Fixture->IsSensor(); }
+		bool IsSensor() const;
 		//! Set if this fixture is a sensor.
-		void SetSensor(bool sensor)
-		{
-			m_Fixture->SetSensor(sensor);
-			m_DeltaSerialisationHelper.markChanged(PropsIdx::Sensor);
-		}
+		void SetSensor(bool sensor);
 
 		//! Get the density of this fixture.
-		float GetDensity() const { return m_Fixture->GetDensity(); }
+		float GetDensity() const;
 		//! Set the density of this fixture. This will _not_ automatically adjust the mass
 		//! of the body. You must call b2Body::ResetMassData to update the body's mass.
-		void SetDensity(float density)
-		{
-			m_Fixture->SetDensity(density);
-			m_DeltaSerialisationHelper.markChanged(PropsIdx::Density);
-		}
+		void SetDensity(float density);
 		
 		//! Get the coefficient of friction.
-		float GetFriction() const { return m_Fixture->GetFriction();}
+		float GetFriction() const;
 		//! Set the coefficient of friction. This will _not_ change the friction of
 		//! existing contacts.
-		void SetFriction(float friction)
-		{
-			m_Fixture->SetFriction(friction);
-			m_DeltaSerialisationHelper.markChanged(PropsIdx::Friction);
-		}
+		void SetFriction(float friction);
 
 		//! Get the coefficient of restitution.
-		float GetRestitution() const { return m_Fixture->GetRestitution(); }
+		float GetRestitution() const;
 		//! Set the coefficient of restitution. This will _not_ change the restitution of
 		//! existing contacts.
-		void SetRestitution(float restitution)
-		{
-			m_Fixture->SetRestitution(restitution);
-			m_DeltaSerialisationHelper.markChanged(PropsIdx::Restitution);
-		}
+		void SetRestitution(float restitution);
 
 		//! Get the fixture's AABB. This AABB may be enlarge and/or stale.
 		//! If you need a more accurate AABB, compute it using the shape and
 		//! the body transform.
 		const b2AABB& GetAABB(int childIndex) const { return m_Fixture->GetAABB(childIndex); }
 
+		b2FixtureDef m_Def;
 		b2Fixture* m_Fixture;
+
+		boost::signals2::scoped_connection m_BodyDestructionConnection;
 	};
 
 }

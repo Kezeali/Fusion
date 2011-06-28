@@ -59,16 +59,55 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + sizeof(types));
 	}
 
-	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type)
+	{
+		return std::shared_ptr<IComponent>();
+	}
+
+	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
 	{
 		if (type == "B2Body")
 		{
 			b2BodyDef def;
-			def.position.Set(pos.x, pos.y);
-			def.angle = angle;
+
+			if (continious_data)
+			{
+				RakNet::BitStream& stream = *continious_data;
+				stream.Read(def.position.x);
+				stream.Read(def.position.y);
+				stream.Read(def.angle);
+
+				stream.Read(def.linearVelocity.x);
+				stream.Read(def.linearVelocity.x);
+				stream.Read(def.angularVelocity);
+			}
+
+			if (occasional_data)
+			{
+				std::bitset<Box2DBody::DeltaSerialiser_t::NumParams> changes;
+				Box2DBody::DeltaSerialiser_t serialiser;
+				serialiser.readChanges(*occasional_data, true, changes,
+					def.active, def.allowSleep, def.awake, def.bullet, def.fixedRotation,
+					def.linearDamping, def.angularDamping, def.gravityScale);
+			}
+			else
+			{
+				def.position.Set(pos.x, pos.y);
+				def.angle = angle;
+			}
 
 			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
 			return com;
+		}
+		else if (type == "B2Fixture")
+		{
+			if (occasional_data)
+			{
+				auto com = std::make_shared<Box2DFixture>(*occasional_data);
+				return com;
+			}
+			else
+				return std::make_shared<Box2DFixture>();
 		}
 		return std::shared_ptr<IComponent>();
 	}

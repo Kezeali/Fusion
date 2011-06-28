@@ -86,7 +86,7 @@ namespace FusionEngine
 	static const unsigned int s_EntitiesPerPacket = 8;
 	static const unsigned int s_BodiesPerPacket = 12;
 
-	static const BitSize_t s_MaxEntityData = 256;
+	static const RakNet::BitSize_t s_MaxEntityData = 256;
 
 	class EntitySynchroniser : public PacketHandler
 	{
@@ -109,7 +109,7 @@ namespace FusionEngine
 		// Returns true if the entity state was written to the packet
 		bool AddToPacket(EntityPtr &entity);
 
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 	protected:
 		ConsolidatedInput *m_PlayerInputs;
@@ -141,7 +141,7 @@ namespace FusionEngine
 
 		struct SystemPriority
 		{
-			RakNetGUID System;
+			RakNet::RakNetGUID System;
 			float Distance; // Average Entity distance
 			unsigned int SkippedSteps;
 		};

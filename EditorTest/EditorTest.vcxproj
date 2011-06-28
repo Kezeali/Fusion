@@ -179,7 +179,6 @@
     <ClCompile Include="..\FusionEngine\FusionPhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPhysicalEntity.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionPhysicalEntityManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPhysicsDebugDraw.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPhysicsFixture.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPlayerInput.cpp" />
@@ -318,7 +317,6 @@
     <ClInclude Include="..\FusionEngine\FusionPhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysFSIODeviceProvider.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysicalEntity.h" />
-    <ClInclude Include="..\FusionEngine\FusionPhysicalEntityManager.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysicsCallback.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysicsDebugDraw.h" />
     <ClInclude Include="..\FusionEngine\FusionPhysicsFixture.h" />

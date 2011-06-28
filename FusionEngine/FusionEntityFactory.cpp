@@ -694,205 +694,6 @@ namespace FusionEngine
 		return m_BaseType;
 	}
 
-	//! Creates instances of a scripted entity type
-	class ScriptedEntityInstancer : public EntityInstancer
-	{
-	public:
-		//! Constructor
-		ScriptedEntityInstancer();
-		//! Constructor
-		ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition);
-		//! Constructor for entity defs with phys. bodies
-		ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition, PhysicalWorld *world);
-
-	public:
-		Entity *InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name);
-
-		//! Gets the EntityDomain that the given name maps to
-		EntityDomain ToDomainIndex(const std::string &domain);
-
-	protected:
-
-		PhysicalWorld *m_PhysicsWorld;
-
-		ScriptManager *m_ScriptingManager;
-		std::string m_Module;
-		EntityDefinitionPtr m_Definition;
-
-		std::unordered_map<std::string, EntityDomain> m_UserDomains;
-	};
-
-	ScriptedEntityInstancer::ScriptedEntityInstancer()
-		: EntityInstancer("undefined_scripted_entity")
-	{}
-
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition)
-		: EntityInstancer(definition->GetType()),
-		m_ScriptingManager(manager),
-		m_Definition(definition),
-		m_PhysicsWorld(NULL)
-	{}
-
-	ScriptedEntityInstancer::ScriptedEntityInstancer(ScriptManager *manager, EntityDefinitionPtr definition, PhysicalWorld *world)
-		: EntityInstancer(definition->GetType()),
-		m_ScriptingManager(manager),
-		m_Definition(definition),
-		m_PhysicsWorld(world)
-	{}
-
-	Entity *ScriptedEntityInstancer::InstanceEntity(const SupplementaryDefinitionData &sup_data, const std::string &name)
-	{
-		if (m_ScriptingManager == NULL)
-			return nullptr;
-
-		ResourceManager *resMan = ResourceManager::getSingletonPtr();
-		if (resMan == NULL)
-			return nullptr;
-
-		asIScriptEngine *engine = m_ScriptingManager->GetEnginePtr();
-
-		asIScriptObject *scrObj = static_cast<asIScriptObject*>( engine->CreateScriptObject(m_Definition->GetTypeId()) );
-		ScriptObject object(scrObj, false);
-		// Make sure the entity was successfully instanciated
-		if (!object.IsValid())
-			return nullptr;
-
-		ScriptedEntity *entity = new ScriptedEntity(object, name);
-		if (!m_Definition->GetDefaultDomain().empty())
-			entity->SetDomain(ToDomainIndex(m_Definition->GetDefaultDomain()));
-		entity->SetPath(m_Definition->GetWorkingDirectory());
-
-		entity->SetSyncProperties(m_Definition->GetSyncProperties());
-
-		ScriptUtils::Calling::Caller f = object.GetCaller("void _setAppObject(Entity@ obj)");
-		if (f.ok())
-		{
-			entity->addRef();
-			f(entity);
-		}
-		else
-			return nullptr;
-
-		// Create phys body
-		if (m_Definition->HasBody())
-		{
-			FSN_ASSERT_MSG(m_PhysicsWorld != NULL, "The physics-world ptr for this ScriptedEntityInstancer is invalid, so physical Entities cannot be created with it.");
-			b2Body *body = m_PhysicsWorld->GetB2World()->CreateBody(&m_Definition->GetBodyDef());
-			// Point the entity to the body and the body to the entity
-			entity->_setBody(body);
-			body->SetUserData((void*)entity);
-			// Set up the entity to delete the body when it is deleted
-			m_PhysicsWorld->PrepareEntity(entity);
-
-			// Add fixtures
-			const EntityDefinition::FixtureArray &fixtures = m_Definition->GetFixtures();
-			for (EntityDefinition::FixtureArray::const_iterator it = fixtures.begin(), end = fixtures.end();
-				it != end; ++it)
-			{
-				const FixtureDefinition &fixtureDef = *it;
-				entity->CreateFixture(&fixtureDef.definition);
-			}
-			// ... And supplemental fixtures
-			for (SupplementaryDefinitionData::FixtureList::const_iterator it = sup_data.fixtures.begin(), end = sup_data.fixtures.end();
-				it != end; ++it)
-			{
-				const FixtureDefinition &fixtureDef = *it;
-				entity->CreateFixture(&fixtureDef.definition);
-			}
-		}
-
-		// Add resource refs
-		//StreamedResourceUserPtr resourceUser;
-		const ResourcesMap &resources = m_Definition->GetStreamedResources();
-		for (ResourcesMap::const_iterator it = resources.begin(), end = resources.end(); it != end; ++it)
-		{
-			const ResourceDescription &desc = it->second;
-			std::string resourceName;
-			// Check for an overriding property in the supplemental data
-			SupplementaryDefinitionData::PropertyOverrideMap::const_iterator _where = sup_data.properties.find(desc.GetPropertyName());
-			if (_where != sup_data.properties.end())
-				resourceName = _where->second;
-			else
-				resourceName = desc.GetResourceName();
-
-			if (desc.GetType() == "Sprite")
-			{
-				RenderableSpritePtr renderable( new RenderableSprite(resMan, resourceName, desc.GetPriority()) );
-				renderable->SetTags(desc.GetTags());
-
-				entity->AddRenderable(renderable);
-
-				// Add the object to the entity for automatic streaming
-				entity->AddStreamedResource( renderable.get() );
-
-				if (desc.GetPropertyIndex() >= 0)
-				{
-					void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
-					Renderable **renderableProperty = static_cast<Renderable**>( prop );
-					*renderableProperty = renderable.get();
-				}
-			}
-			else if (desc.GetType() == "Image")
-			{
-				if (desc.GetPropertyIndex() >= 0)
-				{
-				}
-			}
-			else if (desc.GetType() == "Polygon")
-			{
-				if (desc.GetPropertyIndex() >= 0)
-				{
-				}
-			}
-			else if (desc.GetType() == "Sound")
-			{
-				// Check that the property listed in the description is correct
-				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
-					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
-
-				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
-				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), false);
-
-				entity->AddStreamedResource( *soundProp );
-			}
-			else if (desc.GetType() == "SoundStream")
-			{
-				// Check that the property listed in the description is correct
-				FSN_ASSERT( desc.GetPropertyIndex() < scrObj->GetPropertyCount() &&
-					desc.GetPropertyName() == std::string(scrObj->GetPropertyName(desc.GetPropertyIndex())) );
-
-				void *prop = scrObj->GetAddressOfProperty(desc.GetPropertyIndex());
-				SoundSample **soundProp = static_cast<SoundSample**>( prop );
-				*soundProp = new SoundSample(resMan, resourceName, desc.GetPriority(), true);
-
-				entity->AddStreamedResource( *soundProp );
-			}
-		}
-
-		return entity;
-	}
-
-	EntityDomain ScriptedEntityInstancer::ToDomainIndex(const std::string &domain)
-	{
-		if (domain.empty())
-			return GAME_DOMAIN;
-		else if (domain == "system")
-			return SYSTEM_DOMAIN;
-		else if (domain == "game")
-			return GAME_DOMAIN;
-		else if (domain == "system_local")
-			return SYSTEM_LOCAL_DOMAIN;
-		else
-		{
-			auto _where = m_UserDomains.find(domain);
-			if (_where != m_UserDomains.end())
-				return _where->second;
-			else
-				return s_EntityDomainCount;
-		}
-	}
-
 
 	EntityFactory::EntityFactory()
 	{
@@ -903,44 +704,39 @@ namespace FusionEngine
 	{
 	}
 
-	EntityPtr EntityFactory::InstanceEntity(const std::string &type, const SupplementaryDefinitionData &sup_data, const std::string &name)
+	EntityPtr EntityFactory::InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle)
 	{
-		EntityInstancerMap::iterator _where = m_EntityInstancers.find(type);
-		if (_where != m_EntityInstancers.end())
+		EntityPtr entity;
+		for (auto it = composition.begin(), end = composition.end(); it != end; ++it)
 		{
-			EntityPtr entity( _where->second->InstanceEntity(sup_data, name.empty() ? "default" : name), false );
-			if (entity)
-				SignalEntityInstanced(entity);
-			return entity;
-		}
-		else
-		{
-			// Check for a scripted entity type that hasn't been loaded
-			StringMap::iterator _whereFile = m_EntityDefinitionFileNames.find(type);
-			if (_whereFile != m_EntityDefinitionFileNames.end())
+			auto _where = m_ComponentInstancers.find(*it);
+			if (_where != m_ComponentInstancers.end())
 			{
-				SendToConsole("Entity Factory",
-					"Tried to instance an Entity for which there is a known definition file that hasn't been compiled: "
-					"Please add all required Entities to the <Dependencies> element of your definition file, and check "
-					" that there are no compile errors.");
+				std::shared_ptr<IComponent> component;
+				std::vector<std::string> interfaces;
+				std::tie(interfaces, component) = _where->second->InstantiateComponent(*it, position, angle, nullptr, nullptr);
+				if (!component)
+					return EntityPtr();
+				
+				entity->AddComponent(component);
 			}
 		}
-		return EntityPtr();
+		SignalEntityInstanced(entity);
 	}
 
-	EntityPtr EntityFactory::InstanceEntity(const std::string &type, const std::string &name)
+	//EntityPtr EntityFactory::InstanceEntity(const std::string &type, const std::string &name)
+	//{
+	//	return InstanceEntity(type, SupplementaryDefinitionData(), name);
+	//}
+
+	void EntityFactory::AddInstancer(const std::string &type, const ComponentInstancerPtr &instancer)
 	{
-		return InstanceEntity(type, SupplementaryDefinitionData(), name);
+		m_ComponentInstancers[type] = instancer;
 	}
 
-	void EntityFactory::AddInstancer(const std::string &type, const FusionEngine::EntityInstancerPtr &instancer)
+	bool EntityFactory::LoadPrefabType(const std::string &type)
 	{
-		m_EntityInstancers[type] = instancer;
-	}
-
-	bool EntityFactory::LoadScriptedType(const std::string &type)
-	{
-		StringMap::iterator _where = m_EntityDefinitionFileNames.find(type);
+		auto _where = m_EntityDefinitionFileNames.find(type);
 		if (_where != m_EntityDefinitionFileNames.end())
 		{
 			try

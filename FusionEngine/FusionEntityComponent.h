@@ -229,7 +229,14 @@ namespace FusionEngine
 
 		virtual std::string GetType() const = 0;
 
+		std::set<std::string> GetInterfaces() const
+		{
+			FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
+			return m_Interfaces;
+		}
+
 		virtual void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
+		virtual void OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
 
 		virtual void SynchroniseParallelEdits() = 0;
 
@@ -240,6 +247,8 @@ namespace FusionEngine
 
 	private:
 		Entity* m_Parent;
+
+		std::set<std::string> m_Interfaces;
 	};
 
 }

@@ -128,9 +128,6 @@
     <ClCompile Include="..\FusionEngine\FusionPhysicalEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionPhysicalEntityManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionPhysicsDebugDraw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -446,9 +443,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionPhysicalEntity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionPhysicalEntityManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionPhysicsCallback.h">

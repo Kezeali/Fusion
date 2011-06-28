@@ -358,67 +358,67 @@ namespace FusionEngine
 		return m_MarkedToDeactivate;
 	}
 
-	RenderableArray &Entity::GetRenderables()
-	{
-		return m_Renderables;
-	}
+	//RenderableArray &Entity::GetRenderables()
+	//{
+	//	return m_Renderables;
+	//}
 
-	void Entity::AddRenderable(RenderablePtr renderable)
-	{
-		m_Renderables.push_back(renderable);
-	}
+	//void Entity::AddRenderable(RenderablePtr renderable)
+	//{
+	//	m_Renderables.push_back(renderable);
+	//}
 
-	void Entity::RemoveRenderable(RenderablePtr renderable)
-	{
-		for (RenderableArray::iterator it = m_Renderables.begin(), end = m_Renderables.end(); it != end; ++it)
-		{
-			if (*it == renderable)
-			{
-				m_Renderables.erase(it);
-				break;
-			}
-		}
-	}
+	//void Entity::RemoveRenderable(RenderablePtr renderable)
+	//{
+	//	for (RenderableArray::iterator it = m_Renderables.begin(), end = m_Renderables.end(); it != end; ++it)
+	//	{
+	//		if (*it == renderable)
+	//		{
+	//			m_Renderables.erase(it);
+	//			break;
+	//		}
+	//	}
+	//}
 
-	void Entity::RemoveRenderablesWithTag(const std::string &tag)
-	{
-		auto newEnd = std::remove_if(m_Renderables.begin(), m_Renderables.end(),
-			[&](RenderablePtr &renderable)->bool
-		{
-			return renderable->HasTag(tag);
-		});
-		m_Renderables.erase(newEnd, m_Renderables.end());
-	}
+	//void Entity::RemoveRenderablesWithTag(const std::string &tag)
+	//{
+	//	auto newEnd = std::remove_if(m_Renderables.begin(), m_Renderables.end(),
+	//		[&](RenderablePtr &renderable)->bool
+	//	{
+	//		return renderable->HasTag(tag);
+	//	});
+	//	m_Renderables.erase(newEnd, m_Renderables.end());
+	//}
 
-	CL_Rectf Entity::CalculateOnScreenAABB() const
-	{
-		CL_Rectf bounding_box;
-		if (!m_Renderables.empty())
-		{
-			auto it = m_Renderables.cbegin(), end = m_Renderables.cend();
-			bounding_box = (*it)->GetAABB();
-			for (++it; it != end; ++it)
-				bounding_box.bounding_rect((*it)->GetAABB());
-		}
-		return bounding_box;
-	}
+	//CL_Rectf Entity::CalculateOnScreenAABB() const
+	//{
+	//	CL_Rectf bounding_box;
+	//	if (!m_Renderables.empty())
+	//	{
+	//		auto it = m_Renderables.cbegin(), end = m_Renderables.cend();
+	//		bounding_box = (*it)->GetAABB();
+	//		for (++it; it != end; ++it)
+	//			bounding_box.bounding_rect((*it)->GetAABB());
+	//	}
+	//	return bounding_box;
+	//}
 
-	void Entity::AddStreamedResource(StreamedResourceUser * const user)
-	{
-		m_StreamedResources.push_back(user);
-		user->DestructionNotification = [this](StreamedResourceUser * const user){ this->RemoveStreamedResource(user); };
-	}
+	//void Entity::AddStreamedResource(StreamedResourceUser * const user)
+	//{
+	//	m_StreamedResources.push_back(user);
+	//	user->DestructionNotification = [this](StreamedResourceUser * const user){ this->RemoveStreamedResource(user); };
+	//}
 
-	void Entity::RemoveStreamedResource(StreamedResourceUser * const user)
-	{
-		user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn();
-		for (auto it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
-			if (*it == user)
-			{
-				m_StreamedResources.erase(it);
-				break;
-			}
-	}
+	//void Entity::RemoveStreamedResource(StreamedResourceUser * const user)
+	//{
+	//	user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn();
+	//	for (auto it = m_StreamedResources.begin(), end = m_StreamedResources.end(); it != end; ++it)
+	//		if (*it == user)
+	//		{
+	//			m_StreamedResources.erase(it);
+	//			break;
+	//		}
+	//}
 
 	//void Entity::SetStreamedResources(const StreamedResourceArray &resources)
 	//{
@@ -430,130 +430,130 @@ namespace FusionEngine
 	//	return m_StreamedResources;
 	//}
 
-	template <typename T>
-	void getPropValueOfType(boost::any &value, void *prop_addr, asUINT property_index)
-	{
-		value = *(T*)prop_addr;
-	}
-	template <typename T>
-	void setPropValueOfType(const boost::any &value, void *prop_addr, asUINT property_index)
-	{
-		*(T*)prop_addr = boost::any_cast<T>(value);
-	}
+	//template <typename T>
+	//void getPropValueOfType(boost::any &value, void *prop_addr, asUINT property_index)
+	//{
+	//	value = *(T*)prop_addr;
+	//}
+	//template <typename T>
+	//void setPropValueOfType(const boost::any &value, void *prop_addr, asUINT property_index)
+	//{
+	//	*(T*)prop_addr = boost::any_cast<T>(value);
+	//}
 
-	const boost::any& Entity::GetPropertyValue(unsigned int index) const
-	{
-		boost::any value;
+	//const boost::any& Entity::GetPropertyValue(unsigned int index) const
+	//{
+	//	boost::any value;
 
-		int type_id = GetPropertyType(index);
+	//	int type_id = GetPropertyType(index);
 
-		if (type_id == pt_bool)
-			getPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
-		// Integer types
-		else if (type_id == pt_int8)
-			getPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int16)
-			getPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int32)
-			getPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int64)
-			getPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
-		// ... unsigned
-		else if (type_id == pt_uint8)
-			getPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint16)
-			getPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint32)
-			getPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint64)
-			getPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
-		// Floating point types
-		else if (type_id == pt_float)
-			getPropValueOfType<float>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_double)
-			getPropValueOfType<double>(value, GetAddressOfProperty(index), index);
+	//	if (type_id == pt_bool)
+	//		getPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
+	//	// Integer types
+	//	else if (type_id == pt_int8)
+	//		getPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int16)
+	//		getPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int32)
+	//		getPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int64)
+	//		getPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
+	//	// ... unsigned
+	//	else if (type_id == pt_uint8)
+	//		getPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint16)
+	//		getPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint32)
+	//		getPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint64)
+	//		getPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
+	//	// Floating point types
+	//	else if (type_id == pt_float)
+	//		getPropValueOfType<float>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_double)
+	//		getPropValueOfType<double>(value, GetAddressOfProperty(index), index);
 
-		// Class types
-		else if (type_id == pt_entity)
-			getPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
-		else if (type_id & pt_string)
-		{
-			if (type_id & pt_pointer_flag)
-				getPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
-			else
-				getPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
-		}
-		else if (type_id & pt_vector)
-		{
-			if (type_id & pt_pointer_flag)
-				getPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
-			else
-				getPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
-		}
+	//	// Class types
+	//	else if (type_id == pt_entity)
+	//		getPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id & pt_string)
+	//	{
+	//		if (type_id & pt_pointer_flag)
+	//			getPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
+	//		else
+	//			getPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
+	//	}
+	//	else if (type_id & pt_vector)
+	//	{
+	//		if (type_id & pt_pointer_flag)
+	//			getPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
+	//		else
+	//			getPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
+	//	}
 
-		return value;
-	}
+	//	return value;
+	//}
 
-	void Entity::SetPropertyValue(unsigned int index, const boost::any &value)
-	{
-		int type_id = GetPropertyType(index);
+	//void Entity::SetPropertyValue(unsigned int index, const boost::any &value)
+	//{
+	//	int type_id = GetPropertyType(index);
 
-		if (type_id == pt_bool)
-			setPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
-		// Integer types
-		else if (type_id == pt_int8)
-			setPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int16)
-			setPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int32)
-			setPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_int64)
-			setPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
-		// ... unsigned
-		else if (type_id == pt_uint8)
-			setPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint16)
-			setPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint32)
-			setPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_uint64)
-			setPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
-		// Floating point types
-		else if (type_id == pt_float)
-			setPropValueOfType<float>(value, GetAddressOfProperty(index), index);
-		else if (type_id == pt_double)
-			setPropValueOfType<double>(value, GetAddressOfProperty(index), index);
+	//	if (type_id == pt_bool)
+	//		setPropValueOfType<bool>(value, GetAddressOfProperty(index), index);
+	//	// Integer types
+	//	else if (type_id == pt_int8)
+	//		setPropValueOfType<int8_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int16)
+	//		setPropValueOfType<int16_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int32)
+	//		setPropValueOfType<int32_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_int64)
+	//		setPropValueOfType<int64_t>(value, GetAddressOfProperty(index), index);
+	//	// ... unsigned
+	//	else if (type_id == pt_uint8)
+	//		setPropValueOfType<uint8_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint16)
+	//		setPropValueOfType<uint16_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint32)
+	//		setPropValueOfType<uint32_t>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_uint64)
+	//		setPropValueOfType<uint64_t>(value, GetAddressOfProperty(index), index);
+	//	// Floating point types
+	//	else if (type_id == pt_float)
+	//		setPropValueOfType<float>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id == pt_double)
+	//		setPropValueOfType<double>(value, GetAddressOfProperty(index), index);
 
-		// Class types
-		else if (type_id == pt_entity)
-			setPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
-		else if (type_id & pt_string)
-		{
-			if (type_id & pt_pointer_flag)
-				setPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
-			else
-				setPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
-		}
-		else if (type_id & pt_vector)
-		{
-			if (type_id & pt_pointer_flag)
-				setPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
-			else
-				setPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
-		}
-	}
+	//	// Class types
+	//	else if (type_id == pt_entity)
+	//		setPropValueOfType<Entity*>(value, GetAddressOfProperty(index), index);
+	//	else if (type_id & pt_string)
+	//	{
+	//		if (type_id & pt_pointer_flag)
+	//			setPropValueOfType<std::string*>(value, GetAddressOfProperty(index), index);
+	//		else
+	//			setPropValueOfType<std::string>(value, GetAddressOfProperty(index), index);
+	//	}
+	//	else if (type_id & pt_vector)
+	//	{
+	//		if (type_id & pt_pointer_flag)
+	//			setPropValueOfType<Vector2*>(value, GetAddressOfProperty(index), index);
+	//		else
+	//			setPropValueOfType<Vector2>(value, GetAddressOfProperty(index), index);
+	//	}
+	//}
 
-	EntityPtr Entity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
-	{
-		Entity **entity = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
-		return EntityPtr(*entity);
-	}
+	//EntityPtr Entity::GetPropertyEntity(unsigned int index, unsigned int array_index) const
+	//{
+	//	Entity **entity = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
+	//	return EntityPtr(*entity);
+	//}
 
-	void Entity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity)
-	{
-		Entity **value = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
-		*value = entity.get();
-	}
+	//void Entity::SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity)
+	//{
+	//	Entity **value = static_cast<Entity**>( GetAddressOfProperty(index, array_index) );
+	//	*value = entity.get();
+	//}
 
 	bool Entity::IsSpawned() const
 	{
@@ -619,9 +619,10 @@ namespace FusionEngine
 	//	}
 	//}
 
-	void Entity::SerialiseIdentity(CL_IODevice& device)
+	void Entity::SerialiseIdentity(RakNet::BitStream& stream)
 	{
-		device.write(&m_OwnerID, sizeof(PlayerID));
+		stream.Write(m_OwnerID);
+		stream.Write(m_Authority);
 	}
 
 	std::string Entity::ToString() const

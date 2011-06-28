@@ -31,6 +31,7 @@
 #define H_FusionSerialisationHelper
 
 #include <boost/preprocessor.hpp>
+#include <boost/mpl/vector.hpp>
 
 #include <BitStream.h>
 #include <bitset>
@@ -198,8 +199,9 @@ namespace FusionEngine
 	template <BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, typename T, = sh_none BOOST_PP_INTERCEPT)>
 	struct SerialisationHelper
 	{
-		typedef std::tuple<BOOST_PP_ENUM_PARAMS(8, T)> data_type;
+		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(8, T)> data_type;
 		//typedef std::tuple<BOOST_PP_ENUM(n, REF_PARAM, ~)> reference_type;
+		typedef boost::mpl::vector<BOOST_PP_ENUM_PARAMS(MAX_SerialisationHelper_PROPS, T)> types;
 
 		//BOOST_PP_REPEAT(n, VAL_PROP, m_V)
 		//data_type m_SerialisedValues;
@@ -277,7 +279,8 @@ namespace FusionEngine
 		BOOST_PP_ENUM(BOOST_PP_SUB(MAX_SerialisationHelper_PROPS,n), FSN_PP_PRINT, sh_none)
 	>
 	{
-		//typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, T)> data_type;
+		typedef std::tuple<BOOST_PP_ENUM_PARAMS(BOOST_PP_MIN(n, 10), T)> data_type;
+		typedef boost::mpl::vector<BOOST_PP_ENUM_PARAMS(n, T)> types;
 
 		static const size_t NumParams = n;
 
@@ -296,7 +299,7 @@ namespace FusionEngine
 			m_Changed.set(i);
 		}
 
-		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, const T, &v))//const data_type& new_values)
+		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, const T, &v))
 		{
 			bool dataWritten = false;
 			BOOST_PP_REPEAT(n, FSN_SER_REP, ~)
@@ -304,26 +307,32 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))//data_type& new_values)
+		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))
 		{
 			BOOST_PP_REPEAT(n, FSN_DSER_REP_FORCE, ~)
 		}
 
-		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))//data_type& new_values)
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))
 		{
 			BOOST_PP_REPEAT(n, FSN_DSER_REP, ~)
 		}
 
-#define PARAM_CALLBACK_FN(z, n, data) void BOOST_PP_LPAREN() BOOST_PP_CAT(C::*f, n) BOOST_PP_RPAREN() BOOST_PP_LPAREN() BOOST_PP_CAT(T, n) BOOST_PP_RPAREN()
-
-		template <class C>
-		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, C* obj, BOOST_PP_ENUM(n, PARAM_CALLBACK_FN, _))
+#if (n < 10)
+		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, data_type& values)
 		{
-			FSN_ASSERT(obj);
-			BOOST_PP_REPEAT(n, FSN_DSER_CALLBACKS_REP, ~)
+			BOOST_PP_REPEAT(n, FSN_DSER_REP, ~)
 		}
-
-#undef PARAM_CALLBACK_FN
+#endif
+//#define PARAM_CALLBACK_FN(z, n, data) void BOOST_PP_LPAREN() BOOST_PP_CAT(C::*f, n) BOOST_PP_RPAREN() BOOST_PP_LPAREN() BOOST_PP_CAT(T, n) BOOST_PP_RPAREN()
+//
+//		template <class C>
+//		void readChanges(RakNet::BitStream& stream, bool force_all, std::bitset<n>& changes, C* obj, BOOST_PP_ENUM(n, PARAM_CALLBACK_FN, _))
+//		{
+//			FSN_ASSERT(obj);
+//			BOOST_PP_REPEAT(n, FSN_DSER_CALLBACKS_REP, ~)
+//		}
+//
+//#undef PARAM_CALLBACK_FN
 
 		static void copyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
 		{

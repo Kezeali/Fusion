@@ -65,7 +65,12 @@ namespace FusionEngine
 		virtual ~ISystemWorld() {}
 
 		virtual std::vector<std::string> GetTypes() const = 0;
-		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle) = 0;
+		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type) = 0;
+		//! Instanciate method for physics / transform components
+		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
+		{
+			return InstantiateComponent(type);
+		}
 
 		virtual void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data) = 0;
 
@@ -75,6 +80,8 @@ namespace FusionEngine
 
 		virtual ISystemTask* GetTask() = 0;
 	};
+
+	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
 
 	typedef std::map<std::string, std::string> ComponentStaticProps;
 	enum SystemType { Other, Physics, Rendering };

@@ -251,9 +251,9 @@ namespace FusionEngine
 
 	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser)
 	{
-		ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
-		if (_where != m_ReceivedStates.end())
-			entity->DeserialiseState(_where->second, false, entity_deserialiser);
+		//ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
+		//if (_where != m_ReceivedStates.end())
+		//	entity->DeserialiseState(_where->second, false, entity_deserialiser);
 
 		return true; // Return false to not update this entity
 	}
@@ -282,7 +282,7 @@ namespace FusionEngine
 			if (m_EntityDataUsed < s_MaxEntityData)
 			{
 				SerialisedData state;
-				entity->SerialiseState(state, false);
+				//entity->SerialiseState(state, false);
 				size_t stateSize = state.data.length() + sizeof(unsigned int) + sizeof(ObjectID);
 				if (m_EntityDataUsed + stateSize &&
 					state.data != m_SentStates[entity->GetID()].data)
@@ -302,7 +302,7 @@ namespace FusionEngine
 				{
 					// Check that the Entity has changed since it was last sent
 					SerialisedData state;
-					entity->SerialiseState(state, false);
+					//entity->SerialiseState(state, false);
 					if (state.data != m_SentStates[entity->GetID()].data)
 					{
 						// Remove the entity with the lowest priority
@@ -319,7 +319,7 @@ namespace FusionEngine
 		return false;
 	}
 
-	void EntitySynchroniser::HandlePacket(Packet *packet)
+	void EntitySynchroniser::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream bitStream(packet->data, packet->length, true);
 

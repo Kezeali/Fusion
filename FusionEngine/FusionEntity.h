@@ -174,7 +174,7 @@ namespace FusionEngine
 		};
 		std::vector<ComponentInfo> m_Components;
 
-		typedef std::map<std::string, std::vector<std::pair<std::shared_ptr<IComponent>, std::unique_ptr<ICallQueue>>>> ComInterfaceMap;
+		typedef std::map<std::string, std::vector<std::shared_ptr<IComponent>>> ComInterfaceMap;
 		ComInterfaceMap m_ComponentInterfaces;
 
 		template <class C>
@@ -190,7 +190,7 @@ namespace FusionEngine
 			void operator() (I)
 			{
 				interface_names.insert(I::GetTypeName());
-				map[I::GetTypeName()].push_back( std::make_pair(com, std::unique_ptr<ICallQueue>(new CallQueue<I>(com))) );
+				map[I::GetTypeName()].push_back(com);
 			}
 
 			ComInterfaceMap& map;
@@ -223,22 +223,22 @@ namespace FusionEngine
 			}
 		}
 
-		//! Returns renderables
-		virtual RenderableArray &GetRenderables();
-		//! Adds a renderable
-		virtual void AddRenderable(RenderablePtr renderable);
-		//! Removes the given renderable object from the Entity
-		virtual void RemoveRenderable(RenderablePtr renderable);
-		//! Removes renderables with the given tag
-		virtual void RemoveRenderablesWithTag(const std::string &tag);
+		////! Returns renderables
+		//virtual RenderableArray &GetRenderables();
+		////! Adds a renderable
+		//virtual void AddRenderable(RenderablePtr renderable);
+		////! Removes the given renderable object from the Entity
+		//virtual void RemoveRenderable(RenderablePtr renderable);
+		////! Removes renderables with the given tag
+		//virtual void RemoveRenderablesWithTag(const std::string &tag);
 
 		//! Returns the cumulative AABB of this Entity's renderables
-		CL_Rectf CalculateOnScreenAABB() const;
+		//CL_Rectf CalculateOnScreenAABB() const;
 
 		//! Adds an object that uses a resource that should be loaded when the Entity is streamed in
-		void AddStreamedResource(StreamedResourceUser * const user);
+		//void AddStreamedResource(StreamedResourceUser * const user);
 		//! Removes the given SRU
-		void RemoveStreamedResource(StreamedResourceUser * const user);
+		//void RemoveStreamedResource(StreamedResourceUser * const user);
 		//! Sets resources that should be loaded when the Entity is streamed in
 		//void SetStreamedResources(const StreamedResourceArray &resources);
 		//! Returns streamed resources
@@ -273,50 +273,50 @@ namespace FusionEngine
 		};
 
 		//! Returns the number of editable properties
-		virtual unsigned int GetPropertyCount() const { return 0; }
+		//virtual unsigned int GetPropertyCount() const { return 0; }
 
 		//! Returns the name of the given property
-		virtual std::string GetPropertyName(unsigned int index) const { return ""; }
+		//virtual std::string GetPropertyName(unsigned int index) const { return ""; }
 		//! Returns the property with the given index
-		virtual const boost::any& GetPropertyValue(unsigned int index) const;
+		//virtual const boost::any& GetPropertyValue(unsigned int index) const;
 		//! Sets the given property
-		virtual void SetPropertyValue(unsigned int index, const boost::any &value);
+		//virtual void SetPropertyValue(unsigned int index, const boost::any &value);
 		//! Template typed GetPropertyValue
-		template <typename T>
-		T GetPropertyValue(unsigned int index) const
-		{
-			const boost::any& value = GetPropertyValue(index);
-			try
-			{
-				return boost::any_cast<T>( value );
-			}
-			catch (const boost::bad_any_cast &)
-			{
-				throw FSN_EXCEPT(ExCode::InvalidArgument,
-					"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
-			}
-		}
+		//template <typename T>
+		//T GetPropertyValue(unsigned int index) const
+		//{
+		//	const boost::any& value = GetPropertyValue(index);
+		//	try
+		//	{
+		//		return boost::any_cast<T>( value );
+		//	}
+		//	catch (const boost::bad_any_cast &)
+		//	{
+		//		throw FSN_EXCEPT(ExCode::InvalidArgument,
+		//			"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
+		//	}
+		//}
 		//! Returns the given property as an EntityPtr
-		virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
+		//virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
 		//! Sets the given entity property
-		virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity);
+		//virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity);
 
 		//! Returns the size of the given property if it is an array, 0 otherwise
 		/*!
 		* \see Entity#PropertyIsArray()
 		*/
-		virtual unsigned int GetPropertyArraySize(unsigned int index) const =0;
+		//virtual unsigned int GetPropertyArraySize(unsigned int index) const =0;
 		//! Returns true if the given property is an array
-		bool PropertyIsArray(unsigned int index) const { return GetPropertyArraySize(index) > 0; };
+		//bool PropertyIsArray(unsigned int index) const { return GetPropertyArraySize(index) > 0; };
 		//! Returns the type of the given property
-		virtual int GetPropertyType(unsigned int index) const =0;
+		//virtual int GetPropertyType(unsigned int index) const =0;
 		//! Returns the address of the given property's data
-		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const =0;
+		//virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const =0;
 		//! Returns the address of the given property's data (default for non-array types)
-		void* GetAddressOfProperty(unsigned int index) const
-		{
-			return GetAddressOfProperty(index, 0);
-		}
+		//void* GetAddressOfProperty(unsigned int index) const
+		//{
+		//	return GetAddressOfProperty(index, 0);
+		//}
 
 		//! Sets the dictionary used by the EntityManager
 		/*!
@@ -428,24 +428,10 @@ namespace FusionEngine
 		//! Calls OnSpawn, sets the spawned flag to true
 		void Spawn();
 
-		//! Called after the Entity is spawned
-		virtual void OnSpawn() =0;
-		//! Updates
-		virtual void Update(float split) =0;
-		//! Draws
-		virtual void Draw() {}
-
-		//virtual void UpdateRenderables();
-
 		//! Streams in resources
 		void StreamIn();
 		//! Streams out resources
 		void StreamOut();
-
-		//! Called after an Entity is streamed in
-		virtual void OnStreamIn() =0;
-		//! Called after an Entity is steamed out
-		virtual void OnStreamOut() =0;
 
 		void _setPlayerInput(const PlayerInputPtr &player_input);
 
@@ -453,9 +439,9 @@ namespace FusionEngine
 		float GetInputPosition(const std::string &input);
 
 		//! Writes entity ownership info
-		void SerialiseIdentity(CL_IODevice& device);
+		void SerialiseIdentity(RakNet::BitStream& stream);
 		//! Writes basic properties
-		void SerialiseBasicProperties(CL_IODevice& device);
+		//void SerialiseBasicProperties(CL_IODevice& device);
 
 		//! Save state to buffer
 		/*!
@@ -463,7 +449,7 @@ namespace FusionEngine
 		* Whether the state should be serialized in 'local' mode - i.e. for
 		* saving game rather than network-sync.
 		*/
-		virtual void SerialiseState(SerialisedData &state, bool local) const =0;
+		//virtual void SerialiseState(SerialisedData &state, bool local) const =0;
 		//! Read state from buffer
 		/*!
 		* \param[in] state
@@ -480,7 +466,7 @@ namespace FusionEngine
 		* Amount of data deserialised - useful for Entity types derived from
 		* other Entities, so they know where to start reading.
 		*/
-		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
+		//virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser) =0;
 
 		//! Returns a human-readable string
 		virtual std::string ToString() const;

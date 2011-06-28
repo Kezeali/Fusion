@@ -74,7 +74,8 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
+		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
+		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
 
