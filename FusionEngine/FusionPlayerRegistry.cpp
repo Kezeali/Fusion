@@ -29,6 +29,8 @@
 
 #include "FusionPlayerRegistry.h"
 
+using namespace RakNet;
+
 namespace FusionEngine
 {
 
@@ -74,7 +76,7 @@ namespace FusionEngine
 		registry->addPlayer(id, local_index, UNASSIGNED_RAKNET_GUID);
 	}
 
-	void PlayerRegistry::AddRemotePlayer(PlayerID id, RakNetGUID guid)
+	void PlayerRegistry::AddRemotePlayer(PlayerID id, const RakNetGUID& guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -98,7 +100,7 @@ namespace FusionEngine
 		registry->removePlayer(local_index);
 	}
 
-	void PlayerRegistry::RemovePlayersFrom(RakNetGUID guid)
+	void PlayerRegistry::RemovePlayersFrom(const RakNetGUID& guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -130,7 +132,7 @@ namespace FusionEngine
 		return registry->getPlayerByLocalIndex(index);
 	}
 
-	std::vector<PlayerInfo> PlayerRegistry::GetPlayersBySystem(RakNetGUID guid)
+	std::vector<PlayerInfo> PlayerRegistry::GetPlayersBySystem(const RakNetGUID& guid)
 	{
 		PlayerRegistry *registry = getSingletonPtr();
 		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
@@ -184,7 +186,7 @@ namespace FusionEngine
 		m_NoSuchPlayer.LocalIndex = s_MaxLocalPlayers;
 	}
 
-	void PlayerRegistry::addPlayer(PlayerID net_id, unsigned int local_index, RakNetGUID guid)
+	void PlayerRegistry::addPlayer(PlayerID net_id, unsigned int local_index, const RakNetGUID& guid)
 	{
 		//PlayerInfoPtr playerInfo(new PlayerInfo);
 		PlayerInfo playerInfo;
@@ -213,7 +215,7 @@ namespace FusionEngine
 		m_ByLocalIndex.erase(_where);
 	}
 
-	void PlayerRegistry::removePlayersFrom(RakNetGUID guid)
+	void PlayerRegistry::removePlayersFrom(const RakNetGUID& guid)
 	{
 		for (PlayersByNetIndexMap::iterator it = m_ByNetID.begin(), end = m_ByNetID.end(); it != end; ++it)
 		{
@@ -261,7 +263,7 @@ namespace FusionEngine
 			return m_NoSuchPlayer;
 	}
 
-	std::vector<PlayerInfo> PlayerRegistry::getPlayersBySystem(RakNetGUID guid) const
+	std::vector<PlayerInfo> PlayerRegistry::getPlayersBySystem(const RakNetGUID& guid) const
 	{
 		std::vector<PlayerInfo> players;
 

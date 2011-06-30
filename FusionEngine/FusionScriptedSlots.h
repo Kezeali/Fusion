@@ -76,6 +76,15 @@ namespace FusionEngine
 		//! Executes the bound function (or 'callback') with no parameters
 		void Callback();
 
+		//! Same as Callback(void), but with a distinct name...
+		/*!
+		* ... because std::bind can't identify the correct method (it assumes the template
+		* version, taking ScriptedSlotWrapper* as the arg), when used like: std::bind(&ScriptedSlotWrapper::Callback, slotWrapper)
+		* The same syntax actually DOES compile with boost::bind, so this may be a bug in the MSVC implementation, or something
+		* that differs in the standard vs. the TR1 spec.
+		*/
+		void CallbackNoParam();
+
 		// TODO: Use varadic template to generate these params
 		//! Executes the bound function, with the given parameters
 		template <typename T0>

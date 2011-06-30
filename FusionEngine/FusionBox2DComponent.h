@@ -66,7 +66,7 @@ namespace FusionEngine
 		friend class Box2DWorld;
 		friend class Box2DTask;
 	public:
-		typedef boost::mpl::vector<ITransform, IRigidBody>::type Interfaces;
+		FSN_LIST_INTERFACES((ITransform)(IRigidBody))
 
 		struct PropsIdx { enum Names {
 			Active, SleepingAllowed, Awake, Bullet, FixedRotation,
@@ -96,7 +96,7 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "Box2DBody"; }
 
-		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
+		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
 
@@ -201,7 +201,7 @@ namespace FusionEngine
 	{
 		friend class Box2DWorld;
 	public:
-		typedef boost::mpl::vector<IPhysFixture>::type Interfaces;
+		FSN_LIST_INTERFACES((IPhysFixture))
 
 		struct PropsIdx { enum Names {
 			Sensor,
@@ -226,8 +226,8 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "Box2DFixture"; }
 
-		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
-		void OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com);
+		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
+		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
 
@@ -266,7 +266,7 @@ namespace FusionEngine
 		//! Get the fixture's AABB. This AABB may be enlarge and/or stale.
 		//! If you need a more accurate AABB, compute it using the shape and
 		//! the body transform.
-		const b2AABB& GetAABB(int childIndex) const { return m_Fixture->GetAABB(childIndex); }
+		const b2AABB& GetAABB() const { return m_Fixture->GetAABB(0); }
 
 		b2FixtureDef m_Def;
 		b2Fixture* m_Fixture;

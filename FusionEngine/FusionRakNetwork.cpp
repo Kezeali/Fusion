@@ -182,12 +182,12 @@ namespace FusionEngine
 
 	bool RakNetwork::SendAsIs(const NetDestination& destination, const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
 	{
-		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 	}
 
 	bool RakNetwork::SendAsIs(const NetDestination& destination, const RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
 	{
-		return m_NetInterface->Send(data, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+		return m_NetInterface->Send(data, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 	}
 
 	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
@@ -203,9 +203,9 @@ namespace FusionEngine
 			bits.Write(data, length);
 
 		if (destination.GUID != RakNetGUID())
-			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 		else
-			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast);
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast) != 0;
 	}
 
 	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
@@ -223,9 +223,9 @@ namespace FusionEngine
 			bits.Write(data);
 
 		if (destination.GUID != RakNetGUID())
-			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast);
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 		else
-			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast);
+			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast) != 0;
 	}
 
 	Packet *RakNetwork::Receive()
@@ -233,24 +233,15 @@ namespace FusionEngine
 		return m_NetInterface->Receive();
 	}
 
-	AutoPacketPtr RakNetwork::ReceiveAutoPacket()
+	PacketSpt RakNetwork::ReceivePacketSpt()
 	{
 		Packet *packet = m_NetInterface->Receive();
 		if (packet == nullptr)
-			return AutoPacketPtr();
+			return PacketSpt();
 
 		using namespace std::placeholders;
 
-		return AutoPacketPtr( new AutoPacket(packet, std::bind(&RakNetwork::DeallocatePacket, this, _1)) );
-	}
-
-	void RakNetwork::PushBackPacket(const AutoPacketPtr &auto_packet, bool head)
-	{
-		if (auto_packet)
-		{
-			m_NetInterface->PushBackPacket(auto_packet->m_RakNetPacket, head);
-			auto_packet->m_RakNetPacket = nullptr;
-		}
+		return PacketSpt(packet, std::bind(&RakNetwork::DeallocatePacket, this, _1));
 	}
 
 	void RakNetwork::PushBackPacket(Packet *packet, bool head)

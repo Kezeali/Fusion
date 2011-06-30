@@ -90,6 +90,7 @@ namespace FusionEngine
 	protected:
 		Renderer* m_Renderer;
 		const EntityManager* m_EntityManager;
+		std::set<EntityPtr> m_UsedEntities;
 
 		//Rocket::Core::Geometry* m_Geometry;
 	};

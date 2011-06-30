@@ -225,14 +225,18 @@ namespace FusionEngine
 		//! Receives data
 		RakNet::Packet *Receive();
 
-		//! Receives data, returning an AutoPacket
-		AutoPacketPtr ReceiveAutoPacket();
+		//! Receives data, returning an smart-ptr (probably std::shared_ptr<Packet>)
+		PacketSpt ReceivePacketSpt();
 
 		//! Puts the given packet back on the receive buffer
 		void PushBackPacket(RakNet::Packet *packet, bool to_head = false);
 
-		//! Puts the given packet back on the receive buffer
-		void PushBackPacket(const AutoPacketPtr &auto_packet, bool to_head = false);
+		// It's not obvious how you could validly push back a packet-spt, since doing
+		//  so would need to invalidate all other copies of that spt (it could be done
+		//  if ReceivePacketSpt returned a weak_ptr, but that's too much hassle when you
+		//  could just use a raw packet in the cases when you want to be able to push
+		//  them back), hence this method is removed.
+		//void PushBackPacket(const PacketSpt &packet, bool to_head = false);
 
 		//! Deletes a packet
 		void DeallocatePacket(RakNet::Packet* packet);

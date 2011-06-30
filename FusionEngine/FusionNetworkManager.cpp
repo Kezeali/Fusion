@@ -38,10 +38,10 @@
 namespace FusionEngine
 {
 
-	void PeerIDManager::HandlePacket(Packet *packet)
+	void PeerIDManager::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream bs(packet->data, packet->length, false);
-		MessageID mtid;
+		RakNet::MessageID mtid;
 		bs.Read(mtid);
 
 		switch (mtid)
@@ -59,7 +59,7 @@ namespace FusionEngine
 			break;
 		case MTID_SET_PEER_ID:
 			{
-				RakNetGUID guid;
+				RakNet::RakNetGUID guid;
 				bs.Read(guid);
 				uint8_t id;
 				bs.Read(id);
@@ -75,12 +75,12 @@ namespace FusionEngine
 	{
 	}
 
-	const RakNetGUID &ElectionPacketHandler::GetArbitratorGUID() const
+	const RakNet::RakNetGUID &ElectionPacketHandler::GetArbitratorGUID() const
 	{
 		return m_ArbitratorGUID;
 	}
 
-	void ElectionPacketHandler::HandlePacket(Packet *packet)
+	void ElectionPacketHandler::HandlePacket(RakNet::Packet *packet)
 	{
 		EasyPacket *easyPacket = (EasyPacket*)packet;
 		FSN_ASSERT(easyPacket->GetType() == ID_FCM2_NEW_HOST);
@@ -107,7 +107,7 @@ namespace FusionEngine
 		m_Dispatcher->Unsubscribe(MTID_SET_PEER_ID, &m_PeerIDManager);
 	}
 
-	const RakNetGUID &NetworkManager::GetArbitratorGUID()
+	const RakNet::RakNetGUID &NetworkManager::GetArbitratorGUID()
 	{
 		return getSingleton().m_ArbitratorElector.GetArbitratorGUID();
 	}
@@ -122,7 +122,7 @@ namespace FusionEngine
 		return getSingleton().m_Network->GetPeerIndex();
 	}
 
-	bool NetworkManager::IsSenior(const RakNetGUID &peer)
+	bool NetworkManager::IsSenior(const RakNet::RakNetGUID &peer)
 	{
 		return getSingleton().m_Network->IsSenior(peer);
 	}

@@ -148,9 +148,6 @@ namespace FusionEngine
 		*/
 		void ClearUnusedInstancers();
 
-		//! Adds entity script sections
-		void OnModuleRebuild(BuildModuleEvent &ev);
-
 		//! Fired whenever an entity is instanced
 		boost::signals2::signal<void (EntityPtr &)> SignalEntityInstanced;
 

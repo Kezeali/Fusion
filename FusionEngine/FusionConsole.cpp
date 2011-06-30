@@ -9,9 +9,11 @@
 #include "scriptstring.h"
 
 #include <boost/tokenizer.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 
 #include <ClanLib/Core/Text/string_help.h>
+
+using namespace std::placeholders;
 
 namespace FusionEngine
 {
@@ -24,7 +26,7 @@ namespace FusionEngine
 		m_Buffer.reserve(m_BufferLength);
 
 		CommandFunctions helpFns;
-		helpFns.callback = boost::bind(&Console::CC_PrintCommandHelp, this, _1);
+		helpFns.callback = std::bind(&Console::CC_PrintCommandHelp, this, _1);
 		helpFns.autocomplete = [this](int argn, const std::string& argv)->StringVector
 		{
 			StringVector possibleCommands;
@@ -618,13 +620,13 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller callClear(m_Listener, "void OnClear()");
 
 		if (callNewLine.ok())
-			m_ConsoleOnNewLineConnection = console->OnNewLine.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
+			m_ConsoleOnNewLineConnection = console->OnNewLine.connect( std::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
 
 		if (callNewData.ok())
-			m_ConsoleOnNewDataConnection = console->OnNewData.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
+			m_ConsoleOnNewDataConnection = console->OnNewData.connect( std::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
 
 		if (callClear.ok())
-			m_ConsoleOnClearConnection = console->OnClear.connect( boost::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
+			m_ConsoleOnClearConnection = console->OnClear.connect( std::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
 	}
 
 	ScriptedConsoleListenerWrapper::~ScriptedConsoleListenerWrapper()
@@ -675,7 +677,7 @@ namespace FusionEngine
 		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
 		if (slot != nullptr)
 		{
-			boost::signals2::connection c = obj->OnNewLine.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			boost::signals2::connection c = obj->OnNewLine.connect( std::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
 			slot->HoldConnection(c);
 		}
 		return slot;
@@ -686,7 +688,7 @@ namespace FusionEngine
 		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
 		if (slot != nullptr)
 		{
-			boost::signals2::connection c = obj->OnNewData.connect( boost::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
+			boost::signals2::connection c = obj->OnNewData.connect( std::bind(&ScriptedSlotWrapper::Callback<const std::string &>, slot, _1) );
 			slot->HoldConnection(c);
 		}
 		return slot;
@@ -697,7 +699,7 @@ namespace FusionEngine
 		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
 		if (slot != nullptr)
 		{
-			boost::signals2::connection c = obj->OnClear.connect( boost::bind(&ScriptedSlotWrapper::Callback, slot) );
+			boost::signals2::connection c = obj->OnClear.connect( std::bind(&ScriptedSlotWrapper::CallbackNoParam, slot) );
 			slot->HoldConnection(c);
 		}
 		return slot;
@@ -747,7 +749,7 @@ namespace FusionEngine
 	void Console::SetModule(ModulePtr module)
 	{
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&Console::OnModuleBuild, this, _1) );
+		m_ModuleConnection = module->ConnectToBuild( std::bind(&Console::OnModuleBuild, this, _1) );
 	}
 
 	void Console::OnModuleBuild(BuildModuleEvent &ev)

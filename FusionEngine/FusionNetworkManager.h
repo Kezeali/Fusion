@@ -52,14 +52,14 @@ namespace FusionEngine
 		ElectionPacketHandler();
 
 		//! Returns the GUID of the current arbiter
-		const RakNetGUID &GetArbitratorGUID() const;
+		const RakNet::RakNetGUID &GetArbitratorGUID() const;
 
 		//void VoteNoConfidence();
 
 		//! impl. PacketHandler
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
-		RakNetGUID m_ArbitratorGUID;
+		RakNet::RakNetGUID m_ArbitratorGUID;
 	};
 
 	class PeerIDManager : public PacketHandler
@@ -72,7 +72,7 @@ namespace FusionEngine
 		uint8_t m_PeerID;
 
 	private:
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 		RakNetwork* m_Network;
 		IDSet<uint8_t> m_UnusedIDs;
@@ -89,7 +89,7 @@ namespace FusionEngine
 		~NetworkManager();
 
 		//! Convinience function - calls the relevant method on the NetworkManager singleton
-		static const RakNetGUID &GetArbitratorGUID();
+		static const RakNet::RakNetGUID &GetArbitratorGUID();
 
 		//! Convinience function - returns true if GetLocalGUID() == GetArbitratorGUID()
 		static bool ArbitratorIsLocal();
@@ -101,7 +101,7 @@ namespace FusionEngine
 		static uint8_t GetPeerSeniorityIndex();
 
 		//! Returns true if the given peer has seniority over the local peer
-		static bool IsSenior(const RakNetGUID &peer); 
+		static bool IsSenior(const RakNet::RakNetGUID &peer); 
 
 		//! Returns the unique peer-id of this peer
 		static uint8_t GetPeerID();

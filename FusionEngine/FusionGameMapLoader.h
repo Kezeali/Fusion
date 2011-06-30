@@ -100,7 +100,7 @@ namespace FusionEngine
 		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource);
 		~GameMapLoader();
 
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 		//! Load entity types from the given map - call before compiling the script module
 		void LoadEntityTypes(const std::string &filename, CL_VirtualDirectory &directory);

@@ -56,7 +56,7 @@ namespace FusionEngine
 	{
 		PlayerID NetID;
 		unsigned int LocalIndex;
-		RakNetGUID GUID;
+		RakNet::RakNetGUID GUID;
 		PlayerInfo()
 			: NetID(0),
 			LocalIndex(s_MaxLocalPlayers)
@@ -95,14 +95,14 @@ namespace FusionEngine
 		//! Adds a new local player entry to the registry
 		static void AddLocalPlayer(PlayerID net_id, unsigned int local_index);
 		//! Adds a new remote player entry to the registry
-		static void AddRemotePlayer(PlayerID net_id, RakNetGUID guid);
+		static void AddRemotePlayer(PlayerID net_id, const RakNet::RakNetGUID& guid);
 
 		//! Removes the player with the given net ID - could be a local player, could be remote
 		static void RemovePlayer(PlayerID id);
 		//! Removes the local player with the given index
 		static void RemoveLocalPlayer(unsigned int local_index);
 		//! Removes all players who are from the system indicated by the given GUID
-		static void RemovePlayersFrom(RakNetGUID guid);
+		static void RemovePlayersFrom(const RakNet::RakNetGUID& guid);
 
 		static void Clear();
 
@@ -114,7 +114,7 @@ namespace FusionEngine
 		static const PlayerInfo &GetPlayer(PlayerID id);
 		static const PlayerInfo &GetPlayerByLocalIndex(unsigned int index);
 
-		static std::vector<PlayerInfo> GetPlayersBySystem(RakNetGUID system_address);
+		static std::vector<PlayerInfo> GetPlayersBySystem(const RakNet::RakNetGUID& system_address);
 
 		static bool IsLocal(PlayerID net_index);
 
@@ -137,15 +137,15 @@ namespace FusionEngine
 		PlayersByNetIndexMap m_ByNetID;
 		PlayersByLocalIndexMap m_ByLocalIndex;
 
-		//RakNetGUID m_LocalGUID;
+		//RakNet::RakNetGUID m_LocalGUID;
 
 		PlayerInfo m_NoSuchPlayer;
 
-		void addPlayer(PlayerID net_id, unsigned int local_index, RakNetGUID guid);
+		void addPlayer(PlayerID net_id, unsigned int local_index, const RakNet::RakNetGUID& guid);
 
 		void removePlayer(PlayerID id);
 		void removeLocalPlayer(unsigned int local_index);
-		void removePlayersFrom(RakNetGUID guid);
+		void removePlayersFrom(const RakNet::RakNetGUID& guid);
 
 		void clear();
 
@@ -154,7 +154,7 @@ namespace FusionEngine
 
 		const PlayerInfo &getPlayerByNetID(PlayerID id) const;
 		const PlayerInfo &getPlayerByLocalIndex(unsigned int index) const;
-		std::vector<PlayerInfo> getPlayersBySystem(RakNetGUID guid) const;
+		std::vector<PlayerInfo> getPlayersBySystem(const RakNet::RakNetGUID& guid) const;
 		
 	};
 

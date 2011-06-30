@@ -36,18 +36,6 @@
 namespace FusionEngine
 {
 
-	AutoPacket::AutoPacket(Packet* raknet_packet, const AutoPacket::DeallocatePacketFunction &on_destruct)
-		: //EasyPacket(raknet_packet),
-		m_DeallocatePacket(on_destruct)
-	{
-		m_RakNetPacket = raknet_packet;
-	}
-
-	AutoPacket::~AutoPacket()
-	{
-		m_DeallocatePacket(m_RakNetPacket);
-	}
-
 	//EasyPacket::EasyPacket(Packet* raknet_packet)
 	//	: OriginalPacket(raknet_packet)
 	//{
@@ -79,16 +67,16 @@ namespace FusionEngine
 		return OriginalPacket.data[0] == ID_TIMESTAMP;
 	}
 
-	RakNetTime EasyPacket::GetTime() const
+	RakNet::Time EasyPacket::GetTime() const
 	{
 		FSN_ASSERT(IsTimeStamped());
 		if (IsTimeStamped())
-			return RakNetTime(*(OriginalPacket.data+1));
+			return RakNet::Time(*(OriginalPacket.data+1));
 		else
-			return (RakNetTime)0;
+			return (RakNet::Time)0;
 	}
 
-	const RakNetGUID &EasyPacket::GetGUID() const
+	const RakNet::RakNetGUID &EasyPacket::GetGUID() const
 	{
 		return OriginalPacket.guid;
 	}

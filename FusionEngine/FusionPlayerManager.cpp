@@ -35,6 +35,8 @@
 #include "FusionNetworkManager.h"
 #include "FusionPlayerRegistry.h"
 
+using namespace RakNet;
+
 namespace FusionEngine
 {
 
@@ -84,7 +86,7 @@ namespace FusionEngine
 			MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
 	}
 
-	void PlayerManager::HandlePacket(Packet *packet)
+	void PlayerManager::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream receivedData(packet->data, packet->length, false);
 

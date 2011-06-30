@@ -42,6 +42,8 @@
 #include "FusionNetDestinationHelpers.h"
 #include "FusionPlayerRegistry.h"
 
+using namespace RakNet;
+
 namespace FusionEngine
 {
 	

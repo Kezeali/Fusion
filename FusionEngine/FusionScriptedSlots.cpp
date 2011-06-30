@@ -86,6 +86,11 @@ namespace FusionEngine
 			m_CallSlot();
 	}
 
+	void ScriptedSlotWrapper::CallbackNoParam()
+	{
+		Callback();
+	}
+
 	void ScriptedSlotWrapper::EnumReferences(asIScriptEngine *engine)
 	{
 		if (m_TargetObject != nullptr)

@@ -72,7 +72,7 @@ namespace FusionEngine
 		friend class CLRenderWorld;
 		friend class CLRenderTask;
 	public:
-		typedef boost::mpl::vector<ISprite>::type Interfaces;
+		FSN_LIST_INTERFACES((ISprite))
 
 		struct PropsIdx { enum Names {
 			Offset = 0, LocalDepth,
@@ -133,7 +133,7 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "CLSprite"; }
 
-		void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& component);
+		void OnSiblingAdded(const std::shared_ptr<IComponent>& component);
 
 		void SynchroniseParallelEdits();
 

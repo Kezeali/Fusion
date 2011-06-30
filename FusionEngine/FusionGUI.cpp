@@ -46,6 +46,8 @@
 
 #include "FusionElementSelectableDataGrid.h"
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -463,7 +465,7 @@ namespace FusionEngine
 	void GUI::SetModule(ModulePtr module)
 	{
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&GUI::onModuleBuild, this, _1) );
+		m_ModuleConnection = module->ConnectToBuild( std::bind(&GUI::onModuleBuild, this, _1) );
 	}
 
 	void GUI::initScripting(FusionEngine::ScriptManager *manager)

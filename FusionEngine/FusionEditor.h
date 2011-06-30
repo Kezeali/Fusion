@@ -43,10 +43,12 @@
 
 #include "FusionState.h"
 
+#include "FusionTypes.h"
 #include "FusionContextMenu.h"
 #include "FusionEditorUndo.h"
 #include "FusionElementSelectableDataGrid.h"
 #include "FusionElementUndoMenu.h"
+#include "FusionEntity.h"
 #include "FusionGameMapLoader.h"
 #include "FusionIDStack.h"
 #include "FusionInputHandler.h"

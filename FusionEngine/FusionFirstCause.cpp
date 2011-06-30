@@ -46,6 +46,8 @@
 #include "FusionPhysFSIOStream.h"
 #include <yaml-cpp/yaml.h>
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -69,18 +71,18 @@ namespace FusionEngine
 			Console::CommandHelp help;
 			help.helpText = "Switches to the given engine mode.\nEnter switchto <name of mode>\nMode names: 'game', 'editor'\nSee Also: togglemode";
 			help.argumentNames.push_back("mode");
-			Console::CommandFunctions fncs; fncs.callback = boost::bind(&FirstCause::SwitchTo, this, _1);
+			Console::CommandFunctions fncs; fncs.callback = std::bind(&FirstCause::SwitchTo, this, _1);
 			Console::getSingleton().BindCommand("switchto", fncs, help);
 			help.helpText = "This is an alias of switchto.\n" + help.helpText;
 			Console::getSingleton().BindCommand("start", fncs, help);
 
 			help.helpText = "Toggles between Editor and game mode.";
 			help.argumentNames.clear();
-			fncs.callback = boost::bind(&FirstCause::ToggleMode, this, _1);
+			fncs.callback = std::bind(&FirstCause::ToggleMode, this, _1);
 			Console::getSingleton().BindCommand("togglemode", fncs, help);
 		}
 
-		Console::getSingleton().BindCommand("streamingrange", boost::bind(&FirstCause::SetStreamingRange, this, _1));
+		Console::getSingleton().BindCommand("streamingrange", std::bind(&FirstCause::SetStreamingRange, this, _1));
 	}
 
 	template <class T>
@@ -123,7 +125,7 @@ namespace FusionEngine
 
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
 
-		m_EntityFactory->SetScriptingManager(manager);
+		//m_EntityFactory->SetScriptingManager(manager);
 		m_EntityFactory->SetScriptedEntityPath("Entities/");
 
 		manager->RegisterGlobalObject("StreamingManager streamer", m_Streaming);
@@ -138,19 +140,19 @@ namespace FusionEngine
 
 			//m_Editor->SetEntityModule(module);
 			// Load all entity types so they can be used in the editor
-			m_EntityFactory->LoadAllScriptedTypes();
+			m_EntityFactory->LoadAllPrefabTypes();
 		}
 
 		m_Ontology->SetModule(module);
 
-		m_EntityFactory->SetModule(module);
+		//m_EntityFactory->SetModule(module);
 
 		// The build event is manually passed to individual components to enforce correct ordering
 		//  (entity factory needs to load type definitions after the editor / ontology have
 		//  notified it of their required entities, but it needs to actually construct the type
 		//  instancers before they editor / ontology try to use them)
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&FirstCause::OnBuildModule, this, _1) );
+		m_ModuleConnection = module->ConnectToBuild( std::bind(&FirstCause::OnBuildModule, this, _1) );
 	}
 
 	void FirstCause::OnBuildModule(BuildModuleEvent& ev)

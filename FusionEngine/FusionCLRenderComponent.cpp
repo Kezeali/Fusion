@@ -155,8 +155,9 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& component)
+	void CLSprite::OnSiblingAdded(const std::shared_ptr<IComponent>& component)
 	{
+		const auto& interfaces = component->GetInterfaces();
 		if (interfaces.find(ITransform::GetTypeName()) != interfaces.end())
 		{
 			auto transform = dynamic_cast<ITransform*>(component.get());

@@ -147,7 +147,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectType(name.c_str(), sizeof(std::shared_ptr<T>), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(helper_type::Construct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour(name.c_str(), asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod(name.c_str(), name + "& opAssign(const " + name + " &in other)",
+		r = engine->RegisterObjectMethod(name.c_str(), (name + "& opAssign(const " + name + " &in other)").c_str(),
 			asMETHODPR(std::shared_ptr<T>, operator=, (const std::shared_ptr<T> &), std::shared_ptr<T> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}
 

@@ -113,7 +113,7 @@ namespace FusionEngine
 		//! Stores data from the Dependencies element
 		typedef StringVector DependenciesMap;
 
-		typedef std::tr1::unordered_map<std::string, ScriptedEntity::Property> PropertiesMap;
+		typedef std::map<std::string, ScriptedEntity::Property> PropertiesMap;
 
 	public:
 		//! Basic CTOR
@@ -423,7 +423,7 @@ namespace FusionEngine
 			m_BodyDef.angle = boost::lexical_cast<float32>(attribute);
 		}
 		attribute = element->GetAttribute("is_bullet");
-		m_BodyDef.isBullet = (attribute == "t" || attribute == "1" || attribute == "true");
+		m_BodyDef.bullet = (attribute == "t" || attribute == "1" || attribute == "true");
 
 		attribute = element->GetAttribute("allow_sleep");
 		m_BodyDef.allowSleep = (attribute == "t" || attribute == "1" || attribute == "true");
@@ -435,8 +435,8 @@ namespace FusionEngine
 		for (child = child.begin( element ); child != child.end(); child++)
 		{
 			FixtureDefinition fixtureDef;
-			typedef std::tr1::shared_ptr<b2CircleShape> CircleShapePtr;
-			typedef std::tr1::shared_ptr<b2PolygonShape> PolyShapePtr;
+			typedef std::shared_ptr<b2CircleShape> CircleShapePtr;
+			typedef std::shared_ptr<b2PolygonShape> PolyShapePtr;
 
 			if (child->Value() == "CircleFixture")
 			{
@@ -510,7 +510,7 @@ namespace FusionEngine
 			}
 			else if (child->Value() == "EdgeFixture")
 			{
-				PolyShapePtr poly(new b2PolygonShape());
+				std::shared_ptr<b2EdgeShape> edge(new b2EdgeShape());
 				b2Vec2 vertex1, vertex2;
 				attribute = child->GetAttribute("first");
 				if (!attribute.empty())
@@ -522,9 +522,9 @@ namespace FusionEngine
 				vertex1 *= s_SimUnitsPerGameUnit;
 				vertex2 *= s_SimUnitsPerGameUnit;
 
-				poly->SetAsEdge(vertex1, vertex2);
+				edge->Set(vertex1, vertex2);
 
-				fixtureDef.SetShape(poly);
+				fixtureDef.SetShape(edge);
 			}
 
 			else
@@ -712,9 +712,7 @@ namespace FusionEngine
 			auto _where = m_ComponentInstancers.find(*it);
 			if (_where != m_ComponentInstancers.end())
 			{
-				std::shared_ptr<IComponent> component;
-				std::vector<std::string> interfaces;
-				std::tie(interfaces, component) = _where->second->InstantiateComponent(*it, position, angle, nullptr, nullptr);
+				auto component = _where->second->InstantiateComponent(*it, position, angle, nullptr, nullptr);
 				if (!component)
 					return EntityPtr();
 				

@@ -38,6 +38,8 @@
 #include "FusionEntityManager.h"
 #include "FusionRenderer.h"
 
+#include "FusionRender2DComponent.h"
+
 namespace FusionEngine
 {
 
@@ -119,7 +121,7 @@ namespace FusionEngine
 		EntityPtr entity = m_EntityManager->GetEntity(entityName);
 		if (entity)
 		{
-			entity->addRef();
+			m_UsedEntities.insert(entity);
 			return (Rocket::Core::DecoratorDataHandle)entity.get();
 		}
 
@@ -129,7 +131,7 @@ namespace FusionEngine
 	void DynamicEntityDecorator::ReleaseElementData(Rocket::Core::DecoratorDataHandle element_data)
 	{
 		if (element_data)
-			reinterpret_cast<Entity*>(element_data)->release();
+			m_UsedEntities.erase(reinterpret_cast<Entity*>(element_data)->shared_from_this());
 	}
 
 	void DynamicEntityDecorator::RenderElement(Rocket::Core::Element* element, Rocket::Core::DecoratorDataHandle element_data)
@@ -137,13 +139,12 @@ namespace FusionEngine
 		Entity* entity = reinterpret_cast<Entity*>(element_data);
 		if (entity != nullptr)
 		{
-			CL_Rectf&& aabb = entity->CalculateOnScreenAABB();
 			Rocket::Core::Vector2f offset = element->GetAbsoluteOffset(Rocket::Core::Box::PADDING);
 			CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 			gc.push_modelview();
-			gc.set_translate(offset.x + aabb.get_width() * 0.5f, offset.y + aabb.get_height() * 0.5f);
+			gc.set_translate(offset.x, offset.y);
 
-			m_Renderer->DrawEntity(entity);
+			m_Renderer->DrawEntity(entity->shared_from_this());
 
 			gc.pop_modelview();
 		}

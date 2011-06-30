@@ -48,7 +48,7 @@ namespace FusionEngine
 	const size_t s_BasicHeaderLength = sizeof(unsigned char);
 
 	//! Timestamp length
-	const size_t s_TimestampLength = sizeof(unsigned char) + sizeof(RakNetTime);
+	const size_t s_TimestampLength = sizeof(unsigned char) + sizeof(RakNet::Time);
 
 	//! The length of a header with a timestamp
 	/*!
@@ -95,28 +95,7 @@ namespace FusionEngine
 		const RakNet::RakNetGUID &GetGUID() const;
 	};
 
-	//! Packet that automatically deallocates itself when going out of scope
-	class AutoPacket// : public EasyPacket
-	{
-	public:
-		typedef std::function<void (Packet*)> DeallocatePacketFunction;
-
-	public:
-		//! Constructor
-		AutoPacket();
-		//! Constructor
-		AutoPacket(RakNet::Packet *raknet_packet, const DeallocatePacketFunction &on_destruction);
-
-		//! Destructor
-		~AutoPacket();
-
-		RakNet::Packet* m_RakNetPacket;
-
-	private:
-		DeallocatePacketFunction m_DeallocatePacket;
-	};
-
-	typedef std::shared_ptr<AutoPacket> AutoPacketPtr;
+	typedef std::shared_ptr<RakNet::Packet> PacketSpt;
 
 }
 

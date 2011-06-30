@@ -134,7 +134,7 @@ namespace FusionEngine
 		(*ptrToProperty) = m_NewValue;
 	}
 
-	//! Undoes changes to properties that store entity pointers
+	//! Undo changes to properties that store entity pointers
 	template <>
 	class ChangePropertyAction<EntityPtr> : public UndoableAction
 	{

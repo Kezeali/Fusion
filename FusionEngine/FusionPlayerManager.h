@@ -64,7 +64,7 @@ namespace FusionEngine
 
 		unsigned int GetLocalPlayerCount() const { return m_LocalPlayerCount; }
 
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 		boost::signals2::signal<void (unsigned int)> SignalRequestRejected;
 

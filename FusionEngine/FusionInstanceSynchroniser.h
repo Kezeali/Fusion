@@ -107,7 +107,7 @@ namespace FusionEngine
 		void RemoveInstance(EntityPtr& entity);
 
 		//! Pick up entity creation packets
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 	protected:
 		EntityFactory *m_Factory;

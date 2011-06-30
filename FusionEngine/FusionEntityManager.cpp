@@ -786,7 +786,7 @@ namespace FusionEngine
 							entity->Spawn();
 						for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
 							entity->OnPlayerAdded(ev_it->first, ev_it->second);
-						entity->Update(split);
+						//entity->Update(split);
 						updateRenderables(entity, split, updatedSprites);
 					}
 					if (CheckState(domainIndex, DS_STREAMING))

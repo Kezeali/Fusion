@@ -75,7 +75,7 @@ namespace FusionEngine
 		//! Runs the renderer, mainly
 		virtual void Draw();
 
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 		void Clear();
 		void Start();

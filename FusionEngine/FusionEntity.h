@@ -36,6 +36,7 @@
 
 #include "FusionRefCounted.h"
 
+#include "FusionTypes.h"
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
 #include "FusionCommandQueue.h"
@@ -66,7 +67,7 @@ namespace FusionEngine
 	 * \brief
 	 * In game object base class
 	 */
-	class Entity : public GarbageCollected<Entity>, noncopyable
+	class Entity : public std::enable_shared_from_this<Entity>, noncopyable
 	{
 	public:
 		//! Constructor
@@ -133,94 +134,129 @@ namespace FusionEngine
 		virtual void ReleaseAllReferences(asIScriptEngine *engine)
 		{}
 
+		void SetType(const std::string& type);
 		//! Returns the typename of this entity
-		virtual std::string GetType() const =0;
+		std::string GetType() const;
 
 		//! Gets position
-		virtual const Vector2 &GetPosition() =0;
+		const Vector2 &GetPosition();
 		//! Gets angle (rotation) value
-		virtual float GetAngle() const =0;
+		float GetAngle() const;
 
 		//! Gets position
-		virtual void SetPosition(const Vector2 &position) =0;
+		void SetPosition(const Vector2 &position);
 		//! Gets angle (rotation) value
-		virtual void SetAngle(float angle) =0;
+		void SetAngle(float angle);
+
+		//! Adds the given component
+		void AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
+		//! Removes the given component
+		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 
 		// The interface type passed here determines the interface that other components must use to access the added component
-		template <class Com>
-		void AddComponent(std::shared_ptr<Com>& component)
-		{
-			static_assert(std::is_base_of<IComponent, Com>::value, "Com must be derrived from IComponent");
+		//template <class Com>
+		//void AddComponentT(std::shared_ptr<Com>& component)
+		//{
+		//	static_assert(std::is_base_of<IComponent, Com>::value, "Com must be derrived from IComponent");
 
-			ComponentInfo entry;
-			entry.component = component;
+		//	ComponentInfo entry;
+		//	entry.component = component;
 
-			boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component, entry.interfaces));
+		//	boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component, entry.interfaces));
 
-			for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-			{
-				it->component->OnSiblingAdded(entry.interfaces, entry.component);
-				component->OnSiblingAdded(it->interfaces, it->component);
-			}
-			
-			m_Components.push_back(std::move(entry));
-		}
+		//	for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		//	{
+		//		it->component->OnSiblingAdded(entry.interfaces, entry.component);
+		//		component->OnSiblingAdded(it->interfaces, it->component);
+		//	}
+		//	
+		//	m_Components.push_back(std::move(entry));
+		//}
 
 	private:
-		struct ComponentInfo
-		{
-			std::set<std::string> interfaces;
-			std::shared_ptr<IComponent> component;
-		};
-		std::vector<ComponentInfo> m_Components;
+		std::vector<std::shared_ptr<IComponent>> m_Components;
 
-		typedef std::map<std::string, std::vector<std::shared_ptr<IComponent>>> ComInterfaceMap;
+		typedef std::map<std::string, std::map<std::string, std::shared_ptr<IComponent>>> ComInterfaceMap;
 		ComInterfaceMap m_ComponentInterfaces;
 
-		template <class C>
-		struct addComInterface
-		{
-			addComInterface(ComInterfaceMap& map_, std::shared_ptr<C>& component, std::set<std::string>& interface_names_)
-				: map(_map),
-				com(component),
-				interface_names(interface_names_)
-			{}
+		//template <class C>
+		//struct addComInterface
+		//{
+		//	addComInterface(ComInterfaceMap& map_, std::shared_ptr<C>& component, std::set<std::string>& interface_names_)
+		//		: map(_map),
+		//		com(component),
+		//		interface_names(interface_names_)
+		//	{}
 
-			template <class I>
-			void operator() (I)
-			{
-				interface_names.insert(I::GetTypeName());
-				map[I::GetTypeName()].push_back(com);
-			}
+		//	template <class I>
+		//	void operator() (I)
+		//	{
+		//		interface_names.insert(I::GetTypeName());
+		//		map[I::GetTypeName()].push_back(com);
+		//	}
 
-			ComInterfaceMap& map;
-			std::shared_ptr<C>& com;
-			std::set<std::string>& interface_names;
-		};
+		//	ComInterfaceMap& map;
+		//	std::shared_ptr<C>& com;
+		//	std::set<std::string>& interface_names;
+		//};
 
 	public:
 
+		//template <class Interface>
+		//void InvokeOnComponent(std::function<void (std::shared_ptr<Interface>)> function)
+		//{
+		//	auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
+		//	if (_where != m_ComponentInterfaces.end())
+		//	{
+		//		CallQueue<Interface> *actualQueue = dynamic_cast<CallQueue<Interface>*>(_where->second);
+		//		if (actualQueue) actualQueue->Enqueue(function);
+		//	}
+		//}
+
+		//template <class Interface>
+		//std::shared_ptr<Interface> GetComponent(std::string identifier = std::string())
+		//{
+		//	//static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
+
+		//	auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
+		//	if (_where != m_ComponentInterfaces.end())
+		//	{
+		//		FSN_ASSERT(!_where->second.empty());
+		//		if (identifier.empty())
+		//		{
+		//			return std::dynamic_pointer_cast<Interface>(*_where->second.begin());
+		//		}
+		//		else
+		//		{
+		//			auto implEntry = _where->second.find(identifier);
+		//			if (implEntry != _where->second.end())
+		//				return std::dynamic_pointer_cast<Interface>(*implEntry);
+		//		}
+		//		return std::shared_ptr<Interface>();
+		//	}
+		//}
+
 		template <class Interface>
-		void InvokeOnComponent(std::function<void (std::shared_ptr<Interface>)> function)
+		std::shared_ptr<Interface> GetComponent(std::string identifier = std::string()) const
 		{
+			//static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
+
 			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
 			if (_where != m_ComponentInterfaces.end())
 			{
-				CallQueue<Interface> *actualQueue = dynamic_cast<CallQueue<Interface>*>(_where->second);
-				if (actualQueue) actualQueue->Enqueue(function);
+				FSN_ASSERT(!_where->second.empty());
+				if (identifier.empty())
+				{
+					return std::dynamic_pointer_cast<Interface>(_where->second.begin()->second);
+				}
+				else
+				{
+					auto implEntry = _where->second.find(identifier);
+					if (implEntry != _where->second.end())
+						return std::dynamic_pointer_cast<Interface>(implEntry->second);
+				}
 			}
-		}
-
-		template <class Interface>
-		std::shared_ptr<Interface> GetComponent()
-		{
-			static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
-
-			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
-			if (_where != m_ComponentInterfaces.end())
-			{
-				return _where->first;
-			}
+			return std::shared_ptr<Interface>();
 		}
 
 		////! Returns renderables
@@ -487,6 +523,7 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	protected:
+		std::string m_Type;
 		std::string m_Name;
 		ObjectID m_Id;
 		bool m_HasDefaultName;

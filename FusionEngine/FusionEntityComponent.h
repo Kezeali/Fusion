@@ -221,6 +221,11 @@ namespace FusionEngine
 	class IComponent
 	{
 	public:
+		//! Cotr
+		IComponent()
+		{
+			InitInterfaceList();
+		}
 		//! Destructor
 		virtual ~IComponent() {}
 
@@ -229,14 +234,20 @@ namespace FusionEngine
 
 		virtual std::string GetType() const = 0;
 
-		std::set<std::string> GetInterfaces() const
+		const std::set<std::string>& GetInterfaces() const
 		{
 			FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
 			return m_Interfaces;
 		}
 
-		virtual void OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
-		virtual void OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com) {}
+		virtual void InitInterfaceList() = 0;
+
+		virtual void OnSpawn() {}
+		virtual void OnStreamIn() {}
+		virtual void OnStreamOut() {}
+
+		virtual void OnSiblingAdded(const std::shared_ptr<IComponent>& com) {}
+		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
 
 		virtual void SynchroniseParallelEdits() = 0;
 
@@ -245,11 +256,35 @@ namespace FusionEngine
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
 		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
 
+	protected:
+		std::set<std::string> m_Interfaces;
+
 	private:
 		Entity* m_Parent;
 
-		std::set<std::string> m_Interfaces;
 	};
+
+#define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
+#define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
+
+//	class InsertInterfaceName
+//	{
+//	public:
+//		InsertInterfaceName(std::set<std::string>& container)
+//			: m_Container(container)
+//		{
+//		}
+//
+//		template <typename I>
+//		void operator() (I)
+//		{
+//			m_Container.insert(I::GetTypeName());
+//		}
+//
+//		std::set<std::string>& m_Container;
+//	};
+//
+//#define FSN_LIST_INTERFACES() boost::mpl::for_each<Interfaces>(InsertInterfaceName(m_Interfaces));
 
 }
 

@@ -50,8 +50,6 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
@@ -66,7 +64,6 @@
       <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <StringPooling>
       </StringPooling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -76,12 +73,12 @@
       <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
       <EnablePREfast>false</EnablePREfast>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>angelscriptd.lib;physfs.lib;yaml-cpp.lib;Box2Dd.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
       <IgnoreSpecificDefaultLibraries>LIBCMTD</IgnoreSpecificDefaultLibraries>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
@@ -106,6 +103,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
       <FunctionLevelLinking>false</FunctionLevelLinking>
+      <OpenMPSupport>false</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,7 +135,6 @@
     <ClCompile Include="..\FusionEngine\FusionPlayerManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FusionStableHeaders.h</PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>

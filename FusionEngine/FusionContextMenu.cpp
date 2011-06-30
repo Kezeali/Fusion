@@ -36,6 +36,8 @@
 #include "FusionScriptedSlots.h"
 #include "scriptstring.h"
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -464,7 +466,7 @@ namespace FusionEngine
 		InputManager *manager = InputManager::getSingletonPtr();
 		if (manager != nullptr)
 		{
-			m_RawInputConnection = manager->SignalRawInput.connect( boost::bind(&ContextMenu::OnRawInput, this, _1) );
+			m_RawInputConnection = manager->SignalRawInput.connect( std::bind(&ContextMenu::OnRawInput, this, _1) );
 		}
 	}
 
@@ -475,7 +477,7 @@ namespace FusionEngine
 		m_Context = context;
 		m_Document = m_Context->LoadDocument("core/gui/context_menu.rml");
 
-		m_RawInputConnection = input->SignalRawInput.connect( boost::bind(&ContextMenu::OnRawInput, this, _1) );
+		m_RawInputConnection = input->SignalRawInput.connect( std::bind(&ContextMenu::OnRawInput, this, _1) );
 	}
 
 	ContextMenu::~ContextMenu()
@@ -562,7 +564,7 @@ namespace FusionEngine
 		ScriptedSlotWrapper *slot = ScriptedSlotWrapper::CreateWrapperFor(asGetActiveContext(), decl);
 		if (slot != nullptr)
 		{
-			boost::signals2::connection c = obj->SignalClicked.connect( boost::bind(&ScriptedSlotWrapper::Callback<const MenuItemEvent &>, slot, _1) );
+			boost::signals2::connection c = obj->SignalClicked.connect( std::bind(&ScriptedSlotWrapper::Callback<const MenuItemEvent &>, slot, _1) );
 			slot->HoldConnection(c);
 		}
 		return slot;

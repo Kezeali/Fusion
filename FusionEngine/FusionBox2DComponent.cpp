@@ -42,7 +42,7 @@ namespace FusionEngine
 		Destruction();
 	}
 
-	void Box2DBody::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	void Box2DBody::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
 	{
 	}
 
@@ -205,7 +205,7 @@ namespace FusionEngine
 		m_Fixture = nullptr;
 	}
 
-	void Box2DFixture::OnSiblingAdded(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	void Box2DFixture::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
 	{
 		auto body = dynamic_cast<Box2DBody*>(com.get());
 		if (body)
@@ -221,7 +221,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Box2DFixture::OnSiblingRemoved(const std::set<std::string>& interfaces, const std::shared_ptr<IComponent>& com)
+	void Box2DFixture::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
 	{
 		if (m_Fixture)
 		{

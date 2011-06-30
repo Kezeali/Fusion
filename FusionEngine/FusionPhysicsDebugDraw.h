@@ -40,10 +40,10 @@
 namespace FusionEngine
 {
 
-	class DebugDraw : public b2DebugDraw
+	class DebugDraw : public b2Draw
 	{
 	public:
-		DebugDraw() : b2DebugDraw() {}
+		DebugDraw() : b2Draw() {}
 		DebugDraw(CL_GraphicContext gc);
 
 		void SetGraphicContext(CL_GraphicContext gc);

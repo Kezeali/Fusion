@@ -31,6 +31,7 @@
 
 #include "FusionExceptionFactory.h"
 #include "FusionResourceManager.h"
+#include "FusionPhysicalComponent.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -146,6 +147,95 @@ namespace FusionEngine
 	bool Entity::IsPseudoEntity() const
 	{
 		return !IsSyncedEntity();
+	}
+
+	void Entity::SetType(const std::string& type)
+	{
+		m_Type = type;
+	}
+
+	std::string Entity::GetType() const
+	{
+		return m_Type;
+	}
+
+	const Vector2 &Entity::GetPosition()
+	{
+		return GetComponent<ITransform>()->Position.Get();
+	}
+
+	void Entity::SetPosition(const Vector2 &position)
+	{
+		GetComponent<ITransform>()->Position.Set(position);
+	}
+
+	float Entity::GetAngle() const
+	{
+		return GetComponent<ITransform>()->Angle.Get();
+	}
+
+	void Entity::SetAngle(float angle)
+	{
+		GetComponent<ITransform>()->Angle.Set(angle);
+	}
+
+	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
+	{
+		// Add the new component to the component-by-interface map
+		for (auto it = component->GetInterfaces().begin(), end = component->GetInterfaces().end(); it != end; ++it)
+		{
+			auto& implementors = m_ComponentInterfaces[*it];
+			if (identifier.empty())
+			{
+				if (!implementors.empty())
+				{
+					std::stringstream str; str << *it << implementors.size();
+					identifier = str.str();
+				}
+				else
+					identifier = *it;
+			}
+			implementors[identifier] = component;
+		}
+		// Notify all other components of the new component, and notify the new component of the existing components
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->OnSiblingAdded(component);
+			component->OnSiblingAdded(*it);
+		}
+		// Add the new component to the main list
+		m_Components.push_back(component);
+	}
+
+	void Entity::RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
+	{
+		FSN_ASSERT(std::find(m_Components.begin(), m_Components.end(), component) != m_Components.end());
+
+		// Remove the given component from the main list, and notify all other components
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; )
+		{
+			if (*it == component)
+				it = m_Components.erase(it);
+			else
+			{
+				(*it)->OnSiblingRemoved(component);
+				component->OnSiblingRemoved(*it); // TODO: consider: should the component being removed be notified?
+				++it;
+			}
+		}
+		// Remove all the other references to this component from the component-by-interface map
+		for (auto it = component->GetInterfaces().begin(), end = component->GetInterfaces().end(); it != end; ++it)
+		{
+			auto& implementors = m_ComponentInterfaces[*it];
+			if (identifier.empty())
+			{
+				auto _where = std::find_if(implementors.begin(), implementors.end(), [&](const std::pair<std::string, std::shared_ptr<IComponent>>& entry)->bool
+				{ return entry.second == component; });
+				implementors.erase(_where);
+			}
+			else
+				implementors.erase(identifier);
+		}
 	}
 
 	void Entity::AddTag(const std::string &tag)
@@ -569,7 +659,10 @@ namespace FusionEngine
 	{
 		m_Spawned = true;
 
-		OnSpawn();
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->OnSpawn();
+		}
 	}
 
 	void Entity::StreamIn()
@@ -578,7 +671,10 @@ namespace FusionEngine
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamIn(); });
 
-		OnStreamIn();
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->OnStreamIn();
+		}
 	}
 
 	void Entity::StreamOut()
@@ -587,7 +683,10 @@ namespace FusionEngine
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamOut(); });
 
-		OnStreamOut();
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->OnStreamOut();
+		}
 	}
 
 	void Entity::_setPlayerInput(const PlayerInputPtr &player_input)
@@ -643,7 +742,7 @@ namespace FusionEngine
 	void Entity::Register(asIScriptEngine *engine)
 	{
 		int r;
-		Entity::RegisterGCType(engine, "Entity");
+		RegisterSharedPtrType<Entity>("Entity", engine);
 
 		r = engine->RegisterObjectMethod("Entity",
 			"const string& getName() const",
