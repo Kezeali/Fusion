@@ -53,6 +53,12 @@ namespace FusionEngine
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
 	}
 
+	CLRenderWorld::~CLRenderWorld()
+	{
+		delete m_RenderTask;
+		delete m_Renderer;
+	}
+
 	std::vector<std::string> CLRenderWorld::GetTypes() const
 	{
 		static const std::string types[] = { "CLSprite", "" };

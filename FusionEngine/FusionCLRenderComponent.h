@@ -40,7 +40,7 @@
 #include "FusionResourcePointer.h"
 #include "FusionSerialisationHelper.h"
 
-#include <boost/signals/connection.hpp>
+#include <boost/signals2/connection.hpp>
 
 #include <ClanLib/display.h>
 

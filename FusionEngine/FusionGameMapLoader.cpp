@@ -42,6 +42,8 @@
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -53,7 +55,7 @@ namespace FusionEngine
 		m_NextTypeIndex(0),
 		m_MapChecksum(0)
 	{
-		m_FactoryConnection = factory->SignalEntityInstanced.connect( boost::bind(&GameMapLoader::onEntityInstanced, this, _1) );
+		m_FactoryConnection = factory->SignalEntityInstanced.connect( std::bind(&GameMapLoader::onEntityInstanced, this, _1) );
 
 		NetworkManager::getSingleton().Subscribe(MTID_LOADMAP, this);
 		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
@@ -70,7 +72,7 @@ namespace FusionEngine
 		m_FactoryConnection.disconnect();
 	}
 
-	void GameMapLoader::HandlePacket(Packet *packet)
+	void GameMapLoader::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream bitStream(packet->data, packet->length, false);
 		unsigned char packetType;
@@ -135,7 +137,7 @@ namespace FusionEngine
 		for (cl_int32 i = 0; i < numberEntityTypes; i++)
 		{
 			//entityTypename = device.read_string_a();
-			factory->LoadScriptedType(/*entityTypename*/device.read_string_a());
+			factory->LoadPrefabType(/*entityTypename*/device.read_string_a());
 		}
 	}
 
@@ -244,17 +246,22 @@ namespace FusionEngine
 				cl_uint32 typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
-				if (entityName.empty())
-					entityName = "default";
+				//if (entityName.empty())
+				//	entityName = "default";
 
 				{
 					const std::string &entityTypename = entityTypeArray.at(typeIndex);
-					entity = factory->InstanceEntity(entityTypename, entityName);
+					entity = factory->InstanceEntity(entityTypename, Vector2::zero(), 0.f);
 				}
 
-				m_Manager->AddEntity(entity);
+				if (entity)
+				{
+					entity->_setName(entityName);
 
-				instancedEntities.push_back(entity);
+					m_Manager->AddEntity(entity);
+
+					instancedEntities.push_back(entity);
+				}
 			}
 		}
 
@@ -277,14 +284,14 @@ namespace FusionEngine
 
 					// Check that the archetype data is for the correct entity type before deserializing
 					FSN_ASSERT(entity->GetType() == archetype.entityTypename);
-					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
+					//entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
 				// Load type-specific properties
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a();
 
-				entity->DeserialiseState(state, true, entity_deserialiser);
+				//entity->DeserialiseState(state, true, entity_deserialiser);
 			}
 		}
 	}
@@ -314,11 +321,13 @@ namespace FusionEngine
 
 				{
 					const std::string &entityTypename = entityTypeArray.at(typeIndex);
-					entity = factory->InstanceEntity(entityTypename, entityName);
+					entity = factory->InstanceEntity(entityTypename, Vector2::zero(), 0.f);
 				}
 
 				if (entity)
 				{
+					entity->_setName(entityName);
+
 					entityID = translator(entityID);
 					synchroniser->TakeID(entityID); // remove the ID from the available pool (so entities created after the map is loaded wont take this ID)
 					entity->SetID(entityID);
@@ -355,14 +364,14 @@ namespace FusionEngine
 
 					// Check that the archetype data is for the correct entity type before deserializing
 					FSN_ASSERT(entity->GetType() == archetype.entityTypename);
-					entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
+					//entity->DeserialiseState(archetype.packet, true, entity_deserialiser);
 				}
 
 				// Load custom properties
 				state.mask = device.read_uint32();
 				state.data = device.read_string_a();
 
-				entity->DeserialiseState(state, true, entity_deserialiser);
+				//entity->DeserialiseState(state, true, entity_deserialiser);
 			}
 		}
 	}
@@ -416,8 +425,10 @@ namespace FusionEngine
 
 				{
 					const std::string &entityTypename = indexToName.at(typeIndex);
-					entity = factory->InstanceEntity(entityTypename, entityName);
+					entity = factory->InstanceEntity(entityTypename, Vector2::zero(), 0.f);
 				}
+
+				entity->_setName(entityName);
 
 				if (entity)
 				{
@@ -451,7 +462,7 @@ namespace FusionEngine
 			state.mask = device.read_uint32();
 			state.data = device.read_string_a();
 
-			entity->DeserialiseState(state, true, entity_deserialiser);
+			//entity->DeserialiseState(state, true, entity_deserialiser);
 		}
 	}
 
@@ -509,7 +520,7 @@ namespace FusionEngine
 			device.write_float(entity->GetAngle());
 
 			// Write custom properties
-			entity->SerialiseState(state, true);
+			//entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
 			device.write_string_a(state.data);
@@ -602,7 +613,7 @@ namespace FusionEngine
 
 			// Write custom properties
 			state.mask = mapEntity->stateMask;
-			entity->SerialiseState(state, true);
+			//entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
 			device.write_string_a(state.data);
@@ -654,7 +665,7 @@ namespace FusionEngine
 
 			// Write the custom properties
 			state.mask = mapEntity->stateMask;
-			entity->SerialiseState(state, true);
+			//entity->SerialiseState(state, true);
 
 			device.write_uint32(state.mask);
 			device.write_string_a(state.data);
@@ -684,7 +695,7 @@ namespace FusionEngine
 
 		// Custom properties
 		SerialisedData state;
-		entity->SerialiseState(state, true);
+		//entity->SerialiseState(state, true);
 		device.write_uint32(state.mask);
 		device.write_string_a(state.data);
 	}
@@ -700,7 +711,7 @@ namespace FusionEngine
 			ObjectID entityID;
 			device.read((void*)&entityID, sizeof(ObjectID));
 			// Create the instance
-			entity = factory->InstanceEntity(entityTypename, entityName);
+			entity = factory->InstanceEntity(entityTypename, Vector2::zero(), 0.f);
 			entity->SetID(entityID);
 
 			// Basic Entity properties (position, angle)
@@ -717,7 +728,7 @@ namespace FusionEngine
 			state.mask = device.read_uint32();
 			state.data = device.read_string_a();
 
-			entity->DeserialiseState(state, true, entity_deserialiser);
+			//entity->DeserialiseState(state, true, entity_deserialiser);
 		}
 		catch (CL_Exception &io_exception)
 		{
@@ -742,13 +753,7 @@ namespace FusionEngine
 
 	Entity* MapEntity_getEntity(const GameMapLoader::MapEntity* obj)
 	{
-		if (obj->entity)
-		{
-			obj->entity->addRef();
-			return obj->entity.get();
-		}
-		else
-			return nullptr;
+		return obj->entity.get();
 	}
 
 	void GameMapLoader::Register(asIScriptEngine *engine)

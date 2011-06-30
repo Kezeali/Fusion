@@ -68,7 +68,7 @@ namespace FusionEngine
 
 	void StreamedResourceUser::StreamIn(int priority)
 	{
-		m_LoadConnection = m_ResourceManager->GetResource(m_ResourceType, m_ResourcePath, boost::bind(&StreamedResourceUser::OnResourceLoad, this, _1), m_Priority + priority);
+		m_LoadConnection = m_ResourceManager->GetResource(m_ResourceType, m_ResourcePath, std::bind(&StreamedResourceUser::OnResourceLoad, this, std::placeholders::_1), m_Priority + priority);
 		
 		OnStreamIn();
 	}

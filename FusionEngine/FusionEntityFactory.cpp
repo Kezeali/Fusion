@@ -704,6 +704,31 @@ namespace FusionEngine
 	{
 	}
 
+	EntityPtr EntityFactory::InstanceEntity(const std::string &prefab_type, const Vector2& position, float angle)
+	{
+		EntityPtr entity;
+		auto _where = m_PrefabTypes.find(prefab_type);
+		if (_where == m_PrefabTypes.end())
+			return EntityPtr();
+
+		auto& composition = _where->second;
+
+		for (auto it = composition.begin(), end = composition.end(); it != end; ++it)
+		{
+			auto _where = m_ComponentInstancers.find(it->first);
+			if (_where != m_ComponentInstancers.end())
+			{
+				auto component = _where->second->InstantiateComponent(it->first, position, angle, nullptr, nullptr);
+				if (!component)
+					return EntityPtr(); // or throw?
+				
+				entity->AddComponent(component, it->second);
+			}
+		}
+		SignalEntityInstanced(entity);
+		return entity;
+	}
+
 	EntityPtr EntityFactory::InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle)
 	{
 		EntityPtr entity;
@@ -720,6 +745,7 @@ namespace FusionEngine
 			}
 		}
 		SignalEntityInstanced(entity);
+		return entity;
 	}
 
 	//EntityPtr EntityFactory::InstanceEntity(const std::string &type, const std::string &name)
@@ -796,33 +822,15 @@ namespace FusionEngine
 		parseScriptedEntities(m_ScriptedEntityPath.c_str());
 	}
 
-	void EntityFactory::SetScriptingManager(ScriptManager *manager)
-	{
-		m_ScriptingManager = manager;
-	}
-
-	void EntityFactory::SetModule(const ModulePtr &module)
-	{
-		m_Module = module;
-
-		//m_ModuleConnection.disconnect();
-		//m_ModuleConnection = module->ConnectToBuild(boost::bind(&EntityFactory::OnModuleRebuild, this, _1));
-	}
-
 	void EntityFactory::GetTypes(StringVector &types, bool sort)
 	{
-		types.reserve(m_EntityInstancers.size());
-		for (EntityInstancerMap::iterator it = m_EntityInstancers.begin(), end = m_EntityInstancers.end(); it != end; ++it)
+		types.reserve(m_ComponentInstancers.size());
+		for (auto it = m_ComponentInstancers.begin(), end = m_ComponentInstancers.end(); it != end; ++it)
 		{
 			if (sort && !types.empty())
 			{
 				StringVector::iterator lowerBound = std::lower_bound(types.begin(), types.end(), it->first);
 				types.insert(lowerBound, it->first);
-				/*for (StringVector::iterator s_it = types.begin(), s_end = types.end()-1; s_it != s_end; ++s_it)
-				{
-					if (it->first.compare(*s_it) < 0)
-						types.insert(s_it, it->first);
-				}*/
 			}
 			else
 				types.push_back(it->first);
@@ -836,10 +844,10 @@ namespace FusionEngine
 
 	void EntityFactory::ClearUnusedInstancers()
 	{
-		for (EntityInstancerMap::iterator it = m_EntityInstancers.begin(), end = m_EntityInstancers.end(); it != end; ++it)
+		for (auto it = m_ComponentInstancers.begin(), end = m_ComponentInstancers.end(); it != end; ++it)
 		{
 			if (m_UsedTypes.find(it->first) == m_UsedTypes.end())
-				it = m_EntityInstancers.erase(it);
+				it = m_ComponentInstancers.erase(it);
 		}
 	}
 
@@ -851,7 +859,7 @@ namespace FusionEngine
 		return manager->AddCode(script, module_name.c_str(), (type + "_unwrap_type").c_str());
 	}
 
-	void EntityFactory::OnModuleRebuild(BuildModuleEvent &ev)
+	/*void EntityFactory::OnModuleRebuild(BuildModuleEvent &ev)
 	{
 		if (ev.type == BuildModuleEvent::PreBuild)
 		{
@@ -888,7 +896,7 @@ namespace FusionEngine
 			for (EntityDefinitionArray::iterator it = m_LoadedEntityDefinitions.begin(), end = m_LoadedEntityDefinitions.end(); it != end; ++it)
 				createScriptedEntityInstancer(*it);
 		}
-	}
+	}*/
 
 	//asIScriptObject* EntityFactory_InstanceEntity(const std::string& type, EntityFactory *obj)
 	//{
@@ -901,8 +909,8 @@ namespace FusionEngine
 		RegisterSingletonType<EntityFactory>("EntityFactory", engine);
 
 		r = engine->RegisterObjectMethod("EntityFactory",
-			"Entity@ instance(const string &in, const string &in)",
-			asMETHODPR(EntityFactory, InstanceEntity, (const std::string& type, const std::string& name), EntityPtr), asCALL_THISCALL);
+			"Entity instance(const string &in, const Vector &in, float)",
+			asMETHODPR(EntityFactory, InstanceEntity, (const std::string&, const Vector2&, float), EntityPtr), asCALL_THISCALL);
 	}
 
 	void EntityFactory::loadAllDependencies(const std::string &working_directory, ticpp::Document &document)
@@ -1063,7 +1071,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
+	/*void EntityFactory::createScriptedEntityInstancer(EntityDefinitionPtr definition)
 	{
 		// Create an instance of the script object
 		int typeId = m_Module->GetASModule()->GetTypeIdByDecl(definition->GetType().c_str());
@@ -1211,13 +1219,13 @@ namespace FusionEngine
 			}
 		}
 
-		EntityInstancerPtr instancer;
+		ComponentInstancerPtr instancer;
 		if (definition->HasBody())
 			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, definition, PhysicalWorld::getSingletonPtr()) );
 		else
 			instancer.reset( new ScriptedEntityInstancer(m_ScriptingManager, definition) );
 		m_EntityInstancers[definition->GetType()] = instancer; 
-	}
+	}*/
 
 	bool EntityFactory::getEntityType(TiXmlDocument *document, std::string &type)
 	{

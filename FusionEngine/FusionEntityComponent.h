@@ -236,7 +236,7 @@ namespace FusionEngine
 
 		const std::set<std::string>& GetInterfaces() const
 		{
-			FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
+			//FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
 			return m_Interfaces;
 		}
 
@@ -265,7 +265,7 @@ namespace FusionEngine
 	};
 
 #define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
-#define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
+#define FSN_LIST_INTERFACES(interfaces) virtual void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
 
 //	class InsertInterfaceName
 //	{

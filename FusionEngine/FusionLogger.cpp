@@ -40,6 +40,8 @@
 #include "FusionLogPhysFS.h"
 #include "FusionLogFileConsole.h"
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -65,7 +67,7 @@ namespace FusionEngine
 	void Logger::ActivateConsoleLogging()
 	{
 		m_ConsoleNewLine =
-			Console::getSingleton().OnNewLine.connect(boost::bind(&Logger::onConsoleNewLine, this, _1));
+			Console::getSingleton().OnNewLine.connect(std::bind(&Logger::onConsoleNewLine, this, _1));
 		m_ConsoleLogging = true;
 
 		SendToConsole("Console Logging enabled");
@@ -356,7 +358,3 @@ namespace FusionEngine
 	}
 
 }
-
-#if _MSC_VER > 1000
-# pragma warning(pop)
-#endif

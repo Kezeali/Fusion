@@ -30,7 +30,6 @@
 
 #include "FusionScriptedConsoleCommand.h"
 
-#include <boost/bind.hpp>
 //#include <boost/algorithm/string/classification.hpp>
 //#include <boost/algorithm/string/split.hpp>
 //#include <boost/algorithm/string/find_iterator.hpp>
@@ -160,6 +159,8 @@ namespace FusionEngine
 	}
 	void Scr_BindConsoleCommand(const std::string &command, const std::string &callback, const std::string &autocomplete, Console *obj)
 	{
+		using namespace std::placeholders;
+
 		asIScriptContext *context = asGetActiveContext();
 		if (context != NULL)
 		{
@@ -180,7 +181,7 @@ namespace FusionEngine
 			}
 
 			if (autocomplete.empty())
-				obj->BindCommand(command, boost::bind(&ScriptedConsoleCommand, module, callbackFullDecl, _1) );
+				obj->BindCommand(command, std::bind(&ScriptedConsoleCommand, module, callbackFullDecl, _1) );
 			else
 			{
 				// Expand the given string to a full autocomplete-callback decl. if it is
@@ -199,8 +200,8 @@ namespace FusionEngine
 				}
 
 				obj->BindCommand(command,
-					boost::bind(&ScriptedConsoleCommand, module, callbackFullDecl, _1), // Create command-callback fn.
-					boost::bind(&ScriptedCCAutocomplete, module, autocompleteFullDecl, _1, _2) ); // and autocomplete fn.
+					std::bind(&ScriptedConsoleCommand, module, callbackFullDecl, _1), // Create command-callback fn.
+					std::bind(&ScriptedCCAutocomplete, module, autocompleteFullDecl, _1, _2) ); // and autocomplete fn.
 			}
 		}
 	}

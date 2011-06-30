@@ -51,6 +51,8 @@
 #include "scriptstdvector.h"
 #include "scriptmath.h"
 
+using namespace std::placeholders;
+
 namespace FusionEngine
 {
 
@@ -534,8 +536,8 @@ namespace FusionEngine
 
 	void ScriptManager::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
 	{
-		caller.ConnectExceptionCallback( boost::bind(&ScriptManager::_exceptionCallback, this, _1) );
-		caller.ConnectLineCallback( boost::bind(&ScriptManager::_lineCallback, this, _1) );
+		caller.ConnectExceptionCallback( std::bind(&ScriptManager::_exceptionCallback, this, _1) );
+		caller.ConnectLineCallback( std::bind(&ScriptManager::_lineCallback, this, _1) );
 	}
 
 	bool printVar(std::ostream &strstr, asIScriptContext *ctx, int var_ind, int stack_level)
@@ -833,7 +835,7 @@ namespace FusionEngine
 			asIScriptModule *module = ctxGetModule(context);
 			ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(module, decl);
 
-			boost::signals2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+			boost::signals2::connection c = obj->SigDebug.connect( std::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
 			slot->HoldConnection(c);
 
 			return slot;
@@ -846,7 +848,7 @@ namespace FusionEngine
 	{
 		ScriptedSlotWrapper *slot = new ScriptedSlotWrapper(slot_object, "void ProcessEvent(DebugEvent@)");
 
-		boost::signals2::connection c = obj->SigDebug.connect( boost::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
+		boost::signals2::connection c = obj->SigDebug.connect( std::bind(&ScriptedSlotWrapper::Callback<DebugEvent&>, slot, _1) );
 		slot->HoldConnection(c);
 
 		return slot;

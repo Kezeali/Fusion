@@ -46,7 +46,7 @@ namespace FusionEngine
 		m_Log = Logger::getSingleton().OpenLog("Network");
 	}
 
-	void DebugPacketHandler::HandlePacket(Packet *packet)
+	void DebugPacketHandler::HandlePacket(RakNet::Packet *packet)
 	{
 		if (packet->length > 0)
 			m_Log->AddEntry("Unhandled packet arrived: " + boost::lexical_cast<std::string>(packet->data[0]), LOG_TRIVIAL);

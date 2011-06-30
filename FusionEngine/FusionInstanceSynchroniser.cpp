@@ -187,10 +187,11 @@ namespace FusionEngine
 				sendInstancingMessage(requester->GetID(), id, type, name, owner_id);
 			}
 
-			EntityPtr entity = m_Factory->InstanceEntity(type);
+			EntityPtr entity = m_Factory->InstanceEntity(type, Vector2::zero(), 0.f);
 
 			entity->SetID(id);
 			entity->SetOwnerID(owner_id);
+			entity->_setName(name);
 
 			m_EntityManager->AddEntity(entity);
 
@@ -278,7 +279,7 @@ namespace FusionEngine
 				return;
 			}
 
-			EntityPtr entity = m_Factory->InstanceEntity(entityType);
+			EntityPtr entity = m_Factory->InstanceEntity(entityType, Vector2::zero(), 0.f);
 			if (!entity)
 				FSN_EXCEPT(InstanceSyncException, "Unknown Entity type " + entityType);
 

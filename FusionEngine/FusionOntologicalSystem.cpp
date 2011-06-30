@@ -61,82 +61,82 @@
 namespace FusionEngine
 {
 
-	class SimpleEntity : public PhysicalEntity
-	{
-	public:
-		SimpleEntity(const std::string &name)
-			: PhysicalEntity(name)
-		{
-			ScriptManager *manager = ScriptManager::getSingletonPtr();
-			if (manager != NULL && manager->GetEnginePtr() != NULL)
-				manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
-		}
+	//class SimpleEntity : public PhysicalEntity
+	//{
+	//public:
+	//	SimpleEntity(const std::string &name)
+	//		: PhysicalEntity(name)
+	//	{
+	//		ScriptManager *manager = ScriptManager::getSingletonPtr();
+	//		if (manager != NULL && manager->GetEnginePtr() != NULL)
+	//			manager->GetEnginePtr()->NotifyGarbageCollectorOfNewObject(this, s_TypeId);
+	//	}
 
-		virtual ~SimpleEntity()
-		{
-			SendToConsole(GetName() + " was deleted");
-		}
+	//	virtual ~SimpleEntity()
+	//	{
+	//		SendToConsole(GetName() + " was deleted");
+	//	}
 
-		virtual std::string GetType() const { return "Simple"; }
+	//	virtual std::string GetType() const { return "Simple"; }
 
-		virtual void OnSpawn()
-		{
-			SendToConsole(GetName() + " spawned");
-		}
-		virtual void Update(float split)
-		{
-		}
+	//	virtual void OnSpawn()
+	//	{
+	//		SendToConsole(GetName() + " spawned");
+	//	}
+	//	virtual void Update(float split)
+	//	{
+	//	}
 
-		virtual int GetPropertyType(unsigned int index) const
-		{
-			return pt_none;
-		}
+	//	virtual int GetPropertyType(unsigned int index) const
+	//	{
+	//		return pt_none;
+	//	}
 
-		virtual unsigned int GetPropertyArraySize(unsigned int index) const
-		{
-			return 0;
-		}
+	//	virtual unsigned int GetPropertyArraySize(unsigned int index) const
+	//	{
+	//		return 0;
+	//	}
 
-		virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const
-		{
-			return NULL;
-		}
+	//	virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const
+	//	{
+	//		return NULL;
+	//	}
 
-		virtual void OnStreamIn()
-		{
-			SendToConsole(GetName() + " streamed in");
-		}
-		virtual void OnStreamOut()
-		{
-			SendToConsole(GetName() + " streamed out");
-		}
+	//	virtual void OnStreamIn()
+	//	{
+	//		SendToConsole(GetName() + " streamed in");
+	//	}
+	//	virtual void OnStreamOut()
+	//	{
+	//		SendToConsole(GetName() + " streamed out");
+	//	}
 
-		//! Save state to buffer
-		virtual void SerialiseState(SerialisedData &state, bool local) const
-		{
-		}
+	//	//! Save state to buffer
+	//	virtual void SerialiseState(SerialisedData &state, bool local) const
+	//	{
+	//	}
 
-		//! Read state from buffer
-		virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
-		{
-			return 0;
-		}
-	};
+	//	//! Read state from buffer
+	//	virtual size_t DeserialiseState(const SerialisedData& state, bool local, const EntityDeserialiser &entity_deserialiser)
+	//	{
+	//		return 0;
+	//	}
+	//};
 
-	class SimpleInstancerTest : public EntityInstancer
-	{
-	public:
-		SimpleInstancerTest()
-			: EntityInstancer("Simple")
-		{
-		}
+	//class SimpleInstancerTest : public EntityInstancer
+	//{
+	//public:
+	//	SimpleInstancerTest()
+	//		: EntityInstancer("Simple")
+	//	{
+	//	}
 
-		//! Returns a Simple object
-		virtual Entity *InstanceEntity(const std::string &name)
-		{
-			return new SimpleEntity(name);
-		}
-	};
+	//	//! Returns a Simple object
+	//	virtual Entity *InstanceEntity(const std::string &name)
+	//	{
+	//		return new SimpleEntity(name);
+	//	}
+	//};
 
 	const std::string s_OntologicalSystemName = "Entities";
 
@@ -151,7 +151,7 @@ namespace FusionEngine
 		ScriptManager *manager = ScriptManager::getSingletonPtr();
 		manager->RegisterGlobalObject("System system", this);
 
-		m_PlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(boost::bind(&OntologicalSystem::onPlayerAdded, this, _1));
+		m_PlayerAddedConnection = PlayerRegistry::ConnectToPlayerAdded(std::bind(&OntologicalSystem::onPlayerAdded, this, std::placeholders::_1));
 		m_PlayerManager = new PlayerManager();
 	}
 
@@ -200,14 +200,6 @@ namespace FusionEngine
 		//m_EntitySynchroniser->EndPacket();
 		//m_EntitySynchroniser->Send();
 
-		for (ViewportArray::iterator it = m_Viewports.begin(), end = m_Viewports.end(); it != end; ++it)
-		{
-			ViewportPtr &viewport = *it;
-			const CameraPtr &camera = viewport->GetCamera();
-			if (camera)
-				camera->Update(split);
-		}
-
 		m_Streaming->Update();
 	}
 
@@ -219,7 +211,7 @@ namespace FusionEngine
 		}
 	}
 
-	void OntologicalSystem::HandlePacket(Packet *packet)
+	void OntologicalSystem::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream bitStream(packet->data, packet->length, false);
 		unsigned char packetType;
@@ -305,7 +297,7 @@ namespace FusionEngine
 		m_Module = module;
 
 		//m_ModuleConnection.disconnect();
-		//m_ModuleConnection = module->ConnectToBuild( boost::bind(&OntologicalSystem::OnModuleRebuild, this, _1) );
+		//m_ModuleConnection = module->ConnectToBuild( std::bind(&OntologicalSystem::OnModuleRebuild, this, _1) );
 	}
 
 	void OntologicalSystem::OnModuleRebuild(BuildModuleEvent& ev)
@@ -580,13 +572,13 @@ namespace FusionEngine
 	{
 		EntityPtr requester;
 		asIScriptContext* ctx = asGetActiveContext();
-		if (ctx != nullptr)
-		{
-			asIObjectType* entityBaseType = ctx->GetEngine()->GetObjectTypeById(ScriptedEntity::s_ScriptEntityTypeId);;
-			asIScriptObject* thisObj = static_cast<asIScriptObject*>( ctx->GetThisPointer() );
-			if (ScriptUtils::Inheritance::is_base_of(entityBaseType, thisObj->GetObjectType()))
-				requester = ScriptedEntity::GetAppObject(thisObj);
-		}
+		//if (ctx != nullptr)
+		//{
+		//	asIObjectType* entityBaseType = ctx->GetEngine()->GetObjectTypeById(ScriptedEntity::s_ScriptEntityTypeId);;
+		//	asIScriptObject* thisObj = static_cast<asIScriptObject*>( ctx->GetThisPointer() );
+		//	if (ScriptUtils::Inheritance::is_base_of(entityBaseType, thisObj->GetObjectType()))
+		//		requester = ScriptedEntity::GetAppObject(thisObj);
+		//}
 		obj->RequestInstance(requester, synced, type, name, owner);
 	}
 

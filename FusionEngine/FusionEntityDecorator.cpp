@@ -103,7 +103,7 @@ namespace FusionEngine
 		gc.push_modelview();
 		gc.set_translate( offset.x, offset.y );
 
-		m_Renderer->DrawEntity(m_Entity);
+		//m_Renderer->DrawEntity(m_Entity);
 
 		gc.pop_modelview();
 	}
@@ -144,7 +144,7 @@ namespace FusionEngine
 			gc.push_modelview();
 			gc.set_translate(offset.x, offset.y);
 
-			m_Renderer->DrawEntity(entity->shared_from_this());
+			//m_Renderer->DrawEntity(entity->shared_from_this());
 
 			gc.pop_modelview();
 		}

@@ -136,6 +136,7 @@ namespace FusionEngine
 		PostDraw(m_GC);
 	}
 
+	/*
 	void Renderer::Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer)
 	{
 		drawImpl(entities, viewport, layer, std::string(), 0xFFFFFFFF);
@@ -245,7 +246,7 @@ namespace FusionEngine
 		{
 			RenderablePtr &renderable = *r_it;
 			if (filter_fn(renderable))
-				renderable->Draw(m_GC, Vector2()/*entityPosition*/);
+				renderable->Draw(m_GC, Vector2());
 
 			// Bubble-sort by depth
 			if (renderable->GetDepth() < previousRenderableDepth)
@@ -254,5 +255,6 @@ namespace FusionEngine
 				previousRenderableDepth = renderable->GetDepth();
 		}
 	}
+	*/
 
 }

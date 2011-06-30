@@ -35,6 +35,8 @@
 #include "FusionRakNetwork.h"
 #include "FusionPacketHandler.h"
 
+using namespace RakNet;
+
 namespace FusionEngine
 {
 

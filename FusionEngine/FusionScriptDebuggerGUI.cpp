@@ -57,7 +57,7 @@ namespace FusionEngine
 
 		if (m_Manager != NULL)
 		{
-			m_Manager->SubscribeToDebugEvents( boost::bind(&ScriptDebuggerGui::OnDebugEvent, this, _1) );
+			m_Manager->SubscribeToDebugEvents( std::bind(&ScriptDebuggerGui::OnDebugEvent, this, std::placeholders::_1) );
 		}
 
 		return true;

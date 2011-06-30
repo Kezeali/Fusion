@@ -103,7 +103,7 @@ namespace FusionEngine
 		/*!
 		* Returns an entity object of the requested type, or NULL.
 		*/
-		EntityPtr InstanceEntity(const std::string &prefab_type);
+		EntityPtr InstanceEntity(const std::string &prefab_type, const Vector2& position, float angle);
 
 		//! Instantiates an Entity composed of the given components
 		EntityPtr InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle);
@@ -166,6 +166,8 @@ namespace FusionEngine
 		LogPtr m_Log;
 
 		std::map<std::string, ComponentInstancerPtr> m_ComponentInstancers;
+
+		std::map<std::string, std::vector<std::pair<std::string, std::string>>> m_PrefabTypes;
 
 		typedef std::tr1::unordered_set<std::string> StringSet;
 		StringSet m_UsedTypes;

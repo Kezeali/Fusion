@@ -75,12 +75,12 @@ namespace FusionEngine
 		return new Viewport();
 	}
 
-	void Viewport_ctor(float left, float top, float right, float bottom, void* mem)
+	void Viewport_ctor1(float left, float top, float right, float bottom, void* mem)
 	{
 		new (mem) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom)));
 	}
 
-	void Viewport_ctor(float left, float top, float right, float bottom, CameraPtr camera, void* mem)
+	void Viewport_ctor2(float left, float top, float right, float bottom, CameraPtr camera, void* mem)
 	{
 		new (mem) ViewportPtr(new Viewport(CL_Rectf(left, top, right, bottom), camera));
 	}

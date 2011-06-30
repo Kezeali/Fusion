@@ -52,8 +52,6 @@ namespace FusionEngine
 	
 	//! Loads maps and games.
 	/*!
-	* AND NOTHING ELSE! THAT'S WHAT THE FULLSTOP MEANS - FULL-STOP! OK!
-	*
 	* \todo Fix writing / reading ObjectIDs, since the size has changed (now 32bit)
 	*/
 	class GameMapLoader : public PacketHandler

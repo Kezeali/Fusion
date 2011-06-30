@@ -46,7 +46,7 @@ namespace FusionEngine
 	public:
 		DebugPacketHandler();
 
-		void HandlePacket(Packet *packet);
+		void HandlePacket(RakNet::Packet *packet);
 
 	protected:
 		LogPtr m_Log;

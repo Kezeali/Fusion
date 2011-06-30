@@ -36,7 +36,7 @@ namespace FusionEngine
 {
 
 	DebugDraw::DebugDraw(CL_GraphicContext gc)
-		: b2DebugDraw(),
+		: b2Draw(),
 		m_gc(gc)
 	{
 	}
@@ -203,7 +203,7 @@ namespace FusionEngine
 			m_gc.set_cliprect(viewportArea);
 
 			const CL_Vec2f &camPosition = camera->GetPosition();
-			CL_Origin camOrigin = camera->GetOrigin();
+			CL_Origin camOrigin = origin_center;//camera->GetOrigin();
 
 			CL_Vec2f viewportOffset;
 			viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));

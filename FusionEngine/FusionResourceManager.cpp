@@ -432,6 +432,8 @@ namespace FusionEngine
 	/// Private:
 	void ResourceManager::obtainResource(ResourceDataPtr &resource, const std::string& type, const std::string& path)
 	{
+		using namespace std::placeholders;
+
 		// Check whether the given resource already exists
 		ResourceMap::iterator existingEntry = m_Resources.find(path);
 		if (existingEntry != m_Resources.end() && existingEntry->second->GetPath() == path)
@@ -443,13 +445,13 @@ namespace FusionEngine
 			if (wasUnused)
 			{
 				m_Unreferenced.erase(resource.get());
-				resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
+				resource->NoReferences = std::bind(&ResourceManager::_resourceUnreferenced, this, _1);
 			}
 		}
 		else
 		{
 			resource = ResourceDataPtr(new ResourceContainer(type, path, nullptr));
-			resource->NoReferences = boost::bind(&ResourceManager::_resourceUnreferenced, this, _1);
+			resource->NoReferences = std::bind(&ResourceManager::_resourceUnreferenced, this, _1);
 
 			m_Resources[path] = resource;
 		}

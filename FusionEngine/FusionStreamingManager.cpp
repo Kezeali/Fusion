@@ -484,7 +484,7 @@ namespace FusionEngine
 							Cell &cell = m_Cells[i++];
 							for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 							{
-								const EntityPtr &entity = cell_it->first; 
+								const EntityPtr &entity = cell_it->first->shared_from_this(); 
 								CellEntry &cellEntry = cell_it->second;
 								const Vector2 &entityPosition = entity->GetPosition();
 

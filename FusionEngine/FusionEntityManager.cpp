@@ -44,6 +44,8 @@
 // For script registration (the script method EntityManager::instance() returns a script object)
 #include "FusionScriptedEntity.h"
 
+using namespace std::placeholders;
+using namespace RakNet;
 
 namespace FusionEngine
 {
@@ -52,7 +54,7 @@ namespace FusionEngine
 		: m_LocalManager(input_manager),
 		m_ChangedCount(0)
 	{
-		m_InputChangedConnection = m_LocalManager->SignalInputChanged.connect( boost::bind(&ConsolidatedInput::onInputChanged, this, _1) );
+		m_InputChangedConnection = m_LocalManager->SignalInputChanged.connect( std::bind(&ConsolidatedInput::onInputChanged, this, _1) );
 	}
 
 	ConsolidatedInput::~ConsolidatedInput()
@@ -193,7 +195,7 @@ namespace FusionEngine
 			m_PacketData.Write(entity->GetID());
 
 			SerialisedData state;
-			entity->SerialiseState(state, false);
+			//entity->SerialiseState(state, false);
 
 			//m_PacketData.Write(packetData.State.mask);
 			m_PacketData.Write(state.data.length());
@@ -394,7 +396,7 @@ namespace FusionEngine
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
 
-		m_StreamingManager->SignalActivationEvent.connect(boost::bind(&EntityManager::OnActivationEvent, this, _1));
+		m_StreamingManager->SignalActivationEvent.connect(std::bind(&EntityManager::OnActivationEvent, this, _1));
 	}
 
 	EntityManager::~EntityManager()
@@ -434,7 +436,7 @@ namespace FusionEngine
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
-		if (entity->GetName() == "default")
+		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
 
 		IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
@@ -542,7 +544,7 @@ namespace FusionEngine
 
 	EntityPtr EntityManager::GetEntity(const std::string &name, bool throwIfNotFound) const
 	{
-		//IDEntityMap::const_iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), boost::bind(&isNamed, _1, name));
+		//IDEntityMap::const_iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), std::bind(&isNamed, _1, name));
 		NameEntityMap::const_iterator _where = m_EntitiesByName.find(name);
 		if (_where == m_EntitiesByName.end())
 			if (throwIfNotFound)
@@ -719,32 +721,32 @@ namespace FusionEngine
 	}
 
 	// Hack to animate sprites:
-	typedef std::set<uintptr_t> ptr_set;
-	void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
-	{
-		RenderableArray &renderables = entity->GetRenderables();
-		for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
-		{
-			RenderablePtr &abstractRenderable = *it;
-			RenderableSprite *renderable = dynamic_cast<RenderableSprite*>(abstractRenderable.get());
-			if (renderable != nullptr)
-			{
-				if (!renderable->IsPaused() && renderable->GetSprite()->is_null())
-				{
-					std::pair<ptr_set::iterator, bool> result = updated_sprites.insert( reinterpret_cast<uintptr_t>(renderable) );
-					if (result.second)
-						renderable->GetSprite()->update((int)(split * 1000.f));
-				}
-				renderable->UpdateAABB();
-			}
-		}
-	}
+	//typedef std::set<uintptr_t> ptr_set;
+	//void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
+	//{
+	//	RenderableArray &renderables = entity->GetRenderables();
+	//	for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
+	//	{
+	//		RenderablePtr &abstractRenderable = *it;
+	//		RenderableSprite *renderable = dynamic_cast<RenderableSprite*>(abstractRenderable.get());
+	//		if (renderable != nullptr)
+	//		{
+	//			if (!renderable->IsPaused() && renderable->GetSprite()->is_null())
+	//			{
+	//				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert( reinterpret_cast<uintptr_t>(renderable) );
+	//				if (result.second)
+	//					renderable->GetSprite()->update((int)(split * 1000.f));
+	//			}
+	//			renderable->UpdateAABB();
+	//		}
+	//	}
+	//}
 
 	void EntityManager::updateEntities(EntityArray &entityList, float split)
 	{
 		bool entityRemoved = false;
 
-		ptr_set updatedSprites;
+		//ptr_set updatedSprites;
 
 		auto playerAddedEvents = m_PlayerAddedEvents;
 		m_PlayerAddedEvents.clear();
@@ -787,7 +789,7 @@ namespace FusionEngine
 						for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
 							entity->OnPlayerAdded(ev_it->first, ev_it->second);
 						//entity->Update(split);
-						updateRenderables(entity, split, updatedSprites);
+						//updateRenderables(entity, split, updatedSprites);
 					}
 					if (CheckState(domainIndex, DS_STREAMING))
 						m_StreamingManager->OnUpdated(entity, split);
@@ -860,7 +862,7 @@ namespace FusionEngine
 
 	void EntityManager::Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer)
 	{
-		renderer->Draw(m_ActiveEntities, viewport, layer);
+		//renderer->Draw(m_ActiveEntities, viewport, layer);
 	}
 
 	EntityArray& EntityManager::GetActiveEntities()
@@ -886,7 +888,7 @@ namespace FusionEngine
 	void EntityManager::SetModule(ModulePtr module)
 	{
 		m_ModuleConnection.disconnect();
-		m_ModuleConnection = module->ConnectToBuild( boost::bind(&EntityManager::OnModuleRebuild, this, _1) );
+		m_ModuleConnection = module->ConnectToBuild( std::bind(&EntityManager::OnModuleRebuild, this, _1) );
 	}
 
 	void EntityManager::OnModuleRebuild(BuildModuleEvent& ev)
