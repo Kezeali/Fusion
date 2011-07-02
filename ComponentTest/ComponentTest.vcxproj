@@ -1,0 +1,314 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ComponentTest</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonProperties.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <MinimalRebuild>false</MinimalRebuild>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>angelscriptd.lib;physfs.lib;yaml-cpp.lib;Box2Dd.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+    </Link>
+    <PostBuildEvent>
+      <Command>call $(OutDir)setup_multiplayer_debug.cmd</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Setup multiplayer debug...</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>angelscript.lib;physfs.lib;Box2d.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\FusionEngine\FusionAssert.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionAudioLoader.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCamera.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCmdOptions.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionConsole.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionConsoleStdOutWriter.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionContextMenu.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionElementSelectableDataGrid.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntity.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityDecorator.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityDecoratorInstancer.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityDefinitionData.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityDeserialiser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityFactory.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntityManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionException.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionFlagRegistry.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionGameMapLoader.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionGUI.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionIDStack.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionImageLoader.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionInputDefinitionLoader.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionInputHandler.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionLog.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionLogFileConsole.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionLogger.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionLogPhysFS.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionMessageBox.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionNetworkManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionNetworkSystem.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionOntologicalSystem.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPacketDispatcher.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPhysFS.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPhysFSIODeviceProvider.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPhysFSIOStream.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPhysicsDebugDraw.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPhysicsFixture.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPlayerInput.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPlayerManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPlayerRegistry.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionPrecompiledHeaders.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionRakNetwork.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRefCounted.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRenderable.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRenderer.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionResource.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionResourceManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRocketInterface.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptDebuggerGUI.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptedConsoleCommand.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptedSlots.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptModule.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptReference.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptSound.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionScriptVector.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionSharedPropertyCollection.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionSpriteDefinition.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionState.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionStateManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionStreamingManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionTagFlagDictionary.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionViewport.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptarray.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptstring.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
+    <ClCompile Include="..\tinyxml\ticpp.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinystr.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxml.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxmlerror.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\tinyxml\tinyxmlparser.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\FusionEngine\FusionAssert.h" />
+    <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionBoostSignals2.h" />
+    <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionCamera.h" />
+    <ClInclude Include="..\FusionEngine\FusionClientOptions.h" />
+    <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionCmdOptions.h" />
+    <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
+    <ClInclude Include="..\FusionEngine\FusionCommon.h" />
+    <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
+    <ClInclude Include="..\FusionEngine\FusionConsole.h" />
+    <ClInclude Include="..\FusionEngine\FusionConsoleStdOutWriter.h" />
+    <ClInclude Include="..\FusionEngine\FusionContextMenu.h" />
+    <ClInclude Include="..\FusionEngine\FusionEasyPacket.h" />
+    <ClInclude Include="..\FusionEngine\FusionElementSelectableDataGrid.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntity.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityDecorator.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityDecoratorInstancer.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityDefinitionData.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityDeserialiser.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityFactory.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntityManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionException.h" />
+    <ClInclude Include="..\FusionEngine\FusionExceptionFactory.h" />
+    <ClInclude Include="..\FusionEngine\FusionFlagRegistry.h" />
+    <ClInclude Include="..\FusionEngine\FusionGameMapLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionGUI.h" />
+    <ClInclude Include="..\FusionEngine\FusionHashable.h" />
+    <ClInclude Include="..\FusionEngine\FusionIDStack.h" />
+    <ClInclude Include="..\FusionEngine\FusionImageLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionInputDefinitionLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionInputHandler.h" />
+    <ClInclude Include="..\FusionEngine\FusionInstanceSynchroniser.h" />
+    <ClInclude Include="..\FusionEngine\FusionLinkedNode.h" />
+    <ClInclude Include="..\FusionEngine\FusionLog.h" />
+    <ClInclude Include="..\FusionEngine\FusionLogFileConsole.h" />
+    <ClInclude Include="..\FusionEngine\FusionLogger.h" />
+    <ClInclude Include="..\FusionEngine\FusionLogPhysFS.h" />
+    <ClInclude Include="..\FusionEngine\FusionMaths.h" />
+    <ClInclude Include="..\FusionEngine\FusionMessageBox.h" />
+    <ClInclude Include="..\FusionEngine\FusionNetDestinationHelpers.h" />
+    <ClInclude Include="..\FusionEngine\FusionNetworkManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionNetworkSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionNetworkTypes.h" />
+    <ClInclude Include="..\FusionEngine\FusionOntologicalSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionPacketDispatcher.h" />
+    <ClInclude Include="..\FusionEngine\FusionPacketHandler.h" />
+    <ClInclude Include="..\FusionEngine\FusionPaths.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysFS.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysFSIODeviceProvider.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysFSIOStream.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicalComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicsCallback.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicsDebugDraw.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicsFixture.h" />
+    <ClInclude Include="..\FusionEngine\FusionPhysicsScriptTypes.h" />
+    <ClInclude Include="..\FusionEngine\FusionPlayerInfo.h" />
+    <ClInclude Include="..\FusionEngine\FusionPlayerInput.h" />
+    <ClInclude Include="..\FusionEngine\FusionPlayerManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionPlayerRegistry.h" />
+    <ClInclude Include="..\FusionEngine\FusionPrerequisites.h" />
+    <ClInclude Include="..\FusionEngine\FusionRakNetwork.h" />
+    <ClInclude Include="..\FusionEngine\FusionRefCounted.h" />
+    <ClInclude Include="..\FusionEngine\FusionRender2DComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionRenderable.h" />
+    <ClInclude Include="..\FusionEngine\FusionRenderer.h" />
+    <ClInclude Include="..\FusionEngine\FusionResource.h" />
+    <ClInclude Include="..\FusionEngine\FusionResourceLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionResourceManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionResourcePointer.h" />
+    <ClInclude Include="..\FusionEngine\FusionRocketInterface.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptConsoleCallback.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptDebuggerGUI.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptedConsoleCommand.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptedSlots.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptModule.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptPreprocessor.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptReference.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptSound.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptTypeRegistrationUtils.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptVector.h" />
+    <ClInclude Include="..\FusionEngine\FusionSerialisationHelper.h" />
+    <ClInclude Include="..\FusionEngine\FusionSerialisedData.h" />
+    <ClInclude Include="..\FusionEngine\FusionSharedPropertyCollection.h" />
+    <ClInclude Include="..\FusionEngine\FusionSharedPropertyTypes.h" />
+    <ClInclude Include="..\FusionEngine\FusionSingleton.h" />
+    <ClInclude Include="..\FusionEngine\FusionSlotContainer.h" />
+    <ClInclude Include="..\FusionEngine\FusionSpriteDefinition.h" />
+    <ClInclude Include="..\FusionEngine\FusionStableHeaders.h" />
+    <ClInclude Include="..\FusionEngine\FusionState.h" />
+    <ClInclude Include="..\FusionEngine\FusionStateManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionStateMessage.h" />
+    <ClInclude Include="..\FusionEngine\FusionStdHeaders.h" />
+    <ClInclude Include="..\FusionEngine\FusionStreamedResourceUser.h" />
+    <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
+    <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
+    <ClInclude Include="..\FusionEngine\FusionTagFlagDictionary.h" />
+    <ClInclude Include="..\FusionEngine\FusionThreadSafeProperty.h" />
+    <ClInclude Include="..\FusionEngine\FusionTypes.h" />
+    <ClInclude Include="..\FusionEngine\FusionVector2.h" />
+    <ClInclude Include="..\FusionEngine\FusionViewport.h" />
+    <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
+    <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
+    <ClInclude Include="..\FusionEngine\FusionXML.h" />
+    <ClInclude Include="..\FusionEngine\scriptarray.h" />
+    <ClInclude Include="..\FusionEngine\scriptmath.h" />
+    <ClInclude Include="..\FusionEngine\scriptstdvector.h" />
+    <ClInclude Include="..\FusionEngine\scriptstring.h" />
+    <ClInclude Include="..\tinyxml\ticpp.h" />
+    <ClInclude Include="..\tinyxml\ticpprc.h" />
+    <ClInclude Include="..\tinyxml\tinystr.h" />
+    <ClInclude Include="..\tinyxml\tinyxml.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

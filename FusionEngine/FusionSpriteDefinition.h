@@ -46,24 +46,21 @@ namespace FusionEngine
 	{
 	public:
 		SpriteAnimation();
-		SpriteAnimation(TiXmlDocument* doc);
+		SpriteAnimation(CL_IODevice dev);
 
-		void Load(TiXmlDocument* doc);
+		void Load(CL_IODevice dev);
+
+		std::vector<CL_Rect>& GetFrames() { return m_Frames; }
+		std::vector<std::pair<int, double>>& GetFrameDelays() { return m_FrameDelays; }
+		std::vector<std::pair<int, Vector2>>& GetFrameOffsets() { return m_FrameOffsets; }
+
+		double GetDefaultDelay() const { return m_DefaultDelay; }
+
 	private:
-		struct Frame
-		{
-			CL_Rect cell;
-
-			int xpos, ypos, width, height;
-
-			Frame()
-			{}
-
-			Frame(int x, int y, int width, int height)
-			{}
-		};
-
 		std::vector<CL_Rect> m_Frames;
+		std::vector<std::pair<int, double>> m_FrameDelays;
+		std::vector<std::pair<int, Vector2>> m_FrameOffsets;
+		double m_DefaultDelay;
 	};
 	
 	//! Sprite factory
@@ -75,10 +72,14 @@ namespace FusionEngine
 	public:
 		SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation);
 
+		void GenerateDescription();
+
 		CL_Sprite CreateSprite(CL_GraphicContext &gc);
 
 		ResourcePointer<CL_Texture> m_Texture;
 		ResourcePointer<SpriteAnimation> m_Animation;
+
+		CL_SpriteDescription m_Description;
 	};
 
 	//! Used when loading sprite files

@@ -901,8 +901,8 @@ namespace FusionEngine
 
 	void EntityManager_AddEntity(asIScriptObject *script_entity, EntityManager *obj)
 	{
-		obj->AddEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
-		script_entity->Release();
+		//obj->AddEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
+		//script_entity->Release();
 	}
 
 	void EntityManager_RemoveEntity(const std::string &name, EntityManager *obj)
@@ -917,8 +917,8 @@ namespace FusionEngine
 
 	void EntityManager_RemoveEntity(asIScriptObject *script_entity, EntityManager *obj)
 	{
-		obj->RemoveEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
-		script_entity->Release();
+		//obj->RemoveEntity( EntityPtr(ScriptedEntity::GetAppObject(script_entity)) );
+		//script_entity->Release();
 	}
 
 	void EntityManager::Register(asIScriptEngine *engine)
@@ -952,7 +952,7 @@ namespace FusionEngine
 	{
 		std::stringstream stream;
 		if (entity->IsPseudoEntity())
-			stream << "__entity_pseudo_" << (unsigned int)entity.get();
+			stream << "__entity_pseudo_" << reinterpret_cast<uintptr_t>(entity.get());
 		else
 			stream << "__entity_id_" << entity->GetID();
 		return stream.str();

@@ -193,7 +193,7 @@ namespace FusionEngine
 	{
 		//m_EntitySynchroniser->BeginPacket();
 
-		m_PhysWorld->Step(split);
+		//m_PhysWorld->Step(split);
 
 		m_EntityManager->Update(split);
 
@@ -533,13 +533,13 @@ namespace FusionEngine
 
 	void OntologicalSystem::EnablePhysicsDebugDraw(ViewportPtr viewport)
 	{
-		m_PhysWorld->EnableDebugDraw();
-		m_PhysWorld->SetDebugDrawViewport(viewport);
+		//m_PhysWorld->EnableDebugDraw();
+		//m_PhysWorld->SetDebugDrawViewport(viewport);
 	}
 
 	void OntologicalSystem::DisablePhysicsDebugDraw()
 	{
-		m_PhysWorld->EnableDebugDraw(false);
+		//m_PhysWorld->EnableDebugDraw(false);
 	}
 
 

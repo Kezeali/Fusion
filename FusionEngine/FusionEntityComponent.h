@@ -224,7 +224,6 @@ namespace FusionEngine
 		//! Cotr
 		IComponent()
 		{
-			InitInterfaceList();
 		}
 		//! Destructor
 		virtual ~IComponent() {}
@@ -234,9 +233,10 @@ namespace FusionEngine
 
 		virtual std::string GetType() const = 0;
 
-		const std::set<std::string>& GetInterfaces() const
+		const std::set<std::string>& GetInterfaces()
 		{
 			//FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
+			InitInterfaceList();
 			return m_Interfaces;
 		}
 
@@ -265,7 +265,7 @@ namespace FusionEngine
 	};
 
 #define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
-#define FSN_LIST_INTERFACES(interfaces) virtual void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
+#define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
 
 //	class InsertInterfaceName
 //	{

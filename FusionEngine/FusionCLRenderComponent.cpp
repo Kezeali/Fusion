@@ -277,9 +277,12 @@ namespace FusionEngine
 
 	void CLSprite::SetAlignmentOrigin(CL_Origin origin)
 	{
-		CL_Origin ignore; int x, y;
-		m_Sprite.get_alignment(ignore, x, y);
-		m_Sprite.set_alignment(origin, x, y);
+		if (!m_Sprite.is_null())
+		{
+			CL_Origin ignore; int x, y;
+			m_Sprite.get_alignment(ignore, x, y);
+			m_Sprite.set_alignment(origin, x, y);
+		}
 
 		m_SerialisationHelper.markChanged(PropsIdx::AlignmentOrigin);
 	}
@@ -298,9 +301,12 @@ namespace FusionEngine
 
 	void CLSprite::SetAlignmentOffset(const Vector2i& offset)
 	{
-		CL_Origin origin; int x, y;
-		m_Sprite.get_alignment(origin, x, y);
-		m_Sprite.set_alignment(origin, offset.x, offset.y);
+		if (!m_Sprite.is_null())
+		{
+			CL_Origin origin; int x, y;
+			m_Sprite.get_alignment(origin, x, y);
+			m_Sprite.set_alignment(origin, offset.x, offset.y);
+		}
 
 		m_SerialisationHelper.markChanged(PropsIdx::AlignmentOffset);
 	}
@@ -319,9 +325,12 @@ namespace FusionEngine
 
 	void CLSprite::SetRotationOrigin(CL_Origin origin)
 	{
-		CL_Origin ignore; int x, y;
-		m_Sprite.get_rotation_hotspot(ignore, x, y);
-		m_Sprite.set_rotation_hotspot(origin, x, y);
+		if (!m_Sprite.is_null())
+		{
+			CL_Origin ignore; int x, y;
+			m_Sprite.get_rotation_hotspot(ignore, x, y);
+			m_Sprite.set_rotation_hotspot(origin, x, y);
+		}
 
 		m_SerialisationHelper.markChanged(PropsIdx::RotationOrigin);
 	}
@@ -340,9 +349,12 @@ namespace FusionEngine
 
 	void CLSprite::SetRotationOffset(const Vector2i& offset)
 	{
-		CL_Origin origin; int x, y;
-		m_Sprite.get_rotation_hotspot(origin, x, y);
-		m_Sprite.set_rotation_hotspot(origin, offset.x, offset.y);
+		if (!m_Sprite.is_null())
+		{
+			CL_Origin origin; int x, y;
+			m_Sprite.get_rotation_hotspot(origin, x, y);
+			m_Sprite.set_rotation_hotspot(origin, offset.x, offset.y);
+		}
 
 		m_SerialisationHelper.markChanged(PropsIdx::RotationOffset);
 	}
@@ -361,7 +373,8 @@ namespace FusionEngine
 
 	void CLSprite::SetColour(const CL_Colorf& val)
 	{
-		m_Sprite.set_color(val);
+		if (!m_Sprite.is_null())
+			m_Sprite.set_color(val);
 
 		m_SerialisationHelper.markChanged(PropsIdx::Colour);
 	}
@@ -374,9 +387,26 @@ namespace FusionEngine
 			return Colour.Get();
 	}
 
+	void CLSprite::SetAlpha(float alpha)
+	{
+		if (!m_Sprite.is_null())
+			m_Sprite.set_alpha(alpha);
+
+		m_SerialisationHelper.markChanged(PropsIdx::Alpha);
+	}
+
+	float CLSprite::GetAlpha() const
+	{
+		if (!m_Sprite.is_null())
+			return m_Sprite.get_alpha();
+		else
+			return Alpha.Get();
+	}
+
 	void CLSprite::SetScale(const Vector2& val)
 	{
-		m_Sprite.set_scale(val.x, val.y);
+		if (!m_Sprite.is_null())
+			m_Sprite.set_scale(val.x, val.y);
 
 		m_SerialisationHelper.markChanged(PropsIdx::Scale);
 	}
@@ -395,7 +425,8 @@ namespace FusionEngine
 
 	void CLSprite::SetBaseAngle(float val)
 	{
-		m_Sprite.set_base_angle(CL_Angle(val, cl_radians));
+		if (!m_Sprite.is_null())
+			m_Sprite.set_base_angle(CL_Angle(val, cl_radians));
 
 		m_SerialisationHelper.markChanged(PropsIdx::BaseAngle);
 	}

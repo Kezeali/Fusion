@@ -33,8 +33,211 @@
 #include "FusionPhysFS.h"
 #include "FusionXml.h"
 
+//#include "FusionPhysFSIOStream.h"
+#include <boost/iostreams/stream.hpp>
+
+#include <yaml-cpp/yaml.h>
+
 namespace FusionEngine
 {
+
+	namespace IO
+	{
+
+		class CLStreamDevice
+		{
+		public:
+			struct category
+				: boost::iostreams::seekable_device_tag/*, boost::iostreams::flushable_tag*/, boost::iostreams::closable_tag
+			{};
+			typedef char char_type;
+
+			CLStreamDevice(CL_IODevice dev);
+
+			void close();
+
+			std::streamsize read(char* s, std::streamsize n);
+			std::streamsize write(const char* s, std::streamsize n);
+			std::streampos seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way);
+
+		private:
+			CL_IODevice m_Device;
+		};
+
+		typedef boost::iostreams::stream<CLStreamDevice> CLStream;
+
+		CLStreamDevice::CLStreamDevice(CL_IODevice dev)
+			: m_Device(dev)
+		{
+			if (m_Device.is_null())
+				FSN_EXCEPT(FileSystemException, "Tried to load data from an invalid source");
+		}
+
+		void CLStreamDevice::close()
+		{
+			m_Device = CL_IODevice();
+		}
+
+		std::streamsize CLStreamDevice::read(char* s, std::streamsize n)
+		{
+			int ret = m_Device.read(static_cast<void*>(s), (int)n);
+			return std::streamsize(ret);
+		}
+
+		std::streamsize CLStreamDevice::write(const char* s, std::streamsize n)
+		{
+			int ret = m_Device.write(static_cast<const void*>(s), (int)n);
+			return std::streamsize(ret);
+		}
+
+		std::streampos CLStreamDevice::seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way)
+		{
+			CL_IODevice::SeekMode clSeekMode;
+			switch (way)
+			{
+			case std::ios_base::cur:
+				clSeekMode = CL_IODevice::seek_cur;
+				break;
+			case std::ios_base::end:
+				clSeekMode = CL_IODevice::seek_end;
+				break;
+			default:
+				clSeekMode = CL_IODevice::seek_set;
+				break;
+			};
+
+			if (m_Device.seek((int)off, clSeekMode))
+				FSN_EXCEPT(FileSystemException, "Tried to go to an invalid position within a data-source");
+
+			return std::streampos(m_Device.get_position());
+		}
+
+	}
+
+	SpriteAnimation::SpriteAnimation()
+		: m_DefaultDelay(0.0f)
+	{
+	}
+
+	SpriteAnimation::SpriteAnimation(CL_IODevice dev)
+		: m_DefaultDelay(0.0f)
+	{
+		Load(dev);
+	}
+
+	void operator >> (const YAML::Node& node, CL_Rect& rect)
+	{
+		node[0] >> rect.left;
+		node[1] >> rect.top;
+		node[2] >> rect.right;
+		node[3] >> rect.bottom;
+	}
+
+	void operator >> (const YAML::Node& node, Vector2& vec)
+	{
+		node[0] >> vec.x;
+		node[1] >> vec.y;
+	}
+
+	struct FrameInfo
+	{
+		CL_Rect frameRect;
+		double delay;
+		Vector2 offset;
+	};
+
+	void operator >> (const YAML::Node& node, FrameInfo& frame_info)
+	{
+		node["cell"] >> frame_info.frameRect;
+		node["delay"] >> frame_info.delay;
+		node["offset"] >> frame_info.offset;
+	}
+
+	void SpriteAnimation::Load(CL_IODevice dev)
+	{
+		IO::CLStream stream(dev);
+		YAML::Parser p(stream);
+		YAML::Node doc;
+		if (p.GetNextDocument(doc))
+		{
+			if (auto node = doc.FindValue("default_delay"))
+				*node >> m_DefaultDelay;
+			else if (auto node = doc.FindValue("default_frame_time"))
+				*node >> m_DefaultDelay;
+			else if (auto node = doc.FindValue("framerate"))
+			{
+				double framerate;
+				*node >> framerate;
+				m_DefaultDelay = 1.0 / framerate;
+			}
+
+			auto& framesNode = doc["frames"];
+			m_Frames.resize(framesNode.size());
+			for (unsigned i = 0; i < framesNode.size(); ++i)
+			{
+				auto& frameNode = doc[i];
+
+				auto& frameRect = m_Frames.at(i);
+				frameNode["cell"] >> frameRect;
+
+				if (auto node = frameNode.FindValue("delay"))
+				{
+					double delay;
+					*node >> delay;
+					m_FrameDelays.push_back(std::make_pair(i, delay));
+				}
+				else if (auto node = frameNode.FindValue("frame_time"))
+				{
+					double delay;
+					*node >> delay;
+					m_FrameDelays.push_back(std::make_pair(i, delay));
+				}
+
+				if (auto node = frameNode.FindValue("offset"))
+				{
+					Vector2 offset;
+					*node >> offset;
+					m_FrameOffsets.push_back(std::make_pair(i, offset));
+				}
+			}
+		}
+	}
+
+	SpriteDefinition2::SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)
+		: m_Texture(texture),
+		m_Animation(animation)
+	{
+		GenerateDescription();
+	}
+
+	void SpriteDefinition2::GenerateDescription()
+	{
+		if (!m_Animation.IsLoaded())
+		{
+			m_Description.add_frame(*m_Texture.Get());
+		}
+		else
+		{
+			auto& frames = m_Animation->GetFrames();
+			m_Description.add_frames(*m_Texture.Get(), frames.data(), frames.size());
+
+			auto& frameDelays = m_Animation->GetFrameDelays();
+			for (auto it = frameDelays.begin(), end = frameDelays.end(); it != end; ++it)
+			{
+				m_Description.set_frame_delay(it->first, it->second);
+			}
+		}
+	}
+
+	CL_Sprite SpriteDefinition2::CreateSprite(CL_GraphicContext &gc)
+	{
+		CL_Sprite sprite(gc, m_Description);
+		if (m_Animation.IsLoaded())
+		{
+			sprite.set_delay((int)(m_Animation->GetDefaultDelay() * 1000 + 0.5));
+		}
+		return sprite;
+	}
 
 	void LoadSpriteDefinition(SpriteDefinition &def, const std::string &filepath, CL_VirtualDirectory vdir)
 	{

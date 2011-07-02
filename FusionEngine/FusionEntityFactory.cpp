@@ -45,7 +45,7 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysicalEntityManager.h"
 #include "FusionResourceManager.h"
-#include "FusionScriptedEntity.h"
+//#include "FusionScriptedEntity.h"
 #include "FusionScriptSound.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionXml.h"
@@ -113,7 +113,7 @@ namespace FusionEngine
 		//! Stores data from the Dependencies element
 		typedef StringVector DependenciesMap;
 
-		typedef std::map<std::string, ScriptedEntity::Property> PropertiesMap;
+		//typedef std::map<std::string, ScriptedEntity::Property> PropertiesMap;
 
 	public:
 		//! Basic CTOR
@@ -151,9 +151,9 @@ namespace FusionEngine
 		//! Returns UtilityScript filenames that were listed in the Dependencies element
 		const DependenciesMap &GetScriptDependencies() const;
 		//! Returns streamed-resources collection
-		ResourcesMap &GetStreamedResources();
+		//ResourcesMap &GetStreamedResources();
 		//! Properties array that is passed to Entities created
-		ScriptedEntity::PropertiesArray &GetSyncProperties();
+		//ScriptedEntity::PropertiesArray &GetSyncProperties();
 
 		//! Returns synchronised-properties collection
 		/*!
@@ -163,7 +163,7 @@ namespace FusionEngine
 		* \see GetStreamedResources()
 		* 
 		*/
-		PropertiesMap &GetSyncPropertiesMap();
+		//PropertiesMap &GetSyncPropertiesMap();
 
 		//! Returns true if the entity has a body definition
 		bool HasBody() const;
@@ -199,10 +199,10 @@ namespace FusionEngine
 		DependenciesMap m_EntityDependencies;
 		DependenciesMap m_ScriptDependencies;
 
-		PropertiesMap m_SyncPropertiesMap;
-		ScriptedEntity::PropertiesArray m_SyncProperties;
+		//PropertiesMap m_SyncPropertiesMap;
+		//ScriptedEntity::PropertiesArray m_SyncProperties;
 
-		ResourcesMap m_Resources;
+		//ResourcesMap m_Resources;
 
 		bool m_HasBody;
 		b2BodyDef m_BodyDef;
@@ -286,6 +286,7 @@ namespace FusionEngine
 
 	void EntityDefinition::parseElement_Sync(ticpp::Element *sync_element)
 	{
+		/*
 		std::string attribute;
 		ticpp::Iterator< ticpp::Element > child;
 		for (child = child.begin( sync_element ); child != child.end(); child++)
@@ -303,6 +304,7 @@ namespace FusionEngine
 
 			m_SyncPropertiesMap[propertyDefinition.name] = propertyDefinition;
 		}
+		*/
 	}
 
 	std::string getXmlRootTagForResourceType(ticpp::Element *inline_resource_element)
@@ -351,6 +353,7 @@ namespace FusionEngine
 
 	void EntityDefinition::parseElement_Streaming(ticpp::Element *element)
 	{
+		/*
 		std::string attribute;
 		ticpp::Iterator< ticpp::Element > child;
 		for (child = child.begin( element ); child != child.end(); child++)
@@ -380,6 +383,7 @@ namespace FusionEngine
 
 			m_Resources[propertyName] = resource;
 		}
+		*/
 	}
 
 	template <typename T>
@@ -654,20 +658,20 @@ namespace FusionEngine
 		return m_ScriptDependencies;
 	}
 
-	ResourcesMap &EntityDefinition::GetStreamedResources()
-	{
-		return m_Resources;
-	}
+	//ResourcesMap &EntityDefinition::GetStreamedResources()
+	//{
+	//	return m_Resources;
+	//}
 
-	ScriptedEntity::PropertiesArray &EntityDefinition::GetSyncProperties()
-	{
-		return m_SyncProperties;
-	}
+	//ScriptedEntity::PropertiesArray &EntityDefinition::GetSyncProperties()
+	//{
+	//	return m_SyncProperties;
+	//}
 
-	EntityDefinition::PropertiesMap &EntityDefinition::GetSyncPropertiesMap()
-	{
-		return m_SyncPropertiesMap;
-	}
+	//EntityDefinition::PropertiesMap &EntityDefinition::GetSyncPropertiesMap()
+	//{
+	//	return m_SyncPropertiesMap;
+	//}
 
 	bool EntityDefinition::HasBody() const
 	{
@@ -1062,7 +1066,7 @@ namespace FusionEngine
 
 		default:
 			// Non-constant type IDs (for app. registered types)
-			if (valueTypeId == ScriptedEntity::s_EntityTypeId ||
+			if (/*valueTypeId == ScriptedEntity::s_EntityTypeId ||*/
 				valueTypeId == script_manager->GetStringTypeId() ||
 				valueTypeId == script_manager->GetVector2DTypeId())
 				return true;

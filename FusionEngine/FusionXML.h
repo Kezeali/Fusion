@@ -55,8 +55,10 @@
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <ClanLib/Core/IOData/virtual_directory.h>
 
+extern "C"
+{
 #include <physfs.h>
-
+}
 
 namespace FusionEngine
 {
