@@ -136,6 +136,7 @@ namespace FusionEngine
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& component);
 
 		void SynchroniseParallelEdits();
+		void FireSignals();
 
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
@@ -193,6 +194,8 @@ namespace FusionEngine
 		Vector2 m_LastPosition;
 
 		Vector2 m_Offset;
+
+		float m_Angle;
 
 		std::string m_ImagePath;
 		bool m_ReloadImage;

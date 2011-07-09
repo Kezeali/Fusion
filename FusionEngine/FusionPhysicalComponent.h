@@ -61,7 +61,14 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(Angle);
 			FSN_SYNCH_PROP(Depth);
 		}
-		
+
+		void FireInterfaceSignals()
+		{
+			Position.FireSignal();
+			Angle.FireSignal();
+			Depth.FireSignal();
+		}
+
 		static bool IsThreadSafe() { return true; }
 
 	public:
@@ -79,7 +86,7 @@ namespace FusionEngine
 	class IRigidBody : public ITransform
 	{
 	public:
-		static std::string GetTypeName() { return "IPhysicalProperties"; }
+		static std::string GetTypeName() { return "IRigidBody"; }
 
 		virtual ~IRigidBody()
 		{}
@@ -119,6 +126,23 @@ namespace FusionEngine
 			FSN_SYNCH_PROP_BOOL(FixedRotation);
 		}
 
+		void FireInterfaceSignals()
+		{
+			ITransform::FireInterfaceSignals();
+			Mass.FireSignal();
+			Inertia.FireSignal();
+			Velocity.FireSignal();
+			AngularVelocity.FireSignal();
+			LinearDamping.FireSignal();
+			AngularDamping.FireSignal();
+			GravityScale.FireSignal();
+			Active.FireSignal();
+			SleepingAllowed.FireSignal();
+			Awake.FireSignal();
+			Bullet.FireSignal();
+			FixedRotation.FireSignal();
+		}
+
 		// Prevent simultanious access to implementation methods
 		CL_Mutex m_InternalMutex;
 
@@ -127,12 +151,12 @@ namespace FusionEngine
 		void ApplyForce(const Vector2& force)
 		{ CL_MutexSection lock(&m_InternalMutex); ApplyForceImpl(force, GetCenterOfMass()); };
 		void ApplyTorque(float torque)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyTorque(torque); }
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyTorqueImpl(torque); }
 
 		void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyLinearImpulse(impulse, point); }
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyLinearImpulseImpl(impulse, point); }
 		void ApplyAngularImpulse(float force)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyAngularImpulse(force); }
+		{ CL_MutexSection lock(&m_InternalMutex); ApplyAngularImpulseImpl(force); }
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
@@ -218,6 +242,15 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(Friction);
 			FSN_SYNCH_PROP(Restitution);
 			AABB.Synchronise(GetAABB());
+		}
+
+		void FireInterfaceSignals()
+		{
+			Sensor.FireSignal();
+			Density.FireSignal();
+			Friction.FireSignal();
+			Restitution.FireSignal();
+			AABB.FireSignal();
 		}
 
 		//! Returns true

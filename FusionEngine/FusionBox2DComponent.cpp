@@ -100,6 +100,11 @@ namespace FusionEngine
 		//m_Awake = m_Body->IsAwake();
 	}
 
+	void Box2DBody::FireSignals()
+	{
+		IRigidBody::FireInterfaceSignals();
+	}
+
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		const Vector2& pos = GetPosition();
@@ -216,6 +221,9 @@ namespace FusionEngine
 				m_Fixture = nullptr;
 				m_BodyDestructionConnection.disconnect();
 			}
+			b2CircleShape shape;
+			shape.m_radius = 50.f;
+			m_Def.shape = &shape;
 			m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
 			m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));
 		}
@@ -238,6 +246,11 @@ namespace FusionEngine
 	void Box2DFixture::SynchroniseParallelEdits()
 	{
 		IPhysFixture::SynchroniseInterface();
+	}
+
+	void Box2DFixture::FireSignals()
+	{
+		IPhysFixture::FireInterfaceSignals();
 	}
 
 	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)

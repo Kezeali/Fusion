@@ -162,6 +162,7 @@ namespace FusionEngine
 		typedef boost::signals2::connection Connection;
 
 		ThreadSafeProperty()
+			: m_Changed(true)
 		{}
 
 		~ThreadSafeProperty()

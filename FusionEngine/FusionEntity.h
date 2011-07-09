@@ -153,6 +153,8 @@ namespace FusionEngine
 		//! Removes the given component
 		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 
+		void SynchroniseParallelEdits();
+
 		// The interface type passed here determines the interface that other components must use to access the added component
 		//template <class Com>
 		//void AddComponentT(std::shared_ptr<Com>& component)

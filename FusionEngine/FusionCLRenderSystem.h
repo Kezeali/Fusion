@@ -103,6 +103,8 @@ namespace FusionEngine
 
 		void Update(const float delta);
 
+		PerformanceHint GetPerformanceHint() const { return LongSerial; }
+
 		bool IsPrimaryThreadOnly() const
 		{
 			return true;

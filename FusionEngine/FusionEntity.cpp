@@ -205,6 +205,7 @@ namespace FusionEngine
 		}
 		// Add the new component to the main list
 		m_Components.push_back(component);
+		component->SetParent(this);
 	}
 
 	void Entity::RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
@@ -215,7 +216,10 @@ namespace FusionEngine
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; )
 		{
 			if (*it == component)
+			{
+				component->SetParent(nullptr);
 				it = m_Components.erase(it);
+			}
 			else
 			{
 				(*it)->OnSiblingRemoved(component);
@@ -235,6 +239,14 @@ namespace FusionEngine
 			}
 			else
 				implementors.erase(identifier);
+		}
+	}
+
+	void Entity::SynchroniseParallelEdits()
+	{
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->SynchroniseParallelEdits();
 		}
 	}
 

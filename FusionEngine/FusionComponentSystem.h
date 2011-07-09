@@ -53,6 +53,16 @@ namespace FusionEngine
 
 		virtual void Update(const float delta) = 0;
 
+		enum PerformanceHint
+		{
+			LongSerial = 0,
+			LongParallel,
+			Short,
+			NoPerformanceHint,
+			NumPerformanceHints
+		};
+		virtual PerformanceHint GetPerformanceHint() const { return NoPerformanceHint; }
+
 		virtual bool IsPrimaryThreadOnly() const = 0;
 
 	protected:

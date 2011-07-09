@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionBox2DComponent
-#define H_FusionBox2DComponent
+#ifndef H_FusionRender2DComponent
+#define H_FusionRender2DComponent
 
 #if _MSC_VER > 1000
 #pragma once
@@ -52,6 +52,12 @@ namespace FusionEngine
 				SetOffset(Offset.Get());
 			if (LocalDepth.Synchronise())
 				SetLocalDepth(LocalDepth.Get());
+		}
+
+		void FireInterfaceSignals()
+		{
+			Offset.FireSignal();
+			LocalDepth.FireSignal();
 		}
 
 	private:
@@ -100,6 +106,22 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(BaseAngle);
 
 			AnimationFinished.Synchronise(IsAnimationFinished());
+		}
+
+		void FireInterfaceSignals()
+		{
+			IRenderCom::FireInterfaceSignals();
+			ImagePath.FireSignal();
+			AnimationPath.FireSignal();
+			AlignmentOrigin.FireSignal();
+			AlignmentOffset.FireSignal();
+			RotationOrigin.FireSignal();
+			RotationOffset.FireSignal();
+			Colour.FireSignal();
+			Alpha.FireSignal();
+			Scale.FireSignal();
+			BaseAngle.FireSignal();
+			AnimationFinished.FireSignal();
 		}
 
 	private:

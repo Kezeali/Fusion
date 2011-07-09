@@ -34,6 +34,10 @@
 namespace FusionEngine
 {
 
+	Box2DSystem::Box2DSystem()
+	{
+	}
+
 	ISystemWorld* Box2DSystem::CreateWorld()
 	{
 		return new Box2DWorld();
@@ -55,7 +59,7 @@ namespace FusionEngine
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
 	{
-		static const std::string types[] = { "B2Body", "B2Fixture" };
+		static const std::string types[] = { "B2Body", "B2Fixture", "B2Circle" };
 		return std::vector<std::string>(types, types + sizeof(types));
 	}
 
@@ -69,6 +73,8 @@ namespace FusionEngine
 		if (type == "B2Body")
 		{
 			b2BodyDef def;
+
+			def.type = b2_dynamicBody;
 
 			if (continious_data)
 			{
@@ -99,7 +105,7 @@ namespace FusionEngine
 			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
 			return com;
 		}
-		else if (type == "B2Fixture")
+		else if (type == "B2Fixture" || type == "B2Circle")
 		{
 			if (occasional_data)
 			{
@@ -107,7 +113,11 @@ namespace FusionEngine
 				return com;
 			}
 			else
-				return std::make_shared<Box2DFixture>();
+			{
+				b2FixtureDef def;
+				def.density = 1.0f;
+				return std::make_shared<Box2DFixture>(def);
+			}
 		}
 		return std::shared_ptr<IComponent>();
 	}

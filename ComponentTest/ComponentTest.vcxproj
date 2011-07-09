@@ -163,6 +163,8 @@
     <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamingManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionTagFlagDictionary.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionTaskManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionTaskScheduler.cpp" />
     <ClCompile Include="..\FusionEngine\FusionViewport.cpp" />
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
@@ -186,7 +188,9 @@
     <ClCompile Include="..\tinyxml\tinyxmlparser.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="main.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
@@ -202,6 +206,7 @@
     <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionTaskScheduler.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionConsole.h" />
     <ClInclude Include="..\FusionEngine\FusionConsoleStdOutWriter.h" />
@@ -292,6 +297,7 @@
     <ClInclude Include="..\FusionEngine\FusionStreamingManager.h" />
     <ClInclude Include="..\FusionEngine\FusionStringFormatting.h" />
     <ClInclude Include="..\FusionEngine\FusionTagFlagDictionary.h" />
+    <ClInclude Include="..\FusionEngine\FusionTaskManager.h" />
     <ClInclude Include="..\FusionEngine\FusionThreadSafeProperty.h" />
     <ClInclude Include="..\FusionEngine\FusionTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionVector2.h" />

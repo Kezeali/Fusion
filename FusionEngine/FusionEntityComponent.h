@@ -250,6 +250,7 @@ namespace FusionEngine
 		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
 
 		virtual void SynchroniseParallelEdits() = 0;
+		virtual void FireSignals() = 0;
 
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}

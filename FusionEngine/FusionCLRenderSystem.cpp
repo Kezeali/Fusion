@@ -59,6 +59,16 @@ namespace FusionEngine
 		delete m_Renderer;
 	}
 
+	void CLRenderWorld::AddViewport(const ViewportPtr& viewport)
+	{
+		m_Viewports.push_back(viewport);
+	}
+
+	void CLRenderWorld::RemoveViewport(const ViewportPtr& viewport)
+	{
+		m_Viewports.erase(std::find(m_Viewports.begin(), m_Viewports.end(), viewport));
+	}
+
 	std::vector<std::string> CLRenderWorld::GetTypes() const
 	{
 		static const std::string types[] = { "CLSprite", "" };

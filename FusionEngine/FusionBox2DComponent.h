@@ -99,6 +99,7 @@ namespace FusionEngine
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
+		void FireSignals();
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
@@ -230,6 +231,7 @@ namespace FusionEngine
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
+		void FireSignals();
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);

@@ -96,7 +96,7 @@ namespace FusionEngine
 		if (resource->RequiresGC())
 		{
 			CL_PixelBuffer* pre_gc_data = static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
-			CL_Texture* data = new CL_Texture();
+			CL_Texture* data = new CL_Texture(gc, pre_gc_data->get_width(), pre_gc_data->get_height(), pre_gc_data->get_format());
 			data->set_image(*pre_gc_data);
 			delete pre_gc_data;
 			resource->SetDataPtr(data);

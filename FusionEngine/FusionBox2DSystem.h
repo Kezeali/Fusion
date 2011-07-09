@@ -55,12 +55,15 @@ namespace FusionEngine
 		virtual ~Box2DSystem()
 		{}
 
+		// TODO: make private
+		ISystemWorld* CreateWorld();
+
 	private:
 		SystemType GetType() const { return SystemType::Physics; }
 
 		std::string GetName() const { return "Box2DSystem"; }
 
-		ISystemWorld* CreateWorld();
+		
 
 	};
 
@@ -97,6 +100,8 @@ namespace FusionEngine
 		~Box2DTask();
 
 		void Update(const float delta);
+
+		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 
 		bool IsPrimaryThreadOnly() const
 		{

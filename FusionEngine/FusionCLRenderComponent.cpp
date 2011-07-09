@@ -40,8 +40,10 @@ namespace FusionEngine
 {
 
 	CLSprite::CLSprite()
-		: m_ReloadImage(true),
-		m_ReloadAnimation(true)
+		: m_ReloadImage(false),
+		m_ReloadAnimation(false),
+		m_RecreateSprite(false),
+		m_Angle(0.f)
 	{
 	}
 
@@ -78,7 +80,7 @@ namespace FusionEngine
 		if (m_ReloadImage && !m_ImagePath.empty())
 		{
 			m_ImageLoadConnection.disconnect();
-			m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("IMAGE", m_ImagePath, onImageLoaded);
+			m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, onImageLoaded);
 			m_ReloadImage = false;
 		}
 
@@ -102,8 +104,6 @@ namespace FusionEngine
 
 			if (!m_Sprite.is_finished())
 			{
-				
-
 				if (m_Sprite.is_finished())
 					AnimationFinished.MarkChanged();
 			}
@@ -135,15 +135,18 @@ namespace FusionEngine
 
 	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
 	{
-		if (m_RecreateSprite)
+		if (m_RecreateSprite && m_SpriteDef)
 		{
 			m_Sprite = m_SpriteDef->CreateSprite(gc);
-			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
-			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
-			m_Sprite.set_color(Colour.Get());
-			m_Sprite.set_alpha(Alpha.Get());
-			m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+			//m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
+			//m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
+			//m_Sprite.set_color(Colour.Get());
+			//m_Sprite.set_alpha(Alpha.Get());
+			//m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
+			//m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+
+			SetAngle(m_Angle);
+
 			m_RecreateSprite = false;
 		}
 		if (!m_Sprite.is_null())
@@ -151,7 +154,9 @@ namespace FusionEngine
 			Vector2 draw_pos = m_InterpPosition - camera_pos;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
-			CL_Draw::box(gc, m_AABB, CL_Colorf::purple);
+			auto size = m_AABB.get_size();
+			if (size.width * size.height > 0.0f)
+				CL_Draw::box(gc, m_AABB, CL_Colorf::purple);
 		}
 	}
 
@@ -170,6 +175,11 @@ namespace FusionEngine
 	void CLSprite::SynchroniseParallelEdits()
 	{
 		ISprite::SynchroniseInterface();
+	}
+
+	void CLSprite::FireSignals()
+	{
+		ISprite::FireInterfaceSignals();
 	}
 
 	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
@@ -240,7 +250,9 @@ namespace FusionEngine
 
 	void CLSprite::SetAngle(float angle)
 	{
-		m_Sprite.set_angle(CL_Angle(angle, cl_radians).normalize());
+		m_Angle = angle;
+		if (!m_Sprite.is_null())
+			m_Sprite.set_angle(CL_Angle(angle, cl_radians).normalize());
 	}
 
 	void CLSprite::SetLocalDepth(int value)
