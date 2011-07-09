@@ -126,7 +126,7 @@ namespace FusionEngine
 				m_Sprite.get_rotation_hotspot(origin, x, y);
 
 				CL_Quadf bb(m_AABB);
-				bb.rotate(CL_Vec2f::calc_origin(origin, m_AABB.get_size()) + CL_Vec2f((float)x, (float)y), draw_angle);
+				bb.rotate(CL_Vec2f::calc_origin(origin, m_AABB.get_size()) + m_AABB.get_top_left() + CL_Vec2f((float)x, (float)y), draw_angle);
 
 				m_AABB = bb.get_bounds();
 			}
@@ -156,7 +156,11 @@ namespace FusionEngine
 
 			auto size = m_AABB.get_size();
 			if (size.width * size.height > 0.0f)
-				CL_Draw::box(gc, m_AABB, CL_Colorf::purple);
+			{
+				auto drawAABB = m_AABB;
+				drawAABB.translate(-camera_pos.x, -camera_pos.y);
+				CL_Draw::box(gc, drawAABB, CL_Colorf::purple);
+			}
 		}
 	}
 

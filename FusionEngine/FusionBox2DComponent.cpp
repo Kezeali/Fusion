@@ -222,7 +222,7 @@ namespace FusionEngine
 				m_BodyDestructionConnection.disconnect();
 			}
 			b2CircleShape shape;
-			shape.m_radius = 50.f;
+			shape.m_radius = 0.7f;
 			m_Def.shape = &shape;
 			m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
 			m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));

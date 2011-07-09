@@ -150,7 +150,7 @@ namespace FusionEngine
 		bool IsActive() const { return m_Body->IsActive(); }
 		void SetActive(bool value)
 		{
-			m_Body->SetActive(value);
+			//m_Body->SetActive(value);
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::Active);
 		}
 

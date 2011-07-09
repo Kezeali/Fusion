@@ -211,10 +211,13 @@ public:
 					sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
 				}
 				entity->SynchroniseParallelEdits();
+				b2BodyCom->FireSignals();
+				b2Fixture->FireSignals();
+				clSprite->FireSignals();
 
 				{
 					auto body = entity->GetComponent<IRigidBody>();
-					body->ApplyTorque(25.f);
+					body->ApplyTorque(10.f);
 				}
 
 				//entity->StreamIn();

@@ -63,9 +63,15 @@ namespace FusionEngine
 		unsigned int timePassed = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 
-		// TODO: use timePassed to wait until the next frame
+		m_Accumulator += timePassed;
 
 		deltaTime = 1.f / 30.f;
+		if (m_Accumulator >= deltaTime * 1000)
+		{
+			m_Accumulator = 0;
+		}
+		else
+			deltaTime = 0.f;
 
 		// Update instrumentation for this frame.
 		// If we do this here, there's no thread sync to worry about since we're single-threaded here.

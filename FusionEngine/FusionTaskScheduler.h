@@ -53,6 +53,7 @@ namespace FusionEngine
 
 	private:
 		unsigned int m_LastTime;
+		unsigned int m_Accumulator;
 
 		bool m_ThreadingEnabled;
 
