@@ -37,7 +37,9 @@ namespace FusionEngine
 {
 
 	TaskScheduler::TaskScheduler(TaskManager* task_manager)
-		: m_TaskManager(task_manager)
+		: m_TaskManager(task_manager),
+		m_Accumulator(0),
+		m_LastTime(0)
 	{
 		m_ThreadingEnabled = m_TaskManager != nullptr;
 	}
@@ -63,21 +65,23 @@ namespace FusionEngine
 		unsigned int timePassed = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 
-		m_Accumulator += timePassed;
-
 		deltaTime = 1.f / 30.f;
+		//deltaTime = timePassed * 0.001f;
+
+		//if (timePassed < 33)
+		//	CL_System::pause(33 - timePassed);
+
+		m_Accumulator += fe_min(timePassed, 33u);
+		
+		bool renderOnly = false;
 		if (m_Accumulator >= deltaTime * 1000)
 		{
-			m_Accumulator = 0;
+			m_Accumulator -= deltaTime * 1000;
 		}
 		else
-			deltaTime = 0.f;
+			renderOnly = true;
 
-		// Update instrumentation for this frame.
-		// If we do this here, there's no thread sync to worry about since we're single-threaded here.
-		//Singletons::ServiceManager.Instrumentation().UpdatePeriodicData(deltaTime);
-
-		// Check if the execution is paused, and set delta time to 0 if so.
+		// Check if the execution is paused, and set delta time to 0
 		//if ( Singletons::EnvironmentManager.Runtime().GetStatus() ==
 		//	IEnvironment::IRuntime::Status::Paused )
 		//{
@@ -87,18 +91,20 @@ namespace FusionEngine
 		if (m_ThreadingEnabled)
 		{
 			// Schedule the tasks for component-worlds that are ready for execution
-			if (m_ResortTasks)
+			if (m_ResortTasks || renderOnly)
 			{
 				m_SortedTasks.clear();
 				for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 				{
 					ISystemWorld* world = *it;
-					m_SortedTasks.push_back(world->GetTask());
+					if (!renderOnly || world->GetTask()->IsPrimaryThreadOnly())
+						m_SortedTasks.push_back(world->GetTask());
 				}
 				std::sort(m_SortedTasks.begin(), m_SortedTasks.end(), [](ISystemTask* first, ISystemTask* second)->bool
 				{
 					return first->GetPerformanceHint() < second->GetPerformanceHint();
 				});
+				m_ResortTasks = renderOnly;
 			}
 
 			m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);

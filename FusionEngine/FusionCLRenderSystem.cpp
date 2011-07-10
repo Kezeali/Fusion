@@ -182,7 +182,6 @@ namespace FusionEngine
 			//}
 		}
 
-
 		for (auto it = m_RenderWorld->GetViewports().begin(), end = m_RenderWorld->GetViewports().end(); it != end; ++it)
 		{
 			const auto& camera = (*it)->GetCamera();

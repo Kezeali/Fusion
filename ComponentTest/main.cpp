@@ -217,7 +217,9 @@ public:
 
 				{
 					auto body = entity->GetComponent<IRigidBody>();
-					body->ApplyTorque(10.f);
+					//body->ApplyTorque(10.f);
+					//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+					body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
 				}
 
 				//entity->StreamIn();
