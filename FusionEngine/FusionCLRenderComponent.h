@@ -74,7 +74,7 @@ namespace FusionEngine
 	public:
 		FSN_LIST_INTERFACES((ISprite))
 
-		struct PropsIdx { enum Names {
+		struct PropsIdx { enum Names : size_t {
 			Offset = 0, LocalDepth,
 			ImagePath, ReloadImage, AnimationPath, ReloadAnimation,
 			AlignmentOrigin, AlignmentOffset, RotationOrigin, RotationOffset,

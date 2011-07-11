@@ -40,6 +40,21 @@ namespace FusionEngine
 {
 
 	class ISystemWorld;
+	class IComponentSystem;
+
+	enum SystemType { Other, Physics, Rendering };
+
+	class IComponentSystem
+	{
+	public:
+		virtual ~IComponentSystem() {}
+
+		virtual SystemType GetType() const = 0;
+
+		virtual std::string GetName() const = 0;
+
+		virtual ISystemWorld* CreateWorld() = 0;
+	};
 
 	class ISystemTask
 	{
@@ -50,6 +65,8 @@ namespace FusionEngine
 		virtual ~ISystemTask() {}
 
 		ISystemWorld* GetSystemWorld() const { return m_SystemWorld; }
+
+		inline SystemType GetSystemType() const;
 
 		virtual void Update(const float delta) = 0;
 
@@ -72,7 +89,17 @@ namespace FusionEngine
 	class ISystemWorld
 	{
 	public:
+		ISystemWorld(IComponentSystem* system)
+			: m_System(system)
+		{}
 		virtual ~ISystemWorld() {}
+
+		IComponentSystem* GetSystem() const
+    {
+        return m_System;
+    }
+
+		inline SystemType GetSystemType() const;
 
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type) = 0;
@@ -89,24 +116,23 @@ namespace FusionEngine
 		virtual void OnDeactivation(const std::shared_ptr<IComponent>& component) = 0;
 
 		virtual ISystemTask* GetTask() = 0;
+
+	private:
+		IComponentSystem* m_System;
 	};
 
 	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
 
-	typedef std::map<std::string, std::string> ComponentStaticProps;
-	enum SystemType { Other, Physics, Rendering };
 
-	class IComponentSystem
+	inline SystemType ISystemTask::GetSystemType() const
 	{
-	public:
-		virtual ~IComponentSystem() {}
+		return GetSystemWorld()->GetSystemType();
+	}
 
-		virtual SystemType GetType() const = 0;
-
-		virtual std::string GetName() const = 0;
-
-		virtual ISystemWorld* CreateWorld() = 0;
-	};
+	inline SystemType ISystemWorld::GetSystemType() const
+	{
+		return GetSystem()->GetType();
+	}
 
 }
 

@@ -40,10 +40,11 @@ namespace FusionEngine
 
 	ISystemWorld* Box2DSystem::CreateWorld()
 	{
-		return new Box2DWorld();
+		return new Box2DWorld(this);
 	}
 
-	Box2DWorld::Box2DWorld()
+	Box2DWorld::Box2DWorld(IComponentSystem* system)
+		: ISystemWorld(system)
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity, true);

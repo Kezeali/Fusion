@@ -44,10 +44,11 @@ namespace FusionEngine
 
 	ISystemWorld* CLRenderSystem::CreateWorld()
 	{
-		return new CLRenderWorld(m_GraphicContext);
+		return new CLRenderWorld(this, m_GraphicContext);
 	}
 
-	CLRenderWorld::CLRenderWorld(const CL_GraphicContext& gc)
+	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc)
+		: ISystemWorld(system)
 	{
 		m_Renderer = new Renderer(gc);
 		m_RenderTask = new CLRenderTask(this, m_Renderer);

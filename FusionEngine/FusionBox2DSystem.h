@@ -71,7 +71,7 @@ namespace FusionEngine
 	{
 		friend class Box2DTask;
 	public:
-		Box2DWorld();
+		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
 
 	private:

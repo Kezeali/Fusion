@@ -65,7 +65,7 @@ namespace FusionEngine
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
-		CLRenderWorld(const CL_GraphicContext& gc);
+		CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc);
 		virtual ~CLRenderWorld();
 
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }

@@ -37,6 +37,8 @@
 #include "FusionComponentSystem.h"
 #include "FusionTaskManager.h"
 
+#include "FusionTimer.h"
+
 namespace FusionEngine
 {
 
@@ -58,9 +60,12 @@ namespace FusionEngine
 		bool m_ThreadingEnabled;
 
 		bool m_ResortTasks;
+
+		Timer m_Timer;
 		
 		std::vector<ISystemWorld*> m_ComponentWorlds;
-		std::vector<ISystemTask*> m_SortedTasks;
+		std::vector<ISystemTask*> m_SortedTasks; // All tasks, including render tasks
+		std::vector<ISystemTask*> m_SortedRenderTasks;
 
 		TaskManager* m_TaskManager;
 

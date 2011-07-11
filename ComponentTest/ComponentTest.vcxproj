@@ -41,6 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -165,6 +166,7 @@
     <ClCompile Include="..\FusionEngine\FusionTagFlagDictionary.cpp" />
     <ClCompile Include="..\FusionEngine\FusionTaskManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionTaskScheduler.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionTimer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionViewport.cpp" />
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
@@ -299,6 +301,7 @@
     <ClInclude Include="..\FusionEngine\FusionTagFlagDictionary.h" />
     <ClInclude Include="..\FusionEngine\FusionTaskManager.h" />
     <ClInclude Include="..\FusionEngine\FusionThreadSafeProperty.h" />
+    <ClInclude Include="..\FusionEngine\FusionTimer.h" />
     <ClInclude Include="..\FusionEngine\FusionTypes.h" />
     <ClInclude Include="..\FusionEngine\FusionVector2.h" />
     <ClInclude Include="..\FusionEngine\FusionViewport.h" />

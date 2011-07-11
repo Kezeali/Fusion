@@ -58,7 +58,9 @@ namespace FusionEngine
 			: m_Type(type)
 		{}
 
-		typedef std::vector<std::pair<std::string, ComponentStaticProps>> Composition;
+		typedef std::map<std::string, std::string> ComponentProps;
+
+		typedef std::vector<std::pair<std::string, ComponentProps>> Composition;
 		const Composition& GetComposition() const { return m_Composition; }
 
 		//! Sets the type of this instancer

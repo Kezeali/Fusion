@@ -68,7 +68,7 @@ namespace FusionEngine
 	public:
 		FSN_LIST_INTERFACES((ITransform)(IRigidBody))
 
-		struct PropsIdx { enum Names {
+		struct PropsIdx { enum Names : size_t {
 			Active, SleepingAllowed, Awake, Bullet, FixedRotation,
 			LinearDamping, AngularDamping,
 			GravityScale,
@@ -204,7 +204,7 @@ namespace FusionEngine
 	public:
 		FSN_LIST_INTERFACES((IPhysFixture))
 
-		struct PropsIdx { enum Names {
+		struct PropsIdx { enum Names : size_t {
 			Sensor,
 			Density, Friction, Restitution,
 			NumProps

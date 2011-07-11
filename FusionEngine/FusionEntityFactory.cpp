@@ -76,7 +76,7 @@ namespace FusionEngine
 				if (componentType.empty())
 					continue;
 
-				ComponentStaticProps props;
+				ComponentProps props;
 
 				// Read the static properties for the current component
 				ticpp::Iterator< ticpp::Element > prop_it;

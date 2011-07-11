@@ -39,7 +39,8 @@ namespace FusionEngine
 	TaskScheduler::TaskScheduler(TaskManager* task_manager)
 		: m_TaskManager(task_manager),
 		m_Accumulator(0),
-		m_LastTime(0)
+		m_LastTime(0),
+		m_Timer(1.f / 30.f)
 	{
 		m_ThreadingEnabled = m_TaskManager != nullptr;
 	}
@@ -51,7 +52,18 @@ namespace FusionEngine
 	void TaskScheduler::SetOntology(const std::vector<ISystemWorld*>& ontology)
 	{
 		m_ComponentWorlds = ontology;
+
 		m_ResortTasks = true;
+
+		m_SortedTasks.clear();
+		for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
+		{
+			ISystemWorld* world = *it;
+			m_SortedTasks.push_back(world->GetTask());
+
+			if (world->GetSystemType() == SystemType::Rendering)
+				m_SortedRenderTasks.push_back(world->GetTask());
+		}
 	}
 
 	void TaskScheduler::Execute()
@@ -66,20 +78,18 @@ namespace FusionEngine
 		m_LastTime = currentTime;
 
 		deltaTime = 1.f / 30.f;
-		//deltaTime = timePassed * 0.001f;
 
-		//if (timePassed < 33)
-		//	CL_System::pause(33 - timePassed);
+		m_Timer.Wait();
 
-		m_Accumulator += fe_min(timePassed, 33u);
+		//m_Accumulator += fe_min(timePassed, 33u);
 		
 		bool renderOnly = false;
-		if (m_Accumulator >= deltaTime * 1000)
-		{
-			m_Accumulator -= deltaTime * 1000;
-		}
-		else
-			renderOnly = true;
+		//if (m_Accumulator >= (unsigned int)(deltaTime * 1000))
+		//{
+		//	m_Accumulator -= (unsigned int)(deltaTime * 1000);
+		//}
+		//else
+		//	renderOnly = true;
 
 		// Check if the execution is paused, and set delta time to 0
 		//if ( Singletons::EnvironmentManager.Runtime().GetStatus() ==
@@ -90,34 +100,40 @@ namespace FusionEngine
 
 		if (m_ThreadingEnabled)
 		{
-			// Schedule the tasks for component-worlds that are ready for execution
-			if (m_ResortTasks || renderOnly)
+			if (m_ResortTasks)
 			{
-				m_SortedTasks.clear();
-				for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
-				{
-					ISystemWorld* world = *it;
-					if (!renderOnly || world->GetTask()->IsPrimaryThreadOnly())
-						m_SortedTasks.push_back(world->GetTask());
-				}
 				std::sort(m_SortedTasks.begin(), m_SortedTasks.end(), [](ISystemTask* first, ISystemTask* second)->bool
 				{
 					return first->GetPerformanceHint() < second->GetPerformanceHint();
 				});
-				m_ResortTasks = renderOnly;
+				std::sort(m_SortedRenderTasks.begin(), m_SortedRenderTasks.end(), [](ISystemTask* first, ISystemTask* second)->bool
+				{
+					return first->GetPerformanceHint() < second->GetPerformanceHint();
+				});
+				m_ResortTasks = false;
 			}
 
-			m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);
+			// Schedule the tasks for component-worlds that are ready for execution
+			if (!renderOnly)
+			{
+				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);
 
-			// Wait for the tasks to complete
-			m_TaskManager->WaitForSystemTasks(m_SortedTasks);
+				m_TaskManager->WaitForSystemTasks(m_SortedTasks);
+			}
+			else
+			{
+				m_TaskManager->SpawnJobsForSystemTasks(m_SortedRenderTasks, deltaTime);
+
+				m_TaskManager->WaitForSystemTasks(m_SortedRenderTasks);
+			}
 		}
 		else // Not threading enabled
 		{
 			for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 			{
 				ISystemWorld* world = *it;
-				world->GetTask()->Update(deltaTime);
+				if (!renderOnly || world->GetSystemType() == SystemType::Rendering)
+					world->GetTask()->Update(deltaTime);
 			}
 		}
 	}
