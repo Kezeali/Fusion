@@ -42,7 +42,7 @@ namespace FusionEngine
 	//! Image (pixel-buffer) resource loader callback
 	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 	//! Image resource unloader callback
-	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
 	//! Texture resource loader callback
 	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data);

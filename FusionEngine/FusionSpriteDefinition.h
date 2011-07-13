@@ -62,6 +62,11 @@ namespace FusionEngine
 		std::vector<std::pair<int, Vector2>> m_FrameOffsets;
 		double m_DefaultDelay;
 	};
+
+	//! SpriteAnimation resource loader callback
+	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! SpriteAnimation resource unloader callback
+	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 	
 	//! Sprite factory
 	/*!

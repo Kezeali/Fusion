@@ -155,52 +155,100 @@ namespace FusionEngine
 
 	void SpriteAnimation::Load(CL_IODevice dev)
 	{
-		IO::CLStream stream(dev);
-		YAML::Parser p(stream);
-		YAML::Node doc;
-		if (p.GetNextDocument(doc))
+		try
 		{
-			if (auto node = doc.FindValue("default_delay"))
-				*node >> m_DefaultDelay;
-			else if (auto node = doc.FindValue("default_frame_time"))
-				*node >> m_DefaultDelay;
-			else if (auto node = doc.FindValue("framerate"))
+			IO::CLStream stream(dev);
+			YAML::Parser p(stream);
+			YAML::Node doc;
+			if (p.GetNextDocument(doc))
 			{
-				double framerate;
-				*node >> framerate;
-				m_DefaultDelay = 1.0 / framerate;
-			}
-
-			auto& framesNode = doc["frames"];
-			m_Frames.resize(framesNode.size());
-			for (unsigned i = 0; i < framesNode.size(); ++i)
-			{
-				auto& frameNode = doc[i];
-
-				auto& frameRect = m_Frames.at(i);
-				frameNode["cell"] >> frameRect;
-
-				if (auto node = frameNode.FindValue("delay"))
+				if (auto node = doc.FindValue("default_delay"))
+					*node >> m_DefaultDelay;
+				else if (auto node = doc.FindValue("default_frame_time"))
+					*node >> m_DefaultDelay;
+				else if (auto node = doc.FindValue("framerate"))
 				{
-					double delay;
-					*node >> delay;
-					m_FrameDelays.push_back(std::make_pair(i, delay));
-				}
-				else if (auto node = frameNode.FindValue("frame_time"))
-				{
-					double delay;
-					*node >> delay;
-					m_FrameDelays.push_back(std::make_pair(i, delay));
+					double framerate;
+					*node >> framerate;
+					m_DefaultDelay = 1.0 / framerate;
 				}
 
-				if (auto node = frameNode.FindValue("offset"))
+				auto& framesNode = doc["frames"];
+				m_Frames.resize(framesNode.size());
+				for (unsigned i = 0; i < framesNode.size(); ++i)
 				{
-					Vector2 offset;
-					*node >> offset;
-					m_FrameOffsets.push_back(std::make_pair(i, offset));
+					auto& frameNode = framesNode[i];
+
+					auto& frameRect = m_Frames.at(i);
+					frameNode >> frameRect;
+
+					if (auto node = frameNode.FindValue("delay"))
+					{
+						double delay;
+						*node >> delay;
+						m_FrameDelays.push_back(std::make_pair(i, delay));
+					}
+					else if (auto node = frameNode.FindValue("frame_time"))
+					{
+						double delay;
+						*node >> delay;
+						m_FrameDelays.push_back(std::make_pair(i, delay));
+					}
+
+					if (auto node = frameNode.FindValue("offset"))
+					{
+						Vector2 offset;
+						*node >> offset;
+						m_FrameOffsets.push_back(std::make_pair(i, offset));
+					}
 				}
 			}
 		}
+		catch (YAML::Exception& ex)
+		{
+			FSN_EXCEPT(FileTypeException, std::string("Invalid animation description: ") + ex.what());
+		}
+	}
+
+	void LoadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		if (resource->IsLoaded())
+		{
+			delete static_cast<SpriteAnimation*>(resource->GetDataPtr());
+		}
+
+		resource->_setValid(false);
+
+		SpriteAnimation *data = new SpriteAnimation();
+		try
+		{
+			auto dev = vdir.open_file(resource->GetPath(), CL_File::open_existing, CL_File::access_read);
+			data->Load(dev);
+		}
+		catch (CL_Exception& ex)
+		{
+			delete data;
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + std::string(ex.what()));
+		}
+		catch (Exception&)
+		{
+			delete data;
+			throw;
+		}
+
+		resource->SetDataPtr(data);
+
+		resource->_setValid(true);
+	}
+
+	void UnloadAnimationResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		if (resource->IsLoaded())
+		{
+			resource->_setValid(false);
+			delete static_cast<SpriteAnimation*>(resource->GetDataPtr());
+		}
+		resource->SetDataPtr(nullptr);
 	}
 
 	SpriteDefinition2::SpriteDefinition2(const ResourcePointer<CL_Texture>& texture, const ResourcePointer<SpriteAnimation>& animation)

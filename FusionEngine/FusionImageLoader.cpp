@@ -62,7 +62,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadImageResouce(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		if (resource->IsLoaded())
 		{

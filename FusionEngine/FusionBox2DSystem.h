@@ -80,7 +80,7 @@ namespace FusionEngine
 		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
 		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
 
-		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data);
+		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 		void OnDeactivation(const std::shared_ptr<IComponent>& component);

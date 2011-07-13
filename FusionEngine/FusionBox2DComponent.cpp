@@ -42,7 +42,22 @@ namespace FusionEngine
 		Destruction();
 	}
 
+	void Box2DBody::CleanMassData()
+	{
+		if (m_FixtureMassDirty)
+			m_Body->ResetMassData();
+		m_FixtureMassDirty = false;
+	}
+
 	void Box2DBody::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
+	{
+		//if (auto fixtureCom = dynamic_cast<Box2DFixture*>(com.get()))
+		//{
+		//	fixtureCom->MassChanged = std::bind(&Box2DBody::OnFixtureMassChanged, this);
+		//}
+	}
+
+	void Box2DBody::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
 	{
 	}
 
@@ -188,12 +203,6 @@ namespace FusionEngine
 		DeserialiseOccasional(stream, true);
 	}
 
-	Box2DFixture::Box2DFixture(const b2FixtureDef& def)
-		: m_Def(def),
-		m_Fixture(nullptr)
-	{
-	}
-
 	Box2DFixture::Box2DFixture(b2Fixture* fixture)
 		: m_Fixture(fixture)
 	{
@@ -221,11 +230,11 @@ namespace FusionEngine
 				m_Fixture = nullptr;
 				m_BodyDestructionConnection.disconnect();
 			}
-			b2CircleShape shape;
-			shape.m_radius = 0.7f;
-			m_Def.shape = &shape;
+			m_Def.shape = GetShape();
 			m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
 			m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));
+
+			m_Body = body;
 		}
 	}
 
@@ -239,6 +248,8 @@ namespace FusionEngine
 				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
 				m_Fixture = nullptr;
 				m_BodyDestructionConnection.disconnect();
+
+				m_Body = nullptr;
 			}
 		}
 	}
@@ -342,6 +353,248 @@ namespace FusionEngine
 		else
 			m_Def.restitution = restitution;
 		m_DeltaSerialisationHelper.markChanged(PropsIdx::Restitution);
+	}
+
+	Box2DCircleFixture::Box2DCircleFixture()
+	{
+		m_CircleShape.m_radius = 0.5f;
+	}
+
+	// Make sure this calls Box2DCircleFixture::DeserialiseOccasional
+	Box2DCircleFixture::Box2DCircleFixture(RakNet::BitStream& stream)
+		: Box2DFixture(stream)
+	{
+	}
+
+	void Box2DCircleFixture::CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
+	{
+		Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, delta);
+
+		ShapeDeltaSerialiser_t::copyChanges(result, current_data, delta);
+	}
+
+	void Box2DCircleFixture::SynchroniseParallelEdits()
+	{
+		ICircleShape::SynchroniseInterface();
+		Box2DFixture::SynchroniseParallelEdits();
+	}
+
+	void Box2DCircleFixture::FireSignals()
+	{
+		ICircleShape::FireInterfaceSignals();
+		Box2DFixture::FireSignals();
+	}
+
+	bool Box2DCircleFixture::SerialiseContinuous(RakNet::BitStream& stream)
+	{
+		return false;
+	}
+
+	void Box2DCircleFixture::DeserialiseContinuous(RakNet::BitStream& stream)
+	{
+	}
+
+	bool Box2DCircleFixture::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
+	{
+		bool changesWritten;
+		changesWritten = Box2DFixture::SerialiseOccasional(stream, force_all);
+		changesWritten |= m_CircleDeltaSerialisationHelper.writeChanges(force_all, stream , GetRadius(), GetPosition());
+		return changesWritten;
+	}
+
+	void Box2DCircleFixture::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
+	{
+		Box2DFixture::DeserialiseOccasional(stream, all);
+
+		//float radius;
+		Vector2 position;
+		
+		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+		auto circleShape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+
+		std::bitset<ShapeDeltaSerialiser_t::NumParams> changes;
+		m_CircleDeltaSerialisationHelper.readChanges(stream, all, changes, circleShape->m_radius, position);
+
+		if (changes[ShapePropsIdx::Position])
+			circleShape->m_p.Set(position.x, position.y);
+
+		if (changes.any())
+			m_Body->OnFixtureMassChanged();
+	}
+
+	void Box2DCircleFixture::SetRadius(float radius)
+	{
+		m_CircleShape.m_radius = radius;
+
+		if (m_Fixture)
+		{
+			auto shape = m_Fixture->GetShape();
+			shape->m_radius = radius;
+		}
+
+		m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Radius);
+
+		m_Body->OnFixtureMassChanged();
+	}
+
+	float Box2DCircleFixture::GetRadius() const
+	{
+		if (m_Fixture)
+			return m_Fixture->GetShape()->m_radius;
+		else
+			return m_CircleShape.m_radius;
+	}
+
+	void Box2DCircleFixture::SetPosition(const Vector2& position)
+	{
+		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+		auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+		shape->m_p.Set(position.x, position.y);
+
+		m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Position);
+
+		m_Body->OnFixtureMassChanged();
+	}
+
+	Vector2 Box2DCircleFixture::GetPosition() const
+	{
+		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+		auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+		return b2v2(shape->m_p);
+	}
+
+	Box2DPolygonFixture::Box2DPolygonFixture()
+	{
+	}
+
+	Box2DPolygonFixture::Box2DPolygonFixture(RakNet::BitStream& stream)
+		: Box2DFixture(stream)
+	{
+	}
+
+	void Box2DPolygonFixture::CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
+	{
+		Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, delta);
+
+		if (delta.ReadBit())
+		{
+			int32 numVerts;
+			delta.Read(numVerts);
+
+			std::vector<unsigned char> verts(numVerts);
+			if (delta.ReadBits(verts.data(), sizeof(float) * 2 * numVerts * 8))
+				FSN_EXCEPT(Exception, "Failed to copy changes");
+
+			result.Write(numVerts);
+			result.WriteBits(verts.data(), sizeof(float) * 2 * numVerts * 8);
+		}
+	}
+
+	void Box2DPolygonFixture::SynchroniseParallelEdits()
+	{
+		IPolygonShape::SynchroniseInterface();
+		Box2DFixture::SynchroniseParallelEdits();
+	}
+
+	void Box2DPolygonFixture::FireSignals()
+	{
+		IPolygonShape::FireInterfaceSignals();
+		Box2DFixture::FireSignals();
+	}
+
+	bool Box2DPolygonFixture::SerialiseContinuous(RakNet::BitStream& stream)
+	{
+		return false;
+	}
+
+	void Box2DPolygonFixture::DeserialiseContinuous(RakNet::BitStream& stream)
+	{
+	}
+
+	bool Box2DPolygonFixture::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
+	{
+		bool changesWritten;
+
+		changesWritten = Box2DFixture::SerialiseOccasional(stream, force_all);
+		
+		if (m_VerticiesChanged || force_all)
+		{
+			if (!force_all)
+				stream.Write1();
+			stream.Write(m_PolygonShape.GetVertexCount());
+			for (int i = 0; i < m_PolygonShape.GetVertexCount(); ++i)
+			{
+				const b2Vec2& vert = m_PolygonShape.GetVertex(i);
+				stream.Write(vert.x);
+				stream.Write(vert.y);
+			}
+
+			changesWritten = true;
+		}
+		else if (!force_all)
+			stream.Write0();
+
+		return changesWritten;
+	}
+
+	void Box2DPolygonFixture::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
+	{
+		FSN_EXCEPT(NotImplementedException, "this aint done (need to update the actual fixture)");
+
+		Box2DFixture::DeserialiseOccasional(stream, all);
+
+		//float radius;
+		Vector2 position;
+		
+		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_polygon);
+		auto circleShape = static_cast<b2PolygonShape*>(m_Fixture->GetShape());
+
+		if (all || stream.ReadBit())
+		{
+			int32 vertexCount;
+			stream.Read(vertexCount);
+			std::vector<b2Vec2> verts;
+			verts.resize(vertexCount);
+			for (int i = 0; i < vertexCount; ++i)
+			{
+				auto& vert = verts[i];
+				stream.Read(vert.x);
+				stream.Read(vert.y);
+			}
+			m_PolygonShape.Set(verts.data(), verts.size());
+
+			m_Body->OnFixtureMassChanged();
+		}
+	}
+
+	float Box2DPolygonFixture::GetRadius() const
+	{
+		if (m_Fixture)
+			return m_Fixture->GetShape()->m_radius;
+		else
+			return m_PolygonShape.m_radius;
+	}
+
+	void Box2DPolygonFixture::SetAsBoxImpl(float half_width, float half_height)
+	{
+		m_PolygonShape.SetAsBox(half_width, half_height);
+
+		m_VerticiesChanged = true;
+	}
+
+	void Box2DPolygonFixture::SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle)
+	{
+		m_PolygonShape.SetAsBox(half_width, half_height, b2Vec2(center.x, center.y), angle);
+
+		m_VerticiesChanged = true;
+	}
+
+	void Box2DPolygonFixture::SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2)
+	{
+		std::array<b2Vec2, 2> verts = { b2Vec2(v1.x, v1.y), b2Vec2(v2.x, v2.y) };
+		m_PolygonShape.Set(verts.data(), 2);
+
+		m_VerticiesChanged = true;
 	}
 
 }

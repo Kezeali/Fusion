@@ -154,10 +154,13 @@ public:
 				////////////////////
 				// Resource Manager
 				boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager(gc));
-				resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResouce, NULL);
+				resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, NULL);
 				resourceManager->AddResourceLoader(ResourceLoader("TEXTURE", &LoadTextureResource, &UnloadTextureResource, &LoadTextureResourceIntoGC));
+				resourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
 				resourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
 				resourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
+
+
 				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
 
 				resourceManager->StartLoaderThread();
@@ -198,21 +201,26 @@ public:
 				scheduler->SetOntology(ontology);
 
 				auto entity = std::make_shared<Entity>();
-				auto b2BodyCom = box2dWorld->InstantiateComponent("B2Body", Vector2(20, 20), 0.f, nullptr, nullptr);
+				auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", Vector2(20, 20), 0.f, nullptr, nullptr);
 				entity->AddComponent(b2BodyCom);
-				auto b2Fixture = box2dWorld->InstantiateComponent("B2Circle", Vector2::zero(), 0.f, nullptr, nullptr);
+				auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
 				//std::dynamic_pointer_cast<IPhysFixture>(b2Fixture)->Density.Set(1.0f);
-				entity->AddComponent(b2Fixture);
+				entity->AddComponent(b2CircleFixture);
 				auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 				entity->AddComponent(clSprite);
 
 				{
+					auto fixture = entity->GetComponent<FusionEngine::IPhysFixture>();
+					fixture->Density.Set(1.f);
+				}
+				{
 					auto sprite = entity->GetComponent<ISprite>();
-					sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
+					sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
+					sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
 				}
 				entity->SynchroniseParallelEdits();
 				b2BodyCom->FireSignals();
-				b2Fixture->FireSignals();
+				b2CircleFixture->FireSignals();
 				clSprite->FireSignals();
 
 				{
@@ -224,7 +232,7 @@ public:
 
 				//entity->StreamIn();
 				box2dWorld->OnActivation(b2BodyCom);
-				box2dWorld->OnActivation(b2Fixture);
+				box2dWorld->OnActivation(b2CircleFixture);
 				renderWorld->OnActivation(clSprite);
 
 				auto camera = std::make_shared<Camera>();
@@ -257,9 +265,16 @@ public:
 					
 					scheduler->Execute();
 
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
+					{
+						auto body = entity->GetComponent<IRigidBody>();
+						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+						body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+					}
+
 					entity->SynchroniseParallelEdits();
 					b2BodyCom->FireSignals();
-					b2Fixture->FireSignals();
+					b2CircleFixture->FireSignals();
 					clSprite->FireSignals();
 
 					scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);

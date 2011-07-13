@@ -147,21 +147,36 @@ namespace FusionEngine
 		CL_Mutex m_InternalMutex;
 
 		void ApplyForce(const Vector2& force, const Vector2& point)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyForceImpl(force, point); }
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			ApplyForceImpl(force, point);
+		}
 		void ApplyForce(const Vector2& force)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyForceImpl(force, GetCenterOfMass()); };
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			ApplyForceImpl(force, GetCenterOfMass());
+		};
 		void ApplyTorque(float torque)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyTorqueImpl(torque); }
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			ApplyTorqueImpl(torque);
+		}
 
 		void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyLinearImpulseImpl(impulse, point); }
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			ApplyLinearImpulseImpl(impulse, point);
+		}
 		void ApplyAngularImpulse(float force)
-		{ CL_MutexSection lock(&m_InternalMutex); ApplyAngularImpulseImpl(force); }
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			ApplyAngularImpulseImpl(force);
+		}
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
 
-	public:
+	protected:
 		//! Gets the mass
 		virtual float GetMass() const = 0;
 		//! Gets the inertia
@@ -212,20 +227,6 @@ namespace FusionEngine
 		virtual void ApplyAngularImpulseImpl(float force) = 0;
 	};
 
-	//! Non-threadsafe physical body interface
-	FSN_BEGIN_COIFACE(IPhysicalMethods)
-	public:
-		virtual void ApplyForce(const Vector2& force, const Vector2& point) = 0;
-		virtual void ApplyForce(const Vector2& force) = 0;
-		virtual void ApplyTorque(float torque) = 0;
-
-		virtual void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point) = 0;
-		virtual void ApplyAngularImpulse(float force) = 0;
-
-		//! Returns false
-		static bool IsThreadSafe() { return false; }
-	};
-
 	//! Physical fixture interface
 	FSN_BEGIN_COIFACE(IPhysFixture)
 	public:
@@ -235,6 +236,8 @@ namespace FusionEngine
 		ThreadSafeProperty<float> Restitution;
 		ThreadSafeProperty<b2AABB> AABB;
 
+		//ThreadSafeProperty<b2MassData> MassData;
+
 		void SynchroniseInterface()
 		{
 			FSN_SYNCH_PROP_BOOL(Sensor);
@@ -242,6 +245,7 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(Friction);
 			FSN_SYNCH_PROP(Restitution);
 			AABB.Synchronise(GetAABB());
+			//MassData.Synchronise(GetMassData());
 		}
 
 		void FireInterfaceSignals()
@@ -251,12 +255,13 @@ namespace FusionEngine
 			Friction.FireSignal();
 			Restitution.FireSignal();
 			AABB.FireSignal();
+			//MassData.FireSignal();
 		}
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
 
-	public:
+	protected:
 		//! Set if this fixture is a sensor.
 		virtual void SetSensor(bool sensor) = 0;
 		//! Is this fixture a sensor (non-solid)?
@@ -284,6 +289,110 @@ namespace FusionEngine
 		//! If you need a more accurate AABB, compute it using the shape and
 		//! the body transform.
 		virtual const b2AABB& GetAABB() const = 0;
+
+		//virtual b2MassData GetMassData() const = 0;
+	};
+
+	FSN_BEGIN_COIFACE(IPhysShape)
+	public:
+		ThreadSafeProperty<float> Radius;
+
+		void SynchroniseInterface()
+		{
+			FSN_SYNCH_PROP(Radius);
+		}
+
+		void FireInterfaceSignals()
+		{
+			Radius.FireSignal();
+		}
+
+		//! Returns true
+		static bool IsThreadSafe() { return true; }
+
+	protected:
+		virtual void SetRadius(float radius) = 0;
+		virtual float GetRadius() const = 0;
+	};
+
+	class ICircleShape
+	{
+	public:
+		static std::string GetTypeName() { return "ICircleShape"; }
+		virtual ~ICircleShape() {}
+
+		ThreadSafeProperty<Vector2> Position;
+		ThreadSafeProperty<float> Radius;
+
+		void SynchroniseInterface()
+		{
+			FSN_SYNCH_PROP(Position);
+			FSN_SYNCH_PROP(Radius);
+		}
+
+		void FireInterfaceSignals()
+		{
+			Position.FireSignal();
+			Radius.FireSignal();
+		}
+
+		//! Returns true
+		static bool IsThreadSafe() { return true; }
+
+	protected:
+		virtual void SetPosition(const Vector2& center) = 0;
+		virtual Vector2 GetPosition() const = 0;
+
+		virtual void SetRadius(float radius) = 0;
+		virtual float GetRadius() const = 0;
+	};
+
+	class IPolygonShape
+	{
+	public:
+		static std::string GetTypeName() { return "IPolygonShape"; }
+		virtual ~IPolygonShape() {}
+
+		ThreadSafeProperty<float, NullWriter<float>> Radius;
+
+		void SynchroniseInterface()
+		{
+			Radius.Synchronise(GetRadius());
+		}
+
+		void FireInterfaceSignals()
+		{
+			Radius.FireSignal();
+		}
+
+		//! Returns true
+		static bool IsThreadSafe() { return true; }
+
+		void SetAsBox(float half_width, float half_height)
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			SetAsBoxImpl(half_width, half_height);
+		}
+		void SetAsBox(float half_width, float half_height, const Vector2& center, float angle)
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			SetAsBoxImpl(half_width, half_height, center, angle);
+		}
+		void SetAsEdge(const Vector2 &v1, const Vector2 &v2)
+		{
+			CL_MutexSection lock(&m_InternalMutex);
+			SetAsEdgeImpl(v1, v2);
+		}
+
+	private:
+		CL_Mutex m_InternalMutex;
+
+	protected:
+		virtual float GetRadius() const = 0;
+
+		virtual void SetAsBoxImpl(float half_width, float half_height) = 0;
+		virtual void SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle) = 0;
+		virtual void SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2) = 0;
 	};
 
 }

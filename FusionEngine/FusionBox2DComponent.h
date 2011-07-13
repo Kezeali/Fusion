@@ -88,8 +88,14 @@ namespace FusionEngine
 
 		b2Body* Getb2Body() const { return m_Body; }
 
+		void OnFixtureMassChanged() { m_FixtureMassDirty = true; }
+		
+		void CleanMassData();
+
 	private:
 		b2Body* m_Body;
+
+		tbb::atomic<bool> m_FixtureMassDirty;
 
 		int m_Depth;
 
@@ -97,6 +103,7 @@ namespace FusionEngine
 		std::string GetType() const { return "Box2DBody"; }
 
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
+		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
 		void SynchroniseParallelEdits();
 		void FireSignals();
@@ -217,29 +224,33 @@ namespace FusionEngine
 
 		Box2DFixture();
 		Box2DFixture(RakNet::BitStream& stream);
-		Box2DFixture(const b2FixtureDef& def);
 		Box2DFixture(b2Fixture* fixture);
 		virtual ~Box2DFixture();
 
 		void OnBodyDestroyed();
 
-	private:
-		// IComponent
-		std::string GetType() const { return "Box2DFixture"; }
+		// Called when any properties change that will result in a different MassData value
+		std::function<void (void)> MassChanged;
 
+	private:
+		virtual b2Shape* GetShape() = 0;
+
+		// IComponent
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
-		void SynchroniseParallelEdits();
-		void FireSignals();
+	protected:
+		virtual void SynchroniseParallelEdits();
+		virtual void FireSignals();
 
-		bool SerialiseContinuous(RakNet::BitStream& stream);
-		void DeserialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
+	private:
 		// IPhysFixture
 
 		//! Is this fixture a sensor (non-solid)?
@@ -271,9 +282,110 @@ namespace FusionEngine
 		const b2AABB& GetAABB() const { return m_Fixture->GetAABB(0); }
 
 		b2FixtureDef m_Def;
+	protected:
 		b2Fixture* m_Fixture;
 
+		Box2DBody* m_Body;
+
 		boost::signals2::scoped_connection m_BodyDestructionConnection;
+	};
+
+	class Box2DCircleFixture : public Box2DFixture, public ICircleShape
+	{
+		friend class Box2DWorld;
+	public:
+		FSN_LIST_INTERFACES((IPhysFixture)(ICircleShape))
+
+		struct ShapePropsIdx { enum Names : size_t {
+			Radius,
+			Position,
+			NumProps
+		}; };
+		typedef SerialisationHelper<
+			float, // radius
+			Vector2> // Position
+			ShapeDeltaSerialiser_t;
+		static_assert(ShapePropsIdx::NumProps == ShapeDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
+
+		Box2DCircleFixture();
+		Box2DCircleFixture(RakNet::BitStream& stream);
+
+		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
+
+	private:
+		b2Shape* GetShape() { return &m_CircleShape; }
+
+		// IComponent
+		std::string GetType() const { return "Box2DCircleFixture"; }
+
+		// Box2DFixture overides
+		virtual void SynchroniseParallelEdits();
+		virtual void FireSignals();
+
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+
+		ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
+
+		b2CircleShape m_CircleShape;
+
+		// ICircleShape
+		void SetRadius(float radius);
+		float GetRadius() const;
+		
+		void SetPosition(const Vector2& center);
+		Vector2 GetPosition() const;
+	};
+
+	class Box2DPolygonFixture : public Box2DFixture, public IPolygonShape
+	{
+		friend class Box2DWorld;
+	public:
+		FSN_LIST_INTERFACES((IPhysFixture)(IPolygonShape))
+
+		//struct ShapePropsIdx { enum Names : size_t {
+		//	Radius,
+		//	Position,
+		//	NumProps
+		//}; };
+		//typedef SerialisationHelper<
+		//	float, // radius
+		//	Vector2> // Position
+		//	ShapeDeltaSerialiser_t;
+		//static_assert(ShapePropsIdx::NumProps == ShapeDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
+
+		Box2DPolygonFixture();
+		Box2DPolygonFixture(RakNet::BitStream& stream);
+
+		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
+
+	private:
+		b2Shape* GetShape() { return &m_PolygonShape; }
+
+		// IComponent
+		std::string GetType() const { return "Box2DPolygonFixture"; }
+
+		// Box2DFixture overides
+		virtual void SynchroniseParallelEdits();
+		virtual void FireSignals();
+
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+
+		//ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
+		bool m_VerticiesChanged;
+		b2PolygonShape m_PolygonShape;
+
+		// IPolygonShape
+		float GetRadius() const;
+
+		void SetAsBoxImpl(float half_width, float half_height);
+		void SetAsBoxImpl(float half_width, float half_height, const Vector2& center, float angle);
+		void SetAsEdgeImpl(const Vector2 &v1, const Vector2 &v2);
 	};
 
 }

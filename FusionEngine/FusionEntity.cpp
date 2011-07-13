@@ -181,6 +181,8 @@ namespace FusionEngine
 
 	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
 	{
+		FSN_ASSERT(component);
+
 		// Add the new component to the component-by-interface map
 		for (auto it = component->GetInterfaces().begin(), end = component->GetInterfaces().end(); it != end; ++it)
 		{

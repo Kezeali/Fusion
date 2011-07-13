@@ -60,22 +60,30 @@ namespace FusionEngine
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
 	{
-		static const std::string types[] = { "B2Body", "B2Fixture", "B2Circle" };
+		static const std::string types[] = { "b2RigidBody", "b2Dynamic", "b2Kinematic", "b2Static", "b2Circle", "b2Polygon" };
 		return std::vector<std::string>(types, types + sizeof(types));
 	}
 
 	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type)
 	{
-		return std::shared_ptr<IComponent>();
+		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
 	}
 
 	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
 	{
-		if (type == "B2Body")
+		if (type == "b2RigidBody" 
+			|| type == "b2Dynamic"
+			|| type == "b2Kinematic"
+			|| type == "b2Static")
 		{
 			b2BodyDef def;
 
-			def.type = b2_dynamicBody;
+			if (type == "b2Kinematic")
+				def.type = b2_kinematicBody;
+			else if (type == "b2Static")
+				def.type = b2_staticBody;
+			else
+				def.type = b2_dynamicBody;
 
 			if (continious_data)
 			{
@@ -106,18 +114,16 @@ namespace FusionEngine
 			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
 			return com;
 		}
-		else if (type == "B2Fixture" || type == "B2Circle")
+		else if (type == "b2Circle")
 		{
 			if (occasional_data)
 			{
-				auto com = std::make_shared<Box2DFixture>(*occasional_data);
+				auto com = std::make_shared<Box2DCircleFixture>(*occasional_data);
 				return com;
 			}
 			else
 			{
-				b2FixtureDef def;
-				def.density = 1.0f;
-				return std::make_shared<Box2DFixture>(def);
+				return std::make_shared<Box2DCircleFixture>();
 			}
 		}
 		return std::shared_ptr<IComponent>();
@@ -155,15 +161,18 @@ namespace FusionEngine
 		return m_B2DTask;
 	}
 
-	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data)
+	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
 	{
-		if (type == "B2Body")
+		if (type == "b2RigidBody" 
+			|| type == "b2Dynamic"
+			|| type == "b2Kinematic"
+			|| type == "b2Static")
 		{
-			Box2DBody::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
+			Box2DBody::DeltaSerialiser_t::copyChanges(result, current_data, delta);
 		}
-		else if (type == "B2Fixture")
+		else if (type == "b2Circle")
 		{
-			Box2DFixture::DeltaSerialiser_t::copyChanges(result, current_data, new_data);
+			Box2DCircleFixture::CopyChanges(result, current_data, delta);
 		}
 	}
 
@@ -195,6 +204,8 @@ namespace FusionEngine
 			body->Angle.MarkChanged();
 			body->Velocity.MarkChanged();
 			body->AngularVelocity.MarkChanged();
+
+			body->CleanMassData();
 		}
 	}
 
