@@ -205,11 +205,11 @@ namespace FusionEngine
 		}
 	};
 
-	class Box2DFixture : public IComponent, public IPhysFixture
+	class Box2DFixture : public IComponent, public IFixture
 	{
 		friend class Box2DWorld;
 	public:
-		FSN_LIST_INTERFACES((IPhysFixture))
+		FSN_LIST_INTERFACES((IFixture))
 
 		struct PropsIdx { enum Names : size_t {
 			Sensor,
@@ -251,7 +251,7 @@ namespace FusionEngine
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
 	private:
-		// IPhysFixture
+		// IFixture
 
 		//! Is this fixture a sensor (non-solid)?
 		bool IsSensor() const;
@@ -294,7 +294,7 @@ namespace FusionEngine
 	{
 		friend class Box2DWorld;
 	public:
-		FSN_LIST_INTERFACES((IPhysFixture)(ICircleShape))
+		FSN_LIST_INTERFACES((IFixture)(ICircleShape))
 
 		struct ShapePropsIdx { enum Names : size_t {
 			Radius,
@@ -343,7 +343,7 @@ namespace FusionEngine
 	{
 		friend class Box2DWorld;
 	public:
-		FSN_LIST_INTERFACES((IPhysFixture)(IPolygonShape))
+		FSN_LIST_INTERFACES((IFixture)(IPolygonShape))
 
 		//struct ShapePropsIdx { enum Names : size_t {
 		//	Radius,

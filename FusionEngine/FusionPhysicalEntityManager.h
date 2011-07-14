@@ -113,7 +113,7 @@ namespace FusionEngine
 		int m_PositionIterations;
 
 		ContactListener *m_ContactListener;
-		DebugDraw *m_DebugDraw;
+		B2DebugDraw *m_DebugDraw;
 
 		//typedef std::vector<boost::signals2::connection> ConnectionList;
 

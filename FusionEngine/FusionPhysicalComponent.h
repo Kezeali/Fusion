@@ -228,7 +228,7 @@ namespace FusionEngine
 	};
 
 	//! Physical fixture interface
-	FSN_BEGIN_COIFACE(IPhysFixture)
+	FSN_BEGIN_COIFACE(IFixture)
 	public:
 		ThreadSafeProperty<bool> Sensor;
 		ThreadSafeProperty<float> Density;
@@ -291,28 +291,6 @@ namespace FusionEngine
 		virtual const b2AABB& GetAABB() const = 0;
 
 		//virtual b2MassData GetMassData() const = 0;
-	};
-
-	FSN_BEGIN_COIFACE(IPhysShape)
-	public:
-		ThreadSafeProperty<float> Radius;
-
-		void SynchroniseInterface()
-		{
-			FSN_SYNCH_PROP(Radius);
-		}
-
-		void FireInterfaceSignals()
-		{
-			Radius.FireSignal();
-		}
-
-		//! Returns true
-		static bool IsThreadSafe() { return true; }
-
-	protected:
-		virtual void SetRadius(float radius) = 0;
-		virtual float GetRadius() const = 0;
 	};
 
 	class ICircleShape

@@ -40,18 +40,18 @@
 namespace FusionEngine
 {
 
-	class DebugDraw : public b2Draw
+	class B2DebugDraw : public b2Draw
 	{
 	public:
-		DebugDraw() : b2Draw() {}
-		DebugDraw(CL_GraphicContext gc);
+		B2DebugDraw() : b2Draw() {}
+		B2DebugDraw(CL_GraphicContext gc);
 
 		void SetGraphicContext(CL_GraphicContext gc);
 		void SetViewport(const ViewportPtr &viewport);
 
 		void SetupView();
 		void ResetView();
-
+		
 		void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
 
 		void DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);
@@ -62,13 +62,9 @@ namespace FusionEngine
 
 		void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color);
 
-		void DrawXForm(const b2Transform& xf);
-
 		void DrawPoint(const b2Vec2& p, float32 size, const b2Color& color);
 
-		//void DrawString(int x, int y, const char* string, ...); 
-
-		void DrawAABB(b2AABB* aabb, const b2Color& color);
+		void DrawTransform(const b2Transform& xf);
 
 	protected:
 		CL_GraphicContext m_gc;

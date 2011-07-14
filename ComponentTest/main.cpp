@@ -197,21 +197,26 @@ public:
 				const std::unique_ptr<Box2DSystem> box2dSystem(new Box2DSystem());
 				auto box2dWorld = box2dSystem->CreateWorld();
 				ontology.push_back(box2dWorld);
+				
+				static_cast<CLRenderWorld*>(renderWorld)->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld)->Getb2World());
 
 				scheduler->SetOntology(ontology);
 
+				
+
 				auto entity = std::make_shared<Entity>();
-				auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", Vector2(20, 20), 0.f, nullptr, nullptr);
+				auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", Vector2(ToSimUnits(20.f), ToSimUnits(20.f)), 0.f, nullptr, nullptr);
 				entity->AddComponent(b2BodyCom);
 				auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-				//std::dynamic_pointer_cast<IPhysFixture>(b2Fixture)->Density.Set(1.0f);
 				entity->AddComponent(b2CircleFixture);
 				auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 				entity->AddComponent(clSprite);
 
 				{
-					auto fixture = entity->GetComponent<FusionEngine::IPhysFixture>();
-					fixture->Density.Set(1.f);
+					auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+					fixture->Density.Set(0.8f);
+					auto shape = entity->GetComponent<ICircleShape>();
+					shape->Radius.Set(ToSimUnits(50.f / 2.f));
 				}
 				{
 					auto sprite = entity->GetComponent<ISprite>();

@@ -47,6 +47,8 @@ namespace FusionEngine
 	class IDrawable;
 	class CLRenderTask;
 
+	class B2DebugDraw;
+
 	class CLRenderSystem : public IComponentSystem
 	{
 	public:
@@ -71,6 +73,9 @@ namespace FusionEngine
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
 		void AddViewport(const ViewportPtr& viewport);
 		void RemoveViewport(const ViewportPtr& viewport);
+
+		void SetPhysWorld(b2World* world) { m_PhysWorld = world; }
+		b2World* m_PhysWorld;
 
 		const std::vector<std::shared_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<std::shared_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
@@ -113,6 +118,8 @@ namespace FusionEngine
 	private:
 		CLRenderWorld* m_RenderWorld;
 		Renderer* const m_Renderer;
+
+		std::unique_ptr<B2DebugDraw> m_PhysDebugDraw;
 	};
 
 }

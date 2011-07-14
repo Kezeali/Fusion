@@ -256,12 +256,12 @@ namespace FusionEngine
 
 	void Box2DFixture::SynchroniseParallelEdits()
 	{
-		IPhysFixture::SynchroniseInterface();
+		IFixture::SynchroniseInterface();
 	}
 
 	void Box2DFixture::FireSignals()
 	{
-		IPhysFixture::FireInterfaceSignals();
+		IFixture::FireInterfaceSignals();
 	}
 
 	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)
@@ -357,7 +357,6 @@ namespace FusionEngine
 
 	Box2DCircleFixture::Box2DCircleFixture()
 	{
-		m_CircleShape.m_radius = 0.5f;
 	}
 
 	// Make sure this calls Box2DCircleFixture::DeserialiseOccasional

@@ -32,6 +32,8 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 
+#include "FusionPhysicsDebugDraw.h"
+
 #include <tbb/parallel_sort.h>
 #include <tbb/parallel_for.h>
 
@@ -183,7 +185,8 @@ namespace FusionEngine
 			//}
 		}
 
-		for (auto it = m_RenderWorld->GetViewports().begin(), end = m_RenderWorld->GetViewports().end(); it != end; ++it)
+		auto& viewports = m_RenderWorld->GetViewports();
+		for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
 		{
 			const auto& camera = (*it)->GetCamera();
 
@@ -199,6 +202,23 @@ namespace FusionEngine
 					drawable->Draw(gc, camera_pos);
 				}
 			}
+
+			m_Renderer->PostDraw();
+		}
+
+		if (!m_PhysDebugDraw)
+		{
+			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
+			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
+			m_PhysDebugDraw->SetFlags(0xFFFF);
+		}
+
+		if (!viewports.empty())
+		{
+			m_PhysDebugDraw->SetViewport(viewports.front());
+			m_PhysDebugDraw->SetupView();
+			m_RenderWorld->m_PhysWorld->DrawDebugData();
+			m_PhysDebugDraw->ResetView();
 		}
 	}
 

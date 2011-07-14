@@ -74,6 +74,8 @@ namespace FusionEngine
 		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
 
+		b2World* Getb2World() const { return m_World; }
+
 	private:
 		std::vector<std::string> GetTypes() const;
 

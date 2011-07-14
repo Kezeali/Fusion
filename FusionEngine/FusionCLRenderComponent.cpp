@@ -109,15 +109,16 @@ namespace FusionEngine
 			}
 
 			// update AABB for the current frame / transform
-			m_AABB.left = m_InterpPosition.x;
-			m_AABB.top = m_InterpPosition.y;
+			m_AABB.left = ToRender(m_InterpPosition.x);
+			m_AABB.top = ToRender(m_InterpPosition.y);
 			m_AABB.set_size(CL_Sizef(m_Sprite.get_size()));
 
 			CL_Origin origin;
 			int x, y;
 			m_Sprite.get_alignment(origin, x, y);
 
-			m_AABB.apply_alignment(origin, (float)x, (float)y);
+			m_AABB.translate(-CL_Vec2f::calc_origin(origin, m_AABB.get_size()) - CL_Vec2f((float)x, (float)y));
+			//m_AABB.apply_alignment(origin, (float)x, (float)y);
 
 			CL_Angle draw_angle = m_Sprite.get_angle() - m_Sprite.get_base_angle();
 			draw_angle.normalize();
@@ -138,6 +139,8 @@ namespace FusionEngine
 		if (m_RecreateSprite && m_SpriteDef)
 		{
 			m_Sprite = m_SpriteDef->CreateSprite(gc);
+			m_Sprite.set_alignment(origin_center);
+			m_Sprite.set_rotation_hotspot(origin_center);
 			//m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
 			//m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
 			//m_Sprite.set_color(Colour.Get());
@@ -151,7 +154,7 @@ namespace FusionEngine
 		}
 		if (!m_Sprite.is_null())
 		{
-			Vector2 draw_pos = m_InterpPosition - camera_pos;
+			Vector2 draw_pos = ToRender(m_InterpPosition) - camera_pos;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
 			auto size = m_AABB.get_size();
