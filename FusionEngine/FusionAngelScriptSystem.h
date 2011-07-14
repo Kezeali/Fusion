@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionBox2DSystem
-#define H_FusionBox2DSystem
+#ifndef H_FusionAngelScriptSystem
+#define H_FusionAngelScriptSystem
 
 #if _MSC_VER > 1000
 #pragma once
@@ -37,41 +37,43 @@
 #include "FusionComponentSystem.h"
 #include "FusionEntityComponent.h"
 
-class b2World;
+#include <angelscript.h>
+
+#define FSN_PARALLEL_SCRIPT_EXECUTION
 
 namespace FusionEngine
 {
 
-	class Box2DBody;
-	class Box2DFixture;
+	class ASScript;
 
-	class Box2DWorld;
-	class Box2DTask;
+	class AngelScriptWorld;
+	class AngelScriptTask;
 
-	class Box2DSystem : public IComponentSystem
+	class AngelScriptSystem : public IComponentSystem
 	{
 	public:
-		Box2DSystem();
-		virtual ~Box2DSystem()
+		AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager);
+		virtual ~AngelScriptSystem()
 		{}
 
-		// TODO: make private
 		ISystemWorld* CreateWorld();
 
 	private:
-		SystemType GetType() const { return SystemType::Physics; }
+		SystemType GetType() const { return SystemType::Other; }
 
-		std::string GetName() const { return "Box2DSystem"; }
+		std::string GetName() const { return "AngelScriptSystem"; }
+
+		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
-	class Box2DWorld : public ISystemWorld
+	class AngelScriptWorld : public ISystemWorld
 	{
-		friend class Box2DTask;
+		friend class AngelScriptTask;
 	public:
-		Box2DWorld(IComponentSystem* system);
-		~Box2DWorld();
+		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
+		~AngelScriptWorld();
 
-		b2World* Getb2World() const { return m_World; }
+		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
 	private:
 		std::vector<std::string> GetTypes() const;
@@ -86,21 +88,22 @@ namespace FusionEngine
 
 		ISystemTask* GetTask();
 
-		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
+		std::vector<std::shared_ptr<ASScript>> m_ActiveScripts;
 
-		b2World* m_World;
-		Box2DTask* m_B2DTask;
+		std::shared_ptr<ScriptManager> m_ScriptManager;
+		asIScriptEngine* m_Engine;
+		AngelScriptTask* m_ASTask;
 	};
 
-	class Box2DTask : public ISystemTask
+	class AngelScriptTask : public ISystemTask
 	{
 	public:
-		Box2DTask(Box2DWorld* sysworld, b2World* const world);
-		~Box2DTask();
+		AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
+		~AngelScriptTask();
 
 		void Update(const float delta);
 
-		PerformanceHint GetPerformanceHint() const { return LongSerial; }
+		PerformanceHint GetPerformanceHint() const { return LongParallel; }
 
 		bool IsPrimaryThreadOnly() const
 		{
@@ -108,8 +111,8 @@ namespace FusionEngine
 		}
 
 	protected:
-		Box2DWorld *m_B2DSysWorld;
-		b2World* const m_World;
+		AngelScriptWorld* m_AngelScriptWorld;
+		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
 }

@@ -36,6 +36,8 @@
 
 #include "FusionEntityComponent.h"
 
+#include "FusionCommon.h" // just for Vector2 typedef (should fix this, since it is often the case)
+
 namespace FusionEngine
 {
 

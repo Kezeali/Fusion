@@ -537,7 +537,8 @@ namespace FusionEngine
 	void ScriptManager::ConnectToCaller(ScriptUtils::Calling::Caller &caller)
 	{
 		caller.ConnectExceptionCallback( std::bind(&ScriptManager::_exceptionCallback, this, _1) );
-		caller.ConnectLineCallback( std::bind(&ScriptManager::_lineCallback, this, _1) );
+		if (m_DebugOutput || (m_DebugMode & DebugModeFlags::StepThrough) || (m_DebugMode & DebugModeFlags::Breakpoints))
+			caller.ConnectLineCallback( std::bind(&ScriptManager::_lineCallback, this, _1) );
 	}
 
 	bool printVar(std::ostream &strstr, asIScriptContext *ctx, int var_ind, int stack_level)

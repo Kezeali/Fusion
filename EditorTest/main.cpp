@@ -169,7 +169,7 @@ public:
 				////////////////////
 				// Resource Manager
 				boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager(gc));
-				resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResouce, NULL);
+				resourceManager->AddResourceLoader("IMAGE", &LoadImageResource, &UnloadImageResource, NULL);
 				resourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
 				resourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
 				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);

@@ -26,12 +26,14 @@
 // Systems
 #include "../FusionEngine/FusionGUI.h"
 
+#include "../FusionEngine/FusionAngelScriptSystem.h"
 #include "../FusionEngine/FusionBox2DSystem.h"
 #include "../FusionEngine/FusionCLRenderSystem.h"
 
-#include "../FusionEngine/FusionPhysicalComponent.h"
 #include "../FusionEngine/FusionBox2DComponent.h"
+#include "../FusionEngine/FusionPhysicalComponent.h"
 
+#include "../FusionEngine/FusionScriptComponent.h"
 #include "../FusionEngine/FusionRender2DComponent.h"
 
 // Various
@@ -139,17 +141,19 @@ public:
 
 				////////////////////
 				// Script Manager
-				ScriptManager *scriptingManager = new ScriptManager();
-				asIScriptEngine* asEngine = scriptingManager->GetEnginePtr();
+				auto scriptManager = std::make_shared<ScriptManager>();
+				asIScriptEngine* asEngine = scriptManager->GetEnginePtr();
 
-				Console::Register(scriptingManager);
+				Console::Register(scriptManager.get());
 				RegisterScriptedConsoleCommand(asEngine);
-				GUI::Register(scriptingManager);
+				GUI::Register(scriptManager.get());
 				ContextMenu::Register(asEngine);
+
+				scriptManager->RegisterGlobalObject("Console console", Console::getSingletonPtr());
 
 				/////////////////////////////////////
 				// Script SoundOutput wrapper object
-				std::shared_ptr<SoundOutput> script_SoundOutput = std::make_shared<SoundOutput>(sound_output);
+				auto script_SoundOutput = std::make_shared<SoundOutput>(sound_output);
 
 				////////////////////
 				// Resource Manager
@@ -159,7 +163,6 @@ public:
 				resourceManager->AddResourceLoader(ResourceLoader("ANIMATION", &LoadAnimationResource, &UnloadAnimationResource));
 				resourceManager->AddResourceLoader("AUDIO", &LoadAudio, &UnloadAudio, NULL);
 				resourceManager->AddResourceLoader("AUDIO:STREAM", &LoadAudioStream, &UnloadAudio, NULL); // Note that this intentionally uses the same unload method
-
 
 				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
 
@@ -200,17 +203,24 @@ public:
 				
 				static_cast<CLRenderWorld*>(renderWorld)->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld)->Getb2World());
 
+				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager));
+				auto asWorld = asSystem->CreateWorld();
+				ontology.push_back(asWorld);
+
 				scheduler->SetOntology(ontology);
 
-				
 
 				auto entity = std::make_shared<Entity>();
 				auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", Vector2(ToSimUnits(20.f), ToSimUnits(20.f)), 0.f, nullptr, nullptr);
 				entity->AddComponent(b2BodyCom);
 				auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
 				entity->AddComponent(b2CircleFixture);
+
 				auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 				entity->AddComponent(clSprite);
+
+				auto asScript = asWorld->InstantiateComponent("ASScript");
+				entity->AddComponent(asScript);
 
 				{
 					auto fixture = entity->GetComponent<FusionEngine::IFixture>();
@@ -223,10 +233,15 @@ public:
 					sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
 					sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
 				}
+				{
+					auto script = entity->GetComponent<IScript>();
+					script->ScriptPath.Set("Entities/Test/test_script.as");
+				}
 				entity->SynchroniseParallelEdits();
 				b2BodyCom->FireSignals();
 				b2CircleFixture->FireSignals();
 				clSprite->FireSignals();
+				asScript->FireSignals();
 
 				{
 					auto body = entity->GetComponent<IRigidBody>();
@@ -239,6 +254,7 @@ public:
 				box2dWorld->OnActivation(b2BodyCom);
 				box2dWorld->OnActivation(b2CircleFixture);
 				renderWorld->OnActivation(clSprite);
+				asWorld->OnActivation(asScript);
 
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
@@ -281,8 +297,9 @@ public:
 					b2BodyCom->FireSignals();
 					b2CircleFixture->FireSignals();
 					clSprite->FireSignals();
+					asScript->FireSignals();
 
-					scriptingManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
+					//scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
 					dispWindow.flip();
 					gc.clear();
@@ -290,6 +307,7 @@ public:
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;
 				}
+				scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 			}
 			catch (FusionEngine::Exception &ex)
 			{

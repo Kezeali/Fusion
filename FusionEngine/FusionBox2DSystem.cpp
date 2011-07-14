@@ -191,7 +191,7 @@ namespace FusionEngine
 	{
 		m_World->Step(delta, 10, 10);
 		m_World->ClearForces();
-		auto activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;

@@ -91,6 +91,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\FusionEngine\FusionAngelScriptComponent.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionAngelScriptSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAudioLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
@@ -195,6 +197,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FusionEngine\FusionAngelScriptComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionAngelScriptSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionBoostSignals2.h" />
@@ -208,6 +212,7 @@
     <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionTaskScheduler.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionConsole.h" />
