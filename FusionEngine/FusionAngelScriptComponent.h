@@ -88,7 +88,9 @@ namespace FusionEngine
 		std::string m_Path;
 		bool m_ReloadScript;
 
-		asIScriptModule* m_Module;
+		bool m_ModuleBuilt;
+
+		ModulePtr m_Module;
 		ScriptObject m_ScriptObject; // An instance of the class that the script defines
 	};
 

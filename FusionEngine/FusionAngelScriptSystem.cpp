@@ -30,6 +30,7 @@
 #include "FusionAngelScriptSystem.h"
 
 #include "FusionAngelScriptComponent.h"
+#include "FusionEntity.h"
 
 #include <tbb/parallel_for.h>
 
@@ -133,24 +134,39 @@ namespace FusionEngine
 	{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
 
+		std::map<ModulePtr, EntityPtr> modulesToBuild;
+
 		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
 		{
 			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
 			{
 				auto& script = scripts[i];
+
+				if (script->m_ModuleBuilt)
+				{
+					if (script->m_Module->IsBuilt())
+					{
+						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
+						script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
+					}
+
+					script->m_ModuleBuilt = false;
+				}
+
 				if (script->m_ReloadScript)
 				{
 					script->m_ScriptObject.Release();
 
-					auto module = m_ScriptManager->GetModule(script->m_Path.c_str(), asGM_ALWAYS_CREATE);
-					script->m_Module = module->GetASModule();
-					if (m_ScriptManager->AddFile(script->m_Path, script->m_Path.c_str()))
-					{
-						if (script->m_Module->Build() < 0) { script->m_ReloadScript = false; continue; }
-						
-						auto objectType = script->m_Module->GetObjectTypeByIndex(0);
+					const auto& moduleName = script->GetParent()->GetName();
 
-						script->m_ScriptObject = module->CreateObject(objectType->GetTypeId());
+					auto module = m_ScriptManager->GetModule(moduleName.c_str(), asGM_ALWAYS_CREATE);
+					script->m_Module = module;
+					if (m_ScriptManager->AddFile(script->m_Path, moduleName.c_str()))
+					{
+						//modulesToBuild.insert(module);
+						modulesToBuild.insert( std::make_pair(module, script->GetParent()->shared_from_this()) );
+
+						script->m_ModuleBuilt = true;
 					}
 
 					script->m_ReloadScript = false;
@@ -172,6 +188,46 @@ namespace FusionEngine
 #endif
 
 		m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
+
+		for (auto it = modulesToBuild.begin(), end = modulesToBuild.end(); it != end; ++it)
+		{
+			//auto& module = (*it);
+			auto& module = it->first;
+			auto& entity = it->second;
+
+			std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
+
+			std::string componentConvenienceScript;
+			//auto& componentNames = entity->GetComponentNames();
+			auto& interfaces = entity->GetInterfaces();
+			for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
+			{
+				const auto& interfaceName = it->first;
+				for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
+				{
+					const auto convenientIdentifier = fe_newlower(cit->first);
+					componentConvenienceScript += interfaceName + "@ " + convenientIdentifier + ";\n";
+
+					convenientComponents[convenientIdentifier] = cit->second;
+				}
+			}
+
+			module->AddCode(entity->GetName(), componentConvenienceScript);
+
+			if (module->Build() < 0)
+				continue; // TODO: Report error
+
+			for (auto it = convenientComponents.begin(), end = convenientComponents.end(); it != end; ++it)
+			{
+				int index = module->GetASModule()->GetGlobalVarIndexByName(it->first.c_str());
+				if (index >= 0)
+				{
+					IComponent** component = static_cast<IComponent**>(module->GetASModule()->GetAddressOfGlobalVar(index));
+					it->second->addRef();
+					*component = (it->second.get());
+				}
+			}
+		}
 	}
 
 }

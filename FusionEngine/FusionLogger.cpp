@@ -334,7 +334,7 @@ namespace FusionEngine
 			filename << tag << "-"
 				<< std::setw(2) << std::setfill('0') << pTime->tm_year +1900
 				<< std::setw(2) << std::setfill('0') << pTime->tm_mon +1
-				<< std::setw(2) << std::setfill('0') << pTime->tm_mday 
+				<< std::setw(2) << std::setfill('0') << pTime->tm_mday
 				<< "." << m_Ext;
 
 			//filename.flush();

@@ -34,6 +34,9 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionRefCounted.h"
+#include "scriptstring.h"
+
 #include <vector>
 #include <functional>
 
@@ -67,6 +70,99 @@
 
 namespace FusionEngine
 {
+	
+	class IComponent : public RefCounted
+	{
+	public:
+		//! Cotr
+		IComponent()
+		{
+		}
+		//! Destructor
+		virtual ~IComponent() {}
+
+		void SetParent(Entity* parent) { m_Parent = parent; }
+		Entity* GetParent() const { return m_Parent; }
+
+		void SetIdentifier(const std::string& identifier) { m_Identifier = identifier; }
+		const std::string& GetIdentifier() const { return m_Identifier; }
+
+		virtual std::string GetType() const = 0;
+
+		const std::set<std::string>& GetInterfaces()
+		{
+			//FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
+			InitInterfaceList();
+			return m_Interfaces;
+		}
+
+		virtual void InitInterfaceList() = 0;
+
+		virtual void OnSpawn() {}
+		virtual void OnStreamIn() {}
+		virtual void OnStreamOut() {}
+
+		virtual void OnSiblingAdded(const std::shared_ptr<IComponent>& com) {}
+		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
+
+		virtual void SynchroniseParallelEdits() = 0;
+		virtual void FireSignals() = 0;
+
+		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
+		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
+
+	protected:
+		std::set<std::string> m_Interfaces;
+
+	private:
+		Entity* m_Parent;
+		std::string m_Identifier; // How this component is identified within the entity
+
+	};
+
+#define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
+#define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
+
+//	class InsertInterfaceName
+//	{
+//	public:
+//		InsertInterfaceName(std::set<std::string>& container)
+//			: m_Container(container)
+//		{
+//		}
+//
+//		template <typename I>
+//		void operator() (I)
+//		{
+//			m_Container.insert(I::GetTypeName());
+//		}
+//
+//		std::set<std::string>& m_Container;
+//	};
+//
+//#define FSN_LIST_INTERFACES() boost::mpl::for_each<Interfaces>(InsertInterfaceName(m_Interfaces));
+
+	static CScriptString* IComponent_GetType(void* obj)
+	{
+		auto com = static_cast<IComponent*>(obj);
+		return new CScriptString(com->GetType());
+	}
+
+	//! Registers a script type for the given component interface
+	/*!
+	* Assumes that the interface defines the static function
+	* <code>static std::string GetTypeName()</code>
+	*/
+	template <typename T>
+	void RegisterComponentInterfaceType(asIScriptEngine *engine)
+	{
+		IComponent::RegisterType<IComponent>(engine, T::GetTypeName());
+		//int v = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF | asOBJ_NOHANDLE); FSN_ASSERT(v >= 0);
+		//int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string@ getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string@ getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
 
 	template <typename T>
 	class ValueBuffer
@@ -217,75 +313,6 @@ namespace FusionEngine
 			return true;
 		}
 	};
-
-	class IComponent
-	{
-	public:
-		//! Cotr
-		IComponent()
-		{
-		}
-		//! Destructor
-		virtual ~IComponent() {}
-
-		void SetParent(Entity* parent) { m_Parent = parent; }
-		Entity* GetParent() const { return m_Parent; }
-
-		virtual std::string GetType() const = 0;
-
-		const std::set<std::string>& GetInterfaces()
-		{
-			//FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
-			InitInterfaceList();
-			return m_Interfaces;
-		}
-
-		virtual void InitInterfaceList() = 0;
-
-		virtual void OnSpawn() {}
-		virtual void OnStreamIn() {}
-		virtual void OnStreamOut() {}
-
-		virtual void OnSiblingAdded(const std::shared_ptr<IComponent>& com) {}
-		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
-
-		virtual void SynchroniseParallelEdits() = 0;
-		virtual void FireSignals() = 0;
-
-		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
-		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
-
-	protected:
-		std::set<std::string> m_Interfaces;
-
-	private:
-		Entity* m_Parent;
-
-	};
-
-#define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
-#define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
-
-//	class InsertInterfaceName
-//	{
-//	public:
-//		InsertInterfaceName(std::set<std::string>& container)
-//			: m_Container(container)
-//		{
-//		}
-//
-//		template <typename I>
-//		void operator() (I)
-//		{
-//			m_Container.insert(I::GetTypeName());
-//		}
-//
-//		std::set<std::string>& m_Container;
-//	};
-//
-//#define FSN_LIST_INTERFACES() boost::mpl::for_each<Interfaces>(InsertInterfaceName(m_Interfaces));
 
 }
 

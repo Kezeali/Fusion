@@ -139,6 +139,8 @@ public:
 				SetupPhysFS::clear_temp();
 #endif
 
+				//logger->ActivateConsoleLogging();
+
 				////////////////////
 				// Script Manager
 				auto scriptManager = std::make_shared<ScriptManager>();
@@ -149,6 +151,18 @@ public:
 				GUI::Register(scriptManager.get());
 				ContextMenu::Register(asEngine);
 
+				// Component types
+				RegisterComponentInterfaceType<ITransform>(asEngine);
+				RegisterComponentInterfaceType<IRigidBody>(asEngine);
+				RegisterComponentInterfaceType<IFixture>(asEngine);
+				RegisterComponentInterfaceType<ICircleShape>(asEngine);
+				RegisterComponentInterfaceType<IPolygonShape>(asEngine);
+
+				RegisterComponentInterfaceType<ISprite>(asEngine);
+
+				RegisterComponentInterfaceType<IScript>(asEngine);
+
+				// Console singleton
 				scriptManager->RegisterGlobalObject("Console console", Console::getSingletonPtr());
 
 				/////////////////////////////////////

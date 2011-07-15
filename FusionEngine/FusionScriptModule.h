@@ -85,6 +85,8 @@ namespace FusionEngine
 		int AddCode(const std::string &section_name, const std::string &script);
 		int Build();
 
+		bool IsBuilt() const { return m_Built; }
+
 		const char* GetName() const;
 
 		asIScriptModule *GetASModule() const { return m_Module; }

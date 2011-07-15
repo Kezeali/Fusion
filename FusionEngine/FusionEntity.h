@@ -154,55 +154,8 @@ namespace FusionEngine
 		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 
 		void SynchroniseParallelEdits();
-
-		// The interface type passed here determines the interface that other components must use to access the added component
-		//template <class Com>
-		//void AddComponentT(std::shared_ptr<Com>& component)
-		//{
-		//	static_assert(std::is_base_of<IComponent, Com>::value, "Com must be derrived from IComponent");
-
-		//	ComponentInfo entry;
-		//	entry.component = component;
-
-		//	boost::mpl::for_each<Com::Interfaces>(addComInterface(m_ComponentInterfaces, component, entry.interfaces));
-
-		//	for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-		//	{
-		//		it->component->OnSiblingAdded(entry.interfaces, entry.component);
-		//		component->OnSiblingAdded(it->interfaces, it->component);
-		//	}
-		//	
-		//	m_Components.push_back(std::move(entry));
-		//}
-
-	private:
-		std::vector<std::shared_ptr<IComponent>> m_Components;
-
+		
 		typedef std::map<std::string, std::map<std::string, std::shared_ptr<IComponent>>> ComInterfaceMap;
-		ComInterfaceMap m_ComponentInterfaces;
-
-		//template <class C>
-		//struct addComInterface
-		//{
-		//	addComInterface(ComInterfaceMap& map_, std::shared_ptr<C>& component, std::set<std::string>& interface_names_)
-		//		: map(_map),
-		//		com(component),
-		//		interface_names(interface_names_)
-		//	{}
-
-		//	template <class I>
-		//	void operator() (I)
-		//	{
-		//		interface_names.insert(I::GetTypeName());
-		//		map[I::GetTypeName()].push_back(com);
-		//	}
-
-		//	ComInterfaceMap& map;
-		//	std::shared_ptr<C>& com;
-		//	std::set<std::string>& interface_names;
-		//};
-
-	public:
 
 		//template <class Interface>
 		//void InvokeOnComponent(std::function<void (std::shared_ptr<Interface>)> function)
@@ -261,26 +214,19 @@ namespace FusionEngine
 			return std::shared_ptr<Interface>();
 		}
 
-		////! Returns renderables
-		//virtual RenderableArray &GetRenderables();
-		////! Adds a renderable
-		//virtual void AddRenderable(RenderablePtr renderable);
-		////! Removes the given renderable object from the Entity
-		//virtual void RemoveRenderable(RenderablePtr renderable);
-		////! Removes renderables with the given tag
-		//virtual void RemoveRenderablesWithTag(const std::string &tag);
+		const std::vector<std::shared_ptr<IComponent>>& GetComponents() const;
 
-		//! Returns the cumulative AABB of this Entity's renderables
-		//CL_Rectf CalculateOnScreenAABB() const;
+		const ComInterfaceMap& GetInterfaces() const;
 
-		//! Adds an object that uses a resource that should be loaded when the Entity is streamed in
-		//void AddStreamedResource(StreamedResourceUser * const user);
-		//! Removes the given SRU
-		//void RemoveStreamedResource(StreamedResourceUser * const user);
-		//! Sets resources that should be loaded when the Entity is streamed in
-		//void SetStreamedResources(const StreamedResourceArray &resources);
-		//! Returns streamed resources
-		//const StreamedResourceArray &GetStreamedResources() const;
+		//std::map<std::string, std::string> GetComponentNames() const
+		//{
+		//	std::map<std::string, std::string> names;
+		//	
+		//	for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		//	{
+		//		const auto& component = *it;
+		//	}
+		//}
 
 		//! Valid types for property vars.
 		enum PropertyType
@@ -540,6 +486,9 @@ namespace FusionEngine
 		//  authority is always the owner.
 		PlayerID m_Authority;
 
+		std::vector<std::shared_ptr<IComponent>> m_Components;
+		ComInterfaceMap m_ComponentInterfaces;
+
 		PlayerInputPtr m_PlayerInput;
 
 		TagFlagDictionaryPtr m_TagFlagDictionary;
@@ -571,7 +520,6 @@ namespace FusionEngine
 		// Renderer layer
 		size_t m_Layer;
 
-		RenderableArray m_Renderables;
 		StreamedResourceArray m_StreamedResources;
 
 		inline void SetStreamedIn(bool is_streamed_in);

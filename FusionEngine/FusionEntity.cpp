@@ -187,17 +187,20 @@ namespace FusionEngine
 		for (auto it = component->GetInterfaces().begin(), end = component->GetInterfaces().end(); it != end; ++it)
 		{
 			auto& implementors = m_ComponentInterfaces[*it];
-			if (identifier.empty())
+			std::string interfaceIdentifier = identifier;
+			if (interfaceIdentifier.empty())
 			{
 				if (!implementors.empty())
 				{
 					std::stringstream str; str << *it << implementors.size();
-					identifier = str.str();
+					interfaceIdentifier = str.str();
 				}
 				else
-					identifier = *it;
+					interfaceIdentifier = *it;
 			}
-			implementors[identifier] = component;
+			//component->SetIdentifier(identifier);
+			FSN_ASSERT(implementors.find(interfaceIdentifier) == implementors.end());
+			implementors[interfaceIdentifier] = component;
 		}
 		// Notify all other components of the new component, and notify the new component of the existing components
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
@@ -242,6 +245,16 @@ namespace FusionEngine
 			else
 				implementors.erase(identifier);
 		}
+	}
+
+	const std::vector<std::shared_ptr<IComponent>>& Entity::GetComponents() const
+	{
+		return m_Components;
+	}
+
+	const Entity::ComInterfaceMap& Entity::GetInterfaces() const
+	{
+		return m_ComponentInterfaces;
 	}
 
 	void Entity::SynchroniseParallelEdits()

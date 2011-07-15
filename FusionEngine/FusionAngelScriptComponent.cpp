@@ -33,7 +33,8 @@ namespace FusionEngine
 {
 
 	ASScript::ASScript()
-		: m_ReloadScript(false)
+		: m_ReloadScript(false),
+		m_ModuleBuilt(false)
 	{
 	}
 
@@ -43,9 +44,8 @@ namespace FusionEngine
 
 	void ASScript::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
 	{
-		//if (auto fixtureCom = dynamic_cast<Box2DFixture*>(com.get()))
+		//if (auto scriptCom = dynamic_cast<ASScript*>(com.get()))
 		//{
-		//	fixtureCom->MassChanged = std::bind(&Box2DBody::OnFixtureMassChanged, this);
 		//}
 	}
 
