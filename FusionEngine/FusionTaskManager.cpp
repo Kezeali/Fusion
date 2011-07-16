@@ -36,6 +36,54 @@
 namespace FusionEngine
 {
 
+	namespace tasks
+	{
+		class SynchronisedTask: public tbb::task
+		{
+		public:
+			SynchronisedTask() {}
+
+			tbb::task *execute()
+			{
+				FSN_ASSERT(m_Callback);
+
+				m_Callback();
+
+				if (--m_CallbacksRemainingToCall == 0)
+				{
+					// This is the last callback to complete: allow all the others to return
+					m_AllCallbacksInvokedEvent.set();
+				}
+				else
+				{
+					// Wait for everybody else to finish up
+					CL_Event::wait(m_AllCallbacksInvokedEvent);
+				}
+
+				return NULL;
+			}
+
+			static void PrepareCallback(const std::function<void (void)>& fn, uint32_t count) 
+			{
+				m_Callback = fn;
+				m_CallbacksRemainingToCall = count;
+				m_AllCallbacksInvokedEvent.reset();
+			}
+
+		protected:
+			friend class TaskManager;
+			static CL_Event m_AllCallbacksInvokedEvent;
+			static std::function<void (void)> m_Callback;
+			static tbb::atomic<uint32_t> m_CallbacksRemainingToCall;
+		}; // class SynchronizeTask
+
+		CL_Event SynchronisedTask::m_AllCallbacksInvokedEvent;
+		std::function<void (void)> SynchronisedTask::m_Callback;
+		tbb::atomic<uint32_t> SynchronisedTask::m_CallbacksRemainingToCall;
+	}
+
+	using namespace tasks;
+
 	TaskManager::TaskManager()
 	{
 		m_PrimaryThreadID = tbb::this_tbb_thread::get_id();
@@ -61,14 +109,23 @@ namespace FusionEngine
 
 		//m_pStallPoolParent = NULL;
 		//m_hStallPoolSemaphore = CreateSemaphore( NULL, 0, m_uRequestedNumberOfThreads, NULL );
-		//SynchronizeTask::m_hAllCallbacksInvokedEvent = CreateEvent( NULL, True, False, NULL );
 
 		//m_uMaxNumberOfThreads = m_uRequestedNumberOfThreads;
 		//m_uTargetNumberOfThreads = m_uRequestedNumberOfThreads;
 		//m_uNumberOfThreads = m_uRequestedNumberOfThreads;
 
-		m_TbbScheduler = new tbb::task_scheduler_init(tbb::task_scheduler_init::default_num_threads());
+		SynchronisedTask::m_CallbacksRemainingToCall = 0;
+
+		m_NumberOfThreads = tbb::task_scheduler_init::default_num_threads();
+
+		m_TbbScheduler = new tbb::task_scheduler_init(m_NumberOfThreads);
 		m_SystemTasksRoot = new (tbb::task::allocate_root()) tbb::empty_task;
+
+		NonStandardPerThreadCallback([this]()
+		{
+			tbb::spin_mutex::scoped_lock lock(m_Mutex);
+			m_AffinityIDs.push_back(tbb::task::self().affinity());
+		});
 	}
 
 	TaskManager::~TaskManager()
@@ -78,6 +135,8 @@ namespace FusionEngine
 
 		// trigger the release of the stall pool
 		//ReleaseSemaphore( m_hStallPoolSemaphore, m_uMaxNumberOfThreads, NULL );
+
+		NonStandardPerThreadCallback([](){ asThreadCleanup(); });
 
 		m_SystemTasksRoot->destroy( *m_SystemTasksRoot );
 
@@ -147,9 +206,9 @@ namespace FusionEngine
 
 				// Affinity will increase the chances that each SystemTask will be assigned
 				//  to a unique thread, regardless of PerformanceHint
-				//systemTask->set_affinity(*(affinityIterator++));
-				//if (affinityIterator == m_AffinityIDs.end())
-				//	affinityIterator = m_AffinityIDs.begin();
+				systemTask->set_affinity(*(affinityIterator++));
+				if (affinityIterator == m_AffinityIDs.end())
+					affinityIterator = m_AffinityIDs.begin();
 
 				taskList.push_back(*systemTask);
 			}
@@ -214,6 +273,52 @@ namespace FusionEngine
 #else
 		return true;
 #endif
+	}
+
+	void TaskManager::NonStandardPerThreadCallback(std::function<void (void)> fn)
+	{
+		// This method triggers a synchronized callback to be called once by each thread used
+		// by the TaskManagerTBB.  This method waits until all callbacks have executed.
+
+		// only one at a time here
+		//SpinWait::Lock tLock( m_tSynchronizedCallbackMutex );
+
+		//__ITT_EVENT_START( m_tSynchronizeTPEvent, PROFILE_TASKMANAGER );
+
+		//u32 uNumberOfThreads = m_uNumberOfThreads;
+		//if( uNumberOfThreads != m_uMaxNumberOfThreads )
+		//{
+		//	m_uTargetNumberOfThreads = m_uMaxNumberOfThreads;
+		//	UpdateThreadPoolSize();
+		//}
+
+		SynchronisedTask::PrepareCallback(fn, m_NumberOfThreads);
+
+		tbb::task* broadcastParent = new( tbb::task::allocate_root() ) tbb::empty_task;
+		FSN_ASSERT(broadcastParent != NULL);
+
+		// we have one reference for each thread, plus one for the wait_for_all below
+		broadcastParent->set_ref_count( m_NumberOfThreads + 1 );
+
+		tbb::task_list taskList;
+		for( uint32_t i = 0; i < m_NumberOfThreads; i++ )
+		{
+			// Add a SynchronizedTasks for each thread in the TBB pool (workers + this master)
+			tbb::task *newTask = new( broadcastParent->allocate_child() ) SynchronisedTask;
+			FSN_ASSERT(newTask != NULL);
+			taskList.push_back(*newTask);
+		}
+
+		// get the synchronize tasks running
+		broadcastParent->spawn_and_wait_for_all( taskList );
+		broadcastParent->destroy(*broadcastParent);
+
+		//if( uNumberOfThreads != m_uMaxNumberOfThreads )
+		//{
+		//	m_uTargetNumberOfThreads = uNumberOfThreads;
+		//	UpdateThreadPoolSize();
+		//}
+		//__ITT_EVENT_END( m_tSynchronizeTPEvent, PROFILE_TASKMANAGER );
 	}
 
 }

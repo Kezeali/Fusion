@@ -193,18 +193,21 @@ namespace FusionEngine
 	}
 
 	Box2DFixture::Box2DFixture()
-		: m_Fixture(nullptr)
+		: m_Fixture(nullptr),
+		m_Body(nullptr)
 	{
 	}
 
 	Box2DFixture::Box2DFixture(RakNet::BitStream& stream)
-		: m_Fixture(nullptr)
+		: m_Fixture(nullptr),
+		m_Body(nullptr)
 	{
 		DeserialiseOccasional(stream, true);
 	}
 
 	Box2DFixture::Box2DFixture(b2Fixture* fixture)
-		: m_Fixture(fixture)
+		: m_Fixture(fixture),
+		m_Body(nullptr)
 	{
 	}
 
@@ -355,6 +358,17 @@ namespace FusionEngine
 		m_DeltaSerialisationHelper.markChanged(PropsIdx::Restitution);
 	}
 
+	const b2AABB& Box2DFixture::GetAABB() const
+	{
+		if (m_Fixture)
+			return m_Fixture->GetAABB(0);
+		else
+		{
+			static b2AABB empty;
+			return empty;
+		}
+	}
+
 	Box2DCircleFixture::Box2DCircleFixture()
 	{
 	}
@@ -417,7 +431,7 @@ namespace FusionEngine
 		if (changes[ShapePropsIdx::Position])
 			circleShape->m_p.Set(position.x, position.y);
 
-		if (changes.any())
+		if (changes.any() && m_Body)
 			m_Body->OnFixtureMassChanged();
 	}
 
@@ -433,7 +447,8 @@ namespace FusionEngine
 
 		m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Radius);
 
-		m_Body->OnFixtureMassChanged();
+		if (m_Body)
+			m_Body->OnFixtureMassChanged();
 	}
 
 	float Box2DCircleFixture::GetRadius() const
@@ -446,20 +461,26 @@ namespace FusionEngine
 
 	void Box2DCircleFixture::SetPosition(const Vector2& position)
 	{
-		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
-		auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
-		shape->m_p.Set(position.x, position.y);
+		if (m_Fixture)
+		{
+			FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+			auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+			shape->m_p.Set(position.x, position.y);
 
-		m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Position);
+			m_CircleDeltaSerialisationHelper.markChanged(ShapePropsIdx::Position);
 
-		m_Body->OnFixtureMassChanged();
+			m_Body->OnFixtureMassChanged();
+		}
+		else
+			m_CircleShape.m_p.Set(position.x, position.y);
 	}
 
 	Vector2 Box2DCircleFixture::GetPosition() const
 	{
-		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
-		auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
-		return b2v2(shape->m_p);
+		//FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+		//auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+		//return b2v2(shape->m_p);
+		return b2v2(m_CircleShape.m_p);
 	}
 
 	Box2DPolygonFixture::Box2DPolygonFixture()

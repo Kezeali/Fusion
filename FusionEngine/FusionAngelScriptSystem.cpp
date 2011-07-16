@@ -33,6 +33,7 @@
 #include "FusionEntity.h"
 
 #include <tbb/parallel_for.h>
+#include <tbb/spin_mutex.h>
 
 namespace FusionEngine
 {
@@ -136,6 +137,8 @@ namespace FusionEngine
 
 		std::map<ModulePtr, EntityPtr> modulesToBuild;
 
+		tbb::spin_mutex mutex;
+
 		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
 		{
 			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
@@ -159,15 +162,16 @@ namespace FusionEngine
 
 					const auto& moduleName = script->GetParent()->GetName();
 
+					tbb::spin_mutex::scoped_lock lock(mutex);
 					auto module = m_ScriptManager->GetModule(moduleName.c_str(), asGM_ALWAYS_CREATE);
 					script->m_Module = module;
 					if (m_ScriptManager->AddFile(script->m_Path, moduleName.c_str()))
 					{
 						//modulesToBuild.insert(module);
 						modulesToBuild.insert( std::make_pair(module, script->GetParent()->shared_from_this()) );
-
-						script->m_ModuleBuilt = true;
 					}
+
+					script->m_ModuleBuilt = true;
 
 					script->m_ReloadScript = false;
 				}

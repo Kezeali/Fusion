@@ -140,8 +140,6 @@ namespace FusionEngine
 
 	void CLRenderTask::Update(const float delta)
 	{
-		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-
 		auto& drawables = m_RenderWorld->GetDrawables();
 
 		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
@@ -198,22 +196,25 @@ namespace FusionEngine
 				auto& drawable = *dit;
 				if (!drawable->HasAABB() || drawArea.is_overlapped(drawable->GetAABB()))
 				{
+					CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 					Vector2 camera_pos(camera->GetPosition().x, camera->GetPosition().y);
 					drawable->Draw(gc, camera_pos);
+					//CL_System::pause(100);
 				}
 			}
+			//CL_Draw::point(gc, CL_Pointf(), CL_Colorf::transparent);
 
 			m_Renderer->PostDraw();
 		}
 
-		if (!m_PhysDebugDraw)
-		{
-			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
-			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
-			m_PhysDebugDraw->SetFlags(0xFFFF);
-		}
+		//if (!m_PhysDebugDraw)
+		//{
+		//	m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
+		//	m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
+		//	m_PhysDebugDraw->SetFlags(0xFFFFFFFF);
+		//}
 
-		if (!viewports.empty())
+		if (m_PhysDebugDraw && !viewports.empty())
 		{
 			m_PhysDebugDraw->SetViewport(viewports.front());
 			m_PhysDebugDraw->SetupView();

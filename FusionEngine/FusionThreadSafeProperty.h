@@ -52,7 +52,7 @@
 #include "FusionScriptedSlots.h"
 
 #define FSN_SYNCH_PROP_C(prop, get, set) \
-	if (prop.Synchronise( get() ))\
+	if (prop.m_Changed && prop.Synchronise( get() ))\
 	set(prop.Get());
 
 #define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
@@ -104,7 +104,7 @@ namespace FusionEngine
 		void Write(const T& value) { m_WriteBuffers.local() = value; }
 		bool DumpWrittenValue(T& into)
 		{
-			if (m_WriteBuffers.size() > 0)
+			if (m_WriteBuffers.empty() == false)
 			{
 				into = *m_WriteBuffers.begin();
 				m_WriteBuffers.clear();
@@ -121,17 +121,20 @@ namespace FusionEngine
 	template <>\
 	struct DefaultStaticWriter<t>\
 	{\
-		void Write(const t& value) { m_WriteBuffer = value; }\
+		DefaultStaticWriter() : m_Written(false) {}\
+		void Write(const t& value) { m_WriteBuffer = value; m_Written = true; }\
 		bool DumpWrittenValue(t& into)\
 		{\
-			if (into != m_WriteBuffer)\
+			if (m_Written && into != m_WriteBuffer)\
 			{\
 				into = m_WriteBuffer;\
+				m_Written = false;\
 				return true;\
 			}\
 			return false;\
 		}\
 		tbb::atomic<t> m_WriteBuffer;\
+		bool m_Written;\
 	};
 
 	BOOST_PP_SEQ_FOR_EACH(INTEGRAL_WRITER_SPECIALISATION, _, INTEGRAL_TYPES)

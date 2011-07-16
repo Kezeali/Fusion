@@ -40,7 +40,8 @@ namespace FusionEngine
 		: m_TaskManager(task_manager),
 		m_Accumulator(0),
 		m_LastTime(0),
-		m_Timer(1.f / 30.f)
+		m_Timer(1.f / 30.f),
+		m_FramerateLimiterEnabled(false)
 	{
 		m_ThreadingEnabled = m_TaskManager != nullptr;
 	}
@@ -73,23 +74,35 @@ namespace FusionEngine
 
 		//deltaTime = Singletons::PlatformManager.Timers().Wait( m_hExecutionTimer, !m_bBenchmarkingEnabled );
 
-		unsigned int currentTime = CL_System::get_time();
-		unsigned int timePassed = currentTime - m_LastTime;
+		auto currentTime = CL_System::get_time();
+		if (m_LastTime == 0)
+			m_LastTime = currentTime;
+		auto timePassed = currentTime - m_LastTime;
 		m_LastTime = currentTime;
 
 		deltaTime = 1.f / 30.f;
 
-		m_Timer.Wait();
-
-		//m_Accumulator += fe_min(timePassed, 33u);
-		
 		bool renderOnly = false;
-		//if (m_Accumulator >= (unsigned int)(deltaTime * 1000))
-		//{
-		//	m_Accumulator -= (unsigned int)(deltaTime * 1000);
-		//}
-		//else
-		//	renderOnly = true;
+
+		if (m_FramerateLimiterEnabled)
+		{
+			// Wait until it has been at least deltaTime since the last execution
+#ifdef PROFILE_BUILD
+			if (false/*m_Benchmark*/)
+#endif
+			m_Timer.Wait();
+		}
+		else
+		{
+			m_Accumulator += fe_min(timePassed, 33u);
+
+			if (m_Accumulator >= (unsigned int)(deltaTime * 1000))
+			{
+				m_Accumulator -= (unsigned int)(deltaTime * 1000);
+			}
+			else
+				renderOnly = true;
+		}
 
 		// Check if the execution is paused, and set delta time to 0
 		//if ( Singletons::EnvironmentManager.Runtime().GetStatus() ==

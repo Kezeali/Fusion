@@ -195,15 +195,19 @@ namespace FusionEngine
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
-			if (body->IsAwake() != body->Awake.Get())
+			const bool awake = body->IsAwake();
+			if (awake != body->Awake.Get())
 			{
 				body->Awake.MarkChanged();
 				body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
 			}
-			body->Position.MarkChanged();
-			body->Angle.MarkChanged();
-			body->Velocity.MarkChanged();
-			body->AngularVelocity.MarkChanged();
+			if (awake)
+			{
+				body->Position.MarkChanged();
+				body->Angle.MarkChanged();
+				body->Velocity.MarkChanged();
+				body->AngularVelocity.MarkChanged();
+			}
 
 			body->CleanMassData();
 		}

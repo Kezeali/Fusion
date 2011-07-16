@@ -91,9 +91,9 @@ namespace FusionEngine
 		{
 			IRenderCom::SynchroniseInterface();
 
-			if (ImagePath.Synchronise(GetImagePath()))
+			if (ImagePath.m_Changed && ImagePath.Synchronise(GetImagePath()))
 				SetImagePath(ImagePath.Get());
-			if (AnimationPath.Synchronise(GetAnimationPath()))
+			if (ImagePath.m_Changed && AnimationPath.Synchronise(GetAnimationPath()))
 				SetAnimationPath(AnimationPath.Get());
 
 			FSN_SYNCH_PROP(AlignmentOrigin);
@@ -105,6 +105,7 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(Scale);
 			FSN_SYNCH_PROP(BaseAngle);
 
+			if (AnimationFinished.m_Changed)
 			AnimationFinished.Synchronise(IsAnimationFinished());
 		}
 

@@ -257,10 +257,15 @@ namespace FusionEngine
 
 		boost::signals2::connection onLoadConnection;
 
-		if (resource->IsLoaded())
+		if (resource->IsLoaded()) // TODO: only set IsLoaded to true after RequiresGC is false
 		{
 			if (on_load_callback)
-				on_load_callback(resource);
+			{
+				if (!resource->RequiresGC())
+					on_load_callback(resource);
+				else
+					onLoadConnection = resource->SigLoaded.connect(on_load_callback);
+			}
 		}
 		else
 		{

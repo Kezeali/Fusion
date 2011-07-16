@@ -39,6 +39,8 @@
 
 #include "FusionTimer.h"
 
+#include <tbb/tick_count.h>
+
 namespace FusionEngine
 {
 
@@ -53,9 +55,14 @@ namespace FusionEngine
 
 		void Execute();
 
+		void SetFramerateLimiter(bool enabled) { m_FramerateLimiterEnabled = enabled; }
+
 	private:
+		tbb::tick_count m_LastTick;
 		unsigned int m_LastTime;
 		unsigned int m_Accumulator;
+
+		bool m_FramerateLimiterEnabled;
 
 		bool m_ThreadingEnabled;
 

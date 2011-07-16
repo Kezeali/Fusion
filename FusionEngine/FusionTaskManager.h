@@ -53,6 +53,14 @@ namespace FusionEngine
 		void SpawnJobsForSystemTasks(const std::vector<ISystemTask*>& tasks, const float delta);
 		void WaitForSystemTasks(const std::vector<ISystemTask*>& tasks);
 
+    /// This method triggers a synchronized callback to be called once by each thread used by the <c>TaskManagerTBB</c>.
+    /// This method waits until all callbacks have executed.
+    ///
+    /// <remarks>Unlike the general contract for this method, this method can be safely called at any time,
+    /// as long as the call is made from the primary thread.</remarks>
+    /// <param name="pfnCallback">the function callback to execute</param>
+    void NonStandardPerThreadCallback(std::function<void(void)> fn);
+
 		bool IsPrimaryThread() const;
 
 	private:
@@ -61,6 +69,10 @@ namespace FusionEngine
 		tbb::task_scheduler_init* m_TbbScheduler;
 
 		tbb::task* m_SystemTasksRoot;
+
+		unsigned int m_NumberOfThreads;
+
+		tbb::spin_mutex m_Mutex;
 
 		std::vector<ISystemTask*> m_PrimaryThreadSystemTasks;
 

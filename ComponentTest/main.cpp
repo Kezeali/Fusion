@@ -205,6 +205,8 @@ public:
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
 				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get()));
 
+				scheduler->SetFramerateLimiter(true);
+
 				std::vector<ISystemWorld*> ontology;
 
 				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc));
@@ -224,51 +226,78 @@ public:
 				scheduler->SetOntology(ontology);
 
 
-				auto entity = std::make_shared<Entity>();
-				auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", Vector2(ToSimUnits(20.f), ToSimUnits(20.f)), 0.f, nullptr, nullptr);
-				entity->AddComponent(b2BodyCom);
-				auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-				entity->AddComponent(b2CircleFixture);
+				std::vector<std::shared_ptr<Entity>> entities;
 
-				auto clSprite = renderWorld->InstantiateComponent("CLSprite");
-				entity->AddComponent(clSprite);
-
-				auto asScript = asWorld->InstantiateComponent("ASScript");
-				entity->AddComponent(asScript);
-
+				float xtent = 300;
+				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
+				for (unsigned int i = 0; i < 500; ++i)
 				{
-					auto fixture = entity->GetComponent<FusionEngine::IFixture>();
-					fixture->Density.Set(0.8f);
-					auto shape = entity->GetComponent<ICircleShape>();
-					shape->Radius.Set(ToSimUnits(50.f / 2.f));
-				}
-				{
-					auto sprite = entity->GetComponent<ISprite>();
-					sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
-					sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
-				}
-				{
-					auto script = entity->GetComponent<IScript>();
-					script->ScriptPath.Set("Entities/Test/test_script.as");
-				}
-				entity->SynchroniseParallelEdits();
-				b2BodyCom->FireSignals();
-				b2CircleFixture->FireSignals();
-				clSprite->FireSignals();
-				asScript->FireSignals();
+					position.x += ToSimUnits(50.f);
+					if (position.x >= ToSimUnits(xtent))
+					{
+						position.x = ToSimUnits(-xtent);
+						position.y += ToSimUnits(50.f);
+					}
 
-				{
-					auto body = entity->GetComponent<IRigidBody>();
-					//body->ApplyTorque(10.f);
-					//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
-					body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
-				}
+					auto entity = std::make_shared<Entity>();
+					
+					auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
+					entity->AddComponent(b2CircleFixture);
+					{
+						auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+						fixture->Density.Set(0.8f);
+						auto shape = entity->GetComponent<ICircleShape>();
+						shape->Radius.Set(ToSimUnits(50.f / 2.f));
+					}
+					entity->SynchroniseParallelEdits();
+					auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", position, 0.f, nullptr, nullptr);
+					entity->AddComponent(b2BodyCom);
 
-				//entity->StreamIn();
-				box2dWorld->OnActivation(b2BodyCom);
-				box2dWorld->OnActivation(b2CircleFixture);
-				renderWorld->OnActivation(clSprite);
-				asWorld->OnActivation(asScript);
+					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
+					entity->AddComponent(clSprite);
+
+					auto asScript = asWorld->InstantiateComponent("ASScript");
+					entity->AddComponent(asScript, "script_a");
+
+					//auto asScript2 = asWorld->InstantiateComponent("ASScript");
+					//entity->AddComponent(asScript2, "script_b");
+
+					{
+						auto sprite = entity->GetComponent<ISprite>();
+						sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
+						sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
+					}
+					{
+						//auto script = entity->GetComponent<IScript>("script_a");
+						//script->ScriptPath.Set("Entities/Test/test_script.as");
+
+						//script = entity->GetComponent<IScript>("script_b");
+						//script->ScriptPath.Set("Entities/Test/test_script.as");
+					}
+					entity->SynchroniseParallelEdits();
+					b2BodyCom->FireSignals();
+					b2CircleFixture->FireSignals();
+					clSprite->FireSignals();
+					asScript->FireSignals();
+					//asScript2->FireSignals();
+
+					{
+						auto body = entity->GetComponent<IRigidBody>();
+						//body->ApplyTorque(10.f);
+						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+						//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
+						body->LinearDamping.Set(0.1f);
+					}
+
+					entities.push_back(entity);
+
+					//entity->StreamIn();
+					box2dWorld->OnActivation(b2BodyCom);
+					box2dWorld->OnActivation(b2CircleFixture);
+					renderWorld->OnActivation(clSprite);
+					asWorld->OnActivation(asScript);
+					//asWorld->OnActivation(asScript2);
+				}
 
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
@@ -291,6 +320,11 @@ public:
 					resourceManager->UnloadUnreferencedResources();
 					resourceManager->DeliverLoadedResources();
 
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_1))
+						scheduler->SetFramerateLimiter(false);
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_2))
+						scheduler->SetFramerateLimiter(true);
+
 					if (delta <= 1000)
 					{
 						seconds = delta * 0.001f;
@@ -302,20 +336,26 @@ public:
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
 					{
+						const float invmax = 1.0f / RAND_MAX;
+						auto entity = entities.at((size_t)(std::rand() * invmax * entities.size()));
 						auto body = entity->GetComponent<IRigidBody>();
-						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
-						body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						body->ApplyForce(Vector2(10, 0), body->CenterOfMass.Get() /*+ Vector2(2, -1)*/);
+						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 					}
 
-					entity->SynchroniseParallelEdits();
-					b2BodyCom->FireSignals();
-					b2CircleFixture->FireSignals();
-					clSprite->FireSignals();
-					asScript->FireSignals();
+					for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+					{
+						auto& entity = *it;
+						entity->SynchroniseParallelEdits();
+
+						const auto& components = entity->GetComponents();
+						for (auto it = components.begin(), end = components.end(); it != end; ++it)
+							(*it)->FireSignals();
+					}
 
 					//scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 
-					dispWindow.flip();
+					dispWindow.flip(0);
 					gc.clear();
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))

@@ -279,7 +279,7 @@ namespace FusionEngine
 		//! Get the fixture's AABB. This AABB may be enlarge and/or stale.
 		//! If you need a more accurate AABB, compute it using the shape and
 		//! the body transform.
-		const b2AABB& GetAABB() const { return m_Fixture->GetAABB(0); }
+		const b2AABB& GetAABB() const;
 
 		b2FixtureDef m_Def;
 	protected:

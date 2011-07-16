@@ -99,12 +99,12 @@ namespace FusionEngine
 
 		if (!m_Sprite.is_null())
 		{
-			// update animation
-			m_Sprite.update(int(elapsed * 1000));
-
-			if (!m_Sprite.is_finished())
+			//if (!m_Sprite.is_finished())
 			{
-				if (m_Sprite.is_finished())
+				// update animation
+				m_Sprite.update(int(elapsed * 1000));
+
+				if (m_Sprite.is_finished() != AnimationFinished.Get())
 					AnimationFinished.MarkChanged();
 			}
 
@@ -121,7 +121,7 @@ namespace FusionEngine
 			//m_AABB.apply_alignment(origin, (float)x, (float)y);
 
 			CL_Angle draw_angle = m_Sprite.get_angle() - m_Sprite.get_base_angle();
-			draw_angle.normalize();
+			//draw_angle.normalize();
 			if (!fe_fzero(draw_angle.to_degrees()))
 			{
 				m_Sprite.get_rotation_hotspot(origin, x, y);
@@ -134,7 +134,7 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
+	void CLSprite::Draw(CL_GraphicContext gc, const Vector2& camera_pos)
 	{
 		if (m_RecreateSprite && m_SpriteDef)
 		{
@@ -157,13 +157,13 @@ namespace FusionEngine
 			Vector2 draw_pos = ToRender(m_InterpPosition) - camera_pos;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
-			auto size = m_AABB.get_size();
-			if (size.width * size.height > 0.0f)
-			{
-				auto drawAABB = m_AABB;
-				drawAABB.translate(-camera_pos.x, -camera_pos.y);
-				CL_Draw::box(gc, drawAABB, CL_Colorf::purple);
-			}
+			//auto size = m_AABB.get_size();
+			//if (size.width * size.height > 0.0f)
+			//{
+			//	auto drawAABB = m_AABB;
+			//	drawAABB.translate(-camera_pos.x, -camera_pos.y);
+			//	CL_Draw::box(gc, drawAABB, CL_Colorf::purple);
+			//}
 		}
 	}
 

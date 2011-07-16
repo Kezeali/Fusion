@@ -93,6 +93,7 @@ namespace FusionEngine
 
 		ThreadSafeProperty<float, NullWriter<float>> Mass;
 		ThreadSafeProperty<float, NullWriter<float>> Inertia;
+		ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
 
 		ThreadSafeProperty<Vector2> Velocity;
 		ThreadSafeProperty<float> AngularVelocity;
@@ -114,6 +115,7 @@ namespace FusionEngine
 			ITransform::SynchroniseInterface();
 			Mass.Synchronise(GetMass()); // readonly
 			Inertia.Synchronise(GetInertia()); // readonly
+			CenterOfMass.Synchronise(GetCenterOfMass()); // readonly
 			FSN_SYNCH_PROP(Velocity);
 			FSN_SYNCH_PROP(AngularVelocity);
 			FSN_SYNCH_PROP(LinearDamping);
@@ -131,6 +133,7 @@ namespace FusionEngine
 			ITransform::FireInterfaceSignals();
 			Mass.FireSignal();
 			Inertia.FireSignal();
+			CenterOfMass.FireSignal();
 			Velocity.FireSignal();
 			AngularVelocity.FireSignal();
 			LinearDamping.FireSignal();
