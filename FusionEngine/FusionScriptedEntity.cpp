@@ -539,7 +539,7 @@ namespace FusionEngine
 	{
 		m_KnownPlayers.emplace(std::make_pair(local_index, net_index));
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnPlayerAdded(uint,uint8)");
-		if (f.ok())
+		if (f)
 		{
 			f(local_index, net_index);
 		}
@@ -557,7 +557,7 @@ namespace FusionEngine
 	void ScriptedEntity::Update(float split)
 	{
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void Update(float)");
-		if (f.ok())
+		if (f)
 		{
 			f(split);
 		}
@@ -566,7 +566,7 @@ namespace FusionEngine
 	void ScriptedEntity::Draw()
 	{
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void Draw()");
-		if (f.ok())
+		if (f)
 		{
 			f();
 		}
@@ -575,7 +575,7 @@ namespace FusionEngine
 	void ScriptedEntity::OnStreamIn()
 	{
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamIn()");
-		if (f.ok())
+		if (f)
 		{
 			f();
 		}
@@ -591,7 +591,7 @@ namespace FusionEngine
 	void ScriptedEntity::OnStreamOut()
 	{
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnStreamOut()");
-		if (f.ok())
+		if (f)
 		{
 			f();
 		}
@@ -600,7 +600,7 @@ namespace FusionEngine
 	void ScriptedEntity::OnInstanceRequestFulfilled(const EntityPtr& instance)
 	{
 		ScriptUtils::Calling::Caller f = m_ScriptObject.GetCaller("void OnInstanceRequestFulfilled(Entity@)");
-		if (f.ok())
+		if (f)
 		{
 			EntityPtr passable = instance;
 			f(passable.get());
@@ -855,7 +855,7 @@ namespace FusionEngine
 	{
 		ScriptedEntity *appObject = NULL;
 		ScriptUtils::Calling::Caller f(script_obj, "Entity@ _getAppObject()");
-		if (f.ok())
+		if (f)
 		{
 			Entity *ptr = *static_cast<Entity**>( f() );
 			appObject = dynamic_cast<ScriptedEntity*>( ptr );

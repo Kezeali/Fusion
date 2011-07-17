@@ -205,7 +205,12 @@ public:
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
 				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get()));
 
+#ifdef PROFILE_BUILD
+				scheduler->SetFramerateLimiter(false);
+				scheduler->SetUnlimited(true);
+#else
 				scheduler->SetFramerateLimiter(true);
+#endif
 
 				std::vector<ISystemWorld*> ontology;
 
@@ -240,6 +245,9 @@ public:
 					}
 
 					auto entity = std::make_shared<Entity>();
+					std::stringstream str;
+					str << i;
+					entity->_setName("entity" + str.str());
 					
 					auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
 					entity->AddComponent(b2CircleFixture);
@@ -268,8 +276,8 @@ public:
 						sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
 					}
 					{
-						//auto script = entity->GetComponent<IScript>("script_a");
-						//script->ScriptPath.Set("Entities/Test/test_script.as");
+						auto script = entity->GetComponent<IScript>("script_a");
+						script->ScriptPath.Set("Entities/Test/test_script.as");
 
 						//script = entity->GetComponent<IScript>("script_b");
 						//script->ScriptPath.Set("Entities/Test/test_script.as");
@@ -287,6 +295,7 @@ public:
 						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
 						//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
 						body->LinearDamping.Set(0.1f);
+						body->AngularDamping.Set(0.5f);
 					}
 
 					entities.push_back(entity);
@@ -321,9 +330,17 @@ public:
 					resourceManager->DeliverLoadedResources();
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_1))
+					{
 						scheduler->SetFramerateLimiter(false);
+						scheduler->SetUnlimited(true);
+					}
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_2))
 						scheduler->SetFramerateLimiter(true);
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_3))
+					{
+						scheduler->SetFramerateLimiter(false);
+						scheduler->SetUnlimited(true);
+					}
 
 					if (delta <= 1000)
 					{
@@ -339,7 +356,7 @@ public:
 						const float invmax = 1.0f / RAND_MAX;
 						auto entity = entities.at((size_t)(std::rand() * invmax * entities.size()));
 						auto body = entity->GetComponent<IRigidBody>();
-						body->ApplyForce(Vector2(10, 0), body->CenterOfMass.Get() /*+ Vector2(2, -1)*/);
+						body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
 						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 					}
 

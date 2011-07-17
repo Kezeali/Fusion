@@ -82,7 +82,7 @@ namespace FusionEngine
 
 	void ScriptedSlotWrapper::Callback()
 	{
-		if (m_CallSlot.ok())
+		if (m_CallSlot)
 			m_CallSlot();
 	}
 
@@ -95,7 +95,7 @@ namespace FusionEngine
 	{
 		if (m_TargetObject != nullptr)
 			engine->GCEnumCallback((void*)m_TargetObject);
-		//if (m_CallSlot.ok())
+		//if (m_CallSlot)
 		//	engine->GCEnumCallback((void*)m_TargetObject);
 	}
 

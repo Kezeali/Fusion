@@ -90,7 +90,7 @@ namespace FusionEngine
 		template <typename T0>
 		void Callback(T0 p0)
 		{
-			if (m_CallSlot.ok())
+			if (m_CallSlot)
 			{
 				if (std::is_reference<T0>::value)
 					m_CallSlot(&p0);
@@ -103,7 +103,7 @@ namespace FusionEngine
 		template <typename T0>
 		void CallbackRef(const T0& p0)
 		{
-			if (m_CallSlot.ok())
+			if (m_CallSlot)
 				m_CallSlot(&p0);
 		}
 

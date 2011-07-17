@@ -354,20 +354,23 @@ namespace FusionEngine
 		return success;
 	}
 
-	bool ScriptManager::AddFile(const std::string& filename, const char *module)
+	bool ScriptManager::AddFile(const std::string& filename, const char *module_name)
 	{
 		int r = -1;
 
-		if (m_ScriptSections.find(filename) != m_ScriptSections.end())
+		auto module = GetModule(module_name);
+
+		if (m_ScriptSections.find(filename) != m_ScriptSections.end()
+			&& std::find(module->GetSectionNames().begin(), module->GetSectionNames().end(), filename) != module->GetSectionNames().end())
 			return false; // File already added
 
 		// Load the script from the file
 		std::string script;
 		OpenString_PhysFS(script, filename);
 		// Preprocess the script
-		Preprocess(script, module, filename);
+		Preprocess(script, module_name, filename);
 		// Add the script to the module
-		r = GetModule(module)->AddCode(filename, script);
+		r = module->AddCode(filename, script);
 		// If the script was successfully added to the module, create a new
 		//  ScriptSection for it (these are used for stepping through code
 		//  in the debugger)

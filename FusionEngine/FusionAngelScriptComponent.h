@@ -92,6 +92,7 @@ namespace FusionEngine
 
 		ModulePtr m_Module;
 		ScriptObject m_ScriptObject; // An instance of the class that the script defines
+		std::map<std::string, int> m_ScriptMethods;
 	};
 
 }

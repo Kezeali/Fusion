@@ -189,7 +189,7 @@ namespace FusionEngine
 
 	void Box2DTask::Update(const float delta)
 	{
-		m_World->Step(delta, 10, 10);
+		m_World->Step(delta, 8, 8);
 		m_World->ClearForces();
 		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)

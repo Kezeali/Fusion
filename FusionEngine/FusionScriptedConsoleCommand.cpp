@@ -49,7 +49,7 @@ namespace FusionEngine
 	std::string ScriptedConsoleCommand(asIScriptModule* module, std::string decl, const StringVector &args)
 	{
 		ScriptUtils::Calling::Caller commandCaller(module, decl.c_str());
-		if (commandCaller.ok())
+		if (commandCaller)
 		{
 			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL)
@@ -67,7 +67,7 @@ namespace FusionEngine
 	StringVector ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, int arg_num, const std::string &incomplete_val)
 	{
 		ScriptUtils::Calling::Caller autocompleteCaller(module, decl.c_str());
-		if (autocompleteCaller.ok())
+		if (autocompleteCaller)
 		{
 			ScriptManager *manager = ScriptManager::getSingletonPtr();
 			if (manager != NULL)

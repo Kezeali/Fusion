@@ -416,7 +416,7 @@ namespace FusionEngine
 		//		}
 
 		//		// Call the callback
-		//		if (f.ok())
+		//		if (f)
 		//			f(player_info.LocalIndex, player_info.NetID);
 
 		//		callback_decl.object = NULL;
@@ -560,7 +560,7 @@ namespace FusionEngine
 	//		}
 
 	//		// Call the callback
-	//		if (f.ok())
+	//		if (f)
 	//			f(local_idx, net_idx);
 
 	//		decl.object = NULL;

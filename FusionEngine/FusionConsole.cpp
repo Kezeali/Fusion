@@ -619,13 +619,13 @@ namespace FusionEngine
 		ScriptUtils::Calling::Caller callNewData(m_Listener, "void OnNewData(const string &in)");
 		ScriptUtils::Calling::Caller callClear(m_Listener, "void OnClear()");
 
-		if (callNewLine.ok())
+		if (callNewLine)
 			m_ConsoleOnNewLineConnection = console->OnNewLine.connect( std::bind(&ScriptedConsoleListenerWrapper::OnNewLine, this, _1) );
 
-		if (callNewData.ok())
+		if (callNewData)
 			m_ConsoleOnNewDataConnection = console->OnNewData.connect( std::bind(&ScriptedConsoleListenerWrapper::OnNewData, this, _1) );
 
-		if (callClear.ok())
+		if (callClear)
 			m_ConsoleOnClearConnection = console->OnClear.connect( std::bind(&ScriptedConsoleListenerWrapper::OnClear, this) );
 	}
 
@@ -646,21 +646,21 @@ namespace FusionEngine
 	void ScriptedConsoleListenerWrapper::OnNewLine(const std::string &line)
 	{
 		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewLine(const string &in)");
-		if (f.ok())
+		if (f)
 			f(new CScriptString(line));
 	}
 
 	void ScriptedConsoleListenerWrapper::OnNewData(const std::string &data)
 	{
 		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewData(const string &in)");
-		if (f.ok())
+		if (f)
 			f(new CScriptString(data));
 	}
 
 	void ScriptedConsoleListenerWrapper::OnClear()
 	{
 		ScriptUtils::Calling::Caller f(m_Listener, "void OnClear()");
-		if (f.ok())
+		if (f)
 			f();
 	}
 

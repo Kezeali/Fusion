@@ -149,6 +149,7 @@ namespace FusionEngine
 				{
 					if (script->m_Module->IsBuilt())
 					{
+						tbb::spin_mutex::scoped_lock lock(mutex);
 						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
 						script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
 					}
@@ -178,8 +179,19 @@ namespace FusionEngine
 
 				if (script->m_ScriptObject.IsValid())
 				{
-					auto caller = script->m_ScriptObject.GetCaller("void update(float)");
-					if (caller.ok())
+					ScriptUtils::Calling::Caller caller;
+					auto _where = script->m_ScriptMethods.find("void update(float)");
+					if (_where != script->m_ScriptMethods.end())
+					{
+						caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
+						m_ScriptManager->ConnectToCaller(caller);
+					}
+					else
+					{
+						caller = script->m_ScriptObject.GetCaller("void update(float)");
+						script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
+					}
+					if (caller)
 						caller(delta);
 				}
 			}

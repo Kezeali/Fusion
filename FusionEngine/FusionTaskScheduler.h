@@ -56,6 +56,9 @@ namespace FusionEngine
 		void Execute();
 
 		void SetFramerateLimiter(bool enabled) { m_FramerateLimiterEnabled = enabled; }
+		bool GetFramerateLimiter() const { return m_FramerateLimiterEnabled; }
+
+		void SetUnlimited(bool unlimited) { m_Unlimited = unlimited; }
 
 	private:
 		tbb::tick_count m_LastTick;
@@ -63,6 +66,7 @@ namespace FusionEngine
 		unsigned int m_Accumulator;
 
 		bool m_FramerateLimiterEnabled;
+		bool m_Unlimited; // Update at unlimited rate
 
 		bool m_ThreadingEnabled;
 

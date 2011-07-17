@@ -41,7 +41,8 @@ namespace FusionEngine
 		m_Accumulator(0),
 		m_LastTime(0),
 		m_Timer(1.f / 30.f),
-		m_FramerateLimiterEnabled(false)
+		m_FramerateLimiterEnabled(false),
+		m_Unlimited(false)
 	{
 		m_ThreadingEnabled = m_TaskManager != nullptr;
 	}
@@ -87,12 +88,12 @@ namespace FusionEngine
 		if (m_FramerateLimiterEnabled)
 		{
 			// Wait until it has been at least deltaTime since the last execution
-#ifdef PROFILE_BUILD
-			if (false/*m_Benchmark*/)
-#endif
 			m_Timer.Wait();
 		}
 		else
+#ifdef PROFILE_BUILD
+		if (!m_Unlimited)
+#endif
 		{
 			m_Accumulator += fe_min(timePassed, 33u);
 
