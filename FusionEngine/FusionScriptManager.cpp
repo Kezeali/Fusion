@@ -36,6 +36,8 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include <tbb/scalable_allocator.h>
+
 #include <ClanLib/core.h>
 
 #include "FusionExceptionFactory.h"
@@ -220,6 +222,14 @@ namespace FusionEngine
 			ctx->Abort();
 	}
 
+	static void* ScritAlloc(size_t size)
+	{
+	}
+
+	static void ScriptFree(void* ptr)
+	{
+	}
+
 	//////////
 	// ScriptingManager
 	ScriptManager::ScriptManager()
@@ -231,6 +241,8 @@ namespace FusionEngine
 		m_StringTypeId(0),
 		m_VectorTypeId(0)
 	{
+		int r = asSetGlobalMemoryFunctions(&scalable_malloc, &scalable_free); FSN_ASSERT(r >= 0);
+
 		m_asEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 
 		if (m_asEngine != NULL)

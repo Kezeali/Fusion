@@ -69,6 +69,42 @@ namespace FusionEngine
 		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
 	}
 
+	class StaticTransform : public IComponent, public ITransform
+	{
+	public:
+		FSN_LIST_INTERFACES((ITransform))
+
+		StaticTransform()
+			: m_Angle(0.0f),
+			m_Depth(0)
+		{}
+
+		StaticTransform(const Vector2& pos, float angle)
+			: m_Position(pos),
+			m_Angle(angle),
+			m_Depth(0)
+		{}
+
+	private:
+		std::string GetType() const { return "StaticTransform"; }
+
+		void SynchroniseParallelEdits() { ITransform::SynchroniseInterface(); }
+		void FireSignals() { ITransform::FireInterfaceSignals(); }
+
+		Vector2 GetPosition() const { return m_Position; }
+		void SetPosition(const Vector2& position) { m_Position = position; }
+
+		float GetAngle() const { return m_Angle; }
+		void SetAngle(float angle) { m_Angle = angle; }
+
+		int GetDepth() const { return m_Depth; }
+		void SetDepth(int depth) { m_Depth = depth; }
+
+		Vector2 m_Position;
+		float m_Angle;
+		int m_Depth;
+	};
+
 	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
 	{
 		if (type == "b2RigidBody" 
@@ -125,6 +161,10 @@ namespace FusionEngine
 			{
 				return std::make_shared<Box2DCircleFixture>();
 			}
+		}
+		else if (type == "StaticTransform")
+		{
+			return std::make_shared<StaticTransform>(pos, angle);
 		}
 		return std::shared_ptr<IComponent>();
 	}

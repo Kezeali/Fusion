@@ -64,55 +64,6 @@ namespace FusionEngine
 	void Box2DBody::SynchroniseParallelEdits()
 	{
 		IRigidBody::SynchroniseInterface();
-		//SynchTransform();
-
-		//Vector2 velocity;
-		//if (m_Velocity.ClearWrittenValue(velocity))
-		//	m_Body->SetLinearVelocity(velocity);
-		//else
-		//	m_Velocity.SetReadValue(ToRender(m_Body->GetLinearVelocity()));
-
-		//if (m_AngularVelocityWritten)
-		//{
-		//	m_Body->SetAngularVelocity(m_AngularVelocity);
-		//	m_AngularVelocityWritten = false;
-		//}
-		//else
-		//	m_AngularVelocity = m_Body->GetAngularVelocity();
-
-		//if (m_LinearDampingWritten)
-		//{
-		//	m_Body->SetLinearDamping(ToSim(m_LinearDamping));
-		//	m_LinearDampingWritten = false;
-		//}
-
-		//if (m_AngularDampingWritten)
-		//{
-		//	m_Body->SetAngularDamping(m_AngularDamping);
-		//	m_AngularDampingWritten = false;
-		//}
-
-		//if (m_GravityScaleWritten)
-		//{
-		//	m_Body->SetGravityScale(m_GravityScale);
-		//	m_GravityScaleWritten = false;
-		//}
-
-		//// Copy flags that have been set on the threadsafe wrapper
-		//if (m_Active != m_Body->IsActive())
-		//	m_Body->SetActive(m_Active);
-
-		//if (m_SleepingAllowed != m_Body->IsSleepingAllowed())
-		//	m_Body->SetSleepingAllowed(m_SleepingAllowed);
-
-		//if (m_Bullet != m_Body->IsBullet())
-		//	m_Body->SetBullet(m_Bullet);
-
-		//if (m_FixedRotation != m_Body->IsFixedRotation())
-		//	m_Body->SetFixedRotation(m_FixedRotation);
-
-		//// Copy the value of IsAwake
-		//m_Awake = m_Body->IsAwake();
 	}
 
 	void Box2DBody::FireSignals()

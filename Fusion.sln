@@ -5,6 +5,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EditorTest", "EditorTest\Ed
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComponentTest", "ComponentTest\ComponentTest.vcxproj", "{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{344E8196-5D6A-4978-9572-5D7FFB3ECBCD}"
+	ProjectSection(SolutionItems) = preProject
+		ComponentTest.psess = ComponentTest.psess
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

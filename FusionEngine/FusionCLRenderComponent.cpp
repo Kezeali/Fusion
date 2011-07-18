@@ -134,7 +134,7 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::Draw(CL_GraphicContext gc, const Vector2& camera_pos)
+	void CLSprite::Draw(CL_GraphicContext& gc, const Vector2& camera_pos)
 	{
 		if (m_RecreateSprite && m_SpriteDef)
 		{
@@ -158,7 +158,7 @@ namespace FusionEngine
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
 			//auto size = m_AABB.get_size();
-			//if (size.width * size.height > 0.0f)
+			//if (size.width > 0.0f)
 			//{
 			//	auto drawAABB = m_AABB;
 			//	drawAABB.translate(-camera_pos.x, -camera_pos.y);
@@ -259,7 +259,7 @@ namespace FusionEngine
 	{
 		m_Angle = angle;
 		if (!m_Sprite.is_null())
-			m_Sprite.set_angle(CL_Angle(angle, cl_radians).normalize());
+			m_Sprite.set_angle(CL_Angle(angle, cl_radians));
 	}
 
 	void CLSprite::SetLocalDepth(int value)

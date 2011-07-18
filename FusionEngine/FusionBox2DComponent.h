@@ -116,6 +116,21 @@ namespace FusionEngine
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
 		// RigidBody interface
+		BodyType GetBodyType() const
+		{
+			switch (m_Body->GetType())
+			{
+			case b2_staticBody:
+				return BodyType::Static;
+			case b2_kinematicBody:
+				return BodyType::Kinematic;
+			case b2_dynamicBody:
+				return BodyType::Dynamic;
+			default:
+				return BodyType::Static;
+			}
+		}
+
 		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
 		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
 

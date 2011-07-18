@@ -233,7 +233,7 @@ public:
 
 				std::vector<std::shared_ptr<Entity>> entities;
 
-				float xtent = 300;
+				float xtent = 500;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
 				for (unsigned int i = 0; i < 500; ++i)
 				{
@@ -249,32 +249,53 @@ public:
 					str << i;
 					entity->_setName("entity" + str.str());
 					
-					auto b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-					entity->AddComponent(b2CircleFixture);
+					std::shared_ptr<IComponent> b2CircleFixture;
+					std::shared_ptr<IComponent> b2BodyCom;
+					if (i < 300)
 					{
-						auto fixture = entity->GetComponent<FusionEngine::IFixture>();
-						fixture->Density.Set(0.8f);
-						auto shape = entity->GetComponent<ICircleShape>();
-						shape->Radius.Set(ToSimUnits(50.f / 2.f));
+						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
+						entity->AddComponent(b2CircleFixture);
+						{
+							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+							fixture->Density.Set(0.8f);
+							fixture->Sensor.Set(i > 80);
+							auto shape = entity->GetComponent<ICircleShape>();
+							shape->Radius.Set(ToSimUnits(50.f / 2.f));
+						}
+						entity->SynchroniseParallelEdits();
+
+						b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
+						entity->AddComponent(b2BodyCom);
 					}
-					entity->SynchroniseParallelEdits();
-					auto b2BodyCom = box2dWorld->InstantiateComponent("b2RigidBody", position, 0.f, nullptr, nullptr);
-					entity->AddComponent(b2BodyCom);
+					else
+					{
+						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f, nullptr, nullptr);
+						entity->AddComponent(transformCom);
+					}
 
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
 
 					auto asScript = asWorld->InstantiateComponent("ASScript");
-					entity->AddComponent(asScript, "script_a");
+					if (i < 200)
+					{
+						entity->AddComponent(asScript, "script_a");
+					}
 
 					//auto asScript2 = asWorld->InstantiateComponent("ASScript");
 					//entity->AddComponent(asScript2, "script_b");
 
 					{
 						auto sprite = entity->GetComponent<ISprite>();
-						sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
-						sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
+						if (i > 150 && i < 300)
+						{
+							sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
+							sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
+						}
+						else
+							sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
 					}
+					if (i < 200)
 					{
 						auto script = entity->GetComponent<IScript>("script_a");
 						script->ScriptPath.Set("Entities/Test/test_script.as");
@@ -283,28 +304,30 @@ public:
 						//script->ScriptPath.Set("Entities/Test/test_script.as");
 					}
 					entity->SynchroniseParallelEdits();
-					b2BodyCom->FireSignals();
-					b2CircleFixture->FireSignals();
-					clSprite->FireSignals();
-					asScript->FireSignals();
-					//asScript2->FireSignals();
+					const auto& components = entity->GetComponents();
+					for (auto it = components.begin(), end = components.end(); it != end; ++it)
+						(*it)->FireSignals();
 
+					if (b2BodyCom)
 					{
 						auto body = entity->GetComponent<IRigidBody>();
 						//body->ApplyTorque(10.f);
 						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
 						//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
 						body->LinearDamping.Set(0.1f);
-						body->AngularDamping.Set(0.5f);
+						body->AngularDamping.Set(0.9f);
 					}
 
 					entities.push_back(entity);
 
 					//entity->StreamIn();
-					box2dWorld->OnActivation(b2BodyCom);
-					box2dWorld->OnActivation(b2CircleFixture);
+					if (b2BodyCom)
+						box2dWorld->OnActivation(b2BodyCom);
+					if (b2CircleFixture)
+						box2dWorld->OnActivation(b2CircleFixture);
 					renderWorld->OnActivation(clSprite);
-					asWorld->OnActivation(asScript);
+					if (asScript)
+						asWorld->OnActivation(asScript);
 					//asWorld->OnActivation(asScript2);
 				}
 
@@ -331,13 +354,15 @@ public:
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_1))
 					{
+						// Accumulator
 						scheduler->SetFramerateLimiter(false);
-						scheduler->SetUnlimited(true);
+						scheduler->SetUnlimited(false);
 					}
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_2))
 						scheduler->SetFramerateLimiter(true);
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_3))
 					{
+						// Profile mode
 						scheduler->SetFramerateLimiter(false);
 						scheduler->SetUnlimited(true);
 					}
@@ -348,15 +373,40 @@ public:
 						inputMgr->Update(seconds);
 						//gui->Update(seconds);
 					}
+
+					bool up = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP);
+					bool down = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN);
+					bool left = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT);
+					bool right = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT);
+					if (up || down || left || right)
+					{
+						auto camDelta = delta / 30.f;
+						auto pos = camera->GetPosition();
+						if (up)
+							pos.y -= camDelta;
+						if (down)
+							pos.y += camDelta;
+						if (right)
+							pos.x += camDelta;
+						if (left)
+							pos.x -= camDelta;
+						camera->SetPosition(pos.x, pos.y);
+					}
 					
 					scheduler->Execute();
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
 					{
 						const float invmax = 1.0f / RAND_MAX;
-						auto entity = entities.at((size_t)(std::rand() * invmax * entities.size()));
+						auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
 						auto body = entity->GetComponent<IRigidBody>();
-						body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
+						if (body && body->GetBodyType() == IRigidBody::Dynamic)
+						{
+							//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
+							
+							Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
+							body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
+						}
 						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 					}
 

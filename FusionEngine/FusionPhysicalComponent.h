@@ -146,6 +146,10 @@ namespace FusionEngine
 			FixedRotation.FireSignal();
 		}
 
+		enum BodyType { Static, Kinematic, Dynamic };
+
+		virtual BodyType GetBodyType() const = 0;
+
 		// Prevent simultanious access to implementation methods
 		CL_Mutex m_InternalMutex;
 

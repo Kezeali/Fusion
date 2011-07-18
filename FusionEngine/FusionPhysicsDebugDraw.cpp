@@ -236,8 +236,11 @@ namespace FusionEngine
 
 			//m_gc.set_cliprect(viewportArea);
 
-			const CL_Vec2f &camPosition = camera->GetPosition();
+			CL_Vec2f camPosition = camera->GetPosition();
 			CL_Origin camOrigin = origin_center;//camera->GetOrigin();
+
+			//camPosition.x = ToGameUnits(camPosition.x);
+			//camPosition.y = ToGameUnits(camPosition.y);
 
 			CL_Vec2f viewportOffset;
 			viewportOffset = camPosition - CL_Vec2f::calc_origin(camOrigin, CL_Sizef((float)viewportArea.get_width(), (float)viewportArea.get_height()));

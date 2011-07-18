@@ -159,21 +159,16 @@ namespace FusionEngine
 
 			return false;
 		};
-		tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
 
-		//tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [drawables, delta](const tbb::blocked_range<size_t>& r)
-		//{
-		//	for (auto it = r.begin(), end = r.end(); it != end; ++it)
-		//	{
-		//		drawables[it]->Update(delta);
-		//	}
-		//});
-		
-		
+		bool outOfOrder = false;
 		for (auto it = drawables.begin(); it != drawables.end(); ++it)
 		{
 			auto& drawable = *it;
 			drawable->Update(delta);
+
+			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), *it))
+				outOfOrder = true;
+
 			// Bubblesort
 			//if (it != drawables.begin())
 			//{
@@ -183,6 +178,19 @@ namespace FusionEngine
 			//}
 		}
 
+		//tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
+		//{
+		//	for (auto i = r.begin(), end = r.end(); i != end; ++i)
+		//	{
+		//		drawables[i]->Update(delta);
+		//	}
+		//});
+
+		if (outOfOrder)
+			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
+		
+		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
+
 		auto& viewports = m_RenderWorld->GetViewports();
 		for (auto it = viewports.begin(), end = viewports.end(); it != end; ++it)
 		{
@@ -190,19 +198,19 @@ namespace FusionEngine
 
 			CL_Rectf drawArea;
 			m_Renderer->SetupDraw(*it, &drawArea);
+
+			const auto& p = camera->GetPosition();
+			drawArea.translate(p);
 			
+			Vector2 camera_pos(p.x, p.y);
 			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)
 			{
 				auto& drawable = *dit;
 				if (!drawable->HasAABB() || drawArea.is_overlapped(drawable->GetAABB()))
 				{
-					CL_GraphicContext gc = m_Renderer->GetGraphicContext();
-					Vector2 camera_pos(camera->GetPosition().x, camera->GetPosition().y);
 					drawable->Draw(gc, camera_pos);
-					//CL_System::pause(100);
 				}
 			}
-			//CL_Draw::point(gc, CL_Pointf(), CL_Colorf::transparent);
 
 			m_Renderer->PostDraw();
 		}

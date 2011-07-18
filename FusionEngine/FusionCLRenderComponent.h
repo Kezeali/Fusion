@@ -56,7 +56,7 @@ namespace FusionEngine
 		virtual ~IDrawable() {}
 
 		virtual void Update(const float delta) {}
-		virtual void Draw(CL_GraphicContext gc, const Vector2& offset) = 0;
+		virtual void Draw(CL_GraphicContext& gc, const Vector2& offset) = 0;
 
 		virtual int GetEntityDepth() const = 0;
 		virtual int GetLocalDepth() const = 0;
@@ -113,7 +113,7 @@ namespace FusionEngine
 		void SetAngle(float angle);
 		
 		// IDrawable
-		void Draw(CL_GraphicContext gc, const Vector2& offset);
+		void Draw(CL_GraphicContext& gc, const Vector2& offset);
 		void Update(const float elapsed);
 
 		int GetEntityDepth() const { return m_EntityDepth; }

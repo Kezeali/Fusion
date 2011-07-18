@@ -21,9 +21,15 @@ class Test
 		//	console.println("update(" + delta + ") - frame: " + frames + " - runtime: " + runtime + " (seconds)");
 		//++frames;
 		//runtime += delta;
-		//mandle(30, 30);
-		int m = 2;
-		int v = m * m;
+		//if (frames >= 150)
+		//{
+		//	frames = 0;
+		//	console.println("update" + runtime);
+		//}
+		//int m = 2;
+		//int v = m * m;
+
+		//mandle(5,5);
 	}
 }
 

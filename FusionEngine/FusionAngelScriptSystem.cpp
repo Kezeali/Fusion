@@ -141,6 +141,7 @@ namespace FusionEngine
 
 		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
 		{
+			//auto ctx = m_ScriptManager->CreateContext();
 			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
 			{
 				auto& script = scripts[i];
@@ -192,7 +193,9 @@ namespace FusionEngine
 						script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
 					}
 					if (caller)
+					{
 						caller(delta);
+					}
 				}
 			}
 		};
