@@ -1,8 +1,11 @@
-class Test
+class Test : ScriptComponent
 {
-	Test()
+	Test(ASScript@ app_obj)
 	{
+		super(app_obj);
+
 		//console.println("--Test--");
+
 		frames = 0;
 		runtime = 0.0;
 
@@ -15,8 +18,31 @@ class Test
 	uint frames;
 	float runtime;
 
+	void coroutine()
+	{
+		const float frame = 1;
+		console.println("1st yield at " + frame);
+		yield();
+		console.println("2nd yield at " + frame);
+		yield();
+		console.println("3rd yield at " + frame);
+		yield();
+		console.println("coroutine done");
+	}
+
 	void update(float delta)
 	{
+		++frames;
+		if (frames == 1)
+		{
+			//coroutine_t @fn = @coroutine;
+			createCoroutine("coroutine");
+		}
+		if(frames <= 2)
+		{
+			console.println("updating " + frames);
+		}
+
 		//if (frames % 30 == 0)
 		//	console.println("update(" + delta + ") - frame: " + frames + " - runtime: " + runtime + " (seconds)");
 		//++frames;
@@ -32,6 +58,7 @@ class Test
 		//mandle(5,5);
 	}
 }
+
 
 void mandle(uint ImageHeight, uint ImageWidth)
 {

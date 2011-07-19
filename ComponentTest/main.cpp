@@ -276,9 +276,10 @@ public:
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
 
-					auto asScript = asWorld->InstantiateComponent("ASScript");
+					std::shared_ptr<IComponent> asScript;
 					if (i < 200)
 					{
+						asScript = asWorld->InstantiateComponent("ASScript");
 						entity->AddComponent(asScript, "script_a");
 					}
 
@@ -380,7 +381,7 @@ public:
 					bool right = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT);
 					if (up || down || left || right)
 					{
-						auto camDelta = delta / 30.f;
+						auto camDelta = delta / 10.f;
 						auto pos = camera->GetPosition();
 						if (up)
 							pos.y -= camDelta;

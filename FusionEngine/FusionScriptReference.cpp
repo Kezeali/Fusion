@@ -31,8 +31,19 @@
 
 #include "FusionScriptManager.h"
 
+void intrusive_ptr_add_ref(asIScriptContext *ptr)
+{
+	ptr->AddRef();
+}
+
+void intrusive_ptr_release(asIScriptContext *ptr)
+{
+	ptr->Release();
+}
+
 namespace FusionEngine
 {
+
 #ifndef SCRIPT_ARG_USE_TEMPLATE
 	ScriptArgument::ScriptArgument()
 		: m_Valid(false)

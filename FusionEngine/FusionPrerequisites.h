@@ -38,6 +38,10 @@
 #undef MessageBox
 #endif
 
+#ifdef Yield
+#undef Yield
+#endif
+
 namespace FusionEngine
 {
 

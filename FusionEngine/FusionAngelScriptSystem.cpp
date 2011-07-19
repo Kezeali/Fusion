@@ -31,6 +31,7 @@
 
 #include "FusionAngelScriptComponent.h"
 #include "FusionEntity.h"
+#include "FusionScriptReference.h"
 
 #include <tbb/parallel_for.h>
 #include <tbb/spin_mutex.h>
@@ -38,9 +39,110 @@
 namespace FusionEngine
 {
 
+	void ASScript::Yield()
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			ctx->Suspend();
+		}
+	}
+
+	void ASScript::CreateCoroutine(asIScriptFunction *fn)
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			auto engine = ctx->GetEngine();
+
+			if (fn == nullptr)
+			{
+				ctx->SetException("Tried to create a coroutine for a null function-pointer");
+				return;
+			}
+
+			const auto objectType = fn->GetObjectType();
+			const bool method = objectType != nullptr;
+
+			if (method && objectType != m_ScriptObject.GetScriptObject()->GetObjectType())
+			{
+				const std::string thisTypeName = m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
+				ctx->SetException(("Tried to create a coroutine for a method from another class. This class: " + thisTypeName + ", Method: " + fn->GetDeclaration()).c_str());
+				return;
+			}
+
+			auto coCtx = engine->CreateContext();
+			coCtx->Prepare(fn->GetId());
+			if (method)
+				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+
+			m_ActiveCoroutines.push_back(coCtx);
+			coCtx->Release();
+		}
+	}
+
+	void ASScript::CreateCoroutine(const std::string& functionName)
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			auto engine = ctx->GetEngine();
+
+			int funcId = -1;
+			bool method = false;
+
+			std::string decl = "void " + functionName + "()";
+
+			auto _where = m_ScriptMethods.find(decl);
+			if (_where != m_ScriptMethods.end())
+			{
+				funcId = _where->second;
+				method = true;
+			}
+			else
+			{
+				funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+				if (funcId >= 0)
+					method = true;
+				else
+				{
+					funcId = m_Module->GetASModule()->GetFunctionIdByDecl(decl.c_str());
+					method = false;
+				}
+			}
+			if (funcId < 0)
+			{
+				// No function matching the decl
+				ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
+				return;
+			}
+
+			auto coCtx = engine->CreateContext();
+			coCtx->Prepare(funcId);
+			if (method)
+				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+
+			m_ActiveCoroutines.push_back(coCtx);
+			coCtx->Release();
+		}
+	}
+
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
+		auto engine = m_ScriptManager->GetEnginePtr();
+
+		{
+			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
+		}
+
+		{
+			int r;
+			ASScript::RegisterType<ASScript>(engine, "ASScript");
+			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		}
 	}
 
 	ISystemWorld* AngelScriptSystem::CreateWorld()
@@ -150,9 +252,28 @@ namespace FusionEngine
 				{
 					if (script->m_Module->IsBuilt())
 					{
-						tbb::spin_mutex::scoped_lock lock(mutex);
 						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
-						script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
+						//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
+						auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "ASScript@");
+						if (f)
+						{
+							f.SetThrowOnException(true);
+
+							script->addRef();
+							try
+							{
+								auto obj = *static_cast<asIScriptObject**>( f(script.get()) );
+								if (obj)
+								{
+									script->m_ScriptObject = ScriptObject(obj);
+								}
+							}
+							catch (ScriptUtils::Exception& e)
+							{
+								script->release();
+								SendToConsole(e.m_Message);
+							}
+						}
 					}
 
 					script->m_ModuleBuilt = false;
@@ -162,7 +283,7 @@ namespace FusionEngine
 				{
 					script->m_ScriptObject.Release();
 
-					const auto& moduleName = script->GetParent()->GetName();
+					auto moduleName = script->GetParent()->GetName() + script->GetScriptPath();
 
 					tbb::spin_mutex::scoped_lock lock(mutex);
 					auto module = m_ScriptManager->GetModule(moduleName.c_str(), asGM_ALWAYS_CREATE);
@@ -180,21 +301,80 @@ namespace FusionEngine
 
 				if (script->m_ScriptObject.IsValid())
 				{
-					ScriptUtils::Calling::Caller caller;
+					// Execute any co-routines until they yield or finish
+					for (auto it = script->m_ActiveCoroutines.begin(); it != script->m_ActiveCoroutines.end(); )
+					{
+						auto& ctx = *it;
+						int r = ctx->Execute();
+						if (r == asEXECUTION_SUSPENDED)
+						{
+							++it;
+						}
+						else
+						{
+							ctx->SetObject(NULL);
+							it = script->m_ActiveCoroutines.erase(it);
+						}
+					}
+
+					//ScriptUtils::Calling::Caller caller;
+					boost::intrusive_ptr<asIScriptContext> ctx;
 					auto _where = script->m_ScriptMethods.find("void update(float)");
 					if (_where != script->m_ScriptMethods.end())
 					{
-						caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
-						m_ScriptManager->ConnectToCaller(caller);
+						ctx = boost::intrusive_ptr<asIScriptContext>(m_ScriptManager->CreateContext(), false);
+						int r = ctx->Prepare(_where->second);
+						if (r >= 0)
+						{
+							ctx->SetObject(script->m_ScriptObject.GetScriptObject());
+						}
+						else
+						{
+							ctx->SetObject(NULL);
+							ctx.reset();
+						}
+						//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
+						//m_ScriptManager->ConnectToCaller(caller);
 					}
 					else
 					{
-						caller = script->m_ScriptObject.GetCaller("void update(float)");
-						script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
+						//caller = script->m_ScriptObject.GetCaller("void update(float)");
+						//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
+
+						int funcId = script->m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl("void update(float)");
+
+						ctx = boost::intrusive_ptr<asIScriptContext>(m_ScriptManager->CreateContext(), false);
+						int r = ctx->Prepare(funcId);
+						if (r >= 0)
+						{
+							ctx->SetObject(script->m_ScriptObject.GetScriptObject());
+							script->m_ScriptMethods["void update(float)"] = funcId;
+						}
+						else
+						{
+							ctx->SetObject(NULL);
+							ctx.reset();
+						}
 					}
-					if (caller)
+					if (ctx)
 					{
-						caller(delta);
+						ctx->SetArgFloat(0, delta);
+						int r = ctx->Execute();
+						if (r == asEXECUTION_SUSPENDED)
+						{
+							script->m_ActiveCoroutines.push_back(ctx);
+						}
+						//else if (r == asEXECUTION_EXCEPTION)
+						//{
+						//	int line, col; const char* sec;
+						//	line = ctx->GetExceptionLineNumber(&col, &sec);
+
+						//	std::stringstream str;
+						//	str << "(" << line << ":" << col << ")";
+						//	SendToConsole(std::string("Exception: ") + std::string(sec) + str.str() + ": " + std::string(ctx->GetExceptionString()));
+
+						//	ctx->SetObject(NULL);
+						//}
 					}
 				}
 			}
@@ -225,11 +405,26 @@ namespace FusionEngine
 				for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
 				{
 					const auto convenientIdentifier = fe_newlower(cit->first);
-					componentConvenienceScript += interfaceName + "@ " + convenientIdentifier + ";\n";
+					componentConvenienceScript += interfaceName + " @ " + convenientIdentifier + ";\n";
 
 					convenientComponents[convenientIdentifier] = cit->second;
 				}
 			}
+
+			const char* baseCode =
+				"class ScriptComponent\n"
+				"{\n"
+				"ASScript@ app_obj;\n"
+				"ScriptComponent(ASScript@ _app_obj) {\n"
+				"@app_obj = _app_obj;\n"
+				"}\n"
+				"void yield() { app_obj.yield(); }\n"
+				"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
+				"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
+				"\n"
+				"}\n";
+
+			module->AddCode("basecode", baseCode);
 
 			module->AddCode(entity->GetName(), componentConvenienceScript);
 

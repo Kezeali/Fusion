@@ -44,6 +44,9 @@ namespace FusionEngine
 		m_FramerateLimiterEnabled(false),
 		m_Unlimited(false)
 	{
+		m_DeltaTime = 1.f / 30.f;
+		m_DeltaTimeMS = (unsigned int)(m_DeltaTime * 1000);
+
 		m_ThreadingEnabled = m_TaskManager != nullptr;
 	}
 
@@ -70,18 +73,11 @@ namespace FusionEngine
 
 	void TaskScheduler::Execute()
 	{
-		// Get the delta time; seconds since last Execute call.
-		float deltaTime = 0.0f;
-
-		//deltaTime = Singletons::PlatformManager.Timers().Wait( m_hExecutionTimer, !m_bBenchmarkingEnabled );
-
 		auto currentTime = CL_System::get_time();
 		if (m_LastTime == 0)
 			m_LastTime = currentTime;
 		auto timePassed = currentTime - m_LastTime;
 		m_LastTime = currentTime;
-
-		deltaTime = 1.f / 30.f;
 
 		bool renderOnly = false;
 
@@ -95,11 +91,11 @@ namespace FusionEngine
 		if (!m_Unlimited)
 #endif
 		{
-			m_Accumulator += fe_min(timePassed, 33u);
+			m_Accumulator += fe_min(timePassed, m_DeltaTimeMS);
 
-			if (m_Accumulator >= (unsigned int)(deltaTime * 1000))
+			if (m_Accumulator >= m_DeltaTimeMS)
 			{
-				m_Accumulator -= (unsigned int)(deltaTime * 1000);
+				m_Accumulator -= m_DeltaTimeMS;
 			}
 			else
 				renderOnly = true;
@@ -130,13 +126,13 @@ namespace FusionEngine
 			// Schedule the tasks for component-worlds that are ready for execution
 			if (!renderOnly)
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);
+				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, m_DeltaTime);
 
 				m_TaskManager->WaitForSystemTasks(m_SortedTasks);
 			}
 			else
 			{
-				m_TaskManager->SpawnJobsForSystemTasks(m_SortedRenderTasks, deltaTime);
+				m_TaskManager->SpawnJobsForSystemTasks(m_SortedRenderTasks, m_DeltaTime);
 
 				m_TaskManager->WaitForSystemTasks(m_SortedRenderTasks);
 			}
@@ -147,7 +143,7 @@ namespace FusionEngine
 			{
 				ISystemWorld* world = *it;
 				if (!renderOnly || world->GetSystemType() == SystemType::Rendering)
-					world->GetTask()->Update(deltaTime);
+					world->GetTask()->Update(m_DeltaTime);
 			}
 		}
 	}

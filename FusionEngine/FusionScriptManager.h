@@ -215,6 +215,9 @@ namespace FusionEngine
 		void SetDefaultTimeout(unsigned int timeout);
 		unsigned int GetDefaultTimeout() const;
 
+		//! Creates a context and attaches line / exception callbacks
+		asIScriptContext* CreateContext();
+
 		//! Returns a class object corresponding to the given typename
 		ScriptClass GetClass(const char* module, const std::string& type_name);
 		//! Returns an object of the class corresponding to the given typename

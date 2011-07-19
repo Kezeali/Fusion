@@ -37,6 +37,11 @@
 #include <ScriptUtils/Calling/Caller.h>
 
 #include <boost/type_traits.hpp>
+#include <boost/intrusive_ptr.hpp>
+
+void intrusive_ptr_add_ref(asIScriptContext *ptr);
+
+void intrusive_ptr_release(asIScriptContext *ptr);
 
 namespace FusionEngine
 {

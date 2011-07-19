@@ -64,6 +64,10 @@ namespace FusionEngine
 		ASScript();
 		virtual ~ASScript();
 
+		void Yield();
+		void CreateCoroutine(const std::string& functionName);
+		void CreateCoroutine(asIScriptFunction* function);
+
 	private:
 		// IComponent
 		std::string GetType() const { return "ASScript"; }
@@ -93,6 +97,7 @@ namespace FusionEngine
 		ModulePtr m_Module;
 		ScriptObject m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
+		std::vector<boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutines;
 	};
 
 }

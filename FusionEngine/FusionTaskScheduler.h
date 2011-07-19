@@ -65,8 +65,11 @@ namespace FusionEngine
 		unsigned int m_LastTime;
 		unsigned int m_Accumulator;
 
+		float m_DeltaTime;
+		unsigned int m_DeltaTimeMS;
+
 		bool m_FramerateLimiterEnabled;
-		bool m_Unlimited; // Update at unlimited rate
+		bool m_Unlimited; // Update all tasks at an unlimited rate
 
 		bool m_ThreadingEnabled;
 

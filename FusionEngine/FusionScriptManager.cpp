@@ -458,6 +458,13 @@ namespace FusionEngine
 		return m_DefaultTimeout;
 	}
 
+	asIScriptContext* ScriptManager::CreateContext()
+	{
+		auto ctx = m_asEngine->CreateContext();
+		ctx->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
+		return ctx;
+	}
+
 	ScriptClass ScriptManager::GetClass(const char* module, const std::string& type_name)
 	{
 		int id = getModuleOrThrow(module)->GetTypeIdByDecl(type_name.c_str());
