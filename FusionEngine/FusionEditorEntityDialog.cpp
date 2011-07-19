@@ -45,7 +45,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionElementSelectableDataGrid.h"
 #include "FusionEditorUndo.h"
-#include "scriptstring.h"
+#include "scriptstdstring.h"
 
 namespace FusionEngine
 {

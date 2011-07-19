@@ -32,7 +32,6 @@
 
 #include "FusionPhysicalEntity.h"
 #include "FusionScriptManager.h"
-#include "scriptstring.h"
 
 #include <boost/lexical_cast.hpp>
 

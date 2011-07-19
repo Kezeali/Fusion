@@ -218,6 +218,8 @@
     <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
     <ClCompile Include="..\FusionEngine\scriptarray.cpp" />
     <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptstdstring.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptstdstring_utils.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
     <ClCompile Include="..\tinyxml\ticpp.cpp">
@@ -358,6 +360,7 @@
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
     <ClInclude Include="..\FusionEngine\scriptarray.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
+    <ClInclude Include="..\FusionEngine\scriptstdstring.h" />
     <ClInclude Include="..\FusionEngine\scriptstdvector.h" />
     <ClInclude Include="..\FusionEngine\scriptstring.h" />
     <ClInclude Include="..\tinyxml\ticpp.h" />

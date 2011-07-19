@@ -38,8 +38,6 @@
 #include "FusionScriptManager.h"
 #include "FusionConsole.h"
 
-#include "scriptstring.h"
-
 #include <boost/bind.hpp>
 
 namespace FusionEngine

@@ -42,7 +42,7 @@
 #include "FusionScriptModule.h"
 
 #include "FusionScriptTypeRegistrationUtils.h"
-#include "scriptstring.h"
+#include "scriptstdstring.h"
 
 #include "FusionElementSelectableDataGrid.h"
 
@@ -89,42 +89,42 @@ namespace FusionEngine
 
 	struct ScriptStringConverter
 	{
-		typedef CScriptString* string_type;
+		typedef std::string string_type;
 
 		string_type operator() (const Rocket::Core::String& from) const
 		{
-			string_type obj = new CScriptString(from.CString());
+			string_type obj = std::string(from.CString());
 			return obj;
 		}
 
 		Rocket::Core::String operator() (const string_type& from) const
 		{
-			Rocket::Core::String to(from->buffer.c_str());
+			Rocket::Core::String to(from.c_str());
 			//from->Release();
 			return to;
 		}
 	};
 
-	Rocket::Core::String stringToEString(CScriptString *obj)
+	Rocket::Core::String stringToEString(std::string *obj)
 	{
-		return Rocket::Core::String(obj->buffer.c_str());
+		return Rocket::Core::String(obj->c_str());
 	}
 
-	CScriptString *CScriptStringFactory_FromEMPString(const Rocket::Core::String &copy)
+	static void stdstringCtor_FromEMPString(const Rocket::Core::String &copy, std::string* ptr)
 	{
-		return new CScriptString(copy.CString());
+		new(ptr) std::string(copy.CString());
 	}
 
-	CScriptString &CScriptStringAssignEMPString(const Rocket::Core::String &value, CScriptString *obj)
+	std::string &stdstringAssignEMPString(const Rocket::Core::String &value, std::string &obj)
 	{
-		obj->buffer = value.CString();
-		return *obj;
+		obj = value.CString();
+		return obj;
 	}
 
-	CScriptString &CScriptStringAddAssignEMPString(const Rocket::Core::String &value, CScriptString *obj)
+	std::string &stdstringAddAssignEMPString(const Rocket::Core::String &value, std::string &obj)
 	{
-		obj->buffer += value.CString();
-		return *obj;
+		obj += value.CString();
+		return obj;
 	}
 
 	GUI::GUI()
@@ -379,31 +379,31 @@ namespace FusionEngine
 			consoleWindow->Hide();
 	}
 
-	void GUI::Register(ScriptManager *engine)
+	void GUI::Register(ScriptManager *mgr)
 	{
-		asIScriptEngine *iengine = engine->GetEnginePtr();
+		asIScriptEngine *engine = mgr->GetEnginePtr();
 		int r;
 
 		try
 		{
-			Rocket::AngelScript::RegisterCore(iengine);
-			Rocket::AngelScript::Controls::RegisterControls(iengine);
-			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(iengine, "string", true);
+			Rocket::AngelScript::RegisterCore(engine);
+			Rocket::AngelScript::Controls::RegisterControls(engine);
+			Rocket::AngelScript::StringConversion<ScriptStringConverter>::Register(engine, "string", true);
 
-			r = iengine->RegisterObjectBehaviour("string",
-				asBEHAVE_FACTORY,
-				"string@ f(const rString&in)",
-				asFUNCTION(CScriptStringFactory_FromEMPString),
-				asCALL_CDECL); FSN_ASSERT(r >= 0);
-
-			r = iengine->RegisterObjectMethod("string",
-				"string& opAssign(const rString&in)",
-				asFUNCTION(CScriptStringAssignEMPString),
+			r = engine->RegisterObjectBehaviour("string",
+				asBEHAVE_CONSTRUCT,
+				"void f(const string &in)",
+				asFUNCTION(stdstringCtor_FromEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = iengine->RegisterObjectMethod("string",
+			r = engine->RegisterObjectMethod("string",
+				"string& opAssign(const rString&in)",
+				asFUNCTION(stdstringAssignEMPString),
+				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+			r = engine->RegisterObjectMethod("string",
 				"string& opAddAssign(const rString&in)",
-				asFUNCTION(CScriptStringAddAssignEMPString),
+				asFUNCTION(stdstringAddAssignEMPString),
 				asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		}
 		catch (Rocket::AngelScript::Exception &ex)
@@ -412,52 +412,52 @@ namespace FusionEngine
 			return;
 		}
 
-		RegisterSingletonType<GUI>("GUI", iengine);
+		RegisterSingletonType<GUI>("GUI", engine);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void setMouseShowPeriod(uint)",
 			asMETHOD(GUI, SetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "uint getMouseShowPeriod() const",
 			asMETHOD(GUI, GetMouseShowPeriod), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void showMouse()",
 			asMETHOD(GUI, ShowMouse), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void enableDebugger()",
 			asMETHOD(GUI, InitializeDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void showDebugger()",
 			asMETHOD(GUI, ShowDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void hideDebugger()",
 			asMETHOD(GUI, HideDebugger), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "bool debuggerIsVisible() const",
 			asMETHOD(GUI, DebuggerIsVisible), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "Context@ getContext() const",
 			asFUNCTION(GUI_GetContextRef), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void showConsole()",
 			asFUNCTION(GUI_ShowConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void hideConsole()",
 			asFUNCTION(GUI_HideConsole), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void setMouseCursorPosition(int x, int y)",
 			asMETHOD(GUI, SetMouseCursorPosition_default), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-		r = iengine->RegisterObjectMethod(
+		r = engine->RegisterObjectMethod(
 			"GUI", "void setMouseCursorPosition(int x, int y, int modifiers)",
 			asMETHOD(GUI, SetMouseCursorPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	}

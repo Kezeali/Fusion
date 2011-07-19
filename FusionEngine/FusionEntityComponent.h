@@ -35,7 +35,6 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionRefCounted.h"
-#include "scriptstring.h"
 
 #include <vector>
 #include <functional>
@@ -144,10 +143,10 @@ namespace FusionEngine
 //
 //#define FSN_LIST_INTERFACES() boost::mpl::for_each<Interfaces>(InsertInterfaceName(m_Interfaces));
 
-	static CScriptString* IComponent_GetType(void* obj)
+	static std::string IComponent_GetType(void* obj)
 	{
 		auto com = static_cast<IComponent*>(obj);
-		return new CScriptString(com->GetType());
+		return com->GetType();
 	}
 
 	//! Registers a script type for the given component interface
@@ -161,7 +160,7 @@ namespace FusionEngine
 		IComponent::RegisterType<IComponent>(engine, T::GetTypeName());
 		//int v = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF | asOBJ_NOHANDLE); FSN_ASSERT(v >= 0);
 		//int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string@ getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string@ getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 	template <typename T>

@@ -49,6 +49,8 @@ namespace FusionEngine
 
 	void PhysFSLogFile::Open(const std::string& filename)
 	{
+		/*if (PHYSFS_exists(filename.c_str()))
+			m_Filename = filename.substr(0, filename.find_last_of('.')) + "-" + */
 		m_File = PHYSFS_openAppend(filename.c_str());
 		if (m_File != NULL)
 		{

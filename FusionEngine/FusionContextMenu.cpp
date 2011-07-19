@@ -34,7 +34,7 @@
 #include <ClanLib/Display/Window/keys.h>
 //#include <ScriptUtils/Inheritance/RegisterConversion.h>
 #include "FusionScriptedSlots.h"
-#include "scriptstring.h"
+#include "scriptstdstring.h"
 
 using namespace std::placeholders;
 
@@ -539,14 +539,14 @@ namespace FusionEngine
 		}
 	}
 
-	CScriptString *MenuItemEvent_get_title(MenuItemEvent *obj)
+	const std::string& MenuItemEvent_get_title(MenuItemEvent *obj)
 	{
-		return new CScriptString(obj->title);
+		return obj->title;
 	}
 
-	CScriptString *MenuItemEvent_get_value(MenuItemEvent *obj)
+	const std::string& MenuItemEvent_get_value(MenuItemEvent *obj)
 	{
-		return new CScriptString(obj->value);
+		return obj->value;
 	}
 
 	MenuItem *MenuItem_Factory(const std::string &title, const std::string &value)

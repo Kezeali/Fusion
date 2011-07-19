@@ -142,9 +142,9 @@ namespace FusionEngine
 			else if (type_id & engine->GetStringTypeId())
 			{
 				if (type_id & asTYPEID_OBJHANDLE)
-					accessPropValueOfType<CScriptString*>(cpp_obj, obj, property_index);
+					accessPropValueOfType<std::string*>(cpp_obj, obj, property_index);
 				else
-					accessPropValueOfType<CScriptString>(cpp_obj, obj, property_index);
+					accessPropValueOfType<std::string>(cpp_obj, obj, property_index);
 			}
 			else if (type_id & engine->GetVector2DTypeId())
 			{
@@ -480,18 +480,7 @@ namespace FusionEngine
 	{
 		int scriptType = GetPropertyScriptType(index, array_index);
 		void* address = GetAddressOfPropertyRaw(index, array_index);
-		// Special case for string-type props
-		if ((scriptType & asTYPEID_MASK_OBJECT) == ScriptManager::getSingleton().GetStringTypeId())
-		{
-			CScriptString* obj = nullptr;
-			if (scriptType & asTYPEID_OBJHANDLE)
-				obj = *static_cast<CScriptString**>(address);
-			else
-				obj = static_cast<CScriptString*>(address);
-			return &obj->buffer;
-		}
-		else
-			return address;
+		return address;
 	}
 
 	int ScriptedEntity::GetPropertyScriptType(unsigned int index, unsigned int array_index) const

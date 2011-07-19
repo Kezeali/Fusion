@@ -6,7 +6,7 @@
 #include "FusionScriptManager.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionScriptedSlots.h"
-#include "scriptstring.h"
+#include "scriptstdstring.h"
 
 #include <boost/tokenizer.hpp>
 #include <functional>
@@ -647,14 +647,14 @@ namespace FusionEngine
 	{
 		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewLine(const string &in)");
 		if (f)
-			f(new CScriptString(line));
+			f(line);
 	}
 
 	void ScriptedConsoleListenerWrapper::OnNewData(const std::string &data)
 	{
 		ScriptUtils::Calling::Caller f(m_Listener, "void OnNewData(const string &in)");
 		if (f)
-			f(new CScriptString(data));
+			f(data);
 	}
 
 	void ScriptedConsoleListenerWrapper::OnClear()
@@ -763,11 +763,6 @@ namespace FusionEngine
 		out = obj->ListPossibleCompletions(command);
 	}
 
-	CScriptString* Console_Autocomplete(const std::string& command, const std::string& completion, Console* obj)
-	{
-		return new CScriptString( obj->Autocomplete(command, completion) );
-	}
-
 	void Console::Register(ScriptManager *manager)
 	{
 #ifndef FSN_DONT_USE_SCRIPTING
@@ -804,12 +799,7 @@ namespace FusionEngine
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"void listPrefixedCommands(const string &in, StringArray &out)",
-			asFUNCTIONPR(Console_ListPrefixedCommands, (const std::string&, StringVector&, Console&), void),
-			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
-
-		r = engine->RegisterObjectMethod("Console",
-			"void listPrefixedCommands(const string &in, StringArray &out, uint max_results)",
+			"void listPrefixedCommands(const string &in, StringArray &out, uint max_results = 0)",
 			asMETHODPR(Console, ListPrefixedCommands, (const std::string&, StringVector&, StringVector::size_type), void),
 			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
@@ -819,9 +809,9 @@ namespace FusionEngine
 			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
-			"string@ autocomplete(const string &in, const string &in) const",
-			asFUNCTION(Console_Autocomplete),
-			asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			"string autocomplete(const string &in, const string &in) const",
+			asMETHOD(Console, Autocomplete),
+			asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("Console",
 			"void interpret(const string &in)",

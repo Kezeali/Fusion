@@ -49,7 +49,7 @@
 #include "FusionScriptedSlots.h"
 #include "FusionScriptVector.h"
 #include "scriptarray.h"
-#include "scriptstring.h"
+#include "scriptstdstring.h"
 #include "scriptstdvector.h"
 #include "scriptmath.h"
 
@@ -587,8 +587,8 @@ namespace FusionEngine
 		}
 		else if (typeId == eng->GetTypeIdByDecl("string"))
 		{
-			CScriptString *str = (CScriptString*)varPtr;
-			strstr << "\"" << str->buffer << "\"";
+			std::string *str = (std::string*)varPtr;
+			strstr << "\"" << *str << "\"";
 		}
 		else if (typeId == eng->GetTypeIdByDecl("Vector"))
 		{
@@ -623,10 +623,10 @@ namespace FusionEngine
 		// Handle types
 		else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("string@"))
 		{
-			const CScriptString **handle = (const CScriptString**)varPtr;
+			const std::string *handle = *static_cast<const std::string**>(varPtr);
 			if (handle != NULL)
 			{
-				strstr << "\"" << (*handle)->buffer << "\"";
+				strstr << "\"" << (*handle) << "\"";
 			}
 			else
 			{
@@ -885,8 +885,9 @@ namespace FusionEngine
 		RegisterScriptMath(m_asEngine);
 		RegisterScriptArray(m_asEngine, true);
 		m_ArrayTypeId = m_asEngine->GetDefaultArrayTypeId();
-		m_StringTypeId = RegisterScriptString(m_asEngine);
-		RegisterScriptStringUtils(m_asEngine);
+		RegisterStdString(m_asEngine);
+		m_StringTypeId = m_asEngine->GetTypeIdByDecl("string");
+		RegisterStdStringUtils(m_asEngine);
 		m_VectorTypeId = Scripting::RegisterScriptVector(m_asEngine);
 		
 		RegisterVector<std::string>("StringArray", "string", m_asEngine);
