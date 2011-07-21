@@ -233,6 +233,28 @@ namespace FusionEngine
 	{
 	}
 
+	class Foo
+	{
+	public:
+		Foo()
+		{
+		}
+
+	};
+
+	static Foo* testfac()
+	{
+		return new Foo();
+	}
+
+	static void AddRef()
+	{
+	}
+
+	static void Release()
+	{
+	}
+
 	void AngelScriptTask::Update(const float delta)
 	{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
@@ -254,7 +276,7 @@ namespace FusionEngine
 					{
 						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
 						//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
-						auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "ASScript@");
+						auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "");
 						if (f)
 						{
 							f.SetThrowOnException(true);
@@ -262,10 +284,16 @@ namespace FusionEngine
 							script->addRef();
 							try
 							{
-								auto obj = *static_cast<asIScriptObject**>( f(script.get()) );
+								auto obj = *static_cast<asIScriptObject**>( f() );
 								if (obj)
 								{
 									script->m_ScriptObject = ScriptObject(obj);
+									auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
+									if (setAppObj)
+									{
+										setAppObj.SetThrowOnException(true);
+										setAppObj(script.get());
+									}
 								}
 							}
 							catch (ScriptUtils::Exception& e)
@@ -415,7 +443,7 @@ namespace FusionEngine
 				"class ScriptComponent\n"
 				"{\n"
 				"ASScript@ app_obj;\n"
-				"ScriptComponent(ASScript@ _app_obj) {\n"
+				"void _setAppObj(ASScript@ _app_obj) {\n"
 				"@app_obj = _app_obj;\n"
 				"}\n"
 				"void yield() { app_obj.yield(); }\n"
@@ -430,6 +458,11 @@ namespace FusionEngine
 
 			if (module->Build() < 0)
 				continue; // TODO: Report error
+
+			//int r = m_ScriptManager->GetEnginePtr()->RegisterObjectType("test", 0, asOBJ_REF); FSN_ASSERT(r >= 0);
+			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test@ f()", asFUNCTION(testfac), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(Release), asCALL_CDECL); FSN_ASSERT(r >= 0);
 
 			for (auto it = convenientComponents.begin(), end = convenientComponents.end(); it != end; ++it)
 			{

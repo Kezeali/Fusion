@@ -57,8 +57,102 @@
 #include <ClanLib/sound.h>
 #include <ClanLib/vorbis.h>
 
+//#define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
+//	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
+//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ &get_" #prop "()", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
+
+#define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
+	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
+	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
+
+//#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
+//	struct iface_ ## prop { static ThreadSafeProperty<type> &get_ ## prop(iface &obj) { return obj.prop; } };\
+//	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
+//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ &get_" #prop "()", asFUNCTION(iface_ ## prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
+//
+//#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
+//	struct iface_ ## prop { static ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop(iface &obj) { return obj.prop; } };\
+//	ThreadSafeProperty<type, NullWriter<type>>::RegisterProp(engine, scriptType);\
+//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "ReadonlyProperty_" scriptType "_ &get_" #prop "()", asFUNCTION(iface_ ## prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
+
 namespace FusionEngine
 {
+
+	template <class T>
+	T* GetIface(void* obj)
+	{
+		auto ifaceObj = dynamic_cast<T*>(static_cast<IComponent*>(obj));
+		FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
+		return ifaceObj;
+	}
+
+}
+
+#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
+	struct iface##_##prop {\
+	static const type &get_ ## prop(void *obj) { auto com = GetIface<iface>(obj); return com->prop.Get(); }\
+	static void set_ ## prop(const type& value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); } };\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType "&get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(const " scriptType " &in)", asFUNCTION(iface##_##prop :: set_ ## prop ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0)
+
+#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
+	struct iface##_##prop { static const type &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.Get(); } };\
+	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
+
+
+namespace FusionEngine
+{
+
+	void ITransform::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		int r;
+		FSN_REGISTER_PROP_ACCESSOR(ITransform, Vector2, "Vector", Position);
+		FSN_REGISTER_PROP_ACCESSOR(ITransform, float, "float", Angle);
+
+		//struct iface_Angle {
+		//	static ThreadSafeProperty<float> &get_Angle(ITransform &obj) { return obj.Angle; }
+		//};
+		//ThreadSafeProperty<float>::RegisterProp(engine, "float");
+		//engine->RegisterObjectMethod(ITransform::GetTypeName().c_str(), "Property_float_ &get_Angle()", asFUNCTION(iface_Angle::get_Angle), asCALL_CDECL_OBJLAST);
+
+		//struct iface_Angle {
+		//	static const float &get_Angle(void* obj) {
+		//		auto com = static_cast<IComponent*>(obj);
+		//		auto transform = dynamic_cast<ITransform*>(com);
+		//		FSN_ASSERT(transform);
+		//		return transform->Angle.Get();
+		//	}
+		//};
+		//ThreadSafeProperty<float>::RegisterProp(engine, "float");
+		//engine->RegisterObjectMethod(ITransform::GetTypeName().c_str(), "const float &get_Angle()", asFUNCTION(iface_Angle::get_Angle), asCALL_CDECL_OBJLAST);
+
+		FSN_REGISTER_PROP_ACCESSOR(ITransform, int, "int", Depth);
+	}
+
+	void IRigidBody::RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		int r;
+		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Mass);
+		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Inertia);
+		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, Vector2, "Vector", CenterOfMass);
+
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, Vector2, "Vector", Velocity);
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, float, "float", AngularVelocity);
+
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, float, "float", LinearDamping);
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, float, "float", AngularDamping);
+
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, float, "float", GravityScale);
+
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", Active);
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", SleepingAllowed);
+		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, bool, "bool", Awake);
+
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", Bullet);
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", FixedRotation);
+	}
 
 class ComponentTest
 {
@@ -139,7 +233,7 @@ public:
 				SetupPhysFS::clear_temp();
 #endif
 
-				//logger->ActivateConsoleLogging();
+				logger->ActivateConsoleLogging();
 
 				////////////////////
 				// Script Manager
@@ -153,7 +247,9 @@ public:
 
 				// Component types
 				RegisterComponentInterfaceType<ITransform>(asEngine);
+				ITransform::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IRigidBody>(asEngine);
+				//IRigidBody::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IFixture>(asEngine);
 				RegisterComponentInterfaceType<ICircleShape>(asEngine);
 				RegisterComponentInterfaceType<IPolygonShape>(asEngine);

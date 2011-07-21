@@ -54,6 +54,10 @@ namespace FusionEngine
 		ThreadSafeProperty<Vector2> Position;
 		ThreadSafeProperty<float> Angle;
 		ThreadSafeProperty<int> Depth;
+		
+		FSN_PROP(Vector2, Position);
+		FSN_PROP(float, Angle);
+		FSN_PROP(int, Depth);
 
 		void SynchroniseInterface()
 		{
@@ -68,6 +72,8 @@ namespace FusionEngine
 			Angle.FireSignal();
 			Depth.FireSignal();
 		}
+
+		static void RegisterScriptInterface(asIScriptEngine* engine);
 
 		static bool IsThreadSafe() { return true; }
 
@@ -110,12 +116,33 @@ namespace FusionEngine
 		ThreadSafeProperty<bool> Bullet;
 		ThreadSafeProperty<bool> FixedRotation;
 
+		FSN_PROP_R(float, Mass);
+		FSN_PROP_R(float, Inertia);
+		FSN_PROP_R(Vector2, CenterOfMass);
+
+		FSN_PROP(Vector2, Velocity);
+		FSN_PROP(float, AngularVelocity);
+
+		FSN_PROP(float, LinearDamping);
+		FSN_PROP(float, AngularDamping);
+
+		FSN_PROP(float, GravityScale);
+
+		FSN_PROP(bool, Active);
+		FSN_PROP(bool, SleepingAllowed);
+		FSN_PROP_R(bool, Awake);
+
+		FSN_PROP(bool, Bullet);
+		FSN_PROP(bool, FixedRotation);
+
+		static void RegisterScriptInterface(asIScriptEngine* engine);
+
 		void SynchroniseInterface()
 		{
 			ITransform::SynchroniseInterface();
-			Mass.Synchronise(GetMass()); // readonly
-			Inertia.Synchronise(GetInertia()); // readonly
-			CenterOfMass.Synchronise(GetCenterOfMass()); // readonly
+			if (Mass.m_Changed) Mass.Synchronise(GetMass()); // readonly
+			if (Inertia.m_Changed) Inertia.Synchronise(GetInertia()); // readonly
+			if (CenterOfMass.m_Changed) CenterOfMass.Synchronise(GetCenterOfMass()); // readonly
 			FSN_SYNCH_PROP(Velocity);
 			FSN_SYNCH_PROP(AngularVelocity);
 			FSN_SYNCH_PROP(LinearDamping);
@@ -123,7 +150,7 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(GravityScale);
 			FSN_SYNCH_PROP_BOOL(Active);
 			FSN_SYNCH_PROP_BOOL(SleepingAllowed);
-			Awake.Synchronise(IsAwake()); // readonly
+			if (Awake.m_Changed) Awake.Synchronise(IsAwake()); // readonly
 			FSN_SYNCH_PROP_BOOL(Bullet);
 			FSN_SYNCH_PROP_BOOL(FixedRotation);
 		}
@@ -251,7 +278,7 @@ namespace FusionEngine
 			FSN_SYNCH_PROP(Density);
 			FSN_SYNCH_PROP(Friction);
 			FSN_SYNCH_PROP(Restitution);
-			AABB.Synchronise(GetAABB());
+			if (AABB.m_Changed) AABB.Synchronise(GetAABB());
 			//MassData.Synchronise(GetMassData());
 		}
 

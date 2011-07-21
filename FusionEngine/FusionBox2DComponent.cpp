@@ -33,7 +33,8 @@ namespace FusionEngine
 {
 
 	Box2DBody::Box2DBody(b2Body* body)
-		: m_Body(body)
+		: m_Body(body),
+		m_Depth(0)
 	{
 	}
 

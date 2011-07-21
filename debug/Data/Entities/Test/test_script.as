@@ -1,9 +1,7 @@
 class Test : ScriptComponent
 {
-	Test(ASScript@ app_obj)
+	Test()
 	{
-		super(app_obj);
-
 		//console.println("--Test--");
 
 		frames = 0;
@@ -21,11 +19,11 @@ class Test : ScriptComponent
 	void coroutine()
 	{
 		const float frame = 1;
-		console.println("1st yield at " + frame);
+		//console.println("1st yield at " + frame);
 		yield();
-		console.println("2nd yield at " + frame);
+		//console.println("2nd yield at " + frame);
 		yield();
-		console.println("3rd yield at " + frame);
+		//console.println("3rd yield at " + frame);
 		yield();
 		console.println("coroutine done");
 	}
@@ -35,13 +33,22 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
+			console.println(itransform.getType());
+
+			float angle = itransform.Angle;
+			console.println("Angle: " + angle);
+			Vector pos = itransform.Position;
+			console.println("Position: " + pos.x + ", " + pos.y);
+			console.println("Depth: " + itransform.Depth);
+
 			//coroutine_t @fn = @coroutine;
 			createCoroutine("coroutine");
 		}
-		if(frames <= 2)
-		{
-			console.println("updating " + frames);
-		}
+		itransform.Depth = (rand() * 20.0 - 10.0);
+		//if(frames <= 2)
+		//{
+		//	console.println("updating " + frames);
+		//}
 
 		//if (frames % 30 == 0)
 		//	console.println("update(" + delta + ") - frame: " + frames + " - runtime: " + runtime + " (seconds)");
