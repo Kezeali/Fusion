@@ -40,6 +40,8 @@
 #include "FusionVector2.h"
 #include "FusionCommon.h"
 
+#include <tbb/spin_mutex.h>
+
 namespace FusionEngine
 {
 
@@ -178,32 +180,32 @@ namespace FusionEngine
 		virtual BodyType GetBodyType() const = 0;
 
 		// Prevent simultanious access to implementation methods
-		CL_Mutex m_InternalMutex;
+		tbb::spin_mutex m_InternalMutex;
 
 		void ApplyForce(const Vector2& force, const Vector2& point)
 		{
-			CL_MutexSection lock(&m_InternalMutex);
+			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyForceImpl(force, point);
 		}
 		void ApplyForce(const Vector2& force)
 		{
-			CL_MutexSection lock(&m_InternalMutex);
+			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyForceImpl(force, GetCenterOfMass());
 		};
 		void ApplyTorque(float torque)
 		{
-			CL_MutexSection lock(&m_InternalMutex);
+			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyTorqueImpl(torque);
 		}
 
 		void ApplyLinearImpulse(const Vector2& impulse, const Vector2& point)
 		{
-			CL_MutexSection lock(&m_InternalMutex);
+			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyLinearImpulseImpl(impulse, point);
 		}
 		void ApplyAngularImpulse(float force)
 		{
-			CL_MutexSection lock(&m_InternalMutex);
+			tbb::spin_mutex::scoped_lock lock(m_InternalMutex);
 			ApplyAngularImpulseImpl(force);
 		}
 
@@ -271,6 +273,8 @@ namespace FusionEngine
 		ThreadSafeProperty<b2AABB> AABB;
 
 		//ThreadSafeProperty<b2MassData> MassData;
+
+		static void RegisterScriptInterface(asIScriptEngine* engine);
 
 		void SynchroniseInterface()
 		{

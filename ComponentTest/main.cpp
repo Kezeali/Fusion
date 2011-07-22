@@ -65,23 +65,13 @@
 	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
 	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
 
-//#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-//	struct iface_ ## prop { static ThreadSafeProperty<type> &get_ ## prop(iface &obj) { return obj.prop; } };\
-//	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
-//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ &get_" #prop "()", asFUNCTION(iface_ ## prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
-//
-//#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-//	struct iface_ ## prop { static ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop(iface &obj) { return obj.prop; } };\
-//	ThreadSafeProperty<type, NullWriter<type>>::RegisterProp(engine, scriptType);\
-//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "ReadonlyProperty_" scriptType "_ &get_" #prop "()", asFUNCTION(iface_ ## prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
-
 namespace FusionEngine
 {
 
-	template <class T>
-	T* GetIface(void* obj)
+	template <class IFaceT>
+	IFaceT* GetIface(void* obj)
 	{
-		auto ifaceObj = dynamic_cast<T*>(static_cast<IComponent*>(obj));
+		auto ifaceObj = dynamic_cast<IFaceT*>(static_cast<IComponent*>(obj));
 		FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
 		return ifaceObj;
 	}
@@ -89,17 +79,30 @@ namespace FusionEngine
 }
 
 #define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-	struct iface##_##prop {\
-	static const type &get_ ## prop(void *obj) { auto com = GetIface<iface>(obj); return com->prop.Get(); }\
-	static void set_ ## prop(const type& value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); } };\
-	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType "&get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-	FSN_ASSERT(r >= 0);\
-	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(const " scriptType " &in)", asFUNCTION(iface##_##prop :: set_ ## prop ), asCALL_CDECL_OBJLAST);\
-	FSN_ASSERT(r >= 0)
+	struct iface##_##prop { static ThreadSafeProperty<type> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ @get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_ @)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0);}
 
 #define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-	struct iface##_##prop { static const type &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.Get(); } };\
-	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
+	struct iface##_##prop { static ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	ThreadSafeProperty<type, NullWriter<type>>::RegisterProp(engine, scriptType);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" scriptType "_ &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	FSN_ASSERT(r >= 0);}
+
+//#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
+//	struct iface##_##prop {\
+//	static const type &get_ ## prop(void *obj) { auto com = GetIface<iface>(obj); return com->prop.Get(); }\
+//	static void set_ ## prop(const type& value, void *obj) { return GetIface<iface>(obj)->prop.Set(value); } };\
+//	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType "&get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+//	FSN_ASSERT(r >= 0);\
+//	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(const " scriptType " &in)", asFUNCTION(iface##_##prop :: set_ ## prop ), asCALL_CDECL_OBJLAST);\
+//	FSN_ASSERT(r >= 0)
+//
+//#define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
+//	struct iface##_##prop { static const type &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop.Get(); } };\
+//	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST)
 
 
 namespace FusionEngine
@@ -107,7 +110,6 @@ namespace FusionEngine
 
 	void ITransform::RegisterScriptInterface(asIScriptEngine* engine)
 	{
-		int r;
 		FSN_REGISTER_PROP_ACCESSOR(ITransform, Vector2, "Vector", Position);
 		FSN_REGISTER_PROP_ACCESSOR(ITransform, float, "float", Angle);
 
@@ -133,7 +135,6 @@ namespace FusionEngine
 
 	void IRigidBody::RegisterScriptInterface(asIScriptEngine* engine)
 	{
-		int r;
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Mass);
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Inertia);
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, Vector2, "Vector", CenterOfMass);
@@ -249,7 +250,7 @@ public:
 				RegisterComponentInterfaceType<ITransform>(asEngine);
 				ITransform::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IRigidBody>(asEngine);
-				//IRigidBody::RegisterScriptInterface(asEngine);
+				IRigidBody::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IFixture>(asEngine);
 				RegisterComponentInterfaceType<ICircleShape>(asEngine);
 				RegisterComponentInterfaceType<IPolygonShape>(asEngine);
@@ -360,7 +361,10 @@ public:
 						}
 						entity->SynchroniseParallelEdits();
 
-						b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
+						if (i == 0)
+							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f, nullptr, nullptr);
+						else
+							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
 						entity->AddComponent(b2BodyCom);
 					}
 					else
@@ -491,6 +495,23 @@ public:
 					}
 					
 					scheduler->Execute();
+
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_K))
+					{
+						const float invmax = 1.0f / RAND_MAX;
+						auto entity = entities[0];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
+
+							if (fe_fzero(body->Velocity.Get().y))
+								body->Velocity.Set(Vector2(0.f, -0.5f));
+							else
+								body->Velocity.Set(Vector2(0.f, 0.f));
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
 					{

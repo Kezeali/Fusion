@@ -94,7 +94,7 @@ namespace FusionEngine
 
 		CL_MutexSection lock(&m_BufferMutex);
 
-		// Fire newline signal(s)
+		// Fire newline signal
 		if (!OnNewLine.empty())
 		{
 			if (m_LastNewlineInBuffer > m_BufferLength)
@@ -114,10 +114,10 @@ namespace FusionEngine
 					if (!(startOfLastNewLine == 0 && newlinePos == 1))
 					{
 						auto newLine = m_Buffer.substr(startOfLastNewLine, newlinePos-startOfLastNewLine);
-						lock.unlock();
+						//lock.unlock();
 						// Signal
 						OnNewLine(newLine);
-						lock.lock();
+						//lock.lock();
 					}
 				}
 				else
@@ -126,17 +126,17 @@ namespace FusionEngine
 		}
 
 		// Fire char interval signal
-		if (m_LengthToNextSignal >= message.length())
+		if (m_LengthToNextSignal <= message.length())
 		{
 			m_LengthToNextSignal = m_CharInterval;
 			if (!OnCharacterInterval.empty())
 			{
 				std::string range;
-				if (m_Buffer.length() > m_CharInterval)
-					range = m_Buffer.substr(m_Buffer.length() - m_CharInterval);
+				auto rangeLen = m_CharInterval;
+				if (m_Buffer.length() > message.length())
+					range = m_Buffer.substr(m_Buffer.length() - message.length());
 				else
 					range = m_Buffer;
-				lock.unlock();
 				OnCharacterInterval(range);
 			}
 		}

@@ -236,17 +236,21 @@ namespace FusionEngine
 		{
 			auto body = *it;
 			const bool awake = body->IsAwake();
-			if (awake != body->Awake.Get())
+			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
+			if (!staticBody)
 			{
-				body->Awake.MarkChanged();
-				body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
-			}
-			if (awake)
-			{
-				body->Position.MarkChanged();
-				body->Angle.MarkChanged();
-				body->Velocity.MarkChanged();
-				body->AngularVelocity.MarkChanged();
+				if (awake != body->Awake.Get())
+				{
+					body->Awake.MarkChanged();
+					body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
+				}
+				if (awake)
+				{
+					body->Position.MarkChanged();
+					body->Angle.MarkChanged();
+					body->Velocity.MarkChanged();
+					body->AngularVelocity.MarkChanged();
+				}
 			}
 
 			body->CleanMassData();

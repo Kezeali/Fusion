@@ -31,67 +31,75 @@
 
 namespace FusionEngine { namespace Scripting
 {
-	////////////////
-	// Construction
-	ScriptVector::ScriptVector(const ScriptVector &other)
-		: m_RefCount(1)
-	{
-		Data = other.Data;
-	}
+	//////////////////
+	//// Construction
+	//ScriptVector::ScriptVector(const ScriptVector &other)
+	//	: m_RefCount(1)
+	//{
+	//	Data = other.Data;
+	//}
 
-	ScriptVector::ScriptVector(float x, float y)
-		: m_RefCount(1)
-	{
-		Data.x = x; Data.y = y;
-	}
+	//ScriptVector::ScriptVector(float x, float y)
+	//	: m_RefCount(1)
+	//{
+	//	Data.x = x; Data.y = y;
+	//}
 
-	ScriptVector::ScriptVector(const Vector2 &other)
-		: m_RefCount(1),
-		Data(other)
-	{
-	}
+	//ScriptVector::ScriptVector(const Vector2 &other)
+	//	: m_RefCount(1),
+	//	Data(other)
+	//{
+	//}
 
-	ScriptVector::~ScriptVector()
-	{
-		FSN_ASSERT( m_RefCount == 0 );
-	}
+	//ScriptVector::~ScriptVector()
+	//{
+	//	FSN_ASSERT( m_RefCount == 0 );
+	//}
 
-	//////////////////////
-	// Reference counting
-	void ScriptVector::AddRef()
-	{
-		m_RefCount++;
-	}
+	////////////////////////
+	//// Reference counting
+	//void ScriptVector::AddRef()
+	//{
+	//	m_RefCount++;
+	//}
 
-	void ScriptVector::Release()
-	{
-		if ( --m_RefCount == 0 )
-			delete this;
-	}
+	//void ScriptVector::Release()
+	//{
+	//	if ( --m_RefCount == 0 )
+	//		delete this;
+	//}
 
 
-	///////////////////
-	// Operations
-	// Assignment
-	ScriptVector &ScriptVector::operator=(const ScriptVector &other)
-	{
-		Data = other.Data;
+	/////////////////////
+	//// Operations
+	//// Assignment
+	//ScriptVector &ScriptVector::operator=(const ScriptVector &other)
+	//{
+	//	Data = other.Data;
 
-		// Return a ref. to this
-		return *this;
-	}
+	//	// Return a ref. to this
+	//	return *this;
+	//}
 
-	ScriptVector &ScriptVector::operator+=(const ScriptVector &other)
-	{
-		Data += other.Data;
-		return *this;
-	}
+	//ScriptVector &ScriptVector::operator+=(const ScriptVector &other)
+	//{
+	//	Data += other.Data;
+	//	return *this;
+	//}
 
 	// Arithmatic
-	Vector2 *opAdd(const Vector2 &a, const Vector2 &b)
+	static Vector2 *RefVecopAdd(const Vector2 &a, const Vector2 &b)
 	{
 		Vector2 *sum = new Vector2();
 		v2Add(a, b, *sum);
+		// Return a new object as a script handle
+		return sum;
+	}
+
+	static Vector2 VecopAdd(const Vector2 &b, Vector2 &obj)
+	{
+		Vector2 sum;
+		v2Add(obj, b, sum);
 		// Return a new object as a script handle
 		return sum;
 	}
@@ -113,6 +121,27 @@ namespace FusionEngine { namespace Scripting
 		return new Vector2(other);
 	}
 
+	// Ctors
+	static void VectorDefaultCtor(void *ptr)
+	{
+		new (ptr) Vector2();
+	}
+
+	static void VectorInitCtor(float x, float y, void *ptr)
+	{
+		new (ptr) Vector2(x, y);
+	}
+
+	static void VectorCopyCtor(const Vector2 &other, void *ptr)
+	{
+		new (ptr) Vector2(other);
+	}
+	
+	static void VectorDestructor(Vector2 *ptr)
+	{
+		delete ptr;
+	}
+
 	////////////////////////////////
 	// AngelScript type registration
 	int RegisterScriptVector_Native(asIScriptEngine *engine)
@@ -120,20 +149,38 @@ namespace FusionEngine { namespace Scripting
 		int r, typeId;
 
 		// Register the type
+#ifdef FSN_REFCOUNTED_VECTOR
 		r = engine->RegisterObjectType("Vector", sizeof(Vector2), asOBJ_REF); FSN_ASSERT( r >= 0 );
+#else
+		r = engine->RegisterObjectType("Vector", sizeof(Vector2), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); FSN_ASSERT( r >= 0 );
+#endif
 		typeId = engine->GetTypeIdByDecl("Vector");
 
+#ifdef FSN_REFCOUNTED_VECTOR
 		// Register factory methods
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f()",                 asFUNCTION(VectorDefaultFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(float, float)",     asFUNCTION(VectorInitFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_FACTORY,    "Vector @f(const Vector &in)", asFUNCTION(VectorCopyFactory), asCALL_CDECL); FSN_ASSERT( r >= 0 );
+#else
+		// Register constructors / destructor
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,    "void f()",                 asFUNCTION(VectorDefaultCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,    "void f(float, float)",     asFUNCTION(VectorInitCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_CONSTRUCT,    "void f(const Vector &in)", asFUNCTION(VectorCopyCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_DESTRUCT,     "void f()",                 asFUNCTION(VectorDestructor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+#endif
 		
 		// Register the object operator overloads
+#ifdef FSN_REFCOUNTED_VECTOR
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_ADDREF,     "void f()",                    asMETHOD(Vector2, addRef), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectBehaviour("Vector", asBEHAVE_RELEASE,    "void f()",                    asMETHOD(Vector2, release), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+#endif
 		r = engine->RegisterObjectMethod("Vector", "Vector &opAssign(const Vector &in)", asMETHODPR(Vector2, operator =, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "Vector &opAddAssign(const Vector &in)", asMETHODPR(Vector2, operator+=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(opAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+#ifdef FSN_REFCOUNTED_VECTOR
+		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(RefVecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+#else
+		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in)", asFUNCTION(VecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+#endif
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
@@ -141,8 +188,8 @@ namespace FusionEngine { namespace Scripting
 		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Vector", "void set_x(float)", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "void set_y(float)", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "void set_x(float)", asMETHOD(Vector2,set_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "void set_y(float)", asMETHOD(Vector2,set_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		return typeId;
 	}

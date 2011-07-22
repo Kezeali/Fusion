@@ -45,10 +45,14 @@ namespace FusionEngine
 	public:
 		static_assert(std::is_arithmetic<T>::value, "T is an invalid component type for a coordinate vector");
 		typedef T type;
-	public:
+
 		//! Init. constructor
 		Vector2T(T _x = 0, T _y = 0)
-			: x(_x),
+			:
+#ifdef FSN_REFCOUNTED_VECTOR
+			m_RefCount(1),
+#endif
+			x(_x),
 			y(_y)
 		{
 		}
@@ -58,6 +62,10 @@ namespace FusionEngine
 			: x(std::move(other.x)),
 			y(std::move(other.y))
 		{
+#ifdef FSN_REFCOUNTED_VECTOR
+			m_RefCount = other.m_RefCount;
+			other.m_RefCount = 0; // Prevent other from deleting this object if it's 'release' method is called
+#endif
 		}
 
 		//! Copy constructor (from double)
@@ -67,14 +75,16 @@ namespace FusionEngine
 		//! Copy constructor (from int)
 		Vector2T(const Vector2T<int>& other);
 
-	public:
-		//! Coordinates
-		T x, y;
-
+#ifdef FSN_REFCOUNTED_VECTOR
 	private:
 		int m_RefCount;
 
 	public:
+#endif
+
+		//! Coordinates
+		T x, y;
+
 		static inline Vector2T<T> zero()
 		{
 			return Vector2T<T>(0, 0);
@@ -90,6 +100,7 @@ namespace FusionEngine
 			return Vector2T<T>(0, 1);
 		}
 
+#ifdef FSN_REFCOUNTED_VECTOR
 		/////////////////////
 		// Reference Counting
 		void addRef()
@@ -101,6 +112,7 @@ namespace FusionEngine
 			if (--m_RefCount == 0)
 				delete this;
 		}
+#endif
 
 		///////////////
 		// Assignement
@@ -201,7 +213,6 @@ namespace FusionEngine
 			}
 		}
 
-	public:
 		//! Returns the value of the x co-ord
 		T get_x() const { return x; }
 		//! Returns the value of the y co-ord
@@ -391,128 +402,179 @@ namespace FusionEngine
 	// Vector2T Implementation
 	template<>
 	inline Vector2T<double>::Vector2T(const Vector2T<double> &copy)
-		: m_RefCount(1),
+		:
+#ifdef FSN_REFCOUNTED_VECTOR
+		m_RefCount(1),
+#endif
 		x(copy.x),
 		y(copy.y)
 	{}
 
 	template<>
 	inline Vector2T<float>::Vector2T(const Vector2T<float> &copy)
-		: m_RefCount(1),
+		:
+#ifdef FSN_REFCOUNTED_VECTOR
+		m_RefCount(1),
+#endif
 		x(copy.x),
 		y(copy.y)
 	{}
 
 	template<>
 	inline Vector2T<int>::Vector2T(const Vector2T<int> &copy)
-		: m_RefCount(1),
+		:
+#ifdef FSN_REFCOUNTED_VECTOR
+		m_RefCount(1),
+#endif
 		x(copy.x),
 		y(copy.y)
 	{}
 
 	template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned char)(std::abs(copy.x) + 0.5f); y = (unsigned char)(std::abs(copy.y) + 0.5f); }
 
 	template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned char)(std::abs(copy.x) + 0.5); y = (unsigned char)(std::abs(copy.y) + 0.5); }
 
 	template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned char)std::abs(copy.x); y = (unsigned char)std::abs(copy.y); }
 
 	template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (char)(copy.x + 0.5f); y = (char)(copy.y + 0.5f); }
 
 	template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (char)(copy.x + 0.5); y = (char)(copy.y + 0.5); }
 
 	template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (char)copy.x; y = (char)copy.y; }
 
 	template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned short)(copy.x + 0.5f); y = (unsigned short)(copy.y + 0.5f); }
 
 	template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned short)(std::abs(copy.x) + 0.5); y = (unsigned short)(std::abs(copy.y) + 0.5); }
 
 	template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned short)std::abs(copy.x); y = (unsigned short)std::abs(copy.y); }
 
 	template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (short)(copy.x + 0.5f); y = (short)(copy.y + 0.5f); }
 
 	template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (short)(copy.x + 0.5); y = (short)(copy.y + 0.5); }
 
 	template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (short)copy.x; y = (short)copy.y; }
 
 	template<>
 	inline Vector2T<int>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (int)(copy.x + 0.5f); y = (int)(copy.y + 0.5f); }
 
 	template<>
 	inline Vector2T<int>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (int)(copy.x + 0.5); y = (int)(copy.y + 0.5); }
 
 	template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned int)(std::abs(copy.x) + 0.5f); y = (unsigned int)(std::abs(copy.y) + 0.5f); }
 
 	template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned int)(std::abs(copy.x) + 0.5); y = (unsigned int)(std::abs(copy.y) + 0.5); }
 
 	template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (unsigned int)std::abs(copy.x); y = (unsigned int)std::abs(copy.y); }
 
 	template<>
 	inline Vector2T<float>::Vector2T(const Vector2T<double> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (float)copy.x; y = (float)copy.y; }
 
 	template<>
 	inline Vector2T<float>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (float)copy.x; y = (float)copy.y; }
 
 	template<>
 	inline Vector2T<double>::Vector2T(const Vector2T<float> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (double)copy.x; y = (double)copy.y; }
 
 	template<>
 	inline Vector2T<double>::Vector2T(const Vector2T<int> &copy)
+#ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
+#endif
 	{ x = (double)copy.x; y = (double)copy.y; }
 
 	template <class T>

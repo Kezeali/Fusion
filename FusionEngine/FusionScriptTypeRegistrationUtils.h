@@ -48,7 +48,7 @@ namespace FusionEngine
 		namespace Registation
 		{
 
-			template <typename T>
+			template <class T>
 			class ValueTypeHelper
 			{
 			public:
@@ -57,13 +57,19 @@ namespace FusionEngine
 					new (ptr) T();
 				}
 
+				template <class U>
+				static void Construct(const U &param, T* ptr)
+				{
+					new (ptr) T(param);
+				}
+
 				static void Destruct(T* obj)
 				{
 					obj->~T();
 				}
 			};
 
-			template <typename T>
+			template <class T>
 			class CopyableValueTypeHelper : public ValueTypeHelper<T>
 			{
 			public:
@@ -83,7 +89,7 @@ namespace FusionEngine
 
 	}
 
-	template <typename T>
+	template <class T>
 	void RegisterValueType(const std::string& type_name, asIScriptEngine* engine, asDWORD type_flags)
 	{
 		FSN_ASSERT(engine && "Need a valid engine pointer");
@@ -137,7 +143,7 @@ namespace FusionEngine
 		}
 	}
 	
-	template <typename T>
+	template <class T>
 	void RegisterSharedPtrType(const std::string& name, asIScriptEngine *engine)
 	{
 		using namespace Scripting::Registation;
@@ -152,7 +158,7 @@ namespace FusionEngine
 	}
 
 	//! Registers a POD type (no constructor)
-	template <typename T>
+	template <class T>
 	void RegisterTypePOD(const std::string& type_name, asIScriptEngine* engine)
 	{
 		FSN_ASSERT(engine && "Passed NULL engine pointer to registerVector");
@@ -164,7 +170,7 @@ namespace FusionEngine
 	}
 
 	//! Registers a singleton (REF & NOHANDLE) type
-	template <typename T>
+	template <class T>
 	void RegisterSingletonType(const std::string& type_name, asIScriptEngine* engine)
 	{
 		FSN_ASSERT_MSG(engine, "Passed NULL engine pointer to RegisterSingletonType");

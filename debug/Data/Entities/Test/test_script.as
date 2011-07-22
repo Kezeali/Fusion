@@ -6,6 +6,7 @@ class Test : ScriptComponent
 
 		frames = 0;
 		runtime = 0.0;
+		lastDamping = 0;
 
 		//console.println("itransform implemented by: " + itransform.getType());
 		//console.println("isprite implemented by: " + isprite.getType());
@@ -28,6 +29,8 @@ class Test : ScriptComponent
 		console.println("coroutine done");
 	}
 
+	float lastDamping;
+
 	void update(float delta)
 	{
 		++frames;
@@ -35,16 +38,27 @@ class Test : ScriptComponent
 		{
 			console.println(itransform.getType());
 
+			//itransform.Angle.set(0.7);
+			//itransform.Angle << 0.7;
 			float angle = itransform.Angle;
 			console.println("Angle: " + angle);
-			Vector pos = itransform.Position;
-			console.println("Position: " + pos.x + ", " + pos.y);
-			console.println("Depth: " + itransform.Depth);
+			//Vector pos = itransform.Position;
+			//console.println("Position: " + pos.x + ", " + pos.y);
+			//console.println("Depth: " + itransform.Depth);
+
+			irigidbody.AngularDamping.bindProperty(itransform.Angle);
 
 			//coroutine_t @fn = @coroutine;
 			createCoroutine("coroutine");
 		}
-		itransform.Depth = (rand() * 20.0 - 10.0);
+		//itransform.Depth = (rand() * 20.0 - 10.0);
+
+		if (irigidbody.AngularDamping.value != lastDamping)
+		{
+			lastDamping = irigidbody.AngularDamping.value;
+			console.println("Damping: " + lastDamping);
+		}
+
 		//if(frames <= 2)
 		//{
 		//	console.println("updating " + frames);

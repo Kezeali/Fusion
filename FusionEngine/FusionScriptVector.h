@@ -39,38 +39,38 @@ namespace FusionEngine { namespace Scripting
 {
 
 	//! Reference counting Vector2 for AngelScript
-	class ScriptVector
-	{
-	public:
-		//! Copying constructor.
-		ScriptVector(const ScriptVector &other);
-		//! Init. constructor
-		/*!
-		 * Are these defaults necessary?
-		 */
-		ScriptVector(float x = 0.0, float y = 0.0);
-		//! Init. constructor
-		ScriptVector(const Vector2 &other);
+	//class ScriptVector
+	//{
+	//public:
+	//	//! Copying constructor.
+	//	ScriptVector(const ScriptVector &other);
+	//	//! Init. constructor
+	//	/*!
+	//	 * Are these defaults necessary?
+	//	 */
+	//	ScriptVector(float x = 0.0, float y = 0.0);
+	//	//! Init. constructor
+	//	ScriptVector(const Vector2 &other);
 
-	public:
-		//! Increase reference count
-		void AddRef();
-		//! Decrease reference count. Deletes if refCount = 0
-		void Release();
+	//public:
+	//	//! Increase reference count
+	//	void AddRef();
+	//	//! Decrease reference count. Deletes if refCount = 0
+	//	void Release();
 
-		//! Assign
-		ScriptVector &operator=(const ScriptVector &other);
-		//! Add-assign
-		ScriptVector &operator+=(const ScriptVector &other);
+	//	//! Assign
+	//	ScriptVector &operator=(const ScriptVector &other);
+	//	//! Add-assign
+	//	ScriptVector &operator+=(const ScriptVector &other);
 
-		//! Actual Vector
-		Vector2 Data;
+	//	//! Actual Vector
+	//	Vector2 Data;
 
-	protected:
-		//! Destructor
-		~ScriptVector();
-		int m_RefCount;
-	};
+	//protected:
+	//	//! Destructor
+	//	~ScriptVector();
+	//	int m_RefCount;
+	//};
 
 	//! Register ScriptVector using generic call methods
 	/*!
