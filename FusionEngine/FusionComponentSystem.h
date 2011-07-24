@@ -41,10 +41,35 @@
 namespace FusionEngine
 {
 
+	class DeltaTime
+	{
+		friend class TaskScheduler;
+	public:
+		static float GetDeltaTime() { return m_DT; }
+
+		static float GetActualDeltaTime() { return m_ActualDTMS * 0.001f; }
+		static unsigned int GetActualDeltaTimeMS() { return m_ActualDTMS; }
+
+		static float GetInterpolationAlpha() { return m_Alpha; }
+
+		static unsigned int GetFramesSkipped() { return m_FramesSkipped; }
+
+		static unsigned int GetTick() { return m_Tick; }
+
+	private:
+		static float m_DT;
+		static unsigned int m_ActualDTMS;
+		static float m_Alpha;
+
+		static unsigned int m_FramesSkipped;
+
+		static unsigned int m_Tick;
+	};
+
 	class ISystemWorld;
 	class IComponentSystem;
 
-	enum SystemType { Other, Physics, Rendering };
+	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02 };
 
 	class IComponentSystem
 	{
@@ -61,8 +86,7 @@ namespace FusionEngine
 	class ISystemTask
 	{
 	public:
-		ISystemTask(ISystemWorld* world)
-			: m_SystemWorld(world)
+		ISystemTask(ISystemWorld* world) : m_SystemWorld(world)
 		{}
 		virtual ~ISystemTask() {}
 
@@ -86,6 +110,16 @@ namespace FusionEngine
 
 	protected:
 		ISystemWorld *m_SystemWorld;
+	};
+	
+	class ISystemRenderingTask : public ISystemTask
+	{
+	public:
+		ISystemRenderingTask(ISystemWorld* world) : ISystemTask(world)
+		{}
+		virtual ~ISystemRenderingTask() {}
+
+		virtual void Interpolate(const float alpha) = 0;
 	};
 
 	class ISystemWorld

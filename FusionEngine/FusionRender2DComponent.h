@@ -45,6 +45,7 @@ namespace FusionEngine
 	public:
 		ThreadSafeProperty<Vector2> Offset;
 		ThreadSafeProperty<int> LocalDepth;
+		ThreadSafeProperty<bool> Interpolate;
 
 		void SynchroniseInterface()
 		{
@@ -52,18 +53,23 @@ namespace FusionEngine
 				SetOffset(Offset.Get());
 			if (LocalDepth.Synchronise())
 				SetLocalDepth(LocalDepth.Get());
+			if (Interpolate.Synchronise())
+				SetInterpolate(Interpolate.Get());
 		}
 
 		void FireInterfaceSignals()
 		{
 			Offset.FireSignal();
 			LocalDepth.FireSignal();
+			Interpolate.FireSignal();
 		}
 
 	private:
 		virtual void SetOffset(const Vector2& value) = 0;
 		
 		virtual void SetLocalDepth(int value) = 0;
+
+		virtual void SetInterpolate(bool value) = 0;
 	};
 
 	class ISprite : public IRenderCom

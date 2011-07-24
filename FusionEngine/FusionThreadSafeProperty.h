@@ -191,7 +191,7 @@ namespace FusionEngine
 			: m_Changed(true)
 		{}
 
-		ThreadSafeProperty(const T& value)
+		explicit ThreadSafeProperty(const T& value)
 			: m_Changed(true),
 			m_Value(value)
 		{}
@@ -204,6 +204,12 @@ namespace FusionEngine
 		ThreadSafeProperty<T, Writer>& operator= (const ThreadSafeProperty<T, Writer>& copy)
 		{
 			m_Value = copy.m_Value;
+			return *this;
+		}
+
+		ThreadSafeProperty<T, Writer>& operator= (const T& value)
+		{
+			m_Value = value;
 			return *this;
 		}
 
@@ -352,7 +358,7 @@ namespace FusionEngine
 
 			//r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opShl(const " + type + "&in)").c_str(), asMETHOD(this_type, opAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
-			r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAssign(const " + cname + " &in)").c_str(), asMETHOD(this_type, operator=), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			//r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAssign(const " + cname + " &in)").c_str(), asMETHOD(this_type, operator=), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 			//r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAssign(const " + type + " &in)").c_str(), asMETHOD(this_type, opAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			//r = engine->RegisterObjectMethod(cname.c_str(), (cname + " &opAddAssign(const " + type + " &in)").c_str(), asMETHOD(this_type, opAddAssign), asCALL_THISCALL); FSN_ASSERT(r >= 0);

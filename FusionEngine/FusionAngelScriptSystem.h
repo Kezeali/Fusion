@@ -59,7 +59,7 @@ namespace FusionEngine
 		ISystemWorld* CreateWorld();
 
 	private:
-		SystemType GetType() const { return SystemType::Other; }
+		SystemType GetType() const { return SystemType::Simulation; }
 
 		std::string GetName() const { return "AngelScriptSystem"; }
 

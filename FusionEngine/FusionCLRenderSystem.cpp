@@ -128,10 +128,12 @@ namespace FusionEngine
 	}
 
 	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
-		: ISystemTask(sysworld),
+		: ISystemRenderingTask(sysworld),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer)
 	{
+		auto gc = m_Renderer->GetGraphicContext();
+		m_DebugFont = CL_Font(gc, "Lucida Console", 26);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -140,6 +142,15 @@ namespace FusionEngine
 
 	void CLRenderTask::Update(const float delta)
 	{
+		//const float fullDt = 1.f / 30.f;
+		//if (!fe_fequal(delta, fullDt))
+		//{
+		//	m_Accumulator += delta;
+		//	Interpolate(m_Accumulator / fullDt);
+		//	return;
+		//}
+		//m_Accumulator = 0;
+
 		auto& drawables = m_RenderWorld->GetDrawables();
 
 		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
@@ -160,11 +171,21 @@ namespace FusionEngine
 			return false;
 		};
 
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+		tbb::atomic<bool> outOfOrder;
+		outOfOrder = false;
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
+		{
+			for (auto i = r.begin(), end = r.end(); i != end; ++i)
+			{
+				auto& drawable = drawables[i];
+#else
 		bool outOfOrder = false;
 		for (auto it = drawables.begin(); it != drawables.end(); ++it)
 		{
 			auto& drawable = *it;
-			drawable->Update(delta);
+#endif
+			drawable->Update(DeltaTime::GetTick(), DeltaTime::GetActualDeltaTime(), DeltaTime::GetInterpolationAlpha());
 
 			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), *it))
 				outOfOrder = true;
@@ -176,19 +197,46 @@ namespace FusionEngine
 			//	if (depthSort(previous, drawable))
 			//		previous.swap(drawable);
 			//}
-		}
 
-		//tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
-		//{
-		//	for (auto i = r.begin(), end = r.end(); i != end; ++i)
-		//	{
-		//		drawables[i]->Update(delta);
-		//	}
-		//});
+		}
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+		});
+#endif
 
 		if (outOfOrder)
 			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
-		
+
+		Draw();
+	}
+
+	void CLRenderTask::Interpolate(const float alpha)
+	{
+		auto& drawables = m_RenderWorld->GetDrawables();
+
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
+		{
+			for (auto i = r.begin(), end = r.end(); i != end; ++i)
+			{
+				auto& drawable = drawables[i];
+#else
+		for (auto it = drawables.begin(); it != drawables.end(); ++it)
+		{
+			auto& drawable = *it;
+#endif
+			drawable->Interpolate(alpha);
+		}
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+		});
+#endif
+
+		Draw();
+	}
+
+	void CLRenderTask::Draw()
+	{
+		auto& drawables = m_RenderWorld->GetDrawables();
+
 		CL_GraphicContext gc = m_Renderer->GetGraphicContext();
 
 		auto& viewports = m_RenderWorld->GetViewports();
@@ -214,6 +262,11 @@ namespace FusionEngine
 
 			m_Renderer->PostDraw();
 		}
+
+		std::stringstream str;
+		str << DeltaTime::GetFramesSkipped();
+		std::string debug_text = "Frames Skipped: " + str.str();
+		m_DebugFont.draw_text(gc, CL_Pointf(0.f, 45.f), debug_text);
 
 		//if (!m_PhysDebugDraw)
 		//{

@@ -55,7 +55,8 @@ namespace FusionEngine
 	public:
 		virtual ~IDrawable() {}
 
-		virtual void Update(const float delta) {}
+		virtual void Update(unsigned int tick, const float delta, const float alpha) {}
+		virtual void Interpolate(const float alpha) {}
 		virtual void Draw(CL_GraphicContext& gc, const Vector2& offset) = 0;
 
 		virtual int GetEntityDepth() const = 0;
@@ -114,7 +115,8 @@ namespace FusionEngine
 		
 		// IDrawable
 		void Draw(CL_GraphicContext& gc, const Vector2& offset);
-		void Update(const float elapsed);
+		void Update(unsigned int tick, const float elapsed, const float alpha);
+		void Interpolate(const float alpha);
 
 		int GetEntityDepth() const { return m_EntityDepth; }
 		int GetLocalDepth() const { return m_LocalDepth; }
@@ -144,6 +146,7 @@ namespace FusionEngine
 		// ISprite
 		void SetOffset(const Vector2& offset);
 		void SetLocalDepth(int value);
+		void SetInterpolate(bool value);
 		
 		void SetImagePath(const std::string& value);
 		std::string GetImagePath() const;
@@ -186,7 +189,23 @@ namespace FusionEngine
 		std::unique_ptr<SpriteDefinition2> m_SpriteDef;
 		CL_Sprite m_Sprite;
 
-		boost::signals2::connection m_PositionChangeConnection;
+		int m_AnimationFrame; // Calculated whenever Update is called
+		int m_InterpAnimationFrame;
+		int m_LastAnimationFrame;
+
+		float m_DeltaTime;
+		float m_ElapsedTime;
+
+		bool m_Interpolate;
+
+		bool m_PositionSet; // Set to true when SetPosition is called for the first time (to init m_LastPosition)
+		bool m_AngleSet;
+		unsigned int m_InterpTick; // Tick for which interpolation needs to happen (i.e. when the sim values changed)
+		unsigned int m_CurrentTick;
+
+		CL_Font m_DebugFont;
+
+		ThreadSafeProperty<Vector2>::Connection m_PositionChangeConnection;
 		Vector2 m_NewPosition; // Set by SetPosition
 
 		Vector2 m_Position; // NewPosition is copied here when Update is called
@@ -195,7 +214,14 @@ namespace FusionEngine
 
 		Vector2 m_Offset;
 
+		ThreadSafeProperty<float>::Connection m_AngleChangeConnection;
+		float m_NewAngle;
+
 		float m_Angle;
+		float m_InterpAngle;
+		float m_LastAngle;
+
+		ThreadSafeProperty<int>::Connection m_DepthChangeConnection;
 
 		std::string m_ImagePath;
 		bool m_ReloadImage;

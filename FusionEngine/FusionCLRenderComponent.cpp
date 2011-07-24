@@ -43,7 +43,18 @@ namespace FusionEngine
 		: m_ReloadImage(false),
 		m_ReloadAnimation(false),
 		m_RecreateSprite(false),
-		m_Angle(0.f)
+		m_EntityDepth(0),
+		m_LocalDepth(0),
+		m_Interpolate(true),
+		m_AnimationFrame(0),
+		m_InterpAnimationFrame(0),
+		m_LastAnimationFrame(0),
+		m_DeltaTime(0.f),
+		m_ElapsedTime(0.f),
+		m_NewAngle(0.f),
+		m_Angle(0.f),
+		m_InterpAngle(0.f),
+		m_LastAngle(0.f)
 	{
 	}
 
@@ -51,6 +62,10 @@ namespace FusionEngine
 	{
 		m_ImageLoadConnection.disconnect();
 		m_AnimationLoadConnection.disconnect();
+
+		m_PositionChangeConnection.disconnect();
+		m_AngleChangeConnection.disconnect();
+		m_DepthChangeConnection.disconnect();
 	}
 
 	void CLSprite::redefineSprite()
@@ -62,7 +77,19 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::Update(const float elapsed)
+	template <typename T>
+	void Lerp(T& out, T& start, T& end, float m)
+	{
+		out = start + m * (end - start);
+	}
+
+	template <>
+	void Lerp(Vector2& out, Vector2& start, Vector2& end, float m)
+	{
+		out = start + m * (end - start);
+	}
+
+	void CLSprite::Update(unsigned int tick, const float elapsed, const float alpha)
 	{
 		auto onImageLoaded = [this](ResourceDataPtr& data)
 		{
@@ -91,14 +118,38 @@ namespace FusionEngine
 			m_ReloadAnimation = false;
 		}
 
-		m_LastPosition = m_Position;
-		m_Position = m_NewPosition;
+		m_DeltaTime = elapsed;
+		m_ElapsedTime = 0.f;
 
-		// TODO: interpolate (probably in a separate method., taking a 'm' param)
-		m_InterpPosition = m_Position;
+		m_CurrentTick = tick;
+
+		//m_LastPosition = m_Position;
+		//m_Position = m_NewPosition;
+
+		//m_LastAngle = m_Angle;
+		//m_Angle = m_NewAngle;
+
+		//m_InterpPosition = m_LastPosition;
+		//m_InterpAngle = m_LastAngle;
+
+		if (m_Interpolate && m_CurrentTick == m_InterpTick)
+		{
+			if ((m_Position - m_LastPosition).squared_length() > ToSimUnits(1.0f))
+				m_LastPosition = m_Position;
+
+			Lerp(m_InterpPosition, m_LastPosition, m_Position, alpha);
+			Lerp(m_InterpAngle, m_LastAngle, m_Angle, alpha);
+		}
+		else
+		{
+			m_InterpPosition = m_Position;
+			m_InterpAngle = m_Angle;
+		}
 
 		if (!m_Sprite.is_null())
 		{
+			m_Sprite.set_angle(CL_Angle(m_InterpAngle, cl_radians));
+
 			//if (!m_Sprite.is_finished())
 			{
 				// update animation
@@ -107,6 +158,51 @@ namespace FusionEngine
 				if (m_Sprite.is_finished() != AnimationFinished.Get())
 					AnimationFinished.MarkChanged();
 			}
+
+			// update AABB for the current frame / transform
+			m_AABB.left = ToRender(m_InterpPosition.x);
+			m_AABB.top = ToRender(m_InterpPosition.y);
+			m_AABB.set_size(CL_Sizef(m_Sprite.get_size()));
+
+			CL_Origin origin;
+			int x, y;
+			m_Sprite.get_alignment(origin, x, y);
+
+			m_AABB.translate(-CL_Vec2f::calc_origin(origin, m_AABB.get_size()) - CL_Vec2f((float)x, (float)y));
+			//m_AABB.apply_alignment(origin, (float)x, (float)y);
+
+			CL_Angle draw_angle = m_Sprite.get_angle() - m_Sprite.get_base_angle();
+			//draw_angle.normalize();
+			if (!fe_fzero(draw_angle.to_degrees()))
+			{
+				m_Sprite.get_rotation_hotspot(origin, x, y);
+
+				CL_Quadf bb(m_AABB);
+				bb.rotate(CL_Vec2f::calc_origin(origin, m_AABB.get_size()) + m_AABB.get_top_left() + CL_Vec2f((float)x, (float)y), draw_angle);
+
+				m_AABB = bb.get_bounds();
+			}
+		}
+	}
+
+	void CLSprite::Interpolate(const float alpha)
+	{
+		Lerp(m_InterpPosition, m_LastPosition, m_Position, alpha);
+		Lerp(m_InterpAngle, m_LastAngle, m_Angle, alpha);
+
+		if (!m_Sprite.is_null())
+		{
+			m_Sprite.set_angle(CL_Angle(m_InterpAngle, cl_radians));
+
+			//{
+			//	// update animation
+			//	float newElapsedTime = m_DeltaTime * alpha;
+			//	m_Sprite.update((int)((newElapsedTime - m_ElapsedTime) * 1000.f));
+			//	m_ElapsedTime = newElapsedTime;
+
+			//	if (m_Sprite.is_finished() != AnimationFinished.Get())
+			//		AnimationFinished.MarkChanged();
+			//}
 
 			// update AABB for the current frame / transform
 			m_AABB.left = ToRender(m_InterpPosition.x);
@@ -148,7 +244,7 @@ namespace FusionEngine
 			//m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
 			//m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
 
-			SetAngle(m_Angle);
+			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
 
 			m_RecreateSprite = false;
 		}
@@ -164,6 +260,13 @@ namespace FusionEngine
 			//	drawAABB.translate(-camera_pos.x, -camera_pos.y);
 			//	CL_Draw::box(gc, drawAABB, CL_Colorf::purple);
 			//}
+
+			if (m_Interpolate && m_CurrentTick == m_InterpTick)
+			{
+				if (m_DebugFont.is_null())
+					m_DebugFont = CL_Font(gc, "Lucidia Console", 11);
+				m_DebugFont.draw_text(gc, draw_pos.x, draw_pos.y, "Interpolating", CL_Colorf::deepskyblue);
+			}
 		}
 	}
 
@@ -173,9 +276,16 @@ namespace FusionEngine
 		if (interfaces.find(ITransform::GetTypeName()) != interfaces.end())
 		{
 			auto transform = dynamic_cast<ITransform*>(component.get());
-			transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
-			transform->Angle.Connect(std::bind(&CLSprite::SetAngle, this, std::placeholders::_1));
-			transform->Depth.Connect([this](int depth) { m_EntityDepth = depth; });
+
+			FSN_ASSERT(transform);
+
+			m_PositionChangeConnection.disconnect();
+			m_AngleChangeConnection.disconnect();
+			m_DepthChangeConnection.disconnect();
+
+			m_PositionChangeConnection = transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
+			m_AngleChangeConnection = transform->Angle.Connect(std::bind(&CLSprite::SetAngle, this, std::placeholders::_1));
+			m_DepthChangeConnection = transform->Depth.Connect([this](int depth) { m_EntityDepth = depth; });
 		}
 	}
 
@@ -241,7 +351,34 @@ namespace FusionEngine
 
 	void CLSprite::SetPosition(const Vector2& value)
 	{
-		m_NewPosition = value;
+		//m_NewPosition = value;
+
+		if (m_PositionSet)
+			m_LastPosition = m_Position;
+		else
+		{
+			m_LastPosition = value;
+			m_PositionSet = true;
+		}
+		m_Position = value;
+
+		m_InterpTick = m_CurrentTick;
+	}
+	
+	void CLSprite::SetAngle(float angle)
+	{
+		//m_NewAngle = angle;
+
+		if (m_AngleSet)
+			m_LastAngle = m_Angle;
+		else
+		{
+			m_LastAngle = angle;
+			m_AngleSet = true;
+		}
+		m_Angle = angle;
+
+		m_InterpTick = m_CurrentTick;
 	}
 
 	Vector2 CLSprite::GetPosition() const
@@ -255,17 +392,15 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::Offset);
 	}
 
-	void CLSprite::SetAngle(float angle)
-	{
-		m_Angle = angle;
-		if (!m_Sprite.is_null())
-			m_Sprite.set_angle(CL_Angle(angle, cl_radians));
-	}
-
 	void CLSprite::SetLocalDepth(int value)
 	{
 		m_LocalDepth = value;
 		m_SerialisationHelper.markChanged(PropsIdx::LocalDepth);
+	}
+
+	void CLSprite::SetInterpolate(bool value)
+	{
+		m_Interpolate = value;
 	}
 
 	void CLSprite::SetImagePath(const std::string& value)

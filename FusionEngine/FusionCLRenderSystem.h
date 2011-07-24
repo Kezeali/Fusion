@@ -100,13 +100,16 @@ namespace FusionEngine
 		Renderer* m_Renderer;
 	};
 
-	class CLRenderTask : public ISystemTask
+	class CLRenderTask : public ISystemRenderingTask
 	{
 	public:
 		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
 		~CLRenderTask();
 
 		void Update(const float delta);
+		void Interpolate(const float alpha);
+
+		void Draw();
 
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 
@@ -119,7 +122,11 @@ namespace FusionEngine
 		CLRenderWorld* m_RenderWorld;
 		Renderer* const m_Renderer;
 
+		float m_Accumulator;
+
 		std::unique_ptr<B2DebugDraw> m_PhysDebugDraw;
+
+		CL_Font m_DebugFont;
 	};
 
 }

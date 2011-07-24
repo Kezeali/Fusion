@@ -330,9 +330,9 @@ public:
 
 				std::vector<std::shared_ptr<Entity>> entities;
 
-				float xtent = 500;
+				float xtent = 720;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
-				for (unsigned int i = 0; i < 500; ++i)
+				for (unsigned int i = 0; i < 1500; ++i)
 				{
 					position.x += ToSimUnits(50.f);
 					if (position.x >= ToSimUnits(xtent))
@@ -494,21 +494,79 @@ public:
 						camera->SetPosition(pos.x, pos.y);
 					}
 					
-					scheduler->Execute();
+					const auto rendered = scheduler->Execute();
 
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_K))
+					if (rendered & SystemType::Rendering)
 					{
-						const float invmax = 1.0f / RAND_MAX;
+						dispWindow.flip(0);
+						gc.clear();
+					}
+
+					bool k = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_K);
+					bool j = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_J);
+					if (k || j)
+					{
 						auto entity = entities[0];
 						auto body = entity->GetComponent<IRigidBody>();
 						if (body)
 						{
 							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
 
-							if (fe_fzero(body->Velocity.Get().y))
-								body->Velocity.Set(Vector2(0.f, -0.5f));
-							else
-								body->Velocity.Set(Vector2(0.f, 0.f));
+							const float xvel = k ? 0.5f : -0.5f;
+							if (fe_fzero(body->Velocity.Get().x))
+								body->Velocity.Set(Vector2(xvel, 0.0f));
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_I))
+					{
+						auto entity = entities[0];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
+
+							body->Velocity.Set(Vector2::zero());
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
+
+					bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
+					bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
+					bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
+					bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
+					if (w || s || a || d)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							const float speed = 0.8f;
+							Vector2 vel;
+							if (w)
+								vel.y -= speed;
+							if (s)
+								vel.y += speed;
+							if (a)
+								vel.x -= speed;
+							if (d)
+								vel.x += speed;
+
+							body->Velocity.Set(vel);
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
+					else
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							body->Velocity.Set(Vector2::zero());
 							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
@@ -537,11 +595,6 @@ public:
 						for (auto it = components.begin(), end = components.end(); it != end; ++it)
 							(*it)->FireSignals();
 					}
-
-					//scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
-
-					dispWindow.flip(0);
-					gc.clear();
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;

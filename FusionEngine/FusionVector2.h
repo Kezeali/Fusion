@@ -187,7 +187,7 @@ namespace FusionEngine
 		//Vector2T operator/ (float scalar) const;
 		//! Friend access for multiplication operator
 		/*!
-		 * For Scalar * Vector2 (scalar on LHS, that is)
+		 * For Scalar * Vector2 (scalar on LHS)
 		 * \todo Make operator* (scalar * vector) work
 		 */
 		friend Vector2T<T> operator*(T scalar, const Vector2T<T> &vector);
@@ -577,12 +577,21 @@ namespace FusionEngine
 #endif
 	{ x = (double)copy.x; y = (double)copy.y; }
 
+	// Scalar * Vector
 	template <class T>
-	Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)
+	static Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)
 	{
 		return Vector2T<T>(vector.x * scalar, vector.y * scalar);
 	}
 
+	// Scalar * Vector
+	template <class T>
+	static Vector2T<T> operator *(T scalar, Vector2T<T>&& vector)
+	{
+		return Vector2T<T>(vector.x * scalar, vector.y * scalar);
+	}
+
+	// In-place operators
 	template <class T>
 	static inline void v2Add(const Vector2T<T>& a, const Vector2T<T>& b, Vector2T<T>& result)
 	{

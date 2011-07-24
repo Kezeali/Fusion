@@ -53,7 +53,9 @@ namespace FusionEngine
 
 		void SetOntology(const std::vector<ISystemWorld*>& ontology);
 
-		void Execute();
+		uint8_t Execute();
+
+		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
 
 		void SetFramerateLimiter(bool enabled) { m_FramerateLimiterEnabled = enabled; }
 		bool GetFramerateLimiter() const { return m_FramerateLimiterEnabled; }
@@ -64,6 +66,9 @@ namespace FusionEngine
 		tbb::tick_count m_LastTick;
 		unsigned int m_LastTime;
 		unsigned int m_Accumulator;
+		unsigned int m_FramesSkipped;
+
+		unsigned int m_MaxFrameskip;
 
 		float m_DeltaTime;
 		unsigned int m_DeltaTimeMS;
@@ -78,10 +83,13 @@ namespace FusionEngine
 		Timer m_Timer;
 		
 		std::vector<ISystemWorld*> m_ComponentWorlds;
-		std::vector<ISystemTask*> m_SortedTasks; // All tasks, including render tasks
+		std::vector<ISystemTask*> m_SortedTasks; // All tasks (simulation and render tasks)
+		std::vector<ISystemTask*> m_SortedSimulationTasks;
 		std::vector<ISystemTask*> m_SortedRenderTasks;
 
 		TaskManager* m_TaskManager;
+
+		void SortTasks();
 
 	};
 
