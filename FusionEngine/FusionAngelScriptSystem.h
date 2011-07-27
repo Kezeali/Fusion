@@ -103,6 +103,8 @@ namespace FusionEngine
 
 		void Update(const float delta);
 
+		SystemType GetTaskType() const { return SystemType::Simulation; }
+
 		PerformanceHint GetPerformanceHint() const { return LongParallel; }
 
 		bool IsPrimaryThreadOnly() const

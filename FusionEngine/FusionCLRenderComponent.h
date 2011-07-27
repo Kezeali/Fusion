@@ -56,7 +56,7 @@ namespace FusionEngine
 		virtual ~IDrawable() {}
 
 		virtual void Update(unsigned int tick, const float delta, const float alpha) {}
-		virtual void Interpolate(const float alpha) {}
+		//virtual void Interpolate(const float alpha) {}
 		virtual void Draw(CL_GraphicContext& gc, const Vector2& offset) = 0;
 
 		virtual int GetEntityDepth() const = 0;
@@ -116,7 +116,7 @@ namespace FusionEngine
 		// IDrawable
 		void Draw(CL_GraphicContext& gc, const Vector2& offset);
 		void Update(unsigned int tick, const float elapsed, const float alpha);
-		void Interpolate(const float alpha);
+		//void Interpolate(const float alpha);
 
 		int GetEntityDepth() const { return m_EntityDepth; }
 		int GetLocalDepth() const { return m_LocalDepth; }
@@ -146,7 +146,7 @@ namespace FusionEngine
 		// ISprite
 		void SetOffset(const Vector2& offset);
 		void SetLocalDepth(int value);
-		void SetInterpolate(bool value);
+		//void SetInterpolate(bool value);
 		
 		void SetImagePath(const std::string& value);
 		std::string GetImagePath() const;
@@ -196,7 +196,7 @@ namespace FusionEngine
 		float m_DeltaTime;
 		float m_ElapsedTime;
 
-		bool m_Interpolate;
+		//bool m_Interpolate;
 
 		bool m_PositionSet; // Set to true when SetPosition is called for the first time (to init m_LastPosition)
 		bool m_AngleSet;

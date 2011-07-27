@@ -66,11 +66,15 @@ namespace FusionEngine
 		static unsigned int m_Tick;
 	};
 
+	class ISystemTask;
 	class ISystemWorld;
 	class IComponentSystem;
 
+	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
+
 	enum SystemType : uint8_t { Simulation = 0x01, Rendering = 0x02 };
 
+	//! Component System
 	class IComponentSystem
 	{
 	public:
@@ -83,45 +87,7 @@ namespace FusionEngine
 		virtual ISystemWorld* CreateWorld() = 0;
 	};
 
-	class ISystemTask
-	{
-	public:
-		ISystemTask(ISystemWorld* world) : m_SystemWorld(world)
-		{}
-		virtual ~ISystemTask() {}
-
-		ISystemWorld* GetSystemWorld() const { return m_SystemWorld; }
-
-		inline SystemType GetSystemType() const;
-
-		virtual void Update(const float delta) = 0;
-
-		enum PerformanceHint
-		{
-			LongSerial = 0,
-			LongParallel,
-			Short,
-			NoPerformanceHint,
-			NumPerformanceHints
-		};
-		virtual PerformanceHint GetPerformanceHint() const { return NoPerformanceHint; }
-
-		virtual bool IsPrimaryThreadOnly() const = 0;
-
-	protected:
-		ISystemWorld *m_SystemWorld;
-	};
-	
-	class ISystemRenderingTask : public ISystemTask
-	{
-	public:
-		ISystemRenderingTask(ISystemWorld* world) : ISystemTask(world)
-		{}
-		virtual ~ISystemRenderingTask() {}
-
-		virtual void Interpolate(const float alpha) = 0;
-	};
-
+	//! World
 	class ISystemWorld
 	{
 	public:
@@ -135,7 +101,7 @@ namespace FusionEngine
         return m_System;
     }
 
-		inline SystemType GetSystemType() const;
+		SystemType GetSystemType() const;
 
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type) = 0;
@@ -151,13 +117,51 @@ namespace FusionEngine
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
 		virtual void OnDeactivation(const std::shared_ptr<IComponent>& component) = 0;
 
-		virtual ISystemTask* GetTask() = 0;
+		virtual ISystemTask* GetTask() { return nullptr; }
+
+		virtual std::vector<ISystemTask*> GetTasks()
+		{
+			FSN_ASSERT(GetTask() != nullptr);
+			std::vector<ISystemTask*> tasks(1u);
+			tasks[0] = GetTask();
+			return tasks;
+		}
 
 	private:
 		IComponentSystem* m_System;
 	};
 
-	typedef std::shared_ptr<ISystemWorld> SystemWorldPtr;
+	//! Task
+	class ISystemTask
+	{
+	public:
+		ISystemTask(ISystemWorld* world) : m_SystemWorld(world)
+		{}
+		virtual ~ISystemTask() {}
+
+		ISystemWorld* GetSystemWorld() const { return m_SystemWorld; }
+
+		SystemType GetSystemType() const;
+
+		virtual void Update(const float delta) = 0;
+
+		virtual SystemType GetTaskType() const = 0;
+
+		enum PerformanceHint : uint16_t
+		{
+			LongSerial = 0,
+			LongParallel,
+			Short,
+			NoPerformanceHint,
+			NumPerformanceHints
+		};
+		virtual PerformanceHint GetPerformanceHint() const { return NoPerformanceHint; }
+
+		virtual bool IsPrimaryThreadOnly() const = 0;
+
+	protected:
+		ISystemWorld *m_SystemWorld;
+	};
 
 
 	inline SystemType ISystemTask::GetSystemType() const

@@ -53,14 +53,17 @@ namespace FusionEngine
 
 		void SetOntology(const std::vector<ISystemWorld*>& ontology);
 
-		uint8_t Execute();
-
 		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
+
+		void SetDT(float dt);
+		float GetDT() const;
 
 		void SetFramerateLimiter(bool enabled) { m_FramerateLimiterEnabled = enabled; }
 		bool GetFramerateLimiter() const { return m_FramerateLimiterEnabled; }
 
 		void SetUnlimited(bool unlimited) { m_Unlimited = unlimited; }
+
+		uint8_t Execute();
 
 	private:
 		tbb::tick_count m_LastTick;

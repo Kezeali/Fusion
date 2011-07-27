@@ -99,6 +99,8 @@ namespace FusionEngine
 		virtual ~IRigidBody()
 		{}
 
+		ThreadSafeProperty<bool> Interpolate;
+
 		ThreadSafeProperty<float, NullWriter<float>> Mass;
 		ThreadSafeProperty<float, NullWriter<float>> Inertia;
 		ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
@@ -142,6 +144,7 @@ namespace FusionEngine
 		void SynchroniseInterface()
 		{
 			ITransform::SynchroniseInterface();
+			FSN_SYNCH_PROP(Interpolate);
 			if (Mass.m_Changed) Mass.Synchronise(GetMass()); // readonly
 			if (Inertia.m_Changed) Inertia.Synchronise(GetInertia()); // readonly
 			if (CenterOfMass.m_Changed) CenterOfMass.Synchronise(GetCenterOfMass()); // readonly
@@ -160,6 +163,7 @@ namespace FusionEngine
 		void FireInterfaceSignals()
 		{
 			ITransform::FireInterfaceSignals();
+			Interpolate.FireSignal();
 			Mass.FireSignal();
 			Inertia.FireSignal();
 			CenterOfMass.FireSignal();
@@ -213,6 +217,9 @@ namespace FusionEngine
 		static bool IsThreadSafe() { return true; }
 
 	protected:
+		virtual bool GetInterpolate() const = 0;
+		virtual void SetInterpolate(bool interpolate) = 0;
+
 		//! Gets the mass
 		virtual float GetMass() const = 0;
 		//! Gets the inertia

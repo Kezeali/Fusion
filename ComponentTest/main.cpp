@@ -332,7 +332,11 @@ public:
 
 				float xtent = 720;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
+#ifdef _DEBUG
+				for (unsigned int i = 0; i < 400; ++i)
+#else
 				for (unsigned int i = 0; i < 1500; ++i)
+#endif
 				{
 					position.x += ToSimUnits(50.f);
 					if (position.x >= ToSimUnits(xtent))
@@ -396,6 +400,7 @@ public:
 						else
 							sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
 					}
+
 					if (i < 200)
 					{
 						auto script = entity->GetComponent<IScript>("script_a");
@@ -436,6 +441,74 @@ public:
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
 				dynamic_cast<CLRenderWorld*>(renderWorld)->AddViewport(viewport);
+
+				std::map<int, bool> pressed;
+
+				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
+				{
+					bool dtup = ev.id == CL_KEY_PRIOR;
+					bool dtdown = ev.id == CL_KEY_NEXT;
+					if (dtup || dtdown)
+					{
+						pressed[CL_KEY_PRIOR] = true;
+						unsigned int fps = (unsigned int)(1.0f / scheduler->GetDT() + 0.5f);
+						if (dtdown && fps <= 5)
+							fps -= 1;
+						else if (dtup && fps < 5)
+							fps += 1;
+						else
+							fps += (dtup ? 5 : -5);
+						fe_clamp(fps, 1u, 120u);
+						scheduler->SetDT(1.0f / (float)fps);
+					}
+
+					if (ev.id == CL_KEY_E)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							body->AngularDamping.Set(0.f);
+
+							auto vel = body->AngularVelocity.Get();
+							if (ev.shift)
+								vel = std::max(b2_pi / 2.f, vel);
+							vel += b2_pi * 0.25;
+							body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
+						}
+					}
+					if (ev.id == CL_KEY_Q)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							body->AngularDamping.Set(0.f);
+
+							auto vel = body->AngularVelocity.Get();
+							if (ev.shift)
+								vel = std::min(-(b2_pi / 2.f), vel);
+							vel -= b2_pi * 0.25;
+							body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
+						}
+					}
+					if (ev.id == CL_KEY_X)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							//body->AngularVelocity.Set(CL_Angle(0.0f, cl_radians).to_radians());
+							body->AngularDamping.Set(0.9f);
+						}
+					}
+				});
 
 				unsigned int lastframe = CL_System::get_time();
 				unsigned int delta = 0;
@@ -518,7 +591,7 @@ public:
 							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_I))
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_M))
 					{
 						auto entity = entities[0];
 						auto body = entity->GetComponent<IRigidBody>();
@@ -585,6 +658,20 @@ public:
 						}
 						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 					}
+
+					bool eye = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_I);
+					if (!pressed[CL_KEY_I] && eye)
+					{
+						pressed[CL_KEY_I] = true;
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							body->Interpolate.Set(!body->Interpolate.Get());
+						}
+					}
+					else if (!eye)
+						pressed[CL_KEY_I] = false;
 
 					for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 					{

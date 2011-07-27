@@ -65,6 +65,7 @@ namespace FusionEngine
 	{
 		friend class Box2DWorld;
 		friend class Box2DTask;
+		friend class Box2DInterpolateTask;
 	public:
 		FSN_LIST_INTERFACES((ITransform)(IRigidBody))
 
@@ -99,6 +100,14 @@ namespace FusionEngine
 
 		int m_Depth;
 
+		// Interpolation data
+		bool m_Interpolate;
+		Vector2 m_InterpPosition;
+		Vector2 m_LastPosition;
+		float m_InterpAngle;
+		float m_LastAngle;
+		float m_LastAngularVelocity;
+
 		// IComponent
 		std::string GetType() const { return "Box2DBody"; }
 
@@ -131,14 +140,17 @@ namespace FusionEngine
 			}
 		}
 
-		Vector2 GetPosition() const { return b2v2(m_Body->GetPosition()); }
+		Vector2 GetPosition() const { return m_Interpolate ? m_InterpPosition : b2v2(m_Body->GetPosition()); }
 		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
 
-		float GetAngle() const { return m_Body->GetAngle(); }
+		float GetAngle() const { return m_Interpolate ? m_InterpAngle : m_Body->GetAngle(); }
 		void SetAngle(float angle) { m_Body->SetTransform(m_Body->GetPosition(), angle); }
 
 		int GetDepth() const { return m_Depth; }
 		void SetDepth(int depth) { m_Depth = depth; }
+
+		bool GetInterpolate() const { return m_Interpolate; }
+		void SetInterpolate(bool value) { m_Interpolate = value; }
 
 		float GetMass() const { return m_Body->GetMass(); }
 
@@ -154,20 +166,26 @@ namespace FusionEngine
 		float GetAngularVelocity() const { return m_Body->GetAngularVelocity(); }
 		void SetAngularVelocity(float vel) { m_Body->SetAngularVelocity(vel); }
 
-#define BODY_PROP(name) \
-	float Get ## name() const { return m_Body->Get ## name(); }\
-	void Set ## name(float val) { m_Body->Set ## name(val); m_DeltaSerialisationHelper.markChanged(PropsIdx:: name ); }
+		float GetLinearDamping() const { return m_Body->GetLinearDamping(); }
+		void SetLinearDamping(float val)
+		{
+			m_Body->SetLinearDamping(val);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx:: LinearDamping );
+		};
 
-		//! Get linear damping
-		BODY_PROP(LinearDamping);
+		float GetAngularDamping() const { return m_Body->GetAngularDamping(); }
+		void SetAngularDamping(float val)
+		{
+			m_Body->SetAngularDamping(val);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx:: AngularDamping );
+		};
 
-		//! Get the angular damping of the body.
-		BODY_PROP(AngularDamping);
-
-		//! Get the gravity scale of the body.
-		BODY_PROP(GravityScale);
-
-#undef BODY_PROP
+		float GetGravityScale() const { return m_Body->GetGravityScale(); }
+		void SetGravityScale(float val)
+		{
+			m_Body->SetGravityScale(val);
+			m_DeltaSerialisationHelper.markChanged(PropsIdx:: GravityScale );
+		};
 
 		bool IsActive() const { return m_Body->IsActive(); }
 		void SetActive(bool value)

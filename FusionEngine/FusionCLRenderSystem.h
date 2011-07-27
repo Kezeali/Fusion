@@ -100,16 +100,17 @@ namespace FusionEngine
 		Renderer* m_Renderer;
 	};
 
-	class CLRenderTask : public ISystemRenderingTask
+	class CLRenderTask : public ISystemTask
 	{
 	public:
 		CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer);
 		~CLRenderTask();
 
 		void Update(const float delta);
-		void Interpolate(const float alpha);
 
 		void Draw();
+
+		SystemType GetTaskType() const { return SystemType::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 

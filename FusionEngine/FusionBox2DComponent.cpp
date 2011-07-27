@@ -34,8 +34,14 @@ namespace FusionEngine
 
 	Box2DBody::Box2DBody(b2Body* body)
 		: m_Body(body),
-		m_Depth(0)
+		m_Depth(0),
+		m_Interpolate(false)
 	{
+		const auto& tf = m_Body->GetTransform();
+		m_InterpPosition = m_LastPosition = b2v2(tf.p);
+		m_InterpAngle = m_LastAngle = tf.q.GetAngle();
+
+		m_LastAngularVelocity = m_Body->GetAngularVelocity();
 	}
 
 	Box2DBody::~Box2DBody()

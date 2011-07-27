@@ -51,7 +51,7 @@ namespace FusionEngine
 		~TaskManager();
 
 		void SpawnJobsForSystemTasks(const std::vector<ISystemTask*>& tasks, const float delta);
-		void WaitForSystemTasks(const std::vector<ISystemTask*>& tasks);
+		void WaitForSystemTasks();
 
     /// This method triggers a synchronized callback to be called once by each thread used by the <c>TaskManagerTBB</c>.
     /// This method waits until all callbacks have executed.

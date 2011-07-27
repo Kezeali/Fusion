@@ -36,28 +36,28 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
-			console.println(itransform.getType());
+			//console.println(itransform.getType());
 
 			//itransform.Angle.set(0.7);
 			//itransform.Angle << 0.7;
-			float angle = itransform.Angle;
-			console.println("Angle: " + angle);
+			//float angle = itransform.Angle;
+			//console.println("Angle: " + angle);
 			//Vector pos = itransform.Position;
 			//console.println("Position: " + pos.x + ", " + pos.y);
 			//console.println("Depth: " + itransform.Depth);
 
-			irigidbody.AngularDamping.bindProperty(itransform.Angle);
+			//irigidbody.AngularDamping.bindProperty(itransform.Angle);
 
 			//coroutine_t @fn = @coroutine;
-			createCoroutine("coroutine");
+			//createCoroutine("coroutine");
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 
-		if (irigidbody.AngularDamping.value != lastDamping)
-		{
-			lastDamping = irigidbody.AngularDamping.value;
-			console.println("Damping: " + lastDamping);
-		}
+		//if (irigidbody.AngularDamping.value != lastDamping)
+		//{
+		//	lastDamping = irigidbody.AngularDamping.value;
+		//	console.println("Damping: " + lastDamping);
+		//}
 
 		//if(frames <= 2)
 		//{

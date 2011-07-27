@@ -128,12 +128,12 @@ namespace FusionEngine
 	}
 
 	CLRenderTask::CLRenderTask(CLRenderWorld* sysworld, Renderer* const renderer)
-		: ISystemRenderingTask(sysworld),
+		: ISystemTask(sysworld),
 		m_RenderWorld(sysworld),
 		m_Renderer(renderer)
 	{
 		auto gc = m_Renderer->GetGraphicContext();
-		m_DebugFont = CL_Font(gc, "Lucida Console", 26);
+		m_DebugFont = CL_Font(gc, "Lucida Console", 24);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -209,30 +209,6 @@ namespace FusionEngine
 		Draw();
 	}
 
-	void CLRenderTask::Interpolate(const float alpha)
-	{
-		auto& drawables = m_RenderWorld->GetDrawables();
-
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
-		{
-			for (auto i = r.begin(), end = r.end(); i != end; ++i)
-			{
-				auto& drawable = drawables[i];
-#else
-		for (auto it = drawables.begin(); it != drawables.end(); ++it)
-		{
-			auto& drawable = *it;
-#endif
-			drawable->Interpolate(alpha);
-		}
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-		});
-#endif
-
-		Draw();
-	}
-
 	void CLRenderTask::Draw()
 	{
 		auto& drawables = m_RenderWorld->GetDrawables();
@@ -266,7 +242,13 @@ namespace FusionEngine
 		std::stringstream str;
 		str << DeltaTime::GetFramesSkipped();
 		std::string debug_text = "Frames Skipped: " + str.str();
-		m_DebugFont.draw_text(gc, CL_Pointf(0.f, 45.f), debug_text);
+		str.str("");
+		str << DeltaTime::GetDeltaTime();
+		debug_text += "\nDT: " + str.str();
+		str.str("");
+		str << DeltaTime::GetInterpolationAlpha();
+		debug_text += "\nInterp: " + str.str();
+		m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
 
 		//if (!m_PhysDebugDraw)
 		//{

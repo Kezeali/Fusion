@@ -50,10 +50,12 @@ namespace FusionEngine
 		m_World = new b2World(gravity, true);
 
 		m_B2DTask = new Box2DTask(this, m_World);
+		m_B2DInterpTask = new Box2DInterpolateTask(this);
 	}
 
 	Box2DWorld::~Box2DWorld()
 	{
+		delete m_B2DInterpTask;
 		delete m_B2DTask;
 		delete m_World;
 	}
@@ -147,7 +149,8 @@ namespace FusionEngine
 				def.angle = angle;
 			}
 
-			auto com = std::make_shared<Box2DBody>(m_World->CreateBody(&def));
+			auto com = std::make_shared<Box2DBody>( m_World->CreateBody(&def) );
+			com->SetInterpolate(def.type != b2_staticBody);
 			return com;
 		}
 		else if (type == "b2Circle")
@@ -196,9 +199,12 @@ namespace FusionEngine
 		}
 	}
 
-	ISystemTask* Box2DWorld::GetTask()
+	std::vector<ISystemTask*> Box2DWorld::GetTasks()
 	{
-		return m_B2DTask;
+		std::vector<ISystemTask*> tasks(2);
+		tasks[0] = m_B2DTask;
+		tasks[1] = m_B2DInterpTask;
+		return tasks;
 	}
 
 	void Box2DWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
@@ -229,9 +235,24 @@ namespace FusionEngine
 
 	void Box2DTask::Update(const float delta)
 	{
+		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
+		{
+			auto body = *it;
+			const bool awake = body->IsAwake();
+			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
+			if (!staticBody && awake && body->m_Interpolate)
+			{
+						const auto& tf = body->m_Body->GetTransform();
+						body->m_LastPosition = b2v2(tf.p);
+						body->m_LastAngle = tf.q.GetAngle();
+						body->m_LastAngularVelocity = body->m_Body->GetAngularVelocity();
+			}
+		}
+
 		m_World->Step(delta, 8, 8);
 		m_World->ClearForces();
-		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		//auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
@@ -246,6 +267,13 @@ namespace FusionEngine
 				}
 				if (awake)
 				{
+					//if (body->m_Interpolate)
+					//{
+					//	const auto& tf = body->m_Body->GetTransform();
+					//	body->m_LastPosition = b2v2(tf.p);
+					//	body->m_LastAngle = tf.q.GetAngle();
+					//}
+					
 					body->Position.MarkChanged();
 					body->Angle.MarkChanged();
 					body->Velocity.MarkChanged();
@@ -254,6 +282,89 @@ namespace FusionEngine
 			}
 
 			body->CleanMassData();
+		}
+	}
+
+	Box2DInterpolateTask::Box2DInterpolateTask(Box2DWorld* sysworld)
+		: ISystemTask(sysworld),
+		m_B2DSysWorld(sysworld)
+	{
+	}
+
+	Box2DInterpolateTask::~Box2DInterpolateTask()
+	{
+	}
+
+	//template <typename T>
+	//void Lerp(T& out, const T& start, const T& end, float m)
+	//{
+	//	out = start + m * (end - start);
+	//}
+
+	template <typename T>
+	void Lerp(T& out, const T& start, const T& end, float alpha)
+	{
+		out = start * (1 - alpha) + end * alpha;
+	}
+
+	static void Wrap(float& value, float lower, float upper)
+	{ 
+		float distance = upper - lower;
+		float times = std::floor((value - lower) / distance);
+		value -= (times * distance);
+	} 
+
+	static void AngleInterpB(float& out, float start, float velocity, float accel, float dt, float alpha)
+	{
+		//    x0    +      v * time        +  0.5f *  a * time ^ 2
+		out = start + velocity * dt * alpha + 0.5f * accel * dt * dt * alpha;
+	}
+
+	static void AngleInterpB(float& out, float start, float end, float vel, float alpha)
+	{
+		float diff = end - start;
+		if (vel * diff < 0.f)
+			diff = b2_pi * 2.f - diff;
+		out = start + diff * alpha;
+	}
+
+	static void AngleInterp(float& out, float start, float end, float alpha)
+	{
+		if (std::abs(end - start) < b2_pi)
+		{
+			Lerp(out, start, end, alpha);
+			return;
+		}
+
+		if (start < end)
+			start += b2_pi * 2.f;
+		else
+			end += b2_pi * 2.f;
+		
+		Lerp(out, start, end, alpha);
+	}
+
+	void Box2DInterpolateTask::Update(const float delta)
+	{
+		FSN_ASSERT(DeltaTime::GetInterpolationAlpha() <= 1.0f);
+		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
+		{
+			auto body = *it;
+			const bool awake = body->IsAwake();
+			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
+			const bool interpolate = body->GetInterpolate();
+			if (!staticBody && awake && interpolate)
+			{
+				const auto& tf = body->m_Body->GetTransform();
+				const float angularVelocity = body->m_Body->GetAngularVelocity();
+
+				Lerp(body->m_InterpPosition, body->m_LastPosition, b2v2(tf.p), DeltaTime::GetInterpolationAlpha());
+				AngleInterp(body->m_InterpAngle, body->m_LastAngle, tf.q.GetAngle(), DeltaTime::GetInterpolationAlpha());
+
+				body->Position.MarkChanged();
+				body->Angle.MarkChanged();
+			}
 		}
 	}
 

@@ -47,6 +47,7 @@ namespace FusionEngine
 
 	class Box2DWorld;
 	class Box2DTask;
+	class Box2DInterpolateTask;
 
 	class Box2DSystem : public IComponentSystem
 	{
@@ -67,6 +68,7 @@ namespace FusionEngine
 	class Box2DWorld : public ISystemWorld
 	{
 		friend class Box2DTask;
+		friend class Box2DInterpolateTask;
 	public:
 		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
@@ -84,12 +86,13 @@ namespace FusionEngine
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 		void OnDeactivation(const std::shared_ptr<IComponent>& component);
 
-		ISystemTask* GetTask();
+		std::vector<ISystemTask*> GetTasks();
 
 		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
 
 		b2World* m_World;
 		Box2DTask* m_B2DTask;
+		Box2DInterpolateTask* m_B2DInterpTask;
 	};
 
 	class Box2DTask : public ISystemTask
@@ -99,6 +102,8 @@ namespace FusionEngine
 		~Box2DTask();
 
 		void Update(const float delta);
+
+		SystemType GetTaskType() const { return SystemType::Simulation; }
 
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 
@@ -110,6 +115,27 @@ namespace FusionEngine
 	protected:
 		Box2DWorld *m_B2DSysWorld;
 		b2World* const m_World;
+	};
+
+	class Box2DInterpolateTask : public ISystemTask
+	{
+	public:
+		Box2DInterpolateTask(Box2DWorld* sysworld);
+		~Box2DInterpolateTask();
+
+		void Update(const float delta);
+
+		SystemType GetTaskType() const { return SystemType::Rendering; }
+
+		PerformanceHint GetPerformanceHint() const { return Short; }
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return false;
+		}
+
+	protected:
+		Box2DWorld *m_B2DSysWorld;
 	};
 
 }

@@ -64,6 +64,79 @@ namespace FusionEngine
 	{
 	}
 
+	void TaskScheduler::SetDT(float dt)
+	{
+		FSN_ASSERT(dt > 0.001f);
+		if (dt <= 0.001f)
+			return;
+
+		m_DeltaTime = dt;
+		m_DeltaTimeMS = (unsigned int)(m_DeltaTime * 1000);
+
+		DeltaTime::m_DT = m_DeltaTime;
+
+		m_Timer.SetInterval(m_DeltaTime);
+	}
+
+	float TaskScheduler::GetDT() const
+	{
+		return m_DeltaTime;
+	}
+
+	class SystemTaskExecutor : public ISystemTask
+	{
+	public:
+		SystemTaskExecutor(ISystemWorld* world, const std::vector<ISystemTask*>& sub_tasks);
+
+	private:
+		void Update(const float delta);
+
+		SystemType GetTaskType() const { return m_TaskType; }
+
+		PerformanceHint GetPerformanceHint() const { return m_PerfHint; }
+
+		bool IsPrimaryThreadOnly() const { return m_PrimaryThreadOnly; }
+
+		std::vector<ISystemTask*> m_SubTasks;
+		SystemType m_TaskType;
+		PerformanceHint m_PerfHint;
+		bool m_PrimaryThreadOnly;
+	};
+
+	SystemTaskExecutor::SystemTaskExecutor(ISystemWorld* world, const std::vector<ISystemTask*>& sub_tasks)
+		: ISystemTask(world),
+		m_SubTasks(sub_tasks)
+	{
+		FSN_ASSERT(!sub_tasks.empty());
+
+		{
+			auto firstSubTask = m_SubTasks.front();
+			m_TaskType = firstSubTask->GetTaskType();
+			m_PrimaryThreadOnly = firstSubTask->IsPrimaryThreadOnly();
+		}
+
+		for (auto it = m_SubTasks.begin(), end = m_SubTasks.end(); it != end; ++it)
+		{
+			FSN_ASSERT(*it);
+			auto& subTask = *it;
+
+			// Make sure that the sub-set of sub-tasks given is correct
+			FSN_ASSERT(subTask->IsPrimaryThreadOnly() == m_PrimaryThreadOnly);
+
+			// The perf-hint for this super-task is the slowest perf-hint from the sub-tasks
+			//  (this is the min, since the enum is ordered slowest-fastest)
+			m_PerfHint = std::min(m_PerfHint, subTask->GetPerformanceHint());
+		}
+	}
+
+	void SystemTaskExecutor::Update(const float delta)
+	{
+		for (auto it = m_SubTasks.begin(), end = m_SubTasks.end(); it != end; ++it)
+		{
+			(*it)->Update(delta);
+		}
+	}
+
 	void TaskScheduler::SetOntology(const std::vector<ISystemWorld*>& ontology)
 	{
 		m_ComponentWorlds = ontology;
@@ -76,16 +149,36 @@ namespace FusionEngine
 		for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 		{
 			ISystemWorld* world = *it;
-			m_SortedTasks.push_back(world->GetTask());
+			auto tasks = world->GetTasks();
 
-			if (world->GetSystemType() == SystemType::Rendering)
+			FSN_ASSERT(!tasks.empty());
+
+			if (tasks.size() > 1)
 			{
-				auto renderTask = dynamic_cast<ISystemRenderingTask*>(world->GetTask());
-				FSN_ASSERT_MSG(renderTask, "The given task is marked as a Rendering task, but doesn't implement ISystemRenderTask");
-				m_SortedRenderTasks.push_back(renderTask);
+				ISystemTask* task = new SystemTaskExecutor(world, tasks);
+				m_SortedTasks.push_back(task);
 			}
 			else
-				m_SortedSimulationTasks.push_back(world->GetTask());
+				m_SortedTasks.push_back(tasks.front());
+
+			// Grab all the render tasks
+			std::vector<ISystemTask*> renderTasks;
+			std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(renderTasks),
+				[](ISystemTask* task) { return task->GetTaskType() == SystemType::Rendering; });
+
+			std::vector<ISystemTask*> simulationTasks;
+			std::copy_if(tasks.begin(), tasks.end(), std::back_inserter(simulationTasks),
+				[](ISystemTask* task) { return task->GetTaskType() == SystemType::Simulation; });
+
+			if (renderTasks.size() > 1)
+				m_SortedRenderTasks.push_back(new SystemTaskExecutor(world, renderTasks));
+			else if (!renderTasks.empty())
+				m_SortedRenderTasks.push_back(renderTasks.front());
+
+			if (simulationTasks.size() > 1)
+				m_SortedSimulationTasks.push_back(new SystemTaskExecutor(world, simulationTasks));
+			else if (!simulationTasks.empty())
+				m_SortedSimulationTasks.push_back(simulationTasks.front());
 		}
 
 		SortTasks();
@@ -182,21 +275,17 @@ namespace FusionEngine
 			if ((taskFilter & simAndRender) == simAndRender)
 			{
 				m_TaskManager->SpawnJobsForSystemTasks(m_SortedTasks, deltaTime);
-
-				m_TaskManager->WaitForSystemTasks(m_SortedTasks);
 			}
 			else if (taskFilter & SystemType::Rendering)
 			{
 				m_TaskManager->SpawnJobsForSystemTasks(m_SortedRenderTasks, deltaTime);
-
-				m_TaskManager->WaitForSystemTasks(m_SortedRenderTasks);
 			}
 			else if (taskFilter & SystemType::Simulation)
 			{
 				m_TaskManager->SpawnJobsForSystemTasks(m_SortedSimulationTasks, deltaTime);
-
-				m_TaskManager->WaitForSystemTasks(m_SortedSimulationTasks);
 			}
+
+			m_TaskManager->WaitForSystemTasks();
 		}
 		else // ... not threading enabled:
 		{

@@ -34,6 +34,7 @@
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionHashable.h"
+#include "FusionSerialisationHelper.h"
 #include "FusionSlotContainer.h"
 #include "FusionStdHeaders.h"
 #include "FusionStringFormatting.h"

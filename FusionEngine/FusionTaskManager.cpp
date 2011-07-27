@@ -148,11 +148,10 @@ namespace FusionEngine
 		//CloseHandle( SynchronizeTask::m_hAllCallbacksInvokedEvent );
 	}
 
-	template <typename T>
 	class FunctorTask : public tbb::task
 	{
 	public:
-		FunctorTask(const std::function<T>& functor)
+		FunctorTask(const std::function<void (void)>& functor)
 			: m_Function(functor)
 		{
 		}
@@ -167,10 +166,91 @@ namespace FusionEngine
 		}
 
 	protected:
-		std::function<T> m_Function;
+		std::function<void (void)> m_Function;
 	};
 
-	typedef FunctorTask<void (void)> SystemTask;
+	class FunctorSupertask : public tbb::task
+	{
+	public:
+		FunctorSupertask(const std::vector<std::function<void (void)>>& functors)
+			: m_Functors(functors)
+		{
+		}
+
+		virtual tbb::task* execute()
+		{
+			FSN_ASSERT(!m_Functors.empty());
+
+			for (auto it = m_Functors.begin(), end = m_Functors.end(); it != end; ++it)
+			{
+				auto& functor = *it;
+				functor();
+			}
+
+			return NULL;
+		}
+
+	protected:
+		std::vector<std::function<void (void)>> m_Functors;
+	};
+
+	template <class T>
+	class FunctionTask : public tbb::task
+	{
+	public:
+		FunctionTask(T fn)
+			: m_Function(fn)
+		{
+		}
+
+		virtual tbb::task* execute()
+		{
+			m_Function();
+
+			return NULL;
+		}
+
+	protected:
+		T m_Function;
+	};
+
+	class IntrusiveSystemTask : tbb::task
+	{
+	public:
+		IntrusiveSystemTask(std::vector<ISystemTask*> subtasks, float delta)
+			: m_Subtasks(subtasks),
+			m_Delta(delta)
+		{
+		}
+
+		virtual tbb::task* execute()
+		{
+			FSN_ASSERT(!m_Subtasks.empty());
+
+			for (auto it = m_Subtasks.begin(), end = m_Subtasks.end(); it != end; ++it)
+			{
+				auto& subtask = *it;
+				FSN_ASSERT(subtask != nullptr);
+				subtask->Update(m_Delta);
+			}
+
+			return NULL;
+		}
+
+	protected:
+		std::vector<ISystemTask*> m_Subtasks;
+		const float m_Delta;
+	};
+
+	typedef FunctorTask SystemTask;
+	typedef FunctorSupertask SystemSupertask;
+
+	// Allows FunctionTask objects to be made for lambdas
+	template <class T>
+	FunctionTask<T>* MakeFunctionTask(tbb::task* root, T fn)
+	{
+		return new( root->allocate_additional_child_of(*root) ) FunctionTask<T>(fn);
+	}
 
 	void TaskManager::SpawnJobsForSystemTasks(const std::vector<ISystemTask*>& tasks, const float delta)
 	{
@@ -195,23 +275,30 @@ namespace FusionEngine
 		{
 			auto task = *it;
 
+			FSN_ASSERT(task);
+
 			if (task->IsPrimaryThreadOnly())
 			{
 				m_PrimaryThreadSystemTasks.push_back(task);
 			}
 			else
 			{
-				SystemTask* systemTask = new( m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot) ) SystemTask(std::bind(&ISystemTask::Update, task, delta));
+				//auto systemTask = new( m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot) ) SystemTask(std::bind(&ISystemTask::Update, task, delta));
+				//FSN_ASSERT(systemTask != nullptr);
+
+				auto systemTask = MakeFunctionTask(m_SystemTasksRoot, [task, delta]() { task->Update(delta); });
 				FSN_ASSERT(systemTask != nullptr);
 
 				// Affinity will increase the chances that each SystemTask will be assigned
 				//  to a unique thread, regardless of PerformanceHint
-				systemTask->set_affinity(*(affinityIterator++));
+				const auto affinityId = *(affinityIterator++);
 				if (affinityIterator == m_AffinityIDs.end())
 					affinityIterator = m_AffinityIDs.begin();
+				systemTask->set_affinity(affinityId);
 
 				taskList.push_back(*systemTask);
 			}
+
 		}
 
 		// Only system tasks spawn here. They in their turn will spawn descendant tasks.
@@ -219,7 +306,7 @@ namespace FusionEngine
 		m_SystemTasksRoot->spawn(taskList);
 	}
 
-	void TaskManager::WaitForSystemTasks(const std::vector<ISystemTask*>& tasks)
+	void TaskManager::WaitForSystemTasks()
 	{
 		FSN_ASSERT(IsPrimaryThread());
 
@@ -229,23 +316,15 @@ namespace FusionEngine
 
 		std::vector<ISystemTask*> primaryThreadTasksNotRun;
 
-		// If any of the given system tasks are primary-thread-only tasks, run them now
+		// Run primary-thread tasks
 		for (auto it = m_PrimaryThreadSystemTasks.begin() ; it != m_PrimaryThreadSystemTasks.end(); ++it)
 		{
-			if (std::find(tasks.begin(), tasks.end(), *it) != tasks.end())
-			{
-				// We are, so execute it now on the primary thread
-				//__ITT_EVENT_START( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
+			// We are, so execute it now on the primary thread
+			//__ITT_EVENT_START( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
 
-				(*it)->Update(m_DeltaTime);
+			(*it)->Update(m_DeltaTime);
 
-				//__ITT_EVENT_END( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
-			}
-			else
-			{
-				// Save it for next time
-				primaryThreadTasksNotRun.push_back(*it);
-			}
+			//__ITT_EVENT_END( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
 		}
 
 #ifdef _WIN32
@@ -253,9 +332,8 @@ namespace FusionEngine
 #endif
 
 		m_PrimaryThreadSystemTasks.clear();
-		m_PrimaryThreadSystemTasks.swap(primaryThreadTasksNotRun);
 
-		// Contribute to the parallel calculation, and when it completes, we're done
+		// Contribute to the parallel execution, and when it completes, we're done
 		m_SystemTasksRoot->wait_for_all();
 	}
 
@@ -303,7 +381,7 @@ namespace FusionEngine
 		tbb::task_list taskList;
 		for( uint32_t i = 0; i < m_NumberOfThreads; i++ )
 		{
-			// Add a SynchronizedTasks for each thread in the TBB pool (workers + this master)
+			// Add a SynchronizedTasks for each thread in the TBB pool
 			tbb::task *newTask = new( broadcastParent->allocate_child() ) SynchronisedTask;
 			FSN_ASSERT(newTask != NULL);
 			taskList.push_back(*newTask);
