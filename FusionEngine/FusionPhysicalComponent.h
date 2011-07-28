@@ -63,9 +63,9 @@ namespace FusionEngine
 			Depth.SetCallbacks(this, &ITransform::GetDepth, &ITransform::SetDepth);
 		}
 
-		ThreadSafeProperty<ITransform, Vector2> Position;
-		ThreadSafeProperty<ITransform, float> Angle;
-		ThreadSafeProperty<ITransform, int> Depth;
+		ThreadSafeProperty<Vector2> Position;
+		ThreadSafeProperty<float> Angle;
+		ThreadSafeProperty<int> Depth;
 
 		void SynchroniseInterface()
 		{
@@ -130,26 +130,26 @@ namespace FusionEngine
 #undef iface
 		}
 
-		ThreadSafeProperty<IRigidBody, bool> Interpolate;
+		ThreadSafeProperty<bool> Interpolate;
 
-		ThreadSafeProperty<IRigidBody, float, NullWriter<float>> Mass;
-		ThreadSafeProperty<IRigidBody, float, NullWriter<float>> Inertia;
-		ThreadSafeProperty<IRigidBody, Vector2, NullWriter<Vector2>> CenterOfMass;
+		ThreadSafeProperty<float, NullWriter<float>> Mass;
+		ThreadSafeProperty<float, NullWriter<float>> Inertia;
+		ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
 
-		ThreadSafeProperty<IRigidBody, Vector2> Velocity;
-		ThreadSafeProperty<IRigidBody, float> AngularVelocity;
+		ThreadSafeProperty<Vector2> Velocity;
+		ThreadSafeProperty<float> AngularVelocity;
 
-		ThreadSafeProperty<IRigidBody, float> LinearDamping;
-		ThreadSafeProperty<IRigidBody, float> AngularDamping;
+		ThreadSafeProperty<float> LinearDamping;
+		ThreadSafeProperty<float> AngularDamping;
 
-		ThreadSafeProperty<IRigidBody, float> GravityScale;
+		ThreadSafeProperty<float> GravityScale;
 
-		ThreadSafeProperty<IRigidBody, bool> Active;
-		ThreadSafeProperty<IRigidBody, bool> SleepingAllowed;
-		ThreadSafeProperty<IRigidBody, bool, NullWriter<bool>> Awake;
+		ThreadSafeProperty<bool> Active;
+		ThreadSafeProperty<bool> SleepingAllowed;
+		ThreadSafeProperty<bool, NullWriter<bool>> Awake;
 
-		ThreadSafeProperty<IRigidBody, bool> Bullet;
-		ThreadSafeProperty<IRigidBody, bool> FixedRotation;
+		ThreadSafeProperty<bool> Bullet;
+		ThreadSafeProperty<bool> FixedRotation;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -296,13 +296,13 @@ namespace FusionEngine
 #undef iface
 		}
 
-		ThreadSafeProperty<IFixture, bool> Sensor;
-		ThreadSafeProperty<IFixture, float> Density;
-		ThreadSafeProperty<IFixture, float> Friction;
-		ThreadSafeProperty<IFixture, float> Restitution;
-		ThreadSafeProperty<IFixture, b2AABB, NullWriter<b2AABB>> AABB;
+		ThreadSafeProperty<bool> Sensor;
+		ThreadSafeProperty<float> Density;
+		ThreadSafeProperty<float> Friction;
+		ThreadSafeProperty<float> Restitution;
+		ThreadSafeProperty<b2AABB, NullWriter<b2AABB>> AABB;
 
-		//ThreadSafeProperty<IFixture, b2MassData> MassData;
+		//ThreadSafeProperty<b2MassData> MassData;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -375,8 +375,8 @@ namespace FusionEngine
 #undef iface
 		}
 
-		ThreadSafeProperty<ICircleShape, Vector2> Position;
-		ThreadSafeProperty<ICircleShape, float> Radius;
+		ThreadSafeProperty<Vector2> Position;
+		ThreadSafeProperty<float> Radius;
 
 		void SynchroniseInterface()
 		{
@@ -414,7 +414,7 @@ namespace FusionEngine
 #undef iface
 		}
 
-		ThreadSafeProperty<IPolygonShape, float, NullWriter<float>> Radius;
+		ThreadSafeProperty<float, NullWriter<float>> Radius;
 
 		void SynchroniseInterface()
 		{

@@ -149,9 +149,9 @@ namespace FusionEngine
 		//void SetInterpolate(bool value);
 		
 		void SetImagePath(const std::string& value);
-		std::string GetImagePath() const;
+		const std::string &GetImagePath() const;
 		void SetAnimationPath(const std::string& value);
-		std::string GetAnimationPath() const;
+		const std::string &GetAnimationPath() const;
 
 		void SetAlignmentOrigin(CL_Origin origin);
 		CL_Origin GetAlignmentOrigin() const;

@@ -86,7 +86,7 @@ namespace FusionEngine
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
 		// IScript interface
-		std::string GetScriptPath() const;
+		const std::string& GetScriptPath() const;
 		void SetScriptPath(const std::string& path);
 
 		std::string m_Path;

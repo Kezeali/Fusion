@@ -43,8 +43,8 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		ThreadSafeProperty<IRenderCom, Vector2> Offset;
-		ThreadSafeProperty<IRenderCom, int> LocalDepth;
+		ThreadSafeProperty<Vector2> Offset;
+		ThreadSafeProperty<int> LocalDepth;
 		//ThreadSafeProperty<bool> Interpolate;
 
 		void SynchroniseInterface()
@@ -79,19 +79,25 @@ namespace FusionEngine
 		virtual ~ISprite()
 		{}
 
-		ThreadSafeProperty<ISprite, std::string> ImagePath;
-		ThreadSafeProperty<ISprite, std::string> AnimationPath;
+		FSN_COIFACE_CTOR(ISprite,
+			((FSN_GET_SET)(ImagePath))
+			((FSN_GET_SET)(AnimationPath))
+			((FSN_GET_SET)(AlignmentOrigin))
+			((FSN_IS)(AnimationFinished)) )
 
-		ThreadSafeProperty<ISprite, CL_Origin> AlignmentOrigin;
-		ThreadSafeProperty<ISprite, Vector2i> AlignmentOffset;
-		ThreadSafeProperty<ISprite, CL_Origin> RotationOrigin;
-		ThreadSafeProperty<ISprite, Vector2i> RotationOffset;
-		ThreadSafeProperty<ISprite, CL_Colorf> Colour;
-		ThreadSafeProperty<ISprite, float> Alpha;
-		ThreadSafeProperty<ISprite, Vector2> Scale;
-		ThreadSafeProperty<ISprite, float> BaseAngle;
+		ThreadSafeProperty<std::string> ImagePath;
+		ThreadSafeProperty<std::string> AnimationPath;
 
-		ThreadSafeProperty<ISprite, bool, NullWriter<bool>> AnimationFinished;
+		ThreadSafeProperty<CL_Origin> AlignmentOrigin;
+		ThreadSafeProperty<Vector2i> AlignmentOffset;
+		ThreadSafeProperty<CL_Origin> RotationOrigin;
+		ThreadSafeProperty<Vector2i> RotationOffset;
+		ThreadSafeProperty<CL_Colorf> Colour;
+		ThreadSafeProperty<float> Alpha;
+		ThreadSafeProperty<Vector2> Scale;
+		ThreadSafeProperty<float> BaseAngle;
+
+		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
 
 		void SynchroniseInterface()
 		{
@@ -133,9 +139,9 @@ namespace FusionEngine
 
 	private:
 		virtual void SetImagePath(const std::string& value) = 0;
-		virtual std::string GetImagePath() const = 0;
+		virtual const std::string& GetImagePath() const = 0;
 		virtual void SetAnimationPath(const std::string& value) = 0;
-		virtual std::string GetAnimationPath() const = 0;
+		virtual const std::string& GetAnimationPath() const = 0;
 
 		virtual void SetAlignmentOrigin(CL_Origin origin) = 0;
 		virtual CL_Origin GetAlignmentOrigin() const = 0;

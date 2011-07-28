@@ -370,7 +370,7 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::ReloadImage);
 	}
 
-	std::string CLSprite::GetImagePath() const
+	const std::string &CLSprite::GetImagePath() const
 	{
 		return m_ImagePath;
 	}
@@ -383,7 +383,7 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::ReloadAnimation);
 	}
 
-	std::string CLSprite::GetAnimationPath() const
+	const std::string &CLSprite::GetAnimationPath() const
 	{
 		return m_AnimationPath;
 	}

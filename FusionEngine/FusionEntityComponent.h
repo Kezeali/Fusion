@@ -46,17 +46,6 @@
 
 #include <tbb/enumerable_thread_specific.h>
 
-#define FSN_TS_PROPERTY_GETSET(type, name, get, set) \
-	ThreadSafeProperty<type> m_##name;\
-	type Get##name() const { return m_##name.Get(); }\
-	void Set##name(const type & value) { m_##name.Set(value); }\
-	void Init##name() { m_##name.Initialise([this](type & value) { get(value); }, [this](const type & value) { set(value); }); }
-
-#define FSN_TS_PROPERTY_GET(type, name, get) \
-	ThreadSafeProperty<type> m_##name;\
-	type Get##name() const { return m_##name.Get(); }\
-	void Init##name() { m_##name.Initialise([this](T& value) { get(value); }); }
-
 #define FSN_SYNCH_PROPERTY(name) \
 	m_##name.Synchronise();
 
@@ -66,6 +55,17 @@
 	public:\
 	static std::string GetTypeName() { return #interface_name; }\
 	virtual ~interface_name() {}
+
+#define FSN_COIFACE_CTOR(iface_name, properties) \
+	iface_name()\
+	{\
+	typedef iface_name iface;\
+	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
+	}
+
+#define FSN_COIFACE(interface_name, properties)\
+	FSN_BEGIN_COIFACE(interface_name)\
+	FSN_COIFACE_CTOR(interface_name, properties)
 
 namespace FusionEngine
 {

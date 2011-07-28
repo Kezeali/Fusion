@@ -89,7 +89,7 @@ namespace FusionEngine
 			m_ReloadScript = true;
 	}
 
-	std::string ASScript::GetScriptPath() const
+	const std::string &ASScript::GetScriptPath() const
 	{
 		return m_Path;
 	}
