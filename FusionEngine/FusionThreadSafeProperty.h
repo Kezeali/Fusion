@@ -58,19 +58,41 @@
 #include "FusionScriptedSlots.h"
 
 #define FSN_SYNCH_PROP_C(prop, get, set) \
-	if ((prop.m_Changed && prop.Synchronise( get() )) || prop.Synchronise())\
+	if ((prop.m_Changed && prop.Synchronise( get() )) || prop.SynchroniseExternalOnly())\
 	set(prop.Get());
 
 #define FSN_SYNCH_PROP_BOOL(prop) FSN_SYNCH_PROP_C(prop, Is ## prop, Set ## prop)
 #define FSN_SYNCH_PROP(prop) FSN_SYNCH_PROP_C(prop, Get ## prop, Set ## prop)
 
+#define FSN_PROPA(type, prop) \
+	FSN_PROP_X(ThreadSafeProperty<type>, prop)
+
 //! Prop
-#define FSN_PROP(type, prop) \
-	const type &get_ ## prop() const { return prop.Get(); }
+#define FSN_PROP_X(propType, member) \
+	std::pair<std::string, propType> &get_ ## member() const { return std::make_pair(#member, member); }
+
+#define FSN_PROP(type, prop) ;
+	//ThreadSafeProperty<type> prop;\
+	//std::pair<std::string, ThreadSafeProperty<type>*> &get_ ## prop() const { return std::make_pair(#prop, &prop); }
 
 //! Readonly prop
 #define FSN_PROP_R(type, prop) \
 	ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop() { return prop; }
+
+#define FSN_INIT_PROP_BOOL(prop) \
+	prop.SetCallbacks(this, &iface::Is ## prop, &iface::Set ## prop)
+
+#define FSN_INIT_PROP(prop) \
+	prop.SetCallbacks(this, &iface::Get ## prop, &iface::Set ## prop)
+
+#define FSN_INIT_PROP_R(prop) \
+	prop.SetCallbacks(this, &iface::Get ## prop)
+
+#define FSN_INIT_PROP_BOOL_R(prop) \
+	prop.SetCallbacks(this, &iface::Is ## prop)
+
+#define FSN_INIT_PROP_W(prop) \
+	prop.SetCallbacks(this, &iface::Set ## prop)
 
 namespace FusionEngine
 {
@@ -78,6 +100,7 @@ namespace FusionEngine
 	{
 	public:
 		virtual void FireSignal() = 0;
+		virtual void Synchronise() = 0;
 	};
 
 	template <typename T>
@@ -171,25 +194,79 @@ namespace FusionEngine
 	//	r = engine->RegisterObjectMethod("PropConnection", "void disconnect()", asMETHOD(boost::signals2::connection, disconnect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 	//}
 
+#ifdef FSN_TSP_SIGNALS2
+		typedef boost::signals2::connection ThreadSafePropertyConnection;
+#else
+		typedef boost::signals::connection ThreadSafePropertyConnection;
+#endif
+
 	//! Threadsafe property wrapper
-	template <class T, class Writer = DefaultStaticWriter<T>>
+	template <class C, class T, class Writer = DefaultStaticWriter<T>>
 	class ThreadSafeProperty : public IComponentProperty
 	{
 	private:
 		ThreadSafeProperty(const ThreadSafeProperty& other)
 		{}
-	public:
-#ifdef FSN_TSP_SIGNALS2
-		typedef boost::signals2::connection Connection;
-#else
-		typedef boost::signals::connection Connection;
 
+	public:
+#ifndef FSN_TSP_SIGNALS2
 		tbb::mutex m_Mutex;
 #endif
 
 		ThreadSafeProperty()
-			: m_Changed(true)
+			: m_Changed(true),
+			m_Object(nullptr),
+			m_ObjectAsComponent(nullptr)
 		{}
+
+		typedef typename std::conditional<std::is_fundamental<T>::value, typename T, const typename T &>::type value_type_for_set;
+		typedef typename std::conditional<std::is_fundamental<T>::value || std::is_same<T, Vector2>::value, typename T, const typename T &>::type value_type_for_get;
+
+		typedef void (C::*set_fn_t)(value_type_for_set);
+		typedef value_type_for_get (C::*get_fn_t)(void) const;
+
+		IComponent* m_ObjectAsComponent;
+		C* m_Object;
+		set_fn_t m_Set;
+		get_fn_t m_Get;
+
+		ThreadSafeProperty(/*const std::string &name, */get_fn_t get_fn, set_fn_t set_fn)
+			: m_Changed(true),
+			m_Get(get_fn),
+			m_Set(set_fn)
+		{
+		}
+
+		ThreadSafeProperty(/*const std::string &name, */get_fn_t get_fn)
+			: m_Changed(true),
+			m_Get(get_fn)
+		{
+		}
+
+		ThreadSafeProperty(/*const std::string &name, */set_fn_t set_fn)
+			: m_Changed(true)
+			m_Set(set_fn)
+		{
+		}
+
+		void SetCallbacks(C* obj, get_fn_t get_fn, set_fn_t set_fn)
+		{
+			m_Object = obj;
+			m_ObjectAsComponent = nullptr;
+
+			m_Get = get_fn;
+			m_Set = set_fn;
+		}
+
+		void SetCallbacks(C* obj, get_fn_t get_fn)
+		{
+			SetCallbacks(obj, get_fn, nullptr);
+		}
+
+		void SetCallbacks(C* obj, set_fn_t set_fn)
+		{
+			SetCallbacks(obj, nullptr, set_fn);
+		}
 
 		explicit ThreadSafeProperty(const T& value)
 			: m_Changed(true),
@@ -201,20 +278,27 @@ namespace FusionEngine
 			m_Connection.disconnect();
 		}
 		
-		ThreadSafeProperty<T, Writer>& operator= (const ThreadSafeProperty<T, Writer>& copy)
+		ThreadSafeProperty& operator= (const ThreadSafeProperty& copy)
 		{
-			m_Value = copy.m_Value;
+			Set(copy.m_Value);
+			return *this;
+		}
+		
+		template <class Co>
+		ThreadSafeProperty& operator= (const ThreadSafeProperty<Co, T, Writer>& copy)
+		{
+			Set(copy.m_Value);
 			return *this;
 		}
 
-		ThreadSafeProperty<T, Writer>& operator= (const T& value)
+		ThreadSafeProperty& operator= (const T& value)
 		{
-			m_Value = value;
+			Set(value);
 			return *this;
 		}
 
 		//! Connect an observer to this property
-		Connection Connect(const std::function<void (const T&)>& callback)
+		ThreadSafePropertyConnection Connect(const std::function<void (const T&)>& callback)
 		{
 #ifndef FSN_TSP_SIGNALS2
 			tbb::mutex::scoped_lock lock(m_Mutex);
@@ -223,7 +307,8 @@ namespace FusionEngine
 		}
 
 		//! Bind this property's value to another property
-		void BindProperty(ThreadSafeProperty<T, Writer>& prop)
+		template <class Co>
+		void BindProperty(ThreadSafeProperty<Co, T, Writer>& other)
 		{
 #ifndef FSN_TSP_SIGNALS2
 			tbb::mutex::scoped_lock lock(m_Mutex);
@@ -231,7 +316,7 @@ namespace FusionEngine
 			//using namespace std::placeholders;
 			if (m_Connection.connected())
 				m_Connection.disconnect();
-			m_Connection = prop.m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
+			m_Connection = other.m_Signal.connect(boost::bind(&ThreadSafeProperty<C, T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
 		}
 
 		//! Synchronise parallel (thread) writes
@@ -250,7 +335,7 @@ namespace FusionEngine
 			return false;
 		}
 
-		bool Synchronise(void)
+		bool SynchroniseExternalOnly()
 		{
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
@@ -261,33 +346,22 @@ namespace FusionEngine
 				return false;
 		}
 
-		//template <class C>
-		//void Synchronise(const T& sim_value, C set_obj, void (C::*set_fn)(const T&))
-		//{
-		//	if (m_Writer.DumpWrittenValue(m_Value))
-		//	{
-		//		m_ChangedSinceSerialised = m_Changed = true;
-		//		(set_obj->*set_fn)(m_Value);
-		//	}
-		//	else if (m_Changed)
-		//	{
-		//		m_Value = sim_value;
-		//	}
-		//}
+		void Synchronise()
+		{
+			FSN_ASSERT(m_Object);
 
-		//template <class C>
-		//void Synchronise(const T& sim_value, C set_obj, void (C::*set_fn)(T))
-		//{
-		//	if (m_Writer.DumpWrittenValue(m_Value))
-		//	{
-		//		m_ChangedSinceSerialised = m_Changed = true;
-		//		(set_obj->*set_fn)(m_Value);
-		//	}
-		//	else if (m_Changed)
-		//	{
-		//		m_Value = sim_value;
-		//	}
-		//}
+			if (m_Writer.DumpWrittenValue(m_Value))
+			{
+				m_Changed = true;
+				FSN_ASSERT(m_Set);
+				(m_Object->*m_Set)(m_Value);
+			}
+			else if (m_Changed)
+			{
+				FSN_ASSERT(m_Get);
+				m_Value = (m_Object->*m_Get)();
+			}
+		}
 
 		//! Fire signal
 		void FireSignal()
@@ -302,26 +376,46 @@ namespace FusionEngine
 		//! Mark changed
 		void MarkChanged()
 		{
+			if (m_ObjectAsComponent == nullptr && m_Object != nullptr)
+			{
+				m_ObjectAsComponent = dynamic_cast<IComponent*>(m_Object);
+				FSN_ASSERT(m_ObjectAsComponent);
+				m_ObjectAsComponent->AddProperty(this);
+			}
+			if (m_ObjectAsComponent != nullptr)
+				m_ObjectAsComponent->OnPropertyChanged(this);
 			m_Changed = true;
 		}
 
 		const T& Get() const { return m_Value; }
-		void Set(const T& value) { m_Writer.Write(value); }
+		void Set(const T& value)
+		{
+			m_Writer.Write(value);
+
+			if (m_ObjectAsComponent == nullptr && m_Object != nullptr)
+			{
+				m_ObjectAsComponent = dynamic_cast<IComponent*>(m_Object);
+				FSN_ASSERT(m_ObjectAsComponent);
+				m_ObjectAsComponent->AddProperty(this);
+			}
+			if (m_ObjectAsComponent != nullptr)
+				m_ObjectAsComponent->OnPropertyChanged(this);
+		}
 
 	private:
 		static bool registered; // Gets to true when this type has been registered as a script type
 	public:
-		static void RegisterProp(asIScriptEngine* engine, const std::string& type)
+		static void RegisterProp(asIScriptEngine* engine, const std::string& ct, const std::string& type)
 		{
 			if (registered)
 				return;
 			registered = true;
 
-			std::string cname = "Property_" + type + "_";
+			std::string cname = "Property_" + ct + type + "_";
 			if (std::is_same<Writer, NullWriter<T>>::value)
-				cname = "ReadonlyProperty_" + type + "_";
+				cname = "ReadonlyProperty_" + ct + type + "_";
 
-			typedef ThreadSafeProperty<T, Writer> this_type;
+			typedef ThreadSafeProperty<C, T, Writer> this_type;
 			typedef Scripting::Registation::ValueTypeHelper<typename this_type> helper_type;
 
 			int r;
@@ -375,7 +469,7 @@ namespace FusionEngine
 			}
 
 			r = engine->RegisterObjectMethod(cname.c_str(), "SignalConnection @connect(const string &in)", asMETHOD(this_type, connect), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod(cname.c_str(), ("void bindProperty(" + cname + " @)").c_str(), asMETHOD(this_type, BindProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod(cname.c_str(), ("void bindProperty(" + cname + " @)").c_str(), asMETHOD(this_type, BindProperty<C>), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		}
 
 	public:
@@ -413,7 +507,8 @@ namespace FusionEngine
 			return wrapper;
 		};
 
-		void bindProperty(ThreadSafeProperty<T, Writer>* prop)
+		template <class Co>
+		void bindProperty(ThreadSafeProperty<Co, T, Writer>* other)
 		{
 #ifndef FSN_TSP_SIGNALS2
 			tbb::mutex::scoped_lock lock(m_Mutex);
@@ -421,7 +516,7 @@ namespace FusionEngine
 			//using namespace std::placeholders;
 			if (m_Connection.connected())
 				m_Connection.disconnect();
-			m_Connection = prop->m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
+			m_Connection = prop->m_Signal.connect(boost::bind(&ThreadSafeProperty<C, T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
 		}
 
 	public:
@@ -430,7 +525,7 @@ namespace FusionEngine
 #else
 		boost::signal<void (const T&)> m_Signal;
 #endif
-		Connection m_Connection; // Properties can bind directly to other properties
+		ThreadSafePropertyConnection m_Connection; // Properties can bind directly to other properties
 
 		bool m_Changed;
 		T m_Value;
@@ -438,8 +533,8 @@ namespace FusionEngine
 		Writer m_Writer;
 	};
 
-	template <class T, class Writer>
-	bool ThreadSafeProperty<T, Writer>::registered = false;
+	template <class C, class T, class Writer>
+	bool ThreadSafeProperty<C, T, Writer>::registered = false;
 
 }
 

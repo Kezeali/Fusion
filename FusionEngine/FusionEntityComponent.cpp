@@ -34,4 +34,15 @@
 namespace FusionEngine
 {
 
+	void IComponent::AddProperty(IComponentProperty* prop)
+	{
+		m_Properties.push_back(prop);
+	}
+
+	void IComponent::OnPropertyChanged(IComponentProperty* prop)
+	{
+		FSN_ASSERT(m_ChangedProperties);
+		m_ChangedProperties->push(prop);
+	}
+
 }

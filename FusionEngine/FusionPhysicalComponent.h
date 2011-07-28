@@ -53,13 +53,19 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(ITransform)
 	public:
-		ThreadSafeProperty<Vector2> Position;
-		ThreadSafeProperty<float> Angle;
-		ThreadSafeProperty<int> Depth;
-		
-		FSN_PROP(Vector2, Position);
-		FSN_PROP(float, Angle);
-		FSN_PROP(int, Depth);
+		ITransform()
+			: Position(),
+			Angle(),
+			Depth()
+		{
+			Position.SetCallbacks(this, &ITransform::GetPosition, &ITransform::SetPosition);
+			Angle.SetCallbacks(this, &ITransform::GetAngle, &ITransform::SetAngle);
+			Depth.SetCallbacks(this, &ITransform::GetDepth, &ITransform::SetDepth);
+		}
+
+		ThreadSafeProperty<ITransform, Vector2> Position;
+		ThreadSafeProperty<ITransform, float> Angle;
+		ThreadSafeProperty<ITransform, int> Depth;
 
 		void SynchroniseInterface()
 		{
@@ -99,45 +105,51 @@ namespace FusionEngine
 		virtual ~IRigidBody()
 		{}
 
-		ThreadSafeProperty<bool> Interpolate;
+		IRigidBody()
+		{
+#define iface IRigidBody
+			FSN_INIT_PROP(Interpolate);
+			FSN_INIT_PROP_R(Mass);
+			FSN_INIT_PROP_R(Inertia);
+			FSN_INIT_PROP_R(CenterOfMass);
 
-		ThreadSafeProperty<float, NullWriter<float>> Mass;
-		ThreadSafeProperty<float, NullWriter<float>> Inertia;
-		ThreadSafeProperty<Vector2, NullWriter<Vector2>> CenterOfMass;
+			FSN_INIT_PROP(Velocity);
+			FSN_INIT_PROP(AngularVelocity);
 
-		ThreadSafeProperty<Vector2> Velocity;
-		ThreadSafeProperty<float> AngularVelocity;
+			FSN_INIT_PROP(LinearDamping);
+			FSN_INIT_PROP(AngularDamping);
 
-		ThreadSafeProperty<float> LinearDamping;
-		ThreadSafeProperty<float> AngularDamping;
+			FSN_INIT_PROP(GravityScale);
 
-		ThreadSafeProperty<float> GravityScale;
+			FSN_INIT_PROP_BOOL(Active);
+			FSN_INIT_PROP_BOOL(SleepingAllowed);
+			FSN_INIT_PROP_BOOL_R(Awake);
 
-		ThreadSafeProperty<bool> Active;
-		ThreadSafeProperty<bool> SleepingAllowed;
-		ThreadSafeProperty<bool, NullWriter<bool>> Awake;
+			FSN_INIT_PROP_BOOL(Bullet);
+			FSN_INIT_PROP_BOOL(FixedRotation);
+#undef iface
+		}
 
-		ThreadSafeProperty<bool> Bullet;
-		ThreadSafeProperty<bool> FixedRotation;
+		ThreadSafeProperty<IRigidBody, bool> Interpolate;
 
-		FSN_PROP_R(float, Mass);
-		FSN_PROP_R(float, Inertia);
-		FSN_PROP_R(Vector2, CenterOfMass);
+		ThreadSafeProperty<IRigidBody, float, NullWriter<float>> Mass;
+		ThreadSafeProperty<IRigidBody, float, NullWriter<float>> Inertia;
+		ThreadSafeProperty<IRigidBody, Vector2, NullWriter<Vector2>> CenterOfMass;
 
-		FSN_PROP(Vector2, Velocity);
-		FSN_PROP(float, AngularVelocity);
+		ThreadSafeProperty<IRigidBody, Vector2> Velocity;
+		ThreadSafeProperty<IRigidBody, float> AngularVelocity;
 
-		FSN_PROP(float, LinearDamping);
-		FSN_PROP(float, AngularDamping);
+		ThreadSafeProperty<IRigidBody, float> LinearDamping;
+		ThreadSafeProperty<IRigidBody, float> AngularDamping;
 
-		FSN_PROP(float, GravityScale);
+		ThreadSafeProperty<IRigidBody, float> GravityScale;
 
-		FSN_PROP(bool, Active);
-		FSN_PROP(bool, SleepingAllowed);
-		FSN_PROP_R(bool, Awake);
+		ThreadSafeProperty<IRigidBody, bool> Active;
+		ThreadSafeProperty<IRigidBody, bool> SleepingAllowed;
+		ThreadSafeProperty<IRigidBody, bool, NullWriter<bool>> Awake;
 
-		FSN_PROP(bool, Bullet);
-		FSN_PROP(bool, FixedRotation);
+		ThreadSafeProperty<IRigidBody, bool> Bullet;
+		ThreadSafeProperty<IRigidBody, bool> FixedRotation;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -273,13 +285,24 @@ namespace FusionEngine
 	//! Physical fixture interface
 	FSN_BEGIN_COIFACE(IFixture)
 	public:
-		ThreadSafeProperty<bool> Sensor;
-		ThreadSafeProperty<float> Density;
-		ThreadSafeProperty<float> Friction;
-		ThreadSafeProperty<float> Restitution;
-		ThreadSafeProperty<b2AABB> AABB;
+		IFixture()
+		{
+#define iface IFixture
+			FSN_INIT_PROP_BOOL(Sensor);
+			FSN_INIT_PROP(Density);
+			FSN_INIT_PROP(Friction);
+			FSN_INIT_PROP(Restitution);
+			FSN_INIT_PROP_R(AABB);
+#undef iface
+		}
 
-		//ThreadSafeProperty<b2MassData> MassData;
+		ThreadSafeProperty<IFixture, bool> Sensor;
+		ThreadSafeProperty<IFixture, float> Density;
+		ThreadSafeProperty<IFixture, float> Friction;
+		ThreadSafeProperty<IFixture, float> Restitution;
+		ThreadSafeProperty<IFixture, b2AABB, NullWriter<b2AABB>> AABB;
+
+		//ThreadSafeProperty<IFixture, b2MassData> MassData;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -344,8 +367,16 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "ICircleShape"; }
 		virtual ~ICircleShape() {}
 
-		ThreadSafeProperty<Vector2> Position;
-		ThreadSafeProperty<float> Radius;
+		ICircleShape()
+		{
+#define iface ICircleShape
+			FSN_INIT_PROP(Position);
+			FSN_INIT_PROP(Radius);
+#undef iface
+		}
+
+		ThreadSafeProperty<ICircleShape, Vector2> Position;
+		ThreadSafeProperty<ICircleShape, float> Radius;
 
 		void SynchroniseInterface()
 		{
@@ -376,7 +407,14 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IPolygonShape"; }
 		virtual ~IPolygonShape() {}
 
-		ThreadSafeProperty<float, NullWriter<float>> Radius;
+		IPolygonShape()
+		{
+#define iface IPolygonShape
+			FSN_INIT_PROP_R(Radius);
+#undef iface
+		}
+
+		ThreadSafeProperty<IPolygonShape, float, NullWriter<float>> Radius;
 
 		void SynchroniseInterface()
 		{

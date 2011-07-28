@@ -205,7 +205,7 @@ namespace FusionEngine
 
 		CL_Font m_DebugFont;
 
-		ThreadSafeProperty<Vector2>::Connection m_PositionChangeConnection;
+		ThreadSafePropertyConnection m_PositionChangeConnection;
 		Vector2 m_NewPosition; // Set by SetPosition
 
 		Vector2 m_Position; // NewPosition is copied here when Update is called
@@ -214,14 +214,14 @@ namespace FusionEngine
 
 		Vector2 m_Offset;
 
-		ThreadSafeProperty<float>::Connection m_AngleChangeConnection;
+		ThreadSafePropertyConnection m_AngleChangeConnection;
 		float m_NewAngle;
 
 		float m_Angle;
 		float m_InterpAngle;
 		float m_LastAngle;
 
-		ThreadSafeProperty<int>::Connection m_DepthChangeConnection;
+		ThreadSafePropertyConnection m_DepthChangeConnection;
 
 		std::string m_ImagePath;
 		bool m_ReloadImage;

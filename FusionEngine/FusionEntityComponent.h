@@ -69,12 +69,15 @@
 
 namespace FusionEngine
 {
+
+	class IComponentProperty;
 	
 	class IComponent : public RefCounted
 	{
 	public:
 		//! Cotr
 		IComponent()
+			: m_ChangedProperties(nullptr)
 		{
 		}
 		//! Destructor
@@ -97,6 +100,11 @@ namespace FusionEngine
 
 		virtual void InitInterfaceList() = 0;
 
+		void AddProperty(IComponentProperty* prop);
+		void OnPropertyChanged(IComponentProperty* prop);
+
+		void SetPropChangedQueue(tbb::concurrent_queue<IComponentProperty*>* q) { m_ChangedProperties = q; }
+
 		virtual void OnSpawn() {}
 		virtual void OnStreamIn() {}
 		virtual void OnStreamOut() {}
@@ -118,6 +126,9 @@ namespace FusionEngine
 	private:
 		Entity* m_Parent;
 		std::string m_Identifier; // How this component is identified within the entity
+
+		std::vector<IComponentProperty*> m_Properties;
+		tbb::concurrent_queue<IComponentProperty*> *m_ChangedProperties;
 
 	};
 

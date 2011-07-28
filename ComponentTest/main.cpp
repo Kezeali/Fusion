@@ -62,7 +62,7 @@
 //	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ &get_" #prop "()", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
 
 #define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
-	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
+	ThreadSafeProperty<iface, type>::RegisterProp(engine, scriptType);\
 	engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const " scriptType " &get_" #prop "() const", asMETHOD(iface, get_ ## prop ), asCALL_THISCALL)
 
 namespace FusionEngine
@@ -79,16 +79,16 @@ namespace FusionEngine
 }
 
 #define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
-	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ @get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_ @)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	struct iface##_##prop { static ThreadSafeProperty<iface, type> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	ThreadSafeProperty<iface, type>::RegisterProp(engine, #iface, scriptType);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" #iface scriptType "_ @get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" #iface scriptType "_ @)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
 	FSN_ASSERT(r >= 0);}
 
 #define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
-	ThreadSafeProperty<type, NullWriter<type>>::RegisterProp(engine, scriptType);\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" scriptType "_ &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	struct iface##_##prop { static ThreadSafeProperty<iface, type, NullWriter<type>> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	ThreadSafeProperty<iface, type, NullWriter<type>>::RegisterProp(engine, #iface, scriptType);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" #iface scriptType "_ &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
 	FSN_ASSERT(r >= 0);}
 
 //#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
@@ -111,8 +111,9 @@ namespace FusionEngine
 	void ITransform::RegisterScriptInterface(asIScriptEngine* engine)
 	{
 		FSN_REGISTER_PROP_ACCESSOR(ITransform, Vector2, "Vector", Position);
-		FSN_REGISTER_PROP_ACCESSOR(ITransform, float, "float", Angle);
-
+		FSN_REGISTER_PROP_ACCESSOR(ITransform, float, "float", Angle);		
+		FSN_REGISTER_PROP_ACCESSOR(ITransform, int, "int", Depth);
+		
 		//struct iface_Angle {
 		//	static ThreadSafeProperty<float> &get_Angle(ITransform &obj) { return obj.Angle; }
 		//};
@@ -129,8 +130,6 @@ namespace FusionEngine
 		//};
 		//ThreadSafeProperty<float>::RegisterProp(engine, "float");
 		//engine->RegisterObjectMethod(ITransform::GetTypeName().c_str(), "const float &get_Angle()", asFUNCTION(iface_Angle::get_Angle), asCALL_CDECL_OBJLAST);
-
-		FSN_REGISTER_PROP_ACCESSOR(ITransform, int, "int", Depth);
 	}
 
 	void IRigidBody::RegisterScriptInterface(asIScriptEngine* engine)
@@ -330,6 +329,8 @@ public:
 
 				std::vector<std::shared_ptr<Entity>> entities;
 
+				tbb::concurrent_queue<IComponentProperty*> propChangedQueue;
+
 				float xtent = 720;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
 #ifdef _DEBUG
@@ -355,6 +356,7 @@ public:
 					if (i < 300)
 					{
 						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
+						b2CircleFixture->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(b2CircleFixture);
 						{
 							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
@@ -369,21 +371,27 @@ public:
 							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f, nullptr, nullptr);
 						else
 							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
+
+						b2BodyCom->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(b2BodyCom);
 					}
 					else
 					{
 						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f, nullptr, nullptr);
 						entity->AddComponent(transformCom);
+
+						transformCom->SetPropChangedQueue(&propChangedQueue);
 					}
 
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
+					clSprite->SetPropChangedQueue(&propChangedQueue);
 					entity->AddComponent(clSprite);
 
 					std::shared_ptr<IComponent> asScript;
 					if (i < 200)
 					{
 						asScript = asWorld->InstantiateComponent("ASScript");
+						asScript->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(asScript, "script_a");
 					}
 
@@ -508,6 +516,54 @@ public:
 							body->AngularDamping.Set(0.9f);
 						}
 					}
+
+					bool w = ev.id == CL_KEY_W;
+					bool s = ev.id == CL_KEY_S;
+					bool a = ev.id == CL_KEY_A;
+					bool d = ev.id == CL_KEY_D;
+					if (w || s || a || d)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							body->Velocity.Set(Vector2::zero());
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
+				});
+
+				auto keydownhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_down().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
+				{
+					bool w = ev.id == CL_KEY_W;
+					bool s = ev.id == CL_KEY_S;
+					bool a = ev.id == CL_KEY_A;
+					bool d = ev.id == CL_KEY_D;
+					if (w || s || a || d)
+					{
+						auto entity = entities[1];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							const float speed = 0.8f;
+							Vector2 vel;
+							if (w)
+								vel.y -= speed;
+							if (s)
+								vel.y += speed;
+							if (a)
+								vel.x -= speed;
+							if (d)
+								vel.x += speed;
+
+							body->Velocity.Set(vel);
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
 				});
 
 				unsigned int lastframe = CL_System::get_time();
@@ -604,46 +660,6 @@ public:
 						}
 					}
 
-					bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
-					bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
-					bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
-					bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
-					if (w || s || a || d)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-							const float speed = 0.8f;
-							Vector2 vel;
-							if (w)
-								vel.y -= speed;
-							if (s)
-								vel.y += speed;
-							if (a)
-								vel.x -= speed;
-							if (d)
-								vel.x += speed;
-
-							body->Velocity.Set(vel);
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
-					else
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-							body->Velocity.Set(Vector2::zero());
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
-
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
 					{
 						const float invmax = 1.0f / RAND_MAX;
@@ -673,14 +689,29 @@ public:
 					else if (!eye)
 						pressed[CL_KEY_I] = false;
 
-					for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL))
 					{
-						auto& entity = *it;
-						entity->SynchroniseParallelEdits();
+						//const size_t numents = (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL)) ? entities.size() : 300u;
+						for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+							//for (size_t i = 0; i < numents; ++i)
+						{
+							//auto& entity = entities[i];
+							auto& entity = *it;
+							entity->SynchroniseParallelEdits();
 
-						const auto& components = entity->GetComponents();
-						for (auto it = components.begin(), end = components.end(); it != end; ++it)
-							(*it)->FireSignals();
+							const auto& components = entity->GetComponents();
+							for (auto it = components.begin(), end = components.end(); it != end; ++it)
+								(*it)->FireSignals();
+						}
+					}
+					else
+					{
+						IComponentProperty *changed;
+						while (propChangedQueue.try_pop(changed))
+						{
+							changed->Synchronise();
+							changed->FireSignal();
+						}
 					}
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))

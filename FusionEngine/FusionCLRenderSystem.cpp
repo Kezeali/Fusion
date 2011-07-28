@@ -245,10 +245,17 @@ namespace FusionEngine
 		str.str("");
 		str << DeltaTime::GetDeltaTime();
 		debug_text += "\nDT: " + str.str();
-		str.str("");
-		str << DeltaTime::GetInterpolationAlpha();
-		debug_text += "\nInterp: " + str.str();
 		m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
+
+		CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
+		CL_Rectf fill = bar;
+		fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
+		CL_Colorf c1 = CL_Colorf::aqua;
+		CL_Colorf c0 = c1;
+		c0.set_alpha(0.25f);
+		c1.set_alpha(DeltaTime::GetInterpolationAlpha());
+		CL_Draw::box(gc, bar, CL_Colorf::silver);
+		CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
 
 		//if (!m_PhysDebugDraw)
 		//{

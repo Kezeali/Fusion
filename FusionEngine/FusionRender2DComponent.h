@@ -43,15 +43,15 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(IRenderCom)
 	public:
-		ThreadSafeProperty<Vector2> Offset;
-		ThreadSafeProperty<int> LocalDepth;
+		ThreadSafeProperty<IRenderCom, Vector2> Offset;
+		ThreadSafeProperty<IRenderCom, int> LocalDepth;
 		//ThreadSafeProperty<bool> Interpolate;
 
 		void SynchroniseInterface()
 		{
-			if (Offset.Synchronise()) // writeonly
+			if (Offset.SynchroniseExternalOnly()) // writeonly
 				SetOffset(Offset.Get());
-			if (LocalDepth.Synchronise())
+			if (LocalDepth.SynchroniseExternalOnly())
 				SetLocalDepth(LocalDepth.Get());
 			//if (Interpolate.Synchronise())
 			//	SetInterpolate(Interpolate.Get());
@@ -79,27 +79,27 @@ namespace FusionEngine
 		virtual ~ISprite()
 		{}
 
-		ThreadSafeProperty<std::string> ImagePath;
-		ThreadSafeProperty<std::string> AnimationPath;
+		ThreadSafeProperty<ISprite, std::string> ImagePath;
+		ThreadSafeProperty<ISprite, std::string> AnimationPath;
 
-		ThreadSafeProperty<CL_Origin> AlignmentOrigin;
-		ThreadSafeProperty<Vector2i> AlignmentOffset;
-		ThreadSafeProperty<CL_Origin> RotationOrigin;
-		ThreadSafeProperty<Vector2i> RotationOffset;
-		ThreadSafeProperty<CL_Colorf> Colour;
-		ThreadSafeProperty<float> Alpha;
-		ThreadSafeProperty<Vector2> Scale;
-		ThreadSafeProperty<float> BaseAngle;
+		ThreadSafeProperty<ISprite, CL_Origin> AlignmentOrigin;
+		ThreadSafeProperty<ISprite, Vector2i> AlignmentOffset;
+		ThreadSafeProperty<ISprite, CL_Origin> RotationOrigin;
+		ThreadSafeProperty<ISprite, Vector2i> RotationOffset;
+		ThreadSafeProperty<ISprite, CL_Colorf> Colour;
+		ThreadSafeProperty<ISprite, float> Alpha;
+		ThreadSafeProperty<ISprite, Vector2> Scale;
+		ThreadSafeProperty<ISprite, float> BaseAngle;
 
-		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
+		ThreadSafeProperty<ISprite, bool, NullWriter<bool>> AnimationFinished;
 
 		void SynchroniseInterface()
 		{
 			IRenderCom::SynchroniseInterface();
 
-			if ((ImagePath.m_Changed && ImagePath.Synchronise(GetImagePath())) || ImagePath.Synchronise())
+			if ((ImagePath.m_Changed && ImagePath.Synchronise(GetImagePath())) || ImagePath.SynchroniseExternalOnly())
 				SetImagePath(ImagePath.Get());
-			if ((ImagePath.m_Changed && AnimationPath.Synchronise(GetAnimationPath())) || ImagePath.Synchronise())
+			if ((ImagePath.m_Changed && AnimationPath.Synchronise(GetAnimationPath())) || ImagePath.SynchroniseExternalOnly())
 				SetAnimationPath(AnimationPath.Get());
 
 			FSN_SYNCH_PROP(AlignmentOrigin);

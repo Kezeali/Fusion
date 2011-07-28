@@ -342,6 +342,7 @@ namespace FusionEngine
 
 		Box2DCircleFixture();
 		Box2DCircleFixture(RakNet::BitStream& stream);
+		virtual ~Box2DCircleFixture() {}
 
 		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
