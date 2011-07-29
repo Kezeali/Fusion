@@ -57,7 +57,7 @@
 	virtual ~interface_name() {}
 
 #define FSN_COIFACE_CTOR(iface_name, properties) \
-	iface_name()\
+	void InitProperties()\
 	{\
 	typedef iface_name iface;\
 	BOOST_PP_SEQ_FOR_EACH(FSN_INIT_PROPS, _, properties) \
@@ -94,7 +94,8 @@ namespace FusionEngine
 		const std::set<std::string>& GetInterfaces()
 		{
 			//FSN_ASSERT_MSG(!m_Interfaces.empty(), "IComponent implementations must populate the iterface list");
-			InitInterfaceList();
+			if (m_Interfaces.empty())
+				InitInterfaceList();
 			return m_Interfaces;
 		}
 
@@ -102,6 +103,8 @@ namespace FusionEngine
 
 		void AddProperty(IComponentProperty* prop);
 		void OnPropertyChanged(IComponentProperty* prop);
+
+		void SynchronisePropertiesNow();
 
 		void SetPropChangedQueue(tbb::concurrent_queue<IComponentProperty*>* q) { m_ChangedProperties = q; }
 
@@ -112,8 +115,8 @@ namespace FusionEngine
 		virtual void OnSiblingAdded(const std::shared_ptr<IComponent>& com) {}
 		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
 
-		virtual void SynchroniseParallelEdits() = 0;
-		virtual void FireSignals() = 0;
+		virtual void SynchroniseParallelEdits() {}
+		virtual void FireSignals() {}
 
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
@@ -132,7 +135,7 @@ namespace FusionEngine
 
 	};
 
-#define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName());
+#define FSN_ADD_INTERFACE(r, data, elem) m_Interfaces.insert(elem::GetTypeName()); elem::InitProperties();
 #define FSN_LIST_INTERFACES(interfaces) void InitInterfaceList() { BOOST_PP_SEQ_FOR_EACH(FSN_ADD_INTERFACE, _, interfaces) }
 
 //	class InsertInterfaceName

@@ -82,7 +82,17 @@ namespace FusionEngine
 		FSN_COIFACE_CTOR(ISprite,
 			((FSN_GET_SET)(ImagePath))
 			((FSN_GET_SET)(AnimationPath))
+
 			((FSN_GET_SET)(AlignmentOrigin))
+			((FSN_GET_SET)(AlignmentOffset))
+			((FSN_GET_SET)(RotationOrigin))
+			((FSN_GET_SET)(RotationOffset))
+
+			((FSN_GET_SET)(Colour))
+			((FSN_GET_SET)(Alpha))
+			((FSN_GET_SET)(Scale))
+			((FSN_GET_SET)(BaseAngle))
+
 			((FSN_IS)(AnimationFinished)) )
 
 		ThreadSafeProperty<std::string> ImagePath;
@@ -98,44 +108,6 @@ namespace FusionEngine
 		ThreadSafeProperty<float> BaseAngle;
 
 		ThreadSafeProperty<bool, NullWriter<bool>> AnimationFinished;
-
-		void SynchroniseInterface()
-		{
-			IRenderCom::SynchroniseInterface();
-
-			if ((ImagePath.m_Changed && ImagePath.Synchronise(GetImagePath())) || ImagePath.SynchroniseExternalOnly())
-				SetImagePath(ImagePath.Get());
-			if ((ImagePath.m_Changed && AnimationPath.Synchronise(GetAnimationPath())) || ImagePath.SynchroniseExternalOnly())
-				SetAnimationPath(AnimationPath.Get());
-
-			FSN_SYNCH_PROP(AlignmentOrigin);
-			FSN_SYNCH_PROP(AlignmentOffset);
-			FSN_SYNCH_PROP(RotationOrigin);
-			FSN_SYNCH_PROP(RotationOffset);
-			FSN_SYNCH_PROP(Colour);
-			FSN_SYNCH_PROP(Alpha);
-			FSN_SYNCH_PROP(Scale);
-			FSN_SYNCH_PROP(BaseAngle);
-
-			if (AnimationFinished.m_Changed)
-			AnimationFinished.Synchronise(IsAnimationFinished());
-		}
-
-		void FireInterfaceSignals()
-		{
-			IRenderCom::FireInterfaceSignals();
-			ImagePath.FireSignal();
-			AnimationPath.FireSignal();
-			AlignmentOrigin.FireSignal();
-			AlignmentOffset.FireSignal();
-			RotationOrigin.FireSignal();
-			RotationOffset.FireSignal();
-			Colour.FireSignal();
-			Alpha.FireSignal();
-			Scale.FireSignal();
-			BaseAngle.FireSignal();
-			AnimationFinished.FireSignal();
-		}
 
 	private:
 		virtual void SetImagePath(const std::string& value) = 0;
@@ -156,7 +128,7 @@ namespace FusionEngine
 		virtual Vector2i GetRotationOffset() const = 0;
 
 		virtual void SetColour(const CL_Colorf& val) = 0;
-		virtual CL_Colorf GetColour() const = 0;
+		virtual const CL_Colorf &GetColour() const = 0;
 
 		virtual void SetAlpha(float val) = 0;
 		virtual float GetAlpha() const = 0;

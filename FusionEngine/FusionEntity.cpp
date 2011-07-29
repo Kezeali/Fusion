@@ -261,7 +261,7 @@ namespace FusionEngine
 	{
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
 		{
-			(*it)->SynchroniseParallelEdits();
+			(*it)->SynchronisePropertiesNow();
 		}
 	}
 

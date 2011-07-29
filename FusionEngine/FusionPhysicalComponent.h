@@ -53,10 +53,7 @@ namespace FusionEngine
 
 	FSN_BEGIN_COIFACE(ITransform)
 	public:
-		ITransform()
-			: Position(),
-			Angle(),
-			Depth()
+		void InitProperties()
 		{
 			Position.SetCallbacks(this, &ITransform::GetPosition, &ITransform::SetPosition);
 			Angle.SetCallbacks(this, &ITransform::GetAngle, &ITransform::SetAngle);
@@ -66,20 +63,6 @@ namespace FusionEngine
 		ThreadSafeProperty<Vector2> Position;
 		ThreadSafeProperty<float> Angle;
 		ThreadSafeProperty<int> Depth;
-
-		void SynchroniseInterface()
-		{
-			FSN_SYNCH_PROP(Position);
-			FSN_SYNCH_PROP(Angle);
-			FSN_SYNCH_PROP(Depth);
-		}
-
-		void FireInterfaceSignals()
-		{
-			Position.FireSignal();
-			Angle.FireSignal();
-			Depth.FireSignal();
-		}
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
@@ -105,30 +88,26 @@ namespace FusionEngine
 		virtual ~IRigidBody()
 		{}
 
-		IRigidBody()
-		{
-#define iface IRigidBody
-			FSN_INIT_PROP(Interpolate);
-			FSN_INIT_PROP_R(Mass);
-			FSN_INIT_PROP_R(Inertia);
-			FSN_INIT_PROP_R(CenterOfMass);
+		FSN_COIFACE_CTOR(IRigidBody,
+			((FSN_GET_SET)(Interpolate))
+			((FSN_GET)(Mass))
+			((FSN_GET)(Inertia))
+			((FSN_GET)(CenterOfMass))
 
-			FSN_INIT_PROP(Velocity);
-			FSN_INIT_PROP(AngularVelocity);
+			((FSN_GET_SET)(Velocity))
+			((FSN_GET_SET)(AngularVelocity))
 
-			FSN_INIT_PROP(LinearDamping);
-			FSN_INIT_PROP(AngularDamping);
+			((FSN_GET_SET)(LinearDamping))
+			((FSN_GET_SET)(AngularDamping))
 
-			FSN_INIT_PROP(GravityScale);
+			((FSN_GET_SET)(GravityScale))
 
-			FSN_INIT_PROP_BOOL(Active);
-			FSN_INIT_PROP_BOOL(SleepingAllowed);
-			FSN_INIT_PROP_BOOL_R(Awake);
+			((FSN_IS_SET)(Active))
+			((FSN_IS_SET)(SleepingAllowed))
+			((FSN_IS)(Awake))
 
-			FSN_INIT_PROP_BOOL(Bullet);
-			FSN_INIT_PROP_BOOL(FixedRotation);
-#undef iface
-		}
+			((FSN_IS_SET)(Bullet))
+			((FSN_IS_SET)(FixedRotation)) )
 
 		ThreadSafeProperty<bool> Interpolate;
 
@@ -152,44 +131,6 @@ namespace FusionEngine
 		ThreadSafeProperty<bool> FixedRotation;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
-
-		void SynchroniseInterface()
-		{
-			ITransform::SynchroniseInterface();
-			FSN_SYNCH_PROP(Interpolate);
-			if (Mass.m_Changed) Mass.Synchronise(GetMass()); // readonly
-			if (Inertia.m_Changed) Inertia.Synchronise(GetInertia()); // readonly
-			if (CenterOfMass.m_Changed) CenterOfMass.Synchronise(GetCenterOfMass()); // readonly
-			FSN_SYNCH_PROP(Velocity);
-			FSN_SYNCH_PROP(AngularVelocity);
-			FSN_SYNCH_PROP(LinearDamping);
-			FSN_SYNCH_PROP(AngularDamping);
-			FSN_SYNCH_PROP(GravityScale);
-			FSN_SYNCH_PROP_BOOL(Active);
-			FSN_SYNCH_PROP_BOOL(SleepingAllowed);
-			if (Awake.m_Changed) Awake.Synchronise(IsAwake()); // readonly
-			FSN_SYNCH_PROP_BOOL(Bullet);
-			FSN_SYNCH_PROP_BOOL(FixedRotation);
-		}
-
-		void FireInterfaceSignals()
-		{
-			ITransform::FireInterfaceSignals();
-			Interpolate.FireSignal();
-			Mass.FireSignal();
-			Inertia.FireSignal();
-			CenterOfMass.FireSignal();
-			Velocity.FireSignal();
-			AngularVelocity.FireSignal();
-			LinearDamping.FireSignal();
-			AngularDamping.FireSignal();
-			GravityScale.FireSignal();
-			Active.FireSignal();
-			SleepingAllowed.FireSignal();
-			Awake.FireSignal();
-			Bullet.FireSignal();
-			FixedRotation.FireSignal();
-		}
 
 		enum BodyType { Static, Kinematic, Dynamic };
 
@@ -285,16 +226,13 @@ namespace FusionEngine
 	//! Physical fixture interface
 	FSN_BEGIN_COIFACE(IFixture)
 	public:
-		IFixture()
-		{
-#define iface IFixture
-			FSN_INIT_PROP_BOOL(Sensor);
-			FSN_INIT_PROP(Density);
-			FSN_INIT_PROP(Friction);
-			FSN_INIT_PROP(Restitution);
-			FSN_INIT_PROP_R(AABB);
-#undef iface
-		}
+
+		FSN_COIFACE_CTOR(IFixture,
+			((FSN_IS_SET)(Sensor))
+			((FSN_GET_SET)(Density))
+			((FSN_GET_SET)(Friction))
+			((FSN_GET_SET)(Restitution))
+			((FSN_GET)(AABB)) )
 
 		ThreadSafeProperty<bool> Sensor;
 		ThreadSafeProperty<float> Density;
@@ -305,26 +243,6 @@ namespace FusionEngine
 		//ThreadSafeProperty<b2MassData> MassData;
 
 		static void RegisterScriptInterface(asIScriptEngine* engine);
-
-		void SynchroniseInterface()
-		{
-			FSN_SYNCH_PROP_BOOL(Sensor);
-			FSN_SYNCH_PROP(Density);
-			FSN_SYNCH_PROP(Friction);
-			FSN_SYNCH_PROP(Restitution);
-			if (AABB.m_Changed) AABB.Synchronise(GetAABB());
-			//MassData.Synchronise(GetMassData());
-		}
-
-		void FireInterfaceSignals()
-		{
-			Sensor.FireSignal();
-			Density.FireSignal();
-			Friction.FireSignal();
-			Restitution.FireSignal();
-			AABB.FireSignal();
-			//MassData.FireSignal();
-		}
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
@@ -367,28 +285,12 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "ICircleShape"; }
 		virtual ~ICircleShape() {}
 
-		ICircleShape()
-		{
-#define iface ICircleShape
-			FSN_INIT_PROP(Position);
-			FSN_INIT_PROP(Radius);
-#undef iface
-		}
+		FSN_COIFACE_CTOR(ICircleShape,
+			((FSN_GET_SET)(Position))
+			((FSN_GET_SET)(Radius)) )
 
 		ThreadSafeProperty<Vector2> Position;
 		ThreadSafeProperty<float> Radius;
-
-		void SynchroniseInterface()
-		{
-			FSN_SYNCH_PROP(Position);
-			FSN_SYNCH_PROP(Radius);
-		}
-
-		void FireInterfaceSignals()
-		{
-			Position.FireSignal();
-			Radius.FireSignal();
-		}
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }
@@ -407,24 +309,10 @@ namespace FusionEngine
 		static std::string GetTypeName() { return "IPolygonShape"; }
 		virtual ~IPolygonShape() {}
 
-		IPolygonShape()
-		{
-#define iface IPolygonShape
-			FSN_INIT_PROP_R(Radius);
-#undef iface
-		}
+		FSN_COIFACE_CTOR(IPolygonShape,
+			((FSN_GET)(Radius)) )
 
 		ThreadSafeProperty<float, NullWriter<float>> Radius;
-
-		void SynchroniseInterface()
-		{
-			Radius.Synchronise(GetRadius());
-		}
-
-		void FireInterfaceSignals()
-		{
-			Radius.FireSignal();
-		}
 
 		//! Returns true
 		static bool IsThreadSafe() { return true; }

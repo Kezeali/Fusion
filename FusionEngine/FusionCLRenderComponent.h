@@ -165,8 +165,9 @@ namespace FusionEngine
 		void SetRotationOffset(const Vector2i& offset);
 		Vector2i GetRotationOffset() const;
 
+		mutable CL_Colorf m_Colour; // Since CL_Sprite::get_color returns by value (for no good reason)
 		void SetColour(const CL_Colorf& val);
-		CL_Colorf GetColour() const;
+		const CL_Colorf &GetColour() const;
 		
 		void SetAlpha(float val);
 		float GetAlpha() const;

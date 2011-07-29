@@ -114,9 +114,6 @@ namespace FusionEngine
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
-		void SynchroniseParallelEdits();
-		void FireSignals();
-
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
@@ -273,9 +270,6 @@ namespace FusionEngine
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
 
 	protected:
-		virtual void SynchroniseParallelEdits();
-		virtual void FireSignals();
-
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
@@ -353,9 +347,6 @@ namespace FusionEngine
 		std::string GetType() const { return "Box2DCircleFixture"; }
 
 		// Box2DFixture overides
-		virtual void SynchroniseParallelEdits();
-		virtual void FireSignals();
-
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
@@ -402,9 +393,6 @@ namespace FusionEngine
 		std::string GetType() const { return "Box2DPolygonFixture"; }
 
 		// Box2DFixture overides
-		virtual void SynchroniseParallelEdits();
-		virtual void FireSignals();
-
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
 		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);

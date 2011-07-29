@@ -492,10 +492,13 @@ namespace FusionEngine
 		m_SerialisationHelper.markChanged(PropsIdx::Colour);
 	}
 
-	CL_Colorf CLSprite::GetColour() const
+	const CL_Colorf &CLSprite::GetColour() const
 	{
 		if (!m_Sprite.is_null())
-			return m_Sprite.get_color();
+		{
+			m_Colour = m_Sprite.get_color();
+			return m_Colour;
+		}
 		else
 			return Colour.Get();
 	}

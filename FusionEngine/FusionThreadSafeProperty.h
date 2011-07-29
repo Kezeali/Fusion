@@ -100,7 +100,7 @@
 #define FSN_GET_SET(prop) FSN_INIT_PROP(prop)
 #define FSN_GET(prop) FSN_INIT_PROP_R(prop)
 #define FSN_SET(prop) FSN_INIT_PROP_W(prop)
-#define FSN_IS_SET(prop) FSN_INIT_PROP_W(prop)
+#define FSN_IS_SET(prop) FSN_INIT_PROP_BOOL(prop)
 #define FSN_IS(prop) FSN_INIT_PROP_BOOL_R(prop)
 
 #define FSN_INIT_PROPS(r, data, v) BOOST_PP_SEQ_ELEM(0, v)( BOOST_PP_SEQ_ELEM(1, v) );
@@ -232,24 +232,27 @@ namespace FusionEngine
 		set_fn_t m_SetFn;
 		get_fn_t m_GetFn;
 
-		mutable IComponent *m_ObjectAsComponent;
-
 		GetSetCallback(C *obj, get_fn_t get_fn, set_fn_t set_fn)
 			: m_Object(obj),
 			m_SetFn(set_fn),
 			m_GetFn(get_fn)
 		{}
 
-		void Set(SetT value) { (m_Object->*m_SetFn)(value); }
-		GetT Get() const { return (m_Object->*m_GetFn)(); }
+		void Set(SetT value)
+		{
+			FSN_ASSERT(m_Object); FSN_ASSERT(m_SetFn);
+			(m_Object->*m_SetFn)(value);
+		}
+		GetT Get() const
+		{
+			FSN_ASSERT(m_Object); FSN_ASSERT(m_GetFn);
+			return (m_Object->*m_GetFn)();
+		}
 		
 		IComponent* GetObjectAsComponent() const
 		{
-			if (m_ObjectAsComponent == nullptr && m_Object != nullptr)
-			{
-				m_ObjectAsComponent = dynamic_cast<IComponent*>(m_Object);
-			}
-			return m_ObjectAsComponent;
+			FSN_ASSERT(m_Object);
+			return dynamic_cast<IComponent*>(m_Object);
 		}
 	};
 
@@ -268,18 +271,19 @@ namespace FusionEngine
 
 		ThreadSafeProperty()
 			: m_Changed(true),
-			m_ObjectAsComponent(nullptr)
+			m_Owner(nullptr),
+			m_GetSetCallbacks(nullptr),
+			m_Refs(0)
 		{}
 
-		typedef typename std::conditional<std::is_fundamental<T>::value || std::is_enum<T>::value, typename T, const typename T &>::type value_type_for_set;
-		typedef typename std::conditional<std::is_fundamental<T>::value || std::is_enum<T>::value || std::is_same<T, Vector2>::value, typename T, const typename T &>::type value_type_for_get;
-
-		IComponent* m_ObjectAsComponent;
-
-		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
-
-		//std::function<void (value_type_for_set)> m_SetFn;
-		//std::function<value_type_for_get (void) const> m_GetFn;
+		// Fundimental and enum types are passed to "Set" by value
+		typedef typename std::conditional<
+			std::is_fundamental<T>::value || std::is_enum<T>::value,
+			typename T, const typename T &>::type value_type_for_set;
+		// Fundimental, enum and Vector types are returned from "Get" by value
+		typedef typename std::conditional<
+			std::is_fundamental<T>::value || std::is_enum<T>::value || std::is_same<T, Vector2>::value || std::is_same<T, Vector2i>::value,
+			typename T, const typename T &>::type value_type_for_get;
 
 		template <class C>
 		void SetCallbacks(C* obj, value_type_for_get (C::*get_fn)(void) const, void (C::*set_fn)(value_type_for_set))
@@ -288,8 +292,10 @@ namespace FusionEngine
 			typedef value_type_for_get (C::*get_fn_t)(void) const;
 
 			m_GetSetCallbacks = new GetSetCallback<C, value_type_for_get, value_type_for_set>(obj, get_fn, set_fn);
+
+			GetOwner();
+
 			//m_Object = obj;
-			m_ObjectAsComponent = nullptr;
 
 			//m_Get = get_fn;
 			//m_Set = set_fn;
@@ -297,11 +303,14 @@ namespace FusionEngine
 
 		explicit ThreadSafeProperty(const T& value)
 			: m_Changed(true),
-			m_Value(value)
+			m_Owner(nullptr),
+			m_Value(value),
+			m_Refs(0)
 		{}
 
 		~ThreadSafeProperty()
 		{
+			FSN_ASSERT(m_Refs <= 1);
 			m_Connection.disconnect();
 		}
 		
@@ -388,16 +397,16 @@ namespace FusionEngine
 				m_Signal(m_Value);
 				m_Changed = false;
 			}
+			else
+			{
+				m_Changed = false;
+			}
 		}
 
 		//! Mark changed
 		void MarkChanged()
-		{			
-			m_ObjectAsComponent = m_GetSetCallbacks->GetObjectAsComponent();
-			//FSN_ASSERT(m_ObjectAsComponent);
-			//m_ObjectAsComponent->AddProperty(this);
-			if (m_ObjectAsComponent != nullptr)
-				m_ObjectAsComponent->OnPropertyChanged(this);
+		{
+			GetOwner()->OnPropertyChanged(this);
 			m_Changed = true;
 		}
 
@@ -406,9 +415,7 @@ namespace FusionEngine
 		{
 			m_Writer.Write(value);
 
-			m_ObjectAsComponent = m_GetSetCallbacks->GetObjectAsComponent();
-			if (m_ObjectAsComponent != nullptr)
-				m_ObjectAsComponent->OnPropertyChanged(this);
+			GetOwner()->OnPropertyChanged(this);
 		}
 
 	private:
@@ -481,12 +488,15 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod(cname.c_str(), ("void bindProperty(" + cname + " @)").c_str(), asMETHOD(this_type, BindProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		}
 
-	public:
 		void AddRef()
-		{}
+		{
+			++m_Refs;
+		}
 
 		void Release()
-		{}
+		{
+			--m_Refs;
+		}
 
 		ThreadSafeProperty &opAssign(const T& value) { Set(value); return *this; }
 		ThreadSafeProperty &opAddAssign(const T& value)
@@ -527,7 +537,29 @@ namespace FusionEngine
 			m_Connection = prop->m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
 		}
 
-	public:
+	private:
+		unsigned int m_Refs;
+
+		IComponent* GetOwner()
+		{
+			// The unusual ordering is to (hopefully) avoid branch misprediction:
+			if (m_Owner)
+				return m_Owner;
+			else
+			{
+				FSN_ASSERT(m_GetSetCallbacks);
+				m_Owner = m_GetSetCallbacks->GetObjectAsComponent();
+				m_Owner->AddProperty(this);
+				return m_Owner;
+			}
+		}
+
+		IComponent* m_Owner;
+		IGetSetCallback<value_type_for_get, value_type_for_set>* m_GetSetCallbacks;
+
+		//std::function<void (value_type_for_set)> m_SetFn;
+		//std::function<value_type_for_get (void) const> m_GetFn;
+
 #ifdef FSN_TSP_SIGNALS2
 		boost::signals2::signal<void (const T&)> m_Signal;
 #else
@@ -536,7 +568,9 @@ namespace FusionEngine
 		ThreadSafePropertyConnection m_Connection; // Properties can bind directly to other properties
 
 		bool m_Changed;
+	public:
 		T m_Value;
+	private:
 
 		Writer m_Writer;
 	};

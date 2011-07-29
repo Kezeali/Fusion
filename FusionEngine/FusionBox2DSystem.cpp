@@ -90,9 +90,6 @@ namespace FusionEngine
 	private:
 		std::string GetType() const { return "StaticTransform"; }
 
-		void SynchroniseParallelEdits() { ITransform::SynchroniseInterface(); }
-		void FireSignals() { ITransform::FireInterfaceSignals(); }
-
 		Vector2 GetPosition() const { return m_Position; }
 		void SetPosition(const Vector2& position) { m_Position = position; }
 

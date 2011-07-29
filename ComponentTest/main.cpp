@@ -378,9 +378,9 @@ public:
 					else
 					{
 						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f, nullptr, nullptr);
-						entity->AddComponent(transformCom);
-
+						
 						transformCom->SetPropChangedQueue(&propChangedQueue);
+						entity->AddComponent(transformCom);
 					}
 
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
@@ -418,9 +418,6 @@ public:
 						//script->ScriptPath.Set("Entities/Test/test_script.as");
 					}
 					entity->SynchroniseParallelEdits();
-					const auto& components = entity->GetComponents();
-					for (auto it = components.begin(), end = components.end(); it != end; ++it)
-						(*it)->FireSignals();
 
 					if (b2BodyCom)
 					{

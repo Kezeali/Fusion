@@ -53,16 +53,6 @@ namespace FusionEngine
 	{
 	}
 
-	void ASScript::SynchroniseParallelEdits()
-	{
-		IScript::SynchroniseInterface();
-	}
-
-	void ASScript::FireSignals()
-	{
-		IScript::FireInterfaceSignals();
-	}
-
 	bool ASScript::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		return true;

@@ -68,16 +68,6 @@ namespace FusionEngine
 	{
 	}
 
-	void Box2DBody::SynchroniseParallelEdits()
-	{
-		IRigidBody::SynchroniseInterface();
-	}
-
-	void Box2DBody::FireSignals()
-	{
-		IRigidBody::FireInterfaceSignals();
-	}
-
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		const Vector2& pos = GetPosition();
@@ -215,16 +205,6 @@ namespace FusionEngine
 		}
 	}
 
-	void Box2DFixture::SynchroniseParallelEdits()
-	{
-		IFixture::SynchroniseInterface();
-	}
-
-	void Box2DFixture::FireSignals()
-	{
-		IFixture::FireInterfaceSignals();
-	}
-
 	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		return false;
@@ -344,18 +324,6 @@ namespace FusionEngine
 		ShapeDeltaSerialiser_t::copyChanges(result, current_data, delta);
 	}
 
-	void Box2DCircleFixture::SynchroniseParallelEdits()
-	{
-		ICircleShape::SynchroniseInterface();
-		Box2DFixture::SynchroniseParallelEdits();
-	}
-
-	void Box2DCircleFixture::FireSignals()
-	{
-		ICircleShape::FireInterfaceSignals();
-		Box2DFixture::FireSignals();
-	}
-
 	bool Box2DCircleFixture::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		return false;
@@ -466,18 +434,6 @@ namespace FusionEngine
 			result.Write(numVerts);
 			result.WriteBits(verts.data(), sizeof(float) * 2 * numVerts * 8);
 		}
-	}
-
-	void Box2DPolygonFixture::SynchroniseParallelEdits()
-	{
-		IPolygonShape::SynchroniseInterface();
-		Box2DFixture::SynchroniseParallelEdits();
-	}
-
-	void Box2DPolygonFixture::FireSignals()
-	{
-		IPolygonShape::FireInterfaceSignals();
-		Box2DFixture::FireSignals();
 	}
 
 	bool Box2DPolygonFixture::SerialiseContinuous(RakNet::BitStream& stream)

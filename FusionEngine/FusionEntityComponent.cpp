@@ -29,20 +29,31 @@
 
 #include "FusionEntityComponent.h"
 
-#include "FusionExceptionFactory.h"
+#include "FusionThreadSafeProperty.h"
 
 namespace FusionEngine
 {
 
 	void IComponent::AddProperty(IComponentProperty* prop)
 	{
+		FSN_ASSERT(std::find(m_Properties.begin(), m_Properties.end(), prop) == m_Properties.end());
 		m_Properties.push_back(prop);
+		m_ChangedProperties->push(prop);
 	}
 
 	void IComponent::OnPropertyChanged(IComponentProperty* prop)
 	{
 		FSN_ASSERT(m_ChangedProperties);
 		m_ChangedProperties->push(prop);
+	}
+
+	void IComponent::SynchronisePropertiesNow()
+	{
+		for (auto it = m_Properties.begin(), end = m_Properties.end(); it != end; ++it)
+		{
+			auto prop = *it;
+			prop->Synchronise();
+		}
 	}
 
 }
