@@ -7,11 +7,6 @@ class Test : ScriptComponent
 		frames = 0;
 		runtime = 0.0;
 		lastDamping = 0;
-
-		//console.println("itransform implemented by: " + itransform.getType());
-		//console.println("isprite implemented by: " + isprite.getType());
-		//console.println("icircleshape implemented by: " + icircleshape.getType());
-		//console.println("iscript implemented by: " + script_a.getType());
 	}
 
 	uint frames;
@@ -36,9 +31,13 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
+			//console.println("itransform implemented by: " + itransform.getType());
+			//console.println("isprite implemented by: " + isprite.getType());
+			//console.println("icircleshape implemented by: " + icircleshape.getType());
+			//console.println("iscript implemented by: " + script_a.getType());
 			//console.println(itransform.getType());
 
-			//itransform.Angle.set(0.7);
+			itransform.Angle.value = 0.7f;
 			//itransform.Angle << 0.7;
 			//float angle = itransform.Angle;
 			//console.println("Angle: " + angle);

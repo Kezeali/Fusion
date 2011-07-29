@@ -350,13 +350,14 @@ public:
 					std::stringstream str;
 					str << i;
 					entity->_setName("entity" + str.str());
+
+					entity->SetPropChangedQueue(&propChangedQueue);
 					
 					std::shared_ptr<IComponent> b2CircleFixture;
 					std::shared_ptr<IComponent> b2BodyCom;
 					if (i < 300)
 					{
 						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-						b2CircleFixture->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(b2CircleFixture);
 						{
 							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
@@ -372,26 +373,21 @@ public:
 						else
 							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
 
-						b2BodyCom->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(b2BodyCom);
 					}
 					else
 					{
 						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f, nullptr, nullptr);
-						
-						transformCom->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(transformCom);
 					}
 
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
-					clSprite->SetPropChangedQueue(&propChangedQueue);
 					entity->AddComponent(clSprite);
 
 					std::shared_ptr<IComponent> asScript;
 					if (i < 200)
 					{
 						asScript = asWorld->InstantiateComponent("ASScript");
-						asScript->SetPropChangedQueue(&propChangedQueue);
 						entity->AddComponent(asScript, "script_a");
 					}
 
@@ -526,7 +522,9 @@ public:
 						{
 							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							body->Velocity.Set(Vector2::zero());
+							auto vel = body->Velocity.Get();
+							v2Multiply(vel, Vector2((a || d) ? 0.f : 1.f, (w || s) ? 0.f : 1.f), vel);
+							body->Velocity.Set(vel);
 							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
@@ -538,7 +536,7 @@ public:
 					bool s = ev.id == CL_KEY_S;
 					bool a = ev.id == CL_KEY_A;
 					bool d = ev.id == CL_KEY_D;
-					if (w || s || a || d)
+					if ((w || s || a || d) && ev.repeat_count == 0)
 					{
 						auto entity = entities[1];
 						auto body = entity->GetComponent<IRigidBody>();
@@ -546,8 +544,10 @@ public:
 						{
 							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
+							entity->SynchroniseParallelEdits();
+
 							const float speed = 0.8f;
-							Vector2 vel;
+							Vector2 vel = body->Velocity.Get();
 							if (w)
 								vel.y -= speed;
 							if (s)

@@ -182,9 +182,13 @@ namespace FusionEngine
 	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
 	{
 		FSN_ASSERT(component);
+		FSN_ASSERT(m_PropChangedQueue);
+
+		component->SetPropChangedQueue(m_PropChangedQueue);
 
 		// Add the new component to the component-by-interface map
-		for (auto it = component->GetInterfaces().begin(), end = component->GetInterfaces().end(); it != end; ++it)
+		const auto& interfaceNames = component->GetInterfaces();
+		for (auto it = interfaceNames.begin(), end = interfaceNames.end(); it != end; ++it)
 		{
 			auto& implementors = m_ComponentInterfaces[*it];
 			std::string interfaceIdentifier = identifier;
@@ -199,7 +203,7 @@ namespace FusionEngine
 					interfaceIdentifier = *it;
 			}
 			//component->SetIdentifier(identifier);
-			FSN_ASSERT(implementors.find(interfaceIdentifier) == implementors.end());
+			FSN_ASSERT(implementors.find(interfaceIdentifier) == implementors.end()); // no duplicates
 			implementors[interfaceIdentifier] = component;
 		}
 		// Notify all other components of the new component, and notify the new component of the existing components
@@ -222,6 +226,7 @@ namespace FusionEngine
 		{
 			if (*it == component)
 			{
+				component->SetPropChangedQueue(nullptr);
 				component->SetParent(nullptr);
 				it = m_Components.erase(it);
 			}
@@ -263,6 +268,12 @@ namespace FusionEngine
 		{
 			(*it)->SynchronisePropertiesNow();
 		}
+	}
+
+	void Entity::SetPropChangedQueue(PropChangedQueue *q)
+	{
+		FSN_ASSERT_MSG(m_Components.empty(), "Can't change the prop queue after components have been added");
+		m_PropChangedQueue = q;
 	}
 
 	void Entity::AddTag(const std::string &tag)

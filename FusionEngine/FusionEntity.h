@@ -152,8 +152,6 @@ namespace FusionEngine
 		void AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 		//! Removes the given component
 		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
-
-		void SynchroniseParallelEdits();
 		
 		typedef std::map<std::string, std::map<std::string, std::shared_ptr<IComponent>>> ComInterfaceMap;
 
@@ -218,15 +216,11 @@ namespace FusionEngine
 
 		const ComInterfaceMap& GetInterfaces() const;
 
-		//std::map<std::string, std::string> GetComponentNames() const
-		//{
-		//	std::map<std::string, std::string> names;
-		//	
-		//	for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-		//	{
-		//		const auto& component = *it;
-		//	}
-		//}
+		void SynchroniseParallelEdits();
+
+		void SetPropChangedQueue(PropChangedQueue *q);
+
+		//std::map<std::string, std::string> GetComponentNames() const;
 
 		//! Valid types for property vars.
 		enum PropertyType
@@ -488,6 +482,8 @@ namespace FusionEngine
 
 		std::vector<std::shared_ptr<IComponent>> m_Components;
 		ComInterfaceMap m_ComponentInterfaces;
+
+		PropChangedQueue *m_PropChangedQueue;
 
 		PlayerInputPtr m_PlayerInput;
 

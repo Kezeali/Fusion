@@ -259,7 +259,7 @@ namespace FusionEngine
 	{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
 
-		std::map<ModulePtr, EntityPtr> modulesToBuild;
+		std::set<ModulePtr> modulesToBuild;
 
 		tbb::spin_mutex mutex;
 
@@ -275,6 +275,12 @@ namespace FusionEngine
 					if (script->m_Module->IsBuilt())
 					{
 						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
+						if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
+						{
+							SendToConsole("First class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
+							script->m_ModuleBuilt = false;
+							continue;
+						}
 						//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
 						auto f = ScriptUtils::Calling::Caller::FactoryCaller(objectType, "");
 						if (f)
@@ -294,6 +300,45 @@ namespace FusionEngine
 										setAppObj.SetThrowOnException(true);
 										setAppObj(script.get());
 									}
+
+									auto parentEntity = script->GetParent();
+
+									std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
+									auto& interfaces = parentEntity->GetInterfaces();
+									for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
+									{
+										const auto& interfaceName = it->first;
+										for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
+										{
+											const auto convenientIdentifier = fe_newlower(cit->first);
+
+											convenientComponents[convenientIdentifier] = cit->second;
+										}
+									}
+									// Init the members with available sibling components
+									auto objType = obj->GetObjectType()->GetBaseType();
+									for (int i = 0, count = objType->GetPropertyCount(); i < count; ++i)
+									{
+										const char* name = 0; bool isPrivate = false; int offset = 0;// bool isReference = false;
+										objType->GetProperty(i, &name, 0, &isPrivate, &offset/*, &isReference*/);
+										if (!isPrivate)
+										{
+											auto _where = convenientComponents.find(name);
+											if (_where != convenientComponents.end())
+											{
+												//FSN_ASSERT(isReference);
+												auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
+												IComponent** component = static_cast<IComponent**>(propAddress);
+												_where->second->addRef();
+												*component = (_where->second.get());
+											}
+											else
+											{
+												std::string propDecl = objType->GetPropertyDeclaration(i);
+												SendToConsole(script->GetScriptPath() + " expected a sibling to fit '" + propDecl + "' but " + parentEntity->GetName() + " doesn't have any such component");
+											}
+										}
+									}
 								}
 							}
 							catch (ScriptUtils::Exception& e)
@@ -311,15 +356,51 @@ namespace FusionEngine
 				{
 					script->m_ScriptObject.Release();
 
-					auto moduleName = script->GetParent()->GetName() + script->GetScriptPath();
+					auto moduleName = script->GetScriptPath();
 
 					tbb::spin_mutex::scoped_lock lock(mutex);
-					auto module = m_ScriptManager->GetModule(moduleName.c_str(), asGM_ALWAYS_CREATE);
+					auto module = m_ScriptManager->GetModule(moduleName.c_str());
 					script->m_Module = module;
-					if (m_ScriptManager->AddFile(script->m_Path, moduleName.c_str()))
+					if (!module->IsBuilt() && modulesToBuild.find(module) == modulesToBuild.end())
 					{
-						//modulesToBuild.insert(module);
-						modulesToBuild.insert( std::make_pair(module, script->GetParent()->shared_from_this()) );
+						// TODO: preprocess to get the interfaces used
+						if (m_ScriptManager->AddFile(script->m_Path, moduleName.c_str()))
+						{
+							auto parentEntity = script->GetParent();
+
+							std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
+							std::string convenientComponentsScript;
+							//auto& componentNames = entity->GetComponentNames();
+							auto& interfaces = parentEntity->GetInterfaces();
+							for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
+							{
+								const auto& interfaceName = it->first;
+								for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
+								{
+									const auto convenientIdentifier = fe_newlower(cit->first);
+									convenientComponentsScript += interfaceName + " @ " + convenientIdentifier + ";\n";
+								}
+							}
+
+							const std::string baseCode =
+								"class ScriptComponent\n"
+								"{\n"
+								"private ASScript@ app_obj;\n"
+								"void _setAppObj(ASScript@ _app_obj) {\n"
+								"@app_obj = _app_obj;\n"
+								"}\n"
+								"void yield() { app_obj.yield(); }\n"
+								"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
+								"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
+								"\n" +
+								convenientComponentsScript +
+								"}\n";
+
+							module->AddCode("basecode", baseCode);
+
+							modulesToBuild.insert(module);
+							//modulesToBuild.insert( std::make_pair(module, parentEntity->shared_from_this()) );
+						}
 					}
 
 					script->m_ModuleBuilt = true;
@@ -418,62 +499,19 @@ namespace FusionEngine
 
 		for (auto it = modulesToBuild.begin(), end = modulesToBuild.end(); it != end; ++it)
 		{
-			//auto& module = (*it);
-			auto& module = it->first;
-			auto& entity = it->second;
-
-			std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
-
-			std::string componentConvenienceScript;
-			//auto& componentNames = entity->GetComponentNames();
-			auto& interfaces = entity->GetInterfaces();
-			for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
-			{
-				const auto& interfaceName = it->first;
-				for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
-				{
-					const auto convenientIdentifier = fe_newlower(cit->first);
-					componentConvenienceScript += interfaceName + " @ " + convenientIdentifier + ";\n";
-
-					convenientComponents[convenientIdentifier] = cit->second;
-				}
-			}
-
-			const char* baseCode =
-				"class ScriptComponent\n"
-				"{\n"
-				"ASScript@ app_obj;\n"
-				"void _setAppObj(ASScript@ _app_obj) {\n"
-				"@app_obj = _app_obj;\n"
-				"}\n"
-				"void yield() { app_obj.yield(); }\n"
-				"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
-				"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
-				"\n"
-				"}\n";
-
-			module->AddCode("basecode", baseCode);
-
-			module->AddCode(entity->GetName(), componentConvenienceScript);
+			auto& module = (*it);
+			//auto& module = it->first;
+			//auto& entity = it->second;
 
 			if (module->Build() < 0)
-				continue; // TODO: Report error
+			{
+				// TODO: report error?
+			}
 
 			//int r = m_ScriptManager->GetEnginePtr()->RegisterObjectType("test", 0, asOBJ_REF); FSN_ASSERT(r >= 0);
 			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test@ f()", asFUNCTION(testfac), asCALL_CDECL); FSN_ASSERT(r >= 0);
 			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_CDECL); FSN_ASSERT(r >= 0);
 			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(Release), asCALL_CDECL); FSN_ASSERT(r >= 0);
-
-			for (auto it = convenientComponents.begin(), end = convenientComponents.end(); it != end; ++it)
-			{
-				int index = module->GetASModule()->GetGlobalVarIndexByName(it->first.c_str());
-				if (index >= 0)
-				{
-					IComponent** component = static_cast<IComponent**>(module->GetASModule()->GetAddressOfGlobalVar(index));
-					it->second->addRef();
-					*component = (it->second.get());
-				}
-			}
 		}
 	}
 

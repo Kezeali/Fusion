@@ -36,10 +36,13 @@ namespace FusionEngine
 {
 
 	Module::Module()
+		: m_Module(nullptr),
+		m_Built(false)
 	{}
 
 	Module::Module(asIScriptModule *module)
-		: m_Module(module)
+		: m_Module(module),
+		m_Built(false)
 	{
 	}
 
