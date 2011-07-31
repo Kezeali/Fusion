@@ -1,3 +1,6 @@
+#uses ITransform
+#uses IRigidBody
+
 class Test : ScriptComponent
 {
 	Test()

@@ -109,6 +109,16 @@ namespace FusionEngine
 
 		void SetPropChangedQueue(PropChangedQueue* q) { m_ChangedProperties = q; }
 
+		//! Should be called after all mission-critical resources are done loading
+		void Ready() { m_Ready = true; }
+		//! Returns true after this Ready is called on this component
+		/*
+		* ISystemWorld#OnActivation wont be called until all siblings are ready.
+		* The default ISystemWorld#OnPrepare() calls IComponent#Ready() on the passed component
+		* (i.e. it assumes that the component has no mission-critical resources.)
+		*/
+		bool IsReady() const { return m_Ready; }
+
 		virtual void OnSpawn() {}
 		virtual void OnStreamIn() {}
 		virtual void OnStreamOut() {}
@@ -133,6 +143,8 @@ namespace FusionEngine
 
 		std::vector<IComponentProperty*> m_Properties;
 		tbb::concurrent_queue<IComponentProperty*> *m_ChangedProperties;
+
+		tbb::atomic<bool> m_Ready;
 
 	};
 

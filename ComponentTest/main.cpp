@@ -394,6 +394,12 @@ public:
 					//auto asScript2 = asWorld->InstantiateComponent("ASScript");
 					//entity->AddComponent(asScript2, "script_b");
 
+					if (i == 1)
+					{
+						auto transform = entity->GetComponent<ITransform>();
+						transform->Depth.Set(1);
+					}
+
 					{
 						auto sprite = entity->GetComponent<ISprite>();
 						if (i > 150 && i < 300)
@@ -528,37 +534,60 @@ public:
 							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
+
+					if (ev.id == CL_KEY_SPACE)
+					{
+						const float invmax = 1.0f / RAND_MAX;
+						auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body && body->GetBodyType() == IRigidBody::Dynamic)
+						{
+							//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
+							
+							Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
+							body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
+						}
+						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+					}
+
+					bool k = ev.id == CL_KEY_K;
+					bool j = ev.id == CL_KEY_J;
+					if (k || j)
+					{
+						auto entity = entities[0];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
+
+							const float xvel = k ? 0.5f : -0.5f;
+							body->Velocity.Set(Vector2(xvel, 0.0f));
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
+					if (ev.id == CL_KEY_M)
+					{
+						auto entity = entities[0];
+						auto body = entity->GetComponent<IRigidBody>();
+						if (body)
+						{
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
+
+							body->Velocity.Set(Vector2::zero());
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+						}
+					}
 				});
 
 				auto keydownhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_down().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
-					bool w = ev.id == CL_KEY_W;
-					bool s = ev.id == CL_KEY_S;
-					bool a = ev.id == CL_KEY_A;
-					bool d = ev.id == CL_KEY_D;
-					if ((w || s || a || d) && ev.repeat_count == 0)
+					if (ev.id == CL_KEY_I)
 					{
 						auto entity = entities[1];
 						auto body = entity->GetComponent<IRigidBody>();
 						if (body)
 						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-							entity->SynchroniseParallelEdits();
-
-							const float speed = 0.8f;
-							Vector2 vel = body->Velocity.Get();
-							if (w)
-								vel.y -= speed;
-							if (s)
-								vel.y += speed;
-							if (a)
-								vel.x -= speed;
-							if (d)
-								vel.x += speed;
-
-							body->Velocity.Set(vel);
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+							body->Interpolate.Set(!body->Interpolate.Get());
 						}
 					}
 				});
@@ -628,63 +657,39 @@ public:
 						gc.clear();
 					}
 
-					bool k = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_K);
-					bool j = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_J);
-					if (k || j)
+					bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
+					bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
+					bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
+					bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
+					if (w || s || a || d)
 					{
-						auto entity = entities[0];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
-
-							const float xvel = k ? 0.5f : -0.5f;
-							if (fe_fzero(body->Velocity.Get().x))
-								body->Velocity.Set(Vector2(xvel, 0.0f));
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_M))
-					{
-						auto entity = entities[0];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
-
-							body->Velocity.Set(Vector2::zero());
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
-
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_SPACE))
-					{
-						const float invmax = 1.0f / RAND_MAX;
-						auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body && body->GetBodyType() == IRigidBody::Dynamic)
-						{
-							//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
-							
-							Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
-							body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
-						}
-						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-					}
-
-					bool eye = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_I);
-					if (!pressed[CL_KEY_I] && eye)
-					{
-						pressed[CL_KEY_I] = true;
 						auto entity = entities[1];
 						auto body = entity->GetComponent<IRigidBody>();
 						if (body)
 						{
-							body->Interpolate.Set(!body->Interpolate.Get());
+							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+
+							entity->SynchroniseParallelEdits();
+
+							const float speed = 0.8f;
+							Vector2 vel = body->Velocity.Get();
+							if (w)
+								vel.y = -speed;
+							else if (s)
+								vel.y = speed;
+							else if (w && s)
+								vel.y = 0;
+							if (a)
+								vel.x = -speed;
+							else if (d)
+								vel.x = speed;
+							else if (a && d)
+								vel.x = 0;
+
+							body->Velocity.Set(vel);
+							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
-					else if (!eye)
-						pressed[CL_KEY_I] = false;
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL))
 					{

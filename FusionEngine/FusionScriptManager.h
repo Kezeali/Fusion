@@ -216,7 +216,7 @@ namespace FusionEngine
 		unsigned int GetDefaultTimeout() const;
 
 		//! Creates a context and attaches line / exception callbacks
-		asIScriptContext* CreateContext();
+		boost::intrusive_ptr<asIScriptContext> CreateContext();
 
 		//! Returns a class object corresponding to the given typename
 		ScriptClass GetClass(const char* module, const std::string& type_name);

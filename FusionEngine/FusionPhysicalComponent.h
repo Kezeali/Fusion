@@ -68,7 +68,7 @@ namespace FusionEngine
 
 		static bool IsThreadSafe() { return true; }
 
-	public:
+	protected:
 		virtual Vector2 GetPosition() const = 0;
 		virtual void SetPosition(const Vector2& pos) = 0;
 

@@ -458,11 +458,11 @@ namespace FusionEngine
 		return m_DefaultTimeout;
 	}
 
-	asIScriptContext* ScriptManager::CreateContext()
+	boost::intrusive_ptr<asIScriptContext> ScriptManager::CreateContext()
 	{
 		auto ctx = m_asEngine->CreateContext();
 		ctx->SetExceptionCallback(asMETHOD(ScriptManager, _exceptionCallback), this, asCALL_THISCALL);
-		return ctx;
+		return boost::intrusive_ptr<asIScriptContext>(ctx, false);
 	}
 
 	ScriptClass ScriptManager::GetClass(const char* module, const std::string& type_name)

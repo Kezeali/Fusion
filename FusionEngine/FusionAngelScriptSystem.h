@@ -83,12 +83,35 @@ namespace FusionEngine
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
+		void OnPrepare(const std::shared_ptr<IComponent>& component);
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 		void OnDeactivation(const std::shared_ptr<IComponent>& component);
 
 		ISystemTask* GetTask();
 
 		std::vector<std::shared_ptr<ASScript>> m_ActiveScripts;
+
+	public:
+		struct ComponentScriptInfo
+		{
+			ComponentScriptInfo();
+			ComponentScriptInfo(const ComponentScriptInfo &other);
+			ComponentScriptInfo(ComponentScriptInfo &&other);
+
+			ComponentScriptInfo& operator= (const ComponentScriptInfo &other);
+			ComponentScriptInfo& operator= (ComponentScriptInfo &&other);
+
+			std::string ClassName;
+
+			std::vector<std::string> Properties;
+
+			typedef std::pair<std::string, std::string> UsedComponent_t;
+			std::set<UsedComponent_t> UsedComponents;
+		};
+
+	private:
+
+		std::map<std::string, ComponentScriptInfo> m_ScriptInfo;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 		asIScriptEngine* m_Engine;
