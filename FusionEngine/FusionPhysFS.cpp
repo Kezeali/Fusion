@@ -115,6 +115,8 @@ bool SetupPhysFS::configure(const std::string &organisation,
 		PHYSFS_mkdir(FusionEngine::s_SavePath.c_str());
 		PHYSFS_mkdir(FusionEngine::s_EditorPath.c_str());
 
+		PHYSFS_mkdir("ScriptCache");
+
 		return true;
 	}
 	else

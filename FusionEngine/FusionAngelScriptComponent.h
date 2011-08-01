@@ -41,6 +41,8 @@
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 
+class CScriptAny;
+
 namespace FusionEngine
 {
 
@@ -67,6 +69,7 @@ namespace FusionEngine
 		void Yield();
 		void CreateCoroutine(const std::string& functionName);
 		void CreateCoroutine(asIScriptFunction* function);
+		CScriptAny* GetProperty(unsigned int index);
 
 	private:
 		// IComponent

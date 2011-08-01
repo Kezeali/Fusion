@@ -384,15 +384,15 @@ public:
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
 
-					std::shared_ptr<IComponent> asScript;
+					std::shared_ptr<IComponent> asScript, asScript2;
 					if (i < 200)
 					{
 						asScript = asWorld->InstantiateComponent("ASScript");
 						entity->AddComponent(asScript, "script_a");
-					}
 
-					//auto asScript2 = asWorld->InstantiateComponent("ASScript");
-					//entity->AddComponent(asScript2, "script_b");
+						asScript2 = asWorld->InstantiateComponent("ASScript");
+						entity->AddComponent(asScript2, "script_b");
+					}
 
 					if (i == 1)
 					{
@@ -414,10 +414,11 @@ public:
 					if (i < 200)
 					{
 						auto script = entity->GetComponent<IScript>("script_a");
-						script->ScriptPath.Set("Entities/Test/test_script.as");
+						script->ScriptPath.Set("Data/Scripts/test_script.as");
 
-						//script = entity->GetComponent<IScript>("script_b");
-						//script->ScriptPath.Set("Entities/Test/test_script.as");
+						script = entity->GetComponent<IScript>("script_b");
+						if (script)
+							script->ScriptPath.Set("Data/Scripts/TestB.as");
 					}
 					entity->SynchroniseParallelEdits();
 
@@ -441,7 +442,8 @@ public:
 					renderWorld->OnActivation(clSprite);
 					if (asScript)
 						asWorld->OnActivation(asScript);
-					//asWorld->OnActivation(asScript2);
+					if (asScript2)
+						asWorld->OnActivation(asScript2);
 				}
 
 				auto camera = std::make_shared<Camera>();

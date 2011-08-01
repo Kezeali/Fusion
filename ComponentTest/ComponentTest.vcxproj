@@ -217,6 +217,7 @@
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
+    <ClCompile Include="..\FusionEngine\scriptany.cpp" />
     <ClCompile Include="..\FusionEngine\scriptarray.cpp" />
     <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstdstring.cpp" />
@@ -359,6 +360,7 @@
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
+    <ClInclude Include="..\FusionEngine\scriptany.h" />
     <ClInclude Include="..\FusionEngine\scriptarray.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
     <ClInclude Include="..\FusionEngine\scriptstdstring.h" />

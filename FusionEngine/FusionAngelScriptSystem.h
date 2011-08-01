@@ -75,6 +75,8 @@ namespace FusionEngine
 
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
 
+		void BuildScripts(bool rebuild_all = false);
+
 	private:
 		std::vector<std::string> GetTypes() const;
 
@@ -103,7 +105,7 @@ namespace FusionEngine
 
 			std::string ClassName;
 
-			std::vector<std::string> Properties;
+			std::vector<std::pair<std::string, std::string>> Properties;
 
 			typedef std::pair<std::string, std::string> UsedComponent_t;
 			std::set<UsedComponent_t> UsedComponents;

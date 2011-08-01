@@ -33,12 +33,18 @@
 #include "FusionEntity.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
+#include "FusionPaths.h"
+#include "FusionPhysFS.h"
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
 
+#include "scriptany.h"
+
 #include <tbb/parallel_for.h>
+#include <tbb/scalable_allocator.h>
 #include <tbb/spin_mutex.h>
 
+#include <new>
 #include <regex>
 
 namespace FusionEngine
@@ -140,150 +146,28 @@ namespace FusionEngine
 		}
 	}
 
-	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
-		: m_ScriptManager(manager)
+	CScriptAny* ASScript::GetProperty(unsigned int index)
 	{
-		auto engine = m_ScriptManager->GetEnginePtr();
+		//ASScript* object = static_cast<ASScript*>(gen->GetObject());
+		//unsigned int index = gen->GetArgWord(1);
 
-		{
-			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
-		}
+		const auto& scriptObject = m_ScriptObject.GetScriptObject();
+		if (scriptObject == nullptr)
+			asGetActiveContext()->SetException("Tried to access a script component that wasn't ready");
 
-		{
-			int r;
-			ASScript::RegisterType<ASScript>(engine, "ASScript");
-			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		}
-	}
+		auto prop = scriptObject->GetAddressOfProperty(index);
+		int propTypeId = scriptObject->GetPropertyTypeId(index);
 
-	ISystemWorld* AngelScriptSystem::CreateWorld()
-	{
-		return new AngelScriptWorld(this, m_ScriptManager);
-	}
+		FSN_ASSERT(propTypeId != asTYPEID_BOOL); // I'm not sure what type CScriptAny stores bools as
 
-	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
-		: ISystemWorld(system),
-		m_ScriptManager(manager)
-	{
-		m_Engine = m_ScriptManager->GetEnginePtr();
+		if ((propTypeId - asTYPEID_INT8) <= asTYPEID_UINT64)
+			propTypeId = asTYPEID_INT64;
+		else if (propTypeId == asTYPEID_FLOAT)
+			propTypeId = asTYPEID_DOUBLE;
 
-		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
-	}
-
-	AngelScriptWorld::~AngelScriptWorld()
-	{
-		delete m_ASTask;
-	}
-
-	std::vector<std::string> AngelScriptWorld::GetTypes() const
-	{
-		static const std::string types[] = { "ASScript" };
-		return std::vector<std::string>(types, types + sizeof(types));
-	}
-
-	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type)
-	{
-		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
-	}
-
-	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type, const Vector2&, float, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
-	{
-		if (type == "ASScript")
-		{
-			auto com = std::make_shared<ASScript>();
-			return com;
-		}
-		return std::shared_ptr<IComponent>();
-	}
-
-	void AngelScriptWorld::OnPrepare(const std::shared_ptr<IComponent>& component)
-	{
-		// TODO: request the module from the resource manager here (it will either be building right now, if it had changed, or it the resource manager will begin loading it)
-		component->Ready();
-	}
-
-	void AngelScriptWorld::OnActivation(const std::shared_ptr<IComponent>& component)
-	{
-		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
-		if (scriptComponent)
-		{
-			m_ActiveScripts.push_back(scriptComponent);
-		}
-	}
-
-	void AngelScriptWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
-	{
-		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
-		if (scriptComponent)
-		{
-			// Find and remove the deactivated script
-			auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
-			if (_where != m_ActiveScripts.end())
-			{
-				_where->swap(m_ActiveScripts.back());
-				m_ActiveScripts.pop_back();
-			}
-		}
-	}
-
-	ISystemTask* AngelScriptWorld::GetTask()
-	{
-		return m_ASTask;
-	}
-
-	void AngelScriptWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
-	{
-		if (type == "ASScript")
-		{
-			ASScript::DeltaSerialiser_t::copyChanges(result, current_data, delta);
-		}
-	}
-
-	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo()
-	{
-	}
-
-	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(const ComponentScriptInfo &other)
-		: ClassName(other.ClassName),
-		Properties(other.Properties),
-		UsedComponents(other.UsedComponents)
-	{
-	}
-
-	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(ComponentScriptInfo &&other)
-	{
-		ClassName = std::move(other.ClassName);
-		Properties = std::move(other.Properties);
-		UsedComponents = std::move(other.UsedComponents);
-	}
-
-	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (const ComponentScriptInfo &other)
-	{
-		ClassName = other.ClassName;
-		Properties = other.Properties;
-		UsedComponents = other.UsedComponents;
-		return *this;
-	}
-
-	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (ComponentScriptInfo &&other)
-	{
-		ClassName = std::move(other.ClassName);
-		Properties = std::move(other.Properties);
-		UsedComponents = std::move(other.UsedComponents);
-		return *this;
-	}
-
-	AngelScriptTask::AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
-		: ISystemTask(sysworld),
-		m_AngelScriptWorld(sysworld),
-		m_ScriptManager(script_manager)
-	{
-	}
-
-	AngelScriptTask::~AngelScriptTask()
-	{
+		auto ptr = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(ptr);
+		new (ptr) CScriptAny(prop, propTypeId, scriptObject->GetEngine());
+		return ptr;
 	}
 
 	static std::pair<asETokenClass, int> ParseNextToken(asIScriptEngine* engine, const std::string& script, size_t &pos)
@@ -309,7 +193,7 @@ namespace FusionEngine
 				return ""; // end of line, no value
 		}
 
-		if (tokenClass == asTC_VALUE && tokenLength > 2 && script.at(pos) == '"')
+		if (tokenClass == asTC_VALUE && tokenLength > 2 && script[pos] == '"')
 		{
 			std::string value = script.substr(pos + 1, tokenLength - 2);
 			pos += tokenLength;
@@ -434,6 +318,8 @@ namespace FusionEngine
 					{
 						newStatement = false;
 
+						const bool primative = t == asTC_KEYWORD;
+
 						size_t start = pos;
 						pos += tokenLength;
 
@@ -486,7 +372,7 @@ namespace FusionEngine
 
 						if (t == asTC_KEYWORD)
 						{
-							if (script[pos] == '@')
+							if (!primative && script[pos] == '@') // Only allow handles for non-primative types
 							{
 								pos += tokenLength;
 								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
@@ -498,6 +384,9 @@ namespace FusionEngine
 							}
 						}
 
+						// A type (possibly of a property) has been parsed: copy the text
+						std::string type(&script[start], &script[pos]);
+
 						if (t == asTC_WHITESPACE)
 						{
 							pos += tokenLength;
@@ -506,17 +395,26 @@ namespace FusionEngine
 
 						if (t == asTC_IDENTIFIER)
 						{
+							// Found (probably) a property identifier: copy it
+							std::string identifier = script.substr(pos, tokenLength);
 							pos += tokenLength;
 
+							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
 							if (t == asTC_WHITESPACE)
 							{
-								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
 								pos += tokenLength;
+								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
 							}
 
-							if (script[pos] == ';')
+							// At this point a type, whitespace, and an identifier have been found: If the next
+							//  token is a statement-ending token ([;,]), a public property has been found
+							if (script[pos] == ';' || script[pos] == ',') 
 							{
-								scriptInfo.Properties.push_back(script.substr(start, pos - start));
+								scriptInfo.Properties.push_back(std::make_pair(type, identifier));
+								// Commented out code gets the full declaration in a single string. This was hard to work
+								//  with for the purposes it is used for at the time writing, but may be useful for something
+								//  else later (hence it is retained here)
+								//scriptInfo.Properties.push_back(script.substr(start, pos - start));
 								newStatement = true;
 								++pos;
 								continue;
@@ -566,7 +464,7 @@ namespace FusionEngine
 		while (pos < script.size())
 		{
 			auto token = ParseNextToken(engine, script, pos);
-			if (/*token.first == asTC_UNKNOWN && */script.at(pos) == '#')
+			if (/*token.first == asTC_UNKNOWN && */script[pos] == '#')
 			{
 				size_t start = pos++;
 
@@ -643,11 +541,361 @@ namespace FusionEngine
 		return scriptInfo;
 	}
 
+	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
+		: m_ScriptManager(manager)
+	{
+		auto engine = m_ScriptManager->GetEnginePtr();
+
+		{
+			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
+		}
+
+		{
+			int r;
+			ASScript::RegisterType<ASScript>(engine, "ASScript");
+			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
+		}
+	}
+
+	ISystemWorld* AngelScriptSystem::CreateWorld()
+	{
+		return new AngelScriptWorld(this, m_ScriptManager);
+	}
+
+	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
+		: ISystemWorld(system),
+		m_ScriptManager(manager)
+	{
+		m_Engine = m_ScriptManager->GetEnginePtr();
+
+		BuildScripts();
+
+		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
+	}
+
+	AngelScriptWorld::~AngelScriptWorld()
+	{
+		delete m_ASTask;
+	}
+
+	struct DependencyNode
+	{
+		std::string Name;
+		std::set<std::shared_ptr<DependencyNode>> IncludedBy;
+		std::set<std::shared_ptr<DependencyNode>> UsedBy;
+	};
+
+	class CLBinaryStream : public asIBinaryStream
+	{
+	public:
+		CLBinaryStream(const std::string& filename);
+		~CLBinaryStream();
+
+		void Open(const std::string& filename);
+
+		void Read(void *data, asUINT size);
+		void Write(const void *data, asUINT size);
+
+	private:
+		PHYSFS_File *m_File;
+	};
+
+	CLBinaryStream::CLBinaryStream(const std::string& filename)
+		: m_File(nullptr)
+	{
+		Open(filename);
+	}
+
+	CLBinaryStream::~CLBinaryStream()
+	{
+		if (m_File)
+			PHYSFS_close(m_File);
+	}
+
+	void CLBinaryStream::Open(const std::string& filename)
+	{
+		m_File = PHYSFS_openWrite(filename.c_str());
+	}
+
+	void CLBinaryStream::Read(void *data, asUINT size)
+	{
+		PHYSFS_read(m_File, data, 1u, size);
+	}
+
+	void CLBinaryStream::Write(const void *data, asUINT size)
+	{
+		PHYSFS_write(m_File, data, 1u, size);
+	}
+
+	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
+	{
+		std::string scriptComponentInterface;
+		scriptComponentInterface =
+			"class " + scriptInfo.ClassName + "\n{\n"
+			"private ASScript@ app_obj;\n"
+			"void _setAppObj(ASScript@ _app_obj) { @app_obj = _app_obj; }\n"
+			"\n";
+		for (size_t i = 0; i < scriptInfo.Properties.size(); ++i)
+		{
+			const std::string& type = scriptInfo.Properties[i].first, identifier = scriptInfo.Properties[i].second;
+			std::stringstream str;
+			// TODO: get the actual property-index (this hack just accounts for properties in the base-class),
+			//  or create a mapping in the ASScript upon setting the m_ScriptObject (SetScriptObject(obj, scriptInfo) { iterate props, compare names, create mapping })
+			str << i + 1 + scriptInfo.UsedComponents.size();
+			std::string propIndex = str.str();
+			const bool isHandleType = type.find('@') != std::string::npos;
+			scriptComponentInterface +=
+				type + " get_" + identifier + "() const { "
+				+ type + " value; "
+				"any propAny = app_obj.getProperty(" + propIndex + "); "
+				"propAny.retrieve(" + std::string(isHandleType ? "@" : "") + "value); "
+				"return value; }\n";
+		}
+		scriptComponentInterface += "}\n";
+		return scriptComponentInterface;
+	}
+
+	static std::string GenerateBaseCode(const AngelScriptWorld::ComponentScriptInfo& scriptInfo, std::map<std::string, AngelScriptWorld::ComponentScriptInfo>& scriptComponents)
+	{
+		std::set<std::string> usedIdentifiers;
+		std::vector<AngelScriptWorld::ComponentScriptInfo> scriptComponentInterfaces;
+		std::string convenientComponentProperties;
+		for (auto it = scriptInfo.UsedComponents.cbegin(), end = scriptInfo.UsedComponents.cend(); it != end; ++it)
+		{
+			const std::string& interfaceName = it->first;
+			std::string convenientIdentifier;
+			if (it->second.empty())
+				convenientIdentifier = fe_newlower(it->first);
+			else
+				convenientIdentifier = it->second;
+			if (usedIdentifiers.insert(convenientIdentifier).second) // Ignore duplicate #using directives
+			{
+				convenientComponentProperties += interfaceName + " @ " + convenientIdentifier + ";\n";
+
+				auto _where = scriptComponents.find(interfaceName);
+				if (_where != scriptComponents.end())
+				{
+					scriptComponentInterfaces.push_back(_where->second);
+				}
+			}
+		}
+
+		std::string baseCode =
+			"class ScriptComponent\n"
+			"{\n"
+			"private ASScript@ app_obj;\n"
+			"void _setAppObj(ASScript@ _app_obj) {\n"
+			"@app_obj = _app_obj;\n"
+			"}\n"
+			"void yield() { app_obj.yield(); }\n"
+			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
+			"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
+			"\n" +
+			convenientComponentProperties +
+			"}\n";
+
+		for (auto it = scriptComponentInterfaces.begin(), end = scriptComponentInterfaces.end(); it != end; ++it)
+		{
+			baseCode += GenerateComponentInterface(*it);
+		}
+
+		return baseCode;
+	}
+
+	void AngelScriptWorld::BuildScripts(bool rebuild_all)
+	{
+		std::vector<std::pair<std::string, ModulePtr>> modulesToBuild;
+
+		std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>> scriptsToBuild;
+
+		std::map<std::string, std::shared_ptr<DependencyNode>> dependencyData;
+		auto getDependencyNode = [&](const std::string &name)->std::shared_ptr<DependencyNode>
+		{
+			std::shared_ptr<DependencyNode> dependencyNode;
+			auto _where = dependencyData.find(name);
+			if (_where == dependencyData.end())
+			{
+				dependencyNode = std::make_shared<DependencyNode>();
+				dependencyNode->Name = name;
+				dependencyData[name] = dependencyNode;
+			}
+			else
+				dependencyNode = _where->second;
+			return dependencyNode;
+		};
+
+		const std::string basePath = "Data/Scripts";
+		char **files = PHYSFS_enumerateFiles(basePath.c_str());
+		for (auto it = files; *it != 0; ++it)
+		{
+			const std::string fileName = basePath + "/" + *it;
+			std::string script = OpenString_PhysFS(fileName);
+			try
+			{
+				auto scriptInfo = ParseComponentScript(m_Engine, script);
+
+				scriptsToBuild[fileName] = std::make_pair(script, scriptInfo);
+				m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
+
+				// Add this data to the dependency tree
+				auto thisNode = getDependencyNode(scriptInfo.ClassName);
+				for (auto it = scriptInfo.UsedComponents.begin(), end = scriptInfo.UsedComponents.end(); it != end; ++it)
+				{
+					auto usedNode = getDependencyNode(it->first);
+					usedNode->UsedBy.insert(thisNode);
+				}
+			}
+			catch (PreprocessorException &ex)
+			{
+				SendToConsole("Failed to pre-process " + fileName + ": " + ex.what());
+			}
+		}
+
+		for (auto it = scriptsToBuild.begin(), end = scriptsToBuild.end(); it != end; ++it)
+		{
+			auto& fileName = it->first;
+			auto& script = it->second.first;
+			auto& scriptInfo = it->second.second;
+
+			auto module = m_ScriptManager->GetModule(fileName.c_str(), asGM_ALWAYS_CREATE);
+
+			module->AddCode(fileName, script);
+
+			module->AddCode("basecode", GenerateBaseCode(scriptInfo, m_ScriptInfo));
+
+			std::string moduleFileName = fileName.substr(fileName.rfind('/'));
+			moduleFileName.erase(moduleFileName.size() - 3);
+			moduleFileName = "ScriptCache" + moduleFileName + ".bytecode";
+			modulesToBuild.push_back(std::make_pair(moduleFileName, module));
+		}
+
+		for (auto it = modulesToBuild.begin(), end = modulesToBuild.end(); it != end; ++it)
+		{
+			auto& bytecodeFilename = it->first;
+			auto& module = it->second;
+			if (module->Build() >= 0)
+			{
+				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename));
+				module->GetASModule()->SaveByteCode(outFile.get());
+			}
+		}
+	}
+
+	std::vector<std::string> AngelScriptWorld::GetTypes() const
+	{
+		static const std::string types[] = { "ASScript" };
+		return std::vector<std::string>(types, types + sizeof(types));
+	}
+
+	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type)
+	{
+		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
+	}
+
+	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type, const Vector2&, float, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
+	{
+		if (type == "ASScript")
+		{
+			auto com = std::make_shared<ASScript>();
+			return com;
+		}
+		return std::shared_ptr<IComponent>();
+	}
+
+	void AngelScriptWorld::OnPrepare(const std::shared_ptr<IComponent>& component)
+	{
+		// TODO: request the module from the resource manager here (it will either be building right now, if it had changed, or it the resource manager will begin loading it)
+		component->Ready();
+	}
+
+	void AngelScriptWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	{
+		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		if (scriptComponent)
+		{
+			m_ActiveScripts.push_back(scriptComponent);
+		}
+	}
+
+	void AngelScriptWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	{
+		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		if (scriptComponent)
+		{
+			// Find and remove the deactivated script
+			auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
+			if (_where != m_ActiveScripts.end())
+			{
+				_where->swap(m_ActiveScripts.back());
+				m_ActiveScripts.pop_back();
+			}
+		}
+	}
+
+	ISystemTask* AngelScriptWorld::GetTask()
+	{
+		return m_ASTask;
+	}
+
+	void AngelScriptWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
+	{
+		if (type == "ASScript")
+		{
+			ASScript::DeltaSerialiser_t::copyChanges(result, current_data, delta);
+		}
+	}
+
+	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo()
+	{
+	}
+
+	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(const ComponentScriptInfo &other)
+		: ClassName(other.ClassName),
+		Properties(other.Properties),
+		UsedComponents(other.UsedComponents)
+	{
+	}
+
+	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(ComponentScriptInfo &&other)
+	{
+		ClassName = std::move(other.ClassName);
+		Properties = std::move(other.Properties);
+		UsedComponents = std::move(other.UsedComponents);
+	}
+
+	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (const ComponentScriptInfo &other)
+	{
+		ClassName = other.ClassName;
+		Properties = other.Properties;
+		UsedComponents = other.UsedComponents;
+		return *this;
+	}
+
+	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (ComponentScriptInfo &&other)
+	{
+		ClassName = std::move(other.ClassName);
+		Properties = std::move(other.Properties);
+		UsedComponents = std::move(other.UsedComponents);
+		return *this;
+	}
+
+	AngelScriptTask::AngelScriptTask(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
+		: ISystemTask(sysworld),
+		m_AngelScriptWorld(sysworld),
+		m_ScriptManager(script_manager)
+	{
+	}
+
+	AngelScriptTask::~AngelScriptTask()
+	{
+	}
+
 	void AngelScriptTask::Update(const float delta)
 	{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
-
-		std::set<ModulePtr> modulesToBuild;
 
 		tbb::spin_mutex mutex;
 
@@ -707,18 +955,69 @@ namespace FusionEngine
 									auto objType = obj->GetObjectType()->GetBaseType();
 									for (int i = 0, count = objType->GetPropertyCount(); i < count; ++i)
 									{
-										const char* name = 0; bool isPrivate = false; int offset = 0;// bool isReference = false;
-										objType->GetProperty(i, &name, 0, &isPrivate, &offset/*, &isReference*/);
+										const char* name = 0; int typeId = -1; bool isPrivate = false; int offset = 0;// bool isReference = false;
+										objType->GetProperty(i, &name, &typeId, &isPrivate, &offset/*, &isReference*/);
 										if (!isPrivate)
-										{
+										{	
 											auto _where = convenientComponents.find(name);
 											if (_where != convenientComponents.end())
 											{
 												//FSN_ASSERT(isReference);
-												auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
-												IComponent** component = static_cast<IComponent**>(propAddress);
-												_where->second->addRef();
-												*component = (_where->second.get());
+
+												auto propertyObjectType = m_AngelScriptWorld->GetScriptEngine()->GetObjectTypeById(typeId);
+												FSN_ASSERT(propertyObjectType != nullptr);
+												auto scriptInfoEntry = m_AngelScriptWorld->m_ScriptInfo.find(propertyObjectType->GetName());
+												if (scriptInfoEntry != m_AngelScriptWorld->m_ScriptInfo.end())
+												{
+													auto componentAsScript = dynamic_cast<ASScript*>( _where->second.get() );
+
+													// Create a script-interface object for this property
+													auto f = ScriptUtils::Calling::Caller::FactoryCaller(propertyObjectType, "");
+													if (!f)
+													{
+														SendToConsole("Failed to construct a script-interface object for " + _where->first + ": basecode is broken");
+														continue;
+													}
+													f.SetThrowOnException(true);
+													try
+													{
+														auto scriptInterfaceObj = *static_cast<asIScriptObject**>( f() );
+
+														auto setAppObj = ScriptUtils::Calling::Caller(scriptInterfaceObj, "void _setAppObj(ASScript @)");
+														if (setAppObj)
+														{
+															setAppObj.SetThrowOnException(true);
+															componentAsScript->addRef();
+															try
+															{
+																setAppObj(componentAsScript);
+															}
+															catch (ScriptUtils::Exception&)
+															{
+																componentAsScript->release();
+																continue;
+															}
+
+															// Set the property to point to the interface
+															auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
+															asIScriptObject** propObjPtr = static_cast<asIScriptObject**>(propAddress);
+															scriptInterfaceObj->AddRef();
+															*propObjPtr = scriptInterfaceObj;
+														}
+													}
+													catch (ScriptUtils::Exception& ex)
+													{
+														SendToConsole("Failed to construct a script-interface object for " + _where->first + ": " + ex.m_Message);
+														continue;
+													}
+												}
+												else // Not a script component
+												{
+													auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
+													IComponent** component = static_cast<IComponent**>(propAddress);
+													_where->second->addRef();
+													*component = (_where->second.get());
+												}
 											}
 											else
 											{
@@ -747,100 +1046,7 @@ namespace FusionEngine
 					auto moduleName = script->GetScriptPath();
 
 					tbb::spin_mutex::scoped_lock lock(mutex);
-					auto module = m_ScriptManager->GetModule(moduleName.c_str());
-					script->m_Module = module;
-					if (!module->IsBuilt() && modulesToBuild.find(module) == modulesToBuild.end())
-					{
-						// TODO: preprocess to get the interfaces used
-						std::string scriptText;
-						OpenString_PhysFS(scriptText, script->m_Path);
-
-						try
-						{
-							auto engine = m_ScriptManager->GetEnginePtr();
-							auto scriptInfo = ParseComponentScript(engine, scriptText);
-
-							// Generate script component interface
-							{
-								std::string scriptComponentInterface;
-								scriptComponentInterface += "class " + scriptInfo.ClassName + "\n{\n";
-								//for (auto it = scriptInfo.Properties.cbegin(), end = scriptInfo.Properties.cend(); it != end; ++it)
-								for (size_t i = 0; i < scriptInfo.Properties.size(); ++i)
-								{
-									std::string type, identifier;
-									std::stringstream str;
-									str << i;
-									std::string propIndex = str.str();
-									scriptComponentInterface += type + " get_" + identifier + "() const { return app_obj.getProperty(" + propIndex + "); }";
-								}
-							}
-
-							m_AngelScriptWorld->m_ScriptInfo[scriptInfo.ClassName] = std::move(scriptInfo);
-
-							if (module->AddCode(script->m_Path, scriptText) >= 0)
-							{
-								std::set<std::string> usedIdentifiers;
-								std::vector<std::string> scriptComponentInterfaces;
-								std::string convenientComponentProperties;
-								for (auto it = scriptInfo.UsedComponents.cbegin(), end = scriptInfo.UsedComponents.cend(); it != end; ++it)
-								{
-									const std::string& interfaceName = it->first;
-									std::string convenientIdentifier;
-									if (it->second.empty())
-										convenientIdentifier = fe_newlower(it->first);
-									else
-										convenientIdentifier = it->second;
-									if (usedIdentifiers.insert(convenientIdentifier).second) // Ignore duplicate #using directives
-									{
-										convenientComponentProperties += interfaceName + " @ " + convenientIdentifier + ";\n";
-
-										
-										auto _where = m_AngelScriptWorld->m_ScriptInfo.find(interfaceName);
-										if (_where != m_AngelScriptWorld->m_ScriptInfo.end())
-										{
-											std::string scriptPropertyInterface;
-											scriptComponentInterfaces.push_back(scriptPropertyInterface);
-										}
-									}
-								}
-
-								const std::string baseCode =
-									"class ScriptComponent\n"
-									"{\n"
-									"private ASScript@ app_obj;\n"
-									"void _setAppObj(ASScript@ _app_obj) {\n"
-									"@app_obj = _app_obj;\n"
-									"}\n"
-									"void yield() { app_obj.yield(); }\n"
-									"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
-									"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
-									"\n" +
-									convenientComponentProperties +
-									"}\n";
-
-								module->AddCode("basecode", baseCode);
-
-								for (auto it = scriptComponentInterfaces.begin(), end = scriptComponentInterfaces.end(); it != end; ++it)
-								{
-									const std::string usedCode =
-										"class ScriptComponent\n"
-										"{\n"
-										"private ASScript@ app_obj;\n"
-										"void _setAppObj(ASScript@ _app_obj) { @app_obj = _app_obj; }\n"
-										"\n" +
-										convenientComponentProperties +
-										"}\n";
-								}
-
-								modulesToBuild.insert(module);
-								//modulesToBuild.insert( std::make_pair(module, parentEntity->shared_from_this()) );
-							}
-						}
-						catch (PreprocessorException &ex)
-						{
-							SendToConsole("Failed to pre-process " + script->m_Path + ": " + ex.what());
-						}
-					}
+					script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
 
 					script->m_ModuleBuilt = true;
 
@@ -935,23 +1141,6 @@ namespace FusionEngine
 #endif
 
 		m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
-
-		for (auto it = modulesToBuild.begin(), end = modulesToBuild.end(); it != end; ++it)
-		{
-			auto& module = (*it);
-			//auto& module = it->first;
-			//auto& entity = it->second;
-
-			if (module->Build() < 0)
-			{
-				// TODO: report error?
-			}
-
-			//int r = m_ScriptManager->GetEnginePtr()->RegisterObjectType("test", 0, asOBJ_REF); FSN_ASSERT(r >= 0);
-			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_FACTORY, "test@ f()", asFUNCTION(testfac), asCALL_CDECL); FSN_ASSERT(r >= 0);
-			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(AddRef), asCALL_CDECL); FSN_ASSERT(r >= 0);
-			//m_ScriptManager->GetEnginePtr()->RegisterObjectBehaviour("test", asBEHAVE_ADDREF, "void f()", asFUNCTION(Release), asCALL_CDECL); FSN_ASSERT(r >= 0);
-		}
 	}
 
 }

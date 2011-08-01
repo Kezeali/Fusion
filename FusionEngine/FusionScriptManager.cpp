@@ -48,6 +48,7 @@
 // Scripting extensions
 #include "FusionScriptedSlots.h"
 #include "FusionScriptVector.h"
+#include "scriptany.h"
 #include "scriptarray.h"
 #include "scriptstdstring.h"
 #include "scriptstdvector.h"
@@ -891,6 +892,8 @@ namespace FusionEngine
 		m_VectorTypeId = Scripting::RegisterScriptVector(m_asEngine);
 		
 		RegisterVector<std::string>("StringArray", "string", m_asEngine);
+
+		RegisterScriptAny(m_asEngine);
 
 		ScriptedSlotWrapper::Register(m_asEngine);
 
