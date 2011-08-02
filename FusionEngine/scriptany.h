@@ -59,6 +59,7 @@ protected:
         int   typeId;
     };
 
+public:
 	valueStruct value;
 };
 

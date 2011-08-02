@@ -74,6 +74,8 @@ namespace FusionEngine
 
 		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
+		void CheckChangedPropertiesIn();
+
 	private:
 		// IComponent
 		std::string GetType() const { return "ASScript"; }

@@ -801,6 +801,7 @@ namespace FusionEngine
 		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
+			m_NewlyActiveScripts.push_back(scriptComponent);
 			m_ActiveScripts.push_back(scriptComponent);
 		}
 	}
@@ -811,11 +812,22 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			// Find and remove the deactivated script
-			auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
-			if (_where != m_ActiveScripts.end())
 			{
-				_where->swap(m_ActiveScripts.back());
-				m_ActiveScripts.pop_back();
+				auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
+				if (_where != m_ActiveScripts.end())
+				{
+					_where->swap(m_ActiveScripts.back());
+					m_ActiveScripts.pop_back();
+				}
+			}
+
+			{
+				auto _where = std::find(m_NewlyActiveScripts.begin(), m_NewlyActiveScripts.end(), scriptComponent);
+				if (_where != m_NewlyActiveScripts.end())
+				{
+					_where->swap(m_NewlyActiveScripts.back());
+					m_NewlyActiveScripts.pop_back();
+				}
 			}
 		}
 	}
@@ -880,16 +892,30 @@ namespace FusionEngine
 
 	void AngelScriptTask::Update(const float delta)
 	{
-		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
+		{
+		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
 
 		tbb::spin_mutex mutex;
 
-		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
+		auto instantiate_objects = [&](const tbb::blocked_range<size_t>& r)
 		{
-			//auto ctx = m_ScriptManager->CreateContext();
 			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
 			{
-				auto& script = scripts[i];
+				auto& script = scripts_to_instantiate[i];
+
+				if (script->m_ReloadScript)
+				{
+					script->m_ScriptObject.Release();
+
+					auto moduleName = script->GetScriptPath();
+
+					tbb::spin_mutex::scoped_lock lock(mutex);
+					script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
+
+					script->m_ModuleBuilt = true;
+
+					script->m_ReloadScript = false;
+				}
 
 				if (script->m_ModuleBuilt)
 				{
@@ -1024,20 +1050,27 @@ namespace FusionEngine
 
 					script->m_ModuleBuilt = false;
 				}
+			}
+		};
 
-				if (script->m_ReloadScript)
-				{
-					script->m_ScriptObject.Release();
+#ifdef FSN_PARALLEL_SCRIPT_EXECUTION
+		tbb::parallel_for(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()), instantiate_objects);
+#else
+		instantiate_objects(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()));
+#endif
 
-					auto moduleName = script->GetScriptPath();
+		scripts_to_instantiate.clear();
+		} // scope for instantiate_objects lambda
 
-					tbb::spin_mutex::scoped_lock lock(mutex);
-					script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
+		{
+		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
 
-					script->m_ModuleBuilt = true;
-
-					script->m_ReloadScript = false;
-				}
+		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
+		{
+			//auto ctx = m_ScriptManager->CreateContext();
+			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
+			{
+				auto& script = scripts[i];
 
 				if (script->m_ScriptObject.IsValid())
 				{
@@ -1116,10 +1149,7 @@ namespace FusionEngine
 						//	ctx->SetObject(NULL);
 						//}
 
-						for (auto it = script->m_ScriptProperties.begin(), end = script->m_ScriptProperties.end(); it != end; ++it)
-						{
-							script->OnPropertyChanged(it->get());
-						}
+						script->CheckChangedPropertiesIn();
 					}
 				}
 			}
@@ -1130,6 +1160,8 @@ namespace FusionEngine
 #else
 		execute_scripts(tbb::blocked_range<size_t>(0, scripts.size()));
 #endif
+
+		} // Scope for execute_scripts lambda
 
 		m_ScriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 	}

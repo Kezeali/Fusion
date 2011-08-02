@@ -75,11 +75,18 @@ namespace FusionEngine
 			: m_Object(obj),
 			m_Index(index)
 		{
+			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
+
 			auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-			new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
+			new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
 			m_Value = any;
 			any->Release(); // Assigning the intrusive-ptr above increments the ref-count
 			//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
+		}
+
+		void SetOwner(IComponent* com)
+		{
+			m_Owner = com;
 		}
 
 		~ScriptAnyTSP()
@@ -87,15 +94,42 @@ namespace FusionEngine
 			//m_Value->Release();
 		}
 
+		bool IsDirty()
+		{
+			if (m_Value->value.typeId == m_TypeId)
+			{
+				if (m_TypeId & asTYPEID_OBJHANDLE)
+				{
+					return (*(void**)m_Object->GetAddressOfProperty(m_Index)) != (/**(void**)*/m_Value->value.valueObj);
+					//memcmp(/**(void**)*/m_Object->GetAddressOfProperty(m_Index), /**(void**)*/ref, sizeof(uintptr_t));
+				}
+				else
+				{
+					if (m_TypeId & asTYPEID_MASK_OBJECT)
+					{
+						size_t size = m_Object->GetEngine()->GetObjectTypeById(m_TypeId)->GetSize();
+						return memcmp(m_Object->GetAddressOfProperty(m_Index), m_Value->value.valueObj, size) != 0;
+					}
+					else
+					{
+						size_t size = m_Object->GetEngine()->GetSizeOfPrimitiveType(m_TypeId);
+						return memcmp(m_Object->GetAddressOfProperty(m_Index), &m_Value->value.valueInt, size) != 0;
+					}
+				}
+			}
+			else
+				return true;
+		}
+
 		void Synchronise()
 		{
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
-				m_Value->Retrieve(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index));
+				m_Value->Retrieve(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
 			}
 			else
 			{
-				m_Value->Store(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index));
+				m_Value->Store(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
 			}
 		}
 
@@ -113,16 +147,20 @@ namespace FusionEngine
 			auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
 			m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
 			any->Release();
+
+			m_Owner->OnPropertyChanged(this);
 		}
 
 	protected:
 		boost::intrusive_ptr<asIScriptObject> m_Object;
 		unsigned int m_Index;
 
-		boost::intrusive_ptr<CScriptAny> m_Value;
+		int m_TypeId;
 
+		IComponent* m_Owner;
+
+		boost::intrusive_ptr<CScriptAny> m_Value;
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
-		//tbb::enumerable_thread_specific<CScriptAny*> m_WriteBuffers;
 	};
 
 	ASScript::ASScript()
@@ -189,24 +227,24 @@ namespace FusionEngine
 				auto interfaceIndex = std::distance(properties.cbegin(), _where);
 				FSN_ASSERT(interfaceIndex >= 0);
 
-				int typeId = obj->GetPropertyTypeId(i);
+				auto comProp = new ScriptAnyTSP(obj, i);
 
-				IComponentProperty* comProp = new ScriptAnyTSP(obj, i);
-				//switch (typeId)
-				//{
-				//case asTYPEID_BOOL:
-				//	comProp = new ScriptTSP<bool>(obj, i); break;
-				//case asTYPEID_UINT64:
-				//	comProp = new ScriptTSP<uint64_t>(obj, i); break;
-				//};
 				m_ScriptProperties[(size_t)interfaceIndex].reset(comProp);
 
 				AddProperty(comProp);
+				comProp->SetOwner(this);
 			}
 		}
-		//for (auto it = properties.begin(), end = properties.end(); it != end; ++it)
-		//{
-		//}
+	}
+
+	void ASScript::CheckChangedPropertiesIn()
+	{
+		for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+		{
+			auto scriptProperty = static_cast<ScriptAnyTSP*>( it->get() ); FSN_ASSERT(scriptProperty);
+			if (scriptProperty->IsDirty())
+				OnPropertyChanged(scriptProperty);
+		}
 	}
 
 	void ASScript::OnSiblingAdded(const std::shared_ptr<IComponent>& com)

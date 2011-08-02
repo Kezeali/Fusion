@@ -58,7 +58,14 @@ class Test : ScriptComponent
 		
 		if (frames == 3)
 		{
-			console.println("testb.frames: " + script_b.frames);
+			//console.println("testb.frames: " + script_b.frames);
+			script_b.foo = 99;
+			console.println("testb.foo: " + script_b.foo);
+		}
+		
+		if (frames == 4)
+		{
+			console.println("testb.foo: " + script_b.foo);
 		}
 
 		//if (irigidbody.AngularDamping.value != lastDamping)

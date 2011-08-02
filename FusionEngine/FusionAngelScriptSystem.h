@@ -91,6 +91,7 @@ namespace FusionEngine
 
 		ISystemTask* GetTask();
 
+		std::vector<std::shared_ptr<ASScript>> m_NewlyActiveScripts;
 		std::vector<std::shared_ptr<ASScript>> m_ActiveScripts;
 
 	public:
