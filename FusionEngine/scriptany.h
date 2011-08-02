@@ -62,6 +62,9 @@ protected:
 	valueStruct value;
 };
 
+void intrusive_ptr_add_ref(CScriptAny *ptr);
+void intrusive_ptr_release(CScriptAny *ptr);
+
 void RegisterScriptAny(asIScriptEngine *engine);
 void RegisterScriptAny_Native(asIScriptEngine *engine);
 void RegisterScriptAny_Generic(asIScriptEngine *engine);

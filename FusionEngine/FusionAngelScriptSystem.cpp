@@ -146,30 +146,6 @@ namespace FusionEngine
 		}
 	}
 
-	CScriptAny* ASScript::GetProperty(unsigned int index)
-	{
-		//ASScript* object = static_cast<ASScript*>(gen->GetObject());
-		//unsigned int index = gen->GetArgWord(1);
-
-		const auto& scriptObject = m_ScriptObject.GetScriptObject();
-		if (scriptObject == nullptr)
-			asGetActiveContext()->SetException("Tried to access a script component that wasn't ready");
-
-		auto prop = scriptObject->GetAddressOfProperty(index);
-		int propTypeId = scriptObject->GetPropertyTypeId(index);
-
-		FSN_ASSERT(propTypeId != asTYPEID_BOOL); // I'm not sure what type CScriptAny stores bools as
-
-		if ((propTypeId - asTYPEID_INT8) <= asTYPEID_UINT64)
-			propTypeId = asTYPEID_INT64;
-		else if (propTypeId == asTYPEID_FLOAT)
-			propTypeId = asTYPEID_DOUBLE;
-
-		auto ptr = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(ptr);
-		new (ptr) CScriptAny(prop, propTypeId, scriptObject->GetEngine());
-		return ptr;
-	}
-
 	static std::pair<asETokenClass, int> ParseNextToken(asIScriptEngine* engine, const std::string& script, size_t &pos)
 	{
 		int tokenLength;
@@ -557,6 +533,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
+			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty,(unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
 		}
 	}
 
@@ -644,7 +621,7 @@ namespace FusionEngine
 			std::stringstream str;
 			// TODO: get the actual property-index (this hack just accounts for properties in the base-class),
 			//  or create a mapping in the ASScript upon setting the m_ScriptObject (SetScriptObject(obj, scriptInfo) { iterate props, compare names, create mapping })
-			str << i + 1 + scriptInfo.UsedComponents.size();
+			str << i;
 			std::string propIndex = str.str();
 			const bool isHandleType = type.find('@') != std::string::npos;
 			scriptComponentInterface +=
@@ -652,7 +629,11 @@ namespace FusionEngine
 				+ type + " value; "
 				"any propAny = app_obj.getProperty(" + propIndex + "); "
 				"propAny.retrieve(" + std::string(isHandleType ? "@" : "") + "value); "
-				"return value; }\n";
+				"return value; }\n"
+
+				"void set_" + identifier + "(" + type + " value) { "
+				"app_obj.setProperty(" + propIndex + ", value);"
+				"}\n";
 		}
 		scriptComponentInterface += "}\n";
 		return scriptComponentInterface;
@@ -727,30 +708,34 @@ namespace FusionEngine
 			return dependencyNode;
 		};
 
-		const std::string basePath = "Data/Scripts";
+		const std::string basePath = "Scripts";
 		char **files = PHYSFS_enumerateFiles(basePath.c_str());
 		for (auto it = files; *it != 0; ++it)
 		{
+			//PHYSFS_isDirectory(*it);
 			const std::string fileName = basePath + "/" + *it;
-			std::string script = OpenString_PhysFS(fileName);
-			try
+			if (fileName.rfind(".as") != std::string::npos)
 			{
-				auto scriptInfo = ParseComponentScript(m_Engine, script);
-
-				scriptsToBuild[fileName] = std::make_pair(script, scriptInfo);
-				m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
-
-				// Add this data to the dependency tree
-				auto thisNode = getDependencyNode(scriptInfo.ClassName);
-				for (auto it = scriptInfo.UsedComponents.begin(), end = scriptInfo.UsedComponents.end(); it != end; ++it)
+				std::string script = OpenString_PhysFS(fileName);
+				try
 				{
-					auto usedNode = getDependencyNode(it->first);
-					usedNode->UsedBy.insert(thisNode);
+					auto scriptInfo = ParseComponentScript(m_Engine, script);
+
+					scriptsToBuild[fileName] = std::make_pair(script, scriptInfo);
+					m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
+
+					// Add this data to the dependency tree
+					auto thisNode = getDependencyNode(scriptInfo.ClassName);
+					for (auto it = scriptInfo.UsedComponents.begin(), end = scriptInfo.UsedComponents.end(); it != end; ++it)
+					{
+						auto usedNode = getDependencyNode(it->first);
+						usedNode->UsedBy.insert(thisNode);
+					}
 				}
-			}
-			catch (PreprocessorException &ex)
-			{
-				SendToConsole("Failed to pre-process " + fileName + ": " + ex.what());
+				catch (PreprocessorException &ex)
+				{
+					SendToConsole("Failed to pre-process " + fileName + ": " + ex.what());
+				}
 			}
 		}
 
@@ -929,7 +914,8 @@ namespace FusionEngine
 								auto obj = *static_cast<asIScriptObject**>( f() );
 								if (obj)
 								{
-									script->m_ScriptObject = ScriptObject(obj);
+									auto scriptInfoForThis = m_AngelScriptWorld->m_ScriptInfo.find(objectType->GetName());
+									script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
 									auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
 									if (setAppObj)
 									{
@@ -1129,6 +1115,11 @@ namespace FusionEngine
 
 						//	ctx->SetObject(NULL);
 						//}
+
+						for (auto it = script->m_ScriptProperties.begin(), end = script->m_ScriptProperties.end(); it != end; ++it)
+						{
+							script->OnPropertyChanged(it->get());
+						}
 					}
 				}
 			}

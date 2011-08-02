@@ -70,6 +70,9 @@ namespace FusionEngine
 		void CreateCoroutine(const std::string& functionName);
 		void CreateCoroutine(asIScriptFunction* function);
 		CScriptAny* GetProperty(unsigned int index);
+		bool SetProperty(unsigned int index, void* ref, int typeId);
+
+		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
 	private:
 		// IComponent
@@ -98,6 +101,8 @@ namespace FusionEngine
 		ScriptObject m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
 		std::vector<boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutines;
+
+		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 	};
 
 }

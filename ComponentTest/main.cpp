@@ -414,11 +414,11 @@ public:
 					if (i < 200)
 					{
 						auto script = entity->GetComponent<IScript>("script_a");
-						script->ScriptPath.Set("Data/Scripts/test_script.as");
+						script->ScriptPath.Set("Scripts/test_script.as");
 
 						script = entity->GetComponent<IScript>("script_b");
 						if (script)
-							script->ScriptPath.Set("Data/Scripts/TestB.as");
+							script->ScriptPath.Set("Scripts/TestB.as");
 					}
 					entity->SynchroniseParallelEdits();
 

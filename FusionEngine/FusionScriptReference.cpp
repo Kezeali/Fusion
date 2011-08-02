@@ -41,6 +41,16 @@ void intrusive_ptr_release(asIScriptContext *ptr)
 	ptr->Release();
 }
 
+void intrusive_ptr_add_ref(asIScriptObject *ptr)
+{
+	ptr->AddRef();
+}
+
+void intrusive_ptr_release(asIScriptObject *ptr)
+{
+	ptr->Release();
+}
+
 namespace FusionEngine
 {
 
