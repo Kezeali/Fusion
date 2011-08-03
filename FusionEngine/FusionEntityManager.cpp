@@ -451,11 +451,14 @@ namespace FusionEngine
 		if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
 			m_EntitiesByName[entity->GetName()] = entity;
 
-		m_StreamingManager->AddEntity(entity);
-		m_EntitySynchroniser->OnEntityAdded(entity);
+		//m_StreamingManager->AddEntity(entity);
+		//m_EntitySynchroniser->OnEntityAdded(entity);
 
-		if (!CheckState(entity->GetDomain(), DS_STREAMING))
-			insertActiveEntity(entity);
+		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
+			//insertActiveEntity(entity);
+		m_EntitiesToActivate.push_back(entity);
+
+		entity->SetPropChangedQueue(&m_PropChangedQueue);
 	}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
@@ -834,6 +837,17 @@ namespace FusionEngine
 	void EntityManager::insertActiveEntity(const EntityPtr &entity)
 	{
 		entity->StreamIn();
+		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+		{
+			auto& com = *it;
+			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			{
+				_where->second->OnActivation(com);
+			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
+		}
 		m_ActiveEntities.push_back(entity);
 	}
 

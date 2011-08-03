@@ -318,6 +318,8 @@ namespace FusionEngine
 		// Will notify entities that the given player was added next time Update is called 
 		void OnPlayerAdded(unsigned int local_index, PlayerID net_id);
 
+		tbb::concurrent_queue<IComponentProperty*> m_PropChangedQueue;
+
 	protected:
 		//! Updates the entities that have been added to the active-entities list
 		void updateEntities(EntityArray &entities, float split);

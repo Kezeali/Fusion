@@ -77,8 +77,9 @@ namespace FusionEngine
 		{
 			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
 
-			auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-			new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
+			//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
+			//new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
+			auto any = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
 			m_Value = any;
 			any->Release(); // Assigning the intrusive-ptr above increments the ref-count
 			//m_Value = new CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_Object->GetPropertyTypeId(m_Index), obj->GetEngine());
@@ -144,8 +145,10 @@ namespace FusionEngine
 
 		void Set(void* ref, int typeId)
 		{
-			auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-			m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
+			//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
+			//m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
+			auto any = new CScriptAny(ref, typeId, m_Object->GetEngine());
+			m_Writer.Write(any);
 			any->Release();
 
 			m_Owner->OnPropertyChanged(this);
@@ -162,6 +165,23 @@ namespace FusionEngine
 		boost::intrusive_ptr<CScriptAny> m_Value;
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
 	};
+
+	void ASScript::Register(asIScriptEngine* engine)
+	{
+		{
+			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
+		}
+
+		{
+			int r;
+			ASScript::RegisterType<ASScript>(engine, "ASScript");
+			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
+			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty,(unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
+		}
+	}
 
 	ASScript::ASScript()
 		: m_ReloadScript(false),

@@ -74,8 +74,11 @@ namespace FusionEngine
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const
 	{
-		static const std::string types[] = { "CLSprite", "" };
-		return std::vector<std::string>(types, types + sizeof(types));
+		//static const std::string types[] = { "CLSprite", "" };
+		//return std::vector<std::string>(types, types + sizeof(types));
+		std::vector<std::string> types;
+		types.push_back("CLSprite");
+		return types;
 	}
 
 	std::shared_ptr<IComponent> CLRenderWorld::InstantiateComponent(const std::string& type)

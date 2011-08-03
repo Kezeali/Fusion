@@ -42,6 +42,10 @@
 #include "FusionNetDestinationHelpers.h"
 #include "FusionPlayerRegistry.h"
 
+#include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionScriptManager.h"
+#include "FusionAngelScriptComponent.h"
+
 using namespace RakNet;
 
 namespace FusionEngine
@@ -56,6 +60,8 @@ namespace FusionEngine
 		NetworkManager::getSingleton().Subscribe(MTID_INSTANCEENTITY, this);
 		NetworkManager::getSingleton().Subscribe(MTID_REMOVEENTITY, this);
 		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
+
+		ScriptManager::getSingleton().RegisterGlobalObject("Ontology ontology", this);
 	}
 
 	InstancingSynchroniser::~InstancingSynchroniser()
@@ -157,7 +163,7 @@ namespace FusionEngine
 
 	}
 
-	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, PlayerID owner_id)
+	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, Vector2 pos, float angle, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
 		if (!requester)
 			FSN_EXCEPT(ExCode::InvalidArgument, "You must pass a valid requester instance");
@@ -181,29 +187,45 @@ namespace FusionEngine
 					else
 					{
 						AddLogEntry(g_LogGeneral, "Out of IDs: can't fulfil requests to instanciate Entities anymore");
-						return;
+						return EntityPtr();
 					}
 				}
 				sendInstancingMessage(requester->GetID(), id, type, name, owner_id);
 			}
 
-			EntityPtr entity = m_Factory->InstanceEntity(type, Vector2::zero(), 0.f);
+			//EntityPtr entity = m_Factory->InstanceEntity(type, pos, angle);
+			EntityPtr entity = std::make_shared<Entity>();
 
-			entity->SetID(id);
-			entity->SetOwnerID(owner_id);
-			entity->_setName(name);
+			if (entity)
+			{
+				entity->SetID(id);
+				entity->SetOwnerID(owner_id);
+				entity->_setName(name);
 
-			m_EntityManager->AddEntity(entity);
+				m_EntityManager->AddEntity(entity);
 
-			// TODO: set this entity to a property, rather than calling this callback
-			if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
-				requester->OnInstanceRequestFulfilled(entity);
+				auto transform = m_Factory->InstanceComponent(type, pos, angle);
+				entity->AddComponent(transform);
+
+				// TODO: set this entity to a property, rather than calling this callback
+				if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
+					requester->OnInstanceRequestFulfilled(entity);
+			}
+
+			return entity;
 		}
+
+		return EntityPtr();
 	}
 
-	void InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
+	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string& name, PlayerID owner)
 	{
-		RequestInstance(requester, syncable, type, "", owner);
+		return RequestInstance(requester, syncable, Vector2::zero(), 0.f, type, name, owner);
+	}
+
+	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
+	{
+		return RequestInstance(requester, syncable, Vector2::zero(), 0.f, type, "", owner);
 	}
 
 	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
@@ -309,6 +331,32 @@ namespace FusionEngine
 				sendInstancingMessage(0, it->second->GetID(), it->second->GetType(), it->second->GetName(), it->second->GetOwnerID());
 			}
 		}
+	}
+
+	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, InstancingSynchroniser* obj)
+	{
+		//asIScriptObject* com = static_cast<asIScriptObject*>( asGetActiveContext()->GetThisPointer() );
+
+		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
+		auto entity = app_obj->GetParent()->shared_from_this();
+
+		return obj->RequestInstance(entity, synch, pos, angle, transform_component, "");
+	}
+
+	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)
+	{
+		entity->AddComponent(obj->m_Factory->InstanceComponent(type), identifier);
+	}
+
+	void InstancingSynchroniser::Register(asIScriptEngine* engine)
+	{
+		RegisterSingletonType<InstancingSynchroniser>("Ontology", engine);
+
+		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float)",
+			asFUNCTIONPR(InstantiationSynchroniser_Instantiate, (ASScript*, const std::string&, bool, Vector2, float, InstancingSynchroniser*), EntityPtr), asCALL_CDECL_OBJLAST);
+
+		engine->RegisterObjectMethod("Ontology", "void addComponent(Entity, const string &in, const string &in)",
+			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, InstancingSynchroniser*), void), asCALL_CDECL_OBJLAST);
 	}
 
 }

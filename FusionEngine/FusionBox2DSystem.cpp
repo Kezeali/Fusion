@@ -63,7 +63,7 @@ namespace FusionEngine
 	std::vector<std::string> Box2DWorld::GetTypes() const
 	{
 		static const std::string types[] = { "b2RigidBody", "b2Dynamic", "b2Kinematic", "b2Static", "b2Circle", "b2Polygon" };
-		return std::vector<std::string>(types, types + sizeof(types));
+		return std::vector<std::string>(types, types + 6);
 	}
 
 	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type)

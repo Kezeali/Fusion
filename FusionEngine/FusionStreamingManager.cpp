@@ -39,7 +39,7 @@ namespace FusionEngine
 
 	const float s_DefaultActivationRange = 1500.f;
 	const float s_DefaultCellSize = 500.f;
-	const float s_DefaultWorldSize = 200000.f;
+	const float s_DefaultWorldSize = 20000.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
 

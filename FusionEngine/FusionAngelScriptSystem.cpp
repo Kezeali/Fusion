@@ -520,21 +520,6 @@ namespace FusionEngine
 	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
 		: m_ScriptManager(manager)
 	{
-		auto engine = m_ScriptManager->GetEnginePtr();
-
-		{
-			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
-		}
-
-		{
-			int r;
-			ASScript::RegisterType<ASScript>(engine, "ASScript");
-			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
-			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty,(unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
-		}
 	}
 
 	ISystemWorld* AngelScriptSystem::CreateWorld()
@@ -674,6 +659,7 @@ namespace FusionEngine
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
+			"Entity instantiate(const string &in type, bool synch, Vector pos, float angle) { return ontology.instantiate(@app_obj, type, synch, pos, angle); }\n"
 			"\n" +
 			convenientComponentProperties +
 			"}\n";
@@ -772,7 +758,7 @@ namespace FusionEngine
 	std::vector<std::string> AngelScriptWorld::GetTypes() const
 	{
 		static const std::string types[] = { "ASScript" };
-		return std::vector<std::string>(types, types + sizeof(types));
+		return std::vector<std::string>(types, types + 1);
 	}
 
 	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type)

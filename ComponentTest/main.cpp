@@ -18,6 +18,7 @@
 
 // Network
 #include "../FusionEngine/FusionRakNetwork.h"
+#include "../FusionEngine/FusionPacketDispatcher.h"
 #include "../FusionEngine/FusionPlayerRegistry.h"
 
 // System management
@@ -38,6 +39,7 @@
 
 // Various
 #include "../FusionEngine/FusionInputHandler.h"
+#include "../FusionEngine/FusionNetworkManager.h"
 #include "../FusionEngine/FusionScriptManager.h"
 
 #include "../FusionEngine/FusionContextMenu.h"
@@ -45,10 +47,13 @@
 #include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntityFactory.h"
 #include "../FusionEngine/FusionExceptionFactory.h"
+#include "../FusionEngine/FusionInstanceSynchroniser.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
 #include "../FusionEngine/FusionRenderer.h"
 #include "../FusionEngine/FusionScriptModule.h"
 #include "../FusionEngine/FusionScriptSound.h"
+
+#include "../FusionEngine/FusionAngelScriptComponent.h"
 
 #include <ClanLib/application.h>
 #include <ClanLib/core.h>
@@ -258,6 +263,11 @@ public:
 
 				RegisterComponentInterfaceType<IScript>(asEngine);
 
+				// Entity generation
+				Entity::Register(asEngine);
+				ASScript::Register(asEngine);
+				InstancingSynchroniser::Register(asEngine);
+
 				// Console singleton
 				scriptManager->RegisterGlobalObject("Console console", Console::getSingletonPtr());
 
@@ -297,6 +307,18 @@ public:
 				// Player Registry
 				std::shared_ptr<PlayerRegistry> playerRegistry = std::make_shared<PlayerRegistry>();
 
+				// Network
+				std::unique_ptr<RakNetwork> network(new RakNetwork());
+				std::unique_ptr<PacketDispatcher> packetDispatcher(new PacketDispatcher());
+				std::unique_ptr<NetworkManager> networkManager(new NetworkManager(network.get(), packetDispatcher.get()));
+
+				// Entity management / instantiation
+				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
+				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get()));
+				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager());
+				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
+				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
 				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get()));
@@ -313,10 +335,14 @@ public:
 				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc));
 				auto renderWorld = clRenderSystem->CreateWorld();
 				ontology.push_back(renderWorld);
+
+				entityFactory->AddInstancer(renderWorld);
 				
 				const std::unique_ptr<Box2DSystem> box2dSystem(new Box2DSystem());
 				auto box2dWorld = box2dSystem->CreateWorld();
 				ontology.push_back(box2dWorld);
+
+				entityFactory->AddInstancer(box2dWorld);
 				
 				static_cast<CLRenderWorld*>(renderWorld)->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld)->Getb2World());
 
@@ -324,17 +350,20 @@ public:
 				auto asWorld = asSystem->CreateWorld();
 				ontology.push_back(asWorld);
 
+				entityFactory->AddInstancer(asWorld);
+
 				scheduler->SetOntology(ontology);
 
 
 				std::vector<std::shared_ptr<Entity>> entities;
 
-				tbb::concurrent_queue<IComponentProperty*> propChangedQueue;
+				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
 
 				float xtent = 720;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
 #ifdef _DEBUG
-				for (unsigned int i = 0; i < 400; ++i)
+				xtent = 20;
+				for (unsigned int i = 0; i < 1; ++i)
 #else
 				for (unsigned int i = 0; i < 1500; ++i)
 #endif
@@ -351,7 +380,7 @@ public:
 					str << i;
 					entity->_setName("entity" + str.str());
 
-					entity->SetPropChangedQueue(&propChangedQueue);
+					entity->SetPropChangedQueue(&entityManager->m_PropChangedQueue);
 					
 					std::shared_ptr<IComponent> b2CircleFixture;
 					std::shared_ptr<IComponent> b2BodyCom;

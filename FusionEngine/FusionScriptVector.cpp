@@ -139,7 +139,7 @@ namespace FusionEngine { namespace Scripting
 	
 	static void VectorDestructor(Vector2 *ptr)
 	{
-		delete ptr;
+		ptr->~Vector2();
 	}
 
 	////////////////////////////////

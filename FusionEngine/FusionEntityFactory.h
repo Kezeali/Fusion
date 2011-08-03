@@ -45,7 +45,8 @@
 namespace FusionEngine
 {
 
-	typedef std::shared_ptr<ISystemWorld> ComponentInstancerPtr;
+	//typedef std::shared_ptr<ISystemWorld> ComponentInstancerPtr;
+	typedef ISystemWorld* ComponentInstancerPtr;
 
 	//! Prefab base class
 	class Prefab
@@ -86,6 +87,8 @@ namespace FusionEngine
 	 */
 	class EntityFactory
 	{
+		// TEMP (access to m_ComponentInstancers):
+		friend class EntityManager;
 	protected:
 		//! Maps tags to entity definitions
 		typedef std::tr1::unordered_map<std::string, PrefabPtr> PrefabMap;
@@ -98,8 +101,8 @@ namespace FusionEngine
 		~EntityFactory();
 
 	public:
-		//! Instanciates a component of the given type
-		std::shared_ptr<IComponent> InstanceComponent(const std::string& type);
+		//! Instantiates a component of the given type
+		std::shared_ptr<IComponent> InstanceComponent(const std::string& type, const Vector2& position = Vector2::zero(), float angle = 0.f);
 
 		//! Instances Entity
 		/*!
@@ -112,6 +115,8 @@ namespace FusionEngine
 
 		//! Adds an instancer object for the given type
 		void AddInstancer(const std::string &type, const ComponentInstancerPtr &instancer);
+
+		void AddInstancer(const ComponentInstancerPtr &instancer);
 
 		//! Creates an instancer for the the given scripted type
 		bool LoadPrefabType(const std::string &type);

@@ -708,6 +708,16 @@ namespace FusionEngine
 	{
 	}
 
+	std::shared_ptr<IComponent> EntityFactory::InstanceComponent(const std::string& type, const Vector2& position, float angle)
+	{
+		auto _where = m_ComponentInstancers.find(type);
+		if (_where != m_ComponentInstancers.end())
+		{
+			return _where->second->InstantiateComponent(type, position, angle, nullptr, nullptr);
+		}
+		return std::shared_ptr<IComponent>();
+	}
+
 	EntityPtr EntityFactory::InstanceEntity(const std::string &prefab_type, const Vector2& position, float angle)
 	{
 		EntityPtr entity;
@@ -760,6 +770,13 @@ namespace FusionEngine
 	void EntityFactory::AddInstancer(const std::string &type, const ComponentInstancerPtr &instancer)
 	{
 		m_ComponentInstancers[type] = instancer;
+	}
+
+	void EntityFactory::AddInstancer(const ComponentInstancerPtr &instancer)
+	{
+		auto types = instancer->GetTypes();
+		for (auto it = types.begin(), end = types.end(); it != end; ++it)
+			AddInstancer(*it, instancer);
 	}
 
 	bool EntityFactory::LoadPrefabType(const std::string &type)

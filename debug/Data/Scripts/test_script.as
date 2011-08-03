@@ -29,12 +29,20 @@ class Test : ScriptComponent
 	}
 
 	float lastDamping;
+	
+	void onSpawn()
+	{
+		Entity entity = instantiate("b2Dynamic", false, Vector(10, 10), 0);
+		ontology.addComponent(entity, "CLSprite", "");
+	}
 
 	void update(float delta)
 	{
 		++frames;
 		if (frames == 1)
 		{
+			onSpawn();
+			
 			//console.println("itransform implemented by: " + itransform.getType());
 			//console.println("isprite implemented by: " + isprite.getType());
 			//console.println("icircleshape implemented by: " + icircleshape.getType());

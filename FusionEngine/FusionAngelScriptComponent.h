@@ -76,6 +76,8 @@ namespace FusionEngine
 
 		void CheckChangedPropertiesIn();
 
+		static void Register(asIScriptEngine* engine);
+
 	private:
 		// IComponent
 		std::string GetType() const { return "ASScript"; }
