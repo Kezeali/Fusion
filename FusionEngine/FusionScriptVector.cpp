@@ -142,11 +142,31 @@ namespace FusionEngine { namespace Scripting
 		ptr->~Vector2();
 	}
 
+	static void ColorfCtor(void *ptr)
+	{
+		new (ptr) CL_Colorf();
+	}
+
+	static void ColorfCopyCtor(const CL_Colorf &other, void *ptr)
+	{
+		new (ptr) CL_Colorf(other);
+	}
+	
+	static void ColorfDtor(CL_Colorf *ptr)
+	{
+		ptr->~CL_Colorf();
+	}
+
 	////////////////////////////////
 	// AngelScript type registration
 	int RegisterScriptVector_Native(asIScriptEngine *engine)
 	{
 		int r, typeId;
+
+		r = engine->RegisterObjectType("Colour", sizeof(CL_Colorf), asOBJ_VALUE | asOBJ_APP_CLASS_CK); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ColorfCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_CONSTRUCT, "void f(const Colour &in)", asFUNCTION(ColorfCopyCtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectBehaviour("Colour", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(ColorfDtor), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 		// Register the type
 #ifdef FSN_REFCOUNTED_VECTOR

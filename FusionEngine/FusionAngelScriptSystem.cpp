@@ -639,7 +639,15 @@ namespace FusionEngine
 				convenientIdentifier = it->second;
 			if (usedIdentifiers.insert(convenientIdentifier).second) // Ignore duplicate #using directives
 			{
-				convenientComponentProperties += interfaceName + " @ " + convenientIdentifier + ";\n";
+				if (interfaceName[0] != 'I')
+					convenientComponentProperties += interfaceName + " @ " + convenientIdentifier + ";\n";
+				else
+				{
+					convenientComponentProperties +=
+						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
+						"return cast<" + interfaceName + ">(@app_obj.getParent().getComponent('" + interfaceName + "','" + it->second + "'));"
+						"}\n";
+				}
 
 				auto _where = scriptComponents.find(interfaceName);
 				if (_where != scriptComponents.end())
@@ -1011,10 +1019,10 @@ namespace FusionEngine
 												}
 												else // Not a script component
 												{
-													auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
-													IComponent** component = static_cast<IComponent**>(propAddress);
-													_where->second->addRef();
-													*component = (_where->second.get());
+													//auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
+													//void** component = static_cast<void**>(propAddress);
+													//_where->second->addRef();
+													//*component = (_where->second.get());
 												}
 											}
 											else

@@ -252,6 +252,26 @@ namespace FusionEngine
 		}
 	}
 
+	std::shared_ptr<IComponent> Entity::GetComponent(const std::string& type, std::string identifier) const
+	{
+		auto _where = m_ComponentInterfaces.find(type);
+		if (_where != m_ComponentInterfaces.end())
+		{
+			FSN_ASSERT(!_where->second.empty());
+			if (identifier.empty())
+			{
+				return _where->second.begin()->second;
+			}
+			else
+			{
+				auto implEntry = _where->second.find(identifier);
+				if (implEntry != _where->second.end())
+					return implEntry->second;
+			}
+		}
+		return std::shared_ptr<IComponent>();
+	}
+
 	const std::vector<std::shared_ptr<IComponent>>& Entity::GetComponents() const
 	{
 		return m_Components;
@@ -777,10 +797,21 @@ namespace FusionEngine
 		entity->SetPosition(Vector2(x, y));
 	}
 
+	static IComponent* Entity_GetComponent(EntityPtr* entity, const std::string& type, const std::string& ident = std::string())
+	{
+		auto com = (*entity)->GetComponent(type, ident);
+		com->addRef();
+		return com.get();
+	}
+
 	void Entity::Register(asIScriptEngine *engine)
 	{
 		int r;
 		RegisterSharedPtrType<Entity>("Entity", engine);
+
+		r = engine->RegisterObjectMethod("Entity",
+			"IComponent@ getComponent(const string &in, const string &in ident = string()) const",
+			asFUNCTION(Entity_GetComponent), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Entity",
 			"const string& getName() const",

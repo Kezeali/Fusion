@@ -212,6 +212,8 @@ namespace FusionEngine
 			return std::shared_ptr<Interface>();
 		}
 
+		std::shared_ptr<IComponent> GetComponent(const std::string& type, std::string identifier = std::string()) const;
+
 		const std::vector<std::shared_ptr<IComponent>>& GetComponents() const;
 
 		const ComInterfaceMap& GetInterfaces() const;

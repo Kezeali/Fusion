@@ -1,5 +1,6 @@
 #uses ITransform
 #uses IRigidBody
+//#uses ISprite
 #uses TestB script_b
 
 class Test : ScriptComponent
@@ -32,8 +33,18 @@ class Test : ScriptComponent
 	
 	void onSpawn()
 	{
-		Entity entity = instantiate("b2Dynamic", false, Vector(10, 10), 0);
+		Entity entity = instantiate("b2Dynamic", false, Vector(0.1f, 0.1f), 0);
 		ontology.addComponent(entity, "CLSprite", "");
+		//IComponent@ com = entity.getComponent("ISprite");
+		ISprite@ sprite = cast<ISprite>(@entity.getComponent("ISprite"));
+		if (sprite is null)
+		{
+			console.println("sprite cast failed");
+			return;
+		}
+		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		
+		cast<IRigidBody>(@entity.getComponent("IRigidBody")).AngularVelocity.value = 1;
 	}
 
 	void update(float delta)

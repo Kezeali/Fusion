@@ -29,6 +29,8 @@
 
 #include "FusionAngelScriptComponent.h"
 
+#include "FusionEntity.h"
+
 #include "scriptany.h"
 
 namespace FusionEngine
@@ -166,6 +168,11 @@ namespace FusionEngine
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
 	};
 
+	EntityPtr ASScript_GetParent(ASScript* obj)
+	{
+		return obj->GetParent()->shared_from_this();
+	}
+
 	void ASScript::Register(asIScriptEngine* engine)
 	{
 		{
@@ -180,6 +187,8 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
 			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty,(unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
+			
+			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		}
 	}
 

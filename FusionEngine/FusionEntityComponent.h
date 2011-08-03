@@ -172,10 +172,40 @@ namespace FusionEngine
 //
 //#define FSN_LIST_INTERFACES() boost::mpl::for_each<Interfaces>(InsertInterfaceName(m_Interfaces));
 
+	template <class T>
+	static void IComponent_addRef(T* obj)
+	{
+		auto com = dynamic_cast<IComponent*>(obj);
+		com->addRef();
+	}
+
+	template <class T>
+	static void IComponent_release(T* obj)
+	{
+		auto com = dynamic_cast<IComponent*>(obj);
+		com->release();
+	}
+
 	static std::string IComponent_GetType(void* obj)
 	{
 		auto com = static_cast<IComponent*>(obj);
 		return com->GetType();
+	}
+
+	template <class Derived>
+	Derived* ComponentCast(IComponent *obj)
+	{
+		if (obj != nullptr)
+		{
+			Derived* casted = dynamic_cast<Derived*>(obj);
+			if (casted != nullptr)
+			{
+				obj->addRef();
+			}
+			return casted;
+		}
+		else
+			return nullptr;
 	}
 
 	//! Registers a script type for the given component interface
@@ -186,10 +216,17 @@ namespace FusionEngine
 	template <typename T>
 	void RegisterComponentInterfaceType(asIScriptEngine *engine)
 	{
-		IComponent::RegisterType<IComponent>(engine, T::GetTypeName());
+		//IComponent::RegisterType<IComponent>(engine, T::GetTypeName());
 		//int v = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF | asOBJ_NOHANDLE); FSN_ASSERT(v >= 0);
-		//int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string@ getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		int r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		int r;
+		r = engine->RegisterObjectType(T::GetTypeName().c_str(), 0, asOBJ_REF); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectBehaviour(T::GetTypeName().c_str(), asBEHAVE_ADDREF, "void addref()", asFUNCTION(IComponent_addRef<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectBehaviour(T::GetTypeName().c_str(), asBEHAVE_RELEASE, "void release()", asFUNCTION(IComponent_release<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, (T::GetTypeName() + "@ f()").c_str(), asFUNCTION(ComponentCast<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
 	template <typename T>

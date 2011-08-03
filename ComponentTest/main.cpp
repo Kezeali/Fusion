@@ -77,8 +77,11 @@ namespace FusionEngine
 	IFaceT* GetIface(void* obj)
 	{
 		auto ifaceObj = dynamic_cast<IFaceT*>(static_cast<IComponent*>(obj));
-		FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
+		//FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
+		if (ifaceObj)
 		return ifaceObj;
+		else
+			return static_cast<IFaceT*>(obj);
 	}
 
 }
@@ -157,6 +160,42 @@ namespace FusionEngine
 
 		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", Bullet);
 		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", FixedRotation);
+	}
+
+	void ICircleShape_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		FSN_REGISTER_PROP_ACCESSOR(ICircleShape, Vector2, "Vector", Position);
+		FSN_REGISTER_PROP_ACCESSOR(ICircleShape, float, "float", Radius);
+	}
+
+	void IRenderCom_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		FSN_REGISTER_PROP_ACCESSOR(IRenderCom, Vector2, "Vector", Offset);
+		FSN_REGISTER_PROP_ACCESSOR(IRenderCom, int, "int", LocalDepth);
+	}
+
+	void ISprite_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", ImagePath);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, std::string, "string", AnimationPath);
+
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Origin, "PointOrigin", AlignmentOrigin);
+		//FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2i, "VectorInt", AlignmentOffset);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Origin, "PointOrigin", RotationOrigin);
+		//FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2i, "VectorInt", RotationOffset);
+
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, CL_Colorf, "Colour", Colour);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, float, "float", Alpha);
+
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, Vector2, "Vector", Scale);
+		FSN_REGISTER_PROP_ACCESSOR(ISprite, float, "float", BaseAngle);
+
+		FSN_REGISTER_PROP_ACCESSOR_R(ISprite, bool, "bool", AnimationFinished);
+	}
+
+	void IScript_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		FSN_REGISTER_PROP_ACCESSOR(IScript, std::string, "string", ScriptPath);
 	}
 
 class ComponentTest
@@ -251,17 +290,23 @@ public:
 				ContextMenu::Register(asEngine);
 
 				// Component types
+				IComponent::RegisterType<IComponent>(asEngine, "IComponent");
+				asEngine->RegisterObjectMethod("IComponent", "string getType()", asMETHOD(IComponent, GetType), asCALL_THISCALL);
+
 				RegisterComponentInterfaceType<ITransform>(asEngine);
 				ITransform::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IRigidBody>(asEngine);
 				IRigidBody::RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IFixture>(asEngine);
 				RegisterComponentInterfaceType<ICircleShape>(asEngine);
+				ICircleShape_RegisterScriptInterface(asEngine);
 				RegisterComponentInterfaceType<IPolygonShape>(asEngine);
 
 				RegisterComponentInterfaceType<ISprite>(asEngine);
+				ISprite_RegisterScriptInterface(asEngine);
 
 				RegisterComponentInterfaceType<IScript>(asEngine);
+				//IScript_RegisterScriptInterface(asEngine);
 
 				// Entity generation
 				Entity::Register(asEngine);
