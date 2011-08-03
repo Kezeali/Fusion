@@ -341,8 +341,9 @@ namespace FusionEngine
 		EntitySynchroniser *m_EntitySynchroniser;
 		StreamingManager *m_StreamingManager;
 
+	public:
 		EntityFactory *m_EntityFactory;
-
+	protected:
 		ObjectIDStack m_UnusedIds;
 
 		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)

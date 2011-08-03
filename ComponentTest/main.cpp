@@ -319,6 +319,8 @@ public:
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
+				entityManager->m_EntityFactory = entityFactory.get();
+
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
 				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get()));
@@ -681,6 +683,8 @@ public:
 					}
 					
 					const auto rendered = scheduler->Execute();
+
+					entityManager->Update(delta * 0.001f);
 
 					if (rendered & SystemType::Rendering)
 					{

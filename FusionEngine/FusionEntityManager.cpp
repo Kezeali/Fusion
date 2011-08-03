@@ -817,16 +817,16 @@ namespace FusionEngine
 
 	void EntityManager::Update(float split)
 	{
-		m_EntitiesLocked = true;
+		//m_EntitiesLocked = true;
 
-		m_EntitySynchroniser->BeginPacket();
+		//m_EntitySynchroniser->BeginPacket();
 
-		updateEntities(m_ActiveEntities, split);
+		//updateEntities(m_ActiveEntities, split);
 
-		m_EntitySynchroniser->EndPacket();
-		m_EntitySynchroniser->Send();
+		//m_EntitySynchroniser->EndPacket();
+		//m_EntitySynchroniser->Send();
 
-		m_EntitiesLocked = false;
+		//m_EntitiesLocked = false;
 
 		// Actually add entities which were 'added' during the update
 		for (EntityArray::iterator it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)

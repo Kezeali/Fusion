@@ -109,7 +109,7 @@ namespace FusionEngine
 		float m_LastAngularVelocity;
 
 		// IComponent
-		std::string GetType() const { return "Box2DBody"; }
+		std::string GetType() const { return "b2RigidBody"; }
 
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
