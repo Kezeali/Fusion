@@ -108,7 +108,7 @@ namespace FusionEngine
 
 	protected:
 		template <class T>
-		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::false_type&)
+		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::false_type&)
 		{
 			int r;
 
@@ -116,7 +116,7 @@ namespace FusionEngine
 		}
 
 		template <class T>
-		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::tr1::true_type&)
+		static void RegisterAssignment(asIScriptEngine* engine, const std::string& name, const std::true_type&)
 		{}
 	};
 

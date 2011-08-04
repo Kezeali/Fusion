@@ -38,6 +38,10 @@
 #include "FusionScriptReference.h"
 #include "FusionXML.h"
 
+#include "FusionPlayerRegistry.h"
+#include "FusionInputHandler.h"
+#include "FusionScriptInputEvent.h"
+
 #include "scriptany.h"
 
 #include <tbb/parallel_for.h>
@@ -57,94 +61,6 @@ namespace FusionEngine
 		PreprocessorException(const std::string& description, const std::string& origin, const char* file, long line)
 			: Exception(description, origin, file, line) {}
 	};
-
-	void ASScript::Yield()
-	{
-		auto ctx = asGetActiveContext();
-		if (ctx)
-		{
-			ctx->Suspend();
-		}
-	}
-
-	void ASScript::CreateCoroutine(asIScriptFunction *fn)
-	{
-		auto ctx = asGetActiveContext();
-		if (ctx)
-		{
-			auto engine = ctx->GetEngine();
-
-			if (fn == nullptr)
-			{
-				ctx->SetException("Tried to create a coroutine for a null function-pointer");
-				return;
-			}
-
-			const auto objectType = fn->GetObjectType();
-			const bool method = objectType != nullptr;
-
-			if (method && objectType != m_ScriptObject.GetScriptObject()->GetObjectType())
-			{
-				const std::string thisTypeName = m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
-				ctx->SetException(("Tried to create a coroutine for a method from another class. This class: " + thisTypeName + ", Method: " + fn->GetDeclaration()).c_str());
-				return;
-			}
-
-			auto coCtx = engine->CreateContext();
-			coCtx->Prepare(fn->GetId());
-			if (method)
-				coCtx->SetObject(m_ScriptObject.GetScriptObject());
-
-			m_ActiveCoroutines.push_back(coCtx);
-			coCtx->Release();
-		}
-	}
-
-	void ASScript::CreateCoroutine(const std::string& functionName)
-	{
-		auto ctx = asGetActiveContext();
-		if (ctx)
-		{
-			auto engine = ctx->GetEngine();
-
-			int funcId = -1;
-			bool method = false;
-
-			std::string decl = "void " + functionName + "()";
-
-			auto _where = m_ScriptMethods.find(decl);
-			if (_where != m_ScriptMethods.end())
-			{
-				funcId = _where->second;
-				method = true;
-			}
-			else
-			{
-				funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
-				if (funcId >= 0)
-					method = true;
-				else
-				{
-					funcId = m_Module->GetASModule()->GetFunctionIdByDecl(decl.c_str());
-					method = false;
-				}
-			}
-			if (funcId < 0)
-			{
-				// No function matching the decl
-				ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
-				return;
-			}
-
-			auto coCtx = engine->CreateContext();
-			coCtx->Prepare(funcId);
-			if (method)
-				coCtx->SetObject(m_ScriptObject.GetScriptObject());
-
-			m_ActiveCoroutines.push_back(coCtx);
-			coCtx->Release();
-		}
-	}
 
 	static std::pair<asETokenClass, int> ParseNextToken(asIScriptEngine* engine, const std::string& script, size_t &pos)
 	{
@@ -667,7 +583,7 @@ namespace FusionEngine
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
-			"Entity instantiate(const string &in type, bool synch, Vector pos, float angle) { return ontology.instantiate(@app_obj, type, synch, pos, angle); }\n"
+			"Entity instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id) { return ontology.instantiate(@app_obj, type, synch, pos, angle, owner_id); }\n"
 			"\n" +
 			convenientComponentProperties +
 			"}\n";
@@ -878,6 +794,10 @@ namespace FusionEngine
 		m_AngelScriptWorld(sysworld),
 		m_ScriptManager(script_manager)
 	{
+		InputManager::getSingleton().SignalInputChanged.connect([this](const InputEvent& ev)
+		{
+			m_PlayerInputEvents[ev.Player].push_back(ev);
+		});
 	}
 
 	AngelScriptTask::~AngelScriptTask()
@@ -1084,6 +1004,47 @@ namespace FusionEngine
 						}
 					}
 
+					if (script->GetParent()->GetOwnerID() != 0 && PlayerRegistry::IsLocal(script->GetParent()->GetOwnerID()))
+					{
+						int localPlayer = (int)PlayerRegistry::GetPlayer(script->GetParent()->GetOwnerID()).LocalIndex;
+						auto playerInputEventsEntry = m_PlayerInputEvents.find(localPlayer);
+						if (playerInputEventsEntry != m_PlayerInputEvents.end())
+						{
+							auto& eventQueue = playerInputEventsEntry->second;
+							while (!eventQueue.empty())
+							{
+								auto &queuedEvent = eventQueue.front();
+								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onInput(InputEvent@)"))
+								{
+									auto inputEvent = new ScriptInputEvent(queuedEvent);
+									ctx->SetArgObject(0, inputEvent);
+									int r = ctx->Execute();
+									if (r == asEXECUTION_SUSPENDED)
+									{
+										script->m_ActiveCoroutines.push_back(ctx);
+									}
+								}
+								else
+								{
+									eventQueue.clear();
+									break;
+								}
+								eventQueue.pop_front();
+							}
+						}
+					}
+					if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void update()"))
+					{
+						int r = ctx->Execute();
+						if (r == asEXECUTION_SUSPENDED)
+						{
+							script->m_ActiveCoroutines.push_back(ctx);
+						}
+					}
+					
+					script->CheckChangedPropertiesIn();
+
+#if 0
 					//ScriptUtils::Calling::Caller caller;
 					boost::intrusive_ptr<asIScriptContext> ctx;
 					auto _where = script->m_ScriptMethods.find("void update(float)");
@@ -1145,6 +1106,7 @@ namespace FusionEngine
 
 						script->CheckChangedPropertiesIn();
 					}
+#endif
 				}
 			}
 		};

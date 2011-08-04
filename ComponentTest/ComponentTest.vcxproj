@@ -260,6 +260,7 @@
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
     <ClInclude Include="..\FusionEngine\FusionTaskScheduler.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionConsole.h" />

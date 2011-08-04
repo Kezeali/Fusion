@@ -186,9 +186,10 @@ namespace FusionEngine
 		com->release();
 	}
 
-	static std::string IComponent_GetType(void* obj)
+	template <class T>
+	static std::string IComponent_GetType(T* obj)
 	{
-		auto com = static_cast<IComponent*>(obj);
+		auto com = dynamic_cast<IComponent*>(obj);
 		return com->GetType();
 	}
 
@@ -224,7 +225,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectBehaviour(T::GetTypeName().c_str(), asBEHAVE_ADDREF, "void addref()", asFUNCTION(IComponent_addRef<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectBehaviour(T::GetTypeName().c_str(), asBEHAVE_RELEASE, "void release()", asFUNCTION(IComponent_release<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-		r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod(T::GetTypeName().c_str(), "string getType()", asFUNCTION(IComponent_GetType<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, (T::GetTypeName() + "@ f()").c_str(), asFUNCTION(ComponentCast<T>), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}

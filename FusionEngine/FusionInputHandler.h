@@ -399,7 +399,7 @@ namespace FusionEngine
 		 * The shortname for the key to be bound to the input
 		 *
 		 * \param controller_number
-		 * The index of the XBox controller to use (for xinput only, obviously) [0, 4]
+		 * The index of the XInput controller to use (for xinput only, obviously) [0, 4)
 		 */
 		void MapControl(unsigned int player, const std::string &input_name, const std::string &key_shortname, int controller_number = s_DeviceIndexAny);
 

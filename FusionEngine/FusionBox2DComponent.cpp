@@ -32,21 +32,38 @@
 namespace FusionEngine
 {
 
-	Box2DBody::Box2DBody(b2Body* body)
-		: m_Body(body),
+	Box2DBody::Box2DBody(b2BodyDef def)
+		: m_Def(def),
+		m_Body(nullptr),
 		m_Depth(0),
 		m_Interpolate(false)
 	{
+		m_InterpAngle = 0.f;
+		m_LastAngularVelocity = 0.f;
+	}
+
+	Box2DBody::~Box2DBody()
+	{
+	}
+
+	void Box2DBody::ConstructBody(b2World* world)
+	{
+		FSN_ASSERT(world);
+		FSN_ASSERT(m_Body == nullptr);
+
+		m_Body = world->CreateBody(&m_Def);
+
 		const auto& tf = m_Body->GetTransform();
 		m_InterpPosition = m_LastPosition = b2v2(tf.p);
 		m_InterpAngle = m_LastAngle = tf.q.GetAngle();
 
 		m_LastAngularVelocity = m_Body->GetAngularVelocity();
-	}
 
-	Box2DBody::~Box2DBody()
-	{
-		Destruction();
+		for (auto it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
+		{
+			auto& fixtureCom = *it;
+			fixtureCom->ConstructFixture(this);
+		}
 	}
 
 	void Box2DBody::CleanMassData()
@@ -58,14 +75,18 @@ namespace FusionEngine
 
 	void Box2DBody::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
 	{
-		//if (auto fixtureCom = dynamic_cast<Box2DFixture*>(com.get()))
-		//{
-		//	fixtureCom->MassChanged = std::bind(&Box2DBody::OnFixtureMassChanged, this);
-		//}
+		if (auto fixtureCom = std::dynamic_pointer_cast<Box2DFixture>(com))
+		{
+			m_Fixtures.insert(fixtureCom);
+		}
 	}
 
 	void Box2DBody::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
 	{
+		if (auto fixtureCom = std::dynamic_pointer_cast<Box2DFixture>(com))
+		{
+			m_Fixtures.erase(fixtureCom);
+		}
 	}
 
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
@@ -165,44 +186,51 @@ namespace FusionEngine
 			m_Fixture->GetBody()->DestroyFixture(m_Fixture);
 	}
 
-	void Box2DFixture::OnBodyDestroyed()
+	void Box2DFixture::ConstructFixture(Box2DBody* body_component)
 	{
-		m_Fixture = nullptr;
+		FSN_ASSERT(body_component->Getb2Body());
+		FSN_ASSERT(m_Fixture == nullptr);
+
+		m_Def.shape = GetShape();
+		m_Fixture = body_component->Getb2Body()->CreateFixture(&m_Def);
 	}
 
 	void Box2DFixture::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
 	{
-		auto body = dynamic_cast<Box2DBody*>(com.get());
-		if (body)
-		{
-			if (m_Fixture)
-			{
-				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
-				m_Fixture = nullptr;
-				m_BodyDestructionConnection.disconnect();
-			}
-			m_Def.shape = GetShape();
-			m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
-			m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));
+		//auto body = dynamic_cast<Box2DBody*>(com.get());
+		//if (body)
+		//{
+		//	if (m_Fixture)
+		//	{
+		//		m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+		//		m_Fixture = nullptr;
+		//		//m_BodyDestructionConnection.disconnect();
+		//	}
+		//	if (body->Getb2Body())
+		//	{
+		//		m_Def.shape = GetShape();
+		//		m_Fixture = body->Getb2Body()->CreateFixture(&m_Def);
+		//		//m_BodyDestructionConnection = body->Destruction.connect(std::bind(&Box2DFixture::OnBodyDestroyed, this));
+		//	}
 
-			m_Body = body;
-		}
+		//	m_Body = body;
+		//}
 	}
 
 	void Box2DFixture::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
 	{
-		if (m_Fixture)
-		{
-			auto body = dynamic_cast<Box2DBody*>(com.get());
-			if (body)
-			{
-				m_Fixture->GetBody()->DestroyFixture(m_Fixture);
-				m_Fixture = nullptr;
-				m_BodyDestructionConnection.disconnect();
+		//if (m_Fixture)
+		//{
+		//	auto body = dynamic_cast<Box2DBody*>(com.get());
+		//	if (body)
+		//	{
+		//		m_Fixture->GetBody()->DestroyFixture(m_Fixture);
+		//		m_Fixture = nullptr;
+		//		//m_BodyDestructionConnection.disconnect();
 
-				m_Body = nullptr;
-			}
-		}
+		//		m_Body = nullptr;
+		//	}
+		//}
 	}
 
 	bool Box2DFixture::SerialiseContinuous(RakNet::BitStream& stream)

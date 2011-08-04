@@ -202,6 +202,137 @@ namespace FusionEngine
 	{
 	}
 
+	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, const std::string& decl)
+	{
+		boost::intrusive_ptr<asIScriptContext> ctx;
+		auto _where = m_ScriptMethods.find(decl);
+		if (_where != m_ScriptMethods.end())
+		{
+			ctx = script_manager->CreateContext();
+			int r = ctx->Prepare(_where->second);
+			if (r >= 0)
+			{
+				ctx->SetObject(m_ScriptObject.GetScriptObject());
+			}
+			else
+			{
+				ctx->SetObject(NULL);
+				ctx.reset();
+			}
+			//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
+			//m_ScriptManager->ConnectToCaller(caller);
+		}
+		else
+		{
+			//caller = script->m_ScriptObject.GetCaller("void update(float)");
+			//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
+
+			int funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+
+			ctx = script_manager->CreateContext();
+			int r = ctx->Prepare(funcId);
+			if (r >= 0)
+			{
+				ctx->SetObject(m_ScriptObject.GetScriptObject());
+				m_ScriptMethods[decl] = funcId;
+			}
+			else
+			{
+				ctx->SetObject(NULL);
+				ctx.reset();
+			}
+		}
+		return ctx;
+	}
+
+	void ASScript::Yield()
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			ctx->Suspend();
+		}
+	}
+
+	void ASScript::CreateCoroutine(asIScriptFunction *fn)
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			auto engine = ctx->GetEngine();
+
+			if (fn == nullptr)
+			{
+				ctx->SetException("Tried to create a coroutine for a null function-pointer");
+				return;
+			}
+
+			const auto objectType = fn->GetObjectType();
+			const bool method = objectType != nullptr;
+
+			if (method && objectType != m_ScriptObject.GetScriptObject()->GetObjectType())
+			{
+				const std::string thisTypeName = m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
+				ctx->SetException(("Tried to create a coroutine for a method from another class. This class: " + thisTypeName + ", Method: " + fn->GetDeclaration()).c_str());
+				return;
+			}
+
+			auto coCtx = engine->CreateContext();
+			coCtx->Prepare(fn->GetId());
+			if (method)
+				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+
+			m_ActiveCoroutines.push_back(coCtx);
+			coCtx->Release();
+		}
+	}
+
+	void ASScript::CreateCoroutine(const std::string& functionName)
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			auto engine = ctx->GetEngine();
+
+			int funcId = -1;
+			bool method = false;
+
+			std::string decl = "void " + functionName + "()";
+
+			auto _where = m_ScriptMethods.find(decl);
+			if (_where != m_ScriptMethods.end())
+			{
+				funcId = _where->second;
+				method = true;
+			}
+			else
+			{
+				funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+				if (funcId >= 0)
+					method = true;
+				else
+				{
+					funcId = m_Module->GetASModule()->GetFunctionIdByDecl(decl.c_str());
+					method = false;
+				}
+			}
+			if (funcId < 0)
+			{
+				// No function matching the decl
+				ctx->SetException(("Function '" + decl + "' doesn't exist").c_str());
+				return;
+			}
+
+			auto coCtx = engine->CreateContext();
+			coCtx->Prepare(funcId);
+			if (method)
+				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+
+			m_ActiveCoroutines.push_back(coCtx);
+			coCtx->Release();
+		}
+	}
+
 	CScriptAny* ASScript::GetProperty(unsigned int index)
 	{
 		if (index >= m_ScriptProperties.size())

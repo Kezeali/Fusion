@@ -33,8 +33,10 @@ class Test : ScriptComponent
 	
 	void onSpawn()
 	{
-		Entity entity = instantiate("b2Dynamic", false, Vector(0.1f, 0.1f), 0);
+		Entity entity = instantiate("b2Dynamic", false, Vector(0.1f, 0.1f), 0.f, 1);
+		ontology.addComponent(entity, "b2Circle", "");
 		ontology.addComponent(entity, "CLSprite", "");
+		ontology.addComponent(entity, "ASScript", "");
 		//IComponent@ com = entity.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(@entity.getComponent("ISprite"));
 		if (sprite is null)
@@ -42,12 +44,17 @@ class Test : ScriptComponent
 			console.println("sprite cast failed");
 			return;
 		}
+		console.println(sprite.getType());
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		
-		cast<IRigidBody>(@entity.getComponent("IRigidBody")).AngularVelocity.value = 1;
+		//cast<IRigidBody>(@entity.getComponent("IRigidBody")).AngularVelocity = 1;
+		
+		cast<ICircleShape>(@entity.getComponent("ICircleShape")).Radius = 0.25f;
+		
+		cast<IScript>(@entity.getComponent("IScript")).ScriptPath.value = "Scripts/TestB.as";
 	}
 
-	void update(float delta)
+	void update()
 	{
 		++frames;
 		if (frames == 1)

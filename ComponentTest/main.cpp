@@ -50,6 +50,7 @@
 #include "../FusionEngine/FusionInstanceSynchroniser.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
 #include "../FusionEngine/FusionRenderer.h"
+#include "../FusionEngine/FusionScriptInputEvent.h"
 #include "../FusionEngine/FusionScriptModule.h"
 #include "../FusionEngine/FusionScriptSound.h"
 
@@ -79,7 +80,7 @@ namespace FusionEngine
 		auto ifaceObj = dynamic_cast<IFaceT*>(static_cast<IComponent*>(obj));
 		//FSN_ASSERT_MSG(ifaceObj, "The given component doesn't implement the expected interface");
 		if (ifaceObj)
-		return ifaceObj;
+			return ifaceObj;
 		else
 			return static_cast<IFaceT*>(obj);
 	}
@@ -288,6 +289,10 @@ public:
 				RegisterScriptedConsoleCommand(asEngine);
 				GUI::Register(scriptManager.get());
 				ContextMenu::Register(asEngine);
+				
+				asEngine->RegisterTypedef("PlayerID", "uint8");
+
+				ScriptInputEvent::Register(asEngine);
 
 				// Component types
 				IComponent::RegisterType<IComponent>(asEngine, "IComponent");
@@ -306,7 +311,7 @@ public:
 				ISprite_RegisterScriptInterface(asEngine);
 
 				RegisterComponentInterfaceType<IScript>(asEngine);
-				//IScript_RegisterScriptInterface(asEngine);
+				IScript_RegisterScriptInterface(asEngine);
 
 				// Entity generation
 				Entity::Register(asEngine);
@@ -522,6 +527,8 @@ public:
 						asWorld->OnActivation(asScript2);
 				}
 
+				PlayerRegistry::AddLocalPlayer(1u, 0u);
+
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
@@ -594,24 +601,24 @@ public:
 						}
 					}
 
-					bool w = ev.id == CL_KEY_W;
-					bool s = ev.id == CL_KEY_S;
-					bool a = ev.id == CL_KEY_A;
-					bool d = ev.id == CL_KEY_D;
-					if (w || s || a || d)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+					//bool w = ev.id == CL_KEY_W;
+					//bool s = ev.id == CL_KEY_S;
+					//bool a = ev.id == CL_KEY_A;
+					//bool d = ev.id == CL_KEY_D;
+					//if (w || s || a || d)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							auto vel = body->Velocity.Get();
-							v2Multiply(vel, Vector2((a || d) ? 0.f : 1.f, (w || s) ? 0.f : 1.f), vel);
-							body->Velocity.Set(vel);
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
+					//		auto vel = body->Velocity.Get();
+					//		v2Multiply(vel, Vector2((a || d) ? 0.f : 1.f, (w || s) ? 0.f : 1.f), vel);
+					//		body->Velocity.Set(vel);
+					//		//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+					//	}
+					//}
 
 					if (ev.id == CL_KEY_SPACE)
 					{
@@ -737,39 +744,39 @@ public:
 						gc.clear();
 					}
 
-					bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
-					bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
-					bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
-					bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
-					if (w || s || a || d)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+					//bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
+					//bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
+					//bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
+					//bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
+					//if (w || s || a || d)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							entity->SynchroniseParallelEdits();
+					//		entity->SynchroniseParallelEdits();
 
-							const float speed = 0.8f;
-							Vector2 vel = body->Velocity.Get();
-							if (w)
-								vel.y = -speed;
-							else if (s)
-								vel.y = speed;
-							else if (w && s)
-								vel.y = 0;
-							if (a)
-								vel.x = -speed;
-							else if (d)
-								vel.x = speed;
-							else if (a && d)
-								vel.x = 0;
+					//		const float speed = 0.8f;
+					//		Vector2 vel = body->Velocity.Get();
+					//		if (w)
+					//			vel.y = -speed;
+					//		else if (s)
+					//			vel.y = speed;
+					//		else if (w && s)
+					//			vel.y = 0;
+					//		if (a)
+					//			vel.x = -speed;
+					//		else if (d)
+					//			vel.x = speed;
+					//		else if (a && d)
+					//			vel.x = 0;
 
-							body->Velocity.Set(vel);
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
+					//		body->Velocity.Set(vel);
+					//		//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+					//	}
+					//}
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL))
 					{

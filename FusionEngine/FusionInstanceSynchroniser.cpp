@@ -333,14 +333,14 @@ namespace FusionEngine
 		}
 	}
 
-	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, InstancingSynchroniser* obj)
+	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)
 	{
 		//asIScriptObject* com = static_cast<asIScriptObject*>( asGetActiveContext()->GetThisPointer() );
 
 		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
 		auto entity = app_obj->GetParent()->shared_from_this();
 
-		return obj->RequestInstance(entity, synch, pos, angle, transform_component, "");
+		return obj->RequestInstance(entity, synch, pos, angle, transform_component, name, owner_id);
 	}
 
 	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)
@@ -352,8 +352,8 @@ namespace FusionEngine
 	{
 		RegisterSingletonType<InstancingSynchroniser>("Ontology", engine);
 
-		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float)",
-			asFUNCTIONPR(InstantiationSynchroniser_Instantiate, (ASScript*, const std::string&, bool, Vector2, float, InstancingSynchroniser*), EntityPtr), asCALL_CDECL_OBJLAST);
+		engine->RegisterObjectMethod("Ontology", "Entity instantiate(ASScript @, const string &in, bool, Vector, float, PlayerID owner_id = 0, const string &in name = string())",
+			asFUNCTION(InstantiationSynchroniser_Instantiate), asCALL_CDECL_OBJLAST);
 
 		engine->RegisterObjectMethod("Ontology", "void addComponent(Entity, const string &in, const string &in)",
 			asFUNCTIONPR(InstantiationSynchroniser_AddComponent, (EntityPtr, const std::string&, const std::string&, InstancingSynchroniser*), void), asCALL_CDECL_OBJLAST);

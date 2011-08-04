@@ -88,6 +88,7 @@ namespace FusionEngine
 
 		std::vector<ISystemTask*> GetTasks();
 
+		std::vector<std::shared_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
 
 		b2World* m_World;

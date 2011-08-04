@@ -44,6 +44,8 @@
 namespace FusionEngine
 {
 
+	class InputEvent;
+
 	class ASScript;
 
 	class AngelScriptWorld;
@@ -141,6 +143,8 @@ namespace FusionEngine
 	protected:
 		AngelScriptWorld* m_AngelScriptWorld;
 		std::shared_ptr<ScriptManager> m_ScriptManager;
+
+		std::map<int, std::deque<InputEvent>> m_PlayerInputEvents;
 	};
 
 }

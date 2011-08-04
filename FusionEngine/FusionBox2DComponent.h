@@ -54,12 +54,7 @@ namespace FusionEngine
 		static void Deserialise(RakNet::BitStream& input);
 	};
 
-	template <typename T>
-	class DeltaValueBuffer : public ValueBuffer<T>
-	{
-	public:
-		T m_SerialisedValue;
-	};
+	class Box2DFixture;
 
 	class Box2DBody : public IComponent, public IRigidBody
 	{
@@ -82,11 +77,12 @@ namespace FusionEngine
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
-		Box2DBody(b2Body* body);
+		Box2DBody(b2BodyDef def);
 		virtual ~Box2DBody();
 
 		boost::signals2::signal<void (void)> Destruction;
 
+		void ConstructBody(b2World* world);
 		b2Body* Getb2Body() const { return m_Body; }
 
 		void OnFixtureMassChanged() { m_FixtureMassDirty = true; }
@@ -94,9 +90,11 @@ namespace FusionEngine
 		void CleanMassData();
 
 	private:
+		b2BodyDef m_Def;
 		b2Body* m_Body;
 
 		tbb::atomic<bool> m_FixtureMassDirty;
+		std::set<std::shared_ptr<Box2DFixture>> m_Fixtures;
 
 		int m_Depth;
 
@@ -137,11 +135,19 @@ namespace FusionEngine
 			}
 		}
 
-		Vector2 GetPosition() const { return m_Interpolate ? m_InterpPosition : b2v2(m_Body->GetPosition()); }
-		void SetPosition(const Vector2& position) { m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle()); }
+		Vector2 GetPosition() const { return m_Interpolate ? m_InterpPosition : (m_Body ? b2v2(m_Body->GetPosition()) : b2v2(m_Def.position)); }
+		void SetPosition(const Vector2& position)
+		{
+			if (m_Body) m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle());
+			else m_Def.position.Set(position.x, position.y);
+		}
 
-		float GetAngle() const { return m_Interpolate ? m_InterpAngle : m_Body->GetAngle(); }
-		void SetAngle(float angle) { m_Body->SetTransform(m_Body->GetPosition(), angle); }
+		float GetAngle() const { return m_Interpolate ? m_InterpAngle : (m_Body ? m_Body->GetAngle() : m_Def.angle); }
+		void SetAngle(float angle)
+		{
+			if (m_Body) m_Body->SetTransform(m_Body->GetPosition(), angle);
+			else m_Def.angle = angle;
+		}
 
 		int GetDepth() const { return m_Depth; }
 		void SetDepth(int depth) { m_Depth = depth; }
@@ -149,89 +155,114 @@ namespace FusionEngine
 		bool GetInterpolate() const { return m_Interpolate; }
 		void SetInterpolate(bool value) { m_Interpolate = value; }
 
-		float GetMass() const { return m_Body->GetMass(); }
+		float GetMass() const { return m_Body ? m_Body->GetMass() : 0.f; }
 
-		float GetInertia() const { return m_Body->GetInertia(); }
+		float GetInertia() const { return m_Body ? m_Body->GetInertia() : 0.f; }
 
-		Vector2 GetCenterOfMass() const { return b2v2(m_Body->GetWorldCenter()); }
+		Vector2 GetCenterOfMass() const { return m_Body ? b2v2(m_Body->GetWorldCenter()) : Vector2(); }
 
-		Vector2 GetLocalCenterOfMass() const { return b2v2(m_Body->GetLocalCenter()); }
+		Vector2 GetLocalCenterOfMass() const { return m_Body ? b2v2(m_Body->GetLocalCenter()) : Vector2(); }
 
-		Vector2 GetVelocity() const { return b2v2(m_Body->GetLinearVelocity()); }
-		void SetVelocity(const Vector2& vel) { m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)); }
+		Vector2 GetVelocity() const { return b2v2(m_Body ? m_Body->GetLinearVelocity() : m_Def.linearVelocity); }
+		void SetVelocity(const Vector2& vel) { m_Body ? m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)) : m_Def.linearVelocity.Set(vel.x, vel.y); }
 
-		float GetAngularVelocity() const { return m_Body->GetAngularVelocity(); }
-		void SetAngularVelocity(float vel) { m_Body->SetAngularVelocity(vel); }
+		float GetAngularVelocity() const { return m_Body ? m_Body->GetAngularVelocity() : m_Def.angularVelocity; }
+		void SetAngularVelocity(float vel) { m_Body ? m_Body->SetAngularVelocity(vel) : m_Def.angularVelocity = vel; }
 
-		float GetLinearDamping() const { return m_Body->GetLinearDamping(); }
+		float GetLinearDamping() const { return m_Body ? m_Body->GetLinearDamping() : m_Def.linearDamping; }
 		void SetLinearDamping(float val)
 		{
-			m_Body->SetLinearDamping(val);
-			m_DeltaSerialisationHelper.markChanged(PropsIdx:: LinearDamping );
+			if (m_Body)
+				m_Body->SetLinearDamping(val);
+			else
+				m_Def.linearDamping = val;
+			m_DeltaSerialisationHelper.markChanged(PropsIdx::LinearDamping );
 		};
 
-		float GetAngularDamping() const { return m_Body->GetAngularDamping(); }
+		float GetAngularDamping() const { return m_Body ? m_Body->GetAngularDamping() : m_Def.angularVelocity; }
 		void SetAngularDamping(float val)
 		{
-			m_Body->SetAngularDamping(val);
+			if (m_Body)
+				m_Body->SetAngularDamping(val);
+			else
+				m_Def.angularDamping = val;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx:: AngularDamping );
 		};
 
-		float GetGravityScale() const { return m_Body->GetGravityScale(); }
+		float GetGravityScale() const { return m_Body ? m_Body->GetGravityScale() : m_Def.gravityScale; }
 		void SetGravityScale(float val)
 		{
-			m_Body->SetGravityScale(val);
+			if (m_Body)
+				m_Body->SetGravityScale(val);
+			else
+				m_Def.gravityScale = val;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx:: GravityScale );
 		};
 
-		bool IsActive() const { return m_Body->IsActive(); }
+		bool IsActive() const { return m_Body ? m_Body->IsActive() : m_Def.active; }
 		void SetActive(bool value)
 		{
-			//m_Body->SetActive(value);
+			if (m_Body)
+				m_Body->SetActive(value);
+			else
+				m_Def.active = value;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::Active);
 		}
 
-		bool IsSleepingAllowed() const { return m_Body->IsSleepingAllowed(); }
+		bool IsSleepingAllowed() const { return m_Body ? m_Body->IsSleepingAllowed() : m_Def.allowSleep; }
 		void SetSleepingAllowed(bool value)
 		{
-			m_Body->SetSleepingAllowed(value);
+			if (m_Body)
+				m_Body->SetSleepingAllowed(value);
+			else
+				m_Def.allowSleep = value;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::SleepingAllowed);
 		}
 
-		bool IsAwake() const { return m_Body->IsAwake(); }
+		bool IsAwake() const { return m_Body ? m_Body->IsAwake() : m_Def.awake; }
 
-		bool IsBullet() const { return m_Body->IsBullet(); }
+		bool IsBullet() const { return m_Body ? m_Body->IsBullet() : m_Def.bullet; }
 		void SetBullet(bool value)
 		{
-			m_Body->SetBullet(value);
+			if (m_Body)
+				m_Body->SetBullet(value);
+			else
+				m_Def.bullet = value;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::Bullet);
 		}
 
-		bool IsFixedRotation() const { return m_Body->IsFixedRotation(); }
+		bool IsFixedRotation() const { return m_Body ? m_Body->IsFixedRotation() : m_Def.fixedRotation; }
 		void SetFixedRotation(bool value)
 		{
-			m_Body->SetFixedRotation(value);
+			if (m_Body)
+				m_Body->SetFixedRotation(value);
+			else
+				m_Def.fixedRotation = value;
 			m_DeltaSerialisationHelper.markChanged(PropsIdx::FixedRotation);
 		}
 
 		void ApplyForceImpl(const Vector2& force, const Vector2& point)
 		{
-			m_Body->ApplyForce(b2Vec2(force.x, force.y), b2Vec2(point.x, point.y));
+			if (m_Body)
+				m_Body->ApplyForce(b2Vec2(force.x, force.y), b2Vec2(point.x, point.y));
 		}
 
 		void ApplyTorqueImpl(float force)
 		{
-			m_Body->ApplyTorque(force);
+			if (m_Body)
+				m_Body->ApplyTorque(force);
 		}
 
 		void ApplyLinearImpulseImpl(const Vector2& impulse, const Vector2& point)
 		{
-			m_Body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(point.x, point.y));
+			if (m_Body)
+				m_Body->ApplyLinearImpulse(b2Vec2(impulse.x, impulse.y), b2Vec2(point.x, point.y));
 		}
 
 		void ApplyAngularImpulseImpl(float impulse)
 		{
-			m_Body->ApplyAngularImpulse(impulse);
+			if (m_Body)
+				m_Body->ApplyAngularImpulse(impulse);
 		}
 	};
 
@@ -257,9 +288,9 @@ namespace FusionEngine
 		Box2DFixture(b2Fixture* fixture);
 		virtual ~Box2DFixture();
 
-		void OnBodyDestroyed();
+		void ConstructFixture(Box2DBody* body_component);
 
-		// Called when any properties change that will result in a different MassData value
+		//! Callback: Called when any properties change that will result in a different MassData value
 		std::function<void (void)> MassChanged;
 
 	private:
@@ -344,7 +375,7 @@ namespace FusionEngine
 		b2Shape* GetShape() { return &m_CircleShape; }
 
 		// IComponent
-		std::string GetType() const { return "Box2DCircleFixture"; }
+		std::string GetType() const { return "b2Circle"; }
 
 		// Box2DFixture overides
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
@@ -390,7 +421,7 @@ namespace FusionEngine
 		b2Shape* GetShape() { return &m_PolygonShape; }
 
 		// IComponent
-		std::string GetType() const { return "Box2DPolygonFixture"; }
+		std::string GetType() const { return "b2Polygon"; }
 
 		// Box2DFixture overides
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);

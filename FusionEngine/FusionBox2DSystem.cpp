@@ -146,7 +146,7 @@ namespace FusionEngine
 				def.angle = angle;
 			}
 
-			auto com = std::make_shared<Box2DBody>( m_World->CreateBody(&def) );
+			auto com = std::make_shared<Box2DBody>(def);
 			com->SetInterpolate(def.type != b2_staticBody);
 			return com;
 		}
@@ -174,7 +174,10 @@ namespace FusionEngine
 		auto b2Component = std::dynamic_pointer_cast<Box2DBody>(component);
 		if (b2Component)
 		{
-			m_ActiveBodies.push_back(b2Component);
+			if (b2Component->m_Body != nullptr)
+				m_ActiveBodies.push_back(b2Component);
+			else
+				m_BodiesToCreate.push_back(b2Component); // make sure to create the b2Body before trying to update it!
 			b2Component->SetActive(true);
 		}
 	}
@@ -192,6 +195,15 @@ namespace FusionEngine
 			{
 				_where->swap(m_ActiveBodies.back());
 				m_ActiveBodies.pop_back();
+			}
+			else
+			{
+				auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
+				if (_where != m_BodiesToCreate.end())
+				{
+					_where->swap(m_BodiesToCreate.back());
+					m_BodiesToCreate.pop_back();
+				}
 			}
 		}
 	}
@@ -232,10 +244,22 @@ namespace FusionEngine
 
 	void Box2DTask::Update(const float delta)
 	{
+		auto& toCreate = m_B2DSysWorld->m_BodiesToCreate;
+		for (auto it = toCreate.begin(), end = toCreate.end(); it != end; ++it)
+		{
+			auto body = *it;
+			body->ConstructBody(m_World);
+		}
+
 		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
+		// Copy the newly-created bodies into the active list:
+		activeBodies.insert(activeBodies.end(), toCreate.begin(), toCreate.end());
+		toCreate.clear();
+
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
+
 			const bool awake = body->IsAwake();
 			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
 			if (!staticBody && awake && body->m_Interpolate)

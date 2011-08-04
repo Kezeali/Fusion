@@ -66,6 +66,8 @@ namespace FusionEngine
 		ASScript();
 		virtual ~ASScript();
 
+		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, const std::string& decl);
+
 		void Yield();
 		void CreateCoroutine(const std::string& functionName);
 		void CreateCoroutine(asIScriptFunction* function);
