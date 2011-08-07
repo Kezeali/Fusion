@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionBox2DSystem
-#define H_FusionBox2DSystem
+#ifndef H_FusionInputSystem
+#define H_FusionInputSystem
 
 #if _MSC_VER > 1000
 #pragma once
@@ -37,96 +37,69 @@
 #include "FusionComponentSystem.h"
 #include "FusionEntityComponent.h"
 
-class b2World;
+#include "FusionInputHandler.h"
 
 namespace FusionEngine
 {
 
-	class Box2DBody;
-	class Box2DFixture;
+	namespace Components
+	{
+		class Input;
+	}
 
-	class Box2DWorld;
-	class Box2DTask;
-	class Box2DInterpolateTask;
-
-	class Box2DSystem : public IComponentSystem
+	class InputSystem : public IComponentSystem
 	{
 	public:
-		Box2DSystem();
-		virtual ~Box2DSystem()
+		InputSystem();
+		virtual ~InputSystem()
 		{}
 
-		// TODO: make private
 		ISystemWorld* CreateWorld();
 
 	private:
 		SystemType GetType() const { return SystemType::Simulation; }
 
-		std::string GetName() const { return "Box2DSystem"; }
+		std::string GetName() const { return "InputSystem"; }
+
+		InputManager *m_InputManager;
 	};
 
-	class Box2DWorld : public ISystemWorld
+	class InputWorld : public ISystemWorld
 	{
-		friend class Box2DTask;
-		friend class Box2DInterpolateTask;
+		friend class InputTask;
 	public:
-		Box2DWorld(IComponentSystem* system);
-		~Box2DWorld();
-
-		b2World* Getb2World() const { return m_World; }
+		InputWorld(IComponentSystem* system);
+		~InputWorld();
 
 	private:
 		std::vector<std::string> GetTypes() const;
 
 		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
+		//void OnPrepare(const std::shared_ptr<IComponent>& component);
 		void OnActivation(const std::shared_ptr<IComponent>& component);
 		void OnDeactivation(const std::shared_ptr<IComponent>& component);
 
-		std::vector<ISystemTask*> GetTasks();
+		ISystemTask* GetTask();
 
-		std::vector<std::shared_ptr<Box2DBody>> m_BodiesToCreate;
-		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
+	private:
 
-		b2World* m_World;
-		Box2DTask* m_B2DTask;
-		Box2DInterpolateTask* m_B2DInterpTask;
+		InputTask* m_InputTask;
+
+		std::vector<std::shared_ptr<Components::Input>> m_ActiveComponents;
 	};
 
-	class Box2DTask : public ISystemTask
+	class InputTask : public ISystemTask
 	{
 	public:
-		Box2DTask(Box2DWorld* sysworld, b2World* const world);
-		~Box2DTask();
+		InputTask(InputWorld* sysworld);
+		~InputTask();
 
 		void Update(const float delta);
 
 		SystemType GetTaskType() const { return SystemType::Simulation; }
-
-		PerformanceHint GetPerformanceHint() const { return LongSerial; }
-
-		bool IsPrimaryThreadOnly() const
-		{
-			return false;
-		}
-
-	protected:
-		Box2DWorld *m_B2DSysWorld;
-		b2World* const m_World;
-	};
-
-	class Box2DInterpolateTask : public ISystemTask
-	{
-	public:
-		Box2DInterpolateTask(Box2DWorld* sysworld);
-		~Box2DInterpolateTask();
-
-		void Update(const float delta);
-
-		SystemType GetTaskType() const { return SystemType::Rendering; }
 
 		PerformanceHint GetPerformanceHint() const { return Short; }
 
@@ -136,7 +109,9 @@ namespace FusionEngine
 		}
 
 	protected:
-		Box2DWorld *m_B2DSysWorld;
+		InputWorld* m_InputWorld;
+
+		std::map<int, std::deque<InputEvent>> m_PlayerInputEvents;
 	};
 
 }

@@ -191,7 +191,7 @@ namespace FusionEngine
 			//m_Sprite.set_color(Colour.Get());
 			//m_Sprite.set_alpha(Alpha.Get());
 			//m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
-			//m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
+			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
 
 			m_Sprite.set_angle(CL_Angle(m_Angle, cl_radians));
 

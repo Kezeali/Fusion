@@ -800,7 +800,8 @@ namespace FusionEngine
 	static IComponent* Entity_GetComponent(EntityPtr* entity, const std::string& type, const std::string& ident = std::string())
 	{
 		auto com = (*entity)->GetComponent(type, ident);
-		com->addRef();
+		if (com)
+			com->addRef();
 		return com.get();
 	}
 

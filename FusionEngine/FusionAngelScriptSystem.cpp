@@ -31,6 +31,7 @@
 
 #include "FusionAngelScriptComponent.h"
 #include "FusionEntity.h"
+#include "FusionEntityFactory.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionPaths.h"
@@ -433,19 +434,21 @@ namespace FusionEngine
 		return scriptInfo;
 	}
 
-	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager)
-		: m_ScriptManager(manager)
+	AngelScriptSystem::AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory)
+		: m_ScriptManager(manager),
+		m_EntityFactory(factory)
 	{
 	}
 
 	ISystemWorld* AngelScriptSystem::CreateWorld()
 	{
-		return new AngelScriptWorld(this, m_ScriptManager);
+		return new AngelScriptWorld(this, m_ScriptManager, m_EntityFactory);
 	}
 
-	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager)
+	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory)
 		: ISystemWorld(system),
-		m_ScriptManager(manager)
+		m_ScriptManager(manager),
+		m_EntityFactory(factory)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
 
@@ -512,16 +515,16 @@ namespace FusionEngine
 	{
 		std::string scriptComponentInterface;
 		scriptComponentInterface =
-			"class " + scriptInfo.ClassName + "\n{\n"
+			"class I" + scriptInfo.ClassName + "\n{\n"
 			"private ASScript@ app_obj;\n"
-			"void _setAppObj(ASScript@ _app_obj) { @app_obj = _app_obj; }\n"
+			"I" + scriptInfo.ClassName + "() {}\n"
+			"I" + scriptInfo.ClassName + "(ASScript@ obj) { _setAppObj(obj); }\n"
+			"void _setAppObj(ASScript@ obj) { @app_obj = obj; }\n"
 			"\n";
 		for (size_t i = 0; i < scriptInfo.Properties.size(); ++i)
 		{
 			const std::string& type = scriptInfo.Properties[i].first, identifier = scriptInfo.Properties[i].second;
 			std::stringstream str;
-			// TODO: get the actual property-index (this hack just accounts for properties in the base-class),
-			//  or create a mapping in the ASScript upon setting the m_ScriptObject (SetScriptObject(obj, scriptInfo) { iterate props, compare names, create mapping })
 			str << i;
 			std::string propIndex = str.str();
 			const bool isHandleType = type.find('@') != std::string::npos;
@@ -544,10 +547,10 @@ namespace FusionEngine
 	{
 		std::set<std::string> usedIdentifiers;
 		std::vector<AngelScriptWorld::ComponentScriptInfo> scriptComponentInterfaces;
-		std::string convenientComponentProperties;
+		std::string convenientComponentProperties, convenientEntityProperties;
 		for (auto it = scriptInfo.UsedComponents.cbegin(), end = scriptInfo.UsedComponents.cend(); it != end; ++it)
 		{
-			const std::string& interfaceName = it->first;
+			std::string interfaceName = it->first;
 			std::string convenientIdentifier;
 			if (it->second.empty())
 				convenientIdentifier = fe_newlower(it->first);
@@ -555,31 +558,56 @@ namespace FusionEngine
 				convenientIdentifier = it->second;
 			if (usedIdentifiers.insert(convenientIdentifier).second) // Ignore duplicate #using directives
 			{
-				if (interfaceName[0] != 'I')
-					convenientComponentProperties += interfaceName + " @ " + convenientIdentifier + ";\n";
-				else
-				{
-					convenientComponentProperties +=
-						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return cast<" + interfaceName + ">(@app_obj.getParent().getComponent('" + interfaceName + "','" + it->second + "'));"
-						"}\n";
-				}
-
 				auto _where = scriptComponents.find(interfaceName);
 				if (_where != scriptComponents.end())
 				{
+					interfaceName = "I" + interfaceName;
+					convenientComponentProperties += interfaceName + "@ " + convenientIdentifier + ";\n";
+
+					convenientEntityProperties +=
+						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
+						"return " + interfaceName + "(cast<ASScript>(app_obj.getComponent('IScript','" + it->second + "')));"
+						"}\n";
+
 					scriptComponentInterfaces.push_back(_where->second);
+				}
+				else // Native components can be casted directly from the IComponent returned by getComponent
+				{
+					convenientComponentProperties +=
+						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
+						"return cast<" + interfaceName + ">(@(app_obj.getParent().getComponent('" + interfaceName + "','" + it->second + "')));"
+						"}\n";
+					convenientEntityProperties +=
+						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
+						"return cast<" + interfaceName + ">(@(app_obj.getComponent('" + interfaceName + "','" + it->second + "')));"
+						"}\n";
 				}
 			}
 		}
 
 		std::string baseCode =
+			"class EntityWrapper\n"
+			"{\n"
+			"EntityWrapper() {}\n"
+			"EntityWrapper(Entity &in obj) {\n"
+			"_setAppObj(obj);\n"
+			"}\n"
+			"void _setAppObj(Entity &in obj) {\n"
+			"app_obj = obj;\n"
+			"}\n"
+			"private Entity app_obj;\n"
+			"\n" +
+			convenientEntityProperties +
+			"}\n"
 			"class ScriptComponent\n"
 			"{\n"
 			"private ASScript@ app_obj;\n"
-			"void _setAppObj(ASScript@ _app_obj) {\n"
-			"@app_obj = _app_obj;\n"
+			"private EntityWrapper@ wrapped_entity;\n"
+			"void _setAppObj(ASScript@ obj) {\n"
+			"@app_obj = obj;\n"
+			"@wrapped_entity = @EntityWrapper(obj.getParent());\n"
 			"}\n"
+			"EntityWrapper @get_entity() { return wrapped_entity; }\n"
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
@@ -598,7 +626,7 @@ namespace FusionEngine
 
 	void AngelScriptWorld::BuildScripts(bool rebuild_all)
 	{
-		std::vector<std::pair<std::string, ModulePtr>> modulesToBuild;
+		std::vector<std::tuple<std::string, std::string, ModulePtr>> modulesToBuild;
 
 		std::map<std::string, std::pair<std::string, AngelScriptWorld::ComponentScriptInfo>> scriptsToBuild;
 
@@ -630,9 +658,11 @@ namespace FusionEngine
 				try
 				{
 					auto scriptInfo = ParseComponentScript(m_Engine, script);
+					scriptInfo.Module = fileName;
 
 					scriptsToBuild[fileName] = std::make_pair(script, scriptInfo);
 					m_ScriptInfo[scriptInfo.ClassName] = scriptInfo;
+					m_ScriptInfo["I" + scriptInfo.ClassName] = scriptInfo;
 
 					// Add this data to the dependency tree
 					auto thisNode = getDependencyNode(scriptInfo.ClassName);
@@ -640,6 +670,11 @@ namespace FusionEngine
 					{
 						auto usedNode = getDependencyNode(it->first);
 						usedNode->UsedBy.insert(thisNode);
+					}
+					for (auto it = scriptInfo.IncludedScripts.begin(), end = scriptInfo.IncludedScripts.end(); it != end; ++it)
+					{
+						auto includedNode = getDependencyNode(*it);
+						includedNode->IncludedBy.insert(thisNode);
 					}
 				}
 				catch (PreprocessorException &ex)
@@ -664,17 +699,20 @@ namespace FusionEngine
 			std::string moduleFileName = fileName.substr(fileName.rfind('/'));
 			moduleFileName.erase(moduleFileName.size() - 3);
 			moduleFileName = "ScriptCache" + moduleFileName + ".bytecode";
-			modulesToBuild.push_back(std::make_pair(moduleFileName, module));
+			modulesToBuild.push_back(std::make_tuple(moduleFileName, scriptInfo.ClassName, module));
 		}
 
 		for (auto it = modulesToBuild.begin(), end = modulesToBuild.end(); it != end; ++it)
 		{
-			auto& bytecodeFilename = it->first;
-			auto& module = it->second;
+			const std::string& bytecodeFilename = std::get<0>(*it);
+			const std::string& typeName = std::get<1>(*it);
+			auto& module = std::get<2>(*it);
 			if (module->Build() >= 0)
 			{
 				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename));
 				module->GetASModule()->SaveByteCode(outFile.get());
+
+				m_EntityFactory->AddInstancer(typeName, this);
 			}
 		}
 	}
@@ -692,7 +730,16 @@ namespace FusionEngine
 
 	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type, const Vector2&, float, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
 	{
-		if (type == "ASScript")
+		auto _where = m_ScriptInfo.find(type);
+		if (_where != m_ScriptInfo.end())
+		{
+			auto com = std::make_shared<ASScript>();
+			auto& moduleName = _where->second.Module;
+			com->SetScriptPath(moduleName);
+			//com->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
+			return com;
+		}
+		else if (type == "ASScript")
 		{
 			auto com = std::make_shared<ASScript>();
 			return com;
@@ -761,21 +808,23 @@ namespace FusionEngine
 
 	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(const ComponentScriptInfo &other)
 		: ClassName(other.ClassName),
+		Module(other.Module),
 		Properties(other.Properties),
 		UsedComponents(other.UsedComponents)
 	{
 	}
 
 	AngelScriptWorld::ComponentScriptInfo::ComponentScriptInfo(ComponentScriptInfo &&other)
-	{
-		ClassName = std::move(other.ClassName);
-		Properties = std::move(other.Properties);
-		UsedComponents = std::move(other.UsedComponents);
-	}
+		: ClassName(std::move(other.ClassName)),
+		Module(std::move(other.Module)),
+		Properties(std::move(other.Properties)),
+		UsedComponents(std::move(other.UsedComponents))
+	{}
 
 	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (const ComponentScriptInfo &other)
 	{
 		ClassName = other.ClassName;
+		Module = other.Module;
 		Properties = other.Properties;
 		UsedComponents = other.UsedComponents;
 		return *this;
@@ -784,6 +833,7 @@ namespace FusionEngine
 	AngelScriptWorld::ComponentScriptInfo& AngelScriptWorld::ComponentScriptInfo::operator= (ComponentScriptInfo &&other)
 	{
 		ClassName = std::move(other.ClassName);
+		Module = std::move(other.Module);
 		Properties = std::move(other.Properties);
 		UsedComponents = std::move(other.UsedComponents);
 		return *this;
@@ -1011,9 +1061,9 @@ namespace FusionEngine
 						if (playerInputEventsEntry != m_PlayerInputEvents.end())
 						{
 							auto& eventQueue = playerInputEventsEntry->second;
-							while (!eventQueue.empty())
+							for (auto it = eventQueue.begin(), end = eventQueue.end(); it != end; ++it)
 							{
-								auto &queuedEvent = eventQueue.front();
+								auto &queuedEvent = *it;//eventQueue.front();
 								if (auto ctx = script->PrepareMethod(m_ScriptManager.get(), "void onInput(InputEvent@)"))
 								{
 									auto inputEvent = new ScriptInputEvent(queuedEvent);
@@ -1026,10 +1076,8 @@ namespace FusionEngine
 								}
 								else
 								{
-									eventQueue.clear();
 									break;
 								}
-								eventQueue.pop_front();
 							}
 						}
 					}
@@ -1116,6 +1164,8 @@ namespace FusionEngine
 #else
 		execute_scripts(tbb::blocked_range<size_t>(0, scripts.size()));
 #endif
+
+		m_PlayerInputEvents.clear();
 
 		} // Scope for execute_scripts lambda
 

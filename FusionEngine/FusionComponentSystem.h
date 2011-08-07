@@ -106,7 +106,7 @@ namespace FusionEngine
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type) = 0;
 		//! Instanciate method for physics / transform components
-		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
+		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 		{
 			return InstantiateComponent(type);
 		}

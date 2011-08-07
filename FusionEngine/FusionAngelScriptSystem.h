@@ -54,7 +54,7 @@ namespace FusionEngine
 	class AngelScriptSystem : public IComponentSystem
 	{
 	public:
-		AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager);
+		AngelScriptSystem(const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory);
 		virtual ~AngelScriptSystem()
 		{}
 
@@ -65,6 +65,8 @@ namespace FusionEngine
 
 		std::string GetName() const { return "AngelScriptSystem"; }
 
+		EntityFactory *m_EntityFactory;
+
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
@@ -72,7 +74,7 @@ namespace FusionEngine
 	{
 		friend class AngelScriptTask;
 	public:
-		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager);
+		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory);
 		~AngelScriptWorld();
 
 		asIScriptEngine* GetScriptEngine() const { return m_Engine; }
@@ -108,15 +110,21 @@ namespace FusionEngine
 
 			std::string ClassName;
 
+			std::string Module;
+
 			std::vector<std::pair<std::string, std::string>> Properties;
 
 			typedef std::pair<std::string, std::string> UsedComponent_t;
 			std::set<UsedComponent_t> UsedComponents;
+
+			std::set<std::string> IncludedScripts;
 		};
 
 	private:
 
 		std::map<std::string, ComponentScriptInfo> m_ScriptInfo;
+
+		EntityFactory *m_EntityFactory;
 
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 		asIScriptEngine* m_Engine;
@@ -144,7 +152,7 @@ namespace FusionEngine
 		AngelScriptWorld* m_AngelScriptWorld;
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
-		std::map<int, std::deque<InputEvent>> m_PlayerInputEvents;
+		std::map<int, std::vector<InputEvent>> m_PlayerInputEvents;
 	};
 
 }

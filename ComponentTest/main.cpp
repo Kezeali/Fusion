@@ -143,6 +143,8 @@ namespace FusionEngine
 
 	void IRigidBody::RegisterScriptInterface(asIScriptEngine* engine)
 	{
+		FSN_REGISTER_PROP_ACCESSOR(IRigidBody, bool, "bool", Interpolate);
+
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Mass);
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, float, "float", Inertia);
 		FSN_REGISTER_PROP_ACCESSOR_R(IRigidBody, Vector2, "Vector", CenterOfMass);
@@ -311,7 +313,7 @@ public:
 				ISprite_RegisterScriptInterface(asEngine);
 
 				RegisterComponentInterfaceType<IScript>(asEngine);
-				IScript_RegisterScriptInterface(asEngine);
+				//IScript_RegisterScriptInterface(asEngine);
 
 				// Entity generation
 				Entity::Register(asEngine);
@@ -398,7 +400,7 @@ public:
 				
 				static_cast<CLRenderWorld*>(renderWorld)->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld)->Getb2World());
 
-				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager));
+				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager, entityFactory.get()));
 				auto asWorld = asSystem->CreateWorld();
 				ontology.push_back(asWorld);
 
@@ -450,15 +452,15 @@ public:
 						entity->SynchroniseParallelEdits();
 
 						if (i == 0)
-							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f, nullptr, nullptr);
+							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f);
 						else
-							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f, nullptr, nullptr);
+							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f);
 
 						entity->AddComponent(b2BodyCom);
 					}
 					else
 					{
-						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f, nullptr, nullptr);
+						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f);
 						entity->AddComponent(transformCom);
 					}
 
@@ -554,52 +556,52 @@ public:
 						scheduler->SetDT(1.0f / (float)fps);
 					}
 
-					if (ev.id == CL_KEY_E)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+					//if (ev.id == CL_KEY_E)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							body->AngularDamping.Set(0.f);
+					//		body->AngularDamping.Set(0.f);
 
-							auto vel = body->AngularVelocity.Get();
-							if (ev.shift)
-								vel = std::max(b2_pi / 2.f, vel);
-							vel += b2_pi * 0.25;
-							body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
-						}
-					}
-					if (ev.id == CL_KEY_Q)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+					//		auto vel = body->AngularVelocity.Get();
+					//		if (ev.shift)
+					//			vel = std::max(b2_pi / 2.f, vel);
+					//		vel += b2_pi * 0.25;
+					//		body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
+					//	}
+					//}
+					//if (ev.id == CL_KEY_Q)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							body->AngularDamping.Set(0.f);
+					//		body->AngularDamping.Set(0.f);
 
-							auto vel = body->AngularVelocity.Get();
-							if (ev.shift)
-								vel = std::min(-(b2_pi / 2.f), vel);
-							vel -= b2_pi * 0.25;
-							body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
-						}
-					}
-					if (ev.id == CL_KEY_X)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
+					//		auto vel = body->AngularVelocity.Get();
+					//		if (ev.shift)
+					//			vel = std::min(-(b2_pi / 2.f), vel);
+					//		vel -= b2_pi * 0.25;
+					//		body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
+					//	}
+					//}
+					//if (ev.id == CL_KEY_X)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
 
-							//body->AngularVelocity.Set(CL_Angle(0.0f, cl_radians).to_radians());
-							body->AngularDamping.Set(0.9f);
-						}
-					}
+					//		//body->AngularVelocity.Set(CL_Angle(0.0f, cl_radians).to_radians());
+					//		body->AngularDamping.Set(0.9f);
+					//	}
+					//}
 
 					//bool w = ev.id == CL_KEY_W;
 					//bool s = ev.id == CL_KEY_S;
@@ -620,20 +622,20 @@ public:
 					//	}
 					//}
 
-					if (ev.id == CL_KEY_SPACE)
-					{
-						const float invmax = 1.0f / RAND_MAX;
-						auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body && body->GetBodyType() == IRigidBody::Dynamic)
-						{
-							//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
-							
-							Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
-							body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
-						}
-						//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-					}
+					//if (ev.id == CL_KEY_SPACE)
+					//{
+					//	const float invmax = 1.0f / RAND_MAX;
+					//	auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body && body->GetBodyType() == IRigidBody::Dynamic)
+					//	{
+					//		//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
+					//		
+					//		Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
+					//		body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
+					//	}
+					//	//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
+					//}
 
 					bool k = ev.id == CL_KEY_K;
 					bool j = ev.id == CL_KEY_J;
@@ -666,15 +668,15 @@ public:
 
 				auto keydownhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_down().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
-					if (ev.id == CL_KEY_I)
-					{
-						auto entity = entities[1];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							body->Interpolate.Set(!body->Interpolate.Get());
-						}
-					}
+					//if (ev.id == CL_KEY_I)
+					//{
+					//	auto entity = entities[1];
+					//	auto body = entity->GetComponent<IRigidBody>();
+					//	if (body)
+					//	{
+					//		body->Interpolate.Set(!body->Interpolate.Get());
+					//	}
+					//}
 				});
 
 				unsigned int lastframe = CL_System::get_time();

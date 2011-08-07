@@ -557,20 +557,23 @@ namespace FusionEngine
 
 	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
-		KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, event.id));
-		if (_where != m_KeyBindings.end())
+		if (event.repeat_count == 0)
 		{
-			InputEvent synthedEvent;
-			synthedEvent.Player = _where->second.m_Player;
-			synthedEvent.Input = _where->second.m_Input;
+			auto _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, event.id));
+			if (_where != m_KeyBindings.end())
+			{
+				InputEvent synthedEvent;
+				synthedEvent.Player = _where->second.m_Player;
+				synthedEvent.Input = _where->second.m_Input;
 
-			synthedEvent.Type = InputEvent::Binary;
-			synthedEvent.Value = 0.0;
-			synthedEvent.Down = true;
+				synthedEvent.Type = InputEvent::Binary;
+				synthedEvent.Value = 0.0;
+				synthedEvent.Down = true;
 
-			SignalInputChanged(synthedEvent);
+				SignalInputChanged(synthedEvent);
 
-			//processInputEvent(s_DevKeyboard, event);
+				//processInputEvent(s_DevKeyboard, event);
+			}
 		}
 	}
 

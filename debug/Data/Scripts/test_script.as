@@ -33,25 +33,32 @@ class Test : ScriptComponent
 	
 	void onSpawn()
 	{
-		Entity entity = instantiate("b2Dynamic", false, Vector(0.1f, 0.1f), 0.f, 1);
+	}
+	
+	EntityWrapper@ entityA;
+	EntityWrapper@ entityB;
+	
+	EntityWrapper@ createPlayerEntity(Vector &in pos)
+	{
+		Entity entity = instantiate("b2Dynamic", false, pos, 0.f, 1);
 		ontology.addComponent(entity, "b2Circle", "");
 		ontology.addComponent(entity, "CLSprite", "");
-		ontology.addComponent(entity, "ASScript", "");
-		//IComponent@ com = entity.getComponent("ISprite");
-		ISprite@ sprite = cast<ISprite>(@entity.getComponent("ISprite"));
+		ontology.addComponent(entity, "TestB", "script_b");
+		ISprite@ sprite = cast<ISprite>(entity.getComponent("ISprite"));
 		if (sprite is null)
 		{
 			console.println("sprite cast failed");
-			return;
+			return EntityWrapper();
 		}
 		console.println(sprite.getType());
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.BaseAngle = 1.57;
 		
-		//cast<IRigidBody>(@entity.getComponent("IRigidBody")).AngularVelocity = 1;
+		//cast<IRigidBody>(entity.getComponent("IRigidBody")).AngularVelocity = 1;
 		
-		cast<ICircleShape>(@entity.getComponent("ICircleShape")).Radius = 0.25f;
+		cast<ICircleShape>(entity.getComponent("ICircleShape")).Radius = 0.25f;
 		
-		cast<IScript>(@entity.getComponent("IScript")).ScriptPath.value = "Scripts/TestB.as";
+		return EntityWrapper(entity);
 	}
 
 	void update()
@@ -59,7 +66,8 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
-			onSpawn();
+			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
+			@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
 			
 			//console.println("itransform implemented by: " + itransform.getType());
 			//console.println("isprite implemented by: " + isprite.getType());
@@ -67,7 +75,7 @@ class Test : ScriptComponent
 			//console.println("iscript implemented by: " + script_a.getType());
 			//console.println(itransform.getType());
 
-			itransform.Angle.value = 0.7f;
+			//itransform.Angle.value = 0.7f;
 			//itransform.Angle << 0.7;
 			//float angle = itransform.Angle;
 			//console.println("Angle: " + angle);
@@ -87,11 +95,14 @@ class Test : ScriptComponent
 			//console.println("testb.frames: " + script_b.frames);
 			script_b.foo = 99;
 			console.println("testb.foo: " + script_b.foo);
+			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
+			entityB.script_b.speed = 2.0;
 		}
 		
 		if (frames == 4)
 		{
 			console.println("testb.foo: " + script_b.foo);
+			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
 		}
 
 		//if (irigidbody.AngularDamping.value != lastDamping)

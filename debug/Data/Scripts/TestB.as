@@ -9,23 +9,25 @@ class TestB : ScriptComponent
 
 		frames = 0;
 		foo = 1;
+		speed = 1.0f;
+		go = false;
 	}
 
 	uint frames;
 	uint foo;
+	private bool go;
+	float speed;
 	
 	void onInput(InputEvent@ ev)
 	{
-		float speed = 1.0f;
-		//string inName = ev.inputName;
-		//console.println(inName);
+		console.println(ev.inputName);
 		if (ev.inputName == "thrust")
 		{
-			//console.println("thrust");
 			if (ev.isDown)
 				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 			else
 				irigidbody.Velocity = Vector(0, 0);
+			go = ev.isDown;
 		}
 		if (ev.inputName == "left")
 		{
@@ -41,10 +43,20 @@ class TestB : ScriptComponent
 			else
 				irigidbody.AngularVelocity = 0;
 		}
+		if (ev.inputName == "special")
+		{
+			if (ev.isDown)
+				irigidbody.Interpolate.value = !irigidbody.Interpolate.value;
+		}
 	}
 
 	void update()
 	{
 		++frames;
+		
+		if (go)
+		{
+				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
+		}
 	}
 }

@@ -55,7 +55,10 @@ namespace FusionEngine
 		{}
 
 		int GetPlayer() const { return input_event.Player; }
-		const std::string& GetInputName() const { return input_event.Input; }
+		std::string GetInputName() const
+		{
+			return input_event.Input;
+		}
 		InputEvent::InputType GetType() const { return input_event.Type; }
 		bool IsDown() const { return input_event.Down; }
 		double GetValue() const { return input_event.Value; }
@@ -74,7 +77,7 @@ namespace FusionEngine
 		r = engine->RegisterEnumValue("InputType", "AnalogAbsolute", InputEvent::AnalogAbsolute); FSN_ASSERT(r >= 0);
 
 		r = engine->RegisterObjectMethod("InputEvent", "int get_player() const", asMETHOD(ScriptInputEvent, GetPlayer), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-		r = engine->RegisterObjectMethod("InputEvent", "const string & get_inputName() const", asMETHOD(ScriptInputEvent, GetInputName), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("InputEvent", "string get_inputName() const", asMETHOD(ScriptInputEvent, GetInputName), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("InputEvent", "InputType get_type() const", asMETHOD(ScriptInputEvent, GetType), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("InputEvent", "bool get_isDown() const", asMETHOD(ScriptInputEvent, IsDown), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("InputEvent", "double get_value() const", asMETHOD(ScriptInputEvent, GetValue), asCALL_THISCALL); FSN_ASSERT(r >= 0);

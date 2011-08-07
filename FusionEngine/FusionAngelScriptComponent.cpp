@@ -182,6 +182,9 @@ namespace FusionEngine
 		{
 			int r;
 			ASScript::RegisterType<ASScript>(engine, "ASScript");
+
+			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION((convert_ref<IComponent, ASScript>)), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -341,24 +344,6 @@ namespace FusionEngine
 		auto scriptProperty = dynamic_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
 		auto value = scriptProperty->Get();
 		return value;
-
-		//const auto& scriptObject = m_ScriptObject.GetScriptObject();
-		//if (scriptObject == nullptr)
-		//	asGetActiveContext()->SetException("Tried to access a script component that wasn't ready");
-
-		//auto prop = scriptObject->GetAddressOfProperty(index);
-		//int propTypeId = scriptObject->GetPropertyTypeId(index);
-
-		//FSN_ASSERT(propTypeId != asTYPEID_BOOL); // I'm not sure what type CScriptAny stores bools as
-
-		//if ((propTypeId - asTYPEID_INT8) <= asTYPEID_UINT64)
-		//	propTypeId = asTYPEID_INT64;
-		//else if (propTypeId == asTYPEID_FLOAT)
-		//	propTypeId = asTYPEID_DOUBLE;
-
-		//auto ptr = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(ptr);
-		//new (ptr) CScriptAny(prop, propTypeId, scriptObject->GetEngine());
-		//return ptr;
 	}
 
 	bool ASScript::SetProperty(unsigned int index, void *ref, int typeId)
@@ -375,25 +360,37 @@ namespace FusionEngine
 	{
 		m_ScriptObject = ScriptObject(obj);
 
-		m_ScriptProperties.resize(properties.size());
-		//auto objType = obj->GetObjectType();
-		for (size_t i = 0, count = obj->GetPropertyCount(); i < count; ++i)
+		if (obj)
 		{
-			//const char* name = 0; int typeId = -1; bool isPrivate = false; int offset = 0;
-			std::string nameStr(obj->GetPropertyName(i));
-			auto _where = std::find_if(properties.cbegin(), properties.cend(), [nameStr](const std::pair<std::string, std::string>& v) { return v.second == nameStr; });
-			if (_where != properties.cend())
+
+			m_ScriptProperties.resize(properties.size());
+			//auto objType = obj->GetObjectType();
+			for (size_t i = 0, count = obj->GetPropertyCount(); i < count; ++i)
 			{
-				auto interfaceIndex = std::distance(properties.cbegin(), _where);
-				FSN_ASSERT(interfaceIndex >= 0);
+				//const char* name = 0; int typeId = -1; bool isPrivate = false; int offset = 0;
+				std::string nameStr(obj->GetPropertyName(i));
+				auto _where = std::find_if(properties.cbegin(), properties.cend(), [nameStr](const std::pair<std::string, std::string>& v) { return v.second == nameStr; });
+				if (_where != properties.cend())
+				{
+					auto interfaceIndex = std::distance(properties.cbegin(), _where);
+					FSN_ASSERT(interfaceIndex >= 0);
 
-				auto comProp = new ScriptAnyTSP(obj, i);
+					auto comProp = new ScriptAnyTSP(obj, i);
 
-				m_ScriptProperties[(size_t)interfaceIndex].reset(comProp);
+					m_ScriptProperties[(size_t)interfaceIndex].reset(comProp);
 
-				AddProperty(comProp);
-				comProp->SetOwner(this);
+					AddProperty(comProp);
+					comProp->SetOwner(this);
+				}
 			}
+
+			auto objType = obj->GetObjectType();
+			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
+			{
+				auto method = objType->GetMethodDescriptorByIndex(i);
+				m_ScriptMethods[method->GetDeclaration(false)] = method->GetId();
+			}
+
 		}
 	}
 

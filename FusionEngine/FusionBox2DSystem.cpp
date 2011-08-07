@@ -62,13 +62,13 @@ namespace FusionEngine
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
 	{
-		static const std::string types[] = { "b2RigidBody", "b2Dynamic", "b2Kinematic", "b2Static", "b2Circle", "b2Polygon" };
-		return std::vector<std::string>(types, types + 6);
+		static const std::string types[] = { "b2RigidBody", "b2Dynamic", "b2Kinematic", "b2Static", "b2Circle", "b2Polygon", "StaticTransform" };
+		return std::vector<std::string>(types, types + 7);
 	}
 
 	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type)
 	{
-		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
+		return InstantiateComponent(type, Vector2::zero(), 0.f);
 	}
 
 	class StaticTransform : public IComponent, public ITransform
@@ -104,7 +104,7 @@ namespace FusionEngine
 		int m_Depth;
 	};
 
-	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
+	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 	{
 		if (type == "b2RigidBody" 
 			|| type == "b2Dynamic"
@@ -120,31 +120,8 @@ namespace FusionEngine
 			else
 				def.type = b2_dynamicBody;
 
-			if (continious_data)
-			{
-				RakNet::BitStream& stream = *continious_data;
-				stream.Read(def.position.x);
-				stream.Read(def.position.y);
-				stream.Read(def.angle);
-
-				stream.Read(def.linearVelocity.x);
-				stream.Read(def.linearVelocity.x);
-				stream.Read(def.angularVelocity);
-			}
-
-			if (occasional_data)
-			{
-				std::bitset<Box2DBody::DeltaSerialiser_t::NumParams> changes;
-				Box2DBody::DeltaSerialiser_t serialiser;
-				serialiser.readChanges(*occasional_data, true, changes,
-					def.active, def.allowSleep, def.awake, def.bullet, def.fixedRotation,
-					def.linearDamping, def.angularDamping, def.gravityScale);
-			}
-			else
-			{
-				def.position.Set(pos.x, pos.y);
-				def.angle = angle;
-			}
+			def.position.Set(pos.x, pos.y);
+			def.angle = angle;
 
 			auto com = std::make_shared<Box2DBody>(def);
 			com->SetInterpolate(def.type != b2_staticBody);
@@ -152,15 +129,11 @@ namespace FusionEngine
 		}
 		else if (type == "b2Circle")
 		{
-			if (occasional_data)
-			{
-				auto com = std::make_shared<Box2DCircleFixture>(*occasional_data);
-				return com;
-			}
-			else
-			{
-				return std::make_shared<Box2DCircleFixture>();
-			}
+			return std::make_shared<Box2DCircleFixture>();
+		}
+		else if (type == "b2Polygon")
+		{
+			return std::make_shared<Box2DPolygonFixture>();
 		}
 		else if (type == "StaticTransform")
 		{

@@ -167,6 +167,7 @@
     <ClCompile Include="..\FusionEngine\FusionImageLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInputDefinitionLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInputHandler.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionInputSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionInstanceSynchroniser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLog.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogFileConsole.cpp" />
@@ -259,6 +260,9 @@
     <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
+    <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
+    <ClInclude Include="..\FusionEngine\FusionInputSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
     <ClInclude Include="..\FusionEngine\FusionTaskScheduler.h" />

@@ -622,30 +622,30 @@ namespace FusionEngine
 			strstr << ")";
 		}
 		// Handle types
-		else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("string@"))
-		{
-			const std::string *handle = *static_cast<const std::string**>(varPtr);
-			if (handle != NULL)
-			{
-				strstr << "\"" << (*handle) << "\"";
-			}
-			else
-			{
-				strstr << "NULL";
-			}
-		}
-		else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("Vector@"))
-		{
-			const Vector2 **handle = (const Vector2**)varPtr;
-			if (handle != NULL)
-			{
-				strstr << (*handle)->get_x() << "," << (*handle)->get_y();
-			}
-			else
-			{
-				strstr << "NULL";
-			}
-		}
+		//else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("string@"))
+		//{
+		//	const std::string *handle = *static_cast<const std::string**>(varPtr);
+		//	if (handle != NULL)
+		//	{
+		//		strstr << "\"" << (*handle) << "\"";
+		//	}
+		//	else
+		//	{
+		//		strstr << "NULL";
+		//	}
+		//}
+		//else if ((typeId & ~asTYPEID_HANDLETOCONST) == eng->GetTypeIdByDecl("Vector@"))
+		//{
+		//	const Vector2 **handle = (const Vector2**)varPtr;
+		//	if (handle != NULL)
+		//	{
+		//		strstr << (*handle)->get_x() << "," << (*handle)->get_y();
+		//	}
+		//	else
+		//	{
+		//		strstr << "NULL";
+		//	}
+		//}
 		// No conversion implemented for this type:
 		else
 			return false;

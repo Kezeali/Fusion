@@ -713,7 +713,7 @@ namespace FusionEngine
 		auto _where = m_ComponentInstancers.find(type);
 		if (_where != m_ComponentInstancers.end())
 		{
-			return _where->second->InstantiateComponent(type, position, angle, nullptr, nullptr);
+			return _where->second->InstantiateComponent(type, position, angle);
 		}
 		return std::shared_ptr<IComponent>();
 	}
@@ -732,7 +732,7 @@ namespace FusionEngine
 			auto _where = m_ComponentInstancers.find(it->first);
 			if (_where != m_ComponentInstancers.end())
 			{
-				auto component = _where->second->InstantiateComponent(it->first, position, angle, nullptr, nullptr);
+				auto component = _where->second->InstantiateComponent(it->first, position, angle);
 				if (!component)
 					return EntityPtr(); // or throw?
 				
@@ -751,7 +751,7 @@ namespace FusionEngine
 			auto _where = m_ComponentInstancers.find(*it);
 			if (_where != m_ComponentInstancers.end())
 			{
-				auto component = _where->second->InstantiateComponent(*it, position, angle, nullptr, nullptr);
+				auto component = _where->second->InstantiateComponent(*it, position, angle);
 				if (!component)
 					return EntityPtr();
 				
