@@ -73,8 +73,6 @@ namespace FusionEngine
 
 	PlayerInputPtr ConsolidatedInput::GetInputsForPlayer(PlayerID player)
 	{
-		// TODO: unmuddle this method
-
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
 		{
@@ -82,6 +80,7 @@ namespace FusionEngine
 		}
 		else
 		{
+			// Create an entry for the given player, if it is a valid player
 			if (PlayerRegistry::GetPlayer(player).NetID != 0)
 				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
 			else
@@ -111,7 +110,9 @@ namespace FusionEngine
 
 	void ConsolidatedInput::onInputChanged(const InputEvent &ev)
 	{
-		PlayerID player = LocalToNetPlayer(ev.Player);
+		if (ev.Player < 0)
+			return;
+		PlayerID player = LocalToNetPlayer((unsigned int)ev.Player);
 		PlayerInputsMap::iterator _where = m_PlayerInputs.find(player);
 		if (_where != m_PlayerInputs.end())
 		{
@@ -452,7 +453,7 @@ namespace FusionEngine
 			m_EntitiesByName[entity->GetName()] = entity;
 
 		//m_StreamingManager->AddEntity(entity);
-		//m_EntitySynchroniser->OnEntityAdded(entity);
+		m_EntitySynchroniser->OnEntityAdded(entity);
 
 		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
 			//insertActiveEntity(entity);
@@ -473,7 +474,7 @@ namespace FusionEngine
 
 		m_EntitiesByName.erase(entity->GetName());
 
-		m_StreamingManager->RemoveEntity(entity);
+		//m_StreamingManager->RemoveEntity(entity);
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)

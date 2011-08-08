@@ -805,6 +805,21 @@ namespace FusionEngine
 		return com.get();
 	}
 
+	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
+	{
+		return (*entity)->InputIsActive(input);
+	}
+
+	static float Entity_InputGetPosition(const std::string& input, EntityPtr* entity)
+	{
+		return (*entity)->GetInputPosition(input);
+	}
+
+	//static PlayerInput* Entity_GetInput(EntityPtr* entity)
+	//{
+	//	return (*entity)->m_PlayerInput.get();
+	//}
+
 	void Entity::Register(asIScriptEngine *engine)
 	{
 		int r;
@@ -813,6 +828,17 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"IComponent@ getComponent(const string &in, const string &in ident = string()) const",
 			asFUNCTION(Entity_GetComponent), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+
+		//r = engine->RegisterObjectMethod("Entity",
+		//	"Input@ get_input() const",
+		//	asFUNCTION(Entity_GetInput), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"bool inputIsActive(const string &in) const",
+			asFUNCTION(Entity_InputIsActive), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Entity",
+			"float inputGetPosition(const string &in) const",
+			asFUNCTION(Entity_InputGetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Entity",
 			"const string& getName() const",
@@ -840,12 +866,12 @@ namespace FusionEngine
 			"bool isSynced() const",
 			asMETHOD(Entity, IsSyncedEntity), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Entity",
-			"bool inputIsActive(const string &in) const",
-			asMETHOD(Entity, InputIsActive), asCALL_THISCALL);
-		r = engine->RegisterObjectMethod("Entity",
-			"float getInputPosition(const string &in) const",
-			asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
+		//r = engine->RegisterObjectMethod("Entity",
+		//	"bool inputIsActive(const string &in) const",
+		//	asMETHOD(Entity, InputIsActive), asCALL_THISCALL);
+		//r = engine->RegisterObjectMethod("Entity",
+		//	"float inputGetPosition(const string &in) const",
+		//	asMETHOD(Entity, GetInputPosition), asCALL_THISCALL);
 
 		// Physical state related methods
 		r = engine->RegisterObjectMethod("Entity",

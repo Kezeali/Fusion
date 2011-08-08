@@ -54,7 +54,7 @@ class TestB : ScriptComponent
 	{
 		++frames;
 		
-		if (go)
+		if (entity.input.getButton("thrust"))
 		{
 				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 		}

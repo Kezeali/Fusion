@@ -40,11 +40,11 @@ class Test : ScriptComponent
 	
 	EntityWrapper@ createPlayerEntity(Vector &in pos)
 	{
-		Entity entity = instantiate("b2Dynamic", false, pos, 0.f, 1);
-		ontology.addComponent(entity, "b2Circle", "");
-		ontology.addComponent(entity, "CLSprite", "");
-		ontology.addComponent(entity, "TestB", "script_b");
-		ISprite@ sprite = cast<ISprite>(entity.getComponent("ISprite"));
+		Entity newEnt = instantiate("b2Dynamic", false, pos, 0.f, 1);
+		ontology.addComponent(newEnt, "b2Circle", "");
+		ontology.addComponent(newEnt, "CLSprite", "");
+		ontology.addComponent(newEnt, "TestB", "script_b");
+		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite"));
 		if (sprite is null)
 		{
 			console.println("sprite cast failed");
@@ -54,11 +54,11 @@ class Test : ScriptComponent
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
 		
-		//cast<IRigidBody>(entity.getComponent("IRigidBody")).AngularVelocity = 1;
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody")).AngularVelocity = 1;
 		
-		cast<ICircleShape>(entity.getComponent("ICircleShape")).Radius = 0.25f;
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape")).Radius = 0.25f;
 		
-		return EntityWrapper(entity);
+		return EntityWrapper(newEnt);
 	}
 
 	void update()

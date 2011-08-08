@@ -586,6 +586,13 @@ namespace FusionEngine
 		}
 
 		std::string baseCode =
+			"class Input {\n"
+			"Input(Entity &in obj) { app_obj = obj; }\n"
+			"private Entity app_obj;\n"
+			"bool getButton(const string &in name) { return app_obj.inputIsActive(name); }\n"
+			"float getAnalog(const string &in name) { return app_obj.inputGetPosition(name); }\n"
+			"}\n"
+
 			"class EntityWrapper\n"
 			"{\n"
 			"EntityWrapper() {}\n"
@@ -594,8 +601,11 @@ namespace FusionEngine
 			"}\n"
 			"void _setAppObj(Entity &in obj) {\n"
 			"app_obj = obj;\n"
+			"@input = Input(app_obj);\n"
 			"}\n"
 			"private Entity app_obj;\n"
+			"Input@ input;\n"
+			//"Input@ get_input() { app_obj.get_input(); }\n"
 			"\n" +
 			convenientEntityProperties +
 			"}\n"
@@ -607,7 +617,7 @@ namespace FusionEngine
 			"@app_obj = obj;\n"
 			"@wrapped_entity = @EntityWrapper(obj.getParent());\n"
 			"}\n"
-			"EntityWrapper @get_entity() { return wrapped_entity; }\n"
+			"EntityWrapper@ get_entity() { return wrapped_entity; }\n"
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name) { app_obj.createCoroutine(fn_name); }\n"
@@ -1091,70 +1101,6 @@ namespace FusionEngine
 					}
 					
 					script->CheckChangedPropertiesIn();
-
-#if 0
-					//ScriptUtils::Calling::Caller caller;
-					boost::intrusive_ptr<asIScriptContext> ctx;
-					auto _where = script->m_ScriptMethods.find("void update(float)");
-					if (_where != script->m_ScriptMethods.end())
-					{
-						ctx = m_ScriptManager->CreateContext();
-						int r = ctx->Prepare(_where->second);
-						if (r >= 0)
-						{
-							ctx->SetObject(script->m_ScriptObject.GetScriptObject());
-						}
-						else
-						{
-							ctx->SetObject(NULL);
-							ctx.reset();
-						}
-						//caller = ScriptUtils::Calling::Caller::CallerForMethodFuncId(script->m_ScriptObject.GetScriptObject(), _where->second);
-						//m_ScriptManager->ConnectToCaller(caller);
-					}
-					else
-					{
-						//caller = script->m_ScriptObject.GetCaller("void update(float)");
-						//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
-
-						int funcId = script->m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl("void update(float)");
-
-						ctx = m_ScriptManager->CreateContext();
-						int r = ctx->Prepare(funcId);
-						if (r >= 0)
-						{
-							ctx->SetObject(script->m_ScriptObject.GetScriptObject());
-							script->m_ScriptMethods["void update(float)"] = funcId;
-						}
-						else
-						{
-							ctx->SetObject(NULL);
-							ctx.reset();
-						}
-					}
-					if (ctx)
-					{
-						ctx->SetArgFloat(0, delta);
-						int r = ctx->Execute();
-						if (r == asEXECUTION_SUSPENDED)
-						{
-							script->m_ActiveCoroutines.push_back(ctx);
-						}
-						//else if (r == asEXECUTION_EXCEPTION)
-						//{
-						//	int line, col; const char* sec;
-						//	line = ctx->GetExceptionLineNumber(&col, &sec);
-
-						//	std::stringstream str;
-						//	str << "(" << line << ":" << col << ")";
-						//	SendToConsole(std::string("Exception: ") + std::string(sec) + str.str() + ": " + std::string(ctx->GetExceptionString()));
-
-						//	ctx->SetObject(NULL);
-						//}
-
-						script->CheckChangedPropertiesIn();
-					}
-#endif
 				}
 			}
 		};
