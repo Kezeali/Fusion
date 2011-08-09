@@ -452,14 +452,17 @@ namespace FusionEngine
 		if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
 			m_EntitiesByName[entity->GetName()] = entity;
 
-		//m_StreamingManager->AddEntity(entity);
+		m_StreamingManager->AddEntity(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);
-
-		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
+		
+		// Immeadiately activate this entity if it isn't within a streaming domain
+		if (!CheckState(entity->GetDomain(), DS_STREAMING))
+		{
 			//insertActiveEntity(entity);
-		m_EntitiesToActivate.push_back(entity);
+			m_EntitiesToActivate.push_back(entity);
+		}
 
-		entity->SetPropChangedQueue(&m_PropChangedQueue);
+		//entity->SetPropChangedQueue(&m_PropChangedQueue);
 	}
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
@@ -474,7 +477,7 @@ namespace FusionEngine
 
 		m_EntitiesByName.erase(entity->GetName());
 
-		//m_StreamingManager->RemoveEntity(entity);
+		m_StreamingManager->RemoveEntity(entity);
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)
@@ -761,24 +764,33 @@ namespace FusionEngine
 		{
 			EntityPtr &entity = *it;
 
+			if (entity->GetTagFlags() & m_ToDeleteFlags)
+			{
+				RemoveEntity(entity); // Remove the entity from the lookup maps, and mark it to be removed from the active list
+			}
 			// Check for reasons to remove the
-			//  entity from the active array
+			//  entity from the active list
 			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
 				entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
+				for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
+				{
+					auto& com = *cit;
+					auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+					if (_where != m_EntityFactory->m_ComponentInstancers.end())
+					{
+						_where->second->OnDeactivation(com);
+					}
+					else
+						FSN_EXCEPT(InvalidArgumentException, "Herp derp");
+				}
 				entity->StreamOut();
 				it = entityList.erase(it);
 				end = entityList.end();
 			}
-			else if (entity->GetTagFlags() & m_ToDeleteFlags)
-			{
-				entityRemoved = true;
-				RemoveEntity(entity);
-				it = entityList.erase(it);
-				end = entityList.end();
-			}
+			
 			else
 			{
 				// Also make sure the entity isn't blocked by a flag
@@ -790,8 +802,8 @@ namespace FusionEngine
 					{
 						if (!entity->IsSpawned())
 							entity->Spawn();
-						for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
-							entity->OnPlayerAdded(ev_it->first, ev_it->second);
+						//for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
+						//	entity->OnPlayerAdded(ev_it->first, ev_it->second);
 						//entity->Update(split);
 						//updateRenderables(entity, split, updatedSprites);
 					}
@@ -822,7 +834,7 @@ namespace FusionEngine
 
 		//m_EntitySynchroniser->BeginPacket();
 
-		//updateEntities(m_ActiveEntities, split);
+		updateEntities(m_ActiveEntities, split);
 
 		//m_EntitySynchroniser->EndPacket();
 		//m_EntitySynchroniser->Send();

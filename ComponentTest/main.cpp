@@ -535,6 +535,7 @@ public:
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
 				dynamic_cast<CLRenderWorld*>(renderWorld)->AddViewport(viewport);
+				streamingMgr->AddCamera(camera);
 
 				std::map<int, bool> pressed;
 
@@ -555,87 +556,6 @@ public:
 						fe_clamp(fps, 1u, 120u);
 						scheduler->SetDT(1.0f / (float)fps);
 					}
-
-					//if (ev.id == CL_KEY_E)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-					//		body->AngularDamping.Set(0.f);
-
-					//		auto vel = body->AngularVelocity.Get();
-					//		if (ev.shift)
-					//			vel = std::max(b2_pi / 2.f, vel);
-					//		vel += b2_pi * 0.25;
-					//		body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
-					//	}
-					//}
-					//if (ev.id == CL_KEY_Q)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-					//		body->AngularDamping.Set(0.f);
-
-					//		auto vel = body->AngularVelocity.Get();
-					//		if (ev.shift)
-					//			vel = std::min(-(b2_pi / 2.f), vel);
-					//		vel -= b2_pi * 0.25;
-					//		body->AngularVelocity.Set(CL_Angle(vel, cl_radians).to_radians());
-					//	}
-					//}
-					//if (ev.id == CL_KEY_X)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-					//		//body->AngularVelocity.Set(CL_Angle(0.0f, cl_radians).to_radians());
-					//		body->AngularDamping.Set(0.9f);
-					//	}
-					//}
-
-					//bool w = ev.id == CL_KEY_W;
-					//bool s = ev.id == CL_KEY_S;
-					//bool a = ev.id == CL_KEY_A;
-					//bool d = ev.id == CL_KEY_D;
-					//if (w || s || a || d)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-					//		auto vel = body->Velocity.Get();
-					//		v2Multiply(vel, Vector2((a || d) ? 0.f : 1.f, (w || s) ? 0.f : 1.f), vel);
-					//		body->Velocity.Set(vel);
-					//		//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-					//	}
-					//}
-
-					//if (ev.id == CL_KEY_SPACE)
-					//{
-					//	const float invmax = 1.0f / RAND_MAX;
-					//	auto entity = entities.at((size_t)(std::rand() * invmax * 30/*entities.size()*/));
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body && body->GetBodyType() == IRigidBody::Dynamic)
-					//	{
-					//		//body->ApplyForce(Vector2(ToSimUnits(1000.f), 0.f), body->CenterOfMass.Get() + Vector2(0.f, ToSimUnits(std::rand() * invmax * 6.f - 3.f)));
-					//		
-					//		Vector2 force(std::rand() * invmax * 1000 - 500, std::rand() * invmax * 1000 - 500);
-					//		body->ApplyForce(Vector2(ToSimUnits(force.x), ToSimUnits(force.y)));
-					//	}
-					//	//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-					//}
 
 					bool k = ev.id == CL_KEY_K;
 					bool j = ev.id == CL_KEY_J;
@@ -664,19 +584,6 @@ public:
 							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
 						}
 					}
-				});
-
-				auto keydownhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_down().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
-				{
-					//if (ev.id == CL_KEY_I)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		body->Interpolate.Set(!body->Interpolate.Get());
-					//	}
-					//}
 				});
 
 				unsigned int lastframe = CL_System::get_time();
@@ -738,7 +645,8 @@ public:
 					
 					const auto rendered = scheduler->Execute();
 
-					entityManager->Update(delta * 0.001f);
+					entityManager->Update(delta * 0.001f); // The part of this that calls streamingMgr->OnUpdated(entity) should be done in a task
+					streamingMgr->Update(); // This should be done in a task
 
 					if (rendered & SystemType::Rendering)
 					{

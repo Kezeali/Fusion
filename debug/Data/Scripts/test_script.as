@@ -1,6 +1,6 @@
 #uses ITransform
 #uses IRigidBody
-//#uses ISprite
+#uses ISprite
 #uses TestB script_b
 
 class Test : ScriptComponent
@@ -40,6 +40,8 @@ class Test : ScriptComponent
 	
 	EntityWrapper@ createPlayerEntity(Vector &in pos)
 	{
+		// One possibility is to remove the addComponent method and just have an instantiate method
+		//  where you can pass some sort of collection
 		Entity newEnt = instantiate("b2Dynamic", false, pos, 0.f, 1);
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
@@ -50,7 +52,7 @@ class Test : ScriptComponent
 			console.println("sprite cast failed");
 			return EntityWrapper();
 		}
-		console.println(sprite.getType());
+		//console.println(sprite.getType());
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
 		

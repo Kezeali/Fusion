@@ -189,7 +189,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
-			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty,(unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
 			
 			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 		}
@@ -339,7 +339,10 @@ namespace FusionEngine
 	CScriptAny* ASScript::GetProperty(unsigned int index)
 	{
 		if (index >= m_ScriptProperties.size())
+		{
 			asGetActiveContext()->SetException("Tried to access a script property that doesn't exist");
+			return nullptr;
+		}
 
 		auto scriptProperty = dynamic_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
 		auto value = scriptProperty->Get();
@@ -349,7 +352,10 @@ namespace FusionEngine
 	bool ASScript::SetProperty(unsigned int index, void *ref, int typeId)
 	{
 		if (index >= m_ScriptProperties.size())
+		{
 			asGetActiveContext()->SetException("Tried to access a script property that doesn't exist");
+			return false;
+		}
 
 		auto scriptProperty = dynamic_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
 		scriptProperty->Set(ref, typeId);

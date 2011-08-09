@@ -204,12 +204,19 @@ namespace FusionEngine
 				entity->SetOwnerID(owner_id);
 				entity->_setName(name);
 
-				m_EntityManager->AddEntity(entity);
+				// TODO: Either the factory should set thie propChangedQueue, or Entitymanager should add the transform component
+				//  after setting the queue and before adding the entity to the streaming manager, or EntityManager shouldn't add
+				//  entities to the streaming manager until the first update (so that all the components can be added first - new
+				//  components can't be added after the first update). It is important to note that if the last option isn't used
+				//  (where all components must be added before adding to streaming) components must be individually activated.
+				entity->SetPropChangedQueue(&m_EntityManager->m_PropChangedQueue); 
 
 				auto transform = m_Factory->InstanceComponent(type, pos, angle);
 				if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
 					FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform.");
 				entity->AddComponent(transform);
+				
+				m_EntityManager->AddEntity(entity);
 
 				// TODO: set this entity to a property, rather than calling this callback
 				if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
@@ -358,6 +365,8 @@ namespace FusionEngine
 
 	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)
 	{
+		// This should probably call entityManager->AddComponent and that should activate the component if the entity is already active
+		//  (is it valid to add components to active entities tho?)
 		entity->AddComponent(obj->m_Factory->InstanceComponent(type), identifier);
 	}
 

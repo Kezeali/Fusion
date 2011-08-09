@@ -54,6 +54,8 @@ namespace FusionEngine
 				: m_Active(active), m_Value(value), m_ActiveRatio(active_ratio), m_ActiveNow(active), m_ActiveFirst(active)
 			{}
 
+			size_t m_InputIndex;
+
 			bool m_Active; // Button / key was active during the step
 			float m_Value; // Axis value, cursor position
 			float m_ActiveRatio; // 0.0 to 1.0: indicates whether the button was pressed / released during the step
@@ -70,7 +72,7 @@ namespace FusionEngine
 			inline float GetActiveRatio() const { return m_ActiveRatio; }
 		};
 
-		typedef std::tr1::unordered_map<std::string, InputState> InputMap;
+		typedef std::map<std::string, InputState> InputMap;
 
 	public:
 		PlayerInput();

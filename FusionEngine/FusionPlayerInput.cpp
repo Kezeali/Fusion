@@ -48,10 +48,11 @@ namespace FusionEngine
 	PlayerInput::PlayerInput(const InputDefinitionLoader::InputDefinitionArray &inputs)
 		: m_Changed(false)
 	{
-		for (InputDefinitionLoader::InputDefinitionArray::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
+		for (auto it = inputs.cbegin(), end = inputs.cend(); it != end; ++it)
 		{
 			const InputDefinitionPtr &input = *it;
-			m_Inputs[input->Name];
+			auto& inputState = m_Inputs[input->Name];
+			inputState.m_InputIndex = std::distance(inputs.cbegin(), it);
 		}
 	}
 
@@ -115,6 +116,7 @@ namespace FusionEngine
 		{
 			const InputState &state = it->second;
 
+			stream->Write(state.m_InputIndex);
 			stream->Write(state.IsActive());
 			stream->Write(state.GetValue());
 		}
