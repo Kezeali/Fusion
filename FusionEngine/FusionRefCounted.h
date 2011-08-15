@@ -39,6 +39,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include <boost/utility.hpp>
 #include <type_traits>
+#include <tbb/atomic.h>
 
 namespace FusionEngine
 {
@@ -52,15 +53,17 @@ namespace FusionEngine
 	class RefCounted
 	{
 	protected:
-		volatile int m_RefCount;
+		 tbb::atomic<int> m_RefCount;
 
 	public:
 		RefCounted()
-			: m_RefCount(1)
-		{}
+		{
+			m_RefCount = 1;
+		}
 		RefCounted(int initial_reference_count)
-			: m_RefCount(initial_reference_count)
-		{}
+		{
+			m_RefCount = initial_reference_count;
+		}
 		virtual ~RefCounted() {}
 
 		//! Increases reference count

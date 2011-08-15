@@ -273,7 +273,7 @@ namespace FusionEngine
 			: m_Changed(true),
 			m_Owner(nullptr),
 			m_GetSetCallbacks(nullptr),
-			m_Refs(0)
+			m_Refs(1)
 		{}
 
 		// Fundimental and enum types are passed to "Set" by value
@@ -305,7 +305,7 @@ namespace FusionEngine
 			: m_Changed(true),
 			m_Owner(nullptr),
 			m_Value(value),
-			m_Refs(0)
+			m_Refs(1)
 		{}
 
 		~ThreadSafeProperty()

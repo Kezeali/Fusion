@@ -39,7 +39,7 @@ namespace FusionEngine
 
 	const float s_DefaultActivationRange = 1500.f;
 	const float s_DefaultCellSize = 500.f;
-	const float s_DefaultWorldSize = 20000.f;
+	const float s_DefaultWorldSize = 200000.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
 
@@ -191,13 +191,15 @@ namespace FusionEngine
 
 	void StreamingManager::AddEntity(const EntityPtr &entity)
 	{
-		Cell *cell = CellAtPosition(entity->GetPosition());
+		Vector2 entityPosition = entity->GetPosition();
+		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
+		Cell *cell = CellAtPosition(entityPosition);
 #ifdef STREAMING_USEMAP
 		CellEntry &entry = cell->objects[entity.get()];
 #else
 		CellEntry &entry = createEntry(cell, entity.get());
 #endif
-		entry.x = entity->GetPosition().x; entry.y = entity->GetPosition().y;
+		entry.x = entityPosition.x; entry.y = entityPosition.y;
 		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
 
 		activateInView(cell, &entry, entity, true);
@@ -222,8 +224,8 @@ namespace FusionEngine
 
 		// clamp the new position within bounds
 		Vector2 newPos = entity->GetPosition();
-		float new_x = fe_clamped(newPos.x, -m_Bounds.x, +m_Bounds.x);
-		float new_y = fe_clamped(newPos.y, -m_Bounds.y, +m_Bounds.y);
+		float new_x = fe_clamped(ToGameUnits(newPos.x), -m_Bounds.x, +m_Bounds.x);
+		float new_y = fe_clamped(ToGameUnits(newPos.y), -m_Bounds.y, +m_Bounds.y);
 
 		// gather all of the data we need about this object
 		Cell *currentCell = nullptr;
@@ -244,7 +246,7 @@ namespace FusionEngine
 #ifdef STREAMING_AUTOADD
 		else // add the entity to the grid automatically
 		{
-			currentCell = CellAtPosition(entity->GetPosition());
+			currentCell = CellAtPosition(ToGameUnits(entity->GetPosition()));
 			Cell::CellEntryMap::value_type entryPair(entity, CellEntry());
 			_where = currentCell->objects.insert(entryPair).first;
 			cellEntry = &_where->second;
@@ -310,11 +312,12 @@ namespace FusionEngine
 
 	void StreamingManager::activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp)
 	{
-		const Vector2 &entityPosition = entity->GetPosition();
+		Vector2 entityPosition = entity->GetPosition();
+		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
 		{
 			const StreamingCamera &cam = *it;
-			if ((entityPosition - cam.streamPosition).squared_length() < m_RangeSquared)
+			if ((entityPosition - cam.streamPosition).length() < m_Range)
 			{
 				if (!cell_entry->active)
 					ActivateEntity(entity, *cell_entry, *cell);
@@ -360,6 +363,7 @@ namespace FusionEngine
 	{
 		FSN_ASSERT( cell_entry.active );
 		cell_entry.active = false;
+		cell_entry.pendingDeactivation = false;
 
 		GenerateDeactivationEvent(entity);
 	}
@@ -484,17 +488,16 @@ namespace FusionEngine
 							Cell &cell = m_Cells[i++];
 							for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 							{
-								const EntityPtr &entity = cell_it->first->shared_from_this(); 
 								CellEntry &cellEntry = cell_it->second;
-								const Vector2 &entityPosition = entity->GetPosition();
+								//Vector2 entityPosition = entity->GetPosition();
+								//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
+								Vector2 entityPosition(cellEntry.x, cellEntry.y);
 
-								if ((entityPosition - cam.streamPosition).squared_length() <= m_RangeSquared)
+								if ((entityPosition - cam.streamPosition).length() <= m_Range)
 								{
 									if (!cellEntry.active)
 									{
-										ActivateEntity(entity, cellEntry, cell);
-										//entry.active = true;
-										//m_ActiveEntities.insert(entity);
+										ActivateEntity(cell_it->first->shared_from_this(), cellEntry, cell);
 									}
 									else
 									{

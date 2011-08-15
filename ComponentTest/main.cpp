@@ -88,16 +88,16 @@ namespace FusionEngine
 }
 
 #define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	struct iface##_##prop { static ThreadSafeProperty<type>* get_ ## prop(void *obj) { return &GetIface<iface>(obj)->prop; } };\
 	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_ @get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
-	r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_ @)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "Property_" scriptType "_@+ get_" #prop "()", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	/*r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "void set_" #prop "(Property_" scriptType "_@+)", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);*/\
 	FSN_ASSERT(r >= 0);}
 
 #define FSN_REGISTER_PROP_ACCESSOR_R(iface, type, scriptType, prop) \
-	struct iface##_##prop { static ThreadSafeProperty<type, NullWriter<type>> &get_ ## prop(void *obj) { return GetIface<iface>(obj)->prop; } };\
+	struct iface##_##prop { static ThreadSafeProperty<type, NullWriter<type>> *get_ ## prop(void *obj) { return &GetIface<iface>(obj)->prop; } };\
 	ThreadSafeProperty<type, NullWriter<type>>::RegisterProp(engine, scriptType);\
-	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" scriptType "_ &get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
+	{int r = engine->RegisterObjectMethod(iface::GetTypeName().c_str(), "const ReadonlyProperty_" scriptType "_@+ get_" #prop "() const", asFUNCTION(iface##_##prop :: get_ ## prop ), asCALL_CDECL_OBJLAST);\
 	FSN_ASSERT(r >= 0);}
 
 //#define FSN_REGISTER_PROP_ACCESSOR(iface, type, scriptType, prop) \
@@ -338,6 +338,8 @@ public:
 
 				resourceManager->AddResourceLoader("SPRITE", &LoadSpriteResource, &UnloadSpriteResource, NULL);
 
+				resourceManager->AddResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource, NULL);
+
 				resourceManager->StartLoaderThread();
 
 				CL_OpenGL::set_active(gc);
@@ -409,7 +411,7 @@ public:
 				scheduler->SetOntology(ontology);
 
 
-				std::vector<std::shared_ptr<Entity>> entities;
+				//std::vector<std::shared_ptr<Entity>> entities;
 
 				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
 
@@ -464,6 +466,8 @@ public:
 						entity->AddComponent(transformCom);
 					}
 
+					entityManager->AddEntity(entity);
+
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
 
@@ -473,8 +477,8 @@ public:
 						asScript = asWorld->InstantiateComponent("ASScript");
 						entity->AddComponent(asScript, "script_a");
 
-						asScript2 = asWorld->InstantiateComponent("ASScript");
-						entity->AddComponent(asScript2, "script_b");
+						//asScript2 = asWorld->InstantiateComponent("ASScript");
+						//entity->AddComponent(asScript2, "script_b");
 					}
 
 					if (i == 1)
@@ -515,18 +519,18 @@ public:
 						body->AngularDamping.Set(0.9f);
 					}
 
-					entities.push_back(entity);
+					//entities.push_back(entity);
 
 					//entity->StreamIn();
-					if (b2BodyCom)
-						box2dWorld->OnActivation(b2BodyCom);
-					if (b2CircleFixture)
-						box2dWorld->OnActivation(b2CircleFixture);
-					renderWorld->OnActivation(clSprite);
-					if (asScript)
-						asWorld->OnActivation(asScript);
-					if (asScript2)
-						asWorld->OnActivation(asScript2);
+					//if (b2BodyCom)
+					//	box2dWorld->OnActivation(b2BodyCom);
+					//if (b2CircleFixture)
+					//	box2dWorld->OnActivation(b2CircleFixture);
+					//renderWorld->OnActivation(clSprite);
+					//if (asScript)
+					//	asWorld->OnActivation(asScript);
+					//if (asScript2)
+					//	asWorld->OnActivation(asScript2);
 				}
 
 				PlayerRegistry::AddLocalPlayer(1u, 0u);
@@ -537,15 +541,12 @@ public:
 				dynamic_cast<CLRenderWorld*>(renderWorld)->AddViewport(viewport);
 				streamingMgr->AddCamera(camera);
 
-				std::map<int, bool> pressed;
-
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
 					bool dtup = ev.id == CL_KEY_PRIOR;
 					bool dtdown = ev.id == CL_KEY_NEXT;
 					if (dtup || dtdown)
 					{
-						pressed[CL_KEY_PRIOR] = true;
 						unsigned int fps = (unsigned int)(1.0f / scheduler->GetDT() + 0.5f);
 						if (dtdown && fps <= 5)
 							fps -= 1;
@@ -557,32 +558,19 @@ public:
 						scheduler->SetDT(1.0f / (float)fps);
 					}
 
-					bool k = ev.id == CL_KEY_K;
-					bool j = ev.id == CL_KEY_J;
-					if (k || j)
+					bool rangeup = ev.id == CL_KEY_HOME;
+					bool rangedown = ev.id == CL_KEY_END;
+					if (rangeup || rangedown)
 					{
-						auto entity = entities[0];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
-
-							const float xvel = k ? 0.5f : -0.5f;
-							body->Velocity.Set(Vector2(xvel, 0.0f));
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
-					}
-					if (ev.id == CL_KEY_M)
-					{
-						auto entity = entities[0];
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							FSN_ASSERT(body->GetBodyType() == IRigidBody::Kinematic);
-
-							body->Velocity.Set(Vector2::zero());
-							//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-						}
+						unsigned int range = (unsigned int)(streamingMgr->GetRange() + 0.5f);
+						if (rangedown && range <= 500)
+							range -= 100;
+						else if (rangeup && range < 500)
+							range += 100;
+						else
+							range += (rangeup ? 500 : -500);
+						fe_clamp(range, 100u, 10000u);
+						streamingMgr->SetRange((float)range);
 					}
 				});
 
@@ -654,63 +642,11 @@ public:
 						gc.clear();
 					}
 
-					//bool w = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_W);
-					//bool s = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_S);
-					//bool a = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_A);
-					//bool d = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_D);
-					//if (w || s || a || d)
-					//{
-					//	auto entity = entities[1];
-					//	auto body = entity->GetComponent<IRigidBody>();
-					//	if (body)
-					//	{
-					//		FSN_ASSERT(body->GetBodyType() == IRigidBody::Dynamic);
-
-					//		entity->SynchroniseParallelEdits();
-
-					//		const float speed = 0.8f;
-					//		Vector2 vel = body->Velocity.Get();
-					//		if (w)
-					//			vel.y = -speed;
-					//		else if (s)
-					//			vel.y = speed;
-					//		else if (w && s)
-					//			vel.y = 0;
-					//		if (a)
-					//			vel.x = -speed;
-					//		else if (d)
-					//			vel.x = speed;
-					//		else if (a && d)
-					//			vel.x = 0;
-
-					//		body->Velocity.Set(vel);
-					//		//body->AngularVelocity.Set(CL_Angle(45, cl_degrees).to_radians());
-					//	}
-					//}
-
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL))
+					IComponentProperty *changed;
+					while (propChangedQueue.try_pop(changed))
 					{
-						//const size_t numents = (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_CONTROL)) ? entities.size() : 300u;
-						for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
-							//for (size_t i = 0; i < numents; ++i)
-						{
-							//auto& entity = entities[i];
-							auto& entity = *it;
-							entity->SynchroniseParallelEdits();
-
-							const auto& components = entity->GetComponents();
-							for (auto it = components.begin(), end = components.end(); it != end; ++it)
-								(*it)->FireSignals();
-						}
-					}
-					else
-					{
-						IComponentProperty *changed;
-						while (propChangedQueue.try_pop(changed))
-						{
-							changed->Synchronise();
-							changed->FireSignal();
-						}
+						changed->Synchronise();
+						changed->FireSignal();
 					}
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))

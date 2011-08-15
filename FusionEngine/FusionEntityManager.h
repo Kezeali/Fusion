@@ -313,6 +313,8 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
+		void AddComponent(EntityPtr& entity, const std::string& type);
+
 		void OnActivationEvent(const ActivationEvent& ev);
 
 		// Will notify entities that the given player was added next time Update is called 
@@ -327,7 +329,14 @@ namespace FusionEngine
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
 		void clearEntities(bool real_only);
 
-		void insertActiveEntity(const EntityPtr &entity);
+		void queueEntityToActivate(const EntityPtr& entity);
+		//! returns true if all components are ready to activate
+		bool prepareEntity(const EntityPtr &entity);
+		//! returns true if all components were ready and thus activated
+		bool attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity);
+		void activateEntity(const EntityPtr &entity);
+
+		void deactivateEntity(const EntityPtr& entity);
 
 		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
@@ -354,7 +363,8 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
-		EntityArray m_EntitiesToActivate;
+		std::vector<std::pair<bool, EntityPtr>> m_EntitiesToActivate;
+		//std::vector<EntityPtr> m_EntitiesToActivate;
 		EntityArray m_ActiveEntities;
 
 		// Entities to be updated - 8 domains

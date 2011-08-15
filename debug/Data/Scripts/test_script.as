@@ -92,18 +92,18 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
-		if (frames == 3)
+		if (frames == 10)
 		{
 			//console.println("testb.frames: " + script_b.frames);
-			script_b.foo = 99;
-			console.println("testb.foo: " + script_b.foo);
+			//script_b.foo = 99;
+			//console.println("testb.foo: " + script_b.foo);
 			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
 			entityB.script_b.speed = 2.0;
 		}
 		
-		if (frames == 4)
+		if (frames == 11)
 		{
-			console.println("testb.foo: " + script_b.foo);
+			//console.println("testb.foo: " + script_b.foo);
 			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
 		}
 

@@ -36,6 +36,92 @@
 namespace FusionEngine
 {
 
+	CLBinaryStream::CLBinaryStream(const std::string& filename, CLBinaryStream::OpenMode open_mode)
+		: m_File(nullptr)
+	{
+		Open(filename, open_mode);
+	}
+
+	CLBinaryStream::~CLBinaryStream()
+	{
+		if (m_File)
+			PHYSFS_close(m_File);
+	}
+
+	void CLBinaryStream::Open(const std::string& filename, CLBinaryStream::OpenMode open_mode)
+	{
+		if (open_mode == OpenMode::open_write)
+			m_File = PHYSFS_openWrite(filename.c_str());
+		else
+			m_File = PHYSFS_openRead(filename.c_str());
+	}
+
+	void CLBinaryStream::Read(void *data, asUINT size)
+	{
+		auto r = PHYSFS_read(m_File, data, 1u, size);
+		if (r < 0 || (r != size && !PHYSFS_eof(m_File)))
+			FSN_EXCEPT(FileSystemException, std::string("Couldn't read from file: ") + PHYSFS_getLastError());
+	}
+
+	void CLBinaryStream::Write(const void *data, asUINT size)
+	{
+		auto r = PHYSFS_write(m_File, data, 1u, size);
+		if (r != size)
+			FSN_EXCEPT(FileSystemException, std::string("Couldn't write to file: ") + PHYSFS_getLastError());
+	}
+
+	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		auto engine = ScriptManager::getSingleton().GetEnginePtr();
+
+		asIScriptModule* module = engine->GetModule(resource->GetPath().c_str(), asGM_ALWAYS_CREATE);
+
+		std::string moduleFileName = resource->GetPath().substr(resource->GetPath().rfind('/'));
+		moduleFileName.erase(moduleFileName.size() - 3);
+		moduleFileName = "ScriptCache" + moduleFileName + ".bytecode";
+
+		int r = 0;
+
+		try
+		{
+			CLBinaryStream bcStream(moduleFileName, CLBinaryStream::open_read);
+			r = module->LoadByteCode(&bcStream);
+		}
+		catch (FusionEngine::FileSystemException &ex)
+		{
+			resource->SetDataPtr(nullptr);
+			resource->_setValid(false);
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded: " + ex.what());
+		}
+
+		if (r >= 0)
+		{
+			resource->SetDataPtr(module);
+			resource->_setValid(true);
+		}
+		else
+		{
+			resource->SetDataPtr(nullptr);
+			resource->_setValid(false);
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
+		}
+	}
+
+	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	{
+		if (resource->IsLoaded())
+		{
+			resource->_setValid(false);
+
+			auto engine = ScriptManager::getSingleton().GetEnginePtr();
+
+			engine->DiscardModule(
+				static_cast<asIScriptModule*>(resource->GetDataPtr())->GetName());
+		}
+
+		resource->SetDataPtr(nullptr);
+	}
+
 	template <typename T>
 	class ScriptTSP : public IComponentProperty
 	{
@@ -197,7 +283,7 @@ namespace FusionEngine
 
 	ASScript::ASScript()
 		: m_ReloadScript(false),
-		m_ModuleBuilt(false)
+		m_ModuleReloaded(false)
 	{
 	}
 
@@ -315,7 +401,7 @@ namespace FusionEngine
 					method = true;
 				else
 				{
-					funcId = m_Module->GetASModule()->GetFunctionIdByDecl(decl.c_str());
+					funcId = m_Module->GetFunctionIdByDecl(decl.c_str());
 					method = false;
 				}
 			}
@@ -408,6 +494,12 @@ namespace FusionEngine
 			if (scriptProperty->IsDirty())
 				OnPropertyChanged(scriptProperty);
 		}
+	}
+
+	void ASScript::OnModuleLoaded(ResourceDataPtr resource)
+	{
+		m_Module.SetTarget(resource);
+		m_ModuleReloaded = true;
 	}
 
 	void ASScript::OnSiblingAdded(const std::shared_ptr<IComponent>& com)

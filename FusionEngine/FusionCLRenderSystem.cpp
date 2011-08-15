@@ -98,6 +98,7 @@ namespace FusionEngine
 			auto drawable = std::dynamic_pointer_cast<IDrawable>(component);
 			if (drawable)
 			{
+				FSN_ASSERT(std::find(m_Drawables.begin(), m_Drawables.end(), drawable) == m_Drawables.end());
 				m_Drawables.push_back(drawable);
 			}
 		}
@@ -227,7 +228,7 @@ namespace FusionEngine
 			m_Renderer->SetupDraw(*it, &drawArea);
 
 			const auto& p = camera->GetPosition();
-			drawArea.translate(p);
+			//drawArea.translate(p);
 			
 			Vector2 camera_pos(p.x, p.y);
 			for (auto dit = drawables.begin(), dend = drawables.end(); dit != dend; ++dit)

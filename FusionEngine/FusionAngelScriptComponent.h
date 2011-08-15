@@ -38,6 +38,7 @@
 
 #include "FusionSerialisationHelper.h"
 
+#include "FusionResourcePointer.h"
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 
@@ -45,6 +46,28 @@ class CScriptAny;
 
 namespace FusionEngine
 {
+
+	class CLBinaryStream : public asIBinaryStream
+	{
+	public:
+		enum OpenMode { open_read, open_write };
+
+		CLBinaryStream(const std::string& filename, OpenMode open_mode);
+		~CLBinaryStream();
+
+		void Open(const std::string& filename, OpenMode open_mode);
+
+		void Read(void *data, asUINT size);
+		void Write(const void *data, asUINT size);
+
+	private:
+		PHYSFS_File *m_File;
+	};
+
+	//! Sprite resource loader callback
+	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
+	//! Sprite resource unloader callback
+	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
 	class ASScript : public IComponent, public IScript
 	{
@@ -77,6 +100,8 @@ namespace FusionEngine
 		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
 		void CheckChangedPropertiesIn();
+		
+		void OnModuleLoaded(ResourceDataPtr resource);
 
 		static void Register(asIScriptEngine* engine);
 
@@ -101,14 +126,18 @@ namespace FusionEngine
 		std::string m_Path;
 		bool m_ReloadScript;
 
-		bool m_ModuleBuilt;
+		bool m_ModuleReloaded;
 
-		ModulePtr m_Module;
+		boost::signals2::connection m_ModuleLoadedConnection;
+		ResourcePointer<asIScriptModule> m_Module;
+		ModulePtr m_ModuleOld;
 		ScriptObject m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
-		std::vector<boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutines;
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
+		
+		std::vector<boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutines;
+		std::map<int, boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutinesWithConditions;
 	};
 
 }

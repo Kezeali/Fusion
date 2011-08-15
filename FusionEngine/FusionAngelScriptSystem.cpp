@@ -469,48 +469,6 @@ namespace FusionEngine
 		std::set<std::shared_ptr<DependencyNode>> UsedBy;
 	};
 
-	class CLBinaryStream : public asIBinaryStream
-	{
-	public:
-		CLBinaryStream(const std::string& filename);
-		~CLBinaryStream();
-
-		void Open(const std::string& filename);
-
-		void Read(void *data, asUINT size);
-		void Write(const void *data, asUINT size);
-
-	private:
-		PHYSFS_File *m_File;
-	};
-
-	CLBinaryStream::CLBinaryStream(const std::string& filename)
-		: m_File(nullptr)
-	{
-		Open(filename);
-	}
-
-	CLBinaryStream::~CLBinaryStream()
-	{
-		if (m_File)
-			PHYSFS_close(m_File);
-	}
-
-	void CLBinaryStream::Open(const std::string& filename)
-	{
-		m_File = PHYSFS_openWrite(filename.c_str());
-	}
-
-	void CLBinaryStream::Read(void *data, asUINT size)
-	{
-		PHYSFS_read(m_File, data, 1u, size);
-	}
-
-	void CLBinaryStream::Write(const void *data, asUINT size)
-	{
-		PHYSFS_write(m_File, data, 1u, size);
-	}
-
 	static std::string GenerateComponentInterface(const AngelScriptWorld::ComponentScriptInfo& scriptInfo)
 	{
 		std::string scriptComponentInterface;
@@ -719,7 +677,7 @@ namespace FusionEngine
 			auto& module = std::get<2>(*it);
 			if (module->Build() >= 0)
 			{
-				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename));
+				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename, CLBinaryStream::open_write));
 				module->GetASModule()->SaveByteCode(outFile.get());
 
 				m_EntityFactory->AddInstancer(typeName, this);
@@ -759,8 +717,17 @@ namespace FusionEngine
 
 	void AngelScriptWorld::OnPrepare(const std::shared_ptr<IComponent>& component)
 	{
-		// TODO: request the module from the resource manager here (it will either be building right now, if it had changed, or it the resource manager will begin loading it)
-		component->Ready();
+		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		if (scriptComponent)
+		{
+			using namespace std::placeholders;
+			scriptComponent->m_ModuleLoadedConnection = ResourceManager::getSingleton().GetResource("MODULE", scriptComponent->GetScriptPath(), std::bind(&ASScript::OnModuleLoaded, scriptComponent.get(), _1));
+
+			if (!scriptComponent->m_ScriptObject.IsValid())
+				m_NewlyActiveScripts.push_back(scriptComponent);
+			else
+				scriptComponent->MarkReady();
+		}
 	}
 
 	void AngelScriptWorld::OnActivation(const std::shared_ptr<IComponent>& component)
@@ -768,7 +735,6 @@ namespace FusionEngine
 		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
-			m_NewlyActiveScripts.push_back(scriptComponent);
 			m_ActiveScripts.push_back(scriptComponent);
 		}
 	}
@@ -868,8 +834,9 @@ namespace FusionEngine
 	{
 		{
 		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
+		std::vector<std::shared_ptr<ASScript>> notInstantiated;
 
-		tbb::spin_mutex mutex;
+		//tbb::spin_mutex mutex;
 
 		auto instantiate_objects = [&](const tbb::blocked_range<size_t>& r)
 		{
@@ -877,29 +844,29 @@ namespace FusionEngine
 			{
 				auto& script = scripts_to_instantiate[i];
 
-				if (script->m_ReloadScript)
+				//if (script->m_ReloadScript)
+				//{
+				//	script->m_ScriptObject.Release();
+
+				//	auto moduleName = script->GetScriptPath();
+
+				//	tbb::spin_mutex::scoped_lock lock(mutex);
+				//	script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
+
+				//	script->m_ModuleBuilt = true;
+
+				//	script->m_ReloadScript = false;
+				//}
+
+				//if (script->m_ModuleReloaded)
 				{
-					script->m_ScriptObject.Release();
-
-					auto moduleName = script->GetScriptPath();
-
-					tbb::spin_mutex::scoped_lock lock(mutex);
-					script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
-
-					script->m_ModuleBuilt = true;
-
-					script->m_ReloadScript = false;
-				}
-
-				if (script->m_ModuleBuilt)
-				{
-					if (script->m_Module->IsBuilt())
+					if (script->m_Module.IsLoaded())
 					{
-						auto objectType = script->m_Module->GetASModule()->GetObjectTypeByIndex(0);
+						auto objectType = script->m_Module->GetObjectTypeByIndex(0);
 						if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
 						{
 							SendToConsole("First class defined in " + script->GetScriptPath() + " isn't derived from ScriptComponent");
-							script->m_ModuleBuilt = false;
+							script->m_ModuleReloaded = false;
 							continue;
 						}
 						//script->m_ScriptObject = script->m_Module->CreateObject(objectType->GetTypeId());
@@ -1020,9 +987,13 @@ namespace FusionEngine
 								SendToConsole(e.m_Message);
 							}
 						}
-					}
 
-					script->m_ModuleBuilt = false;
+						script->MarkReady();
+					}
+					else
+						notInstantiated.push_back(script);
+
+					script->m_ModuleReloaded = false;
 				}
 			}
 		};
@@ -1033,7 +1004,7 @@ namespace FusionEngine
 		instantiate_objects(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()));
 #endif
 
-		scripts_to_instantiate.clear();
+		scripts_to_instantiate.swap(notInstantiated);
 		} // scope for instantiate_objects lambda
 
 		{

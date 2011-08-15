@@ -458,8 +458,7 @@ namespace FusionEngine
 		// Immeadiately activate this entity if it isn't within a streaming domain
 		if (!CheckState(entity->GetDomain(), DS_STREAMING))
 		{
-			//insertActiveEntity(entity);
-			m_EntitiesToActivate.push_back(entity);
+			queueEntityToActivate(entity);
 		}
 
 		//entity->SetPropChangedQueue(&m_PropChangedQueue);
@@ -774,19 +773,7 @@ namespace FusionEngine
 			{
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
-				entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
-				for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
-				{
-					auto& com = *cit;
-					auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-					if (_where != m_EntityFactory->m_ComponentInstancers.end())
-					{
-						_where->second->OnDeactivation(com);
-					}
-					else
-						FSN_EXCEPT(InvalidArgumentException, "Herp derp");
-				}
-				entity->StreamOut();
+				deactivateEntity(entity);
 				it = entityList.erase(it);
 				end = entityList.end();
 			}
@@ -841,15 +828,83 @@ namespace FusionEngine
 
 		//m_EntitiesLocked = false;
 
-		// Actually add entities which were 'added' during the update
-		for (EntityArray::iterator it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)
-			insertActiveEntity(*it);
-		m_EntitiesToActivate.clear();
+		// Activate entities
+		auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
+		while (it != end)
+		{
+			//bool ready = false;
+			//if (it->first)
+			//	ready = attemptToActivateEntity(it->second);
+			//else
+			//{
+			//	ready = prepareEntity(it->second);
+			//	it->first = true;
+			//}
+			//if (ready)
+			//	activateEntity(it->second);
+			if (attemptToActivateEntity(it->first, it->second))
+			{
+				it = m_EntitiesToActivate.erase(it);
+				end = m_EntitiesToActivate.end();
+			}
+			else
+				++it;
+		}
 	}
 
-	void EntityManager::insertActiveEntity(const EntityPtr &entity)
+	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
-		entity->StreamIn();
+		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
+		//  so that mark must be removed
+		entity->RemoveDeactivateMark();
+		// The first item in the pair indicated whether Prepare has been called on the entity
+		m_EntitiesToActivate.push_back(std::make_pair(false, entity));
+	}
+
+	bool EntityManager::prepareEntity(const EntityPtr &entity)
+	{
+		bool allAreReady = true;
+		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+		{
+			auto& com = *it;
+			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			{
+				com->SetReadyState(IComponent::Preparing);
+				_where->second->OnPrepare(com);
+				allAreReady &= com->IsReady();
+			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
+		}
+		return allAreReady;
+	}
+
+	bool EntityManager::attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity)
+	{
+		if (!has_begun_preparing)
+		{
+			has_begun_preparing = true;
+			if (!prepareEntity(entity))
+				return false; // Not all ready, return and try again next time this is called
+		}
+		else
+		{
+			// Check unreadyness
+			for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+			{
+				auto& com = *it;
+				if (!com->IsReady())
+					return false;
+			}
+		}
+		// Getting here means all components are ready: activate!
+		activateEntity(entity);
+		return true;
+	}
+	
+	void EntityManager::activateEntity(const EntityPtr &entity)
+	{
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
 			auto& com = *it;
@@ -859,24 +914,49 @@ namespace FusionEngine
 				_where->second->OnActivation(com);
 			}
 			else
+				FSN_EXCEPT(InvalidArgumentException, "I made a mistake, because am dum");
+		}
+		entity->StreamIn();
+
+		FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), entity) == m_ActiveEntities.end());
+		m_ActiveEntities.push_back(entity);
+	}
+
+	void EntityManager::deactivateEntity(const EntityPtr& entity)
+	{
+		entity->StreamOut();
+
+		entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
+		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
+		{
+			auto& com = *cit;
+			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			{
+				_where->second->OnDeactivation(com);
+				com->SetReadyState(IComponent::NotReady);
+			}
+			else
 				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
 		}
-		m_ActiveEntities.push_back(entity);
+	}
+
+	void EntityManager::AddComponent(EntityPtr &entity, const std::string& type)
+	{
+		auto _where = m_EntityFactory->m_ComponentInstancers.find(type);
+		if (_where != m_EntityFactory->m_ComponentInstancers.end())
+		{
+			auto com = _where->second->InstantiateComponent(type);
+			entity->AddComponent(com);
+		}
 	}
 
 	void EntityManager::OnActivationEvent(const ActivationEvent &ev)
 	{
+		// TODO: post stream-out / stream in events
 		if (ev.type == ActivationEvent::Activate)
 		{
-			// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
-			//  so that mark must be removed
-			ev.entity->RemoveDeactivateMark();
-
-			if (m_EntitiesLocked)
-				// The entity will be added to the active list at the end of this update step (see EntityManager::Update(float))
-				m_EntitiesToActivate.push_back(ev.entity);
-			else
-				insertActiveEntity(ev.entity);
+			queueEntityToActivate(ev.entity);
 		}
 		else
 			ev.entity->MarkToDeactivate();

@@ -199,7 +199,7 @@ namespace FusionEngine
 		}
 		if (!m_Sprite.is_null())
 		{
-			Vector2 draw_pos = ToRender(m_Position) - camera_pos;
+			Vector2 draw_pos = ToRender(m_Position);// - camera_pos;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 
 			//auto size = m_AABB.get_size();
