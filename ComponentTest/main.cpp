@@ -411,19 +411,21 @@ public:
 				scheduler->SetOntology(ontology);
 
 
-				//std::vector<std::shared_ptr<Entity>> entities;
+				std::vector<std::shared_ptr<Entity>> entities;
 
 				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
 
 				float xtent = 720;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
 #ifdef _DEBUG
-				xtent = 20;
-				for (unsigned int i = 0; i < 1; ++i)
+				xtent = 1;
+				position.set(ToSimUnits(-xtent), ToSimUnits(-xtent));
+				//for (unsigned int i = 0; i < 1; ++i)
 #else
 				for (unsigned int i = 0; i < 1500; ++i)
 #endif
 				{
+					unsigned int i = 0;
 					position.x += ToSimUnits(50.f);
 					if (position.x >= ToSimUnits(xtent))
 					{
@@ -434,7 +436,7 @@ public:
 					auto entity = std::make_shared<Entity>();
 					std::stringstream str;
 					str << i;
-					entity->_setName("entity" + str.str());
+					entity->_setName("initentity" + str.str());
 
 					entity->SetPropChangedQueue(&entityManager->m_PropChangedQueue);
 					
@@ -442,17 +444,6 @@ public:
 					std::shared_ptr<IComponent> b2BodyCom;
 					if (i < 300)
 					{
-						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-						entity->AddComponent(b2CircleFixture);
-						{
-							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
-							fixture->Density.Set(0.8f);
-							fixture->Sensor.Set(i > 80);
-							auto shape = entity->GetComponent<ICircleShape>();
-							shape->Radius.Set(ToSimUnits(50.f / 2.f));
-						}
-						entity->SynchroniseParallelEdits();
-
 						if (i == 0)
 							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f);
 						else
@@ -467,6 +458,20 @@ public:
 					}
 
 					entityManager->AddEntity(entity);
+
+					if (i < 300)
+					{
+						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
+						entity->AddComponent(b2CircleFixture);
+						{
+							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+							fixture->Density.Set(0.8f);
+							fixture->Sensor.Set(i > 80);
+							auto shape = entity->GetComponent<ICircleShape>();
+							shape->Radius.Set(ToSimUnits(50.f / 2.f));
+						}
+						entity->SynchroniseParallelEdits();
+					}
 
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
@@ -501,11 +506,12 @@ public:
 					if (i < 200)
 					{
 						auto script = entity->GetComponent<IScript>("script_a");
-						script->ScriptPath.Set("Scripts/test_script.as");
-
-						script = entity->GetComponent<IScript>("script_b");
 						if (script)
-							script->ScriptPath.Set("Scripts/TestB.as");
+							script->ScriptPath.Set("Scripts/test_script.as");
+
+						//script = entity->GetComponent<IScript>("script_b");
+						//if (script)
+						//	script->ScriptPath.Set("Scripts/TestB.as");
 					}
 					entity->SynchroniseParallelEdits();
 
@@ -571,6 +577,9 @@ public:
 							range += (rangeup ? 500 : -500);
 						fe_clamp(range, 100u, 10000u);
 						streamingMgr->SetRange((float)range);
+					  std::stringstream str;
+					  str << range;
+						SendToConsole(str.str());
 					}
 				});
 

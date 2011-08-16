@@ -219,8 +219,8 @@ namespace FusionEngine
 				m_EntityManager->AddEntity(entity);
 
 				// TODO: set this entity to a property, rather than calling this callback
-				if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
-					requester->OnInstanceRequestFulfilled(entity);
+				//if (requester->IsSyncedEntity()) // If the entity isn't synced this call can't be synced, so it isn't made in that case
+				//	requester->OnInstanceRequestFulfilled(entity);
 			}
 
 			return entity;
@@ -360,7 +360,10 @@ namespace FusionEngine
 		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
 		auto entity = nativeCom->GetParent()->shared_from_this();
 
-		return obj->RequestInstance(entity, synch, pos, angle, transform_component, name, owner_id);
+		auto newEntity = obj->RequestInstance(entity, synch, pos, angle, transform_component, name, owner_id);
+
+		//newEntity->addRef();
+		return newEntity;//.get();
 	}
 
 	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)

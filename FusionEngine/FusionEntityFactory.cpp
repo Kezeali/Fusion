@@ -721,11 +721,11 @@ namespace FusionEngine
 	EntityPtr EntityFactory::InstanceEntity(const std::string &prefab_type, const Vector2& position, float angle)
 	{
 		EntityPtr entity;
-		auto _where = m_PrefabTypes.find(prefab_type);
-		if (_where == m_PrefabTypes.end())
+		auto prefabEntry = m_PrefabTypes.find(prefab_type);
+		if (prefabEntry == m_PrefabTypes.end())
 			return EntityPtr();
 
-		auto& composition = _where->second;
+		auto& composition = prefabEntry->second;
 
 		for (auto it = composition.begin(), end = composition.end(); it != end; ++it)
 		{
@@ -951,11 +951,13 @@ namespace FusionEngine
 		//	} ) );
 		//}
 
-		std::deque<std::string> *depsToLoad = new std::deque<std::string>();
+		const std::unique_ptr<std::deque<std::string>> depsToLoad(new std::deque<std::string>());
 
 		// Push all the dependencies of the root onto the stack
-		const EntityDefinition::DependenciesMap &deps = definition->GetEntityDependencies();
-		depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+		{
+			const auto &deps = definition->GetEntityDependencies();
+			depsToLoad->insert(depsToLoad->end(), deps.begin(), deps.end());
+		}
 
 		// Load dependencies until the stack is empty
 		while (!depsToLoad->empty())

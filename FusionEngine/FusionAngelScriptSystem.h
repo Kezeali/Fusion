@@ -98,6 +98,8 @@ namespace FusionEngine
 		std::vector<std::shared_ptr<ASScript>> m_NewlyActiveScripts;
 		std::vector<std::shared_ptr<ASScript>> m_ActiveScripts;
 
+		bool m_Updating;
+
 	public:
 		struct ComponentScriptInfo
 		{

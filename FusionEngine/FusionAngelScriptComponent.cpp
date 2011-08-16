@@ -301,7 +301,7 @@ namespace FusionEngine
 			int r = ctx->Prepare(_where->second);
 			if (r >= 0)
 			{
-				ctx->SetObject(m_ScriptObject.GetScriptObject());
+				ctx->SetObject(m_ScriptObject.get());
 			}
 			else
 			{
@@ -316,13 +316,13 @@ namespace FusionEngine
 			//caller = script->m_ScriptObject.GetCaller("void update(float)");
 			//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
 
-			int funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+			int funcId = m_ScriptObject->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 
 			ctx = script_manager->CreateContext();
 			int r = ctx->Prepare(funcId);
 			if (r >= 0)
 			{
-				ctx->SetObject(m_ScriptObject.GetScriptObject());
+				ctx->SetObject(m_ScriptObject.get());
 				m_ScriptMethods[decl] = funcId;
 			}
 			else
@@ -359,9 +359,9 @@ namespace FusionEngine
 			const auto objectType = fn->GetObjectType();
 			const bool method = objectType != nullptr;
 
-			if (method && objectType != m_ScriptObject.GetScriptObject()->GetObjectType())
+			if (method && objectType != m_ScriptObject->GetObjectType())
 			{
-				const std::string thisTypeName = m_ScriptObject.GetScriptObject()->GetObjectType()->GetName();
+				const std::string thisTypeName = m_ScriptObject->GetObjectType()->GetName();
 				ctx->SetException(("Tried to create a coroutine for a method from another class. This class: " + thisTypeName + ", Method: " + fn->GetDeclaration()).c_str());
 				return;
 			}
@@ -369,7 +369,7 @@ namespace FusionEngine
 			auto coCtx = engine->CreateContext();
 			coCtx->Prepare(fn->GetId());
 			if (method)
-				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+				coCtx->SetObject(m_ScriptObject.get());
 
 			m_ActiveCoroutines.push_back(coCtx);
 			coCtx->Release();
@@ -396,7 +396,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				funcId = m_ScriptObject.GetScriptObject()->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+				funcId = m_ScriptObject->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 				if (funcId >= 0)
 					method = true;
 				else
@@ -415,7 +415,7 @@ namespace FusionEngine
 			auto coCtx = engine->CreateContext();
 			coCtx->Prepare(funcId);
 			if (method)
-				coCtx->SetObject(m_ScriptObject.GetScriptObject());
+				coCtx->SetObject(m_ScriptObject.get());
 
 			m_ActiveCoroutines.push_back(coCtx);
 			coCtx->Release();
@@ -430,7 +430,7 @@ namespace FusionEngine
 			return nullptr;
 		}
 
-		auto scriptProperty = dynamic_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
+		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
 		auto value = scriptProperty->Get();
 		return value;
 	}
@@ -443,14 +443,14 @@ namespace FusionEngine
 			return false;
 		}
 
-		auto scriptProperty = dynamic_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
+		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
 		scriptProperty->Set(ref, typeId);
 		return true;
 	}
 
 	void ASScript::SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& properties)
 	{
-		m_ScriptObject = ScriptObject(obj);
+		m_ScriptObject = obj;
 
 		if (obj)
 		{

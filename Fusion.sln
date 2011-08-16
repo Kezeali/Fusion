@@ -12,15 +12,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Analysis|Win32 = Analysis|Win32
 		Debug|Win32 = Debug|Win32
 		Profile|Win32 = Profile|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4C1A90F6-5237-4B76-BE98-830B95915879}.Analysis|Win32.ActiveCfg = Analysis|Win32
 		{4C1A90F6-5237-4B76-BE98-830B95915879}.Debug|Win32.ActiveCfg = Debug|Win32
 		{4C1A90F6-5237-4B76-BE98-830B95915879}.Profile|Win32.ActiveCfg = Profile|Win32
 		{4C1A90F6-5237-4B76-BE98-830B95915879}.Release|Win32.ActiveCfg = Release|Win32
 		{4C1A90F6-5237-4B76-BE98-830B95915879}.Release|Win32.Build.0 = Release|Win32
+		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Analysis|Win32.ActiveCfg = Analysis|Win32
+		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Analysis|Win32.Build.0 = Analysis|Win32
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Debug|Win32.Build.0 = Debug|Win32
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Profile|Win32.ActiveCfg = Profile|Win32

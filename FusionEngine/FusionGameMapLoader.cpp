@@ -81,13 +81,13 @@ namespace FusionEngine
 		if (packetType == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
 		{
 			// Tell the new peer what the current map is
-			RakNet::BitStream bitStream;
-			bitStream.Write(m_MapFilename.size());
-			bitStream.Write(m_MapFilename.data(), m_MapFilename.size());
-			bitStream.Write(m_MapChecksum);
+			RakNet::BitStream replyBitstream;
+			replyBitstream.Write(m_MapFilename.size());
+			replyBitstream.Write(m_MapFilename.data(), m_MapFilename.size());
+			replyBitstream.Write(m_MapChecksum);
 
 			NetworkManager::getSingleton().GetNetwork()->Send(
-				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &bitStream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &replyBitstream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 		}
 		else if (packetType == MTID_LOADMAP)
 		{

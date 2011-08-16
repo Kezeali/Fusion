@@ -107,9 +107,9 @@ namespace FusionEngine
 
 	void RocketRenderer::RenderGeometry(Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture, const Rocket::Core::Vector2f& translation)
 	{
-		CL_Vec2f *polygon = new CL_Vec2f[num_indices];
-		CL_Vec4f *vert_colour = new CL_Vec4f[num_indices];
-		CL_Vec2f *tex_cords = new CL_Vec2f[num_indices];
+		const std::unique_ptr<CL_Vec2f[]> polygon(new CL_Vec2f[num_indices]);
+		const std::unique_ptr<CL_Vec4f[]> vert_colour(new CL_Vec4f[num_indices]);
+		const std::unique_ptr<CL_Vec2f[]> tex_cords(new CL_Vec2f[num_indices]);
 		for (int i = 0; i < num_indices; i++)
 		{
 			int vertex_index = indices[i];
@@ -130,7 +130,8 @@ namespace FusionEngine
 			tex_cords[i].y = vertices[vertex_index].tex_coord.y;
 		}
 
-		m_gc.push_translate(translation.x, translation.y);
+		m_gc.push_modelview();
+		m_gc.set_translate(translation.x, translation.y);
 
 		m_gc.set_map_mode(cl_map_2d_upper_left);
 		if (texture != NULL)
@@ -139,16 +140,16 @@ namespace FusionEngine
 		CL_PrimitivesArray prim_array(m_gc);
 		if (texture != NULL)
 		{
-			prim_array.set_attributes(0, polygon);
-			prim_array.set_attributes(1, vert_colour);
-			prim_array.set_attributes(2, tex_cords);
+			prim_array.set_attributes(0, polygon.get());
+			prim_array.set_attributes(1, vert_colour.get());
+			prim_array.set_attributes(2, tex_cords.get());
 
 			m_gc.set_program_object(cl_program_single_texture);
 		}
 		else
 		{
-			prim_array.set_attributes(0, polygon);
-			prim_array.set_attributes(1, vert_colour);
+			prim_array.set_attributes(0, polygon.get());
+			prim_array.set_attributes(1, vert_colour.get());
 
 			m_gc.set_program_object(cl_program_color_only);
 		}
@@ -161,9 +162,9 @@ namespace FusionEngine
 		//if (m_ClipEnabled)
 		//	m_gc.pop_cliprect();
 
-		delete[] polygon;
-		delete[] vert_colour;
-		delete[] tex_cords;
+		//delete[] polygon;
+		//delete[] vert_colour;
+		//delete[] tex_cords;
 
 		m_gc.reset_program_object();
 		if (texture != NULL)

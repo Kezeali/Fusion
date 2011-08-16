@@ -131,7 +131,7 @@ namespace FusionEngine
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		ModulePtr m_ModuleOld;
-		ScriptObject m_ScriptObject; // An instance of the class that the script defines
+		boost::intrusive_ptr<asIScriptObject> m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;

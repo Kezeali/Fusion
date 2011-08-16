@@ -163,20 +163,22 @@ namespace FusionEngine
 			// Deactivate the body in the simulation
 			b2Component->SetActive(false);
 			// Find and remove the deactivated body (from the Active Bodies list)
+			{
 			auto _where = std::find(m_ActiveBodies.begin(), m_ActiveBodies.end(), b2Component);
 			if (_where != m_ActiveBodies.end())
 			{
 				_where->swap(m_ActiveBodies.back());
 				m_ActiveBodies.pop_back();
+				return;
 			}
-			else
+			}
 			{
-				auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
-				if (_where != m_BodiesToCreate.end())
-				{
-					_where->swap(m_BodiesToCreate.back());
-					m_BodiesToCreate.pop_back();
-				}
+			auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
+			if (_where != m_BodiesToCreate.end())
+			{
+				_where->swap(m_BodiesToCreate.back());
+				m_BodiesToCreate.pop_back();
+			}
 			}
 		}
 	}

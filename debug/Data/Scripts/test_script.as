@@ -7,7 +7,7 @@ class Test : ScriptComponent
 {
 	Test()
 	{
-		//console.println("--Test--");
+		console.println("--Test--");
 
 		frames = 0;
 		runtime = 0.0;
@@ -35,6 +35,30 @@ class Test : ScriptComponent
 	{
 	}
 	
+	void createEntity(Vector &in pos)
+	{
+		console.println("Entity spawned at " + pos.x + "," + pos.y);
+		// One possibility is to remove the addComponent method and just have an instantiate method
+		//  where you can pass some sort of collection
+		Entity newEnt = ontology.instantiate("b2Dynamic", false, pos, 0.f, 0);
+		ontology.addComponent(newEnt, "b2Circle", "");
+		ontology.addComponent(newEnt, "CLSprite", "");
+		//ontology.addComponent(newEnt, "TestB", "script_b");
+		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite"));
+		if (sprite is null)
+		{
+			console.println("sprite cast failed");
+			return;
+		}
+		//console.println(sprite.getType());
+		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.BaseAngle = 1.57;
+		
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody")).AngularVelocity = 1;
+		
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape")).Radius = 0.25f;
+	}
+	
 	EntityWrapper@ entityA;
 	EntityWrapper@ entityB;
 	
@@ -42,7 +66,7 @@ class Test : ScriptComponent
 	{
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = instantiate("b2Dynamic", false, pos, 0.f, 1);
+		Entity newEnt = ontology.instantiate("b2Dynamic", false, pos, 0.f, 1);
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		ontology.addComponent(newEnt, "TestB", "script_b");
@@ -69,7 +93,7 @@ class Test : ScriptComponent
 		if (frames == 1)
 		{
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
-			@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
+			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
 			
 			//console.println("itransform implemented by: " + itransform.getType());
 			//console.println("isprite implemented by: " + isprite.getType());
@@ -92,19 +116,28 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
+		if (frames > 1 && frames < 1000)
+		{
+			uint xframes = frames % 50;
+			uint yframes = frames / 50;
+			float x = (xframes * 0.5f) - 5.f;
+			float y = (yframes * 0.6f) - 3.f;
+			createEntity(Vector(x, y));
+		}
+		
 		if (frames == 10)
 		{
 			//console.println("testb.frames: " + script_b.frames);
 			//script_b.foo = 99;
 			//console.println("testb.foo: " + script_b.foo);
-			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
-			entityB.script_b.speed = 2.0;
+			//console.println("entityB.script_b.speed: " + entityB.script_b.speed);
+			//entityB.script_b.speed = 2.0;
 		}
 		
 		if (frames == 11)
 		{
 			//console.println("testb.foo: " + script_b.foo);
-			console.println("entityB.script_b.speed: " + entityB.script_b.speed);
+			//console.println("entityB.script_b.speed: " + entityB.script_b.speed);
 		}
 
 		//if (irigidbody.AngularDamping.value != lastDamping)

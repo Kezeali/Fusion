@@ -85,6 +85,11 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~IComponent() {}
 
+		void OnNoReferences()
+		{
+			FSN_ASSERT_FAIL("Poop");
+		}
+
 		void SetParent(Entity* parent) { m_Parent = parent; }
 		Entity* GetParent() const { return m_Parent; }
 

@@ -634,14 +634,14 @@ namespace FusionEngine
 
 					// Add this data to the dependency tree
 					auto thisNode = getDependencyNode(scriptInfo.ClassName);
-					for (auto it = scriptInfo.UsedComponents.begin(), end = scriptInfo.UsedComponents.end(); it != end; ++it)
+					for (auto pit = scriptInfo.UsedComponents.begin(), pend = scriptInfo.UsedComponents.end(); pit != pend; ++pit)
 					{
-						auto usedNode = getDependencyNode(it->first);
+						auto usedNode = getDependencyNode(pit->first);
 						usedNode->UsedBy.insert(thisNode);
 					}
-					for (auto it = scriptInfo.IncludedScripts.begin(), end = scriptInfo.IncludedScripts.end(); it != end; ++it)
+					for (auto pit = scriptInfo.IncludedScripts.begin(), pend = scriptInfo.IncludedScripts.end(); pit != pend; ++pit)
 					{
-						auto includedNode = getDependencyNode(*it);
+						auto includedNode = getDependencyNode(*pit);
 						includedNode->IncludedBy.insert(thisNode);
 					}
 				}
@@ -723,7 +723,8 @@ namespace FusionEngine
 			using namespace std::placeholders;
 			scriptComponent->m_ModuleLoadedConnection = ResourceManager::getSingleton().GetResource("MODULE", scriptComponent->GetScriptPath(), std::bind(&ASScript::OnModuleLoaded, scriptComponent.get(), _1));
 
-			if (!scriptComponent->m_ScriptObject.IsValid())
+			FSN_ASSERT(!m_Updating);
+			if (!scriptComponent->m_ScriptObject)
 				m_NewlyActiveScripts.push_back(scriptComponent);
 			else
 				scriptComponent->MarkReady();
@@ -838,11 +839,11 @@ namespace FusionEngine
 
 		//tbb::spin_mutex mutex;
 
-		auto instantiate_objects = [&](const tbb::blocked_range<size_t>& r)
+		auto instantiate_objects = [&](const tbb::blocked_range<size_t>& range)
 		{
-			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
+			for (size_t ri = range.begin(), rend = range.end(); ri != rend; ++ri)
 			{
-				auto& script = scripts_to_instantiate[i];
+				auto& script = scripts_to_instantiate[ri];
 
 				//if (script->m_ReloadScript)
 				//{
@@ -883,13 +884,15 @@ namespace FusionEngine
 								{
 									auto scriptInfoForThis = m_AngelScriptWorld->m_ScriptInfo.find(objectType->GetName());
 									script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
+									{
 									auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
 									if (setAppObj)
 									{
 										setAppObj.SetThrowOnException(true);
 										setAppObj(script.get());
 									}
-
+									}
+#if 0
 									auto parentEntity = script->GetParent();
 
 									std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
@@ -905,11 +908,12 @@ namespace FusionEngine
 										}
 									}
 									// Init the members with available sibling components
+
 									auto objType = obj->GetObjectType()->GetBaseType();
-									for (int i = 0, count = objType->GetPropertyCount(); i < count; ++i)
+									for (int p = 0, count = objType->GetPropertyCount(); p < count; ++p)
 									{
 										const char* name = 0; int typeId = -1; bool isPrivate = false; int offset = 0;// bool isReference = false;
-										objType->GetProperty(i, &name, &typeId, &isPrivate, &offset/*, &isReference*/);
+										objType->GetProperty(p, &name, &typeId, &isPrivate, &offset/*, &isReference*/);
 										if (!isPrivate)
 										{	
 											auto _where = convenientComponents.find(name);
@@ -925,16 +929,16 @@ namespace FusionEngine
 													auto componentAsScript = dynamic_cast<ASScript*>( _where->second.get() );
 
 													// Create a script-interface object for this property
-													auto f = ScriptUtils::Calling::Caller::FactoryCaller(propertyObjectType, "");
-													if (!f)
+													auto fac = ScriptUtils::Calling::Caller::FactoryCaller(propertyObjectType, "");
+													if (!fac)
 													{
 														SendToConsole("Failed to construct a script-interface object for " + _where->first + ": basecode is broken");
 														continue;
 													}
-													f.SetThrowOnException(true);
+													fac.SetThrowOnException(true);
 													try
 													{
-														auto scriptInterfaceObj = *static_cast<asIScriptObject**>( f() );
+														auto scriptInterfaceObj = *static_cast<asIScriptObject**>( fac() );
 
 														auto setAppObj = ScriptUtils::Calling::Caller(scriptInterfaceObj, "void _setAppObj(ASScript @)");
 														if (setAppObj)
@@ -974,11 +978,12 @@ namespace FusionEngine
 											}
 											else
 											{
-												std::string propDecl = objType->GetPropertyDeclaration(i);
+												std::string propDecl = objType->GetPropertyDeclaration(p);
 												SendToConsole(script->GetScriptPath() + " expected a sibling to fit '" + propDecl + "' but " + parentEntity->GetName() + " doesn't have any such component");
 											}
 										}
 									}
+#endif
 								}
 							}
 							catch (ScriptUtils::Exception& e)
@@ -998,26 +1003,29 @@ namespace FusionEngine
 			}
 		};
 
-#ifdef FSN_PARALLEL_SCRIPT_EXECUTION
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()), instantiate_objects);
-#else
+		m_AngelScriptWorld->m_Updating = true;
+//#ifdef FSN_PARALLEL_SCRIPT_EXECUTION
+//		tbb::parallel_for(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()), instantiate_objects);
+//#else
 		instantiate_objects(tbb::blocked_range<size_t>(0, scripts_to_instantiate.size()));
-#endif
+//#endif
+		m_AngelScriptWorld->m_Updating = false;
 
+		scripts_to_instantiate.clear();
 		scripts_to_instantiate.swap(notInstantiated);
 		} // scope for instantiate_objects lambda
 
 		{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
 
-		auto execute_scripts = [&](const tbb::blocked_range<size_t>& r)
+		auto execute_scripts = [&](const tbb::blocked_range<size_t>& range)
 		{
 			//auto ctx = m_ScriptManager->CreateContext();
-			for (size_t i = r.begin(), end = r.end(); i != end; ++i)
+			for (size_t ri = range.begin(), rend = range.end(); ri != rend; ++ri)
 			{
-				auto& script = scripts[i];
+				auto& script = scripts[ri];
 
-				if (script->m_ScriptObject.IsValid())
+				if (script->m_ScriptObject)
 				{
 					// Execute any co-routines until they yield or finish
 					for (auto it = script->m_ActiveCoroutines.begin(); it != script->m_ActiveCoroutines.end(); )

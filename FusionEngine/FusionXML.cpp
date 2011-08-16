@@ -114,6 +114,11 @@ namespace FusionEngine
 			delete doc;
 			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
 		}
+		catch (std::bad_alloc&)
+		{
+			delete doc;
+			FSN_EXCEPT(ExCode::IO, "'" + filename + "' could not be opened");
+		}
 
 		return doc;
 	}
