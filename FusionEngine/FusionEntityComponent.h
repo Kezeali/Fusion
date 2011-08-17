@@ -81,6 +81,7 @@ namespace FusionEngine
 		IComponent()
 			: m_ChangedProperties(nullptr)
 		{
+			m_Ready = NotReady;
 		}
 		//! Destructor
 		virtual ~IComponent() {}
@@ -119,7 +120,7 @@ namespace FusionEngine
 
 		//! Set the ready state
 		void SetReadyState(ReadyState state) { m_Ready = state; }
-		//ReadyState GetReadyState() const { return m_Ready; }
+		ReadyState GetReadyState() const { return m_Ready; }
 
 		bool IsPreparing() const { return m_Ready == Preparing; }
 

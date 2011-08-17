@@ -64,12 +64,24 @@ namespace FusionEngine
 
 	void CLRenderWorld::AddViewport(const ViewportPtr& viewport)
 	{
-		m_Viewports.push_back(viewport);
+		m_ViewportsToAdd.push(viewport);
 	}
 
 	void CLRenderWorld::RemoveViewport(const ViewportPtr& viewport)
 	{
+		// TODO: make threadsafe
 		m_Viewports.erase(std::find(m_Viewports.begin(), m_Viewports.end(), viewport));
+	}
+
+	void CLRenderWorld::AddQueuedViewports()
+	{
+		ViewportPtr viewport;
+		while (m_ViewportsToAdd.try_pop(viewport))
+		{
+			// TEMP:
+			m_Viewports.clear();
+			m_Viewports.push_back(viewport);
+		}
 	}
 
 	std::vector<std::string> CLRenderWorld::GetTypes() const
@@ -146,15 +158,8 @@ namespace FusionEngine
 
 	void CLRenderTask::Update(const float delta)
 	{
-		//const float fullDt = 1.f / 30.f;
-		//if (!fe_fequal(delta, fullDt))
-		//{
-		//	m_Accumulator += delta;
-		//	Interpolate(m_Accumulator / fullDt);
-		//	return;
-		//}
-		//m_Accumulator = 0;
-
+		m_RenderWorld->AddQueuedViewports();
+			
 		auto& drawables = m_RenderWorld->GetDrawables();
 
 		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
@@ -275,6 +280,18 @@ namespace FusionEngine
 			m_RenderWorld->m_PhysWorld->DrawDebugData();
 			m_PhysDebugDraw->ResetView();
 		}
+	}
+
+	void CLRenderWorld_AddViewport(const CameraPtr& camera, CLRenderWorld* obj)
+	{
+		auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+		obj->AddViewport(viewport);
+	}
+
+	void CLRenderWorld::Register(asIScriptEngine* engine)
+	{
+		RegisterSingletonType<CLRenderSystem>("Renderer", engine);
+		engine->RegisterObjectMethod("Renderer", "void addViewport(const Camera &in)", asFUNCTION(CLRenderWorld_AddViewport), asCALL_CDECL_OBJLAST);
 	}
 
 }

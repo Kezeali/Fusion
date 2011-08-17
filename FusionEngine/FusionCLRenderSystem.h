@@ -40,6 +40,7 @@
 #include "FusionViewport.h"
 
 #include <ClanLib/display.h>
+#include <tbb/concurrent_queue.h>
 
 namespace FusionEngine
 {
@@ -74,11 +75,15 @@ namespace FusionEngine
 		void AddViewport(const ViewportPtr& viewport);
 		void RemoveViewport(const ViewportPtr& viewport);
 
+		void AddQueuedViewports();
+
 		void SetPhysWorld(b2World* world) { m_PhysWorld = world; }
 		b2World* m_PhysWorld;
 
 		const std::vector<std::shared_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<std::shared_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
+
+		static void Register(asIScriptEngine* engine);
 
 	private:
 		std::vector<std::string> GetTypes() const;
@@ -96,6 +101,7 @@ namespace FusionEngine
 		std::vector<std::shared_ptr<IDrawable>> m_Drawables;
 
 		std::vector<ViewportPtr> m_Viewports;
+		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
 
 		Renderer* m_Renderer;
 	};

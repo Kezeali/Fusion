@@ -320,6 +320,11 @@ public:
 				ASScript::Register(asEngine);
 				InstancingSynchroniser::Register(asEngine);
 
+				Camera::Register(asEngine);
+				StreamingManager::Register(asEngine);
+
+				CLRenderWorld::Register(asEngine);
+
 				// Console singleton
 				scriptManager->RegisterGlobalObject("Console console", Console::getSingletonPtr());
 
@@ -373,6 +378,8 @@ public:
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
+				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
+
 				entityManager->m_EntityFactory = entityFactory.get();
 
 				// Component systems
@@ -393,6 +400,8 @@ public:
 				ontology.push_back(renderWorld);
 
 				entityFactory->AddInstancer(renderWorld);
+
+				scriptManager->RegisterGlobalObject("Renderer renderer", renderWorld);
 				
 				const std::unique_ptr<Box2DSystem> box2dSystem(new Box2DSystem());
 				auto box2dWorld = box2dSystem->CreateWorld();
@@ -415,15 +424,8 @@ public:
 
 				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
 
-				float xtent = 720;
+				float xtent = 1.f;
 				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
-#ifdef _DEBUG
-				xtent = 1;
-				position.set(ToSimUnits(-xtent), ToSimUnits(-xtent));
-				//for (unsigned int i = 0; i < 1; ++i)
-#else
-				for (unsigned int i = 0; i < 1500; ++i)
-#endif
 				{
 					unsigned int i = 0;
 					position.x += ToSimUnits(50.f);

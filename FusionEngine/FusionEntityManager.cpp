@@ -458,6 +458,7 @@ namespace FusionEngine
 		// Immeadiately activate this entity if it isn't within a streaming domain
 		if (!CheckState(entity->GetDomain(), DS_STREAMING))
 		{
+			FSN_ASSERT_FAIL("Hmm");
 			queueEntityToActivate(entity);
 		}
 
@@ -854,6 +855,9 @@ namespace FusionEngine
 
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
+#ifdef _DEBUG
+		FSN_ASSERT(std::find_if(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), [&](const std::pair<bool, EntityPtr>& entry) { return entry.second == entity; }) == m_EntitiesToActivate.end());
+#endif
 		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
 		//  so that mark must be removed
 		entity->RemoveDeactivateMark();
@@ -867,15 +871,18 @@ namespace FusionEngine
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
 			auto& com = *it;
-			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-			if (_where != m_EntityFactory->m_ComponentInstancers.end())
+			if (com->GetReadyState() == IComponent::NotReady)
 			{
-				com->SetReadyState(IComponent::Preparing);
-				_where->second->OnPrepare(com);
-				allAreReady &= com->IsReady();
+				auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+				if (_where != m_EntityFactory->m_ComponentInstancers.end())
+				{
+					com->SetReadyState(IComponent::Preparing);
+					_where->second->OnPrepare(com);
+					allAreReady &= com->IsReady();
+				}
+				else
+					FSN_EXCEPT(InvalidArgumentException, "Unknown component type (this would be impossable if I had planned ahead successfully, but alas)");
 			}
-			else
-				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
 		}
 		return allAreReady;
 	}
@@ -905,21 +912,25 @@ namespace FusionEngine
 	
 	void EntityManager::activateEntity(const EntityPtr &entity)
 	{
-		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+		if (!entity->IsStreamedIn())
 		{
-			auto& com = *it;
-			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-			if (_where != m_EntityFactory->m_ComponentInstancers.end())
-			{
-				_where->second->OnActivation(com);
-			}
-			else
-				FSN_EXCEPT(InvalidArgumentException, "I made a mistake, because am dum");
-		}
-		entity->StreamIn();
+			FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), entity) == m_ActiveEntities.end());
 
-		FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), entity) == m_ActiveEntities.end());
-		m_ActiveEntities.push_back(entity);
+			for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+			{
+				auto& com = *it;
+				auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+				if (_where != m_EntityFactory->m_ComponentInstancers.end())
+				{
+					_where->second->OnActivation(com);
+				}
+				else
+					FSN_EXCEPT(InvalidArgumentException, "I made a mistake, because am dum");
+			}
+			entity->StreamIn();
+
+			m_ActiveEntities.push_back(entity);
+		}
 	}
 
 	void EntityManager::deactivateEntity(const EntityPtr& entity)
@@ -953,7 +964,7 @@ namespace FusionEngine
 
 	void EntityManager::OnActivationEvent(const ActivationEvent &ev)
 	{
-		// TODO: post stream-out / stream in events
+		// TODO: post stream-out / stream in events (messages) to the entity in question
 		if (ev.type == ActivationEvent::Activate)
 		{
 			queueEntityToActivate(ev.entity);

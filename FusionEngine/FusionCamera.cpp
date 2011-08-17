@@ -85,12 +85,22 @@ namespace FusionEngine
 
 	void Camera_Ctor2(float x, float y, void* ptr)
 	{
-		new (ptr) Camera(x, y);
+		new (ptr) std::shared_ptr<Camera>(new Camera(x, y));
 	}
 
-	Vector2* Camera_GetPosition(Camera *obj)
+	void Camera_Ctor3(Vector2& pos, void* ptr)
 	{
-		return new Vector2(obj->GetPosition().x, obj->GetPosition().y);
+		new (ptr) std::shared_ptr<Camera>(new Camera(pos.x, pos.y));
+	}
+
+	void Camera_SetPosition(Vector2& pos, CameraPtr *obj)
+	{
+		return (*obj)->SetPosition(ToGameUnits(pos.x), ToGameUnits(pos.y));
+	}
+
+	Vector2 Camera_GetPosition(CameraPtr *obj)
+	{
+		return Vector2((*obj)->GetPosition().x, (*obj)->GetPosition().y);
 	}
 
 	void Camera::Register(asIScriptEngine *engine)
@@ -100,12 +110,21 @@ namespace FusionEngine
 		RegisterSharedPtrType<Camera>("Camera", engine);
 		// The other ctor overload (sets position)
 		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_CONSTRUCT, "void f(float, float)", asFUNCTION(Camera_Ctor2), asCALL_CDECL_OBJLAST);
+		r = engine->RegisterObjectBehaviour("Camera", asBEHAVE_CONSTRUCT, "void f(Vector &in)", asFUNCTION(Camera_Ctor3), asCALL_CDECL_OBJLAST);
 
 		r = engine->RegisterObjectMethod("Camera",
-			"void setPosition(int, int)",
+			"void setPosition(Vector &in)",
+			asFUNCTION(Camera_SetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Camera",
+			"Vector getPosition() const",
+			asFUNCTION(Camera_GetPosition), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+		/*r = engine->RegisterObjectMethod("Camera",
+			"void setPosition(float, float)",
 			asMETHOD(Camera, SetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
-			"Vector@ getPosition() const",
+			"Vector getPosition() const",
 			asMETHOD(Camera, GetPosition), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"void setAngle(float)",
@@ -118,7 +137,7 @@ namespace FusionEngine
 			asMETHOD(Camera, SetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		r = engine->RegisterObjectMethod("Camera",
 			"float getScale() const",
-			asMETHOD(Camera, GetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			asMETHOD(Camera, GetZoom), asCALL_THISCALL); FSN_ASSERT(r >= 0);*/
 	}
 
 }

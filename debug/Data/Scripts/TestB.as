@@ -18,6 +18,8 @@ class TestB : ScriptComponent
 	private bool go;
 	float speed;
 	
+	Camera cam;
+	
 	void onInput(InputEvent@ ev)
 	{
 		console.println(ev.inputName);
@@ -49,10 +51,27 @@ class TestB : ScriptComponent
 				irigidbody.Interpolate.value = !irigidbody.Interpolate.value;
 		}
 	}
+	
+	SignalConnection@ setcampos_con;
+	void setCameraPosition(const Vector &in pos)
+	{
+		cam.setPosition(pos);
+	}
 
 	void update()
 	{
 		++frames;
+		
+		if (frames == 1)
+		{
+			cam = Camera(itransform.Position);
+			streaming.addCamera(cam);
+			renderer.addViewport(cam);
+			
+			@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
+		}
+		//if (frames > 1)
+		//	cam.setPosition(itransform.Position);
 		
 		if (entity.input.getButton("thrust"))
 		{

@@ -54,7 +54,7 @@ class Test : ScriptComponent
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
 		
-		//cast<IRigidBody>(newEnt.getComponent("IRigidBody")).AngularVelocity = 1;
+		cast<IRigidBody>(newEnt.getComponent("IRigidBody")).LinearDamping = 4.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape")).Radius = 0.25f;
 	}
