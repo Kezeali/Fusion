@@ -139,14 +139,22 @@ namespace FusionEngine
 		void SetPosition(const Vector2& position)
 		{
 			if (m_Body) m_Body->SetTransform(b2Vec2(position.x, position.y), m_Body->GetAngle());
-			else m_Def.position.Set(position.x, position.y);
+			else
+			{
+				m_Def.position.Set(position.x, position.y);
+				m_InterpPosition = position;
+			}
 		}
 
 		float GetAngle() const { return m_Interpolate ? m_InterpAngle : (m_Body ? m_Body->GetAngle() : m_Def.angle); }
 		void SetAngle(float angle)
 		{
 			if (m_Body) m_Body->SetTransform(m_Body->GetPosition(), angle);
-			else m_Def.angle = angle;
+			else
+			{
+				m_Def.angle = angle;
+				m_InterpAngle = angle;
+			}
 		}
 
 		int GetDepth() const { return m_Depth; }

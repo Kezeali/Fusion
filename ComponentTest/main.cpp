@@ -543,11 +543,14 @@ public:
 
 				PlayerRegistry::AddLocalPlayer(1u, 0u);
 
+				// This scope makes viewport hold the only reference to camera: thus camera will be deleted with viewport
+				{
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
 				dynamic_cast<CLRenderWorld*>(renderWorld)->AddViewport(viewport);
 				streamingMgr->AddCamera(camera);
+				}
 
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
@@ -623,24 +626,24 @@ public:
 						//gui->Update(seconds);
 					}
 
-					bool up = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP);
-					bool down = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN);
-					bool left = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT);
-					bool right = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT);
-					if (up || down || left || right)
-					{
-						auto camDelta = delta / 10.f;
-						auto pos = camera->GetPosition();
-						if (up)
-							pos.y -= camDelta;
-						if (down)
-							pos.y += camDelta;
-						if (right)
-							pos.x += camDelta;
-						if (left)
-							pos.x -= camDelta;
-						camera->SetPosition(pos.x, pos.y);
-					}
+					//bool up = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP);
+					//bool down = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN);
+					//bool left = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT);
+					//bool right = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT);
+					//if (up || down || left || right)
+					//{
+					//	auto camDelta = delta / 10.f;
+					//	auto pos = camera->GetPosition();
+					//	if (up)
+					//		pos.y -= camDelta;
+					//	if (down)
+					//		pos.y += camDelta;
+					//	if (right)
+					//		pos.x += camDelta;
+					//	if (left)
+					//		pos.x -= camDelta;
+					//	camera->SetPosition(pos.x, pos.y);
+					//}
 					
 					const auto rendered = scheduler->Execute();
 

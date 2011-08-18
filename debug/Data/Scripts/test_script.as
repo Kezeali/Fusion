@@ -44,7 +44,8 @@ class Test : ScriptComponent
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		//ontology.addComponent(newEnt, "TestB", "script_b");
-		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite"));
+		IComponent@ com = newEnt.getComponent("ISprite");
+		ISprite@ sprite = cast<ISprite>(com);
 		if (sprite is null)
 		{
 			console.println("sprite cast failed");
@@ -54,13 +55,13 @@ class Test : ScriptComponent
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
 		
-		cast<IRigidBody>(newEnt.getComponent("IRigidBody")).LinearDamping = 4.f;
+		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
 		
-		cast<ICircleShape>(newEnt.getComponent("ICircleShape")).Radius = 0.25f;
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 	}
 	
-	EntityWrapper@ entityA;
-	EntityWrapper@ entityB;
+	private EntityWrapper@ entityA;
+	private EntityWrapper@ entityB;
 	
 	EntityWrapper@ createPlayerEntity(Vector &in pos)
 	{
@@ -70,7 +71,7 @@ class Test : ScriptComponent
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		ontology.addComponent(newEnt, "TestB", "script_b");
-		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite"));
+		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
 		if (sprite is null)
 		{
 			console.println("sprite cast failed");
@@ -80,9 +81,9 @@ class Test : ScriptComponent
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
 		
-		//cast<IRigidBody>(newEnt.getComponent("IRigidBody")).AngularVelocity = 1;
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
 		
-		cast<ICircleShape>(newEnt.getComponent("ICircleShape")).Radius = 0.25f;
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
 		return EntityWrapper(newEnt);
 	}

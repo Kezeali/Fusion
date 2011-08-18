@@ -437,6 +437,8 @@ namespace FusionEngine
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
+		// TODO: mutex / queue
+
 		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
 
@@ -818,6 +820,18 @@ namespace FusionEngine
 
 	void EntityManager::Update(float split)
 	{
+		std::pair<EntityPtr, std::shared_ptr<IComponent>> toActivate;
+		while (m_ComponentsToAdd.try_pop(toActivate))
+		{
+			toActivate.first->AddComponent(toActivate.second);
+			if (toActivate.first->IsStreamedIn())
+			{
+				auto _where = m_EntityFactory->m_ComponentInstancers.find( toActivate.second->GetType() );
+				if (_where != m_EntityFactory->m_ComponentInstancers.end())
+					attemptToActivateComponent(_where->second, toActivate.second);
+			}
+		}
+
 		//m_EntitiesLocked = true;
 
 		//m_EntitySynchroniser->BeginPacket();
@@ -830,39 +844,47 @@ namespace FusionEngine
 		//m_EntitiesLocked = false;
 
 		// Activate entities
+		{
 		auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
 		while (it != end)
 		{
-			//bool ready = false;
-			//if (it->first)
-			//	ready = attemptToActivateEntity(it->second);
-			//else
-			//{
-			//	ready = prepareEntity(it->second);
-			//	it->first = true;
-			//}
-			//if (ready)
-			//	activateEntity(it->second);
-			if (attemptToActivateEntity(it->first, it->second))
+			if (attemptToActivateEntity(*it))
 			{
+				m_ActiveEntities.push_back(*it);
 				it = m_EntitiesToActivate.erase(it);
 				end = m_EntitiesToActivate.end();
 			}
 			else
 				++it;
 		}
+		}
+		// Activate components
+		{
+		auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
+		while (it != end)
+		{
+			auto worldEntry = m_EntityFactory->m_ComponentInstancers.find( toActivate.second->GetType() );
+			if (attemptToActivateComponent(worldEntry->second, it->second))
+			{
+				it = m_ComponentsToActivate.erase(it);
+				end = m_ComponentsToActivate.end();
+			}
+			else
+				++it;
+		}
+		}
 	}
 
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
 #ifdef _DEBUG
-		FSN_ASSERT(std::find_if(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), [&](const std::pair<bool, EntityPtr>& entry) { return entry.second == entity; }) == m_EntitiesToActivate.end());
+		FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
 #endif
 		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
 		//  so that mark must be removed
 		entity->RemoveDeactivateMark();
 		// The first item in the pair indicated whether Prepare has been called on the entity
-		m_EntitiesToActivate.push_back(std::make_pair(false, entity));
+		m_EntitiesToActivate.push_back(entity);
 	}
 
 	bool EntityManager::prepareEntity(const EntityPtr &entity)
@@ -877,7 +899,7 @@ namespace FusionEngine
 				if (_where != m_EntityFactory->m_ComponentInstancers.end())
 				{
 					com->SetReadyState(IComponent::Preparing);
-					_where->second->OnPrepare(com);
+					_where->second->Prepare(com);
 					allAreReady &= com->IsReady();
 				}
 				else
@@ -887,28 +909,65 @@ namespace FusionEngine
 		return allAreReady;
 	}
 
-	bool EntityManager::attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity)
+	bool EntityManager::attemptToActivateEntity(const EntityPtr &entity)
 	{
-		if (!has_begun_preparing)
+		bool allAreActive = true;
+		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
-			has_begun_preparing = true;
-			if (!prepareEntity(entity))
-				return false; // Not all ready, return and try again next time this is called
-		}
-		else
-		{
-			// Check unreadyness
-			for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+			auto& com = *it;
+			auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+			if (_where != m_EntityFactory->m_ComponentInstancers.end())
 			{
-				auto& com = *it;
-				if (!com->IsReady())
-					return false;
+				allAreActive &= attemptToActivateComponent(_where->second, com);
 			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Unknown component type (this would be impossable if I had planned ahead successfully, but alas)");
 		}
-		// Getting here means all components are ready: activate!
-		activateEntity(entity);
-		return true;
+		return allAreActive;
 	}
+
+	bool EntityManager::attemptToActivateComponent(ISystemWorld* world, const std::shared_ptr<IComponent>& component)
+	{
+		if (component->GetReadyState() == IComponent::NotReady)
+		{
+			component->SetReadyState(IComponent::Preparing);
+			world->Prepare(component);
+		}
+		if (component->IsReady())
+		{
+			world->OnActivation(component);
+			component->SetReadyState(IComponent::Active);
+			return true;
+		}
+		else if (component->IsActive())
+		{
+			return true;
+		}
+		return false;
+	}
+	
+	//bool EntityManager::attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity)
+	//{
+	//	if (!has_begun_preparing)
+	//	{
+	//		has_begun_preparing = true;
+	//		if (!prepareEntity(entity))
+	//			return false; // Not all ready, return and try again next time this is called
+	//	}
+	//	else
+	//	{
+	//		// Check unreadyness
+	//		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+	//		{
+	//			auto& com = *it;
+	//			if (!com->IsReady())
+	//				return false;
+	//		}
+	//	}
+	//	// Getting here means all components are ready: activate!
+	//	activateEntity(entity);
+	//	return true;
+	//}
 	
 	void EntityManager::activateEntity(const EntityPtr &entity)
 	{
@@ -952,13 +1011,13 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::AddComponent(EntityPtr &entity, const std::string& type)
+	void EntityManager::AddComponent(EntityPtr &entity, const std::string& type, const std::string& identifier)
 	{
 		auto _where = m_EntityFactory->m_ComponentInstancers.find(type);
 		if (_where != m_EntityFactory->m_ComponentInstancers.end())
 		{
 			auto com = _where->second->InstantiateComponent(type);
-			entity->AddComponent(com);
+			m_ComponentsToAdd.push(std::make_pair(entity, com));
 		}
 	}
 

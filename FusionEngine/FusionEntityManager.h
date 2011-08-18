@@ -50,6 +50,8 @@
 namespace FusionEngine
 {
 
+	class ISystemWorld;
+
 	//! Updates input states for each player (local and remote)
 	class ConsolidatedInput
 	{
@@ -313,7 +315,7 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
-		void AddComponent(EntityPtr& entity, const std::string& type);
+		void AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier);
 
 		void OnActivationEvent(const ActivationEvent& ev);
 
@@ -333,7 +335,8 @@ namespace FusionEngine
 		//! returns true if all components are ready to activate
 		bool prepareEntity(const EntityPtr &entity);
 		//! returns true if all components were ready and thus activated
-		bool attemptToActivateEntity(bool& has_begun_preparing, const EntityPtr &entity);
+		bool attemptToActivateEntity(const EntityPtr &entity);
+		bool attemptToActivateComponent(ISystemWorld* world, const std::shared_ptr<IComponent>& component);
 		void activateEntity(const EntityPtr &entity);
 
 		void deactivateEntity(const EntityPtr& entity);
@@ -363,8 +366,9 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
-		std::vector<std::pair<bool, EntityPtr>> m_EntitiesToActivate;
-		//std::vector<EntityPtr> m_EntitiesToActivate;
+		tbb::concurrent_queue<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToAdd;
+		std::vector<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToActivate;
+		std::vector<EntityPtr> m_EntitiesToActivate;
 		EntityArray m_ActiveEntities;
 
 		// Entities to be updated - 8 domains

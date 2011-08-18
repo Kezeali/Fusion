@@ -33,6 +33,8 @@
 #include "FusionResourceManager.h"
 #include "FusionPhysicalComponent.h"
 
+#include "FusionAngelScriptComponent.h"
+
 #include <boost/lexical_cast.hpp>
 
 namespace FusionEngine
@@ -183,6 +185,8 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(component);
 		FSN_ASSERT(m_PropChangedQueue);
+		// TODO:
+		//FSN_ASSERT(!DeltaTime::IsExecuting());
 
 		component->SetPropChangedQueue(m_PropChangedQueue);
 
@@ -797,12 +801,66 @@ namespace FusionEngine
 		entity->SetPosition(Vector2(x, y));
 	}
 
-	static IComponent* Entity_GetComponent(EntityPtr* entity, const std::string& type, const std::string& ident = std::string())
+	class ASComponentFuture : public RefCounted
 	{
-		auto com = (*entity)->GetComponent(type, ident);
+	public:
+		ASComponentFuture()
+			: component(nullptr)
+		{}
+
+		ASComponentFuture(IComponent* com)
+			: component(com)
+		{}
+
+		IComponent* component;
+
+		static void Register(asIScriptEngine* engine);
+		
+	};
+
+	static IComponent* ASComponentFuture_GetComponent(ASComponentFuture* obj)
+	{
+		return obj->component;
+	}
+
+	void ASComponentFuture::Register(asIScriptEngine* engine)
+	{
+		ASComponentFuture::RegisterType<ASComponentFuture>(engine, "ComponentFuture");
+
+		int r;
+		r = engine->RegisterObjectBehaviour("ComponentFuture", asBEHAVE_IMPLICIT_REF_CAST, "IComponent@ f()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("ComponentFuture", "IComponent@ get()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+	}
+
+	static ASComponentFuture* Entity_GetComponent(EntityPtr* obj, const std::string& type, const std::string& ident = std::string())
+	{
+		auto entity = *obj;
+		auto com = entity->GetComponent(type, ident);
+
+		auto future = new ASComponentFuture();
+
 		if (com)
+		{
 			com->addRef();
-		return com.get();
+			future->component = com.get();
+		}
+		else
+		{
+			ASScript::GetActiveScript()->YieldUntil([entity, type, ident, future]()->bool
+			{
+				auto com = entity->GetComponent(type, ident);
+				if (com)
+				{
+					com->addRef();
+					future->component = com.get();
+					return true;
+				}
+				else
+					return false;
+			}, 3.f);
+		}
+		
+		return future;
 	}
 
 	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
@@ -825,8 +883,10 @@ namespace FusionEngine
 		int r;
 		RegisterSharedPtrType<Entity>("Entity", engine);
 
+		ASComponentFuture::Register(engine);
+
 		r = engine->RegisterObjectMethod("Entity",
-			"IComponent@ getComponent(const string &in, const string &in ident = string()) const",
+			"ComponentFuture@ getComponent(const string &in, const string &in ident = string()) const",
 			asFUNCTION(Entity_GetComponent), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
 		//r = engine->RegisterObjectMethod("Entity",

@@ -215,6 +215,8 @@ namespace FusionEngine
 				if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
 					FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform.");
 				entity->AddComponent(transform);
+
+				transform->SynchronisePropertiesNow();
 				
 				m_EntityManager->AddEntity(entity);
 
@@ -353,9 +355,7 @@ namespace FusionEngine
 
 	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)
 	{
-		asIScriptObject* scriptCom = static_cast<asIScriptObject*>( asGetActiveContext()->GetThisPointer(asGetActiveContext()->GetCallstackSize()-1) );
-		std::string propName(scriptCom->GetPropertyName(0));
-		ASScript* nativeCom = *static_cast<ASScript**>( scriptCom->GetAddressOfProperty(0) );
+		ASScript* nativeCom = ASScript::GetActiveScript();
 
 		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
 		auto entity = nativeCom->GetParent()->shared_from_this();
@@ -370,7 +370,8 @@ namespace FusionEngine
 	{
 		// This should probably call entityManager->AddComponent and that should activate the component if the entity is already active
 		//  (is it valid to add components to active entities tho?)
-		entity->AddComponent(obj->m_Factory->InstanceComponent(type), identifier);
+		//entity->AddComponent(obj->m_Factory->InstanceComponent(type), identifier);
+		obj->m_EntityManager->AddComponent(entity, type, identifier);
 	}
 
 	void InstancingSynchroniser::Register(asIScriptEngine* engine)

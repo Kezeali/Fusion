@@ -166,34 +166,9 @@ namespace FusionEngine
 		//	}
 		//}
 
-		//template <class Interface>
-		//std::shared_ptr<Interface> GetComponent(std::string identifier = std::string())
-		//{
-		//	//static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
-
-		//	auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
-		//	if (_where != m_ComponentInterfaces.end())
-		//	{
-		//		FSN_ASSERT(!_where->second.empty());
-		//		if (identifier.empty())
-		//		{
-		//			return std::dynamic_pointer_cast<Interface>(*_where->second.begin());
-		//		}
-		//		else
-		//		{
-		//			auto implEntry = _where->second.find(identifier);
-		//			if (implEntry != _where->second.end())
-		//				return std::dynamic_pointer_cast<Interface>(*implEntry);
-		//		}
-		//		return std::shared_ptr<Interface>();
-		//	}
-		//}
-
 		template <class Interface>
 		std::shared_ptr<Interface> GetComponent(std::string identifier = std::string()) const
 		{
-			//static_assert(Interface::IsThreadSafe(), "Use InvokeOnComponent to access non-threadsafe interfaces");
-
 			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
 			if (_where != m_ComponentInterfaces.end())
 			{

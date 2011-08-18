@@ -11,6 +11,7 @@ class TestB : ScriptComponent
 		foo = 1;
 		speed = 1.0f;
 		go = false;
+		@setcampos_con = null;
 	}
 
 	uint frames;
@@ -18,7 +19,7 @@ class TestB : ScriptComponent
 	private bool go;
 	float speed;
 	
-	Camera cam;
+	private Camera cam;
 	
 	void onInput(InputEvent@ ev)
 	{
@@ -52,7 +53,7 @@ class TestB : ScriptComponent
 		}
 	}
 	
-	SignalConnection@ setcampos_con;
+	private SignalConnection@ setcampos_con;
 	void setCameraPosition(const Vector &in pos)
 	{
 		cam.setPosition(pos);

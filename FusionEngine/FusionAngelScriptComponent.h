@@ -69,6 +69,32 @@ namespace FusionEngine
 	//! Sprite resource unloader callback
 	void UnloadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
+	class CoroutineSemaphore
+	{
+		virtual ~CoroutineSemaphore();
+		virtual bool IsReady() = 0;
+	};
+
+	struct ConditionalCoroutine
+	{
+		ConditionalCoroutine() {}
+		ConditionalCoroutine(ConditionalCoroutine&& other)
+			: ctx(std::move(other.ctx)),
+			condition(std::move(other.condition)),
+			timeout(other.timeout)
+		{}
+		ConditionalCoroutine& operator= (ConditionalCoroutine&& other)
+		{
+			ctx = std::move(other.ctx);
+			condition = std::move(other.condition);
+			timeout = other.timeout;
+			return *this;
+		}
+		boost::intrusive_ptr<asIScriptContext> ctx;
+		std::function<bool (void)> condition;
+		float timeout;
+	};
+
 	class ASScript : public IComponent, public IScript
 	{
 		friend class AngelScriptWorld;
@@ -92,6 +118,7 @@ namespace FusionEngine
 		boost::intrusive_ptr<asIScriptContext> PrepareMethod(ScriptManager* script_manager, const std::string& decl);
 
 		void Yield();
+		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
 		void CreateCoroutine(const std::string& functionName);
 		void CreateCoroutine(asIScriptFunction* function);
 		CScriptAny* GetProperty(unsigned int index);
@@ -102,6 +129,10 @@ namespace FusionEngine
 		void CheckChangedPropertiesIn();
 		
 		void OnModuleLoaded(ResourceDataPtr resource);
+
+		static ASScript* GetActiveScript();
+		//static void YeildActiveScript();
+		static void YeildActiveScriptUntil(std::function<bool (void)> condition, float timeout = 0.f);
 
 		static void Register(asIScriptEngine* engine);
 
@@ -136,8 +167,10 @@ namespace FusionEngine
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		
-		std::vector<boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutines;
-		std::map<int, boost::intrusive_ptr<asIScriptContext>> m_ActiveCoroutinesWithConditions;
+		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
+		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;
+
+		static int s_ASScriptTypeId;
 	};
 
 }

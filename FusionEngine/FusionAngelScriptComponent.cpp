@@ -32,9 +32,12 @@
 #include "FusionEntity.h"
 
 #include "scriptany.h"
+#include <tbb/tick_count.h>
 
 namespace FusionEngine
 {
+
+	int ASScript::s_ASScriptTypeId = -1;
 
 	CLBinaryStream::CLBinaryStream(const std::string& filename, CLBinaryStream::OpenMode open_mode)
 		: m_File(nullptr)
@@ -269,6 +272,9 @@ namespace FusionEngine
 			int r;
 			ASScript::RegisterType<ASScript>(engine, "ASScript");
 
+			s_ASScriptTypeId = engine->GetTypeIdByDecl("ASScript");
+			FSN_ASSERT(s_ASScriptTypeId >= 0);
+
 			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION((convert_ref<IComponent, ASScript>)), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -343,6 +349,64 @@ namespace FusionEngine
 		}
 	}
 
+	void ASScript::YieldUntil(std::function<bool (void)> condition, float timeout)
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			ctx->Suspend();
+
+			ConditionalCoroutine co;
+			co.condition = condition;
+			co.timeout = timeout;
+			m_ActiveCoroutinesWithConditions[ctx] = std::move(co);
+		}
+	}
+
+	ASScript* ASScript::GetActiveScript()
+	{
+		auto ctx = asGetActiveContext();
+		if (ctx)
+		{
+			asIScriptObject* scriptCom = static_cast<asIScriptObject*>( asGetActiveContext()->GetThisPointer(asGetActiveContext()->GetCallstackSize()-1) );
+
+			if (scriptCom->GetPropertyTypeId(0) == s_ASScriptTypeId)
+			{
+				return *static_cast<ASScript**>( scriptCom->GetAddressOfProperty(0) );
+			}
+			else // Safe (but slow) lookup
+			{
+				if (std::string(scriptCom->GetObjectType()->GetBaseType()->GetName()) != "ScriptComponent")
+					return nullptr;
+
+				int appObjOffset = -1;
+
+				auto baseObjType = scriptCom->GetObjectType()->GetBaseType();
+				for (asUINT i = 0, count = baseObjType->GetPropertyCount(); i < count; ++i)
+				{
+					const char* name; int typeId; bool isPrivate;
+					if (baseObjType->GetProperty(i, &name, &typeId, &isPrivate, &appObjOffset) >= 0)
+					{
+						if (isPrivate && std::string(name) == "app_obj")
+						{
+							break;
+						}
+					}
+				}
+
+				if (appObjOffset != -1)
+				{
+					auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(scriptCom) + appObjOffset);
+					return *static_cast<ASScript**>(propAddress);
+				}
+				else
+					return nullptr;
+			}
+		}
+		else
+			return nullptr;
+	}
+
 	void ASScript::CreateCoroutine(asIScriptFunction *fn)
 	{
 		auto ctx = asGetActiveContext();
@@ -371,7 +435,7 @@ namespace FusionEngine
 			if (method)
 				coCtx->SetObject(m_ScriptObject.get());
 
-			m_ActiveCoroutines.push_back(coCtx);
+			m_ActiveCoroutines.push_back(std::make_pair(coCtx, ConditionalCoroutine()));
 			coCtx->Release();
 		}
 	}
@@ -417,7 +481,7 @@ namespace FusionEngine
 			if (method)
 				coCtx->SetObject(m_ScriptObject.get());
 
-			m_ActiveCoroutines.push_back(coCtx);
+			m_ActiveCoroutines.push_back(std::make_pair(coCtx, ConditionalCoroutine()));
 			coCtx->Release();
 		}
 	}

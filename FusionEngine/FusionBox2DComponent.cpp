@@ -38,8 +38,9 @@ namespace FusionEngine
 		m_Depth(0),
 		m_Interpolate(false)
 	{
-		m_InterpAngle = 0.f;
-		m_LastAngularVelocity = 0.f;
+		m_InterpPosition.set(def.position.x, def.position.y);
+		m_InterpAngle = def.angle;
+		m_LastAngularVelocity = def.angularVelocity;
 	}
 
 	Box2DBody::~Box2DBody()
