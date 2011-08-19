@@ -437,7 +437,7 @@ namespace FusionEngine
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
-		// TODO: mutex / queue
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
 
 		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
@@ -469,6 +469,8 @@ namespace FusionEngine
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+
 		// Mark the entity so it will be removed from the active list, and other secondary containers
 		entity->MarkToRemove();
 
@@ -523,6 +525,8 @@ namespace FusionEngine
 
 	void EntityManager::RenameEntity(EntityPtr &entity, const std::string &new_name)
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+
 		NameEntityMap::iterator _where = m_EntitiesByName.find(entity->GetName());
 		if (_where != m_EntitiesByName.end())
 		{
@@ -535,6 +539,8 @@ namespace FusionEngine
 
 	void EntityManager::RenameEntity(const std::string &current_name, const std::string &new_name)
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+
 		NameEntityMap::iterator _where = m_EntitiesByName.find(current_name);
 		if (_where != m_EntitiesByName.end())
 		{
@@ -553,6 +559,8 @@ namespace FusionEngine
 
 	EntityPtr EntityManager::GetEntity(const std::string &name, bool throwIfNotFound) const
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex, false);
+
 		//IDEntityMap::const_iterator _where = std::find_if(m_Entities.begin(), m_Entities.end(), std::bind(&isNamed, _1, name));
 		NameEntityMap::const_iterator _where = m_EntitiesByName.find(name);
 		if (_where == m_EntitiesByName.end())
@@ -565,6 +573,8 @@ namespace FusionEngine
 
 	EntityPtr EntityManager::GetEntity(ObjectID id, bool throwIfNotFound) const
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex, false);
+
 		IDEntityMap::const_iterator _where = m_Entities.find(id);
 		if (_where == m_Entities.end())
 			if (throwIfNotFound)

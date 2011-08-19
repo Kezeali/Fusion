@@ -358,7 +358,7 @@ namespace FusionEngine
 
 			ConditionalCoroutine co;
 			co.condition = condition;
-			co.timeout = timeout;
+			co.SetTimeout(timeout);
 			m_ActiveCoroutinesWithConditions[ctx] = std::move(co);
 		}
 	}

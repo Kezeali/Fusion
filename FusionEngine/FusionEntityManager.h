@@ -45,6 +45,8 @@
 #include "FusionStreamingManager.h"
 #include "FusionViewport.h"
 
+#include <tbb/spin_rw_mutex.h>
+
 //#include <boost/bimap.hpp>
 
 namespace FusionEngine
@@ -357,6 +359,8 @@ namespace FusionEngine
 		EntityFactory *m_EntityFactory;
 	protected:
 		ObjectIDStack m_UnusedIds;
+
+		mutable tbb::spin_rw_mutex m_EntityListsMutex;
 
 		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)
 		NameEntityMap m_EntitiesByName;

@@ -77,22 +77,32 @@ namespace FusionEngine
 
 	struct ConditionalCoroutine
 	{
-		ConditionalCoroutine() {}
+		ConditionalCoroutine() : timeout_time(std::numeric_limits<unsigned int>::max()) {}
 		ConditionalCoroutine(ConditionalCoroutine&& other)
-			: ctx(std::move(other.ctx)),
+			: new_ctx(std::move(other.new_ctx)),
 			condition(std::move(other.condition)),
-			timeout(other.timeout)
+			timeout_time(other.timeout_time)
 		{}
 		ConditionalCoroutine& operator= (ConditionalCoroutine&& other)
 		{
-			ctx = std::move(other.ctx);
+			new_ctx = std::move(other.new_ctx);
 			condition = std::move(other.condition);
-			timeout = other.timeout;
+			timeout_time = other.timeout_time;
 			return *this;
 		}
-		boost::intrusive_ptr<asIScriptContext> ctx;
+		//! new_ctx is an optional new context (used when this is created as a new co-routine, rather than for a yield)
+		boost::intrusive_ptr<asIScriptContext> new_ctx;
 		std::function<bool (void)> condition;
-		float timeout;
+		unsigned int timeout_time;
+
+		void SetTimeout(float seconds)
+		{ timeout_time = CL_System::get_time() + unsigned int(seconds * 1000); }
+
+		bool IsReady() const
+		{
+			return (condition && condition())
+				|| (timeout_time != std::numeric_limits<unsigned int>::max() && CL_System::get_time() >= timeout_time);
+		}
 	};
 
 	class ASScript : public IComponent, public IScript

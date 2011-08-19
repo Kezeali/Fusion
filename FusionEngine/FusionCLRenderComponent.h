@@ -124,7 +124,7 @@ namespace FusionEngine
 		int m_EntityDepth;
 		int m_LocalDepth;
 
-		bool HasAABB() const { return true; }
+		bool HasAABB() const { return !m_Sprite.is_null(); }
 		CL_Rectf GetAABB()
 		{
 			return m_AABB;
