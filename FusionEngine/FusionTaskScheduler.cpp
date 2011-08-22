@@ -29,6 +29,8 @@
 
 #include "FusionTaskScheduler.h"
 
+#include "FusionStreamingSystem.h"
+
 #include <functional>
 
 #include <tbb/task.h>
@@ -42,8 +44,9 @@ namespace FusionEngine
 	unsigned int DeltaTime::m_FramesSkipped = 0;
 	unsigned int DeltaTime::m_Tick = 0;
 
-	TaskScheduler::TaskScheduler(TaskManager* task_manager)
+	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager)
 		: m_TaskManager(task_manager),
+		m_EntityManager(entity_manager),
 		m_Accumulator(0),
 		m_LastTime(0),
 		m_Timer(1.f / 30.f),
@@ -181,6 +184,14 @@ namespace FusionEngine
 				m_SortedSimulationTasks.push_back(simulationTasks.front());
 		}
 
+		if (m_EntityManager)
+		{
+			auto streamingTask = new StreamingTask(m_EntityManager);
+			m_SortedTasks.push_back(streamingTask);
+			m_SortedSimulationTasks.push_back(streamingTask);
+			m_SortedRenderTasks.push_back(new StreamingTaskB(m_EntityManager));
+		}
+
 		SortTasks();
 	}
 
@@ -295,6 +306,9 @@ namespace FusionEngine
 				if (world->GetSystemType() & taskFilter)
 					world->GetTask()->Update(deltaTime);
 			}
+
+			m_EntityManager->UpdateActiveRegions();
+			m_EntityManager->ProcessActiveEntities(deltaTime);
 		}
 
 		return taskFilter;

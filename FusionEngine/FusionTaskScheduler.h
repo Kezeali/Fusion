@@ -36,6 +36,7 @@
 
 #include "FusionComponentSystem.h"
 #include "FusionTaskManager.h"
+#include "FusionStreamingManager.h"
 
 #include "FusionTimer.h"
 
@@ -47,7 +48,7 @@ namespace FusionEngine
 	class TaskScheduler
 	{
 	public:
-		TaskScheduler(TaskManager* task_manager);
+		TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager);
 
 		~TaskScheduler();
 
@@ -85,12 +86,14 @@ namespace FusionEngine
 
 		Timer m_Timer;
 		
+		// TODO: smart pointers here
 		std::vector<ISystemWorld*> m_ComponentWorlds;
 		std::vector<ISystemTask*> m_SortedTasks; // All tasks (simulation and render tasks)
 		std::vector<ISystemTask*> m_SortedSimulationTasks;
 		std::vector<ISystemTask*> m_SortedRenderTasks;
 
 		TaskManager* m_TaskManager;
+		EntityManager* m_EntityManager;
 
 		void SortTasks();
 

@@ -279,7 +279,7 @@ namespace FusionEngine
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in, float delay = 0.0f)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&, float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
 			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
 			
@@ -435,12 +435,14 @@ namespace FusionEngine
 			if (method)
 				coCtx->SetObject(m_ScriptObject.get());
 
-			m_ActiveCoroutines.push_back(std::make_pair(coCtx, ConditionalCoroutine()));
+			ConditionalCoroutine cco;
+			cco.new_ctx = coCtx;
+			m_ActiveCoroutinesWithConditions[coCtx] = std::move(cco);
 			coCtx->Release();
 		}
 	}
 
-	void ASScript::CreateCoroutine(const std::string& functionName)
+	void ASScript::CreateCoroutine(const std::string& functionName, float delay)
 	{
 		auto ctx = asGetActiveContext();
 		if (ctx)
@@ -481,7 +483,11 @@ namespace FusionEngine
 			if (method)
 				coCtx->SetObject(m_ScriptObject.get());
 
-			m_ActiveCoroutines.push_back(std::make_pair(coCtx, ConditionalCoroutine()));
+			ConditionalCoroutine cco;
+			cco.new_ctx = coCtx;
+			if (!fe_fzero(delay))
+				cco.SetTimeout(delay);
+			m_ActiveCoroutinesWithConditions[coCtx] = std::move(cco);
 			coCtx->Release();
 		}
 	}

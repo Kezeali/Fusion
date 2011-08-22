@@ -85,9 +85,7 @@ namespace FusionEngine
 		* \param[in] instance_owner
 		* The player who will own the new instance. 0 for none
 		*/
-		EntityPtr RequestInstance(EntityPtr &requester, bool synced, Vector2 pos, float angle, const std::string &type, const std::string &name, PlayerID instance_owner = 0);
-
-		EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string& type, const std::string& name, PlayerID instance_owner = 0);
+		EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string &type, const std::string &name, Vector2 pos, float angle, PlayerID instance_owner = 0);
 
 		//! Tries to create a new entity (only succeeds if this peer has authority to do so)
 		/*!
@@ -103,10 +101,12 @@ namespace FusionEngine
 		* \param[in] instance_owner
 		* The player who will own the new instance. 0 for none
 		*/
-		EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string &type, PlayerID instance_owner = 0);
+		EntityPtr RequestInstance(EntityPtr &requester, bool synced, const std::string &type, Vector2 pos, float angle, PlayerID instance_owner = 0);
 
 		//! Returns the given Entity's ID to the pool
 		void RemoveInstance(EntityPtr& entity);
+
+		void AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier);
 
 		//! Pick up entity creation packets
 		void HandlePacket(RakNet::Packet *packet);

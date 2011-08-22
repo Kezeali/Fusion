@@ -195,7 +195,7 @@ namespace FusionEngine
 
 		//m_PhysWorld->Step(split);
 
-		m_EntityManager->Update(split);
+		//m_EntityManager->Update(split);
 
 		//m_EntitySynchroniser->EndPacket();
 		//m_EntitySynchroniser->Send();
@@ -450,7 +450,7 @@ namespace FusionEngine
 
 	void OntologicalSystem::RequestInstance(EntityPtr requester, bool synced, const std::string& type, const std::string& name, PlayerID owner)
 	{
-		m_InstancingSynchroniser->RequestInstance(requester, synced, type, name, owner);
+		m_InstancingSynchroniser->RequestInstance(requester, synced, type, name, Vector2::zero(), 0.f, owner);
 	}
 
 	void OntologicalSystem::RemoveInstance(EntityPtr entity)

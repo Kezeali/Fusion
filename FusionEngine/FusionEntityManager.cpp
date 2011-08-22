@@ -454,14 +454,13 @@ namespace FusionEngine
 		if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
 			m_EntitiesByName[entity->GetName()] = entity;
 
-		m_StreamingManager->AddEntity(entity);
+		//m_StreamingManager->AddEntity(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);
 		
 		// Immeadiately activate this entity if it isn't within a streaming domain
-		if (!CheckState(entity->GetDomain(), DS_STREAMING))
+		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
 		{
-			FSN_ASSERT_FAIL("Hmm");
-			queueEntityToActivate(entity);
+			m_NewEntitiesToActivate.push(entity);
 		}
 
 		//entity->SetPropChangedQueue(&m_PropChangedQueue);
@@ -532,7 +531,7 @@ namespace FusionEngine
 		{
 			m_EntitiesByName.erase(_where);
 
-			entity->_setName(new_name);
+			entity->SetName(new_name);
 			m_EntitiesByName.insert( make_pair(new_name, entity) );
 		}
 	}
@@ -547,7 +546,7 @@ namespace FusionEngine
 			EntityPtr entity = _where->second;
 			m_EntitiesByName.erase(_where);
 
-			entity->_setName(new_name);
+			entity->SetName(new_name);
 			m_EntitiesByName.insert( make_pair(new_name, entity) );
 		}
 	}
@@ -739,28 +738,6 @@ namespace FusionEngine
 		//	domain.clear();
 	}
 
-	// Hack to animate sprites:
-	//typedef std::set<uintptr_t> ptr_set;
-	//void updateRenderables(EntityPtr &entity, float split, ptr_set &updated_sprites)
-	//{
-	//	RenderableArray &renderables = entity->GetRenderables();
-	//	for (RenderableArray::iterator it = renderables.begin(), end = renderables.end(); it != end; ++it)
-	//	{
-	//		RenderablePtr &abstractRenderable = *it;
-	//		RenderableSprite *renderable = dynamic_cast<RenderableSprite*>(abstractRenderable.get());
-	//		if (renderable != nullptr)
-	//		{
-	//			if (!renderable->IsPaused() && renderable->GetSprite()->is_null())
-	//			{
-	//				std::pair<ptr_set::iterator, bool> result = updated_sprites.insert( reinterpret_cast<uintptr_t>(renderable) );
-	//				if (result.second)
-	//					renderable->GetSprite()->update((int)(split * 1000.f));
-	//			}
-	//			renderable->UpdateAABB();
-	//		}
-	//	}
-	//}
-
 	void EntityManager::updateEntities(EntityArray &entityList, float split)
 	{
 		bool entityRemoved = false;
@@ -786,12 +763,20 @@ namespace FusionEngine
 			{
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
-				deactivateEntity(entity);
-				it = entityList.erase(it);
-				end = entityList.end();
+
+				if (entity.use_count() <= 3)
+				{
+					m_EntitiesToDeactivate.push_back(*it);
+
+					entity->RemoveDeactivateMark();
+
+					it = entityList.erase(it);
+					end = entityList.end();
+
+					continue;
+				}
 			}
 			
-			else
 			{
 				// Also make sure the entity isn't blocked by a flag
 				if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
@@ -828,30 +813,31 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::Update(float split)
+	void EntityManager::ProcessActivationQueues()
 	{
 		std::pair<EntityPtr, std::shared_ptr<IComponent>> toActivate;
 		while (m_ComponentsToAdd.try_pop(toActivate))
 		{
-			toActivate.first->AddComponent(toActivate.second);
 			if (toActivate.first->IsStreamedIn())
 			{
-				auto _where = m_EntityFactory->m_ComponentInstancers.find( toActivate.second->GetType() );
-				if (_where != m_EntityFactory->m_ComponentInstancers.end())
-					attemptToActivateComponent(_where->second, toActivate.second);
+				m_ComponentsToActivate.push_back(toActivate);
 			}
 		}
 
-		//m_EntitiesLocked = true;
+		EntityPtr entityToActivate;
+		while (m_NewEntitiesToActivate.try_pop(entityToActivate))
+		{
+			if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
+				m_StreamingManager->AddEntity(entityToActivate);
+			//queueEntityToActivate(entityToActivate);
+		}
 
-		//m_EntitySynchroniser->BeginPacket();
-
-		updateEntities(m_ActiveEntities, split);
-
-		//m_EntitySynchroniser->EndPacket();
-		//m_EntitySynchroniser->Send();
-
-		//m_EntitiesLocked = false;
+		// Dectivate entities
+		for (auto it = m_EntitiesToDeactivate.begin(), end = m_EntitiesToDeactivate.end(); it != end; ++it)
+		{
+			deactivateEntity(*it);
+		}
+		m_EntitiesToDeactivate.clear();
 
 		// Activate entities
 		{
@@ -860,6 +846,7 @@ namespace FusionEngine
 		{
 			if (attemptToActivateEntity(*it))
 			{
+				FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
 				m_ActiveEntities.push_back(*it);
 				it = m_EntitiesToActivate.erase(it);
 				end = m_EntitiesToActivate.end();
@@ -885,6 +872,25 @@ namespace FusionEngine
 		}
 	}
 
+	void EntityManager::ProcessActiveEntities(float dt)
+	{
+		//m_EntitiesLocked = true;
+
+		//m_EntitySynchroniser->BeginPacket();
+
+		updateEntities(m_ActiveEntities, dt);
+
+		//m_EntitySynchroniser->EndPacket();
+		//m_EntitySynchroniser->Send();
+
+		//m_EntitiesLocked = false;
+	}
+
+	void EntityManager::UpdateActiveRegions()
+	{
+		m_StreamingManager->Update();
+	}
+
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
 #ifdef _DEBUG
@@ -892,9 +898,10 @@ namespace FusionEngine
 #endif
 		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
 		//  so that mark must be removed
-		entity->RemoveDeactivateMark();
-		// The first item in the pair indicated whether Prepare has been called on the entity
-		m_EntitiesToActivate.push_back(entity);
+		if (entity->IsMarkedToDeactivate())
+			entity->RemoveDeactivateMark();
+		else
+			m_EntitiesToActivate.push_back(entity);
 	}
 
 	bool EntityManager::prepareEntity(const EntityPtr &entity)
@@ -946,7 +953,9 @@ namespace FusionEngine
 		if (component->IsReady())
 		{
 			world->OnActivation(component);
+			component->GetParent()->OnComponentActivated(component); // Tell the siblings
 			component->SetReadyState(IComponent::Active);
+			component->SynchronisePropertiesNow();
 			return true;
 		}
 		else if (component->IsActive())
@@ -1006,7 +1015,7 @@ namespace FusionEngine
 	{
 		entity->StreamOut();
 
-		entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
+		//entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
 		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
 		{
 			auto& com = *cit;
@@ -1021,14 +1030,9 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::AddComponent(EntityPtr &entity, const std::string& type, const std::string& identifier)
+	void EntityManager::OnComponentAdded(EntityPtr &entity, std::shared_ptr<IComponent>& component)
 	{
-		auto _where = m_EntityFactory->m_ComponentInstancers.find(type);
-		if (_where != m_EntityFactory->m_ComponentInstancers.end())
-		{
-			auto com = _where->second->InstantiateComponent(type);
-			m_ComponentsToAdd.push(std::make_pair(entity, com));
-		}
+		m_ComponentsToAdd.push(std::make_pair(entity, component));
 	}
 
 	void EntityManager::OnActivationEvent(const ActivationEvent &ev)
@@ -1039,7 +1043,9 @@ namespace FusionEngine
 			queueEntityToActivate(ev.entity);
 		}
 		else
+		{
 			ev.entity->MarkToDeactivate();
+		}
 	}
 
 	void EntityManager::OnPlayerAdded(unsigned int local_index, PlayerID net_id)

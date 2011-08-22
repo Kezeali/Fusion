@@ -100,8 +100,15 @@ namespace FusionEngine
 
 		bool IsReady() const
 		{
-			return (condition && condition())
-				|| (timeout_time != std::numeric_limits<unsigned int>::max() && CL_System::get_time() >= timeout_time);
+			if (!condition)
+			{
+				return timeout_time == std::numeric_limits<unsigned int>::max() || CL_System::get_time() >= timeout_time;
+			}
+			else
+			{
+				return condition()
+					|| (timeout_time != std::numeric_limits<unsigned int>::max() && CL_System::get_time() >= timeout_time);
+			}
 		}
 	};
 
@@ -129,7 +136,7 @@ namespace FusionEngine
 
 		void Yield();
 		void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
-		void CreateCoroutine(const std::string& functionName);
+		void CreateCoroutine(const std::string& functionName, float delay = 0.f);
 		void CreateCoroutine(asIScriptFunction* function);
 		CScriptAny* GetProperty(unsigned int index);
 		bool SetProperty(unsigned int index, void* ref, int typeId);

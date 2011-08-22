@@ -256,7 +256,7 @@ namespace FusionEngine
 
 				if (entity)
 				{
-					entity->_setName(entityName);
+					entity->SetName(entityName);
 
 					m_Manager->AddEntity(entity);
 
@@ -326,7 +326,7 @@ namespace FusionEngine
 
 				if (entity)
 				{
-					entity->_setName(entityName);
+					entity->SetName(entityName);
 
 					entityID = translator(entityID);
 					synchroniser->TakeID(entityID); // remove the ID from the available pool (so entities created after the map is loaded wont take this ID)
@@ -428,7 +428,7 @@ namespace FusionEngine
 					entity = factory->InstanceEntity(entityTypename, Vector2::zero(), 0.f);
 				}
 
-				entity->_setName(entityName);
+				entity->SetName(entityName);
 
 				if (entity)
 				{

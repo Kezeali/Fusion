@@ -12,6 +12,8 @@ class Test : ScriptComponent
 		frames = 0;
 		runtime = 0.0;
 		lastDamping = 0;
+		
+		spawnerY = 0;
 	}
 
 	uint frames;
@@ -37,13 +39,18 @@ class Test : ScriptComponent
 	
 	void createEntity(Vector &in pos)
 	{
-		console.println("Entity spawned at " + pos.x + "," + pos.y);
+		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", false, pos, 0.f, 0);
+		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
-		//ontology.addComponent(newEnt, "TestB", "script_b");
+		bool script = false;
+		if (rand() < 0.2)
+		{
+			ontology.addComponent(newEnt, "TestC", "script_c");
+			script = true;
+		}
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		if (sprite is null)
@@ -58,6 +65,25 @@ class Test : ScriptComponent
 		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+		
+		if (script && newEnt.getComponent("IScript").get() is null)
+			console.println("No Script");
+		else
+			@entityB = EntityWrapper(newEnt);
+	}
+	
+	void createDirt(Vector &in pos)
+	{
+		//console.println("Entity spawned at " + pos.x + "," + pos.y);
+		// One possibility is to remove the addComponent method and just have an instantiate method
+		//  where you can pass some sort of collection
+		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand(), 0);
+		ontology.addComponent(newEnt, "CLSprite", "");
+		IComponent@ com = newEnt.getComponent("ISprite");
+		ISprite@ sprite = cast<ISprite>(com);
+		sprite.ImagePath.value = "Entities/Dirt.png";
+		
+		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = -1;
 	}
 	
 	private EntityWrapper@ entityA;
@@ -85,7 +111,20 @@ class Test : ScriptComponent
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
+		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
+		
 		return EntityWrapper(newEnt);
+	}
+	
+	private uint spawnerY;
+	void dirtSpawner()
+	{
+		uint y = spawnerY;
+		++spawnerY;
+		console.println("starting " + y);
+		for (uint x = 0; x < 128; ++x)
+			createDirt(Vector(x * 1.25 - 64 * 1.25, y * 1.25 - 64 * 1.25));
+		console.println("finished " + y);
 	}
 
 	void update()
@@ -93,8 +132,21 @@ class Test : ScriptComponent
 		++frames;
 		if (frames == 1)
 		{
+			seed_rand(1234);
+			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
+			
+			entityA.script_b.speed = 2.0f;
+
+			for (uint i = 0; i < 128; ++i)
+			{
+				createCoroutine("dirtSpawner", i * 0.6f);
+				//for (uint x = 0; x < 128; ++x)
+				//	createDirt(Vector(x * 1.25 - 64 * 1.25, y * 1.25 - 64 * 1.25));
+				//console.println("y: " + y);
+				//yield();
+			}
 			
 			//console.println("itransform implemented by: " + itransform.getType());
 			//console.println("isprite implemented by: " + isprite.getType());
@@ -117,12 +169,12 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
-		if (frames > 1 && frames < 1000)
+		if (frames > 1 && frames < 500)
 		{
 			uint xframes = frames % 50;
 			uint yframes = frames / 50;
-			float x = (xframes * 0.5f) - 5.f;
-			float y = (yframes * 0.6f) - 3.f;
+			float x = (xframes * 1.8f) - 9.f;
+			float y = (yframes * 1.6f) - 6.f;
 			createEntity(Vector(x, y));
 		}
 		

@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 
-	Entity::Entity()
+	Entity::Entity(PropChangedQueue *q, const std::shared_ptr<IComponent>& transform_component)
 		: m_Name("default"),
 		m_HasDefaultName(true),
 		m_Id(0),
@@ -59,29 +59,15 @@ namespace FusionEngine
 		m_Depth(0),
 		m_WaitStepsRemaining(0)
 	{
-	}
+		FSN_ASSERT(q);
+		m_PropChangedQueue = q;
 
-	Entity::Entity(const std::string &name)
-		: m_Name(name),
-		m_HasDefaultName(false),
-		m_Id(0),
-		m_OwnerID(0),
-		m_Authority(0),
-		m_Flags(0),
-		m_Domain(0),
-		m_Layer(0),
-		m_MarkedToRemove(false),
-		m_MarkedToDeactivate(false),
-		m_StreamedIn(false),
-		m_CellIndex(0xFFFFFFFF),
-		m_Spawned(false),
-		m_Paused(false),
-		m_Hidden(false),
-		m_Depth(0),
-		m_WaitStepsRemaining(0)
-	{
-	}
+		// Cache the transform component for quick access
+		m_Transform = std::dynamic_pointer_cast<ITransform>(transform_component);
+		FSN_ASSERT(m_Transform);
 
+		AddComponent(transform_component);
+	}
 
 	Entity::~Entity()
 	{
@@ -89,7 +75,7 @@ namespace FusionEngine
 			[](StreamedResourceUser *user){ user->DestructionNotification = StreamedResourceUser::DestructionNotificationFn(); });
 	}
 
-	void Entity::_setName(const std::string &name)
+	void Entity::SetName(const std::string &name)
 	{
 		m_Name = name;
 		m_HasDefaultName = false;
@@ -102,7 +88,7 @@ namespace FusionEngine
 
 	void Entity::_notifyDefaultName(const std::string &name)
 	{
-		_setName(name);
+		SetName(name);
 		m_HasDefaultName = true;
 	}
 
@@ -163,30 +149,42 @@ namespace FusionEngine
 
 	const Vector2 &Entity::GetPosition()
 	{
-		return GetComponent<ITransform>()->Position.Get();
+		return m_Transform->Position.Get();
 	}
 
 	void Entity::SetPosition(const Vector2 &position)
 	{
-		GetComponent<ITransform>()->Position.Set(position);
+		m_Transform->Position.Set(position);
 	}
 
 	float Entity::GetAngle() const
 	{
-		return GetComponent<ITransform>()->Angle.Get();
+		return m_Transform->Angle.Get();
 	}
 
 	void Entity::SetAngle(float angle)
 	{
-		GetComponent<ITransform>()->Angle.Set(angle);
+		m_Transform->Angle.Set(angle);
 	}
+
+	//void Entity::SetTransformComponent(const std::shared_ptr<IComponent>& component)
+	//{
+	//	FSN_ASSERT(component);
+	//	FSN_ASSERT(dynamic_cast<ITransform*>(component.get()));
+
+	//	m_Transform = std::dynamic_pointer_cast<ITranform>(component);
+	//}
 
 	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
 	{
 		FSN_ASSERT(component);
+		// Don't allow the addition of multiple transform components:
+		FSN_ASSERT(dynamic_cast<ITransform*>(component.get()) == nullptr || dynamic_cast<ITransform*>(component.get()) == m_Transform.get());
 		FSN_ASSERT(m_PropChangedQueue);
 		// TODO:
 		//FSN_ASSERT(!DeltaTime::IsExecuting());
+
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
 		component->SetPropChangedQueue(m_PropChangedQueue);
 
@@ -210,12 +208,6 @@ namespace FusionEngine
 			FSN_ASSERT(implementors.find(interfaceIdentifier) == implementors.end()); // no duplicates
 			implementors[interfaceIdentifier] = component;
 		}
-		// Notify all other components of the new component, and notify the new component of the existing components
-		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
-		{
-			(*it)->OnSiblingAdded(component);
-			component->OnSiblingAdded(*it);
-		}
 		// Add the new component to the main list
 		m_Components.push_back(component);
 		component->SetParent(this);
@@ -224,6 +216,8 @@ namespace FusionEngine
 	void Entity::RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
 	{
 		FSN_ASSERT(std::find(m_Components.begin(), m_Components.end(), component) != m_Components.end());
+
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
 
 		// Remove the given component from the main list, and notify all other components
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; )
@@ -256,6 +250,18 @@ namespace FusionEngine
 		}
 	}
 
+	void Entity::OnComponentActivated(const std::shared_ptr<IComponent>& component)
+	{
+		tbb::spin_rw_mutex::scoped_lock(m_ComponentsMutex, false);
+
+		// Notify all other components of the new component, and notify the new component of the existing components
+		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
+		{
+			(*it)->OnSiblingAdded(component);
+			component->OnSiblingAdded(*it);
+		}
+	}
+
 	std::shared_ptr<IComponent> Entity::GetComponent(const std::string& type, std::string identifier) const
 	{
 		auto _where = m_ComponentInterfaces.find(type);
@@ -264,13 +270,15 @@ namespace FusionEngine
 			FSN_ASSERT(!_where->second.empty());
 			if (identifier.empty())
 			{
-				return _where->second.begin()->second;
+				if (_where->second.begin()->second->IsActive())
+					return _where->second.begin()->second;
 			}
 			else
 			{
 				auto implEntry = _where->second.find(identifier);
 				if (implEntry != _where->second.end())
-					return implEntry->second;
+					if (implEntry->second->IsActive())
+						return implEntry->second;
 			}
 		}
 		return std::shared_ptr<IComponent>();
@@ -832,7 +840,7 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("ComponentFuture", "IComponent@ get()", asFUNCTION(ASComponentFuture_GetComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 	}
 
-	static ASComponentFuture* Entity_GetComponent(EntityPtr* obj, const std::string& type, const std::string& ident = std::string())
+	static ASComponentFuture* Entity_GetComponent(EntityPtr* obj, std::string type, std::string ident)
 	{
 		auto entity = *obj;
 		auto com = entity->GetComponent(type, ident);
@@ -857,10 +865,15 @@ namespace FusionEngine
 				}
 				else
 					return false;
-			}, 3.f);
+			}, 4.f);
 		}
 		
 		return future;
+	}
+
+	static ASComponentFuture* Entity_GetComponentB(EntityPtr* obj, std::string type)
+	{
+		return Entity_GetComponent(obj, type, std::string());
 	}
 
 	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
@@ -886,8 +899,12 @@ namespace FusionEngine
 		ASComponentFuture::Register(engine);
 
 		r = engine->RegisterObjectMethod("Entity",
-			"ComponentFuture@ getComponent(const string &in, const string &in ident = string()) const",
+			"ComponentFuture@ getComponent(string, string) const",
 			asFUNCTION(Entity_GetComponent), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"ComponentFuture@ getComponent(string) const",
+			asFUNCTION(Entity_GetComponentB), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
 		//r = engine->RegisterObjectMethod("Entity",
 		//	"Input@ get_input() const",

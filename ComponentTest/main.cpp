@@ -117,6 +117,119 @@ namespace FusionEngine
 namespace FusionEngine
 {
 
+	class SimpleCellArchiver : public CellArchiver
+	{
+	public:
+		SimpleCellArchiver()
+		{
+		}
+
+		~SimpleCellArchiver()
+		{
+			Stop();
+		}
+
+		void Enqueue(Cell* cell, size_t i)
+		{
+			m_WriteQueue.push(std::make_tuple(cell, i));
+			m_NewData.set();
+		}
+
+		void Retrieve(Cell* cell, size_t i)
+		{
+			m_ReadQueue.push(std::make_tuple(cell, i));
+			m_NewData.set();
+		}
+
+		CL_Thread m_Thread;
+
+		void Start()
+		{
+			m_Thread.start(this, &SimpleCellArchiver::Run);
+		}
+
+		void Stop()
+		{
+			m_Quit.set();
+			m_Thread.join();
+		}
+
+		void Run()
+		{
+			while (CL_Event::wait(m_Quit, m_NewData) == 1)
+			{
+				{
+					std::tuple<Cell*, size_t> toWrite;
+					while (m_WriteQueue.try_pop(toWrite))
+					{
+						Cell*& cell = std::get<0>(toWrite);
+						size_t& i = std::get<1>(toWrite);
+						if (cell->mutex.try_lock())
+						{
+							try
+							{
+								for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+								{
+									//if (it->first->IsSyncedEntity())
+									{
+										m_Archived[i].push_back(it->first->shared_from_this());
+									}
+								}
+								cell->objects.clear();
+							}
+							catch (...)
+							{
+							}
+							cell->mutex.unlock();
+						}
+					}
+				}
+				{
+					std::tuple<Cell*, size_t> toRead;
+					while (m_ReadQueue.try_pop(toRead))
+					{
+						Cell*& cell = std::get<0>(toRead);
+						size_t& i = std::get<1>(toRead);//, y = std::get<1>(toRead);
+						if (cell->mutex.try_lock())
+						{
+							try
+							{
+								auto archivedCellEntry = m_Archived.find(i);
+
+								if (archivedCellEntry != m_Archived.end())
+								{
+									for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
+									{
+										auto& archivedEntity = *it;
+										Vector2 pos = archivedEntity->GetPosition();
+										// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
+										CellEntry entry;
+										entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
+										cell->objects.push_back(std::make_pair(archivedEntity.get(), std::move(entry)));
+									}
+
+									m_Archived.erase(archivedCellEntry);
+								}
+							}
+							catch (...)
+							{
+							}
+							cell->mutex.unlock();
+						}
+					}
+				}
+			}
+		}
+
+		std::map<size_t, std::vector<EntityPtr>> m_Archived;
+
+		tbb::concurrent_queue<std::tuple<Cell*, size_t>> m_WriteQueue;
+		tbb::concurrent_queue<std::tuple<Cell*, size_t>> m_ReadQueue;
+
+		CL_Event m_NewData;
+		CL_Event m_Quit;
+	};
+
 	void ITransform::RegisterScriptInterface(asIScriptEngine* engine)
 	{
 		FSN_REGISTER_PROP_ACCESSOR(ITransform, Vector2, "Vector", Position);
@@ -371,12 +484,16 @@ public:
 				std::unique_ptr<PacketDispatcher> packetDispatcher(new PacketDispatcher());
 				std::unique_ptr<NetworkManager> networkManager(new NetworkManager(network.get(), packetDispatcher.get()));
 
+				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver());
+
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get()));
-				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager());
+				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get()));
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+
+				cellArchivist->Start();
 
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
 
@@ -384,7 +501,7 @@ public:
 
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
-				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get()));
+				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get(), entityManager.get()));
 
 #ifdef PROFILE_BUILD
 				scheduler->SetFramerateLimiter(false);
@@ -425,42 +542,37 @@ public:
 				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
 
 				float xtent = 1.f;
-				Vector2 position(ToSimUnits(-xtent), ToSimUnits(-xtent));
+				Vector2 position(0.0f, 0.0f);
 				{
 					unsigned int i = 0;
-					position.x += ToSimUnits(50.f);
-					if (position.x >= ToSimUnits(xtent))
-					{
-						position.x = ToSimUnits(-xtent);
-						position.y += ToSimUnits(50.f);
-					}
-
-					auto entity = std::make_shared<Entity>();
-					std::stringstream str;
-					str << i;
-					entity->_setName("initentity" + str.str());
-
-					entity->SetPropChangedQueue(&entityManager->m_PropChangedQueue);
+					//position.x += ToSimUnits(50.f);
+					//if (position.x >= ToSimUnits(xtent))
+					//{
+					//	position.x = ToSimUnits(-xtent);
+					//	position.y += ToSimUnits(50.f);
+					//}			
 					
-					std::shared_ptr<IComponent> b2CircleFixture;
-					std::shared_ptr<IComponent> b2BodyCom;
+					std::shared_ptr<IComponent> transformCom;
 					if (i < 300)
 					{
 						if (i == 0)
-							b2BodyCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f);
+							transformCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f);
 						else
-							b2BodyCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f);
-
-						entity->AddComponent(b2BodyCom);
+							transformCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f);
 					}
 					else
 					{
-						auto transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f);
-						entity->AddComponent(transformCom);
+						transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f);
 					}
+
+					auto entity = std::make_shared<Entity>(&entityManager->m_PropChangedQueue, transformCom);
+					std::stringstream str;
+					str << i;
+					entity->SetName("initentity" + str.str());
 
 					entityManager->AddEntity(entity);
 
+					std::shared_ptr<IComponent> b2CircleFixture;
 					if (i < 300)
 					{
 						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
@@ -517,14 +629,16 @@ public:
 					}
 					entity->SynchroniseParallelEdits();
 
-					if (b2BodyCom)
 					{
 						auto body = entity->GetComponent<IRigidBody>();
-						//body->ApplyTorque(10.f);
-						//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
-						//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
-						body->LinearDamping.Set(0.1f);
-						body->AngularDamping.Set(0.9f);
+						if (body)
+						{
+							//body->ApplyTorque(10.f);
+							//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+							//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
+							body->LinearDamping.Set(0.1f);
+							body->AngularDamping.Set(0.9f);
+						}
 					}
 
 					//entities.push_back(entity);
@@ -592,6 +706,8 @@ public:
 				unsigned int delta = 0;
 				float seconds = 0.f;
 
+				CL_Font debugFont(gc, "Arial", 10);
+
 				bool keepGoing = true;
 				while (keepGoing)
 				{
@@ -625,36 +741,16 @@ public:
 						inputMgr->Update(seconds);
 						//gui->Update(seconds);
 					}
-
-					//bool up = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP);
-					//bool down = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN);
-					//bool left = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT);
-					//bool right = dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT);
-					//if (up || down || left || right)
-					//{
-					//	auto camDelta = delta / 10.f;
-					//	auto pos = camera->GetPosition();
-					//	if (up)
-					//		pos.y -= camDelta;
-					//	if (down)
-					//		pos.y += camDelta;
-					//	if (right)
-					//		pos.x += camDelta;
-					//	if (left)
-					//		pos.x -= camDelta;
-					//	camera->SetPosition(pos.x, pos.y);
-					//}
 					
 					const auto rendered = scheduler->Execute();
-
-					entityManager->Update(delta * 0.001f); // The part of this that calls streamingMgr->OnUpdated(entity) should be done in a task
-					streamingMgr->Update(); // This should be done in a task
 
 					if (rendered & SystemType::Rendering)
 					{
 						dispWindow.flip(0);
 						gc.clear();
 					}
+					
+					entityManager->ProcessActivationQueues();
 
 					IComponentProperty *changed;
 					while (propChangedQueue.try_pop(changed))

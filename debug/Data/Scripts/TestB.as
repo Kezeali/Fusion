@@ -5,7 +5,7 @@ class TestB : ScriptComponent
 {
 	TestB()
 	{
-		//console.println("--TestB--");
+		console.println("--TestB--");
 
 		frames = 0;
 		foo = 1;
@@ -26,6 +26,7 @@ class TestB : ScriptComponent
 		console.println(ev.inputName);
 		if (ev.inputName == "thrust")
 		{
+			console.println("at " + speed);
 			if (ev.isDown)
 				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 			else

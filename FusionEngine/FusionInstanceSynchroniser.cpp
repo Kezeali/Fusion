@@ -146,7 +146,7 @@ namespace FusionEngine
 	void InstancingSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const std::string &name, PlayerID owner_id)
 	{
 		RakNet::BitStream newEntityData;
-		newEntityData.Write(requester_id);
+		//newEntityData.Write(requester_id);
 		RakNet::StringTable::Instance()->EncodeString(type.c_str(), s_NetCompressedStringTrunc, &newEntityData);
 		newEntityData.Write(id);
 		newEntityData.Write(owner_id);
@@ -165,12 +165,9 @@ namespace FusionEngine
 
 	}
 
-	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, Vector2 pos, float angle, const std::string &type, const std::string &name, PlayerID owner_id)
+	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, Vector2 pos, float angle, PlayerID owner_id)
 	{
-		if (!requester)
-			FSN_EXCEPT(ExCode::InvalidArgument, "You must pass a valid requester instance");
-
-		bool localAuthority = PlayerRegistry::IsLocal(requester->GetOwnerID());
+		bool localAuthority = requester && PlayerRegistry::IsLocal(requester->GetOwnerID());
 
 		// Syncable entities can only be instanced by a call from either an owned entity or the arbiter
 		//  pseudo-entities (!syncable) are local-only so peers can spawn them willy-nilly
@@ -195,28 +192,19 @@ namespace FusionEngine
 				sendInstancingMessage(requester->GetID(), id, type, name, owner_id);
 			}
 
-			//EntityPtr entity = m_Factory->InstanceEntity(type, pos, angle);
-			EntityPtr entity = std::make_shared<Entity>();
+			auto transform = m_Factory->InstanceComponent(type, pos, angle);
+			if (!transform)
+				FSN_EXCEPT(InvalidArgumentException, type + " doesn't exist, so you can't instantiate an entity with it.");
+			if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
+				FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
+
+			EntityPtr entity = std::make_shared<Entity>(&m_EntityManager->m_PropChangedQueue, transform);
 
 			if (entity)
 			{
 				entity->SetID(id);
 				entity->SetOwnerID(owner_id);
-				entity->_setName(name);
-
-				// TODO: Either the factory should set thie propChangedQueue, or Entitymanager should add the transform component
-				//  after setting the queue and before adding the entity to the streaming manager, or EntityManager shouldn't add
-				//  entities to the streaming manager until the first update (so that all the components can be added first - new
-				//  components can't be added after the first update). It is important to note that if the last option isn't used
-				//  (where all components must be added before adding to streaming) components must be individually activated.
-				entity->SetPropChangedQueue(&m_EntityManager->m_PropChangedQueue); 
-
-				auto transform = m_Factory->InstanceComponent(type, pos, angle);
-				if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
-					FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform.");
-				entity->AddComponent(transform);
-
-				transform->SynchronisePropertiesNow();
+				entity->SetName(name);
 				
 				m_EntityManager->AddEntity(entity);
 
@@ -231,14 +219,9 @@ namespace FusionEngine
 		return EntityPtr();
 	}
 
-	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string& name, PlayerID owner)
+	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, Vector2 pos, float angle, PlayerID owner)
 	{
-		return RequestInstance(requester, syncable, Vector2::zero(), 0.f, type, name, owner);
-	}
-
-	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, PlayerID owner)
-	{
-		return RequestInstance(requester, syncable, Vector2::zero(), 0.f, type, "", owner);
+		return RequestInstance(requester, syncable, type, "", Vector2::zero(), 0.f, owner);
 	}
 
 	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
@@ -266,6 +249,13 @@ namespace FusionEngine
 			m_EntityManager->RemoveEntity(entity);
 	}
 
+	void InstancingSynchroniser::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
+	{
+		auto com = m_Factory->InstanceComponent(type);
+		entity->AddComponent(com, identifier);
+		m_EntityManager->OnComponentAdded(entity, com);
+	}
+
 	void InstancingSynchroniser::HandlePacket(Packet *packet)
 	{
 		RakNet::BitStream receivedData(packet->data, packet->length, false);
@@ -274,8 +264,8 @@ namespace FusionEngine
 		receivedData.Read(type);
 		if (type == MTID_INSTANCEENTITY)
 		{
-			ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
-			receivedData.Read(requesterId);
+			//ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
+			//receivedData.Read(requesterId);
 
 			std::string::size_type length;
 
@@ -321,13 +311,13 @@ namespace FusionEngine
 			entity->SetID(id);
 			entity->SetOwnerID(ownerId);
 			if (!name.empty())
-				entity->_setName(name);
+				entity->SetName(name);
 
 			m_EntityManager->AddEntity(entity);
 
-			EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
-			if (requester)
-				requester->OnInstanceRequestFulfilled(entity);
+			//EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
+			//if (requester)
+			//	requester->OnInstanceRequestFulfilled(entity);
 		}
 		else if (type == MTID_REMOVEENTITY)
 		{
@@ -350,7 +340,7 @@ namespace FusionEngine
 	{
 		auto entity = app_obj->GetParent()->shared_from_this();
 
-		return obj->RequestInstance(entity, synch, pos, angle, transform_component, name, owner_id);
+		return obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
 	}
 
 	static EntityPtr InstantiationSynchroniser_InstantiateAuto(const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)
@@ -360,7 +350,7 @@ namespace FusionEngine
 		//ScriptUtils::Calling::Caller(com, "ASScript@ _getAppObj()"
 		auto entity = nativeCom->GetParent()->shared_from_this();
 
-		auto newEntity = obj->RequestInstance(entity, synch, pos, angle, transform_component, name, owner_id);
+		auto newEntity = obj->RequestInstance(entity, synch, transform_component, name, pos, angle, owner_id);
 
 		//newEntity->addRef();
 		return newEntity;//.get();
@@ -368,10 +358,7 @@ namespace FusionEngine
 
 	static void InstantiationSynchroniser_AddComponent(EntityPtr entity, const std::string& type, const std::string& identifier, InstancingSynchroniser* obj)
 	{
-		// This should probably call entityManager->AddComponent and that should activate the component if the entity is already active
-		//  (is it valid to add components to active entities tho?)
-		//entity->AddComponent(obj->m_Factory->InstanceComponent(type), identifier);
-		obj->m_EntityManager->AddComponent(entity, type, identifier);
+		obj->AddComponent(entity, type, identifier);
 	}
 
 	void InstancingSynchroniser::Register(asIScriptEngine* engine)

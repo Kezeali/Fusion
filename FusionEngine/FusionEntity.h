@@ -41,6 +41,7 @@
 #include "FusionEntityComponent.h"
 #include "FusionCommandQueue.h"
 #include "FusionEntityDeserialiser.h"
+#include "FusionPhysicalComponent.h"
 #include "FusionPhysicsCallback.h"
 #include "FusionPlayerInput.h"
 #include "FusionRenderable.h"
@@ -49,8 +50,7 @@
 #include "FusionTagFlagDictionary.h"
 #include "FusionVector2.h"
 
-#include <boost/mpl/for_each.hpp>
-#include <boost/preprocessor.hpp>
+#include <tbb/spin_rw_mutex.h>
 
 namespace FusionEngine
 {
@@ -61,8 +61,6 @@ namespace FusionEngine
 
 	typedef std::vector<EntityPtr> EntityArray;
 
-	// TODO: there could be a ComponentEntity that implements Entity (the version below)...
-
 	/*!
 	 * \brief
 	 * In game object base class
@@ -71,9 +69,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Entity();
-		//! Constructor. Names the Entity.
-		Entity(const std::string& name);
+		Entity(PropChangedQueue *q, const std::shared_ptr<IComponent>& transform_component);
 		//! Destructor
 		virtual ~Entity();
 
@@ -83,7 +79,7 @@ namespace FusionEngine
 		typedef std::tr1::unordered_set<std::string> TagSet;
 
 		//! Sets the search-name of this Entity
-		void _setName(const std::string &name);
+		void SetName(const std::string &name);
 		//! Gets the search-name of this Entity
 		const std::string &GetName() const;
 
@@ -152,6 +148,8 @@ namespace FusionEngine
 		void AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 		//! Removes the given component
 		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
+
+		void OnComponentActivated(const std::shared_ptr<IComponent>& component);
 		
 		typedef std::map<std::string, std::map<std::string, std::shared_ptr<IComponent>>> ComInterfaceMap;
 
@@ -226,52 +224,6 @@ namespace FusionEngine
 			// Entity is always a pointer so there is no seperate pointer-flag version of this type ID
 			pt_entity = 12 | pt_pointer_flag,
 		};
-
-		//! Returns the number of editable properties
-		//virtual unsigned int GetPropertyCount() const { return 0; }
-
-		//! Returns the name of the given property
-		//virtual std::string GetPropertyName(unsigned int index) const { return ""; }
-		//! Returns the property with the given index
-		//virtual const boost::any& GetPropertyValue(unsigned int index) const;
-		//! Sets the given property
-		//virtual void SetPropertyValue(unsigned int index, const boost::any &value);
-		//! Template typed GetPropertyValue
-		//template <typename T>
-		//T GetPropertyValue(unsigned int index) const
-		//{
-		//	const boost::any& value = GetPropertyValue(index);
-		//	try
-		//	{
-		//		return boost::any_cast<T>( value );
-		//	}
-		//	catch (const boost::bad_any_cast &)
-		//	{
-		//		throw FSN_EXCEPT(ExCode::InvalidArgument,
-		//			"Property #" + boost::lexical_cast<std::string>( index ) + " isn't of type " + typeid(T).name());
-		//	}
-		//}
-		//! Returns the given property as an EntityPtr
-		//virtual EntityPtr GetPropertyEntity(unsigned int index, unsigned int array_index) const;
-		//! Sets the given entity property
-		//virtual void SetPropertyEntity(unsigned int index, unsigned int array_index, const EntityPtr &entity);
-
-		//! Returns the size of the given property if it is an array, 0 otherwise
-		/*!
-		* \see Entity#PropertyIsArray()
-		*/
-		//virtual unsigned int GetPropertyArraySize(unsigned int index) const =0;
-		//! Returns true if the given property is an array
-		//bool PropertyIsArray(unsigned int index) const { return GetPropertyArraySize(index) > 0; };
-		//! Returns the type of the given property
-		//virtual int GetPropertyType(unsigned int index) const =0;
-		//! Returns the address of the given property's data
-		//virtual void* GetAddressOfProperty(unsigned int index, unsigned int array_index) const =0;
-		//! Returns the address of the given property's data (default for non-array types)
-		//void* GetAddressOfProperty(unsigned int index) const
-		//{
-		//	return GetAddressOfProperty(index, 0);
-		//}
 
 		//! Sets the dictionary used by the EntityManager
 		/*!
@@ -456,6 +408,10 @@ namespace FusionEngine
 		//  This is only used when OwnerID is zero - otherwise the
 		//  authority is always the owner.
 		PlayerID m_Authority;
+
+		tbb::spin_rw_mutex m_ComponentsMutex;
+
+		std::shared_ptr<ITransform> m_Transform;
 
 		std::vector<std::shared_ptr<IComponent>> m_Components;
 		ComInterfaceMap m_ComponentInterfaces;

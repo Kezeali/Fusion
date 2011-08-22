@@ -692,5 +692,8 @@
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionStreamingSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

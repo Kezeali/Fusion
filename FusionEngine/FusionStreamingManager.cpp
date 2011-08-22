@@ -43,8 +43,9 @@ namespace FusionEngine
 
 	const float s_DefaultDeactivationTime = 0.1f;
 
-	StreamingManager::StreamingManager()
-		: m_DeactivationTime(s_DefaultDeactivationTime)
+	StreamingManager::StreamingManager(CellArchiver* archivist)
+		: m_DeactivationTime(s_DefaultDeactivationTime),
+		m_Archivist(archivist)
 	{
 		m_Bounds.x = s_DefaultWorldSize / 2.f;
 		m_Bounds.y = s_DefaultWorldSize / 2.f;
@@ -194,6 +195,7 @@ namespace FusionEngine
 		Vector2 entityPosition = entity->GetPosition();
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		Cell *cell = CellAtPosition(entityPosition);
+		tbb::mutex::scoped_lock lock(cell->mutex);
 #ifdef STREAMING_USEMAP
 		CellEntry &entry = cell->objects[entity.get()];
 #else
@@ -203,8 +205,13 @@ namespace FusionEngine
 		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
 
 		activateInView(cell, &entry, entity, true);
+		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
+			QueueEntityForDeactivation(entry, true);
+
 		//OnUpdated(entity, 0.0f);
 	}
+
+//#define STREAMING_AUTOADD
 
 	void StreamingManager::RemoveEntity(const EntityPtr &entity)
 	{
@@ -235,6 +242,8 @@ namespace FusionEngine
 		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/)
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
+
+			tbb::mutex::scoped_lock lock(currentCell->mutex);
 #ifdef STREAMING_USEMAP
 			_where = currentCell->objects.find(entityKey);
 #else
@@ -246,10 +255,13 @@ namespace FusionEngine
 #ifdef STREAMING_AUTOADD
 		else // add the entity to the grid automatically
 		{
-			currentCell = CellAtPosition(ToGameUnits(entity->GetPosition()));
-			Cell::CellEntryMap::value_type entryPair(entity, CellEntry());
-			_where = currentCell->objects.insert(entryPair).first;
-			cellEntry = &_where->second;
+			currentCell = CellAtPosition(new_x, new_y);
+
+			tbb::mutex::scoped_lock lock(currentCell->mutex);
+			currentCell->objects.push_back(std::make_pair(entity.get(), CellEntry()));
+			cellEntry = &currentCell->objects.back().second;
+
+			cellEntry->active = true;
 
 			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
 		}
@@ -271,6 +283,8 @@ namespace FusionEngine
 		}
 		else
 		{
+			tbb::mutex::scoped_lock lock(newCell->mutex);
+
 			// add the entity to its new cell
 #ifdef STREAMING_USEMAP
 			CellEntry &newEntry = newCell->objects[entityKey];
@@ -283,11 +297,14 @@ namespace FusionEngine
 
 			// remove from current cell
 			if (currentCell != nullptr)
+			{
+				tbb::mutex::scoped_lock lock(currentCell->mutex);
 #ifdef STREAMING_USEMAP
 				currentCell->objects.erase(_where);
 #else
 				rRemoveEntityFromCell(currentCell, entityKey);
 #endif
+			}
 
 			currentCell = newCell;
 			//m_EntityToCellIndex[entity] = (size_t)(currentCell - m_Cells);
@@ -306,12 +323,14 @@ namespace FusionEngine
 		{
 			cellEntry->pendingDeactivationTime -= split;
 			if (cellEntry->pendingDeactivationTime <= 0.0f)
-				DeactivateEntity(entity, *cellEntry);
+				DeactivateEntity(*currentCell, entity, *cellEntry);
 		}
 	}
 
 	void StreamingManager::activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp)
 	{
+		FSN_ASSERT(cell);
+
 		Vector2 entityPosition = entity->GetPosition();
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
@@ -320,7 +339,7 @@ namespace FusionEngine
 			if ((entityPosition - cam.streamPosition).length() < m_Range)
 			{
 				if (!cell_entry->active)
-					ActivateEntity(entity, *cell_entry, *cell);
+					ActivateEntity(*cell, entity, *cell_entry);
 				cell_entry->pendingDeactivation = false;
 			}
 			else if (cell_entry->active)
@@ -331,7 +350,7 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::ActivateEntity(const EntityPtr& entity, CellEntry& cell_entry, Cell& cell)
+	void StreamingManager::ActivateEntity(Cell& cell, const EntityPtr& entity, CellEntry& cell_entry)
 	{
 		FSN_ASSERT( !cell_entry.active );
 
@@ -339,6 +358,8 @@ namespace FusionEngine
 		//activeObject.cellObjectIndex = cell.GetCellObjectIndex( cellObject );
 		cell_entry.pendingDeactivation = false;
 		cell_entry.active = true;
+
+		cell.EntryActivated();
 
 		GenerateActivationEvent( entity );
 	}
@@ -353,19 +374,25 @@ namespace FusionEngine
 #endif
 		if (_where == cell.objects.end()) return;
 		CellEntry &cellEntry = _where->second;
-		FSN_ASSERT( cellEntry.active );
-		cellEntry.active = false;
 
-		GenerateDeactivationEvent(entity);
+		DeactivateEntity(cell, entity, cellEntry);
 	}
 
-	void StreamingManager::DeactivateEntity(const EntityPtr &entity, CellEntry &cell_entry)
+	void StreamingManager::DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &cell_entry)
 	{
 		FSN_ASSERT( cell_entry.active );
 		cell_entry.active = false;
 		cell_entry.pendingDeactivation = false;
 
+		cell.EntryDeactivated();
+
 		GenerateDeactivationEvent(entity);
+
+		if (!cell.IsActive())
+		{
+			SendToConsole("Cell Deactivated");
+			//m_Archivist->Enqueue(&cell, (size_t)(&cell - m_Cells));
+		}
 	}
 
 	void StreamingManager::QueueEntityForDeactivation(CellEntry &entry, bool warp)
@@ -486,29 +513,52 @@ namespace FusionEngine
 							FSN_ASSERT( ix < m_XCellCount );
 							FSN_ASSERT( i == iy * m_XCellCount + ix );
 							Cell &cell = m_Cells[i++];
-							for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
-							{
-								CellEntry &cellEntry = cell_it->second;
-								//Vector2 entityPosition = entity->GetPosition();
-								//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
-								Vector2 entityPosition(cellEntry.x, cellEntry.y);
 
-								if ((entityPosition - cam.streamPosition).length() <= m_Range)
+							// Check if the cell needs to be loaded
+							//if (!cell.IsActive())
+							//{
+							//	m_Archivist->Retrieve(&cell, i-1);
+							//}
+
+							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+							if (cell.mutex.try_lock())
+							{
+								try
 								{
-									if (!cellEntry.active)
+									for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 									{
-										ActivateEntity(cell_it->first->shared_from_this(), cellEntry, cell);
-									}
-									else
-									{
-										cellEntry.pendingDeactivation = false;						
+#ifdef _DEBUG
+										FSN_ASSERT(std::count_if(cell.objects.begin(), cell.objects.end(), [&](const Cell::EntityEntryPair& p) { return p.first == cell_it->first; }) == 1);
+#endif
+										CellEntry &cellEntry = cell_it->second;
+										//Vector2 entityPosition = entity->GetPosition();
+										//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
+										Vector2 entityPosition(cellEntry.x, cellEntry.y);
+
+										if ((entityPosition - cam.streamPosition).length() <= m_Range)
+										{
+											if (!cellEntry.active)
+											{
+												ActivateEntity(cell, cell_it->first->shared_from_this(), cellEntry);
+											}
+											else
+											{
+												cellEntry.pendingDeactivation = false;						
+											}
+										}
+										else if (cellEntry.active)
+										{
+											if (!cellEntry.pendingDeactivation)
+												QueueEntityForDeactivation(cellEntry);
+										}
 									}
 								}
-								else if (cellEntry.active)
+								catch (Exception&)
 								{
-									if (!cellEntry.pendingDeactivation)
-										QueueEntityForDeactivation(cellEntry);
+									cell.mutex.unlock();
+									throw;
 								}
+								cell.mutex.unlock();
 							}
 						}
 						i += stride;

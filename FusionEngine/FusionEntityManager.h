@@ -295,8 +295,11 @@ namespace FusionEngine
 		//! Removes all entities in the given domain
 		void ClearDomain(EntityDomain domain_index);
 
-		//! Updates entities
-		void Update(float split);
+		void ProcessActivationQueues();
+
+		void ProcessActiveEntities(float split);
+
+		void UpdateActiveRegions();
 
 		//! Draws entities
 		void Draw(Renderer *renderer, const ViewportPtr &viewport, size_t layer);
@@ -317,7 +320,7 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
-		void AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier);
+		void OnComponentAdded(EntityPtr& entity, std::shared_ptr<IComponent>& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
 
@@ -371,8 +374,11 @@ namespace FusionEngine
 		EntitySet m_PseudoEntities;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToAdd;
+		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
+
 		std::vector<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToActivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;
+		std::vector<EntityPtr> m_EntitiesToDeactivate;
 		EntityArray m_ActiveEntities;
 
 		// Entities to be updated - 8 domains

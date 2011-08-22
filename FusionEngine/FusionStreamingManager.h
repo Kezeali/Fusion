@@ -42,6 +42,8 @@
 #include "FusionEntity.h"
 #include "FusionCamera.h"
 
+#include <tbb/mutex.h>
+
 namespace FusionEngine
 {
 
@@ -94,27 +96,6 @@ namespace FusionEngine
 		return previous * (1-alpha) + current * alpha;
 	}
 
-	template <typename T>
-	class Interpolator
-	{
-	public:
-		Interpolator(T* initial)
-			: Value(initial),
-			Initial(initial),
-			Target(initial)
-		{
-		}
-
-		void Update(float alpha)
-		{
-			*Value = Initial * (1-alpha) + Target * alpha;
-		}
-
-		T* Value;
-		T Initial;
-		T Target;
-	};
-
 #define INFINITE_STREAMING
 //#define STREAMING_USEMAP
 
@@ -138,6 +119,31 @@ namespace FusionEngine
 	class Cell
 	{
 	public:
+		Cell()
+			: active_entries(0)
+		{}
+
+		Cell(const Cell& other)
+			: objects(other.objects),
+			active_entries(other.active_entries)
+		{}
+
+		Cell(Cell&& other)
+			: objects(std::move(other.objects)),
+			active_entries(other.active_entries)
+		{}
+
+		Cell& operator= (const Cell& other)
+		{
+			objects = other.objects;
+			active_entries = other.active_entries;
+		}
+
+		Cell& operator= (Cell&& other)
+		{
+			objects = std::move(other.objects);
+			active_entries = other.active_entries;
+		}
 #ifdef STREAMING_USEMAP
 		typedef std::map<Entity*, CellEntry> CellEntryMap;
 		CellEntryMap objects;
@@ -146,6 +152,21 @@ namespace FusionEngine
 		typedef std::vector<EntityEntryPair> CellEntryMap;
 		CellEntryMap objects;
 #endif
+		unsigned int active_entries;
+		void EntryDeactivated() { --active_entries; }
+		void EntryActivated() { ++active_entries; }
+		bool IsActive() const { return active_entries > 0; }
+
+		tbb::mutex mutex;
+	};
+
+	class CellArchiver
+	{
+	public:
+		virtual ~CellArchiver() {}
+
+		virtual void Enqueue(Cell* cell, size_t i) = 0;
+		virtual void Retrieve(Cell* cell, size_t i) = 0;
 	};
 
 	struct ActivationEvent
@@ -169,7 +190,7 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager();
+		StreamingManager(CellArchiver* archivist);
 		//! Destructor
 		~StreamingManager();
 
@@ -190,9 +211,9 @@ namespace FusionEngine
 		//! Updates the given entity's grid position, and streams in/out
 		void OnUpdated(const EntityPtr &entity, float split);
 
-		void ActivateEntity(const EntityPtr &entity, CellEntry &entry, Cell &cell);
+		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 		void DeactivateEntity(const EntityPtr &entity);
-		void DeactivateEntity(const EntityPtr &entity, CellEntry &entry);
+		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 
 		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
 
@@ -257,7 +278,9 @@ namespace FusionEngine
 		Vector2 m_Bounds;
 
 		Cell *m_Cells;
+		std::vector<Cell> m_CellsBeingLoaded;
 
+		CellArchiver* m_Archivist;
 
 		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 
