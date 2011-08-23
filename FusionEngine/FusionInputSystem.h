@@ -54,7 +54,7 @@ namespace FusionEngine
 		virtual ~InputSystem()
 		{}
 
-		ISystemWorld* CreateWorld();
+		std::shared_ptr<ISystemWorld> CreateWorld();
 
 	private:
 		SystemType GetType() const { return SystemType::Simulation; }

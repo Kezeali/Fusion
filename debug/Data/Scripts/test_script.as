@@ -77,7 +77,7 @@ class Test : ScriptComponent
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand(), 0);
+		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand() * 3.14, 0);
 		ontology.addComponent(newEnt, "CLSprite", "");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);

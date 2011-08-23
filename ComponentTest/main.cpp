@@ -510,7 +510,7 @@ public:
 				scheduler->SetFramerateLimiter(true);
 #endif
 
-				std::vector<ISystemWorld*> ontology;
+				std::vector<std::shared_ptr<ISystemWorld>> ontology;
 
 				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc));
 				auto renderWorld = clRenderSystem->CreateWorld();
@@ -518,19 +518,22 @@ public:
 
 				entityFactory->AddInstancer(renderWorld);
 
-				scriptManager->RegisterGlobalObject("Renderer renderer", renderWorld);
+				scriptManager->RegisterGlobalObject("Renderer renderer", renderWorld.get());
 				
-				const std::unique_ptr<Box2DSystem> box2dSystem(new Box2DSystem());
+				const std::unique_ptr<IComponentSystem> box2dSystem(new Box2DSystem());
 				auto box2dWorld = box2dSystem->CreateWorld();
 				ontology.push_back(box2dWorld);
 
 				entityFactory->AddInstancer(box2dWorld);
 				
-				static_cast<CLRenderWorld*>(renderWorld)->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld)->Getb2World());
+				static_cast<CLRenderWorld*>(renderWorld.get())->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld.get())->Getb2World());
 
 				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager, entityFactory.get()));
 				auto asWorld = asSystem->CreateWorld();
 				ontology.push_back(asWorld);
+
+				// TODO: add some sort of Init method, to be called by the scheduler (?) when the ontology is set (?)
+				static_cast<AngelScriptWorld*>(asWorld.get())->BuildScripts();
 
 				entityFactory->AddInstancer(asWorld);
 
@@ -662,7 +665,7 @@ public:
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
-				dynamic_cast<CLRenderWorld*>(renderWorld)->AddViewport(viewport);
+				dynamic_cast<CLRenderWorld*>(renderWorld.get())->AddViewport(viewport);
 				streamingMgr->AddCamera(camera);
 				}
 

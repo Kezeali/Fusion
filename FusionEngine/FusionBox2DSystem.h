@@ -56,13 +56,12 @@ namespace FusionEngine
 		virtual ~Box2DSystem()
 		{}
 
-		// TODO: make private
-		ISystemWorld* CreateWorld();
-
 	private:
 		SystemType GetType() const { return SystemType::Simulation; }
 
 		std::string GetName() const { return "Box2DSystem"; }
+		
+		std::shared_ptr<ISystemWorld> CreateWorld();
 	};
 
 	class Box2DWorld : public ISystemWorld

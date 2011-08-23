@@ -84,7 +84,7 @@ namespace FusionEngine
 
 		virtual std::string GetName() const = 0;
 
-		virtual ISystemWorld* CreateWorld() = 0;
+		virtual std::shared_ptr<ISystemWorld> CreateWorld() = 0;
 	};
 
 	//! World

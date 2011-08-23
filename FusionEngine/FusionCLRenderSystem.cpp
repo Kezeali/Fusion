@@ -44,9 +44,9 @@ namespace FusionEngine
 	{
 	}
 
-	ISystemWorld* CLRenderSystem::CreateWorld()
+	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
 	{
-		return new CLRenderWorld(this, m_GraphicContext);
+		return std::make_shared<CLRenderWorld>(this, m_GraphicContext);
 	}
 
 	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc)

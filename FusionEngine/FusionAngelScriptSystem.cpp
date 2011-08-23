@@ -440,9 +440,9 @@ namespace FusionEngine
 	{
 	}
 
-	ISystemWorld* AngelScriptSystem::CreateWorld()
+	std::shared_ptr<ISystemWorld> AngelScriptSystem::CreateWorld()
 	{
-		return new AngelScriptWorld(this, m_ScriptManager, m_EntityFactory);
+		return std::make_shared<AngelScriptWorld>(this, m_ScriptManager, m_EntityFactory);
 	}
 
 	AngelScriptWorld::AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory)
@@ -451,8 +451,6 @@ namespace FusionEngine
 		m_EntityFactory(factory)
 	{
 		m_Engine = m_ScriptManager->GetEnginePtr();
-
-		BuildScripts();
 
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
 	}
@@ -680,7 +678,7 @@ namespace FusionEngine
 				std::unique_ptr<CLBinaryStream> outFile(new CLBinaryStream(bytecodeFilename, CLBinaryStream::open_write));
 				module->GetASModule()->SaveByteCode(outFile.get());
 
-				m_EntityFactory->AddInstancer(typeName, this);
+				m_EntityFactory->AddInstancer(typeName, this->shared_from_this());
 			}
 		}
 	}

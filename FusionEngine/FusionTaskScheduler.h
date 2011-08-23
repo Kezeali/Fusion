@@ -52,7 +52,7 @@ namespace FusionEngine
 
 		~TaskScheduler();
 
-		void SetOntology(const std::vector<ISystemWorld*>& ontology);
+		void SetOntology(const std::vector<std::shared_ptr<ISystemWorld>>& ontology);
 
 		void SetMaxFrameskip(unsigned int frameskip) { m_MaxFrameskip = frameskip; }
 
@@ -86,11 +86,12 @@ namespace FusionEngine
 
 		Timer m_Timer;
 		
-		// TODO: smart pointers here
-		std::vector<ISystemWorld*> m_ComponentWorlds;
+		std::vector<std::shared_ptr<ISystemWorld>> m_ComponentWorlds;
 		std::vector<ISystemTask*> m_SortedTasks; // All tasks (simulation and render tasks)
 		std::vector<ISystemTask*> m_SortedSimulationTasks;
 		std::vector<ISystemTask*> m_SortedRenderTasks;
+
+		std::vector<std::unique_ptr<ISystemTask>> m_ProxyTasks; // This is to make sure they are deleted
 
 		TaskManager* m_TaskManager;
 		EntityManager* m_EntityManager;

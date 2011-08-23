@@ -59,7 +59,7 @@ namespace FusionEngine
 
 		CLRenderSystem(const CL_GraphicContext& gc);
 
-		ISystemWorld* CreateWorld();
+		std::shared_ptr<ISystemWorld> CreateWorld();
 
 	private:
 		CL_GraphicContext m_GraphicContext;

@@ -38,9 +38,9 @@ namespace FusionEngine
 	{
 	}
 
-	ISystemWorld* Box2DSystem::CreateWorld()
+	std::shared_ptr<ISystemWorld> Box2DSystem::CreateWorld()
 	{
-		return new Box2DWorld(this);
+		return std::make_shared<Box2DWorld>(this);
 	}
 
 	Box2DWorld::Box2DWorld(IComponentSystem* system)

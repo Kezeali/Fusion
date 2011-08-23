@@ -140,7 +140,7 @@ namespace FusionEngine
 		}
 	}
 
-	void TaskScheduler::SetOntology(const std::vector<ISystemWorld*>& ontology)
+	void TaskScheduler::SetOntology(const std::vector<std::shared_ptr<ISystemWorld>>& ontology)
 	{
 		m_ComponentWorlds = ontology;
 
@@ -151,15 +151,17 @@ namespace FusionEngine
 		m_SortedRenderTasks.clear();
 		for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 		{
-			ISystemWorld* world = *it;
+			auto world = *it;
 			auto tasks = world->GetTasks();
 
 			FSN_ASSERT(!tasks.empty());
 
 			if (tasks.size() > 1)
 			{
-				ISystemTask* task = new SystemTaskExecutor(world, tasks);
+				// Create a proxy-task to execute all the tasks for this system if there is more than one
+				ISystemTask* task = new SystemTaskExecutor(world.get(), tasks);
 				m_SortedTasks.push_back(task);
+				m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
 			}
 			else
 				m_SortedTasks.push_back(tasks.front());
@@ -174,12 +176,20 @@ namespace FusionEngine
 				[](ISystemTask* task) { return task->GetTaskType() == SystemType::Simulation; });
 
 			if (renderTasks.size() > 1)
-				m_SortedRenderTasks.push_back(new SystemTaskExecutor(world, renderTasks));
+			{
+				auto task = new SystemTaskExecutor(world.get(), renderTasks);
+				m_SortedRenderTasks.push_back(task);
+				m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
+			}
 			else if (!renderTasks.empty())
 				m_SortedRenderTasks.push_back(renderTasks.front());
 
 			if (simulationTasks.size() > 1)
-				m_SortedSimulationTasks.push_back(new SystemTaskExecutor(world, simulationTasks));
+			{
+				auto task = new SystemTaskExecutor(world.get(), simulationTasks);
+				m_SortedSimulationTasks.push_back(task);
+				m_ProxyTasks.push_back(std::unique_ptr<ISystemTask>(task));
+			}
 			else if (!simulationTasks.empty())
 				m_SortedSimulationTasks.push_back(simulationTasks.front());
 		}
@@ -189,7 +199,7 @@ namespace FusionEngine
 			auto streamingTask = new StreamingTask(m_EntityManager);
 			m_SortedTasks.push_back(streamingTask);
 			m_SortedSimulationTasks.push_back(streamingTask);
-			m_SortedRenderTasks.push_back(new StreamingTaskB(m_EntityManager));
+			//m_SortedRenderTasks.push_back(new StreamingTaskB(m_EntityManager));
 		}
 
 		SortTasks();
@@ -302,7 +312,7 @@ namespace FusionEngine
 		{
 			for (auto it = m_ComponentWorlds.begin(); it != m_ComponentWorlds.end(); ++it)
 			{
-				ISystemWorld* world = *it;
+				auto world = *it;
 				if (world->GetSystemType() & taskFilter)
 					world->GetTask()->Update(deltaTime);
 			}

@@ -341,7 +341,7 @@ namespace FusionEngine
 		bool prepareEntity(const EntityPtr &entity);
 		//! returns true if all components were ready and thus activated
 		bool attemptToActivateEntity(const EntityPtr &entity);
-		bool attemptToActivateComponent(ISystemWorld* world, const std::shared_ptr<IComponent>& component);
+		bool attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const std::shared_ptr<IComponent>& component);
 		void activateEntity(const EntityPtr &entity);
 
 		void deactivateEntity(const EntityPtr& entity);

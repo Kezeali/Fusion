@@ -40,9 +40,9 @@ namespace FusionEngine
 	{
 	}
 
-	ISystemWorld* InputSystem::CreateWorld()
+	std::shared_ptr<ISystemWorld> InputSystem::CreateWorld()
 	{
-		return new InputWorld(this);
+		return std::make_shared<InputWorld>(this);
 	}
 
 	InputWorld::InputWorld(IComponentSystem* system)

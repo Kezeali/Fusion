@@ -943,7 +943,7 @@ namespace FusionEngine
 		return allAreActive;
 	}
 
-	bool EntityManager::attemptToActivateComponent(ISystemWorld* world, const std::shared_ptr<IComponent>& component)
+	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const std::shared_ptr<IComponent>& component)
 	{
 		if (component->GetReadyState() == IComponent::NotReady)
 		{

@@ -45,8 +45,8 @@
 namespace FusionEngine
 {
 
-	//typedef std::shared_ptr<ISystemWorld> ComponentInstancerPtr;
-	typedef ISystemWorld* ComponentInstancerPtr;
+	typedef std::shared_ptr<ISystemWorld> ComponentInstancerPtr;
+	//typedef ISystemWorld* ComponentInstancerPtr;
 
 	//! Prefab base class
 	class Prefab

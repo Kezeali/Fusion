@@ -58,7 +58,7 @@ namespace FusionEngine
 		virtual ~AngelScriptSystem()
 		{}
 
-		ISystemWorld* CreateWorld();
+		std::shared_ptr<ISystemWorld> CreateWorld();
 
 	private:
 		SystemType GetType() const { return SystemType::Simulation; }
@@ -70,7 +70,7 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
-	class AngelScriptWorld : public ISystemWorld
+	class AngelScriptWorld : public ISystemWorld, public std::enable_shared_from_this<AngelScriptWorld>
 	{
 		friend class AngelScriptTask;
 	public:
