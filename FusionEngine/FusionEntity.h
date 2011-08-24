@@ -144,6 +144,32 @@ namespace FusionEngine
 		//! Gets angle (rotation) value
 		void SetAngle(float angle);
 
+	
+		std::set<EntityPtr> m_ReferencingEntities;
+		std::set<EntityPtr> m_ReferencedEntities;
+	
+	private:
+		//! Notifies this entity that the given entity is referencing it
+		void AddReference(EntityPtr entity);
+		//! Notifies this entity that the given entity is no longer referencing it
+		void RemoveReference(EntityPtr entity);
+		
+	public:
+		//! Adds a reference from this entity to the given entity
+		void HoldReference(EntityPtr toHold);
+		//! Removes a reference from this entity to the given entity
+		void DropReference(EntityPtr heldEntity);
+
+		tbb::atomic<unsigned int> m_LockingReferences;
+		void IncrRefCount() { ++m_LockingReferences; m_GCFlag = false; }
+		void DecrRefCount() { --m_LockingReferences; }
+		bool IsReferenced() const { return m_LockingReferences != 0; }
+		unsigned int GetNumUsers() const { return m_LockingReferences; }
+
+		tbb::atomic<bool> m_GCFlag;
+		void SetGCFlag(bool value) { m_GCFlag = value; }
+		bool GetGCFlag() const { return m_GCFlag; }
+
 		//! Adds the given component
 		void AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
 		//! Removes the given component
@@ -294,6 +320,8 @@ namespace FusionEngine
 
 		//! Returns true if this Entity has been streamed in
 		bool IsStreamedIn() const;
+
+		bool IsActive() const;
 
 		void SetStreamingCellIndex(unsigned int index);
 		unsigned int GetStreamingCellIndex() const;

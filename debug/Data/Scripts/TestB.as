@@ -36,14 +36,14 @@ class TestB : ScriptComponent
 		if (ev.inputName == "left")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity = -1;
+				irigidbody.AngularVelocity = -1.5;
 			else
 				irigidbody.AngularVelocity = 0;
 		}
 		if (ev.inputName == "right")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity = 1;
+				irigidbody.AngularVelocity = 1.5;
 			else
 				irigidbody.AngularVelocity = 0;
 		}

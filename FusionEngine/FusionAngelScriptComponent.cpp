@@ -262,6 +262,18 @@ namespace FusionEngine
 		return obj->GetParent()->shared_from_this();
 	}
 
+	static EntityPtr InitEntityPtr(EntityPtr& entityReferenced)
+	{
+		auto activeScript = ASScript::GetActiveScript(); FSN_ASSERT(activeScript); FSN_ASSERT(activeScript->GetParent());
+		activeScript->GetParent()->HoldReference(entityReferenced);
+		return activeScript->GetParent()->shared_from_this();
+	}
+
+	static void DeinitEntityPtr(EntityPtr& referenceHolder, EntityPtr& entityReferenced)
+	{
+		referenceHolder->DropReference(entityReferenced);
+	}
+
 	void ASScript::Register(asIScriptEngine* engine)
 	{
 		{
@@ -280,10 +292,13 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in, float delay = 0.0f)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&, float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL);
-			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 			
-			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+
+			r = engine->RegisterGlobalFunction("Entity initEntityPointer(Entity &in)", asFUNCTION(InitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterGlobalFunction("void deinitEntityPointer(Entity &in, Entity &in)", asFUNCTION(DeinitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
 		}
 	}
 

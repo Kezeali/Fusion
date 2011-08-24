@@ -261,8 +261,6 @@ namespace FusionEngine
 			currentCell->objects.push_back(std::make_pair(entity.get(), CellEntry()));
 			cellEntry = &currentCell->objects.back().second;
 
-			cellEntry->active = true;
-
 			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
 		}
 #endif
@@ -295,6 +293,9 @@ namespace FusionEngine
 #endif
 			cellEntry = &newEntry; // Change the pointer (since it is used again below)
 
+			if (cellEntry->active)
+				newCell->EntryActivated();
+
 			// remove from current cell
 			if (currentCell != nullptr)
 			{
@@ -304,6 +305,10 @@ namespace FusionEngine
 #else
 				rRemoveEntityFromCell(currentCell, entityKey);
 #endif
+				if (cellEntry->active)
+				{
+					currentCell->EntryDeactivated();
+				}
 			}
 
 			currentCell = newCell;
@@ -390,7 +395,7 @@ namespace FusionEngine
 
 		if (!cell.IsActive())
 		{
-			SendToConsole("Cell Deactivated");
+			//SendToConsole("Cell Deactivated");
 			//m_Archivist->Enqueue(&cell, (size_t)(&cell - m_Cells));
 		}
 	}
@@ -459,6 +464,20 @@ namespace FusionEngine
 		return pointChanged;
 	}
 
+	void StreamingManager::getCellRange(CL_Rect& range, const Vector2& pos)
+	{
+		range.left = (int)std::floor((pos.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
+		range.right = (int)std::floor((pos.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
+
+		range.top = (int)std::floor((pos.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
+		range.bottom = (int)std::floor((pos.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+
+		fe_clamp(range.left, 0, (int)m_XCellCount - 1);
+		fe_clamp(range.right, 0, (int)m_XCellCount - 1);
+		fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+		fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
+	}
+
 	void StreamingManager::Update(const bool refresh)
 	{
 		// Each vector element represents a range of cells to update - overlapping active-areas
@@ -478,12 +497,14 @@ namespace FusionEngine
 			}
 			++it;
 
-			Vector2 oldPosition = cam.streamPosition;
+			
 			updateStreamingCamera(cam, std::move(camera));
 			const Vector2 &newPosition = cam.streamPosition;
 
-			if (refresh || cam.firstUpdate || !v2Equal(oldPosition, newPosition))
+			if (refresh || cam.firstUpdate || !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.5f))
 			{
+				Vector2 oldPosition = cam.lastUsedPosition;
+				cam.lastUsedPosition = newPosition;
 				cam.firstUpdate = false;
 				// Find the minimum & maximum cell indicies that have to be checked
 				CL_Rect range;
@@ -491,23 +512,134 @@ namespace FusionEngine
 				range.right = (int)std::floor((std::max(oldPosition.x, newPosition.x) + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
 
 				range.top = (int)std::floor((std::min(oldPosition.y, newPosition.y) - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-				range.bottom = (int)std::floor((std::min(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+				range.bottom = (int)std::floor((std::max(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
 
 				fe_clamp(range.left, 0, (int)m_XCellCount - 1);
 				fe_clamp(range.right, 0, (int)m_XCellCount - 1);
 				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
 				fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
 
+				CL_Rect inactiveRange;
+				getCellRange(inactiveRange, oldPosition);
+				//inactiveRange.left = (int)std::floor((oldPosition.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
+				//inactiveRange.right = (int)std::floor((oldPosition.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
+
+				//inactiveRange.top = (int)std::floor((oldPosition.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
+				//inactiveRange.bottom = (int)std::floor((oldPosition.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+
+				//fe_clamp(inactiveRange.left, 0, (int)m_XCellCount - 1);
+				//fe_clamp(range.right, 0, (int)m_XCellCount - 1);
+				//fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+				//fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
+
+				CL_Rect activeRange;
+				getCellRange(activeRange, newPosition);
+				//activeRange.left = (int)std::floor((newPosition.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
+				//activeRange.right = (int)std::floor((newPosition.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
+
+				//activeRange.top = (int)std::floor((newPosition.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
+				//activeRange.bottom = (int)std::floor((newPosition.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+
+				//fe_clamp(range.left, 0, (int)m_XCellCount - 1);
+				//fe_clamp(range.right, 0, (int)m_XCellCount - 1);
+				//fe_clamp(range.top, 0, (int)m_YCellCount - 1);
+				//fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
+
+				auto deactivateCells = [this](const CL_Rect &inactiveRange)
 				{
-					unsigned int iy = (unsigned int)range.top;
-					unsigned int ix = (unsigned int)range.left;
+					unsigned int iy = (unsigned int)inactiveRange.top;
+					unsigned int ix = (unsigned int)inactiveRange.left;
 					unsigned int i = iy * m_XCellCount + ix;
-					unsigned int stride = m_XCellCount - ( range.right - range.left + 1 );
-					for (; iy <= (unsigned int)range.bottom; ++iy)
+					unsigned int stride = m_XCellCount - ( inactiveRange.right - inactiveRange.left + 1 );
+					for (; iy <= (unsigned int)inactiveRange.bottom; ++iy)
 					{
 						FSN_ASSERT( iy >= 0 );
 						FSN_ASSERT( iy < m_YCellCount );
-						for (ix = (unsigned int)range.left; ix <= (unsigned int)range.right; ++ix)
+						for (ix = (unsigned int)inactiveRange.left; ix <= (unsigned int)inactiveRange.right; ++ix)
+						{
+							FSN_ASSERT( ix >= 0 );
+							FSN_ASSERT( ix < m_XCellCount );
+							FSN_ASSERT( i == iy * m_XCellCount + ix );
+							Cell &cell = m_Cells[i++];
+
+							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+							if (cell.mutex.try_lock())
+							{
+								for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+								{
+									CellEntry &cellEntry = cell_it->second;
+
+									if (cellEntry.active && !cellEntry.pendingDeactivation)
+									{
+										QueueEntityForDeactivation(cellEntry);
+									}
+								}
+								cell.mutex.unlock();
+							}
+
+							// Unload cell
+							//m_Archivist->Enqueue(&cell, i-1);
+						}
+						i += stride;
+					}
+				};
+
+				if (inactiveRange != activeRange)
+				{
+					// Partial overlap
+					if (inactiveRange.is_overlapped(activeRange))
+					{
+						CL_Rect inactiveRangeY(inactiveRange);
+						CL_Rect inactiveRangeX(inactiveRange);
+
+						if (inactiveRange.top > activeRange.top)
+							inactiveRangeY.top = activeRange.bottom;
+						else
+							inactiveRangeY.bottom = activeRange.top;
+
+						if (inactiveRange.bottom < activeRange.bottom)
+							inactiveRangeY.bottom = activeRange.top;
+						else
+							inactiveRangeY.top = activeRange.bottom;
+
+						inactiveRangeY.bottom = std::max(inactiveRangeY.top, inactiveRangeY.bottom);
+
+						if (inactiveRange.left > activeRange.left)
+							inactiveRangeX.left = activeRange.right;
+						else
+							inactiveRangeX.right = activeRange.left;
+
+						if (inactiveRange.right < activeRange.right)
+							inactiveRangeX.right = activeRange.left;
+						else
+							inactiveRangeX.left = activeRange.right;
+
+						inactiveRangeX.right = std::max(inactiveRangeX.left, inactiveRangeX.right);
+
+						// Don't include stuff in the X range that has already been included in the Y range:
+						inactiveRangeX.top = activeRange.top;
+						inactiveRangeX.bottom = activeRange.bottom;
+
+						deactivateCells(inactiveRangeY);
+						deactivateCells(inactiveRangeX);
+					}
+					// No overlap
+					else
+					{
+						deactivateCells(inactiveRange);
+					}
+				}
+
+				{
+					unsigned int iy = (unsigned int)activeRange.top;
+					unsigned int ix = (unsigned int)activeRange.left;
+					unsigned int i = iy * m_XCellCount + ix;
+					unsigned int stride = m_XCellCount - ( activeRange.right - activeRange.left + 1 );
+					for (; iy <= (unsigned int)activeRange.bottom; ++iy)
+					{
+						FSN_ASSERT( iy >= 0 );
+						FSN_ASSERT( iy < m_YCellCount );
+						for (ix = (unsigned int)activeRange.left; ix <= (unsigned int)activeRange.right; ++ix)
 						{
 							FSN_ASSERT( ix >= 0 );
 							FSN_ASSERT( ix < m_XCellCount );
@@ -515,10 +647,10 @@ namespace FusionEngine
 							Cell &cell = m_Cells[i++];
 
 							// Check if the cell needs to be loaded
-							//if (!cell.IsActive())
-							//{
-							//	m_Archivist->Retrieve(&cell, i-1);
-							//}
+							/*if (!cell.IsLoaded())
+							{
+								m_Archivist->Retrieve(&cell, i-1);
+							}*/
 
 							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 							if (cell.mutex.try_lock())
@@ -527,9 +659,9 @@ namespace FusionEngine
 								{
 									for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 									{
-#ifdef _DEBUG
-										FSN_ASSERT(std::count_if(cell.objects.begin(), cell.objects.end(), [&](const Cell::EntityEntryPair& p) { return p.first == cell_it->first; }) == 1);
-#endif
+//#ifdef _DEBUG
+//										FSN_ASSERT(std::count_if(cell.objects.begin(), cell.objects.end(), [&](const Cell::EntityEntryPair& p) { return p.first == cell_it->first; }) == 1);
+//#endif
 										CellEntry &cellEntry = cell_it->second;
 										//Vector2 entityPosition = entity->GetPosition();
 										//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);

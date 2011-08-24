@@ -120,29 +120,38 @@ namespace FusionEngine
 	{
 	public:
 		Cell()
-			: active_entries(0)
-		{}
+			: active_entries(0),
+			loaded(false)
+		{
+			waiting = false;
+		}
 
 		Cell(const Cell& other)
 			: objects(other.objects),
-			active_entries(other.active_entries)
-		{}
+			active_entries(other.active_entries),
+			loaded(other.loaded)
+		{
+			waiting = false;
+		}
 
 		Cell(Cell&& other)
 			: objects(std::move(other.objects)),
-			active_entries(other.active_entries)
+			active_entries(other.active_entries),
+			loaded(other.loaded)
 		{}
 
 		Cell& operator= (const Cell& other)
 		{
 			objects = other.objects;
 			active_entries = other.active_entries;
+			loaded = other.loaded;
 		}
 
 		Cell& operator= (Cell&& other)
 		{
 			objects = std::move(other.objects);
 			active_entries = other.active_entries;
+			loaded = other.loaded;
 		}
 #ifdef STREAMING_USEMAP
 		typedef std::map<Entity*, CellEntry> CellEntryMap;
@@ -153,9 +162,14 @@ namespace FusionEngine
 		CellEntryMap objects;
 #endif
 		unsigned int active_entries;
-		void EntryDeactivated() { --active_entries; }
+		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; }
 		void EntryActivated() { ++active_entries; }
 		bool IsActive() const { return active_entries > 0; }
+
+		bool loaded;
+		bool IsLoaded() const { return loaded; }
+
+		tbb::atomic<bool> waiting;
 
 		tbb::mutex mutex;
 	};
@@ -240,6 +254,7 @@ namespace FusionEngine
 			// The current middle of the streaming area for the camera
 			//  - Moves ahead based on the camera velocity
 			Vector2 streamPosition;
+			Vector2 lastUsedPosition; // the streamPosition that was most recently actualy processed
 
 			Vector2 lastPosition;
 			Vector2 lastVelocity;
@@ -281,6 +296,8 @@ namespace FusionEngine
 		std::vector<Cell> m_CellsBeingLoaded;
 
 		CellArchiver* m_Archivist;
+
+		void getCellRange(CL_Rect& out, const Vector2& pos);
 
 		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 

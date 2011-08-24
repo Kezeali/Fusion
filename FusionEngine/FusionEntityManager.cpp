@@ -738,6 +738,59 @@ namespace FusionEngine
 		//	domain.clear();
 	}
 
+	static bool allReferencesMarkedToDeactivate(EntityPtr& entity)
+	{
+		bool allMarked = true;
+
+		//tbb::concurrent_queue<EntityPtr> stack;
+		std::deque<EntityPtr> stack;
+
+		stack.push_back(entity);
+
+		EntityPtr ref;
+		//while (stack.try_pop(ref))
+		while (!stack.empty())
+		{
+			ref.swap(stack.back());
+			stack.pop_back();
+
+			ref->SetGCFlag(true);
+
+			if (!ref->IsMarkedToDeactivate())
+			{
+				allMarked = false;
+				stack.clear();
+				break;
+			}
+
+			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
+			{
+				auto& referencingEntity = *it;
+				if (!referencingEntity->GetGCFlag())
+					stack.push_back(referencingEntity);
+			}
+		}
+
+		// Clear the GC flag
+		stack.push_back(entity);
+		while (!stack.empty())
+		{
+			ref.swap(stack.back());
+			stack.pop_back();
+
+			ref->SetGCFlag(false);
+
+			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
+			{
+				auto& referencingEntity = *it;
+				if (referencingEntity->GetGCFlag())
+					stack.push_back(referencingEntity);
+			}
+		}
+
+		return allMarked;
+	}
+
 	void EntityManager::updateEntities(EntityArray &entityList, float split)
 	{
 		bool entityRemoved = false;
@@ -764,7 +817,8 @@ namespace FusionEngine
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
 
-				if (entity.use_count() <= 3)
+				// Keep entities active untill they are no longer referenced
+				if (!entity->IsReferenced() || allReferencesMarkedToDeactivate(entity))
 				{
 					m_EntitiesToDeactivate.push_back(*it);
 
@@ -829,6 +883,8 @@ namespace FusionEngine
 		{
 			if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
 				m_StreamingManager->AddEntity(entityToActivate);
+			else
+				m_EntitiesToActivate.push_back(entityToActivate);
 			//queueEntityToActivate(entityToActivate);
 		}
 
@@ -846,7 +902,8 @@ namespace FusionEngine
 		{
 			if (attemptToActivateEntity(*it))
 			{
-				FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
+				//FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
+				(*it)->StreamIn();
 				m_ActiveEntities.push_back(*it);
 				it = m_EntitiesToActivate.erase(it);
 				end = m_EntitiesToActivate.end();

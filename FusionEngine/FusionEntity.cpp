@@ -62,6 +62,9 @@ namespace FusionEngine
 		FSN_ASSERT(q);
 		m_PropChangedQueue = q;
 
+		m_LockingReferences = 0;
+		m_GCFlag = false;
+
 		// Cache the transform component for quick access
 		m_Transform = std::dynamic_pointer_cast<ITransform>(transform_component);
 		FSN_ASSERT(m_Transform);
@@ -167,13 +170,39 @@ namespace FusionEngine
 		m_Transform->Angle.Set(angle);
 	}
 
-	//void Entity::SetTransformComponent(const std::shared_ptr<IComponent>& component)
-	//{
-	//	FSN_ASSERT(component);
-	//	FSN_ASSERT(dynamic_cast<ITransform*>(component.get()));
+	void Entity::AddReference(EntityPtr entity)
+	{
+		IncrRefCount();
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		m_ReferencingEntities.insert(entity);
+	}
 
-	//	m_Transform = std::dynamic_pointer_cast<ITranform>(component);
-	//}
+	void Entity::RemoveReference(EntityPtr entity)
+	{
+		{
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		m_ReferencingEntities.erase(entity);
+		}
+		DecrRefCount();
+	}
+
+	void Entity::HoldReference(EntityPtr entity)
+	{
+		{
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		m_ReferencedEntities.insert(entity);
+		}
+		if (IsActive())
+			entity->AddReference(this->shared_from_this());
+	}
+
+	void Entity::DropReference(EntityPtr entity)
+	{
+		if (IsActive())
+			entity->RemoveReference(this->shared_from_this());
+		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		m_ReferencedEntities.erase(entity);
+	}
 
 	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
 	{
@@ -435,6 +464,11 @@ namespace FusionEngine
 	bool Entity::IsStreamedIn() const
 	{
 		return m_StreamedIn;
+	}
+
+	bool Entity::IsActive() const
+	{
+		return IsStreamedIn();
 	}
 
 	void Entity::SetStreamingCellIndex(unsigned int index)
@@ -739,6 +773,11 @@ namespace FusionEngine
 	{
 		SetStreamedIn(true);
 
+		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
+		{
+			(*it)->AddReference(this->shared_from_this());
+		}
+
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamIn(); });
 
 		for (auto it = m_Components.begin(), end = m_Components.end(); it != end; ++it)
@@ -750,6 +789,11 @@ namespace FusionEngine
 	void Entity::StreamOut()
 	{
 		SetStreamedIn(false);
+
+		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
+		{
+			(*it)->RemoveReference(this->shared_from_this());
+		}
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamOut(); });
 

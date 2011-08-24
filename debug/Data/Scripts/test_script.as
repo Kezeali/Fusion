@@ -14,6 +14,8 @@ class Test : ScriptComponent
 		lastDamping = 0;
 		
 		spawnerY = 0;
+		
+		dirtSize = 64;
 	}
 
 	uint frames;
@@ -93,7 +95,7 @@ class Test : ScriptComponent
 	{
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", false, pos, 0.f, 1);
+		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 1);
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		ontology.addComponent(newEnt, "TestB", "script_b");
@@ -116,14 +118,17 @@ class Test : ScriptComponent
 		return EntityWrapper(newEnt);
 	}
 	
+	private uint dirtSize;
+	
 	private uint spawnerY;
 	void dirtSpawner()
 	{
 		uint y = spawnerY;
 		++spawnerY;
 		console.println("starting " + y);
-		for (uint x = 0; x < 128; ++x)
-			createDirt(Vector(x * 1.25 - 64 * 1.25, y * 1.25 - 64 * 1.25));
+		uint hDirtSize = (dirtSize / 2);
+		for (uint x = 0; x < dirtSize; ++x)
+			createDirt(Vector(x * 1.25 - hDirtSize * 1.25, y * 1.25 - hDirtSize * 1.25));
 		console.println("finished " + y);
 	}
 
@@ -137,11 +142,11 @@ class Test : ScriptComponent
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
 			
-			entityA.script_b.speed = 2.0f;
+			entityA.script_b.speed = 3.0f;
 
-			for (uint i = 0; i < 128; ++i)
+			for (uint i = 0; i < dirtSize; ++i)
 			{
-				createCoroutine("dirtSpawner", i * 0.6f);
+				createCoroutine("dirtSpawner", i * 0.5f);
 				//for (uint x = 0; x < 128; ++x)
 				//	createDirt(Vector(x * 1.25 - 64 * 1.25, y * 1.25 - 64 * 1.25));
 				//console.println("y: " + y);

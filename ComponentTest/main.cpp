@@ -56,6 +56,8 @@
 
 #include "../FusionEngine/FusionAngelScriptComponent.h"
 
+#include <boost/thread.hpp>
+
 #include <ClanLib/application.h>
 #include <ClanLib/core.h>
 #include <ClanLib/display.h>
@@ -121,6 +123,7 @@ namespace FusionEngine
 	{
 	public:
 		SimpleCellArchiver()
+			: m_NewData(false)
 		{
 		}
 
@@ -131,21 +134,31 @@ namespace FusionEngine
 
 		void Enqueue(Cell* cell, size_t i)
 		{
-			m_WriteQueue.push(std::make_tuple(cell, i));
-			m_NewData.set();
+			if (cell->waiting.fetch_and_store(true) && cell->loaded)
+			{
+				m_WriteQueue.push(std::make_tuple(cell, i));
+				m_NewData.set();
+			}
 		}
 
 		void Retrieve(Cell* cell, size_t i)
 		{
-			m_ReadQueue.push(std::make_tuple(cell, i));
-			m_NewData.set();
+			if (cell->waiting.fetch_and_store(true) && !cell->loaded)
+			{
+				m_ReadQueue.push(std::make_tuple(cell, i));
+				m_NewData.set();
+			}
 		}
 
-		CL_Thread m_Thread;
+		boost::thread m_Thread;
 
 		void Start()
 		{
-			m_Thread.start(this, &SimpleCellArchiver::Run);
+			m_Quit.reset();
+			m_Thread = boost::thread(&SimpleCellArchiver::Run, this);
+#ifdef _WIN32
+			SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
+#endif
 		}
 
 		void Stop()
@@ -156,8 +169,10 @@ namespace FusionEngine
 
 		void Run()
 		{
-			while (CL_Event::wait(m_Quit, m_NewData) == 1)
+			bool retrying = false;
+			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 200 : -1) != 0)
 			{
+				std::list<std::tuple<Cell*, size_t>> stuffToRetry;
 				{
 					std::tuple<Cell*, size_t> toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
@@ -166,16 +181,28 @@ namespace FusionEngine
 						size_t& i = std::get<1>(toWrite);
 						if (cell->mutex.try_lock())
 						{
+							cell->waiting = false;
 							try
 							{
+								std::vector<EntityPtr> newArchive;
 								for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 								{
+									if (it->first->IsActive())
+									{
+										stuffToRetry.push_back(std::move(toWrite));
+										break;
+									}
 									//if (it->first->IsSyncedEntity())
 									{
-										m_Archived[i].push_back(it->first->shared_from_this());
+										newArchive.push_back(it->first->shared_from_this());
 									}
 								}
-								cell->objects.clear();
+								if (stuffToRetry.empty())
+								{
+									m_Archived[i] = std::move(newArchive);
+									cell->objects.clear();
+									cell->loaded = false;
+								}
 							}
 							catch (...)
 							{
@@ -190,8 +217,9 @@ namespace FusionEngine
 					{
 						Cell*& cell = std::get<0>(toRead);
 						size_t& i = std::get<1>(toRead);//, y = std::get<1>(toRead);
-						if (cell->mutex.try_lock())
+						cell->mutex.lock();
 						{
+							cell->waiting = false;
 							try
 							{
 								auto archivedCellEntry = m_Archived.find(i);
@@ -208,8 +236,12 @@ namespace FusionEngine
 										cell->objects.push_back(std::make_pair(archivedEntity.get(), std::move(entry)));
 									}
 
+									cell->loaded = true;
+
 									m_Archived.erase(archivedCellEntry);
 								}
+								else
+									cell->loaded = true; // No data to load
 							}
 							catch (...)
 							{
@@ -218,6 +250,15 @@ namespace FusionEngine
 						}
 					}
 				}
+				if (!stuffToRetry.empty())
+				{
+					retrying = true;
+					for (auto it = stuffToRetry.begin(), end = stuffToRetry.end(); it != end; ++it)
+						m_WriteQueue.push(*it);
+					stuffToRetry.clear();
+				}
+				else
+					retrying = false;
 			}
 		}
 
