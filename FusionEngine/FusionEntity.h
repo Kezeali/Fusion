@@ -323,8 +323,8 @@ namespace FusionEngine
 
 		bool IsActive() const;
 
-		void SetStreamingCellIndex(unsigned int index);
-		unsigned int GetStreamingCellIndex() const;
+		void SetStreamingCellIndex(size_t index);
+		size_t GetStreamingCellIndex() const;
 
 		void SetPaused(bool is_paused);
 		bool IsPaused() const;
@@ -460,7 +460,7 @@ namespace FusionEngine
 		// or updated
 		unsigned int m_Flags;
 
-		unsigned int m_CellIndex;
+		size_t m_CellIndex;
 
 		bool m_Spawned;
 		bool m_StreamedIn;

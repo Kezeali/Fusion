@@ -252,8 +252,12 @@ namespace FusionEngine
 	void InstancingSynchroniser::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
 	{
 		auto com = m_Factory->InstanceComponent(type);
-		entity->AddComponent(com, identifier);
-		m_EntityManager->OnComponentAdded(entity, com);
+		if (com)
+		{
+			entity->AddComponent(com, identifier);
+			m_EntityManager->OnComponentAdded(entity, com);
+		}
+		// TODO: throw exception
 	}
 
 	void InstancingSynchroniser::HandlePacket(Packet *packet)

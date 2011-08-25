@@ -471,12 +471,12 @@ namespace FusionEngine
 		return IsStreamedIn();
 	}
 
-	void Entity::SetStreamingCellIndex(unsigned int index)
+	void Entity::SetStreamingCellIndex(size_t index)
 	{
 		m_CellIndex = index;
 	}
 
-	unsigned int Entity::GetStreamingCellIndex() const
+	size_t Entity::GetStreamingCellIndex() const
 	{
 		return m_CellIndex;
 	}

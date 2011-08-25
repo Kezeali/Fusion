@@ -120,9 +120,10 @@ namespace FusionEngine
 	{
 	public:
 		Cell()
-			: active_entries(0),
-			loaded(false)
+			: loaded(false),
+			objects(0)
 		{
+			active_entries = 0;
 			waiting = false;
 		}
 
@@ -145,6 +146,7 @@ namespace FusionEngine
 			objects = other.objects;
 			active_entries = other.active_entries;
 			loaded = other.loaded;
+			return *this;
 		}
 
 		Cell& operator= (Cell&& other)
@@ -152,6 +154,7 @@ namespace FusionEngine
 			objects = std::move(other.objects);
 			active_entries = other.active_entries;
 			loaded = other.loaded;
+			return *this;
 		}
 #ifdef STREAMING_USEMAP
 		typedef std::map<Entity*, CellEntry> CellEntryMap;
@@ -161,7 +164,7 @@ namespace FusionEngine
 		typedef std::vector<EntityEntryPair> CellEntryMap;
 		CellEntryMap objects;
 #endif
-		unsigned int active_entries;
+		tbb::atomic<unsigned int> active_entries;
 		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; }
 		void EntryActivated() { ++active_entries; }
 		bool IsActive() const { return active_entries > 0; }
@@ -185,7 +188,7 @@ namespace FusionEngine
 
 	struct ActivationEvent
 	{
-		enum Type { Activate, Deactivate };
+		enum Type { Activate, Deactivate, DeactivateAll };
 		Type type;
 		EntityPtr entity;
 	};
@@ -223,7 +226,8 @@ namespace FusionEngine
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);
 		//! Updates the given entity's grid position, and streams in/out
-		void OnUpdated(const EntityPtr &entity, float split);
+		void OnUpdated(const EntityPtr &entity, float dt);
+		void OnDeactivated(const EntityPtr& entity);
 
 		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 		void DeactivateEntity(const EntityPtr &entity);
@@ -293,11 +297,18 @@ namespace FusionEngine
 		Vector2 m_Bounds;
 
 		Cell *m_Cells;
-		std::vector<Cell> m_CellsBeingLoaded;
+		Cell m_TheVoid;
+		std::vector<Cell*> m_CellsBeingLoaded;
 
 		CellArchiver* m_Archivist;
 
+		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
+
 		void getCellRange(CL_Rect& out, const Vector2& pos);
+
+		void deactivateCells(const CL_Rect& inactiveRange);
+
+		void processCell(Cell& cell, const std::list<Vector2>& cam_position);
 
 		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 

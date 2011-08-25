@@ -1085,6 +1085,8 @@ namespace FusionEngine
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
 		}
+
+		m_StreamingManager->OnDeactivated(entity);
 	}
 
 	void EntityManager::OnComponentAdded(EntityPtr &entity, std::shared_ptr<IComponent>& component)
@@ -1095,13 +1097,14 @@ namespace FusionEngine
 	void EntityManager::OnActivationEvent(const ActivationEvent &ev)
 	{
 		// TODO: post stream-out / stream in events (messages) to the entity in question
-		if (ev.type == ActivationEvent::Activate)
+		switch (ev.type)
 		{
+		case ActivationEvent::Activate:
 			queueEntityToActivate(ev.entity);
-		}
-		else
-		{
+			break;
+		case ActivationEvent::Deactivate:
 			ev.entity->MarkToDeactivate();
+			break;
 		}
 	}
 

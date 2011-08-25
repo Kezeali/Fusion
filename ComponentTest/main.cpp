@@ -134,7 +134,7 @@ namespace FusionEngine
 
 		void Enqueue(Cell* cell, size_t i)
 		{
-			if (cell->waiting.fetch_and_store(true) && cell->loaded)
+			if (!cell->waiting.fetch_and_store(true) && cell->loaded)
 			{
 				m_WriteQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
@@ -143,7 +143,7 @@ namespace FusionEngine
 
 		void Retrieve(Cell* cell, size_t i)
 		{
-			if (cell->waiting.fetch_and_store(true) && !cell->loaded)
+			if (!cell->waiting.fetch_and_store(true) && !cell->loaded)
 			{
 				m_ReadQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
@@ -182,6 +182,7 @@ namespace FusionEngine
 						if (cell->mutex.try_lock())
 						{
 							cell->waiting = false;
+							FSN_ASSERT(cell->active_entries == 0);
 							try
 							{
 								std::vector<EntityPtr> newArchive;
@@ -220,6 +221,7 @@ namespace FusionEngine
 						cell->mutex.lock();
 						{
 							cell->waiting = false;
+							FSN_ASSERT(cell->active_entries == 0);
 							try
 							{
 								auto archivedCellEntry = m_Archived.find(i);
@@ -786,16 +788,22 @@ public:
 						//gui->Update(seconds);
 					}
 					
-					const auto rendered = scheduler->Execute();
+					const auto executed = scheduler->Execute();
 
-					if (rendered & SystemType::Rendering)
+					if (executed & SystemType::Rendering)
 					{
 						dispWindow.flip(0);
 						gc.clear();
 					}
 					
-					entityManager->ProcessActivationQueues();
+					if (executed & SystemType::Simulation)
+					{
+						// Actually activate / deactivate components
+						entityManager->ProcessActivationQueues();
 
+					}
+					// Propagate property changes
+					// TODO: throw if properties are changed during Rendering step?
 					IComponentProperty *changed;
 					while (propChangedQueue.try_pop(changed))
 					{

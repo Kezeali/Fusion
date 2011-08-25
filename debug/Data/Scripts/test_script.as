@@ -74,6 +74,25 @@ class Test : ScriptComponent
 			@entityB = EntityWrapper(newEnt);
 	}
 	
+	void createPI(Vector &in pos)
+	{
+		//console.println("Entity spawned at " + pos.x + "," + pos.y);
+		// One possibility is to remove the addComponent method and just have an instantiate method
+		//  where you can pass some sort of collection
+		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
+		ontology.addComponent(newEnt, "b2Circle", "");
+		ontology.addComponent(newEnt, "CLSprite", "");
+		ontology.addComponent(newEnt, "PseudoI", "");
+		IComponent@ com = newEnt.getComponent("ISprite");
+		ISprite@ sprite = cast<ISprite>(com);
+		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.BaseAngle = 1.57;
+		
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
+		
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+	}
+	
 	void createDirt(Vector &in pos)
 	{
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
@@ -141,6 +160,7 @@ class Test : ScriptComponent
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
+			createPI(Vector(0.3f, 0.3f));
 			
 			entityA.script_b.speed = 3.0f;
 

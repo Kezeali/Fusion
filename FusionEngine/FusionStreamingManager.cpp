@@ -71,7 +71,7 @@ namespace FusionEngine
 	//! Finds and removes entry for the given Entity from the given cell
 	static inline void removeEntityFromCell(Cell* cell, const Entity* const entity)
 	{
-		auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [entity](const Cell::EntityEntryPair& pair)->bool {
+		auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
 		cell->objects.erase(newEnd);
@@ -80,16 +80,21 @@ namespace FusionEngine
 	//! Finds and removes the given entity from the given cell, starting the search from the end of the list
 	static inline void rRemoveEntityFromCell(Cell* cell, const Entity* const entity)
 	{
-		auto rNewEnd = std::remove_if(cell->objects.rbegin(), cell->objects.rend(), [entity](const Cell::EntityEntryPair& pair)->bool {
-			return pair.first == entity;
-		});
-		cell->objects.erase((++rNewEnd).base());
+		if (cell->objects.size() > 1)
+		{
+			auto rEntry = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
+				return pair.first == entity;
+			});
+			cell->objects.erase((++rEntry).base());
+		}
+		else
+			cell->objects.pop_back();
 	}
 
 	//! Finds the entry for the given Entity in the given cell
 	static inline Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const Entity* const entity)
 	{
-		return std::find_if(cell->objects.begin(), cell->objects.end(), [entity](const Cell::EntityEntryPair& pair)->bool {
+		return std::find_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
 	}
@@ -97,7 +102,7 @@ namespace FusionEngine
 	//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
 	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const Entity* const entity)
 	{
-		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&entity](const Cell::EntityEntryPair& pair)->bool {
+		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
 		return (++rWhere).base();
@@ -196,17 +201,29 @@ namespace FusionEngine
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		Cell *cell = CellAtPosition(entityPosition);
 		tbb::mutex::scoped_lock lock(cell->mutex);
+		if (cell->IsLoaded())
+			entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
+		else
+		{
+			cell = &m_TheVoid;
+			entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
+		}
+
 #ifdef STREAMING_USEMAP
 		CellEntry &entry = cell->objects[entity.get()];
 #else
 		CellEntry &entry = createEntry(cell, entity.get());
 #endif
 		entry.x = entityPosition.x; entry.y = entityPosition.y;
-		entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
+
+		lock.release();
 
 		activateInView(cell, &entry, entity, true);
 		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
+		{
+			cell->EntryActivated(); // Otherwise the counter will be off when OnDeactivated is called
 			QueueEntityForDeactivation(entry, true);
+		}
 
 		//OnUpdated(entity, 0.0f);
 	}
@@ -215,13 +232,20 @@ namespace FusionEngine
 
 	void StreamingManager::RemoveEntity(const EntityPtr &entity)
 	{
-		FSN_ASSERT(entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/);
-		Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
+		if (entity->GetStreamingCellIndex() != std::numeric_limits<size_t>::max())
+		{
+			FSN_ASSERT(entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/);
+			Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
 #ifdef STREAMING_USEMAP
-		cell->objects.erase(entity.get());
+			cell->objects.erase(entity.get());
 #else
-		removeEntityFromCell(cell, entity.get());
+			removeEntityFromCell(cell, entity.get());
 #endif
+		}
+		else
+		{
+			removeEntityFromCell(&m_TheVoid, entity.get());
+		}
 	}
 
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
@@ -239,16 +263,26 @@ namespace FusionEngine
 		CellEntry *cellEntry = nullptr;
 		Cell::CellEntryMap::iterator _where;
 
-		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/)
+		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
 
 			tbb::mutex::scoped_lock lock(currentCell->mutex);
+			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
+			FSN_ASSERT(currentCell->IsLoaded());
 #ifdef STREAMING_USEMAP
 			_where = currentCell->objects.find(entityKey);
 #else
 			_where = rFindEntityInCell(currentCell, entityKey);
 #endif
+			FSN_ASSERT( _where != currentCell->objects.end() );
+			cellEntry = &_where->second;
+		}
+		else if (entity->GetStreamingCellIndex() == std::numeric_limits<size_t>::max())
+		{
+			currentCell = &m_TheVoid;
+
+			_where = rFindEntityInCell(currentCell, entityKey);
 			FSN_ASSERT( _where != currentCell->objects.end() );
 			cellEntry = &_where->second;
 		}
@@ -283,6 +317,9 @@ namespace FusionEngine
 		{
 			tbb::mutex::scoped_lock lock(newCell->mutex);
 
+			if (!newCell->IsLoaded())
+				newCell = &m_TheVoid;
+
 			// add the entity to its new cell
 #ifdef STREAMING_USEMAP
 			CellEntry &newEntry = newCell->objects[entityKey];
@@ -312,12 +349,14 @@ namespace FusionEngine
 			}
 
 			currentCell = newCell;
-			//m_EntityToCellIndex[entity] = (size_t)(currentCell - m_Cells);
 
 			cellEntry->x = new_x;
 			cellEntry->y = new_y;
 
-			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
+			if (currentCell != &m_TheVoid)
+				entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
+			else
+				entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
 		}
 
 		// see if the object needs to be activated or deactivated
@@ -329,6 +368,20 @@ namespace FusionEngine
 			cellEntry->pendingDeactivationTime -= split;
 			if (cellEntry->pendingDeactivationTime <= 0.0f)
 				DeactivateEntity(*currentCell, entity, *cellEntry);
+		}
+	}
+
+	void StreamingManager::OnDeactivated(const EntityPtr& entity)
+	{
+		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
+		{
+			auto& currentCell = m_Cells[entity->GetStreamingCellIndex()];
+
+			currentCell.EntryDeactivated();
+			if (!currentCell.IsActive())
+			{
+				m_Archivist->Enqueue(&currentCell, entity->GetStreamingCellIndex());
+			}
 		}
 	}
 
@@ -359,7 +412,8 @@ namespace FusionEngine
 	{
 		FSN_ASSERT( !cell_entry.active );
 
-		entity->SetStreamingCellIndex((size_t)(&cell - m_Cells));
+		if (&cell != &m_TheVoid)
+			entity->SetStreamingCellIndex((size_t)(&cell - m_Cells));
 		//activeObject.cellObjectIndex = cell.GetCellObjectIndex( cellObject );
 		cell_entry.pendingDeactivation = false;
 		cell_entry.active = true;
@@ -389,15 +443,14 @@ namespace FusionEngine
 		cell_entry.active = false;
 		cell_entry.pendingDeactivation = false;
 
-		cell.EntryDeactivated();
+		//cell.EntryDeactivated(); // Commented out: this doesn't get called until the entity is actually deactivated (see OnDeactivation)
 
 		GenerateDeactivationEvent(entity);
 
-		if (!cell.IsActive())
-		{
-			//SendToConsole("Cell Deactivated");
-			//m_Archivist->Enqueue(&cell, (size_t)(&cell - m_Cells));
-		}
+		//if (!cell.IsActive())
+		//{
+		//	m_Archivist->Enqueue(&cell, (size_t)(&cell - m_Cells));
+		//}
 	}
 
 	void StreamingManager::QueueEntityForDeactivation(CellEntry &entry, bool warp)
@@ -478,12 +531,189 @@ namespace FusionEngine
 		fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
 	}
 
+	void StreamingManager::deactivateCells(const CL_Rect& inactiveRange)
+	{
+		unsigned int iy = (unsigned int)inactiveRange.top;
+		unsigned int ix = (unsigned int)inactiveRange.left;
+		unsigned int i = iy * m_XCellCount + ix;
+		unsigned int stride = m_XCellCount - ( inactiveRange.right - inactiveRange.left + 1 );
+		for (; iy <= (unsigned int)inactiveRange.bottom; ++iy)
+		{
+			FSN_ASSERT( iy >= 0 );
+			FSN_ASSERT( iy < m_YCellCount );
+			for (ix = (unsigned int)inactiveRange.left; ix <= (unsigned int)inactiveRange.right; ++ix)
+			{
+				FSN_ASSERT( ix >= 0 );
+				FSN_ASSERT( ix < m_XCellCount );
+				FSN_ASSERT( i == iy * m_XCellCount + ix );
+				Cell &cell = m_Cells[i++];
+
+				// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+				if (cell.mutex.try_lock())
+				{
+					for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+					{
+						CellEntry &cellEntry = cell_it->second;
+
+						if (cellEntry.active && !cellEntry.pendingDeactivation)
+						{
+							QueueEntityForDeactivation(cellEntry);
+						}
+					}
+					cell.mutex.unlock();
+				}
+
+				// Unload cell
+				//m_Archivist->Enqueue(&cell, i-1);
+			}
+			i += stride;
+		}
+	}
+
+	void StreamingManager::processCell(Cell& cell, const std::list<Vector2>& cam_positions)
+	{
+		if (cell.mutex.try_lock())
+		{
+			try
+			{
+				for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
+				{
+//#ifdef _DEBUG
+//				FSN_ASSERT(std::count_if(cell.objects.begin(), cell.objects.end(), [&](const Cell::EntityEntryPair& p) { return p.first == cell_it->first; }) == 1);
+//#endif
+					CellEntry &cellEntry = cell_it->second;
+					Vector2 entityPosition(cellEntry.x, cellEntry.y);
+
+					// Check if the entry is in range of any cameras
+					if (std::any_of(cam_positions.begin(), cam_positions.end(),
+						[&](const Vector2& cam_position) { return (entityPosition - cam_position).length() <= m_Range; }))
+					{
+						if (!cellEntry.active)
+						{
+							ActivateEntity(cell, cell_it->first->shared_from_this(), cellEntry);
+						}
+						else
+						{
+							cellEntry.pendingDeactivation = false;						
+						}
+					}
+					else if (cellEntry.active)
+					{
+						if (!cellEntry.pendingDeactivation)
+							QueueEntityForDeactivation(cellEntry);
+					}
+				}
+			}
+			catch (Exception&)
+			{
+				cell.mutex.unlock();
+				throw;
+			}
+			cell.mutex.unlock();
+		}
+	}
+
+	static void clipRange(std::list<CL_Rect>& out, CL_Rect& inactiveRange, const CL_Rect& activeRange)
+	{
+		// Partial overlap
+		if (inactiveRange.is_overlapped(activeRange))
+		{
+			CL_Rect inactiveRangeY(inactiveRange);
+			CL_Rect inactiveRangeX(inactiveRange);
+
+			if (inactiveRange.top > activeRange.top)
+				inactiveRangeY.top = activeRange.bottom;
+			else
+				inactiveRangeY.bottom = activeRange.top;
+
+			if (inactiveRange.bottom < activeRange.bottom)
+				inactiveRangeY.bottom = activeRange.top;
+			else
+				inactiveRangeY.top = activeRange.bottom;
+
+			inactiveRangeY.bottom = std::max(inactiveRangeY.top, inactiveRangeY.bottom);
+
+			if (inactiveRange.left > activeRange.left)
+				inactiveRangeX.left = activeRange.right;
+			else
+				inactiveRangeX.right = activeRange.left;
+
+			if (inactiveRange.right < activeRange.right)
+				inactiveRangeX.right = activeRange.left;
+			else
+				inactiveRangeX.left = activeRange.right;
+
+			inactiveRangeX.right = std::max(inactiveRangeX.left, inactiveRangeX.right);
+
+			// Don't include stuff in the X range that has already been included in the Y range:
+			inactiveRangeX.top = activeRange.top;
+			inactiveRangeX.bottom = activeRange.bottom;
+
+			out.push_back(std::move(inactiveRangeX));
+			out.push_back(std::move(inactiveRangeY));
+		}
+		// No overlap
+		else
+		{
+			out.push_back(inactiveRange);
+		}
+	}
+
 	void StreamingManager::Update(const bool refresh)
 	{
+		// Try to clear The Void
+		{
+			tbb::mutex::scoped_lock lock(m_TheVoid.mutex);
+			for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
+			{
+				auto actualCell = CellAtPosition(it->second.x, it->second.y);
+				tbb::mutex::scoped_lock lock(actualCell->mutex);
+				if (!actualCell->IsLoaded() && !actualCell->waiting)
+				{
+					m_Archivist->Retrieve(actualCell, (size_t)(actualCell - m_Cells));
+					FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
+					m_CellsBeingLoaded.push_back(actualCell);
+
+					++it;
+				}
+				else
+				{
+					auto entity = it->first;
+					// TODO:
+					//changeCell(*it, m_TheVoid, *cell);
+					// OR
+					// m_TheVoid.RemoveEntry(it); <- one of the overloads will take an iterator, the others will take index / entry
+					// cell->AddEntry(*it);
+
+					//tbb::mutex::scoped_lock lock(actualCell->mutex);
+
+					actualCell->objects.push_back( std::move(*it) );
+					auto& newEntry = actualCell->objects.back().second;
+
+					if (newEntry.active)
+						actualCell->EntryActivated();
+
+					// remove from current cell
+					{
+						it = m_TheVoid.objects.erase(it);
+						end = m_TheVoid.objects.end();
+						if (newEntry.active)
+						{
+							m_TheVoid.EntryDeactivated();
+						}
+					}
+
+					entity->SetStreamingCellIndex((size_t)(actualCell - m_Cells));
+				}
+			}
+		}
 		// Each vector element represents a range of cells to update - overlapping active-areas
-		//  are merged, so this may be < m_Cameras.size()
-		//std::vector<CL_Rect> indexRanges;
-		//indexRanges.reserve(m_Cameras.size());
+		//  are merged
+		std::list<CL_Rect> inactiveRanges;
+		std::list<std::pair<CL_Rect, std::list<Vector2>>> activeRanges;
+		// Used to process The Void
+		std::list<Vector2> allStreamPositions;
+
 		auto it = m_Cameras.begin();
 		while (it != m_Cameras.end())
 		{
@@ -507,216 +737,121 @@ namespace FusionEngine
 				cam.lastUsedPosition = newPosition;
 				cam.firstUpdate = false;
 				// Find the minimum & maximum cell indicies that have to be checked
-				CL_Rect range;
-				range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
-				range.right = (int)std::floor((std::max(oldPosition.x, newPosition.x) + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
+				//CL_Rect range;
+				//range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
+				//range.right = (int)std::floor((std::max(oldPosition.x, newPosition.x) + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
 
-				range.top = (int)std::floor((std::min(oldPosition.y, newPosition.y) - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-				range.bottom = (int)std::floor((std::max(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
-
-				fe_clamp(range.left, 0, (int)m_XCellCount - 1);
-				fe_clamp(range.right, 0, (int)m_XCellCount - 1);
-				fe_clamp(range.top, 0, (int)m_YCellCount - 1);
-				fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
-
-				CL_Rect inactiveRange;
-				getCellRange(inactiveRange, oldPosition);
-				//inactiveRange.left = (int)std::floor((oldPosition.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
-				//inactiveRange.right = (int)std::floor((oldPosition.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
-
-				//inactiveRange.top = (int)std::floor((oldPosition.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-				//inactiveRange.bottom = (int)std::floor((oldPosition.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
-
-				//fe_clamp(inactiveRange.left, 0, (int)m_XCellCount - 1);
-				//fe_clamp(range.right, 0, (int)m_XCellCount - 1);
-				//fe_clamp(range.top, 0, (int)m_YCellCount - 1);
-				//fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
-
-				CL_Rect activeRange;
-				getCellRange(activeRange, newPosition);
-				//activeRange.left = (int)std::floor((newPosition.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
-				//activeRange.right = (int)std::floor((newPosition.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
-
-				//activeRange.top = (int)std::floor((newPosition.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-				//activeRange.bottom = (int)std::floor((newPosition.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+				//range.top = (int)std::floor((std::min(oldPosition.y, newPosition.y) - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
+				//range.bottom = (int)std::floor((std::max(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
 
 				//fe_clamp(range.left, 0, (int)m_XCellCount - 1);
 				//fe_clamp(range.right, 0, (int)m_XCellCount - 1);
 				//fe_clamp(range.top, 0, (int)m_YCellCount - 1);
 				//fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
 
-				auto deactivateCells = [this](const CL_Rect &inactiveRange)
-				{
-					unsigned int iy = (unsigned int)inactiveRange.top;
-					unsigned int ix = (unsigned int)inactiveRange.left;
-					unsigned int i = iy * m_XCellCount + ix;
-					unsigned int stride = m_XCellCount - ( inactiveRange.right - inactiveRange.left + 1 );
-					for (; iy <= (unsigned int)inactiveRange.bottom; ++iy)
-					{
-						FSN_ASSERT( iy >= 0 );
-						FSN_ASSERT( iy < m_YCellCount );
-						for (ix = (unsigned int)inactiveRange.left; ix <= (unsigned int)inactiveRange.right; ++ix)
-						{
-							FSN_ASSERT( ix >= 0 );
-							FSN_ASSERT( ix < m_XCellCount );
-							FSN_ASSERT( i == iy * m_XCellCount + ix );
-							Cell &cell = m_Cells[i++];
+				allStreamPositions.push_back(cam.streamPosition);
 
-							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-							if (cell.mutex.try_lock())
-							{
-								for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
-								{
-									CellEntry &cellEntry = cell_it->second;
+				CL_Rect inactiveRange;
+				getCellRange(inactiveRange, oldPosition);
 
-									if (cellEntry.active && !cellEntry.pendingDeactivation)
-									{
-										QueueEntityForDeactivation(cellEntry);
-									}
-								}
-								cell.mutex.unlock();
-							}
-
-							// Unload cell
-							//m_Archivist->Enqueue(&cell, i-1);
-						}
-						i += stride;
-					}
-				};
+				CL_Rect activeRange;
+				getCellRange(activeRange, newPosition);
 
 				if (inactiveRange != activeRange)
+					inactiveRanges.push_back(std::move(inactiveRange));
+
+				// TODO: don't create one big range for all overlapping ranges: split ranges like
+				//  when an inactive range overlaps an active range
+				bool merged = false;
+				for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
 				{
-					// Partial overlap
-					if (inactiveRange.is_overlapped(activeRange))
+					auto& existingRange = it->first;
+					if (activeRange.is_overlapped(existingRange))
 					{
-						CL_Rect inactiveRangeY(inactiveRange);
-						CL_Rect inactiveRangeX(inactiveRange);
-
-						if (inactiveRange.top > activeRange.top)
-							inactiveRangeY.top = activeRange.bottom;
-						else
-							inactiveRangeY.bottom = activeRange.top;
-
-						if (inactiveRange.bottom < activeRange.bottom)
-							inactiveRangeY.bottom = activeRange.top;
-						else
-							inactiveRangeY.top = activeRange.bottom;
-
-						inactiveRangeY.bottom = std::max(inactiveRangeY.top, inactiveRangeY.bottom);
-
-						if (inactiveRange.left > activeRange.left)
-							inactiveRangeX.left = activeRange.right;
-						else
-							inactiveRangeX.right = activeRange.left;
-
-						if (inactiveRange.right < activeRange.right)
-							inactiveRangeX.right = activeRange.left;
-						else
-							inactiveRangeX.left = activeRange.right;
-
-						inactiveRangeX.right = std::max(inactiveRangeX.left, inactiveRangeX.right);
-
-						// Don't include stuff in the X range that has already been included in the Y range:
-						inactiveRangeX.top = activeRange.top;
-						inactiveRangeX.bottom = activeRange.bottom;
-
-						deactivateCells(inactiveRangeY);
-						deactivateCells(inactiveRangeX);
+						existingRange.bounding_rect(activeRange);
+						it->second.push_back(cam.streamPosition);
 					}
-					// No overlap
+				}
+				if (!merged)
+				{
+					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
+					activeRanges.push_back(std::make_pair(std::move(activeRange), std::move(pos)));
+				}
+			}
+			else // Camera hasn't moved
+			{
+				// Make sure entities from cells that just loaded are activted (even if the camera hasn't moved)
+				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+				{
+					auto& cell = *it;
+					//tbb::mutex::scoped_lock lock(cell->mutex);
+					if (cell->IsLoaded())
+					{
+						std::list<Vector2> cams; cams.push_back(cam.streamPosition);
+						processCell(*cell, cams);
+						it = m_CellsBeingLoaded.erase(it);
+						end = m_CellsBeingLoaded.end();
+					}
 					else
-					{
-						deactivateCells(inactiveRange);
-					}
+						++it;
 				}
-
-				{
-					unsigned int iy = (unsigned int)activeRange.top;
-					unsigned int ix = (unsigned int)activeRange.left;
-					unsigned int i = iy * m_XCellCount + ix;
-					unsigned int stride = m_XCellCount - ( activeRange.right - activeRange.left + 1 );
-					for (; iy <= (unsigned int)activeRange.bottom; ++iy)
-					{
-						FSN_ASSERT( iy >= 0 );
-						FSN_ASSERT( iy < m_YCellCount );
-						for (ix = (unsigned int)activeRange.left; ix <= (unsigned int)activeRange.right; ++ix)
-						{
-							FSN_ASSERT( ix >= 0 );
-							FSN_ASSERT( ix < m_XCellCount );
-							FSN_ASSERT( i == iy * m_XCellCount + ix );
-							Cell &cell = m_Cells[i++];
-
-							// Check if the cell needs to be loaded
-							/*if (!cell.IsLoaded())
-							{
-								m_Archivist->Retrieve(&cell, i-1);
-							}*/
-
-							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-							if (cell.mutex.try_lock())
-							{
-								try
-								{
-									for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
-									{
-//#ifdef _DEBUG
-//										FSN_ASSERT(std::count_if(cell.objects.begin(), cell.objects.end(), [&](const Cell::EntityEntryPair& p) { return p.first == cell_it->first; }) == 1);
-//#endif
-										CellEntry &cellEntry = cell_it->second;
-										//Vector2 entityPosition = entity->GetPosition();
-										//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
-										Vector2 entityPosition(cellEntry.x, cellEntry.y);
-
-										if ((entityPosition - cam.streamPosition).length() <= m_Range)
-										{
-											if (!cellEntry.active)
-											{
-												ActivateEntity(cell, cell_it->first->shared_from_this(), cellEntry);
-											}
-											else
-											{
-												cellEntry.pendingDeactivation = false;						
-											}
-										}
-										else if (cellEntry.active)
-										{
-											if (!cellEntry.pendingDeactivation)
-												QueueEntityForDeactivation(cellEntry);
-										}
-									}
-								}
-								catch (Exception&)
-								{
-									cell.mutex.unlock();
-									throw;
-								}
-								cell.mutex.unlock();
-							}
-						}
-						i += stride;
-					}
-				}
-
-				//bool merged = false;
-				//for (auto it = indexRanges.begin(), end = indexRanges.end(); it != end; ++it)
-				//{
-				//	CL_Rect &existingRange = *it;
-				//	if (existingRange.is_overlapped(range))
-				//	{
-				//		existingRange.bounding_rect(range); // Expand the existing rect to encoumpass the new one
-				//		merged = true;
-				//	}
-				//}
-				//if (!merged)
-				//	indexRanges.push_back(range);
 			}
 		}
 
-		//for (auto it = indexRanges.begin(), end = indexRanges.end(); it != end; ++it)
-		//{
-		//	const CL_Rect &range = *it;
-		//	
-		//}
+		std::list<CL_Rect> clippedInactiveRanges;
+		for (auto iit = inactiveRanges.begin(), iend = inactiveRanges.end(); iit != iend; ++iit)
+		{
+			for (auto ait = activeRanges.begin(), aend = activeRanges.end(); ait != aend; ++ait)
+			{
+				auto& inactiveRange = *iit;
+				auto& activeRange = ait->first;
+				clipRange(clippedInactiveRanges, inactiveRange, activeRange);
+			}
+		}
+		
+		for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
+		{
+			deactivateCells(*it);
+		}
+
+		processCell(m_TheVoid, allStreamPositions);
+
+		for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
+		{
+			auto& activeRange = it->first;
+			auto& streamPositions = it->second;
+
+			unsigned int iy = (unsigned int)activeRange.top;
+			unsigned int ix = (unsigned int)activeRange.left;
+			unsigned int i = iy * m_XCellCount + ix;
+			unsigned int stride = m_XCellCount - ( activeRange.right - activeRange.left + 1 );
+			for (; iy <= (unsigned int)activeRange.bottom; ++iy)
+			{
+				FSN_ASSERT( iy >= 0 );
+				FSN_ASSERT( iy < m_YCellCount );
+				for (ix = (unsigned int)activeRange.left; ix <= (unsigned int)activeRange.right; ++ix)
+				{
+					FSN_ASSERT( ix >= 0 );
+					FSN_ASSERT( ix < m_XCellCount );
+					FSN_ASSERT( i == iy * m_XCellCount + ix );
+					Cell &cell = m_Cells[i++];
+
+					// Check if the cell needs to be loaded
+					if (!cell.IsLoaded() && !cell.waiting)
+					{
+						m_Archivist->Retrieve(&cell, i-1);
+						FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
+						m_CellsBeingLoaded.push_back(&cell);
+					}
+					// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+					else
+					{
+						processCell(cell, streamPositions);
+					}
+				}
+				i += stride;
+			}
+		}
 	}
 
 	void StreamingManager_AddCamera(CameraPtr camera, StreamingManager *obj)
