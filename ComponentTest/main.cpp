@@ -136,6 +136,7 @@ namespace FusionEngine
 		{
 			if (!cell->waiting.fetch_and_store(true) && cell->loaded)
 			{
+				cell->AddHist("Enqueued Out");
 				m_WriteQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
 			}
@@ -145,6 +146,7 @@ namespace FusionEngine
 		{
 			if (!cell->waiting.fetch_and_store(true) && !cell->loaded)
 			{
+				cell->AddHist("Enqueued In");
 				m_ReadQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
 			}
@@ -172,7 +174,8 @@ namespace FusionEngine
 			bool retrying = false;
 			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 200 : -1) != 0)
 			{
-				std::list<std::tuple<Cell*, size_t>> stuffToRetry;
+				std::list<std::tuple<Cell*, size_t>> writesToRetry;
+				std::list<std::tuple<Cell*, size_t>> readsToRetry;
 				{
 					std::tuple<Cell*, size_t> toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
@@ -181,35 +184,37 @@ namespace FusionEngine
 						size_t& i = std::get<1>(toWrite);
 						if (cell->mutex.try_lock())
 						{
-							cell->waiting = false;
-							FSN_ASSERT(cell->active_entries == 0);
-							try
+							if (cell->active_entries == 0)
 							{
-								std::vector<EntityPtr> newArchive;
-								for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+								try
 								{
-									if (it->first->IsActive())
+									std::vector<EntityPtr> newArchive;
+									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
-										stuffToRetry.push_back(std::move(toWrite));
-										break;
+										//if (it->first->IsSyncedEntity())
+										{
+											newArchive.push_back(it->first->shared_from_this());
+										}
 									}
-									//if (it->first->IsSyncedEntity())
-									{
-										newArchive.push_back(it->first->shared_from_this());
-									}
-								}
-								if (stuffToRetry.empty())
-								{
+
+									cell->AddHist("Written and cleared");
+
+									std::stringstream str; str << i;
+									SendToConsole("Cell " + str.str() + " streamed out");
+
 									m_Archived[i] = std::move(newArchive);
 									cell->objects.clear();
 									cell->loaded = false;
+									cell->waiting = false;
 								}
-							}
-							catch (...)
-							{
+								catch (...)
+								{
+								}
 							}
 							cell->mutex.unlock();
 						}
+						else
+							writesToRetry.push_back(toWrite);
 					}
 				}
 				{
@@ -218,49 +223,68 @@ namespace FusionEngine
 					{
 						Cell*& cell = std::get<0>(toRead);
 						size_t& i = std::get<1>(toRead);//, y = std::get<1>(toRead);
-						cell->mutex.lock();
+						if (cell->mutex.try_lock())
 						{
-							cell->waiting = false;
-							FSN_ASSERT(cell->active_entries == 0);
-							try
+							if (cell->active_entries == 0)
 							{
-								auto archivedCellEntry = m_Archived.find(i);
-
-								if (archivedCellEntry != m_Archived.end())
+								try
 								{
-									for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
+									//boost::this_thread::sleep(boost::posix_time::seconds(1));
+
+									auto archivedCellEntry = m_Archived.find(i);
+
+									if (archivedCellEntry != m_Archived.end())
 									{
-										auto& archivedEntity = *it;
-										Vector2 pos = archivedEntity->GetPosition();
-										// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
-										CellEntry entry;
-										entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
-										cell->objects.push_back(std::make_pair(archivedEntity.get(), std::move(entry)));
+										for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
+										{
+											auto& archivedEntity = *it;
+											Vector2 pos = archivedEntity->GetPosition();
+											// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
+											CellEntry entry;
+											entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
+											cell->objects.push_back(std::make_pair(archivedEntity.get(), std::move(entry)));
+										}
+
+										std::stringstream str; str << i;
+										SendToConsole("Cell " + str.str() + " streamed in");
+
+										cell->AddHist("Loaded");
+										cell->loaded = true;
+
+										m_Archived.erase(archivedCellEntry);
 									}
-
-									cell->loaded = true;
-
-									m_Archived.erase(archivedCellEntry);
+									else
+									{
+										cell->loaded = true; // No data to load
+										cell->AddHist("Loaded (no data)");
+									}
 								}
-								else
-									cell->loaded = true; // No data to load
-							}
-							catch (...)
-							{
+								catch (...)
+								{
+								}
+								cell->waiting = false;
 							}
 							cell->mutex.unlock();
 						}
+						else
+							readsToRetry.push_back(toRead);
 					}
 				}
-				if (!stuffToRetry.empty())
+				retrying = false;
+				if (!writesToRetry.empty())
 				{
 					retrying = true;
-					for (auto it = stuffToRetry.begin(), end = stuffToRetry.end(); it != end; ++it)
+					for (auto it = writesToRetry.begin(), end = writesToRetry.end(); it != end; ++it)
 						m_WriteQueue.push(*it);
-					stuffToRetry.clear();
+					writesToRetry.clear();
 				}
-				else
-					retrying = false;
+				if (!readsToRetry.empty())
+				{
+					retrying = true;
+					for (auto it = readsToRetry.begin(), end = readsToRetry.end(); it != end; ++it)
+						m_ReadQueue.push(*it);
+					readsToRetry.clear();
+				}
 			}
 		}
 

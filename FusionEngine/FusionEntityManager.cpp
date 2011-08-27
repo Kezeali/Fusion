@@ -763,11 +763,14 @@ namespace FusionEngine
 				break;
 			}
 
+			{
+			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
 				auto& referencingEntity = *it;
 				if (!referencingEntity->GetGCFlag())
 					stack.push_back(referencingEntity);
+			}
 			}
 		}
 
@@ -780,11 +783,14 @@ namespace FusionEngine
 
 			ref->SetGCFlag(false);
 
+			{
+			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
 				auto& referencingEntity = *it;
 				if (referencingEntity->GetGCFlag())
 					stack.push_back(referencingEntity);
+			}
 			}
 		}
 

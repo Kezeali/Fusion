@@ -173,14 +173,14 @@ namespace FusionEngine
 	void Entity::AddReference(EntityPtr entity)
 	{
 		IncrRefCount();
-		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		tbb::mutex::scoped_lock lock(m_InRefsMutex);
 		m_ReferencingEntities.insert(entity);
 	}
 
 	void Entity::RemoveReference(EntityPtr entity)
 	{
 		{
-		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		tbb::mutex::scoped_lock lock(m_InRefsMutex);
 		m_ReferencingEntities.erase(entity);
 		}
 		DecrRefCount();
@@ -189,7 +189,7 @@ namespace FusionEngine
 	void Entity::HoldReference(EntityPtr entity)
 	{
 		{
-		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
 		m_ReferencedEntities.insert(entity);
 		}
 		if (IsActive())
@@ -200,7 +200,7 @@ namespace FusionEngine
 	{
 		if (IsActive())
 			entity->RemoveReference(this->shared_from_this());
-		tbb::spin_rw_mutex::scoped_lock lock(m_ComponentsMutex);
+		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
 		m_ReferencedEntities.erase(entity);
 	}
 
@@ -773,9 +773,12 @@ namespace FusionEngine
 	{
 		SetStreamedIn(true);
 
+		{
+		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex, false);
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
 			(*it)->AddReference(this->shared_from_this());
+		}
 		}
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamIn(); });
@@ -789,10 +792,12 @@ namespace FusionEngine
 	void Entity::StreamOut()
 	{
 		SetStreamedIn(false);
-
+		{
+		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex, false);
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
 			(*it)->RemoveReference(this->shared_from_this());
+		}
 		}
 
 		std::for_each(m_StreamedResources.begin(), m_StreamedResources.end(), [](StreamedResourceUser *user) { user->StreamOut(); });

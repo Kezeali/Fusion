@@ -23,10 +23,10 @@ class TestB : ScriptComponent
 	
 	void onInput(InputEvent@ ev)
 	{
-		console.println(ev.inputName);
+		//console.println(ev.inputName);
 		if (ev.inputName == "thrust")
 		{
-			console.println("at " + speed);
+			//console.println("at " + speed);
 			if (ev.isDown)
 				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 			else

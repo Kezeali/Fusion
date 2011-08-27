@@ -101,14 +101,16 @@ namespace FusionEngine
 
 	struct CellEntry
 	{
-		bool active;
+		enum State { Inactive = 0, Active = 1, Waiting = 2 };
+		//bool active;
+		State active;
 		bool pendingDeactivation;
 		float pendingDeactivationTime;
 
 		float x, y;
 
 		CellEntry()
-			: active(false),
+			: active(Inactive),
 			pendingDeactivation(false),
 			pendingDeactivationTime(0.0f),
 			x(0.0f),
@@ -121,12 +123,14 @@ namespace FusionEngine
 	public:
 		Cell()
 			: loaded(false),
+			inRange(false),
 			objects(0)
 		{
 			active_entries = 0;
 			waiting = false;
 		}
 
+	private:
 		Cell(const Cell& other)
 			: objects(other.objects),
 			active_entries(other.active_entries),
@@ -156,6 +160,7 @@ namespace FusionEngine
 			loaded = other.loaded;
 			return *this;
 		}
+	public:
 #ifdef STREAMING_USEMAP
 		typedef std::map<Entity*, CellEntry> CellEntryMap;
 		CellEntryMap objects;
@@ -165,16 +170,21 @@ namespace FusionEngine
 		CellEntryMap objects;
 #endif
 		tbb::atomic<unsigned int> active_entries;
-		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; }
-		void EntryActivated() { ++active_entries; }
+		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryDeactivated"); }
+		void EntryActivated() { ++active_entries; AddHist("EntryActivated"); }
 		bool IsActive() const { return active_entries > 0; }
 
 		bool loaded;
 		bool IsLoaded() const { return loaded; }
 
+		bool inRange;
+
 		tbb::atomic<bool> waiting;
 
 		tbb::mutex mutex;
+
+		std::vector<std::string> history;
+		void AddHist(const std::string& hist);
 	};
 
 	class CellArchiver

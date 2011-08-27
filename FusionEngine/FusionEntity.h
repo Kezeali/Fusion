@@ -51,6 +51,7 @@
 #include "FusionVector2.h"
 
 #include <tbb/spin_rw_mutex.h>
+#include <tbb/mutex.h>
 
 namespace FusionEngine
 {
@@ -144,8 +145,10 @@ namespace FusionEngine
 		//! Gets angle (rotation) value
 		void SetAngle(float angle);
 
-	
+
+		tbb::mutex m_InRefsMutex;
 		std::set<EntityPtr> m_ReferencingEntities;
+		tbb::spin_rw_mutex m_OutRefsMutex;
 		std::set<EntityPtr> m_ReferencedEntities;
 	
 	private:

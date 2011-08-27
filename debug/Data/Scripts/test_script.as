@@ -15,7 +15,7 @@ class Test : ScriptComponent
 		
 		spawnerY = 0;
 		
-		dirtSize = 64;
+		dirtSize = 48;
 	}
 
 	uint frames;
@@ -160,7 +160,7 @@ class Test : ScriptComponent
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
-			createPI(Vector(0.3f, 0.3f));
+			//createPI(Vector(0.3f, 0.3f));
 			
 			entityA.script_b.speed = 3.0f;
 
@@ -194,7 +194,7 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
-		if (frames > 1 && frames < 500)
+		if (frames > 1 && frames < 250)
 		{
 			uint xframes = frames % 50;
 			uint yframes = frames / 50;
