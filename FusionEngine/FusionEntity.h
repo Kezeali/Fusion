@@ -135,6 +135,8 @@ namespace FusionEngine
 		//! Returns the typename of this entity
 		std::string GetType() const;
 
+		std::shared_ptr<ITransform> GetTransform() const;
+
 		//! Gets position
 		const Vector2 &GetPosition();
 		//! Gets angle (rotation) value

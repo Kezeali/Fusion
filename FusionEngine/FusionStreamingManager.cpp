@@ -208,15 +208,20 @@ namespace FusionEngine
 		Vector2 entityPosition = entity->GetPosition();
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		Cell *cell = CellAtPosition(entityPosition);
-		tbb::mutex::scoped_lock lock(cell->mutex);
-		if (cell->IsLoaded())
+
+		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+		if (lock && cell->IsLoaded())
+		{
 			entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
+		}
 		else
 		{
+			Cell::mutex_t::scoped_try_lock test(m_TheVoid.mutex);
+			FSN_ASSERT(test);
 			cell = &m_TheVoid;
 			entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
 		}
-
+		
 #ifdef STREAMING_USEMAP
 		CellEntry &entry = cell->objects[entity.get()];
 #else
@@ -224,12 +229,14 @@ namespace FusionEngine
 #endif
 		entry.x = entityPosition.x; entry.y = entityPosition.y;
 
-		lock.release();
+		//if (lock.owns_lock())
+		//	lock.unlock();
 
 		activateInView(cell, &entry, entity, true);
 		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
 		{
-			cell->EntryActivated(); // Otherwise the counter will be off when OnDeactivated is called
+			//cell->EntryActivated(); // Otherwise the counter will be off when OnDeactivated is called
+			ActivateEntity(*cell, entity, entry);
 			QueueEntityForDeactivation(entry, true);
 		}
 
@@ -275,7 +282,7 @@ namespace FusionEngine
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
 
-			tbb::mutex::scoped_lock lock(currentCell->mutex);
+			Cell::mutex_t::scoped_lock lock(currentCell->mutex);
 			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
 			FSN_ASSERT(currentCell->IsLoaded());
 #ifdef STREAMING_USEMAP
@@ -299,7 +306,7 @@ namespace FusionEngine
 		{
 			currentCell = CellAtPosition(new_x, new_y);
 
-			tbb::mutex::scoped_lock lock(currentCell->mutex);
+			Cell::mutex_t::scoped_try_lock lock(currentCell->mutex);
 			currentCell->objects.push_back(std::make_pair(entity.get(), CellEntry()));
 			cellEntry = &currentCell->objects.back().second;
 
@@ -323,30 +330,40 @@ namespace FusionEngine
 		}
 		else
 		{
-			tbb::mutex::scoped_lock lock(newCell->mutex);
-
-			if (!newCell->IsLoaded())
+			Cell::mutex_t::scoped_try_lock lock(newCell->mutex);
+			if (!lock || !newCell->IsLoaded())
+			{
 				newCell = &m_TheVoid;
+				
+				Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
+				FSN_ASSERT(lock);
+			}
+			
+			{
+				newCell->AddHist("Entry added from another cell");
 
-			newCell->AddHist("Entry added from another cell");
-
-			// add the entity to its new cell
+				// add the entity to its new cell
 #ifdef STREAMING_USEMAP
-			CellEntry &newEntry = newCell->objects[entityKey];
-			newEntry = *cellEntry; // Copy the current cell data
+				CellEntry &newEntry = newCell->objects[entityKey];
+				newEntry = *cellEntry; // Copy the current cell data
 #else
-			newCell->objects.emplace_back( std::make_pair(entityKey, *cellEntry) );
-			CellEntry &newEntry = newCell->objects.back().second;
+				newCell->objects.emplace_back( std::make_pair(entityKey, *cellEntry) );
+				CellEntry &newEntry = newCell->objects.back().second;
 #endif
-			cellEntry = &newEntry; // Change the pointer (since it is used again below)
+				cellEntry = &newEntry; // Change the pointer (since it is used again below)
+			}
 
 			if (cellEntry->active)
 				newCell->EntryActivated();
 
+			/*if (lock.owns_lock())
+				lock.unlock();*/
+
 			// remove from current cell
 			if (currentCell != nullptr)
 			{
-				tbb::mutex::scoped_lock lock(currentCell->mutex);
+				Cell::mutex_t::scoped_try_lock test(currentCell->mutex);
+				FSN_ASSERT(test);
 #ifdef STREAMING_USEMAP
 				currentCell->objects.erase(_where);
 #else
@@ -398,6 +415,15 @@ namespace FusionEngine
 				currentCell.AddHist("Enqueue Attempted on Deactivation");
 				m_Archivist->Enqueue(&currentCell, entity->GetStreamingCellIndex());
 			}
+		}
+		else if (entity->GetStreamingCellIndex() == std::numeric_limits<size_t>::max())
+		{
+			auto& currentCell = m_TheVoid;
+
+			auto it = findEntityInCell(&currentCell, entity.get());
+			it->second.active = CellEntry::Inactive;
+
+			currentCell.EntryDeactivated();
 		}
 	}
 
@@ -561,7 +587,7 @@ namespace FusionEngine
 
 				cell.inRange = false;
 
-				if (cell.IsLoaded() && !cell.waiting)
+				if (cell.IsLoaded())
 				{
 					if (!cell.IsActive() && !cell.inRange)
 					{
@@ -571,7 +597,8 @@ namespace FusionEngine
 					else
 					{
 						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-						if (cell.mutex.try_lock())
+						Cell::mutex_t::scoped_try_lock lock(cell.mutex);
+						if (lock)
 						{
 							for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 							{
@@ -582,7 +609,6 @@ namespace FusionEngine
 									QueueEntityForDeactivation(cellEntry);
 								}
 							}
-							cell.mutex.unlock();
 						}
 					}
 				}
@@ -593,10 +619,11 @@ namespace FusionEngine
 
 	void StreamingManager::processCell(Cell& cell, const std::list<Vector2>& cam_positions)
 	{
-		if (cell.mutex.try_lock())
+		Cell::mutex_t::scoped_try_lock lock(cell.mutex);
+		if (lock)
 		{
-			try
-			{
+			//try
+			//{
 				for (auto cell_it = cell.objects.begin(), cell_end = cell.objects.end(); cell_it != cell_end; ++cell_it)
 				{
 //#ifdef _DEBUG
@@ -624,13 +651,13 @@ namespace FusionEngine
 							QueueEntityForDeactivation(cellEntry);
 					}
 				}
-			}
-			catch (Exception&)
-			{
-				cell.mutex.unlock();
-				throw;
-			}
-			cell.mutex.unlock();
+			//}
+			//catch (Exception&)
+			//{
+			//	cell.mutex.unlock();
+			//	throw;
+			//}
+			//cell.mutex.unlock();
 		}
 	}
 
@@ -697,48 +724,64 @@ namespace FusionEngine
 	{
 		// Try to clear The Void
 		{
-			tbb::mutex::scoped_lock lock(m_TheVoid.mutex);
-			for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
+			//tbb::mutex::scoped_lock lock(m_TheVoid.mutex);
+			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
+			if (lock)
 			{
-				auto actualCell = CellAtPosition(it->second.x, it->second.y);
-				tbb::mutex::scoped_lock lock(actualCell->mutex);
-				if (!actualCell->IsLoaded() && !actualCell->waiting)
+				for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
 				{
-					actualCell->AddHist("Retrieved due to objects in Void");
-					m_Archivist->Retrieve(actualCell, (size_t)(actualCell - m_Cells));
-					//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
-					m_CellsBeingLoaded.push_back(actualCell);
+					auto actualCell = CellAtPosition(it->second.x, it->second.y);
 
-					++it;
-				}
-				else if (actualCell->IsLoaded() && !actualCell->waiting)
-				{
-					auto entity = it->first;
-					// TODO:
-					//changeCell(*it, m_TheVoid, *cell);
-					// OR
-					// m_TheVoid.RemoveEntry(it); <- one of the overloads will take an iterator, the others will take index / entry
-					// cell->AddEntry(*it);
-
-					//tbb::mutex::scoped_lock lock(actualCell->mutex);
-
-					actualCell->objects.push_back( std::move(*it) );
-					auto& newEntry = actualCell->objects.back().second;
-
-					if (newEntry.active)
-						actualCell->EntryActivated();
-
-					// remove from current cell
+					Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
+					if (lock)
 					{
-						it = m_TheVoid.objects.erase(it);
-						end = m_TheVoid.objects.end();
-						if (newEntry.active)
+						if (!actualCell->IsLoaded())
 						{
-							m_TheVoid.EntryDeactivated();
+							// Request the cell if it isn't already (Retrieve returns true if the cell wasn't already requested)
+							if (m_Archivist->Retrieve(actualCell, (size_t)(actualCell - m_Cells)))
+							{
+								actualCell->AddHist("Retrieved due to objects in Void");
+								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
+								m_CellsBeingLoaded.insert(actualCell);
+							}
+						}
+						else
+						{
+							auto entity = it->first;
+							// TODO:
+							//changeCell(*it, m_TheVoid, *cell);
+							// OR
+							// m_TheVoid.RemoveEntry(it); <- one of the overloads will take an iterator, the others will take index / entry
+							// cell->AddEntry(*it);
+
+							//Cell::mutex_t::scoped_lock lock(actualCell->mutex);
+
+							actualCell->objects.push_back( std::move(*it) );
+							auto& newEntry = actualCell->objects.back().second;
+
+							if (newEntry.active)
+								actualCell->EntryActivated();
+							else if (!actualCell->IsActive())
+							{
+								actualCell->AddHist("Storing cell again after Retrieving it for an entity spawned in The Void");
+								m_Archivist->Enqueue(actualCell, (size_t)(actualCell - m_Cells));
+							}
+
+							// remove from current cell
+							{
+								it = m_TheVoid.objects.erase(it);
+								end = m_TheVoid.objects.end();
+								if (newEntry.active)
+								{
+									m_TheVoid.EntryDeactivated();
+								}
+							}
+
+							entity->SetStreamingCellIndex((size_t)(actualCell - m_Cells));
+							continue;
 						}
 					}
-
-					entity->SetStreamingCellIndex((size_t)(actualCell - m_Cells));
+					++it;
 				}
 			}
 		}
@@ -821,8 +864,8 @@ namespace FusionEngine
 				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
 				{
 					auto& cell = *it;
-					//tbb::mutex::scoped_lock lock(cell->mutex);
-					if (cell->IsLoaded() && !cell->waiting)
+					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+					if (lock && cell->IsLoaded())
 					{
 						std::list<Vector2> cams; cams.push_back(cam.streamPosition);
 						processCell(*cell, cams);
@@ -864,9 +907,12 @@ namespace FusionEngine
 			if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
 			{
 
-			std::stringstream activestr;
-			activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
-			SendToConsole("Activated " + activestr.str());
+				if (!clippedInactiveRanges.empty())
+				{
+					std::stringstream activestr;
+					activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
+					SendToConsole("Activated " + activestr.str());
+				}
 
 			unsigned int iy = (unsigned int)activeRange.top;
 			unsigned int ix = (unsigned int)activeRange.left;
@@ -888,12 +934,11 @@ namespace FusionEngine
 					// Check if the cell needs to be loaded
 					if (!cell.IsLoaded())
 					{
-						if (!cell.waiting)
+						if (m_Archivist->Retrieve(&cell, i-1))
 						{
 							cell.AddHist("Retrieved due to entering range");
-							m_Archivist->Retrieve(&cell, i-1);
 							//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-							m_CellsBeingLoaded.push_back(&cell);
+							m_CellsBeingLoaded.insert(&cell);
 						}
 					}
 					// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)

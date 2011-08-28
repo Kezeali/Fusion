@@ -194,7 +194,7 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
-		if (frames > 1 && frames < 250)
+		if (false && frames > 1 && frames < 250)
 		{
 			uint xframes = frames % 50;
 			uint yframes = frames / 50;

@@ -107,7 +107,20 @@ namespace FusionEngine
 		float m_LastAngularVelocity;
 
 		// IComponent
-		std::string GetType() const { return "b2RigidBody"; }
+		std::string GetType() const
+		{
+			switch (GetBodyType())
+			{
+			case BodyType::Dynamic:
+				return "b2Dynamic";
+			case BodyType::Kinematic:
+				return "b2Kinematic";
+			case BodyType::Static:
+				return "b2Static";
+			default:
+				return "b2RigidBody";
+			}
+		}
 
 		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
 		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
@@ -122,7 +135,8 @@ namespace FusionEngine
 		// RigidBody interface
 		BodyType GetBodyType() const
 		{
-			switch (m_Body->GetType())
+			const b2BodyType type = m_Body ? m_Body->GetType() : m_Def.type;
+			switch (type)
 			{
 			case b2_staticBody:
 				return BodyType::Static;

@@ -150,6 +150,11 @@ namespace FusionEngine
 		return m_Type;
 	}
 
+	std::shared_ptr<ITransform> Entity::GetTransform() const
+	{
+		return m_Transform;
+	}
+
 	const Vector2 &Entity::GetPosition()
 	{
 		return m_Transform->Position.Get();

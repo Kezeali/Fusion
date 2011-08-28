@@ -42,7 +42,8 @@
 #include "FusionEntity.h"
 #include "FusionCamera.h"
 
-#include <tbb/mutex.h>
+//#include <tbb/mutex.h>
+#include <boost/thread/recursive_mutex.hpp>
 
 namespace FusionEngine
 {
@@ -122,12 +123,12 @@ namespace FusionEngine
 	{
 	public:
 		Cell()
-			: loaded(false),
-			inRange(false),
+			: inRange(false),
 			objects(0)
 		{
+			loaded = false;
 			active_entries = 0;
-			waiting = false;
+			waiting = Ready;
 		}
 
 	private:
@@ -136,7 +137,7 @@ namespace FusionEngine
 			active_entries(other.active_entries),
 			loaded(other.loaded)
 		{
-			waiting = false;
+			waiting = Ready;
 		}
 
 		Cell(Cell&& other)
@@ -174,14 +175,16 @@ namespace FusionEngine
 		void EntryActivated() { ++active_entries; AddHist("EntryActivated"); }
 		bool IsActive() const { return active_entries > 0; }
 
-		bool loaded;
+		tbb::atomic<bool> loaded;
 		bool IsLoaded() const { return loaded; }
 
 		bool inRange;
 
-		tbb::atomic<bool> waiting;
+		enum WaitingState { Ready, Retrieve, Store };
+		tbb::atomic<WaitingState> waiting;
 
-		tbb::mutex mutex;
+		typedef boost::recursive_mutex mutex_t;
+		mutex_t mutex;
 
 		std::vector<std::string> history;
 		void AddHist(const std::string& hist);
@@ -193,7 +196,12 @@ namespace FusionEngine
 		virtual ~CellArchiver() {}
 
 		virtual void Enqueue(Cell* cell, size_t i) = 0;
-		virtual void Retrieve(Cell* cell, size_t i) = 0;
+		virtual bool Retrieve(Cell* cell, size_t i) = 0;
+	};
+
+	struct StreamingHandle
+	{
+		size_t cellIndex;
 	};
 
 	struct ActivationEvent
@@ -308,7 +316,7 @@ namespace FusionEngine
 
 		Cell *m_Cells;
 		Cell m_TheVoid;
-		std::vector<Cell*> m_CellsBeingLoaded;
+		std::set<Cell*> m_CellsBeingLoaded;
 
 		CellArchiver* m_Archivist;
 

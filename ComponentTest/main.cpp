@@ -123,7 +123,8 @@ namespace FusionEngine
 	{
 	public:
 		SimpleCellArchiver()
-			: m_NewData(false)
+			: m_NewData(false),
+			m_Instantiator(nullptr)
 		{
 		}
 
@@ -132,24 +133,36 @@ namespace FusionEngine
 			Stop();
 		}
 
+		InstancingSynchroniser* m_Instantiator;
+		void SetSynchroniser(InstancingSynchroniser* instantiator)
+		{
+			m_Instantiator = instantiator;
+		}
+
 		void Enqueue(Cell* cell, size_t i)
 		{
-			if (!cell->waiting.fetch_and_store(true) && cell->loaded)
+			if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 			{
+				std::stringstream str; str << i;
+				SendToConsole("Store " + str.str());
 				cell->AddHist("Enqueued Out");
 				m_WriteQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
 			}
 		}
 
-		void Retrieve(Cell* cell, size_t i)
+		bool Retrieve(Cell* cell, size_t i)
 		{
-			if (!cell->waiting.fetch_and_store(true) && !cell->loaded)
+			if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 			{
+				std::stringstream str; str << i;
+				SendToConsole("Retrieve " + str.str());
 				cell->AddHist("Enqueued In");
 				m_ReadQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
+				return true;
 			}
+			return false;
 		}
 
 		boost::thread m_Thread;
@@ -169,6 +182,106 @@ namespace FusionEngine
 			m_Thread.join();
 		}
 
+		void Save(CL_IODevice& out, EntityPtr entity)
+		{
+			ObjectID id = entity->GetID();
+			out.write(&id, sizeof(ObjectID));
+
+			auto& components = entity->GetComponents();
+			size_t numComponents = components.size();
+
+			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+			out.write_string_a(transform->GetType());
+			{
+				RakNet::BitStream stream;
+				transform->SerialiseContinuous(stream);
+				transform->SerialiseOccasional(stream, true);
+				out.write_uint32(stream.GetNumberOfBytesUsed());
+				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			}
+
+			out.write(&numComponents, sizeof(size_t));
+			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			{
+				auto& component = *it;
+				out.write_string_a(component->GetType());
+			}
+			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			{
+				auto& component = *it;
+				RakNet::BitStream stream;
+				component->SerialiseContinuous(stream);
+				component->SerialiseOccasional(stream, true);
+
+				out.write_uint32(stream.GetNumberOfBytesUsed());
+				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			}
+		}
+
+		EntityPtr Load(CL_IODevice& in)
+		{
+			ObjectID id;
+			in.read(&id, sizeof(ObjectID));
+			m_Instantiator->TakeID(id);
+
+			std::shared_ptr<IComponent> transform;
+			{
+				std::string transformType = in.read_string_a();
+				auto dataLen = in.read_uint32();
+				std::vector<unsigned char> data(dataLen);
+				in.read(data.data(), data.size());
+
+				RakNet::BitStream stream(data.data(), data.size(), false);
+
+				transform = m_Instantiator->m_Factory->InstanceComponent(transformType);
+				transform->DeserialiseContinuous(stream);
+				transform->DeserialiseOccasional(stream, true);
+			}
+
+			auto entity = std::make_shared<Entity>(&m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
+
+			size_t numComponents;
+			in.read(&numComponents, sizeof(size_t));
+			for (size_t i = 0; i < numComponents; ++i)
+			{
+				std::string type = in.read_string_a();
+				auto& component = m_Instantiator->m_Factory->InstanceComponent(type);
+				entity->AddComponent(component);
+			}
+			auto& components = entity->GetComponents();
+			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			{
+				auto& component = *it;
+				
+				auto dataLen = in.read_uint32();
+				std::vector<unsigned char> data(dataLen);
+				in.read(data.data(), data.size());
+
+				RakNet::BitStream stream(data.data(), data.size(), false);
+
+				component->DeserialiseContinuous(stream);
+				component->DeserialiseOccasional(stream, true);
+			}
+			
+			return entity;
+		}
+
+		CL_IODevice GetFile(size_t cell_index)
+		{
+			try
+			{
+				std::stringstream str; str << cell_index;
+				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				auto file = vdir.open_file("cache/" + str.str(), CL_File::open_always);//"cache/partialsave/"
+				return file;
+			}
+			catch (CL_Exception& ex)
+			{
+				SendToConsole(ex.what());
+				return CL_IODevice();
+			}
+		}
+
 		void Run()
 		{
 			bool retrying = false;
@@ -179,21 +292,31 @@ namespace FusionEngine
 				{
 					std::tuple<Cell*, size_t> toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
+					//while (!m_WriteQueue.empty())
 					{
+						//toWrite = m_WriteQueue.front();
+						//m_WriteQueue.pop();
 						Cell*& cell = std::get<0>(toWrite);
 						size_t& i = std::get<1>(toWrite);
-						if (cell->mutex.try_lock())
+						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+						if (lock)
 						{
-							if (cell->active_entries == 0)
+							// Check active_entries since the Store request may be stale
+							if (cell->active_entries == 0 && cell->waiting == Cell::Store)
 							{
 								try
 								{
-									std::vector<EntityPtr> newArchive;
+									//std::vector<EntityPtr> newArchive;
+									auto file = GetFile(i);
+									auto numEntries = cell->objects.size();
+									file.write(&numEntries, sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
 										//if (it->first->IsSyncedEntity())
 										{
-											newArchive.push_back(it->first->shared_from_this());
+											//boost::this_thread::sleep(boost::posix_time::microsec(60000));
+											//newArchive.push_back(it->first->shared_from_this());
+											Save(file, it->first->shared_from_this());
 										}
 									}
 
@@ -202,42 +325,69 @@ namespace FusionEngine
 									std::stringstream str; str << i;
 									SendToConsole("Cell " + str.str() + " streamed out");
 
-									m_Archived[i] = std::move(newArchive);
+									//boost::this_thread::sleep(boost::posix_time::microsec(80000));
+
+									//m_Archived[i] = std::move(newArchive);
 									cell->objects.clear();
 									cell->loaded = false;
-									cell->waiting = false;
 								}
 								catch (...)
 								{
+									std::stringstream str; str << i;
+									SendToConsole("Exception streaming out cell " + str.str());
 								}
 							}
-							cell->mutex.unlock();
+							else
+							{
+								std::stringstream str; str << i;
+								SendToConsole("Cell still in use " + str.str());
+								writesToRetry.push_back(toWrite);
+							}
+							cell->waiting = Cell::Ready;
+							//cell->mutex.unlock();
 						}
 						else
+						{
+							std::stringstream str; str << i;
+							SendToConsole("Retrying write on cell " + str.str());
 							writesToRetry.push_back(toWrite);
+						}
 					}
 				}
 				{
 					std::tuple<Cell*, size_t> toRead;
 					while (m_ReadQueue.try_pop(toRead))
+					//while (!m_ReadQueue.empty())
 					{
+						//toRead = m_ReadQueue.front();
+						//m_ReadQueue.pop();
 						Cell*& cell = std::get<0>(toRead);
 						size_t& i = std::get<1>(toRead);//, y = std::get<1>(toRead);
-						if (cell->mutex.try_lock())
+						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+						if (lock)
 						{
-							if (cell->active_entries == 0)
+							// Shouldn't be possible (unloaded cells shouldn't have active entries) - this could indicate
+							//  that the Retrieve request got enqueued twice:
+							FSN_ASSERT(cell->active_entries == 0);
+							if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
 							{
 								try
 								{
-									//boost::this_thread::sleep(boost::posix_time::seconds(1));
+									//boost::this_thread::sleep(boost::posix_time::microsec(50000));
+									//auto archivedCellEntry = m_Archived.find(i);
+									auto file = GetFile(i);
 
-									auto archivedCellEntry = m_Archived.find(i);
-
-									if (archivedCellEntry != m_Archived.end())
+									//if (archivedCellEntry != m_Archived.end())
+									if (!file.is_null() && file.get_size() > 0)
 									{
-										for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
+										//for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
+										size_t numEntries;
+										file.read(&numEntries, sizeof(size_t));
+										for (size_t n = 0; n < numEntries; ++n)
 										{
-											auto& archivedEntity = *it;
+											//boost::this_thread::sleep(boost::posix_time::microsec(50000));
+											//auto& archivedEntity = *it;
+											auto& archivedEntity = Load(file);
 											Vector2 pos = archivedEntity->GetPosition();
 											// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
 											CellEntry entry;
@@ -251,7 +401,7 @@ namespace FusionEngine
 										cell->AddHist("Loaded");
 										cell->loaded = true;
 
-										m_Archived.erase(archivedCellEntry);
+										//m_Archived.erase(archivedCellEntry);
 									}
 									else
 									{
@@ -261,10 +411,13 @@ namespace FusionEngine
 								}
 								catch (...)
 								{
+									std::stringstream str; str << i;
+									SendToConsole("Exception streaming in cell " + str.str());
+									readsToRetry.push_back(toRead);
 								}
-								cell->waiting = false;
 							}
-							cell->mutex.unlock();
+							cell->waiting = Cell::Ready;
+							//cell->mutex.unlock();
 						}
 						else
 							readsToRetry.push_back(toRead);
@@ -275,21 +428,27 @@ namespace FusionEngine
 				{
 					retrying = true;
 					for (auto it = writesToRetry.begin(), end = writesToRetry.end(); it != end; ++it)
-						m_WriteQueue.push(*it);
+						m_WriteQueue.push(std::move(*it));
 					writesToRetry.clear();
 				}
 				if (!readsToRetry.empty())
 				{
 					retrying = true;
 					for (auto it = readsToRetry.begin(), end = readsToRetry.end(); it != end; ++it)
-						m_ReadQueue.push(*it);
+						m_ReadQueue.push(std::move(*it));
 					readsToRetry.clear();
 				}
+
+				std::stringstream str;
+				str << m_Archived.size();
+				SendToConsole(str.str() + " cells archived");
 			}
 		}
 
 		std::map<size_t, std::vector<EntityPtr>> m_Archived;
 
+		//boost::mutex m_WriteQueueMutex;
+		//boost::mutex m_ReadQueueMutex;/*std::queue*/
 		tbb::concurrent_queue<std::tuple<Cell*, size_t>> m_WriteQueue;
 		tbb::concurrent_queue<std::tuple<Cell*, size_t>> m_ReadQueue;
 
@@ -551,14 +710,14 @@ public:
 				std::unique_ptr<PacketDispatcher> packetDispatcher(new PacketDispatcher());
 				std::unique_ptr<NetworkManager> networkManager(new NetworkManager(network.get(), packetDispatcher.get()));
 
-				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver());
-
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
+				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver());
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get()));
 				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get()));
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 
 				cellArchivist->Start();
 

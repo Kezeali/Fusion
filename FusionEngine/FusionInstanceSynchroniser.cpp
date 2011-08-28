@@ -198,6 +198,7 @@ namespace FusionEngine
 			if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
 				FSN_EXCEPT(InvalidArgumentException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
 
+			// TODO: make m_PropChangedQueue a member of this class?
 			EntityPtr entity = std::make_shared<Entity>(&m_EntityManager->m_PropChangedQueue, transform);
 
 			if (entity)
@@ -205,7 +206,9 @@ namespace FusionEngine
 				entity->SetID(id);
 				entity->SetOwnerID(owner_id);
 				entity->SetName(name);
-				
+
+				transform->SynchronisePropertiesNow();
+
 				m_EntityManager->AddEntity(entity);
 
 				// TODO: set this entity to a property, rather than calling this callback
