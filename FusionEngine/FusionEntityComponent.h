@@ -80,7 +80,7 @@ namespace FusionEngine
 
 	typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
 	
-	class IComponent : public RefCounted
+	class IComponent : public RefCounted, public std::enable_shared_from_this<IComponent>
 	{
 	public:
 		//! Cotr
@@ -92,7 +92,10 @@ namespace FusionEngine
 			m_PropLock = std::make_shared<PropLock>();
 		}
 		//! Destructor
-		virtual ~IComponent() {}
+		virtual ~IComponent()
+		{
+			m_PropLock.reset();
+		}
 
 		void OnNoReferences()
 		{

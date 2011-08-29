@@ -243,6 +243,10 @@ namespace FusionEngine
 			m_PositionChangeConnection = transform->Position.Connect(std::bind(&CLSprite::SetPosition, this, std::placeholders::_1));
 			m_AngleChangeConnection = transform->Angle.Connect(std::bind(&CLSprite::SetAngle, this, std::placeholders::_1));
 			m_DepthChangeConnection = transform->Depth.Connect([this](int depth) { m_EntityDepth = depth; });
+
+			m_Position = transform->Position.Get();
+			m_Angle = transform->Angle.Get();
+			m_EntityDepth = transform->Depth.Get();
 		}
 	}
 

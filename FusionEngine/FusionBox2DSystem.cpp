@@ -90,27 +90,32 @@ namespace FusionEngine
 	private:
 		std::string GetType() const { return "StaticTransform"; }
 
-		bool SerialiseContinuous(RakNet::BitStream& stream)
+		//bool SerialiseContinuous(RakNet::BitStream& stream)
+		//{
+		//	return false;
+		//}
+		//void DeserialiseContinuous(RakNet::BitStream& stream)
+		//{
+		//}
+		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 		{
 			stream.Write(m_Position.x);
 			stream.Write(m_Position.y);
 			stream.Write(m_Angle);
-			return true;
-		}
-		void DeserialiseContinuous(RakNet::BitStream& stream)
-		{
-			stream.Read(m_Position.x);
-			stream.Read(m_Position.y);
-			stream.Read(m_Angle);
-		}
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
-		{
+			
 			stream.Write(m_Depth);
 			return true;
 		}
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 		{
+			stream.Read(m_Position.x);
+			stream.Read(m_Position.y);
+			stream.Read(m_Angle);
+
 			stream.Read(m_Depth);
+
+			//Position.MarkChanged();
+			//Angle.MarkChanged();
 		}
 
 		Vector2 GetPosition() const { return m_Position; }

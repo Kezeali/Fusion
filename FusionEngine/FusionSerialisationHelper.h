@@ -63,7 +63,8 @@ namespace FusionEngine
 		static inline void write(RakNet::BitStream& stream, const std::string& new_value)
 		{
 			stream.Write(new_value.length());
-			stream.Write(new_value.c_str());
+			if (!new_value.empty())
+				stream.Write(new_value.c_str());
 		}
 
 		template <>

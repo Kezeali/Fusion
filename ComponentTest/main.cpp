@@ -194,8 +194,11 @@ namespace FusionEngine
 			out.write_string_a(transform->GetType());
 			{
 				RakNet::BitStream stream;
-				transform->SerialiseContinuous(stream);
-				transform->SerialiseOccasional(stream, true);
+				const bool conData = transform->SerialiseContinuous(stream);
+				const bool occData = transform->SerialiseOccasional(stream, true);
+
+				out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
+				out.write_uint8(occData ? 0xFF : 0x00);
 				out.write_uint32(stream.GetNumberOfBytesUsed());
 				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 			}
@@ -213,9 +216,11 @@ namespace FusionEngine
 				if (component.get() != transform)
 				{
 					RakNet::BitStream stream;
-					component->SerialiseContinuous(stream);
-					component->SerialiseOccasional(stream, true);
+					const bool conData = component->SerialiseContinuous(stream);
+					const bool occData = component->SerialiseOccasional(stream, true);
 
+					out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
+					out.write_uint8(occData ? 0xFF : 0x00);
 					out.write_uint32(stream.GetNumberOfBytesUsed());
 					out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 				}
@@ -231,15 +236,21 @@ namespace FusionEngine
 			std::shared_ptr<IComponent> transform;
 			{
 				std::string transformType = in.read_string_a();
-				auto dataLen = in.read_uint32();
+
+				const bool conData = in.read_uint8() != 0x00;
+				const bool occData = in.read_uint8() != 0x00;
+
+				const auto dataLen = in.read_uint32();
 				std::vector<unsigned char> data(dataLen);
 				in.read(data.data(), data.size());
 
 				RakNet::BitStream stream(data.data(), data.size(), false);
 
 				transform = m_Instantiator->m_Factory->InstanceComponent(transformType);
-				transform->DeserialiseContinuous(stream);
-				transform->DeserialiseOccasional(stream, true);
+				if (conData)
+					transform->DeserialiseContinuous(stream);
+				if (occData)
+					transform->DeserialiseOccasional(stream, true);
 			}
 
 			auto entity = std::make_shared<Entity>(&m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
@@ -264,14 +275,19 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					auto dataLen = in.read_uint32();
+					const bool conData = in.read_uint8() != 0x00;
+					const bool occData = in.read_uint8() != 0x00;
+
+					const auto dataLen = in.read_uint32();
 					std::vector<unsigned char> data(dataLen);
 					in.read(data.data(), data.size());
 
 					RakNet::BitStream stream(data.data(), data.size(), false);
 
-					component->DeserialiseContinuous(stream);
-					component->DeserialiseOccasional(stream, true);
+					if (conData)
+						component->DeserialiseContinuous(stream);
+					if (occData)
+						component->DeserialiseOccasional(stream, true);
 				}
 			}
 			
@@ -287,7 +303,7 @@ namespace FusionEngine
 				auto file = vdir.open_file("cache/" + str.str(), CL_File::open_always, write ? CL_File::access_write : CL_File::access_read);//"cache/partialsave/"
 				return file;
 			}
-			catch (CL_Exception& ex)
+			catch (CL_Exception&)
 			{
 				//SendToConsole(ex.what());
 				return CL_IODevice();

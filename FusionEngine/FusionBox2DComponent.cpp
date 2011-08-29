@@ -92,17 +92,22 @@ namespace FusionEngine
 
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
-		const Vector2& pos = GetPosition();
-		stream.Write(pos.x);
-		stream.Write(pos.y);
-		stream.Write(GetAngle());
+		if (GetBodyType() == Dynamic)
+		{
+			const Vector2& pos = GetPosition();
+			stream.Write(pos.x);
+			stream.Write(pos.y);
+			stream.Write(GetAngle());
 
-		const Vector2& vel = GetVelocity();
-		stream.Write(vel.x);
-		stream.Write(vel.y);
-		stream.Write(GetAngularVelocity());
+			const Vector2& vel = GetVelocity();
+			stream.Write(vel.x);
+			stream.Write(vel.y);
+			stream.Write(GetAngularVelocity());
 
-		return true;
+			return true;
+		}
+		else
+			return false;
 	}
 
 	void Box2DBody::DeserialiseContinuous(RakNet::BitStream& stream)
@@ -124,49 +129,94 @@ namespace FusionEngine
 
 		SetVelocity(linearVelocity);
 		SetAngularVelocity(angularVelocity);
+
+		//Position.MarkChanged();
+		//Angle.MarkChanged();
+
+		//Velocity.MarkChanged();
+		//AngularVelocity.MarkChanged();
 	}
 
 	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
-		return m_DeltaSerialisationHelper.writeChanges(force_all, stream,
+		bool dataWritten = m_DeltaSerialisationHelper.writeChanges(force_all, stream,
 			IsActive(), IsSleepingAllowed(), IsAwake(), IsBullet(), IsFixedRotation(),
 			GetLinearDamping(), GetAngularDamping(), GetGravityScale());
+
+		if (GetBodyType() != Dynamic)
+		{
+			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> transformChanges;
+			dataWritten |= m_NonDynamicDeltaSerialisationHelper.writeChanges(force_all, stream, b2v2(m_Def.position), m_Def.angle, b2v2(m_Def.linearVelocity), m_Def.angularVelocity);
+		}
+
+		return dataWritten;
 	}
 
 	void Box2DBody::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
 	{
-		std::bitset<DeltaSerialiser_t::NumParams> changes;
-		bool active, sleepingAllowed, awake, bullet, fixedrotation;
-		float linearDamping, angularDamping, gravityScale;
-		m_DeltaSerialisationHelper.readChanges(stream, all, changes,
-			active, sleepingAllowed, awake, bullet,
-			fixedrotation, linearDamping, angularDamping,
-			gravityScale);
+		{
+			std::bitset<DeltaSerialiser_t::NumParams> changes;
+			bool active, sleepingAllowed, awake, bullet, fixedrotation;
+			float linearDamping, angularDamping, gravityScale;
+			m_DeltaSerialisationHelper.readChanges(stream, all, changes,
+				active, sleepingAllowed, awake, bullet,
+				fixedrotation, linearDamping, angularDamping,
+				gravityScale);
 
-		if (changes[PropsIdx::Active])
-			//m_Body->SetActive(active);
-			SetActive(active);
-		if (changes[PropsIdx::SleepingAllowed])
-			//m_Body->SetSleepingAllowed(sleepingAllowed);
-			SetSleepingAllowed(sleepingAllowed);
-		if (changes[PropsIdx::Awake])
-			m_Body ? m_Body->SetAwake(awake) : m_Def.awake = awake;
-		if (changes[PropsIdx::Bullet])
-			//m_Body->SetBullet(bullet);
-			SetBullet(bullet);
-		if (changes[PropsIdx::FixedRotation])
-			//m_Body->SetFixedRotation(fixedrotation);
-			SetFixedRotation(fixedrotation);
+			if (changes[PropsIdx::Active])
+				//m_Body->SetActive(active);
+				SetActive(active);
+			if (changes[PropsIdx::SleepingAllowed])
+				//m_Body->SetSleepingAllowed(sleepingAllowed);
+				SetSleepingAllowed(sleepingAllowed);
+			if (changes[PropsIdx::Awake])
+				m_Body ? m_Body->SetAwake(awake) : m_Def.awake = awake;
+			if (changes[PropsIdx::Bullet])
+				//m_Body->SetBullet(bullet);
+				SetBullet(bullet);
+			if (changes[PropsIdx::FixedRotation])
+				//m_Body->SetFixedRotation(fixedrotation);
+				SetFixedRotation(fixedrotation);
 
-		if (changes[PropsIdx::LinearDamping])
-			//m_Body->SetLinearDamping(linearDamping);
-			SetLinearDamping(linearDamping);
-		if (changes[PropsIdx::AngularDamping])
-			//m_Body->SetAngularDamping(angularDamping);
-			SetAngularDamping(angularDamping);
-		if (changes[PropsIdx::GravityScale])
-			//m_Body->SetGravityScale(gravityScale);
-			SetGravityScale(gravityScale);
+			if (changes[PropsIdx::LinearDamping])
+				//m_Body->SetLinearDamping(linearDamping);
+				SetLinearDamping(linearDamping);
+			if (changes[PropsIdx::AngularDamping])
+				//m_Body->SetAngularDamping(angularDamping);
+				SetAngularDamping(angularDamping);
+			if (changes[PropsIdx::GravityScale])
+				//m_Body->SetGravityScale(gravityScale);
+				SetGravityScale(gravityScale);
+		}
+		
+		if (GetBodyType() != Dynamic)
+		{
+			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> changes;
+			Vector2 position, linearVelocity;
+			m_NonDynamicDeltaSerialisationHelper.readChanges(stream, all, changes, position, m_Def.angle, linearVelocity, m_Def.angularVelocity);
+
+			if (changes[NonDynamicPropsIdx::Position])
+			{
+				SetPosition(position);
+				//Position.MarkChanged();
+			}
+			if (changes[NonDynamicPropsIdx::Angle])
+			{
+				SetAngle(m_Def.angle);
+				//Angle.MarkChanged();
+			}
+
+			if (changes[NonDynamicPropsIdx::LinearVelocity])
+			{
+				SetVelocity(linearVelocity);
+				//Velocity.MarkChanged();
+			}
+			if (changes[NonDynamicPropsIdx::AngularVelocity])
+			{
+				SetVelocity(m_Def.angularVelocity);
+				//AngularVelocity.MarkChanged();
+			}
+		}
 	}
 
 	Box2DFixture::Box2DFixture()
@@ -384,17 +434,26 @@ namespace FusionEngine
 		//float radius;
 		Vector2 position;
 		
-		FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
-		auto circleShape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
-
 		std::bitset<ShapeDeltaSerialiser_t::NumParams> changes;
-		m_CircleDeltaSerialisationHelper.readChanges(stream, all, changes, circleShape->m_radius, position);
+		m_CircleDeltaSerialisationHelper.readChanges(stream, all, changes, m_CircleShape.m_radius, position);
 
 		if (changes[ShapePropsIdx::Position])
-			circleShape->m_p.Set(position.x, position.y);
+			m_CircleShape.m_p.Set(position.x, position.y);
 
-		if (changes.any() && m_Body)
-			m_Body->OnFixtureMassChanged();
+		if (m_Fixture && changes.any())
+		{
+			FSN_ASSERT(m_Fixture->GetShape()->m_type == b2Shape::e_circle);
+			auto shape = static_cast<b2CircleShape*>(m_Fixture->GetShape());
+
+			if (changes[ShapePropsIdx::Radius])
+				shape->m_radius = m_CircleShape.m_radius;
+			if (changes[ShapePropsIdx::Position])
+				//SetPosition(position);
+				shape->m_p.Set(position.x, position.y);
+
+			if (m_Body)
+				m_Body->OnFixtureMassChanged();
+		}
 	}
 
 	void Box2DCircleFixture::SetRadius(float radius)

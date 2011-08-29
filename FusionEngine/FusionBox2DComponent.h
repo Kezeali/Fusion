@@ -77,6 +77,15 @@ namespace FusionEngine
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
+		struct NonDynamicPropsIdx { enum Names : size_t {
+			Position, Angle, LinearVelocity, AngularVelocity,
+			NumProps
+		}; };
+		typedef SerialisationHelper<
+			Vector2, float, Vector2, float> // Position, Angle, LinearVelocity, AngularVelocity
+			NonDynamicDeltaSerialiser_t;
+		static_assert(NonDynamicPropsIdx::NumProps == NonDynamicDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
+
 		Box2DBody(b2BodyDef def);
 		virtual ~Box2DBody();
 
@@ -131,6 +140,7 @@ namespace FusionEngine
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
+		NonDynamicDeltaSerialiser_t m_NonDynamicDeltaSerialisationHelper;
 
 		// RigidBody interface
 		BodyType GetBodyType() const

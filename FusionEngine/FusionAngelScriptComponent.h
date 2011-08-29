@@ -183,6 +183,7 @@ namespace FusionEngine
 		std::map<std::string, int> m_ScriptMethods;
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
+		std::vector<boost::intrusive_ptr<CScriptAny>> m_CacheProperties;
 		
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;

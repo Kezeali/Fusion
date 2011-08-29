@@ -15,7 +15,7 @@ class Test : ScriptComponent
 		
 		spawnerY = 0;
 		
-		dirtSize = 48;
+		dirtSize = 16;
 	}
 
 	uint frames;

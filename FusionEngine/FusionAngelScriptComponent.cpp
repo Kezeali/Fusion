@@ -164,7 +164,8 @@ namespace FusionEngine
 	public:
 		ScriptAnyTSP(boost::intrusive_ptr<asIScriptObject> obj, size_t index)
 			: m_Object(obj),
-			m_Index(index)
+			m_Index(index),
+			m_Owner(nullptr)
 		{
 			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
 
@@ -236,13 +237,33 @@ namespace FusionEngine
 
 		void Set(void* ref, int typeId)
 		{
-			//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
-			//m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
-			auto any = new CScriptAny(ref, typeId, m_Object->GetEngine());
-			m_Writer.Write(any);
-			any->Release();
+			if (typeId == m_TypeId)
+			{
+				//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
+				//m_Writer.Write(new (any) CScriptAny(ref, typeId, m_Object->GetEngine()));
+				auto any = new CScriptAny(ref, typeId, m_Object->GetEngine());
+				m_Writer.Write(any);
+				any->Release();
 
-			m_Owner->OnPropertyChanged(this);
+				if (m_Owner)
+					m_Owner->OnPropertyChanged(this);
+			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
+		}
+
+		void Set(CScriptAny* any)
+		{
+			if (any->GetTypeId() == m_TypeId)
+			{
+				m_Writer.Write(any);
+				any->Release();
+
+				if (m_Owner)
+					m_Owner->OnPropertyChanged(this);
+			}
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Tried to assign a value of incorrect type to a script property");
 		}
 
 	protected:
@@ -549,12 +570,21 @@ namespace FusionEngine
 				auto _where = std::find_if(properties.cbegin(), properties.cend(), [nameStr](const std::pair<std::string, std::string>& v) { return v.second == nameStr; });
 				if (_where != properties.cend())
 				{
-					auto interfaceIndex = std::distance(properties.cbegin(), _where);
-					FSN_ASSERT(interfaceIndex >= 0);
+					FSN_ASSERT(std::distance(properties.cbegin(), _where) >= 0);
+					const auto interfaceIndex = (size_t)std::distance(properties.cbegin(), _where);
 
 					auto comProp = new ScriptAnyTSP(obj, i);
 
-					m_ScriptProperties[(size_t)interfaceIndex].reset(comProp);
+					// Copy in any values that were deserialised before the script was reloaded
+					if (m_CacheProperties.size() > interfaceIndex)
+					{
+						const auto& cachedProp = m_CacheProperties[interfaceIndex];
+						cachedProp->AddRef();
+						comProp->Set(cachedProp.get());
+						comProp->Synchronise();
+					}
+
+					m_ScriptProperties[interfaceIndex].reset(comProp);
 
 					AddProperty(comProp);
 					comProp->SetOwner(this);
@@ -609,8 +639,30 @@ namespace FusionEngine
 
 	bool ASScript::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
-		return m_DeltaSerialisationHelper.writeChanges(force_all, stream,
+		bool changeWritten = m_DeltaSerialisationHelper.writeChanges(force_all, stream,
 			GetScriptPath(), std::string());
+
+		if (m_ScriptObject)
+		{
+			stream.Write(m_ScriptProperties.size());
+			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+			{
+				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+				FSN_ASSERT((scriptprop->Get()->GetTypeId() & asTYPEID_MASK_OBJECT) == 0);
+				auto& val = scriptprop->Get()->value;
+				stream.Write(val);
+			}
+		}
+		//else
+		//{
+		//	for (auto it = m_CacheProperties.begin(), end = m_CacheProperties.end(); it != end; ++it)
+		//	{
+		//		auto& prop = *it;
+		//		stream.Write(prop->value);
+		//	}
+		//}
+
+		return changeWritten;
 	}
 
 	void ASScript::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
@@ -622,6 +674,32 @@ namespace FusionEngine
 
 		if (changes[PropsIdx::ScriptPath])
 			m_ReloadScript = true;
+
+		auto engine = ScriptManager::getSingleton().GetEnginePtr();
+
+		auto numProperties = m_ScriptProperties.size();
+		stream.Read(numProperties);
+		if (m_ScriptObject)
+		{
+			FSN_ASSERT(m_ScriptProperties.size() == numProperties);
+			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+			{
+				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+				FSN_ASSERT((scriptprop->Get()->GetTypeId() & asTYPEID_MASK_OBJECT) == 0);
+				auto& val = scriptprop->Get()->value;
+				stream.Read(val);
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < numProperties; ++i)
+			{
+				auto prop = new CScriptAny(engine);
+				stream.Read(prop->value);
+				m_CacheProperties.push_back(prop);
+				prop->Release();
+			}
+		}
 	}
 
 	const std::string &ASScript::GetScriptPath() const
