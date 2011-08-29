@@ -45,10 +45,17 @@ namespace FusionEngine
 
 	const float s_DefaultDeactivationTime = 0.1f;
 
-	void Cell::AddHist(const std::string& l)
+	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
+		mutex_t::scoped_lock lock(historyMutex);
 		auto now = boost::posix_time::second_clock::local_time();
-		history.push_back(boost::posix_time::to_simple_string(now) + ": " + l);
+		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
+		if (n != -1)
+		{
+			std::stringstream str; str << n;
+			message += " (" + str.str() + ")";
+		}
+		history.push_back(message);
 	}
 
 	StreamingManager::StreamingManager(CellArchiver* archivist)
@@ -77,7 +84,7 @@ namespace FusionEngine
 
 #ifndef STREAMING_USEMAP
 	//! Finds and removes entry for the given Entity from the given cell
-	static inline void removeEntityFromCell(Cell* cell, const Entity* const entity)
+	static inline void removeEntityFromCell(Cell* cell, const EntityPtr& entity)
 	{
 		auto newEnd = std::remove_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
@@ -86,7 +93,7 @@ namespace FusionEngine
 	}
 
 	//! Finds and removes the given entity from the given cell, starting the search from the end of the list
-	static inline void rRemoveEntityFromCell(Cell* cell, const Entity* const entity)
+	static inline void rRemoveEntityFromCell(Cell* cell, const EntityPtr& entity)
 	{
 		if (cell->objects.size() > 1)
 		{
@@ -100,7 +107,7 @@ namespace FusionEngine
 	}
 
 	//! Finds the entry for the given Entity in the given cell
-	static inline Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const Entity* const entity)
+	static inline Cell::CellEntryMap::iterator findEntityInCell(Cell* cell, const EntityPtr& entity)
 	{
 		return std::find_if(cell->objects.begin(), cell->objects.end(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
@@ -108,7 +115,7 @@ namespace FusionEngine
 	}
 
 	//! Finds the entry for the given Entity in the given cell, starting the search from the end of the list
-	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const Entity* const entity)
+	static inline Cell::CellEntryMap::iterator rFindEntityInCell(Cell* cell, const EntityPtr& entity)
 	{
 		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
@@ -117,14 +124,14 @@ namespace FusionEngine
 	}
 
 	//! Creates an entry for the given Entity in the given cell
-	static inline CellEntry& createEntry(Cell* cell, Entity* const entity, const CellEntry& copy_entry)
+	static inline CellEntry& createEntry(Cell* cell, const EntityPtr& entity, const CellEntry& copy_entry)
 	{
 		cell->objects.emplace_back( std::make_pair(entity, copy_entry) );
 		return cell->objects.back().second;
 	}
 
 	//! Creates an entry for the given Entity in the given cell
-	static inline CellEntry& createEntry(Cell* cell, Entity* const entity)
+	static inline CellEntry& createEntry(Cell* cell, const EntityPtr& entity)
 	{
 		return createEntry(cell, entity, CellEntry());
 	}
@@ -137,6 +144,7 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
 		}
 
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		m_Cameras.push_back(StreamingCamera());
 		auto& streamingCam = m_Cameras.back();
 
@@ -149,6 +157,7 @@ namespace FusionEngine
 
 	void StreamingManager::RemoveCamera(const CameraPtr &cam)
 	{
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		auto new_end = std::remove_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam));
 		m_Cameras.erase(new_end, m_Cameras.end());
 	}
@@ -218,6 +227,7 @@ namespace FusionEngine
 		{
 			Cell::mutex_t::scoped_try_lock test(m_TheVoid.mutex);
 			FSN_ASSERT(test);
+			lock.swap(test);
 			cell = &m_TheVoid;
 			entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
 		}
@@ -225,7 +235,7 @@ namespace FusionEngine
 #ifdef STREAMING_USEMAP
 		CellEntry &entry = cell->objects[entity.get()];
 #else
-		CellEntry &entry = createEntry(cell, entity.get());
+		CellEntry &entry = createEntry(cell, entity/*.get()*/);
 #endif
 		entry.x = entityPosition.x; entry.y = entityPosition.y;
 
@@ -254,19 +264,19 @@ namespace FusionEngine
 #ifdef STREAMING_USEMAP
 			cell->objects.erase(entity.get());
 #else
-			removeEntityFromCell(cell, entity.get());
+			removeEntityFromCell(cell, entity/*.get()*/);
 #endif
 		}
 		else
 		{
-			removeEntityFromCell(&m_TheVoid, entity.get());
+			removeEntityFromCell(&m_TheVoid, entity/*.get()*/);
 		}
 	}
 
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
 	{
 		FSN_ASSERT(entity);
-		Entity* entityKey = entity.get();
+		EntityPtr entityKey = entity;
 
 		// clamp the new position within bounds
 		Vector2 newPos = entity->GetPosition();
@@ -278,11 +288,12 @@ namespace FusionEngine
 		CellEntry *cellEntry = nullptr;
 		Cell::CellEntryMap::iterator _where;
 
+		Cell::mutex_t::scoped_lock currentCell_lock;
 		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
 		{
 			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
 
-			Cell::mutex_t::scoped_lock lock(currentCell->mutex);
+			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
 			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
 			FSN_ASSERT(currentCell->IsLoaded());
 #ifdef STREAMING_USEMAP
@@ -297,6 +308,7 @@ namespace FusionEngine
 		{
 			currentCell = &m_TheVoid;
 
+			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
 			_where = rFindEntityInCell(currentCell, entityKey);
 			FSN_ASSERT( _where != currentCell->objects.end() );
 			cellEntry = &_where->second;
@@ -306,15 +318,16 @@ namespace FusionEngine
 		{
 			currentCell = CellAtPosition(new_x, new_y);
 
-			Cell::mutex_t::scoped_try_lock lock(currentCell->mutex);
-			currentCell->objects.push_back(std::make_pair(entity.get(), CellEntry()));
+			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
+			currentCell->objects.push_back(std::make_pair(entity, CellEntry()));
 			cellEntry = &currentCell->objects.back().second;
 
 			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
 		}
 #endif
 
-		FSN_ASSERT( cellEntry != nullptr );
+		FSN_ASSERT(cellEntry != nullptr);
+		FSN_ASSERT(currentCell_lock && currentCell_lock.owns_lock());
 
 		bool move = !fe_fequal(cellEntry->x, new_x) || !fe_fequal(cellEntry->y, new_y);
 		bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
@@ -330,13 +343,16 @@ namespace FusionEngine
 		}
 		else
 		{
-			Cell::mutex_t::scoped_try_lock lock(newCell->mutex);
-			if (!lock || !newCell->IsLoaded())
+			Cell::mutex_t::scoped_try_lock newCell_lock(newCell->mutex);
+			if (!newCell_lock || !newCell->IsLoaded())
 			{
 				newCell = &m_TheVoid;
 				
-				Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
-				FSN_ASSERT(lock);
+				if (currentCell != &m_TheVoid)
+				{
+					newCell_lock = Cell::mutex_t::scoped_try_lock(m_TheVoid.mutex);
+					FSN_ASSERT(newCell_lock.owns_lock());
+				}
 			}
 			
 			{
@@ -362,8 +378,7 @@ namespace FusionEngine
 			// remove from current cell
 			if (currentCell != nullptr)
 			{
-				Cell::mutex_t::scoped_try_lock test(currentCell->mutex);
-				FSN_ASSERT(test);
+				FSN_ASSERT(currentCell_lock);
 #ifdef STREAMING_USEMAP
 				currentCell->objects.erase(_where);
 #else
@@ -405,7 +420,9 @@ namespace FusionEngine
 		{
 			auto& currentCell = m_Cells[entity->GetStreamingCellIndex()];
 
-			auto it = findEntityInCell(&currentCell, entity.get());
+			Cell::mutex_t::scoped_lock lock(currentCell.mutex);
+
+			auto it = findEntityInCell(&currentCell, entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
 			currentCell.EntryDeactivated();
@@ -420,7 +437,9 @@ namespace FusionEngine
 		{
 			auto& currentCell = m_TheVoid;
 
-			auto it = findEntityInCell(&currentCell, entity.get());
+			Cell::mutex_t::scoped_lock lock(currentCell.mutex);
+
+			auto it = findEntityInCell(&currentCell, entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
 			currentCell.EntryDeactivated();
@@ -430,6 +449,8 @@ namespace FusionEngine
 	void StreamingManager::activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp)
 	{
 		FSN_ASSERT(cell);
+
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 
 		Vector2 entityPosition = entity->GetPosition();
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
@@ -471,7 +492,7 @@ namespace FusionEngine
 #ifdef STREAMING_USEMAP
 		auto _where = cell.objects.find(entity.get());
 #else
-		auto _where = findEntityInCell(&cell, entity.get());
+		auto _where = findEntityInCell(&cell, entity/*.get()*/);
 #endif
 		if (_where == cell.objects.end()) return;
 		CellEntry &cellEntry = _where->second;
@@ -638,7 +659,7 @@ namespace FusionEngine
 					{
 						if (!cellEntry.active)
 						{
-							ActivateEntity(cell, cell_it->first->shared_from_this(), cellEntry);
+							ActivateEntity(cell, cell_it->first/*->shared_from_this()*/, cellEntry);
 						}
 						else
 						{
@@ -773,6 +794,7 @@ namespace FusionEngine
 								end = m_TheVoid.objects.end();
 								if (newEntry.active)
 								{
+									m_TheVoid.AddHist("Entry transferred to correct cell:");
 									m_TheVoid.EntryDeactivated();
 								}
 							}
@@ -792,6 +814,7 @@ namespace FusionEngine
 		// Used to process The Void
 		std::list<Vector2> allStreamPositions;
 
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		auto it = m_Cameras.begin();
 		while (it != m_Cameras.end())
 		{

@@ -95,8 +95,11 @@ namespace FusionEngine
 		{
 			size_t length;
 			stream.Read(length);
-			out_value.resize(length);
-			stream.Read(&out_value[0]);
+			if (length > 0)
+			{
+				out_value.resize(length);
+				stream.Read(&out_value[0]);
+			}
 		}
 
 		template <>

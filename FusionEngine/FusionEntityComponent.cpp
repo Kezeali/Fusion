@@ -38,13 +38,13 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(std::find(m_Properties.begin(), m_Properties.end(), prop) == m_Properties.end());
 		m_Properties.push_back(prop);
-		m_ChangedProperties->push(prop);
+		m_ChangedProperties->push(std::make_pair(m_PropLock, prop));
 	}
 
 	void IComponent::OnPropertyChanged(IComponentProperty* prop)
 	{
 		FSN_ASSERT(m_ChangedProperties);
-		m_ChangedProperties->push(prop);
+		m_ChangedProperties->push(std::make_pair(m_PropLock, prop));
 	}
 
 	void IComponent::SynchronisePropertiesNow()

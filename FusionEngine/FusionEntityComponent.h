@@ -71,8 +71,14 @@ namespace FusionEngine
 {
 
 	class IComponentProperty;
+	class IComponent;
 
-	typedef tbb::concurrent_queue<IComponentProperty*> PropChangedQueue;
+	struct PropLock
+	{
+		PropLock() {}
+	};
+
+	typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
 	
 	class IComponent : public RefCounted
 	{
@@ -83,6 +89,7 @@ namespace FusionEngine
 			m_InterfacesInitialised(false)
 		{
 			m_Ready = NotReady;
+			m_PropLock = std::make_shared<PropLock>();
 		}
 		//! Destructor
 		virtual ~IComponent() {}
@@ -123,6 +130,8 @@ namespace FusionEngine
 			m_ChangedProperties = q;
 			InitInterfaces();
 		}
+
+		std::shared_ptr<PropLock> m_PropLock;
 
 		//! Possible ready states
 		enum ReadyState /*: uint32_t*/ { NotReady, Preparing, Ready, Active };
@@ -170,7 +179,7 @@ namespace FusionEngine
 		std::string m_Identifier; // How this component is identified within the entity
 
 		std::vector<IComponentProperty*> m_Properties;
-		tbb::concurrent_queue<IComponentProperty*> *m_ChangedProperties;
+		PropChangedQueue *m_ChangedProperties;
 
 		tbb::atomic<ReadyState> m_Ready;
 

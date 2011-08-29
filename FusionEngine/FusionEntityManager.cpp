@@ -442,19 +442,19 @@ namespace FusionEngine
 		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
 
-		if (entity->GetID() != 0)
-		{
-			IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
-			if (_where != m_Entities.end())
-				FSN_EXCEPT(ExCode::InvalidArgument, "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
+		//if (entity->GetID() != 0)
+		//{
+		//	IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
+		//	if (_where != m_Entities.end())
+		//		FSN_EXCEPT(ExCode::InvalidArgument, "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
 
-			//m_Entities.insert(_where, std::make_pair( entity->GetID(), entity ));
-		}
-		else
-			//m_PseudoEntities.insert(entity);
+		//	m_Entities.insert(_where, std::make_pair( entity->GetID(), entity ));
+		//}
+		//else
+		//	m_PseudoEntities.insert(entity);
 
-		if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
-			//m_EntitiesByName[entity->GetName()] = entity;
+		//if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
+		//	m_EntitiesByName[entity->GetName()] = entity;
 
 		//m_StreamingManager->AddEntity(entity);
 		m_EntitySynchroniser->OnEntityAdded(entity);

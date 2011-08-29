@@ -188,7 +188,7 @@ namespace FusionEngine
 			out.write(&id, sizeof(ObjectID));
 
 			auto& components = entity->GetComponents();
-			size_t numComponents = components.size();
+			size_t numComponents = components.size() - 1; // - transform
 
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
 			out.write_string_a(transform->GetType());
@@ -204,17 +204,21 @@ namespace FusionEngine
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			{
 				auto& component = *it;
-				out.write_string_a(component->GetType());
+				if (component.get() != transform)
+					out.write_string_a(component->GetType());
 			}
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			{
 				auto& component = *it;
-				RakNet::BitStream stream;
-				component->SerialiseContinuous(stream);
-				component->SerialiseOccasional(stream, true);
+				if (component.get() != transform)
+				{
+					RakNet::BitStream stream;
+					component->SerialiseContinuous(stream);
+					component->SerialiseOccasional(stream, true);
 
-				out.write_uint32(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+					out.write_uint32(stream.GetNumberOfBytesUsed());
+					out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+				}
 			}
 		}
 
@@ -239,6 +243,9 @@ namespace FusionEngine
 			}
 
 			auto entity = std::make_shared<Entity>(&m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
+			entity->SetID(id);
+
+			transform->SynchronisePropertiesNow();
 
 			size_t numComponents;
 			in.read(&numComponents, sizeof(size_t));
@@ -248,36 +255,41 @@ namespace FusionEngine
 				auto& component = m_Instantiator->m_Factory->InstanceComponent(type);
 				entity->AddComponent(component);
 			}
-			auto& components = entity->GetComponents();
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			if (numComponents != 0)
 			{
-				auto& component = *it;
-				
-				auto dataLen = in.read_uint32();
-				std::vector<unsigned char> data(dataLen);
-				in.read(data.data(), data.size());
+				auto& components = entity->GetComponents();
+				auto it = components.begin(), end = components.end();
+				for (++it; it != end; ++it)
+				{
+					auto& component = *it;
+					FSN_ASSERT(component != transform);
 
-				RakNet::BitStream stream(data.data(), data.size(), false);
+					auto dataLen = in.read_uint32();
+					std::vector<unsigned char> data(dataLen);
+					in.read(data.data(), data.size());
 
-				component->DeserialiseContinuous(stream);
-				component->DeserialiseOccasional(stream, true);
+					RakNet::BitStream stream(data.data(), data.size(), false);
+
+					component->DeserialiseContinuous(stream);
+					component->DeserialiseOccasional(stream, true);
+				}
 			}
 			
 			return entity;
 		}
 
-		CL_IODevice GetFile(size_t cell_index)
+		CL_IODevice GetFile(size_t cell_index, bool write)
 		{
 			try
 			{
 				std::stringstream str; str << cell_index;
 				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				auto file = vdir.open_file("cache/" + str.str(), CL_File::open_always);//"cache/partialsave/"
+				auto file = vdir.open_file("cache/" + str.str(), CL_File::open_always, write ? CL_File::access_write : CL_File::access_read);//"cache/partialsave/"
 				return file;
 			}
 			catch (CL_Exception& ex)
 			{
-				SendToConsole(ex.what());
+				//SendToConsole(ex.what());
 				return CL_IODevice();
 			}
 		}
@@ -307,7 +319,7 @@ namespace FusionEngine
 								try
 								{
 									//std::vector<EntityPtr> newArchive;
-									auto file = GetFile(i);
+									auto file = GetFile(i, true);
 									auto numEntries = cell->objects.size();
 									file.write(&numEntries, sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
@@ -316,7 +328,7 @@ namespace FusionEngine
 										{
 											//boost::this_thread::sleep(boost::posix_time::microsec(60000));
 											//newArchive.push_back(it->first->shared_from_this());
-											Save(file, it->first->shared_from_this());
+											Save(file, it->first);
 										}
 									}
 
@@ -341,7 +353,7 @@ namespace FusionEngine
 							{
 								std::stringstream str; str << i;
 								SendToConsole("Cell still in use " + str.str());
-								writesToRetry.push_back(toWrite);
+								//writesToRetry.push_back(toWrite);
 							}
 							cell->waiting = Cell::Ready;
 							//cell->mutex.unlock();
@@ -375,7 +387,7 @@ namespace FusionEngine
 								{
 									//boost::this_thread::sleep(boost::posix_time::microsec(50000));
 									//auto archivedCellEntry = m_Archived.find(i);
-									auto file = GetFile(i);
+									auto file = GetFile(i, false);
 
 									//if (archivedCellEntry != m_Archived.end())
 									if (!file.is_null() && file.get_size() > 0)
@@ -387,12 +399,16 @@ namespace FusionEngine
 										{
 											//boost::this_thread::sleep(boost::posix_time::microsec(50000));
 											//auto& archivedEntity = *it;
-											auto& archivedEntity = Load(file);
+											auto archivedEntity = Load(file);
+
 											Vector2 pos = archivedEntity->GetPosition();
 											// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
 											CellEntry entry;
 											entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
-											cell->objects.push_back(std::make_pair(archivedEntity.get(), std::move(entry)));
+
+											archivedEntity->SetStreamingCellIndex(i);
+
+											cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
 										}
 
 										std::stringstream str; str << i;
@@ -413,7 +429,7 @@ namespace FusionEngine
 								{
 									std::stringstream str; str << i;
 									SendToConsole("Exception streaming in cell " + str.str());
-									readsToRetry.push_back(toRead);
+									//readsToRetry.push_back(toRead);
 								}
 							}
 							cell->waiting = Cell::Ready;
@@ -428,20 +444,20 @@ namespace FusionEngine
 				{
 					retrying = true;
 					for (auto it = writesToRetry.begin(), end = writesToRetry.end(); it != end; ++it)
-						m_WriteQueue.push(std::move(*it));
+						m_WriteQueue.push(*it);
 					writesToRetry.clear();
 				}
 				if (!readsToRetry.empty())
 				{
 					retrying = true;
 					for (auto it = readsToRetry.begin(), end = readsToRetry.end(); it != end; ++it)
-						m_ReadQueue.push(std::move(*it));
+						m_ReadQueue.push(*it);
 					readsToRetry.clear();
 				}
 
-				std::stringstream str;
+				/*std::stringstream str;
 				str << m_Archived.size();
-				SendToConsole(str.str() + " cells archived");
+				SendToConsole(str.str() + " cells archived");*/
 			}
 		}
 
@@ -768,7 +784,7 @@ public:
 
 				std::vector<std::shared_ptr<Entity>> entities;
 
-				tbb::concurrent_queue<IComponentProperty*> &propChangedQueue = entityManager->m_PropChangedQueue;
+				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
 
 				float xtent = 1.f;
 				Vector2 position(0.0f, 0.0f);
@@ -987,11 +1003,15 @@ public:
 					}
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?
-					IComponentProperty *changed;
+					PropChangedQueue::value_type changed;
 					while (propChangedQueue.try_pop(changed))
 					{
-						changed->Synchronise();
-						changed->FireSignal();
+						auto com = changed.first.lock();
+						if (com)
+						{
+							changed.second->Synchronise();
+							changed.second->FireSignal();
+						}
 					}
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))

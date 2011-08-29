@@ -144,22 +144,29 @@ namespace FusionEngine
 			gravityScale);
 
 		if (changes[PropsIdx::Active])
-			m_Body->SetActive(active);
+			//m_Body->SetActive(active);
+			SetActive(active);
 		if (changes[PropsIdx::SleepingAllowed])
-			m_Body->SetSleepingAllowed(sleepingAllowed);
+			//m_Body->SetSleepingAllowed(sleepingAllowed);
+			SetSleepingAllowed(sleepingAllowed);
 		if (changes[PropsIdx::Awake])
-			m_Body->SetAwake(awake);
+			m_Body ? m_Body->SetAwake(awake) : m_Def.awake = awake;
 		if (changes[PropsIdx::Bullet])
-			m_Body->SetBullet(bullet);
+			//m_Body->SetBullet(bullet);
+			SetBullet(bullet);
 		if (changes[PropsIdx::FixedRotation])
-			m_Body->SetFixedRotation(fixedrotation);
+			//m_Body->SetFixedRotation(fixedrotation);
+			SetFixedRotation(fixedrotation);
 
 		if (changes[PropsIdx::LinearDamping])
-			m_Body->SetLinearDamping(linearDamping);
+			//m_Body->SetLinearDamping(linearDamping);
+			SetLinearDamping(linearDamping);
 		if (changes[PropsIdx::AngularDamping])
-			m_Body->SetAngularDamping(angularDamping);
+			//m_Body->SetAngularDamping(angularDamping);
+			SetAngularDamping(angularDamping);
 		if (changes[PropsIdx::GravityScale])
-			m_Body->SetGravityScale(gravityScale);
+			//m_Body->SetGravityScale(gravityScale);
+			SetGravityScale(gravityScale);
 	}
 
 	Box2DFixture::Box2DFixture()

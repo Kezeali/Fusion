@@ -208,18 +208,19 @@ namespace FusionEngine
 		while (it != end)
 		{
 			ResourceDataPtr &res = *it;
+			if (!res->IsLoaded() && res->RequiresGC())
+			{
+				CL_MutexSection lock(&m_LoaderMutex);
+				auto _where = m_ResourceLoaders.find(res->GetType());
+				if (_where != m_ResourceLoaders.end())
+				{
+					ResourceLoader& loader = _where->second;
+					loader.gcload(res.get(), m_GC, loader.userData);
+				}
+			}
 			if (res->IsLoaded())
 			{
-				if (res->RequiresGC())
-				{
-					CL_MutexSection lock(&m_LoaderMutex);
-					auto _where = m_ResourceLoaders.find(res->GetType());
-					if (_where != m_ResourceLoaders.end())
-					{
-						ResourceLoader& loader = _where->second;
-						loader.gcload(res.get(), m_GC, loader.userData);
-					}
-				}
+				
 				res->SigLoaded(res);
 				res->SigLoaded.disconnect_all_slots();
 
@@ -237,11 +238,20 @@ namespace FusionEngine
 	void ResourceManager::UnloadUnreferencedResources()
 	{
 		{
-			CL_MutexSection lock(&m_ToUnloadMutex);
+			CL_MutexSection lock1(&m_ToUnloadMutex);
+			CL_MutexSection lock2(&m_UnreferencedMutex);
 			for (UnreferencedResourceSet::iterator it = m_Unreferenced.begin(), end = m_Unreferenced.end(); it != end; ++it)
 			{
-				m_ToUnload.push_back(*it);
-				(*it)->_setQueuedToUnload(true);
+				auto& res = *it;
+				if (!res->RequiresGC())
+				{
+					m_ToUnload.push_back(res);
+					res->_setQueuedToUnload(true);
+				}
+				else
+				{
+					unloadResource(ResourceDataPtr(res));
+				}
 			}
 		}
 		m_Unreferenced.clear();
@@ -257,14 +267,11 @@ namespace FusionEngine
 
 		boost::signals2::connection onLoadConnection;
 
-		if (resource->IsLoaded()) // TODO: only set IsLoaded to true after RequiresGC is false
+		if (resource->IsLoaded()) 
 		{
 			if (on_load_callback)
 			{
-				if (!resource->RequiresGC())
-					on_load_callback(resource);
-				else
-					onLoadConnection = resource->SigLoaded.connect(on_load_callback);
+				on_load_callback(resource);
 			}
 		}
 		else
@@ -310,13 +317,14 @@ namespace FusionEngine
 		m_Clearing = true;
 		for (ResourceMap::iterator it = m_Resources.begin(), end = m_Resources.end(); it != end; ++it)
 		{
-			unloadResource(it->second, true);
+			unloadResource(it->second);
 		}
 		// There may still be ResourcePointers holding shared_ptrs to the
 		//  ResourceContainers held in m_Resources, but they will simply
 		//  be invalidated by the previous step. In any case, the following
 		//  step means all ResourceContainers will be deleated ASAP.
 		m_Resources.clear();
+		CL_MutexSection lock(&m_UnreferencedMutex);
 		m_Unreferenced.clear();
 		m_Clearing = false;
 	}
@@ -428,6 +436,7 @@ namespace FusionEngine
 	{
 		if (!m_Clearing)
 		{
+			CL_MutexSection lock(&m_UnreferencedMutex);
 			m_Unreferenced.insert(resource);
 			resource->NoReferences = ResourceContainer::ReleasedFn();
 		}
@@ -449,6 +458,7 @@ namespace FusionEngine
 			// Remove matching entry from Unreferenced
 			if (wasUnused)
 			{
+				CL_MutexSection lock(&m_UnreferencedMutex);
 				m_Unreferenced.erase(resource.get());
 				resource->NoReferences = std::bind(&ResourceManager::_resourceUnreferenced, this, _1);
 			}
@@ -501,7 +511,7 @@ namespace FusionEngine
 			unloadResource(_where->second);
 	}
 
-	void ResourceManager::unloadResource(ResourceDataPtr &resource, bool quickload)
+	void ResourceManager::unloadResource(ResourceDataPtr &resource)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 

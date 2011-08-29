@@ -124,8 +124,7 @@ namespace FusionEngine
 			auto _where = std::find(m_Drawables.begin(), m_Drawables.end(), drawable);
 			if (_where != m_Drawables.end())
 			{
-				_where->swap(m_Drawables.back());
-				m_Drawables.pop_back();
+				m_Drawables.erase(_where);
 			}
 		}
 	}

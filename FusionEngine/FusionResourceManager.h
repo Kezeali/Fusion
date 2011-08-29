@@ -186,6 +186,7 @@ namespace FusionEngine
 
 		bool m_Clearing;
 
+		CL_Mutex m_UnreferencedMutex;
 		UnreferencedResourceSet m_Unreferenced;
 
 		CL_Mutex m_ToDeliverMutex;
@@ -205,7 +206,7 @@ namespace FusionEngine
 		void loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit);
 
 		void getAndUnloadResource(const std::string &path);
-		void unloadResource(ResourceDataPtr &resource, bool unload_quickload_data = false);
+		void unloadResource(ResourceDataPtr &resource);
 	};
 
 }

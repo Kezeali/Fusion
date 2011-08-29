@@ -77,7 +77,7 @@ int PhysFSIODeviceProvider::receive(void *buffer, int size, bool receive_all)
 
 	PHYSFS_sint64 lenRet = PHYSFS_read(m_Handle, buffer, 1, size);
 	if (lenRet == -1)
-		throw CL_Exception("PhysFS: Failed to read file");
+		throw CL_Exception("PhysFS: Failed to read file"  + std::string(PHYSFS_getLastError()));
 
 	return (int)lenRet;
 }

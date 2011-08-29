@@ -166,13 +166,13 @@ namespace FusionEngine
 		typedef std::map<Entity*, CellEntry> CellEntryMap;
 		CellEntryMap objects;
 #else
-		typedef std::pair<Entity*, CellEntry> EntityEntryPair;
+		typedef std::pair<EntityPtr, CellEntry> EntityEntryPair;
 		typedef std::vector<EntityEntryPair> CellEntryMap;
 		CellEntryMap objects;
 #endif
 		tbb::atomic<unsigned int> active_entries;
-		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryDeactivated"); }
-		void EntryActivated() { ++active_entries; AddHist("EntryActivated"); }
+		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryDeactivated", active_entries); }
+		void EntryActivated() { ++active_entries; AddHist("EntryActivated", active_entries); }
 		bool IsActive() const { return active_entries > 0; }
 
 		tbb::atomic<bool> loaded;
@@ -186,8 +186,9 @@ namespace FusionEngine
 		typedef boost::recursive_mutex mutex_t;
 		mutex_t mutex;
 
+		mutex_t historyMutex;
 		std::vector<std::string> history;
-		void AddHist(const std::string& hist);
+		void AddHist(const std::string& hist, unsigned int num = -1);
 	};
 
 	class CellArchiver
@@ -297,6 +298,9 @@ namespace FusionEngine
 				const CameraPtr& observedCamera;
 			};
 		};
+
+		typedef boost::recursive_mutex CamerasMutex_t;
+		CamerasMutex_t m_CamerasMutex;
 
 		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
 		std::vector< StreamingCamera > m_Cameras;

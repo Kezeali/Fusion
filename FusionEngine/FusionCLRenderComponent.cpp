@@ -75,6 +75,8 @@ namespace FusionEngine
 			m_SpriteDef.reset(new SpriteDefinition2(m_ImageResource, m_AnimationResource));
 			m_RecreateSprite = true;
 		}
+		else
+			SendToConsole("Failed to load?");
 	}
 
 	void CLSprite::Update(unsigned int tick, const float elapsed, const float alpha)

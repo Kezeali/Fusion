@@ -13,6 +13,11 @@ class TestB : ScriptComponent
 		go = false;
 		@setcampos_con = null;
 	}
+	
+	~TestB()
+	{
+		console.println("--~TestB--");
+	}
 
 	uint frames;
 	uint foo;
@@ -23,7 +28,7 @@ class TestB : ScriptComponent
 	
 	void onInput(InputEvent@ ev)
 	{
-		//console.println(ev.inputName);
+		console.println(ev.inputName);
 		if (ev.inputName == "thrust")
 		{
 			//console.println("at " + speed);
@@ -77,7 +82,7 @@ class TestB : ScriptComponent
 		
 		if (entity.input.getButton("thrust"))
 		{
-				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
+			irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 		}
 	}
 }

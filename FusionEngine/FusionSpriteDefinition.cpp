@@ -260,20 +260,27 @@ namespace FusionEngine
 
 	void SpriteDefinition2::GenerateDescription()
 	{
-		if (!m_Animation.IsLoaded())
+		if (m_Texture.IsLoaded() && !m_Texture.Get()->is_null())
 		{
-			m_Description.add_frame(*m_Texture.Get());
+			if (!m_Animation.IsLoaded())
+			{
+				m_Description.add_frame(*m_Texture.Get());
+			}
+			else
+			{
+				auto& frames = m_Animation->GetFrames();
+				m_Description.add_frames(*m_Texture.Get(), frames.data(), frames.size());
+
+				auto& frameDelays = m_Animation->GetFrameDelays();
+				for (auto it = frameDelays.begin(), end = frameDelays.end(); it != end; ++it)
+				{
+					m_Description.set_frame_delay(it->first, it->second);
+				}
+			}
 		}
 		else
 		{
-			auto& frames = m_Animation->GetFrames();
-			m_Description.add_frames(*m_Texture.Get(), frames.data(), frames.size());
-
-			auto& frameDelays = m_Animation->GetFrameDelays();
-			for (auto it = frameDelays.begin(), end = frameDelays.end(); it != end; ++it)
-			{
-				m_Description.set_frame_delay(it->first, it->second);
-			}
+			FSN_EXCEPT(InvalidArgumentException, "Tried to generate a sprite using an unloaded texture");
 		}
 	}
 

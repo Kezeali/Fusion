@@ -75,6 +75,7 @@ namespace FusionEngine
 	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		LoadImageResource(resource, vdir, user_data);
+		resource->_setValid(false);
 		resource->_setRequiresGC(true);
 	}
 
@@ -84,23 +85,24 @@ namespace FusionEngine
 		{
 			resource->_setValid(false);
 			if (resource->RequiresGC())
-				delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
-			else
 				delete static_cast<CL_Texture*>(resource->GetDataPtr());
+			else
+				delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			resource->_setRequiresGC(false);
 		}
 		resource->SetDataPtr(nullptr);
 	}
 
 	void LoadTextureResourceIntoGC(ResourceContainer* resource, CL_GraphicContext& gc, void* user_data)
 	{
-		if (resource->RequiresGC())
+		if (!resource->IsLoaded() && resource->RequiresGC())
 		{
 			CL_PixelBuffer* pre_gc_data = static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 			CL_Texture* data = new CL_Texture(gc, pre_gc_data->get_width(), pre_gc_data->get_height(), pre_gc_data->get_format());
 			data->set_image(*pre_gc_data);
 			delete pre_gc_data;
 			resource->SetDataPtr(data);
-			resource->_setRequiresGC(false);
+			//resource->_setRequiresGC(false);
 			resource->_setValid(true);
 		}
 	}
