@@ -156,12 +156,12 @@ namespace FusionEngine
 		//////////////
 		// Comparison
 		//! Equivalancy operator
-		bool operator==(const Vector2T<T> &other) const
+		bool operator==(const Vector2T &other) const
 		{
 			return ((x == other.x) && (y == other.y));
 		}
 		//! Not-equals operator
-		bool operator!=(const Vector2T<T> &other) const
+		bool operator!=(const Vector2T &other) const
 		{
 			return (x != other.x) || (y != other.y);
 		}
@@ -169,19 +169,19 @@ namespace FusionEngine
 		//////////////
 		// Arithmatic
 		//! Addition operator
-		Vector2T<T> operator+(const Vector2T<T> &other) const
+		Vector2T operator+(const Vector2T &other) const
 		{
-			return Vector2T<T>(x + other.x, y + other.y);
+			return Vector2T(x + other.x, y + other.y);
 		}
 		//! Subtraction operator
-		Vector2T<T> operator-(const Vector2T<T> &other) const
+		Vector2T operator-(const Vector2T &other) const
 		{
-			return Vector2T<T>(x - other.x, y - other.y);
+			return Vector2T(x - other.x, y - other.y);
 		}
 		//! Multiplication operator
-		Vector2T<T> operator*(T scalar) const
+		Vector2T operator*(T scalar) const
 		{
-			return Vector2T<T>(scalar * x, scalar * y);
+			return Vector2T(scalar * x, scalar * y);
 		}
 		//! Division operator
 		//Vector2T operator/ (float scalar) const;
@@ -190,12 +190,12 @@ namespace FusionEngine
 		 * For Scalar * Vector2 (scalar on LHS)
 		 * \todo Make operator* (scalar * vector) work
 		 */
-		friend Vector2T<T> operator*(T scalar, const Vector2T<T> &vector);
+		friend Vector2T operator*(T scalar, const Vector2T &vector);
 
 		//! Negation operator
-		Vector2T<T> operator-() const
+		Vector2T operator-() const
 		{
-			return Vector2T<T>(-x, -y);
+			return Vector2T(-x, -y);
 		}
 
 		//! Returns reference to n-th ordinate (0 == x, 1 == y).
@@ -242,17 +242,17 @@ namespace FusionEngine
 			return (float)std::sqrt((float)(x*x + y*y));
 		}
 		//! Returns the dot product
-		float dot(const Vector2T<T>& other) const
+		float dot(const Vector2T& other) const
 		{
 			return (float)(x*other.x + y*other.y);  
 		}
 		//! Returns the cross product
-		float cross(const Vector2T<T>& other) const
+		float cross(const Vector2T& other) const
 		{
 			return (float)(x*other.y - y*other.x);
 		}
 		//! Projects this vector onto the given one
-		Vector2T<T> project(const Vector2T<T>& other) const
+		Vector2T project(const Vector2T& other) const
 		{
 			//       v1 * (v1 dot v2 / v2 dot v2)
 			return ( (*this) * (this->dot(other) / other.dot(other)) );
@@ -262,13 +262,13 @@ namespace FusionEngine
 		 * Uses complex multiplication to rotate (and scale) this by the
 		 * given vector.
 		 */
-		void rotate(const Vector2T<T>& other)
+		void rotate(const Vector2T& other)
 		{
 			x = (x   * other.x - y   * other.y);
 			y = (x   * other.y + y   * other.x);
 		}
 		//! Inverse of Vector2T#rotate()
-		void unrotate(const Vector2T<T>& other)
+		void unrotate(const Vector2T& other)
 		{
 			x = (x   * other.x + y   * other.y);
 			y = (x   * other.y - y   * other.x);
@@ -278,7 +278,7 @@ namespace FusionEngine
 		 * Returns the angle <i>from</i> the given vector; i.e. if the given
 		 * other vector is ahead of this, the angle returned will be negative.
 		 */
-		float angleFrom(const Vector2T<T>& other)
+		float angleFrom(const Vector2T& other)
 		{
 			float cosine = this->x * other.x + this->y * other.y / (this->length() * other.length());
 			// rounding errors might make dotproduct out of range for cosine
@@ -308,11 +308,11 @@ namespace FusionEngine
 		/*!
 		* \returns This vector, normalised
 		*/
-		Vector2T<T> normalized()
+		Vector2T normalized()
 		{
-			Vector2T<T> u;
-			float l = length();
-			if (l!=0)
+			Vector2T u;
+			auto l = length();
+			if (l != 0)
 			{
 				u.x = this->x/l;
 				u.y = this->y/l;
@@ -320,9 +320,9 @@ namespace FusionEngine
 			return u;
 		}
 		//! Returns a vector perpendicular to this
-		Vector2T<T> perpendicular() const
+		Vector2T perpendicular() const
 		{
-			return Vector2T<T>( -y, x );
+			return Vector2T( -y, x );
 		}
 		//! Returns the normal to this vector
 		/*!
@@ -330,16 +330,16 @@ namespace FusionEngine
 		 * <br>
 		 * (y,-x)/sqrt(x^2+y^2)
 		 */
-		Vector2T<T> normal() const
+		Vector2T normal() const
 		{
 			float l = length();
-			return Vector2T<T>( y/l, -x/l );
+			return Vector2T( y/l, -x/l );
 		}
 
-		//! Returns the distance between two vectors as points
-		static float distance(const Vector2T<T>& p1, const Vector2T<T>& p2)
+		//! Returns the distance between two points
+		static float distance(const Vector2T& from, const Vector2T& to)
 		{
-			return (p1-p2).length();
+			return (to - from).length();
 		}
 
 		//! Compute minimum distance from a point to a line segment
@@ -363,16 +363,16 @@ namespace FusionEngine
 		 * \param[out] segmentProjection
 		 * The point on the line chosen as the nearest point to the one given
 		 */
-		static float pointToSegmentDistance(const Vector2T<T>& point,
-			const Vector2T<T>& ep0,
-			const Vector2T<T>& ep1,
+		static float pointToSegmentDistance(const Vector2T& point,
+			const Vector2T& ep0,
+			const Vector2T& ep1,
 			float segmentLength,
-			const Vector2T<T>& segmentNormal,
+			const Vector2T& segmentNormal,
 			float& segmentProjection,
-			Vector2T<T>& chosen)
+			Vector2T& chosen)
 		{
 			// convert the test point to be "local" to ep0
-			Vector2T<T> local = point - ep0;
+			Vector2T local = point - ep0;
 
 			// find the projection of "local" onto "segmentNormal"
 			segmentProjection = segmentNormal.dot(local);
@@ -383,19 +383,19 @@ namespace FusionEngine
 			{
 				chosen = ep0;
 				segmentProjection = 0;
-				return Vector2T<T>::distance(point, ep0);
+				return Vector2T::distance(point, ep0);
 			}
 			if (segmentProjection > segmentLength)
 			{
 				chosen = ep1;
 				segmentProjection = segmentLength;
-				return Vector2T<T>::distance(point, ep1);
+				return Vector2T::distance(point, ep1);
 			}
 
 			// otherwise nearest point is projection point on segment
 			chosen = segmentNormal * segmentProjection;
 			chosen +=  ep0;
-			return Vector2T<T>::distance(point, chosen);
+			return Vector2T::distance(point, chosen);
 		}
 	};
 

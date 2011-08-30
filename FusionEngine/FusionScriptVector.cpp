@@ -196,23 +196,33 @@ namespace FusionEngine { namespace Scripting
 #endif
 		r = engine->RegisterObjectMethod("Vector", "Vector &opAssign(const Vector &in)", asMETHODPR(Vector2, operator =, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "Vector &opAddAssign(const Vector &in)", asMETHODPR(Vector2, operator+=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector &opSubAssign(const Vector &in)", asMETHODPR(Vector2, operator-=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector &opMulAssign(const Vector &in)", asMETHODPR(Vector2, operator*=, (float), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 #ifdef FSN_REFCOUNTED_VECTOR
 		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(RefVecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 #else
 		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in)", asFUNCTION(VecopAdd), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "Vector opSub(const Vector &in)" ,asMETHODPR(Vector2, operator-, (const Vector2&) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opSub(const Vector &in)", asMETHODPR(Vector2, operator-, (const Vector2&) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opMul(const Vector &in)", asMETHOD(Vector2, operator*), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		
+		r = engine->RegisterObjectMethod("Vector", "Vector opNeg()", asMETHODPR(Vector2, operator-, (void) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 #endif
 
+		r = engine->RegisterObjectMethod("Vector", "bool opEquals(const Vector &in)", asMETHOD(Vector2, operator==), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+
 		// Register the object methods
-		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2, length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float squared_length() const", asMETHOD(Vector2, squared_length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Vector", "Vector normalise() const", asMETHOD(Vector2, normalized), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector normalised() const", asMETHOD(Vector2, normalized), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float dot(const Vector &in) const", asMETHOD(Vector2, dot), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterObjectMethod("Vector", "void set_x(float)", asMETHOD(Vector2,set_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "void set_y(float)", asMETHOD(Vector2,set_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2, get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2, get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Vector", "void set_x(float)", asMETHOD(Vector2, set_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "void set_y(float)", asMETHOD(Vector2, set_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		return typeId;
 	}

@@ -946,9 +946,9 @@ namespace FusionEngine
 		
 		for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
 		{
-			std::stringstream inactivestr;
-			inactivestr << it->left << ", " << it->top << ", " << it->right << ", " << it->bottom;
-			SendToConsole("Deactivated " + inactivestr.str());
+			//std::stringstream inactivestr;
+			//inactivestr << it->left << ", " << it->top << ", " << it->right << ", " << it->bottom;
+			//SendToConsole("Deactivated " + inactivestr.str());
 			deactivateCells(*it);
 		}
 
@@ -962,12 +962,12 @@ namespace FusionEngine
 			if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
 			{
 
-				if (!clippedInactiveRanges.empty())
-				{
-					std::stringstream activestr;
-					activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
-					SendToConsole("Activated " + activestr.str());
-				}
+				//if (!clippedInactiveRanges.empty())
+				//{
+				//	std::stringstream activestr;
+				//	activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
+				//	SendToConsole("Activated " + activestr.str());
+				//}
 
 			unsigned int iy = (unsigned int)activeRange.top;
 			unsigned int ix = (unsigned int)activeRange.left;

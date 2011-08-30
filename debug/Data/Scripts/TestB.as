@@ -28,7 +28,7 @@ class TestB : ScriptComponent
 	
 	void onInput(InputEvent@ ev)
 	{
-		console.println(ev.inputName);
+		//console.println(ev.inputName);
 		if (ev.inputName == "thrust")
 		{
 			//console.println("at " + speed);
