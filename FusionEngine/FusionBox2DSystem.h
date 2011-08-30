@@ -77,18 +77,18 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
+		ComponentPtr InstantiateComponent(const std::string& type);
+		ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
-		void OnActivation(const std::shared_ptr<IComponent>& component);
-		void OnDeactivation(const std::shared_ptr<IComponent>& component);
+		void OnActivation(const ComponentPtr& component);
+		void OnDeactivation(const ComponentPtr& component);
 
 		std::vector<ISystemTask*> GetTasks();
 
-		std::vector<std::shared_ptr<Box2DBody>> m_BodiesToCreate;
-		std::vector<std::shared_ptr<Box2DBody>> m_ActiveBodies;
+		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
+		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
 
 		b2World* m_World;
 		Box2DTask* m_B2DTask;

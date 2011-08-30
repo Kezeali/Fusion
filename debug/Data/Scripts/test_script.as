@@ -2,6 +2,7 @@
 #uses IRigidBody
 #uses ISprite
 #uses TestB script_b
+#uses PseudoI notai
 
 class Test : ScriptComponent
 {
@@ -15,7 +16,7 @@ class Test : ScriptComponent
 		
 		spawnerY = 0;
 		
-		dirtSize = 16;
+		dirtSize = 32;
 	}
 
 	uint frames;
@@ -74,7 +75,7 @@ class Test : ScriptComponent
 			@entityB = EntityWrapper(newEnt);
 	}
 	
-	void createPI(Vector &in pos)
+	void createPI(Vector &in pos, Entity target)
 	{
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
@@ -82,11 +83,14 @@ class Test : ScriptComponent
 		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
-		ontology.addComponent(newEnt, "PseudoI", "");
+		ontology.addComponent(newEnt, "PseudoI", "notai");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57;
+		
+		EntityWrapper@ wr = EntityWrapper(newEnt);
+		wr.notai.target = target;
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
 		
@@ -160,7 +164,7 @@ class Test : ScriptComponent
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
 			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
-			//createPI(Vector(0.3f, 0.3f));
+			createPI(Vector(0.3f, 0.3f), entityA.getRaw());
 			
 			entityA.script_b.speed = 3.0f;
 
@@ -194,8 +198,9 @@ class Test : ScriptComponent
 		}
 		//itransform.Depth = (rand() * 20.0 - 10.0);
 		
-		if (false && frames > 1 && frames < 250)
+		if (frames > 1 && frames < 256)
 		{
+			console.println("frame " + frames);
 			uint xframes = frames % 50;
 			uint yframes = frames / 50;
 			float x = (xframes * 1.8f) - 9.f;

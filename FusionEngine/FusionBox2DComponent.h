@@ -103,7 +103,7 @@ namespace FusionEngine
 		b2Body* m_Body;
 
 		tbb::atomic<bool> m_FixtureMassDirty;
-		std::set<std::shared_ptr<Box2DFixture>> m_Fixtures;
+		std::set<boost::intrusive_ptr<Box2DFixture>> m_Fixtures;
 
 		int m_Depth;
 
@@ -131,8 +131,8 @@ namespace FusionEngine
 			}
 		}
 
-		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
-		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
+		void OnSiblingAdded(const ComponentPtr& com);
+		void OnSiblingRemoved(const ComponentPtr& com);
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
@@ -329,8 +329,8 @@ namespace FusionEngine
 		virtual b2Shape* GetShape() = 0;
 
 		// IComponent
-		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
-		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
+		void OnSiblingAdded(const ComponentPtr& com);
+		void OnSiblingRemoved(const ComponentPtr& com);
 
 	protected:
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);

@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 
-	Entity::Entity(PropChangedQueue *q, const std::shared_ptr<IComponent>& transform_component)
+	Entity::Entity(PropChangedQueue *q, const ComponentPtr& transform_component)
 		: m_Name("default"),
 		m_HasDefaultName(true),
 		m_Id(0),
@@ -66,7 +66,7 @@ namespace FusionEngine
 		m_GCFlag = false;
 
 		// Cache the transform component for quick access
-		m_Transform = std::dynamic_pointer_cast<ITransform>(transform_component);
+		m_Transform = dynamic_cast<ITransform*>(transform_component.get());
 		FSN_ASSERT(m_Transform);
 
 		AddComponent(transform_component);
@@ -150,9 +150,9 @@ namespace FusionEngine
 		return m_Type;
 	}
 
-	std::shared_ptr<ITransform> Entity::GetTransform() const
+	ComponentPtr Entity::GetTransform() const
 	{
-		return m_Transform;
+		return m_Transform.p;
 	}
 
 	const Vector2 &Entity::GetPosition()
@@ -209,7 +209,7 @@ namespace FusionEngine
 		m_ReferencedEntities.erase(entity);
 	}
 
-	void Entity::AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
+	void Entity::AddComponent(const ComponentPtr& component, std::string identifier)
 	{
 		FSN_ASSERT(component);
 		// Don't allow the addition of multiple transform components:
@@ -247,7 +247,7 @@ namespace FusionEngine
 		component->SetParent(this);
 	}
 
-	void Entity::RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier)
+	void Entity::RemoveComponent(const ComponentPtr& component, std::string identifier)
 	{
 		FSN_ASSERT(std::find(m_Components.begin(), m_Components.end(), component) != m_Components.end());
 
@@ -275,7 +275,7 @@ namespace FusionEngine
 			auto& implementors = m_ComponentInterfaces[*it];
 			if (identifier.empty())
 			{
-				auto _where = std::find_if(implementors.begin(), implementors.end(), [&](const std::pair<std::string, std::shared_ptr<IComponent>>& entry)->bool
+				auto _where = std::find_if(implementors.begin(), implementors.end(), [&](const std::pair<std::string, ComponentPtr>& entry)->bool
 				{ return entry.second == component; });
 				implementors.erase(_where);
 			}
@@ -284,7 +284,7 @@ namespace FusionEngine
 		}
 	}
 
-	void Entity::OnComponentActivated(const std::shared_ptr<IComponent>& component)
+	void Entity::OnComponentActivated(const ComponentPtr& component)
 	{
 		tbb::spin_rw_mutex::scoped_lock(m_ComponentsMutex, false);
 
@@ -296,7 +296,7 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<IComponent> Entity::GetComponent(const std::string& type, std::string identifier) const
+	ComponentPtr Entity::GetComponent(const std::string& type, std::string identifier) const
 	{
 		auto _where = m_ComponentInterfaces.find(type);
 		if (_where != m_ComponentInterfaces.end())
@@ -315,10 +315,10 @@ namespace FusionEngine
 						return implEntry->second;
 			}
 		}
-		return std::shared_ptr<IComponent>();
+		return ComponentPtr();
 	}
 
-	const std::vector<std::shared_ptr<IComponent>>& Entity::GetComponents() const
+	const std::vector<ComponentPtr>& Entity::GetComponents() const
 	{
 		return m_Components;
 	}

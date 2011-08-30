@@ -135,7 +135,7 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "CLSprite"; }
 
-		void OnSiblingAdded(const std::shared_ptr<IComponent>& component);
+		void OnSiblingAdded(const ComponentPtr& component);
 
 		void SynchroniseParallelEdits();
 		void FireSignals();

@@ -877,7 +877,7 @@ namespace FusionEngine
 
 	void EntityManager::ProcessActivationQueues()
 	{
-		std::pair<EntityPtr, std::shared_ptr<IComponent>> toActivate;
+		std::pair<EntityPtr, ComponentPtr> toActivate;
 		while (m_ComponentsToAdd.try_pop(toActivate))
 		{
 			if (toActivate.first->IsStreamedIn())
@@ -1009,7 +1009,7 @@ namespace FusionEngine
 		return allAreActive;
 	}
 
-	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const std::shared_ptr<IComponent>& component)
+	bool EntityManager::attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component)
 	{
 		if (component->GetReadyState() == IComponent::NotReady)
 		{
@@ -1098,7 +1098,7 @@ namespace FusionEngine
 		m_StreamingManager->OnDeactivated(entity);
 	}
 
-	void EntityManager::OnComponentAdded(EntityPtr &entity, std::shared_ptr<IComponent>& component)
+	void EntityManager::OnComponentAdded(EntityPtr &entity, ComponentPtr& component)
 	{
 		m_ComponentsToAdd.push(std::make_pair(entity, component));
 	}

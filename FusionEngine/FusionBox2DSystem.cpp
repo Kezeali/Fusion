@@ -66,7 +66,7 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + 7);
 	}
 
-	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type)
+	ComponentPtr Box2DWorld::InstantiateComponent(const std::string& type)
 	{
 		return InstantiateComponent(type, Vector2::zero(), 0.f);
 	}
@@ -132,7 +132,7 @@ namespace FusionEngine
 		int m_Depth;
 	};
 
-	std::shared_ptr<IComponent> Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+	ComponentPtr Box2DWorld::InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 	{
 		if (type == "b2RigidBody" 
 			|| type == "b2Dynamic"
@@ -151,28 +151,28 @@ namespace FusionEngine
 			def.position.Set(pos.x, pos.y);
 			def.angle = angle;
 
-			auto com = std::make_shared<Box2DBody>(def);
+			auto com = new Box2DBody(def);
 			com->SetInterpolate(def.type != b2_staticBody);
 			return com;
 		}
 		else if (type == "b2Circle")
 		{
-			return std::make_shared<Box2DCircleFixture>();
+			return new Box2DCircleFixture();
 		}
 		else if (type == "b2Polygon")
 		{
-			return std::make_shared<Box2DPolygonFixture>();
+			return new Box2DPolygonFixture();
 		}
 		else if (type == "StaticTransform")
 		{
-			return std::make_shared<StaticTransform>(pos, angle);
+			return new StaticTransform(pos, angle);
 		}
-		return std::shared_ptr<IComponent>();
+		return ComponentPtr();
 	}
 
-	void Box2DWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	void Box2DWorld::OnActivation(const ComponentPtr& component)
 	{
-		auto b2Component = std::dynamic_pointer_cast<Box2DBody>(component);
+		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
 		if (b2Component)
 		{
 			if (b2Component->m_Body != nullptr)
@@ -183,9 +183,9 @@ namespace FusionEngine
 		}
 	}
 
-	void Box2DWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	void Box2DWorld::OnDeactivation(const ComponentPtr& component)
 	{
-		auto b2Component = std::dynamic_pointer_cast<Box2DBody>(component);
+		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
 		if (b2Component)
 		{
 			// Deactivate the body in the simulation

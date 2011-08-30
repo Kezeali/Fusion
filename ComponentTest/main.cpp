@@ -143,8 +143,8 @@ namespace FusionEngine
 		{
 			if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 			{
-				std::stringstream str; str << i;
-				SendToConsole("Store " + str.str());
+				//std::stringstream str; str << i;
+				//SendToConsole("Store " + str.str());
 				cell->AddHist("Enqueued Out");
 				m_WriteQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
@@ -155,8 +155,8 @@ namespace FusionEngine
 		{
 			if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 			{
-				std::stringstream str; str << i;
-				SendToConsole("Retrieve " + str.str());
+				//std::stringstream str; str << i;
+				//SendToConsole("Retrieve " + str.str());
 				cell->AddHist("Enqueued In");
 				m_ReadQueue.push(std::make_tuple(cell, i));
 				m_NewData.set();
@@ -233,7 +233,7 @@ namespace FusionEngine
 			in.read(&id, sizeof(ObjectID));
 			m_Instantiator->TakeID(id);
 
-			std::shared_ptr<IComponent> transform;
+			ComponentPtr transform;
 			{
 				std::string transformType = in.read_string_a();
 
@@ -300,7 +300,7 @@ namespace FusionEngine
 			{
 				std::stringstream str; str << cell_index;
 				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				auto file = vdir.open_file("cache/" + str.str(), CL_File::open_always, write ? CL_File::access_write : CL_File::access_read);//"cache/partialsave/"
+				auto file = vdir.open_file("cache/" + str.str(), write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);//"cache/partialsave/"
 				return file;
 			}
 			catch (CL_Exception&)
@@ -313,7 +313,7 @@ namespace FusionEngine
 		void Run()
 		{
 			bool retrying = false;
-			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 200 : -1) != 0)
+			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 100 : -1) != 0)
 			{
 				std::list<std::tuple<Cell*, size_t>> writesToRetry;
 				std::list<std::tuple<Cell*, size_t>> readsToRetry;
@@ -342,18 +342,16 @@ namespace FusionEngine
 									{
 										//if (it->first->IsSyncedEntity())
 										{
-											//boost::this_thread::sleep(boost::posix_time::microsec(60000));
 											//newArchive.push_back(it->first->shared_from_this());
 											Save(file, it->first);
 										}
 									}
 
-									cell->AddHist("Written and cleared");
+									cell->AddHist("Written and cleared", numEntries);
 
-									std::stringstream str; str << i;
-									SendToConsole("Cell " + str.str() + " streamed out");
+									//std::stringstream str; str << i;
+									//SendToConsole("Cell " + str.str() + " streamed out");
 
-									//boost::this_thread::sleep(boost::posix_time::microsec(80000));
 
 									//m_Archived[i] = std::move(newArchive);
 									cell->objects.clear();
@@ -367,8 +365,8 @@ namespace FusionEngine
 							}
 							else
 							{
-								std::stringstream str; str << i;
-								SendToConsole("Cell still in use " + str.str());
+								//std::stringstream str; str << i;
+								//SendToConsole("Cell still in use " + str.str());
 								//writesToRetry.push_back(toWrite);
 							}
 							cell->waiting = Cell::Ready;
@@ -376,6 +374,7 @@ namespace FusionEngine
 						}
 						else
 						{
+							cell->AddHist("Cell locked (will retry write later)");
 							std::stringstream str; str << i;
 							SendToConsole("Retrying write on cell " + str.str());
 							writesToRetry.push_back(toWrite);
@@ -396,12 +395,11 @@ namespace FusionEngine
 						{
 							// Shouldn't be possible (unloaded cells shouldn't have active entries) - this could indicate
 							//  that the Retrieve request got enqueued twice:
-							FSN_ASSERT(cell->active_entries == 0);
+							//FSN_ASSERT(cell->active_entries == 0);
 							if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
 							{
 								try
 								{
-									//boost::this_thread::sleep(boost::posix_time::microsec(50000));
 									//auto archivedCellEntry = m_Archived.find(i);
 									auto file = GetFile(i, false);
 
@@ -413,7 +411,6 @@ namespace FusionEngine
 										file.read(&numEntries, sizeof(size_t));
 										for (size_t n = 0; n < numEntries; ++n)
 										{
-											//boost::this_thread::sleep(boost::posix_time::microsec(50000));
 											//auto& archivedEntity = *it;
 											auto archivedEntity = Load(file);
 
@@ -427,10 +424,10 @@ namespace FusionEngine
 											cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
 										}
 
-										std::stringstream str; str << i;
-										SendToConsole("Cell " + str.str() + " streamed in");
+										//std::stringstream str; str << i;
+										//SendToConsole("Cell " + str.str() + " streamed in");
 
-										cell->AddHist("Loaded");
+										cell->AddHist("Loaded", numEntries);
 										cell->loaded = true;
 
 										//m_Archived.erase(archivedCellEntry);
@@ -443,8 +440,8 @@ namespace FusionEngine
 								}
 								catch (...)
 								{
-									std::stringstream str; str << i;
-									SendToConsole("Exception streaming in cell " + str.str());
+									//std::stringstream str; str << i;
+									//SendToConsole("Exception streaming in cell " + str.str());
 									//readsToRetry.push_back(toRead);
 								}
 							}
@@ -452,7 +449,10 @@ namespace FusionEngine
 							//cell->mutex.unlock();
 						}
 						else
+						{
+							cell->AddHist("Cell locked (will retry read later)");
 							readsToRetry.push_back(toRead);
+						}
 					}
 				}
 				retrying = false;
@@ -813,7 +813,7 @@ public:
 					//	position.y += ToSimUnits(50.f);
 					//}			
 					
-					std::shared_ptr<IComponent> transformCom;
+					ComponentPtr transformCom;
 					if (i < 300)
 					{
 						if (i == 0)
@@ -833,7 +833,7 @@ public:
 
 					entityManager->AddEntity(entity);
 
-					std::shared_ptr<IComponent> b2CircleFixture;
+					ComponentPtr b2CircleFixture;
 					if (i < 300)
 					{
 						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
@@ -851,7 +851,7 @@ public:
 					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
 					entity->AddComponent(clSprite);
 
-					std::shared_ptr<IComponent> asScript, asScript2;
+					ComponentPtr asScript, asScript2;
 					if (i < 200)
 					{
 						asScript = asWorld->InstantiateComponent("ASScript");
@@ -1033,6 +1033,7 @@ public:
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;
 				}
+				cellArchivist->Stop();
 				scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
 			}
 			catch (FusionEngine::Exception &ex)

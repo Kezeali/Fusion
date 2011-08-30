@@ -74,17 +74,17 @@ namespace FusionEngine
 		m_FixtureMassDirty = false;
 	}
 
-	void Box2DBody::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
+	void Box2DBody::OnSiblingAdded(const ComponentPtr& com)
 	{
-		if (auto fixtureCom = std::dynamic_pointer_cast<Box2DFixture>(com))
+		if (auto fixtureCom = boost::dynamic_pointer_cast<Box2DFixture>(com))
 		{
 			m_Fixtures.insert(fixtureCom);
 		}
 	}
 
-	void Box2DBody::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
+	void Box2DBody::OnSiblingRemoved(const ComponentPtr& com)
 	{
-		if (auto fixtureCom = std::dynamic_pointer_cast<Box2DFixture>(com))
+		if (auto fixtureCom = boost::dynamic_pointer_cast<Box2DFixture>(com))
 		{
 			m_Fixtures.erase(fixtureCom);
 		}
@@ -253,7 +253,7 @@ namespace FusionEngine
 		m_Fixture = body_component->Getb2Body()->CreateFixture(&m_Def);
 	}
 
-	void Box2DFixture::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
+	void Box2DFixture::OnSiblingAdded(const ComponentPtr& com)
 	{
 		//auto body = dynamic_cast<Box2DBody*>(com.get());
 		//if (body)
@@ -275,7 +275,7 @@ namespace FusionEngine
 		//}
 	}
 
-	void Box2DFixture::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
+	void Box2DFixture::OnSiblingRemoved(const ComponentPtr& com)
 	{
 		//if (m_Fixture)
 		//{

@@ -74,13 +74,13 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
+		ComponentPtr InstantiateComponent(const std::string& type);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
-		//void Prepare(const std::shared_ptr<IComponent>& component);
-		void OnActivation(const std::shared_ptr<IComponent>& component);
-		void OnDeactivation(const std::shared_ptr<IComponent>& component);
+		//void Prepare(const ComponentPtr& component);
+		void OnActivation(const ComponentPtr& component);
+		void OnDeactivation(const ComponentPtr& component);
 
 		ISystemTask* GetTask();
 
@@ -88,7 +88,7 @@ namespace FusionEngine
 
 		InputTask* m_InputTask;
 
-		std::vector<std::shared_ptr<Components::Input>> m_ActiveComponents;
+		std::vector<boost::intrusive_ptr<Components::Input>> m_ActiveComponents;
 	};
 
 	class InputTask : public ISystemTask

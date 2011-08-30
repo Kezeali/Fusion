@@ -279,6 +279,8 @@ namespace FusionEngine
 			Vector2 streamPosition;
 			Vector2 lastUsedPosition; // the streamPosition that was most recently actualy processed
 
+			CL_Rect activeRange;
+
 			Vector2 lastPosition;
 			Vector2 lastVelocity;
 			float tightness;

@@ -84,19 +84,19 @@ namespace FusionEngine
 	private:
 		std::vector<std::string> GetTypes() const;
 
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type);
-		std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
+		ComponentPtr InstantiateComponent(const std::string& type);
+		ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
 
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
-		void Prepare(const std::shared_ptr<IComponent>& component);
-		void OnActivation(const std::shared_ptr<IComponent>& component);
-		void OnDeactivation(const std::shared_ptr<IComponent>& component);
+		void Prepare(const ComponentPtr& component);
+		void OnActivation(const ComponentPtr& component);
+		void OnDeactivation(const ComponentPtr& component);
 
 		ISystemTask* GetTask();
 
-		std::vector<std::shared_ptr<ASScript>> m_NewlyActiveScripts;
-		std::vector<std::shared_ptr<ASScript>> m_ActiveScripts;
+		std::vector<boost::intrusive_ptr<ASScript>> m_NewlyActiveScripts;
+		std::vector<boost::intrusive_ptr<ASScript>> m_ActiveScripts;
 
 		bool m_Updating;
 

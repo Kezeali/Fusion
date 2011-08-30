@@ -70,7 +70,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Entity(PropChangedQueue *q, const std::shared_ptr<IComponent>& transform_component);
+		Entity(PropChangedQueue *q, const ComponentPtr& transform_component);
 		//! Destructor
 		virtual ~Entity();
 
@@ -135,7 +135,7 @@ namespace FusionEngine
 		//! Returns the typename of this entity
 		std::string GetType() const;
 
-		std::shared_ptr<ITransform> GetTransform() const;
+		ComponentPtr GetTransform() const;
 
 		//! Gets position
 		const Vector2 &GetPosition();
@@ -176,16 +176,16 @@ namespace FusionEngine
 		bool GetGCFlag() const { return m_GCFlag; }
 
 		//! Adds the given component
-		void AddComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
+		void AddComponent(const ComponentPtr& component, std::string identifier = std::string());
 		//! Removes the given component
-		void RemoveComponent(const std::shared_ptr<IComponent>& component, std::string identifier = std::string());
+		void RemoveComponent(const ComponentPtr& component, std::string identifier = std::string());
 
-		void OnComponentActivated(const std::shared_ptr<IComponent>& component);
+		void OnComponentActivated(const ComponentPtr& component);
 		
-		typedef std::map<std::string, std::map<std::string, std::shared_ptr<IComponent>>> ComInterfaceMap;
+		typedef std::map<std::string, std::map<std::string, ComponentPtr>> ComInterfaceMap;
 
 		//template <class Interface>
-		//void InvokeOnComponent(std::function<void (std::shared_ptr<Interface>)> function)
+		//void InvokeOnComponent(std::function<void (boost::intrusive_ptr<Interface>)> function)
 		//{
 		//	auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
 		//	if (_where != m_ComponentInterfaces.end())
@@ -196,7 +196,7 @@ namespace FusionEngine
 		//}
 
 		template <class Interface>
-		std::shared_ptr<Interface> GetComponent(std::string identifier = std::string()) const
+		ComponentIPtr<Interface> GetComponent(std::string identifier = std::string()) const
 		{
 			auto _where = m_ComponentInterfaces.find(Interface::GetTypeName());
 			if (_where != m_ComponentInterfaces.end())
@@ -204,21 +204,21 @@ namespace FusionEngine
 				FSN_ASSERT(!_where->second.empty());
 				if (identifier.empty())
 				{
-					return std::dynamic_pointer_cast<Interface>(_where->second.begin()->second);
+					return ComponentIPtr<Interface>(_where->second.begin()->second);
 				}
 				else
 				{
 					auto implEntry = _where->second.find(identifier);
 					if (implEntry != _where->second.end())
-						return std::dynamic_pointer_cast<Interface>(implEntry->second);
+						return ComponentIPtr<Interface>(implEntry->second);
 				}
 			}
-			return std::shared_ptr<Interface>();
+			return ComponentIPtr<Interface>();
 		}
 
-		std::shared_ptr<IComponent> GetComponent(const std::string& type, std::string identifier = std::string()) const;
+		ComponentPtr GetComponent(const std::string& type, std::string identifier = std::string()) const;
 
-		const std::vector<std::shared_ptr<IComponent>>& GetComponents() const;
+		const std::vector<ComponentPtr>& GetComponents() const;
 
 		const ComInterfaceMap& GetInterfaces() const;
 
@@ -444,9 +444,9 @@ namespace FusionEngine
 
 		tbb::spin_rw_mutex m_ComponentsMutex;
 
-		std::shared_ptr<ITransform> m_Transform;
+		ComponentIPtr<ITransform> m_Transform;
 
-		std::vector<std::shared_ptr<IComponent>> m_Components;
+		std::vector<ComponentPtr> m_Components;
 		ComInterfaceMap m_ComponentInterfaces;
 
 		PropChangedQueue *m_PropChangedQueue;

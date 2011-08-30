@@ -708,14 +708,14 @@ namespace FusionEngine
 	{
 	}
 
-	std::shared_ptr<IComponent> EntityFactory::InstanceComponent(const std::string& type, const Vector2& position, float angle)
+	ComponentPtr EntityFactory::InstanceComponent(const std::string& type, const Vector2& position, float angle)
 	{
 		auto _where = m_ComponentInstancers.find(type);
 		if (_where != m_ComponentInstancers.end())
 		{
 			return _where->second->InstantiateComponent(type, position, angle);
 		}
-		return std::shared_ptr<IComponent>();
+		return ComponentPtr();
 	}
 
 	EntityPtr EntityFactory::InstanceEntity(const std::string &prefab_type, const Vector2& position, float angle)

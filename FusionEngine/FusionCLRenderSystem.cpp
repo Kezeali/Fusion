@@ -93,21 +93,21 @@ namespace FusionEngine
 		return types;
 	}
 
-	std::shared_ptr<IComponent> CLRenderWorld::InstantiateComponent(const std::string& type)
+	ComponentPtr CLRenderWorld::InstantiateComponent(const std::string& type)
 	{
-		std::shared_ptr<IComponent> com;
+		ComponentPtr com;
 		if (type == "CLSprite")
 		{
-			com = std::make_shared<CLSprite>();
+			com = new CLSprite();
 		}
 		return com;
 	}
 
-	void CLRenderWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	void CLRenderWorld::OnActivation(const ComponentPtr& component)
 	{
 		if (component->GetType() == "CLSprite")
 		{
-			auto drawable = std::dynamic_pointer_cast<IDrawable>(component);
+			auto drawable = boost::dynamic_pointer_cast<IDrawable>(component);
 			if (drawable)
 			{
 				FSN_ASSERT(std::find(m_Drawables.begin(), m_Drawables.end(), drawable) == m_Drawables.end());
@@ -116,9 +116,9 @@ namespace FusionEngine
 		}
 	}
 
-	void CLRenderWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	void CLRenderWorld::OnDeactivation(const ComponentPtr& component)
 	{
-		auto drawable = std::dynamic_pointer_cast<IDrawable>(component);
+		auto drawable = boost::dynamic_pointer_cast<IDrawable>(component);
 		if (drawable)
 		{
 			auto _where = std::find(m_Drawables.begin(), m_Drawables.end(), drawable);
@@ -161,7 +161,7 @@ namespace FusionEngine
 			
 		auto& drawables = m_RenderWorld->GetDrawables();
 
-		auto depthSort = [](std::shared_ptr<IDrawable>& first, std::shared_ptr<IDrawable>& second)->bool
+		auto depthSort = [](boost::intrusive_ptr<IDrawable>& first, boost::intrusive_ptr<IDrawable>& second)->bool
 		{
 			if (first->GetParent() == second->GetParent())
 			{

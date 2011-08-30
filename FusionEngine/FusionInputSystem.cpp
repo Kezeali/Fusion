@@ -62,26 +62,26 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + 1);
 	}
 
-	std::shared_ptr<IComponent> InputWorld::InstantiateComponent(const std::string& type)
+	ComponentPtr InputWorld::InstantiateComponent(const std::string& type)
 	{
 		if (type == "Input")
 		{
 		}
-		return std::shared_ptr<IComponent>();
+		return ComponentPtr();
 	}
 
-	void InputWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	void InputWorld::OnActivation(const ComponentPtr& component)
 	{
-		auto com = std::dynamic_pointer_cast<Input>(component);
+		auto com = boost::dynamic_pointer_cast<Input>(component);
 		if (com)
 		{
 			m_ActiveComponents.push_back(com);
 		}
 	}
 
-	void InputWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	void InputWorld::OnDeactivation(const ComponentPtr& component)
 	{
-		auto com = std::dynamic_pointer_cast<Input>(component);
+		auto com = boost::dynamic_pointer_cast<Input>(component);
 		if (com)
 		{
 			auto _where = std::find(m_ActiveComponents.begin(), m_ActiveComponents.end(), com);

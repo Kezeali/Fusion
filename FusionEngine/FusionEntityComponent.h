@@ -73,6 +73,104 @@ namespace FusionEngine
 	class IComponentProperty;
 	class IComponent;
 
+	typedef boost::intrusive_ptr<IComponent> ComponentPtr;
+
+	template <class T>
+	class ComponentIPtr
+	{
+	private:
+		typedef ComponentIPtr this_type;
+
+	public:
+		ComponentIPtr()
+		{}
+
+		ComponentIPtr(T* i)
+			: p(dynamic_cast<IComponent*>(i))
+		{}
+
+		ComponentIPtr(ComponentPtr com)
+			: p(com)
+		{}
+
+		//ComponentIPtr(IComponent* com)
+		//	: p(com)
+		//{}
+
+		template<class U> ComponentIPtr & operator=(ComponentIPtr<U> const & rhs)
+    {
+        this_type(rhs).swap(*this);
+        return *this;
+    }
+
+    ComponentIPtr(ComponentIPtr && rhs)
+			: p( std::move(rhs.p) )
+    {
+			//rhs.px = 0;
+    }
+
+    ComponentIPtr & operator=(ComponentIPtr && rhs)
+    {
+        this_type( static_cast< ComponentIPtr && >( rhs ) ).swap(*this);
+        return *this;
+    }
+
+    ComponentIPtr & operator=(ComponentIPtr const & rhs)
+    {
+        this_type(rhs).swap(*this);
+        return *this;
+    }
+
+    ComponentIPtr & operator=(T * rhs)
+    {
+        this_type(rhs).swap(*this);
+        return *this;
+    }
+
+    void reset()
+    {
+        this_type().swap( *this );
+    }
+
+    void reset( T * rhs )
+    {
+        this_type( rhs ).swap( *this );
+    }
+
+		T * get() const
+		{
+			return dynamic_cast<T*>(p.get());
+		}
+
+		T & operator*() const
+		{
+			FSN_ASSERT(p);
+			return *dynamic_cast<T*>(p.get());
+		}
+
+		T * operator->() const
+		{
+			FSN_ASSERT(p);
+			return dynamic_cast<T*>(p.get());
+		}
+
+		operator ComponentPtr::unspecified_bool_type() const
+		{
+			return p;
+		}
+
+		void swap(ComponentIPtr & rhs)
+		{
+			//T * tmp = px;
+			//px = rhs.px;
+			//rhs.px = tmp;
+			p.swap(rhs.p);
+		}
+
+	//private:
+		ComponentPtr p;
+	};
+
 	struct PropLock
 	{
 		PropLock() {}
@@ -80,7 +178,7 @@ namespace FusionEngine
 
 	typedef tbb::concurrent_queue<std::pair<std::weak_ptr<PropLock>, IComponentProperty*>> PropChangedQueue;
 	
-	class IComponent : public RefCounted, public std::enable_shared_from_this<IComponent>
+	class IComponent : public RefCounted
 	{
 	public:
 		//! Cotr
@@ -94,12 +192,12 @@ namespace FusionEngine
 		//! Destructor
 		virtual ~IComponent()
 		{
-			m_PropLock.reset();
 		}
 
 		void OnNoReferences()
 		{
-			FSN_ASSERT_FAIL("Poop");
+			m_PropLock.reset();
+			delete this;
 		}
 
 		void SetParent(Entity* parent) { m_Parent = parent; }
@@ -162,8 +260,8 @@ namespace FusionEngine
 		virtual void OnStreamIn() {}
 		virtual void OnStreamOut() {}
 
-		virtual void OnSiblingAdded(const std::shared_ptr<IComponent>& com) {}
-		virtual void OnSiblingRemoved(const std::shared_ptr<IComponent>& com) {}
+		virtual void OnSiblingAdded(const ComponentPtr& com) {}
+		virtual void OnSiblingRemoved(const ComponentPtr& com) {}
 
 		virtual void SynchroniseParallelEdits() {}
 		virtual void FireSignals() {}
@@ -338,8 +436,6 @@ namespace FusionEngine
 		std::function<void (T&)> get_internal;
 		std::function<void (const T&)> set_internal;
 	};
-
-	typedef std::shared_ptr<Component> ComponentPtr;
 
 	// This will be in a seperate header, included only in FusionEntityFactory.cpp
 	class ComponentType

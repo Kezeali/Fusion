@@ -104,9 +104,9 @@ namespace FusionEngine
 		SystemType GetSystemType() const;
 
 		virtual std::vector<std::string> GetTypes() const = 0;
-		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type) = 0;
+		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
 		//! Instanciate method for physics / transform components
-		virtual std::shared_ptr<IComponent> InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
+		virtual ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle)
 		{
 			return InstantiateComponent(type);
 		}
@@ -114,10 +114,10 @@ namespace FusionEngine
 		virtual void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& new_data) = 0;
 
 		//! Allows a system to prevent an entity from activating until all required resources are loaded
-		virtual void Prepare(const std::shared_ptr<IComponent>& component) { component->MarkReady(); }
-		virtual void OnActivation(const std::shared_ptr<IComponent>& component) = 0;
+		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
+		virtual void OnActivation(const ComponentPtr& component) = 0;
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
-		virtual void OnDeactivation(const std::shared_ptr<IComponent>& component) = 0;
+		virtual void OnDeactivation(const ComponentPtr& component) = 0;
 
 		virtual ISystemTask* GetTask() { return nullptr; }
 

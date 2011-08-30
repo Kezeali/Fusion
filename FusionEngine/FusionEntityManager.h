@@ -320,7 +320,7 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
-		void OnComponentAdded(EntityPtr& entity, std::shared_ptr<IComponent>& component);
+		void OnComponentAdded(EntityPtr& entity, ComponentPtr& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
 
@@ -341,7 +341,7 @@ namespace FusionEngine
 		bool prepareEntity(const EntityPtr &entity);
 		//! returns true if all components were ready and thus activated
 		bool attemptToActivateEntity(const EntityPtr &entity);
-		bool attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const std::shared_ptr<IComponent>& component);
+		bool attemptToActivateComponent(const std::shared_ptr<ISystemWorld>& world, const ComponentPtr& component);
 		void activateEntity(const EntityPtr &entity);
 
 		void deactivateEntity(const EntityPtr& entity);
@@ -373,10 +373,10 @@ namespace FusionEngine
 		// All pseudo-entities
 		EntitySet m_PseudoEntities;
 
-		tbb::concurrent_queue<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToAdd;
+		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
 
-		std::vector<std::pair<EntityPtr, std::shared_ptr<IComponent>>> m_ComponentsToActivate;
+		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToActivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;
 		std::vector<EntityPtr> m_EntitiesToDeactivate;
 		EntityArray m_ActiveEntities;

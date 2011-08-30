@@ -565,6 +565,7 @@ namespace FusionEngine
 			"}\n"
 			"private Entity app_obj;\n"
 			"private Entity owner;\n"
+			"Entity getRaw() const { return app_obj; }\n"
 			//"Input@ input;\n"
 			"Input@ get_input() { return Input(app_obj); }\n"
 			"\n" +
@@ -694,17 +695,17 @@ namespace FusionEngine
 		return std::vector<std::string>(types, types + 1);
 	}
 
-	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type)
+	ComponentPtr AngelScriptWorld::InstantiateComponent(const std::string& type)
 	{
 		return InstantiateComponent(type, Vector2::zero(), 0.f, nullptr, nullptr);
 	}
 
-	std::shared_ptr<IComponent> AngelScriptWorld::InstantiateComponent(const std::string& type, const Vector2&, float, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
+	ComponentPtr AngelScriptWorld::InstantiateComponent(const std::string& type, const Vector2&, float, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data)
 	{
 		auto _where = m_ScriptInfo.find(type);
 		if (_where != m_ScriptInfo.end())
 		{
-			auto com = std::make_shared<ASScript>();
+			auto com = new ASScript();//std::make_shared<ASScript>();
 			auto& moduleName = _where->second.Module;
 			com->SetScriptPath(moduleName);
 			//com->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
@@ -712,15 +713,15 @@ namespace FusionEngine
 		}
 		else if (type == "ASScript")
 		{
-			auto com = std::make_shared<ASScript>();
+			auto com = new ASScript();
 			return com;
 		}
-		return std::shared_ptr<IComponent>();
+		return ComponentPtr();
 	}
 
-	void AngelScriptWorld::Prepare(const std::shared_ptr<IComponent>& component)
+	void AngelScriptWorld::Prepare(const ComponentPtr& component)
 	{
-		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		auto scriptComponent = boost::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
 			using namespace std::placeholders;
@@ -734,18 +735,18 @@ namespace FusionEngine
 		}
 	}
 
-	void AngelScriptWorld::OnActivation(const std::shared_ptr<IComponent>& component)
+	void AngelScriptWorld::OnActivation(const ComponentPtr& component)
 	{
-		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		auto scriptComponent = boost::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
 			m_ActiveScripts.push_back(scriptComponent);
 		}
 	}
 
-	void AngelScriptWorld::OnDeactivation(const std::shared_ptr<IComponent>& component)
+	void AngelScriptWorld::OnDeactivation(const ComponentPtr& component)
 	{
-		auto scriptComponent = std::dynamic_pointer_cast<ASScript>(component);
+		auto scriptComponent = boost::dynamic_pointer_cast<ASScript>(component);
 		if (scriptComponent)
 		{
 			// Find and remove the deactivated script
@@ -838,7 +839,7 @@ namespace FusionEngine
 	{
 		{
 		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
-		std::vector<std::shared_ptr<ASScript>> notInstantiated;
+		std::vector<boost::intrusive_ptr<ASScript>> notInstantiated;
 
 		//tbb::spin_mutex mutex;
 
@@ -898,7 +899,7 @@ namespace FusionEngine
 #if 0
 									auto parentEntity = script->GetParent();
 
-									std::map<std::string, std::shared_ptr<IComponent>> convenientComponents;
+									std::map<std::string, ComponentPtr> convenientComponents;
 									auto& interfaces = parentEntity->GetInterfaces();
 									for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
 									{

@@ -102,7 +102,7 @@ namespace FusionEngine
 
 	public:
 		//! Instantiates a component of the given type
-		std::shared_ptr<IComponent> InstanceComponent(const std::string& type, const Vector2& position = Vector2::zero(), float angle = 0.f);
+		ComponentPtr InstanceComponent(const std::string& type, const Vector2& position = Vector2::zero(), float angle = 0.f);
 
 		//! Instances Entity
 		/*!

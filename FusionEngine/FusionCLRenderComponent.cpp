@@ -227,7 +227,7 @@ namespace FusionEngine
 		}
 	}
 
-	void CLSprite::OnSiblingAdded(const std::shared_ptr<IComponent>& component)
+	void CLSprite::OnSiblingAdded(const ComponentPtr& component)
 	{
 		const auto& interfaces = component->GetInterfaces();
 		if (interfaces.find(ITransform::GetTypeName()) != interfaces.end())

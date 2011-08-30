@@ -591,6 +591,8 @@ namespace FusionEngine
 				}
 			}
 
+			m_CacheProperties.clear();
+
 			auto objType = obj->GetObjectType();
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
 			{
@@ -617,20 +619,20 @@ namespace FusionEngine
 		m_ModuleReloaded = true;
 	}
 
-	void ASScript::OnSiblingAdded(const std::shared_ptr<IComponent>& com)
+	void ASScript::OnSiblingAdded(const ComponentPtr& com)
 	{
 		//if (auto scriptCom = dynamic_cast<ASScript*>(com.get()))
 		//{
 		//}
 	}
 
-	void ASScript::OnSiblingRemoved(const std::shared_ptr<IComponent>& com)
+	void ASScript::OnSiblingRemoved(const ComponentPtr& com)
 	{
 	}
 
 	bool ASScript::SerialiseContinuous(RakNet::BitStream& stream)
 	{
-		return true;
+		return false;
 	}
 
 	void ASScript::DeserialiseContinuous(RakNet::BitStream& stream)
@@ -653,14 +655,15 @@ namespace FusionEngine
 				stream.Write(val);
 			}
 		}
-		//else
-		//{
-		//	for (auto it = m_CacheProperties.begin(), end = m_CacheProperties.end(); it != end; ++it)
-		//	{
-		//		auto& prop = *it;
-		//		stream.Write(prop->value);
-		//	}
-		//}
+		else if (!m_CacheProperties.empty()) // Script may have just been deserialised
+		{
+			stream.Write(m_CacheProperties.size());
+			for (auto it = m_CacheProperties.begin(), end = m_CacheProperties.end(); it != end; ++it)
+			{
+				auto& prop = *it;
+				stream.Write(prop->value);
+			}
+		}
 
 		return changeWritten;
 	}

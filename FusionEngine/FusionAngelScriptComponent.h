@@ -157,8 +157,8 @@ namespace FusionEngine
 		// IComponent
 		std::string GetType() const { return "ASScript"; }
 
-		void OnSiblingAdded(const std::shared_ptr<IComponent>& com);
-		void OnSiblingRemoved(const std::shared_ptr<IComponent>& com);
+		void OnSiblingAdded(const ComponentPtr& com);
+		void OnSiblingRemoved(const ComponentPtr& com);
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);

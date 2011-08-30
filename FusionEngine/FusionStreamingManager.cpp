@@ -47,6 +47,7 @@ namespace FusionEngine
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
+#ifdef _DEBUG
 		mutex_t::scoped_lock lock(historyMutex);
 		auto now = boost::posix_time::second_clock::local_time();
 		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
@@ -56,6 +57,7 @@ namespace FusionEngine
 			message += " (" + str.str() + ")";
 		}
 		history.push_back(message);
+#endif
 	}
 
 	StreamingManager::StreamingManager(CellArchiver* archivist)
@@ -139,12 +141,13 @@ namespace FusionEngine
 
 	void StreamingManager::AddCamera(const CameraPtr &cam)
 	{
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
+
 		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam)))
 		{
 			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
 		}
 
-		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		m_Cameras.push_back(StreamingCamera());
 		auto& streamingCam = m_Cameras.back();
 
@@ -454,20 +457,17 @@ namespace FusionEngine
 
 		Vector2 entityPosition = entity->GetPosition();
 		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
-		for (auto it = m_Cameras.begin(), end = m_Cameras.end(); it != end; ++it)
+		if (std::any_of(m_Cameras.begin(), m_Cameras.end(),
+			[&](const StreamingCamera& cam) { return (entityPosition - cam.streamPosition).length() <= m_Range; }))
 		{
-			const StreamingCamera &cam = *it;
-			if ((entityPosition - cam.streamPosition).length() < m_Range)
-			{
-				if (!cell_entry->active)
-					ActivateEntity(*cell, entity, *cell_entry);
-				cell_entry->pendingDeactivation = false;
-			}
-			else if (cell_entry->active)
-			{
-				if (!cell_entry->pendingDeactivation)
-					QueueEntityForDeactivation(*cell_entry, warp);
-			}
+			if (!cell_entry->active)
+				ActivateEntity(*cell, entity, *cell_entry);
+			cell_entry->pendingDeactivation = false;
+		}
+		else if (cell_entry->active)
+		{
+			if (!cell_entry->pendingDeactivation)
+				QueueEntityForDeactivation(*cell_entry, warp);
 		}
 	}
 
@@ -807,6 +807,20 @@ namespace FusionEngine
 				}
 			}
 		}
+
+		// Check for cells that have finished loading
+		for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+		{
+			auto& cell = *it;
+			if (cell->IsLoaded())
+			{
+				it = m_CellsBeingLoaded.erase(it);
+				end = m_CellsBeingLoaded.end();
+			}
+			else
+				++it;
+		}
+
 		// Each vector element represents a range of cells to update - overlapping active-areas
 		//  are merged
 		std::list<CL_Rect> inactiveRanges;
@@ -855,7 +869,7 @@ namespace FusionEngine
 				CL_Rect inactiveRange;
 				getCellRange(inactiveRange, oldPosition);
 
-				CL_Rect activeRange;
+				CL_Rect& activeRange = cam.activeRange;
 				getCellRange(activeRange, newPosition);
 				//activeRange = range;
 
@@ -878,25 +892,43 @@ namespace FusionEngine
 				if (!merged)
 				{
 					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
-					activeRanges.push_back(std::make_pair(std::move(activeRange), std::move(pos)));
+					activeRanges.push_back(std::make_pair(activeRange, std::move(pos)));
 				}
 			}
 			else // Camera hasn't moved
 			{
 				// Make sure entities from cells that just loaded are activted (even if the camera hasn't moved)
-				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+				//for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+				//{
+				//	auto& cell = *it;
+				//	Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+				//	if (lock && cell->IsLoaded())
+				//	{
+				//		std::list<Vector2> cams; cams.push_back(cam.streamPosition);
+				//		processCell(*cell, cams);
+				//		it = m_CellsBeingLoaded.erase(it);
+				//		end = m_CellsBeingLoaded.end();
+				//	}
+				//	else
+				//		++it;
+				//}
+
+				// Add this cell's most recently calculated active range to make sure it doesn't get deactivated
+				bool merged = false;
+				for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
 				{
-					auto& cell = *it;
-					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-					if (lock && cell->IsLoaded())
+					auto& existingRange = it->first;
+					//if (activeRange.is_overlapped(existingRange))
+					if (inclusiveOverlap(cam.activeRange, existingRange))
 					{
-						std::list<Vector2> cams; cams.push_back(cam.streamPosition);
-						processCell(*cell, cams);
-						it = m_CellsBeingLoaded.erase(it);
-						end = m_CellsBeingLoaded.end();
+						existingRange.bounding_rect(cam.activeRange);
+						it->second.push_back(cam.streamPosition);
 					}
-					else
-						++it;
+				}
+				if (!merged)
+				{
+					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
+					activeRanges.push_back(std::make_pair(cam.activeRange, std::move(pos)));
 				}
 			}
 		}

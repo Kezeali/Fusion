@@ -199,11 +199,14 @@ namespace FusionEngine { namespace Scripting
 #ifdef FSN_REFCOUNTED_VECTOR
 		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(RefVecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 #else
-		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in)", asFUNCTION(VecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in)", asFUNCTION(VecopAdd), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opSub(const Vector &in)" ,asMETHODPR(Vector2, operator-, (const Vector2&) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 #endif
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2,length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Vector", "Vector normalise() const", asMETHOD(Vector2, normalized), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Vector", "float get_x() const", asMETHOD(Vector2,get_x), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "float get_y() const", asMETHOD(Vector2,get_y), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
