@@ -564,7 +564,7 @@ namespace FusionEngine
 			//"@input = Input(app_obj);\n"
 			"}\n"
 			"private Entity app_obj;\n"
-			"private Entity owner;\n"
+			"private EntityW owner;\n"
 			"Entity getRaw() const { return app_obj; }\n"
 			//"Input@ input;\n"
 			"Input@ get_input() { return Input(app_obj); }\n"
@@ -583,7 +583,8 @@ namespace FusionEngine
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"
 			"void createCoroutine(const string &in fn_name, float delay = 0.0f) { app_obj.createCoroutine(fn_name, delay); }\n"
-			"Entity instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id) { return ontology.instantiate(@app_obj, type, synch, pos, angle, owner_id); }\n"
+			"EntityWrapper@ instantiate(const string &in type, bool synch, Vector pos, float angle, PlayerID owner_id)"
+			" { return EntityWrapper(ontology.instantiate(@app_obj, type, synch, pos, angle, owner_id)); }\n"
 			"\n" +
 			convenientComponentProperties +
 			"}\n";

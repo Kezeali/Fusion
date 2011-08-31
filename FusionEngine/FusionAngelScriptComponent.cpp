@@ -283,16 +283,18 @@ namespace FusionEngine
 		return obj->GetParent()->shared_from_this();
 	}
 
-	static EntityPtr InitEntityPtr(EntityPtr& entityReferenced)
+	static std::weak_ptr<Entity> InitEntityPtr(EntityPtr& entityReferenced)
 	{
 		auto activeScript = ASScript::GetActiveScript(); FSN_ASSERT(activeScript); FSN_ASSERT(activeScript->GetParent());
-		activeScript->GetParent()->HoldReference(entityReferenced);
-		return activeScript->GetParent()->shared_from_this();
+		auto referenceHolder = activeScript->GetParent()->shared_from_this();
+		referenceHolder->HoldReference(entityReferenced);
+		return referenceHolder;
 	}
 
-	static void DeinitEntityPtr(EntityPtr& referenceHolder, EntityPtr& entityReferenced)
+	static void DeinitEntityPtr(std::weak_ptr<Entity>& referenceHolder, EntityPtr& entityReferenced)
 	{
-		referenceHolder->DropReference(entityReferenced);
+		if (auto locked = referenceHolder.lock())
+			locked->DropReference(entityReferenced);
 	}
 
 	void ASScript::Register(asIScriptEngine* engine)
@@ -318,8 +320,8 @@ namespace FusionEngine
 			
 			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = engine->RegisterGlobalFunction("Entity initEntityPointer(Entity &in)", asFUNCTION(InitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterGlobalFunction("void deinitEntityPointer(Entity &in, Entity &in)", asFUNCTION(DeinitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterGlobalFunction("EntityW initEntityPointer(Entity &in)", asFUNCTION(InitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterGlobalFunction("void deinitEntityPointer(EntityW &in, Entity &in)", asFUNCTION(DeinitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
 		}
 	}
 
@@ -609,7 +611,10 @@ namespace FusionEngine
 		{
 			auto scriptProperty = static_cast<ScriptAnyTSP*>( it->get() ); FSN_ASSERT(scriptProperty);
 			if (scriptProperty->IsDirty())
+			{
 				OnPropertyChanged(scriptProperty);
+				// TODO: mark this property to be serialised
+			}
 		}
 	}
 
@@ -617,6 +622,11 @@ namespace FusionEngine
 	{
 		m_Module.SetTarget(resource);
 		m_ModuleReloaded = true;
+
+		if (m_Module.IsLoaded())
+		{
+			m_EntityWrapperTypeId = m_Module->GetTypeIdByDecl("EntityWrapper@"); FSN_ASSERT(m_EntityWrapperTypeId >= 0);
+		}
 	}
 
 	void ASScript::OnSiblingAdded(const ComponentPtr& com)
@@ -639,6 +649,38 @@ namespace FusionEngine
 	{
 	}
 
+	bool ASScript::SerialiseProp(RakNet::BitStream& stream, CScriptAny* any)
+	{
+		auto& val = any->value;
+		FSN_ASSERT((val.typeId & asTYPEID_MASK_OBJECT) == 0 || val.typeId == m_EntityWrapperTypeId);
+
+		if (val.typeId == m_EntityWrapperTypeId)
+		{
+			auto propAsScriptObj = *static_cast<asIScriptObject**>(val.valueObj);
+			FSN_ASSERT(std::string(propAsScriptObj->GetPropertyName(0)) == "app_obj");
+			auto app_obj = *static_cast<EntityPtr*>(propAsScriptObj->GetAddressOfProperty(0));
+			stream.Write(app_obj->GetID());
+		}
+
+		stream.Write(val);
+
+		return true;
+	}
+
+	bool ASScript::DeserialiseProp(RakNet::BitStream& stream, CScriptAny* prop)
+	{
+		stream.Read(prop->value);
+		if (prop->value.typeId == m_EntityWrapperTypeId)
+		{
+			ObjectID id;
+			stream.Read(id);
+			auto propAsScriptObj = static_cast<asIScriptObject**>(prop->value.valueObj);
+			//auto app_obj = *static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+		}
+
+		return true;
+	}
+
 	bool ASScript::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
 	{
 		bool changeWritten = m_DeltaSerialisationHelper.writeChanges(force_all, stream,
@@ -650,9 +692,7 @@ namespace FusionEngine
 			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 			{
 				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
-				FSN_ASSERT((scriptprop->Get()->GetTypeId() & asTYPEID_MASK_OBJECT) == 0);
-				auto& val = scriptprop->Get()->value;
-				stream.Write(val);
+				SerialiseProp(stream, scriptprop->Get());
 			}
 		}
 		else if (!m_CacheProperties.empty()) // Script may have just been deserialised

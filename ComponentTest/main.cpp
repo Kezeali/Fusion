@@ -182,26 +182,57 @@ namespace FusionEngine
 			m_Thread.join();
 		}
 
+		void WriteComponent(CL_IODevice& out, IComponent* component)
+		{
+			RakNet::BitStream stream;
+			const bool conData = component->SerialiseContinuous(stream);
+			const bool occData = component->SerialiseOccasional(stream, true);
+
+			out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
+			out.write_uint8(occData ? 0xFF : 0x00);
+
+			out.write_uint32(stream.GetNumberOfBytesUsed());
+			out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+		}
+
+		void ReadComponent(CL_IODevice& in, IComponent* component)
+		{
+			const bool conData = in.read_uint8() != 0x00;
+			const bool occData = in.read_uint8() != 0x00;
+
+			const auto dataLen = in.read_uint32();
+			std::vector<unsigned char> data(dataLen);
+			in.read(data.data(), data.size());
+
+			RakNet::BitStream stream(data.data(), data.size(), false);
+
+			if (conData)
+				component->DeserialiseContinuous(stream);
+			if (occData)
+				component->DeserialiseOccasional(stream, true);
+
+			stream.AssertStreamEmpty();
+		}
+
 		void Save(CL_IODevice& out, EntityPtr entity)
 		{
 			ObjectID id = entity->GetID();
 			out.write(&id, sizeof(ObjectID));
+
+			{
+				RakNet::BitStream stream;
+				entity->SerialiseReferencedEntitiesList(stream);
+
+				out.write_uint32(stream.GetNumberOfBytesUsed());
+				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			}
 
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
 
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
 			out.write_string_a(transform->GetType());
-			{
-				RakNet::BitStream stream;
-				const bool conData = transform->SerialiseContinuous(stream);
-				const bool occData = transform->SerialiseOccasional(stream, true);
-
-				out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
-				out.write_uint8(occData ? 0xFF : 0x00);
-				out.write_uint32(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
-			}
+			WriteComponent(out, transform);
 
 			out.write(&numComponents, sizeof(size_t));
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
@@ -214,16 +245,7 @@ namespace FusionEngine
 			{
 				auto& component = *it;
 				if (component.get() != transform)
-				{
-					RakNet::BitStream stream;
-					const bool conData = component->SerialiseContinuous(stream);
-					const bool occData = component->SerialiseOccasional(stream, true);
-
-					out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
-					out.write_uint8(occData ? 0xFF : 0x00);
-					out.write_uint32(stream.GetNumberOfBytesUsed());
-					out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
-				}
+					WriteComponent(out, component.get());
 			}
 		}
 
@@ -233,24 +255,16 @@ namespace FusionEngine
 			in.read(&id, sizeof(ObjectID));
 			m_Instantiator->TakeID(id);
 
+			const auto dataLen = in.read_uint32();
+			std::vector<unsigned char> referencedEntitiesData(dataLen);
+			in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
+
 			ComponentPtr transform;
 			{
 				std::string transformType = in.read_string_a();
-
-				const bool conData = in.read_uint8() != 0x00;
-				const bool occData = in.read_uint8() != 0x00;
-
-				const auto dataLen = in.read_uint32();
-				std::vector<unsigned char> data(dataLen);
-				in.read(data.data(), data.size());
-
-				RakNet::BitStream stream(data.data(), data.size(), false);
-
 				transform = m_Instantiator->m_Factory->InstanceComponent(transformType);
-				if (conData)
-					transform->DeserialiseContinuous(stream);
-				if (occData)
-					transform->DeserialiseOccasional(stream, true);
+
+				ReadComponent(in, transform.get());
 			}
 
 			auto entity = std::make_shared<Entity>(&m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
@@ -275,19 +289,7 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					const bool conData = in.read_uint8() != 0x00;
-					const bool occData = in.read_uint8() != 0x00;
-
-					const auto dataLen = in.read_uint32();
-					std::vector<unsigned char> data(dataLen);
-					in.read(data.data(), data.size());
-
-					RakNet::BitStream stream(data.data(), data.size(), false);
-
-					if (conData)
-						component->DeserialiseContinuous(stream);
-					if (occData)
-						component->DeserialiseOccasional(stream, true);
+					ReadComponent(in, component.get());
 				}
 			}
 			

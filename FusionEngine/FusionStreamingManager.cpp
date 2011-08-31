@@ -274,6 +274,9 @@ namespace FusionEngine
 		{
 			removeEntityFromCell(&m_TheVoid, entity/*.get()*/);
 		}
+
+		// Remove the entity from the ID -> cell directory
+		m_EntityDirectory.erase(entity->GetID());
 	}
 
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
@@ -430,6 +433,9 @@ namespace FusionEngine
 
 			currentCell.EntryDeactivated();
 
+			// TODO: record this entity somehow (std::set or flag) so that an assertion can be made
+			//  in OnUpdated to ensure that the entity manager is honest
+
 			if (!currentCell.IsActive() && !currentCell.inRange)
 			{
 				currentCell.AddHist("Enqueue Attempted on Deactivation");
@@ -447,6 +453,62 @@ namespace FusionEngine
 
 			currentCell.EntryDeactivated();
 		}
+
+		// Update the entity-directory
+		// TODO: update this in other places where StreamingCellIndex is changed?
+		if (entity->IsSyncedEntity())
+			m_EntityDirectory[entity->GetID()] = entity->GetStreamingCellIndex();
+	}
+
+	static bool findEntityById(Cell::EntityEntryPair* out, Cell& cell, ObjectID id)
+	{
+		auto found = std::find_if(cell.objects.begin(), cell.objects.end(), [id](const Cell::EntityEntryPair& entry)
+		{
+			return entry.first->GetID() == id;
+		});
+		if (found != cell.objects.end())
+		{
+			out = &(*found);
+			return true;
+		}
+		else
+			return false;
+	}
+
+	bool StreamingManager::ActivateEntity(ObjectID id)
+	{
+		auto it = m_EntityDirectory.find(id);
+		if (it != m_EntityDirectory.end())
+		{
+			size_t cellIndex = it->second;
+			if (cellIndex < m_XCellCount * m_YCellCount)
+			{
+				Cell& cell = m_Cells[cellIndex];
+				Cell::mutex_t::scoped_try_lock lock(cell.mutex);
+				if (!lock || !cell.IsLoaded())
+				{
+					m_Archivist->Retrieve(&cell, cellIndex);
+					m_RequestedEntities[&cell].insert(id);
+				}
+				else
+				{
+					Cell::EntityEntryPair* entry = nullptr;
+					if (findEntityById(entry, cell, id))
+						ActivateEntity(cell, entry->first, entry->second);
+				}
+				return true;
+			}
+			else if (cellIndex == std::numeric_limits<size_t>::max())
+			{
+				Cell& cell = m_TheVoid;
+				Cell::EntityEntryPair* entry = nullptr;
+				if (findEntityById(entry, cell, id))
+					ActivateEntity(cell, entry->first, entry->second);
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	void StreamingManager::activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp)
@@ -763,7 +825,7 @@ namespace FusionEngine
 							{
 								actualCell->AddHist("Retrieved due to objects in Void");
 								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
-								m_CellsBeingLoaded.insert(actualCell);
+								//m_CellsBeingLoaded.insert(actualCell);
 							}
 						}
 						else
@@ -808,14 +870,26 @@ namespace FusionEngine
 			}
 		}
 
-		// Check for cells that have finished loading
-		for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+		// Check for requested cells that have finished loading
+		for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
 		{
-			auto& cell = *it;
-			if (cell->IsLoaded())
+			auto& cell = it->first;
+			FSN_ASSERT(cell && cell > m_Cells && cell < &m_Cells[m_XCellCount * m_YCellCount]);
+			Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+			if (lock && cell->IsLoaded())
 			{
-				it = m_CellsBeingLoaded.erase(it);
-				end = m_CellsBeingLoaded.end();
+				auto& requestedIds = it->second;
+				for (auto eit = cell->objects.begin(), eend = cell->objects.end(); it != end; ++it)
+				{
+					if (requestedIds.count(eit->first->GetID()) != 0)
+					{
+						ActivateEntity(*cell, eit->first, eit->second);
+						if (!cell->inRange)
+							QueueEntityForDeactivation(eit->second);
+					}
+				}
+				it = m_RequestedEntities.erase(it);
+				end = m_RequestedEntities.end();
 			}
 			else
 				++it;
@@ -993,7 +1067,7 @@ namespace FusionEngine
 						{
 							cell.AddHist("Retrieved due to entering range");
 							//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-							m_CellsBeingLoaded.insert(&cell);
+							//m_CellsBeingLoaded.insert(&cell);
 						}
 					}
 					// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)

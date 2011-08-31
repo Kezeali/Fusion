@@ -163,7 +163,6 @@ class Test : ScriptComponent
 			seed_rand(1234);
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
-			//@entityB = createPlayerEntity(Vector(0.25f, 0.0f));
 			createPI(Vector(0.3f, 0.3f), entityA.getRaw());
 			
 			entityA.script_b.speed = 3.0f;
@@ -200,7 +199,7 @@ class Test : ScriptComponent
 		
 		if (frames > 1 && frames < 256)
 		{
-			console.println("frame " + frames);
+			//console.println("frame " + frames);
 			uint xframes = frames % 50;
 			uint yframes = frames / 50;
 			float x = (xframes * 1.8f) - 9.f;

@@ -248,14 +248,7 @@ namespace FusionEngine
 		void OnUpdated(const EntityPtr &entity, float dt);
 		void OnDeactivated(const EntityPtr& entity);
 
-		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
-		void DeactivateEntity(const EntityPtr &entity);
-		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
-
-		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
-
-		void GenerateActivationEvent(const EntityPtr &entity);
-		void GenerateDeactivationEvent(const EntityPtr &entity);
+		bool ActivateEntity(ObjectID id);
 
 		boost::signals2::signal<void (const ActivationEvent&)> SignalActivationEvent;
 
@@ -304,7 +297,6 @@ namespace FusionEngine
 		typedef boost::recursive_mutex CamerasMutex_t;
 		CamerasMutex_t m_CamerasMutex;
 
-		typedef std::map<PlayerID, StreamingCamera> StreamingCameraMap;
 		std::vector< StreamingCamera > m_Cameras;
 
 		float m_DeactivationTime;
@@ -323,8 +315,22 @@ namespace FusionEngine
 		Cell *m_Cells;
 		Cell m_TheVoid;
 		std::set<Cell*> m_CellsBeingLoaded;
+		std::map<Cell*, std::set<ObjectID>> m_RequestedEntities;
+
+		std::map<ObjectID, size_t> m_EntityDirectory;
 
 		CellArchiver* m_Archivist;
+
+
+		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
+		void DeactivateEntity(const EntityPtr &entity);
+		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
+
+		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
+
+		void GenerateActivationEvent(const EntityPtr &entity);
+		void GenerateDeactivationEvent(const EntityPtr &entity);
+
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
 

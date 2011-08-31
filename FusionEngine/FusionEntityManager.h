@@ -259,7 +259,7 @@ namespace FusionEngine
 		const IDEntityMap &GetEntities() const;
 
 		//! Returns Pseudo-Entities
-		const EntitySet &GetPseudoEntities() const;
+		//const EntitySet &GetPseudoEntities() const;
 
 		//! Returns the EntityArray for the given domain
 		//EntityArray &GetDomain(EntityDomain domain_index);
@@ -371,7 +371,7 @@ namespace FusionEngine
 		// All non-pseudo-entities
 		IDEntityMap m_Entities;
 		// All pseudo-entities
-		EntitySet m_PseudoEntities;
+		//EntitySet m_PseudoEntities;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;

@@ -149,15 +149,22 @@ namespace FusionEngine
 
 
 		tbb::mutex m_InRefsMutex;
-		std::set<EntityPtr> m_ReferencingEntities;
+		std::set<std::weak_ptr<Entity>, std::owner_less<std::weak_ptr<Entity>>> m_ReferencingEntities;
 		tbb::spin_rw_mutex m_OutRefsMutex;
-		std::set<EntityPtr> m_ReferencedEntities;
+		// TODO: support multiple refs to the same entity by using a map with special ref-IDs
+		std::map<EntityPtr, unsigned int> m_ReferencedEntities;
+		// Stuff that needs to be activated before this can activate:
+		std::vector<std::pair<ObjectID, unsigned int>> m_UnloadedReferencedEntities;
 	
 	private:
 		//! Notifies this entity that the given entity is referencing it
 		void AddReference(EntityPtr entity);
 		//! Notifies this entity that the given entity is no longer referencing it
 		void RemoveReference(EntityPtr entity);
+
+		tbb::atomic<unsigned int> m_LockingReferences;
+		void IncrRefCount() { ++m_LockingReferences; m_GCFlag = false; }
+		void DecrRefCount() { --m_LockingReferences; }
 		
 	public:
 		//! Adds a reference from this entity to the given entity
@@ -165,9 +172,9 @@ namespace FusionEngine
 		//! Removes a reference from this entity to the given entity
 		void DropReference(EntityPtr heldEntity);
 
-		tbb::atomic<unsigned int> m_LockingReferences;
-		void IncrRefCount() { ++m_LockingReferences; m_GCFlag = false; }
-		void DecrRefCount() { --m_LockingReferences; }
+		void SerialiseReferencedEntitiesList(RakNet::BitStream& stream);
+		void DeserialiseReferencedEntitiesList(RakNet::BitStream& stream, const EntityDeserialiser& directory);
+		
 		bool IsReferenced() const { return m_LockingReferences != 0; }
 		unsigned int GetNumUsers() const { return m_LockingReferences; }
 

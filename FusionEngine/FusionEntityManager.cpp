@@ -475,10 +475,10 @@ namespace FusionEngine
 		// Mark the entity so it will be removed from the active list, and other secondary containers
 		entity->MarkToRemove();
 
-		if (!entity->IsPseudoEntity())
+		if (entity->IsSyncedEntity())
 			m_Entities.erase(entity->GetID());
-		else
-			m_PseudoEntities.erase(entity);
+		//else
+		//	m_PseudoEntities.erase(entity);
 
 		m_EntitiesByName.erase(entity->GetName());
 
@@ -590,10 +590,10 @@ namespace FusionEngine
 		return m_Entities;
 	}
 
-	const EntityManager::EntitySet &EntityManager::GetPseudoEntities() const
-	{
-		return m_PseudoEntities;
-	}
+	//const EntityManager::EntitySet &EntityManager::GetPseudoEntities() const
+	//{
+	//	return m_PseudoEntities;
+	//}
 
 	//EntityArray &EntityManager::GetDomain(EntityDomain idx)
 	//{
@@ -698,7 +698,7 @@ namespace FusionEngine
 
 		m_EntitiesByName.clear();
 		m_Entities.clear();
-		m_PseudoEntities.clear();
+		//m_PseudoEntities.clear();
 
 		//m_UnusedIds.freeAll();
 
@@ -740,7 +740,7 @@ namespace FusionEngine
 		//	domain.clear();
 	}
 
-	static bool allReferencesMarkedToDeactivate(EntityPtr& entity)
+	static bool hasNoActiveReferences(EntityPtr& entity)
 	{
 		bool allMarked = true;
 
@@ -769,8 +769,10 @@ namespace FusionEngine
 			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
-				auto& referencingEntity = *it;
-				if (!referencingEntity->GetGCFlag())
+				auto& referencingEntity = (*it).lock();
+				// Not being able to lock means that this entity has not only been deactivated, but also
+				//  destroyed, so it is clearly no longer a valid reference (doesn't need to be checked)
+				if (referencingEntity && !referencingEntity->GetGCFlag())
 					stack.push_back(referencingEntity);
 			}
 			}
@@ -789,8 +791,8 @@ namespace FusionEngine
 			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
-				auto& referencingEntity = *it;
-				if (referencingEntity->GetGCFlag())
+				auto& referencingEntity = (*it).lock();
+				if (referencingEntity && referencingEntity->GetGCFlag())
 					stack.push_back(referencingEntity);
 			}
 			}
@@ -826,7 +828,7 @@ namespace FusionEngine
 					entityRemoved = true;
 
 				// Keep entities active untill they are no longer referenced
-				if (!entity->IsReferenced() || allReferencesMarkedToDeactivate(entity))
+				if (!entity->IsReferenced() || hasNoActiveReferences(entity))
 				{
 					m_EntitiesToDeactivate.push_back(*it);
 
@@ -912,8 +914,14 @@ namespace FusionEngine
 			if (attemptToActivateEntity(*it))
 			{
 				//FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
-				(*it)->StreamIn();
-				m_ActiveEntities.push_back(*it);
+				auto& entity = (*it);
+
+				entity->StreamIn();
+				m_ActiveEntities.push_back(entity);
+
+				if (entity->IsSyncedEntity())
+					m_Entities[entity->GetID()] = entity;
+
 				it = m_EntitiesToActivate.erase(it);
 				end = m_EntitiesToActivate.end();
 			}
@@ -959,15 +967,18 @@ namespace FusionEngine
 
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
-#ifdef _DEBUG
-		FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
-#endif
+
 		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
 		//  so that mark must be removed
 		if (entity->IsMarkedToDeactivate())
 			entity->RemoveDeactivateMark();
 		else
+		{
+#ifdef _DEBUG
+		FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
+#endif
 			m_EntitiesToActivate.push_back(entity);
+		}
 	}
 
 	bool EntityManager::prepareEntity(const EntityPtr &entity)
@@ -995,6 +1006,29 @@ namespace FusionEngine
 	bool EntityManager::attemptToActivateEntity(const EntityPtr &entity)
 	{
 		bool allAreActive = true;
+
+		allAreActive &= entity->m_UnloadedReferencedEntities.empty();
+		auto& refedEnts = entity->m_UnloadedReferencedEntities;
+		for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end; ++it)
+		{
+			ObjectID id = it->first;
+			auto refedEntity = GetEntity(id);
+			if (!entity)
+			{
+				//size_t cellIndex = *m_EntityDirectory.find(id);
+				// m_StreamingManager (or archivist) should store the id's of entities against cell-indicies as they are unloaded.
+				// ActivateEntity returns false if the entity is not known, in which case it can be ignored
+				allAreActive &= !m_StreamingManager->ActivateEntity(id);
+			}
+			else
+			{
+				allAreActive &= true;
+				entity->HoldReference(refedEntity);
+			}
+		}
+		if (!allAreActive)
+			return false;
+
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
 			auto& com = *it;
@@ -1004,7 +1038,7 @@ namespace FusionEngine
 				allAreActive &= attemptToActivateComponent(_where->second, com);
 			}
 			else
-				FSN_EXCEPT(InvalidArgumentException, "Unknown component type (this would be impossable if I had planned ahead successfully, but alas)");
+				FSN_EXCEPT(InvalidArgumentException, "Unknown component type (this would be impossable if I had planned ahead properly, but alas)");
 		}
 		return allAreActive;
 	}
@@ -1093,6 +1127,11 @@ namespace FusionEngine
 			}
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
+		}
+
+		if (entity->IsSyncedEntity())
+		{
+			m_Entities.erase(entity->GetID());
 		}
 
 		m_StreamingManager->OnDeactivated(entity);

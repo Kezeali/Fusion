@@ -193,20 +193,59 @@ namespace FusionEngine
 
 	void Entity::HoldReference(EntityPtr entity)
 	{
-		{
 		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
-		m_ReferencedEntities.insert(entity);
-		}
-		if (IsActive())
+		auto result = m_ReferencedEntities.insert(std::make_pair(entity, 0u));
+		++(result.first->second);
+		if (result.second && IsActive())
 			entity->AddReference(this->shared_from_this());
 	}
 
 	void Entity::DropReference(EntityPtr entity)
 	{
-		if (IsActive())
-			entity->RemoveReference(this->shared_from_this());
 		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
-		m_ReferencedEntities.erase(entity);
+		auto it = m_ReferencedEntities.find(entity);
+		if (it != m_ReferencedEntities.end() && --it->second == 0)
+		{
+			m_ReferencedEntities.erase(entity);
+
+			lock.release();
+
+			if (IsActive())
+				entity->RemoveReference(this->shared_from_this());
+		}
+	}
+
+	void Entity::SerialiseReferencedEntitiesList(RakNet::BitStream& stream)
+	{
+		stream.Write(m_ReferencedEntities.size());
+		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
+		{
+			auto& entity = it->first;
+			auto count = it->second;
+			//if (entity->IsSyncedEntity())
+			stream.Write(entity->GetID());
+			stream.Write(count);
+		}
+	}
+
+	void Entity::DeserialiseReferencedEntitiesList(RakNet::BitStream& stream, const EntityDeserialiser& directory)
+	{
+		size_t numRefed;
+		stream.Read(numRefed);
+		for (size_t i = 0; i < numRefed; ++i)
+		{
+			ObjectID id;
+			stream.Read(id);
+
+			unsigned int numTimesReferenced;
+			stream.Read(numTimesReferenced);
+
+			auto entity = directory.GetEntity(id);
+			if (entity)
+				m_ReferencedEntities[entity] = numTimesReferenced;
+			else
+				m_UnloadedReferencedEntities.push_back(std::make_pair(id, numTimesReferenced));
+		}
 	}
 
 	void Entity::AddComponent(const ComponentPtr& component, std::string identifier)
@@ -782,7 +821,7 @@ namespace FusionEngine
 		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex, false);
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
-			(*it)->AddReference(this->shared_from_this());
+			(*it).first->AddReference(this->shared_from_this());
 		}
 		}
 
@@ -801,7 +840,7 @@ namespace FusionEngine
 		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex, false);
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
-			(*it)->RemoveReference(this->shared_from_this());
+			(*it).first->RemoveReference(this->shared_from_this());
 		}
 		}
 
@@ -947,11 +986,25 @@ namespace FusionEngine
 
 	void Entity::Register(asIScriptEngine *engine)
 	{
-		int r;
+		
 		RegisterSharedPtrType<Entity>("Entity", engine);
+
+		{
+			typedef Scripting::Registation::ValueTypeHelper<std::weak_ptr<Entity>> helper_type;
+
+			int r;
+			r = engine->RegisterObjectType("EntityW", sizeof(std::weak_ptr<Entity>), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectBehaviour("EntityW", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(helper_type::Construct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectBehaviour("EntityW", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(const EntityW &in other)",
+				asMETHODPR(std::weak_ptr<Entity>, operator=, (const std::weak_ptr<Entity> &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(Entity &in other)",
+				asMETHODPR(std::weak_ptr<Entity>, operator=, (EntityPtr &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		}
 
 		ASComponentFuture::Register(engine);
 
+		int r;
 		r = engine->RegisterObjectMethod("Entity",
 			"ComponentFuture@ getComponent(string, string) const",
 			asFUNCTION(Entity_GetComponent), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
@@ -1025,8 +1078,8 @@ namespace FusionEngine
 			"void setAngle(float)",
 			asMETHOD(Entity, SetAngle), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
-		r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
-		r = engine->RegisterInterfaceMethod("IEntity", "void OnSpawn()"); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterInterface("IEntity"); FSN_ASSERT(r >= 0);
+		//r = engine->RegisterInterfaceMethod("IEntity", "void OnSpawn()"); FSN_ASSERT(r >= 0);
 		//r = engine->RegisterInterfaceMethod("IEntity", "void Update()"); FSN_ASSERT(r >= 0);
 		//r = engine->RegisterInterfaceMethod("IEntity", "void Draw()"); FSN_ASSERT(r >= 0);
 	}

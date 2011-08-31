@@ -165,6 +165,9 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
+		bool SerialiseProp(RakNet::BitStream& stream, CScriptAny* any);
+		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any);
+
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
 		// IScript interface
@@ -178,7 +181,7 @@ namespace FusionEngine
 
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
-		ModulePtr m_ModuleOld;
+		int m_EntityWrapperTypeId;
 		boost::intrusive_ptr<asIScriptObject> m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
 
