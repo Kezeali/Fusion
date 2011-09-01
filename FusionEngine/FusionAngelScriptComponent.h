@@ -147,6 +147,9 @@ namespace FusionEngine
 		
 		void OnModuleLoaded(ResourceDataPtr resource);
 
+		// Called after the script is activated
+		void InitialiseEntityWrappers();
+
 		static ASScript* GetActiveScript();
 		//static void YeildActiveScript();
 		static void YeildActiveScriptUntil(std::function<bool (void)> condition, float timeout = 0.f);
@@ -166,7 +169,7 @@ namespace FusionEngine
 		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
 
 		bool SerialiseProp(RakNet::BitStream& stream, CScriptAny* any);
-		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any);
+		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any, unsigned int index);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
@@ -187,6 +190,7 @@ namespace FusionEngine
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 		std::vector<boost::intrusive_ptr<CScriptAny>> m_CacheProperties;
+		std::vector<std::pair<unsigned int, ObjectID>> m_UninitialisedEntityWrappers;
 		
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;

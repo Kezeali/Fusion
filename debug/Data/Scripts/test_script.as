@@ -51,8 +51,8 @@ class Test : ScriptComponent
 		bool script = false;
 		if (rand() < 0.2)
 		{
-			ontology.addComponent(newEnt, "TestC", "script_c");
-			script = true;
+			//ontology.addComponent(newEnt, "TestC", "script_c");
+			//script = true;
 		}
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
@@ -75,7 +75,7 @@ class Test : ScriptComponent
 			@entityB = EntityWrapper(newEnt);
 	}
 	
-	void createPI(Vector &in pos, Entity target)
+	void createPI(Vector &in pos, EntityWrapper@ target)
 	{
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
@@ -90,7 +90,9 @@ class Test : ScriptComponent
 		sprite.BaseAngle = 1.57;
 		
 		EntityWrapper@ wr = EntityWrapper(newEnt);
-		wr.notai.target = target;
+		console.println("before setting target");
+		@wr.notai.target = target;
+		console.println("after setting target");
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
 		
@@ -111,7 +113,7 @@ class Test : ScriptComponent
 		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = -1;
 	}
 	
-	private EntityWrapper@ entityA;
+	EntityWrapper@ entityA;
 	private EntityWrapper@ entityB;
 	
 	EntityWrapper@ createPlayerEntity(Vector &in pos)
@@ -163,7 +165,7 @@ class Test : ScriptComponent
 			seed_rand(1234);
 			
 			@entityA = createPlayerEntity(Vector(-0.1f, 0.0f));
-			createPI(Vector(0.3f, 0.3f), entityA.getRaw());
+			createPI(Vector(0.3f, 0.3f), entityA);
 			
 			entityA.script_b.speed = 3.0f;
 
@@ -205,6 +207,12 @@ class Test : ScriptComponent
 			float x = (xframes * 1.8f) - 9.f;
 			float y = (yframes * 1.6f) - 6.f;
 			createEntity(Vector(x, y));
+		}
+		
+		if (entityA !is null)
+		{
+			if (frames % 60 == 0)
+			console.println("Angle: " + entityA.itransform.Angle.value);
 		}
 		
 		if (frames == 10)

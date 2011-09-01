@@ -15,8 +15,8 @@ class PseudoI : ScriptComponent
 	
 	private Camera cam;
 	
-	Entity target;
-	private EntityWrapper@ wtarget;
+	//Entity target;
+	EntityWrapper@ target;
 	
 	private uint contact_frames;
 	
@@ -41,13 +41,10 @@ class PseudoI : ScriptComponent
 		//if (frames % 100 == 0)
 			//entity.irigidbody.AngularVelocity = (rand() + 0.1) * 6.0 - 3.0;
 		
-		if (frames > 10 && wtarget is null)
-			@wtarget = EntityWrapper(target);
-		
-		if (frames % 2 == 0 && wtarget !is null)
+		if (frames % 2 == 0 && target !is null)
 		{
 			Vector myPos = entity.itransform.Position;
-			Vector targetPos = wtarget.itransform.Position;
+			Vector targetPos = target.itransform.Position;
 			Vector posDiff = targetPos - myPos;
 			if (posDiff.length() < 0.6f)
 				contact_frames = 10;

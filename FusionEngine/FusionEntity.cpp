@@ -217,14 +217,16 @@ namespace FusionEngine
 
 	void Entity::SerialiseReferencedEntitiesList(RakNet::BitStream& stream)
 	{
-		stream.Write(m_ReferencedEntities.size());
+		stream.Write((size_t)std::count_if(m_ReferencedEntities.begin(), m_ReferencedEntities.end(), [](const std::pair<EntityPtr, size_t> &ref) { return ref.first->IsSyncedEntity(); }));
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
 			auto& entity = it->first;
 			auto count = it->second;
-			//if (entity->IsSyncedEntity())
-			stream.Write(entity->GetID());
-			stream.Write(count);
+			if (entity->IsSyncedEntity())
+			{
+				stream.Write(entity->GetID());
+				stream.Write(count);
+			}
 		}
 	}
 

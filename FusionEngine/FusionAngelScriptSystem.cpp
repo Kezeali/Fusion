@@ -173,7 +173,7 @@ namespace FusionEngine
 		}
 
 		//std::set<std::string> builtInTypes;
-		std::regex r("^(?:bool|(?:[u]|)int(?:8|16|32|64|)|float|double)$");
+		std::regex r("^(?:bool|(?:[u]|)int(?:8|16|32|64|)|float|double|EntityWrapper)$");
 
 		if (pos < script.length() && script[pos] == '{')
 		{
@@ -320,6 +320,12 @@ namespace FusionEngine
 					{
 						newStatement = true;
 						++pos;
+						continue;
+					}
+					else if (t == asTC_COMMENT)
+					{
+						newStatement = true;
+						pos += tokenLength;
 						continue;
 					}
 					else
@@ -484,16 +490,32 @@ namespace FusionEngine
 			str << i;
 			std::string propIndex = str.str();
 			const bool isHandleType = type.find('@') != std::string::npos;
-			scriptComponentInterface +=
-				type + " get_" + identifier + "() const { "
-				+ type + " value; "
-				"any propAny = app_obj.getProperty(" + propIndex + "); "
-				"propAny.retrieve(" + std::string(isHandleType ? "@" : "") + "value); "
-				"return value; }\n"
+			if (type != "EntityWrapper@")
+			{
+				scriptComponentInterface +=
+					type + " get_" + identifier + "() const { "
+					+ type + " value; "
+					"any propAny = app_obj.getProperty(" + propIndex + "); "
+					"propAny.retrieve(" + std::string(isHandleType ? "@" : "") + "value); "
+					"return value; }\n"
 
-				"void set_" + identifier + "(" + type + " value) { "
-				"app_obj.setProperty(" + propIndex + ", value);"
-				"}\n";
+					"void set_" + identifier + "(" + type + " value) { "
+					"app_obj.setProperty(" + propIndex + ", value);"
+					"}\n";
+			}
+			else
+			{
+				scriptComponentInterface +=
+					type + " get_" + identifier + "() const { "
+					+ "Entity value; "
+					"any propAny = app_obj.getProperty(" + propIndex + "); "
+					"propAny.retrieve(value); "
+					"return EntityWrapper(value); }\n"
+
+					"void set_" + identifier + "(" + type + " value) { "
+					"app_obj.setProperty(" + propIndex + ", value.getRaw());"
+					"}\n";
+			}
 		}
 		scriptComponentInterface += "}\n";
 		return scriptComponentInterface;
@@ -518,7 +540,11 @@ namespace FusionEngine
 				if (_where != scriptComponents.end())
 				{
 					interfaceName = "I" + interfaceName;
-					convenientComponentProperties += interfaceName + "@ " + convenientIdentifier + ";\n";
+
+					convenientComponentProperties +=
+						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
+						"return " + interfaceName + "(cast<ASScript>(app_obj.getParent().getComponent('IScript','" + it->second + "').get()));"
+						"}\n";
 
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
@@ -742,6 +768,8 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			m_ActiveScripts.push_back(scriptComponent);
+
+			scriptComponent->InitialiseEntityWrappers();
 		}
 	}
 

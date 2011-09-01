@@ -187,6 +187,8 @@ namespace FusionEngine
 			//m_Value->Release();
 		}
 
+		int GetTypeId() const { return m_TypeId; }
+
 		bool IsDirty()
 		{
 			if (m_Value->value.typeId == m_TypeId)
@@ -315,7 +317,7 @@ namespace FusionEngine
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in, float delay = 0.0f)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&, float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "any &getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "any@ getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 			
 			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
@@ -327,7 +329,8 @@ namespace FusionEngine
 
 	ASScript::ASScript()
 		: m_ReloadScript(false),
-		m_ModuleReloaded(false)
+		m_ModuleReloaded(false),
+		m_EntityWrapperTypeId(-1)
 	{
 	}
 
@@ -530,6 +533,12 @@ namespace FusionEngine
 		}
 	}
 
+	void getWrappedEntity(EntityPtr*& out, asIScriptObject* entityWrapper)
+	{
+		FSN_ASSERT(std::string(entityWrapper->GetPropertyName(0)) == "app_obj");
+		out = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+	}
+
 	CScriptAny* ASScript::GetProperty(unsigned int index)
 	{
 		if (index >= m_ScriptProperties.size())
@@ -539,8 +548,30 @@ namespace FusionEngine
 		}
 
 		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
-		auto value = scriptProperty->Get();
-		return value;
+		auto any = scriptProperty->Get();
+		if (any->GetTypeId() != m_EntityWrapperTypeId)
+		{
+			any->AddRef();
+			return any;
+		}
+		else
+		{
+			auto engine = m_Module->GetEngine();
+
+			if (any->value.valueObj != 0)
+			{
+				auto entityWrapper = static_cast<asIScriptObject*>(any->value.valueObj);
+
+				EntityPtr* wrappedEntity = nullptr;
+				getWrappedEntity(wrappedEntity, entityWrapper);
+
+				// TODO: static int Entity::GetTypeId();
+				int entityTypeId = engine->GetTypeIdByDecl("Entity");
+				auto unwrappedAny = new CScriptAny(wrappedEntity, entityTypeId, engine);
+				return unwrappedAny;
+			}
+			else return new CScriptAny(engine);
+		}
 	}
 
 	bool ASScript::SetProperty(unsigned int index, void *ref, int typeId)
@@ -552,7 +583,45 @@ namespace FusionEngine
 		}
 
 		auto scriptProperty = static_cast<ScriptAnyTSP*>( m_ScriptProperties[index].get() ); FSN_ASSERT(scriptProperty);
-		scriptProperty->Set(ref, typeId);
+
+		if (scriptProperty->GetTypeId() != m_EntityWrapperTypeId)
+		{
+			scriptProperty->Set(ref, typeId);
+		}
+		else
+		{
+			auto engine = m_Module->GetEngine();
+			int entityTypeId = engine->GetTypeIdByDecl("Entity");
+
+			if (typeId != entityTypeId)
+				return false;
+
+			auto passedObj = static_cast<EntityPtr*>(ref);
+
+			if (!passedObj)
+				return false;
+			
+			//auto wrapperCtor = ScriptUtils::Calling::Caller::FactoryCaller(engine->GetObjectTypeById(m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE), "Entity &in");
+			//FSN_ASSERT(wrapperCtor);
+			//void* entityWrapper = wrapperCtor(passedObj);
+
+			const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
+			asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+
+			FSN_ASSERT(GetParent());
+			GetParent()->HoldReference(*passedObj);
+
+			FSN_ASSERT(entityWrapper->GetPropertyTypeId(0) == entityTypeId && entityWrapper->GetPropertyTypeId(1) == engine->GetTypeIdByDecl("EntityW"));
+
+			auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+			*app_obj = *passedObj;
+
+			auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
+			*owner = GetParent()->shared_from_this();
+
+			auto any = new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine);
+			scriptProperty->Set(any);
+		}
 		return true;
 	}
 
@@ -577,13 +646,18 @@ namespace FusionEngine
 
 					auto comProp = new ScriptAnyTSP(obj, i);
 
+					FSN_ASSERT((comProp->GetTypeId() & asTYPEID_OBJHANDLE) == 0 || comProp->GetTypeId() == m_EntityWrapperTypeId);
+
 					// Copy in any values that were deserialised before the script was reloaded
 					if (m_CacheProperties.size() > interfaceIndex)
 					{
 						const auto& cachedProp = m_CacheProperties[interfaceIndex];
-						cachedProp->AddRef();
-						comProp->Set(cachedProp.get());
-						comProp->Synchronise();
+						if (cachedProp->GetTypeId() != -1)
+						{
+							cachedProp->AddRef();
+							comProp->Set(cachedProp.get());
+							comProp->Synchronise();
+						}
 					}
 
 					m_ScriptProperties[interfaceIndex].reset(comProp);
@@ -614,6 +688,7 @@ namespace FusionEngine
 			{
 				OnPropertyChanged(scriptProperty);
 				// TODO: mark this property to be serialised
+				//  (also do so in SetProperty(...))
 			}
 		}
 	}
@@ -627,6 +702,51 @@ namespace FusionEngine
 		{
 			m_EntityWrapperTypeId = m_Module->GetTypeIdByDecl("EntityWrapper@"); FSN_ASSERT(m_EntityWrapperTypeId >= 0);
 		}
+	}
+
+	void ASScript::InitialiseEntityWrappers()
+	{
+		FSN_ASSERT(m_Module.IsLoaded());
+
+		auto engine = m_Module->GetEngine();
+
+		for (auto it = m_UninitialisedEntityWrappers.begin(), end = m_UninitialisedEntityWrappers.end(); it != end; ++it)
+		{
+			ObjectID id = it->second;
+
+			auto _where = std::find_if(GetParent()->m_ReferencedEntities.begin(), GetParent()->m_ReferencedEntities.end(), [id](const std::pair<EntityPtr, size_t>& entity)
+			{
+				return entity.first->GetID() == id;
+			});
+
+			unsigned int propertyIndex = it->first;
+
+			if (_where != GetParent()->m_ReferencedEntities.end())
+			{
+				asIScriptObject* entityWrapper = nullptr;
+
+				auto scriptprop = static_cast<ScriptAnyTSP*>(m_ScriptProperties[propertyIndex].get());
+
+				const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
+				entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+				FSN_ASSERT(entityWrapper);
+
+				auto prop = new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine);
+				scriptprop->Set(prop);
+
+				auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+				*app_obj = _where->first;
+
+				auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
+				*owner = GetParent()->shared_from_this();
+			}
+			else
+			{
+				if (id != 0)
+					FSN_ASSERT_FAIL("Failed to intitialise entity wrapper");
+			}
+		}
+		m_UninitialisedEntityWrappers.clear();
 	}
 
 	void ASScript::OnSiblingAdded(const ComponentPtr& com)
@@ -651,31 +771,89 @@ namespace FusionEngine
 
 	bool ASScript::SerialiseProp(RakNet::BitStream& stream, CScriptAny* any)
 	{
-		auto& val = any->value;
-		FSN_ASSERT((val.typeId & asTYPEID_MASK_OBJECT) == 0 || val.typeId == m_EntityWrapperTypeId);
+		FSN_ASSERT(any);
 
+		auto& val = any->value;
+		FSN_ASSERT((val.typeId & asTYPEID_OBJHANDLE) == 0 || val.typeId == m_EntityWrapperTypeId);
+		
 		if (val.typeId == m_EntityWrapperTypeId)
 		{
-			auto propAsScriptObj = *static_cast<asIScriptObject**>(val.valueObj);
-			FSN_ASSERT(std::string(propAsScriptObj->GetPropertyName(0)) == "app_obj");
-			auto app_obj = *static_cast<EntityPtr*>(propAsScriptObj->GetAddressOfProperty(0));
-			stream.Write(app_obj->GetID());
-		}
+			auto temp = val.typeId;
+			val.typeId = -1;
+			stream.Write(val);
+			val.typeId = temp;
 
-		stream.Write(val);
+			if (val.valueObj)
+			{
+				auto propAsScriptObj = static_cast<asIScriptObject*>(val.valueObj);
+				FSN_ASSERT(propAsScriptObj && std::string(propAsScriptObj->GetPropertyName(0)) == "app_obj");
+				auto app_obj = *static_cast<EntityPtr*>(propAsScriptObj->GetAddressOfProperty(0));
+				if (app_obj)
+					stream.Write(app_obj->GetID());
+				else
+					stream.Write(ObjectID(0));
+			}
+			else
+				stream.Write(ObjectID(0));
+		}
+		else if ((val.typeId & asTYPEID_SCRIPTOBJECT) != 0)
+		{
+			FSN_ASSERT_FAIL("Not implemented");
+			// TODO: check if it implements ISerialisable and serialise it, if not, just copy each prop
+		}
+		else if ((val.typeId & asTYPEID_APPOBJECT) != 0)
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Can't serialise app objects");
+		}
+		else
+			stream.Write(val);
 
 		return true;
 	}
 
-	bool ASScript::DeserialiseProp(RakNet::BitStream& stream, CScriptAny* prop)
+	bool ASScript::DeserialiseProp(RakNet::BitStream& stream, CScriptAny* prop, unsigned int index)
 	{
+		FSN_ASSERT(prop);
+
 		stream.Read(prop->value);
-		if (prop->value.typeId == m_EntityWrapperTypeId)
+
+		if (prop->value.typeId == -1)
 		{
 			ObjectID id;
 			stream.Read(id);
-			auto propAsScriptObj = static_cast<asIScriptObject**>(prop->value.valueObj);
-			//auto app_obj = *static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+
+			//ScriptUtils::Calling::Caller::FactoryCaller();
+
+			auto _where = std::find_if(GetParent()->m_ReferencedEntities.begin(), GetParent()->m_ReferencedEntities.end(), [id](const std::pair<EntityPtr, size_t>& entity)
+			{
+				return entity.first->GetID() == id;
+			});
+
+			asIScriptObject* entityWrapper = nullptr;
+			if (m_Module.IsLoaded())
+			{
+				const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
+				entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
+				
+				prop->Store(&entityWrapper, m_EntityWrapperTypeId);
+			}
+
+			if (entityWrapper && _where != GetParent()->m_ReferencedEntities.end())
+			{
+				auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+				*app_obj = _where->first;
+
+				auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
+				*owner = GetParent()->shared_from_this();
+			}
+			else
+			{
+				//FSN_EXCEPT(InvalidArgumentException, "This is why I should use handles, and probably have Entity keep a pointer to EntityManager");
+				// TODO: should the prop be stored here instead, and not call prop->Store below (so the prop stays null)
+				m_UninitialisedEntityWrappers.push_back(std::make_pair(index, id));
+			}
+			
+			
 		}
 
 		return true;
@@ -701,7 +879,7 @@ namespace FusionEngine
 			for (auto it = m_CacheProperties.begin(), end = m_CacheProperties.end(); it != end; ++it)
 			{
 				auto& prop = *it;
-				stream.Write(prop->value);
+				SerialiseProp(stream, prop.get());
 			}
 		}
 
@@ -725,12 +903,15 @@ namespace FusionEngine
 		if (m_ScriptObject)
 		{
 			FSN_ASSERT(m_ScriptProperties.size() == numProperties);
+			unsigned int index = 0;
 			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 			{
 				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
-				FSN_ASSERT((scriptprop->Get()->GetTypeId() & asTYPEID_MASK_OBJECT) == 0);
-				auto& val = scriptprop->Get()->value;
-				stream.Read(val);
+				//auto prop = scriptprop->Get();
+				auto prop = new CScriptAny(engine);
+				DeserialiseProp(stream, prop, index++);
+				scriptprop->Set(prop);
+				prop->Release();
 			}
 		}
 		else
@@ -738,7 +919,7 @@ namespace FusionEngine
 			for (size_t i = 0; i < numProperties; ++i)
 			{
 				auto prop = new CScriptAny(engine);
-				stream.Read(prop->value);
+				DeserialiseProp(stream, prop, i);
 				m_CacheProperties.push_back(prop);
 				prop->Release();
 			}

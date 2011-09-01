@@ -1009,11 +1009,11 @@ namespace FusionEngine
 
 		allAreActive &= entity->m_UnloadedReferencedEntities.empty();
 		auto& refedEnts = entity->m_UnloadedReferencedEntities;
-		for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end; ++it)
+		for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end;)
 		{
 			ObjectID id = it->first;
 			auto refedEntity = GetEntity(id);
-			if (!entity)
+			if (!refedEntity)
 			{
 				//size_t cellIndex = *m_EntityDirectory.find(id);
 				// m_StreamingManager (or archivist) should store the id's of entities against cell-indicies as they are unloaded.
@@ -1024,7 +1024,11 @@ namespace FusionEngine
 			{
 				allAreActive &= true;
 				entity->HoldReference(refedEntity);
+				it = refedEnts.erase(it);
+				end = refedEnts.end();
+				continue;
 			}
+			++it;
 		}
 		if (!allAreActive)
 			return false;

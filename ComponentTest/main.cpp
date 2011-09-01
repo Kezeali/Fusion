@@ -211,7 +211,9 @@ namespace FusionEngine
 			if (occData)
 				component->DeserialiseOccasional(stream, true);
 
-			stream.AssertStreamEmpty();
+			//stream.AssertStreamEmpty();
+			if (stream.GetNumberOfUnreadBits() >= 8)
+				SendToConsole("Not all serialised data was used when reading a " + component->GetType());
 		}
 
 		void Save(CL_IODevice& out, EntityPtr entity)
@@ -271,6 +273,11 @@ namespace FusionEngine
 			entity->SetID(id);
 
 			transform->SynchronisePropertiesNow();
+
+			{
+				RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);
+				entity->DeserialiseReferencedEntitiesList(stream, EntityDeserialiser(m_Instantiator->m_EntityManager));
+			}
 
 			size_t numComponents;
 			in.read(&numComponents, sizeof(size_t));
@@ -755,6 +762,8 @@ public:
 
 				cellArchivist->Start();
 
+				try
+				{
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
 
 				entityManager->m_EntityFactory = entityFactory.get();
@@ -1034,6 +1043,12 @@ public:
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;
+				}
+				}
+				catch (...)
+				{
+					cellArchivist->Stop();
+					throw;
 				}
 				cellArchivist->Stop();
 				scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);

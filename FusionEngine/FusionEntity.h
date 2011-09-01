@@ -152,9 +152,9 @@ namespace FusionEngine
 		std::set<std::weak_ptr<Entity>, std::owner_less<std::weak_ptr<Entity>>> m_ReferencingEntities;
 		tbb::spin_rw_mutex m_OutRefsMutex;
 		// TODO: support multiple refs to the same entity by using a map with special ref-IDs
-		std::map<EntityPtr, unsigned int> m_ReferencedEntities;
+		std::map<EntityPtr, size_t> m_ReferencedEntities;
 		// Stuff that needs to be activated before this can activate:
-		std::vector<std::pair<ObjectID, unsigned int>> m_UnloadedReferencedEntities;
+		std::vector<std::pair<ObjectID, size_t>> m_UnloadedReferencedEntities;
 	
 	private:
 		//! Notifies this entity that the given entity is referencing it

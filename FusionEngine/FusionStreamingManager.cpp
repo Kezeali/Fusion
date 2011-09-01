@@ -460,7 +460,7 @@ namespace FusionEngine
 			m_EntityDirectory[entity->GetID()] = entity->GetStreamingCellIndex();
 	}
 
-	static bool findEntityById(Cell::EntityEntryPair* out, Cell& cell, ObjectID id)
+	static bool findEntityById(EntityPtr& out, CellEntry*& out2, Cell& cell, ObjectID id)
 	{
 		auto found = std::find_if(cell.objects.begin(), cell.objects.end(), [id](const Cell::EntityEntryPair& entry)
 		{
@@ -468,7 +468,8 @@ namespace FusionEngine
 		});
 		if (found != cell.objects.end())
 		{
-			out = &(*found);
+			out = found->first;
+			out2 = &found->second;
 			return true;
 		}
 		else
@@ -492,19 +493,32 @@ namespace FusionEngine
 				}
 				else
 				{
-					Cell::EntityEntryPair* entry = nullptr;
-					if (findEntityById(entry, cell, id))
-						ActivateEntity(cell, entry->first, entry->second);
+					EntityPtr entity;
+					CellEntry* entry = nullptr;
+					if (findEntityById(entity, entry, cell, id))
+					{
+						FSN_ASSERT(entity && entry);
+						if (!entry->active)
+							//ActivateEntity(cell, entity, *entry);
+							m_RequestedEntities[&cell].insert(id);
+					}
+					else
+						return false;
 				}
 				return true;
 			}
 			else if (cellIndex == std::numeric_limits<size_t>::max())
 			{
 				Cell& cell = m_TheVoid;
-				Cell::EntityEntryPair* entry = nullptr;
-				if (findEntityById(entry, cell, id))
-					ActivateEntity(cell, entry->first, entry->second);
-				return true;
+				EntityPtr entity;
+				CellEntry* entry = nullptr;
+				if (findEntityById(entity, entry, cell, id))
+				{
+					FSN_ASSERT(entity && entry);
+					if (!entry->active)
+						ActivateEntity(cell, entity, *entry);
+					return true;
+				}
 			}
 		}
 		
@@ -879,13 +893,16 @@ namespace FusionEngine
 			if (lock && cell->IsLoaded())
 			{
 				auto& requestedIds = it->second;
-				for (auto eit = cell->objects.begin(), eend = cell->objects.end(); it != end; ++it)
+				for (auto eit = cell->objects.begin(), eend = cell->objects.end(); eit != eend; ++eit)
 				{
 					if (requestedIds.count(eit->first->GetID()) != 0)
 					{
-						ActivateEntity(*cell, eit->first, eit->second);
-						if (!cell->inRange)
-							QueueEntityForDeactivation(eit->second);
+						if (!eit->second.active)
+						{
+							ActivateEntity(*cell, eit->first, eit->second);
+							if (!cell->inRange)
+								QueueEntityForDeactivation(eit->second);
+						}
 					}
 				}
 				it = m_RequestedEntities.erase(it);
