@@ -32,6 +32,8 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 
+#include "FusionProfiling.h"
+
 #include "FusionPhysicsDebugDraw.h"
 
 #include <tbb/parallel_sort.h>
@@ -148,7 +150,7 @@ namespace FusionEngine
 		m_Renderer(renderer)
 	{
 		auto gc = m_Renderer->GetGraphicContext();
-		m_DebugFont = CL_Font(gc, "Lucida Console", 24);
+		m_DebugFont = CL_Font(gc, "Lucida Console", 22);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -264,6 +266,20 @@ namespace FusionEngine
 		c1.set_alpha(DeltaTime::GetInterpolationAlpha());
 		CL_Draw::box(gc, bar, CL_Colorf::silver);
 		CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
+
+		{
+		auto& pf = Profiling::getSingleton().GetTimes();
+		CL_Pointf pfLoc(10.f, 90.f);
+		for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
+		{
+			std::stringstream str;
+			str << it->second;
+			std::string line = it->first + ": " + str.str() + "ms";
+			m_DebugFont.draw_text(gc, pfLoc, line);
+
+			pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
+		}
+		}
 
 		//if (!m_PhysDebugDraw)
 		//{

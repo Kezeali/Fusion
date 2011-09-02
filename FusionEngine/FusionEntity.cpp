@@ -217,6 +217,7 @@ namespace FusionEngine
 
 	void Entity::SerialiseReferencedEntitiesList(RakNet::BitStream& stream)
 	{
+#if 0
 		stream.Write((size_t)std::count_if(m_ReferencedEntities.begin(), m_ReferencedEntities.end(), [](const std::pair<EntityPtr, size_t> &ref) { return ref.first->IsSyncedEntity(); }));
 		for (auto it = m_ReferencedEntities.begin(), end = m_ReferencedEntities.end(); it != end; ++it)
 		{
@@ -228,10 +229,12 @@ namespace FusionEngine
 				stream.Write(count);
 			}
 		}
+#endif
 	}
 
 	void Entity::DeserialiseReferencedEntitiesList(RakNet::BitStream& stream, const EntityDeserialiser& directory)
 	{
+#if 0
 		size_t numRefed;
 		stream.Read(numRefed);
 		for (size_t i = 0; i < numRefed; ++i)
@@ -248,6 +251,7 @@ namespace FusionEngine
 			else
 				m_UnloadedReferencedEntities.push_back(std::make_pair(id, numTimesReferenced));
 		}
+#endif
 	}
 
 	void Entity::AddComponent(const ComponentPtr& component, std::string identifier)
@@ -960,7 +964,12 @@ namespace FusionEngine
 				}
 				else
 					return false;
-			}, 4.f);
+			},
+#ifdef PROFILE_BUILD
+				20.0f);
+#else
+				4.f);
+#endif
 		}
 		
 		return future;

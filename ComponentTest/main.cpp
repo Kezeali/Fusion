@@ -6,6 +6,8 @@
 #include "../FusionEngine/FusionConsoleStdOutWriter.h"
 #include "../FusionEngine/FusionLogger.h"
 
+#include "../FusionEngine/FusionProfiling.h"
+
 // Filesystem
 #include "../FusionEngine/FusionPaths.h"
 #include "../FusionEngine/FusionPhysFS.h"
@@ -604,6 +606,7 @@ public:
 			std::unique_ptr<Logger> logger;
 			std::unique_ptr<ConsoleStdOutWriter> coutWriter;
 			std::unique_ptr<Console> console;
+			std::unique_ptr<Profiling> profiling;
 
 			try
 			{
@@ -611,6 +614,8 @@ public:
 				coutWriter.reset(new ConsoleStdOutWriter());
 				coutWriter->Enable();
 				logger.reset(new Logger());
+
+				profiling.reset(new Profiling());
 			}
 			catch (FusionEngine::Exception& ex)
 			{
@@ -1040,6 +1045,9 @@ public:
 							changed.second->FireSignal();
 						}
 					}
+					
+					// Record profiling data
+					profiling->StoreTick();
 
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;

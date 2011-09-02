@@ -234,6 +234,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionProfiling.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRakNetwork.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRefCounted.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderable.cpp" />
@@ -314,6 +315,7 @@
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
     <ClInclude Include="..\FusionEngine\FusionInputSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingSystem.h" />

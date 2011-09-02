@@ -345,6 +345,7 @@ namespace FusionEngine
 		void activateEntity(const EntityPtr &entity);
 
 		void deactivateEntity(const EntityPtr& entity);
+		void removeEntity(const EntityPtr& entity);
 
 		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
@@ -378,6 +379,7 @@ namespace FusionEngine
 
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToActivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;
+		std::vector<EntityPtr> m_EntitiesUnreferenced;
 		std::vector<EntityPtr> m_EntitiesToDeactivate;
 		EntityArray m_ActiveEntities;
 

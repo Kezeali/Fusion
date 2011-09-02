@@ -145,6 +145,8 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
+		virtual std::string GetName() const { return GetSystemWorld()->GetSystem()->GetName(); }
+
 		virtual void Update(const float delta) = 0;
 
 		virtual SystemType GetTaskType() const = 0;

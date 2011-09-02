@@ -248,7 +248,7 @@ namespace FusionEngine
 		activateInView(cell, &entry, entity, true);
 		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
 		{
-			//cell->EntryActivated(); // Otherwise the counter will be off when OnDeactivated is called
+			//cell->EntryReferenced(); // Otherwise the counter will be off when OnDeactivated is called
 			ActivateEntity(*cell, entity, entry);
 			QueueEntityForDeactivation(entry, true);
 		}
@@ -376,7 +376,7 @@ namespace FusionEngine
 			}
 
 			if (cellEntry->active)
-				newCell->EntryActivated();
+				newCell->EntryReferenced();
 
 			/*if (lock.owns_lock())
 				lock.unlock();*/
@@ -393,7 +393,7 @@ namespace FusionEngine
 				newCell->AddHist("Entry moved to another cell");
 				if (cellEntry->active)
 				{
-					currentCell->EntryDeactivated();
+					currentCell->EntryUnreferenced();
 				}
 			}
 
@@ -420,7 +420,7 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::OnDeactivated(const EntityPtr& entity)
+	void StreamingManager::OnUnreferenced(const EntityPtr& entity)
 	{
 		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
 		{
@@ -431,7 +431,7 @@ namespace FusionEngine
 			auto it = findEntityInCell(&currentCell, entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
-			currentCell.EntryDeactivated();
+			currentCell.EntryUnreferenced();
 
 			// TODO: record this entity somehow (std::set or flag) so that an assertion can be made
 			//  in OnUpdated to ensure that the entity manager is honest
@@ -451,7 +451,7 @@ namespace FusionEngine
 			auto it = findEntityInCell(&currentCell, entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
-			currentCell.EntryDeactivated();
+			currentCell.EntryUnreferenced();
 		}
 
 		// Update the entity-directory
@@ -557,7 +557,7 @@ namespace FusionEngine
 		cell_entry.pendingDeactivation = false;
 		cell_entry.active = CellEntry::Active;
 
-		cell.EntryActivated();
+		cell.EntryReferenced();
 
 		GenerateActivationEvent( entity );
 	}
@@ -582,7 +582,7 @@ namespace FusionEngine
 		cell_entry.active = CellEntry::Waiting;
 		cell_entry.pendingDeactivation = false;
 
-		//cell.EntryDeactivated(); // Commented out: this doesn't get called until the entity is actually deactivated (see OnDeactivation)
+		//cell.EntryUnreferenced(); // Commented out: this doesn't get called until the entity is actually deactivated (see OnDeactivation)
 
 		GenerateDeactivationEvent(entity);
 	}
@@ -857,7 +857,7 @@ namespace FusionEngine
 							auto& newEntry = actualCell->objects.back().second;
 
 							if (newEntry.active)
-								actualCell->EntryActivated();
+								actualCell->EntryReferenced();
 							else if (!actualCell->IsActive())
 							{
 								actualCell->AddHist("Storing cell again after Retrieving it for an entity spawned in The Void");
@@ -871,7 +871,7 @@ namespace FusionEngine
 								if (newEntry.active)
 								{
 									m_TheVoid.AddHist("Entry transferred to correct cell:");
-									m_TheVoid.EntryDeactivated();
+									m_TheVoid.EntryUnreferenced();
 								}
 							}
 
@@ -989,20 +989,20 @@ namespace FusionEngine
 			else // Camera hasn't moved
 			{
 				// Make sure entities from cells that just loaded are activted (even if the camera hasn't moved)
-				//for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
-				//{
-				//	auto& cell = *it;
-				//	Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-				//	if (lock && cell->IsLoaded())
-				//	{
-				//		std::list<Vector2> cams; cams.push_back(cam.streamPosition);
-				//		processCell(*cell, cams);
-				//		it = m_CellsBeingLoaded.erase(it);
-				//		end = m_CellsBeingLoaded.end();
-				//	}
-				//	else
-				//		++it;
-				//}
+				for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+				{
+					auto& cell = *it;
+					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+					if (lock && cell->IsLoaded())
+					{
+						std::list<Vector2> cams; cams.push_back(cam.streamPosition);
+						processCell(*cell, cams);
+						it = m_CellsBeingLoaded.erase(it);
+						end = m_CellsBeingLoaded.end();
+					}
+					else
+						++it;
+				}
 
 				// Add this cell's most recently calculated active range to make sure it doesn't get deactivated
 				bool merged = false;
@@ -1023,6 +1023,23 @@ namespace FusionEngine
 				}
 			}
 		}
+
+		// Clear loaded cells (this set is just used to make sure cells are processed if they finish loading after the camera that requested them stops moving)
+		for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
+		{
+			auto cell = *it;
+			if (cell->IsLoaded())
+			{
+				it = m_CellsBeingLoaded.erase(it);
+				end = m_CellsBeingLoaded.end();
+			}
+			else
+				++it;
+		}
+		//{
+		//	auto newEnd = std::remove_if(m_CellsBeingLoaded.begin(), m_CellsBeingLoaded.end(), [](Cell* cell) { return cell->IsLoaded(); });
+		//	m_CellsBeingLoaded.erase(newEnd, m_CellsBeingLoaded.end());
+		//}
 
 		std::list<CL_Rect> clippedInactiveRanges;
 		for (auto iit = inactiveRanges.begin(), iend = inactiveRanges.end(); iit != iend; ++iit)

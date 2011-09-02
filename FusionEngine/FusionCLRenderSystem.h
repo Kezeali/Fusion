@@ -55,7 +55,7 @@ namespace FusionEngine
 	public:
 		SystemType GetType() const { return SystemType::Rendering; }
 
-		std::string GetName() const { return "Box2DSystem"; }
+		std::string GetName() const { return "CLRenderSystem"; }
 
 		CLRenderSystem(const CL_GraphicContext& gc);
 

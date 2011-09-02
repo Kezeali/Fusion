@@ -759,6 +759,9 @@ namespace FusionEngine
 				m_NewlyActiveScripts.push_back(scriptComponent);
 			else
 				scriptComponent->MarkReady();
+			
+			// TODO: this
+			//scriptComponent->InitialiseEntityWrappers();
 		}
 	}
 
@@ -768,8 +771,6 @@ namespace FusionEngine
 		if (scriptComponent)
 		{
 			m_ActiveScripts.push_back(scriptComponent);
-
-			scriptComponent->InitialiseEntityWrappers();
 		}
 	}
 

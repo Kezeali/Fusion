@@ -739,6 +739,8 @@ namespace FusionEngine
 
 				auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
 				*owner = GetParent()->shared_from_this();
+
+				GetParent()->HoldReference(_where->first);
 			}
 			else
 			{
@@ -845,11 +847,11 @@ namespace FusionEngine
 
 				auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
 				*owner = GetParent()->shared_from_this();
+
+				GetParent()->HoldReference(_where->first);
 			}
 			else
 			{
-				//FSN_EXCEPT(InvalidArgumentException, "This is why I should use handles, and probably have Entity keep a pointer to EntityManager");
-				// TODO: should the prop be stored here instead, and not call prop->Store below (so the prop stays null)
 				m_UninitialisedEntityWrappers.push_back(std::make_pair(index, id));
 			}
 			

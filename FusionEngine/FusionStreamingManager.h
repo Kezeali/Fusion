@@ -171,8 +171,8 @@ namespace FusionEngine
 		CellEntryMap objects;
 #endif
 		tbb::atomic<unsigned int> active_entries;
-		void EntryDeactivated() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryDeactivated", active_entries); }
-		void EntryActivated() { ++active_entries; AddHist("EntryActivated", active_entries); }
+		void EntryUnreferenced() { FSN_ASSERT(active_entries > 0); --active_entries; AddHist("EntryUnreferenced", active_entries); }
+		void EntryReferenced() { ++active_entries; AddHist("EntryReferenced", active_entries); }
 		bool IsActive() const { return active_entries > 0; }
 
 		tbb::atomic<bool> loaded;
@@ -246,7 +246,7 @@ namespace FusionEngine
 		void RemoveEntity(const EntityPtr &entity);
 		//! Updates the given entity's grid position, and streams in/out
 		void OnUpdated(const EntityPtr &entity, float dt);
-		void OnDeactivated(const EntityPtr& entity);
+		void OnUnreferenced(const EntityPtr& entity);
 
 		bool ActivateEntity(ObjectID id);
 

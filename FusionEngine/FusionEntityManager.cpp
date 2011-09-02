@@ -827,10 +827,13 @@ namespace FusionEngine
 				if (entity->IsMarkedToRemove())
 					entityRemoved = true;
 
+				if ((*it)->IsActive())
+					m_EntitiesToDeactivate.push_back(*it);
+
 				// Keep entities active untill they are no longer referenced
 				if (!entity->IsReferenced() || hasNoActiveReferences(entity))
 				{
-					m_EntitiesToDeactivate.push_back(*it);
+					m_EntitiesUnreferenced.push_back(*it);
 
 					entity->RemoveDeactivateMark();
 
@@ -902,9 +905,15 @@ namespace FusionEngine
 		for (auto it = m_EntitiesToDeactivate.begin(), end = m_EntitiesToDeactivate.end(); it != end; ++it)
 		{
 			deactivateEntity(*it);
-			//m_StreamingManager->OnDeactivated(*it);
 		}
 		m_EntitiesToDeactivate.clear();
+
+		for (auto it = m_EntitiesUnreferenced.begin(), end = m_EntitiesUnreferenced.end(); it != end; ++it)
+		{
+			// TODO: rename this method "dropEntity"
+			removeEntity(*it);
+		}
+		m_EntitiesUnreferenced.clear();
 
 		// Activate entities
 		{
@@ -1132,13 +1141,16 @@ namespace FusionEngine
 			else
 				FSN_EXCEPT(InvalidArgumentException, "Herp derp");
 		}
+	}
 
+	void EntityManager::removeEntity(const EntityPtr& entity)
+	{
 		if (entity->IsSyncedEntity())
 		{
 			m_Entities.erase(entity->GetID());
 		}
 
-		m_StreamingManager->OnDeactivated(entity);
+		m_StreamingManager->OnUnreferenced(entity);
 	}
 
 	void EntityManager::OnComponentAdded(EntityPtr &entity, ComponentPtr& component)

@@ -300,6 +300,9 @@
     <ClCompile Include="..\FusionEngine\FusionInputSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionProfiling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\tinyxml\ticpp.h">
@@ -693,6 +696,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionStreamingSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionProfiling.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -29,6 +29,8 @@
 
 #include "FusionTaskManager.h"
 
+#include "FusionProfiling.h"
+
 #include <functional>
 
 #include <tbb/tbb.h>
@@ -286,7 +288,12 @@ namespace FusionEngine
 				//auto systemTask = new( m_SystemTasksRoot->allocate_additional_child_of(*m_SystemTasksRoot) ) SystemTask(std::bind(&ISystemTask::Update, task, delta));
 				//FSN_ASSERT(systemTask != nullptr);
 
-				auto systemTask = MakeFunctionTask(m_SystemTasksRoot, [task, delta]() { task->Update(delta); });
+				auto systemTask = MakeFunctionTask(m_SystemTasksRoot, [task, delta]()
+				{
+					//FSN_ASSERT(task->GetSystemWorld() && task->GetSystemWorld()->GetSystem(), "Invalid task");
+					Profiler p(task->GetName());
+					task->Update(delta);
+				});
 				FSN_ASSERT(systemTask != nullptr);
 
 				// Affinity will increase the chances that each SystemTask will be assigned
@@ -321,6 +328,8 @@ namespace FusionEngine
 		{
 			// We are, so execute it now on the primary thread
 			//__ITT_EVENT_START( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
+
+			Profiler p((*it)->GetSystemWorld()->GetSystem()->GetName());
 
 			(*it)->Update(m_DeltaTime);
 
