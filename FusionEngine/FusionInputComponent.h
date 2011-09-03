@@ -59,8 +59,8 @@ namespace FusionEngine { namespace Components
 
 		//bool SerialiseContinuous(RakNet::BitStream& stream);
 		//void DeserialiseContinuous(RakNet::BitStream& stream);
-		//bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		//void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		//bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode force_all);
+		//void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode all);
 
 		void SetInputName(const std::string& value) {};
 		const std::string& GetInputName() const { return m_InputName; };

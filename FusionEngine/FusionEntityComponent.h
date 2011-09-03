@@ -266,10 +266,12 @@ namespace FusionEngine
 		virtual void SynchroniseParallelEdits() {}
 		virtual void FireSignals() {}
 
+		enum SerialiseMode { Changes, All, Editable };
+
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream) { return false; }
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream) {}
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all) { return false; }
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all) {}
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) { return false; }
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode) {}
 
 	protected:
 		std::set<std::string> m_Interfaces;

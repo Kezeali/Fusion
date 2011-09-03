@@ -40,7 +40,7 @@
 namespace FusionEngine
 {
 
-	Entity::Entity(PropChangedQueue *q, const ComponentPtr& transform_component)
+	Entity::Entity(EntityManager* manager, PropChangedQueue *q, const ComponentPtr& transform_component)
 		: m_Name("default"),
 		m_HasDefaultName(true),
 		m_Id(0),
@@ -57,7 +57,8 @@ namespace FusionEngine
 		m_Paused(false),
 		m_Hidden(false),
 		m_Depth(0),
-		m_WaitStepsRemaining(0)
+		m_WaitStepsRemaining(0),
+		m_Manager(manager)
 	{
 		FSN_ASSERT(q);
 		m_PropChangedQueue = q;
@@ -968,7 +969,7 @@ namespace FusionEngine
 #ifdef PROFILE_BUILD
 				20.0f);
 #else
-				4.f);
+				5.f);
 #endif
 		}
 		

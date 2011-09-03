@@ -165,11 +165,13 @@ namespace FusionEngine
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		bool SerialiseProp(RakNet::BitStream& stream, CScriptAny* any);
-		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any, unsigned int index);
+		bool DeserialiseProp(RakNet::BitStream& stream, CScriptAny* any, size_t prop_index, const std::string& prop_name = std::string());
+		void DeserNonStandardProp(RakNet::BitStream& stream, CScriptAny* any, size_t prop_index, const std::string& prop_name);
+		//void CacheProp(CScriptAny* any, const std::string& prop_name);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
@@ -189,8 +191,12 @@ namespace FusionEngine
 		std::map<std::string, int> m_ScriptMethods;
 
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
-		std::vector<boost::intrusive_ptr<CScriptAny>> m_CacheProperties;
-		std::vector<std::pair<unsigned int, ObjectID>> m_UninitialisedEntityWrappers;
+
+		IComponent::SerialiseMode m_LastDeserMode;
+		std::vector<boost::intrusive_ptr<CScriptAny>> m_CachedProperties;
+		std::map<std::string, boost::intrusive_ptr<CScriptAny>> m_EditableCachedProperties;
+		std::vector<std::pair<size_t, ObjectID>> m_UninitialisedEntityWrappers;
+		std::map<std::string, ObjectID> m_EditableUninitialisedEntityWrappers;
 		
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;

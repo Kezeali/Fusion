@@ -34,6 +34,8 @@
 #include "scriptany.h"
 #include <tbb/tick_count.h>
 
+#include <StringCompressor.h>
+
 namespace FusionEngine
 {
 
@@ -168,6 +170,7 @@ namespace FusionEngine
 			m_Owner(nullptr)
 		{
 			m_TypeId = m_Object->GetPropertyTypeId(m_Index);
+			m_Name = m_Object->GetPropertyName(m_Index);
 
 			//auto any = static_cast<CScriptAny*>(scalable_malloc(sizeof(CScriptAny))); FSN_ASSERT(any);
 			//new (any) CScriptAny(m_Object->GetAddressOfProperty(m_Index), m_TypeId, obj->GetEngine());
@@ -188,6 +191,7 @@ namespace FusionEngine
 		}
 
 		int GetTypeId() const { return m_TypeId; }
+		const std::string& GetName() const { return m_Name; }
 
 		bool IsDirty()
 		{
@@ -271,6 +275,7 @@ namespace FusionEngine
 	protected:
 		boost::intrusive_ptr<asIScriptObject> m_Object;
 		unsigned int m_Index;
+		std::string m_Name;
 
 		int m_TypeId;
 
@@ -330,7 +335,8 @@ namespace FusionEngine
 	ASScript::ASScript()
 		: m_ReloadScript(false),
 		m_ModuleReloaded(false),
-		m_EntityWrapperTypeId(-1)
+		m_EntityWrapperTypeId(-1),
+		m_LastDeserMode(Changes)
 	{
 	}
 
@@ -649,14 +655,35 @@ namespace FusionEngine
 					FSN_ASSERT((comProp->GetTypeId() & asTYPEID_OBJHANDLE) == 0 || comProp->GetTypeId() == m_EntityWrapperTypeId);
 
 					// Copy in any values that were deserialised before the script was reloaded
-					if (m_CacheProperties.size() > interfaceIndex)
+					if (m_CachedProperties.size() > interfaceIndex)
 					{
-						const auto& cachedProp = m_CacheProperties[interfaceIndex];
+						const auto& cachedProp = m_CachedProperties[interfaceIndex];
 						if (cachedProp->GetTypeId() != -1)
 						{
 							cachedProp->AddRef();
 							comProp->Set(cachedProp.get());
 							comProp->Synchronise();
+						}
+					}
+					else if (m_LastDeserMode == Editable)
+					{
+						auto _where = m_EditableCachedProperties.find(comProp->GetName());
+						if (_where != m_EditableCachedProperties.end())
+						{
+							const auto& cachedProp = _where->second;
+							if (cachedProp->GetTypeId() != -1)
+							{
+								cachedProp->AddRef();
+								comProp->Set(cachedProp.get());
+								comProp->Synchronise();
+							}
+							else
+							{
+								const auto& name = _where->first;
+								auto namedWrapperEntry = m_EditableUninitialisedEntityWrappers.find(name);
+								if (namedWrapperEntry != m_EditableUninitialisedEntityWrappers.end())
+									m_UninitialisedEntityWrappers.push_back(std::make_pair(interfaceIndex, namedWrapperEntry->second));
+							}
 						}
 					}
 
@@ -667,7 +694,8 @@ namespace FusionEngine
 				}
 			}
 
-			m_CacheProperties.clear();
+			m_CachedProperties.clear();
+			m_EditableCachedProperties.clear();
 
 			auto objType = obj->GetObjectType();
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
@@ -712,14 +740,14 @@ namespace FusionEngine
 
 		for (auto it = m_UninitialisedEntityWrappers.begin(), end = m_UninitialisedEntityWrappers.end(); it != end; ++it)
 		{
-			ObjectID id = it->second;
+			unsigned int propertyIndex = std::get<0>(*it);
+			//const std::string& propertyName = std::get<1>(*it);
+			ObjectID id = std::get<1>(*it);
 
 			auto _where = std::find_if(GetParent()->m_ReferencedEntities.begin(), GetParent()->m_ReferencedEntities.end(), [id](const std::pair<EntityPtr, size_t>& entity)
 			{
 				return entity.first->GetID() == id;
 			});
-
-			unsigned int propertyIndex = it->first;
 
 			if (_where != GetParent()->m_ReferencedEntities.end())
 			{
@@ -813,7 +841,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	bool ASScript::DeserialiseProp(RakNet::BitStream& stream, CScriptAny* prop, unsigned int index)
+	bool ASScript::DeserialiseProp(RakNet::BitStream& stream, CScriptAny* prop, size_t index, const std::string& name)
 	{
 		FSN_ASSERT(prop);
 
@@ -824,46 +852,29 @@ namespace FusionEngine
 			ObjectID id;
 			stream.Read(id);
 
-			//ScriptUtils::Calling::Caller::FactoryCaller();
-
-			auto _where = std::find_if(GetParent()->m_ReferencedEntities.begin(), GetParent()->m_ReferencedEntities.end(), [id](const std::pair<EntityPtr, size_t>& entity)
-			{
-				return entity.first->GetID() == id;
-			});
-
-			asIScriptObject* entityWrapper = nullptr;
-			if (m_Module.IsLoaded())
-			{
-				const int entityWrapperObjectTypeId = m_EntityWrapperTypeId & ~asTYPEID_OBJHANDLE;
-				entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
-				
-				prop->Store(&entityWrapper, m_EntityWrapperTypeId);
-			}
-
-			if (entityWrapper && _where != GetParent()->m_ReferencedEntities.end())
-			{
-				auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
-				*app_obj = _where->first;
-
-				auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
-				*owner = GetParent()->shared_from_this();
-
-				GetParent()->HoldReference(_where->first);
-			}
-			else
-			{
+			if (!name.empty())
 				m_UninitialisedEntityWrappers.push_back(std::make_pair(index, id));
-			}
-			
-			
+			else
+				m_EditableUninitialisedEntityWrappers[name] = id;
 		}
 
 		return true;
 	}
 
-	bool ASScript::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
+	//void ASScript::DeserNonStandardProp(RakNet::BitStream& stream, CScriptAny* prop, size_t index, const std::string& name)
+	//{
+	//	if (prop->value.typeId == -1)
+	//	{
+	//		ObjectID id;
+	//		stream.Read(id);
+
+	//		m_UninitialisedEntityWrappers.push_back(std::make_pair(index, id));
+	//	}
+	//}
+
+	bool ASScript::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
-		bool changeWritten = m_DeltaSerialisationHelper.writeChanges(force_all, stream,
+		bool changeWritten = m_DeltaSerialisationHelper.writeChanges(mode != Changes, stream,
 			GetScriptPath(), std::string());
 
 		if (m_ScriptObject)
@@ -872,27 +883,50 @@ namespace FusionEngine
 			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 			{
 				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+				if (mode == Editable)
+				{
+					std::string name = scriptprop->GetName();
+					stream.Write(name.length());
+					stream.Write(name.data(), name.length());
+				}
 				SerialiseProp(stream, scriptprop->Get());
 			}
 		}
-		else if (!m_CacheProperties.empty()) // Script may have just been deserialised
+		else 
 		{
-			stream.Write(m_CacheProperties.size());
-			for (auto it = m_CacheProperties.begin(), end = m_CacheProperties.end(); it != end; ++it)
+			if (mode == Editable)
 			{
-				auto& prop = *it;
-				SerialiseProp(stream, prop.get());
+				if (m_EditableCachedProperties.empty())
+					FSN_EXCEPT(InvalidArgumentException, "Data wasn't deserialised in editable mode, and the script object isn't available to reference against");
+				for (auto it = m_EditableCachedProperties.begin(), end = m_EditableCachedProperties.end(); it != end; ++it)
+				{
+					std::string name = it->first;
+					stream.Write(name.length());
+					stream.Write(name.data(), name.length());
+					SerialiseProp(stream, it->second.get());
+				}
+			}
+			else if (!m_CachedProperties.empty()) // Script may have just been deserialised
+			{
+				stream.Write(m_CachedProperties.size());
+				for (auto it = m_CachedProperties.begin(), end = m_CachedProperties.end(); it != end; ++it)
+				{
+					auto& prop = *it;
+					SerialiseProp(stream, prop.get());
+				}
 			}
 		}
 
 		return changeWritten;
 	}
 
-	void ASScript::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
+	void ASScript::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
+		m_LastDeserMode = mode;
+
 		std::bitset<DeltaSerialiser_t::NumParams> changes;
 		std::string unused;
-		m_DeltaSerialisationHelper.readChanges(stream, all, changes,
+		m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes,
 			m_Path, unused);
 
 		if (changes[PropsIdx::ScriptPath])
@@ -900,29 +934,81 @@ namespace FusionEngine
 
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
 
+		if (mode != Changes)
+		{
+			m_EditableCachedProperties.clear();
+			m_CachedProperties.clear();
+		}
+
 		auto numProperties = m_ScriptProperties.size();
 		stream.Read(numProperties);
 		if (m_ScriptObject)
 		{
-			FSN_ASSERT(m_ScriptProperties.size() == numProperties);
-			unsigned int index = 0;
-			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+			FSN_ASSERT(mode == Editable || m_ScriptProperties.size() == numProperties);
+
+			if (mode == Editable)
 			{
-				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
-				//auto prop = scriptprop->Get();
-				auto prop = new CScriptAny(engine);
-				DeserialiseProp(stream, prop, index++);
-				scriptprop->Set(prop);
-				prop->Release();
+				std::map<std::string, boost::intrusive_ptr<CScriptAny>> namedProperties;
+				for (size_t i = 0; i < numProperties; ++i)
+				{
+					size_t length; std::string name;
+					stream.Read(length);
+					name.resize(length);
+					stream.Read(&name[0], length);
+
+					auto prop = new CScriptAny(engine);
+					DeserialiseProp(stream, prop, i, name);
+					namedProperties[name] = prop;
+					prop->Release();
+				}
+				for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+				{
+					auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+					auto _where = namedProperties.find(scriptprop->GetName());
+					if (_where != namedProperties.end())
+					{
+						_where->second->AddRef();
+						scriptprop->Set(_where->second.get());
+					}
+				}
+			}
+			else
+			{
+				unsigned int index = 0;
+				for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
+				{
+					auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+					//auto prop = scriptprop->Get();
+					auto prop = new CScriptAny(engine);
+					DeserialiseProp(stream, prop, index++);
+					scriptprop->Set(prop);
+					//prop->Release();
+				}
 			}
 		}
 		else
 		{
+			m_CachedProperties.resize(numProperties);
+
+			std::string name;
 			for (size_t i = 0; i < numProperties; ++i)
 			{
+				if (mode == Editable)
+				{
+					size_t length;
+					stream.Read(length);
+					name.resize(length);
+					stream.Read(&name[0], length);
+				}
+
 				auto prop = new CScriptAny(engine);
-				DeserialiseProp(stream, prop, i);
-				m_CacheProperties.push_back(prop);
+
+				DeserialiseProp(stream, prop, i, name);
+
+				m_CachedProperties[i] = prop;
+				if (mode == Editable)
+					m_EditableCachedProperties[name] = prop;
+
 				prop->Release();
 			}
 		}

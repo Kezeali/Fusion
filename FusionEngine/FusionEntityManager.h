@@ -320,6 +320,10 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
+		// ENtities could also generate their own tokens
+		uint32_t StoreReference(ObjectID from, ObjectID to);
+		bool RetrieveReference(ObjectID from, uint32_t token);
+
 		void OnComponentAdded(EntityPtr& entity, ComponentPtr& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
@@ -345,7 +349,7 @@ namespace FusionEngine
 		void activateEntity(const EntityPtr &entity);
 
 		void deactivateEntity(const EntityPtr& entity);
-		void removeEntity(const EntityPtr& entity);
+		void dropEntity(const EntityPtr& entity);
 
 		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
@@ -373,6 +377,13 @@ namespace FusionEngine
 		IDEntityMap m_Entities;
 		// All pseudo-entities
 		//EntitySet m_PseudoEntities;
+
+		tbb::spin_rw_mutex m_StoredReferencesMutex;
+		// To -> From, token
+		// TODO: make this a multimap: map<to, token> -> from  (doesn't matter if the 'from'
+		//  entity is removed without removing the entry, since it can just be replaced if a new entity is added with the same ID)
+		std::map<ObjectID, std::pair<ObjectID, uint32_t>> m_StoredReferences;
+		IDSet<uint32_t> m_ReferenceTokens; // TODO: make IDSet (or similar class) threadsafe
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;

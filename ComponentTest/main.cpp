@@ -188,7 +188,7 @@ namespace FusionEngine
 		{
 			RakNet::BitStream stream;
 			const bool conData = component->SerialiseContinuous(stream);
-			const bool occData = component->SerialiseOccasional(stream, true);
+			const bool occData = component->SerialiseOccasional(stream, IComponent::All);
 
 			out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
 			out.write_uint8(occData ? 0xFF : 0x00);
@@ -211,7 +211,7 @@ namespace FusionEngine
 			if (conData)
 				component->DeserialiseContinuous(stream);
 			if (occData)
-				component->DeserialiseOccasional(stream, true);
+				component->DeserialiseOccasional(stream, IComponent::All);
 
 			//stream.AssertStreamEmpty();
 			if (stream.GetNumberOfUnreadBits() >= 8)

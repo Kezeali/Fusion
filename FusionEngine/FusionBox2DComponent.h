@@ -48,12 +48,6 @@
 namespace FusionEngine
 {
 
-	class Box2DBodySerialiser
-	{
-	public:
-		static void Deserialise(RakNet::BitStream& input);
-	};
-
 	class Box2DFixture;
 
 	class Box2DBody : public IComponent, public IRigidBody
@@ -136,8 +130,8 @@ namespace FusionEngine
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 		NonDynamicDeltaSerialiser_t m_NonDynamicDeltaSerialisationHelper;
@@ -316,7 +310,6 @@ namespace FusionEngine
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
 		Box2DFixture();
-		Box2DFixture(RakNet::BitStream& stream);
 		Box2DFixture(b2Fixture* fixture);
 		virtual ~Box2DFixture();
 
@@ -335,8 +328,8 @@ namespace FusionEngine
 	protected:
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		DeltaSerialiser_t m_DeltaSerialisationHelper;
 
@@ -398,7 +391,6 @@ namespace FusionEngine
 		static_assert(ShapePropsIdx::NumProps == ShapeDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
 		Box2DCircleFixture();
-		Box2DCircleFixture(RakNet::BitStream& stream);
 		virtual ~Box2DCircleFixture() {}
 
 		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
@@ -412,8 +404,8 @@ namespace FusionEngine
 		// Box2DFixture overides
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
 
@@ -445,7 +437,6 @@ namespace FusionEngine
 		//static_assert(ShapePropsIdx::NumProps == ShapeDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
 		Box2DPolygonFixture();
-		Box2DPolygonFixture(RakNet::BitStream& stream);
 
 		static void CopyChanges(RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
@@ -458,8 +449,8 @@ namespace FusionEngine
 		// Box2DFixture overides
 		virtual bool SerialiseContinuous(RakNet::BitStream& stream);
 		virtual void DeserialiseContinuous(RakNet::BitStream& stream);
-		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		virtual bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		virtual void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		//ShapeDeltaSerialiser_t m_CircleDeltaSerialisationHelper;
 		bool m_VerticiesChanged;

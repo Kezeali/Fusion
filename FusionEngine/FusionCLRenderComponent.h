@@ -140,8 +140,8 @@ namespace FusionEngine
 		void SynchroniseParallelEdits();
 		void FireSignals();
 
-		bool SerialiseOccasional(RakNet::BitStream& stream, const bool force_all);
-		void DeserialiseOccasional(RakNet::BitStream& stream, const bool all);
+		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
+		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode);
 
 		// ISprite
 		void SetOffset(const Vector2& offset);

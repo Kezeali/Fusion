@@ -260,10 +260,10 @@ namespace FusionEngine
 		ISprite::FireInterfaceSignals();
 	}
 
-	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const bool force_all)
+	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
 		//return m_SerialisationHelper.writeChanges(force_all, stream, std::tie(m_Offset, m_FilePath, m_Reload));
-		return m_SerialisationHelper.writeChanges(force_all, stream,
+		return m_SerialisationHelper.writeChanges(mode != Changes, stream,
 			m_Offset, m_LocalDepth,
 			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
 			GetAlignmentOrigin(), GetAlignmentOffset(),
@@ -274,11 +274,11 @@ namespace FusionEngine
 			GetBaseAngle());
 	}
 
-	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const bool all)
+	void CLSprite::DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
 		std::bitset<PropsIdx::NumProps> changed;
 
-		m_SerialisationHelper.readChanges(stream, all, changed,
+		m_SerialisationHelper.readChanges(stream, mode != Changes, changed,
 			m_Offset, m_LocalDepth,
 			m_ImagePath, m_ReloadImage, m_AnimationPath, m_ReloadAnimation,
 			AlignmentOrigin.m_Value, AlignmentOffset.m_Value,

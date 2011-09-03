@@ -910,8 +910,7 @@ namespace FusionEngine
 
 		for (auto it = m_EntitiesUnreferenced.begin(), end = m_EntitiesUnreferenced.end(); it != end; ++it)
 		{
-			// TODO: rename this method "dropEntity"
-			removeEntity(*it);
+			dropEntity(*it);
 		}
 		m_EntitiesUnreferenced.clear();
 
@@ -1143,7 +1142,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::removeEntity(const EntityPtr& entity)
+	void EntityManager::dropEntity(const EntityPtr& entity)
 	{
 		if (entity->IsSyncedEntity())
 		{
@@ -1170,6 +1169,18 @@ namespace FusionEngine
 			ev.entity->MarkToDeactivate();
 			break;
 		}
+	}
+
+	uint32_t EntityManager::StoreReference(ObjectID from, ObjectID to)
+	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+		m_StoredReferences[to] = std::make_pair(from, m_ReferenceTokens.getFreeID());
+	}
+
+	bool EntityManager::RetrieveReference(ObjectID from, uint32_t token)
+	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+		//std::find_if(m_StoredReferences.begin(), m_StoredReferences.end(), [token](
 	}
 
 	void EntityManager::OnPlayerAdded(unsigned int local_index, PlayerID net_id)
