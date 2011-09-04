@@ -47,6 +47,9 @@
 
 #include <tbb/spin_rw_mutex.h>
 
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
 //#include <boost/bimap.hpp>
 
 namespace FusionEngine
@@ -245,10 +248,10 @@ namespace FusionEngine
 		* \param[in] id
 		* ID of the desired Entity
 		*
-		* \param[in] throwIfNotFound
-		* Throw rather than returning NULL
+		* \param[in] load
+		* Load if the given entity isn't found
 		*/
-		EntityPtr GetEntity(ObjectID id, bool throwIfNotFound) const;
+		EntityPtr GetEntity(ObjectID id, bool load) const;
 		//! Implementation of IEntityRepo
 		EntityPtr GetEntity(ObjectID id) const { return GetEntity(id, false); }
 
@@ -322,7 +325,8 @@ namespace FusionEngine
 
 		// ENtities could also generate their own tokens
 		uint32_t StoreReference(ObjectID from, ObjectID to);
-		bool RetrieveReference(ObjectID from, uint32_t token);
+		ObjectID RetrieveReference(uint32_t token);
+		void DropReference(uint32_t token);
 
 		void OnComponentAdded(EntityPtr& entity, ComponentPtr& component);
 
@@ -350,6 +354,7 @@ namespace FusionEngine
 
 		void deactivateEntity(const EntityPtr& entity);
 		void dropEntity(const EntityPtr& entity);
+		void removeEntity(const EntityPtr& entity);
 
 		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
@@ -379,11 +384,23 @@ namespace FusionEngine
 		//EntitySet m_PseudoEntities;
 
 		tbb::spin_rw_mutex m_StoredReferencesMutex;
-		// To -> From, token
-		// TODO: make this a multimap: map<to, token> -> from  (doesn't matter if the 'from'
-		//  entity is removed without removing the entry, since it can just be replaced if a new entity is added with the same ID)
-		std::map<ObjectID, std::pair<ObjectID, uint32_t>> m_StoredReferences;
+		//typedef std::tuple<uint32_t, ObjectID, ObjectID> StoredReference;
+		struct StoredReference
+		{
+			uint32_t token;
+			ObjectID from;
+			ObjectID to;
+		};
+		typedef boost::multi_index_container<
+			StoredReference,
+			boost::multi_index::indexed_by<
+			boost::multi_index::ordered_unique<boost::multi_index::member<StoredReference, uint32_t, &StoredReference::token>>, // token
+			boost::multi_index::ordered_non_unique<boost::multi_index::member<StoredReference, ObjectID, &StoredReference::from>>, // from
+			boost::multi_index::ordered_non_unique<boost::multi_index::member<StoredReference, ObjectID, &StoredReference::to>> // to
+			>> StoredReferences_t;
+		StoredReferences_t m_StoredReferences;
 		IDSet<uint32_t> m_ReferenceTokens; // TODO: make IDSet (or similar class) threadsafe
+		tbb::spin_rw_mutex m_ReferenceTokensMutex;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
@@ -392,6 +409,7 @@ namespace FusionEngine
 		std::vector<EntityPtr> m_EntitiesToActivate;
 		std::vector<EntityPtr> m_EntitiesUnreferenced;
 		std::vector<EntityPtr> m_EntitiesToDeactivate;
+		tbb::concurrent_queue<EntityPtr> m_EntitiesToRemove;
 		EntityArray m_ActiveEntities;
 
 		// Entities to be updated - 8 domains

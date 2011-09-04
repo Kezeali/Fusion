@@ -42,6 +42,7 @@
 #include "FusionEntity.h"
 #include "FusionCamera.h"
 
+//#include <tbb/concurrent_unordered_map.h>
 //#include <tbb/mutex.h>
 #include <boost/thread/recursive_mutex.hpp>
 
@@ -317,7 +318,7 @@ namespace FusionEngine
 		std::set<Cell*> m_CellsBeingLoaded;
 		std::map<Cell*, std::set<ObjectID>> m_RequestedEntities;
 
-		std::map<ObjectID, size_t> m_EntityDirectory;
+		std::unordered_map<ObjectID, size_t> m_EntityDirectory;
 
 		CellArchiver* m_Archivist;
 

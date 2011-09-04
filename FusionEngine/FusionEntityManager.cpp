@@ -392,7 +392,8 @@ namespace FusionEngine
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
-		m_ClearWhenAble(false)
+		m_ClearWhenAble(false),
+		m_ReferenceTokens(1)
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
@@ -470,19 +471,10 @@ namespace FusionEngine
 
 	void EntityManager::RemoveEntity(const EntityPtr &entity)
 	{
-		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
-
 		// Mark the entity so it will be removed from the active list, and other secondary containers
 		entity->MarkToRemove();
 
-		if (entity->IsSyncedEntity())
-			m_Entities.erase(entity->GetID());
-		//else
-		//	m_PseudoEntities.erase(entity);
-
-		m_EntitiesByName.erase(entity->GetName());
-
-		m_StreamingManager->RemoveEntity(entity);
+		m_EntitiesToRemove.push(entity);
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)
@@ -572,16 +564,20 @@ namespace FusionEngine
 		return _where->second;
 	}
 
-	EntityPtr EntityManager::GetEntity(ObjectID id, bool throwIfNotFound) const
+	EntityPtr EntityManager::GetEntity(ObjectID id, bool load) const
 	{
 		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex, false);
 
 		IDEntityMap::const_iterator _where = m_Entities.find(id);
 		if (_where == m_Entities.end())
-			if (throwIfNotFound)
-				FSN_EXCEPT(ExCode::InvalidArgument, std::string("There is no entity with the ID: ") + boost::lexical_cast<std::string>(id));
-			else
-				return EntityPtr();
+		{
+			if (load)
+			{
+				if (!m_StreamingManager->ActivateEntity(id))
+					FSN_ASSERT_FAIL("Entity doesn't exist, so it can't be loaded");
+			}
+			return EntityPtr();
+		}
 		return _where->second;
 	}
 
@@ -850,15 +846,6 @@ namespace FusionEngine
 				{
 					EntityDomain domainIndex = entity->GetDomain();
 
-					if (CheckState(domainIndex, DS_ENTITYUPDATE))
-					{
-						if (!entity->IsSpawned())
-							entity->Spawn();
-						//for (auto ev_it = playerAddedEvents.cbegin(), ev_end = playerAddedEvents.cend(); ev_it != ev_end; ++ev_it)
-						//	entity->OnPlayerAdded(ev_it->first, ev_it->second);
-						//entity->Update(split);
-						//updateRenderables(entity, split, updatedSprites);
-					}
 					if (CheckState(domainIndex, DS_STREAMING))
 						m_StreamingManager->OnUpdated(entity, split);
 
@@ -882,23 +869,29 @@ namespace FusionEngine
 
 	void EntityManager::ProcessActivationQueues()
 	{
-		std::pair<EntityPtr, ComponentPtr> toActivate;
-		while (m_ComponentsToAdd.try_pop(toActivate))
+		// Process newly added components
 		{
-			if (toActivate.first->IsStreamedIn())
+			std::pair<EntityPtr, ComponentPtr> toActivate;
+			while (m_ComponentsToAdd.try_pop(toActivate))
 			{
-				m_ComponentsToActivate.push_back(toActivate);
+				if (toActivate.first->IsStreamedIn())
+				{
+					m_ComponentsToActivate.push_back(toActivate);
+				}
 			}
 		}
 
-		EntityPtr entityToActivate;
-		while (m_NewEntitiesToActivate.try_pop(entityToActivate))
+		// Process newly added entities
 		{
-			if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
-				m_StreamingManager->AddEntity(entityToActivate);
-			else
-				m_EntitiesToActivate.push_back(entityToActivate);
-			//queueEntityToActivate(entityToActivate);
+			EntityPtr entityToActivate;
+			while (m_NewEntitiesToActivate.try_pop(entityToActivate))
+			{
+				if (CheckState(entityToActivate->GetDomain(), DS_STREAMING))
+					m_StreamingManager->AddEntity(entityToActivate);
+				else
+					m_EntitiesToActivate.push_back(entityToActivate);
+				//queueEntityToActivate(entityToActivate);
+			}
 		}
 
 		// Dectivate entities
@@ -907,12 +900,21 @@ namespace FusionEngine
 			deactivateEntity(*it);
 		}
 		m_EntitiesToDeactivate.clear();
-
+		// Drop local references
 		for (auto it = m_EntitiesUnreferenced.begin(), end = m_EntitiesUnreferenced.end(); it != end; ++it)
 		{
 			dropEntity(*it);
 		}
 		m_EntitiesUnreferenced.clear();
+
+		// Process removed entities
+		{
+			EntityPtr entityToRemove;
+			while (m_EntitiesToRemove.try_pop(entityToRemove))
+			{
+				removeEntity(entityToRemove);
+			}
+		}
 
 		// Activate entities
 		{
@@ -942,7 +944,7 @@ namespace FusionEngine
 		auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
 		while (it != end)
 		{
-			auto worldEntry = m_EntityFactory->m_ComponentInstancers.find( toActivate.second->GetType() );
+			auto worldEntry = m_EntityFactory->m_ComponentInstancers.find(it->second->GetType());
 			if (attemptToActivateComponent(worldEntry->second, it->second))
 			{
 				it = m_ComponentsToActivate.erase(it);
@@ -1015,31 +1017,31 @@ namespace FusionEngine
 	{
 		bool allAreActive = true;
 
-		allAreActive &= entity->m_UnloadedReferencedEntities.empty();
-		auto& refedEnts = entity->m_UnloadedReferencedEntities;
-		for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end;)
-		{
-			ObjectID id = it->first;
-			auto refedEntity = GetEntity(id);
-			if (!refedEntity)
-			{
-				//size_t cellIndex = *m_EntityDirectory.find(id);
-				// m_StreamingManager (or archivist) should store the id's of entities against cell-indicies as they are unloaded.
-				// ActivateEntity returns false if the entity is not known, in which case it can be ignored
-				allAreActive &= !m_StreamingManager->ActivateEntity(id);
-			}
-			else
-			{
-				allAreActive &= true;
-				entity->HoldReference(refedEntity);
-				it = refedEnts.erase(it);
-				end = refedEnts.end();
-				continue;
-			}
-			++it;
-		}
-		if (!allAreActive)
-			return false;
+		//allAreActive &= entity->m_UnloadedReferencedEntities.empty();
+		//auto& refedEnts = entity->m_UnloadedReferencedEntities;
+		//for (auto it = refedEnts.begin(), end = refedEnts.end(); it != end;)
+		//{
+		//	ObjectID id = it->first;
+		//	auto refedEntity = GetEntity(id);
+		//	if (!refedEntity)
+		//	{
+		//		//size_t cellIndex = *m_EntityDirectory.find(id);
+		//		// m_StreamingManager (or archivist) should store the id's of entities against cell-indicies as they are unloaded.
+		//		// ActivateEntity returns false if the entity is not known, in which case it can be ignored
+		//		allAreActive &= !m_StreamingManager->ActivateEntity(id);
+		//	}
+		//	else
+		//	{
+		//		allAreActive &= true;
+		//		entity->HoldReference(refedEntity);
+		//		it = refedEnts.erase(it);
+		//		end = refedEnts.end();
+		//		continue;
+		//	}
+		//	++it;
+		//}
+		//if (!allAreActive)
+		//	return false;
 
 		for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
 		{
@@ -1152,6 +1154,41 @@ namespace FusionEngine
 		m_StreamingManager->OnUnreferenced(entity);
 	}
 
+	void EntityManager::removeEntity(const EntityPtr& entity)
+	{
+		FSN_ASSERT(!entity->IsActive());
+
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+		if (entity->IsSyncedEntity())
+			m_Entities.erase(entity->GetID());
+
+		m_EntitiesByName.erase(entity->GetName());
+
+		m_StreamingManager->RemoveEntity(entity);
+
+		if (entity->IsSyncedEntity())
+		{
+			ObjectID id = entity->GetID();
+
+			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+			// Free all tokens for references from this entity (clearly it can't use them anymore)
+			auto& refsFromContainer = m_StoredReferences.get<1>();
+			auto refsFromRemovedEntity = refsFromContainer.equal_range(id);
+			{
+			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+			for (; refsFromRemovedEntity.first != refsFromRemovedEntity.second; ++refsFromRemovedEntity.first)
+			{
+				m_ReferenceTokens.freeID( refsFromRemovedEntity.first->token );
+			}
+			}
+			refsFromContainer.erase(refsFromRemovedEntity.first, refsFromRemovedEntity.second);
+
+			// Invalidate all references to this entity
+			auto& refsToContainer = m_StoredReferences.get<2>();
+			refsToContainer.erase(id);
+		}
+	}
+
 	void EntityManager::OnComponentAdded(EntityPtr &entity, ComponentPtr& component)
 	{
 		m_ComponentsToAdd.push(std::make_pair(entity, component));
@@ -1173,14 +1210,60 @@ namespace FusionEngine
 
 	uint32_t EntityManager::StoreReference(ObjectID from, ObjectID to)
 	{
-		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-		m_StoredReferences[to] = std::make_pair(from, m_ReferenceTokens.getFreeID());
+		if (from > 0 && to > 0)
+		{
+			tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
+			StoredReference r;
+			r.from = from;
+			r.to = to;
+			auto token = r.token = m_ReferenceTokens.getFreeID();
+
+			// TODO: the first few bits of the token could be the StoredReferences database-id (to ensure that references
+			//  are being loaded from the same save-game that the manager currently has loaded)
+
+			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+			m_StoredReferences.insert(r);
+
+			return token;
+		}
+		else
+			return 0;
 	}
 
-	bool EntityManager::RetrieveReference(ObjectID from, uint32_t token)
+	ObjectID EntityManager::RetrieveReference(uint32_t token)
 	{
+		//{
+		//tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+		//m_ReferenceTokens.freeID(token);
+		//}
+
+		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex, false);
+		auto& tokens = m_StoredReferences.get<0>();
+		auto entry = tokens.find(token);
+		if (entry != tokens.end())
+		{
+			//FSN_ASSERT(entry->from == from);
+			//tokens.erase(entry);
+			return entry->to;
+		}
+		else
+			return 0;
+	}
+
+	void EntityManager::DropReference(uint32_t token)
+	{
+		{
+		tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+		m_ReferenceTokens.freeID(token);
+		}
+
 		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-		//std::find_if(m_StoredReferences.begin(), m_StoredReferences.end(), [token](
+		auto& tokens = m_StoredReferences.get<0>();
+		auto entry = tokens.find(token);
+		if (entry != tokens.end())
+		{
+			tokens.erase(token);
+		}
 	}
 
 	void EntityManager::OnPlayerAdded(unsigned int local_index, PlayerID net_id)

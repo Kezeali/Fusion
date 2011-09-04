@@ -579,11 +579,11 @@ namespace FusionEngine
 			"{\n"
 			"EntityWrapper() {}\n"
 			"EntityWrapper(Entity &in obj) {\n"
-			"owner = initEntityPointer(obj);\n"
+			"pointer_id = initEntityPointer(owner, obj);\n"
 			"_setAppObj(obj);\n"
 			"}\n"
 			"~EntityWrapper() {\n"
-			"deinitEntityPointer(owner, app_obj);\n"
+			"deinitEntityPointer(owner, pointer_id, app_obj);\n"
 			"}\n"
 			"void _setAppObj(Entity &in obj) {\n"
 			"app_obj = obj;\n"
@@ -591,6 +591,7 @@ namespace FusionEngine
 			"}\n"
 			"private Entity app_obj;\n"
 			"private EntityW owner;\n"
+			"private uint32 pointer_id;\n"
 			"Entity getRaw() const { return app_obj; }\n"
 			//"Input@ input;\n"
 			"Input@ get_input() { return Input(app_obj); }\n"
@@ -755,13 +756,10 @@ namespace FusionEngine
 			scriptComponent->m_ModuleLoadedConnection = ResourceManager::getSingleton().GetResource("MODULE", scriptComponent->GetScriptPath(), std::bind(&ASScript::OnModuleLoaded, scriptComponent.get(), _1));
 
 			FSN_ASSERT(!m_Updating);
-			if (!scriptComponent->m_ScriptObject)
-				m_NewlyActiveScripts.push_back(scriptComponent);
-			else
+			if (scriptComponent->m_ScriptObject && scriptComponent->InitialiseEntityWrappers())
 				scriptComponent->MarkReady();
-			
-			// TODO: this
-			//scriptComponent->InitialiseEntityWrappers();
+			else
+				m_NewlyActiveScripts.push_back(scriptComponent);
 		}
 	}
 
@@ -784,18 +782,17 @@ namespace FusionEngine
 				auto _where = std::find(m_ActiveScripts.begin(), m_ActiveScripts.end(), scriptComponent);
 				if (_where != m_ActiveScripts.end())
 				{
-					_where->swap(m_ActiveScripts.back());
-					m_ActiveScripts.pop_back();
+					m_ActiveScripts.erase(_where);
 				}
 			}
 
 			{
-				auto _where = std::find(m_NewlyActiveScripts.begin(), m_NewlyActiveScripts.end(), scriptComponent);
-				if (_where != m_NewlyActiveScripts.end())
-				{
-					_where->swap(m_NewlyActiveScripts.back());
-					m_NewlyActiveScripts.pop_back();
-				}
+				FSN_ASSERT(std::find(m_NewlyActiveScripts.begin(), m_NewlyActiveScripts.end(), scriptComponent) == m_NewlyActiveScripts.end());
+				//auto _where = std::find(m_NewlyActiveScripts.begin(), m_NewlyActiveScripts.end(), scriptComponent);
+				//if (_where != m_NewlyActiveScripts.end())
+				//{
+				//	m_NewlyActiveScripts.erase(_where);
+				//}
 			}
 		}
 	}
@@ -879,23 +876,9 @@ namespace FusionEngine
 			{
 				auto& script = scripts_to_instantiate[ri];
 
-				//if (script->m_ReloadScript)
-				//{
-				//	script->m_ScriptObject.Release();
-
-				//	auto moduleName = script->GetScriptPath();
-
-				//	tbb::spin_mutex::scoped_lock lock(mutex);
-				//	script->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
-
-				//	script->m_ModuleBuilt = true;
-
-				//	script->m_ReloadScript = false;
-				//}
-
-				//if (script->m_ModuleReloaded)
+				if (script->m_Module.IsLoaded())
 				{
-					if (script->m_Module.IsLoaded())
+					if (!script->m_ScriptObject)
 					{
 						auto objectType = script->m_Module->GetObjectTypeByIndex(0);
 						if (objectType->GetBaseType() == nullptr || std::string(objectType->GetBaseType()->GetName()) != "ScriptComponent")
@@ -919,105 +902,13 @@ namespace FusionEngine
 									auto scriptInfoForThis = m_AngelScriptWorld->m_ScriptInfo.find(objectType->GetName());
 									script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
 									{
-									auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
-									if (setAppObj)
-									{
-										setAppObj.SetThrowOnException(true);
-										setAppObj(script.get());
-									}
-									}
-#if 0
-									auto parentEntity = script->GetParent();
-
-									std::map<std::string, ComponentPtr> convenientComponents;
-									auto& interfaces = parentEntity->GetInterfaces();
-									for (auto it = interfaces.cbegin(), end = interfaces.cend(); it != end; ++it)
-									{
-										const auto& interfaceName = it->first;
-										for (auto cit = it->second.begin(), cend = it->second.end(); cit != cend; ++cit)
+										auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
+										if (setAppObj)
 										{
-											const auto convenientIdentifier = fe_newlower(cit->first);
-
-											convenientComponents[convenientIdentifier] = cit->second;
+											setAppObj.SetThrowOnException(true);
+											setAppObj(script.get());
 										}
 									}
-									// Init the members with available sibling components
-
-									auto objType = obj->GetObjectType()->GetBaseType();
-									for (int p = 0, count = objType->GetPropertyCount(); p < count; ++p)
-									{
-										const char* name = 0; int typeId = -1; bool isPrivate = false; int offset = 0;// bool isReference = false;
-										objType->GetProperty(p, &name, &typeId, &isPrivate, &offset/*, &isReference*/);
-										if (!isPrivate)
-										{	
-											auto _where = convenientComponents.find(name);
-											if (_where != convenientComponents.end())
-											{
-												//FSN_ASSERT(isReference);
-
-												auto propertyObjectType = m_AngelScriptWorld->GetScriptEngine()->GetObjectTypeById(typeId);
-												FSN_ASSERT(propertyObjectType != nullptr);
-												auto scriptInfoEntry = m_AngelScriptWorld->m_ScriptInfo.find(propertyObjectType->GetName());
-												if (scriptInfoEntry != m_AngelScriptWorld->m_ScriptInfo.end())
-												{
-													auto componentAsScript = dynamic_cast<ASScript*>( _where->second.get() );
-
-													// Create a script-interface object for this property
-													auto fac = ScriptUtils::Calling::Caller::FactoryCaller(propertyObjectType, "");
-													if (!fac)
-													{
-														SendToConsole("Failed to construct a script-interface object for " + _where->first + ": basecode is broken");
-														continue;
-													}
-													fac.SetThrowOnException(true);
-													try
-													{
-														auto scriptInterfaceObj = *static_cast<asIScriptObject**>( fac() );
-
-														auto setAppObj = ScriptUtils::Calling::Caller(scriptInterfaceObj, "void _setAppObj(ASScript @)");
-														if (setAppObj)
-														{
-															setAppObj.SetThrowOnException(true);
-															componentAsScript->addRef();
-															try
-															{
-																setAppObj(componentAsScript);
-															}
-															catch (ScriptUtils::Exception&)
-															{
-																componentAsScript->release();
-																continue;
-															}
-
-															// Set the property to point to the interface
-															auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
-															asIScriptObject** propObjPtr = static_cast<asIScriptObject**>(propAddress);
-															scriptInterfaceObj->AddRef();
-															*propObjPtr = scriptInterfaceObj;
-														}
-													}
-													catch (ScriptUtils::Exception& ex)
-													{
-														SendToConsole("Failed to construct a script-interface object for " + _where->first + ": " + ex.m_Message);
-														continue;
-													}
-												}
-												else // Not a script component
-												{
-													//auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(obj) + offset);
-													//void** component = static_cast<void**>(propAddress);
-													//_where->second->addRef();
-													//*component = (_where->second.get());
-												}
-											}
-											else
-											{
-												std::string propDecl = objType->GetPropertyDeclaration(p);
-												SendToConsole(script->GetScriptPath() + " expected a sibling to fit '" + propDecl + "' but " + parentEntity->GetName() + " doesn't have any such component");
-											}
-										}
-									}
-#endif
 								}
 							}
 							catch (ScriptUtils::Exception& e)
@@ -1026,14 +917,16 @@ namespace FusionEngine
 								SendToConsole(e.m_Message);
 							}
 						}
-
-						script->MarkReady();
 					}
-					else
-						notInstantiated.push_back(script);
-
-					script->m_ModuleReloaded = false;
+					
+					if (script->InitialiseEntityWrappers())
+						script->MarkReady();
 				}
+				
+				if (!script->IsReady())
+					notInstantiated.push_back(script);
+
+				script->m_ModuleReloaded = false;
 			}
 		};
 

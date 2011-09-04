@@ -271,7 +271,7 @@ namespace FusionEngine
 				ReadComponent(in, transform.get());
 			}
 
-			auto entity = std::make_shared<Entity>(&m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
+			auto entity = std::make_shared<Entity>(m_Instantiator->m_EntityManager, &m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
 			entity->SetID(id);
 
 			transform->SynchronisePropertiesNow();
@@ -324,6 +324,7 @@ namespace FusionEngine
 		void Run()
 		{
 			bool retrying = false;
+			// TODO: make m_NewData not auto-reset
 			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 100 : -1) != 0)
 			{
 				std::list<std::tuple<Cell*, size_t>> writesToRetry;
@@ -842,10 +843,13 @@ public:
 						transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f);
 					}
 
-					auto entity = std::make_shared<Entity>(&entityManager->m_PropChangedQueue, transformCom);
+					auto entity = std::make_shared<Entity>(entityManager.get(), &entityManager->m_PropChangedQueue, transformCom);
 					std::stringstream str;
 					str << i;
 					entity->SetName("initentity" + str.str());
+
+					instantiationSynchroniser->TakeID(1);
+					entity->SetID(1);
 
 					entityManager->AddEntity(entity);
 

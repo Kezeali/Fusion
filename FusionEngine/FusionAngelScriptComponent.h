@@ -147,8 +147,8 @@ namespace FusionEngine
 		
 		void OnModuleLoaded(ResourceDataPtr resource);
 
-		// Called after the script is activated
-		void InitialiseEntityWrappers();
+		// Called after the script is loaded
+		bool InitialiseEntityWrappers();
 
 		static ASScript* GetActiveScript();
 		//static void YeildActiveScript();
@@ -195,8 +195,10 @@ namespace FusionEngine
 		IComponent::SerialiseMode m_LastDeserMode;
 		std::vector<boost::intrusive_ptr<CScriptAny>> m_CachedProperties;
 		std::map<std::string, boost::intrusive_ptr<CScriptAny>> m_EditableCachedProperties;
-		std::vector<std::pair<size_t, ObjectID>> m_UninitialisedEntityWrappers;
-		std::map<std::string, ObjectID> m_EditableUninitialisedEntityWrappers;
+		std::vector<std::pair<size_t, uint32_t>> m_UninitialisedEntityWrappers;
+		std::map<std::string, uint32_t> m_EditableUninitialisedEntityWrappers;
+		// TODO: do this properly (use a callback from GetEntity or something, rather than just calling InitialiseWrappers over and over)
+		bool m_FirstInit;
 		
 		std::vector<std::pair<boost::intrusive_ptr<asIScriptContext>, ConditionalCoroutine>> m_ActiveCoroutines;
 		std::map<asIScriptContext*, ConditionalCoroutine> m_ActiveCoroutinesWithConditions;
