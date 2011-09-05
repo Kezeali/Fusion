@@ -227,7 +227,7 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager(CellArchiver* archivist);
+		StreamingManager(CellArchiver* archivist/*, const std::shared_ptr<GameMap>& map*/);
 		//! Destructor
 		~StreamingManager();
 

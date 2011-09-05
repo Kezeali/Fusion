@@ -49,6 +49,7 @@
 #include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntityFactory.h"
 #include "../FusionEngine/FusionExceptionFactory.h"
+#include "../FusionEngine/FusionGameMapLoader.h"
 #include "../FusionEngine/FusionInstanceSynchroniser.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
 #include "../FusionEngine/FusionRenderer.h"
@@ -141,15 +142,26 @@ namespace FusionEngine
 			m_Instantiator = instantiator;
 		}
 
+		std::shared_ptr<GameMap> m_Map;
+		void SetMapLoader(const std::shared_ptr<GameMap>& map)
+		{
+			m_Map = map;
+		}
+
 		void Enqueue(Cell* cell, size_t i)
 		{
 			if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 			{
-				//std::stringstream str; str << i;
-				//SendToConsole("Store " + str.str());
-				cell->AddHist("Enqueued Out");
-				m_WriteQueue.push(std::make_tuple(cell, i));
-				m_NewData.set();
+				if (m_Map)
+				{
+					cell->AddHist("Enqueued Out");
+					m_WriteQueue.push(std::make_tuple(cell, i));
+					m_NewData.set();
+				}
+				else
+				{
+					cell->waiting = Cell::Ready;
+				}
 			}
 		}
 
@@ -157,11 +169,17 @@ namespace FusionEngine
 		{
 			if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 			{
-				//std::stringstream str; str << i;
-				//SendToConsole("Retrieve " + str.str());
-				cell->AddHist("Enqueued In");
-				m_ReadQueue.push(std::make_tuple(cell, i));
-				m_NewData.set();
+				if (m_Map)
+				{
+					cell->AddHist("Enqueued In");
+					m_ReadQueue.push(std::make_tuple(cell, i));
+					m_NewData.set();
+				}
+				else
+				{
+					cell->loaded = true;
+					cell->waiting = Cell::Ready;
+				}
 				return true;
 			}
 			return false;
@@ -346,15 +364,14 @@ namespace FusionEngine
 							{
 								try
 								{
-									//std::vector<EntityPtr> newArchive;
+									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
 									auto file = GetFile(i, true);
-									auto numEntries = cell->objects.size();
+									size_t numEntries = static_cast<size_t>(std::count_if(cell->objects.begin(), cell->objects.end(), [](const EntityPtr& obj) { return obj->IsSyncedEntity(); }));
 									file.write(&numEntries, sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
-										//if (it->first->IsSyncedEntity())
+										if (it->first->IsSyncedEntity())
 										{
-											//newArchive.push_back(it->first->shared_from_this());
 											Save(file, it->first);
 										}
 									}
@@ -364,8 +381,6 @@ namespace FusionEngine
 									//std::stringstream str; str << i;
 									//SendToConsole("Cell " + str.str() + " streamed out");
 
-
-									//m_Archived[i] = std::move(newArchive);
 									cell->objects.clear();
 									cell->loaded = false;
 								}
@@ -412,13 +427,13 @@ namespace FusionEngine
 							{
 								try
 								{
-									//auto archivedCellEntry = m_Archived.find(i);
 									auto file = GetFile(i, false);
 
-									//if (archivedCellEntry != m_Archived.end())
+									// Last param makes the method load synched entities from the map if the cache file isn't available:
+									m_Map->LoadCell(cell, i, file.is_null()); 
+
 									if (!file.is_null() && file.get_size() > 0)
 									{
-										//for (auto it = archivedCellEntry->second.begin(), end = archivedCellEntry->second.end(); it != end; ++it)
 										size_t numEntries;
 										file.read(&numEntries, sizeof(size_t));
 										for (size_t n = 0; n < numEntries; ++n)
@@ -441,8 +456,6 @@ namespace FusionEngine
 
 										cell->AddHist("Loaded", numEntries);
 										cell->loaded = true;
-
-										//m_Archived.erase(archivedCellEntry);
 									}
 									else
 									{

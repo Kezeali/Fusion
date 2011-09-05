@@ -60,23 +60,26 @@ namespace FusionEngine
 #endif
 	}
 
-	StreamingManager::StreamingManager(CellArchiver* archivist)
+	StreamingManager::StreamingManager(CellArchiver* archivist/*, const std::shared_ptr<GameMap>& map*/)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_Archivist(archivist)
 	{
-		m_Bounds.x = s_DefaultWorldSize / 2.f;
-		m_Bounds.y = s_DefaultWorldSize / 2.f;
+		//if (!map)
+		{
+			m_Bounds.x = s_DefaultWorldSize / 2.f;
+			m_Bounds.y = s_DefaultWorldSize / 2.f;
 
-		m_Range = s_DefaultActivationRange;
-		m_RangeSquared = m_Range * m_Range;
+			m_Range = s_DefaultActivationRange;
+			m_RangeSquared = m_Range * m_Range;
 
-		m_CellSize = s_DefaultCellSize;
-		m_InverseCellSize = 1.f / m_CellSize;
+			m_CellSize = s_DefaultCellSize;
+			m_InverseCellSize = 1.f / m_CellSize;
 
-		m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
-		m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+			m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+			m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
-		m_Cells = new Cell[m_XCellCount * m_YCellCount];
+			m_Cells = new Cell[m_XCellCount * m_YCellCount];
+		}
 	}
 
 	StreamingManager::~StreamingManager()

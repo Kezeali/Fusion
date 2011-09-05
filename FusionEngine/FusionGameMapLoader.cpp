@@ -42,10 +42,72 @@
 #include "FusionNetworkTypes.h"
 #include "FusionPlayerRegistry.h"
 
+#include "FusionPhysFSIOStream.h"
+
 using namespace std::placeholders;
 
 namespace FusionEngine
 {
+
+	GameMap::GameMap(CL_IODevice& file)
+		: m_File(file)
+	{
+		auto fileSize = m_File.get_size();
+
+		m_XCells = m_File.read_uint32();
+		m_CellSize = m_File.read_uint32();
+
+		m_CellLocations.resize(m_XCells * m_XCells);
+		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
+		{
+			uint32_t begin = m_File.read_uint32();
+			uint32_t length = m_File.read_uint32();
+			m_CellLocations[i] = std::make_pair(begin, length);
+			FSN_ASSERT(begin && begin + length < (unsigned int)fileSize);
+		}
+
+		m_NonStreamingEntitiesLocation = m_File.read_uint32();
+	}
+
+	unsigned int GameMap::GetNumCellsAcross() const
+	{
+		return m_XCells;
+	}
+
+	unsigned int GameMap::GetCellSize() const
+	{
+		return m_CellSize;
+	}
+
+	void GameMap::LoadCell(Cell* out, size_t index, bool include_synched)
+	{
+		FSN_ASSERT(out);
+		FSN_ASSERT(index < m_CellLocations.size());
+
+		Cell::mutex_t::scoped_lock lock(out->mutex);
+
+		auto pos = m_CellLocations[index];
+		FSN_ASSERT(pos.first < std::numeric_limits<int>::max());
+		m_File.seek((int)pos.first);
+
+		size_t numPseudoEnts;
+		m_File.read(&numPseudoEnts, sizeof(size_t));
+		for (size_t i = 0; i < numPseudoEnts; ++i)
+		{
+			//auto entity = LoadEntity(m_File);
+			//out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
+		}
+		if (include_synched)
+		{
+			size_t numSynchedEnts;
+			m_File.read(&numSynchedEnts, sizeof(size_t));
+			for (size_t i = 0; i < numSynchedEnts; ++i)
+			{
+				//auto entity = LoadEntity(m_File);
+				//out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
+			}
+		}
+	}
 
 	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource)
 		: m_ClientOptions(options),
@@ -141,7 +203,7 @@ namespace FusionEngine
 		}
 	}
 
-	void GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
 	{
 		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
@@ -174,6 +236,8 @@ namespace FusionEngine
 		}
 
 		m_Manager->Clear();
+
+		auto map = std::make_shared<GameMap>(device);
 
 		// Read the entity type count
 		cl_uint32 numberEntityTypes = device.read_uint32();
@@ -214,6 +278,8 @@ namespace FusionEngine
 		loadPseudoEntities(device, archetypeArray, translator);
 		if (synchroniser != nullptr)
 			loadEntities(device, archetypeArray, translator, synchroniser);
+
+		return map;
 	}
 
 	void GameMapLoader::deserialiseBasicProperties(EntityPtr& entity, CL_IODevice &device)
