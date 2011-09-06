@@ -18,6 +18,8 @@
 #include "../FusionEngine/FusionAudioLoader.h"
 #include "../FusionEngine/FusionImageLoader.h"
 
+#include "../FusionEngine/FusionClientOptions.h"
+
 // Network
 #include "../FusionEngine/FusionRakNetwork.h"
 #include "../FusionEngine/FusionPacketDispatcher.h"
@@ -143,7 +145,7 @@ namespace FusionEngine
 		}
 
 		std::shared_ptr<GameMap> m_Map;
-		void SetMapLoader(const std::shared_ptr<GameMap>& map)
+		void SetMap(const std::shared_ptr<GameMap>& map)
 		{
 			m_Map = map;
 		}
@@ -366,7 +368,7 @@ namespace FusionEngine
 								{
 									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
 									auto file = GetFile(i, true);
-									size_t numEntries = static_cast<size_t>(std::count_if(cell->objects.begin(), cell->objects.end(), [](const EntityPtr& obj) { return obj->IsSyncedEntity(); }));
+									size_t numEntries = static_cast<size_t>(std::count_if(cell->objects.begin(), cell->objects.end(), [](const Cell::CellEntryMap::value_type& obj) { return obj.first->IsSyncedEntity(); }));
 									file.write(&numEntries, sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
@@ -430,7 +432,7 @@ namespace FusionEngine
 									auto file = GetFile(i, false);
 
 									// Last param makes the method load synched entities from the map if the cache file isn't available:
-									m_Map->LoadCell(cell, i, file.is_null()); 
+									m_Map->LoadCell(cell, i, file.is_null(), m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator); 
 
 									if (!file.is_null() && file.get_size() > 0)
 									{
@@ -674,12 +676,12 @@ public:
 				if (!SetupPhysFS::mount(s_PackagesPath, "", "7z", false))
 					SendToConsole("Default resource path could not be located");
 				SetupPhysFS::mount_archives(s_PackagesPath, "", "zip", false);
-#ifdef _DEBUG
+//#ifdef _DEBUG
 				// Clear cache
 				SetupPhysFS::clear_temp();
-#endif
+//#endif
 
-				logger->ActivateConsoleLogging();
+				//logger->ActivateConsoleLogging();
 
 				////////////////////
 				// Script Manager
@@ -748,6 +750,15 @@ public:
 
 				CL_OpenGL::set_active(gc);
 
+				/////////////////////////
+				// Load optional settings (set options)
+				ClientOptions* options = new ClientOptions("settings.xml", "settings");
+
+				if (options->GetOption_bool("console_logging"))
+					logger->ActivateConsoleLogging();
+
+				bool editMode = options->GetOption_bool("edit");
+
 				/////////////////
 				// Input Manager
 				const std::unique_ptr<InputManager> inputMgr(new InputManager(dispWindow));
@@ -777,15 +788,24 @@ public:
 				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get()));
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
-				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 
-				cellArchivist->Start();
+				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 
 				try
 				{
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
 
 				entityManager->m_EntityFactory = entityFactory.get();
+
+				std::unique_ptr<GameMapLoader> mapLoader(new GameMapLoader(options, entityFactory.get(), entityManager.get(), std::make_shared<VirtualFileSource_PhysFS>()));
+
+				if (!options->GetOption_bool("edit"))
+				{
+					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
+					cellArchivist->SetMap(map);
+				}
+
+				cellArchivist->Start();
 
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
@@ -828,126 +848,7 @@ public:
 				scheduler->SetOntology(ontology);
 
 
-				std::vector<std::shared_ptr<Entity>> entities;
-
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
-
-				float xtent = 1.f;
-				Vector2 position(0.0f, 0.0f);
-				{
-					unsigned int i = 0;
-					//position.x += ToSimUnits(50.f);
-					//if (position.x >= ToSimUnits(xtent))
-					//{
-					//	position.x = ToSimUnits(-xtent);
-					//	position.y += ToSimUnits(50.f);
-					//}			
-					
-					ComponentPtr transformCom;
-					if (i < 300)
-					{
-						if (i == 0)
-							transformCom = box2dWorld->InstantiateComponent("b2Kinematic", position, 0.f);
-						else
-							transformCom = box2dWorld->InstantiateComponent((i < 30) ? "b2RigidBody" : "b2Static", position, 0.f);
-					}
-					else
-					{
-						transformCom = box2dWorld->InstantiateComponent("StaticTransform", position, 0.f);
-					}
-
-					auto entity = std::make_shared<Entity>(entityManager.get(), &entityManager->m_PropChangedQueue, transformCom);
-					std::stringstream str;
-					str << i;
-					entity->SetName("initentity" + str.str());
-
-					instantiationSynchroniser->TakeID(1);
-					entity->SetID(1);
-
-					entityManager->AddEntity(entity);
-
-					ComponentPtr b2CircleFixture;
-					if (i < 300)
-					{
-						b2CircleFixture = box2dWorld->InstantiateComponent("b2Circle");
-						entity->AddComponent(b2CircleFixture);
-						{
-							auto fixture = entity->GetComponent<FusionEngine::IFixture>();
-							fixture->Density.Set(0.8f);
-							fixture->Sensor.Set(i > 80);
-							auto shape = entity->GetComponent<ICircleShape>();
-							shape->Radius.Set(ToSimUnits(50.f / 2.f));
-						}
-						entity->SynchroniseParallelEdits();
-					}
-
-					auto clSprite = renderWorld->InstantiateComponent("CLSprite");
-					entity->AddComponent(clSprite);
-
-					ComponentPtr asScript, asScript2;
-					if (i < 200)
-					{
-						asScript = asWorld->InstantiateComponent("ASScript");
-						entity->AddComponent(asScript, "script_a");
-
-						//asScript2 = asWorld->InstantiateComponent("ASScript");
-						//entity->AddComponent(asScript2, "script_b");
-					}
-
-					if (i == 1)
-					{
-						auto transform = entity->GetComponent<ITransform>();
-						transform->Depth.Set(1);
-					}
-
-					{
-						auto sprite = entity->GetComponent<ISprite>();
-						if (i > 150 && i < 300)
-						{
-							sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
-							sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
-						}
-						else
-							sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
-					}
-
-					if (i < 200)
-					{
-						auto script = entity->GetComponent<IScript>("script_a");
-						if (script)
-							script->ScriptPath.Set("Scripts/test_script.as");
-
-						//script = entity->GetComponent<IScript>("script_b");
-						//if (script)
-						//	script->ScriptPath.Set("Scripts/TestB.as");
-					}
-					entity->SynchroniseParallelEdits();
-
-					{
-						auto body = entity->GetComponent<IRigidBody>();
-						if (body)
-						{
-							//body->ApplyTorque(10.f);
-							//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
-							//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
-							body->LinearDamping.Set(0.1f);
-							body->AngularDamping.Set(0.9f);
-						}
-					}
-
-					//entities.push_back(entity);
-
-					//entity->StreamIn();
-					//if (b2BodyCom)
-					//	box2dWorld->OnActivation(b2BodyCom);
-					//if (b2CircleFixture)
-					//	box2dWorld->OnActivation(b2CircleFixture);
-					//renderWorld->OnActivation(clSprite);
-					//if (asScript)
-					//	asWorld->OnActivation(asScript);
-					//if (asScript2)
-					//	asWorld->OnActivation(asScript2);
-				}
 
 				PlayerRegistry::AddLocalPlayer(1u, 0u);
 
@@ -960,8 +861,35 @@ public:
 				streamingMgr->AddCamera(camera);
 				}
 
+				std::vector<EntityPtr> entities;
+
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
+					if (ev.id >= CL_KEY_0 && ev.id <= CL_KEY_9)
+					{
+						auto vps = dynamic_cast<CLRenderWorld*>(renderWorld.get())->GetViewports();
+						if (vps.empty())
+							return;
+						auto vp = vps.front();
+
+						Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
+						CL_Rectf area;
+						Renderer::CalculateScreenArea(gc, area, vp, true);
+						pos.x += area.left; pos.y += area.top;
+
+						auto entity =
+							createEntity((unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
+						entities.push_back(entity);
+					}
+
+					if (ev.id == CL_KEY_S)
+					{
+						//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
+						CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+						auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
+						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), 500u, entities);
+					}
+
 					bool dtup = ev.id == CL_KEY_PRIOR;
 					bool dtdown = ev.id == CL_KEY_NEXT;
 					if (dtup || dtdown)
@@ -1014,15 +942,15 @@ public:
 					resourceManager->UnloadUnreferencedResources();
 					resourceManager->DeliverLoadedResources();
 
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_1))
+					if (dispWindow.get_ic().get_keyboard().get_keycode(VK_OEM_4))
 					{
 						// Accumulator
 						scheduler->SetFramerateLimiter(false);
 						scheduler->SetUnlimited(false);
 					}
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_2))
+					if (dispWindow.get_ic().get_keyboard().get_keycode(VK_OEM_6))
 						scheduler->SetFramerateLimiter(true);
-					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_3))
+					if (dispWindow.get_ic().get_keyboard().get_keycode(VK_OEM_5))
 					{
 						// Profile mode
 						scheduler->SetFramerateLimiter(false);
@@ -1036,7 +964,7 @@ public:
 						//gui->Update(seconds);
 					}
 					
-					const auto executed = scheduler->Execute();
+					const auto executed = scheduler->Execute(editMode ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
 
 					if (executed & SystemType::Rendering)
 					{
@@ -1044,7 +972,7 @@ public:
 						gc.clear();
 					}
 					
-					if (executed & SystemType::Simulation)
+					if (executed & SystemType::Simulation || editMode)
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
@@ -1116,6 +1044,125 @@ public:
 		}
 
 		return 0;
+	}
+
+	EntityPtr createEntity(unsigned int i, Vector2 position, InstancingSynchroniser* instantiationSynchroniser, EntityFactory* factory, EntityManager* entityManager)
+	{
+		position.x = ToSimUnits(position.x); position.y = ToSimUnits(position.y);
+
+		ComponentPtr transformCom;
+		if (i == 1)
+		{
+			transformCom = factory->InstanceComponent("StaticTransform", position, 0.f);
+		}
+		else if (i == 4)
+		{
+			transformCom = factory->InstanceComponent("b2Kinematic", position, 0.f);
+		}
+		else
+		{
+			transformCom = factory->InstanceComponent("b2RigidBody", position, 0.f);
+		}
+
+		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transformCom);
+
+		if (i == 2)
+		{
+			auto id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
+			entity->SetID(id);
+
+			std::stringstream str;
+			str << i << "_" << id;
+			entity->SetName("edit" + str.str());
+		}
+		else
+		{
+			std::stringstream str;
+			str << i;
+			entity->SetName("edit" + str.str());
+		}
+
+		entityManager->AddEntity(entity);
+
+		ComponentPtr b2CircleFixture;
+		if (i == 2 || i == 3 || i == 4)
+		{
+			b2CircleFixture = factory->InstanceComponent("b2Circle");
+			entity->AddComponent(b2CircleFixture);
+			{
+				auto fixture = entity->GetComponent<FusionEngine::IFixture>();
+				fixture->Density.Set(0.8f);
+				fixture->Sensor.Set(i > 80);
+				auto shape = entity->GetComponent<ICircleShape>();
+				shape->Radius.Set(ToSimUnits(50.f / 2.f));
+			}
+			entity->SynchroniseParallelEdits();
+		}
+
+		auto clSprite = factory->InstanceComponent("CLSprite");
+		entity->AddComponent(clSprite);
+
+		ComponentPtr asScript, asScript2;
+		if (i == 4)
+		{
+			asScript = factory->InstanceComponent("ASScript");
+			entity->AddComponent(asScript, "script_a");
+		}
+
+		if (i == 2)
+		{
+			asScript2 = factory->InstanceComponent("ASScript");
+			entity->AddComponent(asScript2, "script_b");
+		}
+
+		if (i == 4)
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Depth.Set(1);
+		}
+
+		{
+			auto sprite = entity->GetComponent<ISprite>();
+			if (i == 1)
+			{
+				sprite->ImagePath.Set("Entities/Dirt.png");
+			}
+			else if (i == 3)
+			{
+				sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving.png");
+				sprite->AnimationPath.Set("Entities/Test/test_anim.yaml");
+			}
+			else
+				sprite->ImagePath.Set("Entities/Test/Gfx/spaceshoot_body_moving1.png");
+		}
+
+		if (i == 5)
+		{
+			auto script = entity->GetComponent<IScript>("script_a");
+			if (script)
+				script->ScriptPath.Set("Scripts/test_script.as");
+		}
+		if (i == 2)
+		{
+			auto script = entity->GetComponent<IScript>("script_b");
+			if (script)
+				script->ScriptPath.Set("Scripts/TestB.as");
+		}
+		entity->SynchroniseParallelEdits();
+
+		{
+			auto body = entity->GetComponent<IRigidBody>();
+			if (body)
+			{
+				//body->ApplyTorque(10.f);
+				//body->ApplyForce(Vector2(2000, 0), body->GetCenterOfMass() + Vector2(2, -1));
+				//body->AngularVelocity.Set(CL_Angle(180, cl_degrees).to_radians());
+				body->LinearDamping.Set(0.1f);
+				body->AngularDamping.Set(0.9f);
+			}
+		}
+
+		return entity;
 	}
 
 	~ComponentTest()

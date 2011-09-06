@@ -459,10 +459,12 @@ namespace FusionEngine
 		m_Engine = m_ScriptManager->GetEnginePtr();
 
 		m_ASTask = new AngelScriptTask(this, m_ScriptManager);
+		m_ASTaskB = new AngelScriptTaskB(this, m_ScriptManager);
 	}
 
 	AngelScriptWorld::~AngelScriptWorld()
 	{
+		delete m_ASTaskB;
 		delete m_ASTask;
 	}
 
@@ -802,6 +804,14 @@ namespace FusionEngine
 		return m_ASTask;
 	}
 
+	std::vector<ISystemTask*> AngelScriptWorld::GetTasks()
+	{
+		std::vector<ISystemTask*> tasks;
+		tasks.push_back(m_ASTask);
+		tasks.push_back(m_ASTaskB);
+		return tasks;
+	}
+
 	void AngelScriptWorld::MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta)
 	{
 		if (type == "ASScript")
@@ -862,7 +872,18 @@ namespace FusionEngine
 	{
 	}
 
-	void AngelScriptTask::Update(const float delta)
+	AngelScriptTaskB::AngelScriptTaskB(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager)
+		: ISystemTask(sysworld),
+		m_AngelScriptWorld(sysworld),
+		m_ScriptManager(script_manager)
+	{
+	}
+
+	AngelScriptTaskB::~AngelScriptTaskB()
+	{
+	}
+
+	void AngelScriptTaskB::Update(const float delta)
 	{
 		{
 		auto& scripts_to_instantiate = m_AngelScriptWorld->m_NewlyActiveScripts;
@@ -941,7 +962,10 @@ namespace FusionEngine
 		scripts_to_instantiate.clear();
 		scripts_to_instantiate.swap(notInstantiated);
 		} // scope for instantiate_objects lambda
+	}
 
+	void AngelScriptTask::Update(const float delta)
+	{
 		{
 		auto& scripts = m_AngelScriptWorld->m_ActiveScripts;
 

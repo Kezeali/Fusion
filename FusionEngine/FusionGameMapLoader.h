@@ -38,8 +38,7 @@
 #include <boost/bimap/unordered_set_of.hpp>
 #include <boost/bimap/vector_of.hpp>
 #include <boost/signals2.hpp>
-#include <ClanLib/Core/IOData/iodevice.h>
-#include <ClanLib/Core/IOData/virtual_directory.h>
+#include <ClanLib/core.h>
 
 #include "FusionEntityDeserialiser.h"
 #include "FusionPacketHandler.h"
@@ -56,8 +55,10 @@ namespace FusionEngine
 	public:
 		GameMap(CL_IODevice& file);
 
-		void LoadCell(Cell* out, size_t index, bool include_synched);
-		void LoadNonStreamingEntities(EntityManager* manager);
+		void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
+		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
+
+		static void CompileMap(/*CL_VirtualDirectory& temp_dir, */CL_IODevice& device, unsigned int num_cells_across, unsigned int cell_size, /*const std::vector<EntityPtr>& pseudo_entities, */const std::vector<EntityPtr>& entities);
 
 		unsigned int GetNumCellsAcross() const;
 		unsigned int GetCellSize() const;
@@ -117,7 +118,7 @@ namespace FusionEngine
 			PseudoEntityFlag = 1 << 1
 		};
 	public:
-		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource);
+		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, std::shared_ptr<CL_VirtualFileSource> filesource);
 		~GameMapLoader();
 
 		void HandlePacket(RakNet::Packet *packet);
@@ -138,6 +139,8 @@ namespace FusionEngine
 		* so synced entities can be loaded from the existing ontology.
 		*/
 		std::shared_ptr<GameMap> LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser = nullptr);
+
+		std::shared_ptr<GameMap> LoadMap(const std::string &filename, InstancingSynchroniser* synchroniser = nullptr);
 
 		void LoadSavedGame(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser);
 		void SaveGame(const std::string &filename, CL_VirtualDirectory &directory);
@@ -181,7 +184,7 @@ namespace FusionEngine
 		EntityFactory *m_Factory;
 		EntityManager *m_Manager;
 
-		CL_VirtualFileSource* m_FileSource;
+		std::shared_ptr<CL_VirtualFileSource> m_FileSource;
 
 		// The currently loaded map (must be written to the save game file so it can be re-loaded)
 		std::string m_MapFilename;

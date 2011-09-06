@@ -67,6 +67,30 @@ namespace FusionEngine
 		}
 	}
 
+	void Renderer::CalculateScreenArea(const CL_GraphicContext& gc, CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset)
+	{
+		const CL_Rectf &proportions = viewport->GetArea();
+
+		area.left = proportions.left * gc.get_width();
+		area.top = proportions.top * gc.get_height();
+		area.right = proportions.right * gc.get_width();
+		area.bottom = proportions.bottom * gc.get_height();
+
+		if (apply_camera_offset)
+		{
+			const CameraPtr &camera = viewport->GetCamera();
+			if (!camera)
+				FSN_EXCEPT(ExCode::InvalidArgument, "Cannot apply camera offset if the viewport has no camera associated with it");
+
+			// Viewport offset is the top-left of the viewport in the game-world,
+			//  i.e. camera_offset - viewport_size * camera_origin
+			CL_Vec2f viewportOffset =
+				camera->GetPosition() - CL_Vec2f::calc_origin( origin_center, CL_Sizef((float)area.get_width(), (float)area.get_height()) );
+
+			area.translate(viewportOffset);
+		}
+	}
+
 	const CL_GraphicContext& Renderer::GetGraphicContext() const
 	{
 		return m_GC;

@@ -116,6 +116,7 @@ namespace FusionEngine
 	{
 		friend class AngelScriptWorld;
 		friend class AngelScriptTask;
+		friend class AngelScriptTaskB;
 	public:
 		FSN_LIST_INTERFACES((IScript))
 

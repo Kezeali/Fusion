@@ -199,6 +199,7 @@ namespace FusionEngine
 			auto streamingTask = new StreamingTask(m_EntityManager);
 			m_SortedTasks.push_back(streamingTask);
 			m_SortedSimulationTasks.push_back(streamingTask);
+			m_SortedRenderTasks.push_back(streamingTask);
 			//m_SortedRenderTasks.push_back(new StreamingTaskB(m_EntityManager));
 		}
 
@@ -217,7 +218,7 @@ namespace FusionEngine
 		std::sort(m_SortedRenderTasks.begin(), m_SortedRenderTasks.end(), pred);
 	}
 
-	uint8_t TaskScheduler::Execute()
+	uint8_t TaskScheduler::Execute(uint8_t what)
 	{
 		auto currentTime = CL_System::get_time();
 		if (m_LastTime == 0)
@@ -279,6 +280,9 @@ namespace FusionEngine
 
 			DeltaTime::m_Alpha = m_Accumulator / (float)m_DeltaTimeMS;
 		}
+
+		// TODO: remove this
+		taskFilter &= what;
 
 		// Simulating another step, update the frame count
 		if (taskFilter & SystemType::Simulation)

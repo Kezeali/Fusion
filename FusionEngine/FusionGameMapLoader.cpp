@@ -44,10 +44,139 @@
 
 #include "FusionPhysFSIOStream.h"
 
+// TODO: remove
+#include "FusionVirtualFileSource_PhysFS.h"
+
 using namespace std::placeholders;
 
 namespace FusionEngine
 {
+
+	static void WriteComponent(CL_IODevice& out, IComponent* component)
+	{
+		RakNet::BitStream stream;
+		const bool conData = component->SerialiseContinuous(stream);
+		const bool occData = component->SerialiseOccasional(stream, IComponent::All);
+
+		out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
+		out.write_uint8(occData ? 0xFF : 0x00);
+
+		out.write_uint32(stream.GetNumberOfBytesUsed());
+		out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+	}
+
+	static void DeserialiseComponent(CL_IODevice& in, IComponent* component)
+	{
+		const bool conData = in.read_uint8() != 0x00;
+		const bool occData = in.read_uint8() != 0x00;
+
+		const auto dataLen = in.read_uint32();
+		std::vector<unsigned char> data(dataLen);
+		in.read(data.data(), data.size());
+
+		RakNet::BitStream stream(data.data(), data.size(), false);
+
+		if (conData)
+			component->DeserialiseContinuous(stream);
+		if (occData)
+			component->DeserialiseOccasional(stream, IComponent::All);
+
+		//stream.AssertStreamEmpty();
+		if (stream.GetNumberOfUnreadBits() >= 8)
+			SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+	}
+
+	static void WriteEntity(CL_IODevice& out, EntityPtr entity)
+	{
+		ObjectID id = entity->GetID();
+		if (id != 0)
+			out.write(&id, sizeof(ObjectID));
+
+		{
+			RakNet::BitStream stream;
+			entity->SerialiseReferencedEntitiesList(stream);
+
+			out.write_uint32(stream.GetNumberOfBytesUsed());
+			out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+		}
+
+		auto& components = entity->GetComponents();
+		size_t numComponents = components.size() - 1; // - transform
+
+		auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+		out.write_string_a(transform->GetType());
+		WriteComponent(out, transform);
+
+		out.write(&numComponents, sizeof(size_t));
+		for (auto it = components.begin(), end = components.end(); it != end; ++it)
+		{
+			auto& component = *it;
+			if (component.get() != transform)
+				out.write_string_a(component->GetType());
+		}
+		for (auto it = components.begin(), end = components.end(); it != end; ++it)
+		{
+			auto& component = *it;
+			if (component.get() != transform)
+				WriteComponent(out, component.get());
+		}
+	}
+
+	static EntityPtr LoadEntity(CL_IODevice& in, bool synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator)
+	{
+		
+		ObjectID id = 0;
+		if (synched)
+		{
+			in.read(&id, sizeof(ObjectID));
+			instantiator->TakeID(id);
+		}
+
+		const auto dataLen = in.read_uint32();
+		std::vector<unsigned char> referencedEntitiesData(dataLen);
+		in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
+
+		ComponentPtr transform;
+		{
+			std::string transformType = in.read_string_a();
+			transform = factory->InstanceComponent(transformType);
+
+			DeserialiseComponent(in, transform.get());
+		}
+
+		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transform);
+		entity->SetID(id);
+
+		transform->SynchronisePropertiesNow();
+
+		{
+			RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);
+			entity->DeserialiseReferencedEntitiesList(stream, EntityDeserialiser(instantiator->m_EntityManager));
+		}
+
+		size_t numComponents;
+		in.read(&numComponents, sizeof(size_t));
+		for (size_t i = 0; i < numComponents; ++i)
+		{
+			std::string type = in.read_string_a();
+			auto& component = factory->InstanceComponent(type);
+			entity->AddComponent(component);
+		}
+		if (numComponents != 0)
+		{
+			auto& components = entity->GetComponents();
+			auto it = components.begin(), end = components.end();
+			for (++it; it != end; ++it)
+			{
+				auto& component = *it;
+				FSN_ASSERT(component != transform);
+
+				DeserialiseComponent(in, component.get());
+			}
+		}
+
+		return entity;
+	}
 
 	GameMap::GameMap(CL_IODevice& file)
 		: m_File(file)
@@ -63,7 +192,7 @@ namespace FusionEngine
 			uint32_t begin = m_File.read_uint32();
 			uint32_t length = m_File.read_uint32();
 			m_CellLocations[i] = std::make_pair(begin, length);
-			FSN_ASSERT(begin && begin + length < (unsigned int)fileSize);
+			FSN_ASSERT(begin && begin + length <= (unsigned int)fileSize);
 		}
 
 		m_NonStreamingEntitiesLocation = m_File.read_uint32();
@@ -79,7 +208,7 @@ namespace FusionEngine
 		return m_CellSize;
 	}
 
-	void GameMap::LoadCell(Cell* out, size_t index, bool include_synched)
+	void GameMap::LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator)
 	{
 		FSN_ASSERT(out);
 		FSN_ASSERT(index < m_CellLocations.size());
@@ -87,15 +216,15 @@ namespace FusionEngine
 		Cell::mutex_t::scoped_lock lock(out->mutex);
 
 		auto pos = m_CellLocations[index];
-		FSN_ASSERT(pos.first < std::numeric_limits<int>::max());
+		FSN_ASSERT(pos.first < (unsigned int)std::numeric_limits<int>::max());
 		m_File.seek((int)pos.first);
 
 		size_t numPseudoEnts;
 		m_File.read(&numPseudoEnts, sizeof(size_t));
 		for (size_t i = 0; i < numPseudoEnts; ++i)
 		{
-			//auto entity = LoadEntity(m_File);
-			//out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
+			auto entity = LoadEntity(m_File, false, factory, entityManager, instantiator);
+			out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
 		}
 		if (include_synched)
 		{
@@ -103,13 +232,166 @@ namespace FusionEngine
 			m_File.read(&numSynchedEnts, sizeof(size_t));
 			for (size_t i = 0; i < numSynchedEnts; ++i)
 			{
-				//auto entity = LoadEntity(m_File);
-				//out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
+				auto entity = LoadEntity(m_File, true, factory, entityManager, instantiator);
+				out->objects.push_back(std::make_pair(std::move(entity), CellEntry()));
 			}
 		}
 	}
 
-	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, CL_VirtualFileSource* filesource)
+	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator)
+	{
+		m_File.seek(m_NonStreamingEntitiesLocation);
+
+		size_t numPseudoEnts;
+		m_File.read(&numPseudoEnts, sizeof(size_t));
+		for (size_t i = 0; i < numPseudoEnts; ++i)
+		{
+			auto entity = LoadEntity(m_File, false, factory, entityManager, instantiator);
+			entity->SetDomain(SYSTEM_DOMAIN);
+			entityManager->AddEntity(entity);
+		}
+		if (include_synched)
+		{
+			size_t numSynchedEnts;
+			m_File.read(&numSynchedEnts, sizeof(size_t));
+			for (size_t i = 0; i < numSynchedEnts; ++i)
+			{
+				auto entity = LoadEntity(m_File, true, factory, entityManager, instantiator);
+				entity->SetDomain(SYSTEM_DOMAIN);
+				entityManager->AddEntity(entity);
+			}
+		}
+	}
+
+	void GameMap::CompileMap(/*CL_VirtualDirectory& temp_dir, */CL_IODevice &device, unsigned int num_cells_across, unsigned int cell_size, /*const std::vector<EntityPtr> &pseudo_entities, */const std::vector<EntityPtr> &entities)
+	{
+		device.write(&num_cells_across, sizeof(unsigned int));
+		device.write(&cell_size, sizeof(unsigned int));
+
+		std::vector<std::pair<std::vector<EntityPtr>, std::vector<EntityPtr>>> cells(num_cells_across * num_cells_across);
+		std::vector<EntityPtr> nonStreamingEntities;
+		std::vector<EntityPtr> nonStreamingEntitiesSynched;
+		for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+		{
+			auto& entity = *it;
+			if (entity->GetStreamingCellIndex() < cells.size())
+			{
+				if (!entity->IsSyncedEntity())
+					cells[entity->GetStreamingCellIndex()].first.push_back(entity);
+				else
+					cells[entity->GetStreamingCellIndex()].second.push_back(entity);
+			}
+			else
+			{
+				if (!entity->IsSyncedEntity())
+					nonStreamingEntities.push_back(entity);
+				else
+					nonStreamingEntitiesSynched.push_back(entity);
+			}
+		}
+
+		FSN_ASSERT(nonStreamingEntities.empty() && nonStreamingEntitiesSynched.empty());
+
+		//std::vector<CL_IODevice> tempFiles;
+		//unsigned int cellIndex = 0;
+
+		auto locationsOffset = device.get_position();
+		{
+			uint32_t locationsSpaceSize = cells.size() * sizeof(uint32_t) * 2;
+			std::vector<unsigned char> space(locationsSpaceSize);
+			device.write(space.data(), space.size()); // leave some space for the cell-data offsets
+		}
+		device.write_uint32(0); // Non-streaming entities location
+#ifdef _DEBUG
+		auto locationsEndOffset = device.get_position();
+#endif
+
+		std::vector<std::pair<uint32_t, uint32_t>> cellDataLocations(cells.size());
+
+		auto cellDataLocationIt = cellDataLocations.begin();
+		for (auto it = cells.begin(), end = cells.end(); it != end; ++it)
+		{
+			auto& cell = *it;
+
+			//CL_IODevice tempFile;
+			//if (temp_dir.get_file_system().is_null())
+			//{
+			//	tempFile = CL_IODevice_Memory();
+			//}
+			//else
+			//{
+			//	std::stringstream str; str << cellIndex++;
+			//	tempFile = temp_dir.open_file(str.str());
+			//	tempFiles.push_back(tempFile);
+			//}
+
+			auto& cellDataLocation = *cellDataLocationIt;
+			cellDataLocation.first = uint32_t(device.get_position());
+
+			// Pseudo ents
+			size_t numEnts = cell.first.size();
+			device.write(&numEnts, sizeof(size_t));
+			for (auto cit = cell.first.begin(), cend = cell.first.end(); cit != cend; ++cit)
+			{
+				auto& entity = *cit;
+
+				WriteEntity(device, entity);
+			}
+			// Synched ents
+			numEnts = cell.second.size();
+			device.write(&numEnts, sizeof(size_t));
+			for (auto cit = cell.second.begin(), cend = cell.second.end(); cit != cend; ++cit)
+			{
+				auto& entity = *cit;
+
+				WriteEntity(device, entity);
+			}
+
+			cellDataLocation.second = uint32_t(device.get_position() - cellDataLocation.first);
+
+			++cellDataLocationIt;
+		}
+
+		uint32_t nonStreamingEntitiesLocation = device.get_position();
+		device.write_uint32(nonStreamingEntities.size());
+
+		device.seek(locationsOffset);
+		for (auto it = cellDataLocations.begin(), end = cellDataLocations.end(); it != end; ++it)
+		{
+			device.write_uint32(it->first);
+			device.write_uint32(it->second);
+			FSN_ASSERT(device.get_position() <= locationsEndOffset);
+		}
+
+		device.write_uint32(nonStreamingEntitiesLocation);
+
+		FSN_ASSERT(device.get_position() == locationsEndOffset);
+
+		//{		
+		//for (auto it = tempFiles.begin(), end = tempFiles.end(); it != end; ++it)
+		//{
+		//	device.write_uint32(offset);
+		//	auto cellDataLength = it->get_size();
+		//	device.write_uint32(cellDataLength);
+		//	offset += cellDataLength;
+		//}
+		//}
+
+		//{
+		//std::vector<unsigned char> data;
+		//for (auto it = tempFiles.begin(), end = tempFiles.end(); it != end; ++it)
+		//{
+		//	data.resize(it->get_size());
+
+		//	it->seek(0);
+		//	it->read(&data[0], data.size());
+
+		//	device.write(data.data(), data.size());
+		//}
+		//}
+	}
+
+	GameMapLoader::GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, std::shared_ptr<CL_VirtualFileSource> filesource)
 		: m_ClientOptions(options),
 		m_Factory(factory),
 		m_Manager(manager),
@@ -161,7 +443,7 @@ namespace FusionEngine
 			uint32_t expectedChecksum;
 			bitStream.Read(expectedChecksum);
 
-			CL_VirtualDirectory directory(CL_VirtualFileSystem(m_FileSource), "");
+			CL_VirtualDirectory directory(CL_VirtualFileSystem(m_FileSource.get()), "");
 			CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
 			boost::crc_32_type crc;
@@ -239,47 +521,52 @@ namespace FusionEngine
 
 		auto map = std::make_shared<GameMap>(device);
 
-		// Read the entity type count
-		cl_uint32 numberEntityTypes = device.read_uint32();
-		// List each entity type
-		//StringVector entityTypeArray(numberEntityTypes);
-		m_TypeIndex.clear();
-		{
-			CL_String8 entityTypename;
-			for (m_NextTypeIndex = 0; m_NextTypeIndex < numberEntityTypes; ++m_NextTypeIndex)
-			{
-				entityTypename = device.read_string_a();
-				//entityTypeArray.push_back(entityTypename.c_str());
-				m_TypeIndex.insert( TypeIndex::value_type(entityTypename.c_str(), m_NextTypeIndex) );
-			}
-		}
+		//// Read the entity type count
+		//cl_uint32 numberEntityTypes = device.read_uint32();
+		//// List each entity type
+		////StringVector entityTypeArray(numberEntityTypes);
+		//m_TypeIndex.clear();
+		//{
+		//	CL_String8 entityTypename;
+		//	for (m_NextTypeIndex = 0; m_NextTypeIndex < numberEntityTypes; ++m_NextTypeIndex)
+		//	{
+		//		entityTypename = device.read_string_a();
+		//		//entityTypeArray.push_back(entityTypename.c_str());
+		//		m_TypeIndex.insert( TypeIndex::value_type(entityTypename.c_str(), m_NextTypeIndex) );
+		//	}
+		//}
 
-		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
+		//TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
-		// Load Archetypes
-		cl_uint32 numberArchetypes = device.read_uint32();
-		ArchetypeArray archetypeArray(numberArchetypes);
-		for (cl_uint32 i = 0; i < numberArchetypes; i++)
-		{
-			cl_uint32 entityTypeIndex = device.read_uint32();
-			const std::string &entityTypename = entityTypeArray.at(entityTypeIndex);
+		//// Load Archetypes
+		//cl_uint32 numberArchetypes = device.read_uint32();
+		//ArchetypeArray archetypeArray(numberArchetypes);
+		//for (cl_uint32 i = 0; i < numberArchetypes; i++)
+		//{
+		//	cl_uint32 entityTypeIndex = device.read_uint32();
+		//	const std::string &entityTypename = entityTypeArray.at(entityTypeIndex);
 
-			Archetype &archetype = archetypeArray[i];
+		//	Archetype &archetype = archetypeArray[i];
 
-			archetype.entityIndex = entityTypeIndex;
-			archetype.entityTypename = entityTypename;
+		//	archetype.entityIndex = entityTypeIndex;
+		//	archetype.entityTypename = entityTypename;
 
-			archetype.packet.mask = device.read_uint32();
-			archetype.packet.data = device.read_string_a();
-		}
+		//	archetype.packet.mask = device.read_uint32();
+		//	archetype.packet.data = device.read_string_a();
+		//}
 
-		IDTranslator translator;
+		//IDTranslator translator;
 
-		loadPseudoEntities(device, archetypeArray, translator);
-		if (synchroniser != nullptr)
-			loadEntities(device, archetypeArray, translator, synchroniser);
+		//loadPseudoEntities(device, archetypeArray, translator);
+		//if (synchroniser != nullptr)
+		//	loadEntities(device, archetypeArray, translator, synchroniser);
 
 		return map;
+	}
+
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, InstancingSynchroniser* synchroniser)
+	{
+		return LoadMap(filename, CL_VirtualDirectory(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), ""), synchroniser);
 	}
 
 	void GameMapLoader::deserialiseBasicProperties(EntityPtr& entity, CL_IODevice &device)

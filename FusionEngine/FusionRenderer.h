@@ -65,6 +65,7 @@ namespace FusionEngine
 
 		void CalculateScreenArea(CL_Rect &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 		void CalculateScreenArea(CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
+		static void CalculateScreenArea(const CL_GraphicContext& gc, CL_Rectf &area, const ViewportPtr &viewport, bool apply_camera_offset = false);
 
 		//! Returns the GC object used by this renderer
 		const CL_GraphicContext& GetGraphicContext() const;

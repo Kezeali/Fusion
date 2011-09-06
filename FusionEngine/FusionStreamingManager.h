@@ -240,6 +240,8 @@ namespace FusionEngine
 
 		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
+		unsigned int GetNumCellsAcross() const { return m_XCellCount; }
+
 		Cell *CellAtPosition(const Vector2 &position);
 		Cell *CellAtPosition(float x, float y);
 

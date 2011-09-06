@@ -64,7 +64,7 @@ namespace FusionEngine
 
 		void SetUnlimited(bool unlimited) { m_Unlimited = unlimited; }
 
-		uint8_t Execute();
+		uint8_t Execute(uint8_t what = 0xFF);
 
 	private:
 		tbb::tick_count m_LastTick;

@@ -73,6 +73,7 @@ namespace FusionEngine
 	class AngelScriptWorld : public ISystemWorld, public std::enable_shared_from_this<AngelScriptWorld>
 	{
 		friend class AngelScriptTask;
+		friend class AngelScriptTaskB;
 	public:
 		AngelScriptWorld(IComponentSystem* system, const std::shared_ptr<ScriptManager>& manager, EntityFactory* factory);
 		~AngelScriptWorld();
@@ -94,6 +95,7 @@ namespace FusionEngine
 		void OnDeactivation(const ComponentPtr& component);
 
 		ISystemTask* GetTask();
+		std::vector<ISystemTask*> GetTasks();
 
 		std::vector<boost::intrusive_ptr<ASScript>> m_NewlyActiveScripts;
 		std::vector<boost::intrusive_ptr<ASScript>> m_ActiveScripts;
@@ -131,6 +133,7 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 		asIScriptEngine* m_Engine;
 		AngelScriptTask* m_ASTask;
+		AngelScriptTaskB* m_ASTaskB;
 	};
 
 	class AngelScriptTask : public ISystemTask
@@ -155,6 +158,29 @@ namespace FusionEngine
 		std::shared_ptr<ScriptManager> m_ScriptManager;
 
 		std::map<int, std::vector<InputEvent>> m_PlayerInputEvents;
+	};
+
+	// Remember the friend decls in AngelScriptWorld and AngelScriptComponent!
+	class AngelScriptTaskB : public ISystemTask
+	{
+	public:
+		AngelScriptTaskB(AngelScriptWorld* sysworld, std::shared_ptr<ScriptManager> script_manager);
+		~AngelScriptTaskB();
+
+		void Update(const float delta);
+
+		SystemType GetTaskType() const { return SystemType::Rendering; }
+
+		PerformanceHint GetPerformanceHint() const { return Short; }
+
+		bool IsPrimaryThreadOnly() const
+		{
+			return false;
+		}
+
+	protected:
+		AngelScriptWorld* m_AngelScriptWorld;
+		std::shared_ptr<ScriptManager> m_ScriptManager;
 	};
 
 }
