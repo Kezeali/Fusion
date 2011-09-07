@@ -60,6 +60,9 @@ namespace FusionEngine
 			m_File = PHYSFS_openWrite(filename.c_str());
 		else
 			m_File = PHYSFS_openRead(filename.c_str());
+
+		if (m_File == NULL)
+			FSN_EXCEPT(FileSystemException, std::string("Couldn't open file: ") + PHYSFS_getLastError());
 	}
 
 	void CLBinaryStream::Read(void *data, asUINT size)
@@ -79,6 +82,13 @@ namespace FusionEngine
 	void LoadScriptResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
 		auto engine = ScriptManager::getSingleton().GetEnginePtr();
+
+		if (resource->GetPath().empty())
+		{
+			resource->SetDataPtr(nullptr);
+			resource->_setValid(false);
+			FSN_EXCEPT(FileSystemException, "'" + resource->GetPath() + "' could not be loaded");
+		}
 
 		asIScriptModule* module = engine->GetModule(resource->GetPath().c_str(), asGM_ALWAYS_CREATE);
 

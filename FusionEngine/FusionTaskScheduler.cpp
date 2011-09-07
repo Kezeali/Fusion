@@ -283,6 +283,8 @@ namespace FusionEngine
 
 		// TODO: remove this
 		taskFilter &= what;
+		if (taskFilter == 0)
+			return taskFilter;
 
 		// Simulating another step, update the frame count
 		if (taskFilter & SystemType::Simulation)

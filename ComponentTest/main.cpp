@@ -853,12 +853,16 @@ public:
 				PlayerRegistry::AddLocalPlayer(1u, 0u);
 
 				// This scope makes viewport hold the only reference to camera: thus camera will be deleted with viewport
+				std::shared_ptr<Camera> editCam;
 				{
 				auto camera = std::make_shared<Camera>();
 				camera->SetPosition(0.f, 0.f);
 				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
 				dynamic_cast<CLRenderWorld*>(renderWorld.get())->AddViewport(viewport);
 				streamingMgr->AddCamera(camera);
+				
+				if (editMode)
+					editCam = camera;
 				}
 
 				std::vector<EntityPtr> entities;
@@ -877,9 +881,27 @@ public:
 						Renderer::CalculateScreenArea(gc, area, vp, true);
 						pos.x += area.left; pos.y += area.top;
 
-						auto entity =
-							createEntity((unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
-						entities.push_back(entity);
+						const bool addToScene = !ev.ctrl;
+						unsigned int repeats = 1;
+						const float size = 100.f;
+						if (ev.shift)
+						{
+							repeats = 50;
+							pos.x -= (repeats / 2) * size;
+							pos.y -= (repeats / 2) * size;
+						}
+						for (unsigned int i = 0; i < repeats * repeats; ++i)
+						{
+							auto entity =
+								createEntity(addToScene, (unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
+							entities.push_back(entity);
+							pos.x += size;
+							if (pos.x > (repeats / 2) * size)
+							{
+								pos.x -= repeats * size;
+								pos.y += size;
+							}
+						}
 					}
 
 					if (ev.id == CL_KEY_S)
@@ -962,6 +984,21 @@ public:
 						seconds = delta * 0.001f;
 						inputMgr->Update(seconds);
 						//gui->Update(seconds);
+
+						if (editCam)
+						{
+							auto camPos = editCam->GetPosition();
+							if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_UP))
+								camPos.y -= 400 * seconds;
+							if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_DOWN))
+								camPos.y += 400 * seconds;
+							if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_LEFT))
+								camPos.x -= 400 * seconds;
+							if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_RIGHT))
+								camPos.x += 400 * seconds;
+
+							editCam->SetPosition(camPos.x, camPos.y);
+						}
 					}
 					
 					const auto executed = scheduler->Execute(editMode ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
@@ -1046,12 +1083,12 @@ public:
 		return 0;
 	}
 
-	EntityPtr createEntity(unsigned int i, Vector2 position, InstancingSynchroniser* instantiationSynchroniser, EntityFactory* factory, EntityManager* entityManager)
+	EntityPtr createEntity(bool add_to_scene, unsigned int i, Vector2 position, InstancingSynchroniser* instantiationSynchroniser, EntityFactory* factory, EntityManager* entityManager)
 	{
 		position.x = ToSimUnits(position.x); position.y = ToSimUnits(position.y);
 
 		ComponentPtr transformCom;
-		if (i == 1)
+		if (i == 1 || i == 2)
 		{
 			transformCom = factory->InstanceComponent("StaticTransform", position, 0.f);
 		}
@@ -1082,10 +1119,11 @@ public:
 			entity->SetName("edit" + str.str());
 		}
 
-		entityManager->AddEntity(entity);
+		if (add_to_scene)
+			entityManager->AddEntity(entity);
 
 		ComponentPtr b2CircleFixture;
-		if (i == 2 || i == 3 || i == 4)
+		if (i == 3 || i == 4)
 		{
 			b2CircleFixture = factory->InstanceComponent("b2Circle");
 			entity->AddComponent(b2CircleFixture);
@@ -1112,7 +1150,7 @@ public:
 		if (i == 2)
 		{
 			asScript2 = factory->InstanceComponent("ASScript");
-			entity->AddComponent(asScript2, "script_b");
+			entity->AddComponent(asScript2, "spawn_script");
 		}
 
 		if (i == 4)
@@ -1144,9 +1182,9 @@ public:
 		}
 		if (i == 2)
 		{
-			auto script = entity->GetComponent<IScript>("script_b");
+			auto script = entity->GetComponent<IScript>("spawn_script");
 			if (script)
-				script->ScriptPath.Set("Scripts/TestB.as");
+				script->ScriptPath.Set("Scripts/SpawnPoint.as");
 		}
 		entity->SynchroniseParallelEdits();
 
