@@ -47,7 +47,7 @@ namespace FusionEngine
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
-#ifdef _DEBUG
+#if 1
 		mutex_t::scoped_lock lock(historyMutex);
 		auto now = boost::posix_time::second_clock::local_time();
 		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
@@ -60,14 +60,30 @@ namespace FusionEngine
 #endif
 	}
 
-	StreamingManager::StreamingManager(CellArchiver* archivist/*, const std::shared_ptr<GameMap>& map*/)
+	StreamingManager::StreamingManager(CellArchiver* archivist, bool initialise)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_Archivist(archivist)
 	{
-		//if (!map)
+		if (initialise) // default initialisation
 		{
 			m_Bounds.x = s_DefaultWorldSize / 2.f;
 			m_Bounds.y = s_DefaultWorldSize / 2.f;
+
+			m_Range = s_DefaultActivationRange;
+			m_RangeSquared = m_Range * m_Range;
+
+			m_CellSize = s_DefaultCellSize;
+			m_InverseCellSize = 1.f / m_CellSize;
+
+			m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+			m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+
+			m_Cells = new Cell[m_XCellCount * m_YCellCount];
+		}
+		else // Object will still be valid, just pretty much useless (will also take no time to re-init)
+		{
+			m_Bounds.x = s_DefaultCellSize;
+			m_Bounds.y = s_DefaultCellSize;
 
 			m_Range = s_DefaultActivationRange;
 			m_RangeSquared = m_Range * m_Range;
@@ -85,6 +101,25 @@ namespace FusionEngine
 	StreamingManager::~StreamingManager()
 	{
 		delete[] m_Cells;
+	}
+
+	void StreamingManager::Initialise(float map_width, unsigned int num_cells_across, float cell_size)
+	{
+		delete[] m_Cells;
+
+		m_Bounds.x = map_width / 2.0f;
+		m_Bounds.y = map_width / 2.0f;
+
+		m_Range = s_DefaultActivationRange;
+		m_RangeSquared = m_Range * m_Range;
+
+		m_CellSize = cell_size;
+		m_InverseCellSize = 1.f / cell_size;
+
+		m_XCellCount = num_cells_across;//(size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+		m_YCellCount = num_cells_across;//(size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+
+		m_Cells = new Cell[m_XCellCount * m_YCellCount];
 	}
 
 #ifndef STREAMING_USEMAP
@@ -216,6 +251,18 @@ namespace FusionEngine
 	Cell *StreamingManager::CellAtPosition(const Vector2 &position)
 	{
 		return CellAtPosition(position.x, position.y);
+	}
+
+	void StreamingManager::DumpAllCells()
+	{
+		while (!m_TheVoid.objects.empty())
+			Update(false);
+		const auto size = m_XCellCount * m_YCellCount;
+		for (size_t i = 0; i < size; ++i)
+		{
+			Cell* cell = &m_Cells[i];
+			m_Archivist->Enqueue(cell, i);
+		}
 	}
 
 	void StreamingManager::AddEntity(const EntityPtr &entity)
@@ -824,7 +871,6 @@ namespace FusionEngine
 	{
 		// Try to clear The Void
 		{
-			//tbb::mutex::scoped_lock lock(m_TheVoid.mutex);
 			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
 			if (lock)
 			{
@@ -922,6 +968,8 @@ namespace FusionEngine
 		// Used to process The Void
 		std::list<Vector2> allStreamPositions;
 
+		bool allActiveRangesStale = true;
+
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 		auto it = m_Cameras.begin();
 		while (it != m_Cameras.end())
@@ -945,18 +993,8 @@ namespace FusionEngine
 				Vector2 oldPosition = cam.lastUsedPosition;
 				cam.lastUsedPosition = newPosition;
 				cam.firstUpdate = false;
-				// Find the minimum & maximum cell indicies that have to be checked
-				//CL_Rect range;
-				//range.left = (int)std::floor((std::min(oldPosition.x, newPosition.x) - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
-				//range.right = (int)std::floor((std::max(oldPosition.x, newPosition.x) + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
 
-				//range.top = (int)std::floor((std::min(oldPosition.y, newPosition.y) - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-				//range.bottom = (int)std::floor((std::max(oldPosition.y, newPosition.y) + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
-
-				//fe_clamp(range.left, 0, (int)m_XCellCount - 1);
-				//fe_clamp(range.right, 0, (int)m_XCellCount - 1);
-				//fe_clamp(range.top, 0, (int)m_YCellCount - 1);
-				//fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
+				allActiveRangesStale = false;
 
 				allStreamPositions.push_back(cam.streamPosition);
 
@@ -1044,6 +1082,9 @@ namespace FusionEngine
 		//	m_CellsBeingLoaded.erase(newEnd, m_CellsBeingLoaded.end());
 		//}
 
+		// TODO: seperate activeRanges and staleActiveRanges
+		if (!allActiveRangesStale)
+		{
 		std::list<CL_Rect> clippedInactiveRanges;
 		for (auto iit = inactiveRanges.begin(), iend = inactiveRanges.end(); iit != iend; ++iit)
 		{
@@ -1104,7 +1145,7 @@ namespace FusionEngine
 						{
 							cell.AddHist("Retrieved due to entering range");
 							//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-							//m_CellsBeingLoaded.insert(&cell);
+							m_CellsBeingLoaded.insert(&cell);
 						}
 					}
 					// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
@@ -1117,6 +1158,7 @@ namespace FusionEngine
 			}
 
 			}
+		}
 		}
 	}
 

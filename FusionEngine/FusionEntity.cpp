@@ -47,7 +47,7 @@ namespace FusionEngine
 		m_OwnerID(0),
 		m_Authority(0),
 		m_Flags(0),
-		m_Domain(0),
+		m_Domain(GAME_DOMAIN),
 		m_Layer(0),
 		m_MarkedToRemove(false),
 		m_MarkedToDeactivate(false),

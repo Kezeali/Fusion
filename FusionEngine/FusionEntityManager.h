@@ -109,7 +109,7 @@ namespace FusionEngine
 		//! Sends data
 		void Send();
 
-		void OnEntityAdded(EntityPtr &entity);
+		void OnEntityActivated(EntityPtr &entity);
 
 		// Returns true if the entity should be updated
 		bool ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser);

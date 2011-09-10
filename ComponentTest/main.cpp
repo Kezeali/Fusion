@@ -50,6 +50,7 @@
 #include "../FusionEngine/FusionElementUndoMenu.h"
 #include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntityFactory.h"
+#include "../FusionEngine/FusionEntitySerialisationUtils.h"
 #include "../FusionEngine/FusionExceptionFactory.h"
 #include "../FusionEngine/FusionGameMapLoader.h"
 #include "../FusionEngine/FusionInstanceSynchroniser.h"
@@ -69,6 +70,8 @@
 #include <ClanLib/gl.h>
 #include <ClanLib/sound.h>
 #include <ClanLib/vorbis.h>
+
+#include <numeric>
 
 //#define FSN_REGISTER_PROP_ACCESSORA(iface, type, scriptType, prop) \
 //	ThreadSafeProperty<type>::RegisterProp(engine, scriptType);\
@@ -127,9 +130,13 @@ namespace FusionEngine
 	class SimpleCellArchiver : public CellArchiver
 	{
 	public:
-		SimpleCellArchiver()
+		SimpleCellArchiver(bool edit_mode)
 			: m_NewData(false),
-			m_Instantiator(nullptr)
+			m_Instantiator(nullptr),
+			m_Running(false),
+			m_EditMode(edit_mode),
+			m_BeginIndex(std::numeric_limits<size_t>::max()),
+			m_EndIndex(0)
 		{
 		}
 
@@ -154,16 +161,9 @@ namespace FusionEngine
 		{
 			if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 			{
-				if (m_Map)
-				{
-					cell->AddHist("Enqueued Out");
-					m_WriteQueue.push(std::make_tuple(cell, i));
-					m_NewData.set();
-				}
-				else
-				{
-					cell->waiting = Cell::Ready;
-				}
+				cell->AddHist("Enqueued Out");
+				m_WriteQueue.push(std::make_tuple(cell, i));
+				m_NewData.set();
 			}
 		}
 
@@ -171,17 +171,9 @@ namespace FusionEngine
 		{
 			if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 			{
-				if (m_Map)
-				{
-					cell->AddHist("Enqueued In");
-					m_ReadQueue.push(std::make_tuple(cell, i));
-					m_NewData.set();
-				}
-				else
-				{
-					cell->loaded = true;
-					cell->waiting = Cell::Ready;
-				}
+				cell->AddHist("Enqueued In");
+				m_ReadQueue.push(std::make_tuple(cell, i));
+				m_NewData.set();
 				return true;
 			}
 			return false;
@@ -191,6 +183,8 @@ namespace FusionEngine
 
 		void Start()
 		{
+			m_Running = true;
+
 			m_Quit.reset();
 			m_Thread = boost::thread(&SimpleCellArchiver::Run, this);
 #ifdef _WIN32
@@ -202,147 +196,64 @@ namespace FusionEngine
 		{
 			m_Quit.set();
 			m_Thread.join();
+
+			m_Running = false;
 		}
 
-		void WriteComponent(CL_IODevice& out, IComponent* component)
-		{
-			RakNet::BitStream stream;
-			const bool conData = component->SerialiseContinuous(stream);
-			const bool occData = component->SerialiseOccasional(stream, IComponent::All);
-
-			out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
-			out.write_uint8(occData ? 0xFF : 0x00);
-
-			out.write_uint32(stream.GetNumberOfBytesUsed());
-			out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
-		}
-
-		void ReadComponent(CL_IODevice& in, IComponent* component)
-		{
-			const bool conData = in.read_uint8() != 0x00;
-			const bool occData = in.read_uint8() != 0x00;
-
-			const auto dataLen = in.read_uint32();
-			std::vector<unsigned char> data(dataLen);
-			in.read(data.data(), data.size());
-
-			RakNet::BitStream stream(data.data(), data.size(), false);
-
-			if (conData)
-				component->DeserialiseContinuous(stream);
-			if (occData)
-				component->DeserialiseOccasional(stream, IComponent::All);
-
-			//stream.AssertStreamEmpty();
-			if (stream.GetNumberOfUnreadBits() >= 8)
-				SendToConsole("Not all serialised data was used when reading a " + component->GetType());
-		}
-
-		void Save(CL_IODevice& out, EntityPtr entity)
-		{
-			ObjectID id = entity->GetID();
-			out.write(&id, sizeof(ObjectID));
-
-			{
-				RakNet::BitStream stream;
-				entity->SerialiseReferencedEntitiesList(stream);
-
-				out.write_uint32(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
-			}
-
-			auto& components = entity->GetComponents();
-			size_t numComponents = components.size() - 1; // - transform
-
-			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
-			out.write_string_a(transform->GetType());
-			WriteComponent(out, transform);
-
-			out.write(&numComponents, sizeof(size_t));
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
-			{
-				auto& component = *it;
-				if (component.get() != transform)
-					out.write_string_a(component->GetType());
-			}
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
-			{
-				auto& component = *it;
-				if (component.get() != transform)
-					WriteComponent(out, component.get());
-			}
-		}
-
-		EntityPtr Load(CL_IODevice& in)
-		{
-			ObjectID id;
-			in.read(&id, sizeof(ObjectID));
-			m_Instantiator->TakeID(id);
-
-			const auto dataLen = in.read_uint32();
-			std::vector<unsigned char> referencedEntitiesData(dataLen);
-			in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
-
-			ComponentPtr transform;
-			{
-				std::string transformType = in.read_string_a();
-				transform = m_Instantiator->m_Factory->InstanceComponent(transformType);
-
-				ReadComponent(in, transform.get());
-			}
-
-			auto entity = std::make_shared<Entity>(m_Instantiator->m_EntityManager, &m_Instantiator->m_EntityManager->m_PropChangedQueue, transform);
-			entity->SetID(id);
-
-			transform->SynchronisePropertiesNow();
-
-			{
-				RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);
-				entity->DeserialiseReferencedEntitiesList(stream, EntityDeserialiser(m_Instantiator->m_EntityManager));
-			}
-
-			size_t numComponents;
-			in.read(&numComponents, sizeof(size_t));
-			for (size_t i = 0; i < numComponents; ++i)
-			{
-				std::string type = in.read_string_a();
-				auto& component = m_Instantiator->m_Factory->InstanceComponent(type);
-				entity->AddComponent(component);
-			}
-			if (numComponents != 0)
-			{
-				auto& components = entity->GetComponents();
-				auto it = components.begin(), end = components.end();
-				for (++it; it != end; ++it)
-				{
-					auto& component = *it;
-					FSN_ASSERT(component != transform);
-
-					ReadComponent(in, component.get());
-				}
-			}
-			
-			return entity;
-		}
-
-		CL_IODevice GetFile(size_t cell_index, bool write)
+		CL_IODevice GetFile(size_t cell_index, bool write) const
 		{
 			try
 			{
 				std::stringstream str; str << cell_index;
-				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				auto file = vdir.open_file("cache/" + str.str(), write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);//"cache/partialsave/"
-				return file;
+				std::string filename = "cache/" + str.str();//"cache/partialsave/"
+				if (write || PHYSFS_exists(filename.c_str()))
+				{
+					CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+					auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
+					return file;
+				}
+				else return CL_IODevice();
 			}
-			catch (CL_Exception&)
+			catch (CL_Exception& ex)
 			{
-				//SendToConsole(ex.what());
+				SendToConsole(ex.what());
 				return CL_IODevice();
 			}
 		}
 
+		CL_IODevice GetCellData(size_t index) const
+		{
+			if (m_EditMode && !m_Running)
+				return GetFile(index, false);
+			else
+				FSN_EXCEPT(InvalidArgumentException, "Can't access cell data while running");
+		}
+
+		size_t GetDataBegin() const
+		{
+			if (m_EditMode)
+				return m_BeginIndex;
+			else
+				FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
+		}
+
+		size_t GetDataEnd() const
+		{
+			if (m_EditMode)
+				return m_EndIndex;
+			else
+				FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
+		}
+
+		EntityPtr Load(CL_IODevice& file, bool includes_id)
+		{
+			return EntitySerialisationUtils::LoadEntity(file, includes_id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+		}
+
 		void Run()
 		{
+			using namespace EntitySerialisationUtils;
+
 			bool retrying = false;
 			// TODO: make m_NewData not auto-reset
 			while (CL_Event::wait(m_Quit, m_NewData, retrying ? 100 : -1) != 0)
@@ -362,29 +273,77 @@ namespace FusionEngine
 						if (lock)
 						{
 							// Check active_entries since the Store request may be stale
-							if (cell->active_entries == 0 && cell->waiting == Cell::Store)
+							if ((m_EditMode || cell->active_entries == 0) && cell->waiting == Cell::Store)
 							{
 								try
 								{
 									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
-									auto file = GetFile(i, true);
-									size_t numEntries = static_cast<size_t>(std::count_if(cell->objects.begin(), cell->objects.end(), [](const Cell::CellEntryMap::value_type& obj) { return obj.first->IsSyncedEntity(); }));
-									file.write(&numEntries, sizeof(size_t));
-									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+									
+									size_t numSynched = 0;
+									size_t numPseudo = 0;
+									std::for_each(cell->objects.begin(), cell->objects.end(), [&](const Cell::CellEntryMap::value_type& obj)
 									{
-										if (it->first->IsSyncedEntity())
+										if (!obj.first->IsSyncedEntity())
+											++numPseudo;
+										else
+											++numSynched;
+									});
+
+									auto write = [](CL_IODevice& file, const Cell* cell, size_t numEntries, const bool synched)
+									{
+										using namespace EntitySerialisationUtils;
+										file.write(&numEntries, sizeof(size_t));
+										for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 										{
-											Save(file, it->first);
+											if (it->first->IsSyncedEntity() == synched)
+											{
+												SaveEntity(file, it->first, synched);
+												FSN_ASSERT(numEntries-- > 0);
+											}
+										}
+									};
+
+									if (m_EditMode)
+									{
+										if (numSynched > 0 || numPseudo > 0)
+										{
+											auto file = GetFile(i, true);
+											if (!file.is_null())
+											{
+												m_BeginIndex = std::min(i, m_BeginIndex);
+												m_EndIndex = std::max(i, m_EndIndex);
+												write(file, cell, numPseudo, false);
+												write(file, cell, numSynched, true);
+											}
+											else
+												FSN_EXCEPT(FileSystemException, "Failed to open file to dump edit-mode cache");
+										}
+									}
+									else if (numSynched > 0)
+									{
+										auto file = GetFile(i, true);
+										file.write(&numSynched, sizeof(size_t));
+										for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+										{
+											if (it->first->IsSyncedEntity())
+											{
+												SaveEntity(file, it->first, true);
+												FSN_ASSERT(numSynched-- > 0);
+											}
 										}
 									}
 
-									cell->AddHist("Written and cleared", numEntries);
+									cell->AddHist("Written and cleared", numSynched);
 
 									//std::stringstream str; str << i;
 									//SendToConsole("Cell " + str.str() + " streamed out");
 
-									cell->objects.clear();
-									cell->loaded = false;
+									// TEMP
+									if (!m_EditMode || cell->active_entries == 0)
+									{
+										cell->objects.clear();
+										cell->loaded = false;
+									}
 								}
 								catch (...)
 								{
@@ -432,16 +391,22 @@ namespace FusionEngine
 									auto file = GetFile(i, false);
 
 									// Last param makes the method load synched entities from the map if the cache file isn't available:
-									m_Map->LoadCell(cell, i, file.is_null(), m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator); 
+									if (m_Map)
+									{
+										bool uncached = m_SynchLoaded.insert(i).second;
+										m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+									}
 
 									if (!file.is_null() && file.get_size() > 0)
 									{
+										auto load = [&](const bool synched)->size_t
+										{
 										size_t numEntries;
 										file.read(&numEntries, sizeof(size_t));
 										for (size_t n = 0; n < numEntries; ++n)
 										{
 											//auto& archivedEntity = *it;
-											auto archivedEntity = Load(file);
+											auto archivedEntity = Load(file, synched);
 
 											Vector2 pos = archivedEntity->GetPosition();
 											// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
@@ -452,11 +417,16 @@ namespace FusionEngine
 
 											cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
 										}
+										return numEntries;
+										};
+										if (m_EditMode)
+											load(false);
+										size_t num = load(true);
 
 										//std::stringstream str; str << i;
 										//SendToConsole("Cell " + str.str() + " streamed in");
 
-										cell->AddHist("Loaded", numEntries);
+										cell->AddHist("Loaded", num);
 										cell->loaded = true;
 									}
 									else
@@ -504,7 +474,13 @@ namespace FusionEngine
 			}
 		}
 
-		std::map<size_t, std::vector<EntityPtr>> m_Archived;
+		bool m_EditMode;
+		bool m_Running;
+
+		size_t m_BeginIndex;
+		size_t m_EndIndex;
+
+		std::unordered_set<size_t> m_SynchLoaded;
 
 		//boost::mutex m_WriteQueueMutex;
 		//boost::mutex m_ReadQueueMutex;/*std::queue*/
@@ -764,7 +740,7 @@ public:
 				const std::unique_ptr<InputManager> inputMgr(new InputManager(dispWindow));
 
 				if (!inputMgr->Test())
-					FSN_EXCEPT_CS(ExCode::IO, "startup", "InputManager couldn't find a keyboard device.");
+					FSN_EXCEPT(FileSystemException, "InputManager couldn't find a keyboard device.");
 				inputMgr->Initialise();
 				SendToConsole("Input manager started successfully");
 
@@ -783,26 +759,29 @@ public:
 
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
-				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver());
+				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver(editMode));
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get()));
-				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get()));
+				
+				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
-				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
-
 				try
 				{
+				std::unique_ptr<GameMapLoader> mapLoader(new GameMapLoader(options));
+
+				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
+
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
 
 				entityManager->m_EntityFactory = entityFactory.get();
 
-				std::unique_ptr<GameMapLoader> mapLoader(new GameMapLoader(options, entityFactory.get(), entityManager.get(), std::make_shared<VirtualFileSource_PhysFS>()));
-
-				if (!options->GetOption_bool("edit"))
+				if (!editMode)
 				{
 					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
 					cellArchivist->SetMap(map);
+
+					streamingMgr->Initialise(map->GetMapWidth(), map->GetNumCellsAcross(), map->GetCellSize());
 				}
 
 				cellArchivist->Start();
@@ -866,6 +845,7 @@ public:
 				}
 
 				std::vector<EntityPtr> entities;
+				bool compile = false;
 
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
@@ -894,7 +874,8 @@ public:
 						{
 							auto entity =
 								createEntity(addToScene, (unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
-							entities.push_back(entity);
+							if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
+								entities.push_back(entity);
 							pos.x += size;
 							if (pos.x > (repeats / 2) * size)
 							{
@@ -906,10 +887,7 @@ public:
 
 					if (ev.id == CL_KEY_S)
 					{
-						//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
-						CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-						auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
-						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), 500u, entities);
+						compile = true;
 					}
 
 					bool dtup = ev.id == CL_KEY_PRIOR;
@@ -960,6 +938,21 @@ public:
 					lastframe = timeNow;
 
 					CL_KeepAlive::process();
+
+					if (compile)
+					{
+						compile = false;
+
+						streamingMgr->DumpAllCells();
+						cellArchivist->Stop();
+						//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
+						CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+						auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
+						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), streamingMgr->GetMapWidth(), streamingMgr->GetCellSize(), cellArchivist.get(), entities);
+						cellArchivist->Start();
+
+						streamingMgr->Update(true);
+					}
 
 					resourceManager->UnloadUnreferencedResources();
 					resourceManager->DeliverLoadedResources();

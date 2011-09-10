@@ -199,6 +199,9 @@ namespace FusionEngine
 
 		virtual void Enqueue(Cell* cell, size_t i) = 0;
 		virtual bool Retrieve(Cell* cell, size_t i) = 0;
+		virtual CL_IODevice GetCellData(size_t i) const = 0;
+		virtual size_t GetDataBegin() const = 0;
+		virtual size_t GetDataEnd() const = 0;
 	};
 
 	struct StreamingHandle
@@ -227,9 +230,11 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager(CellArchiver* archivist/*, const std::shared_ptr<GameMap>& map*/);
+		StreamingManager(CellArchiver* archivist, bool initialise = true);
 		//! Destructor
 		~StreamingManager();
+
+		void Initialise(float map_width, unsigned int num_cells_across, float cell_size);
 
 		void AddCamera(const CameraPtr &cam);
 		void RemoveCamera(const CameraPtr &cam);
@@ -241,9 +246,13 @@ namespace FusionEngine
 		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
 		unsigned int GetNumCellsAcross() const { return m_XCellCount; }
+		float GetMapWidth() const { return m_Bounds.x * 2.f; }
+		float GetCellSize() const { return m_CellSize; }
 
 		Cell *CellAtPosition(const Vector2 &position);
 		Cell *CellAtPosition(float x, float y);
+
+		void DumpAllCells();
 
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);

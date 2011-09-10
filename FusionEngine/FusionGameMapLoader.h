@@ -43,12 +43,12 @@
 #include "FusionEntityDeserialiser.h"
 #include "FusionPacketHandler.h"
 #include "FusionRefCounted.h"
-#include "FusionSerialisedData.h"
 
 namespace FusionEngine
 {
 
 	class Cell;
+	class CellArchiver;
 
 	class GameMap
 	{
@@ -58,10 +58,11 @@ namespace FusionEngine
 		void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
 
-		static void CompileMap(/*CL_VirtualDirectory& temp_dir, */CL_IODevice& device, unsigned int num_cells_across, unsigned int cell_size, /*const std::vector<EntityPtr>& pseudo_entities, */const std::vector<EntityPtr>& entities);
+		static void CompileMap(CL_IODevice& device, unsigned int baseWidth, float map_size, float cell_size, CellArchiver* cell_archiver, const std::vector<EntityPtr>& nonStreamingEntities);
 
+		float GetMapWidth() const;
 		unsigned int GetNumCellsAcross() const;
-		unsigned int GetCellSize() const;
+		float GetCellSize() const;
 
 		uint32_t GetNonStreamingEntitiesLocation() const { return m_NonStreamingEntitiesLocation; }
 
@@ -70,13 +71,11 @@ namespace FusionEngine
 		std::vector<std::pair<uint32_t, uint32_t>> m_CellLocations; // Locations within the file for each cell
 		uint32_t m_NonStreamingEntitiesLocation;
 		unsigned int m_XCells;
-		unsigned int m_CellSize;
+		float m_CellSize;
+		float m_MapWidth;
 	};
 	
 	//! Loads maps and games.
-	/*!
-	* \todo Fix writing / reading ObjectIDs, since the size has changed (now 32bit)
-	*/
 	class GameMapLoader : public PacketHandler
 	{
 	public:
@@ -87,7 +86,7 @@ namespace FusionEngine
 
 			unsigned int dataIndex; // used by the editor when writing data files (may be removed)
 
-			SerialisedData packet;
+			//SerialisedData packet;
 		};
 		typedef std::vector<Archetype> ArchetypeArray;
 
@@ -118,7 +117,7 @@ namespace FusionEngine
 			PseudoEntityFlag = 1 << 1
 		};
 	public:
-		GameMapLoader(ClientOptions *options, EntityFactory *factory, EntityManager *manager, std::shared_ptr<CL_VirtualFileSource> filesource);
+		GameMapLoader(ClientOptions *options);
 		~GameMapLoader();
 
 		void HandlePacket(RakNet::Packet *packet);

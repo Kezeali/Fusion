@@ -50,7 +50,7 @@ namespace FusionEngine
 	///////////////////////////
 	class Camera;
 	class ClientOptions;
-	class Component;
+	class IComponent;
 	class Console;
 	class Editor;
 	class EditorMapEntity;

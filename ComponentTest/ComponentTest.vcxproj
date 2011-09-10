@@ -203,6 +203,7 @@
     <ClCompile Include="..\FusionEngine\FusionEntityDeserialiser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntityFactory.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntityManager.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionEntitySerialisationUtils.cpp" />
     <ClCompile Include="..\FusionEngine\FusionException.cpp" />
     <ClCompile Include="..\FusionEngine\FusionFlagRegistry.cpp" />
     <ClCompile Include="..\FusionEngine\FusionGameMapLoader.cpp" />
@@ -312,6 +313,7 @@
     <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntitySerialisationUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
     <ClInclude Include="..\FusionEngine\FusionInputSystem.h" />

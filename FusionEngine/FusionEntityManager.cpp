@@ -238,7 +238,7 @@ namespace FusionEngine
 		m_PacketData.Reset();
 	}
 
-	void EntitySynchroniser::OnEntityAdded(EntityPtr &entity)
+	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
 	{
 		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
 		//{
@@ -385,6 +385,8 @@ namespace FusionEngine
 		}
 	}
 
+	// TODO: set domain modes (and / or replace domains with mode flags in entities?)
+
 	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
 		: m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
@@ -458,7 +460,7 @@ namespace FusionEngine
 		//	m_EntitiesByName[entity->GetName()] = entity;
 
 		//m_StreamingManager->AddEntity(entity);
-		m_EntitySynchroniser->OnEntityAdded(entity);
+		//m_EntitySynchroniser->OnEntityActivated(entity);
 		
 		// Immeadiately activate this entity if it isn't within a streaming domain
 		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
@@ -513,7 +515,7 @@ namespace FusionEngine
 		// Add the entity to the other indexes
 		m_EntitiesByName[entity->GetName()] = entity;
 
-		m_EntitySynchroniser->OnEntityAdded(entity);
+		m_EntitySynchroniser->OnEntityActivated(entity);
 	}
 
 	void EntityManager::RenameEntity(EntityPtr &entity, const std::string &new_name)
@@ -890,7 +892,6 @@ namespace FusionEngine
 					m_StreamingManager->AddEntity(entityToActivate);
 				else
 					m_EntitiesToActivate.push_back(entityToActivate);
-				//queueEntityToActivate(entityToActivate);
 			}
 		}
 
@@ -929,8 +930,15 @@ namespace FusionEngine
 				entity->StreamIn();
 				m_ActiveEntities.push_back(entity);
 
+				m_EntitySynchroniser->OnEntityActivated(entity);
+
 				if (entity->IsSyncedEntity())
 					m_Entities[entity->GetID()] = entity;
+
+				if (entity->GetName() == "default")
+					entity->SetName(generateName(entity));
+				if (!entity->GetName().empty())
+					m_EntitiesByName[entity->GetName()] = entity;
 
 				it = m_EntitiesToActivate.erase(it);
 				end = m_EntitiesToActivate.end();
@@ -1146,10 +1154,12 @@ namespace FusionEngine
 
 	void EntityManager::dropEntity(const EntityPtr& entity)
 	{
+		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+
 		if (entity->IsSyncedEntity())
-		{
 			m_Entities.erase(entity->GetID());
-		}
+
+		m_EntitiesByName.erase(entity->GetName());
 
 		m_StreamingManager->OnUnreferenced(entity);
 	}
