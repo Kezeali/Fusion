@@ -130,7 +130,7 @@ namespace FusionEngine
 
 		EntityArray m_ReceivedEntities;
 
-		typedef std::tr1::unordered_map<ObjectID, SerialisedData> ObjectStatesMap;
+		typedef std::map<ObjectID, RakNet::BitStream> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
 		ObjectStatesMap m_SentStates;
@@ -141,7 +141,7 @@ namespace FusionEngine
 			SerialisedData State;
 		};
 
-		typedef std::map<unsigned int, EntityPtr, std::greater<unsigned int>> EntityPriorityMap;
+		typedef std::multimap<unsigned int, EntityPtr, std::greater<unsigned int>> EntityPriorityMap;
 		EntityPriorityMap m_EntityPriorityQueue;
 
 		size_t m_EntityDataUsed;

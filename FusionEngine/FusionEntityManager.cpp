@@ -44,6 +44,11 @@
 // For script registration (the script method EntityManager::instance() returns a script object)
 #include "FusionScriptedEntity.h"
 
+#include "FusionEntitySerialisationUtils.h"
+
+#include <tbb/parallel_do.h>
+#include <tbb/concurrent_vector.h>
+
 using namespace std::placeholders;
 using namespace RakNet;
 
@@ -184,26 +189,59 @@ namespace FusionEngine
 		}
 	}
 
+//#define FSN_PARALLEL_SERIALISE
+
 	void EntitySynchroniser::EndPacket()
 	{
-		//RakNet::BitStream packetData;
-		m_PacketData.Write((unsigned int)m_EntityPriorityQueue.size());
-		// Fill packet (from priority lists)
-		for (EntityPriorityMap::iterator it = m_EntityPriorityQueue.begin(), end = m_EntityPriorityQueue.end(); it != end; ++it)
+#ifdef FSN_PARALLEL_SERIALISE
+		tbb::concurrent_vector<RakNet::BitStream> dataToSend;
+		tbb::parallel_do(m_EntityPriorityQueue.begin(), m_EntityPriorityQueue.end(), [&](const EntityPtr& entity)
 		{
-			const auto& entity = it->second;
+#else
+		std::vector<RakNet::BitStream> dataToSend;
+		for (auto it = m_EntityPriorityQueue.begin(), end = m_EntityPriorityQueue.end(); it != end; ++it)
+		{
+			auto entity = it->second;
+#endif
 
-			m_PacketData.Write(entity->GetID());
+			RakNet::BitStream state;
+			//if (SerialiseEntity(state, entity, IComponent::All))
+			{
+				const BitSize_t stateSize = state.GetNumberOfBitsUsed();
+				const BitSize_t totalPacketData = stateSize;// + sizeof(unsigned int) * 8 + sizeof(ObjectID) * 8;
 
-			SerialisedData state;
+				// Check whether this will fit within the quota
+				if (m_EntityDataUsed + totalPacketData < s_MaxEntityData)
+				{
+					dataToSend.push_back(state);
+				}
+			}
+		}
+#ifdef FSN_PARALLEL_SERIALISE
+		);
+#endif
+
+		//RakNet::BitStream packetData;
+		m_PacketData.Write(dataToSend.size());
+		// Fill packet (from priority collection)
+		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
+		{
+			//const auto& entity = it->second;
+
+			//m_PacketData.Write(entity->GetID());
+
+			//RakNet::BitStream state;
+			//SerialisedData state;
 			//entity->SerialiseState(state, false);
 
+			auto& state = *it;
+
 			//m_PacketData.Write(packetData.State.mask);
-			m_PacketData.Write(state.data.length());
-			m_PacketData.Write(state.data.c_str(), state.data.length());
+			m_PacketData.Write(state.GetNumberOfBitsUsed());
+			m_PacketData.Write(state, state.GetNumberOfBitsUsed());
 
 			// Note the state that was sent (so that the state wont be sent again till it changes)
-			m_SentStates[entity->GetID()] = state;
+			//m_SentStates[entity->GetID()] = state;
 		}
 	}
 
@@ -258,13 +296,22 @@ namespace FusionEngine
 		//if (_where != m_ReceivedStates.end())
 		//	entity->DeserialiseState(_where->second, false, entity_deserialiser);
 
+		auto _where = m_ReceivedStates.find(entity->GetID());
+		if (_where != m_ReceivedStates.end())
+		{
+			//DeserialiseEntity(_where->second, entity, ...);
+			m_ReceivedStates.erase(_where);
+		}
+
 		return true; // Return false to not update this entity
 	}
 
 	bool EntitySynchroniser::AddToPacket(EntityPtr &entity)
 	{
-		bool arbitor = NetworkManager::ArbitratorIsLocal();
-		bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
+		using namespace EntitySerialisationUtils;
+
+		const bool arbitor = NetworkManager::ArbitratorIsLocal();
+		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		// Only send if: 1) the entity is owned locally, or 2) the entity is under default authroity
 		//  and this system is the arbitor
 		if ((entity->GetOwnerID() == 0 && arbitor) || isOwnedLocally)
@@ -276,47 +323,12 @@ namespace FusionEngine
 			else
 				priority = entity->GetSkippedPacketsCount();
 
+			m_EntityPriorityQueue.insert(std::make_pair(priority, entity));
+
 			// Obviously the packet might not be skipped, but if it is actually sent
 			//  it's skipped-count gets reset to zero, so the following operation will
 			//  be over-ruled
 			entity->PacketSkipped();
-
-			// If the Entity quota hasn't been filled, always insert
-			if (m_EntityDataUsed < s_MaxEntityData)
-			{
-				SerialisedData state;
-				//entity->SerialiseState(state, false);
-				size_t stateSize = state.data.length() + sizeof(unsigned int) + sizeof(ObjectID);
-				if (m_EntityDataUsed + stateSize &&
-					state.data != m_SentStates[entity->GetID()].data)
-				{
-					m_EntityPriorityQueue[priority] = entity;
-
-					m_EntityDataUsed += stateSize;
-					return true;
-				}
-			}
-			// If the Entity quota has been filled, insert if the new entity has a higher priority
-			else
-			{
-				FSN_ASSERT(m_EntityPriorityQueue.size() > 1);
-				EntityPriorityMap::iterator back = --m_EntityPriorityQueue.end();
-				if (priority > back->first)
-				{
-					// Check that the Entity has changed since it was last sent
-					SerialisedData state;
-					//entity->SerialiseState(state, false);
-					if (state.data != m_SentStates[entity->GetID()].data)
-					{
-						// Remove the entity with the lowest priority
-						m_EntityPriorityQueue.erase(back);
-
-						m_EntityPriorityQueue[priority] = entity;
-					}
-
-					return true;
-				}
-			}
 		}
 
 		return false;
@@ -372,13 +384,12 @@ namespace FusionEngine
 					ObjectID entityID;
 					bitStream.Read(entityID);
 
-					SerialisedData &state = m_ReceivedStates[entityID];
+					auto& storedData = m_ReceivedStates[entityID];
+					storedData.Reset();
 
-					//bitStream.Read(state.mask);
-					size_t dataLength;
+					BitSize_t dataLength;
 					bitStream.Read(dataLength);
-					state.data.resize(dataLength);
-					bitStream.Read(&state.data[0], dataLength);
+					bitStream.Read(storedData, dataLength);
 				}
 			}
 			break;
