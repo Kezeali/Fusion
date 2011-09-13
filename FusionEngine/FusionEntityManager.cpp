@@ -54,6 +54,7 @@ using namespace RakNet;
 
 namespace FusionEngine
 {
+	using namespace EntitySerialisationUtils;
 
 	ConsolidatedInput::ConsolidatedInput(InputManager *input_manager)
 		: m_LocalManager(input_manager),
@@ -205,7 +206,7 @@ namespace FusionEngine
 #endif
 
 			RakNet::BitStream state;
-			//if (SerialiseEntity(state, entity, IComponent::All))
+			if (SerialiseEntity(state, entity, IComponent::All))
 			{
 				const BitSize_t stateSize = state.GetNumberOfBitsUsed();
 				const BitSize_t totalPacketData = stateSize;// + sizeof(unsigned int) * 8 + sizeof(ObjectID) * 8;
@@ -290,7 +291,7 @@ namespace FusionEngine
 			entity->_setPlayerInput(playerInput);
 	}
 
-	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser)
+	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
 	{
 		//ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
 		//if (_where != m_ReceivedStates.end())
@@ -299,17 +300,15 @@ namespace FusionEngine
 		auto _where = m_ReceivedStates.find(entity->GetID());
 		if (_where != m_ReceivedStates.end())
 		{
-			//DeserialiseEntity(_where->second, entity, ...);
+			EntitySerialisationUtils::DerialiseEntity(_where->second, entity, IComponent::All, factory, entity_manager);
 			m_ReceivedStates.erase(_where);
 		}
 
 		return true; // Return false to not update this entity
 	}
 
-	bool EntitySynchroniser::AddToPacket(EntityPtr &entity)
+	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
 	{
-		using namespace EntitySerialisationUtils;
-
 		const bool arbitor = NetworkManager::ArbitratorIsLocal();
 		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		// Only send if: 1) the entity is owned locally, or 2) the entity is under default authroity
@@ -814,10 +813,8 @@ namespace FusionEngine
 	{
 		bool entityRemoved = false;
 
-		//ptr_set updatedSprites;
-
-		auto playerAddedEvents = m_PlayerAddedEvents;
-		m_PlayerAddedEvents.clear();
+		//auto playerAddedEvents = m_PlayerAddedEvents;
+		//m_PlayerAddedEvents.clear();
 
 		EntityArray::iterator it = entityList.begin(),
 			end = entityList.end();
@@ -863,7 +860,7 @@ namespace FusionEngine
 						m_StreamingManager->OnUpdated(entity, split);
 
 					if (CheckState(domainIndex, DS_SYNCH))
-						entity->PacketSkipped();
+						m_EntitySynchroniser->Enqueue(entity);
 				}
 
 				// Next entity

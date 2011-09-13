@@ -1006,7 +1006,8 @@ public:
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
-
+						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
+						entitySynchroniser->Send();
 					}
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?

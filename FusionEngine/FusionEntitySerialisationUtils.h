@@ -34,13 +34,24 @@
 
 #include "FusionPrerequisites.h"
 
+//#include <BitStream.h>
 #include <ClanLib/core.h>
+
+#include "FusionEntityComponent.h"
+
+namespace RakNet
+{
+	class BitStream;
+}
 
 namespace FusionEngine
 {
 	
 	namespace EntitySerialisationUtils
 	{
+		bool SerialiseEntity(RakNet::BitStream& out, EntityPtr entity, IComponent::SerialiseMode mode);
+		void DerialiseEntity(RakNet::BitStream& in, EntityPtr entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager);
+
 		void WriteComponent(CL_IODevice& out, IComponent* component);
 		void ReadComponent(CL_IODevice& in, IComponent* component);
 

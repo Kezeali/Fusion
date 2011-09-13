@@ -284,7 +284,9 @@ namespace FusionEngine
 				else
 					interfaceIdentifier = *it;
 			}
-			//component->SetIdentifier(identifier);
+			// TEMP:
+			component->SetIdentifier(identifier);
+
 			FSN_ASSERT(implementors.find(interfaceIdentifier) == implementors.end()); // no duplicates
 			implementors[interfaceIdentifier] = component;
 		}

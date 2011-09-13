@@ -103,22 +103,25 @@ namespace FusionEngine
 
 		const EntityArray &GetReceivedEntities() const;
 
-		void BeginPacket();
-		void EndPacket();
-
 		//! Sends data
 		void Send();
 
 		void OnEntityActivated(EntityPtr &entity);
 
-		// Returns true if the entity should be updated
-		bool ReceiveSync(EntityPtr &entity, const EntityDeserialiser &entity_deserialiser);
-		// Returns true if the entity state was written to the packet
-		bool AddToPacket(EntityPtr &entity);
+		// Enqueues the given entity to be processed for synch
+		bool Enqueue(EntityPtr &entity);
+
+		void ProcessQueue(EntityManager* entity_manager, EntityFactory* factory);
+
+		// Things called by processqueue (make private):
+		void BeginPacket();
+		void EndPacket();
+		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory);
+
 
 		void HandlePacket(RakNet::Packet *packet);
 
-	protected:
+	private:
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;
 
