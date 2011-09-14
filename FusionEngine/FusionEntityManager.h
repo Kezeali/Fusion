@@ -113,15 +113,15 @@ namespace FusionEngine
 
 		void ProcessQueue(EntityManager* entity_manager, EntityFactory* factory);
 
-		// Things called by processqueue (make private):
-		void BeginPacket();
-		void EndPacket();
-		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory);
-
 
 		void HandlePacket(RakNet::Packet *packet);
 
 	private:
+		// Things called by ProcessQueue
+		void WriteHeaderAndInput(RakNet::BitStream& packetData);
+		void WriteEntities(RakNet::BitStream& packetData);
+		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory);
+
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;
 
@@ -131,9 +131,11 @@ namespace FusionEngine
 		//EntityPreparedInstancesMap m_EntityPreparedInstances;
 		boost::signals2::connection m_EntityInstancedCnx;
 
-		EntityArray m_ReceivedEntities;
+		std::vector<EntityPtr> m_ReceivedEntities;
 
-		typedef std::map<ObjectID, RakNet::BitStream> ObjectStatesMap;
+		std::vector<EntityPtr> m_EntitiesToReceive;
+
+		typedef std::map<ObjectID, std::shared_ptr<RakNet::BitStream>> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
 		ObjectStatesMap m_SentStates;

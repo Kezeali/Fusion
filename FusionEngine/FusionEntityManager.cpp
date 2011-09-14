@@ -157,7 +157,7 @@ namespace FusionEngine
 		return m_ReceivedEntities;
 	}
 
-	void EntitySynchroniser::BeginPacket()
+	void EntitySynchroniser::WriteHeaderAndInput(RakNet::BitStream& packetData)
 	{
 		m_ImportantMove = false;
 
@@ -171,14 +171,14 @@ namespace FusionEngine
 			{
 				if (!m_ImportantMove)
 				{
-					m_PacketData.Write((MessageID)MTID_IMPORTANTMOVE);
-					m_PacketData.Write(m_PlayerInputs->ChangedCount());
+					packetData.Write((MessageID)MTID_IMPORTANTMOVE);
+					packetData.Write(m_PlayerInputs->ChangedCount());
 					m_ImportantMove = true;
 				}
 
-				m_PacketData.Write(playerId);
+				packetData.Write(playerId);
 
-				playerInput->Serialise(&m_PacketData);
+				playerInput->Serialise(&packetData);
 			}
 		}
 
@@ -186,35 +186,37 @@ namespace FusionEngine
 
 		if (!m_ImportantMove)
 		{
-			m_PacketData.Write((MessageID)MTID_ENTITYMOVE);
+			packetData.Write((MessageID)MTID_ENTITYMOVE);
 		}
 	}
 
 //#define FSN_PARALLEL_SERIALISE
 
-	void EntitySynchroniser::EndPacket()
+	void EntitySynchroniser::WriteEntities(RakNet::BitStream& packetData)
 	{
 #ifdef FSN_PARALLEL_SERIALISE
-		tbb::concurrent_vector<RakNet::BitStream> dataToSend;
+		tbb::concurrent_vector<std::pair<ObjectID, RakNet::BitStream>> dataToSend;
 		tbb::parallel_do(m_EntityPriorityQueue.begin(), m_EntityPriorityQueue.end(), [&](const EntityPtr& entity)
 		{
 #else
-		std::vector<RakNet::BitStream> dataToSend;
+		std::vector<std::pair<ObjectID, std::shared_ptr<RakNet::BitStream>>> dataToSend;
 		for (auto it = m_EntityPriorityQueue.begin(), end = m_EntityPriorityQueue.end(); it != end; ++it)
 		{
 			auto entity = it->second;
 #endif
 
-			RakNet::BitStream state;
-			if (SerialiseEntity(state, entity, IComponent::All))
+			auto state = std::make_shared<RakNet::BitStream>();
+			if (SerialiseEntity(*state, entity, IComponent::All))
 			{
-				const BitSize_t stateSize = state.GetNumberOfBitsUsed();
-				const BitSize_t totalPacketData = stateSize;// + sizeof(unsigned int) * 8 + sizeof(ObjectID) * 8;
+				const BitSize_t stateSize = state->GetNumberOfBitsUsed();
+				const BitSize_t totalDataForEntity = stateSize;// + sizeof(unsigned int) * 8 + sizeof(ObjectID) * 8;
 
 				// Check whether this will fit within the quota
-				if (m_EntityDataUsed + totalPacketData < s_MaxEntityData)
+				// TODO: increment a data usage counter over time, and decrement that counter as packets are constructed
+				if (m_EntityDataUsed + totalDataForEntity < s_MaxEntityData)
 				{
-					dataToSend.push_back(state);
+					dataToSend.push_back(std::make_pair(entity->GetID(), std::move(state)));
+					m_EntityDataUsed += totalDataForEntity;
 				}
 			}
 		}
@@ -223,27 +225,99 @@ namespace FusionEngine
 #endif
 
 		//RakNet::BitStream packetData;
-		m_PacketData.Write(dataToSend.size());
+		packetData.Write(dataToSend.size());
 		// Fill packet (from priority collection)
 		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
 		{
 			//const auto& entity = it->second;
 
-			//m_PacketData.Write(entity->GetID());
+			//packetData.Write(entity->GetID());
 
 			//RakNet::BitStream state;
 			//SerialisedData state;
 			//entity->SerialiseState(state, false);
 
-			auto& state = *it;
+			ObjectID id = it->first;
+			auto& state = it->second;
 
-			//m_PacketData.Write(packetData.State.mask);
-			m_PacketData.Write(state.GetNumberOfBitsUsed());
-			m_PacketData.Write(state, state.GetNumberOfBitsUsed());
+			//packetData.Write(packetData.State.mask);
+			packetData.Write(id);
+			packetData.Write(state->GetNumberOfBitsUsed());
+			packetData.Write(*state, state->GetNumberOfBitsUsed());
 
 			// Note the state that was sent (so that the state wont be sent again till it changes)
-			//m_SentStates[entity->GetID()] = state;
+			m_SentStates[id] = state;
 		}
+	}
+
+	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
+	{
+		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
+		//{
+		//	const PlayerInfo &playerInfo = ;
+		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
+		//}
+
+		const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
+		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
+		if (playerInput)
+			entity->_setPlayerInput(playerInput);
+	}
+
+	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
+	{
+		//ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
+		//if (_where != m_ReceivedStates.end())
+		//	entity->DeserialiseState(_where->second, false, entity_deserialiser);
+
+		auto _where = m_ReceivedStates.find(entity->GetID());
+		if (_where != m_ReceivedStates.end())
+		{
+			EntitySerialisationUtils::DeserialiseEntity(*_where->second, entity, IComponent::All, factory, entity_manager);
+			m_ReceivedStates.erase(_where);
+		}
+
+		return true; // Return false to not update this entity
+	}
+
+	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
+	{
+		const bool arbitor = NetworkManager::ArbitratorIsLocal();
+		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
+		const bool isUnderLocalAuthority = isOwnedLocally || PlayerRegistry::IsLocal(entity->GetAuthority());
+		// Only send if: a) the entity is under default ownership and this system
+		//  is the arbitor, or b) the entity is owned locally / the entity is
+		//  under local authority
+		if ((entity->GetOwnerID() == 0 && arbitor) || isUnderLocalAuthority)
+		{
+			// Calculate priority
+			unsigned int priority;
+			if (arbitor)
+				priority = (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
+			else
+				priority = entity->GetSkippedPacketsCount();
+
+			m_EntityPriorityQueue.insert(std::make_pair(priority, entity));
+
+			// Obviously the packet might not be skipped, but if it is actually sent
+			//  it's skipped-count gets reset to zero, so the following operation will
+			//  be over-ruled
+			entity->PacketSkipped();
+		}
+		else
+		{
+			m_EntitiesToReceive.push_back(entity);
+		}
+
+		return false;
+	}
+
+	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager, EntityFactory* factory)
+	{
+		for (auto it = m_EntitiesToReceive.begin(), end = m_EntitiesToReceive.end(); it != end; ++it)
+			ReceiveSync(*it, entity_manager, factory);
+		WriteHeaderAndInput(m_PacketData);
+		WriteEntities(m_PacketData);
 	}
 
 	void EntitySynchroniser::Send()
@@ -274,63 +348,8 @@ namespace FusionEngine
 			network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
 		}
 
+		m_EntityDataUsed = 0;
 		m_PacketData.Reset();
-	}
-
-	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
-	{
-		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
-		//{
-		//	const PlayerInfo &playerInfo = ;
-		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
-		//}
-
-		const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
-		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
-		if (playerInput)
-			entity->_setPlayerInput(playerInput);
-	}
-
-	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
-	{
-		//ObjectStatesMap::const_iterator _where = m_ReceivedStates.find(entity->GetID());
-		//if (_where != m_ReceivedStates.end())
-		//	entity->DeserialiseState(_where->second, false, entity_deserialiser);
-
-		auto _where = m_ReceivedStates.find(entity->GetID());
-		if (_where != m_ReceivedStates.end())
-		{
-			EntitySerialisationUtils::DerialiseEntity(_where->second, entity, IComponent::All, factory, entity_manager);
-			m_ReceivedStates.erase(_where);
-		}
-
-		return true; // Return false to not update this entity
-	}
-
-	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
-	{
-		const bool arbitor = NetworkManager::ArbitratorIsLocal();
-		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
-		// Only send if: 1) the entity is owned locally, or 2) the entity is under default authroity
-		//  and this system is the arbitor
-		if ((entity->GetOwnerID() == 0 && arbitor) || isOwnedLocally)
-		{
-			// Calculate priority
-			unsigned int priority;
-			if (arbitor)
-				priority = (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
-			else
-				priority = entity->GetSkippedPacketsCount();
-
-			m_EntityPriorityQueue.insert(std::make_pair(priority, entity));
-
-			// Obviously the packet might not be skipped, but if it is actually sent
-			//  it's skipped-count gets reset to zero, so the following operation will
-			//  be over-ruled
-			entity->PacketSkipped();
-		}
-
-		return false;
 	}
 
 	void EntitySynchroniser::HandlePacket(RakNet::Packet *packet)
@@ -384,11 +403,11 @@ namespace FusionEngine
 					bitStream.Read(entityID);
 
 					auto& storedData = m_ReceivedStates[entityID];
-					storedData.Reset();
+					storedData->Reset();
 
 					BitSize_t dataLength;
 					bitStream.Read(dataLength);
-					bitStream.Read(storedData, dataLength);
+					bitStream.Read(*storedData, dataLength);
 				}
 			}
 			break;

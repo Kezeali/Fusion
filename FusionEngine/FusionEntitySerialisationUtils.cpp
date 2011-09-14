@@ -45,7 +45,7 @@ namespace FusionEngine
 	namespace EntitySerialisationUtils
 	{
 
-		bool SerialiseEntity(RakNet::BitStream& out, EntityPtr entity, IComponent::SerialiseMode mode)
+		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -106,7 +106,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DerialiseEntity(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		void DeserialiseEntity(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
 		{
 			entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 

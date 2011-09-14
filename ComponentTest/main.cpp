@@ -63,6 +63,7 @@
 #include "../FusionEngine/FusionAngelScriptComponent.h"
 
 #include <boost/thread.hpp>
+#include <boost/program_options.hpp>
 
 #include <ClanLib/application.h>
 #include <ClanLib/core.h>
@@ -591,6 +592,17 @@ public:
 		SetupPhysFS physfs(CL_System::get_exe_path().c_str());
 		FSN_ASSERT(SetupPhysFS::is_init());
 
+		namespace po = boost::program_options;
+		po::options_description desc("Options");
+		desc.add_options()
+			("connect", po::value<std::string>()->multitoken(), "Connect to a host.")
+			("listen_port", po::value<unsigned short>(), "Set the listen port.")
+			;
+
+		po::variables_map varMap;
+		po::store(po::command_line_parser(std::vector<std::string>(args.begin(), args.end())).options(desc).run(), varMap);
+		po::notify(varMap);
+
 		CL_ConsoleWindow conWindow("Component Test Console", 80, 10);
 		CL_DisplayWindow dispWindow("Component Test", 800, 600);
 
@@ -730,7 +742,7 @@ public:
 				// Load optional settings (set options)
 				ClientOptions* options = new ClientOptions("settings.xml", "settings");
 
-				if (options->GetOption_bool("console_logging"))
+				if (varMap.count("connect") && options->GetOption_bool("console_logging"))
 					logger->ActivateConsoleLogging();
 
 				bool editMode = options->GetOption_bool("edit");
@@ -890,6 +902,13 @@ public:
 						compile = true;
 					}
 
+					if (ev.id == CL_KEY_I)
+					{
+						std::stringstream str;
+						str << network->IsConnected();
+						SendToConsole(str.str());
+					}
+
 					bool dtup = ev.id == CL_KEY_PRIOR;
 					bool dtdown = ev.id == CL_KEY_NEXT;
 					if (dtup || dtdown)
@@ -923,6 +942,38 @@ public:
 						SendToConsole(str.str());
 					}
 				});
+
+				{
+					unsigned short listenPort = 11122;
+					if (varMap.count("listen_port"))
+						listenPort = varMap["listen_port"].as<unsigned short>();
+					else
+					{
+						int opt;
+						if (options->GetOption("listen_port", &opt))
+							listenPort = (unsigned short)opt;
+					}
+					network->Startup(listenPort);
+				}
+
+				{
+					unsigned short port = 11123;
+					std::string host = "localhost";
+					if (varMap.count("connect") || options->GetOption("connect", &host))
+					{
+						if (varMap.count("connect"))
+							host = varMap["connect"].as<std::string>();
+						if (host.find(':') != std::string::npos)
+						{
+							auto portStr = host.substr(host.find(':') + 1);
+							std::stringstream strStr(portStr);
+							strStr >> port;
+							host.erase(host.find(':'));
+						}
+						network->Connect(host, port);
+						SendToConsole("Connecting");
+					}
+				}
 
 				unsigned int lastframe = CL_System::get_time();
 				unsigned int delta = 0;
@@ -977,6 +1028,7 @@ public:
 						seconds = delta * 0.001f;
 						inputMgr->Update(seconds);
 						//gui->Update(seconds);
+						networkManager->DispatchPackets();
 
 						if (editCam)
 						{

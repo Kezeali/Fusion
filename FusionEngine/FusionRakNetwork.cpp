@@ -141,7 +141,7 @@ namespace FusionEngine
 
 	bool RakNetwork::Connect(const std::string& host, unsigned short port)
 	{
-		if (m_NetInterface->Connect(host.c_str(), port, 0, 0))
+		if (m_NetInterface->Connect(host.c_str(), port, 0, 0) == RakNet::CONNECTION_ATTEMPT_STARTED)
 		{
 			m_NetInterface->SetOccasionalPing(true);
 			return true;

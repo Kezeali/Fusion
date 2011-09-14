@@ -49,8 +49,8 @@ namespace FusionEngine
 	
 	namespace EntitySerialisationUtils
 	{
-		bool SerialiseEntity(RakNet::BitStream& out, EntityPtr entity, IComponent::SerialiseMode mode);
-		void DerialiseEntity(RakNet::BitStream& in, EntityPtr entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager);
+		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode);
+		void DeserialiseEntity(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager);
 
 		void WriteComponent(CL_IODevice& out, IComponent* component);
 		void ReadComponent(CL_IODevice& in, IComponent* component);
