@@ -142,6 +142,7 @@ namespace FusionEngine
 	{
 		NetworkManager::getSingleton().Subscribe(MTID_IMPORTANTMOVE, this);
 		NetworkManager::getSingleton().Subscribe(MTID_ENTITYMOVE, this);
+		NetworkManager::getSingleton().Subscribe(MTID_STARTSYNC, this);
 	}
 
 	EntitySynchroniser::~EntitySynchroniser()
@@ -150,6 +151,7 @@ namespace FusionEngine
 
 		NetworkManager::getSingleton().Unsubscribe(MTID_IMPORTANTMOVE, this);
 		NetworkManager::getSingleton().Unsubscribe(MTID_ENTITYMOVE, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_STARTSYNC, this);
 	}
 
 	const EntityArray &EntitySynchroniser::GetReceivedEntities() const
@@ -164,7 +166,7 @@ namespace FusionEngine
 		const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
 		for (ConsolidatedInput::PlayerInputsMap::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
 		{
-			ObjectID playerId = it->first;
+			PlayerID playerId = it->first;
 			const PlayerInputPtr &playerInput = it->second;
 
 			if (playerInput->HasChanged())
@@ -183,11 +185,6 @@ namespace FusionEngine
 		}
 
 		m_PlayerInputs->ChangesRecorded();
-
-		if (!m_ImportantMove)
-		{
-			packetData.Write((MessageID)MTID_ENTITYMOVE);
-		}
 	}
 
 //#define FSN_PARALLEL_SERIALISE
@@ -205,8 +202,13 @@ namespace FusionEngine
 			auto entity = it->second;
 #endif
 
+			auto& synchedPlayers = std::vector<PlayerID>();//entity->GetPlayersWithFullSynch();
+			for (auto it = synchedPlayers.begin(), end = synchedPlayers.end(); it != end; ++it)
+			{
+			}
+
 			auto state = std::make_shared<RakNet::BitStream>();
-			if (SerialiseEntity(*state, entity, IComponent::All))
+			if (SerialiseEntity(*state, entity, IComponent::Changes))
 			{
 				const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 				const BitSize_t totalDataForEntity = stateSize;// + sizeof(unsigned int) * 8 + sizeof(ObjectID) * 8;
@@ -217,12 +219,21 @@ namespace FusionEngine
 				{
 					dataToSend.push_back(std::make_pair(entity->GetID(), std::move(state)));
 					m_EntityDataUsed += totalDataForEntity;
+					entity->AddedToPacket();
 				}
 			}
 		}
 #ifdef FSN_PARALLEL_SERIALISE
 		);
 #endif
+
+		if (!m_ImportantMove)
+		{
+			if (m_FullSynch)
+			{
+				packetData.Write((MessageID)MTID_ENTITYMOVE);
+			}
+		}
 
 		//RakNet::BitStream packetData;
 		auto numStates = (unsigned short)dataToSend.size();
@@ -247,7 +258,7 @@ namespace FusionEngine
 			packetData.Write(*state, state->GetNumberOfBitsUsed());
 
 			// Note the state that was sent (so that the state wont be sent again till it changes)
-			m_SentStates[id] = state;
+			m_SentStates[id] = std::make_pair(false, state);
 		}
 
 		m_EntityPriorityQueue.clear();
@@ -276,7 +287,12 @@ namespace FusionEngine
 		auto _where = m_ReceivedStates.find(entity->GetID());
 		if (_where != m_ReceivedStates.end())
 		{
-			EntitySerialisationUtils::DeserialiseEntity(*_where->second, entity, IComponent::All, factory, entity_manager);
+			auto synchInfo = _where->second;
+
+			IComponent::SerialiseMode mode = synchInfo.first ? IComponent::All : IComponent::Changes;
+			auto& data = synchInfo.second;
+
+			EntitySerialisationUtils::DeserialiseEntity(*data, entity, mode, factory, entity_manager);
 			m_ReceivedStates.erase(_where);
 		}
 
@@ -295,8 +311,11 @@ namespace FusionEngine
 		{
 			// Calculate priority
 			unsigned int priority;
+			// TODO: if the input has changed, make sure this entity is updated (perhaps add it to another queue that gets processed
+			//  over multiple steps, so even if all the input-handling entites can't fit in one packet, they will be sent)
+			//  Or allow packets to go over-budget so subsequent packets have to be smaller (make the persistent packet data a signed int64)
 			if (arbitor)
-				priority = (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
+				priority = (entity->m_PlayerInput->HasChanged() ? 2 : 1) * (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
 			else
 				priority = entity->GetSkippedPacketsCount();
 
@@ -345,7 +364,7 @@ namespace FusionEngine
 
 		if (m_ImportantMove)
 		{
-			network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_INPUTUPDATE);
+			network->SendAsIs(To::Populace(), &m_PacketData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYSYNC);
 		}
 		else
 		{
@@ -374,30 +393,34 @@ namespace FusionEngine
 					PlayerID player;
 					bitStream.Read(player);
 
-					unsigned short count; // number of inputs that changed
-					bitStream.Read(count);
+					auto playerInput = m_PlayerInputs->GetInputsForPlayer(player);
+					if (playerInput)
+						playerInput->Deserialise(&bitStream);
 
-					const InputDefinitionLoader *inputDefinitions = m_InputManager->GetDefinitionLoader();
+					//unsigned short count; // number of inputs that changed
+					//bitStream.Read(count);
 
-					for (unsigned short i = 0; i < count; ++i)
-					{
-						bool active;
-						float position;
+					//const InputDefinitionLoader *inputDefinitions = m_InputManager->GetDefinitionLoader();
 
-						unsigned short inputIndex;
-						bitStream.Read(inputIndex);
+					//for (unsigned short i = 0; i < count; ++i)
+					//{
+					//	bool active;
+					//	float position;
 
-						bitStream.Read(active);
-						bitStream.Read(position);
+					//	unsigned short inputIndex;
+					//	bitStream.Read(inputIndex);
 
-						const InputDefinition &definition = inputDefinitions->GetInputDefinition((size_t)inputIndex);
+					//	bitStream.Read(active);
+					//	bitStream.Read(position);
 
-						m_PlayerInputs->SetState(player, definition.Name, active, position);
-					}
+					//	const InputDefinition &definition = inputDefinitions->GetInputDefinition(inputIndex);
+
+					//	m_PlayerInputs->SetState(player, definition.Name, active, position);
+					//}
 				}
 			}
-			break;
 		case MTID_ENTITYMOVE:
+		case MTID_STARTSYNC:
 			{
 				unsigned short entityCount;
 				bitStream.Read(entityCount);
@@ -406,7 +429,11 @@ namespace FusionEngine
 					ObjectID entityID;
 					bitStream.Read(entityID);
 
-					auto& storedData = m_ReceivedStates[entityID];
+					auto& info = m_ReceivedStates[entityID];
+
+					info.first = type == MTID_STARTSYNC; // indicates full data (not just changes)
+
+					auto& storedData = info.second;
 					if (storedData)
 						storedData->Reset();
 					else

@@ -48,6 +48,35 @@ class SpawnPoint : ScriptComponent
 		return null;
 	}
 	
+	EntityWrapper@ createBeachBall(Vector &in pos)
+	{
+		console.println("Ball spawned at " + pos.x + "," + pos.y);
+		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 0);
+		if (!newEnt.isNull())
+		{
+		ontology.addComponent(newEnt, "b2Circle", "");
+		ontology.addComponent(newEnt, "CLSprite", "");
+		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
+		if (sprite is null)
+		{
+			return EntityWrapper();
+		}
+		//console.println(sprite.getType());
+		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.BaseAngle = 1.57;
+		
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
+		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
+		
+		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
+		
+		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
+		
+		return EntityWrapper(newEnt);
+		}
+		return null;
+	}
+	
 	EntityWrapper@ entityA;
 	
 	void update()
@@ -59,6 +88,18 @@ class SpawnPoint : ScriptComponent
 			
 			@entityA = createPlayerEntity(itransform.Position);
 			
+			Vector pos = itransform.Position;
+			for (uint i = 0; i < 50; ++i)
+			{
+				pos.x = pos.x + 0.5f;
+				if ((i % 7) == 0)
+				{
+					pos.x = itransform.Position.value.x;
+					pos.y = pos.y + 0.5f;
+				}
+				createBeachBall(pos);
+			}
+			
 			if (entityA !is null)
 				entityA.script_b.speed = 3.0f;
 			
@@ -68,7 +109,7 @@ class SpawnPoint : ScriptComponent
 		if (entityA !is null)
 		{
 			if (frames % 60 == 0)
-			console.println("Player Position: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
+			console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
 		}
 	}
 }

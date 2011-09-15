@@ -63,7 +63,13 @@ namespace FusionEngine
 				
 				RakNet::BitStream tempStream;
 				bool conData = transform->SerialiseContinuous(tempStream);
+				FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+
+				const auto bitsUsedBeforeWriting = tempStream.GetNumberOfBitsUsed();
 				bool occData = transform->SerialiseOccasional(tempStream, mode);
+				FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
+
+
 				out.Write(conData);
 				out.Write(occData);
 				out.Write(tempStream);
@@ -95,12 +101,21 @@ namespace FusionEngine
 
 					RakNet::BitStream tempStream;
 					bool conData = component->SerialiseContinuous(tempStream);
+					FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+					if (!conData)
+						tempStream.Reset();
+
+					const auto bitsUsedBeforeWriting = tempStream.GetNumberOfBitsUsed();
 					bool occData = component->SerialiseOccasional(tempStream, mode);
+					FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
+					if (!occData)
+						tempStream.SetWriteOffset(bitsUsedBeforeWriting);
+
 					out.Write(conData);
 					out.Write(occData);
 					out.Write(tempStream);
 
-					dataWritten |= conData || occData;
+					dataWritten |= (conData || occData);
 				}
 			}
 

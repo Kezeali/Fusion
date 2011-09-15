@@ -46,6 +46,9 @@ namespace FusionEngine
 	{
 		m_Network = NetworkManager::GetNetwork();
 		FSN_ASSERT(m_Network != nullptr);
+		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
+		NetworkManager::getSingleton().Subscribe(MTID_ADDPLAYER, this);
+		NetworkManager::getSingleton().Subscribe(MTID_REMOVEPLAYER, this);
 	}
 
 	//PlayerManager::PlayerManager(RakNetwork* network)
@@ -54,6 +57,13 @@ namespace FusionEngine
 	//	m_NextNetId(1)
 	//{
 	//}
+
+	PlayerManager::~PlayerManager()
+	{
+		NetworkManager::getSingleton().Unsubscribe(ID_NEW_INCOMING_CONNECTION, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_ADDPLAYER, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_REMOVEPLAYER, this);
+	}
 
 	unsigned int PlayerManager::RequestNewPlayer()
 	{
@@ -95,7 +105,26 @@ namespace FusionEngine
 
 		unsigned char type;
 		receivedData.Read(type);
-		if (type == MTID_ADDPLAYER)
+		if (type == ID_NEW_INCOMING_CONNECTION)
+		{
+			// Notify new peers about the existing players
+			if (NetworkManager::ArbitratorIsLocal())
+			{
+				for (auto it = PlayerRegistry::PlayersBegin(), end = PlayerRegistry::PlayersEnd(); it != end; ++it)
+				{
+					RakNet::BitStream newPlayerNotification;
+					newPlayerNotification.Write0(); // Tell the peer that the player is on another system
+					newPlayerNotification.Write(it->NetID);
+					newPlayerNotification.Write(it->GUID);
+					network->Send(
+						NetDestination(remotePeerGUID, false),
+						!Timestamped,
+						MTID_ADDPLAYER, &newPlayerNotification,
+						MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_SYSTEM);
+				}
+			}
+		}
+		else if (type == MTID_ADDPLAYER)
 		{
 			if (NetworkManager::ArbitratorIsLocal())
 			{

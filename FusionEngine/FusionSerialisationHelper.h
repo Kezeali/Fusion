@@ -172,7 +172,7 @@ namespace FusionEngine
 //#define FSN_DSER_REP(z, n, text) changes.set(n, SerialisationUtils::readChange(false, stream, get<n>(new_values)));
 //#define FSN_DSER_REP_FORCE(z, n, text) SerialisationUtils::readChange<BOOST_PP_CAT(T,n)>(true, stream, get<n>(new_values));
 
-#define FSN_SER_REP(z, n, text) dataWritten |= force_all || m_Changed.at(n); SerialisationUtils::writeChange(force_all, stream, m_Changed.at(n), v ## n);
+#define FSN_SER_REP(z, n, text) SerialisationUtils::writeChange(force_all, stream, m_Changed.at(n), v ## n);
 #define FSN_DSER_REP(z, n, text) changes.set(n, SerialisationUtils::readChange(force_all, stream, v ## n) );
 #define FSN_DSER_CALLBACKS_REP(z, n, text) { T ## n value; if (SerialisationUtils::readChange(force_all, stream, value)) { changes.set(n); (obj->* f ## n)(value); } }
 
@@ -225,10 +225,11 @@ namespace FusionEngine
 
 		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, const T, &v))//const data_type& new_values)
 		{
-			bool dataWritten = false;
+			if (!force_all && !m_Changed.any())
+				return false;
 			BOOST_PP_REPEAT(MAX_SerialisationHelper_PROPS, FSN_SER_REP, ~)
 			m_Changed.reset();
-			return dataWritten;
+			return true;
 		}
 
 		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(MAX_SerialisationHelper_PROPS, T, &v))//data_type& new_values)
@@ -299,10 +300,11 @@ namespace FusionEngine
 
 		bool writeChanges(bool force_all, RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, const T, &v))
 		{
-			bool dataWritten = false;
+			if (!force_all && !m_Changed.any())
+				return false;
 			BOOST_PP_REPEAT(n, FSN_SER_REP, ~)
 			m_Changed.reset();
-			return dataWritten;
+			return true;
 		}
 
 		void readAll(RakNet::BitStream& stream, BOOST_PP_ENUM_BINARY_PARAMS(n, T, &v))

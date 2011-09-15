@@ -231,11 +231,34 @@ namespace FusionEngine
 				return true;
 		}
 
+		bool MarkForSerialisationIfDirty()
+		{
+			if (!IsDirty())
+				return false;
+			else
+			{
+				m_ChangedSinceSerialised = true;
+				return true;
+			}
+		}
+
+		void Unmark()
+		{
+			m_ChangedSinceSerialised = false;
+		}
+
+		bool HasChangedSinceSerialised() const
+		{
+			return m_ChangedSinceSerialised;
+		}
+
 		void Synchronise()
 		{
 			if (m_Writer.DumpWrittenValue(m_Value))
 			{
 				m_Value->Retrieve(m_Object->GetAddressOfProperty(m_Index), m_TypeId);
+
+				m_ChangedSinceSerialised = true; // The property was changed using Set(...)
 			}
 			else
 			{
@@ -294,6 +317,8 @@ namespace FusionEngine
 
 		boost::intrusive_ptr<CScriptAny> m_Value;
 		DefaultStaticWriter<boost::intrusive_ptr<CScriptAny>> m_Writer;
+
+		bool m_ChangedSinceSerialised;
 	};
 
 	EntityPtr ASScript_GetParent(ASScript* obj)
@@ -737,11 +762,10 @@ namespace FusionEngine
 		for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 		{
 			auto scriptProperty = static_cast<ScriptAnyTSP*>( it->get() ); FSN_ASSERT(scriptProperty);
-			if (scriptProperty->IsDirty())
+			// Mark the property for serialisation and post it to be synched if it has changed since last synch
+			if (scriptProperty->MarkForSerialisationIfDirty())
 			{
 				OnPropertyChanged(scriptProperty);
-				// TODO: mark this property to be serialised
-				//  (also do so in SetProperty(...))
 			}
 		}
 	}
@@ -937,13 +961,23 @@ namespace FusionEngine
 			for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 			{
 				auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+
+				if (mode == Changes)
+					stream.Write(scriptprop->HasChangedSinceSerialised());
+
 				if (mode == Editable)
 				{
 					std::string name = scriptprop->GetName();
 					stream.Write(name.length());
 					stream.Write(name.data(), name.length());
 				}
-				SerialiseProp(stream, scriptprop->Get());
+				if (mode != Changes || scriptprop->HasChangedSinceSerialised())
+				{
+					changeWritten = true;
+					SerialiseProp(stream, scriptprop->Get());
+					// Changes have been written
+					scriptprop->Unmark();
+				}
 			}
 		}
 		else 
@@ -960,7 +994,7 @@ namespace FusionEngine
 					SerialiseProp(stream, it->second.get());
 				}
 			}
-			else if (!m_CachedProperties.empty()) // Script may have just been deserialised
+			else if (mode == All && !m_CachedProperties.empty()) // Script may have just been deserialised and not activated
 			{
 				stream.Write(m_CachedProperties.size());
 				for (auto it = m_CachedProperties.begin(), end = m_CachedProperties.end(); it != end; ++it)
@@ -1031,14 +1065,17 @@ namespace FusionEngine
 				unsigned int index = 0;
 				for (auto it = m_ScriptProperties.begin(), end = m_ScriptProperties.end(); it != end; ++it)
 				{
-					auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
-					//auto prop = scriptprop->Get();
-					auto prop = new CScriptAny(engine);
-					DeserialiseProp(stream, prop, index++);
-					// TODO: deserialise entity ptrs
-					if (prop->GetTypeId() != -1)
-						scriptprop->Set(prop);
-					//prop->Release();
+					if (mode == All || stream.ReadBit())
+					{
+						auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
+						//auto prop = scriptprop->Get();
+						auto prop = new CScriptAny(engine);
+						DeserialiseProp(stream, prop, index++);
+						// TODO: deserialise entity ptrs
+						if (prop->GetTypeId() != -1)
+							scriptprop->Set(prop);
+						//prop->Release();
+					}
 				}
 			}
 		}
@@ -1057,15 +1094,18 @@ namespace FusionEngine
 					stream.Read(&name[0], length);
 				}
 
-				auto prop = new CScriptAny(engine);
+				if (mode == All || stream.ReadBit())
+				{
+					auto prop = new CScriptAny(engine);
 
-				DeserialiseProp(stream, prop, i, name);
+					DeserialiseProp(stream, prop, i, name);
 
-				m_CachedProperties[i] = prop;
-				if (mode == Editable)
-					m_EditableCachedProperties[name] = prop;
+					m_CachedProperties[i] = prop;
+					if (mode == Editable)
+						m_EditableCachedProperties[name] = prop;
 
-				prop->Release();
+					prop->Release();
+				}
 			}
 		}
 	}

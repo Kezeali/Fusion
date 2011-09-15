@@ -99,10 +99,10 @@ namespace FusionEngine
 			stream.Write(pos.y);
 			stream.Write(GetAngle());
 
-			const Vector2& vel = GetVelocity();
-			stream.Write(vel.x);
-			stream.Write(vel.y);
-			stream.Write(GetAngularVelocity());
+			//const Vector2& vel = GetVelocity();
+			//stream.Write(vel.x);
+			//stream.Write(vel.y);
+			//stream.Write(GetAngularVelocity());
 
 			return true;
 		}
@@ -121,14 +121,14 @@ namespace FusionEngine
 		SetPosition(position);
 		SetAngle(angle);
 
-		Vector2 linearVelocity;
-		float angularVelocity;
-		stream.Read(linearVelocity.x);
-		stream.Read(linearVelocity.x);
-		stream.Read(angularVelocity);
+		//Vector2 linearVelocity;
+		//float angularVelocity;
+		//stream.Read(linearVelocity.x);
+		//stream.Read(linearVelocity.x);
+		//stream.Read(angularVelocity);
 
-		SetVelocity(linearVelocity);
-		SetAngularVelocity(angularVelocity);
+		//SetVelocity(linearVelocity);
+		//SetAngularVelocity(angularVelocity);
 
 		//Position.MarkChanged();
 		//Angle.MarkChanged();

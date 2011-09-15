@@ -127,7 +127,7 @@ namespace FusionEngine
 		return *_where->second;
 	}
 
-	const InputDefinition &InputDefinitionLoader::GetInputDefinition(size_t input_index) const
+	const InputDefinition &InputDefinitionLoader::GetInputDefinition(uint16_t input_index) const
 	{
 		if (input_index >= m_InputDefinitionsByIndex.size())
 			FSN_EXCEPT(ExCode::IO, "Input index given is not defined");
