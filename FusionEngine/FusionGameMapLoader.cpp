@@ -32,6 +32,7 @@
 #include <boost/crc.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RakNetTypes.h>
+#include <StringCompressor.h>
 
 #include "FusionClientOptions.h"
 #include "FusionEntityFactory.h"
@@ -362,46 +363,65 @@ namespace FusionEngine
 		unsigned char packetType;
 		bitStream.Read(packetType);
 
+		auto stringCompressor = RakNet::StringCompressor::Instance();
+
 		if (packetType == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
 		{
-			// Tell the new peer what the current map is
-			RakNet::BitStream replyBitstream;
-			replyBitstream.Write(m_MapFilename.size());
-			replyBitstream.Write(m_MapFilename.data(), m_MapFilename.size());
-			replyBitstream.Write(m_MapChecksum);
+			if (!m_MapFilename.empty())
+			{
+				// Tell the new peer what the current map is
+				RakNet::BitStream replyBitstream;
+				//replyBitstream.Write(m_MapFilename.size());
+				//replyBitstream.Write(m_MapFilename.data(), m_MapFilename.size());
+				stringCompressor->EncodeString(m_MapFilename.c_str(), m_MapFilename.length() + 1, &replyBitstream);
+				replyBitstream.Write(m_MapChecksum);
 
-			NetworkManager::getSingleton().GetNetwork()->Send(
-				NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &replyBitstream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+				NetworkManager::getSingleton().GetNetwork()->Send(
+					NetDestination(packet->guid, false), !Timestamped, MTID_LOADMAP, &replyBitstream, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+			}
 		}
 		else if (packetType == MTID_LOADMAP)
 		{
-			std::string::size_type filename_length;
-			bitStream.Read(filename_length);
-			std::string filename; filename.resize(filename_length);
-			bitStream.Read(&filename[0], filename_length);
+			//std::string::size_type filename_length;
+			//bitStream.Read(filename_length);
+			std::string filename; filename.resize(256);
+			//bitStream.Read(&filename[0], filename_length);
+			stringCompressor->DecodeString(&filename[0], filename.length(), &bitStream);
+			auto endPos = filename.find('\0');
+			if (endPos != std::string::npos)
+				filename.erase(endPos);
 
 			uint32_t expectedChecksum;
 			bitStream.Read(expectedChecksum);
 
-			CL_VirtualDirectory directory(CL_VirtualFileSystem(m_FileSource.get()), "");
-			CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
-
-			boost::crc_32_type crc;
-			int count = 0;
-			do
+			try
 			{
-				char buffer[2048];
-				count = device.read(buffer, 2048);
-				crc.process_bytes(buffer, 2048);
-			} while (count == 2048);
+				CL_VirtualDirectory directory(CL_VirtualFileSystem(m_FileSource.get()), "");
+				CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
 
-			if (crc.checksum() == expectedChecksum)
-			{
-				m_MapChecksum = crc.checksum();
-				LoadMap(filename, directory, nullptr);
+				boost::crc_32_type crc;
+				int count = 0;
+				static const size_t bufferSize = 2048;
+				do
+				{
+					char buffer[bufferSize];
+					count = device.read(buffer, bufferSize);
+					if (count > 0)
+						crc.process_bytes(buffer, (size_t)count);
+				} while (count == bufferSize);
+
+				if (crc.checksum() == expectedChecksum)
+				{
+					m_MapChecksum = crc.checksum();
+					//LoadMap(filename, directory, nullptr);
+				}
+				else
+					SendToConsole("Host map is different to local map.");
 			}
-			else
-				SendToConsole("Host map is different to local map.");
+			catch (CL_Exception& ex)
+			{
+				SendToConsole("Failed to load host map: " + std::string(ex.what()));
+			}
 		}
 	}
 

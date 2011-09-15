@@ -983,6 +983,11 @@ namespace FusionEngine
 		return Entity_GetComponent(obj, type, std::string());
 	}
 
+	static bool Entity_IsNull(EntityPtr* obj)
+	{
+		return !(*obj);
+	}
+
 	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
 	{
 		return (*entity)->InputIsActive(input);
@@ -1026,6 +1031,10 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"ComponentFuture@ getComponent(string) const",
 			asFUNCTION(Entity_GetComponentB), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+
+		r = engine->RegisterObjectMethod("Entity",
+			"bool isNull() const",
+			asFUNCTION(Entity_IsNull), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
 		//r = engine->RegisterObjectMethod("Entity",
 		//	"Input@ get_input() const",

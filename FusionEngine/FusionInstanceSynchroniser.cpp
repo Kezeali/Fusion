@@ -143,11 +143,15 @@ namespace FusionEngine
 		return id;
 	}
 
-	void InstancingSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const std::string &name, PlayerID owner_id)
+	void InstancingSynchroniser::sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &type, const Vector2& pos, float angle, const std::string &name, PlayerID owner_id)
 	{
 		RakNet::BitStream newEntityData;
 		//newEntityData.Write(requester_id);
 		RakNet::StringTable::Instance()->EncodeString(type.c_str(), s_NetCompressedStringTrunc, &newEntityData);
+		newEntityData.Write(pos.x);
+		newEntityData.Write(pos.y);
+		newEntityData.Write(angle);
+
 		newEntityData.Write(id);
 		newEntityData.Write(owner_id);
 		if (name.empty())
@@ -189,7 +193,7 @@ namespace FusionEngine
 						return EntityPtr();
 					}
 				}
-				sendInstancingMessage(requester->GetID(), id, type, name, owner_id);
+				sendInstancingMessage(requester->GetID(), id, type, pos, angle, name, owner_id);
 			}
 
 			auto transform = m_Factory->InstanceComponent(type, pos, angle);
@@ -254,11 +258,14 @@ namespace FusionEngine
 
 	void InstancingSynchroniser::AddComponent(EntityPtr& entity, const std::string& type, const std::string& identifier)
 	{
-		auto com = m_Factory->InstanceComponent(type);
-		if (com)
+		if (entity)
 		{
-			entity->AddComponent(com, identifier);
-			m_EntityManager->OnComponentAdded(entity, com);
+			auto com = m_Factory->InstanceComponent(type);
+			if (com)
+			{
+				entity->AddComponent(com, identifier);
+				m_EntityManager->OnComponentAdded(entity, com);
+			}
 		}
 		// TODO: throw exception
 	}
@@ -276,13 +283,18 @@ namespace FusionEngine
 
 			std::string::size_type length;
 
-			// Read the entity type-name
-			char stored_string[s_NetCompressedStringTrunc];
-			RakNet::StringTable::Instance()->DecodeString(stored_string, s_NetCompressedStringTrunc, &receivedData);
-			std::string entityType(stored_string);
+			// Read the entity transform type-name
+			char table_string[s_NetCompressedStringTrunc];
+			RakNet::StringTable::Instance()->DecodeString(table_string, s_NetCompressedStringTrunc, &receivedData);
+			std::string transformTypeName(table_string);
 			//receivedData.Read(length);
 			//entityType.resize(length);
 			//receivedData.Read(&entityType[0], length);
+			Vector2 position;
+			receivedData.Read(position.x);
+			receivedData.Read(position.y);
+			float angle;
+			receivedData.Read(angle);
 
 			ObjectID id;
 			receivedData.Read(id);
@@ -311,14 +323,22 @@ namespace FusionEngine
 				return;
 			}
 
-			EntityPtr entity = m_Factory->InstanceEntity(entityType, Vector2::zero(), 0.f);
+			auto transform = m_Factory->InstanceComponent(transformTypeName, position, angle);
+			if (!transform)
+				FSN_EXCEPT(InstanceSyncException, type + " doesn't exist, so you can't instantiate an entity with it.");
+			if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
+				FSN_EXCEPT(InstanceSyncException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
+
+			EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
 			if (!entity)
-				FSN_EXCEPT(InstanceSyncException, "Unknown Entity type " + entityType);
+				FSN_EXCEPT(InstanceSyncException, "Failed to create entity");
 
 			entity->SetID(id);
 			entity->SetOwnerID(ownerId);
 			if (!name.empty())
 				entity->SetName(name);
+
+			transform->SynchronisePropertiesNow();
 
 			m_EntityManager->AddEntity(entity);
 
@@ -336,9 +356,16 @@ namespace FusionEngine
 		else if (type == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
 		{
 			const auto& entities = m_EntityManager->GetEntities();
-			for( auto it = entities.begin(), end = entities.end(); it != end; ++it )
+			for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 			{
-				sendInstancingMessage(0, it->second->GetID(), it->second->GetType(), it->second->GetName(), it->second->GetOwnerID());
+				auto transformComponent = it->second->GetTransform();
+				auto transform = dynamic_cast<ITransform*>(transformComponent.get());
+				if (transform)
+				{
+					sendInstancingMessage(0, it->second->GetID(),
+						transformComponent->GetType(), transform->Position.Get(), transform->Angle.Get(),
+						it->second->GetName(), it->second->GetOwnerID());
+				}
 			}
 		}
 	}

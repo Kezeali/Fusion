@@ -225,7 +225,8 @@ namespace FusionEngine
 #endif
 
 		//RakNet::BitStream packetData;
-		packetData.Write(dataToSend.size());
+		auto numStates = (unsigned short)dataToSend.size();
+		packetData.Write(numStates);
 		// Fill packet (from priority collection)
 		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
 		{
@@ -248,6 +249,8 @@ namespace FusionEngine
 			// Note the state that was sent (so that the state wont be sent again till it changes)
 			m_SentStates[id] = state;
 		}
+
+		m_EntityPriorityQueue.clear();
 	}
 
 	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
@@ -316,6 +319,7 @@ namespace FusionEngine
 	{
 		for (auto it = m_EntitiesToReceive.begin(), end = m_EntitiesToReceive.end(); it != end; ++it)
 			ReceiveSync(*it, entity_manager, factory);
+		m_EntitiesToReceive.clear();
 		WriteHeaderAndInput(m_PacketData);
 		WriteEntities(m_PacketData);
 	}
@@ -403,7 +407,10 @@ namespace FusionEngine
 					bitStream.Read(entityID);
 
 					auto& storedData = m_ReceivedStates[entityID];
-					storedData->Reset();
+					if (storedData)
+						storedData->Reset();
+					else
+						storedData = std::make_shared<RakNet::BitStream>();
 
 					BitSize_t dataLength;
 					bitStream.Read(dataLength);
@@ -1226,7 +1233,7 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::OnComponentAdded(EntityPtr &entity, ComponentPtr& component)
+	void EntityManager::OnComponentAdded(const EntityPtr &entity, const ComponentPtr& component)
 	{
 		m_ComponentsToAdd.push(std::make_pair(entity, component));
 	}

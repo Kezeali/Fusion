@@ -24,6 +24,7 @@
 #include "../FusionEngine/FusionRakNetwork.h"
 #include "../FusionEngine/FusionPacketDispatcher.h"
 #include "../FusionEngine/FusionPlayerRegistry.h"
+#include "../FusionEngine/FusionPlayerManager.h"
 
 // System management
 #include "../FusionEngine/FusionTaskScheduler.h"
@@ -769,6 +770,8 @@ public:
 				std::unique_ptr<PacketDispatcher> packetDispatcher(new PacketDispatcher());
 				std::unique_ptr<NetworkManager> networkManager(new NetworkManager(network.get(), packetDispatcher.get()));
 
+				std::unique_ptr<PlayerManager> playerManager(new PlayerManager());
+
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
 				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver(editMode));
@@ -788,7 +791,7 @@ public:
 
 				entityManager->m_EntityFactory = entityFactory.get();
 
-				if (!editMode)
+				if (!editMode && varMap.count("connect") == 0)
 				{
 					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
 					cellArchivist->SetMap(map);
@@ -841,7 +844,7 @@ public:
 
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
 
-				PlayerRegistry::AddLocalPlayer(1u, 0u);
+				//PlayerRegistry::AddLocalPlayer(1u, 0u);
 
 				// This scope makes viewport hold the only reference to camera: thus camera will be deleted with viewport
 				std::shared_ptr<Camera> editCam;
@@ -971,7 +974,14 @@ public:
 							host.erase(host.find(':'));
 						}
 						network->Connect(host, port);
-						SendToConsole("Connecting");
+						SendToConsole("Connecting: " + host);
+					}
+					else
+					{
+						SendToConsole("Hosting");
+						auto playerInd = playerManager->RequestNewPlayer();
+						std::stringstream str; str << playerInd;
+						SendToConsole("Player: " + str.str());
 					}
 				}
 

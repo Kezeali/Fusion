@@ -59,7 +59,7 @@ namespace FusionEngine
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
 			{
 				std::string type = transform->GetType();
-				compressor->EncodeString(type.c_str(), type.length(), &out);
+				compressor->EncodeString(type.c_str(), type.length() + 1, &out);
 				
 				RakNet::BitStream tempStream;
 				bool conData = transform->SerialiseContinuous(tempStream);
@@ -82,10 +82,11 @@ namespace FusionEngine
 					FSN_ASSERT(component.get() != transform);
 
 					std::string type = component->GetType();
-					compressor->EncodeString(type.c_str(), type.length(), &out);
+					std::string identifier = component->GetIdentifier();
+					compressor->EncodeString(type.c_str(), type.length() + 1, &out);
 					// TODO: give IDs from an IDStack to components and use those to identify them
 					//  (the interface identifier are really ment as a scripting convinience thing - i.e. for #uses <Interface> <identifier> directives)
-					compressor->EncodeString(component->GetIdentifier().c_str(), component->GetIdentifier().length(), &out);
+					compressor->EncodeString(identifier.c_str(), identifier.length() + 1, &out);
 				}
 				for (auto it = begin; it != end; ++it)
 				{
@@ -114,10 +115,11 @@ namespace FusionEngine
 
 			ComponentPtr transform;
 			{
-				RakNet::RakString string;
-				stringCompressor->DecodeString(&string, 256, &in);
+				char typeNameBuf[256u];
+				stringCompressor->DecodeString(&typeNameBuf[0], 256, &in);
+				std::string typeName(typeNameBuf);
 
-				FSN_ASSERT(entity->GetTransform()->GetType() == string.C_String());
+				FSN_ASSERT(entity->GetTransform()->GetType() == typeName);
 				transform = entity->GetTransform();
 
 				//transform = factory->InstanceComponent(string.C_String());
@@ -134,22 +136,37 @@ namespace FusionEngine
 
 			std::vector<ComponentPtr> localComponents;
 
+			auto& existingComponents = entity->GetComponents();
+
 			size_t numComponents;
 			in.Read(numComponents);
 			localComponents.reserve(numComponents);
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				std::string typeName(256u, '\n');
-				stringCompressor->DecodeString(&typeName[0], 256, &in);
-				std::string identifier(256u, '\n');
-				stringCompressor->DecodeString(&identifier[0], 256, &in);
-
-				auto component = entity->GetComponent(typeName, identifier);
-				if (!component)
+				char typeNameBuf[256u];
+				stringCompressor->DecodeString(&typeNameBuf[0], 256, &in);
+				std::string typeName(typeNameBuf);
+				char identifierBuf[256u];
+				stringCompressor->DecodeString(&identifierBuf[0], 256, &in);
+				std::string identifier(identifierBuf);
+				
+				auto componentEntry = std::find_if(existingComponents.begin(), existingComponents.end(), [&typeName, &identifier](const ComponentPtr& com)
+				{
+					return com->GetType() == typeName && com->GetIdentifier() == identifier;
+				});
+				ComponentPtr component;
+				//entity->GetComponent(typeName, identifier);
+				//if (!component)
+				if (componentEntry != existingComponents.end())
+					component = *componentEntry;
+				else
 				{
 					component = factory->InstanceComponent(typeName);
 					if (component)
+					{
 						entity->AddComponent(component, identifier);
+						manager->OnComponentAdded(entity, component);
+					}
 					else
 					{
 						FSN_EXCEPT(InvalidArgumentException, "Unknown component type used: " + identifier);
@@ -160,8 +177,7 @@ namespace FusionEngine
 			if (numComponents != 0)
 			{
 				auto& components = localComponents;
-				auto it = components.begin(), end = components.end();
-				for (++it; it != end; ++it)
+				for (auto it = components.begin(), end = components.end(); it != end; ++it)
 				{
 					auto& component = *it;
 					FSN_ASSERT(component != transform);

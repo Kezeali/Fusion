@@ -1035,7 +1035,9 @@ namespace FusionEngine
 					//auto prop = scriptprop->Get();
 					auto prop = new CScriptAny(engine);
 					DeserialiseProp(stream, prop, index++);
-					scriptprop->Set(prop);
+					// TODO: deserialise entity ptrs
+					if (prop->GetTypeId() != -1)
+						scriptprop->Set(prop);
 					//prop->Release();
 				}
 			}

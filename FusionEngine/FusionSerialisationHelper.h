@@ -62,9 +62,7 @@ namespace FusionEngine
 		template <>
 		static inline void write(RakNet::BitStream& stream, const std::string& new_value)
 		{
-			stream.Write(new_value.length());
-			if (!new_value.empty())
-				stream.Write(new_value.c_str());
+			stream.WriteCompressed(new_value.c_str());
 		}
 
 		template <>
@@ -94,13 +92,9 @@ namespace FusionEngine
 		template <>
 		static inline void read(RakNet::BitStream& stream, std::string& out_value)
 		{
-			size_t length;
-			stream.Read(length);
-			if (length > 0)
-			{
-				out_value.resize(length);
-				stream.Read(&out_value[0]);
-			}
+			RakNet::RakString temp;
+			stream.ReadCompressed(temp);
+			out_value.assign(temp.C_String(), temp.C_String() + temp.GetLength());
 		}
 
 		template <>

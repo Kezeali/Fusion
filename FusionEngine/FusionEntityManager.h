@@ -93,7 +93,7 @@ namespace FusionEngine
 	static const unsigned int s_EntitiesPerPacket = 8;
 	static const unsigned int s_BodiesPerPacket = 12;
 
-	static const RakNet::BitSize_t s_MaxEntityData = 256;
+	static const RakNet::BitSize_t s_MaxEntityData = 8192;
 
 	class EntitySynchroniser : public PacketHandler
 	{
@@ -333,7 +333,7 @@ namespace FusionEngine
 		ObjectID RetrieveReference(uint32_t token);
 		void DropReference(uint32_t token);
 
-		void OnComponentAdded(EntityPtr& entity, ComponentPtr& component);
+		void OnComponentAdded(const EntityPtr& entity, const ComponentPtr& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
 

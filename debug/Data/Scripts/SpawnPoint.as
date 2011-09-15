@@ -22,6 +22,8 @@ class SpawnPoint : ScriptComponent
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
 		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 1);
+		if (!newEnt.isNull())
+		{
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		ontology.addComponent(newEnt, "TestB", "script_b");
@@ -42,6 +44,8 @@ class SpawnPoint : ScriptComponent
 		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
 		
 		return EntityWrapper(newEnt);
+		}
+		return null;
 	}
 	
 	EntityWrapper@ entityA;
@@ -55,7 +59,8 @@ class SpawnPoint : ScriptComponent
 			
 			@entityA = createPlayerEntity(itransform.Position);
 			
-			entityA.script_b.speed = 3.0f;
+			if (entityA !is null)
+				entityA.script_b.speed = 3.0f;
 			
 			isprite.ImagePath = "";
 		}
