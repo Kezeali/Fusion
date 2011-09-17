@@ -64,6 +64,8 @@ namespace FusionEngine
 		std::shared_ptr<ISystemWorld> CreateWorld();
 	};
 
+	class AuthorityContactListener;
+
 	class Box2DWorld : public ISystemWorld
 	{
 		friend class Box2DTask;
@@ -89,6 +91,8 @@ namespace FusionEngine
 
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_BodiesToCreate;
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
+
+		AuthorityContactListener* m_AuthContactListener;
 
 		b2World* m_World;
 		Box2DTask* m_B2DTask;

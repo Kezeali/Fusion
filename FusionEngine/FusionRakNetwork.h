@@ -242,7 +242,7 @@ namespace FusionEngine
 		void DeallocatePacket(RakNet::Packet* packet);
 
 		//! Returns RakNet stats
-		RakNet::RakNetStatistics *const GetStatistics(const RakNet::RakNetGUID &guid);
+		std::shared_ptr<RakNet::RakNetStatistics> GetStatistics(const RakNet::RakNetGUID &guid);
 
 		//! Gets the ping to the given host
 		int GetPing(const RakNet::RakNetGUID& guid);
@@ -251,6 +251,7 @@ namespace FusionEngine
 		int GetLowestPing(const RakNet::RakNetGUID& guid);
 
 		const RakNet::RakPeerInterface* GetPeerInterface() const { return m_NetInterface; }
+		RakNet::RakPeerInterface* GetPeerInterface() { return m_NetInterface; }
 
 		//! Uses RakPeerInterface#ApplyNetworkSimulator to introduce fake lag
 		/*!

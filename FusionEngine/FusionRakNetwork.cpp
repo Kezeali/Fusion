@@ -254,10 +254,12 @@ namespace FusionEngine
 		m_NetInterface->DeallocatePacket(packet);
 	}
 
-	RakNetStatistics *const RakNetwork::GetStatistics(const RakNetGUID &guid)
+	std::shared_ptr<RakNet::RakNetStatistics> RakNetwork::GetStatistics(const RakNetGUID &guid)
 	{
+		auto stats = std::make_shared<RakNetStatistics>();
 		SystemAddress system = m_NetInterface->GetSystemAddressFromGuid(guid);
-		return m_NetInterface->GetStatistics(system);
+		m_NetInterface->GetStatistics(system, stats.get());
+		return stats;
 	}
 
 	int RakNetwork::GetPing(const RakNetGUID &guid)

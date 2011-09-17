@@ -31,6 +31,12 @@
 
 #include "FusionBox2DComponent.h"
 
+// TEMP: For authority contact listener:
+#include "FusionEntity.h"
+#include "FusionPlayerRegistry.h"
+#include "FusionNetworkManager.h"
+#include "FusionRender2DComponent.h"
+
 namespace FusionEngine
 {
 
@@ -43,11 +49,93 @@ namespace FusionEngine
 		return std::make_shared<Box2DWorld>(this);
 	}
 
+	class AuthorityContactListener : public b2ContactListener
+	{
+	public:
+		AuthorityContactListener()
+		{
+		}
+
+		/// Called when two fixtures begin to touch.
+		void BeginContact(b2Contact* contact)
+		{
+			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
+			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
+			if (bodyComA && bodyComB)
+			{
+				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
+				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
+				if ((ownerA != 0 || authA != 0) && ownerB == 0)
+				{
+					if (ownerA != 0)
+						authA = ownerA;
+
+					if (authB == 0)
+						bodyComB->GetParent()->SetAuthority(authA);
+					else if (!NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authB).GUID))
+					{
+						bodyComB->GetParent()->SetAuthority(authA);
+					}
+					if (bodyComB->GetParent()->GetAuthority() == authA)
+						if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
+							sprite->Colour.Set(CL_Colorf(authA / 16.f, 1.f, 1.f, 1.f));
+				}
+				if ((ownerB != 0 || authB != 0) && ownerA == 0)
+				{
+					if (ownerB != 0)
+						authB = ownerB;
+
+					if (authA == 0)
+						bodyComA->GetParent()->SetAuthority(authB);
+					else if (!NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authA).GUID))
+					{
+						bodyComA->GetParent()->SetAuthority(authB);
+					}
+					if (bodyComA->GetParent()->GetAuthority() == authB)
+						if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
+							sprite->Colour.Set(CL_Colorf(authB / 16.f, 1.f, 1.f, 1.f));
+				}
+			}
+		}
+
+		/// Called when two fixtures cease to touch.
+		void EndContact(b2Contact* contact)
+		{
+			// TODO: handle multiple contacts (keep update authority to most senior as they are removed)
+			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
+			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
+			if (bodyComA && bodyComB)
+			{
+				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
+				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
+				if (ownerA != 0)
+					authA = ownerA;
+				if (ownerB != 0)
+					authB = ownerB;
+
+				if (authA != 0 && ownerB == 0 && authB == authA)
+					bodyComB->GetParent()->SetAuthority(0);
+				if (authB != 0 && ownerA == 0 && authA == authB)
+					bodyComA->GetParent()->SetAuthority(0);
+
+				if (bodyComA->GetParent()->GetAuthority() == 0)
+					if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
+						sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+				if (bodyComB->GetParent()->GetAuthority() == 0)
+					if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
+						sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+			}
+		}
+	};
+
 	Box2DWorld::Box2DWorld(IComponentSystem* system)
 		: ISystemWorld(system)
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
 		m_World = new b2World(gravity, true);
+
+		m_AuthContactListener = new AuthorityContactListener();
+		m_World->SetContactListener(m_AuthContactListener);
 
 		m_B2DTask = new Box2DTask(this, m_World);
 		m_B2DInterpTask = new Box2DInterpolateTask(this);
@@ -58,6 +146,7 @@ namespace FusionEngine
 		delete m_B2DInterpTask;
 		delete m_B2DTask;
 		delete m_World;
+		delete m_AuthContactListener;
 	}
 
 	std::vector<std::string> Box2DWorld::GetTypes() const

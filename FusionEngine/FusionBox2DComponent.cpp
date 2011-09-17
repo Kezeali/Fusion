@@ -52,6 +52,7 @@ namespace FusionEngine
 		FSN_ASSERT(world);
 		FSN_ASSERT(m_Body == nullptr);
 
+		m_Def.userData = this;
 		m_Body = world->CreateBody(&m_Def);
 
 		const auto& tf = m_Body->GetTransform();
@@ -78,7 +79,9 @@ namespace FusionEngine
 	{
 		if (auto fixtureCom = boost::dynamic_pointer_cast<Box2DFixture>(com))
 		{
-			m_Fixtures.insert(fixtureCom);
+			if (m_Fixtures.insert(fixtureCom).second)
+				if (m_Body)
+					fixtureCom->ConstructFixture(this);
 		}
 	}
 

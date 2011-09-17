@@ -33,6 +33,9 @@
 #include "FusionRenderer.h"
 
 #include "FusionProfiling.h"
+#include "FusionNetworkManager.h"
+#include "FusionRakNetwork.h"
+#include <RakNetStatistics.h>
 
 #include "FusionPhysicsDebugDraw.h"
 
@@ -151,6 +154,7 @@ namespace FusionEngine
 	{
 		auto gc = m_Renderer->GetGraphicContext();
 		m_DebugFont = CL_Font(gc, "Lucida Console", 22);
+		m_DebugFont2 = CL_Font(gc, "Lucida Console", 14);
 	}
 
 	CLRenderTask::~CLRenderTask()
@@ -268,7 +272,7 @@ namespace FusionEngine
 		CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
 
 		{
-		auto& pf = Profiling::getSingleton().GetTimes();
+		auto pf = Profiling::getSingleton().GetTimes();
 		CL_Pointf pfLoc(10.f, 90.f);
 		for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 		{
@@ -281,12 +285,72 @@ namespace FusionEngine
 		}
 		}
 
-		//if (!m_PhysDebugDraw)
-		//{
-		//	m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
-		//	m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
-		//	m_PhysDebugDraw->SetFlags(0xFFFFFFFF);
-		//}
+		{
+			auto network = NetworkManager::GetNetwork();
+
+			if (network->IsConnected())
+			{
+				CL_Pointf pfLoc(400.f, 40.f);
+
+				unsigned short numberSystems = network->GetPeerInterface()->GetMaximumNumberOfPeers();
+				network->GetPeerInterface()->GetConnectionList(nullptr, &numberSystems);
+				std::vector<RakNet::SystemAddress> remoteSystems(numberSystems);
+				network->GetPeerInterface()->GetConnectionList(remoteSystems.data(), &numberSystems);
+
+				RakNet::RakNetStatistics stats;
+				for (unsigned short i = 0; i < numberSystems; ++i)
+				{
+					network->GetPeerInterface()->GetStatistics(remoteSystems[i], &stats);
+
+					std::vector<std::string> lines;
+
+					{
+						char address[256];
+						remoteSystems[i].ToString(true, address);
+						lines.push_back(std::string(address) + ":");
+					}
+
+					std::stringstream str;
+
+					int ping = network->GetPeerInterface()->GetAveragePing(remoteSystems[i]);
+					str << ping;
+					lines.push_back("Ping: " + str.str());
+					str.str("");
+
+					str << stats.BPSLimitByCongestionControl;
+					lines.push_back(
+						std::string("Congested: ") + std::string(stats.isLimitedByCongestionControl ? "yes" : "no") + std::string(stats.isLimitedByOutgoingBandwidthLimit ? " (arb)" : "") + std::string("  BPS limit: ") + str.str()
+						);
+					str.str("");
+					for (size_t p = 0; p < NUMBER_OF_PRIORITIES; ++p)
+					{
+						str << "P" << p;
+						str << "  Msg: " << stats.messageInSendBuffer[p] << " (r " << stats.messagesInResendBuffer << ")";
+						str << "  Byt: " << stats.bytesInSendBuffer[p] << " (r " << stats.bytesInResendBuffer << ")";
+						lines.push_back(str.str());
+						str.str("");
+					}
+					str << "Packet loss: " << stats.packetlossLastSecond;
+					lines.push_back(str.str());
+					str.str("");
+
+					lines.push_back("---");
+
+					for (auto it = lines.begin(), end = lines.end(); it != end; ++it)
+					{
+						m_DebugFont2.draw_text(gc, pfLoc, *it);
+						pfLoc.y += m_DebugFont2.get_text_size(gc, *it).height;
+					}
+				}
+			}
+		}
+
+		if (!m_PhysDebugDraw)
+		{
+			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
+			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
+			m_PhysDebugDraw->SetFlags(0xFFFFFFFF);
+		}
 
 		if (m_PhysDebugDraw && !viewports.empty())
 		{

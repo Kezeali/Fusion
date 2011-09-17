@@ -93,7 +93,7 @@ namespace FusionEngine
 	static const unsigned int s_EntitiesPerPacket = 8;
 	static const unsigned int s_BodiesPerPacket = 12;
 
-	static const RakNet::BitSize_t s_MaxEntityData = 8192;
+	static const RakNet::BitSize_t s_MaxDataPerTick = 8000;
 
 	class EntitySynchroniser : public PacketHandler
 	{
@@ -104,7 +104,7 @@ namespace FusionEngine
 		const EntityArray &GetReceivedEntities() const;
 
 		//! Sends data
-		void Send();
+		//void Send();
 
 		void OnEntityActivated(EntityPtr &entity);
 
@@ -118,8 +118,8 @@ namespace FusionEngine
 
 	private:
 		// Things called by ProcessQueue
-		void WriteHeaderAndInput(RakNet::BitStream& packetData);
-		void WriteEntities(RakNet::BitStream& packetData);
+		void WriteHeaderAndInput(bool important, RakNet::BitStream& packetData);
+		void SendPackets();
 		bool ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory);
 
 		ConsolidatedInput *m_PlayerInputs;
@@ -135,10 +135,10 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> m_EntitiesToReceive;
 
-		typedef std::map<ObjectID, std::shared_ptr<RakNet::BitStream>> ObjectStatesMap;
+		typedef std::map<ObjectID, std::pair<bool, std::shared_ptr<RakNet::BitStream>>> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
-		ObjectStatesMap m_SentStates;
+		std::map<RakNet::RakNetGUID, std::map<ObjectID, uint64_t>> m_SentStates;
 
 		struct EntityPacketData
 		{
@@ -146,10 +146,12 @@ namespace FusionEngine
 			SerialisedData State;
 		};
 
+		std::vector<EntityPtr> m_ImportantEntities; // entities which have player inputs that have changed state
+
 		typedef std::multimap<unsigned int, EntityPtr, std::greater<unsigned int>> EntityPriorityMap;
 		EntityPriorityMap m_EntityPriorityQueue;
 
-		size_t m_EntityDataUsed;
+		int64_t m_PacketDataBudget;
 
 		struct SystemPriority
 		{
@@ -162,6 +164,7 @@ namespace FusionEngine
 		SystemArray m_PacketDestinations;
 
 		bool m_ImportantMove;
+		bool m_FullSynch;
 		//std::string m_PacketData;
 		RakNet::BitStream m_PacketData;
 	};

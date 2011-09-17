@@ -944,6 +944,31 @@ public:
 					  str << range;
 						SendToConsole(str.str());
 					}
+
+					if (ev.id == CL_KEY_NUMPAD3)
+					{
+						network->SetDebugLag(100, 10);
+					}
+					if (ev.id == CL_KEY_NUMPAD6)
+					{
+						network->SetDebugLag(150, 50);
+					}
+					if (ev.id == CL_KEY_NUMPAD9)
+					{
+						network->SetDebugLag(200, 100);
+					}
+					if (ev.id == CL_KEY_NUMPAD8)
+					{
+						network->SetDebugPacketLoss(0.2f);
+					}
+					if (ev.id == CL_KEY_NUMPAD5)
+					{
+						network->SetDebugLag(0, 0);
+					}
+					if (ev.id == CL_KEY_NUMPAD5)
+					{
+						network->SetDebugPacketLoss(0);
+					}
 				});
 
 				{
@@ -1000,7 +1025,7 @@ public:
 
 					CL_KeepAlive::process();
 
-					if (compile)
+					if (compile && editMode)
 					{
 						compile = false;
 
@@ -1069,7 +1094,6 @@ public:
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
 						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
-						entitySynchroniser->Send();
 					}
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?

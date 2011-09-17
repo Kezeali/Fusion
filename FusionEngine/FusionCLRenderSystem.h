@@ -134,6 +134,7 @@ namespace FusionEngine
 		std::unique_ptr<B2DebugDraw> m_PhysDebugDraw;
 
 		CL_Font m_DebugFont;
+		CL_Font m_DebugFont2;
 	};
 
 }
