@@ -211,7 +211,7 @@ namespace FusionEngine
 
 	struct ActivationEvent
 	{
-		enum Type { Activate, Deactivate, DeactivateAll };
+		enum Type { Activate, Deactivate, DeactivateAll, RemoteActivation };
 		Type type;
 		EntityPtr entity;
 	};
@@ -292,17 +292,17 @@ namespace FusionEngine
 
 			bool firstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
 
-			struct IsObserver
+			struct HasSameCamera
 			{
-				explicit IsObserver(const CameraPtr &cam) : observedCamera(cam)
+				explicit HasSameCamera(const CameraPtr &cam) : newCamera(cam)
 				{}
 
 				bool operator() (const StreamingCamera& streamingCamera)
 				{
-					return streamingCamera.camera.lock() == observedCamera;
+					return streamingCamera.camera.lock() == newCamera;
 				}
 
-				const CameraPtr& observedCamera;
+				const CameraPtr& newCamera;
 			};
 		};
 

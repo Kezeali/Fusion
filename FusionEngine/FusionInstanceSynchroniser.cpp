@@ -31,6 +31,7 @@
 
 #include <BitStream.h>
 #include <RakNetTypes.h>
+#include <StringCompressor.h>
 #include <StringTable.h>
 #include <climits>
 
@@ -48,6 +49,8 @@
 #include "FusionScriptManager.h"
 #include "FusionAngelScriptComponent.h"
 
+#include "FusionEntitySerialisationUtils.h"
+
 using namespace RakNet;
 
 namespace FusionEngine
@@ -61,6 +64,7 @@ namespace FusionEngine
 
 		NetworkManager::getSingleton().Subscribe(MTID_INSTANCEENTITY, this);
 		NetworkManager::getSingleton().Subscribe(MTID_REMOVEENTITY, this);
+		NetworkManager::getSingleton().Subscribe(MTID_STARTSYNC, this);
 		NetworkManager::getSingleton().Subscribe(ID_NEW_INCOMING_CONNECTION, this);
 
 		ScriptManager::getSingleton().RegisterGlobalObject("Ontology ontology", this);
@@ -163,10 +167,21 @@ namespace FusionEngine
 			newEntityData.Write(name.c_str(), name.length());
 		}
 		if (id != 0)
-			m_Network->Send(To::Populace(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+			m_Network->Send(To::Populace(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 		else // This peer failed to generate an ID, so the job of instancing now goes to the arbiter
-			m_Network->Send(To::Arbiter(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+			m_Network->Send(To::Arbiter(), !Timestamped, MTID_INSTANCEENTITY, &newEntityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
+	}
 
+	void InstancingSynchroniser::sendFullSynch(NetDestination& destination, const EntityPtr& entity)
+	{
+		RakNet::BitStream entityData;
+
+		entityData.Write(entity->GetID());
+		entityData.Write(entity->GetOwnerID());
+		RakNet::StringCompressor::Instance()->EncodeString(entity->GetName().c_str(), 256, &entityData);
+		EntitySerialisationUtils::SerialiseEntity(entityData, entity, IComponent::All);
+
+		m_Network->Send(destination, !Timestamped, MTID_STARTSYNC, &entityData, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_ENTITYMANAGER);
 	}
 
 	EntityPtr InstancingSynchroniser::RequestInstance(EntityPtr &requester, bool syncable, const std::string &type, const std::string &name, Vector2 pos, float angle, PlayerID owner_id)
@@ -265,6 +280,8 @@ namespace FusionEngine
 			{
 				entity->AddComponent(com, identifier);
 				m_EntityManager->OnComponentAdded(entity, com);
+
+				//sendComponent(To::Populace(), entity, com);
 			}
 		}
 		// TODO: throw exception
@@ -276,98 +293,117 @@ namespace FusionEngine
 
 		unsigned char type;
 		receivedData.Read(type);
-		if (type == MTID_INSTANCEENTITY)
+		switch (type)
 		{
-			//ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
-			//receivedData.Read(requesterId);
-
-			std::string::size_type length;
-
-			// Read the entity transform type-name
-			char table_string[s_NetCompressedStringTrunc];
-			RakNet::StringTable::Instance()->DecodeString(table_string, s_NetCompressedStringTrunc, &receivedData);
-			std::string transformTypeName(table_string);
-			//receivedData.Read(length);
-			//entityType.resize(length);
-			//receivedData.Read(&entityType[0], length);
-			Vector2 position;
-			receivedData.Read(position.x);
-			receivedData.Read(position.y);
-			float angle;
-			receivedData.Read(angle);
-
-			ObjectID id;
-			receivedData.Read(id);
-			PlayerID ownerId;
-			receivedData.Read(ownerId);
-
-			TakeID(id);
-
-			// Entity name
-			std::string name;
-			if (receivedData.ReadBit())
+		case MTID_INSTANCEENTITY:
 			{
-				receivedData.Read(length);
-				name.resize(length);
-				receivedData.Read(&name[0], length);
-			}
+				//ObjectID requesterId; // the entity that requested this instance (the OnRequestFulfilled method must be called on this object)
+				//receivedData.Read(requesterId);
 
-			// id == 0 indicates that a peer is requesting an id for this entity
-			if (id == 0)
-			{
-				//if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
-				//	id = m_WorldIdGenerator.getFreeID();
+				std::string::size_type length;
 
-				// I've decided that peers should just use their own IDs; using up the
-				//  world/arbiter id's when a peer runs out seems foolish
-				return;
-			}
+				// Read the entity transform type-name
+				char table_string[s_NetCompressedStringTrunc];
+				RakNet::StringTable::Instance()->DecodeString(table_string, s_NetCompressedStringTrunc, &receivedData);
+				std::string transformTypeName(table_string);
+				//receivedData.Read(length);
+				//entityType.resize(length);
+				//receivedData.Read(&entityType[0], length);
+				Vector2 position;
+				receivedData.Read(position.x);
+				receivedData.Read(position.y);
+				float angle;
+				receivedData.Read(angle);
 
-			auto transform = m_Factory->InstanceComponent(transformTypeName, position, angle);
-			if (!transform)
-				FSN_EXCEPT(InstanceSyncException, type + " doesn't exist, so you can't instantiate an entity with it.");
-			if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
-				FSN_EXCEPT(InstanceSyncException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
+				ObjectID id;
+				receivedData.Read(id);
+				PlayerID ownerId;
+				receivedData.Read(ownerId);
 
-			EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
-			if (!entity)
-				FSN_EXCEPT(InstanceSyncException, "Failed to create entity");
+				TakeID(id);
 
-			entity->SetID(id);
-			entity->SetOwnerID(ownerId);
-			if (!name.empty())
-				entity->SetName(name);
-
-			transform->SynchronisePropertiesNow();
-
-			m_EntityManager->AddEntity(entity);
-
-			//EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
-			//if (requester)
-			//	requester->OnInstanceRequestFulfilled(entity);
-		}
-		else if (type == MTID_REMOVEENTITY)
-		{
-			ObjectID removedId;
-			receivedData.Read(removedId);
-
-			m_EntityManager->RemoveEntityById(removedId);
-		}
-		else if (type == ID_NEW_INCOMING_CONNECTION && NetworkManager::ArbitratorIsLocal())
-		{
-			const auto& entities = m_EntityManager->GetEntities();
-			for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
-			{
-				auto transformComponent = it->second->GetTransform();
-				auto transform = dynamic_cast<ITransform*>(transformComponent.get());
-				if (transform)
+				// Entity name
+				std::string name;
+				if (receivedData.ReadBit())
 				{
-					sendInstancingMessage(0, it->second->GetID(),
-						transformComponent->GetType(), transform->Position.Get(), transform->Angle.Get(),
-						it->second->GetName(), it->second->GetOwnerID());
+					receivedData.Read(length);
+					name.resize(length);
+					receivedData.Read(&name[0], length);
+				}
+
+				// id == 0 indicates that a peer is requesting an id for this entity
+				if (id == 0)
+				{
+					//if ((m_WorldIdGenerator.peekNextID() & 0x8000) == 0)
+					//	id = m_WorldIdGenerator.getFreeID();
+
+					// I've decided that peers should just use their own IDs; using up the
+					//  world/arbiter id's when a peer runs out seems foolish
+					return;
+				}
+
+				auto transform = m_Factory->InstanceComponent(transformTypeName, position, angle);
+				if (!transform)
+					FSN_EXCEPT(InstanceSyncException, type + " doesn't exist, so you can't instantiate an entity with it.");
+				if (dynamic_cast<ITransform*>(transform.get()) == nullptr)
+					FSN_EXCEPT(InstanceSyncException, type + " doesn't implement ITransform, so you can't instantiate an entity with it.");
+
+				EntityPtr entity = std::make_shared<Entity>(m_EntityManager, &m_EntityManager->m_PropChangedQueue, transform);
+				if (!entity)
+					FSN_EXCEPT(InstanceSyncException, "Failed to create entity");
+
+				entity->SetID(id);
+				entity->SetOwnerID(ownerId);
+				if (!name.empty())
+					entity->SetName(name);
+
+				transform->SynchronisePropertiesNow();
+
+				m_EntityManager->AddEntity(entity);
+
+				//EntityPtr requester = m_EntityManager->GetEntity(requesterId, false);
+				//if (requester)
+				//	requester->OnInstanceRequestFulfilled(entity);
+			}
+			break;
+		case MTID_REMOVEENTITY:
+			{
+				ObjectID removedId;
+				receivedData.Read(removedId);
+
+				m_EntityManager->RemoveEntityById(removedId);
+			}
+			break;
+		case MTID_STARTSYNC:
+			{
+				ObjectID id;
+				receivedData.Read(id);
+				PlayerID ownerId;
+				receivedData.Read(ownerId);
+				std::string name;
+				{
+					char nameBuf[256];
+					RakNet::StringCompressor::Instance()->DecodeString(nameBuf, 256, &receivedData);
+					name = nameBuf;
+				}
+				EntityPtr entity = EntitySerialisationUtils::DeserialiseEntity(receivedData, m_Factory, m_EntityManager);
+				entity->SetID(id);
+				entity->SetOwnerID(ownerId);
+				entity->SetName(name);
+				m_EntityManager->AddEntity(entity);
+			}
+			break;
+		case ID_NEW_INCOMING_CONNECTION:
+			if (NetworkManager::ArbitratorIsLocal())
+			{
+				const auto& entities = m_EntityManager->GetEntities();
+				for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
+				{
+					sendFullSynch(NetDestination(packet->guid, false), it->second);
 				}
 			}
-		}
+			break;
+		} // end switch (type)
 	}
 
 	static EntityPtr InstantiationSynchroniser_Instantiate(ASScript* app_obj, const std::string& transform_component, bool synch, Vector2 pos, float angle, PlayerID owner_id, const std::string& name, InstancingSynchroniser* obj)

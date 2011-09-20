@@ -30,6 +30,7 @@
 #include "FusionEntityManager.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/crc.hpp>
 #include <BitStream.h>
 #include <RakNetStatistics.h>
 
@@ -191,6 +192,27 @@ namespace FusionEngine
 
 //#define FSN_PARALLEL_SERIALISE
 
+#ifdef FSN_PARALLEL_SERIALISE
+	typedef tbb::concurrent_vector<std::pair<ObjectID, RakNet::BitStream>> DataToSend_t;
+#else
+	typedef std::vector<std::pair<ObjectID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
+#endif
+
+	static void writeStates(RakNet::BitStream& packetData, const DataToSend_t& dataToSend)
+	{
+		auto numStates = (unsigned short)dataToSend.size();
+		packetData.Write(numStates);
+		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
+		{
+			ObjectID id = it->first;
+			auto& state = it->second;
+
+			packetData.Write(id);
+			packetData.Write(state->GetNumberOfBitsUsed());
+			packetData.Write(*state, state->GetNumberOfBitsUsed());
+		}
+	}
+
 	void EntitySynchroniser::SendPackets()
 	{
 		auto network = NetworkManager::GetNetwork();
@@ -198,15 +220,12 @@ namespace FusionEngine
 		struct PersonalisedData
 		{
 			BitSize_t dataUsed;
-#ifdef FSN_PARALLEL_SERIALISE
-			tbb::concurrent_vector<std::pair<ObjectID, RakNet::BitStream>> dataToSend;
-#else
-			std::vector<std::pair<ObjectID, std::shared_ptr<RakNet::BitStream>>> dataToSend;
-#endif
+			DataToSend_t continuousData;
+			DataToSend_t occasionalData;
 			bool important;
+			PersonalisedData() : important(false) {}
 		};
 		std::map<RakNet::RakNetGUID, PersonalisedData> dataToSendToSystems;
-		std::map<RakNet::RakNetGUID, PersonalisedData> occDataToSendToSystems;
 
 		bool important = true;
 
@@ -220,7 +239,8 @@ namespace FusionEngine
 			if (!remoteViewers.empty())
 			{
 				auto state = std::make_shared<RakNet::BitStream>();
-				if (SerialiseEntity(*state, entity, IComponent::All))
+				if (important || PlayerRegistry::IsLocal(entity->GetOwnerID()) || PlayerRegistry::IsLocal(entity->GetAuthority()))
+				if (SerialiseContinuous(*state, entity, IComponent::All))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 
@@ -231,12 +251,43 @@ namespace FusionEngine
 						{
 							auto& dataInfo = dataToSendToSystems[*vit];
 
-							dataInfo.dataToSend.push_back(std::make_pair(entity->GetID(), /*std::move*/(state)));
+							dataInfo.continuousData.push_back(std::make_pair(entity->GetID(), state));
 							dataInfo.important |= important; // If the dataset contains any important entity changes, it must be sent as Important data
 
 							m_PacketDataBudget -= stateSize;
 
 							entity->AddedToPacket();
+						}
+					}
+				}
+				state = std::make_shared<RakNet::BitStream>();
+				if (SerialiseOccasional(*state, entity, IComponent::All))
+				{
+					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
+					
+					boost::crc_16_type crc;
+					crc.process_bytes(state->GetData(), state->GetNumberOfBytesUsed());
+					auto newChecksum = crc.checksum();
+
+					for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
+					{
+						// Check whether this will fit within the quota
+						if (m_PacketDataBudget - stateSize >= 0)
+						{
+							auto& dataInfo = dataToSendToSystems[*vit];
+							
+							auto& existingChecksum = m_SentStates[*vit][entity->GetID()];
+							if (newChecksum != existingChecksum)
+							{
+								dataInfo.occasionalData.push_back(std::make_pair(entity->GetID(), state));
+								dataInfo.important |= important; // If the dataset contains any important entity changes, it must be sent as Important data
+
+								m_PacketDataBudget -= stateSize;
+
+								entity->AddedToPacket();
+
+								existingChecksum = newChecksum;
+							}
 						}
 					}
 				}
@@ -262,41 +313,56 @@ namespace FusionEngine
 		);
 #endif
 
-		RakNet::BitStream packetData;
+		RakNet::BitStream contPacketData, occnPacketData;
 		for (auto sit = dataToSendToSystems.cbegin(), send = dataToSendToSystems.cend(); sit != send; ++sit)
 		{
 			const auto& dest = sit->first;
-			auto& dataToSend = sit->second.dataToSend;
+			auto& contData = sit->second.continuousData;
+			auto& occnData = sit->second.occasionalData;
 			bool important = sit->second.important;
-
-			// Write input if this is an important packet
-			WriteHeaderAndInput(important, packetData);
-
-			auto numStates = (unsigned short)dataToSend.size();
-			packetData.Write(numStates);
-			for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
-			{
-				ObjectID id = it->first;
-				auto& state = it->second;
-
-				packetData.Write(id);
-				packetData.Write(state->GetNumberOfBitsUsed());
-				packetData.Write(*state, state->GetNumberOfBitsUsed());
-			}
 
 			if (important)
 			{
-				network->SendAsIs(NetDestination(dest, false), &packetData, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYSYNC);
+				// Write input if this is an important packet
+				WriteHeaderAndInput(important, contPacketData);
+
+				contPacketData.Write1();
+				contPacketData.Write1();
+
+				writeStates(contPacketData, contData);
+				writeStates(contPacketData, occnData);
+
+				network->SendAsIs(NetDestination(dest, false), &contPacketData, HIGH_PRIORITY, RELIABLE_ORDERED, CID_ENTITYSYNC);
 			}
 			else
 			{
-				// TODO: send continious data in a separate packet to occasional data
-				//  Continious: HIGH_PRIORITY, UNRELIABLE_SEQUENCED
-				//  Occasional: LOW_PRIORITY, RELIABLE_ORDERED
-				network->SendAsIs(NetDestination(dest, false), &packetData, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
+				if (!contData.empty())
+				{
+					WriteHeaderAndInput(important, contPacketData);
+					// Packet contains continuous data and no occasional data
+					contPacketData.Write1();
+					contPacketData.Write0();
+
+					writeStates(contPacketData, contData);
+
+					network->SendAsIs(NetDestination(dest, false), &contPacketData, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, CID_ENTITYSYNC);
+				}
+
+				if (!occnData.empty())
+				{
+					WriteHeaderAndInput(important, occnPacketData);
+					// Packet contains no continuous data but does contain occasional data
+					occnPacketData.Write0();
+					occnPacketData.Write1();
+					// Write the actual data
+					writeStates(occnPacketData, occnData);
+
+					network->SendAsIs(NetDestination(dest, false), &occnPacketData, MEDIUM_PRIORITY, RELIABLE_SEQUENCED, CID_ENTITYSYNC);
+				}
 			}
 
-			packetData.Reset();
+			contPacketData.Reset();
+			occnPacketData.Reset();
 		}
 
 		m_EntityPriorityQueue.clear();
@@ -329,10 +395,15 @@ namespace FusionEngine
 		{
 			auto synchInfo = _where->second;
 
-			IComponent::SerialiseMode mode = synchInfo.first ? IComponent::All : IComponent::Changes;
-			auto& data = synchInfo.second;
+			IComponent::SerialiseMode mode = synchInfo.full ? IComponent::All : IComponent::Changes;
+			auto& continuous = synchInfo.continuous;
+			auto& occasional = synchInfo.occasional;
 
-			EntitySerialisationUtils::DeserialiseEntity(*data, entity, mode, factory, entity_manager);
+			if (continuous)
+				EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
+			if (occasional)
+				EntitySerialisationUtils::DeserialiseOccasional(*occasional, entity, mode, factory, entity_manager);
+
 			m_ReceivedStates.erase(_where);
 		}
 
@@ -341,13 +412,18 @@ namespace FusionEngine
 
 	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
 	{
+		if (!entity->IsSyncedEntity())
+			return false;
+
 		const bool arbitor = NetworkManager::ArbitratorIsLocal();
 		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		const bool isUnderLocalAuthority = isOwnedLocally || PlayerRegistry::IsLocal(entity->GetAuthority());
-		// Only send if: a) the entity is under default ownership and this system
-		//  is the arbitor, or b) the entity is owned locally / the entity is
-		//  under local authority
-		if (isUnderLocalAuthority)
+
+		if (!isUnderLocalAuthority)
+		{
+			m_EntitiesToReceive.push_back(entity);
+		}
+		//if (isUnderLocalAuthority)
 		{
 			// Calculate priority
 			unsigned int priority;
@@ -358,10 +434,10 @@ namespace FusionEngine
 			}
 			else
 			{
-				if (arbitor)
-					priority = (isOwnedLocally ? 2 : 1) * entity->GetSkippedPacketsCount();
-				else
-					priority = entity->GetSkippedPacketsCount();
+				//if (arbitor)
+					priority = (isUnderLocalAuthority ? 2 : 1) * entity->GetSkippedPacketsCount();
+				//else
+				//	priority = entity->GetSkippedPacketsCount();
 
 				m_EntityPriorityQueue.insert(std::make_pair(priority, entity));
 			}
@@ -370,10 +446,6 @@ namespace FusionEngine
 			//  it's skipped-count gets reset to zero, so the following operation will
 			//  be over-ruled
 			entity->PacketSkipped();
-		}
-		else
-		{
-			m_EntitiesToReceive.push_back(entity);
 		}
 
 		return false;
@@ -385,10 +457,10 @@ namespace FusionEngine
 			ReceiveSync(*it, entity_manager, factory);
 		m_EntitiesToReceive.clear();
 
-		if (m_PacketDataBudget < s_MaxDataPerTick)
+		if (m_PacketDataBudget < s_MaxDataPerTick * 2)
 			m_PacketDataBudget += s_MaxDataPerTick;
 		if (m_PacketDataBudget < -int64_t(s_MaxDataPerTick * 2))
-			m_PacketDataBudget = s_MaxDataPerTick;
+			m_PacketDataBudget = -int64_t(s_MaxDataPerTick * 2);
 		SendPackets();
 	}
 
@@ -410,6 +482,18 @@ namespace FusionEngine
 
 	//	m_PacketData.Reset();
 	//}
+
+	static void readState(RakNet::BitStream& sourceStr, std::shared_ptr<RakNet::BitStream>& state)
+	{
+		if (state)
+			state->Reset();
+		else
+			state = std::make_shared<RakNet::BitStream>();
+
+		BitSize_t dataLength;
+		sourceStr.Read(dataLength);
+		sourceStr.Read(*state, dataLength);
+	}
 
 	void EntitySynchroniser::HandlePacket(RakNet::Packet *packet)
 	{
@@ -456,28 +540,44 @@ namespace FusionEngine
 				}
 			}
 		case MTID_ENTITYMOVE:
-		case MTID_STARTSYNC:
 			{
+				const bool includesCon = bitStream.ReadBit();
+				const bool includesOca = bitStream.ReadBit();
+
 				unsigned short entityCount;
-				bitStream.Read(entityCount);
-				for (unsigned short i = 0; i < entityCount; i++)
+				if (includesCon)
 				{
-					ObjectID entityID;
-					bitStream.Read(entityID);
+					bitStream.Read(entityCount);
+					for (unsigned short i = 0; i < entityCount; i++)
+					{
+						ObjectID entityID;
+						bitStream.Read(entityID);
 
-					auto& info = m_ReceivedStates[entityID];
+						auto& info = m_ReceivedStates[entityID];
 
-					info.first = true; // indicates full data (not just changes)
+						info.full = true; // indicates full data (not just changes)
 
-					auto& storedData = info.second;
-					if (storedData)
-						storedData->Reset();
-					else
-						storedData = std::make_shared<RakNet::BitStream>();
+						readState(bitStream, info.continuous);
+					}
+				}
+				if (includesOca)
+				{
+					bitStream.Read(entityCount);
+					for (unsigned short i = 0; i < entityCount; i++)
+					{
+						ObjectID entityID;
+						bitStream.Read(entityID);
 
-					BitSize_t dataLength;
-					bitStream.Read(dataLength);
-					bitStream.Read(*storedData, dataLength);
+						auto& info = m_ReceivedStates[entityID];
+
+						info.full = true; // indicates full data (not just changes)
+
+						readState(bitStream, info.occasional);
+
+						boost::crc_16_type crc;
+						crc.process_bytes(info.occasional->GetData(), info.occasional->GetNumberOfBytesUsed());
+						//m_SentStates[packet->guid][entityID] = crc.checksum();
+					}
 				}
 			}
 			break;

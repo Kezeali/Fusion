@@ -44,7 +44,7 @@ namespace FusionEngine
 	 * These are used to sort messages (e.g. per subsystem). In the actual
 	 * packet, they come in the char after the Type ID (MTID_...)
 	 */
-	enum ChannelType
+	enum ChannelType : char
 	{
 		//@{
 		//! Channels

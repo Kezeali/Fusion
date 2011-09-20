@@ -50,7 +50,6 @@ namespace FusionEngine
 		m_Domain(GAME_DOMAIN),
 		m_Layer(0),
 		m_MarkedToRemove(false),
-		m_MarkedToDeactivate(false),
 		m_StreamedIn(false),
 		m_CellIndex(0xFFFFFFFF),
 		m_Spawned(false),
@@ -60,6 +59,8 @@ namespace FusionEngine
 		m_WaitStepsRemaining(0),
 		m_Manager(manager)
 	{
+		m_MarkedToDeactivate = false;
+
 		FSN_ASSERT(q);
 		m_PropChangedQueue = q;
 

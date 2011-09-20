@@ -349,7 +349,7 @@ namespace FusionEngine
 		{
 			m_PhysDebugDraw.reset(new B2DebugDraw(m_Renderer->GetGraphicContext()));
 			m_RenderWorld->m_PhysWorld->SetDebugDraw(m_PhysDebugDraw.get());
-			m_PhysDebugDraw->SetFlags(0xFFFFFFFF);
+			m_PhysDebugDraw->SetFlags(B2DebugDraw::e_centerOfMassBit | B2DebugDraw::e_jointBit | B2DebugDraw::e_pairBit | B2DebugDraw::e_shapeBit);
 		}
 
 		if (m_PhysDebugDraw && !viewports.empty())

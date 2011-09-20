@@ -49,7 +49,7 @@ namespace FusionEngine
 		{
 			bool dataWritten = false;
 
-			entity->SerialiseReferencedEntitiesList(out);
+			//entity->SerialiseReferencedEntitiesList(out);
 
 			auto compressor = RakNet::StringCompressor::Instance();
 
@@ -63,12 +63,15 @@ namespace FusionEngine
 				
 				RakNet::BitStream tempStream;
 				bool conData = transform->SerialiseContinuous(tempStream);
-				FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+				if (!conData)
+					tempStream.Reset();
 
 				const auto bitsUsedBeforeWriting = tempStream.GetNumberOfBitsUsed();
 				bool occData = transform->SerialiseOccasional(tempStream, mode);
-				FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
-
+				//FSN_ASSERT(occData || tempStream.GetNumberOfBitsUsed() == bitsUsedBeforeWriting);
+				if (!occData)
+					tempStream.SetWriteOffset(bitsUsedBeforeWriting);
 
 				out.Write(conData);
 				out.Write(occData);
@@ -86,6 +89,11 @@ namespace FusionEngine
 				{
 					auto& component = *it;
 					FSN_ASSERT(component.get() != transform);
+
+					auto dist = std::distance(components.begin(), it);
+					FSN_ASSERT(dist > 0);
+					size_t index = (size_t)dist;
+					out.Write(index);
 
 					std::string type = component->GetType();
 					std::string identifier = component->GetIdentifier();
@@ -122,9 +130,13 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseEntity(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		EntityPtr DeserialiseEntity(RakNet::BitStream& in, EntityFactory* factory, EntityManager* manager)
 		{
-			entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
+			EntityPtr entity;
+
+			auto mode = IComponent::All;
+
+			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
 			auto stringCompressor = RakNet::StringCompressor::Instance();
 
@@ -134,10 +146,10 @@ namespace FusionEngine
 				stringCompressor->DecodeString(&typeNameBuf[0], 256, &in);
 				std::string typeName(typeNameBuf);
 
-				FSN_ASSERT(entity->GetTransform()->GetType() == typeName);
-				transform = entity->GetTransform();
+				//FSN_ASSERT(entity->GetTransform()->GetType() == typeName);
+				//transform = entity->GetTransform();
 
-				//transform = factory->InstanceComponent(string.C_String());
+				transform = factory->InstanceComponent(typeName);
 
 				bool conData = in.ReadBit();
 				bool occData = in.ReadBit();
@@ -147,17 +159,22 @@ namespace FusionEngine
 					transform->DeserialiseOccasional(in, mode);
 			}
 
-			//transform->SynchronisePropertiesNow();
+			transform->SynchronisePropertiesNow();
+
+			entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
 
 			std::vector<ComponentPtr> localComponents;
 
-			auto& existingComponents = entity->GetComponents();
+			//auto& existingComponents = entity->GetComponents();
 
 			size_t numComponents;
 			in.Read(numComponents);
 			localComponents.reserve(numComponents);
 			for (size_t i = 0; i < numComponents; ++i)
 			{
+				size_t index;
+				in.Read(index);
+
 				char typeNameBuf[256u];
 				stringCompressor->DecodeString(&typeNameBuf[0], 256, &in);
 				std::string typeName(typeNameBuf);
@@ -165,22 +182,19 @@ namespace FusionEngine
 				stringCompressor->DecodeString(&identifierBuf[0], 256, &in);
 				std::string identifier(identifierBuf);
 				
-				auto componentEntry = std::find_if(existingComponents.begin(), existingComponents.end(), [&typeName, &identifier](const ComponentPtr& com)
-				{
-					return com->GetType() == typeName && com->GetIdentifier() == identifier;
-				});
+				//auto componentEntry = std::find_if(existingComponents.begin(), existingComponents.end(), [&typeName, &identifier](const ComponentPtr& com)
+				//{
+				//	return com->GetType() == typeName && com->GetIdentifier() == identifier;
+				//});
 				ComponentPtr component;
-				//entity->GetComponent(typeName, identifier);
-				//if (!component)
-				if (componentEntry != existingComponents.end())
-					component = *componentEntry;
-				else
+				//if (componentEntry != existingComponents.end())
+				//	component = *componentEntry;
+				//else
 				{
 					component = factory->InstanceComponent(typeName);
 					if (component)
 					{
 						entity->AddComponent(component, identifier);
-						manager->OnComponentAdded(entity, component);
 					}
 					else
 					{
@@ -202,6 +216,184 @@ namespace FusionEngine
 					if (conData)
 						component->DeserialiseContinuous(in);
 					if (occData)
+						component->DeserialiseOccasional(in, mode);
+				}
+			}
+
+			return entity;
+		}
+
+		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		{
+			bool dataWritten = false;
+
+			//entity->SerialiseReferencedEntitiesList(out);
+
+			auto compressor = RakNet::StringCompressor::Instance();
+
+			auto& components = entity->GetComponents();
+			size_t numComponents = components.size() - 1; // minus transform
+
+			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+			{			
+				RakNet::BitStream tempStream;
+				bool conData = transform->SerialiseContinuous(tempStream);
+				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+				if (!conData)
+					tempStream.Reset();
+
+				out.Write(conData);
+				out.Write(tempStream);
+
+				dataWritten |= conData;
+			}
+
+			out.Write(numComponents);
+			if (components.size() > 1)
+			{
+				auto begin = ++components.begin();
+				auto end = components.end();
+				for (auto it = begin; it != end; ++it)
+				{
+					auto& component = *it;
+					FSN_ASSERT(component.get() != transform);
+
+					RakNet::BitStream tempStream;
+					bool conData = component->SerialiseContinuous(tempStream);
+					//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+					if (conData)
+					{
+						out.Write1();
+						out.Write(tempStream);
+					}
+					else
+						out.Write0();
+
+					dataWritten |= conData;
+				}
+			}
+
+			return dataWritten;
+		}
+
+		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		{
+			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
+
+			auto stringCompressor = RakNet::StringCompressor::Instance();
+
+			ComponentPtr transform;
+			{
+				transform = entity->GetTransform();
+
+				bool conData = in.ReadBit();
+				if (conData)
+					transform->DeserialiseContinuous(in);
+			}
+
+			auto& existingComponents = entity->GetComponents();
+
+			size_t numComponents;
+			in.Read(numComponents);
+			FSN_ASSERT(numComponents == existingComponents.size() - 1);
+			if (numComponents != 0)
+			{
+				auto it = existingComponents.begin(), end = existingComponents.end();
+				for (++it; it != end; ++it)
+				{
+					auto& component = *it;
+					FSN_ASSERT(component != transform);
+
+					bool conData = in.ReadBit();
+					if (conData)
+						component->DeserialiseContinuous(in);
+				}
+			}
+		}
+
+		bool SerialiseOccasional(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		{
+			bool dataWritten = false;
+
+			//entity->SerialiseReferencedEntitiesList(out);
+
+			auto compressor = RakNet::StringCompressor::Instance();
+
+			auto& components = entity->GetComponents();
+			size_t numComponents = components.size() - 1; // minus transform
+
+			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+			{			
+				RakNet::BitStream tempStream;
+				bool conData = transform->SerialiseOccasional(tempStream, mode);
+				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+				if (!conData)
+					tempStream.Reset();
+
+				out.Write(conData);
+				out.Write(tempStream);
+
+				dataWritten |= conData;
+			}
+
+			out.Write(numComponents);
+			if (components.size() > 1)
+			{
+				auto begin = ++components.begin();
+				auto end = components.end();
+				for (auto it = begin; it != end; ++it)
+				{
+					auto& component = *it;
+					FSN_ASSERT(component.get() != transform);
+
+					RakNet::BitStream tempStream;
+					bool conData = component->SerialiseOccasional(tempStream, mode);
+					//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+					if (conData)
+					{
+						out.Write1();
+						out.Write(tempStream);
+					}
+					else
+						out.Write0();
+
+					dataWritten |= conData;
+				}
+			}
+
+			return dataWritten;
+		}
+
+		void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		{
+			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
+
+			auto stringCompressor = RakNet::StringCompressor::Instance();
+
+			ComponentPtr transform;
+			{
+				transform = entity->GetTransform();
+
+				bool conData = in.ReadBit();
+				if (conData)
+					transform->DeserialiseOccasional(in, mode);
+			}
+
+			auto& existingComponents = entity->GetComponents();
+
+			size_t numComponents;
+			in.Read(numComponents);
+			FSN_ASSERT(numComponents == existingComponents.size() - 1);
+			if (numComponents != 0)
+			{
+				auto it = existingComponents.begin(), end = existingComponents.end();
+				for (++it; it != end; ++it)
+				{
+					auto& component = *it;
+					FSN_ASSERT(component != transform);
+
+					bool conData = in.ReadBit();
+					if (conData)
 						component->DeserialiseOccasional(in, mode);
 				}
 			}

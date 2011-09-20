@@ -484,7 +484,7 @@ namespace FusionEngine
 		bool m_Hidden;
 		unsigned int m_WaitStepsRemaining;
 		bool m_MarkedToRemove;
-		bool m_MarkedToDeactivate;
+		tbb::atomic<bool> m_MarkedToDeactivate;
 
 		int m_Depth;
 

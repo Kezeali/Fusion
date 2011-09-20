@@ -181,7 +181,7 @@ namespace FusionEngine
 	{
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 
-		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam)))
+		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam)))
 		{
 			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
 		}
@@ -199,7 +199,7 @@ namespace FusionEngine
 	void StreamingManager::RemoveCamera(const CameraPtr &cam)
 	{
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
-		auto new_end = std::remove_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::IsObserver(cam));
+		auto new_end = std::remove_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam));
 		m_Cameras.erase(new_end, m_Cameras.end());
 	}
 
@@ -950,7 +950,7 @@ namespace FusionEngine
 						{
 							ActivateEntity(*cell, eit->first, eit->second);
 							if (!cell->inRange)
-								QueueEntityForDeactivation(eit->second);
+								QueueEntityForDeactivation(eit->second, true);
 						}
 					}
 				}

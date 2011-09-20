@@ -29,6 +29,10 @@
 
 #include "FusionBox2DComponent.h"
 
+// TEMP: auth test
+#include "FusionEntity.h"
+#include "FusionRender2DComponent.h"
+
 namespace FusionEngine
 {
 
@@ -36,7 +40,8 @@ namespace FusionEngine
 		: m_Def(def),
 		m_Body(nullptr),
 		m_Depth(0),
-		m_Interpolate(false)
+		m_Interpolate(false),
+		m_InteractingWithPlayer(false)
 	{
 		m_InterpPosition.set(def.position.x, def.position.y);
 		m_InterpAngle = def.angle;
@@ -75,6 +80,29 @@ namespace FusionEngine
 		m_FixtureMassDirty = false;
 	}
 
+	bool Box2DBody::AddInteraction(b2Body* other)
+	{
+		return m_Interacting.insert(other).second;
+	}
+
+	void Box2DBody::ClearInteractions()
+	{
+		//for (auto it = m_Interacting.cbegin(), end = m_Interacting.cend(); it != end; ++it)
+		//{
+		//	auto owner = GetParent()->GetOwnerID();
+		//	auto otherComponent = (Box2DBody*)(*it)->GetUserData();
+		//	auto otherAuth = otherComponent->GetParent()->GetAuthority();
+		//	if (owner != 0 && otherAuth == owner)
+		//	{
+		//		otherComponent->GetParent()->SetAuthority(0);
+
+		//		if (auto sprite = otherComponent->GetParent()->GetComponent<ISprite>())
+		//			sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+		//	}
+		//}
+		m_Interacting.clear();
+	}
+
 	void Box2DBody::OnSiblingAdded(const ComponentPtr& com)
 	{
 		if (auto fixtureCom = boost::dynamic_pointer_cast<Box2DFixture>(com))
@@ -97,15 +125,21 @@ namespace FusionEngine
 	{
 		if (GetBodyType() == Dynamic)
 		{
+			const bool awake = IsAwake();
+			stream.Write(awake);
+
 			const Vector2& pos = GetPosition();
 			stream.Write(pos.x);
 			stream.Write(pos.y);
 			stream.Write(GetAngle());
 
-			//const Vector2& vel = GetVelocity();
-			//stream.Write(vel.x);
-			//stream.Write(vel.y);
-			//stream.Write(GetAngularVelocity());
+			if (awake)
+			{
+				const Vector2& vel = GetVelocity();
+				stream.Write(vel.x);
+				stream.Write(vel.y);
+				stream.Write(GetAngularVelocity());
+			}
 
 			return true;
 		}
@@ -115,23 +149,39 @@ namespace FusionEngine
 
 	void Box2DBody::DeserialiseContinuous(RakNet::BitStream& stream)
 	{
+		bool awake = stream.ReadBit();
+		if (m_Body)
+			m_Body->SetAwake(awake);
+		else
+			m_Def.awake = true;
+
 		Vector2 position;
 		float angle;
 		stream.Read(position.x);
 		stream.Read(position.y);
 		stream.Read(angle);
 
+		m_SmoothTightness = 0.2f;
+
 		SetPosition(position);
 		SetAngle(angle);
 
-		//Vector2 linearVelocity;
-		//float angularVelocity;
-		//stream.Read(linearVelocity.x);
-		//stream.Read(linearVelocity.x);
-		//stream.Read(angularVelocity);
+		Vector2 linearVelocity;
+		float angularVelocity;
+		if (awake)
+		{
+			stream.Read(linearVelocity.x);
+			stream.Read(linearVelocity.x);
+			stream.Read(angularVelocity);
+		}
+		else
+		{
+			linearVelocity = Vector2::zero();
+			angularVelocity = 0.f;
+		}
 
-		//SetVelocity(linearVelocity);
-		//SetAngularVelocity(angularVelocity);
+		SetVelocity(linearVelocity);
+		SetAngularVelocity(angularVelocity);
 
 		//Position.MarkChanged();
 		//Angle.MarkChanged();
@@ -143,13 +193,13 @@ namespace FusionEngine
 	bool Box2DBody::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
 		bool dataWritten = m_DeltaSerialisationHelper.writeChanges(mode != Changes, stream,
-			IsActive(), IsSleepingAllowed(), IsAwake(), IsBullet(), IsFixedRotation(),
+			IsActive(), IsSleepingAllowed(), IsBullet(), IsFixedRotation(),
 			GetLinearDamping(), GetAngularDamping(), GetGravityScale());
 
 		if (GetBodyType() != Dynamic)
 		{
 			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> transformChanges;
-			dataWritten |= m_NonDynamicDeltaSerialisationHelper.writeChanges(mode != Changes, stream, b2v2(m_Def.position), m_Def.angle, b2v2(m_Def.linearVelocity), m_Def.angularVelocity);
+			dataWritten |= m_NonDynamicDeltaSerialisationHelper.writeChanges(mode != Changes, stream, IsAwake(), GetPosition(), GetAngle(), GetVelocity(), GetAngularVelocity());
 		}
 
 		return dataWritten;
@@ -159,10 +209,10 @@ namespace FusionEngine
 	{
 		{
 			std::bitset<DeltaSerialiser_t::NumParams> changes;
-			bool active, sleepingAllowed, awake, bullet, fixedrotation;
+			bool active, sleepingAllowed, bullet, fixedrotation;
 			float linearDamping, angularDamping, gravityScale;
 			m_DeltaSerialisationHelper.readChanges(stream, mode != Changes, changes,
-				active, sleepingAllowed, awake, bullet,
+				active, sleepingAllowed, bullet,
 				fixedrotation, linearDamping, angularDamping,
 				gravityScale);
 
@@ -172,8 +222,8 @@ namespace FusionEngine
 			if (changes[PropsIdx::SleepingAllowed])
 				//m_Body->SetSleepingAllowed(sleepingAllowed);
 				SetSleepingAllowed(sleepingAllowed);
-			if (changes[PropsIdx::Awake])
-				m_Body ? m_Body->SetAwake(awake) : m_Def.awake = awake;
+			//if (changes[PropsIdx::Awake])
+			//	if (m_Body) {/*m_Body->SetAwake(awake);*/} else m_Def.awake = awake;
 			if (changes[PropsIdx::Bullet])
 				//m_Body->SetBullet(bullet);
 				SetBullet(bullet);
@@ -196,8 +246,14 @@ namespace FusionEngine
 		{
 			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> changes;
 			Vector2 position, linearVelocity;
-			m_NonDynamicDeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, position, m_Def.angle, linearVelocity, m_Def.angularVelocity);
+			m_NonDynamicDeltaSerialisationHelper.readChanges(stream, mode != Changes, changes, m_Def.awake, position, m_Def.angle, linearVelocity, m_Def.angularVelocity);
 
+			if (changes[NonDynamicPropsIdx::Awake])
+			{
+				if (m_Body)
+					m_Body->SetAwake(m_Def.awake);
+				//Awake.MarkChanged();
+			}
 			if (changes[NonDynamicPropsIdx::Position])
 			{
 				SetPosition(position);

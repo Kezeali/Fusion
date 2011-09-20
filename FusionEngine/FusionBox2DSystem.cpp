@@ -49,6 +49,27 @@ namespace FusionEngine
 		return std::make_shared<Box2DWorld>(this);
 	}
 
+	class AuthorityContactFilter : public b2ContactFilter
+	{
+	public:
+		bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB)
+		{
+			Box2DBody* bodyComA = static_cast<Box2DBody*>(fixtureA->GetBody()->GetUserData());
+			Box2DBody* bodyComB = static_cast<Box2DBody*>(fixtureB->GetBody()->GetUserData());
+			if (bodyComA && bodyComB)
+			{
+				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
+				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
+				authA = std::max(ownerA, authA); authB = std::max(ownerB, authB);
+				if (authA != 0 && authB != 0 && !PlayerRegistry::IsLocal(authA) && !PlayerRegistry::IsLocal(authB))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+	};
+
 	class AuthorityContactListener : public b2ContactListener
 	{
 	public:
@@ -56,8 +77,9 @@ namespace FusionEngine
 		{
 		}
 
-		/// Called when two fixtures begin to touch.
-		void BeginContact(b2Contact* contact)
+		std::map<PlayerID, std::set<b2Body*>> m_Interacting;
+
+		void AddContact(b2Contact* contact)
 		{
 			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
 			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
@@ -69,6 +91,8 @@ namespace FusionEngine
 				{
 					if (ownerA != 0)
 						authA = ownerA;
+
+					m_Interacting[ownerA].insert(contact->GetFixtureB()->GetBody());
 
 					if (authB == 0)
 						bodyComB->GetParent()->SetAuthority(authA);
@@ -85,6 +109,8 @@ namespace FusionEngine
 					if (ownerB != 0)
 						authB = ownerB;
 
+					m_Interacting[ownerB].insert(contact->GetFixtureA()->GetBody());
+
 					if (authA == 0)
 						bodyComA->GetParent()->SetAuthority(authB);
 					else if (!NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authA).GUID))
@@ -98,33 +124,48 @@ namespace FusionEngine
 			}
 		}
 
+		/// Called when two fixtures begin to touch.
+		void BeginContact(b2Contact*)
+		{
+		}
+
 		/// Called when two fixtures cease to touch.
 		void EndContact(b2Contact* contact)
 		{
-			// TODO: handle multiple contacts (keep update authority to most senior as they are removed)
 			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
 			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
 			if (bodyComA && bodyComB)
 			{
 				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
-				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
 				if (ownerA != 0)
-					authA = ownerA;
+					m_Interacting[ownerA].erase(contact->GetFixtureB()->GetBody());
 				if (ownerB != 0)
-					authB = ownerB;
-
-				if (authA != 0 && ownerB == 0 && authB == authA)
-					bodyComB->GetParent()->SetAuthority(0);
-				if (authB != 0 && ownerA == 0 && authA == authB)
-					bodyComA->GetParent()->SetAuthority(0);
-
-				if (bodyComA->GetParent()->GetAuthority() == 0)
-					if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
-						sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
-				if (bodyComB->GetParent()->GetAuthority() == 0)
-					if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
-						sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+					m_Interacting[ownerB].erase(contact->GetFixtureA()->GetBody());
 			}
+			//// TODO: handle multiple contacts (keep update authority to most senior as they are removed)
+			//Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
+			//Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
+			//if (bodyComA && bodyComB)
+			//{
+			//	auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
+			//	auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
+			//	if (ownerA != 0)
+			//		authA = ownerA;
+			//	if (ownerB != 0)
+			//		authB = ownerB;
+
+			//	if (authA != 0 && ownerB == 0 && authB == authA)
+			//		bodyComB->GetParent()->SetAuthority(0);
+			//	if (authB != 0 && ownerA == 0 && authA == authB)
+			//		bodyComA->GetParent()->SetAuthority(0);
+
+			//	if (bodyComA->GetParent()->GetAuthority() == 0)
+			//		if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
+			//			sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+			//	if (bodyComB->GetParent()->GetAuthority() == 0)
+			//		if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
+			//			sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+			//}
 		}
 	};
 
@@ -376,7 +417,7 @@ namespace FusionEngine
 				if (awake != body->Awake.Get())
 				{
 					body->Awake.MarkChanged();
-					body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
+					//body->m_DeltaSerialisationHelper.markChanged(Box2DBody::PropsIdx::Awake);
 				}
 				if (awake)
 				{
@@ -391,6 +432,51 @@ namespace FusionEngine
 					body->Angle.MarkChanged();
 					body->Velocity.MarkChanged();
 					body->AngularVelocity.MarkChanged();
+
+					if (body->GetParent()->GetOwnerID() != 0)
+					{
+						body->ClearInteractions();
+
+						auto b2b = body->Getb2Body();
+						std::deque<b2Body*> bodiesStack;
+						while (b2b)
+						{
+							auto contactList = b2b->GetContactList();
+							for (auto c = contactList; c != nullptr; c = c->next)
+							{
+								if (c->contact->IsTouching())
+								{
+									m_B2DSysWorld->m_AuthContactListener->AddContact(c->contact);
+									if (body->AddInteraction(c->other))
+										bodiesStack.push_back(c->other);
+								}
+							}
+							if (!bodiesStack.empty())
+							{
+								b2b = bodiesStack.back();
+								bodiesStack.pop_back();
+							}
+							else
+								b2b = nullptr;
+						}
+					}
+				}
+				else
+				{
+					//if (!body->IsInteractingWithPlayer())
+					{
+						auto owner = body->GetParent()->GetOwnerID();
+						auto auth = body->GetParent()->GetAuthority();
+
+						if (owner == 0 && auth != 0)
+						{
+							body->GetParent()->SetAuthority(0);
+
+							if (body->GetParent()->GetAuthority() == 0)
+								if (auto sprite = body->GetParent()->GetComponent<ISprite>())
+									sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+						}
+					}
 				}
 			}
 

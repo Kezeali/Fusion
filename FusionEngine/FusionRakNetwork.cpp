@@ -180,17 +180,17 @@ namespace FusionEngine
 		return m_FullyConnectedMeshPlugin.GetConnectedHost();
 	}
 
-	bool RakNetwork::SendAsIs(const NetDestination& destination, const char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
+	bool RakNetwork::SendAsIs(const NetDestination& destination, const char* data, unsigned int length, PacketPriority priority, PacketReliability reliability, char channel)
 	{
 		return m_NetInterface->Send(data, length, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 	}
 
-	bool RakNetwork::SendAsIs(const NetDestination& destination, const RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
+	bool RakNetwork::SendAsIs(const NetDestination& destination, const RakNet::BitStream *data, PacketPriority priority, PacketReliability reliability, char channel)
 	{
 		return m_NetInterface->Send(data, rakPriority(priority), rakReliability(reliability), channel, destination.GUID, destination.Broadcast) != 0;
 	}
 
-	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, char* data, unsigned int length, NetPriority priority, NetReliability reliability, char channel)
+	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, char* data, unsigned int length, PacketPriority priority, PacketReliability reliability, char channel)
 	{
 		RakNet::BitStream bits;
 		if (timestamped)
@@ -208,7 +208,7 @@ namespace FusionEngine
 			return m_NetInterface->Send(&bits, rakPriority(priority), rakReliability(reliability), channel, GetLocalGUID(), destination.Broadcast) != 0;
 	}
 
-	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, RakNet::BitStream *data, NetPriority priority, NetReliability reliability, char channel)
+	bool RakNetwork::Send(const NetDestination &destination, bool timestamped, unsigned char type, RakNet::BitStream *data, PacketPriority priority, PacketReliability reliability, char channel)
 	{
 		FSN_ASSERT(type >= ID_USER_PACKET_ENUM);
 

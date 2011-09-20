@@ -59,24 +59,24 @@ namespace FusionEngine
 		FSN_LIST_INTERFACES((ITransform)(IRigidBody))
 
 		struct PropsIdx { enum Names : size_t {
-			Active, SleepingAllowed, Awake, Bullet, FixedRotation,
+			Active, SleepingAllowed, Bullet, FixedRotation,
 			LinearDamping, AngularDamping,
 			GravityScale,
 			NumProps
 		}; };
 		typedef SerialisationHelper<
-			bool, bool, bool, bool, bool, // active, SleepingAllowed, IsAwake, IsBullet, IsFixedRotation
+			bool, bool, bool, bool, // IsActive, SleepingAllowed, IsBullet, IsFixedRotation
 			float, float, // Linear, angular Damping
 			float> // GravityScale
 			DeltaSerialiser_t;
 		static_assert(PropsIdx::NumProps == DeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
 		struct NonDynamicPropsIdx { enum Names : size_t {
-			Position, Angle, LinearVelocity, AngularVelocity,
+			Awake, Position, Angle, LinearVelocity, AngularVelocity,
 			NumProps
 		}; };
 		typedef SerialisationHelper<
-			Vector2, float, Vector2, float> // Position, Angle, LinearVelocity, AngularVelocity
+			bool, Vector2, float, Vector2, float> // IsAwake, Position, Angle, LinearVelocity, AngularVelocity
 			NonDynamicDeltaSerialiser_t;
 		static_assert(NonDynamicPropsIdx::NumProps == NonDynamicDeltaSerialiser_t::NumParams, "Must define names for each param in the SerialisationHelper");
 
@@ -92,6 +92,11 @@ namespace FusionEngine
 		
 		void CleanMassData();
 
+		bool AddInteraction(b2Body* other);
+		void ClearInteractions();
+		void SetInteractingWithPlayer(const bool value) { m_InteractingWithPlayer = value; }
+		bool IsInteractingWithPlayer() const;
+
 	private:
 		b2BodyDef m_Def;
 		b2Body* m_Body;
@@ -99,15 +104,21 @@ namespace FusionEngine
 		tbb::atomic<bool> m_FixtureMassDirty;
 		std::set<boost::intrusive_ptr<Box2DFixture>> m_Fixtures;
 
+		bool m_InteractingWithPlayer;
+		std::set<b2Body*> m_Interacting;
+
 		int m_Depth;
 
 		// Interpolation data
 		bool m_Interpolate;
 		Vector2 m_InterpPosition;
+		Vector2 m_SmoothPosition;
 		Vector2 m_LastPosition;
 		float m_InterpAngle;
 		float m_LastAngle;
 		float m_LastAngularVelocity;
+
+		float m_SmoothTightness;
 
 		// IComponent
 		std::string GetType() const

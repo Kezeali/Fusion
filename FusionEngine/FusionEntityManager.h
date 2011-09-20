@@ -135,10 +135,17 @@ namespace FusionEngine
 
 		std::vector<EntityPtr> m_EntitiesToReceive;
 
-		typedef std::map<ObjectID, std::pair<bool, std::shared_ptr<RakNet::BitStream>>> ObjectStatesMap;
+		struct StateData
+		{
+			bool full;
+			std::shared_ptr<RakNet::BitStream> continuous;
+			std::shared_ptr<RakNet::BitStream> occasional;
+		};
+
+		typedef std::map<ObjectID, StateData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
-		std::map<RakNet::RakNetGUID, std::map<ObjectID, uint64_t>> m_SentStates;
+		std::map<RakNet::RakNetGUID, std::map<ObjectID, uint16_t>> m_SentStates;
 
 		struct EntityPacketData
 		{
@@ -413,6 +420,8 @@ namespace FusionEngine
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
 
+		std::vector<EntityPtr> m_RequestedEntities;
+
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToActivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;
 		std::vector<EntityPtr> m_EntitiesUnreferenced;
@@ -420,8 +429,6 @@ namespace FusionEngine
 		tbb::concurrent_queue<EntityPtr> m_EntitiesToRemove;
 		EntityArray m_ActiveEntities;
 
-		// Entities to be updated - 8 domains
-		//EntityArray m_EntitiesToUpdate[s_EntityDomainCount];
 		// Active status of each domain
 		char m_DomainState[s_EntityDomainCount];
 

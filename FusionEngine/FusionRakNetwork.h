@@ -62,22 +62,22 @@ namespace FusionEngine
 	*/
 
 	//! Fusion Packet priority enumeration
-	enum NetPriority
-	{
-		HIGH_PRIORITY = ::HIGH_PRIORITY,
-		MEDIUM_PRIORITY = ::MEDIUM_PRIORITY,
-		LOW_PRIORITY = ::LOW_PRIORITY
-	};
+	//enum NetPriority
+	//{
+	//	HIGH_PRIORITY = ::HIGH_PRIORITY,
+	//	MEDIUM_PRIORITY = ::MEDIUM_PRIORITY,
+	//	LOW_PRIORITY = ::LOW_PRIORITY
+	//};
 
 	//! Fusion Packet reliability enumeration
-	enum NetReliability
-	{
-		UNRELIABLE = ::UNRELIABLE,
-		UNRELIABLE_SEQUENCED = ::UNRELIABLE_SEQUENCED,
-		RELIABLE = ::RELIABLE,
-		RELIABLE_ORDERED = ::RELIABLE_ORDERED,
-		RELIABLE_SEQUENCED = ::RELIABLE_SEQUENCED
-	};
+	//enum NetReliability
+	//{
+	//	UNRELIABLE = ::UNRELIABLE,
+	//	UNRELIABLE_SEQUENCED = ::UNRELIABLE_SEQUENCED,
+	//	RELIABLE = ::RELIABLE,
+	//	RELIABLE_ORDERED = ::RELIABLE_ORDERED,
+	//	RELIABLE_SEQUENCED = ::RELIABLE_SEQUENCED
+	//};
 
 	//inline PacketPriority rakPriority(NetPriority priority)
 	//{
@@ -193,7 +193,7 @@ namespace FusionEngine
 		*/
 		bool SendAsIs(const NetDestination &dest,
 			const char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel);
+			PacketPriority priority, PacketReliability reliability, char channel);
 
 		//! Sends a RakNet#BitStream as-is (without adding a header)
 		/*!
@@ -201,7 +201,7 @@ namespace FusionEngine
 		*/
 		bool SendAsIs(const NetDestination &dest,
 			const RakNet::BitStream *bitStream,
-			NetPriority priority, NetReliability reliability, char channel);
+			PacketPriority priority, PacketReliability reliability, char channel);
 
 		//! Prepends the given data with a header and sends it
 		/*!
@@ -215,12 +215,12 @@ namespace FusionEngine
 		 */
 		virtual bool Send(const NetDestination &destination,
 			bool timestamped, unsigned char type, char* data, unsigned int length,
-			NetPriority priority, NetReliability reliability, char channel);
+			PacketPriority priority, PacketReliability reliability, char channel);
 
 		//! Prepends the given RakNet#BitStream with a header and sends it
 		bool Send(const NetDestination &destination,
 			bool timestamped, unsigned char type, RakNet::BitStream *data,
-			NetPriority priority, NetReliability reliability, char channel);
+			PacketPriority priority, PacketReliability reliability, char channel);
 		
 		//! Receives data
 		RakNet::Packet *Receive();

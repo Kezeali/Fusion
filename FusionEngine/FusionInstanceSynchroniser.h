@@ -126,7 +126,10 @@ namespace FusionEngine
 
 		//! Gets a new ID for local-authroity instancing
 		ObjectID generateLocalId();
+		//! Notifies other clients of new entities
 		void sendInstancingMessage(ObjectID requester_id, ObjectID id, const std::string &transformType, const Vector2& pos, float angle, const std::string &name, PlayerID owner_id);
+		//! Sends full entity data to clients
+		void sendFullSynch(NetDestination& destination, const EntityPtr& entity);
 	};
 
 }
