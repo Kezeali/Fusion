@@ -306,6 +306,9 @@
     <ClCompile Include="..\FusionEngine\FusionEntitySerialisationUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionDeltaTime.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\tinyxml\ticpp.h">
@@ -705,6 +708,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionEntitySerialisationUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionDeltaTime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

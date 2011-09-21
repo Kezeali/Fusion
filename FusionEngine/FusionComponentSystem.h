@@ -41,31 +41,6 @@
 namespace FusionEngine
 {
 
-	class DeltaTime
-	{
-		friend class TaskScheduler;
-	public:
-		static float GetDeltaTime() { return m_DT; }
-
-		static float GetActualDeltaTime() { return m_ActualDTMS * 0.001f; }
-		static unsigned int GetActualDeltaTimeMS() { return m_ActualDTMS; }
-
-		static float GetInterpolationAlpha() { return m_Alpha; }
-
-		static unsigned int GetFramesSkipped() { return m_FramesSkipped; }
-
-		static unsigned int GetTick() { return m_Tick; }
-
-	private:
-		static float m_DT;
-		static unsigned int m_ActualDTMS;
-		static float m_Alpha;
-
-		static unsigned int m_FramesSkipped;
-
-		static unsigned int m_Tick;
-	};
-
 	class ISystemTask;
 	class ISystemWorld;
 	class IComponentSystem;

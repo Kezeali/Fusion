@@ -93,7 +93,7 @@ namespace FusionEngine
 	static const unsigned int s_EntitiesPerPacket = 8;
 	static const unsigned int s_BodiesPerPacket = 12;
 
-	static const RakNet::BitSize_t s_MaxDataPerTick = 8000;
+	static const RakNet::BitSize_t s_MaxDataPerTick = 4000;
 
 	class EntitySynchroniser : public PacketHandler
 	{

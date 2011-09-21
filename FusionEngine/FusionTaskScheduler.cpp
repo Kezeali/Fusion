@@ -29,6 +29,7 @@
 
 #include "FusionTaskScheduler.h"
 
+#include "FusionDeltaTime.h"
 #include "FusionStreamingSystem.h"
 
 #include <functional>
@@ -37,12 +38,6 @@
 
 namespace FusionEngine
 {
-
-	float DeltaTime::m_DT = 0.f;
-	unsigned int DeltaTime::m_ActualDTMS = 0;
-	float DeltaTime::m_Alpha = 0.f;
-	unsigned int DeltaTime::m_FramesSkipped = 0;
-	unsigned int DeltaTime::m_Tick = 0;
 
 	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager)
 		: m_TaskManager(task_manager),

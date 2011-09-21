@@ -29,6 +29,7 @@
 
 #include "FusionCLRenderSystem.h"
 
+#include "FusionDeltaTime.h"
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 

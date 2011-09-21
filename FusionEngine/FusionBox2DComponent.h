@@ -45,6 +45,8 @@
 #include <Box2D/Box2D.h>
 #include <tbb/atomic.h>
 
+#define FSN_PHYS_COMPRESS_STATE
+
 namespace FusionEngine
 {
 

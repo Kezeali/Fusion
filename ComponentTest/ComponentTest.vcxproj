@@ -193,6 +193,7 @@
     <ClCompile Include="..\FusionEngine\FusionConsole.cpp" />
     <ClCompile Include="..\FusionEngine\FusionConsoleStdOutWriter.cpp" />
     <ClCompile Include="..\FusionEngine\FusionContextMenu.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionDeltaTime.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEasyPacket.cpp" />
     <ClCompile Include="..\FusionEngine\FusionElementSelectableDataGrid.cpp" />
     <ClCompile Include="..\FusionEngine\FusionEntity.cpp" />
@@ -313,6 +314,7 @@
     <ClInclude Include="..\FusionEngine\FusionCommandQueue.h" />
     <ClInclude Include="..\FusionEngine\FusionCommon.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionDeltaTime.h" />
     <ClInclude Include="..\FusionEngine\FusionEntitySerialisationUtils.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />

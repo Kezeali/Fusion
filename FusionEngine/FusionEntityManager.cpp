@@ -35,6 +35,7 @@
 #include <RakNetStatistics.h>
 
 #include "FusionClientOptions.h"
+#include "FusionDeltaTime.h"
 #include "FusionEntityFactory.h"
 #include "FusionExceptionFactory.h"
 #include "FusionNetDestinationHelpers.h"
@@ -188,6 +189,7 @@ namespace FusionEngine
 				}
 			}
 		}
+		packetData.Write(DeltaTime::GetTick());
 	}
 
 //#define FSN_PARALLEL_SERIALISE
@@ -212,6 +214,8 @@ namespace FusionEngine
 			packetData.Write(*state, state->GetNumberOfBitsUsed());
 		}
 	}
+
+	static BitSize_t stateSizeMax = 0;
 
 	void EntitySynchroniser::SendPackets()
 	{
@@ -243,11 +247,17 @@ namespace FusionEngine
 				if (SerialiseContinuous(*state, entity, IComponent::All))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
-
-					for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
+					if (stateSize > stateSizeMax)
 					{
-						// Check whether this will fit within the quota
-						if (m_PacketDataBudget - stateSize >= 0)
+						stateSizeMax = stateSize;
+						std::stringstream str; str << stateSizeMax;
+						SendToConsole("Max state size: " + str.str());
+					}
+
+					// Check whether this will fit within the quota
+					if (m_PacketDataBudget - (stateSize * remoteViewers.size()) >= 0)
+					{
+						for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
 						{
 							auto& dataInfo = dataToSendToSystems[*vit];
 
@@ -269,13 +279,13 @@ namespace FusionEngine
 					crc.process_bytes(state->GetData(), state->GetNumberOfBytesUsed());
 					auto newChecksum = crc.checksum();
 
-					for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
+					// Check whether this will fit within the quota
+					if (m_PacketDataBudget - (stateSize * remoteViewers.size()) >= 0)
 					{
-						// Check whether this will fit within the quota
-						if (m_PacketDataBudget - stateSize >= 0)
+						for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
 						{
 							auto& dataInfo = dataToSendToSystems[*vit];
-							
+
 							auto& existingChecksum = m_SentStates[*vit][entity->GetID()];
 							if (newChecksum != existingChecksum)
 							{
@@ -338,6 +348,7 @@ namespace FusionEngine
 			{
 				if (!contData.empty())
 				{
+					const auto num = contData.size();
 					WriteHeaderAndInput(important, contPacketData);
 					// Packet contains continuous data and no occasional data
 					contPacketData.Write1();
@@ -405,9 +416,11 @@ namespace FusionEngine
 				EntitySerialisationUtils::DeserialiseOccasional(*occasional, entity, mode, factory, entity_manager);
 
 			m_ReceivedStates.erase(_where);
+
+			return true;
 		}
 
-		return true; // Return false to not update this entity
+		return false;
 	}
 
 	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
@@ -434,10 +447,11 @@ namespace FusionEngine
 			}
 			else
 			{
-				//if (arbitor)
-					priority = (isUnderLocalAuthority ? 2 : 1) * entity->GetSkippedPacketsCount();
-				//else
-				//	priority = entity->GetSkippedPacketsCount();
+				priority = entity->GetSkippedPacketsCount();
+				if (isOwnedLocally)
+					priority *= 1000;
+				else if (isUnderLocalAuthority)
+					priority *= 2;
 
 				m_EntityPriorityQueue.insert(std::make_pair(priority, entity));
 			}
@@ -448,7 +462,7 @@ namespace FusionEngine
 			entity->PacketSkipped();
 		}
 
-		return false;
+		return true;
 	}
 
 	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager, EntityFactory* factory)
@@ -494,6 +508,8 @@ namespace FusionEngine
 		sourceStr.Read(dataLength);
 		sourceStr.Read(*state, dataLength);
 	}
+
+	static uint32_t lastTick = 0;
 
 	void EntitySynchroniser::HandlePacket(RakNet::Packet *packet)
 	{
@@ -541,24 +557,36 @@ namespace FusionEngine
 			}
 		case MTID_ENTITYMOVE:
 			{
+				uint32_t tick;
+				bitStream.Read(tick);
+
 				const bool includesCon = bitStream.ReadBit();
 				const bool includesOca = bitStream.ReadBit();
 
 				unsigned short entityCount;
 				if (includesCon)
 				{
+					if (tick <= lastTick)
+					{
+						std::stringstream str; str << tick;
+						SendToConsole("Continious state out of date, ignoring: " + str.str());
+					}
+
 					bitStream.Read(entityCount);
 					for (unsigned short i = 0; i < entityCount; i++)
 					{
 						ObjectID entityID;
 						bitStream.Read(entityID);
 
-						auto& info = m_ReceivedStates[entityID];
+						StateData nullState;
+						auto& info = tick > lastTick ? m_ReceivedStates[entityID] : nullState;
 
 						info.full = true; // indicates full data (not just changes)
 
 						readState(bitStream, info.continuous);
 					}
+					// TEMP: store the last tick
+					lastTick = tick;
 				}
 				if (includesOca)
 				{

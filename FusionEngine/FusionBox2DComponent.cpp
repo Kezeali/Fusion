@@ -136,9 +136,15 @@ namespace FusionEngine
 			if (awake)
 			{
 				const Vector2& vel = GetVelocity();
+#ifdef FSN_PHYS_COMPRESS_STATE
+				stream.WriteFloat16(vel.x, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
+				stream.WriteFloat16(vel.y, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
+				stream.WriteFloat16(GetAngularVelocity(), -b2_maxRotation * 120.f, b2_maxRotation * 120.f);
+#else
 				stream.Write(vel.x);
 				stream.Write(vel.y);
 				stream.Write(GetAngularVelocity());
+#endif
 			}
 
 			return true;
@@ -170,9 +176,15 @@ namespace FusionEngine
 		float angularVelocity;
 		if (awake)
 		{
+#ifdef FSN_PHYS_COMPRESS_STATE
+			stream.ReadFloat16(linearVelocity.x, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
+			stream.ReadFloat16(linearVelocity.y, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
+			stream.ReadFloat16(angularVelocity, -b2_maxRotation * 120.f, b2_maxRotation * 120.f);
+#else
 			stream.Read(linearVelocity.x);
 			stream.Read(linearVelocity.x);
 			stream.Read(angularVelocity);
+#endif
 		}
 		else
 		{

@@ -80,6 +80,15 @@ class TestB : ScriptComponent
 		//if (frames > 1)
 		//	cam.setPosition(itransform.Position);
 		
+		if (entity.input.getButton("special") && setcampos_con is null)
+		{
+			cam = Camera(itransform.Position);
+			streaming.addCamera(cam);
+			renderer.addViewport(cam);
+			
+			@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
+		}
+		
 		if (entity.input.getButton("thrust"))
 		{
 			//console.println("Adjusting velocity");

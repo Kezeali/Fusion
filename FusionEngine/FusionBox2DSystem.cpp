@@ -30,6 +30,7 @@
 #include "FusionBox2DSystem.h"
 
 #include "FusionBox2DComponent.h"
+#include "FusionDeltaTime.h"
 
 // TEMP: For authority contact listener:
 #include "FusionEntity.h"
