@@ -36,6 +36,9 @@
 
 namespace FusionEngine
 {
+
+	// TODO: put this in FusionTypes or whatever
+	typedef uint32_t Tick_t;
 	
 	//! Global access to pacing data
 	class DeltaTime
@@ -60,7 +63,7 @@ namespace FusionEngine
 		*/
 		static unsigned int GetFramesSkipped() { return m_FramesSkipped; }
 
-		static unsigned int GetTick() { return m_Tick; }
+		static Tick_t GetTick() { return m_Tick; }
 
 	private:
 		static float m_DT;
@@ -69,7 +72,7 @@ namespace FusionEngine
 
 		static unsigned int m_FramesSkipped;
 
-		static unsigned int m_Tick;
+		static Tick_t m_Tick;
 	};
 
 }

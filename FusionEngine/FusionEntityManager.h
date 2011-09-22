@@ -106,17 +106,21 @@ namespace FusionEngine
 		//! Sends data
 		//void Send();
 
+		//! Prepares the given entity for synch
 		void OnEntityActivated(EntityPtr &entity);
+		//! Removes the given entity from the queue, if it hasn't been cleared yet
+		void OnEntityDeactivated(EntityPtr &entity);
 
-		// Enqueues the given entity to be processed for synch
+		//! Enqueues the given entity to be processed for synch
 		bool Enqueue(EntityPtr &entity);
-
-		void ProcessQueue(EntityManager* entity_manager, EntityFactory* factory);
-
-
+		//! Sends enqueued entities
+		void ProcessQueue(bool send, EntityManager* entity_manager, EntityFactory* factory);
+		//! Implements PacketHandler
 		void HandlePacket(RakNet::Packet *packet);
 
 	private:
+		void ProcessPacket(const RakNet::RakNetGUID& guid, RakNet::BitStream& bitStream);
+
 		// Things called by ProcessQueue
 		void WriteHeaderAndInput(bool important, RakNet::BitStream& packetData);
 		void SendPackets();
@@ -138,9 +142,54 @@ namespace FusionEngine
 		struct StateData
 		{
 			bool full;
+			uint32_t tick;
 			std::shared_ptr<RakNet::BitStream> continuous;
 			std::shared_ptr<RakNet::BitStream> occasional;
 		};
+
+		std::map<RakNet::RakNetGUID, uint32_t> m_RemoteTicks;
+
+		struct JitterBufferPacket
+		{
+			//RakNet::RakNetGUID guid;
+			RakNet::Time timestamp;
+			std::shared_ptr<RakNet::BitStream> data;
+
+			JitterBufferPacket() {}
+			JitterBufferPacket(/*const RakNet::RakNetGUID& id, */RakNet::Time time, std::shared_ptr<RakNet::BitStream>&& pdat)
+				: /*guid(id),*/
+				timestamp(time),
+				data(std::move(pdat))
+			{
+			}
+			JitterBufferPacket(JitterBufferPacket&& other)
+				: /*guid(other.guid),*/
+				timestamp(other.timestamp),
+				data(std::move(other.data))
+			{}
+			JitterBufferPacket(const JitterBufferPacket& other)
+				: /*guid(other.guid),*/
+				timestamp(other.timestamp),
+				data(other.data)
+			{}
+		};
+
+		struct JitterBuffer
+		{
+			RakNet::Time remoteTime;
+			RakNet::Time localTime;
+			RakNet::Time lastPopTime;
+			double popRate;
+			std::vector<JitterBufferPacket> buffer;
+
+			JitterBuffer()
+				: remoteTime(0), lastPopTime(0), popRate(1.0)
+			{}
+		};
+
+		//std::map<RakNet::RakNetGUID, RakNet::Time> m_RemoteTime;
+		std::map<RakNet::RakNetGUID, JitterBuffer> m_JitterBuffers;
+		RakNet::Time m_JitterBufferTargetLength;
 
 		typedef std::map<ObjectID, StateData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
@@ -159,6 +208,11 @@ namespace FusionEngine
 		EntityPriorityMap m_EntityPriorityQueue;
 
 		int64_t m_PacketDataBudget;
+
+		// Stats
+		size_t m_MinEntsInAPacket;
+		size_t m_MaxEntsInAPacket;
+		RakNet::BitSize_t m_MaxContinuousStateSize;
 
 		struct SystemPriority
 		{

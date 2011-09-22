@@ -141,11 +141,12 @@ namespace FusionEngine
 
 	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager)
 		: m_InputManager(input_manager),
-		m_PlayerInputs(new ConsolidatedInput(input_manager))
+		m_PlayerInputs(new ConsolidatedInput(input_manager)),
+		m_JitterBufferTargetLength(100)
 	{
 		NetworkManager::getSingleton().Subscribe(MTID_IMPORTANTMOVE, this);
 		NetworkManager::getSingleton().Subscribe(MTID_ENTITYMOVE, this);
-		NetworkManager::getSingleton().Subscribe(MTID_STARTSYNC, this);
+		//NetworkManager::getSingleton().Subscribe(MTID_STARTSYNC, this);
 	}
 
 	EntitySynchroniser::~EntitySynchroniser()
@@ -154,7 +155,13 @@ namespace FusionEngine
 
 		NetworkManager::getSingleton().Unsubscribe(MTID_IMPORTANTMOVE, this);
 		NetworkManager::getSingleton().Unsubscribe(MTID_ENTITYMOVE, this);
-		NetworkManager::getSingleton().Unsubscribe(MTID_STARTSYNC, this);
+		//NetworkManager::getSingleton().Unsubscribe(MTID_STARTSYNC, this);
+
+		std::stringstream str;
+		str << "MinStatesInAPacket: " << m_MinEntsInAPacket << std::endl <<
+		str << "MaxStatesInAPacket: " << m_MaxEntsInAPacket << std::endl <<
+		str << "MaxStateSize: " << m_MaxContinuousStateSize;
+		Logger::getSingleton().Add(str.str(), "Network");
 	}
 
 	const EntityArray &EntitySynchroniser::GetReceivedEntities() const
@@ -164,8 +171,8 @@ namespace FusionEngine
 
 	void EntitySynchroniser::WriteHeaderAndInput(bool important, RakNet::BitStream& packetData)
 	{
-		//packetData.Write((MessageID)ID_TIMESTAMP);
-		//packetData.Write(RakNet::GetTime());
+		packetData.Write((MessageID)ID_TIMESTAMP);
+		packetData.Write(RakNet::GetTime());
 		if (!important)
 		{
 			packetData.Write((MessageID)MTID_ENTITYMOVE);
@@ -215,8 +222,6 @@ namespace FusionEngine
 		}
 	}
 
-	static BitSize_t stateSizeMax = 0;
-
 	void EntitySynchroniser::SendPackets()
 	{
 		auto network = NetworkManager::GetNetwork();
@@ -247,12 +252,9 @@ namespace FusionEngine
 				if (SerialiseContinuous(*state, entity, IComponent::All))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
-					if (stateSize > stateSizeMax)
-					{
-						stateSizeMax = stateSize;
-						std::stringstream str; str << stateSizeMax;
-						SendToConsole("Max state size: " + str.str());
-					}
+#ifdef _DEBUG
+					m_MaxContinuousStateSize = std::max<BitSize_t>(stateSize, m_MaxContinuousStateSize);
+#endif
 
 					// Check whether this will fit within the quota
 					if (m_PacketDataBudget - (stateSize * remoteViewers.size()) >= 0)
@@ -348,7 +350,11 @@ namespace FusionEngine
 			{
 				if (!contData.empty())
 				{
+#ifdef _DEBUG
 					const auto num = contData.size();
+					m_MinEntsInAPacket = std::min(num, m_MinEntsInAPacket);
+					m_MaxEntsInAPacket = std::max(num, m_MaxEntsInAPacket);
+#endif
 					WriteHeaderAndInput(important, contPacketData);
 					// Packet contains continuous data and no occasional data
 					contPacketData.Write1();
@@ -383,16 +389,25 @@ namespace FusionEngine
 
 	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
 	{
-		//for (unsigned int i = 0; i < s_MaxLocalPlayers; ++i)
-		//{
-		//	const PlayerInfo &playerInfo = ;
-		//	if (playerInfo.LocalIndex != s_MaxLocalPlayers && playerInfo.NetIndex == entity->GetOwnerID())
-		//}
-
 		const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
 		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
 		if (playerInput)
 			entity->_setPlayerInput(playerInput);
+	}
+
+	void EntitySynchroniser::OnEntityDeactivated(EntityPtr &entity)
+	{
+		{
+			auto entry = std::find(m_EntitiesToReceive.begin(), m_EntitiesToReceive.end(), entity);
+			if (entry != m_EntitiesToReceive.end())
+				m_EntitiesToReceive.erase(entry);
+		}
+
+		{
+			auto entry = std::find_if(m_EntityPriorityQueue.begin(), m_EntityPriorityQueue.end(), [&](const EntityPriorityMap::value_type& val) { return val.second == entity; });
+			if (entry != m_EntityPriorityQueue.end())
+				m_EntityPriorityQueue.erase(entry);
+		}
 	}
 
 	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
@@ -465,17 +480,51 @@ namespace FusionEngine
 		return true;
 	}
 
-	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager, EntityFactory* factory)
+	static RakNet::Time nextPacketTime = 0;
+
+	void EntitySynchroniser::ProcessQueue(bool send, EntityManager* entity_manager, EntityFactory* factory)
 	{
+		// TODO: OnDisconected handler (need to add a signal or something for that) that removes jitter buffer
+		const auto sendDt = DeltaTime::GetDeltaTime() * 1000.0;
+		auto timeNow = RakNet::GetTime();
+		for (auto it = m_JitterBuffers.begin(), end = m_JitterBuffers.end(); it != end; ++it)
+		{
+			const auto& guid = it->first;
+			const auto lastPopTime = it->second.lastPopTime;
+			const auto popRate = it->second.popRate;
+			auto& jitterBuffer = it->second.buffer;
+
+			if (!jitterBuffer.empty()/* && timeNow >= (RakNet::Time)(lastPopTime + sendDt * popRate + 0.5)*/)
+			{
+				auto newEnd = jitterBuffer.begin(), end = jitterBuffer.end();
+				RakNet::Time dbgTime = 0;
+				do
+				{
+					const auto& front = *newEnd;
+					dbgTime = front.timestamp;
+					if (RakNet::LessThan(timeNow, front.timestamp + m_JitterBufferTargetLength))
+						break;
+					ProcessPacket(guid, *front.data);
+					++newEnd;
+				} while (newEnd != end);
+				jitterBuffer.erase(jitterBuffer.begin(), newEnd);
+			}
+		}
+
 		for (auto it = m_EntitiesToReceive.begin(), end = m_EntitiesToReceive.end(); it != end; ++it)
 			ReceiveSync(*it, entity_manager, factory);
-		m_EntitiesToReceive.clear();
 
-		if (m_PacketDataBudget < s_MaxDataPerTick * 2)
-			m_PacketDataBudget += s_MaxDataPerTick;
-		if (m_PacketDataBudget < -int64_t(s_MaxDataPerTick * 2))
-			m_PacketDataBudget = -int64_t(s_MaxDataPerTick * 2);
-		SendPackets();
+		if (send)
+		{
+			m_EntitiesToReceive.clear();
+
+			if (m_PacketDataBudget < s_MaxDataPerTick * 2)
+				m_PacketDataBudget += s_MaxDataPerTick;
+			if (m_PacketDataBudget < -int64_t(s_MaxDataPerTick * 2))
+				m_PacketDataBudget = -int64_t(s_MaxDataPerTick * 2);
+
+			SendPackets();
+		}
 	}
 
 	//void EntitySynchroniser::Send()
@@ -509,11 +558,65 @@ namespace FusionEngine
 		sourceStr.Read(*state, dataLength);
 	}
 
-	static uint32_t lastTick = 0;
+	static size_t jb_size = 0;
 
 	void EntitySynchroniser::HandlePacket(RakNet::Packet *packet)
 	{
-		RakNet::BitStream bitStream(packet->data, packet->length, true);
+		auto bitStream = std::make_shared<RakNet::BitStream>(packet->data, packet->length, true);
+
+#ifdef _DEBUG
+		unsigned char timestampMessageId;
+		bitStream->Read(timestampMessageId);
+		FSN_ASSERT(timestampMessageId == (unsigned char)ID_TIMESTAMP);
+#else
+		bitStream->IgnoreBytes(sizeof(unsigned char));
+#endif
+		RakNet::Time timestamp;
+		bitStream->Read(timestamp);
+
+		auto& jitterBuffer = m_JitterBuffers[packet->guid];
+
+		auto previousRemoteTime = jitterBuffer.remoteTime;
+		auto previousLocalTime = jitterBuffer.localTime;
+
+		//m_RemoteTime[packet->guid] = timestamp;
+		jitterBuffer.remoteTime = timestamp;
+		jitterBuffer.localTime = GetTime();
+
+		bitStream->ResetReadPointer();
+
+		JitterBufferPacket jitterPacket;
+		//jitterPacket.guid = packet->guid;
+		jitterPacket.timestamp = timestamp;
+		jitterPacket.data = /*std::move*/(bitStream);
+		jitterBuffer.buffer.push_back(/*std::move*/(jitterPacket));
+
+		// Adjust rate smoothly to try and keep the buffer at desired size
+		//if (sendDiff > DeltaTime::GetDeltaTime() * 1000)
+		//{
+		//	jitterBuffer.popRate -= (back.timestamp - desiredTimestamp) / m_JitterBufferTargetLength;
+		//}
+		//if (back.timestamp < desiredTimestamp)
+		//{
+		//	jitterBuffer.popRate += (desiredTimestamp - back.timestamp) / m_JitterBufferTargetLength;
+		//}
+
+		fe_clamp(jitterBuffer.popRate, 0.5, 1.5);
+
+#ifdef _DEBUG
+		//FSN_ASSERT(jitterBuffer.buffer.size() < 50);
+		if (std::abs<size_t>(std::max(jb_size, jitterBuffer.buffer.size()) - std::min(jb_size, jitterBuffer.buffer.size())) > 2)
+		{
+			jb_size = jitterBuffer.buffer.size();
+			std::stringstream str; str << jb_size;
+			SendToConsole("Jitter Buffer for " + std::string(packet->guid.ToString()) + " changed size by > 2: " + str.str());
+		}
+#endif
+	}
+
+	void EntitySynchroniser::ProcessPacket(const RakNet::RakNetGUID& guid, RakNet::BitStream& bitStream)
+	{
+		bitStream.IgnoreBytes(sizeof(unsigned char) + sizeof(RakNet::Time));
 
 		unsigned char type;
 		bitStream.Read(type);
@@ -557,8 +660,17 @@ namespace FusionEngine
 			}
 		case MTID_ENTITYMOVE:
 			{
-				uint32_t tick;
+				Tick_t tick;
 				bitStream.Read(tick);
+				
+				auto& lastTick = m_RemoteTicks[guid];
+//#ifdef _DEBUG
+//				if (tick <= lastTick)
+//				{
+//					std::stringstream str; str << ((type == MTID_IMPORTANTMOVE) ? "(i)" : "") << tick;
+//					SendToConsole("Continious state out of date, ignoring: " + str.str());
+//				}
+//#endif
 
 				const bool includesCon = bitStream.ReadBit();
 				const bool includesOca = bitStream.ReadBit();
@@ -566,26 +678,26 @@ namespace FusionEngine
 				unsigned short entityCount;
 				if (includesCon)
 				{
-					if (tick <= lastTick)
-					{
-						std::stringstream str; str << tick;
-						SendToConsole("Continious state out of date, ignoring: " + str.str());
-					}
-
 					bitStream.Read(entityCount);
 					for (unsigned short i = 0; i < entityCount; i++)
 					{
 						ObjectID entityID;
 						bitStream.Read(entityID);
 
-						StateData nullState;
-						auto& info = tick > lastTick ? m_ReceivedStates[entityID] : nullState;
+						StateData state;
+						auto& info = state;
 
 						info.full = true; // indicates full data (not just changes)
 
 						readState(bitStream, info.continuous);
+
+						if (tick > lastTick)
+						{
+							state.tick = DeltaTime::GetTick() + (tick - lastTick);
+							m_ReceivedStates[entityID] = state;
+						}
 					}
-					// TEMP: store the last tick
+
 					lastTick = tick;
 				}
 				if (includesOca)

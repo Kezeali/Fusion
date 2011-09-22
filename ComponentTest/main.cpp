@@ -809,7 +809,7 @@ public:
 				scheduler->SetFramerateLimiter(false);
 				scheduler->SetUnlimited(true);
 #else
-				scheduler->SetFramerateLimiter(true);
+				scheduler->SetFramerateLimiter(false);
 #endif
 
 				std::vector<std::shared_ptr<ISystemWorld>> ontology;
@@ -1085,7 +1085,11 @@ public:
 
 					if (executed & SystemType::Rendering)
 					{
+#ifdef PROFILE_BUILD
 						dispWindow.flip(0);
+#else
+						dispWindow.flip();
+#endif
 						gc.clear();
 					}
 					
@@ -1093,8 +1097,9 @@ public:
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
-						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
 					}
+					entitySynchroniser->ProcessQueue(executed & SystemType::Simulation, entityManager.get(), entityFactory.get());
+
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?
 					PropChangedQueue::value_type changed;
