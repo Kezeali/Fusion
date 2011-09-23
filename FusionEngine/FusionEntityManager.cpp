@@ -171,15 +171,20 @@ namespace FusionEngine
 
 	void EntitySynchroniser::WriteHeaderAndInput(bool important, RakNet::BitStream& packetData)
 	{
-		packetData.Write((MessageID)ID_TIMESTAMP);
-		packetData.Write(RakNet::GetTime());
+		//packetData.Write((MessageID)ID_TIMESTAMP);
+		//packetData.Write(RakNet::GetTime());
 		if (!important)
 		{
 			packetData.Write((MessageID)MTID_ENTITYMOVE);
+
+			packetData.Write(DeltaTime::GetTick());
 		}
 		else
 		{
 			packetData.Write((MessageID)MTID_IMPORTANTMOVE);
+
+			packetData.Write(DeltaTime::GetTick());
+
 			packetData.Write(m_PlayerInputs->ChangedCount());
 
 			const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
@@ -196,7 +201,7 @@ namespace FusionEngine
 				}
 			}
 		}
-		packetData.Write(DeltaTime::GetTick());
+		//packetData.Write(DeltaTime::GetTick());
 	}
 
 //#define FSN_PARALLEL_SERIALISE
@@ -273,34 +278,36 @@ namespace FusionEngine
 					}
 				}
 				state = std::make_shared<RakNet::BitStream>();
-				if (SerialiseOccasional(*state, entity, IComponent::All))
+				auto& existingChecksums = m_SentStates[entity->GetID()];
+				auto newChecksums = existingChecksums;
+				if (PlayerRegistry::IsLocal(entity->GetAuthority()) && SerialiseOccasional(*state, newChecksums, entity, IComponent::Changes))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 					
-					boost::crc_16_type crc;
-					crc.process_bytes(state->GetData(), state->GetNumberOfBytesUsed());
-					auto newChecksum = crc.checksum();
+					//boost::crc_16_type crc;
+					//crc.process_bytes(state->GetData(), state->GetNumberOfBytesUsed());
+					//auto newChecksum = crc.checksum();
 
-					// Check whether this will fit within the quota
-					if (m_PacketDataBudget - (stateSize * remoteViewers.size()) >= 0)
+					// Compare the checksums
+					//if (newChecksums != existingChecksums)
 					{
-						for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
+						// Check whether this will fit within the quota
+						if (m_PacketDataBudget - (stateSize * remoteViewers.size()) >= 0)
 						{
-							auto& dataInfo = dataToSendToSystems[*vit];
-
-							auto& existingChecksum = m_SentStates[*vit][entity->GetID()];
-							if (newChecksum != existingChecksum)
+							for (auto vit = remoteViewers.begin(), vend = remoteViewers.end(); vit != vend; ++vit)
 							{
+								auto& dataInfo = dataToSendToSystems[*vit];
+
 								dataInfo.occasionalData.push_back(std::make_pair(entity->GetID(), state));
 								dataInfo.important |= important; // If the dataset contains any important entity changes, it must be sent as Important data
 
 								m_PacketDataBudget -= stateSize;
 
 								entity->AddedToPacket();
-
-								existingChecksum = newChecksum;
 							}
 						}
+						// Update the stored checksums
+						existingChecksums = newChecksums;
 					}
 				}
 			}
@@ -428,7 +435,9 @@ namespace FusionEngine
 			if (continuous)
 				EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
 			if (occasional)
-				EntitySerialisationUtils::DeserialiseOccasional(*occasional, entity, mode, factory, entity_manager);
+			{
+				EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode, factory, entity_manager);
+			}
 
 			m_ReceivedStates.erase(_where);
 
@@ -497,17 +506,29 @@ namespace FusionEngine
 			if (!jitterBuffer.empty()/* && timeNow >= (RakNet::Time)(lastPopTime + sendDt * popRate + 0.5)*/)
 			{
 				auto newEnd = jitterBuffer.begin(), end = jitterBuffer.end();
-				RakNet::Time dbgTime = 0;
-				do
+				auto processTick = newEnd->tick;
+				auto bufferLength = sendDt * (jitterBuffer.back().tick - processTick);
+				if ((it->second.filling && bufferLength < m_JitterBufferTargetLength) || bufferLength < m_JitterBufferTargetLength / 2)
 				{
-					const auto& front = *newEnd;
-					dbgTime = front.timestamp;
-					if (RakNet::LessThan(timeNow, front.timestamp + m_JitterBufferTargetLength))
-						break;
-					ProcessPacket(guid, *front.data);
-					++newEnd;
-				} while (newEnd != end);
-				jitterBuffer.erase(jitterBuffer.begin(), newEnd);
+					if (!it->second.filling)
+						SendToConsole("Jitter buffer empty: refilling");
+					it->second.filling = true;
+				}
+				else
+				{
+					it->second.filling = false;
+					do
+					{
+						const auto& front = *newEnd;
+						//if (RakNet::LessThan(timeNow, front.timestamp + m_JitterBufferTargetLength))
+						//	break;
+						if (front.tick != processTick)
+							break;
+						ProcessPacket(guid, *front.data);
+						++newEnd;
+					} while (newEnd != end);
+					jitterBuffer.erase(jitterBuffer.begin(), newEnd);
+				}
 			}
 		}
 
@@ -564,15 +585,18 @@ namespace FusionEngine
 	{
 		auto bitStream = std::make_shared<RakNet::BitStream>(packet->data, packet->length, true);
 
-#ifdef _DEBUG
-		unsigned char timestampMessageId;
-		bitStream->Read(timestampMessageId);
-		FSN_ASSERT(timestampMessageId == (unsigned char)ID_TIMESTAMP);
-#else
+//#ifdef _DEBUG
+//		unsigned char timestampMessageId;
+//		bitStream->Read(timestampMessageId);
+//		FSN_ASSERT(timestampMessageId == (unsigned char)ID_TIMESTAMP);
+//#else
 		bitStream->IgnoreBytes(sizeof(unsigned char));
-#endif
-		RakNet::Time timestamp;
-		bitStream->Read(timestamp);
+//#endif
+		RakNet::Time timestamp = GetTime();
+		//bitStream->Read(timestamp);
+
+		Tick_t remoteTick;
+		bitStream->Read(remoteTick);
 
 		auto& jitterBuffer = m_JitterBuffers[packet->guid];
 
@@ -588,6 +612,7 @@ namespace FusionEngine
 		JitterBufferPacket jitterPacket;
 		//jitterPacket.guid = packet->guid;
 		jitterPacket.timestamp = timestamp;
+		jitterPacket.tick = remoteTick;
 		jitterPacket.data = /*std::move*/(bitStream);
 		jitterBuffer.buffer.push_back(/*std::move*/(jitterPacket));
 
@@ -616,10 +641,14 @@ namespace FusionEngine
 
 	void EntitySynchroniser::ProcessPacket(const RakNet::RakNetGUID& guid, RakNet::BitStream& bitStream)
 	{
-		bitStream.IgnoreBytes(sizeof(unsigned char) + sizeof(RakNet::Time));
+		//bitStream.IgnoreBytes(sizeof(unsigned char) + sizeof(RakNet::Time));
 
 		unsigned char type;
 		bitStream.Read(type);
+		// Read the tick for this packet
+		Tick_t tick;
+		bitStream.Read(tick);
+
 		switch (type)
 		{
 		case MTID_IMPORTANTMOVE:
@@ -660,9 +689,9 @@ namespace FusionEngine
 			}
 		case MTID_ENTITYMOVE:
 			{
-				Tick_t tick;
-				bitStream.Read(tick);
-				
+				//Tick_t tick;
+				//bitStream.Read(tick);
+
 				auto& lastTick = m_RemoteTicks[guid];
 //#ifdef _DEBUG
 //				if (tick <= lastTick)

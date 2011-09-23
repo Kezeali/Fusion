@@ -39,6 +39,8 @@
 #include <BitStream.h>
 #include <StringCompressor.h>
 
+#include <boost/crc.hpp>
+
 namespace FusionEngine
 {
 
@@ -311,7 +313,39 @@ namespace FusionEngine
 			}
 		}
 
-		bool SerialiseOccasional(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		bool SerialiseComponent(RakNet::BitStream& out, uint16_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
+		{
+			RakNet::BitStream tempStream;
+			bool conData = component->SerialiseOccasional(tempStream, IComponent::All);
+			//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+
+			conData = tempStream.GetNumberOfBitsUsed() > 0;
+
+			if (conData)
+			{
+				boost::crc_16_type crc;
+				crc.process_bytes(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
+				uint16_t checksum = crc.checksum();
+
+				if (mode == IComponent::Changes)
+				{
+					conData = checksum != storedChecksum; // Ignore unchanged states
+				}
+				storedChecksum = checksum;
+			}
+
+			if (conData)
+			{
+				out.Write1();
+				out.Write(tempStream);
+			}
+			else
+				out.Write0();
+
+			return conData;
+		}
+
+		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint16_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -322,18 +356,11 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
+			checksums.resize(components.size());
+
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
-			{			
-				RakNet::BitStream tempStream;
-				bool conData = transform->SerialiseOccasional(tempStream, mode);
-				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
-				if (!conData)
-					tempStream.Reset();
-
-				out.Write(conData);
-				out.Write(tempStream);
-
-				dataWritten |= conData;
+			{
+				dataWritten |= SerialiseComponent(out, checksums[0], transform, mode);
 			}
 
 			out.Write(numComponents);
@@ -341,34 +368,54 @@ namespace FusionEngine
 			{
 				auto begin = ++components.begin();
 				auto end = components.end();
+				auto checksumEntry = checksums.begin();
 				for (auto it = begin; it != end; ++it)
 				{
 					auto& component = *it;
 					FSN_ASSERT(component.get() != transform);
+					FSN_ASSERT(checksumEntry != checksums.end());
 
-					RakNet::BitStream tempStream;
-					bool conData = component->SerialiseOccasional(tempStream, mode);
-					//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
-					if (conData)
-					{
-						out.Write1();
-						out.Write(tempStream);
-					}
-					else
-						out.Write0();
-
-					dataWritten |= conData;
+					dataWritten |= SerialiseComponent(out, *checksumEntry, transform, mode);
+					++checksumEntry;
 				}
 			}
 
 			return dataWritten;
 		}
 
-		void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		void DeserialiseComponent(RakNet::BitStream& in, uint16_t& checksum, IComponent* component)
+		{
+			//bool conData = in.ReadBit();
+			//if (conData)
+			{
+				auto start = in.GetReadOffset();
+				component->DeserialiseOccasional(in, IComponent::All);
+
+				const auto dataEnd = in.GetReadOffset();
+				const auto dataBits = dataEnd - start;
+				//const size_t dataBytes = BITS_TO_BYTES(dataBits);
+				in.SetReadOffset(start);
+
+				RakNet::BitStream checksumBitstream;
+				in.Read(checksumBitstream, dataBits);
+
+				boost::crc_16_type crc;
+				crc.process_bytes(checksumBitstream.GetData(), checksumBitstream.GetNumberOfBytesUsed());
+				checksum = crc.checksum();
+
+				in.SetReadOffset(dataEnd);
+			}
+		}
+
+		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint16_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
 			auto stringCompressor = RakNet::StringCompressor::Instance();
+
+			auto& existingComponents = entity->GetComponents();
+			// Make sure checksums for every component can be stored
+			checksums.resize(existingComponents.size());
 
 			ComponentPtr transform;
 			{
@@ -376,10 +423,10 @@ namespace FusionEngine
 
 				bool conData = in.ReadBit();
 				if (conData)
-					transform->DeserialiseOccasional(in, mode);
+				{
+					DeserialiseComponent(in, checksums[0], transform.get());
+				}
 			}
-
-			auto& existingComponents = entity->GetComponents();
 
 			size_t numComponents;
 			in.Read(numComponents);
@@ -387,14 +434,17 @@ namespace FusionEngine
 			if (numComponents != 0)
 			{
 				auto it = existingComponents.begin(), end = existingComponents.end();
+				auto checksumEntry = checksums.begin();
 				for (++it; it != end; ++it)
 				{
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
+					FSN_ASSERT(checksumEntry != checksums.end());
 
 					bool conData = in.ReadBit();
 					if (conData)
-						component->DeserialiseOccasional(in, mode);
+						DeserialiseComponent(in, *checksumEntry, component.get());
+					++checksumEntry;
 				}
 			}
 		}

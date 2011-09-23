@@ -591,7 +591,8 @@ public:
 		CL_SoundOutput sound_output(44100);
 
 		SetupPhysFS physfs(CL_System::get_exe_path().c_str());
-		FSN_ASSERT(SetupPhysFS::is_init());
+		if (!SetupPhysFS::is_init())
+			return 1;
 
 		namespace po = boost::program_options;
 		po::options_description desc("Options");
@@ -1088,7 +1089,7 @@ public:
 #ifdef PROFILE_BUILD
 						dispWindow.flip(0);
 #else
-						dispWindow.flip();
+						dispWindow.flip(0);
 #endif
 						gc.clear();
 					}
@@ -1097,8 +1098,15 @@ public:
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
+						entitySynchroniser->ProcessQueue(executed & SystemType::Simulation, entityManager.get(), entityFactory.get());
 					}
-					entitySynchroniser->ProcessQueue(executed & SystemType::Simulation, entityManager.get(), entityFactory.get());
+
+					//if (int(rand() / (float)RAND_MAX * 16) == 15)
+					//{
+					//	auto sleeptime = int(rand() / (float)RAND_MAX * 31);
+					//	if (sleeptime > 22)
+					//		CL_System::pause(sleeptime);
+					//}
 
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?
@@ -1113,6 +1121,7 @@ public:
 						}
 					}
 					
+					profiling->AddTime("ActualDT", (unsigned long)delta);
 					// Record profiling data
 					profiling->StoreTick();
 
@@ -1134,7 +1143,7 @@ public:
 				if (logger)
 					logger->Add(ex.ToString());
 #endif
-				//TODO: Show a OS native GUI messagebox in Release builds
+				//TODO: Show a OS native GUI messagebox
 #ifdef _WIN32
 				MessageBoxA(dispWindow.get_hwnd(), ex.what(), "Exception", MB_OK);
 #endif
@@ -1157,9 +1166,15 @@ public:
 					logger->Add(stackTrace);
 #endif
 				}
-				//TODO: Show a OS native GUI messagebox in Release builds
+				//TODO: Show a OS native GUI messagebox
 #ifdef _WIN32
 				MessageBoxA(dispWindow.get_hwnd(), ex.what(), "Exception", MB_OK);
+#endif
+			}
+			catch(...)
+			{
+#ifdef _WIN32
+				MessageBoxA(dispWindow.get_hwnd(), "Unknown error", "Exception", MB_OK);
 #endif
 			}
 

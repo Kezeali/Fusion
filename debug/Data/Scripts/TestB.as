@@ -52,11 +52,11 @@ class TestB : ScriptComponent
 			else
 				irigidbody.AngularVelocity = 0;
 		}
-		if (ev.inputName == "special")
-		{
-			if (ev.isDown)
-				irigidbody.Interpolate.value = !irigidbody.Interpolate.value;
-		}
+		//if (ev.inputName == "special")
+		//{
+		//	if (ev.isDown)
+		//		irigidbody.Interpolate.value = !irigidbody.Interpolate.value;
+		//}
 	}
 	
 	private SignalConnection@ setcampos_con;
@@ -69,7 +69,7 @@ class TestB : ScriptComponent
 	{
 		++frames;
 		
-		if (frames == 1)
+		if (frames == 1 && setcampos_con is null)
 		{
 			cam = Camera(itransform.Position);
 			streaming.addCamera(cam);
@@ -82,6 +82,7 @@ class TestB : ScriptComponent
 		
 		if (entity.input.getButton("special") && setcampos_con is null)
 		{
+			console.println("adding camera");
 			cam = Camera(itransform.Position);
 			streaming.addCamera(cam);
 			renderer.addViewport(cam);

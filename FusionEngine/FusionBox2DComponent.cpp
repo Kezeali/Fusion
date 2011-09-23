@@ -128,14 +128,14 @@ namespace FusionEngine
 			const bool awake = IsAwake();
 			stream.Write(awake);
 
-			const Vector2& pos = GetPosition();
+			const Vector2 pos = m_Body ? b2v2(m_Body->GetPosition()) : b2v2(m_Def.position);
 			stream.Write(pos.x);
 			stream.Write(pos.y);
-			stream.Write(GetAngle());
+			stream.Write(m_Body ? m_Body->GetAngle() : m_Def.angle);
 
 			if (awake)
 			{
-				const Vector2& vel = GetVelocity();
+				const Vector2 vel = GetVelocity();
 #ifdef FSN_PHYS_COMPRESS_STATE
 				stream.WriteFloat16(vel.x, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
 				stream.WriteFloat16(vel.y, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);

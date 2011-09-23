@@ -276,6 +276,8 @@ namespace FusionEngine
 			DeltaTime::m_Alpha = m_Accumulator / (float)m_DeltaTimeMS;
 		}
 
+		FSN_ASSERT(DeltaTime::m_Alpha >= 0.0f && (m_FramesSkipped > 0 || DeltaTime::m_Alpha <= 1.0f));
+
 		// TODO: remove this
 		taskFilter &= what;
 		if (taskFilter == 0)

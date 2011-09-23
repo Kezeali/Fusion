@@ -153,24 +153,27 @@ namespace FusionEngine
 		{
 			//RakNet::RakNetGUID guid;
 			RakNet::Time timestamp;
+			uint32_t tick;
 			std::shared_ptr<RakNet::BitStream> data;
 
-			JitterBufferPacket() {}
-			JitterBufferPacket(/*const RakNet::RakNetGUID& id, */RakNet::Time time, std::shared_ptr<RakNet::BitStream>&& pdat)
-				: /*guid(id),*/
-				timestamp(time),
-				data(std::move(pdat))
-			{
-			}
+			JitterBufferPacket() : tick(0) {}
+			//JitterBufferPacket(/*const RakNet::RakNetGUID& id, */RakNet::Time time, std::shared_ptr<RakNet::BitStream>&& pdat)
+			//	: /*guid(id),*/
+			//	timestamp(time),
+			//	data(std::move(pdat))
+			//{
+			//}
 			JitterBufferPacket(JitterBufferPacket&& other)
 				: /*guid(other.guid),*/
 				timestamp(other.timestamp),
-				data(std::move(other.data))
+				data(std::move(other.data)),
+				tick(other.tick)
 			{}
 			JitterBufferPacket(const JitterBufferPacket& other)
 				: /*guid(other.guid),*/
 				timestamp(other.timestamp),
-				data(other.data)
+				data(other.data),
+				tick(other.tick)
 			{}
 		};
 
@@ -180,10 +183,13 @@ namespace FusionEngine
 			RakNet::Time localTime;
 			RakNet::Time lastPopTime;
 			double popRate;
+			uint32_t lastTickPopped;
+			uint32_t remoteTick;
+			bool filling;
 			std::vector<JitterBufferPacket> buffer;
 
 			JitterBuffer()
-				: remoteTime(0), lastPopTime(0), popRate(1.0)
+				: remoteTime(0), lastPopTime(0), popRate(1.0), filling(true)
 			{}
 		};
 
@@ -194,7 +200,7 @@ namespace FusionEngine
 		typedef std::map<ObjectID, StateData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
-		std::map<RakNet::RakNetGUID, std::map<ObjectID, uint16_t>> m_SentStates;
+		std::map<ObjectID, std::vector<uint16_t>> m_SentStates;
 
 		struct EntityPacketData
 		{
