@@ -1,7 +1,7 @@
 ﻿Entities
 Maps
 Scripts
-default-clientoptions.xml
+default-settings.xml
 default-controls.xml
 gameconfig.xml
 inputdefinitions.xml
