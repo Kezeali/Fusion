@@ -186,10 +186,12 @@ namespace FusionEngine
 			uint32_t lastTickPopped;
 			uint32_t remoteTick;
 			bool filling;
+			bool emptying;
+			uint32_t lastTickSkipped;
 			std::vector<JitterBufferPacket> buffer;
 
 			JitterBuffer()
-				: remoteTime(0), lastPopTime(0), popRate(1.0), filling(true)
+				: remoteTime(0), lastPopTime(0), popRate(1.0), filling(true), emptying(false)
 			{}
 		};
 
