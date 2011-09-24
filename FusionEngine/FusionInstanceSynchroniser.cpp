@@ -391,11 +391,15 @@ namespace FusionEngine
 				entity->SetOwnerID(ownerId);
 				entity->SetName(name);
 				m_EntityManager->AddEntity(entity);
+
+				std::stringstream str; str << id;
+				SendToConsole("Received full synch for " + str.str());
 			}
 			break;
 		case ID_NEW_INCOMING_CONNECTION:
 			if (NetworkManager::ArbitratorIsLocal())
 			{
+				SendToConsole("Sending full sync to " + std::string(packet->guid.ToString()));
 				const auto& entities = m_EntityManager->GetEntities();
 				for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 				{

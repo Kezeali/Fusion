@@ -713,5 +713,8 @@
     <ClInclude Include="..\FusionEngine\FusionDeltaTime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionEntitySynchroniser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

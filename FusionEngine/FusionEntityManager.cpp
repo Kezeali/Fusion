@@ -37,6 +37,7 @@
 #include "FusionClientOptions.h"
 #include "FusionDeltaTime.h"
 #include "FusionEntityFactory.h"
+#include "FusionEntitySynchroniser.h"
 #include "FusionExceptionFactory.h"
 #include "FusionNetDestinationHelpers.h"
 #include "FusionNetworkTypes.h"
@@ -48,6 +49,8 @@
 #include "FusionScriptedEntity.h"
 
 #include "FusionEntitySerialisationUtils.h"
+
+#include "FusionProfiling.h"
 
 #include <tbb/parallel_do.h>
 #include <tbb/concurrent_vector.h>
@@ -227,6 +230,8 @@ namespace FusionEngine
 		{
 			ObjectID id = it->first;
 			auto& state = it->second;
+
+			state->ResetReadPointer();
 
 			packetData.Write(id);
 			packetData.Write(state->GetNumberOfBitsUsed());
@@ -459,6 +464,9 @@ namespace FusionEngine
 		if (!entity->IsSyncedEntity())
 			return false;
 
+		if (!m_TEMPQueuedEntities.insert(entity->GetID()).second)
+			return false;
+
 		const bool arbitor = NetworkManager::ArbitratorIsLocal();
 		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		const bool isUnderLocalAuthority = isOwnedLocally || PlayerRegistry::IsLocal(entity->GetAuthority());
@@ -517,6 +525,8 @@ namespace FusionEngine
 				auto firstTickToProcess = newEnd->tick;
 
 				unsigned int numTicksToProcess = 1;
+
+				Profiling::getSingleton().AddTime("Buffer size", (unsigned long)jitterBuffer.size());
 
 				auto bufferLength = sendDt * (jitterBuffer.back().tick - firstTickToProcess);
 				if ((jitterBufferState.filling && bufferLength < m_JitterBufferTargetLength) || bufferLength < m_JitterBufferTargetLength * 0.5)
@@ -583,6 +593,7 @@ namespace FusionEngine
 					jitterBufferState.emptying = false;
 					jitterBufferState.lastTickSkipped = 0;
 				}
+				if (numTicksToProcess > 0)
 				{
 					unsigned int ticksProcessed = 0;
 					auto tickToProcess = firstTickToProcess;
@@ -611,6 +622,8 @@ namespace FusionEngine
 		if (send)
 		{
 			m_EntitiesToReceive.clear();
+
+			m_TEMPQueuedEntities.clear();
 
 			if (m_PacketDataBudget < s_MaxDataPerTick * 2)
 				m_PacketDataBudget += s_MaxDataPerTick;
@@ -660,6 +673,8 @@ namespace FusionEngine
 	{
 		auto bitStream = std::make_shared<RakNet::BitStream>(packet->data, packet->length, true);
 
+		Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)1);
+
 //#ifdef _DEBUG
 //		unsigned char timestampMessageId;
 //		bitStream->Read(timestampMessageId);
@@ -705,7 +720,7 @@ namespace FusionEngine
 
 #ifdef _DEBUG
 		//FSN_ASSERT(jitterBuffer.buffer.size() < 50);
-		if (std::abs<size_t>(std::max(jb_size, jitterBuffer.buffer.size()) - std::min(jb_size, jitterBuffer.buffer.size())) > 2)
+		if (std::abs<int>((int)std::max(jb_size, jitterBuffer.buffer.size()) - (int)std::min(jb_size, jitterBuffer.buffer.size())) > 2)
 		{
 			jb_size = jitterBuffer.buffer.size();
 			std::stringstream str; str << jb_size;
@@ -717,6 +732,8 @@ namespace FusionEngine
 	void EntitySynchroniser::ProcessPacket(const RakNet::RakNetGUID& guid, RakNet::BitStream& bitStream)
 	{
 		//bitStream.IgnoreBytes(sizeof(unsigned char) + sizeof(RakNet::Time));
+
+		Profiling::getSingleton().AddTime("Packets Processed", (unsigned long)1);
 
 		unsigned char type;
 		bitStream.Read(type);

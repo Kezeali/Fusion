@@ -316,6 +316,7 @@
     <ClInclude Include="..\FusionEngine\FusionComponentSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionDeltaTime.h" />
     <ClInclude Include="..\FusionEngine\FusionEntitySerialisationUtils.h" />
+    <ClInclude Include="..\FusionEngine\FusionEntitySynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
     <ClInclude Include="..\FusionEngine\FusionInputSystem.h" />

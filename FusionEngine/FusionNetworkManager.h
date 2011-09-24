@@ -89,10 +89,17 @@ namespace FusionEngine
 		~NetworkManager();
 
 		//! Convinience function - calls the relevant method on the NetworkManager singleton
-		static const RakNet::RakNetGUID &GetArbitratorGUID();
+		static RakNet::RakNetGUID GetArbitratorGUID();
 
 		//! Convinience function - returns true if GetLocalGUID() == GetArbitratorGUID()
 		static bool ArbitratorIsLocal();
+
+		// TEMP - makes this peer the default arbitrator during the limbo
+		//  period where GetArbitratorGUID returns UNASSIGNED_RAKNET_GUID
+		//  One solution to this problem would be to use a plugin that
+		//  sets m_Hosting to false if you start a connection attempt
+		//  (then resets m_Hosting if that attempt fails)
+		static void SetHosting(bool value);
 
 		//! Returns the peer index of this machine (from 0 - s_MaxPeers)
 		/*!
@@ -107,7 +114,7 @@ namespace FusionEngine
 		static uint8_t GetPeerID();
 
 		//! Returns the current network object
-		static RakNetwork * const GetNetwork();
+		static RakNetwork* GetNetwork();
 
 		void Subscribe(unsigned char type, PacketHandler *handler);
 		void Unsubscribe(unsigned char type, PacketHandler *handler);
@@ -130,6 +137,8 @@ namespace FusionEngine
 
 		ElectionPacketHandler m_ArbitratorElector;
 		PeerIDManager m_PeerIDManager;
+
+		bool m_Hosting;
 	};
 
 }

@@ -297,7 +297,9 @@ namespace FusionEngine
 
 			size_t numComponents;
 			in.Read(numComponents);
-			FSN_ASSERT(numComponents == existingComponents.size() - 1);
+			// TEMP - just ignore states for incomplete entities (TODO: synchronise entities properly)
+			if (numComponents != existingComponents.size() - 1) return;
+			//FSN_ASSERT(numComponents == existingComponents.size() - 1);
 			if (numComponents != 0)
 			{
 				auto it = existingComponents.begin(), end = existingComponents.end();
@@ -430,7 +432,9 @@ namespace FusionEngine
 
 			size_t numComponents;
 			in.Read(numComponents);
-			FSN_ASSERT(numComponents == existingComponents.size() - 1);
+			// TEMP - just ignore states for incomplete entities (TODO: synchronise entities properly)
+			if (numComponents != existingComponents.size() - 1) return;
+			//FSN_ASSERT(numComponents == existingComponents.size() - 1);
 			if (numComponents != 0)
 			{
 				auto it = existingComponents.begin(), end = existingComponents.end();

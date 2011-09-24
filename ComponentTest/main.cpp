@@ -49,8 +49,9 @@
 
 #include "../FusionEngine/FusionContextMenu.h"
 #include "../FusionEngine/FusionElementUndoMenu.h"
-#include "../FusionEngine/FusionEntityManager.h"
 #include "../FusionEngine/FusionEntityFactory.h"
+#include "../FusionEngine/FusionEntityManager.h"
+#include "../FusionEngine/FusionEntitySynchroniser.h"
 #include "../FusionEngine/FusionEntitySerialisationUtils.h"
 #include "../FusionEngine/FusionExceptionFactory.h"
 #include "../FusionEngine/FusionGameMapLoader.h"
@@ -960,7 +961,15 @@ public:
 					}
 					if (ev.id == CL_KEY_NUMPAD8)
 					{
-						network->SetDebugPacketLoss(0.2f);
+						network->SetDebugPacketLoss(0.1f);
+					}
+					if (ev.id == CL_KEY_NUMPAD2)
+					{
+						network->SetDebugPacketLoss(0.05f);
+					}
+					if (ev.id == CL_KEY_NUMPAD1)
+					{
+						network->SetDebugPacketLoss(0.005f);
 					}
 					if (ev.id == CL_KEY_NUMPAD5)
 					{
@@ -985,6 +994,7 @@ public:
 					network->Startup(listenPort);
 				}
 
+				bool connecting = false;
 				{
 					unsigned short port = 11123;
 					std::string host = "localhost";
@@ -999,7 +1009,9 @@ public:
 							strStr >> port;
 							host.erase(host.find(':'));
 						}
+						networkManager->SetHosting(false);
 						network->Connect(host, port);
+						connecting = true;
 						SendToConsole("Connecting: " + host);
 					}
 					else
@@ -1025,6 +1037,12 @@ public:
 					lastframe = timeNow;
 
 					CL_KeepAlive::process();
+
+					if (connecting && network->IsConnected() && network->GetHost() != RakNet::UNASSIGNED_RAKNET_GUID)
+					{
+						connecting = false;
+						playerManager->RequestNewPlayer();
+					}
 
 					if (compile && editMode)
 					{
@@ -1082,7 +1100,7 @@ public:
 						}
 					}
 					
-					const auto executed = scheduler->Execute(editMode ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
+					const auto executed = scheduler->Execute((editMode || connecting) ? SystemType::Rendering : (SystemType::Rendering | SystemType::Simulation));
 
 					if (executed & SystemType::Rendering)
 					{
@@ -1120,6 +1138,10 @@ public:
 							changed.second->FireSignal();
 						}
 					}
+
+					Profiling::getSingleton().AddTime("Buffer size", (unsigned long)0);
+					Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)0);
+					Profiling::getSingleton().AddTime("Packets Processed", (unsigned long)0);
 					
 					profiling->AddTime("ActualDT", (unsigned long)delta);
 					// Record profiling data
