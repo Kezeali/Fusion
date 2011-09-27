@@ -56,6 +56,14 @@ namespace FusionEngine
 		//m_InterpAngle(0.f),
 		//m_LastAngle(0.f)
 	{
+		m_Colour = CL_Colorf::white;
+		AlignmentOrigin.m_Value = origin_center;
+		RotationOrigin.m_Value = origin_center;
+		Alpha.m_Value = 1.f;
+		Scale.m_Value = Vector2(1.f, 1.0f);
+		BaseAngle.m_Value = 0.f;
+
+		AnimationFinished.m_Value = false;
 	}
 
 	CLSprite::~CLSprite()
@@ -186,12 +194,13 @@ namespace FusionEngine
 		if (m_RecreateSprite && m_SpriteDef)
 		{
 			m_Sprite = m_SpriteDef->CreateSprite(gc);
-			m_Sprite.set_alignment(origin_center);
-			m_Sprite.set_rotation_hotspot(origin_center);
-			//m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
-			//m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
+			//m_Sprite.set_alignment(origin_center);
+			//m_Sprite.set_rotation_hotspot(origin_center);
+			m_Sprite.set_alignment(AlignmentOrigin.Get(), AlignmentOffset.Get().x, AlignmentOffset.Get().y);
+			m_Sprite.set_rotation_hotspot(RotationOrigin.Get(), RotationOffset.Get().x, RotationOffset.Get().y);
 			//m_Sprite.set_color(Colour.Get());
-			//m_Sprite.set_alpha(Alpha.Get());
+			m_Sprite.set_color(m_Colour);
+			m_Sprite.set_alpha(Alpha.Get());
 			//m_Sprite.set_scale(Scale.Get().x, Scale.Get().y);
 			m_Sprite.set_base_angle(CL_Angle(BaseAngle.Get(), cl_radians));
 
@@ -495,6 +504,8 @@ namespace FusionEngine
 		if (!m_Sprite.is_null())
 			m_Sprite.set_color(val);
 
+		m_Colour = val;
+
 		m_SerialisationHelper.markChanged(PropsIdx::Colour);
 	}
 
@@ -506,7 +517,7 @@ namespace FusionEngine
 			return m_Colour;
 		}
 		else
-			return Colour.Get();
+			return m_Colour;
 	}
 
 	void CLSprite::SetAlpha(float alpha)
