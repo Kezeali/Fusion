@@ -31,6 +31,7 @@
 
 #include "FusionBox2DComponent.h"
 #include "FusionDeltaTime.h"
+#include "FusionMaths.h"
 
 // TEMP: For authority contact listener:
 #include "FusionEntity.h"
@@ -40,6 +41,8 @@
 
 namespace FusionEngine
 {
+
+	using namespace Maths;
 
 	Box2DSystem::Box2DSystem()
 	{
@@ -82,6 +85,17 @@ namespace FusionEngine
 
 		void AddContact(b2Contact* contact)
 		{
+			const CL_Colorf authColours[] = {
+				CL_Colorf::white,
+				CL_Colorf::blue,
+				CL_Colorf::red,
+				CL_Colorf::yellow,
+				CL_Colorf::green,
+				CL_Colorf::darkgray,
+				CL_Colorf::purple,
+				CL_Colorf::orange
+			};
+
 			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
 			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
 			if (bodyComA && bodyComB)
@@ -103,7 +117,7 @@ namespace FusionEngine
 					}
 					if (bodyComB->GetParent()->GetAuthority() == authA)
 						if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
-							sprite->Colour.Set(CL_Colorf(authA / 16.f, 1.f, 1.f, 1.f));
+							sprite->Colour.Set(authColours[authA]);
 				}
 				if ((ownerB != 0 || authB != 0) && ownerA == 0)
 				{
@@ -120,7 +134,7 @@ namespace FusionEngine
 					}
 					if (bodyComA->GetParent()->GetAuthority() == authB)
 						if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
-							sprite->Colour.Set(CL_Colorf(authB / 16.f, 1.f, 1.f, 1.f));
+							sprite->Colour.Set(authColours[authB]);
 				}
 			}
 		}
@@ -496,53 +510,47 @@ namespace FusionEngine
 	}
 
 	//template <typename T>
-	//void Lerp(T& out, const T& start, const T& end, float m)
+	//void Lerp(T& out, const T& start, const T& end, float alpha)
 	//{
-	//	out = start + m * (end - start);
+	//	out = start * (1 - alpha) + end * alpha;
 	//}
 
-	template <typename T>
-	void Lerp(T& out, const T& start, const T& end, float alpha)
-	{
-		out = start * (1 - alpha) + end * alpha;
-	}
+	//static void Wrap(float& value, float lower, float upper)
+	//{ 
+	//	float distance = upper - lower;
+	//	float times = std::floor((value - lower) / distance);
+	//	value -= (times * distance);
+	//} 
 
-	static void Wrap(float& value, float lower, float upper)
-	{ 
-		float distance = upper - lower;
-		float times = std::floor((value - lower) / distance);
-		value -= (times * distance);
-	} 
+	//static void AngleInterpB(float& out, float start, float velocity, float accel, float dt, float alpha)
+	//{
+	//	//    x0    +      v * time        +  0.5f *  a * time ^ 2
+	//	out = start + velocity * dt * alpha + 0.5f * accel * dt * dt * alpha;
+	//}
 
-	static void AngleInterpB(float& out, float start, float velocity, float accel, float dt, float alpha)
-	{
-		//    x0    +      v * time        +  0.5f *  a * time ^ 2
-		out = start + velocity * dt * alpha + 0.5f * accel * dt * dt * alpha;
-	}
+	//static void AngleInterpB(float& out, float start, float end, float vel, float alpha)
+	//{
+	//	float diff = end - start;
+	//	if (vel * diff < 0.f)
+	//		diff = b2_pi * 2.f - diff;
+	//	out = start + diff * alpha;
+	//}
 
-	static void AngleInterpB(float& out, float start, float end, float vel, float alpha)
-	{
-		float diff = end - start;
-		if (vel * diff < 0.f)
-			diff = b2_pi * 2.f - diff;
-		out = start + diff * alpha;
-	}
+	//static void AngleInterp(float& out, float start, float end, float alpha)
+	//{
+	//	if (std::abs(end - start) < b2_pi)
+	//	{
+	//		Lerp(out, start, end, alpha);
+	//		return;
+	//	}
 
-	static void AngleInterp(float& out, float start, float end, float alpha)
-	{
-		if (std::abs(end - start) < b2_pi)
-		{
-			Lerp(out, start, end, alpha);
-			return;
-		}
-
-		if (start < end)
-			start += b2_pi * 2.f;
-		else
-			end += b2_pi * 2.f;
-		
-		Lerp(out, start, end, alpha);
-	}
+	//	if (start < end)
+	//		start += b2_pi * 2.f;
+	//	else
+	//		end += b2_pi * 2.f;
+	//	
+	//	Lerp(out, start, end, alpha);
+	//}
 
 	void Box2DInterpolateTask::Update(const float delta)
 	{

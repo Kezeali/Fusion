@@ -17,11 +17,11 @@ class SpawnPoint : ScriptComponent
 	{
 	}
 	
-	EntityWrapper@ createPlayerEntity(Vector &in pos)
+	EntityWrapper@ createPlayerEntity(Vector &in pos, PlayerID owner)
 	{
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, 1);
+		Entity newEnt = ontology.instantiate("b2Dynamic", true, pos, 0.f, owner);
 		if (!newEnt.isNull())
 		{
 		ontology.addComponent(newEnt, "b2Circle", "");
@@ -86,7 +86,8 @@ class SpawnPoint : ScriptComponent
 		{
 			seed_rand(1234);
 			
-			@entityA = createPlayerEntity(itransform.Position);
+			@entityA = createPlayerEntity(itransform.Position, 1);
+			createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
 			
 			Vector pos = itransform.Position;
 			for (uint i = 0; i < 50; ++i)

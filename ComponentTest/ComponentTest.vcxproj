@@ -257,6 +257,7 @@
     <ClCompile Include="..\FusionEngine\FusionState.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStateManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamedResourceUser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionStreamingCameraComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionStreamingManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionTagFlagDictionary.cpp" />
     <ClCompile Include="..\FusionEngine\FusionTaskManager.cpp" />
@@ -323,6 +324,7 @@
     <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
+    <ClInclude Include="..\FusionEngine\FusionStreamingCameraComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionTaskScheduler.h" />
     <ClInclude Include="..\FusionEngine\FusionComponentUtils.h" />

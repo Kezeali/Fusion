@@ -33,6 +33,9 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 
+// TODO: move into StreamingSystem?
+#include "FusionStreamingCameraComponent.h"
+
 #include "FusionProfiling.h"
 #include "FusionNetworkManager.h"
 #include "FusionRakNetwork.h"
@@ -106,6 +109,10 @@ namespace FusionEngine
 		{
 			com = new CLSprite();
 		}
+		else if (type == "StreamingCamera")
+		{
+			com = new StreamingCamera();
+		}
 		return com;
 	}
 
@@ -120,6 +127,18 @@ namespace FusionEngine
 				m_Drawables.push_back(drawable);
 			}
 		}
+		if (component->GetType() == "StreamingCamera")
+		{
+			if (auto camComponent = boost::dynamic_pointer_cast<StreamingCamera>(component))
+			{
+				if (camComponent->m_ViewportEnabled)
+				{
+					camComponent->m_Viewport = std::make_shared<Viewport>(camComponent->m_ViewportRect, camComponent->m_Camera);
+					AddViewport(camComponent->m_Viewport);
+				}
+				m_Cameras.push_back(camComponent);
+			}
+		}
 	}
 
 	void CLRenderWorld::OnDeactivation(const ComponentPtr& component)
@@ -131,6 +150,23 @@ namespace FusionEngine
 			if (_where != m_Drawables.end())
 			{
 				m_Drawables.erase(_where);
+			}
+		}
+		else if (component->GetType() == "StreamingCamera")
+		{
+			if (auto camComponent = boost::dynamic_pointer_cast<StreamingCamera>(component))
+			{
+				if (camComponent->m_ViewportEnabled && camComponent->m_Viewport)
+				{
+					RemoveViewport(camComponent->m_Viewport);
+					camComponent->m_Viewport.reset();
+				}
+
+				auto _where = std::find(m_Cameras.begin(), m_Cameras.end(), camComponent);
+				if (_where != m_Cameras.end())
+				{
+					m_Cameras.erase(_where);
+				}
 			}
 		}
 	}
@@ -162,11 +198,20 @@ namespace FusionEngine
 	{
 	}
 
+//#define FSN_CLRENDER_PARALLEL_UPDATE
+
 	void CLRenderTask::Update(const float delta)
 	{
 		m_RenderWorld->AddQueuedViewports();
-			
+
+		auto& cameras = m_RenderWorld->GetCameras();
 		auto& drawables = m_RenderWorld->GetDrawables();
+
+		for (auto it = cameras.cbegin(), end = cameras.cend(); it != end; ++it)
+		{
+			auto& camera = *it;
+			camera->Update(DeltaTime::GetActualDeltaTime(), DeltaTime::GetInterpolationAlpha());
+		}
 
 		auto depthSort = [](boost::intrusive_ptr<IDrawable>& first, boost::intrusive_ptr<IDrawable>& second)->bool
 		{
@@ -202,8 +247,13 @@ namespace FusionEngine
 #endif
 			drawable->Update(DeltaTime::GetTick(), DeltaTime::GetActualDeltaTime(), DeltaTime::GetInterpolationAlpha());
 
-			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), *it))
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+			if (!outOfOrder && i != r.begin() && !depthSort(drawables[i - 1], drawable))
 				outOfOrder = true;
+#else
+			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), drawable))
+				outOfOrder = true;
+#endif
 
 			// Bubblesort
 			//if (it != drawables.begin())
@@ -212,7 +262,6 @@ namespace FusionEngine
 			//	if (depthSort(previous, drawable))
 			//		previous.swap(drawable);
 			//}
-
 		}
 #ifdef FSN_CLRENDER_PARALLEL_UPDATE
 		});

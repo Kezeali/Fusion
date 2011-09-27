@@ -199,16 +199,16 @@ namespace FusionEngine { namespace Scripting
 		r = engine->RegisterObjectMethod("Vector", "Vector &opSubAssign(const Vector &in)", asMETHODPR(Vector2, operator-=, (const Vector2&), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 		r = engine->RegisterObjectMethod("Vector", "Vector &opMulAssign(const Vector &in)", asMETHODPR(Vector2, operator*=, (float), Vector2&), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 #ifdef FSN_REFCOUNTED_VECTOR
-		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in)", asFUNCTION(RefVecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector@ opAdd(const Vector &in) const", asFUNCTION(RefVecopAdd), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 #else
-		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in)", asFUNCTION(VecopAdd), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "Vector opSub(const Vector &in)", asMETHODPR(Vector2, operator-, (const Vector2&) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Vector", "Vector opMul(const Vector &in)", asMETHOD(Vector2, operator*), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Vector", "Vector opAdd(const Vector &in) const", asFUNCTION(VecopAdd), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opSub(const Vector &in) const", asMETHODPR(Vector2, operator-, (const Vector2&) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opMul(const Vector &in) const", asMETHOD(Vector2, operator*), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		
-		r = engine->RegisterObjectMethod("Vector", "Vector opNeg()", asMETHODPR(Vector2, operator-, (void) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		r = engine->RegisterObjectMethod("Vector", "Vector opNeg() const", asMETHODPR(Vector2, operator-, (void) const, Vector2), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 #endif
 
-		r = engine->RegisterObjectMethod("Vector", "bool opEquals(const Vector &in)", asMETHOD(Vector2, operator==), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("Vector", "bool opEquals(const Vector &in) const", asMETHOD(Vector2, operator==), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 
 		// Register the object methods
 		r = engine->RegisterObjectMethod("Vector", "float length() const", asMETHOD(Vector2, length), asCALL_THISCALL); FSN_ASSERT( r >= 0 );

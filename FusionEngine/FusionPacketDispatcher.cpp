@@ -67,8 +67,7 @@ namespace FusionEngine
 			{
 				std::for_each(range.first, range.second, [&](HandlerMultiMap::value_type &it)
 				{
-					PacketHandler *handler = it.second;
-					handler->HandlePacket(packet);
+					it.second->HandlePacket(packet);
 				});
 				//for (HandlerMultiMap::iterator it = range.first, end = range.second; it != end; ++it)
 				//	it->second->HandlePacket(packet);
@@ -84,6 +83,12 @@ namespace FusionEngine
 
 	void PacketDispatcher::Subscribe(unsigned char type, PacketHandler *handler)
 	{
+#ifdef FSN_ASSERTS_ENABLED
+		// Fails if this is a duplicate:
+		auto range = m_TypeHandlers.equal_range(type);
+		auto existingEntry = std::find_if(range.first, range.second, [handler](const HandlerMultiMap::value_type& entry) { return entry.second == handler; });
+		FSN_ASSERT(existingEntry == range.second);
+#endif
 		m_TypeHandlers.insert( HandlerMultiMap::value_type(type, handler) );
 	}
 

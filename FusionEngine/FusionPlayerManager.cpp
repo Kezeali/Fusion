@@ -115,7 +115,10 @@ namespace FusionEngine
 					RakNet::BitStream newPlayerNotification;
 					newPlayerNotification.Write0(); // Tell the peer that the player is on another system
 					newPlayerNotification.Write(it->NetID);
-					newPlayerNotification.Write(it->GUID);
+					if (it->LocalIndex >= s_MaxLocalPlayers)
+						newPlayerNotification.Write(it->GUID); // Remote player (relative to this arbitrator)
+					else
+						newPlayerNotification.Write(NetworkManager::GetNetwork()->GetLocalGUID()); // Local player
 					network->Send(
 						NetDestination(remotePeerGUID, false),
 						!Timestamped,

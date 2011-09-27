@@ -30,6 +30,7 @@
 
 #include "FusionMaths.h"
 #include "FusionScriptTypeRegistrationUtils.h"
+#include "FusionPlayerRegistry.h"
 
 #include <boost/date_time.hpp>
 
@@ -47,7 +48,7 @@ namespace FusionEngine
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
-#if 1
+#if 0
 		mutex_t::scoped_lock lock(historyMutex);
 		auto now = boost::posix_time::second_clock::local_time();
 		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
@@ -179,6 +180,14 @@ namespace FusionEngine
 
 	void StreamingManager::AddCamera(const CameraPtr &cam)
 	{
+		AddOwnedCamera(0, cam);
+	}
+
+	void StreamingManager::AddOwnedCamera(PlayerID owner, const CameraPtr& cam)
+	{
+		if (!cam)
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a NULL camera ptr to StreamingManager");
+
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 
 		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam)))
@@ -194,6 +203,7 @@ namespace FusionEngine
 		streamingCam.lastPosition = Vector2(cam->GetPosition().x, cam->GetPosition().y);
 		streamingCam.streamPosition = streamingCam.lastPosition;
 		streamingCam.tightness = s_SmoothTightness;
+		streamingCam.owner = owner;
 	}
 
 	void StreamingManager::RemoveCamera(const CameraPtr &cam)
@@ -976,18 +986,22 @@ namespace FusionEngine
 		{
 			StreamingCamera &cam = *it;
 
-			CameraPtr camera = cam.camera.lock();
-			if (!camera)
+			// Update streaming position of this camera
 			{
-				it = m_Cameras.erase(it); // Remove expired cameras
-				continue;
-			}
-			++it;
+				CameraPtr camera = cam.camera.lock();
+				if (!camera && (cam.owner == 0 || PlayerRegistry::IsLocal(cam.owner)))
+				{
+					it = m_Cameras.erase(it); // Remove expired (local) cameras
+					continue;
+				}
+				++it;
 
-			
-			updateStreamingCamera(cam, std::move(camera));
+				if (camera)
+					updateStreamingCamera(cam, std::move(camera));
+			}
 			const Vector2 &newPosition = cam.streamPosition;
 
+			// Figure out the active range of this camera
 			if (refresh || cam.firstUpdate || !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.5f))
 			{
 				Vector2 oldPosition = cam.lastUsedPosition;
@@ -1001,7 +1015,7 @@ namespace FusionEngine
 				CL_Rect inactiveRange;
 				getCellRange(inactiveRange, oldPosition);
 
-				CL_Rect& activeRange = cam.activeRange;
+				CL_Rect& activeRange = cam.activeCellRange;
 				getCellRange(activeRange, newPosition);
 				//activeRange = range;
 
@@ -1051,16 +1065,16 @@ namespace FusionEngine
 				{
 					auto& existingRange = it->first;
 					//if (activeRange.is_overlapped(existingRange))
-					if (inclusiveOverlap(cam.activeRange, existingRange))
+					if (inclusiveOverlap(cam.activeCellRange, existingRange))
 					{
-						existingRange.bounding_rect(cam.activeRange);
+						existingRange.bounding_rect(cam.activeCellRange);
 						it->second.push_back(cam.streamPosition);
 					}
 				}
 				if (!merged)
 				{
 					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
-					activeRanges.push_back(std::make_pair(cam.activeRange, std::move(pos)));
+					activeRanges.push_back(std::make_pair(cam.activeCellRange, std::move(pos)));
 				}
 			}
 		}
@@ -1082,7 +1096,7 @@ namespace FusionEngine
 		//	m_CellsBeingLoaded.erase(newEnd, m_CellsBeingLoaded.end());
 		//}
 
-		// TODO: seperate activeRanges and staleActiveRanges
+		// TODO: seperate activeRanges and staleActiveRanges?
 		if (!allActiveRangesStale)
 		{
 		std::list<CL_Rect> clippedInactiveRanges;
@@ -1113,7 +1127,6 @@ namespace FusionEngine
 
 			if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
 			{
-
 				//if (!clippedInactiveRanges.empty())
 				//{
 				//	std::stringstream activestr;
@@ -1121,41 +1134,41 @@ namespace FusionEngine
 				//	SendToConsole("Activated " + activestr.str());
 				//}
 
-			unsigned int iy = (unsigned int)activeRange.top;
-			unsigned int ix = (unsigned int)activeRange.left;
-			unsigned int i = iy * m_XCellCount + ix;
-			unsigned int stride = m_XCellCount - ( activeRange.right - activeRange.left + 1 );
-			for (; iy <= (unsigned int)activeRange.bottom; ++iy)
-			{
-				FSN_ASSERT( iy >= 0 );
-				FSN_ASSERT( iy < m_YCellCount );
-				for (ix = (unsigned int)activeRange.left; ix <= (unsigned int)activeRange.right; ++ix)
+				unsigned int iy = (unsigned int)activeRange.top;
+				unsigned int ix = (unsigned int)activeRange.left;
+				unsigned int i = iy * m_XCellCount + ix;
+				unsigned int stride = m_XCellCount - ( activeRange.right - activeRange.left + 1 );
+				for (; iy <= (unsigned int)activeRange.bottom; ++iy)
 				{
-					FSN_ASSERT( ix >= 0 );
-					FSN_ASSERT( ix < m_XCellCount );
-					FSN_ASSERT( i == iy * m_XCellCount + ix );
-					Cell &cell = m_Cells[i++];
-
-					cell.inRange = true;
-
-					// Check if the cell needs to be loaded
-					if (!cell.IsLoaded())
+					FSN_ASSERT( iy >= 0 );
+					FSN_ASSERT( iy < m_YCellCount );
+					for (ix = (unsigned int)activeRange.left; ix <= (unsigned int)activeRange.right; ++ix)
 					{
-						if (m_Archivist->Retrieve(&cell, i-1))
+						FSN_ASSERT( ix >= 0 );
+						FSN_ASSERT( ix < m_XCellCount );
+						FSN_ASSERT( i == iy * m_XCellCount + ix );
+						Cell &cell = m_Cells[i++];
+
+						cell.inRange = true;
+
+						// Check if the cell needs to be loaded
+						if (!cell.IsLoaded())
 						{
-							cell.AddHist("Retrieved due to entering range");
-							//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-							m_CellsBeingLoaded.insert(&cell);
+							if (m_Archivist->Retrieve(&cell, i-1))
+							{
+								cell.AddHist("Retrieved due to entering range");
+								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
+								m_CellsBeingLoaded.insert(&cell);
+							}
+						}
+						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+						else
+						{
+							processCell(cell, streamPositions);
 						}
 					}
-					// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-					else
-					{
-						processCell(cell, streamPositions);
-					}
+					i += stride;
 				}
-				i += stride;
-			}
 
 			}
 		}

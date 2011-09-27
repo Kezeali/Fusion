@@ -53,6 +53,7 @@ namespace FusionEngine
 		float GetAngle() const;
 		float GetZoom() const;
 
+		void SetPosition(const Vector2& position);
 		void SetPosition(float x, float y);
 		void SetAngle(float angle);
 		void SetZoom(float scale);

@@ -142,6 +142,42 @@ namespace FusionEngine
 		virtual bool IsAnimationFinished() const = 0;
 	};
 
+	class ICamera
+	{
+	public:
+		static std::string GetTypeName() { return "ICamera"; }
+		virtual ~ICamera()
+		{}
+
+		FSN_COIFACE_CTOR(ICamera,
+			((FSN_GET_SET)(SyncType))
+			((FSN_IS_SET)(ViewportEnabled))
+			((FSN_GET_SET)(ViewportRect)) )
+
+		enum SyncTypes : uint8_t
+		{
+			NoSync = 0x00,
+			Owned,
+			Shared
+		};
+
+		ThreadSafeProperty<SyncTypes> SyncType;
+
+		ThreadSafeProperty<bool> ViewportEnabled;
+		ThreadSafeProperty<CL_Rectf> ViewportRect;
+
+	private:
+		virtual void SetSyncType(SyncTypes value) = 0;
+		virtual SyncTypes GetSyncType() const = 0;
+
+		virtual void SetViewportEnabled(bool value) = 0;
+		virtual bool IsViewportEnabled() const = 0;
+
+		virtual void SetViewportRect(const CL_Rectf& value) = 0;
+		virtual const CL_Rectf& GetViewportRect() const = 0;
+
+	};
+
 }
 
 #endif

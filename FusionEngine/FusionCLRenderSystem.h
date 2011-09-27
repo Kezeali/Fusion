@@ -47,6 +47,7 @@ namespace FusionEngine
 	// forward decl.
 	class IDrawable;
 	class CLRenderTask;
+	class StreamingCamera;
 
 	class B2DebugDraw;
 
@@ -83,6 +84,8 @@ namespace FusionEngine
 		const std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
 
+		std::vector<boost::intrusive_ptr<StreamingCamera>>& GetCameras() { return m_Cameras; }
+
 		static void Register(asIScriptEngine* engine);
 
 	private:
@@ -99,6 +102,8 @@ namespace FusionEngine
 		CLRenderTask* m_RenderTask;
 
 		std::vector<boost::intrusive_ptr<IDrawable>> m_Drawables;
+
+		std::vector<boost::intrusive_ptr<StreamingCamera>> m_Cameras;
 
 		std::vector<ViewportPtr> m_Viewports;
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;

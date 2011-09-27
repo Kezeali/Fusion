@@ -34,6 +34,8 @@
 
 #include "FusionAssert.h"
 
+#include <cmath>
+
 namespace FusionEngine
 {
 	namespace Maths
@@ -85,6 +87,27 @@ namespace FusionEngine
 			value = (value < lower_bound) ? lower_bound : (value > upper_bound) ? upper_bound : value;
 		}
 
+		template <typename T>
+		void Lerp(T& out, const T& start, const T& end, float alpha)
+		{
+			out = start * (1 - alpha) + end * alpha;
+		}
+
+		static void AngleInterp(float& out, float start, float end, float alpha)
+		{
+			if (std::abs(end - start) < b2_pi)
+			{
+				Lerp(out, start, end, alpha);
+				return;
+			}
+
+			if (start < end)
+				start += b2_pi * 2.f;
+			else
+				end += b2_pi * 2.f;
+
+			Lerp(out, start, end, alpha);
+		}
 	}
 }
 

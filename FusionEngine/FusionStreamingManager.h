@@ -238,6 +238,8 @@ namespace FusionEngine
 
 		void AddCamera(const CameraPtr &cam);
 		void RemoveCamera(const CameraPtr &cam);
+
+		void AddOwnedCamera(PlayerID owner, const CameraPtr& cam);
 		
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
@@ -272,19 +274,51 @@ namespace FusionEngine
 		static void Register(asIScriptEngine *engine);
 
 	private:
+		//! Streaming camera data
 		struct StreamingCamera
 		{
-			StreamingCamera() : tightness(0.0f), firstUpdate(true)
+			//! Ctor
+			StreamingCamera()
+				: tightness(0.0f), firstUpdate(true), range(0.0f), owner(0)
+			{}
+			//! Move ctor
+			StreamingCamera(StreamingCamera&& other)
+				: tightness(other.tightness),
+				firstUpdate(other.firstUpdate),
+				range(other.range),
+				owner(other.owner),
+				camera(std::move(other.camera)),
+				streamPosition(other.streamPosition),
+				lastUsedPosition(other.lastUsedPosition),
+				activeCellRange(other.activeCellRange),
+				lastPosition(other.lastPosition),
+				lastVelocity(other.lastVelocity)
 			{}
 
+			//! Owner for owned cameras
+			PlayerID owner;
+
+			//! Render-camera object (if this is a local camera)
+			/*!
+			* This may not be available for remote cameras (cameras owned by
+			* a player on another peer.) In that case, the position is sync'd
+			* over the network, rather than taken from an actual local camera.
+			*/
 			std::weak_ptr<Camera> camera;
 
-			// The current middle of the streaming area for the camera
-			//  - Moves ahead based on the camera velocity
+			//! The current middle of the streaming area for the camera
+			//! Moves ahead based on the camera velocity
 			Vector2 streamPosition;
-			Vector2 lastUsedPosition; // the streamPosition that was most recently actualy processed
+			//! The streamPosition that was most recently actualy processed
+			Vector2 lastUsedPosition; 
 
-			CL_Rect activeRange;
+			//! Activation range of this camera, it it isn't default
+			/*!
+			* Set to < 0 to use the default range 
+			*/
+			float range;
+
+			CL_Rect activeCellRange;
 
 			Vector2 lastPosition;
 			Vector2 lastVelocity;
@@ -292,6 +326,7 @@ namespace FusionEngine
 
 			bool firstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
 
+			//! Functor: returns true if the given StreamingCamera uses a specific render Camera
 			struct HasSameCamera
 			{
 				explicit HasSameCamera(const CameraPtr &cam) : newCamera(cam)
@@ -304,6 +339,22 @@ namespace FusionEngine
 
 				const CameraPtr& newCamera;
 			};
+
+		private:
+			//! Copy ctor (Disabled)
+			StreamingCamera(const StreamingCamera& other)
+				: tightness(other.tightness),
+				firstUpdate(other.firstUpdate),
+				range(other.range),
+				owner(other.owner),
+				camera(other.camera),
+				streamPosition(other.streamPosition),
+				lastUsedPosition(other.lastUsedPosition),
+				activeCellRange(other.activeCellRange),
+				lastPosition(other.lastPosition),
+				lastVelocity(other.lastVelocity)
+			{
+			}
 		};
 
 		typedef boost::recursive_mutex CamerasMutex_t;

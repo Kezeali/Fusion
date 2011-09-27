@@ -745,7 +745,7 @@ public:
 				// Load optional settings (set options)
 				ClientOptions* options = new ClientOptions("settings.xml", "settings");
 
-				if (varMap.count("connect") && options->GetOption_bool("console_logging"))
+				if (varMap.count("connect") == 0 && options->GetOption_bool("console_logging"))
 					logger->ActivateConsoleLogging();
 
 				bool editMode = options->GetOption_bool("edit");
@@ -845,8 +845,6 @@ public:
 
 
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
-
-				//PlayerRegistry::AddLocalPlayer(1u, 0u);
 
 				// This scope makes viewport hold the only reference to camera: thus camera will be deleted with viewport
 				std::shared_ptr<Camera> editCam;
@@ -1019,7 +1017,7 @@ public:
 						SendToConsole("Hosting");
 						auto playerInd = playerManager->RequestNewPlayer();
 						std::stringstream str; str << playerInd;
-						SendToConsole("Player: " + str.str());
+						SendToConsole("Players: " + str.str());
 					}
 				}
 
@@ -1042,6 +1040,8 @@ public:
 					{
 						connecting = false;
 						playerManager->RequestNewPlayer();
+						std::string hostGUID(network->GetHost().ToString());
+						SendToConsole(hostGUID);
 					}
 
 					if (compile && editMode)

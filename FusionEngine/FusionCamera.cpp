@@ -58,6 +58,12 @@ namespace FusionEngine
 		m_Position.y = y;
 	}
 
+	void Camera::SetPosition(const Vector2& position)
+	{
+		m_Position.x = position.x;
+		m_Position.y = position.y;
+	}
+
 	void Camera::SetAngle(float angle)
 	{
 		m_Angle = angle;

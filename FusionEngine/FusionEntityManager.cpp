@@ -259,7 +259,7 @@ namespace FusionEngine
 		{
 			auto& remoteViewers = std::set<RakNet::RakNetGUID>();//entity->GetViewers();
 			for (auto it = PlayerRegistry::PlayersBegin(), end = PlayerRegistry::PlayersEnd(); it != end; ++it)
-				if (it->LocalIndex > 4)
+				if (it->LocalIndex >= s_MaxLocalPlayers)
 					remoteViewers.insert(it->GUID);
 
 			if (!remoteViewers.empty())
