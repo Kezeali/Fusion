@@ -47,7 +47,7 @@ namespace FusionEngine
 		typedef T type;
 
 		//! Init. constructor
-		Vector2T(T _x = 0, T _y = 0)
+		explicit Vector2T(T _x = 0, T _y = 0)
 			:
 #ifdef FSN_REFCOUNTED_VECTOR
 			m_RefCount(1),

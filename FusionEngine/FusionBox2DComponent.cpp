@@ -284,7 +284,7 @@ namespace FusionEngine
 			}
 			if (changes[NonDynamicPropsIdx::AngularVelocity])
 			{
-				SetVelocity(m_Def.angularVelocity);
+				SetAngularVelocity(m_Def.angularVelocity);
 				//AngularVelocity.MarkChanged();
 			}
 		}

@@ -98,7 +98,7 @@ namespace FusionEngine
 		}
 
 		template <>
-		static inline void read(RakNet::BitStream& stream, const CL_Colorf& new_value)
+		static inline void read(RakNet::BitStream& stream, CL_Colorf& new_value)
 		{
 			stream.Read(new_value.a);
 			stream.Read(new_value.r);
