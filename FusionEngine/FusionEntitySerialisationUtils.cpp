@@ -339,6 +339,10 @@ namespace FusionEngine
 			if (conData)
 			{
 				out.Write1();
+#ifdef _DEBUG
+				out.Write(RakNet::RakString(component->GetType().c_str()));
+				out.Write(tempStream.GetNumberOfBitsUsed());
+#endif
 				out.Write(tempStream);
 			}
 			else
@@ -370,14 +374,15 @@ namespace FusionEngine
 			{
 				auto begin = ++components.begin();
 				auto end = components.end();
-				auto checksumEntry = checksums.begin();
+				auto checksumEntry = checksums.begin() + 1;
 				for (auto it = begin; it != end; ++it)
 				{
 					auto& component = *it;
 					FSN_ASSERT(component.get() != transform);
 					FSN_ASSERT(checksumEntry != checksums.end());
 
-					dataWritten |= SerialiseComponent(out, *checksumEntry, transform, mode);
+
+					dataWritten |= SerialiseComponent(out, *checksumEntry, component.get(), mode);
 					++checksumEntry;
 				}
 			}
@@ -390,6 +395,13 @@ namespace FusionEngine
 			//bool conData = in.ReadBit();
 			//if (conData)
 			{
+#ifdef _DEBUG
+				RakNet::RakString expectedType;
+				in.Read(expectedType);
+				FSN_ASSERT(component->GetType() == expectedType.C_String());
+				RakNet::BitSize_t expectedNumBits;
+				in.Read(expectedNumBits);
+#endif
 				auto start = in.GetReadOffset();
 				component->DeserialiseOccasional(in, IComponent::All);
 
@@ -406,6 +418,8 @@ namespace FusionEngine
 				checksum = crc.checksum();
 
 				in.SetReadOffset(dataEnd);
+
+				FSN_ASSERT(dataBits == expectedNumBits);
 			}
 		}
 
@@ -419,6 +433,8 @@ namespace FusionEngine
 			// Make sure checksums for every component can be stored
 			checksums.resize(existingComponents.size());
 
+			std::vector<bool> comsRead;
+
 			ComponentPtr transform;
 			{
 				transform = entity->GetTransform();
@@ -428,6 +444,7 @@ namespace FusionEngine
 				{
 					DeserialiseComponent(in, checksums[0], transform.get());
 				}
+				comsRead.push_back(conData);
 			}
 
 			size_t numComponents;
@@ -438,7 +455,7 @@ namespace FusionEngine
 			if (numComponents != 0)
 			{
 				auto it = existingComponents.begin(), end = existingComponents.end();
-				auto checksumEntry = checksums.begin();
+				auto checksumEntry = checksums.begin() + 1;
 				for (++it; it != end; ++it)
 				{
 					auto& component = *it;
@@ -449,6 +466,7 @@ namespace FusionEngine
 					if (conData)
 						DeserialiseComponent(in, *checksumEntry, component.get());
 					++checksumEntry;
+					comsRead.push_back(conData);
 				}
 			}
 		}

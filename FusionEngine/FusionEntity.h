@@ -441,15 +441,15 @@ namespace FusionEngine
 		ObjectID m_Id;
 		bool m_HasDefaultName;
 
-		// The player who owns this entity, 0 for default ownership
-		//  (which falls to the arbitrator, if ownership is needed)
-		//  Most entities have no owner (i.e. this will be set to 0)
-		//  Where there is no owner, the authority (below) is used.
+		//! The player who owns this entity, 0 for default ownership
+		//!  (which falls to the arbitrator, if ownership is needed)
+		//!  Most entities have no owner (i.e. this will be set to 0)
+		//!  Where there is no owner, the authority (below) is used.
 		PlayerID m_OwnerID;
-		// The player who currently has authority over this entity.
-		//  This is only used when OwnerID is zero - otherwise the
-		//  authority is always the owner.
-		PlayerID m_Authority;
+		//! The player who currently has authority over this entity.
+		//!  This is only used when OwnerID is zero - otherwise the
+		//!  authority is always the owner.
+		tbb::atomic<PlayerID> m_Authority;
 
 		tbb::spin_rw_mutex m_ComponentsMutex;
 

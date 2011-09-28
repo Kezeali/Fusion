@@ -110,6 +110,9 @@ namespace FusionEngine
 		//! Returns true if the given peer has seniority over the local peer
 		static bool IsSenior(const RakNet::RakNetGUID &peer); 
 
+		//! Returns true if peerA has seniority over peerB
+		static bool IsSenior(const RakNet::RakNetGUID &peerA, const RakNet::RakNetGUID &peerB); 
+
 		//! Returns the unique peer-id of this peer
 		static uint8_t GetPeerID();
 

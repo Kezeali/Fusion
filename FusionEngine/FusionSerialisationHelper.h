@@ -93,8 +93,12 @@ namespace FusionEngine
 		static inline void read(RakNet::BitStream& stream, std::string& out_value)
 		{
 			RakNet::RakString temp;
-			stream.ReadCompressed(temp);
-			out_value.assign(temp.C_String(), temp.C_String() + temp.GetLength());
+			if (stream.ReadCompressed(temp))
+				out_value.assign(temp.C_String(), temp.C_String() + temp.GetLength());
+			else
+			{
+				FSN_ASSERT_FAIL("Failed to deserialise compressed string");
+			}
 		}
 
 		template <>

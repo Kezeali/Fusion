@@ -62,6 +62,8 @@ namespace FusionEngine
 			LocalIndex(s_MaxLocalPlayers)
 		{}
 
+		bool IsLocal() const { return LocalIndex < s_MaxLocalPlayers; }
+
 		bool operator==(const PlayerInfo &other) const;
 		bool operator!=(const PlayerInfo &other) const;
 	};

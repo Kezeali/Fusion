@@ -134,6 +134,9 @@ namespace FusionEngine
 		{
 			bool full;
 			uint32_t tick;
+			uint32_t conTick;
+			uint32_t ocaTick;
+			RakNet::RakNetGUID guid;
 			std::shared_ptr<RakNet::BitStream> continuous;
 			std::shared_ptr<RakNet::BitStream> occasional;
 		};

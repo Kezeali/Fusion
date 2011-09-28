@@ -271,6 +271,7 @@ namespace FusionEngine
 
 	bool CLSprite::SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 	{
+		FSN_ASSERT(mode == All);
 		//return m_SerialisationHelper.writeChanges(force_all, stream, std::tie(m_Offset, m_FilePath, m_Reload));
 		return m_SerialisationHelper.writeChanges(mode != Changes, stream,
 			m_Offset, m_LocalDepth,

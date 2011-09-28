@@ -182,7 +182,10 @@ namespace FusionEngine
 		uint8_t GetPeerIndex() const;
 
 		//! Returns true if the given peer has seniority over this one
-		bool IsSenior(const RakNet::RakNetGUID &peer) const;
+		bool IsSenior(const RakNet::RakNetGUID &peer);
+
+		//! Returns true if the first given peer has seniority over the other one
+		bool IsSenior(const RakNet::RakNetGUID& expectedSenior, const RakNet::RakNetGUID& expectedJunior);
 
 		//! Gets the host GUID from the FullyConnectedMesh plugin
 		RakNet::RakNetGUID GetHost() const;

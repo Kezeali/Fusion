@@ -45,7 +45,6 @@ namespace FusionEngine
 		m_HasDefaultName(true),
 		m_Id(0),
 		m_OwnerID(0),
-		m_Authority(0),
 		m_Flags(0),
 		m_Domain(GAME_DOMAIN),
 		m_Layer(0),
@@ -59,6 +58,8 @@ namespace FusionEngine
 		m_WaitStepsRemaining(0),
 		m_Manager(manager)
 	{
+		m_Authority = 0;
+
 		m_MarkedToDeactivate = false;
 
 		FSN_ASSERT(q);

@@ -274,7 +274,7 @@ namespace FusionEngine
 			if (!remoteViewers.empty())
 			{
 				auto state = std::make_shared<RakNet::BitStream>();
-				if (important || PlayerRegistry::IsLocal(entity->GetOwnerID()) || PlayerRegistry::IsLocal(entity->GetAuthority()))
+				state->Write1();
 				if (SerialiseContinuous(*state, entity, IComponent::All))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
@@ -299,9 +299,10 @@ namespace FusionEngine
 					}
 				}
 				state = std::make_shared<RakNet::BitStream>();
+				state->Write1();
 				auto& existingChecksums = m_SentStates[entity->GetID()];
-				auto newChecksums = existingChecksums;
-				if (PlayerRegistry::IsLocal(entity->GetAuthority()) && SerialiseOccasional(*state, newChecksums, entity, IComponent::Changes))
+				//auto newChecksums = existingChecksums;
+				if (SerialiseOccasional(*state, existingChecksums/*newChecksums*/, entity, IComponent::Changes))
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 					
@@ -328,7 +329,7 @@ namespace FusionEngine
 							}
 						}
 						// Update the stored checksums
-						existingChecksums = newChecksums;
+						//existingChecksums = newChecksums;
 					}
 				}
 			}
@@ -447,17 +448,32 @@ namespace FusionEngine
 		auto _where = m_ReceivedStates.find(entity->GetID());
 		if (_where != m_ReceivedStates.end())
 		{
-			auto synchInfo = _where->second;
+			auto& synchInfo = _where->second;
 
-			IComponent::SerialiseMode mode = synchInfo.full ? IComponent::All : IComponent::Changes;
-			auto& continuous = synchInfo.continuous;
-			auto& occasional = synchInfo.occasional;
+			const bool owned = entity->GetOwnerID() != 0;
+			const bool defaultAuthority = entity->GetOwnerID() == 0 && entity->GetAuthority() == 0;
+			auto currentAuthority = PlayerRegistry::GetPlayer(entity->GetAuthority());
 
-			if (continuous)
-				EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
-			if (occasional)
+			// The sender is authoritative when
+			//  a) it owns the given entity
+			//  b) the entity is under the sender's authority
+			//  c) the entity is under default authority and the sender is older
+			const bool isAuthoritativeState = owned || (defaultAuthority ?
+				NetworkManager::IsSenior(synchInfo.guid)
+				: (synchInfo.guid == currentAuthority.GUID || NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID)));
+
+			if (isAuthoritativeState)
 			{
-				EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode, factory, entity_manager);
+				IComponent::SerialiseMode mode = synchInfo.full ? IComponent::All : IComponent::Changes;
+				auto& continuous = synchInfo.continuous;
+				auto& occasional = synchInfo.occasional;
+
+				if (continuous)
+					EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
+				if (occasional)
+				{
+					EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode, factory, entity_manager);
+				}
 			}
 
 			m_ReceivedStates.erase(_where);
@@ -479,12 +495,13 @@ namespace FusionEngine
 		const bool arbitor = NetworkManager::ArbitratorIsLocal();
 		const bool isOwnedLocally = PlayerRegistry::IsLocal(entity->GetOwnerID());
 		const bool isUnderLocalAuthority = isOwnedLocally || PlayerRegistry::IsLocal(entity->GetAuthority());
+		const bool isUnderDefaultAuthority = entity->GetOwnerID() == 0 && entity->GetAuthority() == 0;
 
-		if (!isUnderLocalAuthority)
+		if (!isOwnedLocally)
 		{
 			m_EntitiesToReceive.push_back(entity);
 		}
-		if (isOwnedLocally || entity->GetOwnerID() == 0)
+		if (isUnderLocalAuthority || isUnderDefaultAuthority)
 		{
 			// Calculate priority
 			unsigned int priority;
@@ -672,6 +689,7 @@ namespace FusionEngine
 		BitSize_t dataLength;
 		sourceStr.Read(dataLength);
 		sourceStr.Read(*state, dataLength);
+		FSN_ASSERT(state->ReadBit());
 	}
 
 #ifdef _DEBUG
@@ -832,9 +850,17 @@ namespace FusionEngine
 
 						if (tick > lastTick)
 						{
-							state.tick = DeltaTime::GetTick() + (tick - lastTick);
-							m_ReceivedStates[entityID].continuous = state.continuous;
+							auto& existingState = m_ReceivedStates[entityID];
+							// Only override the state if the new peer has seniority over the old one
+							if (guid == existingState.guid || NetworkManager::IsSenior(guid, existingState.guid))
+							{
+								existingState.conTick = tick;//DeltaTime::GetTick() + (tick - lastTick);
+								existingState.continuous = state.continuous;
+								existingState.guid = guid;
+							}
 						}
+						else
+							SendToConsole("Old state, ignored");
 					}
 
 					lastTick = tick;
@@ -847,15 +873,27 @@ namespace FusionEngine
 						ObjectID entityID;
 						bitStream.Read(entityID);
 
-						auto& info = m_ReceivedStates[entityID];
+						auto& existingState = m_ReceivedStates[entityID];
 
-						info.full = true; // indicates full data (not just changes)
+						// Accept states from peers with higher authority
+						if (guid == existingState.guid || NetworkManager::IsSenior(guid, existingState.guid))
+						{
+							existingState.full = true; // indicates full data (not just changes)
 
-						readState(bitStream, info.occasional);
+							readState(bitStream, existingState.occasional);
 
-						boost::crc_16_type crc;
-						crc.process_bytes(info.occasional->GetData(), info.occasional->GetNumberOfBytesUsed());
-						//m_SentStates[packet->guid][entityID] = crc.checksum();
+							existingState.guid = guid;
+							existingState.ocaTick = tick;
+
+							//boost::crc_16_type crc;
+							//crc.process_bytes(existingState.occasional->GetData(), existingState.occasional->GetNumberOfBytesUsed());
+							//m_SentStates[packet->guid][entityID] = crc.checksum();
+						}
+						else
+						{
+							StateData trashState;
+							readState(bitStream, trashState.occasional);
+						}
 					}
 				}
 			}

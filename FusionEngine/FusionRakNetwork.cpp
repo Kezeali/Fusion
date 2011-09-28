@@ -170,9 +170,28 @@ namespace FusionEngine
 		return m_PeerIndexPlugin.GetPeerIndex();
 	}
 
-	bool RakNetwork::IsSenior(const RakNetGUID &guid) const
+	bool RakNetwork::IsSenior(const RakNetGUID &guid)
 	{
-		return m_PeerIndexPlugin.IsSenior(guid);
+		return !IsConnected() || guid == UNASSIGNED_RAKNET_GUID || guid == GetLocalGUID() || IsSenior(guid, GetLocalGUID());
+	}
+
+	bool RakNetwork::IsSenior(const RakNetGUID &guidSen, const RakNetGUID &guidJun)
+	{
+		if (guidSen != guidJun)
+		{
+			DataStructures::List<RakNetGUID> participants;
+			m_FullyConnectedMeshPlugin.GetParticipantList(participants); // This stupid method isn't const, so this overload of IsSenior can't be const :(
+			for (size_t i = 0; i < participants.Size(); ++i)
+			{
+				if (participants.Get(i) == guidSen)
+					return true;
+				else if (participants.Get(i) == guidJun)
+					return false;
+			}
+			FSN_EXCEPT(InvalidArgumentException, "Unknown participants");
+		}
+		else
+			return true;
 	}
 
 	RakNetGUID RakNetwork::GetHost() const
