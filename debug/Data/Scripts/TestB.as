@@ -69,7 +69,7 @@ class TestB : ScriptComponent
 	{
 		++frames;
 		
-		if (frames == 1 && setcampos_con is null)
+		if (false && frames == 1 && setcampos_con is null)
 		{
 			cam = Camera(itransform.Position);
 			streaming.addCamera(cam);

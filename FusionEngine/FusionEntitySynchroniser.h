@@ -137,6 +137,7 @@ namespace FusionEngine
 			uint32_t conTick;
 			uint32_t ocaTick;
 			RakNet::RakNetGUID guid;
+			PlayerID authority;
 			std::shared_ptr<RakNet::BitStream> continuous;
 			std::shared_ptr<RakNet::BitStream> occasional;
 		};

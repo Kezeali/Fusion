@@ -189,10 +189,6 @@ namespace FusionEngine
 		if (state.m_Active != active)
 			m_Changed = true;
 		state.m_Active = active;
-		if (active)
-			SendToConsole(state.m_Name + " activated");
-		else
-			SendToConsole(state.m_Name + " deactivated");
 	}
 
 	void PlayerInput::setPosition(PlayerInput::InputState &state, float position)

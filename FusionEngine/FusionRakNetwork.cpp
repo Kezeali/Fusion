@@ -172,13 +172,21 @@ namespace FusionEngine
 
 	bool RakNetwork::IsSenior(const RakNetGUID &guid)
 	{
-		return !IsConnected() || guid == UNASSIGNED_RAKNET_GUID || guid == GetLocalGUID() || IsSenior(guid, GetLocalGUID());
+		if (guid != UNASSIGNED_RAKNET_GUID)
+			return !IsConnected() || guid == GetLocalGUID() || IsSenior(guid, GetLocalGUID());
+		else
+			return false;
 	}
 
 	bool RakNetwork::IsSenior(const RakNetGUID &guidSen, const RakNetGUID &guidJun)
 	{
 		if (guidSen != guidJun)
 		{
+			if (guidSen == GetHost())
+				return true;
+			else if (guidJun == GetHost())
+				return false;
+
 			DataStructures::List<RakNetGUID> participants;
 			m_FullyConnectedMeshPlugin.GetParticipantList(participants); // This stupid method isn't const, so this overload of IsSenior can't be const :(
 			for (size_t i = 0; i < participants.Size(); ++i)

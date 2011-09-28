@@ -36,6 +36,10 @@
 
 #include <functional>
 
+#ifdef _DEBUG
+#include "FusionEntity.h"
+#endif
+
 namespace FusionEngine
 {
 
@@ -210,6 +214,22 @@ namespace FusionEngine
 		}
 		if (!m_Sprite.is_null())
 		{
+#ifdef _DEBUG
+			const CL_Colorf authColours[] = {
+				CL_Colorf::white,
+				CL_Colorf::blue,
+				CL_Colorf::red,
+				CL_Colorf::yellow,
+				CL_Colorf::green,
+				CL_Colorf::brown,
+				CL_Colorf::purple,
+				CL_Colorf::orange
+			};
+			PlayerID auth = GetParent()->GetAuthority();
+			if (auth < 8)
+				m_Sprite.set_color(authColours[auth]);
+#endif
+
 			Vector2 draw_pos = ToRender(m_Position);// - camera_pos;
 			m_Sprite.draw(gc, draw_pos.x, draw_pos.y);
 

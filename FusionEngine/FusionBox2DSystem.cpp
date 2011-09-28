@@ -115,12 +115,12 @@ namespace FusionEngine
 					{
 						bodyComB->GetParent()->SetAuthority(authA);
 					}
-					if (bodyComB->GetParent()->GetAuthority() == authA)
-						if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
-						{
-							FSN_ASSERT(authA < 8);
-							sprite->Colour.Set(authColours[authA]);
-						}
+					//if (bodyComB->GetParent()->GetAuthority() == authA)
+					//	if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
+					//	{
+					//		FSN_ASSERT(authA < 8);
+					//		sprite->Colour.Set(authColours[authA]);
+					//	}
 				}
 				if ((ownerB != 0 || authB != 0) && ownerA == 0)
 				{
@@ -135,12 +135,12 @@ namespace FusionEngine
 					{
 						bodyComA->GetParent()->SetAuthority(authB);
 					}
-					if (bodyComA->GetParent()->GetAuthority() == authB)
-						if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
-						{
-							FSN_ASSERT(authB < 8);
-							sprite->Colour.Set(authColours[authB]);
-						}
+					//if (bodyComA->GetParent()->GetAuthority() == authB)
+					//	if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
+					//	{
+					//		FSN_ASSERT(authB < 8);
+					//		sprite->Colour.Set(authColours[authB]);
+					//	}
 				}
 			}
 		}
@@ -492,9 +492,9 @@ namespace FusionEngine
 						{
 							body->GetParent()->SetAuthority(0);
 
-							if (body->GetParent()->GetAuthority() == 0)
-								if (auto sprite = body->GetParent()->GetComponent<ISprite>())
-									sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
+							//if (body->GetParent()->GetAuthority() == 0)
+							//	if (auto sprite = body->GetParent()->GetComponent<ISprite>())
+							//		sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
 						}
 					}
 				}

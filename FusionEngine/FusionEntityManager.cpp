@@ -228,7 +228,7 @@ namespace FusionEngine
 #ifdef FSN_PARALLEL_SERIALISE
 	typedef tbb::concurrent_vector<std::pair<ObjectID, RakNet::BitStream>> DataToSend_t;
 #else
-	typedef std::vector<std::pair<ObjectID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
+	typedef std::vector<std::tuple<ObjectID, PlayerID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
 #endif
 
 	static void writeStates(RakNet::BitStream& packetData, const DataToSend_t& dataToSend)
@@ -237,12 +237,14 @@ namespace FusionEngine
 		packetData.Write(numStates);
 		for (auto it = dataToSend.begin(), end = dataToSend.end(); it != end; ++it)
 		{
-			ObjectID id = it->first;
-			auto& state = it->second;
+			ObjectID id = std::get<0>(*it);
+			PlayerID authority = std::get<1>(*it);
+			auto& state = std::get<2>(*it);
 
 			state->ResetReadPointer();
 
 			packetData.Write(id);
+			packetData.Write(authority);
 			packetData.Write(state->GetNumberOfBitsUsed());
 			packetData.Write(*state, state->GetNumberOfBitsUsed());
 		}
@@ -289,7 +291,7 @@ namespace FusionEngine
 						{
 							auto& dataInfo = dataToSendToSystems[*vit];
 
-							dataInfo.continuousData.push_back(std::make_pair(entity->GetID(), state));
+							dataInfo.continuousData.push_back(std::make_tuple(entity->GetID(), entity->GetAuthority(), state));
 							dataInfo.important |= important; // If the dataset contains any important entity changes, it must be sent as Important data
 
 							m_PacketDataBudget -= stateSize;
@@ -320,7 +322,7 @@ namespace FusionEngine
 							{
 								auto& dataInfo = dataToSendToSystems[*vit];
 
-								dataInfo.occasionalData.push_back(std::make_pair(entity->GetID(), state));
+								dataInfo.occasionalData.push_back(std::make_tuple(entity->GetID(), entity->GetAuthority(), state));
 								dataInfo.important |= important; // If the dataset contains any important entity changes, it must be sent as Important data
 
 								m_PacketDataBudget -= stateSize;
@@ -451,22 +453,36 @@ namespace FusionEngine
 			auto& synchInfo = _where->second;
 
 			const bool owned = entity->GetOwnerID() != 0;
-			const bool defaultAuthority = entity->GetOwnerID() == 0 && entity->GetAuthority() == 0;
+			const bool defaultAuthority = NetworkManager::IsSenior(synchInfo.guid) ? synchInfo.authority == 0 : (entity->GetOwnerID() == 0 && entity->GetAuthority() == 0);
+			auto remoteAuthority = PlayerRegistry::GetPlayer(synchInfo.authority);
 			auto currentAuthority = PlayerRegistry::GetPlayer(entity->GetAuthority());
+			if (currentAuthority.IsLocal())
+				currentAuthority.GUID = NetworkManager::GetNetwork()->GetLocalGUID();
 
 			// The sender is authoritative when
 			//  a) it owns the given entity
 			//  b) the entity is under the sender's authority
 			//  c) the entity is under default authority and the sender is older
-			const bool isAuthoritativeState = owned || (defaultAuthority ?
-				NetworkManager::IsSenior(synchInfo.guid)
-				: (synchInfo.guid == currentAuthority.GUID || NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID)));
+			//const bool isAuthoritativeState = owned || (defaultAuthority ?
+			//	NetworkManager::IsSenior(synchInfo.guid)
+			//	: (synchInfo.guid == currentAuthority.GUID || NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID)));
+			const bool isAuthoritativeState = owned
+				|| (remoteAuthority.GUID == synchInfo.guid && NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID))
+				|| (!currentAuthority.IsLocal() && NetworkManager::IsSenior(synchInfo.guid));
 
-			if (isAuthoritativeState)
+			if (isAuthoritativeState && !PlayerRegistry::IsLocal(synchInfo.authority))
 			{
 				IComponent::SerialiseMode mode = synchInfo.full ? IComponent::All : IComponent::Changes;
 				auto& continuous = synchInfo.continuous;
 				auto& occasional = synchInfo.occasional;
+
+				//FSN_ASSERT(owned || synchInfo.authority != 0 || NetworkManager::IsSenior(synchInfo.guid));
+
+				if (!owned && remoteAuthority.GUID == synchInfo.guid)
+				{
+					entity->SetAuthority(synchInfo.authority);
+					SendToConsole("accepting remote authority");
+				}
 
 				if (continuous)
 					EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
@@ -475,6 +491,9 @@ namespace FusionEngine
 					EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode, factory, entity_manager);
 				}
 			}
+			// Make sure the local peer isn't giving auth. to remote peers that don't want it
+			if (currentAuthority.GUID == synchInfo.guid && remoteAuthority.GUID != currentAuthority.GUID)
+				entity->SetAuthority(0);
 
 			m_ReceivedStates.erase(_where);
 
@@ -786,32 +805,7 @@ namespace FusionEngine
 
 					auto playerInput = m_PlayerInputs->GetInputsForPlayer(player);
 					if (playerInput)
-					{
 						playerInput->Deserialise(&bitStream);
-						if (playerInput->IsActive("thrust"))
-							SendToConsole(" thrust active");
-					}
-
-					//unsigned short count; // number of inputs that changed
-					//bitStream.Read(count);
-
-					//const InputDefinitionLoader *inputDefinitions = m_InputManager->GetDefinitionLoader();
-
-					//for (unsigned short i = 0; i < count; ++i)
-					//{
-					//	bool active;
-					//	float position;
-
-					//	unsigned short inputIndex;
-					//	bitStream.Read(inputIndex);
-
-					//	bitStream.Read(active);
-					//	bitStream.Read(position);
-
-					//	const InputDefinition &definition = inputDefinitions->GetInputDefinition(inputIndex);
-
-					//	m_PlayerInputs->SetState(player, definition.Name, active, position);
-					//}
 				}
 			}
 		case MTID_ENTITYMOVE:
@@ -841,6 +835,9 @@ namespace FusionEngine
 						ObjectID entityID;
 						bitStream.Read(entityID);
 
+						PlayerID authority;
+						bitStream.Read(authority);
+
 						StateData state;
 						auto& info = state;
 
@@ -857,6 +854,7 @@ namespace FusionEngine
 								existingState.conTick = tick;//DeltaTime::GetTick() + (tick - lastTick);
 								existingState.continuous = state.continuous;
 								existingState.guid = guid;
+								existingState.authority = authority;
 							}
 						}
 						else
@@ -873,6 +871,9 @@ namespace FusionEngine
 						ObjectID entityID;
 						bitStream.Read(entityID);
 
+						PlayerID authority;
+						bitStream.Read(authority);
+
 						auto& existingState = m_ReceivedStates[entityID];
 
 						// Accept states from peers with higher authority
@@ -883,6 +884,7 @@ namespace FusionEngine
 							readState(bitStream, existingState.occasional);
 
 							existingState.guid = guid;
+							existingState.authority = authority;
 							existingState.ocaTick = tick;
 
 							//boost::crc_16_type crc;
