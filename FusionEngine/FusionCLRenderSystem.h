@@ -78,8 +78,12 @@ namespace FusionEngine
 
 		void AddQueuedViewports();
 
+		// TEMP
 		void SetPhysWorld(b2World* world) { m_PhysWorld = world; }
 		b2World* m_PhysWorld;
+		bool m_PhysDebugDrawEnabled;
+		void SetDebugDraw(bool value) { m_PhysDebugDrawEnabled = value; }
+		void ToggleDebugDraw() { m_PhysDebugDrawEnabled = !m_PhysDebugDrawEnabled; }
 
 		const std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }

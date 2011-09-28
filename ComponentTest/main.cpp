@@ -831,6 +831,7 @@ public:
 				entityFactory->AddInstancer(box2dWorld);
 				
 				static_cast<CLRenderWorld*>(renderWorld.get())->SetPhysWorld(static_cast<Box2DWorld*>(box2dWorld.get())->Getb2World());
+				static_cast<CLRenderWorld*>(renderWorld.get())->SetDebugDraw(false);
 
 				const std::unique_ptr<AngelScriptSystem> asSystem(new AngelScriptSystem(scriptManager, entityFactory.get()));
 				auto asWorld = asSystem->CreateWorld();
@@ -977,6 +978,9 @@ public:
 					{
 						network->SetDebugPacketLoss(0);
 					}
+
+					if (ev.id == CL_KEY_F3)
+						std::dynamic_pointer_cast<CLRenderWorld>(renderWorld)->ToggleDebugDraw();
 				});
 
 				{

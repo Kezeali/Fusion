@@ -54,6 +54,7 @@ namespace FusionEngine
 			//inputState.m_InputIndex = std::distance(inputs.cbegin(), it);
 			InputState state;
 			state.m_Name = input->Name;
+			state.m_Analog = input->Analog;
 			m_Inputs.push_back(state);
 		}
 	}
@@ -146,7 +147,8 @@ namespace FusionEngine
 
 			//stream->Write(state.m_InputIndex);
 			stream->Write(state.IsActive());
-			stream->Write(state.GetValue());
+			if (state.m_Analog)
+				stream->Write(state.GetValue());
 
 			//state.m_ChangedSinceSerialised = false;
 		}
@@ -170,10 +172,12 @@ namespace FusionEngine
 				bool active;
 				stream->Read(active);
 				float position;
-				stream->Read(position);
+				if (state.m_Analog)
+					stream->Read(position);
 
 				setActive(state, active);
-				setPosition(state, position);
+				if (state.m_Analog)
+					setPosition(state, position);
 			});
 		}
 
@@ -185,6 +189,10 @@ namespace FusionEngine
 		if (state.m_Active != active)
 			m_Changed = true;
 		state.m_Active = active;
+		if (active)
+			SendToConsole(state.m_Name + " activated");
+		else
+			SendToConsole(state.m_Name + " deactivated");
 	}
 
 	void PlayerInput::setPosition(PlayerInput::InputState &state, float position)

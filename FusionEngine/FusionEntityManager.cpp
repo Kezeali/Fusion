@@ -195,9 +195,18 @@ namespace FusionEngine
 
 			packetData.Write(DeltaTime::GetTick());
 
-			packetData.Write(m_PlayerInputs->ChangedCount());
-
 			const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
+
+			unsigned short numChangedInputCollections = std::count_if(inputs.cbegin(), inputs.cend(), [](const ConsolidatedInput::PlayerInputsMap::value_type& entry)
+			{
+				return entry.second->HasChanged();
+			});
+
+			//FSN_ASSERT_MSG(numChangedInputCollections > 0, "Important moves should have changed input!");
+			FSN_ASSERT(numChangedInputCollections <= inputs.size());
+
+			packetData.Write(numChangedInputCollections);
+
 			for (ConsolidatedInput::PlayerInputsMap::const_iterator it = inputs.begin(), end = inputs.end(); it != end; ++it)
 			{
 				PlayerID playerId = it->first;
@@ -475,7 +484,7 @@ namespace FusionEngine
 		{
 			m_EntitiesToReceive.push_back(entity);
 		}
-		//if (isUnderLocalAuthority)
+		if (isOwnedLocally || entity->GetOwnerID() == 0)
 		{
 			// Calculate priority
 			unsigned int priority;
@@ -745,9 +754,13 @@ namespace FusionEngine
 		{
 		case MTID_IMPORTANTMOVE:
 			{
+				std::stringstream tickStr; tickStr << tick;
+				SendToConsole("Processing important move at " + tickStr.str());
 				// Get Input data
 				unsigned short playerCount;
 				bitStream.Read(playerCount);
+				if (playerCount == 0)
+					SendToConsole(" No changes?");
 				for (unsigned short pi = 0; pi < playerCount; pi++)
 				{
 					PlayerID player;
@@ -755,7 +768,11 @@ namespace FusionEngine
 
 					auto playerInput = m_PlayerInputs->GetInputsForPlayer(player);
 					if (playerInput)
+					{
 						playerInput->Deserialise(&bitStream);
+						if (playerInput->IsActive("thrust"))
+							SendToConsole(" thrust active");
+					}
 
 					//unsigned short count; // number of inputs that changed
 					//bitStream.Read(count);
@@ -784,7 +801,6 @@ namespace FusionEngine
 				//Tick_t tick;
 				//bitStream.Read(tick);
 
-				auto& lastTick = m_RemoteTicks[guid];
 //#ifdef _DEBUG
 //				if (tick <= lastTick)
 //				{
@@ -799,6 +815,8 @@ namespace FusionEngine
 				unsigned short entityCount;
 				if (includesCon)
 				{
+					auto& lastTick = m_RemoteTicks[guid];
+
 					bitStream.Read(entityCount);
 					for (unsigned short i = 0; i < entityCount; i++)
 					{
@@ -815,7 +833,7 @@ namespace FusionEngine
 						if (tick > lastTick)
 						{
 							state.tick = DeltaTime::GetTick() + (tick - lastTick);
-							m_ReceivedStates[entityID] = state;
+							m_ReceivedStates[entityID].continuous = state.continuous;
 						}
 					}
 

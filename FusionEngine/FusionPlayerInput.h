@@ -50,7 +50,7 @@ namespace FusionEngine
 		struct InputState
 		{
 			InputState()
-				: m_Active(false), m_Value(0.0f), m_ActiveRatio(0.0f), m_ActiveNow(false), m_ActiveFirst(false)
+				: m_Analog(false), m_Active(false), m_Value(0.0f), m_ActiveRatio(0.0f), m_ActiveNow(false), m_ActiveFirst(false)
 			{}
 			InputState(const std::string& name, bool active, float value, float active_ratio)
 				: m_Name(name), m_Active(active), m_Value(value), m_ActiveRatio(active_ratio), m_ActiveNow(active), m_ActiveFirst(active)
@@ -60,6 +60,8 @@ namespace FusionEngine
 			std::string m_Name;
 
 			mutable bool m_ChangedSinceSerialised;
+
+			bool m_Analog;
 
 			bool m_Active; // Button / key was active during the step
 			float m_Value; // Axis value, cursor position

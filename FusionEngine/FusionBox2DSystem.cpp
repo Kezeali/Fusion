@@ -86,12 +86,12 @@ namespace FusionEngine
 		void AddContact(b2Contact* contact)
 		{
 			const CL_Colorf authColours[] = {
-				CL_Colorf::white,
+				CL_Colorf::aqua,
 				CL_Colorf::blue,
 				CL_Colorf::red,
 				CL_Colorf::yellow,
 				CL_Colorf::green,
-				CL_Colorf::darkgray,
+				CL_Colorf::brown,
 				CL_Colorf::purple,
 				CL_Colorf::orange
 			};
@@ -117,7 +117,10 @@ namespace FusionEngine
 					}
 					if (bodyComB->GetParent()->GetAuthority() == authA)
 						if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
+						{
+							FSN_ASSERT(authA < 8);
 							sprite->Colour.Set(authColours[authA]);
+						}
 				}
 				if ((ownerB != 0 || authB != 0) && ownerA == 0)
 				{
@@ -134,7 +137,10 @@ namespace FusionEngine
 					}
 					if (bodyComA->GetParent()->GetAuthority() == authB)
 						if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
+						{
+							FSN_ASSERT(authB < 8);
 							sprite->Colour.Set(authColours[authB]);
+						}
 				}
 			}
 		}
@@ -412,10 +418,9 @@ namespace FusionEngine
 			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
 			if (!staticBody && awake && body->m_Interpolate)
 			{
-						const auto& tf = body->m_Body->GetTransform();
-						body->m_LastPosition = b2v2(tf.p);
-						body->m_LastAngle = tf.q.GetAngle();
-						body->m_LastAngularVelocity = body->m_Body->GetAngularVelocity();
+				const auto& tf = body->m_Body->GetTransform();
+				body->m_LastPosition = b2v2(tf.p);
+				body->m_LastAngle = tf.q.GetAngle();
 			}
 		}
 
