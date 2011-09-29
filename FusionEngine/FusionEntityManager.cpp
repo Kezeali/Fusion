@@ -93,7 +93,8 @@ namespace FusionEngine
 		else
 		{
 			// Create an entry for the given player, if it is a valid player
-			if (PlayerRegistry::GetPlayer(player).NetID != 0)
+			//if (PlayerRegistry::GetPlayer(player).NetID != 0)
+			if (player != 0)
 				return m_PlayerInputs[player] = PlayerInputPtr( new PlayerInput(m_LocalManager->GetDefinitionLoader()->GetInputDefinitions()) );
 			else
 				return PlayerInputPtr();
@@ -420,8 +421,7 @@ namespace FusionEngine
 
 	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
 	{
-		const PlayerInfo &playerInfo = PlayerRegistry::GetPlayer(entity->GetOwnerID());
-		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(playerInfo.NetID);
+		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(entity->GetOwnerID());
 		if (playerInput)
 			entity->_setPlayerInput(playerInput);
 	}
@@ -463,9 +463,6 @@ namespace FusionEngine
 			//  a) it owns the given entity
 			//  b) the entity is under the sender's authority
 			//  c) the entity is under default authority and the sender is older
-			//const bool isAuthoritativeState = owned || (defaultAuthority ?
-			//	NetworkManager::IsSenior(synchInfo.guid)
-			//	: (synchInfo.guid == currentAuthority.GUID || NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID)));
 			const bool isAuthoritativeState = owned
 				|| (remoteAuthority.GUID == synchInfo.guid && NetworkManager::IsSenior(synchInfo.guid, currentAuthority.GUID))
 				|| (!currentAuthority.IsLocal() && NetworkManager::IsSenior(synchInfo.guid));

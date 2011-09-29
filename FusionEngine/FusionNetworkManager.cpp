@@ -147,6 +147,18 @@ namespace FusionEngine
 		return getSingleton().m_Network->IsSenior(peerA, peerB);
 	}
 
+	bool NetworkManager::IsSenior(const PlayerInfo &pA, const PlayerInfo& pB)
+	{
+		auto guidA = pA.IsLocal() ? getSingleton().GetNetwork()->GetLocalGUID() : pA.GUID;
+		auto guidB = pB.IsLocal() ? getSingleton().GetNetwork()->GetLocalGUID() : pB.GUID;
+		if (guidA != guidB)
+			// Check what system has seniority
+			return getSingleton().m_Network->IsSenior(guidA, guidB);
+		else
+			// If both players are on the same system, use the lower player-id
+			return pA.NetID < pB.NetID;
+	}
+
 	uint8_t NetworkManager::GetPeerID()
 	{
 		return getSingleton().m_PeerIDManager.m_PeerID;

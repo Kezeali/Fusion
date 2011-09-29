@@ -92,7 +92,6 @@ class TestB : ScriptComponent
 		
 		if (entity.input.getButton("thrust"))
 		{
-			//console.println("Adjusting velocity");
 			irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
 		}
 		else

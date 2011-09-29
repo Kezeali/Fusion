@@ -85,17 +85,6 @@ namespace FusionEngine
 
 		void AddContact(b2Contact* contact)
 		{
-			const CL_Colorf authColours[] = {
-				CL_Colorf::aqua,
-				CL_Colorf::blue,
-				CL_Colorf::red,
-				CL_Colorf::yellow,
-				CL_Colorf::green,
-				CL_Colorf::brown,
-				CL_Colorf::purple,
-				CL_Colorf::orange
-			};
-
 			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
 			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
 			if (bodyComA && bodyComB)
@@ -111,16 +100,14 @@ namespace FusionEngine
 
 					if (authB == 0)
 						bodyComB->GetParent()->SetAuthority(authA);
-					else if (!NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authB).GUID))
+					else
 					{
-						bodyComB->GetParent()->SetAuthority(authA);
+						auto playerA = PlayerRegistry::GetPlayer(authA);
+						auto playerB = PlayerRegistry::GetPlayer(authB);
+						// If both authorities are on the same system, use the lower player-id
+						if ((playerA.GUID == playerB.GUID && authA < authB) || NetworkManager::IsSenior(playerA, playerB))
+							bodyComB->GetParent()->SetAuthority(authA);
 					}
-					//if (bodyComB->GetParent()->GetAuthority() == authA)
-					//	if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
-					//	{
-					//		FSN_ASSERT(authA < 8);
-					//		sprite->Colour.Set(authColours[authA]);
-					//	}
 				}
 				if ((ownerB != 0 || authB != 0) && ownerA == 0)
 				{
@@ -131,16 +118,14 @@ namespace FusionEngine
 
 					if (authA == 0)
 						bodyComA->GetParent()->SetAuthority(authB);
-					else if (!NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authA).GUID))
+					else
 					{
-						bodyComA->GetParent()->SetAuthority(authB);
+						auto playerA = PlayerRegistry::GetPlayer(authA);
+						auto playerB = PlayerRegistry::GetPlayer(authB);
+						// If both authorities are on the same system, use the lower player-id
+						if ((playerA.GUID == playerB.GUID && authB < authA) || NetworkManager::IsSenior(playerB, playerA))
+							bodyComA->GetParent()->SetAuthority(authB);
 					}
-					//if (bodyComA->GetParent()->GetAuthority() == authB)
-					//	if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
-					//	{
-					//		FSN_ASSERT(authB < 8);
-					//		sprite->Colour.Set(authColours[authB]);
-					//	}
 				}
 			}
 		}

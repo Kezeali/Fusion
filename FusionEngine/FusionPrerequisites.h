@@ -79,6 +79,7 @@ namespace FusionEngine
 	class PacketHandlerNode;
 	class PhysicalWorld;
 	class PlayerInput;
+	struct PlayerInfo;
 	class RakNetwork;
 	class Renderable;
 	class Renderer;
