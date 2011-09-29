@@ -1120,7 +1120,7 @@ public:
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
-						entitySynchroniser->ProcessQueue(executed & SystemType::Simulation, entityManager.get(), entityFactory.get());
+						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
 					}
 
 					//if (int(rand() / (float)RAND_MAX * 16) == 15)

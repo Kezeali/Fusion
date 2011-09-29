@@ -146,7 +146,9 @@ namespace FusionEngine
 	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager)
 		: m_InputManager(input_manager),
 		m_PlayerInputs(new ConsolidatedInput(input_manager)),
+		m_SendTick(0),
 		m_JitterBufferTargetLength(100),
+		m_UseJitterBuffer(true),
 		m_MinEntsInAPacket(std::numeric_limits<size_t>::max()),
 		m_MaxEntsInAPacket(0),
 		m_MaxContinuousStateSize(0)
@@ -188,13 +190,13 @@ namespace FusionEngine
 		{
 			packetData.Write((MessageID)MTID_ENTITYMOVE);
 
-			packetData.Write(DeltaTime::GetTick());
+			packetData.Write(m_SendTick);
 		}
 		else
 		{
 			packetData.Write((MessageID)MTID_IMPORTANTMOVE);
 
-			packetData.Write(DeltaTime::GetTick());
+			packetData.Write(m_SendTick);
 
 			const ConsolidatedInput::PlayerInputsMap &inputs = m_PlayerInputs->GetPlayerInputs();
 
@@ -548,132 +550,27 @@ namespace FusionEngine
 
 	static RakNet::Time nextPacketTime = 0;
 
-	void EntitySynchroniser::ProcessQueue(bool send, EntityManager* entity_manager, EntityFactory* factory)
+	void EntitySynchroniser::ProcessQueue(EntityManager* entity_manager, EntityFactory* factory)
 	{
 		// TODO: OnDisconected handler (need to add a signal or something for that) that removes jitter buffer
-		const auto sendDt = DeltaTime::GetDeltaTime() * 1000.0;
-		auto timeNow = RakNet::GetTime();
-		for (auto it = m_JitterBuffers.begin(), end = m_JitterBuffers.end(); it != end; ++it)
-		{
-			const auto& guid = it->first;
-			const auto lastPopTime = it->second.lastPopTime;
-			const auto popRate = it->second.popRate;
-			auto& jitterBuffer = it->second.buffer;
-			auto& jitterBufferState = it->second;
-
-			if (!jitterBuffer.empty()/* && timeNow >= (RakNet::Time)(lastPopTime + sendDt * popRate + 0.5)*/)
-			{
-				auto newEnd = jitterBuffer.begin(), end = jitterBuffer.end();
-				auto firstTickToProcess = newEnd->tick;
-
-				unsigned int numTicksToProcess = 1;
-
-				Profiling::getSingleton().AddTime("Buffer size", (unsigned long)jitterBuffer.size());
-
-				auto bufferLength = sendDt * (jitterBuffer.back().tick - firstTickToProcess);
-				if ((jitterBufferState.filling && bufferLength < m_JitterBufferTargetLength) || bufferLength < m_JitterBufferTargetLength * 0.5)
-				{
-#ifdef _DEBUG
-					const bool started = !jitterBufferState.filling;
-#endif
-					jitterBufferState.filling = true;
-					jitterBufferState.emptying = false;
-
-					auto ticksBetweenLess = ((m_JitterBufferTargetLength - bufferLength) / m_JitterBufferTargetLength) * 4;
-					if (++jitterBufferState.lastTickSkipped >= ticksBetweenLess)
-					{
-						--numTicksToProcess; // slow down to fill up the buffer
-						jitterBufferState.lastTickSkipped = 0;
-					}
-
-#ifdef _DEBUG
-					if (started)
-					{
-						std::stringstream str; str << ticksBetweenLess;
-						SendToConsole("Jitter buffer too small: refilling. " + str.str());
-					}
-#endif
-				}
-				else if((jitterBufferState.emptying && bufferLength > m_JitterBufferTargetLength * 1.5) || bufferLength > m_JitterBufferTargetLength * 2)
-				{
-#ifdef _DEBUG
-					const bool started = !jitterBufferState.emptying;
-#endif
-					it->second.filling = false;
-					it->second.emptying = true;
-
-					auto ticksBetweenExtra = (1 / ((bufferLength - m_JitterBufferTargetLength) / m_JitterBufferTargetLength)) * 4;
-					if (++jitterBufferState.lastTickSkipped >= ticksBetweenExtra)
-					{
-						++numTicksToProcess; // speed up to fill the buffer
-						jitterBufferState.lastTickSkipped = 0;
-					}
-
-#ifdef _DEBUG
-					if (started)
-					{
-						std::stringstream str; str << ticksBetweenExtra;
-						SendToConsole("Jitter buffer too big: emptying. " + str.str());
-					}
-#endif
-				}
-				else
-				{
-#ifdef _DEBUG
-					if (jitterBufferState.filling)
-					{
-						std::stringstream str; str << bufferLength;
-						SendToConsole("Done filling. Buffer length is now " + str.str());
-					}
-					if (jitterBufferState.emptying)
-					{
-						std::stringstream str; str << bufferLength;
-						SendToConsole("Done emptying. Buffer length is now " + str.str());
-					}
-#endif
-					jitterBufferState.filling = false;
-					jitterBufferState.emptying = false;
-					jitterBufferState.lastTickSkipped = 0;
-				}
-				if (numTicksToProcess > 0)
-				{
-					unsigned int ticksProcessed = 0;
-					auto tickToProcess = firstTickToProcess;
-					do
-					{
-						const auto& front = *newEnd;
-						//if (RakNet::LessThan(timeNow, front.timestamp + m_JitterBufferTargetLength))
-						//	break;
-						if (front.tick > tickToProcess)
-						{
-							tickToProcess = front.tick;
-							if (++ticksProcessed >= numTicksToProcess)
-								break;
-						}
-						ProcessPacket(guid, *front.data);
-						++newEnd;
-					} while (newEnd != end);
-					jitterBuffer.erase(jitterBuffer.begin(), newEnd);
-				}
-			}
-		}
+		if (m_UseJitterBuffer)
+			ProcessJitterBuffer();
 
 		for (auto it = m_EntitiesToReceive.begin(), end = m_EntitiesToReceive.end(); it != end; ++it)
 			ReceiveSync(*it, entity_manager, factory);
 
-		if (send)
-		{
-			m_EntitiesToReceive.clear();
+		m_EntitiesToReceive.clear();
 
-			m_TEMPQueuedEntities.clear();
+		m_TEMPQueuedEntities.clear();
 
-			if (m_PacketDataBudget < s_MaxDataPerTick * 2)
-				m_PacketDataBudget += s_MaxDataPerTick;
-			if (m_PacketDataBudget < -int64_t(s_MaxDataPerTick * 2))
-				m_PacketDataBudget = -int64_t(s_MaxDataPerTick * 2);
+		if (m_PacketDataBudget < s_MaxDataPerTick * 2)
+			m_PacketDataBudget += s_MaxDataPerTick;
+		if (m_PacketDataBudget < -int64_t(s_MaxDataPerTick * 2))
+			m_PacketDataBudget = -int64_t(s_MaxDataPerTick * 2);
 
-			SendPackets();
-		}
+		SendPackets();
+
+		++m_SendTick;
 	}
 
 	//void EntitySynchroniser::Send()
@@ -718,58 +615,44 @@ namespace FusionEngine
 
 		Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)1);
 
-//#ifdef _DEBUG
-//		unsigned char timestampMessageId;
-//		bitStream->Read(timestampMessageId);
-//		FSN_ASSERT(timestampMessageId == (unsigned char)ID_TIMESTAMP);
-//#else
+		// Ignore message ID
 		bitStream->IgnoreBytes(sizeof(unsigned char));
-//#endif
-		RakNet::Time timestamp = GetTime();
-		//bitStream->Read(timestamp);
 
-		Tick_t remoteTick;
+		SendTick_t remoteTick;
 		bitStream->Read(remoteTick);
 
-		auto& jitterBuffer = m_JitterBuffers[packet->guid];
+		if (m_UseJitterBuffer)
+		{
+			auto& jitterBuffer = m_JitterBuffers[packet->guid];
 
-		auto previousRemoteTime = jitterBuffer.remoteTime;
-		auto previousLocalTime = jitterBuffer.localTime;
+			bitStream->ResetReadPointer();
 
-		//m_RemoteTime[packet->guid] = timestamp;
-		jitterBuffer.remoteTime = timestamp;
-		jitterBuffer.localTime = GetTime();
+			JitterBufferPacket jitterPacket;
+			//jitterPacket.guid = packet->guid;
+			//jitterPacket.timestamp = timestamp;
+			jitterPacket.tick = remoteTick;
+			jitterPacket.data = /*std::move*/(bitStream);
+			jitterBuffer.buffer.push_back(/*std::move*/(jitterPacket));
 
-		bitStream->ResetReadPointer();
-
-		JitterBufferPacket jitterPacket;
-		//jitterPacket.guid = packet->guid;
-		jitterPacket.timestamp = timestamp;
-		jitterPacket.tick = remoteTick;
-		jitterPacket.data = /*std::move*/(bitStream);
-		jitterBuffer.buffer.push_back(/*std::move*/(jitterPacket));
-
-		// Adjust rate smoothly to try and keep the buffer at desired size
-		//if (sendDiff > DeltaTime::GetDeltaTime() * 1000)
-		//{
-		//	jitterBuffer.popRate -= (back.timestamp - desiredTimestamp) / m_JitterBufferTargetLength;
-		//}
-		//if (back.timestamp < desiredTimestamp)
-		//{
-		//	jitterBuffer.popRate += (desiredTimestamp - back.timestamp) / m_JitterBufferTargetLength;
-		//}
-
-		fe_clamp(jitterBuffer.popRate, 0.5, 1.5);
+			// Prevent the jitterbuffer from growing out of control:
+			while (jitterBuffer.buffer.size() > 60)
+				jitterBuffer.buffer.pop_front();
 
 #ifdef _DEBUG
-		//FSN_ASSERT(jitterBuffer.buffer.size() < 50);
-		if (std::abs<int>((int)std::max(jb_size, jitterBuffer.buffer.size()) - (int)std::min(jb_size, jitterBuffer.buffer.size())) > 2)
-		{
-			jb_size = jitterBuffer.buffer.size();
-			std::stringstream str; str << jb_size;
-			SendToConsole("Jitter Buffer for " + std::string(packet->guid.ToString()) + " changed size by > 2: " + str.str());
-		}
+			//FSN_ASSERT(jitterBuffer.buffer.size() < 50);
+			if (std::abs<int>((int)std::max(jb_size, jitterBuffer.buffer.size()) - (int)std::min(jb_size, jitterBuffer.buffer.size())) > 2)
+			{
+				jb_size = jitterBuffer.buffer.size();
+				std::stringstream str; str << jb_size;
+				SendToConsole("Jitter Buffer for " + std::string(packet->guid.ToString()) + " changed size by > 2: " + str.str());
+			}
 #endif
+		}
+		else
+		{
+			bitStream->ResetReadPointer();
+			ProcessPacket(packet->guid, *bitStream);
+		}
 	}
 
 	void EntitySynchroniser::ProcessPacket(const RakNet::RakNetGUID& guid, RakNet::BitStream& bitStream)
@@ -781,7 +664,7 @@ namespace FusionEngine
 		unsigned char type;
 		bitStream.Read(type);
 		// Read the tick for this packet
-		Tick_t tick;
+		SendTick_t tick;
 		bitStream.Read(tick);
 
 		switch (type)
@@ -807,17 +690,6 @@ namespace FusionEngine
 			}
 		case MTID_ENTITYMOVE:
 			{
-				//Tick_t tick;
-				//bitStream.Read(tick);
-
-//#ifdef _DEBUG
-//				if (tick <= lastTick)
-//				{
-//					std::stringstream str; str << ((type == MTID_IMPORTANTMOVE) ? "(i)" : "") << tick;
-//					SendToConsole("Continious state out of date, ignoring: " + str.str());
-//				}
-//#endif
-
 				const bool includesCon = bitStream.ReadBit();
 				const bool includesOca = bitStream.ReadBit();
 
@@ -897,6 +769,116 @@ namespace FusionEngine
 				}
 			}
 			break;
+		}
+	}
+
+	void EntitySynchroniser::ProcessJitterBuffer()
+	{
+		const auto sendDt = DeltaTime::GetDeltaTime() * 1000.0;
+		auto timeNow = RakNet::GetTime();
+		for (auto it = m_JitterBuffers.begin(), end = m_JitterBuffers.end(); it != end; ++it)
+		{
+			const auto& guid = it->first;
+			const auto lastPopTime = it->second.lastPopTime;
+			const auto popRate = it->second.popRate;
+			auto& jitterBuffer = it->second.buffer;
+			auto& jitterBufferState = it->second;
+
+			if (!jitterBuffer.empty()/* && timeNow >= (RakNet::Time)(lastPopTime + sendDt * popRate + 0.5)*/)
+			{
+				auto newEnd = jitterBuffer.begin(), end = jitterBuffer.end();
+				auto firstTickToProcess = newEnd->tick;
+
+				unsigned int numTicksToProcess = 1;
+
+				Profiling::getSingleton().AddTime("Buffer size", (unsigned long)jitterBuffer.size());
+
+				auto bufferLength = sendDt * (jitterBuffer.back().tick - firstTickToProcess);
+				if ((jitterBufferState.filling && bufferLength < m_JitterBufferTargetLength) || bufferLength < m_JitterBufferTargetLength * 0.5)
+				{
+#ifdef _DEBUG
+					const bool started = !jitterBufferState.filling;
+#endif
+					jitterBufferState.filling = true;
+					jitterBufferState.emptying = false;
+
+					auto ticksBetweenLess = ((m_JitterBufferTargetLength - bufferLength) / m_JitterBufferTargetLength) * 4;
+					if (++jitterBufferState.lastTickSkipped >= ticksBetweenLess)
+					{
+						--numTicksToProcess; // slow down to fill up the buffer
+						jitterBufferState.lastTickSkipped = 0;
+					}
+
+#ifdef _DEBUG
+					if (started)
+					{
+						std::stringstream str; str << ((ticksBetweenLess > 0) ? (1 / ticksBetweenLess) : std::numeric_limits<double>::infinity());
+						SendToConsole("Jitter buffer too small: refilling at " + str.str() + "x speed");
+					}
+#endif
+				}
+				else if((jitterBufferState.emptying && bufferLength > m_JitterBufferTargetLength * 1.5) || bufferLength > m_JitterBufferTargetLength * 2)
+				{
+#ifdef _DEBUG
+					const bool started = !jitterBufferState.emptying;
+#endif
+					it->second.filling = false;
+					it->second.emptying = true;
+
+					auto ticksBetweenExtra = (1 / ((bufferLength - m_JitterBufferTargetLength) / m_JitterBufferTargetLength)) * 4;
+					if (++jitterBufferState.lastTickSkipped >= ticksBetweenExtra)
+					{
+						++numTicksToProcess; // speed up to fill the buffer
+						jitterBufferState.lastTickSkipped = 0;
+					}
+
+#ifdef _DEBUG
+					if (started)
+					{
+						std::stringstream str; str << ticksBetweenExtra;
+						SendToConsole("Jitter buffer too big: emptying at " + str.str() + "x speed");
+					}
+#endif
+				}
+				else
+				{
+#ifdef _DEBUG
+					if (jitterBufferState.filling)
+					{
+						std::stringstream str; str << bufferLength;
+						SendToConsole("Done filling. Buffer length is now " + str.str());
+					}
+					if (jitterBufferState.emptying)
+					{
+						std::stringstream str; str << bufferLength;
+						SendToConsole("Done emptying. Buffer length is now " + str.str());
+					}
+#endif
+					jitterBufferState.filling = false;
+					jitterBufferState.emptying = false;
+					jitterBufferState.lastTickSkipped = 0;
+				}
+				if (numTicksToProcess > 0)
+				{
+					unsigned int ticksProcessed = 0;
+					auto tickToProcess = firstTickToProcess;
+					do
+					{
+						const auto& front = *newEnd;
+						//if (RakNet::LessThan(timeNow, front.timestamp + m_JitterBufferTargetLength))
+						//	break;
+						if (front.tick > tickToProcess)
+						{
+							++tickToProcess;
+							if (++ticksProcessed >= numTicksToProcess)
+								break;
+						}
+						ProcessPacket(guid, *front.data);
+						++newEnd;
+					} while (newEnd != end);
+					jitterBuffer.erase(jitterBuffer.begin(), newEnd);
+				}
+			}
 		}
 	}
 
