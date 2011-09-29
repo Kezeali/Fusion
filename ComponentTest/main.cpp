@@ -946,6 +946,10 @@ public:
 						SendToConsole(str.str());
 					}
 
+					if (ev.id == CL_KEY_DECIMAL)
+					{
+						network->SetDebugLag(60, 4);
+					}
 					if (ev.id == CL_KEY_NUMPAD3)
 					{
 						network->SetDebugLag(100, 10);
@@ -981,6 +985,12 @@ public:
 
 					if (ev.id == CL_KEY_F3)
 						std::dynamic_pointer_cast<CLRenderWorld>(renderWorld)->ToggleDebugDraw();
+
+					if (ev.id == CL_KEY_F4)
+					{
+						entitySynchroniser->SetUseJitterBuffer(!entitySynchroniser->IsUsingJitterBuffer());
+						SendToConsole(std::string("Jitter buffer") + (entitySynchroniser->IsUsingJitterBuffer() ? " enabled" : " disabled"));
+					}
 				});
 
 				{

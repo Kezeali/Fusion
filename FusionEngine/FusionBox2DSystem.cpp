@@ -39,6 +39,8 @@
 #include "FusionNetworkManager.h"
 #include "FusionRender2DComponent.h"
 
+#include <tbb/parallel_do.h>
+
 namespace FusionEngine
 {
 
@@ -74,104 +76,98 @@ namespace FusionEngine
 		}
 	};
 
-	class AuthorityContactListener : public b2ContactListener
+#define FSN_PARALLEL_PROC_AUTH
+
+	class AuthorityContactListener
 	{
 	public:
 		AuthorityContactListener()
 		{
 		}
 
-		std::map<PlayerID, std::set<b2Body*>> m_Interacting;
-
-		void AddContact(b2Contact* contact)
+		void WalkInteractions(PlayerID owner, const Box2DBody* bodyCom)
 		{
-			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
-			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
-			if (bodyComA && bodyComB)
+#if FSN_ASSERTS_ENABLED == 1
+			unsigned short sanity = 0;
+#endif
+			auto b2b = bodyCom->Getb2Body();
+			std::deque<b2Body*> bodiesStack;
+			while (b2b)
 			{
-				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
-				auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
-				if ((ownerA != 0 || authA != 0) && ownerB == 0)
+				auto contactList = b2b->GetContactList();
+				for (auto c = contactList; c != nullptr; c = c->next)
 				{
-					if (ownerA != 0)
-						authA = ownerA;
-
-					m_Interacting[ownerA].insert(contact->GetFixtureB()->GetBody());
-
-					if (authB == 0)
-						bodyComB->GetParent()->SetAuthority(authA);
-					else
+					if (c->contact->IsTouching())
 					{
-						auto playerA = PlayerRegistry::GetPlayer(authA);
-						auto playerB = PlayerRegistry::GetPlayer(authB);
-						// If both authorities are on the same system, use the lower player-id
-						if ((playerA.GUID == playerB.GUID && authA < authB) || NetworkManager::IsSenior(playerA, playerB))
-							bodyComB->GetParent()->SetAuthority(authA);
+						// AddInteraction(...) returns false if the other body is owned, thus
+						//  breaking the interaction chain
+						if (AddInteraction(owner, c->other))
+							bodiesStack.push_back(c->other);
 					}
 				}
-				if ((ownerB != 0 || authB != 0) && ownerA == 0)
+				if (!bodiesStack.empty())
 				{
-					if (ownerB != 0)
-						authB = ownerB;
+					b2b = bodiesStack.back();
+					bodiesStack.pop_back();
+				}
+				else
+					b2b = nullptr;
+#if FSN_ASSERTS_ENABLED == 1
+				FSN_ASSERT(++sanity != 0); // Break on rollover
+#endif
+			}
+		}
 
-					m_Interacting[ownerB].insert(contact->GetFixtureA()->GetBody());
+		void ParseAuthority()
+		{
+			for (auto authIt = m_Interacting.begin(), authEnd = m_Interacting.end(); authIt != authEnd; ++authIt)
+			{
+				PlayerID authority = authIt->first;
 
-					if (authA == 0)
-						bodyComA->GetParent()->SetAuthority(authB);
+				for (auto iactIt = authIt->second.begin(), iactEnd = authIt->second.end(); iactIt != iactEnd; ++iactIt)
+				{
+					const auto& bodyComB = *iactIt;
+					PlayerID authB = bodyComB->GetParent()->GetAuthority();
+
+					if (authB == 0) // No current authority: take it
+					{
+						bodyComB->GetParent()->SetAuthority(authority);
+					}
 					else
 					{
-						auto playerA = PlayerRegistry::GetPlayer(authA);
-						auto playerB = PlayerRegistry::GetPlayer(authB);
-						// If both authorities are on the same system, use the lower player-id
-						if ((playerA.GUID == playerB.GUID && authB < authA) || NetworkManager::IsSenior(playerB, playerA))
-							bodyComA->GetParent()->SetAuthority(authB);
+						// If there is a current authority for this body, check whether it is due to
+						//  an active interation with a more senior player (if not, take authority)
+						const auto& bInteractions = m_Interacting[authB];
+						bool activeInteraction = bInteractions.find(bodyComB) != bInteractions.end();
+
+						if (/*!activeInteraction || */NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authority), PlayerRegistry::GetPlayer(authB)))
+							bodyComB->GetParent()->SetAuthority(authority);
 					}
 				}
 			}
 		}
 
-		/// Called when two fixtures begin to touch.
-		void BeginContact(b2Contact*)
+		void ClearInteractions()
 		{
+			m_Interacting.clear();
 		}
 
-		/// Called when two fixtures cease to touch.
-		void EndContact(b2Contact* contact)
+	private:
+		std::map<PlayerID, std::set<Box2DBody*>> m_Interacting;
+
+		bool AddInteraction(PlayerID auth, b2Body* otherBody)
 		{
-			Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
-			Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
-			if (bodyComA && bodyComB)
+			Box2DBody* bodyComB = static_cast<Box2DBody*>(otherBody->GetUserData());
+			if (bodyComB)
 			{
-				auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
-				if (ownerA != 0)
-					m_Interacting[ownerA].erase(contact->GetFixtureB()->GetBody());
-				if (ownerB != 0)
-					m_Interacting[ownerB].erase(contact->GetFixtureA()->GetBody());
+				PlayerID ownerB = bodyComB->GetParent()->GetOwnerID();
+				PlayerID authB = bodyComB->GetParent()->GetAuthority();
+				if (ownerB == 0) // Break interaction chains at owned bodies
+				{
+					return m_Interacting[auth].insert(bodyComB).second; // Don't follow paths already checked
+				}
 			}
-			//// TODO: handle multiple contacts (keep update authority to most senior as they are removed)
-			//Box2DBody* bodyComA = static_cast<Box2DBody*>(contact->GetFixtureA()->GetBody()->GetUserData());
-			//Box2DBody* bodyComB = static_cast<Box2DBody*>(contact->GetFixtureB()->GetBody()->GetUserData());
-			//if (bodyComA && bodyComB)
-			//{
-			//	auto ownerA = bodyComA->GetParent()->GetOwnerID(), ownerB = bodyComB->GetParent()->GetOwnerID();
-			//	auto authA = bodyComA->GetParent()->GetAuthority(), authB = bodyComB->GetParent()->GetAuthority();
-			//	if (ownerA != 0)
-			//		authA = ownerA;
-			//	if (ownerB != 0)
-			//		authB = ownerB;
-
-			//	if (authA != 0 && ownerB == 0 && authB == authA)
-			//		bodyComB->GetParent()->SetAuthority(0);
-			//	if (authB != 0 && ownerA == 0 && authA == authB)
-			//		bodyComA->GetParent()->SetAuthority(0);
-
-			//	if (bodyComA->GetParent()->GetAuthority() == 0)
-			//		if (auto sprite = bodyComA->GetParent()->GetComponent<ISprite>())
-			//			sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
-			//	if (bodyComB->GetParent()->GetAuthority() == 0)
-			//		if (auto sprite = bodyComB->GetParent()->GetComponent<ISprite>())
-			//			sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
-			//}
+			return false;
 		}
 	};
 
@@ -182,7 +178,7 @@ namespace FusionEngine
 		m_World = new b2World(gravity, true);
 
 		m_AuthContactListener = new AuthorityContactListener();
-		m_World->SetContactListener(m_AuthContactListener);
+		//m_World->SetContactListener(m_AuthContactListener);
 
 		m_B2DTask = new Box2DTask(this, m_World);
 		m_B2DInterpTask = new Box2DInterpolateTask(this);
@@ -383,6 +379,7 @@ namespace FusionEngine
 
 	void Box2DTask::Update(const float delta)
 	{
+		// Late initialisation
 		auto& toCreate = m_B2DSysWorld->m_BodiesToCreate;
 		for (auto it = toCreate.begin(), end = toCreate.end(); it != end; ++it)
 		{
@@ -395,6 +392,7 @@ namespace FusionEngine
 		activeBodies.insert(activeBodies.end(), toCreate.begin(), toCreate.end());
 		toCreate.clear();
 
+		// Update interpolation and mass data
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
@@ -407,11 +405,18 @@ namespace FusionEngine
 				body->m_LastPosition = b2v2(tf.p);
 				body->m_LastAngle = tf.q.GetAngle();
 			}
+
+			// Update the mass data based on any fixture changes
+			body->CleanMassData();
 		}
 
+		// I'm glad I don't have to worry about what goes on in here :)
 		m_World->Step(delta, 8, 8);
 		m_World->ClearForces();
-		//auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;
+
+		// Setup property synch by marking them as changed and
+		//  process interactions which affect authority (network sync stuff)
+		m_B2DSysWorld->m_AuthContactListener->ClearInteractions();
 		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
 		{
 			auto body = *it;
@@ -426,48 +431,20 @@ namespace FusionEngine
 				}
 				if (awake)
 				{
-					//if (body->m_Interpolate)
-					//{
-					//	const auto& tf = body->m_Body->GetTransform();
-					//	body->m_LastPosition = b2v2(tf.p);
-					//	body->m_LastAngle = tf.q.GetAngle();
-					//}
-					
 					body->Position.MarkChanged();
 					body->Angle.MarkChanged();
 					body->Velocity.MarkChanged();
 					body->AngularVelocity.MarkChanged();
 
-					if (body->GetParent()->GetOwnerID() != 0)
+					const PlayerID owner = body->GetParent()->GetOwnerID();
+					if (owner != 0)
 					{
-						body->ClearInteractions();
-
-						auto b2b = body->Getb2Body();
-						std::deque<b2Body*> bodiesStack;
-						while (b2b)
-						{
-							auto contactList = b2b->GetContactList();
-							for (auto c = contactList; c != nullptr; c = c->next)
-							{
-								if (c->contact->IsTouching())
-								{
-									m_B2DSysWorld->m_AuthContactListener->AddContact(c->contact);
-									if (body->AddInteraction(c->other))
-										bodiesStack.push_back(c->other);
-								}
-							}
-							if (!bodiesStack.empty())
-							{
-								b2b = bodiesStack.back();
-								bodiesStack.pop_back();
-							}
-							else
-								b2b = nullptr;
-						}
+						m_B2DSysWorld->m_AuthContactListener->WalkInteractions(owner, body.get());
 					}
 				}
 				else
 				{
+					// Remove authority on sleeping bodies
 					//if (!body->IsInteractingWithPlayer())
 					{
 						auto owner = body->GetParent()->GetOwnerID();
@@ -476,17 +453,14 @@ namespace FusionEngine
 						if (owner == 0 && auth != 0)
 						{
 							body->GetParent()->SetAuthority(0);
-
-							//if (body->GetParent()->GetAuthority() == 0)
-							//	if (auto sprite = body->GetParent()->GetComponent<ISprite>())
-							//		sprite->Colour.Set(CL_Colorf(1.f, 1.f, 1.f, 1.f));
 						}
 					}
 				}
 			}
-
-			body->CleanMassData();
 		}
+
+		m_B2DSysWorld->m_AuthContactListener->ParseAuthority();
+		m_B2DSysWorld->m_AuthContactListener->ClearInteractions();
 	}
 
 	Box2DInterpolateTask::Box2DInterpolateTask(Box2DWorld* sysworld)

@@ -615,14 +615,14 @@ namespace FusionEngine
 
 		Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)1);
 
-		// Ignore message ID
-		bitStream->IgnoreBytes(sizeof(unsigned char));
-
-		SendTick_t remoteTick;
-		bitStream->Read(remoteTick);
-
 		if (m_UseJitterBuffer)
 		{
+			// Ignore message ID
+			bitStream->IgnoreBytes(sizeof(unsigned char));
+
+			SendTick_t remoteTick;
+			bitStream->Read(remoteTick);
+
 			auto& jitterBuffer = m_JitterBuffers[packet->guid];
 
 			bitStream->ResetReadPointer();
@@ -650,7 +650,6 @@ namespace FusionEngine
 		}
 		else
 		{
-			bitStream->ResetReadPointer();
 			ProcessPacket(packet->guid, *bitStream);
 		}
 	}

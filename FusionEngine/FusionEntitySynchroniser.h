@@ -90,6 +90,9 @@ namespace FusionEngine
 		EntitySynchroniser(InputManager *input_manager);
 		~EntitySynchroniser();
 
+		void SetUseJitterBuffer(bool use) { m_UseJitterBuffer = use; }
+		bool IsUsingJitterBuffer() const { return m_UseJitterBuffer; }
+
 		const EntityArray &GetReceivedEntities() const;
 
 		//! Sends data
