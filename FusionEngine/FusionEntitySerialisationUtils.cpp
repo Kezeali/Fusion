@@ -239,15 +239,19 @@ namespace FusionEngine
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
 			{			
 				RakNet::BitStream tempStream;
-				bool conData = transform->SerialiseContinuous(tempStream);
-				//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
-				if (!conData)
-					tempStream.Reset();
+				transform->SerialiseContinuous(tempStream);
 
-				out.Write(conData);
-				out.Write(tempStream);
+				if (tempStream.GetNumberOfBitsUsed() > 0)
+				{
+					out.Write1();
+					out.Write(tempStream);
 
-				dataWritten |= conData;
+					dataWritten = true;
+				}
+				else
+				{
+					out.Write0();
+				}
 			}
 
 			out.Write(numComponents);
@@ -261,17 +265,17 @@ namespace FusionEngine
 					FSN_ASSERT(component.get() != transform);
 
 					RakNet::BitStream tempStream;
-					bool conData = component->SerialiseContinuous(tempStream);
-					//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
-					if (conData)
+					component->SerialiseContinuous(tempStream);
+
+					if (tempStream.GetNumberOfBitsUsed() > 0)
 					{
 						out.Write1();
 						out.Write(tempStream);
+
+						dataWritten = true;
 					}
 					else
 						out.Write0();
-
-					dataWritten |= conData;
 				}
 			}
 
@@ -318,10 +322,9 @@ namespace FusionEngine
 		bool SerialiseComponent(RakNet::BitStream& out, uint16_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
-			bool conData = component->SerialiseOccasional(tempStream, IComponent::All);
-			//FSN_ASSERT(conData || tempStream.GetNumberOfBitsUsed() == 0);
+			component->SerialiseOccasional(tempStream, IComponent::All);
 
-			conData = tempStream.GetNumberOfBitsUsed() > 0;
+			bool conData = tempStream.GetNumberOfBitsUsed() > 0;
 
 			if (conData)
 			{
@@ -339,10 +342,10 @@ namespace FusionEngine
 			if (conData)
 			{
 				out.Write1();
-#ifdef _DEBUG
-				out.Write(RakNet::RakString(component->GetType().c_str()));
-				out.Write(tempStream.GetNumberOfBitsUsed());
-#endif
+//#ifdef _DEBUG
+//				out.Write(RakNet::RakString(component->GetType().c_str()));
+//				out.Write(tempStream.GetNumberOfBitsUsed());
+//#endif
 				out.Write(tempStream);
 			}
 			else
@@ -395,13 +398,13 @@ namespace FusionEngine
 			//bool conData = in.ReadBit();
 			//if (conData)
 			{
-#ifdef _DEBUG
-				RakNet::RakString expectedType;
-				in.Read(expectedType);
-				FSN_ASSERT(component->GetType() == expectedType.C_String());
-				RakNet::BitSize_t expectedNumBits;
-				in.Read(expectedNumBits);
-#endif
+//#ifdef _DEBUG
+//				RakNet::RakString expectedType;
+//				in.Read(expectedType);
+//				FSN_ASSERT(component->GetType() == expectedType.C_String());
+//				RakNet::BitSize_t expectedNumBits;
+//				in.Read(expectedNumBits);
+//#endif
 				auto start = in.GetReadOffset();
 				component->DeserialiseOccasional(in, IComponent::All);
 
@@ -419,7 +422,7 @@ namespace FusionEngine
 
 				in.SetReadOffset(dataEnd);
 
-				FSN_ASSERT(dataBits == expectedNumBits);
+				//FSN_ASSERT(dataBits == expectedNumBits);
 			}
 		}
 

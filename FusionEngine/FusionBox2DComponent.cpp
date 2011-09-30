@@ -29,6 +29,8 @@
 
 #include "FusionBox2DComponent.h"
 
+#include "FusionMaths.h"
+
 // TEMP: auth test
 #include "FusionEntity.h"
 #include "FusionRender2DComponent.h"
@@ -121,6 +123,18 @@ namespace FusionEngine
 		}
 	}
 
+	// 120 is max sim framerate (TODO: actually restrict this)
+	static const float s_MaxVelocity = b2_maxTranslation * 120.f;
+	static const float s_MinVelocity = -s_MaxVelocity;
+	static const float s_MaxRotationalVelocity = b2_maxRotation * 120.f;
+	static const float s_MinRotationalVelocity = -s_MaxRotationalVelocity;
+
+	void Box2DBody::CompressState()
+	{
+#ifdef FSN_PHYS_COMPRESS_STATE
+#endif
+	}
+
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		if (GetBodyType() == Dynamic)
@@ -135,11 +149,14 @@ namespace FusionEngine
 
 			if (awake)
 			{
-				const Vector2 vel = GetVelocity();
+				Vector2 vel = GetVelocity();
 #ifdef FSN_PHYS_COMPRESS_STATE
-				stream.WriteFloat16(vel.x, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
-				stream.WriteFloat16(vel.y, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
-				stream.WriteFloat16(GetAngularVelocity(), -b2_maxRotation * 120.f, b2_maxRotation * 120.f);
+				Maths::ClampThis(vel.x, s_MinVelocity, s_MaxVelocity);
+				Maths::ClampThis(vel.y, s_MinVelocity, s_MaxVelocity);
+
+				stream.WriteFloat16(vel.x, s_MinVelocity, s_MaxVelocity);
+				stream.WriteFloat16(vel.y, s_MinVelocity, s_MaxVelocity);
+				stream.WriteFloat16(Maths::Clamp(GetAngularVelocity(), s_MinRotationalVelocity, s_MaxRotationalVelocity), s_MinRotationalVelocity, s_MaxRotationalVelocity);
 #else
 				stream.Write(vel.x);
 				stream.Write(vel.y);
@@ -156,10 +173,6 @@ namespace FusionEngine
 	void Box2DBody::DeserialiseContinuous(RakNet::BitStream& stream)
 	{
 		bool awake = stream.ReadBit();
-		if (m_Body)
-			m_Body->SetAwake(awake);
-		else
-			m_Def.awake = true;
 
 		Vector2 position;
 		float angle;
@@ -177,9 +190,9 @@ namespace FusionEngine
 		if (awake)
 		{
 #ifdef FSN_PHYS_COMPRESS_STATE
-			stream.ReadFloat16(linearVelocity.x, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
-			stream.ReadFloat16(linearVelocity.y, -b2_maxTranslation * 120.f, b2_maxTranslation * 120.f);
-			stream.ReadFloat16(angularVelocity, -b2_maxRotation * 120.f, b2_maxRotation * 120.f);
+			stream.ReadFloat16(linearVelocity.x, -s_MaxVelocity, s_MaxVelocity);
+			stream.ReadFloat16(linearVelocity.y, -s_MaxVelocity, s_MaxVelocity);
+			stream.ReadFloat16(angularVelocity, -s_MaxRotationalVelocity, s_MaxRotationalVelocity);
 #else
 			stream.Read(linearVelocity.x);
 			stream.Read(linearVelocity.x);
@@ -194,6 +207,14 @@ namespace FusionEngine
 
 		SetVelocity(linearVelocity);
 		SetAngularVelocity(angularVelocity);
+
+		if (m_Body)
+			m_Body->SetAwake(awake);
+		else
+			m_Def.awake = true;
+
+		// Prevent sleeping objects from jittering due to being slightly out of synch and colliding / being corrected repeatedly
+		m_PinTransform = !awake;
 
 		//Position.MarkChanged();
 		//Angle.MarkChanged();

@@ -78,6 +78,53 @@ namespace FusionEngine
 
 #define FSN_PARALLEL_PROC_AUTH
 
+	class TransformPinner : public b2ContactListener
+	{
+	public:
+		TransformPinner()
+		{
+		}
+
+		// Prevent objects under another authority from jittering as they go to sleep
+		//  due to out-of synch collisions
+		void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
+		{
+			if (!contact->IsTouching())
+				return;
+
+			const auto bodyA = contact->GetFixtureA()->GetBody();
+			const auto bodyB = contact->GetFixtureB()->GetBody();
+			const auto bodyComA = static_cast<Box2DBody*>(bodyA->GetUserData());
+			const auto bodyComB = static_cast<Box2DBody*>(bodyB->GetUserData());
+
+			if (bodyComA && bodyComB)
+			{
+				if (bodyComA->IsPinned())
+				//if (bodyComA->GetParent()->GetAuthority() != 0 && !PlayerRegistry::GetPlayer(bodyComA->GetParent()->GetAuthority()).IsLocal())
+				{
+					if (bodyB->GetLinearVelocity().Length() < b2_linearSleepTolerance)
+						contact->SetEnabled(false);
+				}
+				else if (bodyComB->IsPinned())
+				{
+					if (bodyA->GetLinearVelocity().Length() < b2_linearSleepTolerance)
+						contact->SetEnabled(false);
+				}
+			}
+
+			//if (bodyComB)
+			//{
+			//	if (bodyComB->IsPinned())
+			//	{
+			//		auto manifold = contact->GetManifold();
+			//		//manifold->localNormal
+			//		for (int32 i = 0; i < manifold->pointCount; ++i)
+			//			manifold->points[i].normalImpulse = 0;
+			//	}
+			//}
+		}
+	};
+
 	class AuthorityContactListener
 	{
 	public:
@@ -129,19 +176,22 @@ namespace FusionEngine
 					const auto& bodyComB = *iactIt;
 					PlayerID authB = bodyComB->GetParent()->GetAuthority();
 
-					if (authB == 0) // No current authority: take it
+					if (bodyComB->Getb2Body()->IsAwake())
 					{
-						bodyComB->GetParent()->SetAuthority(authority);
-					}
-					else
-					{
-						// If there is a current authority for this body, check whether it is due to
-						//  an active interation with a more senior player (if not, take authority)
-						const auto& bInteractions = m_Interacting[authB];
-						bool activeInteraction = bInteractions.find(bodyComB) != bInteractions.end();
-
-						if (/*!activeInteraction || */NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authority), PlayerRegistry::GetPlayer(authB)))
+						if (authB == 0) // No current authority: take it
+						{
 							bodyComB->GetParent()->SetAuthority(authority);
+						}
+						else
+						{
+							// If there is a current authority for this body, check whether it is due to
+							//  an active interation with a more senior player (if not, take authority)
+							const auto& bInteractions = m_Interacting[authB];
+							bool activeInteraction = bInteractions.find(bodyComB) != bInteractions.end();
+
+							if (/*!activeInteraction || */NetworkManager::IsSenior(PlayerRegistry::GetPlayer(authority), PlayerRegistry::GetPlayer(authB)))
+								bodyComB->GetParent()->SetAuthority(authority);
+						}
 					}
 				}
 			}
@@ -162,7 +212,7 @@ namespace FusionEngine
 			{
 				PlayerID ownerB = bodyComB->GetParent()->GetOwnerID();
 				PlayerID authB = bodyComB->GetParent()->GetAuthority();
-				if (ownerB == 0) // Break interaction chains at owned bodies
+				if ((ownerB == 0 || ownerB == auth) && (authB == 0 || authB == auth)) // Break interaction chains at owned bodies
 				{
 					return m_Interacting[auth].insert(bodyComB).second; // Don't follow paths already checked
 				}
@@ -175,10 +225,12 @@ namespace FusionEngine
 		: ISystemWorld(system)
 	{
 		b2Vec2 gravity(0.0f, 0.0f);
-		m_World = new b2World(gravity, true);
+		m_World = new b2World(gravity);
 
 		m_AuthContactListener = new AuthorityContactListener();
+		m_TransformPinner = new TransformPinner();
 		//m_World->SetContactListener(m_AuthContactListener);
+		m_World->SetContactListener(m_TransformPinner);
 
 		m_B2DTask = new Box2DTask(this, m_World);
 		m_B2DInterpTask = new Box2DInterpolateTask(this);
@@ -190,6 +242,7 @@ namespace FusionEngine
 		delete m_B2DTask;
 		delete m_World;
 		delete m_AuthContactListener;
+		delete m_TransformPinner;
 	}
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
@@ -424,6 +477,8 @@ namespace FusionEngine
 			const bool staticBody = body->GetBodyType() == IRigidBody::Static;
 			if (!staticBody)
 			{
+				body->CompressState();
+
 				if (awake != body->Awake.Get())
 				{
 					body->Awake.MarkChanged();
@@ -436,10 +491,10 @@ namespace FusionEngine
 					body->Velocity.MarkChanged();
 					body->AngularVelocity.MarkChanged();
 
-					const PlayerID owner = body->GetParent()->GetOwnerID();
-					if (owner != 0)
+					const PlayerID authority = /*body->GetParent()->GetOwnerID();*/((body->GetParent()->GetOwnerID() != 0) ? body->GetParent()->GetOwnerID() : body->GetParent()->GetAuthority());
+					if (authority != 0)
 					{
-						m_B2DSysWorld->m_AuthContactListener->WalkInteractions(owner, body.get());
+						m_B2DSysWorld->m_AuthContactListener->WalkInteractions(authority, body.get());
 					}
 				}
 				else
@@ -457,6 +512,12 @@ namespace FusionEngine
 					}
 				}
 			}
+		}
+		// Clear pinning
+		for (auto it = activeBodies.begin(), end = activeBodies.end(); it != end; ++it)
+		{
+			auto& body = *it;
+			body->m_PinTransform = false;
 		}
 
 		m_B2DSysWorld->m_AuthContactListener->ParseAuthority();

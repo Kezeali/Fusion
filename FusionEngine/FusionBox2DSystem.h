@@ -65,6 +65,7 @@ namespace FusionEngine
 	};
 
 	class AuthorityContactListener;
+	class TransformPinner;
 
 	class Box2DWorld : public ISystemWorld
 	{
@@ -93,6 +94,7 @@ namespace FusionEngine
 		std::vector<boost::intrusive_ptr<Box2DBody>> m_ActiveBodies;
 
 		AuthorityContactListener* m_AuthContactListener;
+		TransformPinner* m_TransformPinner;
 
 		b2World* m_World;
 		Box2DTask* m_B2DTask;

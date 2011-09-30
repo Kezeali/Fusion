@@ -54,6 +54,7 @@
 
 #include <tbb/parallel_do.h>
 #include <tbb/concurrent_vector.h>
+#include <tbb/concurrent_unordered_map.h>
 
 using namespace std::placeholders;
 using namespace RakNet;
@@ -229,7 +230,7 @@ namespace FusionEngine
 //#define FSN_PARALLEL_SERIALISE
 
 #ifdef FSN_PARALLEL_SERIALISE
-	typedef tbb::concurrent_vector<std::pair<ObjectID, RakNet::BitStream>> DataToSend_t;
+	typedef tbb::concurrent_vector<std::tuple<ObjectID, PlayerID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
 #else
 	typedef std::vector<std::tuple<ObjectID, PlayerID, std::shared_ptr<RakNet::BitStream>>> DataToSend_t;
 #endif
@@ -265,7 +266,11 @@ namespace FusionEngine
 			bool important;
 			PersonalisedData() : important(false) {}
 		};
+#ifdef FSN_PARALLEL_SERIALISE
+		tbb::concurrent_unordered_map<RakNet::RakNetGUID, PersonalisedData> dataToSendToSystems;
+#else
 		std::map<RakNet::RakNetGUID, PersonalisedData> dataToSendToSystems;
+#endif
 
 		bool important = true;
 
@@ -480,7 +485,8 @@ namespace FusionEngine
 				if (!owned && remoteAuthority.GUID == synchInfo.guid)
 				{
 					entity->SetAuthority(synchInfo.authority);
-					SendToConsole("accepting remote authority");
+					//std::stringstream str; str << (uint32_t)synchInfo.authority;
+					//SendToConsole("accepting remote authority " + str.str());
 				}
 
 				if (continuous)
@@ -670,13 +676,13 @@ namespace FusionEngine
 		{
 		case MTID_IMPORTANTMOVE:
 			{
-				std::stringstream tickStr; tickStr << tick;
-				SendToConsole("Processing important move at " + tickStr.str());
+				//std::stringstream tickStr; tickStr << tick;
+				//SendToConsole("Processing important move at " + tickStr.str());
 				// Get Input data
 				unsigned short playerCount;
 				bitStream.Read(playerCount);
-				if (playerCount == 0)
-					SendToConsole(" No changes?");
+				//if (playerCount == 0)
+				//	SendToConsole(" No changes?");
 				for (unsigned short pi = 0; pi < playerCount; pi++)
 				{
 					PlayerID player;
@@ -725,8 +731,8 @@ namespace FusionEngine
 								existingState.authority = authority;
 							}
 						}
-						else
-							SendToConsole("Old state, ignored");
+						//else
+						//	SendToConsole("Old state, ignored");
 					}
 
 					lastTick = tick;

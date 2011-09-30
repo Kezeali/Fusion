@@ -94,6 +94,10 @@ namespace FusionEngine
 		
 		void CleanMassData();
 
+		void CompressState();
+
+		bool IsPinned() const { return m_PinTransform; }
+
 		bool AddInteraction(b2Body* other);
 		void ClearInteractions();
 		void SetInteractingWithPlayer(const bool value) { m_InteractingWithPlayer = value; }
@@ -108,6 +112,8 @@ namespace FusionEngine
 
 		bool m_InteractingWithPlayer;
 		std::set<b2Body*> m_Interacting;
+
+		bool m_PinTransform;
 
 		int m_Depth;
 
