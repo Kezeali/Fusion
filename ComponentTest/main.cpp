@@ -160,7 +160,7 @@ namespace FusionEngine
 			m_Map = map;
 		}
 
-		void Enqueue(Cell* cell, size_t i)
+		void Store(Cell* cell, size_t i)
 		{
 			if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 			{
@@ -687,6 +687,12 @@ public:
 				asEngine->RegisterTypedef("PlayerID", "uint8");
 
 				ScriptInputEvent::Register(asEngine);
+
+				{
+				int r = asEngine->RegisterGlobalFunction("bool isLocal(PlayerID)",
+					asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
+				FSN_ASSERT(r >= 0);
+				}
 
 				// Component types
 				IComponent::RegisterType<IComponent>(asEngine, "IComponent");

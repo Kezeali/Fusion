@@ -140,6 +140,15 @@ namespace FusionEngine
 				IDCollectionType::iterator lowest = m_UnusedIds.begin();
 				ObjectID id = *lowest;
 				m_UnusedIds.erase(lowest);
+
+				// It's possible for an ID to get freed when it is more than 1 below m_NextId
+				//  then "freed" again with another call to freeID(id) when it is one below m_NextId
+				//  (see the logic in that fn) -> this ensures that m_NextId will be incremented
+				//  if that was the case for the ID just retreived from the set<> (so that the
+				//  next call to this method after the set<> is empty wont return the same ID again)
+				if (id == m_NextId)
+					++m_NextId;
+
 				return id;
 			}
 		}
@@ -180,6 +189,16 @@ namespace FusionEngine
 				m_NextId = id + 1;
 				return true;
 			}
+		}
+
+		size_t numUsed() const
+		{
+			return m_NextId - m_UnusedIds.size();
+		}
+
+		size_t numNotUsed() const
+		{
+			return std::numeric_limits<T>::max() - numUsed();
 		}
 	};
 

@@ -65,10 +65,7 @@ namespace FusionEngine
 	class PeerIDManager : public PacketHandler
 	{
 	public:
-		PeerIDManager(RakNetwork *network)
-			: m_PeerID(0),
-			m_Network(network)
-		{}
+		PeerIDManager(RakNetwork *network);
 		uint8_t m_PeerID;
 
 	private:
@@ -76,6 +73,7 @@ namespace FusionEngine
 
 		RakNetwork* m_Network;
 		IDSet<uint8_t> m_UnusedIDs;
+		bool m_WaitingForID;
 	};
 
 	//! Singleton class - manages automatic network stuff
@@ -114,6 +112,8 @@ namespace FusionEngine
 		static bool IsSenior(const RakNet::RakNetGUID &peerA, const RakNet::RakNetGUID &peerB); 
 
 		static bool IsSenior(const PlayerInfo &playerA, const PlayerInfo &playerB); 
+
+		static void ForEachPeer(std::function<void (const RakNet::RakNetGUID &)>&& fn);
 
 		//! Returns the unique peer-id of this peer
 		static uint8_t GetPeerID();

@@ -4,9 +4,15 @@
     <key shortname="backspace" device="keyboard" id="8" name="Backspace" />
     <key shortname="tab" device="keyboard" id="9" name="Tab" />
     <key shortname="enter" device="keyboard" id="13" name="Enter" />
-    <key shortname="lshift" device="keyboard" id="16" name="Left Shift" />
-    <key shortname="lctrl" device="keyboard" id="17" name="Left Control" />
-    <key shortname="lalt" device="keyboard" id="18" name="Left Alt" />
+    <key shortname="shift" device="keyboard" id="16" name="Shift" />
+    <key shortname="ctrl" device="keyboard" id="17" name="Control" />
+    <key shortname="alt" device="keyboard" id="18" name="Alt" />
+		<key shortname="lshift" device="keyboard" id="160" name="Left Shift" />
+		<key shortname="rshift" device="keyboard" id="161" name="Right Shift" />
+    <key shortname="lctrl" device="keyboard" id="162" name="Left Control" />
+		<key shortname="rctrl" device="keyboard" id="163" name="Right Control" />
+    <key shortname="lalt" device="keyboard" id="164" name="Left Alt" />
+    <key shortname="ralt" device="keyboard" id="165" name="Right Alt" />
     <key shortname="pause" device="keyboard" id="19" name="Pause Key" />
     <key shortname="capslock" device="keyboard" id="20" name="Caps Lock" />
     <key shortname="esc" device="keyboard" id="27" name="Esc" />

@@ -29,6 +29,7 @@
 
 #include "FusionNetworkManager.h"
 
+#include "FusionLogger.h"
 #include "FusionNetDestinationHelpers.h"
 #include "FusionPacketDispatcher.h"
 #include "FusionRakNetwork.h"
@@ -38,6 +39,13 @@
 namespace FusionEngine
 {
 
+	PeerIDManager::PeerIDManager(RakNetwork *network)
+		: m_PeerID(0),
+		m_WaitingForID(false),
+		m_Network(network)
+	{
+	}
+
 	void PeerIDManager::HandlePacket(RakNet::Packet *packet)
 	{
 		RakNet::BitStream bs(packet->data, packet->length, false);
@@ -46,6 +54,31 @@ namespace FusionEngine
 
 		switch (mtid)
 		{
+		case ID_FCM2_NEW_HOST:
+			{
+				// Make sure the ID list hasn't gone out-of-sync due to a previous host disconnecting before
+				//  assigning an ID to the local peer
+				if (m_PeerID == 0 && packet->guid != m_Network->GetLocalGUID())
+				{
+					if (m_WaitingForID)
+					{
+						// Still waiting for ID from the last host - notify the new host that it needs to provide one now
+						RakNet::BitStream outgoing;
+						m_Network->Send(NetDestination(packet->guid, false), false, MTID_REQUEST_PEER_ID, &outgoing, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+					}
+					else
+						m_WaitingForID = true;
+				}
+			}
+			break;
+		case MTID_REQUEST_PEER_ID:
+			if (m_Network->GetLocalGUID() != m_Network->GetHost())
+			{
+				std::string from; from.resize(256);
+				packet->systemAddress.ToString(true, &from[0]);
+				AddLogEntry("Network", "Remote system \"" + from + "\" requested a peer-id from this system, which is not currenlty the host", LOG_CRITICAL);
+				FSN_ASSERT(m_Network->GetLocalGUID() == m_Network->GetHost());
+			}
 		case ID_NEW_INCOMING_CONNECTION:
 			{
 				if (m_Network->GetLocalGUID() == m_Network->GetHost())
@@ -56,7 +89,7 @@ namespace FusionEngine
 					uint8_t id = m_UnusedIDs.getFreeID(); 
 					outgoing.Write(packet->guid);
 					outgoing.Write(id);
-					m_Network->Send(To::Populace(), false, MTID_SET_PEER_ID, &outgoing, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+					m_Network->Send(NetDestination(packet->guid, false), false, MTID_SET_PEER_ID, &outgoing, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
 				}
 			}
 			break;
@@ -67,8 +100,24 @@ namespace FusionEngine
 				uint8_t id;
 				bs.Read(id);
 				m_UnusedIDs.takeID(id);
-				if (guid == m_Network->GetLocalGUID())
-					m_PeerID = id;
+				// The second requirement makes sure this isn't an old packet in the receive queue from an old host:
+				if (guid == m_Network->GetLocalGUID() && packet->guid == m_Network->GetHost())
+				{
+					m_WaitingForID = false;
+					if (m_PeerID == 0)
+					{
+						m_PeerID = id;
+						// Send the packet on to all other peers (doing this from the recipiant ensures that id's are
+						//  properly synchronised, even if the host disconnects after assigning them but before they are
+						//  received by all peers)
+						m_Network->SendAsIs(To::Populace(), &bs, MEDIUM_PRIORITY, RELIABLE, CID_SYSTEM);
+					}
+					else
+					{
+						AddLogEntry("Network", "Host wasted a Peer-ID by sending more than one to this system.", LOG_CRITICAL);
+						FSN_ASSERT_FAIL("Host sent more than one ID to this system.");
+					}
+				}
 			}
 			break;
 		}
@@ -99,7 +148,9 @@ namespace FusionEngine
 		//m_Dispatcher->Subscribe(ID_FCM2_NEW_HOST, &m_ArbitratorElector);
 
 		m_Dispatcher->Subscribe(ID_NEW_INCOMING_CONNECTION, &m_PeerIDManager);
+		m_Dispatcher->Subscribe(ID_FCM2_NEW_HOST, &m_PeerIDManager);
 		m_Dispatcher->Subscribe(MTID_SET_PEER_ID, &m_PeerIDManager);
+		m_Dispatcher->Subscribe(MTID_REQUEST_PEER_ID, &m_PeerIDManager);
 	}
 
 	NetworkManager::~NetworkManager()
@@ -107,7 +158,9 @@ namespace FusionEngine
 		//m_Dispatcher->Unsubscribe(ID_FCM2_NEW_HOST, &m_ArbitratorElector);
 
 		m_Dispatcher->Unsubscribe(ID_NEW_INCOMING_CONNECTION, &m_PeerIDManager);
+		m_Dispatcher->Unsubscribe(ID_FCM2_NEW_HOST, &m_PeerIDManager);
 		m_Dispatcher->Unsubscribe(MTID_SET_PEER_ID, &m_PeerIDManager);
+		m_Dispatcher->Unsubscribe(MTID_REQUEST_PEER_ID, &m_PeerIDManager);
 	}
 
 	RakNet::RakNetGUID NetworkManager::GetArbitratorGUID()
@@ -157,6 +210,11 @@ namespace FusionEngine
 		else
 			// If both players are on the same system, use the lower player-id
 			return pA.NetID < pB.NetID;
+	}
+
+	void NetworkManager::ForEachPeer(std::function<void (const RakNet::RakNetGUID &)>&& fn)
+	{
+		getSingleton().m_Network->ForEachPeer(std::move(fn));
 	}
 
 	uint8_t NetworkManager::GetPeerID()

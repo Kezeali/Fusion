@@ -41,6 +41,9 @@
 
 #include "FusionEntity.h"
 #include "FusionCamera.h"
+#include "FusionIDStack.h"
+// TEMP:
+#include "FusionPacketHandler.h"
 
 //#include <tbb/concurrent_unordered_map.h>
 //#include <tbb/mutex.h>
@@ -197,7 +200,7 @@ namespace FusionEngine
 	public:
 		virtual ~CellArchiver() {}
 
-		virtual void Enqueue(Cell* cell, size_t i) = 0;
+		virtual void Store(Cell* cell, size_t i) = 0;
 		virtual bool Retrieve(Cell* cell, size_t i) = 0;
 		virtual CL_IODevice GetCellData(size_t i) const = 0;
 		virtual size_t GetDataBegin() const = 0;
@@ -211,9 +214,18 @@ namespace FusionEngine
 
 	struct ActivationEvent
 	{
-		enum Type { Activate, Deactivate, DeactivateAll, RemoteActivation };
+		enum Type { Activate, Deactivate, DeactivateAll };
 		Type type;
 		EntityPtr entity;
+	};
+
+	struct RemoteActivationEvent
+	{
+		enum Type { Activate, Deactivate, DeactivateAll };
+		Type type;
+		PlayerID viewer;
+		ObjectID entity;
+		std::shared_ptr<RakNet::BitStream> state;
 	};
 
 	/*!
@@ -223,7 +235,7 @@ namespace FusionEngine
 	 * \see
 	 * Entity | Camera | EntityManager
 	 */
-	class StreamingManager
+	class StreamingManager : public PacketHandler
 	{
 	public:
 		static const float s_SmoothTightness;
@@ -240,6 +252,8 @@ namespace FusionEngine
 		void RemoveCamera(const CameraPtr &cam);
 
 		void AddOwnedCamera(PlayerID owner, const CameraPtr& cam);
+
+		void HandlePacket(RakNet::Packet* packet);
 		
 		//! Sets the range within which Entities are streamed in
 		void SetRange(float game_units);
@@ -266,6 +280,8 @@ namespace FusionEngine
 
 		boost::signals2::signal<void (const ActivationEvent&)> SignalActivationEvent;
 
+		boost::signals2::signal<void (const RemoteActivationEvent&)> SignalRemoteActivationEvent;
+
 		//const std::set<EntityPtr> &GetActiveEntities() const;
 
 		//! Calculates the active streaming area for each camera
@@ -279,7 +295,7 @@ namespace FusionEngine
 		{
 			//! Ctor
 			StreamingCamera()
-				: tightness(0.0f), firstUpdate(true), range(0.0f), owner(0)
+				: tightness(0.0f), firstUpdate(true), range(0.0f), owner(0), id(0)
 			{}
 			//! Move ctor
 			StreamingCamera(StreamingCamera&& other)
@@ -287,6 +303,7 @@ namespace FusionEngine
 				firstUpdate(other.firstUpdate),
 				range(other.range),
 				owner(other.owner),
+				id(other.id),
 				camera(std::move(other.camera)),
 				streamPosition(other.streamPosition),
 				lastUsedPosition(other.lastUsedPosition),
@@ -297,6 +314,8 @@ namespace FusionEngine
 
 			//! Owner for owned cameras
 			PlayerID owner;
+			//! How this is identified to other systems
+			uint8_t id;
 
 			//! Render-camera object (if this is a local camera)
 			/*!
@@ -360,7 +379,11 @@ namespace FusionEngine
 		typedef boost::recursive_mutex CamerasMutex_t;
 		CamerasMutex_t m_CamerasMutex;
 
-		std::vector< StreamingCamera > m_Cameras;
+		StreamingCamera& createStreamingCamera(PlayerID owner, const CameraPtr& controller);
+
+		std::vector<StreamingCamera> m_Cameras;
+
+		IDSet<uint8_t> m_CamIds;
 
 		float m_DeactivationTime;
 

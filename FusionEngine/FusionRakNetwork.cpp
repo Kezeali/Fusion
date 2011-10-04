@@ -160,6 +160,20 @@ namespace FusionEngine
 		return m_FullyConnectedMeshPlugin.GetParticipantCount() > 0;
 	}
 
+	size_t RakNetwork::GetConnectedPeersCount() const
+	{
+		return m_FullyConnectedMeshPlugin.GetParticipantCount();
+	}
+
+	void RakNetwork::ForEachPeer(std::function<void (const RakNet::RakNetGUID &)>&& fn)
+	{
+		// TODO: manually keep a peer list (in a sensible container (man that RakNet "List" sucks!))
+		DataStructures::List<RakNet::RakNetGUID> peers;
+		m_FullyConnectedMeshPlugin.GetParticipantList(peers);
+		for (size_t i = 0; i < peers.Size(); ++i)
+			fn(peers[i]);
+	}
+
 	const RakNetGUID &RakNetwork::GetLocalGUID() const
 	{
 		return m_NetInterface->GetGuidFromSystemAddress(UNASSIGNED_SYSTEM_ADDRESS);

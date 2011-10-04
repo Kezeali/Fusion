@@ -31,6 +31,9 @@
 #include "FusionMaths.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionPlayerRegistry.h"
+#include "FusionNetworkManager.h"
+#include "FusionRakNetwork.h"
+#include "FusionNetDestinationHelpers.h"
 
 #include <boost/date_time.hpp>
 
@@ -97,10 +100,17 @@ namespace FusionEngine
 
 			m_Cells = new Cell[m_XCellCount * m_YCellCount];
 		}
+
+		NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_ADD, this);
+		NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_REMOVE, this);
+		NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_MOVE, this);
 	}
 
 	StreamingManager::~StreamingManager()
 	{
+		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_ADD, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_REMOVE, this);
+		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_MOVE, this);
 		delete[] m_Cells;
 	}
 
@@ -178,9 +188,36 @@ namespace FusionEngine
 	}
 #endif
 
+	StreamingManager::StreamingCamera& StreamingManager::createStreamingCamera(PlayerID owner, const CameraPtr& cam)
+	{
+		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
+
+		m_Cameras.push_back(StreamingCamera());
+		auto& streamingCam = m_Cameras.back();
+
+		streamingCam.firstUpdate = true;
+		streamingCam.tightness = s_SmoothTightness;
+		if (cam)
+		{
+			streamingCam.camera = cam;
+			streamingCam.streamPosition = streamingCam.lastPosition = Vector2(cam->GetPosition().x, cam->GetPosition().y);
+		}
+		streamingCam.owner = owner;
+
+		return streamingCam;
+	}
+
 	void StreamingManager::AddCamera(const CameraPtr &cam)
 	{
-		AddOwnedCamera(0, cam);
+		if (!cam)
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a NULL camera ptr to StreamingManager");
+
+		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam)))
+		{
+			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
+		}
+
+		createStreamingCamera(0, cam);
 	}
 
 	void StreamingManager::AddOwnedCamera(PlayerID owner, const CameraPtr& cam)
@@ -188,29 +225,87 @@ namespace FusionEngine
 		if (!cam)
 			FSN_EXCEPT(InvalidArgumentException, "Tried to add a NULL camera ptr to StreamingManager");
 
-		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
-
 		if (std::any_of(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam)))
 		{
 			FSN_EXCEPT(InvalidArgumentException, "Tried to add a camera to StreamingManager that is already being tracked");
 		}
 
-		m_Cameras.push_back(StreamingCamera());
-		auto& streamingCam = m_Cameras.back();
+		auto& streamingCam = createStreamingCamera(owner, cam);
 
-		streamingCam.firstUpdate = true;
-		streamingCam.camera = cam;
-		streamingCam.lastPosition = Vector2(cam->GetPosition().x, cam->GetPosition().y);
-		streamingCam.streamPosition = streamingCam.lastPosition;
-		streamingCam.tightness = s_SmoothTightness;
-		streamingCam.owner = owner;
+		if (owner != 0)
+		{
+			streamingCam.id = m_CamIds.getFreeID();
+
+			RakNet::BitStream bs;
+			bs.Write(streamingCam.id);
+			bs.Write(streamingCam.owner);
+			bs.Write(streamingCam.streamPosition.x);
+			bs.Write(streamingCam.streamPosition.y);
+			NetworkManager::GetNetwork()->Send(To::Populace(), false, MTID_REMOTECAMERA_ADD, &bs, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_VIEWMANAGER);
+		}
 	}
 
 	void StreamingManager::RemoveCamera(const CameraPtr &cam)
 	{
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
-		auto new_end = std::remove_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam));
-		m_Cameras.erase(new_end, m_Cameras.end());
+		auto streamingCameraEntry = std::find_if(m_Cameras.begin(), m_Cameras.end(), StreamingCamera::HasSameCamera(cam));
+		if (streamingCameraEntry != m_Cameras.end())
+		{
+			const auto& streamingCam = *streamingCameraEntry;
+			RakNet::BitStream bs;
+			bs.Write(streamingCam.id);
+			NetworkManager::GetNetwork()->Send(To::Populace(), false, MTID_REMOTECAMERA_REMOVE, &bs, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_VIEWMANAGER);
+
+			m_Cameras.erase(streamingCameraEntry, m_Cameras.end());
+		}
+	}
+
+	void StreamingManager::HandlePacket(RakNet::Packet* packet)
+	{
+		RakNet::BitStream dataStream(packet->data, packet->length, false);
+
+		unsigned char type;
+		dataStream.Read(type);
+		switch (type)
+		{
+		case MTID_REMOTECAMERA_ADD:
+			{
+				uint8_t camId;
+				dataStream.Read(camId);
+				PlayerID owner;
+				dataStream.Read(owner);
+				Vector2 pos;
+				dataStream.Read(pos.x);
+				dataStream.Read(pos.y);
+				auto& streamingCam = createStreamingCamera(owner, CameraPtr());
+				streamingCam.id = camId;
+				streamingCam.lastPosition = streamingCam.streamPosition = pos;
+			}
+			break;
+		case MTID_REMOTECAMERA_REMOVE:
+			{
+				uint8_t camId;
+				dataStream.Read(camId);
+				auto camEntry = std::find_if(m_Cameras.begin(), m_Cameras.end(), [camId](const StreamingCamera& cam) { return cam.id == camId; });
+				if (camEntry != m_Cameras.end())
+					m_Cameras.erase(camEntry);
+			}
+			break;
+		case MTID_REMOTECAMERA_MOVE:
+			{
+				uint8_t camId;
+				dataStream.Read(camId);
+				auto camEntry = std::find_if(m_Cameras.begin(), m_Cameras.end(), [camId](const StreamingCamera& cam) { return cam.id == camId; });
+				if (camEntry != m_Cameras.end())
+				{
+					auto& streamingCam = *camEntry;
+					streamingCam.lastPosition = streamingCam.streamPosition;
+					dataStream.Read(streamingCam.streamPosition.x);
+					dataStream.Read(streamingCam.streamPosition.y);
+				}
+			}
+			break;
+		};
 	}
 
 	void StreamingManager::SetRange(float game_units)
@@ -271,7 +366,7 @@ namespace FusionEngine
 		for (size_t i = 0; i < size; ++i)
 		{
 			Cell* cell = &m_Cells[i];
-			m_Archivist->Enqueue(cell, i);
+			m_Archivist->Store(cell, i);
 		}
 	}
 
@@ -498,8 +593,8 @@ namespace FusionEngine
 
 			if (!currentCell.IsActive() && !currentCell.inRange)
 			{
-				currentCell.AddHist("Enqueue Attempted on Deactivation");
-				m_Archivist->Enqueue(&currentCell, entity->GetStreamingCellIndex());
+				currentCell.AddHist("Store Attempted on Deactivation");
+				m_Archivist->Store(&currentCell, entity->GetStreamingCellIndex());
 			}
 		}
 		else if (entity->GetStreamingCellIndex() == std::numeric_limits<size_t>::max())
@@ -748,8 +843,8 @@ namespace FusionEngine
 				{
 					if (!cell.IsActive() && !cell.inRange)
 					{
-						cell.AddHist("Enqueue Attempted due to leaving range");
-						m_Archivist->Enqueue(&cell, i-1);
+						cell.AddHist("Store Attempted due to leaving range");
+						m_Archivist->Store(&cell, i-1);
 					}
 					else
 					{
@@ -823,7 +918,8 @@ namespace FusionEngine
 		return (r.left <= l.right && r.right >= l.left && r.top <= l.bottom && r.bottom >= l.top);
 	}
 
-	static void clipRange(std::list<CL_Rect>& out, CL_Rect& inactiveRange, const CL_Rect& activeRange)
+	template <class T>
+	static inline void clipRange(T& out_it, CL_Rect& inactiveRange, const CL_Rect& activeRange)
 	{
 		// Partial overlap
 		//if (inactiveRange.is_overlapped(activeRange))
@@ -866,14 +962,14 @@ namespace FusionEngine
 			inactiveRangeX.bottom = activeRange.bottom;
 
 			if (inactiveRangeX.get_width() >= 0 && inactiveRangeX.get_height() >= 0)
-				out.push_back(std::move(inactiveRangeX));
+				*out_it++ = std::move(inactiveRangeX);
 			if (inactiveRangeY.get_width() >= 0  && inactiveRangeY.get_height() >= 0)
-				out.push_back(std::move(inactiveRangeY));
+				*out_it++ = std::move(inactiveRangeY);
 		}
 		// No overlap
 		else
 		{
-			out.push_back(inactiveRange);
+			*out_it++ = inactiveRange;
 		}
 	}
 
@@ -920,7 +1016,7 @@ namespace FusionEngine
 							else if (!actualCell->IsActive())
 							{
 								actualCell->AddHist("Storing cell again after Retrieving it for an entity spawned in The Void");
-								m_Archivist->Enqueue(actualCell, (size_t)(actualCell - m_Cells));
+								m_Archivist->Store(actualCell, (size_t)(actualCell - m_Cells));
 							}
 
 							// remove from current cell
@@ -971,12 +1067,14 @@ namespace FusionEngine
 				++it;
 		}
 
-		// Each vector element represents a range of cells to update - overlapping active-areas
-		//  are merged
+		// Each vector element represents a range of cells to update - overlapping areas
+		//  are split / merged into no-overlapping sub-regions (to avoid processing cells
+		//  twice in a step)
 		std::list<CL_Rect> inactiveRanges;
 		std::list<std::pair<CL_Rect, std::list<Vector2>>> activeRanges;
 		// Used to process The Void
-		std::list<Vector2> allStreamPositions;
+		std::list<Vector2> localStreamPositions;
+		std::list<std::pair<Vector2, PlayerID>> remoteStreamPositions;
 
 		bool allActiveRangesStale = true;
 
@@ -997,7 +1095,18 @@ namespace FusionEngine
 				++it;
 
 				if (camera)
+				{
 					updateStreamingCamera(cam, std::move(camera));
+
+					if (cam.owner != 0 && !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.5f))
+					{
+						RakNet::BitStream bs;
+						bs.Write(cam.id);
+						bs.Write(cam.streamPosition.x);
+						bs.Write(cam.streamPosition.y);
+						NetworkManager::GetNetwork()->Send(To::Populace(), false, MTID_REMOTECAMERA_MOVE, &bs, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_VIEWMANAGER);
+					}
+				}
 			}
 			const Vector2 &newPosition = cam.streamPosition;
 
@@ -1010,7 +1119,8 @@ namespace FusionEngine
 
 				allActiveRangesStale = false;
 
-				allStreamPositions.push_back(cam.streamPosition);
+				if (cam.owner == 0)
+					localStreamPositions.push_back(cam.streamPosition);
 
 				CL_Rect inactiveRange;
 				getCellRange(inactiveRange, oldPosition);
@@ -1106,9 +1216,15 @@ namespace FusionEngine
 			{
 				auto& inactiveRange = *iit;
 				auto& activeRange = ait->first;
-				clipRange(clippedInactiveRanges, inactiveRange, activeRange);
+				clipRange(std::back_inserter(clippedInactiveRanges), inactiveRange, activeRange);
 			}
 		}
+
+		// Sort to improve cache performance
+		clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
+		{
+			return (a.top * m_XCellCount + a.left) < (b.top * m_XCellCount + b.left);
+		});
 		
 		for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
 		{
@@ -1118,7 +1234,7 @@ namespace FusionEngine
 			deactivateCells(*it);
 		}
 
-		processCell(m_TheVoid, allStreamPositions);
+		processCell(m_TheVoid, localStreamPositions);
 
 		for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
 		{
@@ -1191,7 +1307,10 @@ namespace FusionEngine
 		RegisterSingletonType<StreamingManager>("StreamingManager", engine);
 		r = engine->RegisterObjectMethod("StreamingManager",
 			"void addCamera(Camera)",
-			asFUNCTION(StreamingManager_AddCamera), asCALL_CDECL_OBJLAST);
+			asFUNCTION(StreamingManager_AddCamera), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+		r = engine->RegisterObjectMethod("StreamingManager",
+			"void addOwnedCamera(PlayerID, Camera)",
+			asMETHOD(StreamingManager, AddOwnedCamera), asCALL_THISCALL);
 		r = engine->RegisterObjectMethod("StreamingManager",
 			"void removeCamera(Camera)",
 			asFUNCTION(StreamingManager_RemoveCamera), asCALL_CDECL_OBJLAST);

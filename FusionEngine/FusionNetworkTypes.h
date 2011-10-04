@@ -57,8 +57,8 @@ namespace FusionEngine
 		CID_ENTITYMANAGER,
 		//! EntitySynchroniser channel
 		CID_ENTITYSYNC,
-		//! Entity updates that contain input
-		CID_INPUTUPDATE,
+		//! Synchronising remote views
+		CID_VIEWMANAGER,
 		//! No channel
 		CID_MAXCID
 		//@}
@@ -73,6 +73,7 @@ namespace FusionEngine
 	enum MessageType
 	{
 		MTID_SET_PEER_ID = ID_USER_PACKET_ENUM,
+		MTID_REQUEST_PEER_ID,
 
 		MTID_INSTANCEENTITY,
 		MTID_ADDENTITY,
@@ -93,6 +94,10 @@ namespace FusionEngine
 		MTID_ENTITYMOVE,
 		MTID_CORRECTION,
 		MTID_IMPORTANTMOVE,
+
+		MTID_REMOTECAMERA_ADD,
+		MTID_REMOTECAMERA_REMOVE,
+		MTID_REMOTECAMERA_MOVE,
 
 		MTID_REQUESTSTEPCONTROL,
 

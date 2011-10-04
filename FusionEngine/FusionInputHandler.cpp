@@ -555,6 +555,36 @@ namespace FusionEngine
 		return m_MouseSensitivity;
 	}
 
+	// Checks which key is actually being pressed for keys with multiple locations
+	// TODO: catch these by calling GetAsyncKeyState in InputManager::Update(...)
+	static int specifySide(int id)
+	{
+#ifdef _WIN32
+		switch (id)
+		{
+		case CL_KEY_SHIFT:
+			if (GetKeyState(VK_LSHIFT))
+				id = VK_LSHIFT;
+			else if (GetKeyState(VK_RSHIFT))
+				id = VK_RSHIFT;
+			break;
+		case CL_KEY_CONTROL:
+			if (GetKeyState(VK_LCONTROL))
+				id = VK_LCONTROL;
+			else if (GetKeyState(VK_RCONTROL))
+				id = VK_RCONTROL;
+			break;
+		case CL_KEY_MENU:
+			if (GetKeyState(VK_LMENU))
+				id = VK_LMENU;
+			else if (GetKeyState(VK_RMENU))
+				id = VK_RMENU;
+			break;
+		}		
+#endif
+		return id;
+	}
+
 	void InputManager::onKeyDown(const CL_InputEvent &event, const CL_InputState &state)
 	{
 		if (event.repeat_count == 0)
@@ -573,6 +603,24 @@ namespace FusionEngine
 				SignalInputChanged(synthedEvent);
 
 				//processInputEvent(s_DevKeyboard, event);
+			}
+			if (specifySide(event.id) != event.id)
+			{
+				auto _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, specifySide(event.id)));
+				if (_where != m_KeyBindings.end())
+				{
+					InputEvent synthedEvent;
+					synthedEvent.Player = _where->second.m_Player;
+					synthedEvent.Input = _where->second.m_Input;
+
+					synthedEvent.Type = InputEvent::Binary;
+					synthedEvent.Value = 0.0;
+					synthedEvent.Down = true;
+
+					SignalInputChanged(synthedEvent);
+
+					//processInputEvent(s_DevKeyboard, event);
+				}
 			}
 		}
 	}
@@ -593,6 +641,24 @@ namespace FusionEngine
 			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
+		}
+		if (specifySide(event.id) != event.id)
+		{
+			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, specifySide(event.id)));
+			if (_where != m_KeyBindings.end())
+			{
+				InputEvent synthedEvent;
+				synthedEvent.Player = _where->second.m_Player;
+				synthedEvent.Input = _where->second.m_Input;
+
+				synthedEvent.Type = InputEvent::Binary;
+				synthedEvent.Value = 0.0;
+				synthedEvent.Down = false;
+
+				SignalInputChanged(synthedEvent);
+
+				//processInputEvent(s_DevKeyboard, event);
+			}
 		}
 	}
 

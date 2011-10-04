@@ -171,6 +171,11 @@ namespace FusionEngine
 
 		bool IsConnected() const;
 
+		size_t GetConnectedPeersCount() const;
+
+		// TODO: add an in-host-order version of this method
+		void ForEachPeer(std::function<void (const RakNet::RakNetGUID &)>&& fn);
+
 		//! Returnst he GUID of this machine
 		const RakNet::RakNetGUID &GetLocalGUID() const;
 

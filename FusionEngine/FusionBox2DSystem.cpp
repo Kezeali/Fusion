@@ -85,6 +85,8 @@ namespace FusionEngine
 		{
 		}
 
+		std::map<b2Body*, b2MassData> pinnedBodies;
+
 		// Prevent objects under another authority from jittering as they go to sleep
 		//  due to out-of synch collisions
 		void PreSolve(b2Contact* contact, const b2Manifold* oldManifold)
@@ -103,12 +105,16 @@ namespace FusionEngine
 				//if (bodyComA->GetParent()->GetAuthority() != 0 && !PlayerRegistry::GetPlayer(bodyComA->GetParent()->GetAuthority()).IsLocal())
 				{
 					if (bodyB->GetLinearVelocity().Length() < b2_linearSleepTolerance)
+					{
 						contact->SetEnabled(false);
+					}
 				}
 				else if (bodyComB->IsPinned())
 				{
 					if (bodyA->GetLinearVelocity().Length() < b2_linearSleepTolerance)
+					{
 						contact->SetEnabled(false);
+					}
 				}
 			}
 
@@ -122,6 +128,18 @@ namespace FusionEngine
 			//			manifold->points[i].normalImpulse = 0;
 			//	}
 			//}
+		}
+
+		void PostSolve(b2Contact* contact, const b2Manifold* oldManifold)
+		{
+		}
+
+		void Unpin()
+		{
+			for (auto it = pinnedBodies.begin(), end = pinnedBodies.end(); it != end; ++it)
+			{
+				it->first->SetMassData(&it->second);
+			}
 		}
 	};
 
@@ -519,6 +537,7 @@ namespace FusionEngine
 			auto& body = *it;
 			body->m_PinTransform = false;
 		}
+		//m_B2DSysWorld->m_TransformPinner->Unpin();
 
 		m_B2DSysWorld->m_AuthContactListener->ParseAuthority();
 		m_B2DSysWorld->m_AuthContactListener->ClearInteractions();

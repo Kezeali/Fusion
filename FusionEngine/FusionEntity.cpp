@@ -32,6 +32,7 @@
 #include "FusionExceptionFactory.h"
 #include "FusionResourceManager.h"
 #include "FusionPhysicalComponent.h"
+#include "FusionNetworkManager.h"
 
 #include "FusionAngelScriptComponent.h"
 
@@ -990,6 +991,11 @@ namespace FusionEngine
 		return !(*obj);
 	}
 
+	static PlayerID Entity_GetOwnerID(EntityPtr* obj)
+	{
+		return (*obj)->GetOwnerID();
+	}
+
 	static bool Entity_InputIsActive(const std::string& input, EntityPtr* entity)
 	{
 		return (*entity)->InputIsActive(input);
@@ -1038,6 +1044,10 @@ namespace FusionEngine
 			"bool isNull() const",
 			asFUNCTION(Entity_IsNull), asCALL_CDECL_OBJFIRST); FSN_ASSERT( r >= 0 );
 
+		r = engine->RegisterObjectMethod("Entity",
+			"PlayerID getOwnerID() const",
+			asFUNCTION(Entity_GetOwnerID), asCALL_CDECL_OBJFIRST); FSN_ASSERT(r >= 0);
+
 		//r = engine->RegisterObjectMethod("Entity",
 		//	"Input@ get_input() const",
 		//	asFUNCTION(Entity_GetInput), asCALL_CDECL_OBJLAST); FSN_ASSERT( r >= 0 );
@@ -1067,9 +1077,9 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"void setOwnerID(uint8)",
 			asMETHOD(Entity, SetOwnerID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
-		r = engine->RegisterObjectMethod("Entity",
-			"uint8 getOwnerID() const",
-			asMETHOD(Entity, GetOwnerID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+		//r = engine->RegisterObjectMethod("Entity",
+		//	"uint8 getOwnerID() const",
+		//	asMETHOD(Entity, GetOwnerID), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 		r = engine->RegisterObjectMethod("Entity",
 			"bool isSynced() const",

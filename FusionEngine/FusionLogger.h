@@ -216,11 +216,11 @@ namespace FusionEngine
 
 	};
 
-	static void AddLogEntry(const std::string& log, const std::string& entry, LogSeverity severity = LOG_NORMAL)
+	static void AddLogEntry(const std::string& file_tag, const std::string& entry, LogSeverity severity = LOG_NORMAL)
 	{
 		Logger* logger = Logger::getSingletonPtr();
-		if(logger != nullptr)
-			logger->Add(entry, log, severity);
+		if (logger != nullptr)
+			logger->Add(entry, file_tag, severity);
 	}
 
 	static void AddLogEntry(const std::string& entry, LogSeverity severity = LOG_NORMAL)
