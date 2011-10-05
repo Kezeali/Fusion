@@ -604,24 +604,6 @@ namespace FusionEngine
 
 				//processInputEvent(s_DevKeyboard, event);
 			}
-			if (specifySide(event.id) != event.id)
-			{
-				auto _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, specifySide(event.id)));
-				if (_where != m_KeyBindings.end())
-				{
-					InputEvent synthedEvent;
-					synthedEvent.Player = _where->second.m_Player;
-					synthedEvent.Input = _where->second.m_Input;
-
-					synthedEvent.Type = InputEvent::Binary;
-					synthedEvent.Value = 0.0;
-					synthedEvent.Down = true;
-
-					SignalInputChanged(synthedEvent);
-
-					//processInputEvent(s_DevKeyboard, event);
-				}
-			}
 		}
 	}
 
@@ -641,24 +623,6 @@ namespace FusionEngine
 			SignalInputChanged(synthedEvent);
 
 			//processInputEvent(s_DevKeyboard, event);
-		}
-		if (specifySide(event.id) != event.id)
-		{
-			KeyBindingMap::iterator _where = m_KeyBindings.find(BindingKey(s_DevKeyboard, s_DeviceIndexAny, specifySide(event.id)));
-			if (_where != m_KeyBindings.end())
-			{
-				InputEvent synthedEvent;
-				synthedEvent.Player = _where->second.m_Player;
-				synthedEvent.Input = _where->second.m_Input;
-
-				synthedEvent.Type = InputEvent::Binary;
-				synthedEvent.Value = 0.0;
-				synthedEvent.Down = false;
-
-				SignalInputChanged(synthedEvent);
-
-				//processInputEvent(s_DevKeyboard, event);
-			}
 		}
 	}
 
