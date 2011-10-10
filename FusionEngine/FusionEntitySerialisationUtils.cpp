@@ -236,10 +236,26 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
-			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
-			{			
+#ifdef _DEBUG
+			std::string componentsNames;
+			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			{
+				componentsNames += (*it)->GetType();
+			}
+			boost::crc_32_type crc;
+			crc.process_block(componentsNames.data(), componentsNames.data() + componentsNames.length());
+			out.Write(crc.checksum());
+			// TODO: read this at the receiving end
+#endif
+
+			auto transformComponent = entity->GetTransform();
+			{
+				auto transform = dynamic_cast<ITransform*>(entity->GetTransform().get());
+				//if (transform->IsContinuous())
+				//	SerialisePosition(transform, origin, radius);
+
 				RakNet::BitStream tempStream;
-				transform->SerialiseContinuous(tempStream);
+				transformComponent->SerialiseContinuous(tempStream);
 
 				if (tempStream.GetNumberOfBitsUsed() > 0)
 				{
@@ -262,7 +278,7 @@ namespace FusionEngine
 				for (auto it = begin; it != end; ++it)
 				{
 					auto& component = *it;
-					FSN_ASSERT(component.get() != transform);
+					FSN_ASSERT(component != transformComponent);
 
 					RakNet::BitStream tempStream;
 					component->SerialiseContinuous(tempStream);
@@ -319,7 +335,7 @@ namespace FusionEngine
 			}
 		}
 
-		bool SerialiseComponent(RakNet::BitStream& out, uint16_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
+		bool SerialiseComponent(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
 			component->SerialiseOccasional(tempStream, IComponent::All);
@@ -328,9 +344,9 @@ namespace FusionEngine
 
 			if (conData)
 			{
-				boost::crc_16_type crc;
+				boost::crc_32_type crc;
 				crc.process_bytes(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
-				uint16_t checksum = crc.checksum();
+				uint32_t checksum = crc.checksum();
 
 				if (mode == IComponent::Changes)
 				{
@@ -354,7 +370,7 @@ namespace FusionEngine
 			return conData;
 		}
 
-		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint16_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			bool dataWritten = false;
 
@@ -367,9 +383,13 @@ namespace FusionEngine
 
 			checksums.resize(components.size());
 
-			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
+			auto transformComponent = entity->GetTransform();
 			{
-				dataWritten |= SerialiseComponent(out, checksums[0], transform, mode);
+				auto transform = dynamic_cast<ITransform*>(transformComponent.get());
+				//if (!transform->IsContinuous())
+				//	SerialisePosition(transform, origin, radius);
+
+				dataWritten |= SerialiseComponent(out, checksums[0], transformComponent.get(), mode);
 			}
 
 			out.Write(numComponents);
@@ -381,7 +401,7 @@ namespace FusionEngine
 				for (auto it = begin; it != end; ++it)
 				{
 					auto& component = *it;
-					FSN_ASSERT(component.get() != transform);
+					FSN_ASSERT(component != transformComponent);
 					FSN_ASSERT(checksumEntry != checksums.end());
 
 
@@ -393,7 +413,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseComponent(RakNet::BitStream& in, uint16_t& checksum, IComponent* component)
+		void DeserialiseComponent(RakNet::BitStream& in, uint32_t& checksum, IComponent* component)
 		{
 			//bool conData = in.ReadBit();
 			//if (conData)
@@ -416,7 +436,7 @@ namespace FusionEngine
 				RakNet::BitStream checksumBitstream;
 				in.Read(checksumBitstream, dataBits);
 
-				boost::crc_16_type crc;
+				boost::crc_32_type crc;
 				crc.process_bytes(checksumBitstream.GetData(), checksumBitstream.GetNumberOfBytesUsed());
 				checksum = crc.checksum();
 
@@ -426,7 +446,7 @@ namespace FusionEngine
 			}
 		}
 
-		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint16_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityManager* manager)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
@@ -472,6 +492,24 @@ namespace FusionEngine
 					comsRead.push_back(conData);
 				}
 			}
+		}
+
+		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius)
+		{
+			// First bit indicates presence of position data, as some
+			//  transform components send this in the continuous stream
+			//  while others use the occasional stream (the given stream
+			//  can be either):
+			// TODO? This could be ~4 bits indicating a position (de)serialisation functor to use (one for each transform type, thus up to 16 types allowed)
+			if (in.ReadBit())
+			{
+				Vector2 pos;
+				in.ReadFloat16(pos.x, -radius, radius);
+				in.ReadFloat16(pos.y, -radius, radius);
+				return std::make_pair(true, pos);
+			}
+			else
+				return std::make_pair(false, origin);
 		}
 
 		void WriteComponent(CL_IODevice& out, IComponent* component)

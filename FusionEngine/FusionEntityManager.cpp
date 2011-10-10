@@ -34,6 +34,7 @@
 #include <BitStream.h>
 #include <RakNetStatistics.h>
 
+#include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
 #include "FusionDeltaTime.h"
 #include "FusionEntityFactory.h"
@@ -144,9 +145,10 @@ namespace FusionEngine
 		}
 	}
 
-	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager)
+	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser)
 		: m_InputManager(input_manager),
 		m_PlayerInputs(new ConsolidatedInput(input_manager)),
+		m_CameraSynchroniser(camera_synchroniser),
 		m_SendTick(0),
 		m_JitterBufferTargetLength(100),
 		m_UseJitterBuffer(true),
@@ -316,7 +318,7 @@ namespace FusionEngine
 				{
 					const BitSize_t stateSize = state->GetNumberOfBitsUsed();
 					
-					//boost::crc_16_type crc;
+					//boost::crc_32_type crc;
 					//crc.process_bytes(state->GetData(), state->GetNumberOfBytesUsed());
 					//auto newChecksum = crc.checksum();
 
@@ -446,6 +448,8 @@ namespace FusionEngine
 			if (entry != m_EntityPriorityQueue.end())
 				m_EntityPriorityQueue.erase(entry);
 		}
+
+		m_SentStates.erase(entity->GetID());
 	}
 
 	bool EntitySynchroniser::ReceiveSync(EntityPtr &entity, EntityManager* entity_manager, EntityFactory* factory)
@@ -566,6 +570,15 @@ namespace FusionEngine
 			ReceiveSync(*it, entity_manager, factory);
 
 		m_EntitiesToReceive.clear();
+
+		// Process states for inactive entities
+		for (auto it = m_ReceivedStates.begin(), end = m_ReceivedStates.end(); it != end; ++it)
+		{
+			const ObjectID id = it->first;
+			const auto& state = it->second;
+			//Vector2 position = DeserialisePosition(state.continuous, state.occasional);
+			//m_CameraSynchroniser->SetCameraPosition(id, position);
+		}
 
 		m_TEMPQueuedEntities.clear();
 
@@ -761,7 +774,7 @@ namespace FusionEngine
 							existingState.authority = authority;
 							existingState.ocaTick = tick;
 
-							//boost::crc_16_type crc;
+							//boost::crc_32_type crc;
 							//crc.process_bytes(existingState.occasional->GetData(), existingState.occasional->GetNumberOfBytesUsed());
 							//m_SentStates[packet->guid][entityID] = crc.checksum();
 						}

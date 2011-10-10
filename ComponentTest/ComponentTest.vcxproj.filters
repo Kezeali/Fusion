@@ -722,5 +722,8 @@
     <ClInclude Include="..\FusionEngine\FusionStreamingCameraComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionCameraSynchroniser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

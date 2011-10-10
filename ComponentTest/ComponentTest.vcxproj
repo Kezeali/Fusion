@@ -308,6 +308,7 @@
     <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionCamera.h" />
+    <ClInclude Include="..\FusionEngine\FusionCameraSynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionClientOptions.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h" />

@@ -87,7 +87,7 @@ namespace FusionEngine
 	class EntitySynchroniser : public PacketHandler
 	{
 	public:
-		EntitySynchroniser(InputManager *input_manager);
+		EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser);
 		~EntitySynchroniser();
 
 		void SetUseJitterBuffer(bool use) { m_UseJitterBuffer = use; }
@@ -122,6 +122,8 @@ namespace FusionEngine
 
 		ConsolidatedInput *m_PlayerInputs;
 		InputManager *m_InputManager;
+
+		CameraSynchroniser* m_CameraSynchroniser;
 
 		RakNetwork *m_Network;
 
@@ -207,7 +209,7 @@ namespace FusionEngine
 		typedef std::map<ObjectID, StateData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
-		std::map<ObjectID, std::vector<uint16_t>> m_SentStates;
+		std::map<ObjectID, std::vector<uint32_t>> m_SentStates;
 
 		struct EntityPacketData
 		{

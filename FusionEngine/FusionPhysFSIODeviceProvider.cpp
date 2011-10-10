@@ -96,8 +96,8 @@ int PhysFSIODeviceProvider::peek(void *data, int len)
 
 bool PhysFSIODeviceProvider::seek(int seek_pos, CL_IODevice::SeekMode mode)
 {
-	cl_int64 absolute_pos = 0;
-	cl_int64 curPos = (cl_int64)PHYSFS_tell(m_Handle);
+	cl_long absolute_pos = 0;
+	cl_long curPos = (cl_long)PHYSFS_tell(m_Handle);
 	switch (mode)
 	{
 	case CL_IODevice::seek_set:

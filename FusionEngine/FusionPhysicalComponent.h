@@ -64,6 +64,8 @@ namespace FusionEngine
 		ThreadSafeProperty<float> Angle;
 		ThreadSafeProperty<int> Depth;
 
+		virtual bool IsContinuous() const;
+
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
 		static bool IsThreadSafe() { return true; }

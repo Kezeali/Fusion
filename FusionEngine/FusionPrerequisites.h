@@ -49,6 +49,7 @@ namespace FusionEngine
 	// --Forward declarations--
 	///////////////////////////
 	class Camera;
+	class CameraSynchroniser;
 	class ClientOptions;
 	class IComponent;
 	class Console;

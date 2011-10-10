@@ -435,10 +435,10 @@ namespace FusionEngine
 	{
 		EntityFactory *factory = m_Factory;
 		// Read the entity type count
-		cl_int32 numberEntityTypes = device.read_int32();
+		cl_int numberEntityTypes = device.read_int32();
 		// Tell the entity-factory to load each entity type listed in the map file
 		//CL_String8 entityTypename;
-		for (cl_int32 i = 0; i < numberEntityTypes; i++)
+		for (cl_int i = 0; i < numberEntityTypes; i++)
 		{
 			//entityTypename = device.read_string_a();
 			factory->LoadPrefabType(/*entityTypename*/device.read_string_a());
@@ -482,7 +482,7 @@ namespace FusionEngine
 		auto map = std::make_shared<GameMap>(device);
 
 		//// Read the entity type count
-		//cl_uint32 numberEntityTypes = device.read_uint32();
+		//auto numberEntityTypes = device.read_uint32();
 		//// List each entity type
 		////StringVector entityTypeArray(numberEntityTypes);
 		//m_TypeIndex.clear();
@@ -499,9 +499,9 @@ namespace FusionEngine
 		//TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
 		//// Load Archetypes
-		//cl_uint32 numberArchetypes = device.read_uint32();
+		//auto numberArchetypes = device.read_uint32();
 		//ArchetypeArray archetypeArray(numberArchetypes);
-		//for (cl_uint32 i = 0; i < numberArchetypes; i++)
+		//for (uint32_t i = 0; i < numberArchetypes; i++)
 		//{
 		//	cl_uint32 entityTypeIndex = device.read_uint32();
 		//	const std::string &entityTypename = entityTypeArray.at(entityTypeIndex);
@@ -548,15 +548,15 @@ namespace FusionEngine
 		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
 		// Load & instance Entities
-		cl_uint32 numberEntities = device.read_uint32();
+		cl_uint numberEntities = device.read_uint32();
 		EntityArray instancedEntities;
 		instancedEntities.reserve(numberEntities);
 		{
 			std::string entityName;
 			EntityPtr entity;
-			for (cl_uint32 i = 0; i < numberEntities; i++)
+			for (cl_uint i = 0; i < numberEntities; i++)
 			{
-				cl_uint32 typeIndex = device.read_uint32();
+				cl_uint typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
 				//if (entityName.empty())
@@ -588,11 +588,11 @@ namespace FusionEngine
 
 				deserialiseBasicProperties(entity, device);
 
-				cl_uint8 typeFlags = device.read_uint8();
+				auto typeFlags = device.read_uint8();
 				// Load archetype
 				if (typeFlags & ArchetypeFlag) // Check for archetype flag
 				{
-					cl_uint32 typeIndex = device.read_uint32();
+					auto typeIndex = device.read_uint32();
 					const Archetype &archetype = archetypeArray[typeIndex];
 
 					// Check that the archetype data is for the correct entity type before deserializing
@@ -616,15 +616,15 @@ namespace FusionEngine
 		TypeIndex::right_map &entityTypeArray = m_TypeIndex.right;
 
 		// Load & instance Entities
-		cl_uint32 numberEntities = device.read_uint32();
+		auto numberEntities = device.read_uint32();
 		EntityArray instancedEntities;
 		instancedEntities.reserve(numberEntities);
 		{
 			std::string entityName; ObjectID entityID;
 			EntityPtr entity;
-			for (cl_uint32 i = 0; i < numberEntities; i++)
+			for (uint32_t i = 0; i < numberEntities; i++)
 			{
-				cl_uint32 typeIndex = device.read_uint32();
+				auto typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a().c_str();
 				if (entityName.empty())
@@ -668,11 +668,11 @@ namespace FusionEngine
 
 				m_Manager->AddEntity(entity);
 
-				cl_uint8 typeFlags = device.read_uint8();
+				auto typeFlags = device.read_uint8();
 				// Load archetype
 				if (typeFlags & ArchetypeFlag) // Check for archetype flag
 				{
-					cl_uint32 typeIndex = device.read_uint32();
+					auto typeIndex = device.read_uint32();
 					const Archetype &archetype = archetypeArray[typeIndex];
 
 					// Check that the archetype data is for the correct entity type before deserializing
@@ -721,7 +721,7 @@ namespace FusionEngine
 
 		// Load & instance Entities (this section is loaded the same way as the equivilant section in the map file)
 		// TODO: share code with map file loading?
-		cl_uint32 numberEntities = device.read_uint32();
+		cl_uint numberEntities = device.read_uint32();
 		EntityArray instancedEntities;
 		instancedEntities.reserve(numberEntities);
 		// The TypeIndex bimap maps typename to index, so the right_map is index to name
@@ -729,9 +729,9 @@ namespace FusionEngine
 		{
 			std::string entityName; ObjectID entityID;
 			EntityPtr entity;
-			for (cl_uint32 i = 0; i < numberEntities; i++)
+			for (cl_uint i = 0; i < numberEntities; i++)
 			{
-				cl_uint32 typeIndex = device.read_uint32();
+				cl_uint typeIndex = device.read_uint32();
 
 				entityName = device.read_string_a();
 				device.read((void*)&entityID, sizeof(ObjectID));
@@ -850,11 +850,11 @@ namespace FusionEngine
 		device.write_uint32(used_entity_types.size());
 
 		// Used for getting the index at which a given type was listed in the used type list (which is about to be written)
-		typedef std::tr1::unordered_map<std::string, cl_uint32> UsedTypeMap;
+		typedef std::tr1::unordered_map<std::string, uint32_t> UsedTypeMap;
 		UsedTypeMap usedTypeIndexes;
 
 		{
-			cl_uint32 type_index = 0;
+			uint32_t type_index = 0;
 			for (StringSet::const_iterator it = used_entity_types.begin(), end = used_entity_types.end(); it != end; ++it)
 			{
 				device.write_string_a(*it);
@@ -869,7 +869,7 @@ namespace FusionEngine
 		UsedTypeMap usedArchetypeIndexes;
 
 		{
-			cl_uint32 type_index = 0;
+			uint32_t type_index = 0;
 			for (ArchetypeMap::const_iterator it = archetypes.begin(), end = archetypes.end(); it != end; ++it)
 			{
 				// Write the type index (refers to the previously written used-type-list)

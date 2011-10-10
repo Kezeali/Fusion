@@ -110,7 +110,7 @@ namespace FusionEngine
 	protected:
 		EntityManager* m_StreamingManager;
 
-		cl_uint64 newSlowness;
+		uint32_t newSlowness;
 	};
 
 	class StreamingTaskB : public ISystemTask
