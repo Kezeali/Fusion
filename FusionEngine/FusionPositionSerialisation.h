@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCameraSynchroniser
-#define H_FusionCameraSynchroniser
+#ifndef H_FusionPositionSerialisation
+#define H_FusionPositionSerialisation
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,25 +34,33 @@
 
 #include "FusionPrerequisites.h"
 
-#include "FusionCamera.h"
+#include "FusionEntityComponent.h"
+#include <functional>
+#include <BitStream.h>
 
 namespace FusionEngine
 {
 
-	class CameraSynchroniser
+	typedef std::function<Vector2 (RakNet::BitStream&, const Vector2&, float)> PositionSerialisationFunctor;
+	struct PositionSerialiser
 	{
-	public:
-		CameraSynchroniser(StreamingManager* streaming_manager);
+		PositionSerialisationFunctor write;
+		PositionSerialisationFunctor read;
 
-		//! Gets / creates a camera attached to the given entity id
-		CameraPtr& GetCamera(ObjectID entity_id, PlayerID owner);
-		//! Updates the position of the given camera
-		void SetCameraPosition(ObjectID entity_id, const Vector2& new_pos);
+		PositionSerialiser()
+		{}
 
-	private:
-		std::map<ObjectID, CameraPtr> m_Cameras;
+		PositionSerialiser(PositionSerialisationFunctor&& write_fn, PositionSerialisationFunctor&& read_fn)
+			: write(std::move(write_fn)), read(std::move(read_fn))
+		{}
 
-		StreamingManager* m_StreamingManager;
+		PositionSerialiser(const PositionSerialiser& other)
+			: write(other.write), read(other.read)
+		{}
+
+		PositionSerialiser(PositionSerialiser&& other)
+			: write(std::move(other.write)), read(std::move(other.read))
+		{}
 	};
 
 }

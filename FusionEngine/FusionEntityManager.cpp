@@ -428,14 +428,14 @@ namespace FusionEngine
 		m_PlayerInputs->ChangesRecorded();
 	}
 
-	void EntitySynchroniser::OnEntityActivated(EntityPtr &entity)
+	void EntitySynchroniser::OnEntityActivated(const EntityPtr &entity)
 	{
 		PlayerInputPtr playerInput = m_PlayerInputs->GetInputsForPlayer(entity->GetOwnerID());
 		if (playerInput)
 			entity->_setPlayerInput(playerInput);
 	}
 
-	void EntitySynchroniser::OnEntityDeactivated(EntityPtr &entity)
+	void EntitySynchroniser::OnEntityDeactivated(const EntityPtr &entity)
 	{
 		{
 			auto entry = std::find(m_EntitiesToReceive.begin(), m_EntitiesToReceive.end(), entity);
@@ -494,10 +494,10 @@ namespace FusionEngine
 				}
 
 				if (continuous)
-					EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode, factory, entity_manager);
+					EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode);
 				if (occasional)
 				{
-					EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode, factory, entity_manager);
+					EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode);
 				}
 			}
 			// Make sure the local peer isn't giving auth. to remote peers that don't want it
@@ -574,10 +574,23 @@ namespace FusionEngine
 		// Process states for inactive entities
 		for (auto it = m_ReceivedStates.begin(), end = m_ReceivedStates.end(); it != end; ++it)
 		{
+			using namespace EntitySerialisationUtils;
+
 			const ObjectID id = it->first;
 			const auto& state = it->second;
-			//Vector2 position = DeserialisePosition(state.continuous, state.occasional);
-			//m_CameraSynchroniser->SetCameraPosition(id, position);
+
+			if (state.continuous)
+			{
+				auto result = DeserialisePosition(*state.continuous, Vector2(), 0.f);
+				if (result.first)
+					m_CameraSynchroniser->SetCameraPosition(id, result.second);
+			}
+			else if (state.occasional)
+			{
+				auto result = DeserialisePosition(*state.occasional, Vector2(), 0.f);
+				if (result.first)
+					m_CameraSynchroniser->SetCameraPosition(id, result.second);
+			}
 		}
 
 		m_TEMPQueuedEntities.clear();
@@ -916,6 +929,7 @@ namespace FusionEngine
 			m_DomainState[i] = DS_ALL;
 
 		m_StreamingManager->SignalActivationEvent.connect(std::bind(&EntityManager::OnActivationEvent, this, _1));
+		m_StreamingManager->SignalRemoteActivationEvent.connect(std::bind(&EntityManager::OnRemoteActivationEvent, this, _1));
 	}
 
 	EntityManager::~EntityManager()
@@ -1650,6 +1664,8 @@ namespace FusionEngine
 	{
 		entity->StreamOut();
 
+		m_EntitySynchroniser->OnEntityDeactivated(entity);
+
 		//entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
 		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
 		{
@@ -1727,6 +1743,16 @@ namespace FusionEngine
 			break;
 		case ActivationEvent::Deactivate:
 			ev.entity->MarkToDeactivate();
+			break;
+		}
+	}
+
+	void EntityManager::OnRemoteActivationEvent(const RemoteActivationEvent &ev)
+	{
+		switch (ev.type)
+		{
+		case ActivationEvent::Activate:
+			queueEntityToSynch(ev.entity, ev.viewer, ev.state);
 			break;
 		}
 	}

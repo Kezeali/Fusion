@@ -412,10 +412,15 @@ namespace FusionEngine
 		void DeactivateEntity(const EntityPtr &entity);
 		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 
+		void RemoteActivateEntity(CellEntry& entry, ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state);
+
 		void QueueEntityForDeactivation(CellEntry &entry, bool warp = false);
 
 		void GenerateActivationEvent(const EntityPtr &entity);
 		void GenerateDeactivationEvent(const EntityPtr &entity);
+
+		void GenerateRemoteActivationEvent(ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state);
+		void GenerateRemoteDeactivationEvent(ObjectID entity, PlayerID viewer);
 
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
@@ -424,7 +429,7 @@ namespace FusionEngine
 
 		void deactivateCells(const CL_Rect& inactiveRange);
 
-		void processCell(Cell& cell, const std::list<Vector2>& cam_position);
+		void processCell(Cell& cell, const std::list<Vector2>& cam_position, const std::list<std::pair<Vector2, PlayerID>>& remote_positions);
 
 		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 

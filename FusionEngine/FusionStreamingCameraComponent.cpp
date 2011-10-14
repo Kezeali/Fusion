@@ -52,6 +52,11 @@ namespace FusionEngine
 		m_AngleChangeConnection.disconnect();
 	}
 
+	void StreamingCamera::SetCamera(const CameraPtr& camera)
+	{
+		m_Camera = camera;
+	}
+
 	void StreamingCamera::Update(float dt, float interp_a)
 	{
 		m_LastPosition = m_Position;
@@ -71,8 +76,11 @@ namespace FusionEngine
 			m_InterpAngle = m_Angle;
 		}
 
-		m_Camera->SetPosition(m_InterpPosition);
-		m_Camera->SetAngle(m_InterpAngle);
+		if (m_Camera)
+		{
+			m_Camera->SetPosition(m_InterpPosition);
+			m_Camera->SetAngle(m_InterpAngle);
+		}
 	}
 
 	void StreamingCamera::SetPosition(const Vector2& value)

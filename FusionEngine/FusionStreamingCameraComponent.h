@@ -47,6 +47,10 @@
 namespace FusionEngine
 {
 
+	//! Camera component
+	/*
+	* \todo Add a property to IComponent(?) that indicates that the given component type must only have one instance per entity
+	*/
 	class StreamingCamera : public IComponent, public ICamera
 	{
 		friend class CLRenderWorld;
@@ -67,6 +71,8 @@ namespace FusionEngine
 		virtual ~StreamingCamera();
 
 		void Update(float dt, float interp);
+
+		void SetCamera(const CameraPtr& camera);
 
 	private:
 		void SetPosition(const Vector2& value);

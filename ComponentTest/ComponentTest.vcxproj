@@ -186,6 +186,7 @@
     <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCamera.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCameraSynchroniser.cpp" />
     <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp" />
@@ -321,7 +322,7 @@
     <ClInclude Include="..\FusionEngine\FusionEntitySynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
-    <ClInclude Include="..\FusionEngine\FusionInputSystem.h" />
+    <ClInclude Include="..\FusionEngine\FusionPositionSerialisation.h" />
     <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />

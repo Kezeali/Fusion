@@ -721,8 +721,9 @@ namespace FusionEngine
 
 	std::vector<std::string> AngelScriptWorld::GetTypes() const
 	{
-		static const std::string types[] = { "ASScript" };
-		return std::vector<std::string>(types, types + 1);
+		std::vector<std::string> types;
+		types.push_back("ASScript");
+		return types;
 	}
 
 	ComponentPtr AngelScriptWorld::InstantiateComponent(const std::string& type)

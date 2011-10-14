@@ -47,6 +47,42 @@ namespace FusionEngine
 	namespace EntitySerialisationUtils
 	{
 
+		Vector2 StdDeserialisePosition(RakNet::BitStream& stream, const Vector2& origin, float radius)
+		{
+			if (stream.ReadBit())
+			{
+				Vector2 position;
+				stream.ReadFloat16(position.x, -radius, radius);
+				stream.ReadFloat16(position.y, -radius, radius);
+				return origin + position;
+			}
+			else
+			{
+				Vector2 position;
+				stream.Read(position.x);
+				stream.Read(position.y);
+				return position;
+			}
+		}
+
+		void StdSerialisePosition(RakNet::BitStream& stream, ITransform* tf, const Vector2& origin, float radius)
+		{
+			auto pos = tf->GetPosition();
+			auto offset = pos - origin;
+			if (offset.length() < radius - 0.01f)
+			{
+				stream.Write1();
+				stream.WriteFloat16(offset.x, -radius, radius);
+				stream.WriteFloat16(offset.y, -radius, radius);
+			}
+			else
+			{
+				stream.Write0();
+				stream.Write(pos.x);
+				stream.Write(pos.y);
+			}
+		}
+
 		bool SerialiseEntity(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			bool dataWritten = false;
@@ -236,23 +272,17 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
-#ifdef _DEBUG
-			std::string componentsNames;
-			for (auto it = components.begin(), end = components.end(); it != end; ++it)
-			{
-				componentsNames += (*it)->GetType();
-			}
-			boost::crc_32_type crc;
-			crc.process_block(componentsNames.data(), componentsNames.data() + componentsNames.length());
-			out.Write(crc.checksum());
-			// TODO: read this at the receiving end
-#endif
-
 			auto transformComponent = entity->GetTransform();
 			{
+				Vector2 origin; float radius = 0.f;
 				auto transform = dynamic_cast<ITransform*>(entity->GetTransform().get());
-				//if (transform->IsContinuous())
-				//	SerialisePosition(transform, origin, radius);
+				if (transform->HasContinuousPosition())
+				{
+					out.Write1();
+					StdSerialisePosition(out, transform, origin, radius);
+				}
+				else
+					out.Write0();
 
 				RakNet::BitStream tempStream;
 				transformComponent->SerialiseContinuous(tempStream);
@@ -298,7 +328,7 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityFactory* factory, EntityManager* manager)
+		void DeserialiseContinuous(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
@@ -307,6 +337,12 @@ namespace FusionEngine
 			ComponentPtr transform;
 			{
 				transform = entity->GetTransform();
+
+				Vector2 origin; float radius = 0;
+				auto tf = dynamic_cast<ITransform*>(transform.get());
+				auto result = DeserialisePosition(in, origin, radius);
+				if (result.first)
+					tf->SetPosition(result.second);
 
 				bool conData = in.ReadBit();
 				if (conData)
@@ -381,13 +417,30 @@ namespace FusionEngine
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // minus transform
 
+#ifdef _DEBUG
+			std::string componentsNames;
+			for (auto it = components.begin(), end = components.end(); it != end; ++it)
+			{
+				componentsNames += (*it)->GetType();
+			}
+			boost::crc_32_type crc;
+			crc.process_block(componentsNames.data(), componentsNames.data() + componentsNames.length());
+			out.Write(crc.checksum());
+#endif
+
 			checksums.resize(components.size());
 
 			auto transformComponent = entity->GetTransform();
 			{
-				auto transform = dynamic_cast<ITransform*>(transformComponent.get());
-				//if (!transform->IsContinuous())
-				//	SerialisePosition(transform, origin, radius);
+				Vector2 origin; float radius = 0.f;
+				auto transform = dynamic_cast<ITransform*>(entity->GetTransform().get());
+				if (transform->HasContinuousPosition())
+				{
+					out.Write1();
+					StdSerialisePosition(out, transform, origin, radius);
+				}
+				else
+					out.Write0();
 
 				dataWritten |= SerialiseComponent(out, checksums[0], transformComponent.get(), mode);
 			}
@@ -446,13 +499,28 @@ namespace FusionEngine
 			}
 		}
 
-		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode, EntityManager* manager)
+		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			//entity->DeserialiseReferencedEntitiesList(in, EntityDeserialiser(manager));
 
 			auto stringCompressor = RakNet::StringCompressor::Instance();
 
 			auto& existingComponents = entity->GetComponents();
+
+#ifdef _DEBUG
+			std::string componentsNames;
+			for (auto it = existingComponents.begin(), end = existingComponents.end(); it != end; ++it)
+			{
+				componentsNames += (*it)->GetType();
+			}
+			boost::crc_32_type crc;
+			crc.process_block(componentsNames.data(), componentsNames.data() + componentsNames.length());
+			auto localNameSum = crc.checksum();
+			uint32_t remoteNameSum;
+			in.Read(remoteNameSum);
+			FSN_ASSERT(localNameSum == remoteNameSum);
+#endif
+
 			// Make sure checksums for every component can be stored
 			checksums.resize(existingComponents.size());
 
@@ -461,6 +529,12 @@ namespace FusionEngine
 			ComponentPtr transform;
 			{
 				transform = entity->GetTransform();
+
+				Vector2 origin; float radius = 0;
+				auto tf = dynamic_cast<ITransform*>(transform.get());
+				auto result = DeserialisePosition(in, origin, radius);
+				if (result.first)
+					tf->SetPosition(result.second);
 
 				bool conData = in.ReadBit();
 				if (conData)
@@ -500,17 +574,22 @@ namespace FusionEngine
 			//  transform components send this in the continuous stream
 			//  while others use the occasional stream (the given stream
 			//  can be either):
-			// TODO? This could be ~4 bits indicating a position (de)serialisation functor to use (one for each transform type, thus up to 16 types allowed)
 			if (in.ReadBit())
 			{
-				Vector2 pos;
-				in.ReadFloat16(pos.x, -radius, radius);
-				in.ReadFloat16(pos.y, -radius, radius);
-				return std::make_pair(true, pos);
+				// TODO: Could use ~3 bits here indicating a non-standard position-(de)serialisation functor to use
+				return std::make_pair(true, StdDeserialisePosition(in, origin, radius));
 			}
 			else
+			{
 				return std::make_pair(false, origin);
+			}
 		}
+
+		//void SerialisePosition(RakNet::BitStream& out, ComponentPtr tf, const Vector2& origin, const float radius)
+		//{
+		//	auto sf = std::function<void (RakNet::BitStream&, const Vector2&, float)>();//tf->GetSerialisationFunctor();
+		//	sf(out, origin, radius);
+		//}
 
 		void WriteComponent(CL_IODevice& out, IComponent* component)
 		{

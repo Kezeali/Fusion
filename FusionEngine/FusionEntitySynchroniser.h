@@ -99,9 +99,9 @@ namespace FusionEngine
 		//void Send();
 
 		//! Prepares the given entity for synch
-		void OnEntityActivated(EntityPtr &entity);
+		void OnEntityActivated(const EntityPtr &entity);
 		//! Removes the given entity from the queue, if it hasn't been cleared yet
-		void OnEntityDeactivated(EntityPtr &entity);
+		void OnEntityDeactivated(const EntityPtr &entity);
 
 		//! Enqueues the given entity to be processed for synch
 		bool Enqueue(EntityPtr &entity);

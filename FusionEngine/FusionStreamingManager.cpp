@@ -716,6 +716,16 @@ namespace FusionEngine
 
 		GenerateActivationEvent( entity );
 	}
+	
+	void StreamingManager::RemoteActivateEntity(CellEntry& cell_entry, ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state)
+	{
+		FSN_ASSERT( !cell_entry.active ); // TODO: Maybe not neccessary?
+
+		// Note that this intentionally doesn't increase the ref-count of the local cell, because the cell
+		//  is no longer needed now that the state has been extracted and passed to the interested parties
+
+		GenerateRemoteActivationEvent(entity, viewer, state);
+	}
 
 	void StreamingManager::DeactivateEntity(const EntityPtr &entity)
 	{
@@ -763,6 +773,25 @@ namespace FusionEngine
 		ev.type = ActivationEvent::Deactivate;
 		ev.entity = entity;
 		SignalActivationEvent(ev);
+	}
+
+	void StreamingManager::GenerateRemoteActivationEvent(ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state)
+	{
+		RemoteActivationEvent ev;
+		ev.type = RemoteActivationEvent::Activate;
+		ev.entity = entity;
+		ev.viewer = viewer;
+		ev.state = state;
+		SignalRemoteActivationEvent(ev);
+	}
+
+	void StreamingManager::GenerateRemoteDeactivationEvent(ObjectID entity, PlayerID viewer)
+	{
+		RemoteActivationEvent ev;
+		ev.type = RemoteActivationEvent::Deactivate;
+		ev.entity = entity;
+		ev.viewer = viewer;
+		SignalRemoteActivationEvent(ev);
 	}
 
 	//const std::set<EntityPtr> &StreamingManager::GetActiveEntities() const
@@ -869,7 +898,7 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::processCell(Cell& cell, const std::list<Vector2>& cam_positions)
+	void StreamingManager::processCell(Cell& cell, const std::list<Vector2>& cam_positions, const std::list<std::pair<Vector2, PlayerID>>& remote_positions)
 	{
 		Cell::mutex_t::scoped_try_lock lock(cell.mutex);
 		if (lock)
@@ -897,10 +926,23 @@ namespace FusionEngine
 							cellEntry.pendingDeactivation = false;						
 						}
 					}
-					else if (cellEntry.active)
+					else
 					{
-						if (!cellEntry.pendingDeactivation)
-							QueueEntityForDeactivation(cellEntry);
+						auto camEntry = std::find_if(remote_positions.begin(), remote_positions.end(),
+							[&](const Vector2& cam_position) { return (entityPosition - cam_position).length() <= m_Range; });
+						if (camEntry != remote_positions.end())
+						{
+							// TODO: add id and state to CellEntry
+							// state can probably be only initialised when the entity isn't activated (so either
+							// the entity associated with the entry is initialised, or the state is)
+							//RemoteActivateEntity(cellEntry, cellEntry.id, camEntry->second, cellEntry.state);
+						}
+
+						if (cellEntry.active)
+						{
+							if (!cellEntry.pendingDeactivation)
+								QueueEntityForDeactivation(cellEntry);
+						}
 					}
 				}
 			//}
@@ -972,6 +1014,35 @@ namespace FusionEngine
 			*out_it++ = inactiveRange;
 		}
 	}
+
+	//void mergeRange(std::list<std::tuple<CL_Rect, std::list<Vector2>, std::list<std::pair<Vector2, PlayerID>>>>& activeRanges, CL_Rect& new_activeRange, StreamingManager::StreamingCamera& cam, const bool localCam)
+	//{
+	//	bool merged = false;
+	//	for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
+	//	{
+	//		auto& existingRange = std::get<0>(*it);
+	//		//if (activeRange.is_overlapped(existingRange))
+	//		if (inclusiveOverlap(new_activeRange, existingRange))
+	//		{
+	//			existingRange.bounding_rect(activeRange);
+	//			if (localCam)
+	//				std::get<1>(*it).push_back(cam.streamPosition);
+	//			else
+	//				std::get<2>(*it).push_back(std::make_pair(cam.streamPosition, cam.owner));
+	//		}
+	//	}
+	//	if (!merged)
+	//	{
+	//		// Create a new list with just this position (this will be appended if this region is merged)
+	//		std::list<Vector2> localPosList;
+	//		std::list<std::pair<Vector2, PlayerID>> remotePosList;
+	//		if (localCam)
+	//			localPosList.push_back(cam.streamPosition);
+	//		else
+	//			remotePosList.push_back(std::make_pair(cam.streamPosition, cam.owner));
+	//		activeRanges.push_back(std::make_tuple(cam.streamPosition, std::move(localPosList), std::move(remotePosList)));
+	//	}
+	//}
 
 	void StreamingManager::Update(const bool refresh)
 	{
@@ -1071,10 +1142,10 @@ namespace FusionEngine
 		//  are split / merged into no-overlapping sub-regions (to avoid processing cells
 		//  twice in a step)
 		std::list<CL_Rect> inactiveRanges;
-		std::list<std::pair<CL_Rect, std::list<Vector2>>> activeRanges;
+		std::list<std::tuple<CL_Rect, std::list<Vector2>, std::list<std::pair<Vector2, PlayerID>>>> activeRanges;
 		// Used to process The Void
-		std::list<Vector2> localStreamPositions;
-		std::list<std::pair<Vector2, PlayerID>> remoteStreamPositions;
+		std::list<Vector2> allLocalStreamPositions;
+		std::list<std::pair<Vector2, PlayerID>> allRemoteStreamPositions;
 
 		bool allActiveRangesStale = true;
 
@@ -1087,7 +1158,7 @@ namespace FusionEngine
 			// Update streaming position of this camera
 			{
 				CameraPtr camera = cam.camera.lock();
-				if (!camera && (cam.owner == 0 || PlayerRegistry::IsLocal(cam.owner)))
+				if (!camera)
 				{
 					it = m_Cameras.erase(it); // Remove expired (local) cameras
 					continue;
@@ -1095,20 +1166,40 @@ namespace FusionEngine
 				++it;
 
 				if (camera)
-				{
 					updateStreamingCamera(cam, std::move(camera));
-
-					if (cam.owner != 0 && !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.5f))
-					{
-						RakNet::BitStream bs;
-						bs.Write(cam.id);
-						bs.Write(cam.streamPosition.x);
-						bs.Write(cam.streamPosition.y);
-						NetworkManager::GetNetwork()->Send(To::Populace(), false, MTID_REMOTECAMERA_MOVE, &bs, MEDIUM_PRIORITY, RELIABLE_ORDERED, CID_VIEWMANAGER);
-					}
-				}
 			}
 			const Vector2 &newPosition = cam.streamPosition;
+			
+			const bool localCam = PlayerRegistry::IsLocal(cam.owner);
+
+			auto mergeRange = [&](CL_Rect& new_activeRange)
+			{
+				bool merged = false;
+				for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
+				{
+					auto& existingRange = std::get<0>(*it);
+					//if (activeRange.is_overlapped(existingRange))
+					if (inclusiveOverlap(new_activeRange, existingRange))
+					{
+						existingRange.bounding_rect(new_activeRange);
+						if (localCam)
+							std::get<1>(*it).push_back(cam.streamPosition);
+						else
+							std::get<2>(*it).push_back(std::make_pair(cam.streamPosition, cam.owner));
+					}
+				}
+				if (!merged)
+				{
+					// Create a new list with just this position (this will be appended if this region is merged)
+					std::list<Vector2> localPosList;
+					std::list<std::pair<Vector2, PlayerID>> remotePosList;
+					if (localCam)
+						localPosList.push_back(cam.streamPosition);
+					else
+						remotePosList.push_back(std::make_pair(cam.streamPosition, cam.owner));
+					activeRanges.push_back(std::make_tuple(new_activeRange, std::move(localPosList), std::move(remotePosList)));
+				}
+			};
 
 			// Figure out the active range of this camera
 			if (refresh || cam.firstUpdate || !v2Equal(cam.lastUsedPosition, cam.streamPosition, 0.5f))
@@ -1119,37 +1210,24 @@ namespace FusionEngine
 
 				allActiveRangesStale = false;
 
-				if (cam.owner == 0)
-					localStreamPositions.push_back(cam.streamPosition);
+				if (localCam)
+					allLocalStreamPositions.push_back(cam.streamPosition);
+				else
+					allRemoteStreamPositions.push_back(std::make_pair(cam.streamPosition, cam.owner));
 
 				CL_Rect inactiveRange;
 				getCellRange(inactiveRange, oldPosition);
 
+				// Update the current active cell range for this camera
 				CL_Rect& activeRange = cam.activeCellRange;
 				getCellRange(activeRange, newPosition);
-				//activeRange = range;
 
 				if (inactiveRange != activeRange && (inactiveRange.get_width() != 0 && inactiveRange.get_height() != 0))
 					inactiveRanges.push_back(std::move(inactiveRange));
 
 				// TODO: don't create one big range for all overlapping ranges: split ranges like
 				//  when an inactive range overlaps an active range
-				bool merged = false;
-				for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
-				{
-					auto& existingRange = it->first;
-					//if (activeRange.is_overlapped(existingRange))
-					if (inclusiveOverlap(activeRange, existingRange))
-					{
-						existingRange.bounding_rect(activeRange);
-						it->second.push_back(cam.streamPosition);
-					}
-				}
-				if (!merged)
-				{
-					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
-					activeRanges.push_back(std::make_pair(activeRange, std::move(pos)));
-				}
+				mergeRange(activeRange);
 			}
 			else // Camera hasn't moved
 			{
@@ -1170,22 +1248,7 @@ namespace FusionEngine
 				}
 
 				// Add this cell's most recently calculated active range to make sure it doesn't get deactivated
-				bool merged = false;
-				for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
-				{
-					auto& existingRange = it->first;
-					//if (activeRange.is_overlapped(existingRange))
-					if (inclusiveOverlap(cam.activeCellRange, existingRange))
-					{
-						existingRange.bounding_rect(cam.activeCellRange);
-						it->second.push_back(cam.streamPosition);
-					}
-				}
-				if (!merged)
-				{
-					std::list<Vector2> pos; pos.push_back(cam.streamPosition);
-					activeRanges.push_back(std::make_pair(cam.activeCellRange, std::move(pos)));
-				}
+				mergeRange(cam.activeCellRange);
 			}
 		}
 
@@ -1215,7 +1278,7 @@ namespace FusionEngine
 			for (auto ait = activeRanges.begin(), aend = activeRanges.end(); ait != aend; ++ait)
 			{
 				auto& inactiveRange = *iit;
-				auto& activeRange = ait->first;
+				auto& activeRange = std::get<0>(*ait);
 				clipRange(std::back_inserter(clippedInactiveRanges), inactiveRange, activeRange);
 			}
 		}
@@ -1234,12 +1297,13 @@ namespace FusionEngine
 			deactivateCells(*it);
 		}
 
-		processCell(m_TheVoid, localStreamPositions);
+		processCell(m_TheVoid, allLocalStreamPositions, allRemoteStreamPositions);
 
 		for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
 		{
-			auto& activeRange = it->first;
-			auto& streamPositions = it->second;
+			auto& activeRange = std::get<0>(*it);
+			auto& streamPositions = std::get<1>(*it);
+			auto& remotePositions = std::get<2>(*it);
 
 			if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
 			{
@@ -1280,7 +1344,7 @@ namespace FusionEngine
 						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 						else
 						{
-							processCell(cell, streamPositions);
+							processCell(cell, streamPositions, remotePositions);
 						}
 					}
 					i += stride;

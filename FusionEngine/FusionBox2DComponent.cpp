@@ -135,17 +135,55 @@ namespace FusionEngine
 #endif
 	}
 
+	Vector2 Box2DBody::DeserialisePosition(RakNet::BitStream& stream, const Vector2& origin, float radius)
+	{
+		if (stream.ReadBit())
+		{
+			Vector2 position;
+			stream.ReadFloat16(position.x, -radius, radius);
+			stream.ReadFloat16(position.y, -radius, radius);
+			return origin + position;
+		}
+		else
+		{
+			Vector2 position;
+			stream.Read(position.x);
+			stream.Read(position.y);
+			return position;
+		}
+	}
+
+	void Box2DBody::SerialiseTransform(RakNet::BitStream& stream, const Vector2& origin, float radius)
+	{
+		auto pos = m_Body ? m_Body->GetPosition() : m_Def.position;
+		auto offset = pos - b2Vec2(origin.x, origin.y);
+		if (offset.Length() < radius - 0.01f)
+		{
+			stream.Write1();
+			stream.WriteFloat16(offset.x, -radius, radius);
+			stream.WriteFloat16(offset.y, -radius, radius);
+		}
+		else
+		{
+			stream.Write0();
+			stream.Write(pos.x);
+			stream.Write(pos.y);
+		}
+	}
+
+	void Box2DBody::DeserialiseTransform(RakNet::BitStream& stream, const Vector2& position)
+	{
+		SetPosition(position);
+	}
+
 	bool Box2DBody::SerialiseContinuous(RakNet::BitStream& stream)
 	{
 		if (GetBodyType() == Dynamic)
 		{
+			stream.Write(m_Body ? m_Body->GetAngle() : m_Def.angle);
+
 			const bool awake = IsAwake();
 			stream.Write(awake);
-
-			const Vector2 pos = m_Body ? b2v2(m_Body->GetPosition()) : b2v2(m_Def.position);
-			stream.Write(pos.x);
-			stream.Write(pos.y);
-			stream.Write(m_Body ? m_Body->GetAngle() : m_Def.angle);
 
 			if (awake)
 			{
@@ -172,8 +210,6 @@ namespace FusionEngine
 
 	void Box2DBody::DeserialiseContinuous(RakNet::BitStream& stream)
 	{
-		bool awake = stream.ReadBit();
-
 		Vector2 position;
 		float angle;
 		stream.Read(position.x);
@@ -184,6 +220,9 @@ namespace FusionEngine
 
 		SetPosition(position);
 		SetAngle(angle);
+
+		// If the body isn't awake, velocities are assumed to be zero
+		bool awake = stream.ReadBit();
 
 		Vector2 linearVelocity;
 		float angularVelocity;

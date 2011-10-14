@@ -227,6 +227,7 @@ namespace FusionEngine
 		void OnComponentAdded(const EntityPtr& entity, const ComponentPtr& component);
 
 		void OnActivationEvent(const ActivationEvent& ev);
+		void OnRemoteActivationEvent(const RemoteActivationEvent& ev);
 
 		// Will notify entities that the given player was added next time Update is called 
 		void OnPlayerAdded(unsigned int local_index, PlayerID net_id);

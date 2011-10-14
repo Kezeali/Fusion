@@ -103,6 +103,9 @@ namespace FusionEngine
 		void SetInteractingWithPlayer(const bool value) { m_InteractingWithPlayer = value; }
 		bool IsInteractingWithPlayer() const;
 
+		static Vector2 DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, float radius);
+		bool HasContinuousPosition() const { return GetBodyType() == Dynamic; }
+
 	private:
 		b2BodyDef m_Def;
 		b2Body* m_Body;
@@ -146,6 +149,9 @@ namespace FusionEngine
 
 		void OnSiblingAdded(const ComponentPtr& com);
 		void OnSiblingRemoved(const ComponentPtr& com);
+
+		void SerialiseTransform(RakNet::BitStream& out, const Vector2& origin, float radius);
+		void DeserialiseTransform(RakNet::BitStream& in, const Vector2& position);
 
 		bool SerialiseContinuous(RakNet::BitStream& stream);
 		void DeserialiseContinuous(RakNet::BitStream& stream);

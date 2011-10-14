@@ -48,6 +48,7 @@ namespace FusionEngine
 	class IDrawable;
 	class CLRenderTask;
 	class StreamingCamera;
+	class CameraSynchroniser;
 
 	class B2DebugDraw;
 
@@ -58,18 +59,19 @@ namespace FusionEngine
 
 		std::string GetName() const { return "CLRenderSystem"; }
 
-		CLRenderSystem(const CL_GraphicContext& gc);
+		CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync);
 
 		std::shared_ptr<ISystemWorld> CreateWorld();
 
 	private:
 		CL_GraphicContext m_GraphicContext;
+		CameraSynchroniser* m_CameraSynchroniser;
 	};
 
 	class CLRenderWorld : public ISystemWorld
 	{
 	public:
-		CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc);
+		CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc, CameraSynchroniser* camera_sync);
 		virtual ~CLRenderWorld();
 
 		const std::vector<ViewportPtr>& GetViewports() const { return m_Viewports; }
@@ -111,6 +113,8 @@ namespace FusionEngine
 
 		std::vector<ViewportPtr> m_Viewports;
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
+
+		CameraSynchroniser* m_CameraManager;
 
 		Renderer* m_Renderer;
 	};

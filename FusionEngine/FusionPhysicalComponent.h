@@ -64,15 +64,16 @@ namespace FusionEngine
 		ThreadSafeProperty<float> Angle;
 		ThreadSafeProperty<int> Depth;
 
-		virtual bool IsContinuous() const;
-
 		static void RegisterScriptInterface(asIScriptEngine* engine);
 
 		static bool IsThreadSafe() { return true; }
 
-	protected:
+		virtual bool HasContinuousPosition() const = 0;
+
 		virtual Vector2 GetPosition() const = 0;
 		virtual void SetPosition(const Vector2& pos) = 0;
+
+	protected:
 
 		virtual float GetAngle() const = 0;
 		virtual void SetAngle(float angle) = 0;

@@ -265,7 +265,11 @@ namespace FusionEngine
 
 	std::vector<std::string> Box2DWorld::GetTypes() const
 	{
+		//using namespace std::placeholders;
 		static const std::string types[] = { "b2RigidBody", "b2Dynamic", "b2Kinematic", "b2Static", "b2Circle", "b2Polygon", "StaticTransform" };
+		//std::vector<ISystemWorld::ComponentType> types;
+		//types.push_back(ComponentType("b2RigidBody", PositionSerialiser(std::bind(&Box2DBody::SerialisePosition, _1, _2, _3, _4), PositionSerialisationFunctor())));
+		//return types;
 		return std::vector<std::string>(types, types + 7);
 	}
 
@@ -320,6 +324,8 @@ namespace FusionEngine
 			//Position.MarkChanged();
 			//Angle.MarkChanged();
 		}
+
+		bool HasContinuousPosition() const { return false; }
 
 		Vector2 GetPosition() const { return m_Position; }
 		void SetPosition(const Vector2& position) { m_Position = position; }

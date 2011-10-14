@@ -777,6 +777,39 @@ namespace FusionEngine
 		auto types = instancer->GetTypes();
 		for (auto it = types.begin(), end = types.end(); it != end; ++it)
 			AddInstancer(*it, instancer);
+
+		auto serialisers = instancer->GetPositionSerialisers();
+		for (auto it = serialisers.begin(), end = serialisers.end(); it != end; ++it)
+		{
+			AddPositionSerialiser(std::move(it->first), std::move(it->second));
+		}
+	}
+
+	void EntityFactory::AddPositionSerialiser(const std::string &type, PositionSerialisationFunctor&& serialiser)
+	{
+		m_TransformTypeSerialisers[type] = serialiser;
+	}
+
+	std::pair<bool, Vector2> EntityFactory::DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius)
+	{
+		uint8_t tfType = 0;
+		in.ReadBits(&tfType, 3);
+		if (tfType < m_PositionSerialisers.size() && m_PositionSerialisers[tfType])
+		{
+			return std::make_pair(true, m_PositionSerialisers[tfType](in, origin, radius));
+		}
+		return std::make_pair(false, Vector2());
+	}
+
+	void EntityFactory::SerialisePosition(RakNet::BitStream& out, ComponentPtr tf, const Vector2& origin, const float radius)
+	{
+		auto entry = m_TransformTypeSerialiserIndicies.find(tf->GetType());
+		if (entry != m_TransformTypeSerialiserIndicies.end())
+		{
+			FSN_ASSERT(entry->second < m_PositionSerialisers.size());
+			out.WriteBits(&entry->second, 3);
+			//tf->SerialisePosition(origin, radius);
+		}
 	}
 
 	bool EntityFactory::LoadPrefabType(const std::string &type)

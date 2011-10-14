@@ -25,36 +25,38 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionCameraSynchroniser
-#define H_FusionCameraSynchroniser
+#include "FusionStableHeaders.h"
 
-#if _MSC_VER > 1000
-#pragma once
-#endif
+#include "FusionCameraSynchroniser.h"
 
-#include "FusionPrerequisites.h"
-
-#include "FusionCamera.h"
+#include "FusionStreamingManager.h"
 
 namespace FusionEngine
 {
 
-	class CameraSynchroniser
+	CameraSynchroniser::CameraSynchroniser(StreamingManager* streaming_manager)
+		: m_StreamingManager(streaming_manager)
 	{
-	public:
-		CameraSynchroniser(StreamingManager* streaming_manager);
+	}
 
-		//! Gets / creates a camera attached to the given entity id
-		CameraPtr& GetCamera(ObjectID entity_id, PlayerID owner);
-		//! Updates the position of the given camera
-		void SetCameraPosition(ObjectID entity_id, const Vector2& new_pos);
+	CameraPtr& CameraSynchroniser::GetCamera(ObjectID entity_id, PlayerID owner)
+	{
+		auto entry = m_Cameras.find(entity_id);
+		if (entry != m_Cameras.end())
+			return entry->second;
+		else
+		{
+			auto& cam = m_Cameras[entity_id] = std::make_shared<Camera>();
+			m_StreamingManager->AddOwnedCamera(owner, cam);
+			return cam;
+		}
+	}
 
-	private:
-		std::map<ObjectID, CameraPtr> m_Cameras;
-
-		StreamingManager* m_StreamingManager;
-	};
+	void CameraSynchroniser::SetCameraPosition(ObjectID entity_id, const Vector2& new_pos)
+	{
+		auto entry = m_Cameras.find(entity_id);
+		if (entry != m_Cameras.end())
+			m_Cameras[entity_id]->SetPosition(new_pos);
+	}
 
 }
-
-#endif

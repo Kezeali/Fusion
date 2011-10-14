@@ -37,6 +37,7 @@
 #include "FusionEntityComponent.h"
 
 #include "FusionCommon.h" // just for Vector2 typedef (should fix this, since it is often the case)
+#include "FusionPositionSerialisation.h"
 
 namespace FusionEngine
 {
@@ -78,6 +79,35 @@ namespace FusionEngine
 
 		SystemType GetSystemType() const;
 
+		struct ComponentType
+		{
+			std::string name;
+			PositionSerialiser transformSerialiser;
+
+			ComponentType(std::string&& n)
+				: name(std::move(n))
+			{}
+			ComponentType(const std::string& n)
+				: name(n)
+			{}
+			ComponentType(const std::string& n, const PositionSerialiser& serialiser)
+				: name(n),
+				transformSerialiser(serialiser)
+			{}
+			ComponentType(std::string&& n, PositionSerialiser&& serialiser)
+				: name(std::move(n)),
+				transformSerialiser(std::move(serialiser))
+			{}
+			ComponentType(const ComponentType& other)
+				: name(other.name),
+				transformSerialiser(other.transformSerialiser)
+			{}
+			ComponentType(ComponentType&& other)
+				: name(std::move(other.name)),
+				transformSerialiser(std::move(other.transformSerialiser))
+			{}
+		};
+		virtual std::vector<std::pair<std::string, PositionSerialisationFunctor>> GetPositionSerialisers() const { return std::vector<std::pair<std::string, PositionSerialisationFunctor>>(); }
 		virtual std::vector<std::string> GetTypes() const = 0;
 		virtual ComponentPtr InstantiateComponent(const std::string& type) = 0;
 		//! Instanciate method for physics / transform components

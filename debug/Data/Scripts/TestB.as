@@ -69,27 +69,27 @@ class TestB : ScriptComponent
 	{
 		++frames;
 		
-		if (false && setcampos_con is null && isLocal(entity.getRaw().getOwnerID()))
-		{
-			cam = Camera(itransform.Position);
-			streaming.addOwnedCamera(entity.getRaw().getOwnerID(), cam);
-			renderer.addViewport(cam);
+		//if (false && setcampos_con is null && isLocal(entity.getRaw().getOwnerID()))
+		//{
+		//	cam = Camera(itransform.Position);
+		//	streaming.addOwnedCamera(entity.getRaw().getOwnerID(), cam);
+		//	renderer.addViewport(cam);
 			
-			@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
-		}
+		//	@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
+		//}
 		//if (frames > 1)
 		//	cam.setPosition(itransform.Position);
 		
-		if (entity.input.getButton("special") && setcampos_con is null && isLocal(entity.getRaw().getOwnerID()))
-		{
-			console.println("adding camera");
-			cam = Camera(itransform.Position);
-			//streaming.addOwnedCamera(getParent().getOwnerID(), cam);
-			streaming.addCamera(cam);
-			renderer.addViewport(cam);
+		//if (entity.input.getButton("special") && setcampos_con is null && isLocal(entity.getRaw().getOwnerID()))
+		//{
+		//	console.println("adding camera");
+		//	cam = Camera(itransform.Position);
+		//	//streaming.addOwnedCamera(getParent().getOwnerID(), cam);
+		//	streaming.addCamera(cam);
+		//	renderer.addViewport(cam);
 			
-			@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
-		}
+		//	@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
+		//}
 		
 		if (entity.input.getButton("thrust"))
 		{

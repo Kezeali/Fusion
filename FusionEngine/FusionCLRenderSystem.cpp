@@ -35,6 +35,9 @@
 
 // TODO: move into StreamingSystem?
 #include "FusionStreamingCameraComponent.h"
+#include "FusionCameraSynchroniser.h"
+
+#include "FusionPlayerRegistry.h"
 
 #include "FusionProfiling.h"
 #include "FusionNetworkManager.h"
@@ -48,18 +51,20 @@
 
 namespace FusionEngine
 {
-	CLRenderSystem::CLRenderSystem(const CL_GraphicContext& gc)
-		: m_GraphicContext(gc)
+	CLRenderSystem::CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
+		: m_GraphicContext(gc),
+		m_CameraSynchroniser(camera_sync)
 	{
 	}
 
 	std::shared_ptr<ISystemWorld> CLRenderSystem::CreateWorld()
 	{
-		return std::make_shared<CLRenderWorld>(this, m_GraphicContext);
+		return std::make_shared<CLRenderWorld>(this, m_GraphicContext, m_CameraSynchroniser);
 	}
 
-	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc)
-		: ISystemWorld(system)
+	CLRenderWorld::CLRenderWorld(IComponentSystem* system, const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
+		: ISystemWorld(system),
+		m_CameraManager(camera_sync)
 	{
 		m_Renderer = new Renderer(gc);
 		m_RenderTask = new CLRenderTask(this, m_Renderer);
@@ -131,10 +136,18 @@ namespace FusionEngine
 		{
 			if (auto camComponent = boost::dynamic_pointer_cast<StreamingCamera>(component))
 			{
-				if (camComponent->m_ViewportEnabled)
+				const bool shared = camComponent->GetSyncType() == ICamera::Shared;
+				const PlayerID owner = shared ? 0 : camComponent->GetParent()->GetOwnerID();
+
+				camComponent->m_Camera = m_CameraManager->GetCamera(component->GetParent()->GetID(), owner);
+
+				if (shared || PlayerRegistry::IsLocal(camComponent->GetParent()->GetOwnerID()))
 				{
-					camComponent->m_Viewport = std::make_shared<Viewport>(camComponent->m_ViewportRect, camComponent->m_Camera);
-					AddViewport(camComponent->m_Viewport);
+					if (camComponent->m_ViewportEnabled)
+					{
+						camComponent->m_Viewport = std::make_shared<Viewport>(camComponent->m_ViewportRect, camComponent->m_Camera);
+						AddViewport(camComponent->m_Viewport);
+					}
 				}
 				m_Cameras.push_back(camComponent);
 			}

@@ -39,6 +39,7 @@
 #include "FusionSingleton.h"
 
 #include "FusionComponentSystem.h"
+#include "FusionPositionSerialisation.h"
 #include "FusionTypes.h"
 #include "FusionXML.h"
 
@@ -118,6 +119,11 @@ namespace FusionEngine
 
 		void AddInstancer(const ComponentInstancerPtr &instancer);
 
+		void AddPositionSerialiser(const std::string &type, PositionSerialisationFunctor&& serialiser);
+
+		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);
+		void SerialisePosition(RakNet::BitStream& out, ComponentPtr tf, const Vector2& origin, const float radius);
+
 		//! Creates an instancer for the the given scripted type
 		bool LoadPrefabType(const std::string &type);
 
@@ -171,6 +177,10 @@ namespace FusionEngine
 		void parseScriptedEntities(const char *path, unsigned int current_recursion = 0);
 
 		LogPtr m_Log;
+
+		std::map<std::string, PositionSerialisationFunctor> m_TransformTypeSerialisers;
+		std::map<std::string, uint8_t> m_TransformTypeSerialiserIndicies;
+		std::array<PositionSerialisationFunctor, 16> m_PositionSerialisers;
 
 		std::map<std::string, ComponentInstancerPtr> m_ComponentInstancers;
 
