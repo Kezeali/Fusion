@@ -423,6 +423,29 @@ namespace FusionEngine
 			occnPacketData.Reset();
 		}
 
+		{
+		RakNet::BitStream packetData;
+		for (auto it = m_ToInform.cbegin(), end = m_ToInform.cend(); it != end; ++it)
+		{
+			const auto& dest = it->first;
+			auto& states = it->second;
+
+			for (auto sit = states.cbegin(), send = states.cend(); sit != send; ++sit)
+			{
+				ObjectID id = sit->first;
+				auto& state = sit->second;
+
+				packetData.Write(id);
+				packetData.Write(state->GetNumberOfBitsUsed());
+				packetData.Write(state);
+			}
+
+			network->Send(NetDestination(dest, false), false, MTID_CORRECTION, &packetData, LOW_PRIORITY, RELIABLE_ORDERED, CID_ENTITYSYNC);
+
+			packetData.Reset();
+		}
+		}
+
 		m_EntityPriorityQueue.clear();
 		m_ImportantEntities.clear();
 		m_PlayerInputs->ChangesRecorded();
@@ -512,6 +535,12 @@ namespace FusionEngine
 		return false;
 	}
 
+	void EntitySynchroniser::EnqueueInactive(PlayerID viewer, ObjectID id, const std::shared_ptr<RakNet::BitStream>& state)
+	{
+		RakNet::RakNetGUID guid = PlayerRegistry::GetPlayer(viewer).GUID;
+		m_ToInform[guid].push_back(std::make_pair(id, state));
+	}
+
 	bool EntitySynchroniser::Enqueue(EntityPtr &entity)
 	{
 		if (!entity->IsSyncedEntity())
@@ -579,6 +608,8 @@ namespace FusionEngine
 			const ObjectID id = it->first;
 			const auto& state = it->second;
 
+			//m_Archivist->Store(id, state.continuous, state.occasional);
+
 			if (state.continuous)
 			{
 				auto result = DeserialisePosition(*state.continuous, Vector2(), 0.f);
@@ -592,6 +623,8 @@ namespace FusionEngine
 					m_CameraSynchroniser->SetCameraPosition(id, result.second);
 			}
 		}
+
+		// TODO: remote data from m_ToInform that has been superceeded by remote data
 
 		m_TEMPQueuedEntities.clear();
 
@@ -634,7 +667,10 @@ namespace FusionEngine
 		BitSize_t dataLength;
 		sourceStr.Read(dataLength);
 		sourceStr.Read(*state, dataLength);
+#ifdef _DEBUG
 		FSN_ASSERT(state->ReadBit());
+		state->ResetReadPointer();
+#endif
 	}
 
 #ifdef _DEBUG
@@ -928,12 +964,14 @@ namespace FusionEngine
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
 
-		m_StreamingManager->SignalActivationEvent.connect(std::bind(&EntityManager::OnActivationEvent, this, _1));
-		m_StreamingManager->SignalRemoteActivationEvent.connect(std::bind(&EntityManager::OnRemoteActivationEvent, this, _1));
+		m_ActivationEventConnection = m_StreamingManager->SignalActivationEvent.connect(std::bind(&EntityManager::OnActivationEvent, this, _1));
+		m_RemoteActivationEventConnection = m_StreamingManager->SignalRemoteActivationEvent.connect(std::bind(&EntityManager::OnRemoteActivationEvent, this, _1));
 	}
 
 	EntityManager::~EntityManager()
 	{
+		m_ActivationEventConnection.disconnect();
+		m_RemoteActivationEventConnection.disconnect();
 	}
 
 	void EntityManager::CompressIDs()
@@ -1726,6 +1764,11 @@ namespace FusionEngine
 			auto& refsToContainer = m_StoredReferences.get<2>();
 			refsToContainer.erase(id);
 		}
+	}
+
+	void EntityManager::queueEntityToSynch(ObjectID id, PlayerID viewer, const std::shared_ptr<RakNet::BitStream>& state)
+	{
+		m_EntitySynchroniser->EnqueueInactive(viewer, id, state);
 	}
 
 	void EntityManager::OnComponentAdded(const EntityPtr &entity, const ComponentPtr& component)

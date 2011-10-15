@@ -64,7 +64,12 @@ namespace FusionEngine
 		void WriteComponent(CL_IODevice& out, IComponent* component);
 		void ReadComponent(CL_IODevice& in, IComponent* component);
 
+		//! Merge inactive entity data
+		void MergeEntityData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming);
+
+		//! Save an active entity
 		void SaveEntity(CL_IODevice& out, EntityPtr entity, bool id_included);
+		//! Load an entity
 		EntityPtr LoadEntity(CL_IODevice& in, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
 	}
 

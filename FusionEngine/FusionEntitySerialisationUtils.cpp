@@ -591,37 +591,128 @@ namespace FusionEngine
 		//	sf(out, origin, radius);
 		//}
 
+		static void MergeComponentData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming)
+		{
+			auto existingConDataBytes = in.read_uint16();
+			auto existingOccDataBytes = in.read_uint16();
+
+			RakNet::BitSize_t conDataBits = 0;
+			incomming.Read(conDataBits);
+			RakNet::BitSize_t occDataBits = 0;
+			incomming.Read(occDataBits);
+
+			RakNet::BitStream tempStream;
+			if (conDataBits)
+			{
+				incomming.Read(tempStream, conDataBits);
+
+				out.write_uint16(tempStream.GetNumberOfBytesUsed());
+				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
+				
+				tempStream.Reset();
+			}
+			else
+			{
+				std::vector<unsigned char> tempData(existingConDataBytes);
+				in.read(tempData.data(), existingConDataBytes);
+
+				out.write_uint16(existingConDataBytes);
+				out.write(tempData.data(), existingConDataBytes);
+			}
+
+			if (occDataBits)
+			{
+				incomming.Read(tempStream, occDataBits);
+
+				out.write_uint16(tempStream.GetNumberOfBytesUsed());
+				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
+			}
+			else
+			{
+				std::vector<unsigned char> tempData(existingOccDataBytes);
+				in.read(tempData.data(), existingOccDataBytes);
+
+				out.write_uint16(existingOccDataBytes);
+				out.write(tempData.data(), existingOccDataBytes);
+			}
+		}
+
+		void MergeEntityData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming)
+		{
+			// Copy transform component type name
+			std::string transformType = in.read_string_a();
+			out.write_string_a(transformType);
+
+			// Merge transform component data
+			MergeComponentData(in, out, incomming);
+
+			// Copy the component count
+			size_t numComponents;
+			in.read(&numComponents, sizeof(size_t));
+			out.write(&numComponents, sizeof(size_t));
+
+			// Copy the other component names
+			for (size_t i = 0; i < numComponents; ++i)
+			{
+				std::string transformType = in.read_string_a();
+				out.write_string_a(transformType);
+			}
+
+			// Merge the other component data
+			for (size_t i = 0; i < numComponents; ++i)
+			{
+				MergeComponentData(in, out, incomming);
+			}
+		}
+
 		void WriteComponent(CL_IODevice& out, IComponent* component)
 		{
 			FSN_ASSERT(component);
 
+			bool conData;
+			bool occData;
+
 			RakNet::BitStream stream;
-			const bool conData = component->SerialiseContinuous(stream);
-			const bool occData = component->SerialiseOccasional(stream, IComponent::All);
+			component->SerialiseContinuous(stream);
+			if (stream.GetWriteOffset() > 0)
+			{
+				out.write_uint16(stream.GetNumberOfBytesUsed());
+				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			}
+			else
+				out.write_uint16(0);
+			stream.Reset();
 
-			out.write_uint8(conData ? 0xFF : 0x00); // Flag indicating data presence
-			out.write_uint8(occData ? 0xFF : 0x00);
-
-			out.write_uint32(stream.GetNumberOfBytesUsed());
-			out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			component->SerialiseOccasional(stream, IComponent::All);
+			if (stream.GetWriteOffset() > 0)
+			{
+				out.write_uint16(stream.GetNumberOfBytesUsed());
+				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+			}
+			else
+				out.write_uint16(0);
 		}
 
 		void ReadComponent(CL_IODevice& in, IComponent* component)
 		{
 			FSN_ASSERT(component);
 
-			const bool conData = in.read_uint8() != 0x00;
-			const bool occData = in.read_uint8() != 0x00;
+			const auto conDataLen = in.read_uint16();
+			std::vector<unsigned char> data(conDataLen);
+			in.read(data.data(), conDataLen);
 
-			const auto dataLen = in.read_uint32();
-			std::vector<unsigned char> data(dataLen);
-			in.read(data.data(), data.size());
+			const auto occDataLen = in.read_uint16();
+			data.resize(conDataLen + occDataLen);
+			in.read(data.data() + conDataLen, occDataLen);
 
 			RakNet::BitStream stream(data.data(), data.size(), false);
 
-			if (conData)
+			if (conDataLen)
 				component->DeserialiseContinuous(stream);
-			if (occData)
+
+			stream.AlignReadToByteBoundary();
+
+			if (occDataLen)
 				component->DeserialiseOccasional(stream, IComponent::All);
 
 			//stream.AssertStreamEmpty();
@@ -629,20 +720,20 @@ namespace FusionEngine
 				SendToConsole("Not all serialised data was used when reading a " + component->GetType());
 		}
 
+		//{
+		//	RakNet::BitStream stream;
+		//	entity->SerialiseReferencedEntitiesList(stream);
+
+		//	out.write_uint32(stream.GetNumberOfBytesUsed());
+		//	out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+		//}
+
 		void SaveEntity(CL_IODevice& out, EntityPtr entity, bool id_included)
 		{
 			if (id_included)
 			{
 				ObjectID id = entity->GetID();
 				out.write(&id, sizeof(ObjectID));
-			}
-
-			{
-				RakNet::BitStream stream;
-				entity->SerialiseReferencedEntitiesList(stream);
-
-				out.write_uint32(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 			}
 
 			auto& components = entity->GetComponents();
@@ -666,7 +757,9 @@ namespace FusionEngine
 			{
 				auto& component = *it;
 				if (component.get() != transform)
+				{
 					WriteComponent(out, component.get());
+				}
 			}
 		}
 
@@ -679,9 +772,9 @@ namespace FusionEngine
 				synchroniser->TakeID(id);
 			}
 
-			const auto dataLen = in.read_uint32();
-			std::vector<unsigned char> referencedEntitiesData(dataLen);
-			in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
+			//const auto dataLen = in.read_uint32();
+			//std::vector<unsigned char> referencedEntitiesData(dataLen);
+			//in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
 
 			ComponentPtr transform;
 			{
@@ -696,10 +789,10 @@ namespace FusionEngine
 
 			transform->SynchronisePropertiesNow();
 
-			{
-				RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);
-				entity->DeserialiseReferencedEntitiesList(stream, EntityDeserialiser(manager));
-			}
+			//{
+			//	RakNet::BitStream stream(referencedEntitiesData.data(), referencedEntitiesData.size(), false);
+			//	entity->DeserialiseReferencedEntitiesList(stream, EntityDeserialiser(manager));
+			//}
 
 			size_t numComponents;
 			in.read(&numComponents, sizeof(size_t));

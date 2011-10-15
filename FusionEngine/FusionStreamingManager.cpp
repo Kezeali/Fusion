@@ -1238,8 +1238,13 @@ namespace FusionEngine
 					Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 					if (lock && cell->IsLoaded())
 					{
-						std::list<Vector2> cams; cams.push_back(cam.streamPosition);
-						processCell(*cell, cams);
+						std::list<Vector2> cams;
+						std::list<std::pair<Vector2, PlayerID>> remoteCams;
+						if (localCam)
+							cams.push_back(cam.streamPosition);
+						else
+							remoteCams.push_back(std::make_pair(cam.streamPosition, cam.owner));
+						processCell(*cell, cams, remoteCams);
 						it = m_CellsBeingLoaded.erase(it);
 						end = m_CellsBeingLoaded.end();
 					}

@@ -253,6 +253,8 @@ namespace FusionEngine
 		void dropEntity(const EntityPtr& entity);
 		void removeEntity(const EntityPtr& entity);
 
+		void queueEntityToSynch(ObjectID id, PlayerID viewer, const std::shared_ptr<RakNet::BitStream>& state);
+
 		//! Generates a unique name for the given entity
 		std::string generateName(const EntityPtr &entity);
 
@@ -332,6 +334,9 @@ namespace FusionEngine
 		BlockedTagSet m_DrawBlockedTags;
 
 		boost::signals2::connection m_ModuleConnection;
+
+		boost::signals2::connection m_ActivationEventConnection;
+		boost::signals2::connection m_RemoteActivationEventConnection;
 
 	};
 

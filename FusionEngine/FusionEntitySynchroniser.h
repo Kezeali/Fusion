@@ -103,6 +103,13 @@ namespace FusionEngine
 		//! Removes the given entity from the queue, if it hasn't been cleared yet
 		void OnEntityDeactivated(const EntityPtr &entity);
 
+		//! Enqueues inactive entity data that to be sent to another peer
+		/*
+		* Used when this system beleives that a remote camera is viewing an entity that isn't locally active.
+		* The synchroniser automatically ignores states enqueued for entities that the remote peer has sent
+		* a greater authority update for.
+		*/
+		void EnqueueInactive(PlayerID viewer, ObjectID entity, const std::shared_ptr<RakNet::BitStream>& state);
 		//! Enqueues the given entity to be processed for synch
 		bool Enqueue(EntityPtr &entity);
 		//! Sends enqueued entities
@@ -134,7 +141,9 @@ namespace FusionEngine
 		typedef uint32_t SendTick_t;
 		SendTick_t m_SendTick;
 
-		std::vector<EntityPtr> m_ReceivedEntities;
+		// Data to be sent to peers that don't know about it
+		typedef std::vector<std::pair<ObjectID, std::shared_ptr<RakNet::BitStream>>> ToInformList_t;
+		std::map<RakNet::RakNetGUID, ToInformList_t> m_ToInform;
 
 		std::vector<EntityPtr> m_EntitiesToReceive;
 
@@ -209,6 +218,7 @@ namespace FusionEngine
 		typedef std::map<ObjectID, StateData> ObjectStatesMap;
 		ObjectStatesMap m_ReceivedStates;
 
+		// Checksums of states sent for active entities
 		std::map<ObjectID, std::vector<uint32_t>> m_SentStates;
 
 		struct EntityPacketData
