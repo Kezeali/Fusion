@@ -929,7 +929,7 @@ namespace FusionEngine
 					else
 					{
 						auto camEntry = std::find_if(remote_positions.begin(), remote_positions.end(),
-							[&](const Vector2& cam_position) { return (entityPosition - cam_position).length() <= m_Range; });
+							[&](const std::pair<Vector2, PlayerID>& remote_position) { return (entityPosition - remote_position.first).length() <= m_Range; });
 						if (camEntry != remote_positions.end())
 						{
 							// TODO: add id and state to CellEntry

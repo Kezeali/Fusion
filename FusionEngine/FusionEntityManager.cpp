@@ -180,11 +180,6 @@ namespace FusionEngine
 		Logger::getSingleton().Add(str.str(), "Network");
 	}
 
-	const EntityArray &EntitySynchroniser::GetReceivedEntities() const
-	{
-		return m_ReceivedEntities;
-	}
-
 	void EntitySynchroniser::WriteHeaderAndInput(bool important, RakNet::BitStream& packetData)
 	{
 		//packetData.Write((MessageID)ID_TIMESTAMP);
@@ -249,10 +244,17 @@ namespace FusionEngine
 
 			state->ResetReadPointer();
 
-			packetData.Write(id);
-			packetData.Write(authority);
-			packetData.Write(state->GetNumberOfBitsUsed());
-			packetData.Write(*state, state->GetNumberOfBitsUsed());
+			const auto bitsUsed = state->GetNumberOfBitsUsed();
+			if (bitsUsed < std::numeric_limits<uint16_t>::max())
+			{
+				const uint16_t bitsUsed16 = uint16_t(bitsUsed);
+
+				packetData.Write(id);
+				packetData.Write(authority);
+				packetData.Write(bitsUsed16);
+				packetData.Write(*state, state->GetNumberOfBitsUsed());
+			}
+			FSN_ASSERT_MSG(bitsUsed < std::numeric_limits<uint16_t>::max(), "Entity state is too big");
 		}
 	}
 
@@ -664,7 +666,7 @@ namespace FusionEngine
 		else
 			state = std::make_shared<RakNet::BitStream>();
 
-		BitSize_t dataLength;
+		uint16_t dataLength;
 		sourceStr.Read(dataLength);
 		sourceStr.Read(*state, dataLength);
 #ifdef _DEBUG

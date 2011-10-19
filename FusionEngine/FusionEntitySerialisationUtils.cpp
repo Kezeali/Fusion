@@ -44,6 +44,56 @@
 namespace FusionEngine
 {
 
+	// TODO: put this in a more common header
+	template <int num_bits, typename IntegerT>
+	void WriteIntegerInBits(RakNet::BitStream& out, IntegerT value)
+	{
+		FSN_ASSERT(std::is_integral<IntegerT>());
+		FSN_ASSERT(std::is_unsigned<IntegerT>());
+		// Make sure the given value can fit in the allowed number of bits
+		FSN_ASSERT(num_bits >= BYTES_TO_BITS(sizeof(IntegerT))-NumberOfLeadingZeroes(IntegerT(value)));
+
+		if (value != 0)
+		{
+			out.Write1();
+			if (RakNet::BitStream::IsBigEndian())
+			{
+				unsigned char output[sizeof(IntegerT)];
+				RakNet::BitStream::ReverseBytes(reinterpret_cast<unsigned char*>(&value), output, sizeof(templateType));
+				out.WriteBits(&output, num_bits);
+			}
+			else
+			{
+				out.WriteBits(reinterpret_cast<unsigned char*>(&value), num_bits);
+			}
+		}
+		else
+			out.Write0();
+	}
+
+	template <int num_bits, typename IntegerT>
+	bool ReadIntegerInBits(RakNet::BitStream& in, IntegerT& outValue)
+	{
+		if (out.ReadBit())
+		{
+			unsigned char rawBits[sizeof(IntegerT)];
+			memset(rawBits, 0, sizeof(rawBits));
+			const bool success = in.ReadBits(rawBits, num_bits);
+			if (success)
+			{
+				if (RakNet::BitStream::IsBigEndian())
+					RakNet::BitStream::ReverseBytesInPlace(rawBits, sizeof(rawBits));
+				memcpy(&outValue, rawBits, sizeof(rawBits));
+			}
+			else
+				return false;
+		}
+		else
+			value = 0;
+
+		return true;
+	}
+
 	namespace EntitySerialisationUtils
 	{
 
@@ -261,6 +311,43 @@ namespace FusionEngine
 			return entity;
 		}
 
+		bool WriteComponentState(RakNet::BitStream& out, RakNet::BitStream& state, const IComponent* component)
+		{
+			if (state.GetNumberOfBitsUsed() > 0)
+			{
+				if (state.GetNumberOfBitsUsed() < (1 << 14))
+				{
+					//WriteIntegerInBits<14>(out, state.GetNumberOfBitsUsed());
+					out.Write1();
+					out.WriteBitsFromIntegerRange(state.GetNumberOfBitsUsed(), 0u, (1u << 14));
+					out.Write(state);
+
+					return true;
+				}
+				else
+					FSN_EXCEPT(InvalidArgumentException, "Serialised state for " + component->GetType() + " is too large");
+			}
+			else
+			{
+				out.Write0();
+			}
+
+			return false;
+		}
+
+		RakNet::BitSize_t ReadStateLength(RakNet::BitStream& in)
+		{
+			//ReadIntegerInBits<14>(in, length);
+			if (in.ReadBit())
+			{
+				RakNet::BitSize_t length;
+				in.ReadBitsFromIntegerRange(length, 0u, (1u << 14));
+				return length;
+			}
+			else
+				return RakNet::BitSize_t(0);
+		}
+
 		bool SerialiseContinuous(RakNet::BitStream& out, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
 			bool dataWritten = false;
@@ -286,18 +373,7 @@ namespace FusionEngine
 
 				RakNet::BitStream tempStream;
 				transformComponent->SerialiseContinuous(tempStream);
-
-				if (tempStream.GetNumberOfBitsUsed() > 0)
-				{
-					out.Write1();
-					out.Write(tempStream);
-
-					dataWritten = true;
-				}
-				else
-				{
-					out.Write0();
-				}
+				dataWritten = WriteComponentState(out, tempStream, transformComponent.get());
 			}
 
 			out.Write(numComponents);
@@ -313,15 +389,7 @@ namespace FusionEngine
 					RakNet::BitStream tempStream;
 					component->SerialiseContinuous(tempStream);
 
-					if (tempStream.GetNumberOfBitsUsed() > 0)
-					{
-						out.Write1();
-						out.Write(tempStream);
-
-						dataWritten = true;
-					}
-					else
-						out.Write0();
+					dataWritten |= WriteComponentState(out, tempStream, component.get());
 				}
 			}
 
@@ -344,9 +412,16 @@ namespace FusionEngine
 				if (result.first)
 					tf->SetPosition(result.second);
 
-				bool conData = in.ReadBit();
-				if (conData)
+				const auto stateLength = ReadStateLength(in);
+				if (stateLength > 0)
+				{
+					const auto startPos = in.GetReadOffset();
+
 					transform->DeserialiseContinuous(in);
+
+					if (in.GetReadOffset() - startPos != stateLength)
+						FSN_EXCEPT(Exception, "Component read too much data");
+				}
 			}
 
 			auto& existingComponents = entity->GetComponents();
@@ -364,14 +439,14 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					bool conData = in.ReadBit();
-					if (conData)
+					const auto stateLength = ReadStateLength(in);
+					if (stateLength > 0)
 						component->DeserialiseContinuous(in);
 				}
 			}
 		}
 
-		bool SerialiseComponent(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
+		bool SerialiseComponentOccasional(RakNet::BitStream& out, uint32_t& storedChecksum, IComponent* component, IComponent::SerialiseMode mode)
 		{
 			RakNet::BitStream tempStream;
 			component->SerialiseOccasional(tempStream, IComponent::All);
@@ -391,17 +466,7 @@ namespace FusionEngine
 				storedChecksum = checksum;
 			}
 
-			if (conData)
-			{
-				out.Write1();
-//#ifdef _DEBUG
-//				out.Write(RakNet::RakString(component->GetType().c_str()));
-//				out.Write(tempStream.GetNumberOfBitsUsed());
-//#endif
-				out.Write(tempStream);
-			}
-			else
-				out.Write0();
+			WriteComponentState(out, tempStream, component);
 
 			return conData;
 		}
@@ -442,7 +507,7 @@ namespace FusionEngine
 				else
 					out.Write0();
 
-				dataWritten |= SerialiseComponent(out, checksums[0], transformComponent.get(), mode);
+				dataWritten |= SerialiseComponentOccasional(out, checksums[0], transformComponent.get(), mode);
 			}
 
 			out.Write(numComponents);
@@ -457,8 +522,7 @@ namespace FusionEngine
 					FSN_ASSERT(component != transformComponent);
 					FSN_ASSERT(checksumEntry != checksums.end());
 
-
-					dataWritten |= SerialiseComponent(out, *checksumEntry, component.get(), mode);
+					dataWritten |= SerialiseComponentOccasional(out, *checksumEntry, component.get(), mode);
 					++checksumEntry;
 				}
 			}
@@ -466,18 +530,11 @@ namespace FusionEngine
 			return dataWritten;
 		}
 
-		void DeserialiseComponent(RakNet::BitStream& in, uint32_t& checksum, IComponent* component)
+		void DeserialiseComponentOccasional(RakNet::BitStream& in, uint32_t& checksum, IComponent* component)
 		{
-			//bool conData = in.ReadBit();
-			//if (conData)
+			//const auto stateLength = ReadStateLength(in);
+			//if (stateLength)
 			{
-//#ifdef _DEBUG
-//				RakNet::RakString expectedType;
-//				in.Read(expectedType);
-//				FSN_ASSERT(component->GetType() == expectedType.C_String());
-//				RakNet::BitSize_t expectedNumBits;
-//				in.Read(expectedNumBits);
-//#endif
 				auto start = in.GetReadOffset();
 				component->DeserialiseOccasional(in, IComponent::All);
 
@@ -495,7 +552,7 @@ namespace FusionEngine
 
 				in.SetReadOffset(dataEnd);
 
-				//FSN_ASSERT(dataBits == expectedNumBits);
+				//FSN_ASSERT(dataBits == stateLength);
 			}
 		}
 
@@ -524,8 +581,6 @@ namespace FusionEngine
 			// Make sure checksums for every component can be stored
 			checksums.resize(existingComponents.size());
 
-			std::vector<bool> comsRead;
-
 			ComponentPtr transform;
 			{
 				transform = entity->GetTransform();
@@ -536,12 +591,11 @@ namespace FusionEngine
 				if (result.first)
 					tf->SetPosition(result.second);
 
-				bool conData = in.ReadBit();
-				if (conData)
+				const auto stateLength = ReadStateLength(in);
+				if (stateLength > 0)
 				{
-					DeserialiseComponent(in, checksums[0], transform.get());
+					DeserialiseComponentOccasional(in, checksums[0], transform.get());
 				}
-				comsRead.push_back(conData);
 			}
 
 			size_t numComponents;
@@ -559,11 +613,10 @@ namespace FusionEngine
 					FSN_ASSERT(component != transform);
 					FSN_ASSERT(checksumEntry != checksums.end());
 
-					bool conData = in.ReadBit();
-					if (conData)
-						DeserialiseComponent(in, *checksumEntry, component.get());
+					const auto stateLength = ReadStateLength(in);
+					if (stateLength > 0)
+						DeserialiseComponentOccasional(in, *checksumEntry, component.get());
 					++checksumEntry;
-					comsRead.push_back(conData);
 				}
 			}
 		}
@@ -591,20 +644,16 @@ namespace FusionEngine
 		//	sf(out, origin, radius);
 		//}
 
-		static void MergeComponentData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming)
+		static void MergeComponentData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
 		{
 			auto existingConDataBytes = in.read_uint16();
 			auto existingOccDataBytes = in.read_uint16();
 
-			RakNet::BitSize_t conDataBits = 0;
-			incomming.Read(conDataBits);
-			RakNet::BitSize_t occDataBits = 0;
-			incomming.Read(occDataBits);
-
+			auto conDataBits = ReadStateLength(continuous);
 			RakNet::BitStream tempStream;
-			if (conDataBits)
+			if (conDataBits > 0)
 			{
-				incomming.Read(tempStream, conDataBits);
+				continuous.Read(tempStream, conDataBits);
 
 				out.write_uint16(tempStream.GetNumberOfBytesUsed());
 				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
@@ -620,9 +669,10 @@ namespace FusionEngine
 				out.write(tempData.data(), existingConDataBytes);
 			}
 
-			if (occDataBits)
+			auto occDataBits = ReadStateLength(occasional);
+			if (occDataBits > 0)
 			{
-				incomming.Read(tempStream, occDataBits);
+				occasional.Read(tempStream, occDataBits);
 
 				out.write_uint16(tempStream.GetNumberOfBytesUsed());
 				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
@@ -637,14 +687,14 @@ namespace FusionEngine
 			}
 		}
 
-		void MergeEntityData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming)
+		void MergeEntityData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
 		{
 			// Copy transform component type name
 			std::string transformType = in.read_string_a();
 			out.write_string_a(transformType);
 
 			// Merge transform component data
-			MergeComponentData(in, out, incomming);
+			MergeComponentData(in, out, incomming_c, incomming_o);
 
 			// Copy the component count
 			size_t numComponents;
@@ -661,7 +711,7 @@ namespace FusionEngine
 			// Merge the other component data
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				MergeComponentData(in, out, incomming);
+				MergeComponentData(in, out, incomming_c, incomming_o);
 			}
 		}
 
