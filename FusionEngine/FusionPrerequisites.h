@@ -62,6 +62,7 @@ namespace FusionEngine
 	class Exception;
 	class FileSystemException;
 	class Fixture;
+	class GameMap;
 	class GameMapLoader;
 	class InputDefinitionLoader;
 	class InputManager;

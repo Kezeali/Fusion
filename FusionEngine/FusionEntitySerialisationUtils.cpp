@@ -36,6 +36,8 @@
 #include "FusionEntityManager.h"
 #include "FusionInstanceSynchroniser.h"
 
+#include "FusionBinaryStream.h"
+
 #include <BitStream.h>
 #include <StringCompressor.h>
 
@@ -644,8 +646,16 @@ namespace FusionEngine
 		//	sf(out, origin, radius);
 		//}
 
-		static void MergeComponentData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
+		static void MergeComponentData(std::istream& ins, std::ostream& outs, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
 		{
+			using namespace IO::Streams;
+
+			BinaryStreamReader inr(&ins);
+			int testa = inr.ReadValue<int>();
+			if (testa)
+				std::cout << "blah";
+
+			CL_IODevice in, out;
 			auto existingConDataBytes = in.read_uint16();
 			auto existingOccDataBytes = in.read_uint16();
 
@@ -687,14 +697,15 @@ namespace FusionEngine
 			}
 		}
 
-		void MergeEntityData(CL_IODevice& in, CL_IODevice& out, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
+		void MergeEntityData(std::istream& ins, std::ostream& outs, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
 		{
+			CL_IODevice in, out;
 			// Copy transform component type name
 			std::string transformType = in.read_string_a();
 			out.write_string_a(transformType);
 
 			// Merge transform component data
-			MergeComponentData(in, out, incomming_c, incomming_o);
+			MergeComponentData(ins, outs, incomming_c, incomming_o);
 
 			// Copy the component count
 			size_t numComponents;
@@ -711,16 +722,13 @@ namespace FusionEngine
 			// Merge the other component data
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				MergeComponentData(in, out, incomming_c, incomming_o);
+				MergeComponentData(ins, outs, incomming_c, incomming_o);
 			}
 		}
 
 		void WriteComponent(CL_IODevice& out, IComponent* component)
 		{
 			FSN_ASSERT(component);
-
-			bool conData;
-			bool occData;
 
 			RakNet::BitStream stream;
 			component->SerialiseContinuous(stream);

@@ -34,6 +34,7 @@
 #include <BitStream.h>
 #include <RakNetStatistics.h>
 
+#include "FusionCellArchivist.h"
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
 #include "FusionDeltaTime.h"
@@ -609,8 +610,12 @@ namespace FusionEngine
 
 			const ObjectID id = it->first;
 			const auto& state = it->second;
+			size_t cellIndex;
 
-			//m_Archivist->Store(id, state.continuous, state.occasional);
+			//boost::iostreams::stream_buffer<boost::iostreams::array_source> conStream(state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed());
+			//boost::iostreams::stream_buffer<boost::iostreams::array_source> occStream(state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
+			//m_Archivist->Update(id, std::istream(&conStream), std::istream(&occStream));
+			m_Archivist->Update(id, state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed(), state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
 
 			if (state.continuous)
 			{

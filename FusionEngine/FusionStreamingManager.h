@@ -202,6 +202,9 @@ namespace FusionEngine
 
 		virtual void Store(Cell* cell, size_t i) = 0;
 		virtual bool Retrieve(Cell* cell, size_t i) = 0;
+
+		virtual void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
+
 		virtual CL_IODevice GetCellData(size_t i) const = 0;
 		virtual size_t GetDataBegin() const = 0;
 		virtual size_t GetDataEnd() const = 0;

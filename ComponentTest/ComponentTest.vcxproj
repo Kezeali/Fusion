@@ -145,6 +145,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -183,10 +184,12 @@
     <ClCompile Include="..\FusionEngine\FusionAngelScriptSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp" />
     <ClCompile Include="..\FusionEngine\FusionAudioLoader.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionBinaryStream.cpp" />
     <ClCompile Include="..\FusionEngine\FusionBox2DComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCamera.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCameraSynchroniser.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionCellArchivist.cpp" />
     <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp" />
@@ -305,11 +308,13 @@
     <ClInclude Include="..\FusionEngine\FusionAngelScriptSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionAssert.h" />
     <ClInclude Include="..\FusionEngine\FusionAudioLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionBinaryStream.h" />
     <ClInclude Include="..\FusionEngine\FusionBoostSignals2.h" />
     <ClInclude Include="..\FusionEngine\FusionBox2DComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionCamera.h" />
     <ClInclude Include="..\FusionEngine\FusionCameraSynchroniser.h" />
+    <ClInclude Include="..\FusionEngine\FusionCellArchivist.h" />
     <ClInclude Include="..\FusionEngine\FusionClientOptions.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h" />

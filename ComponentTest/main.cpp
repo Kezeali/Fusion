@@ -780,14 +780,16 @@ public:
 				std::unique_ptr<NetworkManager> networkManager(new NetworkManager(network.get(), packetDispatcher.get()));
 
 				std::unique_ptr<PlayerManager> playerManager(new PlayerManager());
-				std::unique_ptr<CameraSynchroniser> cameraSynchroniser(new CameraSynchroniser());
+
+				std::unique_ptr<SimpleCellArchiver> cellArchivist/*(new SimpleCellArchiver(editMode))*/;
+				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
+
+				std::unique_ptr<CameraSynchroniser> cameraSynchroniser(new CameraSynchroniser(streamingMgr.get()));
 
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
-				std::unique_ptr<SimpleCellArchiver> cellArchivist(new SimpleCellArchiver(editMode));
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get()));
 				
-				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
@@ -824,7 +826,7 @@ public:
 
 				std::vector<std::shared_ptr<ISystemWorld>> ontology;
 
-				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc, streamingMgr.get(), cameraSynchroniser.get()));
+				const std::unique_ptr<CLRenderSystem> clRenderSystem(new CLRenderSystem(gc, cameraSynchroniser.get()));
 				auto renderWorld = clRenderSystem->CreateWorld();
 				ontology.push_back(renderWorld);
 

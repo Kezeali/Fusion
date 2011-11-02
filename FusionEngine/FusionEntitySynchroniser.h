@@ -130,6 +130,8 @@ namespace FusionEngine
 
 		CameraSynchroniser* m_CameraSynchroniser;
 
+		CellArchiver* m_Archivist;
+
 		RakNetwork *m_Network;
 
 		//typedef std::tr1::unordered_map<ObjectID, EntityArray> EntityPreparedInstancesMap;
