@@ -50,15 +50,25 @@ namespace FusionEngine
 	class Cell;
 	class CellArchiver;
 
+	namespace IO
+	{
+		class PhysFSDevice;
+	}
+
 	class GameMap
 	{
 	public:
 		GameMap(CL_IODevice& file);
 
+		// TODO: remove this
 		void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
-		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
 
-		static void CompileMap(CL_IODevice& device, unsigned int baseWidth, float map_size, float cell_size, CellArchiver* cell_archiver, const std::vector<EntityPtr>& nonStreamingEntities);
+		//! Loads entities that aren't managed by the cell archiver
+		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
+		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
+		std::vector<char> GetRegionData(size_t index, bool include_synched);
+
+		static void CompileMap(IO::PhysFSDevice& device, unsigned int baseWidth, float map_size, float cell_size, CellArchiver* cell_archiver, const std::vector<EntityPtr>& nonStreamingEntities);
 
 		float GetMapWidth() const;
 		unsigned int GetNumCellsAcross() const;
@@ -70,6 +80,7 @@ namespace FusionEngine
 		CL_IODevice m_File;
 		std::vector<std::pair<uint32_t, uint32_t>> m_CellLocations; // Locations within the file for each cell
 		uint32_t m_NonStreamingEntitiesLocation;
+		uint32_t m_NonStreamingEntitiesDataLength;
 		unsigned int m_XCells;
 		float m_CellSize;
 		float m_MapWidth;

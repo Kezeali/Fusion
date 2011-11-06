@@ -45,7 +45,7 @@ namespace FusionEngine
 			parent->write(*data, cellIndex);
 	}
 
-	std::unique_ptr<IStreamDevice> RegionFile::getInputCellData(size_t i)
+	std::unique_ptr<ArchiveIStream> RegionFile::getInputCellData(size_t i)
 	{
 		namespace io = boost::iostreams;
 
@@ -61,13 +61,13 @@ namespace FusionEngine
 		device.data->resize(cellLength);
 		file.get(device.data->data(), cellLength);
 
-		auto stream = std::unique_ptr<IStreamDevice>(new io::filtering_istream());
+		auto stream = std::unique_ptr<ArchiveIStream>(new io::filtering_istream());
 		stream->push(io::zlib_decompressor());
 		stream->push(boost::ref(device));
 		return stream;
 	}
 
-	std::unique_ptr<OStreamDevice> RegionFile::getOutputCellData(size_t i)
+	std::unique_ptr<ArchiveOStream> RegionFile::getOutputCellData(size_t i)
 	{
 		namespace io = boost::iostreams;
 
@@ -83,7 +83,7 @@ namespace FusionEngine
 		device.cellIndex = i;
 		device.data->reserve(cellLength);
 
-		auto stream = std::unique_ptr<OStreamDevice>(new io::filtering_ostream());
+		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
 		stream->push(io::zlib_compressor());
 		stream->push(boost::ref(device));
 		return stream;
@@ -192,6 +192,50 @@ namespace FusionEngine
 		}
 	}
 
+	std::unique_ptr<ArchiveIStream> CachingCellArchiver::GetCellStreamForReading(size_t cell_index) const
+	{
+		try
+		{
+			std::stringstream str; str << cell_index;
+			std::string filename = "cache/" + str.str();
+			if (PHYSFS_exists(filename.c_str()))
+			{
+				//CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+				//auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
+				std::unique_ptr<ArchiveIStream> stream(new ArchiveIStream());
+				stream->push(boost::iostreams::zlib_decompressor());
+				stream->push(IO::PhysFSDevice(filename, IO::Read));
+				return std::move(stream);
+			}
+			else return std::unique_ptr<ArchiveIStream>();
+		}
+		catch (CL_Exception& ex)
+		{
+			SendToConsole(ex.what());
+			return std::unique_ptr<ArchiveIStream>();
+		}
+	}
+
+	std::unique_ptr<ArchiveOStream> CachingCellArchiver::GetCellStreamForWriting(size_t cell_index) const
+	{
+		try
+		{
+			std::stringstream str; str << cell_index;
+			std::string filename = "cache/" + str.str();
+			//CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+			//auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
+			std::unique_ptr<ArchiveOStream> stream(new ArchiveOStream());
+			stream->push(boost::iostreams::zlib_compressor());
+			stream->push(IO::PhysFSDevice(filename, IO::Read));
+			return std::move(stream);
+		}
+		catch (CL_Exception& ex)
+		{
+			SendToConsole(ex.what());
+			return std::unique_ptr<ArchiveOStream>();
+		}
+	}
+
 	CL_IODevice CachingCellArchiver::GetCellData(size_t index) const
 	{
 		if (m_EditMode && !m_Running)
@@ -216,9 +260,30 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
 	}
 
-	EntityPtr CachingCellArchiver::Load(CL_IODevice& file, bool includes_id)
+	EntityPtr CachingCellArchiver::Load(ICellStream& file, bool includes_id)
 	{
 		return EntitySerialisationUtils::LoadEntity(file, includes_id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+	}
+
+	size_t CachingCellArchiver::LoadEntitiesFromCellData(size_t index, Cell* cell, ICellStream& file, bool data_includes_ids)
+	{
+		size_t numEntries;
+		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
+		for (size_t n = 0; n < numEntries; ++n)
+		{
+			//auto& archivedEntity = *it;
+			auto archivedEntity = Load(file, data_includes_ids);
+
+			Vector2 pos = archivedEntity->GetPosition();
+			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
+			CellEntry entry;
+			entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
+
+			archivedEntity->SetStreamingCellIndex(index);
+
+			cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
+		}
+		return numEntries;
 	}
 
 	void CachingCellArchiver::Run()
@@ -259,10 +324,10 @@ namespace FusionEngine
 										++numSynched;
 								});
 
-								auto write = [](CL_IODevice& file, const Cell* cell, size_t numEntries, const bool synched)
+								auto write = [](ArchiveOStream& file, const Cell* cell, size_t numEntries, const bool synched)
 								{
 									using namespace EntitySerialisationUtils;
-									file.write(&numEntries, sizeof(size_t));
+									file.write(reinterpret_cast<const char*>(&numEntries), sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
 										if (it->first->IsSyncedEntity() == synched)
@@ -277,8 +342,9 @@ namespace FusionEngine
 								{
 									if (numSynched > 0 || numPseudo > 0)
 									{
-										auto file = GetFile(i, true);
-										if (!file.is_null())
+										auto filePtr = GetCellStreamForWriting(i);
+										auto& file = *filePtr;
+										if (file)
 										{
 											m_BeginIndex = std::min(i, m_BeginIndex);
 											m_EndIndex = std::max(i, m_EndIndex);
@@ -291,13 +357,13 @@ namespace FusionEngine
 								}
 								else if (numSynched > 0)
 								{
-									auto file = GetFile(i, true);
-									file.write(&numSynched, sizeof(size_t));
+									auto filePtr = GetCellStreamForWriting(i);
+									filePtr->write(reinterpret_cast<const char*>(&numSynched), sizeof(size_t));
 									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 									{
 										if (it->first->IsSyncedEntity())
 										{
-											SaveEntity(file, it->first, true);
+											SaveEntity(*filePtr, it->first, true);
 											FSN_ASSERT(numSynched-- > 0);
 										}
 									}
@@ -353,40 +419,31 @@ namespace FusionEngine
 						{
 							try
 							{
-								auto file = GetFile(i, false);
-
 								// Last param makes the method load synched entities from the map if the cache file isn't available:
 								if (m_Map)
 								{
+									// Load synched entities if this cell is uncached (hasn't been loaded before)
 									bool uncached = m_SynchLoaded.insert(i).second;
-									m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+
+									//m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+									auto data = m_Map->GetRegionData(i, uncached);
+									namespace io = boost::iostreams;
+									io::filtering_istream inflateStream;
+									inflateStream.push(io::zlib_decompressor());
+									inflateStream.push(io::array_source(data.data(), data.size()));
+
+									LoadEntitiesFromCellData(i, cell, inflateStream, false);
+									if (uncached)
+										LoadEntitiesFromCellData(i, cell, inflateStream, true);
 								}
 
-								if (!file.is_null() && file.get_size() > 0)
+								auto filePtr = GetCellStreamForReading(i);
+								auto& file = *filePtr;
+								if (file && !file.eof())
 								{
-									auto load = [&](const bool synched)->size_t
-									{
-										size_t numEntries;
-										file.read(&numEntries, sizeof(size_t));
-										for (size_t n = 0; n < numEntries; ++n)
-										{
-											//auto& archivedEntity = *it;
-											auto archivedEntity = Load(file, synched);
-
-											Vector2 pos = archivedEntity->GetPosition();
-											// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
-											CellEntry entry;
-											entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
-
-											archivedEntity->SetStreamingCellIndex(i);
-
-											cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
-										}
-										return numEntries;
-									};
 									if (m_EditMode)
-										load(false);
-									size_t num = load(true);
+										LoadEntitiesFromCellData(i, cell, file, false); // In edit-mode unsynched entities are also written to the cache
+									size_t num = LoadEntitiesFromCellData(i, cell, file, true);
 
 									//std::stringstream str; str << i;
 									//SendToConsole("Cell " + str.str() + " streamed in");

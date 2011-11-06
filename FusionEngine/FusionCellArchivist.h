@@ -45,6 +45,7 @@
 
 #include "FusionGameMapLoader.h"
 #include "FusionPhysFSIOStream.h"
+#include "FusionEntitySerialisationUtils.h"
 
 #include <boost/integer_traits.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
@@ -162,16 +163,16 @@ namespace FusionEngine
 		RegionFile* parent;
 	};
 
-	typedef boost::iostreams::filtering_istream IStreamDevice;
-	typedef boost::iostreams::filtering_ostream OStreamDevice;
+	typedef boost::iostreams::filtering_istream ArchiveIStream;
+	typedef boost::iostreams::filtering_ostream ArchiveOStream;
 
 	struct RegionFile
 	{
 		std::string filename;
 		std::iostream file;
 		std::map<size_t, std::pair<size_t, size_t>> cellOffsets;
-		std::unique_ptr<IStreamDevice> getInputCellData(size_t i);
-		std::unique_ptr<OStreamDevice> getOutputCellData(size_t i);
+		std::unique_ptr<ArchiveIStream> getInputCellData(size_t i);
+		std::unique_ptr<ArchiveOStream> getOutputCellData(size_t i);
 
 		void write(std::vector<char>& data, size_t i);
 	};
@@ -208,12 +209,17 @@ namespace FusionEngine
 
 		CL_IODevice GetFile(size_t cell_index, bool write) const;
 
+		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(size_t cell_index) const;
+		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(size_t cell_index) const;
+
 		CL_IODevice GetCellData(size_t index) const;
 
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
-		EntityPtr Load(CL_IODevice& file, bool includes_id);
+		EntityPtr Load(ICellStream& file, bool includes_id);
+
+		size_t LoadEntitiesFromCellData(size_t index, Cell* cell, ICellStream& file, bool data_includes_ids);
 
 		void Run();
 

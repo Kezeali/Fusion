@@ -46,6 +46,10 @@
 
 #include "FusionPhysFSIOStream.h"
 
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include "FusionBinaryStream.h"
+
 // TODO: remove
 #include "FusionVirtualFileSource_PhysFS.h"
 
@@ -111,7 +115,7 @@ namespace FusionEngine
 			m_File.read(&numPseudoEnts, sizeof(size_t));
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(m_File, false, factory, entityManager, instantiator);
+				auto entity = EntityPtr();//LoadEntity(m_File, false, factory, entityManager, instantiator);
 				entity->SetStreamingCellIndex(index);
 				auto entityPosition = entity->GetPosition();
 				CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
@@ -123,7 +127,7 @@ namespace FusionEngine
 				m_File.read(&numSynchedEnts, sizeof(size_t));
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntity(m_File, true, factory, entityManager, instantiator);
+					auto entity = EntityPtr();//LoadEntity(m_File, true, factory, entityManager, instantiator);
 					entity->SetStreamingCellIndex(index);
 					auto entityPosition = entity->GetPosition();
 					CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
@@ -135,29 +139,63 @@ namespace FusionEngine
 			return;
 	}
 
+	std::vector<char> GameMap::GetRegionData(size_t index, bool include_synched)
+	{
+		if (index < m_CellLocations.size())
+		{
+			auto pos = m_CellLocations[index];
+
+			if (pos.second == 0) // No data for this cell
+				return std::vector<char>();
+
+			FSN_ASSERT(pos.first < (unsigned int)std::numeric_limits<int>::max());
+			m_File.seek((int)pos.first);
+
+			std::vector<char> buf(pos.second);
+
+			if (m_File.read(buf.data(), pos.second))
+				return std::move(buf);
+			else
+			{
+				FSN_EXCEPT(FileSystemException, "Failed to load static region data from the map file");
+			}
+		}
+		else
+			return std::vector<char>();
+	}
+
 	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator)
 	{
 		using namespace EntitySerialisationUtils;
+		namespace io = boost::iostreams;
 
 		m_File.seek(m_NonStreamingEntitiesLocation);
 
-		size_t numPseudoEnts;
-		m_File.read(&numPseudoEnts, sizeof(size_t));
-		for (size_t i = 0; i < numPseudoEnts; ++i)
+		std::vector<char> buf(m_NonStreamingEntitiesDataLength);
+		if (m_File.read(buf.data(), m_NonStreamingEntitiesDataLength) == m_NonStreamingEntitiesDataLength)
 		{
-			auto entity = LoadEntity(m_File, false, factory, entityManager, instantiator);
-			entity->SetDomain(SYSTEM_DOMAIN);
-			entityManager->AddEntity(entity);
-		}
-		if (include_synched)
-		{
-			size_t numSynchedEnts;
-			m_File.read(&numSynchedEnts, sizeof(size_t));
-			for (size_t i = 0; i < numSynchedEnts; ++i)
+			io::filtering_istream inflateStream;
+			inflateStream.push(io::zlib_decompressor());
+			inflateStream.push(io::array_source(buf.data(), buf.size()));
+
+			size_t numPseudoEnts;
+			m_File.read(&numPseudoEnts, sizeof(size_t));
+			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(m_File, true, factory, entityManager, instantiator);
+				auto entity = LoadEntity(inflateStream, false, factory, entityManager, instantiator);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
+			}
+			if (include_synched)
+			{
+				size_t numSynchedEnts;
+				m_File.read(&numSynchedEnts, sizeof(size_t));
+				for (size_t i = 0; i < numSynchedEnts; ++i)
+				{
+					auto entity = LoadEntity(inflateStream, true, factory, entityManager, instantiator);
+					entity->SetDomain(SYSTEM_DOMAIN);
+					entityManager->AddEntity(entity);
+				}
 			}
 		}
 	}
@@ -172,9 +210,19 @@ namespace FusionEngine
 	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
 	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
 	//  cells
-	void GameMap::CompileMap(CL_IODevice &device, unsigned int baseWidth, float map_width, float cell_size, CellArchiver* cell_data_source, const std::vector<EntityPtr>& nsentities)
+	void GameMap::CompileMap(IO::PhysFSDevice &device, unsigned int baseWidth, float map_width, float cell_size, CellArchiver* cell_data_source, const std::vector<EntityPtr>& nsentities)
 	{
 		using namespace EntitySerialisationUtils;
+		using namespace IO::Streams;
+
+		namespace io = boost::iostreams;
+
+		io::filtering_ostream deflateStream;
+		deflateStream.push(io::zlib_compressor());
+		deflateStream.push(device);
+
+		CellStreamWriter writer(&deflateStream);
+
 
 		//std::vector<std::pair<std::vector<EntityPtr>, std::vector<EntityPtr>>> cells(num_cells_across * num_cells_across);
 		std::vector<EntityPtr> nonStreamingEntities = nsentities;
@@ -233,32 +281,32 @@ namespace FusionEngine
 		const float outputMapWidth = map_width;
 
 		const size_t numCells = outputCellsAcross * outputCellsAcross;
-		
-		device.write(&outputCellsAcross, sizeof(unsigned int));
-		device.write_float(cell_size);
-		device.write_float(outputMapWidth);
+
+		writer.Write(outputCellsAcross);
+		writer.Write(cell_size);
+		writer.Write(outputMapWidth);
 
 		//std::vector<CL_IODevice> tempFiles;
 		//unsigned int cellIndex = 0;
 
-		auto locationsOffset = device.get_position();
+		size_t locationsOffset = deflateStream.tellp();
 		{
 			uint32_t locationsSpaceSize = numCells * sizeof(uint32_t) * 2;
-			std::vector<unsigned char> space(locationsSpaceSize);
-			device.write(space.data(), space.size()); // leave some space for the cell-data offsets
+			std::vector<char> space(locationsSpaceSize);
+			deflateStream.write(space.data(), space.size()); // leave some space for the cell-data offsets
 		}
-		device.write_uint32(0); // Non-streaming entities location
+		writer.WriteAs<uint32_t>(0); // Non-streaming entities location
 
-		int locationsEndOffset;
+		size_t locationsEndOffset;
 #ifdef _DEBUG
-		locationsEndOffset = device.get_position();
+		locationsEndOffset = deflateStream.tellp();
 #endif
 
 		std::vector<std::pair<uint32_t, uint32_t>> cellDataLocations(numCells);
 
 		{
 			// Buffer for copying data out of the cache files
-			std::vector<unsigned char> buffer(1048576);
+			std::vector<char> buffer(1048576);
 
 			//for (size_t y = topMargin; y < bottomMargin; ++y)
 			//{
@@ -278,19 +326,19 @@ namespace FusionEngine
 					if (!cellData.is_null())
 					{
 						auto& cellDataLocation = cellDataLocations[i];
-						cellDataLocation.first = uint32_t(device.get_position());
+						cellDataLocation.first = uint32_t(deflateStream.tellp());
 
 						int bytesRead = 0;
 						do
 						{
 							bytesRead = cellData.read(buffer.data(), buffer.size(), false);
 							if (bytesRead > 0)
-								device.write(buffer.data(), bytesRead);
+								deflateStream.write(buffer.data(), bytesRead);
 						} while (bytesRead == buffer.size());
 
 						FSN_ASSERT(cellData.get_position() == cellData.get_size());
 
-						cellDataLocation.second = uint32_t(device.get_position() - cellDataLocation.first);
+						cellDataLocation.second = uint32_t(deflateStream.tellp()) - cellDataLocation.first;
 					}
 			}
 			//	}
@@ -298,38 +346,38 @@ namespace FusionEngine
 		}
 
 		// Store the position of this section to write later
-		uint32_t nonStreamingEntitiesLocation = device.get_position();
+		uint32_t nonStreamingEntitiesLocation = deflateStream.tellp();
 		// The non-streaming entities section
 		{
 		size_t numEnts = nonStreamingEntities.size();
-		device.write(&numEnts, sizeof(size_t));
+		writer.Write(numEnts);
 		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
 		{
 			auto& entity = *it;
 
-			SaveEntity(device, entity, false);
+			SaveEntity(deflateStream, entity, false);
 		}
 		numEnts = nonStreamingEntitiesSynched.size();
-		device.write(&numEnts, sizeof(size_t));
+		writer.Write(numEnts);
 		for (auto it = nonStreamingEntitiesSynched.begin(), end = nonStreamingEntitiesSynched.end(); it != end; ++it)
 		{
 			auto& entity = *it;
 
-			SaveEntity(device, entity, true);
+			SaveEntity(deflateStream, entity, true);
 		}
 		}
 
-		device.seek(locationsOffset);
+		deflateStream.seekp(locationsOffset);
 		for (auto it = cellDataLocations.begin(), end = cellDataLocations.end(); it != end; ++it)
 		{
-			device.write_uint32(it->first);
-			device.write_uint32(it->second);
-			FSN_ASSERT(device.get_position() <= locationsEndOffset);
+			writer.Write(it->first);
+			writer.Write(it->second);
+			FSN_ASSERT(deflateStream.tellp() <= locationsEndOffset);
 		}
 
-		device.write_uint32(nonStreamingEntitiesLocation);
+		writer.Write(nonStreamingEntitiesLocation);
 
-		FSN_ASSERT(device.get_position() == locationsEndOffset);
+		FSN_ASSERT(uint32_t(deflateStream.tellp()) == locationsEndOffset);
 	}
 
 	GameMapLoader::GameMapLoader(ClientOptions *options)

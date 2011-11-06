@@ -46,6 +46,9 @@ namespace RakNet
 
 namespace FusionEngine
 {
+
+	typedef std::basic_istream<char> ICellStream;
+	typedef std::basic_ostream<char> OCellStream;
 	
 	namespace EntitySerialisationUtils
 	{
@@ -61,16 +64,16 @@ namespace FusionEngine
 		//! Deserialises and returns the position data from the given state, if it contains such data
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);
 
-		void WriteComponent(CL_IODevice& out, IComponent* component);
-		void ReadComponent(CL_IODevice& in, IComponent* component);
+		void WriteComponent(OCellStream& out, IComponent* component);
+		void ReadComponent(ICellStream& in, IComponent* component);
 
 		//! Merge inactive entity data
-		void MergeEntityData(std::istream& in, std::ostream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
+		void MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
 
 		//! Save an active entity
-		void SaveEntity(CL_IODevice& out, EntityPtr entity, bool id_included);
+		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included);
 		//! Load an entity
-		EntityPtr LoadEntity(CL_IODevice& in, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
+		EntityPtr LoadEntity(ICellStream& in, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
 	}
 
 }

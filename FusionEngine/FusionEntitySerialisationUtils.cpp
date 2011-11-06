@@ -43,6 +43,8 @@
 
 #include <boost/crc.hpp>
 
+using namespace FusionEngine::IO::Streams;
+
 namespace FusionEngine
 {
 
@@ -646,18 +648,13 @@ namespace FusionEngine
 		//	sf(out, origin, radius);
 		//}
 
-		static void MergeComponentData(std::istream& ins, std::ostream& outs, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
+		static void MergeComponentData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& continuous, RakNet::BitStream& occasional)
 		{
-			using namespace IO::Streams;
+			CellStreamReader in(&instr);
+			CellStreamWriter out(&outstr);
 
-			BinaryStreamReader inr(&ins);
-			int testa = inr.ReadValue<int>();
-			if (testa)
-				std::cout << "blah";
-
-			CL_IODevice in, out;
-			auto existingConDataBytes = in.read_uint16();
-			auto existingOccDataBytes = in.read_uint16();
+			auto existingConDataBytes = in.ReadValue<uint16_t>();
+			auto existingOccDataBytes = in.ReadValue<uint16_t>();
 
 			auto conDataBits = ReadStateLength(continuous);
 			RakNet::BitStream tempStream;
@@ -665,18 +662,18 @@ namespace FusionEngine
 			{
 				continuous.Read(tempStream, conDataBits);
 
-				out.write_uint16(tempStream.GetNumberOfBytesUsed());
-				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
+				out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 				
 				tempStream.Reset();
 			}
 			else
 			{
-				std::vector<unsigned char> tempData(existingConDataBytes);
-				in.read(tempData.data(), existingConDataBytes);
+				std::vector<char> tempData(existingConDataBytes);
+				instr.read(tempData.data(), existingConDataBytes);
 
-				out.write_uint16(existingConDataBytes);
-				out.write(tempData.data(), existingConDataBytes);
+				out.WriteAs<uint16_t>(existingConDataBytes);
+				outstr.write(tempData.data(), existingConDataBytes);
 			}
 
 			auto occDataBits = ReadStateLength(occasional);
@@ -684,91 +681,102 @@ namespace FusionEngine
 			{
 				occasional.Read(tempStream, occDataBits);
 
-				out.write_uint16(tempStream.GetNumberOfBytesUsed());
-				out.write(tempStream.GetData(), tempStream.GetNumberOfBytesUsed());
+				out.WriteAs<uint16_t>(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
 			}
 			else
 			{
-				std::vector<unsigned char> tempData(existingOccDataBytes);
-				in.read(tempData.data(), existingOccDataBytes);
+				std::vector<char> tempData(existingOccDataBytes);
+				instr.read(tempData.data(), existingOccDataBytes);
 
-				out.write_uint16(existingOccDataBytes);
-				out.write(tempData.data(), existingOccDataBytes);
+				out.WriteAs<uint16_t>(existingOccDataBytes);
+				outstr.write(reinterpret_cast<char*>(tempData.data()), existingOccDataBytes);
 			}
 		}
 
-		void MergeEntityData(std::istream& ins, std::ostream& outs, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
+		void MergeEntityData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
 		{
-			CL_IODevice in, out;
+			CellStreamReader in(&instr);
+			CellStreamWriter out(&outstr);
 			// Copy transform component type name
-			std::string transformType = in.read_string_a();
-			out.write_string_a(transformType);
+			std::string transformType = in.ReadString();
+			out.WriteString(transformType);
 
 			// Merge transform component data
-			MergeComponentData(ins, outs, incomming_c, incomming_o);
+			MergeComponentData(instr, outstr, incomming_c, incomming_o);
 
 			// Copy the component count
 			size_t numComponents;
-			in.read(&numComponents, sizeof(size_t));
-			out.write(&numComponents, sizeof(size_t));
+			in.Read(numComponents);
+			out.Write(numComponents);
 
 			// Copy the other component names
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				std::string transformType = in.read_string_a();
-				out.write_string_a(transformType);
+				std::string transformType = in.ReadString();
+				out.WriteString(transformType);
 			}
 
 			// Merge the other component data
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				MergeComponentData(ins, outs, incomming_c, incomming_o);
+				MergeComponentData(instr, outstr, incomming_c, incomming_o);
 			}
 		}
 
-		void WriteComponent(CL_IODevice& out, IComponent* component)
+		void WriteComponent(OCellStream& outstr, IComponent* component)
 		{
 			FSN_ASSERT(component);
+
+			CellStreamWriter out(&outstr);
 
 			RakNet::BitStream stream;
 			component->SerialiseContinuous(stream);
 			if (stream.GetWriteOffset() > 0)
 			{
-				out.write_uint16(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+				out.WriteAs<uint16_t>(stream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
 			}
 			else
-				out.write_uint16(0);
+				out.WriteAs<uint16_t>(0);
 			stream.Reset();
 
 			component->SerialiseOccasional(stream, IComponent::All);
 			if (stream.GetWriteOffset() > 0)
 			{
-				out.write_uint16(stream.GetNumberOfBytesUsed());
-				out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
+				out.WriteAs<uint16_t>(stream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
 			}
 			else
-				out.write_uint16(0);
+				out.WriteAs<uint16_t>(0);
 		}
 
-		void ReadComponent(CL_IODevice& in, IComponent* component)
+		void ReadComponent(ICellStream& instr, IComponent* component)
 		{
 			FSN_ASSERT(component);
 
-			const auto conDataLen = in.read_uint16();
-			std::vector<unsigned char> data(conDataLen);
-			in.read(data.data(), conDataLen);
+			CellStreamReader in(&instr);
 
-			const auto occDataLen = in.read_uint16();
-			data.resize(conDataLen + occDataLen);
-			in.read(data.data() + conDataLen, occDataLen);
+			const auto conDataLen = in.ReadValue<uint16_t>();
+			std::vector<char> data(conDataLen);
+			if (conDataLen > 0)
+				instr.read(data.data(), conDataLen);
 
-			RakNet::BitStream stream(data.data(), data.size(), false);
+			const auto occDataLen = in.ReadValue<uint16_t>();
+			if (occDataLen)
+			{
+				data.resize(conDataLen + occDataLen);
+				instr.read(data.data() + conDataLen, occDataLen);
+			}
+
+			RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
 
 			if (conDataLen)
+			{
 				component->DeserialiseContinuous(stream);
 
-			stream.AlignReadToByteBoundary();
+				stream.AlignReadToByteBoundary();
+			}
 
 			if (occDataLen)
 				component->DeserialiseOccasional(stream, IComponent::All);
@@ -786,29 +794,31 @@ namespace FusionEngine
 		//	out.write(stream.GetData(), stream.GetNumberOfBytesUsed());
 		//}
 
-		void SaveEntity(CL_IODevice& out, EntityPtr entity, bool id_included)
+		void SaveEntity(OCellStream& outstr, EntityPtr entity, bool id_included)
 		{
+			CellStreamWriter out(&outstr);
+
 			if (id_included)
 			{
 				ObjectID id = entity->GetID();
-				out.write(&id, sizeof(ObjectID));
+				out.Write(id);
 			}
 
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
 
 			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
-			out.write_string_a(transform->GetType());
-			WriteComponent(out, transform);
+			out.WriteString(transform->GetType());
+			WriteComponent(outstr, transform);
 
-			out.write(&numComponents, sizeof(size_t));
+			out.Write(numComponents);
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			{
 				auto& component = *it;
 				if (component.get() != transform)
 				{
-					out.write_string_a(component->GetType());
-					out.write_string_a(component->GetIdentifier());
+					out.WriteString(component->GetType());
+					out.WriteString(component->GetIdentifier());
 				}
 			}
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
@@ -816,17 +826,19 @@ namespace FusionEngine
 				auto& component = *it;
 				if (component.get() != transform)
 				{
-					WriteComponent(out, component.get());
+					WriteComponent(outstr, component.get());
 				}
 			}
 		}
 
-		EntityPtr LoadEntity(CL_IODevice& in, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser)
+		EntityPtr LoadEntity(ICellStream& instr, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser)
 		{
+			CellStreamReader in(&instr);
+
 			ObjectID id = 0;
 			if (id_included)
 			{
-				in.read(&id, sizeof(ObjectID));
+				in.Read(id);
 				synchroniser->TakeID(id);
 			}
 
@@ -836,10 +848,10 @@ namespace FusionEngine
 
 			ComponentPtr transform;
 			{
-				std::string transformType = in.read_string_a();
+				std::string transformType = in.ReadString();
 				transform = factory->InstanceComponent(transformType);
 
-				ReadComponent(in, transform.get());
+				ReadComponent(instr, transform.get());
 			}
 
 			auto entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
@@ -853,11 +865,11 @@ namespace FusionEngine
 			//}
 
 			size_t numComponents;
-			in.read(&numComponents, sizeof(size_t));
+			in.Read(numComponents);
 			for (size_t i = 0; i < numComponents; ++i)
 			{
-				std::string type = in.read_string_a();
-				std::string ident = in.read_string_a();
+				std::string type = in.ReadString();
+				std::string ident = in.ReadString();
 				auto component = factory->InstanceComponent(type);
 				entity->AddComponent(component, ident);
 			}
@@ -870,7 +882,7 @@ namespace FusionEngine
 					auto& component = *it;
 					FSN_ASSERT(component != transform);
 
-					ReadComponent(in, component.get());
+					ReadComponent(instr, component.get());
 				}
 			}
 

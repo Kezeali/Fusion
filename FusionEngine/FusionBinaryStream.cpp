@@ -37,16 +37,17 @@ namespace FusionEngine
 		namespace Streams
 		{
 
-			BinaryStreamReader::BinaryStreamReader(std::istream* stream)
-				: m_Stream(stream),
-				m_LittleEndian(!CL_Endian::is_system_big())
-			{
-			}
+			//BinaryStreamReader::BinaryStreamReader(std::istream* stream)
+			//	: m_Stream(stream),
+			//	m_LittleEndian(!CL_Endian::is_system_big())
+			//{
+			//}
 
-			BinaryStreamWriter::BinaryStreamWriter(std::ostream* stream)
-				: m_Stream(stream)
-			{
-			}
+			//BinaryStreamWriter::BinaryStreamWriter(std::ostream* stream)
+			//	: m_Stream(stream),
+			//	m_LittleEndian(!CL_Endian::is_system_big())
+			//{
+			//}
 
 		}
 
