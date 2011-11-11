@@ -139,10 +139,28 @@ namespace FusionEngine
 			return;
 	}
 
-	std::vector<char> GameMap::GetRegionData(size_t index, bool include_synched)
+	std::vector<char> GameMap::GetRegionData(int32_t x, int32_t y, bool include_synched)
 	{
-		if (index < m_CellLocations.size())
+		if (x > m_MinCell.x && x < m_MaxCell.x && y > m_MinCell.y && y < m_MaxCell.y)
 		{
+			auto size = m_MaxCell - m_MinCell;
+			uint32_t adj_x, adj_y;
+			if (x < 0)
+			{
+				FSN_ASSERT(x - m_MinCell.x >= 0);
+				FSN_ASSERT(y - m_MinCell.y >= 0);
+				adj_x = x - m_MinCell.x;
+				adj_y = y - m_MinCell.y;
+			}
+			else
+			{
+				// When [x > 0] it is possable that [x - mincell.x] will be greater than numeric_limits<int32_t>::max()
+				// (actually, I'm not sure that this is correct - will revisit when I make a map bigger than 2147483647
+				//  cells wide (never))
+				adj_x = (uint32_t)x - m_MinCell.x;
+				adj_y = (uint32_t)y - m_MinCell.y;
+			}
+			auto index = adj_x + adj_y * size.x;
 			auto pos = m_CellLocations[index];
 
 			if (pos.second == 0) // No data for this cell
@@ -161,7 +179,9 @@ namespace FusionEngine
 			}
 		}
 		else
+		{
 			return std::vector<char>();
+		}
 	}
 
 	void GameMap::LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator)
@@ -200,28 +220,24 @@ namespace FusionEngine
 		}
 	}
 
-	static size_t translateCellIndex(size_t base_index, size_t base_width, size_t left_margin, size_t top_margin, size_t right_margin, size_t bottom_margin)
-	{
-	}
-
 	// CellArchiver should throw if GetCellData is called while it is running (Stop() must be called first)
 	// CellDataSource could be a class (that implements ICellDataSource::GetCellData()) that you create by passing
 	//  a StreamingManager and a SimpleCellArchiver. It would call tell the streaming manager to dump all its
 	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
 	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
 	//  cells
-	void GameMap::CompileMap(IO::PhysFSDevice &device, unsigned int baseWidth, float map_width, float cell_size, CellArchiver* cell_data_source, const std::vector<EntityPtr>& nsentities)
+	void GameMap::CompileMap(IO::PhysFSDevice &device, unsigned int baseWidth, float map_width, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
-		io::filtering_ostream deflateStream;
-		deflateStream.push(io::zlib_compressor());
-		deflateStream.push(device);
+		io::filtering_ostream fileStream;
+		fileStream.push(io::zlib_compressor());
+		fileStream.push(device);
 
-		CellStreamWriter writer(&deflateStream);
+		CellStreamWriter writer(&fileStream);
 
 
 		//std::vector<std::pair<std::vector<EntityPtr>, std::vector<EntityPtr>>> cells(num_cells_across * num_cells_across);
@@ -289,17 +305,17 @@ namespace FusionEngine
 		//std::vector<CL_IODevice> tempFiles;
 		//unsigned int cellIndex = 0;
 
-		size_t locationsOffset = deflateStream.tellp();
+		size_t locationsOffset = fileStream.tellp();
 		{
 			uint32_t locationsSpaceSize = numCells * sizeof(uint32_t) * 2;
 			std::vector<char> space(locationsSpaceSize);
-			deflateStream.write(space.data(), space.size()); // leave some space for the cell-data offsets
+			fileStream.write(space.data(), space.size()); // leave some space for the cell-data offsets
 		}
 		writer.WriteAs<uint32_t>(0); // Non-streaming entities location
 
 		size_t locationsEndOffset;
 #ifdef _DEBUG
-		locationsEndOffset = deflateStream.tellp();
+		locationsEndOffset = fileStream.tellp();
 #endif
 
 		std::vector<std::pair<uint32_t, uint32_t>> cellDataLocations(numCells);
@@ -326,19 +342,19 @@ namespace FusionEngine
 					if (!cellData.is_null())
 					{
 						auto& cellDataLocation = cellDataLocations[i];
-						cellDataLocation.first = uint32_t(deflateStream.tellp());
+						cellDataLocation.first = uint32_t(fileStream.tellp());
 
 						int bytesRead = 0;
 						do
 						{
 							bytesRead = cellData.read(buffer.data(), buffer.size(), false);
 							if (bytesRead > 0)
-								deflateStream.write(buffer.data(), bytesRead);
+								fileStream.write(buffer.data(), bytesRead);
 						} while (bytesRead == buffer.size());
 
 						FSN_ASSERT(cellData.get_position() == cellData.get_size());
 
-						cellDataLocation.second = uint32_t(deflateStream.tellp()) - cellDataLocation.first;
+						cellDataLocation.second = uint32_t(fileStream.tellp()) - cellDataLocation.first;
 					}
 			}
 			//	}
@@ -346,7 +362,7 @@ namespace FusionEngine
 		}
 
 		// Store the position of this section to write later
-		uint32_t nonStreamingEntitiesLocation = deflateStream.tellp();
+		uint32_t nonStreamingEntitiesLocation = fileStream.tellp();
 		// The non-streaming entities section
 		{
 		size_t numEnts = nonStreamingEntities.size();
@@ -355,7 +371,7 @@ namespace FusionEngine
 		{
 			auto& entity = *it;
 
-			SaveEntity(deflateStream, entity, false);
+			SaveEntity(fileStream, entity, false);
 		}
 		numEnts = nonStreamingEntitiesSynched.size();
 		writer.Write(numEnts);
@@ -363,21 +379,21 @@ namespace FusionEngine
 		{
 			auto& entity = *it;
 
-			SaveEntity(deflateStream, entity, true);
+			SaveEntity(fileStream, entity, true);
 		}
 		}
 
-		deflateStream.seekp(locationsOffset);
+		fileStream.seekp(locationsOffset);
 		for (auto it = cellDataLocations.begin(), end = cellDataLocations.end(); it != end; ++it)
 		{
 			writer.Write(it->first);
 			writer.Write(it->second);
-			FSN_ASSERT(deflateStream.tellp() <= locationsEndOffset);
+			FSN_ASSERT(fileStream.tellp() <= locationsEndOffset);
 		}
 
 		writer.Write(nonStreamingEntitiesLocation);
 
-		FSN_ASSERT(uint32_t(deflateStream.tellp()) == locationsEndOffset);
+		FSN_ASSERT(uint32_t(fileStream.tellp()) == locationsEndOffset);
 	}
 
 	GameMapLoader::GameMapLoader(ClientOptions *options)

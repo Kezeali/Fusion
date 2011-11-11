@@ -52,6 +52,8 @@
 namespace FusionEngine
 {
 
+	class CellDataSource;
+
 	static const float s_DefaultSmoothDecayRate = 0.01f;
 
 	template <typename T>
@@ -195,21 +197,6 @@ namespace FusionEngine
 		void AddHist(const std::string& hist, unsigned int num = -1);
 	};
 
-	class CellArchiver
-	{
-	public:
-		virtual ~CellArchiver() {}
-
-		virtual void Store(Cell* cell, size_t i) = 0;
-		virtual bool Retrieve(Cell* cell, size_t i) = 0;
-
-		virtual void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
-
-		virtual CL_IODevice GetCellData(size_t i) const = 0;
-		virtual size_t GetDataBegin() const = 0;
-		virtual size_t GetDataEnd() const = 0;
-	};
-
 	struct StreamingHandle
 	{
 		size_t cellIndex;
@@ -245,7 +232,7 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager(CellArchiver* archivist, bool initialise = true);
+		StreamingManager(CellDataSource* archivist, bool initialise = true);
 		//! Destructor
 		~StreamingManager();
 
@@ -408,7 +395,7 @@ namespace FusionEngine
 
 		std::unordered_map<ObjectID, size_t> m_EntityDirectory;
 
-		CellArchiver* m_Archivist;
+		CellDataSource* m_Archivist;
 
 
 		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);

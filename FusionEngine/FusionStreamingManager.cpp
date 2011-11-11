@@ -28,6 +28,7 @@
 
 #include "FusionStreamingManager.h"
 
+#include "FusionCellDataSource.h"
 #include "FusionMaths.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionPlayerRegistry.h"

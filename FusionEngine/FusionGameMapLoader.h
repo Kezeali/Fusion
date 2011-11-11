@@ -48,7 +48,7 @@ namespace FusionEngine
 {
 
 	class Cell;
-	class CellArchiver;
+	class CellCache;
 
 	namespace IO
 	{
@@ -66,9 +66,9 @@ namespace FusionEngine
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
 		// (To be) Used by CellArchiver to obtain static region data from a compiled map file 
-		std::vector<char> GetRegionData(size_t index, bool include_synched);
+		std::vector<char> GetRegionData(int32_t x, int32_t y, bool include_synched);
 
-		static void CompileMap(IO::PhysFSDevice& device, unsigned int baseWidth, float map_size, float cell_size, CellArchiver* cell_archiver, const std::vector<EntityPtr>& nonStreamingEntities);
+		static void CompileMap(IO::PhysFSDevice& device, unsigned int baseWidth, float map_size, float cell_size, CellCache* cache, const std::vector<EntityPtr>& nonStreamingEntities);
 
 		float GetMapWidth() const;
 		unsigned int GetNumCellsAcross() const;
@@ -82,6 +82,8 @@ namespace FusionEngine
 		uint32_t m_NonStreamingEntitiesLocation;
 		uint32_t m_NonStreamingEntitiesDataLength;
 		unsigned int m_XCells;
+		Vector2T<int32_t> m_MinCell;
+		Vector2T<int32_t> m_MaxCell;
 		float m_CellSize;
 		float m_MapWidth;
 	};
