@@ -222,7 +222,6 @@
     <ClCompile Include="..\FusionEngine\FusionLogFileConsole.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogger.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogPhysFS.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionMapLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionMessageBox.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkSystem.cpp" />
@@ -243,6 +242,7 @@
     <ClCompile Include="..\FusionEngine\FusionProfiling.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRakNetwork.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRefCounted.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRegionCellCache.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRegionMapLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderable.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderer.cpp" />
@@ -329,9 +329,9 @@
     <ClInclude Include="..\FusionEngine\FusionEntitySynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
-    <ClInclude Include="..\FusionEngine\FusionMapLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionPositionSerialisation.h" />
     <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
+    <ClInclude Include="..\FusionEngine\FusionRegionCellCache.h" />
     <ClInclude Include="..\FusionEngine\FusionRegionMapLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />

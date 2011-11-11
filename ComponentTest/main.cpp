@@ -12,6 +12,7 @@
 #include "../FusionEngine/FusionPaths.h"
 #include "../FusionEngine/FusionPhysFS.h"
 #include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
+#include "../FusionEngine/FusionPhysFSIOStream.h"
 
 // Resource Loading
 #include "../FusionEngine/FusionResourceManager.h"
@@ -48,7 +49,6 @@
 #include "../FusionEngine/FusionNetworkManager.h"
 #include "../FusionEngine/FusionScriptManager.h"
 
-#include "../FusionEngine/FusionCellArchivist.h"
 #include "../FusionEngine/FusionContextMenu.h"
 #include "../FusionEngine/FusionElementUndoMenu.h"
 #include "../FusionEngine/FusionEntityFactory.h"
@@ -59,6 +59,8 @@
 #include "../FusionEngine/FusionGameMapLoader.h"
 #include "../FusionEngine/FusionInstanceSynchroniser.h"
 #include "../FusionEngine/FusionScriptedConsoleCommand.h"
+#include "../FusionEngine/FusionRegionCellCache.h"
+#include "../FusionEngine/FusionRegionMapLoader.h"
 #include "../FusionEngine/FusionRenderer.h"
 #include "../FusionEngine/FusionScriptInputEvent.h"
 #include "../FusionEngine/FusionScriptModule.h"
@@ -418,7 +420,8 @@ public:
 
 				std::unique_ptr<PlayerManager> playerManager(new PlayerManager());
 
-				std::unique_ptr<CachingCellArchiver> cellArchivist(new CachingCellArchiver(editMode));
+				std::unique_ptr<RegionCellCache> cellCache(new RegionCellCache());
+				std::unique_ptr<RegionMapLoader> cellArchivist(new RegionMapLoader(editMode));
 				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
 
 				std::unique_ptr<CameraSynchroniser> cameraSynchroniser(new CameraSynchroniser(streamingMgr.get()));
@@ -714,7 +717,7 @@ public:
 						//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
 						//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 						//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
-						IO::PhysFSDevice file("default.gad", IO::Write);
+						IO::PhysFSStream file("default.gad", IO::Write);
 						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), streamingMgr->GetMapWidth(), streamingMgr->GetCellSize(), cellArchivist.get(), entities);
 						cellArchivist->Start();
 

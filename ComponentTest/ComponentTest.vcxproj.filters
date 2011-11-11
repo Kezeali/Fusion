@@ -318,10 +318,10 @@
     <ClCompile Include="..\FusionEngine\FusionBinaryStream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionMapLoader.cpp">
+    <ClCompile Include="..\FusionEngine\FusionRegionMapLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FusionEngine\FusionRegionMapLoader.cpp">
+    <ClCompile Include="..\FusionEngine\FusionRegionCellCache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -740,9 +740,6 @@
     <ClInclude Include="..\FusionEngine\FusionBinaryStream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FusionEngine\FusionMapLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionCellDataSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -750,6 +747,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionRegionMapLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionRegionCellCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

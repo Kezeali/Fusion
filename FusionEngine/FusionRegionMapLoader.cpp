@@ -27,291 +27,29 @@
 
 #include "FusionStableHeaders.h"
 
-#include "FusionCellArchivist.h"
+#include "FusionRegionMapLoader.h"
+
+#include "FusionRegionCellCache.h"
 
 #include "FusionGameMapLoader.h"
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionInstanceSynchroniser.h"
 #include "FusionVirtualFileSource_PhysFS.h"
+#include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionLogger.h"
 
 #include "FusionBinaryStream.h"
 
+#include <kchashdb.h>
+
 namespace FusionEngine
 {
 
 	static const size_t s_DefaultRegionSize = 4;
-	static const size_t s_CellHeaderSize = sizeof(size_t) + sizeof(uint8_t); // length & version number
-	static const size_t s_MaxSectors = 1024;
-	static const size_t s_SectorSize = 4096;
-	static const uint8_t s_CellDataVersion = 1;
 
-	static std::array<char, s_SectorSize> s_EmptySectorData;
-	
-	CellBuffer::~CellBuffer()
-	{
-		FSN_ASSERT(parent);
-		if (data)
-			parent->write(cellIndex, *data);
-	}
-
-	static inline size_t fileLength(std::iostream& file)
-	{
-		file.seekg(0, std::ios::end);
-		auto len = file.tellg();
-		file.seekg(0);
-		return len;
-	}
-
-	RegionFile::RegionFile(std::string&& filename)
-		: filename(std::move(filename)),
-		file(IO::PhysFSStream(filename, IO::Read)),
-		cellDataLocations(s_MaxSectors) // Hmm
-	{
-		try
-		{
-			IO::Streams::CellStreamWriter writer(&file);
-
-			bool new_file = false;
-			auto length = fileLength(file);
-
-			if (length < s_SectorSize)
-			{
-				// New file: write the chunk offset table
-				DataLocation nothing; nothing.startingSector = 0; nothing.sectorsAllocated = 0;
-				for (int i = 0; i < s_MaxSectors; ++i)
-					writer.Write(nothing);
-
-				//sizeDelta += s_SectorSize;
-
-				new_file = true;
-			}
-
-			if ((length & 0xFFF) != 0)
-			{
-				// The file size is not a multiple of 4KB, grow it
-				for (int i = 0; i < (length & 0xfff); ++i)
-					file.put(0);
-
-				length = fileLength(file);
-				FSN_ASSERT(length & 0xFFF == 0);
-			}
-
-			// Set up the available-sector map
-			auto numSectors = length / s_SectorSize;
-			free_sectors.resize(numSectors, true);
-
-			free_sectors.set(0, false); // chunk offset table
-
-			if (!new_file)
-			{
-				IO::Streams::CellStreamReader reader(&file);
-
-				file.seekg(0);
-				for (size_t i = 0; i < s_MaxSectors; ++i)
-				{
-					auto location = reader.ReadValue<DataLocation>();
-					cellDataLocations[i] = location;
-					if (location.is_valid() && location.end() <= free_sectors.size())
-					{
-						const auto endSector = location.end();
-						for (size_t sectorNum = location.startingSector; sectorNum < endSector; ++sectorNum)
-						{
-							free_sectors.set(sectorNum, false);
-						}
-					}
-				}
-			}
-		}
-		catch (std::ios::failure& e)
-		{
-			AddLogEntry(e.what(), LOG_CRITICAL);
-		}
-	}
-
-	std::unique_ptr<ArchiveIStream> RegionFile::getInputCellData(size_t x, size_t y)
-	{
-		namespace io = boost::iostreams;
-		// TODO: sanity checks
-
-		std::pair<size_t, size_t> location(x, y);
-
-		const auto& locationData = getCellDataLocation(location);
-
-		const auto firstSector = locationData.startingSector;
-		const auto numSectors = locationData.sectorsAllocated;
-
-		const auto dataBegin = firstSector * s_SectorSize;
-
-		file.seekg(dataBegin);
-
-		// Read the header
-		IO::Streams::CellStreamReader reader(&file);
-		const auto dataLength = reader.ReadValue<size_t>() - sizeof(uint8_t); // - sizeof(version number)
-
-		if (dataLength > s_SectorSize * numSectors)
-		{
-			std::stringstream str; str << location.first << ", " << location.second;
-			AddLogEntry("Region file is corrupt: data length for cell [" + str.str() + "] is inconsistent with sectors used", LOG_CRITICAL);
-			return std::unique_ptr<ArchiveIStream>();
-		}
-
-		const auto dataVersion = reader.ReadValue<uint8_t>();
-
-		SmartArrayDevice device;
-
-		device.data->resize(dataLength);
-		file.read(device.data->data(), dataLength);
-
-		auto stream = std::unique_ptr<ArchiveIStream>(new io::filtering_istream());
-		stream->push(io::zlib_decompressor());
-		stream->push(boost::ref(device));
-		return stream;
-	}
-
-	std::unique_ptr<ArchiveOStream> RegionFile::getOutputCellData(size_t x, size_t y)
-	{
-		namespace io = boost::iostreams;
-		// TODO: sanity checks
-
-		std::pair<size_t, size_t> location(x, y);
-
-		const auto& locationData = getCellDataLocation(location);
-
-		const auto firstSector = locationData.startingSector;
-		const auto numSectors = locationData.sectorsAllocated;
-
-		IO::Streams::CellStreamReader reader(&file);
-		const auto dataLength = reader.ReadValue<size_t>();
-
-		CellBuffer device(this);
-
-		device.cellIndex = location;
-		device.data->reserve(dataLength);
-
-		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
-		stream->push(io::zlib_compressor());
-		stream->push(boost::ref(device));
-		return stream;
-	}
-
-	void RegionFile::write(const std::pair<size_t, size_t>& i, std::vector<char>& data)
-	{
-		const auto length = data.size();
-
-		const auto& dataLocation = getCellDataLocation(i);
-		auto sectorNumber = dataLocation.startingSector;
-		auto sectorsAllocated = dataLocation.sectorsAllocated;
-		auto sectorsNeeded = (length + s_CellHeaderSize) / s_SectorSize + 1;
-
-		if (sectorsNeeded > 256)
-		{
-			std::stringstream str; str << i.first << ", " << i.second;
-			FSN_EXCEPT(FileSystemException, "Too much data for cell [" + str.str() + "] in region " + filename);
-		}
-
-		if (sectorNumber != 0 && sectorsAllocated == sectorsNeeded)
-		{
-			write(sectorNumber, data);
-		}
-		else // Allocate new sectors
-		{
-			for (size_t i = 0; i < sectorsAllocated; ++i)
-				free_sectors.set(sectorNumber + i, true);
-
-			// Scan for a run of free sectors that will fit the cell data
-			auto runStart = free_sectors.find_first();
-			size_t runLength = 0;
-			if (runStart != boost::dynamic_bitset<>::npos)
-			{
-				for (auto i = runStart; i < free_sectors.size(); ++i)
-				{
-					if (runLength != 0)
-					{
-						if (free_sectors.test(i))
-							++runLength;
-						else
-							runLength = 0;
-					}
-					else if (free_sectors.test(i))
-					{
-						runStart = i;
-						runLength = 1;
-					}
-					if (runLength >= sectorsNeeded)
-						break;
-				}
-			}
-
-			if (runLength >= sectorsNeeded) // Free space found
-			{
-				sectorNumber = runStart;
-				setCellDataLocation(i, sectorNumber, sectorsNeeded);
-				// Mark these sectors used
-				for (size_t i = 0; i < sectorsAllocated; ++i)
-					free_sectors.set(sectorNumber + i, false);
-				
-				write(sectorNumber, data);
-			}
-			else // No free space found, grow the file
-			{
-				sectorNumber = free_sectors.size();
-				free_sectors.resize(free_sectors.size() + sectorsNeeded, false);
-
-				file.seekp(0, std::ios::end);
-				for (size_t i = 0; i < sectorsNeeded; ++i)
-				{
-					file.write(s_EmptySectorData.data(), s_SectorSize);
-				}
-				
-				write(sectorNumber, data);
-				setCellDataLocation(i, sectorNumber, sectorsNeeded);
-			}
-		}
-	}
-
-	void RegionFile::write(size_t sector_number, const std::vector<char>& data)
-	{
-		IO::Streams::CellStreamWriter writer(&file);
-
-		std::streampos streamPos(sector_number * s_SectorSize);
-		file.seekp(streamPos);
-
-		writer.WriteAs<size_t>(data.size() + sizeof(uint8_t)); // The length written includes the version number (written below)
-		writer.WriteAs<uint8_t>(s_CellDataVersion);
-		file.write(data.data(), data.size());
-	}
-
-	void RegionFile::setCellDataLocation(const std::pair<int32_t, int32_t>& i, uint32_t startSector, uint32_t sectorsUsed)
-	{
-		// Make sure the values given fit within the space available in the bitfield
-		FSN_ASSERT(startSector < (1 << 24));
-		FSN_ASSERT(sectorsUsed < 256);
-
-		const size_t x = i.first & 31, y = i.second & 31;
-
-		auto& data = cellDataLocations[x + y * region_width];
-		data.startingSector = startSector;
-		data.sectorsAllocated = sectorsUsed;
-
-		IO::Streams::CellStreamWriter writer(&file);
-
-		file.seekp(i.first + i.second * region_width * sizeof(DataLocation));
-		writer.Write(data);
-	}
-
-	const RegionFile::DataLocation& RegionFile::getCellDataLocation(const std::pair<int32_t, int32_t>& i)
-	{
-		const size_t x = i.first & 31, y = i.second & 31;
-
-		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
-		return cellDataLocations[x + y * region_width];
-	}
-
-	RegionCellArchiver::RegionCellArchiver(bool edit_mode, const std::shared_ptr<GameMap>& map, CellArchiver* cache)
-		: m_Map(map),
-		m_Cache(cache),
+	RegionMapLoader::RegionMapLoader(bool edit_mode, RegionCellCache* cache)
+		: m_Cache(cache),
 		m_NewData(false),
 		m_Instantiator(nullptr),
 		m_Running(false),
@@ -320,30 +58,40 @@ namespace FusionEngine
 		m_EndIndex(0),
 		m_RegionSize(s_DefaultRegionSize)
 	{
+		std::string cache_path; // TODO: make this a ctor param, rather than RegionCellCache* (create the RegionCellCache internally)
+
+		m_FullBasePath = PHYSFS_getWriteDir();
+		m_FullBasePath += cache_path + "/";
 	}
 
-	RegionCellArchiver::~RegionCellArchiver()
+	RegionMapLoader::~RegionMapLoader()
 	{
 		Stop();
 	}
 
-	void RegionCellArchiver::SetSynchroniser(InstancingSynchroniser* instantiator)
+	void RegionMapLoader::SetSynchroniser(InstancingSynchroniser* instantiator)
 	{
 		m_Instantiator = instantiator;
 	}
 
-	void RegionCellArchiver::SetMap(const std::shared_ptr<GameMap>& map)
+	void RegionMapLoader::SetMap(const std::shared_ptr<GameMap>& map)
 	{
 		m_Map = map;
+
+		//PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "entitylocations.kc");
+		if (m_EntityLocationDB)
+			m_EntityLocationDB->close();
+		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
 	}
 
-	void RegionCellArchiver::Update(ObjectID id, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
+	void RegionMapLoader::Update(ObjectID id, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, std::move(continuous), std::move(occasional)));
 		m_NewData.set();
 	}
 
-	void RegionCellArchiver::Store(Cell* cell, size_t i)
+	void RegionMapLoader::Store(Cell* cell, size_t i)
 	{
 		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 		{
@@ -353,7 +101,7 @@ namespace FusionEngine
 		}
 	}
 
-	bool RegionCellArchiver::Retrieve(Cell* cell, size_t i)
+	bool RegionMapLoader::Retrieve(Cell* cell, size_t i)
 	{
 		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 		{
@@ -365,18 +113,18 @@ namespace FusionEngine
 		return false;
 	}
 
-	void RegionCellArchiver::Start()
+	void RegionMapLoader::Start()
 	{
 		m_Running = true;
 
 		m_Quit.reset();
-		m_Thread = boost::thread(&RegionCellArchiver::Run, this);
+		m_Thread = boost::thread(&RegionMapLoader::Run, this);
 #ifdef _WIN32
 		SetThreadPriority(m_Thread.native_handle(), THREAD_PRIORITY_BELOW_NORMAL);
 #endif
 	}
 
-	void RegionCellArchiver::Stop()
+	void RegionMapLoader::Stop()
 	{
 		m_Quit.set();
 		m_Thread.join();
@@ -384,7 +132,7 @@ namespace FusionEngine
 		m_Running = false;
 	}
 
-	CL_IODevice RegionCellArchiver::GetFile(size_t cell_index, bool write) const
+	CL_IODevice RegionMapLoader::GetFile(size_t cell_index, bool write) const
 	{
 		try
 		{
@@ -405,7 +153,7 @@ namespace FusionEngine
 		}
 	}
 
-	std::unique_ptr<ArchiveIStream> RegionCellArchiver::GetCellStreamForReading(size_t cell_x, size_t cell_y)
+	std::unique_ptr<ArchiveIStream> RegionMapLoader::GetCellStreamForReading(size_t cell_x, size_t cell_y)
 	{
 		try
 		{
@@ -438,14 +186,14 @@ namespace FusionEngine
 		}
 	}
 
-	RegionFile& RegionCellArchiver::CacheRegionFile(RegionCellArchiver::CellCoord_t& coord)
+	RegionFile& RegionMapLoader::CacheRegionFile(RegionMapLoader::CellCoord_t& coord)
 	{
 		std::stringstream str; str << coord.x << "." << coord.y;
 
 		return m_Cache[coord] = RegionFile("cache/" + str.str());
 	}
 
-	std::unique_ptr<ArchiveOStream> RegionCellArchiver::GetCellStreamForWriting(size_t cell_x, size_t cell_y)
+	std::unique_ptr<ArchiveOStream> RegionMapLoader::GetCellStreamForWriting(size_t cell_x, size_t cell_y)
 	{
 		try
 		{
@@ -469,7 +217,7 @@ namespace FusionEngine
 		}
 	}
 
-	CL_IODevice RegionCellArchiver::GetCellData(size_t index) const
+	CL_IODevice RegionMapLoader::GetCellData(size_t index) const
 	{
 		if (m_EditMode && !m_Running)
 			return GetFile(index, false);
@@ -477,7 +225,7 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "Can't access cell data while running");
 	}
 
-	size_t RegionCellArchiver::GetDataBegin() const
+	size_t RegionMapLoader::GetDataBegin() const
 	{
 		if (m_EditMode)
 			return m_BeginIndex;
@@ -485,7 +233,7 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
 	}
 
-	size_t RegionCellArchiver::GetDataEnd() const
+	size_t RegionMapLoader::GetDataEnd() const
 	{
 		if (m_EditMode)
 			return m_EndIndex;
@@ -493,12 +241,12 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
 	}
 
-	EntityPtr RegionCellArchiver::Load(ICellStream& file, bool includes_id)
+	EntityPtr RegionMapLoader::Load(ICellStream& file, bool includes_id)
 	{
 		return EntitySerialisationUtils::LoadEntity(file, includes_id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 	}
 
-	size_t RegionCellArchiver::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids)
+	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids)
 	{
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
@@ -520,7 +268,7 @@ namespace FusionEngine
 		return numEntries;
 	}
 
-	void RegionCellArchiver::Run()
+	void RegionMapLoader::Run()
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -734,10 +482,12 @@ namespace FusionEngine
 					auto& incommingConData = std::get<1>(objectUpdateData);
 					auto& incommingOccData = std::get<2>(objectUpdateData);
 
-					const auto loc = m_EntityLocations[id];
+					CellCoord_t loc;
+					m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
+					//const auto loc = m_EntityLocations[id];
 
-					auto inData = GetCellStreamForReading(loc.x, loc.y);
-					auto outData = GetCellStreamForWriting(loc.x, loc.y);
+					auto inData = new std::ifstream();//GetCellStreamForReading(loc.x, loc.y);
+					auto outData = new std::ofstream();//GetCellStreamForWriting(loc.x, loc.y);
 
 					RakNet::BitStream iConDataStream(incommingConData.data(), incommingConData.size(), false);
 					RakNet::BitStream iOccDataStream(incommingOccData.data(), incommingOccData.size(), false);

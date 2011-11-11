@@ -43,6 +43,7 @@
 #include <unordered_set>
 #include <tbb/concurrent_queue.h>
 
+#include "FusionCellDataSource.h"
 #include "FusionGameMapLoader.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionEntitySerialisationUtils.h"
@@ -53,11 +54,18 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/array.hpp>
 
+namespace kyotocabinet
+{
+	class HashDB;
+}
 
 namespace FusionEngine
 {
 
+	class RegionCellCache;
+
 	//! CellArchiver implementaion
+	// TODO: rename to RegionCellArchivist
 	class RegionMapLoader : public CellDataSource
 	{
 	public:
@@ -68,7 +76,7 @@ namespace FusionEngine
 		* The map provides a static entity source, whilst the CellArchiver (cache) provides methods for 
 		* storing and retrieving entity states.
 		*/
-		RegionMapLoader(bool edit_mode, const std::shared_ptr<GameMap>& map, CellArchiver* cache);
+		RegionMapLoader(bool edit_mod, RegionCellCache* cache);
 		~RegionMapLoader();
 
 		InstancingSynchroniser* m_Instantiator;
@@ -96,10 +104,10 @@ namespace FusionEngine
 
 		CL_IODevice GetFile(size_t cell_index, bool write) const;
 
-		RegionFile& CacheRegionFile(CellCoord_t& coord);
+		//RegionFile& CacheRegionFile(CellCoord_t& coord);
 
-		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(uint32_t cell_x, uint32_t cell_y);
-		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(uint32_t cell_x, uint32_t cell_y);
+		//std::unique_ptr<ArchiveIStream> GetCellStreamForReading(uint32_t cell_x, uint32_t cell_y);
+		//std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(uint32_t cell_x, uint32_t cell_y);
 
 		CL_IODevice GetCellData(size_t index) const;
 
@@ -120,10 +128,13 @@ namespace FusionEngine
 
 		size_t m_RegionSize;
 
-		RegionCache* m_Cache;
+		RegionCellCache* m_Cache;
+
+		std::string m_FullBasePath;
+		std::unique_ptr<kyotocabinet::HashDB> m_EntityLocationDB;
 
 		// Loaded cache files
-		std::map<CellCoord_t, RegionFile> m_Cache;
+		//std::map<CellCoord_t, RegionFile> m_Cache;
 
 		std::map<ObjectID, CellCoord_t> m_EntityLocations;
 

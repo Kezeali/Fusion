@@ -34,6 +34,7 @@
 #include <RakNetTypes.h>
 #include <StringCompressor.h>
 
+#include "FusionCellCache.h"
 #include "FusionClientOptions.h"
 #include "FusionEntityFactory.h"
 #include "FusionEntityManager.h"
@@ -226,16 +227,15 @@ namespace FusionEngine
 	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
 	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
 	//  cells
-	void GameMap::CompileMap(IO::PhysFSDevice &device, unsigned int baseWidth, float map_width, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities)
+	void GameMap::CompileMap(std::ostream &fileStream, unsigned int baseWidth, float map_width, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;
 
 		namespace io = boost::iostreams;
 
-		io::filtering_ostream fileStream;
-		fileStream.push(io::zlib_compressor());
-		fileStream.push(device);
+		//io::filtering_ostream fileStream;
+		//fileStream.push(device);
 
 		CellStreamWriter writer(&fileStream);
 
@@ -261,7 +261,7 @@ namespace FusionEngine
 		//size_t leftMargin = std::numeric_limits<size_t>::max(), topMargin = std::numeric_limits<size_t>::max(), rightMargin = 0, bottomMargin = 0;
 
 		const size_t baseNumCells = baseWidth * baseWidth;
-		const size_t baseCellsEnd = cell_data_source->GetDataEnd();
+		//const size_t baseCellsEnd = cell_cache->GetDataEnd();
 
 		//for (size_t i = cell_data_source->GetDataBegin(); i < baseNumCells; ++i)
 		//{
@@ -328,7 +328,7 @@ namespace FusionEngine
 			//{
 			//	for (size_t x = leftMargin; x < rightMargin; ++x)
 			//	{
-			for (size_t i = cell_data_source->GetDataBegin(); i < baseNumCells; ++i)
+			for (size_t i = cell_cache->GetBeginCellCoord(); i < baseNumCells; ++i)
 			{
 					//const size_t baseIndex = y * baseWidth + x;
 					//const size_t outputIndex = (y - topMargin) * outputCellsAcross + (x - leftMargin);
@@ -337,7 +337,7 @@ namespace FusionEngine
 
 				const size_t baseIndex = i;
 
-					CL_IODevice cellData = cell_data_source->GetCellData(baseIndex);
+					CL_IODevice cellData = cell_cache->GetCellData(baseIndex);
 
 					if (!cellData.is_null())
 					{
