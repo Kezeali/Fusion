@@ -189,7 +189,6 @@
     <ClCompile Include="..\FusionEngine\FusionBox2DSystem.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCamera.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCameraSynchroniser.cpp" />
-    <ClCompile Include="..\FusionEngine\FusionCellArchivist.cpp" />
     <ClCompile Include="..\FusionEngine\FusionClientOptions.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderComponent.cpp" />
     <ClCompile Include="..\FusionEngine\FusionCLRenderSystem.cpp" />
@@ -223,6 +222,7 @@
     <ClCompile Include="..\FusionEngine\FusionLogFileConsole.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogger.cpp" />
     <ClCompile Include="..\FusionEngine\FusionLogPhysFS.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionMapLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionMessageBox.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkManager.cpp" />
     <ClCompile Include="..\FusionEngine\FusionNetworkSystem.cpp" />
@@ -243,6 +243,7 @@
     <ClCompile Include="..\FusionEngine\FusionProfiling.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRakNetwork.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRefCounted.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionRegionMapLoader.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderable.cpp" />
     <ClCompile Include="..\FusionEngine\FusionRenderer.cpp" />
     <ClCompile Include="..\FusionEngine\FusionResource.cpp" />
@@ -314,7 +315,8 @@
     <ClInclude Include="..\FusionEngine\FusionBox2DSystem.h" />
     <ClInclude Include="..\FusionEngine\FusionCamera.h" />
     <ClInclude Include="..\FusionEngine\FusionCameraSynchroniser.h" />
-    <ClInclude Include="..\FusionEngine\FusionCellArchivist.h" />
+    <ClInclude Include="..\FusionEngine\FusionCellCache.h" />
+    <ClInclude Include="..\FusionEngine\FusionCellDataSource.h" />
     <ClInclude Include="..\FusionEngine\FusionClientOptions.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionCLRenderSystem.h" />
@@ -327,8 +329,10 @@
     <ClInclude Include="..\FusionEngine\FusionEntitySynchroniser.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionInputComponentInterface.h" />
+    <ClInclude Include="..\FusionEngine\FusionMapLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionPositionSerialisation.h" />
     <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
+    <ClInclude Include="..\FusionEngine\FusionRegionMapLoader.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingCameraComponent.h" />
