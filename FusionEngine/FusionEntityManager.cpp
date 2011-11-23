@@ -34,7 +34,7 @@
 #include <BitStream.h>
 #include <RakNetStatistics.h>
 
-#include "FusionCellArchivist.h"
+#include "FusionRegionMapLoader.h"
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
 #include "FusionDeltaTime.h"

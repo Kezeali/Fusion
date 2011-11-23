@@ -62,19 +62,27 @@ namespace FusionEngine
 	GameMap::GameMap(CL_IODevice& file)
 		: m_File(file)
 	{
-		auto fileSize = m_File.get_size();
-
-		m_File.read(&m_XCells, sizeof(unsigned int));
+		m_MinCell.x = m_File.read_int32();
+		m_MaxCell.x = m_File.read_int32();
+		m_MinCell.y = m_File.read_int32();
+		m_MaxCell.y = m_File.read_int32();
 		m_CellSize = m_File.read_float();
-		m_MapWidth = m_File.read_float();
 
-		m_CellLocations.resize(m_XCells * m_XCells);
+		if (m_MaxCell.x < m_MinCell.x || m_MaxCell.y < m_MinCell.y)
+		{
+			FSN_EXCEPT(FileSystemException, "The given map file has an invalid header");
+		}
+
+		m_NumCells.x = Vector2T<uint32_t>(m_MaxCell) - m_MinCell;
+
+		m_CellLocations.resize(m_NumCells.x * m_NumCells.y);
 		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
 		{
 			uint32_t begin = m_File.read_uint32();
 			uint32_t length = m_File.read_uint32();
 			m_CellLocations[i] = std::make_pair(begin, length);
-			FSN_ASSERT((length == 0 || begin != 0) && begin + length <= (unsigned int)fileSize);
+
+			FSN_ASSERT((length == 0 || begin != 0) && begin + length <= (unsigned int)m_File.get_size());
 		}
 
 		m_NonStreamingEntitiesLocation = m_File.read_uint32();
@@ -95,56 +103,56 @@ namespace FusionEngine
 		return m_CellSize;
 	}
 
-	void GameMap::LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator)
-	{
-		using namespace EntitySerialisationUtils;
+	//void GameMap::LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator)
+	//{
+	//	using namespace EntitySerialisationUtils;
 
-		FSN_ASSERT(out);
-		if (index < m_CellLocations.size())
-		{
-			Cell::mutex_t::scoped_lock lock(out->mutex);
+	//	FSN_ASSERT(out);
+	//	if (index < m_CellLocations.size())
+	//	{
+	//		Cell::mutex_t::scoped_lock lock(out->mutex);
 
-			auto pos = m_CellLocations[index];
+	//		auto pos = m_CellLocations[index];
 
-			if (pos.second == 0) // No data for this cell
-				return;
+	//		if (pos.second == 0) // No data for this cell
+	//			return;
 
-			FSN_ASSERT(pos.first < (unsigned int)std::numeric_limits<int>::max());
-			m_File.seek((int)pos.first);
+	//		FSN_ASSERT(pos.first < (unsigned int)std::numeric_limits<int>::max());
+	//		m_File.seek((int)pos.first);
 
-			size_t numPseudoEnts;
-			m_File.read(&numPseudoEnts, sizeof(size_t));
-			for (size_t i = 0; i < numPseudoEnts; ++i)
-			{
-				auto entity = EntityPtr();//LoadEntity(m_File, false, factory, entityManager, instantiator);
-				entity->SetStreamingCellIndex(index);
-				auto entityPosition = entity->GetPosition();
-				CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
-				out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
-			}
-			if (include_synched)
-			{
-				size_t numSynchedEnts;
-				m_File.read(&numSynchedEnts, sizeof(size_t));
-				for (size_t i = 0; i < numSynchedEnts; ++i)
-				{
-					auto entity = EntityPtr();//LoadEntity(m_File, true, factory, entityManager, instantiator);
-					entity->SetStreamingCellIndex(index);
-					auto entityPosition = entity->GetPosition();
-					CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
-					out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
-				}
-			}
-		}
-		else
-			return;
-	}
+	//		size_t numPseudoEnts;
+	//		m_File.read(&numPseudoEnts, sizeof(size_t));
+	//		for (size_t i = 0; i < numPseudoEnts; ++i)
+	//		{
+	//			auto entity = EntityPtr();//LoadEntity(m_File, false, factory, entityManager, instantiator);
+	//			entity->SetStreamingCellIndex(index);
+	//			auto entityPosition = entity->GetPosition();
+	//			CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
+	//			out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
+	//		}
+	//		if (include_synched)
+	//		{
+	//			size_t numSynchedEnts;
+	//			m_File.read(&numSynchedEnts, sizeof(size_t));
+	//			for (size_t i = 0; i < numSynchedEnts; ++i)
+	//			{
+	//				auto entity = EntityPtr();//LoadEntity(m_File, true, factory, entityManager, instantiator);
+	//				entity->SetStreamingCellIndex(index);
+	//				auto entityPosition = entity->GetPosition();
+	//				CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
+	//				out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
+	//			}
+	//		}
+	//	}
+	//	else
+	//		return;
+	//}
 
 	std::vector<char> GameMap::GetRegionData(int32_t x, int32_t y, bool include_synched)
 	{
 		if (x > m_MinCell.x && x < m_MaxCell.x && y > m_MinCell.y && y < m_MaxCell.y)
 		{
-			auto size = m_MaxCell - m_MinCell;
+			Vector2T<uint32_t> size = m_MaxCell - m_MinCell;
 			uint32_t adj_x, adj_y;
 			if (x < 0)
 			{
@@ -258,52 +266,22 @@ namespace FusionEngine
 			}
 		}
 
-		//size_t leftMargin = std::numeric_limits<size_t>::max(), topMargin = std::numeric_limits<size_t>::max(), rightMargin = 0, bottomMargin = 0;
+		int32_t minX = 0;// = cell_cache->GetMinX();
+		int32_t maxX = 0;// = cell_cache->GetMaxX();
+		int32_t minY = 0;// = cell_cache->GetMinY();
+		int32_t maxY = 0;// = cell_cache->GetMaxY();
 
-		const size_t baseNumCells = baseWidth * baseWidth;
-		//const size_t baseCellsEnd = cell_cache->GetDataEnd();
+		const size_t cellsAcross = maxX - minX;
+		const size_t cellsDown = maxY - minY;
 
-		//for (size_t i = cell_data_source->GetDataBegin(); i < baseNumCells; ++i)
-		//{
-		//	CL_IODevice cellData = cell_data_source->GetCellData(i);
-		//	if (!cellData.is_null())
-		//	{
-		//		const size_t x = i % baseWidth;
-		//		const size_t y = (i - x) / baseWidth;
-		//		leftMargin = std::min(leftMargin, x);
-		//		topMargin = std::min(topMargin, y);
-		//		rightMargin = std::max(rightMargin, x);
-		//		bottomMargin = std::max(bottomMargin, y);
-		//		//if (x < leftCoord)
-		//		//{
-		//		//	leftCoord = x;
-		//		//	leftMargin = i;
-		//		//}
-		//	}
-		//}
+		const size_t numCells = cellsAcross * cellsDown;
 
-		//rightMargin += 1;
-		//bottomMargin += 1;
-
-		//// Make the included range square:
-		//rightMargin = std::max(leftMargin + (bottomMargin - topMargin), rightMargin);
-
-		//const size_t outputCellsAcross = rightMargin - leftMargin;
-		//const size_t numCells = outputCellsAcross * outputCellsAcross;
-
-		//const float outputMapWidth = map_width * (outputCellsAcross / (float)baseWidth);
-
-		const size_t outputCellsAcross = baseWidth;
-		const float outputMapWidth = map_width;
-
-		const size_t numCells = outputCellsAcross * outputCellsAcross;
-
-		writer.Write(outputCellsAcross);
+		// Write the world bounds info
+		writer.Write(minX);
+		writer.Write(maxX);
+		writer.Write(minY);
+		writer.Write(maxY);
 		writer.Write(cell_size);
-		writer.Write(outputMapWidth);
-
-		//std::vector<CL_IODevice> tempFiles;
-		//unsigned int cellIndex = 0;
 
 		size_t locationsOffset = fileStream.tellp();
 		{
@@ -322,43 +300,35 @@ namespace FusionEngine
 
 		{
 			// Buffer for copying data out of the cache files
-			std::vector<char> buffer(1048576);
+			std::vector<char> buffer(4096);
 
-			//for (size_t y = topMargin; y < bottomMargin; ++y)
-			//{
-			//	for (size_t x = leftMargin; x < rightMargin; ++x)
-			//	{
-			for (size_t i = cell_cache->GetBeginCellCoord(); i < baseNumCells; ++i)
+			for (int32_t y = minX; y <= maxX; ++y)
 			{
-					//const size_t baseIndex = y * baseWidth + x;
-					//const size_t outputIndex = (y - topMargin) * outputCellsAcross + (x - leftMargin);
+				for (int32_t x = minY; x <= maxY; ++x)
+				{
+					auto cellData = cell_cache->GetCellStreamForReading(x, y);
 
-					//FSN_ASSERT(std::distance(cellDataLocations.begin(), cellDataLocationIt) == outputIndex);
+					// Convert the X,Y grid location to a 1-D array index
+					const size_t i = (y - minY) * cellsAcross + (x - minX);
+					FSN_ASSERT(i < numCells);
 
-				const size_t baseIndex = i;
-
-					CL_IODevice cellData = cell_cache->GetCellData(baseIndex);
-
-					if (!cellData.is_null())
+					if (cellData)
 					{
 						auto& cellDataLocation = cellDataLocations[i];
 						cellDataLocation.first = uint32_t(fileStream.tellp());
 
 						int bytesRead = 0;
-						do
+						while (!cellData->eof())
 						{
-							bytesRead = cellData.read(buffer.data(), buffer.size(), false);
-							if (bytesRead > 0)
-								fileStream.write(buffer.data(), bytesRead);
-						} while (bytesRead == buffer.size());
-
-						FSN_ASSERT(cellData.get_position() == cellData.get_size());
+							cellData->read(buffer.data(), buffer.size());
+							if (cellData->gcount() > 0)
+								fileStream.write(buffer.data(), cellData->gcount());
+						}
 
 						cellDataLocation.second = uint32_t(fileStream.tellp()) - cellDataLocation.first;
 					}
+				}
 			}
-			//	}
-			//}
 		}
 
 		// Store the position of this section to write later

@@ -75,11 +75,8 @@ public:
 	* File to copy
 	* \param[in] from
 	* Target file
-	*
-	* \return
-	* The data copied
 	*/
-	static std::vector<char> copy_file(const std::string& from, const std::string& to);
+	static void copy_file(const std::string& from, const std::string& to);
 };
 
 class SetupPhysFS

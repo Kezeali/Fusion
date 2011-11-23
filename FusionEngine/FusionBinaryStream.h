@@ -91,6 +91,7 @@ namespace FusionEngine
 				template <typename T>
 				T ReadValue()
 				{
+					static_assert(std::is_fundamental<T>::value, "Must actually be a basic type");
 					T value;
 					if (m_Stream->read(reinterpret_cast<char_type*>(&value), sizeof(value)))
 					{

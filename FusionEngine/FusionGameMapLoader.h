@@ -61,7 +61,7 @@ namespace FusionEngine
 		GameMap(CL_IODevice& file);
 
 		// TODO: remove this
-		void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
+		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);
 
 		//! Loads entities that aren't managed by the cell archiver
 		void LoadNonStreamingEntities(bool include_synched, EntityManager* entityManager, EntityFactory* factory, InstancingSynchroniser* instantiator);
@@ -70,6 +70,8 @@ namespace FusionEngine
 
 		static void CompileMap(std::ostream& device, unsigned int baseWidth, float map_size, float cell_size, CellCache* cache, const std::vector<EntityPtr>& nonStreamingEntities);
 
+		const std::string& GetName() const { return m_Name; }
+
 		float GetMapWidth() const;
 		unsigned int GetNumCellsAcross() const;
 		float GetCellSize() const;
@@ -77,6 +79,7 @@ namespace FusionEngine
 		uint32_t GetNonStreamingEntitiesLocation() const { return m_NonStreamingEntitiesLocation; }
 
 	private:
+		std::string m_Name;
 		CL_IODevice m_File;
 		std::vector<std::pair<uint32_t, uint32_t>> m_CellLocations; // Locations within the file for each cell
 		uint32_t m_NonStreamingEntitiesLocation;
@@ -84,6 +87,7 @@ namespace FusionEngine
 		unsigned int m_XCells;
 		Vector2T<int32_t> m_MinCell;
 		Vector2T<int32_t> m_MaxCell;
+		Vector2T<uint32_t> m_NumCells;
 		float m_CellSize;
 		float m_MapWidth;
 	};

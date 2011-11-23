@@ -41,15 +41,18 @@
 
 #include "FusionBinaryStream.h"
 
+#pragma warning( push );
+#pragma warning( disable: 244; )
 #include <kchashdb.h>
+#pragma warning( pop );
 
 namespace FusionEngine
 {
 
 	static const size_t s_DefaultRegionSize = 4;
 
-	RegionMapLoader::RegionMapLoader(bool edit_mode, RegionCellCache* cache)
-		: m_Cache(cache),
+	RegionMapLoader::RegionMapLoader(bool edit_mode, const std::string& cache_path)
+		: m_CachePath(cache_path),
 		m_NewData(false),
 		m_Instantiator(nullptr),
 		m_Running(false),
@@ -58,10 +61,9 @@ namespace FusionEngine
 		m_EndIndex(0),
 		m_RegionSize(s_DefaultRegionSize)
 	{
-		std::string cache_path; // TODO: make this a ctor param, rather than RegionCellCache* (create the RegionCellCache internally)
-
+		m_Cache = new RegionCellCache(cache_path);
 		m_FullBasePath = PHYSFS_getWriteDir();
-		m_FullBasePath += cache_path + "/";
+		m_FullBasePath += m_CachePath + "/";
 	}
 
 	RegionMapLoader::~RegionMapLoader()
@@ -78,35 +80,41 @@ namespace FusionEngine
 	{
 		m_Map = map;
 
-		//PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "entitylocations.kc");
+		PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "entitylocations.kc");
 		if (m_EntityLocationDB)
 			m_EntityLocationDB->close();
 		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
 		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
 	}
 
-	void RegionMapLoader::Update(ObjectID id, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
+	void RegionMapLoader::Update(ObjectID id, const RegionMapLoader::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
 	{
-		m_ObjectUpdateQueue.push(std::make_tuple(id, std::move(continuous), std::move(occasional)));
+		m_ObjectUpdateQueue.push(std::make_tuple(id, new_location, std::move(continuous), std::move(occasional)));
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Store(Cell* cell, size_t i)
+	void RegionMapLoader::Update(ObjectID id, int32_t new_x, int32_t new_y)
+	{
+		m_ObjectUpdateQueue.push(std::make_tuple(id, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
+		m_NewData.set();
+	}
+
+	void RegionMapLoader::Store(int32_t x, int32_t y, Cell* cell)
 	{
 		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 		{
 			cell->AddHist("Enqueued Out");
-			m_WriteQueue.push(std::make_tuple(cell, i));
+			m_WriteQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
 			m_NewData.set();
 		}
 	}
 
-	bool RegionMapLoader::Retrieve(Cell* cell, size_t i)
+	bool RegionMapLoader::Retrieve(int32_t x, int32_t y, Cell* cell)
 	{
 		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 		{
 			cell->AddHist("Enqueued In");
-			m_ReadQueue.push(std::make_tuple(cell, i));
+			m_ReadQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
 			m_NewData.set();
 			return true;
 		}
@@ -153,68 +161,14 @@ namespace FusionEngine
 		}
 	}
 
-	std::unique_ptr<ArchiveIStream> RegionMapLoader::GetCellStreamForReading(size_t cell_x, size_t cell_y)
+	std::unique_ptr<std::istream> RegionMapLoader::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
 	{
-		try
-		{
-			CellCoord_t regionCoord(cell_x / m_RegionSize, cell_y / m_RegionSize);
-
-			auto cacheEntry = m_Cache.find(regionCoord);
-
-			if (cacheEntry != m_Cache.end())
-			{
-				std::stringstream str; str << regionCoord.x << "." << regionCoord.y;
-				std::string filename = "cache/" + str.str();
-				if (PHYSFS_exists(filename.c_str()))
-				{
-					//CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-					//auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
-
-					std::unique_ptr<ArchiveIStream> stream(new ArchiveIStream());
-					stream->push(boost::iostreams::zlib_decompressor());
-					stream->push(IO::PhysFSDevice(filename, IO::Read));
-					return std::move(stream);
-				}
-			}
-
-			return std::unique_ptr<ArchiveIStream>();
-		}
-		catch (CL_Exception& ex)
-		{
-			SendToConsole(ex.what());
-			return std::unique_ptr<ArchiveIStream>();
-		}
+		return m_Cache->GetCellStreamForReading(cell_x, cell_y);
 	}
 
-	RegionFile& RegionMapLoader::CacheRegionFile(RegionMapLoader::CellCoord_t& coord)
+	std::unique_ptr<std::ostream> RegionMapLoader::GetCellStreamForWriting(int32_t cell_x, int32_t cell_y)
 	{
-		std::stringstream str; str << coord.x << "." << coord.y;
-
-		return m_Cache[coord] = RegionFile("cache/" + str.str());
-	}
-
-	std::unique_ptr<ArchiveOStream> RegionMapLoader::GetCellStreamForWriting(size_t cell_x, size_t cell_y)
-	{
-		try
-		{
-			CellCoord_t regionCoord(cell_x / m_RegionSize, cell_y / m_RegionSize);
-			auto& cacheEntry = m_Cache.find(regionCoord);
-			if (cacheEntry != m_Cache.end())
-			{
-				auto& regionFile = cacheEntry->second;
-				return regionFile.getOutputCellData(cell_x, cell_y);
-			}
-			else
-			{
-				auto& regionFile = CacheRegionFile(regionCoord);
-				return regionFile.getOutputCellData(cell_x, cell_y);
-			}
-		}
-		catch (CL_Exception& ex)
-		{
-			SendToConsole(ex.what());
-			return std::unique_ptr<ArchiveOStream>();
-		}
+		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
 
 	CL_IODevice RegionMapLoader::GetCellData(size_t index) const
@@ -250,6 +204,14 @@ namespace FusionEngine
 	{
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
+
+		// Skip the ID header-data (is only used when updating inactive cells)
+		if (data_includes_ids)
+		{
+			file.seekg(numEntries * (sizeof(ObjectID) + sizeof(std::streamoff)), std::ios::cur);
+		}
+
+		// Read entity data
 		for (size_t n = 0; n < numEntries; ++n)
 		{
 			//auto& archivedEntity = *it;
@@ -260,12 +222,57 @@ namespace FusionEngine
 			CellEntry entry;
 			entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
 
-			// TODO: SetStreamingCellCoord(x, y)
-			archivedEntity->SetStreamingCellIndex(coord.x);
+			archivedEntity->SetStreamingCellIndex(coord);
 
 			cell->objects.push_back(std::make_pair(archivedEntity, std::move(entry)));
 		}
 		return numEntries;
+	}
+
+	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
+	void WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched)
+	{
+		using namespace EntitySerialisationUtils;
+
+		IO::Streams::CellStreamWriter writer(&file);
+
+		writer.Write(expectedNumEntries);
+
+		std::vector<std::pair<ObjectID, std::streamoff>> dataPositions;
+		auto headerPos = file.tellp();
+		if (synched)
+		{
+			// Leave some space for the header data
+			const std::vector<char> headerSpace(expectedNumEntries * (sizeof(ObjectID) + sizeof(std::streamoff)));
+			file.write(headerSpace.data(), headerSpace.size());
+
+			dataPositions.reserve(expectedNumEntries);
+		}
+
+		for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+		{
+			const bool entSynched = it->first->IsSyncedEntity();
+			if (entSynched == synched)
+			{
+				if (entSynched)
+					dataPositions.push_back(std::make_pair(it->first->GetID(), file.tellp())); // Remember where this data starts, so the header can be written
+
+				SaveEntity(file, it->first, false);
+				FSN_ASSERT(expectedNumEntries-- > 0); // Confirm the number of synched / unsynched entities expected
+			}
+		}
+
+		// Write the header if this is ID'd ("synched") data
+		if (synched)
+		{
+			file.seekp(headerPos);
+
+			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
+			{
+				writer.Write(it->first);
+				writer.Write(it->second);
+			}
+		}
 	}
 
 	void RegionMapLoader::Run()
@@ -276,8 +283,8 @@ namespace FusionEngine
 		// TODO: make m_NewData not auto-reset
 		while (CL_Event::wait(m_Quit, m_NewData, retrying ? 100 : -1) != 0)
 		{
-			std::list<std::tuple<Cell*, size_t>> writesToRetry;
-			std::list<std::tuple<Cell*, size_t>> readsToRetry;
+			std::list<std::tuple<Cell*, CellCoord_t>> writesToRetry;
+			std::list<std::tuple<Cell*, CellCoord_t>> readsToRetry;
 
 			// Read / write cell data
 			{
@@ -306,20 +313,6 @@ namespace FusionEngine
 										++numSynched;
 								});
 
-								auto write = [](ArchiveOStream& file, const Cell* cell, size_t numEntries, const bool synched)
-								{
-									using namespace EntitySerialisationUtils;
-									file.write(reinterpret_cast<const char*>(&numEntries), sizeof(size_t));
-									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
-									{
-										if (it->first->IsSyncedEntity() == synched)
-										{
-											SaveEntity(file, it->first, synched);
-											FSN_ASSERT(numEntries-- > 0);
-										}
-									}
-								};
-
 								if (m_EditMode)
 								{
 									if (numSynched > 0 || numPseudo > 0)
@@ -330,25 +323,17 @@ namespace FusionEngine
 											auto& file = *filePtr;
 											//m_BeginIndex = std::min(cell_coord, m_BeginIndex);
 											//m_EndIndex = std::max(cell_coord, m_EndIndex);
-											write(file, cell, numPseudo, false);
-											write(file, cell, numSynched, true);
+											WriteCell(file, cell, numPseudo, false);
+											WriteCell(file, cell, numSynched, true);
 										}
 										else
-											FSN_EXCEPT(FileSystemException, "Failed to open file to dump edit-mode cache");
+											FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
 									}
 								}
 								else if (numSynched > 0)
 								{
-									auto filePtr = GetCellStreamForWriting(i);
-									filePtr->write(reinterpret_cast<const char*>(&numSynched), sizeof(size_t));
-									for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
-									{
-										if (it->first->IsSyncedEntity())
-										{
-											SaveEntity(*filePtr, it->first, true);
-											FSN_ASSERT(numSynched-- > 0);
-										}
-									}
+									auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
+									WriteCell(*filePtr, cell, numSynched, true);
 								}
 
 								cell->AddHist("Written and cleared", numSynched);
@@ -365,8 +350,8 @@ namespace FusionEngine
 							}
 							catch (...)
 							{
-								std::stringstream str; str << i;
-								SendToConsole("Exception streaming out cell " + str.str());
+								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+								SendToConsole("Exception streaming out cell [" + str.str() + "]");
 							}
 						}
 						else
@@ -381,8 +366,8 @@ namespace FusionEngine
 					else
 					{
 						cell->AddHist("Cell locked (will retry write later)");
-						std::stringstream str; str << i;
-						SendToConsole("Retrying write on cell " + str.str());
+						std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+						SendToConsole("Retrying write on cell [" + str.str() + "]");
 						writesToRetry.push_back(toWrite);
 					}
 				}
@@ -404,11 +389,12 @@ namespace FusionEngine
 								// Last param makes the method load synched entities from the map if the cache file isn't available:
 								if (m_Map)
 								{
-									// Load synched entities if this cell is uncached (hasn't been loaded before)
-									bool uncached = m_SynchLoaded.insert(cell_coord).second;
+									// Load synched entities if this cell is un-cached (hasn't been loaded before)
+									bool uncached = m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
 
 									//m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 									auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
+
 									namespace io = boost::iostreams;
 									io::filtering_istream inflateStream;
 									inflateStream.push(io::zlib_decompressor());
@@ -475,30 +461,66 @@ namespace FusionEngine
 			using namespace IO;
 
 			{
-				std::tuple<ObjectID, std::vector<unsigned char>, std::vector<unsigned char>> objectUpdateData;
+				std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>> objectUpdateData;
 				while (m_ObjectUpdateQueue.try_pop(objectUpdateData))
 				{
 					const ObjectID id = std::get<0>(objectUpdateData);
-					auto& incommingConData = std::get<1>(objectUpdateData);
-					auto& incommingOccData = std::get<2>(objectUpdateData);
+					CellCoord_t new_loc = std::get<1>(objectUpdateData);
+					auto& incommingConData = std::get<2>(objectUpdateData);
+					auto& incommingOccData = std::get<3>(objectUpdateData);
 
 					CellCoord_t loc;
 					m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
+
+					// Skip if nothing has changed
+					if (new_loc == loc && incommingConData.empty() && incommingOccData.empty())
+						continue;
+
+					m_EntityLocationDB->set((const char*)&id, sizeof(id), (char*)&new_loc, sizeof(new_loc));
 					//const auto loc = m_EntityLocations[id];
 
-					auto inData = new std::ifstream();//GetCellStreamForReading(loc.x, loc.y);
-					auto outData = new std::ofstream();//GetCellStreamForWriting(loc.x, loc.y);
+					auto inData = GetCellStreamForReading(loc.x, loc.y);
+					auto outData = GetCellStreamForWriting(new_loc.x, new_loc.y);
 
-					RakNet::BitStream iConDataStream(incommingConData.data(), incommingConData.size(), false);
-					RakNet::BitStream iOccDataStream(incommingOccData.data(), incommingOccData.size(), false);
+					if (!incommingConData.empty() || !incommingOccData.empty())
+					{
+						RakNet::BitStream iConDataStream(incommingConData.data(), incommingConData.size(), false);
+						RakNet::BitStream iOccDataStream(incommingOccData.data(), incommingOccData.size(), false);
 
-					MergeEntityData(*inData, *outData, iConDataStream, iOccDataStream);
+						MergeEntityData(id, *inData, *outData, iConDataStream, iOccDataStream);
+					}
+					else
+					{
+						MoveEntityData(id, *inData, *outData);
+					}
 				}
 			}
 
 			/*std::stringstream str;
 			str << m_Archived.size();
 			SendToConsole(str.str() + " cells archived");*/
+		}
+	}
+
+	void RegionMapLoader::MergeEntityData(ObjectID id, ICellStream& in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
+	{
+		std::array<char, 4096> buffer;
+
+		while (!in.eof())
+		{
+			in.read(buffer.data(), buffer.size());
+			out.write(buffer.data(), in.gcount());
+		}
+	}
+
+	void RegionMapLoader::MoveEntityData(ObjectID id, ICellStream& in, OCellStream& out) const
+	{
+		std::array<char, 4096> buffer;
+
+		while (!in.eof())
+		{
+			in.read(buffer.data(), buffer.size());
+			out.write(buffer.data(), in.gcount());
 		}
 	}
 

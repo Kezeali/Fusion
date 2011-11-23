@@ -292,13 +292,9 @@ namespace FusionEngine
 		TiXmlDocument* inner = nullptr;
 		// Create the file if it doesn't exist
 		if (PHYSFS_exists(filename.c_str()) == 0)
-		{
-			std::vector<char> buffer = PhysFSHelp::copy_file("default-" + filename, filename);
-			inner = new TiXmlDocument();
-			inner->Parse(buffer.data());
-		}
-		else
-			inner = OpenXml_PhysFS(filename);
+			PhysFSHelp::copy_file("default-" + filename, filename);
+
+		inner = OpenXml_PhysFS(filename);
 		// Read the file
 		ticpp::Document doc(inner);
 		loadControls(&doc);

@@ -41,27 +41,40 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
 
-std::vector<char> PhysFSHelp::copy_file(const std::string& from, const std::string& to)
+void PhysFSHelp::copy_file(const std::string& from, const std::string& to)
 {
 	PHYSFS_File *fromFile = PHYSFS_openRead(from.c_str());
 	if (fromFile == nullptr)
 		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to open " + from + " for copying (probably doesn't exist).");
 	PHYSFS_File *toFile = PHYSFS_openWrite(to.c_str());
 	if (toFile == nullptr)
+	{
+		PHYSFS_close(fromFile);
 		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to create / overwrite target file " + to + ".");
+	}
+	try
+	{
+		std::vector<char> buffer(4096);
+		PHYSFS_sint64 readLength = 0;
+		do
+		{
+			readLength = PHYSFS_read(fromFile, buffer.data(), sizeof(char), buffer.size());
+			if (readLength < 0)
+				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying.");
 
-	PHYSFS_sint32 totalLength = (PHYSFS_sint32)PHYSFS_fileLength(fromFile);
-	std::vector<char> buffer(totalLength);
-	PHYSFS_sint64 readLength = 0;
-	readLength = PHYSFS_read(fromFile, buffer.data(), totalLength, 1);
-	if (readLength != 1)
-		FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying."); // failed to read the default file
-	// Write the copy of the file
-	PHYSFS_write(toFile, buffer.data(), totalLength, 1);
+			if (PHYSFS_write(toFile, buffer.data(), sizeof(char), (PHYSFS_uint32)readLength) != readLength)
+				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to write " + to + " when copying.");
+		} while (!PHYSFS_eof(fromFile));
+	}
+	catch (FusionEngine::FileSystemException&)
+	{
+		PHYSFS_close(toFile);
+		PHYSFS_close(fromFile);
+		throw;
+	}
+
 	PHYSFS_close(toFile);
 	PHYSFS_close(fromFile);
-
-	return buffer;
 }
 
 SetupPhysFS::SetupPhysFS()

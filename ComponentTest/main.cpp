@@ -420,7 +420,6 @@ public:
 
 				std::unique_ptr<PlayerManager> playerManager(new PlayerManager());
 
-				std::unique_ptr<RegionCellCache> cellCache(new RegionCellCache());
 				std::unique_ptr<RegionMapLoader> cellArchivist(new RegionMapLoader(editMode));
 				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
 

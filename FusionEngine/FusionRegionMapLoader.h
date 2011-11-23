@@ -64,19 +64,22 @@ namespace FusionEngine
 
 	class RegionCellCache;
 
+	typedef boost::iostreams::filtering_istream RegionIStream;
+	typedef boost::iostreams::filtering_ostream RegionOStream;
+
 	//! CellArchiver implementaion
 	// TODO: rename to RegionCellArchivist
 	class RegionMapLoader : public CellDataSource
 	{
 	public:
-		typedef Vector2T<uint32_t> CellCoord_t;
+		typedef Vector2T<int32_t> CellCoord_t;
 
 		//! Ctor
 		/*
 		* The map provides a static entity source, whilst the CellArchiver (cache) provides methods for 
 		* storing and retrieving entity states.
 		*/
-		RegionMapLoader(bool edit_mod, RegionCellCache* cache);
+		RegionMapLoader(bool edit_mod, const std::string& cache_path = "/cache");
 		~RegionMapLoader();
 
 		InstancingSynchroniser* m_Instantiator;
@@ -85,16 +88,18 @@ namespace FusionEngine
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);
 
-		void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional, size_t occ_length)
+		void Update(ObjectID id, int32_t new_x, int32_t new_y);
+
+		void Update(ObjectID id, int32_t new_x, int32_t new_y, unsigned char* continuous, size_t con_length, unsigned char* occasional, size_t occ_length)
 		{
-			Update(id, std::vector<unsigned char>(continuous, continuous + con_length), std::vector<unsigned char>(occasional, occasional + occ_length));
+			Update(id, CellCoord_t(new_x, new_y), std::vector<unsigned char>(continuous, continuous + con_length), std::vector<unsigned char>(occasional, occasional + occ_length));
 		}
 
-		void Update(ObjectID id, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional);
+		void Update(ObjectID id, const CellCoord_t& expected_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional);
 
-		void Store(Cell* cell, size_t i);
+		void Store(int32_t x, int32_t y, Cell* cell);
 
-		bool Retrieve(Cell* cell, size_t i);
+		bool Retrieve(int32_t x, int32_t y, Cell* cell);
 
 		boost::thread m_Thread;
 
@@ -106,8 +111,8 @@ namespace FusionEngine
 
 		//RegionFile& CacheRegionFile(CellCoord_t& coord);
 
-		//std::unique_ptr<ArchiveIStream> GetCellStreamForReading(uint32_t cell_x, uint32_t cell_y);
-		//std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(uint32_t cell_x, uint32_t cell_y);
+		std::unique_ptr<std::istream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
+		std::unique_ptr<std::ostream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
 		CL_IODevice GetCellData(size_t index) const;
 
@@ -120,6 +125,9 @@ namespace FusionEngine
 
 		void Run();
 
+		void MergeEntityData(ObjectID id, ICellStream& in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
+		void MoveEntityData(ObjectID id, ICellStream& in, OCellStream& out) const;
+
 		bool m_EditMode;
 		bool m_Running;
 
@@ -128,6 +136,7 @@ namespace FusionEngine
 
 		size_t m_RegionSize;
 
+		std::string m_CachePath;
 		RegionCellCache* m_Cache;
 
 		std::string m_FullBasePath;
@@ -138,14 +147,14 @@ namespace FusionEngine
 
 		std::map<ObjectID, CellCoord_t> m_EntityLocations;
 
-		std::unordered_set<CellCoord_t> m_SynchLoaded;
+		std::unordered_set<std::pair<int32_t, int32_t>> m_SynchLoaded;
 
 		//boost::mutex m_WriteQueueMutex;
 		//boost::mutex m_ReadQueueMutex;/*std::queue*/
 		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_WriteQueue;
 		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_ReadQueue;
 
-		tbb::concurrent_queue<std::tuple<ObjectID, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
+		tbb::concurrent_queue<std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
 
 		CL_Event m_NewData;
 		CL_Event m_Quit;

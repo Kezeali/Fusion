@@ -44,11 +44,13 @@ namespace FusionEngine
 	const float StreamingManager::s_SmoothTightness = 0.1f;
 	const float StreamingManager::s_FastTightness = 0.3f;
 
-	const float s_DefaultActivationRange = 1500.f;
-	const float s_DefaultCellSize = 500.f;
+	const float s_DefaultActivationRange = 16.f;
+	const float s_DefaultCellSize = 8.f;
 	const float s_DefaultWorldSize = 200000.f;
 
 	const float s_DefaultDeactivationTime = 0.1f;
+
+	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
@@ -65,7 +67,7 @@ namespace FusionEngine
 #endif
 	}
 
-	StreamingManager::StreamingManager(CellArchiver* archivist, bool initialise)
+	StreamingManager::StreamingManager(CellDataSource* archivist, bool initialise)
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_Archivist(archivist)
 	{
@@ -83,24 +85,24 @@ namespace FusionEngine
 			m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
 			m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
-			m_Cells = new Cell[m_XCellCount * m_YCellCount];
+			//m_Cells = new Cell[m_XCellCount * m_YCellCount];
 		}
-		else // Object will still be valid, just pretty much useless (will also take no time to re-init)
-		{
-			m_Bounds.x = s_DefaultCellSize;
-			m_Bounds.y = s_DefaultCellSize;
+		//else // Object will still be valid, just pretty much useless (will also take no time to re-init)
+		//{
+		//	m_Bounds.x = s_DefaultCellSize;
+		//	m_Bounds.y = s_DefaultCellSize;
 
-			m_Range = s_DefaultActivationRange;
-			m_RangeSquared = m_Range * m_Range;
+		//	m_Range = s_DefaultActivationRange;
+		//	m_RangeSquared = m_Range * m_Range;
 
-			m_CellSize = s_DefaultCellSize;
-			m_InverseCellSize = 1.f / m_CellSize;
+		//	m_CellSize = s_DefaultCellSize;
+		//	m_InverseCellSize = 1.f / m_CellSize;
 
-			m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
-			m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+		//	m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+		//	m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
-			m_Cells = new Cell[m_XCellCount * m_YCellCount];
-		}
+		//	m_Cells = new Cell[m_XCellCount * m_YCellCount];
+		//}
 
 		NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_ADD, this);
 		NetworkManager::getSingleton().Subscribe(MTID_REMOTECAMERA_REMOVE, this);
@@ -112,26 +114,26 @@ namespace FusionEngine
 		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_ADD, this);
 		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_REMOVE, this);
 		NetworkManager::getSingleton().Unsubscribe(MTID_REMOTECAMERA_MOVE, this);
-		delete[] m_Cells;
+		//delete[] m_Cells;
 	}
 
-	void StreamingManager::Initialise(float map_width, unsigned int num_cells_across, float cell_size)
+	void StreamingManager::Initialise(float cell_size)
 	{
-		delete[] m_Cells;
+		//delete[] m_Cells;
 
-		m_Bounds.x = map_width / 2.0f;
-		m_Bounds.y = map_width / 2.0f;
+		//m_Bounds.x = map_width / 2.0f;
+		//m_Bounds.y = map_width / 2.0f;
 
-		m_Range = s_DefaultActivationRange;
-		m_RangeSquared = m_Range * m_Range;
+		//m_Range = s_DefaultActivationRange;
+		//m_RangeSquared = m_Range * m_Range;
 
 		m_CellSize = cell_size;
 		m_InverseCellSize = 1.f / cell_size;
 
-		m_XCellCount = num_cells_across;//(size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
-		m_YCellCount = num_cells_across;//(size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+		//m_XCellCount = num_cells_across;//(size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+		//m_YCellCount = num_cells_across;//(size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
-		m_Cells = new Cell[m_XCellCount * m_YCellCount];
+		//m_Cells = new Cell[m_XCellCount * m_YCellCount];
 	}
 
 #ifndef STREAMING_USEMAP
@@ -338,20 +340,39 @@ namespace FusionEngine
 	//	return area;
 	//}
 
+	CellHandle StreamingManager::ToCellLocation(float x, float y) const
+	{
+		const int32_t ix = (int32_t)(x * m_InverseCellSize + 0.5f);
+		const int32_t iy = (int32_t)(y * m_InverseCellSize + 0.5f);
+		return CellHandle(ix, iy);
+	}
+
+	CellHandle StreamingManager::ToCellLocation(const Vector2& position) const
+	{
+		return ToCellLocation(position.x, position.y);
+	}
+
+	Cell *StreamingManager::CellAtCellLocation(const CellHandle& cell_location)
+	{
+		//return &m_Cells[iy*m_XCellCount+ix];
+		return &m_Cells[cell_location];
+	}
+
 	Cell *StreamingManager::CellAtPosition(float x, float y)
 	{
-#ifdef INFINITE_STREAMING
-		Maths::ClampThis(x, -m_Bounds.x, m_Bounds.x);
-		Maths::ClampThis(y, -m_Bounds.y, m_Bounds.y);
-#endif
-		FSN_ASSERT( x >= -m_Bounds.x );
-		FSN_ASSERT( x <= +m_Bounds.x );
-		FSN_ASSERT( y >= -m_Bounds.y );
-		FSN_ASSERT( y <= +m_Bounds.y );
-		unsigned int ix = Maths::Clamp<unsigned int>( (unsigned int)( (x + m_Bounds.x) * m_InverseCellSize ), 0, m_XCellCount - 1 );
-		unsigned int iy = Maths::Clamp<unsigned int>( (unsigned int)( (y + m_Bounds.y) * m_InverseCellSize ), 0, m_YCellCount - 1 );
-		FSN_ASSERT( iy*m_XCellCount+ix < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/ );
-		return &m_Cells[iy*m_XCellCount+ix];
+//#ifdef INFINITE_STREAMING
+//		Maths::ClampThis(x, -m_Bounds.x, m_Bounds.x);
+//		Maths::ClampThis(y, -m_Bounds.y, m_Bounds.y);
+//#endif
+//		FSN_ASSERT( x >= -m_Bounds.x );
+//		FSN_ASSERT( x <= +m_Bounds.x );
+//		FSN_ASSERT( y >= -m_Bounds.y );
+//		FSN_ASSERT( y <= +m_Bounds.y );
+//		unsigned int ix = Maths::Clamp<unsigned int>( (unsigned int)( (x + m_Bounds.x) * m_InverseCellSize ), 0, m_XCellCount - 1 );
+//		unsigned int iy = Maths::Clamp<unsigned int>( (unsigned int)( (y + m_Bounds.y) * m_InverseCellSize ), 0, m_YCellCount - 1 );
+//		FSN_ASSERT( iy*m_XCellCount+ix < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/ );
+		
+		return CellAtCellLocation(ToCellLocation(x, y));
 	}
 	
 	Cell *StreamingManager::CellAtPosition(const Vector2 &position)
@@ -359,28 +380,39 @@ namespace FusionEngine
 		return CellAtPosition(position.x, position.y);
 	}
 
+	std::pair<CellHandle, Cell*> StreamingManager::CellAndLocationAtPosition(const Vector2& position)
+	{
+		const auto location = ToCellLocation(position.x, position.y);
+		Cell* cell = CellAtCellLocation(location);
+		return std::make_pair(std::move(location), cell);
+	}
+
 	void StreamingManager::DumpAllCells()
 	{
 		while (!m_TheVoid.objects.empty())
 			Update(false);
-		const auto size = m_XCellCount * m_YCellCount;
-		for (size_t i = 0; i < size; ++i)
-		{
-			Cell* cell = &m_Cells[i];
-			m_Archivist->Store(cell, i);
-		}
+		//const auto size = m_XCellCount * m_YCellCount;
+		//for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
+		//{
+		//	const auto& loc = it->first;
+		//	Cell* cell = &(it->second);
+		//	m_Archivist->Store(loc.x, loc.y, cell);
+		//}
 	}
 
 	void StreamingManager::AddEntity(const EntityPtr &entity)
 	{
 		Vector2 entityPosition = entity->GetPosition();
-		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
-		Cell *cell = CellAtPosition(entityPosition);
+		//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
+
+		Cell *cell;
+		CellHandle cellIndex;
+		std::tie(cell, cellIndex) = CellAndLocationAtPosition(entityPosition);
 
 		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 		if (lock && cell->IsLoaded())
 		{
-			entity->SetStreamingCellIndex((size_t)(cell - m_Cells));
+			entity->SetStreamingCellIndex(cellIndex);
 		}
 		else
 		{
@@ -388,7 +420,7 @@ namespace FusionEngine
 			FSN_ASSERT(test);
 			lock.swap(test);
 			cell = &m_TheVoid;
-			entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
+			entity->SetStreamingCellIndex(s_VoidCellIndex);
 		}
 		
 #ifdef STREAMING_USEMAP
@@ -416,23 +448,27 @@ namespace FusionEngine
 
 	void StreamingManager::RemoveEntity(const EntityPtr &entity)
 	{
-		if (entity->GetStreamingCellIndex() != std::numeric_limits<size_t>::max())
+		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
-			FSN_ASSERT(entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount)/*sizeof(m_Cells)*/);
-			Cell *cell = &m_Cells[entity->GetStreamingCellIndex()];
+			auto cellEntry = m_Cells.find(entity->GetStreamingCellIndex());
+			if (cellEntry != m_Cells.end())
+			{
+				Cell *cell = &cellEntry->second;
 #ifdef STREAMING_USEMAP
-			cell->objects.erase(entity.get());
+				cell->objects.erase(entity.get());
 #else
-			removeEntityFromCell(cell, entity/*.get()*/);
+				removeEntityFromCell(cell, entity/*.get()*/);
 #endif
+			}
 		}
 		else
 		{
 			removeEntityFromCell(&m_TheVoid, entity/*.get()*/);
 		}
-
+		
+		m_Archivist->Remove(entity->GetID());
 		// Remove the entity from the ID -> cell directory
-		m_EntityDirectory.erase(entity->GetID());
+		//m_EntityDirectory.erase(entity->GetID());
 	}
 
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
@@ -442,8 +478,8 @@ namespace FusionEngine
 
 		// clamp the new position within bounds
 		Vector2 newPos = entity->GetPosition();
-		float new_x = fe_clamped(ToGameUnits(newPos.x), -m_Bounds.x, +m_Bounds.x);
-		float new_y = fe_clamped(ToGameUnits(newPos.y), -m_Bounds.y, +m_Bounds.y);
+		float new_x = newPos.x;//fe_clamped(ToGameUnits(newPos.x), -m_Bounds.x, +m_Bounds.x);
+		float new_y = newPos.y;//fe_clamped(ToGameUnits(newPos.y), -m_Bounds.y, +m_Bounds.y);
 
 		// gather all of the data we need about this object
 		Cell *currentCell = nullptr;
@@ -451,9 +487,9 @@ namespace FusionEngine
 		Cell::CellEntryMap::iterator _where;
 
 		Cell::mutex_t::scoped_lock currentCell_lock;
-		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
+		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
-			currentCell = &m_Cells[entity->GetStreamingCellIndex()];
+			currentCell = CellAtCellLocation(entity->GetStreamingCellIndex());
 
 			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
 			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
@@ -466,7 +502,7 @@ namespace FusionEngine
 			FSN_ASSERT( _where != currentCell->objects.end() );
 			cellEntry = &_where->second;
 		}
-		else if (entity->GetStreamingCellIndex() == std::numeric_limits<size_t>::max())
+		else// if (entity->GetStreamingCellIndex() == s_VoidCellIndex)
 		{
 			currentCell = &m_TheVoid;
 
@@ -559,9 +595,9 @@ namespace FusionEngine
 			cellEntry->y = new_y;
 
 			if (currentCell != &m_TheVoid)
-				entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
+				entity->SetStreamingCellIndex(ToCellLocation(new_x, new_y));
 			else
-				entity->SetStreamingCellIndex(std::numeric_limits<size_t>::max());
+				entity->SetStreamingCellIndex(s_VoidCellIndex);
 		}
 
 		// see if the object needs to be activated or deactivated
@@ -578,27 +614,29 @@ namespace FusionEngine
 
 	void StreamingManager::OnUnreferenced(const EntityPtr& entity)
 	{
-		if (entity->GetStreamingCellIndex() < (m_XCellCount * m_YCellCount))
+		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
-			auto& currentCell = m_Cells[entity->GetStreamingCellIndex()];
+			auto currentCell = CellAtCellLocation(entity->GetStreamingCellIndex());
 
-			Cell::mutex_t::scoped_lock lock(currentCell.mutex);
+			Cell::mutex_t::scoped_lock lock(currentCell->mutex);
 
-			auto it = findEntityInCell(&currentCell, entity/*.get()*/);
+			auto it = findEntityInCell(currentCell, entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
-			currentCell.EntryUnreferenced();
+			currentCell->EntryUnreferenced();
 
 			// TODO: record this entity somehow (std::set or flag) so that an assertion can be made
 			//  in OnUpdated to ensure that the entity manager is honest
 
-			if (!currentCell.IsActive() && !currentCell.inRange)
+			if (!currentCell->IsActive() && !currentCell->inRange)
 			{
-				currentCell.AddHist("Store Attempted on Deactivation");
-				m_Archivist->Store(&currentCell, entity->GetStreamingCellIndex());
+				currentCell->AddHist("Store Attempted on Deactivation");
+				auto location = entity->GetStreamingCellIndex();
+				m_Archivist->Store(location.x, location.y, currentCell);
+				m_Cells.erase(location);
 			}
 		}
-		else if (entity->GetStreamingCellIndex() == std::numeric_limits<size_t>::max())
+		else// if (entity->GetStreamingCellIndex() == s_VoidCellIndex)
 		{
 			auto& currentCell = m_TheVoid;
 
@@ -609,11 +647,6 @@ namespace FusionEngine
 
 			currentCell.EntryUnreferenced();
 		}
-
-		// Update the entity-directory
-		// TODO: update this in other places where StreamingCellIndex is changed?
-		if (entity->IsSyncedEntity())
-			m_EntityDirectory[entity->GetID()] = entity->GetStreamingCellIndex();
 	}
 
 	static bool findEntityById(EntityPtr& out, CellEntry*& out2, Cell& cell, ObjectID id)

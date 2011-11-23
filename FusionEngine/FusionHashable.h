@@ -114,6 +114,15 @@ namespace FusionEngine
 		// All elements are equal
 		return false;
 	}
+
+	template <class T>
+	std::size_t hash_value(const Vector2T<T>& vec)
+	{
+		std::size_t seed = 0;
+		boost::hash_combine(seed, vec.x);
+		boost::hash_combine(seed, vec.y);
+		return seed;
+	}
 }
 
 namespace std {

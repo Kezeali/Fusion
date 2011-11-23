@@ -30,13 +30,21 @@
 
 #include "FusionPrerequisites.h"
 
+#include <boost/iostreams/filtering_stream.hpp>
+
 namespace FusionEngine
 {
+	typedef boost::iostreams::filtering_istream ArchiveIStream;
+	typedef boost::iostreams::filtering_ostream ArchiveOStream;
 
+	// TODO: rename to CellDataSource
 	class CellCache
 	{
 	public:
 		virtual ~CellCache() {}
+
+		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
+		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 	};
 
 }

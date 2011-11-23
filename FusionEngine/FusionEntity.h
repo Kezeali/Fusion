@@ -62,6 +62,8 @@ namespace FusionEngine
 
 	typedef std::vector<EntityPtr> EntityArray;
 
+	typedef Vector2T<int32_t> CellHandle;
+
 	/*!
 	 * \brief
 	 * In game object base class
@@ -337,8 +339,8 @@ namespace FusionEngine
 
 		bool IsActive() const;
 
-		void SetStreamingCellIndex(size_t index);
-		size_t GetStreamingCellIndex() const;
+		void SetStreamingCellIndex(CellHandle index);
+		CellHandle GetStreamingCellIndex() const;
 
 		void SetPaused(bool is_paused);
 		bool IsPaused() const;
@@ -476,7 +478,7 @@ namespace FusionEngine
 		// or updated
 		unsigned int m_Flags;
 
-		size_t m_CellIndex;
+		CellHandle m_CellIndex;
 
 		bool m_Spawned;
 		bool m_StreamedIn;

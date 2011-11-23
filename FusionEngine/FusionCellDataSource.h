@@ -35,15 +35,21 @@ namespace FusionEngine
 
 	class Cell;
 
+	// TODO: rename to cellarchiver
+	//! Store and retreive entity data
 	class CellDataSource
 	{
 	public:
 		virtual ~CellDataSource() {}
 
-		virtual void Store(Cell* cell, size_t i) = 0;
-		virtual bool Retrieve(Cell* cell, size_t i) = 0;
+		virtual void Store(int32_t x, int32_t y, Cell* cell) = 0;
+		virtual bool Retrieve(int32_t x, int32_t y, Cell* cell) = 0;
 
-		virtual void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
+		//! Update location and data (inactive cells)
+		virtual void Update(ObjectID id, int32_t new_x, int32_t new_y, unsigned char* continuous, size_t con_length, unsigned char* occasional_begin, size_t occ_length) = 0;
+		//! Update location (active cells)
+		virtual void Update(ObjectID id, int32_t new_x, int32_t new_y) = 0;
+		virtual void Remove(ObjectID id);
 	};
 
 }

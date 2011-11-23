@@ -132,12 +132,10 @@ namespace FusionEngine
 				// Copy the default config file
 				try
 				{
-					std::vector<char> buffer = PhysFSHelp::copy_file("default-" + filename, filename);
+					PhysFSHelp::copy_file("default-" + filename, filename);
 
 					// Parse the xml
-					TiXmlDocument *inner = new TiXmlDocument();
-					inner->Parse(buffer.data());
-					doc = ticpp::Document(inner);
+					doc = ticpp::Document(OpenXml_PhysFS(filename));
 				}
 				catch (FileSystemException&)
 				{

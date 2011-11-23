@@ -45,6 +45,8 @@
 // TEMP:
 #include "FusionPacketHandler.h"
 
+#include "FusionHashable.h"
+
 //#include <tbb/concurrent_unordered_map.h>
 //#include <tbb/mutex.h>
 #include <boost/thread/recursive_mutex.hpp>
@@ -236,7 +238,7 @@ namespace FusionEngine
 		//! Destructor
 		~StreamingManager();
 
-		void Initialise(float map_width, unsigned int num_cells_across, float cell_size);
+		void Initialise(float cell_size);
 
 		void AddCamera(const CameraPtr &cam);
 		void RemoveCamera(const CameraPtr &cam);
@@ -255,8 +257,15 @@ namespace FusionEngine
 		float GetMapWidth() const { return m_Bounds.x * 2.f; }
 		float GetCellSize() const { return m_CellSize; }
 
-		Cell *CellAtPosition(const Vector2 &position);
-		Cell *CellAtPosition(float x, float y);
+		inline CellHandle ToCellLocation(float x, float y) const;
+		inline CellHandle ToCellLocation(const Vector2 &position) const;
+
+		inline Cell *CellAtCellLocation(const CellHandle& cell_location);
+
+		inline Cell *CellAtPosition(float x, float y);
+		inline Cell *CellAtPosition(const Vector2 &position);
+
+		inline std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
 
 		void DumpAllCells();
 
@@ -388,7 +397,9 @@ namespace FusionEngine
 
 		Vector2 m_Bounds;
 
-		Cell *m_Cells;
+		//Cell* m_Cells;
+		std::unordered_map<CellHandle, std::shared_ptr<Cell>, boost::hash<CellHandle>> m_Cells;
+		//std::map<Vector2T<int32_t>, Cell> m_Cells;
 		Cell m_TheVoid;
 		std::set<Cell*> m_CellsBeingLoaded;
 		std::map<Cell*, std::set<ObjectID>> m_RequestedEntities;

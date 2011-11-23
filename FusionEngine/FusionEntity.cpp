@@ -51,7 +51,7 @@ namespace FusionEngine
 		m_Layer(0),
 		m_MarkedToRemove(false),
 		m_StreamedIn(false),
-		m_CellIndex(0xFFFFFFFF),
+		m_CellIndex(0xFFFFFFFF, 0xFFFFFFFF),
 		m_Spawned(false),
 		m_Paused(false),
 		m_Hidden(false),
@@ -527,12 +527,12 @@ namespace FusionEngine
 		return IsStreamedIn();
 	}
 
-	void Entity::SetStreamingCellIndex(size_t index)
+	void Entity::SetStreamingCellIndex(CellHandle index)
 	{
 		m_CellIndex = index;
 	}
 
-	size_t Entity::GetStreamingCellIndex() const
+	CellHandle Entity::GetStreamingCellIndex() const
 	{
 		return m_CellIndex;
 	}

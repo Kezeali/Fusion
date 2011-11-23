@@ -41,7 +41,6 @@
 
 namespace FusionEngine
 {
-
 	
 	//! Unique identifier type for game objects
 	typedef uint32_t ObjectID;
