@@ -73,7 +73,7 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, "The given map file has an invalid header");
 		}
 
-		m_NumCells.x = Vector2T<uint32_t>(m_MaxCell) - m_MinCell;
+		m_NumCells = Vector2T<uint32_t>(m_MaxCell) - m_MinCell;
 
 		m_CellLocations.resize(m_NumCells.x * m_NumCells.y);
 		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
@@ -283,7 +283,7 @@ namespace FusionEngine
 		writer.Write(maxY);
 		writer.Write(cell_size);
 
-		size_t locationsOffset = fileStream.tellp();
+		std::streampos locationsOffset = fileStream.tellp();
 		{
 			uint32_t locationsSpaceSize = numCells * sizeof(uint32_t) * 2;
 			std::vector<char> space(locationsSpaceSize);
@@ -291,7 +291,7 @@ namespace FusionEngine
 		}
 		writer.WriteAs<uint32_t>(0); // Non-streaming entities location
 
-		size_t locationsEndOffset;
+		std::streampos locationsEndOffset;
 #ifdef _DEBUG
 		locationsEndOffset = fileStream.tellp();
 #endif
@@ -332,7 +332,12 @@ namespace FusionEngine
 		}
 
 		// Store the position of this section to write later
-		uint32_t nonStreamingEntitiesLocation = fileStream.tellp();
+		uint32_t nonStreamingEntitiesLocation = 0;
+		{
+			std::streamoff off = fileStream.tellp();
+			if (off > 0)
+				nonStreamingEntitiesLocation = (uint32_t)off;
+		}
 		// The non-streaming entities section
 		{
 		size_t numEnts = nonStreamingEntities.size();

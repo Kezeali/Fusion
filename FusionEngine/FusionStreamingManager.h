@@ -56,6 +56,17 @@ namespace FusionEngine
 
 	class CellDataSource;
 
+	struct CellHandleGreater
+	{
+		bool operator() (const CellHandle& l, const CellHandle& r)
+		{
+			if (l.y == r.y)
+				return l.x < r.x;
+			else
+				return l.y < r.y;
+		}
+	};
+
 	static const float s_DefaultSmoothDecayRate = 0.01f;
 
 	template <typename T>
@@ -398,18 +409,18 @@ namespace FusionEngine
 		Vector2 m_Bounds;
 
 		//Cell* m_Cells;
-		std::unordered_map<CellHandle, std::shared_ptr<Cell>, boost::hash<CellHandle>> m_Cells;
+		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_Cells;
 		//std::map<Vector2T<int32_t>, Cell> m_Cells;
 		Cell m_TheVoid;
-		std::set<Cell*> m_CellsBeingLoaded;
-		std::map<Cell*, std::set<ObjectID>> m_RequestedEntities;
+		std::map<CellHandle, Cell*, CellHandleGreater> m_CellsBeingLoaded;
+		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
-		std::unordered_map<ObjectID, size_t> m_EntityDirectory;
+		//std::unordered_map<ObjectID, size_t> m_EntityDirectory;
 
 		CellDataSource* m_Archivist;
 
 
-		void ActivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
+		void ActivateEntity(const CellHandle& cell_location, Cell &cell, const EntityPtr &entity, CellEntry &entry);
 		void DeactivateEntity(const EntityPtr &entity);
 		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 
@@ -430,9 +441,9 @@ namespace FusionEngine
 
 		void deactivateCells(const CL_Rect& inactiveRange);
 
-		void processCell(Cell& cell, const std::list<Vector2>& cam_position, const std::list<std::pair<Vector2, PlayerID>>& remote_positions);
+		void processCell(const CellHandle& cell_location, Cell& cell, const std::list<Vector2>& cam_position, const std::list<std::pair<Vector2, PlayerID>>& remote_positions);
 
-		void activateInView(Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
+		void activateInView(const CellHandle& cell_location, Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 
 		bool updateStreamingCamera(StreamingCamera &cam, CameraPtr camera);
 	};

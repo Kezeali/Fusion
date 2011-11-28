@@ -615,19 +615,38 @@ namespace FusionEngine
 			//boost::iostreams::stream_buffer<boost::iostreams::array_source> conStream(state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed());
 			//boost::iostreams::stream_buffer<boost::iostreams::array_source> occStream(state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
 			//m_Archivist->Update(id, std::istream(&conStream), std::istream(&occStream));
-			m_Archivist->Update(id, state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed(), state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
+			//m_Archivist->Update(id, state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed(), state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
 
+			std::pair<bool, Vector2> result;
 			if (state.continuous)
 			{
-				auto result = DeserialisePosition(*state.continuous, Vector2(), 0.f);
+				result = DeserialisePosition(*state.continuous, Vector2(), 0.f);
 				if (result.first)
+				{
 					m_CameraSynchroniser->SetCameraPosition(id, result.second);
+				}
 			}
 			else if (state.occasional)
 			{
-				auto result = DeserialisePosition(*state.occasional, Vector2(), 0.f);
+				result = DeserialisePosition(*state.occasional, Vector2(), 0.f);
 				if (result.first)
+				{
 					m_CameraSynchroniser->SetCameraPosition(id, result.second);
+				}
+			}
+
+			if (result.first)
+			{
+				// A position was retrieved from the incomming data
+				//  (position may not be present as entity state is spread across multiple packets)
+				//m_StreamingManager->UpdateInactiveEntity(id, result.second, state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed(), state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
+			}
+			else
+			{
+				// No position value retrieved
+				m_Archivist->Update(id,
+					state.continuous ? state.continuous->GetData() : nullptr, state.continuous ? state.continuous->GetNumberOfBytesUsed() : 0u,
+					state.occasional ? state.occasional->GetData() : nullptr, state.occasional ? state.occasional->GetNumberOfBytesUsed() : 0u);
 			}
 		}
 

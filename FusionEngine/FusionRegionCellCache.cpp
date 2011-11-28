@@ -49,7 +49,67 @@ namespace FusionEngine
 	static const uint8_t s_CellDataVersion = 1;
 
 	static std::array<char, s_SectorSize> s_EmptySectorData;
-	
+
+	std::streamsize SmartArrayDevice::read(char_type* s, std::streamsize n)
+	{
+		using namespace std;
+		streamsize amt = static_cast<streamsize>(data->size() - position);
+		streamsize result = (min)(n, amt);
+		if (result != 0)
+		{
+			std::copy( data->begin() + position, 
+				data->begin() + position + result, 
+				s );
+			position += result;
+			return result;
+		}
+		else
+		{
+			return -1; // EOF
+		}
+	}
+	std::streamsize SmartArrayDevice::write(const char_type* s, std::streamsize n)
+	{
+		using namespace std;
+		streamsize result = 0;
+		if (position != data->size())
+		{
+			streamsize amt = 
+				static_cast<streamsize>(data->size() - position);
+			result = (min)(n, amt);
+			std::copy(s, s + result, data->begin() + position);
+			position += result;
+		}
+		if (result < n)
+		{
+			data->insert(data->end(), s, s + n);
+			position = data->size();
+		}
+		return n;
+	}
+	boost::iostreams::stream_offset SmartArrayDevice::seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way)
+		{
+			using namespace std;
+			using namespace boost::iostreams;
+			// Determine new value of pos_
+			stream_offset next;
+			if (way == ios_base::beg)
+				next = off;
+			else if (way == ios_base::cur)
+				next = position + off;
+			else if (way == ios_base::end)
+				next = data->size() + off - 1;
+			else
+				throw ios_base::failure("bad seek direction");
+
+			// Check for errors
+			if (next < 0 || next >= data->size())
+				throw ios_base::failure("bad seek offset");
+
+			position = next;
+			return position;
+		}
+
 	CellBuffer::~CellBuffer()
 	{
 		FSN_ASSERT(parent);
