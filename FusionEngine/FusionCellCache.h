@@ -43,8 +43,8 @@ namespace FusionEngine
 	public:
 		virtual ~CellCache() {}
 
-		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
-		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
+		virtual std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
+		virtual std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y) = 0;
 	};
 
 }

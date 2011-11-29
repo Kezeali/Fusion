@@ -146,10 +146,11 @@ namespace FusionEngine
 		}
 	}
 
-	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser)
+	EntitySynchroniser::EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser, StreamingManager* strm_mgr)
 		: m_InputManager(input_manager),
 		m_PlayerInputs(new ConsolidatedInput(input_manager)),
 		m_CameraSynchroniser(camera_synchroniser),
+		m_StreamingManager(strm_mgr),
 		m_SendTick(0),
 		m_JitterBufferTargetLength(100),
 		m_UseJitterBuffer(true),
@@ -610,7 +611,6 @@ namespace FusionEngine
 
 			const ObjectID id = it->first;
 			const auto& state = it->second;
-			size_t cellIndex;
 
 			//boost::iostreams::stream_buffer<boost::iostreams::array_source> conStream(state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed());
 			//boost::iostreams::stream_buffer<boost::iostreams::array_source> occStream(state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
@@ -639,7 +639,7 @@ namespace FusionEngine
 			{
 				// A position was retrieved from the incomming data
 				//  (position may not be present as entity state is spread across multiple packets)
-				//m_StreamingManager->UpdateInactiveEntity(id, result.second, state.continuous->GetData(), state.continuous->GetNumberOfBytesUsed(), state.occasional->GetData(), state.occasional->GetNumberOfBytesUsed());
+				m_StreamingManager->UpdateInactiveEntity(id, result.second, *state.continuous, *state.occasional);
 			}
 			else
 			{

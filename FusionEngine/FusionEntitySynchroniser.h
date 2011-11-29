@@ -87,7 +87,7 @@ namespace FusionEngine
 	class EntitySynchroniser : public PacketHandler
 	{
 	public:
-		EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser);
+		EntitySynchroniser(InputManager *input_manager, CameraSynchroniser* camera_synchroniser, StreamingManager* streaming_manager);
 		~EntitySynchroniser();
 
 		void SetUseJitterBuffer(bool use) { m_UseJitterBuffer = use; }
@@ -131,6 +131,7 @@ namespace FusionEngine
 		CameraSynchroniser* m_CameraSynchroniser;
 
 		CellDataSource* m_Archivist;
+		StreamingManager* m_StreamingManager;
 
 		RakNetwork *m_Network;
 

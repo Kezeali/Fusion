@@ -427,7 +427,7 @@ public:
 
 				// Entity management / instantiation
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
-				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get()));
+				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get(), streamingMgr.get()));
 				
 				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
@@ -447,7 +447,7 @@ public:
 					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
 					cellArchivist->SetMap(map);
 
-					streamingMgr->Initialise(map->GetMapWidth(), map->GetNumCellsAcross(), map->GetCellSize());
+					streamingMgr->Initialise(map->GetCellSize());
 				}
 
 				cellArchivist->Start();
@@ -717,7 +717,7 @@ public:
 						//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 						//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
 						IO::PhysFSStream file("default.gad", IO::Write);
-						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), streamingMgr->GetMapWidth(), streamingMgr->GetCellSize(), cellArchivist.get(), entities);
+						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), streamingMgr->GetMapWidth(), streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
 						cellArchivist->Start();
 
 						streamingMgr->Update(true);

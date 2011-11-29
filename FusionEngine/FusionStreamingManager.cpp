@@ -405,9 +405,8 @@ namespace FusionEngine
 		Vector2 entityPosition = entity->GetPosition();
 		//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 
-		Cell *cell;
-		CellHandle cellIndex;
-		std::tie(cell, cellIndex) = CellAndLocationAtPosition(entityPosition);
+		CellHandle cellIndex = ToCellLocation(entityPosition);
+		Cell* cell = CellAtCellLocation(cellIndex);
 
 		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 		if (lock && cell->IsLoaded())
@@ -433,11 +432,11 @@ namespace FusionEngine
 		//if (lock.owns_lock())
 		//	lock.unlock();
 
-		activateInView(cell, &entry, entity, true);
+		activateInView(cellIndex, cell, &entry, entity, true);
 		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
 		{
 			//cell->EntryReferenced(); // Otherwise the counter will be off when OnDeactivated is called
-			ActivateEntity(*cell, entity, entry);
+			ActivateEntity(cellIndex, *cell, entity, entry);
 			QueueEntityForDeactivation(entry, true);
 		}
 
@@ -530,12 +529,13 @@ namespace FusionEngine
 		bool move = !fe_fequal(cellEntry->x, new_x) || !fe_fequal(cellEntry->y, new_y);
 		bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
 
-		// move the object, updating the current cell if necessary
-		Cell *newCell = CellAtPosition(new_x, new_y);
+		// Move the object, updating the current cell if necessary
+		CellHandle newCellLocation = ToCellLocation(new_x, new_y);
+		Cell *newCell = CellAtCellLocation(newCellLocation);
 		FSN_ASSERT( newCell );
-		if ( currentCell == newCell )
+		if (currentCell == newCell)
 		{
-			// common case: same cell
+			// Common case: same cell (just update the cached position)
 			cellEntry->x = new_x;
 			cellEntry->y = new_y;
 		}
@@ -544,7 +544,9 @@ namespace FusionEngine
 			Cell::mutex_t::scoped_try_lock newCell_lock(newCell->mutex);
 			if (!newCell_lock || !newCell->IsLoaded())
 			{
+				// Since the target cell isn't ready, move the entity into The Void (temporarily)
 				newCell = &m_TheVoid;
+				newCellLocation = s_VoidCellIndex;
 				
 				if (currentCell != &m_TheVoid)
 				{
@@ -594,15 +596,16 @@ namespace FusionEngine
 			cellEntry->x = new_x;
 			cellEntry->y = new_y;
 
-			if (currentCell != &m_TheVoid)
-				entity->SetStreamingCellIndex(ToCellLocation(new_x, new_y));
-			else
-				entity->SetStreamingCellIndex(s_VoidCellIndex);
+			entity->SetStreamingCellIndex(newCellLocation);
+			if (entity->IsSyncedEntity())
+				m_Archivist->Update(entity->GetID(), newCellLocation.x, newCellLocation.y);
 		}
 
 		// see if the object needs to be activated or deactivated
 		if (move)
-			activateInView(currentCell, cellEntry, entity, warp);
+		{
+			activateInView(newCellLocation, currentCell, cellEntry, entity, warp);
+		}
 
 		if (cellEntry->pendingDeactivation)
 		{
@@ -610,6 +613,14 @@ namespace FusionEngine
 			if (cellEntry->pendingDeactivationTime <= 0.0f)
 				DeactivateEntity(*currentCell, entity, *cellEntry);
 		}
+	}
+
+	void StreamingManager::UpdateInactiveEntity(ObjectID id, const Vector2& position, const RakNet::BitStream& continuous_data, const RakNet::BitStream& occasional_data)
+	{
+		CellHandle location = ToCellLocation(position);
+		m_Archivist->Update(id, location.x, location.y,
+			continuous_data.GetData(), continuous_data.GetNumberOfBytesUsed(),
+			occasional_data.GetData(), occasional_data.GetNumberOfBytesUsed());
 	}
 
 	void StreamingManager::OnUnreferenced(const EntityPtr& entity)
@@ -700,14 +711,14 @@ namespace FusionEngine
 			}
 			else// if (loc == s_VoidCellIndex)
 			{
-				Cell& cell = m_TheVoid;
+				Cell* cell = &m_TheVoid;
 				EntityPtr entity;
 				CellEntry* entry = nullptr;
 				if (findEntityById(entity, entry, cell, id))
 				{
 					FSN_ASSERT(entity && entry);
 					if (!entry->active)
-						ActivateEntity(cell, entity, *entry);
+						ActivateEntity(s_VoidCellIndex, *cell, entity, *entry);
 					return true;
 				}
 			}
@@ -1426,7 +1437,7 @@ namespace FusionEngine
 							{
 								cell->AddHist("Retrieved due to entering range");
 								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-								m_CellsBeingLoaded.insert(it);
+								m_CellsBeingLoaded.insert(*it);
 							}
 						}
 						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)

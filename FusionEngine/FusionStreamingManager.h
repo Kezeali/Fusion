@@ -286,6 +286,9 @@ namespace FusionEngine
 		void OnUpdated(const EntityPtr &entity, float dt);
 		void OnUnreferenced(const EntityPtr& entity);
 
+		//! Move & update archived entity data
+		void UpdateInactiveEntity(ObjectID id, const Vector2& position, const RakNet::BitStream& continuous_data, const RakNet::BitStream& occasional_data);
+
 		bool ActivateEntity(ObjectID id);
 
 		boost::signals2::signal<void (const ActivationEvent&)> SignalActivationEvent;
@@ -412,7 +415,7 @@ namespace FusionEngine
 		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_Cells;
 		//std::map<Vector2T<int32_t>, Cell> m_Cells;
 		Cell m_TheVoid;
-		std::map<CellHandle, Cell*, CellHandleGreater> m_CellsBeingLoaded;
+		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_CellsBeingLoaded;
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
 		//std::unordered_map<ObjectID, size_t> m_EntityDirectory;

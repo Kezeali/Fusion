@@ -95,7 +95,14 @@ namespace FusionEngine
 			Update(id, CellCoord_t(new_x, new_y), std::vector<unsigned char>(continuous, continuous + con_length), std::vector<unsigned char>(occasional, occasional + occ_length));
 		}
 
+		void Update(ObjectID id, unsigned char* continuous, size_t con_length, unsigned char* occasional, size_t occ_length)
+		{
+			Update(id, CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()), std::vector<unsigned char>(continuous, continuous + con_length), std::vector<unsigned char>(occasional, occasional + occ_length));
+		}
+
 		void Update(ObjectID id, const CellCoord_t& expected_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional);
+
+		Vector2T<int32_t> GetEntityLocation(ObjectID id);
 
 		void Store(int32_t x, int32_t y, Cell* cell);
 
@@ -115,6 +122,8 @@ namespace FusionEngine
 		std::unique_ptr<std::ostream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
 		CL_IODevice GetCellData(size_t index) const;
+
+		RegionCellCache* GetCellCache() const { return m_Cache; }
 
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;

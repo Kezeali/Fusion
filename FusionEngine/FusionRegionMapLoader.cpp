@@ -41,10 +41,10 @@
 
 #include "FusionBinaryStream.h"
 
-#pragma warning( push );
+#pragma warning( push )
 #pragma warning( disable: 244; )
 #include <kchashdb.h>
-#pragma warning( pop );
+#pragma warning( pop )
 
 namespace FusionEngine
 {
@@ -97,6 +97,13 @@ namespace FusionEngine
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
+	}
+
+	Vector2T<int32_t> RegionMapLoader::GetEntityLocation(ObjectID id)
+	{
+		CellCoord_t loc;
+		m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
+		return loc;
 	}
 
 	void RegionMapLoader::Store(int32_t x, int32_t y, Cell* cell)
@@ -471,6 +478,9 @@ namespace FusionEngine
 
 					CellCoord_t loc;
 					m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
+
+					if (new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
+						new_loc = loc;
 
 					// Skip if nothing has changed
 					if (new_loc == loc && incommingConData.empty() && incommingOccData.empty())
