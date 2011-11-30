@@ -54,7 +54,7 @@ namespace FusionEngine
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
-#if 0
+#if FSN_CELL_HISTORY
 		mutex_t::scoped_lock lock(historyMutex);
 		auto now = boost::posix_time::second_clock::local_time();
 		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
@@ -73,8 +73,8 @@ namespace FusionEngine
 	{
 		if (initialise) // default initialisation
 		{
-			m_Bounds.x = s_DefaultWorldSize / 2.f;
-			m_Bounds.y = s_DefaultWorldSize / 2.f;
+			//m_Bounds.x = s_DefaultWorldSize / 2.f;
+			//m_Bounds.y = s_DefaultWorldSize / 2.f;
 
 			m_Range = s_DefaultActivationRange;
 			m_RangeSquared = m_Range * m_Range;
@@ -82,8 +82,8 @@ namespace FusionEngine
 			m_CellSize = s_DefaultCellSize;
 			m_InverseCellSize = 1.f / m_CellSize;
 
-			m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
-			m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
+			//m_XCellCount = (size_t)(m_Bounds.x * 2.0f * m_InverseCellSize) + 1;
+			//m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
 			//m_Cells = new Cell[m_XCellCount * m_YCellCount];
 		}
@@ -355,7 +355,11 @@ namespace FusionEngine
 	Cell *StreamingManager::CellAtCellLocation(const CellHandle& cell_location)
 	{
 		//return &m_Cells[iy*m_XCellCount+ix];
-		return m_Cells[cell_location].get();
+		auto _where = m_Cells.find(cell_location);
+		if (_where != m_Cells.end())
+			return _where->second.get();
+		else
+			return nullptr;
 	}
 
 	Cell *StreamingManager::CellAtPosition(float x, float y)
@@ -387,17 +391,61 @@ namespace FusionEngine
 		return std::make_pair(std::move(location), cell);
 	}
 
+	std::shared_ptr<Cell> StreamingManager::RetrieveCell(const CellHandle &location)
+	{
+		auto _where = m_Cells.lower_bound(location);
+		if (_where != m_Cells.end() && _where->first == location)
+		{
+			auto& cell = _where->second;
+
+			// If the held pointer is invalid or the cell is waiting to be stored: Retrieve
+			if (!cell || cell->waiting == Cell::Store)
+			{
+				cell = m_Archivist->Retrieve(location.x, location.y);
+				return cell;
+			}
+			else
+				return cell;
+		}
+		else
+		{
+			// Retrieve and insert a new cell entry
+			auto cell = m_Archivist->Retrieve(location.x, location.y);
+			m_Cells.insert(_where, std::make_pair(location, cell));
+			return cell;
+		}
+	}
+
+	bool StreamingManager::ConfirmRetrieval(const CellHandle &location, Cell* cell)
+	{
+		if (cell->IsRetrieved())
+			return true;
+		else
+		{
+			m_Archivist->Retrieve(location.x, location.y);
+			return false;
+		}
+	}
+
+	void StreamingManager::StoreCell(const CellHandle& location)
+	{
+		auto _where = m_Cells.find(location);
+		m_Archivist->Store(location.x, location.y, std::move(_where->second));
+		m_Cells.erase(_where);
+	}
+
 	void StreamingManager::DumpAllCells()
 	{
 		while (!m_TheVoid.objects.empty())
 			Update(false);
 		//const auto size = m_XCellCount * m_YCellCount;
-		//for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
-		//{
-		//	const auto& loc = it->first;
-		//	Cell* cell = &(it->second);
-		//	m_Archivist->Store(loc.x, loc.y, cell);
-		//}
+		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
+		{
+			const auto& loc = it->first;
+			auto& cell = it->second;
+			m_Archivist->Store(loc.x, loc.y, std::move(cell));
+		}
+		m_Cells.clear();
 	}
 
 	void StreamingManager::AddEntity(const EntityPtr &entity)
@@ -406,7 +454,7 @@ namespace FusionEngine
 		//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 
 		CellHandle cellIndex = ToCellLocation(entityPosition);
-		Cell* cell = CellAtCellLocation(cellIndex);
+		Cell* cell = RetrieveCell(cellIndex).get();
 
 		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 		if (lock && cell->IsLoaded())
@@ -627,23 +675,25 @@ namespace FusionEngine
 	{
 		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
-			auto currentCell = CellAtCellLocation(entity->GetStreamingCellIndex());
+			auto currentCell = m_Cells[entity->GetStreamingCellIndex()];
+
+			FSN_ASSERT(currentCell);
 
 			Cell::mutex_t::scoped_lock lock(currentCell->mutex);
 
-			auto it = findEntityInCell(currentCell, entity/*.get()*/);
+			auto it = findEntityInCell(currentCell.get(), entity/*.get()*/);
 			it->second.active = CellEntry::Inactive;
 
 			currentCell->EntryUnreferenced();
 
 			// TODO: record this entity somehow (std::set or flag) so that an assertion can be made
-			//  in OnUpdated to ensure that the entity manager is honest
+			//  in OnUpdated to ensure that the entity manager is honest about what it 'unreferences'
 
 			if (!currentCell->IsActive() && !currentCell->inRange)
 			{
 				currentCell->AddHist("Store Attempted on Deactivation");
 				auto location = entity->GetStreamingCellIndex();
-				m_Archivist->Store(location.x, location.y, currentCell);
+				m_Archivist->Store(location.x, location.y, std::move(currentCell));
 				m_Cells.erase(location);
 			}
 		}
@@ -686,18 +736,18 @@ namespace FusionEngine
 		{
 			if (loc != s_VoidCellIndex)
 			{
-				Cell* cell = CellAtCellLocation(loc);
+				auto cell = RetrieveCell(loc);
 				Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 				if (!lock || !cell->IsLoaded())
 				{
-					m_Archivist->Retrieve(loc.x, loc.y, cell);
+					//m_Archivist->Retrieve(loc.x, loc.y);
 					m_RequestedEntities[loc].insert(id);
 				}
 				else
 				{
 					EntityPtr entity;
 					CellEntry* entry = nullptr;
-					if (findEntityById(entity, entry, cell, id))
+					if (findEntityById(entity, entry, cell.get(), id))
 					{
 						FSN_ASSERT(entity && entry);
 						if (!entry->active)
@@ -884,16 +934,14 @@ namespace FusionEngine
 
 	void StreamingManager::getCellRange(CL_Rect& range, const Vector2& pos)
 	{
-		range.left = (int)std::floor((pos.x - m_Range + m_Bounds.x) * m_InverseCellSize) - 1;
-		range.right = (int)std::floor((pos.x + m_Range + m_Bounds.x) * m_InverseCellSize) + 1;
+		// Expand range a little bit to make sure all relevant cells are checked
+		const auto expandedRange = m_Range + 0.1f;
 
-		range.top = (int)std::floor((pos.y - m_Range + m_Bounds.y) * m_InverseCellSize) - 1;
-		range.bottom = (int)std::floor((pos.y + m_Range + m_Bounds.y) * m_InverseCellSize) + 1;
+		range.left = (int)std::floor((pos.x - expandedRange) * m_InverseCellSize);
+		range.right = (int)std::ceil((pos.x + expandedRange) * m_InverseCellSize);
 
-		fe_clamp(range.left, 0, (int)m_XCellCount - 1);
-		fe_clamp(range.right, 0, (int)m_XCellCount - 1);
-		fe_clamp(range.top, 0, (int)m_YCellCount - 1);
-		fe_clamp(range.bottom, 0, (int)m_YCellCount - 1);
+		range.top = (int)std::floor((pos.y - expandedRange) * m_InverseCellSize);
+		range.bottom = (int)std::ceil((pos.y + expandedRange) * m_InverseCellSize);
 	}
 
 	void StreamingManager::deactivateCells(const CL_Rect& inactiveRange)
@@ -926,7 +974,7 @@ namespace FusionEngine
 					// Using lower_bound here means that there is a possibility the cell found will be the NEXT expected cell,
 					//  even if it misses this time (the missing cell will be skipped by 'continue'-ing below)
 					auto _where = m_Cells.lower_bound(expectedLocation);
-					if (_where->first == expectedLocation)
+					if (_where != m_Cells.end() && _where->first == expectedLocation)
 						it = _where;
 					else
 					{
@@ -934,9 +982,8 @@ namespace FusionEngine
 						continue;
 					}
 				}
-				Cell* cell = it->second.get();
-				// Increment the iterator (ready for next iteration)
-				++it;
+				auto& cell = it->second;
+				
 
 				cell->inRange = false;
 
@@ -945,7 +992,8 @@ namespace FusionEngine
 					if (!cell->IsActive() && !cell->inRange)
 					{
 						cell->AddHist("Store Attempted due to leaving range");
-						m_Archivist->Store(ix, iy, cell);
+						m_Archivist->Store(ix, iy, std::move(cell));
+						m_Cells.erase(it);
 					}
 					else
 					{
@@ -965,6 +1013,9 @@ namespace FusionEngine
 						}
 					}
 				}
+				// Increment the iterator (ready for next iteration) - done
+				//  here so it is still available for potential erase() above
+				++it;
 			}
 			//i += stride;
 		}
@@ -1126,20 +1177,20 @@ namespace FusionEngine
 				for (auto it = m_TheVoid.objects.begin(), end = m_TheVoid.objects.end(); it != end;/* ++it*/)
 				{
 					auto location = ToCellLocation(it->second.x, it->second.y);
-					auto actualCell = CellAtCellLocation(location);
+					auto actualCell = RetrieveCell(location);
 
 					Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
 					if (lock)
 					{
 						if (!actualCell->IsLoaded())
 						{
-							// Request the cell if it isn't already (Retrieve returns true if the cell wasn't already requested)
-							if (m_Archivist->Retrieve(location.x, location.y, actualCell))
-							{
-								actualCell->AddHist("Retrieved due to objects in Void");
-								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
-								//m_CellsBeingLoaded.insert(actualCell);
-							}
+						//	// Request the cell if it isn't already (Retrieve returns true if the cell wasn't already requested)
+						//	if (m_Archivist->Retrieve(location.x, location.y, actualCell))
+						//	{
+						//		actualCell->AddHist("Retrieved due to objects in Void");
+						//		//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
+						//		//m_CellsBeingLoaded.insert(actualCell);
+						//	}
 						}
 						else
 						{
@@ -1160,7 +1211,8 @@ namespace FusionEngine
 							else if (!actualCell->IsActive())
 							{
 								actualCell->AddHist("Storing cell again after Retrieving it for an entity spawned in The Void");
-								m_Archivist->Store(location.x, location.y, actualCell);
+								m_Archivist->Store(location.x, location.y, std::move(actualCell));
+								m_Cells.erase(location);
 							}
 
 							// remove from current cell
@@ -1187,8 +1239,10 @@ namespace FusionEngine
 		for (auto it = m_RequestedEntities.begin(), end = m_RequestedEntities.end(); it != end;)
 		{
 			auto& cellLocation = it->first;
+
 			FSN_ASSERT(m_Cells.find(cellLocation) != m_Cells.end());
 			auto cell = CellAtCellLocation(cellLocation);
+
 			Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 			if (lock && cell->IsLoaded())
 			{
@@ -1365,7 +1419,7 @@ namespace FusionEngine
 		// Sort to improve cache performance
 		clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
 		{
-			return (a.top * m_XCellCount + a.left) < (b.top * m_XCellCount + b.left);
+			return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);
 		});
 		
 		for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
@@ -1417,12 +1471,16 @@ namespace FusionEngine
 							// ... if not, find the next cell or create a new cell to load
 							CellHandle expectedLocation(ix, iy);
 							auto _where = m_Cells.lower_bound(expectedLocation);
-							if (_where->first == expectedLocation)
+							if (_where != m_Cells.end() && _where->first == expectedLocation)
 								it = _where;
 							else
 							{
-								auto result = m_Cells.insert(_where, std::make_pair(std::move(expectedLocation), std::make_shared<Cell>()));
+								auto newCell = m_Archivist->Retrieve(expectedLocation.x, expectedLocation.y);
+								auto result = m_Cells.insert(_where, std::make_pair(std::move(expectedLocation), std::move(newCell)));
 								it = result;
+								
+								newCell->AddHist("Retrieved due to entering range");
+								m_CellsBeingLoaded.insert(*it);
 							}
 						}
 
@@ -1433,12 +1491,12 @@ namespace FusionEngine
 						// Check if the cell needs to be loaded
 						if (!cell->IsLoaded())
 						{
-							if (m_Archivist->Retrieve(ix, iy, cell))
-							{
-								cell->AddHist("Retrieved due to entering range");
-								//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-								m_CellsBeingLoaded.insert(*it);
-							}
+							//if (ConfirmRetrieval(CellHandle(ix, iy), cell))
+							//{
+							//	cell->AddHist("Retrieved due to entering range");
+							//	FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
+							//	m_CellsBeingLoaded.insert(*it);
+							//}
 						}
 						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 						else

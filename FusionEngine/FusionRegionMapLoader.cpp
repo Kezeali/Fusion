@@ -41,10 +41,14 @@
 
 #include "FusionBinaryStream.h"
 
+#if _MSC_VER > 1000
 #pragma warning( push )
-#pragma warning( disable: 244; )
+#pragma warning( disable: 4244; )
+#endif
 #include <kchashdb.h>
+#if _MSC_VER > 1000
 #pragma warning( pop )
+#endif
 
 namespace FusionEngine
 {
@@ -99,6 +103,13 @@ namespace FusionEngine
 		m_NewData.set();
 	}
 
+	void RegionMapLoader::Remove(ObjectID id)
+	{
+		//m_ObjectRemovalQueue.push(id);
+		m_EntityLocationDB->remove((const char*)&id, sizeof(id));
+		m_NewData.set();
+	}
+
 	Vector2T<int32_t> RegionMapLoader::GetEntityLocation(ObjectID id)
 	{
 		CellCoord_t loc;
@@ -106,26 +117,63 @@ namespace FusionEngine
 		return loc;
 	}
 
-	void RegionMapLoader::Store(int32_t x, int32_t y, Cell* cell)
+	void RegionMapLoader::Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell)
 	{
+#ifdef _DEBUG
+		// Make sure this method is only accessed within one thread
+		if (m_ControllerThreadId == boost::thread::id())
+			m_ControllerThreadId = boost::this_thread::get_id();
+		FSN_ASSERT(m_ControllerThreadId == boost::this_thread::get_id());
+#endif
+
+		m_CellsBeingProcessed[CellCoord_t(x, y)] = cell;
+		// TODO: entries in CellsBeingProcessed need to be cleared when they are done
+
 		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 		{
 			cell->AddHist("Enqueued Out");
-			m_WriteQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
+			m_WriteQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y)));
 			m_NewData.set();
 		}
 	}
 
-	bool RegionMapLoader::Retrieve(int32_t x, int32_t y, Cell* cell)
+	std::shared_ptr<Cell> RegionMapLoader::Retrieve(int32_t x, int32_t y)
 	{
+#ifdef _DEBUG
+		if (m_ControllerThreadId == boost::thread::id())
+			m_ControllerThreadId = boost::this_thread::get_id();
+		FSN_ASSERT(m_ControllerThreadId == boost::this_thread::get_id());
+#endif
+
+		auto _where = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>())).first;
+		auto& cell = _where->second;
+
 		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 		{
 			cell->AddHist("Enqueued In");
 			m_ReadQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
 			m_NewData.set();
-			return true;
+			//return std::shared_ptr<Cell>();
 		}
-		return false;
+		else if (cell->loaded)
+		{
+			std::shared_ptr<Cell> retVal = std::move(cell); // move the ptr so the stored one can be erased
+			m_CellsBeingProcessed.erase(_where);
+			return std::move(retVal);
+		}
+
+		return cell;
+	}
+
+	void RegionMapLoader::BeginTransaction()
+	{
+		if (!m_Mutex.try_lock())
+			FSN_EXCEPT(InvalidArgumentException, "Tried to BeginTransaction twice"); 
+	}
+
+	void RegionMapLoader::EndTransaction()
+	{
+		m_Mutex.unlock();
 	}
 
 	void RegionMapLoader::Start()
@@ -237,7 +285,7 @@ namespace FusionEngine
 	}
 
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched)
+	void RegionMapLoader::WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched)
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -262,7 +310,7 @@ namespace FusionEngine
 			if (entSynched == synched)
 			{
 				if (entSynched)
-					dataPositions.push_back(std::make_pair(it->first->GetID(), file.tellp())); // Remember where this data starts, so the header can be written
+					dataPositions.push_back(std::make_pair(it->first->GetID(), file.tellp() - headerPos)); // Remember where this data starts, so the header can be written
 
 				SaveEntity(file, it->first, false);
 				FSN_ASSERT(expectedNumEntries-- > 0); // Confirm the number of synched / unsynched entities expected
@@ -282,6 +330,26 @@ namespace FusionEngine
 		}
 	}
 
+	static void storeCellLocation(kyotocabinet::HashDB& db, ObjectID id, RegionMapLoader::CellCoord_t new_loc)
+	{
+		if (CL_Endian::is_system_big())
+		{
+			CL_Endian::swap((void*)new_loc.x, sizeof(new_loc.x));
+			CL_Endian::swap((void*)new_loc.y, sizeof(new_loc.y));
+		}
+#ifdef _DEBUG
+		// Make sure the cell-location data is stored as expected
+		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
+		{
+			int64_t new_loc_test = new_loc.x;
+			new_loc_test = new_loc_test << 32;
+			new_loc_test |= new_loc.y;
+			FSN_ASSERT(memcmp(&new_loc, &new_loc_test, sizeof(new_loc)));
+		}
+#endif
+		db.set((const char*)&id, sizeof(id), (char*)&new_loc, sizeof(new_loc));
+	}
+
 	void RegionMapLoader::Run()
 	{
 		using namespace EntitySerialisationUtils;
@@ -292,6 +360,8 @@ namespace FusionEngine
 		{
 			std::list<std::tuple<Cell*, CellCoord_t>> writesToRetry;
 			std::list<std::tuple<Cell*, CellCoord_t>> readsToRetry;
+
+			std::list<CellCoord_t> readyCells;
 
 			// Read / write cell data
 			{
@@ -320,6 +390,15 @@ namespace FusionEngine
 										++numSynched;
 								});
 
+								std::for_each(cell->objects.begin(), cell->objects.end(), [&](const Cell::CellEntryMap::value_type& obj)
+								{
+									if (!obj.first->IsSyncedEntity())
+									{
+										ObjectID id = obj.first->GetID();
+										storeCellLocation(*m_EntityLocationDB, id, cell_coord);
+									}
+								});
+
 								if (m_EditMode)
 								{
 									if (numSynched > 0 || numPseudo > 0)
@@ -328,9 +407,15 @@ namespace FusionEngine
 										if (filePtr && *filePtr)
 										{
 											auto& file = *filePtr;
-											//m_BeginIndex = std::min(cell_coord, m_BeginIndex);
-											//m_EndIndex = std::max(cell_coord, m_EndIndex);
+
+											IO::Streams::CellStreamWriter writer(&file);
+											writer.Write(std::streamsize(0)); // Leave space to write the data length
+											std::streampos start = file.tellp();
+											// Write un-synched entity data (written to cache since this is edit mode)
 											WriteCell(file, cell, numPseudo, false);
+											std::streamsize dataLength = file.tellp() - start;
+											writer.Write(dataLength); // Actually write the data length
+
 											WriteCell(file, cell, numSynched, true);
 										}
 										else
@@ -368,6 +453,7 @@ namespace FusionEngine
 							//writesToRetry.push_back(toWrite);
 						}
 						cell->waiting = Cell::Ready;
+						readyCells.push_back(cell_coord);
 						//cell->mutex.unlock();
 					}
 					else
@@ -417,7 +503,23 @@ namespace FusionEngine
 								{
 									auto& file = *filePtr;
 									if (m_EditMode)
+									{
+										// The length of this data is written in front of it so that it can be skipped when merging incomming data
+										//  (we don't need to know this length to actually load the data):
+#ifdef _DEBUG
+										IO::Streams::CellStreamReader reader(&file);
+										std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
+										std::streampos startRead = file.tellg();
+#else
+										file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
+#endif
 										LoadEntitiesFromCellData(cell_coord, cell, file, false); // In edit-mode unsynched entities are also written to the cache
+#ifdef _DEBUG
+										// Make sure all the data was read
+										// TODO: in Release builds: skip to the end if it wasn't all read?
+										FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
+#endif
+									}
 									size_t num = LoadEntitiesFromCellData(cell_coord, cell, file, true);
 
 									//std::stringstream str; str << i;
@@ -440,6 +542,7 @@ namespace FusionEngine
 							}
 						}
 						cell->waiting = Cell::Ready;
+						readyCells.push_back(cell_coord);
 						//cell->mutex.unlock();
 					}
 					else
@@ -465,9 +568,9 @@ namespace FusionEngine
 				readsToRetry.clear();
 			}
 
-			using namespace IO;
-
 			{
+				using namespace IO;
+
 				std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>> objectUpdateData;
 				while (m_ObjectUpdateQueue.try_pop(objectUpdateData))
 				{
@@ -478,6 +581,11 @@ namespace FusionEngine
 
 					CellCoord_t loc;
 					m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
+					if (CL_Endian::is_system_big())
+					{
+						CL_Endian::swap((void*)loc.x, sizeof(loc.x));
+						CL_Endian::swap((void*)loc.y, sizeof(loc.y));
+					}
 
 					if (new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
 						new_loc = loc;
@@ -486,8 +594,8 @@ namespace FusionEngine
 					if (new_loc == loc && incommingConData.empty() && incommingOccData.empty())
 						continue;
 
-					m_EntityLocationDB->set((const char*)&id, sizeof(id), (char*)&new_loc, sizeof(new_loc));
-					//const auto loc = m_EntityLocations[id];
+
+					storeCellLocation(*m_EntityLocationDB, id, new_loc);
 
 					auto inData = GetCellStreamForReading(loc.x, loc.y);
 					auto outData = GetCellStreamForWriting(new_loc.x, new_loc.y);
@@ -506,9 +614,19 @@ namespace FusionEngine
 				}
 			}
 
-			/*std::stringstream str;
-			str << m_Archived.size();
-			SendToConsole(str.str() + " cells archived");*/
+			// Drop references to cells that are done processing (if m_CellsBeingProcessed isn't locked by a current transaction)
+			if (!readyCells.empty())
+			{
+				boost::mutex::scoped_try_lock lock(m_Mutex);
+				if (lock)
+				{
+					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
+					{
+						m_CellsBeingProcessed.erase(*it);
+					}
+				}
+			}
+
 		}
 	}
 
@@ -516,6 +634,60 @@ namespace FusionEngine
 	{
 		std::array<char, 4096> buffer;
 
+		IO::Streams::CellStreamReader reader(&in);
+
+		// Skip the un-synced entity data that is present in Edit Mode
+		if (m_EditMode)
+		{
+			std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
+
+			FSN_ASSERT(unsynchedDataLength >= 0);
+			std::streamsize remainingData = unsynchedDataLength;
+
+			while (remainingData > 0 && !in.eof())
+			{
+				in.read(buffer.data(), std::min(std::streamsize(buffer.size()), remainingData));
+				auto gcount = in.gcount();
+				out.write(buffer.data(), gcount);
+				FSN_ASSERT(gcount <= remainingData);
+				remainingData -= gcount;
+			}
+		}
+
+		size_t numEnts = reader.ReadValue<size_t>();
+
+		std::streamoff dataOff = 0;
+		auto headerPos = in.tellg(); // The offsets given in the header are relative to the start of the header
+
+		for (size_t i = 0; i < numEnts; ++i)
+		{
+			ObjectID iID = reader.ReadValue<ObjectID>();
+			std::streamoff iDataOff = reader.ReadValue<std::streamoff>();
+
+			if (iID == id)
+			{
+				FSN_ASSERT(dataOff == 0); // Make sure the IDs aren't repeated (or corrupted, I guess)
+				dataOff = iDataOff;
+			}
+		}
+
+		const size_t headerSize = numEnts * (sizeof(ObjectID) + sizeof(std::streamoff));
+		auto remainingData = dataOff - headerSize;
+
+		// Copy the data up to the relevant entity data
+		while (remainingData > 0 && !in.eof())
+		{
+			in.read(buffer.data(), std::min(std::streamsize(buffer.size()), remainingData));
+			auto gcount = in.gcount();
+			out.write(buffer.data(), gcount);
+			FSN_ASSERT(gcount <= remainingData);
+			remainingData -= gcount;
+		}
+
+		// Merge the data
+		EntitySerialisationUtils::MergeEntityData(in, out, mergeCon, mergeOcc);
+
+		// Copy the rest of the entity data
 		while (!in.eof())
 		{
 			in.read(buffer.data(), buffer.size());

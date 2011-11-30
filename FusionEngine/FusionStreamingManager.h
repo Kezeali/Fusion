@@ -202,11 +202,15 @@ namespace FusionEngine
 		enum WaitingState { Ready, Retrieve, Store };
 		tbb::atomic<WaitingState> waiting;
 
+		bool IsRetrieved() const { return loaded && waiting != Store; }
+
 		typedef boost::recursive_mutex mutex_t;
 		mutex_t mutex;
 
+#ifdef FSN_CELL_HISTORY
 		mutex_t historyMutex;
 		std::vector<std::string> history;
+#endif
 		void AddHist(const std::string& hist, unsigned int num = -1);
 	};
 
@@ -264,8 +268,8 @@ namespace FusionEngine
 
 		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
 
-		unsigned int GetNumCellsAcross() const { return m_XCellCount; }
-		float GetMapWidth() const { return m_Bounds.x * 2.f; }
+		//unsigned int GetNumCellsAcross() const { return m_XCellCount; }
+		//float GetMapWidth() const { return m_Bounds.x * 2.f; }
 		float GetCellSize() const { return m_CellSize; }
 
 		inline CellHandle ToCellLocation(float x, float y) const;
@@ -406,10 +410,10 @@ namespace FusionEngine
 		float m_CellSize;
 		float m_InverseCellSize;
 
-		unsigned int m_XCellCount;
-		unsigned int m_YCellCount;
+		//unsigned int m_XCellCount;
+		//unsigned int m_YCellCount;
 
-		Vector2 m_Bounds;
+		//Vector2 m_Bounds;
 
 		//Cell* m_Cells;
 		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_Cells;
@@ -422,6 +426,11 @@ namespace FusionEngine
 
 		CellDataSource* m_Archivist;
 
+
+		std::shared_ptr<Cell> RetrieveCell(const CellHandle &location);
+		void StoreCell(const CellHandle& location);
+		//! Makes sure that the given cell is in either Ready or Retrieve state
+		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);
 
 		void ActivateEntity(const CellHandle& cell_location, Cell &cell, const EntityPtr &entity, CellEntry &entry);
 		void DeactivateEntity(const EntityPtr &entity);

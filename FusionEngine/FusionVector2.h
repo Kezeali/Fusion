@@ -82,8 +82,10 @@ namespace FusionEngine
 	public:
 #endif
 
-		//! Coordinates
-		T x, y;
+		//! X Coordinate
+		T x;
+		//! Y Coordinate
+		T y;
 
 		static inline Vector2T<T> zero()
 		{

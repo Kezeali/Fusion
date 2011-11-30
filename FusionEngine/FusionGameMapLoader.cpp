@@ -235,7 +235,7 @@ namespace FusionEngine
 	//  cells, then call Stop on the archiver (which causes it to write all queued cells, then stop)
 	//  Upon destruction, it would call Start on the archiver and allow the streaming manager to reload its active
 	//  cells
-	void GameMap::CompileMap(std::ostream &fileStream, unsigned int baseWidth, float map_width, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities)
+	void GameMap::CompileMap(std::ostream &fileStream, float cell_size, CellCache* cell_cache, const std::vector<EntityPtr>& nsentities)
 	{
 		using namespace EntitySerialisationUtils;
 		using namespace IO::Streams;

@@ -717,7 +717,7 @@ public:
 						//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
 						//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
 						IO::PhysFSStream file("default.gad", IO::Write);
-						GameMap::CompileMap(file, streamingMgr->GetNumCellsAcross(), streamingMgr->GetMapWidth(), streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
+						GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
 						cellArchivist->Start();
 
 						streamingMgr->Update(true);

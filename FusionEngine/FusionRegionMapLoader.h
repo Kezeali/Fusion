@@ -54,6 +54,8 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/array.hpp>
 
+#include "FusionHashable.h"
+
 namespace kyotocabinet
 {
 	class HashDB;
@@ -102,11 +104,17 @@ namespace FusionEngine
 
 		void Update(ObjectID id, const CellCoord_t& expected_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional);
 
+		void Remove(ObjectID id);
+
 		Vector2T<int32_t> GetEntityLocation(ObjectID id);
 
-		void Store(int32_t x, int32_t y, Cell* cell);
+		//! Stores the given cell
+		void Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell);
+		//! Retrieves the given cell
+		std::shared_ptr<Cell> Retrieve(int32_t x, int32_t y);
 
-		bool Retrieve(int32_t x, int32_t y, Cell* cell);
+		void BeginTransaction();
+		void EndTransaction();
 
 		boost::thread m_Thread;
 
@@ -132,6 +140,8 @@ namespace FusionEngine
 
 		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids);
 
+		void WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched);
+
 		void Run();
 
 		void MergeEntityData(ObjectID id, ICellStream& in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
@@ -151,12 +161,14 @@ namespace FusionEngine
 		std::string m_FullBasePath;
 		std::unique_ptr<kyotocabinet::HashDB> m_EntityLocationDB;
 
-		// Loaded cache files
-		//std::map<CellCoord_t, RegionFile> m_Cache;
-
-		std::map<ObjectID, CellCoord_t> m_EntityLocations;
+		std::unique_ptr<kyotocabinet::HashDB> m_SynchLoadedDB;
 
 		std::unordered_set<std::pair<int32_t, int32_t>> m_SynchLoaded;
+
+		// Cells who's ownership has been passed to this archiver via Store or created by Retrieve
+		std::unordered_map<CellCoord_t, std::shared_ptr<Cell>, boost::hash<CellCoord_t>> m_CellsBeingProcessed;
+
+		boost::mutex m_Mutex;
 
 		//boost::mutex m_WriteQueueMutex;
 		//boost::mutex m_ReadQueueMutex;/*std::queue*/
@@ -165,8 +177,14 @@ namespace FusionEngine
 
 		tbb::concurrent_queue<std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
 
+		tbb::concurrent_queue<ObjectID> m_ObjectRemovalQueue;
+
 		CL_Event m_NewData;
 		CL_Event m_Quit;
+
+#ifdef _DEBUG
+		boost::thread::id m_ControllerThreadId;
+#endif
 	};
 
 }
