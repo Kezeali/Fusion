@@ -34,9 +34,10 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
 
+#include <boost/filesystem.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/device/mapped_file.hpp>
+//#include <boost/iostreams/device/mapped_file.hpp>
 
 namespace io = boost::iostreams;
 
@@ -110,32 +111,51 @@ namespace FusionEngine
 			return position;
 		}
 
-	CellBuffer::~CellBuffer()
+	CellBuffer::cell_impl::~cell_impl()
 	{
 		FSN_ASSERT(parent);
 		if (data)
+		{
 			parent->write(cellIndex, *data);
+		}
 	}
 
 	static inline size_t fileLength(std::iostream& file)
 	{
+		if (file.eof())
+			file.clear();
 		file.seekg(0, std::ios::end);
 		auto len = file.tellg();
-		file.seekg(0);
-		return (size_t)len;
+		file.seekg(0, std::ios::beg);
+		if (len >= 0)
+			return (size_t)len;
+		else
+			return 0;
 	}
 
-	RegionFile::RegionFile(const std::string& filename)
+	RegionFile::RegionFile(const std::string& filename, size_t width)
 		: filename(filename),
-		filebuf(new io::stream_buffer<io::file>(filename)),
-		file(new std::iostream(filebuf.get())),
+		region_width(width),
+		//filebuf(new io::stream_buffer<io::file>(filename, std::ios::in | std::ios::out | std::ios::binary)),
+		//filedesc(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary)),
+		//file(new io::stream<io::file_descriptor>(*filedesc, 0)),
 		cellDataLocations(s_MaxSectors) // Hmm
 	{
+		if (!boost::filesystem::exists(filename))
+		{
+			filedesc.reset(new io::file_descriptor(filename, std::ios::out | std::ios::binary));
+			file.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
+			file.release();
+			filedesc.release();
+		}
+		filedesc.reset(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary));
+		file.reset(new io::stream<io::file_descriptor>(*filedesc));
 		init();
 	}
 
-	RegionFile::RegionFile(std::unique_ptr<std::streambuf>&& custom_buffer)
+	RegionFile::RegionFile(std::unique_ptr<std::streambuf>&& custom_buffer, size_t width)
 		: filename("custom"),
+		region_width(width),
 		filebuf(std::move(custom_buffer)),
 		file(new std::iostream(filebuf.get())),
 		cellDataLocations(s_MaxSectors)
@@ -147,10 +167,16 @@ namespace FusionEngine
 	{
 		try
 		{
+			if (!(*file))
+				FSN_EXCEPT(FileSystemException, "Failed to open region file: " + filename);
+
 			IO::Streams::CellStreamWriter writer(file.get());
 
 			bool new_file = false;
 			auto length = fileLength(*file);
+			file->clear();
+
+			file->exceptions(std::ios::failbit);
 
 			if (length < s_SectorSize)
 			{
@@ -159,7 +185,11 @@ namespace FusionEngine
 				for (int i = 0; i < s_MaxSectors; ++i)
 					writer.Write(nothing);
 
+				file->flush();
+
 				//sizeDelta += s_SectorSize;
+
+				length = fileLength(*file);
 
 				new_file = true;
 			}
@@ -175,7 +205,7 @@ namespace FusionEngine
 			}
 
 			// Set up the available-sector map
-			auto numSectors = length / s_SectorSize;
+			auto numSectors = std::max(length / s_SectorSize, 1u);
 			free_sectors.resize(numSectors, true);
 
 			free_sectors.set(0, false); // chunk offset table
@@ -250,7 +280,7 @@ namespace FusionEngine
 
 		auto stream = std::unique_ptr<ArchiveIStream>(new io::filtering_istream());
 		stream->push(io::zlib_decompressor());
-		stream->push(boost::ref(device));
+		stream->push(device);
 		return stream;
 	}
 
@@ -271,12 +301,13 @@ namespace FusionEngine
 
 		CellBuffer device(this);
 
-		device.cellIndex = location;
+		device.pimpl->cellIndex = location;
 		device.data->reserve(dataLength);
 
 		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
+		// TODO: allow direct, uncompressed writing, then compress when ~cell_impl is called
 		stream->push(io::zlib_compressor());
-		stream->push(boost::ref(device));
+		stream->push(device);
 		return stream;
 	}
 
@@ -414,7 +445,7 @@ namespace FusionEngine
 			{
 				// Add a new cache entry
 				std::stringstream str; str << coord.x << "." << coord.y;
-				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile("cache/" + str.str())));
+				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(m_CachePath + str.str())));
 				RegionFile* regionFile = &newEntry->second;
 
 				m_CacheImportance.push_back(coord);

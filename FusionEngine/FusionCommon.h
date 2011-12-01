@@ -410,13 +410,19 @@ namespace FusionEngine
 	//#endif
 
 	//! Returns rounded value converted to int64
-	static inline long long fe_lround(double v) { return static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
-	//! Returns rounded value converted to type R
+	static inline int64_t fe_lround(double v) { return static_cast<int64_t>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	//! Returns rounded value converted to type R, where R is an integral type
 	template<typename R, typename T>
-	static inline R fe_round(T v) { return (R)static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	static inline typename std::enable_if<std::is_integral<R>::value, R>::type fe_round(T v)
+	{ static_assert(std::is_floating_point<T>::value, "No need to round an integer!"); return static_cast<R>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	//! Returns rounded value converted to type R, where R is not an integral type
+	template<typename R, typename T>
+	static inline typename std::enable_if<std::is_floating_point<R>::value && !std::is_same<R, T>::value, R>::type fe_round(T v)
+	{ static_assert(std::is_floating_point<T>::value, "No need to round an integer!"); return static_cast<R>(static_cast<int64_t>(v > 0.0 ? v + 0.5 : v - 0.5)); }
 	//! Returns rounded value
 	template<typename T>
-	static inline T fe_round(T v) { return (T)static_cast<long int>(v > 0.0 ? v + 0.5 : v - 0.5); }
+	static inline T fe_round(T v)
+	{ static_assert(std::is_floating_point<T>::value, "No need to round an integer!"); return static_cast<T>(static_cast<int64_t>(v > 0.0 ? v + 0.5 : v - 0.5)); }
 
 	//! Returns the bigger value
 	template<class T>

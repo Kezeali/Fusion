@@ -454,7 +454,7 @@ public:
 
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
-				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get(), entityManager.get()));
+				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get(), entityManager.get(), cellArchivist.get()));
 
 #ifdef PROFILE_BUILD
 				scheduler->SetFramerateLimiter(false);

@@ -203,7 +203,7 @@ namespace FusionEngine
 		if (cam)
 		{
 			streamingCam.camera = cam;
-			streamingCam.streamPosition = streamingCam.lastPosition = Vector2(cam->GetPosition().x, cam->GetPosition().y);
+			streamingCam.streamPosition = streamingCam.lastPosition = Vector2(ToSimUnits(cam->GetPosition().x), ToSimUnits(cam->GetPosition().y));// = cam->GetSimPosition();
 		}
 		streamingCam.owner = owner;
 
@@ -342,8 +342,8 @@ namespace FusionEngine
 
 	CellHandle StreamingManager::ToCellLocation(float x, float y) const
 	{
-		const int32_t ix = (int32_t)(x * m_InverseCellSize + 0.5f);
-		const int32_t iy = (int32_t)(y * m_InverseCellSize + 0.5f);
+		const int32_t ix = static_cast<int32_t>(std::floor(x * m_InverseCellSize));
+		const int32_t iy = static_cast<int32_t>(std::floor(y * m_InverseCellSize));
 		return CellHandle(ix, iy);
 	}
 
@@ -537,6 +537,7 @@ namespace FusionEngine
 		if (entity->GetStreamingCellIndex() != s_VoidCellIndex)
 		{
 			currentCell = CellAtCellLocation(entity->GetStreamingCellIndex());
+			FSN_ASSERT(currentCell);
 
 			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
 			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
@@ -561,31 +562,37 @@ namespace FusionEngine
 #ifdef STREAMING_AUTOADD
 		else // add the entity to the grid automatically
 		{
-			currentCell = CellAtPosition(new_x, new_y);
+			auto currentLocation = ToCellLocation(new_x, new_y);
+			currentCell = CellAtCellLocation(currentLocation);
 
 			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
 			currentCell->objects.push_back(std::make_pair(entity, CellEntry()));
 			cellEntry = &currentCell->objects.back().second;
 
-			entity->SetStreamingCellIndex((size_t)(currentCell - m_Cells));
+			entity->SetStreamingCellIndex(currentLocation);
 		}
 #endif
 
 		FSN_ASSERT(cellEntry != nullptr);
 		FSN_ASSERT(currentCell_lock && currentCell_lock.owns_lock());
 
-		bool move = !fe_fequal(cellEntry->x, new_x) || !fe_fequal(cellEntry->y, new_y);
-		bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
+		const bool move = !fe_fequal(cellEntry->x, new_x, 0.001f) || !fe_fequal(cellEntry->y, new_y, 0.001f);
+		const bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
 
 		// Move the object, updating the current cell if necessary
 		CellHandle newCellLocation = ToCellLocation(new_x, new_y);
-		Cell *newCell = CellAtCellLocation(newCellLocation);
+		Cell* newCell = RetrieveCell(newCellLocation).get();
 		FSN_ASSERT( newCell );
 		if (currentCell == newCell)
 		{
-			// Common case: same cell (just update the cached position)
-			cellEntry->x = new_x;
-			cellEntry->y = new_y;
+			// Common case: same cell (just update the stored position)
+			// Don't update the stored position if the object hasn't moved far enough to be re-checked for activation
+			//  (this way slow moving objects will (hopefully) eventually get re-checked)
+			if (move)
+			{
+				cellEntry->x = new_x;
+				cellEntry->y = new_y;
+			}
 		}
 		else
 		{
@@ -783,8 +790,10 @@ namespace FusionEngine
 
 		CamerasMutex_t::scoped_lock lock(m_CamerasMutex);
 
-		Vector2 entityPosition = entity->GetPosition();
-		entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
+		FSN_ASSERT(cell_entry->x == entity->GetPosition().x); // Make sure the entry is up to date whenever this is called
+
+		Vector2 entityPosition(cell_entry->x, cell_entry->y);// = entity->GetPosition();
+		//entityPosition.x = ToGameUnits(entityPosition.x); entityPosition.y = ToGameUnits(entityPosition.y);
 		if (std::any_of(m_Cameras.begin(), m_Cameras.end(),
 			[&](const StreamingCamera& cam) { return (entityPosition - cam.streamPosition).length() <= m_Range; }))
 		{
@@ -900,7 +909,9 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(camera);
 
-		const CL_Vec2f &camPos = camera->GetPosition();
+		CL_Vec2f camPos = camera->GetPosition();
+		camPos *= s_SimUnitsPerGameUnit;
+		//Vector2 camPos = camera->GetSimPosition();
 
 		bool pointChanged = false;
 
@@ -935,7 +946,7 @@ namespace FusionEngine
 	void StreamingManager::getCellRange(CL_Rect& range, const Vector2& pos)
 	{
 		// Expand range a little bit to make sure all relevant cells are checked
-		const auto expandedRange = m_Range + 0.1f;
+		const auto expandedRange = m_Range + 0.01f;
 
 		range.left = (int)std::floor((pos.x - expandedRange) * m_InverseCellSize);
 		range.right = (int)std::ceil((pos.x + expandedRange) * m_InverseCellSize);
@@ -993,7 +1004,8 @@ namespace FusionEngine
 					{
 						cell->AddHist("Store Attempted due to leaving range");
 						m_Archivist->Store(ix, iy, std::move(cell));
-						m_Cells.erase(it);
+						m_Cells.erase(it++);
+						continue;
 					}
 					else
 					{
@@ -1489,20 +1501,13 @@ namespace FusionEngine
 						cell->inRange = true;
 
 						// Check if the cell needs to be loaded
-						if (!cell->IsLoaded())
+						if (cell->IsLoaded())
 						{
-							//if (ConfirmRetrieval(CellHandle(ix, iy), cell))
-							//{
-							//	cell->AddHist("Retrieved due to entering range");
-							//	FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), &cell) == m_CellsBeingLoaded.end());
-							//	m_CellsBeingLoaded.insert(*it);
-							//}
-						}
-						// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-						else
-						{
+							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
 							processCell(it->first, *cell, streamPositions, remotePositions);
 						}
+						// Go to the next cell in the sequence
+						++it;
 					}
 					//i += stride;
 				}

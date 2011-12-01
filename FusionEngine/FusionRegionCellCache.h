@@ -45,17 +45,24 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/device/array.hpp>
 
+#include <boost/iostreams/device/file_descriptor.hpp>
+
 namespace FusionEngine
 {
 
 	class RegionFile;
 	struct SmartArrayDevice
 	{
-		std::unique_ptr<std::vector<char>> data;
+		std::shared_ptr<std::vector<char>> data;
 		std::streamsize position;
 
 		SmartArrayDevice()
-			: position(0)
+			: position(0),
+			data(new std::vector<char>())
+		{}
+		SmartArrayDevice(const SmartArrayDevice& other)
+			: position(other.position),
+			data(other.data)
 		{}
 		SmartArrayDevice(SmartArrayDevice&& other)
 			: data(std::move(other.data)),
@@ -72,31 +79,44 @@ namespace FusionEngine
 		std::streamsize write(const char_type* s, std::streamsize n);
 		boost::iostreams::stream_offset seek(boost::iostreams::stream_offset off, std::ios_base::seekdir way);
 
-	private:
-		SmartArrayDevice(const SmartArrayDevice&)
-		{}
+		//struct impl
+		//{
+		//	std::vector<char> data;
+		//};
+
+		//std::shared_ptr<impl> pimpl;
 	};
 
 	struct CellBuffer : public SmartArrayDevice
 	{
 		CellBuffer(RegionFile* p)
-			: parent(p),
-			cellIndex(0, 0)
+			: pimpl(new cell_impl(p, data))
+		{}
+		CellBuffer(const CellBuffer& other)
+			: SmartArrayDevice(other),
+			pimpl(other.pimpl)
 		{}
 		CellBuffer(CellBuffer&& other)
 			: SmartArrayDevice(std::move(other)),
-			parent(other.parent),
-			cellIndex(other.cellIndex)
+			pimpl(std::move(other.pimpl))
+		{}
+
+		struct cell_impl// : public SmartArrayDevice::impl
 		{
-			other.parent = nullptr;
-			other.cellIndex.first = 0;
-			other.cellIndex.second = 0;
-		}
-		~CellBuffer();
+			std::pair<int32_t, int32_t> cellIndex;
+			RegionFile* parent;
+			std::shared_ptr<std::vector<char>> data;
+			cell_impl(RegionFile* p, std::shared_ptr<std::vector<char>> d)
+				: parent(p),
+				data(d),
+				cellIndex(0, 0)
+			{}
+			~cell_impl();
+		private:
+			cell_impl(const cell_impl& other) {}
+		};
 
-		std::pair<int32_t, int32_t> cellIndex;
-
-		RegionFile* parent;
+		std::shared_ptr<cell_impl> pimpl;
 	};
 
 	class RegionFile
@@ -106,23 +126,27 @@ namespace FusionEngine
 			: region_width(0)
 		{}
 
-		explicit RegionFile(const std::string& filename);
-		explicit RegionFile(std::unique_ptr<std::streambuf>&& file);
+		explicit RegionFile(const std::string& filename, size_t width = 16);
+		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width = 16);
 
 		void init();
 
 		RegionFile(RegionFile&& other)
 			: filename(std::move(other.filename)),
+			filebuf(std::move(other.filebuf)),
+			filedesc(std::move(other.filedesc)),
 			file(std::move(other.file)),
 			cellDataLocations(std::move(other.cellDataLocations)),
 			free_sectors(std::move(other.free_sectors)),
-			region_width(region_width)
+			region_width(other.region_width)
 		{
 		}
 
 		RegionFile& operator=(RegionFile&& other)
 		{
 			filename = std::move(other.filename);
+			filebuf = std::move(other.filebuf);
+			filedesc = std::move(other.filedesc);
 			file = std::move(other.file);
 			cellDataLocations = std::move(other.cellDataLocations);
 			free_sectors = std::move(other.free_sectors);
@@ -141,6 +165,7 @@ namespace FusionEngine
 
 		std::string filename;
 		std::unique_ptr<std::streambuf> filebuf;
+		std::unique_ptr<boost::iostreams::file_descriptor> filedesc;
 		std::unique_ptr<std::iostream> file;
 		// This could be a std::array (its a static array in the minecraft impl)
 		std::vector<DataLocation> cellDataLocations;
@@ -158,6 +183,7 @@ namespace FusionEngine
 		const DataLocation& getCellDataLocation(const std::pair<int32_t, int32_t>& i);
 		
 	private:
+		RegionFile(const RegionFile&) {}
 		RegionFile& operator=(const RegionFile&) {}
 	};
 

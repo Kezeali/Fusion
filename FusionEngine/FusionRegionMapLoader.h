@@ -113,6 +113,20 @@ namespace FusionEngine
 		//! Retrieves the given cell
 		std::shared_ptr<Cell> Retrieve(int32_t x, int32_t y);
 
+		struct TransactionLock
+		{
+			TransactionLock(boost::mutex& mutex, CL_Event& ev);
+			//TransactionLock(TransactionLock&& other)
+			//	: lock(std::move(other.lock)),
+			//	endEvent(std::move(other.endEvent))
+			//{
+			//}
+			~TransactionLock();
+			boost::mutex::scoped_lock lock;
+			CL_Event& endEvent;
+		};
+
+		std::unique_ptr<TransactionLock> MakeTransaction();
 		void BeginTransaction();
 		void EndTransaction();
 
@@ -180,6 +194,7 @@ namespace FusionEngine
 		tbb::concurrent_queue<ObjectID> m_ObjectRemovalQueue;
 
 		CL_Event m_NewData;
+		CL_Event m_TransactionEnded;
 		CL_Event m_Quit;
 
 #ifdef _DEBUG

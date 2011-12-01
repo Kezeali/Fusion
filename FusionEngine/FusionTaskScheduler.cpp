@@ -39,9 +39,10 @@
 namespace FusionEngine
 {
 
-	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager)
+	TaskScheduler::TaskScheduler(TaskManager* task_manager, EntityManager* entity_manager, RegionMapLoader* archivist)
 		: m_TaskManager(task_manager),
 		m_EntityManager(entity_manager),
+		m_Archivist(archivist),
 		m_Accumulator(0),
 		m_LastTime(0),
 		m_Timer(1.f / 30.f),
@@ -191,7 +192,7 @@ namespace FusionEngine
 
 		if (m_EntityManager)
 		{
-			auto streamingTask = new StreamingTask(m_EntityManager);
+			auto streamingTask = new StreamingTask(m_EntityManager, m_Archivist);
 			m_SortedTasks.push_back(streamingTask);
 			m_SortedSimulationTasks.push_back(streamingTask);
 			m_SortedRenderTasks.push_back(streamingTask);

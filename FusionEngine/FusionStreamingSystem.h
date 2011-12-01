@@ -37,59 +37,16 @@
 #include "FusionComponentSystem.h"
 
 #include "FusionEntityManager.h"
+#include "FusionRegionMapLoader.h"
 
 namespace FusionEngine
 {
-	
-	/*class StreamingTask;
-
-	class StreamingSystem : public IComponentSystem
-	{
-	public:
-		StreamingSystem(const std::shared_ptr<StreamingManager>& manager);
-		virtual ~StreamingSystem()
-		{}
-
-		ISystemWorld* CreateWorld();
-
-	private:
-		SystemType GetType() const { return SystemType::Simulation; }
-
-		std::string GetName() const { return "StreamingSystem"; }
-
-		std::shared_ptr<StreamingManager> m_StreamingManager;
-	};
-
-	class StreamingWorld : public ISystemWorld
-	{
-	public:
-		StreamingWorld(IComponentSystem* system, const std::shared_ptr<StreamingManager>& manager);
-		~StreamingWorld();
-
-	private:
-		std::vector<std::string> GetTypes() const { return std::vector<std::string>(); }
-
-		ComponentPtr InstantiateComponent(const std::string& type);
-		ComponentPtr InstantiateComponent(const std::string& type, const Vector2& pos, float angle, RakNet::BitStream* continious_data, RakNet::BitStream* occasional_data);
-
-		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
-
-		void Prepare(const ComponentPtr& component);
-		void OnActivation(const ComponentPtr& component);
-		void OnDeactivation(const ComponentPtr& component);
-
-		ISystemTask* GetTask();
-
-	private:
-		std::shared_ptr<StreamingManager> m_StreamingManager;
-		StreamingTask* m_StreamingTask;
-	};*/
 
 	class StreamingTask : public ISystemTask
 	{
 	public:
-		StreamingTask(EntityManager* streaming_manager)
-			: ISystemTask(nullptr), m_StreamingManager(streaming_manager),
+		StreamingTask(EntityManager* streaming_manager, RegionMapLoader* archivist)
+			: ISystemTask(nullptr), m_StreamingManager(streaming_manager), m_Archivist(archivist),
 			newSlowness(0u)
 		{}
 		~StreamingTask() {}
@@ -109,6 +66,7 @@ namespace FusionEngine
 
 	protected:
 		EntityManager* m_StreamingManager;
+		RegionMapLoader* m_Archivist;
 
 		uint32_t newSlowness;
 	};
@@ -138,8 +96,18 @@ namespace FusionEngine
 	
 	inline void StreamingTask::Update(const float delta)
 	{
-		m_StreamingManager->UpdateActiveRegions();
-		m_StreamingManager->ProcessActiveEntities(delta);
+		m_Archivist->BeginTransaction();
+		try
+		{
+			m_StreamingManager->UpdateActiveRegions();
+			m_StreamingManager->ProcessActiveEntities(delta);
+		}
+		catch (...)
+		{
+			m_Archivist->EndTransaction();
+			throw;
+		}
+		m_Archivist->EndTransaction();
 	}
 	
 	inline void StreamingTaskB::Update(const float delta)
