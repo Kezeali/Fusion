@@ -58,7 +58,7 @@ namespace FusionEngine
 	class GameMap
 	{
 	public:
-		GameMap(CL_IODevice& file);
+		GameMap(CL_IODevice& file, const std::string& name);
 
 		// TODO: remove this
 		//void LoadCell(Cell* out, size_t index, bool include_synched, EntityFactory* factory, EntityManager* entityManager, InstancingSynchroniser* instantiator);

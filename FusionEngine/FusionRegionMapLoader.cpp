@@ -50,6 +50,8 @@
 #pragma warning( pop )
 #endif
 
+namespace bio = boost::iostreams;
+
 namespace FusionEngine
 {
 
@@ -94,7 +96,7 @@ namespace FusionEngine
 	{
 		m_Map = map;
 
-		PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "entitylocations.kc");
+		PhysFSHelp::copy_file(m_Map->GetName() + ".endb", m_CachePath + "/entitylocations.kc");
 		if (m_EntityLocationDB)
 			m_EntityLocationDB->close();
 		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
@@ -293,7 +295,9 @@ namespace FusionEngine
 		// Skip the ID header-data (is only used when updating inactive cells)
 		if (data_includes_ids)
 		{
-			file.seekg(numEntries * (sizeof(ObjectID) + sizeof(std::streamoff)), std::ios::cur);
+			const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
+			std::vector<char> bleh(headerSize);
+			file.read(bleh.data(), headerSize);
 		}
 
 		// Read entity data
@@ -473,15 +477,21 @@ namespace FusionEngine
 											{
 												auto& file = *filePtr;
 
-												IO::Streams::CellStreamWriter writer(&file);
-												writer.Write(std::streamsize(0)); // Leave space to write the data length
-												std::streampos start = file.tellp();
+												// Need a seekable stream, so write to a temp. one
+												//bio::stream<bio::array_sink> tempStream();
+												std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+												std::streampos start = tempStream.tellp();
 												// Write un-synched entity data (written to cache since this is edit mode)
-												WriteCell(file, cell, numPseudo, false);
-												std::streamsize dataLength = file.tellp() - start;
-												writer.Write(dataLength); // Actually write the data length
+												WriteCell(tempStream, cell, numPseudo, false);
+												std::streamsize dataLength = tempStream.tellp() - start;
 
-												WriteCell(file, cell, numSynched, true);
+												WriteCell(tempStream, cell, numSynched, true);
+
+												// Write to the file-stream
+												IO::Streams::CellStreamWriter writer(&file);
+												writer.Write(dataLength);
+
+												file << tempStream.rdbuf();
 											}
 											else
 												FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
@@ -490,7 +500,11 @@ namespace FusionEngine
 									else if (numSynched > 0)
 									{
 										auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
-										WriteCell(*filePtr, cell, numSynched, true);
+										// Need a seekable stream, so write to a temp. one
+										//bio::stream<bio::array_sink> tempStream();
+										std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+										WriteCell(tempStream, cell, numSynched, true);
+										*filePtr << tempStream.rdbuf();
 									}
 
 									cell->AddHist("Written and cleared", numSynched);
@@ -553,10 +567,9 @@ namespace FusionEngine
 										//m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 										auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
 
-										namespace io = boost::iostreams;
-										io::filtering_istream inflateStream;
-										inflateStream.push(io::zlib_decompressor());
-										inflateStream.push(io::array_source(data.data(), data.size()));
+										bio::filtering_istream inflateStream;
+										inflateStream.push(bio::zlib_decompressor());
+										inflateStream.push(bio::array_source(data.data(), data.size()));
 
 										LoadEntitiesFromCellData(cell_coord, cell, inflateStream, false);
 										if (uncached)
@@ -569,20 +582,22 @@ namespace FusionEngine
 										auto& file = *filePtr;
 										if (m_EditMode)
 										{
-											// The length of this data is written in front of it so that it can be skipped when merging incomming data
+											// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incomming data
 											//  (we don't need to know this length to actually load the data):
 #ifdef _DEBUG
 											IO::Streams::CellStreamReader reader(&file);
 											std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
-											std::streampos startRead = file.tellg();
+											//std::streampos startRead = file.tellg();
 #else
-											file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
+											IO::Streams::CellStreamReader reader(&file);
+											reader.ReadValue<std::streamsize>();
+											//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
 #endif
 											LoadEntitiesFromCellData(cell_coord, cell, file, false); // In edit-mode unsynched entities are also written to the cache
 #ifdef _DEBUG
 											// Make sure all the data was read
 											// TODO: in Release builds: skip to the end if it wasn't all read?
-											FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
+											//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
 #endif
 										}
 										size_t num = LoadEntitiesFromCellData(cell_coord, cell, file, true);
@@ -710,7 +725,7 @@ namespace FusionEngine
 		size_t numEnts = reader.ReadValue<size_t>();
 
 		std::streamoff dataOff = 0;
-		auto headerPos = in.tellg(); // The offsets given in the header are relative to the start of the header
+		//auto headerPos = in.tellg(); // The offsets given in the header are relative to the start of the header
 
 		for (size_t i = 0; i < numEnts; ++i)
 		{
@@ -719,13 +734,13 @@ namespace FusionEngine
 
 			if (iID == id)
 			{
-				FSN_ASSERT(dataOff == 0); // Make sure the IDs aren't repeated (or corrupted, I guess)
+				FSN_ASSERT(dataOff == 0); // Make sure the ID isn't repeated (or the header is corrupted, I guess)
 				dataOff = iDataOff;
 			}
 		}
 
 		const size_t headerSize = numEnts * (sizeof(ObjectID) + sizeof(std::streamoff));
-		auto remainingData = dataOff - headerSize;
+		auto remainingData = dataOff - headerSize; // The offsets given in the header are relative to the start of the header
 
 		// Copy the data up to the relevant entity data
 		while (remainingData > 0 && !in.eof())
@@ -750,13 +765,15 @@ namespace FusionEngine
 
 	void RegionMapLoader::MoveEntityData(ObjectID id, ICellStream& in, OCellStream& out) const
 	{
-		std::array<char, 4096> buffer;
+		//std::array<char, 4096> buffer;
 
-		while (!in.eof())
-		{
-			in.read(buffer.data(), buffer.size());
-			out.write(buffer.data(), in.gcount());
-		}
+		//while (!in.eof())
+		//{
+		//	in.read(buffer.data(), buffer.size());
+		//	out.write(buffer.data(), in.gcount());
+		//}
+
+		out << in.rdbuf();
 	}
 
 }

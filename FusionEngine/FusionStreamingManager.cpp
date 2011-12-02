@@ -71,8 +71,8 @@ namespace FusionEngine
 		: m_DeactivationTime(s_DefaultDeactivationTime),
 		m_Archivist(archivist)
 	{
-		if (initialise) // default initialisation
-		{
+		//if (initialise) // default initialisation
+		//{
 			//m_Bounds.x = s_DefaultWorldSize / 2.f;
 			//m_Bounds.y = s_DefaultWorldSize / 2.f;
 
@@ -86,7 +86,7 @@ namespace FusionEngine
 			//m_YCellCount = (size_t)(m_Bounds.y * 2.0f * m_InverseCellSize) + 1;
 
 			//m_Cells = new Cell[m_XCellCount * m_YCellCount];
-		}
+		//}
 		//else // Object will still be valid, just pretty much useless (will also take no time to re-init)
 		//{
 		//	m_Bounds.x = s_DefaultCellSize;
@@ -1310,7 +1310,7 @@ namespace FusionEngine
 			}
 			const Vector2 &newPosition = cam.streamPosition;
 			
-			const bool localCam = PlayerRegistry::IsLocal(cam.owner);
+			const bool localCam = PlayerRegistry::IsLocal(cam.owner) || PlayerRegistry::GetPlayerCount() == 1;
 
 			auto mergeRange = [&](CL_Rect& new_activeRange)
 			{

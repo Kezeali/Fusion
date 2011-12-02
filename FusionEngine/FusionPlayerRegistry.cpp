@@ -116,6 +116,22 @@ namespace FusionEngine
 		registry->clear();
 	}
 
+	unsigned int PlayerRegistry::GetPlayerCount()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getPlayerCount();
+	}
+
+	unsigned int PlayerRegistry::GetLocalPlayerCount()
+	{
+		PlayerRegistry *registry = getSingletonPtr();
+		FSN_ASSERT_MSG(registry != NULL, "Tried to use un-initialised PlayerRegistry");
+		
+		return registry->getLocalPlayerCount();
+	}
+
 	const PlayerInfo &PlayerRegistry::GetPlayer(PlayerID id)
 	{
 		PlayerRegistry *registry = getSingletonPtr();

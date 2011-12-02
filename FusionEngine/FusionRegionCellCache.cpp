@@ -273,6 +273,11 @@ namespace FusionEngine
 
 		const auto dataVersion = reader.ReadValue<uint8_t>();
 
+		// Decompress the data
+		//io::filtering_istream decompressor;
+		//decompressor.push(io::zlib_decompressor());
+		//decompressor.push(*file);
+
 		SmartArrayDevice device;
 
 		device.data->resize(dataLength);
@@ -305,7 +310,6 @@ namespace FusionEngine
 		device.data->reserve(dataLength);
 
 		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
-		// TODO: allow direct, uncompressed writing, then compress when ~cell_impl is called
 		stream->push(io::zlib_compressor());
 		stream->push(device);
 		return stream;
@@ -430,13 +434,13 @@ namespace FusionEngine
 	{
 	}
 	
-	RegionFile& RegionCellCache::CreateRegionFile(RegionCellCache::CellCoord_t& coord)
+	RegionFile& RegionCellCache::CreateRegionFile(const RegionCellCache::CellCoord_t& coord)
 	{
 		m_Cache.erase(coord);
 		return *GetRegionFile(coord, true);
 	}
 
-	RegionFile* RegionCellCache::GetRegionFile(RegionCellCache::CellCoord_t& coord, bool create)
+	RegionFile* RegionCellCache::GetRegionFile(const RegionCellCache::CellCoord_t& coord, bool create)
 	{
 		auto result = m_Cache.find(coord);
 		if (result == m_Cache.end())
@@ -457,6 +461,11 @@ namespace FusionEngine
 					m_Cache.erase(m_CacheImportance.front());
 					m_CacheImportance.pop_front();
 				}
+
+				m_Bounds.left = std::min(m_Bounds.left, coord.x);
+				m_Bounds.right = std::max(m_Bounds.right, coord.x);
+				m_Bounds.top = std::min(m_Bounds.top, coord.y);
+				m_Bounds.bottom = std::max(m_Bounds.bottom, coord.y);
 
 				return regionFile;
 			}

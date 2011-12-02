@@ -190,16 +190,18 @@ namespace FusionEngine
 	class RegionCellCache : public CellCache
 	{
 	public:
-		typedef Vector2T<uint32_t> CellCoord_t;
+		typedef Vector2T<int32_t> CellCoord_t;
 
-		//! Region-file based cell cache
+		//! Region-file based cell data source
 		RegionCellCache(const std::string& cache_path);
 
-		RegionFile& CreateRegionFile(CellCoord_t& coord);
-		RegionFile* GetRegionFile(CellCoord_t& coord, bool create);
+		RegionFile& CreateRegionFile(const CellCoord_t& coord);
+		RegionFile* GetRegionFile(const CellCoord_t& coord, bool create);
 
 		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
+
+		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
 	private:
 		std::unordered_map<CellCoord_t, RegionFile, boost::hash<CellCoord_t>> m_Cache;
@@ -209,6 +211,8 @@ namespace FusionEngine
 		std::string m_CachePath;
 
 		size_t m_RegionSize;
+
+		CL_Rect m_Bounds;
 
 	};
 

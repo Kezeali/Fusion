@@ -51,6 +51,8 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include "FusionBinaryStream.h"
 
+#include <boost/filesystem.hpp>
+
 // TODO: remove
 #include "FusionVirtualFileSource_PhysFS.h"
 
@@ -59,8 +61,9 @@ using namespace std::placeholders;
 namespace FusionEngine
 {
 
-	GameMap::GameMap(CL_IODevice& file)
-		: m_File(file)
+	GameMap::GameMap(CL_IODevice& file, const std::string& name)
+		: m_File(file),
+		m_Name(name)
 	{
 		m_MinCell.x = m_File.read_int32();
 		m_MaxCell.x = m_File.read_int32();
@@ -74,6 +77,7 @@ namespace FusionEngine
 		}
 
 		m_NumCells = Vector2T<uint32_t>(m_MaxCell) - m_MinCell;
+		m_NumCells.x += 1; m_NumCells.y += 1; // min and max are inclusive
 
 		m_CellLocations.resize(m_NumCells.x * m_NumCells.y);
 		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
@@ -150,9 +154,10 @@ namespace FusionEngine
 
 	std::vector<char> GameMap::GetRegionData(int32_t x, int32_t y, bool include_synched)
 	{
-		if (x > m_MinCell.x && x < m_MaxCell.x && y > m_MinCell.y && y < m_MaxCell.y)
+		if (x >= m_MinCell.x && x <= m_MaxCell.x && y >= m_MinCell.y && y <= m_MaxCell.y)
 		{
 			Vector2T<uint32_t> size = m_MaxCell - m_MinCell;
+			size.x += 1; size.y += 1; // min and max are inclusive
 			uint32_t adj_x, adj_y;
 			if (x < 0)
 			{
@@ -266,13 +271,14 @@ namespace FusionEngine
 			}
 		}
 
-		int32_t minX = 0;// = cell_cache->GetMinX();
-		int32_t maxX = 0;// = cell_cache->GetMaxX();
-		int32_t minY = 0;// = cell_cache->GetMinY();
-		int32_t maxY = 0;// = cell_cache->GetMaxY();
+		auto bounds = cell_cache->GetUsedBounds();
+		int32_t minX = bounds.left;
+		int32_t maxX = bounds.right;
+		int32_t minY = bounds.top;
+		int32_t maxY = bounds.bottom;
 
-		const size_t cellsAcross = maxX - minX;
-		const size_t cellsDown = maxY - minY;
+		const size_t cellsAcross = maxX - minX + 1; // +1 because given bounds are inclusive
+		const size_t cellsDown = maxY - minY + 1;
 
 		const size_t numCells = cellsAcross * cellsDown;
 
@@ -302,9 +308,9 @@ namespace FusionEngine
 			// Buffer for copying data out of the cache files
 			std::vector<char> buffer(4096);
 
-			for (int32_t y = minX; y <= maxX; ++y)
+			for (int32_t y = minY; y <= maxY; ++y)
 			{
-				for (int32_t x = minY; x <= maxY; ++x)
+				for (int32_t x = minX; x <= maxX; ++x)
 				{
 					auto cellData = cell_cache->GetCellStreamForReading(x, y);
 
@@ -518,7 +524,7 @@ namespace FusionEngine
 
 		//m_Manager->Clear();
 
-		auto map = std::make_shared<GameMap>(device);
+		auto map = std::make_shared<GameMap>(device, boost::filesystem::basename(filename));
 
 		//// Read the entity type count
 		//auto numberEntityTypes = device.read_uint32();
