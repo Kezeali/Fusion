@@ -78,14 +78,17 @@ namespace FusionEngine
 					std::string value;
 					std::string::size_type length;
 					Read(length);
-					value.resize(length);
-					if (m_Stream->read(&value[0], length))
-						return std::move(value);
-					else
+					if (length > 0)
 					{
-						value.clear();
-						return std::move(value);
+						value.resize(length);
+						if (m_Stream->read(&value[0], length))
+							return std::move(value);
+						else
+						{
+							value.clear();
+						}
 					}
+					return std::move(value);
 				}
 
 				template <typename T>

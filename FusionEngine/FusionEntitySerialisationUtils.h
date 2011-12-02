@@ -73,7 +73,7 @@ namespace FusionEngine
 		//! Save an active entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included);
 		//! Load an entity
-		EntityPtr LoadEntity(ICellStream& in, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
+		EntityPtr LoadEntity(ICellStream& in, bool id_included, ObjectID override_id, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser);
 	}
 
 }

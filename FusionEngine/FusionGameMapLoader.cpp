@@ -216,7 +216,7 @@ namespace FusionEngine
 			m_File.read(&numPseudoEnts, sizeof(size_t));
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
-				auto entity = LoadEntity(inflateStream, false, factory, entityManager, instantiator);
+				auto entity = LoadEntity(inflateStream, false, 0, factory, entityManager, instantiator);
 				entity->SetDomain(SYSTEM_DOMAIN);
 				entityManager->AddEntity(entity);
 			}
@@ -226,7 +226,7 @@ namespace FusionEngine
 				m_File.read(&numSynchedEnts, sizeof(size_t));
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
-					auto entity = LoadEntity(inflateStream, true, factory, entityManager, instantiator);
+					auto entity = LoadEntity(inflateStream, true, 0, factory, entityManager, instantiator);
 					entity->SetDomain(SYSTEM_DOMAIN);
 					entityManager->AddEntity(entity);
 				}
@@ -312,7 +312,7 @@ namespace FusionEngine
 			{
 				for (int32_t x = minX; x <= maxX; ++x)
 				{
-					auto cellData = cell_cache->GetCellStreamForReading(x, y);
+					auto cellData = cell_cache->GetRawCellStreamForReading(x, y);
 
 					// Convert the X,Y grid location to a 1-D array index
 					const size_t i = (y - minY) * cellsAcross + (x - minX);

@@ -150,7 +150,7 @@ namespace FusionEngine
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
-		EntityPtr Load(ICellStream& file, bool includes_id);
+		EntityPtr Load(ICellStream& file, bool includes_id, ObjectID id);
 
 		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids);
 

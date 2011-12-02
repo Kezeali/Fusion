@@ -282,9 +282,9 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
 	}
 
-	EntityPtr RegionMapLoader::Load(ICellStream& file, bool includes_id)
+	EntityPtr RegionMapLoader::Load(ICellStream& file, bool includes_id, ObjectID id)
 	{
-		return EntitySerialisationUtils::LoadEntity(file, includes_id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
+		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 	}
 
 	size_t RegionMapLoader::LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids)
@@ -292,24 +292,35 @@ namespace FusionEngine
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
 
-		// Skip the ID header-data (is only used when updating inactive cells)
+		std::vector<ObjectID> idIndex;
+
+		// NOPE: Skip the ID header-data (is only used when updating inactive cells)
 		if (data_includes_ids)
 		{
-			const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
+			/*const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
 			std::vector<char> bleh(headerSize);
-			file.read(bleh.data(), headerSize);
+			file.read(bleh.data(), headerSize);*/
+			IO::Streams::CellStreamReader reader(&file);
+			for (size_t i = 0; i < numEntries; ++i)
+			{
+				ObjectID id;
+				std::streamoff bleh;
+				reader.Read(id);
+				reader.Read(bleh);
+				idIndex.push_back(id);
+			}
 		}
 
 		// Read entity data
 		for (size_t n = 0; n < numEntries; ++n)
 		{
 			//auto& archivedEntity = *it;
-			auto archivedEntity = Load(file, data_includes_ids);
+			auto archivedEntity = Load(file, false/*data_includes_ids*/, idIndex[n]);
 
 			Vector2 pos = archivedEntity->GetPosition();
 			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
 			CellEntry entry;
-			entry.x = ToGameUnits(pos.x); entry.y = ToGameUnits(pos.y);
+			entry.x = pos.x; entry.y = pos.y;
 
 			archivedEntity->SetStreamingCellIndex(coord);
 
@@ -567,13 +578,16 @@ namespace FusionEngine
 										//m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 										auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
 
-										bio::filtering_istream inflateStream;
-										inflateStream.push(bio::zlib_decompressor());
-										inflateStream.push(bio::array_source(data.data(), data.size()));
+										if (!data.empty())
+										{
+											bio::filtering_istream inflateStream;
+											inflateStream.push(bio::zlib_decompressor());
+											inflateStream.push(bio::array_source(data.data(), data.size()));
 
-										LoadEntitiesFromCellData(cell_coord, cell, inflateStream, false);
-										if (uncached)
-											LoadEntitiesFromCellData(cell_coord, cell, inflateStream, true);
+											LoadEntitiesFromCellData(cell_coord, cell, inflateStream, false);
+											if (uncached)
+												LoadEntitiesFromCellData(cell_coord, cell, inflateStream, true);
+										}
 									}
 
 									auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);

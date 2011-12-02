@@ -831,7 +831,7 @@ namespace FusionEngine
 			}
 		}
 
-		EntityPtr LoadEntity(ICellStream& instr, bool id_included, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser)
+		EntityPtr LoadEntity(ICellStream& instr, bool id_included, ObjectID override_id, EntityFactory* factory, EntityManager* manager, InstancingSynchroniser* synchroniser)
 		{
 			CellStreamReader in(&instr);
 
@@ -839,6 +839,11 @@ namespace FusionEngine
 			if (id_included)
 			{
 				in.Read(id);
+				synchroniser->TakeID(id);
+			}
+			else if (override_id != 0)
+			{
+				id = override_id;
 				synchroniser->TakeID(id);
 			}
 
