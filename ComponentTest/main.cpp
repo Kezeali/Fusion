@@ -247,7 +247,7 @@ public:
 		po::notify(varMap);
 
 		CL_ConsoleWindow conWindow("Component Test Console", 80, 10);
-		CL_DisplayWindow dispWindow("Component Test", 800, 600);
+		CL_DisplayWindow dispWindow("Component Test", 800, 600, false, true);
 
 		{
 			std::unique_ptr<Logger> logger;
@@ -505,7 +505,7 @@ public:
 				dynamic_cast<CLRenderWorld*>(renderWorld.get())->AddViewport(viewport);
 				streamingMgr->AddCamera(camera);
 				
-				if (editMode)
+				//if (editMode)
 					editCam = camera;
 				}
 
@@ -718,6 +718,7 @@ public:
 						//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
 						IO::PhysFSStream file("default.gad", IO::Write);
 						GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
+						cellArchivist->SaveEntityLocationDB("default.endb");
 						cellArchivist->Start();
 
 						streamingMgr->Update(true);

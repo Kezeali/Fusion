@@ -180,7 +180,7 @@ namespace FusionEngine
 	//! Creates an entry for the given Entity in the given cell
 	static inline CellEntry& createEntry(Cell* cell, const EntityPtr& entity, const CellEntry& copy_entry)
 	{
-		cell->objects.emplace_back( std::make_pair(entity, copy_entry) );
+		cell->objects.push_back( std::make_pair(entity, copy_entry) );
 		return cell->objects.back().second;
 	}
 
@@ -443,9 +443,9 @@ namespace FusionEngine
 		{
 			const auto& loc = it->first;
 			auto& cell = it->second;
-			m_Archivist->Store(loc.x, loc.y, std::move(cell));
+			m_Archivist->Store(loc.x, loc.y, /*std::move*/(cell));
 		}
-		m_Cells.clear();
+		//m_Cells.clear();
 	}
 
 	void StreamingManager::AddEntity(const EntityPtr &entity)

@@ -244,12 +244,12 @@ namespace FusionEngine
 		}
 	}
 
-	std::unique_ptr<ArchiveIStream> RegionFile::getInputCellData(int32_t x, int32_t y)
+	std::unique_ptr<ArchiveIStream> RegionFile::getInputCellData(int32_t x, int32_t y, bool inflate)
 	{
 		namespace io = boost::iostreams;
 		// TODO: sanity checks
 
-		std::pair<size_t, size_t> location(x, y);
+		auto location = std::make_pair(x, y);
 
 		const auto& locationData = getCellDataLocation(location);
 
@@ -274,9 +274,12 @@ namespace FusionEngine
 		const auto dataVersion = reader.ReadValue<uint8_t>();
 
 		// Decompress the data
-		//io::filtering_istream decompressor;
-		//decompressor.push(io::zlib_decompressor());
-		//decompressor.push(*file);
+		//if (inflate)
+		//{
+		//	io::filtering_istream decompressor;
+		//	decompressor.push(io::zlib_decompressor());
+		//	decompressor.push(*file);
+		//}
 
 		SmartArrayDevice device;
 
@@ -284,7 +287,8 @@ namespace FusionEngine
 		file->read(device.data->data(), dataLength);
 
 		auto stream = std::unique_ptr<ArchiveIStream>(new io::filtering_istream());
-		stream->push(io::zlib_decompressor());
+		if (inflate)
+			stream->push(io::zlib_decompressor());
 		stream->push(device);
 		return stream;
 	}
@@ -294,20 +298,20 @@ namespace FusionEngine
 		namespace io = boost::iostreams;
 		// TODO: sanity checks
 
-		std::pair<size_t, size_t> location(x, y);
+		auto location = std::make_pair(x, y);
 
 		const auto& locationData = getCellDataLocation(location);
 
-		const auto firstSector = locationData.startingSector;
-		const auto numSectors = locationData.sectorsAllocated;
+		//const auto firstSector = locationData.startingSector;
+		//const auto numSectors = locationData.sectorsAllocated;
 
-		IO::Streams::CellStreamReader reader(file.get());
-		const auto dataLength = reader.ReadValue<size_t>();
+		// The data will probably be about as long as it was last time:
+		const auto predictedDataLength = locationData.sectorsAllocated * s_SectorSize;
 
 		CellBuffer device(this);
 
 		device.pimpl->cellIndex = location;
-		device.data->reserve(dataLength);
+		device.data->reserve(predictedDataLength);
 
 		auto stream = std::unique_ptr<ArchiveOStream>(new io::filtering_ostream());
 		stream->push(io::zlib_compressor());
@@ -404,11 +408,11 @@ namespace FusionEngine
 
 	void RegionFile::setCellDataLocation(const std::pair<int32_t, int32_t>& cell_index, uint32_t startSector, uint32_t sectorsUsed)
 	{
-		// Make sure the values given fit within the space available in the bitfield
+		// Make sure the values given fit within the space available to them in the bitfield
 		FSN_ASSERT(startSector < (1 << 24));
 		FSN_ASSERT(sectorsUsed < 256);
 
-		const int32_t x = cell_index.first & 31, y = cell_index.second & 31;
+		const auto x = cell_index.first & 31, y = cell_index.second & 31;
 
 		auto& data = cellDataLocations[x + y * region_width];
 		data.startingSector = startSector;
@@ -420,18 +424,37 @@ namespace FusionEngine
 		writer.Write(data);
 	}
 
-	const RegionFile::DataLocation& RegionFile::getCellDataLocation(const std::pair<int32_t, int32_t>& cell_index)
+	const RegionFile::DataLocation& RegionFile::getCellDataLocation(const std::pair<int32_t, int32_t>& cell_coords)
 	{
-		const size_t x = cell_index.first & 31, y = cell_index.second & 31;
+		// TODO: fix this conversion (either pass the region-relative coords from
+		//  RegionFileCache, or store the region file coord within the RegionFile object so they can be calculated here)
+		const auto x = cell_coords.first & 31, y = cell_coords.second & 31;
 
 		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 		return cellDataLocations[x + y * region_width];
 	}
 
-	RegionCellCache::RegionCellCache(const std::string& cache_path)
+	RegionCellCache::RegionCellCache(const std::string& cache_path, int32_t region_size)
 		: m_CachePath(cache_path),
-		m_MaxLoadedFiles(10)
+		m_RegionSize(region_size),
+		m_MaxLoadedFiles(10),
+		m_EditMode(false)
 	{
+		FSN_ASSERT(region_size > 0);
+	}
+
+	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)
+	{
+		m_EditMode = enable;
+		m_Bounds = bounds;
+	}
+
+	inline RegionCellCache::CellCoord_t RegionCellCache::cellToRegionCoord(int32_t* cell_x, int32_t* cell_y) const
+	{
+		CellCoord_t regionCoord((int32_t)std::floor(*cell_x / (float)m_RegionSize), (int32_t)std::floor(*cell_y / (float)m_RegionSize));
+		// Figure out the location of the cell relative to the origin (0,0) point of the region
+		*cell_x = *cell_x - regionCoord.x * m_RegionSize, *cell_y = *cell_y - regionCoord.y * m_RegionSize;
+		return regionCoord;
 	}
 	
 	RegionFile& RegionCellCache::CreateRegionFile(const RegionCellCache::CellCoord_t& coord)
@@ -449,7 +472,7 @@ namespace FusionEngine
 			{
 				// Add a new cache entry
 				std::stringstream str; str << coord.x << "." << coord.y;
-				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(m_CachePath + str.str())));
+				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(m_CachePath + str.str() + ".celldata", (size_t)m_RegionSize)));
 				RegionFile* regionFile = &newEntry->second;
 
 				m_CacheImportance.push_back(coord);
@@ -460,12 +483,7 @@ namespace FusionEngine
 					// Remove the least recently accessed file
 					m_Cache.erase(m_CacheImportance.front());
 					m_CacheImportance.pop_front();
-				}
-
-				m_Bounds.left = std::min(m_Bounds.left, coord.x);
-				m_Bounds.right = std::max(m_Bounds.right, coord.x);
-				m_Bounds.top = std::min(m_Bounds.top, coord.y);
-				m_Bounds.bottom = std::max(m_Bounds.bottom, coord.y);
+				}				
 
 				return regionFile;
 			}
@@ -482,16 +500,36 @@ namespace FusionEngine
 		}
 	}
 
+	std::unique_ptr<ArchiveIStream> RegionCellCache::GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y)
+	{
+		try
+		{
+			CellCoord_t regionCoord = cellToRegionCoord(&cell_x, &cell_y);
+
+			auto region = GetRegionFile(regionCoord, false);
+
+			if (region)
+			{
+				return region->getInputCellData(cell_x, cell_y, false);
+			}
+
+			return std::unique_ptr<ArchiveIStream>();
+		}
+		catch (CL_Exception& ex)
+		{
+			AddLogEntry(ex.what());
+			return std::unique_ptr<ArchiveIStream>();
+		}
+	}
+
 	std::unique_ptr<ArchiveIStream> RegionCellCache::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
 	{
 		try
 		{
-			CellCoord_t regionCoord(cell_x / m_RegionSize, cell_y / m_RegionSize);
+			CellCoord_t regionCoord = cellToRegionCoord(&cell_x, &cell_y);
 
 			auto region = GetRegionFile(regionCoord, false);
-			//auto cacheEntry = m_Cache.find(regionCoord);
 
-			//if (cacheEntry != m_Cache.end())
 			if (region)
 			{
 				return region->getInputCellData(cell_x, cell_y);
@@ -510,18 +548,17 @@ namespace FusionEngine
 	{
 		try
 		{
-			CellCoord_t regionCoord(cell_x / m_RegionSize, cell_y / m_RegionSize);
-			//auto& cacheEntry = m_Cache.find(regionCoord);
-			//if (cacheEntry != m_Cache.end())
-			//{
-			//	auto& regionFile = cacheEntry->second;
-			//	return regionFile.getOutputCellData(cell_x, cell_y);
-			//}
-			//else
-			//{
-			//	auto& regionFile = CacheRegionFile(regionCoord);
-			//	return regionFile.getOutputCellData(cell_x, cell_y);
-			//}
+			// Expand the bounds (edit mode)
+			if (m_EditMode)
+			{
+				m_Bounds.left = std::min(m_Bounds.left, cell_x);
+				m_Bounds.right = std::max(m_Bounds.right, cell_x);
+				m_Bounds.top = std::min(m_Bounds.top, cell_y);
+				m_Bounds.bottom = std::max(m_Bounds.bottom, cell_y);
+			}
+
+			auto regionCoord = cellToRegionCoord(&cell_x, &cell_y);
+
 			auto regionFile = GetRegionFile(regionCoord, true); FSN_ASSERT(regionFile);
 			return regionFile->getOutputCellData(cell_x, cell_y);
 		}

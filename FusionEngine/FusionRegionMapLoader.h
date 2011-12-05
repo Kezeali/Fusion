@@ -136,16 +136,12 @@ namespace FusionEngine
 
 		void Stop();
 
-		CL_IODevice GetFile(size_t cell_index, bool write) const;
-
-		//RegionFile& CacheRegionFile(CellCoord_t& coord);
-
 		std::unique_ptr<std::istream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<std::ostream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
 
-		CL_IODevice GetCellData(size_t index) const;
-
 		RegionCellCache* GetCellCache() const { return m_Cache; }
+
+		void SaveEntityLocationDB(const std::string& filename);
 
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;

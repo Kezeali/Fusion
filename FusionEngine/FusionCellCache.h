@@ -46,6 +46,8 @@ namespace FusionEngine
 		virtual std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
 		virtual std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y) = 0;
 
+		//! Used when compiling a map from a cell cache
+		virtual std::unique_ptr<ArchiveIStream> GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y) = 0;
 		virtual CL_Rect GetUsedBounds() const = 0;
 	};
 

@@ -126,8 +126,8 @@ namespace FusionEngine
 			: region_width(0)
 		{}
 
-		explicit RegionFile(const std::string& filename, size_t width = 16);
-		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width = 16);
+		explicit RegionFile(const std::string& filename, size_t width);
+		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width);
 
 		void init();
 
@@ -173,7 +173,7 @@ namespace FusionEngine
 
 		size_t region_width; // Number of cells in each direction that comprise this region
 
-		std::unique_ptr<ArchiveIStream> getInputCellData(int32_t x, int32_t y);
+		std::unique_ptr<ArchiveIStream> getInputCellData(int32_t x, int32_t y, bool inflate = true);
 		std::unique_ptr<ArchiveOStream> getOutputCellData(int32_t x, int32_t y);
 
 		void write(const std::pair<int32_t, int32_t>& i, std::vector<char>& data);
@@ -187,19 +187,33 @@ namespace FusionEngine
 		RegionFile& operator=(const RegionFile&) {}
 	};
 
+	//! Region-file based cell data source
 	class RegionCellCache : public CellCache
 	{
 	public:
 		typedef Vector2T<int32_t> CellCoord_t;
 
-		//! Region-file based cell data source
-		RegionCellCache(const std::string& cache_path);
+		
+		//! CTOR
+		/*!
+		* \param cache_path
+		* The absolute path where the region files should be stored
+		*
+		* \param cells_per_region_square
+		* Width & height in number of cells per region file, i.e. 16 makes 16x16 region files.
+		*/
+		RegionCellCache(const std::string& cache_path, int32_t cells_per_region_square = 16);
 
 		RegionFile& CreateRegionFile(const CellCoord_t& coord);
+		//! Returns a RegionFile for the given coord
 		RegionFile* GetRegionFile(const CellCoord_t& coord, bool create);
 
 		std::unique_ptr<ArchiveIStream> GetCellStreamForReading(int32_t cell_x, int32_t cell_y);
 		std::unique_ptr<ArchiveOStream> GetCellStreamForWriting(int32_t cell_x, int32_t cell_y);
+
+		std::unique_ptr<ArchiveIStream> GetRawCellStreamForReading(int32_t cell_x, int32_t cell_y);
+
+		void SetupEditMode(bool enable, CL_Rect bounds = CL_Rect());
 
 		CL_Rect GetUsedBounds() const { return m_Bounds; }
 
@@ -210,9 +224,13 @@ namespace FusionEngine
 
 		std::string m_CachePath;
 
-		size_t m_RegionSize;
+		int32_t m_RegionSize;
 
+		bool m_EditMode;
 		CL_Rect m_Bounds;
+
+		//! Returns the region in which the given cell resides, and converts the coords to region-relative coords
+		inline CellCoord_t cellToRegionCoord(int32_t* in_out_x, int32_t* in_out_y) const;
 
 	};
 

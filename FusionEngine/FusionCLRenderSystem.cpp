@@ -286,6 +286,22 @@ namespace FusionEngine
 		Draw();
 	}
 
+	static void DrawSegment(Vector2 p1, Vector2 p2, CL_GraphicContext& gc)
+	{
+		CL_Colorf clcolor(1.f, 0.5f, 0.9f, 1.0f);
+
+		CL_Vec2i positions[] =
+		{
+			CL_Vec2i((int)(p1.x * s_GameUnitsPerSimUnit), (int)(p1.y * s_GameUnitsPerSimUnit)),
+			CL_Vec2i((int)(p2.x * s_GameUnitsPerSimUnit), (int)(p2.y * s_GameUnitsPerSimUnit))
+		};
+
+		CL_PrimitivesArray vertex_data(gc);
+		vertex_data.set_attributes(0, positions);
+		vertex_data.set_attribute(1, clcolor);
+		gc.draw_primitives(cl_lines, 2, vertex_data);
+	}
+
 	void CLRenderTask::Draw()
 	{
 		auto& drawables = m_RenderWorld->GetDrawables();
@@ -316,23 +332,25 @@ namespace FusionEngine
 			m_Renderer->PostDraw();
 		}
 
-		std::stringstream str;
-		str << DeltaTime::GetFramesSkipped();
-		std::string debug_text = "Frames Skipped: " + str.str();
-		str.str("");
-		str << DeltaTime::GetDeltaTime();
-		debug_text += "\nDT: " + str.str();
-		m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
+		{
+			std::stringstream str;
+			str << DeltaTime::GetFramesSkipped();
+			std::string debug_text = "Frames Skipped: " + str.str();
+			str.str("");
+			str << DeltaTime::GetDeltaTime();
+			debug_text += "\nDT: " + str.str();
+			m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
 
-		CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
-		CL_Rectf fill = bar;
-		fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
-		CL_Colorf c1 = CL_Colorf::aqua;
-		CL_Colorf c0 = c1;
-		c0.set_alpha(0.25f);
-		c1.set_alpha(DeltaTime::GetInterpolationAlpha());
-		CL_Draw::box(gc, bar, CL_Colorf::silver);
-		CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
+			CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
+			CL_Rectf fill = bar;
+			fill.set_width(bar.get_width() * DeltaTime::GetInterpolationAlpha());
+			CL_Colorf c1 = CL_Colorf::aqua;
+			CL_Colorf c0 = c1;
+			c0.set_alpha(0.25f);
+			c1.set_alpha(DeltaTime::GetInterpolationAlpha());
+			CL_Draw::box(gc, bar, CL_Colorf::silver);
+			CL_Draw::gradient_fill(gc, fill, CL_Gradient(c0, c1, c0, c1));
+		}
 
 		{
 		auto pf = Profiling::getSingleton().GetTimes();
@@ -419,6 +437,29 @@ namespace FusionEngine
 		{
 			m_PhysDebugDraw->SetViewport(viewports.front());
 			m_PhysDebugDraw->SetupView();
+			CL_Rectf area;
+			m_Renderer->CalculateScreenArea(area, viewports.front(), true);
+			area.top *= s_SimUnitsPerGameUnit; area.right *= s_SimUnitsPerGameUnit; area.bottom *= s_SimUnitsPerGameUnit; area.left *= s_SimUnitsPerGameUnit;
+			//auto center = area.get_center();
+			//auto x = std::floor(area.left / 8) * 8, y = std::floor(area.top / 8) * 8;
+			for (auto iy = std::floor(area.top / 8.f) * 8; iy < area.bottom; iy += 8)
+			{
+				for (auto ix = std::floor(area.left / 8.f) * 8; ix < area.right; ix += 8)
+				{
+					//auto x = std::floor(ix / 8) * 8, y = std::floor(iy / 8) * 8;
+					DrawSegment(Vector2(ix, iy), Vector2(ix + 8, iy), gc);
+					DrawSegment(Vector2(ix, iy), Vector2(ix, iy + 8), gc);
+				}
+			}
+			const auto textHeight = m_DebugFont2.get_text_size(gc, "1").height;
+			for (auto iy = std::floor(area.top / 8.f) * 8; iy < area.bottom; iy += 8)
+			{
+				for (auto ix = std::floor(area.left / 8.f) * 8; ix < area.right; ix += 8)
+				{
+					std::stringstream str; str << (ix / 8) << "," << (iy / 8);
+					m_DebugFont2.draw_text(gc, ToGameUnits(ix), ToGameUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
+				}
+			}
 			m_RenderWorld->m_PhysWorld->DrawDebugData();
 			m_PhysDebugDraw->ResetView();
 		}

@@ -54,7 +54,7 @@ void PhysFSHelp::copy_file(const std::string& from, const std::string& to)
 	}
 	try
 	{
-		std::vector<char> buffer(4096);
+		std::vector<char> buffer(4194304);
 		PHYSFS_sint64 readLength = 0;
 		do
 		{
@@ -63,7 +63,7 @@ void PhysFSHelp::copy_file(const std::string& from, const std::string& to)
 				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to read " + from + " for copying.");
 
 			if (PHYSFS_write(toFile, buffer.data(), sizeof(char), (PHYSFS_uint32)readLength) != readLength)
-				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to write " + to + " when copying.");
+				FSN_EXCEPT(FusionEngine::FileSystemException, "Failed to write copied data to " + to + ".");
 		} while (!PHYSFS_eof(fromFile));
 	}
 	catch (FusionEngine::FileSystemException&)

@@ -72,6 +72,8 @@ namespace FusionEngine
 
 		const std::string& GetName() const { return m_Name; }
 
+		CL_Rect GetBounds() const;
+
 		float GetMapWidth() const;
 		unsigned int GetNumCellsAcross() const;
 		float GetCellSize() const;

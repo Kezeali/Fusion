@@ -41,6 +41,8 @@
 
 #include "FusionBinaryStream.h"
 
+#include <boost/filesystem.hpp>
+
 #if _MSC_VER > 1000
 #pragma warning( push )
 #pragma warning( disable: 4244 4351; )
@@ -56,6 +58,12 @@ namespace FusionEngine
 {
 
 	static const size_t s_DefaultRegionSize = 4;
+
+	static void setupTuning(kyotocabinet::HashDB* db)
+	{
+		db->tune_defrag(8);
+		db->tune_map(16LL << 20); // 16MB memory-map
+	}
 
 	RegionMapLoader::RegionMapLoader(bool edit_mode, const std::string& cache_path)
 		: m_CachePath(cache_path),
@@ -78,7 +86,11 @@ namespace FusionEngine
 		if (m_EditMode)
 		{
 			m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+			m_EntityLocationDB->tune_options(kyotocabinet::HashDB::TSMALL);
+			setupTuning(m_EntityLocationDB.get());
 			m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+
+			m_Cache->SetupEditMode(true);
 		}
 	}
 
@@ -100,7 +112,10 @@ namespace FusionEngine
 		if (m_EntityLocationDB)
 			m_EntityLocationDB->close();
 		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+		setupTuning(m_EntityLocationDB.get());
 		m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
+
+		m_Cache->SetupEditMode(m_EditMode, m_Map->GetBounds());
 	}
 
 	void RegionMapLoader::Update(ObjectID id, const RegionMapLoader::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
@@ -227,26 +242,26 @@ namespace FusionEngine
 		m_Running = false;
 	}
 
-	CL_IODevice RegionMapLoader::GetFile(size_t cell_index, bool write) const
-	{
-		try
-		{
-			std::stringstream str; str << cell_index;
-			std::string filename = "cache/" + str.str();
-			if (write || PHYSFS_exists(filename.c_str()))
-			{
-				CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-				auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
-				return file;
-			}
-			else return CL_IODevice();
-		}
-		catch (CL_Exception& ex)
-		{
-			SendToConsole(ex.what());
-			return CL_IODevice();
-		}
-	}
+	//CL_IODevice RegionMapLoader::GetFile(size_t cell_index, bool write) const
+	//{
+	//	try
+	//	{
+	//		std::stringstream str; str << cell_index;
+	//		std::string filename = "cache/" + str.str();
+	//		if (write || PHYSFS_exists(filename.c_str()))
+	//		{
+	//			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+	//			auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
+	//			return file;
+	//		}
+	//		else return CL_IODevice();
+	//	}
+	//	catch (CL_Exception& ex)
+	//	{
+	//		SendToConsole(ex.what());
+	//		return CL_IODevice();
+	//	}
+	//}
 
 	std::unique_ptr<std::istream> RegionMapLoader::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
 	{
@@ -258,12 +273,35 @@ namespace FusionEngine
 		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
 
-	CL_IODevice RegionMapLoader::GetCellData(size_t index) const
+	//CL_IODevice RegionMapLoader::GetCellData(size_t index) const
+	//{
+	//	if (m_EditMode && !m_Running)
+	//		return GetFile(index, false);
+	//	else
+	//		FSN_EXCEPT(InvalidArgumentException, "Can't access cell data while running");
+	//}
+
+	void RegionMapLoader::SaveEntityLocationDB(const std::string& filename)
 	{
-		if (m_EditMode && !m_Running)
-			return GetFile(index, false);
+		if (m_EntityLocationDB)
+		{
+			std::string fullPath = boost::filesystem::path(filename).make_preferred().string();
+			std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).make_preferred().string();
+
+			if (filename.length() < writeDir.length() || filename.substr(0, writeDir.length()) != writeDir)
+				fullPath = writeDir + "\\" + filename;
+
+			// TODO: (to make the resulting DB smaller)
+			// db->stop() (or db.reset())
+			// boost::filesystem::copy(db path, fullpath)
+			// reopen
+
+			m_EntityLocationDB->copy(fullPath);
+		}
 		else
-			FSN_EXCEPT(InvalidArgumentException, "Can't access cell data while running");
+		{
+			FSN_EXCEPT(FileSystemException, "The entity database isn't open, so it can't be saved");
+		}
 	}
 
 	size_t RegionMapLoader::GetDataBegin() const
@@ -315,7 +353,7 @@ namespace FusionEngine
 		for (size_t n = 0; n < numEntries; ++n)
 		{
 			//auto& archivedEntity = *it;
-			auto archivedEntity = Load(file, false/*data_includes_ids*/, idIndex[n]);
+			auto archivedEntity = Load(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0);
 
 			Vector2 pos = archivedEntity->GetPosition();
 			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit
@@ -386,9 +424,9 @@ namespace FusionEngine
 		// Make sure the cell-location data is stored as expected
 		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
 		{
-			int64_t new_loc_test = new_loc.x;
+			int64_t new_loc_test = new_loc.y;
 			new_loc_test = new_loc_test << 32;
-			new_loc_test |= new_loc.y;
+			new_loc_test |= new_loc.x;
 			FSN_ASSERT(memcmp(&new_loc, &new_loc_test, sizeof(new_loc)) == 0);
 		}
 #endif
@@ -575,7 +613,6 @@ namespace FusionEngine
 										// Load synched entities if this cell is un-cached (hasn't been loaded before)
 										bool uncached = m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
 
-										//m_Map->LoadCell(cell, i, uncached, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 										auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
 
 										if (!data.empty())
@@ -583,6 +620,10 @@ namespace FusionEngine
 											bio::filtering_istream inflateStream;
 											inflateStream.push(bio::zlib_decompressor());
 											inflateStream.push(bio::array_source(data.data(), data.size()));
+
+											IO::Streams::CellStreamReader reader(&inflateStream);
+											// This value is the length of the pseudo-entity data (TODO: read this in GetRegionData and only return the data after this length if uncached is false)
+											reader.ReadValue<std::streamsize>();
 
 											LoadEntitiesFromCellData(cell_coord, cell, inflateStream, false);
 											if (uncached)

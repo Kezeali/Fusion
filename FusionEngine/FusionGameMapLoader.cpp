@@ -76,8 +76,10 @@ namespace FusionEngine
 			FSN_EXCEPT(FileSystemException, "The given map file has an invalid header");
 		}
 
-		m_NumCells = Vector2T<uint32_t>(m_MaxCell) - m_MinCell;
-		m_NumCells.x += 1; m_NumCells.y += 1; // min and max are inclusive
+		//m_NumCells = m_MaxCell - m_MinCell;
+		// + 1 because both min and max are inclusive
+		m_NumCells.x = (uint32_t)((int64_t)m_MaxCell.x - (int64_t)m_MinCell.x + 1);
+		m_NumCells.y = (uint32_t)((int64_t)m_MaxCell.y - (int64_t)m_MinCell.y + 1); 
 
 		m_CellLocations.resize(m_NumCells.x * m_NumCells.y);
 		for (unsigned int i = 0; i < m_CellLocations.size(); ++i)
@@ -90,6 +92,11 @@ namespace FusionEngine
 		}
 
 		m_NonStreamingEntitiesLocation = m_File.read_uint32();
+	}
+
+	CL_Rect GameMap::GetBounds() const
+	{
+		return CL_Rect(m_MinCell.x, m_MinCell.y, m_MaxCell.x, m_MaxCell.y);
 	}
 
 	unsigned int GameMap::GetNumCellsAcross() const
@@ -156,8 +163,9 @@ namespace FusionEngine
 	{
 		if (x >= m_MinCell.x && x <= m_MaxCell.x && y >= m_MinCell.y && y <= m_MaxCell.y)
 		{
-			Vector2T<uint32_t> size = m_MaxCell - m_MinCell;
-			size.x += 1; size.y += 1; // min and max are inclusive
+			//Vector2T<uint32_t> size = m_MaxCell - m_MinCell;
+			//size.x += 1; size.y += 1; // min and max are inclusive
+			auto size = m_NumCells;
 			uint32_t adj_x, adj_y;
 			if (x < 0)
 			{
