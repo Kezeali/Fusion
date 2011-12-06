@@ -427,7 +427,7 @@ namespace FusionEngine
 		CellDataSource* m_Archivist;
 
 
-		std::shared_ptr<Cell> RetrieveCell(const CellHandle &location);
+		std::shared_ptr<Cell>& RetrieveCell(const CellHandle &location);
 		void StoreCell(const CellHandle& location);
 		//! Makes sure that the given cell is in either Ready or Retrieve state
 		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);

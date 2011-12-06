@@ -342,8 +342,8 @@ namespace FusionEngine
 
 	CellHandle StreamingManager::ToCellLocation(float x, float y) const
 	{
-		const int32_t ix = static_cast<int32_t>(std::floor(x * m_InverseCellSize));
-		const int32_t iy = static_cast<int32_t>(std::floor(y * m_InverseCellSize));
+		const int32_t ix = static_cast<int32_t>(std::floorf(x * m_InverseCellSize));
+		const int32_t iy = static_cast<int32_t>(std::floorf(y * m_InverseCellSize));
 		return CellHandle(ix, iy);
 	}
 
@@ -391,7 +391,7 @@ namespace FusionEngine
 		return std::make_pair(std::move(location), cell);
 	}
 
-	std::shared_ptr<Cell> StreamingManager::RetrieveCell(const CellHandle &location)
+	std::shared_ptr<Cell>& StreamingManager::RetrieveCell(const CellHandle &location)
 	{
 		auto _where = m_Cells.lower_bound(location);
 		if (_where != m_Cells.end() && _where->first == location)
@@ -411,8 +411,7 @@ namespace FusionEngine
 		{
 			// Retrieve and insert a new cell entry
 			auto cell = m_Archivist->Retrieve(location.x, location.y);
-			m_Cells.insert(_where, std::make_pair(location, cell));
-			return cell;
+			return m_Cells.insert(_where, std::make_pair(location, cell))->second;
 		}
 	}
 
@@ -521,7 +520,7 @@ namespace FusionEngine
 	void StreamingManager::OnUpdated(const EntityPtr &entity, float split)
 	{
 		FSN_ASSERT(entity);
-		EntityPtr entityKey = entity;
+		const EntityPtr& entityKey = entity;
 
 		// clamp the new position within bounds
 		Vector2 newPos = entity->GetPosition();
