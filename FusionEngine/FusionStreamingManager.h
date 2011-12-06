@@ -294,6 +294,7 @@ namespace FusionEngine
 		void UpdateInactiveEntity(ObjectID id, const Vector2& position, const RakNet::BitStream& continuous_data, const RakNet::BitStream& occasional_data);
 
 		bool ActivateEntity(ObjectID id);
+		void DeactivateEntity(const EntityPtr &entity);
 
 		boost::signals2::signal<void (const ActivationEvent&)> SignalActivationEvent;
 
@@ -433,7 +434,6 @@ namespace FusionEngine
 		bool ConfirmRetrieval(const CellHandle &location, Cell* cell);
 
 		void ActivateEntity(const CellHandle& cell_location, Cell &cell, const EntityPtr &entity, CellEntry &entry);
-		void DeactivateEntity(const EntityPtr &entity);
 		void DeactivateEntity(Cell &cell, const EntityPtr &entity, CellEntry &entry);
 
 		void RemoteActivateEntity(CellEntry& entry, ObjectID entity, PlayerID viewer, std::shared_ptr<RakNet::BitStream> state);

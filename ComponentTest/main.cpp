@@ -355,7 +355,7 @@ public:
 
 				// Entity generation
 				Entity::Register(asEngine);
-				ASScript::Register(asEngine);
+				ASScript::ScriptInterface::Register(asEngine);
 				InstancingSynchroniser::Register(asEngine);
 
 				Camera::Register(asEngine);
@@ -815,14 +815,19 @@ public:
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;
 				}
+				entityManager->Clear();
+				streamingMgr.reset();
+				cellArchivist->Stop();
+				entityFactory.reset();
+				scriptManager->GetEnginePtr()->GarbageCollect();
 				}
 				catch (...)
 				{
 					cellArchivist->Stop();
 					throw;
 				}
-				cellArchivist->Stop();
-				scriptManager->GetEnginePtr()->GarbageCollect(asGC_ONE_STEP);
+				//cellArchivist->Stop();
+				scriptManager->GetEnginePtr()->GarbageCollect();
 			}
 			catch (FusionEngine::Exception &ex)
 			{

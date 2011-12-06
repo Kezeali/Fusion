@@ -179,17 +179,14 @@ namespace FusionEngine
 		void ShowEntitiesWithTag(const std::string &tag);
 		void RemoveEntitiesWithTag(const std::string &tag);
 
-		/*!
-		* \brief
-		* Removes all entities from the manager.
-		*/
+		//! Drop all entity references
 		void Clear();
-
-		/*!
-		* \brief
-		* Removes synchronised (non-pseudo) entities from the manager
-		*/
+		//! Drops synchronised (non-pseudo) entities from the manager
 		void ClearSyncedEntities();
+
+		//! Request that all active entities be deactivated (unloaded)
+		void DeactivateAllEntities();
+		
 		
 		//! Removes all entities in the given domain
 		void ClearDomain(EntityDomain domain_index);
@@ -239,7 +236,7 @@ namespace FusionEngine
 		void updateEntities(EntityArray &entities, float split);
 
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
-		void clearEntities(bool real_only);
+		void clearEntities(bool synced_only);
 
 		void queueEntityToActivate(const EntityPtr& entity);
 		//! returns true if all components are ready to activate

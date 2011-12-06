@@ -183,7 +183,8 @@ namespace FusionEngine
 	public:
 		//! Cotr
 		IComponent()
-			: m_ChangedProperties(nullptr),
+			: RefCounted(0),
+			m_ChangedProperties(nullptr),
 			m_InterfacesInitialised(false)
 		{
 			m_Ready = NotReady;

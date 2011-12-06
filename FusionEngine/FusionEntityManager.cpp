@@ -1280,8 +1280,10 @@ namespace FusionEngine
 		}
 	}
 
-	void EntityManager::clearEntities(bool real_only)
+	void EntityManager::clearEntities(bool synced_only)
 	{
+		FSN_ASSERT(!synced_only); // not implemented
+
 		if (m_EntitiesLocked)
 			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });
 		else
@@ -1289,12 +1291,6 @@ namespace FusionEngine
 
 		m_EntitiesByName.clear();
 		m_Entities.clear();
-		//m_PseudoEntities.clear();
-
-		//m_UnusedIds.freeAll();
-
-		m_ChangedUpdateStateTags.clear();
-		m_ChangedDrawStateTags.clear();
 	}
 
 	void EntityManager::Clear()
@@ -1305,6 +1301,14 @@ namespace FusionEngine
 	void EntityManager::ClearSyncedEntities()
 	{
 		clearEntities(true);
+	}
+
+	void EntityManager::DeactivateAllEntities()
+	{
+		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		{
+			m_StreamingManager->DeactivateEntity(*it);
+		}
 	}
 
 	void EntityManager::ClearDomain(EntityDomain idx)

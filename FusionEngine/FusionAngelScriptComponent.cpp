@@ -321,9 +321,57 @@ namespace FusionEngine
 		bool m_ChangedSinceSerialised;
 	};
 
-	EntityPtr ASScript_GetParent(ASScript* obj)
+	ASScript::ScriptInterface::ScriptInterface(ASScript* owner, asIScriptObject* script_object)
+		: object(script_object),
+		component(owner)
 	{
-		return obj->GetParent()->shared_from_this();
+		FSN_ASSERT(owner);
+	}
+
+	void ASScript::ScriptInterface::Yield()
+	{
+		component->Yield();
+	}
+
+	void ASScript::ScriptInterface::YieldUntil(std::function<bool (void)> condition, float timeout)
+	{
+		component->YieldUntil(condition, timeout);
+	}
+
+	void ASScript::ScriptInterface::CreateCoroutine(asIScriptFunction *fn)
+	{
+		component->CreateCoroutine(fn);
+	}
+
+	void ASScript::ScriptInterface::CreateCoroutine(const std::string& functionName, float delay)
+	{
+		component->CreateCoroutine(functionName, delay);
+	}
+
+	CScriptAny* ASScript::ScriptInterface::GetProperty(unsigned int index)
+	{
+		return component->GetProperty(index);
+	}
+
+	bool ASScript::ScriptInterface::SetProperty(unsigned int index, void *ref, int typeId)
+	{
+		return component->SetProperty(index, ref, typeId);
+	}
+
+	void ASScript::ScriptInterface::EnumReferences(asIScriptEngine *engine)
+	{
+		engine->GCEnumCallback(object.get());
+	}
+
+	void ASScript::ScriptInterface::ReleaseAllReferences(asIScriptEngine *engine)
+	{
+		object.reset();
+	}
+
+	EntityPtr ASScript_ScriptInterface_GetParent(ASScript::ScriptInterface* interface_obj)
+	{
+		FSN_ASSERT(interface_obj->component);
+		return interface_obj->component->GetParent()->shared_from_this();
 	}
 
 	static uint32_t InitEntityPtr(std::weak_ptr<Entity>& owner, EntityPtr& entityReferenced)
@@ -353,7 +401,7 @@ namespace FusionEngine
 		}
 	}
 
-	void ASScript::Register(asIScriptEngine* engine)
+	void ASScript::ScriptInterface::Register(asIScriptEngine* engine)
 	{
 		{
 			int r = engine->RegisterFuncdef("void coroutine_t()"); FSN_ASSERT(r >= 0);
@@ -361,20 +409,20 @@ namespace FusionEngine
 
 		{
 			int r;
-			ASScript::RegisterType<ASScript>(engine, "ASScript");
+			ASScript::ScriptInterface::RegisterGCType(engine, "ASScript");
 
 			s_ASScriptTypeId = engine->GetTypeIdByDecl("ASScript");
 			FSN_ASSERT(s_ASScriptTypeId >= 0);
 
-			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION((convert_ref<IComponent, ASScript>)), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION((convert_ref<IComponent, ASScript::ScriptInterface>)), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
-			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in, float delay = 0.0f)", asMETHODPR(ASScript, CreateCoroutine, (const std::string&, float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "any@ getProperty(uint) const", asMETHOD(ASScript, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
-			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
+			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript::ScriptInterface, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(const string &in, float delay = 0.0f)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (const std::string&, float), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "any@ getProperty(uint) const", asMETHOD(ASScript::ScriptInterface, GetProperty), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "void setProperty(uint, ?&in)", asMETHODPR(ASScript::ScriptInterface, SetProperty, (unsigned int, void*,int), bool), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 			
-			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("ASScript", "Entity getParent()", asFUNCTION(ASScript_ScriptInterface_GetParent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterGlobalFunction("uint32 initEntityPointer(EntityW &out, Entity &in)", asFUNCTION(InitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterGlobalFunction("void deinitEntityPointer(EntityW &in, uint32, Entity &in)", asFUNCTION(DeinitEntityPtr), asCALL_CDECL); FSN_ASSERT(r >= 0);
@@ -403,7 +451,7 @@ namespace FusionEngine
 			int r = ctx->Prepare(_where->second);
 			if (r >= 0)
 			{
-				ctx->SetObject(m_ScriptObject.get());
+				ctx->SetObject(m_ScriptObject->object.get());
 			}
 			else
 			{
@@ -418,13 +466,13 @@ namespace FusionEngine
 			//caller = script->m_ScriptObject.GetCaller("void update(float)");
 			//script->m_ScriptMethods["void update(float)"] = caller.get_funcid();
 
-			int funcId = m_ScriptObject->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+			int funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 
 			ctx = script_manager->CreateContext();
 			int r = ctx->Prepare(funcId);
 			if (r >= 0)
 			{
-				ctx->SetObject(m_ScriptObject.get());
+				ctx->SetObject(m_ScriptObject->object.get());
 				m_ScriptMethods[decl] = funcId;
 			}
 			else
@@ -519,9 +567,9 @@ namespace FusionEngine
 			const auto objectType = fn->GetObjectType();
 			const bool method = objectType != nullptr;
 
-			if (method && objectType != m_ScriptObject->GetObjectType())
+			if (method && objectType != m_ScriptObject->object->GetObjectType())
 			{
-				const std::string thisTypeName = m_ScriptObject->GetObjectType()->GetName();
+				const std::string thisTypeName = m_ScriptObject->object->GetObjectType()->GetName();
 				ctx->SetException(("Tried to create a coroutine for a method from another class. This class: " + thisTypeName + ", Method: " + fn->GetDeclaration()).c_str());
 				return;
 			}
@@ -529,7 +577,7 @@ namespace FusionEngine
 			auto coCtx = engine->CreateContext();
 			coCtx->Prepare(fn->GetId());
 			if (method)
-				coCtx->SetObject(m_ScriptObject.get());
+				coCtx->SetObject(m_ScriptObject->object.get());
 
 			ConditionalCoroutine cco;
 			cco.new_ctx = coCtx;
@@ -558,7 +606,7 @@ namespace FusionEngine
 			}
 			else
 			{
-				funcId = m_ScriptObject->GetObjectType()->GetMethodIdByDecl(decl.c_str());
+				funcId = m_ScriptObject->object->GetObjectType()->GetMethodIdByDecl(decl.c_str());
 				if (funcId >= 0)
 					method = true;
 				else
@@ -577,7 +625,7 @@ namespace FusionEngine
 			auto coCtx = engine->CreateContext();
 			coCtx->Prepare(funcId);
 			if (method)
-				coCtx->SetObject(m_ScriptObject.get());
+				coCtx->SetObject(m_ScriptObject->object.get());
 
 			ConditionalCoroutine cco;
 			cco.new_ctx = coCtx;
@@ -682,10 +730,11 @@ namespace FusionEngine
 
 	void ASScript::SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& properties)
 	{
-		m_ScriptObject = obj;
-
 		if (obj)
 		{
+			m_ScriptObject = new ScriptInterface(this, obj);
+			m_ScriptObject->release();
+
 			m_FirstInit = true;
 
 			m_ScriptProperties.resize(properties.size());
@@ -754,6 +803,28 @@ namespace FusionEngine
 				m_ScriptMethods[method->GetDeclaration(false)] = method->GetId();
 			}
 
+			// Pass the script-interface to the script object
+			{
+				auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
+				if (setAppObj)
+				{
+					m_ScriptObject->addRef();
+					try
+					{
+						setAppObj.SetThrowOnException(true);
+						setAppObj(m_ScriptObject.get());
+					}
+					catch (ScriptUtils::Exception& e)
+					{
+						m_ScriptObject->release();
+						throw e;
+					}
+				}
+			}
+		}
+		else
+		{
+			m_ScriptObject.reset();
 		}
 	}
 
@@ -934,6 +1005,15 @@ namespace FusionEngine
 				m_UninitialisedEntityWrappers.push_back(std::make_pair(index, pointer_id));
 			else
 				m_EditableUninitialisedEntityWrappers[name] = pointer_id;
+		}
+		else
+		{
+			auto v = prop->value;
+			prop->Store(v.valueObj, v.typeId);
+
+			FSN_EXCEPT(NotImplementedException, "This probably doesn't work");
+			// TODO: write & read script props more explicitly (don't just write the internal representation)
+			//  and do something like prop->Store(valueRead, typeIdRead);
 		}
 
 		return true;

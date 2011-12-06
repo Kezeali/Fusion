@@ -740,12 +740,12 @@ namespace FusionEngine
 			auto& moduleName = _where->second.Module;
 			com->SetScriptPath(moduleName);
 			//com->m_Module = m_ScriptManager->GetModule(moduleName.c_str());
-			return com;
+
+			return com; // ComponentPtr's constructor will init the ref count to 1
 		}
 		else if (type == "ASScript")
 		{
-			auto com = new ASScript();
-			return com;
+			return new ASScript();
 		}
 		return ComponentPtr();
 	}
@@ -915,7 +915,6 @@ namespace FusionEngine
 						{
 							f.SetThrowOnException(true);
 
-							script->addRef();
 							try
 							{
 								auto obj = *static_cast<asIScriptObject**>( f() );
@@ -923,19 +922,10 @@ namespace FusionEngine
 								{
 									auto scriptInfoForThis = m_AngelScriptWorld->m_ScriptInfo.find(objectType->GetName());
 									script->SetScriptObject(obj, scriptInfoForThis->second.Properties);
-									{
-										auto setAppObj = ScriptUtils::Calling::Caller(obj, "void _setAppObj(ASScript @)");
-										if (setAppObj)
-										{
-											setAppObj.SetThrowOnException(true);
-											setAppObj(script.get());
-										}
-									}
 								}
 							}
 							catch (ScriptUtils::Exception& e)
 							{
-								script->release();
 								SendToConsole(e.m_Message);
 							}
 						}

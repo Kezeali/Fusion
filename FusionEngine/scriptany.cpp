@@ -400,7 +400,7 @@ int CScriptAny::GetTypeId() const
 void CScriptAny::FreeObject()
 {
     // If it is a handle or a ref counted object, call release
-	if( value.typeId & asTYPEID_MASK_OBJECT )
+	if( value.valueObj && value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Let the engine release the object
 		engine->ReleaseScriptObject(value.valueObj, value.typeId);

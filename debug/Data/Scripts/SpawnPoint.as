@@ -80,7 +80,7 @@ class SpawnPoint : ScriptComponent
 	EntityWrapper@ entityA;
 	
 	void update()
-	{
+	{	
 		++frames;
 		if (frames == 1)
 		{

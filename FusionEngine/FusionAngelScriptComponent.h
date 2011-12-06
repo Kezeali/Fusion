@@ -142,6 +142,28 @@ namespace FusionEngine
 		CScriptAny* GetProperty(unsigned int index);
 		bool SetProperty(unsigned int index, void* ref, int typeId);
 
+		class ScriptInterface : public GarbageCollected<ScriptInterface>
+		{
+		public:
+			ScriptInterface(ASScript* owner, asIScriptObject* script_object);
+
+			void Yield();
+			void YieldUntil(std::function<bool (void)> condition, float timeout = 0.f);
+			void CreateCoroutine(const std::string& functionName, float delay = 0.f);
+			void CreateCoroutine(asIScriptFunction* function);
+			CScriptAny* GetProperty(unsigned int index);
+			bool SetProperty(unsigned int index, void* ref, int typeId);
+
+			void EnumReferences(asIScriptEngine *engine);
+			void ReleaseAllReferences(asIScriptEngine *engine);
+
+			static void Register(asIScriptEngine* engine);
+
+			boost::intrusive_ptr<asIScriptObject> object; // An instance of the class that the script defines
+
+			ASScript* component;
+		};
+
 		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
 		void CheckChangedPropertiesIn();
@@ -154,8 +176,6 @@ namespace FusionEngine
 		static ASScript* GetActiveScript();
 		//static void YeildActiveScript();
 		static void YeildActiveScriptUntil(std::function<bool (void)> condition, float timeout = 0.f);
-
-		static void Register(asIScriptEngine* engine);
 
 	private:
 		// IComponent
@@ -188,9 +208,8 @@ namespace FusionEngine
 		boost::signals2::connection m_ModuleLoadedConnection;
 		ResourcePointer<asIScriptModule> m_Module;
 		int m_EntityWrapperTypeId;
-		boost::intrusive_ptr<asIScriptObject> m_ScriptObject; // An instance of the class that the script defines
 		std::map<std::string, int> m_ScriptMethods;
-
+		boost::intrusive_ptr<ScriptInterface> m_ScriptObject;
 		std::vector<std::shared_ptr<IComponentProperty>> m_ScriptProperties;
 
 		IComponent::SerialiseMode m_LastDeserMode;
