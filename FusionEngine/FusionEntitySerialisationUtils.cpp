@@ -694,7 +694,7 @@ namespace FusionEngine
 			}
 		}
 
-		void MergeEntityData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
+		std::streamsize MergeEntityData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
 		{
 			CellStreamReader in(&instr);
 			CellStreamWriter out(&outstr);
@@ -711,6 +711,44 @@ namespace FusionEngine
 			out.Write(numComponents);
 
 			// Copy the other component names
+			for (size_t i = 0; i < numComponents; ++i)
+			{
+				std::string transformType = in.ReadString();
+				out.WriteString(transformType);
+			}
+
+			// Merge the other component data
+			for (size_t i = 0; i < numComponents; ++i)
+			{
+				MergeComponentData(instr, outstr, incomming_c, incomming_o);
+			}
+
+			return 0;//fileWrapper.totalbytes();
+		}
+
+		void CopyEntityData(ICellStream& instr, OCellStream& outstr)
+		{
+			FSN_EXCEPT(NotImplementedException, "Decided not to use this, so haven't implmented it (this is basically just the code from MergeEntityData)");
+
+			RakNet::BitStream incomming_c;
+			RakNet::BitStream incomming_o;
+
+			CellStreamReader in(&instr);
+			CellStreamWriter out(&outstr);
+
+			// Copy transform component type name
+			std::string transformType = in.ReadString();
+			out.WriteString(transformType);
+
+			// Merge transform component data
+			MergeComponentData(instr, outstr, incomming_c, incomming_o);
+
+			// Copy the component count
+			size_t numComponents;
+			in.Read(numComponents);
+			out.Write(numComponents);
+
+			// Copy the other (non-transform) component names
 			for (size_t i = 0; i < numComponents; ++i)
 			{
 				std::string transformType = in.ReadString();

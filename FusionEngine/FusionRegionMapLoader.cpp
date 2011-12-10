@@ -59,6 +59,78 @@ namespace FusionEngine
 
 	static const size_t s_DefaultRegionSize = 4;
 
+	//! boost::iostreams filter that counts bytes written
+	struct CharCounter
+	{
+		typedef char char_type;
+		typedef bio::multichar_output_filter_tag category;
+
+		std::streamsize totalWritten;
+
+		std::streamsize count() const { return totalWritten; }
+
+		template <typename Sink>
+		std::streamsize write(Sink& snk, const char_type* s, std::streamsize n)
+		{
+			totalWritten += n;
+			bio::write(snk, s, n);
+			return n;
+		}
+	};
+
+	static void storeEntityLocation(kyotocabinet::HashDB& db, ObjectID id, RegionMapLoader::CellCoord_t new_loc, std::streamoff offset, std::streamsize length)
+	{
+		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
+
+		// Convert to little-endian
+		if (CL_Endian::is_system_big())
+		{
+			CL_Endian::swap((void*)new_loc.x, sizeof(new_loc.x));
+			CL_Endian::swap((void*)new_loc.y, sizeof(new_loc.y));
+			CL_Endian::swap((void*)offset, sizeof(offset));
+			CL_Endian::swap((void*)length, sizeof(length));
+		}
+
+#ifdef _DEBUG
+		// Make sure the cell-location data is stored as expected
+		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
+		{
+			int64_t new_loc_test = new_loc.y;
+			new_loc_test = new_loc_test << 32;
+			new_loc_test |= new_loc.x;
+			FSN_ASSERT(memcmp(&new_loc, &new_loc_test, sizeof(new_loc)) == 0);
+		}
+#endif
+
+		// Copy the values into a buffer
+		std::memcpy(data.data(), (char*)&new_loc, sizeof(new_loc));
+		std::memcpy(&data[sizeof(new_loc)], (char*)&offset, sizeof(offset));
+		std::memcpy(&data[sizeof(new_loc) + sizeof(offset)], (char*)&length, sizeof(length));
+
+		// Write the buffer to the DB
+		db.set((const char*)&id, sizeof(id), data.data(), data.size());
+	}
+
+	static void getEntityLocation(kyotocabinet::HashDB& db, RegionMapLoader::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
+	{
+		// TODO: make sure that sizeof(ref) returns the size of the object
+		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
+
+		db.get((const char*)&id, sizeof(id), data.data(), data.size());
+
+		std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
+		std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
+		std::memcpy((void*)&data_length, &data[sizeof(cell_loc) + sizeof(data_offset)], sizeof(data_length));
+
+		if (CL_Endian::is_system_big())
+		{
+			CL_Endian::swap((void*)cell_loc.x, sizeof(cell_loc.x));
+			CL_Endian::swap((void*)cell_loc.y, sizeof(cell_loc.y));
+			CL_Endian::swap((void*)data_offset, sizeof(data_offset));
+			CL_Endian::swap((void*)data_length, sizeof(data_length));
+		}
+	}
+
 	static void setupTuning(kyotocabinet::HashDB* db)
 	{
 		db->tune_defrag(8);
@@ -120,32 +192,27 @@ namespace FusionEngine
 
 	void RegionMapLoader::Update(ObjectID id, const RegionMapLoader::CellCoord_t& new_location, std::vector<unsigned char>&& continuous, std::vector<unsigned char>&& occasional)
 	{
-		m_ObjectUpdateQueue.push(std::make_tuple(id, new_location, std::move(continuous), std::move(occasional)));
+		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::UPDATE, new_location, std::move(continuous), std::move(occasional)));
 		m_NewData.set();
 	}
 
 	void RegionMapLoader::Update(ObjectID id, int32_t new_x, int32_t new_y)
 	{
-		m_ObjectUpdateQueue.push(std::make_tuple(id, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
+		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::UPDATE, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
 	}
 
 	void RegionMapLoader::Remove(ObjectID id)
 	{
-		//m_ObjectRemovalQueue.push(id);
-		m_EntityLocationDB->remove((const char*)&id, sizeof(id));
+		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::REMOVE, CellCoord_t(), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
 	}
 
 	Vector2T<int32_t> RegionMapLoader::GetEntityLocation(ObjectID id)
 	{
 		CellCoord_t loc;
-		m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
-		if (CL_Endian::is_system_big())
-		{
-			CL_Endian::swap((void*)loc.x, sizeof(loc.x));
-			CL_Endian::swap((void*)loc.y, sizeof(loc.y));
-		}
+		std::streamoff offset; std::streamsize length;
+		getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
 
 		return loc;
 	}
@@ -242,27 +309,6 @@ namespace FusionEngine
 		m_Running = false;
 	}
 
-	//CL_IODevice RegionMapLoader::GetFile(size_t cell_index, bool write) const
-	//{
-	//	try
-	//	{
-	//		std::stringstream str; str << cell_index;
-	//		std::string filename = "cache/" + str.str();
-	//		if (write || PHYSFS_exists(filename.c_str()))
-	//		{
-	//			CL_VirtualDirectory vdir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-	//			auto file = vdir.open_file(filename, write ? CL_File::create_always : CL_File::open_existing, write ? CL_File::access_write : CL_File::access_read);
-	//			return file;
-	//		}
-	//		else return CL_IODevice();
-	//	}
-	//	catch (CL_Exception& ex)
-	//	{
-	//		SendToConsole(ex.what());
-	//		return CL_IODevice();
-	//	}
-	//}
-
 	std::unique_ptr<std::istream> RegionMapLoader::GetCellStreamForReading(int32_t cell_x, int32_t cell_y)
 	{
 		return m_Cache->GetCellStreamForReading(cell_x, cell_y);
@@ -272,14 +318,6 @@ namespace FusionEngine
 	{
 		return m_Cache->GetCellStreamForWriting(cell_x, cell_y);
 	}
-
-	//CL_IODevice RegionMapLoader::GetCellData(size_t index) const
-	//{
-	//	if (m_EditMode && !m_Running)
-	//		return GetFile(index, false);
-	//	else
-	//		FSN_EXCEPT(InvalidArgumentException, "Can't access cell data while running");
-	//}
 
 	void RegionMapLoader::SaveEntityLocationDB(const std::string& filename)
 	{
@@ -291,12 +329,25 @@ namespace FusionEngine
 			if (filename.length() < writeDir.length() || filename.substr(0, writeDir.length()) != writeDir)
 				fullPath = writeDir + "\\" + filename;
 
-			// TODO: (to make the resulting DB smaller)
-			// db->stop() (or db.reset())
-			// boost::filesystem::copy(db path, fullpath)
-			// reopen
+			if (!m_Thread.joinable())
+			{
+				// Close the DB to do a clean copy (closed DB can be smaller)
+				std::string dbPath = m_EntityLocationDB->path();
 
-			m_EntityLocationDB->copy(fullPath);
+				m_EntityLocationDB->close();
+				m_EntityLocationDB.reset();
+
+				boost::filesystem::copy_file(dbPath, fullPath);
+
+				m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+				setupTuning(m_EntityLocationDB.get());
+				m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
+			}
+			else
+			{
+				// Thread is running, DB may be in use: do hot copy
+				m_EntityLocationDB->copy(fullPath);
+			}
 		}
 		else
 		{
@@ -332,7 +383,6 @@ namespace FusionEngine
 
 		std::vector<ObjectID> idIndex;
 
-		// NOPE: Skip the ID header-data (is only used when updating inactive cells)
 		if (data_includes_ids)
 		{
 			/*const auto headerSize = numEntries * (sizeof(ObjectID) + sizeof(std::streamoff));
@@ -342,9 +392,9 @@ namespace FusionEngine
 			for (size_t i = 0; i < numEntries; ++i)
 			{
 				ObjectID id;
-				std::streamoff bleh;
+				//std::streamoff bleh;
 				reader.Read(id);
-				reader.Read(bleh);
+				//reader.Read(bleh);
 				idIndex.push_back(id);
 			}
 		}
@@ -368,7 +418,7 @@ namespace FusionEngine
 	}
 
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void RegionMapLoader::WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched)
+	void RegionMapLoader::WriteCell(std::ostream& file, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched)
 	{
 		using namespace EntitySerialisationUtils;
 
@@ -376,26 +426,42 @@ namespace FusionEngine
 
 		writer.Write(expectedNumEntries);
 
-		std::vector<std::pair<ObjectID, std::streamoff>> dataPositions;
-		auto headerPos = file.tellp();
+		std::vector<std::tuple<ObjectID, std::streamoff, std::streamsize>> dataPositions;
+		std::streamoff headerPos = sizeof(expectedNumEntries);
 		if (synched)
 		{
 			// Leave some space for the header data
-			const std::vector<char> headerSpace(expectedNumEntries * (sizeof(ObjectID) + sizeof(std::streamoff)));
-			file.write(headerSpace.data(), headerSpace.size());
+			//const std::vector<char> headerSpace(expectedNumEntries * (sizeof(ObjectID) /*+ sizeof(std::streamoff)*/));
+			//file.write(headerSpace.data(), headerSpace.size());
+
+			for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
+			{
+				const bool entSynched = it->first->IsSyncedEntity();
+				if (entSynched)
+					writer.Write(it->first->GetID());
+			}
 
 			dataPositions.reserve(expectedNumEntries);
 		}
 
+		std::streamoff beginPos;
 		for (auto it = cell->objects.cbegin(), end = cell->objects.cend(); it != end; ++it)
 		{
 			const bool entSynched = it->first->IsSyncedEntity();
 			if (entSynched == synched)
 			{
 				if (entSynched)
-					dataPositions.push_back(std::make_pair(it->first->GetID(), file.tellp() - headerPos)); // Remember where this data starts, so the header can be written
+					beginPos = file.tellp() - headerPos;
 
 				SaveEntity(file, it->first, false);
+
+				if (entSynched)
+				{
+					auto endPos = file.tellp();
+					std::streamsize length = endPos - beginPos;
+					dataPositions.push_back(std::make_tuple(it->first->GetID(), beginPos, length));
+				}
+
 				FSN_ASSERT(expectedNumEntries-- > 0); // Confirm the number of synched / unsynched entities expected
 			}
 		}
@@ -403,34 +469,15 @@ namespace FusionEngine
 		// Write the header if this is ID'd ("synched") data
 		if (synched)
 		{
-			file.seekp(headerPos);
+			//file.seekp(headerPos);
 
 			for (auto it = dataPositions.cbegin(), end = dataPositions.cend(); it != end; ++it)
 			{
-				writer.Write(it->first);
-				writer.Write(it->second);
+				//writer.Write(it->first);
+				//writer.Write(it->second);
+				storeEntityLocation(*m_EntityLocationDB, std::get<0>(*it), loc, std::get<1>(*it), std::get<2>(*it));
 			}
 		}
-	}
-
-	static void storeCellLocation(kyotocabinet::HashDB& db, ObjectID id, RegionMapLoader::CellCoord_t new_loc)
-	{
-		if (CL_Endian::is_system_big())
-		{
-			CL_Endian::swap((void*)new_loc.x, sizeof(new_loc.x));
-			CL_Endian::swap((void*)new_loc.y, sizeof(new_loc.y));
-		}
-#ifdef _DEBUG
-		// Make sure the cell-location data is stored as expected
-		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
-		{
-			int64_t new_loc_test = new_loc.y;
-			new_loc_test = new_loc_test << 32;
-			new_loc_test |= new_loc.x;
-			FSN_ASSERT(memcmp(&new_loc, &new_loc_test, sizeof(new_loc)) == 0);
-		}
-#endif
-		db.set((const char*)&id, sizeof(id), (char*)&new_loc, sizeof(new_loc));
 	}
 
 	void RegionMapLoader::Run()
@@ -508,15 +555,6 @@ namespace FusionEngine
 											++numSynched;
 									});
 
-									std::for_each(cell->objects.begin(), cell->objects.end(), [&](const Cell::CellEntryMap::value_type& obj)
-									{
-										if (obj.first->IsSyncedEntity())
-										{
-											ObjectID id = obj.first->GetID();
-											storeCellLocation(*m_EntityLocationDB, id, cell_coord);
-										}
-									});
-
 									if (m_EditMode)
 									{
 										if (numSynched > 0 || numPseudo > 0)
@@ -527,14 +565,13 @@ namespace FusionEngine
 												auto& file = *filePtr;
 
 												// Need a seekable stream, so write to a temp. one
-												//bio::stream<bio::array_sink> tempStream();
 												std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
 												std::streampos start = tempStream.tellp();
 												// Write un-synched entity data (written to cache since this is edit mode)
-												WriteCell(tempStream, cell, numPseudo, false);
+												WriteCell(tempStream, cell_coord, cell, numPseudo, false);
 												std::streamsize dataLength = tempStream.tellp() - start;
 
-												WriteCell(tempStream, cell, numSynched, true);
+												WriteCell(tempStream, cell_coord, cell, numSynched, true);
 
 												// Write to the file-stream
 												IO::Streams::CellStreamWriter writer(&file);
@@ -550,10 +587,9 @@ namespace FusionEngine
 									{
 										auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
 										// Need a seekable stream, so write to a temp. one
-										//bio::stream<bio::array_sink> tempStream();
-										std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-										WriteCell(tempStream, cell, numSynched, true);
-										*filePtr << tempStream.rdbuf();
+										//std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+										WriteCell(*filePtr, cell_coord, cell, numSynched, true);
+										//*filePtr << tempStream.rdbuf();
 									}
 
 									cell->AddHist("Written and cleared", numSynched);
@@ -706,21 +742,20 @@ namespace FusionEngine
 				{
 					using namespace IO;
 
-					std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>> objectUpdateData;
+					std::tuple<ObjectID, UpdateOperation, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>> objectUpdateData;
 					while (m_ObjectUpdateQueue.try_pop(objectUpdateData))
 					{
 						const ObjectID id = std::get<0>(objectUpdateData);
-						CellCoord_t new_loc = std::get<1>(objectUpdateData);
-						auto& incommingConData = std::get<2>(objectUpdateData);
-						auto& incommingOccData = std::get<3>(objectUpdateData);
+						UpdateOperation operation = std::get<1>(objectUpdateData);
+						CellCoord_t new_loc = std::get<2>(objectUpdateData);
+						auto& incommingConData = std::get<3>(objectUpdateData);
+						auto& incommingOccData = std::get<4>(objectUpdateData);
 
 						CellCoord_t loc;
-						m_EntityLocationDB->get((const char*)&id, sizeof(id), (char*)&loc, sizeof(loc));
-						if (CL_Endian::is_system_big())
-						{
-							CL_Endian::swap((void*)loc.x, sizeof(loc.x));
-							CL_Endian::swap((void*)loc.y, sizeof(loc.y));
-						}
+						std::streamoff dataOffset;
+						std::streamsize dataLength;
+						getEntityLocation(*m_EntityLocationDB, loc, dataOffset, dataLength, id);
+
 
 						if (new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
 							new_loc = loc;
@@ -730,22 +765,90 @@ namespace FusionEngine
 							continue;
 
 
-						storeCellLocation(*m_EntityLocationDB, id, new_loc);
-
-						auto inData = GetCellStreamForReading(loc.x, loc.y);
-						auto outData = GetCellStreamForWriting(new_loc.x, new_loc.y);
-
-						if (!incommingConData.empty() || !incommingOccData.empty())
+						auto inSourceData = GetCellStreamForReading(loc.x, loc.y);
+						auto outDestData = GetCellStreamForWriting(new_loc.x, new_loc.y);
+						// If the data is being moved there are some more streams that need to be prepared:
+						std::unique_ptr<std::istream> inDestData;
+						std::unique_ptr<std::ostream> outSourceData;
+						if (new_loc != loc)
 						{
-							RakNet::BitStream iConDataStream(incommingConData.data(), incommingConData.size(), false);
-							RakNet::BitStream iOccDataStream(incommingOccData.data(), incommingOccData.size(), false);
+							inDestData = GetCellStreamForReading(new_loc.x, new_loc.y);
+							outSourceData = GetCellStreamForWriting(loc.x, loc.y);
+						}
 
-							MergeEntityData(id, *inData, *outData, iConDataStream, iOccDataStream);
-						}
-						else
+						if (!inSourceData || !outDestData)
+							continue;
+
+						auto newDataLength = dataLength;
+
+						std::vector<ObjectID> displacedObjects;
+						std::vector<ObjectID> displacedObjectsBackward;
+
+						if (operation == UpdateOperation::UPDATE)
 						{
-							MoveEntityData(id, *inData, *outData);
+							if (!incommingConData.empty() || !incommingOccData.empty())
+							{
+								RakNet::BitStream iConDataStream(incommingConData.data(), incommingConData.size(), false);
+								RakNet::BitStream iOccDataStream(incommingOccData.data(), incommingOccData.size(), false);
+
+								if (new_loc == loc)
+								{
+									// Note that outDest and inSource are re-used for both sets of in and out streams
+									newDataLength = MergeEntityData(displacedObjects, displacedObjectsBackward, id, dataOffset, dataLength, *inSourceData, *outDestData, *inSourceData, *outDestData, iConDataStream, iOccDataStream);
+								}
+								else
+								{
+									if (!outSourceData || !inDestData)
+										continue;
+									newDataLength = MergeEntityData(displacedObjects, displacedObjectsBackward, id, dataOffset, dataLength, *inSourceData, *outSourceData, *inDestData, *outDestData, iConDataStream, iOccDataStream);
+								}
+							}
+							else
+							{
+								if (!inSourceData || !outDestData || !outSourceData || !inDestData)
+									continue;
+
+								MoveEntityData(displacedObjectsBackward, id, dataOffset, dataLength, *inSourceData, *outSourceData, *inDestData, *outDestData);
+							}
+
+							storeEntityLocation(*m_EntityLocationDB, id, new_loc, dataOffset, dataLength);
 						}
+						else if (operation == UpdateOperation::REMOVE)
+						{
+							DeleteEntityData(displacedObjectsBackward, id, dataOffset, dataLength, *inSourceData, *outDestData);
+
+							m_EntityLocationDB->remove((const char*)&id, sizeof(id));
+						}
+
+						// Update the offsets of entities affected by data getting longer / shorter
+						if (newDataLength != dataLength)
+						{
+							auto lengthDiff = newDataLength - dataLength;
+							for (auto it = displacedObjects.begin(), end = displacedObjects.end(); it != end; ++it)
+							{
+								ObjectID displaced_id = *it;
+
+								CellCoord_t displaced_loc;
+								std::streamoff displaced_dataOffset;
+								std::streamsize displaced_dataLength;
+								getEntityLocation(*m_EntityLocationDB, displaced_loc, displaced_dataOffset, displaced_dataLength, displaced_id);
+
+								storeEntityLocation(*m_EntityLocationDB, displaced_id, displaced_loc, displaced_dataOffset + lengthDiff, displaced_dataLength);
+							}
+						}
+						// Update the offsets of entities affected by data getting removed
+						for (auto it = displacedObjectsBackward.begin(), end = displacedObjectsBackward.end(); it != end; ++it)
+						{
+							ObjectID displaced_id = *it;
+
+							CellCoord_t displaced_loc;
+							std::streamoff displaced_dataOffset;
+							std::streamsize displaced_dataLength;
+							getEntityLocation(*m_EntityLocationDB, displaced_loc, displaced_dataOffset, displaced_dataLength, displaced_id);
+
+							storeEntityLocation(*m_EntityLocationDB, displaced_id, displaced_loc, displaced_dataOffset - dataLength, displaced_dataLength);
+						}
+
 					}
 				}
 
@@ -753,82 +856,254 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::MergeEntityData(ObjectID id, ICellStream& in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
-	{
-		std::array<char, 4096> buffer;
+	typedef std::array<char, 4096> CopyBuffer_t;
 
-		IO::Streams::CellStreamReader reader(&in);
+	static inline void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest)
+	{
+		while (!source.eof())
+		{
+			source.read(buffer.data(), std::streamsize(buffer.size()));
+			const auto gcount = source.gcount();
+			dest.write(buffer.data(), gcount);
+		}
+	}
+
+	static inline void CopyData(CopyBuffer_t& buffer, ICellStream& source, OCellStream& dest, std::streamsize remaining_length)
+	{
+		while (remaining_length > 0 && !source.eof())
+		{
+			source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
+			const auto gcount = source.gcount();
+			dest.write(buffer.data(), gcount);
+
+			FSN_ASSERT(gcount <= remaining_length);
+			remaining_length -= gcount;
+		}
+	}
+
+	static inline void SkipData(CopyBuffer_t& buffer, ICellStream& source, std::streamsize remaining_length)
+	{
+		while (remaining_length > 0 && !source.eof())
+		{
+			source.read(buffer.data(), std::min(std::streamsize(buffer.size()), remaining_length));
+			const auto gcount = source.gcount();
+
+			FSN_ASSERT(gcount <= remaining_length);
+			remaining_length -= gcount;
+		}
+	}
+
+	static inline size_t RemoveID(std::vector<ObjectID>& objects_displaced, ObjectID id_to_remove, ICellStream& source_in, OCellStream& source_out)
+	{
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamWriter src_writer(&source_out);
+
+		// Read the ID list from the source and figure out what entity data will be offset by deleting this data
+		size_t numEntsInSource = src_reader.ReadValue<size_t>();
+		bool encounteredId = false;
+		for (size_t i = 0; i < numEntsInSource; ++i)
+		{
+			const ObjectID iID = src_reader.ReadValue<ObjectID>();
+			if (iID != id_to_remove)
+			{
+				src_writer.Write(iID);
+				if (encounteredId)
+					objects_displaced.push_back(iID);
+			}
+			else
+			{
+				FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
+				encounteredId = true;
+			}
+		}
+		return numEntsInSource;
+	}
+
+	static inline void CopyIDList(std::vector<ObjectID>& objects_displaced, size_t numEnts, ObjectID id_causing_displacement, ICellStream& source_in, OCellStream& source_out)
+	{
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamWriter src_writer(&source_out);
+
+		// Read the ID list from the source and figure out what entity data will be offset by modifying this data
+		bool encounteredId = false;
+		for (size_t i = 0; i < numEnts; ++i)
+		{
+			const ObjectID iID = src_reader.ReadValue<ObjectID>();
+			src_writer.Write(iID);
+			if (encounteredId)
+				objects_displaced.push_back(iID);
+			if (iID == id_causing_displacement)
+			{
+				FSN_ASSERT(!encounteredId); // make sure the IDs aren't repeated (indicates a bug somewhere)
+				encounteredId = true;
+			}
+		}
+	}
+
+	std::streamsize RegionMapLoader::MergeEntityData(std::vector<ObjectID>& objects_displaced_for, std::vector<ObjectID>& objects_displaced_back, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const
+	{
+		CopyBuffer_t buffer;
+
+		const bool destChanged = &source_in != &dest_in;
+
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamReader dst_reader(&dest_in);
+		IO::Streams::CellStreamWriter writer(&out);
 
 		// Skip the un-synced entity data that is present in Edit Mode
 		if (m_EditMode)
 		{
-			std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
+			src_reader.ReadValue<std::streamsize>();
+			std::streamsize unsynchedDataLength = dst_reader.ReadValue<std::streamsize>();
 
 			FSN_ASSERT(unsynchedDataLength >= 0);
 			std::streamsize remainingData = unsynchedDataLength;
 
-			while (remainingData > 0 && !in.eof())
-			{
-				in.read(buffer.data(), std::min(std::streamsize(buffer.size()), remainingData));
-				auto gcount = in.gcount();
-				out.write(buffer.data(), gcount);
-				FSN_ASSERT(gcount <= remainingData);
-				remainingData -= gcount;
-			}
+			CopyData(buffer, dest_in, out, remainingData);
 		}
 
-		size_t numEnts = reader.ReadValue<size_t>();
-
-		std::streamoff dataOff = 0;
-		//auto headerPos = in.tellg(); // The offsets given in the header are relative to the start of the header
-
-		for (size_t i = 0; i < numEnts; ++i)
+		size_t numEnts = dst_reader.ReadValue<size_t>();
+		if (destChanged)
 		{
-			ObjectID iID = reader.ReadValue<ObjectID>();
-			std::streamoff iDataOff = reader.ReadValue<std::streamoff>();
+			numEnts += 1; // Since an entry is being added
 
-			if (iID == id)
-			{
-				FSN_ASSERT(dataOff == 0); // Make sure the ID isn't repeated (or the header is corrupted, I guess)
-				dataOff = iDataOff;
-			}
+			// Remove the ID being moved from the source header
+			RemoveID(objects_displaced_back, id, source_in, source_out);
+		}
+		writer.Write(numEnts);
+
+		const size_t headerLength = numEnts * sizeof(ObjectID);
+
+		// Copy the existing object IDs list in the dest
+		if (destChanged)
+		{
+			std::vector<char> headerData((numEnts - 1) * sizeof(ObjectID));
+			dest_in.read(headerData.data(), headerData.size());
+			out.write(headerData.data(), headerData.size());
+
+			// The the ID for the entity being merged in
+			writer.Write(id);
+		}
+		else
+		{
+			// Copy the existing ID list and note which objects come after the one being
+			//  updated, and thus will be displaced if the length changes
+			CopyIDList(objects_displaced_for, numEnts, id, dest_in, out);
 		}
 
-		const size_t headerSize = numEnts * (sizeof(ObjectID) + sizeof(std::streamoff));
-		auto remainingData = dataOff - headerSize; // The offsets given in the header are relative to the start of the header
 
-		// Copy the data up to the relevant entity data
-		while (remainingData > 0 && !in.eof())
+		if (!destChanged)
 		{
-			in.read(buffer.data(), std::min(std::streamsize(buffer.size()), remainingData));
-			auto gcount = in.gcount();
-			out.write(buffer.data(), gcount);
-			FSN_ASSERT(gcount <= remainingData);
-			remainingData -= gcount;
+			auto remainingData = data_offset - (sizeof(size_t) + headerLength); // The offset is relative to the start of the cell data
+			// Copy existing cell data to the relevant entity data
+			CopyData(buffer, dest_in, out, remainingData);
+		}
+		else
+		{
+			auto remainingData = data_offset - (sizeof(size_t) + headerLength); // The offset is relative to the start of the cell data
+			// Re-write the source up to the relevant entity data
+			CopyData(buffer, source_in, source_out, remainingData);
+
+			// Re-write rest of the existing dest cell data (changed data will be written at the end)
+			CopyData(buffer, dest_in, out);
 		}
 
 		// Merge the data
-		EntitySerialisationUtils::MergeEntityData(in, out, mergeCon, mergeOcc);
-
-		// Copy the rest of the entity data
-		while (!in.eof())
+		std::streamsize newEntityDataLength;
 		{
-			in.read(buffer.data(), buffer.size());
-			out.write(buffer.data(), in.gcount());
+			bio::filtering_ostream countingOut;
+			CharCounter counter;
+			countingOut.push(counter);
+			countingOut.push(out);
+			/*auto newEntityDataLength = */EntitySerialisationUtils::MergeEntityData(source_in, countingOut, mergeCon, mergeOcc);
+			newEntityDataLength = counter.count();
 		}
+
+		if (destChanged)
+		{
+			// Re-write the rest of the source (sans the moved entity)
+			CopyData(buffer, source_in, source_out);
+		}
+		else
+		{
+			// Re-write the rest of the un-changed cell data
+			CopyData(buffer, dest_in, out);
+		}
+
+		return newEntityDataLength;
 	}
 
-	void RegionMapLoader::MoveEntityData(ObjectID id, ICellStream& in, OCellStream& out) const
+	void RegionMapLoader::MoveEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const
 	{
-		//std::array<char, 4096> buffer;
+		// Not implemented yet (need to copy pseudo data like above):
+		FSN_ASSERT(!m_EditMode);
+		// Make sure the data is actually being moved!
+		FSN_ASSERT(&source_in != &dest_in);
 
-		//while (!in.eof())
-		//{
-		//	in.read(buffer.data(), buffer.size());
-		//	out.write(buffer.data(), in.gcount());
-		//}
+		CopyBuffer_t buffer;
 
-		out << in.rdbuf();
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamWriter src_writer(&source_out);
+
+		IO::Streams::CellStreamReader dst_reader(&dest_in);
+		IO::Streams::CellStreamWriter dst_writer(&dest);
+
+		size_t numEntsInSource;// = src_reader.ReadValue<size_t>();
+		numEntsInSource = RemoveID(objects_displaced, id, source_in, source_out);
+
+		const size_t sourceHeaderLength = numEntsInSource * sizeof(ObjectID);
+
+		{
+			auto remainingData = data_offset - sourceHeaderLength;
+			// Copy the source up to the relevant entity data
+			CopyData(buffer, source_in, source_out, remainingData);
+		}
+
+		if (source_in.eof())
+			FSN_EXCEPT(FileSystemException, "Failed to move entity data: source was missing data / invalid");
+
+		size_t numEnts = dst_reader.ReadValue<size_t>();
+		++numEnts;
+		dst_writer.Write(numEnts);
+
+		// Copy the dest's existing ID list
+		std::vector<char> headerData((numEnts - 1) * sizeof(ObjectID));
+		dest_in.read(headerData.data(), headerData.size());
+		dest.write(headerData.data(), headerData.size());
+		// Write the new ID
+		dst_writer.Write(id);
+
+		// Copy the rest of the existing dest data
+		CopyData(buffer, dest_in, dest);
+
+		// Copy entity data from the source into the dest (note that not copying this back into source_out effectively deletes it from there)
+		CopyData(buffer, source_in, dest, data_length);
+
+		// Copy the remaining source data back into the source
+		CopyData(buffer, source_in, source_out);
+	}
+
+	void RegionMapLoader::DeleteEntityData(std::vector<ObjectID>& objects_displaced, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out) const
+	{
+		// Not implemented yet (need to copy pseudo data like above):
+		FSN_ASSERT(!m_EditMode);
+
+		CopyBuffer_t buffer;
+
+		IO::Streams::CellStreamReader src_reader(&source_in);
+		IO::Streams::CellStreamWriter src_writer(&source_out);
+
+		// Read the ID list from the source and figure out what entity data will be offset by deleting this data
+		auto numEnts = RemoveID(objects_displaced, id, source_in, source_out);
+
+		auto headerLength = sizeof(numEnts) + numEnts * sizeof(ObjectID);
+
+		// Copy the data for the entities before the one being removed
+		CopyData(buffer, source_in, source_out, data_offset - headerLength);
+		// Skip the removed entity
+		SkipData(buffer, source_in, data_length);
+		// Copy the rest of the data until EOF
+		CopyData(buffer, source_in, source_out);
 	}
 
 }

@@ -516,7 +516,9 @@ namespace FusionEngine
 
 			if (scriptCom->GetPropertyTypeId(0) == s_ASScriptTypeId)
 			{
-				return *static_cast<ASScript**>( scriptCom->GetAddressOfProperty(0) );
+				// Note: The script object stores a pointer to the intermediate ScriptInterface (which is garbage collected)
+				const auto scriptInterface = *static_cast<ASScript::ScriptInterface**>( scriptCom->GetAddressOfProperty(0) );
+				return scriptInterface->component;
 			}
 			else // Safe (but slow) lookup
 			{
@@ -541,7 +543,7 @@ namespace FusionEngine
 				if (appObjOffset != -1)
 				{
 					auto propAddress = reinterpret_cast<void*>(reinterpret_cast<asBYTE*>(scriptCom) + appObjOffset);
-					return *static_cast<ASScript**>(propAddress);
+					return (*static_cast<ASScript::ScriptInterface**>(propAddress))->component;
 				}
 				else
 					return nullptr;
@@ -1009,9 +1011,9 @@ namespace FusionEngine
 		else
 		{
 			auto v = prop->value;
-			prop->Store(v.valueObj, v.typeId);
+			prop->Store(&v.valueInt, v.typeId);
 
-			FSN_EXCEPT(NotImplementedException, "This probably doesn't work");
+			//FSN_EXCEPT(NotImplementedException, "This probably doesn't work");
 			// TODO: write & read script props more explicitly (don't just write the internal representation)
 			//  and do something like prop->Store(valueRead, typeIdRead);
 		}

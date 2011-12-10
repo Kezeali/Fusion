@@ -68,7 +68,10 @@ namespace FusionEngine
 		void ReadComponent(ICellStream& in, IComponent* component);
 
 		//! Merge inactive entity data
-		void MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
+		std::streamsize MergeEntityData(ICellStream& in, OCellStream& out, RakNet::BitStream& incomming, RakNet::BitStream& incomming_occasional);
+
+		//! Copy inactive entity data
+		void CopyEntityData(ICellStream& in, OCellStream& out);
 
 		//! Save an active entity
 		void SaveEntity(OCellStream& out, EntityPtr entity, bool id_included);

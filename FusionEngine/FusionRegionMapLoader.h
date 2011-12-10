@@ -150,12 +150,13 @@ namespace FusionEngine
 
 		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids);
 
-		void WriteCell(std::ostream& file, const Cell* cell, size_t expectedNumEntries, const bool synched);
+		void WriteCell(std::ostream& file, const CellCoord_t& coord, const Cell* cell, size_t expectedNumEntries, const bool synched);
 
 		void Run();
 
-		void MergeEntityData(ObjectID id, ICellStream& in, OCellStream& out, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
-		void MoveEntityData(ObjectID id, ICellStream& in, OCellStream& out) const;
+		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
+		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
+		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
 
 		bool m_EditMode;
 		bool m_Running;
@@ -185,9 +186,10 @@ namespace FusionEngine
 		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_WriteQueue;
 		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_ReadQueue;
 
-		tbb::concurrent_queue<std::tuple<ObjectID, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
+		//! TODO un-caps these when vc++ supports enum class
+		enum UpdateOperation { UPDATE, REMOVE };
 
-		tbb::concurrent_queue<ObjectID> m_ObjectRemovalQueue;
+		tbb::concurrent_queue<std::tuple<ObjectID, UpdateOperation, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
 
 		CL_Event m_NewData;
 		CL_Event m_TransactionEnded;
