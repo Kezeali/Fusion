@@ -103,7 +103,7 @@ namespace FusionEngine
 		error_code = engine->RegisterObjectType(type_name.c_str(), sizeof(T), asOBJ_VALUE | type_flags);
 		FSN_ASSERT(error_code >= 0 && "Failed to register object type");
 
-		if (type_flags & asOBJ_APP_CLASS_CONSTRUCTOR)
+		//if (type_flags & asOBJ_APP_CLASS_CONSTRUCTOR)
 		{
 			error_code = engine->RegisterObjectBehaviour(type_name.c_str(), 
 				asBEHAVE_CONSTRUCT, 
@@ -113,7 +113,7 @@ namespace FusionEngine
 			FSN_ASSERT(error_code >= 0 && "Failed to register constructor");
 		}
 
-		if (type_flags & asOBJ_APP_CLASS_DESTRUCTOR)
+		//if (type_flags & asOBJ_APP_CLASS_DESTRUCTOR)
 		{
 			error_code = engine->RegisterObjectBehaviour(type_name.c_str(),
 				asBEHAVE_DESTRUCT,

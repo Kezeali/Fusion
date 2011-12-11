@@ -78,8 +78,9 @@ namespace FusionEngine
 
 		if (m_Camera)
 		{
-			m_Camera->SetPosition(m_InterpPosition);
-			m_Camera->SetAngle(m_InterpAngle);
+			m_Camera->SetSimPosition(m_InterpPosition);
+			if (m_AngleEnabled)
+				m_Camera->SetAngle(m_InterpAngle);
 		}
 	}
 
@@ -123,6 +124,9 @@ namespace FusionEngine
 		stream.Write(m_ViewportRect.top);
 		stream.Write(m_ViewportRect.right);
 		stream.Write(m_ViewportRect.bottom);
+
+		stream.Write(m_AngleEnabled);
+
 		return true;
 	}
 
@@ -137,6 +141,8 @@ namespace FusionEngine
 		stream.Read(m_ViewportRect.top);
 		stream.Read(m_ViewportRect.right);
 		stream.Read(m_ViewportRect.bottom);
+
+		stream.Read(m_AngleEnabled);
 	}
 
 	// ICamera
@@ -168,6 +174,16 @@ namespace FusionEngine
 	const CL_Rectf& StreamingCamera::GetViewportRect() const
 	{
 		return m_ViewportRect;
+	}
+
+	void StreamingCamera::SetAngleEnabled(bool value)
+	{
+		m_AngleEnabled = value;
+	}
+
+	bool StreamingCamera::IsAngleEnabled() const
+	{
+		return m_AngleEnabled;
 	}
 
 }

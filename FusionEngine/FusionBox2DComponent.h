@@ -88,6 +88,7 @@ namespace FusionEngine
 		boost::signals2::signal<void (void)> Destruction;
 
 		void ConstructBody(b2World* world);
+		void DestructBody(b2World* world);
 		b2Body* Getb2Body() const { return m_Body; }
 
 		void OnFixtureMassChanged() { m_FixtureMassDirty = true; }
@@ -320,6 +321,7 @@ namespace FusionEngine
 	class Box2DFixture : public IComponent, public IFixture
 	{
 		friend class Box2DWorld;
+		friend class Box2DBody;
 	public:
 		FSN_LIST_INTERFACES((IFixture))
 

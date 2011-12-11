@@ -90,6 +90,8 @@ namespace FusionEngine
 		std::shared_ptr<GameMap> m_Map;
 		void SetMap(const std::shared_ptr<GameMap>& map);
 
+		void ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y);
+
 		void Update(ObjectID id, int32_t new_x, int32_t new_y);
 
 		void Update(ObjectID id, int32_t new_x, int32_t new_y, unsigned char* continuous, size_t con_length, unsigned char* occasional, size_t occ_length)

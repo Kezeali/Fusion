@@ -523,9 +523,7 @@ namespace FusionEngine
 				if (continuous)
 					EntitySerialisationUtils::DeserialiseContinuous(*continuous, entity, mode);
 				if (occasional)
-				{
 					EntitySerialisationUtils::DeserialiseOccasional(*occasional, m_SentStates[entity->GetID()], entity, mode);
-				}
 			}
 			// Make sure the local peer isn't giving auth. to remote peers that don't want it
 			if (currentAuthority.GUID == synchInfo.guid && remoteAuthority.GUID != currentAuthority.GUID)
@@ -639,7 +637,7 @@ namespace FusionEngine
 			{
 				// A position was retrieved from the incomming data
 				//  (position may not be present as entity state is spread across multiple packets)
-				m_StreamingManager->UpdateInactiveEntity(id, result.second, *state.continuous, *state.occasional);
+				m_StreamingManager->UpdateInactiveEntity(id, result.second, state.continuous, state.occasional);
 			}
 			else
 			{
@@ -989,6 +987,8 @@ namespace FusionEngine
 	{
 		for (size_t i = 0; i < s_EntityDomainCount; ++i)
 			m_DomainState[i] = DS_ALL;
+		SetDomainState(SYSTEM_DOMAIN, DS_ENTITYUPDATE | DS_SYNCH);
+		SetDomainState(SYSTEM_LOCAL_DOMAIN, DS_ENTITYUPDATE | DS_SYNCH);
 
 		m_ActivationEventConnection = m_StreamingManager->SignalActivationEvent.connect(std::bind(&EntityManager::OnActivationEvent, this, _1));
 		m_RemoteActivationEventConnection = m_StreamingManager->SignalRemoteActivationEvent.connect(std::bind(&EntityManager::OnRemoteActivationEvent, this, _1));
@@ -1283,6 +1283,8 @@ namespace FusionEngine
 	void EntityManager::clearEntities(bool synced_only)
 	{
 		FSN_ASSERT(!synced_only); // not implemented
+
+		std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->m_ReferencedEntities.clear(); });
 
 		if (m_EntitiesLocked)
 			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });

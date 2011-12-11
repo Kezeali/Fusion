@@ -701,7 +701,7 @@ namespace FusionEngine
 
 	EntityFactory::EntityFactory()
 	{
-		m_Log = Logger::getSingleton().OpenLog("entity_factory");
+		m_Log = Logger::getSingleton().OpenLog("EntityFactory");
 	}
 
 	EntityFactory::~EntityFactory()
@@ -713,6 +713,7 @@ namespace FusionEngine
 		auto _where = m_ComponentInstancers.find(type);
 		if (_where != m_ComponentInstancers.end())
 		{
+			m_Log->AddEntry("Component instanciated: " + type, LOG_INFO);
 			return _where->second->InstantiateComponent(type, position, angle);
 		}
 		return ComponentPtr();

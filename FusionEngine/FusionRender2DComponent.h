@@ -152,7 +152,8 @@ namespace FusionEngine
 		FSN_COIFACE_CTOR(ICamera,
 			((FSN_GET_SET)(SyncType))
 			((FSN_IS_SET)(ViewportEnabled))
-			((FSN_GET_SET)(ViewportRect)) )
+			((FSN_GET_SET)(ViewportRect))
+			((FSN_IS_SET)(AngleEnabled)) )
 
 		enum SyncTypes : uint8_t
 		{
@@ -166,6 +167,8 @@ namespace FusionEngine
 		ThreadSafeProperty<bool> ViewportEnabled;
 		ThreadSafeProperty<CL_Rectf> ViewportRect;
 
+		ThreadSafeProperty<bool> AngleEnabled;
+
 	private:
 		virtual void SetSyncType(SyncTypes value) = 0;
 		virtual SyncTypes GetSyncType() const = 0;
@@ -175,6 +178,9 @@ namespace FusionEngine
 
 		virtual void SetViewportRect(const CL_Rectf& value) = 0;
 		virtual const CL_Rectf& GetViewportRect() const = 0;
+
+		virtual void SetAngleEnabled(bool value) = 0;
+		virtual bool IsAngleEnabled() const = 0;
 
 	};
 

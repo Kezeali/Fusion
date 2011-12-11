@@ -41,6 +41,7 @@
 
 #include <ClanLib/display.h>
 #include <tbb/concurrent_queue.h>
+#include <boost/thread/mutex.hpp>
 
 namespace FusionEngine
 {
@@ -111,6 +112,7 @@ namespace FusionEngine
 
 		std::vector<boost::intrusive_ptr<StreamingCamera>> m_Cameras;
 
+		boost::mutex m_ViewportMutex;
 		std::vector<ViewportPtr> m_Viewports;
 		tbb::concurrent_queue<ViewportPtr> m_ViewportsToAdd;
 

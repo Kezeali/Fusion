@@ -75,6 +75,40 @@ namespace FusionEngine
 		}
 	}
 
+	void Box2DBody::DestructBody(b2World* world)
+	{
+		FSN_ASSERT(world);
+		FSN_ASSERT(m_Body);
+
+		const auto& tf = m_Body->GetTransform();
+		m_InterpPosition = m_LastPosition = b2v2(tf.p);
+		m_InterpAngle = m_LastAngle = tf.q.GetAngle();
+
+		m_LastAngularVelocity = m_Body->GetAngularVelocity();
+
+		m_Def.active = m_Body->IsActive();
+		m_Def.allowSleep = m_Body->IsSleepingAllowed();
+		m_Def.angle = m_Body->GetAngle();
+		m_Def.angularDamping = m_Body->GetAngularDamping();
+		m_Def.angularVelocity = m_Body->GetAngularVelocity();
+		m_Def.awake = m_Body->IsAwake();
+		m_Def.bullet = m_Body->IsBullet();
+		m_Def.fixedRotation = m_Body->IsFixedRotation();
+		m_Def.gravityScale = m_Body->GetGravityScale();
+		m_Def.linearDamping = m_Body->GetLinearDamping();
+		m_Def.position = tf.p;
+		m_Def.type = m_Body->GetType();
+
+		for (auto it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
+		{
+			auto& fixtureCom = *it;
+			fixtureCom->m_Fixture = nullptr;
+		}
+		
+		world->DestroyBody(m_Body);
+		m_Body = nullptr;
+	}
+
 	void Box2DBody::CleanMassData()
 	{
 		if (m_FixtureMassDirty)
@@ -180,6 +214,9 @@ namespace FusionEngine
 	{
 		if (GetBodyType() == Dynamic)
 		{
+			//auto position = m_Body ? m_Body->GetPosition() : m_Def.position;
+			//stream.Write(position.x);
+			//stream.Write(position.y);
 			stream.Write(m_Body ? m_Body->GetAngle() : m_Def.angle);
 
 			const bool awake = IsAwake();
@@ -212,13 +249,13 @@ namespace FusionEngine
 	{
 		Vector2 position;
 		float angle;
-		stream.Read(position.x);
-		stream.Read(position.y);
+		//stream.Read(position.x);
+		//stream.Read(position.y);
 		stream.Read(angle);
 
 		m_SmoothTightness = 0.2f;
 
-		SetPosition(position);
+		//SetPosition(position);
 		SetAngle(angle);
 
 		// If the body isn't awake, velocities are assumed to be zero
@@ -268,6 +305,8 @@ namespace FusionEngine
 			IsActive(), IsSleepingAllowed(), IsBullet(), IsFixedRotation(),
 			GetLinearDamping(), GetAngularDamping(), GetGravityScale());
 
+		stream.Write(m_Depth);
+
 		if (GetBodyType() != Dynamic)
 		{
 			std::bitset<NonDynamicDeltaSerialiser_t::NumParams> transformChanges;
@@ -287,6 +326,8 @@ namespace FusionEngine
 				active, sleepingAllowed, bullet,
 				fixedrotation, linearDamping, angularDamping,
 				gravityScale);
+
+			stream.Read(m_Depth);
 
 			if (changes[PropsIdx::Active])
 				//m_Body->SetActive(active);
@@ -326,11 +367,12 @@ namespace FusionEngine
 					m_Body->SetAwake(m_Def.awake);
 				//Awake.MarkChanged();
 			}
-			if (changes[NonDynamicPropsIdx::Position])
-			{
-				SetPosition(position);
-				//Position.MarkChanged();
-			}
+			// note: removed since this is serialised by standard method (in EntitySerialisationUtils):
+			//if (changes[NonDynamicPropsIdx::Position])
+			//{
+			//	SetPosition(position);
+			//	//Position.MarkChanged();
+			//}
 			if (changes[NonDynamicPropsIdx::Angle])
 			{
 				SetAngle(m_Def.angle);

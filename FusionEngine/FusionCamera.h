@@ -49,11 +49,12 @@ namespace FusionEngine
 		Camera(float x, float y);
 		~Camera();
 
+		Vector2 GetSimPosition() const;
 		const CL_Vec2f &GetPosition() const;
 		float GetAngle() const;
 		float GetZoom() const;
 
-		void SetPosition(const Vector2& position);
+		void SetSimPosition(const Vector2& position);
 		void SetPosition(float x, float y);
 		void SetAngle(float angle);
 		void SetZoom(float scale);

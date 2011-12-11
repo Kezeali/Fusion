@@ -545,12 +545,12 @@ namespace FusionEngine
 
 					convenientComponentProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return " + interfaceName + "(cast<ASScript>(app_obj.getParent().getComponent('IScript','" + it->second + "').get()));"
+						"return " + interfaceName + "(cast<ASScript>(getRaw().getParent().getComponent('IScript','" + it->second + "').get()));"
 						"}\n";
 
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return " + interfaceName + "(cast<ASScript>(app_obj.getComponent('IScript','" + it->second + "').get()));"
+						"return " + interfaceName + "(cast<ASScript>(getRaw().getComponent('IScript','" + it->second + "').get()));"
 						"}\n";
 
 					scriptComponentInterfaces.push_back(_where->second);
@@ -559,11 +559,11 @@ namespace FusionEngine
 				{
 					convenientComponentProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return cast<" + interfaceName + ">((app_obj.getParent().getComponent('" + interfaceName + "','" + it->second + "')).get());"
+						"return cast<" + interfaceName + ">((getRaw().getParent().getComponent('" + interfaceName + "','" + it->second + "')).get());"
 						"}\n";
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return cast<" + interfaceName + ">((app_obj.getComponent('" + interfaceName + "','" + it->second + "')).get());"
+						"return cast<" + interfaceName + ">((getRaw().getComponent('" + interfaceName + "','" + it->second + "')).get());"
 						"}\n";
 				}
 			}
@@ -585,18 +585,18 @@ namespace FusionEngine
 			"_setAppObj(obj);\n"
 			"}\n"
 			"~EntityWrapper() {\n"
-			"deinitEntityPointer(owner, pointer_id, app_obj);\n"
+			"deinitEntityPointer(owner, pointer_id, app_obj.lock());\n"
 			"}\n"
 			"void _setAppObj(Entity &in obj) {\n"
 			"app_obj = obj;\n"
 			//"@input = Input(app_obj);\n"
 			"}\n"
-			"private Entity app_obj;\n"
+			"private EntityW app_obj;\n"
 			"private EntityW owner;\n"
 			"private uint32 pointer_id;\n"
-			"Entity getRaw() const { return app_obj; }\n"
+			"Entity getRaw() const { return app_obj.lock(); }\n"
 			//"Input@ input;\n"
-			"Input@ get_input() { return Input(app_obj); }\n"
+			"Input@ get_input() { return Input(app_obj.lock()); }\n"
 			"\n" +
 			convenientEntityProperties +
 			"}\n"
@@ -608,6 +608,7 @@ namespace FusionEngine
 			"@app_obj = obj;\n"
 			//"@wrapped_entity = @EntityWrapper(app_obj.getParent());\n"
 			"}\n"
+			"ASScript@ getRaw() const { return app_obj; }\n"
 			"EntityWrapper@ get_entity() { return EntityWrapper(app_obj.getParent()); }\n"
 			"void yield() { app_obj.yield(); }\n"
 			"void createCoroutine(coroutine_t @fn) { app_obj.createCoroutine(fn); }\n"

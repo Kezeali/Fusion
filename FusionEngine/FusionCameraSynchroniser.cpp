@@ -56,7 +56,7 @@ namespace FusionEngine
 	{
 		auto entry = m_Cameras.find(entity_id);
 		if (entry != m_Cameras.end())
-			m_Cameras[entity_id]->SetPosition(new_pos);
+			m_Cameras[entity_id]->SetSimPosition(new_pos);
 	}
 
 }

@@ -65,14 +65,17 @@ namespace FusionEngine
 		typedef char char_type;
 		typedef bio::multichar_output_filter_tag category;
 
-		std::streamsize totalWritten;
+		std::shared_ptr<std::streamsize> totalWritten;
 
-		std::streamsize count() const { return totalWritten; }
+		CharCounter() : totalWritten(new std::streamsize(0))
+		{}
+
+		std::streamsize count() const { return *totalWritten; }
 
 		template <typename Sink>
 		std::streamsize write(Sink& snk, const char_type* s, std::streamsize n)
 		{
-			totalWritten += n;
+			*totalWritten += n;
 			bio::write(snk, s, n);
 			return n;
 		}
@@ -91,32 +94,29 @@ namespace FusionEngine
 			CL_Endian::swap((void*)length, sizeof(length));
 		}
 
-#ifdef _DEBUG
-		// Make sure the cell-location data is stored as expected
-		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
-		{
-			int64_t new_loc_test = new_loc.y;
-			new_loc_test = new_loc_test << 32;
-			new_loc_test |= new_loc.x;
-			FSN_ASSERT(memcmp(&new_loc, &new_loc_test, sizeof(new_loc)) == 0);
-		}
-#endif
-
 		// Copy the values into a buffer
 		std::memcpy(data.data(), (char*)&new_loc, sizeof(new_loc));
 		std::memcpy(&data[sizeof(new_loc)], (char*)&offset, sizeof(offset));
 		std::memcpy(&data[sizeof(new_loc) + sizeof(offset)], (char*)&length, sizeof(length));
 
+#ifdef _DEBUG
+		// Make sure the cell-location data is stored as expected
+		FSN_ASSERT(sizeof(new_loc) == sizeof(int64_t));
+		{
+			FSN_ASSERT(std::memcmp(&new_loc.x, data.data(), sizeof(new_loc.x)) == 0);
+		}
+#endif
+
 		// Write the buffer to the DB
 		db.set((const char*)&id, sizeof(id), data.data(), data.size());
 	}
 
-	static void getEntityLocation(kyotocabinet::HashDB& db, RegionMapLoader::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
+	static bool getEntityLocation(kyotocabinet::HashDB& db, RegionMapLoader::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
 	{
 		// TODO: make sure that sizeof(ref) returns the size of the object
 		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
 
-		db.get((const char*)&id, sizeof(id), data.data(), data.size());
+		auto retrieved = db.get((const char*)&id, sizeof(id), data.data(), data.size());
 
 		std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
 		std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
@@ -129,6 +129,8 @@ namespace FusionEngine
 			CL_Endian::swap((void*)data_offset, sizeof(data_offset));
 			CL_Endian::swap((void*)data_length, sizeof(data_length));
 		}
+
+		return retrieved == data.size();
 	}
 
 	static void setupTuning(kyotocabinet::HashDB* db)
@@ -200,6 +202,15 @@ namespace FusionEngine
 	{
 		m_ObjectUpdateQueue.push(std::make_tuple(id, UpdateOperation::UPDATE, CellCoord_t(new_x, new_y), std::vector<unsigned char>(), std::vector<unsigned char>()));
 		m_NewData.set();
+	}
+
+	void RegionMapLoader::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
+	{
+		// TODO: store active entity locations in-memory (in StreamingManager)?
+		CellCoord_t loc;
+		std::streamoff offset = 0; std::streamsize length = 0;
+		getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
+		storeEntityLocation(*m_EntityLocationDB, id, CellCoord_t(new_x, new_y), offset, length);
 	}
 
 	void RegionMapLoader::Remove(ObjectID id)
@@ -323,11 +334,11 @@ namespace FusionEngine
 	{
 		if (m_EntityLocationDB)
 		{
-			std::string fullPath = boost::filesystem::path(filename).make_preferred().string();
-			std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).make_preferred().string();
+			std::string fullPath = boost::filesystem::path(filename).generic_string();
+			std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).generic_string();
 
 			if (filename.length() < writeDir.length() || filename.substr(0, writeDir.length()) != writeDir)
-				fullPath = writeDir + "\\" + filename;
+				fullPath = writeDir + "/" + fullPath;
 
 			if (!m_Thread.joinable())
 			{
@@ -337,7 +348,14 @@ namespace FusionEngine
 				m_EntityLocationDB->close();
 				m_EntityLocationDB.reset();
 
-				boost::filesystem::copy_file(dbPath, fullPath);
+				try
+				{
+					boost::filesystem::copy_file(dbPath, fullPath, boost::filesystem::copy_option::overwrite_if_exists);
+				}
+				catch (boost::filesystem::filesystem_error& e)
+				{
+					FSN_EXCEPT(FileSystemException, std::string("Failed to copy entity location db: ") + e.what());
+				}
 
 				m_EntityLocationDB.reset(new kyotocabinet::HashDB);
 				setupTuning(m_EntityLocationDB.get());
@@ -418,16 +436,21 @@ namespace FusionEngine
 	}
 
 	// expectedNumEntries is used because this can be counted once when WriteCell is called multiple times
-	void RegionMapLoader::WriteCell(std::ostream& file, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched)
+	void RegionMapLoader::WriteCell(std::ostream& file_param, const CellCoord_t& loc, const Cell* cell, size_t expectedNumEntries, const bool synched)
 	{
 		using namespace EntitySerialisationUtils;
+
+		CharCounter counter;
+		bio::filtering_ostream file;
+		file.push(counter, 0);
+		file.push(file_param);
 
 		IO::Streams::CellStreamWriter writer(&file);
 
 		writer.Write(expectedNumEntries);
 
 		std::vector<std::tuple<ObjectID, std::streamoff, std::streamsize>> dataPositions;
-		std::streamoff headerPos = sizeof(expectedNumEntries);
+		//std::streamoff headerPos = sizeof(expectedNumEntries);
 		if (synched)
 		{
 			// Leave some space for the header data
@@ -451,13 +474,15 @@ namespace FusionEngine
 			if (entSynched == synched)
 			{
 				if (entSynched)
-					beginPos = file.tellp() - headerPos;
+				{
+					beginPos = counter.count();
+				}
 
 				SaveEntity(file, it->first, false);
 
 				if (entSynched)
 				{
-					auto endPos = file.tellp();
+					auto endPos = counter.count();
 					std::streamsize length = endPos - beginPos;
 					dataPositions.push_back(std::make_tuple(it->first->GetID(), beginPos, length));
 				}
@@ -754,8 +779,8 @@ namespace FusionEngine
 						CellCoord_t loc;
 						std::streamoff dataOffset;
 						std::streamsize dataLength;
-						getEntityLocation(*m_EntityLocationDB, loc, dataOffset, dataLength, id);
-
+						if (!getEntityLocation(*m_EntityLocationDB, loc, dataOffset, dataLength, id))
+							continue; // This entity hasn't been stored (so, why are you trying to move an active entity!?)
 
 						if (new_loc == CellCoord_t(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max()))
 							new_loc = loc;
@@ -1011,11 +1036,12 @@ namespace FusionEngine
 		// Merge the data
 		std::streamsize newEntityDataLength;
 		{
-			bio::filtering_ostream countingOut;
 			CharCounter counter;
+			bio::filtering_ostream countingOut;
 			countingOut.push(counter);
-			countingOut.push(out);
+			countingOut.push(out, 0);
 			/*auto newEntityDataLength = */EntitySerialisationUtils::MergeEntityData(source_in, countingOut, mergeCon, mergeOcc);
+			countingOut.flush();
 			newEntityDataLength = counter.count();
 		}
 

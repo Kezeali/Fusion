@@ -95,7 +95,7 @@ namespace FusionEngine
 	////////////////////////
 	// --General functions--
 	////////////////////////
-	static float ToGameUnits(float sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
+	static float ToRenderUnits(float sim_coord) { return sim_coord * s_GameUnitsPerSimUnit; }
 
 	static float ToSimUnits(float game_coord) { return game_coord * s_SimUnitsPerGameUnit; }
 

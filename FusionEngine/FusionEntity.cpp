@@ -1013,7 +1013,6 @@ namespace FusionEngine
 
 	void Entity::Register(asIScriptEngine *engine)
 	{
-		
 		RegisterSharedPtrType<Entity>("Entity", engine);
 
 		{
@@ -1027,6 +1026,8 @@ namespace FusionEngine
 				asMETHODPR(std::weak_ptr<Entity>, operator=, (const std::weak_ptr<Entity> &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(Entity &in other)",
 				asMETHODPR(std::weak_ptr<Entity>, operator=, (EntityPtr &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectMethod("EntityW", "Entity lock() const",
+				asMETHODPR(std::weak_ptr<Entity>, lock, () const, EntityPtr), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		}
 
 		ASComponentFuture::Register(engine);

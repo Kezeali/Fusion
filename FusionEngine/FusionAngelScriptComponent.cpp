@@ -176,7 +176,7 @@ namespace FusionEngine
 	{
 	public:
 		ScriptAnyTSP(boost::intrusive_ptr<asIScriptObject> obj, size_t index)
-			: m_Object(obj),
+			: m_Object(obj.get()),
 			m_Index(index),
 			m_Owner(nullptr)
 		{
@@ -307,7 +307,7 @@ namespace FusionEngine
 		}
 
 	protected:
-		boost::intrusive_ptr<asIScriptObject> m_Object;
+		asIScriptObject* m_Object;
 		unsigned int m_Index;
 		std::string m_Name;
 
@@ -401,6 +401,20 @@ namespace FusionEngine
 		}
 	}
 
+	static ASScript::ScriptInterface* ScriptInterface_FromComponent(IComponent* component)
+	{
+		auto scriptComponent = convert_ref<IComponent, ASScript>(component);
+		if (scriptComponent)
+		{
+			auto scriptInterface = scriptComponent->GetScriptInterface();
+			scriptInterface->addRef();
+			scriptComponent->release();
+			return scriptInterface.get();
+		}
+
+		return nullptr;
+	}
+
 	void ASScript::ScriptInterface::Register(asIScriptEngine* engine)
 	{
 		{
@@ -414,7 +428,7 @@ namespace FusionEngine
 			s_ASScriptTypeId = engine->GetTypeIdByDecl("ASScript");
 			FSN_ASSERT(s_ASScriptTypeId >= 0);
 
-			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION((convert_ref<IComponent, ASScript::ScriptInterface>)), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
+			r = engine->RegisterObjectBehaviour("IComponent", asBEHAVE_REF_CAST, "ASScript@ f()", asFUNCTION(ScriptInterface_FromComponent), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 
 			r = engine->RegisterObjectMethod("ASScript", "void yield()", asMETHOD(ASScript::ScriptInterface, Yield), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("ASScript", "void createCoroutine(coroutine_t @)", asMETHODPR(ASScript::ScriptInterface, CreateCoroutine, (asIScriptFunction*), void), asCALL_THISCALL); FSN_ASSERT(r >= 0);
@@ -950,7 +964,7 @@ namespace FusionEngine
 		{
 			auto temp = val.typeId;
 			val.typeId = -1;
-			stream.Write(val);
+			stream.Write(val.typeId);
 			val.typeId = temp;
 
 			if (val.valueObj)
@@ -984,7 +998,12 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "Can't serialise app objects");
 		}
 		else
-			stream.Write(val);
+		{
+			FSN_ASSERT((val.typeId & asTYPEID_MASK_OBJECT) == 0);
+
+			stream.Write(val.typeId);
+			stream.Write(val.valueInt);
+		}
 
 		return true;
 	}
@@ -993,10 +1012,12 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(prop);
 
-		stream.Read(prop->value);
+		stream.Read(prop->value.typeId);
 
 		if (prop->value.typeId == -1)
 		{
+			prop->value.valueObj = 0;
+
 			//ObjectID id;
 			//stream.Read(id);
 
@@ -1010,12 +1031,9 @@ namespace FusionEngine
 		}
 		else
 		{
-			auto v = prop->value;
-			prop->Store(&v.valueInt, v.typeId);
-
-			//FSN_EXCEPT(NotImplementedException, "This probably doesn't work");
-			// TODO: write & read script props more explicitly (don't just write the internal representation)
-			//  and do something like prop->Store(valueRead, typeIdRead);
+			auto v = prop->value.valueInt;
+			stream.Read(v);
+			prop->Store(&v, prop->value.typeId);
 		}
 
 		return true;

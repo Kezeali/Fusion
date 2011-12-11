@@ -92,6 +92,7 @@ namespace FusionEngine
 		}
 
 		m_NonStreamingEntitiesLocation = m_File.read_uint32();
+		m_NonStreamingEntitiesDataLength = m_File.read_uint32();
 	}
 
 	CL_Rect GameMap::GetBounds() const
@@ -138,7 +139,7 @@ namespace FusionEngine
 	//			auto entity = EntityPtr();//LoadEntity(m_File, false, factory, entityManager, instantiator);
 	//			entity->SetStreamingCellIndex(index);
 	//			auto entityPosition = entity->GetPosition();
-	//			CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
+	//			CellEntry entry; entry.x = ToRenderUnits(entityPosition.x), entry.y = ToRenderUnits(entityPosition.y);
 	//			out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
 	//		}
 	//		if (include_synched)
@@ -150,7 +151,7 @@ namespace FusionEngine
 	//				auto entity = EntityPtr();//LoadEntity(m_File, true, factory, entityManager, instantiator);
 	//				entity->SetStreamingCellIndex(index);
 	//				auto entityPosition = entity->GetPosition();
-	//				CellEntry entry; entry.x = ToGameUnits(entityPosition.x), entry.y = ToGameUnits(entityPosition.y);
+	//				CellEntry entry; entry.x = ToRenderUnits(entityPosition.x), entry.y = ToRenderUnits(entityPosition.y);
 	//				out->objects.push_back(std::make_pair(std::move(entity), std::move(entry)));
 	//			}
 	//		}
@@ -211,6 +212,9 @@ namespace FusionEngine
 		using namespace EntitySerialisationUtils;
 		namespace io = boost::iostreams;
 
+		if (m_NonStreamingEntitiesDataLength == 0)
+			return;
+
 		m_File.seek(m_NonStreamingEntitiesLocation);
 
 		std::vector<char> buf(m_NonStreamingEntitiesDataLength);
@@ -220,8 +224,10 @@ namespace FusionEngine
 			inflateStream.push(io::zlib_decompressor());
 			inflateStream.push(io::array_source(buf.data(), buf.size()));
 
+			IO::Streams::CellStreamReader reader(&inflateStream);
+
 			size_t numPseudoEnts;
-			m_File.read(&numPseudoEnts, sizeof(size_t));
+			numPseudoEnts = reader.ReadValue<size_t>();
 			for (size_t i = 0; i < numPseudoEnts; ++i)
 			{
 				auto entity = LoadEntity(inflateStream, false, 0, factory, entityManager, instantiator);
@@ -231,7 +237,7 @@ namespace FusionEngine
 			if (include_synched)
 			{
 				size_t numSynchedEnts;
-				m_File.read(&numSynchedEnts, sizeof(size_t));
+				numSynchedEnts = reader.ReadValue<size_t>();
 				for (size_t i = 0; i < numSynchedEnts; ++i)
 				{
 					auto entity = LoadEntity(inflateStream, true, 0, factory, entityManager, instantiator);
@@ -269,13 +275,13 @@ namespace FusionEngine
 			auto& entity = *it;
 			if (!entity->IsSyncedEntity())
 			{
-				it = nonStreamingEntities.erase(it);
-				end = nonStreamingEntities.end();
+				++it;
 			}
 			else
 			{
 				nonStreamingEntitiesSynched.push_back(entity);
-				++it;
+				it = nonStreamingEntities.erase(it);
+				end = nonStreamingEntities.end();
 			}
 		}
 
@@ -304,6 +310,7 @@ namespace FusionEngine
 			fileStream.write(space.data(), space.size()); // leave some space for the cell-data offsets
 		}
 		writer.WriteAs<uint32_t>(0); // Non-streaming entities location
+		writer.WriteAs<uint32_t>(0); //  '' length
 
 		std::streampos locationsEndOffset;
 #ifdef _DEBUG
@@ -347,30 +354,37 @@ namespace FusionEngine
 
 		// Store the position of this section to write later
 		uint32_t nonStreamingEntitiesLocation = 0;
+		std::streamoff nonStreamingDataBegin;
 		{
-			std::streamoff off = fileStream.tellp();
-			if (off > 0)
-				nonStreamingEntitiesLocation = (uint32_t)off;
-		}
-		// The non-streaming entities section
-		{
-		size_t numEnts = nonStreamingEntities.size();
-		writer.Write(numEnts);
-		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
-		{
-			auto& entity = *it;
+			nonStreamingDataBegin = fileStream.tellp();
+			if (nonStreamingDataBegin > 0)
+				nonStreamingEntitiesLocation = (uint32_t)nonStreamingDataBegin;
 
-			SaveEntity(fileStream, entity, false);
-		}
-		numEnts = nonStreamingEntitiesSynched.size();
-		writer.Write(numEnts);
-		for (auto it = nonStreamingEntitiesSynched.begin(), end = nonStreamingEntitiesSynched.end(); it != end; ++it)
-		{
-			auto& entity = *it;
+			// The non-streaming entities section
+			boost::iostreams::filtering_ostream compressingStream;
+			compressingStream.push(boost::iostreams::zlib_compressor());
+			compressingStream.push(fileStream);
 
-			SaveEntity(fileStream, entity, true);
+			IO::Streams::CellStreamWriter nonsWriter(&compressingStream);
+
+			size_t numEnts = nonStreamingEntities.size();
+			nonsWriter.Write(numEnts);
+			for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
+			{
+				auto& entity = *it;
+
+				SaveEntity(compressingStream, entity, false);
+			}
+			numEnts = nonStreamingEntitiesSynched.size();
+			nonsWriter.Write(numEnts);
+			for (auto it = nonStreamingEntitiesSynched.begin(), end = nonStreamingEntitiesSynched.end(); it != end; ++it)
+			{
+				auto& entity = *it;
+
+				SaveEntity(compressingStream, entity, true);
+			}
 		}
-		}
+		uint32_t nonStreamingEntitiesDataLength = (uint32_t)(std::streamoff(fileStream.tellp()) - nonStreamingDataBegin);
 
 		fileStream.seekp(locationsOffset);
 		for (auto it = cellDataLocations.begin(), end = cellDataLocations.end(); it != end; ++it)
@@ -381,6 +395,7 @@ namespace FusionEngine
 		}
 
 		writer.Write(nonStreamingEntitiesLocation);
+		writer.Write(nonStreamingEntitiesDataLength);
 
 		FSN_ASSERT(uint32_t(fileStream.tellp()) == locationsEndOffset);
 	}

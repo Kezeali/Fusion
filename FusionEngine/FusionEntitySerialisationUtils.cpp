@@ -119,9 +119,8 @@ namespace FusionEngine
 			}
 		}
 
-		void StdSerialisePosition(RakNet::BitStream& stream, ITransform* tf, const Vector2& origin, float radius)
+		void StdSerialisePosition(RakNet::BitStream& stream, const Vector2& pos, const Vector2& origin, float radius)
 		{
-			auto pos = tf->GetPosition();
 			auto offset = pos - origin;
 			if (offset.length() < radius - 0.01f)
 			{
@@ -370,7 +369,7 @@ namespace FusionEngine
 				if (transform->HasContinuousPosition())
 				{
 					out.Write1();
-					StdSerialisePosition(out, transform, origin, radius);
+					StdSerialisePosition(out, transform->GetPosition(), origin, radius);
 				}
 				else
 					out.Write0();
@@ -503,10 +502,10 @@ namespace FusionEngine
 			{
 				Vector2 origin; float radius = 0.f;
 				auto transform = dynamic_cast<ITransform*>(entity->GetTransform().get());
-				if (transform->HasContinuousPosition())
+				if (!transform->HasContinuousPosition())
 				{
 					out.Write1();
-					StdSerialisePosition(out, transform, origin, radius);
+					StdSerialisePosition(out, transform->GetPosition(), origin, radius);
 				}
 				else
 					out.Write0();
@@ -694,13 +693,48 @@ namespace FusionEngine
 			}
 		}
 
+		static bool WritePositionDataIfAvailable(OCellStream& outstr, RakNet::BitStream& incomming)
+		{
+			CellStreamWriter out(&outstr);
+
+			auto result = DeserialisePosition(incomming, Vector2(), 0);
+			if (result.first)
+			{
+				RakNet::BitStream tempStream;
+				StdSerialisePosition(tempStream, result.second, Vector2(), 0);
+
+				out.Write(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+			}
+			
+			return result.first;
+		}
+
 		std::streamsize MergeEntityData(ICellStream& instr, OCellStream& outstr, RakNet::BitStream& incomming_c, RakNet::BitStream& incomming_o)
 		{
 			CellStreamReader in(&instr);
 			CellStreamWriter out(&outstr);
+
+			auto owner = in.ReadValue<PlayerID>();
+			out.Write(owner);
+
+			auto name = in.ReadString();
+			out.WriteString(name);
+
 			// Copy transform component type name
 			std::string transformType = in.ReadString();
 			out.WriteString(transformType);
+
+			// Write position (transform component)
+			if (!WritePositionDataIfAvailable(outstr, incomming_c) && !WritePositionDataIfAvailable(outstr, incomming_o))
+			{
+				// No new position to insert: copy the old data
+				auto len = in.ReadValue<RakNet::BitSize_t>();
+				out.Write(len);
+				std::vector<char> buffer(len);
+				instr.read(buffer.data(), buffer.size());
+				outstr.write(buffer.data(), buffer.size());
+			}
 
 			// Merge transform component data
 			MergeComponentData(instr, outstr, incomming_c, incomming_o);
@@ -772,21 +806,21 @@ namespace FusionEngine
 			component->SerialiseContinuous(stream);
 			if (stream.GetWriteOffset() > 0)
 			{
-				out.WriteAs<uint16_t>(stream.GetNumberOfBytesUsed());
+				out.Write(stream.GetNumberOfBytesUsed());
 				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
 			}
 			else
-				out.WriteAs<uint16_t>(0);
+				out.WriteAs<RakNet::BitSize_t>(0);
 			stream.Reset();
 
 			component->SerialiseOccasional(stream, IComponent::All);
 			if (stream.GetWriteOffset() > 0)
 			{
-				out.WriteAs<uint16_t>(stream.GetNumberOfBytesUsed());
+				out.Write(stream.GetNumberOfBytesUsed());
 				outstr.write(reinterpret_cast<const char*>(stream.GetData()), stream.GetNumberOfBytesUsed());
 			}
 			else
-				out.WriteAs<uint16_t>(0);
+				out.WriteAs<RakNet::BitSize_t>(0);
 		}
 
 		void ReadComponent(ICellStream& instr, IComponent* component)
@@ -795,33 +829,33 @@ namespace FusionEngine
 
 			CellStreamReader in(&instr);
 
-			const auto conDataLen = in.ReadValue<uint16_t>();
+			const auto conDataLen = in.ReadValue<RakNet::BitSize_t>();
 			std::vector<char> data(conDataLen);
 			if (conDataLen > 0)
+			{
 				instr.read(data.data(), conDataLen);
 
-			const auto occDataLen = in.ReadValue<uint16_t>();
-			if (occDataLen)
-			{
-				data.resize(conDataLen + occDataLen);
-				instr.read(data.data() + conDataLen, occDataLen);
-			}
+				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
 
-			RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
-
-			if (conDataLen)
-			{
 				component->DeserialiseContinuous(stream);
 
-				stream.AlignReadToByteBoundary();
+				if (stream.GetNumberOfUnreadBits() >= 8)
+					SendToConsole("Not all serialised data was used when reading a " + component->GetType());
 			}
 
-			if (occDataLen)
+			const auto occDataLen = in.ReadValue<RakNet::BitSize_t>();
+			if (occDataLen > 0)
+			{
+				data.resize(occDataLen);
+				instr.read(data.data(), occDataLen);
+
+				RakNet::BitStream stream(reinterpret_cast<unsigned char*>(data.data()), data.size(), false);
+
 				component->DeserialiseOccasional(stream, IComponent::All);
 
-			//stream.AssertStreamEmpty();
-			if (stream.GetNumberOfUnreadBits() >= 8)
-				SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+				if (stream.GetNumberOfUnreadBits() >= 8)
+					SendToConsole("Not all serialised data was used when reading a " + component->GetType());
+			}
 		}
 
 		//{
@@ -842,18 +876,33 @@ namespace FusionEngine
 				out.Write(id);
 			}
 
+			out.Write(entity->GetOwnerID());
+
+			if (!entity->HasDefaultName())
+				out.WriteString(entity->GetName());
+			else
+				out.WriteString("");
+
 			auto& components = entity->GetComponents();
 			size_t numComponents = components.size() - 1; // - transform
 
-			auto transform = dynamic_cast<IComponent*>(entity->GetTransform().get());
-			out.WriteString(transform->GetType());
-			WriteComponent(outstr, transform);
+			auto tfComponent = entity->GetTransform().get();
+			auto transform = dynamic_cast<ITransform*>(tfComponent);
+			out.WriteString(tfComponent->GetType());
+			// Write position
+			{
+				RakNet::BitStream tempStream;
+				StdSerialisePosition(tempStream, transform->GetPosition(), Vector2(), 0);
+				out.Write(tempStream.GetNumberOfBytesUsed());
+				outstr.write(reinterpret_cast<char*>(tempStream.GetData()), tempStream.GetNumberOfBytesUsed());
+			}
+			WriteComponent(outstr, tfComponent);
 
 			out.Write(numComponents);
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			{
 				auto& component = *it;
-				if (component.get() != transform)
+				if (component.get() != tfComponent)
 				{
 					out.WriteString(component->GetType());
 					out.WriteString(component->GetIdentifier());
@@ -862,7 +911,7 @@ namespace FusionEngine
 			for (auto it = components.begin(), end = components.end(); it != end; ++it)
 			{
 				auto& component = *it;
-				if (component.get() != transform)
+				if (component.get() != tfComponent)
 				{
 					WriteComponent(outstr, component.get());
 				}
@@ -885,6 +934,11 @@ namespace FusionEngine
 				synchroniser->TakeID(id);
 			}
 
+			PlayerID owner = 0;
+			in.Read(owner);
+
+			auto name = in.ReadString();
+
 			//const auto dataLen = in.read_uint32();
 			//std::vector<unsigned char> referencedEntitiesData(dataLen);
 			//in.read(referencedEntitiesData.data(), referencedEntitiesData.size());
@@ -894,11 +948,31 @@ namespace FusionEngine
 				std::string transformType = in.ReadString();
 				transform = factory->InstanceComponent(transformType);
 
+				if (transformType != "StaticTransform")
+				{
+					auto i = transformType.length();
+				}
+
+				auto tf = dynamic_cast<ITransform*>(transform.get()); FSN_ASSERT(tf);
+				auto len = in.ReadValue<RakNet::BitSize_t>();
+				if (len > 0)
+				{
+					std::vector<char> buffer(len);
+					instr.read(buffer.data(), len);
+					RakNet::BitStream stream(reinterpret_cast<unsigned char*>(buffer.data()), buffer.size(), false);
+					auto result = StdDeserialisePosition(stream, Vector2(), 0);
+					tf->SetPosition(result);
+				}
+
 				ReadComponent(instr, transform.get());
 			}
 
 			auto entity = std::make_shared<Entity>(manager, &manager->m_PropChangedQueue, transform);
 			entity->SetID(id);
+			entity->SetOwnerID(owner);
+
+			if (!name.empty())
+				entity->SetName(name);
 
 			transform->SynchronisePropertiesNow();
 

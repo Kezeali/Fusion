@@ -98,6 +98,9 @@ namespace FusionEngine
 		void SetViewportRect(const CL_Rectf& value);
 		const CL_Rectf& GetViewportRect() const;
 
+		void StreamingCamera::SetAngleEnabled(bool value);
+		bool StreamingCamera::IsAngleEnabled() const;
+
 		SyncTypes m_SyncType;
 
 		bool m_ViewportEnabled;
@@ -105,6 +108,8 @@ namespace FusionEngine
 
 		CameraPtr m_Camera;
 		ViewportPtr m_Viewport;
+
+		bool m_AngleEnabled;
 
 		bool m_Interpolate;
 

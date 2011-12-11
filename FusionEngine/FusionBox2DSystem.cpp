@@ -256,6 +256,8 @@ namespace FusionEngine
 
 	Box2DWorld::~Box2DWorld()
 	{
+		m_ActiveBodies.clear();
+		m_BodiesToCreate.clear();
 		delete m_B2DInterpTask;
 		delete m_B2DTask;
 		delete m_World;
@@ -306,8 +308,8 @@ namespace FusionEngine
 		//}
 		bool SerialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 		{
-			stream.Write(m_Position.x);
-			stream.Write(m_Position.y);
+			//stream.Write(m_Position.x);
+			//stream.Write(m_Position.y);
 			stream.Write(m_Angle);
 			
 			stream.Write(m_Depth);
@@ -315,14 +317,11 @@ namespace FusionEngine
 		}
 		void DeserialiseOccasional(RakNet::BitStream& stream, const SerialiseMode mode)
 		{
-			stream.Read(m_Position.x);
-			stream.Read(m_Position.y);
+			//stream.Read(m_Position.x);
+			//stream.Read(m_Position.y);
 			stream.Read(m_Angle);
 
 			stream.Read(m_Depth);
-
-			//Position.MarkChanged();
-			//Angle.MarkChanged();
 		}
 
 		bool HasContinuousPosition() const { return false; }
@@ -361,7 +360,7 @@ namespace FusionEngine
 			def.angle = angle;
 
 			auto com = new Box2DBody(def);
-			com->SetInterpolate(def.type != b2_staticBody);
+			//com->SetInterpolate(def.type != b2_staticBody);
 			return com;
 		}
 		else if (type == "b2Circle")
@@ -397,15 +396,17 @@ namespace FusionEngine
 		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
 		if (b2Component)
 		{
+			// TODO: add an OnOutOfRange method and call this there
 			// Deactivate the body in the simulation
-			b2Component->SetActive(false);
+			//b2Component->SetActive(false);
+
+			b2Component->DestructBody(m_World);
 			// Find and remove the deactivated body (from the Active Bodies list)
 			{
 			auto _where = std::find(m_ActiveBodies.begin(), m_ActiveBodies.end(), b2Component);
 			if (_where != m_ActiveBodies.end())
 			{
-				_where->swap(m_ActiveBodies.back());
-				m_ActiveBodies.pop_back();
+				m_ActiveBodies.erase(_where);
 				return;
 			}
 			}
@@ -413,8 +414,7 @@ namespace FusionEngine
 			auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
 			if (_where != m_BodiesToCreate.end())
 			{
-				_where->swap(m_BodiesToCreate.back());
-				m_BodiesToCreate.pop_back();
+				m_BodiesToCreate.erase(_where);
 			}
 			}
 		}

@@ -120,6 +120,7 @@ namespace FusionEngine
 
 		//! Allows a system to prevent an entity from activating until all required resources are loaded
 		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
+		//! Called when a component is activated
 		virtual void OnActivation(const ComponentPtr& component) = 0;
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.
 		virtual void OnDeactivation(const ComponentPtr& component) = 0;

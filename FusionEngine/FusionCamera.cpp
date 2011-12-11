@@ -58,10 +58,15 @@ namespace FusionEngine
 		m_Position.y = y;
 	}
 
-	void Camera::SetPosition(const Vector2& position)
+	void Camera::SetSimPosition(const Vector2& position)
 	{
-		m_Position.x = position.x;
-		m_Position.y = position.y;
+		m_Position.x = ToRenderUnits(position.x);
+		m_Position.y = ToRenderUnits(position.y);
+	}
+
+	Vector2 Camera::GetSimPosition() const
+	{
+		return Vector2(ToSimUnits(m_Position.x), ToSimUnits(m_Position.y));;
 	}
 
 	void Camera::SetAngle(float angle)
@@ -101,7 +106,7 @@ namespace FusionEngine
 
 	void Camera_SetPosition(Vector2& pos, CameraPtr *obj)
 	{
-		return (*obj)->SetPosition(ToGameUnits(pos.x), ToGameUnits(pos.y));
+		return (*obj)->SetPosition(ToRenderUnits(pos.x), ToRenderUnits(pos.y));
 	}
 
 	Vector2 Camera_GetPosition(CameraPtr *obj)

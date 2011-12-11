@@ -49,6 +49,8 @@
 #include <tbb/parallel_sort.h>
 #include <tbb/parallel_for.h>
 
+#include <boost/thread/mutex.hpp>
+
 namespace FusionEngine
 {
 	CLRenderSystem::CLRenderSystem(const CL_GraphicContext& gc, CameraSynchroniser* camera_sync)
@@ -83,17 +85,19 @@ namespace FusionEngine
 
 	void CLRenderWorld::RemoveViewport(const ViewportPtr& viewport)
 	{
-		// TODO: make threadsafe
-		m_Viewports.erase(std::find(m_Viewports.begin(), m_Viewports.end(), viewport));
+		boost::mutex::scoped_lock lock(m_ViewportMutex);
+		auto _where = std::find(m_Viewports.begin(), m_Viewports.end(), viewport);
+		if (_where != m_Viewports.end())
+			m_Viewports.erase(_where);
 	}
 
 	void CLRenderWorld::AddQueuedViewports()
 	{
+		boost::mutex::scoped_lock lock(m_ViewportMutex);
 		ViewportPtr viewport;
 		while (m_ViewportsToAdd.try_pop(viewport))
 		{
-			// TEMP:
-			m_Viewports.clear();
+			//m_Viewports.clear();
 			m_Viewports.push_back(viewport);
 		}
 	}
@@ -104,6 +108,7 @@ namespace FusionEngine
 		//return std::vector<std::string>(types, types + sizeof(types));
 		std::vector<std::string> types;
 		types.push_back("CLSprite");
+		types.push_back("StreamingCamera");
 		return types;
 	}
 
@@ -339,6 +344,9 @@ namespace FusionEngine
 			str.str("");
 			str << DeltaTime::GetDeltaTime();
 			debug_text += "\nDT: " + str.str();
+			str.str("");
+			str << viewports.size();
+			debug_text += "\nViewports: " + str.str();
 			m_DebugFont.draw_text(gc, CL_Pointf(10.f, 40.f), debug_text);
 
 			CL_Rectf bar(CL_Pointf(10.f, 4.f), CL_Sizef((float)(gc.get_width() - 20), 14.f));
@@ -354,7 +362,7 @@ namespace FusionEngine
 
 		{
 		auto pf = Profiling::getSingleton().GetTimes();
-		CL_Pointf pfLoc(10.f, 90.f);
+		CL_Pointf pfLoc(10.f, 110.f);
 		for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 		{
 			std::stringstream str;
@@ -457,7 +465,7 @@ namespace FusionEngine
 				for (auto ix = std::floor(area.left / 8.f) * 8; ix < area.right; ix += 8)
 				{
 					std::stringstream str; str << (ix / 8) << "," << (iy / 8);
-					m_DebugFont2.draw_text(gc, ToGameUnits(ix), ToGameUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
+					m_DebugFont2.draw_text(gc, ToRenderUnits(ix), ToRenderUnits(iy) + textHeight, str.str(), CL_Colorf::bisque);
 				}
 			}
 			m_RenderWorld->m_PhysWorld->DrawDebugData();

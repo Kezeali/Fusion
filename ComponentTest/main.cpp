@@ -218,6 +218,26 @@ namespace FusionEngine
 		FSN_REGISTER_PROP_ACCESSOR(IScript, std::string, "string", ScriptPath);
 	}
 
+// TODO: remove this
+}
+#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
+namespace FusionEngine
+{
+	void ICamera_RegisterScriptInterface(asIScriptEngine* engine)
+	{
+		engine->RegisterEnum("SyncType");
+		engine->RegisterEnumValue("SyncType", "NoSync", ICamera::SyncTypes::NoSync);
+		engine->RegisterEnumValue("SyncType", "Owned", ICamera::SyncTypes::NoSync);
+		engine->RegisterEnumValue("SyncType", "Shared", ICamera::SyncTypes::NoSync);
+
+		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
+
+		FSN_REGISTER_PROP_ACCESSOR(ICamera, ICamera::SyncTypes, "SyncType", SyncType);
+		FSN_REGISTER_PROP_ACCESSOR(ICamera, bool, "bool", ViewportEnabled);
+		FSN_REGISTER_PROP_ACCESSOR(ICamera, CL_Rectf, "Rect", ViewportRect);
+		FSN_REGISTER_PROP_ACCESSOR(ICamera, bool, "bool", AngleEnabled);
+	}
+
 class ComponentTest
 {
 public:
@@ -353,6 +373,9 @@ public:
 				RegisterComponentInterfaceType<IScript>(asEngine);
 				//IScript_RegisterScriptInterface(asEngine);
 
+				RegisterComponentInterfaceType<ICamera>(asEngine);
+				ICamera_RegisterScriptInterface(asEngine);
+
 				// Entity generation
 				Entity::Register(asEngine);
 				ASScript::ScriptInterface::Register(asEngine);
@@ -370,6 +393,25 @@ public:
 				// Script SoundOutput wrapper object
 				auto script_SoundOutput = std::make_shared<SoundOutput>(sound_output);
 
+				/////////////////////////
+				// Load optional settings (set options, that is, options that have been set)
+				ClientOptions* options = new ClientOptions("settings.xml", "settings");
+				
+				auto loggingLevel = options->GetOption_str("logging_level");
+				if (loggingLevel.empty() || loggingLevel == "normal")
+					logger->SetDefaultThreshold(LOG_NORMAL);
+				else if (loggingLevel == "info")
+					logger->SetDefaultThreshold(LOG_INFO);
+				else if (loggingLevel == "trivial")
+					logger->SetDefaultThreshold(LOG_TRIVIAL);
+				else if (loggingLevel == "critical")
+					logger->SetDefaultThreshold(LOG_CRITICAL);
+
+				if (varMap.count("connect") == 0 && options->GetOption_bool("console_logging"))
+					logger->ActivateConsoleLogging();
+
+				bool editMode = options->GetOption_bool("edit");
+
 				////////////////////
 				// Resource Manager
 				boost::scoped_ptr<ResourceManager> resourceManager(new ResourceManager(gc));
@@ -386,15 +428,6 @@ public:
 				resourceManager->StartLoaderThread();
 
 				CL_OpenGL::set_active(gc);
-
-				/////////////////////////
-				// Load optional settings (set options)
-				ClientOptions* options = new ClientOptions("settings.xml", "settings");
-
-				if (varMap.count("connect") == 0 && options->GetOption_bool("console_logging"))
-					logger->ActivateConsoleLogging();
-
-				bool editMode = options->GetOption_bool("edit");
 
 				/////////////////
 				// Input Manager
@@ -442,16 +475,6 @@ public:
 
 				entityManager->m_EntityFactory = entityFactory.get();
 
-				if (!editMode && varMap.count("connect") == 0)
-				{
-					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
-					cellArchivist->SetMap(map);
-
-					streamingMgr->Initialise(map->GetCellSize());
-				}
-
-				cellArchivist->Start();
-
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
 				const std::unique_ptr<TaskScheduler> scheduler(new TaskScheduler(taskManager.get(), entityManager.get(), cellArchivist.get()));
@@ -461,6 +484,9 @@ public:
 				scheduler->SetUnlimited(true);
 #else
 				scheduler->SetFramerateLimiter(false);
+				int maxFrameskip = 0;
+				if (options->GetOption("max_frameskip", &maxFrameskip) && maxFrameskip >= 0)
+					scheduler->SetMaxFrameskip((unsigned int)maxFrameskip);
 #endif
 
 				std::vector<std::shared_ptr<ISystemWorld>> ontology;
@@ -496,16 +522,29 @@ public:
 
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
 
+				// Load the map
+				if (!editMode && varMap.count("connect") == 0)
+				{
+					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
+					cellArchivist->SetMap(map);
+
+					streamingMgr->Initialise(map->GetCellSize());
+
+					map->LoadNonStreamingEntities(true, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
+				}
+				// Start the asynchronous cell loader
+				cellArchivist->Start();
+
 				// This scope makes viewport hold the only reference to camera: thus camera will be deleted with viewport
 				std::shared_ptr<Camera> editCam;
+				if (editMode)
 				{
-				auto camera = std::make_shared<Camera>();
-				camera->SetPosition(0.f, 0.f);
-				auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
-				dynamic_cast<CLRenderWorld*>(renderWorld.get())->AddViewport(viewport);
-				streamingMgr->AddCamera(camera);
+					auto camera = std::make_shared<Camera>();
+					camera->SetPosition(0.f, 0.f);
+					auto viewport = std::make_shared<Viewport>(CL_Rectf(0.f, 0.f, 1.f, 1.f), camera);
+					dynamic_cast<CLRenderWorld*>(renderWorld.get())->AddViewport(viewport);
+					streamingMgr->AddCamera(camera);
 				
-				//if (editMode)
 					editCam = camera;
 				}
 
@@ -713,12 +752,19 @@ public:
 
 						streamingMgr->DumpAllCells();
 						cellArchivist->Stop();
-						//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
-						//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-						//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
-						IO::PhysFSStream file("default.gad", IO::Write);
-						GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
-						cellArchivist->SaveEntityLocationDB("default.endb");
+						try
+						{
+							//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
+							//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
+							//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
+							IO::PhysFSStream file("default.gad", IO::Write);
+							GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
+							cellArchivist->SaveEntityLocationDB("default.endb");
+						}
+						catch (FileSystemException& e)
+						{
+							SendToConsole("Failed to compile map: " + e.GetDescription());
+						}
 						cellArchivist->Start();
 
 						streamingMgr->Update(true);
@@ -815,10 +861,15 @@ public:
 					if (dispWindow.get_ic().get_keyboard().get_keycode(CL_KEY_ESCAPE))
 						keepGoing = false;
 				}
+				propChangedQueue.clear();
+				asWorld.reset();
+				cameraSynchroniser.reset();
 				entityManager->Clear();
 				streamingMgr.reset();
 				cellArchivist->Stop();
-				entityFactory.reset();
+				entityManager.reset();
+				
+				entitySynchroniser.reset();
 				scriptManager->GetEnginePtr()->GarbageCollect();
 				}
 				catch (...)
@@ -827,6 +878,7 @@ public:
 					throw;
 				}
 				//cellArchivist->Stop();
+				entityFactory.reset();
 				scriptManager->GetEnginePtr()->GarbageCollect();
 			}
 			catch (FusionEngine::Exception &ex)
@@ -863,12 +915,14 @@ public:
 				MessageBoxA(dispWindow.get_hwnd(), ex.what(), "Exception", MB_OK);
 #endif
 			}
+#ifndef _DEBUG
 			catch(...)
 			{
 #ifdef _WIN32
 				MessageBoxA(dispWindow.get_hwnd(), "Unknown error", "Exception", MB_OK);
 #endif
 			}
+#endif
 
 		}
 
@@ -897,19 +951,22 @@ public:
 
 		if (i == 2)
 		{
-			auto id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
-			entity->SetID(id);
+			ObjectID id = 0;
+			//auto id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
+			//entity->SetID(id);
 
 			std::stringstream str;
 			str << i << "_" << id;
 			entity->SetName("edit" + str.str());
+
+			entity->SetDomain(SYSTEM_DOMAIN);
 		}
-		else
-		{
-			std::stringstream str;
-			str << i;
-			entity->SetName("edit" + str.str());
-		}
+		//else
+		//{
+		//	std::stringstream str;
+		//	str << reinterpret_cast<uintptr_t>(entity.get());
+		//	entity->SetName("edit" + str.str());
+		//}
 
 		if (add_to_scene)
 			entityManager->AddEntity(entity);

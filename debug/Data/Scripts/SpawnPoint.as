@@ -27,6 +27,7 @@ class SpawnPoint : ScriptComponent
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		ontology.addComponent(newEnt, "TestB", "script_b");
+		ontology.addComponent(newEnt, "StreamingCamera", "");
 		ISprite@ sprite = cast<ISprite>(newEnt.getComponent("ISprite").get());
 		if (sprite is null)
 		{
@@ -42,6 +43,8 @@ class SpawnPoint : ScriptComponent
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
 		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
+		
+		cast<ICamera>(newEnt.getComponent("ICamera").get()).AngleEnabled = false;
 		
 		return EntityWrapper(newEnt);
 		}
@@ -86,7 +89,8 @@ class SpawnPoint : ScriptComponent
 		{
 			seed_rand(1234);
 			
-			@entityA = createPlayerEntity(itransform.Position, 1);
+			@entityA = 
+			createPlayerEntity(itransform.Position, 1);
 			createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
 			
 			Vector pos = itransform.Position;
@@ -102,7 +106,11 @@ class SpawnPoint : ScriptComponent
 			}
 			
 			if (entityA !is null)
+			{
 				entityA.script_b.speed = 3.0f;
+				entityA.script_b.speed = 3.5f;
+				entityA.script_b.foo = 2;
+			}
 			
 			isprite.ImagePath = "";
 		}

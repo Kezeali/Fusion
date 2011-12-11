@@ -61,6 +61,11 @@ namespace FusionEngine
 		bool SerialiseOccasional(RakNet::BitStream& out, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode);
 		void DeserialiseOccasional(RakNet::BitStream& in, std::vector<uint32_t>& checksums, const EntityPtr& entity, IComponent::SerialiseMode mode);
 
+		static void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode)
+		{
+			DeserialiseOccasional(in, std::vector<uint32_t>(), entity, mode);
+		}
+
 		//! Deserialises and returns the position data from the given state, if it contains such data
 		std::pair<bool, Vector2> DeserialisePosition(RakNet::BitStream& in, const Vector2& origin, const float radius);
 

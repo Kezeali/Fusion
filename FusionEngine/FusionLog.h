@@ -44,6 +44,7 @@ namespace FusionEngine
 //! Level of severity for log messages
 	enum LogSeverity
 	{
+		LOG_INFO = 0,
 		LOG_TRIVIAL = 1,
 		LOG_NORMAL = 2,
 		LOG_CRITICAL = 3,

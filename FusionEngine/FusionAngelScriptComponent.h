@@ -166,6 +166,8 @@ namespace FusionEngine
 
 		void SetScriptObject(asIScriptObject* obj, const std::vector<std::pair<std::string, std::string>>& interface_properties);
 
+		const boost::intrusive_ptr<ScriptInterface>& GetScriptInterface() const { return m_ScriptObject; }
+
 		void CheckChangedPropertiesIn();
 		
 		void OnModuleLoaded(ResourceDataPtr resource);

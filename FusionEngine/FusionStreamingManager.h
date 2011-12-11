@@ -291,7 +291,7 @@ namespace FusionEngine
 		void OnUnreferenced(const EntityPtr& entity);
 
 		//! Move & update archived entity data
-		void UpdateInactiveEntity(ObjectID id, const Vector2& position, const RakNet::BitStream& continuous_data, const RakNet::BitStream& occasional_data);
+		void UpdateInactiveEntity(ObjectID id, const Vector2& position, const std::shared_ptr<RakNet::BitStream>& continuous_data, const std::shared_ptr<RakNet::BitStream>& occasional_data);
 
 		bool ActivateEntity(ObjectID id);
 		void DeactivateEntity(const EntityPtr &entity);
