@@ -230,8 +230,6 @@ namespace FusionEngine
 		engine->RegisterEnumValue("SyncType", "Owned", ICamera::SyncTypes::NoSync);
 		engine->RegisterEnumValue("SyncType", "Shared", ICamera::SyncTypes::NoSync);
 
-		RegisterValueType<CL_Rectf>("Rect", engine, asOBJ_APP_CLASS_CK);
-
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, ICamera::SyncTypes, "SyncType", SyncType);
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, bool, "bool", ViewportEnabled);
 		FSN_REGISTER_PROP_ACCESSOR(ICamera, CL_Rectf, "Rect", ViewportRect);
@@ -353,6 +351,16 @@ public:
 					asFUNCTION(PlayerRegistry::IsLocal), asCALL_CDECL);
 				FSN_ASSERT(r >= 0);
 				}
+
+				RegisterValueType<CL_Rectf>("Rect", asEngine, asOBJ_APP_CLASS_CK);
+				struct ScriptRect
+				{
+					static void CTOR1(float left, float top, float right, float bottom, void* ptr)
+					{
+						new (ptr) CL_Rectf(left, top, right, bottom);
+					}
+				};
+				asEngine->RegisterObjectBehaviour("Rect", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTION(ScriptRect::CTOR1), asCALL_CDECL_OBJLAST);
 
 				// Component types
 				IComponent::RegisterType<IComponent>(asEngine, "IComponent");
@@ -621,13 +629,13 @@ public:
 					if (rangeup || rangedown)
 					{
 						unsigned int range = (unsigned int)(streamingMgr->GetRange() + 0.5f);
-						if (rangedown && range <= 500)
-							range -= 100;
-						else if (rangeup && range < 500)
-							range += 100;
+						if (rangedown && range <= 4)
+							range -= 1;
+						else if (rangeup && range < 4)
+							range += 1;
 						else
-							range += (rangeup ? 500 : -500);
-						fe_clamp(range, 100u, 10000u);
+							range += (rangeup ? 2 : -2);
+						fe_clamp(range, 1u, 64u);
 						streamingMgr->SetRange((float)range);
 					  std::stringstream str;
 					  str << range;
@@ -718,6 +726,7 @@ public:
 					{
 						SendToConsole("Hosting");
 						auto playerInd = playerManager->RequestNewPlayer();
+						playerInd = playerManager->RequestNewPlayer();
 						std::stringstream str; str << playerInd;
 						SendToConsole("Players: " + str.str());
 					}

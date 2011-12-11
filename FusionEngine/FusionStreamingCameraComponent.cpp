@@ -169,6 +169,8 @@ namespace FusionEngine
 	void StreamingCamera::SetViewportRect(const CL_Rectf& value)
 	{
 		m_ViewportRect = value;
+		if (m_Viewport)
+			m_Viewport->SetArea(m_ViewportRect);
 	}
 
 	const CL_Rectf& StreamingCamera::GetViewportRect() const

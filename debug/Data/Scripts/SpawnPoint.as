@@ -44,7 +44,12 @@ class SpawnPoint : ScriptComponent
 		
 		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = 1;
 		
-		cast<ICamera>(newEnt.getComponent("ICamera").get()).AngleEnabled = false;
+		ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
+		cam.AngleEnabled = false;
+		if (owner == 1)
+			cam.ViewportRect.value = Rect(0, 0, 0.49, 1);
+		if (owner == 2)
+			cam.ViewportRect.value = Rect(0.51, 0, 1, 1);
 		
 		return EntityWrapper(newEnt);
 		}

@@ -1368,6 +1368,7 @@ namespace FusionEngine
 					//if (activeRange.is_overlapped(existingRange))
 					if (inclusiveOverlap(new_activeRange, existingRange))
 					{
+						merged = true;
 						existingRange.bounding_rect(new_activeRange);
 						if (localCam)
 							std::get<1>(*it).push_back(cam.streamPosition);

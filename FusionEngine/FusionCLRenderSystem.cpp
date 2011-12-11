@@ -229,6 +229,20 @@ namespace FusionEngine
 		{
 			auto& camera = *it;
 			camera->Update(DeltaTime::GetActualDeltaTime(), DeltaTime::GetInterpolationAlpha());
+
+			if (camera->m_ViewportEnabled)
+			{
+				if (!camera->m_Viewport)
+				{
+					camera->m_Viewport = std::make_shared<Viewport>(camera->m_ViewportRect, camera->m_Camera);
+					m_RenderWorld->AddViewport(camera->m_Viewport);
+				}
+			}
+			else if (camera->m_Viewport)
+			{
+				m_RenderWorld->RemoveViewport(camera->m_Viewport);
+				camera->m_Viewport.reset();
+			}
 		}
 
 		auto depthSort = [](boost::intrusive_ptr<IDrawable>& first, boost::intrusive_ptr<IDrawable>& second)->bool
