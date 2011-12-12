@@ -436,16 +436,29 @@ namespace FusionEngine
 		m_Cells.erase(_where);
 	}
 
-	void StreamingManager::DumpAllCells()
+	void StreamingManager::StoreAllCells()
 	{
 		while (!m_TheVoid.objects.empty())
 			Update(false);
 		//const auto size = m_XCellCount * m_YCellCount;
-		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end; ++it)
+		for (auto it = m_Cells.begin(), end = m_Cells.end(); it != end;)
 		{
 			const auto& loc = it->first;
 			auto& cell = it->second;
-			m_Archivist->Store(loc.x, loc.y, /*std::move*/(cell));
+			if (cell->active_entries == 0)
+			{
+				// Erase cells with no active entries, since they will be unloaded by the
+				//  archivist (this assumes a bit much about implementation details, but what can ya do?*)
+				// * technically, all Store()'d cells should be erased, but this way saving and compiling
+				//  should be a bit faster
+				m_Archivist->Store(loc.x, loc.y, std::move(cell));
+				m_Cells.erase(it++);
+			}
+			else
+			{
+				m_Archivist->Store(loc.x, loc.y, cell);
+				++it;
+			}
 		}
 		//m_Cells.clear();
 	}
@@ -1396,29 +1409,27 @@ namespace FusionEngine
 				cam.lastUsedPosition = newPosition;
 				cam.firstUpdate = false;
 
+				allActiveRangesStale = false;
+
+				// List this camera position (for processing The Void)
 				if (localCam)
-				{
-					allActiveRangesStale = false;
-
 					allLocalStreamPositions.push_back(cam.streamPosition);
-
-
-					CL_Rect inactiveRange;
-					getCellRange(inactiveRange, oldPosition);
-
-					// Update the current active cell range for this camera
-					CL_Rect& activeRange = cam.activeCellRange;
-					getCellRange(activeRange, newPosition);
-
-					if (inactiveRange != activeRange && (inactiveRange.get_width() != 0 && inactiveRange.get_height() != 0))
-						inactiveRanges.push_back(std::move(inactiveRange));
-
-					// TODO: don't create one big range for all overlapping ranges: split ranges like
-					//  when an inactive range overlaps an active range
-					mergeRange(activeRange);
-				}
 				else
 					allRemoteStreamPositions.push_back(std::make_pair(cam.streamPosition, cam.owner));
+
+				// Update the current active cell range for this camera
+				CL_Rect inactiveRange;
+				getCellRange(inactiveRange, oldPosition);
+				
+				CL_Rect& activeRange = cam.activeCellRange;
+				getCellRange(activeRange, newPosition);
+
+				if (inactiveRange != activeRange && (inactiveRange.get_width() != 0 && inactiveRange.get_height() != 0))
+					inactiveRanges.push_back(std::move(inactiveRange));
+
+				// TODO: don't create one big range for all overlapping ranges: split ranges like
+				//  when an inactive range overlaps an active range
+				mergeRange(activeRange);
 			}
 			else // Camera hasn't moved
 			{
@@ -1445,12 +1456,11 @@ namespace FusionEngine
 
 				// Add this cell's most recently calculated active range to make sure it doesn't get deactivated
 				if (localCam)
-				{
 					allLocalStreamPositions.push_back(cam.lastUsedPosition);
-					mergeRange(cam.activeCellRange);
-				}
 				else
 					allRemoteStreamPositions.push_back(std::make_pair(cam.lastUsedPosition, cam.owner));
+				
+				mergeRange(cam.activeCellRange);
 			}
 		}
 

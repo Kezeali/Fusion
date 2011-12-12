@@ -35,6 +35,7 @@
 #include "FusionEntitySerialisationUtils.h"
 #include "FusionInstanceSynchroniser.h"
 #include "FusionVirtualFileSource_PhysFS.h"
+#include "FusionPaths.h"
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionLogger.h"
@@ -42,6 +43,7 @@
 #include "FusionBinaryStream.h"
 
 #include <boost/filesystem.hpp>
+#include <numeric>
 
 #if _MSC_VER > 1000
 #pragma warning( push )
@@ -373,6 +375,12 @@ namespace FusionEngine
 		}
 	}
 
+	void RegionMapLoader::CreateSave(const std::string& filename)
+	{
+		m_SaveQueue.push(filename);
+		m_NewData.set();
+	}
+
 	size_t RegionMapLoader::GetDataBegin() const
 	{
 		if (m_EditMode)
@@ -550,6 +558,96 @@ namespace FusionEngine
 			}
 			else
 			{
+				{
+					namespace bfs = boost::filesystem;
+
+					std::string saveName;
+					while (m_SaveQueue.try_pop(saveName))
+					{
+						// TODO: replace all SendToConsole calls with signals
+						try
+						{
+							SendToConsole("Quick-Saving...");
+
+							auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) /= s_SavePath;
+							savePath /= saveName;
+
+							auto physFsPath = s_SavePath + saveName;
+
+							if (!bfs::is_directory(savePath))
+							{
+								if (PHYSFS_mkdir(physFsPath.c_str()) == 0)
+								{
+									FSN_EXCEPT(FileSystemException, "Failed to create save path (" + physFsPath + "): " + std::string(PHYSFS_getLastError()));
+								}
+							}
+							else
+							{
+								auto physFsPath = s_SavePath + saveName;
+								auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
+								for (auto it = fileList; *it; ++it)
+								{
+									auto filePath = physFsPath + "/" + *it;
+									if (PHYSFS_delete(filePath.c_str()) == 0)
+									{
+										PHYSFS_freeList(fileList);
+										FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+									}
+								}
+								PHYSFS_freeList(fileList);
+							}
+							//if (bfs::is_directory(savePath))
+							//{
+							//	PHYSFS_delete(physFsPath.c_str());
+							//}
+							//FSN_ASSERT(!bfs::is_directory(savePath));
+							//PHYSFS_mkdir(physFsPath.c_str());
+							FSN_ASSERT(bfs::is_directory(savePath));
+							FSN_ASSERT(bfs::is_empty(savePath));
+
+							SendToConsole("QS Path: " + savePath.string());
+
+							std::vector<bfs::path> regionFiles;
+							for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+							{
+								if (it->path().extension() == ".celldata")
+									regionFiles.push_back(it->path());
+							}
+
+							std::stringstream str1; str1 << regionFiles.size();
+							std::string numRegionFilesStr = str1.str();
+
+							unsigned int i = 0;
+							//for (bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+							for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
+							{
+								std::stringstream str; str << ++i;
+								SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+
+								auto dest = savePath; dest /= it->filename();
+								boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+							}
+							SendToConsole("QS Progress: copying entitylocations.kc");
+							m_EntityLocationDB->copy((savePath /= "entitylocations.kc").string());
+							SendToConsole("QS Progress: done copying entitylocations.kc");
+
+							SendToConsole("Done Quick-Saving.");
+						}
+						catch (bfs::filesystem_error& e)
+						{
+							SendToConsole("QS Failed");
+
+							AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
+						}
+						catch (FileSystemException& e)
+						{
+							SendToConsole("QS Failed");
+
+							AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
+						}
+					}
+				}
+
 				std::list<std::tuple<Cell*, CellCoord_t>> writesToRetry;
 				std::list<std::tuple<Cell*, CellCoord_t>> readsToRetry;
 
@@ -564,8 +662,10 @@ namespace FusionEngine
 						if (lock)
 						{
 							// Check active_entries since the Store request may be stale
-							if ((m_EditMode || cell->active_entries == 0) && cell->waiting == Cell::Store)
+							if (cell->waiting == Cell::Store)
 							{
+								if (cell->active_entries != 0 && !m_EditMode)
+									AddLogEntry("Warning: writing cell with active entries");
 								try
 								{
 									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
@@ -623,7 +723,7 @@ namespace FusionEngine
 									//SendToConsole("Cell " + str.str() + " streamed out");
 
 									// TEMP
-									if (!m_EditMode || cell->active_entries == 0)
+									if (/*!m_EditMode || */cell->active_entries == 0)
 									{
 										cell->objects.clear();
 										cell->loaded = false;

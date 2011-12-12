@@ -6,16 +6,32 @@
 		<bind key="d" command="right"/>
 		<bind key="lshift" command="primary"/>
 		<bind key="lctrl" command="secondary"/>
-		<bind key="z" command="special"/>
+		<bind key="i" command="special"/>
 		<bind key="esc" command="quit"/>
 		<bind key="t" command="debug"/>
 	</binds>
 	<binds player="2">
-		<bind key="xbox_a" controller_number="1" command="thrust"/>
-		<!--etc-->
+		<bind key="y" command="thrust"/>
+		<bind key="g" command="left"/>
+		<bind key="h" command="right"/>
+		<bind key="xbox_a" controller_number="0" command="thrust"/>
+		<bind key="xbox_lt_left_digital" controller_number="0" command="left"/>
+		<bind key="xbox_lt_right_digital" controller_number="0" command="right"/>
+		<bind key="xbox_dpad_left" controller_number="0" command="left"/>
+		<bind key="xbox_dpad_right" controller_number="0" command="right"/>
+		<bind key="rshift" command="primary"/>
+		<bind key="rctrl" command="secondary"/>
+		<bind key="j" command="special"/>
+		<bind key="esc" command="quit"/>
+		<bind key="u" command="debug"/>
 	</binds>
 	<binds player="3">
-		<bind key="xbox_a" controller_number="2" command="thrust"/>
+		<bind key="xbox_a" controller_number="1" command="thrust"/>
+		<bind key="xbox_x" controller_number="1" command="left"/>
+		<bind key="xbox_b" controller_number="1" command="right"/>
 		<!--etc-->
+	</binds>
+	<binds player="4">
+		<bind key="xbox_a" controller_number="2" command="thrust"/>
 	</binds>
 </controls>

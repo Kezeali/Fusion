@@ -6,6 +6,9 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb30_174oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <OpenMPSupport>false</OpenMPSupport>
+      <CompileAsManaged>false</CompileAsManaged>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\lib;$(SolutionDir)..\FusionDependencies\tbb30_174oss\lib\ia32\vc10;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

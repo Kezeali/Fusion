@@ -47,9 +47,9 @@ class SpawnPoint : ScriptComponent
 		ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
 		cam.AngleEnabled = false;
 		if (owner == 1)
-			cam.ViewportRect.value = Rect(0, 0, 0.49, 1);
+			cam.ViewportRect.value = Rect(0, 0, 0.5 - 0.01, 1);
 		if (owner == 2)
-			cam.ViewportRect.value = Rect(0.51, 0, 1, 1);
+			cam.ViewportRect.value = Rect(0.5 + 0.01, 0, 1, 1);
 		
 		return EntityWrapper(newEnt);
 		}
@@ -113,7 +113,6 @@ class SpawnPoint : ScriptComponent
 			if (entityA !is null)
 			{
 				entityA.script_b.speed = 3.0f;
-				entityA.script_b.speed = 3.5f;
 				entityA.script_b.foo = 2;
 			}
 			

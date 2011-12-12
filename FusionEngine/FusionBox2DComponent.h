@@ -224,6 +224,7 @@ namespace FusionEngine
 		float GetLinearDamping() const { return m_Body ? m_Body->GetLinearDamping() : m_Def.linearDamping; }
 		void SetLinearDamping(float val)
 		{
+			FSN_ASSERT(val >= 0.0f);
 			if (m_Body)
 				m_Body->SetLinearDamping(val);
 			else
@@ -234,6 +235,7 @@ namespace FusionEngine
 		float GetAngularDamping() const { return m_Body ? m_Body->GetAngularDamping() : m_Def.angularVelocity; }
 		void SetAngularDamping(float val)
 		{
+			FSN_ASSERT(val >= 0.0f);
 			if (m_Body)
 				m_Body->SetAngularDamping(val);
 			else

@@ -256,6 +256,13 @@ namespace FusionEngine
 		const auto firstSector = locationData.startingSector;
 		const auto numSectors = locationData.sectorsAllocated;
 
+		if (numSectors == 0)
+		{
+			//std::stringstream str; str << location.first << ", " << location.second;
+			//AddLogEntry("There was no cell data for [" + str.str() + "] in the cache", LOG_INFO);
+			return std::unique_ptr<ArchiveIStream>();
+		}
+
 		const auto dataBegin = firstSector * s_SectorSize;
 
 		file->seekg(dataBegin);

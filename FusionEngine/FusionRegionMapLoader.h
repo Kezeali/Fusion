@@ -145,6 +145,8 @@ namespace FusionEngine
 
 		void SaveEntityLocationDB(const std::string& filename);
 
+		void CreateSave(const std::string& filename);
+
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
@@ -192,6 +194,8 @@ namespace FusionEngine
 		enum UpdateOperation { UPDATE, REMOVE };
 
 		tbb::concurrent_queue<std::tuple<ObjectID, UpdateOperation, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
+
+		tbb::concurrent_queue<std::string> m_SaveQueue;
 
 		CL_Event m_NewData;
 		CL_Event m_TransactionEnded;

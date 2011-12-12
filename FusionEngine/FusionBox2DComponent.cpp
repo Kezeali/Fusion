@@ -289,7 +289,7 @@ namespace FusionEngine
 		else
 			m_Def.awake = true;
 
-		// Prevent sleeping objects from jittering due to being slightly out of synch and colliding / being corrected repeatedly
+		// Prevent sleeping objects from jittering due to being slightly out of synch and colliding then being corrected repeatedly
 		m_PinTransform = !awake;
 
 		//Position.MarkChanged();
@@ -328,6 +328,9 @@ namespace FusionEngine
 				gravityScale);
 
 			stream.Read(m_Depth);
+
+			angularDamping = std::max(0.0f, angularDamping);
+			linearDamping = std::max(0.0f, linearDamping);
 
 			if (changes[PropsIdx::Active])
 				//m_Body->SetActive(active);

@@ -576,9 +576,11 @@ public:
 						const bool addToScene = !ev.ctrl;
 						unsigned int repeats = 1;
 						const float size = 100.f;
+						float rightEdge = 0;
 						if (ev.shift)
 						{
 							repeats = 50;
+							rightEdge = pos.x + (repeats / 2) * size;
 							pos.x -= (repeats / 2) * size;
 							pos.y -= (repeats / 2) * size;
 						}
@@ -589,7 +591,7 @@ public:
 							if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
 								entities.push_back(entity);
 							pos.x += size;
-							if (pos.x > (repeats / 2) * size)
+							if (pos.x > rightEdge)
 							{
 								pos.x -= repeats * size;
 								pos.y += size;
@@ -755,28 +757,36 @@ public:
 						SendToConsole(hostGUID);
 					}
 
-					if (compile && editMode)
+					if (compile)
 					{
 						compile = false;
 
-						streamingMgr->DumpAllCells();
-						cellArchivist->Stop();
-						try
+						if (editMode)
 						{
-							//std::unique_ptr<VirtualFileSource_PhysFS> fileSource(new VirtualFileSource_PhysFS());
-							//CL_VirtualDirectory dir(CL_VirtualFileSystem(new VirtualFileSource_PhysFS()), "");
-							//auto file = dir.open_file("default.gad", CL_File::create_always, CL_File::access_write);
-							IO::PhysFSStream file("default.gad", IO::Write);
-							GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
-							cellArchivist->SaveEntityLocationDB("default.endb");
-						}
-						catch (FileSystemException& e)
-						{
-							SendToConsole("Failed to compile map: " + e.GetDescription());
-						}
-						cellArchivist->Start();
+							streamingMgr->StoreAllCells();
+							cellArchivist->Stop();
+							try
+							{
+								IO::PhysFSStream file("default.gad", IO::Write);
+								GameMap::CompileMap(file, streamingMgr->GetCellSize(), cellArchivist->GetCellCache(), entities);
+								cellArchivist->SaveEntityLocationDB("default.endb");
+							}
+							catch (FileSystemException& e)
+							{
+								SendToConsole("Failed to compile map: " + e.GetDescription());
+							}
+							cellArchivist->Start();
 
-						streamingMgr->Update(true);
+							streamingMgr->Update(true);
+						}
+						else
+						{
+							//entityManager->ProcessActiveEntities(0.0f);
+							streamingMgr->StoreAllCells();
+							cellArchivist->Stop();
+							cellArchivist->Start();
+							cellArchivist->CreateSave("save");
+						}
 					}
 
 					resourceManager->UnloadUnreferencedResources();

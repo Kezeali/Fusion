@@ -282,7 +282,7 @@ namespace FusionEngine
 
 		inline std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
 
-		void DumpAllCells();
+		void StoreAllCells();
 
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);
