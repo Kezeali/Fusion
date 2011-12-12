@@ -118,6 +118,7 @@ namespace FusionEngine
 
 #define INFINITE_STREAMING
 //#define STREAMING_USEMAP
+//#define FSN_CELL_HISTORY
 
 	struct CellEntry
 	{

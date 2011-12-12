@@ -61,6 +61,8 @@ namespace FusionEngine
 
 	static const size_t s_DefaultRegionSize = 4;
 
+	extern void AddHist(const CellHandle& loc, const std::string& l, unsigned int n = -1);
+
 	//! boost::iostreams filter that counts bytes written
 	struct CharCounter
 	{
@@ -232,43 +234,34 @@ namespace FusionEngine
 
 	void RegionMapLoader::Store(int32_t x, int32_t y, std::shared_ptr<Cell> cell)
 	{
-//#ifdef _DEBUG
-//		// Make sure this method is only accessed within one thread
-//		if (m_ControllerThreadId == boost::thread::id())
-//			m_ControllerThreadId = boost::this_thread::get_id();
-//		FSN_ASSERT(m_ControllerThreadId == boost::this_thread::get_id());
-//#endif
-
-		m_CellsBeingProcessed[CellCoord_t(x, y)] = cell;
-
 		if (cell->waiting.fetch_and_store(Cell::Store) != Cell::Store && cell->loaded)
 		{
-			cell->AddHist("Enqueued Out");
-			m_WriteQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y)));
+			AddHist(CellCoord_t(x, y), "Enqueued Out");
+			// The last tuple param indicates whether the cell should be cleared (unloaded)
+			//  when the write operation is done: it checks whether this is the only reference
+			//  to the cell
+			m_WriteQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y), cell.unique()));
 			m_NewData.set();
+			
+			m_CellsBeingProcessed[CellCoord_t(x, y)] = std::move(cell);
 		}
 	}
 
 	std::shared_ptr<Cell> RegionMapLoader::Retrieve(int32_t x, int32_t y)
 	{
-//#ifdef _DEBUG
-//		if (m_ControllerThreadId == boost::thread::id())
-//			m_ControllerThreadId = boost::this_thread::get_id();
-//		FSN_ASSERT(m_ControllerThreadId == boost::this_thread::get_id());
-//#endif
-
 		auto _where = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>())).first;
 		auto& cell = _where->second;
 
 		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 		{
-			cell->AddHist("Enqueued In");
+			AddHist(CellCoord_t(x, y), "Enqueued In");
 			m_ReadQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y)));
 			m_NewData.set();
-			//return std::shared_ptr<Cell>();
 		}
 		else if (cell->loaded)
 		{
+			AddHist(CellCoord_t(x, y), "Already loaded");
+			cell->waiting = Cell::Ready;
 			std::shared_ptr<Cell> retVal = std::move(cell); // move the ptr so the stored one can be erased
 			m_CellsBeingProcessed.erase(_where);
 			return std::move(retVal);
@@ -523,40 +516,7 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_NewData, m_TransactionEnded, retrying ? 100 : -1);
-			if (eventId == 0)
-			{
-				// Drop references to cells that are done processing (if m_CellsBeingProcessed isn't locked by a current transaction)
-				if (!readyCells.empty())
-				{
-					{
-						boost::mutex::scoped_lock lock(m_Mutex);
-						if (lock)
-						{
-							for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
-								m_CellsBeingProcessed.erase(*it);
-						}
-					}
-					readyCells.clear();
-				}
-				break;
-			}
-			else if (eventId == 2)
-			{
-				// Drop references to cells that are done processing (if m_CellsBeingProcessed isn't locked by a current transaction)
-				if (!readyCells.empty())
-				{
-					{
-						boost::mutex::scoped_lock lock(m_Mutex);
-						if (lock)
-						{
-							for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
-								m_CellsBeingProcessed.erase(*it);
-						}
-					}
-					readyCells.clear();
-				}
-			}
-			else
+			if (eventId != 2) // 2 = TransactionEnded
 			{
 				{
 					namespace bfs = boost::filesystem;
@@ -648,26 +608,28 @@ namespace FusionEngine
 					}
 				}
 
-				std::list<std::tuple<Cell*, CellCoord_t>> writesToRetry;
-				std::list<std::tuple<Cell*, CellCoord_t>> readsToRetry;
+				std::list<WriteQueue_t::value_type> writesToRetry;
+				std::list<ReadQueue_t::value_type> readsToRetry;
 
 				// Read / write cell data
 				{
-					std::tuple<Cell*, CellCoord_t> toWrite;
+					std::tuple<Cell*, CellCoord_t, bool> toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
 					{
 						Cell*& cell = std::get<0>(toWrite);
 						const auto& cell_coord = std::get<1>(toWrite);
+						const bool unload_when_done = std::get<2>(toWrite);
 						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 						if (lock)
 						{
 							// Check active_entries since the Store request may be stale
 							if (cell->waiting == Cell::Store)
 							{
-								if (cell->active_entries != 0 && !m_EditMode)
-									AddLogEntry("Warning: writing cell with active entries");
 								try
 								{
+									if (cell->active_entries != 0 && !m_EditMode)
+										AddLogEntry("Warning: writing cell with active entries");
+
 									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
 
 									size_t numSynched = 0;
@@ -717,14 +679,12 @@ namespace FusionEngine
 										//*filePtr << tempStream.rdbuf();
 									}
 
-									cell->AddHist("Written and cleared", numSynched);
+									AddHist(cell_coord, "Written and cleared", numSynched);
 
-									//std::stringstream str; str << i;
-									//SendToConsole("Cell " + str.str() + " streamed out");
-
-									// TEMP
-									if (/*!m_EditMode || */cell->active_entries == 0)
+									if (unload_when_done)
 									{
+										if (cell->active_entries != 0)
+											AddLogEntry("Warning: unloading active cell");
 										cell->objects.clear();
 										cell->loaded = false;
 									}
@@ -732,13 +692,15 @@ namespace FusionEngine
 								catch (...)
 								{
 									std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-									SendToConsole("Exception streaming out cell [" + str.str() + "]");
+									std::string message = "Exception streaming out cell [" + str.str() + "]";
+									SendToConsole(message);
+									AddLogEntry(message);
 								}
 							}
 							else
 							{
-								//std::stringstream str; str << i;
-								//SendToConsole("Cell still in use " + str.str());
+								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+								SendToConsole("Cell write canceled: " + str.str());
 								//writesToRetry.push_back(toWrite);
 							}
 							cell->waiting = Cell::Ready;
@@ -747,7 +709,7 @@ namespace FusionEngine
 						}
 						else
 						{
-							cell->AddHist("Cell locked (will retry write later)");
+							AddHist(cell_coord, "Cell locked (will retry write later)");
 							std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
 							SendToConsole("Retrying write on cell [" + str.str() + "]");
 							writesToRetry.push_back(toWrite);
@@ -821,13 +783,13 @@ namespace FusionEngine
 										//std::stringstream str; str << i;
 										//SendToConsole("Cell " + str.str() + " streamed in");
 
-										cell->AddHist("Loaded", num);
+										AddHist(cell_coord, "Loaded", num);
 										cell->loaded = true;
 									}
 									else
 									{
 										cell->loaded = true; // No data to load
-										cell->AddHist("Loaded (no data)");
+										AddHist(cell_coord, "Loaded (no data)");
 									}
 								}
 								catch (...)
@@ -843,7 +805,7 @@ namespace FusionEngine
 						}
 						else
 						{
-							cell->AddHist("Cell locked (will retry read later)");
+							AddHist(cell_coord, "Cell locked (will retry read later)");
 							readsToRetry.push_back(toRead);
 						}
 					}
@@ -977,7 +939,33 @@ namespace FusionEngine
 					}
 				}
 
+				if (eventId == 0) // Quit
+				{
+					ClearReadyCells(readyCells);
+					break;
+				}
 			}
+			else // TransactionEnded
+			{
+				ClearReadyCells(readyCells);
+			}
+		}
+	}
+
+	void RegionMapLoader::ClearReadyCells(std::list<CellCoord_t>& readyCells)
+	{
+		// Drop references to cells that are done processing (if m_CellsBeingProcessed isn't locked by a current transaction)
+		if (!readyCells.empty())
+		{
+			{
+				boost::mutex::scoped_lock lock(m_Mutex);
+				if (lock)
+				{
+					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
+						m_CellsBeingProcessed.erase(*it);
+				}
+			}
+			readyCells.clear();
 		}
 	}
 

@@ -158,6 +158,7 @@ namespace FusionEngine
 
 		void Run();
 
+private:
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
 		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
@@ -185,10 +186,21 @@ namespace FusionEngine
 
 		boost::mutex m_Mutex;
 
-		//boost::mutex m_WriteQueueMutex;
-		//boost::mutex m_ReadQueueMutex;/*std::queue*/
-		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_WriteQueue;
-		tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> m_ReadQueue;
+		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
+
+		
+#ifdef FSN_NO_TBB_CONCURRENT
+		boost::mutex m_WriteQueueMutex;
+		boost::mutex m_ReadQueueMutex;
+		typedef std::queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
+		typedef std::queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
+#else
+		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
+		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
+#endif
+		WriteQueue_t m_WriteQueue;
+		ReadQueue_t m_ReadQueue;
+
 
 		//! TODO un-caps these when vc++ supports enum class
 		enum UpdateOperation { UPDATE, REMOVE };
