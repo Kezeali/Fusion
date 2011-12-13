@@ -462,7 +462,7 @@ public:
 				std::unique_ptr<PlayerManager> playerManager(new PlayerManager());
 
 				std::unique_ptr<RegionMapLoader> cellArchivist(new RegionMapLoader(editMode));
-				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get(), editMode));
+				std::unique_ptr<StreamingManager> streamingMgr(new StreamingManager(cellArchivist.get()));
 
 				std::unique_ptr<CameraSynchroniser> cameraSynchroniser(new CameraSynchroniser(streamingMgr.get()));
 
@@ -531,9 +531,10 @@ public:
 				PropChangedQueue &propChangedQueue = entityManager->m_PropChangedQueue;
 
 				// Load the map
+				std::shared_ptr<GameMap> map;
 				if (!editMode && varMap.count("connect") == 0)
 				{
-					auto map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
+					map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
 					cellArchivist->SetMap(map);
 
 					streamingMgr->Initialise(map->GetCellSize());
@@ -558,6 +559,7 @@ public:
 
 				std::vector<EntityPtr> entities;
 				bool compile = false;
+				bool load = false;
 
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
 				{
@@ -602,6 +604,11 @@ public:
 					if (ev.id == CL_KEY_S)
 					{
 						compile = true;
+					}
+
+					if (ev.id == CL_KEY_L)
+					{
+						load = true;
 					}
 
 					if (ev.id == CL_KEY_I)
@@ -763,7 +770,7 @@ public:
 
 						if (editMode)
 						{
-							streamingMgr->StoreAllCells();
+							streamingMgr->StoreAllCells(false);
 							cellArchivist->Stop();
 							try
 							{
@@ -784,8 +791,42 @@ public:
 							//entityManager->ProcessActiveEntities(0.0f);
 							streamingMgr->StoreAllCells();
 							cellArchivist->Stop();
+							auto file = cellArchivist->CreateSaveFile("quicksave", "active_entities");
+							if (file)
+							{
+								try
+								{
+									entityManager->Save(*file);
+									//streamingMgr->Save(file);
+								}
+								catch (std::ios::failure& e)
+								{
+									AddLogEntry(e.what());
+								}
+							}
+							cellArchivist->EnqueueQuickSave("quicksave");
 							cellArchivist->Start();
-							cellArchivist->CreateSave("save");
+						}
+					}
+					if (load)
+					{
+						load = false;
+						if (!editMode)
+						{
+							cellArchivist->Stop();
+							entityManager->DeactivateAllEntities(false);
+							entityManager->Clear();
+							cameraSynchroniser->Clear();
+							streamingMgr->Reset();
+							map->LoadNonStreamingEntities(false, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
+							cellArchivist->Load("quicksave");
+							cellArchivist->Start();
+							auto file = cellArchivist->LoadSaveFile("quicksave", "active_entities");
+							if (file)
+							{
+								entityManager->Load(*file);
+								//streamingMgr->Load(file);
+							}
 						}
 					}
 
@@ -971,8 +1012,8 @@ public:
 		if (i == 2)
 		{
 			ObjectID id = 0;
-			//auto id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
-			//entity->SetID(id);
+			id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();
+			entity->SetID(id);
 
 			std::stringstream str;
 			str << i << "_" << id;

@@ -129,6 +129,8 @@ namespace FusionEngine
 		explicit RegionFile(const std::string& filename, size_t width);
 		explicit RegionFile(std::unique_ptr<std::streambuf>&& file, size_t width);
 
+		~RegionFile();
+
 		void init();
 
 		RegionFile(RegionFile&& other)
@@ -204,6 +206,12 @@ namespace FusionEngine
 		*/
 		RegionCellCache(const std::string& cache_path, int32_t cells_per_region_square = 16);
 
+		//! Unload held files (doesn't delete them from disk)
+		void DropCache();
+
+		//! Sets the save path to load missing regions from
+		void SetSavePath(const std::string& save_path);
+
 		RegionFile& CreateRegionFile(const CellCoord_t& coord);
 		//! Returns a RegionFile for the given coord
 		RegionFile* GetRegionFile(const CellCoord_t& coord, bool create);
@@ -223,6 +231,8 @@ namespace FusionEngine
 		size_t m_MaxLoadedFiles;
 
 		std::string m_CachePath;
+
+		std::string m_SavePath;
 
 		int32_t m_RegionSize;
 

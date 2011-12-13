@@ -102,6 +102,9 @@ namespace FusionEngine
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
 		//typedef TagFlagMap::value_type TagDef;
 
+		void Save(std::ostream& stream);
+		void Load(std::istream& stream);
+
 		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
 
@@ -185,7 +188,7 @@ namespace FusionEngine
 		void ClearSyncedEntities();
 
 		//! Request that all active entities be deactivated (unloaded)
-		void DeactivateAllEntities();
+		void DeactivateAllEntities(bool proper = true);
 		
 		
 		//! Removes all entities in the given domain

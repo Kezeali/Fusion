@@ -145,8 +145,8 @@ namespace FusionEngine
 		{
 			filedesc.reset(new io::file_descriptor(filename, std::ios::out | std::ios::binary));
 			file.reset(new io::stream<io::file_descriptor>(*filedesc, 0));
-			file.release();
-			filedesc.release();
+			file.reset();
+			filedesc.reset();
 		}
 		filedesc.reset(new io::file_descriptor(filename, std::ios::in | std::ios::out | std::ios::binary));
 		file.reset(new io::stream<io::file_descriptor>(*filedesc));
@@ -161,6 +161,10 @@ namespace FusionEngine
 		cellDataLocations(s_MaxSectors)
 	{
 		init();
+	}
+
+	RegionFile::~RegionFile()
+	{
 	}
 
 	void RegionFile::init()
@@ -419,23 +423,35 @@ namespace FusionEngine
 		FSN_ASSERT(startSector < (1 << 24));
 		FSN_ASSERT(sectorsUsed < 256);
 
-		const auto x = cell_index.first & 31, y = cell_index.second & 31;
+		const auto x = cell_index.first;
+		const auto y = cell_index.second;
+
+		FSN_ASSERT(x < region_width);
+		FSN_ASSERT(y < region_width);
+		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 
 		auto& data = cellDataLocations[x + y * region_width];
 		data.startingSector = startSector;
 		data.sectorsAllocated = sectorsUsed;
 
+		//auto output = data;
+
 		IO::Streams::CellStreamWriter writer(file.get());
 
-		file->seekp(cell_index.first + cell_index.second * region_width * sizeof(DataLocation));
-		writer.Write(data);
+		std::streampos pos((x + y * region_width) * sizeof(DataLocation));
+		//file->seekp(x + y * region_width * sizeof(DataLocation), std::ios::beg);
+		if (file->seekp(pos))
+			writer.Write(data);
+		FSN_ASSERT(file->tellp() == (pos + std::streamoff(sizeof(data))));
 	}
 
 	const RegionFile::DataLocation& RegionFile::getCellDataLocation(const std::pair<int32_t, int32_t>& cell_coords)
 	{
-		// TODO: fix this conversion (either pass the region-relative coords from
-		//  RegionFileCache, or store the region file coord within the RegionFile object so they can be calculated here)
-		const auto x = cell_coords.first & 31, y = cell_coords.second & 31;
+		const auto x = cell_coords.first;
+		const auto y = cell_coords.second;
+
+		FSN_ASSERT(x < region_width);
+		FSN_ASSERT(y < region_width);
 
 		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 		return cellDataLocations[x + y * region_width];
@@ -448,6 +464,17 @@ namespace FusionEngine
 		m_EditMode(false)
 	{
 		FSN_ASSERT(region_size > 0);
+	}
+
+	void RegionCellCache::DropCache()
+	{
+		m_Cache.clear();
+		m_CacheImportance.clear();
+	}
+
+	void RegionCellCache::SetSavePath(const std::string& save_path)
+	{
+		m_SavePath = save_path;
 	}
 
 	void RegionCellCache::SetupEditMode(bool enable, CL_Rect bounds)
@@ -479,7 +506,20 @@ namespace FusionEngine
 			{
 				// Add a new cache entry
 				std::stringstream str; str << coord.x << "." << coord.y;
-				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(m_CachePath + str.str() + ".celldata", (size_t)m_RegionSize)));
+				std::string filename = str.str();
+				std::string filePath = m_CachePath + filename + ".celldata";
+				// Check for files in the save path before creating new ones
+				if (!m_SavePath.empty() && !boost::filesystem::exists(filePath))
+				{
+					try
+					{
+						boost::filesystem::copy_file(m_SavePath + filename, filePath, boost::filesystem::copy_option::fail_if_exists);
+					}
+					catch (boost::filesystem::filesystem_error&)
+					{}
+				}
+				// Create and/or load the region file
+				auto newEntry = m_Cache.insert(result, std::make_pair(coord, RegionFile(filePath, (size_t)m_RegionSize)));
 				RegionFile* regionFile = &newEntry->second;
 
 				m_CacheImportance.push_back(coord);
@@ -522,7 +562,7 @@ namespace FusionEngine
 
 			return std::unique_ptr<ArchiveIStream>();
 		}
-		catch (CL_Exception& ex)
+		catch (boost::filesystem::filesystem_error& ex)
 		{
 			AddLogEntry(ex.what());
 			return std::unique_ptr<ArchiveIStream>();
@@ -535,7 +575,7 @@ namespace FusionEngine
 		{
 			CellCoord_t regionCoord = cellToRegionCoord(&cell_x, &cell_y);
 
-			auto region = GetRegionFile(regionCoord, false);
+			auto region = GetRegionFile(regionCoord, true);
 
 			if (region)
 			{
@@ -544,7 +584,7 @@ namespace FusionEngine
 
 			return std::unique_ptr<ArchiveIStream>();
 		}
-		catch (CL_Exception& ex)
+		catch (boost::filesystem::filesystem_error& ex)
 		{
 			AddLogEntry(ex.what());
 			return std::unique_ptr<ArchiveIStream>();
@@ -569,7 +609,7 @@ namespace FusionEngine
 			auto regionFile = GetRegionFile(regionCoord, true); FSN_ASSERT(regionFile);
 			return regionFile->getOutputCellData(cell_x, cell_y);
 		}
-		catch (CL_Exception& ex)
+		catch (boost::filesystem::filesystem_error& ex)
 		{
 			AddLogEntry(ex.what());
 			return std::unique_ptr<ArchiveOStream>();

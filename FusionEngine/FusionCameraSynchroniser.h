@@ -39,15 +39,24 @@
 namespace FusionEngine
 {
 
+	//! Stores cameras used by camera components (keeps them alive when the associated components are inactive)
 	class CameraSynchroniser
 	{
 	public:
+		//! CTOR
 		CameraSynchroniser(StreamingManager* streaming_manager);
+
+		//! Remove all cameras
+		void Clear();
 
 		//! Gets / creates a camera attached to the given entity id
 		CameraPtr& GetCamera(ObjectID entity_id, PlayerID owner);
+		//! Removes the camera owned by the entity
+		void RemoveCamera(ObjectID entity_id);
 		//! Updates the position of the given camera
 		void SetCameraPosition(ObjectID entity_id, const Vector2& new_pos);
+
+		StreamingManager* GetStreamingManager() const { return m_StreamingManager; }
 
 	private:
 		std::map<ObjectID, CameraPtr> m_Cameras;

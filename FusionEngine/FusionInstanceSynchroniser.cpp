@@ -248,7 +248,7 @@ namespace FusionEngine
 
 	void InstancingSynchroniser::RemoveInstance(EntityPtr& entity)
 	{
-		// TODO: figure out logic of who should be able to instance / delete entities (WRT owner ID)
+		// TODO: reconsider the logic of who should be able to instance / delete entities (WRT owner ID)
 		if (entity->IsSyncedEntity())
 		{
 			if (PlayerRegistry::IsLocal(entity->GetOwnerID()) || NetworkManager::ArbitratorIsLocal())

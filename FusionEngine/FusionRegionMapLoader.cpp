@@ -89,6 +89,11 @@ namespace FusionEngine
 	{
 		std::array<char, sizeof(new_loc) + sizeof(offset) + sizeof(length)> data;
 
+		if (id == 1)
+		{
+			SendToConsole("One");
+		}
+
 		// Convert to little-endian
 		if (CL_Endian::is_system_big())
 		{
@@ -122,19 +127,24 @@ namespace FusionEngine
 
 		auto retrieved = db.get((const char*)&id, sizeof(id), data.data(), data.size());
 
-		std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
-		std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
-		std::memcpy((void*)&data_length, &data[sizeof(cell_loc) + sizeof(data_offset)], sizeof(data_length));
-
-		if (CL_Endian::is_system_big())
+		if (retrieved == data.size())
 		{
-			CL_Endian::swap((void*)cell_loc.x, sizeof(cell_loc.x));
-			CL_Endian::swap((void*)cell_loc.y, sizeof(cell_loc.y));
-			CL_Endian::swap((void*)data_offset, sizeof(data_offset));
-			CL_Endian::swap((void*)data_length, sizeof(data_length));
-		}
+			std::memcpy((void*)&cell_loc, data.data(), sizeof(cell_loc));
+			std::memcpy((void*)&data_offset, &data[sizeof(cell_loc)], sizeof(data_offset));
+			std::memcpy((void*)&data_length, &data[sizeof(cell_loc) + sizeof(data_offset)], sizeof(data_length));
 
-		return retrieved == data.size();
+			if (CL_Endian::is_system_big())
+			{
+				CL_Endian::swap((void*)cell_loc.x, sizeof(cell_loc.x));
+				CL_Endian::swap((void*)cell_loc.y, sizeof(cell_loc.y));
+				CL_Endian::swap((void*)data_offset, sizeof(data_offset));
+				CL_Endian::swap((void*)data_length, sizeof(data_length));
+			}
+
+			return true;
+		}
+		else
+			return false;
 	}
 
 	static void setupTuning(kyotocabinet::HashDB* db)
@@ -175,6 +185,8 @@ namespace FusionEngine
 	RegionMapLoader::~RegionMapLoader()
 	{
 		Stop();
+
+		delete m_Cache;
 	}
 
 	void RegionMapLoader::SetSynchroniser(InstancingSynchroniser* instantiator)
@@ -211,6 +223,7 @@ namespace FusionEngine
 	void RegionMapLoader::ActiveUpdate(ObjectID id, int32_t new_x, int32_t new_y)
 	{
 		// TODO: store active entity locations in-memory (in StreamingManager)?
+		FSN_ASSERT(m_EntityLocationDB);
 		CellCoord_t loc;
 		std::streamoff offset = 0; std::streamsize length = 0;
 		getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
@@ -225,10 +238,12 @@ namespace FusionEngine
 
 	Vector2T<int32_t> RegionMapLoader::GetEntityLocation(ObjectID id)
 	{
-		CellCoord_t loc;
-		std::streamoff offset; std::streamsize length;
-		getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
-
+		CellCoord_t loc(std::numeric_limits<CellCoord_t::type>::max(), std::numeric_limits<CellCoord_t::type>::max());
+		if (m_EntityLocationDB) // TODO: lock while loading save-game and wait here
+		{
+			std::streamoff offset; std::streamsize length;
+			getEntityLocation(*m_EntityLocationDB, loc, offset, length, id);
+		}
 		return loc;
 	}
 
@@ -282,17 +297,17 @@ namespace FusionEngine
 
 	std::unique_ptr<RegionMapLoader::TransactionLock> RegionMapLoader::MakeTransaction()
 	{
-		return std::unique_ptr<TransactionLock>(new TransactionLock(m_Mutex, m_TransactionEnded));
+		return std::unique_ptr<TransactionLock>(new TransactionLock(m_TransactionMutex, m_TransactionEnded));
 	}
 
 	void RegionMapLoader::BeginTransaction()
 	{
-		m_Mutex.lock();
+		m_TransactionMutex.lock();
 	}
 
 	void RegionMapLoader::EndTransaction()
 	{
-		m_Mutex.unlock();
+		m_TransactionMutex.unlock();
 		m_TransactionEnded.set();
 	}
 
@@ -332,14 +347,18 @@ namespace FusionEngine
 			std::string fullPath = boost::filesystem::path(filename).generic_string();
 			std::string writeDir = boost::filesystem::path(PHYSFS_getWriteDir()).generic_string();
 
-			if (filename.length() < writeDir.length() || filename.substr(0, writeDir.length()) != writeDir)
+			if (fullPath.length() < writeDir.length() || fullPath.substr(0, writeDir.length()) != writeDir)
 				fullPath = writeDir + "/" + fullPath;
 
-			if (!m_Thread.joinable())
+			if (m_Thread.joinable())
+			{
+				// Thread is running, DB may be in use: do hot copy
+				m_EntityLocationDB->copy(fullPath);
+			}
+			else
 			{
 				// Close the DB to do a clean copy (closed DB can be smaller)
 				std::string dbPath = m_EntityLocationDB->path();
-
 				m_EntityLocationDB->close();
 				m_EntityLocationDB.reset();
 
@@ -354,24 +373,103 @@ namespace FusionEngine
 
 				m_EntityLocationDB.reset(new kyotocabinet::HashDB);
 				setupTuning(m_EntityLocationDB.get());
-				m_EntityLocationDB->open(m_FullBasePath + "entitylocations.kc", kyotocabinet::HashDB::OWRITER);
-			}
-			else
-			{
-				// Thread is running, DB may be in use: do hot copy
-				m_EntityLocationDB->copy(fullPath);
+				m_EntityLocationDB->open(dbPath, kyotocabinet::HashDB::OWRITER);
 			}
 		}
 		else
 		{
-			FSN_EXCEPT(FileSystemException, "The entity database isn't open, so it can't be saved");
+			FSN_ASSERT_FAIL("Entity location DB should be open");
 		}
 	}
 
-	void RegionMapLoader::CreateSave(const std::string& filename)
+	void RegionMapLoader::EnqueueQuickSave(const std::string& filename)
 	{
 		m_SaveQueue.push(filename);
 		m_NewData.set();
+	}
+
+	void RegionMapLoader::Save(const std::string& filename)
+	{
+		const bool wasRunning = m_Thread.joinable();
+		if (wasRunning)
+			Stop();
+		PerformSave(filename);
+		if (wasRunning)
+			Start();
+	}
+
+	void RegionMapLoader::EnqueueQuickLoad(const std::string& filename)
+	{
+		// Stop and clear the cache
+		PrepareLoad(filename);
+
+		m_Cache->SetSavePath(filename);
+		m_NewData.set();
+	}
+
+	void RegionMapLoader::Load(const std::string& filename)
+	{
+		const bool wasRunning = m_Thread.joinable();
+		if (wasRunning)
+			Stop();
+		PrepareLoad(filename);
+		PerformLoad(filename);
+		if (wasRunning)
+			Start();
+	}
+
+	std::unique_ptr<std::ostream> RegionMapLoader::CreateSaveFile(const std::string& save_name, const std::string& filename)
+	{
+		namespace bfs = boost::filesystem;
+		namespace io = boost::iostreams;
+
+		//TODO: bfs::path GetFullSavePath(save_name)
+		//auto savePath = bfs::path(PHYSFS_getWriteDir());
+		//savePath /= s_SavePath;
+		//savePath /= save_name;
+		auto savePath = bfs::path(m_FullBasePath);
+
+		auto filePath = savePath;
+		filePath /= (filename + ".dat");
+
+		try
+		{
+			io::file_descriptor_sink file(filePath.generic_string(), std::ios::out | std::ios::binary);
+			if (file.is_open())
+			{
+				auto stream = std::unique_ptr<io::filtering_ostream>(new io::filtering_ostream());
+				stream->push(io::zlib_compressor());
+				stream->push(file);
+				return std::move(stream);
+			}
+		}
+		catch (...)
+		{
+		}
+		return std::unique_ptr<io::filtering_ostream>();
+	}
+
+	std::unique_ptr<std::istream> RegionMapLoader::LoadSaveFile(const std::string& save_name, const std::string& filename)
+	{
+		namespace bfs = boost::filesystem;
+		namespace io = boost::iostreams;
+
+		auto savePath = bfs::path(PHYSFS_getWriteDir());
+		savePath /= s_SavePath;
+		savePath /= save_name;
+
+		auto filePath = savePath;
+		filePath /= (filename + ".dat");
+
+		io::file_descriptor_source file(filePath.generic_string(), std::ios::in | std::ios::binary);
+		if (file.is_open())
+		{
+			auto stream = std::unique_ptr<io::filtering_istream>(new io::filtering_istream());
+			stream->push(io::zlib_decompressor());
+			stream->push(file);
+			return std::move(stream);
+		}
+		return std::unique_ptr<io::filtering_istream>();
 	}
 
 	size_t RegionMapLoader::GetDataBegin() const
@@ -512,105 +610,22 @@ namespace FusionEngine
 
 		std::list<CellCoord_t> readyCells;
 		bool retrying = false;
-		// TODO: make m_NewData not auto-reset
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_NewData, m_TransactionEnded, retrying ? 100 : -1);
-			if (eventId != 2) // 2 = TransactionEnded
+			if (eventId != 2) // 2 is TransactionEnded
 			{
+				// Process quick-save queue
 				{
-					namespace bfs = boost::filesystem;
-
 					std::string saveName;
 					while (m_SaveQueue.try_pop(saveName))
 					{
-						// TODO: replace all SendToConsole calls with signals
-						try
-						{
-							SendToConsole("Quick-Saving...");
-
-							auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) /= s_SavePath;
-							savePath /= saveName;
-
-							auto physFsPath = s_SavePath + saveName;
-
-							if (!bfs::is_directory(savePath))
-							{
-								if (PHYSFS_mkdir(physFsPath.c_str()) == 0)
-								{
-									FSN_EXCEPT(FileSystemException, "Failed to create save path (" + physFsPath + "): " + std::string(PHYSFS_getLastError()));
-								}
-							}
-							else
-							{
-								auto physFsPath = s_SavePath + saveName;
-								auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
-								for (auto it = fileList; *it; ++it)
-								{
-									auto filePath = physFsPath + "/" + *it;
-									if (PHYSFS_delete(filePath.c_str()) == 0)
-									{
-										PHYSFS_freeList(fileList);
-										FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
-									}
-								}
-								PHYSFS_freeList(fileList);
-							}
-							//if (bfs::is_directory(savePath))
-							//{
-							//	PHYSFS_delete(physFsPath.c_str());
-							//}
-							//FSN_ASSERT(!bfs::is_directory(savePath));
-							//PHYSFS_mkdir(physFsPath.c_str());
-							FSN_ASSERT(bfs::is_directory(savePath));
-							FSN_ASSERT(bfs::is_empty(savePath));
-
-							SendToConsole("QS Path: " + savePath.string());
-
-							std::vector<bfs::path> regionFiles;
-							for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
-							{
-								if (it->path().extension() == ".celldata")
-									regionFiles.push_back(it->path());
-							}
-
-							std::stringstream str1; str1 << regionFiles.size();
-							std::string numRegionFilesStr = str1.str();
-
-							unsigned int i = 0;
-							//for (bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
-							for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
-							{
-								std::stringstream str; str << ++i;
-								SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
-
-								auto dest = savePath; dest /= it->filename();
-								boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
-							}
-							SendToConsole("QS Progress: copying entitylocations.kc");
-							m_EntityLocationDB->copy((savePath /= "entitylocations.kc").string());
-							SendToConsole("QS Progress: done copying entitylocations.kc");
-
-							SendToConsole("Done Quick-Saving.");
-						}
-						catch (bfs::filesystem_error& e)
-						{
-							SendToConsole("QS Failed");
-
-							AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
-						}
-						catch (FileSystemException& e)
-						{
-							SendToConsole("QS Failed");
-
-							AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
-						}
+						PerformSave(saveName);
 					}
 				}
 
 				std::list<WriteQueue_t::value_type> writesToRetry;
 				std::list<ReadQueue_t::value_type> readsToRetry;
-
 				// Read / write cell data
 				{
 					std::tuple<Cell*, CellCoord_t, bool> toWrite;
@@ -958,7 +973,7 @@ namespace FusionEngine
 		if (!readyCells.empty())
 		{
 			{
-				boost::mutex::scoped_lock lock(m_Mutex);
+				boost::mutex::scoped_lock lock(m_TransactionMutex);
 				if (lock)
 				{
 					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
@@ -966,6 +981,238 @@ namespace FusionEngine
 				}
 			}
 			readyCells.clear();
+		}
+	}
+
+	void RegionMapLoader::PerformSave(const std::string& saveName)
+	{
+		namespace bfs = boost::filesystem;
+
+		// TODO: replace all SendToConsole calls with signals
+		try
+		{
+			SendToConsole("Quick-Saving...");
+
+			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) /= s_SavePath;
+			savePath /= saveName;
+
+			SendToConsole("QS Path: " + savePath.string());
+
+			auto physFsPath = s_SavePath + saveName;
+			if (!bfs::is_directory(savePath))
+			{
+				if (PHYSFS_mkdir(physFsPath.c_str()) == 0)
+				{
+					FSN_EXCEPT(FileSystemException, "Failed to create save path (" + physFsPath + "): " + std::string(PHYSFS_getLastError()));
+				}
+			}
+			else
+			{
+				auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
+				for (auto it = fileList; *it; ++it)
+				{
+					auto filePath = physFsPath + "/" + *it;
+					if (PHYSFS_delete(filePath.c_str()) == 0)
+					{
+						PHYSFS_freeList(fileList);
+						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+					}
+				}
+				PHYSFS_freeList(fileList);
+			}
+			FSN_ASSERT(bfs::is_directory(savePath));
+			FSN_ASSERT(bfs::is_empty(savePath));
+
+			// Flush the cache
+			// TODO: flush without unloading? (Cache->FlushCache())
+			m_Cache->DropCache();
+
+			std::vector<bfs::path> regionFiles;
+			std::vector<bfs::path> dataFiles;
+			for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+			{
+				if (it->path().extension() == ".celldata")
+					regionFiles.push_back(it->path());
+				if (it->path().extension() == ".dat")
+					dataFiles.push_back(it->path());
+			}
+
+			std::stringstream str1; str1 << regionFiles.size();
+			std::string numRegionFilesStr = str1.str();
+
+			unsigned int i = 0;
+			for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
+			{
+				std::stringstream str; str << ++i;
+				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+
+				auto dest = savePath; dest /= it->filename();
+				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			}
+			i = 0;
+			for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
+			{
+				std::stringstream str; str << ++i;
+				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " data files");
+
+				auto dest = savePath; dest /= it->filename();
+				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			}
+			SendToConsole("QS Progress: copying entitylocations.kc");
+			SaveEntityLocationDB((savePath /= "entitylocations.kc").string());
+			SendToConsole("QS Progress: done copying entitylocations.kc");
+
+			SendToConsole("Done Quick-Saving.");
+		}
+		catch (bfs::filesystem_error& e)
+		{
+			SendToConsole("QS Failed");
+
+			AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
+		}
+		catch (FileSystemException& e)
+		{
+			SendToConsole("QS Failed");
+
+			AddLogEntry(std::string("Quick-Save failed: ") + e.what(), LOG_CRITICAL);
+		}
+	}
+
+	void RegionMapLoader::PrepareLoad(const std::string& saveName)
+	{
+		namespace bfs = boost::filesystem;
+
+		{
+			boost::mutex::scoped_lock lock(m_SaveToLoadMutex);
+			m_SaveToLoad = saveName;
+		}
+		
+		auto savePath = bfs::path(PHYSFS_getWriteDir()) /= s_SavePath;
+		savePath /= saveName;
+
+		if (!bfs::is_directory(savePath) || bfs::is_empty(savePath))
+		{
+			SendToConsole("Load Failed: save doesn't exist");
+			return;
+		}
+
+		FSN_ASSERT(m_Thread.get_id() != boost::this_thread::get_id());
+
+		const bool threadRunning = m_Thread.joinable();
+		if (threadRunning)
+			Stop();
+
+		// Everything needs to reload
+		m_SynchLoaded.clear();
+		// Drop file handles (files need to be deletable below)
+		m_Cache->DropCache();
+		// Unload the location DB
+		m_EntityLocationDB.reset();
+		auto cacheDbPath = m_FullBasePath + "entitylocations.kc";
+		// Delete the cache files
+		try
+		{
+			if (!bfs::is_empty(m_FullBasePath))
+			{
+				auto fileList = PHYSFS_enumerateFiles(m_CachePath.c_str());
+				for (auto it = fileList; *it; ++it)
+				{
+					auto filePath = m_CachePath + "/" + *it;
+					if (PHYSFS_delete(filePath.c_str()) == 0)
+					{
+						PHYSFS_freeList(fileList);
+						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing cache (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+					}
+				}
+				PHYSFS_freeList(fileList);
+			}
+			// Copy the saved location DB into the cache
+			SendToConsole("Loading: copying entitylocations.kc");
+			{
+				auto saveDbPath = savePath;
+				saveDbPath /= "entitylocations.kc";
+
+				boost::filesystem::copy_file(saveDbPath, cacheDbPath, bfs::copy_option::overwrite_if_exists);
+			}
+			SendToConsole("Loading: done copying entitylocations.kc");
+		}
+		catch (FileSystemException& e)
+		{
+			AddLogEntry(e.what());
+		}
+		catch (bfs::filesystem_error& e)
+		{
+			AddLogEntry(e.what());
+		}
+		// Reload the location DB
+		m_EntityLocationDB.reset(new kyotocabinet::HashDB);
+		setupTuning(m_EntityLocationDB.get());
+		m_EntityLocationDB->open(cacheDbPath, kyotocabinet::HashDB::OWRITER);
+
+		if (threadRunning)
+			Start();
+	}
+
+	void RegionMapLoader::PerformLoad(const std::string& saveName)
+	{
+		namespace bfs = boost::filesystem;
+
+		{
+			boost::mutex::scoped_lock lock(m_SaveToLoadMutex);
+			//saveName = m_SaveToLoad;
+			m_SaveToLoad.clear();
+		}
+
+		// TODO: replace all SendToConsole calls with signals
+		try
+		{
+			SendToConsole("Loading...");
+
+			auto savePath = bfs::path(PHYSFS_getWriteDir()) /= s_SavePath;
+			savePath /= saveName;
+
+			if (!bfs::is_directory(savePath) || bfs::is_empty(savePath))
+			{
+				SendToConsole("QL Failed: save doesn't exist");
+				return;
+			}
+
+			SendToConsole("QL Path: " + savePath.string());
+
+			std::vector<bfs::path> regionFiles;
+			for(bfs::directory_iterator it(savePath); it != bfs::directory_iterator(); ++it)
+			{
+				if (it->path().extension() == ".celldata")
+					regionFiles.push_back(it->path());
+			}
+
+			std::stringstream str1; str1 << regionFiles.size();
+			std::string numRegionFilesStr = str1.str();
+
+			unsigned int i = 0;
+			//for (bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+			for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
+			{
+				std::stringstream str; str << ++i;
+				SendToConsole("QL Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+
+				auto dest = bfs::path(m_FullBasePath); dest /= it->filename();
+				bfs::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
+			}
+
+			SendToConsole("Done Quick-Loading.");
+		}
+		catch (bfs::filesystem_error& e)
+		{
+			SendToConsole("QL Failed");
+
+			AddLogEntry(std::string("Load failed: ") + e.what(), LOG_CRITICAL);
+		}
+		catch (FileSystemException& e)
+		{
+			SendToConsole("QL Failed");
+
+			AddLogEntry(std::string("Load failed: ") + e.what(), LOG_CRITICAL);
 		}
 	}
 

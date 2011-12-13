@@ -52,6 +52,8 @@ namespace FusionEngine
 
 	Box2DBody::~Box2DBody()
 	{
+		// TODO callback to Box2DWorld to have it destroy this?
+		//FSN_ASSERT(!m_Body);
 	}
 
 	void Box2DBody::ConstructBody(b2World* world)

@@ -34,6 +34,7 @@
 #include <BitStream.h>
 #include <RakNetStatistics.h>
 
+#include "FusionBinaryStream.h"
 #include "FusionRegionMapLoader.h"
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
@@ -173,13 +174,13 @@ namespace FusionEngine
 
 		std::stringstream str;
 		str << "MinStatesInAPacket: " << m_MinEntsInAPacket;
-		Logger::getSingleton().Add(str.str(), "Network");
+		AddLogEntry("Network", str.str());
 		str.str("");
 		str << "MaxStatesInAPacket: " << m_MaxEntsInAPacket;
-		Logger::getSingleton().Add(str.str(), "Network");
+		AddLogEntry("Network", str.str());
 		str.str("");
 		str << "MaxStateSize: " << m_MaxContinuousStateSize;
-		Logger::getSingleton().Add(str.str(), "Network");
+		AddLogEntry("Network", str.str());
 	}
 
 	void EntitySynchroniser::WriteHeaderAndInput(bool important, RakNet::BitStream& packetData)
@@ -1000,6 +1001,60 @@ namespace FusionEngine
 		m_RemoteActivationEventConnection.disconnect();
 	}
 
+	void EntityManager::Save(std::ostream& stream)
+	{
+		IO::Streams::CellStreamWriter writer(&stream);
+
+		stream.exceptions(std::ios::failbit);
+
+		size_t num = 0;
+		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		{
+			if ((*it)->IsSyncedEntity())
+				++num;
+		}
+
+		writer.Write(num);
+
+		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		{
+			auto& entity = *it;
+			if (entity->IsSyncedEntity())
+			{
+				writer.Write(entity->GetID());
+#ifdef _DEBUG
+			--num;
+#endif
+			}
+		}
+		// Make sure everything was written
+		FSN_ASSERT(num == 0);
+	}
+
+	void EntityManager::Load(std::istream& stream)
+	{
+		IO::Streams::CellStreamReader reader(&stream);
+
+		stream.exceptions(std::ios::failbit);
+
+		size_t num = 0;
+		reader.Read(num);
+
+		std::vector<ObjectID> activeIds;
+		activeIds.reserve(num);
+		for (size_t i = 0; i < num; ++i)
+		{
+			ObjectID id;
+			reader.Read(id);
+			activeIds.push_back(id);
+		}
+
+		for (auto it = activeIds.begin(), end = activeIds.end(); it != end; ++it)
+		{
+			m_StreamingManager->ActivateEntity(*it);
+		}
+	}
+
 	void EntityManager::CompressIDs()
 	{
 		IDEntityMap::iterator it = m_Entities.begin();
@@ -1069,7 +1124,8 @@ namespace FusionEngine
 		// Mark the entity so it will be removed from the active list, and other secondary containers
 		entity->MarkToRemove();
 
-		m_EntitiesToRemove.push(entity);
+		if (!entity->IsActive())
+			m_EntitiesToRemove.push(entity);
 	}
 
 	void EntityManager::RemoveEntityNamed(const std::string &name)
@@ -1286,6 +1342,11 @@ namespace FusionEngine
 
 		std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->m_ReferencedEntities.clear(); });
 
+		{
+			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+			m_ReferenceTokens.freeAll();
+		}
+
 		if (m_EntitiesLocked)
 			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });
 		else
@@ -1305,36 +1366,42 @@ namespace FusionEngine
 		clearEntities(true);
 	}
 
-	void EntityManager::DeactivateAllEntities()
+	void EntityManager::DeactivateAllEntities(bool proper)
 	{
-		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		if (proper)
 		{
-			m_StreamingManager->DeactivateEntity(*it);
+			FSN_ASSERT_FAIL("Not implemented (properly)");
+			// TODO: StreamingManager::DeactivateAll -> deactivate all entities in all cells
+			//  (obviously this will be overrulled in next Update, but that's not really an issue)
+			// Note that the current implmentation is incorrect because ActiveEntities contains
+			//  non-streamed entities
+			for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+			{
+				m_StreamingManager->DeactivateEntity(*it);
+			}
+		}
+		else // TODO: make this an option in Clear()
+		{
+			for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+			{
+				auto& entity = *it;
+				entity->m_ReferencedEntities.clear();
+				deactivateEntity(entity);
+			}
 		}
 	}
 
 	void EntityManager::ClearDomain(EntityDomain idx)
 	{
-		//EntityArray &domain = m_EntitiesToUpdate[idx];
-		//for (EntityArray::iterator it = domain.begin(), end = domain.end(); it != end; ++it)
-		//{
-		//	EntityPtr &entity = *it;
-
-		//	entity->MarkToRemove();
-		//	if (entity->IsPseudoEntity())
-		//		m_PseudoEntities.erase(entity);
-		//	else
-		//	{
-		//		m_UnusedIds.freeID(entity->GetID());
-		//		m_Entities.erase(entity->GetID());
-		//	}
-		//	m_EntitiesByName.erase(entity->GetName());
-		//}
-		//// If the manager isn't updating, we can immeadiately clear the
-		////  domain (otherwise it will be cleared next time it is updated
-		////  due to the MarkToRemove() call above)
-		//if (!m_EntitiesLocked)
-		//	domain.clear();
+		FSN_ASSERT_FAIL("Not implemented");
+		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end;)
+		{
+			auto& entity = *it;
+			if (entity->GetDomain() == idx)
+				m_ActiveEntities.erase(it++);
+			else
+				++it;
+		}
 	}
 
 	static bool hasNoActiveReferences(EntityPtr& entity)
@@ -1413,16 +1480,13 @@ namespace FusionEngine
 
 			if (entity->GetTagFlags() & m_ToDeleteFlags)
 			{
-				RemoveEntity(entity); // Remove the entity from the lookup maps, and mark it to be removed from the active list
+				RemoveEntity(entity); // Mark it to be removed from the active list
 			}
 			// Check for reasons to remove the
 			//  entity from the active list
 			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
 			{
-				if (entity->IsMarkedToRemove())
-					entityRemoved = true;
-
-				if ((*it)->IsActive())
+				if (entity->IsActive())
 					m_EntitiesToDeactivate.push_back(*it);
 
 				// Keep entities active untill they are no longer referenced
@@ -1459,11 +1523,6 @@ namespace FusionEngine
 
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
-
-		if (entityRemoved) // Do a full GC cycle if entities were removed
-		{
-			ScriptManager::getSingleton().GetEnginePtr()->GarbageCollect();
-		}
 	}
 
 	void EntityManager::ProcessActivationQueues()
@@ -1501,7 +1560,10 @@ namespace FusionEngine
 		// Drop local references
 		for (auto it = m_EntitiesUnreferenced.begin(), end = m_EntitiesUnreferenced.end(); it != end; ++it)
 		{
-			dropEntity(*it);
+			if (!(*it)->IsMarkedToRemove()) // Mark-to-remove superceeds mark-to-deactivate
+				dropEntity(*it);
+			else
+				removeEntity(*it);
 		}
 		m_EntitiesUnreferenced.clear();
 
@@ -1565,12 +1627,10 @@ namespace FusionEngine
 	{
 		//m_EntitiesLocked = true;
 
-		//m_EntitySynchroniser->BeginPacket();
-
+		// TODO: pass begin & end iterators here and have it return a "new end"
+		//  to indicate where it moved any removed entities. This way partial
+		//  updates can be performed
 		updateEntities(m_ActiveEntities, dt);
-
-		//m_EntitySynchroniser->EndPacket();
-		//m_EntitySynchroniser->Send();
 
 		//m_EntitiesLocked = false;
 	}
@@ -1582,17 +1642,23 @@ namespace FusionEngine
 
 	void EntityManager::queueEntityToActivate(const EntityPtr& entity)
 	{
-
-		// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
-		//  so that mark must be removed
-		if (entity->IsMarkedToDeactivate())
-			entity->RemoveDeactivateMark();
+		if (!entity->IsMarkedToRemove())
+		{
+			// It's possible that the entity was marked to deactivate, then reactivated before it was updated,
+			//  so that mark must be removed
+			if (entity->IsMarkedToDeactivate())
+				entity->RemoveDeactivateMark();
+			else
+			{
+#ifdef _DEBUG
+				FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
+#endif
+				m_EntitiesToActivate.push_back(entity);
+			}
+		}
 		else
 		{
-#ifdef _DEBUG
-		FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
-#endif
-			m_EntitiesToActivate.push_back(entity);
+			AddLogEntry("Warning: Activation event received (and ignored) for entity marked to remove.");
 		}
 	}
 
@@ -1736,7 +1802,6 @@ namespace FusionEngine
 
 		m_EntitySynchroniser->OnEntityDeactivated(entity);
 
-		//entity->RemoveDeactivateMark(); // Otherwise the entity will be immeadiately re-deactivated if it is activated later
 		for (auto cit = entity->GetComponents().begin(), cend = entity->GetComponents().end(); cit != cend; ++cit)
 		{
 			auto& com = *cit;

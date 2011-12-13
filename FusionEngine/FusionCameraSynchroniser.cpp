@@ -39,6 +39,11 @@ namespace FusionEngine
 	{
 	}
 
+	void CameraSynchroniser::Clear()
+	{
+		m_Cameras.clear();
+	}
+
 	CameraPtr& CameraSynchroniser::GetCamera(ObjectID entity_id, PlayerID owner)
 	{
 		auto entry = m_Cameras.find(entity_id);
@@ -50,6 +55,11 @@ namespace FusionEngine
 			m_StreamingManager->AddOwnedCamera(owner, cam);
 			return cam;
 		}
+	}
+
+	void CameraSynchroniser::RemoveCamera(ObjectID entity_id)
+	{
+		m_Cameras.erase(entity_id);
 	}
 
 	void CameraSynchroniser::SetCameraPosition(ObjectID entity_id, const Vector2& new_pos)

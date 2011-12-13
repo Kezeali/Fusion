@@ -151,6 +151,15 @@ namespace FusionEngine
 			waiting = Ready;
 		}
 
+		void Reset()
+		{
+			inRange = false;
+			objects.clear();
+			loaded = false;
+			active_entries = 0;
+			waiting = Ready;
+		}
+
 	private:
 		Cell(const Cell& other)
 			: objects(other.objects),
@@ -250,21 +259,31 @@ namespace FusionEngine
 		static const float s_FastTightness;
 
 		//! Constructor
-		StreamingManager(CellDataSource* archivist, bool initialise = true);
+		StreamingManager(CellDataSource* archivist);
 		//! Destructor
 		~StreamingManager();
 
+		//! Initialises the manager
 		void Initialise(float cell_size);
+		//! Clears out all held cells
+		void Reset();
 
-		void AddCamera(const CameraPtr &cam);
+		//! Adds the given camera
+		void AddCamera(const CameraPtr &cam, float range = -1.f);
+		//! Removes the given camera
 		void RemoveCamera(const CameraPtr &cam);
-
-		void AddOwnedCamera(PlayerID owner, const CameraPtr& cam);
+		//! Adds an owned camera (for network sync)
+		void AddOwnedCamera(PlayerID owner, const CameraPtr& cam, float range = -1.f);
 
 		void HandlePacket(RakNet::Packet* packet);
 		
-		//! Sets the range within which Entities are streamed in
-		void SetRange(float game_units);
+		//! Sets the default range within which Entities are streamed in
+		/*
+		* Note that this is just the default; individual cameras can have their
+		* own range setting.
+		*/
+		void SetRange(float sim_units);
+		//! Returns the default range
 		float GetRange() const;
 
 		//CL_Rectf CalculateActiveArea(PlayerID net_idx) const;
@@ -283,7 +302,19 @@ namespace FusionEngine
 
 		inline std::pair<CellHandle, Cell*> CellAndLocationAtPosition(const Vector2 &position);
 
-		void StoreAllCells();
+		//! Pass all loaded cells to the archivist to be stored
+		/*!
+		* \param setup_refresh
+		* Setting this to true will make the next call to Update() do a full refresh
+		* (process all cameras) so any cells that were being retrieved before this was
+		* called will continue to be loaded.
+		*/
+		void StoreAllCells(bool setup_refresh = true);
+
+		//! Writes info needed when loading saves
+		void Save(std::ostream& stream);
+		//! Loads saved info
+		void Load(std::istream& stream);
 
 		void AddEntity(const EntityPtr &entity);
 		void RemoveEntity(const EntityPtr &entity);
@@ -314,13 +345,15 @@ namespace FusionEngine
 		{
 			//! Ctor
 			StreamingCamera()
-				: tightness(0.0f), firstUpdate(true), range(0.0f), owner(0), id(0)
+				: tightness(0.0f), firstUpdate(true), range(0.0f), rangeSquared(0.0f), defaultRange(true), owner(0), id(0)
 			{}
 			//! Move ctor
 			StreamingCamera(StreamingCamera&& other)
 				: tightness(other.tightness),
 				firstUpdate(other.firstUpdate),
 				range(other.range),
+				rangeSquared(other.rangeSquared),
+				defaultRange(other.defaultRange),
 				owner(other.owner),
 				id(other.id),
 				camera(std::move(other.camera)),
@@ -352,9 +385,11 @@ namespace FusionEngine
 
 			//! Activation range of this camera, it it isn't default
 			/*!
-			* Set to < 0 to use the default range 
+			* Set to <= 0 to use the default range 
 			*/
 			float range;
+			float rangeSquared;
+			bool defaultRange;
 
 			CL_Rect activeCellRange;
 
@@ -384,6 +419,8 @@ namespace FusionEngine
 				: tightness(other.tightness),
 				firstUpdate(other.firstUpdate),
 				range(other.range),
+				rangeSquared(other.range),
+				defaultRange(other.defaultRange),
 				owner(other.owner),
 				camera(other.camera),
 				streamPosition(other.streamPosition),
@@ -398,7 +435,7 @@ namespace FusionEngine
 		typedef boost::recursive_mutex CamerasMutex_t;
 		CamerasMutex_t m_CamerasMutex;
 
-		StreamingCamera& createStreamingCamera(PlayerID owner, const CameraPtr& controller);
+		StreamingCamera& createStreamingCamera(PlayerID owner, const CameraPtr& controller, float range);
 
 		std::vector<StreamingCamera> m_Cameras;
 
@@ -450,11 +487,12 @@ namespace FusionEngine
 
 		void changeCell(Cell::EntityEntryPair& entry, Cell& current_cell, Cell& new_cell);
 
-		void getCellRange(CL_Rect& out, const Vector2& pos);
+		void getCellRange(CL_Rect& out, const Vector2& pos, const float camera_range);
 
 		void deactivateCells(const CL_Rect& inactiveRange);
 
-		void processCell(const CellHandle& cell_location, Cell& cell, const std::list<Vector2>& cam_position, const std::list<std::pair<Vector2, PlayerID>>& remote_positions);
+		// TODO: replace the pair here with a struct CamToProcess { Vec2, float }
+		void processCell(const CellHandle& cell_location, Cell& cell, const std::list<std::pair<Vector2, float>>& cam_position, const std::list<std::pair<std::pair<Vector2, float>, PlayerID>>& remote_positions);
 
 		void activateInView(const CellHandle& cell_location, Cell *cell, CellEntry *cell_entry, const EntityPtr &entity, bool warp);
 

@@ -142,11 +142,23 @@ namespace FusionEngine
 			if (auto camComponent = boost::dynamic_pointer_cast<StreamingCamera>(component))
 			{
 				const bool shared = camComponent->GetSyncType() == ICamera::Shared;
-				const PlayerID owner = shared ? 0 : camComponent->GetParent()->GetOwnerID();
+				const bool synced = camComponent->GetParent()->IsSyncedEntity();
 
-				camComponent->m_Camera = m_CameraManager->GetCamera(component->GetParent()->GetID(), owner);
+				if (synced)
+				{
+					// Shared cameras have no owner
+					const PlayerID owner = shared ? 0 : camComponent->GetParent()->GetOwnerID();
+					camComponent->m_Camera = m_CameraManager->GetCamera(camComponent->GetParent()->GetID(), owner);
+				}
+				else
+				{
+					// Attached to a pseudo-entity: create an un-synchronised camera
+					camComponent->m_Camera = std::make_shared<Camera>();
+					// Unsynchronised cameras are only useful for creating viewports at the moment
+					SendToConsole("Warning: unsynchronised camera created: cameras attached to unsynchronised entities won't cause the map to load.");
+				}
 
-				if (shared || PlayerRegistry::IsLocal(camComponent->GetParent()->GetOwnerID()))
+				if (shared || PlayerRegistry::IsLocal(camComponent->GetParent()->GetOwnerID()) || !synced)
 				{
 					if (camComponent->m_ViewportEnabled)
 					{
@@ -184,6 +196,18 @@ namespace FusionEngine
 				if (_where != m_Cameras.end())
 				{
 					m_Cameras.erase(_where);
+				}
+
+				// If the component being deactivated should be kept active by this camera then
+				//  it must have been removed
+				if (camComponent->GetParent()->IsSyncedEntity())
+				{
+					const bool shared = camComponent->GetSyncType() == ICamera::Shared;
+					const PlayerID owner = camComponent->GetParent()->GetOwnerID();
+					if (shared || PlayerRegistry::IsLocal(owner))
+					{
+						m_CameraManager->RemoveCamera(camComponent->GetParent()->GetID());
+					}
 				}
 			}
 		}

@@ -145,7 +145,16 @@ namespace FusionEngine
 
 		void SaveEntityLocationDB(const std::string& filename);
 
-		void CreateSave(const std::string& filename);
+		void EnqueueQuickSave(const std::string& save_name);
+		void Save(const std::string& save_name);
+
+		void EnqueueQuickLoad(const std::string& save_name);
+		void Load(const std::string& save_name);
+
+		//! Create a file in the given save for storing custom data
+		std::unique_ptr<std::ostream> CreateSaveFile(const std::string& save_name, const std::string& filename);
+		//! Load a custom file from the given save
+		std::unique_ptr<std::istream> LoadSaveFile(const std::string& save_name, const std::string& filename);
 
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
@@ -162,6 +171,10 @@ private:
 		std::streamsize MergeEntityData(std::vector<ObjectID>& objects_displaced, std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest, RakNet::BitStream& mergeCon, RakNet::BitStream& mergeOcc) const;
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
 		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
+
+		void PerformSave(const std::string& save_name);
+		void PrepareLoad(const std::string& save_name);
+		void PerformLoad(const std::string& save_name);
 
 		bool m_EditMode;
 		bool m_Running;
@@ -184,7 +197,7 @@ private:
 		// Cells who's ownership has been passed to this archiver via Store or created by Retrieve
 		std::unordered_map<CellCoord_t, std::shared_ptr<Cell>, boost::hash<CellCoord_t>> m_CellsBeingProcessed;
 
-		boost::mutex m_Mutex;
+		boost::mutex m_TransactionMutex;
 
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 
@@ -208,6 +221,8 @@ private:
 		tbb::concurrent_queue<std::tuple<ObjectID, UpdateOperation, CellCoord_t, std::vector<unsigned char>, std::vector<unsigned char>>> m_ObjectUpdateQueue;
 
 		tbb::concurrent_queue<std::string> m_SaveQueue;
+		boost::mutex m_SaveToLoadMutex;
+		std::string m_SaveToLoad;
 
 		CL_Event m_NewData;
 		CL_Event m_TransactionEnded;
