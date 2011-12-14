@@ -788,23 +788,23 @@ public:
 						}
 						else
 						{
-							//entityManager->ProcessActiveEntities(0.0f);
+							SendToConsole("Preparing to save...");
 							streamingMgr->StoreAllCells();
 							cellArchivist->Stop();
-							auto file = cellArchivist->CreateSaveFile("quicksave", "active_entities");
-							if (file)
+							try
 							{
-								try
-								{
-									entityManager->Save(*file);
-									//streamingMgr->Save(file);
-								}
-								catch (std::ios::failure& e)
-								{
-									AddLogEntry(e.what());
-								}
+								if (auto file = cellArchivist->CreateDataFile("active_entities"))
+									entityManager->SaveActiveEntities(*file);
+								if (auto file = cellArchivist->CreateDataFile("non_streaming_entities"))
+									entityManager->SaveNonStreamingEntities(*file);
+								
+								cellArchivist->EnqueueQuickSave("quicksave");
 							}
-							cellArchivist->EnqueueQuickSave("quicksave");
+							catch (std::ios::failure& e)
+							{
+								AddLogEntry(e.what());
+							}
+							// The first thing the archivist does when it restarts will be perform the save
 							cellArchivist->Start();
 						}
 					}
@@ -813,20 +813,27 @@ public:
 						load = false;
 						if (!editMode)
 						{
+							SendToConsole("Loading: Stopping archivist...");
 							cellArchivist->Stop();
+							SendToConsole("Loading: Deactivating entities...");
 							entityManager->DeactivateAllEntities(false);
+							SendToConsole("Loading: Clearing entities...");
 							entityManager->Clear();
 							cameraSynchroniser->Clear();
+							SendToConsole("Loading: Clearing cells...");
 							streamingMgr->Reset();
+							SendToConsole("Loading: Garbage-collecting...");
+							scriptManager->GetEnginePtr()->GarbageCollect();
+							SendToConsole("Loading: Non-streaming entities (from map)...");
 							map->LoadNonStreamingEntities(false, entityManager.get(), entityFactory.get(), instantiationSynchroniser.get());
 							cellArchivist->Load("quicksave");
+							SendToConsole("Loading: Non-streaming entities (from data-file)...");
+							if (auto file = cellArchivist->LoadDataFile("non_streaming_entities"))
+								entityManager->LoadNonStreamingEntities(*file, instantiationSynchroniser.get());
 							cellArchivist->Start();
-							auto file = cellArchivist->LoadSaveFile("quicksave", "active_entities");
-							if (file)
-							{
-								entityManager->Load(*file);
-								//streamingMgr->Load(file);
-							}
+							SendToConsole("Loading: Activating entities...");
+							if (auto file = cellArchivist->LoadDataFile("active_entities"))
+								entityManager->LoadActiveEntities(*file);
 						}
 					}
 

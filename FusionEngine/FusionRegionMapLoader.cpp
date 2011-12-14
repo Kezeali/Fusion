@@ -150,7 +150,7 @@ namespace FusionEngine
 	static void setupTuning(kyotocabinet::HashDB* db)
 	{
 		db->tune_defrag(8);
-		db->tune_map(16LL << 20); // 16MB memory-map
+		db->tune_map(2LL << 20); // 2MB memory-map
 	}
 
 	RegionMapLoader::RegionMapLoader(bool edit_mode, const std::string& cache_path)
@@ -418,15 +418,11 @@ namespace FusionEngine
 			Start();
 	}
 
-	std::unique_ptr<std::ostream> RegionMapLoader::CreateSaveFile(const std::string& save_name, const std::string& filename)
+	std::unique_ptr<std::ostream> RegionMapLoader::CreateDataFile(const std::string& filename)
 	{
 		namespace bfs = boost::filesystem;
 		namespace io = boost::iostreams;
 
-		//TODO: bfs::path GetFullSavePath(save_name)
-		//auto savePath = bfs::path(PHYSFS_getWriteDir());
-		//savePath /= s_SavePath;
-		//savePath /= save_name;
 		auto savePath = bfs::path(m_FullBasePath);
 
 		auto filePath = savePath;
@@ -434,7 +430,7 @@ namespace FusionEngine
 
 		try
 		{
-			io::file_descriptor_sink file(filePath.generic_string(), std::ios::out | std::ios::binary);
+			io::file_descriptor_sink file(filePath.generic_string(), std::ios::out | std::ios::trunc | std::ios::binary);
 			if (file.is_open())
 			{
 				auto stream = std::unique_ptr<io::filtering_ostream>(new io::filtering_ostream());
@@ -449,14 +445,12 @@ namespace FusionEngine
 		return std::unique_ptr<io::filtering_ostream>();
 	}
 
-	std::unique_ptr<std::istream> RegionMapLoader::LoadSaveFile(const std::string& save_name, const std::string& filename)
+	std::unique_ptr<std::istream> RegionMapLoader::LoadDataFile(const std::string& filename)
 	{
 		namespace bfs = boost::filesystem;
 		namespace io = boost::iostreams;
 
-		auto savePath = bfs::path(PHYSFS_getWriteDir());
-		savePath /= s_SavePath;
-		savePath /= save_name;
+		auto savePath = bfs::path(m_FullBasePath);
 
 		auto filePath = savePath;
 		filePath /= (filename + ".dat");
@@ -613,7 +607,7 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_NewData, m_TransactionEnded, retrying ? 100 : -1);
-			if (eventId != 2) // 2 is TransactionEnded
+			//if (eventId != 2) // 2 is TransactionEnded
 			{
 				// Process quick-save queue
 				{
@@ -724,9 +718,11 @@ namespace FusionEngine
 						}
 						else
 						{
-							AddHist(cell_coord, "Cell locked (will retry write later)");
+#ifdef _DEBUG
 							std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
 							SendToConsole("Retrying write on cell [" + str.str() + "]");
+#endif
+							AddHist(cell_coord, "Cell locked (will retry write later)");
 							writesToRetry.push_back(toWrite);
 						}
 					}
@@ -743,6 +739,7 @@ namespace FusionEngine
 							// Make sure this cell hasn't been re-activated:
 							if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
 							{
+								FSN_ASSERT(!cell->loaded);
 								try
 								{
 									// Last param makes the method load synched entities from the map if the cache file isn't available:
@@ -820,6 +817,10 @@ namespace FusionEngine
 						}
 						else
 						{
+#ifdef _DEBUG
+							std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+							SendToConsole("Retrying read on cell [" + str.str() + "]");
+#endif
 							AddHist(cell_coord, "Cell locked (will retry read later)");
 							readsToRetry.push_back(toRead);
 						}
@@ -960,7 +961,7 @@ namespace FusionEngine
 					break;
 				}
 			}
-			else // TransactionEnded
+			if (eventId == 2)//else // TransactionEnded
 			{
 				ClearReadyCells(readyCells);
 			}
@@ -1024,7 +1025,7 @@ namespace FusionEngine
 			FSN_ASSERT(bfs::is_empty(savePath));
 
 			// Flush the cache
-			// TODO: flush without unloading? (Cache->FlushCache())
+			// TODO: flush without unloading? (Cache->FlushFiles())
 			m_Cache->DropCache();
 
 			std::vector<bfs::path> regionFiles;
@@ -1037,8 +1038,10 @@ namespace FusionEngine
 					dataFiles.push_back(it->path());
 			}
 
-			std::stringstream str1; str1 << regionFiles.size();
-			std::string numRegionFilesStr = str1.str();
+			std::stringstream numStr; numStr << regionFiles.size();
+			std::string numRegionFilesStr = numStr.str();
+			numStr.str(""); numStr << dataFiles.size();
+			std::string numDataFilesStr = numStr.str();
 
 			unsigned int i = 0;
 			for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
@@ -1053,7 +1056,7 @@ namespace FusionEngine
 			for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
 			{
 				std::stringstream str; str << ++i;
-				SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " data files");
+				SendToConsole("QS Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
 
 				auto dest = savePath; dest /= it->filename();
 				boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
@@ -1102,13 +1105,18 @@ namespace FusionEngine
 		if (threadRunning)
 			Stop();
 
+		// Just to be safe
+		m_CellsBeingProcessed.clear();
+
 		// Everything needs to reload
 		m_SynchLoaded.clear();
 		// Drop file handles (files need to be deletable below)
 		m_Cache->DropCache();
+
 		// Unload the location DB
 		m_EntityLocationDB.reset();
 		auto cacheDbPath = m_FullBasePath + "entitylocations.kc";
+
 		// Delete the cache files
 		try
 		{
@@ -1126,6 +1134,7 @@ namespace FusionEngine
 				}
 				PHYSFS_freeList(fileList);
 			}
+
 			// Copy the saved location DB into the cache
 			SendToConsole("Loading: copying entitylocations.kc");
 			{
@@ -1135,6 +1144,25 @@ namespace FusionEngine
 				boost::filesystem::copy_file(saveDbPath, cacheDbPath, bfs::copy_option::overwrite_if_exists);
 			}
 			SendToConsole("Loading: done copying entitylocations.kc");
+
+			// Copy saved custom-data files
+			std::vector<bfs::path> dataFiles;
+			for(bfs::directory_iterator it(savePath); it != bfs::directory_iterator(); ++it)
+			{
+				if (it->path().extension() == ".dat")
+					dataFiles.push_back(it->path());
+			}
+			std::stringstream numStr; numStr << dataFiles.size();
+			std::string numDataFilesStr = numStr.str();
+			unsigned int i = 0;
+			for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
+			{
+				std::stringstream str; str << ++i;
+				SendToConsole("Load Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
+
+				auto dest = bfs::path(m_FullBasePath); dest /= it->filename();
+				bfs::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
+			}
 		}
 		catch (FileSystemException& e)
 		{
@@ -1173,11 +1201,11 @@ namespace FusionEngine
 
 			if (!bfs::is_directory(savePath) || bfs::is_empty(savePath))
 			{
-				SendToConsole("QL Failed: save doesn't exist");
+				SendToConsole("Load Failed: save doesn't exist");
 				return;
 			}
 
-			SendToConsole("QL Path: " + savePath.string());
+			SendToConsole("Load Path: " + savePath.string());
 
 			std::vector<bfs::path> regionFiles;
 			for(bfs::directory_iterator it(savePath); it != bfs::directory_iterator(); ++it)
@@ -1186,31 +1214,30 @@ namespace FusionEngine
 					regionFiles.push_back(it->path());
 			}
 
-			std::stringstream str1; str1 << regionFiles.size();
-			std::string numRegionFilesStr = str1.str();
+			std::stringstream numStr; numStr << regionFiles.size();
+			std::string numRegionFilesStr = numStr.str();
 
 			unsigned int i = 0;
-			//for (bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
 			for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
 			{
 				std::stringstream str; str << ++i;
-				SendToConsole("QL Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+				SendToConsole("Load Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
 
 				auto dest = bfs::path(m_FullBasePath); dest /= it->filename();
 				bfs::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
 			}
 
-			SendToConsole("Done Quick-Loading.");
+			SendToConsole("Done Loading.");
 		}
 		catch (bfs::filesystem_error& e)
 		{
-			SendToConsole("QL Failed");
+			SendToConsole("Load Failed");
 
 			AddLogEntry(std::string("Load failed: ") + e.what(), LOG_CRITICAL);
 		}
 		catch (FileSystemException& e)
 		{
-			SendToConsole("QL Failed");
+			SendToConsole("Load Failed");
 
 			AddLogEntry(std::string("Load failed: ") + e.what(), LOG_CRITICAL);
 		}

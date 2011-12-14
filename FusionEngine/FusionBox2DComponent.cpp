@@ -52,14 +52,20 @@ namespace FusionEngine
 
 	Box2DBody::~Box2DBody()
 	{
-		// TODO callback to Box2DWorld to have it destroy this?
-		//FSN_ASSERT(!m_Body);
+		// If the owning Box2DWorld has been destroyed, m_Body is invalid (no need to destruct it)
+		if (auto owner = Owner.lock())
+		{
+			if (m_Body)
+				DestructBody(m_Body->GetWorld());
+		}
 	}
 
-	void Box2DBody::ConstructBody(b2World* world)
+	void Box2DBody::ConstructBody(b2World* world, const std::weak_ptr<Box2DWorld>& owner)
 	{
 		FSN_ASSERT(world);
 		FSN_ASSERT(m_Body == nullptr);
+
+		Owner = owner;
 
 		m_Def.userData = this;
 		m_Body = world->CreateBody(&m_Def);
@@ -80,35 +86,36 @@ namespace FusionEngine
 	void Box2DBody::DestructBody(b2World* world)
 	{
 		FSN_ASSERT(world);
-		FSN_ASSERT(m_Body);
-
-		const auto& tf = m_Body->GetTransform();
-		m_InterpPosition = m_LastPosition = b2v2(tf.p);
-		m_InterpAngle = m_LastAngle = tf.q.GetAngle();
-
-		m_LastAngularVelocity = m_Body->GetAngularVelocity();
-
-		m_Def.active = m_Body->IsActive();
-		m_Def.allowSleep = m_Body->IsSleepingAllowed();
-		m_Def.angle = m_Body->GetAngle();
-		m_Def.angularDamping = m_Body->GetAngularDamping();
-		m_Def.angularVelocity = m_Body->GetAngularVelocity();
-		m_Def.awake = m_Body->IsAwake();
-		m_Def.bullet = m_Body->IsBullet();
-		m_Def.fixedRotation = m_Body->IsFixedRotation();
-		m_Def.gravityScale = m_Body->GetGravityScale();
-		m_Def.linearDamping = m_Body->GetLinearDamping();
-		m_Def.position = tf.p;
-		m_Def.type = m_Body->GetType();
-
-		for (auto it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
+		if (m_Body)
 		{
-			auto& fixtureCom = *it;
-			fixtureCom->m_Fixture = nullptr;
+			const auto& tf = m_Body->GetTransform();
+			m_InterpPosition = m_LastPosition = b2v2(tf.p);
+			m_InterpAngle = m_LastAngle = tf.q.GetAngle();
+
+			m_LastAngularVelocity = m_Body->GetAngularVelocity();
+
+			m_Def.active = m_Body->IsActive();
+			m_Def.allowSleep = m_Body->IsSleepingAllowed();
+			m_Def.angle = m_Body->GetAngle();
+			m_Def.angularDamping = m_Body->GetAngularDamping();
+			m_Def.angularVelocity = m_Body->GetAngularVelocity();
+			m_Def.awake = m_Body->IsAwake();
+			m_Def.bullet = m_Body->IsBullet();
+			m_Def.fixedRotation = m_Body->IsFixedRotation();
+			m_Def.gravityScale = m_Body->GetGravityScale();
+			m_Def.linearDamping = m_Body->GetLinearDamping();
+			m_Def.position = tf.p;
+			m_Def.type = m_Body->GetType();
+
+			for (auto it = m_Fixtures.begin(), end = m_Fixtures.end(); it != end; ++it)
+			{
+				auto& fixtureCom = *it;
+				fixtureCom->m_Fixture = nullptr;
+			}
+
+			world->DestroyBody(m_Body);
+			m_Body = nullptr;
 		}
-		
-		world->DestroyBody(m_Body);
-		m_Body = nullptr;
 	}
 
 	void Box2DBody::CleanMassData()

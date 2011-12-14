@@ -41,10 +41,6 @@
 
 #include <functional>
 
-#ifdef _DEBUG
-#include "FusionConsole.h"
-#endif
-
 
 namespace FusionEngine
 {

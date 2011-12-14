@@ -49,9 +49,11 @@ namespace FusionEngine
 	class Box2DTask;
 	class Box2DInterpolateTask;
 
+	//! Creates Box2DWorld
 	class Box2DSystem : public IComponentSystem
 	{
 	public:
+		//! CTOR
 		Box2DSystem();
 		virtual ~Box2DSystem()
 		{}
@@ -67,14 +69,20 @@ namespace FusionEngine
 	class AuthorityContactListener;
 	class TransformPinner;
 
-	class Box2DWorld : public ISystemWorld
+	//! Manages a b2World
+	class Box2DWorld : public ISystemWorld, public std::enable_shared_from_this<Box2DWorld>
 	{
 		friend class Box2DTask;
 		friend class Box2DInterpolateTask;
 	public:
+		//! CTOR
 		Box2DWorld(IComponentSystem* system);
 		~Box2DWorld();
 
+		// NOTE: due to how Box2DBody destruction is handled, Box2DWorld should
+		//  NEVER have a Clear method (that clears the b2World), nor should you
+		//  clear b2World in any other way - just destroy the current Box2DWorld
+		//  and create a new one from the system.
 		b2World* Getb2World() const { return m_World; }
 
 	private:
@@ -101,18 +109,23 @@ namespace FusionEngine
 		Box2DInterpolateTask* m_B2DInterpTask;
 	};
 
+	//! Updates Box2D-based physics components
 	class Box2DTask : public ISystemTask
 	{
 	public:
+		//! CTOR
 		Box2DTask(Box2DWorld* sysworld, b2World* const world);
 		~Box2DTask();
 
 		void Update(const float delta);
 
+		//! Simulation
 		SystemType GetTaskType() const { return SystemType::Simulation; }
 
+		//! LongSerial
 		PerformanceHint GetPerformanceHint() const { return LongSerial; }
 
+		//! false
 		bool IsPrimaryThreadOnly() const
 		{
 			return false;
@@ -123,6 +136,7 @@ namespace FusionEngine
 		b2World* const m_World;
 	};
 
+	//! Does interpolation on objects for which it is enabled
 	class Box2DInterpolateTask : public ISystemTask
 	{
 	public:

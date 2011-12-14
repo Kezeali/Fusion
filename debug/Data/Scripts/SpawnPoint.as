@@ -121,8 +121,8 @@ class SpawnPoint : ScriptComponent
 
 		if (entityA !is null)
 		{
-			//if (frames % 60 == 0)
-			//console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
+			if (frames % 60 == 0)
+				console.println("Player pos: " + entityA.itransform.Position.value.x + ", " + entityA.itransform.Position.value.y);
 		}
 	}
 }

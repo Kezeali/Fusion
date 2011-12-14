@@ -387,7 +387,7 @@ namespace FusionEngine
 				m_ActiveBodies.push_back(b2Component);
 			else
 				m_BodiesToCreate.push_back(b2Component); // make sure to create the b2Body before trying to update it!
-			b2Component->SetActive(true);
+			//b2Component->SetActive(true);
 		}
 	}
 
@@ -396,26 +396,27 @@ namespace FusionEngine
 		auto b2Component = boost::dynamic_pointer_cast<Box2DBody>(component);
 		if (b2Component)
 		{
-			// TODO: add an OnOutOfRange method and call this there
+			b2Component->DestructBody(m_World);
 			// Deactivate the body in the simulation
 			//b2Component->SetActive(false);
-
-			b2Component->DestructBody(m_World);
+			
 			// Find and remove the deactivated body (from the Active Bodies list)
+			bool removed = false;
 			{
-			auto _where = std::find(m_ActiveBodies.begin(), m_ActiveBodies.end(), b2Component);
-			if (_where != m_ActiveBodies.end())
-			{
-				m_ActiveBodies.erase(_where);
-				return;
+				auto _where = std::find(m_ActiveBodies.begin(), m_ActiveBodies.end(), b2Component);
+				if (_where != m_ActiveBodies.end())
+				{
+					m_ActiveBodies.erase(_where);
+					removed = true;
+				}
 			}
-			}
+			if (!removed)
 			{
-			auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
-			if (_where != m_BodiesToCreate.end())
-			{
-				m_BodiesToCreate.erase(_where);
-			}
+				auto _where = std::find(m_BodiesToCreate.begin(), m_BodiesToCreate.end(), b2Component);
+				if (_where != m_BodiesToCreate.end())
+				{
+					m_BodiesToCreate.erase(_where);
+				}
 			}
 		}
 	}
@@ -461,7 +462,7 @@ namespace FusionEngine
 		for (auto it = toCreate.begin(), end = toCreate.end(); it != end; ++it)
 		{
 			auto body = *it;
-			body->ConstructBody(m_World);
+			body->ConstructBody(m_World, this->m_B2DSysWorld->shared_from_this());
 		}
 
 		auto& activeBodies = m_B2DSysWorld->m_ActiveBodies;

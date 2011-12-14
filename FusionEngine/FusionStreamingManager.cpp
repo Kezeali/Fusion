@@ -40,8 +40,6 @@
 
 #include "FusionLogger.h"
 
-#include <boost/date_time.hpp>
-
 namespace FusionEngine
 {
 
@@ -56,6 +54,8 @@ namespace FusionEngine
 
 	static const CellHandle s_VoidCellIndex = CellHandle(std::numeric_limits<int32_t>::max(), std::numeric_limits<int32_t>::max());
 
+#define FSN_CELL_LOG
+
 	// TODO: make this a preprocessor macro that reduces to nothing when FSN_CELL_LOG is false (so params don't get evaluated)
 	void AddHist(const CellHandle& loc, const std::string& l, unsigned int n = -1)
 	{
@@ -65,29 +65,31 @@ namespace FusionEngine
 			std::stringstream str; str << loc.x << "." << loc.y;
 			name += str.str();
 		}
-		auto now = boost::posix_time::second_clock::local_time();
-		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
-		if (n != -1)
+		if (n == -1)
+			AddLogEntry(name, l, LOG_INFO);
+		else
 		{
 			std::stringstream str; str << n;
-			message += " (" + str.str() + ")";
+			AddLogEntry(name, l + " (" + str.str() + ")", LOG_INFO);
 		}
-		AddLogEntry(name, message, LOG_INFO);
 #endif
 	}
 
 	void Cell::AddHist(const std::string& l, unsigned int n)
 	{
 #ifdef FSN_CELL_HISTORY
-		mutex_t::scoped_lock lock(historyMutex);
-		auto now = boost::posix_time::second_clock::local_time();
-		std::string message = boost::posix_time::to_simple_string(now) + ": " + l;
+		if (!m_Log)
+		{
+			std::stringstream str; str << loc.x << "." << loc.y;
+			m_Log = Logger::OpenLog("cell_log_" + str.str());
+		}
+		std::string message = l;
 		if (n != -1)
 		{
 			std::stringstream str; str << n;
 			message += " (" + str.str() + ")";
 		}
-		history.push_back(message);
+		m_Log->AddEntry(message, LOG_INFO);
 #endif
 	}
 
@@ -121,7 +123,7 @@ namespace FusionEngine
 
 		if (!m_Cells.empty())
 		{
-			AddLogEntry("Warning: StreamingManager initialised while holding retrieved cells.");
+			AddLogEntry("Streaming", "Warning: StreamingManager initialised while holding retrieved cells.");
 			Reset();
 		}
 	}
@@ -376,6 +378,7 @@ namespace FusionEngine
 			{
 				cam.range = m_Range;
 				cam.rangeSquared = m_RangeSquared;
+				cam.firstUpdate = true;
 			}
 		}
 	}
@@ -530,39 +533,43 @@ namespace FusionEngine
 		CellHandle cellIndex = ToCellLocation(entityPosition);
 		auto cellSpt = RetrieveCell(cellIndex);
 		Cell* cell = cellSpt.get();
+		CellEntry* entry = nullptr;
 
 		Cell::mutex_t::scoped_try_lock lock(cell->mutex);
 		if (lock && cell->IsLoaded())
 		{
 			entity->SetStreamingCellIndex(cellIndex);
+
+#ifdef STREAMING_USEMAP
+			entry = &cell->objects[entity.get()];
+#else
+			entry = &createEntry(cell, entity/*.get()*/);
+#endif
 		}
 		else
 		{
-			Cell::mutex_t::scoped_try_lock test(m_TheVoid.mutex);
-			FSN_ASSERT(test);
-			lock.swap(test);
+			Cell::mutex_t::scoped_lock voidLock(m_TheVoid.mutex);
 			cell = &m_TheVoid;
 			entity->SetStreamingCellIndex(s_VoidCellIndex);
 
+#ifdef STREAMING_USEMAP
+			entry = &cell->objects[entity.get()];
+#else
+			entry = &createEntry(cell, entity/*.get()*/);
+#endif
+
 			m_CellsBeingLoaded.insert(std::make_pair(cellIndex, cellSpt));
 		}
-		
-#ifdef STREAMING_USEMAP
-		CellEntry &entry = cell->objects[entity.get()];
-#else
-		CellEntry &entry = createEntry(cell, entity/*.get()*/);
-#endif
-		entry.x = entityPosition.x; entry.y = entityPosition.y;
 
-		//if (lock.owns_lock())
-		//	lock.unlock();
+		FSN_ASSERT(entry);
+		entry->x = entityPosition.x; entry->y = entityPosition.y;
 
-		activateInView(cellIndex, cell, &entry, entity, true);
-		if (!entry.active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
+		activateInView(cellIndex, cell, entry, entity, true);
+		if (!entry->active) // activateInView assumes that the entry's current state has been propagated - it hasn't in this case, since the entry was just added
 		{
 			//cell->EntryReferenced(); // Otherwise the counter will be off when OnDeactivated is called
-			ActivateEntity(cellIndex, *cell, entity, entry);
-			QueueEntityForDeactivation(entry, true);
+			ActivateEntity(cellIndex, *cell, entity, *entry);
+			QueueEntityForDeactivation(*entry, true);
 		}
 
 		//OnUpdated(entity, 0.0f);
@@ -623,17 +630,28 @@ namespace FusionEngine
 		{
 			currentCell = CellAtCellLocation(entity->GetStreamingCellIndex());
 			FSN_ASSERT(currentCell);
-
-			currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
-			// TODO: rather than this (and setting StreamingCellIndex to size_t::max), entities could be implicitly in the void if the cell isn't loaded
-			FSN_ASSERT(currentCell->IsLoaded());
+			if (currentCell && currentCell->IsLoaded())
+			{
+				currentCell_lock = Cell::mutex_t::scoped_lock(currentCell->mutex);
+				// TODO: maybe: rather than this (and setting StreamingCellIndex to VoidCellIndex), entities could be implicitly in the void if the cell isn't loaded
+				FSN_ASSERT(currentCell->IsLoaded());
 #ifdef STREAMING_USEMAP
-			_where = currentCell->objects.find(entityKey);
+				_where = currentCell->objects.find(entityKey);
 #else
-			_where = rFindEntityInCell(currentCell, entityKey);
+				_where = rFindEntityInCell(currentCell, entityKey);
 #endif
-			FSN_ASSERT( _where != currentCell->objects.end() );
-			cellEntry = &_where->second;
+				FSN_ASSERT(_where != currentCell->objects.end());
+				if (_where != currentCell->objects.end())
+					cellEntry = &_where->second;
+				else
+					FSN_EXCEPT(Exception, "Entity missing from loaded cell.");
+			}
+			else
+			{
+				AddLogEntry("Streaming", "The cell that an active object was supposed to be in was missing.", LOG_CRITICAL);
+				AddHist(entity->GetStreamingCellIndex(), "This cell was missing during a call to OnUpdate() on an active entity that expected to be here");
+				return;
+			}
 		}
 		else// if (entity->GetStreamingCellIndex() == s_VoidCellIndex)
 		{
@@ -661,7 +679,7 @@ namespace FusionEngine
 		FSN_ASSERT(cellEntry != nullptr);
 		FSN_ASSERT(currentCell_lock && currentCell_lock.owns_lock());
 
-		const bool move = !fe_fequal(cellEntry->x, new_x, 0.001f) || !fe_fequal(cellEntry->y, new_y, 0.001f);
+		bool move = !fe_fequal(cellEntry->x, new_x, 0.001f) || !fe_fequal(cellEntry->y, new_y, 0.001f);
 		const bool warp = diff(cellEntry->x, new_x) > 50.0f || diff(cellEntry->y, new_y) > 50.0f;
 
 		// Move the object, updating the current cell if necessary
@@ -687,6 +705,8 @@ namespace FusionEngine
 				// Since the target cell isn't ready, move the entity into The Void (temporarily)
 				newCell = &m_TheVoid;
 				newCellLocation = s_VoidCellIndex;
+
+				move = true;
 				
 				if (currentCell != &m_TheVoid)
 				{
@@ -1144,7 +1164,7 @@ namespace FusionEngine
 	void StreamingManager::processCell(const CellHandle& cell_location, Cell& cell, const std::list<std::pair<Vector2, float>>& cams, const std::list<std::pair<std::pair<Vector2, float>, PlayerID>>& remote_cams)
 	{
 		Cell::mutex_t::scoped_try_lock lock(cell.mutex);
-		if (lock)
+		if (lock && cell.IsLoaded())
 		{
 			//try
 			//{
@@ -1210,49 +1230,41 @@ namespace FusionEngine
 		//if (inactiveRange.is_overlapped(activeRange))
 		if (inclusiveOverlap(inactiveRange, activeRange))
 		{
-			CL_Rect inactiveRangeY(inactiveRange);
-			CL_Rect inactiveRangeX(inactiveRange);
+			// Fully overlapped: inactive range obliterated!
+			// Note that this checks if inactive range is inside active active
+			//  range, despite what the syntax of the statement suggests (oh, ClanLib -_-)
+			if (activeRange.is_inside(inactiveRange))
+				return;
+
+			enum RangeSide : size_t
+			{
+				Left = 0, Top, Right, Bottom
+			};
+
+			std::array<CL_Rect, 4> clippedInactiveRange;
+			clippedInactiveRange.fill(inactiveRange);
 
 			// + 1 / - 1 are due to the ranges being used inclusively when processed
 
-			if (inactiveRange.top >= activeRange.top)
-				inactiveRangeY.top = activeRange.bottom + 1;
-			//else
-			//	inactiveRangeY.bottom = activeRange.top - 1;
+			clippedInactiveRange[Top].bottom = activeRange.top - 1;
+			clippedInactiveRange[Bottom].top = activeRange.bottom + 1;
 
-			if (inactiveRange.bottom <= activeRange.bottom)
-				inactiveRangeY.bottom = activeRange.top - 1;
-			//else
-			//	inactiveRangeY.top = activeRange.bottom + 1;
+			clippedInactiveRange[Left].right = activeRange.left - 1;
+			clippedInactiveRange[Right].left = activeRange.right + 1;
 
-			//if (inactiveRange.top > activeRange.top)
-			//	inactiveRangeY.bottom = std::max(inactiveRangeY.top, inactiveRangeY.bottom);
-			//else
-			//	inactiveRangeY.top = std::min(inactiveRangeY.top, inactiveRangeY.bottom);
+			// Exclude cells from the side ranges that are covered by the top & bottom ranges
+			clippedInactiveRange[Left].top = clippedInactiveRange[Right].top = activeRange.top;
+			clippedInactiveRange[Left].bottom = clippedInactiveRange[Right].bottom = activeRange.bottom;
 
-			if (inactiveRange.left >= activeRange.left)
-				inactiveRangeX.left = activeRange.right + 1;
-			//else
-			//	inactiveRangeX.right = activeRange.left - 1;
-
-			if (inactiveRange.right <= activeRange.right)
-				inactiveRangeX.right = activeRange.left - 1;
-			//else
-			//	inactiveRangeX.left = activeRange.right + 1;
-
-			//inactiveRangeX.right = std::max(inactiveRangeX.left, inactiveRangeX.right);
-
-			// Don't include stuff in the X range that has already been included in the Y range:
-			inactiveRangeX.top = activeRange.top;
-			inactiveRangeX.bottom = activeRange.bottom;
-
-			FSN_ASSERT(!inclusiveOverlap(inactiveRangeX, activeRange));
-			FSN_ASSERT(!inclusiveOverlap(inactiveRangeY, activeRange));
-
-			if (inactiveRangeX.get_width() >= 0 && inactiveRangeX.get_height() >= 0)
-				*out_it++ = inactiveRangeX;
-			if (inactiveRangeY.get_width() >= 0  && inactiveRangeY.get_height() >= 0)
-				*out_it++ = inactiveRangeY;
+			for (auto it = clippedInactiveRange.begin(), end = clippedInactiveRange.end(); it != end; ++it)
+			{
+				// Output the ranges that still include cells
+				if (it->get_width() >= 0 && it->get_height() >= 0)
+				{
+					FSN_ASSERT(!inclusiveOverlap(*it, activeRange));
+					*out_it++ = *it;
+				}
+			}
 		}
 		// No overlap
 		else
@@ -1292,6 +1304,8 @@ namespace FusionEngine
 
 	void StreamingManager::Update(const bool refresh)
 	{
+		// TODO: Don't check the void every frame, wait a few milis in between queries to give the loader a chance
+		//  Also don't check requested entities every frame 
 		// Try to clear The Void
 		{
 			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex);
@@ -1302,22 +1316,18 @@ namespace FusionEngine
 					auto location = ToCellLocation(it->second.x, it->second.y);
 					auto actualCell = RetrieveCell(location);
 
-					// TODO: don't do this every frame, wait a few milis in between queries to give the loader a chance
-					Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
-					if (lock)
+					if (!actualCell->IsLoaded())
 					{
-						if (!actualCell->IsLoaded())
-						{
-						//	// Request the cell if it isn't already (Retrieve returns true if the cell wasn't already requested)
-						//	if (m_Archivist->Retrieve(location.x, location.y, actualCell))
-						//	{
-						//		actualCell->AddHist("Retrieved due to objects in Void");
-						//		//FSN_ASSERT(std::find(m_CellsBeingLoaded.cbegin(), m_CellsBeingLoaded.cend(), actualCell) == m_CellsBeingLoaded.end());
-						//		//m_CellsBeingLoaded.insert(actualCell);
-						//	}
-							m_CellsBeingLoaded.insert(std::make_pair(location, actualCell));
-						}
-						else
+						//Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
+						//if (lock && !actualCell->IsLoaded())
+						//{
+							m_CellsBeingLoaded.insert(std::make_pair(std::move(location), std::move(actualCell)));
+						//}
+					}
+					else
+					{
+						Cell::mutex_t::scoped_try_lock lock(actualCell->mutex);
+						if (lock && actualCell->IsLoaded())
 						{
 							auto entity = it->first;
 							// TODO:
@@ -1325,8 +1335,6 @@ namespace FusionEngine
 							// OR
 							// m_TheVoid.RemoveEntry(it); <- one of the overloads will take an iterator, the others will take index / entry
 							// cell->AddEntry(*it);
-
-							//Cell::mutex_t::scoped_lock lock(actualCell->mutex);
 
 							actualCell->objects.push_back( std::move(*it) );
 							auto& newEntry = actualCell->objects.back().second;
@@ -1372,7 +1380,7 @@ namespace FusionEngine
 			if (cell->IsLoaded())
 			{
 				Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-				if (lock)
+				if (lock && cell->IsLoaded())
 				{
 					auto& requestedIds = it->second;
 					for (auto eit = cell->objects.begin(), eend = cell->objects.end(); eit != eend; ++eit)
@@ -1493,9 +1501,13 @@ namespace FusionEngine
 				else
 					allRemoteStreamPositions.push_back(std::make_pair(std::make_pair(cam.streamPosition, cam.range), cam.owner));
 
-				// Update the current active cell range for this camera
+				// Update the (in)active cell ranges for this camera
 				CL_Rect inactiveRange;
-				getCellRange(inactiveRange, oldPosition, cam.range);
+				// Use the previously calculated range if it seems to be correct:
+				if (cam.activeCellRange.contains(CL_Vec2f(oldPosition.x, oldPosition.y)))
+					inactiveRange = cam.activeCellRange;
+				else // Recalculate the inactive cell range
+					getCellRange(inactiveRange, oldPosition, cam.range);
 				
 				CL_Rect& activeRange = cam.activeCellRange;
 				getCellRange(activeRange, newPosition, cam.range);
@@ -1520,9 +1532,134 @@ namespace FusionEngine
 		}
 		}
 
-		// Clear loaded cells (this set is just used to make sure cells are processed if they finish loading after the camera that requested them stops moving)
-		if (allActiveRangesStale)
+		// TODO: seperate activeRanges and staleActiveRanges? (processCell on activeRanges, check m_CellsBeingLoaded for cells to process on staleActiveRanges)
+		// This set is just used to make sure cells are processed if they finish loading after the camera that requested them stops moving (see else clause below):
+		if (!allActiveRangesStale)
 		{
+			std::list<CL_Rect> clippedInactiveRanges;
+			{
+				// Clip inactive ranges against all active ranges
+				std::deque<CL_Rect> toProcess(inactiveRanges.begin(), inactiveRanges.end());
+				while (!toProcess.empty())
+				{
+					CL_Rect inactiveRange = toProcess.back();
+					toProcess.pop_back();
+					bool hasOverlap = false;
+					for (auto ait = activeRanges.begin(), aend = activeRanges.end(); ait != aend; ++ait)
+					{
+						auto& activeRange = std::get<0>(*ait);
+						if (inclusiveOverlap(inactiveRange, activeRange))
+						{
+							hasOverlap = true;
+							clipRange(std::back_inserter(toProcess), inactiveRange, activeRange);
+							break;
+						}
+					}
+					if (!hasOverlap)
+						clippedInactiveRanges.push_back(inactiveRange);
+				}
+			}
+
+			// Sort to improve cache performance
+			clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
+			{
+				return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);
+			});
+			// TODO: merge adjcent ranges
+
+			for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
+			{
+				//std::stringstream inactivestr;
+				//inactivestr << it->left << ", " << it->top << ", " << it->right << ", " << it->bottom;
+				//SendToConsole("Deactivated " + inactivestr.str());
+#ifdef _DEBUG
+				// Make sure there is no overlap (overlapping ranges should have been clipped above)
+				const bool noOverlap = std::all_of(activeRanges.begin(), activeRanges.end(),
+					[it](const std::tuple<CL_Rect, std::list<std::pair<Vector2, float>>, std::list<std::pair<std::pair<Vector2, float>, PlayerID>>>& v)
+				{ return !inclusiveOverlap(*it, std::get<0>(v)); });
+				FSN_ASSERT(noOverlap);
+#endif
+				deactivateCells(*it);
+			}
+
+			processCell(s_VoidCellIndex, m_TheVoid, allLocalStreamPositions, allRemoteStreamPositions);
+
+			for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
+			{
+				auto& activeRange = std::get<0>(*it);
+				auto& streamPositions = std::get<1>(*it);
+				auto& remotePositions = std::get<2>(*it);
+
+				if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
+				{
+					//if (!clippedInactiveRanges.empty())
+					//{
+					//	std::stringstream activestr;
+					//	activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
+					//	SendToConsole("Activated " + activestr.str());
+					//}
+
+					int iy = activeRange.top;
+					int ix = activeRange.left;
+
+					auto it = m_Cells.find(CellHandle(ix, iy));
+
+					Cell::mutex_t::scoped_lock lock(m_TheVoid.mutex); // So m_CellsBeingLoaded can be accessed safely
+
+					for (; iy <= activeRange.bottom; ++iy)
+					{
+						for (ix = activeRange.left; ix <= activeRange.right; ++ix)
+						{
+							// Check that the next stored cell is the next cell expected in the sequence...
+							if (it == m_Cells.end() || it->first.x != ix || it->first.y != iy)
+							{
+								// ... if not, find the next cell or create a new cell to load
+								CellHandle expectedLocation(ix, iy);
+								auto _where = m_Cells.lower_bound(expectedLocation);
+								if (_where != m_Cells.end() && _where->first == expectedLocation)
+									it = _where;
+								else
+								{
+									auto newCell = m_Archivist->Retrieve(expectedLocation.x, expectedLocation.y);
+									auto result = m_Cells.insert(_where, std::make_pair(std::move(expectedLocation), std::move(newCell)));
+									it = result;
+
+									AddHist(expectedLocation, "Retrieved due to entering range");
+									
+									m_CellsBeingLoaded.insert(*it);
+								}
+							}
+
+							Cell* cell = it->second.get();
+
+							cell->inRange = true;
+
+							// Check if the cell needs to be loaded
+							if (cell->IsLoaded())
+							{
+								// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
+								processCell(it->first, *cell, streamPositions, remotePositions);
+							}
+							// Failsafe (in case this cell was indexed while in some broken state)
+							else if (cell->waiting != Cell::Retrieve)
+							{
+								AddLogEntry("Streaming", "Cell loading failed to work as expected; cell had to be re-retrieved.", LOG_CRITICAL);
+								it->second = m_Archivist->Retrieve(ix, iy);
+							}
+							// Go to the next cell in the sequence
+							++it;
+						}
+						//i += stride;
+					}
+
+				}
+			}
+		}
+		else // All active ranges stale
+		{
+			// Clear loaded cells
+			Cell::mutex_t::scoped_try_lock lock(m_TheVoid.mutex); // TheVoid's mutex is used to lock m_CellsBeingLoaded
+			if (lock)
 			for (auto it = m_CellsBeingLoaded.begin(), end = m_CellsBeingLoaded.end(); it != end;)
 			{
 				auto cell = it->second;
@@ -1535,130 +1672,6 @@ namespace FusionEngine
 				else
 					++it;
 			}
-		}
-		//{
-		//	auto newEnd = std::remove_if(m_CellsBeingLoaded.begin(), m_CellsBeingLoaded.end(), [](Cell* cell) { return cell->IsLoaded(); });
-		//	m_CellsBeingLoaded.erase(newEnd, m_CellsBeingLoaded.end());
-		//}
-
-		// TODO: seperate activeRanges and staleActiveRanges? (processCell on activeRanges, check m_CellsBeingLoaded for cells to process on staleActiveRanges)
-		if (!allActiveRangesStale)
-		{
-		std::list<CL_Rect> clippedInactiveRanges;
-		{
-			// Clip inactive ranges against all active ranges
-			std::deque<CL_Rect> toProcess(inactiveRanges.begin(), inactiveRanges.end());
-			while (!toProcess.empty())
-			{
-				CL_Rect inactiveRange = toProcess.back();
-				toProcess.pop_back();
-				bool hasOverlap = false;
-				for (auto ait = activeRanges.begin(), aend = activeRanges.end(); ait != aend; ++ait)
-				{
-					auto& activeRange = std::get<0>(*ait);
-					if (inclusiveOverlap(inactiveRange, activeRange))
-					{
-						hasOverlap = true;
-						clipRange(std::back_inserter(toProcess), inactiveRange, activeRange);
-						break;
-					}
-				}
-				if (!hasOverlap)
-					clippedInactiveRanges.push_back(inactiveRange);
-			}
-		}
-
-		// Sort to improve cache performance
-		clippedInactiveRanges.sort([this](const CL_Rect& a, const CL_Rect& b)
-		{
-			return (a.top != b.top) ? (a.top < b.top) : (a.left < b.left);
-		});
-		// TODO: merge adjcent ranges
-		
-		for (auto it = clippedInactiveRanges.begin(), end = clippedInactiveRanges.end(); it != end; ++it)
-		{
-			//std::stringstream inactivestr;
-			//inactivestr << it->left << ", " << it->top << ", " << it->right << ", " << it->bottom;
-			//SendToConsole("Deactivated " + inactivestr.str());
-#ifdef _DEBUG
-			// Make sure there is no overlap (overlapping ranges should have been clipped above)
-			const bool noOverlap = std::all_of(activeRanges.begin(), activeRanges.end(),
-				[it](const std::tuple<CL_Rect, std::list<std::pair<Vector2, float>>, std::list<std::pair<std::pair<Vector2, float>, PlayerID>>>& v)
-			{ return !inclusiveOverlap(*it, std::get<0>(v)); });
-			FSN_ASSERT(noOverlap);
-#endif
-			deactivateCells(*it);
-		}
-
-		processCell(s_VoidCellIndex, m_TheVoid, allLocalStreamPositions, allRemoteStreamPositions);
-
-		for (auto it = activeRanges.begin(), end = activeRanges.end(); it != end; ++it)
-		{
-			auto& activeRange = std::get<0>(*it);
-			auto& streamPositions = std::get<1>(*it);
-			auto& remotePositions = std::get<2>(*it);
-
-			if (activeRange.get_width() >= 0 && activeRange.get_height() >= 0)
-			{
-				//if (!clippedInactiveRanges.empty())
-				//{
-				//	std::stringstream activestr;
-				//	activestr << activeRange.left << ", " << activeRange.top << ", " << activeRange.right << ", " << activeRange.bottom;
-				//	SendToConsole("Activated " + activestr.str());
-				//}
-
-				int iy = activeRange.top;
-				int ix = activeRange.left;
-
-				auto it = m_Cells.find(CellHandle(ix, iy));
-
-				for (; iy <= activeRange.bottom; ++iy)
-				{
-					for (ix = activeRange.left; ix <= activeRange.right; ++ix)
-					{
-						// Check that the next stored cell is the next cell expected in the sequence...
-						if (it == m_Cells.end() || it->first.x != ix || it->first.y != iy)
-						{
-							// ... if not, find the next cell or create a new cell to load
-							CellHandle expectedLocation(ix, iy);
-							auto _where = m_Cells.lower_bound(expectedLocation);
-							if (_where != m_Cells.end() && _where->first == expectedLocation)
-								it = _where;
-							else
-							{
-								auto newCell = m_Archivist->Retrieve(expectedLocation.x, expectedLocation.y);
-								auto result = m_Cells.insert(_where, std::make_pair(std::move(expectedLocation), std::move(newCell)));
-								it = result;
-								
-								AddHist(expectedLocation, "Retrieved due to entering range");
-								m_CellsBeingLoaded.insert(*it);
-							}
-						}
-
-						Cell* cell = it->second.get();
-
-						cell->inRange = true;
-
-						// Check if the cell needs to be loaded
-						if (cell->IsLoaded())
-						{
-							// Attempt to access the cell (it will be locked if the archivist is in the process of loading it)
-							processCell(it->first, *cell, streamPositions, remotePositions);
-						}
-						// Failsafe (in case this cell was indexed while in some broken state)
-						else if (cell->waiting != Cell::Retrieve)
-						{
-							AddLogEntry("Cell loading failed to work as expected", LOG_CRITICAL);
-							it->second = m_Archivist->Retrieve(ix, iy);
-						}
-						// Go to the next cell in the sequence
-						++it;
-					}
-					//i += stride;
-				}
-
-			}
-		}
 		}
 	}
 

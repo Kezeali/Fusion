@@ -290,6 +290,7 @@ namespace FusionEngine
 		else
 		{
 			LogPtr log( new Log(tag, filename(tag)) );
+			log->SetThreshold(m_DefaultThreshold);
 
 			if (m_DefaultTarget_File)
 			{

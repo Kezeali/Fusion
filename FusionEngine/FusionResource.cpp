@@ -35,6 +35,10 @@
 #include <boost/thread/locks.hpp>
 #endif
 
+#ifdef _DEBUG
+#include "FusionConsole.h"
+#endif
+
 
 namespace FusionEngine
 {
@@ -226,7 +230,7 @@ namespace FusionEngine
 #ifdef _WIN32
 		InterlockedIncrement(&m_RefCount);
 #else
-		boost::lock_guard<boost::mutex> lock(m_Mutex);
+		boost::mutex::scoped_lock lock(m_Mutex);
 		++m_RefCount;
 #endif
 	}
@@ -236,7 +240,7 @@ namespace FusionEngine
 #ifdef _WIN32
 		long refCount = InterlockedDecrement(&m_RefCount);
 #else
-		boost::lock_guard<boost::mutex> lock(m_Mutex);
+		boost::mutex::scoped_lock lock(m_Mutex);
 		long refCount = --m_RefCount;
 #endif
 		if (refCount == 1)

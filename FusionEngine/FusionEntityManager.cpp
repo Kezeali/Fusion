@@ -1001,7 +1001,7 @@ namespace FusionEngine
 		m_RemoteActivationEventConnection.disconnect();
 	}
 
-	void EntityManager::Save(std::ostream& stream)
+	void EntityManager::SaveActiveEntities(std::ostream& stream)
 	{
 		IO::Streams::CellStreamWriter writer(&stream);
 
@@ -1029,9 +1029,19 @@ namespace FusionEngine
 		}
 		// Make sure everything was written
 		FSN_ASSERT(num == 0);
+
+		// TODO: store references in a DB
+		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+		writer.Write(static_cast<size_t>(m_StoredReferences.size()));
+		for (auto it = m_StoredReferences.begin(), end = m_StoredReferences.end(); it != end; ++it)
+		{
+			writer.Write(it->token);
+			writer.Write(it->from);
+			writer.Write(it->to);
+		}
 	}
 
-	void EntityManager::Load(std::istream& stream)
+	void EntityManager::LoadActiveEntities(std::istream& stream)
 	{
 		IO::Streams::CellStreamReader reader(&stream);
 
@@ -1052,6 +1062,54 @@ namespace FusionEngine
 		for (auto it = activeIds.begin(), end = activeIds.end(); it != end; ++it)
 		{
 			m_StreamingManager->ActivateEntity(*it);
+		}
+
+		tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
+		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+		StoredReference r;
+		reader.Read(num);
+		for (size_t i = 0; i < num; ++i)
+		{
+			reader.Read(r.token);
+			reader.Read(r.from);
+			reader.Read(r.to);
+
+			m_StoredReferences.insert(r);
+
+			m_ReferenceTokens.takeID(r.token);
+		}
+	}
+
+	void EntityManager::SaveNonStreamingEntities(std::ostream& stream)
+	{
+		std::vector<EntityPtr> nonStreamingEntities;
+		for (auto it = m_Entities.begin(), end = m_Entities.end(); it != end; ++it)
+		{
+			const auto& entity = it->second;
+			if (entity->GetDomain() == SYSTEM_DOMAIN)
+				nonStreamingEntities.push_back(entity);
+		}
+
+		IO::Streams::CellStreamWriter writer(&stream);
+		writer.Write(static_cast<size_t>(nonStreamingEntities.size()));
+		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end; ++it)
+		{
+			const auto& entity = *it;
+			SaveEntity(stream, entity, true);
+		}
+	}
+
+	void EntityManager::LoadNonStreamingEntities(std::istream& stream, InstancingSynchroniser* instantiator)
+	{
+		IO::Streams::CellStreamReader reader(&stream);
+
+		size_t numEnts;
+		numEnts = reader.ReadValue<size_t>();
+		for (size_t i = 0; i < numEnts; ++i)
+		{
+			auto entity = LoadEntity(stream, true, 0, m_EntityFactory, this, instantiator);
+			entity->SetDomain(SYSTEM_DOMAIN);
+			AddEntity(entity);
 		}
 	}
 
@@ -1093,25 +1151,6 @@ namespace FusionEngine
 		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
 
-		//if (entity->GetID() != 0)
-		//{
-		//	IDEntityMap::iterator _where = m_Entities.find(entity->GetID());
-		//	if (_where != m_Entities.end())
-		//		FSN_EXCEPT(ExCode::InvalidArgument, "An entity with the ID " + boost::lexical_cast<std::string>(entity->GetID()) + " already exists");
-
-		//	m_Entities.insert(_where, std::make_pair( entity->GetID(), entity ));
-		//}
-		//else
-		//	m_PseudoEntities.insert(entity);
-
-		//if (!entity->GetName().empty()) // TODO: log a warning about this (empty name is kind of an error)
-		//	m_EntitiesByName[entity->GetName()] = entity;
-
-		//m_StreamingManager->AddEntity(entity);
-		//m_EntitySynchroniser->OnEntityActivated(entity);
-		
-		// Immeadiately activate this entity if it isn't within a streaming domain
-		//if (!CheckState(entity->GetDomain(), DS_STREAMING))
 		{
 			m_NewEntitiesToActivate.push(entity);
 		}
@@ -1338,7 +1377,15 @@ namespace FusionEngine
 
 	void EntityManager::clearEntities(bool synced_only)
 	{
-		FSN_ASSERT(!synced_only); // not implemented
+		FSN_ASSERT_MSG(!synced_only, "Not implemented");
+
+		m_ComponentsToAdd.clear();
+		m_NewEntitiesToActivate.clear();
+		m_ComponentsToActivate.clear();
+		m_EntitiesToActivate.clear();
+		m_EntitiesUnreferenced.clear();
+		m_EntitiesToDeactivate.clear();
+		m_EntitiesToRemove.clear();
 
 		std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->m_ReferencedEntities.clear(); });
 
@@ -1346,6 +1393,8 @@ namespace FusionEngine
 			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
 			m_ReferenceTokens.freeAll();
 		}
+
+		m_PropChangedQueue.clear();
 
 		if (m_EntitiesLocked)
 			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });

@@ -384,20 +384,24 @@ namespace FusionEngine
 			Vector2 lastUsedPosition; 
 
 			//! Activation range of this camera, it it isn't default
-			/*!
-			* Set to <= 0 to use the default range 
-			*/
 			float range;
+			//! range squared
 			float rangeSquared;
+			//! True if this camera should use the default range (m_Range)
 			bool defaultRange;
 
+			//! The rect. of cells activated by this camera last time it was processed
 			CL_Rect activeCellRange;
 
+			//! Position last time this camera was updated
 			Vector2 lastPosition;
+			//! Velocity (size of jump) last time this camera was updated
 			Vector2 lastVelocity;
+			//! Smoothing tightness (increases over time as the camera moves)
 			float tightness;
 
-			bool firstUpdate; // Will be set to true when a cam. has just been added - makes sure it gets processed
+			//! Will be set to true when a camera has just been added - makes sure it gets processed
+			bool firstUpdate; 
 
 			//! Functor: returns true if the given StreamingCamera uses a specific render Camera
 			struct HasSameCamera
@@ -454,14 +458,15 @@ namespace FusionEngine
 
 		//Vector2 m_Bounds;
 
-		//Cell* m_Cells;
+		// Cells are sorted by y then x, so they can be iterated over linearly when processing
 		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_Cells;
-		//std::map<Vector2T<int32_t>, Cell> m_Cells;
+		// Where entities are stored until the correct cell is loaded for them
 		Cell m_TheVoid;
 		std::map<CellHandle, std::shared_ptr<Cell>, CellHandleGreater> m_CellsBeingLoaded;
+		// Entities that have been requested useing the public method ActivateEntity(ObjectID)
 		std::map<CellHandle, std::set<ObjectID>, CellHandleGreater> m_RequestedEntities;
 
-		//std::unordered_map<ObjectID, size_t> m_EntityDirectory;
+		std::unordered_map<ObjectID, size_t> m_EntityDirectory;
 
 		CellDataSource* m_Archivist;
 

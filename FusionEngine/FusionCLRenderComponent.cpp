@@ -29,6 +29,7 @@
 
 #include "FusionCLRenderComponent.h"
 
+#include "FusionLogger.h"
 #include "FusionResourceManager.h"
 
 #include "FusionPhysicalComponent.h"
@@ -82,13 +83,16 @@ namespace FusionEngine
 
 	void CLSprite::redefineSprite()
 	{
+		// This checks if m_AnimationLoadConnection is connected because if it is this method will
+		//  be called again when the animation resource is done loading. Otherwise, the animation
+		//  resource path simply hasn't been set.
 		if (m_ImageResource.IsLoaded() && (m_AnimationResource.IsLoaded() || !m_AnimationLoadConnection.connected()))
 		{
 			m_SpriteDef.reset(new SpriteDefinition2(m_ImageResource, m_AnimationResource));
 			m_RecreateSprite = true;
 		}
-		else
-			SendToConsole("Failed to load?");
+		if (!m_ImageResource.IsLoaded() && !m_AnimationResource.IsLoaded())
+			AddLogEntry("CLSprite: Seems like a sprite resource failed to load. Image: " + m_ImagePath + " Animation: " + m_AnimationPath);
 	}
 
 	void CLSprite::Update(unsigned int tick, const float elapsed, const float alpha)
@@ -106,17 +110,34 @@ namespace FusionEngine
 		};
 
 		using namespace std::placeholders;
-		if (m_ReloadImage && !m_ImagePath.empty())
+		if (m_ReloadImage)
 		{
-			m_ImageLoadConnection.disconnect();
-			m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, onImageLoaded);
+			if (!m_ImagePath.empty())
+			{
+				m_ImageLoadConnection.disconnect();
+				m_ImageLoadConnection = ResourceManager::getSingleton().GetResource("TEXTURE", m_ImagePath, onImageLoaded);
+			}
+			else
+			{
+				m_Sprite = CL_Sprite();
+				m_SpriteDef.reset();
+				m_ImageResource.Release();
+			}
 			m_ReloadImage = false;
 		}
 
-		if (m_ReloadAnimation && !m_AnimationPath.empty())
+		if (m_ReloadAnimation)
 		{
-			m_AnimationLoadConnection.disconnect();
-			m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, onAnimationLoaded);
+			if (!m_AnimationPath.empty())
+			{
+				m_AnimationLoadConnection.disconnect();
+				m_AnimationLoadConnection = ResourceManager::getSingleton().GetResource("ANIMATION", m_AnimationPath, onAnimationLoaded);
+			}
+			else
+			{
+				m_AnimationResource.Release();
+				redefineSprite();
+			}
 			m_ReloadAnimation = false;
 		}
 

@@ -151,10 +151,10 @@ namespace FusionEngine
 		void EnqueueQuickLoad(const std::string& save_name);
 		void Load(const std::string& save_name);
 
-		//! Create a file in the given save for storing custom data
-		std::unique_ptr<std::ostream> CreateSaveFile(const std::string& save_name, const std::string& filename);
-		//! Load a custom file from the given save
-		std::unique_ptr<std::istream> LoadSaveFile(const std::string& save_name, const std::string& filename);
+		//! Create a file for storing custom data
+		std::unique_ptr<std::ostream> CreateDataFile(const std::string& filename);
+		//! Load a custom data file
+		std::unique_ptr<std::istream> LoadDataFile(const std::string& filename);
 
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;

@@ -102,8 +102,12 @@ namespace FusionEngine
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;
 		//typedef TagFlagMap::value_type TagDef;
 
-		void Save(std::ostream& stream);
-		void Load(std::istream& stream);
+		//! Writes a save file containing a list of (synced) entities that are currently active
+		void SaveActiveEntities(std::ostream& stream);
+		void LoadActiveEntities(std::istream& stream);
+
+		void SaveNonStreamingEntities(std::ostream& stream);
+		void LoadNonStreamingEntities(std::istream& stream, InstancingSynchroniser* instantiator);
 
 		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
@@ -219,7 +223,7 @@ namespace FusionEngine
 		//! Registers EntityManager script methods
 		static void Register(asIScriptEngine *engine);
 
-		// ENtities could also generate their own tokens
+		// Entities could also generate their own tokens
 		uint32_t StoreReference(ObjectID from, ObjectID to);
 		ObjectID RetrieveReference(uint32_t token);
 		void DropReference(uint32_t token);
@@ -270,8 +274,6 @@ namespace FusionEngine
 	public:
 		EntityFactory *m_EntityFactory;
 	protected:
-		ObjectIDStack m_UnusedIds;
-
 		mutable tbb::spin_rw_mutex m_EntityListsMutex;
 
 		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)
@@ -303,8 +305,6 @@ namespace FusionEngine
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;
-
-		std::vector<EntityPtr> m_RequestedEntities;
 
 		std::vector<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToActivate;
 		std::vector<EntityPtr> m_EntitiesToActivate;

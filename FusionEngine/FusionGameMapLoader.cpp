@@ -261,13 +261,8 @@ namespace FusionEngine
 
 		namespace io = boost::iostreams;
 
-		//io::filtering_ostream fileStream;
-		//fileStream.push(device);
-
 		CellStreamWriter writer(&fileStream);
 
-
-		//std::vector<std::pair<std::vector<EntityPtr>, std::vector<EntityPtr>>> cells(num_cells_across * num_cells_across);
 		std::vector<EntityPtr> nonStreamingEntities = nsentities;
 		std::vector<EntityPtr> nonStreamingEntitiesSynched;
 		for (auto it = nonStreamingEntities.begin(), end = nonStreamingEntities.end(); it != end;)

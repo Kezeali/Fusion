@@ -906,7 +906,7 @@ namespace FusionEngine
 					auto prop = new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine);
 					scriptprop->Set(prop);
 
-					auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+					auto app_obj = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(0));
 					*app_obj = refedEntity;
 
 					auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));

@@ -85,9 +85,9 @@ namespace FusionEngine
 		Box2DBody(b2BodyDef def);
 		virtual ~Box2DBody();
 
-		boost::signals2::signal<void (void)> Destruction;
+		std::weak_ptr<Box2DWorld> Owner;
 
-		void ConstructBody(b2World* world);
+		void ConstructBody(b2World* world, const std::weak_ptr<Box2DWorld>& owner);
 		void DestructBody(b2World* world);
 		b2Body* Getb2Body() const { return m_Body; }
 
