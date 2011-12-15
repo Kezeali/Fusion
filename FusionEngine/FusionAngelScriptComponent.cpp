@@ -33,7 +33,6 @@
 #include "FusionEntityManager.h"
 
 #include "scriptany.h"
-#include <tbb/tick_count.h>
 
 #include <StringCompressor.h>
 
@@ -385,6 +384,8 @@ namespace FusionEngine
 		if (referenceHolder->IsSyncedEntity() && entityReferenced->IsSyncedEntity())
 		{
 			uint32_t token = activeScript->GetParent()->GetManager()->StoreReference(referenceHolder->GetID(), entityReferenced->GetID());
+			if (token == 0)
+				asGetActiveContext()->SetException("Failed to create a synced entity pointer: no more pointer-IDs are available");
 			return token;
 		}
 		else

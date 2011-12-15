@@ -37,7 +37,6 @@
 namespace FusionEngine
 {
 
-	// TODO: put this in FusionTypes or whatever
 	typedef uint32_t Tick_t;
 	
 	//! Global access to pacing data

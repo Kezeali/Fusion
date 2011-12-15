@@ -897,13 +897,6 @@ public:
 						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
 					}
 
-					//if (int(rand() / (float)RAND_MAX * 16) == 15)
-					//{
-					//	auto sleeptime = int(rand() / (float)RAND_MAX * 31);
-					//	if (sleeptime > 22)
-					//		CL_System::pause(sleeptime);
-					//}
-
 					// Propagate property changes
 					// TODO: throw if properties are changed during Rendering step?
 					PropChangedQueue::value_type changed;
@@ -917,11 +910,11 @@ public:
 						}
 					}
 
-					Profiling::getSingleton().AddTime("Buffer size", (unsigned long)0);
-					Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)0);
-					Profiling::getSingleton().AddTime("Packets Processed", (unsigned long)0);
+					Profiling::getSingleton().AddTime("~Buffer size", 0.0);
+					Profiling::getSingleton().AddTime("~Incomming Packets", 0.0);
+					Profiling::getSingleton().AddTime("~Packets Processed", 0.0);
 					
-					profiling->AddTime("ActualDT", (unsigned long)delta);
+					profiling->AddTime("ActualDT", delta);
 					// Record profiling data
 					profiling->StoreTick();
 

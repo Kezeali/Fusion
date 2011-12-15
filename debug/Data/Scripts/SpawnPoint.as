@@ -96,7 +96,7 @@ class SpawnPoint : ScriptComponent
 			
 			@entityA = 
 			createPlayerEntity(itransform.Position, 1);
-			createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
+			EntityWrapper@ entityB = createPlayerEntity(itransform.Position.value + Vector(0.5f, 0.f), 2);
 			
 			Vector pos = itransform.Position;
 			for (uint i = 0; i < 50; ++i)
@@ -113,7 +113,11 @@ class SpawnPoint : ScriptComponent
 			if (entityA !is null)
 			{
 				entityA.script_b.speed = 3.0f;
-				entityA.script_b.foo = 2;
+			}
+			
+			if (entityB !is null)
+			{
+				entityB.script_b.speed = 3.0f;
 			}
 			
 			isprite.ImagePath = "";

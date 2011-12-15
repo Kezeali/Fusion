@@ -90,32 +90,6 @@ namespace FusionEngine
 	{
 		m_PrimaryThreadID = tbb::this_tbb_thread::get_id();
 
-		//m_Quit = false;
-		//m_uRequestedNumberOfThreads = Singletons::EnvironmentManager.Variables().GetAsInt( "TaskManager::Threads", 0 );
-		//if( m_uRequestedNumberOfThreads == 0 )
-		//{
-		//	// IMPLEMENTATION NOTE
-		//	// The audio thread (which Thread Profiler shows as constantly working) 
-		//	// has no negative impact on the performance when it causes apparent 
-		//	// oversubscription. Shrinking the pool to avoid this apparent oversubscription
-		//	// results in smaller FPS. So this is probably one of the cases when TP
-		//	// misinterprets the behavior of threads created by some of the Windows 
-		//	// subsystems (DirectX is historically its weak place).
-		//	//
-		//	m_uRequestedNumberOfThreads = tbb::task_scheduler_init::default_num_threads();
-		//}
-
-		//m_uMaxNumberOfThreads = 0;
-		//m_uNumberOfThreads = 0;
-		//m_uTargetNumberOfThreads = 0;
-
-		//m_pStallPoolParent = NULL;
-		//m_hStallPoolSemaphore = CreateSemaphore( NULL, 0, m_uRequestedNumberOfThreads, NULL );
-
-		//m_uMaxNumberOfThreads = m_uRequestedNumberOfThreads;
-		//m_uTargetNumberOfThreads = m_uRequestedNumberOfThreads;
-		//m_uNumberOfThreads = m_uRequestedNumberOfThreads;
-
 		SynchronisedTask::m_CallbacksRemainingToCall = 0;
 
 		m_NumberOfThreads = tbb::task_scheduler_init::default_num_threads();
@@ -132,22 +106,11 @@ namespace FusionEngine
 
 	TaskManager::~TaskManager()
 	{
-		// get the callback thread to exit
-		//m_Quit = True;
-
-		// trigger the release of the stall pool
-		//ReleaseSemaphore( m_hStallPoolSemaphore, m_uMaxNumberOfThreads, NULL );
-
 		NonStandardPerThreadCallback([](){ asThreadCleanup(); });
 
 		m_SystemTasksRoot->destroy( *m_SystemTasksRoot );
 
 		delete m_TbbScheduler;
-
-		// now get rid of all the events
-		//CloseHandle( m_hStallPoolSemaphore );
-		//m_hStallPoolSemaphore = NULL;
-		//CloseHandle( SynchronizeTask::m_hAllCallbacksInvokedEvent );
 	}
 
 	class FunctorTask : public tbb::task
@@ -291,7 +254,7 @@ namespace FusionEngine
 				auto systemTask = MakeFunctionTask(m_SystemTasksRoot, [task, delta]()
 				{
 					//FSN_ASSERT(task->GetSystemWorld() && task->GetSystemWorld()->GetSystem(), "Invalid task");
-					Profiler p(task->GetName());
+					FSN_PROFILE(task->GetName());
 					task->Update(delta);
 				});
 				FSN_ASSERT(systemTask != nullptr);
@@ -329,7 +292,7 @@ namespace FusionEngine
 			// We are, so execute it now on the primary thread
 			//__ITT_EVENT_START( GetSupportForSystemTask( *it ).m_tpeSystemTask, PROFILE_TASKMANAGER );
 
-			Profiler p((*it)->GetSystemWorld()->GetSystem()->GetName());
+			FSN_PROFILE((*it)->GetSystemWorld()->GetSystem()->GetName());
 
 			(*it)->Update(m_DeltaTime);
 

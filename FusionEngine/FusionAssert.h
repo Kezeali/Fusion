@@ -30,8 +30,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef H_FusionEngine_Assert
-#define H_FusionEngine_Assert
+#ifndef H_FusionAssert
+#define H_FusionAssert
 
 namespace FusionEngine { namespace Assert
 {
@@ -107,11 +107,5 @@ namespace FusionEngine { namespace Assert
 	#define FSN_VERIFY_MSG(cond, msg, ...) \
 		do { (void)(cond); FSN_UNUSED(msg); } while(0)
 #endif
-
-#define FSN_STATIC_ASSERT(x) \
-	typedef char fsnStaticAssert[(x) ? 1 : -1];
-
-//lint -esym(751,pow2StaticAssert)
-//lint -esym(751,pow2::pow2StaticAssert)
 
 #endif

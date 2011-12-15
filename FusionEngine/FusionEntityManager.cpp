@@ -59,6 +59,9 @@
 #include <tbb/concurrent_vector.h>
 #include <tbb/concurrent_unordered_map.h>
 
+#include <ClanLib/database.h>
+#include <ClanLib/sqlite.h>
+
 using namespace std::placeholders;
 using namespace RakNet;
 
@@ -706,7 +709,7 @@ namespace FusionEngine
 	{
 		auto bitStream = std::make_shared<RakNet::BitStream>(packet->data, packet->length, true);
 
-		Profiling::getSingleton().AddTime("Incomming Packets", (unsigned long)1);
+		Profiling::getSingleton().AddTime("~Incomming Packets", 1.0);
 
 		if (m_UseJitterBuffer)
 		{
@@ -751,7 +754,7 @@ namespace FusionEngine
 	{
 		//bitStream.IgnoreBytes(sizeof(unsigned char) + sizeof(RakNet::Time));
 
-		Profiling::getSingleton().AddTime("Packets Processed", (unsigned long)1);
+		Profiling::getSingleton().AddTime("~Packets Processed", 1.0);
 
 		unsigned char type;
 		bitStream.Read(type);
@@ -883,7 +886,7 @@ namespace FusionEngine
 
 				unsigned int numTicksToProcess = 1;
 
-				Profiling::getSingleton().AddTime("Buffer size", (unsigned long)jitterBuffer.size());
+				Profiling::getSingleton().AddTime("~Buffer size", (double)jitterBuffer.size());
 
 				auto bufferLength = sendDt * (jitterBuffer.back().tick - firstTickToProcess);
 				if ((jitterBufferState.filling && bufferLength < m_JitterBufferTargetLength) || bufferLength < m_JitterBufferTargetLength * 0.5)

@@ -34,9 +34,23 @@
 
 #include "FusionSingleton.h"
 
-// TODO: For profiler: (could be in another header)
+#include "FusionAssert.h"
+
+
+#ifdef FSN_TBB_AVAILABLE
+// Comment this out to use boost cpu_timer rather than tbb::tick_count (they both use perf. timer in windows)
+#define FSN_PROFILER_USE_TBB_TIMER
+
+#ifdef FSN_PROFILER_USE_TBB_TIMER
 #include <tbb/tick_count.h>
+#endif
 #include <tbb/concurrent_queue.h>
+#else // TBB not available
+#include <boost/thread/mutex.hpp>
+#endif
+#ifndef FSN_PROFILER_USE_TBB_TIMER
+#include <boost/timer/timer.hpp>
+#endif
 
 namespace FusionEngine
 {
@@ -54,18 +68,23 @@ namespace FusionEngine
 		~Profiling();
 
 		void AddTime(const std::string& label, double seconds);
-		void AddTime(const std::string& label, unsigned long miliseconds);
+		void AddTime(const std::string& label, uint32_t miliseconds);
 
 		//! Returns the accumulated time recoreded under the given label during the last tick
-		unsigned long GetTime(const std::string& label) const;
+		double GetTime(const std::string& label) const;
 		//! Returns the accumulated times recorded during the last tick
-		std::map<std::string, unsigned long> GetTimes() const;
+		std::map<std::string, double> GetTimes() const;
 
 		void StoreTick();
 
 	private:
-		std::map<std::string, unsigned long> m_TimesLastTick;
-		tbb::concurrent_queue<std::pair<std::string, unsigned long>> m_IncomingTimes;
+		std::map<std::string, double> m_TimesLastTick;
+#ifdef FSN_TBB_AVAILABLE
+		tbb::concurrent_queue<std::pair<std::string, double>> m_IncomingTimes;
+#else
+		std::deque<std::pair<std::string, double>> m_IncomingTimes;
+		boost::mutex m_Mutex;
+#endif
 	};
 
 	//! Scoped timer
@@ -76,9 +95,19 @@ namespace FusionEngine
 		~Profiler();
 
 	private:
+#ifdef FSN_PROFILER_USE_TBB_TIMER
 		tbb::tick_count m_Start;
+#else
+		boost::timer::cpu_timer m_Timer;
+#endif
 		std::string m_Label;
 	};
+
+#ifdef FSN_PROFILING_ENABLED
+#define FSN_PROFILE(name) Profiler scoped_profiler_(name);
+#else
+	#define FSN_PROFILE(name) FSN_UNUSED(name);
+#endif
 
 }
 

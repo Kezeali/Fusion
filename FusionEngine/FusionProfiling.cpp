@@ -29,8 +29,6 @@
 
 #include "FusionProfiling.h"
 
-#include <tbb/tick_count.h>
-
 namespace FusionEngine
 {
 
@@ -44,20 +42,25 @@ namespace FusionEngine
 
 	void Profiling::AddTime(const std::string& label, double seconds)
 	{
-		AddTime(label, unsigned long(seconds * 1000));
+#ifdef FSN_TBB_AVAILABLE
+		m_IncomingTimes.push(std::make_pair(label, seconds));
+#else
+		boost::mutex::scoped_lock lock(m_Mutex);
+		m_IncomingTimes.push_back(std::make_pair(label, seconds));
+#endif
 	}
 
-	void Profiling::AddTime(const std::string& label, unsigned long miliseconds)
+	void Profiling::AddTime(const std::string& label, uint32_t miliseconds)
 	{
-		m_IncomingTimes.push(std::make_pair(label, miliseconds));
+		AddTime(label, double(miliseconds) * 0.001);
 	}
 
-	unsigned long Profiling::GetTime(const std::string& label) const
+	double Profiling::GetTime(const std::string& label) const
 	{
 		return m_TimesLastTick.at(label);
 	}
 
-	std::map<std::string, unsigned long> Profiling::GetTimes() const
+	std::map<std::string, double> Profiling::GetTimes() const
 	{
 		return m_TimesLastTick;
 	}
@@ -66,9 +69,17 @@ namespace FusionEngine
 	{
 		m_TimesLastTick.clear();
 
-		std::pair<std::string, unsigned long> entry;
+		std::pair<std::string, double> entry;
+#ifdef FSN_TBB_AVAILABLE
 		while (m_IncomingTimes.try_pop(entry))
 		{
+#else
+		boost::mutex::scoped_lock lock(m_Mutex);
+		while (!m_IncomingTimes.empty())
+		{
+			entry = m_IncomingTimes.front();
+			m_IncomingTimes.pop_front();
+#endif
 			auto result = m_TimesLastTick.insert(entry);
 			if (!result.second) // Add time to existing labels:
 				result.first->second += entry.second;
@@ -76,15 +87,22 @@ namespace FusionEngine
 	}
 
 	Profiler::Profiler(const std::string& label)
-		: m_Label(label),
-		m_Start(tbb::tick_count::now())
+		: m_Label(label)
+#ifdef FSN_PROFILER_USE_TBB_TIMER
+		, m_Start(tbb::tick_count::now())
+#endif
 	{
 	}
 
 	Profiler::~Profiler()
 	{
+#ifdef FSN_PROFILER_USE_TBB_TIMER
 		auto doneTime = tbb::tick_count::now() - m_Start;
 		Profiling::getSingleton().AddTime(m_Label, doneTime.seconds());
+#else
+		boost::timer::nanosecond_type nanoseconds = m_Timer.elapsed().wall;
+		Profiling::getSingleton().AddTime(m_Label, double(nanoseconds * 0.000000001));
+#endif
 	}
 
 }

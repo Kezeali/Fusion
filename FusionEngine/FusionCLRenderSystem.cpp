@@ -381,7 +381,7 @@ namespace FusionEngine
 			std::string debug_text = "Frames Skipped: " + str.str();
 			str.str("");
 			str << DeltaTime::GetDeltaTime();
-			debug_text += "\nDT: " + str.str();
+			debug_text += "\nDT: " + str.str() + "sec";
 			str.str("");
 			str << viewports.size();
 			debug_text += "\nViewports: " + str.str();
@@ -403,9 +403,20 @@ namespace FusionEngine
 		CL_Pointf pfLoc(10.f, 110.f);
 		for (auto it = pf.begin(), end = pf.end(); it != end; ++it)
 		{
-			std::stringstream str;
-			str << it->second;
-			std::string line = it->first + ": " + str.str() + "ms";
+			std::stringstream secStr, percentStr;
+			secStr.setf(std::ios::fixed);
+			secStr.precision(5);
+			percentStr.precision(3);
+
+			secStr << it->second;
+			std::string line = it->first + ": " + secStr.str() + "sec";
+
+			if (it->second > 0.0 && DeltaTime::GetDeltaTime() > 0.f)
+			{
+				percentStr << (it->second / DeltaTime::GetDeltaTime()) * 100.f;
+				line += " (" + percentStr.str() + "%)";
+			}
+
 			m_DebugFont.draw_text(gc, pfLoc, line);
 
 			pfLoc.y += m_DebugFont.get_text_size(gc, line).height;
