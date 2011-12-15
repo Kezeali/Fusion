@@ -752,5 +752,8 @@
     <ClInclude Include="..\FusionEngine\FusionRegionCellCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionSaveDataArchive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

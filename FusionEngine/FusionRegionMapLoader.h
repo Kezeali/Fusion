@@ -46,13 +46,9 @@
 #include "FusionCellDataSource.h"
 #include "FusionGameMapLoader.h"
 #include "FusionPhysFSIOStream.h"
+#include "FusionSaveDataArchive.h"
+// Only used for ICellStream; TODO: remove
 #include "FusionEntitySerialisationUtils.h"
-
-#include <boost/dynamic_bitset.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
-#include <boost/iostreams/device/array.hpp>
 
 #include "FusionHashable.h"
 
@@ -66,12 +62,9 @@ namespace FusionEngine
 
 	class RegionCellCache;
 
-	typedef boost::iostreams::filtering_istream RegionIStream;
-	typedef boost::iostreams::filtering_ostream RegionOStream;
-
 	//! CellArchiver implementaion
 	// TODO: rename to RegionCellArchivist
-	class RegionMapLoader : public CellDataSource
+	class RegionMapLoader : public CellDataSource, public SaveDataArchive
 	{
 	public:
 		typedef Vector2T<int32_t> CellCoord_t;
@@ -159,7 +152,7 @@ namespace FusionEngine
 		size_t GetDataBegin() const;
 		size_t GetDataEnd() const;
 
-		EntityPtr Load(ICellStream& file, bool includes_id, ObjectID id);
+		EntityPtr LoadEntity(ICellStream& file, bool includes_id, ObjectID id);
 
 		size_t LoadEntitiesFromCellData(const CellCoord_t& coord, Cell* cell, ICellStream& file, bool data_includes_ids);
 
@@ -202,14 +195,15 @@ private:
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 
 		
-#ifdef FSN_NO_TBB_CONCURRENT
+		// TODO: implement the no-tbb version
+#ifdef FSN_TBB_AVAILABLE
+		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
+		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
+#else
 		boost::mutex m_WriteQueueMutex;
 		boost::mutex m_ReadQueueMutex;
 		typedef std::queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
 		typedef std::queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
-#else
-		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
-		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
 #endif
 		WriteQueue_t m_WriteQueue;
 		ReadQueue_t m_ReadQueue;

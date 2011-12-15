@@ -43,6 +43,11 @@
 #include "FusionBinaryStream.h"
 
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/device/array.hpp>
+
 #include <numeric>
 
 #if _MSC_VER > 1000
@@ -455,13 +460,16 @@ namespace FusionEngine
 		auto filePath = savePath;
 		filePath /= (filename + ".dat");
 
-		io::file_descriptor_source file(filePath.generic_string(), std::ios::in | std::ios::binary);
-		if (file.is_open())
+		if (bfs::exists(filePath))
 		{
-			auto stream = std::unique_ptr<io::filtering_istream>(new io::filtering_istream());
-			stream->push(io::zlib_decompressor());
-			stream->push(file);
-			return std::move(stream);
+			io::file_descriptor_source file(filePath.generic_string(), std::ios::in | std::ios::binary);
+			if (file.is_open())
+			{
+				auto stream = std::unique_ptr<io::filtering_istream>(new io::filtering_istream());
+				stream->push(io::zlib_decompressor());
+				stream->push(file);
+				return std::move(stream);
+			}
 		}
 		return std::unique_ptr<io::filtering_istream>();
 	}
@@ -482,7 +490,7 @@ namespace FusionEngine
 			FSN_EXCEPT(InvalidArgumentException, "This function is only available in edit mode");
 	}
 
-	EntityPtr RegionMapLoader::Load(ICellStream& file, bool includes_id, ObjectID id)
+	EntityPtr RegionMapLoader::LoadEntity(ICellStream& file, bool includes_id, ObjectID id)
 	{
 		return EntitySerialisationUtils::LoadEntity(file, includes_id, id, m_Instantiator->m_Factory, m_Instantiator->m_EntityManager, m_Instantiator);
 	}
@@ -514,7 +522,7 @@ namespace FusionEngine
 		for (size_t n = 0; n < numEntries; ++n)
 		{
 			//auto& archivedEntity = *it;
-			auto archivedEntity = Load(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0);
+			auto archivedEntity = LoadEntity(file, false/*data_includes_ids*/, data_includes_ids ? idIndex[n] : 0);
 
 			Vector2 pos = archivedEntity->GetPosition();
 			// TODO: Cell::Add(entity, CellEntry = def) rather than this bullshit

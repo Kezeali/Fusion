@@ -470,7 +470,7 @@ public:
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get(), streamingMgr.get()));
 				
-				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get()));
+				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), cellArchivist.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
 				try
@@ -797,6 +797,8 @@ public:
 									entityManager->SaveActiveEntities(*file);
 								if (auto file = cellArchivist->CreateDataFile("non_streaming_entities"))
 									entityManager->SaveNonStreamingEntities(*file);
+
+								entityManager->SaveCurrentReferenceData();
 								
 								cellArchivist->EnqueueQuickSave("quicksave");
 							}

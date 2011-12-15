@@ -49,13 +49,15 @@
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/member.hpp>
-//#include <boost/bimap.hpp>
 
 namespace FusionEngine
 {
 
 	class ISystemWorld;
+
+	class SaveDataArchive;
 
 	enum DomainState
 	{
@@ -89,7 +91,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming);
+		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, SaveDataArchive* data_archive);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -108,6 +110,8 @@ namespace FusionEngine
 
 		void SaveNonStreamingEntities(std::ostream& stream);
 		void LoadNonStreamingEntities(std::istream& stream, InstancingSynchroniser* instantiator);
+		//! Saves data used to restore pointers between entities
+		void SaveCurrentReferenceData();
 
 		//! Makes all the entity IDs sequential (so there are no gaps)
 		void CompressIDs();
@@ -239,6 +243,12 @@ namespace FusionEngine
 		PropChangedQueue m_PropChangedQueue;
 
 	protected:
+		//! Saves the currently loaded reference range
+		void saveReferenceData();
+		void dumpOldReferenceData();
+		//! Makes sure the reference data for the given token is loaded
+		bool aquireReferenceData(uint32_t for_token);
+
 		//! Updates the entities that have been added to the active-entities list
 		void updateEntities(EntityArray &entities, float split);
 
@@ -284,8 +294,9 @@ namespace FusionEngine
 		// All pseudo-entities
 		//EntitySet m_PseudoEntities;
 
+		SaveDataArchive* m_SaveDataArchive;
+
 		tbb::spin_rw_mutex m_StoredReferencesMutex;
-		//typedef std::tuple<uint32_t, ObjectID, ObjectID> StoredReference;
 		struct StoredReference
 		{
 			uint32_t token;
@@ -300,8 +311,9 @@ namespace FusionEngine
 			boost::multi_index::ordered_non_unique<boost::multi_index::member<StoredReference, ObjectID, &StoredReference::to>> // to
 			>> StoredReferences_t;
 		StoredReferences_t m_StoredReferences;
-		IDSet<uint32_t> m_ReferenceTokens; // TODO: make IDSet (or similar class) threadsafe
+		IDBitset<uint32_t> m_ReferenceTokens; // TODO: make IDSet (or similar class) threadsafe
 		tbb::spin_rw_mutex m_ReferenceTokensMutex;
+		std::pair<uint32_t, uint32_t> m_LoadedReferenceRange;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
 		tbb::concurrent_queue<EntityPtr> m_NewEntitiesToActivate;

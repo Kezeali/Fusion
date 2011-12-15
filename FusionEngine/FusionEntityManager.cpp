@@ -47,6 +47,7 @@
 #include "FusionPlayerRegistry.h"
 #include "FusionRakNetwork.h"
 #include "FusionRenderer.h"
+#include "FusionSaveDataArchive.h"
 #include "FusionScriptTypeRegistrationUtils.h"
 // For script registration (the script method EntityManager::instance() returns a script object)
 #include "FusionScriptedEntity.h"
@@ -58,9 +59,6 @@
 #include <tbb/parallel_do.h>
 #include <tbb/concurrent_vector.h>
 #include <tbb/concurrent_unordered_map.h>
-
-#include <ClanLib/database.h>
-#include <ClanLib/sqlite.h>
 
 using namespace std::placeholders;
 using namespace RakNet;
@@ -979,10 +977,11 @@ namespace FusionEngine
 
 	// TODO: set domain modes (and / or replace domains with mode flags in entities?)
 
-	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming)
+	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, SaveDataArchive* data_archive)
 		: m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_StreamingManager(streaming),
+		m_SaveDataArchive(data_archive),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
 		m_EntitiesLocked(false),
@@ -1032,16 +1031,6 @@ namespace FusionEngine
 		}
 		// Make sure everything was written
 		FSN_ASSERT(num == 0);
-
-		// TODO: store references in a DB
-		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-		writer.Write(static_cast<size_t>(m_StoredReferences.size()));
-		for (auto it = m_StoredReferences.begin(), end = m_StoredReferences.end(); it != end; ++it)
-		{
-			writer.Write(it->token);
-			writer.Write(it->from);
-			writer.Write(it->to);
-		}
 	}
 
 	void EntityManager::LoadActiveEntities(std::istream& stream)
@@ -1065,21 +1054,6 @@ namespace FusionEngine
 		for (auto it = activeIds.begin(), end = activeIds.end(); it != end; ++it)
 		{
 			m_StreamingManager->ActivateEntity(*it);
-		}
-
-		tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
-		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-		StoredReference r;
-		reader.Read(num);
-		for (size_t i = 0; i < num; ++i)
-		{
-			reader.Read(r.token);
-			reader.Read(r.from);
-			reader.Read(r.to);
-
-			m_StoredReferences.insert(r);
-
-			m_ReferenceTokens.takeID(r.token);
 		}
 	}
 
@@ -1114,6 +1088,11 @@ namespace FusionEngine
 			entity->SetDomain(SYSTEM_DOMAIN);
 			AddEntity(entity);
 		}
+	}
+
+	void EntityManager::SaveCurrentReferenceData()
+	{
+		saveReferenceData();
 	}
 
 	void EntityManager::CompressIDs()
@@ -1396,6 +1375,11 @@ namespace FusionEngine
 			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
 			m_ReferenceTokens.freeAll();
 		}
+		{
+			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+			m_StoredReferences.clear();
+		}
+		m_LoadedReferenceRange.first = m_LoadedReferenceRange.second = 0;
 
 		m_PropChangedQueue.clear();
 
@@ -1884,14 +1868,6 @@ namespace FusionEngine
 	{
 		FSN_ASSERT(!entity->IsActive());
 
-		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
-		if (entity->IsSyncedEntity())
-			m_Entities.erase(entity->GetID());
-
-		m_EntitiesByName.erase(entity->GetName());
-
-		m_StreamingManager->RemoveEntity(entity);
-
 		if (entity->IsSyncedEntity())
 		{
 			ObjectID id = entity->GetID();
@@ -1901,17 +1877,27 @@ namespace FusionEngine
 			auto& refsFromContainer = m_StoredReferences.get<1>();
 			auto refsFromRemovedEntity = refsFromContainer.equal_range(id);
 			{
-			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
-			for (; refsFromRemovedEntity.first != refsFromRemovedEntity.second; ++refsFromRemovedEntity.first)
-			{
-				m_ReferenceTokens.freeID( refsFromRemovedEntity.first->token );
-			}
+				tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+				for (; refsFromRemovedEntity.first != refsFromRemovedEntity.second; ++refsFromRemovedEntity.first)
+				{
+					m_ReferenceTokens.freeID( refsFromRemovedEntity.first->token );
+				}
 			}
 			refsFromContainer.erase(refsFromRemovedEntity.first, refsFromRemovedEntity.second);
 
 			// Invalidate all references to this entity
 			auto& refsToContainer = m_StoredReferences.get<2>();
 			refsToContainer.erase(id);
+		}
+
+		{
+			tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+			if (entity->IsSyncedEntity())
+				m_Entities.erase(entity->GetID());
+
+			m_EntitiesByName.erase(entity->GetName());
+
+			m_StreamingManager->RemoveEntity(entity);
 		}
 	}
 
@@ -1949,33 +1935,138 @@ namespace FusionEngine
 		}
 	}
 
+	static const uint32_t s_ReferenceDatafileRange = (1 << 16) / 4u;
+	static const size_t s_MaxCachedReferences = (1 << 16) / 2u;
+
+	static std::string fileContainingReferenceToken(uint32_t token)
+	{
+		size_t fileIndex = token / s_ReferenceDatafileRange;
+
+		std::stringstream str;
+		str << fileIndex;
+		return "stored_references" + str.str();
+	}
+
+	void EntityManager::saveReferenceData()
+	{
+		if (m_LoadedReferenceRange.second > 0)
+		{
+			std::string filename = fileContainingReferenceToken(m_LoadedReferenceRange.first);
+
+			auto stream = m_SaveDataArchive->CreateDataFile(filename);
+			IO::Streams::CellStreamWriter writer(stream.get());
+
+			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex, false);
+			writer.Write(static_cast<size_t>(m_StoredReferences.size()));
+			for (auto it = m_StoredReferences.begin(), end = m_StoredReferences.end(); it != end; ++it)
+			{
+				writer.Write(it->token);
+				writer.Write(it->from);
+				writer.Write(it->to);
+			}
+		}
+	}
+
+	void EntityManager::dumpOldReferenceData()
+	{
+	}
+
+	bool EntityManager::aquireReferenceData(uint32_t required_token)
+	{
+		// Load data if the token is out of the loaded range
+		if (required_token < m_LoadedReferenceRange.first || required_token >= m_LoadedReferenceRange.second)
+		{
+			saveReferenceData();
+
+			auto fileIndex = uint32_t(required_token / s_ReferenceDatafileRange);
+
+			m_LoadedReferenceRange.first = fileIndex * s_ReferenceDatafileRange;
+			m_LoadedReferenceRange.second = m_LoadedReferenceRange.first + s_ReferenceDatafileRange;
+
+			std::string filename = fileContainingReferenceToken(required_token);
+
+			auto stream = m_SaveDataArchive->LoadDataFile(filename);
+			if (stream)
+			{
+				IO::Streams::CellStreamReader reader(stream.get());
+
+				tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
+				//m_ReferenceTokens.freeAll();
+				//m_ReferenceTokens.takeAll(m_LoadedReferenceRange.first);
+
+				tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+				m_StoredReferences.clear();
+
+				bool tokenAvailable = true;
+
+				size_t num;
+				reader.Read(num);
+				StoredReference r;
+				for (size_t i = 0; i < num; ++i)
+				{
+					reader.Read(r.token);
+					reader.Read(r.from);
+					reader.Read(r.to);
+
+					m_StoredReferences.insert(r);
+
+					m_ReferenceTokens.takeID(r.token);
+
+					if (r.token == required_token)
+						tokenAvailable = false;
+				}
+				return tokenAvailable;
+			}
+		}
+		return true;
+	}
+
 	uint32_t EntityManager::StoreReference(ObjectID from, ObjectID to)
 	{
 		if (from > 0 && to > 0)
 		{
-			tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
-			StoredReference r;
-			r.from = from;
-			r.to = to;
-			auto token = r.token = m_ReferenceTokens.getFreeID();
+			tbb::spin_rw_mutex::scoped_lock tlock1(m_ReferenceTokensMutex, false);
+			if (m_ReferenceTokens.hasMore())
+			{
+				tlock1.release();
+				StoredReference r;
+				r.from = from;
+				r.to = to;
+				do
+				{
+					tbb::spin_rw_mutex::scoped_lock tlock2(m_ReferenceTokensMutex, false);
+					r.token = m_ReferenceTokens.peekNextID();
+				} while(!aquireReferenceData(r.token)); // aquireReferenceData returns true if the token is valid
 
-			// TODO: the first few bits of the token could be the StoredReferences database-id (to ensure that references
-			//  are being loaded from the same save-game that the manager currently has loaded)
+				if (r.token > 0)
+				{
+					m_ReferenceTokens.takeID(r.token);
 
-			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-			m_StoredReferences.insert(r);
+					// TODO: the first few bits of the token could be the StoredReferences database-id (to ensure that references
+					//  being requested are from the same reference-db that the manager currently has loaded)
 
-			return token;
+					tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+					m_StoredReferences.insert(r);
+
+					return r.token;
+				}
+			}
 		}
-		else
-			return 0;
+
+		return 0;
 	}
 
 	ObjectID EntityManager::RetrieveReference(uint32_t token)
 	{
+		// Make sure the correct range is loaded
+		aquireReferenceData(token);
+
+		// Commented out code is for removing the reference (same as DropReferene() method): I decided not to do this
+		//  because it doesn't fit well with (what seems to be) the simplest implementation of the script class
+		//  "EntityWrapper", which is the primary use for Reference Tokens.
 		//{
-		//tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
-		//m_ReferenceTokens.freeID(token);
+		//	tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+		//	m_ReferenceTokens.freeID(token);
 		//}
 
 		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex, false);
@@ -1993,9 +2084,11 @@ namespace FusionEngine
 
 	void EntityManager::DropReference(uint32_t token)
 	{
+		aquireReferenceData(token);
+
 		{
-		tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
-		m_ReferenceTokens.freeID(token);
+			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+			m_ReferenceTokens.freeID(token);
 		}
 
 		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);

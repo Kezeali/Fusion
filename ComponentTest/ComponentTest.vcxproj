@@ -336,6 +336,7 @@
     <ClInclude Include="..\FusionEngine\FusionProfiling.h" />
     <ClInclude Include="..\FusionEngine\FusionRegionCellCache.h" />
     <ClInclude Include="..\FusionEngine\FusionRegionMapLoader.h" />
+    <ClInclude Include="..\FusionEngine\FusionSaveDataArchive.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptComponent.h" />
     <ClInclude Include="..\FusionEngine\FusionScriptInputEvent.h" />
     <ClInclude Include="..\FusionEngine\FusionStreamingCameraComponent.h" />

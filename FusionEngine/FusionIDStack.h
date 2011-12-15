@@ -34,6 +34,7 @@
 
 #include "FusionCommon.h"
 
+#include <boost/dynamic_bitset.hpp>
 #include <limits>
 
 namespace FusionEngine
@@ -126,7 +127,7 @@ namespace FusionEngine
 		T peekNextID() const
 		{
 			if (m_UnusedIds.empty())
-				return m_NextId+1;
+					return m_NextId;
 			else
 				return *m_UnusedIds.begin();
 		}
@@ -134,7 +135,7 @@ namespace FusionEngine
 		virtual T getFreeID()
 		{
 			if (m_UnusedIds.empty())
-				return m_NextId++;
+					return m_NextId++;
 			else
 			{
 				IDCollectionType::iterator lowest = m_UnusedIds.begin();
@@ -199,6 +200,11 @@ namespace FusionEngine
 		size_t numNotUsed() const
 		{
 			return std::numeric_limits<T>::max() - numUsed();
+		}
+
+		bool hasMore() const
+		{
+			return numUsed() < std::numeric_limits<T>::max();
 		}
 	};
 
@@ -276,18 +282,135 @@ namespace FusionEngine
 		T m_MaxId;
 	};
 
-	//! Template specialization of the default IDSet ctor, to make ObjectID generators start at 1
-	//template <>
-	//IDSet<ObjectID>::IDSet()
-	//	: IDCollection(1)
-	//{}
+	//! Supplies IDs which aren't assigned, starting with the lowest ID available
+	/*!
+	* O(n) (when the ID is in the set, rather than the next id).
+	* Constant time when the id is the next id.
+	*/
+	template <typename T>
+	class IDBitset : public IDCollection<T, boost::dynamic_bitset<>>
+	{
+		typedef boost::dynamic_bitset<> Bitset_t;
+	public:
+		//! Default
+		IDBitset()
+			: IDCollection()
+		{}
+		//! Initialises m_NextId to the given value
+		IDBitset(T first_id)
+			: IDCollection(first_id)
+		{}
+		//! Virtual destructor
+		virtual ~IDBitset()
+		{}
+		//! Returns the next ID that will be returned by getFreeID
+		T peekNextID() const
+		{
+			if (m_UnusedIds.none())
+					return m_NextId;
+			else
+				return m_UnusedIds.find_first();
+		}
+		//! Returns an ID which is not in use
+		virtual T getFreeID()
+		{
+			if (m_UnusedIds.none())
+					return m_NextId++;
+			else
+			{
+				ObjectID id = m_UnusedIds.find_first();
+				m_UnusedIds.reset(id);
+				//if (m_UnusedIds.find_next(id) == Bitset_t::npos)
+				//	m_UnusedIds.resize(id - 1);
+
+				// It's possible for an ID to get freed when it is more than 1 below m_NextId
+				//  then "freed" again with another call to freeID(id) when it is one below m_NextId
+				//  (see the logic in that fn) -> this ensures that m_NextId will be incremented
+				//  if that was the case for the ID just retreived from the set<> (so that the
+				//  next call to this method after the set<> is empty wont return the same ID again)
+				if (id == m_NextId)
+					++m_NextId;
+
+				return id;
+			}
+		}
+		//! Allows the given ID which was previously returned by getFreeID to be returned again
+		virtual void freeID(T id)
+		{
+			if (id == m_NextId-1)
+			{
+				m_UnusedIds.resize(id - 1);
+				m_NextId = id;
+			}
+			else if (id < m_NextId-1)
+			{
+				if (id >= m_UnusedIds.size())
+					m_UnusedIds.resize(id + 1);
+				// record unused ID
+				m_UnusedIds.set(id);
+			}
+		}
+		//! Removes the given ID from the set
+		/*!
+		* \return Returns true if the ID was unused (so it could be taken), false otherwise
+		*/
+		virtual bool takeID(T id)
+		{
+			if (id == m_NextId)
+			{
+				++m_NextId;
+				return true;
+			}
+			else if (id < m_NextId)
+			{
+				if (id < m_UnusedIds.size())
+				{
+					auto& bitRef = m_UnusedIds[id];
+					if (bitRef)
+					{
+						bitRef = false;
+						return true;
+					}
+					else
+						return false;
+				}
+				else
+				{
+					m_UnusedIds.resize(id + 1, false);
+					return true;
+				}
+			}
+			else // the id being taken is after the current index: jump forward to it
+			{
+				m_UnusedIds.resize(id, true);
+				m_NextId = id + 1;
+				return true;
+			}
+		}
+
+		size_t numUsed() const
+		{
+			return m_NextId - m_UnusedIds.size();
+		}
+
+		size_t numNotUsed() const
+		{
+			return std::numeric_limits<T>::max() - numUsed();
+		}
+
+		bool hasMore() const
+		{
+			return numUsed() < std::numeric_limits<T>::max();
+		}
+	};
+
 	//! Supplies ObjectIDs which aren't assigned
-	class ObjectIDSet : public IDSet<ObjectID>
+	class ObjectIDSet : public IDBitset<ObjectID>
 	{
 	public:
 		//! Initialises the first ID to 1 (Entity IDs start at 1)
 		ObjectIDSet()
-			: IDSet(1)
+			: IDBitset(1)
 		{}
 	};
 
