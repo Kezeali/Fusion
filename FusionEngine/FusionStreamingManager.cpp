@@ -221,7 +221,7 @@ namespace FusionEngine
 		if (rWhere != cell->objects.rend())
 			return rWhere.base() - 1;
 		else
-			cell->objects.end();
+			return cell->objects.end();
 	}
 
 	//! Creates an entry for the given Entity in the given cell

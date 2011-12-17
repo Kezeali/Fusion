@@ -532,7 +532,7 @@ public:
 				std::shared_ptr<GameMap> map;
 				if (!editMode && varMap.count("connect") == 0)
 				{
-					map = mapLoader->LoadMap("default.gad", instantiationSynchroniser.get());
+					map = mapLoader->LoadMap("Maps/default.gad", instantiationSynchroniser.get());
 					cellArchivist->SetMap(map);
 
 					streamingMgr->Initialise(map->GetCellSize());
