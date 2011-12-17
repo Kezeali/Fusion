@@ -568,6 +568,8 @@ public:
 							return;
 						auto vp = vps.front();
 
+						srand(CL_System::get_time());
+
 						Vector2 pos((float)ev.mouse_pos.x, (float)ev.mouse_pos.y);
 						CL_Rectf area;
 						Renderer::CalculateScreenArea(gc, area, vp, true);
@@ -575,26 +577,49 @@ public:
 
 						const bool addToScene = !ev.ctrl;
 						unsigned int repeats = 1;
-						const float size = 100.f;
+						float size = 100.f;
 						float rightEdge = 0;
+						float leftEdge = 0;
 						if (ev.shift)
 						{
-							repeats = 50;
-							rightEdge = pos.x + (repeats / 2) * size;
-							pos.x -= (repeats / 2) * size;
-							pos.y -= (repeats / 2) * size;
+							if (ev.alt)
+							{
+								repeats = 50;
+								size = 200.f;
+							}
+							else
+							{
+								repeats = 50;
+							}
+								rightEdge = pos.x + (repeats / 2) * size;
+								pos.x -= (repeats / 2) * size;
+								pos.y -= (repeats / 2) * size;
 						}
+						leftEdge = pos.x;
 						for (unsigned int i = 0; i < repeats * repeats; ++i)
 						{
 							auto entity =
 								createEntity(addToScene, (unsigned int)(ev.id - CL_KEY_0), pos, instantiationSynchroniser.get(), entityFactory.get(), entityManager.get());
 							if (entity && entity->GetDomain() == SYSTEM_DOMAIN)
 								entities.push_back(entity);
-							pos.x += size;
-							if (pos.x > rightEdge)
+							if (ev.alt)
 							{
-								pos.x -= repeats * size;
-								pos.y += size;
+								pos.x += size + (rand() / (float)RAND_MAX) * size * 2;
+								pos.y += ((rand() / (float)RAND_MAX) * size) - (size * 0.5f);
+								if (pos.x > rightEdge)
+								{
+									pos.x = leftEdge - leftEdge * (rand() / RAND_MAX) * 0.5f;
+									pos.y += size + (rand() / (float)RAND_MAX) * size;
+								}
+							}
+							else
+							{
+								pos.x += size;
+								if (pos.x > rightEdge)
+								{
+									pos.x -= repeats * size;
+									pos.y += size;
+								}
 							}
 						}
 					}
@@ -1036,6 +1061,12 @@ public:
 
 		if (add_to_scene)
 			entityManager->AddEntity(entity);
+
+		if (i == 1)
+		{
+			auto transform = entity->GetComponent<ITransform>();
+			transform->Depth.Set(-1);
+		}
 
 		ComponentPtr b2CircleFixture;
 		if (i == 3 || i == 4)

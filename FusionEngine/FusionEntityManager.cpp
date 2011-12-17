@@ -1515,8 +1515,6 @@ namespace FusionEngine
 		//auto playerAddedEvents = m_PlayerAddedEvents;
 		//m_PlayerAddedEvents.clear();
 
-		size_t numRemoved = 0;
-
 		auto newEnd = begin;
 		for (EntityArray::iterator it = begin; it != end; ++it)
 		{
@@ -1540,14 +1538,8 @@ namespace FusionEngine
 
 					entity->RemoveDeactivateMark();
 
-					++numRemoved;
-
 					//--end;
 					//entity.swap(*(end));
-					//++it;
-
-					//it = entityList.erase(it);
-					//end = entityList.end();
 
 					continue;
 				}
@@ -1575,9 +1567,6 @@ namespace FusionEngine
 		// Clear the ToDeleteFlags
 		m_ToDeleteFlags = 0;
 
-		if (numRemoved)
-		SendToConsole(boost::lexical_cast<std::string>(numRemoved));
-		FSN_ASSERT(std::distance(newEnd, end) == numRemoved);
 		return newEnd;
 	}
 
