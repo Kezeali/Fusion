@@ -91,6 +91,7 @@ namespace FusionEngine
 		void MergeSerialisedDelta(const std::string& type, RakNet::BitStream& result, RakNet::BitStream& current_data, RakNet::BitStream& delta);
 
 		void Prepare(const ComponentPtr& component);
+		void CancelPreparation(const ComponentPtr& component);
 		void OnActivation(const ComponentPtr& component);
 		void OnDeactivation(const ComponentPtr& component);
 

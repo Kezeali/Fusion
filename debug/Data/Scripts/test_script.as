@@ -49,7 +49,7 @@ class Test : ScriptComponent
 		ontology.addComponent(newEnt, "b2Circle", "");
 		ontology.addComponent(newEnt, "CLSprite", "");
 		bool script = false;
-		if (rand() < 0.2)
+		if (rand() < 0.2f)
 		{
 			//ontology.addComponent(newEnt, "TestC", "script_c");
 			//script = true;
@@ -63,7 +63,7 @@ class Test : ScriptComponent
 		}
 		//console.println(sprite.getType());
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
-		sprite.BaseAngle = 1.57;
+		sprite.BaseAngle = 1.57f;
 		
 		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
 		
@@ -87,7 +87,7 @@ class Test : ScriptComponent
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
-		sprite.BaseAngle = 1.57;
+		sprite.BaseAngle = 1.57f;
 		
 		EntityWrapper@ wr = EntityWrapper(newEnt);
 		console.println("before setting target");
@@ -104,7 +104,7 @@ class Test : ScriptComponent
 		//console.println("Entity spawned at " + pos.x + "," + pos.y);
 		// One possibility is to remove the addComponent method and just have an instantiate method
 		//  where you can pass some sort of collection
-		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand() * 3.14, 0);
+		Entity newEnt = ontology.instantiate("StaticTransform", false, pos, rand() * 3.14f, 0);
 		ontology.addComponent(newEnt, "CLSprite", "");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
@@ -132,7 +132,7 @@ class Test : ScriptComponent
 		}
 		//console.println(sprite.getType());
 		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
-		sprite.BaseAngle = 1.57;
+		sprite.BaseAngle = 1.57f;
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
 		
@@ -153,7 +153,7 @@ class Test : ScriptComponent
 		console.println("starting " + y);
 		uint hDirtSize = (dirtSize / 2);
 		for (uint x = 0; x < dirtSize; ++x)
-			createDirt(Vector(x * 1.25 - hDirtSize * 1.25, y * 1.25 - hDirtSize * 1.25));
+			createDirt(Vector(x * 1.25f - hDirtSize * 1.25f, y * 1.25f - hDirtSize * 1.25f));
 		console.println("finished " + y);
 	}
 

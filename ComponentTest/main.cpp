@@ -470,7 +470,7 @@ public:
 				std::unique_ptr<EntityFactory> entityFactory(new EntityFactory());
 				std::unique_ptr<EntitySynchroniser> entitySynchroniser(new EntitySynchroniser(inputMgr.get(), cameraSynchroniser.get(), streamingMgr.get()));
 				
-				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), cellArchivist.get()));
+				std::unique_ptr<EntityManager> entityManager(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), entityFactory.get(), cellArchivist.get()));
 				std::unique_ptr<InstancingSynchroniser> instantiationSynchroniser(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
 
 				try
@@ -480,8 +480,6 @@ public:
 				cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
 
 				scriptManager->RegisterGlobalObject("StreamingManager streaming", streamingMgr.get());
-
-				entityManager->m_EntityFactory = entityFactory.get();
 
 				// Component systems
 				const std::unique_ptr<TaskManager> taskManager(new TaskManager());
@@ -819,9 +817,14 @@ public:
 							cellArchivist->Stop();
 							SendToConsole("Loading: Deactivating entities...");
 							entityManager->DeactivateAllEntities(false);
-							SendToConsole("Loading: Clearing entities...");
-							entityManager->Clear();
 							cameraSynchroniser->Clear();
+							SendToConsole("Loading: Clearing entities...");
+							//entityManager.reset(new EntityManager(inputMgr.get(), entitySynchroniser.get(), streamingMgr.get(), entityFactory.get(), cellArchivist.get()));
+							//instantiationSynchroniser.reset(new InstancingSynchroniser(entityFactory.get(), entityManager.get()));
+							//cellArchivist->SetSynchroniser(instantiationSynchroniser.get());
+							//propChangedQueue = entityManager->m_PropChangedQueue;
+							entityManager->Clear();
+							instantiationSynchroniser->Reset();
 							SendToConsole("Loading: Clearing cells...");
 							streamingMgr->Reset();
 							SendToConsole("Loading: Garbage-collecting...");
@@ -836,6 +839,7 @@ public:
 							SendToConsole("Loading: Activating entities...");
 							if (auto file = cellArchivist->LoadDataFile("active_entities"))
 								entityManager->LoadActiveEntities(*file);
+							// TODO: allow the entity manager to pause the simulation until all these entities are active
 						}
 					}
 

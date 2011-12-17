@@ -405,12 +405,12 @@ namespace FusionEngine
 	};
 
 	//! Supplies ObjectIDs which aren't assigned
-	class ObjectIDSet : public IDBitset<ObjectID>
+	class ObjectIDSet : public IDSet<ObjectID>
 	{
 	public:
 		//! Initialises the first ID to 1 (Entity IDs start at 1)
 		ObjectIDSet()
-			: IDBitset(1)
+			: IDSet(1)
 		{}
 	};
 

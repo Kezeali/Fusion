@@ -46,6 +46,7 @@
 #include "FusionViewport.h"
 
 #include <tbb/spin_rw_mutex.h>
+#include <tbb/recursive_mutex.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -91,7 +92,7 @@ namespace FusionEngine
 
 	public:
 		//! Constructor
-		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, SaveDataArchive* data_archive);
+		EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, EntityFactory* component_factory, SaveDataArchive* data_archive);
 		//! Destructor
 		virtual ~EntityManager();
 
@@ -250,7 +251,9 @@ namespace FusionEngine
 		bool aquireReferenceData(uint32_t for_token);
 
 		//! Updates the entities that have been added to the active-entities list
-		void updateEntities(EntityArray &entities, float split);
+		EntityArray::iterator updateEntities(EntityArray::iterator begin, EntityArray::iterator end, float split);
+
+		void updateEntities(EntityArray& entities, float split);
 
 		//! \param real_only Only remove non-pseudo entities (used before loading save-games, for example)
 		void clearEntities(bool synced_only);
@@ -281,9 +284,9 @@ namespace FusionEngine
 		EntitySynchroniser *m_EntitySynchroniser;
 		StreamingManager *m_StreamingManager;
 
-	public:
-		EntityFactory *m_EntityFactory;
 	protected:
+		EntityFactory *m_EntityFactory;
+
 		mutable tbb::spin_rw_mutex m_EntityListsMutex;
 
 		// Used to quickly find entities by name (all entities, pseudo/non-pseudo are listed here)
@@ -296,7 +299,8 @@ namespace FusionEngine
 
 		SaveDataArchive* m_SaveDataArchive;
 
-		tbb::spin_rw_mutex m_StoredReferencesMutex;
+		typedef tbb::spin_rw_mutex StoredReferencesMutex_t;
+		StoredReferencesMutex_t m_StoredReferencesMutex;
 		struct StoredReference
 		{
 			uint32_t token;
@@ -312,7 +316,8 @@ namespace FusionEngine
 			>> StoredReferences_t;
 		StoredReferences_t m_StoredReferences;
 		IDBitset<uint32_t> m_ReferenceTokens; // TODO: make IDSet (or similar class) threadsafe
-		tbb::spin_rw_mutex m_ReferenceTokensMutex;
+		typedef tbb::recursive_mutex ReferenceTokensMutex_t;
+		ReferenceTokensMutex_t m_ReferenceTokensMutex;
 		std::pair<uint32_t, uint32_t> m_LoadedReferenceRange;
 
 		tbb::concurrent_queue<std::pair<EntityPtr, ComponentPtr>> m_ComponentsToAdd;
@@ -325,10 +330,12 @@ namespace FusionEngine
 		tbb::concurrent_queue<EntityPtr> m_EntitiesToRemove;
 		EntityArray m_ActiveEntities;
 
+		typedef tbb::spin_rw_mutex ActiveEntitiesMutex_t;
+		ActiveEntitiesMutex_t m_ActiveEntitiesMutex;
+
 		// Active status of each domain
 		char m_DomainState[s_EntityDomainCount];
 
-		bool m_EntitiesLocked;
 		bool m_ClearWhenAble;
 
 		std::list<std::pair<unsigned int, PlayerID>> m_PlayerAddedEvents;

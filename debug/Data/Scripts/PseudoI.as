@@ -59,10 +59,10 @@ class PseudoI : ScriptComponent
 			//entity.itransform.Angle = atan2(myVel.x, myVel.y);
 		}
 		
-		float angleDiff = wrap(target_angle - entity.itransform.Angle.value, 0.0f, 2 * 3.14);
-		if (angleDiff >= 3.14)
-			angleDiff -= 6.28;
-		const float normAngle = angleDiff / 2 * 3.14;
+		float angleDiff = wrap(target_angle - entity.itransform.Angle.value, 0.0f, 2 * 3.14f);
+		if (angleDiff >= 3.14f)
+			angleDiff -= 6.28f;
+		const float normAngle = angleDiff / 2 * 3.14f;
 		if (angleDiff < -0.01f)
 		{
 			entity.irigidbody.AngularVelocity = normAngle * 2.0f;

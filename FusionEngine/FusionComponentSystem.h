@@ -120,6 +120,12 @@ namespace FusionEngine
 
 		//! Allows a system to prevent an entity from activating until all required resources are loaded
 		virtual void Prepare(const ComponentPtr& component) { component->MarkReady(); }
+		//! Cancel preperation & drop any references to the given component
+		virtual void CancelPreparation(const ComponentPtr& component)
+		{
+			if (component->IsPreparing())
+				FSN_EXCEPT(NotImplementedException, "CancelPreparation() isn't implemented by " + GetSystem()->GetName());
+		}
 		//! Called when a component is activated
 		virtual void OnActivation(const ComponentPtr& component) = 0;
 		//! component.use_count() should be decremented by at least 1 when this function returns. This is checked with an assertion in the world manager.

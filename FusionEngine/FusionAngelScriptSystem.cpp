@@ -509,10 +509,10 @@ namespace FusionEngine
 			{
 				scriptComponentInterface +=
 					type + " get_" + identifier + "() const { "
-					+ "Entity value; "
+					+ "EntityW value; "
 					"any propAny = app_obj.getProperty(" + propIndex + "); "
 					"propAny.retrieve(value); "
-					"return EntityWrapper(value); }\n"
+					"return EntityWrapper(value.lock()); }\n"
 
 					"void set_" + identifier + "(" + type + " value) { "
 					"app_obj.setProperty(" + propIndex + ", value.getRaw());"
@@ -550,7 +550,7 @@ namespace FusionEngine
 
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return " + interfaceName + "(cast<ASScript>(getRaw().getComponent('IScript','" + it->second + "').get()));"
+						"return " + interfaceName + "(cast<ASScript>(getLocked().getComponent('IScript','" + it->second + "').get()));"
 						"}\n";
 
 					scriptComponentInterfaces.push_back(_where->second);
@@ -563,7 +563,7 @@ namespace FusionEngine
 						"}\n";
 					convenientEntityProperties +=
 						interfaceName + "@ get_" + convenientIdentifier + "() {\n"
-						"return cast<" + interfaceName + ">((getRaw().getComponent('" + interfaceName + "','" + it->second + "')).get());"
+						"return cast<" + interfaceName + ">((getLocked().getComponent('" + interfaceName + "','" + it->second + "')).get());"
 						"}\n";
 				}
 			}
@@ -594,7 +594,8 @@ namespace FusionEngine
 			"private EntityW app_obj;\n"
 			"private EntityW owner;\n"
 			"private uint32 pointer_id;\n"
-			"Entity getRaw() const { return app_obj.lock(); }\n"
+			"EntityW getRaw() const { return app_obj; }\n"
+			"Entity getLocked() const { return app_obj.lock(); }\n"
 			//"Input@ input;\n"
 			"Input@ get_input() { return Input(app_obj.lock()); }\n"
 			"\n" +
@@ -764,6 +765,22 @@ namespace FusionEngine
 				scriptComponent->MarkReady();
 			else
 				m_NewlyActiveScripts.push_back(scriptComponent);
+		}
+	}
+
+	void AngelScriptWorld::CancelPreparation(const ComponentPtr& component)
+	{
+		auto scriptComponent = boost::dynamic_pointer_cast<ASScript>(component);
+		if (scriptComponent)
+		{
+			// Find and remove the deactivated script
+			{
+				auto _where = std::find(m_NewlyActiveScripts.begin(), m_NewlyActiveScripts.end(), scriptComponent);
+				if (_where != m_NewlyActiveScripts.end())
+				{
+					m_NewlyActiveScripts.erase(_where);
+				}
+			}
 		}
 	}
 

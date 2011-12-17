@@ -375,25 +375,35 @@ namespace FusionEngine
 
 	static uint32_t InitEntityPtr(std::weak_ptr<Entity>& owner, EntityPtr& entityReferenced)
 	{
-		auto activeScript = ASScript::GetActiveScript(); FSN_ASSERT(activeScript); FSN_ASSERT(activeScript->GetParent());
-
-		auto referenceHolder = activeScript->GetParent()->shared_from_this();
-		referenceHolder->HoldReference(entityReferenced);
-		owner = referenceHolder;
-
-		if (referenceHolder->IsSyncedEntity() && entityReferenced->IsSyncedEntity())
+		if (entityReferenced)
 		{
-			uint32_t token = activeScript->GetParent()->GetManager()->StoreReference(referenceHolder->GetID(), entityReferenced->GetID());
-			if (token == 0)
-				asGetActiveContext()->SetException("Failed to create a synced entity pointer: no more pointer-IDs are available");
-			return token;
+			auto activeScript = ASScript::GetActiveScript(); FSN_ASSERT(activeScript); FSN_ASSERT(activeScript->GetParent());
+
+			auto referenceHolder = activeScript->GetParent()->shared_from_this();
+			referenceHolder->HoldReference(entityReferenced);
+			owner = referenceHolder;
+
+			if (referenceHolder->IsSyncedEntity() && entityReferenced->IsSyncedEntity())
+			{
+				if (referenceHolder->GetID() == entityReferenced->GetID())
+				{
+					return std::numeric_limits<uint32_t>::max();
+				}
+				else
+				{
+					uint32_t token = activeScript->GetParent()->GetManager()->StoreReference(referenceHolder->GetID(), entityReferenced->GetID());
+					if (token == 0)
+						asGetActiveContext()->SetException("Failed to create a synced entity pointer: no more pointer-IDs are available");
+					return token;
+				}
+			}
 		}
-		else
-			return 0;
+		return 0;
 	}
 
 	static void DeinitEntityPtr(std::weak_ptr<Entity>& referenceHolder, uint32_t token, EntityPtr& entityReferenced)
 	{
+		if (token != std::numeric_limits<uint32_t>::max())
 		if (auto locked = referenceHolder.lock())
 		{
 			locked->DropReference(entityReferenced);
@@ -454,6 +464,7 @@ namespace FusionEngine
 
 	ASScript::~ASScript()
 	{
+		m_ModuleLoadedConnection.disconnect();
 	}
 
 	boost::intrusive_ptr<asIScriptContext> ASScript::PrepareMethod(ScriptManager* script_manager, const std::string& decl)
@@ -653,10 +664,10 @@ namespace FusionEngine
 		}
 	}
 
-	void getWrappedEntity(EntityPtr*& out, asIScriptObject* entityWrapper)
+	void getWrappedEntity(std::weak_ptr<Entity>*& out, asIScriptObject* entityWrapper)
 	{
 		FSN_ASSERT(std::string(entityWrapper->GetPropertyName(0)) == "app_obj");
-		out = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+		out = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(0));
 	}
 
 	CScriptAny* ASScript::GetProperty(unsigned int index)
@@ -682,11 +693,11 @@ namespace FusionEngine
 			{
 				auto entityWrapper = static_cast<asIScriptObject*>(any->value.valueObj);
 
-				EntityPtr* wrappedEntity = nullptr;
+				std::weak_ptr<Entity>* wrappedEntity = nullptr;
 				getWrappedEntity(wrappedEntity, entityWrapper);
 
-				// TODO: static int Entity::GetTypeId();
-				int entityTypeId = engine->GetTypeIdByDecl("Entity");
+				// TODO: static int Entity::GetTypeId() & GetWptrTypeId;
+				int entityTypeId = engine->GetTypeIdByDecl("EntityW");
 				auto unwrappedAny = new CScriptAny(wrappedEntity, entityTypeId, engine);
 				return unwrappedAny;
 			}
@@ -711,12 +722,12 @@ namespace FusionEngine
 		else
 		{
 			auto engine = m_Module->GetEngine();
-			int entityTypeId = engine->GetTypeIdByDecl("Entity");
+			int entityTypeId = engine->GetTypeIdByDecl("EntityW");
 
 			if (typeId != entityTypeId)
 				return false;
 
-			auto passedObj = static_cast<EntityPtr*>(ref);
+			auto passedObj = static_cast<std::weak_ptr<Entity>*>(ref);
 
 			if (!passedObj)
 				return false;
@@ -729,11 +740,11 @@ namespace FusionEngine
 			asIScriptObject* entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
 
 			FSN_ASSERT(GetParent());
-			GetParent()->HoldReference(*passedObj);
+			GetParent()->HoldReference(passedObj->lock());
 
 			FSN_ASSERT(entityWrapper->GetPropertyTypeId(0) == entityTypeId && entityWrapper->GetPropertyTypeId(1) == engine->GetTypeIdByDecl("EntityW"));
 
-			auto app_obj = static_cast<EntityPtr*>(entityWrapper->GetAddressOfProperty(0));
+			auto app_obj = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(0));
 			*app_obj = *passedObj;
 
 			auto owner = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(1));
@@ -884,17 +895,26 @@ namespace FusionEngine
 			//const std::string& propertyName = std::get<1>(*it);
 			uint32_t pointerId = std::get<1>(*it);
 
-			ObjectID id = entityManager->RetrieveReference(pointerId);
-			if (id != 0)
+			if (pointerId != 0)
 			{
-				auto refedEntity = entityManager->GetEntity(id, m_FirstInit);
-				//auto _where = std::find_if(GetParent()->m_ReferencedEntities.begin(), GetParent()->m_ReferencedEntities.end(), [id](const std::pair<EntityPtr, size_t>& entity)
-				//{
-				//	return entity.first->GetID() == id;
-				//});
+				EntityPtr refedEntity;
+				bool validId = false;
+				if (pointerId < std::numeric_limits<uint32_t>::max())
+				{
+					ObjectID id = entityManager->RetrieveReference(pointerId);
+					if (id != 0)
+					{
+						refedEntity = entityManager->GetEntity(id, m_FirstInit);
+						validId = true;
+					}
+				}
+				else
+				{
+					refedEntity = GetParent()->shared_from_this();
+					validId = true;
+				}
 
-				//if (_where != GetParent()->m_ReferencedEntities.end())
-				if (refedEntity)
+				if (validId && refedEntity)
 				{
 					asIScriptObject* entityWrapper = nullptr;
 

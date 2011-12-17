@@ -197,25 +197,31 @@ namespace FusionEngine
 
 	void Entity::HoldReference(EntityPtr entity)
 	{
-		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
-		auto result = m_ReferencedEntities.insert(std::make_pair(entity, 0u));
-		++(result.first->second);
-		if (result.second && IsActive())
-			entity->AddReference(this->shared_from_this());
+		if (entity)
+		{
+			tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
+			auto result = m_ReferencedEntities.insert(std::make_pair(entity, 0u));
+			++(result.first->second);
+			if (result.second && IsActive())
+				entity->AddReference(this->shared_from_this());
+		}
 	}
 
 	void Entity::DropReference(EntityPtr entity)
 	{
-		tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
-		auto it = m_ReferencedEntities.find(entity);
-		if (it != m_ReferencedEntities.end() && --it->second == 0)
+		if (entity)
 		{
-			m_ReferencedEntities.erase(entity);
+			tbb::spin_rw_mutex::scoped_lock lock(m_OutRefsMutex);
+			auto it = m_ReferencedEntities.find(entity);
+			if (it != m_ReferencedEntities.end() && --it->second == 0)
+			{
+				m_ReferencedEntities.erase(entity);
 
-			lock.release();
+				lock.release();
 
-			if (IsActive())
-				entity->RemoveReference(this->shared_from_this());
+				if (IsActive())
+					entity->RemoveReference(this->shared_from_this());
+			}
 		}
 	}
 
@@ -991,6 +997,11 @@ namespace FusionEngine
 		return !(*obj);
 	}
 
+	static bool Entity_OpEquals(EntityPtr* obj, const EntityPtr& other)
+	{
+		return *obj == other;
+	}
+
 	static PlayerID Entity_GetOwnerID(EntityPtr* obj)
 	{
 		return (*obj)->GetOwnerID();
@@ -1048,6 +1059,9 @@ namespace FusionEngine
 		r = engine->RegisterObjectMethod("Entity",
 			"PlayerID getOwnerID() const",
 			asFUNCTION(Entity_GetOwnerID), asCALL_CDECL_OBJFIRST); FSN_ASSERT(r >= 0);
+
+		r = engine->RegisterObjectMethod("Entity", "bool opEquals(const Entity &in other)",
+			asFUNCTION(Entity_OpEquals), asCALL_CDECL_OBJFIRST); FSN_ASSERT(r >= 0);
 
 		//r = engine->RegisterObjectMethod("Entity",
 		//	"Input@ get_input() const",

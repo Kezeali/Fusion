@@ -195,7 +195,9 @@ namespace FusionEngine
 			auto rEntry = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
 				return pair.first == entity;
 			});
-			cell->objects.erase((++rEntry).base());
+			FSN_ASSERT(rEntry != cell->objects.rend());
+			if (rEntry != cell->objects.rend())
+				cell->objects.erase((++rEntry).base());
 		}
 		else if (!cell->objects.empty())
 			cell->objects.pop_back();
@@ -215,7 +217,11 @@ namespace FusionEngine
 		auto rWhere = std::find_if(cell->objects.rbegin(), cell->objects.rend(), [&](const Cell::EntityEntryPair& pair)->bool {
 			return pair.first == entity;
 		});
-		return (++rWhere).base();
+		FSN_ASSERT(rWhere != cell->objects.rend());
+		if (rWhere != cell->objects.rend())
+			return rWhere.base() - 1;
+		else
+			cell->objects.end();
 	}
 
 	//! Creates an entry for the given Entity in the given cell

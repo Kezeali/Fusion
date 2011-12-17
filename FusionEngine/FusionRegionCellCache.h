@@ -53,12 +53,13 @@ namespace FusionEngine
 	class RegionFile;
 	struct SmartArrayDevice
 	{
-		std::shared_ptr<std::vector<char>> data;
+		typedef std::vector<char> DataArray_t;
+		std::shared_ptr<DataArray_t> data;
 		std::streamsize position;
 
 		SmartArrayDevice()
 			: position(0),
-			data(new std::vector<char>())
+			data(new DataArray_t())
 		{}
 		SmartArrayDevice(const SmartArrayDevice& other)
 			: position(other.position),
@@ -81,7 +82,7 @@ namespace FusionEngine
 
 		//struct impl
 		//{
-		//	std::vector<char> data;
+		//	DataArray_t data;
 		//};
 
 		//std::shared_ptr<impl> pimpl;
@@ -105,8 +106,8 @@ namespace FusionEngine
 		{
 			std::pair<int32_t, int32_t> cellIndex;
 			RegionFile* parent;
-			std::shared_ptr<std::vector<char>> data;
-			cell_impl(RegionFile* p, std::shared_ptr<std::vector<char>> d)
+			std::shared_ptr<DataArray_t> data;
+			cell_impl(RegionFile* p, std::shared_ptr<DataArray_t> d)
 				: parent(p),
 				data(d),
 				cellIndex(0, 0)

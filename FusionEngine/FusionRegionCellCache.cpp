@@ -58,8 +58,8 @@ namespace FusionEngine
 		streamsize result = (min)(n, amt);
 		if (result != 0)
 		{
-			std::copy( data->begin() + position, 
-				data->begin() + position + result, 
+			std::copy( data->begin() + /*DataArray_t::difference_type*/(position), 
+				data->begin() + /*DataArray_t::difference_type*/(position + result), 
 				s );
 			position += result;
 			return result;
@@ -78,7 +78,7 @@ namespace FusionEngine
 			streamsize amt = 
 				static_cast<streamsize>(data->size() - position);
 			result = (min)(n, amt);
-			std::copy(s, s + result, data->begin() + position);
+			std::copy(s, s + result, data->begin() + /*DataArray_t::difference_type*/(position));
 			position += result;
 		}
 		if (result < n)
@@ -426,8 +426,10 @@ namespace FusionEngine
 		const auto x = cell_index.first;
 		const auto y = cell_index.second;
 
-		FSN_ASSERT(x < region_width);
-		FSN_ASSERT(y < region_width);
+		FSN_ASSERT(x >= 0 && y >= 0);
+
+		FSN_ASSERT(x < (int32_t)region_width);
+		FSN_ASSERT(y < (int32_t)region_width);
 		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 
 		auto& data = cellDataLocations[x + y * region_width];
@@ -450,8 +452,8 @@ namespace FusionEngine
 		const auto x = cell_coords.first;
 		const auto y = cell_coords.second;
 
-		FSN_ASSERT(x < region_width);
-		FSN_ASSERT(y < region_width);
+		FSN_ASSERT(x < (int32_t)region_width);
+		FSN_ASSERT(y < (int32_t)region_width);
 
 		FSN_ASSERT(x + y * region_width < cellDataLocations.size());
 		return cellDataLocations[x + y * region_width];

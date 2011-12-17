@@ -977,14 +977,14 @@ namespace FusionEngine
 
 	// TODO: set domain modes (and / or replace domains with mode flags in entities?)
 
-	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, SaveDataArchive* data_archive)
+	EntityManager::EntityManager(InputManager *input_manager, EntitySynchroniser *entity_synchroniser, StreamingManager *streaming, EntityFactory* component_factory, SaveDataArchive* data_archive)
 		: m_InputManager(input_manager),
 		m_EntitySynchroniser(entity_synchroniser),
 		m_StreamingManager(streaming),
+		m_EntityFactory(component_factory),
 		m_SaveDataArchive(data_archive),
 		m_UpdateBlockedFlags(0),
 		m_DrawBlockedFlags(0),
-		m_EntitiesLocked(false),
 		m_ClearWhenAble(false),
 		m_ReferenceTokens(1)
 	{
@@ -1009,28 +1009,23 @@ namespace FusionEngine
 
 		stream.exceptions(std::ios::failbit);
 
-		size_t num = 0;
-		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
+		std::vector<EntityPtr> syncedStreamedActiveEntities;
 		{
-			if ((*it)->IsSyncedEntity())
-				++num;
-		}
-
-		writer.Write(num);
-
-		for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
-		{
-			auto& entity = *it;
-			if (entity->IsSyncedEntity())
+			ActiveEntitiesMutex_t::scoped_lock lock(m_ActiveEntitiesMutex, false);
+			for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
 			{
-				writer.Write(entity->GetID());
-#ifdef _DEBUG
-			--num;
-#endif
+				const auto& entity = *it;
+				if (entity->IsSyncedEntity() && entity->GetDomain() != SYSTEM_DOMAIN)
+					syncedStreamedActiveEntities.push_back(entity);
 			}
 		}
-		// Make sure everything was written
-		FSN_ASSERT(num == 0);
+
+		writer.Write(static_cast<size_t>(syncedStreamedActiveEntities.size()));
+		for (auto it = syncedStreamedActiveEntities.begin(), end = syncedStreamedActiveEntities.end(); it != end; ++it)
+		{
+			const auto& entity = *it;
+			writer.Write(entity->GetID());
+		}
 	}
 
 	void EntityManager::LoadActiveEntities(std::istream& stream)
@@ -1128,7 +1123,7 @@ namespace FusionEngine
 
 	void EntityManager::AddEntity(EntityPtr &entity)
 	{
-		tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
+		//tbb::spin_rw_mutex::scoped_lock lock(m_EntityListsMutex);
 
 		if (entity->GetName().empty() || entity->GetName() == "default")
 			entity->_notifyDefaultName(generateName(entity));
@@ -1161,8 +1156,7 @@ namespace FusionEngine
 
 	void EntityManager::ReplaceEntity(ObjectID id, EntityPtr &entity)
 	{
-		if (m_EntitiesLocked)
-			FSN_EXCEPT(ExCode::NotImplemented, "EntityManager is currently updating: Can't replace Entities while updating");
+		FSN_EXCEPT(ExCode::NotImplemented, "EntityManager is currently updating: Can't replace Entities while updating");
 		
 		// Make sure the entity to be inserted has the given ID
 		entity->SetID(id);
@@ -1372,21 +1366,18 @@ namespace FusionEngine
 		std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->m_ReferencedEntities.clear(); });
 
 		{
-			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+			ReferenceTokensMutex_t::scoped_lock lock(m_ReferenceTokensMutex);
 			m_ReferenceTokens.freeAll();
 		}
 		{
-			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+			StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex);
 			m_StoredReferences.clear();
 		}
 		m_LoadedReferenceRange.first = m_LoadedReferenceRange.second = 0;
 
 		m_PropChangedQueue.clear();
 
-		if (m_EntitiesLocked)
-			std::for_each(m_ActiveEntities.begin(), m_ActiveEntities.end(), [](const EntityPtr &entity){ entity->MarkToRemove(); });
-		else
-			m_ActiveEntities.clear();
+		m_ActiveEntities.clear();
 
 		m_EntitiesByName.clear();
 		m_Entities.clear();
@@ -1416,13 +1407,29 @@ namespace FusionEngine
 				m_StreamingManager->DeactivateEntity(*it);
 			}
 		}
-		else // TODO: make this an option in Clear()
+		else // TODO: make this an option in Clear()?
 		{
+			// TODO: add an ActiveEntities mutex (use here, in update and in SaveActiveEntities)
 			for (auto it = m_ActiveEntities.begin(), end = m_ActiveEntities.end(); it != end; ++it)
 			{
 				auto& entity = *it;
 				entity->m_ReferencedEntities.clear();
 				deactivateEntity(entity);
+			}
+			for (auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end(); it != end; ++it)
+			{
+				auto& entity = *it;
+				entity->m_ReferencedEntities.clear();
+				// TODO: note that this might have to be done when activating entities normally (i.e. check m_EntitiesToActivate as well when calling deactivateEntity)
+				for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
+				{
+					auto& com = *it;
+					auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
+					if (_where != m_EntityFactory->m_ComponentInstancers.end())
+					{
+						_where->second->CancelPreparation(com);
+					}
+				}
 			}
 		}
 	}
@@ -1499,6 +1506,79 @@ namespace FusionEngine
 		}
 
 		return allMarked;
+	}
+
+	EntityArray::iterator EntityManager::updateEntities(EntityArray::iterator begin, EntityArray::iterator end, float split)
+	{
+		bool entityRemoved = false;
+
+		//auto playerAddedEvents = m_PlayerAddedEvents;
+		//m_PlayerAddedEvents.clear();
+
+		size_t numRemoved = 0;
+
+		auto newEnd = begin;
+		for (EntityArray::iterator it = begin; it != end; ++it)
+		{
+			EntityPtr &entity = *it;
+
+			if (entity->GetTagFlags() & m_ToDeleteFlags)
+			{
+				RemoveEntity(entity); // Mark it to be removed from the active list
+			}
+			// Check for reasons to remove the
+			//  entity from the active list
+			if (entity->IsMarkedToRemove() || entity->IsMarkedToDeactivate())
+			{
+				if (entity->IsActive())
+					m_EntitiesToDeactivate.push_back(*it);
+
+				// Keep entities active untill they are no longer referenced
+				if (!entity->IsReferenced() || hasNoActiveReferences(entity))
+				{
+					m_EntitiesUnreferenced.push_back(*it);
+
+					entity->RemoveDeactivateMark();
+
+					++numRemoved;
+
+					//--end;
+					//entity.swap(*(end));
+					//++it;
+
+					//it = entityList.erase(it);
+					//end = entityList.end();
+
+					continue;
+				}
+			}
+			
+			{
+				// Also make sure the entity isn't blocked by a flag
+				if ((entity->GetTagFlags() & m_UpdateBlockedFlags) == 0)
+				{
+					EntityDomain domainIndex = entity->GetDomain();
+
+					if (CheckState(domainIndex, DS_STREAMING))
+						m_StreamingManager->OnUpdated(entity, split);
+
+					if (CheckState(domainIndex, DS_SYNCH))
+						m_EntitySynchroniser->Enqueue(entity);
+				}
+
+				// Next entity
+				//++it;
+				*newEnd++ = std::move(*it);
+			}
+		}
+
+		// Clear the ToDeleteFlags
+		m_ToDeleteFlags = 0;
+
+		if (numRemoved)
+		SendToConsole(boost::lexical_cast<std::string>(numRemoved));
+		FSN_ASSERT(std::distance(newEnd, end) == numRemoved);
+		return newEnd;
 	}
 
 	void EntityManager::updateEntities(EntityArray &entityList, float split)
@@ -1613,62 +1693,75 @@ namespace FusionEngine
 		}
 
 		// Activate entities
+		if (!m_EntitiesToActivate.empty())
 		{
-		auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
-		while (it != end)
-		{
-			if (attemptToActivateEntity(*it))
+			auto it = m_EntitiesToActivate.begin(), end = m_EntitiesToActivate.end();
+			while (it != end)
 			{
-				//FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
-				auto& entity = (*it);
+				if (attemptToActivateEntity(*it))
+				{
+					//FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), *it) == m_ActiveEntities.end());
+					auto& entity = (*it);
 
-				entity->StreamIn();
-				m_ActiveEntities.push_back(entity);
+					entity->StreamIn();
+					{
+						ActiveEntitiesMutex_t::scoped_lock lock(m_ActiveEntitiesMutex);
+						m_ActiveEntities.push_back(entity);
+					}
 
-				m_EntitySynchroniser->OnEntityActivated(entity);
+					m_EntitySynchroniser->OnEntityActivated(entity);
 
-				if (entity->IsSyncedEntity())
-					m_Entities[entity->GetID()] = entity;
+					if (entity->IsSyncedEntity())
+					{
+						FSN_ASSERT(m_Entities.find(entity->GetID()) == m_Entities.end());
+						m_Entities[entity->GetID()] = entity;
+					}
 
-				if (entity->GetName() == "default")
-					entity->SetName(generateName(entity));
-				if (!entity->GetName().empty())
-					m_EntitiesByName[entity->GetName()] = entity;
+					if (entity->GetName() == "default")
+						entity->SetName(generateName(entity));
+					if (!entity->GetName().empty())
+						m_EntitiesByName[entity->GetName()] = entity;
 
-				it = m_EntitiesToActivate.erase(it);
-				end = m_EntitiesToActivate.end();
+					it = m_EntitiesToActivate.erase(it);
+					end = m_EntitiesToActivate.end();
+				}
+				else
+					++it;
 			}
-			else
-				++it;
-		}
 		}
 		// Activate components
 		{
-		auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
-		while (it != end)
-		{
-			auto worldEntry = m_EntityFactory->m_ComponentInstancers.find(it->second->GetType());
-			if (attemptToActivateComponent(worldEntry->second, it->second))
+			auto it = m_ComponentsToActivate.begin(), end = m_ComponentsToActivate.end();
+			while (it != end)
 			{
-				it = m_ComponentsToActivate.erase(it);
-				end = m_ComponentsToActivate.end();
+				auto worldEntry = m_EntityFactory->m_ComponentInstancers.find(it->second->GetType());
+				if (attemptToActivateComponent(worldEntry->second, it->second))
+				{
+					it = m_ComponentsToActivate.erase(it);
+					end = m_ComponentsToActivate.end();
+				}
+				else
+					++it;
 			}
-			else
-				++it;
-		}
 		}
 	}
 
 	void EntityManager::ProcessActiveEntities(float dt)
 	{
-		//m_EntitiesLocked = true;
+		ActiveEntitiesMutex_t::scoped_lock lock(m_ActiveEntitiesMutex, false);
+		auto begin = m_ActiveEntities.begin();
+		auto end = m_ActiveEntities.end();
 
-		// TODO: pass begin & end iterators here and have it return a "new end"
-		//  to indicate where it moved any removed entities. This way partial
-		//  updates can be performed
-		updateEntities(m_ActiveEntities, dt);
+		//updateEntities(m_ActiveEntities, dt);
 
-		//m_EntitiesLocked = false;
+		auto newEnd = updateEntities(begin, end, dt);
+		lock.release();
+
+		if (end != newEnd)
+		{
+			lock.acquire(m_ActiveEntitiesMutex);
+			m_ActiveEntities.erase(newEnd, end);
+		}
 	}
 
 	void EntityManager::UpdateActiveRegions()
@@ -1686,9 +1779,9 @@ namespace FusionEngine
 				entity->RemoveDeactivateMark();
 			else
 			{
-#ifdef _DEBUG
-				FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
-#endif
+//#ifdef _DEBUG
+//				FSN_ASSERT(std::find(m_EntitiesToActivate.begin(), m_EntitiesToActivate.end(), entity) == m_EntitiesToActivate.end());
+//#endif
 				m_EntitiesToActivate.push_back(entity);
 			}
 		}
@@ -1811,25 +1904,7 @@ namespace FusionEngine
 	
 	void EntityManager::activateEntity(const EntityPtr &entity)
 	{
-		if (!entity->IsStreamedIn())
-		{
-			FSN_ASSERT(std::find(m_ActiveEntities.begin(), m_ActiveEntities.end(), entity) == m_ActiveEntities.end());
-
-			for (auto it = entity->GetComponents().begin(), end = entity->GetComponents().end(); it != end; ++it)
-			{
-				auto& com = *it;
-				auto _where = m_EntityFactory->m_ComponentInstancers.find( com->GetType() );
-				if (_where != m_EntityFactory->m_ComponentInstancers.end())
-				{
-					_where->second->OnActivation(com);
-				}
-				else
-					FSN_EXCEPT(InvalidArgumentException, "I made a mistake, because am dum");
-			}
-			entity->StreamIn();
-
-			m_ActiveEntities.push_back(entity);
-		}
+		FSN_ASSERT_FAIL("Not implemented");
 	}
 
 	void EntityManager::deactivateEntity(const EntityPtr& entity)
@@ -1872,12 +1947,12 @@ namespace FusionEngine
 		{
 			ObjectID id = entity->GetID();
 
-			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+			StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex);
 			// Free all tokens for references from this entity (clearly it can't use them anymore)
 			auto& refsFromContainer = m_StoredReferences.get<1>();
 			auto refsFromRemovedEntity = refsFromContainer.equal_range(id);
 			{
-				tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
+				ReferenceTokensMutex_t::scoped_lock lock(m_ReferenceTokensMutex);
 				for (; refsFromRemovedEntity.first != refsFromRemovedEntity.second; ++refsFromRemovedEntity.first)
 				{
 					m_ReferenceTokens.freeID( refsFromRemovedEntity.first->token );
@@ -1896,9 +1971,9 @@ namespace FusionEngine
 				m_Entities.erase(entity->GetID());
 
 			m_EntitiesByName.erase(entity->GetName());
-
-			m_StreamingManager->RemoveEntity(entity);
 		}
+
+		m_StreamingManager->RemoveEntity(entity);
 	}
 
 	void EntityManager::queueEntityToSynch(ObjectID id, PlayerID viewer, const std::shared_ptr<RakNet::BitStream>& state)
@@ -1956,7 +2031,7 @@ namespace FusionEngine
 			auto stream = m_SaveDataArchive->CreateDataFile(filename);
 			IO::Streams::CellStreamWriter writer(stream.get());
 
-			tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex, false);
+			StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex, false);
 			writer.Write(static_cast<size_t>(m_StoredReferences.size()));
 			for (auto it = m_StoredReferences.begin(), end = m_StoredReferences.end(); it != end; ++it)
 			{
@@ -1990,11 +2065,11 @@ namespace FusionEngine
 			{
 				IO::Streams::CellStreamReader reader(stream.get());
 
-				tbb::spin_rw_mutex::scoped_lock tlock(m_ReferenceTokensMutex);
+				ReferenceTokensMutex_t::scoped_lock tlock(m_ReferenceTokensMutex);
 				//m_ReferenceTokens.freeAll();
 				//m_ReferenceTokens.takeAll(m_LoadedReferenceRange.first);
 
-				tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+				StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex);
 				m_StoredReferences.clear();
 
 				bool tokenAvailable = true;
@@ -2023,29 +2098,32 @@ namespace FusionEngine
 
 	uint32_t EntityManager::StoreReference(ObjectID from, ObjectID to)
 	{
-		if (from > 0 && to > 0)
+		if (from > 0 && to > 0 && from != to)
 		{
-			tbb::spin_rw_mutex::scoped_lock tlock1(m_ReferenceTokensMutex, false);
+			ReferenceTokensMutex_t::scoped_lock tlock(m_ReferenceTokensMutex);
 			if (m_ReferenceTokens.hasMore())
 			{
-				tlock1.release();
+				//tlock1.release();
 				StoredReference r;
 				r.from = from;
 				r.to = to;
+				size_t tokensGot = 0;
 				do
 				{
-					tbb::spin_rw_mutex::scoped_lock tlock2(m_ReferenceTokensMutex, false);
+					//ReferenceTokensMutex_t::scoped_lock tlock2(m_ReferenceTokensMutex);
 					r.token = m_ReferenceTokens.peekNextID();
+					FSN_ASSERT(++tokensGot < 100);
+					FSN_ASSERT(r.token < (1 << 11));
 				} while(!aquireReferenceData(r.token)); // aquireReferenceData returns true if the token is valid
 
-				if (r.token > 0)
+				if (r.token > 0 && r.token < std::numeric_limits<uint32_t>::max())
 				{
 					m_ReferenceTokens.takeID(r.token);
 
 					// TODO: the first few bits of the token could be the StoredReferences database-id (to ensure that references
 					//  being requested are from the same reference-db that the manager currently has loaded)
 
-					tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
+					StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex);
 					m_StoredReferences.insert(r);
 
 					return r.token;
@@ -2058,45 +2136,50 @@ namespace FusionEngine
 
 	ObjectID EntityManager::RetrieveReference(uint32_t token)
 	{
-		// Make sure the correct range is loaded
-		aquireReferenceData(token);
-
-		// Commented out code is for removing the reference (same as DropReferene() method): I decided not to do this
-		//  because it doesn't fit well with (what seems to be) the simplest implementation of the script class
-		//  "EntityWrapper", which is the primary use for Reference Tokens.
-		//{
-		//	tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
-		//	m_ReferenceTokens.freeID(token);
-		//}
-
-		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex, false);
-		auto& tokens = m_StoredReferences.get<0>();
-		auto entry = tokens.find(token);
-		if (entry != tokens.end())
+		if (token > 0)
 		{
-			//FSN_ASSERT(entry->from == from);
-			//tokens.erase(entry);
-			return entry->to;
+			// Make sure the correct range is loaded
+			aquireReferenceData(token);
+
+			// Commented out code is for removing the reference (same as DropReferene() method): I decided not to do this
+			//  because it doesn't fit well with (what seems to be) the simplest implementation of the script class
+			//  "EntityWrapper", which is the primary use for Reference Tokens.
+			//{
+			//	ReferenceTokensMutex_t::scoped_lock lock(m_ReferenceTokensMutex);
+			//	m_ReferenceTokens.freeID(token);
+			//}
+
+			StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex, false);
+			auto& tokens = m_StoredReferences.get<0>();
+			auto entry = tokens.find(token);
+			if (entry != tokens.end())
+			{
+				//FSN_ASSERT(entry->from == from);
+				//tokens.erase(entry);
+				return entry->to;
+			}
 		}
-		else
-			return 0;
+		return 0;
 	}
 
 	void EntityManager::DropReference(uint32_t token)
 	{
-		aquireReferenceData(token);
-
+		if (token > 0)
 		{
-			tbb::spin_rw_mutex::scoped_lock lock(m_ReferenceTokensMutex);
-			m_ReferenceTokens.freeID(token);
-		}
+			aquireReferenceData(token);
 
-		tbb::spin_rw_mutex::scoped_lock lock(m_StoredReferencesMutex);
-		auto& tokens = m_StoredReferences.get<0>();
-		auto entry = tokens.find(token);
-		if (entry != tokens.end())
-		{
-			tokens.erase(token);
+			{
+				ReferenceTokensMutex_t::scoped_lock lock(m_ReferenceTokensMutex);
+				m_ReferenceTokens.freeID(token);
+			}
+
+			StoredReferencesMutex_t::scoped_lock lock(m_StoredReferencesMutex);
+			auto& tokens = m_StoredReferences.get<0>();
+			auto entry = tokens.find(token);
+			if (entry != tokens.end())
+			{
+				tokens.erase(token);
+			}
 		}
 	}
 
