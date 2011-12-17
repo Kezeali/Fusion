@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <settings>
 	<!--var elements are stored in a map-->
-  <var name="edit" value="false"/>
+  <var name="edit" value="true"/>
   <var name="logging_level" value="trivial"/>
 	<var name="console_logging" value="true"/>
 	<var name="num_local_players" value="0"/>
