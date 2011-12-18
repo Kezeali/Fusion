@@ -591,9 +591,9 @@ public:
 							{
 								repeats = 50;
 							}
-								rightEdge = pos.x + (repeats / 2) * size;
-								pos.x -= (repeats / 2) * size;
-								pos.y -= (repeats / 2) * size;
+							rightEdge = pos.x + (repeats / 2) * size;
+							pos.x -= (repeats / 2) * size;
+							pos.y -= (repeats / 2) * size;
 						}
 						leftEdge = pos.x;
 						for (unsigned int i = 0; i < repeats * repeats; ++i)
@@ -605,7 +605,7 @@ public:
 							if (ev.alt)
 							{
 								pos.x += size + (rand() / (float)RAND_MAX) * size * 2;
-								pos.y += ((rand() / (float)RAND_MAX) * size) - (size * 0.5f);
+								pos.y += ((rand() / (float)RAND_MAX) * size * 2) - size;
 								if (pos.x > rightEdge)
 								{
 									pos.x = leftEdge - leftEdge * (rand() / RAND_MAX) * 0.5f;
@@ -1040,7 +1040,7 @@ public:
 
 		auto entity = std::make_shared<Entity>(entityManager, &entityManager->m_PropChangedQueue, transformCom);
 
-		if (i == 2)
+		if (i == 2 || i == 3)
 		{
 			ObjectID id = 0;
 			id = instantiationSynchroniser->m_WorldIdGenerator.getFreeID();

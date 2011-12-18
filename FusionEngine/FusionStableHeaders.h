@@ -25,7 +25,6 @@
 #include <ClanLib/gl.h>
 #include <ClanLib/sound.h>
 #include <ClanLib/vorbis.h>
-#include <ClanLib/regexp.h>
 #ifdef GetObject
 #undef GetObject
 #endif

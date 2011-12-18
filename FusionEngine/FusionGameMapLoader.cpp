@@ -542,7 +542,12 @@ namespace FusionEngine
 
 		//m_Manager->Clear();
 
-		auto map = std::make_shared<GameMap>(device, boost::filesystem::basename(filename));
+		boost::filesystem::path mapPath(filename);
+		if (mapPath.has_parent_path())
+			mapPath = mapPath.parent_path() / mapPath.stem();
+		else
+			mapPath = mapPath.stem();
+		auto map = std::make_shared<GameMap>(device, mapPath.generic_string());
 
 		//// Read the entity type count
 		//auto numberEntityTypes = device.read_uint32();
