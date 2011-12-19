@@ -13,26 +13,22 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="tinyxml">
+    <Filter Include="IO">
+      <UniqueIdentifier>{a49f3b0d-e649-465e-8109-420ed67f7de1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\FileTypes">
+      <UniqueIdentifier>{b332cdf1-8300-45eb-a957-fc3908e33bbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\FileTypes\tinyxml">
       <UniqueIdentifier>{dff48967-066d-4012-a756-f8325b03de49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO\FileTypes\minizip">
+      <UniqueIdentifier>{5d3a7787-6938-4847-8fe3-c6f3bcf98b69}</UniqueIdentifier>
+      <Extensions>
+      </Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\tinyxml\ticpp.cpp">
-      <Filter>tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\tinyxml\tinystr.cpp">
-      <Filter>tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxml.cpp">
-      <Filter>tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxmlerror.cpp">
-      <Filter>tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxmlparser.cpp">
-      <Filter>tinyxml</Filter>
-    </ClCompile>
     <ClCompile Include="..\FusionEngine\FusionAssert.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -324,20 +320,35 @@
     <ClCompile Include="..\FusionEngine\FusionRegionCellCache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\external\minizip\ioapi.c">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\minizip\iowin32.c">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\minizip\zip.c">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\ticpp.cpp">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinystr.cpp">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxml.cpp">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FusionEngine\FusionZipArchive.cpp">
+      <Filter>IO\FileTypes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\tinyxml\ticpp.h">
-      <Filter>tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\tinyxml\ticpprc.h">
-      <Filter>tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\tinyxml\tinystr.h">
-      <Filter>tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\tinyxml\tinyxml.h">
-      <Filter>tinyxml</Filter>
-    </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionAssert.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -754,6 +765,33 @@
     </ClInclude>
     <ClInclude Include="..\FusionEngine\FusionSaveDataArchive.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\minizip\crypt.h">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\minizip\ioapi.h">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\minizip\iowin32.h">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\minizip\zip.h">
+      <Filter>IO\FileTypes\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\ticpp.h">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\ticpprc.h">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\tinystr.h">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external\tinyxml\tinyxml.h">
+      <Filter>IO\FileTypes\tinyxml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FusionEngine\FusionZipArchive.h">
+      <Filter>IO\FileTypes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

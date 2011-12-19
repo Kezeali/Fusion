@@ -557,6 +557,8 @@ public:
 
 				std::vector<EntityPtr> entities;
 				bool compile = false;
+				bool quickSave = false;
+				size_t save_index = 0;
 				bool load = false;
 
 				auto keyhandlerSlot = dispWindow.get_ic().get_keyboard().sig_key_up().connect_functor([&](const CL_InputEvent& ev, const CL_InputState&)
@@ -627,6 +629,7 @@ public:
 					if (ev.id == CL_KEY_S)
 					{
 						compile = true;
+						quickSave = !ev.shift;
 					}
 
 					if (ev.id == CL_KEY_L)
@@ -811,26 +814,49 @@ public:
 						}
 						else
 						{
-							SendToConsole("Preparing to save...");
-							streamingMgr->StoreAllCells();
-							cellArchivist->Stop();
-							try
+							if (quickSave)
 							{
-								if (auto file = cellArchivist->CreateDataFile("active_entities"))
-									entityManager->SaveActiveEntities(*file);
-								if (auto file = cellArchivist->CreateDataFile("non_streaming_entities"))
-									entityManager->SaveNonStreamingEntities(*file);
+								quickSave = false;
+								SendToConsole("Preparing to save...");
+								streamingMgr->StoreAllCells();
+								cellArchivist->Stop();
+								try
+								{
+									if (auto file = cellArchivist->CreateDataFile("active_entities"))
+										entityManager->SaveActiveEntities(*file);
+									if (auto file = cellArchivist->CreateDataFile("non_streaming_entities"))
+										entityManager->SaveNonStreamingEntities(*file);
 
-								entityManager->SaveCurrentReferenceData();
-								
-								cellArchivist->EnqueueQuickSave("quicksave");
+									entityManager->SaveCurrentReferenceData();
+
+									cellArchivist->EnqueueQuickSave("quicksave");
+								}
+								catch (std::ios::failure& e)
+								{
+									AddLogEntry(e.what());
+								}
+								// The first thing the archivist does when it restarts will be perform the save
+								cellArchivist->Start();
 							}
-							catch (std::ios::failure& e)
+							else
 							{
-								AddLogEntry(e.what());
+								streamingMgr->StoreAllCells();
+								try
+								{
+									if (auto file = cellArchivist->CreateDataFile("active_entities"))
+										entityManager->SaveActiveEntities(*file);
+									if (auto file = cellArchivist->CreateDataFile("non_streaming_entities"))
+										entityManager->SaveNonStreamingEntities(*file);
+
+									entityManager->SaveCurrentReferenceData();
+
+									cellArchivist->Save("save" + boost::lexical_cast<std::string>(save_index++));
+								}
+								catch (std::ios::failure& e)
+								{
+									AddLogEntry(e.what());
+								}
 							}
-							// The first thing the archivist does when it restarts will be perform the save
-							cellArchivist->Start();
 						}
 					}
 					if (load)

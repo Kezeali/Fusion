@@ -165,6 +165,8 @@ private:
 		void MoveEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& source_in, OCellStream& source_out, ICellStream& dest_in, OCellStream& dest) const;
 		void DeleteEntityData(std::vector<ObjectID>& objects_displaced_backward, ObjectID id, std::streamoff data_offset, std::streamsize data_length, ICellStream& in, OCellStream& out) const;
 
+		void CompressSave(const std::string& save_name);
+
 		void PerformSave(const std::string& save_name);
 		void PrepareLoad(const std::string& save_name);
 		void PerformLoad(const std::string& save_name);

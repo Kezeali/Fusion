@@ -275,6 +275,7 @@
     <ClCompile Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXInputController.cpp" />
     <ClCompile Include="..\FusionEngine\FusionXML.cpp" />
+    <ClCompile Include="..\FusionEngine\FusionZipArchive.cpp" />
     <ClCompile Include="..\FusionEngine\scriptany.cpp" />
     <ClCompile Include="..\FusionEngine\scriptarray.cpp" />
     <ClCompile Include="..\FusionEngine\scriptmath.cpp" />
@@ -282,25 +283,29 @@
     <ClCompile Include="..\FusionEngine\scriptstdstring_utils.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring.cpp" />
     <ClCompile Include="..\FusionEngine\scriptstring_utils.cpp" />
-    <ClCompile Include="..\tinyxml\ticpp.cpp">
+    <ClCompile Include="..\external\minizip\ioapi.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\tinyxml\tinystr.cpp">
+    <ClCompile Include="..\external\minizip\iowin32.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxml.cpp">
+    <ClCompile Include="..\external\minizip\zip.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxmlerror.cpp">
+    <ClCompile Include="..\external\tinyxml\ticpp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\tinyxml\tinyxmlparser.cpp">
+    <ClCompile Include="..\external\tinyxml\tinystr.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxml.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
@@ -441,16 +446,21 @@
     <ClInclude Include="..\FusionEngine\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\FusionEngine\FusionXInputController.h" />
     <ClInclude Include="..\FusionEngine\FusionXML.h" />
+    <ClInclude Include="..\FusionEngine\FusionZipArchive.h" />
     <ClInclude Include="..\FusionEngine\scriptany.h" />
     <ClInclude Include="..\FusionEngine\scriptarray.h" />
     <ClInclude Include="..\FusionEngine\scriptmath.h" />
     <ClInclude Include="..\FusionEngine\scriptstdstring.h" />
     <ClInclude Include="..\FusionEngine\scriptstdvector.h" />
     <ClInclude Include="..\FusionEngine\scriptstring.h" />
-    <ClInclude Include="..\tinyxml\ticpp.h" />
-    <ClInclude Include="..\tinyxml\ticpprc.h" />
-    <ClInclude Include="..\tinyxml\tinystr.h" />
-    <ClInclude Include="..\tinyxml\tinyxml.h" />
+    <ClInclude Include="..\external\minizip\crypt.h" />
+    <ClInclude Include="..\external\minizip\ioapi.h" />
+    <ClInclude Include="..\external\minizip\iowin32.h" />
+    <ClInclude Include="..\external\minizip\zip.h" />
+    <ClInclude Include="..\external\tinyxml\ticpp.h" />
+    <ClInclude Include="..\external\tinyxml\ticpprc.h" />
+    <ClInclude Include="..\external\tinyxml\tinystr.h" />
+    <ClInclude Include="..\external\tinyxml\tinyxml.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

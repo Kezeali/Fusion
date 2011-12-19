@@ -39,6 +39,7 @@
 #include "FusionPhysFS.h"
 #include "FusionPhysFSIOStream.h"
 #include "FusionLogger.h"
+#include "FusionZipArchive.h"
 
 #include "FusionBinaryStream.h"
 
@@ -127,7 +128,6 @@ namespace FusionEngine
 
 	static bool getEntityLocation(kyotocabinet::HashDB& db, RegionMapLoader::CellCoord_t& cell_loc, std::streamoff& data_offset, std::streamsize& data_length, ObjectID id)
 	{
-		// TODO: make sure that sizeof(ref) returns the size of the object
 		std::array<char, sizeof(cell_loc) + sizeof(data_offset) + sizeof(data_length)> data;
 
 		auto retrieved = db.get((const char*)&id, sizeof(id), data.data(), data.size());
@@ -387,38 +387,39 @@ namespace FusionEngine
 		}
 	}
 
-	void RegionMapLoader::EnqueueQuickSave(const std::string& filename)
+	void RegionMapLoader::EnqueueQuickSave(const std::string& save_name)
 	{
-		m_SaveQueue.push(filename);
+		m_SaveQueue.push(save_name);
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Save(const std::string& filename)
+	void RegionMapLoader::Save(const std::string& save_name)
 	{
 		const bool wasRunning = m_Thread.joinable();
 		if (wasRunning)
 			Stop();
-		PerformSave(filename);
+		PerformSave(save_name);
+		CompressSave(save_name);
 		if (wasRunning)
 			Start();
 	}
 
-	void RegionMapLoader::EnqueueQuickLoad(const std::string& filename)
+	void RegionMapLoader::EnqueueQuickLoad(const std::string& save_name)
 	{
 		// Stop and clear the cache
-		PrepareLoad(filename);
+		PrepareLoad(save_name);
 
-		m_Cache->SetSavePath(filename);
+		m_Cache->SetSavePath(save_name);
 		m_NewData.set();
 	}
 
-	void RegionMapLoader::Load(const std::string& filename)
+	void RegionMapLoader::Load(const std::string& save_name)
 	{
 		const bool wasRunning = m_Thread.joinable();
 		if (wasRunning)
 			Stop();
-		PrepareLoad(filename);
-		PerformLoad(filename);
+		PrepareLoad(save_name);
+		PerformLoad(save_name);
 		if (wasRunning)
 			Start();
 	}
@@ -993,6 +994,103 @@ namespace FusionEngine
 		}
 	}
 
+	void RegionMapLoader::CompressSave(const std::string& saveName)
+	{
+		namespace bfs = boost::filesystem;
+
+		// TODO: replace all SendToConsole calls with signals
+		try
+		{
+			SendToConsole("Compressing save...");
+
+			auto savePath = boost::filesystem::path(PHYSFS_getWriteDir()) / s_SavePath / saveName;
+
+			SendToConsole("Original path: " + savePath.string());
+
+			auto physFsPath = s_SavePath + saveName;
+			if (!bfs::is_directory(savePath))
+			{
+				FSN_EXCEPT(FileSystemException, "Save path (" + physFsPath + ") not found.");
+			}
+
+			auto archiveFilePath = savePath;
+			archiveFilePath.replace_extension(".zip");
+
+			AddLogEntry("Creating compressed save: " + savePath.string() + " -> " + archiveFilePath.string(), LOG_INFO);
+
+			{
+				IO::ZipArchive archive(archiveFilePath);
+				archive.AddPath(savePath, savePath.stem());
+			}
+
+			//std::vector<bfs::path> regionFiles;
+			//std::vector<bfs::path> dataFiles;
+			//for(bfs::directory_iterator it(m_FullBasePath); it != bfs::directory_iterator(); ++it)
+			//{
+			//	if (it->path().extension() == ".celldata")
+			//		regionFiles.push_back(it->path());
+			//	if (it->path().extension() == ".dat")
+			//		dataFiles.push_back(it->path());
+			//}
+
+			//std::stringstream numStr; numStr << regionFiles.size();
+			//std::string numRegionFilesStr = numStr.str();
+			//numStr.str(""); numStr << dataFiles.size();
+			//std::string numDataFilesStr = numStr.str();
+
+			//unsigned int i = 0;
+			//for (auto it = regionFiles.begin(); it != regionFiles.end(); ++it)
+			//{
+			//	std::stringstream str; str << ++i;
+			//	SendToConsole("QS Progress: copying " + str.str() + " / " + numRegionFilesStr + " regions");
+
+			//	auto dest = savePath; dest /= it->filename();
+			//	boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			//}
+			//i = 0;
+			//for (auto it = dataFiles.begin(); it != dataFiles.end(); ++it)
+			//{
+			//	std::stringstream str; str << ++i;
+			//	SendToConsole("QS Progress: copying " + str.str() + " / " + numDataFilesStr + " data files");
+
+			//	auto dest = savePath; dest /= it->filename();
+			//	boost::filesystem::copy_file(*it, dest, boost::filesystem::copy_option::overwrite_if_exists);
+			//}
+			//SendToConsole("QS Progress: copying entitylocations.kc");
+			//SaveEntityLocationDB((savePath /= "entitylocations.kc").string());
+			//SendToConsole("QS Progress: done copying entitylocations.kc");
+
+			{
+				auto fileList = PHYSFS_enumerateFiles(physFsPath.c_str());
+				for (auto it = fileList; *it; ++it)
+				{
+					auto filePath = physFsPath + "/" + *it;
+					if (PHYSFS_delete(filePath.c_str()) == 0)
+					{
+						PHYSFS_freeList(fileList);
+						FSN_EXCEPT(FileSystemException, "Failed to delete file while clearing save path (" + filePath + "): " + std::string(PHYSFS_getLastError()));
+					}
+				}
+				PHYSFS_freeList(fileList);
+			}
+			PHYSFS_delete(physFsPath.c_str());
+
+			SendToConsole("Done compressing.");
+		}
+		catch (bfs::filesystem_error& e)
+		{
+			SendToConsole("Save compression failed");
+
+			AddLogEntry(std::string("Failed to compress save: ") + e.what(), LOG_CRITICAL);
+		}
+		catch (FileSystemException& e)
+		{
+			SendToConsole("Save compression failed");
+
+			AddLogEntry(std::string("Failed to compress save: ") + e.what(), LOG_CRITICAL);
+		}
+	}
+
 	void RegionMapLoader::PerformSave(const std::string& saveName)
 	{
 		namespace bfs = boost::filesystem;
@@ -1006,6 +1104,8 @@ namespace FusionEngine
 			savePath /= saveName;
 
 			SendToConsole("QS Path: " + savePath.string());
+
+			AddLogEntry("Saving: " + savePath.string(), LOG_INFO);
 
 			auto physFsPath = s_SavePath + saveName;
 			if (!bfs::is_directory(savePath))

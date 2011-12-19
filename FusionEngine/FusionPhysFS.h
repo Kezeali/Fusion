@@ -32,10 +32,7 @@
 #pragma once
 #endif
 
-extern "C"
-{
 #include <physfs.h>
-}
 
 #include <ClanLib/core.h>
 

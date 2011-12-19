@@ -45,20 +45,17 @@
 #elif defined(USE_TINYXML)
 //#define USE_TINYXPATH
 #ifdef USE_TINYXPATH
-#include "../tinyxml/xpath_static.h"
-#include "../tinyxml/ticpp.h"
+#include "tinyxml/xpath_static.h"
+#include "tinyxml/ticpp.h"
 #else
-#include "../tinyxml/ticpp.h"
+#include "tinyxml/ticpp.h"
 #endif
 #endif
 
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <ClanLib/Core/IOData/virtual_directory.h>
 
-extern "C"
-{
 #include <physfs.h>
-}
 
 namespace FusionEngine
 {
