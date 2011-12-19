@@ -96,6 +96,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
       <DisableSpecificWarnings>4482</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(SolutionDir)\FusionEngine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -307,6 +308,7 @@
     <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\source\FusionAnyFS.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
@@ -461,6 +463,7 @@
     <ClInclude Include="..\external\tinyxml\ticpprc.h" />
     <ClInclude Include="..\external\tinyxml\tinystr.h" />
     <ClInclude Include="..\external\tinyxml\tinyxml.h" />
+    <ClInclude Include="..\include\FusionAnyFS.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

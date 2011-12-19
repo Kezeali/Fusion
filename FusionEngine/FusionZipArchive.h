@@ -25,6 +25,9 @@
 *    Elliot Hayward
 */
 
+// Inspired by 'microzip': http://code.google.com/p/microzip/ (no code was taken directly, since that uses depreciated boost::filesystem functions)
+//  which is aparently based on .dan.g.'s "Win32 Wrapper classes for Gilles Volant's Zip/Unzip API"
+
 #ifndef H_FusionZipArchive
 #define H_FusionZipArchive
 
@@ -41,10 +44,8 @@
 namespace FusionEngine
 {
 
-	namespace IO
+	namespace IO { namespace FileType
 	{
-		// TODO: add full copyright info / credits to this file
-
 		// TODO: implement filesystem helper
 		/*
 		template <class FSHelper>
@@ -52,7 +53,7 @@ namespace FusionEngine
 		{
 		ZipArchive(... path, FSHelper fs_helper = FSHelper())
 		{
-		m_Impl = std::make_shared<...>(path);
+		...
 		}
 
 		... AddPath(... path, ...)
@@ -71,48 +72,47 @@ namespace FusionEngine
 		auto input = m_FSHelper.OpenFile(path);
 		}
 		private:
-		std::shared_ptr<detail::ZipArchiveImpl> m_Impl;
+		std::unique_ptr<detail::ZipArchiveImpl> m_Impl;
 		*/
+
+		namespace detail
+		{
+			class ZipArchiveImpl;
+		}
 
 		//! Write files to a .zip
 		class ZipArchive
 		{
 		public:
+			//! Ctor. Creates a null object
+			ZipArchive();
 			//! Ctor
 			ZipArchive(const boost::filesystem::path& file_path);
+			//! DTOR
 			~ZipArchive();
 
-			// TODO: implement
+			//! Move Ctor
 			ZipArchive(ZipArchive&& other);
+
+			ZipArchive& operator= (ZipArchive&& other);
+
+			//! Re-initialise this object by closing the current file (if open) and opening a new one
+			void Open(const boost::filesystem::path& file_path);
+			//! Close the current file
+			void Close();
 
 			//! Add the file or folder at the given path to the archive
 			void AddPath(const boost::filesystem::path& path, boost::filesystem::path path_in_archive = boost::filesystem::path());
 
-			// TODO: implement
 			//! Create an archive from the given folder
 			static ZipArchive Create(const boost::filesystem::path& path, boost::filesystem::path path_in_archive = boost::filesystem::path());
 
 		private:
-			void AddFolder(const boost::filesystem::path& path, const boost::filesystem::path& arc_path);
-			void AddFile(const boost::filesystem::path& path, const boost::filesystem::path& arc_path);
-
-			zipFile m_File;
-			boost::filesystem::path m_WorkingDir;
-
-			struct ArchiveInfo
-			{
-				int fileCount;
-				int folderCount;
-				unsigned long uncompressedSize;
-
-				ArchiveInfo()
-				{
-					memset(this, 0, sizeof(ArchiveInfo));
-				}
-			} m_Info;
+			typedef detail::ZipArchiveImpl Impl_t;
+			std::unique_ptr<Impl_t> m_Impl;
 		};
 
-	}
+	} }
 
 }
 
