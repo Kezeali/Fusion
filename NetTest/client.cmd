@@ -1,1 +1,0 @@
-..\debug\NetTest.exe -c127.0.0.1

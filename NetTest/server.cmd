@@ -1,1 +1,0 @@
-..\debug\NetTest.exe -s16
