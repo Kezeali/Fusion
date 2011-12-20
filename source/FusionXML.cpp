@@ -31,6 +31,7 @@
 
 #include "FusionExceptionFactory.h"
 #include "FusionPhysFS.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 
 namespace FusionEngine
 {

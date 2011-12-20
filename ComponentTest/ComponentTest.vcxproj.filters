@@ -22,13 +22,14 @@
     <Filter Include="IO\FileType">
       <UniqueIdentifier>{b332cdf1-8300-45eb-a957-fc3908e33bbc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IO\FileType\tinyxml">
-      <UniqueIdentifier>{dff48967-066d-4012-a756-f8325b03de49}</UniqueIdentifier>
+    <Filter Include="AngelScript">
+      <UniqueIdentifier>{bb442270-131e-4cf6-a224-2bdd570ac7a2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IO\FileType\minizip">
-      <UniqueIdentifier>{5d3a7787-6938-4847-8fe3-c6f3bcf98b69}</UniqueIdentifier>
-      <Extensions>
-      </Extensions>
+    <Filter Include="Entity">
+      <UniqueIdentifier>{33152dc8-3d12-48d2-b83f-6c3719f4c932}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\Instantiation">
+      <UniqueIdentifier>{4d1598a2-b541-4da2-aef2-3f80961729b5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -74,25 +75,13 @@
     <ClCompile Include="..\source\FusionElementSelectableDataGrid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionEntity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\scriptstring_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntityComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntityDecorator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntityDecoratorInstancer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntityFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntityManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionException.cpp">
@@ -140,9 +129,6 @@
     <ClCompile Include="..\source\FusionNetworkSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionOntologicalSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionPacketDispatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -156,9 +142,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysicsFixture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionPlayerInput.cpp">
@@ -179,9 +162,6 @@
     <ClCompile Include="..\source\FusionRefCounted.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionRenderable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -192,9 +172,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionRocketInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptDebuggerGUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp">
@@ -275,9 +252,6 @@
     <ClCompile Include="..\source\scriptany.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionInputSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionProfiling.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -302,35 +276,23 @@
     <ClCompile Include="..\source\FusionRegionCellCache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\external\minizip\ioapi.c">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\minizip\iowin32.c">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\minizip\zip.c">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\ticpp.cpp">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinystr.cpp">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxml.cpp">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionZipArchive.cpp">
       <Filter>IO\FileType</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionAnyFS.cpp">
       <Filter>IO\FileSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionComponentFactory.cpp">
+      <Filter>Entity\Instantiation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntity.cpp">
+      <Filter>Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntityManager.cpp">
+      <Filter>Entity\Instantiation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntityComponent.cpp">
+      <Filter>Entity</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -397,19 +359,10 @@
     <ClInclude Include="..\include\scriptstring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionEntityComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionEntityDecorator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityDecoratorInstancer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionEntityFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionEntityManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionException.h">
@@ -730,30 +683,6 @@
     <ClInclude Include="..\include\FusionSaveDataArchive.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\external\minizip\crypt.h">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\minizip\ioapi.h">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\minizip\iowin32.h">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\minizip\zip.h">
-      <Filter>IO\FileType\minizip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\tinyxml\ticpp.h">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\tinyxml\ticpprc.h">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\tinyxml\tinystr.h">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClInclude>
-    <ClInclude Include="..\external\tinyxml\tinyxml.h">
-      <Filter>IO\FileType\tinyxml</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionZipArchive.h">
       <Filter>IO\FileType</Filter>
     </ClInclude>
@@ -763,8 +692,17 @@
     <ClInclude Include="..\include\FusionVectorTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\FusionComponentFactory.h">
+      <Filter>Entity\Instantiation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionEntityComponent.h">
+      <Filter>Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionEntityManager.h">
+      <Filter>Entity\Instantiation</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\FusionEntityRepo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Entity\Instantiation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

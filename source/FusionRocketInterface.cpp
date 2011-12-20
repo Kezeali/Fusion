@@ -32,8 +32,9 @@
 
 #include <Rocket/Core.h>
 
-#include "PhysFS.h"
+#include "physfs.h"
 #include "FusionPhysFS.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionLogger.h"
 #include "FusionConsole.h"
 

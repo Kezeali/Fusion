@@ -31,7 +31,7 @@
 
 #include "FusionAngelScriptComponent.h"
 #include "FusionEntity.h"
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 #include "FusionException.h"
 #include "FusionExceptionFactory.h"
 #include "FusionPaths.h"

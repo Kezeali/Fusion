@@ -35,7 +35,7 @@
 #include "FusionPrerequisites.h"
 
 #include "FusionPacketHandler.h"
-#include "FusionState.h"
+//#include "FusionState.h"
 
 namespace FusionEngine
 {
@@ -53,7 +53,7 @@ namespace FusionEngine
 	};
 
 	//! Runs the network automation stuff
-	class NetworkSystem : public System
+	class NetworkSystem/* : public System*/
 	{
 	public:
 		NetworkSystem();

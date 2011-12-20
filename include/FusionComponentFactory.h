@@ -118,10 +118,10 @@ namespace FusionEngine
 		void SerialisePosition(RakNet::BitStream& out, ComponentPtr tf, const Vector2& origin, const float radius);
 
 		//! Creates an instancer for the the given scripted type
-		bool LoadTemplateType(const std::string &type);
+		bool LoadPrefabType(const std::string &type);
 
 		//! Loads all the scripted types within the current ScriptedEntityPath
-		void LoadAllTemplateTypes(const std::string &type);
+		void LoadAllPrefabTypes(const std::string &type);
 
 		//! Sets the path where scripted entity files can be found
 		void SetScriptedEntityPath(const std::string &path);

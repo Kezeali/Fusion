@@ -27,7 +27,7 @@
 
 #include "FusionStableHeaders.h"
 
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -81,10 +81,10 @@ namespace FusionEngine
 		}
 	}
 
-	class XMLEntityTemplate : public EntityTemplate
+	class XMLPrefab : public EntityTemplate
 	{
 	public:
-		XMLEntityTemplate(ticpp::Document& document)
+		XMLPrefab(ticpp::Document& document)
 		{
 			ticpp::Element *root = document.FirstChildElement();
 
@@ -99,25 +99,15 @@ namespace FusionEngine
 			ticpp::Iterator< ticpp::Element > comp_it;
 			for (comp_it = comp_it.begin(root); comp_it != comp_it.end(); comp_it++)
 			{
-				std::string componentType = comp_it->Value();
+				std::string componentType = comp_it->GetAttribute("type");
+				std::string componentIdentifier = comp_it->Value();
 
 				if (componentType.empty())
 					continue;
 
-				ComponentProps props;
+				ComponentData_t data;
 
-				// Read the static properties for the current component
-				ticpp::Iterator< ticpp::Element > prop_it;
-				for (prop_it = prop_it.begin(comp_it->FirstChild()); prop_it != prop_it.end(); prop_it++)
-				{
-					std::string prop_name = prop_it->Value();
-					std::string value = prop_it->GetText(false); // value may be empty - this is ok
-
-					if (!prop_name.empty())
-						props[prop_name] = value;
-				}
-
-				m_Composition.push_back(std::make_pair(std::move(componentType), std::move(props)));
+				m_Composition.push_back(std::make_tuple(std::move(componentType), std::move(componentIdentifier), data));
 			}
 		}
 	};
@@ -191,7 +181,7 @@ namespace FusionEngine
 			auto _where = m_ComponentInstancers.find(componentTypeName);
 			if (_where != m_ComponentInstancers.end())
 			{
-				auto component = _where->second->InstantiateComponent(it->first, position, angle);
+				auto component = _where->second->InstantiateComponent(componentTypeName, position, angle);
 				if (!component)
 					return EntityPtr(); // or throw?
 				
@@ -202,7 +192,7 @@ namespace FusionEngine
 		return entity;
 	}
 
-	bool EntityFactory::InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle)
+	EntityPtr EntityFactory::InstanceEntity(const std::vector<std::string>& composition, const Vector2& position, float angle)
 	{
 		EntityPtr entity;
 
@@ -241,24 +231,24 @@ namespace FusionEngine
 
 	bool EntityFactory::LoadPrefabType(const std::string &type)
 	{
-		auto _where = m_EntityDefinitionFileNames.find(type);
-		if (_where != m_EntityDefinitionFileNames.end())
-		{
-			try
-			{
-				ticpp::Document document( OpenXml_PhysFS(_where->second) );
-				loadAllDependencies(fe_getbasepath(_where->second), document);
-			}
-			catch (ticpp::Exception &)
-			{
-				return false;
-			}
-			catch (FileSystemException &)
-			{
-				return false;
-			}
-			return true;
-		}
+		//auto _where = m_EntityDefinitionFileNames.find(type);
+		//if (_where != m_EntityDefinitionFileNames.end())
+		//{
+		//	try
+		//	{
+		//		ticpp::Document document( OpenXml_PhysFS(_where->second) );
+		//		loadAllDependencies(fe_getbasepath(_where->second), document);
+		//	}
+		//	catch (ticpp::Exception &)
+		//	{
+		//		return false;
+		//	}
+		//	catch (FileSystemException &)
+		//	{
+		//		return false;
+		//	}
+		//	return true;
+		//}
 
 		return false;
 	}
@@ -276,16 +266,16 @@ namespace FusionEngine
 			{
 				ticpp::Document document(OpenXml_PhysFS(path));
 
-				auto definition = std::make_shared<XMLPrefab>(/*fe_getbasepath(filename), */document));
+				auto definition = std::make_shared<XMLPrefab>(/*fe_getbasepath(filename), */document);
 				m_PrefabTypes[definition->GetTypeName()] = definition;
 			}
 			catch (ticpp::Exception &ex)
 			{
-				m_Log->AddEntry("The Entity definition file '" + filename + "' has invalid XML: " + ex.what(), LOG_NORMAL);
+				m_Log->AddEntry("The prefab definition file '" + path + "' has invalid XML: " + ex.what(), LOG_NORMAL);
 			}
 			catch (FileSystemException &ex)
 			{
-				m_Log->AddEntry("Failed to open Entity definition file '" + filename + "': " + ex.ToString(), LOG_NORMAL);
+				m_Log->AddEntry("Failed to open prefab definition file '" + path + "': " + ex.ToString(), LOG_NORMAL);
 			}
 		}
 	}

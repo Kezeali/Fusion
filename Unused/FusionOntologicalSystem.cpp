@@ -37,7 +37,7 @@
 #include "FusionClientOptions.h"
 #include "FusionEditor.h"
 #include "FusionEntityManager.h"
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 #include "FusionGameMapLoader.h"
 #include "FusionInputHandler.h"
 #include "FusionInstanceSynchroniser.h"

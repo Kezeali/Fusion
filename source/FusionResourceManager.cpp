@@ -12,6 +12,7 @@
 #include "FusionLogger.h"
 #include "FusionPaths.h"
 #include "FusionPhysFS.h"
+#include "FusionVirtualFileSource_PhysFS.h"
 #include "FusionScriptManager.h"
 
 namespace FusionEngine

@@ -67,6 +67,7 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\CommonProperties.props" />
+    <Import Project="..\CommonReleaseLibs.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -125,7 +126,6 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>angelscriptd.lib;physfs.lib;yaml-cpp-d.lib;Box2Dd.lib;RakNetDLLDebug.lib;ws2_32.lib;ScriptUtils-mtdll-d.lib;RocketAngelScript_d.lib;RocketAngelScriptControls_d.lib;RocketCore_d.lib;RocketControls_d.lib;RocketDebugger_d.lib;kyotocabinet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
     <PostBuildEvent>
@@ -176,7 +176,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>angelscript.lib;physfs.lib;yaml-cpp.lib;Box2D.lib;RakNetDLL.lib;ws2_32.lib;ScriptUtils-mtdll.lib;RocketAngelScript.lib;RocketAngelScriptControls.lib;RocketCore.lib;RocketControls.lib;RocketDebugger.lib;kyotocabinet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
@@ -197,6 +196,7 @@
     <ClCompile Include="..\source\FusionCLRenderComponent.cpp" />
     <ClCompile Include="..\source\FusionCLRenderSystem.cpp" />
     <ClCompile Include="..\source\FusionCmdOptions.cpp" />
+    <ClCompile Include="..\source\FusionComponentFactory.cpp" />
     <ClCompile Include="..\source\FusionConsole.cpp" />
     <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp" />
     <ClCompile Include="..\source\FusionContextMenu.cpp" />
@@ -207,7 +207,6 @@
     <ClCompile Include="..\source\FusionEntityComponent.cpp" />
     <ClCompile Include="..\source\FusionEntityDecorator.cpp" />
     <ClCompile Include="..\source\FusionEntityDecoratorInstancer.cpp" />
-    <ClCompile Include="..\source\FusionEntityFactory.cpp" />
     <ClCompile Include="..\source\FusionEntityManager.cpp" />
     <ClCompile Include="..\source\FusionEntitySerialisationUtils.cpp" />
     <ClCompile Include="..\source\FusionException.cpp" />
@@ -217,7 +216,6 @@
     <ClCompile Include="..\source\FusionImageLoader.cpp" />
     <ClCompile Include="..\source\FusionInputDefinitionLoader.cpp" />
     <ClCompile Include="..\source\FusionInputHandler.cpp" />
-    <ClCompile Include="..\source\FusionInputSystem.cpp" />
     <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp" />
     <ClCompile Include="..\source\FusionLog.cpp" />
     <ClCompile Include="..\source\FusionLogFileConsole.cpp" />
@@ -226,13 +224,11 @@
     <ClCompile Include="..\source\FusionMessageBox.cpp" />
     <ClCompile Include="..\source\FusionNetworkManager.cpp" />
     <ClCompile Include="..\source\FusionNetworkSystem.cpp" />
-    <ClCompile Include="..\source\FusionOntologicalSystem.cpp" />
     <ClCompile Include="..\source\FusionPacketDispatcher.cpp" />
     <ClCompile Include="..\source\FusionPhysFS.cpp" />
     <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp" />
     <ClCompile Include="..\source\FusionPhysFSIOStream.cpp" />
     <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp" />
-    <ClCompile Include="..\source\FusionPhysicsFixture.cpp" />
     <ClCompile Include="..\source\FusionPlayerInput.cpp" />
     <ClCompile Include="..\source\FusionPlayerManager.cpp" />
     <ClCompile Include="..\source\FusionPlayerRegistry.cpp" />
@@ -245,12 +241,10 @@
     <ClCompile Include="..\source\FusionRefCounted.cpp" />
     <ClCompile Include="..\source\FusionRegionCellCache.cpp" />
     <ClCompile Include="..\source\FusionRegionMapLoader.cpp" />
-    <ClCompile Include="..\source\FusionRenderable.cpp" />
     <ClCompile Include="..\source\FusionRenderer.cpp" />
     <ClCompile Include="..\source\FusionResource.cpp" />
     <ClCompile Include="..\source\FusionResourceManager.cpp" />
     <ClCompile Include="..\source\FusionRocketInterface.cpp" />
-    <ClCompile Include="..\source\FusionScriptDebuggerGUI.cpp" />
     <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp" />
     <ClCompile Include="..\source\FusionScriptedSlots.cpp" />
     <ClCompile Include="..\source\FusionScriptManager.cpp" />
@@ -277,44 +271,12 @@
     <ClCompile Include="..\source\scriptstdstring_utils.cpp" />
     <ClCompile Include="..\source\scriptstring.cpp" />
     <ClCompile Include="..\source\scriptstring_utils.cpp" />
-    <ClCompile Include="..\external\minizip\ioapi.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\minizip\iowin32.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\minizip\zip.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\ticpp.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinystr.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxml.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxmlerror.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\external\tinyxml\tinyxmlparser.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../include/FusionStableHeaders.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\external\minizip\crypt.h" />
-    <ClInclude Include="..\external\minizip\ioapi.h" />
-    <ClInclude Include="..\external\minizip\iowin32.h" />
-    <ClInclude Include="..\external\minizip\zip.h" />
-    <ClInclude Include="..\external\tinyxml\ticpp.h" />
-    <ClInclude Include="..\external\tinyxml\ticpprc.h" />
-    <ClInclude Include="..\external\tinyxml\tinystr.h" />
-    <ClInclude Include="..\external\tinyxml\tinyxml.h" />
     <ClInclude Include="..\include\FusionAngelScriptComponent.h" />
     <ClInclude Include="..\include\FusionAngelScriptSystem.h" />
     <ClInclude Include="..\include\FusionAnyFS.h" />
@@ -334,6 +296,7 @@
     <ClInclude Include="..\include\FusionCmdOptions.h" />
     <ClInclude Include="..\include\FusionCommandQueue.h" />
     <ClInclude Include="..\include\FusionCommon.h" />
+    <ClInclude Include="..\include\FusionComponentFactory.h" />
     <ClInclude Include="..\include\FusionComponentSystem.h" />
     <ClInclude Include="..\include\FusionDeltaTime.h" />
     <ClInclude Include="..\include\FusionEntityRepo.h" />
@@ -361,7 +324,6 @@
     <ClInclude Include="..\include\FusionEntityComponent.h" />
     <ClInclude Include="..\include\FusionEntityDecorator.h" />
     <ClInclude Include="..\include\FusionEntityDecoratorInstancer.h" />
-    <ClInclude Include="..\include\FusionEntityFactory.h" />
     <ClInclude Include="..\include\FusionEntityManager.h" />
     <ClInclude Include="..\include\FusionException.h" />
     <ClInclude Include="..\include\FusionExceptionFactory.h" />
@@ -451,6 +413,24 @@
     <ClInclude Include="..\include\scriptstdstring.h" />
     <ClInclude Include="..\include\scriptstdvector.h" />
     <ClInclude Include="..\include\scriptstring.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\external\minizip\minizip.vcxproj">
+      <Project>{23b092d0-f753-463d-8fb7-ca5ad1b4b6b8}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="..\external\tinyxml\tinyxml.vcxproj">
+      <Project>{80eec939-ee99-4428-9c34-8d08f8d1940a}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

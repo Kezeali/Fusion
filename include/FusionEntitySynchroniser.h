@@ -222,12 +222,6 @@ namespace FusionEngine
 		// Checksums of states sent for active entities
 		std::map<ObjectID, std::vector<uint32_t>> m_SentStates;
 
-		struct EntityPacketData
-		{
-			ObjectID ID;
-			SerialisedData State;
-		};
-
 		std::vector<EntityPtr> m_ImportantEntities; // entities which have player inputs that have changed state
 
 		typedef std::multimap<unsigned int, EntityPtr, std::greater<unsigned int>> EntityPriorityMap;

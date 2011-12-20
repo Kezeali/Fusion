@@ -31,8 +31,7 @@
 
 #include "FusionEntity.h"
 #include "FusionEntityComponent.h"
-#include "FusionEntityDeserialiser.h"
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionInstanceSynchroniser.h"
 

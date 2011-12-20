@@ -35,7 +35,7 @@
 #include <StringTable.h>
 #include <climits>
 
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 #include "FusionEntityManager.h"
 #include "FusionExceptionFactory.h"
 #include "FusionLogger.h"

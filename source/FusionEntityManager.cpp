@@ -39,7 +39,7 @@
 #include "FusionCameraSynchroniser.h"
 #include "FusionClientOptions.h"
 #include "FusionDeltaTime.h"
-#include "FusionEntityFactory.h"
+#include "FusionComponentFactory.h"
 #include "FusionEntitySynchroniser.h"
 #include "FusionExceptionFactory.h"
 #include "FusionNetDestinationHelpers.h"
@@ -49,8 +49,6 @@
 #include "FusionRenderer.h"
 #include "FusionSaveDataArchive.h"
 #include "FusionScriptTypeRegistrationUtils.h"
-// For script registration (the script method EntityManager::instance() returns a script object)
-#include "FusionScriptedEntity.h"
 
 #include "FusionEntitySerialisationUtils.h"
 

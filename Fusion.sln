@@ -2,11 +2,19 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ComponentTest", "ComponentTest\ComponentTest.vcxproj", "{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A} = {80EEC939-EE99-4428-9C34-8D08F8D1940A}
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8} = {23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{344E8196-5D6A-4978-9572-5D7FFB3ECBCD}"
 	ProjectSection(SolutionItems) = preProject
 		ComponentTest.psess = ComponentTest.psess
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml", "external\tinyxml\tinyxml.vcxproj", "{80EEC939-EE99-4428-9C34-8D08F8D1940A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minizip", "external\minizip\minizip.vcxproj", "{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +32,22 @@ Global
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Profile|Win32.Build.0 = Profile|Win32
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Release|Win32.ActiveCfg = Release|Win32
 		{39C18BD0-A5CB-4378-A3F5-AD2C0961D04C}.Release|Win32.Build.0 = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Analysis|Win32.ActiveCfg = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Analysis|Win32.Build.0 = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Debug|Win32.Build.0 = Debug|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Profile|Win32.ActiveCfg = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Profile|Win32.Build.0 = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Release|Win32.ActiveCfg = Release|Win32
+		{80EEC939-EE99-4428-9C34-8D08F8D1940A}.Release|Win32.Build.0 = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Analysis|Win32.ActiveCfg = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Analysis|Win32.Build.0 = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Debug|Win32.Build.0 = Debug|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Profile|Win32.ActiveCfg = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Profile|Win32.Build.0 = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Release|Win32.ActiveCfg = Release|Win32
+		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

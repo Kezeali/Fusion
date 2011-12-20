@@ -4,7 +4,6 @@
 
 #include "FusionExceptionFactory.h"
 #include "FusionGUI.h"
-#include "FusionScriptedEntity.h"
 
 namespace FusionEngine
 {

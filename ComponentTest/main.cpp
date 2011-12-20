@@ -1,72 +1,73 @@
-#include "../FusionEngine/FusionStableHeaders.h"
-#include "../FusionEngine/FusionPrerequisites.h"
+#include "../include/FusionStableHeaders.h"
+#include "../include/FusionPrerequisites.h"
 
 // Logging
-#include "../FusionEngine/FusionConsole.h"
-#include "../FusionEngine/FusionConsoleStdOutWriter.h"
-#include "../FusionEngine/FusionLogger.h"
+#include "../include/FusionConsole.h"
+#include "../include/FusionConsoleStdOutWriter.h"
+#include "../include/FusionLogger.h"
 
-#include "../FusionEngine/FusionProfiling.h"
+#include "../include/FusionProfiling.h"
 
 // Filesystem
-#include "../FusionEngine/FusionPaths.h"
-#include "../FusionEngine/FusionPhysFS.h"
-#include "../FusionEngine/FusionVirtualFileSource_PhysFS.h"
-#include "../FusionEngine/FusionPhysFSIOStream.h"
+#include "../include/FusionPaths.h"
+#include "../include/FusionPhysFS.h"
+#include "../include/FusionVirtualFileSource_PhysFS.h"
+#include "../include/FusionPhysFSIOStream.h"
 
 // Resource Loading
-#include "../FusionEngine/FusionResourceManager.h"
-#include "../FusionEngine/FusionAudioLoader.h"
-#include "../FusionEngine/FusionImageLoader.h"
+#include "../include/FusionResourceManager.h"
+#include "../include/FusionAudioLoader.h"
+#include "../include/FusionImageLoader.h"
+#include "../include/FusionSpriteDefinition.h"
 
-#include "../FusionEngine/FusionClientOptions.h"
+#include "../include/FusionClientOptions.h"
 
 // Network
-#include "../FusionEngine/FusionRakNetwork.h"
-#include "../FusionEngine/FusionPacketDispatcher.h"
-#include "../FusionEngine/FusionPlayerRegistry.h"
-#include "../FusionEngine/FusionPlayerManager.h"
-#include "../FusionEngine/FusionCameraSynchroniser.h"
+#include "../include/FusionRakNetwork.h"
+#include "../include/FusionPacketDispatcher.h"
+#include "../include/FusionPlayerRegistry.h"
+#include "../include/FusionPlayerManager.h"
+#include "../include/FusionCameraSynchroniser.h"
 
 // System management
-#include "../FusionEngine/FusionTaskScheduler.h"
+#include "../include/FusionTaskScheduler.h"
 
 // Systems
-#include "../FusionEngine/FusionGUI.h"
+#include "../include/FusionGUI.h"
 
-#include "../FusionEngine/FusionAngelScriptSystem.h"
-#include "../FusionEngine/FusionBox2DSystem.h"
-#include "../FusionEngine/FusionCLRenderSystem.h"
+#include "../include/FusionAngelScriptSystem.h"
+#include "../include/FusionBox2DSystem.h"
+#include "../include/FusionCLRenderSystem.h"
 
-#include "../FusionEngine/FusionBox2DComponent.h"
-#include "../FusionEngine/FusionPhysicalComponent.h"
+#include "../include/FusionBox2DComponent.h"
+#include "../include/FusionPhysicalComponent.h"
 
-#include "../FusionEngine/FusionScriptComponent.h"
-#include "../FusionEngine/FusionRender2DComponent.h"
+#include "../include/FusionScriptComponent.h"
+#include "../include/FusionRender2DComponent.h"
 
 // Various
-#include "../FusionEngine/FusionInputHandler.h"
-#include "../FusionEngine/FusionNetworkManager.h"
-#include "../FusionEngine/FusionScriptManager.h"
+#include "../include/FusionInputHandler.h"
+#include "../include/FusionNetworkManager.h"
+#include "../include/FusionScriptManager.h"
 
-#include "../FusionEngine/FusionContextMenu.h"
-#include "../FusionEngine/FusionElementUndoMenu.h"
-#include "../FusionEngine/FusionEntityFactory.h"
-#include "../FusionEngine/FusionEntityManager.h"
-#include "../FusionEngine/FusionEntitySynchroniser.h"
-#include "../FusionEngine/FusionEntitySerialisationUtils.h"
-#include "../FusionEngine/FusionExceptionFactory.h"
-#include "../FusionEngine/FusionGameMapLoader.h"
-#include "../FusionEngine/FusionInstanceSynchroniser.h"
-#include "../FusionEngine/FusionScriptedConsoleCommand.h"
-#include "../FusionEngine/FusionRegionCellCache.h"
-#include "../FusionEngine/FusionRegionMapLoader.h"
-#include "../FusionEngine/FusionRenderer.h"
-#include "../FusionEngine/FusionScriptInputEvent.h"
-#include "../FusionEngine/FusionScriptModule.h"
-#include "../FusionEngine/FusionScriptSound.h"
+#include "../include/FusionContextMenu.h"
+#include "../include/FusionElementUndoMenu.h"
+#include "../include/FusionComponentFactory.h"
+#include "../include/FusionEntityManager.h"
+#include "../include/FusionEntitySynchroniser.h"
+#include "../include/FusionEntitySerialisationUtils.h"
+#include "../include/FusionExceptionFactory.h"
+#include "../include/FusionGameMapLoader.h"
+#include "../include/FusionInstanceSynchroniser.h"
+#include "../include/FusionScriptedConsoleCommand.h"
+#include "../include/FusionRegionCellCache.h"
+#include "../include/FusionRegionMapLoader.h"
+#include "../include/FusionRenderer.h"
+#include "../include/FusionScriptInputEvent.h"
+#include "../include/FusionScriptModule.h"
+#include "../include/FusionScriptSound.h"
 
-#include "../FusionEngine/FusionAngelScriptComponent.h"
+#include "../include/FusionAngelScriptComponent.h"
 
 #include <boost/thread.hpp>
 #include <boost/program_options.hpp>
@@ -220,7 +221,7 @@ namespace FusionEngine
 
 // TODO: remove this
 }
-#include "../FusionEngine/FusionScriptTypeRegistrationUtils.h"
+#include "../include/FusionScriptTypeRegistrationUtils.h"
 namespace FusionEngine
 {
 	void ICamera_RegisterScriptInterface(asIScriptEngine* engine)
