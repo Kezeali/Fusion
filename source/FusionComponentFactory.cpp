@@ -257,7 +257,7 @@ namespace FusionEngine
 	{
 		m_PrefabTypes.clear();
 
-		auto prefabFiles = PhysFSHelp::regex_find(path, std::regex(".+\.xml", std::regex::ECMAScript | std::regex::icase));
+		auto prefabFiles = PhysFSHelp::regex_find(path, std::regex(".+\\.xml", std::regex::ECMAScript | std::regex::icase));
 
 		for (auto it = prefabFiles.begin(), end = prefabFiles.end(); it != end; ++it)
 		{

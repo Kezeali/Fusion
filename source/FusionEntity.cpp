@@ -31,7 +31,7 @@
 
 #include "FusionAngelScriptComponent.h"
 #include "FusionExceptionFactory.h"
-#include "FusionPhysicalComponent.h"
+#include "FusionTransformComponent.h"
 #include "FusionResourceManager.h"
 #include "FusionStreamedResourceUser.h"
 #include "FusionNetworkManager.h"

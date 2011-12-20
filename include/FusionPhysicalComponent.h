@@ -37,6 +37,8 @@
 #include "FusionEntityComponent.h"
 #include "FusionThreadSafeProperty.h"
 
+#include "FusionTransformComponent.h"
+
 #include "FusionVector2.h"
 #include "FusionCommon.h"
 
@@ -45,45 +47,8 @@
 namespace FusionEngine
 {
 
-	//template <class C>
-	//static void RegisterProp(asIScriptEngine* engine, const std::string& cname, const std::string& type, const std::string& name)
-	//{
-	//	engine->RegisterObjectMethod(cname.c_str(), (type + " get_" + name + "() const").c_str(), asMETHOD(C, Get));
-	//}
-
-	FSN_BEGIN_COIFACE(ITransform)
-	public:
-		void InitProperties()
-		{
-			Position.SetCallbacks(this, &ITransform::GetPosition, &ITransform::SetPosition);
-			Angle.SetCallbacks(this, &ITransform::GetAngle, &ITransform::SetAngle);
-			Depth.SetCallbacks(this, &ITransform::GetDepth, &ITransform::SetDepth);
-		}
-
-		ThreadSafeProperty<Vector2> Position;
-		ThreadSafeProperty<float> Angle;
-		ThreadSafeProperty<int> Depth;
-
-		static void RegisterScriptInterface(asIScriptEngine* engine);
-
-		static bool IsThreadSafe() { return true; }
-
-		virtual bool HasContinuousPosition() const = 0;
-
-		virtual Vector2 GetPosition() const = 0;
-		virtual void SetPosition(const Vector2& pos) = 0;
-
-	protected:
-
-		virtual float GetAngle() const = 0;
-		virtual void SetAngle(float angle) = 0;
-
-		virtual int GetDepth() const = 0;
-		virtual void SetDepth(int depth) = 0;
-	};
-
-	//! Threadsafe physical body interface
-	class IRigidBody : public ITransform
+	//! Rigid-body interface
+	class IRigidBody
 	{
 	public:
 		static std::string GetTypeName() { return "IRigidBody"; }

@@ -663,7 +663,7 @@ namespace FusionEngine
 
 									if (m_EditMode)
 									{
-										if (numSynched > 0 || numPseudo > 0)
+										//if (numSynched > 0 || numPseudo > 0)
 										{
 											auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
 											if (filePtr && *filePtr)
@@ -689,7 +689,7 @@ namespace FusionEngine
 												FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
 										}
 									}
-									else if (numSynched > 0)
+									//else if (numSynched > 0)
 									{
 										auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
 										// Need a seekable stream, so write to a temp. one

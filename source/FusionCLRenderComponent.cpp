@@ -32,7 +32,7 @@
 #include "FusionLogger.h"
 #include "FusionResourceManager.h"
 
-#include "FusionPhysicalComponent.h"
+#include "FusionTransformComponent.h"
 #include "FusionSpriteDefinition.h"
 
 #include <functional>
@@ -95,7 +95,7 @@ namespace FusionEngine
 			AddLogEntry("CLSprite: Seems like a sprite resource failed to load. Image: " + m_ImagePath + " Animation: " + m_AnimationPath);
 	}
 
-	void CLSprite::Update(unsigned int tick, const float elapsed, const float alpha)
+	void CLSprite::Update(unsigned int, const float elapsed, const float)
 	{
 		auto onImageLoaded = [this](ResourceDataPtr& data)
 		{
@@ -144,7 +144,7 @@ namespace FusionEngine
 		m_DeltaTime = elapsed;
 		m_ElapsedTime = 0.f;
 
-		m_CurrentTick = tick;
+		//m_CurrentTick = tick;
 
 		//m_LastPosition = m_Position;
 		//m_Position = m_NewPosition;

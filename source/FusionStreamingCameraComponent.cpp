@@ -30,7 +30,7 @@
 #include "FusionStreamingCameraComponent.h"
 
 #include "FusionMaths.h"
-#include "FusionPhysicalComponent.h"
+#include "FusionTransformComponent.h"
 #include "FusionResourceManager.h"
 
 #include <functional>

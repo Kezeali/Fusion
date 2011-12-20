@@ -43,7 +43,7 @@
 #include "FusionNetDestinationHelpers.h"
 #include "FusionPlayerRegistry.h"
 
-#include "FusionPhysicalComponent.h"
+#include "FusionTransformComponent.h"
 
 #include "FusionScriptTypeRegistrationUtils.h"
 #include "FusionScriptManager.h"

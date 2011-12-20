@@ -40,7 +40,7 @@
 #include "FusionCommon.h"
 #include "FusionEntityComponent.h"
 #include "FusionCommandQueue.h"
-#include "FusionPhysicalComponent.h"
+#include "FusionTransformComponent.h"
 #include "FusionPlayerInput.h"
 #include "FusionResourcePointer.h"
 //#include "FusionTagFlagDictionary.h"

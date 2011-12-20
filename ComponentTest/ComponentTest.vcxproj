@@ -302,9 +302,6 @@
     <ClInclude Include="..\include\FusionEntityRepo.h" />
     <ClInclude Include="..\include\FusionEntitySerialisationUtils.h" />
     <ClInclude Include="..\include\FusionEntitySynchroniser.h" />
-    <ClInclude Include="..\include\FusionInputComponent.h" />
-    <ClInclude Include="..\include\FusionInputComponentInterface.h" />
-    <ClInclude Include="..\include\FusionPositionSerialisation.h" />
     <ClInclude Include="..\include\FusionProfiling.h" />
     <ClInclude Include="..\include\FusionRegionCellCache.h" />
     <ClInclude Include="..\include\FusionRegionMapLoader.h" />
@@ -314,7 +311,6 @@
     <ClInclude Include="..\include\FusionStreamingCameraComponent.h" />
     <ClInclude Include="..\include\FusionStreamingSystem.h" />
     <ClInclude Include="..\include\FusionTaskScheduler.h" />
-    <ClInclude Include="..\include\FusionComponentUtils.h" />
     <ClInclude Include="..\include\FusionConsole.h" />
     <ClInclude Include="..\include\FusionConsoleStdOutWriter.h" />
     <ClInclude Include="..\include\FusionContextMenu.h" />
@@ -346,7 +342,6 @@
     <ClInclude Include="..\include\FusionNetworkManager.h" />
     <ClInclude Include="..\include\FusionNetworkSystem.h" />
     <ClInclude Include="..\include\FusionNetworkTypes.h" />
-    <ClInclude Include="..\include\FusionOntologicalSystem.h" />
     <ClInclude Include="..\include\FusionPacketDispatcher.h" />
     <ClInclude Include="..\include\FusionPacketHandler.h" />
     <ClInclude Include="..\include\FusionPaths.h" />
@@ -354,11 +349,7 @@
     <ClInclude Include="..\include\FusionPhysFSIODeviceProvider.h" />
     <ClInclude Include="..\include\FusionPhysFSIOStream.h" />
     <ClInclude Include="..\include\FusionPhysicalComponent.h" />
-    <ClInclude Include="..\include\FusionPhysicsCallback.h" />
     <ClInclude Include="..\include\FusionPhysicsDebugDraw.h" />
-    <ClInclude Include="..\include\FusionPhysicsFixture.h" />
-    <ClInclude Include="..\include\FusionPhysicsScriptTypes.h" />
-    <ClInclude Include="..\include\FusionPlayerInfo.h" />
     <ClInclude Include="..\include\FusionPlayerInput.h" />
     <ClInclude Include="..\include\FusionPlayerManager.h" />
     <ClInclude Include="..\include\FusionPlayerRegistry.h" />
@@ -366,7 +357,6 @@
     <ClInclude Include="..\include\FusionRakNetwork.h" />
     <ClInclude Include="..\include\FusionRefCounted.h" />
     <ClInclude Include="..\include\FusionRender2DComponent.h" />
-    <ClInclude Include="..\include\FusionRenderable.h" />
     <ClInclude Include="..\include\FusionRenderer.h" />
     <ClInclude Include="..\include\FusionResource.h" />
     <ClInclude Include="..\include\FusionResourceLoader.h" />
@@ -374,7 +364,6 @@
     <ClInclude Include="..\include\FusionResourcePointer.h" />
     <ClInclude Include="..\include\FusionRocketInterface.h" />
     <ClInclude Include="..\include\FusionScriptConsoleCallback.h" />
-    <ClInclude Include="..\include\FusionScriptDebuggerGUI.h" />
     <ClInclude Include="..\include\FusionScriptedConsoleCommand.h" />
     <ClInclude Include="..\include\FusionScriptedSlots.h" />
     <ClInclude Include="..\include\FusionScriptManager.h" />
@@ -385,9 +374,6 @@
     <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h" />
     <ClInclude Include="..\include\FusionScriptVector.h" />
     <ClInclude Include="..\include\FusionSerialisationHelper.h" />
-    <ClInclude Include="..\include\FusionSerialisedData.h" />
-    <ClInclude Include="..\include\FusionSharedPropertyCollection.h" />
-    <ClInclude Include="..\include\FusionSharedPropertyTypes.h" />
     <ClInclude Include="..\include\FusionSingleton.h" />
     <ClInclude Include="..\include\FusionSlotContainer.h" />
     <ClInclude Include="..\include\FusionSpriteDefinition.h" />
@@ -399,6 +385,7 @@
     <ClInclude Include="..\include\FusionTaskManager.h" />
     <ClInclude Include="..\include\FusionThreadSafeProperty.h" />
     <ClInclude Include="..\include\FusionTimer.h" />
+    <ClInclude Include="..\include\FusionTransformComponent.h" />
     <ClInclude Include="..\include\FusionTypes.h" />
     <ClInclude Include="..\include\FusionVector2.h" />
     <ClInclude Include="..\include\FusionVectorTypes.h" />

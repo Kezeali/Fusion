@@ -1,708 +1,727 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="IO">
+    <Filter Include="Common">
+      <UniqueIdentifier>{7573e0d5-886b-4017-8c41-a544e55f3146}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\AngelScript">
+      <UniqueIdentifier>{c6d8fb2c-3456-4381-aa8a-f4c5a52fe502}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\IO">
       <UniqueIdentifier>{a49f3b0d-e649-465e-8109-420ed67f7de1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IO\FileSystem">
+    <Filter Include="Common\IO\FileSystem">
       <UniqueIdentifier>{2a204f8f-dfe8-4c85-8ee3-cf62308a917d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IO\FileType">
+    <Filter Include="Common\IO\FileType">
       <UniqueIdentifier>{b332cdf1-8300-45eb-a957-fc3908e33bbc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="AngelScript">
+    <Filter Include="Common\Logging">
+      <UniqueIdentifier>{46f47878-5e32-4e24-9e17-54394299eeb9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{bba8ae7b-8052-47c2-af12-52f4f75478e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AngelScript Component">
       <UniqueIdentifier>{bb442270-131e-4cf6-a224-2bdd570ac7a2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Entity">
+    <Filter Include="CL Rendering Component">
+      <UniqueIdentifier>{eb2eae02-fecc-437c-9232-f3e1e05aaec3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\IO\Streams">
+      <UniqueIdentifier>{6959cd86-0861-4930-817e-90abf0e8c94b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Maths">
+      <UniqueIdentifier>{dbbba152-7fb1-48b8-8eaa-2e89203fea19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\AngelScript\sdk addons">
+      <UniqueIdentifier>{f174598d-fc42-47e0-bdbf-b75f3e2b233f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Box2D Component">
+      <UniqueIdentifier>{986e2b46-1981-42a0-8ecc-b82e51d58681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component Interface">
+      <UniqueIdentifier>{17c91d72-352f-49d4-8450-bdd3ac2f59b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component Interface\Entity">
       <UniqueIdentifier>{33152dc8-3d12-48d2-b83f-6c3719f4c932}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Entity\Instantiation">
+    <Filter Include="Engine">
       <UniqueIdentifier>{4d1598a2-b541-4da2-aef2-3f80961729b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{594fed69-6128-41ea-82b9-59c3f827c63a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Visual">
+      <UniqueIdentifier>{4a41713b-594a-41fe-b105-75eb7584cad0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Resources">
+      <UniqueIdentifier>{d0b526ab-3c31-4055-87a4-eaac6eabc25a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Resources\Loaders">
+      <UniqueIdentifier>{6da6832b-61b2-48d8-ad6d-11143c570f25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Profiling">
+      <UniqueIdentifier>{58a56974-4068-4836-aaa3-a01b39d07ead}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{570c57fa-c2ec-42ad-b948-8c9410483692}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map">
+      <UniqueIdentifier>{36f0ab19-e530-4de8-971e-b4e23018cc62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map\Async Loading">
+      <UniqueIdentifier>{c535c79b-a459-4b66-acea-71a1ac384971}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Console">
+      <UniqueIdentifier>{fcd2dc37-3563-4f87-befc-a48b7c0c09bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Exception">
+      <UniqueIdentifier>{4e0feb90-234a-42f0-a0ca-7d5a783af570}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Map">
+      <UniqueIdentifier>{36a9e0e1-0fe6-4998-87c8-4d7023f4bed2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component Interface\Types">
+      <UniqueIdentifier>{c2d852ae-ff47-4e41-8828-46010d6c98ba}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\FusionAssert.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEasyPacket.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionAudioLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionBox2DComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionBox2DSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionClientOptions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCLRenderComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCLRenderSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCmdOptions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionConsole.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionContextMenu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionElementSelectableDataGrid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstring_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntityDecorator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntityDecoratorInstancer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionException.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionGameMapLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionGUI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionIDStack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionImageLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionInputDefinitionLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionInputHandler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogFileConsole.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogPhysFS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionMessageBox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionNetworkManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionNetworkSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPacketDispatcher.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFSIOStream.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPlayerInput.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPlayerManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPlayerRegistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPrecompiledHeaders.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRakNetwork.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRefCounted.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionResource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionResourceManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRocketInterface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptedSlots.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptModule.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptReference.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptSound.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptVector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionSpriteDefinition.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionStreamedResourceUser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionStreamingManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionViewport.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionVirtualFileSource_PhysFS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionXInputController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionXML.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptarray.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptmath.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstring.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionTaskManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionTaskScheduler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionTimer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionAngelScriptComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionAngelScriptSystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstdstring.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstdstring_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptany.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionProfiling.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionEntitySerialisationUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionDeltaTime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionStreamingCameraComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCameraSynchroniser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionBinaryStream.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRegionMapLoader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRegionCellCache.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionZipArchive.cpp">
-      <Filter>IO\FileType</Filter>
+      <Filter>Common\IO\FileType</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionAnyFS.cpp">
-      <Filter>IO\FileSystem</Filter>
+      <Filter>Common\IO\FileSystem</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionComponentFactory.cpp">
-      <Filter>Entity\Instantiation</Filter>
+      <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntity.cpp">
-      <Filter>Entity</Filter>
+      <Filter>Component Interface\Entity</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntityManager.cpp">
-      <Filter>Entity\Instantiation</Filter>
+      <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntityComponent.cpp">
-      <Filter>Entity</Filter>
+      <Filter>Component Interface\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptManager.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptModule.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptReference.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptSound.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptVector.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptedSlots.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp">
+      <Filter>Common\AngelScript</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionAngelScriptComponent.cpp">
+      <Filter>AngelScript Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionAngelScriptSystem.cpp">
+      <Filter>AngelScript Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionLog.cpp">
+      <Filter>Common\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionLogPhysFS.cpp">
+      <Filter>Common\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionLogFileConsole.cpp">
+      <Filter>Common\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionLogger.cpp">
+      <Filter>Common\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionCmdOptions.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionCLRenderComponent.cpp">
+      <Filter>CL Rendering Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionCLRenderSystem.cpp">
+      <Filter>CL Rendering Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionAudioLoader.cpp">
+      <Filter>Common\Resources\Loaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionBinaryStream.cpp">
+      <Filter>Common\IO\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptany.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptstring_utils.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptarray.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptmath.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptstdstring.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptstdstring_utils.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\scriptstring.cpp">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionBox2DComponent.cpp">
+      <Filter>Box2D Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionBox2DSystem.cpp">
+      <Filter>Box2D Component</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionTaskManager.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionTaskScheduler.cpp">
+      <Filter>Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionCamera.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRenderer.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionGUI.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionIDStack.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionViewport.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntityDecorator.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntityDecoratorInstancer.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionInputHandler.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionInputDefinitionLoader.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionMessageBox.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionProfiling.cpp">
+      <Filter>Common\Profiling</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionContextMenu.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionXInputController.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionResource.cpp">
+      <Filter>Common\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionResourceManager.cpp">
+      <Filter>Common\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRefCounted.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEasyPacket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionNetworkManager.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionNetworkSystem.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPacketDispatcher.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRakNetwork.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionDeltaTime.cpp">
+      <Filter>Component Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionCameraSynchroniser.cpp">
+      <Filter>CL Rendering Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionGameMapLoader.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRegionMapLoader.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRegionCellCache.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionStreamingManager.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionStreamingCameraComponent.cpp">
+      <Filter>CL Rendering Component</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionElementSelectableDataGrid.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPlayerManager.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPlayerRegistry.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPhysFS.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPhysFSIOStream.cpp">
+      <Filter>Common\IO\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionRocketInterface.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionVirtualFileSource_PhysFS.cpp">
+      <Filter>Common\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionImageLoader.cpp">
+      <Filter>Common\Resources\Loaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionXML.cpp">
+      <Filter>Common\IO\FileType</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionSpriteDefinition.cpp">
+      <Filter>Common\Resources\Loaders</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionTimer.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp">
+      <Filter>Component Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPlayerInput.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp">
+      <Filter>Visual</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionPrecompiledHeaders.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionEntitySerialisationUtils.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionStreamedResourceUser.cpp">
+      <Filter>Common\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionClientOptions.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionConsole.cpp">
+      <Filter>Common\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp">
+      <Filter>Common\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionAssert.cpp">
+      <Filter>Common\Exception</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionException.cpp">
+      <Filter>Common\Exception</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\FusionAssert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionEasyPacket.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAudioLoader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionBoostSignals2.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionBox2DComponent.h">
-      <Filter>Header Files</Filter>
+      <Filter>Box2D Component</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionBox2DSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Box2D Component</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionClientOptions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionCLRenderComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionCLRenderSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Visual</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCmdOptions.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCommandQueue.h">
-      <Filter>Header Files</Filter>
+      <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCommon.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionComponentSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionComponentUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionConsole.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionConsoleStdOutWriter.h">
-      <Filter>Header Files</Filter>
+      <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionContextMenu.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionElementSelectableDataGrid.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstring.h">
-      <Filter>Header Files</Filter>
+      <Filter>Component Interface\Entity</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityDecorator.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityDecoratorInstancer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionException.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionExceptionFactory.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionGameMapLoader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionGUI.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionHashable.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionIDStack.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionImageLoader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Resources\Loaders</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionInputDefinitionLoader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionInputHandler.h">
-      <Filter>Header Files</Filter>
+      <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionInstanceSynchroniser.h">
-      <Filter>Header Files</Filter>
+      <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLinkedNode.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLog.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Logging</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLogFileConsole.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Logging</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLogger.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Logging</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLogPhysFS.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Logging</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionMaths.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Maths</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionMessageBox.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionNetDestinationHelpers.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionNetworkManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionNetworkSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionNetworkTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionOntologicalSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPacketDispatcher.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPacketHandler.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPaths.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPhysFS.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPhysFSIODeviceProvider.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPhysFSIOStream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysicalComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysicsCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysicsDebugDraw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysicsFixture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysicsScriptTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPlayerInfo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\IO\Streams</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPlayerInput.h">
-      <Filter>Header Files</Filter>
+      <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPlayerManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPlayerRegistry.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPrerequisites.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRakNetwork.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRefCounted.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionRender2DComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionRenderable.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourceLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourceManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourcePointer.h">
-      <Filter>Header Files</Filter>
+      <Filter>Visual</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRocketInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionScriptConsoleCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptDebuggerGUI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptedConsoleCommand.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptedSlots.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptModule.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptPreprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptReference.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptSound.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptVector.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\AngelScript</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionSerialisationHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSerialisedData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSharedPropertyCollection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSharedPropertyTypes.h">
-      <Filter>Header Files</Filter>
+      <Filter>Network</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionSingleton.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionSlotContainer.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionSpriteDefinition.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Resources\Loaders</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStableHeaders.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStdHeaders.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStreamedResourceUser.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Resources</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStreamingManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStringFormatting.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionThreadSafeProperty.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVector2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionViewport.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVirtualFileSource_PhysFS.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionXInputController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionXML.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptarray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptmath.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstdvector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionTaskManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionTaskScheduler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAngelScriptComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAngelScriptSystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstdstring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptany.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionScriptInputEvent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionInputComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionInputComponentInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>AngelScript Component</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStreamingSystem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionProfiling.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\Profiling</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntitySerialisationUtils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionDeltaTime.h">
-      <Filter>Header Files</Filter>
+      <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntitySynchroniser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionStreamingCameraComponent.h">
-      <Filter>Header Files</Filter>
+      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCameraSynchroniser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPositionSerialisation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionBinaryStream.h">
-      <Filter>Header Files</Filter>
+      <Filter>CL Rendering Component</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCellDataSource.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCellCache.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRegionMapLoader.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRegionCellCache.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSaveDataArchive.h">
-      <Filter>Header Files</Filter>
+      <Filter>Map\Async Loading</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionZipArchive.h">
-      <Filter>IO\FileType</Filter>
+      <Filter>Common\IO\FileType</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionAnyFS.h">
-      <Filter>IO\FileSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVectorTypes.h">
-      <Filter>Header Files</Filter>
+      <Filter>Common\IO\FileSystem</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionComponentFactory.h">
-      <Filter>Entity\Instantiation</Filter>
+      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityComponent.h">
-      <Filter>Entity</Filter>
+      <Filter>Component Interface\Entity</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityManager.h">
-      <Filter>Entity\Instantiation</Filter>
+      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityRepo.h">
-      <Filter>Entity\Instantiation</Filter>
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionAngelScriptComponent.h">
+      <Filter>AngelScript Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionAngelScriptSystem.h">
+      <Filter>AngelScript Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptany.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptarray.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptmath.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptstdstring.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptstdvector.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\scriptstring.h">
+      <Filter>Common\AngelScript\sdk addons</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionBinaryStream.h">
+      <Filter>Common\IO\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionVirtualFileSource_PhysFS.h">
+      <Filter>Common\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionAudioLoader.h">
+      <Filter>Common\Resources\Loaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionTypes.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionVector2.h">
+      <Filter>Common\Maths</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionTaskScheduler.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionTaskManager.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionXML.h">
+      <Filter>Common\IO\FileType</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionXInputController.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionViewport.h">
+      <Filter>Visual</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptVector.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptManager.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptModule.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptPreprocessor.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptReference.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptSound.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionVectorTypes.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionResource.h">
+      <Filter>Common\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionResourcePointer.h">
+      <Filter>Common\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionResourceLoader.h">
+      <Filter>Common\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionResourceManager.h">
+      <Filter>Common\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionThreadSafeProperty.h">
+      <Filter>Component Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionStreamingCameraComponent.h">
+      <Filter>CL Rendering Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionClientOptions.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionConsole.h">
+      <Filter>Common\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionConsoleStdOutWriter.h">
+      <Filter>Common\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionAssert.h">
+      <Filter>Common\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionException.h">
+      <Filter>Common\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionExceptionFactory.h">
+      <Filter>Common\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionSaveDataArchive.h">
+      <Filter>Common\Map</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionCLRenderComponent.h">
+      <Filter>CL Rendering Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionCLRenderSystem.h">
+      <Filter>CL Rendering Component</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionRender2DComponent.h">
+      <Filter>Component Interface\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionPhysicalComponent.h">
+      <Filter>Component Interface\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptComponent.h">
+      <Filter>Component Interface\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionTransformComponent.h">
+      <Filter>Component Interface\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionPhysicsDebugDraw.h">
+      <Filter>Visual</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptedConsoleCommand.h">
+      <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionScriptedSlots.h">
+      <Filter>Common\AngelScript</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

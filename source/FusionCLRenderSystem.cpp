@@ -130,11 +130,12 @@ namespace FusionEngine
 	{
 		if (component->GetType() == "CLSprite")
 		{
-			auto drawable = boost::dynamic_pointer_cast<IDrawable>(component);
-			if (drawable)
+			auto sprite = boost::dynamic_pointer_cast<CLSprite>(component);
+			if (sprite)
 			{
-				FSN_ASSERT(std::find(m_Drawables.begin(), m_Drawables.end(), drawable) == m_Drawables.end());
-				m_Drawables.push_back(drawable);
+				FSN_ASSERT(std::find(m_Drawables.begin(), m_Drawables.end(), sprite) == m_Drawables.end());
+				m_Drawables.push_back(sprite);
+				m_Sprites.push_back(sprite);
 			}
 		}
 		if (component->GetType() == "StreamingCamera")
@@ -180,6 +181,16 @@ namespace FusionEngine
 			if (_where != m_Drawables.end())
 			{
 				m_Drawables.erase(_where);
+			}
+
+			auto sprite = boost::dynamic_pointer_cast<CLSprite>(component);
+			if (sprite)
+			{
+				auto _where = std::find(m_Sprites.begin(), m_Sprites.end(), sprite);
+				if (_where != m_Sprites.end())
+				{
+					m_Sprites.erase(_where);
+				}
 			}
 		}
 		else if (component->GetType() == "StreamingCamera")
@@ -248,6 +259,7 @@ namespace FusionEngine
 
 		auto& cameras = m_RenderWorld->GetCameras();
 		auto& drawables = m_RenderWorld->GetDrawables();
+		auto& sprites = m_RenderWorld->GetSprites();
 
 		for (auto it = cameras.cbegin(), end = cameras.cend(); it != end; ++it)
 		{
@@ -287,44 +299,45 @@ namespace FusionEngine
 			return false;
 		};
 
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-		tbb::atomic<bool> outOfOrder;
-		outOfOrder = false;
-		tbb::parallel_for(tbb::blocked_range<size_t>(0, drawables.size()), [&](const tbb::blocked_range<size_t>& r)
 		{
-			for (auto i = r.begin(), end = r.end(); i != end; ++i)
+			FSN_PROFILE("CLRender:Animate");
+			float animationDt = std::min(DeltaTime::GetDeltaTime(), DeltaTime::GetActualDeltaTime());
+#define FSN_CLRENDER_PARALLEL_UPDATE
+
+#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+			//tbb::atomic<bool> outOfOrder;
+			//outOfOrder = false;
+			tbb::parallel_for(tbb::blocked_range<size_t>(0, sprites.size()), [&](const tbb::blocked_range<size_t>& r)
 			{
-				auto& drawable = drawables[i];
+				for (auto i = r.begin(), end = r.end(); i != end; ++i)
+				{
+					auto& sprite = sprites[i];
 #else
-		bool outOfOrder = false;
-		for (auto it = drawables.begin(); it != drawables.end(); ++it)
-		{
-			auto& drawable = *it;
+			//bool outOfOrder = false;
+			for (auto it = sprites.begin(); it != sprites.end(); ++it)
+			{
+				auto& sprite = *it;
 #endif
-			drawable->Update(DeltaTime::GetTick(), DeltaTime::GetActualDeltaTime(), DeltaTime::GetInterpolationAlpha());
+				sprite->Update(DeltaTime::GetTick(), animationDt, DeltaTime::GetInterpolationAlpha());
 
+				//#ifdef FSN_CLRENDER_PARALLEL_UPDATE
+				//			if (!outOfOrder && i != r.begin() && !depthSort(drawables[i - 1], drawable))
+				//				outOfOrder = true;
+				//#else
+				//			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), drawable))
+				//				outOfOrder = true;
+				//#endif
+			}
 #ifdef FSN_CLRENDER_PARALLEL_UPDATE
-			if (!outOfOrder && i != r.begin() && !depthSort(drawables[i - 1], drawable))
-				outOfOrder = true;
-#else
-			if (!outOfOrder && it != drawables.begin() && !depthSort(*(it - 1), drawable))
-				outOfOrder = true;
+			});
 #endif
-
-			// Bubblesort
-			//if (it != drawables.begin())
-			//{
-			//	auto& previous = *(it - 1);
-			//	if (depthSort(previous, drawable))
-			//		previous.swap(drawable);
-			//}
 		}
-#ifdef FSN_CLRENDER_PARALLEL_UPDATE
-		});
-#endif
 
-		if (outOfOrder)
+		//if (outOfOrder)
+		{
+			FSN_PROFILE("CLRender:Depth Sort");
 			tbb::parallel_sort(drawables.begin(), drawables.end(), depthSort);
+		}
 
 		Draw();
 	}
@@ -347,6 +360,7 @@ namespace FusionEngine
 
 	void CLRenderTask::Draw()
 	{
+		FSN_PROFILE("CLRender:Draw");
 		auto& drawables = m_RenderWorld->GetDrawables();
 
 		CL_GraphicContext gc = m_Renderer->GetGraphicContext();

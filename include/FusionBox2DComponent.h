@@ -52,7 +52,7 @@ namespace FusionEngine
 
 	class Box2DFixture;
 
-	class Box2DBody : public IComponent, public IRigidBody
+	class Box2DBody : public IComponent, public ITransform, public IRigidBody
 	{
 		friend class Box2DWorld;
 		friend class Box2DTask;

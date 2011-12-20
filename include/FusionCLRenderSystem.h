@@ -47,6 +47,7 @@ namespace FusionEngine
 {
 	// forward decl.
 	class IDrawable;
+	class CLSprite;
 	class CLRenderTask;
 	class StreamingCamera;
 	class CameraSynchroniser;
@@ -90,6 +91,7 @@ namespace FusionEngine
 
 		const std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() const { return m_Drawables; }
 		std::vector<boost::intrusive_ptr<IDrawable>>& GetDrawables() { return m_Drawables; }
+		std::vector<boost::intrusive_ptr<CLSprite>>& GetSprites() { return m_Sprites; }
 
 		std::vector<boost::intrusive_ptr<StreamingCamera>>& GetCameras() { return m_Cameras; }
 
@@ -108,7 +110,10 @@ namespace FusionEngine
 
 		CLRenderTask* m_RenderTask;
 
+		// Drawables contains all drawable components (sprites, etc.) sorted for rendering
 		std::vector<boost::intrusive_ptr<IDrawable>> m_Drawables;
+
+		std::vector<boost::intrusive_ptr<CLSprite>> m_Sprites;
 
 		std::vector<boost::intrusive_ptr<StreamingCamera>> m_Cameras;
 
