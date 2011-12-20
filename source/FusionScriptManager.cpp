@@ -684,7 +684,7 @@ namespace FusionEngine
 		std::stringstream str;
 
 		// Print the current function
-		asIScriptFunction *func = engine->GetFunctionDescriptorById(current_func);
+		asIScriptFunction *func = engine->GetFunctionById(current_func);
 		if (func != NULL)
 		{
 			const char *sig = func->GetDeclaration(true);
@@ -746,7 +746,7 @@ namespace FusionEngine
 			CL_StringHelp::text_to_local8( cl_format("Script Exception:\n %1\n", ctx->GetExceptionString()) );
 
 		int funcId = ctx->GetExceptionFunction();
-		const asIScriptFunction *function = engine->GetFunctionDescriptorById(funcId);
+		const asIScriptFunction *function = engine->GetFunctionById(funcId);
 		int column = 0;
 		desc += CL_StringHelp::text_to_local8(
 			cl_format(" In function: %1 (line %2, col %3)\n", function->GetDeclaration(), ctx->GetExceptionLineNumber(&column), column)
@@ -816,7 +816,7 @@ namespace FusionEngine
 			int funcId = ctx->GetFunction()->GetId();
 			int column, line = ctx->GetLineNumber(0U, &column);
 
-			asIScriptFunction *function = ctx->GetEngine()->GetFunctionDescriptorById(funcId);
+			asIScriptFunction *function = ctx->GetEngine()->GetFunctionById(funcId);
 
 			std::ostringstream str;
 

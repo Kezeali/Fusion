@@ -62,12 +62,11 @@ static CScriptArray* ScriptArrayFactory(asIObjectType *ot)
 static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 {
 	// Make sure the subtype can be instanciated with a default factory/constructor, 
-	// otherwise we won't be able to instanciate the elements. Script classes always
-	// have default factories, so we don't have to worry about those.
+	// otherwise we won't be able to instanciate the elements. 
 	int typeId = ot->GetSubTypeId();
 	if( typeId == asTYPEID_VOID )
 		return false;
-	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) && !(typeId & asTYPEID_SCRIPTOBJECT) )
+	if( (typeId & asTYPEID_MASK_OBJECT) && !(typeId & asTYPEID_OBJHANDLE) )
 	{
 		asIObjectType *subtype = ot->GetEngine()->GetObjectTypeById(typeId);
 		asDWORD flags = subtype->GetFlags();
@@ -80,7 +79,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 				int funcId = subtype->GetBehaviourByIndex(n, &beh);
 				if( beh != asBEHAVE_CONSTRUCT ) continue;
 
-				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionById(funcId);
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default constructor
@@ -97,7 +96,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot)
 			for( asUINT n = 0; n < subtype->GetFactoryCount(); n++ )
 			{
 				int funcId = subtype->GetFactoryIdByIndex(n);
-				asIScriptFunction *func = ot->GetEngine()->GetFunctionDescriptorById(funcId);
+				asIScriptFunction *func = ot->GetEngine()->GetFunctionById(funcId);
 				if( func->GetParamCount() == 0 )
 				{
 					// Found the default factory
@@ -162,6 +161,7 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void removeAt(uint)", asMETHOD(CScriptArray, RemoveAt), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void insertLast(const T&in)", asMETHOD(CScriptArray, InsertLast), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void removeLast()", asMETHOD(CScriptArray, RemoveLast), asCALL_THISCALL); assert( r >= 0 );
+	// TODO: Should length() and resize() be deprecated as the property accessors do the same thing?
 	r = engine->RegisterObjectMethod("array<T>", "uint length() const", asMETHOD(CScriptArray, GetSize), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void resize(uint)", asMETHODPR(CScriptArray, Resize, (asUINT), void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void sortAsc()", asMETHODPR(CScriptArray, SortAsc, (), void), asCALL_THISCALL); assert( r >= 0 );
@@ -171,6 +171,10 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void reverse()", asMETHOD(CScriptArray, Reverse), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(const T&in) const", asMETHODPR(CScriptArray, Find, (void*), int), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(uint, const T&in) const", asMETHODPR(CScriptArray, Find, (asUINT, void*), int), asCALL_THISCALL); assert( r >= 0 );
+
+	// Register virtual properties
+	r = engine->RegisterObjectMethod("array<T>", "uint get_length() const", asMETHOD(CScriptArray, GetSize), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void set_length(uint)", asMETHODPR(CScriptArray, Resize, (asUINT), void), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register GC behaviours in case the array needs to be garbage collected
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CScriptArray, GetRefCount), asCALL_THISCALL); assert( r >= 0 );
@@ -275,12 +279,12 @@ CScriptArray::CScriptArray(asUINT length, void *defVal, asIObjectType *ot)
 // Internal
 void CScriptArray::SetValue(asUINT index, void *value)
 {
-	if( (subTypeId & ~0x03FFFFFF) && !(subTypeId & asTYPEID_OBJHANDLE) )
+	if( (subTypeId & ~asTYPEID_MASK_SEQNBR) && !(subTypeId & asTYPEID_OBJHANDLE) )
 		objType->GetEngine()->CopyScriptObject(At(index), value, subTypeId);
 	else if( subTypeId & asTYPEID_OBJHANDLE )
 	{
 		*(void**)At(index) = *(void**)value;
-		objType->GetEngine()->AddRefScriptObject(*(void**)value, subTypeId);
+		objType->GetEngine()->AddRefScriptObject(*(void**)value, objType->GetSubType());
 	}
 	else if( subTypeId == asTYPEID_BOOL ||
 			 subTypeId == asTYPEID_INT8 ||
@@ -538,7 +542,7 @@ void CScriptArray::Destruct(SArrayBuffer *buf, asUINT start, asUINT end)
 		for( ; d < max; d++ )
 		{
 			if( *d )
-				engine->ReleaseScriptObject(*d, subTypeId);
+				engine->ReleaseScriptObject(*d, objType->GetSubType());
 		}
 	}
 }
@@ -610,6 +614,12 @@ void CScriptArray::Reverse()
 	}
 }
 
+template <typename T>
+inline bool compare(const void *a, const void *b)
+{
+	return *((T*)a) == *((T*)b);
+}
+
 // internal
 bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx)
 {
@@ -618,17 +628,15 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx)
 		// Simple compare of values
 		switch( subTypeId )
 		{
-			#define COMPARE(T) *((T*)a) == *((T*)b)
-			case asTYPEID_BOOL: return COMPARE(bool);
-			case asTYPEID_INT8: return COMPARE(signed char);
-			case asTYPEID_UINT8: return COMPARE(unsigned char);
-			case asTYPEID_INT16: return COMPARE(signed short);
-			case asTYPEID_UINT16: return COMPARE(unsigned short);
-			case asTYPEID_INT32: return COMPARE(signed int);
-			case asTYPEID_UINT32: return COMPARE(unsigned int);
-			case asTYPEID_FLOAT: return COMPARE(float);
-			case asTYPEID_DOUBLE: return COMPARE(double);
-			#undef COMPARE
+			case asTYPEID_BOOL: return compare<bool>(a, b);
+			case asTYPEID_INT8: return compare<signed char>(a, b);
+			case asTYPEID_UINT8: return compare<unsigned char>(a, b);
+			case asTYPEID_INT16: return compare<signed short>(a, b);
+			case asTYPEID_UINT16: return compare<unsigned short>(a, b);
+			case asTYPEID_INT32: return compare<signed int>(a, b);
+			case asTYPEID_UINT32: return compare<unsigned int>(a, b);
+			case asTYPEID_FLOAT: return compare<float>(a, b);
+			case asTYPEID_DOUBLE: return compare<double>(a, b);
 		}
 	}
 	else
@@ -885,7 +893,7 @@ void CScriptArray::CopyBuffer(SArrayBuffer *dst, SArrayBuffer *src)
 			{
 				*d = *s;
 				if( *d )
-					engine->AddRefScriptObject(*d, subTypeId);
+					engine->AddRefScriptObject(*d, objType->GetSubType());
 			}
 		}
 	}
@@ -934,7 +942,7 @@ void CScriptArray::Precache()
 		{
 			for( asUINT i = 0; i < subType->GetMethodCount(); i++ )
 			{
-				asIScriptFunction *func = subType->GetMethodDescriptorByIndex(i);
+				asIScriptFunction *func = subType->GetMethodByIndex(i);
 
 				if( func->GetParamCount() == 1 /* && func->IsReadOnly() */ )
 				{
@@ -1150,6 +1158,8 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "array<T> &opAssign(const array<T>&in)", asFUNCTION(ScriptArrayAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "uint length() const", asFUNCTION(ScriptArrayLength_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "void resize(uint)", asFUNCTION(ScriptArrayResize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "uint get_length() const", asFUNCTION(ScriptArrayLength_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "void set_length(uint)", asFUNCTION(ScriptArrayResize_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptArrayGetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptArraySetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptArrayGetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );

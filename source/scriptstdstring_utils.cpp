@@ -3,6 +3,8 @@
 #include <assert.h>
 #include "scriptstdstring.h"
 #include "scriptarray.h"
+#include <stdio.h>
+#include <string.h>
 
 using namespace std;
 
@@ -98,9 +100,6 @@ static void StringJoin_Generic(asIScriptGeneric *gen)
     // Return the string
     new(gen->GetAddressOfReturnLocation()) string(str);
 }
-
-
-
 
 // This is where the utility functions are registered.
 // The string type must have been registered first.

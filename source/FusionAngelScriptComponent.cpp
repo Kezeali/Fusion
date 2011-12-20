@@ -827,7 +827,7 @@ namespace FusionEngine
 			auto objType = obj->GetObjectType();
 			for (size_t i = 0, count = objType->GetMethodCount(); i < count; ++i)
 			{
-				auto method = objType->GetMethodDescriptorByIndex(i);
+				auto method = objType->GetMethodByIndex(i);
 				m_ScriptMethods[method->GetDeclaration(false)] = method->GetId();
 			}
 

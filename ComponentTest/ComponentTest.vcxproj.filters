@@ -89,6 +89,9 @@
     <Filter Include="Component Interface\Types">
       <UniqueIdentifier>{c2d852ae-ff47-4e41-8828-46010d6c98ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Instantiation">
+      <UniqueIdentifier>{eb99820a-ced1-431a-930f-13afd187cc65}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\FusionZipArchive.cpp">
@@ -96,9 +99,6 @@
     </ClCompile>
     <ClCompile Include="..\source\FusionAnyFS.cpp">
       <Filter>Common\IO\FileSystem</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionComponentFactory.cpp">
-      <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEntity.cpp">
       <Filter>Component Interface\Entity</Filter>
@@ -319,9 +319,6 @@
     <ClCompile Include="..\source\FusionTimer.cpp">
       <Filter>Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp">
-      <Filter>Component Interface</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionPlayerInput.cpp">
       <Filter>Input</Filter>
     </ClCompile>
@@ -351,6 +348,12 @@
     </ClCompile>
     <ClCompile Include="..\source\FusionException.cpp">
       <Filter>Common\Exception</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionComponentFactory.cpp">
+      <Filter>Engine\Instantiation</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp">
+      <Filter>Engine\Instantiation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -416,9 +419,6 @@
     </ClInclude>
     <ClInclude Include="..\include\FusionInputHandler.h">
       <Filter>Input</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionInstanceSynchroniser.h">
-      <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionLinkedNode.h">
       <Filter>Common</Filter>
@@ -563,9 +563,6 @@
     </ClInclude>
     <ClInclude Include="..\include\FusionAnyFS.h">
       <Filter>Common\IO\FileSystem</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionComponentFactory.h">
-      <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntityComponent.h">
       <Filter>Component Interface\Entity</Filter>
@@ -722,6 +719,12 @@
     </ClInclude>
     <ClInclude Include="..\include\FusionScriptedSlots.h">
       <Filter>Common\AngelScript</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionComponentFactory.h">
+      <Filter>Engine\Instantiation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\FusionInstanceSynchroniser.h">
+      <Filter>Engine\Instantiation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

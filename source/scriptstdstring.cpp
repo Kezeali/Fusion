@@ -1,9 +1,12 @@
 #include "FusionStableHeaders.h"
 
-#include <assert.h>
-#include <sstream>
 #include "scriptstdstring.h"
-#include <string.h> // strstr
+#include <assert.h> // assert()
+#include <sstream>  // std::stringstream
+#include <string.h> // strstr()
+#include <stdio.h>	// sprintf()
+#include <stdlib.h> // strtod()
+#include <locale.h> // setlocale()
 
 using namespace std;
 
@@ -44,12 +47,6 @@ static void AddAssignStringGeneric(asIScriptGeneric *gen) {
   gen->SetReturnAddress(self);
 }
 
-static void StringEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a == *b);
-}
-
 static void StringEqualsGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   string * b = static_cast<string *>(gen->GetArgAddress(0));
@@ -65,36 +62,6 @@ static void StringCmpGeneric(asIScriptGeneric * gen) {
   else if( *a > *b ) cmp = 1;
 
   *(int*)gen->GetAddressOfReturnLocation() = cmp;
-}
-
-static void StringNotEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a != *b);
-}
-
-static void StringLEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a <= *b);
-}
-
-static void StringGEqualGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a >= *b);
-}
-
-static void StringLessThanGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a < *b);
-}
-
-static void StringGreaterThanGeneric(asIScriptGeneric * gen) {
-  string * a = static_cast<string *>(gen->GetArgAddress(0));
-  string * b = static_cast<string *>(gen->GetArgAddress(1));
-  *(bool*)gen->GetAddressOfReturnLocation() = (*a > *b);
 }
 
 static void StringAddGeneric(asIScriptGeneric * gen) {
@@ -164,7 +131,7 @@ static void AssignBool2StringGeneric(asIScriptGeneric *gen)
 	bool *a = static_cast<bool*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
 	std::stringstream sstr;
-	sstr << *a ? "true" : "false";
+	sstr << (*a ? "true" : "false");
 	*self = sstr.str();
 	gen->SetReturnAddress(self);
 }
@@ -200,7 +167,7 @@ static void AddAssignBool2StringGeneric(asIScriptGeneric * gen) {
   bool * a = static_cast<bool *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
-  sstr << *a ? "true" : "false";
+  sstr << (*a ? "true" : "false");
   *self += sstr.str();
   gen->SetReturnAddress(self);
 }
@@ -236,7 +203,7 @@ static void AddString2BoolGeneric(asIScriptGeneric * gen) {
   string * a = static_cast<string *>(gen->GetObject());
   bool * b = static_cast<bool *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
-  sstr << *a << *b ? "true" : "false";
+  sstr << *a << (*b ? "true" : "false");
   std::string ret_val = sstr.str();
   gen->SetReturnObject(&ret_val);
 }
@@ -450,7 +417,7 @@ static string &AddAssignDoubleToString(double f, string &dest)
 static string &AssignBoolToString(bool b, string &dest)
 {
 	ostringstream stream;
-	stream << b ? "true" : "false";
+	stream << (b ? "true" : "false");
 	dest = stream.str();
 	return dest;
 }
@@ -458,7 +425,7 @@ static string &AssignBoolToString(bool b, string &dest)
 static string &AddAssignBoolToString(bool b, string &dest)
 {
 	ostringstream stream;
-	stream << b ? "true" : "false";
+	stream << (b ? "true" : "false");
 	dest += stream.str();
 	return dest;
 }
@@ -480,14 +447,14 @@ static string AddDoubleString(double f, const string &str)
 static string AddStringBool(const string &str, bool b)
 {
 	ostringstream stream;
-	stream << b ? "true" : "false";
+	stream << (b ? "true" : "false");
 	return str + stream.str();
 }
 
 static string AddBoolString(bool b, const string &str)
 {
 	ostringstream stream;
-	stream << b ? "true" : "false";
+	stream << (b ? "true" : "false");
 	return stream.str() + str;
 }
 
@@ -558,6 +525,168 @@ static void StringResize(asUINT l, string &str)
 	str.resize(l);
 }
 
+// AngelScript signature:
+// string formatInt(int64 val, const string &in options, uint width)
+static string formatInt(asINT64 value, const string &options, asUINT width)
+{
+	bool leftJustify = options.find("l") != -1;
+	bool padWithZero = options.find("0") != -1;
+	bool alwaysSign  = options.find("+") != -1;
+	bool spaceOnSign = options.find(" ") != -1;
+	bool hexSmall    = options.find("h") != -1;
+	bool hexLarge    = options.find("H") != -1;
+
+	string fmt = "%";
+	if( leftJustify ) fmt += "-";
+	if( alwaysSign ) fmt += "+";
+	if( spaceOnSign ) fmt += " ";
+	if( padWithZero ) fmt += "0";
+
+#ifdef __GNUC__
+#ifdef _LP64
+	fmt += "*l";
+#else
+	fmt += "*ll";
+#endif
+#else
+	fmt += "*I64";
+#endif
+
+	if( hexSmall ) fmt += "x";
+	else if( hexLarge ) fmt += "X";
+	else fmt += "d";
+
+	string buf;
+	buf.resize(width+20);
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, value);
+#else
+	sprintf(&buf[0], fmt.c_str(), width, value);
+#endif
+	buf.resize(strlen(&buf[0]));
+	
+	return buf;
+}
+
+// AngelScript signature:
+// string formatFloat(double val, const string &in options, uint width, uint precision)
+static string formatFloat(double value, const string &options, asUINT width, asUINT precision)
+{
+	bool leftJustify = options.find("l") != -1;
+	bool padWithZero = options.find("0") != -1;
+	bool alwaysSign  = options.find("+") != -1;
+	bool spaceOnSign = options.find(" ") != -1;
+	bool expSmall    = options.find("e") != -1;
+	bool expLarge    = options.find("E") != -1;
+
+	string fmt = "%";
+	if( leftJustify ) fmt += "-";
+	if( alwaysSign ) fmt += "+";
+	if( spaceOnSign ) fmt += " ";
+	if( padWithZero ) fmt += "0";
+
+	fmt += "*.*";
+
+	if( expSmall ) fmt += "e";
+	else if( expLarge ) fmt += "E";
+	else fmt += "f";
+
+	string buf;
+	buf.resize(width+precision+50);
+#if _MSC_VER >= 1400 // MSVC 8.0 / 2005
+	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, precision, value);
+#else
+	sprintf(&buf[0], fmt.c_str(), width, precision, value);
+#endif
+	buf.resize(strlen(&buf[0]));
+	
+	return buf;
+}
+
+// AngelScript signature:
+// int64 parseInt(const string &in val, uint base = 10, uint &out byteCount = 0)
+static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
+{
+	// Only accept base 10 and 16
+	if( base != 10 && base != 16 )
+	{
+		if( byteCount ) *byteCount = 0;
+		return 0;
+	}
+
+	const char *end = &val[0];
+
+	// Determine the sign
+	bool sign = false;
+	if( *end == '-' )
+	{
+		sign = true;
+		*end++;
+	}
+	else if( *end == '+' )
+		*end++;
+
+	asINT64 res = 0;
+	if( base == 10 )
+	{
+		while( *end >= '0' && *end <= '9' )
+		{
+			res *= 10;
+			res += *end++ - '0';
+		}
+	}
+	else if( base == 16 )
+	{
+		while( (*end >= '0' && *end <= '9') ||
+		       (*end >= 'a' && *end <= 'f') ||
+		       (*end >= 'A' && *end <= 'F') )
+		{
+			res *= 16;
+			if( *end >= '0' && *end <= '9' )
+				res += *end++ - '0';
+			else if( *end >= 'a' && *end <= 'f' )
+				res += *end++ - 'a' + 10;
+			else if( *end >= 'A' && *end <= 'F' )
+				res += *end++ - 'A' + 10;
+		}
+	}
+
+	if( byteCount )
+		*byteCount = end - val.c_str();
+
+	if( sign )
+		res = -res;
+
+	return res;
+}
+
+// AngelScript signature:
+// double parseFloat(const string &in val, uint &out byteCount = 0)
+double parseFloat(const string &val, asUINT *byteCount)
+{
+	char *end;
+
+    // WinCE doesn't have setlocale. Some quick testing on my current platform
+    // still manages to parse the numbers such as "3.14" even if the decimal for the
+    // locale is ",".
+#if !defined(_WIN32_WCE) && !defined(ANDROID)
+	// Set the locale to C so that we are guaranteed to parse the float value correctly
+	char *orig = setlocale(LC_NUMERIC, 0);
+	setlocale(LC_NUMERIC, "C");
+#endif
+
+	double res = strtod(val.c_str(), &end);
+
+#if !defined(_WIN32_WCE) && !defined(ANDROID)
+	// Restore the locale
+	setlocale(LC_NUMERIC, orig);
+#endif
+
+	if( byteCount )
+		*byteCount = end - val.c_str();
+
+	return res;
+}
 
 void RegisterStdString_Native(asIScriptEngine *engine)
 {
@@ -580,12 +709,14 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmp), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTIONPR(operator +, (const string &, const string &), string), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 
-	// Register the object methods
+	// The string length can be accessed through methods or through virtual property
 	r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "void resize(uint)", asFUNCTION(StringResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "uint get_length() const", asFUNCTION(StringLength), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "void set_length(uint)", asFUNCTION(StringResize), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	// Register the index operator, both as a mutator and as an inspector
-	// Note that we don't register the operator[] directory, as it doesn't do bounds checking
+	// Note that we don't register the operator[] directly, as it doesn't do bounds checking
 	r = engine->RegisterObjectMethod("string", "uint8 &opIndex(uint)", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "const uint8 &opIndex(uint) const", asFUNCTION(StringCharAt), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
@@ -610,23 +741,25 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string opAdd(bool) const", asFUNCTION(AddStringBool), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd_r(bool) const", asFUNCTION(AddBoolString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
+	// Utilities
 	r = engine->RegisterObjectMethod("string", "string substr(uint start = 0, int count = -1) const", asFUNCTION(StringSubString_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "int findFirst(const string &in, uint start = 0) const", asFUNCTION(StringFindFirst), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "int findLast(const string &in, int start = -1) const", asFUNCTION(StringFindLast), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+
+	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options, uint width = 0)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options, uint width = 0, uint precision = 0)", asFUNCTION(formatFloat), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("int64 parseInt(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseInt), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("double parseFloat(const string &in, uint &out byteCount = 0)", asFUNCTION(parseFloat), asCALL_CDECL); assert(r >= 0);
 
 	// TODO: Implement the following
 	// findFirstOf
 	// findLastOf
 	// findFirstNotOf
 	// findLastNotOf
-	// parseInt
-	// parseFloat
-	// formatInt - maybe as string::string(int64 value, const string &in format)
-	// formatFloat
 	// replace - replaces a text found in the string
 	// replaceRange - replaces a range of bytes in the string
-	// trim
-	// multiply/times - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
+	// trim/trimLeft/trimRight
+	// multiply/times/opMul/opMul_r - takes the string and multiplies it n times, e.g. "-".multiply(5) returns "-----"
 }
 
 void RegisterStdString(asIScriptEngine * engine)
