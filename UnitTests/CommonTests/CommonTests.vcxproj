@@ -63,7 +63,7 @@
     </Link>
     <PostBuildEvent>
       <Command>cd $(SolutionDir)bin
-$(TargetPath)</Command>
+"$(TargetPath)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Running unit tests</Message>
