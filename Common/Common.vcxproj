@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Analysis|Win32">
+      <Configuration>Analysis</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}</ProjectGuid>
+    <RootNamespace>Common</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonDebugProperties.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonProperties.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
+      <PreprocessorDefinitions>FSN_ASSERTS_ENABLED;TBB_USE_DEBUG;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\source\FusionAnyFS.cpp" />
+    <ClCompile Include="..\source\FusionAssert.cpp" />
+    <ClCompile Include="..\source\FusionAudioLoader.cpp" />
+    <ClCompile Include="..\source\FusionBinaryStream.cpp" />
+    <ClCompile Include="..\source\FusionClientOptions.cpp" />
+    <ClCompile Include="..\source\FusionCmdOptions.cpp" />
+    <ClCompile Include="..\source\FusionConsole.cpp" />
+    <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp" />
+    <ClCompile Include="..\source\FusionException.cpp" />
+    <ClCompile Include="..\source\FusionIDStack.cpp" />
+    <ClCompile Include="..\source\FusionImageLoader.cpp" />
+    <ClCompile Include="..\source\FusionLog.cpp" />
+    <ClCompile Include="..\source\FusionLogFileConsole.cpp" />
+    <ClCompile Include="..\source\FusionLogger.cpp" />
+    <ClCompile Include="..\source\FusionLogPhysFS.cpp" />
+    <ClCompile Include="..\source\FusionPhysFS.cpp" />
+    <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp" />
+    <ClCompile Include="..\source\FusionPhysFSIOStream.cpp" />
+    <ClCompile Include="..\source\FusionPlayerRegistry.cpp" />
+    <ClCompile Include="..\source\FusionProfiling.cpp" />
+    <ClCompile Include="..\source\FusionRefCounted.cpp" />
+    <ClCompile Include="..\source\FusionResource.cpp" />
+    <ClCompile Include="..\source\FusionResourceManager.cpp" />
+    <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp" />
+    <ClCompile Include="..\source\FusionScriptedSlots.cpp" />
+    <ClCompile Include="..\source\FusionScriptManager.cpp" />
+    <ClCompile Include="..\source\FusionScriptModule.cpp" />
+    <ClCompile Include="..\source\FusionScriptReference.cpp" />
+    <ClCompile Include="..\source\FusionScriptSound.cpp" />
+    <ClCompile Include="..\source\FusionScriptVector.cpp" />
+    <ClCompile Include="..\source\FusionSpriteDefinition.cpp" />
+    <ClCompile Include="..\source\FusionStreamedResourceUser.cpp" />
+    <ClCompile Include="..\source\FusionTimer.cpp" />
+    <ClCompile Include="..\source\FusionVirtualFileSource_PhysFS.cpp" />
+    <ClCompile Include="..\source\FusionXML.cpp" />
+    <ClCompile Include="..\source\FusionZipArchive.cpp" />
+    <ClCompile Include="..\source\scriptany.cpp" />
+    <ClCompile Include="..\source\scriptarray.cpp" />
+    <ClCompile Include="..\source\scriptmath.cpp" />
+    <ClCompile Include="..\source\scriptstdstring.cpp" />
+    <ClCompile Include="..\source\scriptstdstring_utils.cpp" />
+    <ClCompile Include="..\source\scriptstring.cpp" />
+    <ClCompile Include="..\source\scriptstring_utils.cpp" />
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\FusionAnyFS.h" />
+    <ClInclude Include="..\include\FusionAssert.h" />
+    <ClInclude Include="..\include\FusionAudioLoader.h" />
+    <ClInclude Include="..\include\FusionBinaryStream.h" />
+    <ClInclude Include="..\include\FusionBoostSignals2.h" />
+    <ClInclude Include="..\include\FusionClientOptions.h" />
+    <ClInclude Include="..\include\FusionCmdOptions.h" />
+    <ClInclude Include="..\include\FusionCommon.h" />
+    <ClInclude Include="..\include\FusionConsole.h" />
+    <ClInclude Include="..\include\FusionConsoleStdOutWriter.h" />
+    <ClInclude Include="..\include\FusionException.h" />
+    <ClInclude Include="..\include\FusionExceptionFactory.h" />
+    <ClInclude Include="..\include\FusionHashable.h" />
+    <ClInclude Include="..\include\FusionIDStack.h" />
+    <ClInclude Include="..\include\FusionImageLoader.h" />
+    <ClInclude Include="..\include\FusionLinkedNode.h" />
+    <ClInclude Include="..\include\FusionLog.h" />
+    <ClInclude Include="..\include\FusionLogFileConsole.h" />
+    <ClInclude Include="..\include\FusionLogger.h" />
+    <ClInclude Include="..\include\FusionLogPhysFS.h" />
+    <ClInclude Include="..\include\FusionMaths.h" />
+    <ClInclude Include="..\include\FusionPaths.h" />
+    <ClInclude Include="..\include\FusionPhysFS.h" />
+    <ClInclude Include="..\include\FusionPhysFSIODeviceProvider.h" />
+    <ClInclude Include="..\include\FusionPhysFSIOStream.h" />
+    <ClInclude Include="..\include\FusionPlayerRegistry.h" />
+    <ClInclude Include="..\include\FusionPrerequisites.h" />
+    <ClInclude Include="..\include\FusionProfiling.h" />
+    <ClInclude Include="..\include\FusionRefCounted.h" />
+    <ClInclude Include="..\include\FusionResource.h" />
+    <ClInclude Include="..\include\FusionResourceLoader.h" />
+    <ClInclude Include="..\include\FusionResourceManager.h" />
+    <ClInclude Include="..\include\FusionResourcePointer.h" />
+    <ClInclude Include="..\include\FusionSaveDataArchive.h" />
+    <ClInclude Include="..\include\FusionScriptConsoleCallback.h" />
+    <ClInclude Include="..\include\FusionScriptedConsoleCommand.h" />
+    <ClInclude Include="..\include\FusionScriptedSlots.h" />
+    <ClInclude Include="..\include\FusionScriptManager.h" />
+    <ClInclude Include="..\include\FusionScriptModule.h" />
+    <ClInclude Include="..\include\FusionScriptPreprocessor.h" />
+    <ClInclude Include="..\include\FusionScriptReference.h" />
+    <ClInclude Include="..\include\FusionScriptSound.h" />
+    <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h" />
+    <ClInclude Include="..\include\FusionScriptVector.h" />
+    <ClInclude Include="..\include\FusionSingleton.h" />
+    <ClInclude Include="..\include\FusionSlotContainer.h" />
+    <ClInclude Include="..\include\FusionSpriteDefinition.h" />
+    <ClInclude Include="..\include\FusionStableHeaders.h" />
+    <ClInclude Include="..\include\FusionStdHeaders.h" />
+    <ClInclude Include="..\include\FusionStreamedResourceUser.h" />
+    <ClInclude Include="..\include\FusionStringFormatting.h" />
+    <ClInclude Include="..\include\FusionTimer.h" />
+    <ClInclude Include="..\include\FusionTypes.h" />
+    <ClInclude Include="..\include\FusionVector2.h" />
+    <ClInclude Include="..\include\FusionVectorTypes.h" />
+    <ClInclude Include="..\include\FusionVirtualFileSource_PhysFS.h" />
+    <ClInclude Include="..\include\FusionXML.h" />
+    <ClInclude Include="..\include\FusionZipArchive.h" />
+    <ClInclude Include="..\include\scriptany.h" />
+    <ClInclude Include="..\include\scriptarray.h" />
+    <ClInclude Include="..\include\scriptmath.h" />
+    <ClInclude Include="..\include\scriptstdstring.h" />
+    <ClInclude Include="..\include\scriptstdvector.h" />
+    <ClInclude Include="..\include\scriptstring.h" />
+    <ClInclude Include="PrecompiledHeaders.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\external\minizip\minizip.vcxproj">
+      <Project>{23b092d0-f753-463d-8fb7-ca5ad1b4b6b8}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="..\external\tinyxml\tinyxml.vcxproj">
+      <Project>{80eec939-ee99-4428-9c34-8d08f8d1940a}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

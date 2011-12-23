@@ -42,6 +42,10 @@
 #undef Yield
 #endif
 
+#ifdef GetObject
+#undef GetObject
+#endif
+
 #if TBB_VERSION_MAJOR >= 3
 #define FSN_TBB_AVAILABLE
 #endif

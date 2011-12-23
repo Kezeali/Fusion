@@ -1,29 +1,28 @@
 /*
-  Copyright (c) 2006-2011 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-
-	File Author(s):
-
-		Elliot Hayward
-
+*  Copyright (c) 2006-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #ifndef H_FusionEngine_Logger
@@ -133,18 +132,17 @@ namespace FusionEngine
 		*/
 		LogPtr OpenLog(const std::string& tag, LogSeverity threshold);
 
+		enum CreationMode { ReturnNull, CreateIfNotExist, ReplaceIfExist };
+
 		//! Gets the log corresponding to the given tag.
 		/*!
-		* \todo Perhaps this should throw an INVALID_PARAMETERS exception
-		*  if the tag isn't found.
-		*
 		* \param[in] tag
 		* Tag to find
 		*
 		* \returns Log*
 		* If the tag exists
 		*/
-		LogPtr GetLog(const std::string& tag);
+		LogPtr GetLog(const std::string& tag, CreationMode create = CreateIfNotExist, LogSeverity threshold_if_new = LOG_DEFAULT);
 
 		//! Removes a log from the list
 		/*!
@@ -168,8 +166,9 @@ namespace FusionEngine
 		*/
 		void Add(const std::string &message, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_NORMAL);
 
-		//! [depreciated] Adds the given error to the given log
+		//! Adds the given error to the given log
 		/*!
+		* \deprecated
 		* Formats the given error to a string, then calls the normal Add()
 		*/
 		void Add(const Exception& error, const std::string &tag = g_LogGeneral, LogSeverity severity = LOG_CRITICAL);

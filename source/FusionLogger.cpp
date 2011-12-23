@@ -1,28 +1,28 @@
 /*
-  Copyright (c) 2006-2011 Fusion Project Team
-
-  This software is provided 'as-is', without any express or implied warranty.
-	In noevent will the authors be held liable for any damages arising from the
-	use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software in a
-		product, an acknowledgment in the product documentation would be
-		appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not
-		be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
-
-		
-	File Author(s):
-
-		Elliot Hayward
+*  Copyright (c) 2006-2011 Fusion Project Team
+*
+*  This software is provided 'as-is', without any express or implied warranty.
+*  In noevent will the authors be held liable for any damages arising from the
+*  use of this software.
+*
+*  Permission is granted to anyone to use this software for any purpose,
+*  including commercial applications, and to alter it and redistribute it
+*  freely, subject to the following restrictions:
+*
+*    1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software in a
+*    product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+*    2. Altered source versions must be plainly marked as such, and must not
+*    be misrepresented as being the original software.
+*
+*    3. This notice may not be removed or altered from any source distribution.
+*
+*
+*  File Author(s):
+*
+*    Elliot Hayward
 */
 
 #include "FusionStableHeaders.h"
@@ -216,7 +216,7 @@ namespace FusionEngine
 		try
 		{
 			log = openLog(tag);
-			log->SetThreshold(threshold);
+			log->SetThreshold(threshold != LOG_DEFAULT ? threshold : GetDefaultThreshold());
 		}
 		catch (FileSystemException &e)
 		{
@@ -243,14 +243,21 @@ namespace FusionEngine
 		m_Logs.erase(log->GetTag());
 	}
 
-	LogPtr Logger::GetLog(const std::string& tag)
+	LogPtr Logger::GetLog(const std::string& tag, CreationMode creation_mode, LogSeverity threshold_if_new)
 	{
 		CL_MutexSection lock(&m_LogsMutex);
 		LogList::iterator it = m_Logs.find(tag);
-		if (it != m_Logs.end())
-			return it->second;
+		if (creation_mode != ReplaceIfExist)
+		{
+			if (it != m_Logs.end())
+				return it->second;
+			else if (creation_mode == CreateIfNotExist)
+				return OpenLog(tag, threshold_if_new == LOG_DEFAULT ? GetDefaultThreshold() : threshold_if_new);
+			else
+				return LogPtr();
+		}
 		else
-			return LogPtr();
+			return OpenLog(tag, threshold_if_new);
 	}
 
 	void Logger::Add(const std::string& message, const std::string& tag, LogSeverity severity)

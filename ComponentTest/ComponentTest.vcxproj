@@ -51,7 +51,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\CommonProperties.props" />
+    <Import Project="..\CommonDebugProperties.props" />
     <Import Project="..\CommonDebugLibs.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'" Label="PropertySheets">
@@ -138,8 +138,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -148,6 +147,7 @@
       <OpenMPSupport>false</OpenMPSupport>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
+      <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,8 +159,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -170,6 +169,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <CreateHotpatchableImage>false</CreateHotpatchableImage>
+      <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -184,21 +184,13 @@
   <ItemGroup>
     <ClCompile Include="..\source\FusionAngelScriptComponent.cpp" />
     <ClCompile Include="..\source\FusionAngelScriptSystem.cpp" />
-    <ClCompile Include="..\source\FusionAnyFS.cpp" />
-    <ClCompile Include="..\source\FusionAssert.cpp" />
-    <ClCompile Include="..\source\FusionAudioLoader.cpp" />
-    <ClCompile Include="..\source\FusionBinaryStream.cpp" />
     <ClCompile Include="..\source\FusionBox2DComponent.cpp" />
     <ClCompile Include="..\source\FusionBox2DSystem.cpp" />
     <ClCompile Include="..\source\FusionCamera.cpp" />
     <ClCompile Include="..\source\FusionCameraSynchroniser.cpp" />
-    <ClCompile Include="..\source\FusionClientOptions.cpp" />
     <ClCompile Include="..\source\FusionCLRenderComponent.cpp" />
     <ClCompile Include="..\source\FusionCLRenderSystem.cpp" />
-    <ClCompile Include="..\source\FusionCmdOptions.cpp" />
     <ClCompile Include="..\source\FusionComponentFactory.cpp" />
-    <ClCompile Include="..\source\FusionConsole.cpp" />
-    <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp" />
     <ClCompile Include="..\source\FusionContextMenu.cpp" />
     <ClCompile Include="..\source\FusionDeltaTime.cpp" />
     <ClCompile Include="..\source\FusionEasyPacket.cpp" />
@@ -209,110 +201,62 @@
     <ClCompile Include="..\source\FusionEntityDecoratorInstancer.cpp" />
     <ClCompile Include="..\source\FusionEntityManager.cpp" />
     <ClCompile Include="..\source\FusionEntitySerialisationUtils.cpp" />
-    <ClCompile Include="..\source\FusionException.cpp" />
     <ClCompile Include="..\source\FusionGameMapLoader.cpp" />
     <ClCompile Include="..\source\FusionGUI.cpp" />
-    <ClCompile Include="..\source\FusionIDStack.cpp" />
-    <ClCompile Include="..\source\FusionImageLoader.cpp" />
     <ClCompile Include="..\source\FusionInputDefinitionLoader.cpp" />
     <ClCompile Include="..\source\FusionInputHandler.cpp" />
     <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp" />
-    <ClCompile Include="..\source\FusionLog.cpp" />
-    <ClCompile Include="..\source\FusionLogFileConsole.cpp" />
-    <ClCompile Include="..\source\FusionLogger.cpp" />
-    <ClCompile Include="..\source\FusionLogPhysFS.cpp" />
     <ClCompile Include="..\source\FusionMessageBox.cpp" />
     <ClCompile Include="..\source\FusionNetworkManager.cpp" />
     <ClCompile Include="..\source\FusionNetworkSystem.cpp" />
     <ClCompile Include="..\source\FusionPacketDispatcher.cpp" />
-    <ClCompile Include="..\source\FusionPhysFS.cpp" />
-    <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp" />
-    <ClCompile Include="..\source\FusionPhysFSIOStream.cpp" />
     <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp" />
     <ClCompile Include="..\source\FusionPlayerInput.cpp" />
     <ClCompile Include="..\source\FusionPlayerManager.cpp" />
-    <ClCompile Include="..\source\FusionPlayerRegistry.cpp" />
-    <ClCompile Include="..\source\FusionPrecompiledHeaders.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionProfiling.cpp" />
     <ClCompile Include="..\source\FusionRakNetwork.cpp" />
-    <ClCompile Include="..\source\FusionRefCounted.cpp" />
     <ClCompile Include="..\source\FusionRegionCellCache.cpp" />
     <ClCompile Include="..\source\FusionRegionMapLoader.cpp" />
     <ClCompile Include="..\source\FusionRenderer.cpp" />
-    <ClCompile Include="..\source\FusionResource.cpp" />
-    <ClCompile Include="..\source\FusionResourceManager.cpp" />
     <ClCompile Include="..\source\FusionRocketInterface.cpp" />
-    <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp" />
-    <ClCompile Include="..\source\FusionScriptedSlots.cpp" />
-    <ClCompile Include="..\source\FusionScriptManager.cpp" />
-    <ClCompile Include="..\source\FusionScriptModule.cpp" />
-    <ClCompile Include="..\source\FusionScriptReference.cpp" />
-    <ClCompile Include="..\source\FusionScriptSound.cpp" />
-    <ClCompile Include="..\source\FusionScriptVector.cpp" />
-    <ClCompile Include="..\source\FusionSpriteDefinition.cpp" />
-    <ClCompile Include="..\source\FusionStreamedResourceUser.cpp" />
     <ClCompile Include="..\source\FusionStreamingCameraComponent.cpp" />
     <ClCompile Include="..\source\FusionStreamingManager.cpp" />
     <ClCompile Include="..\source\FusionTaskManager.cpp" />
     <ClCompile Include="..\source\FusionTaskScheduler.cpp" />
-    <ClCompile Include="..\source\FusionTimer.cpp" />
     <ClCompile Include="..\source\FusionViewport.cpp" />
-    <ClCompile Include="..\source\FusionVirtualFileSource_PhysFS.cpp" />
     <ClCompile Include="..\source\FusionXInputController.cpp" />
-    <ClCompile Include="..\source\FusionXML.cpp" />
-    <ClCompile Include="..\source\FusionZipArchive.cpp" />
-    <ClCompile Include="..\source\scriptany.cpp" />
-    <ClCompile Include="..\source\scriptarray.cpp" />
-    <ClCompile Include="..\source\scriptmath.cpp" />
-    <ClCompile Include="..\source\scriptstdstring.cpp" />
-    <ClCompile Include="..\source\scriptstdstring_utils.cpp" />
-    <ClCompile Include="..\source\scriptstring.cpp" />
-    <ClCompile Include="..\source\scriptstring_utils.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../include/FusionStableHeaders.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\FusionAngelScriptComponent.h" />
     <ClInclude Include="..\include\FusionAngelScriptSystem.h" />
-    <ClInclude Include="..\include\FusionAnyFS.h" />
-    <ClInclude Include="..\include\FusionAssert.h" />
-    <ClInclude Include="..\include\FusionAudioLoader.h" />
-    <ClInclude Include="..\include\FusionBinaryStream.h" />
-    <ClInclude Include="..\include\FusionBoostSignals2.h" />
     <ClInclude Include="..\include\FusionBox2DComponent.h" />
     <ClInclude Include="..\include\FusionBox2DSystem.h" />
     <ClInclude Include="..\include\FusionCamera.h" />
     <ClInclude Include="..\include\FusionCameraSynchroniser.h" />
     <ClInclude Include="..\include\FusionCellCache.h" />
     <ClInclude Include="..\include\FusionCellDataSource.h" />
-    <ClInclude Include="..\include\FusionClientOptions.h" />
     <ClInclude Include="..\include\FusionCLRenderComponent.h" />
     <ClInclude Include="..\include\FusionCLRenderSystem.h" />
-    <ClInclude Include="..\include\FusionCmdOptions.h" />
     <ClInclude Include="..\include\FusionCommandQueue.h" />
-    <ClInclude Include="..\include\FusionCommon.h" />
     <ClInclude Include="..\include\FusionComponentFactory.h" />
     <ClInclude Include="..\include\FusionComponentSystem.h" />
     <ClInclude Include="..\include\FusionDeltaTime.h" />
     <ClInclude Include="..\include\FusionEntityRepo.h" />
     <ClInclude Include="..\include\FusionEntitySerialisationUtils.h" />
     <ClInclude Include="..\include\FusionEntitySynchroniser.h" />
-    <ClInclude Include="..\include\FusionProfiling.h" />
     <ClInclude Include="..\include\FusionRegionCellCache.h" />
     <ClInclude Include="..\include\FusionRegionMapLoader.h" />
-    <ClInclude Include="..\include\FusionSaveDataArchive.h" />
     <ClInclude Include="..\include\FusionScriptComponent.h" />
     <ClInclude Include="..\include\FusionScriptInputEvent.h" />
     <ClInclude Include="..\include\FusionStreamingCameraComponent.h" />
     <ClInclude Include="..\include\FusionStreamingSystem.h" />
     <ClInclude Include="..\include\FusionTaskScheduler.h" />
-    <ClInclude Include="..\include\FusionConsole.h" />
-    <ClInclude Include="..\include\FusionConsoleStdOutWriter.h" />
     <ClInclude Include="..\include\FusionContextMenu.h" />
     <ClInclude Include="..\include\FusionEasyPacket.h" />
     <ClInclude Include="..\include\FusionElementSelectableDataGrid.h" />
@@ -321,22 +265,11 @@
     <ClInclude Include="..\include\FusionEntityDecorator.h" />
     <ClInclude Include="..\include\FusionEntityDecoratorInstancer.h" />
     <ClInclude Include="..\include\FusionEntityManager.h" />
-    <ClInclude Include="..\include\FusionException.h" />
-    <ClInclude Include="..\include\FusionExceptionFactory.h" />
     <ClInclude Include="..\include\FusionGameMapLoader.h" />
     <ClInclude Include="..\include\FusionGUI.h" />
-    <ClInclude Include="..\include\FusionHashable.h" />
-    <ClInclude Include="..\include\FusionIDStack.h" />
-    <ClInclude Include="..\include\FusionImageLoader.h" />
     <ClInclude Include="..\include\FusionInputDefinitionLoader.h" />
     <ClInclude Include="..\include\FusionInputHandler.h" />
     <ClInclude Include="..\include\FusionInstanceSynchroniser.h" />
-    <ClInclude Include="..\include\FusionLinkedNode.h" />
-    <ClInclude Include="..\include\FusionLog.h" />
-    <ClInclude Include="..\include\FusionLogFileConsole.h" />
-    <ClInclude Include="..\include\FusionLogger.h" />
-    <ClInclude Include="..\include\FusionLogPhysFS.h" />
-    <ClInclude Include="..\include\FusionMaths.h" />
     <ClInclude Include="..\include\FusionMessageBox.h" />
     <ClInclude Include="..\include\FusionNetDestinationHelpers.h" />
     <ClInclude Include="..\include\FusionNetworkManager.h" />
@@ -344,64 +277,32 @@
     <ClInclude Include="..\include\FusionNetworkTypes.h" />
     <ClInclude Include="..\include\FusionPacketDispatcher.h" />
     <ClInclude Include="..\include\FusionPacketHandler.h" />
-    <ClInclude Include="..\include\FusionPaths.h" />
-    <ClInclude Include="..\include\FusionPhysFS.h" />
-    <ClInclude Include="..\include\FusionPhysFSIODeviceProvider.h" />
-    <ClInclude Include="..\include\FusionPhysFSIOStream.h" />
     <ClInclude Include="..\include\FusionPhysicalComponent.h" />
     <ClInclude Include="..\include\FusionPhysicsDebugDraw.h" />
     <ClInclude Include="..\include\FusionPlayerInput.h" />
     <ClInclude Include="..\include\FusionPlayerManager.h" />
-    <ClInclude Include="..\include\FusionPlayerRegistry.h" />
-    <ClInclude Include="..\include\FusionPrerequisites.h" />
     <ClInclude Include="..\include\FusionRakNetwork.h" />
-    <ClInclude Include="..\include\FusionRefCounted.h" />
     <ClInclude Include="..\include\FusionRender2DComponent.h" />
     <ClInclude Include="..\include\FusionRenderer.h" />
-    <ClInclude Include="..\include\FusionResource.h" />
-    <ClInclude Include="..\include\FusionResourceLoader.h" />
-    <ClInclude Include="..\include\FusionResourceManager.h" />
-    <ClInclude Include="..\include\FusionResourcePointer.h" />
     <ClInclude Include="..\include\FusionRocketInterface.h" />
-    <ClInclude Include="..\include\FusionScriptConsoleCallback.h" />
-    <ClInclude Include="..\include\FusionScriptedConsoleCommand.h" />
-    <ClInclude Include="..\include\FusionScriptedSlots.h" />
-    <ClInclude Include="..\include\FusionScriptManager.h" />
-    <ClInclude Include="..\include\FusionScriptModule.h" />
-    <ClInclude Include="..\include\FusionScriptPreprocessor.h" />
-    <ClInclude Include="..\include\FusionScriptReference.h" />
-    <ClInclude Include="..\include\FusionScriptSound.h" />
-    <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h" />
-    <ClInclude Include="..\include\FusionScriptVector.h" />
     <ClInclude Include="..\include\FusionSerialisationHelper.h" />
-    <ClInclude Include="..\include\FusionSingleton.h" />
-    <ClInclude Include="..\include\FusionSlotContainer.h" />
-    <ClInclude Include="..\include\FusionSpriteDefinition.h" />
-    <ClInclude Include="..\include\FusionStableHeaders.h" />
-    <ClInclude Include="..\include\FusionStdHeaders.h" />
-    <ClInclude Include="..\include\FusionStreamedResourceUser.h" />
     <ClInclude Include="..\include\FusionStreamingManager.h" />
-    <ClInclude Include="..\include\FusionStringFormatting.h" />
     <ClInclude Include="..\include\FusionTaskManager.h" />
     <ClInclude Include="..\include\FusionThreadSafeProperty.h" />
-    <ClInclude Include="..\include\FusionTimer.h" />
     <ClInclude Include="..\include\FusionTransformComponent.h" />
-    <ClInclude Include="..\include\FusionTypes.h" />
-    <ClInclude Include="..\include\FusionVector2.h" />
-    <ClInclude Include="..\include\FusionVectorTypes.h" />
     <ClInclude Include="..\include\FusionViewport.h" />
-    <ClInclude Include="..\include\FusionVirtualFileSource_PhysFS.h" />
     <ClInclude Include="..\include\FusionXInputController.h" />
-    <ClInclude Include="..\include\FusionXML.h" />
-    <ClInclude Include="..\include\FusionZipArchive.h" />
-    <ClInclude Include="..\include\scriptany.h" />
-    <ClInclude Include="..\include\scriptarray.h" />
-    <ClInclude Include="..\include\scriptmath.h" />
-    <ClInclude Include="..\include\scriptstdstring.h" />
-    <ClInclude Include="..\include\scriptstdvector.h" />
-    <ClInclude Include="..\include\scriptstring.h" />
+    <ClInclude Include="PrecompiledHeaders.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{182a4ce9-6a30-48a2-a72f-b9d0cfff56f0}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
     <ProjectReference Include="..\external\minizip\minizip.vcxproj">
       <Project>{23b092d0-f753-463d-8fb7-ca5ad1b4b6b8}</Project>
       <Private>false</Private>

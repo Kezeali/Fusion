@@ -16,6 +16,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tinyxml", "external\tinyxml
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "minizip", "external\minizip\minizip.vcxproj", "{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unit Tests", "Unit Tests", "{BFFCE528-BBDB-45CE-A16E-B164460E202E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CommonTests", "UnitTests\CommonTests\CommonTests.vcxproj", "{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Analysis|Win32 = Analysis|Win32
@@ -48,12 +54,27 @@ Global
 		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Profile|Win32.Build.0 = Release|Win32
 		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Release|Win32.ActiveCfg = Release|Win32
 		{23B092D0-F753-463D-8FB7-CA5AD1B4B6B8}.Release|Win32.Build.0 = Release|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Analysis|Win32.ActiveCfg = Analysis|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Analysis|Win32.Build.0 = Analysis|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Debug|Win32.Build.0 = Debug|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Profile|Win32.ActiveCfg = Release|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Profile|Win32.Build.0 = Release|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Release|Win32.ActiveCfg = Release|Win32
+		{182A4CE9-6A30-48A2-A72F-B9D0CFFF56F0}.Release|Win32.Build.0 = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Analysis|Win32.ActiveCfg = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Analysis|Win32.Build.0 = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Debug|Win32.Build.0 = Debug|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Profile|Win32.ActiveCfg = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Profile|Win32.Build.0 = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Release|Win32.ActiveCfg = Release|Win32
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
+	GlobalSection(NestedProjects) = preSolution
+		{EDB8D577-CBD9-4101-8FB6-3E92DD64D9D3} = {BFFCE528-BBDB-45CE-A16E-B164460E202E}
 	EndGlobalSection
 EndGlobal

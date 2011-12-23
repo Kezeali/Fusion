@@ -5,24 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{7573e0d5-886b-4017-8c41-a544e55f3146}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\AngelScript">
-      <UniqueIdentifier>{c6d8fb2c-3456-4381-aa8a-f4c5a52fe502}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\IO">
-      <UniqueIdentifier>{a49f3b0d-e649-465e-8109-420ed67f7de1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\IO\FileSystem">
-      <UniqueIdentifier>{2a204f8f-dfe8-4c85-8ee3-cf62308a917d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\IO\FileType">
-      <UniqueIdentifier>{b332cdf1-8300-45eb-a957-fc3908e33bbc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Logging">
-      <UniqueIdentifier>{46f47878-5e32-4e24-9e17-54394299eeb9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="GUI">
       <UniqueIdentifier>{bba8ae7b-8052-47c2-af12-52f4f75478e9}</UniqueIdentifier>
     </Filter>
@@ -31,15 +13,6 @@
     </Filter>
     <Filter Include="CL Rendering Component">
       <UniqueIdentifier>{eb2eae02-fecc-437c-9232-f3e1e05aaec3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\IO\Streams">
-      <UniqueIdentifier>{6959cd86-0861-4930-817e-90abf0e8c94b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Maths">
-      <UniqueIdentifier>{dbbba152-7fb1-48b8-8eaa-2e89203fea19}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\AngelScript\sdk addons">
-      <UniqueIdentifier>{f174598d-fc42-47e0-bdbf-b75f3e2b233f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Box2D Component">
       <UniqueIdentifier>{986e2b46-1981-42a0-8ecc-b82e51d58681}</UniqueIdentifier>
@@ -59,15 +32,6 @@
     <Filter Include="Visual">
       <UniqueIdentifier>{4a41713b-594a-41fe-b105-75eb7584cad0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Resources">
-      <UniqueIdentifier>{d0b526ab-3c31-4055-87a4-eaac6eabc25a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Resources\Loaders">
-      <UniqueIdentifier>{6da6832b-61b2-48d8-ad6d-11143c570f25}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Profiling">
-      <UniqueIdentifier>{58a56974-4068-4836-aaa3-a01b39d07ead}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Network">
       <UniqueIdentifier>{570c57fa-c2ec-42ad-b948-8c9410483692}</UniqueIdentifier>
     </Filter>
@@ -77,29 +41,17 @@
     <Filter Include="Map\Async Loading">
       <UniqueIdentifier>{c535c79b-a459-4b66-acea-71a1ac384971}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common\Console">
-      <UniqueIdentifier>{fcd2dc37-3563-4f87-befc-a48b7c0c09bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Exception">
-      <UniqueIdentifier>{4e0feb90-234a-42f0-a0ca-7d5a783af570}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Common\Map">
-      <UniqueIdentifier>{36a9e0e1-0fe6-4998-87c8-4d7023f4bed2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Component Interface\Types">
       <UniqueIdentifier>{c2d852ae-ff47-4e41-8828-46010d6c98ba}</UniqueIdentifier>
     </Filter>
     <Filter Include="Engine\Instantiation">
       <UniqueIdentifier>{eb99820a-ced1-431a-930f-13afd187cc65}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{c360811e-9b04-4cea-89b0-65011d62d27b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\FusionZipArchive.cpp">
-      <Filter>Common\IO\FileType</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionAnyFS.cpp">
-      <Filter>Common\IO\FileSystem</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionEntity.cpp">
       <Filter>Component Interface\Entity</Filter>
     </ClCompile>
@@ -109,47 +61,11 @@
     <ClCompile Include="..\source\FusionEntityComponent.cpp">
       <Filter>Component Interface\Entity</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionScriptManager.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptModule.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptReference.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptSound.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptVector.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptedSlots.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionScriptedConsoleCommand.cpp">
-      <Filter>Common\AngelScript</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionAngelScriptComponent.cpp">
       <Filter>AngelScript Component</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionAngelScriptSystem.cpp">
       <Filter>AngelScript Component</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLog.cpp">
-      <Filter>Common\Logging</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogPhysFS.cpp">
-      <Filter>Common\Logging</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogFileConsole.cpp">
-      <Filter>Common\Logging</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionLogger.cpp">
-      <Filter>Common\Logging</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionCmdOptions.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionCLRenderComponent.cpp">
       <Filter>CL Rendering Component</Filter>
@@ -157,41 +73,11 @@
     <ClCompile Include="..\source\FusionCLRenderSystem.cpp">
       <Filter>CL Rendering Component</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionAudioLoader.cpp">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionBinaryStream.cpp">
-      <Filter>Common\IO\Streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptany.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstring_utils.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptarray.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptmath.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstdstring.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstdstring_utils.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\scriptstring.cpp">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionBox2DComponent.cpp">
       <Filter>Box2D Component</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionBox2DSystem.cpp">
       <Filter>Box2D Component</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Engine</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionTaskManager.cpp">
       <Filter>Engine</Filter>
@@ -207,9 +93,6 @@
     </ClCompile>
     <ClCompile Include="..\source\FusionGUI.cpp">
       <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionIDStack.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionViewport.cpp">
       <Filter>Visual</Filter>
@@ -229,23 +112,11 @@
     <ClCompile Include="..\source\FusionMessageBox.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionProfiling.cpp">
-      <Filter>Common\Profiling</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionContextMenu.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionXInputController.cpp">
       <Filter>Input</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionResource.cpp">
-      <Filter>Common\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionResourceManager.cpp">
-      <Filter>Common\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionRefCounted.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionEasyPacket.cpp">
       <Filter>Network</Filter>
@@ -289,35 +160,8 @@
     <ClCompile Include="..\source\FusionPlayerManager.cpp">
       <Filter>Network</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionPlayerRegistry.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFS.cpp">
-      <Filter>Common\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFSIOStream.cpp">
-      <Filter>Common\IO\Streams</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionPhysFSIODeviceProvider.cpp">
-      <Filter>Common\IO</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionRocketInterface.cpp">
       <Filter>GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionVirtualFileSource_PhysFS.cpp">
-      <Filter>Common\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionImageLoader.cpp">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionXML.cpp">
-      <Filter>Common\IO\FileType</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionSpriteDefinition.cpp">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionTimer.cpp">
-      <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionPlayerInput.cpp">
       <Filter>Input</Filter>
@@ -325,29 +169,8 @@
     <ClCompile Include="..\source\FusionPhysicsDebugDraw.cpp">
       <Filter>Visual</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\FusionPrecompiledHeaders.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FusionEntitySerialisationUtils.cpp">
       <Filter>Map</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionStreamedResourceUser.cpp">
-      <Filter>Common\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionClientOptions.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionConsole.cpp">
-      <Filter>Common\Console</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionConsoleStdOutWriter.cpp">
-      <Filter>Common\Console</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionAssert.cpp">
-      <Filter>Common\Exception</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\FusionException.cpp">
-      <Filter>Common\Exception</Filter>
     </ClCompile>
     <ClCompile Include="..\source\FusionComponentFactory.cpp">
       <Filter>Engine\Instantiation</Filter>
@@ -355,13 +178,14 @@
     <ClCompile Include="..\source\FusionInstanceSynchroniser.cpp">
       <Filter>Engine\Instantiation</Filter>
     </ClCompile>
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\FusionEasyPacket.h">
       <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionBoostSignals2.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionBox2DComponent.h">
       <Filter>Box2D Component</Filter>
@@ -372,14 +196,8 @@
     <ClInclude Include="..\include\FusionCamera.h">
       <Filter>Visual</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionCmdOptions.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionCommandQueue.h">
       <Filter>Component Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionCommon.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionComponentSystem.h">
       <Filter>Component Interface</Filter>
@@ -405,38 +223,11 @@
     <ClInclude Include="..\include\FusionGUI.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionHashable.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionIDStack.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionImageLoader.h">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionInputDefinitionLoader.h">
       <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionInputHandler.h">
       <Filter>Input</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionLinkedNode.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionLog.h">
-      <Filter>Common\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionLogFileConsole.h">
-      <Filter>Common\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionLogger.h">
-      <Filter>Common\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionLogPhysFS.h">
-      <Filter>Common\Logging</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionMaths.h">
-      <Filter>Common\Maths</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionMessageBox.h">
       <Filter>GUI</Filter>
@@ -459,35 +250,14 @@
     <ClInclude Include="..\include\FusionPacketHandler.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionPaths.h">
-      <Filter>Common\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysFS.h">
-      <Filter>Common\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysFSIODeviceProvider.h">
-      <Filter>Common\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPhysFSIOStream.h">
-      <Filter>Common\IO\Streams</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionPlayerInput.h">
       <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionPlayerManager.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionPlayerRegistry.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionPrerequisites.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionRakNetwork.h">
       <Filter>Network</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionRefCounted.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionRenderer.h">
       <Filter>Visual</Filter>
@@ -495,44 +265,17 @@
     <ClInclude Include="..\include\FusionRocketInterface.h">
       <Filter>GUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionScriptConsoleCallback.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionSerialisationHelper.h">
       <Filter>Network</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionSingleton.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSlotContainer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSpriteDefinition.h">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionStableHeaders.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionStdHeaders.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionStreamedResourceUser.h">
-      <Filter>Common\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionStreamingManager.h">
       <Filter>Map\Async Loading</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionStringFormatting.h">
-      <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionScriptInputEvent.h">
       <Filter>AngelScript Component</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStreamingSystem.h">
       <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionProfiling.h">
-      <Filter>Common\Profiling</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionEntitySerialisationUtils.h">
       <Filter>Map</Filter>
@@ -558,12 +301,6 @@
     <ClInclude Include="..\include\FusionRegionCellCache.h">
       <Filter>Map\Async Loading</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionZipArchive.h">
-      <Filter>Common\IO\FileType</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAnyFS.h">
-      <Filter>Common\IO\FileSystem</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionEntityComponent.h">
       <Filter>Component Interface\Entity</Filter>
     </ClInclude>
@@ -579,119 +316,23 @@
     <ClInclude Include="..\include\FusionAngelScriptSystem.h">
       <Filter>AngelScript Component</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\scriptany.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptarray.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptmath.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstdstring.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstdvector.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\scriptstring.h">
-      <Filter>Common\AngelScript\sdk addons</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionBinaryStream.h">
-      <Filter>Common\IO\Streams</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVirtualFileSource_PhysFS.h">
-      <Filter>Common\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAudioLoader.h">
-      <Filter>Common\Resources\Loaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionTypes.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVector2.h">
-      <Filter>Common\Maths</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionTaskScheduler.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionTaskManager.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionXML.h">
-      <Filter>Common\IO\FileType</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionXInputController.h">
       <Filter>Input</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionTimer.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionViewport.h">
       <Filter>Visual</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptVector.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptManager.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptModule.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptPreprocessor.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptReference.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptSound.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptTypeRegistrationUtils.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionVectorTypes.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResource.h">
-      <Filter>Common\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourcePointer.h">
-      <Filter>Common\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourceLoader.h">
-      <Filter>Common\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionResourceManager.h">
-      <Filter>Common\Resources</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionThreadSafeProperty.h">
       <Filter>Component Interface</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionStreamingCameraComponent.h">
       <Filter>CL Rendering Component</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionClientOptions.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionConsole.h">
-      <Filter>Common\Console</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionConsoleStdOutWriter.h">
-      <Filter>Common\Console</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionAssert.h">
-      <Filter>Common\Exception</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionException.h">
-      <Filter>Common\Exception</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionExceptionFactory.h">
-      <Filter>Common\Exception</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionSaveDataArchive.h">
-      <Filter>Common\Map</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionCLRenderComponent.h">
       <Filter>CL Rendering Component</Filter>
@@ -714,17 +355,14 @@
     <ClInclude Include="..\include\FusionPhysicsDebugDraw.h">
       <Filter>Visual</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\FusionScriptedConsoleCommand.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\FusionScriptedSlots.h">
-      <Filter>Common\AngelScript</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\FusionComponentFactory.h">
       <Filter>Engine\Instantiation</Filter>
     </ClInclude>
     <ClInclude Include="..\include\FusionInstanceSynchroniser.h">
       <Filter>Engine\Instantiation</Filter>
+    </ClInclude>
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
