@@ -41,7 +41,7 @@ class PseudoI : ScriptComponent
 		//if (frames % 100 == 0)
 			//entity.irigidbody.AngularVelocity = (rand() + 0.1) * 6.0 - 3.0;
 		
-		if (frames % 2 == 0 && target !is null)
+		if ((frames % 2) == 0 && target !is null)
 		{
 			Vector myPos = entity.itransform.Position;
 			Vector targetPos = target.itransform.Position;
