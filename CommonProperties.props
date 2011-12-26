@@ -13,6 +13,7 @@
       <CompileAsManaged>false</CompileAsManaged>
       <PreprocessorDefinitions>FSN_PROFILING_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)lib\$(Configuration);$(SolutionDir)..\FusionDependencies\lib;$(SolutionDir)..\FusionDependencies\lib\Win32;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\lib;$(SolutionDir)..\FusionDependencies\tbb30_174oss\lib\ia32\vc10;$(SolutionDir)..\FusionDependencies\libRocket\bin;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Lib;$(SolutionDir)..\ScriptUtils\lib;$(SolutionDir)..\RAS\library;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

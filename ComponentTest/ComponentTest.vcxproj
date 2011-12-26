@@ -91,7 +91,6 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
