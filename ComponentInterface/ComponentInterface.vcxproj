@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{80EEC939-EE99-4428-9C34-8D08F8D1940A}</ProjectGuid>
-    <RootNamespace>tinyxml</RootNamespace>
+    <ProjectGuid>{1F9D2082-7977-40A2-95A6-C254DD2CD660}</ProjectGuid>
+    <RootNamespace>ComponentInterface</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -31,11 +31,11 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\CommonProperties.props" />
+    <Import Project="..\CommonDebugProperties.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\CommonProperties.props" />
+    <Import Project="..\CommonReleaseProperties.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -49,9 +49,6 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -61,10 +58,8 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -73,17 +68,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ticpp.cpp" />
-    <ClCompile Include="tinystr.cpp" />
-    <ClCompile Include="tinyxml.cpp" />
-    <ClCompile Include="tinyxmlerror.cpp" />
-    <ClCompile Include="tinyxmlparser.cpp" />
+    <ClCompile Include="source\FusionComponentFactory.cpp" />
+    <ClCompile Include="source\FusionDeltaTime.cpp" />
+    <ClCompile Include="source\FusionEntity.cpp" />
+    <ClCompile Include="source\FusionEntityComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ticpp.h" />
-    <ClInclude Include="ticpprc.h" />
-    <ClInclude Include="tinystr.h" />
-    <ClInclude Include="tinyxml.h" />
+    <ClInclude Include="include\FusionCommandQueue.h" />
+    <ClInclude Include="include\FusionComponentFactory.h" />
+    <ClInclude Include="include\FusionComponentSystem.h" />
+    <ClInclude Include="include\FusionDeltaTime.h" />
+    <ClInclude Include="include\FusionEntity.h" />
+    <ClInclude Include="include\FusionEntityComponent.h" />
+    <ClInclude Include="include\FusionEntityRepo.h" />
+    <ClInclude Include="include\FusionPhysicalComponent.h" />
+    <ClInclude Include="include\FusionRender2DComponent.h" />
+    <ClInclude Include="include\FusionScriptComponent.h" />
+    <ClInclude Include="include\FusionThreadSafeProperty.h" />
+    <ClInclude Include="include\FusionTransformComponent.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{182a4ce9-6a30-48a2-a72f-b9d0cfff56f0}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="..\Input\Input.vcxproj">
+      <Project>{a16cd0db-0d43-4611-88e6-d2203cb9511b}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -22,40 +22,39 @@ class TestB : ScriptComponent
 	uint foo;
 	private bool go;
 	float speed;
-	
-	private Camera cam;
-	
+
 	void onInput(InputEvent@ ev)
 	{
 		console.println(ev.inputName);
+		
 		if (ev.inputName == "thrust")
 		{
 			//console.println("at " + speed);
 			if (ev.isDown)
-				irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
+				irigidbody.Velocity << Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
 			else
-				irigidbody.Velocity = Vector(0, 0);
+				irigidbody.Velocity << Vector(0, 0);
 			go = ev.isDown;
 		}
 		if (ev.inputName == "left")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity = -1.5;
+				irigidbody.AngularVelocity << -1.5;
 			else
-				irigidbody.AngularVelocity = 0;
+				irigidbody.AngularVelocity << 0;
 		}
 		if (ev.inputName == "right")
 		{
 			if (ev.isDown)
-				irigidbody.AngularVelocity = 1.5;
+				irigidbody.AngularVelocity << 1.5;
 			else
-				irigidbody.AngularVelocity = 0;
+				irigidbody.AngularVelocity << 0;
 		}
-		//if (ev.inputName == "special")
-		//{
-		//	if (ev.isDown)
-		//		irigidbody.Interpolate.value = !irigidbody.Interpolate.value;
-		//}
+		//~ //if (ev.inputName == "special")
+		//~ //{
+		//~ //	if (ev.isDown)
+		//~ //		irigidbody.Interpolate = !irigidbody.Interpolate;
+		//~ //}
 	}
 
 	void update()
@@ -64,9 +63,9 @@ class TestB : ScriptComponent
 		
 		if (entity.input.getButton("thrust"))
 		{
-			irigidbody.Velocity = Vector(cos(itransform.Angle.value) * speed, sin(itransform.Angle.value) * speed);
+			irigidbody.Velocity << Vector(cos(itransform.Angle) * speed, sin(itransform.Angle) * speed);
 		}
 		else
-			irigidbody.Velocity = Vector();
+			irigidbody.Velocity << Vector();
 	}
 }

@@ -11,8 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{80EEC939-EE99-4428-9C34-8D08F8D1940A}</ProjectGuid>
-    <RootNamespace>tinyxml</RootNamespace>
+    <ProjectGuid>{9CC264DC-13E7-4004-8548-ACAD64E1D5D8}</ProjectGuid>
+    <RootNamespace>ClanLibRendering</RootNamespace>
+    <ProjectName>ClanLibRenderingSystem</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -31,40 +32,36 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\CommonProperties.props" />
+    <Import Project="..\..\CommonDebugProperties.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\CommonProperties.props" />
+    <Import Project="..\..\CommonReleaseProperties.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>$(ProjectName)_d</TargetName>
-    <OutDir>$(SolutionDir)lib\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)lib\$(Configuration)\</OutDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Box2Dd.lib;RakNetDLLDebug.lib;ws2_32.lib;yaml-cpp-d.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>TIXML_USE_TICPP;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -73,17 +70,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ticpp.cpp" />
-    <ClCompile Include="tinystr.cpp" />
-    <ClCompile Include="tinyxml.cpp" />
-    <ClCompile Include="tinyxmlerror.cpp" />
-    <ClCompile Include="tinyxmlparser.cpp" />
+    <ClCompile Include="source\FusionCameraSynchroniser.cpp" />
+    <ClCompile Include="source\FusionCLRenderComponent.cpp" />
+    <ClCompile Include="source\FusionCLRenderSystem.cpp" />
+    <ClCompile Include="source\FusionStreamingCameraComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ticpp.h" />
-    <ClInclude Include="ticpprc.h" />
-    <ClInclude Include="tinystr.h" />
-    <ClInclude Include="tinyxml.h" />
+    <ClInclude Include="include\FusionCameraSynchroniser.h" />
+    <ClInclude Include="include\FusionCLRenderComponent.h" />
+    <ClInclude Include="include\FusionCLRenderSystem.h" />
+    <ClInclude Include="include\FusionStreamingCameraComponent.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common.vcxproj">
+      <Project>{182a4ce9-6a30-48a2-a72f-b9d0cfff56f0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\ComponentInterface\ComponentInterface.vcxproj">
+      <Project>{1f9d2082-7977-40a2-95a6-c254dd2cd660}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\external\tinyxml\tinyxml.vcxproj">
+      <Project>{80eec939-ee99-4428-9c34-8d08f8d1940a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Input\Input.vcxproj">
+      <Project>{a16cd0db-0d43-4611-88e6-d2203cb9511b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Network\Network.vcxproj">
+      <Project>{80cbb172-cb75-4b4e-aad8-ebce1301971b}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Visual\Visual.vcxproj">
+      <Project>{bbeb0cfc-de25-45f1-af3f-fc8da7c63887}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\AngelScript\AngelScript.vcxproj">
+      <Project>{4fead078-4b8b-4b9f-bc45-0246912887fc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

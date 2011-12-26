@@ -35,7 +35,7 @@ class SpawnPoint : ScriptComponent
 			return EntityWrapper();
 		}
 		//console.println(sprite.getType());
-		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
@@ -47,9 +47,9 @@ class SpawnPoint : ScriptComponent
 		ICamera@ cam = cast<ICamera>(newEnt.getComponent("ICamera").get());
 		cam.AngleEnabled = false;
 		if (owner == 1)
-			cam.ViewportRect.value = Rect(0, 0, 0.5f - 0.01f, 1);
+			cam.ViewportRect << Rect(0, 0, 0.5f - 0.01f, 1);
 		if (owner == 2)
-			cam.ViewportRect.value = Rect(0.5f + 0.01f, 0, 1, 1);
+			cam.ViewportRect << Rect(0.5f + 0.01f, 0, 1, 1);
 		
 		return EntityWrapper(newEnt);
 		}
@@ -70,11 +70,11 @@ class SpawnPoint : ScriptComponent
 			return EntityWrapper();
 		}
 		//console.println(sprite.getType());
-		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
-		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
+		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		

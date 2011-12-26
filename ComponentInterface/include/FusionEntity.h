@@ -69,7 +69,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Constructor
-		Entity(EntityManager* manager, PropChangedQueue *q, const ComponentPtr& transform_component);
+		Entity(EntityRepo* manager, PropChangedQueue *q, const ComponentPtr& transform_component);
 		//! Destructor
 		virtual ~Entity();
 
@@ -146,7 +146,7 @@ namespace FusionEngine
 		//! Gets angle (rotation) value
 		void SetAngle(float angle);
 
-		EntityManager* GetManager() const { return m_Manager; }
+		EntityRepo* GetManager() const { return m_Manager; }
 
 
 		tbb::mutex m_InRefsMutex;
@@ -386,7 +386,7 @@ namespace FusionEngine
 
 		PropChangedQueue *m_PropChangedQueue;
 
-		EntityManager* m_Manager;
+		EntityRepo* m_Manager;
 
 		PlayerInputPtr m_PlayerInput;
 

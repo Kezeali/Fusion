@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{47A1A46F-AE7A-4164-A99B-4722BE79B8A3}</ProjectGuid>
+    <RootNamespace>EngineFramework</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonDebugProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\CommonReleaseProperties.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>$(ProjectName)_d</TargetName>
+    <OutDir>$(SolutionDir)lib\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)lib\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="source\FusionContextMenu.cpp" />
+    <ClCompile Include="source\FusionElementSelectableDataGrid.cpp" />
+    <ClCompile Include="source\FusionEntityDecorator.cpp" />
+    <ClCompile Include="source\FusionEntityDecoratorInstancer.cpp" />
+    <ClCompile Include="source\FusionEntityManager.cpp" />
+    <ClCompile Include="source\FusionEntitySerialisationUtils.cpp" />
+    <ClCompile Include="source\FusionGameMapLoader.cpp" />
+    <ClCompile Include="source\FusionGUI.cpp" />
+		<ClCompile Include="source\FusionConsoleGUI.cpp" />
+    <ClCompile Include="source\FusionInstanceSynchroniser.cpp" />
+    <ClCompile Include="source\FusionMessageBox.cpp" />
+    <ClCompile Include="source\FusionRegionCellCache.cpp" />
+    <ClCompile Include="source\FusionRegionMapLoader.cpp" />
+    <ClCompile Include="source\FusionRocketInterface.cpp" />
+    <ClCompile Include="source\FusionStreamingManager.cpp" />
+    <ClCompile Include="source\FusionTaskManager.cpp" />
+    <ClCompile Include="source\FusionTaskScheduler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\FusionCellCache.h" />
+    <ClInclude Include="include\FusionCellDataSource.h" />
+    <ClInclude Include="include\FusionContextMenu.h" />
+    <ClInclude Include="include\FusionElementSelectableDataGrid.h" />
+    <ClInclude Include="include\FusionEntityDecorator.h" />
+    <ClInclude Include="include\FusionEntityDecoratorInstancer.h" />
+    <ClInclude Include="include\FusionEntityManager.h" />
+    <ClInclude Include="include\FusionEntitySerialisationUtils.h" />
+    <ClInclude Include="include\FusionEntitySynchroniser.h" />
+    <ClInclude Include="include\FusionGameMapLoader.h" />
+    <ClInclude Include="include\FusionGUI.h" />
+		<ClInclude Include="include\FusionConsoleGUI.cpp" />
+    <ClInclude Include="include\FusionInstanceSynchroniser.h" />
+    <ClInclude Include="include\FusionMessageBox.h" />
+    <ClInclude Include="include\FusionRegionCellCache.h" />
+    <ClInclude Include="include\FusionRegionMapLoader.h" />
+    <ClInclude Include="include\FusionRocketInterface.h" />
+    <ClInclude Include="include\FusionStreamingManager.h" />
+    <ClInclude Include="include\FusionStreamingSystem.h" />
+    <ClInclude Include="include\FusionTaskManager.h" />
+    <ClInclude Include="include\FusionTaskScheduler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.vcxproj">
+      <Project>{182a4ce9-6a30-48a2-a72f-b9d0cfff56f0}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="..\ComponentInterface\ComponentInterface.vcxproj">
+      <Project>{1f9d2082-7977-40a2-95a6-c254dd2cd660}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
+    <ProjectReference Include="..\Network\Network.vcxproj">
+      <Project>{80cbb172-cb75-4b4e-aad8-ebce1301971b}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,5 +1,5 @@
 /*
-*  Copyright (c) 2009-2011 Fusion Project Team
+*  Copyright (c) 2011 Fusion Project Team
 *
 *  This software is provided 'as-is', without any express or implied warranty.
 *  In noevent will the authors be held liable for any damages arising from the
@@ -25,8 +25,8 @@
 *    Elliot Hayward
 */
 
-#ifndef H_FusionEntityRepo
-#define H_FusionEntityRepo
+#ifndef H_FusionCameraManager
+#define H_FusionCameraManager
 
 #if _MSC_VER > 1000
 #pragma once
@@ -34,14 +34,18 @@
 
 #include "FusionTypes.h"
 
+#include "FusionCamera.h"
+
 namespace FusionEngine
 {
 
-	class IEntityRepo
+	//! Camera Manager interface (implemented by Map::StreamingManager)
+	class CameraManager
 	{
 	public:
-		virtual ~IEntityRepo() {}
-		virtual EntityPtr GetEntity(ObjectID id) const = 0;
+		virtual ~CameraManager() {}
+
+		virtual void AddOwnedCamera(PlayerID owner, const CameraPtr& cam, float range = -1.f) = 0;
 	};
 
 }

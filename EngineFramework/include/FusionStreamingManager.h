@@ -41,9 +41,8 @@
 
 #include "FusionEntity.h"
 #include "FusionCamera.h"
+#include "FusionCameraManager.h"
 #include "FusionIDStack.h"
-// TEMP:
-#include "FusionPacketHandler.h"
 
 #include "FusionHashable.h"
 
@@ -252,7 +251,7 @@ namespace FusionEngine
 	 * \see
 	 * Entity | Camera | EntityManager
 	 */
-	class StreamingManager : public PacketHandler
+	class StreamingManager : public CameraManager
 	{
 	public:
 		static const float s_SmoothTightness;
@@ -274,8 +273,6 @@ namespace FusionEngine
 		void RemoveCamera(const CameraPtr &cam);
 		//! Adds an owned camera (for network sync)
 		void AddOwnedCamera(PlayerID owner, const CameraPtr& cam, float range = -1.f);
-
-		void HandlePacket(RakNet::Packet* packet);
 		
 		//! Sets the default range within which Entities are streamed in
 		/*

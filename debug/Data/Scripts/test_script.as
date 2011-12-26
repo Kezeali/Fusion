@@ -62,10 +62,10 @@ class Test : ScriptComponent
 			return;
 		}
 		//console.println(sprite.getType());
-		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
-		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
+		cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 		
@@ -86,7 +86,7 @@ class Test : ScriptComponent
 		ontology.addComponent(newEnt, "PseudoI", "notai");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
-		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
 		EntityWrapper@ wr = EntityWrapper(newEnt);
@@ -94,7 +94,7 @@ class Test : ScriptComponent
 		@wr.notai.target = target;
 		console.println("after setting target");
 		
-		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping.value = 1.f;
+		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).LinearDamping = 1.f;
 		
 		cast<ICircleShape>(newEnt.getComponent("ICircleShape").get()).Radius = 0.25f;
 	}
@@ -108,7 +108,7 @@ class Test : ScriptComponent
 		ontology.addComponent(newEnt, "CLSprite", "");
 		IComponent@ com = newEnt.getComponent("ISprite");
 		ISprite@ sprite = cast<ISprite>(com);
-		sprite.ImagePath.value = "Entities/Dirt.png";
+		sprite.ImagePath = "Entities/Dirt.png";
 		
 		cast<ITransform>(newEnt.getComponent("ITransform").get()).Depth = -1;
 	}
@@ -131,7 +131,7 @@ class Test : ScriptComponent
 			return EntityWrapper();
 		}
 		//console.println(sprite.getType());
-		sprite.ImagePath.value = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
+		sprite.ImagePath = "Entities/Test/Gfx/spaceshoot_body_moving1.png";
 		sprite.BaseAngle = 1.57f;
 		
 		//cast<IRigidBody>(newEnt.getComponent("IRigidBody").get()).AngularVelocity = 1;
@@ -184,7 +184,7 @@ class Test : ScriptComponent
 			//console.println("iscript implemented by: " + script_a.getType());
 			//console.println(itransform.getType());
 
-			//itransform.Angle.value = 0.7f;
+			//itransform.Angle = 0.7f;
 			//itransform.Angle << 0.7;
 			//float angle = itransform.Angle;
 			//console.println("Angle: " + angle);
@@ -212,7 +212,7 @@ class Test : ScriptComponent
 		if (entityA !is null)
 		{
 			if (frames % 60 == 0)
-			console.println("Angle: " + entityA.itransform.Angle.value);
+			console.println("Angle: " + entityA.itransform.Angle);
 		}
 		
 		if (frames == 10)
@@ -230,9 +230,9 @@ class Test : ScriptComponent
 			//console.println("entityB.script_b.speed: " + entityB.script_b.speed);
 		}
 
-		//if (irigidbody.AngularDamping.value != lastDamping)
+		//if (irigidbody.AngularDamping != lastDamping)
 		//{
-		//	lastDamping = irigidbody.AngularDamping.value;
+		//	lastDamping = irigidbody.AngularDamping;
 		//	console.println("Damping: " + lastDamping);
 		//}
 

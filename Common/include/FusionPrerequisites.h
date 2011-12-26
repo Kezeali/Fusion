@@ -65,6 +65,7 @@ namespace FusionEngine
 	class EditorMapEntity;
 	class Entity;
 	class EntityFactory;
+	class EntityRepo;
 	class EntitySynchroniser;
 	class EntityManager;
 	class Exception;

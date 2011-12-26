@@ -7,11 +7,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\include;$(SolutionDir)\external;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb30_174oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Visual\include;$(SolutionDir)include;$(SolutionDir)external;$(SolutionDir)..\FusionDependencies\include;$(SolutionDir)..\FusionDependencies\kyotocabinet\kcwin32\include;$(SolutionDir)..\FusionDependencies\tbb30_174oss\include;$(SolutionDir)..\FusionDependencies\libRocket\include;$(SolutionDir)..\FusionDependencies\RakNet_PC-4.033\Source;$(SolutionDir)..\ScriptUtils\include;$(SolutionDir)..\RAS\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <OpenMPSupport>false</OpenMPSupport>
       <CompileAsManaged>false</CompileAsManaged>
-      <PreprocessorDefinitions>FSN_PROFILING_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSN_PROFILING_ENABLED;TIXML_USE_TICPP;TIXML_USE_STL;BOOST_BIND_NO_PLACEHOLDERS;WIN32_LEAN_AND_MEAN;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>

@@ -25,48 +25,48 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#ifndef H_FusionCameraSynchroniser
+#define H_FusionCameraSynchroniser
 
-#include "FusionCameraSynchroniser.h"
+#if _MSC_VER > 1000
+#pragma once
+#endif
 
-#include "FusionStreamingManager.h"
+#include "FusionPrerequisites.h"
+
+#include "FusionCamera.h"
+#include "FusionCameraManager.h"
 
 namespace FusionEngine
 {
 
-	CameraSynchroniser::CameraSynchroniser(StreamingManager* streaming_manager)
-		: m_StreamingManager(streaming_manager)
-	{
-	}
+	class CameraManager;
 
-	void CameraSynchroniser::Clear()
+	//! Stores cameras used by camera components (keeps them alive when the associated components are inactive)
+	class CameraSynchroniser
 	{
-		m_Cameras.clear();
-	}
+	public:
+		//! CTOR
+		CameraSynchroniser(CameraManager* streaming_manager);
 
-	CameraPtr& CameraSynchroniser::GetCamera(ObjectID entity_id, PlayerID owner)
-	{
-		auto entry = m_Cameras.find(entity_id);
-		if (entry != m_Cameras.end())
-			return entry->second;
-		else
-		{
-			auto& cam = m_Cameras[entity_id] = std::make_shared<Camera>();
-			m_StreamingManager->AddOwnedCamera(owner, cam);
-			return cam;
-		}
-	}
+		//! Remove all cameras
+		void Clear();
 
-	void CameraSynchroniser::RemoveCamera(ObjectID entity_id)
-	{
-		m_Cameras.erase(entity_id);
-	}
+		//! Gets / creates a camera attached to the given entity id
+		CameraPtr& GetCamera(ObjectID entity_id, PlayerID owner);
+		//! Removes the camera owned by the entity
+		void RemoveCamera(ObjectID entity_id);
+		//! Updates the position of the given camera
+		void SetCameraPosition(ObjectID entity_id, const Vector2& new_pos);
 
-	void CameraSynchroniser::SetCameraPosition(ObjectID entity_id, const Vector2& new_pos)
-	{
-		auto entry = m_Cameras.find(entity_id);
-		if (entry != m_Cameras.end())
-			m_Cameras[entity_id]->SetSimPosition(new_pos);
-	}
+		CameraManager* GetStreamingManager() const { return m_StreamingManager; }
+
+	private:
+		std::map<ObjectID, CameraPtr> m_Cameras;
+
+		CameraManager* m_StreamingManager;
+	};
 
 }
+
+#endif

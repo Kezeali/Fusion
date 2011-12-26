@@ -1,5 +1,6 @@
 #uses ITransform
 #uses IRigidBody
+//#uses cam
 
 class PseudoI : ScriptComponent
 {
@@ -13,7 +14,7 @@ class PseudoI : ScriptComponent
 
 	private uint frames;
 	
-	private Camera cam;
+	//private Camera cam;
 	
 	//Entity target;
 	EntityWrapper@ target;
@@ -25,19 +26,13 @@ class PseudoI : ScriptComponent
 		++frames;
 		
 		if (frames == 1)
-		{
-			cam = Camera(itransform.Position);
-			streaming.addCamera(cam);
-			//renderer.addViewport(cam);
-			
-			@setcampos_con = itransform.Position.connect("void setCameraPosition(const Vector &in)");
-			
+		{			
 			//entity.irigidbody.AngularVelocity = 0.9f;
-			entity.irigidbody.Velocity = Vector(cos(itransform.Angle.value), sin(itransform.Angle.value));
+			entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
 			@velchange_con = entity.irigidbody.Velocity.connect("void onVelocityChanged(const Vector &in)");
 		}
 		//if (frames % 2 == 0)
-		//	entity.irigidbody.Velocity = Vector(cos(itransform.Angle.value), sin(itransform.Angle.value));
+		//	entity.irigidbody.Velocity = Vector(cos(itransform.Angle), sin(itransform.Angle));
 		//if (frames % 100 == 0)
 			//entity.irigidbody.AngularVelocity = (rand() + 0.1) * 6.0 - 3.0;
 		
@@ -59,7 +54,7 @@ class PseudoI : ScriptComponent
 			//entity.itransform.Angle = atan2(myVel.x, myVel.y);
 		}
 		
-		float angleDiff = wrap(target_angle - entity.itransform.Angle.value, 0.0f, 2 * 3.14f);
+		float angleDiff = wrap(target_angle - entity.itransform.Angle, 0.0f, 2 * 3.14f);
 		if (angleDiff >= 3.14f)
 			angleDiff -= 6.28f;
 		const float normAngle = angleDiff / 2 * 3.14f;
@@ -93,11 +88,5 @@ class PseudoI : ScriptComponent
 		{
 			target_angle = atan2(myVel.y, myVel.x);// - (3.14/2);
 		}
-	}
-	
-	private SignalConnection@ setcampos_con;
-	void setCameraPosition(const Vector &in pos)
-	{
-		cam.setPosition(pos);
 	}
 }
