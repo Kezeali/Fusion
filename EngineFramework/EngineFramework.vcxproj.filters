@@ -51,9 +51,6 @@
     <ClCompile Include="source\FusionGUI.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-		<ClCompile Include="source\FusionConsoleGUI.cpp">
-      <Filter>GUI</Filter>
-    </ClCompile>
     <ClCompile Include="source\FusionMessageBox.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -104,9 +101,6 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionGUI.h">
-      <Filter>GUI</Filter>
-    </ClInclude>
-		<ClInclude Include="include\FusionConsoleGUI.h">
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="include\FusionMessageBox.h">

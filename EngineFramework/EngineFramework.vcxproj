@@ -76,7 +76,6 @@
     <ClCompile Include="source\FusionEntitySerialisationUtils.cpp" />
     <ClCompile Include="source\FusionGameMapLoader.cpp" />
     <ClCompile Include="source\FusionGUI.cpp" />
-		<ClCompile Include="source\FusionConsoleGUI.cpp" />
     <ClCompile Include="source\FusionInstanceSynchroniser.cpp" />
     <ClCompile Include="source\FusionMessageBox.cpp" />
     <ClCompile Include="source\FusionRegionCellCache.cpp" />
@@ -98,7 +97,6 @@
     <ClInclude Include="include\FusionEntitySynchroniser.h" />
     <ClInclude Include="include\FusionGameMapLoader.h" />
     <ClInclude Include="include\FusionGUI.h" />
-		<ClInclude Include="include\FusionConsoleGUI.cpp" />
     <ClInclude Include="include\FusionInstanceSynchroniser.h" />
     <ClInclude Include="include\FusionMessageBox.h" />
     <ClInclude Include="include\FusionRegionCellCache.h" />
