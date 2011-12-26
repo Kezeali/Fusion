@@ -209,6 +209,14 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
+    <ProjectReference Include="..\Network\Network.vcxproj">
+      <Project>{80cbb172-cb75-4b4e-aad8-ebce1301971b}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+    </ProjectReference>
     <ProjectReference Include="..\Systems\AngelScript\AngelScript.vcxproj">
       <Project>{4fead078-4b8b-4b9f-bc45-0246912887fc}</Project>
     </ProjectReference>
@@ -217,6 +225,14 @@
     </ProjectReference>
     <ProjectReference Include="..\Systems\ClanLibRendering\ClanLibRendering.vcxproj">
       <Project>{9cc264dc-13e7-4004-8548-acad64e1d5d8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Visual\Visual.vcxproj">
+      <Project>{bbeb0cfc-de25-45f1-af3f-fc8da7c63887}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
