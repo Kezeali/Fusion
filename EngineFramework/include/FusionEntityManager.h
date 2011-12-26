@@ -83,7 +83,7 @@ namespace FusionEngine
 	 * \see
 	 * Entity
 	 */
-	class EntityManager : public IEntityRepo
+	class EntityManager : public EntityRepo
 	{
 	protected:
 		typedef std::set<std::string> BlockedTagSet;

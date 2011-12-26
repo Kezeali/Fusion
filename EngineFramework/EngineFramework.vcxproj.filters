@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Instantiation">
+      <UniqueIdentifier>{2a7b8947-2a7c-4e34-9947-31e930abe5a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map">
+      <UniqueIdentifier>{32073f4f-6fad-4c24-b3a4-51ecd78bc6e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Map\Async Loading">
+      <UniqueIdentifier>{8aefb84e-f9d7-4a15-b7a2-ba350ef57548}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{12ceb53f-9497-4022-acc8-0e93c0757aeb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\FusionInstanceSynchroniser.cpp">
+      <Filter>Instantiation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionEntityManager.cpp" />
+    <ClCompile Include="source\FusionTaskManager.cpp" />
+    <ClCompile Include="source\FusionTaskScheduler.cpp" />
+    <ClCompile Include="source\FusionEntitySerialisationUtils.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionGameMapLoader.cpp">
+      <Filter>Map</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionRegionCellCache.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionRegionMapLoader.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionStreamingManager.cpp">
+      <Filter>Map\Async Loading</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionContextMenu.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionElementSelectableDataGrid.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionEntityDecorator.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionEntityDecoratorInstancer.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionGUI.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+		<ClCompile Include="source\FusionConsoleGUI.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionMessageBox.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="source\FusionRocketInterface.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\FusionInstanceSynchroniser.h">
+      <Filter>Instantiation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionTaskScheduler.h" />
+    <ClInclude Include="include\FusionEntityManager.h" />
+    <ClInclude Include="include\FusionEntitySynchroniser.h" />
+    <ClInclude Include="include\FusionStreamingSystem.h" />
+    <ClInclude Include="include\FusionTaskManager.h" />
+    <ClInclude Include="include\FusionEntitySerialisationUtils.h">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionGameMapLoader.h">
+      <Filter>Map</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCellCache.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionCellDataSource.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRegionCellCache.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRegionMapLoader.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionStreamingManager.h">
+      <Filter>Map\Async Loading</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionContextMenu.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionElementSelectableDataGrid.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionEntityDecorator.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionEntityDecoratorInstancer.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionGUI.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+		<ClInclude Include="include\FusionConsoleGUI.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionMessageBox.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FusionRocketInterface.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

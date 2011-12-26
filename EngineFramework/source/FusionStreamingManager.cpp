@@ -321,56 +321,6 @@ namespace FusionEngine
 		}
 	}
 
-	void StreamingManager::HandlePacket(RakNet::Packet* packet)
-	{
-		RakNet::BitStream dataStream(packet->data, packet->length, false);
-
-		unsigned char type;
-		dataStream.Read(type);
-		switch (type)
-		{
-		case MTID_REMOTECAMERA_ADD:
-			{
-				uint8_t camId;
-				dataStream.Read(camId);
-				PlayerID owner;
-				dataStream.Read(owner);
-				Vector2 pos;
-				dataStream.Read(pos.x);
-				dataStream.Read(pos.y);
-				float range;
-				dataStream.Read(range);
-				auto& streamingCam = createStreamingCamera(owner, CameraPtr(), range);
-				streamingCam.id = camId;
-				streamingCam.lastPosition = streamingCam.streamPosition = pos;
-			}
-			break;
-		case MTID_REMOTECAMERA_REMOVE:
-			{
-				uint8_t camId;
-				dataStream.Read(camId);
-				auto camEntry = std::find_if(m_Cameras.begin(), m_Cameras.end(), [camId](const StreamingCamera& cam) { return cam.id == camId; });
-				if (camEntry != m_Cameras.end())
-					m_Cameras.erase(camEntry);
-			}
-			break;
-		case MTID_REMOTECAMERA_MOVE:
-			{
-				uint8_t camId;
-				dataStream.Read(camId);
-				auto camEntry = std::find_if(m_Cameras.begin(), m_Cameras.end(), [camId](const StreamingCamera& cam) { return cam.id == camId; });
-				if (camEntry != m_Cameras.end())
-				{
-					auto& streamingCam = *camEntry;
-					streamingCam.lastPosition = streamingCam.streamPosition;
-					dataStream.Read(streamingCam.streamPosition.x);
-					dataStream.Read(streamingCam.streamPosition.y);
-				}
-			}
-			break;
-		};
-	}
-
 	void StreamingManager::SetRange(float sim_units)
 	{
 		m_Range = sim_units;

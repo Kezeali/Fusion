@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="source\FusionCamera.cpp" />
+    <ClCompile Include="source\FusionViewport.cpp" />
+    <ClCompile Include="source\FusionPhysicsDebugDraw.cpp" />
+    <ClCompile Include="source\FusionRenderer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\FusionCamera.h" />
+    <ClInclude Include="include\FusionPhysicsDebugDraw.h" />
+    <ClInclude Include="include\FusionRenderer.h" />
+    <ClInclude Include="include\FusionViewport.h" />
+    <ClInclude Include="include\FusionCameraManager.h" />
+  </ItemGroup>
+</Project>
