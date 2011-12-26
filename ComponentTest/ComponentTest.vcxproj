@@ -94,7 +94,8 @@
       <PrecompiledHeaderFile>FusionStableHeaders.h</PrecompiledHeaderFile>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <MinimalRebuild>false</MinimalRebuild>
-      <DisableSpecificWarnings>4482</DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -182,7 +183,6 @@
   <ItemGroup>
     <ClCompile Include="source\EntityScriptBinding.cpp" />
     <ClCompile Include="source\main.cpp">
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../include/FusionStableHeaders.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">../FusionEngine/FusionStableHeaders.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="PrecompiledHeaders.cpp">
