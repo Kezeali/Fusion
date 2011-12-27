@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
@@ -62,7 +62,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
@@ -107,7 +107,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
@@ -147,7 +147,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
 	{
 		if (resource->IsLoaded())
 		{
