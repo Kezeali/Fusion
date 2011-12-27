@@ -25,7 +25,7 @@
 		Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionScriptManager.h"
 
@@ -88,7 +88,7 @@ namespace FusionEngine
 
 		std::string::size_type pos = 0;
 		unsigned int line = 0;
-		MarkedLines::const_iterator it = marked.begin(), end = marked.end();
+		MarkedLines::iterator it = marked.begin(), end = marked.end();
 		while (it != end)
 		{
 			if ( it->type == '#' && isIncludeLine(code.c_str() + it->pos) )

@@ -287,10 +287,10 @@ namespace FusionEngine
 		int m_VectorTypeId;
 		int m_StringTypeId;
 
-		typedef std::tr1::unordered_map<std::string, ModulePtr> ModuleMap;
+		typedef std::unordered_map<std::string, ModulePtr> ModuleMap;
 		ModuleMap m_Modules;
 
-		typedef std::tr1::shared_ptr<ScriptPreprocessor> PreprocessorPtr;
+		typedef std::shared_ptr<ScriptPreprocessor> PreprocessorPtr;
 		typedef std::vector<PreprocessorPtr> PreprocessorArray;
 		PreprocessorArray m_Preprocessors;
 
@@ -328,8 +328,8 @@ namespace FusionEngine
 			std::string m_Filename;
 			std::string m_Code;
 		};
-		typedef std::tr1::shared_ptr<ScriptSection> ScriptSectionPtr;
-		typedef std::tr1::unordered_map<std::string, ScriptSectionPtr> ScriptSectionMap;
+		typedef std::shared_ptr<ScriptSection> ScriptSectionPtr;
+		typedef std::unordered_map<std::string, ScriptSectionPtr> ScriptSectionMap;
 
 		ScriptSectionMap m_ScriptSections;
 
@@ -345,7 +345,7 @@ namespace FusionEngine
 		{
 			std::size_t operator() (const Breakpoint &value) const;
 		};
-		typedef std::tr1::unordered_set<Breakpoint, hash_Breakpoint> BreakpointSet;
+		typedef std::unordered_set<Breakpoint, hash_Breakpoint> BreakpointSet;
 
 		BreakpointSet m_Breakpoints;
 

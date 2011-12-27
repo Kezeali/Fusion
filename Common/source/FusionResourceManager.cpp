@@ -1,5 +1,5 @@
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionResourceManager.h"
 
@@ -512,7 +512,7 @@ namespace FusionEngine
 			unloadResource(_where->second);
 	}
 
-	void ResourceManager::unloadResource(ResourceDataPtr &resource)
+	void ResourceManager::unloadResource(const ResourceDataPtr& resource)
 	{
 		CL_MutexSection loaderMutexSection(&m_LoaderMutex);
 

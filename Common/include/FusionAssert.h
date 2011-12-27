@@ -33,6 +33,8 @@
 #ifndef H_FusionAssert
 #define H_FusionAssert
 
+#include <string>
+
 namespace FusionEngine { namespace Assert
 {
 	enum FailBehavior

@@ -71,12 +71,14 @@ namespace FusionEngine
 	template <typename MapType>
 	struct GetValue : public std::unary_function<typename MapType::value_type, typename MapType::mapped_type>
 	{
+		typedef typename std::unary_function<typename MapType::value_type, typename MapType::mapped_type>::result_type result_type;
+		typedef typename std::unary_function<typename MapType::value_type, typename MapType::mapped_type>::argument_type argument_type;
 		const result_type& operator() (const argument_type& p) const { return p.second; }
 	};
 
 	//! Singleton registry of player IDs and network addresses
 	/*!
-	* Only stores player info, maintainence is done primarily by
+	* Only stores player info, maintenance is done primarily by
 	* PlayerManager, which registers new players as they join the network
 	* and allows the local peer to request new players.
 	*/
@@ -121,8 +123,8 @@ namespace FusionEngine
 		static bool IsLocal(PlayerID net_index);
 
 	private:
-		typedef std::tr1::unordered_map<PlayerID, PlayerInfo> PlayersByNetIndexMap;
-		typedef std::tr1::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
+		typedef std::unordered_map<PlayerID, PlayerInfo> PlayersByNetIndexMap;
+		typedef std::unordered_map<unsigned int, PlayerInfo> PlayersByLocalIndexMap;
 
 	public:
 		typedef GetValue<PlayersByNetIndexMap> ByNetIndexTransformFn;

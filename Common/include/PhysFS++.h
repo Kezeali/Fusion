@@ -21,7 +21,8 @@ namespace PhysFS
   class Exception : public std::exception
   {
   public:
-    Exception(const std::string& what) : s(what) { }
+    Exception(const std::string& what) throw() : s(what) { }
+    ~Exception() throw() {}
     const char* what() const throw() { return s.c_str(); }
 
   private:

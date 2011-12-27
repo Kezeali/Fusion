@@ -213,7 +213,7 @@ namespace FusionEngine
 				"void f(int&in)", asMETHOD(GarbageCollected, ReleaseAllReferences), asCALL_THISCALL); FSN_ASSERT( r >= 0 );
 
 			// Register the assignment operator if the type is copyable
-			RegisterAssignment<T>(engine, name, std::tr1::is_base_of<noncopyable, T>());
+			RegisterAssignment<T>(engine, name, std::is_base_of<noncopyable, T>());
 		}
 	};
 

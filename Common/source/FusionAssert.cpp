@@ -31,7 +31,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionAssert.h"
 

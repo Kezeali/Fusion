@@ -1,9 +1,11 @@
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include <assert.h>
 #include <math.h>
 #include <string.h>
 #include "scriptmath.h"
+
+#include <stdlib.h>
 
 #ifdef __BORLANDC__
 #include <cmath>

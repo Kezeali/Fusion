@@ -25,9 +25,11 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionTimer.h"
+
+#include "FusionAssert.h"
 
 #include <boost/asio/deadline_timer.hpp>
 

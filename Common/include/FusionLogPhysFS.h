@@ -36,7 +36,7 @@
 
 #include "FusionLog.h"
 
-#include "PhysFS.h"
+#include <physfs.h>
 //#include "PhysFS++.h"
 
 namespace FusionEngine

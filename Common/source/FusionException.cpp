@@ -26,16 +26,18 @@
 
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionException.h"
 
 #include "FusionStringFormatting.h"
 
+#include <typeinfo>
+
 namespace FusionEngine
 {
 
-	Exception::Exception()
+	Exception::Exception() throw()
 		: m_Line(0)
 	{
 	}
@@ -61,7 +63,7 @@ namespace FusionEngine
 	{
 	}
 
-	Exception::~Exception()
+	Exception::~Exception() throw()
 	{
 	}
 
@@ -97,7 +99,7 @@ namespace FusionEngine
 		return str;
 	}
 
-	const char *Exception::what() const
+	const char *Exception::what() const throw()
 	{
 		return GetDescription().c_str();
 	}

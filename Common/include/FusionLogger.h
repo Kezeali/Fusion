@@ -68,7 +68,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Maps tags to LogFiles
-		typedef std::tr1::unordered_map<std::string, LogPtr> LogList;
+		typedef std::unordered_map<std::string, LogPtr> LogList;
 
 	public:
 		//! Constructor

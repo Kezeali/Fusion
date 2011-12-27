@@ -38,7 +38,7 @@ namespace FusionEngine
 	{
 	public:
 		//! Basic constructor
-		Exception();
+		Exception() throw();
 
 		//! Constructor +message
 		Exception(const std::string &message);
@@ -47,7 +47,7 @@ namespace FusionEngine
 		//! Constructor +message +origin +file +line
 		Exception(const std::string &message, const std::string &function, const char* file, long line);
 
-		virtual ~Exception();
+		virtual ~Exception() throw();
 
 	public:
 		//! Retrieves the exception class name
@@ -65,14 +65,17 @@ namespace FusionEngine
 		std::string ToString() const;
 
 		//! Implementation of std::exception. Returns the string from GetDescription()
-		const char *what() const;
+#ifdef _WIN32
+		const char* what() const;
+#else
+		const char* what() const throw();
+#endif
 
 	protected:
-		std::string m_File;
-		long m_Line;
 		std::string m_Origin;
 		std::string m_Message;
-
+		std::string m_File;
+		long m_Line;
 	};
 
 	//! Filesystem exception class

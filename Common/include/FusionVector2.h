@@ -625,16 +625,16 @@ namespace FusionEngine
 	template <class T>
 	static inline void v2Divide(const Vector2T<T>& numerator, T scalar_denominator, Vector2T<T>& result)
 	{
-		double bInv = 1.0f / (double)b;
-		result.x = a.x * bInv;
-		result.y = a.y * bInv;
+		double bInv = 1.0f / (double)scalar_denominator;
+		result.x = numerator.x * bInv;
+		result.y = numerator.y * bInv;
 	}
 
 	template <class T>
 	static inline void v2Divide(const Vector2T<T>& numerator, const Vector2T<T>& denominator, Vector2T<T>& result)
 	{
-		result.x = a.x / b.x;
-		result.y = a.y / b.y;
+		result.x = numerator.x / denominator.x;
+		result.y = numerator.y / denominator.y;
 	}
 
 	template <class T>

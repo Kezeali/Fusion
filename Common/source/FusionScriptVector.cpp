@@ -25,9 +25,11 @@
 		Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionScriptVector.h"
+
+#include <ClanLib/Display/2D/color.h>
 
 namespace FusionEngine { namespace Scripting
 {

@@ -20,7 +20,7 @@
     3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionStreamedResourceUser.h"
 

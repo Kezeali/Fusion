@@ -25,13 +25,13 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionSpriteDefinition.h"
 
 #include "FusionExceptionFactory.h"
 #include "FusionPhysFS.h"
-#include "FusionXml.h"
+#include "FusionXML.h"
 
 //#include "FusionPhysFSIOStream.h"
 #include <boost/iostreams/stream.hpp>

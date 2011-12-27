@@ -36,6 +36,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
+#include <set>
 
 namespace FusionEngine
 {
@@ -110,15 +111,16 @@ namespace FusionEngine
 	{
 	protected:
 		typedef std::set<T> IDCollectionType;
+		typedef ::FusionEngine::IDCollection<T, std::set<T> > base_type;
 
 	public:
 		//! Default
 		IDSet()
-			: IDCollection()
+			: base_type()
 		{}
 		//! Initialises m_NextId to the given value
 		IDSet(T first_id)
-			: IDCollection(first_id)
+			: base_type(first_id)
 		{}
 		//! Virtual destructor
 		virtual ~IDSet()
@@ -126,29 +128,29 @@ namespace FusionEngine
 		//! Returns the next ID that will be returned by getFreeID
 		T peekNextID() const
 		{
-			if (m_UnusedIds.empty())
-					return m_NextId;
+			if (this->m_UnusedIds.empty())
+				return this->m_NextId;
 			else
-				return *m_UnusedIds.begin();
+				return *(this->m_UnusedIds.begin());
 		}
 		//! Returns an ID which is not in use
 		virtual T getFreeID()
 		{
-			if (m_UnusedIds.empty())
-					return m_NextId++;
+			if (this->m_UnusedIds.empty())
+				return this->m_NextId++;
 			else
 			{
-				IDCollectionType::iterator lowest = m_UnusedIds.begin();
+				auto lowest = this->m_UnusedIds.begin();
 				ObjectID id = *lowest;
-				m_UnusedIds.erase(lowest);
+				this->m_UnusedIds.erase(lowest);
 
 				// It's possible for an ID to get freed when it is more than 1 below m_NextId
 				//  then "freed" again with another call to freeID(id) when it is one below m_NextId
 				//  (see the logic in that fn) -> this ensures that m_NextId will be incremented
 				//  if that was the case for the ID just retreived from the set<> (so that the
 				//  next call to this method after the set<> is empty wont return the same ID again)
-				if (id == m_NextId)
-					++m_NextId;
+				if (id == this->m_NextId)
+					++(this->m_NextId);
 
 				return id;
 			}
@@ -156,10 +158,10 @@ namespace FusionEngine
 		//! Allows the given ID which was previously returned by getFreeID to be returned again
 		virtual void freeID(T id)
 		{
-			if (id == m_NextId-1)
-				m_NextId = id;
-			else if (id < m_NextId-1)
-				m_UnusedIds.insert(id); // record unused ID
+			if (id == (this->m_NextId)-1)
+				this->m_NextId = id;
+			else if (id < this->m_NextId-1)
+				this->m_UnusedIds.insert(id); // record unused ID
 		}
 		//! Removes the given ID from the set
 		/*!
@@ -167,17 +169,17 @@ namespace FusionEngine
 		*/
 		virtual bool takeID(T id)
 		{
-			if (id == m_NextId)
+			if (id == this->m_NextId)
 			{
-				++m_NextId;
+				++(this->m_NextId);
 				return true;
 			}
-			else if (id < m_NextId)
+			else if (id < this->m_NextId)
 			{
-				IDCollectionType::iterator _where = m_UnusedIds.find(id);
-				if (_where != m_UnusedIds.end())
+				auto _where = this->m_UnusedIds.find(id);
+				if (_where != this->m_UnusedIds.end())
 				{
-					m_UnusedIds.erase(_where);
+					this->m_UnusedIds.erase(_where);
 					return true;
 				}
 				else
@@ -185,16 +187,16 @@ namespace FusionEngine
 			}
 			else // the id being taken is after the current index: jump forward to it
 			{
-				for (T unusedId = m_NextId; unusedId < id; ++unusedId)
-					m_UnusedIds.insert(unusedId);
-				m_NextId = id + 1;
+				for (T unusedId = this->m_NextId; unusedId < id; ++unusedId)
+					this->m_UnusedIds.insert(unusedId);
+				this->m_NextId = id + 1;
 				return true;
 			}
 		}
 
 		size_t numUsed() const
 		{
-			return m_NextId - m_UnusedIds.size();
+			return this->m_NextId - this->m_UnusedIds.size();
 		}
 
 		size_t numNotUsed() const
@@ -216,19 +218,21 @@ namespace FusionEngine
 	class IDStack : public IDCollection<T>
 	{
 	public:
+		typedef IDCollection<T> base_type;
+
 		//! Default CTOR
 		IDStack()
-			: IDCollection(),
+			: base_type(),
 			m_MaxId(std::numeric_limits<T>::max())
 		{}
 		//! Sets the first id
 		IDStack(T first)
-			: IDCollection(first),
+			: base_type(first),
 			m_MaxId(std::numeric_limits<T>::max())
 		{}
 		//! Inits like the single param constructor, but also sets the max ID available
 		IDStack(T first, T max)
-			: IDCollection(first),
+			: base_type(first),
 			m_MaxId(max)
 		{}
 		//! Virtual destructor
@@ -237,44 +241,44 @@ namespace FusionEngine
 
 		void setMaxID(T max)
 		{
-			FSN_ASSERT(m_NextId == m_FirstId);
-			FSN_ASSERT(m_UnusedIds.empty());
+			FSN_ASSERT(this->m_NextId == this->m_FirstId);
+			FSN_ASSERT(this->m_UnusedIds.empty());
 			m_MaxId = max;
 		}
 
 		T peekNextID() const
 		{
-			if (m_UnusedIds.empty())
-				return m_NextId+1;
+			if (this->m_UnusedIds.empty())
+				return this->m_NextId+1;
 			else
-				return m_UnusedIds.back();
+				return this->m_UnusedIds.back();
 		}
 
 		//! Returns an ObjectID which is not in use
 		virtual T getFreeID()
 		{
-			if (m_NextId > m_MaxId)
+			if (this->m_NextId > m_MaxId)
 				FSN_EXCEPT(NoMoreIdsException, "No more IDs are available");
 
-			if (m_UnusedIds.empty())
-				return m_NextId++;
+			if (this->m_UnusedIds.empty())
+				return this->m_NextId++;
 			else
 			{
-				ObjectID id = m_UnusedIds.back();
-				m_UnusedIds.pop_back();
+				ObjectID id = this->m_UnusedIds.back();
+				this->m_UnusedIds.pop_back();
 				return id;
 			}
 		}
 		//! Allows the given ID which was previously returned by getFreeID to be returned again
 		virtual void freeID(T id)
 		{
-			if (id == m_NextId-1)
-				--m_NextId;
-			else if (id < m_NextId-1)
+			if (id == this->m_NextId-1)
+				--(this->m_NextId);
+			else if (id < this->m_NextId-1)
 			{
-				FSN_ASSERT_MSG(std::find(m_UnusedIds.begin(), m_UnusedIds.end(), id) != m_UnusedIds.end(),
+				FSN_ASSERT_MSG(std::find(this->m_UnusedIds.begin(), this->m_UnusedIds.end(), id) != this->m_UnusedIds.end(),
 					"Redundant call to freeID: the given ID is already free");
-				m_UnusedIds.push_back(id); // record unused ID
+				this->m_UnusedIds.push_back(id); // record unused ID
 			}
 		}
 
@@ -291,14 +295,16 @@ namespace FusionEngine
 	class IDBitset : public IDCollection<T, boost::dynamic_bitset<>>
 	{
 		typedef boost::dynamic_bitset<> Bitset_t;
+
+		typedef IDCollection<T, boost::dynamic_bitset<>> base_type;
 	public:
 		//! Default
 		IDBitset()
-			: IDCollection()
+			: base_type()
 		{}
 		//! Initialises m_NextId to the given value
 		IDBitset(T first_id)
-			: IDCollection(first_id)
+			: base_type(first_id)
 		{}
 		//! Virtual destructor
 		virtual ~IDBitset()
@@ -306,30 +312,30 @@ namespace FusionEngine
 		//! Returns the next ID that will be returned by getFreeID
 		T peekNextID() const
 		{
-			if (m_UnusedIds.none())
-					return m_NextId;
+			if (this->m_UnusedIds.none())
+					return this->m_NextId;
 			else
-				return m_UnusedIds.find_first();
+				return this->m_UnusedIds.find_first();
 		}
 		//! Returns an ID which is not in use
 		virtual T getFreeID()
 		{
-			if (m_UnusedIds.none())
-					return m_NextId++;
+			if (this->m_UnusedIds.none())
+					return this->m_NextId++;
 			else
 			{
-				ObjectID id = m_UnusedIds.find_first();
-				m_UnusedIds.reset(id);
-				//if (m_UnusedIds.find_next(id) == Bitset_t::npos)
-				//	m_UnusedIds.resize(id - 1);
+				ObjectID id = this->m_UnusedIds.find_first();
+				this->m_UnusedIds.reset(id);
+				//if (this->m_UnusedIds.find_next(id) == Bitset_t::npos)
+				//	this->m_UnusedIds.resize(id - 1);
 
 				// It's possible for an ID to get freed when it is more than 1 below m_NextId
 				//  then "freed" again with another call to freeID(id) when it is one below m_NextId
 				//  (see the logic in that fn) -> this ensures that m_NextId will be incremented
 				//  if that was the case for the ID just retreived from the set<> (so that the
 				//  next call to this method after the set<> is empty wont return the same ID again)
-				if (id == m_NextId)
-					++m_NextId;
+				if (id == this->m_NextId)
+					++this->m_NextId;
 
 				return id;
 			}
@@ -337,17 +343,17 @@ namespace FusionEngine
 		//! Allows the given ID which was previously returned by getFreeID to be returned again
 		virtual void freeID(T id)
 		{
-			if (id == m_NextId-1)
+			if (id == this->m_NextId-1)
 			{
-				m_UnusedIds.resize(id - 1);
-				m_NextId = id;
+				this->m_UnusedIds.resize(id - 1);
+				this->m_NextId = id;
 			}
-			else if (id < m_NextId-1)
+			else if (id < this->m_NextId-1)
 			{
-				if (id >= m_UnusedIds.size())
-					m_UnusedIds.resize(id + 1);
+				if (id >= this->m_UnusedIds.size())
+					this->m_UnusedIds.resize(id + 1);
 				// record unused ID
-				m_UnusedIds.set(id);
+				this->m_UnusedIds.set(id);
 			}
 		}
 		//! Removes the given ID from the set
@@ -356,16 +362,16 @@ namespace FusionEngine
 		*/
 		virtual bool takeID(T id)
 		{
-			if (id == m_NextId)
+			if (id == this->m_NextId)
 			{
-				++m_NextId;
+				++this->m_NextId;
 				return true;
 			}
-			else if (id < m_NextId)
+			else if (id < this->m_NextId)
 			{
-				if (id < m_UnusedIds.size())
+				if (id < this->m_UnusedIds.size())
 				{
-					auto& bitRef = m_UnusedIds[id];
+					auto& bitRef = this->m_UnusedIds[id];
 					if (bitRef)
 					{
 						bitRef = false;
@@ -376,21 +382,21 @@ namespace FusionEngine
 				}
 				else
 				{
-					m_UnusedIds.resize(id + 1, false);
+					this->m_UnusedIds.resize(id + 1, false);
 					return true;
 				}
 			}
 			else // the id being taken is after the current index: jump forward to it
 			{
-				m_UnusedIds.resize(id, true);
-				m_NextId = id + 1;
+				this->m_UnusedIds.resize(id, true);
+				this->m_NextId = id + 1;
 				return true;
 			}
 		}
 
 		size_t numUsed() const
 		{
-			return m_NextId - m_UnusedIds.size();
+			return this->m_NextId - this->m_UnusedIds.size();
 		}
 
 		size_t numNotUsed() const

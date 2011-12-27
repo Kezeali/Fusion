@@ -25,9 +25,11 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionZipArchive.h"
+
+#include "FusionExceptionFactory.h"
 
 #include <zlib.h>
 #include "minizip/zip.h"
@@ -36,6 +38,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
+
+#ifndef _WIN32
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 
 namespace bfs = boost::filesystem;
 namespace bio = boost::iostreams;

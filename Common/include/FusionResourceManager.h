@@ -206,7 +206,7 @@ namespace FusionEngine
 		void loadResourceAndDeps(ResourceDataPtr& resource, unsigned int depth_limit);
 
 		void getAndUnloadResource(const std::string &path);
-		void unloadResource(ResourceDataPtr &resource);
+		void unloadResource(const ResourceDataPtr& resource);
 	};
 
 }

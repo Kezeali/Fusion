@@ -25,13 +25,13 @@
 *    Elliot Hayward
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionLog.h"
 
 #include <iomanip>
-#include <time.h>
-//#include <boost/date_time.hpp>
+//#include <time.h>
+#include <boost/date_time.hpp>
 
 #include "FusionException.h"
 
@@ -61,7 +61,7 @@ namespace FusionEngine
 	void Log::addFooterToAll()
 	{
 		CL_MutexSection lock(&m_LogFilesMutex);
-		for (LogFileList::iterator it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
+		for (auto it = m_LogFiles.begin(), end = m_LogFiles.end(); it != end; ++it)
 		{
 			addFooter(it->second);
 		}
@@ -72,12 +72,8 @@ namespace FusionEngine
 		std::stringstream header;
 
 		// Get the date/time
-		time_t t = time(NULL);
-		std::string tstr = asctime(localtime(&t));
-		tstr.pop_back();
-
-		//auto now = boost::posix_time::second_clock::local_time();
-		//std::string tstr = boost::posix_time::to_simple_string(now);
+		auto now = boost::posix_time::second_clock::local_time();
+		std::string tstr = boost::posix_time::to_simple_string(now);
 
 		header << "------------------ Log began on " << tstr << " ------------------" << std::endl;
 
@@ -89,12 +85,8 @@ namespace FusionEngine
 		std::stringstream header;
 
 		// Get the date/time
-		time_t t = time(NULL);
-		std::string tstr = asctime(localtime(&t));
-		tstr.pop_back();
-		
-		//auto now = boost::posix_time::second_clock::local_time();
-		//std::string tstr = boost::posix_time::to_simple_string(now);
+		auto now = boost::posix_time::second_clock::local_time();
+		std::string tstr = boost::posix_time::to_simple_string(now);
 
 		header << "------------------ Log ended on " << tstr << " ------------------" << std::endl;
 
@@ -168,14 +160,13 @@ namespace FusionEngine
 		{
 			std::stringstream tempStream;
 
-			struct tm *pTime;
-			time_t ctTime; time(&ctTime);
-			pTime = localtime( &ctTime );
+			auto now = boost::posix_time::second_clock::local_time();
+			auto pTime = boost::posix_time::to_tm(now);
 
 			tempStream
-				<< "[" << std::setw(2) << std::setfill('0') << pTime->tm_hour
-				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_min
-				<< ":" << std::setw(2) << std::setfill('0') << pTime->tm_sec
+				<< "[" << std::setw(2) << std::setfill('0') << pTime.tm_hour
+				<< ":" << std::setw(2) << std::setfill('0') << pTime.tm_min
+				<< ":" << std::setw(2) << std::setfill('0') << pTime.tm_sec
 				<< "]  " << message;
 
 			// Add a new-line at the end if neccessary, otherwise just flush

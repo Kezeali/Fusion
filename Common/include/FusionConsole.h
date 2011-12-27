@@ -42,7 +42,7 @@
 
 #include <boost/signals2/signal.hpp>
 #include <boost/function.hpp>
-#include <containers/structured_map.hpp>
+#include "containers/structured_map.hpp"
 
 #include <tbb/atomic.h>
 
@@ -67,7 +67,7 @@ namespace FusionEngine
 		{
 		}
 		//! DTOR
-		virtual ~UnknownCommandException() {}
+		virtual ~UnknownCommandException() throw() {}
 		//! The command that couldn't be found
 		std::string command;
 	};

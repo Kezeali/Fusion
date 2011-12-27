@@ -91,7 +91,7 @@ namespace FusionEngine
 	class SpriteDefinition
 	{
 	public:
-		typedef std::tr1::unordered_set<std::string> FilenameSet;
+		typedef std::unordered_set<std::string> FilenameSet;
 
 		struct Image
 		{

@@ -86,7 +86,7 @@ namespace FusionEngine
 		friend class Logger;
 		friend class LogTask;
 	public:
-		typedef std::tr1::shared_ptr<ILogFile> LogFilePtr;
+		typedef std::shared_ptr<ILogFile> LogFilePtr;
 		typedef std::map<std::string, LogFilePtr> LogFileList;
 
 	private:

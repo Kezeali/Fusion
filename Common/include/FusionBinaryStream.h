@@ -34,6 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
+#include <ClanLib/core.h>
 
 namespace FusionEngine
 {
@@ -47,7 +48,7 @@ namespace FusionEngine
 			class BinaryStreamReader
 			{
 			public:
-				typedef typename CharT char_type;
+				typedef CharT char_type;
 
 				BinaryStreamReader(std::basic_istream<char_type>* stream)
 					: m_Stream(stream),
@@ -121,7 +122,7 @@ namespace FusionEngine
 			class BinaryStreamWriter
 			{
 			public:
-				typedef typename CharT char_type;
+				typedef CharT char_type;
 
 				BinaryStreamWriter(std::basic_ostream<char_type>* stream)
 					: m_Stream(stream),

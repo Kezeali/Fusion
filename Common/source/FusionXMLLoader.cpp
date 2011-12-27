@@ -34,7 +34,7 @@ namespace FusionEngine
 
 	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 		{
 			delete resource->GetDataPtr();
 		}
@@ -47,7 +47,7 @@ namespace FusionEngine
 
 	void UnloadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
-		if (resource->IsValid())
+		if (resource->IsLoaded())
 			delete resource->GetDataPtr();
 		resource->SetDataPtr(NULL);
 

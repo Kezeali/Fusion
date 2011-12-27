@@ -38,9 +38,9 @@
 namespace FusionEngine
 {
 
-	std::string ScriptedConsoleCommand(std::string decl, const StringVector &args);
+	//std::string ScriptedConsoleCommand(asIScriptModule* module, std::string decl, const StringVector &args);
 
-	std::string ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, const StringVector &args);
+	//std::string ScriptedCCAutocomplete(asIScriptModule* module, std::string decl, const StringVector &args);
 
 	void Scr_BindConsoleCommand(const std::string &command, const std::string &func_name, Console *obj);
 	void Scr_BindConsoleCommand(const std::string &command, const std::string &callback, const std::string &autocomplete, Console *obj);

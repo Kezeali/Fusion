@@ -26,7 +26,7 @@
 
 */
 
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include "FusionClientOptions.h"
 
@@ -182,7 +182,7 @@ namespace FusionEngine
 		return true;
 	}
 
-	void ClientOptions::SetMultipleOptions(const std::tr1::unordered_map<std::string, std::string> &pairs)
+	void ClientOptions::SetMultipleOptions(const std::unordered_map<std::string, std::string> &pairs)
 	{
 		m_Mutex.lock();
 		m_Variables.insert(pairs.begin(), pairs.end());

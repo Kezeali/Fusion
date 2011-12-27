@@ -39,8 +39,6 @@
 namespace FusionEngine
 {
 
-	TiXmlDocument* PhysFSOpen_TiXmDocument(const std::wstring &filename);
-
 	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 	void UnloadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData);
 
