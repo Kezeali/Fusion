@@ -117,7 +117,7 @@ namespace FusionEngine
 
 		//! Creates a FileSystemException
 		static FileSystemException Create(
-			FusionEngine::ExceptionClass<ExCode::IO> type,
+			FusionEngine::ExceptionClass<ExCode::IO>,
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
 			return FileSystemException(message, origin, file, line);
@@ -125,7 +125,7 @@ namespace FusionEngine
 
 		//! Creates a FileTypeExcepton
 		static FileTypeException Create(
-			ExceptionClass<ExCode::FileType> type, 
+			ExceptionClass<ExCode::FileType>, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
 			return FileTypeException(message, origin, file, line);
@@ -133,7 +133,7 @@ namespace FusionEngine
 
 		//! Creates a FileNotFoundException
 		static FileNotFoundException Create(
-			ExceptionClass<ExCode::FileNotFound> type, 
+			ExceptionClass<ExCode::FileNotFound>, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
 			return FileNotFoundException(message, origin, file, line);
@@ -141,7 +141,7 @@ namespace FusionEngine
 
 		//! Creates a ResourceNotLoadedException
 		static NotImplementedException Create(
-			ExceptionClass<ExCode::NotImplemented> type, 
+			ExceptionClass<ExCode::NotImplemented>, 
 			const std::string& origin, const std::string& message, const char* file, long line)
 		{
 			return NotImplementedException(message, origin, file, line);
@@ -149,7 +149,7 @@ namespace FusionEngine
 
 		//! Creates a InvalidArgumentException
 		static InvalidArgumentException Create(
-			ExceptionClass<ExCode::InvalidArgument> type,
+			ExceptionClass<ExCode::InvalidArgument>,
 			const std::string &origin, const std::string &message, const char *file, long line)
 		{
 			return InvalidArgumentException(message, origin, file, line);

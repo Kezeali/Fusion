@@ -311,7 +311,6 @@
     <ClInclude Include="PrecompiledHeaders.h">
       <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
-    <ClInclude Include="include\FusionVectorTypes.h" />
     <ClInclude Include="include\FusionBoostSignals2.h" />
     <ClInclude Include="include\FusionClientOptions.h" />
     <ClInclude Include="include\FusionCmdOptions.h" />
@@ -329,5 +328,8 @@
     <ClInclude Include="include\FusionStringFormatting.h" />
     <ClInclude Include="include\FusionTimer.h" />
     <ClInclude Include="include\FusionTypes.h" />
+    <ClInclude Include="include\FusionVectorTypes.h">
+      <Filter>Maths</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

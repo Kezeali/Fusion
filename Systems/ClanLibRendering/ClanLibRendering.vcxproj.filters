@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{aa651468-57bf-4259-8027-b2bae98cb302}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionCameraSynchroniser.cpp">
@@ -23,6 +26,9 @@
     <ClCompile Include="source\FusionStreamingCameraComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionStreamingCameraComponent.h">
@@ -36,6 +42,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionCLRenderSystem.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -126,8 +126,10 @@ namespace FusionEngine
 			// Load the document
 			ticpp::Document doc;
 			if (PHYSFS_exists(filename.c_str()))
+			{
 				doc = ticpp::Document(OpenXml_PhysFS(filename));
-			else
+			}
+			else if (default_if_missing)
 			{				
 				// Copy the default config file
 				try

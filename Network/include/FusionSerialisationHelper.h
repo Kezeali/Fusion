@@ -127,7 +127,7 @@ namespace FusionEngine
 		}
 
 		template <>
-		static inline void writeChange(bool all, RakNet::BitStream& stream, bool changed, const bool& new_value)
+		static inline void writeChange(bool, RakNet::BitStream& stream, bool changed, const bool& new_value)
 		{
 			stream.Write(new_value);
 		}
@@ -145,7 +145,7 @@ namespace FusionEngine
 		}
 
 		template <>
-		static inline bool readChange(bool all, RakNet::BitStream& stream, bool& new_value)
+		static inline bool readChange(bool, RakNet::BitStream& stream, bool& new_value)
 		{
 			stream.Read(new_value);
 			return true;

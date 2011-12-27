@@ -13,6 +13,9 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{12ceb53f-9497-4022-acc8-0e93c0757aeb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{59dbc461-2340-4c1e-a7f0-26fb95578c2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionInstanceSynchroniser.cpp">
@@ -56,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="source\FusionRocketInterface.cpp">
       <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +114,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionRocketInterface.h">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

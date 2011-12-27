@@ -5,6 +5,9 @@
     <ClCompile Include="source\FusionViewport.cpp" />
     <ClCompile Include="source\FusionPhysicsDebugDraw.cpp" />
     <ClCompile Include="source\FusionRenderer.cpp" />
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionCamera.h" />
@@ -12,5 +15,13 @@
     <ClInclude Include="include\FusionRenderer.h" />
     <ClInclude Include="include\FusionViewport.h" />
     <ClInclude Include="include\FusionCameraManager.h" />
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{1e2086f7-36d4-4847-b57d-9da0277a601b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

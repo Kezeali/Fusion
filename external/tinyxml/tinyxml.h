@@ -205,7 +205,7 @@ public:
 class TiXmlCFile : public TiXmlFileInterface
 {
 public:
-	TiXmlCFile(FILE *_file) : file(file) {}
+	TiXmlCFile(FILE *_file) : file(_file) {}
 
 	virtual void Write(const char *str, size_t length);
 	virtual void Print(const char *str);

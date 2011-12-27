@@ -3,10 +3,21 @@
   <ItemGroup>
     <ClCompile Include="source\FusionAngelScriptComponent.cpp" />
     <ClCompile Include="source\FusionAngelScriptSystem.cpp" />
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionScriptInputEvent.h" />
     <ClInclude Include="include\FusionAngelScriptComponent.h" />
     <ClInclude Include="include\FusionAngelScriptSystem.h" />
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{fa1310a8-cece-4fc7-959b-87d4e94d28e2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

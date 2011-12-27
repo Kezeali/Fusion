@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="PrecompiledHeaders">
+      <UniqueIdentifier>{b8743446-ca5b-4875-9f1d-69e452c3f8b5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\FusionBox2DComponent.cpp">
@@ -17,6 +20,9 @@
     <ClCompile Include="source\FusionBox2DSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PrecompiledHeaders.cpp">
+      <Filter>PrecompiledHeaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\FusionBox2DSystem.h">
@@ -24,6 +30,9 @@
     </ClInclude>
     <ClInclude Include="include\FusionBox2DComponent.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PrecompiledHeaders.h">
+      <Filter>PrecompiledHeaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

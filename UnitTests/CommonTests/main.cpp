@@ -1,4 +1,4 @@
-#include "FusionStableHeaders.h"
+#include "PrecompiledHeaders.h"
 
 #include <ClanLib/core.h>
 #include "FusionPrerequisites.h"
