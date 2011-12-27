@@ -120,8 +120,4 @@ namespace FusionEngine { namespace Assert
 #pragma warning( pop )
 #endif
 
-#if _MSC_VER > 1000
-#pragma warning( pop )
-#endif
-
 #endif
