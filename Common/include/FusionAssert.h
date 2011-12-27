@@ -63,6 +63,7 @@ namespace FusionEngine { namespace Assert
 }}
 
 #define FSN_HALT() __debugbreak()
+#define FSN_UNUSED(x) do { (void)sizeof(x); } while(0)
 
 #if _MSC_VER > 1000
 #pragma warning( push )
@@ -103,7 +104,6 @@ namespace FusionEngine { namespace Assert
 	#define FSN_VERIFY(cond) FSN_ASSERT(cond)
 	#define FSN_VERIFY_MSG(cond, msg, ...) FSN_ASSERT_MSG(cond, msg, ##__VA_ARGS__)
 #else
-	#define FSN_UNUSED(x) do { (void)sizeof(x); } while(0)
 	#define FSN_ASSERT(condition) \
 		do { FSN_UNUSED(condition); } while(0)
 	#define FSN_ASSERT_MSG(condition, msg, ...) \
@@ -113,7 +113,6 @@ namespace FusionEngine { namespace Assert
 	#define FSN_VERIFY(cond) (void)(cond)
 	#define FSN_VERIFY_MSG(cond, msg, ...) \
 		do { (void)(cond); FSN_UNUSED(msg); } while(0)
-	#undef FSN_UNUSED
 #endif
 
 #if _MSC_VER > 1000
