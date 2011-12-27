@@ -267,92 +267,31 @@ namespace FusionEngine
 	};
 
 	//! Safely sends a message to the Console
-	static void SendToConsole(const std::string &message)
-	{
-		Console* c = Console::getSingletonPtr();
-		if (c != NULL)
-		{
-			c->Add(message);
-		}
-
-		// If the console hasn't been created, just send the message to standard output
-		else
-		{
-			std::cout << message << std::endl;
-		}
-	}
+	void SendToConsole(const std::string &message);
 
 	//! Sends a sectioned message to the Console
-	static void SendToConsole(const std::string& heading, const std::string& message)
-	{
-		Console* c = Console::getSingletonPtr();
-		if (c != NULL)
-		{
-			c->Add(heading, message);
-		}
-		// If the console hasn't been created, just send the message to standard output
-		else
-		{
-			std::cout << heading << ": " << message << std::endl;
-		}
-	}
+	void SendToConsole(const std::string& heading, const std::string& message);
 
 	//! Safely sends a message to the Console (wide-char)
-	static void SendToConsole(const std::wstring &message)
-	{
-		SendToConsole(fe_narrow(message));
-	}
+	void SendToConsole(const std::wstring &message);
 
 	//! Sends a sectioned message to the Console (wide-char)
-	static void SendToConsole(const std::wstring& heading, const std::wstring &message)
-	{
-		SendToConsole(fe_narrow(heading), fe_narrow(message));
-	}
+	void SendToConsole(const std::wstring& heading, const std::wstring &message);
 
 	//! Static method to safely add a message to the Console singleton
 	/*!
 	* \sa Console#Add(const std::string, MessageType)
 	*/
-	static void SendToConsole(const std::string &message, Console::MessageType type)
-	{
-		Console* c = Console::getSingletonPtr();
-		if (c != NULL)
-		{
-			c->Add(message, type);
-		}
-
-		// If the console hasn't been created, just send the message to standard output
-		else
-		{
-			std::cout << message << std::endl;
-		}
-	}
+	void SendToConsole(const std::string &message, Console::MessageType type);
 
 	//! Static method to safely add a message to the Console singleton
 	/*!
 	* \sa Console#Add(const std::string, MessageType)
 	*/
-	static void SendToConsole(const std::wstring &message, Console::MessageType type)
-	{
-		SendToConsole(fe_narrow(message), type);
-	}
+	void SendToConsole(const std::wstring &message, Console::MessageType type);
 
 	//! Static method to safely add a message to the singleton object
-	static void SendToConsole(const Exception &ex)
-	{
-		Console* c = Console::getSingletonPtr();
-		if (c != NULL)
-		{
-			std::string message = ex.ToString();
-			c->Add(message, Console::MTERROR);
-		}
-
-		// If the console hasn't been created, just send the message to standard output
-		else
-		{
-			std::cout << ex.ToString() << std::endl;
-		}
-	}
+	void SendToConsole(const Exception &ex);
 
 }
 
