@@ -38,6 +38,12 @@
 namespace FusionEngine
 {
 
+#ifdef FSN_USE_XINPUT
+	static const unsigned int s_AnyControlerNumber = XUSER_INDEX_ANY;
+#else
+	static const unsigned int s_AnyControlerNumber = s_DeviceIndexAny;
+#endif
+
 	inline unsigned int DeviceNameToID(const std::string& device)
 	{
 		if (device == s_DevKeyboardStr)
@@ -389,7 +395,7 @@ namespace FusionEngine
 				if (!contrlName.empty())
 				{
 					if (contrlName == "any")
-						ctrlNum = XUSER_INDEX_ANY;
+						ctrlNum = s_AnyControlerNumber;
 					else
 						ctrlNum = CL_StringHelp::local8_to_uint(contrlName.c_str());
 				}
@@ -438,7 +444,7 @@ namespace FusionEngine
 		return false;
 	}
 
-	typedef std::tr1::unordered_map<int, ticpp::Element*> PlayerElementMap;
+	typedef std::unordered_map<int, ticpp::Element*> PlayerElementMap;
 
 	// Gets or creates (if needed) a player xml-element
 	static ticpp::Element* getPlayerElement(int player, PlayerElementMap &playerElements, ticpp::Element *parent)
@@ -823,6 +829,7 @@ namespace FusionEngine
 		}
 	}
 
+#ifdef FSN_USE_XINPUT
 	void InputManager::onXInputPress(const XInputEvent &event)
 	{
 		unsigned int index = event.controller->GetUserIndex();
@@ -880,6 +887,7 @@ namespace FusionEngine
 			SignalInputChanged(synthedEvent);
 		}
 	}
+#endif
 
 	void InputManager::fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData dev_info)
 	{
@@ -949,6 +957,7 @@ namespace FusionEngine
 		SignalRawInput(rawInput);
 	}
 
+#ifdef FSN_USE_XINPUT
 	void InputManager::fireRawInput_XInput(const XInputEvent &ev)
 	{
 		RawInput rawInput;
@@ -995,6 +1004,7 @@ namespace FusionEngine
 
 		SignalRawInput(rawInput);
 	}
+#endif
 
 	void InputManager::onDisplayResize(int w, int h)
 	{

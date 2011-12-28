@@ -77,7 +77,7 @@ namespace FusionEngine
 	{
 	public:
 		//! InputDefinitions listed by shortname
-		typedef std::tr1::unordered_map<std::string, InputDefinitionPtr> InputDefinitionMap;
+		typedef std::unordered_map<std::string, InputDefinitionPtr> InputDefinitionMap;
 		typedef std::vector<InputDefinitionPtr> InputDefinitionArray;
 
 	public:

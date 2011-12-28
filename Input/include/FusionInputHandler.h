@@ -333,18 +333,18 @@ namespace FusionEngine
 
 	public:
 		//! Key shortname mapped to KeyInfo
-		typedef std::tr1::unordered_map<std::string, KeyInfo> KeyInfoMap;
+		typedef std::unordered_map<std::string, KeyInfo> KeyInfoMap;
 
 		//! Device / keycode pair type
 		typedef std::pair<unsigned int, int> DeviceKeycodePair;
 		typedef boost::hash<DeviceKeycodePair> DeviceKeycodePairHashFn;
 
 		//! Keys mapped to bindings
-		//typedef std::tr1::unordered_map<DeviceKeycodePair, InputBinding, DeviceKeycodePairHashFn> KeyBindingMap;
-		typedef std::tr1::unordered_map<BindingKey, InputBinding> KeyBindingMap;
+		//typedef std::unordered_map<DeviceKeycodePair, InputBinding, DeviceKeycodePairHashFn> KeyBindingMap;
+		typedef std::unordered_map<BindingKey, InputBinding> KeyBindingMap;
 
 		//! Input shortnames mapped to input states
-		typedef std::tr1::unordered_map<std::string, InputState> InputStateMap;
+		typedef std::unordered_map<std::string, InputState> InputStateMap;
 		//! Input state lists for each player (0 is player 1, etc.)
 		typedef std::vector<InputStateMap> PlayerInputStateMaps;
 
@@ -495,14 +495,18 @@ namespace FusionEngine
 		void onGamepadRelease(const CL_InputEvent &ev, const CL_InputState &state);
 		void onGamepadAxisMove(const CL_InputEvent &ev, const CL_InputState &state);
 
+#ifdef FSN_USE_XINPUT
 		void onXInputPress(const XInputEvent &ev);
 		void onXInputRelease(const XInputEvent &ev);
 		void onXInputAxisMove(const XInputEvent &ev);
+#endif
 
 		//! Invokes SignalRawInput
 		void fireRawInput(const CL_InputEvent &ev, const CL_InputState &state, RawInputUserData device_info);
+#ifdef FSN_USE_XINPUT
 		//! Invokes SignalRawInput when a XInputEvent is received
 		void fireRawInput_XInput(const XInputEvent& ev);
+#endif
 
 		//! Handle screen resize
 		void onDisplayResize(int w, int h);

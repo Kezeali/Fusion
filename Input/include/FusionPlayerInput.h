@@ -36,10 +36,22 @@
 
 #include "FusionInputDefinitionLoader.h"
 #include <RakNetTypes.h>
+
+#ifdef BOOST_BIND_NO_PLACEHOLDERS
+#define FSN_UNDEF_NOPLACE
+#undef BOOST_BIND_NO_PLACEHOLDERS
+#endif
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
+
+
+#ifdef FSN_UNDEF_NOPLACE
+#undef FSN_UNDEF_NOPLACE
+#define BOOST_BIND_NO_PLACEHOLDERS
+#endif
 
 namespace FusionEngine
 {
