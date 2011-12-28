@@ -36,6 +36,7 @@
 
 #include "FusionAssert.h"
 
+#include <map>
 
 #ifdef FSN_TBB_AVAILABLE
 // Comment this out to use boost cpu_timer rather than tbb::tick_count (they both use perf. timer in windows)

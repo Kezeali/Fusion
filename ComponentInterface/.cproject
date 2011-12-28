@@ -39,6 +39,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1636821130" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.473131459" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -112,6 +113,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.943432228" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

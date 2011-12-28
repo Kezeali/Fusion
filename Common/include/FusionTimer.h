@@ -34,6 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include <memory>
+
 // If this is defined the Timer interval will be represented in
 //  microseconds, rather than milliseconds, internally
 //#define FSN_TIMER_USE_MICROSECOND

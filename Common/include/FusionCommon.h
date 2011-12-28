@@ -43,6 +43,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include "FusionStdHeaders.h"
+
 #include "FusionAssert.h"
 #include "FusionExceptionFactory.h"
 #include "FusionVector2.h"

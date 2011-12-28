@@ -41,6 +41,7 @@
 #include <RakNetTypes.h>
 #include <boost/signals2.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#include <unordered_map>
 
 namespace FusionEngine
 {

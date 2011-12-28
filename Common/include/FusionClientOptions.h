@@ -33,12 +33,14 @@
 #pragma once
 #endif
 
-#include "FusionSingleton.h"
-
 #include "FusionPrerequisites.h"
+
+#include "FusionSingleton.h"
 #include "FusionXML.h"
 
 #include <ClanLib/Core/System/mutex.h>
+#include <unordered_map>
+#include <vector>
 
 namespace FusionEngine
 {

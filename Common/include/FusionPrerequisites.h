@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "FusionStdHeaders.h"
+//#include "FusionStdHeaders.h"
 
 #ifdef MessageBox
 #undef MessageBox
@@ -46,8 +46,13 @@
 #undef GetObject
 #endif
 
-#if TBB_VERSION_MAJOR >= 3
 #define FSN_TBB_AVAILABLE
+
+#ifndef BOOST_BIND_NO_PLACEHOLDERS
+#define BOOST_BIND_NO_PLACEHOLDERS
+#endif
+#ifndef BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
+#define BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
 #endif
 
 namespace FusionEngine

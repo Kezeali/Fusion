@@ -31,7 +31,7 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.1461332673" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.1426434562" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.other.other.977507248" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.include.files.616801143" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files" valueType="includeFiles"/>
+								<option id="gnu.cpp.compiler.option.include.files.616801143" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files"/>
 								<option id="gnu.cpp.compiler.option.include.paths.770194494" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/include&quot;"/>
 									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
@@ -47,6 +47,8 @@
 									<listOptionValue builtIn="false" value="_DEBUG"/>
 									<listOptionValue builtIn="false" value="FSN_USE_ASSERT"/>
 									<listOptionValue builtIn="false" value="FSN_PROFILING_ENABLED"/>
+									<listOptionValue builtIn="false" value="BOOST_BIND_NO_PLACEHOLDERS"/>
+									<listOptionValue builtIn="false" value="BOOST_MULTI_INDEX_DISABLE_SERIALIZATION"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.777597587" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

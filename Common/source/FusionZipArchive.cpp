@@ -44,6 +44,8 @@
 #include <sys/stat.h>
 #endif
 
+#include <array>
+
 namespace bfs = boost::filesystem;
 namespace bio = boost::iostreams;
 

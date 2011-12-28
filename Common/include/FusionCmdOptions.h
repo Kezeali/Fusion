@@ -34,8 +34,8 @@
 
 #include "FusionCommon.h"
 
-
-
+#include <map>
+#include <deque>
 
 namespace FusionEngine
 {

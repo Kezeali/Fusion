@@ -34,10 +34,12 @@
 
 #include "FusionCommon.h"
 
-#include <queue>
+// TODO: why is this required for WIN32?
 #ifdef _WIN32
 #include <ClanLib/core.h>
 #endif
+#include <queue>
+#include <unordered_map>
 
 // Inherited
 #include "FusionSingleton.h"
