@@ -33,6 +33,8 @@
 #include "FusionPhysFS.h"
 #include "FusionVirtualFileSource_PhysFS.h"
 
+#include <tinyxml/tinyxml.h>
+
 namespace FusionEngine
 {
 
@@ -100,7 +102,7 @@ namespace FusionEngine
 
 	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
 	{
-		TiXmlDocument* doc = new TiXmlDocument();
+		TiXmlDocument* doc = nullptr;new TiXmlDocument();
 		try
 		{
 			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);

@@ -48,7 +48,7 @@
 #include "tinyxml/xpath_static.h"
 #include "tinyxml/ticpp.h"
 #else
-#include "tinyxml/ticpp.h"
+#include <tinyxml/ticpp.h>
 #endif
 #endif
 

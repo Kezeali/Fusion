@@ -38,7 +38,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @todo add TYPECOUNT support. See ticpp::NodeFactory.
 @todo Add a quick reference
 */
-#ifdef TIXML_USE_TICPP
+//#ifdef TIXML_USE_TICPP
+
+#ifndef TIXML_USE_TICPP
+#define TIXML_USE_TICPP
+#endif
 
 #ifndef TICPP_INCLUDED
 #define TICPP_INCLUDED
@@ -979,7 +983,7 @@ namespace ticpp
 		@endcode
 		@return Pointer the duplicate node.
 		*/
-		std::auto_ptr< Node > Clone() const;
+		std::shared_ptr< Node > Clone() const;
 
 		/**
 		Accept a hierchical visit the nodes in the TinyXML DOM.
@@ -1912,4 +1916,4 @@ namespace ticpp
 
 #endif	// TICPP_INCLUDED
 
-#endif // TIXML_USE_TICPP
+//#endif // TIXML_USE_TICPP

@@ -3,7 +3,6 @@
 	<name>Common</name>
 	<comment></comment>
 	<projects>
-		<project>ScriptUtils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
@@ -24,7 +23,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value>-j1</value>
+					<value></value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>

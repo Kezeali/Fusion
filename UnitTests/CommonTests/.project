@@ -3,6 +3,9 @@
 	<name>CommonTests</name>
 	<comment></comment>
 	<projects>
+		<project>Common</project>
+		<project>minizip</project>
+		<project>tinyxml</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

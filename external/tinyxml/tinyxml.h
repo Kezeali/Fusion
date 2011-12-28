@@ -1,7 +1,7 @@
 /*
 www.sourceforge.net/projects/tinyxml
 Original code (2.0 and earlier )copyright (c) 2000-2006 Lee Thomason (www.grinninglizard.com)
-'TiXmlFileInterface' is (c) 2010 Elliot Hayward
+'TiXmlFileInterface' is by Elliot Hayward
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
