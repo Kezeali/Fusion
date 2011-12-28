@@ -8,6 +8,7 @@
 #include "FusionScriptedSlots.h"
 #include "scriptstdstring.h"
 
+#include <containers/structured_map.hpp>
 #include <boost/tokenizer.hpp>
 #include <functional>
 
@@ -17,6 +18,80 @@ using namespace std::placeholders;
 
 namespace FusionEngine
 {
+
+	namespace detail
+	{
+		class CommandHelpImpl
+		{
+		public:
+			// Used for auto-complete - using structured_map (ternary tree) rather than unordered_map
+			//  and getting / listing help strings
+			typedef containers::structured_map<std::string, Console::CommandHelp> CommandHelpMap;
+
+			CommandHelpMap commands;
+
+			CommandHelpImpl()
+			{
+			}
+
+			//! This member is bound as a console command.
+			/*
+			* Prints the names of all the bound console commands. If a
+			* specific command is given as an arg, the help string for
+			* that command is printed.
+			*/
+			std::string CC_PrintCommandHelp(const StringVector &args);
+		};
+
+		std::string CommandHelpImpl::CC_PrintCommandHelp(const StringVector &args)
+		{
+			// First arg (arg 0) is the command name which invoked this
+			//  method, so args.size() == 1 is essentually a command
+			//  call without args:
+			if (args.size() == 1)
+			{
+				SendToConsole("Recognised Commands (names): ");
+				for (CommandHelpMap::iterator it = commands.begin(), end = commands.end();
+						it != end; ++it)
+				{
+					SendToConsole("\t " + it->first);
+				}
+				SendToConsole("Enter 'help <name of a command>' to see the instructions for using a specific command (if available.)");
+			}
+			// More than one arg:
+			else
+			{
+				// arg 1 should be a command name:
+				CommandHelpMap::iterator _where = commands.find(args[1]);
+				if (_where == commands.end())
+				{
+					return args[1] + " is not a recognised command.";
+				}
+
+				SendToConsole("Help for '" + _where->first + "':");
+				if (!_where->second.argumentNames.empty())
+				{
+					SendToConsole("Usage:");
+					std::string argNames = "";
+					for (StringVector::iterator it = _where->second.argumentNames.begin(), end = _where->second.argumentNames.end();
+							it != end; ++it)
+					{
+						argNames += " " + *it;
+					}
+					SendToConsole("\t " + _where->first + argNames);
+					SendToConsole("\t  Arguments in brackets are optional");
+				}
+				SendToConsole("Description:");
+				if (!_where->second.helpText.empty())
+					SendToConsole(" " + _where->second.helpText);
+				else
+					SendToConsole(" There is no help text associated with this command.");
+			}
+
+			return "";
+		}
+	}
+
 	Console::Console()
 		: m_BufferLength(s_ConsoleDefaultBufferLength),
 		m_LastNewlineInBuffer(0),
@@ -25,14 +100,16 @@ namespace FusionEngine
 	{
 		m_Buffer.reserve(m_BufferLength);
 
+		m_CommandHelp.reset(new CommandHelpImpl_t());
+
 		CommandFunctions helpFns;
-		helpFns.callback = std::bind(&Console::CC_PrintCommandHelp, this, _1);
+		helpFns.callback = std::bind(&CommandHelpImpl_t::CC_PrintCommandHelp, std::ref(m_CommandHelp), _1);
 		helpFns.autocomplete = [this](int argn, const std::string& argv)->StringVector
 		{
 			StringVector possibleCommands;
 			if (argn == 1)
 			{
-				auto range = m_CommandHelp.prefix_range(argv);
+				auto range = this->m_CommandHelp->commands.prefix_range(argv);
 				for (; range.first != range.second; ++range.first)
 					possibleCommands.push_back(range.first->first);
 			}
@@ -248,59 +325,11 @@ namespace FusionEngine
 		m_LastHeading = heading;
 	}
 
-	std::string Console::CC_PrintCommandHelp(const StringVector &args)
-	{
-		// First arg (arg 0) is the command name which invoked this
-		//  method, so args.size() == 1 is essentually a command
-		//  call without args:
-		if (args.size() == 1)
-		{
-			Add("Recognised Commands (names): ");
-			for (CommandHelpMap::iterator it = m_CommandHelp.begin(), end = m_CommandHelp.end();
-				it != end; ++it)
-			{
-				Add("\t " + it->first);
-			}
-			Add("Enter 'help <name of a command>' to see the instructions for using a specific command (if available.)");
-		}
-		// More than one arg:
-		else
-		{
-			// arg 1 should be a command name:
-			CommandHelpMap::iterator _where = m_CommandHelp.find(args[1]);
-			if (_where == m_CommandHelp.end())
-			{
-				return args[1] + " is not a recognised command.";
-			}
-
-			Add("Help for '" + _where->first + "':");
-			if (!_where->second.argumentNames.empty())
-			{
-				Add("Usage:");
-				std::string argNames = "";
-				for (StringVector::iterator it = _where->second.argumentNames.begin(), end = _where->second.argumentNames.end();
-					it != end; ++it)
-				{
-					argNames += " " + *it;
-				}
-				Add("\t " + _where->first + argNames);
-				Add("\t  Arguments in brackets are optional");
-			}
-			Add("Description:");
-			if (!_where->second.helpText.empty())
-				Add(" " + _where->second.helpText);
-			else
-				Add(" There is no help text associated with this command.");
-		}
-
-		return "";
-	}
-
 	void Console::BindCommand(const std::string &command, Console::CommandCallback callback)
 	{
 		m_Commands[command].callback = callback;
 
-		m_CommandHelp[command];
+		m_CommandHelp->commands[command] = CommandHelp();
 	}
 
 	void Console::BindCommand(const std::string &command, Console::CommandCallback callback, Console::AutocompleteCallback autocomplete)
@@ -309,25 +338,25 @@ namespace FusionEngine
 		fns.callback = callback;
 		fns.autocomplete = autocomplete;
 
-		m_CommandHelp[command];
+		m_CommandHelp->commands[command] = CommandHelp();
 	}
 
 	void Console::BindCommand(const std::string &command, const Console::CommandFunctions &functions, const Console::CommandHelp &help)
 	{
 		m_Commands[command] = functions;
-		m_CommandHelp[command] = help;
+		m_CommandHelp->commands[command] = help;
 	}
 
 	void Console::UnbindCommand(const std::string &command)
 	{
 		m_Commands.erase(command);
-		m_CommandHelp.erase(command);
+		m_CommandHelp->commands.erase(command);
 	}
 
 	void Console::SetCommandHelpText(const std::string &command, const std::string &help_text, const FusionEngine::StringVector &arg_names)
 	{
-		CommandHelpMap::iterator _where = m_CommandHelp.find(command);
-		if (_where != m_CommandHelp.end())
+		auto _where = m_CommandHelp->commands.find(command);
+		if (_where != m_CommandHelp->commands.end())
 		{
 			CommandHelp &helpData = _where->second;
 			helpData.helpText = help_text;
@@ -337,8 +366,7 @@ namespace FusionEngine
 
 	void Console::ListPrefixedCommands(const std::string &prefix, StringVector &possibleCommands, StringVector::size_type max_results)
 	{
-		typedef std::pair<CommandHelpMap::iterator, CommandHelpMap::iterator> HelpIterRange;
-		HelpIterRange range = m_CommandHelp.prefix_range(prefix);
+		auto range = m_CommandHelp->commands.prefix_range(prefix);
 
 		if (max_results != 0)
 			possibleCommands.reserve(max_results);
@@ -356,8 +384,8 @@ namespace FusionEngine
 	{
 		static std::string noResult;
 
-		CommandHelpMap::search_results_list results = m_CommandHelp.create_search_results();
-		m_CommandHelp.levenshtein_search(command, std::back_inserter(results), 3);
+		auto results = m_CommandHelp->commands.create_search_results();
+		m_CommandHelp->commands.levenshtein_search(command, std::back_inserter(results), 3);
 		
 		if (!results.empty())
 			return (*results.begin())->first;

@@ -52,7 +52,7 @@ namespace FusionEngine
 	//{
 	//public:
 	//	typedef std::vector<boost::signals2::connection> ConnectionArray;
-	//	//typedef std::tr1::shared_ptr<boost::signals2::scoped_connection> ScopedConnectionPtr;
+	//	//typedef std::shared_ptr<boost::signals2::scoped_connection> ScopedConnectionPtr;
 	//	//typedef std::vector<ScopedConnectionPtr> ConnectionArray;
 	//	typedef ConnectionArray::size_type size_type;
 	//public:

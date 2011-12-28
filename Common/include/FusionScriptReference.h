@@ -99,7 +99,7 @@ namespace FusionEngine
 		/*!
 		 * Releases the context if this is the last reference to it
 		 */
-		~ScriptContext();
+		virtual ~ScriptContext();
 
 	public:
 		int Execute() const;

@@ -34,9 +34,10 @@ namespace FusionEngine
 
 	void LoadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
+		FSN_ASSERT_FAIL("Not implemented");
 		if (resource->IsLoaded())
 		{
-			delete resource->GetDataPtr();
+			delete static_cast<TiXmlDocument*>(resource->GetDataPtr());
 		}
 
 		TiXmlDocument* doc = OpenXml(resource->GetPath(), vdir);
@@ -47,8 +48,10 @@ namespace FusionEngine
 
 	void UnloadXml(ResourceContainer* resource, CL_VirtualDirectory vdir, void* userData)
 	{
+		FSN_ASSERT_FAIL("Not implemented");
+
 		if (resource->IsLoaded())
-			delete resource->GetDataPtr();
+			delete static_cast<TiXmlDocument*>(resource->GetDataPtr());
 		resource->SetDataPtr(NULL);
 
 		resource->_setValid(false);

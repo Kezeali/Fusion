@@ -34,6 +34,8 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "FusionVector2.h"
+
 namespace FusionEngine
 {
 	//! Asoc. container key class incl. integer and string key
@@ -53,7 +55,7 @@ namespace FusionEngine
 		}
 	};
 
-	static bool operator== (PlayerKey const& l, PlayerKey const& r)
+	inline bool operator== (PlayerKey const& l, PlayerKey const& r)
 	{
 		return l.player == r.player && l.key == r.key;
 	}
@@ -61,7 +63,7 @@ namespace FusionEngine
 	//! Hash function for PlayerKey
 	/*std::size_t hash_value(PlayerKey const& k)
 	{
-		std::tr1::hash<std::string> hasher;
+		std::hash<std::string> hasher;
 		return hasher(k.key + CL_StringHelp::int_to_local8(k.player).c_str());
 	}*/
 
@@ -88,13 +90,13 @@ namespace FusionEngine
 	};
 
 	// Needed for unordered_map
-	static bool operator== (BindingKey const& l, BindingKey const& r)
+	inline bool operator== (BindingKey const& l, BindingKey const& r)
 	{
 		return l.device == r.device && l.index == r.index && l.code == r.code;
 	}
 
 	// Lessthan sorting for std::map
-	static bool operator< (BindingKey const& l, BindingKey const& r)
+	inline bool operator< (BindingKey const& l, BindingKey const& r)
 	{
 		if (l.device < r.device)
 			return true;

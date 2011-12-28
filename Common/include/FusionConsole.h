@@ -41,8 +41,8 @@
 #include "FusionException.h"
 
 #include <boost/signals2/signal.hpp>
-#include <boost/function.hpp>
-#include "containers/structured_map.hpp"
+#include <functional>
+#include <unordered_map>
 
 #include <tbb/atomic.h>
 
@@ -72,20 +72,25 @@ namespace FusionEngine
 		std::string command;
 	};
 
+	namespace detail
+	{
+		class CommandHelpImpl;
+	}
+
 	//! Provides console data access to all FusionEngine objects
 	/*!
 	 * This class does not actually do anything with the data it contains,
 	 * but instead uses callbacks to allow other classes to deal with console
 	 * data.
 	 */
-	class Console : public Singleton<Console>
+	class Console : public Singleton<Console>, boost::noncopyable
 	{
 	public:
 		//! Lines in the console
 		//typedef std::list<std::string> ConsoleLines;
 
-		typedef boost::function<std::string (const StringVector&)> CommandCallback;
-		typedef boost::function<StringVector (int, const std::string&)> AutocompleteCallback;
+		typedef std::function<std::string (const StringVector&)> CommandCallback;
+		typedef std::function<StringVector (int, const std::string&)> AutocompleteCallback;
 		struct CommandFunctions
 		{
 			CommandCallback callback;
@@ -100,9 +105,6 @@ namespace FusionEngine
 			//  command entry area of a console UI to indicate the expected inputs
 			StringVector argumentNames;
 		};
-		// Used for auto-complete - using structured_map (ternary tree) rather than unordered_map
-		//  and getting / listing help strings
-		typedef containers::structured_map<std::string, CommandHelp> CommandHelpMap;
 
 		//! Message header types
 		enum MessageType {
@@ -141,14 +143,6 @@ namespace FusionEngine
 		 * will be added directly below it. Otherwise a new heading will be added.
 		 */
 		void Add(const std::string& heading, const std::string &message);
-
-		//! This member is bound as a console command.
-		/*
-		* Prints the names of all the bound console commands. If a
-		* specific command is given as an arg, the help string for
-		* that command is printed.
-		*/
-		std::string CC_PrintCommandHelp(const StringVector &args);
 
 		//! Binds the given callback to the given command
 		void BindCommand(const std::string &command, CommandCallback callback);
@@ -256,7 +250,8 @@ namespace FusionEngine
 		std::string m_Buffer;
 
 		CommandCallbackMap m_Commands;
-		CommandHelpMap m_CommandHelp;
+		typedef detail::CommandHelpImpl CommandHelpImpl_t;
+		std::unique_ptr<CommandHelpImpl_t> m_CommandHelp;
 
 		boost::signals2::connection m_ModuleConnection;
 

@@ -192,7 +192,8 @@ namespace FusionEngine
 		 * For Scalar * Vector2 (scalar on LHS)
 		 * \todo Make operator* (scalar * vector) work
 		 */
-		friend Vector2T operator*(T scalar, const Vector2T &vector);
+		template <class U>
+		friend inline Vector2T<U> operator*(U scalar, const Vector2T<U> &vector);
 
 		//! Negation operator
 		Vector2T operator-() const
@@ -581,14 +582,14 @@ namespace FusionEngine
 
 	// Scalar * Vector
 	template <class T>
-	static Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)
+	inline Vector2T<T> operator *(T scalar, const Vector2T<T>& vector)
 	{
 		return Vector2T<T>(vector.x * scalar, vector.y * scalar);
 	}
 
 	// Scalar * Vector
 	template <class T>
-	static Vector2T<T> operator *(T scalar, Vector2T<T>&& vector)
+	inline Vector2T<T> operator *(T scalar, Vector2T<T>&& vector)
 	{
 		return Vector2T<T>(vector.x * scalar, vector.y * scalar);
 	}

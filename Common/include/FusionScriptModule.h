@@ -66,7 +66,7 @@ namespace FusionEngine
 		typedef boost::signals2::signal<void (BuildModuleEvent&)> BuildModuleSignalType;
 		typedef BuildModuleSignalType::slot_type BuildModuleSlotType;
 
-		//typedef std::tr1::shared_ptr<BuildModuleSignalType> BuildModuleSignalTypePtr;
+		//typedef std::shared_ptr<BuildModuleSignalType> BuildModuleSignalTypePtr;
 
 	public:
 		Module();

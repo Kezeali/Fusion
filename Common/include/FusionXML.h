@@ -32,7 +32,7 @@
 #pragma once
 #endif
 
-#include "FusionStdHeaders.h"
+#include "FusionPrerequisites.h"
 
 #define USE_TINYXML
 //! XML version to write to the xml declaration of new files
@@ -56,6 +56,8 @@
 #include <ClanLib/Core/IOData/virtual_directory.h>
 
 #include <physfs.h>
+
+#include <string>
 
 namespace FusionEngine
 {
