@@ -31,6 +31,7 @@
 
 #include "FusionExceptionFactory.h"
 #include "FusionTransformComponent.h"
+#include "FusionPlayerInput.h"
 #include "FusionResourceManager.h"
 #include "FusionStreamedResourceUser.h"
 #include "FusionNetworkManager.h"

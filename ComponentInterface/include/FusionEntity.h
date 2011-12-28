@@ -41,7 +41,7 @@
 #include "FusionEntityComponent.h"
 #include "FusionCommandQueue.h"
 #include "FusionTransformComponent.h"
-#include "FusionPlayerInput.h"
+//#include "FusionPlayerInput.h"
 #include "FusionResourcePointer.h"
 //#include "FusionTagFlagDictionary.h"
 #include "FusionVector2.h"
@@ -58,6 +58,8 @@ namespace FusionEngine
 	enum EntityDomains { SYSTEM_DOMAIN, GAME_DOMAIN, SYSTEM_LOCAL_DOMAIN, USER_DOMAIN };
 
 	typedef std::vector<EntityPtr> EntityArray;
+
+	typedef std::shared_ptr<PlayerInput> PlayerInputPtr;
 
 	class StreamedResourceUser;
 
@@ -76,7 +78,7 @@ namespace FusionEngine
 	public:
 		//! Array of StreamedResourceUser objects
 		typedef std::vector<StreamedResourceUser*> StreamedResourceArray;
-		typedef std::tr1::unordered_set<std::string> TagSet;
+		typedef std::unordered_set<std::string> TagSet;
 
 		//! Sets the search-name of this Entity
 		void SetName(const std::string &name);

@@ -77,7 +77,7 @@ namespace FusionEngine
 		std::pair<std::string, ComponentData_t> m_Transform;
 	};
 
-	typedef std::tr1::shared_ptr<EntityTemplate> EntityTemplatePtr;
+	typedef std::shared_ptr<EntityTemplate> EntityTemplatePtr;
 
 	//! Creates entities
 	/*!
@@ -143,7 +143,7 @@ namespace FusionEngine
 
 		std::unordered_map<std::string, EntityTemplatePtr> m_PrefabTypes;
 
-		typedef std::tr1::unordered_set<std::string> StringSet;
+		typedef std::unordered_set<std::string> StringSet;
 		StringSet m_UsedTypes;
 
 		std::string m_ScriptedEntityPath;

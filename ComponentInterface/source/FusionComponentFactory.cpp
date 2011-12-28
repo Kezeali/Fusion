@@ -48,7 +48,7 @@
 //#include "FusionScriptedEntity.h"
 #include "FusionScriptSound.h"
 #include "FusionScriptTypeRegistrationUtils.h"
-#include "FusionXml.h"
+#include "FusionXML.h"
 
 namespace FusionEngine
 {

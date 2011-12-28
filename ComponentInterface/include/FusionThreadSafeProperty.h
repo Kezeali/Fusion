@@ -74,7 +74,7 @@
 	std::pair<std::string, propType> &get_ ## member() const { return std::make_pair(#member, member); }
 
 #define FSN_PROP(type, prop) ;
-	//ThreadSafeProperty<type> prop;\
+	//ThreadSafeProperty<type> prop; \
 	//std::pair<std::string, ThreadSafeProperty<type>*> &get_ ## prop() const { return std::make_pair(#prop, &prop); }
 
 //! Readonly prop
@@ -222,8 +222,8 @@ namespace FusionEngine
 	class GetSetCallback : public IGetSetCallback<GetT, SetT>
 	{
 	public:
-		typedef typename SetT value_type_for_set;
-		typedef typename GetT value_type_for_get;
+		typedef SetT value_type_for_set;
+		typedef GetT value_type_for_get;
 
 		typedef void (C::*set_fn_t)(value_type_for_set);
 		typedef value_type_for_get (C::*get_fn_t)(void) const;
@@ -278,12 +278,12 @@ namespace FusionEngine
 
 		// Fundimental and enum types are passed to "Set" by value
 		typedef typename std::conditional<
-			std::is_fundamental<T>::value || std::is_enum<T>::value,
-			typename T, const typename T &>::type value_type_for_set;
+				std::is_fundamental<T>::value || std::is_enum<T>::value,
+			T, const T &>::type value_type_for_set;
 		// Fundimental, enum and Vector types are returned from "Get" by value
 		typedef typename std::conditional<
 			std::is_fundamental<T>::value || std::is_enum<T>::value || std::is_same<T, Vector2>::value || std::is_same<T, Vector2i>::value,
-			typename T, const typename T &>::type value_type_for_get;
+			T, const T &>::type value_type_for_get;
 
 		template <class C>
 		void SetCallbacks(C* obj, value_type_for_get (C::*get_fn)(void) const, void (C::*set_fn)(value_type_for_set))
@@ -432,7 +432,7 @@ namespace FusionEngine
 				cname = "ReadonlyProperty_" + type + "_";
 
 			typedef ThreadSafeProperty<T, Writer> this_type;
-			typedef Scripting::Registation::ValueTypeHelper<typename this_type> helper_type;
+			typedef Scripting::Registation::ValueTypeHelper<this_type> helper_type;
 
 			int r;
 			//r = engine->RegisterObjectType(cname.c_str(), sizeof(ThreadSafeProperty<T, Writer>), asOBJ_VALUE | asOBJ_APP_CLASS_CDA); FSN_ASSERT(r >= 0);
@@ -534,7 +534,7 @@ namespace FusionEngine
 			//using namespace std::placeholders;
 			if (m_Connection.connected())
 				m_Connection.disconnect();
-			m_Connection = prop->m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
+			m_Connection = other->m_Signal.connect(boost::bind(&ThreadSafeProperty<T, Writer>::Set, this, boost::arg<1>()));//std::bind(&Set, this, _1));
 		}
 
 	private:
