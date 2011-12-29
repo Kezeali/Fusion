@@ -371,7 +371,7 @@ namespace FusionEngine
 			{
 				if (id < this->m_UnusedIds.size())
 				{
-					auto& bitRef = this->m_UnusedIds[id];
+					auto bitRef = this->m_UnusedIds[id];
 					if (bitRef)
 					{
 						bitRef = false;
