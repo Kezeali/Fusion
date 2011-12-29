@@ -42,6 +42,8 @@
 #include "FusionScriptModule.h"
 #include "FusionScriptReference.h"
 
+#include <physfs.h>
+
 class CScriptAny;
 
 namespace FusionEngine
@@ -90,13 +92,32 @@ namespace FusionEngine
 			timeout_time = other.timeout_time;
 			return *this;
 		}
+		ConditionalCoroutine(const ConditionalCoroutine& other) :
+			new_ctx(other.new_ctx), condition(other.condition), timeout_time(other.timeout_time)
+		{
+#ifdef _WIN32
+#warning copying ConditionalCoroutine;
+#endif
+		}
+		ConditionalCoroutine& operator= (const ConditionalCoroutine& other)
+		{
+#ifdef _WIN32
+#warning copying ConditionalCoroutine;
+#endif
+			new_ctx = other.new_ctx;
+			condition = other.condition;
+			timeout_time = other.timeout_time;
+			return *this;
+		}
 		//! new_ctx is an optional new context (used when this is created as a new co-routine, rather than for a yield)
 		boost::intrusive_ptr<asIScriptContext> new_ctx;
 		std::function<bool (void)> condition;
 		unsigned int timeout_time;
 
 		void SetTimeout(float seconds)
-		{ timeout_time = CL_System::get_time() + unsigned int(seconds * 1000); }
+		{
+			timeout_time = CL_System::get_time() + (unsigned int)(seconds * 1000);
+		}
 
 		bool IsReady() const
 		{

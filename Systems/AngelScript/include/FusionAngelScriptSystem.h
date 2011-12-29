@@ -50,6 +50,7 @@ namespace FusionEngine
 
 	class AngelScriptWorld;
 	class AngelScriptTask;
+	class AngelScriptTaskB;
 
 	class AngelScriptSystem : public IComponentSystem
 	{

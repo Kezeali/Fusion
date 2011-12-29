@@ -30,7 +30,7 @@
 #include "FusionAngelScriptComponent.h"
 
 #include "FusionEntity.h"
-#include "FusionEntityManager.h"
+#include "FusionEntityRepo.h"
 
 #include "scriptany.h"
 
@@ -149,13 +149,13 @@ namespace FusionEngine
 
 		void Synchronise()
 		{
-			if (m_Writer.DumpWrittenValue(m_Value))
+			if (m_Writer.DumpWrittenValue(this->m_Value))
 			{
 				m_Object->GetAddressOfProperty(m_Index);
 			}
 			else
 			{
-				m_Value = *static_cast<T*>( m_Object->GetAddressOfProperty(m_Index) );
+				this->m_Value = *static_cast<T*>( m_Object->GetAddressOfProperty(m_Index) );
 			}
 		}
 
