@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include <Bitstream.h>
+#include <BitStream.h>
 #include <RakNetTypes.h>
 
 #include "FusionEntity.h"
@@ -98,9 +98,9 @@ namespace FusionEngine
 		virtual ~EntityManager();
 
 	public:
-		typedef std::tr1::weak_ptr<Entity> EntityWPtr;
+		typedef std::weak_ptr<Entity> EntityWPtr;
 		//! A list of nodes
-		typedef std::tr1::unordered_map<std::string, EntityPtr> NameEntityMap;
+		typedef std::unordered_map<std::string, EntityPtr> NameEntityMap;
 		typedef std::map<ObjectID, EntityPtr> IDEntityMap;
 
 		//typedef boost::bimap<std::string, unsigned int> TagFlagMap;

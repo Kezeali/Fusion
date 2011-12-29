@@ -73,7 +73,7 @@ namespace FusionEngine
 	{
 	public:
 		Smooth(T initial, float initial_tightness)
-			: Value(initial)
+			: Value(initial),
 			Target(initial),
 			BaseTightness(initial_tightness),
 			Tightness(initial_tightness),
@@ -82,7 +82,7 @@ namespace FusionEngine
 		}
 
 		Smooth(T initial, float initial_tightness, float decay_rate)
-			: Value(initial)
+			: Value(initial),
 			Target(initial),
 			BaseTightness(initial_tightness),
 			Tightness(initial_tightness),

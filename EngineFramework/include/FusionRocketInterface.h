@@ -62,7 +62,7 @@ namespace FusionEngine
 	public:
 		RocketRenderer(const CL_GraphicContext &gc);
 
-		typedef std::tr1::unordered_map<CL_String, CL_Texture> TextureMap;
+		typedef std::unordered_map<CL_String, CL_Texture> TextureMap;
 		typedef std::list<CL_VertexArrayBuffer> GeometryMap;
 	public:
 		//! Called by Rocket when it wants to render geometry that it does not wish to optimise.

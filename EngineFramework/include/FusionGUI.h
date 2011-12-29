@@ -148,7 +148,7 @@ namespace FusionEngine
 		RocketRenderer *m_RocketRenderer;
 		RocketFileSystem *m_RocketFileSys;
 
-		std::list<std::tr1::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
+		std::list<std::shared_ptr<Rocket::Controls::DataFormatter>> m_DataFormatters;
 
 		Rocket::Core::Context* m_Context;
 		Rocket::Core::ElementDocument *m_ConsoleDocument;
