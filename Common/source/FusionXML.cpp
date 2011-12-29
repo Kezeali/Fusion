@@ -102,7 +102,7 @@ namespace FusionEngine
 
 	TiXmlDocument* OpenXml(const std::string &filename, CL_VirtualDirectory vdir)
 	{
-		TiXmlDocument* doc = nullptr;new TiXmlDocument();
+		TiXmlDocument* doc = new TiXmlDocument();
 		try
 		{
 			CL_IODevice in = vdir.open_file(filename, CL_File::open_existing, CL_File::access_read);
