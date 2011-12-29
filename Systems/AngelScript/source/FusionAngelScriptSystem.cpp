@@ -173,173 +173,183 @@ namespace FusionEngine
 		}
 
 		//std::set<std::string> builtInTypes;
-		std::regex r("^(?:bool|(?:[u]|)int(?:8|16|32|64|)|float|double|EntityWrapper)$");
-
-		if (pos < script.length() && script[pos] == '{')
+		try
 		{
-			pos += 1;
+			std::regex r("^(?:bool|(?:[u]|)int(?:8|16|32|64|)|float|double|EntityWrapper)$");
 
-			// Find the end of the statement block
-			bool newStatement = false;
-			int level = 1;
-			while (level > 0 && pos < (int)script.size())
+			if (pos < script.length() && script[pos] == '{')
 			{
-				asETokenClass t = engine->ParseToken(&script[pos], 0, &tokenLength);
-				if (t == asTC_KEYWORD)
+				pos += 1;
+
+				// Find the end of the statement block
+				bool newStatement = false;
+				int level = 1;
+				while (level > 0 && pos < (int)script.size())
 				{
-					if (script[pos] == '{')
+					asETokenClass t = engine->ParseToken(&script[pos], 0, &tokenLength);
+					if (t == asTC_KEYWORD)
 					{
-						level++;
-						pos += tokenLength;
-						continue;
-					}
-					else if (script[pos] == '}')
-					{
-						level--;
-						newStatement = true;
-						pos += tokenLength;
-						continue;
-					}
-				}
-
-				if (level == 1)
-				{
-					if(newStatement &&
-						(t == asTC_IDENTIFIER
-						|| (t == asTC_KEYWORD && std::regex_match(&script[pos], &script[pos] + tokenLength, r)))
-						)
-					{
-						newStatement = false;
-
-						const bool primative = t == asTC_KEYWORD;
-
-						size_t start = pos;
-						pos += tokenLength;
-
-						t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-
-						// template types
-						if (t == asTC_KEYWORD && script[pos] == '<')
+						if (script[pos] == '{')
 						{
+							level++;
 							pos += tokenLength;
-							t = engine->ParseToken(&script[pos], 0, &tokenLength);
+							continue;
+						}
+						else if (script[pos] == '}')
+						{
+							level--;
+							newStatement = true;
+							pos += tokenLength;
+							continue;
+						}
+					}
 
-							if (t == asTC_WHITESPACE)
+					if (level == 1)
+					{
+						if(newStatement &&
+							(t == asTC_IDENTIFIER
+							|| (t == asTC_KEYWORD && std::regex_match(&script[pos], &script[pos] + tokenLength, r)))
+							)
+						{
+							newStatement = false;
+
+							const bool primative = t == asTC_KEYWORD;
+
+							size_t start = pos;
+							pos += tokenLength;
+
+							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+
+							// template types
+							if (t == asTC_KEYWORD && script[pos] == '<')
 							{
 								pos += tokenLength;
 								t = engine->ParseToken(&script[pos], 0, &tokenLength);
-							}
 
-							if (t == asTC_IDENTIFIER || t == asTC_KEYWORD)
+								if (t == asTC_WHITESPACE)
+								{
+									pos += tokenLength;
+									t = engine->ParseToken(&script[pos], 0, &tokenLength);
+								}
+
+								if (t == asTC_IDENTIFIER || t == asTC_KEYWORD)
+								{
+									pos += tokenLength;
+									t = engine->ParseToken(&script[pos], 0, &tokenLength);
+								}
+								else
+								{
+									pos += tokenLength;
+									continue;
+								}
+
+								if (t == asTC_WHITESPACE)
+								{
+									pos += tokenLength;
+								}
+
+								if (script[pos] == '>')
+								{
+									++pos;
+								}
+								else
+								{
+									pos += tokenLength;
+									continue;
+								}
+							}
 							{
-								pos += tokenLength;
-								t = engine->ParseToken(&script[pos], 0, &tokenLength);
-							}
-							else
-							{
-								pos += tokenLength;
-								continue;
-							}
 
-							if (t == asTC_WHITESPACE)
-							{
-								pos += tokenLength;
-							}
-
-							if (script[pos] == '>')
-							{
-								++pos;
-							}
-							else
-							{
-								pos += tokenLength;
-								continue;
-							}
-						}
-
-						if (t == asTC_WHITESPACE)
-						{
-							pos += tokenLength;
-							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-						}
-
-						if (t == asTC_KEYWORD)
-						{
-							if (!primative && script[pos] == '@') // Only allow handles for non-primative types
-							{
-								pos += tokenLength;
-								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-							}
-							else
-							{
-								pos += tokenLength;
-								continue;
-							}
-						}
-
-						// A type (possibly of a property) has been parsed: copy the text
-						std::string type(&script[start], &script[pos]);
-
-						if (t == asTC_WHITESPACE)
-						{
-							pos += tokenLength;
-							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-						}
-
-						if (t == asTC_IDENTIFIER)
-						{
-							// Found (probably) a property identifier: copy it
-							std::string identifier = script.substr(pos, tokenLength);
-							pos += tokenLength;
-
-							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
 							if (t == asTC_WHITESPACE)
 							{
 								pos += tokenLength;
 								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
 							}
 
-							// At this point a type, whitespace, and an identifier have been found: If the next
-							//  token is a statement-ending token ([;,]), a public property has been found
-							if (script[pos] == ';' || script[pos] == ',') 
+							if (t == asTC_KEYWORD)
 							{
-								scriptInfo.Properties.push_back(std::make_pair(type, identifier));
-								// Commented out code gets the full declaration in a single string. This was hard to work
-								//  with for the purposes it is used for at the time writing, but may be useful for something
-								//  else later (hence it is retained here)
-								//scriptInfo.Properties.push_back(script.substr(start, pos - start));
-								newStatement = true;
-								++pos;
-								continue;
+								if (!primative && script[pos] == '@') // Only allow handles for non-primative types
+								{
+									pos += tokenLength;
+									t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+								}
+								else
+								{
+									pos += tokenLength;
+									continue;
+								}
 							}
+
+							// A type (possibly of a property) has been parsed: copy the text
+							std::string type(&script[start], &script[pos]);
+
+							if (t == asTC_WHITESPACE)
+							{
+								pos += tokenLength;
+								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+							}
+
+							if (t == asTC_IDENTIFIER)
+							{
+								// Found (probably) a property identifier: copy it
+								std::string identifier = script.substr(pos, tokenLength);
+								pos += tokenLength;
+
+								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+								if (t == asTC_WHITESPACE)
+								{
+									pos += tokenLength;
+									t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+								}
+
+								// At this point a type, whitespace, and an identifier have been found: If the next
+								//  token is a statement-ending token ([;,]), a public property has been found
+								if (script[pos] == ';' || script[pos] == ',')
+								{
+									scriptInfo.Properties.push_back(std::make_pair(type, identifier));
+									// Commented out code gets the full declaration in a single string. This was hard to work
+									//  with for the purposes it is used for at the time writing, but may be useful for something
+									//  else later (hence it is retained here)
+									//scriptInfo.Properties.push_back(script.substr(start, pos - start));
+									newStatement = true;
+									++pos;
+									continue;
+								}
+							}
+							else
+								pos += tokenLength;
+						}
+						else if (t == asTC_KEYWORD && script[pos] == ';')
+						{
+							newStatement = true;
+							++pos;
+							continue;
+						}
+						else if (t == asTC_COMMENT)
+						{
+							newStatement = true;
+							pos += tokenLength;
+							continue;
 						}
 						else
 							pos += tokenLength;
 					}
-					else if (t == asTC_KEYWORD && script[pos] == ';')
-					{
-						newStatement = true;
-						++pos;
-						continue;
-					}
-					else if (t == asTC_COMMENT)
-					{
-						newStatement = true;
-						pos += tokenLength;
-						continue;
-					}
 					else
 						pos += tokenLength;
-				}
-				else
-					pos += tokenLength;
 
-				if (newStatement && t != asTC_WHITESPACE)
-					newStatement = false; // No longer the first meaningful token on this line
+					if (newStatement && t != asTC_WHITESPACE)
+						newStatement = false; // No longer the first meaningful token on this line
+				}
+			}
+			else
+			{
+				pos += 1;
 			}
 		}
-		else
-			pos += 1;
+		catch (std::regex_error& err)
+		{
+			return;
+		}
 	}
 
 	static bool EatToken(asIScriptEngine *engine, std::string &script, size_t &pos, asETokenClass token_class)

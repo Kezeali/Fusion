@@ -31,6 +31,7 @@
 
 #include "FusionPaths.h"
 #include "FusionExceptionFactory.h"
+#include "FusionLogger.h"
 
 #include <stack>
 #include <regex>
@@ -119,9 +120,16 @@ namespace FusionEngine
 				std::string filename = *it;
 				std::string filePath = path + filename;
 
-				if (std::regex_match(filePath, expression))
+				try
 				{
-					results.push_back(filePath);
+					if (std::regex_match(filePath, expression))
+					{
+						results.push_back(filePath);
+					}
+				}
+				catch (std::regex_error& e)
+				{
+					AddLogEntry(std::string("Encountered an error while performing regex-find ") + e.what());
 				}
 
 				if (recursive && PHYSFS_isDirectory(filePath.c_str()))
