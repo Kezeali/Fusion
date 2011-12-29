@@ -34,7 +34,9 @@
 
 #include "FusionPrerequisites.h"
 
+// TODO: why is functional needed here?
 #include <functional>
+#include <memory>
 #include <RakNetTypes.h>
 
 namespace FusionEngine

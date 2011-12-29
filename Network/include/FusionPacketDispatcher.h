@@ -37,6 +37,9 @@
 
 #include "FusionNetworkTypes.h"
 
+#include <unordered_map>
+#include <map>
+
 namespace FusionEngine
 {
 
@@ -50,7 +53,7 @@ namespace FusionEngine
 		//! List of handlers
 		//typedef std::list<PacketHandler*> HandlerList;
 		//! Map of handler lists
-		typedef std::tr1::unordered_multimap<unsigned char, PacketHandler*> HandlerMultiMap;
+		typedef std::unordered_multimap<unsigned char, PacketHandler*> HandlerMultiMap;
 		typedef std::pair<HandlerMultiMap::iterator, HandlerMultiMap::iterator> HandlerRange;
 
 	public:

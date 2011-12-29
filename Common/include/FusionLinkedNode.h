@@ -52,8 +52,8 @@ namespace FusionEngine
 		//! Constructor
 		LinkedNode( void )
 		{
-			m_Previous = NULL;
-			m_Next = NULL;
+			m_Previous = nullptr;
+			m_Next = nullptr;
 		}
 
 		//! Destructor
@@ -69,27 +69,27 @@ namespace FusionEngine
 		//! Removes this node from the list
 		void remove( void )
 		{
-			if (m_Next != NULL)
+			if (m_Next != nullptr)
 			{
 				m_Next->m_Previous = m_Previous;
-				m_Next = NULL;
+				m_Next = nullptr;
 			}
-			if (m_Previous != NULL)
+			if (m_Previous != nullptr)
 			{
 				m_Previous->m_Next = m_Next;
-				m_Previous = NULL;
+				m_Previous = nullptr;
 			}
 		}
 		void removeAllAfter( void )
 		{
-			if (m_Next != NULL)
+			if (m_Next != nullptr)
 				m_Next->removeAllAfter();
 
 			this->remove();
 		}
 		void removeAllBefore( void )
 		{
-			if (m_Previous != NULL)
+			if (m_Previous != nullptr)
 				m_Previous->removeAllBefore();
 
 			this->remove();
@@ -114,10 +114,10 @@ namespace FusionEngine
 		{
 			// Init the node
 			node->m_Previous = this;
-			node->m_Next = m_Next; // It's OK if this->m_Next is NULL here
+			node->m_Next = m_Next; // It's OK if this->m_Next is nullptr here
 
 			// Insert the node
-			if (m_Next != NULL)
+			if (m_Next != nullptr)
 				m_Next->m_Previous = node;
 			m_Next = node;
 		}
@@ -127,14 +127,14 @@ namespace FusionEngine
 			node->m_Next = this;
 			node->m_Previous = this->m_Previous;
 
-			if (m_Previous != NULL)
+			if (m_Previous != nullptr)
 				m_Previous->m_Next = node;
 			this->m_Previous = node;
 		}
 		//! Adds a new node to the end of the list
 		void push_back( LinkedNode* node )
 		{
-			if (m_Next == NULL)
+			if (m_Next == nullptr)
 				insert(node);
 			else
 				m_Next->push_back(node);
@@ -142,7 +142,7 @@ namespace FusionEngine
 		//! Adds a new node to the begining of the list
 		void push_front( LinkedNode* node )
 		{
-			if (m_Next == NULL)
+			if (m_Next == nullptr)
 				insert(node);
 			else
 				m_Next->push_back(node);

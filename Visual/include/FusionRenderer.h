@@ -35,10 +35,10 @@
 #include "FusionCommon.h"
 
 // Fusion
-#include "FusionEntity.h"
 #include "FusionCamera.h"
 #include "FusionViewport.h"
 
+#include <ClanLib/display.h>
 
 namespace FusionEngine
 {
@@ -88,149 +88,7 @@ namespace FusionEngine
 		//! Resets the GC to as it was before SetupDraw was called, assuming SetupDraw has been called
 		void PostDraw();
 
-		//! Draws the given entities
-		/*!
-		* Each call to draw on a given list of entities runs one iteration of
-		* bubble sort to (eventually) sort the list by each entity's depth property.
-		* \param[in] entities
-		* The collection of entities to draw
-		*
-		* \param[in] viewport
-		* The viewport in which to draw the entities
-		*
-		* \param[in] layer
-		* The filter-layer of entities to draw (other entitites will be excluded)
-		*/
-		//void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer);
-		//! Draws the given entities
-		/*!
-		* \param[in] entities
-		* The collection of entities to draw
-		*
-		* \param[in] viewport
-		* The viewport in which to draw the entities
-		*
-		* \param[in] layer
-		* The filter-layer of entities to draw (other entitites will be excluded)
-		*
-		* \param[in] renderable_tag
-		* Only renderables with this tag will be drawn
-		*/
-		//void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag);
-		//! Draws the given entities
-		/*!
-		* \param[in] entities
-		* The collection of entities to draw
-		*
-		* \param[in] viewport
-		* The viewport in which to draw the entities
-		*
-		* \param[in] layer
-		* The filter-layer of entities to draw (other entitites will be excluded)
-		*
-		* \param[in] filter_flags
-		* Only renderables with at least one of these flags will be drawn
-		*/
-		//void Draw(EntityArray &entities, const ViewportPtr &viewport, size_t layer, uint32_t filter_flags);
-
-		//! Draws the given entity
-		//void DrawEntity(const EntityPtr& entity);
-
-		//! Draws the given entity
-		//void DrawEntity(const EntityPtr& entity, const std::string& renderable_tag, uint32_t filter_flags);
-
 	protected:
-		//! Draws the given entity using the standard filter fn.
-		//inline void drawEntity(const EntityPtr& entity, const CL_Rectf& draw_rect, const std::string& renderable_tag, uint32_t filter_flags);
-		//! Draws the given entity using a custom filter fn.
-		//inline void drawEntity(const EntityPtr& entity, std::function<bool (const RenderablePtr&)> filter_fn);
-
-		//void drawImpl(EntityArray &entities, const ViewportPtr &viewport, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
-		//void actuallyDraw(EntityArray &entities, const CL_Rectf &cull_outside, size_t layer, const std::string& renderable_tag, uint32_t filter_flags);
-
-		struct ChangingTagCollection
-		{
-			void show(const std::string &tag)
-			{
-				m_HiddenTags.erase(tag);
-				m_ShownTags.insert(tag);
-			}
-
-			void hide(const std::string &tag)
-			{
-				m_ShownTags.erase(tag);
-				m_HiddenTags.insert(tag);
-			}
-
-			void clear()
-			{
-				m_ShownTags.clear();
-				m_HiddenTags.clear();
-			}
-
-			bool somethingWasShown() const
-			{
-				return !m_ShownTags.empty();
-			}
-
-			bool checkShown(const std::string &tag) const
-			{
-				return m_ShownTags.find(tag) == m_ShownTags.end();
-			}
-
-			bool wasShown(const EntityPtr &entity) const
-			{
-				for (StringSet::const_iterator it = m_ShownTags.begin(), end = m_ShownTags.end(); it != end; ++it)
-				{
-					if (entity->CheckTag(*it))
-						return true;
-				}
-
-				return false;
-			}
-
-			bool checkHidden(const std::string &tag) const
-			{
-				return m_HiddenTags.find(tag) == m_HiddenTags.end();
-			}
-
-			bool wasHidden(const EntityPtr &entity) const
-			{
-				for (StringSet::const_iterator it = m_HiddenTags.begin(), end = m_HiddenTags.end(); it != end; ++it)
-				{
-					if (entity->CheckTag(*it))
-						return true;
-				}
-
-				return false;
-			}
-
-			const StringSet &shownTags() const
-			{
-				return m_ShownTags;
-			}
-
-			const StringSet &hiddenTags() const
-			{
-				return m_HiddenTags;
-			}
-
-			std::set<std::string> m_ShownTags;
-			std::set<std::string> m_HiddenTags;
-		} m_ChangedTags;
-
-		//StringSet m_ShownTags;
-		StringSet m_HiddenTags;
-
-		//EntitySet m_Entities;
-
-		bool m_EntityAdded;
-
-		//EntityArray m_EntitiesToDraw;
-
-		//RenderableArray m_Renderables;
-
-		//ViewportArray m_Viewports;
 
 		CL_GraphicContext m_GC;
 

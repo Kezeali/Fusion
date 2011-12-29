@@ -58,7 +58,7 @@ namespace FusionEngine
 				}
 
 				template <class U>
-				static void Construct(const U &param, T* ptr)
+				static void ConstructWithArgs(const U &param, T* ptr)
 				{
 					new (ptr) T(param);
 				}

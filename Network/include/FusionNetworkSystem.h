@@ -36,6 +36,8 @@
 
 #include "FusionPacketHandler.h"
 //#include "FusionState.h"
+#include "FusionTypes.h"
+#include <string>
 
 namespace FusionEngine
 {

@@ -445,7 +445,7 @@ namespace FusionEngine
 			////r = engine->RegisterObjectBehaviour(cname.c_str(), 
 			////	asBEHAVE_CONSTRUCT, 
 			////	("void f(const " + type + " &in)").c_str(), 
-			////	asFUNCTIONPR(helper_type::Construct, (const T&, this_type*), void),
+			////	asFUNCTIONPR(helper_type::ConstructWithArgs, (const T&, this_type*), void),
 			////	asCALL_CDECL_OBJLAST);
 			////FSN_ASSERT(r >= 0);
 			//r = engine->RegisterObjectBehaviour(cname.c_str(),

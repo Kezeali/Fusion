@@ -36,6 +36,7 @@
 #include <GetTime.h>
 
 #include "FusionAssert.h"
+#include "FusionExceptionFactory.h"
 
 #include <tbb/spin_mutex.h>
 

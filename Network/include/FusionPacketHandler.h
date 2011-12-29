@@ -70,7 +70,7 @@ namespace FusionEngine
 	public:
 		//! Constructor
 		PacketHandlerNode()
-			: m_Handler(NULL)
+			: m_Handler(nullptr)
 		{}
 		PacketHandlerNode(PacketHandler *handler)
 			: m_Handler(handler)
@@ -84,7 +84,7 @@ namespace FusionEngine
 		void ListHandlePacket(RakNet::Packet* packet)
 		{
 			PacketHandlerNode *next = dynamic_cast<PacketHandlerNode*>( getNext() );
-			if (next != NULL)
+			if (next != nullptr)
 				next->ListHandlePacket(packet);
 
 			m_Handler->HandlePacket(packet);

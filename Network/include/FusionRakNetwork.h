@@ -38,9 +38,12 @@
 #include <ConnectionGraph2.h>
 
 #include <tbb/atomic.h>
+#include <tbb/spin_mutex.h>
 
 #include "FusionEasyPacket.h"
 #include "FusionNetworkTypes.h"
+
+#include <set>
 
 namespace FusionEngine
 {

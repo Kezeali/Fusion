@@ -38,6 +38,8 @@
 #include "FusionEntityComponent.h"
 #include "FusionThreadSafeProperty.h"
 
+#include <ClanLib/Display/2D/color.h>
+
 namespace FusionEngine
 {
 

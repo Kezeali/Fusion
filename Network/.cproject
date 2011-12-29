@@ -43,7 +43,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.other.other.70564115" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.366805298" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.2084162091" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
@@ -97,6 +100,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1178545870" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
