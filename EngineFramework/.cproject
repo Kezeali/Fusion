@@ -26,7 +26,7 @@
 						<toolChain id="cdt.managedbuild.toolchain.gnu.lib.debug.1772185563" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.lib.debug">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.1659926444" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
 							<builder buildPath="${workspace_loc:/EngineFramework/Debug}" id="cdt.managedbuild.target.gnu.builder.lib.debug.1656037116" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.debug"/>
-							<tool id="cdt.managedbuild.tool.gnu.archiver.lib.debug.1184058008" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.debug"/>
+							<tool command="ar" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.archiver.lib.debug.1184058008" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1077813796" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug">
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.970704000" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.672921583" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
@@ -34,6 +34,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
@@ -42,6 +44,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.930014699" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1182253291" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -52,6 +55,7 @@
 									<listOptionValue builtIn="false" value="FSN_PROFILING_ENABLED"/>
 									<listOptionValue builtIn="false" value="BOOST_BIND_NO_PLACEHOLDERS"/>
 								</option>
+								<option id="gnu.cpp.compiler.option.warnings.allwarn.1053485790" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1232833529" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.45132949" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
@@ -66,6 +70,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<sourceEntries>
+						<entry excluding="PrecompiledHeaders.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
@@ -101,6 +108,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
@@ -109,9 +118,10 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1473040580" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.659311467" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.659311467" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1442543411" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.release.1003362158" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.release">
@@ -126,6 +136,9 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<sourceEntries>
+						<entry excluding="PrecompiledHeaders.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
@@ -152,4 +165,6 @@
 	<storageModule moduleId="refreshScope" versionNumber="1">
 		<resource resourceType="PROJECT" workspacePath="/EngineFramework"/>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>

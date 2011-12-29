@@ -27,7 +27,7 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.2136368336" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
 							<builder buildPath="${workspace_loc:/minizip/Debug}" id="cdt.managedbuild.target.gnu.builder.lib.debug.1109405562" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.lib.debug.65352239" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.debug">
-								<option id="gnu.both.lib.option.flags.437725302" name="Archiver flags" superClass="gnu.both.lib.option.flags" value="-r -s" valueType="string"/>
+								<option id="gnu.both.lib.option.flags.437725302" name="Archiver flags" superClass="gnu.both.lib.option.flags" value="-r" valueType="string"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.1924990445" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug">
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.965492912" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>

@@ -72,7 +72,9 @@ namespace FusionEngine
 				m_AllCallbacksInvokedEvent.reset();
 			}
 
+#ifdef _WIN32
 		protected:
+#endif
 			friend class TaskManager;
 			static CL_Event m_AllCallbacksInvokedEvent;
 			static std::function<void (void)> m_Callback;

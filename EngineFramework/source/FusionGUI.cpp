@@ -184,7 +184,7 @@ namespace FusionEngine
 		Rocket::Controls::Initialise();
 
 		ElementSelectableDataGrid::RegisterElement();
-		m_DataFormatters.push_back(std::tr1::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
+		m_DataFormatters.push_back(std::shared_ptr<Rocket::Controls::DataFormatter>(new ExpandButtonFormatter()));
 
 		CL_GraphicContext gc = m_Display.get_gc();
 

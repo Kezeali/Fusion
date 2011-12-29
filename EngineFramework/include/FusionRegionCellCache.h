@@ -39,7 +39,13 @@
 
 #include "FusionCellCache.h"
 
+#include <memory>
+#include <unordered_map>
+
+#include <ClanLib/Core/Math/rect.h>
+
 #include <boost/dynamic_bitset.hpp>
+
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>

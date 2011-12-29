@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?>
+
+<cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="cdt.managedbuild.config.gnu.lib.debug.1719562426">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.lib.debug.1719562426" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+				<externalSettings>
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ComponentTest"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ComponentTest/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ComponentTest"/>
+					</externalSetting>
+				</externalSettings>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactExtension="" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.debug.1719562426" name="Debug" parent="cdt.managedbuild.config.gnu.lib.debug">
+					<folderInfo id="cdt.managedbuild.config.gnu.lib.debug.1719562426." name="/" resourcePath="">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.lib.debug.1445413065" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.lib.debug">
+							<targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.debug.2112605398" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.debug"/>
+							<builder buildPath="${workspace_loc:/ComponentTest/Debug}" id="cdt.managedbuild.target.gnu.builder.lib.debug.2029838329" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.debug"/>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 ClanRegExp-2.3 ClanSound-2.3 ClanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.archiver.lib.debug.1477450091" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.debug"/>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.807268684" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug">
+								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.1497759099" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.77940089" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1219817147" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="TIXML_USE_TICPP"/>
+									<listOptionValue builtIn="false" value="TIXML_USE_STL"/>
+									<listOptionValue builtIn="false" value="_DEBUG"/>
+									<listOptionValue builtIn="false" value="FSN_USE_ASSERT"/>
+									<listOptionValue builtIn="false" value="FSN_PROFILING_ENABLED"/>
+									<listOptionValue builtIn="false" value="BOOST_BIND_NO_PLACEHOLDERS"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.warnings.allwarn.1445978685" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
+								<option id="gnu.cpp.compiler.option.other.other.2090576230" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.include.paths.877246270" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="${ProjDirPath}/../external"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.other.pic.337111967" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" value="false" valueType="boolean"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1963117597" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.debug.1269464085" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.debug">
+								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.2052403674" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
+								<option id="gnu.c.compiler.lib.debug.option.debugging.level.1715044383" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.1562781079" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.403671923" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 ClanRegExp-2.3 ClanSound-2.3 ClanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.c.linker.base.433789829" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
+								<option defaultValue="true" id="gnu.c.link.option.shared.1241322972" name="Shared (-shared)" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+							</tool>
+							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 clanRegExp-2.3 clanSound-2.3 clanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.cpp.linker.base.624007098" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
+								<option id="gnu.cpp.link.option.paths.1263974221" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/lib&quot;"/>
+								</option>
+								<option id="gnu.cpp.link.option.libs.1802279893" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="EngineFramework"/>
+									<listOptionValue builtIn="false" value="SystemClanLibRendering"/>
+									<listOptionValue builtIn="false" value="SystemBox2D"/>
+									<listOptionValue builtIn="false" value="SystemAngelScript"/>
+									<listOptionValue builtIn="false" value="RocketAngelScriptControls"/>
+									<listOptionValue builtIn="false" value="RocketAngelScript"/>
+									<listOptionValue builtIn="false" value="ComponentInterface"/>
+									<listOptionValue builtIn="false" value="Visual"/>
+									<listOptionValue builtIn="false" value="ScriptUtils"/>
+									<listOptionValue builtIn="false" value="Network"/>
+									<listOptionValue builtIn="false" value="Input"/>
+									<listOptionValue builtIn="false" value="Common"/>
+									<listOptionValue builtIn="false" value="Box2D"/>
+									<listOptionValue builtIn="false" value="kyotocabinet"/>
+									<listOptionValue builtIn="false" value="RakNetDynamic"/>
+									<listOptionValue builtIn="false" value="angelscript"/>
+									<listOptionValue builtIn="false" value="physfs"/>
+									<listOptionValue builtIn="false" value="minizip"/>
+									<listOptionValue builtIn="false" value="tinyxml"/>
+									<listOptionValue builtIn="false" value="yaml-cpp"/>
+									<listOptionValue builtIn="false" value="boost_date_time"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
+									<listOptionValue builtIn="false" value="boost_iostreams"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
+									<listOptionValue builtIn="false" value="tbb"/>
+									<listOptionValue builtIn="false" value="tbbmalloc"/>
+									<listOptionValue builtIn="false" value="z"/>
+								</option>
+								<option defaultValue="true" id="gnu.cpp.link.option.shared.1647389950" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" value="false" valueType="boolean"/>
+								<option id="gnu.cpp.link.option.flags.1280775517" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="" valueType="string"/>
+								<option id="gnu.cpp.link.option.userobjs.1619119259" name="Other objects" superClass="gnu.cpp.link.option.userobjs"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1184287995" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+								<outputType id="cdt.managedbuild.tool.gnu.cpp.linker.output.so.563112577" outputPrefix="" superClass="cdt.managedbuild.tool.gnu.cpp.linker.output.so"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.301559627" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
+								<option id="gnu.both.asm.option.include.paths.2056626070" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.540214498" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="PrecompiledHeaders.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="Common;cdt.managedbuild.config.gnu.exe.debug.1438999554" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Common"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Common/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Common"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="ComponentInterface;cdt.managedbuild.config.gnu.lib.debug.207275781" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ComponentInterface"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ComponentInterface/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ComponentInterface"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="EngineFramework;cdt.managedbuild.config.gnu.lib.debug.250481432" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/EngineFramework"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/EngineFramework/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="EngineFramework"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Input;cdt.managedbuild.config.gnu.lib.debug.1201529788" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Input"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Input/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Input"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Network;cdt.managedbuild.config.gnu.lib.debug.970752974" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Network"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Network/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Network"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="RocketAngelScript;cdt.managedbuild.config.gnu.so.debug.1894193464" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/RocketAngelScript"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/RocketAngelScript/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="RocketAngelScript"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="RocketAngelScriptControls;cdt.managedbuild.config.gnu.lib.debug.326123935" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/RocketAngelScriptControls"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/RocketAngelScriptControls/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="RocketAngelScriptControls"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="ScriptUtils;cdt.managedbuild.config.gnu.lib.debug.439056820" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ScriptUtils"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ScriptUtils/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ScriptUtils"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="SystemAngelScript;cdt.managedbuild.config.gnu.lib.debug.1086731658" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemAngelScript"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemAngelScript/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemAngelScript"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="SystemBox2D;cdt.managedbuild.config.gnu.lib.debug.1692835635" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemBox2D"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemBox2D/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemBox2D"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="SystemClanLibRendering;cdt.managedbuild.config.gnu.lib.debug.1807293374" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemClanLibRendering"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemClanLibRendering/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemClanLibRendering"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Visual;cdt.managedbuild.config.gnu.lib.debug.879786114" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Visual"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Visual/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Visual"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="minizip;cdt.managedbuild.config.gnu.lib.debug.2077612939" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/minizip"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/minizip/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="minizip"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="tinyxml;cdt.managedbuild.config.gnu.lib.debug.1659202753" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/tinyxml"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/tinyxml/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="tinyxml"/>
+					</externalSetting>
+				</externalSettings>
+			</storageModule>
+		</cconfiguration>
+		<cconfiguration id="cdt.managedbuild.config.gnu.lib.release.37327871">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.lib.release.37327871" moduleId="org.eclipse.cdt.core.settings" name="Release">
+				<externalSettings>
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ComponentTest"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ComponentTest/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ComponentTest"/>
+					</externalSetting>
+				</externalSettings>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration artifactExtension="" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.lib.release.37327871" name="Release" parent="cdt.managedbuild.config.gnu.lib.release">
+					<folderInfo id="cdt.managedbuild.config.gnu.lib.release.37327871." name="/" resourcePath="">
+						<toolChain id="cdt.managedbuild.toolchain.gnu.lib.release.177310206" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.lib.release">
+							<targetPlatform id="cdt.managedbuild.target.gnu.platform.lib.release.523944533" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.lib.release"/>
+							<builder buildPath="${workspace_loc:/ComponentTest/Release}" id="cdt.managedbuild.target.gnu.builder.lib.release.36600404" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.lib.release"/>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 ClanRegExp-2.3 ClanSound-2.3 ClanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.archiver.lib.release.1893441300" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.lib.release">
+								<outputType id="cdt.managedbuild.tool.gnu.archiver.output.1763451113" outputPrefix="" superClass="cdt.managedbuild.tool.gnu.archiver.output"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.lib.release.645419428" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.lib.release">
+								<option id="gnu.cpp.compiler.lib.release.option.optimization.level.2372434" name="Optimization Level" superClass="gnu.cpp.compiler.lib.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.lib.release.option.debugging.level.1580488890" name="Debug Level" superClass="gnu.cpp.compiler.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1308252148" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="TIXML_USE_TICPP"/>
+									<listOptionValue builtIn="false" value="TIXML_USE_STL"/>
+									<listOptionValue builtIn="false" value="FSN_USE_ASSERT"/>
+									<listOptionValue builtIn="false" value="FSN_PROFILING_ENABLED"/>
+									<listOptionValue builtIn="false" value="BOOST_BIND_NO_PLACEHOLDERS"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.include.paths.139664912" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="${ProjDirPath}/../external"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.other.other.1848332027" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.303456877" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.c.compiler.lib.release.2117219728" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.lib.release">
+								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.lib.release.option.optimization.level.449434422" name="Optimization Level" superClass="gnu.c.compiler.lib.release.option.optimization.level" valueType="enumerated"/>
+								<option id="gnu.c.compiler.lib.release.option.debugging.level.325249371" name="Debug Level" superClass="gnu.c.compiler.lib.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.include.paths.829792022" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1280286137" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+							</tool>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 ClanRegExp-2.3 ClanSound-2.3 ClanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.c.linker.base.1921194953" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base">
+								<option defaultValue="true" id="gnu.c.link.option.shared.1276088106" name="Shared (-shared)" superClass="gnu.c.link.option.shared" valueType="boolean"/>
+							</tool>
+							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 ClanRegExp-2.3 ClanSound-2.3 ClanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.cpp.linker.base.872273355" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
+								<option defaultValue="true" id="gnu.cpp.link.option.shared.1982223160" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
+								<option id="gnu.cpp.link.option.paths.1781019024" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
+									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
+								</option>
+								<option id="gnu.cpp.link.option.libs.1078229731" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="EngineFramework"/>
+									<listOptionValue builtIn="false" value="SystemClanLibRendering"/>
+									<listOptionValue builtIn="false" value="SystemBox2D"/>
+									<listOptionValue builtIn="false" value="SystemAngelScript"/>
+									<listOptionValue builtIn="false" value="RocketAngelScriptControls"/>
+									<listOptionValue builtIn="false" value="RocketAngelScript"/>
+									<listOptionValue builtIn="false" value="ComponentInterface"/>
+									<listOptionValue builtIn="false" value="Visual"/>
+									<listOptionValue builtIn="false" value="ScriptUtils"/>
+									<listOptionValue builtIn="false" value="Network"/>
+									<listOptionValue builtIn="false" value="Input"/>
+									<listOptionValue builtIn="false" value="Common"/>
+									<listOptionValue builtIn="false" value="Box2D"/>
+									<listOptionValue builtIn="false" value="kyotocabinet"/>
+									<listOptionValue builtIn="false" value="RakNetDynamic"/>
+									<listOptionValue builtIn="false" value="angelscript"/>
+									<listOptionValue builtIn="false" value="physfs"/>
+									<listOptionValue builtIn="false" value="minizip"/>
+									<listOptionValue builtIn="false" value="tinyxml"/>
+									<listOptionValue builtIn="false" value="yaml-cpp"/>
+									<listOptionValue builtIn="false" value="boost_date_time"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
+									<listOptionValue builtIn="false" value="boost_iostreams"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="boost_thread"/>
+									<listOptionValue builtIn="false" value="tbb"/>
+									<listOptionValue builtIn="false" value="tbbmalloc"/>
+									<listOptionValue builtIn="false" value="z"/>
+								</option>
+								<option id="gnu.cpp.link.option.flags.669391688" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="-pthread" valueType="string"/>
+								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1562473301" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
+									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
+									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
+								</inputType>
+							</tool>
+							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.release.1884316349" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.release">
+								<option id="gnu.both.asm.option.include.paths.417177624" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+								</option>
+								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.444245678" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
+							</tool>
+						</toolChain>
+					</folderInfo>
+					<sourceEntries>
+						<entry excluding="PrecompiledHeaders.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings">
+				<externalSettings containerId="SystemBox2D;cdt.managedbuild.config.gnu.lib.release.1929122808" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemBox2D"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemBox2D/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemBox2D"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="SystemClanLibRendering;cdt.managedbuild.config.gnu.lib.release.835218684" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemClanLibRendering"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemClanLibRendering/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemClanLibRendering"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="SystemAngelScript;cdt.managedbuild.config.gnu.lib.release.1141592490" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/SystemAngelScript"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/SystemAngelScript/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="SystemAngelScript"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="EngineFramework;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/EngineFramework"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/EngineFramework/Debug"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="EngineFramework"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="ComponentInterface;cdt.managedbuild.config.gnu.lib.release.1087276334" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ComponentInterface"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ComponentInterface/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ComponentInterface"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Input;cdt.managedbuild.config.gnu.lib.release.2139700612" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Input"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Input/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Input"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Network;cdt.managedbuild.config.gnu.lib.release.647289755" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Network"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Network/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Network"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="RocketAngelScriptControls;cdt.managedbuild.config.gnu.lib.release.974425094" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/RocketAngelScriptControls"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/RocketAngelScriptControls/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="RocketAngelScriptControls"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="RocketAngelScript;cdt.managedbuild.config.gnu.so.release.2073691823" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/RocketAngelScript"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/RocketAngelScript/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="RocketAngelScript"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="ScriptUtils;cdt.managedbuild.config.gnu.lib.release.1967811815" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ScriptUtils"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ScriptUtils/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="ScriptUtils"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Visual;cdt.managedbuild.config.gnu.lib.release.1587293411" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/Visual"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/Visual/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="Visual"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="Common;cdt.managedbuild.config.gnu.exe.release.154203529" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier"/>
+				<externalSettings containerId="minizip;cdt.managedbuild.config.gnu.lib.release.910313176" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/minizip"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/minizip/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="minizip"/>
+					</externalSetting>
+				</externalSettings>
+				<externalSettings containerId="tinyxml;cdt.managedbuild.config.gnu.lib.release.181335801" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
+					<externalSetting>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/tinyxml"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/tinyxml/Release"/>
+						<entry flags="RESOLVED" kind="libraryFile" name="tinyxml"/>
+					</externalSetting>
+				</externalSettings>
+			</storageModule>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="ComponentTest.cdt.managedbuild.target.gnu.lib.1046587697" name="Static Library" projectType="cdt.managedbuild.target.gnu.lib"/>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.lib.debug.1719562426;cdt.managedbuild.config.gnu.lib.debug.1719562426.;cdt.managedbuild.tool.gnu.cpp.compiler.lib.debug.807268684;cdt.managedbuild.tool.gnu.cpp.compiler.input.1963117597">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.lib.debug.1719562426;cdt.managedbuild.config.gnu.lib.debug.1719562426.;cdt.managedbuild.tool.gnu.c.compiler.lib.debug.1269464085;cdt.managedbuild.tool.gnu.c.compiler.input.403671923">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.lib.release.37327871;cdt.managedbuild.config.gnu.lib.release.37327871.;cdt.managedbuild.tool.gnu.c.compiler.lib.release.2117219728;cdt.managedbuild.tool.gnu.c.compiler.input.1280286137">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.lib.release.37327871;cdt.managedbuild.config.gnu.lib.release.37327871.;cdt.managedbuild.tool.gnu.cpp.compiler.lib.release.645419428;cdt.managedbuild.tool.gnu.cpp.compiler.input.303456877">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/ComponentTest"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+</cproject>

@@ -113,7 +113,7 @@ namespace FusionEngine
 		* Set if starting a new game; if joining a game or loading a save, set to null
 		* so synced entities can be loaded from the existing ontology.
 		*/
-		std::shared_ptr<GameMap> LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser = nullptr);
+		std::shared_ptr<GameMap> LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser = nullptr);
 
 		std::shared_ptr<GameMap> LoadMap(const std::string &filename, InstancingSynchroniser* synchroniser = nullptr);
 

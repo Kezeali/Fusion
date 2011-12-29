@@ -1239,7 +1239,7 @@ namespace FusionEngine
 				else
 				{
 					auto dest = bfs::path(m_FullBasePath) / it->filename();
-					bfs::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
+					boost::filesystem::copy_file(*it, dest, bfs::copy_option::overwrite_if_exists);
 				}
 			}
 		}

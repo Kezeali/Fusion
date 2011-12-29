@@ -62,7 +62,7 @@ namespace FusionEngine
 			if (RakNet::BitStream::IsBigEndian())
 			{
 				unsigned char output[sizeof(IntegerT)];
-				RakNet::BitStream::ReverseBytes(reinterpret_cast<unsigned char*>(&value), output, sizeof(templateType));
+				RakNet::BitStream::ReverseBytes(reinterpret_cast<unsigned char*>(&value), output, sizeof(IntegerT));
 				out.WriteBits(&output, num_bits);
 			}
 			else
@@ -77,7 +77,7 @@ namespace FusionEngine
 	template <int num_bits, typename IntegerT>
 	bool ReadIntegerInBits(RakNet::BitStream& in, IntegerT& outValue)
 	{
-		if (out.ReadBit())
+		if (in.ReadBit())
 		{
 			unsigned char rawBits[sizeof(IntegerT)];
 			memset(rawBits, 0, sizeof(rawBits));
@@ -92,7 +92,7 @@ namespace FusionEngine
 				return false;
 		}
 		else
-			value = 0;
+			outValue = 0;
 
 		return true;
 	}

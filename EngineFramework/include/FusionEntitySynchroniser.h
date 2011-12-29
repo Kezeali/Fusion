@@ -34,7 +34,7 @@
 
 #include "FusionPrerequisites.h"
 
-#include <Bitstream.h>
+#include <BitStream.h>
 #include <RakNetTypes.h>
 
 #include "FusionEntity.h"
@@ -50,7 +50,7 @@ namespace FusionEngine
 	class ConsolidatedInput
 	{
 	public:
-		typedef std::tr1::unordered_map<PlayerID, PlayerInputPtr> PlayerInputsMap;
+		typedef std::unordered_map<PlayerID, PlayerInputPtr> PlayerInputsMap;
 
 	public:
 		ConsolidatedInput(InputManager *input_manager);

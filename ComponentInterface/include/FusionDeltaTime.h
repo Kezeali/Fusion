@@ -34,6 +34,8 @@
 
 #include "FusionPrerequisites.h"
 
+#include <cstdint>
+
 namespace FusionEngine
 {
 

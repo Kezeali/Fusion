@@ -898,6 +898,7 @@ public:
 					resourceManager->UnloadUnreferencedResources();
 					resourceManager->DeliverLoadedResources();
 
+#ifdef _WIN32
 					if (dispWindow.get_ic().get_keyboard().get_keycode(VK_OEM_4))
 					{
 						// Accumulator
@@ -912,6 +913,7 @@ public:
 						scheduler->SetFramerateLimiter(false);
 						scheduler->SetUnlimited(true);
 					}
+#endif
 
 					if (delta <= 1000)
 					{

@@ -69,7 +69,7 @@ namespace FusionEngine
 		virtual ~ScriptedSlotWrapper();
 
 		//! Sets the connection to keep open
-		void HoldConnection(boost::signals2::connection &connection);
+		void HoldConnection(const boost::signals2::connection &connection);
 		//! Disconnects the held connection
 		void Disconnect();
 

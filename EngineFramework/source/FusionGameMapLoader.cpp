@@ -443,9 +443,9 @@ namespace FusionEngine
 		}
 	}
 
-	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
+	std::shared_ptr<GameMap> GameMapLoader::LoadMap(const std::string &filename, const CL_VirtualDirectory &directory, InstancingSynchroniser* synchroniser)
 	{
-		CL_IODevice device = directory.open_file(filename, CL_File::open_existing, CL_File::access_read);
+		CL_IODevice device = directory.open_file_read(filename);
 
 		m_MapFilename = filename;
 

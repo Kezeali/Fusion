@@ -251,7 +251,7 @@ namespace FusionEngine
 
 		CommandCallbackMap m_Commands;
 		typedef detail::CommandHelpImpl CommandHelpImpl_t;
-		std::unique_ptr<CommandHelpImpl_t> m_CommandHelp;
+		std::shared_ptr<CommandHelpImpl_t> m_CommandHelp;
 
 		boost::signals2::connection m_ModuleConnection;
 

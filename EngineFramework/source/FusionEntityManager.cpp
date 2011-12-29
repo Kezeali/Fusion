@@ -282,7 +282,7 @@ namespace FusionEngine
 
 		auto processEntity = [&](const EntityPtr& entity)
 		{
-			auto& remoteViewers = std::set<RakNet::RakNetGUID>();//entity->GetViewers();
+			auto remoteViewers = std::set<RakNet::RakNetGUID>();//entity->GetViewers();
 			for (auto it = PlayerRegistry::PlayersBegin(), end = PlayerRegistry::PlayersEnd(); it != end; ++it)
 				if (it->LocalIndex >= s_MaxLocalPlayers)
 					remoteViewers.insert(it->GUID);
@@ -1474,7 +1474,7 @@ namespace FusionEngine
 			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
-				auto& referencingEntity = (*it).lock();
+				auto referencingEntity = (*it).lock();
 				// Not being able to lock means that this entity has not only been deactivated, but also
 				//  destroyed, so it is clearly no longer a valid reference (doesn't need to be checked)
 				if (referencingEntity && !referencingEntity->GetGCFlag())
@@ -1496,7 +1496,7 @@ namespace FusionEngine
 			tbb::mutex::scoped_lock lock(ref->m_InRefsMutex);
 			for (auto it = ref->m_ReferencingEntities.cbegin(), end = ref->m_ReferencingEntities.cend(); it != end; ++it)
 			{
-				auto& referencingEntity = (*it).lock();
+				auto referencingEntity = (*it).lock();
 				if (referencingEntity && referencingEntity->GetGCFlag())
 					stack.push_back(referencingEntity);
 			}

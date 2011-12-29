@@ -50,6 +50,7 @@
 namespace FusionEngine
 {
 
+	class Box2DWorld;
 	class Box2DFixture;
 
 	class Box2DBody : public IComponent, public ITransform, public IRigidBody
@@ -219,7 +220,7 @@ namespace FusionEngine
 		void SetVelocity(const Vector2& vel) { m_Body ? m_Body->SetLinearVelocity(b2Vec2(vel.x, vel.y)) : m_Def.linearVelocity.Set(vel.x, vel.y); }
 
 		float GetAngularVelocity() const { return m_Body ? m_Body->GetAngularVelocity() : m_Def.angularVelocity; }
-		void SetAngularVelocity(float vel) { m_Body ? m_Body->SetAngularVelocity(vel) : m_Def.angularVelocity = vel; }
+		void SetAngularVelocity(float vel) { if (m_Body) m_Body->SetAngularVelocity(vel); else m_Def.angularVelocity = vel; }
 
 		float GetLinearDamping() const { return m_Body ? m_Body->GetLinearDamping() : m_Def.linearDamping; }
 		void SetLinearDamping(float val)

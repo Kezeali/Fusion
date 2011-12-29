@@ -57,10 +57,34 @@ namespace FusionEngine
 		{
 		}
 
-		//! Move constructor
-		Vector2T(Vector2T<T>&& other)
-			: x(std::move(other.x)),
-			y(std::move(other.y))
+		//! Copy constructor
+		inline Vector2T(const Vector2T<T>& other)
+			: x(other.x),
+			y(other.y)
+		{
+#ifdef FSN_REFCOUNTED_VECTOR
+			m_RefCount = other.m_RefCount;
+			other.m_RefCount = 0; // Prevent other from deleting this object if it's 'release' method is called
+#endif
+		}
+
+//		//! Move constructor
+//		Vector2T(Vector2T<T>&& other)
+//			: x(std::move(other.x)),
+//			y(std::move(other.y))
+//		{
+//#ifdef FSN_REFCOUNTED_VECTOR
+//			m_RefCount = other.m_RefCount;
+//			other.m_RefCount = 0; // Prevent other from deleting this object if it's 'release' method is called
+//#endif
+//		}
+
+		//! Copy constructor
+		//! Note that copying into integer from float is handled with specialisations lower in this file
+		template <class U>
+		inline Vector2T(const Vector2T<U>& other)
+			: x(other.x),
+			y(other.y)
 		{
 #ifdef FSN_REFCOUNTED_VECTOR
 			m_RefCount = other.m_RefCount;
@@ -69,11 +93,11 @@ namespace FusionEngine
 		}
 
 		//! Copy constructor (from double)
-		Vector2T(const Vector2T<double>& other);
+		//inline Vector2T(const Vector2T<double>& other);
 		//! Copy constructor (from float)
-		Vector2T(const Vector2T<float>& other);
+		//inline Vector2T(const Vector2T<float>& other);
 		//! Copy constructor (from int)
-		Vector2T(const Vector2T<int>& other);
+		//inline Vector2T(const Vector2T<int>& other);
 
 #ifdef FSN_REFCOUNTED_VECTOR
 	private:
@@ -125,13 +149,13 @@ namespace FusionEngine
 			y = other.y;
 			return *this;
 		}
-		//! Move assignment
-		Vector2T<T>& operator=(Vector2T<T>&& other)
-		{ 
-			x = std::move(other.x);
-			y = std::move(other.y);
-			return *this;
-		}
+//		//! Move assignment
+//		Vector2T<T>& operator=(Vector2T<T>&& other)
+//		{
+//			x = std::move(other.x);
+//			y = std::move(other.y);
+//			return *this;
+//		}
 		//! Addition assignment operator
 		Vector2T<T>& operator+=(const Vector2T<T>& other)
 		{
@@ -433,147 +457,148 @@ namespace FusionEngine
 		y(copy.y)
 	{}
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned char)(std::abs(copy.x) + 0.5f); y = (unsigned char)(std::abs(copy.y) + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned char)(std::abs(copy.x) + 0.5); y = (unsigned char)(std::abs(copy.y) + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned char>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned char)std::abs(copy.x); y = (unsigned char)std::abs(copy.y); }
 
-	template<>
+	//! TODO: Fix signed rounding for Vector2T copy constructors
+	template<> template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (char)(copy.x + 0.5f); y = (char)(copy.y + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (char)(copy.x + 0.5); y = (char)(copy.y + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<char>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (char)copy.x; y = (char)copy.y; }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned short)(copy.x + 0.5f); y = (unsigned short)(copy.y + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned short)(std::abs(copy.x) + 0.5); y = (unsigned short)(std::abs(copy.y) + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned short>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned short)std::abs(copy.x); y = (unsigned short)std::abs(copy.y); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (short)(copy.x + 0.5f); y = (short)(copy.y + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (short)(copy.x + 0.5); y = (short)(copy.y + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<short>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (short)copy.x; y = (short)copy.y; }
 
-	template<>
+	template<> template<>
 	inline Vector2T<int>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (int)(copy.x + 0.5f); y = (int)(copy.y + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<int>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (int)(copy.x + 0.5); y = (int)(copy.y + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned int)(std::abs(copy.x) + 0.5f); y = (unsigned int)(std::abs(copy.y) + 0.5f); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned int)(std::abs(copy.x) + 0.5); y = (unsigned int)(std::abs(copy.y) + 0.5); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<unsigned int>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (unsigned int)std::abs(copy.x); y = (unsigned int)std::abs(copy.y); }
 
-	template<>
+	template<> template<>
 	inline Vector2T<float>::Vector2T(const Vector2T<double> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (float)copy.x; y = (float)copy.y; }
 
-	template<>
+	template<> template<>
 	inline Vector2T<float>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (float)copy.x; y = (float)copy.y; }
 
-	template<>
+	template<> template<>
 	inline Vector2T<double>::Vector2T(const Vector2T<float> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)
 #endif
 	{ x = (double)copy.x; y = (double)copy.y; }
 
-	template<>
+	template<> template<>
 	inline Vector2T<double>::Vector2T(const Vector2T<int> &copy)
 #ifdef FSN_REFCOUNTED_VECTOR
 		: m_RefCount(1)

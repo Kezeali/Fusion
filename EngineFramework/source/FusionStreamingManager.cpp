@@ -40,6 +40,8 @@
 
 #include "FusionLogger.h"
 
+#include <cmath>
+
 namespace FusionEngine
 {
 
@@ -364,8 +366,8 @@ namespace FusionEngine
 
 	CellHandle StreamingManager::ToCellLocation(float x, float y) const
 	{
-		const int32_t ix = static_cast<int32_t>(std::floorf(x * m_InverseCellSize));
-		const int32_t iy = static_cast<int32_t>(std::floorf(y * m_InverseCellSize));
+		const int32_t ix = static_cast<int32_t>(std::floor(x * m_InverseCellSize));
+		const int32_t iy = static_cast<int32_t>(std::floor(y * m_InverseCellSize));
 		return CellHandle(ix, iy);
 	}
 
@@ -1180,7 +1182,7 @@ namespace FusionEngine
 	}
 
 	template <class T>
-	static inline void clipRange(T& out_it, CL_Rect& inactiveRange, const CL_Rect& activeRange)
+	static inline void clipRange(T&& out_it, CL_Rect& inactiveRange, const CL_Rect& activeRange)
 	{
 		// Partial overlap
 		//if (inactiveRange.is_overlapped(activeRange))

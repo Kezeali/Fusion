@@ -63,7 +63,8 @@ namespace FusionEngine
 
 		static void DeserialiseOccasional(RakNet::BitStream& in, const EntityPtr& entity, IComponent::SerialiseMode mode)
 		{
-			DeserialiseOccasional(in, std::vector<uint32_t>(), entity, mode);
+			std::vector<uint32_t> notUsed;
+			DeserialiseOccasional(in, notUsed, entity, mode);
 		}
 
 		//! Deserialises and returns the position data from the given state, if it contains such data

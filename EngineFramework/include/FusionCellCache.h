@@ -32,6 +32,10 @@
 
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include <memory>
+
+#include <ClanLib/Core/Math/rect.h>
+
 namespace FusionEngine
 {
 	typedef boost::iostreams::filtering_istream ArchiveIStream;

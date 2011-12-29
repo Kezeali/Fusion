@@ -94,7 +94,8 @@ namespace FusionEngine
 
 	void MessageBox::SetTitle(const std::string& title)
 	{
-		m_Document->SetTitle(toEmp(title));
+		auto rocketStringTitle = toEmp(title);
+		m_Document->SetTitle(rocketStringTitle);
 	}
 
 	void MessageBox::SetElement(const std::string& id, const std::string& text)

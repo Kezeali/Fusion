@@ -403,7 +403,7 @@ namespace FusionEngine
 				const auto& entities = m_EntityManager->GetEntities();
 				for (auto it = entities.begin(), end = entities.end(); it != end; ++it)
 				{
-					sendFullSynch(NetDestination(packet->guid, false), it->second);
+//					sendFullSynch(NetDestination(packet->guid, false), it->second);
 				}
 			}
 			break;
