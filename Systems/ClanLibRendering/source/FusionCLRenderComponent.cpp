@@ -97,13 +97,13 @@ namespace FusionEngine
 
 	void CLSprite::Update(unsigned int, const float elapsed, const float)
 	{
-		auto onImageLoaded = [this](ResourceDataPtr& data)
+		auto onImageLoaded = [this](ResourceDataPtr data)
 		{
 			m_ImageResource.SetTarget(data);
 			redefineSprite();
 		};
 
-		auto onAnimationLoaded = [this](ResourceDataPtr& data)
+		auto onAnimationLoaded = [this](ResourceDataPtr data)
 		{
 			m_AnimationResource.SetTarget(data);
 			redefineSprite();

@@ -29,8 +29,6 @@
 
 #include "FusionCameraSynchroniser.h"
 
-#include "FusionStreamingManager.h"
-
 namespace FusionEngine
 {
 

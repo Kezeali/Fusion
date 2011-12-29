@@ -33,6 +33,8 @@
 #include "FusionCLRenderComponent.h"
 #include "FusionRenderer.h"
 
+#include "FusionEntity.h"
+
 // TODO: move into StreamingSystem?
 #include "FusionStreamingCameraComponent.h"
 #include "FusionCameraSynchroniser.h"
@@ -281,7 +283,7 @@ namespace FusionEngine
 			}
 		}
 
-		auto depthSort = [](boost::intrusive_ptr<IDrawable>& first, boost::intrusive_ptr<IDrawable>& second)->bool
+		auto depthSort = [](const boost::intrusive_ptr<IDrawable>& first, const boost::intrusive_ptr<IDrawable>& second)->bool
 		{
 			if (first->GetParent() == second->GetParent())
 			{
