@@ -172,10 +172,10 @@ namespace FusionEngine
 			return;
 		}
 
-		//std::set<std::string> builtInTypes;
 		try
 		{
-			std::regex r("^(?:bool|(?:[u]|)int(?:8|16|32|64|)|float|double|EntityWrapper)$");
+			//std::set<std::string> builtInTypes;
+			std::regex reg("^(?:bool|(?:u?)int(?:8|16|32|64|)|float|double|EntityWrapper)$", std::regex::ECMAScript);
 
 			if (pos < script.length() && script[pos] == '{')
 			{
@@ -183,8 +183,8 @@ namespace FusionEngine
 
 				// Find the end of the statement block
 				bool newStatement = false;
-				int level = 1;
-				while (level > 0 && pos < (int)script.size())
+				size_t level = 1;
+				while (level > 0 && pos < script.size())
 				{
 					asETokenClass t = engine->ParseToken(&script[pos], 0, &tokenLength);
 					if (t == asTC_KEYWORD)
@@ -208,7 +208,7 @@ namespace FusionEngine
 					{
 						if(newStatement &&
 							(t == asTC_IDENTIFIER
-							|| (t == asTC_KEYWORD && std::regex_match(&script[pos], &script[pos] + tokenLength, r)))
+							|| (t == asTC_KEYWORD && std::regex_match(&script[pos], &script[pos] + tokenLength, reg)))
 							)
 						{
 							newStatement = false;
@@ -258,7 +258,6 @@ namespace FusionEngine
 									continue;
 								}
 							}
-							{
 
 							if (t == asTC_WHITESPACE)
 							{
@@ -317,7 +316,9 @@ namespace FusionEngine
 								}
 							}
 							else
+							{
 								pos += tokenLength;
+							}
 						}
 						else if (t == asTC_KEYWORD && script[pos] == ';')
 						{
@@ -346,9 +347,36 @@ namespace FusionEngine
 				pos += 1;
 			}
 		}
-		catch (std::regex_error& err)
+		catch(std::regex_error& e)
 		{
-			return;
+			if (e.code() == std::regex_constants::error_paren)
+				AddLogEntry(std::string("Failed to parse script properties due to regex error: unmatched paren"));
+			else if (e.code() == std::regex_constants::error_badbrace)
+				AddLogEntry("Failed to parse script properties due to regex error: bad backbrace");
+			else if (e.code() == std::regex_constants::error_badrepeat)
+				AddLogEntry("Failed to parse script properties due to regex error: bad repeat");
+			else if (e.code() == std::regex_constants::error_brace)
+				AddLogEntry("Failed to parse script properties due to regex error: error_brace");
+			else if (e.code() == std::regex_constants::error_brack)
+				AddLogEntry("Failed to parse script properties due to regex error: error_brack");
+			else if (e.code() == std::regex_constants::error_collate)
+				AddLogEntry("Failed to parse script properties due to regex error: error_collate");
+			else if (e.code() == std::regex_constants::error_complexity)
+				AddLogEntry("Failed to parse script properties due to regex error: error_complexity");
+			else if (e.code() == std::regex_constants::error_ctype)
+				AddLogEntry("Failed to parse script properties due to regex error: error_ctype");
+			else if (e.code() == std::regex_constants::error_collate)
+				AddLogEntry("Failed to parse script properties due to regex error: error_collate");
+			else if (e.code() == std::regex_constants::error_escape)
+				AddLogEntry("Failed to parse script properties due to regex error: error_escape");
+			else if (e.code() == std::regex_constants::error_range)
+				AddLogEntry("Failed to parse script properties due to regex error: error_range");
+			else if (e.code() == std::regex_constants::error_space)
+				AddLogEntry("Failed to parse script properties due to regex error: error_space");
+			else if (e.code() == std::regex_constants::error_stack)
+				AddLogEntry("Failed to parse script properties due to regex error: error_stack");
+			else if (e.code() == std::regex_constants::error_backref)
+				AddLogEntry("Failed to parse script properties due to regex error: error_backref");
 		}
 	}
 
