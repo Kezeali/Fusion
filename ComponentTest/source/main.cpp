@@ -950,7 +950,7 @@ public:
 						gc.clear();
 					}
 					
-					if (executed & SystemType::Simulation || editMode)
+					if ((executed & SystemType::Simulation) || editMode)
 					{
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
