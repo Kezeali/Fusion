@@ -33,8 +33,8 @@
 								<option id="gnu.cpp.compiler.option.include.paths.506804715" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
@@ -107,8 +107,8 @@
 								<option id="gnu.cpp.compiler.option.include.paths.2084651812" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>

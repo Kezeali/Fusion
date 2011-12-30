@@ -44,8 +44,8 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
@@ -105,8 +105,8 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
