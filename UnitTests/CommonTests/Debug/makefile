@@ -1,0 +1,66 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+-include ../makefile.init
+
+RM := rm -rf
+
+# All of the sources participating in the build are defined here
+-include sources.mk
+-include subdir.mk
+-include objects.mk
+
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(C++_DEPS)),)
+-include $(C++_DEPS)
+endif
+ifneq ($(strip $(C_DEPS)),)
+-include $(C_DEPS)
+endif
+ifneq ($(strip $(CC_DEPS)),)
+-include $(CC_DEPS)
+endif
+ifneq ($(strip $(CPP_DEPS)),)
+-include $(CPP_DEPS)
+endif
+ifneq ($(strip $(CXX_DEPS)),)
+-include $(CXX_DEPS)
+endif
+ifneq ($(strip $(C_UPPER_DEPS)),)
+-include $(C_UPPER_DEPS)
+endif
+endif
+
+-include ../makefile.defs
+
+# Add inputs and outputs from these tool invocations to the build variables 
+
+# All Target
+all: CommonTests
+
+dependents:
+	-cd /home/kezeali/FusionGit/Fusion/Common/Debug && $(MAKE) all
+	-cd /home/kezeali/FusionGit/Fusion/external/minizip/Debug && $(MAKE) all
+	-cd /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug && $(MAKE) all
+
+# Tool invocations
+CommonTests: $(OBJS) $(USER_OBJS) /home/kezeali/FusionGit/Fusion/Common/Debug/libCommon.a /home/kezeali/FusionGit/Fusion/external/minizip/Debug/libminizip.a /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug/libtinyxml.a
+	@echo 'Building target: $@'
+	@echo 'Invoking: GCC C++ Linker'
+	g++ -L"/home/kezeali/FusionGit/Fusion/external/tinyxml/Debug" -L"/home/kezeali/FusionGit/Fusion/external/minizip/Debug" -L"/home/kezeali/FusionGit/Fusion/Common/Debug" -L"${GTEST_ROOT}/lib" -L"${BOOST_ROOT}/lib" -L/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release -pthread -o "CommonTests" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+# Other Targets
+clean:
+	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) CommonTests
+	-@echo ' '
+
+.PHONY: all clean dependents
+.SECONDARY:
+/home/kezeali/FusionGit/Fusion/Common/Debug/libCommon.a:
+/home/kezeali/FusionGit/Fusion/external/minizip/Debug/libminizip.a:
+/home/kezeali/FusionGit/Fusion/external/tinyxml/Debug/libtinyxml.a:
+
+-include ../makefile.targets

@@ -172,211 +172,203 @@ namespace FusionEngine
 			return;
 		}
 
-		try
+		class TypeValidator
 		{
-			//std::set<std::string> builtInTypes;
-			std::regex reg("^(?:bool|(?:u?)int(?:8|16|32|64|)|float|double|EntityWrapper)$", std::regex::ECMAScript);
-
-			if (pos < script.length() && script[pos] == '{')
+		public:
+			std::regex intTypeRegex;
+			TypeValidator()
 			{
-				pos += 1;
-
-				// Find the end of the statement block
-				bool newStatement = false;
-				size_t level = 1;
-				while (level > 0 && pos < script.size())
+				try
 				{
-					asETokenClass t = engine->ParseToken(&script[pos], 0, &tokenLength);
-					if (t == asTC_KEYWORD)
+					intTypeRegex = std::regex("u?int(?:8|16|32|64)", std::regex_constants::ECMAScript);
+					//bool|float|double|EntityWrapper
+				}
+				catch(std::regex_error& e)
+				{
+					AddLogEntry(std::string("Failed to parse script properties due to regex error"));
+					FSN_EXCEPT(FusionEngine::PreprocessorException, "Failed to compile script property type regex");
+				}
+			}
+
+			bool operator() (const std::string& angelscript_typename)
+			{
+				return angelscript_typename == "bool" ||
+						angelscript_typename == "float" ||
+						angelscript_typename == "double" ||
+						angelscript_typename == "EntityWrapper" ||
+						std::regex_match(angelscript_typename, intTypeRegex);
+			}
+		} typeValidator;
+
+		if (pos < script.length() && script[pos] == '{')
+		{
+			pos += 1;
+
+			// Find the end of the statement block
+			bool newStatement = false;
+			size_t level = 1;
+			while (level > 0 && pos < script.size())
+			{
+				asETokenClass t = engine->ParseToken(&script[pos], 0, &tokenLength);
+				if (t == asTC_KEYWORD)
+				{
+					if (script[pos] == '{')
 					{
-						if (script[pos] == '{')
-						{
-							level++;
-							pos += tokenLength;
-							continue;
-						}
-						else if (script[pos] == '}')
-						{
-							level--;
-							newStatement = true;
-							pos += tokenLength;
-							continue;
-						}
+						level++;
+						pos += tokenLength;
+						continue;
 					}
-
-					if (level == 1)
+					else if (script[pos] == '}')
 					{
-						if(newStatement &&
-							(t == asTC_IDENTIFIER
-							|| (t == asTC_KEYWORD && std::regex_match(&script[pos], &script[pos] + tokenLength, reg)))
-							)
+						level--;
+						newStatement = true;
+						pos += tokenLength;
+						continue;
+					}
+				}
+
+				if (level == 1)
+				{
+					// token is range &script[pos], &script[pos] + tokenLength - todo: pass range (not substr) to typeValidator
+					if(newStatement &&
+						(t == asTC_IDENTIFIER
+						|| (t == asTC_KEYWORD && typeValidator(script.substr(pos, tokenLength))))
+						)
+					{
+						newStatement = false;
+
+						const bool primative = t == asTC_KEYWORD;
+
+						size_t start = pos;
+						pos += tokenLength;
+
+						t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+
+						// template types
+						if (t == asTC_KEYWORD && script[pos] == '<')
 						{
-							newStatement = false;
-
-							const bool primative = t == asTC_KEYWORD;
-
-							size_t start = pos;
 							pos += tokenLength;
+							t = engine->ParseToken(&script[pos], 0, &tokenLength);
 
-							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-
-							// template types
-							if (t == asTC_KEYWORD && script[pos] == '<')
+							if (t == asTC_WHITESPACE)
 							{
 								pos += tokenLength;
 								t = engine->ParseToken(&script[pos], 0, &tokenLength);
-
-								if (t == asTC_WHITESPACE)
-								{
-									pos += tokenLength;
-									t = engine->ParseToken(&script[pos], 0, &tokenLength);
-								}
-
-								if (t == asTC_IDENTIFIER || t == asTC_KEYWORD)
-								{
-									pos += tokenLength;
-									t = engine->ParseToken(&script[pos], 0, &tokenLength);
-								}
-								else
-								{
-									pos += tokenLength;
-									continue;
-								}
-
-								if (t == asTC_WHITESPACE)
-								{
-									pos += tokenLength;
-								}
-
-								if (script[pos] == '>')
-								{
-									++pos;
-								}
-								else
-								{
-									pos += tokenLength;
-									continue;
-								}
 							}
 
-							if (t == asTC_WHITESPACE)
+							if (t == asTC_IDENTIFIER || t == asTC_KEYWORD)
 							{
 								pos += tokenLength;
-								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-							}
-
-							if (t == asTC_KEYWORD)
-							{
-								if (!primative && script[pos] == '@') // Only allow handles for non-primative types
-								{
-									pos += tokenLength;
-									t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-								}
-								else
-								{
-									pos += tokenLength;
-									continue;
-								}
-							}
-
-							// A type (possibly of a property) has been parsed: copy the text
-							std::string type(&script[start], &script[pos]);
-
-							if (t == asTC_WHITESPACE)
-							{
-								pos += tokenLength;
-								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-							}
-
-							if (t == asTC_IDENTIFIER)
-							{
-								// Found (probably) a property identifier: copy it
-								std::string identifier = script.substr(pos, tokenLength);
-								pos += tokenLength;
-
-								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-								if (t == asTC_WHITESPACE)
-								{
-									pos += tokenLength;
-									t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
-								}
-
-								// At this point a type, whitespace, and an identifier have been found: If the next
-								//  token is a statement-ending token ([;,]), a public property has been found
-								if (script[pos] == ';' || script[pos] == ',')
-								{
-									scriptInfo.Properties.push_back(std::make_pair(type, identifier));
-									// Commented out code gets the full declaration in a single string. This was hard to work
-									//  with for the purposes it is used for at the time writing, but may be useful for something
-									//  else later (hence it is retained here)
-									//scriptInfo.Properties.push_back(script.substr(start, pos - start));
-									newStatement = true;
-									++pos;
-									continue;
-								}
+								t = engine->ParseToken(&script[pos], 0, &tokenLength);
 							}
 							else
 							{
 								pos += tokenLength;
+								continue;
+							}
+
+							if (t == asTC_WHITESPACE)
+							{
+								pos += tokenLength;
+							}
+
+							if (script[pos] == '>')
+							{
+								++pos;
+							}
+							else
+							{
+								pos += tokenLength;
+								continue;
 							}
 						}
-						else if (t == asTC_KEYWORD && script[pos] == ';')
+
+						if (t == asTC_WHITESPACE)
 						{
-							newStatement = true;
-							++pos;
-							continue;
-						}
-						else if (t == asTC_COMMENT)
-						{
-							newStatement = true;
 							pos += tokenLength;
-							continue;
+							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+						}
+
+						if (t == asTC_KEYWORD)
+						{
+							if (!primative && script[pos] == '@') // Only allow handles for non-primative types
+							{
+								pos += tokenLength;
+								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+							}
+							else
+							{
+								pos += tokenLength;
+								continue;
+							}
+						}
+
+						// A type (possibly of a property) has been parsed: copy the text
+						std::string type(&script[start], &script[pos]);
+
+						if (t == asTC_WHITESPACE)
+						{
+							pos += tokenLength;
+							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+						}
+
+						if (t == asTC_IDENTIFIER)
+						{
+							// Found (probably) a property identifier: copy it
+							std::string identifier = script.substr(pos, tokenLength);
+							pos += tokenLength;
+
+							t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+							if (t == asTC_WHITESPACE)
+							{
+								pos += tokenLength;
+								t = engine->ParseToken(&script[pos], script.size() - pos, &tokenLength);
+							}
+
+							// At this point a type, whitespace, and an identifier have been found: If the next
+							//  token is a statement-ending token ([;,]), a public property has been found
+							if (script[pos] == ';' || script[pos] == ',')
+							{
+								scriptInfo.Properties.push_back(std::make_pair(type, identifier));
+								// Commented out code gets the full declaration in a single string. This was hard to work
+								//  with for the purposes it is used for at the time writing, but may be useful for something
+								//  else later (hence it is retained here)
+								//scriptInfo.Properties.push_back(script.substr(start, pos - start));
+								newStatement = true;
+								++pos;
+								continue;
+							}
 						}
 						else
+						{
 							pos += tokenLength;
+						}
+					}
+					else if (t == asTC_KEYWORD && script[pos] == ';')
+					{
+						newStatement = true;
+						++pos;
+						continue;
+					}
+					else if (t == asTC_COMMENT)
+					{
+						newStatement = true;
+						pos += tokenLength;
+						continue;
 					}
 					else
 						pos += tokenLength;
-
-					if (newStatement && t != asTC_WHITESPACE)
-						newStatement = false; // No longer the first meaningful token on this line
 				}
-			}
-			else
-			{
-				pos += 1;
+				else
+					pos += tokenLength;
+
+				if (newStatement && t != asTC_WHITESPACE)
+					newStatement = false; // No longer the first meaningful token on this line
 			}
 		}
-		catch(std::regex_error& e)
+		else
 		{
-			if (e.code() == std::regex_constants::error_paren)
-				AddLogEntry(std::string("Failed to parse script properties due to regex error: unmatched paren"));
-			else if (e.code() == std::regex_constants::error_badbrace)
-				AddLogEntry("Failed to parse script properties due to regex error: bad backbrace");
-			else if (e.code() == std::regex_constants::error_badrepeat)
-				AddLogEntry("Failed to parse script properties due to regex error: bad repeat");
-			else if (e.code() == std::regex_constants::error_brace)
-				AddLogEntry("Failed to parse script properties due to regex error: error_brace");
-			else if (e.code() == std::regex_constants::error_brack)
-				AddLogEntry("Failed to parse script properties due to regex error: error_brack");
-			else if (e.code() == std::regex_constants::error_collate)
-				AddLogEntry("Failed to parse script properties due to regex error: error_collate");
-			else if (e.code() == std::regex_constants::error_complexity)
-				AddLogEntry("Failed to parse script properties due to regex error: error_complexity");
-			else if (e.code() == std::regex_constants::error_ctype)
-				AddLogEntry("Failed to parse script properties due to regex error: error_ctype");
-			else if (e.code() == std::regex_constants::error_collate)
-				AddLogEntry("Failed to parse script properties due to regex error: error_collate");
-			else if (e.code() == std::regex_constants::error_escape)
-				AddLogEntry("Failed to parse script properties due to regex error: error_escape");
-			else if (e.code() == std::regex_constants::error_range)
-				AddLogEntry("Failed to parse script properties due to regex error: error_range");
-			else if (e.code() == std::regex_constants::error_space)
-				AddLogEntry("Failed to parse script properties due to regex error: error_space");
-			else if (e.code() == std::regex_constants::error_stack)
-				AddLogEntry("Failed to parse script properties due to regex error: error_stack");
-			else if (e.code() == std::regex_constants::error_backref)
-				AddLogEntry("Failed to parse script properties due to regex error: error_backref");
+			pos += 1;
 		}
 	}
 
