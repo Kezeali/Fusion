@@ -37,7 +37,7 @@
 namespace FusionEngine
 {
 
-	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void LoadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -62,7 +62,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void UnloadImageResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -75,8 +75,11 @@ namespace FusionEngine
 	void LoadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		LoadImageResource(resource, vdir, user_data);
-		resource->_setValid(false);
-		resource->_setRequiresGC(true);
+		if (resource->IsLoaded())
+		{
+			resource->_setValid(false);
+			resource->_setRequiresGC(true);
+		}
 	}
 
 	void UnloadTextureResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
@@ -84,11 +87,13 @@ namespace FusionEngine
 		if (resource->IsLoaded())
 		{
 			resource->_setValid(false);
-			if (resource->RequiresGC())
-				delete static_cast<CL_Texture*>(resource->GetDataPtr());
-			else
-				delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 			resource->_setRequiresGC(false);
+			delete static_cast<CL_Texture*>(resource->GetDataPtr());
+		}
+		else if (resource->RequiresGC())
+		{
+			resource->_setRequiresGC(false);
+			delete static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
 		}
 		resource->SetDataPtr(nullptr);
 	}
@@ -98,6 +103,7 @@ namespace FusionEngine
 		if (!resource->IsLoaded() && resource->RequiresGC())
 		{
 			CL_PixelBuffer* pre_gc_data = static_cast<CL_PixelBuffer*>(resource->GetDataPtr());
+			FSN_ASSERT(pre_gc_data);
 			CL_Texture* data = new CL_Texture(gc, pre_gc_data->get_width(), pre_gc_data->get_height(), pre_gc_data->get_format());
 			data->set_image(*pre_gc_data);
 			delete pre_gc_data;
@@ -107,7 +113,7 @@ namespace FusionEngine
 		}
 	}
 
-	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void LoadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{
@@ -147,7 +153,7 @@ namespace FusionEngine
 		resource->_setValid(true);
 	}
 
-	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void*)
+	void UnloadSpriteResource(ResourceContainer* resource, CL_VirtualDirectory vdir, void* user_data)
 	{
 		if (resource->IsLoaded())
 		{

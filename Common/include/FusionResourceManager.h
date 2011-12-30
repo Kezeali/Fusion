@@ -48,6 +48,7 @@
 #include "FusionResource.h"
 #include "FusionResourceLoader.h"
 
+#include <tbb/concurrent_unordered_map.h>
 
 namespace FusionEngine
 {
@@ -142,7 +143,7 @@ namespace FusionEngine
 		//! ResourceLoader pointer
 		typedef std::shared_ptr<ResourceLoader> ResourceLoaderSpt;
 		//! Maps ResourceTag keys to Resource ptrs
-		typedef std::unordered_map<std::string, ResourceDataPtr> ResourceMap;
+		typedef tbb::concurrent_unordered_map<std::string, ResourceDataPtr> ResourceMap;
 		//! Maps Resource types to ResourceLoader factory methods
 		typedef std::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 

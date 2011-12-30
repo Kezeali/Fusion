@@ -53,9 +53,6 @@
 namespace FusionEngine
 {
 
-	//! Resource container weak pointer
-	typedef boost::weak_ptr<ResourceContainer> ResourceWpt;
-
 	//! Makes accessing resource data easier.
 	/*!
 	 * The basic resource class accesses loaded data via a void*.

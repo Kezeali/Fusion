@@ -61,7 +61,8 @@ namespace FusionEngine
 		m_HasQuickLoadData(false),
 		m_RefCount(0),
 		m_ToLoad(false),
-		m_ToUnload(false)
+		m_ToUnload(false),
+		m_RequiresGC(false)
 	{
 		_setValid(false);
 	}
@@ -74,7 +75,8 @@ namespace FusionEngine
 		m_HasQuickLoadData(false),
 		m_RefCount(0),
 		m_ToLoad(false),
-		m_ToUnload(false)
+		m_ToUnload(false),
+		m_RequiresGC(false)
 	{
 		if (ptr != 0)
 			_setValid(true);

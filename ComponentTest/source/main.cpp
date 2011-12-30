@@ -318,8 +318,6 @@ public:
 			{
 				auto gc = dispWindow.get_gc();
 
-				CL_OpenGL::set_active(NULL);
-
 				////////////////////
 				// Configure PhysFS
 				SetupPhysFS::configure("lastflare", "Fusion", "7z");
@@ -435,8 +433,6 @@ public:
 				resourceManager->AddResourceLoader("MODULE", &LoadScriptResource, &UnloadScriptResource, NULL);
 
 				resourceManager->StartLoaderThread();
-
-				CL_OpenGL::set_active(gc);
 
 				/////////////////
 				// Input Manager
