@@ -107,7 +107,16 @@ namespace FusionEngine
 
 		std::vector<std::string> regex_find(const std::string& path, const std::string& expression, bool recursive)
 		{
-			return regex_find(path, std::regex(expression), recursive);
+			try
+			{
+				return regex_find(path, std::regex(expression), recursive);
+			}
+			catch (std::regex_error&)
+			{
+				AddLogEntry("Failed to compile regex passed to regex_find: " + expression);
+				// TODO: throw here? (caller should probably be notified of the failure)
+				return std::vector<std::string>();
+			}
 		}
 
 		std::vector<std::string> regex_find(const std::string& path, const std::regex& expression, bool recursive)
@@ -120,16 +129,9 @@ namespace FusionEngine
 				std::string filename = *it;
 				std::string filePath = path + filename;
 
-				try
+				if (std::regex_match(filePath, expression))
 				{
-					if (std::regex_match(filePath, expression))
-					{
-						results.push_back(filePath);
-					}
-				}
-				catch (std::regex_error& e)
-				{
-					AddLogEntry(std::string("Encountered an error while performing regex-find ") + e.what());
+					results.push_back(filePath);
 				}
 
 				if (recursive && PHYSFS_isDirectory(filePath.c_str()))
