@@ -211,8 +211,8 @@ class Test : ScriptComponent
 		
 		if (entityA !is null)
 		{
-			if (frames % 60 == 0)
-			console.println("Angle: " + cast<double>(entityA.itransform.Angle));
+			//if (frames % 60 == 0)
+			//console.println("Angle: " + double(entityA.itransform.Angle));
 		}
 		
 		if (frames == 10)

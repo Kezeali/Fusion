@@ -32,6 +32,8 @@
 #include "FusionEntity.h"
 #include "FusionEntityRepo.h"
 
+#include "FusionLogger.h"
+
 #include "scriptany.h"
 
 #include <StringCompressor.h>
@@ -830,36 +832,42 @@ namespace FusionEngine
 					FSN_ASSERT((comProp->GetTypeId() & asTYPEID_OBJHANDLE) == 0 || comProp->GetTypeId() == m_EntityWrapperTypeId);
 
 					// Copy in any values that were deserialised before the script was reloaded
-					if (m_CachedProperties.size() > interfaceIndex)
+					try
 					{
-						const auto& cachedProp = m_CachedProperties[interfaceIndex];
-						if (cachedProp->GetTypeId() != -1)
+						if (m_CachedProperties.size() > interfaceIndex)
 						{
-							cachedProp->AddRef();
-							comProp->Set(cachedProp.get());
-							comProp->Synchronise();
-						}
-					}
-					else if (m_LastDeserMode == Editable)
-					{
-						auto _where = m_EditableCachedProperties.find(comProp->GetName());
-						if (_where != m_EditableCachedProperties.end())
-						{
-							const auto& cachedProp = _where->second;
+							const auto& cachedProp = m_CachedProperties[interfaceIndex];
 							if (cachedProp->GetTypeId() != -1)
 							{
-								cachedProp->AddRef();
-								comProp->Set(cachedProp.get());
+								comProp->Set(cachedProp);
 								comProp->Synchronise();
 							}
-							else
+						}
+						// Editable data (stored by name, rather than index)
+						else if (m_LastDeserMode == Editable)
+						{
+							auto _where = m_EditableCachedProperties.find(comProp->GetName());
+							if (_where != m_EditableCachedProperties.end())
 							{
-								const auto& name = _where->first;
-								auto namedWrapperEntry = m_EditableUninitialisedEntityWrappers.find(name);
-								if (namedWrapperEntry != m_EditableUninitialisedEntityWrappers.end())
-									m_UninitialisedEntityWrappers.push_back(std::make_pair(interfaceIndex, namedWrapperEntry->second));
+								const auto& cachedProp = _where->second;
+								if (cachedProp->GetTypeId() != -1)
+								{
+									comProp->Set(cachedProp);
+									comProp->Synchronise();
+								}
+								else
+								{
+									const auto& name = _where->first;
+									auto namedWrapperEntry = m_EditableUninitialisedEntityWrappers.find(name);
+									if (namedWrapperEntry != m_EditableUninitialisedEntityWrappers.end())
+										m_UninitialisedEntityWrappers.push_back(std::make_pair(interfaceIndex, namedWrapperEntry->second));
+								}
 							}
 						}
+					}
+					catch (InvalidArgumentException&)
+					{
+						AddLogEntry("Failed to re-load script properties - data type has changed for " + std::string(obj->GetObjectType()->GetName()) + "." +  comProp->GetName());
 					}
 
 					m_ScriptProperties[interfaceIndex].reset(comProp);
@@ -972,7 +980,7 @@ namespace FusionEngine
 					entityWrapper = static_cast<asIScriptObject*>(ScriptManager::getSingleton().GetEnginePtr()->CreateScriptObject(entityWrapperObjectTypeId));
 					FSN_ASSERT(entityWrapper);
 
-					auto prop = new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine);
+					auto prop = boost::intrusive_ptr<CScriptAny>(new CScriptAny(&entityWrapper, m_EntityWrapperTypeId, engine), false);
 					scriptprop->Set(prop);
 
 					auto app_obj = static_cast<std::weak_ptr<Entity>*>(entityWrapper->GetAddressOfProperty(0));
@@ -1202,6 +1210,7 @@ namespace FusionEngine
 		if (m_ScriptObject)
 		{
 			FSN_ASSERT(mode == Editable || m_ScriptProperties.size() == numProperties);
+			FSN_ASSERT(m_ScriptObject->object);
 
 			if (mode == Editable)
 			{
@@ -1224,8 +1233,15 @@ namespace FusionEngine
 					auto _where = namedProperties.find(scriptprop->GetName());
 					if (_where != namedProperties.end())
 					{
-						_where->second->AddRef();
-						scriptprop->Set(_where->second.get());
+						try
+						{
+							scriptprop->Set(_where->second);
+						}
+						catch (InvalidArgumentException&)
+						{
+							AddLogEntry("Failed to deserialise script properties - data type has changed for " +
+								std::string(m_ScriptObject->object->GetObjectType()->GetName()) + "." +  scriptprop->GetName());
+						}
 					}
 				}
 			}
@@ -1238,12 +1254,21 @@ namespace FusionEngine
 					{
 						auto scriptprop = static_cast<ScriptAnyTSP*>((*it).get());
 						//auto prop = scriptprop->Get();
-						auto prop = new CScriptAny(engine);
-						DeserialiseProp(stream, prop, index++);
-						// TODO: deserialise entity ptrs
+						auto prop = boost::intrusive_ptr<CScriptAny>(new CScriptAny(engine), false);
+						DeserialiseProp(stream, prop.get(), index++);
 						if (prop->GetTypeId() != -1)
-							scriptprop->Set(prop);
-						//prop->Release();
+						{
+							try
+							{
+								scriptprop->Set(prop);
+							}
+							catch (InvalidArgumentException& e)
+							{
+								AddLogEntry("Failed to deserialise script properties - data type has changed for " +
+									std::string(m_ScriptObject->object->GetObjectType()->GetName()) + "." +  scriptprop->GetName());
+								throw e;
+							}
+						}
 					}
 				}
 			}
