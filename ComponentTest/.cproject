@@ -43,9 +43,9 @@
 								<option id="gnu.cpp.compiler.option.other.other.2090576230" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.877246270" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
@@ -63,9 +63,9 @@
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.pic.337111967" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" value="false" valueType="boolean"/>
@@ -76,9 +76,9 @@
 								<option id="gnu.c.compiler.lib.debug.option.debugging.level.1715044383" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1562781079" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
@@ -95,9 +95,9 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/Debug&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/Debug&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/Debug&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ScriptUtils/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Debug&quot;"/>
@@ -150,9 +150,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.301559627" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
 								<option id="gnu.both.asm.option.include.paths.2056626070" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
@@ -312,9 +312,9 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
@@ -327,9 +327,9 @@
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/include&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1848332027" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
@@ -344,9 +344,9 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1280286137" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -364,9 +364,9 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/Release&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/Release&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.1078229731" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
@@ -416,9 +416,9 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.444245678" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
