@@ -42,36 +42,30 @@
 								<option id="gnu.cpp.compiler.option.warnings.allwarn.1445978685" name="All warnings (-Wall)" superClass="gnu.cpp.compiler.option.warnings.allwarn" value="false" valueType="boolean"/>
 								<option id="gnu.cpp.compiler.option.other.other.2090576230" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.paths.877246270" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="${ProjDirPath}/../external"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.pic.337111967" name="Position Independent Code (-fPIC)" superClass="gnu.cpp.compiler.option.other.pic" value="false" valueType="boolean"/>
@@ -81,21 +75,15 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.2052403674" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.lib.debug.option.debugging.level.1715044383" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1562781079" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.403671923" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -104,21 +92,18 @@
 							</tool>
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 clanRegExp-2.3 clanSound-2.3 clanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.cpp.linker.base.624007098" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.paths.1263974221" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ScriptUtils/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/lib&quot;"/>
 								</option>
@@ -164,21 +149,15 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.301559627" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
 								<option id="gnu.both.asm.option.include.paths.2056626070" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.540214498" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -328,35 +307,29 @@
 									<listOptionValue builtIn="false" value="BOOST_BIND_NO_PLACEHOLDERS"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.139664912" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="${ProjDirPath}/../external"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1848332027" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
@@ -366,20 +339,14 @@
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.lib.release.option.optimization.level.449434422" name="Optimization Level" superClass="gnu.c.compiler.lib.release.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.lib.release.option.debugging.level.325249371" name="Debug Level" superClass="gnu.c.compiler.lib.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.829792022" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1280286137" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -389,20 +356,17 @@
 							<tool commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS} &quot;${BOOST_ROOT}/lib/libboost_filesystem.so.1.48.0&quot; `pkg-config --cflags --libs clanCore-2.3 clanDisplay-2.3 clanGL-2.3 clanApp-2.3 clanRegExp-2.3 clanSound-2.3 clanVorbis-2.3` -pthread" id="cdt.managedbuild.tool.gnu.cpp.linker.base.872273355" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option defaultValue="true" id="gnu.cpp.link.option.shared.1982223160" name="Shared (-shared)" superClass="gnu.cpp.link.option.shared" valueType="boolean"/>
 								<option id="gnu.cpp.link.option.paths.1781019024" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ScriptUtils/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.1078229731" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
@@ -447,20 +411,14 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.release.1884316349" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.release">
 								<option id="gnu.both.asm.option.include.paths.417177624" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RocketAngelScriptControls}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/EngineFramework}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemBox2D}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/Box2D&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.444245678" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

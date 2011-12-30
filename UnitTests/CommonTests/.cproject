@@ -28,13 +28,10 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.950665408" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.285662061" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1933812380" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="${ProjDirPath}/../../external"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${GTEST_ROOT}/include&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.2007998840" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
@@ -53,22 +50,18 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.1475463434" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.327786915" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.934617953" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.731556382" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1362944999" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.674355827" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.paths.278209404" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${GTEST_ROOT}/lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/lib&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.1980806472" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="Common"/>
@@ -90,10 +83,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.debug.2100849330" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.debug">
 								<option id="gnu.both.asm.option.include.paths.1184868028" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1139256281" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -151,9 +141,6 @@
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.1699763608" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.1769307319" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1459641537" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1228463174" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -162,9 +149,6 @@
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.1127540645" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.1588561701" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.2070109281" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.983068345" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -182,10 +166,9 @@
 									<listOptionValue builtIn="false" value="gtest"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1830963680" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml/Release}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip/Release}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${GTEST_ROOT}/lib&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1086978555" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -194,9 +177,6 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.release.1106201783" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
 								<option id="gnu.both.asm.option.include.paths.542852591" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/tinyxml}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/minizip}&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.937503727" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

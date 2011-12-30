@@ -95,13 +95,13 @@ namespace FusionEngine
 		ConditionalCoroutine(const ConditionalCoroutine& other) :
 			new_ctx(other.new_ctx), condition(other.condition), timeout_time(other.timeout_time)
 		{
-#ifdef _WIN32
+#ifndef _WIN32
 #warning copying ConditionalCoroutine;
 #endif
 		}
 		ConditionalCoroutine& operator= (const ConditionalCoroutine& other)
 		{
-#ifdef _WIN32
+#ifndef _WIN32
 #warning copying ConditionalCoroutine;
 #endif
 			new_ctx = other.new_ctx;

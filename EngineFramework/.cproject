@@ -31,19 +31,19 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.970704000" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.672921583" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.506804715" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.930014699" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x -pthread" valueType="string"/>
@@ -105,19 +105,19 @@
 								<option id="gnu.cpp.compiler.lib.release.option.optimization.level.1253351095" name="Optimization Level" superClass="gnu.cpp.compiler.lib.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.release.option.debugging.level.530856839" name="Debug Level" superClass="gnu.cpp.compiler.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.2084651812" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Visual/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemClanLibRendering/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/SystemAngelScript/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RAS/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/ClanLibRendering/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/System/AngelScript/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/external}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1473040580" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>

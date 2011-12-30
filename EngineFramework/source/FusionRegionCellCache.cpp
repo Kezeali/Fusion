@@ -209,7 +209,7 @@ namespace FusionEngine
 			}
 
 			// Set up the available-sector map
-			auto numSectors = std::max(length / s_SectorSize, 1ul);
+			auto numSectors = std::max<size_t>(length / s_SectorSize, 1);
 			free_sectors.resize(numSectors, true);
 
 			free_sectors.set(0, false); // chunk offset table

@@ -33,13 +33,12 @@
 								<option id="gnu.cpp.compiler.option.other.other.977507248" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.include.files.616801143" name="Include files (-include)" superClass="gnu.cpp.compiler.option.include.files"/>
 								<option id="gnu.cpp.compiler.option.include.paths.770194494" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/include&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.790343346" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -57,7 +56,7 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.1741396005" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.lib.debug.option.debugging.level.850807729" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.files.1071839968" name="Include files (-include)" superClass="gnu.c.compiler.option.include.files" valueType="includeFiles">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/PrecompiledHeaders.h}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/PrecompiledHeaders.h&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1631351963" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -103,13 +102,12 @@
 								<option id="gnu.cpp.compiler.lib.release.option.optimization.level.865250054" name="Optimization Level" superClass="gnu.cpp.compiler.lib.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.release.option.debugging.level.1711663501" name="Debug Level" superClass="gnu.cpp.compiler.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1107550675" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/include&quot;"/>
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/${ProjName}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.747285372" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>

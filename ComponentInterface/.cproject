@@ -31,15 +31,14 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.optimization.level.2013222615" name="Optimization Level" superClass="gnu.cpp.compiler.lib.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.929999896" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1413384321" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1636821130" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
@@ -57,7 +56,6 @@
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.lib.debug.option.optimization.level.1577884178" name="Optimization Level" superClass="gnu.c.compiler.lib.debug.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.lib.debug.option.debugging.level.238657475" name="Debug Level" superClass="gnu.c.compiler.lib.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.1049245576" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1221923008" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -65,7 +63,6 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.1401577995" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.lib.debug.1075607391" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.lib.debug">
 								<option id="gnu.both.asm.option.include.paths.1990163837" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.2042464942" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
@@ -106,15 +103,14 @@
 								<option id="gnu.cpp.compiler.lib.release.option.optimization.level.1151794209" name="Optimization Level" superClass="gnu.cpp.compiler.lib.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.lib.release.option.debugging.level.1721149706" name="Debug Level" superClass="gnu.cpp.compiler.lib.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1036745755" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/home/kezeali/tbb/include"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ComponentInterface/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../external&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/include/raknet&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Common/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Input/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ScriptUtils/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/Network/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/include&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.943432228" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>

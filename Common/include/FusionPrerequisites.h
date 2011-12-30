@@ -32,6 +32,10 @@
 #pragma once
 #endif
 
+#if _MSC_VER > 1000 && _MSC_VER < 1600
+#error Visual Studio 2010 or later required (for c++11 features)
+#endif
+
 //#include "FusionStdHeaders.h"
 
 #ifdef MessageBox

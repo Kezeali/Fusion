@@ -159,8 +159,14 @@ namespace FusionEngine
 			r = engine->RegisterObjectBehaviour("EntityW", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(helper_type::Destruct), asCALL_CDECL_OBJLAST); FSN_ASSERT(r >= 0);
 			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(const EntityW &in other)",
 				asMETHODPR(std::weak_ptr<Entity>, operator=, (const std::weak_ptr<Entity> &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+			// MSVC 2010 has standard-non-compliant weakptr::operator=(NOT CONST shared_ptr&)
+#if _MSC_VER == 1600
+			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(Entity &in other)",
+				asMETHODPR(std::weak_ptr<Entity>, operator=, (EntityPtr &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+#else
 			r = engine->RegisterObjectMethod("EntityW", "EntityW& opAssign(Entity &in other)",
 				asMETHODPR(std::weak_ptr<Entity>, operator=, (const EntityPtr &), std::weak_ptr<Entity> &), asCALL_THISCALL); FSN_ASSERT(r >= 0);
+#endif
 			r = engine->RegisterObjectMethod("EntityW", "Entity lock() const",
 				asMETHODPR(std::weak_ptr<Entity>, lock, () const, EntityPtr), asCALL_THISCALL); FSN_ASSERT(r >= 0);
 		}
