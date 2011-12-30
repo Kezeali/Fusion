@@ -183,7 +183,7 @@ namespace FusionEngine
 					intTypeRegex = std::regex("u?int(?:8|16|32|64)", std::regex_constants::ECMAScript);
 					//bool|float|double|EntityWrapper
 				}
-				catch(std::regex_error& e)
+				catch(std::regex_error&)
 				{
 					AddLogEntry(std::string("Failed to parse script properties due to regex error"));
 					FSN_EXCEPT(FusionEngine::PreprocessorException, "Failed to compile script property type regex");
@@ -601,7 +601,7 @@ namespace FusionEngine
 
 		std::string baseCode =
 			"class Input {\n"
-			"Input(Entity &in obj) { app_obj = obj; }\n"
+			"Input(const Entity &in obj) { app_obj = obj; }\n"
 			"private Entity app_obj;\n"
 			"bool getButton(const string &in name) { return app_obj.inputIsActive(name); }\n"
 			"float getAnalog(const string &in name) { return app_obj.inputGetPosition(name); }\n"
@@ -610,14 +610,14 @@ namespace FusionEngine
 			"class EntityWrapper\n"
 			"{\n"
 			"EntityWrapper() {}\n"
-			"EntityWrapper(Entity &in obj) {\n"
+			"EntityWrapper(const Entity &in obj) {\n"
 			"pointer_id = initEntityPointer(owner, obj);\n"
 			"_setAppObj(obj);\n"
 			"}\n"
 			"~EntityWrapper() {\n"
 			"deinitEntityPointer(owner, pointer_id, app_obj.lock());\n"
 			"}\n"
-			"void _setAppObj(Entity &in obj) {\n"
+			"void _setAppObj(const Entity &in obj) {\n"
 			"app_obj = obj;\n"
 			//"@input = Input(app_obj);\n"
 			"}\n"
