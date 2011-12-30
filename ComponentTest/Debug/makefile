@@ -71,19 +71,19 @@ clean:
 
 .PHONY: all clean dependents
 .SECONDARY:
-${FUSION_WORKSPACE}/Fusion/Common/Debug/libCommon.a:
-${FUSION_WORKSPACE}/Fusion/ComponentInterface/Debug/libComponentInterface.a:
-${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug/libEngineFramework.a:
-${FUSION_WORKSPACE}/Fusion/Input/Debug/libInput.a:
-${FUSION_WORKSPACE}/Fusion/Network/Debug/libNetwork.a:
-${FUSION_WORKSPACE}/RAS/source/Core/Debug/libRocketAngelScript.a:
-${FUSION_WORKSPACE}/RAS/source/Controls/Debug/libRocketAngelScriptControls.a:
-${FUSION_WORKSPACE}/ScriptUtils/Debug/libScriptUtils.a:
-${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Debug/libSystemAngelScript.a:
-${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Debug/libSystemBox2D.a:
-${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Debug/libSystemClanLibRendering.a:
-${FUSION_WORKSPACE}/Fusion/Visual/Debug/libVisual.a:
-${FUSION_WORKSPACE}/Fusion/external/minizip/Debug/libminizip.a:
-${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug/libtinyxml.a:
+"${FUSION_WORKSPACE}/Fusion/Common/Debug/libCommon.a":
+"${FUSION_WORKSPACE}/Fusion/ComponentInterface/Debug/libComponentInterface.a":
+"${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug/libEngineFramework.a":
+"${FUSION_WORKSPACE}/Fusion/Input/Debug/libInput.a":
+"${FUSION_WORKSPACE}/Fusion/Network/Debug/libNetwork.a":
+"${FUSION_WORKSPACE}/RAS/source/Core/Debug/libRocketAngelScript.a":
+"${FUSION_WORKSPACE}/RAS/source/Controls/Debug/libRocketAngelScriptControls.a":
+"${FUSION_WORKSPACE}/ScriptUtils/Debug/libScriptUtils.a":
+"${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Debug/libSystemAngelScript.a":
+"${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Debug/libSystemBox2D.a":
+"${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Debug/libSystemClanLibRendering.a":
+"${FUSION_WORKSPACE}/Fusion/Visual/Debug/libVisual.a":
+"${FUSION_WORKSPACE}/Fusion/external/minizip/Debug/libminizip.a":
+"${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug/libtinyxml.a":
 
 -include ../makefile.targets
