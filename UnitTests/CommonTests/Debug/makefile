@@ -40,15 +40,15 @@ endif
 all: CommonTests
 
 dependents:
-	-cd /home/kezeali/FusionGit/Fusion/Common/Debug && $(MAKE) all
-	-cd /home/kezeali/FusionGit/Fusion/external/minizip/Debug && $(MAKE) all
-	-cd /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug && $(MAKE) all
+	-cd /home/kezeali/FusionGit/Fusion/Common/Debug && $(MAKE) clean all
+	-cd /home/kezeali/FusionGit/Fusion/external/minizip/Debug && $(MAKE) clean all
+	-cd /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug && $(MAKE) clean all
 
 # Tool invocations
 CommonTests: $(OBJS) $(USER_OBJS) /home/kezeali/FusionGit/Fusion/Common/Debug/libCommon.a /home/kezeali/FusionGit/Fusion/external/minizip/Debug/libminizip.a /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug/libtinyxml.a
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L"/home/kezeali/FusionGit/Fusion/external/tinyxml/Debug" -L"/home/kezeali/FusionGit/Fusion/external/minizip/Debug" -L"/home/kezeali/FusionGit/Fusion/Common/Debug" -L"${GTEST_ROOT}/lib" -L"${BOOST_ROOT}/lib" -L/home/kezeali/tbb/build/linux_intel64_gcc_cc4.6.1_libc2.13_kernel3.0.0_release -pthread -o "CommonTests" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L"${FUSION_WORKSPACE}/Fusion/external/tinyxml/Debug" -L"${FUSION_WORKSPACE}/Fusion/external/minizip/Debug" -L"${FUSION_WORKSPACE}/Fusion/Common/Debug" -L"${GTEST_ROOT}/lib" -L"${BOOST_ROOT}/lib" -pthread -o "CommonTests" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
