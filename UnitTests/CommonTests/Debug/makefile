@@ -40,9 +40,9 @@ endif
 all: CommonTests
 
 dependents:
-	-cd /home/kezeali/FusionGit/Fusion/Common/Debug && $(MAKE) clean all
-	-cd /home/kezeali/FusionGit/Fusion/external/minizip/Debug && $(MAKE) clean all
-	-cd /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug && $(MAKE) clean all
+	-cd /home/kezeali/FusionGit/Fusion/Common/Debug && $(MAKE) all
+	-cd /home/kezeali/FusionGit/Fusion/external/minizip/Debug && $(MAKE) all
+	-cd /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug && $(MAKE) all
 
 # Tool invocations
 CommonTests: $(OBJS) $(USER_OBJS) /home/kezeali/FusionGit/Fusion/Common/Debug/libCommon.a /home/kezeali/FusionGit/Fusion/external/minizip/Debug/libminizip.a /home/kezeali/FusionGit/Fusion/external/tinyxml/Debug/libtinyxml.a

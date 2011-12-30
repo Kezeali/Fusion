@@ -98,12 +98,14 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Debug&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ScriptUtils/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Common/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/source/Core/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/source/Controls/Debug&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${BOOST_ROOT}/lib&quot;"/>
 								</option>
@@ -359,14 +361,16 @@
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/tinyxml/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/external/minizip/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Visual/Release&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ScriptUtils/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Network/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Input/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/ComponentInterface/Release&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Debug&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/EngineFramework/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/AngelScript/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/ClanLibRendering/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/Fusion/Systems/Box2D/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/ScriptUtils/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/source/Core/Release&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${FUSION_WORKSPACE}/RAS/source/Controls/Release&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${RAKNET_ROOT}/Lib&quot;"/>
 								</option>
 								<option id="gnu.cpp.link.option.libs.1078229731" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
