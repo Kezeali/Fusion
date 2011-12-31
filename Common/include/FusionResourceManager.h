@@ -49,6 +49,7 @@
 #include "FusionResourceLoader.h"
 
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_queue.h>
 
 namespace FusionEngine
 {
@@ -147,7 +148,7 @@ namespace FusionEngine
 		//! Maps Resource types to ResourceLoader factory methods
 		typedef std::unordered_map<std::string, ResourceLoader> ResourceLoaderMap;
 
-		typedef std::vector<ResourceDataPtr> ResourceList;
+		typedef tbb::concurrent_queue<ResourceDataPtr> ResourceList;
 		typedef std::set<ResourceContainer*> UnreferencedResourceSet;
 
 		struct ResourceToLoadData

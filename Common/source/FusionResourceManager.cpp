@@ -205,10 +205,12 @@ namespace FusionEngine
 
 	void ResourceManager::DeliverLoadedResources()
 	{
-		ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end();
-		while (it != end)
+		//ResourceList::iterator it = m_ToDeliver.begin(), end = m_ToDeliver.end();
+		ResourceDataPtr res;
+		ResourceList notLoaded;
+		while (m_ToDeliver.try_pop(res))
 		{
-			ResourceDataPtr &res = *it;
+			//ResourceDataPtr &res = *it;
 			if (!res->IsLoaded() && res->RequiresGC())
 			{
 				CL_MutexSection lock(&m_LoaderMutex);
@@ -227,13 +229,14 @@ namespace FusionEngine
 
 				res->_setQueuedToLoad(false);
 
-				it = m_ToDeliver.erase(it);
-				end = m_ToDeliver.end();
+				//it = m_ToDeliver.erase(it);
+				//end = m_ToDeliver.end();
 			}
 			else
-				++it;
+				notLoaded.push(res);//++it;
 		}
-		//m_LoadedResources.clear();
+		while (notLoaded.try_pop(res))
+			m_ToDeliver.push(res);
 	}
 
 	void ResourceManager::UnloadUnreferencedResources()
@@ -282,7 +285,8 @@ namespace FusionEngine
 
 			if (!resource->IsQueuedToLoad())
 			{
-				m_ToDeliver.push_back(resource);
+				//m_ToDeliver.push_back(resource);
+				m_ToDeliver.push(resource);
 				resource->_setQueuedToLoad(true);
 
 				// A non-locking alternative would be to add these ToLoad jobs
@@ -476,7 +480,7 @@ namespace FusionEngine
 		{
 			// Stop the resource form unloading
 			CL_MutexSection lock(&m_ToUnloadMutex);
-			for (ResourceList::iterator it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
+			for (auto it = m_ToUnload.begin(), end = m_ToUnload.end(); it != end; ++it)
 			{
 				if (*it == resource)
 				{
