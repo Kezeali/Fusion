@@ -14,9 +14,9 @@ Build instructions for Windows with VC2010:
 
 Oops, one last step: Run ***bin/setup_targetdirs.cmd*** before debugging Fusion within Visual Studio: this should copy all the .dlls from *FusionDependencies\bin*, *FusionDependencies\libRocket\bin*, *FusionDependencies\RakNet-x.x\Lib*, *RAS\library*, etc. into *Fusion\$(ConfigName)*, the working directory used by the executable projects. 
 
-Pre-compiled builds:
+Release builds:
 ====================
-Go [here][4] to download up-to-date builds.
+Go [here][5] to download up-to-date builds.
 
  [1]: http://sourceforge.net/projects/steelfusion
  [2]: https://github.com/Kezeali/RAS
