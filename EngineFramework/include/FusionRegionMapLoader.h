@@ -41,6 +41,7 @@
 #include <ClanLib/Core/System/event.h>
 #include <ClanLib/Core/IOData/iodevice.h>
 #include <unordered_set>
+#include <tuple>
 #include <tbb/concurrent_queue.h>
 
 #include "FusionCellDataSource.h"
@@ -108,16 +109,20 @@ namespace FusionEngine
 		//! Retrieves the given cell
 		std::shared_ptr<Cell> Retrieve(int32_t x, int32_t y);
 
+		typedef boost::recursive_mutex TransactionMutex_t;
+
+		boost::mutex m_CellsBeingLoadedMutex;
+
 		struct TransactionLock
 		{
-			TransactionLock(boost::mutex& mutex, CL_Event& ev);
+			TransactionLock(TransactionMutex_t& mutex, CL_Event& ev);
 			//TransactionLock(TransactionLock&& other)
 			//	: lock(std::move(other.lock)),
 			//	endEvent(std::move(other.endEvent))
 			//{
 			//}
 			~TransactionLock();
-			boost::mutex::scoped_lock lock;
+			TransactionMutex_t::scoped_lock lock;
 			CL_Event& endEvent;
 		};
 
@@ -192,20 +197,20 @@ private:
 		// Cells who's ownership has been passed to this archiver via Store or created by Retrieve
 		std::unordered_map<CellCoord_t, std::shared_ptr<Cell>, boost::hash<CellCoord_t>> m_CellsBeingProcessed;
 
-		boost::mutex m_TransactionMutex;
+		TransactionMutex_t m_TransactionMutex;
 
 		void ClearReadyCells(std::list<CellCoord_t>& readyCells);
 
 		
 		// TODO: implement the no-tbb version
 #ifdef FSN_TBB_AVAILABLE
-		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
-		typedef tbb::concurrent_queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
+		typedef tbb::concurrent_queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool>> WriteQueue_t;
+		typedef tbb::concurrent_queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t>> ReadQueue_t;
 #else
 		boost::mutex m_WriteQueueMutex;
 		boost::mutex m_ReadQueueMutex;
-		typedef std::queue<std::tuple<Cell*, CellCoord_t, bool>> WriteQueue_t;
-		typedef std::queue<std::tuple<Cell*, CellCoord_t>> ReadQueue_t;
+		typedef std::queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool>> WriteQueue_t;
+		typedef std::queue<std::tuple<std::weak_ptr<Cell>, CellCoord_t>> ReadQueue_t;
 #endif
 		WriteQueue_t m_WriteQueue;
 		ReadQueue_t m_ReadQueue;

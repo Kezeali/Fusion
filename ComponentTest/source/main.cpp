@@ -948,9 +948,11 @@ public:
 					
 					if ((executed & SystemType::Simulation) || editMode)
 					{
+						cellArchivist->BeginTransaction();
 						// Actually activate / deactivate components
 						entityManager->ProcessActivationQueues();
 						entitySynchroniser->ProcessQueue(entityManager.get(), entityFactory.get());
+						cellArchivist->EndTransaction();
 					}
 
 					// Propagate property changes
@@ -1075,7 +1077,8 @@ public:
 			str << i << "_" << id;
 			entity->SetName("edit" + str.str());
 
-			entity->SetDomain(SYSTEM_DOMAIN);
+			if (i == 2)
+				entity->SetDomain(SYSTEM_DOMAIN);
 		}
 		//else
 		//{

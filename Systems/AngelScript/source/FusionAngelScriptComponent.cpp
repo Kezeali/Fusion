@@ -298,7 +298,6 @@ namespace FusionEngine
 			if (any->GetTypeId() == m_TypeId)
 			{
 				m_Writer.Write(any);
-				any->Release();
 
 				if (m_Owner)
 					m_Owner->OnPropertyChanged(this);

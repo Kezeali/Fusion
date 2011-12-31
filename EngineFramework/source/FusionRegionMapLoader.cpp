@@ -261,22 +261,31 @@ namespace FusionEngine
 			// The last tuple param indicates whether the cell should be cleared (unloaded)
 			//  when the write operation is done: it checks whether this is the only reference
 			//  to the cell
-			m_WriteQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y), cell.unique()));
+			m_WriteQueue.push(std::make_tuple(cell, CellCoord_t(x, y), cell.unique()));
 			m_NewData.set();
 			
+			TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
+			FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
 			m_CellsBeingProcessed[CellCoord_t(x, y)] = std::move(cell);
 		}
 	}
 
 	std::shared_ptr<Cell> RegionMapLoader::Retrieve(int32_t x, int32_t y)
 	{
+		TransactionMutex_t::scoped_try_lock lock(m_TransactionMutex);
+		FSN_ASSERT_MSG(lock, "Concurrent Store/Retrieve access isn't allowed");
+#ifdef _DEBUG
+		auto r = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>()));
+		auto _where = r.first;
+#else
 		auto _where = m_CellsBeingProcessed.insert(std::make_pair(CellCoord_t(x, y), std::make_shared<Cell>())).first;
+#endif
 		auto& cell = _where->second;
 
 		if (cell->waiting.fetch_and_store(Cell::Retrieve) != Cell::Retrieve && !cell->loaded)
 		{
 			AddHist(CellCoord_t(x, y), "Enqueued In");
-			m_ReadQueue.push(std::make_tuple(cell.get(), CellCoord_t(x, y)));
+			m_ReadQueue.push(std::make_tuple(cell, CellCoord_t(x, y)));
 			m_NewData.set();
 		}
 		else if (cell->loaded)
@@ -291,7 +300,7 @@ namespace FusionEngine
 		return cell;
 	}
 
-	RegionMapLoader::TransactionLock::TransactionLock(boost::mutex& mutex, CL_Event& ev)
+	RegionMapLoader::TransactionLock::TransactionLock(RegionMapLoader::TransactionMutex_t& mutex, CL_Event& ev)
 		: lock(mutex),
 		endEvent(ev)
 	{}
@@ -502,6 +511,8 @@ namespace FusionEngine
 		size_t numEntries;
 		file.read(reinterpret_cast<char*>(&numEntries), sizeof(size_t));
 
+		FSN_ASSERT_MSG(numEntries < (1 << 16), "Probably invalid data");
+
 		std::vector<ObjectID> idIndex;
 
 		if (data_includes_ids)
@@ -617,7 +628,10 @@ namespace FusionEngine
 		while (true)
 		{
 			const int eventId = CL_Event::wait(m_Quit, m_NewData, m_TransactionEnded, retrying ? 100 : -1);
-			//if (eventId != 2) // 2 is TransactionEnded
+			if (eventId == 2) // TransactionEnded
+			{
+				ClearReadyCells(readyCells);
+			}
 			{
 				// Process quick-save queue
 				{
@@ -632,210 +646,226 @@ namespace FusionEngine
 				std::list<ReadQueue_t::value_type> readsToRetry;
 				// Read / write cell data
 				{
-					std::tuple<Cell*, CellCoord_t, bool> toWrite;
+					std::tuple<std::weak_ptr<Cell>, CellCoord_t, bool> toWrite;
 					while (m_WriteQueue.try_pop(toWrite))
 					{
-						Cell*& cell = std::get<0>(toWrite);
+						const std::weak_ptr<Cell>& cellWpt = std::get<0>(toWrite);
 						const auto& cell_coord = std::get<1>(toWrite);
 						const bool unload_when_done = std::get<2>(toWrite);
-						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-						if (lock)
+						if (auto cell = cellWpt.lock()) // Make sure the queue item is valid
 						{
-							// Check active_entries since the Store request may be stale
-							if (cell->waiting == Cell::Store)
+							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+							if (lock)
 							{
-								try
+								// Check active_entries since the Store request may be stale
+								if (cell->waiting == Cell::Store)
 								{
-									if (cell->active_entries != 0 && !m_EditMode)
-										AddLogEntry("Warning: writing cell with active entries");
-
-									FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
-
-									size_t numSynched = 0;
-									size_t numPseudo = 0;
-									std::for_each(cell->objects.begin(), cell->objects.end(), [&](const Cell::CellEntryMap::value_type& obj)
+									try
 									{
-										if (!obj.first->IsSyncedEntity())
-											++numPseudo;
-										else
-											++numSynched;
-									});
+										if (cell->active_entries != 0 && !m_EditMode)
+											AddLogEntry("Warning: writing cell with active entries");
 
-									if (m_EditMode)
-									{
-										//if (numSynched > 0 || numPseudo > 0)
+										FSN_ASSERT(cell->loaded == true); // Don't want to create an inaccurate cache (without entities from the map file)
+
+										size_t numSynched = 0;
+										size_t numPseudo = 0;
+										std::for_each(cell->objects.begin(), cell->objects.end(), [&](const Cell::CellEntryMap::value_type& obj)
+										{
+											if (!obj.first->IsSyncedEntity())
+												++numPseudo;
+											else
+												++numSynched;
+										});
+
+										if (m_EditMode)
+										{
+											//if (numSynched > 0 || numPseudo > 0)
+											{
+												auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
+												if (filePtr && *filePtr)
+												{
+													auto& file = *filePtr;
+
+													// Need a seekable stream, so write to a temp. one
+													std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+													std::streampos start = tempStream.tellp();
+													// Write un-synched entity data (written to cache since this is edit mode)
+													WriteCell(tempStream, cell_coord, cell.get(), numPseudo, false);
+													std::streamsize dataLength = tempStream.tellp() - start;
+
+													WriteCell(tempStream, cell_coord, cell.get(), numSynched, true);
+
+													// Write to the file-stream
+													IO::Streams::CellStreamWriter writer(&file);
+													writer.Write(dataLength);
+
+													file << tempStream.rdbuf();
+												}
+												else
+													FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
+											}
+										}
+										else // Not EditMode
 										{
 											auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
-											if (filePtr && *filePtr)
-											{
-												auto& file = *filePtr;
+											// Need a seekable stream, so write to a temp. one
+											//std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
+											WriteCell(*filePtr, cell_coord, cell.get(), numSynched, true);
+											//*filePtr << tempStream.rdbuf();
+										}
 
-												// Need a seekable stream, so write to a temp. one
-												std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-												std::streampos start = tempStream.tellp();
-												// Write un-synched entity data (written to cache since this is edit mode)
-												WriteCell(tempStream, cell_coord, cell, numPseudo, false);
-												std::streamsize dataLength = tempStream.tellp() - start;
+										AddHist(cell_coord, "Written and cleared", numSynched);
 
-												WriteCell(tempStream, cell_coord, cell, numSynched, true);
-
-												// Write to the file-stream
-												IO::Streams::CellStreamWriter writer(&file);
-												writer.Write(dataLength);
-
-												file << tempStream.rdbuf();
-											}
-											else
-												FSN_EXCEPT(FileSystemException, "Failed to open file in order to dump edit-mode cache");
+										if (unload_when_done)
+										{
+											if (cell->active_entries != 0)
+												AddLogEntry("Warning: unloading active cell");
+											cell->objects.clear();
+											cell->loaded = false;
 										}
 									}
-									//else if (numSynched > 0)
+									catch (...)
 									{
-										auto filePtr = GetCellStreamForWriting(cell_coord.x, cell_coord.y);
-										// Need a seekable stream, so write to a temp. one
-										//std::stringstream tempStream(std::ios::in | std::ios::out | std::ios::binary);
-										WriteCell(*filePtr, cell_coord, cell, numSynched, true);
-										//*filePtr << tempStream.rdbuf();
-									}
-
-									AddHist(cell_coord, "Written and cleared", numSynched);
-
-									if (unload_when_done)
-									{
-										if (cell->active_entries != 0)
-											AddLogEntry("Warning: unloading active cell");
-										cell->objects.clear();
-										cell->loaded = false;
+										std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+										std::string message = "Exception streaming out cell [" + str.str() + "]";
+										SendToConsole(message);
+										AddLogEntry(message);
 									}
 								}
-								catch (...)
+								else
 								{
 									std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-									std::string message = "Exception streaming out cell [" + str.str() + "]";
-									SendToConsole(message);
-									AddLogEntry(message);
+									SendToConsole("Cell write canceled: " + str.str());
+									//writesToRetry.push_back(toWrite);
 								}
+								cell->waiting = Cell::Ready;
+								readyCells.push_back(cell_coord);
+								//cell->mutex.unlock();
 							}
 							else
 							{
-								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-								SendToConsole("Cell write canceled: " + str.str());
-								//writesToRetry.push_back(toWrite);
-							}
-							cell->waiting = Cell::Ready;
-							readyCells.push_back(cell_coord);
-							//cell->mutex.unlock();
-						}
-						else
-						{
 #ifdef _DEBUG
-							std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-							SendToConsole("Retrying write on cell [" + str.str() + "]");
+								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+								SendToConsole("Retrying write on cell [" + str.str() + "]");
 #endif
-							AddHist(cell_coord, "Cell locked (will retry write later)");
-							writesToRetry.push_back(toWrite);
+								AddHist(cell_coord, "Cell locked (will retry write later)");
+								writesToRetry.push_back(toWrite);
+							}
 						}
 					}
 				}
 				{
-					std::tuple<Cell*, CellCoord_t> toRead;
+					std::tuple<std::weak_ptr<Cell>, CellCoord_t> toRead;
 					while (m_ReadQueue.try_pop(toRead))
 					{
-						Cell*& cell = std::get<0>(toRead);
+						std::weak_ptr<Cell>& cellWpt = std::get<0>(toRead);
 						const CellCoord_t& cell_coord = std::get<1>(toRead);
-						Cell::mutex_t::scoped_try_lock lock(cell->mutex);
-						if (lock)
+						if (auto cell = cellWpt.lock())
 						{
-							// Make sure this cell hasn't been re-activated:
-							if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
+							Cell::mutex_t::scoped_try_lock lock(cell->mutex);
+							if (lock)
 							{
-								FSN_ASSERT(!cell->loaded);
-								try
+								// Make sure this cell hasn't been re-activated:
+								if (cell->active_entries == 0 && cell->waiting == Cell::Retrieve)
 								{
-									// Last param makes the method load synched entities from the map if the cache file isn't available:
-									if (m_Map)
+									FSN_ASSERT(!cell->loaded);
+									try
 									{
-										// Load synched entities if this cell is un-cached (hasn't been loaded before)
-										bool uncached = m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
-
-										auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
-
-										if (!data.empty())
+										// Last param makes the method load synched entities from the map if the cache file isn't available:
+										if (m_Map)
 										{
-											bio::filtering_istream inflateStream;
-											inflateStream.push(bio::zlib_decompressor());
-											inflateStream.push(bio::array_source(data.data(), data.size()));
+											// Load synched entities if this cell is un-cached (hasn't been loaded before)
+											bool uncached = m_SynchLoaded.insert(std::make_pair(cell_coord.x, cell_coord.y)).second;
 
-											IO::Streams::CellStreamReader reader(&inflateStream);
-											// This value is the length of the pseudo-entity data (TODO: read this in GetRegionData and only return the data after this length if uncached is false)
-											reader.ReadValue<std::streamsize>();
+											auto data = m_Map->GetRegionData(cell_coord.x, cell_coord.y, uncached);
 
-											LoadEntitiesFromCellData(cell_coord, cell, inflateStream, false);
-											if (uncached)
-												LoadEntitiesFromCellData(cell_coord, cell, inflateStream, true);
+											if (!data.empty())
+											{
+												bio::filtering_istream inflateStream;
+												inflateStream.push(bio::zlib_decompressor());
+												inflateStream.push(bio::array_source(data.data(), data.size()));
+
+												IO::Streams::CellStreamReader reader(&inflateStream);
+												// This value is the length of the pseudo-entity data (TODO: read this in GetRegionData and only return the data after this length if uncached is false)
+												auto mapDataLength = reader.ReadValue<std::streamsize>();
+
+												if (mapDataLength > 0)
+													LoadEntitiesFromCellData(cell_coord, cell.get(), inflateStream, false);
+												if (uncached)
+													LoadEntitiesFromCellData(cell_coord, cell.get(), inflateStream, true);
+											}
 										}
-									}
 
-									auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
-									if (filePtr && *filePtr && !filePtr->eof())
-									{
-										auto& file = *filePtr;
-										if (m_EditMode)
+										auto filePtr = GetCellStreamForReading(cell_coord.x, cell_coord.y);
+										if (filePtr && *filePtr && !filePtr->eof())
 										{
-											// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incomming data
-											//  (we don't need to know this length to actually load the data):
+											auto& file = *filePtr;
+											if (m_EditMode)
+											{
+												// The length of this (edit-mode only) data is written in front of it so that it can be skipped when merging incomming data
+												//  (we don't need to know this length to actually load the data):
 #ifdef _DEBUG
-											IO::Streams::CellStreamReader reader(&file);
-											std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
-											//std::streampos startRead = file.tellg();
+												IO::Streams::CellStreamReader reader(&file);
+												std::streamsize unsynchedDataLength = reader.ReadValue<std::streamsize>();
+												//std::streampos startRead = file.tellg();
 #else
-											IO::Streams::CellStreamReader reader(&file);
-											reader.ReadValue<std::streamsize>();
-											//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
+												IO::Streams::CellStreamReader reader(&file);
+												reader.ReadValue<std::streamsize>();
+												//file.seekg(std::streamoff(sizeof(std::streamsize)), std::ios::cur);
 #endif
-											LoadEntitiesFromCellData(cell_coord, cell, file, false); // In edit-mode unsynched entities are also written to the cache
+												LoadEntitiesFromCellData(cell_coord, cell.get(), file, false); // In edit-mode unsynched entities are also written to the cache
 #ifdef _DEBUG
-											// Make sure all the data was read
-											// TODO: in Release builds: skip to the end if it wasn't all read?
-											//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
+												// Make sure all the data was read
+												// TODO: in Release builds: skip to the end if it wasn't all read?
+												//FSN_ASSERT(unsynchedDataLength == file.tellg() - startRead);
 #endif
+											}
+											size_t num = LoadEntitiesFromCellData(cell_coord, cell.get(), file, true);
+
+											//std::stringstream str; str << i;
+											//SendToConsole("Cell " + str.str() + " streamed in");
+
+											AddHist(cell_coord, "Loaded", num);
+											cell->loaded = true;
 										}
-										size_t num = LoadEntitiesFromCellData(cell_coord, cell, file, true);
-
-										//std::stringstream str; str << i;
-										//SendToConsole("Cell " + str.str() + " streamed in");
-
-										AddHist(cell_coord, "Loaded", num);
-										cell->loaded = true;
+										else
+										{
+											cell->loaded = true; // No data to load
+											AddHist(cell_coord, "Loaded (no data)");
+										}
 									}
-									else
+									catch (std::exception& e)
 									{
-										cell->loaded = true; // No data to load
-										AddHist(cell_coord, "Loaded (no data)");
+										std::string message("Exception while streaming in cell: ");
+										message += e.what();
+										AddHist(cell_coord, message);
+										AddLogEntry(message);
+									}
+									catch (...)
+									{
+										AddLogEntry("Unknown exception while streaming in cell");
+										//std::stringstream str; str << i;
+										//SendToConsole("Exception streaming in cell " + str.str());
+										//readsToRetry.push_back(toRead);
 									}
 								}
-								catch (...)
-								{
-									//std::stringstream str; str << i;
-									//SendToConsole("Exception streaming in cell " + str.str());
-									//readsToRetry.push_back(toRead);
-								}
+								cell->waiting = Cell::Ready;
+								readyCells.push_back(cell_coord);
+								//cell->mutex.unlock();
 							}
-							cell->waiting = Cell::Ready;
-							readyCells.push_back(cell_coord);
-							//cell->mutex.unlock();
-						}
-						else
-						{
+							else
+							{
 #ifdef _DEBUG
-							std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
-							SendToConsole("Retrying read on cell [" + str.str() + "]");
+								std::stringstream str; str << cell_coord.x << "," << cell_coord.y;
+								SendToConsole("Retrying read on cell [" + str.str() + "]");
 #endif
-							AddHist(cell_coord, "Cell locked (will retry read later)");
-							readsToRetry.push_back(toRead);
+								AddHist(cell_coord, "Cell locked (will retry read later)");
+								readsToRetry.push_back(toRead);
+							}
 						}
 					}
 				}
+				// Re-enqueue blocked writes/reads
 				retrying = false;
 				if (!writesToRetry.empty())
 				{
@@ -971,10 +1001,6 @@ namespace FusionEngine
 					break;
 				}
 			}
-			if (eventId == 2)//else // TransactionEnded
-			{
-				ClearReadyCells(readyCells);
-			}
 		}
 	}
 
@@ -984,7 +1010,7 @@ namespace FusionEngine
 		if (!readyCells.empty())
 		{
 			{
-				boost::mutex::scoped_lock lock(m_TransactionMutex);
+				TransactionMutex_t::scoped_lock lock(m_TransactionMutex);
 				if (lock)
 				{
 					for (auto it = readyCells.begin(); it != readyCells.end(); ++it)
@@ -1158,6 +1184,8 @@ namespace FusionEngine
 
 		// Just to be safe
 		m_CellsBeingProcessed.clear();
+		m_ReadQueue.clear();
+		m_WriteQueue.clear();
 
 		// Everything needs to reload
 		m_SynchLoaded.clear();

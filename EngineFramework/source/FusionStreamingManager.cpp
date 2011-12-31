@@ -366,8 +366,13 @@ namespace FusionEngine
 
 	CellHandle StreamingManager::ToCellLocation(float x, float y) const
 	{
+#if _MSC_VER > 1000
+		const int32_t ix = static_cast<int32_t>(std::floorf(x * m_InverseCellSize));
+		const int32_t iy = static_cast<int32_t>(std::floorf(y * m_InverseCellSize));
+#else
 		const int32_t ix = static_cast<int32_t>(std::floor(x * m_InverseCellSize));
 		const int32_t iy = static_cast<int32_t>(std::floor(y * m_InverseCellSize));
+#endif
 		return CellHandle(ix, iy);
 	}
 
@@ -671,6 +676,8 @@ namespace FusionEngine
 					newCell_lock = Cell::mutex_t::scoped_try_lock(m_TheVoid.mutex);
 					FSN_ASSERT(newCell_lock.owns_lock());
 				}
+				else
+					newCell_lock = Cell::mutex_t::scoped_try_lock();
 			}
 			
 			{

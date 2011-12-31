@@ -31,6 +31,8 @@
 
 #include "FusionProfiling.h"
 
+#include "FusionLogger.h"
+
 #include <functional>
 
 #include <tbb/tbb.h>
@@ -308,7 +310,36 @@ namespace FusionEngine
 		m_PrimaryThreadSystemTasks.clear();
 
 		// Contribute to the parallel execution, and when it completes, we're done
-		m_SystemTasksRoot->wait_for_all();
+		try
+		{
+			m_SystemTasksRoot->wait_for_all();
+		}
+		catch (tbb::bad_last_alloc& e)
+		{
+			AddLogEntry(e.what());
+			throw e;
+		}
+		catch (tbb::improper_lock& e)
+		{
+			AddLogEntry(e.what());
+			throw e;
+		}
+		catch (tbb::invalid_multiple_scheduling& e)
+		{
+			AddLogEntry(e.what());
+			throw e;
+		}
+		catch (tbb::missing_wait& e)
+		{
+			AddLogEntry(e.what());
+			throw e;
+		}
+		catch (std::exception e)
+		{
+			AddLogEntry(e.what());
+			SendToConsole(e.what());
+			throw e;
+		}
 	}
 
 	bool TaskManager::IsPrimaryThread() const
