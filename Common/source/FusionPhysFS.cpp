@@ -326,37 +326,36 @@ namespace FusionEngine
 		const std::string &archiveExt,
 		bool archivesFirst)
 	{
-		// Get the absoulte path to the given directory (or archive)
-		const char* dir = PHYSFS_getRealDir(path.c_str());
-		if (dir == NULL)
-			return false;
-
 		bool added = false;
 
 		// Try to add the path relative to app
-		std::string full_path = std::string( PHYSFS_getBaseDir() ) + path;
+		std::string full_path = std::string(PHYSFS_getBaseDir()) + path;
 		// Add the directory to the end of the search path
 		if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
 			added = true;
 
-		// Try to add the path from anywhere we can
-		full_path = std::string( dir ) + PHYSFS_getDirSeparator() + path;
-		// Add the directory to the end of the search path
-		if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
-			added = true;
+		const char* dir = PHYSFS_getWriteDir();
+		if (dir != NULL)
+		{
+			// Try to add the path from anywhere we can
+			full_path = std::string(dir) + PHYSFS_getDirSeparator() + path;
+			// Add the directory to the end of the search path
+			if (PHYSFS_mount(full_path.c_str(), (mount_point.empty() ? NULL : mount_point.c_str()), 1) > 0)
+				added = true;
+		}
 
 		if (!added)
 			return false;
 
-		// Ripped from PHYSFS_setSaneConfig (and somewhat c++ized)
 		if (!archiveExt.empty())
-			added = mount_archives(path, mount_point, archiveExt, archivesFirst);
+			added = mount_archives(mount_point, mount_point, archiveExt, archivesFirst);
 
 		return added;
 	}
 
 	bool SetupPhysFS::mount_archives(const std::string &path, const std::string &mount_point, const std::string &archive_ext, bool archives_first)
 	{
+		// Ripped from PHYSFS_setSaneConfig (and somewhat c++ized)
 		const char *dirsep = PHYSFS_getDirSeparator();
 
 		char **rc = PHYSFS_enumerateFiles(path.c_str());
